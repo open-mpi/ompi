@@ -17,577 +17,455 @@
 # $HEADER$
 #
 
-AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
+#
+# Search the generated warnings for 
+# keywords regarding skipping or ignoring certain attributes
+#   Intel: ignore
+#   Sun C++: skip
+#
+AC_DEFUN([_OMPI_ATTRIBUTE_FAIL_SEARCH],[
+    # AC_REQUIRE([AC_PROG_GREP]) # Requires autoconf-2.61
+    if test -s conftest.err ; then
+        for i in ignore skip ; do
+            grep -iq $i conftest.err
+            if test "$?" = "0" ; then
+                ompi_cv___attribute__[$1]=0
+                break;
+            fi
+        done
+    fi
+])
+
+#
+# Check for one specific attribute by compiling with C and C++
+# and possibly using a cross-check.
+#
+# If the cross-check is defined, a static function "usage" should be
+# defined, which is to be called from main (to circumvent warnings
+# regarding unused function in main file)
+#       static int usage (int * argument);
+#
+# The last argument is for specific CFLAGS, that need to be set 
+# for the compiler to generate a warning on the cross-check.
+# This may need adaption for future compilers / CFLAG-settings.
+#
+AC_DEFUN([_OMPI_CHECK_SPECIFIC_ATTRIBUTE], [
+    AC_MSG_CHECKING([for __attribute__([$1])])
+    AC_CACHE_VAL(ompi_cv___attribute__[$1], [
+        #
+        # Try to compile using the C compiler, then C++
+        #
+        AC_TRY_COMPILE([$2],[],
+                       [
+                        #
+                        # In case we did succeed: Fine, but was this due to the
+                        # attribute being ignored/skipped? Grep for IgNoRe/skip in conftest.err
+                        # and if found, reset the ompi_cv__attribute__var=0
+                        #
+                        ompi_cv___attribute__[$1]=1
+                        _OMPI_ATTRIBUTE_FAIL_SEARCH([$1])
+                       ],
+                       [ompi_cv___attribute__[$1]=0])
+        if test "$ompi_cv___attribute__[$1]" = "1" ; then
+            AC_LANG_PUSH(C++)
+            AC_TRY_COMPILE([
+                           extern "C" {
+                           $2
+                           }],[],
+                           [
+                            ompi_cv___attribute__[$1]=1
+                            _OMPI_ATTRIBUTE_FAIL_SEARCH([$1])
+                           ],[ompi_cv___attribute__[$1]=0])
+            AC_LANG_POP(C++)
+        fi
+        
+        #
+        # If the attribute is supported by both compilers,
+        # try to recompile a *cross-check*, IFF defined.
+        #
+        if test '(' "$ompi_cv___attribute__[$1]" = "1" -a "[$3]" != "" ')' ; then
+            ac_c_werror_flag_safe=$ac_c_werror_flag
+            ac_c_werror_flag="yes"
+            CFLAGS_safe=$CFLAGS
+            CFLAGS="$CFLAGS [$4]"
+
+            AC_TRY_COMPILE([$3],
+                [
+                 int i=4711;
+                 i=usage(&i);
+                ],
+                [ompi_cv___attribute__[$1]=0],
+                [
+                 #
+                 # In case we did NOT succeed: Fine, but was this due to the
+                 # attribute being ignored? Grep for IgNoRe in conftest.err
+                 # and if found, reset the ompi_cv__attribute__var=0
+                 #
+                 ompi_cv___attribute__[$1]=1
+                 _OMPI_ATTRIBUTE_FAIL_SEARCH([$1])
+                ])
+
+            ac_c_werror_flag=$ac_c_werror_flag_safe
+            CFLAGS=$CFLAGS_safe
+        fi
+    ])
+
+    if test "$ompi_cv___attribute__[$1]" = "1" ; then
+        AC_MSG_RESULT([yes])
+    else
+        AC_MSG_RESULT([no])
+    fi
+])
+
+
+
+AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
   AC_MSG_CHECKING(for __attribute__)
-  AC_CACHE_VAL(ac_cv___attribute__, [
+  AC_CACHE_VAL(ompi_cv___attribute__, [
     AC_TRY_COMPILE(
       [#include <stdlib.h>
        /* Check for the longest available __attribute__ (since gcc-2.3) */
        struct foo {
            char a;
-           int x[2] __attribute__ ((packed));
+           int x[2] __attribute__ ((__packed__));
         };
       ],
       [],
-      [ac_cv___attribute__=1],
-      [ac_cv___attribute__=0],
+      [ompi_cv___attribute__=1],
+      [ompi_cv___attribute__=0],
     )
 
-    if test "$ac_cv___attribute__" = "1" ; then
+    if test "$ompi_cv___attribute__" = "1" ; then
         AC_TRY_COMPILE(
           [#include <stdlib.h>
            /* Check for the longest available __attribute__ (since gcc-2.3) */
            struct foo {
                char a;
-               int x[2] __attribute__ ((packed));
+               int x[2] __attribute__ ((__packed__));
             };
           ],
           [],
-          [ac_cv___attribute__=1 ac_cv___attribute__msg=yes],
-          [ac_cv___attribute__=0 ac_cv___attribute__msg=no],
+          [ompi_cv___attribute__=1 ompi_cv___attribute__msg=yes],
+          [ompi_cv___attribute__=0 ompi_cv___attribute__msg=no],
         )
     fi
     ])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE, [$ac_cv___attribute__],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE, [$ompi_cv___attribute__],
                      [Whether your compiler has __attribute__ or not])
-  AC_MSG_RESULT($ac_cv___attribute__msg)
+  AC_MSG_RESULT($ompi_cv___attribute__msg)
 
 #
 # Now that we know the compiler support __attribute__ let's check which kind of
 # attributed are supported.
 #
-  if test "$ac_cv___attribute__msg" = "no"; then
-    ac_cv___attribute__aligned=0
-    ac_cv___attribute__always_inline=0
-    ac_cv___attribute__const=0
-    ac_cv___attribute__deprecated=0
-    ac_cv___attribute__format=0
-    ac_cv___attribute__malloc=0
-    ac_cv___attribute__may_alias=0
-    ac_cv___attribute__nonnull=0
-    ac_cv___attribute__noreturn=0
-    ac_cv___attribute__pure=0
-    ac_cv___attribute__packed=0
-    ac_cv___attribute__unused=0
-    ac_cv___attribute__sentinel=0
-    ac_cv___attribute__visibility=0
-    ac_cv___attribute__warn_unused_result=0
-    ac_cv___attribute__weak_alias=0
+  if test "$ompi_cv___attribute__msg" = "no" ; then
+    ompi_cv___attribute__aligned=0
+    ompi_cv___attribute__always_inline=0
+    ompi_cv___attribute__const=0
+    ompi_cv___attribute__deprecated=0
+    ompi_cv___attribute__format=0
+    ompi_cv___attribute__malloc=0
+    ompi_cv___attribute__may_alias=0
+    ompi_cv___attribute__nonnull=0
+    ompi_cv___attribute__noreturn=0
+    ompi_cv___attribute__pure=0
+    ompi_cv___attribute__packed=0
+    ompi_cv___attribute__unused=0
+    ompi_cv___attribute__sentinel=0
+    ompi_cv___attribute__visibility=0
+    ompi_cv___attribute__warn_unused_result=0
+    ompi_cv___attribute__weak_alias=0
   else
 
-#
-# All attributes may be specified in Header files -- requiring them to be
-# compilable with both the selected C- and the C++ compilers.
-#
-
-    AC_MSG_CHECKING([for __attribute__ ((aligned))])
-    AC_CACHE_VAL(ac_cv___attribute__aligned, [
-      AC_TRY_COMPILE(
-        [#include <stdlib.h>
-         struct foo { char text[4]; }  __attribute__ ((aligned(8))); ],
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([aligned],
+        [struct foo { char text[4]; }  __attribute__ ((__aligned__(8)));],
         [],
-        [ac_cv___attribute__aligned=1], [ac_cv___attribute__aligned=0]
-      )
+        [])
 
-      if test "$ac_cv___attribute__aligned" = "1" ; then
-          AC_LANG_PUSH(C++)
-          AC_TRY_COMPILE(
-            [#include <stdlib.h>
-             // No need to declare extern "C"
-             struct foo { char text[4]; }  __attribute__ ((aligned(8))); ],
-            [],
-            [ac_cv___attribute__aligned=1 ac_cv___attribute__aligned_msg=yes], [ac_cv___attribute__aligned=0 ac_cv___attribute__aligned_msg=no]
-          )
-          AC_LANG_POP(C++)
-      fi
-
-      ])
-    AC_MSG_RESULT($ac_cv___attribute__aligned_msg)
-
-
-    AC_MSG_CHECKING([for __attribute__ ((always_inline))])
-    AC_CACHE_VAL(ac_cv___attribute__always_inline, [
-      AC_TRY_COMPILE(
-        [#include <stdlib.h>
-          int foo (int arg) __attribute__ ((always_inline));],
+    #
+    # Ignored by PGI-6.2.5; -- recognized by output-parser
+    #
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([always_inline],
+        [int foo (int arg) __attribute__ ((__always_inline__));],
         [],
-        [ac_cv___attribute__always_inline=1],
-        [ac_cv___attribute__always_inline=0]
-      )
-
-      if test "$ac_cv___attribute__always_inline" = "1" ; then
-          AC_LANG_PUSH(C++)
-          AC_TRY_COMPILE(
-            [#include <stdlib.h>
-             extern "C" {
-               int foo (int arg) __attribute__ ((always_inline));
-             }
-            ],
-            [],
-            [ac_cv___attribute__always_inline=1 ac_cv___attribute__always_inline_msg=yes],
-            [ac_cv___attribute__always_inline=0 ac_cv___attribute__always_inline_msg=no]
-          )
-          AC_LANG_POP(C++)
-      fi
-      ])
-    AC_MSG_RESULT($ac_cv___attribute__always_inline_msg)
+        [])
 
 
-    AC_MSG_CHECKING([for __attribute__ ((const))])
-    AC_CACHE_VAL(ac_cv___attribute__const, [
-      AC_TRY_COMPILE(
-        [#include <stdlib.h>
-         int foo(int arg1, int arg2) __attribute__ ((const));
-         int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }],
-        [],
-        [ac_cv___attribute__const=1],
-        [ac_cv___attribute__const=0]
-      )
-
-      if test "$ac_cv___attribute__const" = "1" ; then
-          AC_LANG_PUSH(C++)
-          AC_TRY_COMPILE(
-            [#include <stdlib.h>
-             extern "C" {
-               int foo(int arg1, int arg2) __attribute__ ((const));
-               int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
-             }
-            ],
-            [],
-            [ac_cv___attribute__const=1 ac_cv___attribute__const_msg=yes],
-            [ac_cv___attribute__const=0 ac_cv___attribute__const_msg=no]
-          )
-          AC_LANG_POP(C++)
-      fi
-      ])
-    AC_MSG_RESULT($ac_cv___attribute__const_msg)
-
-
-    AC_MSG_CHECKING([for __attribute__ ((deprecated))])
-    AC_CACHE_VAL(ac_cv___attribute__deprecated, [
-      AC_TRY_COMPILE(
-        [#include <stdlib.h>
-         int foo(int arg1, int arg2) __attribute__ ((deprecated));
-         int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }],
-        [],
-        [ac_cv___attribute__deprecated=1],
-        [ac_cv___attribute__deprecated=0]
-      )
-
-      if test "$ac_cv___attribute__deprecated" = "1" ; then
-          AC_LANG_PUSH(C++)
-          AC_TRY_COMPILE(
-            [#include <stdlib.h>
-             extern "C" {
-               int foo(int arg1, int arg2) __attribute__ ((deprecated));
-               int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
-             }
-            ],
-            [],
-            [ac_cv___attribute__deprecated=1 ac_cv___attribute__deprecated_msg=yes],
-            [ac_cv___attribute__deprecated=0 ac_cv___attribute__deprecated_msg=no]
-          )
-          AC_LANG_POP(C++)
-      fi
-      ])
-    AC_MSG_RESULT($ac_cv___attribute__deprecated_msg)
-
-
-    AC_MSG_CHECKING([for __attribute__ ((format))])
-    AC_CACHE_VAL(ac_cv___attribute__format, [
-      AC_TRY_COMPILE(
-        [#include <stdlib.h>
-         int this_printf (void *my_object, const char *my_format, ...) __attribute__ ((format (printf, 2, 3)));],
-        [],
-        [ac_cv___attribute__format=1],
-        [ac_cv___attribute__format=0]
-      )
-
-      if test "$ac_cv___attribute__format" = "1" ; then
-          AC_LANG_PUSH(C++)
-          AC_TRY_COMPILE(
-            [#include <stdlib.h>
-             extern "C" {
-               int this_printf (void *my_object, const char *my_format, ...) __attribute__ ((format (printf, 2, 3)));
-             }
-            ],
-            [],
-            [ac_cv___attribute__format=1 ac_cv___attribute__format_msg=yes],
-            [ac_cv___attribute__format=0 ac_cv___attribute__format_msg=no]
-          )
-          AC_LANG_POP(C++)
-      fi
-      ])
-    AC_MSG_RESULT($ac_cv___attribute__format_msg)
-
-
-    AC_MSG_CHECKING([for __attribute__ ((malloc))])
-    AC_CACHE_VAL(ac_cv___attribute__malloc, [
-      AC_TRY_COMPILE(
-        [#include <stdlib.h>
-         int * foo(int arg1) __attribute__ ((malloc));
-         int * foo(int arg1) { return (int*) malloc(arg1); }],
-        [],
-        [ac_cv___attribute__malloc=1],
-        [ac_cv___attribute__malloc=0]
-      )
-
-      if test "$ac_cv___attribute__malloc" = "1" ; then
-          AC_LANG_PUSH(C++)
-          AC_TRY_COMPILE(
-            [#include <stdlib.h>
-             extern "C" {
-               int * foo(int arg1) __attribute__ ((malloc));
-               int * foo(int arg1) { return (int*) malloc(arg1); }
-             }
-            ],
-            [],
-            [ac_cv___attribute__malloc=1 ac_cv___attribute__malloc_msg=yes],
-            [ac_cv___attribute__malloc=0 ac_cv___attribute__malloc_msg=no]
-          )
-          AC_LANG_POP(C++)
-      fi
-      ])
-    AC_MSG_RESULT($ac_cv___attribute__malloc_msg)
-
-
-    AC_MSG_CHECKING([for __attribute__ ((may_alias))])
-    AC_CACHE_VAL(ac_cv___attribute__may_alias, [
-      AC_TRY_COMPILE(
-        [#include <stdlib.h>
-         int * arg __attribute__ ((may_alias));],
-        [],
-        [ac_cv___attribute__may_alias=1],
-        [ac_cv___attribute__may_alias=0]
-      )
-
-      if test "$ac_cv___attribute__may_alias" = "1" ; then
-          AC_LANG_PUSH(C++)
-          AC_TRY_COMPILE(
-            [#include <stdlib.h>
-             // No need to declare extern "C"
-             int * arg __attribute__ ((may_alias));],
-            [],
-            [ac_cv___attribute__may_alias=1 ac_cv___attribute__may_alias_msg=yes],
-            [ac_cv___attribute__may_alias=0 ac_cv___attribute__may_alias_msg=no]
-          )
-          AC_LANG_POP(C++)
-      fi
-      ])
-    AC_MSG_RESULT($ac_cv___attribute__may_alias_msg)
-
-
-    AC_MSG_CHECKING([for __attribute__ ((nonnull))])
-    AC_CACHE_VAL(ac_cv___attribute__nonnull, [
-      AC_TRY_COMPILE(
-        [#include <stdlib.h>
-         int square(int *arg) __attribute__ ((nonnull));
-         int square(int *arg) { return *arg; }],
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([const],
         [
-         int value=1;
-         value = square (&value);
+         int foo(int arg1, int arg2) __attribute__ ((__const__));
+         int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
         ],
-        [ac_cv___attribute__nonnull=1],
-        [ac_cv___attribute__nonnull=0]
-      )
-
-      if test "$ac_cv___attribute__nonnull" = "1" ; then
-          AC_LANG_PUSH(C++)
-          AC_TRY_COMPILE(
-            [#include <stdlib.h>
-             extern "C" {
-               int square(int *arg) __attribute__ ((nonnull));
-               int square(int *arg) { return *arg; }
-             }
-            ],
-            [
-             int value=1;
-             value = square (&value);
-            ],
-            [ac_cv___attribute__nonnull=1 ac_cv___attribute__nonnull_msg=yes],
-            [ac_cv___attribute__nonnull=0 ac_cv___attribute__nonnull_msg=no]
-          )
-          AC_LANG_POP(C++)
-      fi
-      ])
-    AC_MSG_RESULT($ac_cv___attribute__nonnull_msg)
-
-
-    AC_MSG_CHECKING([for __attribute__ ((noreturn))])
-    AC_CACHE_VAL(ac_cv___attribute__noreturn, [
-      AC_TRY_COMPILE(
-        [#include <stdlib.h>
-         int fatal(int arg1) __attribute__ ((noreturn));
-         int fatal(int arg1) { exit(arg1); }],
         [],
-        [ac_cv___attribute__noreturn=1],
-        [ac_cv___attribute__noreturn=0]
-      )
-
-      if test "$ac_cv___attribute__noreturn" = "1" ; then
-          AC_LANG_PUSH(C++)
-          AC_TRY_COMPILE(
-            [#include <stdlib.h>
-             extern "C" {
-               int fatal(int arg1) __attribute__ ((noreturn));
-               int fatal(int arg1) { exit(arg1); }
-             }
-            ],
-            [],
-            [ac_cv___attribute__noreturn=1 ac_cv___attribute__noreturn_msg=yes],
-            [ac_cv___attribute__noreturn=0 ac_cv___attribute__noreturn_msg=no]
-          )
-          AC_LANG_POP(C++)
-      fi
-      ])
-    AC_MSG_RESULT($ac_cv___attribute__noreturn_msg)
+        [])
 
 
-    AC_MSG_CHECKING([for __attribute__ ((packed))])
-    AC_CACHE_VAL(ac_cv___attribute__packed, [
-      AC_TRY_COMPILE(
-        [#include <stdlib.h>
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([deprecated],
+        [
+         int foo(int arg1, int arg2) __attribute__ ((__deprecated__));
+         int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
+        ],
+        [],
+        [])
+
+
+    ATTRIBUTE_CFLAGS=
+    case "$ompi_c_vendor" in
+        gnu)
+            ATTRIBUTE_CFLAGS="-Wall"
+            ;;
+        intel)
+            # we want specifically the warning on format string conversion
+            ATTRIBUTE_CFLAGS="-we181"
+            ;;
+    esac
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([format],
+        [
+         int this_printf (void *my_object, const char *my_format, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
+        ],
+        [
+         static int usage (int * argument);
+         extern int this_printf (int arg1, const char *my_format, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
+
+         static int usage (int * argument) {
+             return this_printf (*argument, "%d", argument); /* This should produce a format warning */
+         }
+         /* The autoconf-generated main-function is int main(), which produces a warning by itself */
+         int main(void);
+        ],
+        [$ATTRIBUTE_CFLAGS])
+
+
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([malloc],
+        [
+#ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+#endif
+         int * foo(int arg1) __attribute__ ((__malloc__));
+         int * foo(int arg1) { return (int*) malloc(arg1); }
+        ],
+        [],
+        [])
+
+
+    #
+    # Attribute may_alias: No suitable cross-check available, that works for non-supporting compilers
+    # Ignored by intel-9.1.045 -- turn off with -wd1292
+    # Ignored by PGI-6.2.5; ignore not detected due to missing cross-check
+    #
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([may_alias],
+        [int * p_value __attribute__ ((__may_alias__));],
+        [],
+        [])
+
+
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([no_instrument_function],
+        [int * foo(int arg1) __attribute__ ((__no_instrument_function__));],
+        [],
+        [])
+
+
+    #
+    # Attribute nonnull:
+    # Ignored by intel-compiler 9.1.045 -- recognized by cross-check
+    # Ignored by PGI-6.2.5 (pgCC) -- recognized by cross-check
+    #
+    ATTRIBUTE_CFLAGS=
+    case "$ompi_c_vendor" in
+        gnu)
+            ATTRIBUTE_CFLAGS="-Wall"
+            ;;
+        intel)
+            # we do not want to get ignored attributes warnings, but rather real warnings
+            ATTRIBUTE_CFLAGS="-wd1292"
+            ;;
+    esac
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([nonnull],
+        [
+         int square(int *arg) __attribute__ ((__nonnull__));
+         int square(int *arg) { return *arg; }
+        ],
+        [
+         static int usage(int * argument);
+         int square(int * argument) __attribute__ ((__nonnull__));
+         int square(int * argument) { return (*argument) * (*argument); }
+
+         static int usage(int * argument) {
+             return square( ((void*)0) );    /* This should produce an argument must be nonnull warning */
+         }
+         /* The autoconf-generated main-function is int main(), which produces a warning by itself */
+         int main(void);
+        ],
+        [$ATTRIBUTE_CFLAGS])
+
+
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([noreturn],
+        [
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+#ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+#endif
+         void fatal(int arg1) __attribute__ ((__noreturn__));
+         void fatal(int arg1) { exit(arg1); }
+        ],
+        [],
+        [])
+
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([packed],
+        [
          struct foo {
              char a;
-             int x[2] __attribute__ ((packed));
-         };],
+             int x[2] __attribute__ ((__packed__));
+         };
+        ],
         [],
-        [ac_cv___attribute__packed=1],
-        [ac_cv___attribute__packed=0]
-      )
+        [])
 
-      if test "$ac_cv___attribute__packed" = "1" ; then
-          AC_LANG_PUSH(C++)
-          AC_TRY_COMPILE(
-            [#include <stdlib.h>
-             // No need to declare extern "C"
-             struct foo {
-                 char a;
-                 int x[2] __attribute__ ((packed));
-             };
-            ],
-            [],
-            [ac_cv___attribute__packed=1 ac_cv___attribute__packed_msg=yes],
-            [ac_cv___attribute__packed=0 ac_cv___attribute__packed_msg=no]
-          )
-          AC_LANG_POP(C++)
-      fi
-      ])
-    AC_MSG_RESULT($ac_cv___attribute__packed_msg)
-
-
-    AC_MSG_CHECKING([for __attribute__ ((pure))])
-    AC_CACHE_VAL(ac_cv___attribute__pure, [
-      AC_TRY_COMPILE(
-        [#include <stdlib.h>
-         int square(int arg) __attribute__ ((pure));
-         int square(int arg) { return arg * arg; }],
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([pure],
+        [
+         int square(int arg) __attribute__ ((__pure__));
+         int square(int arg) { return arg * arg; }
+        ],
         [],
-        [ac_cv___attribute__pure=1],
-        [ac_cv___attribute__pure=0]
-      )
+        [])
 
-      if test "$ac_cv___attribute__pure" = "1" ; then
-          AC_LANG_PUSH(C++)
-          AC_TRY_COMPILE(
-            [#include <stdlib.h>
-             extern "C" {
-               int square(int arg) __attribute__ ((pure));
-               int square(int arg) { return arg * arg; }
-             }
-            ],
-            [],
-            [ac_cv___attribute__pure=1 ac_cv___attribute__pure_msg=yes],
-            [ac_cv___attribute__pure=0 ac_cv___attribute__pure_msg=no]
-          )
-          AC_LANG_POP(C++)
-      fi
-      ])
-    AC_MSG_RESULT($ac_cv___attribute__pure_msg)
+    #
+    # Attribute sentinel:
+    # Ignored by the intel-9.1.045 -- recognized by cross-check
+    #                intel-10.0beta works fine
+    # Ignored by PGI-6.2.5 (pgCC) -- recognized by output-parser and cross-check
+    # Ignored by pathcc-2.2.1 -- recognized by cross-check (through grep ignore)
+    #
+    ATTRIBUTE_CFLAGS=
+    case "$ompi_c_vendor" in
+        gnu)
+            ATTRIBUTE_CFLAGS="-Wall"
+            ;;
+        intel)
+            # we do not want to get ignored attributes warnings
+            ATTRIBUTE_CFLAGS="-wd1292"
+            ;;
+    esac
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([sentinel],
+        [
+         int my_execlp(const char * file, const char *arg, ...) __attribute__ ((__sentinel__));
+        ],
+        [
+         static int usage(int * argument);
+         int my_execlp(const char * file, const char *arg, ...) __attribute__ ((__sentinel__));
 
+         static int usage(int * argument) {
+             void * last_arg_should_be_null = argument;
+             return my_execlp ("lala", "/home/there", last_arg_should_be_null);   /* This should produce a warning */
+         }
+         /* The autoconf-generated main-function is int main(), which produces a warning by itself */
+         int main(void);
+        ],
+        [$ATTRIBUTE_CFLAGS])
 
-    AC_MSG_CHECKING([for __attribute__ ((sentinel))])
-    AC_CACHE_VAL(ac_cv___attribute__sentinel, [
-      AC_TRY_COMPILE(
-        [#include <stdlib.h>
-         int my_execlp(const char * file, const char *arg, ...) __attribute__ ((sentinel));],
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([unused],
+        [
+         int square(int arg1 __attribute__ ((__unused__)), int arg2);
+         int square(int arg1, int arg2) { return arg2; }
+        ],
         [],
-        [ac_cv___attribute__sentinel=1],
-        [ac_cv___attribute__sentinel=0]
-      )
-
-      if test "$ac_cv___attribute__sentinel" = "1" ; then
-          AC_LANG_PUSH(C++)
-          AC_TRY_COMPILE(
-            [#include <stdlib.h>
-             extern "C" {
-               int my_execlp(const char * file, const char *arg, ...) __attribute__ ((sentinel));
-             }
-            ],
-            [],
-            [ac_cv___attribute__sentinel=1 ac_cv___attribute__sentinel_msg=yes],
-            [ac_cv___attribute__sentinel=0 ac_cv___attribute__sentinel_msg=no]
-          )
-          AC_LANG_POP(C++)
-      fi
-      ])
-
-    AC_MSG_RESULT($ac_cv___attribute__sentinel_msg)
+        [])
 
 
-    AC_MSG_CHECKING([for __attribute__ ((unused))])
-    AC_CACHE_VAL(ac_cv___attribute__unused, [
-      AC_TRY_COMPILE(
-        [#include <stdlib.h>
-         int square(int arg1 __attribute__ ((unused)), int arg2);
-         int square(int arg1, int arg2) { return arg2; }],
+    #
+    # Ignored by PGI-6.2.5 (pgCC) -- recognized by the output-parser
+    #
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([visibility],
+        [
+         int square(int arg1) __attribute__ ((__visibility__("hidden")));
+        ],
         [],
-        [ac_cv___attribute__unused=1],
-        [ac_cv___attribute__unused=0]
-      )
-
-      if test "$ac_cv___attribute__unused" = "1" ; then
-          AC_LANG_PUSH(C++)
-          AC_TRY_COMPILE(
-            [#include <stdlib.h>
-             extern "C" {
-               int square(int arg1 __attribute__ ((unused)), int arg2);
-               int square(int arg1, int arg2) { return arg2; }
-             }
-            ],
-            [],
-            [ac_cv___attribute__unused=1 ac_cv___attribute__unused_msg=yes],
-            [ac_cv___attribute__unused=0 ac_cv___attribute__unused_msg=no]
-          )
-          AC_LANG_POP(C++)
-      fi
-      ])
-    AC_MSG_RESULT($ac_cv___attribute__unused_msg)
+        [])
 
 
-    AC_MSG_CHECKING([for __attribute__ ((visibility))])
-    AC_CACHE_VAL(ac_cv___attribute__visibility, [
-      AC_TRY_COMPILE(
-        [#include <stdlib.h>
-         int square(int arg1) __attribute__ ((visibility("hidden")));],
-        [],
-        [ac_cv___attribute__visibility=1],
-        [ac_cv___attribute__visibility=0]
-      )
-
-      if test "$ac_cv___attribute__visibility" = "1" ; then
-          AC_LANG_PUSH(C++)
-          AC_TRY_COMPILE(
-            [#include <stdlib.h>
-             extern "C" {
-               int square(int arg1) __attribute__ ((visibility("hidden")));
-             }
-            ],
-            [],
-            [ac_cv___attribute__visibility=1 ac_cv___attribute__visibility_msg=yes],
-            [ac_cv___attribute__visibility=0 ac_cv___attribute__visibility_msg=no]
-          )
-          AC_LANG_POP(C++)
-      fi
-      ])
-    AC_MSG_RESULT($ac_cv___attribute__visibility_msg)
-
-
-    AC_MSG_CHECKING([for __attribute__ ((warn_unused_result))])
-    AC_CACHE_VAL(ac_cv___attribute__warn_unused_result, [
-      AC_TRY_COMPILE(
-        [#include <stdlib.h>
-         int foo(int arg) __attribute__ ((warn_unused_result));
+    #
+    # Attribute warn_unused_result:
+    # Ignored by the intel-compiler 9.1.045 -- recognized by cross-check
+    # Ignored by pathcc-2.2.1 -- recognized by cross-check (through grep ignore)
+    #
+    ATTRIBUTE_CFLAGS=
+    case "$ompi_c_vendor" in
+        gnu)
+            ATTRIBUTE_CFLAGS="-Wall"
+            ;;
+        intel)
+            # we do not want to get ignored attributes warnings
+            ATTRIBUTE_CFLAGS="-wd1292"
+            ;;
+    esac
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([warn_unused_result],
+        [
+         int foo(int arg) __attribute__ ((__warn_unused_result__));
          int foo(int arg) { return arg + 3; }
-         int foo2(int arg) { return foo (arg); } ],
+        ],
+        [
+         static int usage(int * argument);
+         int foo(int arg) __attribute__ ((__warn_unused_result__));
+
+         int foo(int arg) { return arg + 3; }
+         static int usage(int * argument) {
+           foo (*argument);        /* Should produce an unused result warning */
+           return 0;
+         }
+
+         /* The autoconf-generated main-function is int main(), which produces a warning by itself */
+         int main(void);
+        ],
+        [$ATTRIBUTE_CFLAGS])
+
+
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([weak_alias],
+        [
+         int foo(int arg);
+         int foo(int arg) { return arg + 3; }
+         int foo2(int arg) __attribute__ ((__weak__, __alias__("foo")));
+        ],
         [],
-        [ac_cv___attribute__warn_unused_result=1],
-        [ac_cv___attribute__warn_unused_result=0]
-      )
-
-      if test "$ac_cv___attribute__warn_unused_result" = "1" ; then
-          AC_LANG_PUSH(C++)
-          AC_TRY_COMPILE(
-            [#include <stdlib.h>
-             extern "C" {
-               int foo(int arg) __attribute__ ((warn_unused_result));
-               int foo(int arg) { return arg + 3; }
-               int foo2(int arg) { return foo (arg); }
-             }
-            ],
-            [],
-            [ac_cv___attribute__warn_unused_result=1 ac_cv___attribute__warn_unused_result_msg=yes],
-            [ac_cv___attribute__warn_unused_result=0 ac_cv___attribute__warn_unused_result_msg=no]
-          )
-          AC_LANG_POP(C++)
-      fi
-      ])
-    AC_MSG_RESULT($ac_cv___attribute__warn_unused_result_msg)
-
-
-    AC_MSG_CHECKING([for __attribute__ ((weak, alias..))])
-    AC_CACHE_VAL(ac_cv___attribute__weak_alias, [
-      AC_TRY_COMPILE(
-        [#include <stdlib.h>
-           int foo(int arg);
-           int foo(int arg) { return arg + 3; }
-           int foo2(int arg) __attribute__ ((weak, alias("foo")));],
-        [],
-        [ac_cv___attribute__weak_alias=1],
-        [ac_cv___attribute__weak_alias=0]
-      )
-
-      if test "$ac_cv___attribute__weak_alias" = "1" ; then
-          AC_LANG_PUSH(C++)
-          AC_TRY_COMPILE(
-            [#include <stdlib.h>
-             extern "C" {
-               int foo(int arg) { return arg + 3; }
-               int foo2(int) __attribute__ ((weak, alias("foo")));
-             }],
-            [],
-            [ac_cv___attribute__weak_alias=1 ac_cv___attribute__weak_alias_msg=yes],
-            [ac_cv___attribute__weak_alias=0 ac_cv___attribute__weak_alias_msg=no]
-          )
-          AC_LANG_POP(C++)
-      fi
-      ])
-    AC_MSG_RESULT($ac_cv___attribute__weak_alias_msg)
+        [])
 
   fi
 
   # Now that all the values are set, define them
 
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_ALIGNED, [$ac_cv___attribute__aligned],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_ALIGNED, [$ompi_cv___attribute__aligned],
                      [Whether your compiler has __attribute__ aligned or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_ALWAYS_INLINE, [$ac_cv___attribute__always_inline],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_ALWAYS_INLINE, [$ompi_cv___attribute__always_inline],
                      [Whether your compiler has __attribute__ always_inline or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_CONST, [$ac_cv___attribute__const],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_CONST, [$ompi_cv___attribute__const],
                      [Whether your compiler has __attribute__ const or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_DEPRECATED, [$ac_cv___attribute__deprecated],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_DEPRECATED, [$ompi_cv___attribute__deprecated],
                      [Whether your compiler has __attribute__ deprecated or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_FORMAT, [$ac_cv___attribute__format],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_FORMAT, [$ompi_cv___attribute__format],
                      [Whether your compiler has __attribute__ format or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_MALLOC, [$ac_cv___attribute__malloc],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_MALLOC, [$ompi_cv___attribute__malloc],
                      [Whether your compiler has __attribute__ malloc or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_MAY_ALIAS, [$ac_cv___attribute__may_alias],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_MAY_ALIAS, [$ompi_cv___attribute__may_alias],
                      [Whether your compiler has __attribute__ may_alias or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_NONNULL, [$ac_cv___attribute__nonnull],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_NO_INSTRUMENT_FUNCTION, [$ompi_cv___attribute__no_instrument_function],
+                     [Whether your compiler has __attribute__ no_instrument_function or not])
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_NONNULL, [$ompi_cv___attribute__nonnull],
                      [Whether your compiler has __attribute__ nonnull or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_NORETURN, [$ac_cv___attribute__noreturn],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_NORETURN, [$ompi_cv___attribute__noreturn],
                      [Whether your compiler has __attribute__ noreturn or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_PACKED, [$ac_cv___attribute__packed],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_PACKED, [$ompi_cv___attribute__packed],
                      [Whether your compiler has __attribute__ packed or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_PURE, [$ac_cv___attribute__pure],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_PURE, [$ompi_cv___attribute__pure],
                      [Whether your compiler has __attribute__ pure or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_SENTINEL, [$ac_cv___attribute__sentinel],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_SENTINEL, [$ompi_cv___attribute__sentinel],
                      [Whether your compiler has __attribute__ sentinel or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_UNUSED, [$ac_cv___attribute__unused],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_UNUSED, [$ompi_cv___attribute__unused],
                      [Whether your compiler has __attribute__ unused or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_VISIBILITY, [$ac_cv___attribute__visibility],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_VISIBILITY, [$ompi_cv___attribute__visibility],
                      [Whether your compiler has __attribute__ visibility or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_WARN_UNUSED_RESULT, [$ac_cv___attribute__warn_unused_result],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_WARN_UNUSED_RESULT, [$ompi_cv___attribute__warn_unused_result],
                      [Whether your compiler has __attribute__ warn unused result or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_WEAK_ALIAS, [$ac_cv___attribute__weak_alias],
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_WEAK_ALIAS, [$ompi_cv___attribute__weak_alias],
                      [Whether your compiler has __attribute__ weak alias or not])
 ])

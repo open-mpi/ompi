@@ -95,9 +95,15 @@
 #    define __opal_attribute_may_alias__
 #endif
 
+#if OMPI_HAVE_ATTRIBUTE_NO_INSTRUMENT_FUNCTION
+#    define __opal_attribute_no_instrument_function__  __attribute__((__no_instrument_function__))
+#else
+#    define __opal_attribute_no_instrument_function__
+#endif
+
 #if OMPI_HAVE_ATTRIBUTE_NONNULL
-#      define __opal_attribute_nonnull__(a)    __attribute__((__nonnull__(a)))
-#      define __opal_attribute_nonnull_all__   __attribute__((__nonnull__))
+#    define __opal_attribute_nonnull__(a)    __attribute__((__nonnull__(a)))
+#    define __opal_attribute_nonnull_all__   __attribute__((__nonnull__))
 #else
 #    define __opal_attribute_nonnull__(a)
 #    define __opal_attribute_nonnull_all__
