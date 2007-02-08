@@ -464,7 +464,7 @@ static inline void *ompi_fifo_read_from_tail(ompi_fifo_t *fifo,
         /* See the big comment at the top of this file about this
            lock. */
         opal_atomic_lock(&(fifo->fifo_lock));
-        if(fifo->tail->cb_overflow == true) {
+        if(t_ptr->cb_overflow == true) {
             t_ptr->cb_overflow = false;
             fifo->tail = t_ptr->next_fifo_wrapper;
         }
