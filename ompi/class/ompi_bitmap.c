@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,7 +25,7 @@
 #include "ompi/class/ompi_bitmap.h"
 
 
-#define SIZE_OF_CHAR (sizeof(char) * 8)
+#define SIZE_OF_CHAR ((int) (sizeof(char) * 8))
 
 static void ompi_bitmap_construct(ompi_bitmap_t *bm);
 static void ompi_bitmap_destruct(ompi_bitmap_t *bm);
@@ -36,7 +37,6 @@ OBJ_CLASS_INSTANCE(ompi_bitmap_t, opal_object_t,
 static void 
 ompi_bitmap_construct(ompi_bitmap_t *bm) 
 {
-    bm->legal_numbits = 0;
     bm->array_size = 0;
     bm->bitmap = NULL;
 }
@@ -60,16 +60,14 @@ ompi_bitmap_init(ompi_bitmap_t *bm, int size)
 	    return OMPI_ERR_BAD_PARAM;
     }
 
-    bm->legal_numbits = size;
     actual_size = size / SIZE_OF_CHAR;
-  
     actual_size += (size % SIZE_OF_CHAR == 0) ? 0 : 1;
+    bm->array_size = actual_size;
     bm->bitmap = (unsigned char *) malloc(actual_size);
     if (NULL == bm->bitmap) {
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    bm->array_size = actual_size;
     ompi_bitmap_clear_all_bits(bm);
     return OMPI_SUCCESS;
 }
@@ -97,7 +95,7 @@ ompi_bitmap_set_bit(ompi_bitmap_t *bm, int bit)
         }
 
 	/* We need to allocate more space for the bitmap, since we are
-	   out of range. We dont throw any error here, because this is
+	   out of range. We don't throw any error here, because this is
 	   valid and we simply expand the bitmap */
 
 	new_size_large = (index / bm->array_size + 1 ) * bm->array_size;
@@ -130,7 +128,6 @@ ompi_bitmap_set_bit(ompi_bitmap_t *bm, int bit)
 
 	/* Update the array_size */
 	bm->array_size = new_size;
-	bm->legal_numbits = bit + 1;
     }
     
     /* Now set the bit */
@@ -145,7 +142,7 @@ ompi_bitmap_clear_bit(ompi_bitmap_t *bm, int bit)
 {
     int index, offset;
 
-    if ((bit < 0) || (bit > bm->legal_numbits - 1) || (NULL == bm)) {
+    if ((bit < 0) || NULL == bm || (bit >= (bm->array_size * SIZE_OF_CHAR))) {
 	return OMPI_ERR_BAD_PARAM;
     }
 
@@ -166,7 +163,7 @@ ompi_bitmap_is_set_bit(ompi_bitmap_t *bm, int bit)
 {
     int index, offset;
   
-    if ((bit < 0) || (bit > bm->legal_numbits - 1) || (NULL == bm)) {
+    if ((bit < 0) || NULL == bm || (bit >= (bm->array_size * SIZE_OF_CHAR))) {
 	return OMPI_ERR_BAD_PARAM;
     }
 
@@ -224,7 +221,7 @@ ompi_bitmap_find_and_set_first_unset_bit(ompi_bitmap_t *bm, int *position)
 	return OMPI_ERR_BAD_PARAM;
     }
 
-    /* Neglect all which dont have an unset bit */
+    /* Neglect all which don't have an unset bit */
     *position = 0;
     while((i < bm->array_size) && (bm->bitmap[i] == all_ones)) {
 	++i;

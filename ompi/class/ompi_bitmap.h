@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -125,10 +126,6 @@ struct ompi_bitmap_t {
     opal_object_t super; /**< Subclass of opal_object_t */
     unsigned char *bitmap; /**< The actual bitmap array of characters */
     int array_size;  /**< The actual array size that maintains the bitmap */
-    int legal_numbits; /**< The number of bits which are legal (the
-			    actual bitmap may contain more bits, since
-			    it needs to be rounded to the nearest
-			    char  */
 };
 
 typedef struct ompi_bitmap_t ompi_bitmap_t;
@@ -226,7 +223,7 @@ OMPI_DECLSPEC int ompi_bitmap_set_all_bits(ompi_bitmap_t *bm);
  */
 static inline int ompi_bitmap_size(ompi_bitmap_t *bm)
 {
-    return (NULL == bm) ? 0 : bm->legal_numbits;
+    return (NULL == bm) ? 0 : (bm->array_size * ((int) (sizeof(char) * 8)));
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)
