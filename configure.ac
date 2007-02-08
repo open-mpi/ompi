@@ -52,6 +52,8 @@ m4_if(m4_version_compare(m4_defn([m4_PACKAGE_VERSION]), [2.60]), -1,
   [AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define])],
   [AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.10])])
 
+m4_pattern_allow([m4_ifval])
+
 # Make configure depend on the VERSION file, since it's used in AC_INIT
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 
@@ -375,7 +377,15 @@ AM_CONDITIONAL(WANT_MPI_CXX_BINDINGS,
     test "$WANT_MPI_CXX_SUPPORT" = 1)
 AC_DEFINE_UNQUOTED(OMPI_WANT_CXX_BINDINGS, $WANT_MPI_CXX_SUPPORT,
     [Whether we want MPI cxx support or not])
-    
+
+
+
+##################################
+# Only after setting up both
+# C and C++ check compiler attributes.
+##################################
+OMPI_CHECK_ATTRIBUTES
+
 
 ##################################
 # Assembler Configuration
