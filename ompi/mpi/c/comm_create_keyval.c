@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -53,7 +54,7 @@ int MPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn,
     del_fn.attr_communicator_delete_fn = comm_delete_attr_fn;
 
     ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, 
-                                  del_fn, comm_keyval, extra_state, 0);
+                                  del_fn, comm_keyval, extra_state, 0, NULL);
 
     OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
 }
