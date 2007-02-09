@@ -110,6 +110,7 @@ extern "C" {
      * be made if they will be made).
      */
     int ompi_init_do_preconnect(void);
+    int ompi_init_do_oob_preconnect(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
