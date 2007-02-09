@@ -108,6 +108,11 @@ OMPI_DECLSPEC extern bool ompi_mpi_paffinity_alone;
     OMPI_DECLSPEC extern bool ompi_mpi_preconnect_all;
 
     /**
+     * should we wireup the oob completely during MPI_INIT?
+     */
+    OMPI_DECLSPEC extern bool ompi_mpi_preconnect_oob;
+
+    /**
      * Whether  MPI_ABORT  should  print  out an  identifying  message
      * (e.g., hostname  and PID)  and loop waiting  for a  debugger to
      * attach.  The value of the integer is how many seconds to wait:

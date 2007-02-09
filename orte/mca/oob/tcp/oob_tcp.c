@@ -229,7 +229,7 @@ int mca_oob_tcp_component_open(void)
                            "connect() timeout in seconds, before trying next interface",
                            false,
                            false,
-                           600,
+                           10,
                            &mca_oob_tcp_component.tcp_timeout);
 
     
@@ -412,7 +412,7 @@ static int mca_oob_tcp_create_listen(void)
     mca_oob_tcp_component.tcp_listen_port = inaddr.sin_port;
 
     /* setup listen backlog to maximum allowed by kernel */
-    if(listen(mca_oob_tcp_component.tcp_listen_sd, SOMAXCONN) < 0) {
+    if(listen(mca_oob_tcp_component.tcp_listen_sd, 5) < 0) {
         opal_output(0, "mca_oob_tcp_component_init: listen(): %s (%d)", 
                     strerror(opal_socket_errno), opal_socket_errno);
         return ORTE_ERROR;
@@ -623,7 +623,7 @@ static int mca_oob_tcp_create_listen_thread(void)
     mca_oob_tcp_component.tcp_listen_port = inaddr.sin_port;
 
     /* setup listen backlog to maximum allowed by kernel */
-    if(listen(mca_oob_tcp_component.tcp_listen_sd, SOMAXCONN) < 0) {
+    if(listen(mca_oob_tcp_component.tcp_listen_sd, 5) < 0) {
         opal_output(0, "mca_oob_tcp_component_init: listen() failed: %s (%d)", 
                     strerror(opal_socket_errno), opal_socket_errno);
         return ORTE_ERROR;
