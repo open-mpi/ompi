@@ -666,11 +666,21 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
             opal_output(0, "ompi_mpi_init: could not obtain start time for stg3");
         }
     }
-    
-    /* new very last step: check whether we have been spawned or not.
-       We introduce that at the very end, since we need collectives,
-       datatypes, ptls etc. up and running here.... */
 
+
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
+    /* Start setting up the event engine for MPI operations.  Don't
+       block in the event library, so that communications don't take
+       forever between procs in the dynamic code.  This will increase
+       CPU utilization for the remainder of MPI_INIT when we are
+       blocking on ORTE-level events, but may greatly reduce non-TCP
+       latency. */
+    opal_progress_events(OPAL_EVLOOP_NONBLOCK);
+#endif
+    
+    /* Check whether we have been spawned or not.  We introduce that
+       at the very end, since we need collectives, datatypes, ptls
+       etc. up and running here.... */
     if (OMPI_SUCCESS != (ret = ompi_comm_dyn_init())) {
         error = "ompi_comm_dyn_init() failed";
         goto error;
@@ -684,12 +694,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                        "MPI_INIT", "MPI_INIT", error, err_msg, ret);
         return ret;
     }
-
-#if OMPI_ENABLE_PROGRESS_THREADS == 0
-    /* switch from letting us sit in the event library for a bit each
-       time through opal_progress() to completely non-blocking */
-    opal_progress_events(OPAL_EVLOOP_NONBLOCK);
-#endif
 
     /* put the event library in "high performance MPI mode" */
     if (OMPI_SUCCESS != (ret = opal_progress_mpi_enable())) {
