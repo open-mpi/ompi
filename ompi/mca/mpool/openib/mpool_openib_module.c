@@ -130,7 +130,6 @@ int mca_mpool_openib_register(mca_mpool_base_module_t* mpool,
         if (ENOMEM == errno) {
             int ret;
             struct rlimit limit;
-            char *str_limit = NULL;
 
             ret = getrlimit(RLIMIT_MEMLOCK, &limit);
             if (0 != ret) {
