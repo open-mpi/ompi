@@ -24,6 +24,7 @@
 #include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
+#include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/btl/base/base.h"
 #include "pml_ob1.h"
 #include "pml_ob1_component.h"
@@ -117,6 +118,13 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     rc = ompi_bitmap_init(&reachable, (int)nprocs);
     if(OMPI_SUCCESS != rc)
         return rc;
+
+    /* make sure remote procs are using the same PML as us */
+    if (OMPI_SUCCESS != (rc = mca_pml_base_pml_check_selected("ob1",
+                                                              procs,
+                                                              nprocs))) {
+        return rc;
+    }
 
     bml_endpoints = (struct mca_bml_base_endpoint_t **) malloc ( nprocs *
 		     sizeof(struct mca_bml_base_endpoint_t*));

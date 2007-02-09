@@ -36,6 +36,7 @@
 #include "ompi/mca/bml/base/base.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "ompi/mca/pml/base/base.h"
 
 mca_pml_dr_t mca_pml_dr = {
     {
@@ -119,6 +120,13 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
         }
     }
 #endif
+
+    /* make sure remote procs are using the same PML as us */
+    if (OMPI_SUCCESS != (rc = mca_pml_base_pml_check_selected("dr",
+                                                              procs,
+                                                              nprocs))) {
+        return rc;
+    }
 
     OBJ_CONSTRUCT(&reachable, ompi_bitmap_t);
     rc = ompi_bitmap_init(&reachable, (int)nprocs);

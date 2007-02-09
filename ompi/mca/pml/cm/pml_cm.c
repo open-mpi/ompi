@@ -14,6 +14,7 @@
 #include "opal/class/opal_list.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
+#include "ompi/mca/pml/base/base.h"
 
 #include "pml_cm.h"
 #include "pml_cm_sendreq.h"
@@ -86,6 +87,13 @@ mca_pml_cm_add_procs(struct ompi_proc_t** procs, size_t nprocs)
         }
     }
 #endif
+
+    /* make sure remote procs are using the same PML as us */
+    if (OMPI_SUCCESS != (ret = mca_pml_base_pml_check_selected("cm",
+                                                              procs,
+                                                              nprocs))) {
+        return ret;
+    }
 
     endpoints = (struct mca_mtl_base_endpoint_t**)malloc(nprocs * sizeof(struct mca_mtl_base_endpoint_t*));
     if (NULL == endpoints) return OMPI_ERROR;
