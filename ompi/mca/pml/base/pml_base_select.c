@@ -28,6 +28,8 @@
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
+#include "ompi/proc/proc.h"
+#include "ompi/mca/pml/base/pml_base_module_exchange.h"
 
 typedef struct opened_component_t {
   opal_list_item_t super;
@@ -178,7 +180,68 @@ int mca_pml_base_select(bool enable_progress_threads,
     /* register the winner's callback */
     opal_progress_register(mca_pml.pml_progress);
 
+
+    /* register winner in the modex */
+    mca_pml_base_pml_selected(best_component->pmlm_version.mca_component_name);
+
     /* All done */
+
+    return OMPI_SUCCESS;
+}
+
+/* need a "commonly" named PML structure so everything ends up in the
+   same modex field */
+static mca_base_component_t pml_base_component = {
+    MCA_BASE_VERSION_1_0_0,
+    "pml",
+    MCA_BASE_VERSION_1_0_0,
+    "base",
+    MCA_BASE_VERSION_1_0_0,
+    NULL,
+    NULL
+};
+
+
+int
+mca_pml_base_pml_selected(const char *name)
+{
+    return mca_pml_base_modex_send(&pml_base_component, name, strlen(name) + 1);
+}
+
+int
+mca_pml_base_pml_check_selected(const char *my_pml,
+                                ompi_proc_t **procs,
+                                size_t nprocs)
+{
+    size_t i, size;
+    int ret;
+    char *remote_pml;
+
+    for (i = 0 ; i < nprocs ; ++i) {
+        if (ompi_proc_local() == procs[i]) continue;
+
+        ret = mca_pml_base_modex_recv(&pml_base_component,
+                                      procs[i],
+                                      (void**) &remote_pml, &size);
+        if (OMPI_SUCCESS != ret) return ret;
+        if ((size != strlen(my_pml) + 1) ||
+            (0 != strcmp(my_pml, remote_pml))) {
+            if (procs[i]->proc_hostname) {
+                opal_output(0, "[%lu,%lu,%lu] selected pml %s, but peer [%lu,%lu,%lu] on %s selected pml %s",
+                            ORTE_NAME_ARGS(&ompi_proc_local()->proc_name),
+                            my_pml, ORTE_NAME_ARGS(&procs[i]->proc_name),
+                            procs[i]->proc_hostname, remote_pml);
+            } else {
+                opal_output(0, "[%lu,%lu,%lu] selected pml %s, but peer [%lu,%lu,%lu] selected pml %s",
+                            ORTE_NAME_ARGS(&ompi_proc_local()->proc_name),
+                            my_pml, ORTE_NAME_ARGS(&procs[i]->proc_name),
+                            remote_pml);
+            }
+            return OMPI_ERR_UNREACH;
+        }
+
+        free(remote_pml);
+    }
 
     return OMPI_SUCCESS;
 }
