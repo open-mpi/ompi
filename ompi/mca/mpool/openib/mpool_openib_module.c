@@ -27,6 +27,15 @@
 #include "ompi/mca/rcache/rcache.h"
 #include "ompi/mca/rcache/base/base.h"
 #include "ompi/mca/mpool/base/base.h"
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif
 
 extern uint32_t mca_mpool_base_page_size;
 extern uint32_t mca_mpool_base_page_size_log; 
@@ -118,8 +127,27 @@ int mca_mpool_openib_register(mca_mpool_base_module_t* mpool,
    
     
     if(NULL == vapi_reg->mr){ 
-        opal_output(0, "%s: ibv_reg_mr(%p,%lu) failed with error: %s\n", 
-            __func__, vapi_reg->base_reg.base, size, strerror(errno)); 
+        if (ENOMEM == errno) {
+            int ret;
+            struct rlimit limit;
+            char *str_limit = NULL;
+
+            ret = getrlimit(RLIMIT_MEMLOCK, &limit);
+            if (0 != ret) {
+                opal_output(0, "%s: ibv_reg_mr(%p,%lu) failed with error: %s, memlock unknown\n", 
+                            __func__, vapi_reg->base_reg.base, size, strerror(errno)); 
+            } else if (limit.rlim_cur == RLIM_INFINITY) {
+                opal_output(0, "%s: ibv_reg_mr(%p,%lu) failed with error: %s, memlock unlimited\n", 
+                            __func__, vapi_reg->base_reg.base, size, strerror(errno)); 
+            } else {
+                opal_output(0, "%s: ibv_reg_mr(%p,%lu) failed with error: %s, memlock: %d\n", 
+                            __func__, vapi_reg->base_reg.base, size, strerror(errno),
+                            limit.rlim_cur); 
+            }
+        } else {
+            opal_output(0, "%s: ibv_reg_mr(%p,%lu) failed with error: %s\n", 
+                        __func__, vapi_reg->base_reg.base, size, strerror(errno)); 
+        }
         return OMPI_ERROR; 
     }
     
