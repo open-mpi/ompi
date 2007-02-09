@@ -36,7 +36,6 @@ version 1.0.
 - Fix a problem with compiling the XGrid components with non-gcc
   compilers.
 
-
 1.1.4
 -----
 
