@@ -26,7 +26,6 @@ static void test_bitmap_is_set(ompi_bitmap_t *bm);
 static void test_bitmap_clear_all(ompi_bitmap_t *bm);
 static void test_bitmap_set_all(ompi_bitmap_t *bm);
 static void test_bitmap_find_and_set(ompi_bitmap_t *bm);
-static void test_bitmap_find_size(ompi_bitmap_t *bm);
 
 
 static int set_bit(ompi_bitmap_t *bm, int bit);
@@ -35,7 +34,6 @@ static int is_set_bit(ompi_bitmap_t *bm, int bit);
 static int clear_all(ompi_bitmap_t *bm);
 static int set_all(ompi_bitmap_t *bm);
 static int find_and_set(ompi_bitmap_t *bm, int bit);
-static int find_size(ompi_bitmap_t *bm);
 
 #define WANT_PRINT_BITMAP 0
 #if WANT_PRINT_BITMAP
@@ -94,9 +92,6 @@ int main(int argc, char *argv[])
 
     fprintf(error_out, "\nTesting bitmap find_and_set... \n");
     test_bitmap_find_and_set(&bm);
-
-    fprintf(error_out, "\nTesting bitmap find_size... \n");
-    test_bitmap_find_size(&bm);
 
     fprintf(error_out, "\n~~~~~~     Testing complete     ~~~~~~ \n\n");
 
@@ -228,13 +223,6 @@ void test_bitmap_set_all(ompi_bitmap_t *bm)
     TEST_AND_REPORT(result, 0, " error in ompi_bitmap_set_ala_bitsl");
 }
 
-void test_bitmap_find_size(ompi_bitmap_t *bm)
-{
-    int result = find_size(bm);
-    TEST_AND_REPORT(result, 0, " error in ompi_bitmap_size");
-}
-
-
 int set_bit(ompi_bitmap_t *bm, int bit)
 {
     int err = ompi_bitmap_set_bit(bm, bit);
@@ -322,18 +310,6 @@ int set_all(ompi_bitmap_t *bm)
 }
 
 	
-int find_size(ompi_bitmap_t *bm)
-{
-    if (ompi_bitmap_size(bm) != bm->legal_numbits) {
-	fprintf(error_out, "ERROR: find_size: expected %d reported %d\n\n",
-		(int) bm->array_size, (int) ompi_bitmap_size(bm));
-        
-	return ERR_CODE;
-    }
-    return 0;
-}
-
-
 #if WANT_PRINT_BITMAP
 void print_bitmap(ompi_bitmap_t *bm) 
 {
