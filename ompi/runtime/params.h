@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -106,6 +108,11 @@ OMPI_DECLSPEC extern bool ompi_mpi_paffinity_alone;
      * first communication with an MPI peer process).
      */
     OMPI_DECLSPEC extern bool ompi_mpi_preconnect_all;
+
+    /**
+     * should we wireup the oob completely during MPI_INIT?
+     */
+    OMPI_DECLSPEC extern bool ompi_mpi_preconnect_oob;
 
     /**
      * Whether  MPI_ABORT  should  print  out an  identifying  message
