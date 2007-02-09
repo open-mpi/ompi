@@ -222,6 +222,13 @@ int orte_rmaps_base_unpack_mapped_node(orte_buffer_t *buffer, void *dest,
             return rc;
         }
 
+        /* unpack the launch id */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(nodes[i]->launch_id), &n, ORTE_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
         /* unpack the username */
         n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,

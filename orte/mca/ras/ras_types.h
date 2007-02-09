@@ -46,6 +46,8 @@ struct orte_ras_node_t {
     opal_list_item_t super;
     /** String node name */
     char *node_name;
+    /** Launch id - needed by some systems to launch a proc on this node */
+    int32_t launch_id;
     /** String of the architecture for the node.  This is permitted to
         be NULL if it is not known. */
     char *node_arch;
