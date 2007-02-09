@@ -23,6 +23,7 @@
 #include "opal/util/output.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/mca/mtl/base/base.h"
+#include "ompi/mca/common/mx/common_mx.h"
 
 #include "mtl_mx.h"
 #include "mtl_mx_types.h"
@@ -113,27 +114,11 @@ static mca_mtl_base_module_t*
 ompi_mtl_mx_component_init(bool enable_progress_threads,
                            bool enable_mpi_threads)
 {
-    mx_return_t mx_return;
-    int ret;
-
-    /* set the MX error handle to always return. This function is the
-     * only MX function allowed to be called before mx_init in order
-     * to make sure that if the MX is not up and running the MX
-     * library does not exit the application.
-     */
-    mx_set_error_handler(MX_ERRORS_RETURN);
+   int ret;
     
-    /* initialize the mx library */
-    mx_return = mx_init(); 
-    
-    if(MX_SUCCESS != mx_return){
-        if(MX_ALREADY_INITIALIZED  != mx_return) {
-            opal_output(ompi_mtl_base_output,
-                        "Error in mx_init (error %s)\n",
-                        mx_strerror(mx_return));
-        } else { 
-            return NULL;
-        }
+    ret = ompi_common_mx_initialize();
+    if(OMPI_SUCCESS != ret) { 
+        return NULL;
     }
         
     ret = ompi_mtl_mx_module_init();
