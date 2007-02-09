@@ -27,6 +27,7 @@ static int mca_pml_cm_component_close(void);
 static mca_pml_base_module_t* mca_pml_cm_component_init( int* priority,
                             bool enable_progress_threads, bool enable_mpi_threads);
 static int mca_pml_cm_component_fini(void);
+extern mca_mtl_base_component_t* ompi_mtl_base_selected_component;
 
 mca_pml_base_component_1_0_0_t mca_pml_cm_component = {
 
@@ -132,7 +133,14 @@ mca_pml_cm_component_init(int* priority,
     if (OMPI_SUCCESS != ret) { 
         *priority = -1;
         return NULL;
+    } else if(strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "psm") != 0) {
+        /* if mtl is not PSM then back down priority, and require the user to */
+        /*  specify pml cm directly if that is what they want priority */
+        /*  of 1 is sufficient in that case as it is the only pml that */ 
+        /*  will be considered */
+        *priority = 1;
     }
+
     
     /* update our tag / context id max values based on MTL
        information */

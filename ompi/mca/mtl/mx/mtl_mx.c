@@ -25,7 +25,7 @@
 #include "opal/class/opal_list.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
-
+#include "ompi/mca/common/mx/common_mx.h"
 #include "mtl_mx.h"
 #include "mtl_mx_types.h"
 #include "mtl_mx_endpoint.h"
@@ -114,7 +114,7 @@ int ompi_mtl_mx_module_init(){
 int
 ompi_mtl_mx_finalize(struct mca_mtl_base_module_t* mtl) { 
     mx_return_t mx_return;
-
+    
     opal_progress_unregister(ompi_mtl_mx_progress);
     
     /* free resources */
@@ -123,14 +123,9 @@ ompi_mtl_mx_finalize(struct mca_mtl_base_module_t* mtl) {
         opal_output(ompi_mtl_base_output, "Error in mx_close_endpoint (error %s)\n", mx_strerror(mx_return));
         return OMPI_ERROR;
     }
-
-    mx_return = mx_finalize(); 
-    if(mx_return != MX_SUCCESS){ 
-        opal_output(ompi_mtl_base_output, "Error in mx_finalize (error %s)\n", mx_strerror(mx_return));
-        return OMPI_ERROR;
-    }
     
-    return OMPI_SUCCESS;
+    return ompi_common_mx_finalize();
+    
 }
 
 int

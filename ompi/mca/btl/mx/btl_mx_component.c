@@ -28,6 +28,8 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
+#include "ompi/mca/common/mx/common_mx.h"
+
 #include "btl_mx.h"
 #include "btl_mx_frag.h"
 #include "btl_mx_endpoint.h" 
@@ -176,8 +178,10 @@ int mca_btl_mx_component_close(void)
 {
     if( NULL == mca_btl_mx_component.mx_btls )
         return OMPI_SUCCESS;
-
-    mx_finalize();
+    
+    if(OMPI_SUCCESS != ompi_common_mx_finalize()) { 
+        return OMPI_ERROR;
+    }
 
     /* release resources */
     OBJ_DESTRUCT(&mca_btl_mx_component.mx_send_eager_frags);
@@ -376,16 +380,12 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     opal_setenv( "MX_PIPELINE_LOG", "0", true, &environ );
 
     /* First check if MX is available ... */
-    if( MX_SUCCESS != (status = mx_init()) ) {
-        if(MX_ALREADY_INITIALIZED != status) {
-            opal_output( 0, "mca_btl_mx_component_init: mx_init() failed with status = %d (%s)\n",
-                         status, mx_strerror(status) );
-        }
+    if(OMPI_SUCCESS!=ompi_common_mx_initialize()) { 
         mca_pml_base_modex_send(&mca_btl_mx_component.super.btl_version, 
                                 NULL, 0);
         return NULL;
     }
-
+        
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_mx_component.mx_send_eager_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_mx_component.mx_send_user_frags, ompi_free_list_t);
