@@ -39,47 +39,56 @@ static int ras_tm_open(void);
 static orte_ras_base_module_t *ras_tm_init(int*);
 
 
-orte_ras_base_component_t mca_ras_tm_component = {
-    /* First, the mca_base_component_t struct containing meta
-       information about the component itself */
+orte_ras_tm_component_t mca_ras_tm_component = {
+    {
+        /* First, the mca_base_component_t struct containing meta
+           information about the component itself */
 
-    {
-        /* Indicate that we are a ras v1.3.0 component (which also
-           implies a specific MCA version) */
+        {
+            /* Indicate that we are a ras v1.3.0 component (which also
+               implies a specific MCA version) */
+            
+            ORTE_RAS_BASE_VERSION_1_3_0,
+            
+            /* Component name and version */
+            
+            "tm",
+            ORTE_MAJOR_VERSION,
+            ORTE_MINOR_VERSION,
+            ORTE_RELEASE_VERSION,
+            
+            /* Component open and close functions */
+            
+            ras_tm_open,
+            NULL
+        },
         
-        ORTE_RAS_BASE_VERSION_1_3_0,
+        /* Next the MCA v1.0.0 component meta data */
+        {
+            /* Whether the component is checkpointable or not */
+            false
+        },
         
-        /* Component name and version */
-        
-        "tm",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
-        
-        /* Component open and close functions */
-        
-        ras_tm_open,
-        NULL
-    },
-    
-    /* Next the MCA v1.0.0 component meta data */
-    {
-        /* Whether the component is checkpointable or not */
-        false
-    },
-    
-    ras_tm_init
+        ras_tm_init
+    }
 };
 
 
 static int ras_tm_open(void)
 {
+    mca_base_component_t *c = &mca_ras_tm_component.super.ras_version;
+
     param_priority = 
-        mca_base_param_reg_int(&mca_ras_tm_component.ras_version,
+        mca_base_param_reg_int(c,
                                "priority",
                                "Priority of the tm ras component",
                                false, false, 100, NULL);
 
+    mca_base_param_reg_string(c, "nodefile_dir",
+                              "The directory where the PBS nodefile can be found",
+                              false, false, "/var/torque/aux", 
+                              &mca_ras_tm_component.nodefile_dir);
+    
     return ORTE_SUCCESS;
 }
 

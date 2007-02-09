@@ -179,6 +179,12 @@ int orte_rmaps_base_pack_mapped_node(orte_buffer_t *buffer, void *src,
             return rc;
         }
 
+        /* pack the launch id */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(nodes[i]->launch_id), 1, ORTE_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
         /* pack the username */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(nodes[i]->username), 1, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
