@@ -87,8 +87,8 @@ static int windows_module_set(int id)
         return OPAL_ERR_NOT_FOUND;
     }
 
-    if( (1 << id) & system_mask ) {
-        process_mask = (1 << id);
+    if( (int)(1 << id) & (system_mask & 0xFFFFFFFF) ) {
+        process_mask = (int)(1 << id);
         if( SetThreadAffinityMask( threadid, process_mask ) )
             return OPAL_SUCCESS;
         /* otherwise something went wrong */
@@ -104,7 +104,7 @@ static int windows_module_get(int *id)
     DWORD_PTR process_mask, system_mask;
 
     if( GetProcessAffinityMask( threadid, &process_mask, &system_mask ) ) {
-        *id = process_mask;
+        *id = (int)process_mask;
         return OPAL_SUCCESS;
     }
     *id = 1;
