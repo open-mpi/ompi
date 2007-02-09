@@ -661,27 +661,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         gettimeofday(&ompistart, NULL);
     }
 
-    /* wire up the oob interface, if requested.  Do this here because
-       it will go much faster before the event library is switched
-       into non-blocking mode */
-    if (ompi_mpi_preconnect_oob) { 
-        if (OMPI_SUCCESS != (ret = ompi_init_do_oob_preconnect())) {
-            error = "ompi_mpi_do_preconnect_oob() failed";
-            goto error;
-        }
-    }
-
-    /* check for timing request - get stop time and report elapsed
-       time if so, then start the clock again */
-    if (timing) {
-        gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init[%ld]: time from stage 2 cast to complete oob wireup %ld usec",
-                    (long)ORTE_PROC_MY_NAME->vpid,
-                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
-                               (ompistop.tv_usec - ompistart.tv_usec)));
-        gettimeofday(&ompistart, NULL);
-    }
-
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
     /* Start setting up the event engine for MPI operations.  Don't
        block in the event library, so that communications don't take
@@ -754,10 +733,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* At this point, we are fully configured and in MPI mode.  Any
        communication calls here will work exactly like they would in
        the user's code.  Setup the connections between procs and warm
-       them up with simple sends, if requested */
+       them up with simple sends, if requested*/
    if (ompi_mpi_preconnect_all) { 
        if (OMPI_SUCCESS != (ret = ompi_init_do_preconnect())) {
            error = "ompi_mpi_do_preconnect_all() failed";
+           /* This will loop back up above, but ret != OMPI_SUCCESS,
+              so we'll end up returning out of this function before
+              getting here (and therefore avoiding an infinite
+              loop) */
            goto error;
        }
     }
@@ -786,7 +769,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* check for timing request - get stop time and report elapsed time if so */
     if (timing) {
         gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init[%ld]: time from oob wireup to complete mpi_init %ld usec",
+        opal_output(0, "ompi_mpi_init[%ld]: time from stage2 xcast to complete mpi_init %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
