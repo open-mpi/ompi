@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -110,6 +112,7 @@ extern "C" {
      * be made if they will be made).
      */
     int ompi_init_do_preconnect(void);
+    int ompi_init_do_oob_preconnect(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

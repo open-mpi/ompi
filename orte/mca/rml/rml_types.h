@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -54,6 +56,7 @@ typedef uint32_t orte_rml_tag_t;
 #define ORTE_RML_TAG_BPROC          17
 #define ORTE_RML_TAG_BPROC_ABORT    18
 #define ORTE_RML_TAG_SM_BACK_FILE_CREATED    19
+#define ORTE_RML_TAG_WIREUP         20
 
 #define ORTE_RML_TAG_DYNAMIC     2000
 
