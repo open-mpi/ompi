@@ -331,8 +331,7 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
                  "root %d rank %d com_size %d msg_length %ld",
                  root, rank, communicator_size, message_size));
 
-    if (((communicator_size < 20) && (message_size < 512)) ||
-        ((communicator_size < 10) && (message_size <= 1024))){
+    if ((communicator_size < 8) && (message_size < 512)){
         /* Linear_0K */
         return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm); 
     } else if ((communicator_size < 8) && (message_size < 20480)) {
