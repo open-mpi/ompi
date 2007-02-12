@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -891,20 +892,14 @@ static int odls_default_fork_local_proc(
                 /* Child was successful in exec'ing! */
                 break;
             } else {
-                int exit_code;
                 /* Doh -- child failed.
-                   Report the failure to launch this process through
-                   the SOH or else everyone else will hang. Don't bother
-                   checking whether or not this worked - just fire and forget
+                   Report the ORTE rc from child to let the calling function
+                   know about the failure.  The actual exit status of child proc
+                   cannot be found here. The calling func need to report the
+                   failure to launch this process through the SMR or else
+                   everyone else will hang.
                 */
-#ifdef W_EXITCODE
-                exit_code = W_EXITCODE((0xFF & i), 0);
-#else
-                exit_code = (0xFF & i);
-#endif
-                orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_ABORTED, exit_code);
-                return ORTE_ERR_FATAL;
-                break;
+                return i;
             }
         }
 
