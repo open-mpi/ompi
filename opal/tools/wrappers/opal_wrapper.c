@@ -77,6 +77,7 @@ struct options_data_t {
     char *req_file;
     char *path_includedir;
     char *path_libdir;
+    char *extra_includes;
 };
 
 static struct options_data_t *options_data = NULL;
@@ -119,6 +120,7 @@ options_data_init(struct options_data_t *data)
     data->req_file = NULL;
     data->path_includedir = NULL;
     data->path_libdir = NULL;
+    data->extra_includes = NULL;
 }
 
 static void
@@ -142,6 +144,7 @@ options_data_free(struct options_data_t *data)
     if (NULL != data->req_file) free(data->req_file);
     if (NULL != data->path_includedir) free(data->path_includedir);
     if (NULL != data->path_libdir) free(data->path_libdir);
+    if (NULL != data->extra_includes) free(data->extra_includes);
 }
 
 static void
@@ -200,6 +203,30 @@ find_options_index(const char *arg)
 
 
 static void
+add_extra_includes(const char *includes, const char* includedir)
+{
+    int i;
+    char **values = opal_argv_split(includes, ' ');
+
+    for (i = 0 ; i < opal_argv_count(values) ; ++i) {
+        char *line, *include_directory;
+
+        include_directory = opal_os_path(false, includedir, values[i], NULL);
+
+#if defined(__WINDOWS__)
+        asprintf(&line, OPAL_INCLUDE_FLAG"\"%s\"", include_directory);
+#else
+        asprintf(&line, OPAL_INCLUDE_FLAG"%s", include_directory);
+#endif  /* defined(__WINDOWS__) */
+
+        opal_argv_append_nosize(&options_data[parse_options_idx].preproc_flags, line);
+        free(include_directory);
+        free(line);
+    }
+}
+
+
+static void
 data_callback(const char *key, const char *value)
 {
     /* handle case where text file does not contain any special
@@ -221,22 +248,11 @@ data_callback(const char *key, const char *value)
     } else if (0 == strcmp(key, "module_option")) {
         if (NULL != value) options_data[parse_options_idx].module_option = strdup(value);
     } else if (0 == strcmp(key, "extra_includes")) {
-        /* this is the hard one - need to put it together... */
-        int i;
-        char **values = opal_argv_split(value, ' ');
-
-        for (i = 0 ; i < opal_argv_count(values) ; ++i) {
-            char *line, *include_directory;
-
-            include_directory = opal_os_path( false, OPAL_INCLUDEDIR, values[i], NULL );
-#if defined(__WINDOWS__)
-            asprintf(&line, OPAL_INCLUDE_FLAG"\"%s\"", include_directory);
-#else
-            asprintf(&line, OPAL_INCLUDE_FLAG"%s", include_directory);
-#endif  /* defined(__WINDOWS__) */
-            opal_argv_append_nosize(&options_data[parse_options_idx].preproc_flags, line);
-            free(include_directory);
-            free(line);
+        if (NULL != value) options_data[parse_options_idx].extra_includes = strdup(value);
+        if (NULL != value && NULL != options_data[parse_options_idx].path_includedir) {
+            /* includedir already found -- we now have both pieces of information, and the
+               includedir code didn't do this because it didn't have the extra includes */
+            add_extra_includes(value, options_data[parse_options_idx].path_includedir);
         }
     } else if (0 == strcmp(key, "preprocessor_flags")) {
         char **values = opal_argv_split(value, ' ');
@@ -271,18 +287,27 @@ data_callback(const char *key, const char *value)
     } else if (0 == strcmp(key, "compiler_flags_env")) {
         if (NULL != value) options_data[parse_options_idx].compiler_flags_env = strdup(value);
     } else if (0 == strcmp(key, "includedir")) {
-        if (NULL != value) options_data[parse_options_idx].path_includedir = strdup(value);
-        if (0 != strcmp(options_data[parse_options_idx].path_includedir, "/usr/include")) {
-            char *line;
+        if (NULL != value) {
+            options_data[parse_options_idx].path_includedir = strdup(value);
+            if (0 != strcmp(options_data[parse_options_idx].path_includedir, "/usr/include") ||
+                0 == strncmp(options_data[parse_options_idx].language, "Fortran", strlen("Fortran"))) {
+                char *line;
 #if defined(__WINDOWS__)
-            asprintf(&line, OPAL_INCLUDE_FLAG"\"%s\"", 
-                     options_data[parse_options_idx].path_includedir);
+                asprintf(&line, OPAL_INCLUDE_FLAG"\"%s\"", 
+                         options_data[parse_options_idx].path_includedir);
 #else
-            asprintf(&line, OPAL_INCLUDE_FLAG"%s", 
-                     options_data[parse_options_idx].path_includedir);
+                asprintf(&line, OPAL_INCLUDE_FLAG"%s", 
+                         options_data[parse_options_idx].path_includedir);
 #endif  /* defined(__WINDOWS__) */
-            opal_argv_append_nosize(&options_data[parse_options_idx].preproc_flags, line);
-            free(line);
+                opal_argv_append_nosize(&options_data[parse_options_idx].preproc_flags, line);
+                free(line);
+            }
+            /* Now that we have an include dir, see if we already have
+               the extra includes, so that we can post them as well */
+            if (NULL != options_data[parse_options_idx].extra_includes) {
+                add_extra_includes(options_data[parse_options_idx].extra_includes,
+                                   options_data[parse_options_idx].path_includedir);
+            }
         }
     } else if (0 == strcmp(key, "libdir")) {
         if (NULL != value) options_data[parse_options_idx].path_libdir = strdup(value);
