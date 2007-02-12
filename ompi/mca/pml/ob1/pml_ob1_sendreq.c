@@ -674,6 +674,7 @@ int mca_pml_ob1_send_request_start_rdma(
          if(NULL == des) {
              ompi_convertor_set_position(&sendreq->req_send.req_convertor,
                      &old_position);
+             mca_bml_base_free(bml_btl, src);
              return OMPI_ERR_OUT_OF_RESOURCE;
          }
          segment = des->des_src;
