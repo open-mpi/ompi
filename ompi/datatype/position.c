@@ -109,7 +109,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
     size_t iov_len_local;
     ptrdiff_t extent = pConvertor->pDesc->ub - pConvertor->pDesc->lb;
 
-    DUMP( "ompi_convertor_generic_simple_pack( %p, &%ld )\n", (void*)pConvertor, (long)*position );
+    DUMP( "ompi_convertor_generic_simple_position( %p, &%ld )\n", (void*)pConvertor, (long)*position );
 
     /* We dont want to have to parse the datatype multiple times. What we are interested in
      * here is to compute the number of completed datatypes that we can move forward, update
@@ -199,6 +199,9 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
             base_pointer = pConvertor->pBaseBuf + pStack->disp;
             UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
             DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop" );
+            DO_DEBUG( opal_output( 0, "position set loop count %d stack_pos %d pos_desc %d disp %llx space %lu\n",
+                                   (int)pStack->count, pConvertor->stack_pos, pos_desc,
+                                   (unsigned long long)pStack->disp, (unsigned long)iov_len_local ); );
             continue;
         }
         while( pElem->elem.common.flags & DT_FLAG_DATA ) {
@@ -213,6 +216,9 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
             base_pointer = pConvertor->pBaseBuf + pStack->disp;
             pos_desc++;  /* advance to the next data */
             UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
+            DO_DEBUG( opal_output( 0, "position set loop count %d stack_pos %d pos_desc %d disp %llx space %lu\n",
+                                   (int)pStack->count, pConvertor->stack_pos, pos_desc,
+                                   (unsigned long long)pStack->disp, (unsigned long)iov_len_local ); );
         }
     }
  complete_loop:
