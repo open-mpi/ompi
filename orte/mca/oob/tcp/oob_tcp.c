@@ -226,10 +226,10 @@ int mca_oob_tcp_component_open(void)
        see AWF comment in oob_tcp_peer.c */
     mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
                            "connect_timeout",
-                           "connect() timeout in seconds, before trying next interface",
+                           "connect timeout in seconds, before trying next interface (0 means block until connect() times out)",
                            false,
                            false,
-                           600,
+                           0,
                            &mca_oob_tcp_component.tcp_timeout);
 
     

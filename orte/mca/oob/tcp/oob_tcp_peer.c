@@ -289,20 +289,26 @@ static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
                 (struct sockaddr*)&inaddr, sizeof(struct sockaddr_in)) < 0) {
             /* non-blocking so wait for completion */
             if(opal_socket_errno == EINPROGRESS || opal_socket_errno == EWOULDBLOCK) {
-                /* AWF - the connect_timeout MCA parameter defaults to a low setting (10secs)
-                   to minimize job startup time on IU BigRed.  However, on large machines
-                   such a short timeout may not be suitable -- the head node may not be
-                   able to accept connections fast enough.  If this is the case, increase
-                   the connect_timeout MCA parameter. 
-                 */
-                struct timeval tv;
+                if (mca_oob_tcp_component.tcp_timeout > 0) {
+                    /* AWF - the connect_timeout MCA parameter
+                       defaults to a low setting (10secs) to minimize
+                       job startup time on IU BigRed.  However, on
+                       large machines such a short timeout may not be
+                       suitable -- the head node may not be able to
+                       accept connections fast enough.  If this is the
+                       case, increase the connect_timeout MCA
+                       parameter.
+                    */
+                    struct timeval tv;
                 
-                tv.tv_sec = mca_oob_tcp_component.tcp_timeout;
-                tv.tv_usec = 0;
+                    tv.tv_sec = mca_oob_tcp_component.tcp_timeout;
+                    tv.tv_usec = 0;
                 
-                /* The first event is responsible for our timeout, while the second event
-                   may occur sooner, due to a successful connect() */
-                opal_evtimer_add(&peer->peer_timer_event, &tv);
+                    /* The first event is responsible for our timeout,
+                       while the second event may occur sooner, due to
+                       a successful connect() */
+                    opal_evtimer_add(&peer->peer_timer_event, &tv);
+                }
                 opal_event_add(&peer->peer_send_event, 0);
 
                 return ORTE_SUCCESS;
