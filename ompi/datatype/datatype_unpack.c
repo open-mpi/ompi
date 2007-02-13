@@ -189,7 +189,7 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
     char *user_memory, *packed_buffer;
     uint32_t iov_count, i;
     size_t bConverted, remaining, length, initial_bytes_converted = pConv->bConverted;
-    dt_stack_t* stack = &(pConv->pStack[1]);
+    dt_stack_t* stack = pConv->pStack;
     ptrdiff_t extent = pData->ub - pData->lb;
     ptrdiff_t initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
 
@@ -203,11 +203,10 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
         bConverted = remaining; /* how much will get unpacked this time */
         user_memory = pConv->pBaseBuf + initial_displ;
 
-        DO_DEBUG( opal_output( 0, "unpack_homogeneous_contig( user_memory %p, packed_buffer %p length %lu\n",
-                               user_memory, packed_buffer, (unsigned long)remaining ); );
-
         if( (ptrdiff_t)pData->size == extent ) {
             user_memory += pConv->bConverted;
+            DO_DEBUG( opal_output( 0, "unpack_homogeneous_contig( user_memory %p, packed_buffer %p length %lu\n",
+                                   user_memory, packed_buffer, (unsigned long)remaining ); );
 
             /* contiguous data or basic datatype with count */
             OMPI_DDT_SAFEGUARD_POINTER( user_memory, remaining,
@@ -216,7 +215,10 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
                                    user_memory, packed_buffer, (unsigned long)remaining ); );
             MEMCPY_CSUM( user_memory, packed_buffer, remaining, pConv );
         } else {
-            user_memory += stack->disp;
+            user_memory += stack[0].disp + stack[1].disp;
+
+            DO_DEBUG( opal_output( 0, "unpack_homogeneous_contig( user_memory %p, packed_buffer %p length %lu\n",
+                                   user_memory, packed_buffer, (unsigned long)remaining ); );
 
             length = pConv->bConverted / pData->size;  /* already done */
             length = pConv->bConverted - length * pData->size;  /* how much of the last data we convert */
@@ -245,6 +247,8 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
                 user_memory   += extent;
                 remaining     -= pData->size;
             }
+            stack[0].disp = (intptr_t)user_memory - (intptr_t)pConv->pBaseBuf - initial_displ;
+            stack[1].disp = remaining;
             /* copy the last bits */
             if( remaining != 0 ) {
                 OMPI_DDT_SAFEGUARD_POINTER( user_memory, remaining, pConv->pBaseBuf,
@@ -254,7 +258,6 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
                 MEMCPY_CSUM( user_memory, packed_buffer, remaining, pConv );
                 user_memory += remaining;
             }
-            stack->disp = user_memory - pConv->pBaseBuf;  /* save the position */
         }
         pConv->bConverted += bConverted;
     }
