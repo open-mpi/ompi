@@ -289,8 +289,8 @@ do {                                                                            
             if(offset >= segment->seg_len) {                                      \
                 offset -= segment->seg_len;                                       \
             } else {                                                              \
-                iov[iov_count].iov_len = segment->seg_len - seg_offset;           \
-                iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + seg_offset); \
+                iov[iov_count].iov_len = segment->seg_len - offset;               \
+                iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + offset); \
                 iov_count++;                                                      \
             }                                                                     \
         }                                                                         \
