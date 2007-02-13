@@ -108,7 +108,7 @@ mca_btl_sm_t mca_btl_sm[2] = {
         NULL,  /* get */
         mca_btl_base_dump,
         NULL, /* mpool */
-        NULL /* register error */
+        mca_btl_sm_register_error_cb /* register error */
         }
     },
     {
@@ -136,7 +136,7 @@ mca_btl_sm_t mca_btl_sm[2] = {
         NULL, /* get function */
         mca_btl_base_dump,
         NULL, /* mpool */
-        NULL /* register error */
+        mca_btl_sm_register_error_cb /* register error */
         }
     }
 };
@@ -770,6 +770,17 @@ int mca_btl_sm_register(
     return OMPI_SUCCESS;
 }
                                                                                                                  
+/* 
+ * Register callback function for error handling..
+ */
+int mca_btl_sm_register_error_cb(
+        struct mca_btl_base_module_t* btl,
+        mca_btl_base_module_error_cb_fn_t cbfunc)
+{
+    mca_btl_sm_t *sm_btl = (mca_btl_sm_t *)btl;
+    sm_btl->error_cb = cbfunc;
+    return OMPI_SUCCESS;
+}
 
 /**
  * Allocate a segment.

@@ -179,11 +179,23 @@ struct mca_btl_sm_t {
     mca_btl_base_module_t  super;       /**< base BTL interface */
     bool btl_inited;  /**< flag indicating if btl has been inited */
     mca_btl_sm_recv_reg_t sm_reg[256];
+    mca_btl_base_module_error_cb_fn_t error_cb;
 };
 typedef struct mca_btl_sm_t mca_btl_sm_t;
 
 extern mca_btl_sm_t mca_btl_sm[2];
 
+/**
+ * Register a callback function that is called on error..
+ *
+ * @param btl (IN)     BTL module
+ * @return             Status indicating if cleanup was successful
+ */
+
+int mca_btl_sm_register_error_cb(
+    struct mca_btl_base_module_t* btl,
+    mca_btl_base_module_error_cb_fn_t cbfunc
+);
 
 /**
  * Cleanup any resources held by the BTL.
