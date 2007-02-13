@@ -223,6 +223,8 @@ mca_pml_base_pml_check_selected(const char *my_pml,
         ret = mca_pml_base_modex_recv(&pml_base_component,
                                       procs[i],
                                       (void**) &remote_pml, &size);
+        /* if modex isn't implemented, then just assume all is well... */
+        if (OMPI_ERR_NOT_IMPLEMENTED == ret) return OMPI_SUCCESS;
         if (OMPI_SUCCESS != ret) return ret;
         if ((size != strlen(my_pml) + 1) ||
             (0 != strcmp(my_pml, remote_pml))) {
