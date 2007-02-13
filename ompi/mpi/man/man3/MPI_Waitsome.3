@@ -99,14 +99,37 @@ If your application does not need to examine the \fIarray_of_statuses\fP field, 
 The array of indices are in the range 0 to incount-1 for C and in the range 1 to incount for Fortran. 
 
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI:Exception object.
+For each invocation of MPI_Waitsome, if one or more requests generate
+an MPI exception, only the \fIfirst\fP MPI request that caused an
+exception will be passed to its corresponding error handler.  No other
+error handlers will be invoked (even if multiple requests generated
+exceptions).  However, \fIall\fP requests that generate an exception
+will have a relevant error code set in the corresponding
+status.MPI_ERROR field (unless MPI_IGNORE_STATUSES was used).
 .sp
-Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.  
+The default error handler aborts the MPI job, except for I/O function
+errors. The error handler may be changed with MPI_Comm_set_errhandler,
+MPI_File_set_errhandler, or MPI_Win_set_errhandler (depending on the
+type of MPI handle that generated the MPI request); the predefined
+error handler MPI_ERRORS_RETURN may be used to cause error values to
+be returned. Note that MPI does not guarantee that an MPI program can
+continue past an error.
+.sp
+If the invoked error handler allows MPI_Waitsome to return to the
+caller, the value MPI_ERR_IN_STATUS will be returned in the C and
+Fortran bindings.  In C++, if the predefined error handler
+MPI::ERRORS_THROW_EXCEPTIONS is used, the value MPI::ERR_IN_STATUS
+will be contained in the MPI::Exception object.  The MPI_ERROR field
+can then be examined in the array of returned statuses to determine
+exactly which request(s) generated an exception.
 
 .SH SEE ALSO
 .ft R
 .sp
+MPI_Comm_set_errhandler
+.br
+MPI_File_set_errhandler
+.br
 MPI_Test
 .br
 MPI_Testall
@@ -117,9 +140,11 @@ MPI_Testsome
 .br
 MPI_Wait
 .br
+MPI_Waitall
+.br
 MPI_Waitany
 .br
-MPI_Waitall
+MPI_Win_set_errhandler
 .br
 
 ' @(#)MPI_Waitsome.3 1.20 06/03/09
