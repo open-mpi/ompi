@@ -60,8 +60,8 @@ static inline void copy_predefined_data( const dt_elem_desc_t* ELEM,
         OMPI_DDT_SAFEGUARD_POINTER( _source, _copy_blength, (SOURCE_BASE),
                                     (DATATYPE), (TOTAL_COUNT) );
         /* the extent and the size of the basic datatype are equals */
-        DO_DEBUG( opal_output( 0, "copy 1. memcpy( %p, %p, %ld ) => space %d\n",
-                               _destination, _source, _copy_blength, *(SPACE) ); );
+        DO_DEBUG( opal_output( 0, "copy 1. memcpy( %p, %p, %ld ) => space %lu\n",
+                               _destination, _source, _copy_blength, (unsigned long)(*(SPACE)) ); );
         MEMCPY( _destination, _source, _copy_blength );
         _source      += _copy_blength;
         _destination += _copy_blength;
@@ -70,8 +70,8 @@ static inline void copy_predefined_data( const dt_elem_desc_t* ELEM,
         for( _i = 0; _i < _copy_count; _i++ ) {
             OMPI_DDT_SAFEGUARD_POINTER( _source, _copy_blength, (SOURCE_BASE),
                                         (DATATYPE), (TOTAL_COUNT) );
-            DO_DEBUG( opal_output( 0, "copy 2. memcpy( %p, %p, %ld ) => space %d\n",
-                                   _destination, _source, _copy_blength, *(SPACE) - (_i * _copy_blength) ); );
+            DO_DEBUG( opal_output( 0, "copy 2. memcpy( %p, %p, %ld ) => space %lu\n",
+                                   _destination, _source, _copy_blength, (unsigned long)(*(SPACE) - (_i * _copy_blength)) ); );
             MEMCPY( _destination, _source, _copy_blength );
             _source      += _elem->extent;
             _destination += _elem->extent;
@@ -138,7 +138,7 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
     char *source = source_base, *destination = destination_base;
 
     DO_DEBUG( opal_output( 0, "ompi_ddt_copy_content_same_ddt( %p, %d, dst %p, src %p )\n",
-                           datatype, count, destination_base, source_base ); );
+                           (void*)datatype, count, destination_base, source_base ); );
     /* empty data ? then do nothing. This should normally be trapped
      * at a higher level.
      */
@@ -163,8 +163,8 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
                 if( memcpy_chunk > total_length ) memcpy_chunk = total_length;
                 OMPI_DDT_SAFEGUARD_POINTER( destination, memcpy_chunk,
                                             destination, datatype, count );
-                DO_DEBUG( opal_output( 0, "copy c1. memcpy( %p, %p, %ld ) => space %d\n",
-                                       destination, source, memcpy_chunk, iov_len_local ); );
+                DO_DEBUG( opal_output( 0, "copy c1. memcpy( %p, %p, %ld ) => space %lu\n",
+                                       destination, source, memcpy_chunk, (unsigned long)iov_len_local ); );
                 MEMCPY( destination, source, memcpy_chunk );
                 destination   += memcpy_chunk;
                 source        += memcpy_chunk;
@@ -175,9 +175,9 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
             for( pos_desc = 0; (int32_t)pos_desc < count; pos_desc++ ) {
                 OMPI_DDT_SAFEGUARD_POINTER( destination, datatype->size,
                                             destination, datatype, count );
-                DO_DEBUG( opal_output( 0, "copy c2. memcpy( %p, %p, %ld ) => space %d\n",
+                DO_DEBUG( opal_output( 0, "copy c2. memcpy( %p, %p, %ld ) => space %lu\n",
                                        destination, source, datatype->size,
-                                       iov_len_local - (pos_desc * datatype->size) ); );
+                                       (unsigned long)(iov_len_local - (pos_desc * datatype->size)) ); );
                 MEMCPY( destination, source, datatype->size );
                 destination += extent;
                 source += extent;
@@ -214,8 +214,8 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
             UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
         }
         if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
-            DO_DEBUG( opal_output( 0, "copy end_loop count %d stack_pos %d pos_desc %d disp %ld space %d\n",
-                                   pStack->count, stack_pos, pos_desc, pStack->disp, iov_len_local ); );
+            DO_DEBUG( opal_output( 0, "copy end_loop count %d stack_pos %d pos_desc %d disp %ld space %lu\n",
+                                   (int)pStack->count, stack_pos, pos_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
             if( --(pStack->count) == 0 ) { /* end of loop */
                 if( stack_pos == 0 ) {
                     assert( iov_len_local == 0 );
@@ -236,8 +236,8 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
             source      = source_base + pStack->disp;
             destination = destination_base + pStack->disp;
             UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
-            DO_DEBUG( opal_output( 0, "copy new_loop count %d stack_pos %d pos_desc %d disp %ld space %d\n",
-                                   pStack->count, stack_pos, pos_desc, pStack->disp, iov_len_local ); );
+            DO_DEBUG( opal_output( 0, "copy new_loop count %d stack_pos %d pos_desc %d disp %ld space %lu\n",
+                                   (int)pStack->count, stack_pos, pos_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
         }
         if( DT_LOOP == pElem->elem.common.type ) {
             ptrdiff_t local_disp = (ptrdiff_t)source;

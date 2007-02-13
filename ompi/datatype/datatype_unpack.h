@@ -36,8 +36,8 @@ static inline void unpack_predefined_data( ompi_convertor_t* CONVERTOR, /* the c
         /* the extent and the size of the basic datatype are equals */
         OMPI_DDT_SAFEGUARD_POINTER( _destination, _copy_blength, (CONVERTOR)->pBaseBuf,
                                     (CONVERTOR)->pDesc, (CONVERTOR)->count );
-        DO_DEBUG( opal_output( 0, "unpack 1. memcpy( %p, %p, %ld ) => space %d\n",
-                               _destination, *(SOURCE), _copy_blength, *(SPACE) ); );
+        DO_DEBUG( opal_output( 0, "unpack 1. memcpy( %p, %p, %ld ) => space %lu\n",
+                               _destination, *(SOURCE), _copy_blength, (unsigned long)(*(SPACE)) ); );
         MEMCPY_CSUM( _destination, *(SOURCE), _copy_blength, (CONVERTOR) );
         *(SOURCE)    += _copy_blength;
         _destination += _copy_blength;
@@ -46,8 +46,8 @@ static inline void unpack_predefined_data( ompi_convertor_t* CONVERTOR, /* the c
         for( _i = 0; _i < _copy_count; _i++ ) {
             OMPI_DDT_SAFEGUARD_POINTER( _destination, _copy_blength, (CONVERTOR)->pBaseBuf,
                                         (CONVERTOR)->pDesc, (CONVERTOR)->count );
-            DO_DEBUG( opal_output( 0, "unpack 2. memcpy( %p, %p, %ld ) => space %d\n",
-                                   _destination, *(SOURCE), _copy_blength, *(SPACE) - (_i * _copy_blength) ); );
+            DO_DEBUG( opal_output( 0, "unpack 2. memcpy( %p, %p, %ld ) => space %lu\n",
+                                   _destination, *(SOURCE), _copy_blength, (unsigned long)(*(SPACE) - (_i * _copy_blength)) ); );
             MEMCPY_CSUM( _destination, *(SOURCE), _copy_blength, (CONVERTOR) );
             *(SOURCE)    += _copy_blength;
             _destination += _elem->extent;
