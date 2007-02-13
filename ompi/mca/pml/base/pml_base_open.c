@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -49,7 +49,7 @@ int mca_pml_base_output = 0;
 mca_pml_base_module_t mca_pml = {
     NULL,                    /* pml_add_procs */
     NULL,                    /* pml_del_procs */
-    NULL,                    /* pml_control */
+    NULL,                    /* pml_enable */
     mca_pml_base_progress,   /* pml_progress */
     NULL,                    /* pml_add_comm */
     NULL,                    /* pml_del_comm */
@@ -61,12 +61,15 @@ mca_pml_base_module_t mca_pml = {
     NULL,                    /* pml_send */
     NULL,                    /* pml_iprobe */
     NULL,                    /* pml_probe */
-    NULL                     /* pml_start */
+    NULL,                    /* pml_start */
+    NULL,                    /* pml_dump */
+    0,                       /* pml_max_contextid */
+    0                        /* pml_max_tag */
 };
 
 opal_list_t mca_pml_base_components_available;
 mca_pml_base_component_t mca_pml_base_selected_component;
-char *mca_pml_base_pml;
+ompi_pointer_array_t mca_pml_base_pml;
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -74,6 +77,8 @@ char *mca_pml_base_pml;
  */
 int mca_pml_base_open(void)
 {
+    char* default_pml = NULL;
+
     /* Open up all available components */
 
     if (OMPI_SUCCESS != 
@@ -88,18 +93,34 @@ int mca_pml_base_open(void)
 
     mca_pml_base_selected_component.pmlm_finalize = NULL;
 
-    mca_base_param_lookup_string(
-        mca_base_param_register_string("pml",
-                                       NULL,
-                                       NULL,
-                                       NULL,
+    /**
+     * Right now our selection of BTLs is completely broken. If we have
+     * multiple PMLs that use BTLs than we will open all BTLs several times, leading to
+     * undefined behaviors. The simplest solution, at least until we
+     * figure out the correct way to do it, is to force a default PML that 
+     * uses BTLs and any other PMLs that do not in the mca_pml_base_pml array.
+     */
+
+    OBJ_CONSTRUCT(&mca_pml_base_pml, ompi_pointer_array_t);
+    
 #if MCA_pml_DIRECT_CALL
-                                       stringify(MCA_pml_DIRECT_CALL_COMPONENT)
+    ompi_pointer_array_add(&mca_pml_base_pml, 
+                           stringify(MCA_pml_DIRECT_CALL_COMPONENT));
 #else
-                                       "ob1"
+    
+
+    mca_base_param_reg_string_name("pml", NULL, 
+                                   "Specify a specific PML to use", 
+                                   false, false, "", &default_pml);
+    
+    if(0 == strlen(default_pml)){ 
+        ompi_pointer_array_add(&mca_pml_base_pml, strdup("ob1")); 
+        ompi_pointer_array_add(&mca_pml_base_pml, strdup("cm"));
+    } else { 
+        ompi_pointer_array_add(&mca_pml_base_pml, strdup(default_pml));
+    }
 #endif
-                                       ),
-        &mca_pml_base_pml);
 
     return OMPI_SUCCESS;
+
 }

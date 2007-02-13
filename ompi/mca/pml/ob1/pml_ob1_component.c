@@ -95,7 +95,7 @@ int mca_pml_ob1_component_open(void)
     mca_pml_ob1.free_list_inc =
         mca_pml_ob1_param_register_int("free_list_inc", 64);
     mca_pml_ob1.priority =
-        mca_pml_ob1_param_register_int("priority", 1);
+        mca_pml_ob1_param_register_int("priority", 20);
     mca_pml_ob1.eager_limit =
         mca_pml_ob1_param_register_int("eager_limit", 128 * 1024);
     mca_pml_ob1.send_pipeline_depth =
@@ -219,6 +219,13 @@ mca_pml_base_module_t* mca_pml_ob1_component_init(int* priority,
                                                   bool enable_progress_threads,
                                                   bool enable_mpi_threads)
 {
+    opal_output_verbose( 10, 0, 
+                         "in ob1, my priority is %d\n", mca_pml_ob1.priority);
+    
+    if((*priority) > mca_pml_ob1.priority) { 
+        *priority = mca_pml_ob1.priority;
+        return NULL;
+    }
     *priority = mca_pml_ob1.priority;
 
     /* buffered send */

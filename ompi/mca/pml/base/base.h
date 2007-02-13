@@ -23,7 +23,7 @@
 
 #include "opal/mca/mca.h"
 #include "ompi/mca/pml/pml.h"
-
+#include "ompi/class/ompi_pointer_array.h"
 
 /*
  * Global functions for the PML
@@ -36,6 +36,13 @@ OMPI_DECLSPEC  int mca_pml_base_open(void);
 OMPI_DECLSPEC  int mca_pml_base_progress(void);
 OMPI_DECLSPEC  int mca_pml_base_select(bool enable_progress_threads,
                                        bool enable_mpi_threads);
+    /* share in modex the name of the selected component */
+OMPI_DECLSPEC int mca_pml_base_pml_selected(const char *name);
+    /* verify that all new procs are using the currently selected component */
+OMPI_DECLSPEC int mca_pml_base_pml_check_selected(const char *my_pml,
+                                                  struct ompi_proc_t **procs,
+                                                  size_t nprocs);
+
 OMPI_DECLSPEC int mca_pml_base_close(void);
 
 
@@ -46,7 +53,7 @@ OMPI_DECLSPEC extern int mca_pml_base_output;
 OMPI_DECLSPEC extern opal_list_t mca_pml_base_components_available;
 OMPI_DECLSPEC extern mca_pml_base_component_t mca_pml_base_selected_component;
 OMPI_DECLSPEC extern mca_pml_base_module_t mca_pml;
-OMPI_DECLSPEC extern char* mca_pml_base_pml;
+OMPI_DECLSPEC extern ompi_pointer_array_t mca_pml_base_pml;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

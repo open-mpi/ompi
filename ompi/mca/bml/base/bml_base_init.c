@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
@@ -32,9 +32,13 @@ mca_bml_base_module_t mca_bml = {
     0,                       /* bml_max_rdma_size */ 
     NULL,                    /* bml_add_procs */ 
     NULL,                    /* bml_del_procs */
+    NULL,                    /* bml_add_btl */
+    NULL,                    /* bml_del_btl */
+    NULL,                    /* bml_del_proc_btl */
     NULL,                    /* bml_register */ 
+    NULL,                    /* bml_register_error */ 
     NULL,                    /* bml_finalize*/
-    NULL                    /* bml_progress */
+    NULL                     /* bml_progress */
 };
 mca_bml_base_component_t mca_bml_component;
 

@@ -42,6 +42,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_mx_la_SOURCES = $(btl_mx_sources)
 mca_btl_mx_la_LIBADD = \
     $(btl_mx_LIBS) \
+    $(top_ompi_builddir)/ompi/mca/common/mx/libmca_common_mx.la \
     $(top_ompi_builddir)/ompi/libmpi.la \
     $(top_ompi_builddir)/orte/libopen-rte.la \
     $(top_ompi_builddir)/opal/libopen-pal.la
