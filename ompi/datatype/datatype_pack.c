@@ -186,18 +186,16 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
             size_t done;
 
             packed_buffer = iov[iov_count].iov_base;
-            done = pConv->bConverted - i * pData->size;  /* how much data left last time */
-            user_memory += done;
+            done = pConv->bConverted - i * pData->size;  /* partial data from last pack */
             if( done != 0 ) {  /* still some data to copy from the last time */
                 done = pData->size - done;
                 OMPI_DDT_SAFEGUARD_POINTER( user_memory, done, pConv->pBaseBuf, pData, pConv->count );
                 MEMCPY_CSUM( packed_buffer, user_memory, done, pConv );
                 packed_buffer += done;
                 max_allowed -= done;
-                i++;  /* just to compute the correct source pointer */
                 total_bytes_converted += done;
+                user_memory += (extent - pData->size + done);
             }
-            user_memory = pConv->pBaseBuf + initial_displ + i * extent;
             counter = (uint32_t)(max_allowed / pData->size);
             if( counter > pConv->count ) counter = pConv->count;
             for( i = 0; i < counter; i++ ) {
@@ -206,16 +204,23 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
                 packed_buffer+= pData->size;
                 user_memory += extent;
             }
-            max_allowed -= (counter * pData->size);
-            iov[iov_count].iov_len -= max_allowed;
-            total_bytes_converted += iov[iov_count].iov_len;
+            done = (counter * pData->size);
+            max_allowed -= done;
+            total_bytes_converted += done;
+            /* If there is anything pending ... */
+            if( 0 != max_allowed ) {
+                done = max_allowed;
+                OMPI_DDT_SAFEGUARD_POINTER( user_memory, done, pConv->pBaseBuf, pData, pConv->count );
+                MEMCPY_CSUM( packed_buffer, user_memory, done, pConv );
+                packed_buffer += done;
+                max_allowed = 0;
+                total_bytes_converted += done;
+                user_memory += done;
+            }
         }
-        /* Now update the user_memory pointer. At the end of each parth we have to update
-         * the pStack[0].disp field. BEWARE here we remove the pStack[1].disp as
-         * it's supposed to be useless from now.
-         */
-        user_memory = pConv->pBaseBuf + initial_displ + pStack[0].disp;
     }
+    pStack[0].disp = (intptr_t)user_memory - (intptr_t)pConv->pBaseBuf - initial_displ;
+    pStack[1].disp = max_allowed;
     *max_data = total_bytes_converted;
     pConv->bConverted += total_bytes_converted;
     *out_size = iov_count;
