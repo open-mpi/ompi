@@ -338,7 +338,7 @@ static inline int ompi_fifo_write_to_head_same_base_addr(void *data,
         if(error_code != OMPI_CB_ERROR) {
             fifo->head->cb_overflow = false;
             opal_atomic_unlock(&(fifo->fifo_lock));
-            return error_code;
+            return OMPI_SUCCESS;
         }
 
         /* see if next queue is available - while the next queue
@@ -384,11 +384,11 @@ static inline int ompi_fifo_write_to_head_same_base_addr(void *data,
         error_code=ompi_cb_fifo_write_to_head_same_base_addr(data,
                 (ompi_cb_fifo_t *)&(fifo->head->cb_fifo));
         if( OMPI_CB_ERROR == error_code ) {
-            return error_code;
+            return OMPI_ERROR;
         }
     }
 
-    return error_code;
+    return OMPI_SUCCESS; 
 }
 
 

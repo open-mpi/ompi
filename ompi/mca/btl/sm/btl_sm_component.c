@@ -49,6 +49,7 @@
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
+#include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_sm.h"
 #include "btl_sm_frag.h"
 #include "btl_sm_fifo.h"
@@ -343,7 +344,7 @@ int mca_btl_sm_component_progress(void)
     ompi_fifo_t *fifo = NULL;
     int my_smp_rank=mca_btl_sm_component.my_smp_rank;
     int proc;
-    int rc = 0;
+    int rc = 0, btl = 0;
 
     /* send progress is made by the PML */
 
@@ -405,7 +406,7 @@ int mca_btl_sm_component_progress(void)
                 MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
                                        my_smp_rank, peer_smp_rank, frag, rc );
                 if(OMPI_SUCCESS != rc)
-                    return rc;
+                    goto err;
                 break;
             }
             default:
@@ -416,7 +417,7 @@ int mca_btl_sm_component_progress(void)
                 MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
                                        my_smp_rank, peer_smp_rank, frag, rc );
                 if(OMPI_SUCCESS != rc)
-                    return rc;
+                    goto err;
                 break;
             }
         }
@@ -424,6 +425,7 @@ int mca_btl_sm_component_progress(void)
     }  /* end peer_local_smp_rank loop */
 
 
+    btl = 1;
     /* loop over fifo's - procs with different base shared memory 
      * virtual address as this process */
     for( proc=0 ; proc < mca_btl_sm_component.num_smp_procs_different_base_addr
@@ -497,7 +499,7 @@ int mca_btl_sm_component_progress(void)
                 MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
                                        my_smp_rank, peer_smp_rank, frag, rc );
                 if(OMPI_SUCCESS != rc)
-                    return rc;
+                    goto err;
                 break;
             }
             default:
@@ -508,11 +510,15 @@ int mca_btl_sm_component_progress(void)
                 MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
                                        my_smp_rank, peer_smp_rank, frag, rc );
                 if(OMPI_SUCCESS != rc)
-                    return rc;
+                    goto err;
                 break;
             }
         }
         rc++;
     }  /* end peer_local_smp_rank loop */
+    return rc;
+err:
+    BTL_ERROR(("SM faild to send message due to shortage of shared memory.\n"));
+    mca_btl_sm[btl].error_cb(&mca_btl_sm[btl].super, MCA_BTL_ERROR_FLAGS_FATAL);
     return rc;
 }
