@@ -101,7 +101,7 @@ extern "C" {
  */
 struct opal_atomic_lock_t {
     union {
-        volatile int lock;         /**< The lock address (an integer) */
+        volatile int32_t lock;     /**< The lock address (an integer) */
         volatile unsigned char sparc_lock; /**< The lock address on sparc */
         char padding[sizeof(int)]; /**< Array for optional padding */
     } u;
