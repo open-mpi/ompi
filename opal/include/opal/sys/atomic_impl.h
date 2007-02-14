@@ -337,7 +337,6 @@ static inline void
 opal_atomic_init( opal_atomic_lock_t* lock, int value )
 {
    lock->u.lock = value;
-   opal_atomic_mb();
 }
 
 
@@ -364,12 +363,8 @@ opal_atomic_lock(opal_atomic_lock_t *lock)
 static inline void
 opal_atomic_unlock(opal_atomic_lock_t *lock)
 {
-    /*
-   opal_atomic_cmpset_rel( &(lock->u.lock),
-                           OPAL_ATOMIC_LOCKED, OPAL_ATOMIC_UNLOCKED);
-                           */
+   opal_atomic_wmb();
    lock->u.lock=OPAL_ATOMIC_UNLOCKED;
-   opal_atomic_mb();
 }
 
 #endif /* OPAL_HAVE_ATOMIC_SPINLOCKS */
