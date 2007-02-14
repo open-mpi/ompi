@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Mellanox Technologies. 
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -1153,9 +1155,13 @@ void mca_pml_dr_sendreq_cleanup_active(mca_btl_base_module_t* btl) {
          item = opal_list_get_next(item)) {
         mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*) item;
         mca_btl_base_descriptor_t* des = sendreq->req_descriptor;
-        mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
-        if( bml_btl && bml_btl->btl == btl) { 
-            des->des_context = NULL;
+        /* The des may be NULL if 
+         * first fragment of rndv was delivered */
+        if (NULL != des) {
+            mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
+            if( bml_btl && bml_btl->btl == btl) { 
+                des->des_context = NULL;
+            }
         }
             
     }
