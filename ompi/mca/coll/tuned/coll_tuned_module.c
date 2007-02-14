@@ -484,6 +484,9 @@ ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
     data->cached_pipeline = ompi_coll_tuned_topo_build_chain (1, comm, 0);
     data->cached_pipeline_root = 0;
 
+    /* in-order binary tree */
+    data->cached_in_order_bintree = ompi_coll_tuned_topo_build_in_order_bintree(comm);
+
     /* All done */
 
     comm->c_coll_selected_data = data;
@@ -525,6 +528,9 @@ int ompi_coll_tuned_module_finalize(struct ompi_communicator_t *comm)
     }
     if (comm->c_coll_selected_data->cached_pipeline) { /* destroy pipeline if defined */
         ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_pipeline);
+    }
+    if (comm->c_coll_selected_data->cached_in_order_bintree) { /* destroy in order bintree if defined */
+        ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_in_order_bintree);
     }
 
     /* if any algorithm rules are cached on the communicator, only free them if its MCW */
