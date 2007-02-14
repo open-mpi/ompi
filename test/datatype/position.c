@@ -187,9 +187,11 @@ static void dump_ldi( ddt_ldi_t* buffer, int start_pos, int end_pos )
     }
 }
 
+#if OMPI_ENABLE_DEBUG
 extern int ompi_unpack_debug;
 extern int ompi_pack_debug;
 extern int ompi_position_debug ;
+#endif  /* OMPI_ENABLE_DEBUG */
 
 static char* bytes_dump( void* src, size_t cnt )
 {
@@ -222,9 +224,11 @@ int main( int argc, char* argv[] )
 
     ompi_ddt_init();
 
+#if OMPI_ENABLE_DEBUG
     ompi_unpack_debug   = 0;
     ompi_pack_debug     = 0;
     ompi_position_debug = 0;
+#endif  /* OMPI_ENABLE_DEBUG */
 
     create_segments( datatype, data_count, fragment_size,
                      &segments, &seg_count );
