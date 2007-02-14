@@ -224,6 +224,7 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   int ompi_coll_tuned_reduce_intra_pipeline(REDUCE_ARGS, uint32_t segsize);
   int ompi_coll_tuned_reduce_intra_binary(REDUCE_ARGS, uint32_t segsize);
   int ompi_coll_tuned_reduce_intra_binomial(REDUCE_ARGS, uint32_t segsize);
+  int ompi_coll_tuned_reduce_intra_in_order_binary(REDUCE_ARGS, uint32_t segsize);
   int ompi_coll_tuned_reduce_inter_dec_fixed(REDUCE_ARGS);
   int ompi_coll_tuned_reduce_inter_dec_dynamic(REDUCE_ARGS);
 
@@ -334,6 +335,9 @@ struct mca_coll_base_comm_t {
    ompi_coll_tree_t *cached_pipeline;
    int cached_pipeline_root;
 
+   /* in-order binary tree (root of the in-order binary tree is rank 0) */
+   ompi_coll_tree_t *cached_in_order_bintree;
+
    /* extra data required by the decision functions */
    ompi_coll_alg_rule_t *all_base_rules;       /* stored only on MCW, all other coms ref it */
                                                 /* moving to the component */
@@ -406,6 +410,17 @@ do {                                                                            
         coll_comm->cached_chain_root = (ROOT);                                                   \
         coll_comm->cached_chain_fanout = (FANOUT);                                               \
     }                                                                                            \
+} while (0)
+
+#define COLL_TUNED_UPDATE_IN_ORDER_BINTREE( OMPI_COMM )                        \
+do {                                                                           \
+    mca_coll_base_comm_t* coll_comm = (OMPI_COMM)->c_coll_selected_data;       \
+    if( !(coll_comm->cached_in_order_bintree) ) {                              \
+        /* In-order binary tree topology is defined by communicator size */    \
+        /* Thus, there is no need to destroy anything */                       \
+        coll_comm->cached_in_order_bintree =                                   \
+              ompi_coll_tuned_topo_build_in_order_bintree((OMPI_COMM));        \
+    }                                                                          \
 } while (0)
 
 /**
