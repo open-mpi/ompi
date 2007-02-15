@@ -105,9 +105,16 @@ Trunk (not on release branches yet)
 - Properly check for local host only addresses properly, looking 
   for 127.0.0.0/8, rather than just 127.0.0.1.
 
+
 1.1.5
 -----
 
+- Add new MCA parameter (mpi_preconnect_oob) for pre-connecting the
+  "out of band" channels between all MPI processes.  Most helpful for
+  MPI applications over InfiniBand where process A sends an initial
+  message to process B, but process B does not enter the MPI library
+  for a long time.
+- Fix for a race condition in shared memory locking semantics.
 - Add major, minor, and release version number of Open MPI to mpi.h.
   Thanks to Martin Audet for the suggestion.
 - Fix a race condition in the shared memory btl that could cause
@@ -116,6 +123,7 @@ Trunk (not on release branches yet)
 - Fix a problem with argument checking in MPI_TYPE_CREATE_SUBARRAY.
 - Fix a problem with compiling the XGrid components with non-gcc
   compilers.
+
 
 1.1.4
 -----
@@ -141,6 +149,7 @@ Trunk (not on release branches yet)
   bringing this to our attention.
 - Fix possible segmentation fault during shutdown when using the
   MX BTL.
+
 
 1.1.3
 -----
