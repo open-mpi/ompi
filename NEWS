@@ -27,6 +27,11 @@ version 1.0.
 1.1.5
 -----
 
+- Add new MCA parameter (mpi_preconnect_oob) for pre-connecting the
+  "out of band" channels between all MPI processes.  Most helpful for
+  MPI applications over InfiniBand where process A sends an initial
+  message to process B, but process B does not enter the MPI library
+  for a long time.
 - Fix for a race condition in shared memory locking semantics.
 - Add major, minor, and release version number of Open MPI to mpi.h.
   Thanks to Martin Audet for the suggestion.

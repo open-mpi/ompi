@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006      University of Houston. All rights reserved.
  *
@@ -602,6 +602,16 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         ORTE_ERROR_LOG(ret);
         error = "ompi_mpi_init: failed to see all procs register\n";
         goto error;
+    }
+
+    /* wire up the oob interface, if requested.  Do this here because
+       it will go much faster before the event library is switched
+       into non-blocking mode */
+    if (ompi_mpi_preconnect_oob) { 
+        if (OMPI_SUCCESS != (ret = ompi_init_do_oob_preconnect())) {
+            error = "ompi_mpi_do_preconnect_oob() failed";
+            goto error;
+        }
     }
 
     /* new very last step: check whether we have been spawned or not.

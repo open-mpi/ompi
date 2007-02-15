@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -48,6 +50,7 @@ bool ompi_mpi_abort_print_stack = false;
 int ompi_mpi_abort_delay = 0;
 bool ompi_mpi_keep_peer_hostnames = true;
 bool ompi_mpi_preconnect_all = false;
+bool ompi_mpi_preconnect_oob = false;
 
 int ompi_mpi_register_params(void)
 {
@@ -185,6 +188,13 @@ int ompi_mpi_register_params(void)
     
     ompi_mpi_preconnect_all = (bool) value; 
 
+    mca_base_param_reg_int_name("mpi", "preconnect_oob",
+                                "Whether to force MPI processes to fully wire-up the OOB system between MPI processes.",
+                                false, false, 
+                                (int) ompi_mpi_preconnect_oob, &value);
+    
+    ompi_mpi_preconnect_oob = (bool) value;
+    
     /* The ddt engine has a few parameters */
 
     return ompi_ddt_register_params();

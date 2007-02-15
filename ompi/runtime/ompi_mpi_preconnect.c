@@ -5,6 +5,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,6 +22,8 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/request/request.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 
 /* 
  * do zero byte IRECV / ISEND: upper half sends to lower half (i.e. do
@@ -79,5 +83,66 @@ int ompi_init_do_preconnect(void)
     }
     
     return ret;
+}
+
+    
+int ompi_init_do_oob_preconnect(void)
+{
+    size_t world_size, i, next, prev, my_index;
+    ompi_proc_t **procs;
+    int ret;
+    struct iovec msg[1];
+
+    procs = ompi_proc_world(&world_size);
+
+    msg[0].iov_base = NULL;
+    msg[0].iov_len = 0;
+
+    if (world_size == 2) {
+        if (ompi_proc_local() == procs[0]) {
+            ret = orte_rml.send(&procs[1]->proc_name,
+                                msg,
+                                1,
+                                ORTE_RML_TAG_WIREUP,
+                                0);
+            if (ret < 0) return ret;
+        } else {
+            ret = orte_rml.recv(&procs[0]->proc_name,
+                                msg,
+                                1,
+                                ORTE_RML_TAG_WIREUP,
+                                0);
+            if (ret < 0) return ret;
+        }
+    } else if (world_size > 2) {
+        for (i = 0 ; i < world_size ; ++i) {
+            if (ompi_proc_local() == procs[i]) {
+                my_index = i;
+                break;
+            }
+        }
+
+        for (i = 1 ; i <= world_size / 2 ; ++i) {
+            next = (my_index + i) % world_size;
+            prev = (my_index - i + world_size) % world_size;
+
+            /* sends do not wait for a match */
+            ret = orte_rml.send(&procs[next]->proc_name,
+                                msg,
+                                1,
+                                ORTE_RML_TAG_WIREUP,
+                                0);
+            if (ret < 0) return ret;
+
+            ret = orte_rml.recv(&procs[prev]->proc_name,
+                                msg,
+                                1,
+                                ORTE_RML_TAG_WIREUP,
+                                0);
+            if (ret < 0) return ret;
+        }
+    }
+    
+    return OMPI_SUCCESS;
 }
     
