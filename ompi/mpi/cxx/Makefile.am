@@ -18,7 +18,10 @@
 # $HEADER$
 #
 
-
+# *_DATA files are not automatically included in the tarball.  Need to
+# ensure that README.txt is picked up so that people who disable the
+# C++ MPI bindings can still build properly.
+EXTRA_DIST = README.txt
 
 if WANT_MPI_CXX_BINDINGS
 
