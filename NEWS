@@ -27,6 +27,7 @@ version 1.0.
 1.1.5
 -----
 
+- Fix for a race condition in shared memory locking semantics.
 - Add major, minor, and release version number of Open MPI to mpi.h.
   Thanks to Martin Audet for the suggestion.
 - Fix a race condition in the shared memory btl that could cause
@@ -35,6 +36,7 @@ version 1.0.
 - Fix a problem with argument checking in MPI_TYPE_CREATE_SUBARRAY.
 - Fix a problem with compiling the XGrid components with non-gcc
   compilers.
+
 
 1.1.4
 -----
@@ -60,6 +62,7 @@ version 1.0.
   bringing this to our attention.
 - Fix possible segmentation fault during shutdown when using the
   MX BTL.
+
 
 1.1.3
 -----
