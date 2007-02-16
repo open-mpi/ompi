@@ -51,7 +51,8 @@ typedef struct {
     int reap;
 } orted_globals_t;
 
-    
+ORTE_DECLSPEC extern orted_globals_t orted_globals;
+
 /*
  * Version-related strings and functions
  */
