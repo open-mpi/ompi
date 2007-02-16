@@ -114,7 +114,7 @@ int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
 /*
  * Process a single MCA argument.
  */
-int static process_arg(const char *param, const char *value,
+static int process_arg(const char *param, const char *value,
                        char ***params, char ***values)
 {
     int i;
