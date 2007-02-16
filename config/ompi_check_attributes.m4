@@ -118,9 +118,33 @@ AC_DEFUN([_OMPI_CHECK_SPECIFIC_ATTRIBUTE], [
 ])
 
 
+#
+# Test the availability of __attribute__ and with the help
+# of _OMPI_CHECK_SPECIFIC_ATTRIBUTE for the support of
+# particular attributes. Compilers, that do not support an
+# attribute most often fail with a warning (when the warning
+# level is set).
+# The compilers output is parsed in _OMPI_ATTRIBUTE_FAIL_SEARCH
+# 
+# To add a new attributes __NAME__ add the
+#   ompi_cv___attribute__NAME
+# add a new check with _OMPI_CHECK_SPECIFIC_ATTRIBUTE (possibly with a cross-check)
+#   _OMPI_CHECK_SPECIFIC_ATTRIBUTE([name], [int foo (int arg) __attribute__ ((__name__));], [], [])
+# and define the corresponding
+#   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_NAME, [$ompi_cv___attribute__NAME],
+#                      [Whether your compiler has __attribute__ NAME or not])
+# and decide on a correct macro (in opal/include/opal_config_bottom.h):
+#  #  define __opal_attribute_NAME(x)  __attribute__(__NAME__)
+#
+# Please use the "__"-notation of the attribute in order not to
+# clash with predefined names or macros (e.g. const, which some compilers
+# do not like..)
+#
+
 
 AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
   AC_MSG_CHECKING(for __attribute__)
+
   AC_CACHE_VAL(ompi_cv___attribute__, [
     AC_TRY_COMPILE(
       [#include <stdlib.h>
@@ -145,20 +169,20 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
             };
           ],
           [],
-          [ompi_cv___attribute__=1 ompi_cv___attribute__msg=yes],
-          [ompi_cv___attribute__=0 ompi_cv___attribute__msg=no],
+          [ompi_cv___attribute__=1],
+          [ompi_cv___attribute__=0],
         )
     fi
     ])
   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE, [$ompi_cv___attribute__],
                      [Whether your compiler has __attribute__ or not])
-  AC_MSG_RESULT($ompi_cv___attribute__msg)
 
 #
 # Now that we know the compiler support __attribute__ let's check which kind of
 # attributed are supported.
 #
-  if test "$ompi_cv___attribute__msg" = "no" ; then
+  if test "$ompi_cv___attribute__" = "0" ; then
+    AC_MSG_RESULT([no])
     ompi_cv___attribute__aligned=0
     ompi_cv___attribute__always_inline=0
     ompi_cv___attribute__const=0
@@ -166,6 +190,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
     ompi_cv___attribute__format=0
     ompi_cv___attribute__malloc=0
     ompi_cv___attribute__may_alias=0
+    ompi_cv___attribute__no_instrument_function=0
     ompi_cv___attribute__nonnull=0
     ompi_cv___attribute__noreturn=0
     ompi_cv___attribute__pure=0
@@ -176,6 +201,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
     ompi_cv___attribute__warn_unused_result=0
     ompi_cv___attribute__weak_alias=0
   else
+    AC_MSG_RESULT([yes])
 
     _OMPI_CHECK_SPECIFIC_ATTRIBUTE([aligned],
         [struct foo { char text[4]; }  __attribute__ ((__aligned__(8)));],
