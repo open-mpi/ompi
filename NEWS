@@ -1,4 +1,4 @@
-Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
                         University Research and Technology
                         Corporation.  All rights reserved.
 Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -29,6 +29,7 @@ version 1.0.
 1.2
 ---
 
+- Add support for MPI_2COMPLEX and MPI_2DOUBLE_COMPLEX.
 - Always ensure to create $(includedir)/openmpi, even if the C++
   bindings are disabled so that the wrapper compilers don't point to
   a directory that doesn't exist.  Thanks to Martin Audet for
@@ -93,9 +94,16 @@ version 1.0.
 - Properly check for local host only addresses properly, looking 
   for 127.0.0.0/8, rather than just 127.0.0.1.
 
+
 1.1.5 (expected)
 -----
 
+- Add new MCA parameter (mpi_preconnect_oob) for pre-connecting the
+  "out of band" channels between all MPI processes.  Most helpful for
+  MPI applications over InfiniBand where process A sends an initial
+  message to process B, but process B does not enter the MPI library
+  for a long time.
+- Fix for a race condition in shared memory locking semantics.
 - Add major, minor, and release version number of Open MPI to mpi.h.
   Thanks to Martin Audet for the suggestion.
 - Fix a race condition in the shared memory btl that could cause
@@ -104,6 +112,7 @@ version 1.0.
 - Fix a problem with argument checking in MPI_TYPE_CREATE_SUBARRAY.
 - Fix a problem with compiling the XGrid components with non-gcc
   compilers.
+
 
 1.1.4
 -----
@@ -129,6 +138,7 @@ version 1.0.
   bringing this to our attention.
 - Fix possible segmentation fault during shutdown when using the
   MX BTL.
+
 
 1.1.3
 -----
