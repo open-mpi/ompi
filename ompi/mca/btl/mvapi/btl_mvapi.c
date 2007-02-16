@@ -800,9 +800,9 @@ void mca_btl_mvapi_dump(
                      (endpoint->endpoint_state == MCA_BTL_IB_CLOSED ? "closed" :
                       (endpoint->endpoint_state == MCA_BTL_IB_FAILED ? "failed" : "unknown")))))));
 
-    opal_output( 0, "pending send frags: %d\n", opal_list_get_size(&endpoint->pending_send_frags) );
-    opal_output( 0, "pending frags hp : %d\n", opal_list_get_size(&endpoint->pending_frags_hp) );
-    opal_output( 0, "pending frags lp : %d\n", opal_list_get_size(&endpoint->pending_frags_lp) );
+    opal_output( 0, "pending send frags: %ld\n", opal_list_get_size(&endpoint->pending_send_frags) );
+    opal_output( 0, "pending frags hp : %ld\n", opal_list_get_size(&endpoint->pending_frags_hp) );
+    opal_output( 0, "pending frags lp : %ld\n", opal_list_get_size(&endpoint->pending_frags_lp) );
 #ifdef VAPI_FEATURE_SRQ
     if( mca_btl_mvapi_component.use_srq ) {
         opal_output( 0, "mvapi_btl->srd_posted_hp %d\n", mvapi_btl->srd_posted_hp );

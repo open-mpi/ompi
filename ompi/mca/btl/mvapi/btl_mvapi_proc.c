@@ -140,14 +140,14 @@ mca_btl_mvapi_proc_t* mca_btl_mvapi_proc_create(ompi_proc_t* ompi_proc)
     
 
     if(OMPI_SUCCESS != rc) {
-        opal_output(0, "[%s:%d] mca_pml_base_modex_recv failed for peer [%d,%d,%d]",
+        opal_output(0, "[%s:%d] mca_pml_base_modex_recv failed for peer [%ld,%ld,%ld]",
             __FILE__,__LINE__,ORTE_NAME_ARGS(&ompi_proc->proc_name));
         OBJ_RELEASE(mvapi_proc);
         return NULL;
     }
 
     if((size % sizeof(mca_btl_mvapi_port_info_t)) != 0) {
-        opal_output(0, "[%s:%d] invalid mvapi address for peer [%d,%d,%d]",
+        opal_output(0, "[%s:%d] invalid mvapi address for peer [%ld,%ld,%ld]",
             __FILE__,__LINE__,ORTE_NAME_ARGS(&ompi_proc->proc_name));
         OBJ_RELEASE(mvapi_proc);
         return NULL;
