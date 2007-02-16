@@ -61,7 +61,9 @@ static bool initialized = false;
 /*
  * local functions
  */
+#if defined(__WINDOWS__)
 static int read_keys_from_registry(HKEY hKey, char *sub_key, char *current_key);
+#endif  /* defined(__WINDOWS__) */
 static int read_files(char *file_list);
 static int param_register(const char *type_name,
                           const char *component_name,
