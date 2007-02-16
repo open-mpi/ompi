@@ -38,7 +38,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/base/mca_base_param_internal.h"
 #include "opal/constants.h"
-
+#include "opal/util/output.h"
 
 /*
  * Public variables
@@ -61,6 +61,7 @@ static bool initialized = false;
 /*
  * local functions
  */
+static int read_keys_from_registry(HKEY hKey, char *sub_key, char *current_key);
 static int read_files(char *file_list);
 static int param_register(const char *type_name,
                           const char *component_name,
@@ -109,8 +110,6 @@ OBJ_CLASS_INSTANCE(mca_base_param_file_value_t, opal_list_item_t,
 OBJ_CLASS_INSTANCE(mca_base_param_info_t, opal_list_item_t,
                    info_constructor, info_destructor);
 
-
-
 /*
  * Set it up
  */
@@ -118,7 +117,7 @@ int mca_base_param_init(void)
 {
     int id;
     char *files, *new_files = NULL;
-
+    
     if (!initialized) {
 
         /* Init the value array for the param storage */
@@ -132,7 +131,7 @@ int mca_base_param_init(void)
 
         /* Set this before we register the parameter, below */
 
-        initialized = true;
+        initialized = true; 
 
         /* We may need this later */
 #if !defined(__WINDOWS__)
@@ -141,7 +140,7 @@ int mca_base_param_init(void)
                  "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"mca-params.conf:%s"OPAL_PATH_SEP"openmpi-mca-params.conf",
                  home, OPAL_SYSCONFDIR);
 #else
-        home = getenv("USERPROFILE");
+        home = getenv("USERPROFILE");       
         asprintf(&files,
                  "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"mca-params.conf;%s"OPAL_PATH_SEP"openmpi-mca-params.conf",
                  home, OPAL_SYSCONFDIR);
@@ -154,6 +153,11 @@ int mca_base_param_init(void)
                                             "Path for MCA configuration files containing default parameter values",
                                             false, false, files, &new_files);
         read_files(new_files);
+        
+#if defined(__WINDOWS__)
+        read_keys_from_registry(HKEY_CURRENT_USER, "SOFTWARE\\Open MPI", NULL);
+#endif  /* defined(__WINDOWS__) */
+
         free(files);
         free(new_files);
     }
@@ -801,7 +805,137 @@ static int read_files(char *file_list)
     return OPAL_SUCCESS;
 }
 
+/**
+ *
+ */
+#if defined(__WINDOWS__)
+#define MAX_KEY_LENGTH 255
+#define MAX_VALUE_NAME 16383
 
+static int read_keys_from_registry(HKEY hKey, char *sub_key, char *current_key)
+{       
+    TCHAR   achKey[MAX_KEY_LENGTH];        /* buffer for subkey name */
+    DWORD   cbName;                        /* size of name string */
+    TCHAR   achClass[MAX_PATH] = TEXT(""); /* buffer for class name */
+    DWORD   cchClassName = MAX_PATH;       /* size of class string */
+    DWORD   cSubKeys=0;                    /* number of subkeys */
+    DWORD   cbMaxSubKey;                   /* longest subkey size */
+    DWORD   cchMaxClass;                   /* longest class string */
+    DWORD   cValues;                       /* number of values for key */
+    DWORD   cchMaxValue;                   /* longest value name */
+    DWORD   cbMaxValueData;                /* longest value data */
+    DWORD   cbSecurityDescriptor;          /* size of security descriptor */
+
+    LPDWORD lpType;
+    LPDWORD word_lpData;
+    TCHAR   str_lpData[MAX_VALUE_NAME];
+    TCHAR   *str_key_name, *tmp_key, *type;
+    DWORD   dwSize, i, retCode, type_len;
+    TCHAR achValue[MAX_VALUE_NAME];
+    DWORD cchValue = MAX_VALUE_NAME;
+    HKEY hTestKey; 
+    char *sub_sub_key;
+      
+    if( !RegOpenKeyEx( hKey, sub_key, 0, KEY_READ, &hTestKey) == ERROR_SUCCESS )
+        return OPAL_ERROR;
+
+    /* Get the class name and the value count. */
+    retCode = RegQueryInfoKey( hTestKey,                /* key handle */
+                               achClass,                /* buffer for class name */
+                               &cchClassName,           /* size of class string */
+                               NULL,                    /* reserved */
+                               &cSubKeys,               /* number of subkeys */
+                               &cbMaxSubKey,            /* longest subkey size */
+                               &cchMaxClass,            /* longest class string */
+                               &cValues,                /* number of values for this key */
+                               &cchMaxValue,            /* longest value name */
+                               &cbMaxValueData,         /* longest value data */
+                               &cbSecurityDescriptor,   /* security descriptor */
+                               NULL );
+
+    /* Enumerate the subkeys, until RegEnumKeyEx fails. */
+    if (cSubKeys) {
+        for (i = 0; i < cSubKeys; i++) { 
+            cbName = MAX_KEY_LENGTH;
+            retCode = RegEnumKeyEx(hTestKey, i, achKey, &cbName, NULL, NULL, NULL, NULL); 
+            if (retCode == ERROR_SUCCESS) {
+                asprintf(&sub_sub_key, "%s\\%s", sub_key, achKey);
+                if (current_key!=NULL) {
+                    asprintf(&tmp_key, "%s", current_key);
+                    asprintf(&current_key, "%s_%s", current_key, achKey);
+                } else {
+                    tmp_key = NULL;
+                    asprintf(&current_key, "%s", achKey);
+                }
+                read_keys_from_registry(HKEY_CURRENT_USER, sub_sub_key, current_key);
+                free(current_key);
+                if (tmp_key!=NULL) {
+                    asprintf(&current_key, "%s", tmp_key);
+                    free(tmp_key);
+                } else
+                    current_key = NULL;
+            }
+        }
+    } 
+    
+    /* Enumerate the key values. */
+    if (cValues) {
+        for (i=0, retCode=ERROR_SUCCESS; i<cValues; i++) { 
+            cchValue = MAX_VALUE_NAME; 
+            achValue[0] = '\0'; 
+            retCode = RegEnumValue(hTestKey, i, achValue, &cchValue, NULL, NULL, NULL, NULL);
+     
+            if (retCode == ERROR_SUCCESS ) { 
+            
+                /* lpType - get the type of the value
+                 * dwSize - get the size of the buffer to hold the value
+                 */
+                retCode = RegQueryValueEx(hTestKey, achValue, NULL, (LPDWORD)&lpType, NULL, &dwSize);
+
+                if (strcmp(achValue,"")) {
+                    if (current_key!=NULL)
+                        asprintf(&str_key_name, "%s_%s", current_key, achValue);
+                    else
+                        asprintf(&str_key_name, "%s", achValue);
+                } else {
+                    if (current_key!=NULL)
+                        asprintf(&str_key_name, "%s", current_key);
+                    else
+                        asprintf(&str_key_name, "%s", achValue);
+                } 
+                
+                type_len = strcspn(str_key_name, "_");
+                type = (char*) malloc((type_len+1)*sizeof(char));
+                strncpy(type, str_key_name, type_len);
+                type[type_len]='\0';
+                if (lpType == (LPDWORD) REG_SZ) { /* REG_SZ = 1 */
+                    retCode = RegQueryValueEx(hTestKey, achValue, NULL, NULL, (LPBYTE)&str_lpData, &dwSize);
+                    if (!retCode)
+                        mca_base_param_reg_string_name( type, str_key_name, "Key read from Windows registry", false, false, str_lpData, NULL);
+                    else
+                        opal_output(0, "error reading value of param_name: %s with error.\n", str_key_name, retCode);
+                }
+                if (lpType == (LPDWORD) REG_DWORD) { /* REG_DWORD = 4 */
+                    retCode = RegQueryValueEx(hTestKey, achValue, NULL, NULL, (LPBYTE)&word_lpData, &dwSize);
+                    if (!retCode)
+                        mca_base_param_reg_int_name( type, str_key_name, "Key read from Windows registry", false, false, (int)word_lpData, NULL);
+                    else
+                       opal_output(0, "error reading value of param_name: %s with error.\n", str_key_name, retCode);
+                }
+                free(type);
+                free(str_key_name);
+            } 
+        }
+    }
+    RegCloseKey( hKey );
+
+    return OPAL_SUCCESS;
+}
+#endif  /* defined(__WINDOWS__) */
+
+/******************************************************************************/
+
+   
 static int param_register(const char *type_name,
                           const char *component_name,
                           const char *param_name,
