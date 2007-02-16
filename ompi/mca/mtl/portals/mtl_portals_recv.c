@@ -40,6 +40,8 @@ static int
 ompi_mtl_portals_recv_progress(ptl_event_t *ev,
                                struct ompi_mtl_portals_request_t* ptl_request)
 {
+    int ret;
+
     switch (ev->type) {
     case PTL_EVENT_PUT_END:
         /* make sure the data is in the right place */
@@ -68,7 +70,10 @@ ompi_mtl_portals_recv_progress(ptl_event_t *ev,
         ompi_mtl_datatype_unpack(ptl_request->convertor,
                                  ev->md.start, ev->mlength);
 
-        PtlMDUnlink(ev->md_handle);
+        ret=PtlMDUnlink(ev->md_handle);
+        if( ret !=PTL_OK) {
+            return ompi_common_portals_error_ptl_to_ompi(ret);
+        }
 
         /* set the status - most of this filled in right after issuing
            the PtlGet*/
@@ -316,23 +321,33 @@ ompi_mtl_portals_irecv(struct mca_mtl_base_module_t* mtl,
                                      &ptl_request->free_after);
     md.length = buflen;
 
-    PtlMEInsert(ompi_mtl_portals.ptl_match_ins_me_h,
+    /* create ME entry */
+    ret = PtlMEInsert(ompi_mtl_portals.ptl_match_ins_me_h,
                 remote_proc,
                 match_bits,
                 ignore_bits,
                 PTL_UNLINK,
                 PTL_INS_BEFORE,
                 &me_h);
+    if( ret !=PTL_OK) {
+        return ompi_common_portals_error_ptl_to_ompi(ret);
+    }
 
+    /* associate a memory descriptor with the Match list Entry */
     md.threshold = 0;
     md.options = PTL_MD_OP_PUT | PTL_MD_TRUNCATE | PTL_MD_EVENT_START_DISABLE;
     md.user_ptr = ptl_request;
     md.eq_handle = ompi_mtl_portals.ptl_eq_h;
-    PtlMDAttach(me_h, md, PTL_UNLINK, &md_h);
+    ret=PtlMDAttach(me_h, md, PTL_UNLINK, &md_h);
+    if( ret !=PTL_OK) {
+        return ompi_common_portals_error_ptl_to_ompi(ret);
+    }
 
     /* now try to make active */
     md.threshold = 1;
 
+    /* enable the memory descritor, if the ptl_unexpected_recv_eq_h
+     *   queue is empty */
     ret = PtlMDUpdate(md_h, NULL, &md,
                       ompi_mtl_portals.ptl_unexpected_recv_eq_h);
     if (ret == PTL_MD_NO_UPDATE) {
@@ -340,6 +355,8 @@ ompi_mtl_portals_irecv(struct mca_mtl_base_module_t* mtl,
         PtlMDUnlink(md_h);
         if (ptl_request->free_after) { free(md.start); }
         goto restart_search;
+    } else if( PTL_OK != ret ) {
+        return ompi_common_portals_error_ptl_to_ompi(ret);
     }
 
     ptl_request->event_callback = ompi_mtl_portals_recv_progress;
