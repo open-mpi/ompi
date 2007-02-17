@@ -13,6 +13,7 @@
 #include "ompi_config.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype.h"
+#include "opal/util/output.h"
 
 /**
  * The purpose of this test is to simulate the multi-network packing and
