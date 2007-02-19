@@ -41,7 +41,7 @@ int ompi_init_do_preconnect(void)
         if(my_rank){ 
             ret = MCA_PML_CALL(send(MPI_BOTTOM, 0, MPI_BYTE,
                                     0, 1,
-                                    MCA_PML_BASE_SEND_COMPLETE,
+                                    MCA_PML_BASE_SEND_STANDARD,
                                      MPI_COMM_WORLD));
             if(OMPI_SUCCESS != ret) {
                 return ret;
