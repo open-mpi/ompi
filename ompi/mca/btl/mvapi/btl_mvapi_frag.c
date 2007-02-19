@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,12 +44,12 @@ static void mca_btl_mvapi_send_frag_common_constructor(mca_btl_mvapi_frag_t* fra
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     
-    frag->sr_desc.comp_type = VAPI_SIGNALED; 
-    frag->sr_desc.opcode = VAPI_SEND; 
-    frag->sr_desc.remote_qkey = 0; 
-    frag->sr_desc.sg_lst_len = 1; 
-    frag->sr_desc.sg_lst_p = &frag->sg_entry; 
-    frag->sr_desc.id = (VAPI_virt_addr_t) (MT_virt_addr_t) frag; 
+    frag->desc.sr_desc.comp_type = VAPI_SIGNALED; 
+    frag->desc.sr_desc.opcode = VAPI_SEND; 
+    frag->desc.sr_desc.remote_qkey = 0; 
+    frag->desc.sr_desc.sg_lst_len = 1; 
+    frag->desc.sr_desc.sg_lst_p = &frag->sg_entry; 
+    frag->desc.sr_desc.id = (VAPI_virt_addr_t) (MT_virt_addr_t) frag; 
     
 }
 
@@ -61,11 +62,11 @@ static void mca_btl_mvapi_recv_frag_common_constructor(mca_btl_mvapi_frag_t* fra
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
     
-    frag->rr_desc.comp_type = VAPI_SIGNALED; 
-    frag->rr_desc.opcode = VAPI_RECEIVE; 
-    frag->rr_desc.sg_lst_len = 1; 
-    frag->rr_desc.sg_lst_p = &frag->sg_entry; 
-    frag->rr_desc.id = (VAPI_virt_addr_t) (MT_virt_addr_t) frag; 
+    frag->desc.rr_desc.comp_type = VAPI_SIGNALED; 
+    frag->desc.rr_desc.opcode = VAPI_RECEIVE; 
+    frag->desc.rr_desc.sg_lst_len = 1; 
+    frag->desc.rr_desc.sg_lst_p = &frag->sg_entry; 
+    frag->desc.rr_desc.id = (VAPI_virt_addr_t) (MT_virt_addr_t) frag; 
     
    
 }

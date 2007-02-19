@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -146,7 +147,7 @@ static inline int mca_btl_mvapi_endpoint_post_send(
         }
     } 
     
-    frag->sr_desc.remote_qkey = 0; 
+    frag->desc.sr_desc.remote_qkey = 0; 
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
     frag->sg_entry.len =
         frag->segment.seg_len + sizeof(mca_btl_mvapi_header_t) + 
@@ -156,14 +157,14 @@ static inline int mca_btl_mvapi_endpoint_post_send(
         mca_btl_mvapi_footer_t* ftr =
             (mca_btl_mvapi_footer_t*)(((char*)frag->segment.seg_addr.pval) +
                                        frag->segment.seg_len);
-        frag->sr_desc.opcode = VAPI_RDMA_WRITE;
+        frag->desc.sr_desc.opcode = VAPI_RDMA_WRITE;
         MCA_BTL_MVAPI_RDMA_FRAG_SET_SIZE(ftr, frag->sg_entry.len);
         MCA_BTL_MVAPI_RDMA_MAKE_LOCAL(ftr);
 #ifdef OMPI_ENABLE_DEBUG
         ftr->seq = endpoint->eager_rdma_remote.seq++;
 #endif
-        frag->sr_desc.r_key = (VAPI_rkey_t)endpoint->eager_rdma_remote.rkey;
-        frag->sr_desc.remote_addr = (VAPI_virt_addr_t)
+        frag->desc.sr_desc.r_key = (VAPI_rkey_t)endpoint->eager_rdma_remote.rkey;
+        frag->desc.sr_desc.remote_addr = (VAPI_virt_addr_t)
             endpoint->eager_rdma_remote.base.lval +
             endpoint->eager_rdma_remote.head *
             mvapi_btl->eager_rdma_frag_size +
@@ -171,17 +172,17 @@ static inline int mca_btl_mvapi_endpoint_post_send(
             sizeof(mca_btl_mvapi_header_t) +
             frag->size +
             sizeof(mca_btl_mvapi_footer_t);
-        frag->sr_desc.remote_addr -= frag->sg_entry.len;
+        frag->desc.sr_desc.remote_addr -= frag->sg_entry.len;
         MCA_BTL_MVAPI_RDMA_NEXT_INDEX (endpoint->eager_rdma_remote.head);
     } else {
-        frag->sr_desc.opcode = VAPI_SEND;
+        frag->desc.sr_desc.opcode = VAPI_SEND;
     }
 
 
     if(frag->sg_entry.len <= mvapi_btl->ib_inline_max) { 
-        ret = EVAPI_post_inline_sr(mvapi_btl->nic, qp_hndl, &frag->sr_desc); 
+        ret = EVAPI_post_inline_sr(mvapi_btl->nic, qp_hndl, &frag->desc.sr_desc); 
     } else { 
-        ret = VAPI_post_sr(mvapi_btl->nic, qp_hndl, &frag->sr_desc); 
+        ret = VAPI_post_sr(mvapi_btl->nic, qp_hndl, &frag->desc.sr_desc); 
     }
 
     if(VAPI_OK != ret) {
@@ -1075,15 +1076,15 @@ void mca_btl_mvapi_endpoint_send_credits_lp(
     OPAL_THREAD_ADD32(&endpoint->rd_credits_lp, -frag->hdr->credits);
     ((mca_btl_mvapi_control_header_t *)frag->segment.seg_addr.pval)->type = MCA_BTL_MVAPI_CONTROL_NOOP;
 
-    frag->sr_desc.opcode = VAPI_SEND; 
+    frag->desc.sr_desc.opcode = VAPI_SEND; 
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
     frag->sg_entry.len = sizeof(mca_btl_mvapi_header_t) +
         sizeof(mca_btl_mvapi_control_header_t);
 
     if(sizeof(mca_btl_mvapi_header_t) <= mvapi_btl->ib_inline_max) {
-        ret = EVAPI_post_inline_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_lp, &frag->sr_desc);
+        ret = EVAPI_post_inline_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_lp, &frag->desc.sr_desc);
     } else {
-        ret = VAPI_post_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_lp, &frag->sr_desc);
+        ret = VAPI_post_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_lp, &frag->desc.sr_desc);
     }
     if(ret != VAPI_SUCCESS) {
         OPAL_THREAD_ADD32(&endpoint->sd_credits_lp, -1);
@@ -1154,15 +1155,15 @@ void mca_btl_mvapi_endpoint_send_credits_hp(
     ((mca_btl_mvapi_control_header_t *)frag->segment.seg_addr.pval)->type = MCA_BTL_MVAPI_CONTROL_NOOP;
 
 
-    frag->sr_desc.opcode = VAPI_SEND; 
+    frag->desc.sr_desc.opcode = VAPI_SEND; 
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
     frag->sg_entry.len = sizeof(mca_btl_mvapi_header_t) +
         sizeof(mca_btl_mvapi_control_header_t);
 
     if(sizeof(mca_btl_mvapi_header_t) <= mvapi_btl->ib_inline_max) {
-        ret = EVAPI_post_inline_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_hp, &frag->sr_desc);
+        ret = EVAPI_post_inline_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_hp, &frag->desc.sr_desc);
     } else {
-        ret = VAPI_post_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_hp, &frag->sr_desc);
+        ret = VAPI_post_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_hp, &frag->desc.sr_desc);
     }
     if(ret != VAPI_SUCCESS) {
         OPAL_THREAD_ADD32(&endpoint->sd_credits_lp, -1);
