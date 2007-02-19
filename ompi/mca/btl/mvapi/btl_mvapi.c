@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -463,7 +464,7 @@ int mca_btl_mvapi_send(
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*)descriptor; 
     frag->endpoint = endpoint; 
     frag->hdr->tag = tag; 
-    frag->sr_desc.opcode = VAPI_SEND;
+    frag->desc.sr_desc.opcode = VAPI_SEND;
     return mca_btl_mvapi_endpoint_send(endpoint, frag);
 }
 
@@ -481,7 +482,7 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
 
     /* setup for queued requests */
     frag->endpoint = endpoint;
-    frag->sr_desc.opcode = VAPI_RDMA_WRITE; 
+    frag->desc.sr_desc.opcode = VAPI_RDMA_WRITE; 
 
     /* check for a send wqe */
     if (OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1) < 0) {
@@ -494,12 +495,12 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
     /* post descriptor */
     } else {
         
-        frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_lp; 
-        frag->sr_desc.remote_addr = (VAPI_virt_addr_t) frag->base.des_dst->seg_addr.lval; 
-        frag->sr_desc.r_key = frag->base.des_dst->seg_key.key32[0]; 
+        frag->desc.sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_lp; 
+        frag->desc.sr_desc.remote_addr = (VAPI_virt_addr_t) frag->base.des_dst->seg_addr.lval; 
+        frag->desc.sr_desc.r_key = frag->base.des_dst->seg_key.key32[0]; 
         frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_src->seg_addr.pval; 
         frag->sg_entry.len  = frag->base.des_src->seg_len; 
-        if(VAPI_OK != VAPI_post_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_lp, &frag->sr_desc)) {
+        if(VAPI_OK != VAPI_post_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_lp, &frag->desc.sr_desc)) {
             rc =  OMPI_ERROR; 
         } else { 
             rc = OMPI_SUCCESS; 
@@ -531,7 +532,7 @@ int mca_btl_mvapi_get( mca_btl_base_module_t* btl,
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*) descriptor; 
     
     frag->endpoint = endpoint;
-    frag->sr_desc.opcode = VAPI_RDMA_READ; 
+    frag->desc.sr_desc.opcode = VAPI_RDMA_READ; 
 
    /* check for a send wqe */
     if (OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1) < 0) {
@@ -555,13 +556,13 @@ int mca_btl_mvapi_get( mca_btl_base_module_t* btl,
 
     } else {
         
-        frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_lp; 
-        frag->sr_desc.remote_addr = (VAPI_virt_addr_t) frag->base.des_src->seg_addr.lval; 
-        frag->sr_desc.r_key = frag->base.des_src->seg_key.key32[0]; 
+        frag->desc.sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_lp; 
+        frag->desc.sr_desc.remote_addr = (VAPI_virt_addr_t) frag->base.des_src->seg_addr.lval; 
+        frag->desc.sr_desc.r_key = frag->base.des_src->seg_key.key32[0]; 
         frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_dst->seg_addr.pval; 
         frag->sg_entry.len  = frag->base.des_dst->seg_len; 
 
-        if(VAPI_OK != VAPI_post_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_lp, &frag->sr_desc)) {
+        if(VAPI_OK != VAPI_post_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_lp, &frag->desc.sr_desc)) {
             rc =  OMPI_ERROR; 
         } else { 
             rc = OMPI_SUCCESS; 

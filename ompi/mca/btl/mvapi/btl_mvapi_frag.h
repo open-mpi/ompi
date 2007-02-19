@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All Rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -78,6 +79,12 @@ enum mca_btl_mvapi_frag_type_t {
 };
 typedef enum mca_btl_mvapi_frag_type_t mca_btl_mvapi_frag_type_t;
 
+union mca_btl_mvapi_frag_desc_t {
+    VAPI_rr_desc_t rr_desc; 
+    VAPI_sr_desc_t sr_desc; 
+};
+typedef union mca_btl_mvapi_frag_desc_t mca_btl_mvapi_frag_desc_t;
+
 /**
  * IB send fragment derived type.
  */
@@ -89,10 +96,7 @@ struct mca_btl_mvapi_frag_t {
     int rc; 
     mca_btl_mvapi_frag_type_t type;
 
-    union{ 
-        VAPI_rr_desc_t rr_desc; 
-        VAPI_sr_desc_t sr_desc; 
-    }; 
+    mca_btl_mvapi_frag_desc_t desc;
     VAPI_sg_lst_entry_t sg_entry;  
     mca_btl_mvapi_header_t *hdr;
     mca_btl_mvapi_footer_t *ftr;
@@ -165,7 +169,7 @@ OBJ_CLASS_DECLARATION(mca_btl_mvapi_recv_frag_max_t);
 
 #define MCA_BTL_IB_FRAG_PROGRESS(frag) \
 do { \
-    switch(frag->sr_desc.opcode) { \
+    switch(frag->desc.sr_desc.opcode) { \
     case VAPI_SEND: \
         if(OMPI_SUCCESS !=  mca_btl_mvapi_endpoint_send(frag->endpoint, frag)) { \
             BTL_ERROR(("error in posting pending send\n")); \
@@ -186,7 +190,7 @@ do { \
         } \
         break; \
     default: \
-        BTL_ERROR(("error in posting pending operation, invalide opcode %d\n", frag->sr_desc.opcode)); \
+        BTL_ERROR(("error in posting pending operation, invalide opcode %d\n", frag->desc.sr_desc.opcode)); \
         break; \
     } \
 } while (0)
