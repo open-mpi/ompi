@@ -129,7 +129,7 @@ poll_recalc(void *arg, int max)
 #if OPAL_EVENT_USE_SIGNALS
 	return (opal_evsignal_recalc(&pop->evsigmask));
 #else
-	return (0)
+	return (0);
 #endif
 }
 
