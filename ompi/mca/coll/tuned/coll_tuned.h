@@ -71,6 +71,7 @@ extern int   ompi_coll_tuned_use_dynamic_rules;
 extern char* ompi_coll_tuned_dynamic_rules_filename;
 extern int   ompi_coll_tuned_init_tree_fanout;
 extern int   ompi_coll_tuned_init_chain_fanout;
+extern int   ompi_coll_tuned_init_max_requests;
 
 /* forced algorithm choices */
 /* the indices to the MCA params so that modules can look them up at open / comm create time  */
@@ -143,11 +144,12 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   int ompi_coll_tuned_alltoall_intra_dec_fixed(ALLTOALL_ARGS);
   int ompi_coll_tuned_alltoall_intra_dec_dynamic(ALLTOALL_ARGS);
   int ompi_coll_tuned_alltoall_intra_do_forced(ALLTOALL_ARGS);
-  int ompi_coll_tuned_alltoall_intra_do_this(ALLTOALL_ARGS, int algorithm, int faninout, int segsize);
+  int ompi_coll_tuned_alltoall_intra_do_this(ALLTOALL_ARGS, int algorithm, int faninout, int segsize, int max_requests);
   int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
   int ompi_coll_tuned_alltoall_intra_pairwise(ALLTOALL_ARGS);
   int ompi_coll_tuned_alltoall_intra_bruck(ALLTOALL_ARGS);
   int ompi_coll_tuned_alltoall_intra_basic_linear(ALLTOALL_ARGS);
+  int ompi_coll_tuned_alltoall_intra_linear_sync(ALLTOALL_ARGS, int max_requests);
   int ompi_coll_tuned_alltoall_intra_two_procs(ALLTOALL_ARGS);
   int ompi_coll_tuned_alltoall_inter_dec_fixed(ALLTOALL_ARGS);
   int ompi_coll_tuned_alltoall_inter_dec_dynamic(ALLTOALL_ARGS);

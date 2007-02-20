@@ -48,6 +48,7 @@ int ompi_coll_tuned_forced_getvalues (coll_tuned_force_algorithm_mca_param_indic
     mca_base_param_lookup_int (mca_params.segsize_param_index,      &(forced_values->segsize));
     mca_base_param_lookup_int (mca_params.tree_fanout_param_index,  &(forced_values->tree_fanout));
     mca_base_param_lookup_int (mca_params.chain_fanout_param_index, &(forced_values->chain_fanout));
+    mca_base_param_lookup_int (mca_params.max_requests_param_index, &(forced_values->max_requests));
 
     return (MPI_SUCCESS);
 }

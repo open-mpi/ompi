@@ -233,6 +233,167 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
     return err;
 }
 
+/*
+ * alltoall_intra_linear_sync
+ * 
+ * Function:       Linear implementation of alltoall with limited number
+ *                 of outstanding requests.
+ * Accepts:        Same as MPI_Alltoall(), and the maximum number of 
+ *                 outstanding requests (actual number is 2 * max, since
+ *                 we count receive and send requests separately).
+ * Returns:        MPI_SUCCESS or error code
+ *
+ * Description:    Algorithm is the following:
+ *                 1) post K irecvs, K <= N
+ *                 2) post K isends, K <= N
+ *                 3) while not done
+ *                    - wait for any request to complete
+ *                    - replace that request by the new one of the same type.
+ */
+int ompi_coll_tuned_alltoall_intra_linear_sync(void *sbuf, int scount,
+                                               struct ompi_datatype_t *sdtype,
+                                               void* rbuf, int rcount,
+                                               struct ompi_datatype_t *rdtype,
+                                               struct ompi_communicator_t *comm,
+                                               int max_outstanding_reqs)
+{
+    int line, error;
+    int ri, si;
+    int rank;
+    int size;
+    int nreqs, nrreqs, nsreqs, total_reqs;
+    char *psnd;
+    char *prcv;
+    ptrdiff_t slb, sext;
+    ptrdiff_t rlb, rext;
+
+    ompi_request_t **reqs = NULL;
+
+    /* Initialize. */
+
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"ompi_coll_tuned_alltoall_intra_linear_sync rank %d", rank));
+
+
+    error = ompi_ddt_get_extent(sdtype, &slb, &sext);
+    if (OMPI_SUCCESS != error) {
+        return error;
+    }
+    sext *= scount;
+
+    error = ompi_ddt_get_extent(rdtype, &rlb, &rext);
+    if (OMPI_SUCCESS != error) {
+        return error;
+    }
+    rext *= rcount;
+
+    /* simple optimization */
+
+    psnd = ((char *) sbuf) + (rank * sext);
+    prcv = ((char *) rbuf) + (rank * rext);
+
+    error = ompi_ddt_sndrcv(psnd, scount, sdtype, prcv, rcount, rdtype);
+    if (MPI_SUCCESS != error) {
+        return error;
+    }
+
+    /* If only one process, we're done. */
+
+    if (1 == size) {
+        return MPI_SUCCESS;
+    }
+
+    /* Initiate send/recv to/from others. */
+    total_reqs =  (((max_outstanding_reqs > (size - 1)) || 
+                    (max_outstanding_reqs <= 0)) ?
+                   (size - 1) : (max_outstanding_reqs));
+    reqs = (ompi_request_t**) malloc( 2 * total_reqs * 
+                                      sizeof(ompi_request_t*));
+    if (NULL == reqs) { error = -1; goto error_hndl; }
+    
+    prcv = (char *) rbuf;
+    psnd = (char *) sbuf;
+
+    /* Post first batch or ireceive and isend requests  */
+    for (nreqs = 0, nrreqs = 0, ri = (rank + 1) % size; nreqs < total_reqs; 
+         ri = (ri + 1) % size, ++nreqs, ++nrreqs) {
+       error =
+          MCA_PML_CALL(irecv
+                       (prcv + (ri * rext), rcount, rdtype, ri,
+                        MCA_COLL_BASE_TAG_ALLTOALL, comm, &reqs[nreqs]));
+       if (MPI_SUCCESS != error) { line = __LINE__; goto error_hndl; }
+    }
+    for ( nsreqs = 0, si =  (rank + size - 1) % size; nreqs < 2 * total_reqs; 
+          si = (si + size - 1) % size, ++nreqs, ++nsreqs) {
+       error =
+          MCA_PML_CALL(isend
+                       (psnd + (si * sext), scount, sdtype, si,
+                        MCA_COLL_BASE_TAG_ALLTOALL,
+                        MCA_PML_BASE_SEND_STANDARD, comm, &reqs[nreqs]));
+       if (MPI_SUCCESS != error) { line = __LINE__; goto error_hndl; }
+    }
+
+    /* Wait for requests to complete */
+    if (nreqs == 2 * (size - 1)) {
+       /* Optimization for the case when all requests have been posted  */
+       error = ompi_request_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
+       if (MPI_SUCCESS != error) { line = __LINE__; goto error_hndl; }
+       
+    } else {
+       /* As requests complete, replace them with corresponding requests:
+          - wait for any request to complete, mark the request as 
+            MPI_REQUEST_NULL
+          - If it was a receive request, replace it with new irecv request 
+            (if any)
+          - if it was a send request, replace it with new isend request (if any)
+       */
+       int ncreqs = 0;
+       while (ncreqs < 2 * (size - 1)) {
+          int completed;
+          error = ompi_request_wait_any(2 * total_reqs, reqs, &completed,
+                                        MPI_STATUS_IGNORE);
+          if (MPI_SUCCESS != error) { line = __LINE__; goto error_hndl; }
+          reqs[completed] = MPI_REQUEST_NULL;
+          ncreqs++;
+          if (completed < total_reqs) {
+             if (nrreqs < (size - 1)) {
+                error = 
+                   MCA_PML_CALL(irecv
+                                (prcv + (ri * rext), rcount, rdtype, ri,
+                                 MCA_COLL_BASE_TAG_ALLTOALL, comm, 
+                                 &reqs[completed]));
+                if (MPI_SUCCESS != error) { line = __LINE__; goto error_hndl; }
+                ++nrreqs;
+                ri = (ri + 1) % size;
+             }
+          } else {
+             if (nsreqs < (size - 1)) {
+                error = MCA_PML_CALL(isend
+                                     (psnd + (si * sext), scount, sdtype, si,
+                                      MCA_COLL_BASE_TAG_ALLTOALL,
+                                      MCA_PML_BASE_SEND_STANDARD, comm,
+                                      &reqs[completed]));
+                ++nsreqs;
+                si = (si + size - 1) % size; 
+             }
+          }
+       }
+    }
+
+    /* Free the reqs */
+    free(reqs);
+
+    /* All done */
+    return MPI_SUCCESS;
+
+ error_hndl:
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__, line, error, rank));
+    if (NULL != reqs) free(reqs);
+    return error;
+}
+
 
 int ompi_coll_tuned_alltoall_intra_two_procs(void *sbuf, int scount,
                                              struct ompi_datatype_t *sdtype,
@@ -298,10 +459,6 @@ int ompi_coll_tuned_alltoall_intra_two_procs(void *sbuf, int scount,
  */
 
 /* copied function (with appropriate renaming) starts here */
-
-
-
-
 
 int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
                                                 struct ompi_datatype_t *sdtype,
@@ -435,7 +592,7 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
 
 int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices)
 {
-    int rc, max_alg = 4, requested_alg;
+    int rc, max_alg = 5, requested_alg, max_requests;
 
     ompi_coll_tuned_forced_max_algorithms[ALLTOALL] = max_alg;
 
@@ -447,7 +604,7 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
     mca_param_indices->algorithm_param_index
         = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                                  "alltoall_algorithm",
-                                 "Which alltoall algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 pairwise, 3: modified bruck, 4: two proc only.",
+                                 "Which alltoall algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 pairwise, 3: modified bruck, 4: linear with sync, 5:two proc only.",
                                  false, false, 0, NULL);
     mca_base_param_lookup_int(mca_param_indices->algorithm_param_index, &(requested_alg));
     if( requested_alg > max_alg ) {
@@ -480,6 +637,23 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
                                  ompi_coll_tuned_init_chain_fanout, /* get system wide default */
                                  NULL);
 
+    mca_param_indices->max_requests_param_index
+       = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                "alltoall_algorithm_max_requests",
+                                "Maximum number of outstanding send or recv requests.  Only has meaning for synchronized algorithms.",
+                                false, false, 
+                                ompi_coll_tuned_init_max_requests, /* get system wide default */
+                                NULL);
+    mca_base_param_lookup_int(mca_param_indices->max_requests_param_index, &(max_requests));
+    if( max_requests <= 1 ) {
+        if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
+            opal_output( 0, "Maximum outstanding requests must be positive number greater than 1.  Switching to system level default %d \n",
+                         ompi_coll_tuned_init_max_requests );
+        }
+        mca_base_param_set_int( mca_param_indices->max_requests_param_index, 
+                                ompi_coll_tuned_init_max_requests);
+    }
+
     return (MPI_SUCCESS);
 }
 
@@ -499,7 +673,8 @@ int ompi_coll_tuned_alltoall_intra_do_forced(void *sbuf, int scount,
     case (1):   return ompi_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     case (2):   return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     case (3):   return ompi_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
-    case (4):   return ompi_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    case (4):   return ompi_coll_tuned_alltoall_intra_linear_sync (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, comm->c_coll_selected_data->user_forced[ALLTOALL].max_requests);
+    case (5):   return ompi_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?", 
                      comm->c_coll_selected_data->user_forced[ALLTOALL].algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALL]));
@@ -514,7 +689,8 @@ int ompi_coll_tuned_alltoall_intra_do_this(void *sbuf, int scount,
                                            void* rbuf, int rcount,
                                            struct ompi_datatype_t *rdtype,
                                            struct ompi_communicator_t *comm,
-                                           int algorithm, int faninout, int segsize)
+                                           int algorithm, int faninout, int segsize, 
+                                           int max_requests)
 {
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_this selected algorithm %d topo faninout %d segsize %d", 
                  algorithm, faninout, segsize));
@@ -524,7 +700,8 @@ int ompi_coll_tuned_alltoall_intra_do_this(void *sbuf, int scount,
     case (1):   return ompi_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     case (2):   return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     case (3):   return ompi_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
-    case (4):   return ompi_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    case (4):   return ompi_coll_tuned_alltoall_intra_linear_sync (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, max_requests);
+    case (5):   return ompi_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 
                      algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALL]));
