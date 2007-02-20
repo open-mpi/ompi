@@ -43,7 +43,7 @@ typedef struct msg_rule_s {
    int result_alg;              /* result algorithm to use */
    int result_topo_faninout;    /* result topology fan in/out to use (if applicable) */
    long result_segsize;         /* result segment size to use */ 
-
+   int result_max_requests;     /* maximum number of outstanding requests (if applicable) */
 } ompi_coll_msg_rule_t;
 
 
@@ -96,7 +96,8 @@ int ompi_coll_tuned_free_all_rules (ompi_coll_alg_rule_t* alg_p, int n_algs);
 ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* rules, int alg_id, int mpi_comsize);
 
 int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rule, int mpi_msgsize, 
-                                            int* result_topo_faninout, int* result_segsize);
+                                              int* result_topo_faninout, int* result_segsize, 
+                                              int* max_requests);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

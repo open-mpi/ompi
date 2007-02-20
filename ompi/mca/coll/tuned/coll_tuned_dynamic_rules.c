@@ -355,7 +355,7 @@ ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* ru
  */
 
 int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rule, int mpi_msgsize, int *result_topo_faninout, 
-                                              int* result_segsize)
+                                              int* result_segsize, int* max_requests)
 {
     ompi_coll_msg_rule_t*  msg_p = (ompi_coll_msg_rule_t*) NULL;
     ompi_coll_msg_rule_t*  best_msg_p = (ompi_coll_msg_rule_t*) NULL;
@@ -371,6 +371,10 @@ int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rul
 
     if (!result_segsize) {
         return (0);
+    }
+
+    if (!max_requests) {
+       return (0);
     }
 
     if (!base_com_rule->n_msg_sizes) {   /* check for count of message sizes */
@@ -408,6 +412,9 @@ int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rul
 
     /* return the segment size */
     *result_segsize = best_msg_p->result_segsize;
+
+    /* return the maximum requests */
+    *max_requests = best_msg_p->result_max_requests;
 
     /* return the algorithm/method to use */
     return (best_msg_p->result_alg);  

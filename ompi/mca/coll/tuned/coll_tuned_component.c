@@ -42,11 +42,12 @@ const char *ompi_coll_tuned_component_version_string =
  */
 int   ompi_coll_tuned_stream = -1;
 int   ompi_coll_tuned_priority = 30;
-int   ompi_coll_tuned_preallocate_memory_comm_size_limit = (32*1024);
+int   ompi_coll_tuned_preallocate_memory_comm_size_limit = (32 * 1024);
 int   ompi_coll_tuned_use_dynamic_rules = 0;
 char* ompi_coll_tuned_dynamic_rules_filename = (char*) NULL;
 int   ompi_coll_tuned_init_tree_fanout = 4;
 int   ompi_coll_tuned_init_chain_fanout = 4;
+int   ompi_coll_tuned_init_max_requests = 128;
 
 /* forced alogrithm variables */
 /* indices for the MCA parameters */

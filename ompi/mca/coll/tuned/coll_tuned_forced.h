@@ -34,6 +34,7 @@ struct coll_tuned_force_algorithm_mca_param_indices_t {
    int  segsize_param_index;        /* segsize to use (if supported), 0 = no segmentation */
    int  tree_fanout_param_index;    /* tree fanout/in to use */
    int  chain_fanout_param_index;   /* K-chain fanout/in to use */
+   int  max_requests_param_index;   /* Maximum number of outstanding send or recv requests */
 };
 
 typedef struct coll_tuned_force_algorithm_mca_param_indices_t coll_tuned_force_algorithm_mca_param_indices_t;
@@ -47,6 +48,7 @@ struct coll_tuned_force_algorithm_params_t {
    int  segsize;        /* segsize to use (if supported), 0 = no segmentation */
    int  tree_fanout;    /* tree fanout/in to use */
    int  chain_fanout;   /* K-chain fanout/in to use */
+   int  max_requests;   /* Maximum number of outstanding send or recv requests */
 };
 
 typedef struct coll_tuned_force_algorithm_params_t coll_tuned_force_algorithm_params_t;
