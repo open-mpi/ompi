@@ -67,6 +67,7 @@ extern mca_mtl_portals_module_t ompi_mtl_portals;
 struct ompi_mtl_portals_event_t {
     struct ompi_free_list_item_t super;
     ptl_event_t ev;
+    bool is_complete;
 };
 typedef struct ompi_mtl_portals_event_t ompi_mtl_portals_event_t;
 OBJ_CLASS_DECLARATION(ompi_mtl_portals_event_t);
