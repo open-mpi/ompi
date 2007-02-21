@@ -74,7 +74,7 @@ int mca_btl_base_warn_component_unused = 1;
 opal_list_t mca_btl_base_components_opened;
 opal_list_t mca_btl_base_modules_initialized;
 
-static bool already_opened = false;
+bool already_opened = false;
 
 /**
  * Function for finding and opening either all MCA components, or the one

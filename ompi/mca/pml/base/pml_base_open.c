@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -22,6 +22,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
@@ -78,6 +79,20 @@ ompi_pointer_array_t mca_pml_base_pml;
 int mca_pml_base_open(void)
 {
     char* default_pml = NULL;
+    int value;
+
+    /*
+     * Register some MCA parameters
+     */
+    /* Debugging/Verbose output */
+    mca_base_param_reg_int_name("pml_base",
+                                "verbose",
+                                "Verbosity level of the PML framework",
+                                false, false,
+                                0, &value);
+ 
+    mca_pml_base_output = opal_output_open(NULL);
+    opal_output_set_verbosity(mca_pml_base_output, value);
 
     /* Open up all available components */
 
