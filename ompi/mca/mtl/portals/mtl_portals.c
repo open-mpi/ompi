@@ -127,7 +127,7 @@ ompi_mtl_portals_add_procs(struct mca_mtl_base_module_t *mtl,
         md.length = 0;
         md.threshold = PTL_MD_THRESH_INF;
         md.max_size = 0;
-        md.options = (PTL_MD_OP_PUT | PTL_MD_TRUNCATE | PTL_MD_ACK_DISABLE | PTL_MD_EVENT_START_DISABLE);
+        md.options = (PTL_MD_OP_PUT | PTL_MD_TRUNCATE | PTL_MD_ACK_DISABLE);
         md.eq_handle = ompi_mtl_portals.ptl_unexpected_recv_eq_h;
 
         ret = PtlMDAttach(ompi_mtl_portals.ptl_unexpected_me_h,
