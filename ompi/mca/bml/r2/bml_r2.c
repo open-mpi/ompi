@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -25,6 +25,7 @@
 #include "orte/mca/ns/ns.h"
 #include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/bml/bml.h"
+#include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/bml/base/bml_base_endpoint.h" 
@@ -542,7 +543,41 @@ int mca_bml_r2_del_procs(size_t nprocs,
 }
 
 int mca_bml_r2_finalize( void ) { 
-    return OMPI_SUCCESS; /* TODO */ 
+    ompi_proc_t** procs;
+    size_t p, num_procs;
+    opal_list_item_t* w_item;
+
+    /* Similar to mca_bml_r2_del_btl ... */
+    procs = ompi_proc_all(&num_procs);
+    if(NULL == procs)
+        goto CLEANUP;
+
+    for (w_item =  opal_list_get_first(&mca_btl_base_modules_initialized);
+         w_item != opal_list_get_end(&mca_btl_base_modules_initialized);
+         w_item =  opal_list_get_next(w_item)) {
+        mca_btl_base_selected_module_t *sm = (mca_btl_base_selected_module_t *) w_item;
+
+        /* dont use this btl for any peers */
+        for(p=0; p<num_procs; p++) {
+            ompi_proc_t* proc = procs[p];
+            mca_bml_r2_del_proc_btl(proc, sm->btl_module);
+        }
+    }
+
+ CLEANUP:
+    mca_bml_r2.num_btl_modules = 0;
+    mca_bml_r2.num_btl_progress = 0;
+
+    if( NULL != mca_bml_r2.btl_modules) {
+        free( mca_bml_r2.btl_modules);
+    }
+    if( NULL != mca_bml_r2.btl_progress ) {
+        free( mca_bml_r2.btl_progress);
+    }
+
+    mca_btl_base_close();
+
+    return OMPI_SUCCESS;
 } 
 
 

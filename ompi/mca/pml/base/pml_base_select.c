@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -57,6 +57,7 @@ int mca_pml_base_select(bool enable_progress_threads,
     opal_list_t opened;
     opened_component_t *om = NULL;
     bool found_pml;
+
     /* Traverse the list of available components; call their init
        functions. */
 
@@ -69,14 +70,22 @@ int mca_pml_base_select(bool enable_progress_threads,
          item = opal_list_get_next(item) ) {
         cli = (mca_base_component_list_item_t *) item;
         component = (mca_pml_base_component_t *) cli->cli_component;
+
         /* if there is an include list - item must be in the list to be included */
         found_pml = false;
         for( i = 0; i < ompi_pointer_array_get_size(&mca_pml_base_pml); i++) { 
-            if((strcmp(component->pmlm_version.mca_component_name, 
-                       (char *) ompi_pointer_array_get_item(&mca_pml_base_pml, i)) == 0)) {
+            char * tmp_val = NULL;
+            tmp_val = (char *) ompi_pointer_array_get_item(&mca_pml_base_pml, i);
+            if( NULL == tmp_val) {
+                continue;
+            }
+
+            if(0 == strncmp(component->pmlm_version.mca_component_name, 
+                            tmp_val, strlen(component->pmlm_version.mca_component_name)) ) {
                 found_pml = true;
             }
         }
+
         if(!found_pml && ompi_pointer_array_get_size(&mca_pml_base_pml)) { 
             opal_output_verbose( 10, mca_pml_base_output,
                                      "select: component %s not in the include list",
@@ -84,12 +93,16 @@ int mca_pml_base_select(bool enable_progress_threads,
                 
             continue;
         }
+
+        /* if there is no init function - ignore it */
         if (NULL == component->pmlm_init) {
             opal_output_verbose( 10, mca_pml_base_output,
                                  "select: no init function; ignoring component %s",
                                  component->pmlm_version.mca_component_name );
             continue;
         }
+
+        /* Init component to get its priority */
         opal_output_verbose( 10, mca_pml_base_output, 
                              "select: initializing %s component %s",
                              component->pmlm_version.mca_type_name,
@@ -103,6 +116,7 @@ int mca_pml_base_select(bool enable_progress_threads,
                                  component->pmlm_version.mca_component_name );
             continue;
         }
+
         opal_output_verbose( 10, mca_pml_base_output,
                              "select: init returned priority %d", priority );
         if (priority > best_priority) {
@@ -125,7 +139,12 @@ int mca_pml_base_select(bool enable_progress_threads,
     if( NULL == best_component ) {
         opal_show_help("help-mca-base.txt", "find-available:none-found", true, "pml");
         for( i = 0; i < ompi_pointer_array_get_size(&mca_pml_base_pml); i++) { 
-            orte_errmgr.error_detected(1, "PML %s cannot be selected", (char*)  ompi_pointer_array_get_item(&mca_pml_base_pml, i), NULL);
+            char * tmp_val = NULL;
+            tmp_val = (char *) ompi_pointer_array_get_item(&mca_pml_base_pml, i);
+            if( NULL == tmp_val) {
+                continue;
+            }
+            orte_errmgr.error_detected(1, "PML %s cannot be selected", tmp_val, NULL);
         }
         if(0 == i) { 
             orte_errmgr.error_detected(2, "No pml component available.  This shouldn't happen.", NULL);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -28,6 +28,7 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 
+extern bool already_opened;
 
 int mca_btl_base_close(void)
 {
@@ -68,6 +69,8 @@ int mca_btl_base_close(void)
 
   /* restore event processing */
   opal_event_enable();
+
+  already_opened = false;
 
   /* All done */
   return OMPI_SUCCESS;
