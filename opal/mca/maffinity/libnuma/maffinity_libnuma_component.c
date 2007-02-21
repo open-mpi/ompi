@@ -52,10 +52,10 @@ const opal_maffinity_base_component_1_0_0_t mca_maffinity_libnuma_component = {
         /* Component name and version */
 
         "libnuma",
-        OMPI_MAJOR_VERSION,
-        OMPI_MINOR_VERSION,
-        OMPI_RELEASE_VERSION,
-
+        OPAL_MAJOR_VERSION,
+        OPAL_MINOR_VERSION,
+        OPAL_RELEASE_VERSION,
+        
         /* Component open and close functions */
 
         libnuma_open,
