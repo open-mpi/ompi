@@ -442,4 +442,25 @@ do {                                                                           \
             (SEGCOUNT)++;                                               \
     }                                                                   \
 
+/**
+ * This macro gives a generic wait to compute the well distributed block counts
+ * when the count and number of blocks are fixed.
+ * Macro returns "early-block" count, "late-block" count, and "split-index"
+ * which is the block at which we switch from "early-block" count to 
+ * the "late-block" count.
+ * count = split_index * early_block_count + 
+ *         (block_count - split_index) * late_block_count
+ * We do not perform ANY error checks - make sure that the input values 
+ * make sense (eg. count > num_blocks).
+ */
+#define COLL_TUNED_COMPUTE_BLOCKCOUNT( COUNT, NUM_BLOCKS, SPLIT_INDEX,       \
+                                       EARLY_BLOCK_COUNT, LATE_BLOCK_COUNT ) \
+    EARLY_BLOCK_COUNT = LATE_BLOCK_COUNT = COUNT / NUM_BLOCKS;               \
+    SPLIT_INDEX = COUNT % NUM_BLOCKS;                                        \
+    if (0 != SPLIT_INDEX) {                                                  \
+        EARLY_BLOCK_COUNT = EARLY_BLOCK_COUNT + 1;                           \
+    }                                                                        \
+
+
 #endif /* MCA_COLL_TUNED_EXPORT_H */
+
