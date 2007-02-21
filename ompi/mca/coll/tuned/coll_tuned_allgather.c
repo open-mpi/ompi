@@ -702,24 +702,14 @@ ompi_coll_tuned_allgather_intra_basic_linear(void *sbuf, int scount,
 
     /* Handle MPI_IN_PLACE (see explanantion in reduce.c for how to
        allocate temp buffer) -- note that rank 0 can use IN_PLACE
-       natively, and we'll be ok (actually saves a little bit of
-       copying around) */
-
+       natively, and we can just alias the right position in rbuf
+       as sbuf and avoid using a temporary buffer if gather is
+       implemented correctly */
     if (MPI_IN_PLACE == sbuf && 0 != ompi_comm_rank(comm)) {
        ompi_ddt_get_extent(rdtype, &lb, &extent);
-       ompi_ddt_get_true_extent(rdtype, &true_lb, &true_extent);
-       
-       rbuf_original = (char*)rbuf;
        sbuf = ((char*) rbuf) + (ompi_comm_rank(comm) * extent * rcount);
        sdtype = rdtype;
        scount = rcount;
-       
-       inplace_temp = (char*)malloc((true_extent + (rcount - 1) * extent) * 
-                                    ompi_comm_size(comm));
-       if (NULL == inplace_temp) {
-          return OMPI_ERR_OUT_OF_RESOURCE;
-       }
-       rbuf = inplace_temp - lb;
     } 
 
     /* Gather and broadcast. */
@@ -729,14 +719,6 @@ ompi_coll_tuned_allgather_intra_basic_linear(void *sbuf, int scount,
     if (MPI_SUCCESS == err) {
         err = comm->c_coll.coll_bcast(rbuf, rcount * ompi_comm_size(comm), 
                                       rdtype, 0, comm);
-    }
-
-    /* If we've got a temp buffer, copy back out */
-
-    if (MPI_SUCCESS == err && NULL != inplace_temp) {
-        ompi_ddt_copy_content_same_ddt(rdtype, rcount * ompi_comm_size(comm),
-                                       rbuf_original, (char*)rbuf);
-        free(inplace_temp);
     }
 
     /* All done */
