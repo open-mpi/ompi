@@ -16,7 +16,8 @@
 # 
 # $HEADER$
 #
-# This is the US/English general help file for Open RTE's orterun.
+# This is the US/English general help file for Open MPI's Shared memory
+# collective component.
 #
 [tree-degree-larger-than-control]
 The specified shared memory collective tree degree
