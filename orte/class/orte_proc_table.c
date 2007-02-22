@@ -30,16 +30,16 @@
  *  orte_process_name_hash_node_t
  */
                                                                             
-struct ompi_proc_hash_node_t
+struct orte_proc_hash_node_t
 {
     opal_list_item_t super;
     orte_process_name_t hn_key;
     void *hn_value;
 };
-typedef struct ompi_proc_hash_node_t ompi_proc_hash_node_t;
+typedef struct orte_proc_hash_node_t orte_proc_hash_node_t;
                                                                             
 static OBJ_CLASS_INSTANCE(
-    ompi_proc_hash_node_t,
+    orte_proc_hash_node_t,
     opal_list_item_t,
     NULL, 
     NULL);
@@ -50,7 +50,7 @@ void* orte_hash_table_get_proc(opal_hash_table_t* ht,
 {
     uint32_t key = (proc->cellid << 24) + (proc->jobid << 16) + proc->vpid;
     opal_list_t* list = ht->ht_table + (key & ht->ht_mask);
-    ompi_proc_hash_node_t *node;
+    orte_proc_hash_node_t *node;
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
@@ -59,9 +59,9 @@ void* orte_hash_table_get_proc(opal_hash_table_t* ht,
         return NULL;
     }
 #endif
-    for(node =  (ompi_proc_hash_node_t*)opal_list_get_first(list);
-        node != (ompi_proc_hash_node_t*)opal_list_get_end(list);
-        node =  (ompi_proc_hash_node_t*)opal_list_get_next(node)) {
+    for(node =  (orte_proc_hash_node_t*)opal_list_get_first(list);
+        node != (orte_proc_hash_node_t*)opal_list_get_end(list);
+        node =  (orte_proc_hash_node_t*)opal_list_get_next(node)) {
         if (memcmp(&node->hn_key,proc,sizeof(orte_process_name_t)) == 0) {
             return node->hn_value;
         }
@@ -77,7 +77,7 @@ int orte_hash_table_set_proc(
 {
     uint32_t key = (proc->cellid << 24) + (proc->jobid << 16) + proc->vpid;
     opal_list_t* list = ht->ht_table + (key & ht->ht_mask);
-    ompi_proc_hash_node_t *node;
+    orte_proc_hash_node_t *node;
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
@@ -86,18 +86,18 @@ int orte_hash_table_set_proc(
         return ORTE_ERR_BAD_PARAM;
     }
 #endif
-    for(node =  (ompi_proc_hash_node_t*)opal_list_get_first(list);
-        node != (ompi_proc_hash_node_t*)opal_list_get_end(list);
-        node =  (ompi_proc_hash_node_t*)opal_list_get_next(node)) {
+    for(node =  (orte_proc_hash_node_t*)opal_list_get_first(list);
+        node != (orte_proc_hash_node_t*)opal_list_get_end(list);
+        node =  (orte_proc_hash_node_t*)opal_list_get_next(node)) {
         if (memcmp(&node->hn_key,proc,sizeof(orte_process_name_t)) == 0) {
             node->hn_value = value;
             return ORTE_SUCCESS;
         }
     } 
 
-    node = (ompi_proc_hash_node_t*)opal_list_remove_first(&ht->ht_nodes); 
+    node = (orte_proc_hash_node_t*)opal_list_remove_first(&ht->ht_nodes); 
     if(NULL == node) {
-        node = OBJ_NEW(ompi_proc_hash_node_t);
+        node = OBJ_NEW(orte_proc_hash_node_t);
         if(NULL == node)
             return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -115,7 +115,7 @@ int orte_hash_table_remove_proc(
 {
     uint32_t key = (proc->cellid << 24) + (proc->jobid << 16) + proc->vpid;
     opal_list_t* list = ht->ht_table + (key & ht->ht_mask);
-    ompi_proc_hash_node_t *node;
+    orte_proc_hash_node_t *node;
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
@@ -124,9 +124,9 @@ int orte_hash_table_remove_proc(
         return ORTE_ERR_BAD_PARAM;
     }
 #endif
-    for(node =  (ompi_proc_hash_node_t*)opal_list_get_first(list);
-        node != (ompi_proc_hash_node_t*)opal_list_get_end(list);
-        node =  (ompi_proc_hash_node_t*)opal_list_get_next(node)) {
+    for(node =  (orte_proc_hash_node_t*)opal_list_get_first(list);
+        node != (orte_proc_hash_node_t*)opal_list_get_end(list);
+        node =  (orte_proc_hash_node_t*)opal_list_get_next(node)) {
         if (memcmp(&node->hn_key,proc,sizeof(orte_process_name_t)) == 0) {
             opal_list_remove_item(list, (opal_list_item_t*)node);
             opal_list_append(&ht->ht_nodes, (opal_list_item_t*)node);
