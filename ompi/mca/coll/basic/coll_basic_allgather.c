@@ -44,8 +44,7 @@ mca_coll_basic_allgather_intra(void *sbuf, int scount,
                                struct ompi_communicator_t *comm)
 {
     int err;
-    char *rbuf_original = NULL, *inplace_temp = NULL;
-    ptrdiff_t true_lb, true_extent, lb, extent;
+    ptrdiff_t lb, extent;
 
     /* Handle MPI_IN_PLACE (see explanantion in reduce.c for how to
        allocate temp buffer) -- note that rank 0 can use IN_PLACE
