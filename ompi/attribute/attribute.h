@@ -49,10 +49,11 @@
 extern "C" {
 #endif
 enum ompi_attribute_type_t {
-    UNUSED_ATTR = 0, /**< Make the compilers happy when we have to construct an attribute */
+    UNUSED_ATTR = 0, /**< Make the compilers happy when we have to construct
+                      * an attribute */
     COMM_ATTR,       /**< The attribute belongs to a comm object. Starts
-		      * with 1 so that we can have it initialized to 0
-		      * using memset in the constructor */
+                      * with 1 so that we can have it initialized to 0
+                      * using memset in the constructor */
     TYPE_ATTR,       /**< The attribute belongs to datatype object */
     WIN_ATTR         /**< The attribute belongs to a win object */
 };
@@ -68,7 +69,7 @@ typedef void (ompi_mpi1_fortran_copy_attr_function)(MPI_Fint *oldobj,
                                                     MPI_Fint *extra_state, 
                                                     MPI_Fint *attr_in,
                                                     MPI_Fint *attr_out,
-                                                    ompi_fortran_logical_t *flag, 
+                                                    ompi_fortran_logical_t *flag,
                                                     MPI_Fint *ierr);
 typedef void (ompi_mpi1_fortran_delete_attr_function)(MPI_Fint *obj, 
                                                       MPI_Fint *keyval,
@@ -85,7 +86,7 @@ typedef void (ompi_mpi2_fortran_copy_attr_function)(MPI_Fint *oldobj,
                                                     void *extra_state, 
                                                     void *attr_in, 
                                                     void *attr_out,
-                                                    ompi_fortran_logical_t *flag, 
+                                                    ompi_fortran_logical_t *flag,
                                                     MPI_Fint *ierr);
 typedef void (ompi_mpi2_fortran_delete_attr_function)(MPI_Fint *obj, 
                                                       MPI_Fint *keyval,
@@ -99,11 +100,14 @@ typedef void (ompi_mpi2_fortran_delete_attr_function)(MPI_Fint *obj,
  * on the main communicator.
  */
 typedef int (MPI_Comm_internal_copy_attr_function)(MPI_Comm, int, void *,
-                                                   void *, void *, int *, MPI_Comm);
+                                                   void *, void *, int *, 
+                                                   MPI_Comm);
 typedef int (MPI_Type_internal_copy_attr_function)(MPI_Datatype, int, void *,
-                                                   void *, void *, int *, MPI_Datatype);
+                                                   void *, void *, int *, 
+                                                   MPI_Datatype);
 typedef int (MPI_Win_internal_copy_attr_function)(MPI_Win, int, void *,
-                                                  void *, void *, int *, MPI_Win);
+                                                  void *, void *, int *, 
+                                                  MPI_Win);
 
 typedef void (ompi_attribute_keyval_destructor_fn_t)(int);
 
@@ -151,18 +155,18 @@ typedef union ompi_attribute_fortran_ptr_t ompi_attribute_fortran_ptr_t;
 struct ompi_attribute_keyval_t {
     opal_object_t super;
     ompi_attribute_type_t attr_type; /**< One of COMM/WIN/DTYPE. This
-				       will be used to cast the
-				       copy/delete attribute functions
-				       properly and error checking */
+                                       will be used to cast the
+                                       copy/delete attribute functions
+                                       properly and error checking */
     int attr_flag; /**< flag field: contains "OMPI_KEYVAL_PREDEFINED",
-		      "OMPI_KEYVAL_F77"  */
+                      "OMPI_KEYVAL_F77"  */
     ompi_attribute_fn_ptr_union_t copy_attr_fn; /**< Copy function for the 
-					     attribute */
+                                             attribute */
     ompi_attribute_fn_ptr_union_t delete_attr_fn; /**< Delete function for the
-					       attribute */
+                                               attribute */
     void *extra_state; /**< Extra state of the attribute */
     int key; /**< Keep a track of which key this item belongs to, so that
-		the key can be deleted when this object is destroyed */
+                the key can be deleted when this object is destroyed */
 
     /** If non-null, call this function when the OBJ destructor for this
         object is invoked */
@@ -484,8 +488,8 @@ int ompi_attr_delete(ompi_attribute_type_t type, void *object,
  */
 
 int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object, 
-		      void *new_object, opal_hash_table_t *oldattr_hash,
-		      opal_hash_table_t *newkeyhash);
+                      void *new_object, opal_hash_table_t *oldattr_hash,
+                      opal_hash_table_t *newkeyhash);
 
 
 /** 
@@ -499,7 +503,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
  */
 
 int ompi_attr_delete_all(ompi_attribute_type_t type, void *object, 
-			opal_hash_table_t *attr_hash);
+                        opal_hash_table_t *attr_hash);
 
 
 /**
@@ -520,7 +524,6 @@ int ompi_attr_create_predefined(void);
  */
 int ompi_attr_free_predefined(void);
 
-struct orte_gpr_notify_data_t;
 /**
  * \internal
  * Callback function to get data from registry and create predefined attributes
@@ -528,8 +531,8 @@ struct orte_gpr_notify_data_t;
  * @returns Nothing
  */
 void ompi_attr_create_predefined_callback(
-	orte_gpr_notify_data_t *data,
-	void *cbdata);
+        orte_gpr_notify_data_t *data,
+        void *cbdata);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
