@@ -608,17 +608,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-#if OMPI_ENABLE_PROGRESS_THREADS && 0
-    /* BWB - XXX - FIXME - is this actually correct? */
-    /* setup I/O forwarding */
-    if (orte_process_info.seed == false) {
-        if (OMPI_SUCCESS != (ret = ompi_mpi_init_io())) {
-            error = "ompi_rte_init_io failed";
-            goto error;
-        }
-    }
-#endif
-
     /*
      * Dump all MCA parameters if requested
      */
