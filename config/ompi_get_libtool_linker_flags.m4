@@ -76,11 +76,11 @@ ompi_check_linker_flags_work
 cmd="$libtool --dry-run --mode=link --tag=CC $CC bar.lo libfoo.la -o bar $extra_flags"
 ompi_check_linker_flags_work yes
 
+output=`echo $output | sed -e "s/^$CC//"`
 eval "set $output"
 extra_ldflags=
 while test -n "[$]1"; do
     case "[$]1" in
-    $CC) ;;
     *.libs/bar*) ;;
     bar*) ;;
     -I*) ;;
