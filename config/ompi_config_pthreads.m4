@@ -480,7 +480,6 @@ if test "$ompi_pthread_cxx_success" = "0"; then
                               ompi_pthread_cxx_success=0)
     AC_LANG_POP(C++)
     if test "$ompi_pthread_cxx_success" = "1"; then
-      PTHREAD_LIBS="$pl"
       AC_MSG_RESULT([yes])
     else
       CXXCPPFLAGS="$orig_CXXCPPFLAGS"
@@ -515,6 +514,7 @@ if test "$ompi_pthread_cxx_success" = "0"; then
       else
         PTHREAD_CXXCPPFLAGS=
         CXXCPPFLAGS="$orig_CXXCPPFLAGS"
+        LIBS="$orig_LIBS"
         AC_MSG_RESULT([no])
       fi
     done
@@ -535,7 +535,6 @@ if test "$ompi_pthread_f77_success" = "0" -a "$OMPI_WANT_F77_BINDINGS" = "1"; th
     OMPI_INTL_PTHREAD_TRY_LINK_F77(ompi_pthread_f77_success=1, 
                                   ompi_pthread_f77_success=0)
     AC_LANG_POP(C)
-    LIBS="$orig_LIBS"
     if test "$ompi_pthread_f77_success" = "1"; then
       AC_MSG_RESULT([yes])
     else
@@ -550,12 +549,12 @@ if test "$ompi_pthread_f77_success" = "0" -a "$OMPI_WANT_F77_BINDINGS" = "1"; th
       OMPI_INTL_PTHREAD_TRY_LINK_F77(ompi_pthread_f77_success=1, 
                                     ompi_pthread_f77_success=0)
       AC_LANG_POP(C)
-      LIBS="$orig_LIBS"
       if test "$ompi_pthread_f77_success" = "1"; then
 	PTHREAD_LIBS="$pl"
         AC_MSG_RESULT([yes])
         break
       else
+        LIBS="$orig_LIBS"
         AC_MSG_RESULT([no])
       fi
     done
