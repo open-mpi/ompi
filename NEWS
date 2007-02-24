@@ -36,6 +36,13 @@ Trunk (not on release branches yet)
 - Added Microsoft Windows support.  See README.WINDOWS file for
   details.
   --> Expected: ???
+- Fixed issue with multi-word CC variables and pulling the LDFLAGS
+  added by libtool.  Thanks to Bert Wesarg for the bug report.
+  --> Expected 1.2.1
+- Fixed issue with pthread detection when compilers are not all
+  from the same vendor.  Thanks to Ake Sandgren for the bug
+  report.
+  --> Expected 1.2.1
 
 
 1.2
