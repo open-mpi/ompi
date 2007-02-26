@@ -266,6 +266,51 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
  *	Function:	- reduction using O(log N) algorithm
  *	Accepts:	- same as MPI_Reduce()
  *	Returns:	- MPI_SUCCESS or error code
+ *
+ * 
+ *      Performing reduction on each dimension of the hypercube.
+ *	An example for 8 procs (dimensions = 3):
+ *
+ *      Stage 1, reduce on X dimension,  1 -> 0, 3 -> 2, 5 -> 4, 7 -> 6
+ *
+ *          6----<---7		proc_0: 0+1
+ *         /|       /|		proc_1: 1
+ *        / |      / |		proc_2: 2+3
+ *       /  |     /  |		proc_3: 3
+ *      4----<---5   |		proc_4: 4+5
+ *      |   2--< |---3		proc_5: 5
+ *      |  /     |  /		proc_6: 6+7
+ *      | /      | /		proc_7: 7
+ *      |/       |/
+ *      0----<---1
+ *
+ *	Stage 2, reduce on Y dimension, 2 -> 0, 6 -> 4
+ *
+ *          6--------7		proc_0: 0+1+2+3
+ *         /|       /|		proc_1: 1
+ *        v |      / |		proc_2: 2+3
+ *       /  |     /  |		proc_3: 3
+ *      4--------5   |		proc_4: 4+5+6+7
+ *      |   2--- |---3		proc_5: 5
+ *      |  /     |  /		proc_6: 6+7
+ *      | v      | /		proc_7: 7
+ *      |/       |/
+ *      0--------1
+ *
+ *	Stage 3, reduce on Z dimension, 4 -> 0
+ *
+ *          6--------7		proc_0: 0+1+2+3+4+5+6+7
+ *         /|       /|		proc_1: 1
+ *        / |      / |		proc_2: 2+3
+ *       /  |     /  |		proc_3: 3
+ *      4--------5   |		proc_4: 4+5+6+7
+ *      |   2--- |---3		proc_5: 5
+ *      v  /     |  /		proc_6: 6+7
+ *      | /      | /		proc_7: 7
+ *      |/       |/
+ *      0--------1
+ *
+ *
  */
 int
 mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
