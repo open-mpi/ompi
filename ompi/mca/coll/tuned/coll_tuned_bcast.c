@@ -252,8 +252,8 @@ ompi_coll_tuned_bcast_intra_bintree ( void* buffer,
     ompi_ddt_type_size( datatype, &typelng );
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_binary rank %d ss %5d typelng %uld segcount %d",
-                 ompi_comm_rank(comm), segsize, typelng, segcount));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_binary rank %d ss %5d typelng %lu segcount %d",
+                 ompi_comm_rank(comm), segsize, (unsigned long)typelng, segcount));
 
     return ompi_coll_tuned_bcast_intra_generic( buffer, count, datatype, root, comm,
                                                 segcount, comm->c_coll_selected_data->cached_bintree );
@@ -278,8 +278,8 @@ ompi_coll_tuned_bcast_intra_pipeline( void* buffer,
     ompi_ddt_type_size( datatype, &typelng );
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_pipeline rank %d ss %5d typelng %uld segcount %d",
-                 ompi_comm_rank(comm), segsize, typelng, segcount));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_pipeline rank %d ss %5d typelng %lu segcount %d",
+                 ompi_comm_rank(comm), segsize, (unsigned long)typelng, segcount));
 
     return ompi_coll_tuned_bcast_intra_generic( buffer, count, datatype, root, comm,
                                                 segcount, comm->c_coll_selected_data->cached_pipeline );
@@ -304,8 +304,8 @@ ompi_coll_tuned_bcast_intra_chain( void* buffer,
     ompi_ddt_type_size( datatype, &typelng );
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_chain rank %d fo %d ss %5d typelng %uld segcount %d",
-                 ompi_comm_rank(comm), chains, segsize, typelng, segcount));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_chain rank %d fo %d ss %5d typelng %lu segcount %d",
+                 ompi_comm_rank(comm), chains, segsize, (unsigned long)typelng, segcount));
 
     return ompi_coll_tuned_bcast_intra_generic( buffer, count, datatype, root, comm,
                                                 segcount, comm->c_coll_selected_data->cached_chain );
@@ -330,8 +330,8 @@ ompi_coll_tuned_bcast_intra_binomial( void* buffer,
     ompi_ddt_type_size( datatype, &typelng );
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_binomial rank %d ss %5d typelng %uld segcount %d",
-                 ompi_comm_rank(comm), segsize, typelng, segcount));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_binomial rank %d ss %5d typelng %lu segcount %d",
+                 ompi_comm_rank(comm), segsize, (unsigned long)typelng, segcount));
 
     return ompi_coll_tuned_bcast_intra_generic( buffer, count, datatype, root, comm,
                                                 segcount, comm->c_coll_selected_data->cached_bmtree );
