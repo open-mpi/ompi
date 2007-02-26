@@ -19,6 +19,7 @@
  * $HEADER$
  */
 
+#define OMPI_DISABLE_ENABLE_MEM_DEBUG 1
 #include "ompi_config.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
