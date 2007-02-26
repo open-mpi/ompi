@@ -30,7 +30,7 @@
  *	gatherv_intra
  *
  *	Function:	- basic gatherv operation
- *	Accepts:	- same arguments as MPI_Gatherb()
+ *	Accepts:	- same arguments as MPI_Gatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
