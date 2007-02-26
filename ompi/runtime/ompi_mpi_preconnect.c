@@ -118,28 +118,28 @@ int ompi_init_do_oob_preconnect(void)
         for (i = 0 ; i < world_size ; ++i) {
             if (ompi_proc_local() == procs[i]) {
                 my_index = i;
+                /* Do all required preconnections */
+                for (i = 1 ; i <= world_size / 2 ; ++i) {
+                    next = (my_index + i) % world_size;
+                    prev = (my_index - i + world_size) % world_size;
+                    
+                    /* sends do not wait for a match */
+                    ret = orte_rml.send(&procs[next]->proc_name,
+                                        msg,
+                                        1,
+                                        ORTE_RML_TAG_WIREUP,
+                                        0);
+                    if (ret < 0) return ret;
+                    
+                    ret = orte_rml.recv(&procs[prev]->proc_name,
+                                        msg,
+                                        1,
+                                        ORTE_RML_TAG_WIREUP,
+                                        0);
+                    if (ret < 0) return ret;
+                }
                 break;
             }
-        }
-
-        for (i = 1 ; i <= world_size / 2 ; ++i) {
-            next = (my_index + i) % world_size;
-            prev = (my_index - i + world_size) % world_size;
-
-            /* sends do not wait for a match */
-            ret = orte_rml.send(&procs[next]->proc_name,
-                                msg,
-                                1,
-                                ORTE_RML_TAG_WIREUP,
-                                0);
-            if (ret < 0) return ret;
-
-            ret = orte_rml.recv(&procs[prev]->proc_name,
-                                msg,
-                                1,
-                                ORTE_RML_TAG_WIREUP,
-                                0);
-            if (ret < 0) return ret;
         }
     }
     
