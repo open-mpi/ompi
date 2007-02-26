@@ -19,6 +19,7 @@
  * $HEADER$
  */
 
+#define OMPI_DISABLE_ENABLE_MEM_DEBUG 1
 #include "ompi_config.h"
 #include "opal/include/opal/align.h"
 #include "orte/util/proc_info.h"
