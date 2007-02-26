@@ -212,8 +212,9 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     ompi_ddt_type_size(datatype, &dsize);
     message_size = dsize * (unsigned long)count;   /* needed for decision */
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_bcast_intra_dec_fixed root %d rank %d com_size %d msg_length %uld",
-                 root, rank, communicator_size, message_size));
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_bcast_intra_dec_fixed"
+                 " root %d rank %d com_size %d msg_length %lu",
+                 root, rank, communicator_size, (unsigned long)message_size));
 
     /* Handle messages of small and intermediate size */
     if (message_size < small_message_size) {
@@ -328,8 +329,8 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     message_size = dsize * count;   /* needed for decision */
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_dec_fixed"
-                 "root %d rank %d com_size %d msg_length %uld",
-                 root, rank, communicator_size, message_size));
+                 "root %d rank %d com_size %d msg_length %lu",
+                 root, rank, communicator_size, (unsigned long)message_size));
 
     if ((communicator_size < 8) && (message_size < 512)){
         /* Linear_0K */
@@ -423,7 +424,9 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
    ompi_ddt_type_size(sdtype, &dsize);
    total_dsize = dsize * scount * communicator_size;   
    
-   OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allgather_intra_dec_fixed rank %d com_size %d msg_length %uld", rank, communicator_size, total_dsize));
+   OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allgather_intra_dec_fixed"
+                " rank %d com_size %d msg_length %lu",
+                rank, communicator_size, (unsigned long)total_dsize));
 
    for (pow2_size  = 1; pow2_size <= communicator_size; pow2_size <<=1); 
    pow2_size >>=1;
