@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -134,11 +135,12 @@ int mca_mpool_base_module_destroy(mca_mpool_base_module_t *module)
     opal_list_item_t* item;
     mca_mpool_base_selected_module_t *sm;
 
-    for (item = opal_list_remove_first(&mca_mpool_base_modules);
-         NULL != item; 
-         item = opal_list_remove_first(&mca_mpool_base_modules)) {
+    for (item = opal_list_get_first(&mca_mpool_base_modules);
+            item != opal_list_get_end(&mca_mpool_base_modules);
+            item = opal_list_get_next(item)) {
         sm = (mca_mpool_base_selected_module_t *) item;
         if (module == sm->mpool_module) {
+            opal_list_remove_item(&mca_mpool_base_modules,item);
             if (NULL != sm->mpool_module->mpool_finalize) {
                 sm->mpool_module->mpool_finalize(sm->mpool_module);
             }
