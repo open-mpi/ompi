@@ -56,7 +56,7 @@ typedef struct orte_odls_child_t {
     bool alive;                  /* is this proc alive? */
     orte_proc_state_t state;     /* the state of the process */
 } orte_odls_child_t;
-OBJ_CLASS_DECLARATION(orte_odls_child_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
     
     
 typedef struct orte_odls_globals_t {
