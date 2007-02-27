@@ -83,7 +83,6 @@ base as of this writing (28 Feb 2007):
   - XGrid
   - Cray XT-3 and XT-4
   - Sun N1 Grid Engine (N1GE) 6 and open source Grid Engine
-    *** JMS waiting for Sun confirmation
 
 - The majority of Open MPI's documentation is here in this file, the
   included man pages, and on the web site FAQ
