@@ -43,6 +43,8 @@ Trunk (not on release branches yet)
   from the same vendor.  Thanks to Ake Sandgren for the bug
   report.
   --> Expected 1.2.1
+- Portals MTL
+  --> Expected 1.2.x
 
 
 1.2
@@ -66,9 +68,9 @@ Trunk (not on release branches yet)
   job startup scalability, BProc support, and cleanup in failure
   scenarios (e.g., MPI_ABORT, MPI processes abnormally terminating,
   etc.).
-- Significant performance improvements for MPI collectives on
-  high-speed networks.
-- Various fixes in both the MX BTL and MTL components.
+- Significant performance improvements for MPI collectives,
+  particularly on high-speed networks.
+- Various fixes in the MX BTL component.
 - Fix C++ typecast problems with MPI_ERRCODES_IGNORE.  Thanks to
   Satish Balay for bringing this to our attention.
 - Allow run-time specification of the maximum amount of registered
@@ -105,8 +107,8 @@ Trunk (not on release branches yet)
 - Fixed standards conformance issues with MPI_ERR_TRUNCATED and
   setting MPI_ERROR during MPI_TEST/MPI_WAIT.
 - Addition of "cm" PML to better support library-level matching
-  interconnects, with support for Myrinet/MX, Portals, and QLogic
-  PSM-based networks.
+  interconnects, with support for Myrinet/MX, and QLogic PSM-based
+  networks.
 - Addition of "udapl" BTL for transport across uDAPL interconnects.
 - Really check that the $CXX given to configure is a C++ compiler
   (not a C compiler that "sorta works" as a C++ compiler).
