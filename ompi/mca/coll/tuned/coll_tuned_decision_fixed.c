@@ -43,6 +43,7 @@ ompi_coll_tuned_allreduce_intra_dec_fixed (void *sbuf, void *rbuf, int count,
                                            struct ompi_communicator_t *comm)
 {
     size_t dsize, block_dsize;
+    int comm_size = ompi_comm_size(comm);
     const size_t intermediate_message = 10000;
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allreduce_intra_dec_fixed"));
 
@@ -62,9 +63,17 @@ ompi_coll_tuned_allreduce_intra_dec_fixed (void *sbuf, void *rbuf, int count,
                                                                   op, comm));
     } 
 
-    if( ompi_op_is_commute(op) ) {
-       return (ompi_coll_tuned_allreduce_intra_ring (sbuf, rbuf, count, dtype, 
-                                                     op, comm));
+    if( ompi_op_is_commute(op) && (count > comm_size) ) {
+       const size_t segment_size = 1 << 20; /* 1 MB */
+       if ((comm_size * segment_size >= block_dsize)) {
+          return (ompi_coll_tuned_allreduce_intra_ring (sbuf, rbuf, count, dtype, 
+                                                        op, comm));
+       } else {
+          return (ompi_coll_tuned_allreduce_intra_ring_segmented (sbuf, rbuf, 
+                                                                  count, dtype, 
+                                                                  op, comm,
+                                                                  segment_size));
+       }
     }
 
     return (ompi_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, 
