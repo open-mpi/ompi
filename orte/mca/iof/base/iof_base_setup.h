@@ -40,11 +40,11 @@ typedef struct orte_iof_base_io_conf_t orte_iof_base_io_conf_t;
  * Do all stdio forwarding that must be done before fork() is called.
  * This might include creating pipes or ptys or similar work.
  */
-int orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts);
+ORTE_DECLSPEC int orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts);
 
-int orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts);
+ORTE_DECLSPEC int orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts);
 
-int orte_iof_base_setup_parent(const orte_process_name_t* name,
-                               orte_iof_base_io_conf_t *opts);
+ORTE_DECLSPEC int orte_iof_base_setup_parent(const orte_process_name_t* name,
+                                             orte_iof_base_io_conf_t *opts);
 
 #endif
