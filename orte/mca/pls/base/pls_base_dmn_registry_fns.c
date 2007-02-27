@@ -46,10 +46,10 @@ static void orte_pls_daemon_info_destructor(orte_pls_daemon_info_t* ptr)
     if (NULL != ptr->nodename) free(ptr->nodename);
     if (NULL != ptr->name) free(ptr->name);
 }
-OBJ_CLASS_INSTANCE(orte_pls_daemon_info_t,  /* type name */
-                   opal_list_item_t, /* parent "class" name */
-                   orte_pls_daemon_info_construct, /* constructor */
-                   orte_pls_daemon_info_destructor); /* destructor */
+ORTE_DECLSPEC OBJ_CLASS_INSTANCE(orte_pls_daemon_info_t,  /* type name */
+                                 opal_list_item_t, /* parent "class" name */
+                                 orte_pls_daemon_info_construct, /* constructor */
+                                 orte_pls_daemon_info_destructor); /* destructor */
                    
 /*
  * Store the active daemons for a job

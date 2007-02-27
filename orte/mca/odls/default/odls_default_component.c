@@ -60,7 +60,7 @@ OBJ_CLASS_INSTANCE(odls_default_app_context_t,
  * and pointers to our public functions in it
  */
 
-orte_odls_base_component_t mca_odls_default_component = {
+ORTE_MODULE_DECLSPEC orte_odls_base_component_t mca_odls_default_component = {
     /* First, the mca_component_t struct containing meta information
     about the component itself */
     {

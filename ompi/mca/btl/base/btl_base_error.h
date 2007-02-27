@@ -28,7 +28,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/sys_info.h"
 
-extern int mca_btl_base_debug;
+OMPI_DECLSPEC extern int mca_btl_base_debug;
 
 extern int mca_btl_base_err(const char*, ...);
 extern int mca_btl_base_out(const char*, ...);

@@ -19,9 +19,10 @@
 #ifndef OPAL_MCA_TIMER_LINUX_TIMER_LINUX_H
 #define OPAL_MCA_TIMER_LINUX_TIMER_LINUX_H
 
+#include "opal_config.h"
 #include <opal/sys/timer.h>
 
-extern opal_timer_t opal_timer_linux_freq;
+OPAL_DECLSPEC extern opal_timer_t opal_timer_linux_freq;
 
 static inline opal_timer_t
 opal_timer_base_get_cycles(void)
