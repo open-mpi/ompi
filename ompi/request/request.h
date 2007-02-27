@@ -319,7 +319,7 @@ OMPI_DECLSPEC int ompi_request_test_some(
  *
  */
 
-int ompi_request_wait(
+OMPI_DECLSPEC int ompi_request_wait(
     ompi_request_t ** req_ptr,
     ompi_status_public_t * status);
 

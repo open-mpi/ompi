@@ -23,6 +23,8 @@
 extern "C" {
 #endif
 
+    ORTE_MODULE_DECLSPEC extern orte_sds_base_component_t mca_sds_slurm_component;
+    
     /*
      * Module open / close
      */

@@ -83,12 +83,12 @@ int ompi_proc_finalize(void);
 /**
  * Returns the list of proc instances associated with this job.
  */
-ompi_proc_t** ompi_proc_world(size_t* size);
+OMPI_DECLSPEC ompi_proc_t** ompi_proc_world(size_t* size);
 
 /**
  * Returns the list of all known proc instances.
  */
-ompi_proc_t** ompi_proc_all(size_t* size);
+OMPI_DECLSPEC ompi_proc_t** ompi_proc_all(size_t* size);
 
 /**
  * Returns a list (of one) proc instances.
