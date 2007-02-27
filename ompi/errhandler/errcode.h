@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,7 +65,6 @@ static inline bool ompi_mpi_errcode_is_invalid(int errcode)
         return 1;
 }
 
-OMPI_DECLSPEC extern ompi_mpi_errcode_t ompi_err_unknown;
 /**
  * Return the error class
  */
