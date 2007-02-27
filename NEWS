@@ -117,6 +117,8 @@ Trunk (not on release branches yet)
 1.1.5
 -----
 
+- Fix syntax error in a corner case of the event library.  Thanks to
+  Bert Wesarg for pointing this out.
 - Add new MCA parameter (mpi_preconnect_oob) for pre-connecting the
   "out of band" channels between all MPI processes.  Most helpful for
   MPI applications over InfiniBand where process A sends an initial
@@ -125,8 +127,6 @@ Trunk (not on release branches yet)
 - Fix for a race condition in shared memory locking semantics.
 - Add major, minor, and release version number of Open MPI to mpi.h.
   Thanks to Martin Audet for the suggestion.
-- Fix a race condition in the shared memory btl that could cause
-  deadlock.
 - Fix the "restrict" compiler check in configure.
 - Fix a problem with argument checking in MPI_TYPE_CREATE_SUBARRAY.
 - Fix a problem with compiling the XGrid components with non-gcc
