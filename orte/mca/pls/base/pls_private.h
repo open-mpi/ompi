@@ -61,7 +61,7 @@ typedef uint8_t orte_pls_cmd_flag_t;
     /*
      * object for daemon information
      */
-    ORTE_DECLSPEC typedef struct orte_pls_daemon_info_t {
+    typedef struct orte_pls_daemon_info_t {
         opal_list_item_t super;
         orte_cellid_t cell;
         char *nodename;
