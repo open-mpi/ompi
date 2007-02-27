@@ -8,7 +8,7 @@ Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
 $COPYRIGHT$
@@ -40,8 +40,14 @@ Thanks for your time.
 
 ===========================================================================
 
+Much, much more information is also available in the Open MPI FAQ:
+
+    http://www.open-mpi.org/faq/
+
+===========================================================================
+
 The following abbreviated list of release notes applies to this code
-base as of this writing (10 Nov 2006):
+base as of this writing (28 Feb 2007):
 
 - Open MPI includes support for a wide variety of supplemental
   hardware and software package.  When configuring Open MPI, you may
@@ -51,14 +57,16 @@ base as of this writing (10 Nov 2006):
   may include support for all the devices (etc.) that you expect,
   especially if their support headers / libraries are installed in
   non-standard locations.  Network interconnects are an easy example
-  to discuss -- Myrinet and Infiniband, for example, both have
+  to discuss -- Myrinet and InfiniBand, for example, both have
   supplemental headers and libraries that must be found before Open
   MPI can build support for them.  You must specify where these files
   are with the appropriate options to configure.  See the listing of
   configure command-line switches, below, for more details.
 
 - The Open MPI installation must be in your PATH on all nodes (and
-  potentially LD_LIBRARY_PATH, if libmpi is a shared library).
+  potentially LD_LIBRARY_PATH, if libmpi is a shared library), unless
+  using the --prefix or --enable-mpirun-prefix-by-default
+  functionality (see below).
 
 - LAM/MPI-like mpirun notation of "C" and "N" is not yet supported.
 
@@ -68,30 +76,31 @@ base as of this writing (10 Nov 2006):
 
 - The run-time systems that are currently supported are:
   - rsh / ssh
-  - Recent versions of BProc (e.g., Clustermatic)
-  - PBS Pro, Open PBS, Torque (i.e., anything who supports the TM
-    interface)
+  - BProc versions 3 and 4 with LSF
+  - LoadLeveler
+  - PBS Pro, Open PBS, Torque
   - SLURM
   - XGrid
-  - Cray XT-3 / Red Storm
+  - Cray XT-3 and XT-4
   - Sun N1 Grid Engine (N1GE) 6 and open source Grid Engine
+    *** JMS waiting for Sun confirmation
 
-- The majority of Open MPI's documentation is here in this file and on
-  the web site FAQ (http://www.open-mpi.org/).  This will eventually
-  be supplemented with cohesive installation and user documentation
-  files.
+- The majority of Open MPI's documentation is here in this file, the
+  included man pages, and on the web site FAQ
+  (http://www.open-mpi.org/).  This will eventually be supplemented
+  with cohesive installation and user documentation files.
 
 - Systems that have been tested are:
   - Linux, 32 bit, with gcc
   - Linux, 64 bit (x86), with gcc
-  - OS X (10.3), 32 bit, with gcc
-  - OS X (10.4), 32 bit, with gcc
+  - OS X (10.4), 32 and 64 bit (i386, PPC, PPC64, x86_64), with gcc
   - Solaris 10 update 2, SPARC and AMD, 32 and 64 bit, with Sun Studio
     10
+    *** JMS waiting for Sun clarification
 
 - Other systems have been lightly (but not fully tested):
   - Other compilers on Linux, 32 and 64 bit
-  - Other 64 bit platforms (Linux and AIX on PPC64, SPARC)
+  - Other 64 bit platforms (e.g., Linux on PPC64)
 
 - Some MCA parameters can be set in a way that renders Open MPI
   inoperable (see notes about MCA parameters later in this file).  In
@@ -106,15 +115,12 @@ base as of this writing (10 Nov 2006):
     not be able to route MPI messages using the TCP BTL.  For example:
     "mpirun --mca btl_tcp_if_exclude lo,eth1 ..."
 
-- Building shared libraries on AIX with the xlc compilers is only
-  supported if you supply the following command line option to
-  configure: LDFLAGS=-Wl,-brtl.
-
 - Open MPI does not support the Sparc v8 CPU target, which is the
   default on Sun Solaris.  The v8plus (32 bit) or v9 (64 bit)
   targets must be used to build Open MPI on Solaris.  This can be
   done by including a flag in CFLAGS, CXXFLAGS, FFLAGS, and FCFLAGS,
   -xarch=v8plus for the Sun compilers, -mv8plus for GCC.
+    *** JMS waiting for Sun confirmation
 
 - At least some versions of the Intel 8.1 compiler seg fault while
   compiling certain Open MPI source code files.  As such, it is not
@@ -181,16 +187,14 @@ base as of this writing (10 Nov 2006):
   You can use the ompi_info command to see the Fortran compiler that
   Open MPI was configured with.
 
-- The MPI and run-time layers do not free all used memory properly
-  during MPI_FINALIZE.
-
 - Running on nodes with different endian and/or different datatype
-  sizes within a single parallel job is supported starting with Open
-  MPI v1.1.  However, Open MPI does not resize data when datatypes
-  differ in size (for example, sending a 4 byte MPI_LONG and receiving
-  an 8 byte MPI_LONG will fail).
+  sizes within a single parallel job is supported in this release.
+  However, Open MPI does not resize data when datatypes differ in size
+  (for example, sending a 4 byte MPI_DOUBLE and receiving an 8 byte
+  MPI_DOUBLE will fail).
 
 - MPI_THREAD_MULTIPLE support is included, but is only lightly tested.
+  It likely does not work for thread-intensive applications.
 
 - Asynchronous message passing progress using threads can be turned on
   with the --enable-progress-threads option to configure.
@@ -217,11 +221,24 @@ base as of this writing (10 Nov 2006):
   messages; latter fragments do not have this size restriction.  The
   MCA parameter btl_mx_max_send_size can be used to vary the maximum
   size of subsequent fragments.
+  *** JMS fix MX paragraph (George says it's wrong)
 
-- The Open Fabrics Enterprise Distribution (OFED) software package
-  v1.0 will not work properly with Open MPI v1.2 (and later) due to
-  how its Mellanox InfiniBand plugin driver is created.  The problem
-  is fixed OFED v1.1 (and later).
+- The OpenFabrics Enterprise Distribution (OFED) software package v1.0
+  will not work properly with Open MPI v1.2 (and later) due to how its
+  Mellanox InfiniBand plugin driver is created.  The problem is fixed
+  OFED v1.1 (and later).
+
+- The use of the mvapi BTL is deprecated.  All new InfiniBand work is
+  being done in the openib BTL (i.e., the OpenFabrics driver stack).
+
+- The use of fork() with the openib BTL is only partially supported,
+  and only on Linux kernels >= v2.6.15 with libibverbs v1.1 or later
+  (first released as part of OFED v1.2).  More complete support will
+  be included in a future release of Open MPI (see the OFED 1.2
+  distribution for details).
+
+- iWARP support is not yet included in the Open MPI OpenFabrics
+  support.
 
 - The Fortran 90 MPI bindings can now be built in one of three sizes
   using --with-mpi-f90-size=SIZE (see description below).  These sizes
@@ -264,6 +281,36 @@ base as of this writing (10 Nov 2006):
   interface.  A "large" size that includes the two choice buffer MPI
   functions is possible in future versions of Open MPI.
 
+- Starting with Open MPI v1.2, there are two MPI network models
+  available: "ob1" and "cm".  
+
+  - "ob1" supports a variety of networks that can be used in
+    combination with each other (per OS constraints; e.g., there are
+    reports that the GM and OpenFabrics kernel drivers do not operate
+    well together):
+    - InfiniBand: mVAPI and the OpenFabrics stack
+    - Loopback (send-to-self)
+    - Myrinet: GM and MX
+    - Portals
+    - Shared memory
+    - TCP
+    - uDAPL
+
+  - "cm" supports a smaller number of networks (and they cannot be
+    used together), but may provide better better overall MPI
+    performance:
+    - Myrinet MX (not GM)
+    - InfiniPath PSM
+
+  Open MPI will, by default, choose to use "cm" if it finds a
+  cm-supported network at run-time.  Users can force the use of ob1 if
+  desired by setting the "pml" MCA parameter at run-time:
+
+    shell$ mpirun --mca pml ob1 ...
+
+  *** JMS need more verbiage here about cm?  Need a paragraph
+      describing the diff between MX BTL and MX MTL?
+
 ===========================================================================
 
 Building Open MPI
@@ -305,7 +352,8 @@ for a full list); a summary of the more commonly used ones follows:
 
 --with-mvapi=<directory>
   Specify the directory where the mVAPI libraries and header files are
-  located.  This enables mVAPI support in Open MPI.
+  located.  This enables mVAPI support in Open MPI (although it is
+  deprecated).
 
 --with-mvapi-libdir=<directory>
   Look in directory for the MVAPI libraries.  By default, Open MPI will
@@ -314,8 +362,8 @@ for a full list); a summary of the more commonly used ones follows:
 
 --with-openib=<directory>
   Specify the directory where the OpenFabrics (previously known as
-  OpenIB) libraries and header files are located.  This enables Open
-  Fabrics support in Open MPI.
+  OpenIB) libraries and header files are located.  This enables
+  OpenFabrics support in Open MPI.
 
 --with-openib-libdir=<directory>
   Look in directory for the OpenFabrics libraries.  By default, Open
@@ -425,7 +473,7 @@ for a full list); a summary of the more commonly used ones follows:
   --disable-shared; enabling static libraries and disabling shared
   libraries are two independent options.
 
-There are several other options available -- see "./configure --help".
+There are many other options available -- see "./configure --help".
 
 Changing the compilers that Open MPI uses to build itself uses the
 standard Autoconf mechanism of setting special environment variables
@@ -554,7 +602,7 @@ are equivalent.  Some of mpiexec's switches (such as -host and -arch)
 are not yet functional, although they will not error if you try to use
 them.  
 
-The rsh starter accepts a -hostfile parameter (the option
+The rsh launcher accepts a -hostfile parameter (the option
 "-machinefile" is equivalent); you can specify a -hostfile parameter
 indicating an standard mpirun-style hostfile (one hostname per line):
 
@@ -578,6 +626,15 @@ and 3 on node3, and ranks 4 through 7 on node4.
 
 Other starters, such as the batch scheduling environments, do not
 require hostfiles (and will ignore the hostfile if it is supplied).
+They will also launch as many processes as slots have been allocated
+by the scheduler if no "-np" argument has been provided.  For example,
+running an interactive SLURM job with 8 processors:
+
+shell$ srun -n 8 -A
+shell$ mpirun a.out
+
+The above command will launch 8 copies of a.out in a single
+MPI_COMM_WORLD on the processors that were allocated by SLURM.
 
 Note that the values of component parameters can be changed on the
 mpirun / mpiexec command line.  This is explained in the section
@@ -604,6 +661,7 @@ io        - MPI-2 I/O
 mpool     - Memory pooling
 mtl       - Matching transport layer, used for MPI point-to-point
             messages on some types of networks
+osc       - MPI-2 one-sided communications
 pml       - MPI point-to-point management layer
 rcache    - Memory registration cache
 topo      - MPI topology routines
@@ -630,8 +688,11 @@ smr       - State-of-health monitoring subsystem
 Miscellaneous frameworks:
 -------------------------
 
+backtrace - Debugging call stack backtrace support
 maffinity - Memory affinity
 memory    - Memory subsystem hooks
+memcpy    - Memopy copy support
+memory    - Memory management hooks
 paffinity - Processor affinity
 timer     - High-resolution timers
 
@@ -726,44 +787,10 @@ the following web page to subscribe:
 
      http://www.open-mpi.org/mailman/listinfo.cgi/devel
 
-When submitting bug reports to either list, be sure to include the
-following information in your mail (please compress!):
+When submitting bug reports to either list, be sure to include as much
+extra information as possible.  This web page details all the
+information that we request in order to provide assistance:
 
-- the stdout and stderr from Open MPI's configure
-- the top-level config.log file
-- the stdout and stderr from building Open MPI
-- the output from "ompi_info --all" (if possible)
+     http://www.open-mpi.org/community/help/
 
-For Bourne-type shells, here's one way to capture this information:
-
-shell$ ./configure ... 2>&1 | tee config.out
-[...lots of configure output...]
-shell$ make 2>&1 | tee make.out
-[...lots of make output...]
-shell$ mkdir ompi-output
-shell$ cp config.out config.log make.out ompi-output
-shell$ ompi_info --all |& tee ompi-output/ompi-info.out
-shell$ tar cvf ompi-output.tar ompi-output
-[...output from tar...]
-shell$ gzip ompi-output.tar
-
-For C shell-type shells, the procedure is only slightly different:
-
-shell% ./configure ... |& tee config.out
-[...lots of configure output...]
-shell% make |& tee make.out
-[...lots of make output...]
-shell% mkdir ompi-output
-shell% cp config.out config.log make.out ompi-output
-shell% ompi_info --all |& tee ompi-output/ompi-info.out
-shell% tar cvf ompi-output.tar ompi-output
-[...output from tar...]
-shell% gzip ompi-output.tar
-
-In either case, attach the resulting ompi-output.tar.gz file to your
-mail.  This provides the Open MPI developers with a lot of information
-about your installation and can greatly assist us in helping with your
-problem.
-
-Be sure to also include any other useful files (in the
-ompi-output.tar.gz tarball), such as output showing specific errors.
+Make today an Open MPI day!
