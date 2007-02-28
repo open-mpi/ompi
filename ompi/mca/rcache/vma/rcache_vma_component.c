@@ -49,7 +49,7 @@ static int mca_rcache_vma_component_open(void)
     return OMPI_SUCCESS; 
 }
 
-mca_rcache_base_module_t* mca_rcache_vma_component_init(void) {
+static mca_rcache_base_module_t* mca_rcache_vma_component_init(void) {
     mca_rcache_vma_module_t* rcache; 
     
     rcache = (mca_rcache_vma_module_t*) malloc(sizeof(mca_rcache_vma_module_t));

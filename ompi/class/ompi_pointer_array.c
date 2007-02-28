@@ -39,7 +39,7 @@ OBJ_CLASS_INSTANCE(ompi_pointer_array_t, opal_object_t,
 /*
  * ompi_pointer_array constructor
  */
-void ompi_pointer_array_construct(ompi_pointer_array_t *array)
+static void ompi_pointer_array_construct(ompi_pointer_array_t *array)
 {
     OBJ_CONSTRUCT(&array->lock, opal_mutex_t);
     array->lowest_free = 0;
@@ -51,7 +51,7 @@ void ompi_pointer_array_construct(ompi_pointer_array_t *array)
 /*
  * ompi_pointer_array destructor
  */
-void ompi_pointer_array_destruct(ompi_pointer_array_t *array)
+static void ompi_pointer_array_destruct(ompi_pointer_array_t *array)
 {
     /* free table */
     if( NULL != array->addr) {

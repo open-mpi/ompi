@@ -989,7 +989,7 @@ static int orte_console_send_command(orte_daemon_cmd_flag_t usercmd)
     return ORTE_SUCCESS;
 }
 
-char *orte_console_get_input_line()
+static char *orte_console_get_input_line(void)
 {
     char *ret, *buff;
     char input[ORTE_CONSOLE_MAX_LINE_LENGTH];
