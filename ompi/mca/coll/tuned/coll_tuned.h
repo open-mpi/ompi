@@ -206,6 +206,11 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   /* Gather */
   int ompi_coll_tuned_gather_intra_dec_fixed(GATHER_ARGS);
   int ompi_coll_tuned_gather_intra_dec_dynamic(GATHER_ARGS);
+  int ompi_coll_tuned_gather_intra_do_forced(GATHER_ARGS);
+  int ompi_coll_tuned_gather_intra_do_this(GATHER_ARGS, int algorithm, int faninout, int segsize);
+  int ompi_coll_tuned_gather_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
+  int ompi_coll_tuned_gather_intra_basic_linear(GATHER_ARGS);
+  int ompi_coll_tuned_gather_intra_binomial(GATHER_ARGS);
   int ompi_coll_tuned_gather_inter_dec_fixed(GATHER_ARGS);
   int ompi_coll_tuned_gather_inter_dec_dynamic(GATHER_ARGS);
 
@@ -329,6 +334,10 @@ struct mca_coll_base_comm_t {
    ompi_coll_tree_t *cached_bmtree;
    int cached_bmtree_root;
 
+   /* binomial tree */
+   ompi_coll_tree_t *cached_in_order_bmtree;
+   int cached_in_order_bmtree_root;
+
    /* chained tree (fanout followed by pipelines) */
    ompi_coll_tree_t *cached_chain;
    int cached_chain_root;
@@ -384,6 +393,19 @@ do {                                                                            
         }                                                                                    \
         coll_comm->cached_bmtree = ompi_coll_tuned_topo_build_bmtree( (OMPI_COMM), (ROOT) ); \
         coll_comm->cached_bmtree_root = (ROOT);                                              \
+    }                                                                                        \
+} while (0)
+
+#define COLL_TUNED_UPDATE_IN_ORDER_BMTREE( OMPI_COMM, ROOT )                                 \
+do {                                                                                         \
+    mca_coll_base_comm_t* coll_comm = (OMPI_COMM)->c_coll_selected_data;                     \
+    if( !( (coll_comm->cached_in_order_bmtree)                                               \
+           && (coll_comm->cached_in_order_bmtree_root == (ROOT)) ) ) {                       \
+        if( coll_comm->cached_in_order_bmtree ) { /* destroy previous binomial if defined */          \
+            ompi_coll_tuned_topo_destroy_tree( &(coll_comm->cached_in_order_bmtree) );                \
+        }                                                                                    \
+        coll_comm->cached_in_order_bmtree = ompi_coll_tuned_topo_build_in_order_bmtree( (OMPI_COMM), (ROOT) ); \
+        coll_comm->cached_in_order_bmtree_root = (ROOT);                                              \
     }                                                                                        \
 } while (0)
 
