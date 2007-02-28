@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -41,12 +41,12 @@ FCFLAGS = -g
 # Example programs to build
 
 EXAMPLES = hello_c hello_cxx hello_f77 hello_f90 \
-           ring_c ring_cxx ring_f77 ring_f90
+           ring_c ring_cxx ring_f77 ring_f90 connectivity_c
 
 # Default target.  Always build the C example.  Only build the others
 # if Open MPI was build with the relevant language bindings.
 
-all: hello_c ring_c
+all: hello_c ring_c connectivity_c
 	@ if test "`ompi_info --parsable | grep bindings:cxx:yes`" != ""; then \
 	    $(MAKE) hello_cxx ring_cxx; \
 	fi

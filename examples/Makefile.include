@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -37,4 +38,5 @@ EXTRA_DIST += \
         examples/ring_c.c \
         examples/ring_cxx.cc \
         examples/ring_f77.f \
-        examples/ring_f90.f90
+        examples/ring_f90.f90 \
+        examples/connectivity_c.c
