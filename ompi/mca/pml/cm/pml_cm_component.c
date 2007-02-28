@@ -27,7 +27,6 @@ static int mca_pml_cm_component_close(void);
 static mca_pml_base_module_t* mca_pml_cm_component_init( int* priority,
                             bool enable_progress_threads, bool enable_mpi_threads);
 static int mca_pml_cm_component_fini(void);
-extern mca_mtl_base_component_t* ompi_mtl_base_selected_component;
 
 mca_pml_base_component_1_0_0_t mca_pml_cm_component = {
 
