@@ -33,6 +33,8 @@
 extern "C" {
 #endif
 
+OMPI_DECLSPEC mca_mtl_base_component_t* ompi_mtl_base_selected_component;
+    
 OMPI_DECLSPEC int ompi_mtl_base_open(void);
 OMPI_DECLSPEC int ompi_mtl_base_select(bool enable_progress_threads,
                                        bool enable_mpi_threads);
