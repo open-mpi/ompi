@@ -18,14 +18,3 @@ The only exceptions are MPI_Initialized, MPI_Finalized and MPI_Get_version.
 [mpi-initialize-twice]
 Calling MPI_Init or MPI_Init_thread twice is erroneous.
 
-[spawn-from-singleton]
-This version of Open MPI does not support %s from a 
-"singleton" application.  Specifically, you cannot invoke an MPI
-application like this:
-
-    shell$ ./a.out
-
-and then have a.out use the MPI-2 dynamic spawn functions.  Instead,
-you must start your MPI application via mpirun:
-
-    shell: mpirun -np 1 ./a.out
