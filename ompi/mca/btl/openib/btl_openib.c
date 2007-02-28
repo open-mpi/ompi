@@ -377,7 +377,9 @@ int mca_btl_openib_free(
 {
     mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*)des; 
 
-    if(MCA_BTL_OPENIB_FRAG_FRAG == frag->type && frag->registration != NULL) {
+    if(((MCA_BTL_OPENIB_SEND_FRAG_FRAG == frag->type) ||
+            (MCA_BTL_OPENIB_RECV_FRAG_FRAG == frag->type)) 
+            && frag->registration != NULL) {
         btl->btl_mpool->mpool_deregister(btl->btl_mpool,
                                       (mca_mpool_base_registration_t*)
                                       frag->registration);
@@ -433,7 +435,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 
     if(ompi_convertor_need_buffers(convertor) == false && 0 == reserve) {
         if(registration != NULL || max_data > btl->btl_max_send_size) {
-            MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc);
+            MCA_BTL_IB_FRAG_ALLOC_SEND_FRAG(btl, frag, rc);
             if(NULL == frag) {
                 return NULL;
             }
@@ -548,7 +550,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
 
     openib_btl = (mca_btl_openib_module_t*)btl;
     
-    MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc);
+    MCA_BTL_IB_FRAG_ALLOC_RECV_FRAG(btl, frag, rc);
     if(NULL == frag) {
         return NULL;
     }
