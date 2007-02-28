@@ -275,7 +275,7 @@ request_progress_thread(opal_object_t *arg)
 #endif /* OMPI_ENABLE_PROGRESS_THREADS */
 
 void
-mca_io_base_request_progress_init()
+mca_io_base_request_progress_init(void)
 {
     mca_io_base_request_num_pending = 0;
 
@@ -294,7 +294,7 @@ mca_io_base_request_progress_init()
 
 
 void
-mca_io_base_request_progress_add()
+mca_io_base_request_progress_add(void)
 {
 #if OMPI_ENABLE_PROGRESS_THREADS
     /* if we don't have a progress thread, make us have a progress
@@ -318,14 +318,14 @@ mca_io_base_request_progress_add()
 
 
 void
-mca_io_base_request_progress_del()
+mca_io_base_request_progress_del(void)
 {
     OPAL_THREAD_ADD32(&mca_io_base_request_num_pending, -1);
 }
 
 
 void
-mca_io_base_request_progress_fini()
+mca_io_base_request_progress_fini(void)
 {
 #if OMPI_ENABLE_PROGRESS_THREADS
     void *ret;

@@ -27,7 +27,7 @@
 /* 
  * local prototypes 
  */
-int  mca_base_msgbuf_init (void);
+static int mca_base_msgbuf_init (void);
 
 
 
@@ -110,7 +110,7 @@ int  mca_base_msgbuf_unpack_string (mca_base_msgbuf_t bufid, char* strptr,
 
 /* private functions just inside this code */
 
-int  mca_base_msgbuf_init ()
+static int mca_base_msgbuf_init (void)
 {
   if (initialized) return (0);
   return OPAL_ERR_NOT_SUPPORTED;

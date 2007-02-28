@@ -539,7 +539,7 @@ static int pls_slurm_signal_proc(const orte_process_name_t *name, int32_t signal
 /**
  * Cancel an operation involving comm to an orted
  */
-int pls_slurm_cancel_operation(void)
+static int pls_slurm_cancel_operation(void)
 {
     int rc;
 
