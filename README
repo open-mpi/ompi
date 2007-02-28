@@ -93,9 +93,8 @@ base as of this writing (28 Feb 2007):
   - Linux, 32 bit, with gcc
   - Linux, 64 bit (x86), with gcc
   - OS X (10.4), 32 and 64 bit (i386, PPC, PPC64, x86_64), with gcc
-  - Solaris 10 update 2, SPARC and AMD, 32 and 64 bit, with Sun Studio
-    10
-    *** JMS waiting for Sun clarification
+  - Solaris 10 updates 2 and 3, SPARC and AMD, 32 and 64 bit, with Sun
+    Studio 10 and 11
 
 - Other systems have been lightly (but not fully tested):
   - Other compilers on Linux, 32 and 64 bit
@@ -119,7 +118,6 @@ base as of this writing (28 Feb 2007):
   targets must be used to build Open MPI on Solaris.  This can be
   done by including a flag in CFLAGS, CXXFLAGS, FFLAGS, and FCFLAGS,
   -xarch=v8plus for the Sun compilers, -mv8plus for GCC.
-    *** JMS waiting for Sun confirmation
 
 - At least some versions of the Intel 8.1 compiler seg fault while
   compiling certain Open MPI source code files.  As such, it is not
