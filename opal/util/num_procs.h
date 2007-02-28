@@ -33,7 +33,7 @@ extern "C" {
      * @retval OPAL_ERR_NOT_IMPLEMENTED on platforms that are not yet
      * supported.
      */
-    int opal_get_num_processors(int *num_procs);
+    OPAL_DECLSPEC int opal_get_num_processors(int *num_procs);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
