@@ -693,6 +693,7 @@ btl_openib_component_init(int *num_btl_modules,
         
         OBJ_CONSTRUCT(&openib_btl->recv_free_eager, ompi_free_list_t);
         OBJ_CONSTRUCT(&openib_btl->recv_free_max, ompi_free_list_t);
+        OBJ_CONSTRUCT(&openib_btl->recv_free_frag, ompi_free_list_t);
 
         /* initialize the memory pool using the hca */ 
         openib_btl->super.btl_mpool = openib_btl->hca->mpool;
@@ -771,6 +772,14 @@ btl_openib_component_init(int *num_btl_modules,
         ompi_free_list_init(&openib_btl->send_free_frag,
                             length, 
                             OBJ_CLASS(mca_btl_openib_send_frag_frag_t),
+                            mca_btl_openib_component.ib_free_list_num,
+                            mca_btl_openib_component.ib_free_list_max,
+                            mca_btl_openib_component.ib_free_list_inc,
+                            NULL);
+
+        ompi_free_list_init(&openib_btl->recv_free_frag,
+                            length, 
+                            OBJ_CLASS(mca_btl_openib_recv_frag_frag_t),
                             mca_btl_openib_component.ib_free_list_num,
                             mca_btl_openib_component.ib_free_list_max,
                             mca_btl_openib_component.ib_free_list_inc,
