@@ -67,10 +67,10 @@ static const mca_coll_base_module_1_0_0_t intra_fixed = {
     ompi_coll_tuned_barrier_intra_dec_fixed,
     /*     NULL, */
     ompi_coll_tuned_bcast_intra_dec_fixed,
-    /*     NULL, */
+    /* NULL, */
     /*   ompi_coll_tuned_exscan_intra_dec_fixed, */
     NULL,
-    /*   ompi_coll_tuned_gather_intra_dec_fixed, */
+    /* ompi_coll_tuned_gather_intra_dec_fixed, */
     NULL,
     /*   ompi_coll_tuned_gatherv_intra_dec_fixed, */
     NULL,
@@ -113,8 +113,8 @@ static const mca_coll_base_module_1_0_0_t intra_dynamic = {
     /*     NULL, */
     /*   ompi_coll_tuned_exscan_intra_dec_dynamic, */
     NULL,
-    /*   ompi_coll_tuned_gather_intra_dec_dynamic, */
-    NULL,
+    ompi_coll_tuned_gather_intra_dec_dynamic,
+    /*     NULL, */
     /*   ompi_coll_tuned_gatherv_intra_dec_dynamic, */
     NULL,
     ompi_coll_tuned_reduce_intra_dec_dynamic,
@@ -400,6 +400,7 @@ ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
         ompi_coll_tuned_forced_getvalues_barrier (ompi_coll_tuned_forced_params[BARRIER],   &(data->user_forced[BARRIER]));
         ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[BCAST],     &(data->user_forced[BCAST]));
         ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[REDUCE],    &(data->user_forced[REDUCE]));
+	ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[GATHER],    &(data->user_forced[GATHER]));
     }
 
 
@@ -468,6 +469,9 @@ ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
     data->cached_bmtree = ompi_coll_tuned_topo_build_bmtree (comm, 0);
     data->cached_bmtree_root = 0;
 
+    /* binomial tree */
+    data->cached_in_order_bmtree = ompi_coll_tuned_topo_build_in_order_bmtree (comm, 0);
+    data->cached_in_order_bmtree_root = 0;
     /* 
      * chains (fanout followed by pipelines)
      * are more difficuilt as the fan out really really depends on message size [sometimes].. 
@@ -522,6 +526,9 @@ int ompi_coll_tuned_module_finalize(struct ompi_communicator_t *comm)
     }
     if (comm->c_coll_selected_data->cached_bmtree) { /* destroy bmtree if defined */
         ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_bmtree);
+    }
+    if (comm->c_coll_selected_data->cached_in_order_bmtree) { /* destroy bmtree if defined */
+        ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_in_order_bmtree);
     }
     if (comm->c_coll_selected_data->cached_chain) { /* destroy general chain if defined */
         ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_chain);

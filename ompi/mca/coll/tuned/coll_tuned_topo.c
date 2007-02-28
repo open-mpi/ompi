@@ -307,6 +307,18 @@ int ompi_coll_tuned_topo_destroy_tree( ompi_coll_tree_t** tree )
     return OMPI_SUCCESS;
 }
 
+/*
+ * 
+ * Here are some of the examples of this tree:
+ * size == 2                   size = 4                 size = 8
+ *      0                           0                        0
+ *     /                            | \                    / | \
+ *    1                             2  1                  4  2  1
+ *                                     |                     |  |\
+ *                                     3                     6  5 3
+ *                                                                |
+ *                                                                7
+ */
 ompi_coll_tree_t*
 ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
                                    int root )
@@ -372,6 +384,82 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
     }
     bmtree->tree_nextsize = childs;
     bmtree->tree_root     = root;
+    return bmtree;
+}
+
+/*
+ * Constructs in-order binomial tree which can be used for gather/scatter
+ * operations.
+ * 
+ * Here are some of the examples of this tree:
+ * size == 2                   size = 4                 size = 8
+ *      0                           0                        0
+ *     /                          / |                      / | \
+ *    1                          1  2                     1  2  4
+ *                                  |                        |  | \
+ *                                  3                        3  5  6
+ *                                                                 |
+ *                                                                 7
+ */
+ompi_coll_tree_t*
+ompi_coll_tuned_topo_build_in_order_bmtree( struct ompi_communicator_t* comm,
+					    int root )
+{
+    int childs = 0;
+    int rank, vrank;
+    int size;
+    int mask = 1;
+    int remote;
+    ompi_coll_tree_t *bmtree;
+    int i;
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_in_order_bmtree rt %d", root));
+
+    /* 
+     * Get size and rank of the process in this communicator 
+     */
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+
+    vrank = (rank - root + size) % size;
+
+    bmtree = (ompi_coll_tree_t*)malloc(sizeof(ompi_coll_tree_t));
+    if (!bmtree) {
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_bmtree PANIC out of memory"));
+        return NULL;
+    }
+
+    bmtree->tree_bmtree   = 1;
+    bmtree->tree_root     = MPI_UNDEFINED;
+    bmtree->tree_nextsize = MPI_UNDEFINED;
+    for(i=0;i<MAXTREEFANOUT;i++) {
+        bmtree->tree_next[i] = -1;
+    }
+
+    if (root == rank) {
+	bmtree->tree_prev = root;
+    }
+
+    while (mask < size) {
+	remote = vrank ^ mask;
+	if (remote < vrank) {
+	    bmtree->tree_prev = (remote + root) % size;
+	    break;
+	} else if (remote < size) {
+	    bmtree->tree_next[childs] = (remote + root) % size;
+	    childs++;
+	    if (childs==MAXTREEFANOUT) {
+		OPAL_OUTPUT((ompi_coll_tuned_stream,
+			     "coll:tuned:topo:build_bmtree max fanout incorrect %d needed %d",
+			     MAXTREEFANOUT, childs));
+		return NULL;
+	    }
+	}
+	mask <<= 1;
+    }
+    bmtree->tree_nextsize = childs;
+    bmtree->tree_root     = root;
+
     return bmtree;
 }
 
