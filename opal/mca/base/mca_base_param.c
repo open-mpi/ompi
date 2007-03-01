@@ -1070,21 +1070,31 @@ static int read_keys_from_registry(HKEY hKey, char *sub_key, char *current_key)
                 
                 type_len = strcspn(str_key_name, "_");
                 type = (char*) malloc((type_len+1)*sizeof(char));
-                strncpy(type, str_key_name, type_len);
+                strncpy( type, str_key_name, type_len );
+                if ( type_len == strlen(str_key_name) )
+                    strcpy( str_key_name, "" );
+                else
+                    strcpy( str_key_name, str_key_name + type_len + 1 ); /* trim str_key_name by length of type + 1 for underscrore */
                 type[type_len]='\0';
                 if (lpType == (LPDWORD) REG_SZ) { /* REG_SZ = 1 */
                     retCode = RegQueryValueEx(hTestKey, achValue, NULL, NULL, (LPBYTE)&str_lpData, &dwSize);
-                    if (!retCode)
+                    if (!retCode) 
+                    {
+                        /* printf( "%s %s.\n", type, str_key_name); */
                         mca_base_param_reg_string_name( type, str_key_name, "Key read from Windows registry", false, false, str_lpData, NULL);
+                    }
                     else
-                        opal_output(0, "error reading value of param_name: %s with error.\n", str_key_name, retCode);
+                        opal_output(0, "error reading value of param_name: %s with %d error.\n", str_key_name, retCode);
                 }
                 if (lpType == (LPDWORD) REG_DWORD) { /* REG_DWORD = 4 */
                     retCode = RegQueryValueEx(hTestKey, achValue, NULL, NULL, (LPBYTE)&word_lpData, &dwSize);
                     if (!retCode)
+                    {
+                        /* printf( "%s %s.\n", type, str_key_name); */
                         mca_base_param_reg_int_name( type, str_key_name, "Key read from Windows registry", false, false, (int)word_lpData, NULL);
+                    }
                     else
-                       opal_output(0, "error reading value of param_name: %s with error.\n", str_key_name, retCode);
+                        opal_output(0, "error reading value of param_name: %s with %d error.\n", str_key_name, retCode);
                 }
                 free(type);
                 free(str_key_name);
