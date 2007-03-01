@@ -84,13 +84,10 @@ struct orte_pls_xcpu_component_t {
     /* The priority of this component. This will be returned if
      * we determine that xcpu is available and running on this node,
      */
-    int terminate_sig;
-    /* The signal that gets sent to a process to kill it. */
-    opal_mutex_t lock;
-    /* Lock used to prevent some race conditions */
-    opal_condition_t condition;
-    /* Condition that is signaled when all the daemons have died */
     int chatty;
+    /* enable print out of 9P protocol */
+    int maxsessions;
+    /* maximum fan out for tree spawn */
 };
 typedef struct orte_pls_xcpu_component_t orte_pls_xcpu_component_t;
 

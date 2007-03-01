@@ -52,6 +52,9 @@ orte_pls_xcpu_component_t mca_pls_xcpu_component = {
     }
 };
 
+/** external variable defined in libspclient */
+extern int spc_chatty;
+
 /**
  * Opens the pls_xcpu component, setting all the needed mca parameters and 
  * finishes setting up the component struct.
@@ -69,10 +72,15 @@ int orte_pls_xcpu_component_open(void)
     mca_base_param_reg_int(c, "debug",
                            "If > 0 prints library debugging information",
                            false, false, 0, &mca_pls_xcpu_component.debug);
-    mca_base_param_reg_int(c, "chatty", "Prints 9P protocol transactions",
+    mca_base_param_reg_int(c, "chatty",
+			   "Prints 9P protocol transactions",
 			   false, false, 0, &mca_pls_xcpu_component.chatty);
-    OBJ_CONSTRUCT(&mca_pls_xcpu_component.lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_pls_xcpu_component.condition, opal_condition_t);
+    mca_base_param_reg_int(c, "maxsession",
+			   "Max fan out when using XCPUFS tree spawn",
+			   false, false, -1, &mca_pls_xcpu_component.maxsessions);
+
+    if (mca_pls_xcpu_component.chatty)
+	    spc_chatty = 1;
 
     return rc;
 }
@@ -82,11 +90,6 @@ int orte_pls_xcpu_component_open(void)
  */
 int orte_pls_xcpu_component_close(void)
 {
-    //fprintf(stderr, "orte_pls_xcpu_component_close\n");
-
-    OBJ_DESTRUCT(&mca_pls_xcpu_component.lock);
-    OBJ_DESTRUCT(&mca_pls_xcpu_component.condition);
-
     return ORTE_SUCCESS;
 }
 

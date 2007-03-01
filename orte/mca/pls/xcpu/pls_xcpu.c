@@ -68,6 +68,7 @@
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/runtime.h"
 
+#include <math.h>
 #include "pls_xcpu.h"
 #include "spfs.h"
 #include "spclient.h"
@@ -75,9 +76,6 @@
 #include "libxcpu.h"
 
 extern char **environ;
-
-/** external variable defined in libspclient */
-extern int spc_chatty;
 
 /**
  * Initialization of the xcpu module with all the needed function pointers
@@ -96,7 +94,7 @@ orte_pls_base_module_t orte_pls_xcpu_module = {
 /* array of *Xpcommand and Xpnodeset, each xcmd/nodeset correspond to one OMPI app_context */
 Xpcommand **xcmd_sets;
 Xpnodeset **node_sets;
-int num_xcmds;
+int num_apps;
 
 void
 pls_xcpu_stdout_cb(Xpsession *s, u8 *buf, u32 buflen)
@@ -242,16 +240,12 @@ pls_xcpu_setup_env(char ***e)
 int
 orte_pls_xcpu_launch_job(orte_jobid_t jobid)
 {
-	int i, n, rc;
+	int i, fanout, rc;
 	int num_processes = 0;
 	orte_cellid_t cellid;
 	opal_list_item_t *node_item, *proc_item;
 	orte_job_map_t *map;
 	orte_vpid_t vpid_start, vpid_range;
-	char **env;
-
-	if (mca_pls_xcpu_component.chatty)
-		spc_chatty = 1;
 
 	/* get the job map */
 	rc = orte_rmaps.get_job_map(&map, jobid);
@@ -259,6 +253,7 @@ orte_pls_xcpu_launch_job(orte_jobid_t jobid)
 		ORTE_ERROR_LOG(rc);
 		return rc;
 	}
+	num_apps = map->num_apps;
 
 	/* next, get the vpid_start and range */
 	rc = orte_rmgr.get_vpid_range(jobid, &vpid_start, &vpid_range);
@@ -271,13 +266,11 @@ orte_pls_xcpu_launch_job(orte_jobid_t jobid)
 	cellid = orte_process_info.my_name->cellid;
 
 	/* create num_apps of pointers to Xpnodeset and Xpcommand */
-	node_sets = (Xpnodeset **) malloc(map->num_apps * sizeof(Xpnodeset *));
-	xcmd_sets = (Xpcommand **) malloc(map->num_apps * sizeof(Xpcommand *));
-
-	num_xcmds = map->num_apps;
+	node_sets = (Xpnodeset **) malloc(num_apps * sizeof(Xpnodeset *));
+	xcmd_sets = (Xpcommand **) malloc(num_apps * sizeof(Xpcommand *));
 
 	/* create Xpnodeset for each app_context */
-	for (i = 0; i < map->num_apps; i++) {
+	for (i = 0; i < num_apps; i++) {
 		node_sets[i] = xp_nodeset_create();
 	}
 
@@ -299,13 +292,13 @@ orte_pls_xcpu_launch_job(orte_jobid_t jobid)
 	}
 
 	/* setup envrionment variables for each app context */
-	for (i = 0; i < map->num_apps; i++) {
+	for (i = 0; i < num_apps; i++) {
 		/* FixME: how many layers of *? */
 		pls_xcpu_setup_env(&map->apps[i]->env);
 		num_processes += map->apps[i]->num_procs;
 	}
 
-	for (i = 0; i < map->num_apps; i++) {
+	for (i = 0; i < num_apps; i++) {
 		rc = orte_ns_nds_xcpu_put(cellid, jobid, vpid_start,
 					  num_processes, &map->apps[i]->env);
 		if (rc != ORTE_SUCCESS) {
@@ -315,8 +308,17 @@ orte_pls_xcpu_launch_job(orte_jobid_t jobid)
 	}
 
 	/* create Xpcommand for each app_context from Xpnodeset */
-	for (i = 0; i < map->num_apps; i++) {
+	for (i = 0; i < num_apps; i++) {
 		xcmd_sets[i] = xp_command_create(node_sets[i]);
+
+		/* caculate maximum fan out for tree spawn */
+		if (mca_pls_xcpu_component.maxsessions < 0) {
+			fanout = (int) sqrt(node_sets[i]->len);
+			if (fanout*fanout < node_sets[i]->len)
+				fanout++;
+		} else
+			fanout = mca_pls_xcpu_component.maxsessions;
+		xcmd_sets[i]->nspawn = fanout;
 
 		/* setup argc, argv and evn in xcpu command */
 		xcmd_sets[i]->cwd  = strdup(map->apps[i]->cwd);
@@ -341,7 +343,7 @@ orte_pls_xcpu_launch_job(orte_jobid_t jobid)
 	 * FixME: we are blocked here so both success and faulure cases
 	 * fall back to the error handler and all resources are freed.
 	 * this should be changed when we have non-blocking command_wait()  */
-	if (xp_commands_wait(map->num_apps, xcmd_sets) < 0) {
+	if (xp_commands_wait(num_apps, xcmd_sets) < 0) {
 		rc = ORTE_ERROR;
 	} else {
 		rc = ORTE_SUCCESS;
@@ -349,7 +351,7 @@ orte_pls_xcpu_launch_job(orte_jobid_t jobid)
 
 error:
 	/* error handling and clean up, kill all the processes */
-	for (i = 0; i < map->num_apps; i++) {
+	for (i = 0; i < num_apps; i++) {
 		if (xcmd_sets[i] != NULL) {
 		    xp_command_wipe(xcmd_sets[i]);
 		    xp_command_destroy(xcmd_sets[i]);
@@ -363,18 +365,9 @@ error:
 
 int orte_pls_xcpu_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
-	int i, rc;
-	orte_job_map_t *map;
+	int i;
 
-
-	/* get the job map */
-	rc = orte_rmaps.get_job_map(&map, jobid);
-	if (rc != ORTE_SUCCESS) {
-		ORTE_ERROR_LOG(rc);
-		return rc;
-	}
-
-	for (i = 0; i < map->num_apps; i++) {
+	for (i = 0; i < num_apps; i++) {
 		if (xcmd_sets[i] != NULL) {
 			xp_command_kill(xcmd_sets[i], SIGTERM);
 		}
@@ -391,7 +384,7 @@ int orte_pls_xcpu_terminate_proc(const orte_process_name_t* proc_name)
 {
 	fprintf(stderr, __FILE__ " terminate_proc\n");
 
-	/* libxcpu can not wipe individual process in an
+	/* libxcpu can not kill individual process in an
 	 * Xpcommand/Xpsessionset, only to the whole session set */
 
 	return ORTE_SUCCESS;
@@ -399,19 +392,11 @@ int orte_pls_xcpu_terminate_proc(const orte_process_name_t* proc_name)
 
 int orte_pls_xcpu_signal_job(orte_jobid_t jobid, int32_t sig, opal_list_t *attrs)
 {
-	int i, rc;
-	orte_job_map_t *map;
+	int i;
 
 	fprintf(stderr, __FILE__ " signal_job, sig = %d\n", sig);
 
-	/* get the job map */
-	rc = orte_rmaps.get_job_map(&map, jobid);
-	if (rc != ORTE_SUCCESS) {
-		ORTE_ERROR_LOG(rc);
-		return rc;
-	}
-
-	for (i = 0; i < map->num_apps; i++) {
+	for (i = 0; i < num_apps; i++) {
 		if (xcmd_sets[i] != NULL)
 			xp_command_kill(xcmd_sets[i], sig);
 	}
