@@ -204,21 +204,37 @@ base as of this writing (28 Feb 2007):
 
   http://www.open-mpi.org/community/lists/users/2006/01/0539.php
 
-- The MX library limits the maximum message fragment size for both
-  on-node and off-node messages.  As of MX v1.0.3, the inter-node
-  maximum fragment size is 32k, and the intra-node maximum fragment
-  size is 16k -- fragments sent larger than these sizes will fail.
-  Open MPI automatically fragments large messages; it currently limits
-  its first fragment size on MX networks to the lower of these two
-  values -- 16k.  As such, increasing the value of the MCA parameter
-  named "btl_mx_first_frag_size" larger than 16k may cause failures in
-  some cases (i.e., when using MX to send large messages to processes
-  on the same node); it will cause failures in all cases if it is set
-  above 32k.  Note that this only affects the *first* fragment of
-  messages; latter fragments do not have this size restriction.  The
-  MCA parameter btl_mx_max_send_size can be used to vary the maximum
-  size of subsequent fragments.
-  *** JMS fix MX paragraph (George says it's wrong)
+- The MX support is shared between the 2 internal devices, the MTL
+  and the BTL. The MTL stand for Message Transport Layer, while the
+  BTL stand for Byte Transport Layer. The design of the BTL interface
+  in OpenMPI assumes that only naive one-sided communication
+  capabilities are provided by the low level communication layers.
+  However, modern communication layers such as MX, PSM or Portals,
+  natively implement highly-optimized two-sided communication
+  semantics. To leverage these capabilities, OpenMPI provides the MTL
+  interface to transfer messages rather than bytes.
+  The MTL interface implements a shorter code path and let the
+  low-level network library decides which protocol to use, depending
+  on message length, internal resources and other parameters
+  specific to the interconnect used. However, OpenMPI cannot
+  currently use multiple MTL at once. In the case of the MX MTL,
+  self and shared memory communications are provided by the MX
+  library. Moreover, the current MX MTL do not support message
+  pipelining resulting in lower performances in case of non
+  contiguous data-types.
+  In the case of the BTL, MCA parameters allow Open MPI to use our own
+  shared memory and self device for increased performance.
+  The BTL interface allow multiple devices to be used simultaneously.
+  For the MX BTL it is recommended that the first segment (which is
+  as a threshold between the eager and the rendez-vous protocol) should
+  always be at most 4KB, but there is no further restriction on
+  the size of subsequent fragments.
+  The MX MTL is recommended in the common case for best performance
+  on 10G hardware, when most of the data transfer cover contiguous
+  memory layouts. The MX BTL is recommended in all other cases, more
+  specifically when using multiple interconnects at the same time
+  (including TCP), transferring non contiguous data-types or when
+  using DR PML.
 
 - The OpenFabrics Enterprise Distribution (OFED) software package v1.0
   will not work properly with Open MPI v1.2 (and later) due to how its
