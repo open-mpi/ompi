@@ -16,6 +16,7 @@
  *
  * $HEADER$
  */
+#include "ompi_config.h"
 #include "dt_arch.h"
 
 int32_t ompi_arch_compute_local_id( uint32_t *me )
