@@ -30,7 +30,6 @@
 #include <assert.h>
 #include <limits.h>
 #include "spfs.h"
-//#include "spfsimpl.h"
 #include "orte_config.h"
 #include "opal/event/event.h"
 #include "opal/runtime/opal_progress.h"
@@ -97,7 +96,6 @@ spfd_add(int fd, void (*notify)(Spfd *, void *), void *aux)
 	if (!spfd)
 		return NULL;
 
-//	fprintf(stderr, "spfd_add spfd %p fd %d\n", spfd, fd);
 	fcntl(fd, F_SETFL, O_NONBLOCK);
 	spfd->fd = fd;
 	spfd->flags = 0;
@@ -116,7 +114,6 @@ spfd_add(int fd, void (*notify)(Spfd *, void *), void *aux)
 void
 spfd_remove(Spfd *spfd)
 {
-//	fprintf(stderr, "spfd_remove spfd %p\n", spfd);
 	if (spfd->prev)
 		spfd->prev->next = spfd->next;
 	else
@@ -213,7 +210,6 @@ spfd_handler(int fd, short event, void *aux)
 
 	spfd = aux;
 
-//	fprintf(stderr, "spfd_handler spfd %p event %d events %d flags %d\n", spfd, event, spfd->events, spfd->flags);
 	flags = spfd->flags;
 	events = spfd->events;
 
@@ -244,9 +240,6 @@ spfd_handler(int fd, short event, void *aux)
 static void
 sp_setup_event(Spfd *spfd)
 {
-//	fprintf(stderr, "sp_setup_event ");
-//	sp_printtime(stderr);
-//	fprintf(stderr, " spfd %p events %d\n", spfd, spfd->events);
 	opal_event_set(&spfd->opevent, spfd->fd, spfd->events, spfd_handler, spfd);
 	opal_event_add(&spfd->opevent, sptval);
 }
