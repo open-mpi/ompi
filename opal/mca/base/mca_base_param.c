@@ -999,6 +999,7 @@ static int read_keys_from_registry(HKEY hKey, char *sub_key, char *current_key)
     DWORD cchValue = MAX_VALUE_NAME;
     HKEY hTestKey; 
     char *sub_sub_key;
+    mca_base_param_storage_t storage, override, lookup;
       
     if( !RegOpenKeyEx( hKey, sub_key, 0, KEY_READ, &hTestKey) == ERROR_SUCCESS )
         return OPAL_ERROR;
@@ -1050,7 +1051,7 @@ static int read_keys_from_registry(HKEY hKey, char *sub_key, char *current_key)
             retCode = RegEnumValue(hTestKey, i, achValue, &cchValue, NULL, NULL, NULL, NULL);
      
             if (retCode == ERROR_SUCCESS ) { 
-            
+           
                 /* lpType - get the type of the value
                  * dwSize - get the size of the buffer to hold the value
                  */
@@ -1078,23 +1079,36 @@ static int read_keys_from_registry(HKEY hKey, char *sub_key, char *current_key)
                 type[type_len]='\0';
                 if (lpType == (LPDWORD) REG_SZ) { /* REG_SZ = 1 */
                     retCode = RegQueryValueEx(hTestKey, achValue, NULL, NULL, (LPBYTE)&str_lpData, &dwSize);
-                    if (!retCode) 
-                    {
-                        /* printf( "%s %s.\n", type, str_key_name); */
-                        mca_base_param_reg_string_name( type, str_key_name, "Key read from Windows registry", false, false, str_lpData, NULL);
+                    if (!retCode) {
+                        mca_base_param_storage_t storage, override;
+                        mca_base_param_storage_t lookup;
+    
+                        storage.stringval = (char*)str_lpData;
+                        override.stringval = (char*)str_lpData;
+                        (void)param_register( type, NULL, str_key_name, "Key read from Windows registry", 
+                                              MCA_BASE_PARAM_TYPE_STRING, false, false,
+                                              &storage, NULL, &override, 
+                                              &lookup );
+                        /*printf( "%s %s = %s.\n", type, str_key_name, str_lpData);*/
+                    } else {
+                        opal_output( 0, "error reading value of param_name: %s with %d error.\n",
+                                     str_key_name, retCode);
                     }
-                    else
-                        opal_output(0, "error reading value of param_name: %s with %d error.\n", str_key_name, retCode);
                 }
                 if (lpType == (LPDWORD) REG_DWORD) { /* REG_DWORD = 4 */
                     retCode = RegQueryValueEx(hTestKey, achValue, NULL, NULL, (LPBYTE)&word_lpData, &dwSize);
-                    if (!retCode)
-                    {
-                        /* printf( "%s %s.\n", type, str_key_name); */
-                        mca_base_param_reg_int_name( type, str_key_name, "Key read from Windows registry", false, false, (int)word_lpData, NULL);
+                    if (!retCode) {
+                        storage.intval  = (int)word_lpData;
+                        override.intval = (int)word_lpData;
+                        (void)param_register( type, NULL, str_key_name, "Key read from Windows registry", 
+                                              MCA_BASE_PARAM_TYPE_INT, false, false,
+                                              &storage, NULL, &override, 
+                                              &lookup );
+                        /*printf( "%s %s = %d.\n", type, str_key_name, (int)word_lpData);*/
+                    } else {
+                        opal_output( 0, "error reading value of param_name: %s with %d error.\n",
+                                     str_key_name, retCode );
                     }
-                    else
-                        opal_output(0, "error reading value of param_name: %s with %d error.\n", str_key_name, retCode);
                 }
                 free(type);
                 free(str_key_name);
