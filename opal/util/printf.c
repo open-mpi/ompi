@@ -38,7 +38,7 @@
  */
 static int guess_strlen(const char *fmt, va_list ap)
 {
-    char *sarg;
+    char *sarg, carg;
     double darg;
     float farg;
     size_t i;
@@ -55,6 +55,10 @@ static int guess_strlen(const char *fmt, va_list ap)
             && '%' != fmt[i + 1]) {
             ++i;
             switch (fmt[i]) {
+            case 'c':
+                carg = va_arg(ap, char);
+                len += 1;  /* let's suppose it's a printable char */
+                break;
             case 's':
                 sarg = va_arg(ap, char *);
 
@@ -197,11 +201,11 @@ int opal_vasprintf(char **ptr, const char *fmt, va_list ap)
        it twice is a bad idea.  So make a copy for the second
        use.  Copy order taken from Autoconf docs. */
 #if OMPI_HAVE_VA_COPY
-  va_copy(ap2, ap);
+    va_copy(ap2, ap);
 #elif OMPI_HAVE_UNDERSCORE_VA_COPY
-  __va_copy(ap2, ap);
+    __va_copy(ap2, ap);
 #else
-  memcpy (&ap2, &ap, sizeof(va_list));
+    memcpy (&ap2, &ap, sizeof(va_list));
 #endif
 
     /* guess the size */
@@ -216,7 +220,9 @@ int opal_vasprintf(char **ptr, const char *fmt, va_list ap)
 
     /* fill the buffer */
     length = vsprintf(*ptr, fmt, ap2);
+#if OMPI_HAVE_VA_COPY || OMPI_HAVE_UNDERSCORE_VA_COPY
     va_end(ap2);
+#endif  /* OMPI_HAVE_VA_COPY || OMPI_HAVE_UNDERSCORE_VA_COPY */
 
     /* realloc */
     *ptr = (char*) realloc(*ptr, (size_t) length + 1);
