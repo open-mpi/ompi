@@ -278,6 +278,18 @@ extern "C" {
                                            opal_cmd_line_init_t *table);
 
     /**
+     * Create a command line option.
+     *
+     * @param cmd OPAL command line handle.
+     * @param entry Command line entry to add to the command line.
+     *
+     * @retval OPAL_SUCCESS Upon success.
+     *
+     */
+    OPAL_DECLSPEC int opal_cmd_line_make_opt_mca(opal_cmd_line_t *cmd,
+                                                 opal_cmd_line_init_t entry);
+
+    /**
      * \deprecated
      *
      * Create a command line option.

@@ -317,9 +317,13 @@ int orterun(int argc, char *argv[])
     opal_list_t attributes;
     opal_list_item_t *item;
     uint8_t flow;
+    char * cwd = NULL;
 
-    /* Setup MCA params */
-
+    /* Setup MCA params
+     * Do not parse the Aggregate Parameter Sets in this pass.
+     * we will get to them in a moment
+     */
+    opal_mca_base_param_use_amca_sets = true;
     mca_base_param_init();
     orte_register_params(false);
 
@@ -334,6 +338,29 @@ int orterun(int argc, char *argv[])
     /* If we're still here, parse each app */
 
     parse_locals(argc, argv);
+
+    /*
+     * Get the current working directory
+     */
+    cwd = (char *) malloc(sizeof(char) * MAXPATHLEN);
+    if( NULL == (cwd = getcwd(cwd, MAXPATHLEN) )) {
+        cwd = strdup("");
+    }
+
+    /*
+     * Need to recache the files since the user might have given us 
+     * Aggregate MCA parameters that need to be reinitalized.
+     * In addition we need to let the orted know about the current working
+     * directory so that it has another place to look for any Aggregate MCA 
+     * parameter set files
+     */
+    mca_base_param_reg_string_name("mca", "base_param_file_path_orted",
+                                   "[INTERNAL] Current working directory from MPIRUN to help in finding Aggregate MCA parameters",
+                                   true, false,
+                                   cwd,
+                                   &cwd);
+    opal_mca_base_param_use_amca_sets = true;
+    mca_base_param_recache_files(false);
 
     /* Convert the list of apps to an array of orte_app_context_t
        pointers */

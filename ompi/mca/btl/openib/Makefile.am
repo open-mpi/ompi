@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2007      Cisco, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,6 +22,9 @@
 AM_CPPFLAGS = $(btl_openib_CPPFLAGS) -DPKGDATADIR=\"$(pkgdatadir)\"
 AM_LFLAGS = -Pbtl_openib_ini_yy
 LEX_OUTPUT_ROOT = lex.btl_openib_ini_yy
+
+amca_paramdir = $(AMCA_PARAM_SETS_DIR)
+dist_amca_param_DATA = btl-openib-benchmark
 
 dist_pkgdata_DATA = \
         help-mpi-btl-openib.txt \

@@ -23,3 +23,6 @@ WARNING: A user-supplied value attempted to override the read-only MCA
 parameter named "%s".
 
 The user-supplied value was ignored.
+[missing-param-file]
+Process %d Unable to locate the parameter file "%s" in the following search path:
+   %s

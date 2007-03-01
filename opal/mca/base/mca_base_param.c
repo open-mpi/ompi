@@ -21,9 +21,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
 
 #include "opal/install_dirs.h"
 #include "opal/util/os_path.h"
+#include "opal/util/path.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/util/show_help.h"
 #include "opal/class/opal_hash_table.h"
@@ -41,6 +48,16 @@
 #include "opal/util/output.h"
 
 /*
+ * A boolean to temporarily skip over the Aggregate MCA Paramater Set
+ * reading.
+ * We need to do this as a global variable since all other entry
+ * functions to the _param_ funcitons make sure that the init function
+ * has been called. By calling init the system will pick up the 
+ * wrong files
+ */
+bool opal_mca_base_param_use_amca_sets = true;
+
+/*
  * Public variables
  *
  * This variable is public, but not advertised in mca_base_param.h.
@@ -55,6 +72,7 @@ opal_list_t mca_base_param_file_values;
 static opal_value_array_t mca_base_params;
 static const char *mca_prefix = "OMPI_MCA_";
 static char *home = NULL;
+static char *cwd  = NULL;
 static bool initialized = false;
 
 
@@ -64,6 +82,7 @@ static bool initialized = false;
 #if defined(__WINDOWS__)
 static int read_keys_from_registry(HKEY hKey, char *sub_key, char *current_key);
 #endif  /* defined(__WINDOWS__) */
+static int fixup_files(char **file_list, char * path, bool rel_path_search);
 static int read_files(char *file_list);
 static int param_register(const char *type_name,
                           const char *component_name,
@@ -117,9 +136,6 @@ OBJ_CLASS_INSTANCE(mca_base_param_info_t, opal_list_item_t,
  */
 int mca_base_param_init(void)
 {
-    int id;
-    char *files, *new_files = NULL;
-    
     if (!initialized) {
 
         /* Init the value array for the param storage */
@@ -135,33 +151,92 @@ int mca_base_param_init(void)
 
         initialized = true; 
 
-        /* We may need this later */
+        mca_base_param_recache_files(false);
+    }
+
+    return OPAL_SUCCESS;
+}
+
+int mca_base_param_recache_files(bool rel_path_search)
+{
+    int id;
+    char *files, *new_files = NULL, *new_agg_files = NULL;
+    char * new_agg_path = NULL, *agg_default_path = NULL;
+
+    /* We may need this later */
 #if !defined(__WINDOWS__)
-        home = getenv("HOME");
-        asprintf(&files,
-                 "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"mca-params.conf:%s"OPAL_PATH_SEP"openmpi-mca-params.conf",
-                 home, OPAL_SYSCONFDIR);
+    home = getenv("HOME");
 #else
-        home = getenv("USERPROFILE");       
-        asprintf(&files,
-                 "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"mca-params.conf;%s"OPAL_PATH_SEP"openmpi-mca-params.conf",
-                 home, OPAL_SYSCONFDIR);
+    home = getenv("USERPROFILE");
 #endif  /* !defined(__WINDOWS__) */
-
-        /* Initialize a parameter that says where MCA param files can
-           be found */
-
-        id = mca_base_param_reg_string_name("mca", "param_files",
-                                            "Path for MCA configuration files containing default parameter values",
-                                            false, false, files, &new_files);
-        read_files(new_files);
         
-#if defined(__WINDOWS__)
-        read_keys_from_registry(HKEY_CURRENT_USER, "SOFTWARE\\Open MPI", NULL);
-#endif  /* defined(__WINDOWS__) */
+    cwd = (char *) malloc(sizeof(char) * MAXPATHLEN);
+    if( NULL == (cwd = getcwd(cwd, MAXPATHLEN) )) {
+        opal_output(0, "Error: Unable to get the current working directory\n");
+        cwd = strdup(".");
+    }
 
-        free(files);
-        free(new_files);
+    asprintf(&files,
+             "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"mca-params.conf%c%s"OPAL_PATH_SEP"openmpi-mca-params.conf",
+             home, OPAL_ENV_SEP, OPAL_SYSCONFDIR);
+
+
+    /* Initialize a parameter that says where MCA param files can
+       be found */
+
+    id = mca_base_param_reg_string_name("mca", "param_files",
+                                        "Path for MCA configuration files containing default parameter values",
+                                        false, false, files, &new_files);
+
+    /* Aggregate MCA parameter files
+     * A prefix search path to look up aggregate MCA parameter file
+     * requests that do not specify an absolute path
+     */
+    id = mca_base_param_reg_string_name("mca", "base_param_file_prefix",
+                                        "Aggregate MCA parameter file sets",
+                                        false, false, NULL, &new_agg_files);
+    
+    asprintf(&agg_default_path,
+             "%s"OPAL_PATH_SEP"amca-param-sets%c%s",
+             OPAL_PKGDATADIR, OPAL_ENV_SEP, cwd);
+    id = mca_base_param_reg_string_name("mca", "base_param_file_path",
+                                        "Aggregate MCA parameter Search path",
+                                        false, false, agg_default_path, &new_agg_path);
+    
+    if( opal_mca_base_param_use_amca_sets && NULL != new_agg_files ) {
+        char *tmp_str = NULL;
+        
+        /*
+         * Resolve all relative paths.
+         * the file list returned will contain only absolute paths
+         */
+        if( OPAL_SUCCESS != fixup_files(&new_agg_files, new_agg_path, rel_path_search) ) {
+#if 0
+            /* JJH We need to die! */
+            abort();
+#else
+            ;
+#endif
+        }
+        else {
+            /* Prepend the files to the search list */
+            asprintf(&tmp_str, "%s%c%s", new_agg_files, OPAL_ENV_SEP, new_files);
+            free(new_files);
+            new_files = strdup(tmp_str);
+            free(tmp_str);
+        }
+    }
+
+    read_files(new_files);
+    
+#if defined(__WINDOWS__)
+    read_keys_from_registry(HKEY_CURRENT_USER, "SOFTWARE\\Open MPI", NULL);
+#endif  /* defined(__WINDOWS__) */
+    
+    free(files);
+    free(new_files);
+    if( NULL != new_agg_files ) {
+        free(new_agg_files);
     }
 
     return OPAL_SUCCESS;
@@ -786,6 +861,93 @@ int mca_base_param_finalize(void)
 
 
 /*************************************************************************/
+static int fixup_files(char **file_list, char * path, bool rel_path_search) {
+    int exit_status = OPAL_SUCCESS;
+    char **files = NULL;
+    char **search_path = NULL;
+    char * tmp_file = NULL;
+    char **argv = NULL;
+    int mode = R_OK; /* The file exists, and we can read it */
+    int count, i, argc = 0;
+
+    search_path = opal_argv_split(path, OPAL_ENV_SEP);
+    files = opal_argv_split(*file_list, OPAL_ENV_SEP);
+    count = opal_argv_count(files);
+
+    /* Read in reverse order, so we can preserve the original ordering */
+    for (i = 0 ; i < count; ++i) {
+        /* Absolute paths preserved */
+        if ( opal_path_is_absolute(files[i]) ) {
+            if( NULL == opal_path_access(files[i], NULL, mode) ) {
+                opal_show_help("help-mca-param.txt", "missing-param-file",
+                               true, getpid(), files[i], path);
+                exit_status = OPAL_ERROR;
+                goto cleanup;
+            }
+            else {
+                opal_argv_append(&argc, &argv, files[i]);
+            }
+        }
+        /* Resolve all relative paths:
+         *  - If filename contains a "/" (e.g., "./foo" or "foo/bar")
+         *    - look for it relative to cwd
+         *    - if exists, use it
+         *    - ow warn/error
+         */
+        else if (!rel_path_search && NULL != strchr(files[i], OPAL_PATH_SEP[0]) ) {
+            if( NULL == (tmp_file = opal_path_access(files[i], cwd, mode) ) ) {
+                opal_show_help("help-mca-param.txt", "missing-param-file",
+                               true, getpid(), files[i], cwd);
+                exit_status = OPAL_ERROR;
+                goto cleanup;
+            }
+            else {
+                opal_argv_append(&argc, &argv, tmp_file);
+            }
+        }
+        /* Resolve all relative paths:
+         * - Use path resolution
+         *    - if found and readable, use it
+         *    - otherwise, warn/error
+         */
+        else {
+            if( NULL != (tmp_file = opal_path_find(files[i], search_path, mode, NULL)) ) {
+                opal_argv_append(&argc, &argv, tmp_file);
+                free(tmp_file);
+                tmp_file = NULL;
+            }
+            else {
+                opal_show_help("help-mca-param.txt", "missing-param-file",
+                               true, getpid(), files[i], path);
+                exit_status = OPAL_ERROR;
+                goto cleanup;
+            }
+        }
+    }
+
+    free(*file_list);
+    *file_list = opal_argv_join(argv, OPAL_ENV_SEP);
+
+ cleanup:
+    if( NULL != files ) {
+        opal_argv_free(files);
+        files = NULL;
+    }
+    if( NULL != argv ) {
+        opal_argv_free(argv);
+        argv = NULL;
+    }
+    if( NULL != search_path ) {
+        opal_argv_free(search_path);
+        search_path = NULL;
+    }
+    if( NULL != tmp_file ) {
+        free(tmp_file);
+        tmp_file = NULL;
+    }
+
+    return exit_status;
+}
 
 static int read_files(char *file_list)
 {

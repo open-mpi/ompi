@@ -18,6 +18,8 @@
 
 # Use the top-level Makefile.options
 
+amca_paramdir = $(AMCA_PARAM_SETS_DIR)
+dist_amca_param_DATA = netpipe-btl-template.txt
 
 
 sources = \

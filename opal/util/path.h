@@ -83,6 +83,19 @@ extern "C" {
      */
     OPAL_DECLSPEC bool opal_path_is_absolute( const char *path );
 
+    /**
+     * Forms a complete pathname and checks it for existance and
+     * permissions
+     *
+     * @param fname File name
+     * @param path Path prefix, if NULL then fname is an absolute path
+     * @param mode Target permissions which must be satisfied (see access(2))
+     *
+     * @retval NULL Failure
+     * @retval Full pathname of the located file on Success
+     */
+    OPAL_DECLSPEC char *opal_path_access(char *fname, char *path, int mode);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
