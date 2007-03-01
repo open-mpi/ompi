@@ -119,6 +119,14 @@ typedef struct mca_base_param_info_t mca_base_param_info_t;
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+    /*
+     * Whether or not to temporarily skip over the Aggregate MCA Paramater Set
+     * reading. This is useful when we know the MCA parameters it will use
+     * are incorrect which occurs with some support tools.
+     */
+    OPAL_DECLSPEC extern bool opal_mca_base_param_use_amca_sets;
+
     /**
      * Make a real object for the info
      */
@@ -134,6 +142,16 @@ extern "C" {
      * here for completeness.
      */
     OPAL_DECLSPEC int mca_base_param_init(void);
+
+    /**
+     * Recache the MCA param files
+     *
+     * @param rel_path_search If a relative path is found, search the path even
+     * if the relative path in pointing to the current working directory.
+     * @retval OPAL_SUCCESS
+     *
+     */
+    OPAL_DECLSPEC int mca_base_param_recache_files(bool rel_path_search);
 
     /**
      * Register an integer MCA parameter.

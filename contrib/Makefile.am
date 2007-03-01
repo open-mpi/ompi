@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -16,7 +16,8 @@
 # $HEADER$
 #
 
-
+amca_paramdir = $(AMCA_PARAM_SETS_DIR)
+dist_amca_param_DATA = amca-param-sets/example.conf
 
 EXTRA_DIST = \
 	dist/make_dist_tarball \

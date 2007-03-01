@@ -712,6 +712,52 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     free(uri);
     free(param);
 
+    /* pass along the Aggregate MCA Parameter Sets */
+    {
+        int loc_id;
+        char * amca_param_path = NULL;
+        char * amca_param_prefix = NULL;
+
+        /* Add the 'prefix' param */
+        loc_id = mca_base_param_find("mca", NULL, "base_param_file_prefix");
+        mca_base_param_lookup_string(loc_id, &amca_param_prefix);
+        if( NULL != amca_param_prefix ) {
+            /* Could also use the short version '-am'
+             * but being verbose has some value
+             */
+            opal_argv_append(&argc, &argv, "-mca");
+            opal_argv_append(&argc, &argv, "mca_base_param_file_prefix");
+            opal_argv_append(&argc, &argv, amca_param_prefix);
+        }
+
+        /* Add the 'path' param */
+        loc_id = mca_base_param_find("mca", NULL, "base_param_file_path");
+        mca_base_param_lookup_string(loc_id, &amca_param_path);
+        if( NULL != amca_param_path ) {
+            opal_argv_append(&argc, &argv, "-mca");
+            opal_argv_append(&argc, &argv, "mca_base_param_file_path");
+            opal_argv_append(&argc, &argv, amca_param_path);
+        }
+
+        /* Add the ORTED hint 'path' param */
+        loc_id = mca_base_param_find("mca", NULL, "base_param_file_path_orted");
+        mca_base_param_lookup_string(loc_id, &amca_param_path);
+        if( NULL != amca_param_path ) {
+            opal_argv_append(&argc, &argv, "-mca");
+            opal_argv_append(&argc, &argv, "mca_base_param_file_path_orted");
+            opal_argv_append(&argc, &argv, amca_param_path);
+        }
+
+        if( NULL != amca_param_path ) {
+            free(amca_param_path);
+            amca_param_path = NULL;
+        }
+        if( NULL != amca_param_prefix ) {
+            free(amca_param_prefix);
+            amca_param_prefix = NULL;
+        }
+    }
+
     local_exec_index_end = argc;
     if (!(remote_csh || remote_sh)) {
         opal_argv_append(&argc, &argv, ")");

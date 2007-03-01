@@ -1114,6 +1114,11 @@ AC_SUBST(CXXCPPFLAGS)
 AC_SUBST(FFLAGS)
 AC_SUBST(FCFLAGS)
 
+#
+# Aggregate MCA parameters directory
+#
+AC_SUBST([AMCA_PARAM_SETS_DIR], ['$(pkgdatadir)/amca-param-sets'])
+
 ############################################################################
 # final wrapper compiler config
 ############################################################################

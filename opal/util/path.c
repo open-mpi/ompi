@@ -29,7 +29,6 @@
 #include "opal/util/output.h"
 
 static void path_env_load(char *path, int *pargc, char ***pargv);
-static char *path_access(char *fname, char *path, int mode);
 static char *list_env_get(char *var, char **list);
 
 bool opal_path_is_absolute( const char *path )
@@ -60,7 +59,7 @@ char *opal_path_find(char *fname, char **pathv, int mode, char **envv)
 
     /* If absolute path is given, return it without searching. */
     if( opal_path_is_absolute(fname) ) {
-        return path_access(fname, "", mode);
+        return opal_path_access(fname, "", mode);
     }
 
     /* Initialize. */
@@ -85,7 +84,7 @@ char *opal_path_find(char *fname, char **pathv, int mode, char **envv)
             }
             if (NULL != env) {
                 if (!delimit) {
-                    fullpath = path_access(fname, env, mode);
+                    fullpath = opal_path_access(fname, env, mode);
                 } else {
                     pfix = (char*) malloc(strlen(env) + strlen(delimit) + 1);
                     if (NULL == pfix) {
@@ -93,13 +92,13 @@ char *opal_path_find(char *fname, char **pathv, int mode, char **envv)
                     }
                     strcpy(pfix, env);
                     strcat(pfix, delimit);
-                    fullpath = path_access(fname, pfix, mode);
+                    fullpath = opal_path_access(fname, pfix, mode);
                     free(pfix);
                 }
             }
         }
         else {
-            fullpath = path_access(fname, pathv[i], mode);
+            fullpath = opal_path_access(fname, pathv[i], mode);
         }
         i++;
     }
@@ -170,12 +169,17 @@ char *opal_path_findv(char *fname, int mode, char **envv, char *wrkdir)
  *      -Full pathname of located file Success
  *      -NULL Failure
  */
-static char *path_access(char *fname, char *path, int mode)
+char *opal_path_access(char *fname, char *path, int mode)
 {
-    char *fullpath;
+    char *fullpath = NULL;
 
     /* Allocate space for the full pathname. */
-    fullpath = opal_os_path( false, path, fname, NULL );
+    if( NULL == path ) {
+        fullpath = opal_os_path( false, fname, NULL );
+    }
+    else {
+        fullpath = opal_os_path( false, path, fname, NULL );
+    }
     if( NULL == fullpath )
         return NULL;
 

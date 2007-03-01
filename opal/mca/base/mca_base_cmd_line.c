@@ -45,7 +45,8 @@ static void add_to_env(char **params, char **values, char ***env);
  */
 int mca_base_cmd_line_setup(opal_cmd_line_t *cmd)
 {
-    int ret;
+    int ret = OPAL_SUCCESS;
+
     ret = opal_cmd_line_make_opt3(cmd, '\0', "mca", "mca", 2,
                                   "Pass context-specific MCA parameters; they are considered global if --gmca is not used and only one context is specified (arg0 is the parameter name; arg1 is the parameter value)");
     if (OPAL_SUCCESS != ret) {
@@ -54,6 +55,23 @@ int mca_base_cmd_line_setup(opal_cmd_line_t *cmd)
 
     ret = opal_cmd_line_make_opt3(cmd, '\0', "gmca", "gmca", 2,
                                   "Pass global MCA parameters that are applicable to all contexts (arg0 is the parameter name; arg1 is the parameter value)");
+
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    {
+        opal_cmd_line_init_t entry = 
+            {"mca", "base", "param_file_prefix", '\0', "am", NULL, 1,
+             NULL, OPAL_CMD_LINE_TYPE_STRING,
+             "Aggregate MCA parameter set file list"
+            };
+        ret = opal_cmd_line_make_opt_mca(cmd, entry);
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
+    }
+
     return ret;
 }
 

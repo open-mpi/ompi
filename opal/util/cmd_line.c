@@ -178,6 +178,26 @@ int opal_cmd_line_create(opal_cmd_line_t *cmd,
     return OPAL_SUCCESS;
 }
 
+/*
+ * Append a command line entry to the previously constructed command line
+ */
+int opal_cmd_line_make_opt_mca(opal_cmd_line_t *cmd,
+                               opal_cmd_line_init_t entry)
+{
+    int ret;
+
+    /* Ensure we got an entry */
+    if ('\0' == entry.ocl_cmd_short_name &&
+        NULL == entry.ocl_cmd_single_dash_name &&
+        NULL == entry.ocl_cmd_long_name) {
+        return OPAL_SUCCESS;
+    }
+
+    ret = make_opt(cmd, &entry);
+
+    return OPAL_SUCCESS;
+}
+
 
 /*
  * Create a command line option, --long-name and/or -s (short name).
