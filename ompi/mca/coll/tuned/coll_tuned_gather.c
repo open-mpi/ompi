@@ -31,6 +31,8 @@
 #include "coll_tuned_util.h"
 
 
+/* Todo: gather_intra_generic, gather_intra_binary, gather_intra_chain,
+ * gather_intra_pipeline, segmentation? */
 int
 ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
 				      struct ompi_datatype_t *sdtype,
@@ -396,9 +398,9 @@ ompi_coll_tuned_gather_intra_do_this(void *sbuf, int scount,
 						     root, comm);
    default:
        OPAL_OUTPUT((ompi_coll_tuned_stream,
-		    "coll:tuned:allgather_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 
+		    "coll:tuned:gather_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 
 		    algorithm, 
-		    ompi_coll_tuned_forced_max_algorithms[ALLGATHER]));
+		    ompi_coll_tuned_forced_max_algorithms[GATHER]));
        return (MPI_ERR_ARG);
    } /* switch */
 }
