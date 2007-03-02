@@ -64,6 +64,14 @@ static int calculate_num_nodes_up_to_level( int fanout, int level )
 
 /*
  * And now the building functions.
+ *
+ * An example for fanout = 2, comm_size = 7
+ *
+ *              0           <-- delta = 1 (fanout^0)
+ *            /   \
+ *           1     2        <-- delta = 2 (fanout^1)
+ *          / \   / \
+ *         3   5 4   6      <-- delta = 4 (fanout^2)
  */
 
 ompi_coll_tree_t*
@@ -174,14 +182,14 @@ ompi_coll_tuned_topo_build_tree( int fanout,
  * operations.
  * Root of this tree is always rank (size-1) and fanout is 2.
  * Here are some of the examples of this tree:
- * size == 2                   size = 4                 size = 9
- *      1                           3                        8
- *     /                          /   \                    /   \
- *    0                          2     1                  7      3
- *                                    /                 /  \    / \
- *                                   0                 6    5  2   1
- *                                                         /      /
- *                                                        4      0
+ * size == 2     size == 3     size == 4                size == 9
+ *      1             2             3                        8
+ *     /             / \          /   \                    /   \
+ *    0             1  0         2     1                  7     3
+ *                                    /                 /  \   / \
+ *                                   0                 6    5 2   1
+ *                                                         /     /
+ *                                                        4     0
  */
 ompi_coll_tree_t*
 ompi_coll_tuned_topo_build_in_order_bintree( struct ompi_communicator_t* comm )
