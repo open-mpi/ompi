@@ -205,36 +205,36 @@ base as of this writing (28 Feb 2007):
   http://www.open-mpi.org/community/lists/users/2006/01/0539.php
 
 - The MX support is shared between the 2 internal devices, the MTL
-  and the BTL. The MTL stand for Message Transport Layer, while the
-  BTL stand for Byte Transport Layer. The design of the BTL interface
-  in OpenMPI assumes that only naive one-sided communication
+  and the BTL.  MTL stands for Message Transport Layer, while BTL
+  stands for Byte Transport Layer.  The design of the BTL interface
+  in Open MPI assumes that only naive one-sided communication
   capabilities are provided by the low level communication layers.
   However, modern communication layers such as MX, PSM or Portals,
   natively implement highly-optimized two-sided communication
-  semantics. To leverage these capabilities, OpenMPI provides the MTL
-  interface to transfer messages rather than bytes.
-  The MTL interface implements a shorter code path and let the
-  low-level network library decides which protocol to use, depending
+  semantics.  To leverage these capabilities, Open MPI provides the
+  MTL interface to transfer messages rather than bytes.
+  The MTL interface implements a shorter code path and lets the
+  low-level network library decide which protocol to use, depending
   on message length, internal resources and other parameters
-  specific to the interconnect used. However, OpenMPI cannot
-  currently use multiple MTL at once. In the case of the MX MTL,
-  self and shared memory communications are provided by the MX
-  library. Moreover, the current MX MTL do not support message
-  pipelining resulting in lower performances in case of non
-  contiguous data-types.
+  specific to the interconnect used.  However, Open MPI cannot
+  currently use multiple MTL modules at once.  In the case of the
+  MX MTL, self and shared memory communications are provided by the
+  MX library.  Moreover, the current MX MTL does not support message
+  pipelining resulting in lower performances in case of non-contiguous
+  data-types.
   In the case of the BTL, MCA parameters allow Open MPI to use our own
   shared memory and self device for increased performance.
-  The BTL interface allow multiple devices to be used simultaneously.
+  The BTL interface allows multiple devices to be used simultaneously.
   For the MX BTL it is recommended that the first segment (which is
-  as a threshold between the eager and the rendez-vous protocol) should
+  as a threshold between the eager and the rendezvous protocol) should
   always be at most 4KB, but there is no further restriction on
   the size of subsequent fragments.
   The MX MTL is recommended in the common case for best performance
-  on 10G hardware, when most of the data transfer cover contiguous
+  on 10G hardware, when most of the data transfers cover contiguous
   memory layouts. The MX BTL is recommended in all other cases, more
   specifically when using multiple interconnects at the same time
   (including TCP), transferring non contiguous data-types or when
-  using DR PML.
+  using the DR PML.
 
 - The OpenFabrics Enterprise Distribution (OFED) software package v1.0
   will not work properly with Open MPI v1.2 (and later) due to how its
@@ -321,8 +321,7 @@ base as of this writing (28 Feb 2007):
 
     shell$ mpirun --mca pml ob1 ...
 
-  *** JMS need more verbiage here about cm?  Need a paragraph
-      describing the diff between MX BTL and MX MTL?
+  *** JMS need more verbiage here about cm?
 
 ===========================================================================
 
