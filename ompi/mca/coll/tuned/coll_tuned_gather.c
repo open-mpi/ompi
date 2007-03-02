@@ -133,24 +133,24 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
     if (!(vrank % 2)) {
 	/* all non-leaf nodes recv from children */
 	for (i = 0; i < bmtree->tree_nextsize; i++) {
-	    int cur_count = 0;
+	    int mycount = 0, vkid;
+	    /* figure out how much data I have to send to this child */
+	    vkid = (bmtree->tree_next[i] - root + size) % size;
+	    mycount = vkid - vrank;
+	    if (mycount > (size - vkid))
+		mycount = size - vkid;
+	    mycount *= rcount;
 
 	    OPAL_OUTPUT((ompi_coll_tuned_stream,
-			 "ompi_coll_tuned_gather_intra_binomial rank %d recv %d ",
-			 rank, bmtree->tree_next[i]));
+			 "ompi_coll_tuned_gather_intra_binomial rank %d recv %d mycount = %d",
+			 rank, bmtree->tree_next[i], mycount));
 
 	    err = MCA_PML_CALL(recv(ptmp + total_recv*rextent, rcount*size-total_recv, rdtype,
 				    bmtree->tree_next[i], MCA_COLL_BASE_TAG_GATHER,
 				    comm, &status));
 	    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
-	    /* the number of elements actually received may be smaller than the count
-	     * passed to recv when comm_size is not power of 2 */
-	    MPI_Get_count(&status, rdtype, &cur_count);
-	    total_recv += cur_count;
-	    OPAL_OUTPUT((ompi_coll_tuned_stream,
-			 "ompi_coll_tuned_gather_intra_binomial received %d total %d\n",
-			 cur_count, total_recv));
+	    total_recv += mycount;
 	}
     }
 
