@@ -37,6 +37,7 @@ sources = \
         coll_tuned_bcast.c \
         coll_tuned_reduce.c \
 	coll_tuned_gather.c \
+	coll_tuned_scatter.c \
         coll_tuned_component.c \
         coll_tuned_module.c 
 

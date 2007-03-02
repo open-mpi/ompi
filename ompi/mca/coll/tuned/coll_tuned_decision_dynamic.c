@@ -321,3 +321,24 @@ int ompi_coll_tuned_gather_intra_dec_dynamic(void *sbuf, int scount,
 						  rbuf, rcount, rdtype, 
 						  root, comm);
 }
+
+int ompi_coll_tuned_scatter_intra_dec_dynamic(void *sbuf, int scount, 
+					      struct ompi_datatype_t *sdtype,
+					      void* rbuf, int rcount, 
+					      struct ompi_datatype_t *rdtype, 
+					      int root, struct ompi_communicator_t *comm)
+{
+
+   OPAL_OUTPUT((ompi_coll_tuned_stream,
+		"ompi_coll_tuned_scatter_intra_dec_dynamic"));
+
+   if (comm->c_coll_selected_data->user_forced[SCATTER].algorithm) {
+     return ompi_coll_tuned_scatter_intra_do_forced (sbuf, scount, sdtype,
+						     rbuf, rcount, rdtype,
+						     root, comm);
+   }
+
+   return ompi_coll_tuned_scatter_intra_dec_fixed (sbuf, scount, sdtype, 
+						   rbuf, rcount, rdtype, 
+						   root, comm);
+}

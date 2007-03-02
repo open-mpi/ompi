@@ -251,6 +251,11 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   /* Scatter */
   int ompi_coll_tuned_scatter_intra_dec_fixed(SCATTER_ARGS);
   int ompi_coll_tuned_scatter_intra_dec_dynamic(SCATTER_ARGS);
+  int ompi_coll_tuned_scatter_intra_do_forced(SCATTER_ARGS);
+  int ompi_coll_tuned_scatter_intra_do_this(SCATTER_ARGS, int algorithm, int faninout, int segsize);
+  int ompi_coll_tuned_scatter_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
+  int ompi_coll_tuned_scatter_intra_basic_linear(SCATTER_ARGS);
+  int ompi_coll_tuned_scatter_intra_binomial(SCATTER_ARGS);
   int ompi_coll_tuned_scatter_inter_dec_fixed(SCATTER_ARGS);
   int ompi_coll_tuned_scatter_inter_dec_dynamic(SCATTER_ARGS);
 
