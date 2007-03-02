@@ -27,6 +27,8 @@ version 1.0.
 1.1.5
 -----
 
+- Fix race condition in shared memory BTL startup that could cause MPI
+  applications to hang in MPI_INIT.
 - Fix syntax error in a corner case of the event library.  Thanks to
   Bert Wesarg for pointing this out.
 - Add new MCA parameter (mpi_preconnect_oob) for pre-connecting the

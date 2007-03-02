@@ -47,6 +47,7 @@ typedef uint32_t orte_rml_tag_t;
 #define ORTE_RML_TAG_RMGR_CLNT   9
 #define ORTE_RML_TAG_PROBE       10
 #define ORTE_RML_TAG_WIREUP         20
+#define ORTE_RML_TAG_SM_BACK_FILE_CREATED    19
 
 #define ORTE_RML_TAG_DYNAMIC     2000
 #define ORTE_RML_TAG_MAX UINT32_MAX
