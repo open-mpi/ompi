@@ -115,6 +115,7 @@ static void set_handler_default(int sig);
 
 enum {
     ORTE_PLS_RSH_SHELL_BASH = 0,
+    ORTE_PLS_RSH_SHELL_ZSH,
     ORTE_PLS_RSH_SHELL_TCSH,
     ORTE_PLS_RSH_SHELL_CSH,
     ORTE_PLS_RSH_SHELL_KSH,
@@ -126,6 +127,7 @@ typedef int orte_pls_rsh_shell;
 
 static const char * orte_pls_rsh_shell_name[] = {
     "bash",
+    "zsh",
     "tcsh",       /* tcsh has to be first otherwise strstr finds csh */
     "csh",
     "ksh",
@@ -576,6 +578,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 switch (i) {
                 case ORTE_PLS_RSH_SHELL_SH:  /* fall through */
                 case ORTE_PLS_RSH_SHELL_KSH: /* fall through */
+                case ORTE_PLS_RSH_SHELL_ZSH: /* fall through */
                 case ORTE_PLS_RSH_SHELL_BASH: local_sh = true; break;
                 case ORTE_PLS_RSH_SHELL_TCSH: /* fall through */
                 case ORTE_PLS_RSH_SHELL_CSH:  local_csh = true; break;
