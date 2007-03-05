@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "btl_openib.h"
 #include "btl_openib_mca.h"
@@ -337,9 +338,15 @@ int btl_openib_register_mca_params(void)
 
     CHECK(reg_int("buffer_alignment", 
                   "Prefered communication buffer alignment, in bytes "
-                  "(must be >= 0)",
+                  "(must be > 0 and power of two)",
                   64, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_component.buffer_alignment = (uint32_t) ival;
+    if(ival <= 1 || (ival & (ival - 1))) {
+        opal_show_help("help-mpi-btl-openib.txt", "wrong buffer alignment",
+                true, ival, orte_system_info.nodename, 64);
+        mca_btl_openib_component.buffer_alignment = 64;
+    } else {
+        mca_btl_openib_component.buffer_alignment = (uint32_t) ival;
+    }
 
     CHECK(reg_int("eager_limit", "Eager send limit, in bytes "
                   "(must be >= 1)",

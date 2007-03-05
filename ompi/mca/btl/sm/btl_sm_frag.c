@@ -19,9 +19,12 @@
 #include "btl_sm_frag.h"
 
 
-static inline void mca_btl_sm_frag_constructor(mca_btl_sm_frag_t* frag)
+static inline void mca_btl_sm_frag_common_constructor(mca_btl_sm_frag_t* frag)
 {
-    frag->segment.seg_addr.pval = frag+1;
+    frag->hdr = frag->base.super.ptr;
+    if(frag->hdr != NULL)
+        frag->hdr->frag = frag;
+    frag->segment.seg_addr.pval = ((char*)frag->hdr) + sizeof(mca_btl_sm_hdr_t);
     frag->segment.seg_len = frag->size;
     frag->base.des_src = &frag->segment;
     frag->base.des_src_cnt = 1;
@@ -30,18 +33,25 @@ static inline void mca_btl_sm_frag_constructor(mca_btl_sm_frag_t* frag)
     frag->base.des_flags = 0;
 }
 
+static void mca_btl_sm_frag_constructor(mca_btl_sm_frag_t* frag)
+{
+    frag->size = 0;
+    frag->my_list = &mca_btl_sm_component.sm_frags;
+    mca_btl_sm_frag_common_constructor(frag);
+}
+
 static void mca_btl_sm_frag1_constructor(mca_btl_sm_frag_t* frag)
 {
     frag->size = mca_btl_sm_component.eager_limit;
     frag->my_list = &mca_btl_sm_component.sm_frags1;
-    mca_btl_sm_frag_constructor(frag);
+    mca_btl_sm_frag_common_constructor(frag);
 }
 
 static void mca_btl_sm_frag2_constructor(mca_btl_sm_frag_t* frag)
 {
     frag->size = mca_btl_sm_component.max_frag_size;
     frag->my_list = &mca_btl_sm_component.sm_frags2;
-    mca_btl_sm_frag_constructor(frag);
+    mca_btl_sm_frag_common_constructor(frag);
 }
 
 static void mca_btl_sm_frag_destructor(mca_btl_sm_frag_t* frag)

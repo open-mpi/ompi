@@ -40,7 +40,6 @@ struct ompi_free_list_t
     size_t fl_num_per_alloc;
     size_t fl_num_waiting;
     size_t fl_elem_size;
-    size_t fl_header_space;
     size_t fl_alignment;
     opal_class_t* fl_elem_class;
     struct mca_mpool_base_module_t* fl_mpool;
@@ -51,10 +50,12 @@ struct ompi_free_list_t
 typedef struct ompi_free_list_t ompi_free_list_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_free_list_t);
 
+struct mca_mpool_base_registration_t;
 struct ompi_free_list_item_t
 { 
     opal_list_item_t super; 
-    void* user_data; 
+    struct mca_mpool_base_registration_t *registration;
+    void *ptr;
 }; 
 typedef struct ompi_free_list_item_t ompi_free_list_item_t; 
 
@@ -75,7 +76,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_free_list_item_t);
 OMPI_DECLSPEC int ompi_free_list_init_ex(
     ompi_free_list_t *free_list, 
     size_t element_size,
-    size_t header_size,
     size_t alignment,
     opal_class_t* element_class,
     int num_elements_to_alloc,
@@ -92,7 +92,7 @@ static inline int ompi_free_list_init(
     int num_elements_per_alloc,
     struct mca_mpool_base_module_t* mpool)
 {
-    return ompi_free_list_init_ex(free_list, element_size, 0, CACHE_LINE_SIZE,
+    return ompi_free_list_init_ex(free_list, element_size, CACHE_LINE_SIZE,
             element_class, num_elements_to_alloc, max_elements_to_alloc,
             num_elements_per_alloc, mpool);
 }

@@ -173,7 +173,6 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
             endpoint->eager_rdma_remote.base.lval +
             endpoint->eager_rdma_remote.head *
             openib_btl->eager_rdma_frag_size +
-            endpoint->eager_rdma_remote.frag_t_len + 
             sizeof(mca_btl_openib_header_t) +
             mca_btl_openib_component.eager_limit +
             sizeof(mca_btl_openib_footer_t);
@@ -1168,7 +1167,6 @@ static int mca_btl_openib_endpoint_send_eager_rdma(
     rdma_hdr = (mca_btl_openib_eager_rdma_header_t*)frag->segment.seg_addr.pval;
     rdma_hdr->control.type = MCA_BTL_OPENIB_CONTROL_RDMA;
     rdma_hdr->rkey = endpoint->eager_rdma_local.reg->mr->rkey;
-    rdma_hdr->frag_t_len = sizeof(mca_btl_openib_frag_t);
     rdma_hdr->rdma_start.lval = ompi_ptr_ptol(endpoint->eager_rdma_local.base.pval);
     BTL_VERBOSE(("sending rkey %lu, rdma_start.lval %llu, pval %p, ival %u type %d and sizeof(rdma_hdr) %d\n", 
                rdma_hdr->rkey, 
@@ -1204,6 +1202,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
 {
     mca_btl_openib_module_t* openib_btl = endpoint->endpoint_btl;
     char *buf;
+    mca_btl_openib_recv_frag_eager_t *headers_buf;
     unsigned int i;
     orte_std_cntr_t index;
 
@@ -1213,6 +1212,13 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
                 (void*)1))
         return;
 
+    headers_buf = (mca_btl_openib_recv_frag_eager_t*)
+        malloc(sizeof(mca_btl_openib_recv_frag_eager_t) *
+            mca_btl_openib_component.eager_rdma_num);
+
+    if(NULL == headers_buf)
+       goto unlock_rdma_local;
+
     buf = openib_btl->super.btl_mpool->mpool_alloc(openib_btl->super.btl_mpool,
             openib_btl->eager_rdma_frag_size *
             mca_btl_openib_component.eager_rdma_num,
@@ -1221,22 +1227,24 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
             (mca_mpool_base_registration_t**)&endpoint->eager_rdma_local.reg);
 
     if(!buf)
-       goto unlock_rdma_local;
+       goto free_headers_buf;
 
     buf = buf + openib_btl->eager_rdma_frag_size -
         sizeof(mca_btl_openib_footer_t) - openib_btl->super.btl_eager_limit -
-        sizeof(mca_btl_openib_header_t) -
-        sizeof(mca_btl_openib_recv_frag_eager_t);
+        sizeof(mca_btl_openib_header_t);
 
     for(i = 0; i < mca_btl_openib_component.eager_rdma_num; i++) {
-        ompi_free_list_item_t *item = (ompi_free_list_item_t *)(buf +
-                i*openib_btl->eager_rdma_frag_size);
-        item->user_data = (void*)endpoint->eager_rdma_local.reg;
+        ompi_free_list_item_t *item;
+        item = (ompi_free_list_item_t*)&headers_buf[i];
+        item->registration = (void*)endpoint->eager_rdma_local.reg;
+        item->ptr = buf + i * openib_btl->eager_rdma_frag_size;
         OBJ_CONSTRUCT(item, mca_btl_openib_recv_frag_eager_t);
         ((mca_btl_openib_frag_t*)item)->endpoint = endpoint;
         ((mca_btl_openib_frag_t*)item)->type = MCA_BTL_OPENIB_FRAG_EAGER_RDMA;
     }
-    
+
+    endpoint->eager_rdma_local.frags = headers_buf;
+
     /* set local rdma pointer to real value */
     opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, (void*)1,
             buf);
@@ -1253,8 +1261,11 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
 
     openib_btl->super.btl_mpool->mpool_free(openib_btl->super.btl_mpool,
            buf, (mca_mpool_base_registration_t*)endpoint->eager_rdma_local.reg);
+free_headers_buf:
+    free(headers_buf);
 unlock_rdma_local:
     /* set local rdma pointer back to zero. Will retry later */
     opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, 
             endpoint->eager_rdma_local.base.pval, NULL);
+    endpoint->eager_rdma_local.frags = NULL;
 }

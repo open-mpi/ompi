@@ -113,7 +113,6 @@ struct mca_btl_openib_eager_rdma_header_t {
     uint8_t padding[3]; 
     uint32_t rkey;
     ompi_ptr_t rdma_start;
-    uint64_t frag_t_len;
 };
 typedef struct mca_btl_openib_eager_rdma_header_t mca_btl_openib_eager_rdma_header_t;
 
@@ -121,14 +120,12 @@ typedef struct mca_btl_openib_eager_rdma_header_t mca_btl_openib_eager_rdma_head
     do {                                                   \
         h.rkey = htonl(h.rkey);                                  \
         h.rdma_start.lval = hton64(h.rdma_start.lval);           \
-        h.frag_t_len = hton64(h.frag_t_len);                     \
     } while (0)
     
 #define BTL_OPENIB_EAGER_RDMA_CONTROL_HEADER_NTOH(h)     \
     do {                                                 \
         h.rkey = ntohl(h.rkey);                          \
         h.rdma_start.lval = ntoh64(h.rdma_start.lval);   \
-        h.frag_t_len = ntoh64(h.frag_t_len);             \
     } while (0)
     
     

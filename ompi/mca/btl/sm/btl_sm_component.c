@@ -165,6 +165,7 @@ int mca_btl_sm_component_open(void)
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags1, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags2, ompi_free_list_t);
     return OMPI_SUCCESS;
@@ -342,6 +343,7 @@ int mca_btl_sm_component_progress(void)
     unsigned int peer_smp_rank ;
     mca_btl_sm_frag_t *frag;
     ompi_fifo_t *fifo = NULL;
+    mca_btl_sm_hdr_t *hdr;
     int my_smp_rank=mca_btl_sm_component.my_smp_rank;
     int proc;
     int rc = 0, btl = 0;
@@ -377,7 +379,7 @@ int mca_btl_sm_component_progress(void)
          * that we have the same base address as the sender, so no
          * translation is necessary when accessing the fifo.  Hence,
          * we use the _same_base_addr varient. */
-        frag = (mca_btl_sm_frag_t *)
+        hdr = (mca_btl_sm_hdr_t *)
           ompi_fifo_read_from_tail_same_base_addr( fifo );
 
         /* release thread lock */
@@ -385,26 +387,33 @@ int mca_btl_sm_component_progress(void)
             opal_atomic_unlock(&(fifo->tail_lock));
         }
 
-        if( OMPI_CB_FREE == frag ) {
+        if( OMPI_CB_FREE == hdr ) {
             continue;
         }
 
         /* dispatch fragment by type */
-        switch(frag->type) {
+        switch(hdr->type) {
             case MCA_BTL_SM_FRAG_ACK:
             {
+                frag = hdr->frag;
                 /* completion callback */
-                frag->base.des_cbfunc(&mca_btl_sm[0].super, frag->endpoint, &frag->base, frag->rc);
+                frag->base.des_cbfunc(&mca_btl_sm[0].super, frag->endpoint, &frag->base, hdr->u.rc);
                 break;
             }
             case MCA_BTL_SM_FRAG_SEND:
             {
                 /* recv upcall */
-                mca_btl_sm_recv_reg_t* reg = mca_btl_sm[0].sm_reg + frag->tag;
-                reg->cbfunc(&mca_btl_sm[0].super,frag->tag,&frag->base,reg->cbdata);
-                frag->type = MCA_BTL_SM_FRAG_ACK;
+                mca_btl_sm_recv_reg_t* reg = mca_btl_sm[0].sm_reg + hdr->u.s.tag;
+                MCA_BTL_SM_FRAG_ALLOC(frag, rc);
+                frag->segment.seg_addr.pval = ((char*)hdr) +
+                    sizeof(mca_btl_sm_hdr_t);
+                frag->segment.seg_len = hdr->u.s.len;
+                reg->cbfunc(&mca_btl_sm[0].super,hdr->u.s.tag,&frag->base,reg->cbdata);
+                MCA_BTL_SM_FRAG_RETURN(frag);
+                hdr->type = MCA_BTL_SM_FRAG_ACK;
+                hdr->u.rc = OMPI_SUCCESS;
                 MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
-                                       my_smp_rank, peer_smp_rank, frag, rc );
+                                       my_smp_rank, peer_smp_rank, hdr, rc );
                 if(OMPI_SUCCESS != rc)
                     goto err;
                 break;
@@ -412,10 +421,10 @@ int mca_btl_sm_component_progress(void)
             default:
             {
                 /* unknown */
-                frag->rc = OMPI_ERROR;
-                frag->type = MCA_BTL_SM_FRAG_ACK;
+                hdr->u.rc = OMPI_ERROR;
+                hdr->type = MCA_BTL_SM_FRAG_ACK;
                 MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
-                                       my_smp_rank, peer_smp_rank, frag, rc );
+                                       my_smp_rank, peer_smp_rank, hdr, rc );
                 if(OMPI_SUCCESS != rc)
                     goto err;
                 break;
@@ -450,9 +459,9 @@ int mca_btl_sm_component_progress(void)
          * translate every access into the fifo to be relevant to our
          * memory space.  Hence, we do *not* use the _same_base_addr
          * variant. */
-        frag=(mca_btl_sm_frag_t *)ompi_fifo_read_from_tail( fifo,
+        hdr=(mca_btl_sm_hdr_t *)ompi_fifo_read_from_tail( fifo,
                 mca_btl_sm_component.sm_offset[peer_smp_rank]);
-        if( OMPI_CB_FREE == frag ) {
+        if( OMPI_CB_FREE == hdr ) {
             /* release thread lock */
             if( opal_using_threads() ) {
                 opal_atomic_unlock(&(fifo->tail_lock));
@@ -467,37 +476,32 @@ int mca_btl_sm_component_progress(void)
 
         /* change the address from address relative to the shared
          * memory address, to a true virtual address */
-        frag = (mca_btl_sm_frag_t *)( (char *)frag +
+        hdr = (mca_btl_sm_hdr_t *)( (char *)hdr +
                 mca_btl_sm_component.sm_offset[peer_smp_rank]);
 
         /* dispatch fragment by type */
-        switch(frag->type) {
+        switch(hdr->type) {
             case MCA_BTL_SM_FRAG_ACK:
             {
+                frag = hdr->frag;
                 /* completion callback */
-                frag->base.des_src = 
-                    ( mca_btl_base_segment_t* )((ptrdiff_t)frag->base.des_dst + mca_btl_sm_component.sm_offset[peer_smp_rank]);
-                frag->base.des_src->seg_addr.pval = (void*)
-                    ((ptrdiff_t)frag->base.des_src->seg_addr.pval +
-                     mca_btl_sm_component.sm_offset[peer_smp_rank]);
-                frag->base.des_dst = frag->base.des_src;
-                frag->base.des_cbfunc(&mca_btl_sm[1].super, frag->endpoint, &frag->base, frag->rc);
+                frag->base.des_cbfunc(&mca_btl_sm[1].super, frag->endpoint, &frag->base, hdr->u.rc);
                 break;
             }
             case MCA_BTL_SM_FRAG_SEND:
             {
                 /* recv upcall */
-                mca_btl_sm_recv_reg_t* reg = mca_btl_sm[1].sm_reg + frag->tag;
-                frag->base.des_dst = (mca_btl_base_segment_t*)
-                    ((ptrdiff_t)frag->base.des_src + mca_btl_sm_component.sm_offset[peer_smp_rank]);
-                frag->base.des_dst->seg_addr.pval = (void*)
-                    ((ptrdiff_t)frag->base.des_dst->seg_addr.pval +
-                    mca_btl_sm_component.sm_offset[peer_smp_rank]);
-                frag->base.des_src = frag->base.des_dst;
-                reg->cbfunc(&mca_btl_sm[1].super,frag->tag,&frag->base,reg->cbdata);
-                frag->type = MCA_BTL_SM_FRAG_ACK;
+                mca_btl_sm_recv_reg_t* reg = mca_btl_sm[1].sm_reg + hdr->u.s.tag;
+                MCA_BTL_SM_FRAG_ALLOC(frag, rc);
+                frag->segment.seg_addr.pval = ((char*)hdr) +
+                    sizeof(mca_btl_sm_hdr_t);
+                frag->segment.seg_len = hdr->u.s.len;
+                reg->cbfunc(&mca_btl_sm[1].super,hdr->u.s.tag,&frag->base,reg->cbdata);
+                MCA_BTL_SM_FRAG_RETURN(frag);
+                hdr->type = MCA_BTL_SM_FRAG_ACK;
+                hdr->u.rc = OMPI_SUCCESS;
                 MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
-                                       my_smp_rank, peer_smp_rank, frag, rc );
+                                       my_smp_rank, peer_smp_rank, hdr, rc );
                 if(OMPI_SUCCESS != rc)
                     goto err;
                 break;
@@ -505,10 +509,10 @@ int mca_btl_sm_component_progress(void)
             default:
             {
                 /* unknown */
-                frag->rc = OMPI_ERROR;
-                frag->type = MCA_BTL_SM_FRAG_ACK;
+                hdr->u.rc = OMPI_ERROR;
+                hdr->type = MCA_BTL_SM_FRAG_ACK;
                 MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
-                                       my_smp_rank, peer_smp_rank, frag, rc );
+                                       my_smp_rank, peer_smp_rank, hdr, rc );
                 if(OMPI_SUCCESS != rc)
                     goto err;
                 break;

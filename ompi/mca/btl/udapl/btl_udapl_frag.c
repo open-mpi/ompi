@@ -26,7 +26,8 @@
 
 static void mca_btl_udapl_frag_common_constructor(mca_btl_udapl_frag_t* frag) 
 {
-    mca_btl_udapl_reg_t* reg = (mca_btl_udapl_reg_t*)frag->base.super.user_data;
+    mca_btl_udapl_reg_t* reg =
+        (mca_btl_udapl_reg_t*)frag->base.super.registration;
 
 #if OMPI_ENABLE_DEBUG
     frag->base.des_src = NULL;
@@ -37,7 +38,7 @@ static void mca_btl_udapl_frag_common_constructor(mca_btl_udapl_frag_t* frag)
 #endif
 
     frag->registration = reg; 
-    frag->segment.seg_addr.pval = (unsigned char*)(frag + 1); 
+    frag->segment.seg_addr.pval = (unsigned char*)frag->base.super.ptr;
     frag->ftr = NULL;
 
     /* Don't understand why yet, but there are cases where reg is NULL -

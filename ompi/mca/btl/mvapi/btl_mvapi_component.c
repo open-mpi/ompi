@@ -583,7 +583,10 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
             2*MCA_BTL_IB_FRAG_ALIGN; 
        
         mvapi_btl->eager_rdma_frag_size =
-            length & ~(2 * MCA_BTL_IB_FRAG_ALIGN - 1);
+            (sizeof(mca_btl_mvapi_header_t) +
+             sizeof(mca_btl_mvapi_footer_t) +
+             mvapi_btl->super.btl_eager_limit +
+             2*MCA_BTL_IB_FRAG_ALIGN) & ~(2 * MCA_BTL_IB_FRAG_ALIGN - 1);
 
         ompi_free_list_init(&mvapi_btl->send_free_eager,
                             length, 

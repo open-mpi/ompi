@@ -22,5 +22,6 @@
 #define OPAL_ALIGN_H
 
 #define OPAL_ALIGN(x,a,t) (((x)+((t)(a)-1)) & ~(((t)(a)-1)))
+#define OPAL_ALIGN_PTR(x,a,t) ((t)OPAL_ALIGN((uintptr_t)x, a, uintptr_t))
 
 #endif /* OPAL_ALIGN_H */

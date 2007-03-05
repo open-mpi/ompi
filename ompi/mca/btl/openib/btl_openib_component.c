@@ -234,23 +234,21 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
     case MCA_BTL_OPENIB_CONTROL_RDMA:
        rdma_hdr = (mca_btl_openib_eager_rdma_header_t*)ctl_hdr;
        
-       BTL_VERBOSE(("prior to NTOH received  rkey %lu, rdma_start.lval %llu, pval %p, ival %u, frag_t_len %llu\n", 
+       BTL_VERBOSE(("prior to NTOH received  rkey %lu, rdma_start.lval %llu, pval %p, ival %u\n", 
                   rdma_hdr->rkey, 
                   (unsigned long) rdma_hdr->rdma_start.lval,
                   rdma_hdr->rdma_start.pval,
-                  rdma_hdr->rdma_start.ival,
-                  (unsigned long) rdma_hdr->frag_t_len
+                  rdma_hdr->rdma_start.ival
                   ));
        
        if(endpoint->nbo) {
            BTL_OPENIB_EAGER_RDMA_CONTROL_HEADER_NTOH((*rdma_hdr));
            
-           BTL_VERBOSE(("received  rkey %lu, rdma_start.lval %llu, pval %p, ival %u, frag_t_len %llu\n", 
+           BTL_VERBOSE(("received  rkey %lu, rdma_start.lval %llu, pval %p, ival %u\n", 
                       rdma_hdr->rkey, 
                       (unsigned long) rdma_hdr->rdma_start.lval,
                       rdma_hdr->rdma_start.pval,
-                      rdma_hdr->rdma_start.ival,
-                      (unsigned long) rdma_hdr->frag_t_len
+                      rdma_hdr->rdma_start.ival
                       ));
            
        } 
@@ -261,7 +259,6 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
        }
        endpoint->eager_rdma_remote.rkey =  rdma_hdr->rkey;
        endpoint->eager_rdma_remote.base.lval = rdma_hdr->rdma_start.lval;
-       endpoint->eager_rdma_remote.frag_t_len = rdma_hdr->frag_t_len;
        endpoint->eager_rdma_remote.tokens =
            mca_btl_openib_component.eager_rdma_num - 1;
        break;
@@ -699,17 +696,19 @@ btl_openib_component_init(int *num_btl_modules,
         openib_btl->super.btl_mpool = openib_btl->hca->mpool;
 
         /* Initialize pool of send fragments */ 
-        length = sizeof(mca_btl_openib_frag_t) + 
+        length = sizeof(mca_btl_openib_send_frag_eager_t) +
             sizeof(mca_btl_openib_header_t) + 
             sizeof(mca_btl_openib_footer_t) + 
             openib_btl->super.btl_eager_limit;
 
-        openib_btl->eager_rdma_frag_size = OPAL_ALIGN(length,
-                mca_btl_openib_component.buffer_alignment, int);
+        openib_btl->eager_rdma_frag_size = OPAL_ALIGN(
+                sizeof(mca_btl_openib_header_t) +
+                sizeof(mca_btl_openib_footer_t) +
+                openib_btl->super.btl_eager_limit,
+                mca_btl_openib_component.buffer_alignment, size_t);
  
         ompi_free_list_init_ex(&openib_btl->send_free_eager,
                             length,
-                            sizeof(mca_btl_openib_frag_t),
                             mca_btl_openib_component.buffer_alignment,
                             OBJ_CLASS(mca_btl_openib_send_frag_eager_t),
                             mca_btl_openib_component.ib_free_list_num,
@@ -717,9 +716,13 @@ btl_openib_component_init(int *num_btl_modules,
                             mca_btl_openib_component.ib_free_list_inc,
                             openib_btl->super.btl_mpool);
         
+        length = sizeof(mca_btl_openib_recv_frag_eager_t) +
+            sizeof(mca_btl_openib_header_t) +
+            sizeof(mca_btl_openib_footer_t) +
+            openib_btl->super.btl_eager_limit;
+
         ompi_free_list_init_ex(&openib_btl->recv_free_eager,
                             length, 
-                            sizeof(mca_btl_openib_frag_t),
                             mca_btl_openib_component.buffer_alignment,
                             OBJ_CLASS(mca_btl_openib_recv_frag_eager_t),
                             mca_btl_openib_component.ib_free_list_num,
@@ -727,13 +730,12 @@ btl_openib_component_init(int *num_btl_modules,
                             mca_btl_openib_component.ib_free_list_inc,
                             openib_btl->super.btl_mpool);
 
-        length = sizeof(mca_btl_openib_frag_t) + 
+        length = sizeof(mca_btl_openib_send_frag_max_t) +
             sizeof(mca_btl_openib_header_t) + 
             openib_btl->super.btl_max_send_size;
         
         ompi_free_list_init_ex(&openib_btl->send_free_max,
                             length,
-                            sizeof(mca_btl_openib_frag_t),
                             mca_btl_openib_component.buffer_alignment,
                             OBJ_CLASS(mca_btl_openib_send_frag_max_t),
                             mca_btl_openib_component.ib_free_list_num,
@@ -741,25 +743,27 @@ btl_openib_component_init(int *num_btl_modules,
                             mca_btl_openib_component.ib_free_list_inc,
                             openib_btl->super.btl_mpool);
                 
+        length = sizeof(mca_btl_openib_recv_frag_max_t) +
+            sizeof(mca_btl_openib_header_t) +
+            openib_btl->super.btl_max_send_size;
+
         /* Initialize pool of receive fragments */
         ompi_free_list_init_ex(&openib_btl->recv_free_max, 
                              length, 
-                             sizeof(mca_btl_openib_frag_t),
                              mca_btl_openib_component.buffer_alignment,
-                             OBJ_CLASS (mca_btl_openib_recv_frag_max_t),
+                             OBJ_CLASS(mca_btl_openib_recv_frag_max_t),
                              mca_btl_openib_component.ib_free_list_num,
                              mca_btl_openib_component.ib_free_list_max,
                              mca_btl_openib_component.ib_free_list_inc, 
                              openib_btl->super.btl_mpool);
 
-        length = sizeof(mca_btl_openib_frag_t) +
+        length = sizeof(mca_btl_openib_send_frag_control_t) +
             sizeof(mca_btl_openib_header_t) +
             sizeof(mca_btl_openib_footer_t) + 
             sizeof(mca_btl_openib_eager_rdma_header_t);
 
         ompi_free_list_init_ex(&openib_btl->send_free_control,
                             length,
-                            sizeof(mca_btl_openib_frag_t),
                             mca_btl_openib_component.buffer_alignment,
                             OBJ_CLASS(mca_btl_openib_send_frag_control_t),
                             mca_btl_openib_component.ib_free_list_num,

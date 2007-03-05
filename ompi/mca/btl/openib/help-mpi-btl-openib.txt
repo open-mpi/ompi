@@ -169,3 +169,6 @@ Please see this FAQ entry for more details:
 
 NOTE: You can turn off this warning by setting the MCA parameter
       btl_openib_warn_default_gid_prefix to 0.
+[wrong buffer alignment]
+Wrong buffer alignment %d configured on host '%s'. Should be bigger
+than zero and power of two. Use default %d instead.

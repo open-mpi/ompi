@@ -4,7 +4,7 @@
 #include "btl_sm.h"
 #include "btl_sm_endpoint.h"
 
-#define MCA_BTL_SM_FIFO_WRITE(endpoint_peer, my_smp_rank,peer_smp_rank,frag,rc) \
+#define MCA_BTL_SM_FIFO_WRITE(endpoint_peer, my_smp_rank,peer_smp_rank,hdr,rc) \
 do { \
     ompi_fifo_t* fifo; \
     fifo=&(mca_btl_sm_component.fifo[my_smp_rank][peer_smp_rank]); \
@@ -29,7 +29,7 @@ do { \
     } \
     \
     /* post fragment */ \
-    while(ompi_fifo_write_to_head_same_base_addr(frag, fifo, \
+    while(ompi_fifo_write_to_head_same_base_addr(hdr, fifo, \
         mca_btl_sm_component.sm_mpool) != OMPI_SUCCESS) \
         opal_progress(); \
     MCA_BTL_SM_SIGNAL_PEER(endpoint_peer); \

@@ -129,6 +129,7 @@ struct mca_btl_sm_component_t {
 			      *   SMP specfic data structures. */
     ompi_free_list_t sm_frags1;    /**< free list of sm first */
     ompi_free_list_t sm_frags2;    /**< free list of sm second */
+    ompi_free_list_t sm_frags;    /**< free list of frags without data */
     ompi_free_list_t sm_first_frags_to_progress;  /**< list of first
                                                     fragments that are
                                                     awaiting resources */
