@@ -231,7 +231,6 @@ CLEANUP:
     return return_value;
 }
 
-
 /*
  *  SM component initialization
  */
@@ -392,28 +391,32 @@ int mca_btl_sm_component_progress(void)
         }
 
         /* dispatch fragment by type */
-        switch(hdr->type) {
+        switch(((uintptr_t)hdr) & MCA_BTL_SM_FRAG_TYPE_MASK) {
             case MCA_BTL_SM_FRAG_ACK:
             {
-                frag = hdr->frag;
+                int status = (uintptr_t)hdr & MCA_BTL_SM_FRAG_STATUS_MASK;
+                frag = (mca_btl_sm_frag_t *)((uintptr_t)hdr &
+                        (~(MCA_BTL_SM_FRAG_TYPE_MASK |
+                           MCA_BTL_SM_FRAG_STATUS_MASK)));
                 /* completion callback */
-                frag->base.des_cbfunc(&mca_btl_sm[0].super, frag->endpoint, &frag->base, hdr->u.rc);
+                frag->base.des_cbfunc(&mca_btl_sm[0].super, frag->endpoint,
+                        &frag->base, status?OMPI_ERROR:OMPI_SUCCESS);
                 break;
             }
             case MCA_BTL_SM_FRAG_SEND:
             {
                 /* recv upcall */
-                mca_btl_sm_recv_reg_t* reg = mca_btl_sm[0].sm_reg + hdr->u.s.tag;
+                mca_btl_sm_recv_reg_t* reg = mca_btl_sm[0].sm_reg + hdr->tag;
+
                 MCA_BTL_SM_FRAG_ALLOC(frag, rc);
                 frag->segment.seg_addr.pval = ((char*)hdr) +
                     sizeof(mca_btl_sm_hdr_t);
-                frag->segment.seg_len = hdr->u.s.len;
-                reg->cbfunc(&mca_btl_sm[0].super,hdr->u.s.tag,&frag->base,reg->cbdata);
+                frag->segment.seg_len = hdr->len;
+                reg->cbfunc(&mca_btl_sm[0].super,hdr->tag,&frag->base,reg->cbdata);
                 MCA_BTL_SM_FRAG_RETURN(frag);
-                hdr->type = MCA_BTL_SM_FRAG_ACK;
-                hdr->u.rc = OMPI_SUCCESS;
-                MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
-                                       my_smp_rank, peer_smp_rank, hdr, rc );
+                MCA_BTL_SM_FIFO_WRITE(
+                        mca_btl_sm_component.sm_peers[peer_smp_rank],
+                        my_smp_rank, peer_smp_rank, hdr->frag, rc);
                 if(OMPI_SUCCESS != rc)
                     goto err;
                 break;
@@ -421,10 +424,11 @@ int mca_btl_sm_component_progress(void)
             default:
             {
                 /* unknown */
-                hdr->u.rc = OMPI_ERROR;
-                hdr->type = MCA_BTL_SM_FRAG_ACK;
-                MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
-                                       my_smp_rank, peer_smp_rank, hdr, rc );
+                hdr = (mca_btl_sm_hdr_t*)((uintptr_t)hdr->frag |
+                        MCA_BTL_SM_FRAG_STATUS_MASK);
+                MCA_BTL_SM_FIFO_WRITE(
+                        mca_btl_sm_component.sm_peers[peer_smp_rank],
+                        my_smp_rank, peer_smp_rank, hdr, rc);
                 if(OMPI_SUCCESS != rc)
                     goto err;
                 break;
@@ -474,34 +478,37 @@ int mca_btl_sm_component_progress(void)
             opal_atomic_unlock(&(fifo->tail_lock));
         }
 
-        /* change the address from address relative to the shared
-         * memory address, to a true virtual address */
-        hdr = (mca_btl_sm_hdr_t *)( (char *)hdr +
-                mca_btl_sm_component.sm_offset[peer_smp_rank]);
-
         /* dispatch fragment by type */
-        switch(hdr->type) {
+        switch(((uintptr_t)hdr) & MCA_BTL_SM_FRAG_TYPE_MASK) {
             case MCA_BTL_SM_FRAG_ACK:
             {
-                frag = hdr->frag;
+                int status = (uintptr_t)hdr & MCA_BTL_SM_FRAG_STATUS_MASK;
+                frag = (mca_btl_sm_frag_t *)((char*)((uintptr_t)hdr &
+                        (~(MCA_BTL_SM_FRAG_TYPE_MASK |
+                           MCA_BTL_SM_FRAG_STATUS_MASK))));
                 /* completion callback */
-                frag->base.des_cbfunc(&mca_btl_sm[1].super, frag->endpoint, &frag->base, hdr->u.rc);
+                frag->base.des_cbfunc(&mca_btl_sm[1].super, frag->endpoint,
+                        &frag->base, status?OMPI_ERROR:OMPI_SUCCESS);
                 break;
             }
             case MCA_BTL_SM_FRAG_SEND:
             {
+                mca_btl_sm_recv_reg_t* reg;
+                /* change the address from address relative to the shared
+                * memory address, to a true virtual address */
+                hdr = (mca_btl_sm_hdr_t *)( (char *)hdr +
+                        mca_btl_sm_component.sm_offset[peer_smp_rank]);
                 /* recv upcall */
-                mca_btl_sm_recv_reg_t* reg = mca_btl_sm[1].sm_reg + hdr->u.s.tag;
+                reg = mca_btl_sm[1].sm_reg + hdr->tag;
                 MCA_BTL_SM_FRAG_ALLOC(frag, rc);
                 frag->segment.seg_addr.pval = ((char*)hdr) +
                     sizeof(mca_btl_sm_hdr_t);
-                frag->segment.seg_len = hdr->u.s.len;
-                reg->cbfunc(&mca_btl_sm[1].super,hdr->u.s.tag,&frag->base,reg->cbdata);
+                frag->segment.seg_len = hdr->len;
+                reg->cbfunc(&mca_btl_sm[1].super,hdr->tag,&frag->base,reg->cbdata);
                 MCA_BTL_SM_FRAG_RETURN(frag);
-                hdr->type = MCA_BTL_SM_FRAG_ACK;
-                hdr->u.rc = OMPI_SUCCESS;
-                MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
-                                       my_smp_rank, peer_smp_rank, hdr, rc );
+                MCA_BTL_SM_FIFO_WRITE(
+                        mca_btl_sm_component.sm_peers[peer_smp_rank],
+                        my_smp_rank, peer_smp_rank, hdr->frag, rc);
                 if(OMPI_SUCCESS != rc)
                     goto err;
                 break;
@@ -509,10 +516,11 @@ int mca_btl_sm_component_progress(void)
             default:
             {
                 /* unknown */
-                hdr->u.rc = OMPI_ERROR;
-                hdr->type = MCA_BTL_SM_FRAG_ACK;
-                MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
-                                       my_smp_rank, peer_smp_rank, hdr, rc );
+                hdr = (mca_btl_sm_hdr_t*)((uintptr_t)hdr->frag |
+                        MCA_BTL_SM_FRAG_STATUS_MASK);
+                MCA_BTL_SM_FIFO_WRITE(
+                        mca_btl_sm_component.sm_peers[peer_smp_rank],
+                        my_smp_rank, peer_smp_rank, hdr, rc);
                 if(OMPI_SUCCESS != rc)
                     goto err;
                 break;
