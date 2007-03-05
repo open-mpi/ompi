@@ -100,12 +100,6 @@
 #define MPI_File_get_errhandler ROMIO_PREFIX(MPI_File_get_errhandler)
 /* End Prototypes */
 
-/* Section 4.14.4 */
-#define MPI_Type_create_subarray ROMIO_PREFIX(MPI_Type_create_subarray)
-
-/* Section 4.14.5 */
-#define MPI_Type_create_darray ROMIO_PREFIX(MPI_Type_create_darray)
-
 #define MPI_Register_datarep ROMIO_PREFIX(MPI_Register_datarep)
 
 /* JMS these don't seem to work... */
