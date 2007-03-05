@@ -76,8 +76,8 @@ static const mca_coll_base_module_1_0_0_t intra_fixed = {
     NULL,
     ompi_coll_tuned_reduce_intra_dec_fixed,
     /*     NULL, */
-    /*   ompi_coll_tuned_reduce_scatter_intra_dec_fixed, */
-    NULL,
+    ompi_coll_tuned_reduce_scatter_intra_dec_fixed,
+    /*     NULL, */
     /*   ompi_coll_tuned_scan_intra_dec_fixed, */
     NULL,
     ompi_coll_tuned_scatter_intra_dec_fixed,
@@ -119,8 +119,8 @@ static const mca_coll_base_module_1_0_0_t intra_dynamic = {
     NULL,
     ompi_coll_tuned_reduce_intra_dec_dynamic,
     /*     NULL, */
-    /*   ompi_coll_tuned_reduce_scatter_intra_dec_dynamic, */
-    NULL,
+    ompi_coll_tuned_reduce_scatter_intra_dec_dynamic,
+    /*     NULL, */
     /*   ompi_coll_tuned_scan_intra_dec_dynamic, */
     NULL,
     ompi_coll_tuned_scatter_intra_dec_dynamic,
@@ -400,6 +400,7 @@ ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
         ompi_coll_tuned_forced_getvalues_barrier (ompi_coll_tuned_forced_params[BARRIER],   &(data->user_forced[BARRIER]));
         ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[BCAST],     &(data->user_forced[BCAST]));
         ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[REDUCE],    &(data->user_forced[REDUCE]));
+        ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[REDUCESCATTER],    &(data->user_forced[REDUCESCATTER]));
 	ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[GATHER],    &(data->user_forced[GATHER]));
 	ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[SCATTER],   &(data->user_forced[SCATTER]));
     }
