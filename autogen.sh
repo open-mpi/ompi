@@ -440,6 +440,15 @@ EOF
         else
             echo "     ==> your libtool doesn't need this! yay!"
         fi
+
+        echo "  -- RTLD_GLOBAL in libltdl"
+        if test -r opal/libltdl/loaders/dlopen.c && \
+            test ! -z "`grep 'filename, LT_LAZY_OR_NOW' opal/libltdl/loaders/dlopen.c`"; then
+            patch -N -p0 < config/libltdl_dlopen_global.diff
+        else
+            echo "     ==> your libltdl doesn't need this! yay!"
+        fi
+
 	echo "  -- patching configure for broken -c/-o compiler test"
 	sed -e 's/chmod -w \./#OMPI\/MPI FIX: chmod -w ./' \
 	    configure > configure.new
