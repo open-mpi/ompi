@@ -895,9 +895,8 @@ int mca_btl_sm_send(
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)descriptor;
     int rc;
 
-    frag->hdr->u.s.len = frag->segment.seg_len;
-    frag->hdr->u.s.tag = tag;
-    frag->hdr->type = MCA_BTL_SM_FRAG_SEND;
+    frag->hdr->len = frag->segment.seg_len;
+    frag->hdr->tag = tag;
 
     /* 
      * post the descriptor in the queue - post with the relative

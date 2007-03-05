@@ -21,10 +21,13 @@
 
 static inline void mca_btl_sm_frag_common_constructor(mca_btl_sm_frag_t* frag)
 {
-    frag->hdr = frag->base.super.ptr;
-    if(frag->hdr != NULL)
-        frag->hdr->frag = frag;
-    frag->segment.seg_addr.pval = ((char*)frag->hdr) + sizeof(mca_btl_sm_hdr_t);
+    frag->hdr = (mca_btl_sm_hdr_t*)frag->base.super.ptr;
+    if(frag->hdr != NULL) {
+        frag->hdr->frag = (mca_btl_sm_frag_t*)((uintptr_t)frag |
+            MCA_BTL_SM_FRAG_ACK);
+        frag->segment.seg_addr.pval = ((char*)frag->hdr) +
+            sizeof(mca_btl_sm_hdr_t);
+    }
     frag->segment.seg_len = frag->size;
     frag->base.des_src = &frag->segment;
     frag->base.des_src_cnt = 1;

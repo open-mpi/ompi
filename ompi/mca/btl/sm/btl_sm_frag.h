@@ -27,29 +27,20 @@
 #include "btl_sm.h"
 
 
-/*typedef enum {
-    MCA_BTL_SM_FRAG_SEND,
-    MCA_BTL_SM_FRAG_PUT,
-    MCA_BTL_SM_FRAG_GET,
-    MCA_BTL_SM_FRAG_ACK
-} mca_btl_sm_frag_type_t; */
+#define MCA_BTL_SM_FRAG_TYPE_MASK ((uintptr_t)0x3)
+#define MCA_BTL_SM_FRAG_SEND ((uintptr_t)0x0)
+#define MCA_BTL_SM_FRAG_ACK ((uintptr_t)0x1)
+#define MCA_BTL_SM_FRAG_PUT ((uintptr_t)0x2)
+#define MCA_BTL_SM_FRAG_GET ((uintptr_t)0x3)
 
-#define MCA_BTL_SM_FRAG_SEND 0
-#define MCA_BTL_SM_FRAG_ACK 1
+#define MCA_BTL_SM_FRAG_STATUS_MASK ((uintptr_t)0x4)
 
-typedef uint8_t mca_btl_sm_frag_type_t;
 struct mca_btl_sm_frag_t;
 
 struct mca_btl_sm_hdr_t {
     struct mca_btl_sm_frag_t *frag;
-    union {
-        struct {
-            size_t len;
-            mca_btl_base_tag_t tag;
-        } s;
-        int rc;
-    } u;
-    mca_btl_sm_frag_type_t type;
+    size_t len;
+    mca_btl_base_tag_t tag;
 };
 typedef struct mca_btl_sm_hdr_t mca_btl_sm_hdr_t;
 
