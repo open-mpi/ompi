@@ -488,10 +488,27 @@ int mca_btl_sm_add_procs_same_base_addr(
         }
 
         for( j=0 ; j < n_to_allocate ; j++ ) {
+            char *buf;
             my_fifos[j].head = (ompi_cb_fifo_wrapper_t*)OMPI_CB_FREE;
             my_fifos[j].tail = (ompi_cb_fifo_wrapper_t*)OMPI_CB_FREE;
-            opal_atomic_unlock(&(my_fifos[j].head_lock));
-            opal_atomic_unlock(&(my_fifos[j].tail_lock));
+	    if(opal_using_threads()) {
+                /* allocate head and tail locks on different cache lines */
+                buf = (char*)mca_btl_sm_component.sm_mpool->mpool_alloc(
+                    mca_btl_sm_component.sm_mpool,
+                    CACHE_LINE_SIZE*2, CACHE_LINE_SIZE, 0, NULL);
+                if(NULL == buf) {
+                    return_code = OMPI_ERR_OUT_OF_RESOURCE;
+                    goto CLEANUP;
+                }
+            	my_fifos[j].head_lock = (opal_atomic_lock_t*)buf;
+            	my_fifos[j].tail_lock = (opal_atomic_lock_t*)(buf +
+				CACHE_LINE_SIZE);
+            	opal_atomic_init(my_fifos[j].head_lock, OPAL_ATOMIC_UNLOCKED);
+            	opal_atomic_init(my_fifos[j].tail_lock, OPAL_ATOMIC_UNLOCKED);
+	    } else {
+		    my_fifos[j].head_lock = NULL;
+		    my_fifos[j].tail_lock = NULL;
+	    }
         }
         fifo_tmp=(ompi_fifo_t * volatile *)
                 ( (char *)(mca_btl_sm_component.sm_ctl_header->fifo) +
