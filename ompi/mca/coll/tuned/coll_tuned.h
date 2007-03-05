@@ -236,9 +236,16 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   int ompi_coll_tuned_reduce_inter_dec_fixed(REDUCE_ARGS);
   int ompi_coll_tuned_reduce_inter_dec_dynamic(REDUCE_ARGS);
 
-  /* Reduce-Scatter */
+  /* Reduce_scatter */
   int ompi_coll_tuned_reduce_scatter_intra_dec_fixed(REDUCESCATTER_ARGS);
   int ompi_coll_tuned_reduce_scatter_intra_dec_dynamic(REDUCESCATTER_ARGS);
+  int ompi_coll_tuned_reduce_scatter_intra_do_forced(REDUCESCATTER_ARGS);
+  int ompi_coll_tuned_reduce_scatter_intra_do_this(REDUCESCATTER_ARGS, int algorithm, int faninout, int segsize);
+  int ompi_coll_tuned_reduce_scatter_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
+  int ompi_coll_tuned_reduce_scatter_intra_nonoverlapping(REDUCESCATTER_ARGS);
+  int ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(REDUCESCATTER_ARGS);
+  int ompi_coll_tuned_reduce_scatter_intra_ring(REDUCESCATTER_ARGS);
+
   int ompi_coll_tuned_reduce_scatter_inter_dec_fixed(REDUCESCATTER_ARGS);
   int ompi_coll_tuned_reduce_scatter_inter_dec_dynamic(REDUCESCATTER_ARGS);
  

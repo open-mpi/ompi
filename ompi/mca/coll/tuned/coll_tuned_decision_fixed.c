@@ -402,6 +402,56 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
 }
 
 /*
+ *	reduce_scatter_intra_dec 
+ *
+ *	Function:	- seletects reduce_scatter algorithm to use
+ *	Accepts:	- same arguments as MPI_Reduce_scatter()
+ *	Returns:	- MPI_SUCCESS or error code (passed from 
+ *                        the reduce scatter implementation)
+ *                                        
+ */
+int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( void *sbuf, void *rbuf,
+                                                    int *rcounts,
+                                                    struct ompi_datatype_t *dtype,
+                                                    struct ompi_op_t *op,
+                                                    struct ompi_communicator_t *comm)
+{
+   int comm_size, i;
+   size_t total_message_size, dsize;
+   const size_t large_message_size = 512 * 1024;
+
+   OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_scatter_intra_dec_fixed"));
+
+   if( !ompi_op_is_commute(op) ) {
+      return ompi_coll_tuned_reduce_scatter_intra_nonoverlapping (sbuf, 
+                                                                  rbuf, 
+                                                                  rcounts, 
+                                                                  dtype, 
+                                                                  op, 
+                                                                  comm); 
+   }
+   
+   comm_size = ompi_comm_size(comm);
+   /* We need data size for decision function */
+   ompi_ddt_type_size(dtype, &dsize);
+   total_message_size = 0;
+   for (i = 0; i < comm_size; i++) { total_message_size += rcounts[i]; }
+   total_message_size *= dsize;
+
+   if (total_message_size <= large_message_size) {
+      return 
+         ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(sbuf, 
+                                                                     rbuf,
+                                                                     rcounts,
+                                                                     dtype,
+                                                                     op,
+                                                                     comm);
+   } 
+   return ompi_coll_tuned_reduce_scatter_intra_ring(sbuf, rbuf, rcounts,
+                                                    dtype, op, comm);
+}
+
+/*
  *	allgather_intra_dec 
  *
  *	Function:	- seletects allgather algorithm to use
