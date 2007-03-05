@@ -29,7 +29,7 @@ do {                                             \
 
 static void mca_btl_gm_frag_eager_constructor(mca_btl_gm_frag_t* frag) 
 { 
-    frag->hdr = (mca_btl_base_header_t*)(frag + 1);
+    frag->hdr = (mca_btl_base_header_t*)frag->base.super.ptr;
     frag->segment.seg_addr.pval = (unsigned char*)(frag->hdr + 1); 
     frag->segment.seg_len = mca_btl_gm_module.super.btl_eager_limit - sizeof(mca_btl_base_header_t);
     frag->size = mca_btl_gm_component.gm_eager_frag_size;

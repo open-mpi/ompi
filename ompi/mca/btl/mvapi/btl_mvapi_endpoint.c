@@ -165,10 +165,9 @@ static inline int mca_btl_mvapi_endpoint_post_send(
 #endif
         frag->desc.sr_desc.r_key = (VAPI_rkey_t)endpoint->eager_rdma_remote.rkey;
         frag->desc.sr_desc.remote_addr = (VAPI_virt_addr_t)
-            endpoint->eager_rdma_remote.base.lval +
+            (uintptr_t)endpoint->eager_rdma_remote.base.pval +
             endpoint->eager_rdma_remote.head *
             mvapi_btl->eager_rdma_frag_size +
-            sizeof(mca_btl_mvapi_frag_t) +
             sizeof(mca_btl_mvapi_header_t) +
             frag->size +
             sizeof(mca_btl_mvapi_footer_t);
@@ -1223,10 +1222,18 @@ void mca_btl_mvapi_endpoint_connect_eager_rdma(
 {
     mca_btl_mvapi_module_t* mvapi_btl = endpoint->endpoint_btl;
     char *buf;
+    mca_btl_mvapi_recv_frag_eager_t *headers_buf;
     unsigned int i;
 
     OPAL_THREAD_LOCK(&endpoint->eager_rdma_local.lock);
     if (endpoint->eager_rdma_local.base.pval)
+        goto unlock_rdma_local;
+
+    headers_buf = (mca_btl_mvapi_recv_frag_eager_t*)
+        malloc(sizeof(mca_btl_mvapi_recv_frag_eager_t) *
+                mca_btl_mvapi_component.eager_rdma_num);
+
+    if(NULL == headers_buf)
         goto unlock_rdma_local;
 
     buf = mvapi_btl->super.btl_mpool->mpool_alloc(mvapi_btl->super.btl_mpool,
@@ -1236,12 +1243,13 @@ void mca_btl_mvapi_endpoint_connect_eager_rdma(
             (mca_mpool_base_registration_t**)&endpoint->eager_rdma_local.reg);
 
     if(!buf)
-       goto unlock_rdma_local;
+       goto free_headers_buf;
 
     for(i = 0; i < mca_btl_mvapi_component.eager_rdma_num; i++) {
-        ompi_free_list_item_t *item = (ompi_free_list_item_t *)(buf +
-                i*mvapi_btl->eager_rdma_frag_size);
-        item->user_data = (void*)endpoint->eager_rdma_local.reg;
+        ompi_free_list_item_t *item;
+        item = (ompi_free_list_item_t *)&headers_buf[i];
+        item->registration = (void*)endpoint->eager_rdma_local.reg;
+        item->ptr = buf + i * mvapi_btl->eager_rdma_frag_size;
         OBJ_CONSTRUCT(item, mca_btl_mvapi_recv_frag_eager_t);
         ((mca_btl_mvapi_frag_t*)item)->endpoint = endpoint;
         ((mca_btl_mvapi_frag_t*)item)->type = MCA_BTL_MVAPI_FRAG_EAGER_RDMA;
@@ -1253,6 +1261,7 @@ void mca_btl_mvapi_endpoint_connect_eager_rdma(
       goto cleanup;
 
     endpoint->eager_rdma_local.base.pval = buf;
+    endpoint->eager_rdma_local.frags = headers_buf;
     mvapi_btl->eager_rdma_buffers_count++;
     if (mca_btl_mvapi_endpoint_send_eager_rdma(endpoint) == 0) {
         OPAL_THREAD_UNLOCK(&mvapi_btl->eager_rdma_lock);
@@ -1262,6 +1271,7 @@ void mca_btl_mvapi_endpoint_connect_eager_rdma(
 
     mvapi_btl->eager_rdma_buffers_count--;
     endpoint->eager_rdma_local.base.pval = NULL;
+    endpoint->eager_rdma_local.frags = NULL;
     orte_pointer_array_set_item(mvapi_btl->eager_rdma_buffers,
             endpoint->eager_rdma_index, NULL);
 
@@ -1269,6 +1279,8 @@ cleanup:
     OPAL_THREAD_UNLOCK(&mvapi_btl->eager_rdma_lock);
     mvapi_btl->super.btl_mpool->mpool_free(mvapi_btl->super.btl_mpool,
             buf, (mca_mpool_base_registration_t*)endpoint->eager_rdma_local.reg);
+free_headers_buf:
+    free(headers_buf);
 unlock_rdma_local:
     OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
 }

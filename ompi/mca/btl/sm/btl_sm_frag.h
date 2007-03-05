@@ -27,13 +27,31 @@
 #include "btl_sm.h"
 
 
-typedef enum {
+/*typedef enum {
     MCA_BTL_SM_FRAG_SEND,
     MCA_BTL_SM_FRAG_PUT,
     MCA_BTL_SM_FRAG_GET,
     MCA_BTL_SM_FRAG_ACK
-} mca_btl_sm_frag_type_t;
+} mca_btl_sm_frag_type_t; */
 
+#define MCA_BTL_SM_FRAG_SEND 0
+#define MCA_BTL_SM_FRAG_ACK 1
+
+typedef uint8_t mca_btl_sm_frag_type_t;
+struct mca_btl_sm_frag_t;
+
+struct mca_btl_sm_hdr_t {
+    struct mca_btl_sm_frag_t *frag;
+    union {
+        struct {
+            size_t len;
+            mca_btl_base_tag_t tag;
+        } s;
+        int rc;
+    } u;
+    mca_btl_sm_frag_type_t type;
+};
+typedef struct mca_btl_sm_hdr_t mca_btl_sm_hdr_t;
 
 /**
  * shared memory send fragment derived type.
@@ -42,10 +60,8 @@ struct mca_btl_sm_frag_t {
     mca_btl_base_descriptor_t base;
     mca_btl_base_segment_t segment;
     struct mca_btl_base_endpoint_t *endpoint;
-    mca_btl_sm_frag_type_t type;
-    mca_btl_base_tag_t tag;
     size_t size;
-    int rc;
+    mca_btl_sm_hdr_t *hdr;
     ompi_free_list_t* my_list;
 };
 typedef struct mca_btl_sm_frag_t mca_btl_sm_frag_t;
@@ -55,6 +71,13 @@ typedef struct mca_btl_sm_frag_t mca_btl_sm_frag2_t;
 OBJ_CLASS_DECLARATION(mca_btl_sm_frag_t);
 OBJ_CLASS_DECLARATION(mca_btl_sm_frag1_t);
 OBJ_CLASS_DECLARATION(mca_btl_sm_frag2_t);
+
+#define MCA_BTL_SM_FRAG_ALLOC(frag, rc)                                 \
+{                                                                       \
+    ompi_free_list_item_t* item;                                        \
+    OMPI_FREE_LIST_WAIT(&mca_btl_sm_component.sm_frags, item, rc);      \
+    frag = (mca_btl_sm_frag_t*)item;                                    \
+}
 
 #define MCA_BTL_SM_FRAG_ALLOC1(frag, rc)                                \
 {                                                                       \

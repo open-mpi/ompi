@@ -542,7 +542,8 @@ int mca_btl_sm_add_procs_same_base_addr(
         /* initialize fragment descriptor free lists */
 
         /* allocation will be for the fragment descriptor and payload buffer */
-        length=sizeof(mca_btl_sm_frag_t) + mca_btl_sm_component.eager_limit;
+        length = sizeof(mca_btl_sm_frag1_t) + sizeof(mca_btl_sm_hdr_t) +
+            mca_btl_sm_component.eager_limit;
         ompi_free_list_init(&mca_btl_sm_component.sm_frags1, length,
                 OBJ_CLASS(mca_btl_sm_frag1_t),
                 mca_btl_sm_component.sm_free_list_num,
@@ -550,13 +551,22 @@ int mca_btl_sm_add_procs_same_base_addr(
                 mca_btl_sm_component.sm_free_list_inc,
                 mca_btl_sm_component.sm_mpool); /* use shared-memory pool */
 
-        length=sizeof(mca_btl_sm_frag_t) + mca_btl_sm_component.max_frag_size;
+        length = sizeof(mca_btl_sm_frag2_t) + sizeof(mca_btl_sm_hdr_t) +
+            mca_btl_sm_component.max_frag_size;
         ompi_free_list_init(&mca_btl_sm_component.sm_frags2, length,
                 OBJ_CLASS(mca_btl_sm_frag2_t),
                 mca_btl_sm_component.sm_free_list_num,
                 mca_btl_sm_component.sm_free_list_max,
                 mca_btl_sm_component.sm_free_list_inc,
                 mca_btl_sm_component.sm_mpool); /* use shared-memory pool */
+
+        ompi_free_list_init(&mca_btl_sm_component.sm_frags,
+                sizeof(mca_btl_sm_frag_t),
+                OBJ_CLASS(mca_btl_sm_frag_t),
+                mca_btl_sm_component.sm_free_list_num,
+                -1,
+                mca_btl_sm_component.sm_free_list_inc,
+                NULL);
 
         /* set up mca_btl_sm_component.list_smp_procs_same_base_addr */
         mca_btl_sm_component.list_smp_procs_same_base_addr=(int *)
@@ -854,7 +864,9 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
         max_data = frag->size - reserve;
     } 
     iov.iov_len = max_data;
-    iov.iov_base = (IOVBASE_TYPE*)(((unsigned char*)(frag+1)) + reserve);
+    iov.iov_base =
+        (IOVBASE_TYPE*)(((unsigned char*)(frag->segment.seg_addr.pval)) +
+                reserve);
 
     rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
     if(rc < 0) {
@@ -883,16 +895,14 @@ int mca_btl_sm_send(
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)descriptor;
     int rc;
 
-    frag->tag = tag;
-    frag->type = MCA_BTL_SM_FRAG_SEND;
-    frag->rc = OMPI_SUCCESS;
+    frag->hdr->u.s.len = frag->segment.seg_len;
+    frag->hdr->u.s.tag = tag;
+    frag->hdr->type = MCA_BTL_SM_FRAG_SEND;
 
     /* 
      * post the descriptor in the queue - post with the relative
      * address 
      */
-    MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank, endpoint->peer_smp_rank, frag, rc);
+    MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank, endpoint->peer_smp_rank, frag->hdr, rc);
     return rc;
 }
-
-

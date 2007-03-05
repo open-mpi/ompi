@@ -18,9 +18,11 @@ extern "C" {
 #endif
 
 struct mca_btl_mvapi_reg_t;
+struct mca_btl_mvapi_frag_t;
 
 struct mca_btl_mvapi_eager_rdma_local_t {
 	ompi_ptr_t base; /**< buffer for RDMAing eager messages */
+    struct mca_btl_mvapi_frag_t *frags;
 	struct mca_btl_mvapi_reg_t *reg;
 	uint16_t head; /**< RDMA buffer to poll */
     uint16_t tail; /**< Needed for credit managment */
@@ -73,9 +75,7 @@ typedef struct mca_btl_mvapi_eager_rdma_remote_t mca_btl_mvapi_eager_rdma_remote
                             }while (0)
 
 #define MCA_BTL_MVAPI_GET_LOCAL_RDMA_FRAG(E, I)                         \
-            (mca_btl_mvapi_frag_t*)                                     \
-            ((char*)(E)->eager_rdma_local.base.pval +                   \
-            (I) * (E)->endpoint_btl->eager_rdma_frag_size)
+            (&(E)->eager_rdma_local.frags[(I)])
 
 #define MCA_BTL_MVAPI_RDMA_NEXT_INDEX(I) do {                       \
                             (I) = ((I) + 1) %                        \

@@ -19,6 +19,7 @@ extern "C" {
 
 struct mca_btl_openib_eager_rdma_local_t {
 	ompi_ptr_t base; /**< buffer for RDMAing eager messages */
+    mca_btl_openib_recv_frag_eager_t *frags;
 	mca_btl_openib_reg_t *reg;
 	uint16_t head; /**< RDMA buffer to poll */
     uint16_t tail; /**< Needed for credit managment */
@@ -38,7 +39,6 @@ struct mca_btl_openib_eager_rdma_remote_t {
 #if OMPI_ENABLE_DEBUG
     uint32_t seq;
 #endif
-    uint64_t frag_t_len; /**< remote's sizeof(mca_btl_openib_frag_t) */ 
 };
 typedef struct mca_btl_openib_eager_rdma_remote_t mca_btl_openib_eager_rdma_remote_t;
 
@@ -72,10 +72,8 @@ typedef struct mca_btl_openib_eager_rdma_remote_t mca_btl_openib_eager_rdma_remo
                              ((volatile uint8_t*)(F)->u.buf)[3] = EAGER_RDMA_BUFFER_LOCAL; \
                             }while (0)
 
-#define MCA_BTL_OPENIB_GET_LOCAL_RDMA_FRAG(E, I)                         \
-            (mca_btl_openib_frag_t*)                                     \
-            ((char*)(E)->eager_rdma_local.base.pval +                    \
-            (I) * (E)->endpoint_btl->eager_rdma_frag_size)
+#define MCA_BTL_OPENIB_GET_LOCAL_RDMA_FRAG(E, I)                            \
+                            (&(E)->eager_rdma_local.frags[(I)])
 
 #define MCA_BTL_OPENIB_RDMA_NEXT_INDEX(I) do {                              \
                             (I) = ((I) + 1);                                \

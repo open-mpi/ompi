@@ -1127,7 +1127,8 @@ void mca_btl_udapl_endpoint_connect_eager_rdma(
          mca_btl_udapl_frag_eager_rdma_t* local_rdma_frag;
          ompi_free_list_item_t *item = (ompi_free_list_item_t *)(buf +
                 i*mca_btl_udapl_component.udapl_eager_rdma_frag_size);
-         item->user_data = endpoint->endpoint_eager_rdma_local.reg;
+         item->registration = (void*)endpoint->endpoint_eager_rdma_local.reg;
+         item->ptr = buf + i * mca_btl_udapl_component.udapl_eager_rdma_frag_size; 
          OBJ_CONSTRUCT(item, mca_btl_udapl_frag_eager_rdma_t);
 
          local_rdma_frag = ((mca_btl_udapl_frag_eager_rdma_t*)item);

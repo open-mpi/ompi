@@ -23,8 +23,8 @@
 static void mca_btl_mvapi_frag_common_constructor( mca_btl_mvapi_frag_t* frag) 
 {
     mca_btl_mvapi_reg_t* mem_hndl =
-        (mca_btl_mvapi_reg_t*)frag->base.super.user_data;
-    frag->hdr = (mca_btl_mvapi_header_t*) (frag+1);  /* initialize btl header to start at end of frag */ 
+        (mca_btl_mvapi_reg_t*)frag->base.super.registration;
+    frag->hdr = (mca_btl_mvapi_header_t*)frag->base.super.ptr;
     frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + sizeof(mca_btl_mvapi_header_t);  
     /* init the segment address to start after the btl header */ 
     
