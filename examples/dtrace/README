@@ -1,4 +1,4 @@
-Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 			Use is subject to license terms.
 
 This document discusses how to use the Solaris Dynamic Tracing utility (DTrace)
@@ -100,7 +100,7 @@ view the changed privileges.
 
 There are two ways to use Dynamic Tracing with MPI programs:
 
-	- Run the program directly under DTrace, or 
+	- Run the MPI program directly under DTrace, or 
 	- Attach DTrace to a running MPI program
 
 
@@ -119,16 +119,17 @@ participate in collecting data.
 
 This approach also has some disadvantages.  One disadvantage of running a
 program like the one in the above example is that all the tracing output for 
-all four processes is directed to standard output (stdout).  One way around 
-this problem is to create a script similar to the following.
+all four processes is directed to standard output (stdout). 
+
+To trace a parallel program and get separate trace files, create a script
+similar to the following.
 
 #!/bin/sh 
 # partrace.sh - a helper script to dtrace Open MPI jobs from the 
 #		start of the job.  
 dtrace -s $1 -c $2 -o $2.$OMPI_MCA_ns_nds_vpid.trace
 
-To trace a parallel program and get separate trace files, type the following
-command to run the partrace.sh shell script:
+Type the following command to run the partrace.sh shell script:
 
 % mpirun -np 4 partrace.sh mpitrace.d mpiapp
 
@@ -138,7 +139,7 @@ based on the program name and rank of the process.  Note that subsequent
 runs will append the data into the existing trace files.
 
 
-2.2 Attaching to MPI Processes
+2.2 Attaching DTrace to a Running MPI Program
 
 The second way to use dtrace with Open MPI is to attach dtrace to a running
 process.  Perform the following procedure:
