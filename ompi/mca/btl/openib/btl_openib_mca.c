@@ -203,34 +203,32 @@ int btl_openib_register_mca_params(void)
     /* JMS Is this really in seconds?  Is there a max? */
     CHECK(reg_int("ib_min_rnr_timer", "InfiniBand minimum "
                   "\"receiver not ready\" timer, in seconds "
-                  "(must be >= 1)",
-                  5, &ival, REGINT_GE_ONE));
+                  "(must be >= 0 and <= 32)",
+                  5, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.ib_min_rnr_timer = (uint32_t) ival;
 
     /* JMS is there a max? */
     CHECK(reg_int("ib_timeout", "InfiniBand transmit timeout, in seconds"
-                  "(must be >= 1)",
-                  10, &ival, REGINT_GE_ONE));
+                  "(must be >= 0 and <= 32)",
+                  10, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.ib_timeout = (uint32_t) ival;
 
     /* JMS What is the difference between these two counts? */
-    /* JMS is there a max? */
     CHECK(reg_int("ib_retry_count", "InfiniBand transmit retry count "
-                  "(must be >= 1)",
-                  7, &ival, REGINT_GE_ONE));
+                  "(must be >= 0 and <= 7)",
+                  7, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.ib_retry_count = (uint32_t) ival;
 
-    /* JMS: is there a max? */
     CHECK(reg_int("ib_rnr_retry", "InfiniBand \"receiver not ready\" "
                   "retry count "
-                  "(must be >= 1)", 
-                  7, &ival, REGINT_GE_ONE));
+                  "(must be >= 0 and <= 7)", 
+                  7, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.ib_rnr_retry = (uint32_t) ival;
 
     CHECK(reg_int("ib_max_rdma_dst_ops", "InfiniBand maximum pending RDMA "
                   "destination operations "
-                  "(must be >= 1)",
-                  4, &ival, REGINT_GE_ONE));
+                  "(must be >= 0)",
+                  4, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.ib_max_rdma_dst_ops = (uint32_t) ival;
 
     /* JMS is there a max? */
