@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -47,7 +47,15 @@ int MPI_Type_dup (MPI_Datatype type,
       }
    }
 
-   
+   /* Don't allow for UB and LB duplication. Instead return the same
+    * pointer and increase the reference count by one.
+    */
+   if( (MPI_UB == type) || (MPI_LB == type) ) {
+       OBJ_RETAIN( type );
+       *newtype = type;
+       return OMPI_SUCCESS;
+   }
+
    if( (rc = ompi_ddt_duplicate( type, newtype )) != MPI_SUCCESS ) {
       ompi_ddt_destroy( newtype );
       OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
