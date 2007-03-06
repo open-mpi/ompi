@@ -71,7 +71,9 @@ void opal_class_initialize(opal_class_t *cls)
 {
     opal_class_t *c;
     opal_construct_t* cls_construct_array;
-    opal_destruct_t* cls_destruct_array; 
+    opal_destruct_t* cls_destruct_array;
+    int cls_construct_array_count;
+    int cls_destruct_array_count;
     int i;
 
     assert(cls);
@@ -95,33 +97,51 @@ void opal_class_initialize(opal_class_t *cls)
 
     /*
      * First calculate depth of class hierarchy
+     * And the number of constructors and destructors
      */
 
     cls->cls_depth = 0;
+    cls_construct_array_count = 0;
+    cls_destruct_array_count  = 0;
     for (c = cls; c; c = c->cls_parent) {
-        cls->cls_depth += 1;
+        if( NULL != c->cls_construct ) {
+            cls_construct_array_count++;
+        }
+        if( NULL != c->cls_destruct ) {
+            cls_destruct_array_count++;
+        }
+        cls->cls_depth++;
     }
 
     /*
      * Allocate arrays for hierarchy of constructors and destructors
+     * plus for each a NULL-sentinel
      */
 
     cls->cls_construct_array = 
-        (void (**)(opal_object_t*))malloc((cls->cls_depth + 1)*
-                                          sizeof(opal_construct_t) * 2 );
+        (void (**)(opal_object_t*))malloc((cls_construct_array_count +
+                                           cls_destruct_array_count + 2) *
+                                          sizeof(opal_construct_t) );
     if (NULL == cls->cls_construct_array) {
         perror("Out of memory");
         exit(-1);
     }
-    cls->cls_destruct_array = cls->cls_construct_array + cls->cls_depth + 1;
-    cls_construct_array = cls->cls_construct_array;
-    cls_destruct_array  = cls->cls_destruct_array; 
-    
+    cls->cls_destruct_array =
+        cls->cls_construct_array + cls_construct_array_count + 1;
+
+    /*
+     * The constructor array is reversed, so start at the end
+     */
+
+    cls_construct_array = cls->cls_construct_array + cls_construct_array_count;
+    cls_destruct_array  = cls->cls_destruct_array;
+
     c = cls;
+    *cls_construct_array = NULL;  /* end marker for the constructors */
     for (i = 0; i < cls->cls_depth; i++) {
         if( NULL != c->cls_construct ) {
+            --cls_construct_array;
             *cls_construct_array = c->cls_construct;
-            cls_construct_array++;
         }
         if( NULL != c->cls_destruct ) {
             *cls_destruct_array = c->cls_destruct;
@@ -129,16 +149,7 @@ void opal_class_initialize(opal_class_t *cls)
         }
         c = c->cls_parent;
     }
-    *cls_construct_array = NULL;  /* end marker for the constructors */
     *cls_destruct_array = NULL;  /* end marker for the destructors */
-    /* Now we have to invert the constructors */
-    for( i = 0, --cls_construct_array;
-         cls_construct_array > (cls->cls_construct_array + i);
-         i++, cls_construct_array-- ) {
-        opal_construct_t temp_construct = *cls_construct_array;
-        *cls_construct_array = cls->cls_construct_array[i];
-        cls->cls_construct_array[i] = temp_construct;
-    }
 
     cls->cls_initialized = 1;
     save_class(cls);
