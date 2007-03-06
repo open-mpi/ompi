@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -25,7 +25,7 @@ int32_t ompi_ddt_destroy( ompi_datatype_t** dt )
 {
     ompi_datatype_t* pData = *dt;
 
-    if( pData->flags & DT_FLAG_PREDEFINED )
+    if( (pData->flags & DT_FLAG_PREDEFINED) && (pData->super.obj_reference_count <= 1) )
         return OMPI_ERROR;
 
     OBJ_RELEASE( pData );
