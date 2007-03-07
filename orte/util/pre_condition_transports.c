@@ -154,6 +154,7 @@ int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_c
     }
 
     free(cs_env);
+    free(string_key);
 
     return ORTE_SUCCESS;
 }
