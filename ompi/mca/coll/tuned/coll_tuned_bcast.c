@@ -41,14 +41,17 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
     int err = 0, line, i;
     int rank, size;
     int segindex;
-    int num_segments;   /* Number of segments */
-    int sendcount;      /* the same like segcount, except for the last segment */ 
+    int num_segments; /* Number of segments */
+    int sendcount;    /* number of elements sent in this segment */ 
     size_t realsegsize;
     char *tmpbuf;
     size_t type_size;
     ptrdiff_t extent, lb;
-    ompi_request_t *recv_reqs[2], **send_reqs = NULL;
-    int req_index = 0, old_req_index;
+    ompi_request_t *recv_reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
+#if !defined(COLL_TUNED_BCAST_USE_BLOCKING)
+    ompi_request_t **send_reqs = NULL;
+#endif
+    int req_index;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -59,177 +62,193 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
     num_segments = (original_count + count_by_segment - 1) / count_by_segment;
     realsegsize = count_by_segment * extent;
     
-    /* set the buffer pointers */
+    /* Set the buffer pointers */
     tmpbuf = (char *) buffer;
 
+#if !defined(COLL_TUNED_BCAST_USE_BLOCKING)
     if( tree->tree_nextsize != 0 ) {
-        send_reqs = (ompi_request_t**)malloc( tree->tree_nextsize * sizeof(ompi_request_t*) );
+        send_reqs = (ompi_request_t**)malloc( tree->tree_nextsize * 
+                                              sizeof(ompi_request_t*) );
     }
+#endif
 
-    /* root code */
-    /* just send a segment to each child in turn as fast as you can */
+    /* Root code */
     if( rank == root ) {
-        /* determine segment count */
+        /* 
+           For each segment:
+           - send segment to all children.
+             The last segment may have less elements than other segments.
+        */
         sendcount = count_by_segment;
-        /* for each segment */
         for( segindex = 0; segindex < num_segments; segindex++ ) {
-            /* if last segment determine how many elements are being sent */
-            if( segindex == (num_segments - 1) )
+            if( segindex == (num_segments - 1) ) {
                 sendcount = original_count - segindex * count_by_segment;
-            for( i = 0; i < tree->tree_nextsize; i++ ) {  /* send data to children */
-                /* send data */
+            }
+            for( i = 0; i < tree->tree_nextsize; i++ ) { 
 #if defined(COLL_TUNED_BCAST_USE_BLOCKING)
                 err = MCA_PML_CALL(send(tmpbuf, sendcount, datatype,
-                                        tree->tree_next[i], MCA_COLL_BASE_TAG_BCAST,
+                                        tree->tree_next[i], 
+                                        MCA_COLL_BASE_TAG_BCAST,
                                         MCA_PML_BASE_SEND_STANDARD, comm));
 #else
                 err = MCA_PML_CALL(isend(tmpbuf, sendcount, datatype,
-                                         tree->tree_next[i], MCA_COLL_BASE_TAG_BCAST,
-                                         MCA_PML_BASE_SEND_STANDARD, comm, &send_reqs[i]));
+                                         tree->tree_next[i], 
+                                         MCA_COLL_BASE_TAG_BCAST,
+                                         MCA_PML_BASE_SEND_STANDARD, comm, 
+                                         &send_reqs[i]));
 #endif  /* COLL_TUNED_BCAST_USE_BLOCKING */
                 if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
             } 
 
+#if !defined(COLL_TUNED_BCAST_USE_BLOCKING)
             /* complete the sends before starting the next sends */
-            err = ompi_request_wait_all( tree->tree_nextsize, send_reqs, MPI_STATUSES_IGNORE );
+            err = ompi_request_wait_all( tree->tree_nextsize, send_reqs, 
+                                         MPI_STATUSES_IGNORE );
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+#endif /* not COLL_TUNED_BCAST_USE_BLOCKING */
 
             /* update tmp buffer */
             tmpbuf += realsegsize;
 
-        } /* root for each segment */
-    } /* root */
+        }
+    } 
     
-    /* intermediate nodes code */
+    /* Intermediate nodes code */
     else if( tree->tree_nextsize > 0 ) { 
-
-        /* Intermediate nodes:
-         * Create the pipeline. We first post the first receive, then in the loop we
-         * post the next receive and after that wait for the previous receive to complete 
-         * and we disseminating the data to all our children.
+        /* 
+           Create the pipeline. 
+           1) Post the first receive
+           2) For segments 1 .. num_segments
+              - post new receive
+              - wait on the previous receive to complete
+              - send this data to children
+           3) Wait on the last segment
+           4) Compute number of elements in last segment.
+           5) Send the last segment to children
          */
-        sendcount = count_by_segment;
-
-        MCA_PML_CALL(irecv(tmpbuf, sendcount, datatype,
+        req_index = 0;
+        MCA_PML_CALL(irecv(tmpbuf, count_by_segment, datatype,
                            tree->tree_prev, MCA_COLL_BASE_TAG_BCAST,
                            comm, &recv_reqs[req_index]));
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
-        old_req_index = req_index;
-        req_index = (req_index + 1) & 0x1;
-
+        
         for( segindex = 1; segindex < num_segments; segindex++ ) {
-
-            /* if last segment determine how many elements to expect in this round */
-            if( segindex == (num_segments - 1) )
-                sendcount = original_count - segindex * count_by_segment;
-
+            
+            req_index = req_index ^ 0x1;
+            
             /* post new irecv */
-            MCA_PML_CALL(irecv( tmpbuf + realsegsize, sendcount,
-                                datatype, tree->tree_prev, MCA_COLL_BASE_TAG_BCAST, 
+            MCA_PML_CALL(irecv( tmpbuf + realsegsize, count_by_segment,
+                                datatype, tree->tree_prev, 
+                                MCA_COLL_BASE_TAG_BCAST, 
                                 comm, &recv_reqs[req_index]));
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
-
-            /* wait for and forward current segment */
-            err = ompi_request_wait( &recv_reqs[old_req_index], MPI_STATUSES_IGNORE );
-            old_req_index = req_index;
-            req_index = (req_index + 1) & 0x1;
-
+            
+            /* wait for and forward the previous segment to children */
+            err = ompi_request_wait( &recv_reqs[req_index ^ 0x1], 
+                                     MPI_STATUSES_IGNORE );
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
-            /* must wait here or we will forward data before its received! */
-
-            for( i = 0; i < tree->tree_nextsize; i++ ) {  /* send data to children */
-                /* send data */
+            
+            for( i = 0; i < tree->tree_nextsize; i++ ) { 
 #if defined(COLL_TUNED_BCAST_USE_BLOCKING)
                 err = MCA_PML_CALL(send(tmpbuf, count_by_segment, datatype,
-                                        tree->tree_next[i], MCA_COLL_BASE_TAG_BCAST,
+                                        tree->tree_next[i], 
+                                        MCA_COLL_BASE_TAG_BCAST,
                                         MCA_PML_BASE_SEND_STANDARD, comm));
 #else
                 err = MCA_PML_CALL(isend(tmpbuf, count_by_segment, datatype,
-                                         tree->tree_next[i], MCA_COLL_BASE_TAG_BCAST,
-                                         MCA_PML_BASE_SEND_STANDARD, comm, &send_reqs[i]));
+                                         tree->tree_next[i], 
+                                         MCA_COLL_BASE_TAG_BCAST,
+                                         MCA_PML_BASE_SEND_STANDARD, comm, 
+                                         &send_reqs[i]));
 #endif  /* COLL_TUNED_BCAST_USE_BLOCKING */
                 if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
             } 
-
+            
 #if !defined(COLL_TUNED_BCAST_USE_BLOCKING)
-            /* complete the sends before starting the next pair */
-            err = ompi_request_wait_all( tree->tree_nextsize, send_reqs, MPI_STATUSES_IGNORE );
+            /* complete the sends before starting the next iteration */
+            err = ompi_request_wait_all( tree->tree_nextsize, send_reqs, 
+                                         MPI_STATUSES_IGNORE );
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
 #endif  /* COLL_TUNED_BCAST_USE_BLOCKING */
-
-            /* go to the next buffer (ie. the one corresponding to the next recv) */
+            
+            /* Update the receive buffer */
             tmpbuf += realsegsize;
+            
+        }
 
-        } /* end of for segindex */
-
-        /* wait for the last segment and forward current segment */
-        err = ompi_request_wait( &recv_reqs[old_req_index], MPI_STATUSES_IGNORE );
+        /* Process the last segment */
+        err = ompi_request_wait( &recv_reqs[req_index], MPI_STATUSES_IGNORE );
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
-
-        for( i = 0; i < tree->tree_nextsize; i++ ) {  /* send data to children */
+        sendcount = original_count - (num_segments - 1) * count_by_segment;
+        for( i = 0; i < tree->tree_nextsize; i++ ) {
 #if defined(COLL_TUNED_BCAST_USE_BLOCKING)
             err = MCA_PML_CALL(send(tmpbuf, sendcount, datatype,
-                                    tree->tree_next[i], MCA_COLL_BASE_TAG_BCAST,
+                                    tree->tree_next[i], 
+                                    MCA_COLL_BASE_TAG_BCAST,
                                     MCA_PML_BASE_SEND_STANDARD, comm));
 #else
             err = MCA_PML_CALL(isend(tmpbuf, sendcount, datatype,
-                                     tree->tree_next[i], MCA_COLL_BASE_TAG_BCAST,
-                                     MCA_PML_BASE_SEND_STANDARD, comm, &send_reqs[i]));
+                                     tree->tree_next[i], 
+                                     MCA_COLL_BASE_TAG_BCAST,
+                                     MCA_PML_BASE_SEND_STANDARD, comm, 
+                                     &send_reqs[i]));
 #endif  /* COLL_TUNED_BCAST_USE_BLOCKING */
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
         }
-
+        
 #if !defined(COLL_TUNED_BCAST_USE_BLOCKING)
-        err = ompi_request_wait_all( tree->tree_nextsize, send_reqs, MPI_STATUSES_IGNORE );
+        err = ompi_request_wait_all( tree->tree_nextsize, send_reqs, 
+                                     MPI_STATUSES_IGNORE );
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
 #endif  /* COLL_TUNED_BCAST_USE_BLOCKING */
-    } 
+    }
   
-    /* leaf nodes */
+    /* Leaf nodes */
     else {
-        /* We just loop receiving. */
-        sendcount = count_by_segment;
-
-        /* Prologue */
-        err = MCA_PML_CALL(irecv(tmpbuf, sendcount, datatype,
+        /* 
+           Receive all segments from parent in a loop:
+           1) post irecv for the first segment
+           2) for segments 1 .. num_segments
+              - post irecv for the next segment
+              - wait on the previous segment to arrive
+           3) wait for the last segment
+        */
+        req_index = 0;
+        err = MCA_PML_CALL(irecv(tmpbuf, count_by_segment, datatype,
                                  tree->tree_prev, MCA_COLL_BASE_TAG_BCAST,
                                  comm, &recv_reqs[req_index]));
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
-        tmpbuf += realsegsize;
-        old_req_index = req_index;
-        req_index = (req_index + 1) & 0x1;
 
-        /* Loop over the remaining receives */
         for( segindex = 1; segindex < num_segments; segindex++ ) {
-            /* determine how many elements to expect in this round */
-            if( segindex == (num_segments - 1) )
-                sendcount = original_count - segindex * count_by_segment;
-            /* receive segments */
-            err = MCA_PML_CALL(irecv(tmpbuf, sendcount, datatype,
-                                     tree->tree_prev, MCA_COLL_BASE_TAG_BCAST,
+            req_index = req_index ^ 0x1;
+            tmpbuf += realsegsize;
+            /* post receive for the next segment */
+            err = MCA_PML_CALL(irecv(tmpbuf, count_by_segment, datatype, 
+                                     tree->tree_prev, MCA_COLL_BASE_TAG_BCAST, 
                                      comm, &recv_reqs[req_index]));
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
-            /* update the initial pointer to the buffer */
-            tmpbuf += realsegsize;
-
-            err = ompi_request_wait( &recv_reqs[old_req_index], MPI_STATUS_IGNORE );
+            /* wait on the previous segment */
+            err = ompi_request_wait( &recv_reqs[req_index ^ 0x1], 
+                                     MPI_STATUS_IGNORE );
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
-
-            old_req_index = req_index;
-            req_index = (req_index + 1) & 0x1;
         }
-        /* epilogue */
-        err = ompi_request_wait( &recv_reqs[old_req_index], MPI_STATUS_IGNORE );
+
+        err = ompi_request_wait( &recv_reqs[req_index], MPI_STATUS_IGNORE );
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
     }
 
+#if !defined(COLL_TUNED_BCAST_USE_BLOCKING)
     if( NULL != send_reqs ) free(send_reqs);
+#endif
+
     return (MPI_SUCCESS);
   
  error_hndl:
     OPAL_OUTPUT( (ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d",
                   __FILE__, line, err, rank) );
+#if !defined(COLL_TUNED_BCAST_USE_BLOCKING)
     if( NULL != send_reqs ) free(send_reqs);
+#endif
     return (err);
 }
 
