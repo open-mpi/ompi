@@ -416,6 +416,7 @@ int opal_util_register_stackhandlers (void)
         return OPAL_ERR_IN_ERRNO;
       }
     }
+    free(string_value);
 #endif /* OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) */
 
     return OPAL_SUCCESS;

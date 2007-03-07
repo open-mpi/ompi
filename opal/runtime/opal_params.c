@@ -71,6 +71,7 @@ int opal_register_params(void)
         mca_base_param_reg_string_name("opal", "signal", 
                                        "If a signal is received, display the stack trace frame",
                                        false, false, string, NULL);
+        free(string);
     }
 
 #if OMPI_ENABLE_DEBUG
