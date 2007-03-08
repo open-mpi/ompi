@@ -29,6 +29,10 @@ version 1.0.
 1.2
 ---
 
+- Fixed race condition in the shared memory fifo's, which led to
+  orphaned messages.
+- Corrected the size of the shared memory file - subtracted out the
+  space the header was occupying.
 - Add support for MPI_2COMPLEX and MPI_2DOUBLE_COMPLEX.
 - Always ensure to create $(includedir)/openmpi, even if the C++
   bindings are disabled so that the wrapper compilers don't point to
