@@ -1,9 +1,9 @@
 #!/bin/ksh
 
-# Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 
 #
-# This scipt takes as input to the prototype space of files that are to be
+# This script takes as input to the prototype space of files that are to be
 # encapsulated in Solaris packages.  The installation must include both 32 and
 # 64 bit libraries and prefixes in the correct manner.
 #
