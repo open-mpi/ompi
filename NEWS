@@ -47,6 +47,8 @@ Trunk (not on release branches yet)
   --> Expected 1.2.x
 - Recognize zsh in rsh pls
   --> Expected 1.2.x
+- Implement MPI_TYPE_CREATE_DARRAY function
+  --> Expected 1.2.x
 
 
 1.2
