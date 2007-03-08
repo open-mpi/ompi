@@ -47,9 +47,12 @@ Trunk (not on release branches yet)
   --> Expected 1.2.x
 - Recognize zsh in rsh pls
   --> Expected 1.2.x
+- Fixed race condition in the shared memory fifo's, which led to orphaned
+  messages.
+- Corrected the size of the shared memory file - subtracted out the space
+  the header was occupying.
 - Implement MPI_TYPE_CREATE_DARRAY function
   --> Expected 1.2.x
-
 
 1.2
 ---
@@ -118,6 +121,10 @@ Trunk (not on release branches yet)
   (not a C compiler that "sorta works" as a C++ compiler).
 - Properly check for local host only addresses properly, looking 
   for 127.0.0.0/8, rather than just 127.0.0.1.
+- Fixed race condition in the shared memory fifo's, which led to orphaned
+  messages.
+- Corrected the size of the shared memory file - subtracted out the space
+  the header was occupying.
 
 
 1.1.5
@@ -137,6 +144,10 @@ Trunk (not on release branches yet)
 - Fix a problem with argument checking in MPI_TYPE_CREATE_SUBARRAY.
 - Fix a problem with compiling the XGrid components with non-gcc
   compilers.
+- Fixed race condition in the shared memory fifo's, which led to orphaned
+  messages.
+- Corrected the size of the shared memory file - subtracted out the space
+  the header was occupying.
 
 
 1.1.4
