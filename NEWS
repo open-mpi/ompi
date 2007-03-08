@@ -126,10 +126,6 @@ Trunk (not on release branches yet)
 1.1.5
 -----
 
-- Fixed race condition in the shared memory fifo's, which led to
-  orphaned messages.
-- Corrected the size of the shared memory file - subtracted out the
-  space the header was occupying.
 - Fix syntax error in a corner case of the event library.  Thanks to
   Bert Wesarg for pointing this out.
 - Add new MCA parameter (mpi_preconnect_oob) for pre-connecting the
