@@ -26,6 +26,19 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
+1.2lanl
+-------
+
+This release was created specifically for use on Los Alamos National
+Laboratory production machines.  It is the Open MPI 1.2 community
+release with a few features that were required on LANL platforms
+but were too late to make the community v1.2 release.  This release
+is not supported outside of the LANL production environment.
+
+This functionality will be merged into future community Open MPI
+releases.
+
+
 1.2
 ---
 
