@@ -422,6 +422,10 @@ void *ompi_fifo_read_from_tail(ompi_fifo_t *fifo)
         opal_atomic_lock(&(fifo->fifo_lock));
         if(fifo->tail->cb_overflow == true) {
             fifo->tail->cb_overflow = false;
+            if(fifo->head == ((char*)fifo->tail) + fifo->offset) {
+                opal_atomic_unlock(&(fifo->fifo_lock));
+                return return_value;
+            }
             fifo->tail = (ompi_cb_fifo_wrapper_t*)
                 ((char*)fifo->tail->next_fifo_wrapper - fifo->offset);
         }
