@@ -1,0 +1,12 @@
+#
+# For your btl you may want special mca parameters for a benchmark 
+# such as netpipe, or better yet, your application, one can always 
+# dream.
+#
+
+# Example:
+
+# btl_template_flags=1 
+# btl_template_eager_limit=4096 
+
+
