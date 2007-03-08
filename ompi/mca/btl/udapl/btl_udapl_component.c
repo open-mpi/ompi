@@ -679,7 +679,7 @@ int mca_btl_udapl_component_progress()
 		/* Was the DTO successful? */
                 if(DAT_DTO_SUCCESS != dto->status) {
                     OPAL_OUTPUT((0,
-                        "btl_udapl ***** DTO error %d %d %d %p*****\n",
+                        "btl_udapl ***** DTO error %d %d %u %p*****\n",
                         dto->status, frag->type, frag->size, dto->ep_handle));
                     break;
                 }
