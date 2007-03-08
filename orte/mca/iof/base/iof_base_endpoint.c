@@ -118,6 +118,11 @@ static void orte_iof_base_endpoint_send_cb(
     orte_iof_base_endpoint_t* endpoint = frag->frag_owner;
     opal_list_remove_item(&endpoint->ep_frags, &frag->super.super);
     ORTE_IOF_BASE_FRAG_RETURN(frag);
+
+    /* Decrement the refcount on the endpoint; matches the RETAIN for
+       when this frag's send was initiated in
+       orte_iof_base_endpoint_read_handler() */
+    OBJ_RELEASE(endpoint);
 }
 
 
@@ -187,6 +192,10 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
         opal_event_del(&endpoint->ep_event);
     }
     OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+
+    /* Increment the refcount on the endpoint so that it doesn't get
+       deleted before the frag */
+    OBJ_RETAIN(endpoint);
 
     /* start non-blocking OOB call to forward received data */
     rc = orte_rml.send_nb(
@@ -448,8 +457,6 @@ int orte_iof_base_endpoint_delete(
 
 void orte_iof_base_endpoint_closed(orte_iof_base_endpoint_t* endpoint)
 {
-    opal_list_item_t* item;
-
     /* Special case: if we're a sink and one of the special streams
        (stdout or stderr), don't close anything because we don't want
        to *actually* close stdout or stderr just because a remote
@@ -477,12 +484,6 @@ void orte_iof_base_endpoint_closed(orte_iof_base_endpoint_t* endpoint)
     /* close associated file descriptor */
     close(endpoint->ep_fd);
     endpoint->ep_fd = -1;
-
-    /* Can't complete any pending operations so cleanup all datastructures */
-    endpoint->ep_ack = endpoint->ep_seq;
-    while(NULL != (item = opal_list_remove_first(&endpoint->ep_frags))) {
-        ORTE_IOF_BASE_FRAG_RETURN(item)
-    }
 }
 
 /*
