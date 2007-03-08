@@ -35,6 +35,8 @@ release with a few features that were required on LANL platforms
 but were too late to make the community v1.2 release.  This release
 is not supported outside of the LANL production environment.
 
+- Implement MPI_TYPE_CREATE_DARRAY function.
+
 This functionality will be merged into future community Open MPI
 releases.
 
