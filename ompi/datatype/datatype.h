@@ -10,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -157,14 +159,6 @@ OMPI_DECLSPEC int32_t ompi_ddt_create_indexed_block( int count, int bLength, con
 OMPI_DECLSPEC int32_t ompi_ddt_create_struct( int count, const int* pBlockLength, const long* pDisp,
                                               ompi_datatype_t* const* pTypes, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_ddt_create_resized( const ompi_datatype_t* oldType, long lb, long extent, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_ddt_create_subarray( int ndims, const int* pSizes,
-                                                const int* pSubSizes, const int* pStarts,
-                                                int order, const ompi_datatype_t* oldType, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_ddt_create_darray( int size, int rank, int ndims,
-                                              const int* pGSizes, const int *pDistrib,
-                                              const int* pDArgs, const int* pPSizes,
-                                              int order, const ompi_datatype_t* oldType,
-                                              ompi_datatype_t** newType );
 
 OMPI_DECLSPEC int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd, uint32_t count,
                                     long disp, long extent );
