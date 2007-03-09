@@ -29,12 +29,11 @@ do { \
     } \
     \
     /* post fragment */ \
-    rc=ompi_fifo_write_to_head_same_base_addr(frag, fifo, \
-        mca_btl_sm_component.sm_mpool); \
-    if(  0 <= rc ) { \
-        MCA_BTL_SM_SIGNAL_PEER(endpoint_peer); \
-        rc=OMPI_SUCCESS; \
-    } \
+    while(ompi_fifo_write_to_head_same_base_addr(frag, fifo, \
+        mca_btl_sm_component.sm_mpool) != OMPI_SUCCESS) \
+        opal_progress(); \
+    MCA_BTL_SM_SIGNAL_PEER(endpoint_peer); \
+    rc=OMPI_SUCCESS; \
     if(opal_using_threads()) \
         opal_atomic_unlock(&fifo->head_lock); \
 } while(0) 
