@@ -423,6 +423,10 @@ void *ompi_fifo_read_from_tail_same_base_addr( ompi_fifo_t *fifo)
         opal_atomic_lock(&(fifo->fifo_lock));
         if(fifo->tail->cb_overflow == true) {
             fifo->tail->cb_overflow=false;
+            if(fifo->head == (ompi_cb_fifo_wrapper_t*) ((char*)fifo->tail) ) {
+                opal_atomic_unlock(&(fifo->fifo_lock));
+                return return_value;
+            }
             fifo->tail=fifo->tail->next_fifo_wrapper;
         }
         opal_atomic_unlock(&(fifo->fifo_lock));
@@ -466,6 +470,10 @@ static inline void *ompi_fifo_read_from_tail(ompi_fifo_t *fifo,
         opal_atomic_lock(&(fifo->fifo_lock));
         if(t_ptr->cb_overflow == true) {
             t_ptr->cb_overflow = false;
+            if(fifo->head == (ompi_cb_fifo_wrapper_t*) (((char*)fifo->tail) + offset)) {
+                opal_atomic_unlock(&(fifo->fifo_lock));
+                return return_value;
+            }
             fifo->tail = t_ptr->next_fifo_wrapper;
         }
         opal_atomic_unlock(&(fifo->fifo_lock));

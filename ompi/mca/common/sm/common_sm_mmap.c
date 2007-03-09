@@ -164,7 +164,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     
         /* initialize the segment - only the first process to open the file */
         seg->seg_offset = mem_offset;
-        seg->seg_size = size;
+        seg->seg_size = size - mem_offset;
         opal_atomic_unlock(&seg->seg_lock);
         seg->seg_inited = false;
 
@@ -355,7 +355,8 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         opal_atomic_unlock(&seg->seg_lock);
         seg->seg_inited = false;
         seg->seg_offset = mem_offset;
-        seg->seg_size = size;
+        /* initialize size after subtracting out space used by the header */
+        seg->seg_size = size - mem_offset;
     }
 
     CloseHandle(hMapObject);
@@ -408,7 +409,7 @@ void* mca_common_sm_mmap_seg_alloc(
     void* addr;
 
     opal_atomic_lock(&seg->seg_lock);
-    if(seg->seg_offset + *size > map->map_size) {
+    if(seg->seg_offset + *size > seg->seg_size) {
         addr = NULL;
     } else {
         size_t fixup;
