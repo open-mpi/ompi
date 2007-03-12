@@ -424,7 +424,7 @@ void *ompi_fifo_read_from_tail_same_base_addr( ompi_fifo_t *fifo)
         if(fifo->tail->cb_overflow == true) {
             fifo->tail->cb_overflow=false;
             /* make sure that writer is not writing to this fifo any more */
-            if(fifo->head == ((char*)fifo->tail)) {
+            if(fifo->head == (ompi_cb_fifo_wrapper_t*) ((char*)fifo->tail)) {
                 opal_atomic_unlock(&(fifo->fifo_lock));
                 return return_value;
             }
@@ -472,7 +472,7 @@ static inline void *ompi_fifo_read_from_tail(ompi_fifo_t *fifo,
         if(t_ptr->cb_overflow == true) {
             t_ptr->cb_overflow = false;
             /* make sure that writer is not writing to this fifo any more */
-            if(fifo->head == ((char*)fifo->tail) + offset) {
+            if(fifo->head == (ompi_cb_fifo_wrapper_t*) (((char*)fifo->tail) + offset)) {
                 opal_atomic_unlock(&(fifo->fifo_lock));
                 return return_value;
             }
