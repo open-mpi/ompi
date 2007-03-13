@@ -88,7 +88,7 @@ int ompi_init_do_preconnect(void)
     
 int ompi_init_do_oob_preconnect(void)
 {
-    size_t world_size, i, next, prev, my_index = 0;
+    size_t world_size, i, next, prev, my_index = -1;
     ompi_proc_t **procs;
     int ret;
     struct iovec msg[1];
@@ -115,31 +115,34 @@ int ompi_init_do_oob_preconnect(void)
             if (ret < 0) return ret;
         }
     } else if (world_size > 2) {
+        /* find local index in proc list (which *should* be our rank
+           in MCW, aborting if not found */
         for (i = 0 ; i < world_size ; ++i) {
             if (ompi_proc_local() == procs[i]) {
                 my_index = i;
-                /* Do all required preconnections */
-                for (i = 1 ; i <= world_size / 2 ; ++i) {
-                    next = (my_index + i) % world_size;
-                    prev = (my_index - i + world_size) % world_size;
-                    
-                    /* sends do not wait for a match */
-                    ret = orte_rml.send(&procs[next]->proc_name,
-                                        msg,
-                                        1,
-                                        ORTE_RML_TAG_WIREUP,
-                                        0);
-                    if (ret < 0) return ret;
-                    
-                    ret = orte_rml.recv(&procs[prev]->proc_name,
-                                        msg,
-                                        1,
-                                        ORTE_RML_TAG_WIREUP,
-                                        0);
-                    if (ret < 0) return ret;
-                }
                 break;
             }
+        }
+        if (my_index < 0) return OMPI_ERR_NOT_FOUND;
+
+        for (i = 1 ; i <= world_size / 2 ; ++i) {
+            next = (my_index + i) % world_size;
+            prev = (my_index - i + world_size) % world_size;
+                    
+            /* sends do not wait for a match */
+            ret = orte_rml.send(&procs[next]->proc_name,
+                                msg,
+                                1,
+                                ORTE_RML_TAG_WIREUP,
+                                0);
+            if (ret < 0) return ret;
+                    
+            ret = orte_rml.recv(&procs[prev]->proc_name,
+                                msg,
+                                1,
+                                ORTE_RML_TAG_WIREUP,
+                                0);
+            if (ret < 0) return ret;
         }
     }
     
