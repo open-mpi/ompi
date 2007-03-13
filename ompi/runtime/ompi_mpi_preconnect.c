@@ -88,7 +88,7 @@ int ompi_init_do_preconnect(void)
     
 int ompi_init_do_oob_preconnect(void)
 {
-    size_t world_size, i, next, prev, my_index;
+    size_t world_size, i, next, prev, my_index = 0;
     ompi_proc_t **procs;
     int ret;
     struct iovec msg[1];
