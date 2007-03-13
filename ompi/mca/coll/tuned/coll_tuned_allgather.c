@@ -641,6 +641,8 @@ int ompi_coll_tuned_allgather_intra_two_procs(void *sbuf, int scount,
    tmpsend = (char*)sbuf;
    if (MPI_IN_PLACE == sbuf) {
       tmpsend = (char*)rbuf + rank * rcount * rext;
+      scount = rcount;
+      sdtype = rdtype;
    }
    tmprecv = (char*)rbuf + remote * rcount * rext;
 
