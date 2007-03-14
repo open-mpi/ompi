@@ -855,9 +855,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
             BTL_OPENIB_CREDITS(frag->hdr->credits));
     else
         if(!mca_btl_openib_component.use_srq && frag->hdr->credits > 0)
-            OPAL_THREAD_ADD32(&endpoint->sd_tokens[prio],
-                frag->hdr->credits);
-
+            OPAL_THREAD_ADD32(&endpoint->sd_tokens[prio], frag->hdr->credits);
     if (!MCA_BTL_OPENIB_RDMA_FRAG(frag)) {
         OMPI_FREE_LIST_RETURN(free_list, (ompi_free_list_item_t*) frag);
     } else {
