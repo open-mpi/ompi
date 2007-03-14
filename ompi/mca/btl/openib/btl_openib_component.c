@@ -683,13 +683,13 @@ btl_openib_component_init(int *num_btl_modules,
         OBJ_CONSTRUCT(&openib_btl->pending_frags[BTL_OPENIB_LP_QP], opal_list_t);
             
         OBJ_CONSTRUCT(&openib_btl->ib_lock, opal_mutex_t); 
-        OBJ_CONSTRUCT(&openib_btl->send_free_eager, ompi_free_list_t);
-        OBJ_CONSTRUCT(&openib_btl->send_free_max, ompi_free_list_t);
+        OBJ_CONSTRUCT(&openib_btl->send_free[BTL_OPENIB_HP_QP], ompi_free_list_t);
+        OBJ_CONSTRUCT(&openib_btl->send_free[BTL_OPENIB_LP_QP], ompi_free_list_t);
         OBJ_CONSTRUCT(&openib_btl->send_free_frag, ompi_free_list_t);
         OBJ_CONSTRUCT(&openib_btl->send_free_control, ompi_free_list_t);
         
-        OBJ_CONSTRUCT(&openib_btl->recv_free_eager, ompi_free_list_t);
-        OBJ_CONSTRUCT(&openib_btl->recv_free_max, ompi_free_list_t);
+        OBJ_CONSTRUCT(&openib_btl->recv_free[BTL_OPENIB_HP_QP], ompi_free_list_t);
+        OBJ_CONSTRUCT(&openib_btl->recv_free[BTL_OPENIB_LP_QP], ompi_free_list_t);
         OBJ_CONSTRUCT(&openib_btl->recv_free_frag, ompi_free_list_t);
 
         /* initialize the memory pool using the hca */ 
@@ -707,7 +707,7 @@ btl_openib_component_init(int *num_btl_modules,
                 openib_btl->super.btl_eager_limit,
                 mca_btl_openib_component.buffer_alignment, size_t);
  
-        ompi_free_list_init_ex(&openib_btl->send_free_eager,
+        ompi_free_list_init_ex(&openib_btl->send_free[BTL_OPENIB_HP_QP],
                             length,
                             mca_btl_openib_component.buffer_alignment,
                             OBJ_CLASS(mca_btl_openib_send_frag_eager_t),
@@ -721,7 +721,7 @@ btl_openib_component_init(int *num_btl_modules,
             sizeof(mca_btl_openib_footer_t) +
             openib_btl->super.btl_eager_limit;
 
-        ompi_free_list_init_ex(&openib_btl->recv_free_eager,
+        ompi_free_list_init_ex(&openib_btl->recv_free[BTL_OPENIB_HP_QP],
                             length, 
                             mca_btl_openib_component.buffer_alignment,
                             OBJ_CLASS(mca_btl_openib_recv_frag_eager_t),
@@ -734,7 +734,7 @@ btl_openib_component_init(int *num_btl_modules,
             sizeof(mca_btl_openib_header_t) + 
             openib_btl->super.btl_max_send_size;
         
-        ompi_free_list_init_ex(&openib_btl->send_free_max,
+        ompi_free_list_init_ex(&openib_btl->send_free[BTL_OPENIB_LP_QP],
                             length,
                             mca_btl_openib_component.buffer_alignment,
                             OBJ_CLASS(mca_btl_openib_send_frag_max_t),
@@ -748,7 +748,7 @@ btl_openib_component_init(int *num_btl_modules,
             openib_btl->super.btl_max_send_size;
 
         /* Initialize pool of receive fragments */
-        ompi_free_list_init_ex(&openib_btl->recv_free_max, 
+        ompi_free_list_init_ex(&openib_btl->recv_free[BTL_OPENIB_LP_QP], 
                              length, 
                              mca_btl_openib_component.buffer_alignment,
                              OBJ_CLASS(mca_btl_openib_recv_frag_max_t),
@@ -837,10 +837,8 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
     if(endpoint->nbo) {
         BTL_OPENIB_HEADER_NTOH((*(frag->hdr)));
     }
-    if(BTL_OPENIB_HP_QP == prio)
-        free_list = &openib_btl->recv_free_eager;
-    else
-        free_list = &openib_btl->recv_free_max;
+
+    free_list = &openib_btl->recv_free[prio];
 
     /* advance the segment address past the header and subtract from the
      * length..*/

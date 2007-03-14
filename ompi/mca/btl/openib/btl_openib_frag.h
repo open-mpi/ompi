@@ -219,21 +219,20 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_control_t);
     frag = (mca_btl_openib_frag_t*) item;                              \
 }
 
-#define MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc)                     \
-{                                                                      \
-                                                                       \
-    ompi_free_list_item_t *item;                                       \
-    OMPI_FREE_LIST_GET(&((mca_btl_openib_module_t*)btl)->send_free_eager, item, rc);       \
-    frag = (mca_btl_openib_frag_t*) item;                              \
-}
+#define MCA_BTL_IB_FRAG_ALLOC(btl, frag, rc, prio)                     \
+    do {                                                               \
+        ompi_free_list_item_t *item;                                   \
+         OMPI_FREE_LIST_GET(                                           \
+                 &((mca_btl_openib_module_t*)btl)->send_free[prio],    \
+                 item, rc);                                            \
+        frag = (mca_btl_openib_frag_t*)item;                           \
+    } while (0)
 
-#define MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc)                               \
-{                                                                      \
-                                                                       \
-    ompi_free_list_item_t *item;                                            \
-    OMPI_FREE_LIST_GET(&((mca_btl_openib_module_t*)btl)->send_free_max, item, rc);       \
-    frag = (mca_btl_openib_frag_t*) item;                                  \
-}
+#define MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc)                     \
+    MCA_BTL_IB_FRAG_ALLOC(btl, frag, rc, BTL_OPENIB_HP_QP)
+
+#define MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc)                       \
+    MCA_BTL_IB_FRAG_ALLOC(btl, frag, rc, BTL_OPENIB_LP_QP)
 
 #define MCA_BTL_IB_FRAG_ALLOC_SEND_FRAG(btl, frag, rc)                               \
 {                                                                      \
@@ -257,13 +256,13 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_control_t);
         switch(frag->type) {                                               \
          case MCA_BTL_OPENIB_FRAG_EAGER_RDMA:                              \
          case MCA_BTL_OPENIB_FRAG_EAGER:                                   \
-          my_list = &btl->send_free_eager;                                 \
+          my_list = &btl->send_free[BTL_OPENIB_HP_QP];                     \
           break;                                                           \
          case MCA_BTL_OPENIB_FRAG_MAX:                                     \
-          my_list = &btl->send_free_max;                                   \
+          my_list = &btl->send_free[BTL_OPENIB_LP_QP];                     \
           break;                                                           \
-         case MCA_BTL_OPENIB_FRAG_CONTROL:                                    \
-          my_list = &btl->send_free_control;                                  \
+         case MCA_BTL_OPENIB_FRAG_CONTROL:                                 \
+          my_list = &btl->send_free_control;                               \
           break;                                                           \
          case MCA_BTL_OPENIB_RECV_FRAG_FRAG:                               \
           my_list = &btl->recv_free_frag;                                  \
