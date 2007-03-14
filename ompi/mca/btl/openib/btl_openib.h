@@ -198,12 +198,10 @@ struct mca_btl_openib_module_t {
     uint16_t lid;                      /**< lid that is actually used (for LMC) */
     uint8_t src_path_bits;             /**< offset from base lid (for LMC) */
 
-    ompi_free_list_t send_free_eager;  /**< free list of eager buffer descriptors */
-    ompi_free_list_t send_free_max;    /**< free list of max buffer descriptors */ 
+    ompi_free_list_t send_free[2];  /**< free lists of send buffer descriptors */
     ompi_free_list_t send_free_frag;   /**< free list of frags only... used for pining memory */ 
     
-    ompi_free_list_t recv_free_eager;  /**< High priority free list of buffer descriptors */
-    ompi_free_list_t recv_free_max;    /**< Low priority free list of buffer descriptors */ 
+    ompi_free_list_t recv_free[2];  /**< free lists of receive buffer descriptors */
     ompi_free_list_t recv_free_frag;   /**< free list of frags only... used for pining memory */ 
 
     ompi_free_list_t send_free_control; /**< frags for control massages */ 
@@ -458,10 +456,7 @@ static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
         struct ibv_recv_wr *bad_wr;
         ompi_free_list_t *free_list;
 
-        if(BTL_OPENIB_HP_QP == prio)
-            free_list = &openib_btl->recv_free_eager;
-        else
-            free_list = &openib_btl->recv_free_max;
+        free_list = &openib_btl->recv_free[prio];
 
         for(i = 0; i < num_post; i++) {
             OMPI_FREE_LIST_WAIT(free_list, item, rc);

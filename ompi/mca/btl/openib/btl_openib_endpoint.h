@@ -180,10 +180,7 @@ static inline int btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpoint,
         struct ibv_recv_wr* bad_wr;
         ompi_free_list_t *free_list;
 
-        if(BTL_OPENIB_HP_QP == prio)
-            free_list = &openib_btl->recv_free_eager;
-        else
-            free_list = &openib_btl->recv_free_max;
+        free_list = &openib_btl->recv_free[prio];
 
         for(i = 0; i < num_post; i++) {
            ompi_free_list_item_t* item;
