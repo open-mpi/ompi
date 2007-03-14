@@ -235,6 +235,27 @@ OBJ_CLASS_INSTANCE(mca_btl_openib_endpoint_t,
  * Initialize state of the endpoint instance.
  *
  */
+static void mca_btl_openib_endpoint_construct_qp(
+        mca_btl_base_endpoint_t *endpoint, int prio)
+{
+    OBJ_CONSTRUCT(&endpoint->pending_frags[prio], opal_list_t);
+    endpoint->lcl_qp_attr[prio] =
+        (struct ibv_qp_attr *)malloc(sizeof(struct ibv_qp_attr));
+    memset(endpoint->lcl_qp_attr[prio], 0, sizeof(struct ibv_qp_attr));
+    endpoint->rd_posted[prio] = 0;
+    /* number of available send wqes */
+    endpoint->sd_wqe[prio] = mca_btl_openib_component.rd_num;
+    /* zero these out w/ initial posting, so that we start out w/
+     * zero credits to return to peer
+     */
+    endpoint->rd_credits[prio] =
+        -(mca_btl_openib_component.rd_num + mca_btl_openib_component.rd_rsv);
+    endpoint->sd_credits[prio] = 0;
+    /* initialize the tokens */
+    endpoint->sd_tokens[prio] = mca_btl_openib_component.rd_num;
+    endpoint->rem_info.rem_qp_num[prio] = 0; 
+    endpoint->rem_info.rem_psn[prio] = 0;
+}
 
 static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 {
@@ -245,53 +266,26 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->endpoint_retries = 0;
     OBJ_CONSTRUCT(&endpoint->endpoint_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&endpoint->pending_send_frags, opal_list_t);
-    OBJ_CONSTRUCT(&endpoint->pending_frags[BTL_OPENIB_HP_QP], opal_list_t);
-    OBJ_CONSTRUCT(&endpoint->pending_frags[BTL_OPENIB_LP_QP], opal_list_t);
     OBJ_CONSTRUCT(&endpoint->pending_get_frags, opal_list_t);
     OBJ_CONSTRUCT(&endpoint->pending_put_frags, opal_list_t);
     
-    endpoint->lcl_qp_attr_hp = (struct ibv_qp_attr *) malloc(sizeof(struct ibv_qp_attr)); 
-    endpoint->lcl_qp_attr_lp = (struct ibv_qp_attr *) malloc(sizeof(struct ibv_qp_attr)); 
-    memset(endpoint->lcl_qp_attr_hp, 0, sizeof(struct ibv_qp_attr)); 
-    memset(endpoint->lcl_qp_attr_lp, 0, sizeof(struct ibv_qp_attr)); 
-
-    endpoint->rd_posted[BTL_OPENIB_HP_QP] = 0;
-    endpoint->rd_posted[BTL_OPENIB_LP_QP] = 0;
-
-    /* number of available send wqes */
-    endpoint->sd_wqe[BTL_OPENIB_HP_QP] = mca_btl_openib_component.rd_num;
-    endpoint->sd_wqe[BTL_OPENIB_LP_QP] = mca_btl_openib_component.rd_num;
-
-    /* zero these out w/ initial posting, so that we start out w/
-     * zero credits to return to peer
-     */
-    endpoint->rd_credits[BTL_OPENIB_HP_QP] = -(mca_btl_openib_component.rd_num + mca_btl_openib_component.rd_rsv);
-    endpoint->rd_credits[BTL_OPENIB_LP_QP] = -(mca_btl_openib_component.rd_num + mca_btl_openib_component.rd_rsv);
-    endpoint->sd_credits[BTL_OPENIB_HP_QP] = 0;
-    endpoint->sd_credits[BTL_OPENIB_LP_QP] = 0;
-
-    /* initialize the high and low priority tokens */
-    endpoint->sd_tokens[BTL_OPENIB_HP_QP] = mca_btl_openib_component.rd_num;
-    endpoint->sd_tokens[BTL_OPENIB_LP_QP] = mca_btl_openib_component.rd_num;
     endpoint->get_tokens = mca_btl_openib_component.ib_qp_ous_rd_atom;
 
     /* initialize RDMA eager related parts */
     endpoint->eager_recv_count = 0;
     memset(&endpoint->eager_rdma_remote, 0,
 		    sizeof(mca_btl_openib_eager_rdma_remote_t));
-    memset (&endpoint->eager_rdma_local, 0,
+    memset(&endpoint->eager_rdma_local, 0,
 		    sizeof(mca_btl_openib_eager_rdma_local_t));
     OBJ_CONSTRUCT(&endpoint->eager_rdma_local.lock, opal_mutex_t);
 
-    endpoint->rem_info.rem_qp_num_hp = 0; 
-    endpoint->rem_info.rem_qp_num_lp = 0; 
     endpoint->rem_info.rem_lid = 0; 
-    endpoint->rem_info.rem_psn_hp = 0;
-    endpoint->rem_info.rem_psn_lp = 0; 
     endpoint->rem_info.rem_subnet_id = 0; 
     endpoint->rem_info.rem_mtu = 0;
     endpoint->nbo = false;
     endpoint->use_eager_rdma = true;
+    mca_btl_openib_endpoint_construct_qp(endpoint, BTL_OPENIB_HP_QP);
+    mca_btl_openib_endpoint_construct_qp(endpoint, BTL_OPENIB_LP_QP);
 }
 
 /*
@@ -343,13 +337,15 @@ static int mca_btl_openib_endpoint_send_connect_data(mca_btl_base_endpoint_t* en
         return rc;
     }
 
-    rc = orte_dss.pack(buffer, &endpoint->lcl_psn_hp, 1, ORTE_UINT32); 
+    rc = orte_dss.pack(buffer, &endpoint->lcl_psn[BTL_OPENIB_HP_QP], 1,
+            ORTE_UINT32); 
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
      
-    rc = orte_dss.pack(buffer, &endpoint->lcl_psn_lp, 1, ORTE_UINT32); 
+    rc = orte_dss.pack(buffer, &endpoint->lcl_psn[BTL_OPENIB_LP_QP], 1,
+            ORTE_UINT32); 
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -410,8 +406,8 @@ static int mca_btl_openib_endpoint_set_remote_info(mca_btl_base_endpoint_t* endp
     memcpy(&((mca_btl_openib_endpoint_t*) endpoint)->rem_info, rem_info, sizeof(mca_btl_openib_rem_info_t)); 
     
     BTL_VERBOSE(("Setting High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
-                 endpoint->rem_info.rem_qp_num_hp,
-                 endpoint->rem_info.rem_qp_num_lp, 
+                 endpoint->rem_info.rem_qp_num[BTL_OPENIB_HP_QP],
+                 endpoint->rem_info.rem_qp_num[BTL_OPENIB_LP_QP], 
                  endpoint->rem_info.rem_lid));
 
     return ORTE_SUCCESS;
@@ -419,6 +415,28 @@ static int mca_btl_openib_endpoint_set_remote_info(mca_btl_base_endpoint_t* endp
 }
 
 
+static int mca_btl_openib_endpoint_start_connect_qp(
+        mca_btl_base_endpoint_t* endpoint, int prio)
+{
+    int rc;
+    mca_btl_openib_module_t *openib_btl =
+        (mca_btl_openib_module_t*)endpoint->endpoint_btl;
+
+
+    /* Create the  Queue Pair */
+    if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_create_qp(openib_btl,
+                    openib_btl->hca->ib_pd,
+                    openib_btl->ib_cq[prio],
+                    openib_btl->srq[prio],
+                    endpoint->lcl_qp_attr[prio],
+                    &endpoint->lcl_qp[prio]))) {
+        BTL_ERROR(("error creating queue pair, error code %d", rc)); 
+        return rc;
+    }
+    endpoint->lcl_psn[prio] = lrand48() & 0xffffff; 
+
+    return OMPI_SUCCESS;
+ }
 
 /*
  * Start to connect to the endpoint. We send our Queue Pair
@@ -432,45 +450,53 @@ static int mca_btl_openib_endpoint_set_remote_info(mca_btl_base_endpoint_t* endp
 static int mca_btl_openib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoint)
 {
     int rc;
-    mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) endpoint->endpoint_btl; 
     
-    
-    /* Create the High Priority Queue Pair */
-    if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_create_qp(openib_btl,
-                    openib_btl->hca->ib_pd,
-                    openib_btl->ib_cq[BTL_OPENIB_HP_QP],
-                    openib_btl->srq[BTL_OPENIB_HP_QP],
-                    endpoint->lcl_qp_attr_hp,
-                    &endpoint->lcl_qp[BTL_OPENIB_HP_QP]))) {
-        BTL_ERROR(("error creating queue pair, error code %d", rc)); 
-        return rc;
-    }
     srand48(getpid() * time(NULL));
-    endpoint->lcl_psn_hp = lrand48() & 0xffffff; 
-    
-    /* Create the Low Priority Queue Pair */
-    if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_create_qp(openib_btl,
-                    openib_btl->hca->ib_pd,
-                    openib_btl->ib_cq[BTL_OPENIB_LP_QP],
-                    openib_btl->srq[BTL_OPENIB_LP_QP],
-                    endpoint->lcl_qp_attr_lp,
-                    &endpoint->lcl_qp[BTL_OPENIB_LP_QP]))) {
-        BTL_ERROR(("error creating queue pair, error code %d", rc)); 
+    rc = mca_btl_openib_endpoint_start_connect_qp(endpoint, BTL_OPENIB_HP_QP);
+    if(rc != OMPI_SUCCESS) {
         return rc;
     }
-    endpoint->lcl_psn_lp = lrand48() & 0xffffff; 
+    rc = mca_btl_openib_endpoint_start_connect_qp(endpoint, BTL_OPENIB_LP_QP);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
 
-    BTL_VERBOSE(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
+    BTL_VERBOSE(("Initialized High Priority QP num = %d, "
+                "Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp[BTL_OPENIB_HP_QP]->qp_num,
               endpoint->lcl_qp[BTL_OPENIB_LP_QP]->qp_num, 
-              openib_btl->lid)); 
+              ((mca_btl_openib_module_t*)endpoint->endpoint_btl)->lid)); 
 
     /* Send connection info over to remote endpoint */
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTING;
-    if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_send_connect_data(endpoint))) {
+    if(OMPI_SUCCESS !=
+            (rc = mca_btl_openib_endpoint_send_connect_data(endpoint))) {
         BTL_ERROR(("error sending connect request, error code %d", rc)); 
         return rc;
     }
+    return OMPI_SUCCESS;
+}
+
+static int mca_btl_openib_endpoint_reply_start_connect_qp(
+        mca_btl_openib_endpoint_t *endpoint,
+        mca_btl_openib_rem_info_t *rem_info, int prio)
+{
+    int rc;
+    mca_btl_openib_module_t *openib_btl =
+        (mca_btl_openib_module_t*)endpoint->endpoint_btl; 
+
+    /* Create the  Queue Pair */
+    if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_create_qp(openib_btl,
+                    openib_btl->hca->ib_pd,
+                    openib_btl->ib_cq[prio],
+                    openib_btl->srq[prio],
+                    endpoint->lcl_qp_attr[prio],
+                    &endpoint->lcl_qp[prio]))) {
+        BTL_ERROR(("error creating queue pair, error code %d", rc)); 
+        return rc;
+    }
+    endpoint->lcl_psn[prio] = lrand48() & 0xffffff;
+
     return OMPI_SUCCESS;
 }
 
@@ -478,42 +504,29 @@ static int mca_btl_openib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoi
  * Reply to a `start - connect' message
  *
  */
-static int mca_btl_openib_endpoint_reply_start_connect(mca_btl_openib_endpoint_t *endpoint, 
-                                                       mca_btl_openib_rem_info_t *rem_info)
+static int mca_btl_openib_endpoint_reply_start_connect(
+        mca_btl_openib_endpoint_t *endpoint,
+        mca_btl_openib_rem_info_t *rem_info)
 {
     int rc;
-    mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) endpoint->endpoint_btl; 
-        
-        
-    /* Create the High Priority Queue Pair */
-    if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_create_qp(openib_btl,
-                    openib_btl->hca->ib_pd,
-                    openib_btl->ib_cq[BTL_OPENIB_HP_QP],
-                    openib_btl->srq[BTL_OPENIB_HP_QP],
-                    endpoint->lcl_qp_attr_hp,
-                    &endpoint->lcl_qp[BTL_OPENIB_HP_QP]))) {
-        BTL_ERROR(("error creating queue pair, error code %d", rc)); 
-        return rc;
-    }
-    srand48(getpid() * time(NULL));
-    endpoint->lcl_psn_hp = lrand48() & 0xffffff;
-    
-    /* Create the Low Priority Queue Pair */
-    if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_create_qp(openib_btl,
-                    openib_btl->hca->ib_pd,
-                    openib_btl->ib_cq[BTL_OPENIB_LP_QP],
-                    openib_btl->srq[BTL_OPENIB_LP_QP],
-                    endpoint->lcl_qp_attr_lp,
-                    &endpoint->lcl_qp[BTL_OPENIB_LP_QP]))) {
-        BTL_ERROR(("error creating queue pair, error code %d", rc)); 
-        return rc;
-    }
-    endpoint->lcl_psn_lp = lrand48() & 0xffffff; 
 
-    BTL_VERBOSE(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
-              endpoint->lcl_qp[BTL_OPENIB_HP_QP]->qp_num,
-              endpoint->lcl_qp[BTL_OPENIB_LP_QP]->qp_num, 
-              openib_btl->lid)); 
+    srand48(getpid() * time(NULL));
+    rc = mca_btl_openib_endpoint_reply_start_connect_qp(endpoint, rem_info,
+            BTL_OPENIB_HP_QP);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+    rc = mca_btl_openib_endpoint_reply_start_connect_qp(endpoint, rem_info,
+            BTL_OPENIB_LP_QP);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+    
+    BTL_VERBOSE(("Initialized High Priority QP num = %d, "
+                "Low Priority QP num = %d,  LID = %d",
+                endpoint->lcl_qp[BTL_OPENIB_HP_QP]->qp_num,
+                endpoint->lcl_qp[BTL_OPENIB_LP_QP]->qp_num,
+                ((mca_btl_openib_module_t*)endpoint->endpoint_btl)->lid));
 
 
     /* Set the remote side info */
@@ -529,8 +542,10 @@ static int mca_btl_openib_endpoint_reply_start_connect(mca_btl_openib_endpoint_t
 
     /* Send connection info over to remote endpoint */
     endpoint->endpoint_state = MCA_BTL_IB_CONNECT_ACK;
-    if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_send_connect_data(endpoint))) {
-        BTL_ERROR(("error in endpoint send connect request error code is %d", rc)); 
+    if(OMPI_SUCCESS !=
+            (rc = mca_btl_openib_endpoint_send_connect_data(endpoint))) {
+        BTL_ERROR(("error in endpoint send connect request error code is %d",
+                    rc));
         return rc;
     }
     return OMPI_SUCCESS;
@@ -604,22 +619,26 @@ static void mca_btl_openib_endpoint_recv(
     /* start by unpacking data first so we know who is knocking at 
        our door */ 
     
-    rc = orte_dss.unpack(buffer, &rem_info.rem_qp_num_hp, &cnt, ORTE_UINT32);
+    rc = orte_dss.unpack(buffer, &rem_info.rem_qp_num[BTL_OPENIB_HP_QP], &cnt,
+            ORTE_UINT32);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
     }
-    rc = orte_dss.unpack(buffer, &rem_info.rem_qp_num_lp, &cnt, ORTE_UINT32);
+    rc = orte_dss.unpack(buffer, &rem_info.rem_qp_num[BTL_OPENIB_LP_QP], &cnt,
+            ORTE_UINT32);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
     }
-    rc = orte_dss.unpack(buffer, &rem_info.rem_psn_hp, &cnt, ORTE_UINT32);
+    rc = orte_dss.unpack(buffer, &rem_info.rem_psn[BTL_OPENIB_HP_QP], &cnt,
+            ORTE_UINT32);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
     }
-    rc = orte_dss.unpack(buffer, &rem_info.rem_psn_lp, &cnt, ORTE_UINT32);
+    rc = orte_dss.unpack(buffer, &rem_info.rem_psn[BTL_OPENIB_LP_QP], &cnt,
+            ORTE_UINT32);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
@@ -646,8 +665,8 @@ static void mca_btl_openib_endpoint_recv(
     }
 
     BTL_VERBOSE(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d, SUBNET = %016x\n",
-                 rem_info.rem_qp_num_hp,
-                 rem_info.rem_qp_num_lp, 
+                 rem_info.rem_qp_num[BTL_OPENIB_HP_QP],
+                 rem_info.rem_qp_num[BTL_OPENIB_LP_QP], 
                  rem_info.rem_lid, 
                  rem_info.rem_subnet_id));
     
@@ -668,7 +687,8 @@ static void mca_btl_openib_endpoint_recv(
                 ib_endpoint = ib_proc->proc_endpoints[i]; 
                 if(ib_endpoint->rem_info.rem_lid && 
                    (ib_endpoint->rem_info.rem_lid == rem_info.rem_lid && 
-                    ib_endpoint->rem_info.rem_qp_num_hp == rem_info.rem_qp_num_hp)) { 
+                    ib_endpoint->rem_info.rem_qp_num[BTL_OPENIB_HP_QP] ==
+                    rem_info.rem_qp_num[BTL_OPENIB_HP_QP])) { 
                     /* we've seen them before! */ 
                     found = true; 
                     break;
@@ -846,57 +866,55 @@ int mca_btl_openib_endpoint_send(
  * Complete connection to endpoint.
  */
 
+static int mca_btl_openib_endpoint_connect_qp(
+        mca_btl_openib_endpoint_t *endpoint, int prio)
+{
+    int rc;
+    mca_btl_openib_module_t* openib_btl =
+        (mca_btl_openib_module_t*)endpoint->endpoint_btl;
+
+    /* Connection establishment RC */
+    rc = mca_btl_openib_endpoint_qp_init_query(openib_btl,
+            endpoint->lcl_qp[prio],
+            endpoint->lcl_qp_attr[prio],
+            endpoint->lcl_psn[prio],
+            endpoint->rem_info.rem_qp_num[prio],
+            endpoint->rem_info.rem_psn[prio],
+            endpoint->rem_info.rem_lid,
+            endpoint->rem_info.rem_mtu,
+            openib_btl->port_num);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+    MCA_BTL_IB_FRAG_ALLOC_CREDIT_WAIT(openib_btl, endpoint->credit_frag[prio],
+            rc);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+
+    if(mca_btl_openib_component.use_srq) { 
+        mca_btl_openib_post_srr(openib_btl, 1, prio);
+    } else { 
+        btl_openib_endpoint_post_rr(endpoint, 1, prio);
+    }
+
+    return OMPI_SUCCESS;
+}
+
 int mca_btl_openib_endpoint_connect(
     mca_btl_openib_endpoint_t *endpoint)
 {
     int rc;
-    mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) endpoint->endpoint_btl; 
 
-    /* Connection establishment RC */
-    rc = mca_btl_openib_endpoint_qp_init_query(openib_btl,
-            endpoint->lcl_qp[BTL_OPENIB_HP_QP],
-            endpoint->lcl_qp_attr_hp,
-            endpoint->lcl_psn_hp,
-            endpoint->rem_info.rem_qp_num_hp,
-            endpoint->rem_info.rem_psn_hp,
-            endpoint->rem_info.rem_lid,
-            endpoint->rem_info.rem_mtu,
-            openib_btl->port_num);
-    
-    
-    
+    rc = mca_btl_openib_endpoint_connect_qp(endpoint, BTL_OPENIB_HP_QP);
     if(rc != OMPI_SUCCESS) {
         return rc;
     }
-    rc = mca_btl_openib_endpoint_qp_init_query(openib_btl,
-            endpoint->lcl_qp[BTL_OPENIB_LP_QP],
-            endpoint->lcl_qp_attr_lp,
-            endpoint->lcl_psn_lp,
-            endpoint->rem_info.rem_qp_num_lp,
-            endpoint->rem_info.rem_psn_lp,
-            endpoint->rem_info.rem_lid,
-            endpoint->rem_info.rem_mtu,
-            openib_btl->port_num);
-    
-    
-    
+    rc = mca_btl_openib_endpoint_connect_qp(endpoint, BTL_OPENIB_LP_QP);
     if(rc != OMPI_SUCCESS) {
         return rc;
     }
-             
-    MCA_BTL_IB_FRAG_ALLOC_CREDIT_WAIT(openib_btl,
-            endpoint->credit_frag[BTL_OPENIB_HP_QP], rc);
-    MCA_BTL_IB_FRAG_ALLOC_CREDIT_WAIT(openib_btl,
-            endpoint->credit_frag[BTL_OPENIB_LP_QP], rc);
 
-    if(mca_btl_openib_component.use_srq) { 
-        mca_btl_openib_post_srr(openib_btl, 1, BTL_OPENIB_HP_QP);
-        mca_btl_openib_post_srr(openib_btl, 1, BTL_OPENIB_LP_QP);
-    } else { 
-        btl_openib_endpoint_post_rr(endpoint, 1, BTL_OPENIB_HP_QP);
-        btl_openib_endpoint_post_rr(endpoint, 1, BTL_OPENIB_LP_QP);
-    }
-    
     return OMPI_SUCCESS;
 }
 
