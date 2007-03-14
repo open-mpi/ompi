@@ -66,16 +66,14 @@ typedef enum {
 
 struct mca_btl_openib_rem_info_t { 
     
-    uint32_t                    rem_qp_num_hp;
-    uint32_t                    rem_qp_num_lp; 
+    uint32_t                    rem_qp_num[2];
     /* Remote QP number  (Low and High priority) */ 
 
     uint16_t                    rem_lid;
     /* Local identifier of the remote process */
     
     
-    uint32_t                    rem_psn_hp; 
-    uint32_t                    rem_psn_lp; 
+    uint32_t                    rem_psn[2]; 
     /* Remote processes port sequence number (Low and High) */ 
    
     uint64_t                    rem_subnet_id; 
@@ -128,14 +126,12 @@ struct mca_btl_base_endpoint_t {
 
     mca_btl_openib_rem_info_t   rem_info;
     
-    uint32_t                    lcl_psn_hp; 
-    uint32_t                    lcl_psn_lp; 
+    uint32_t                    lcl_psn[2]; 
     /* Local processes port sequence number (Low and High) */
  
     struct ibv_qp*              lcl_qp[2]; /* Local QP (Low and High) */
 
-    struct ibv_qp_attr*         lcl_qp_attr_hp; 
-    struct ibv_qp_attr*         lcl_qp_attr_lp; 
+    struct ibv_qp_attr*         lcl_qp_attr[2]; 
     /* Local QP attributes (Low and High) */
     
     int32_t                     sd_tokens[2];  /**< number of send tokens */
