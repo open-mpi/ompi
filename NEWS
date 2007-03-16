@@ -53,6 +53,9 @@ Trunk (not on release branches yet)
   was more than one space between tokens.  Thanks to Bert
   Wesarg for reporting the issue.
   --> Expected 1.2.x
+- Fixed issue with backtrace code on 64 bit Intel OS X builds.
+  --> Expected 1.2.x
+
 
 1.2.1
 -----
