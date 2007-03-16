@@ -1,8 +1,12 @@
 .\"
+.\" Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+.\"                         University Research and Technology
+.\"                         Corporation.  All rights reserved.
+.\"
 .\" Man page for OMPI's ompi-ps command
 .\" 
 .\" .TH name     section center-footer   left-footer  center-header
-.TH     OMPI-PS  1       "June 2006" "Open MPI"   "OPEN MPI COMMANDS"
+.TH     OMPI-PS  1       "March 2007" "Open MPI"   "OPEN MPI COMMANDS"
 .\" **************************
 .\"    Name Section
 .\" **************************
@@ -30,7 +34,59 @@ identical behavior.
 .\" **************************
 .SH Options
 .
-To be written...
+\fIompi-ps\fR will display information about running job(s) in the current
+universe.
+.
+.TP 10
+.B -h | --help
+Display help for this command
+.
+.
+.TP
+.B -v | --verbose
+Enable verbose output for debugging
+.
+.
+.TP
+.B -d | --dump
+Display the current state of the Open RTE GPR. This is an advanced debugging
+feature.
+.
+.
+.TP
+.B --universe
+Specify a specific universe to connect to. By default this command attempts to
+connect to the current/first universe it finds.
+.
+.
+.TP
+.B -j | --jobid
+Display the state of a specific job in the universe. By default all jobs will
+be displayed.
+.
+.
+.TP
+.B -p | --vpid
+Display the state of a specific vpid (process) in the universe. By default all
+vpids cooresponding to processes will be displayed. Must be used in conjunction
+with the \fB--jobid\fP option.
+.
+.
+.TP
+.B -n | --nodes
+Display all of the allocated nodes, and their cooresponding states. By default
+this is disabled.
+.
+.
+.TP
+.B -gmca | --gmca \fR<key> <value>\fP
+Pass global MCA parameters that are applicable to all contexts. \fI<key>\fP is
+the parameter name; \fI<value>\fP is the parameter value.
+.
+.
+.TP
+.B -mca | --mca <key> <value>
+Send arguments to various MCA modules.
 .
 .
 .\" **************************
@@ -39,7 +95,7 @@ To be written...
 .SH DESCRIPTION
 .
 .PP
-\fIompi-ps\fR ...
+\fIompi-ps\fR displays the state of jobs running inside an Open RTE universe.
 .
 .
 .\" **************************
@@ -47,5 +103,5 @@ To be written...
 .\" **************************
 .
 .SH SEE ALSO
-orterun(1)
+orterun(1), orte-clean(1)
 .

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -47,8 +47,16 @@ typedef struct orte_rml_base_t orte_rml_base_t;
 
 ORTE_DECLSPEC extern orte_rml_base_t orte_rml_base;
 ORTE_DECLSPEC extern orte_rml_module_t orte_rml;
+ORTE_DECLSPEC extern orte_rml_component_t orte_rml_component;
 ORTE_DECLSPEC extern orte_process_name_t orte_rml_name_any;
 ORTE_DECLSPEC extern orte_process_name_t orte_rml_name_seed;
+
+/*
+ * This is the base priority for a RML wrapper component
+ * If there exists more than one wrapper, then the one with 
+ * the lowest priority wins.
+ */
+#define RML_SELECT_WRAPPER_PRIORITY -128
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

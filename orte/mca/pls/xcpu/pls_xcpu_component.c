@@ -46,7 +46,8 @@ orte_pls_xcpu_component_t mca_pls_xcpu_component = {
         orte_pls_xcpu_component_close /* component close */
         },
         {
-        false /* checkpoint / restart */
+            /* This component is not checkpoint ready */
+            MCA_BASE_METADATA_PARAM_NONE
         },
         orte_pls_xcpu_init    /* component init */ 
     }

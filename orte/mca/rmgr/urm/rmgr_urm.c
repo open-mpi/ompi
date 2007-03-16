@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -44,7 +44,9 @@
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/smr/smr.h"
-
+#if OPAL_ENABLE_FT == 1
+#include "orte/mca/snapc/snapc.h"
+#endif
 #include "orte/mca/rmgr/base/rmgr_private.h"
 #include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/rmgr/urm/rmgr_urm.h"
@@ -88,7 +90,9 @@ orte_rmgr_base_module_t orte_rmgr_urm_module = {
     orte_rmgr_base_check_context_cwd,
     orte_rmgr_base_check_context_app,
     orte_rmgr_base_set_vpid_range,
-    orte_rmgr_base_get_vpid_range    
+    orte_rmgr_base_get_vpid_range,
+    orte_rmgr_base_set_proc_info,
+    orte_rmgr_base_get_proc_info
 };
 
 
@@ -253,10 +257,22 @@ static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
                     continue;
                 }
                 if(strcmp(keyval->key, ORTE_PROC_NUM_FINALIZED) == 0) {
+#if OPAL_ENABLE_FT == 1
+                    /* Stop tracking this job */
+                    if(ORTE_SUCCESS != (rc = orte_snapc.release_job(jobid))) {
+                        ORTE_ERROR_LOG(rc);
+                    }
+#endif
                     (*cbfunc)(jobid,ORTE_PROC_STATE_FINALIZED);
                     continue;
                 }
                 if(strcmp(keyval->key, ORTE_PROC_NUM_TERMINATED) == 0) {
+#if OPAL_ENABLE_FT == 1
+                    /* Stop tracking this job */
+                    if(ORTE_SUCCESS != (rc = orte_snapc.release_job(jobid))) {
+                        ORTE_ERROR_LOG(rc);
+                    }
+#endif
                     (*cbfunc)(jobid,ORTE_PROC_STATE_TERMINATED);
                     continue;
                 }
@@ -447,13 +463,23 @@ static int orte_rmgr_urm_spawn_job(
              }
          }
      }
-     
+
      /* if we don't want to launch, then just return here */
      if (!(flags & ORTE_RMGR_LAUNCH)) {
          return ORTE_SUCCESS;
      }
-     
-     /*
+
+#if OPAL_ENABLE_FT == 1
+    /*
+     * Wire up the SnapC component to this job
+     */
+    if(ORTE_SUCCESS != (rc = orte_snapc.setup_job(*jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+#endif
+
+    /*
      * launch the job
      */
     if (ORTE_SUCCESS != (rc = orte_pls.launch_job(*jobid))) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -37,6 +37,8 @@ int MPI_File_get_byte_offset(MPI_File fh, MPI_Offset offset,
                              MPI_Offset *disp)
 {
     int rc;
+
+    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
         rc = MPI_SUCCESS;

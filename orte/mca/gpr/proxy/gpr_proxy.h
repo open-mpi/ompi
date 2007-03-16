@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -226,6 +226,8 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
                    orte_buffer_t *buffer, orte_rml_tag_t tag,
                    void* cbdata);
 
+
+int  orte_gpr_proxy_ft_event(int state);
 
 /*
  * Internal functions

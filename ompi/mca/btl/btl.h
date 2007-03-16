@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -113,6 +113,9 @@
 
 #include "ompi/types.h"
 #include "ompi/mca/mpool/mpool.h"
+
+#include "opal/mca/crs/crs.h"
+#include "opal/mca/crs/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -544,6 +547,12 @@ typedef void (*mca_btl_base_module_dump_fn_t)(
     int verbose
 );
 
+/**
+ * Fault Tolerance Event Notification Function
+ * @param state Checkpoint Status
+ * @return OMPI_SUCCESS or failure status
+ */
+typedef int (*mca_btl_base_module_ft_event_fn_t)(int state);
 
 /**
  * BTL module interface functions and attributes.
@@ -582,6 +591,7 @@ struct mca_btl_base_module_t {
     /* register a default error handler */ 
     mca_btl_base_module_register_error_fn_t btl_register_error;
     
+    mca_btl_base_module_ft_event_fn_t btl_ft_event;
 };
 typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -66,7 +66,8 @@ mca_btl_portals_module_t mca_btl_portals_module = {
         mca_btl_portals_get,
         mca_btl_base_dump,
         NULL, /* mpool */
-        NULL /* register error */
+        NULL, /* register error */
+        NULL
     },
 };
 

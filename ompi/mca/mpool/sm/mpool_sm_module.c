@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -38,6 +38,7 @@ void mca_mpool_sm_module_init(mca_mpool_sm_module_t* mpool)
   mpool->super.mpool_deregister = NULL; 
   mpool->super.mpool_release_memory = NULL;
   mpool->super.mpool_finalize = NULL; 
+  mpool->super.mpool_ft_event = mca_mpool_sm_ft_event;
   mpool->super.flags = 0;
 }
 
@@ -84,4 +85,24 @@ void mca_mpool_sm_free(mca_mpool_base_module_t* mpool, void * addr,
 {
     mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
     mpool_sm->sm_allocator->alc_free(mpool_sm->sm_allocator, addr);
+}
+
+int mca_mpool_sm_ft_event(int state) {
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+
+    return OMPI_SUCCESS;
 }

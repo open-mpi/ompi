@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -31,12 +31,21 @@
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/timer/base/base.h"
+
+#include "opal/runtime/opal_cr.h"
+#include "opal/mca/crs/base/base.h"
+
+#include "opal/runtime/opal_progress.h"
+#include "opal/event/event.h"
 #include "opal/mca/backtrace/base/base.h"
+
 #include "opal/constants.h"
 #include "opal/util/error.h"
 #include "opal/util/stacktrace.h"
 #include "opal/util/keyval_parse.h"
 
+
+bool opal_init_only = true;
 int opal_initialized = 0;
 
 static const char *
@@ -236,6 +245,42 @@ opal_init(void)
         goto return_error;
     }
 
+    if( opal_init_only ) {
+        /*
+         * Need to start the event and progress engines if noone else is.
+         * opal_cr_init uses the progress engine, so it is lumped together
+         * into this set as well.
+         */
+        /*
+         * Initialize the event library
+         */
+        if (OPAL_SUCCESS != (ret = opal_event_init())) {
+            error = "opal_event_init";
+            goto return_error;
+        }
+            
+        /*
+         * Intialize the general progress engine
+         */
+        if (OPAL_SUCCESS != (ret = opal_progress_init())) {
+            error = "opal_progress_init";
+            goto return_error;
+        }
+        /* we want to tick the event library whenever possible */
+        opal_progress_event_users_increment();
+
+        /*
+         * Initalize the checkpoint/restart functionality
+         * Note: Always do this so we can detect if the user
+         * attempts to checkpoint a non checkpointable job,
+         * otherwise the tools may hang or not clean up properly.
+         */
+        if (OPAL_SUCCESS != (ret = opal_cr_init() ) ) {
+            error = "opal_cr_init() failed";
+            goto return_error;
+        }
+    }
+    
     return OPAL_SUCCESS;
 
  return_error:

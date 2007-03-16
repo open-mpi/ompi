@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -37,7 +37,6 @@ static void mca_oob_tcp_msg_ident(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pe
 static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer);
 static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer);
 static void mca_oob_tcp_msg_ping(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer);
-
 
 OBJ_CLASS_INSTANCE(
     mca_oob_tcp_msg_t,
@@ -105,6 +104,7 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
            time. */
         opal_progress();
         opal_event_loop(OPAL_EVLOOP_NONBLOCK);
+        OPAL_CR_TEST_CHECKPOINT_READY();
     }
 #endif
 
@@ -397,8 +397,11 @@ void mca_oob_tcp_msg_recv_complete(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* p
             mca_oob_tcp_msg_data(msg,peer);
             break;
         default:
-            opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_msg_recv_complete: invalid message type: %d\n",
-                 ORTE_NAME_ARGS(orte_process_info.my_name), msg->msg_hdr.msg_type);
+            opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_msg_recv_complete: invalid message type: %d from peer [%lu,%lu,%lu]\n",
+                        ORTE_NAME_ARGS(orte_process_info.my_name), msg->msg_hdr.msg_type, 
+                        (long)(peer->peer_name.cellid),
+                        (long)(peer->peer_name.jobid),
+                        (long)(peer->peer_name.vpid));
             MCA_OOB_TCP_MSG_RETURN(msg);
             break;
     }
@@ -597,7 +600,3 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(orte_process_name_t* name, int tag
     }
     return NULL;
 }
-
-
-
-

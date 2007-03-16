@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -229,6 +229,8 @@ extern int mca_pml_dr_start(
     size_t count,
     ompi_request_t** requests
 );
+
+extern int mca_pml_dr_ft_event(int state);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

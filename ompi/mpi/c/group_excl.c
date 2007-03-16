@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -41,6 +41,8 @@ int MPI_Group_excl(MPI_Group group, int n, int *ranks,
 {
     ompi_group_t *group_pointer = (ompi_group_t *)group;
     int i, err, group_size;
+
+    OPAL_CR_TEST_CHECKPOINT_READY();
 
     group_size = ompi_group_size ( group_pointer);
     if( MPI_PARAM_CHECK ) {

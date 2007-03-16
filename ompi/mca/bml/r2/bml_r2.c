@@ -52,7 +52,8 @@ mca_bml_r2_module_t mca_bml_r2 = {
         mca_bml_r2_register, 
         mca_bml_r2_register_error,
         mca_bml_r2_finalize, 
-        mca_bml_r2_progress
+        mca_bml_r2_progress,
+        mca_bml_r2_ft_event
     }
     
 };
@@ -797,3 +798,114 @@ int mca_bml_r2_component_fini(void)
 }
 
 
+int mca_bml_r2_ft_event(int state) {
+    size_t btl_idx;
+    int ret;
+    ompi_proc_t** procs = NULL;
+    size_t num_procs;
+    
+#if 0    
+    opal_output(0, "bml:r2: ft_event: *** R2 BML *** (%d)\n", state);
+#endif
+    
+    if(OPAL_CRS_CHECKPOINT == state) {
+        /* Do nothing for now */
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        /* Since nothingin Checkpoint, we are fine here */
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        procs = ompi_proc_all(&num_procs);
+        if(NULL == procs)
+            goto END_PRE_RESTART;
+        
+        if (OMPI_SUCCESS != (ret = mca_bml_r2_del_procs(num_procs, procs) ) ) {
+            goto END_PRE_RESTART;
+        }
+        
+    END_PRE_RESTART:
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+    
+    /*
+     * Call ft_event in:
+     * - BTL
+     * - MPool
+     */
+    for(btl_idx = 0; btl_idx < mca_bml_r2.num_btl_modules; btl_idx++) {
+#if 0 
+        opal_output(0, "bml:r2: ft_event: Notify the %s BTL.\n",
+                    (mca_bml_r2.btl_modules[btl_idx])->btl_component->btl_version.mca_component_name);
+#endif
+        /*
+         * Close the btl
+         */
+        if( NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_ft_event) {
+            if(OMPI_SUCCESS != (ret = (mca_bml_r2.btl_modules[btl_idx])->btl_ft_event(state) ) ) {
+                continue;
+            }
+        }
+        
+        /*
+         * Close its mpool
+         */
+        if( NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_mpool) {
+            if(OMPI_SUCCESS != (ret = (mca_bml_r2.btl_modules[btl_idx])->btl_mpool->mpool_ft_event(state) ) ) {
+                continue;
+            }
+        }
+    }
+    
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        struct mca_bml_base_endpoint_t ** endpoints = NULL;
+        ompi_bitmap_t reachable;
+        
+        OBJ_CONSTRUCT(&reachable, ompi_bitmap_t);
+        if( OMPI_SUCCESS != (ret = ompi_bitmap_init(&reachable, num_procs)) ) {
+            goto END_POST_RESTART;
+        }
+        
+        endpoints = (struct mca_bml_base_endpoint_t **) malloc ( num_procs *
+                                                                 sizeof(struct mca_bml_base_endpoint_t*));
+        if ( NULL == endpoints ) {
+            goto END_POST_RESTART;
+        }
+        
+        /* Don't need to do this again since we still have the 
+         * values from PRE_RESTART
+         * procs = ompi_proc_all(&num_procs);
+         */
+        if (OMPI_SUCCESS != (ret = mca_bml_r2_add_procs(num_procs, procs, endpoints, &reachable) ) ) {
+            goto END_POST_RESTART;
+        }
+        
+    END_POST_RESTART:
+        if ( NULL != endpoints ) {
+            free ( endpoints) ;
+        }
+        OBJ_DESTRUCT(&reachable);
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+    
+    if( NULL != procs) 
+        free(procs);
+    
+    return OMPI_SUCCESS;
+}

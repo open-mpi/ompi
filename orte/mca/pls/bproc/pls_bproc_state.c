@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -31,6 +31,7 @@
 #include "orte/mca/smr/smr.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/schema/schema.h"
+#include "orte/mca/rmgr/rmgr.h"
 
 #include "orte/mca/pls/bproc/pls_bproc.h"
 
@@ -41,79 +42,18 @@
 
 int orte_pls_bproc_set_proc_pid(const orte_process_name_t *name, pid_t pid, int nodenum)
 {
-    orte_gpr_value_t *values[1];
-    char *segment;
-    char *nodename;
-    int rc;
-
-    if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, name->jobid))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&values[0],
-                                                    ORTE_GPR_OVERWRITE,
-                                                    segment,
-                                                    2, 0))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        free(segment);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    free(segment);
-
-    if(ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&(values[0]->tokens), &(values[0]->num_tokens), (orte_process_name_t*)name))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(values[0]);
-        return rc;
-    }
-
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[0]->keyvals[0]), ORTE_PROC_LOCAL_PID_KEY, ORTE_PID, &pid))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(values[0]);
-        return rc;
-    }
-
-    asprintf(&nodename, "%ld", (long)nodenum);
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[0]->keyvals[1]), ORTE_NODE_NAME_KEY, ORTE_STRING, nodename))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(values[0]);
-        free(nodename);
-        return rc;
-    }
-    free(nodename);
+    int rc = ORTE_SUCCESS;
+    char * nodename = NULL;
     
-    rc = orte_gpr.put(1, values);
-    if(ORTE_SUCCESS != rc) {
+    asprintf(&nodename, "%ld", (long)nodenum);
+
+    if (ORTE_SUCCESS != (rc = orte_rmgr.set_process_pid(name, pid, nodename) ) ) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(values[0]);
         return rc;
     }
-
-    OBJ_RELEASE(values[0]);
 
     /* set the process state to LAUNCHED */
     if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state((orte_process_name_t*)name, ORTE_PROC_STATE_LAUNCHED, 0))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    return rc;
-}
-
-/**
- *  Retreive a specified process pid from the registry.
- */
-int orte_pls_bproc_get_proc_pid(const orte_process_name_t* name, pid_t* pid)
-{
-    char *segment;
-    char **tokens;
-    orte_std_cntr_t num_tokens;
-    char *keys[2];
-    orte_gpr_value_t** values = NULL;
-    orte_std_cntr_t i, num_values = 0;
-    pid_t *pptr;
-    int rc;
-
-    /* query the job segment on the registry */
-    if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, name->jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

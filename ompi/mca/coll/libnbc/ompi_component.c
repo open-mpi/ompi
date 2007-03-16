@@ -331,9 +331,8 @@ const mca_coll_base_component_1_0_0_t mca_coll_libnbc_component = {
     /* Next the MCA v1.0.0 component meta data */
 
     {
-        /* Whether the component is checkpointable or not */
-        
-        true
+        /* The component is checkpoint ready */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
 
     /* Initialization / querying functions */

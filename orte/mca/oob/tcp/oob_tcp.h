@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -30,16 +30,20 @@
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/runtime/opal_progress.h"
+#include "opal/runtime/opal_cr.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "orte/mca/oob/tcp/oob_tcp_peer.h"
 #include "orte/mca/oob/tcp/oob_tcp_msg.h"
+
 #include "opal/mca/timer/base/base.h"
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+#define ORTE_OOB_TCP_KEY "oob-tcp"
 
 /*
  * standard component functions
@@ -224,7 +228,10 @@ void mca_oob_tcp_registry_callback(
 
 void mca_oob_tcp_set_socket_options(int sd);
 
+int mca_oob_tcp_ft_event(int state);
+
 typedef enum { OOB_TCP_EVENT, OOB_TCP_LISTEN_THREAD } mca_oob_tcp_listen_type_t;
+
 /**
  *  OOB TCP Component
 */
@@ -279,11 +286,14 @@ typedef struct mca_oob_tcp_component_t mca_oob_tcp_component_t;
 
 ORTE_MODULE_DECLSPEC extern mca_oob_tcp_component_t mca_oob_tcp_component;
 
+ORTE_DECLSPEC extern int mca_oob_tcp_output_handle;
+
 #if defined(__WINDOWS__)
 #define CLOSE_THE_SOCKET(socket)    closesocket(socket)
 #else
 #define CLOSE_THE_SOCKET(socket)    close(socket)
 #endif  /* defined(__WINDOWS__) */
+
 
 struct mca_oob_tcp_pending_connection_t {
         opal_free_list_item_t super;
@@ -292,6 +302,7 @@ struct mca_oob_tcp_pending_connection_t {
     };
     typedef struct mca_oob_tcp_pending_connection_t mca_oob_tcp_pending_connection_t;
     OBJ_CLASS_DECLARATION(mca_oob_tcp_pending_connection_t);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

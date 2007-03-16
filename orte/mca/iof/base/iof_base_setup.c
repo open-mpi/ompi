@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -88,7 +88,7 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
 #if defined(__WINDOWS__)
     /* Windows doesn't have a 'pipe' function.
      * So we need to do something a bit more complex */
-    /* XXX Implement this properly JJH
+    /* 
      * http://www-106.ibm.com/developerworks/linux/library/l-rt4/?open&t=grl,l=252,p=pipes
      */
 #else

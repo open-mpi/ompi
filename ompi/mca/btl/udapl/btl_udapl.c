@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -69,7 +69,8 @@ mca_btl_udapl_module_t mca_btl_udapl_module = {
         NULL, /* get */ 
         mca_btl_base_dump,
         NULL, /* mpool */
-        NULL /* register error cb */ 
+        NULL, /* register error cb */
+        mca_btl_udapl_ft_event
     }
 };
 
@@ -828,3 +829,22 @@ int mca_btl_udapl_get(
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
+int mca_btl_udapl_ft_event(int state) {
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+    
+    return OMPI_SUCCESS;
+}

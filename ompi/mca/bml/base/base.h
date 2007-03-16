@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -53,6 +53,7 @@ OMPI_DECLSPEC  int mca_bml_base_init(bool enable_progress_threads,
 OMPI_DECLSPEC  int mca_bml_base_close(void);
 OMPI_DECLSPEC  bool mca_bml_base_inited(void);
 
+OMPI_DECLSPEC  int mca_bml_base_ft_event(int state);
 
 
 /*

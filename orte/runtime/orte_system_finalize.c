@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -26,6 +26,8 @@
 #include "opal/util/if.h"
 #include "opal/util/os_path.h"
 
+#include "orte/runtime/orte_cr.h"
+
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/rml/base/base.h"
@@ -40,6 +42,10 @@
 #include "orte/mca/schema/base/base.h"
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/filem/base/base.h"
+#if OPAL_ENABLE_FT == 1
+#include "orte/mca/snapc/base/base.h"
+#endif
 #include "orte/mca/odls/base/base.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/sys_info.h"
@@ -66,9 +72,18 @@ int orte_system_finalize(void)
         free(contact_path);
     }
     
+    orte_cr_finalize();
+
     /* rmgr and odls close depend on wait/iof */
     orte_rmgr_base_close();
+
+#if OPAL_ENABLE_FT == 1
+    orte_snapc_base_close();
+#endif
+    orte_filem_base_close();
+
     orte_odls_base_close();
+
     orte_wait_finalize();
     orte_iof_base_close();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -35,6 +35,9 @@
 #include "orte/runtime/runtime.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/sys_info.h"
+
+#include "orte/runtime/orte_cr.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 
 
@@ -77,6 +80,9 @@ int orte_abort(int status, bool report)
      * clean environment. Taken from orte_finalize():
      * - Assume errmgr cleans up child processes before we exit.
      */
+
+    /* CRS cleanup since it may have a named pipe and thread active */
+    orte_cr_finalize();
 
     /* If we were asked to report this termination,
      * write an "abort" file into our session directory

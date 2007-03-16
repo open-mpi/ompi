@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -23,11 +23,13 @@ dist_pkgdata_DATA += runtime/help-mpi-runtime.txt
 
 headers += \
         runtime/mpiruntime.h \
-        runtime/params.h
+        runtime/params.h \
+		runtime/ompi_cr.h
 
 libmpi_la_SOURCES += \
         runtime/ompi_mpi_abort.c \
         runtime/ompi_mpi_init.c \
         runtime/ompi_mpi_finalize.c \
         runtime/ompi_mpi_params.c \
-        runtime/ompi_mpi_preconnect.c
+        runtime/ompi_mpi_preconnect.c \
+		runtime/ompi_cr.c

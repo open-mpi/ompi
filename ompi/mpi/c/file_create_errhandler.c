@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -35,6 +35,8 @@ static const char FUNC_NAME[] = "MPI_File_create_errhandler";
 int MPI_File_create_errhandler(MPI_File_errhandler_fn *function,
 		                        MPI_Errhandler *errhandler) {
   int err = MPI_SUCCESS;
+
+  OPAL_CR_TEST_CHECKPOINT_READY();
 
   /* Error checking */
 

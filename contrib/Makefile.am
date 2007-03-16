@@ -19,6 +19,10 @@
 amca_paramdir = $(AMCA_PARAM_SETS_DIR)
 dist_amca_param_DATA = amca-param-sets/example.conf
 
+if WANT_FT
+dist_amca_param_DATA += amca-param-sets/ft-enable-cr
+endif
+
 EXTRA_DIST = \
 	dist/make_dist_tarball \
 	dist/linux/openmpi.spec \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -28,6 +28,9 @@
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
 #include "orte/mca/ns/ns.h"
+
+#include "opal/mca/crs/crs.h"
+#include "opal/mca/crs/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -166,6 +169,11 @@ typedef int (*orte_iof_base_unsubscribe_fn_t)(
 typedef int (*orte_iof_base_flush_fn_t)(void);
 
 typedef int (*orte_iof_base_finalize_fn_t)(void);
+ 
+    /*
+     * FT Event Notification
+     */
+    typedef int (*orte_iof_base_ft_event_fn_t)(int state);
 
 /**
  *  IOF module.
@@ -180,6 +188,7 @@ struct orte_iof_base_module_1_0_0_t {
     orte_iof_base_unsubscribe_fn_t iof_unsubscribe;
     orte_iof_base_flush_fn_t iof_flush;
     orte_iof_base_finalize_fn_t iof_finalize;
+    orte_iof_base_ft_event_fn_t ft_event;
 };
 
 typedef struct orte_iof_base_module_1_0_0_t orte_iof_base_module_1_0_0_t;

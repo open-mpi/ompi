@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -59,6 +59,8 @@ int MPI_Type_create_darray(int size,
     ptrdiff_t orig_extent, *st_offsets = NULL;
     int i, start_loop, end_loop, step;
     int *coords = NULL, rc = OMPI_SUCCESS;
+
+    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
         int prod_psize = 1;

@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2006-2007 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -38,6 +41,7 @@ ompi_pml_cm_t ompi_pml_cm = {
         mca_pml_cm_probe,
         mca_pml_cm_start,
         mca_pml_cm_dump,
+        NULL,
         0,
         0
     }

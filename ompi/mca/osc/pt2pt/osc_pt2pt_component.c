@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University.
+ * Copyright (c) 2004-2007 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -49,7 +49,8 @@ ompi_osc_pt2pt_component_t mca_osc_pt2pt_component = {
             NULL
         },
         { /* mca_base_component_data */
-            false /* checkpointable? */
+            /* The component is checkpoint ready - JJH Double check this... */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
         ompi_osc_pt2pt_component_init,
         ompi_osc_pt2pt_component_query,

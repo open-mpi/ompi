@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -106,8 +106,9 @@ int mca_oob_tcp_send(
     }
 
     MCA_OOB_TCP_MSG_ALLOC(msg, rc);
-    if(NULL == msg) 
+    if(NULL == msg) {
         return rc;
+    }
 
     /* calculate the size of the message */
     size = 0;
@@ -146,7 +147,8 @@ int mca_oob_tcp_send(
     
     if (NULL != name && NULL != orte_process_info.my_name &&
         ORTE_EQUAL == mca_oob_tcp_process_name_compare(name, orte_process_info.my_name)) {  /* local delivery */
-        return mca_oob_tcp_send_self(peer,msg,iov,count);
+        rc = mca_oob_tcp_send_self(peer,msg,iov,count);
+        return rc;
     }
 
     MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
@@ -158,9 +160,11 @@ int mca_oob_tcp_send(
 
     rc = mca_oob_tcp_msg_wait(msg, &size);
     MCA_OOB_TCP_MSG_RETURN(msg);
-    if(rc != ORTE_SUCCESS)
+    if(rc != ORTE_SUCCESS) {
         return rc;
+    }
     size -= sizeof(mca_oob_tcp_hdr_t);
+    
     return size;
 }
 
@@ -195,8 +199,9 @@ int mca_oob_tcp_send_nb(
         return ORTE_ERR_UNREACH;
 
     MCA_OOB_TCP_MSG_ALLOC(msg, rc);
-    if(NULL == msg) 
+    if(NULL == msg) {
         return rc;
+    }
 
     /* calculate the size of the message */
     size = 0;
@@ -233,7 +238,8 @@ int mca_oob_tcp_send_nb(
     msg->msg_peer = peer->peer_name;
     
     if (ORTE_EQUAL == mca_oob_tcp_process_name_compare(name, orte_process_info.my_name)) {  /* local delivery */
-        return mca_oob_tcp_send_self(peer,msg,iov,count);
+        rc = mca_oob_tcp_send_self(peer,msg,iov,count);
+        return rc;
     }
 
     MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
@@ -242,6 +248,7 @@ int mca_oob_tcp_send_nb(
         MCA_OOB_TCP_MSG_RETURN(msg);
         return rc;
     }
+
     return ORTE_SUCCESS;
 }
 

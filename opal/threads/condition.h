@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -32,6 +32,8 @@
 #include "opal/threads/condition.h"
 #include "opal/threads/mutex.h"
 #include "opal/runtime/opal_progress.h"
+
+#include "opal/runtime/opal_cr.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -79,6 +81,7 @@ static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
     } else {
         while (c->c_signaled == 0) {
             opal_progress();
+            OPAL_CR_TEST_CHECKPOINT_READY_STALL();
         }
     }
     c->c_signaled--;

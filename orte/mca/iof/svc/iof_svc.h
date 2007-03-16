@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -134,6 +134,8 @@ int orte_iof_svc_unsubscribe(
 );
 
 int orte_iof_svc_finalize(void);
+
+    int orte_iof_svc_ft_event(int state);
 
 /**
  * IOF svc Component 

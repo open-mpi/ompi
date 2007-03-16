@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -40,6 +40,9 @@
 
 #include "opal/mca/mca.h"
 #include "orte/mca/rml/rml_types.h"
+
+#include "opal/mca/crs/crs.h"
+#include "opal/mca/crs/base/base.h"
 
 #include "ns_types.h"
 
@@ -565,6 +568,7 @@ typedef int (*orte_ns_base_module_dump_tags_fn_t)(void);
 
 typedef int (*orte_ns_base_module_dump_datatypes_fn_t)(void);
 
+typedef int (*orte_ns_base_module_ft_event_fn_t)(int state);
 
 /*
  * Ver 2.0
@@ -614,6 +618,8 @@ struct mca_ns_base_module_2_0_0_t {
     orte_ns_base_module_dump_jobs_fn_t                      dump_jobs;
     orte_ns_base_module_dump_tags_fn_t                      dump_tags;
     orte_ns_base_module_dump_datatypes_fn_t                 dump_datatypes;
+
+    orte_ns_base_module_ft_event_fn_t ft_event;
 };
 
 typedef struct mca_ns_base_module_2_0_0_t mca_ns_base_module_2_0_0_t;

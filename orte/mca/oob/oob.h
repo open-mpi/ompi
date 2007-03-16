@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -37,6 +37,9 @@
 
 #include "orte/mca/oob/oob_types.h"
 #include "orte/mca/oob/base/base.h"
+
+#include "opal/mca/crs/crs.h"
+#include "opal/mca/crs/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -201,6 +204,8 @@ typedef int (*mca_oob_base_module_xcast_fn_t)(orte_jobid_t job,
                                               orte_buffer_t* buffer,
                                               orte_gpr_trigger_cb_fn_t cbfunc);
 
+typedef int (*mca_oob_base_module_ft_event_fn_t)( int state );
+
 /**
  * OOB Module
  */
@@ -216,6 +221,7 @@ struct mca_oob_1_0_0_t {
     mca_oob_base_module_init_fn_t        oob_init;
     mca_oob_base_module_fini_fn_t        oob_fini;
     mca_oob_base_module_xcast_fn_t       oob_xcast;
+    mca_oob_base_module_ft_event_fn_t    oob_ft_event;
 };
 
 /**

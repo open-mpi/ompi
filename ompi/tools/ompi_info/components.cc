@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+// Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 //                         University Research and Technology
 //                         Corporation.  All rights reserved.
 // Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -41,6 +41,10 @@
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/timer/timer.h"
 #include "opal/mca/timer/base/base.h"
+#if OPAL_ENABLE_FT == 1
+#include "opal/mca/crs/crs.h"
+#include "opal/mca/crs/base/base.h"
+#endif
 #include "opal/runtime/opal.h"
 
 #include "ompi/mca/allocator/allocator.h"
@@ -65,6 +69,10 @@
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
+#if OPAL_ENABLE_FT == 1
+#include "ompi/mca/crcp/crcp.h"
+#include "ompi/mca/crcp/base/base.h"
+#endif
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -96,6 +104,12 @@
 #include "orte/mca/smr/base/base.h"
 #include "orte/mca/sds/sds.h"
 #include "orte/mca/sds/base/base.h"
+#if OPAL_ENABLE_FT == 1
+#include "orte/mca/snapc/snapc.h"
+#include "orte/mca/snapc/base/base.h"
+#endif
+#include "orte/mca/filem/filem.h"
+#include "orte/mca/filem/base/base.h"
 
 using namespace std;
 using namespace ompi_info;
@@ -191,6 +205,10 @@ void ompi_info::open_components()
 
   opal_timer_base_open();
   component_map["timer"] = &opal_timer_base_components_opened;
+#if OPAL_ENABLE_FT == 1
+  opal_crs_base_open();
+  component_map["crs"] = &opal_crs_base_components_available;
+#endif
 
   // ORTE frameworks
 
@@ -239,6 +257,14 @@ void ompi_info::open_components()
   orte_smr_base_open();
   component_map["smr"] = &orte_smr_base.smr_components;
 
+#if OPAL_ENABLE_FT == 1
+  orte_snapc_base_open();
+  component_map["snapc"] = &orte_snapc_base_components_available;
+#endif
+
+  orte_filem_base_open();
+  component_map["filem"] = &orte_filem_base_components_available;
+
   // MPI frameworks
 
   mca_allocator_base_open();
@@ -275,6 +301,11 @@ void ompi_info::open_components()
   mca_topo_base_open();
   component_map["topo"] = &mca_topo_base_components_opened;
 
+#if OPAL_ENABLE_FT == 1
+  ompi_crcp_base_open();
+  component_map["crcp"] = &ompi_crcp_base_components_available;
+#endif
+
   // All done
 
   opened_components = true;
@@ -290,6 +321,9 @@ void ompi_info::close_components()
         // there are no dependencies between the frameworks.  We list
         // them generally "in order", but it doesn't really matter.
 
+#if OPAL_ENABLE_FT == 1
+        ompi_crcp_base_close();
+#endif
         mca_topo_base_close();
         // the PML has to call the base PTL close function.
         mca_btl_base_close();
@@ -302,6 +336,10 @@ void ompi_info::close_components()
         mca_allocator_base_close();
         ompi_osc_base_close();
 
+#if OPAL_ENABLE_FT == 1
+        orte_snapc_base_close();
+#endif
+        orte_filem_base_close();
         orte_iof_base_close();
         orte_sds_base_close();
         orte_smr_base_close();
@@ -323,7 +361,9 @@ void ompi_info::close_components()
         opal_paffinity_base_close();
         opal_maffinity_base_close();
         opal_timer_base_close();
-
+#if OPAL_ENABLE_FT == 1
+        opal_crs_base_close();
+#endif
         component_map.clear();
     }
 

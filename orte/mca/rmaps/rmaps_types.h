@@ -1,4 +1,4 @@
-/* Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+/* Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -55,6 +55,11 @@ struct orte_mapped_proc_t {
     orte_std_cntr_t	rank;		/* process rank */
     orte_std_cntr_t	app_idx;	/* index of app_context for this process */
     pid_t pid;
+#if OPAL_ENABLE_FT == 1
+    size_t ckpt_state;
+    char * ckpt_snapshot_ref;
+    char * ckpt_snapshot_loc;
+#endif
 };
 typedef struct orte_mapped_proc_t orte_mapped_proc_t;
 OBJ_CLASS_DECLARATION(orte_mapped_proc_t);

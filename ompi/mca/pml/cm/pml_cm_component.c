@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2006-2007 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -50,8 +53,8 @@ mca_pml_base_component_1_0_0_t mca_pml_cm_component = {
      /* Next the MCA v1.0.0 component meta data */
 
      {
-         /* Whether the component is checkpointable or not */
-         false
+         /* This component is not checkpoint ready */
+         MCA_BASE_METADATA_PARAM_NONE
      },
 
      mca_pml_cm_component_init,  /* component init */

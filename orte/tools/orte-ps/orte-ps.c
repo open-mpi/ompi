@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -18,13 +18,18 @@
  * $HEADER$
  */
 
+/**
+ * @fie
+ * ORTE PS command
+ *
+ */
+
 #include "orte_config.h"
 
 #include <stdio.h>
 #include <errno.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif  /* HAVE_UNISTD_H */
+#include <libgen.h>
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif  /*  HAVE_STDLIB_H */
@@ -44,8 +49,7 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 #include <sys/types.h>
-
-#include "orte/orte_constants.h"
+#include <dirent.h>
 
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
@@ -55,7 +59,13 @@
 #include "opal/util/os_path.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/runtime/opal.h"
+#if OPAL_ENABLE_FT == 1
+#include "opal/runtime/opal_cr.h"
+#endif
 
+#include "orte/orte_constants.h"
+#include "orte/runtime/runtime.h"
 #include "orte/util/univ_info.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
@@ -64,13 +74,16 @@
 #include "orte/util/universe_setup_file_io.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rmgr/rmgr.h"
+#include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/ras/ras.h"
-#include "orte/mca/ras/ras_types.h"
 #include "orte/mca/ras/base/base.h"
+#include "orte/mca/ras/ras_types.h"
 #include "orte/mca/ras/base/ras_private.h"
 
-#include "opal/runtime/opal.h"
-#include "orte/runtime/runtime.h"
+/******************
+ * Global Vars
+ ******************/
+extern char** environ;
 
 /*******************
  * Universe/job/vpid information Objects
@@ -88,6 +101,11 @@ struct orte_ps_vpid_info_t {
     
     orte_std_cntr_t app_context_idx;
 
+#if OPAL_ENABLE_FT == 1
+    size_t ckpt_state;
+    char *ckpt_ref;
+    char *ckpt_loc;
+#endif
 };
 typedef struct orte_ps_vpid_info_t orte_ps_vpid_info_t;
 
@@ -116,6 +134,12 @@ struct orte_ps_job_info_t {
     orte_std_cntr_t slots;
     orte_vpid_t vpid_start;
     orte_vpid_t vpid_range;
+
+#if OPAL_ENABLE_FT == 1
+    size_t ckpt_state;
+    char *ckpt_ref;
+    char *ckpt_loc;
+#endif
 
     orte_app_context_t **app_context;
     orte_std_cntr_t num_app_context;
@@ -161,7 +185,7 @@ OBJ_CLASS_INSTANCE(orte_ps_universe_info_t,
 /******************
  * Local Functions
  ******************/
-static int orte_ps_init(void);
+static int orte_ps_init(int argc, char *argv[]);
 static int parse_args(int argc, char *argv[]);
 
 static int connect_to_universe(orte_universe_t universe_info);
@@ -194,6 +218,7 @@ typedef struct {
     bool gpr_dump;
     bool attached;
     bool nodes;
+    int  output;
 } orte_ps_globals_t;
 
 orte_ps_globals_t orte_ps_globals;
@@ -260,15 +285,11 @@ main(int argc, char *argv[])
     /***************
      * Initialize
      ***************/
-    if (ORTE_SUCCESS != (ret = parse_args(argc, argv))) {
-        return ret;
-    }
-
     OBJ_CONSTRUCT(&universe_list, opal_list_t);
     OBJ_CONSTRUCT(&universe_search_result, opal_list_t);
     orte_ps_globals.attached = false;
 
-    if (ORTE_SUCCESS != (ret = orte_ps_init())) {
+    if (ORTE_SUCCESS != (ret = orte_ps_init(argc, argv))) {
         exit_status = ret;
         goto cleanup;
     }
@@ -276,9 +297,9 @@ main(int argc, char *argv[])
     /*
      * Get the directory listing
      */
-    if( orte_ps_globals.verbose ) {
-        printf("orte_ps: Acquiring universe list...\n");
-    }
+    opal_output_verbose(10, orte_ps_globals.output,
+                        "orte_ps: Acquiring universe list...\n");
+
     if (ORTE_SUCCESS != (ret = orte_universe_search(&universe_search_result, true, false) ) ) {
         exit_status = ret;
         goto cleanup;
@@ -332,9 +353,10 @@ main(int argc, char *argv[])
         /*
          * Connect to the universe
          */
-        if( orte_ps_globals.verbose ) {
-            printf("orte_ps: Connecting to universe: %s\n", univ->universe_info.name);
-        }
+        opal_output_verbose(10, orte_ps_globals.output,
+                            "orte_ps: Connecting to universe: %s\n",
+                            univ->universe_info.name);
+
         if( ORTE_SUCCESS != (ret = connect_to_universe(univ->universe_info)) ) {
             exit_status = ret;
             goto cleanup;
@@ -343,9 +365,9 @@ main(int argc, char *argv[])
         /*
          * Gather the information
          */
-        if( orte_ps_globals.verbose ) {
-            printf("orte_ps: Gathering Universe Information\n");
-        }
+        opal_output_verbose(10, orte_ps_globals.output,
+                            "orte_ps: Gathering Universe Information\n");
+
         if( ORTE_SUCCESS != (ret = gather_information(univ)) ) {
             exit_status = ret;
             goto cleanup;
@@ -369,7 +391,7 @@ main(int argc, char *argv[])
             }
         }
         
-        /*
+        /* JJH: This should be fixed eventually
          * Since connecting and disconnecting from a universe is
          * not well defined, only allow connection to the first
          * universe found.
@@ -396,7 +418,9 @@ main(int argc, char *argv[])
             return ret;
         }
     }
-    opal_finalize();
+    else {
+        opal_finalize();
+    }
 
     return exit_status;
 }
@@ -412,12 +436,12 @@ static int parse_args(int argc, char *argv[]) {
                               -1, 
                               false,
                               false,
-                              false};
+                              false,
+                              -1};
+
+    orte_ps_globals = tmp;
 
     /* Parse the command line options */
-    
-    orte_ps_globals = tmp;
-    
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
     
     mca_base_open();
@@ -438,6 +462,12 @@ static int parse_args(int argc, char *argv[]) {
     for(i = 0; i < len; ++i) {
         putenv(global_env[i]);
     }
+
+#if OPAL_ENABLE_FT == 1
+    opal_setenv(mca_base_param_env_var("opal_cr_is_tool"),
+                "1",
+                true, &environ);
+#endif
 
     /**
      * Now start parsing our specific arguments
@@ -466,16 +496,47 @@ static int parse_args(int argc, char *argv[]) {
     return ORTE_SUCCESS;
 }
 
-static int orte_ps_init(void) {
+static int orte_ps_init(int argc, char *argv[]) {
     int exit_status = ORTE_SUCCESS, ret;
+
+    /*
+     * Parse Command Line Arguments
+     */
+    if (ORTE_SUCCESS != (ret = parse_args(argc, argv))) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    /*
+     * Setup OPAL Output handle from the verbose argument
+     */
+    if( orte_ps_globals.verbose ) {
+        orte_ps_globals.output = opal_output_open(NULL);
+        opal_output_set_verbosity(orte_ps_globals.output, 10);
+    } else {
+        orte_ps_globals.output = 0; /* Default=STDOUT */
+    }
 
     /*
      * We are trying to attach to another process' GPR so we need to 
      * attach no matter if it is identified as private or not.
      */
     opal_setenv(mca_base_param_env_var("universe_console"),
-                "1", true, NULL);
+                "1", true, &environ);
 
+#if OPAL_ENABLE_FT == 1
+    /* Disable the checkpoint notification routine for this
+     * tool. As we will never need to checkpoint this tool.
+     * Note: This must happen before opal_init().
+     */
+    opal_cr_set_enabled(false);
+
+    /* Select the none component, since we don't actually use a checkpointer */
+    opal_setenv(mca_base_param_env_var("crs"),
+                "none",
+                true, &environ);
+#endif
+    
     /***************************
      * We need all of OPAL
      ***************************/
@@ -546,7 +607,7 @@ static int pretty_print(orte_ps_universe_info_t* universe) {
                 len_uid    + 3 +
                 len_per    + 3 +
                 len_scope  + 3 +
-                len_state) + 3 ;
+                len_state) + 2 ;
 
     /*
      * Print header
@@ -603,7 +664,6 @@ static int pretty_print_nodes(opal_list_t *nodes) {
         len_state   = 0,
         len_slots   = 0,
         len_slots_i = 0,
-        len_slots_a = 0,
         len_slots_m = 0;
 
     /*
@@ -615,12 +675,8 @@ static int pretty_print_nodes(opal_list_t *nodes) {
     len_state   = (int) strlen("State");
     len_slots   = (int) strlen("Slots");
     len_slots_i = (int) strlen("Slots In Use");
-#if 0
-    len_slots_a = (int) strlen("Slots Alloc");
-#else
-    len_slots_a = -3;
-#endif
     len_slots_m = (int) strlen("Slots Max");
+
     for(node_item  = opal_list_get_first(nodes);
         node_item != opal_list_get_end(nodes);
         node_item  = opal_list_get_next(node_item) ) {
@@ -639,18 +695,13 @@ static int pretty_print_nodes(opal_list_t *nodes) {
             len_state = (int)strlen(pretty_node_state(node->node_state));
     }
 
-    /*
-     * JJH Since node_slots_inuse and node_slots_alloc are not used properly
-     * JJH   do not display them to the user.
-     */
     line_len = (len_name    + 3 +
                 len_arch    + 3 +
                 len_cell    + 3 +
                 len_state   + 3 +
                 len_slots   + 3 +
                 len_slots_i + 3 +
-                len_slots_a + 3 +
-                len_slots_m + 3);
+                len_slots_m) + 2;
 
     /*
      * Print the header
@@ -662,9 +713,6 @@ static int pretty_print_nodes(opal_list_t *nodes) {
     printf("%*s | ", len_slots,   "Slots");
     printf("%*s | ", len_slots_m, "Slots Max");
     printf("%*s | ", len_slots_i, "Slots In Use");
-#if 0
-    printf("%*s | ", len_slots_a, "Slots Alloc");
-#endif
     printf("\n");
 
     for(i = 0; i < line_len; ++i) {
@@ -690,10 +738,6 @@ static int pretty_print_nodes(opal_list_t *nodes) {
         printf("%*d | ", len_slots,   (uint)node->node_slots);
         printf("%*d | ", len_slots_m, (uint)node->node_slots_max);
         printf("%*d | ", len_slots_i, (uint)node->node_slots_inuse);
-#if 0
-        printf("%*d | ", len_slots_a, (uint)node->node_slots_alloc);
-#endif
-
         printf("\n");
     }
     
@@ -728,10 +772,23 @@ static int pretty_print_jobs(opal_list_t *jobs) {
         len_slots  = 6;
         len_vpid_s = (int) strlen("VPID Start");
         len_vpid_r = (int) strlen("VPID Range");
-        len_ckpt_s = 0;
-        len_ckpt_r = 0;
+#if OPAL_ENABLE_FT == 1
+        len_ckpt_s = (int) (strlen(orte_snapc_ckpt_state_str(job->ckpt_state)) < strlen("Ckpt State") ?
+                            strlen("Ckpt State") :
+                            strlen(orte_snapc_ckpt_state_str(job->ckpt_state)) );
+        len_ckpt_r = (int) (NULL == job->ckpt_ref ? strlen("Ckpt Ref") :
+                            (strlen(job->ckpt_ref) < strlen("Ckpt Ref") ?
+                             strlen("Ckpt Ref") :
+                             strlen(job->ckpt_ref) ) );
+        len_ckpt_l = (int) (NULL == job->ckpt_loc ? strlen("Ckpt Loc") :
+                            (strlen(job->ckpt_loc) < strlen("Ckpt Loc") ?
+                             strlen("Ckpt Loc") :
+                             strlen(job->ckpt_loc) ) );
+#else
+        len_ckpt_s = -3;
+        len_ckpt_r = -3;
         len_ckpt_l = 0;
-
+#endif
         line_len = (len_jobid  + 3 +
                     len_state  + 3 +
                     len_slots  + 3 +
@@ -739,8 +796,9 @@ static int pretty_print_jobs(opal_list_t *jobs) {
                     len_vpid_r + 3 +
                     len_ckpt_s + 3 +
                     len_ckpt_r + 3 +
-                    len_ckpt_l - 6
-                    );
+                    len_ckpt_l)
+                    + 2;
+
         /*
          * Print Header
          */
@@ -750,6 +808,11 @@ static int pretty_print_jobs(opal_list_t *jobs) {
         printf("%*s | ", len_slots  , "Slots");
         printf("%*s | ", len_vpid_s , "VPID Start");
         printf("%*s | ", len_vpid_r , "VPID Range");
+#if OPAL_ENABLE_FT == 1
+        printf("%*s | ", len_ckpt_s , "Ckpt State");
+        printf("%*s | ", len_ckpt_r , "Ckpt Ref");
+        printf("%*s |",  len_ckpt_l , "Ckpt Loc");
+#endif
         printf("\n");
 
         for(i = 0; i < line_len; ++i) {
@@ -765,7 +828,15 @@ static int pretty_print_jobs(opal_list_t *jobs) {
         printf("%*d | ",  len_slots ,  (uint)job->slots);
         printf("%*d | ",  len_vpid_s,  job->vpid_start);
         printf("%*d | ",  len_vpid_r,  job->vpid_range);
-
+#if OPAL_ENABLE_FT == 1
+        printf("%*s | ",  len_ckpt_s,  orte_snapc_ckpt_state_str(job->ckpt_state));
+        printf("%*s | ",  len_ckpt_r,  (NULL == job->ckpt_ref ? 
+                                        "" :
+                                        job->ckpt_ref) );
+        printf("%*s |",   len_ckpt_l,  (NULL == job->ckpt_loc ? 
+                                        "" :
+                                        job->ckpt_loc) );
+#endif
         printf("\n");
 
         /*
@@ -803,9 +874,15 @@ static int pretty_print_vpids(orte_ps_job_info_t *job) {
     len_pid         = 6;
     len_state       = 0;
     len_node        = 0;
-    len_ckpt_s      = 0;
-    len_ckpt_r      = 0;
+#if OPAL_ENABLE_FT == 1
+    len_ckpt_s      = strlen("Ckpt State");
+    len_ckpt_r      = strlen("Ckpt Ref");
+    len_ckpt_l      = strlen("Ckpt Loc");
+#else
+    len_ckpt_s      = -3;
+    len_ckpt_r      = -3;
     len_ckpt_l      = 0;
+#endif
 
     for(vpid_item  = opal_list_get_first(&(job->vpid_list));
         vpid_item != opal_list_get_end(&(job->vpid_list));
@@ -817,6 +894,7 @@ static int pretty_print_vpids(orte_ps_job_info_t *job) {
         /*
          * Find my app context
          */
+        len_proc_name = len_proc_name;
         for( i = 0; i < (int)job->num_app_context; ++i) {
             if( job->app_context[i]->idx == vpid->app_context_idx ) {
                 if( (int)strlen(job->app_context[i]->app) > len_proc_name) 
@@ -835,6 +913,19 @@ static int pretty_print_vpids(orte_ps_job_info_t *job) {
         if( (int)strlen(pretty_vpid_state(vpid->state)) > len_state)
             len_state = strlen(pretty_vpid_state(vpid->state));
         
+#if OPAL_ENABLE_FT == 1
+        if( (int)strlen(orte_snapc_ckpt_state_str(vpid->ckpt_state)) > len_ckpt_s)
+            len_ckpt_s = strlen(orte_snapc_ckpt_state_str(vpid->ckpt_state));
+        
+        if( NULL != vpid->ckpt_ref &&
+            (int)strlen(vpid->ckpt_ref) > len_ckpt_r) 
+            len_ckpt_r = strlen(vpid->ckpt_ref);
+        
+        if( NULL != vpid->ckpt_loc &&
+            (int)strlen(vpid->ckpt_loc) > len_ckpt_l) 
+            len_ckpt_l = strlen(vpid->ckpt_loc);
+#endif
+
         if( NULL != proc_name) {
             free(proc_name);
             proc_name = NULL;
@@ -849,8 +940,8 @@ static int pretty_print_vpids(orte_ps_job_info_t *job) {
                 len_node        + 3 +
                 len_ckpt_s      + 3 +
                 len_ckpt_r      + 3 +
-                len_ckpt_l       - 6
-                );
+                len_ckpt_l)
+                + 2;
 
     /*
      * Print Header
@@ -862,6 +953,11 @@ static int pretty_print_vpids(orte_ps_job_info_t *job) {
     printf("%*s | ", len_pid         , "PID");
     printf("%*s | ", len_node        , "Node");
     printf("%*s | ", len_state       , "State");
+#if OPAL_ENABLE_FT == 1
+    printf("%*s | ", len_ckpt_s      , "Ckpt State");
+    printf("%*s | ", len_ckpt_r      , "Ckpt Ref");
+    printf("%*s |",  len_ckpt_l      , "Ckpt Loc");
+#endif
     printf("\n");
     
     printf("\t");
@@ -896,6 +992,16 @@ static int pretty_print_vpids(orte_ps_job_info_t *job) {
         printf("%*d | ",  len_pid        , vpid->pid);
         printf("%*s | ",  len_node       , vpid->node);
         printf("%*s | ",  len_state      , pretty_vpid_state(vpid->state));
+        
+#if OPAL_ENABLE_FT == 1
+        printf("%*s | ",  len_ckpt_s, orte_snapc_ckpt_state_str(vpid->ckpt_state));
+        printf("%*s | ",  len_ckpt_r, (NULL == vpid->ckpt_ref ? 
+                                       "" : 
+                                       vpid->ckpt_ref));
+        printf("%*s |",   len_ckpt_l, (NULL == vpid->ckpt_loc ? 
+                                       "" : 
+                                       vpid->ckpt_loc));
+#endif
         printf("\n");
         
         if( NULL != proc_name) {
@@ -918,7 +1024,7 @@ static int connect_to_universe(orte_universe_t universe_info) {
              universe_info.uid,
              universe_info.host,
              universe_info.name);
-#if 0
+#if 0 /* JJH: Does not currently work as expected */
     /*
      * Disconnect from the current universe
      */
@@ -932,7 +1038,7 @@ static int connect_to_universe(orte_universe_t universe_info) {
      * Set the environment universe information
      */
     opal_setenv(mca_base_param_env_var("universe"),
-                univ_mca_param, true, NULL);
+                univ_mca_param, true, &environ);
 
     /*
      * Restart ORTE in the requested universe
@@ -945,7 +1051,8 @@ static int connect_to_universe(orte_universe_t universe_info) {
     }
     else {
         if( ORTE_SUCCESS != (ret = orte_restart(orte_process_info.my_name, universe_info.seed_uri)) ) {
-            printf("orte_restart: FAILED (%d)\n", ret);
+            opal_output(orte_ps_globals.output,
+                        "orte_ps: restart: FAILED (%d)\n", ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -1188,6 +1295,34 @@ static int gather_job_info(orte_ps_universe_info_t* universe) {
                     job->vpid_range = *tmp_vpid;
                     continue;
                 }
+#if OPAL_ENABLE_FT == 1
+                else if( 0 == strncmp(keyval->key, ORTE_JOB_CKPT_STATE_KEY, strlen(ORTE_JOB_CKPT_STATE_KEY)) ) {
+                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_num, keyval->value, ORTE_SIZE))) {
+                        exit_status = ret;
+                        goto cleanup;
+                    }
+                    job->ckpt_state = *tmp_num;
+                    continue;
+                }
+                else if( 0 == strncmp(keyval->key, ORTE_JOB_CKPT_SNAPSHOT_REF_KEY, strlen(ORTE_JOB_CKPT_SNAPSHOT_REF_KEY)) ) {
+                    char *tmp_str = NULL;
+                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_str, keyval->value, ORTE_STRING))) {
+                        exit_status = ret;
+                        goto cleanup;
+                    }
+                    job->ckpt_ref = strdup(tmp_str);
+                    continue;
+                }
+                else if( 0 == strncmp(keyval->key, ORTE_JOB_CKPT_SNAPSHOT_LOC_KEY, strlen(ORTE_JOB_CKPT_SNAPSHOT_LOC_KEY)) ) {
+                    char *tmp_str = NULL;
+                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_str, keyval->value, ORTE_STRING))) {
+                        exit_status = ret;
+                        goto cleanup;
+                    }
+                    job->ckpt_loc = strdup(tmp_str);
+                    continue;
+                }
+#endif
             }
         }
     }
@@ -1240,7 +1375,8 @@ static int gather_vpid_info(orte_ps_universe_info_t* universe) {
                     opal_show_help("help-orte-ps.txt", "invalid-vpid", true,
                                    orte_ps_globals.vpid,
                                    orte_ps_globals.jobid );
-                    return ORTE_ERROR;
+                    exit_status = ORTE_ERROR;
+                    goto cleanup;
                 }
                 
                 if( (int)v != orte_ps_globals.vpid ) {
@@ -1293,7 +1429,6 @@ static int gather_vpid_info(orte_ps_universe_info_t* universe) {
                             exit_status = ret;
                             goto cleanup;
                         }
-                        
                         vpid->rank = *tmp_size;
                         continue;
                     }
@@ -1303,17 +1438,15 @@ static int gather_vpid_info(orte_ps_universe_info_t* universe) {
                             exit_status = ret;
                             goto cleanup;
                         }
-                        
                         vpid->app_context_idx = *tmp_size;
                         continue;
                     }
-                    else if( 0 == strncmp(keyval->key, ORTE_PROC_PID_KEY, strlen(ORTE_PROC_PID_KEY)) ) {
+                    else if( 0 == strncmp(keyval->key, ORTE_PROC_LOCAL_PID_KEY, strlen(ORTE_PROC_LOCAL_PID_KEY)) ) {
                         pid_t *tmp_pid;
                         if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_pid, keyval->value, ORTE_PID))) {
                             exit_status = ret;
                             goto cleanup;
                         }
-                        
                         vpid->pid = *tmp_pid;
                         continue;
                     }
@@ -1323,11 +1456,9 @@ static int gather_vpid_info(orte_ps_universe_info_t* universe) {
                             exit_status = ret;
                             goto cleanup;
                         }
-                        
                         vpid->name.cellid = tmp_proc->cellid;
                         vpid->name.jobid  = tmp_proc->jobid;
                         vpid->name.vpid   = tmp_proc->vpid;
-
                         continue;
                     }
                     else if( 0 == strncmp(keyval->key, ORTE_NODE_NAME_KEY, strlen(ORTE_NODE_NAME_KEY)) ) {
@@ -1336,7 +1467,6 @@ static int gather_vpid_info(orte_ps_universe_info_t* universe) {
                             exit_status = ret;
                             goto cleanup;
                         }
-                        
                         vpid->node = strdup(tmp_node);
                         continue;
                     }
@@ -1346,12 +1476,54 @@ static int gather_vpid_info(orte_ps_universe_info_t* universe) {
                             exit_status = ret;
                             goto cleanup;
                         }
-                        
                         vpid->state = *tmp_state;
                         continue;
                     }
+#if OPAL_ENABLE_FT == 1
+                    else if( 0 == strncmp(keyval->key, ORTE_PROC_CKPT_STATE_KEY, strlen(ORTE_PROC_CKPT_STATE_KEY)) ) {
+                        size_t *tmp_state;
+                        if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_state, keyval->value, ORTE_SIZE))) {
+                            exit_status = ret;
+                            goto cleanup;
+                        }
+                        vpid->ckpt_state = *tmp_state;
+                        continue;
+                    }
+                    else if( 0 == strncmp(keyval->key, ORTE_PROC_CKPT_SNAPSHOT_REF_KEY, strlen(ORTE_PROC_CKPT_SNAPSHOT_REF_KEY)) ) {
+                        char *tmp_str = NULL;
+                        if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_str, keyval->value, ORTE_STRING))) {
+                            exit_status = ret;
+                            goto cleanup;
+                        }
+                        vpid->ckpt_ref = strdup(tmp_str);
+                        continue;
+                    }
+                    else if( 0 == strncmp(keyval->key, ORTE_PROC_CKPT_SNAPSHOT_LOC_KEY, strlen(ORTE_PROC_CKPT_SNAPSHOT_LOC_KEY)) ) {
+                        char *tmp_str = NULL;
+                        if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_str, keyval->value, ORTE_STRING))) {
+                            exit_status = ret;
+                            goto cleanup;
+                        }
+                        vpid->ckpt_loc = strdup(tmp_str);
+                        continue;
+                    }
+#endif
                 }
             }
+
+            /* A bit of dummy check - Can happen if the GPR is corrupted*/
+            if( NULL == vpid->node ) {
+                vpid->node = strdup("");
+            }
+
+#if OPAL_ENABLE_FT == 1
+            if( NULL == vpid->ckpt_ref ) {
+                vpid->ckpt_ref = strdup("");
+            }
+            if( NULL == vpid->ckpt_loc ) {
+                vpid->ckpt_loc = strdup("");
+            }
+#endif
 
             opal_list_append(&job->vpid_list, &(vpid->super));
         }
@@ -1367,12 +1539,22 @@ static int gather_vpid_info(orte_ps_universe_info_t* universe) {
 void orte_ps_vpid_info_construct(orte_ps_vpid_info_t *obj) {
     obj->node     = NULL;
 
+#if OPAL_ENABLE_FT == 1
+    obj->ckpt_ref = NULL;
+    obj->ckpt_loc = NULL;
+#endif
 }
 
 void orte_ps_vpid_info_destruct( orte_ps_vpid_info_t *obj) {
     if( NULL != obj->node) 
         free(obj->node);
 
+#if OPAL_ENABLE_FT == 1
+    if( NULL != obj->ckpt_ref) 
+        free(obj->ckpt_ref);
+    if( NULL != obj->ckpt_loc) 
+        free(obj->ckpt_loc);
+#endif
 }
 
 void orte_ps_job_info_construct(orte_ps_job_info_t *obj) {
@@ -1380,12 +1562,24 @@ void orte_ps_job_info_construct(orte_ps_job_info_t *obj) {
 
     obj->app_context = NULL;
     obj->num_app_context = 0;
+
+#if OPAL_ENABLE_FT == 1
+    obj->ckpt_ref = NULL;
+    obj->ckpt_loc = NULL;
+#endif
 }
 
 void orte_ps_job_info_destruct( orte_ps_job_info_t *obj) {
     opal_list_item_t* item = NULL;
     orte_std_cntr_t i;
 
+#if OPAL_ENABLE_FT == 1
+    if( NULL != obj->ckpt_ref)
+        free(obj->ckpt_ref);
+    if( NULL != obj->ckpt_loc)
+        free(obj->ckpt_loc);
+#endif
+    
     for(i = 0; i < obj->num_app_context; ++i) {
         free(obj->app_context[i]);
     }
@@ -1451,8 +1645,8 @@ static char *pretty_job_state(orte_job_state_t state) {
     default:
         break;
     }
-
-    return strdup("Unknown");
+    
+    return strdup("");
 }
 
 static char *pretty_vpid_state(orte_proc_state_t state) {
@@ -1488,7 +1682,7 @@ static char *pretty_vpid_state(orte_proc_state_t state) {
         break;
     }
     
-    return strdup("Unknown");
+    return strdup("");
 }
 
 static char *pretty_univ_state(orte_universe_state_t state) {
@@ -1506,10 +1700,9 @@ static char *pretty_univ_state(orte_universe_state_t state) {
         return strdup("Finalized");
         break;
     default:
+        return strdup("Unknown");
         break;
     }
-
-    return strdup("Unknown");
 }
 
 static char *pretty_node_state(orte_node_state_t state) {
@@ -1525,8 +1718,7 @@ static char *pretty_node_state(orte_node_state_t state) {
         break;
     case ORTE_NODE_STATE_UNKNOWN:
     default:
+        return strdup("Unknown");
         break;
     }
-    
-    return strdup("Unknown");
 }

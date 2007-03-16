@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -32,6 +32,14 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+/*
+ * This is the base priority for a PML wrapper component
+ * If there exists more than one then it is undefined 
+ * which one is picked.
+ */
+#define PML_SELECT_WRAPPER_PRIORITY -128
+
 OMPI_DECLSPEC  int mca_pml_base_open(void);
 OMPI_DECLSPEC  int mca_pml_base_progress(void);
 OMPI_DECLSPEC  int mca_pml_base_select(bool enable_progress_threads,
@@ -45,6 +53,7 @@ OMPI_DECLSPEC int mca_pml_base_pml_check_selected(const char *my_pml,
 
 OMPI_DECLSPEC int mca_pml_base_close(void);
 
+OMPI_DECLSPEC int mca_pml_base_ft_event(int state);
 
 /*
  * Globals

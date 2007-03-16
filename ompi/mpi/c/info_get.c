@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -58,6 +58,8 @@ int MPI_Info_get(MPI_Info info, char *key, int valuelen,
 {
     int err;
     int key_length;
+
+    OPAL_CR_TEST_CHECKPOINT_READY();
 
     /*
      * Simple function. All we need to do is search for the value

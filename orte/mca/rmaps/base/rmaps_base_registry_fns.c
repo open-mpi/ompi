@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -72,6 +72,11 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
         ORTE_JOB_VPID_START_KEY,
         ORTE_JOB_VPID_RANGE_KEY,
         ORTE_JOB_MAPPING_MODE_KEY,
+#if OPAL_ENABLE_FT == 1
+        ORTE_PROC_CKPT_STATE_KEY,
+        ORTE_PROC_CKPT_SNAPSHOT_REF_KEY,
+        ORTE_PROC_CKPT_SNAPSHOT_LOC_KEY,
+#endif
         NULL
     };
 
@@ -242,7 +247,36 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
                     oversub = *bptr;
                     continue;
                 }
+#if OPAL_ENABLE_FT == 1
+                /*
+                 * Three checkpoint tokens
+                 */
+                if(strcmp(keyval->key, ORTE_PROC_CKPT_STATE_KEY) == 0) {
+                    size_t *l_sptr;
+                    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&l_sptr, keyval->value, ORTE_SIZE))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto cleanup;
+                    }
+                    proc->ckpt_state = *l_sptr;
+                    continue;
+                }
+                if(strcmp(keyval->key, ORTE_PROC_CKPT_SNAPSHOT_REF_KEY) == 0) {
+                    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&(proc->ckpt_snapshot_ref), keyval->value, ORTE_STRING))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto cleanup;
+                    }
+                    continue;
+                }
+                if(strcmp(keyval->key, ORTE_PROC_CKPT_SNAPSHOT_LOC_KEY) == 0) {
+                    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&(proc->ckpt_snapshot_loc), keyval->value, ORTE_STRING))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto cleanup;
+                    }
+                    continue;
+                }
+#endif
             }
+
             /* store this process in the map */
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_add_proc_to_map(mapping, cell, node_name, launch_id, username, oversub, proc))) {
                 ORTE_ERROR_LOG(rc);
@@ -393,7 +427,12 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
     for(i=0; i<num_procs; i++) {
         if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[i]),
                                     ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_AND,
-                                    segment, 9, 0))) {
+#if OPAL_ENABLE_FT == 1
+                                    segment, 12,
+#else
+                                    segment, 9,
+#endif
+                                    0))) {
              ORTE_ERROR_LOG(rc);
              for(j=0; j<i; j++) {
                  OBJ_RELEASE(values[j]);
@@ -462,6 +501,37 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
+
+#if OPAL_ENABLE_FT == 1
+            /*
+             * Checkpoint tokens
+             */
+            if( NULL == proc->ckpt_snapshot_ref)
+                proc->ckpt_snapshot_ref = strdup("");
+            if( NULL == proc->ckpt_snapshot_loc)
+                proc->ckpt_snapshot_loc = strdup("");
+
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[9]), 
+                                                             ORTE_PROC_CKPT_STATE_KEY, ORTE_SIZE,
+                                                             &(proc->ckpt_state)))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[10]),
+                                                             ORTE_PROC_CKPT_SNAPSHOT_REF_KEY, ORTE_STRING, 
+                                                             proc->ckpt_snapshot_ref))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[11]),
+                                                             ORTE_PROC_CKPT_SNAPSHOT_LOC_KEY, ORTE_STRING, 
+                                                             proc->ckpt_snapshot_loc))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+#endif
 
             /* set the tokens */
             if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&(value->tokens), &(value->num_tokens), &(proc->name)))) {

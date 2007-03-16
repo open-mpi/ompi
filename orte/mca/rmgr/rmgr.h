@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -261,6 +261,15 @@ typedef int (*orte_rmgr_base_module_get_vpid_range_fn_t)(orte_jobid_t jobid,
                                                          orte_vpid_t *start,
                                                          orte_vpid_t *range);
 
+    /**
+     * Set the process' local PID
+     */
+    typedef int (*orte_rmgr_base_module_set_process_info_fn_t)(const orte_process_name_t *name, pid_t pid, char * nodename);
+
+    /**
+     * Get the process' local PID
+     */
+    typedef int (*orte_rmgr_base_module_get_process_info_fn_t)(const orte_process_name_t *name, pid_t *pid, char ** nodename);
 
 /*
  * Ver 2.0
@@ -283,6 +292,8 @@ struct orte_rmgr_base_module_2_0_0_t {
     orte_rmgr_base_module_check_context_app_fn_t    check_context_app;
     orte_rmgr_base_module_set_vpid_range_fn_t       set_vpid_range;
     orte_rmgr_base_module_get_vpid_range_fn_t       get_vpid_range;
+    orte_rmgr_base_module_set_process_info_fn_t     set_process_info;
+    orte_rmgr_base_module_get_process_info_fn_t     get_process_info;
 };
 
 typedef struct orte_rmgr_base_module_2_0_0_t orte_rmgr_base_module_2_0_0_t;

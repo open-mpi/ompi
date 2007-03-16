@@ -19,6 +19,7 @@
 
 #include "ompi_config.h"
 #include <stdio.h>
+#include <unistd.h>
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -64,6 +65,7 @@ mca_pml_base_module_t mca_pml = {
     NULL,                    /* pml_probe */
     NULL,                    /* pml_start */
     NULL,                    /* pml_dump */
+    NULL,                    /* pml_ft_event */
     0,                       /* pml_max_contextid */
     0                        /* pml_max_tag */
 };
@@ -79,25 +81,26 @@ ompi_pointer_array_t mca_pml_base_pml;
 int mca_pml_base_open(void)
 {
     char* default_pml = NULL;
+    char* wrapper_pml = NULL;
     int value;
 
     /*
      * Register some MCA parameters
      */
-    /* Debugging/Verbose output */
-    mca_base_param_reg_int_name("pml_base",
-                                "verbose",
-                                "Verbosity level of the PML framework",
-                                false, false,
-                                0, &value);
+     /* Debugging/Verbose output */
+     mca_base_param_reg_int_name("pml_base",
+                                 "verbose",
+                                 "Verbosity level of the PML framework",
+                                 false, false,
+                                 0, &value);
  
-    mca_pml_base_output = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_pml_base_output, value);
+     mca_pml_base_output = opal_output_open(NULL);
+     opal_output_set_verbosity(mca_pml_base_output, value);
 
     /* Open up all available components */
 
     if (OMPI_SUCCESS != 
-        mca_base_components_open("pml", 0, mca_pml_base_static_components, 
+        mca_base_components_open("pml", mca_pml_base_output, mca_pml_base_static_components, 
                                  &mca_pml_base_components_available,
                                  !MCA_pml_DIRECT_CALL)) {
         return OMPI_ERROR;
@@ -133,6 +136,19 @@ int mca_pml_base_open(void)
         ompi_pointer_array_add(&mca_pml_base_pml, strdup("cm"));
     } else { 
         ompi_pointer_array_add(&mca_pml_base_pml, strdup(default_pml));
+    }
+
+    /* 
+     * Which PML Wrapper component to use, if any
+     *  - NULL or "" = No wrapper
+     *  - ow. select that specific wrapper component
+     */
+    mca_base_param_reg_string_name("pml", "wrapper",
+                                   "Use a Wrapper component around the selected PML component",
+                                   false, false,
+                                   NULL, &wrapper_pml);
+    if( NULL != wrapper_pml ) {
+        ompi_pointer_array_add(&mca_pml_base_pml, strdup(wrapper_pml));
     }
 #endif
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -43,6 +43,7 @@
 
 orte_rml_base_t orte_rml_base;
 orte_rml_module_t orte_rml;
+orte_rml_component_t orte_rml_component;
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -53,6 +54,7 @@ int orte_rml_base_open(void)
     int id;
     int int_value;
     int rc;
+    char *rml_wrapper = NULL;
 
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_rml_base.rml_components, opal_list_t);
@@ -61,17 +63,33 @@ int orte_rml_base_open(void)
     id = mca_base_param_reg_int_name("rml_base", "debug",
                                      "Verbosity level for the rml famework",
                                      false, false, 0, &int_value);
-    orte_rml_base.rml_debug = int_value;
-    if (int_value) {
+    if (0 != int_value) {
         orte_rml_base.rml_output = opal_output_open(NULL);
     } else {
         orte_rml_base.rml_output = -1;
     }
+    orte_rml_base.rml_debug = int_value;
+    opal_output_set_verbosity(orte_rml_base.rml_output, int_value);
 
+    /* 
+     * Which RML Wrapper component to use, if any
+     *  - NULL or "" = No wrapper
+     *  - ow. select that specific wrapper component
+     */
+    mca_base_param_reg_string_name("rml", "wrapper",
+                                   "Use a Wrapper component around the selected RML component",
+                                   false, false,
+                                   NULL, &rml_wrapper);
+    if( NULL != rml_wrapper) {
+        free(rml_wrapper);
+    }
+    
     /* Open up all available components */
-    if ((rc = mca_base_components_open("rml", orte_rml_base.rml_output,
-                                       mca_rml_base_static_components, 
-            &orte_rml_base.rml_components, true)) != ORTE_SUCCESS) {
+    if (ORTE_SUCCESS != (rc = mca_base_components_open("rml",
+                                          orte_rml_base.rml_output,
+                                          mca_rml_base_static_components, 
+                                          &orte_rml_base.rml_components,
+                                          true)) ) {
         return rc;
     }
     return ORTE_SUCCESS;

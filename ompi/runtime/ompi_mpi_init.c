@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -81,6 +81,13 @@
 #include "ompi/mca/io/base/base.h"
 #include "ompi/debuggers/debuggers.h"
 #include "ompi/proc/proc.h"
+
+#if OPAL_ENABLE_FT == 1
+#include "ompi/mca/crcp/crcp.h"
+#include "ompi/mca/crcp/base/base.h"
+#endif
+#include "ompi/runtime/ompi_cr.h"
+
 
 /*
  * Global variables and symbols for the MPI layer
@@ -218,6 +225,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     int num_processors;
 #endif
     
+    /*
+     * ORTE takes the responsibility of starting the progress and event
+     * (and other) engines.
+     */
+    opal_init_only = false;
+
     /* Join the run-time environment - do the things that don't hit
        the registry */
 
@@ -373,6 +386,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+#if OPAL_ENABLE_FT == 1
+    if (OMPI_SUCCESS != (ret = ompi_crcp_base_open())) {
+        error = "ompi_crcp_base_open() failed";
+        goto error;
+    }
+#endif
+
     /* In order to reduce the common case for MPI apps (where they
        don't use MPI-2 IO or MPI-1 topology functions), the io and
        topo frameworks are initialized lazily, at the first use of
@@ -415,6 +435,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_osc_base_find_available() failed";
         goto error;
     }
+
+#if OPAL_ENABLE_FT == 1
+    if (OMPI_SUCCESS != (ret = ompi_crcp_base_select() ) ) {
+        error = "ompi_crcp_base_select() failed";
+        goto error;
+    }
+#endif
 
     /* io and topo components are not selected here -- see comment
        above about the io and topo frameworks being loaded lazily */
@@ -686,6 +713,16 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        etc. up and running here.... */
     if (OMPI_SUCCESS != (ret = ompi_comm_dyn_init())) {
         error = "ompi_comm_dyn_init() failed";
+        goto error;
+    }
+
+    /*
+     * Startup the Checkpoint/Restart Mech.
+     * Note: Always do this so tools don't hang when
+     * in a non-checkpointable build
+     */
+    if (OMPI_SUCCESS != (ret = ompi_cr_init())) {
+        error = "ompi_cr_init";
         goto error;
     }
 

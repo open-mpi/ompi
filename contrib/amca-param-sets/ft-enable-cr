@@ -1,0 +1,34 @@
+#
+# An Aggregate MCA Parameter Set to enable checkpoint/restart capabilities
+# for a job.
+#
+# Usage:
+#   shell$ mpirun -am ft-enable-cr ./app
+#
+
+#
+# OPAL Parameters
+# - Select only checkpoint ready components
+# - Enable Additional FT infrastructure
+# - Auto-select OPAL CRS component
+#
+mca_base_component_distill_checkpoint_ready=1
+ft_cr_enabled=1
+crs=
+
+#
+# ORTE Parameters
+# - Wrap the RML
+# - Use the 'full' Snapshot Coordinator
+#
+rml_wrapper=ftrm
+snapc=full
+#filem=rsh
+
+#
+# OMPI Parameters
+# - Wrap the PML
+# - Use the LAM/MPI-like Coordinated Checkpoint/Restart Coordination Protocol
+#
+pml_wrapper=crcpw
+crcp=coord

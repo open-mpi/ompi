@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -39,6 +39,8 @@ int MPI_Put(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
             MPI_Datatype target_datatype, MPI_Win win) 
 {
     int rc;
+
+    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;

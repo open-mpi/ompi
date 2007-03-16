@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -36,6 +36,9 @@
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/gpr/gpr_types.h"
 #include "orte/mca/rml/rml_types.h"
+
+#include "opal/mca/crs/crs.h"
+#include "opal/mca/crs/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -118,6 +121,7 @@ typedef int (*orte_rml_module_send_fn_t)(
 *
 * @param peer (IN)   Opaque name of peer process.
 * @param buffer (IN) Prepacked orte_buffer_t containing data to send
+* @param tag (IN)    User defined tag for matching send/recv.
 * @param flags (IN)  Currently unused.
 * @return            OMPI error code (<0) on error or number of bytes actually sent.
 */
@@ -367,6 +371,12 @@ typedef int (*orte_rml_module_init_fn_t)(void);
 typedef int (*orte_rml_module_fini_fn_t)(void);
 
 /**
+ * Fault tolerance Awareness function
+ */
+typedef int  (*orte_rml_module_ft_event_fn_t)(int state);
+
+
+/**
  * RML Module
  */
 struct orte_rml_module_t {
@@ -388,6 +398,7 @@ struct orte_rml_module_t {
     orte_rml_module_xcast_fn_t           xcast;
     orte_rml_module_exception_fn_t       add_exception_handler;
     orte_rml_module_exception_fn_t       del_exception_handler;
+    orte_rml_module_ft_event_fn_t        ft_event;
 };
 typedef struct orte_rml_module_t orte_rml_module_t;
 
@@ -423,6 +434,7 @@ typedef struct orte_rml_component_1_0_0_t orte_rml_component_t;
  */
 
 ORTE_DECLSPEC extern orte_rml_module_t orte_rml;
+ORTE_DECLSPEC extern orte_rml_component_t orte_rml_component;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

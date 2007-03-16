@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -38,7 +38,6 @@ struct component_name_t {
   char mn_name[MCA_BASE_MAX_COMPONENT_NAME_LEN];
 };
 typedef struct component_name_t component_name_t;
-
 
 /*
  * Local variables
@@ -80,12 +79,14 @@ int mca_base_components_open(const char *type_name, int output_id,
   bool distilled = false;
 
   /* Register MCA parameters */
-
-  asprintf(&str, "Default selection set of components for the %s framework (<none> means \"use all components that can be found\")", type_name);
-  param_type = 
-      mca_base_param_reg_string_name(type_name, NULL, str, 
-                                     false, false, NULL, NULL);
-  free(str);
+  /* Check to see if it exists first */
+  if( 0 > (param_type = mca_base_param_find(type_name, NULL, NULL) ) ) {
+      asprintf(&str, "Default selection set of components for the %s framework (<none> means \"use all components that can be found\")", type_name);
+      param_type = 
+          mca_base_param_reg_string_name(type_name, NULL, str, 
+                                         false, false, NULL, NULL);
+      free(str);
+  }
 
   asprintf(&str, "Verbosity level for the %s framework (0 = no verbosity)", type_name);
   param_verbose = 
@@ -208,6 +209,17 @@ static int parse_requested(int mca_param, bool *include_mode,
   return OPAL_SUCCESS;
 }
 
+/*
+ * Dummy structure for casting in distill
+ */
+struct mca_base_distill_dummy_component_t {
+    /** MCA base component */
+    mca_base_component_t version;
+    /** MCA base data */
+    mca_base_component_data_1_0_0_t data;
+};
+typedef struct mca_base_distill_dummy_component_t mca_base_distill_dummy_component_t;
+
 
 /*
  * Parse the list of found components and factor in the included /
@@ -223,11 +235,89 @@ static int distill(bool include_mode, const char *type_name,
     opal_list_item_t *item, *next;
     const mca_base_component_t *component;
     mca_base_component_list_item_t *cli;
+    uint32_t open_only_flags = MCA_BASE_METADATA_PARAM_NONE;
+#if OPAL_ENABLE_FT    == 1
+#if OPAL_ENABLE_FT_CR == 1
+    int param_id = -1;
+    int param_val = 0;
+#endif
+#endif
 
     opal_output_verbose(10, output_id,
                         "mca: base: components_open: "
                         "distilling %s components", type_name);
     OBJ_CONSTRUCT(dest, opal_list_t);
+
+    /*
+     * Extract supported mca parameters for selection contraints
+     * Supported Options:
+     *   - mca_base_component_distill_checkpoint_ready = Checkpoint Ready
+     */
+#if OPAL_ENABLE_FT    == 1
+#if OPAL_ENABLE_FT_CR == 1
+    param_id = mca_base_param_reg_int_name("mca", "base_component_distill_checkpoint_ready",
+                                           "Distill only those components that are Checkpoint Ready", 
+                                           false, false,
+                                           0, &param_val);
+    if( 0 != param_val ) { /* Select Checkpoint Ready */
+        open_only_flags |= MCA_BASE_METADATA_PARAM_CHECKPOINT;
+    }
+#endif
+#endif
+
+    /*
+     * Pre-process the list with parameter constraints
+     * e.g., If requested to select only CR enabled components
+     *       then only make available those components.
+     */
+    if( !(MCA_BASE_METADATA_PARAM_NONE & open_only_flags) ) {
+#if OPAL_ENABLE_FT    == 1
+#if OPAL_ENABLE_FT_CR == 1
+        if( MCA_BASE_METADATA_PARAM_CHECKPOINT & open_only_flags) {
+            opal_output_verbose(10, output_id,
+                                "mca: base: components_open: "
+                                "including only %s components that are checkpoint enabled", type_name);
+        }
+#endif
+#endif
+
+        for(item  = opal_list_get_first(src);
+            item != opal_list_get_end(src);
+            item  = next ) {
+            mca_base_distill_dummy_component_t *dummy;
+            cli = (mca_base_component_list_item_t *) item;
+            dummy = (mca_base_distill_dummy_component_t*) cli->cli_component;
+            component = cli->cli_component;
+
+            next = opal_list_get_next(item);
+
+#if OPAL_ENABLE_FT    == 1
+#if OPAL_ENABLE_FT_CR == 1
+            /*
+             * If the user asked for a checkpoint enabled run
+             * then only load checkpoint enabled components.
+             */
+            if( MCA_BASE_METADATA_PARAM_CHECKPOINT & open_only_flags) {
+                if( MCA_BASE_METADATA_PARAM_CHECKPOINT & dummy->data.param_field) {
+                    opal_output_verbose(10, output_id,
+                                        "mca: base: components_open: "
+                                        "(%s) Component %s is Checkpointable",
+                                        type_name,
+                                        dummy->version.mca_component_name);
+                }
+                else {
+                    opal_output_verbose(10, output_id,
+                                        "mca: base: components_open: "
+                                        "(%s) Component %s is *NOT* Checkpointable - Disabled",
+                                        type_name,
+                                        dummy->version.mca_component_name);
+                    opal_list_remove_item(src, item);
+                }
+            }
+#endif
+#endif
+        }
+    }
 
     /* Bozo case */
 
@@ -238,6 +328,7 @@ static int distill(bool include_mode, const char *type_name,
         opal_list_join(dest, opal_list_get_end(dest), src);
         return OPAL_SUCCESS;
     }
+
 
     /* Are we including components? */
 

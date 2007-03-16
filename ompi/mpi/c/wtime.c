@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -42,6 +42,7 @@ static const char FUNC_NAME[] = "MPI_Wtime";
 double MPI_Wtime(void)
 {
     double wtime;
+
 #if OPAL_TIMER_USEC_NATIVE
     wtime = (double)opal_timer_base_get_usec() / 1000000.0;
 #else
@@ -57,5 +58,8 @@ double MPI_Wtime(void)
 #endif  /* defined(__WINDOWS__) */
 
 #endif  /* OPAL_TIMER_USEC_NATIVE */
+
+    OPAL_CR_TEST_CHECKPOINT_READY();
+
     return wtime;
 }

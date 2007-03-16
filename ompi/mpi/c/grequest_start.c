@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -39,6 +39,9 @@ int MPI_Grequest_start(MPI_Grequest_query_function *query_fn,
                        void *extra_state, MPI_Request *request) 
 {
     int rc;
+
+    OPAL_CR_TEST_CHECKPOINT_READY();
+
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == request) {

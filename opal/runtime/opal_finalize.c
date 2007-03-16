@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -35,6 +35,12 @@
 #include "opal/mca/backtrace/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
+#include "opal/event/event.h"
+#include "opal/runtime/opal_progress.h"
+
+#include "opal/runtime/opal_cr.h"
+#include "opal/mca/crs/base/base.h"
+
 
 int
 opal_finalize_util(void)
@@ -78,6 +84,16 @@ opal_finalize(void)
         }
         return OPAL_SUCCESS;
     }
+
+    if( opal_init_only ) {
+        /* close the checkpoint and restart service */
+        opal_cr_finalize();
+
+        opal_progress_finalize();
+
+        opal_event_fini();
+    }
+
     /* close high resolution timers */
     opal_timer_base_close();
 

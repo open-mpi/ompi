@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -23,6 +23,7 @@
 
 #include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/btl/base/base.h"
@@ -55,6 +56,7 @@ mca_pml_ob1_t mca_pml_ob1 = {
     mca_pml_ob1_probe,
     mca_pml_ob1_start,
     mca_pml_ob1_dump,
+    mca_pml_base_ft_event,
     32768,
     INT_MAX
     }
@@ -119,12 +121,20 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         return rc;
 
+    /*
+     * JJH: Disable this in FT enabled builds since
+     * we use a wrapper PML. It will cause this check to 
+     * return failure as all processes will return the wrapper PML
+     * component in use instead of the wrapped PML component underneath.
+     */
+#if OPAL_ENABLE_FT == 0
     /* make sure remote procs are using the same PML as us */
     if (OMPI_SUCCESS != (rc = mca_pml_base_pml_check_selected("ob1",
                                                               procs,
                                                               nprocs))) {
         return rc;
     }
+#endif
 
     bml_endpoints = (struct mca_bml_base_endpoint_t **) malloc ( nprocs *
 		     sizeof(struct mca_bml_base_endpoint_t*));

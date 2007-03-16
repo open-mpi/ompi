@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -145,12 +145,18 @@ struct mca_base_component_t {
  */
 typedef struct mca_base_component_t mca_base_component_t;
 
+/*
+ * Metadata Bit field parameters
+ */
+#define MCA_BASE_METADATA_PARAM_NONE        (uint32_t)0x00 /**< No Metadata flags */
+#define MCA_BASE_METADATA_PARAM_CHECKPOINT  (uint32_t)0x02 /**< Checkpoint enabled Component */
+#define MCA_BASE_METADATA_PARAM_DEBUG       (uint32_t)0x04 /**< Debug enabled/only Component */
+
 /**
  * Meta data for MCA v1.0.0 components.
  */
 struct mca_base_component_data_1_0_0_t {
-  bool mca_is_checkpointable;
-  /**< Indicates whether this component is checkpointable or not. */
+    uint32_t param_field;
 };
 /**
  * Convenience typedef.

@@ -1,6 +1,6 @@
 # -*- makefile -*-
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -24,4 +24,12 @@ SUBDIRS += \
 	tools/wrappers
 
 DIST_SUBDIRS += \
-	tools/wrappers
+	tools/wrappers \
+	tools/opal-checkpoint \
+	tools/opal-restart
+
+if WANT_FT
+SUBDIRS += \
+	tools/opal-checkpoint \
+	tools/opal-restart
+endif

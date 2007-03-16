@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -24,6 +24,11 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/runtime/params.h"
+
+/* This library needs to be here so that we can define 
+ * OPAL_CR_TEST_CHECKPOINT_READY 
+ */
+#include "opal/runtime/opal_cr.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

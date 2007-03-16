@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -25,6 +25,8 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
+#include "opal/mca/crs/crs.h"
+#include "opal/mca/crs/base/base.h"
 
 /*
  * Forward declaration
@@ -115,6 +117,14 @@ typedef int (*mca_coll_base_module_scatterv_fn_t)
    int root, struct ompi_communicator_t *comm);
 
 
+/**
+ * Fault Tolerance Awareness function
+ * @param status   Checkpoint status
+ * @return         OMPI_SUCCESS or failure status
+ */
+typedef int (*mca_coll_base_module_ft_event_fn_t) (int state);
+
+
 /*
  * Structure for coll v1.0.0 components
  * Chained to MCA v1.0.0
@@ -164,6 +174,8 @@ struct mca_coll_base_module_1_0_0_t {
   mca_coll_base_module_scan_fn_t coll_scan;
   mca_coll_base_module_scatter_fn_t coll_scatter;
   mca_coll_base_module_scatterv_fn_t coll_scatterv;
+
+  mca_coll_base_module_ft_event_fn_t ft_event;
 };
 typedef struct mca_coll_base_module_1_0_0_t mca_coll_base_module_1_0_0_t;
 

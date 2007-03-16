@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -144,23 +144,15 @@ int mca_mpool_mvapi_retain(
                             ); 
 
 
+/**
+ * Fault Tolerance Event Notification Function
+ * @param state Checkpoint Stae
+ * @return OMPI_SUCCESS or failure status
+ */
+int mca_mpool_mvapi_ft_event(int state);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

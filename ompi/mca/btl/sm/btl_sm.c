@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -108,7 +108,8 @@ mca_btl_sm_t mca_btl_sm[2] = {
         NULL,  /* get */
         mca_btl_base_dump,
         NULL, /* mpool */
-        mca_btl_sm_register_error_cb /* register error */
+        mca_btl_sm_register_error_cb, /* register error */
+        mca_btl_sm_ft_event
         }
     },
     {
@@ -136,7 +137,8 @@ mca_btl_sm_t mca_btl_sm[2] = {
         NULL, /* get function */
         mca_btl_base_dump,
         NULL, /* mpool */
-        mca_btl_sm_register_error_cb /* register error */
+        mca_btl_sm_register_error_cb, /* register error */
+        mca_btl_sm_ft_event
         }
     }
 };
@@ -921,4 +923,24 @@ int mca_btl_sm_send(
      */
     MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank, endpoint->peer_smp_rank, frag->hdr, rc);
     return rc;
+}
+
+int mca_btl_sm_ft_event(int state) {
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+
+    return OMPI_SUCCESS;
 }

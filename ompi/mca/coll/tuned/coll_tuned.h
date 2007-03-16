@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -272,6 +272,7 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   int ompi_coll_tuned_scatterv_inter_dec_fixed(SCATTERV_ARGS);
   int ompi_coll_tuned_scatterv_inter_dec_dynamic(SCATTERV_ARGS);
 
+    int mca_coll_tuned_ft_event(int state);
 
 
 /* Utility functions */

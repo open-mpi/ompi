@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -29,6 +29,10 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
+#if OPAL_ENABLE_FT == 1
+#include "orte/mca/snapc/snapc.h"
+#include "orte/mca/snapc/base/base.h"
+#endif
 
 #include "orte/mca/rmgr/base/rmgr_private.h"
 
@@ -91,6 +95,19 @@ int orte_rmgr_base_put_app_context(
         goto cleanup;
     }
     rc = orte_rmgr_base_set_job_slots(jobid, job_slots); /* JJH C/N napping breaks here */
+    if(ORTE_SUCCESS != rc) {
+        goto cleanup;
+    }
+
+#if OPAL_ENABLE_FT == 1
+    /*
+     * Attach the SNAPC component GPR tags to this job
+     */
+    rc = orte_snapc_base_set_job_ckpt_info(jobid, ORTE_SNAPC_CKPT_STATE_NONE, strdup(""), strdup(""));
+    if(ORTE_SUCCESS != rc) {
+        goto cleanup;
+    }
+#endif
 
 cleanup:
     OBJ_RELEASE(value);

@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -289,6 +289,13 @@ mca_btl_mx_prepare_dst( struct mca_btl_base_module_t* btl,
                         struct ompi_convertor_t* convertor,
                         size_t reserve,
                         size_t* size );
+
+/**
+ * Fault Tolerance Event Notification Function
+ * @param state Checkpoint Stae
+ * @return OMPI_SUCCESS or failure status
+ */
+int mca_btl_mx_ft_event(int state);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

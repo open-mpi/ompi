@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -78,7 +78,8 @@ static const mca_coll_base_module_1_0_0_t intra = {
   NULL,  /* reduce_scatter */
   NULL,  /* scan */
   NULL,  /* scatter */
-  NULL   /* scatterv */
+  NULL,   /* scatterv */
+  mca_coll_hierarch_ft_event
 };
 
 
@@ -107,6 +108,7 @@ static const mca_coll_base_module_1_0_0_t null_intra = {
   NULL, 
   NULL,
   NULL, 
+  NULL,
   NULL
 };
 
@@ -771,3 +773,22 @@ static void mca_coll_hierarch_dump_struct ( struct mca_coll_base_comm_t *c)
     return;
 }
 
+int mca_coll_hierarch_ft_event(int state) {
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+
+    return OMPI_SUCCESS;
+}

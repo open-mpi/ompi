@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -32,6 +32,11 @@
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/ras/ras_types.h"
 
+#if OPAL_ENABLE_FT == 1
+#include "orte/mca/snapc/snapc.h"
+#include "orte/mca/snapc/base/base.h"
+#endif
+
 #include "orte/mca/rmaps/rmaps.h"
 
 /*
@@ -51,11 +56,38 @@ static void orte_rmaps_mapped_proc_construct(orte_mapped_proc_t* proc)
     proc->rank = 0;
     proc->app_idx = 0;
     proc->pid = 0;
+#if OPAL_ENABLE_FT == 1
+    proc->ckpt_state = ORTE_SNAPC_CKPT_STATE_NONE;
+    proc->ckpt_snapshot_ref = NULL;
+    proc->ckpt_snapshot_loc = NULL;
+#endif
+}
+
+static void orte_rmaps_mapped_proc_destruct(orte_mapped_proc_t* proc)
+{
+    proc->name.cellid = ORTE_CELLID_INVALID;
+    proc->name.jobid = ORTE_JOBID_INVALID;
+    proc->name.vpid = ORTE_VPID_INVALID;
+    proc->rank = 0;
+    proc->app_idx = 0;
+    proc->pid = 0;
+#if OPAL_ENABLE_FT == 1
+    proc->ckpt_state = ORTE_SNAPC_CKPT_STATE_NONE;
+    if( NULL != proc->ckpt_snapshot_ref) {
+        free(proc->ckpt_snapshot_ref);
+        proc->ckpt_snapshot_ref = NULL;
+    }
+    if( NULL != proc->ckpt_snapshot_loc) {
+        free(proc->ckpt_snapshot_loc);
+        proc->ckpt_snapshot_loc = NULL;
+    }
+#endif
 }
 
 OBJ_CLASS_INSTANCE(orte_mapped_proc_t,
                    opal_list_item_t,
-                   orte_rmaps_mapped_proc_construct, NULL);
+                   orte_rmaps_mapped_proc_construct, 
+                   orte_rmaps_mapped_proc_destruct);
 
 /*
  * orte_mapped_node_t

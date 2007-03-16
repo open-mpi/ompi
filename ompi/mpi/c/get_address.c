@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -32,6 +32,8 @@ static const char FUNC_NAME[] = "MPI_Get_address";
 
 int MPI_Get_address(void *location, MPI_Aint *address)
 {
+    OPAL_CR_TEST_CHECKPOINT_READY();
+
     if( MPI_PARAM_CHECK ) {
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
       if (NULL == location || NULL == address) {

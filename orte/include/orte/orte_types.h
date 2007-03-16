@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -132,6 +132,11 @@ typedef void* orte_iov_base_ptr_t;
 
     /* DAEMON communication type */
 #define    ORTE_DAEMON_CMD          (orte_data_type_t)   59 /**< command flag for communicating with the daemon */
+
+/* Need a command separate from ORTE_DAEMON_CMD, so that we can receive on 
+ * them both at the same time */
+#define    ORTE_CKPT_CMD            (orte_data_type_t)   60 /**< command flag for communicating with HNP */
+
 
 /* define the starting point for dynamically assigning data types */
 #define ORTE_DSS_ID_DYNAMIC 70

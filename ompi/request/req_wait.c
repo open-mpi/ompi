@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -21,6 +21,9 @@
 #include "ompi/constants.h"
 #include "ompi/request/request.h"
 #include "ompi/request/grequest.h"
+
+#include "opal/runtime/opal_cr.h"
+#include "ompi/mca/crcp/crcp.h"
 
 int ompi_request_wait(
     ompi_request_t ** req_ptr,
@@ -50,6 +53,10 @@ int ompi_request_wait(
 finished:
 #endif
 
+#if OPAL_ENABLE_FT == 1
+    OMPI_CRCP_REQUEST_COMPLETE(req);
+#endif
+
     /* return status.  If it's a generalized request, we *have* to
        invoke the query_fn, even if the user procided STATUS_IGNORE.
        MPI-2:8.2. */
@@ -76,6 +83,7 @@ finished:
     if (MPI_SUCCESS != req->req_status.MPI_ERROR) {
         return req->req_status.MPI_ERROR;
     }
+
     /* If there's an error while freeing the request, assume that the
        request is still there.  Otherwise, Bad Things will happen
        later! */
@@ -137,6 +145,12 @@ int ompi_request_wait_any(
         num_requests_null_inactive = 0;
         for (i = 0; i < count; i++, rptr++) {
             request = *rptr;
+
+            /* Sanity test */
+            if( NULL == request) {
+                continue;
+            }
+
             /*
              * Check for null or completed persistent request.
              * For MPI_REQUEST_NULL, the req_state is always OMPI_REQUEST_INACTIVE.
@@ -193,6 +207,19 @@ finished:
         }
         *index = completed;
     }
+
+#if OPAL_ENABLE_FT == 1
+    if( opal_cr_is_enabled) {
+        rptr = requests;
+        for (i = 0; i < count; i++, rptr++) {
+            request = *rptr;
+            if( true == request->req_complete) {
+                OMPI_CRCP_REQUEST_COMPLETE(request);
+            }
+        }
+    }
+#endif
+
     return rc;
 }
 
@@ -265,6 +292,18 @@ int ompi_request_wait_all(
         ompi_request_waiting--;
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
+
+#if OPAL_ENABLE_FT == 1
+    if( opal_cr_is_enabled) {
+        rptr = requests;
+        for (i = 0; i < count; i++, rptr++) {
+            request = *rptr;
+            if( true == request->req_complete) {
+                OMPI_CRCP_REQUEST_COMPLETE(request);
+            }
+        }
+    }
+#endif
 
     rptr = requests;
     if (MPI_STATUSES_IGNORE != statuses) {
@@ -421,6 +460,18 @@ int ompi_request_wait_some(
 #if OMPI_ENABLE_PROGRESS_THREADS
 finished:
 #endif  /* OMPI_ENABLE_PROGRESS_THREADS */
+
+#if OPAL_ENABLE_FT == 1
+    if( opal_cr_is_enabled) {
+        rptr = requests;
+        for (i = 0; i < count; i++, rptr++) {
+            request = *rptr;
+            if( true == request->req_complete) {
+                OMPI_CRCP_REQUEST_COMPLETE(request);
+            }
+        }
+    }
+#endif
 
     if(num_requests_null_inactive == count) {
         *outcount = MPI_UNDEFINED;

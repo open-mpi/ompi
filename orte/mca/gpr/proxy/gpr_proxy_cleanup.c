@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -153,3 +153,37 @@ int orte_gpr_proxy_cleanup_proc(orte_process_name_t *proc)
 
     return ret;
 }
+
+int  orte_gpr_proxy_ft_event(int state) {
+
+    if(OPAL_CRS_CHECKPOINT == state) {
+        /*
+         * Quiet the GPR globally. (NS ?)
+         * Here we want to make sure there are no pending notifications in the 
+         * HNP GPR. So make sure everything is settled in the HNP.
+         */
+        /* Check all of the subscriptions */
+        /* orte_gpr_proxy_globals.subscriptions */
+        
+        /* Check all of the triggers */
+        /* orte_gpr_proxy_globals.triggers */
+        
+        /* Stop the RML recv... */
+        /* orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR_NOTIFY); */
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+
+    return ORTE_SUCCESS;
+}
+

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -32,4 +32,5 @@ libmca_pml_la_SOURCES += \
         base/pml_base_recvreq.c \
         base/pml_base_request.c \
         base/pml_base_select.c \
-        base/pml_base_sendreq.c
+        base/pml_base_sendreq.c \
+        base/pml_base_ft.c

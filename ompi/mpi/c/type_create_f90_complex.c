@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -36,6 +36,8 @@ static const char FUNC_NAME[] = "MPI_Type_create_f90_complex";
 
 int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype)
 {
+    OPAL_CR_TEST_CHECKPOINT_READY();
+
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 

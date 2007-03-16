@@ -54,6 +54,9 @@ int mca_pml_base_select(bool enable_progress_threads,
     mca_base_component_list_item_t *cli = NULL;
     mca_pml_base_component_t *component = NULL, *best_component = NULL;
     mca_pml_base_module_t *module = NULL, *best_module = NULL;
+    mca_pml_base_component_t *wrapper_component = NULL;
+    mca_pml_base_module_t *wrapper_module = NULL;
+    int wrapper_priority;
     opal_list_t opened;
     opened_component_t *om = NULL;
     bool found_pml;
@@ -119,7 +122,18 @@ int mca_pml_base_select(bool enable_progress_threads,
 
         opal_output_verbose( 10, mca_pml_base_output,
                              "select: init returned priority %d", priority );
-        if (priority > best_priority) {
+        /* Determine if this is the wrapper component */
+        if( priority <= PML_SELECT_WRAPPER_PRIORITY) {
+            opal_output_verbose( 10, mca_pml_base_output,
+                                 "pml:select: Wrapper Component: Component %s was determined to be a Wrapper PML with priority %d",
+                                 component->pmlm_version.mca_component_name, priority );
+            wrapper_priority  = priority;
+            wrapper_component = component;
+            wrapper_module    = module;
+            continue;
+        }
+        /* Otherwise determine if this is the best component */
+        else if (priority > best_priority) {
             best_priority = priority;
             best_component = component;
             best_module = module;
@@ -162,25 +176,44 @@ int mca_pml_base_select(bool enable_progress_threads,
          item = opal_list_remove_first(&opened)) {
         om = (opened_component_t *) item;
         if (om->om_component != best_component) {
+            if( NULL != wrapper_component &&
+                om->om_component != wrapper_component ) {
+                /* Finalize */
+                
+                if (NULL != om->om_component->pmlm_finalize) {
+                
+                    /* Blatently ignore the return code (what would we do to
+                       recover, anyway?  This component is going away, so errors
+                       don't matter anymore) */
 
-            /* Finalize */
-            
-            if (NULL != om->om_component->pmlm_finalize) {
-
-                /* Blatently ignore the return code (what would we do to
-                   recover, anyway?  This component is going away, so errors
-                   don't matter anymore) */
-
-                om->om_component->pmlm_finalize();
-                opal_output_verbose(10, mca_pml_base_output, 
-                                    "select: component %s not selected / finalized",
-                                    om->om_component->pmlm_version.mca_component_name);
+                    om->om_component->pmlm_finalize();
+                    opal_output_verbose(10, mca_pml_base_output, 
+                                        "select: component %s not selected / finalized",
+                                        om->om_component->pmlm_version.mca_component_name);
+                }
             }
         }
         OBJ_DESTRUCT( om );
         free(om);
     }
     OBJ_DESTRUCT( &opened );
+
+    /* Remove the wrapper component from the mca_pml_base_components_available list
+     * so we don't unload it prematurely in the next call
+     */
+    if( NULL != wrapper_component ) {
+        for (item  = opal_list_get_first(&mca_pml_base_components_available);
+             item != opal_list_get_end(&mca_pml_base_components_available);
+             item  = opal_list_get_next(item) ) {
+            cli       = (mca_base_component_list_item_t *) item;
+            component = (mca_pml_base_component_t *) cli->cli_component;
+            
+            if( component == wrapper_component ) {
+                opal_list_remove_item(&mca_pml_base_components_available, item);
+            }
+        }
+    }
+
     /* This base function closes, unloads, and removes from the
        available list all unselected components.  The available list will
        contain only the selected component. */
@@ -196,6 +229,31 @@ int mca_pml_base_select(bool enable_progress_threads,
     opal_output_verbose( 10, mca_pml_base_output, 
                          "select: component %s selected",
                          best_component->pmlm_version.mca_component_name );
+
+    /* If we have a wrapper then initalize it */
+    if( NULL != wrapper_component ) {
+        priority = PML_SELECT_WRAPPER_PRIORITY;
+        opal_output_verbose( 10, mca_pml_base_output,
+                             "pml:select: Wrapping: Component %s [%d] is being wrapped by component %s [%d]", 
+                             mca_pml_base_selected_component.pmlm_version.mca_component_name,
+                             best_priority,
+                             wrapper_component->pmlm_version.mca_component_name,
+                             wrapper_priority );
+
+        /* Ask the wrapper commponent to wrap around the currently
+         * selected component. Indicated by the priority value provided
+         * this will cause the wrapper to do something different this time around
+         */
+        module = wrapper_component->pmlm_init(&priority,
+                                              enable_progress_threads,
+                                              enable_mpi_threads);
+        /* Replace with the wrapper */
+        best_component = wrapper_component;
+        mca_pml_base_selected_component = *best_component;
+        best_module = module;
+        mca_pml     = *best_module;
+    }
+
     /* register the winner's callback */
     opal_progress_register(mca_pml.pml_progress);
 
