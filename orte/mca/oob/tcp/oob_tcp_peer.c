@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -140,6 +140,7 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
 {
     int rc = ORTE_SUCCESS;
     OPAL_THREAD_LOCK(&peer->peer_lock);
+
     switch(peer->peer_state) {
     case MCA_OOB_TCP_CONNECTING:
     case MCA_OOB_TCP_CONNECT_ACK:
@@ -152,7 +153,8 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
         if(peer->peer_state == MCA_OOB_TCP_CLOSED) {
             peer->peer_state = MCA_OOB_TCP_RESOLVE;
             OPAL_THREAD_UNLOCK(&peer->peer_lock);
-            return mca_oob_tcp_resolve(peer);
+            rc = mca_oob_tcp_resolve(peer);
+            return rc;
         }
         break;
     case MCA_OOB_TCP_FAILED:
@@ -175,6 +177,7 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
         }
         break;
     }
+
     OPAL_THREAD_UNLOCK(&peer->peer_lock);
     return rc;
 }
@@ -454,10 +457,10 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
     } else if (so_error == ECONNREFUSED || so_error == ETIMEDOUT) {
         struct timeval tv = { 1,0 };
         opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_complete_connect: "
-            "connection failed (errno=%d) - retrying (pid=%d)\n", 
-            ORTE_NAME_ARGS(orte_process_info.my_name),
-            ORTE_NAME_ARGS(&(peer->peer_name)),
-            so_error, getpid());
+                    "connection failed (errno=%d) - retrying (pid=%d)\n", 
+                    ORTE_NAME_ARGS(orte_process_info.my_name),
+                    ORTE_NAME_ARGS(&(peer->peer_name)),
+                    so_error, getpid());
         mca_oob_tcp_peer_shutdown(peer);
         opal_evtimer_add(&peer->peer_timer_event, &tv);
         return;
@@ -713,7 +716,6 @@ int mca_oob_tcp_peer_send_ident(mca_oob_tcp_peer_t* peer)
     return ORTE_SUCCESS;
 }
 
-
 /* static void mca_oob_tcp_peer_recv_ident(mca_oob_tcp_peer_t* peer, mca_oob_tcp_hdr_t* hdr) */
 /* { */
 /*     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock); */
@@ -765,7 +767,7 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
                 peer->peer_recv_msg = msg;
             }
 
-            if (peer->peer_recv_msg && 
+            if (NULL != peer->peer_recv_msg && 
                 mca_oob_tcp_msg_recv_handler(peer->peer_recv_msg, peer)) {
                mca_oob_tcp_msg_t* msg = peer->peer_recv_msg;
                peer->peer_recv_msg = NULL;

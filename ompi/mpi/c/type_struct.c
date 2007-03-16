@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -35,6 +35,8 @@ int MPI_Type_struct(int count,
                     MPI_Datatype array_of_types[],
                     MPI_Datatype *newtype)
 {
+    OPAL_CR_TEST_CHECKPOINT_READY();
+
     /* the param check will be done if necessary on the MPI_Type_create_struct */
     return MPI_Type_create_struct(count,
                                   array_of_blocklengths,

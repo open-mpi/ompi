@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -441,6 +441,23 @@ int orte_dss_open(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
+#if OPAL_ENABLE_FT == 1
+    tmp = ORTE_CKPT_CMD;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_dss_pack_ckpt_cmd,
+                                                     orte_dss_unpack_ckpt_cmd,
+                                                     (orte_dss_copy_fn_t)orte_dss_std_copy,
+                                                     (orte_dss_compare_fn_t)orte_dss_compare_ckpt_cmd,
+                                                     (orte_dss_size_fn_t)orte_dss_std_size,
+                                                     (orte_dss_print_fn_t)orte_dss_print_ckpt_cmd,
+                                                     (orte_dss_release_fn_t)orte_dss_std_release,
+                                                     ORTE_DSS_UNSTRUCTURED,
+                                                     "ORTE_DATA_TYPE", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+#endif
+
     tmp = ORTE_BYTE_OBJECT;
     if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_dss_pack_byte_object,
                                           orte_dss_unpack_byte_object,

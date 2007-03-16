@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -125,6 +125,13 @@ typedef struct {
     /** Prefix directory for this app (or NULL if no override
         necessary) */
     char *prefix_dir;
+    /** Preload the binary on the remote machine (in PLS via FileM) */
+    bool preload_binary;
+    /** Preload the comma separated list of files to the remote machines cwd */
+    char * preload_files;
+    /** Destination directory for the preloaded files 
+     * If NULL then the absolute and relative paths are obeyed */
+    char * preload_files_dest_dir;
 } orte_app_context_t;
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_t);

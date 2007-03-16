@@ -1,6 +1,6 @@
 /* -*- C -*-
  * 
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -43,7 +43,8 @@ orte_pls_bproc_component_t mca_pls_bproc_component = {
         orte_pls_bproc_component_close /* component close */
         },
         {
-        false /* checkpoint / restart */
+            /* The component is not checkpoint ready */
+            MCA_BASE_METADATA_PARAM_NONE
         },
         orte_pls_bproc_init    /* component init */ 
     }

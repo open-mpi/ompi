@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -65,7 +65,7 @@ int orte_dss_copy(void **dest, void *src, orte_data_type_t type)
 int orte_dss_std_copy(void **dest, void *src, orte_data_type_t type)
 {
     size_t datasize;
-    uint8_t *val;
+    uint8_t *val = NULL;
 
     switch(type) {
         case ORTE_BOOL:
@@ -113,6 +113,12 @@ int orte_dss_std_copy(void **dest, void *src, orte_data_type_t type)
         case ORTE_DATA_TYPE:
             datasize = sizeof(orte_data_type_t);
             break;
+
+#if OPAL_ENABLE_FT == 1
+        case ORTE_CKPT_CMD:
+            datasize = sizeof(size_t);
+            break;
+#endif
 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);

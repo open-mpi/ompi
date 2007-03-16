@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2006-2007 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -32,6 +35,8 @@ mca_pml_example_t mca_pml_example = {
         mca_pml_example_iprobe,
         mca_pml_example_probe,
         mca_pml_example_start,
+        mca_pml_example_ft_event,
+
         32768,
         (0x7fffffff)
     }
@@ -67,3 +72,22 @@ int mca_pml_example_del_procs(ompi_proc_t** procs, size_t nprocs)
     return OMPI_SUCCESS;
 }
 
+int mca_pml_example_ft_event(int state) {
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+    
+    return OMPI_SUCCESS;
+}

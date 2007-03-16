@@ -1,6 +1,6 @@
 /* -*- C -*-
 *
-* Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+* Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 *                         University Research and Technology
 *                         Corporation.  All rights reserved.
 * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -64,7 +64,8 @@ mca_ns_base_component_t mca_ns_replica_component = {
     orte_ns_replica_close /* module close */
 },
 {
-    false /* checkpoint / restart */
+    /* The component is checkpoint ready */
+      MCA_BASE_METADATA_PARAM_CHECKPOINT
 },
 orte_ns_replica_init,    /* module init */
 orte_ns_replica_finalize /* module shutdown */
@@ -117,7 +118,8 @@ static mca_ns_base_module_t orte_ns_replica_module = {
     orte_ns_replica_dump_cells,
     orte_ns_replica_dump_jobs,
     orte_ns_replica_dump_tags,
-    orte_ns_replica_dump_datatypes
+    orte_ns_replica_dump_datatypes,
+    orte_ns_replica_ft_event
 };
 
 /*
@@ -307,3 +309,22 @@ int orte_ns_replica_finalize(void)
     return ORTE_SUCCESS;
 }
 
+int orte_ns_replica_ft_event(int state) {
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+
+    return ORTE_SUCCESS;
+}

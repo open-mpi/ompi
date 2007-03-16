@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -109,6 +109,14 @@
 #define ORTE_PROC_NUM_TERMINATED                "orte-proc-num-terminated"
 #define ORTE_PROC_RML_IP_ADDRESS_KEY            "orte-proc-rml-ip-addr"
 
+#define ORTE_JOB_CKPT_STATE_KEY                "orte-job-ckpt-state"
+#define ORTE_JOB_CKPT_SNAPSHOT_REF_KEY         "orte-job-ckpt-snapshot-ref"
+#define ORTE_JOB_CKPT_SNAPSHOT_LOC_KEY         "orte-job-ckpt-snapshot-loc"
+
+#define ORTE_PROC_CKPT_STATE_KEY                "orte-proc-ckpt-state"
+#define ORTE_PROC_CKPT_SNAPSHOT_REF_KEY         "orte-proc-ckpt-snapshot-ref"
+#define ORTE_PROC_CKPT_SNAPSHOT_LOC_KEY         "orte-proc-ckpt-snapshot-loc"
+
 /*
  * ORTE-wide names for specific system triggers and subscriptions
  */
@@ -121,6 +129,10 @@
 #define ORTE_NUM_FINALIZED_TRIGGER      "orte-num-finalized"
 #define ORTE_NUM_ABORTED_TRIGGER        "orte-num-aborted"
 #define ORTE_NUM_TERMINATED_TRIGGER     "orte-num-terminated"
+
+#define ORTE_JOB_CKPT_STATE_TRIGGER     "orte-job-ckpt-trig"
+#define ORTE_PROC_CKPT_STATE_TRIGGER    "orte-proc-ckpt-trig"
+
 #define ORTE_FAILED_TO_START_TRIGGER    "orte-failed-start-trig"
 
 /*

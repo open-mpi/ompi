@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -345,6 +345,12 @@ extern int mca_btl_sm_send(
     mca_btl_base_tag_t tag
 );
 
+/**
+ * Fault Tolerance Event Notification Function
+ * @param state Checkpoint Stae
+ * @return OMPI_SUCCESS or failure status
+ */
+int mca_btl_sm_ft_event(int state);
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
 void mca_btl_sm_component_event_thread(opal_object_t*);

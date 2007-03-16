@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -36,6 +36,8 @@
 #include "opal/util/show_help.h"
 #include "opal/threads/mutex.h"
 #include "opal/runtime/opal.h"
+#include "opal/runtime/opal_cr.h"
+
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -57,6 +59,10 @@
 #include "orte/mca/odls/base/base.h"
 
 #include "orte/mca/rmaps/base/base.h"
+#if OPAL_ENABLE_FT == 1
+#include "orte/mca/snapc/base/base.h"
+#endif
+#include "orte/mca/filem/base/base.h"
 #include "orte/mca/schema/base/base.h"
 #include "orte/mca/smr/base/base.h"
 #include "orte/util/univ_info.h"
@@ -73,6 +79,8 @@
 #include "orte/runtime/runtime_internal.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/params.h"
+
+#include "orte/runtime/orte_cr.h"
 
 int orte_init_stage1(bool infrastructure)
 {
@@ -671,6 +679,51 @@ int orte_init_stage1(bool infrastructure)
         free(contact_path);
     }
 
+    /*
+     * Setup the FileM
+     */
+    if (ORTE_SUCCESS != (ret = orte_filem_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_filem_base_open";
+        goto error;
+    }
+
+    if (ORTE_SUCCESS != (ret = orte_filem_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_filem_base_select";
+        goto error;
+    }
+
+#if OPAL_ENABLE_FT == 1
+    /*
+     * Setup the SnapC
+     */
+    if (ORTE_SUCCESS != (ret = orte_snapc_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_snapc_base_open";
+        goto error;
+    }
+
+    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(orte_process_info.seed, !orte_process_info.daemon))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_snapc_base_select";
+        goto error;
+    }
+
+    /* Need to figure out if we are an application or part of ORTE */
+    if(infrastructure || 
+       orte_process_info.seed || 
+       orte_process_info.daemon) {
+        /* ORTE doesn't need the OPAL CR stuff */
+        opal_cr_set_enabled(false);
+    }
+    else {
+        /* The application does however */
+        opal_cr_set_enabled(true);
+    }
+#else
+    opal_cr_set_enabled(false);
+#endif
 
 error:
     if (ret != ORTE_SUCCESS) {

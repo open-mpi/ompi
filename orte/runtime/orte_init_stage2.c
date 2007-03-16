@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -31,9 +31,11 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/iof/base/base.h"
 
+#include "orte/runtime/orte_cr.h"
+
 #include "orte/runtime/runtime.h"
 
-int orte_init_stage2(void)
+int orte_init_stage2()
 {
     int ret;
     char *error_str = NULL;
@@ -71,6 +73,18 @@ int orte_init_stage2(void)
         error_str = "orte_iof_base_select";
         goto return_error;
     }
+
+    /*
+     * Initalize the CR setup
+     * Note: Always do this, even in non-FT builds.
+     * If we don't some user level tools may hang.
+     */
+    if (ORTE_SUCCESS != (ret = orte_cr_init())) {
+        ORTE_ERROR_LOG(ret);
+        error_str = "orte_cr_init";
+        goto return_error;
+    }
+
     /* Since we are now finished with init, change the state to running */
     orte_universe_info.state = ORTE_UNIVERSE_STATE_RUNNING;
 

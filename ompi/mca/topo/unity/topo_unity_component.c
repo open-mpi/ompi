@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -55,7 +55,8 @@ mca_topo_base_component_1_0_0_t mca_topo_unity_component =
         NULL    /* fp to close the component */
     },
     {
-      false /* whether checkpoint/restart is enabled */
+        /* The component is checkpoint ready */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
     mca_topo_unity_component_init_query,      /* get thread level */
     mca_topo_unity_component_comm_query,      /* get priority and actions */

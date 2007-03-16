@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -52,6 +52,7 @@ void mca_mpool_mvapi_module_init(mca_mpool_mvapi_module_t* mpool)
     mpool->super.mpool_retain = mca_mpool_mvapi_retain;
     mpool->super.mpool_release = mca_mpool_mvapi_release; 
     mpool->super.mpool_finalize = NULL; 
+    mpool->super.mpool_ft_event = mca_mpool_mvapi_ft_event;
     mpool->super.rcache = 
         mca_rcache_base_module_create(mca_mpool_mvapi_component.rcache_name);
     mpool->super.flags = MCA_MPOOL_FLAGS_MPI_ALLOC_MEM; 
@@ -253,3 +254,22 @@ int mca_mpool_mvapi_retain(struct mca_mpool_base_module_t* mpool,
     return OMPI_SUCCESS; 
 }
 
+int mca_mpool_mvapi_ft_event(int state) {
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+
+    return OMPI_SUCCESS;
+}

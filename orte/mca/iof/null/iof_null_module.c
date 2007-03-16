@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -41,9 +41,15 @@ orte_iof_base_module_t orte_iof_null_module = {
     orte_iof_null_pull,
     orte_iof_null_subscribe,
     orte_iof_null_unsubscribe,
-    orte_iof_base_flush
+    orte_iof_base_flush,
+    orte_iof_null_finalize,
+    orte_iof_null_ft_event
 };
 
+
+int orte_iof_null_finalize(void) {
+    return ORTE_SUCCESS;
+}
 
 /**
  * Publish a local file descriptor as an endpoint that is logically
@@ -162,3 +168,9 @@ int orte_iof_null_unsubscribe(
     return ORTE_SUCCESS;
 }
 
+int orte_iof_null_ft_event( int state ) {
+    /*
+     * Do nothing :)
+     */
+    return ORTE_SUCCESS;
+}

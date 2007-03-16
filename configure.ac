@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -1155,6 +1155,8 @@ AC_CONFIG_FILES([
     opal/tools/wrappers/Makefile
     opal/tools/wrappers/opalcc-wrapper-data.txt
     opal/tools/wrappers/opalc++-wrapper-data.txt
+    opal/tools/opal-checkpoint/Makefile
+    opal/tools/opal-restart/Makefile
 
     orte/Makefile
     orte/include/Makefile
@@ -1170,6 +1172,8 @@ AC_CONFIG_FILES([
     orte/tools/wrappers/Makefile
     orte/tools/wrappers/ortecc-wrapper-data.txt
     orte/tools/wrappers/ortec++-wrapper-data.txt
+    orte/tools/orte-checkpoint/Makefile
+    orte/tools/orte-restart/Makefile
     orte/tools/orte-ps/Makefile
     orte/tools/orte-clean/Makefile
 

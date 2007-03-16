@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -44,6 +44,8 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
     char port_name[MPI_MAX_PORT_NAME];
     char *tmp_port;
     orte_rml_tag_t tag;
+
+    OPAL_CR_TEST_CHECKPOINT_READY();
  
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

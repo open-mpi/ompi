@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -48,6 +48,8 @@
 #include "orte/mca/gpr/gpr_types.h"
 #include "orte/mca/rml/rml_types.h"
 
+#include "opal/mca/crs/crs.h"
+#include "opal/mca/crs/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -667,6 +669,10 @@ typedef int (*orte_gpr_base_module_create_keyval_fn_t)(orte_gpr_keyval_t **keyva
                                                  char *key,
                                                  orte_data_type_t type,
                                                  void *data);
+
+    typedef int (*orte_gpr_base_module_ft_event_fn_t)(int state);
+
+
 /*
  * Ver 1.0.0
  */
@@ -725,6 +731,8 @@ struct orte_gpr_base_module_1_0_0_t {
     /* CLEANUP OPERATIONS */
     orte_gpr_base_module_cleanup_job_fn_t cleanup_job;
     orte_gpr_base_module_cleanup_proc_fn_t cleanup_process;
+
+    orte_gpr_base_module_ft_event_fn_t ft_event;
 };
 typedef struct orte_gpr_base_module_1_0_0_t orte_gpr_base_module_1_0_0_t;
 typedef orte_gpr_base_module_1_0_0_t orte_gpr_base_module_t;

@@ -237,6 +237,15 @@ int mca_base_param_recache_files(bool rel_path_search)
     free(new_files);
     if( NULL != new_agg_files ) {
         free(new_agg_files);
+        new_agg_files = NULL;
+    }
+    if( NULL != agg_default_path ) {
+        free(agg_default_path);
+        agg_default_path = NULL;
+    }
+    if( NULL != new_agg_path ) {
+        free(new_agg_path);
+        new_agg_path = NULL;
     }
 
     return OPAL_SUCCESS;
@@ -851,6 +860,12 @@ int mca_base_param_finalize(void)
             OBJ_RELEASE(item);
         }
         OBJ_DESTRUCT(&mca_base_param_file_values);
+
+        if( NULL != cwd ) {
+            free(cwd);
+            cwd = NULL;
+        }
+
         initialized = false;
     }
 

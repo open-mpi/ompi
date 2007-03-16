@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -60,8 +60,8 @@ orte_rmgr_base_component_t mca_rmgr_cnos_component = {
 
       /* Next the MCA v1.0.0 component meta data */
       {
-        /* Whether the component is checkpointable or not */
-        false
+          /* The component is not checkpoint ready */
+          MCA_BASE_METADATA_PARAM_NONE
       },
 
       orte_rmgr_cnos_init

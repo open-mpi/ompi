@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -89,6 +89,9 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
     app_context->num_map = 0;
     app_context->map_data = NULL;
     app_context->prefix_dir = NULL;
+    app_context->preload_binary = false;
+    app_context->preload_files  = NULL;
+    app_context->preload_files_dest_dir  = NULL;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -126,6 +129,16 @@ static void orte_app_context_destructor(orte_app_context_t* app_context)
     
     if (NULL != app_context->prefix_dir) {
         free(app_context->prefix_dir);
+    }
+    
+    app_context->preload_binary = false;
+    
+    if(NULL != app_context->preload_files) {
+        free(app_context->preload_files);
+    }
+
+    if(NULL != app_context->preload_files_dest_dir) {
+        free(app_context->preload_files_dest_dir);
     }
 }
 

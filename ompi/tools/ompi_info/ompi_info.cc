@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+// Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 //                         University Research and Technology
 //                         Corporation.  All rights reserved.
 // Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -183,6 +183,9 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("paffinity");
   ompi_info::mca_types.push_back("maffinity");
   ompi_info::mca_types.push_back("timer");
+#if OPAL_ENABLE_FT == 1
+  ompi_info::mca_types.push_back("crs");
+#endif
 
   ompi_info::mca_types.push_back("allocator");
   ompi_info::mca_types.push_back("coll");
@@ -196,6 +199,9 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("topo");
   ompi_info::mca_types.push_back("osc");
   ompi_info::mca_types.push_back("common");
+#if OPAL_ENABLE_FT == 1
+  ompi_info::mca_types.push_back("crcp");
+#endif
 
   ompi_info::mca_types.push_back("errmgr");
   ompi_info::mca_types.push_back("gpr");
@@ -211,6 +217,10 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("pls");
   ompi_info::mca_types.push_back("sds");
   ompi_info::mca_types.push_back("soh");
+#if OPAL_ENABLE_FT == 1
+  ompi_info::mca_types.push_back("snapc");
+#endif
+  ompi_info::mca_types.push_back("filem");
 
   // Execute the desired action(s)
 

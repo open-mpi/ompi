@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University.
+ * Copyright (c) 2004-2007 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -50,7 +50,8 @@ ompi_osc_rdma_component_t mca_osc_rdma_component = {
             NULL
         },
         { /* mca_base_component_data */
-            false /* checkpointable? */
+            /* The component is not checkpoint ready */
+            MCA_BASE_METADATA_PARAM_NONE
         },
         ompi_osc_rdma_component_init,
         ompi_osc_rdma_component_query,

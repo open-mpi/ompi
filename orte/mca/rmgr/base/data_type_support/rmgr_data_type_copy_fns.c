@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -59,6 +59,17 @@ int orte_rmgr_base_copy_app_context(orte_app_context_t **dest, orte_app_context_
     }
     (*dest)->user_specified_cwd = src->user_specified_cwd;
     (*dest)->num_map = src->num_map;
+    (*dest)->preload_binary = src->preload_binary;
+
+    if( NULL != src->preload_files)
+        (*dest)->preload_files  = strdup(src->preload_files);
+    else 
+        (*dest)->preload_files = NULL;
+
+    if( NULL != src->preload_files_dest_dir)
+        (*dest)->preload_files_dest_dir  = strdup(src->preload_files_dest_dir);
+    else 
+        (*dest)->preload_files_dest_dir = NULL;
 
     if (0 < src->num_map) {
         (*dest)->map_data = (orte_app_context_map_t**)malloc(src->num_map * sizeof(orte_app_context_map_t*));

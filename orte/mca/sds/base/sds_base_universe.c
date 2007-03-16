@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -55,7 +55,7 @@ orte_sds_base_basic_contact_universe(void)
             orte_universe_info.persistence = univ.persistence;
             orte_universe_info.scope = strdup(univ.scope);
             /* JJH XXX This will inadvertently overwrite the console MCA param */
-            /* orte_universe_info.console = univ.console; JJH XXX */
+            /* orte_universe_info.console = univ.console; */
             orte_universe_info.seed_uri = strdup(univ.seed_uri);
             orte_universe_info.console_connected = univ.console_connected;
             if( NULL != univ.scriptfile)
@@ -85,10 +85,10 @@ orte_sds_base_basic_contact_universe(void)
             }
             if (ORTE_ERR_NOT_FOUND != ret) {
                 /* user-specified name - abort */
-                    opal_output(0, "orte_init: could not contact the specified universe name %s",
-                        orte_universe_info.name);
-                    return ORTE_ERR_UNREACH;
-                }
+                opal_output(0, "orte_init: could not contact the specified universe name %s",
+                            orte_universe_info.name);
+                return ORTE_ERR_UNREACH;
+            }
             orte_process_info.seed = true;
             /* since we are seed, ensure that all replica info is NULL'd */
             if (NULL != orte_process_info.ns_replica_uri) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -55,8 +55,8 @@ orte_rml_component_t mca_rml_oob_component = {
 
       /* Next the MCA v1.0.0 component meta data */
       {
-        /* Whether the component is checkpointable or not */
-        false
+          /* The component is checkpoint ready */
+          MCA_BASE_METADATA_PARAM_CHECKPOINT
       },
       orte_rml_oob_init
 };
@@ -79,7 +79,8 @@ orte_rml_module_t orte_rml_oob_module = {
     (orte_rml_module_recv_cancel_fn_t)mca_oob_recv_cancel,
     (orte_rml_module_xcast_fn_t)mca_oob_xcast,
     (orte_rml_module_exception_fn_t)mca_oob_add_exception_handler,
-    (orte_rml_module_exception_fn_t)mca_oob_del_exception_handler
+    (orte_rml_module_exception_fn_t)mca_oob_del_exception_handler,
+    (orte_rml_module_ft_event_fn_t)orte_rml_oob_ft_event
 };
 
 
@@ -124,4 +125,8 @@ orte_rml_oob_close(void)
     }
 
     return rc;
+}
+
+int orte_rml_oob_ft_event(int state) {
+    return mca_oob.oob_ft_event(state);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -310,8 +310,7 @@ int mca_coll_hierarch_reduce_tmp(void *sbuf, void *rbuf, int count,
 				 struct ompi_op_t *op,
 				 int root, struct ompi_communicator_t *comm);
 
-
-
+int mca_coll_hierarch_ft_event(int status);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

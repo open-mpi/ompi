@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -55,6 +55,11 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/trace.h"
+
+#if OPAL_ENABLE_FT == 1
+#include "opal/runtime/opal_cr.h"
+#endif
+
 #include "opal/version.h"
 
 #include "orte/orte_constants.h"
@@ -123,6 +128,9 @@ struct globals_t {
     char *appfile;
     char *wdir;
     char *path;
+    bool preload_binary;
+    char* preload_files;
+    char* preload_files_dest_dir;
     opal_mutex_t lock;
     opal_condition_t cond;
 } orterun_globals;
@@ -143,6 +151,21 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, 'q', NULL, "quiet", 0,
       &orterun_globals.quiet, OPAL_CMD_LINE_TYPE_BOOL,
       "Suppress helpful messages" },
+
+    /* Preload the binary on the remote machine */
+    { NULL, NULL, NULL, 's', NULL, "preload-binary", 0,
+      &orterun_globals.preload_binary, OPAL_CMD_LINE_TYPE_BOOL,
+      "Preload the binary on the remote machine before starting the remote process." },
+
+    /* Preload files on the remote machine */
+    { NULL, NULL, NULL, '\0', NULL, "preload-files", 1,
+      &orterun_globals.preload_files, OPAL_CMD_LINE_TYPE_STRING,
+      "Preload the comma separated list of files to the remote machines current working directory before starting the remote process." },
+
+    /* Where to Preload files on the remote machine */
+    { NULL, NULL, NULL, '\0', NULL, "preload-files-dest-dir", 1,
+      &orterun_globals.preload_files_dest_dir, OPAL_CMD_LINE_TYPE_STRING,
+      "The destination directory to use in conjunction with --preload-files. By default the absolute and relative paths provided by --preload-files are used." },
 
     /* Use an appfile */
     { NULL, NULL, NULL, '\0', NULL, "app", 1,
@@ -387,6 +410,11 @@ int orterun(int argc, char *argv[])
         exit(1);
     }
 
+#if OPAL_ENABLE_FT == 1
+    /* Disable OPAL CR notifications for this tool */
+    opal_cr_set_enabled(false);
+#endif
+
     /* Intialize our Open RTE environment */
     /* Set the flag telling orte_init that I am NOT a
      * singleton, but am "infrastructure" - prevents setting
@@ -456,7 +484,6 @@ int orterun(int argc, char *argv[])
         }
         
         /* Wait for the app to complete */
-
         if (wait_for_job_completion) {
             OPAL_THREAD_LOCK(&orterun_globals.lock);
             while (!orterun_globals.exit) {
@@ -943,6 +970,10 @@ static int init_globals(void)
     if( NULL != orterun_globals.path )
         free( orterun_globals.path );
     orterun_globals.path =        NULL;
+
+    orterun_globals.preload_binary = false;
+    orterun_globals.preload_files  = NULL;
+    orterun_globals.preload_files_dest_dir = NULL;
 
     /* All done */
     globals_init = true;
@@ -1522,6 +1553,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     if (app->num_procs == 0) {
         have_zero_np = true;  /** flag that we have a zero_np situation */
     }
+
     if (0 < total_num_apps && have_zero_np) {
         /** we have more than one app and a zero_np - that's no good.
          * note that we have to do this as a two step logic check since
@@ -1534,7 +1566,19 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     }
     
     total_num_apps++;
-    
+
+    /* Preserve if we are to preload the binary */
+    app->preload_binary = orterun_globals.preload_binary;
+    if( NULL != orterun_globals.preload_files)
+        app->preload_files  = strdup(orterun_globals.preload_files);
+    else 
+        app->preload_files = NULL;
+    if( NULL != orterun_globals.preload_files_dest_dir)
+        app->preload_files_dest_dir  = strdup(orterun_globals.preload_files_dest_dir);
+    else 
+        app->preload_files_dest_dir = NULL;
+
+
     /* Do not try to find argv[0] here -- the starter is responsible
        for that because it may not be relevant to try to find it on
        the node where orterun is executing.  So just strdup() argv[0]

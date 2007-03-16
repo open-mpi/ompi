@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -72,7 +72,15 @@
 #include "orte/mca/rml/rml.h"
 
 #include "opal/runtime/opal.h"
+#if OPAL_ENABLE_FT == 1
+#include "opal/runtime/opal_cr.h"
+#endif
 #include "orte/runtime/runtime.h"
+
+/******************
+ * Global Vars
+ ******************/
+extern char** environ;
 
 /******************
  * Local Functions
@@ -188,7 +196,7 @@ static int parse_args(int argc, char *argv[]) {
         putenv(global_env[i]);
     }
 
-    opal_setenv(mca_base_param_env_var("crs_base_is_tool"),
+    opal_setenv(mca_base_param_env_var("opal_cr_is_tool"),
                 "1", true, NULL);
 
     /**
@@ -218,6 +226,19 @@ static int orte_clean_init(void) {
      */
     opal_setenv(mca_base_param_env_var("universe_console"),
                 "1", true, NULL);
+
+#if OPAL_ENABLE_FT == 1
+    /* Disable the checkpoint notification routine for this
+     * tool. As we will never need to checkpoint this tool.
+     * Note: This must happen before opal_init().
+     */
+    opal_cr_set_enabled(false);
+    
+    /* Select the none component, since we don't actually use a checkpointer */
+    opal_setenv(mca_base_param_env_var("crs"),
+                "none",
+                true, &environ);
+#endif
 
     /***************************
      * We need all of OPAL

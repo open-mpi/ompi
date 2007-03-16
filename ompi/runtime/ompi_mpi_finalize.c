@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -76,6 +76,12 @@
 #include "ompi/mca/io/base/base.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/rcache/base/base.h"
+
+#if OPAL_ENABLE_FT == 1
+#include "ompi/mca/crcp/crcp.h"
+#include "ompi/mca/crcp/base/base.h"
+#endif
+#include "ompi/runtime/ompi_cr.h"
 
 
 int ompi_mpi_finalize(void)
@@ -155,7 +161,14 @@ int ompi_mpi_finalize(void)
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-    
+
+    /*
+     * Shutdown the Checkpoint/Restart Mech.
+     */
+    if (OMPI_SUCCESS != (ret = ompi_cr_finalize())) {
+        ORTE_ERROR_LOG(ret);
+    }
+
     /* Shut down any bindings-specific issues: C++, F77, F90 (may or
        may not be necessary...?) */
 
@@ -192,6 +205,15 @@ int ompi_mpi_finalize(void)
 	return ret;
     }
 
+#if OPAL_ENABLE_FT == 1
+    /*
+     * Shutdown the CRCP Framework, must happen after PML shutdown
+     */
+    if (OMPI_SUCCESS != (ret = ompi_crcp_base_close() ) ) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+#endif
 
     /* Free secondary resources */
 

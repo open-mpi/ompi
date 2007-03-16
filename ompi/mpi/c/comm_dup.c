@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -34,6 +34,8 @@ static const char FUNC_NAME[] = "MPI_Comm_dup";
 int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) 
 {
     int rc=MPI_SUCCESS;
+
+    OPAL_CR_TEST_CHECKPOINT_READY();
     
     /* argument checking */
     if ( MPI_PARAM_CHECK ) {

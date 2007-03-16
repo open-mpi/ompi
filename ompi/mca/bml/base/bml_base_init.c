@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -38,7 +38,8 @@ mca_bml_base_module_t mca_bml = {
     NULL,                    /* bml_register */ 
     NULL,                    /* bml_register_error */ 
     NULL,                    /* bml_finalize*/
-    NULL                     /* bml_progress */
+    NULL,                    /* bml_progress */
+    NULL                     /* FT event */
 };
 mca_bml_base_component_t mca_bml_component;
 
@@ -98,4 +99,3 @@ int mca_bml_base_init( bool enable_progress_threads,
 
 
 }
-

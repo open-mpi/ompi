@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -33,6 +33,9 @@
 
 #include "ompi/types.h"
 #include "ompi/class/ompi_free_list.h"
+
+#include "opal/mca/crs/crs.h"
+#include "opal/mca/crs/base/base.h"
 
 #define OMPI_ENABLE_DEBUG_RELIABILITY 0
 
@@ -445,7 +448,6 @@ typedef struct mca_bml_base_module_t* (*mca_bml_base_component_init_fn_t)(
 
 typedef int (*mca_bml_base_module_progress_fn_t)(void);
 
-
 /**
  *  BML component descriptor. Contains component version information
  *  and component open/close/init functions.
@@ -455,7 +457,6 @@ struct mca_bml_base_component_1_0_0_t {
   mca_base_component_t bml_version;
   mca_base_component_data_1_0_0_t bml_data;
   mca_bml_base_component_init_fn_t bml_init;
-    
 };
 typedef struct mca_bml_base_component_1_0_0_t mca_bml_base_component_1_0_0_t;
 typedef struct mca_bml_base_component_1_0_0_t mca_bml_base_component_t;
@@ -610,7 +611,12 @@ typedef int (*mca_bml_base_module_register_error_cb_fn_t)(
         mca_btl_base_module_error_cb_fn_t cbfunc
 );
 
-
+/**
+ * Fault Tolerance Event Notification Function
+ * @param status Checkpoint Status
+ * @return OMPI_SUCCESS or failure status
+ */
+typedef int (*mca_bml_base_module_ft_event_fn_t)(int status);
 
 
 /**
@@ -638,6 +644,7 @@ struct mca_bml_base_module_t {
 
     mca_bml_base_module_progress_fn_t bml_progress;
 
+    mca_bml_base_module_ft_event_fn_t      bml_ft_event;
 };
 typedef struct mca_bml_base_module_t mca_bml_base_module_t;
 

@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -65,7 +65,8 @@ mca_gpr_base_component_t mca_gpr_null_component = {
 	orte_gpr_null_close /* module close */
     },
     {
-	false /* checkpoint / restart */
+        /* The component is checkpoint ready */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
     orte_gpr_null_init,    /* module init */
     orte_gpr_null_finalize /* module shutdown */

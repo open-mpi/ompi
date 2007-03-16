@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -1239,7 +1239,7 @@ int orte_pls_bproc_terminate_proc(const orte_process_name_t* proc_name) {
 
     OPAL_TRACE(1);
     
-    if(ORTE_SUCCESS != (rc = orte_pls_bproc_get_proc_pid(proc_name, &pid)))
+    if(ORTE_SUCCESS != (rc = orte_rmgr.get_process_pid(proc_name, &pid)))
         return rc;
     if(kill(pid, mca_pls_bproc_component.terminate_sig) != 0) {
         switch(errno) {
@@ -1290,8 +1290,8 @@ int orte_pls_bproc_signal_proc(const orte_process_name_t* proc_name, int32_t sig
     pid_t pid;
 
     OPAL_TRACE(1);
-    
-    if(ORTE_SUCCESS != (rc = orte_pls_bproc_get_proc_pid(proc_name, &pid)))
+
+    if(ORTE_SUCCESS != (rc = orte_rmgr.get_process_pid(proc_name, &pid)))
         return rc;
     if(kill(pid, (int)signal) != 0) {
         switch(errno) {

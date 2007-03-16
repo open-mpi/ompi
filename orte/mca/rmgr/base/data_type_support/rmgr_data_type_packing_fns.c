@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -38,7 +38,7 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
                                  orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
-    int8_t have_prefix, user_specified;
+    int8_t have_prefix, have_preload_files, have_preload_files_dest_dir, user_specified;
     orte_std_cntr_t i, count;
     orte_app_context_t **app_context;
 
@@ -151,6 +151,58 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
                                                            (void*)(&(app_context[i]->prefix_dir)), 1, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
+            }
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                                    (void*)(&(app_context[i]->preload_binary)), 1, ORTE_BOOL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* Pack the preload_files if we have one */
+        if (NULL != app_context[i]->preload_files) {
+            have_preload_files = 1;
+        } else {
+            have_preload_files = 0;
+        }
+
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                                                       (void*)(&have_preload_files), 1, ORTE_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        if( have_preload_files) {
+            if( NULL != app_context[i]->preload_files) {
+                if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                                                               (void*)(&(app_context[i]->preload_files)), 1, ORTE_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
+        }
+
+        /* Pack the preload_files_dest_dir if we have one */
+        if (NULL != app_context[i]->preload_files_dest_dir) {
+            have_preload_files_dest_dir = 1;
+        } else {
+            have_preload_files_dest_dir = 0;
+        }
+
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                                                       (void*)(&have_preload_files_dest_dir), 1, ORTE_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        if( have_preload_files_dest_dir) {
+            if( NULL != app_context[i]->preload_files_dest_dir) {
+                if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                                                               (void*)(&(app_context[i]->preload_files_dest_dir)), 1, ORTE_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
             }
         }
     }

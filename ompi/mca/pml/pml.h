@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -479,6 +479,14 @@ typedef int (*mca_pml_base_module_dump_fn_t)(
     int verbose
 );
 
+/**
+ * Fault Tolerance Awareness function
+ * @param status     Checkpoint status
+ * @return           OMPI_SUCCESS or failure status
+ */
+typedef int (*mca_pml_base_module_ft_event_fn_t) (int status);
+
+
 
 /**
  *  PML instance.
@@ -507,6 +515,9 @@ struct mca_pml_base_module_1_0_0_t {
 
     /* diagnostics */
     mca_pml_base_module_dump_fn_t         pml_dump;
+
+    /* FT Event */
+    mca_pml_base_module_ft_event_fn_t     pml_ft_event;
 
     /* maximum constant sizes */
     int                                   pml_max_contextid;

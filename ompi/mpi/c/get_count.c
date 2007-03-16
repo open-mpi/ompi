@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -36,6 +36,8 @@ int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count)
 {
    size_t size = 0;
    int rc      = MPI_SUCCESS;
+
+    OPAL_CR_TEST_CHECKPOINT_READY();
 
    if (MPI_PARAM_CHECK) {
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

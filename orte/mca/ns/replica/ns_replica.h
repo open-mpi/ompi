@@ -1,6 +1,6 @@
 /* -*- C -*-
  * 
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -203,6 +203,7 @@ int orte_ns_replica_dump_tags_fn(orte_buffer_t *buffer);
 int orte_ns_replica_dump_datatypes(void);
 int orte_ns_replica_dump_datatypes_fn(orte_buffer_t *buffer);
 
+int orte_ns_replica_ft_event(int state);
 
 /*
  * INTERNAL SUPPORT FUNCTIONS

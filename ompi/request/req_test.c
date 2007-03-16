@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -22,6 +22,7 @@
 #include "ompi/request/request.h"
 #include "ompi/request/grequest.h"
 
+#include "ompi/mca/crcp/crcp.h"
 
 int ompi_request_test( ompi_request_t ** rptr,
                        int *completed,
@@ -42,6 +43,8 @@ int ompi_request_test( ompi_request_t ** rptr,
         return OMPI_SUCCESS;
     }
     if (request->req_complete) {
+        OMPI_CRCP_REQUEST_COMPLETE(request);
+
         *completed = true;
         /* For a generalized request, we *have* to call the query_fn
            if it completes, even if the user provided
@@ -109,6 +112,8 @@ int ompi_request_test_any(
             continue;
         }
         if( request->req_complete ) {
+            OMPI_CRCP_REQUEST_COMPLETE(request);
+
             *index = i;
             *completed = true;
             /* MPI 2:8.2 says that generalized requests always have
@@ -180,6 +185,7 @@ int ompi_request_test_all(
         request = *rptr;
         if( request->req_state == OMPI_REQUEST_INACTIVE ||
             request->req_complete) {
+            OMPI_CRCP_REQUEST_COMPLETE(request);
             num_completed++;
         }
     }
@@ -278,6 +284,7 @@ int ompi_request_test_some(
             continue;
         }
         if (true == request->req_complete) {
+            OMPI_CRCP_REQUEST_COMPLETE(request);
             indices[num_requests_done++] = i;
         }
     }

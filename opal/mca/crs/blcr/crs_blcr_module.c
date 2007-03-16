@@ -1,0 +1,808 @@
+/*
+ * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
+#include "opal_config.h"
+
+#include <sched.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+#include "opal/util/output.h"
+#include "opal/util/show_help.h"
+#include "opal/util/argv.h"
+#include "opal/constants.h"
+
+#include "opal/mca/base/mca_base_param.h"
+
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
+
+#include "opal/event/event.h"
+
+#include "opal/mca/crs/crs.h"
+#include "opal/mca/crs/base/base.h"
+
+#include "crs_blcr.h"
+
+/*
+ * Blcr module
+ */
+static opal_crs_base_module_t blcr_module = {
+    /** Initialization Function */
+    opal_crs_blcr_module_init,
+    /** Finalization Function */
+    opal_crs_blcr_module_finalize,
+
+    /** Checkpoint interface */
+    opal_crs_blcr_checkpoint,
+
+    /** Restart Command Access */
+    opal_crs_blcr_restart,
+
+    /** Disable checkpoints */
+    opal_crs_blcr_disable_checkpoint,
+    /** Enable checkpoints */
+    opal_crs_blcr_enable_checkpoint
+};
+
+/***************************
+ * Snapshot Class Functions
+ ***************************/
+OBJ_CLASS_DECLARATION(opal_crs_blcr_snapshot_t);
+
+struct opal_crs_blcr_snapshot_t {
+    /** Base CRS snapshot type */
+    opal_crs_base_snapshot_t super;
+    char * context_filename;
+};
+typedef struct opal_crs_blcr_snapshot_t opal_crs_blcr_snapshot_t;
+
+void opal_crs_blcr_construct(opal_crs_blcr_snapshot_t *obj);
+void opal_crs_blcr_destruct( opal_crs_blcr_snapshot_t *obj);
+
+OBJ_CLASS_INSTANCE(opal_crs_blcr_snapshot_t,
+                   opal_crs_base_snapshot_t,
+                   opal_crs_blcr_construct,
+                   opal_crs_blcr_destruct);
+
+/******************
+ * Local Functions
+ ******************/
+static int blcr_move(char *src, char *dest);
+static int blcr_checkpoint_peer(pid_t pid, char ** fname);
+static int blcr_get_checkpoint_filename(char **fname, pid_t pid);
+static int opal_crs_blcr_thread_callback(void *arg);
+
+static int opal_crs_blcr_checkpoint_cmd(pid_t pid, char **fname, char **cmd);
+static int opal_crs_blcr_restart_cmd(char *fname, char **cmd);
+
+static int blcr_update_snapshot_metadata(opal_crs_blcr_snapshot_t *snapshot);
+static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot);
+
+/*************************
+ * Local Global Variables
+ *************************/
+static cr_client_id_t client_id;
+static cr_callback_id_t cr_thread_callback_id;
+static int blcr_current_state = OPAL_CRS_RUNNING;
+
+static char *blcr_restart_cmd = NULL;
+static char *blcr_checkpoint_cmd = NULL;
+
+static opal_condition_t blcr_cond;
+static opal_mutex_t     blcr_lock;
+
+
+void opal_crs_blcr_construct(opal_crs_blcr_snapshot_t *snapshot) {
+    snapshot->context_filename = NULL;
+    snapshot->super.component_name = strdup(mca_crs_blcr_component.super.crs_version.mca_component_name);
+}
+
+void opal_crs_blcr_destruct( opal_crs_blcr_snapshot_t *snapshot) {
+    if(NULL != snapshot->context_filename)
+        free(snapshot->context_filename);
+}
+
+/*****************
+ * MCA Functions
+ *****************/ 
+opal_crs_base_module_1_0_0_t *
+opal_crs_blcr_component_query(int *priority)
+{
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: component_query()");
+
+    *priority = mca_crs_blcr_component.super.priority;
+    
+    return &blcr_module;
+}
+
+int opal_crs_blcr_module_init(void)
+{
+    void *crs_blcr_thread_callback_arg = NULL;
+
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: module_init()");
+
+    if( !opal_cr_is_tool ) {
+        /*
+         * Initialize BLCR
+         */
+        client_id = cr_init();
+        if (0 > client_id) {
+            opal_output(mca_crs_blcr_component.super.output_handle,
+                        "Error: crs:blcr: module_init: cr_init failed (%d)\n", client_id);
+            return OPAL_ERROR;
+        }
+    }
+
+    blcr_restart_cmd    = strdup("cr_restart");
+    blcr_checkpoint_cmd = strdup("cr_checkpoint");
+    
+    if( !opal_cr_is_tool ) {
+        /* We need to make the lock and condition variable before
+         * starting the thread, since the thread uses these vars.
+         */
+        OBJ_CONSTRUCT(&blcr_lock, opal_mutex_t);
+        OBJ_CONSTRUCT(&blcr_cond, opal_condition_t);
+        
+        /*
+         * Register the thread handler
+         */
+        cr_thread_callback_id = cr_register_callback(opal_crs_blcr_thread_callback,
+                                                     crs_blcr_thread_callback_arg,
+                                                     CR_THREAD_CONTEXT);
+    }
+
+    /*
+     * Now that we are done with init, set the state to running
+     */
+    blcr_current_state = OPAL_CRS_RUNNING;
+
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: module_init() --> Finished [%d]",
+                        opal_cr_is_tool);
+    
+    return OPAL_SUCCESS;
+}
+
+int opal_crs_blcr_module_finalize(void)
+{
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: module_finalize()");
+
+    /* Cleanup some memory */
+    if( NULL != blcr_restart_cmd ) {
+        free(blcr_restart_cmd);
+        blcr_restart_cmd = NULL;
+    }
+    if( NULL != blcr_checkpoint_cmd ) {
+        free(blcr_checkpoint_cmd);
+        blcr_checkpoint_cmd = NULL;
+    }
+
+    if( !opal_cr_is_tool ) {
+        OBJ_DESTRUCT(&blcr_lock);
+        OBJ_DESTRUCT(&blcr_cond);
+
+        /* Unload the thread callback */
+        cr_replace_callback(cr_thread_callback_id, NULL, NULL, CR_THREAD_CONTEXT);
+    }
+
+    /* BLCR does not have a finalization routine */
+
+    return OPAL_SUCCESS;
+}
+
+int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,  opal_crs_state_type_t *state)
+{
+    int ret;
+    opal_crs_blcr_snapshot_t *snapshot = OBJ_NEW(opal_crs_blcr_snapshot_t);
+    char * tmp_str = NULL;
+
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: checkpoint(%d, ---)", pid);
+
+    if(NULL != snapshot->super.reference_name)
+        free(snapshot->super.reference_name);
+    snapshot->super.reference_name = strdup(base_snapshot->reference_name);
+
+    if(NULL != snapshot->super.local_location)
+        free(snapshot->super.local_location);
+    snapshot->super.local_location  = strdup(base_snapshot->local_location);
+
+    if(NULL != snapshot->super.remote_location)
+        free(snapshot->super.remote_location);
+    snapshot->super.remote_location  = strdup(base_snapshot->remote_location);
+
+    /*
+     * Create the snapshot directory
+     */
+    snapshot->super.component_name = strdup(mca_crs_blcr_component.super.crs_version.mca_component_name);
+    if( OPAL_SUCCESS != (ret = opal_crs_base_init_snapshot_directory(&snapshot->super) )) {
+        *state = OPAL_CRS_ERROR;
+        opal_output(mca_crs_blcr_component.super.output_handle,
+                    "crs:blcr: checkpoint(): Error: Unable to initialize the directory for (%s).", 
+                    snapshot->super.reference_name);
+        return ret;
+    }
+
+    /*
+     * If we can checkpointing ourselves
+     * Note:
+     *   We cannot assume that just because
+     *   pid == getpid() 
+     *   that we can use the cr_request() function to checkpoint ourselves.
+     *   Since if we are a thread, then it is likely that we have not
+     *   properly initalized this module.
+     */
+    if(0 >= pid) { 
+        blcr_get_checkpoint_filename(&(snapshot->context_filename), pid);
+
+        /* Request a checkpoint be taken of the current process.
+         * Since we are not guaranteed to finish the checkpoint before this
+         * returns, we also need to wait for it.
+         */
+        cr_request_file(snapshot->context_filename);
+        
+        /* Wait for checkpoint to finish */
+        do {
+            sleep(1); /* JJH Do we really want to sleep? */
+        } while(CR_STATE_IDLE == cr_status());
+
+        *state = blcr_current_state;
+    }
+    /*
+     * Checkpointing another process
+     */
+    else {
+        ret = blcr_checkpoint_peer(pid, &(snapshot->context_filename));
+
+        if(OPAL_SUCCESS != ret) {
+            *state = OPAL_CRS_ERROR;
+            opal_output(mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: checkpoint(): Error: Unable to checkpoint pid (%d)",
+                        pid);
+            return ret;
+        }
+
+        *state = blcr_current_state;
+    }
+    
+    if(*state == OPAL_CRS_CONTINUE) {
+        /*
+         * Make sure the snapshot is in the proper directory
+         * Update the snapshot structure
+         */
+        asprintf(&tmp_str, "%s/%s", snapshot->super.local_location, snapshot->context_filename);
+        if (0 != (ret = blcr_move(snapshot->context_filename, tmp_str))) { 
+            *state = OPAL_CRS_ERROR;
+            opal_output(mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: checkpoint(): Error: Unable to move the checkpoint file (%s to the approprate directory (%s) :[%d].",
+                        snapshot->context_filename, tmp_str, ret);
+            perror("crs:blcr: checkpoint");
+            free(tmp_str);
+            return ret;
+        }
+
+        /*
+         * Update the metadata file
+         */
+        if( OPAL_SUCCESS != (ret = blcr_update_snapshot_metadata(snapshot)) ) {
+            *state = OPAL_CRS_ERROR;
+            opal_output(mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: checkpoint(): Error: Unable to update metadata for snapshot (%s).", 
+                        snapshot->super.reference_name);
+            return ret;
+        }
+    }
+
+    /*
+     * Return to the caller
+     */
+    base_snapshot = &(snapshot->super);
+
+    if(NULL != tmp_str) 
+        free(tmp_str);
+
+    return OPAL_SUCCESS;
+}
+
+int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_child, pid_t *child_pid)
+{
+    opal_crs_blcr_snapshot_t *snapshot = OBJ_NEW(opal_crs_blcr_snapshot_t);
+    char **cr_argv = NULL;
+    char *cr_cmd = NULL;
+    int ret;
+    int exit_status = OPAL_SUCCESS;
+    int status;
+
+    snapshot->super = *base_snapshot;
+
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: restart(%s, %d)", snapshot->super.reference_name, spawn_child);
+
+    /*
+     * If we need to reconstruct the snapshot,
+     */
+    if(snapshot->super.cold_start) {
+        if( OPAL_SUCCESS != (ret = blcr_cold_start(snapshot)) ) {
+            exit_status = OPAL_ERROR;
+            opal_output(mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: blcr_restart: Unable to reconstruct the snapshot.");
+            goto cleanup;
+        }
+    }
+    
+
+    /*
+     * Get the restart command
+     */
+    if ( OPAL_SUCCESS != (ret = opal_crs_blcr_restart_cmd(snapshot->context_filename, &cr_cmd)) ) {
+        exit_status = ret;
+        goto cleanup;
+    }
+    if ( NULL == (cr_argv = opal_argv_split(cr_cmd, ' ')) ) {
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+
+    /*
+     * Restart by replacing this process
+     */
+    /* Need to shutdown the event engine before this.
+     * for some reason the BLCR checkpointer and our event engine don't get
+     * along very well.
+     */
+    opal_progress_finalize();
+    opal_event_fini();
+
+    if (!spawn_child) {
+        opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                            "crs:blcr: blcr_restart: SELF: exec :(%s, %s):", 
+                            strdup(blcr_restart_cmd),
+                            opal_argv_join(cr_argv, ' '));
+
+        status = execvp(strdup(blcr_restart_cmd), cr_argv);
+
+        if(status < 0) {
+            opal_output(mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: blcr_restart: SELF: Child failed to execute :(%d):", status);
+        }
+        opal_output(mca_crs_blcr_component.super.output_handle,
+                    "crs:blcr: blcr_restart: SELF: execvp returned %d", status);
+
+        exit_status = status;
+        goto cleanup;
+    }
+    /*
+     * Restart by starting a new process
+     */
+    else {
+        *child_pid = fork();
+
+        if( 0 == *child_pid) {
+            /* Child Process */
+            opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                                "crs:blcr: blcr_restart: CHILD: exec :(%s, %s):", 
+                                strdup(blcr_restart_cmd),
+                                opal_argv_join(cr_argv, ' '));
+            
+            status = execvp(strdup(blcr_restart_cmd), cr_argv);
+
+            if(status < 0) {
+                opal_output(mca_crs_blcr_component.super.output_handle,
+                            "crs:blcr: blcr_restart: CHILD: Child failed to execute :(%d):", status);
+            }
+            opal_output(mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: blcr_restart: CHILD: execvp returned %d", status);
+
+            exit_status = status;
+            goto cleanup;
+        }
+        else if(*child_pid > 0) {
+            /* Parent is done once it is started. */
+            ;
+        }
+        else {
+            opal_output(mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: blcr_restart: CHILD: fork failed :(%d):", *child_pid);
+        }
+    }
+
+ cleanup:
+    if(NULL != cr_cmd)
+        free(cr_cmd);
+    if(NULL != cr_argv)
+        opal_argv_free(cr_argv);
+    
+    return exit_status;
+}
+    
+int opal_crs_blcr_disable_checkpoint(void)
+{
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: disable_checkpoint()");
+    /*
+     * Enter the BLCR Critical Section
+     */
+    cr_enter_cs(client_id);
+
+    return OPAL_SUCCESS;
+}
+
+int opal_crs_blcr_enable_checkpoint(void)
+{
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: enable_checkpoint()");
+    /*
+     * Leave the BLCR Critical Section
+     */
+    cr_leave_cs(client_id);
+
+    return OPAL_SUCCESS;
+}
+
+/*****************************
+ * Local Function Definitions
+ *****************************/
+static int blcr_checkpoint_peer(pid_t pid, char ** fname) 
+{
+    char **cr_argv = NULL;
+    char *cr_cmd = NULL;
+    int ret;
+    pid_t child_pid;
+    int exit_status = OPAL_SUCCESS;
+    int status, child_status;        
+
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: checkpoint_peer(%d, --)", pid);
+
+    /*
+     * Get the checkpoint command
+     */
+    if ( OPAL_SUCCESS != (ret = opal_crs_blcr_checkpoint_cmd(pid, fname, &cr_cmd)) ) {
+        opal_output(mca_crs_blcr_component.super.output_handle,
+                    "crs:blcr: checkpoint_peer: Failed to generate checkpoint command :(%d):", ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+    if ( NULL == (cr_argv = opal_argv_split(cr_cmd, ' ')) ) {
+        opal_output(mca_crs_blcr_component.super.output_handle,
+                    "crs:blcr: checkpoint_peer: Failed to opal_argv_split :(%d):", ret);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+    /*
+     * Fork a child to do the checkpoint
+     */
+    blcr_current_state = OPAL_CRS_CHECKPOINT;
+ 
+    child_pid = fork();
+
+    if(0 == child_pid) {
+        /* Child Process */
+        opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                            "crs:blcr: blcr_checkpoint_peer: exec :(%s, %s):", 
+                            strdup(blcr_checkpoint_cmd),
+                            opal_argv_join(cr_argv, ' '));
+        
+        status = execvp(strdup(blcr_checkpoint_cmd), cr_argv);
+
+        if(status < 0) {
+            opal_output(mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: blcr_checkpoint_peer: Child failed to execute :(%d):", status);
+        }
+        opal_output(mca_crs_blcr_component.super.output_handle,
+                    "crs:blcr: blcr_checkpoint_peer: execvp returned %d", status);
+    }
+    else if(child_pid > 0) {
+        /* Don't waitpid here since we don't really want to restart from inside waitpid ;) */
+        while(OPAL_CRS_RESTART  != blcr_current_state  &&
+              OPAL_CRS_CONTINUE != blcr_current_state ) {
+            opal_condition_wait(&blcr_cond, &blcr_lock);
+        }
+
+        opal_output(mca_crs_blcr_component.super.output_handle,
+                    "crs:blcr: blcr_checkpoint_peer: Thread finished with status %d", blcr_current_state);
+
+        if(OPAL_CRS_CONTINUE == blcr_current_state) {
+            /* Wait for the child only if we are continuing */
+            if( 0 > waitpid(child_pid, &child_status, 0) ) {
+                opal_output(mca_crs_blcr_component.super.output_handle,
+                    "crs:blcr: blcr_checkpoint_peer: waitpid returned %d", child_status);
+            }
+        }
+    }
+    else {
+        opal_output(mca_crs_blcr_component.super.output_handle,
+                    "crs:blcr: blcr_checkpoint_peer: fork failed :(%d):", child_pid);
+    }
+
+    /*
+     * Cleanup
+     */
+cleanup:
+    if(NULL != cr_cmd)
+        free(cr_cmd);
+    if(NULL != cr_argv)
+        opal_argv_free(cr_argv);
+
+    return exit_status;
+}
+
+static int opal_crs_blcr_thread_callback(void *arg) {
+    int ret;
+    
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: thread_callback()");
+
+    blcr_current_state = OPAL_CRS_CHECKPOINT;
+
+    /*
+     * Allow the checkpoint to be taken
+     */
+    ret = cr_checkpoint(0);
+    
+    /*
+     * Restarting
+     */
+    if ( 0 < ret ) {
+        opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                            "crs:blcr: thread_callback: Restarting.");
+        blcr_current_state = OPAL_CRS_RESTART;
+    }
+    /*
+     * Continuing
+     */
+    else {
+        opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                            "crs:blcr: thread_callback: Continue.");
+        blcr_current_state = OPAL_CRS_CONTINUE;
+    }
+
+    opal_condition_signal(&blcr_cond);
+
+    return 0;
+}
+
+static int opal_crs_blcr_checkpoint_cmd(pid_t pid, char **fname, char **cmd)
+{
+    char **cr_argv = NULL;
+    int argc = 0, ret;
+    char * pid_str;
+    int exit_status = OPAL_SUCCESS;
+
+    blcr_get_checkpoint_filename(fname, pid);
+
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: checkpoint_cmd(%d)", pid);
+
+    /*
+     * Build the command
+     */
+    if (OPAL_SUCCESS != (ret = opal_argv_append(&argc, &cr_argv, strdup(blcr_checkpoint_cmd)))) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    if (OPAL_SUCCESS != (ret = opal_argv_append(&argc, &cr_argv, strdup("--pid")))) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    asprintf(&pid_str, "%d", pid);
+    if (OPAL_SUCCESS != (ret = opal_argv_append(&argc, &cr_argv, strdup(pid_str)))) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    if (OPAL_SUCCESS != (ret = opal_argv_append(&argc, &cr_argv, strdup("--file")))) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    if (OPAL_SUCCESS != (ret = opal_argv_append(&argc, &cr_argv, strdup(*fname)))) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
+ cleanup:
+    if(exit_status != OPAL_SUCCESS)
+        *cmd = NULL;
+    else 
+        *cmd = opal_argv_join(cr_argv, ' ');
+    
+    if(NULL != pid_str) 
+        free(pid_str);
+    if( NULL != cr_argv)
+        opal_argv_free(cr_argv);
+
+    return exit_status;
+}
+
+static int opal_crs_blcr_restart_cmd(char *fname, char **cmd)
+{
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: restart_cmd(%s, ---)", fname);
+
+    if (NULL == fname) {
+        opal_output_verbose(10, opal_crs_base_output, 
+                            "crs:blcr: restart_cmd: Error: filename is NULL!");
+        return OPAL_CRS_ERROR;
+    }
+
+    asprintf(cmd, "%s %s", blcr_restart_cmd, fname);
+
+    return OPAL_SUCCESS;
+}
+
+static int blcr_get_checkpoint_filename(char **fname, pid_t pid)
+{
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: get_checkpoint_filename(--, %d)", pid);
+
+    asprintf(fname, "ompi_blcr_context.%d", pid);
+    
+    return OPAL_SUCCESS;
+}
+
+static int blcr_update_snapshot_metadata(opal_crs_blcr_snapshot_t *snapshot) {
+    char * dir_name  = NULL;
+    FILE * meta_data = NULL;
+    int exit_status  = OPAL_SUCCESS;
+
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: update_snapshot_metadata(%s)", snapshot->super.reference_name);
+
+    /* Bozo check to make sure this snapshot is ours */
+    if ( 0 != strncmp(mca_crs_blcr_component.super.crs_version.mca_component_name, 
+                      snapshot->super.component_name, 
+                      strlen(snapshot->super.component_name)) ) {
+        exit_status = OPAL_ERROR;
+        opal_output(mca_crs_blcr_component.super.output_handle,
+                    "crs:blcr: blcr_update_snapshot_metadata: Error: This snapshot (%s) is not intended for us (%s)\n", 
+                    snapshot->super.component_name, mca_crs_blcr_component.super.crs_version.mca_component_name);
+        goto cleanup;
+    }
+
+    /*
+     * Append to the metadata file:
+     *  the relative path of the context filename
+     */
+    if( NULL == (meta_data = opal_crs_base_open_metadata(&snapshot->super, 'w') ) ) {
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+    /* Context Filename -- Relative path */
+    fprintf(meta_data, "%s\n", snapshot->context_filename);
+
+    
+ cleanup:
+    if(NULL != meta_data)
+        fclose(meta_data);
+    if(NULL != dir_name)
+        free(dir_name);
+
+    return exit_status;
+}
+
+static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
+    char * content = NULL;
+    char * component_name = NULL;
+    int prev_pid;
+    int len = 0;
+    FILE * meta_data = NULL;
+    int exit_status = OPAL_SUCCESS;
+
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: cold_start(%s)", snapshot->super.reference_name);
+
+    /*
+     * Find the snapshot directory, read the metadata file
+     */
+    if( NULL == (meta_data = opal_crs_base_open_read_metadata(snapshot->super.local_location, 
+                                                              &component_name, &prev_pid) ) ) {
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+    snapshot->super.component_name = strdup(component_name);
+
+    /* Compare the component strings to make sure this is our snapshot before going further */
+    if ( 0 != strncmp(mca_crs_blcr_component.super.crs_version.mca_component_name,
+                      component_name, strlen(component_name)) ) {
+        exit_status = OPAL_ERROR;
+        opal_output(mca_crs_blcr_component.super.output_handle,
+                    "crs:blcr: blcr_cold_start: Error: This snapshot (%s) is not intended for us (%s)\n", 
+                    component_name, mca_crs_blcr_component.super.crs_version.mca_component_name);
+        goto cleanup;
+    }
+
+    /*
+     * Context Filename
+     */
+    len = 256; /* Max size for a BLCR filename */
+    content = (char *) malloc(sizeof(char) * len);
+    if (NULL == fgets(content, len, meta_data) ) {
+        free(content);
+        content = NULL;
+        goto cleanup;
+    }
+    /* Strip of newline */
+    len = strlen(content);
+    content[len - 1] = '\0';
+
+    /* save the filename in the structure */
+    asprintf(&snapshot->context_filename, "%s/%s", snapshot->super.local_location, content);
+
+    /*
+     * Reset the cold_start flag
+     */
+    snapshot->super.cold_start = false;
+
+ cleanup:
+    if(NULL != meta_data)
+        fclose(meta_data);
+    if(NULL != content)
+        free(content);
+
+    return exit_status;
+}
+
+/*
+ * As it turns out 'rename' doesn't work across filesystems :(
+ * So just do the system call to mv for the moment,
+ */
+static int blcr_move(char *src, char *dest) {
+    char * command = NULL;
+    int ret = OPAL_SUCCESS;
+
+    /* JJH: Assume 'mv' is in the path */
+    asprintf(&command, "mv %s %s", src, dest);
+
+    if (0 != (ret = system(command) )) {
+        opal_output(mca_crs_blcr_component.super.output_handle,
+                    "crs:blcr: move(): Error: Unable to move the file (%s) to (%s) :[%d].",
+                    src, dest, ret);
+        perror("crs:blcr move");
+        goto error;
+    }
+
+    free(command);
+    
+    /* JJH: Assume 'chmod' is in the path */
+    asprintf(&command, "chmod u+rwX  %s", dest);
+
+    if (0 != (ret = system(command) )) {
+        opal_output(mca_crs_blcr_component.super.output_handle,
+                    "crs:blcr: move(): Error: Unable to execute the command <%s> :[%d].",
+                    command, ret);
+        perror("crs:blcr chmod");
+        goto error;
+    }
+    
+ error:
+    free(command);
+    return ret;
+}

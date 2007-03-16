@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -22,10 +22,11 @@ headers += \
         base/bml_base_endpoint.h
 
 libmca_bml_la_SOURCES += \
-        base/bml_base_btl.c \
+	base/bml_base_btl.c \
 	base/bml_base_btl.h \
 	base/bml_base_endpoint.h \
-        base/bml_base_endpoint.c \
+	base/bml_base_endpoint.c \
 	base/bml_base_init.c \
 	base/bml_base_close.c \
-	base/bml_base_open.c
+	base/bml_base_open.c \
+	base/bml_base_ft.c

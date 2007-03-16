@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -63,7 +63,8 @@ mca_btl_mvapi_module_t mca_btl_mvapi_module = {
         mca_btl_mvapi_get,
         mca_btl_mvapi_dump, 
         NULL, /* mpool */
-        NULL /* error call back registration */
+        NULL, /* error call back registration */
+        mca_btl_mvapi_ft_event
     }
 };
 
@@ -826,4 +827,24 @@ void mca_btl_mvapi_dump(
 #endif  /* VAPI_FEATURE_SRQ */
     opal_output( 0, "sd_wqe_hp %d\n", endpoint->sd_wqe_hp );
     opal_output( 0, "sd_wqe_lp %d\n", endpoint->sd_wqe_lp );
+}
+
+int mca_btl_mvapi_ft_event(int state) {
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+
+    return OMPI_SUCCESS;
 }

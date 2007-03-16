@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -17,6 +17,8 @@
  */
 
 #include "orte_config.h"
+
+#include "orte/orte_constants.h"
 
 #include <sys/types.h>
 #if HAVE_NETINET_IN_H
@@ -47,6 +49,10 @@ static void orte_dss_arith_std_cntr(orte_std_cntr_t *value, orte_std_cntr_t *ope
 /* some weird ones - but somebody *might* want to do it, I suppose... */
 static void orte_dss_arith_data_type(orte_data_type_t *value, orte_data_type_t *operand, orte_dss_arith_op_t operation);
 static void orte_dss_arith_daemon_cmd(orte_daemon_cmd_flag_t *value, orte_daemon_cmd_flag_t *operand, orte_dss_arith_op_t operation);
+
+#if OPAL_ENABLE_FT == 1
+static void orte_dss_arith_ckpt_cmd(orte_daemon_cmd_flag_t *value, orte_daemon_cmd_flag_t *operand, orte_dss_arith_op_t operation);
+#endif
 
 int orte_dss_arith(orte_data_value_t *value, orte_data_value_t *operand, orte_dss_arith_op_t operation)
 {
@@ -141,6 +147,9 @@ int orte_dss_increment(orte_data_value_t *value)
     orte_daemon_cmd_flag_t daemoncmdone;
     orte_data_type_t datatypeone;
     orte_std_cntr_t stdcntrone;
+#if OPAL_ENABLE_FT == 1
+    orte_daemon_cmd_flag_t ckptcmdone;
+#endif
 
     /* check for error */
     if (NULL == value) {
@@ -216,6 +225,13 @@ int orte_dss_increment(orte_data_value_t *value)
             orte_dss_arith_daemon_cmd((orte_daemon_cmd_flag_t*)value->data, &daemoncmdone, ORTE_DSS_ADD);
             break;
 
+#if OPAL_ENABLE_FT == 1
+        case ORTE_CKPT_CMD:
+            ckptcmdone = 1;
+            orte_dss_arith_ckpt_cmd(value->data, &ckptcmdone, ORTE_DSS_ADD);
+            break;
+#endif
+
         case ORTE_DATA_TYPE:
             datatypeone = 1;
             orte_dss_arith_data_type((orte_data_type_t*)value->data, &datatypeone, ORTE_DSS_ADD);
@@ -251,6 +267,9 @@ int orte_dss_decrement(orte_data_value_t *value)
     orte_daemon_cmd_flag_t daemoncmdone;
     orte_data_type_t datatypeone;
     orte_std_cntr_t stdcntrone;
+#if OPAL_ENABLE_FT == 1
+    orte_daemon_cmd_flag_t ckptcmdone;
+#endif
 
     /* check for error */
     if (NULL == value) {
@@ -325,6 +344,13 @@ int orte_dss_decrement(orte_data_value_t *value)
             daemoncmdone = 1;
             orte_dss_arith_daemon_cmd((orte_daemon_cmd_flag_t*)value->data, &daemoncmdone, ORTE_DSS_SUB);
             break;
+
+#if OPAL_ENABLE_FT == 1
+        case ORTE_CKPT_CMD:
+            ckptcmdone = 1;
+            orte_dss_arith_ckpt_cmd(value->data, &ckptcmdone, ORTE_DSS_SUB);
+            break;
+#endif
 
         case ORTE_DATA_TYPE:
             datatypeone = 1;
@@ -797,3 +823,34 @@ static void orte_dss_arith_daemon_cmd(orte_daemon_cmd_flag_t *value, orte_daemon
     return;
 }
 
+#if OPAL_ENABLE_FT == 1
+static void orte_dss_arith_ckpt_cmd(orte_daemon_cmd_flag_t *value, orte_daemon_cmd_flag_t *operand, orte_dss_arith_op_t operation)
+{
+    switch(operation) {
+        case ORTE_DSS_ADD:
+            (*value) += *operand;
+            return;
+
+        case ORTE_DSS_SUB:
+            (*value) -= *operand;
+            return;
+
+        case ORTE_DSS_MUL:
+            (*value) *= *operand;
+            return;
+
+        case ORTE_DSS_DIV:
+            if (0 == *operand) {
+                ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
+                return;
+            }
+            (*value) /= *operand;
+            return;
+
+        default:
+            ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
+            return;
+    }
+    return;
+}
+#endif

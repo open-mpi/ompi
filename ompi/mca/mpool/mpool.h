@@ -1,5 +1,5 @@
 /**
-  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
   *                         University Research and Technology
   *                         Corporation.  All rights reserved.
   * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -25,6 +25,9 @@
 #include "ompi/info/info.h"
 #include "ompi/class/ompi_free_list.h" 
 #include "ompi/class/ompi_pointer_array.h" 
+
+#include "opal/mca/crs/crs.h"
+#include "opal/mca/crs/base/base.h"
 
 #define MCA_MPOOL_FLAGS_CACHE_BYPASS 0x1
 #define MCA_MPOOL_FLAGS_PERSIST 0x2 
@@ -131,6 +134,14 @@ typedef void (*mca_mpool_base_module_finalize_fn_t)(struct mca_mpool_base_module
 
 
 /**
+ * Fault Tolerance Event Notification Function
+ * @param state Checkpoint Stae
+ * @return OMPI_SUCCESS or failure status
+ */
+typedef int (*mca_mpool_base_module_ft_event_fn_t)(int state);
+
+
+/**
  * mpool component descriptor. Contains component version information
  * and open/close/init functions.
  */
@@ -166,6 +177,7 @@ struct mca_mpool_base_module_t {
     mca_mpool_base_module_release_fn_t mpool_release; /**< release a registration from the cache */ 
     mca_mpool_base_module_release_memory_fn_t mpool_release_memory; /**< release memor region from the cache  */
     mca_mpool_base_module_finalize_fn_t mpool_finalize;  /**< finalize */
+    mca_mpool_base_module_ft_event_fn_t mpool_ft_event;  /**< ft_event */
     struct mca_rcache_base_module_t *rcache; /* the rcache associated with this mpool */ 
     uint32_t flags; /**< mpool flags */
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -439,6 +439,13 @@ extern void mca_btl_openib_send_frag_return(mca_btl_base_module_t* btl,
 
 
 int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t* openib_btl); 
+
+/**
+ * Fault Tolerance Event Notification Function
+ * @param state Checkpoint Stae
+ * @return OMPI_SUCCESS or failure status
+ */
+int mca_btl_openib_ft_event(int state);
 
 #define BTL_OPENIB_HP_QP 0
 #define BTL_OPENIB_LP_QP 1

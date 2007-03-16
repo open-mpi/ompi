@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -34,6 +34,8 @@ static const char FUNC_NAME[] = "MPI_Get_version";
 int MPI_Get_version(int *version, int *subversion) 
 {
     MPI_Comm null = NULL;
+
+    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
         /* Per MPI-2:3.1, this function can be invoked before

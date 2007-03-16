@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -26,6 +26,7 @@
 extern "C" {
 #endif
 
+int orte_iof_null_finalize(void);
 
 /**
  * Publish a local file descriptor as an endpoint that is logically
@@ -125,6 +126,8 @@ int orte_iof_null_unsubscribe(
     orte_ns_cmp_bitmask_t src_mask,
     orte_iof_base_tag_t src_tag
 );
+
+int orte_iof_null_ft_event( int state );
 
 /**
  * IOF null Component 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -58,10 +58,15 @@ typedef uint32_t orte_rml_tag_t;
 #define ORTE_RML_TAG_SM_BACK_FILE_CREATED    19
 #define ORTE_RML_TAG_WIREUP         20
 
+#define ORTE_RML_TAG_FILEM          21
+#define ORTE_RML_TAG_CKPT           22
+/* For CRCP Coord Component */
+#define OMPI_CRCP_COORD_BOOKMARK_TAG 4242
+
+
 #define ORTE_RML_TAG_DYNAMIC     2000
 
 #define ORTE_RML_TAG_MAX UINT32_MAX
-
                                                                                                                                         
 /**
  * Flags to send/recv

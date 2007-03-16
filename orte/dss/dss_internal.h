@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -307,6 +307,11 @@ extern orte_data_type_t orte_dss_num_reg_types;
     int orte_dss_pack_data_type(orte_buffer_t *buffer, void *src,
                            orte_std_cntr_t num_vals, orte_data_type_t type);
 
+#if OPAL_ENABLE_FT == 1
+    int orte_dss_pack_ckpt_cmd(orte_buffer_t *buffer, void *src,
+                               orte_std_cntr_t num_vals, orte_data_type_t type);
+#endif
+
     int orte_dss_pack_data_value(orte_buffer_t *buffer, void *src,
                            orte_std_cntr_t num_vals, orte_data_type_t type);
 
@@ -348,6 +353,11 @@ extern orte_data_type_t orte_dss_num_reg_types;
 
     int orte_dss_unpack_data_type(orte_buffer_t *buffer, void *dest,
                              orte_std_cntr_t *num_vals, orte_data_type_t type);
+
+#if OPAL_ENABLE_FT == 1
+    int orte_dss_unpack_ckpt_cmd(orte_buffer_t *buffer, void *dest,
+                                 orte_std_cntr_t *num_vals, orte_data_type_t type);
+#endif
 
     int orte_dss_unpack_data_value(orte_buffer_t *buffer, void *dest,
                              orte_std_cntr_t *num_vals, orte_data_type_t type);
@@ -405,6 +415,10 @@ extern orte_data_type_t orte_dss_num_reg_types;
 
     int orte_dss_compare_dt(orte_data_type_t *value1, orte_data_type_t *value2, orte_data_type_t type);
 
+#if OPAL_ENABLE_FT == 1
+    int orte_dss_compare_ckpt_cmd(size_t *value1, size_t *value2, orte_data_type_t type);
+#endif
+
     int orte_dss_compare_data_value(orte_data_value_t *value1, orte_data_value_t *value2, orte_data_type_t type);
 
     int orte_dss_compare_byte_object(orte_byte_object_t *value1, orte_byte_object_t *value2, orte_data_type_t type);
@@ -448,6 +462,9 @@ extern orte_data_type_t orte_dss_num_reg_types;
     int orte_dss_print_null(char **output, char *prefix, void *src, orte_data_type_t type);
     int orte_dss_print_std_cntr(char **output, char *prefix, orte_std_cntr_t *src, orte_data_type_t type);
     int orte_dss_print_data_type(char **output, char *prefix, orte_data_type_t *src, orte_data_type_t type);
+#if OPAL_ENABLE_FT == 1
+    int orte_dss_print_ckpt_cmd(char **output, char *prefix, size_t *src, orte_data_type_t type);
+#endif
     int orte_dss_print_data_value(char **output, char *prefix, orte_data_value_t *src, orte_data_type_t type);
     int orte_dss_print_byte_object(char **output, char *prefix, orte_byte_object_t *src, orte_data_type_t type);
 

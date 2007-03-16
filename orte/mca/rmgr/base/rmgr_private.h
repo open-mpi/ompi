@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -84,6 +84,10 @@ ORTE_DECLSPEC int orte_rmgr_base_set_vpid_range(orte_jobid_t jobid, orte_vpid_t 
 
 ORTE_DECLSPEC int orte_rmgr_base_get_vpid_range(orte_jobid_t jobid, orte_vpid_t *start, orte_vpid_t *range);
 
+
+ORTE_DECLSPEC int orte_rmgr_base_set_proc_info(const orte_process_name_t* name, pid_t pid, char * nodename);
+ORTE_DECLSPEC int orte_rmgr_base_get_proc_info(const orte_process_name_t* name, pid_t* pid, char **nodename);
+
 ORTE_DECLSPEC int orte_rmgr_base_connect(orte_std_cntr_t num_connect,
                                          orte_process_name_t *connect);
 
@@ -99,7 +103,6 @@ ORTE_DECLSPEC int orte_rmgr_base_add_attribute(opal_list_t* attr_list, char* key
 ORTE_DECLSPEC int orte_rmgr_base_merge_attributes(opal_list_t* target, opal_list_t* source, bool override);
 
 ORTE_DECLSPEC int orte_rmgr_base_delete_attribute(opal_list_t* attr_list, char* key);
-
 
 /*
  * Internal definitions

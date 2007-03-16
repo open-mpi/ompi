@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2006-2007 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
  *
  * $COPYRIGHT$
@@ -36,8 +39,8 @@ mca_rcache_vma_component_t mca_rcache_vma_component = {
         /* Next the MCA v1.0.0 component meta data */
     
         {
-            /* Whether the component is checkpointable or not */
-            false
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
         mca_rcache_vma_component_init
     }

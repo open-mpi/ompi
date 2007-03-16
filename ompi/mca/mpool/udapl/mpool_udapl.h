@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -154,6 +154,12 @@ void* mca_common_udapl_segment_alloc(
     size_t* size, 
     mca_mpool_base_registration_t** registration);
 
+/**
+ * Fault Tolerance Event Notification Function
+ * @param state Checkpoint Stae
+ * @return OMPI_SUCCESS or failure status
+ */
+int mca_mpool_udapl_ft_event(int state);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

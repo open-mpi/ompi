@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -41,7 +41,7 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
     int rc;
     orte_app_context_t **app_context;
     orte_std_cntr_t i, max_n=1, count;
-    int8_t have_prefix, user_specified;
+    int8_t have_prefix, user_specified, have_preload_files, have_preload_files_dest_dir;
 
     /* unpack into array of app_context objects */
     app_context = (orte_app_context_t**) dest;
@@ -183,6 +183,49 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
         } else {
             app_context[i]->prefix_dir = NULL;
         }
+
+        /* Unpack the preload_binary flag */
+        max_n=1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(app_context[i]->preload_binary),
+                   &max_n, ORTE_BOOL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* Unpack the preload_files set */
+        max_n=1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &have_preload_files,
+                                                         &max_n, ORTE_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (have_preload_files) {
+            if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &app_context[i]->preload_files,
+                                                             &max_n, ORTE_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else {
+            app_context[i]->preload_files = NULL;
+        }
+
+        /* Unpack the preload_files_dest_dir set */
+        max_n=1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &have_preload_files_dest_dir,
+                                                         &max_n, ORTE_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (have_preload_files_dest_dir) {
+            if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &app_context[i]->preload_files_dest_dir,
+                                                             &max_n, ORTE_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else {
+            app_context[i]->preload_files_dest_dir = NULL;
+        }
+
     }
 
     return ORTE_SUCCESS;

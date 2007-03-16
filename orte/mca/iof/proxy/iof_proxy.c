@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -45,9 +45,13 @@ orte_iof_base_module_t orte_iof_proxy_module = {
     orte_iof_proxy_subscribe,
     orte_iof_proxy_unsubscribe,
     orte_iof_base_flush,
-    NULL
+    orte_iof_proxy_finalize,
+    orte_iof_proxy_ft_event
 };
 
+int orte_iof_proxy_finalize(void ) {
+    return ORTE_SUCCESS;
+}
 
 /**
  * Publish a local file descriptor as an endpoint that is logically
@@ -285,3 +289,64 @@ int orte_iof_proxy_unsubscribe(
     return orte_iof_base_callback_delete(ORTE_PROC_MY_NAME,src_tag);
 }
 
+int orte_iof_proxy_ft_event(int state) {
+    int ret, exit_status = ORTE_SUCCESS;
+
+    if(OPAL_CRS_CHECKPOINT == state) {
+        /*
+         * Flush
+         */
+        if( ORTE_SUCCESS != (ret = orte_iof_base_flush() ) ) {
+            return ret;
+        }
+
+        /*
+         * Stop receiving events
+         */
+        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_SVC);
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        /*
+         * Restart Receiving events
+         */
+        if(ORTE_SUCCESS != (ret = orte_rml.recv_nb(
+                                                   ORTE_NAME_WILDCARD,
+                                                   mca_iof_proxy_component.proxy_iov,
+                                                   1,
+                                                   ORTE_RML_TAG_IOF_SVC,
+                                                   ORTE_RML_ALLOC|ORTE_RML_PERSISTENT,
+                                                   orte_iof_proxy_svc_recv,
+                                                   NULL
+                                                   ) ) ) {
+            exit_status = ret;
+            goto cleanup;
+        }
+
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        /*
+         * Restart Receiving events
+         */
+        if(ORTE_SUCCESS != (ret = orte_rml.recv_nb(
+                                                   ORTE_NAME_WILDCARD,
+                                                   mca_iof_proxy_component.proxy_iov,
+                                                   1,
+                                                   ORTE_RML_TAG_IOF_SVC,
+                                                   ORTE_RML_ALLOC|ORTE_RML_PERSISTENT,
+                                                   orte_iof_proxy_svc_recv,
+                                                   NULL
+                                                   ) ) ) {
+            exit_status = ret;
+            goto cleanup;
+        }
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+
+ cleanup:
+    return exit_status;
+}

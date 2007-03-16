@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+dnl Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -519,6 +519,105 @@ elif test "$with_cross" != "" ; then
     OMPI_LOG_FILE([$with_cross])
     . "$with_cross"
 fi
+
+#
+# --with-ft=TYPE
+#  TYPE:
+#    - LAM (synonym for 'cr' currently)
+#    - cr
+#  /* General FT sections */
+#  #if OPAL_ENABLE_FT == 0 /* FT Disabled globaly */
+#  #if OPAL_ENABLE_FT == 1 /* FT Enabled globaly */
+#  /* CR Specific sections */
+#  #if OPAL_ENABLE_FT_CR == 0 /* FT Ckpt/Restart Disabled */
+#  #if OPAL_ENABLE_FT_CR == 1 /* FT Ckpt/Restart Enabled */
+#
+AC_MSG_CHECKING([if want fault tolerance])
+AC_ARG_WITH(ft,
+    [AC_HELP_STRING([--with-ft=TYPE],
+            [Specify the type of fault tolerance to enable. Options: LAM (LAM/MPI-like), cr (Checkpoint/Restart) (default: disabled)])],
+        [ompi_want_ft=1],
+        [ompi_want_ft=0])
+if test "$with_ft" = "no" -o "$ompi_want_ft" = "0"; then
+    ompi_want_ft=0
+    ompi_want_ft_cr=0
+    AC_MSG_RESULT([Disabled fault tolerance])
+else
+    ompi_want_ft=1
+    ompi_want_ft_cr=0
+    ompi_want_ft_type=none
+
+    # Default value
+    if test "$with_ft" = "" -o "$with_ft" = "yes"; then
+        ompi_want_ft_type=cr
+        ompi_want_ft_cr=1
+    elif test "$with_ft" = "LAM"; then
+        ompi_want_ft_type=lam
+        ompi_want_ft_cr=1
+    elif test "$with_ft" = "lam"; then
+        ompi_want_ft_type=lam
+        ompi_want_ft_cr=1
+    elif test "$with_ft" = "CR"; then
+        ompi_want_ft_type=cr
+        ompi_want_ft_cr=1
+    elif test "$with_ft" = "cr"; then
+        ompi_want_ft_type=cr
+        ompi_want_ft_cr=1
+    else
+        AC_MSG_RESULT([Unrecognized FT TYPE: $with_ft])
+        AC_MSG_ERROR([Cannot continue])
+    fi
+    AC_MSG_RESULT([Enabled $with_ft ($ompi_want_ft_type)])
+    AC_MSG_WARN([**************************************************])
+    AC_MSG_WARN([*** Fault Tolerance Integration into Open MPI is *])
+    AC_MSG_WARN([*** a research quality implementation, and care  *])
+    AC_MSG_WARN([*** should be used when choosing to enable it.   *])
+    AC_MSG_WARN([**************************************************])
+fi
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT], [$ompi_want_ft],
+                   [Enable fault tolerance general components and logic])
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT_CR], [$ompi_want_ft_cr],
+                   [Enable fault tolerance checkpoint/restart components and logic])
+AM_CONDITIONAL(WANT_FT, test "$ompi_want_ft" = "1")
+
+#
+# Fault Tolerance Components and Logic
+#
+# --enable-ft-thread
+#  #if OPAL_ENABLE_FT_THREAD == 0 /* Disabled */
+#  #if OPAL_ENABLE_FT_THREAD == 1 /* Enabled  */
+# 
+AC_MSG_CHECKING([if want fault tolerance thread])
+AC_ARG_ENABLE([ft_thread],
+    [AC_HELP_STRING([--enable-ft-thread],
+                    [Enable fault tolerance thread running inside all processes. Requires progress threads (default: disabled)])])
+if test "$ompi_want_ft" = "0"; then
+    ompi_want_ft_thread=0
+    AC_MSG_RESULT([Disabled (fault tolerance disabled --without-ft-style)])
+elif test "$enable_ft_thread" = "yes"; then
+    # This check may not fire since progress threads are checked after this section :/
+    if test "$OMPI_ENABLE_PROGRESS_THREADS" = "0"; then
+        AC_MSG_RESULT([Must enable progress threads to use this option])
+        AC_MSG_ERROR([Cannot continue])
+    else
+        AC_MSG_RESULT([yes])
+        ompi_want_ft_thread=1
+        AC_MSG_WARN([**************************************************])
+        AC_MSG_WARN([*** Fault Tolerance with a thread in Open MPI    *])
+        AC_MSG_WARN([*** is an experimental, research quality option. *])
+        AC_MSG_WARN([*** It requires progress threads to be used, and *])
+        AC_MSG_WARN([*** care should be used when enabling these      *])
+        AC_MSG_WARN([*** options.                                     *])
+        AC_MSG_WARN([**************************************************])
+    fi
+else
+    ompi_want_ft_thread=0
+    AC_MSG_RESULT([Disabled])
+fi
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT_THREAD], [$ompi_want_ft_thread],
+                   [Enable fault tolerance thread in Open PAL])
+AM_CONDITIONAL(WANT_FT_THREAD, test "$ompi_want_ft_thread" = "1")
+
 
 #
 # Do we want to install binaries?

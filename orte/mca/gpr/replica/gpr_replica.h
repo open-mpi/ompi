@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -444,6 +444,8 @@ int orte_gpr_replica_close(void);
 orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority);
 int orte_gpr_replica_finalize(void);
 int orte_gpr_replica_module_init(void);
+
+int  orte_gpr_replica_ft_event(int state);
 
 ORTE_MODULE_DECLSPEC extern mca_gpr_base_component_t mca_gpr_replica_component;
 

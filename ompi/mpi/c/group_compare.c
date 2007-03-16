@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -41,6 +41,8 @@ int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result) {
     int return_value, proc1, proc2, similar, identical, match ;
     ompi_group_t *group1_pointer, *group2_pointer;
     ompi_proc_t *proc1_pointer, *proc2_pointer;
+
+    OPAL_CR_TEST_CHECKPOINT_READY();
 
     /* initialization */
     return_value=MPI_SUCCESS;

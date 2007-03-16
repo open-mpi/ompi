@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -125,8 +125,8 @@ mca_allocator_base_component_t mca_allocator_bucket_component = {
   /* Next the MCA v1.0.0 module meta data */
 
   {
-    /* Whether the module is checkpointable or not */
-    false
+      /* The component is checkpoint ready */
+      MCA_BASE_METADATA_PARAM_CHECKPOINT
   },
   mca_allocator_bucket_module_init
 };

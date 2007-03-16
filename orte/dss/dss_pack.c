@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -471,6 +471,56 @@ int orte_dss_pack_data_value(orte_buffer_t *buffer, void *src, orte_std_cntr_t n
 
     return ORTE_SUCCESS;
 }
+
+#if OPAL_ENABLE_FT == 1
+/*
+ * ORTE_CKPT_CMD
+ */
+int orte_dss_pack_ckpt_cmd(orte_buffer_t *buffer, void *src, orte_std_cntr_t num,
+                           orte_data_type_t type)
+{
+    size_t required;
+    int rc;
+
+    required = sizeof(size_t);
+    switch (required) {
+
+        case 1:
+            if (ORTE_SUCCESS != (
+                rc = orte_dss_pack_byte(buffer, src, num, ORTE_BYTE))) {
+                ORTE_ERROR_LOG(rc);
+            }
+            break;
+
+        case 2:
+            if (ORTE_SUCCESS != (
+                rc = orte_dss_pack_int16(buffer, src, num, ORTE_INT16))) {
+                ORTE_ERROR_LOG(rc);
+            }
+            break;
+
+        case 4:
+            if (ORTE_SUCCESS != (
+                rc = orte_dss_pack_int32(buffer, src, num, ORTE_INT32))) {
+                ORTE_ERROR_LOG(rc);
+            }
+            break;
+
+        case 8:
+            if (ORTE_SUCCESS != (
+                rc = orte_dss_pack_int64(buffer, src, num, ORTE_INT64))) {
+                ORTE_ERROR_LOG(rc);
+            }
+            break;
+
+        default:
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            return ORTE_ERR_BAD_PARAM;
+    }
+
+    return rc;
+}
+#endif
 
 /*
  * ORTE_BYTE_OBJECT

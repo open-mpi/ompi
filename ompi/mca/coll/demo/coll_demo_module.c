@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -55,7 +55,8 @@ static const mca_coll_base_module_1_0_0_t intra = {
     mca_coll_demo_reduce_scatter_intra,
     mca_coll_demo_scan_intra,
     mca_coll_demo_scatter_intra,
-    mca_coll_demo_scatterv_intra
+    mca_coll_demo_scatterv_intra,
+    mca_coll_demo_ft_event
 };
 
 
@@ -86,7 +87,8 @@ static const mca_coll_base_module_1_0_0_t inter = {
     mca_coll_demo_reduce_scatter_inter,
     NULL,
     mca_coll_demo_scatter_inter,
-    mca_coll_demo_scatterv_inter
+    mca_coll_demo_scatterv_inter,
+    mca_coll_demo_ft_event
 };
 
 
@@ -143,5 +145,25 @@ mca_coll_demo_module_init(struct ompi_communicator_t *comm)
  */
 int mca_coll_demo_module_finalize(struct ompi_communicator_t *comm)
 {
+    return OMPI_SUCCESS;
+}
+
+int mca_coll_demo_ft_event(int status) {
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+
     return OMPI_SUCCESS;
 }

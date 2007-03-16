@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -56,6 +56,7 @@ mca_pml_dr_t mca_pml_dr = {
     mca_pml_dr_probe,
     mca_pml_dr_start,
     mca_pml_dr_dump,
+    NULL,
     32768,
     INT_MAX
     }

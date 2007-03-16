@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -49,7 +49,7 @@ const opal_backtrace_base_component_1_0_0_t mca_backtrace_none_component = {
 
     /* Next the MCA v1.0.0 component meta data */
     {
-        /* Whether the component is checkpointable or not */
-        true
+        /* The component is checkpoint ready */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
 };

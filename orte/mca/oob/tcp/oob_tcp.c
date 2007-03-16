@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -41,6 +41,7 @@
 #include "opal/opal_socket_errno.h"
 #include "opal/util/output.h"
 #include "opal/util/if.h"
+#include "opal/class/opal_hash_table.h"
 #include "orte/class/orte_proc_table.h"
 #include "orte/mca/oob/tcp/oob_tcp.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -50,7 +51,6 @@
 /*
  * Data structure for accepting connections.
  */
-
 struct mca_oob_tcp_event_t {
     opal_list_item_t item;
     opal_event_t event;
@@ -86,7 +86,6 @@ static int  mca_oob_tcp_create_listen_thread(void);
 static void mca_oob_tcp_recv_handler(int sd, short flags, void* user);
 static void mca_oob_tcp_accept(void);
 
-
 struct mca_oob_tcp_subscription_t {
     opal_list_item_t item;
     orte_jobid_t jobid;
@@ -106,6 +105,7 @@ OBJ_CLASS_INSTANCE(
                    NULL,
                    NULL);
 
+int mca_oob_tcp_output_handle = 0;
 
 
 /*
@@ -123,7 +123,8 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
         mca_oob_tcp_component_close /* component close */
     },
     {
-        false /* checkpoint / restart */
+        /* The component is checkpoint ready */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
     mca_oob_tcp_component_init
   }
@@ -140,9 +141,9 @@ static mca_oob_t mca_oob_tcp = {
     mca_oob_tcp_recv_cancel,
     mca_oob_tcp_init,
     mca_oob_tcp_fini,
-    mca_oob_xcast
+    mca_oob_xcast,
+    mca_oob_tcp_ft_event
 };
-
 
 /*
  * Utility function to register/lookup module parameters.
@@ -175,6 +176,7 @@ static inline char* mca_oob_tcp_param_register_str(
  */
 int mca_oob_tcp_component_open(void)
 {
+    int value = 0;
     char *listen_type;
     int tmp;
 
@@ -185,6 +187,15 @@ int mca_oob_tcp_component_open(void)
         return ORTE_ERROR;
     }
 #endif
+
+    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
+                           "verbose",
+                           "Verbose level for the OOB tcp component",
+                           false, false,
+                           0,
+                           &value);
+    mca_oob_tcp_output_handle = opal_output_open(NULL);
+    opal_output_set_verbosity(mca_oob_tcp_output_handle, value);
 
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_subscriptions, opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,     opal_list_t);
@@ -294,7 +305,9 @@ int mca_oob_tcp_component_open(void)
     mca_oob_tcp_component.tcp_shutdown = false;
     mca_oob_tcp_component.tcp_listen_sd = -1;
     mca_oob_tcp_component.tcp_match_count = 0;
+
     mca_oob_tcp_component.tcp_last_copy_time = 0;
+
     return ORTE_SUCCESS;
 }
 
@@ -323,6 +336,7 @@ int mca_oob_tcp_component_close(void)
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msg_completed);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_match_lock);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_match_cond);
+
     return ORTE_SUCCESS;
 }
 
@@ -796,6 +810,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
             CLOSE_THE_SOCKET(sd);
             break;
     }
+
 }
 
 
@@ -872,7 +887,7 @@ void mca_oob_tcp_registry_callback(
 
                 /* check to make sure this is the requested key */
                 keyval = value->keyvals[j];
-                if(strcmp(keyval->key,"oob-tcp") != 0)
+                if(strcmp(keyval->key, ORTE_OOB_TCP_KEY) != 0)
                     continue;
 
                 /* transfer ownership of registry object to buffer and unpack */
@@ -908,6 +923,7 @@ void mca_oob_tcp_registry_callback(
                     &mca_oob_tcp_component.tcp_peer_names, &addr->addr_name);
                 if(NULL != existing) {
                     /* TSW - need to update existing entry */
+                    orte_hash_table_set_proc(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
                     OBJ_RELEASE(addr);
                     continue;
                 }
@@ -921,6 +937,8 @@ void mca_oob_tcp_registry_callback(
             }
         }
     }
+
+
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 }
 
@@ -933,7 +951,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
     mca_oob_tcp_addr_t* addr;
     mca_oob_tcp_subscription_t* subscription;
     char *segment, *sub_name, *trig_name;
-    char *key="oob-tcp";
+    char *key = ORTE_OOB_TCP_KEY;
     orte_gpr_subscription_id_t sub_id;
     opal_list_item_t* item;
     int rc;
@@ -1037,7 +1055,7 @@ int mca_oob_tcp_init(void)
     orte_buffer_t *buffer;
     orte_gpr_subscription_id_t sub_id;
     char *sub_name, *segment, *trig_name, **tokens;
-    char *keys[] = {"oob-tcp", ORTE_PROC_RML_IP_ADDRESS_KEY};
+    char *keys[] = { ORTE_OOB_TCP_KEY, ORTE_PROC_RML_IP_ADDRESS_KEY};
     orte_data_value_t *values[2];
     orte_byte_object_t bo;
     mca_oob_tcp_subscription_t *subscription;
@@ -1144,6 +1162,8 @@ int mca_oob_tcp_init(void)
         free(segment);
         return rc;
     }
+
+
     /* the id of each subscription is recorded
      * here so we can (if desired) cancel that subscription later
      */
@@ -1411,3 +1431,89 @@ int mca_oob_tcp_set_addr(const orte_process_name_t* name, const char* uri)
     return rc;
 }
 
+
+/* Dummy function for when we are not using FT. */
+#if OPAL_ENABLE_FT == 0
+int mca_oob_tcp_ft_event(int state) {
+    return ORTE_SUCCESS;
+}
+#else
+int mca_oob_tcp_ft_event(int state) {
+    int  exit_status = ORTE_SUCCESS;
+
+    if(OPAL_CRS_CHECKPOINT == state) {
+        /*
+         * Disable event processing while we are working
+         */
+        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+        opal_event_disable();
+
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        /*
+         * Resume event processing
+         */
+        opal_event_enable();
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        /* Module cleanup */
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+        mca_oob_tcp_fini();
+        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+
+        /* Clean up bad peer info */
+        OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_subscriptions);
+        OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_list);
+        OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peers);
+        OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_names);
+        OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_free);
+        OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_events);
+        
+        /* do subset of mca_oob_tcp_component_open() */
+        OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_subscriptions, opal_list_t);
+        OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,     opal_list_t);
+        OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peers,         opal_hash_table_t);
+        OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_names,    opal_hash_table_t);
+        OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_free,     opal_free_list_t);
+        OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_events,        opal_list_t);
+
+        mca_oob_tcp_component.tcp_shutdown = false;
+        mca_oob_tcp_component.tcp_listen_sd = -1;
+        mca_oob_tcp_component.tcp_match_count = 0;
+        
+        mca_oob_tcp_component.tcp_last_copy_time = 0;
+
+        /* Do subset of mca_oob_tcp_component_init() */
+        opal_hash_table_init(&mca_oob_tcp_component.tcp_peers, 128);
+        opal_hash_table_init(&mca_oob_tcp_component.tcp_peer_names, 128);
+        
+        opal_free_list_init(&mca_oob_tcp_component.tcp_peer_free,
+                            sizeof(mca_oob_tcp_peer_t),
+                            OBJ_CLASS(mca_oob_tcp_peer_t),
+                            8,  /* initial number */
+                            mca_oob_tcp_component.tcp_peer_limit, /* maximum number */
+                            8);  /* increment to grow by */
+        
+        
+        /* Reset seed contact information */
+        if(NULL != orte_process_info.ns_replica_uri) {
+            mca_oob_set_contact_info(orte_process_info.ns_replica_uri);
+        }
+
+        if(NULL != orte_process_info.gpr_replica_uri) {
+            mca_oob_set_contact_info(orte_process_info.gpr_replica_uri);
+        }
+        
+        mca_oob_tcp_init();
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+
+    return exit_status;
+}
+#endif
