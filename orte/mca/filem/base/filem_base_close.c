@@ -29,7 +29,9 @@
 int orte_filem_base_close(void)
 {
     /* Close the selected component */
-    orte_filem.filem_finalize();
+    if( NULL != orte_filem.filem_finalize ) {
+        orte_filem.filem_finalize();
+    }
 
     /* Close all available modules that are open */
     mca_base_components_close(orte_filem_base_output,

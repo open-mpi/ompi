@@ -30,7 +30,9 @@ int orte_snapc_base_close(void)
 {
 
     /* Close the selected component */
-    orte_snapc.snapc_finalize();
+    if( NULL != orte_snapc.snapc_finalize ) {
+        orte_snapc.snapc_finalize();
+    }
 
     /* Close all available modules that are open */
     mca_base_components_close(orte_snapc_base_output,

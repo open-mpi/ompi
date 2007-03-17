@@ -28,7 +28,9 @@
 int ompi_crcp_base_close(void)
 {
     /* Close the selected component */
-    ompi_crcp.crcp_finalize();
+    if( NULL != ompi_crcp.crcp_finalize ) {
+        ompi_crcp.crcp_finalize();
+    }
 
     /* Close all available modules that are open */
     mca_base_components_close(ompi_crcp_base_output,
