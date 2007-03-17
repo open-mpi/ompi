@@ -319,13 +319,6 @@ static int initialize(int argc, char *argv[]) {
                 true, &environ);
 
     /*
-     * Turn on 'cr' style fault tolerance
-     */
-    opal_setenv(mca_base_param_env_var("ft_enable"),
-                "cr", /* Turn on cr fault tolerance  */
-                true, &environ);
-
-    /*
      * Initialize the OPAL layer
      */
     if (OPAL_SUCCESS != (ret = opal_init())) {

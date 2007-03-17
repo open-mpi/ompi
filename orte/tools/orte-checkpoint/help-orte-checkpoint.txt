@@ -68,10 +68,9 @@ Error: The job with pid %d is not checkpointable.
        This could be caused by one of the following:
         - The application is using unsupported components.
         - Your application did not select to be checkpointable
-To enable checkpointing in an application use one of the following 
-arguments to mpirun:
-       -mca ft_enable cr
-       -mca ft_enable lam
+To enable checkpointing in an application use the following AMCA parameter
+argument to mpirun:
+       -am ft-enable-cr
 [not_impl]
 The following feature was requested, but is not currently implemented.
      %s

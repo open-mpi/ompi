@@ -430,7 +430,7 @@ static int create_appfile(orte_snapc_base_global_snapshot_t *snapshot) {
             fprintf(appfile, "--preload-files-dest-dir . ");
         }
         /* JJH: Make this match what the user originally specified on the command line */
-        fprintf(appfile, "-mca ft_enable cr ");
+        fprintf(appfile, "-am ft-enable-cr ");
         fprintf(appfile, " opal-restart ");
         /* JJH: Make sure this changes if ever the default location of the local file is changed,
          * currently it is safe to assume that it is in the current working directory.
