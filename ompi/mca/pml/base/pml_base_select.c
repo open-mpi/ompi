@@ -175,22 +175,20 @@ int mca_pml_base_select(bool enable_progress_threads,
          NULL != item;
          item = opal_list_remove_first(&opened)) {
         om = (opened_component_t *) item;
-        if (om->om_component != best_component) {
-            if( NULL != wrapper_component &&
-                om->om_component != wrapper_component ) {
-                /* Finalize */
+        if (om->om_component != best_component &&
+            om->om_component != wrapper_component) {
+            /* Finalize */
                 
-                if (NULL != om->om_component->pmlm_finalize) {
+            if (NULL != om->om_component->pmlm_finalize) {
                 
-                    /* Blatently ignore the return code (what would we do to
-                       recover, anyway?  This component is going away, so errors
-                       don't matter anymore) */
-
-                    om->om_component->pmlm_finalize();
-                    opal_output_verbose(10, mca_pml_base_output, 
-                                        "select: component %s not selected / finalized",
-                                        om->om_component->pmlm_version.mca_component_name);
-                }
+                /* Blatently ignore the return code (what would we do to
+                   recover, anyway?  This component is going away, so errors
+                   don't matter anymore) */
+                
+                om->om_component->pmlm_finalize();
+                opal_output_verbose(10, mca_pml_base_output, 
+                                    "select: component %s not selected / finalized",
+                                    om->om_component->pmlm_version.mca_component_name);
             }
         }
         OBJ_DESTRUCT( om );
