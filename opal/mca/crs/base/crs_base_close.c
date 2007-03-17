@@ -25,7 +25,9 @@
 int opal_crs_base_close(void)
 {
     /* Call the component's finalize routine */
-    opal_crs.crs_finalize();
+    if( NULL != opal_crs.crs_finalize ) {
+        opal_crs.crs_finalize();
+    }
 
     /* Close all available modules that are open */
     mca_base_components_close(opal_crs_base_output,
