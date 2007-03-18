@@ -113,6 +113,8 @@ static int post_send(mca_btl_openib_module_t *openib_btl,
         if(mca_btl_openib_component.use_srq) {
             frag->wr_desc.sr_desc.opcode = IBV_WR_SEND_WITH_IMM;
             frag->wr_desc.sr_desc.imm_data = endpoint->rem_info.rem_index;
+        } else {
+            frag->wr_desc.sr_desc.opcode = IBV_WR_SEND;
         }
     }
             
@@ -174,7 +176,6 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
 { 
     int do_rdma = 0, prio;
     
-    frag->wr_desc.sr_desc.opcode = IBV_WR_SEND;
     frag->sg_entry.addr = (unsigned long) frag->hdr;
 
     prio = (frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY) ?
@@ -1105,7 +1106,6 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     if(BTL_OPENIB_HP_QP == prio) {
         if(OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens, -1) < 0) {
             OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens, 1);
-            frag->wr_desc.sr_desc.opcode = IBV_WR_SEND;
         } else {
             do_rdma = 1;
         }
