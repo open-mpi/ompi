@@ -92,6 +92,12 @@ static int orte_rmgr_cnos_merge_attributes(opal_list_t* target, opal_list_t* sou
 
 static int orte_rmgr_cnos_delete_attribute(opal_list_t* attr_list, char* key);
 
+static int orte_rmgr_cnos_set_proc_info(const orte_process_name_t* name, 
+    pid_t pid, char *nodename);
+
+int orte_rmgr_cnos_get_proc_info(const orte_process_name_t* name, 
+    pid_t* pid, char **nodename);
+
 orte_rmgr_base_module_t orte_rmgr_cnos_module = {
     NULL, /* don't need special init */
     orte_rmgr_cnos_setup_job,
@@ -110,8 +116,8 @@ orte_rmgr_base_module_t orte_rmgr_cnos_module = {
     orte_rmgr_cnos_check_context_app,
     orte_rmgr_cnos_set_vpid_range,
     orte_rmgr_cnos_get_vpid_range,
-    orte_rmgr_base_set_proc_info,
-    orte_rmgr_base_get_proc_info
+    orte_rmgr_cnos_set_proc_info,
+    orte_rmgr_cnos_get_proc_info
 };
 
 
@@ -226,3 +232,14 @@ static int orte_rmgr_cnos_delete_attribute(opal_list_t* attr_list, char* key)
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
+static int orte_rmgr_cnos_set_proc_info(const orte_process_name_t* name, 
+    pid_t pid, char *nodename) 
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+int orte_rmgr_cnos_get_proc_info(const orte_process_name_t* name, 
+    pid_t* pid, char **nodename)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
