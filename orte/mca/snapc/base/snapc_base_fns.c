@@ -110,7 +110,7 @@ ORTE_DECLSPEC void orte_snapc_base_global_snapshot_destruct( orte_snapc_base_glo
     while (NULL != (item = opal_list_remove_first(&snapshot->snapshots))) {
         OBJ_RELEASE(item);
     }
-    OBJ_DESTRUCT(&snapshot->snapshots);
+    OBJ_DESTRUCT(&(snapshot->snapshots));
 
     if(NULL != snapshot->reference_name) {
         free(snapshot->reference_name);

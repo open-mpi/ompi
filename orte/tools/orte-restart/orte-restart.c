@@ -221,12 +221,12 @@ main(int argc, char *argv[])
      * Cleanup
      ***************/
  cleanup:
+    if(NULL != snapshot )
+        OBJ_RELEASE(snapshot);
+
     if (OPAL_SUCCESS != (ret = finalize())) {
         return ret;
     }
-
-    if(NULL != snapshot )
-        OBJ_RELEASE(snapshot);
 
     return exit_status;
 }
