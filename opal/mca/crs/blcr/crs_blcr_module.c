@@ -89,6 +89,7 @@ static int blcr_move(char *src, char *dest);
 static int blcr_checkpoint_peer(pid_t pid, char ** fname);
 static int blcr_get_checkpoint_filename(char **fname, pid_t pid);
 static int opal_crs_blcr_thread_callback(void *arg);
+static int opal_crs_blcr_signal_callback(void *arg);
 
 static int opal_crs_blcr_checkpoint_cmd(pid_t pid, char **fname, char **cmd);
 static int opal_crs_blcr_restart_cmd(char *fname, char **cmd);
@@ -101,6 +102,7 @@ static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot);
  *************************/
 static cr_client_id_t client_id;
 static cr_callback_id_t cr_thread_callback_id;
+static cr_callback_id_t cr_signal_callback_id;
 static int blcr_current_state = OPAL_CRS_RUNNING;
 
 static char *blcr_restart_cmd = NULL;
@@ -137,6 +139,7 @@ opal_crs_blcr_component_query(int *priority)
 int opal_crs_blcr_module_init(void)
 {
     void *crs_blcr_thread_callback_arg = NULL;
+    void *crs_blcr_signal_callback_arg = NULL;
 
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: module_init()");
@@ -169,6 +172,13 @@ int opal_crs_blcr_module_init(void)
         cr_thread_callback_id = cr_register_callback(opal_crs_blcr_thread_callback,
                                                      crs_blcr_thread_callback_arg,
                                                      CR_THREAD_CONTEXT);
+        /*
+         * Register the signal handler
+         *  - even though we do not use it
+         */
+        cr_signal_callback_id = cr_register_callback(opal_crs_blcr_signal_callback,
+                                                     crs_blcr_signal_callback_arg,
+                                                     CR_SIGNAL_CONTEXT);
     }
 
     /*
@@ -204,6 +214,8 @@ int opal_crs_blcr_module_finalize(void)
 
         /* Unload the thread callback */
         cr_replace_callback(cr_thread_callback_id, NULL, NULL, CR_THREAD_CONTEXT);
+        /* Unload the signal callback */
+        cr_replace_callback(cr_signal_callback_id, NULL, NULL, CR_SIGNAL_CONTEXT);
     }
 
     /* BLCR does not have a finalization routine */
@@ -245,16 +257,22 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
     }
 
     /*
-     * If we can checkpointing ourselves
+     * If we can checkpointing ourselves do so
      * Note:
-     *   We cannot assume that just because
-     *   pid == getpid() 
-     *   that we can use the cr_request() function to checkpoint ourselves.
-     *   Since if we are a thread, then it is likely that we have not
-     *   properly initalized this module.
+     *   If threading based checkpoint is enabled we cannot use the cr_request()
+     *   functionto checkpoint ourselves. If we are a thread, then it is likely 
+     *   that we have not properly initalized this module.
+     * Additionally there is a bug with use cr_request and moving the context file from
+     * the location where it was created (As if v0.4.2). So this funciton cannot be used
+     * with this version of BLCR.
      */
-    if(0 >= pid) { 
+#if 0
+    if(pid == getpid() ) {
         blcr_get_checkpoint_filename(&(snapshot->context_filename), pid);
+
+        opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                            "crs:blcr: checkpoint SELF <%s>",
+                            snapshot->context_filename);
 
         /* Request a checkpoint be taken of the current process.
          * Since we are not guaranteed to finish the checkpoint before this
@@ -265,14 +283,16 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
         /* Wait for checkpoint to finish */
         do {
             sleep(1); /* JJH Do we really want to sleep? */
-        } while(CR_STATE_IDLE == cr_status());
+        } while(CR_STATE_IDLE != cr_status());
 
         *state = blcr_current_state;
     }
+    else
+#endif
     /*
      * Checkpointing another process
      */
-    else {
+    {
         ret = blcr_checkpoint_peer(pid, &(snapshot->context_filename));
 
         if(OPAL_SUCCESS != ret) {
@@ -581,6 +601,17 @@ static int opal_crs_blcr_thread_callback(void *arg) {
     }
 
     opal_condition_signal(&blcr_cond);
+
+    return 0;
+}
+
+static int opal_crs_blcr_signal_callback(void *arg) {
+    int ret;
+
+    /*
+     * Allow the checkpoint to be taken
+     */
+    ret = cr_checkpoint(0);
 
     return 0;
 }
