@@ -149,6 +149,10 @@ int opal_cr_init(void )
     }
     opal_output_set_verbosity(opal_cr_output, val);
 
+    opal_output_verbose(10, opal_cr_output,
+                        "opal_cr: init: Verbose Level: %d",
+                        val);
+
     mca_base_param_reg_int_name("ft", "cr_enabled",
                                 "Enable fault tolerance for this program",
                                 false, false,
@@ -160,6 +164,10 @@ int opal_cr_init(void )
         opal_cr_set_enabled(false);
     }
 
+    opal_output_verbose(10, opal_cr_output,
+                        "opal_cr: init: FT Enabled: %d",
+                        val);
+
     mca_base_param_reg_int_name("opal_cr", "is_tool",
                                 "Is this a tool program, meaning does it require a fully operational OPAL or just enough to exec.",
                                 false, false,
@@ -170,17 +178,29 @@ int opal_cr_init(void )
     else
         opal_cr_is_tool = true;
 
+    opal_output_verbose(10, opal_cr_output,
+                        "opal_cr: init: Is a tool program: %d",
+                        val);
+
     mca_base_param_reg_int_name("opal_cr", "signal",
                                 "Checkpoint/Restart signal used to initialize a checkpoint of a program",
                                 false, false,
                                 SIGUSR1,
                                 &opal_cr_signal);
     
+    opal_output_verbose(10, opal_cr_output,
+                        "opal_cr: init: Checkpoint Signal: %d",
+                        opal_cr_signal);
+
     mca_base_param_reg_string_name("opal_cr", "tmp_dir",
                                    "Temporary directory to place rendezvous files for a checkpoint",
                                    false, false,
                                    strdup("/tmp"),
                                    &opal_cr_pipe_dir);
+
+    opal_output_verbose(10, opal_cr_output,
+                        "opal_cr: init: Temp Directory: %s",
+                        opal_cr_pipe_dir);
 
     if( !opal_cr_is_tool ) {
         /* Register the OPAL interlevel coordination callback */
