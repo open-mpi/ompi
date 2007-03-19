@@ -55,6 +55,8 @@ Trunk (not on release branches yet)
   --> Expected 1.2.x
 - Fixed issue with backtrace code on 64 bit Intel OS X builds.
   --> Expected 1.2.x
+- Fix compile error on OS X 10.3.x introduced with Open MPI 1.1.5.
+  --> Expected 1.1.6 / 1.2.x
 
 
 1.2.1
