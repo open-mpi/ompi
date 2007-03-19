@@ -324,10 +324,14 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     const double b4 =  1.6761;
 
     /**
-     * If the operation is non commutative we only have one reduce algorithm right now.
+     * If the operation is non commutative we currently have choice of linear 
+     * or in-order binary tree algorithm.
      */
     if( !ompi_op_is_commute(op) ) {
-        return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm); 
+        if ((communicator_size < 12) && (message_size < 2048)) {
+            return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm); 
+        } 
+        return ompi_coll_tuned_reduce_intra_in_order_binary (sendbuf, recvbuf, count, datatype, op, root, comm, 0); 
     }
 
     communicator_size = ompi_comm_size(comm);
