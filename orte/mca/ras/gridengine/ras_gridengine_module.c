@@ -148,7 +148,6 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
     
     /* check the PE_HOSTFILE before continuing on */
     if (!(fp = fopen(pe_hostfile, "r"))) {
-        opal_output(0, "ras:gridengine: fopen returns erorr: %s", strerror(errno));
         opal_show_help("help-ras-gridengine.txt", "cannot-read-pe-hostfile",
             true, pe_hostfile, strerror(errno));
         rc = ORTE_ERROR;
@@ -190,6 +189,7 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
         /* otherwise, it's a new node.  Then create a new node entry */
         node = OBJ_NEW(orte_ras_node_t);
         if (NULL == node) {
+            fclose(fp);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         node->node_name = strdup(ptr);
@@ -406,7 +406,6 @@ static int get_slot_count(char* node_name, int* slot_cnt)
     
     /* check the PE_HOSTFILE before continuing on */
     if (!(fp = fopen(pe_hostfile, "r"))) {
-        opal_output(0, "ras:gridengine: fopen returns error: %s", strerror(errno));
         opal_show_help("help-ras-gridengine.txt", "cannot-read-pe-hostfile",
             true, pe_hostfile, strerror(errno));
         ORTE_ERROR_LOG(ORTE_ERROR);
