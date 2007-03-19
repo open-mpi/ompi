@@ -9,8 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
- *                         Use is subject to license terms.
+ * Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -129,7 +128,7 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
     char *pe_hostfile = getenv("PE_HOSTFILE");
     char *job_id = getenv("JOB_ID");
     char buf[1024], *tok, *num, *queue, *arch, *ptr;
-    int rc, gridengine_slot_cnt;
+    int rc;
     opal_list_item_t* item;
     opal_list_t new_nodes;
     FILE *fp;
@@ -149,6 +148,7 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
     
     /* check the PE_HOSTFILE before continuing on */
     if (!(fp = fopen(pe_hostfile, "r"))) {
+        opal_output(0, "ras:gridengine: fopen returns erorr: %s", strerror(errno));
         opal_show_help("help-ras-gridengine.txt", "cannot-read-pe-hostfile",
             true, pe_hostfile, strerror(errno));
         rc = ORTE_ERROR;
@@ -198,20 +198,20 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
         node->node_cellid = 0;
         node->node_slots_inuse = 0;
         node->node_slots_max = 0;
-        if (ORTE_SUCCESS != (rc =
-            get_slot_count(node->node_name, &gridengine_slot_cnt))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        node->node_slots = gridengine_slot_cnt;
+        node->node_slots = (int)strtol(num, (char **)NULL, 10);
+        opal_output(mca_ras_gridengine_component.verbose,
+            "ras:gridengine: %s: PE_HOSTFILE shows slots=%d",
+            node->node_name, node->node_slots);
         opal_list_append(&new_nodes, &node->super);
 
         /* put the gridengine slot into the gpr to use later */
-        if (ORTE_SUCCESS != (rc = put_slot_keyval(node, gridengine_slot_cnt))) {
+        if (ORTE_SUCCESS != (rc = put_slot_keyval(node, node->node_slots))) {
             ORTE_ERROR_LOG(rc);
+            fclose(fp);
             goto cleanup;
         }
     } /* finished reading the $PE_HOSTFILE */
+    fclose(fp);
     
     /* adding new / undiscovered nodes to the registry */
     if(opal_list_get_size(&new_nodes)) {
@@ -394,6 +394,7 @@ static int get_slot_keyval(orte_ras_node_t* node, int* slot_cnt) {
 }
 
 /**
+ * This function is not used currently, but may be used eventually.
  * Parse the PE_HOSTFILE to determine the number of process
  * slots/processors available on the node.
  */
@@ -405,6 +406,7 @@ static int get_slot_count(char* node_name, int* slot_cnt)
     
     /* check the PE_HOSTFILE before continuing on */
     if (!(fp = fopen(pe_hostfile, "r"))) {
+        opal_output(0, "ras:gridengine: fopen returns error: %s", strerror(errno));
         opal_show_help("help-ras-gridengine.txt", "cannot-read-pe-hostfile",
             true, pe_hostfile, strerror(errno));
         ORTE_ERROR_LOG(ORTE_ERROR);
@@ -422,11 +424,13 @@ static int get_slot_count(char* node_name, int* slot_cnt)
             opal_output(mca_ras_gridengine_component.verbose,
                 "ras:gridengine: %s: PE_HOSTFILE shows slots=%d",
                 node_name, *slot_cnt);
+            fclose(fp);
             return ORTE_SUCCESS;
         }
     }
 
     /* when there is no match */
+    fclose(fp);
     return ORTE_ERROR;
 }
 
