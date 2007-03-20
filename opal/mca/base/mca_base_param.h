@@ -751,7 +751,7 @@ extern "C" {
                                                   const char *component_name,
                                                   const char *param_name, 
                                                   const char *mca_param_name,
-                                                  int default_value);
+                                                  int default_value) /* __opal_attribute_deprecated__ */;
     
     /**
      * \deprecated
@@ -788,7 +788,7 @@ extern "C" {
                                                      const char *component_name,
                                                      const char *param_name, 
                                                      const char *mca_param_name,
-                                                     const char *default_value);
+                                                     const char *default_value) /* __opal_attribute_deprecated__ */;
 
     /**
      * \deprecated
@@ -812,7 +812,7 @@ extern "C" {
      */
     OPAL_DECLSPEC char *mca_base_param_environ_variable(const char *type,
                                                         const char *comp,
-                                                        const char *param);
+                                                        const char *param) /* __opal_attribute_deprecated__ */;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
