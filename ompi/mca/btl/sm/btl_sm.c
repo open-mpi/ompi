@@ -82,38 +82,8 @@
  * cases, the receiver doesn't have to do anything.
  */
 
-mca_btl_sm_t mca_btl_sm[2] = {
+mca_btl_sm_t mca_btl_sm = {
     {
-        {
-        &mca_btl_sm_component.super,
-        0, /* btl_eager_limit */
-        0, /* btl_min_send_size */
-        0, /* btl_max_send_size */
-        0, /* btl_min_rdma_size */
-        0, /* btl_max_rdma_size */
-        0, /* btl_exclusivity */
-        0, /* btl_latency */
-        0, /* btl_bandwidth */
-        0, /* btl flags */
-        mca_btl_sm_add_procs_same_base_addr,
-        mca_btl_sm_del_procs,
-        mca_btl_sm_register,
-        mca_btl_sm_finalize,
-        mca_btl_sm_alloc,
-        mca_btl_sm_free,
-        mca_btl_sm_prepare_src,
-        NULL,
-        mca_btl_sm_send, 
-        NULL,  /* put */
-        NULL,  /* get */
-        mca_btl_base_dump,
-        NULL, /* mpool */
-        mca_btl_sm_register_error_cb, /* register error */
-        mca_btl_sm_ft_event
-        }
-    },
-    {
-        {
         &mca_btl_sm_component.super,
         0, /* btl_eager_limit */
         0, /* btl_min_send_size */
@@ -128,26 +98,35 @@ mca_btl_sm_t mca_btl_sm[2] = {
         mca_btl_sm_del_procs,
         mca_btl_sm_register,
         mca_btl_sm_finalize,
-        mca_btl_sm_alloc,  
-        mca_btl_sm_free,  
+        mca_btl_sm_alloc,
+        mca_btl_sm_free,
         mca_btl_sm_prepare_src,
         NULL,
-        mca_btl_sm_send,  
-        NULL, /* put function */
-        NULL, /* get function */
+        mca_btl_sm_send, 
+        NULL,  /* put */
+        NULL,  /* get */
         mca_btl_base_dump,
         NULL, /* mpool */
         mca_btl_sm_register_error_cb, /* register error */
         mca_btl_sm_ft_event
-        }
     }
 };
 
 /* track information needed to synchronise a Shared Memory BTL module */
 mca_btl_sm_module_resource_t mca_btl_sm_module_resource;
 
+/*
+ * calculate offset of an address from the beginning of a shared memory segment
+ */
+#define ADDR2OFFSET(ADDR, BASE) ((char*)(ADDR) - (char*)(BASE))
 
-int mca_btl_sm_add_procs_same_base_addr(
+/*
+ * calculate an absolute address in a local address space given an offset and
+ * a base address of a shared memory segment
+ */
+#define OFFSET2ADDR(OFFSET, BASE) ((ptrdiff_t)(OFFSET) + (char*)(BASE))
+
+int mca_btl_sm_add_procs(
     struct mca_btl_base_module_t* btl, 
     size_t nprocs, 
     struct ompi_proc_t **procs, 
@@ -155,35 +134,25 @@ int mca_btl_sm_add_procs_same_base_addr(
     ompi_bitmap_t* reachability)
 {
     int return_code = OMPI_SUCCESS, cnt, len;
-    size_t i, j, size, n_to_allocate, length;
-    int32_t n_local_procs, proc;
+    size_t size, length;
+    int32_t n_local_procs, proc, j, n_to_allocate, i;
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     mca_btl_sm_t *btl_sm;
     ompi_fifo_t *my_fifos;
     ompi_fifo_t * volatile *fifo_tmp;
-    bool same_sm_base;
     ptrdiff_t diff;
     volatile char **tmp_ptr;
     volatile int *tmp_int_ptr;
     bool have_connected_peer = false;
 
     /* initializion */
-    for( i = 0 ; i < nprocs ; i++ ) {
-        peers[i] = NULL;
-    }
     btl_sm=(mca_btl_sm_t *)btl;
 
     /* allocate array to hold setup shared memory from all
      * other procs */
-    mca_btl_sm_component.sm_proc_connect=(int *) malloc(nprocs*sizeof(int));
+    mca_btl_sm_component.sm_proc_connect=(int *)malloc(nprocs*sizeof(int));
     if( NULL == mca_btl_sm_component.sm_proc_connect ){
-        return_code=OMPI_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
-    }
-
-    /* initialize and sm_proc_connect*/
-    for( proc = 0 ; proc < (int32_t)nprocs ; proc++ ) {
-        mca_btl_sm_component.sm_proc_connect[proc] = 0;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* get pointer to my proc structure */
@@ -227,7 +196,7 @@ int mca_btl_sm_add_procs_same_base_addr(
             return_code=OMPI_ERR_OUT_OF_RESOURCE;
             goto CLEANUP;
         }
-        peer->peer_smp_rank=n_local_procs+
+        peer->peer_smp_rank = n_local_procs +
             mca_btl_sm_component.num_smp_procs;
         
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
@@ -268,7 +237,7 @@ int mca_btl_sm_add_procs_same_base_addr(
     }
 
     /* make sure that my_smp_rank has been defined */
-    if( 0xFFFFFFFF == mca_btl_sm_component.my_smp_rank ) {
+    if( -1 == mca_btl_sm_component.my_smp_rank ) {
         return_code=OMPI_ERROR;
         goto CLEANUP;
     }
@@ -290,7 +259,7 @@ int mca_btl_sm_add_procs_same_base_addr(
 
     /* make sure n_to_allocate is greater than 0 */
 
-    if ( !mca_btl_sm[0].btl_inited ) {
+    if ( !mca_btl_sm.btl_inited ) {
         /* set the shared memory offset */
         mca_btl_sm_component.sm_offset=(ptrdiff_t*)
             malloc(n_to_allocate*sizeof(ptrdiff_t));
@@ -324,7 +293,7 @@ int mca_btl_sm_add_procs_same_base_addr(
     /* 
      * Create backing file - only first time through 
      */
-    if ( !mca_btl_sm[0].btl_inited ) {
+    if ( !mca_btl_sm.btl_inited ) {
         /* set file name */
         len=asprintf(&(mca_btl_sm_component.sm_resouce_ctl_file),
                 "%s"OPAL_PATH_SEP"shared_mem_btl_module.%s",orte_process_info.job_session_dir,
@@ -363,7 +332,8 @@ int mca_btl_sm_add_procs_same_base_addr(
             /* check to make sure number of local procs is within the
              * specified limits */
             if( ( 0 < mca_btl_sm_component.sm_max_procs ) &&
-                    ( n_local_procs > mca_btl_sm_component.sm_max_procs) ) {
+                    ( mca_btl_sm_component.num_smp_procs + n_local_procs >
+                      mca_btl_sm_component.sm_max_procs) ) {
                 return_code=OMPI_ERROR;
                 goto CLEANUP;
             }
@@ -379,10 +349,6 @@ int mca_btl_sm_add_procs_same_base_addr(
                 return_code=OMPI_ERR_OUT_OF_RESOURCE;
                 goto CLEANUP;
             }
-            /* initiazlize the pointer array */
-            for(i=0 ; i < n_to_allocate ; i++ ) {
-                mca_btl_sm_component.sm_ctl_header->fifo[i]=NULL;
-            }
 
             /*  allocate and initialize the array to hold the virtual address
              *  of the shared memory base */
@@ -394,11 +360,6 @@ int mca_btl_sm_add_procs_same_base_addr(
                     base_shared_mem_segment ) {
                 return_code=OMPI_ERR_OUT_OF_RESOURCE;
                 goto CLEANUP;
-            }
-            /* initialize the pointer array */
-            for(i=0 ; i < n_to_allocate ; i++ ) {
-                mca_btl_sm_component.sm_ctl_header->segment_header.
-                    base_shared_mem_segment[i]=NULL;
             }
 
             /*  allocate and initialize the array of flags indicating
@@ -416,26 +377,28 @@ int mca_btl_sm_add_procs_same_base_addr(
             for(i=0 ; i < n_to_allocate ; i++ ) {
                 mca_btl_sm_component.sm_ctl_header->segment_header.
                     base_shared_mem_flags[i]=0;
+                mca_btl_sm_component.sm_ctl_header->fifo[i]=NULL;
+                mca_btl_sm_component.sm_ctl_header->segment_header.
+                    base_shared_mem_segment[i]=NULL;
             }
 
             /* set the addresses to be a relative, so that
              * they can be used by other procs */
-            mca_btl_sm_component.sm_ctl_header->fifo=
-                (volatile ompi_fifo_t **)
-                ( (char *)(mca_btl_sm_component.sm_ctl_header->fifo)-
-                  (char *)(mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool)) );
+            mca_btl_sm_component.sm_ctl_header->fifo = (volatile ompi_fifo_t **)
+                ADDR2OFFSET(mca_btl_sm_component.sm_ctl_header->fifo,
+                        mca_btl_sm_component.sm_mpool_base);
 
-                mca_btl_sm_component.sm_ctl_header->segment_header.
-                    base_shared_mem_segment=( volatile char **)
-                    ( (char *)(mca_btl_sm_component.sm_ctl_header->
-                               segment_header.base_shared_mem_segment) -
-                      (char *)(mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool)) );
+            mca_btl_sm_component.sm_ctl_header->segment_header.
+                base_shared_mem_segment = (volatile char **)
+                ADDR2OFFSET(mca_btl_sm_component.sm_ctl_header->
+                        segment_header.base_shared_mem_segment,
+                        mca_btl_sm_component.sm_mpool_base);
 
-	    mca_btl_sm_component.sm_ctl_header->segment_header.
-	      base_shared_mem_flags = (volatile int *)
-                ( ((char *) mca_btl_sm_component.sm_ctl_header->
-                   segment_header.base_shared_mem_flags) -
-                  (char *) (mca_btl_sm_component.sm_mpool_base));
+	        mca_btl_sm_component.sm_ctl_header->segment_header.
+                base_shared_mem_flags = (volatile int *)
+                ADDR2OFFSET(mca_btl_sm_component.sm_ctl_header->segment_header.
+                        base_shared_mem_flags,
+                        mca_btl_sm_component.sm_mpool_base);
 
             /* allow other procs to use this shared memory map */
             mca_btl_sm_component.mmap_file->map_seg->seg_inited=true;
@@ -458,20 +421,20 @@ int mca_btl_sm_add_procs_same_base_addr(
         /* set the base of the shared memory segment, and flag
          * indicating that it is set */
         tmp_ptr=(volatile char **)
-            ( (char *)(mca_btl_sm_component.sm_ctl_header->segment_header.
-              base_shared_mem_segment)  +
-		      (long )(mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool)) );
-        tmp_ptr[mca_btl_sm_component.my_smp_rank]=(char*)
-            mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool);
+            OFFSET2ADDR(mca_btl_sm_component.sm_ctl_header->segment_header.
+                    base_shared_mem_segment,
+                    mca_btl_sm_component.sm_mpool_base);
+        tmp_ptr[mca_btl_sm_component.my_smp_rank] =
+            (char*)mca_btl_sm_component.sm_mpool_base;
+
         /* memory barrier to ensure this flag is set before other
          *  flags are set */
         opal_atomic_mb();
 
 		/* Set my flag to 1 (convert from relative address first) */
         tmp_int_ptr=(volatile int *)
-            ( ((char *) mca_btl_sm_component.sm_ctl_header->segment_header.
-               base_shared_mem_flags) +
-              ((long) mca_btl_sm_component.sm_mpool_base));
+            OFFSET2ADDR(mca_btl_sm_component.sm_ctl_header->segment_header.
+                    base_shared_mem_flags, mca_btl_sm_component.sm_mpool_base);
 		tmp_int_ptr[mca_btl_sm_component.my_smp_rank]=1;
 
         /*
@@ -493,7 +456,7 @@ int mca_btl_sm_add_procs_same_base_addr(
             char *buf;
             my_fifos[j].head = (ompi_cb_fifo_wrapper_t*)OMPI_CB_FREE;
             my_fifos[j].tail = (ompi_cb_fifo_wrapper_t*)OMPI_CB_FREE;
-	    if(opal_using_threads()) {
+            if(opal_using_threads()) {
                 /* allocate head and tail locks on different cache lines */
                 buf = (char*)mca_btl_sm_component.sm_mpool->mpool_alloc(
                     mca_btl_sm_component.sm_mpool,
@@ -507,14 +470,14 @@ int mca_btl_sm_add_procs_same_base_addr(
 				CACHE_LINE_SIZE);
             	opal_atomic_init(my_fifos[j].head_lock, OPAL_ATOMIC_UNLOCKED);
             	opal_atomic_init(my_fifos[j].tail_lock, OPAL_ATOMIC_UNLOCKED);
-	    } else {
-		    my_fifos[j].head_lock = NULL;
-		    my_fifos[j].tail_lock = NULL;
-	    }
+            } else {
+                my_fifos[j].head_lock = NULL;
+                my_fifos[j].tail_lock = NULL;
+            }
         }
-        fifo_tmp=(ompi_fifo_t * volatile *)
-                ( (char *)(mca_btl_sm_component.sm_ctl_header->fifo) +
-                  (long)(mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool)) );
+        fifo_tmp = (ompi_fifo_t * volatile *)
+            OFFSET2ADDR(mca_btl_sm_component.sm_ctl_header->fifo,
+                    mca_btl_sm_component.sm_mpool_base);
         fifo_tmp[mca_btl_sm_component.my_smp_rank]=my_fifos;
         opal_atomic_mb();
 
@@ -529,14 +492,13 @@ int mca_btl_sm_add_procs_same_base_addr(
         mca_btl_sm_component.fifo[mca_btl_sm_component.my_smp_rank]=my_fifos;
     }
 
-    /* cache the pointers to the rest of the fifo arrays */
-    fifo_tmp=(ompi_fifo_t * volatile *)
-        ( (char *)(mca_btl_sm_component.sm_ctl_header->fifo) +
-          (long)(mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool)) );
+    fifo_tmp = (ompi_fifo_t * volatile *)
+        OFFSET2ADDR(mca_btl_sm_component.sm_ctl_header->fifo,
+                mca_btl_sm_component.sm_mpool_base);
     tmp_ptr=(volatile char **)
-        ( (char *)mca_btl_sm_component.sm_ctl_header->
-          segment_header.base_shared_mem_segment +
-          (long)mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool));
+        OFFSET2ADDR(mca_btl_sm_component.sm_ctl_header->segment_header.
+                base_shared_mem_segment,
+                mca_btl_sm_component.sm_mpool_base);
     for( j=mca_btl_sm_component.num_smp_procs ; j <
             mca_btl_sm_component.num_smp_procs+n_local_procs ; j++ ) {
 
@@ -548,13 +510,12 @@ int mca_btl_sm_add_procs_same_base_addr(
 
         /* Calculate the difference as (my_base - their_base) */
         diff = tmp_ptr[mca_btl_sm_component.my_smp_rank] - tmp_ptr[j];
-        mca_btl_sm_component.fifo[j]=
-            ( ompi_fifo_t *)( (char *)fifo_tmp[j]+diff);
+        mca_btl_sm_component.fifo[j] = (ompi_fifo_t*)((char*)fifo_tmp[j]+diff);
         mca_btl_sm_component.sm_offset[j] = diff;
     }
 
     /* initialize some of the free-lists */
-    if( !mca_btl_sm[0].btl_inited ) {
+    if( !mca_btl_sm.btl_inited ) {
         /* some initialization happens only the first time this routine
          * is called, i.e. when btl_inited is false */
 
@@ -587,18 +548,10 @@ int mca_btl_sm_add_procs_same_base_addr(
                 mca_btl_sm_component.sm_free_list_inc,
                 NULL);
 
-        /* set up mca_btl_sm_component.list_smp_procs_same_base_addr */
-        mca_btl_sm_component.list_smp_procs_same_base_addr=(int *)
+        /* set up mca_btl_sm_component.list_smp_procs */
+        mca_btl_sm_component.list_smp_procs=(int *)
             malloc(mca_btl_sm_component.sm_max_procs*sizeof(int));
-        if( NULL == mca_btl_sm_component.list_smp_procs_same_base_addr ){
-            return_code=OMPI_ERR_OUT_OF_RESOURCE;
-            goto CLEANUP;
-        }
-
-        /* set up mca_btl_sm_component.list_smp_procs_different_base_addr */
-        mca_btl_sm_component.list_smp_procs_different_base_addr=(int *)
-            malloc(mca_btl_sm_component.sm_max_procs*sizeof(int));
-        if( NULL == mca_btl_sm_component.list_smp_procs_different_base_addr ){
+        if( NULL == mca_btl_sm_component.list_smp_procs ){
             return_code=OMPI_ERR_OUT_OF_RESOURCE;
             goto CLEANUP;
         }
@@ -610,49 +563,24 @@ int mca_btl_sm_add_procs_same_base_addr(
     /* set connectivity */
     cnt=0;
     for(proc = 0 ; proc < (int32_t)nprocs ; proc++ ) {
-
         struct mca_btl_base_endpoint_t* peer = peers[proc];
         if(peer == NULL)
             continue;
 
-        tmp_ptr=(volatile char **)
-            ( (char *)mca_btl_sm_component.sm_ctl_header->
-              segment_header.base_shared_mem_segment +
-              (long)mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool));
-        same_sm_base=(tmp_ptr[peer->peer_smp_rank] ==
-            tmp_ptr[mca_btl_sm_component.my_smp_rank]);
-
         if( SM_CONNECTED == mca_btl_sm_component.sm_proc_connect[proc] ) {
-            if( same_sm_base ){
+            /* don't count if same process */
+            if( (mca_btl_sm_component.num_smp_procs+proc ) ==
+                    mca_btl_sm_component.my_smp_rank) {
+                continue;
+            }
 
-                /* don't count if same process */
-                if( (mca_btl_sm_component.num_smp_procs+cnt ) ==
-                        mca_btl_sm_component.my_smp_rank) {
-                    cnt++;
-                    continue;
-                }
-                /* set up the list of local processes with the same base
-                 * shared memory virtual address as this process */
-                mca_btl_sm_component.list_smp_procs_same_base_addr
-                    [mca_btl_sm_component.num_smp_procs_same_base_addr]=
-                    cnt;
-                mca_btl_sm_component.num_smp_procs_same_base_addr++;
-                cnt++;
-                /* add this proc to shared memory accessability list */
-                return_code=ompi_bitmap_set_bit(reachability,proc);
-                if( OMPI_SUCCESS != return_code ){
-                    goto CLEANUP;
-                }
-            } else {
-                /* set up the list of local processes with the same base
-                 * shared memory virtual address as this process */
-                mca_btl_sm_component.list_smp_procs_different_base_addr
-                    [mca_btl_sm_component.num_smp_procs_different_base_addr]=
-                    cnt;
-                mca_btl_sm_component.num_smp_procs_different_base_addr++;
-                cnt++;
-                mca_btl_sm_component.sm_proc_connect[proc]=
-                    SM_CONNECTED_DIFFERENT_BASE_ADDR;
+            mca_btl_sm_component.list_smp_procs
+                [mca_btl_sm_component.num_smp_procs + cnt] = proc;
+            cnt++;
+            /* add this proc to shared memory accessability list */
+            return_code=ompi_bitmap_set_bit(reachability,proc);
+            if( OMPI_SUCCESS != return_code ){
+                goto CLEANUP;
             }
         }
     }
@@ -668,81 +596,11 @@ int mca_btl_sm_add_procs_same_base_addr(
     mca_btl_sm_component.num_smp_procs+=n_local_procs;
 
 CLEANUP:
-    return return_code;
-}
-
-/* Note:: this routine assumes that mca_btl_sm_add_procs_same_base_addr
- *  has already been called to set up data structures needed by this
- *  routine */
-int mca_btl_sm_add_procs(
-    struct mca_btl_base_module_t* btl, 
-    size_t nprocs, 
-    struct ompi_proc_t **procs, 
-    struct mca_btl_base_endpoint_t **peers,
-    ompi_bitmap_t* reachability)
-{
-    int return_code = OMPI_SUCCESS, tmp_cnt;
-    uint32_t proc, n_local_procs;
-
-    /* initializion */
-    for(proc=0 ; proc < nprocs ; proc++ ) {
-        peers[proc]=NULL;
-    }
-
-    /* figure out total number of local procs in current set */
-    tmp_cnt=0;
-    for(proc = 0 ; proc < nprocs ; proc++ ) {
-        if( (SM_CONNECTED_DIFFERENT_BASE_ADDR ==
-                    mca_btl_sm_component.sm_proc_connect[proc]) ||
-                (SM_CONNECTED ==
-                    mca_btl_sm_component.sm_proc_connect[proc]) ) {
-            tmp_cnt++;
-        }
-    }
-    /* set connectivity */
-    n_local_procs=0;
-    for(proc = 0 ; proc < nprocs ; proc++ ) {
-        /* Same base address base */
-        if (SM_CONNECTED == mca_btl_sm_component.sm_proc_connect[proc]) {
-            n_local_procs++;
-        }
-
-        /* Different base address case */
-        else if (SM_CONNECTED_DIFFERENT_BASE_ADDR ==
-                mca_btl_sm_component.sm_proc_connect[proc]) {
-
-            /* add this proc to shared memory accessability list */
-            return_code=ompi_bitmap_set_bit(reachability,proc);
-            if( OMPI_SUCCESS != return_code ){
-                goto CLEANUP;
-            }
-
-            /* initialize the peers information */
-            peers[proc] = (struct mca_btl_base_endpoint_t*)malloc(sizeof(struct mca_btl_base_endpoint_t));
-            if( NULL == peers[proc] ){
-                return_code=OMPI_ERR_OUT_OF_RESOURCE;
-                goto CLEANUP;
-            }
-            peers[proc]->my_smp_rank=mca_btl_sm_component.my_smp_rank;
-            /* subtract tmp_cnt, since mca_btl_sm_add_procs_same_base_addr
-             * already added these into num_smp_procs */
-            peers[proc]->peer_smp_rank=n_local_procs+
-                mca_btl_sm_component.num_smp_procs-tmp_cnt;
-#if OMPI_ENABLE_PROGRESS_THREADS
-            peers[proc]->fifo_fd =
-                mca_btl_sm_component.sm_peers[peers[proc]->peer_smp_rank]->fifo_fd;
-#endif
-            n_local_procs++;
-        }
-    }
-
-CLEANUP:
     /* free local memory */
     if(mca_btl_sm_component.sm_proc_connect){
         free(mca_btl_sm_component.sm_proc_connect);
         mca_btl_sm_component.sm_proc_connect=NULL;
     }
-
     return return_code;
 }
 

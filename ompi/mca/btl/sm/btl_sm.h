@@ -111,21 +111,11 @@ struct mca_btl_sm_component_t {
     int *sm_proc_connect;    /* scratch array used by the 0'th btl to
                               * set indicate sm connectivty.  Used by
                               * the 1'st btl */
-    uint32_t num_smp_procs;  /**< current number of smp procs on this host */
-    int num_smp_procs_same_base_addr;  /* number of procs with same
-                                          base shared memory virtual
-                                          address as this process */
-    int num_smp_procs_different_base_addr;  /* number of procs with
-                                               different base shared memory
-                                               virtual address as this
-                                               process */
-    int *list_smp_procs_same_base_addr;  /* number of procs with same 
-                                            base shared memory virtual 
-                                            address as this process */
-    int *list_smp_procs_different_base_addr;  /* number of procs with different 
-                                            base shared memory virtual 
-                                            address as this process */
-    uint32_t my_smp_rank;    /**< My SMP process rank.  Used for accessing
+    int32_t num_smp_procs;  /**< current number of smp procs on this host */
+    int *list_smp_procs;     /* procs with same (index 0) and
+                                different (index 1) base shared memory virtual
+                                address as this process */
+    int32_t my_smp_rank;    /**< My SMP process rank.  Used for accessing
 			      *   SMP specfic data structures. */
     ompi_free_list_t sm_frags1;    /**< free list of sm first */
     ompi_free_list_t sm_frags2;    /**< free list of sm second */
@@ -184,7 +174,7 @@ struct mca_btl_sm_t {
 };
 typedef struct mca_btl_sm_t mca_btl_sm_t;
 
-extern mca_btl_sm_t mca_btl_sm[2];
+extern mca_btl_sm_t mca_btl_sm;
 
 /**
  * Register a callback function that is called on error..
