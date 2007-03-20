@@ -240,7 +240,6 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
     bool enable_mpi_threads)
 {
     mca_btl_base_module_t **ptls = NULL;
-    int i;
 
     *num_ptls = 0;
 
@@ -270,44 +269,40 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
 #endif
 
     /* allocate the Shared Memory PTL */
-    *num_ptls = 2;
+    *num_ptls = 1;
     ptls = (mca_btl_base_module_t**)malloc((*num_ptls)*sizeof(mca_btl_base_module_t*));
     if (NULL == ptls) {
         return NULL;
     }
 
     /* get pointer to the ptls */
-    ptls[0] = (mca_btl_base_module_t *)(&(mca_btl_sm[0]));
-    ptls[1] = (mca_btl_base_module_t *)(&(mca_btl_sm[1]));
+    ptls[0] = (mca_btl_base_module_t *)(&(mca_btl_sm));
 
     /* set scheduling parameters */
-    for( i=0 ; i < 2 ; i++ ) {
-        mca_btl_sm[i].super.btl_eager_limit=mca_btl_sm_component.eager_limit;
-        mca_btl_sm[i].super.btl_min_send_size=mca_btl_sm_component.max_frag_size;
-        mca_btl_sm[i].super.btl_max_send_size=mca_btl_sm_component.max_frag_size;
-        mca_btl_sm[i].super.btl_min_rdma_size=mca_btl_sm_component.max_frag_size;
-        mca_btl_sm[i].super.btl_max_rdma_size=mca_btl_sm_component.max_frag_size;
-        /* The order in which the SM modules are initialized is important as only
-         * the first one (the one using the mca_btl_sm_add_procs_same_base_addr)
-         * will setup all the memory for the internal structures (sm_proc_connect).
-         * Therefore, the order in which the two SM module will be after the 
-         * selection is important. We have to make sure they get sorted in the
-         * correct order. The simplest way is to force the exclusivity of the
-         * second module to something lower than the exclusivity of the first one.
-         */
-        mca_btl_sm[i].super.btl_exclusivity = mca_btl_sm_component.sm_exclusivity - i;
-        mca_btl_sm[i].super.btl_latency     = mca_btl_sm_component.sm_latency; /* lowest latency */
-        mca_btl_sm[i].super.btl_bandwidth   = 900; /* not really used now since exclusivity is set to the highest value */
-    }
+    mca_btl_sm.super.btl_eager_limit=mca_btl_sm_component.eager_limit;
+    mca_btl_sm.super.btl_min_send_size=mca_btl_sm_component.max_frag_size;
+    mca_btl_sm.super.btl_max_send_size=mca_btl_sm_component.max_frag_size;
+    mca_btl_sm.super.btl_min_rdma_size=mca_btl_sm_component.max_frag_size;
+    mca_btl_sm.super.btl_max_rdma_size=mca_btl_sm_component.max_frag_size;
+    /* The order in which the SM modules are initialized is important as only
+     * the first one (the one using the mca_btl_sm_add_procs_same_base_addr)
+     * will setup all the memory for the internal structures (sm_proc_connect).
+     * Therefore, the order in which the two SM module will be after the
+     * selection is important. We have to make sure they get sorted in the
+     * correct order. The simplest way is to force the exclusivity of the
+     * second module to something lower than the exclusivity of the first one.
+     */
+    mca_btl_sm.super.btl_exclusivity = mca_btl_sm_component.sm_exclusivity;
+    mca_btl_sm.super.btl_latency     = mca_btl_sm_component.sm_latency; /* lowest latency */
+    mca_btl_sm.super.btl_bandwidth   = 900; /* not really used now since exclusivity is set to the highest value */
 
     /* initialize some PTL data */
     /* start with no SM procs */
     mca_btl_sm_component.num_smp_procs = 0;
-    mca_btl_sm_component.my_smp_rank   = 0xFFFFFFFF;  /* not defined */
+    mca_btl_sm_component.my_smp_rank   = -1;  /* not defined */
 
     /* set flag indicating ptl not inited */
-    mca_btl_sm[0].btl_inited=false;
-    mca_btl_sm[1].btl_inited=false;
+    mca_btl_sm.btl_inited=false;
 
     return ptls;
 }
@@ -344,7 +339,7 @@ int mca_btl_sm_component_progress(void)
     mca_btl_sm_hdr_t *hdr;
     int my_smp_rank=mca_btl_sm_component.my_smp_rank;
     int proc;
-    int rc = 0, btl = 0;
+    int rc = 0;
 
     /* send progress is made by the PML */
 
@@ -353,14 +348,9 @@ int mca_btl_sm_component_progress(void)
      */
 
     /* poll each fifo */
-
-    /* loop over fifo's - procs with same base shared memory 
-     * virtual address as this process */
-    for( proc=0 ; proc < mca_btl_sm_component.num_smp_procs_same_base_addr
-            ; proc++ ) 
-    {
-        peer_smp_rank= mca_btl_sm_component.list_smp_procs_same_base_addr[proc];
-        fifo=&(mca_btl_sm_component.fifo[my_smp_rank][peer_smp_rank]);
+    for(proc = 0; proc < mca_btl_sm_component.num_smp_procs - 1; proc++) {
+        peer_smp_rank = mca_btl_sm_component.list_smp_procs[proc];
+        fifo = &(mca_btl_sm_component.fifo[my_smp_rank][peer_smp_rank]);
 
         /* if fifo is not yet setup - continue - not data has been sent*/
         if(OMPI_CB_FREE == fifo->tail){
@@ -368,112 +358,19 @@ int mca_btl_sm_component_progress(void)
         }
 
         /* aquire thread lock */
-        if( opal_using_threads() ) {
+        if(opal_using_threads()) {
             opal_atomic_lock(fifo->tail_lock);
         }
 
-        /* get pointer - pass in offset to change queue pointer
-         * addressing from that of the sender.  In this case, we know
-         * that we have the same base address as the sender, so no
-         * translation is necessary when accessing the fifo.  Hence,
-         * we use the _same_base_addr varient. */
         hdr = (mca_btl_sm_hdr_t *)ompi_fifo_read_from_tail(fifo);
 
         /* release thread lock */
-        if( opal_using_threads() ) {
+        if(opal_using_threads()) {
             opal_atomic_unlock(fifo->tail_lock);
         }
 
-        if( OMPI_CB_FREE == hdr ) {
+        if(OMPI_CB_FREE == hdr) {
             continue;
-        }
-
-        /* dispatch fragment by type */
-        switch(((uintptr_t)hdr) & MCA_BTL_SM_FRAG_TYPE_MASK) {
-            case MCA_BTL_SM_FRAG_ACK:
-            {
-                int status = (uintptr_t)hdr & MCA_BTL_SM_FRAG_STATUS_MASK;
-                frag = (mca_btl_sm_frag_t *)((uintptr_t)hdr &
-                        (~(MCA_BTL_SM_FRAG_TYPE_MASK |
-                           MCA_BTL_SM_FRAG_STATUS_MASK)));
-                /* completion callback */
-                frag->base.des_cbfunc(&mca_btl_sm[0].super, frag->endpoint,
-                        &frag->base, status?OMPI_ERROR:OMPI_SUCCESS);
-                break;
-            }
-            case MCA_BTL_SM_FRAG_SEND:
-            {
-                /* recv upcall */
-                mca_btl_sm_recv_reg_t* reg = mca_btl_sm[0].sm_reg + hdr->tag;
-
-                MCA_BTL_SM_FRAG_ALLOC(frag, rc);
-                frag->segment.seg_addr.pval = ((char*)hdr) +
-                    sizeof(mca_btl_sm_hdr_t);
-                frag->segment.seg_len = hdr->len;
-                reg->cbfunc(&mca_btl_sm[0].super,hdr->tag,&frag->base,reg->cbdata);
-                MCA_BTL_SM_FRAG_RETURN(frag);
-                MCA_BTL_SM_FIFO_WRITE(
-                        mca_btl_sm_component.sm_peers[peer_smp_rank],
-                        my_smp_rank, peer_smp_rank, hdr->frag, rc);
-                if(OMPI_SUCCESS != rc)
-                    goto err;
-                break;
-            }
-            default:
-            {
-                /* unknown */
-                hdr = (mca_btl_sm_hdr_t*)((uintptr_t)hdr->frag |
-                        MCA_BTL_SM_FRAG_STATUS_MASK);
-                MCA_BTL_SM_FIFO_WRITE(
-                        mca_btl_sm_component.sm_peers[peer_smp_rank],
-                        my_smp_rank, peer_smp_rank, hdr, rc);
-                if(OMPI_SUCCESS != rc)
-                    goto err;
-                break;
-            }
-        }
-        rc++;
-    }  /* end peer_local_smp_rank loop */
-
-
-    btl = 1;
-    /* loop over fifo's - procs with different base shared memory 
-     * virtual address as this process */
-    for( proc=0 ; proc < mca_btl_sm_component.num_smp_procs_different_base_addr
-            ; proc++ ) 
-    {
-        peer_smp_rank= mca_btl_sm_component.list_smp_procs_different_base_addr[proc];
-        fifo=&(mca_btl_sm_component.fifo[my_smp_rank][peer_smp_rank]);
-
-        /* if fifo is not yet setup - continue - not data has been sent*/
-        if(OMPI_CB_FREE == fifo->tail){
-            continue;
-        }
-
-        /* aquire thread lock */
-        if( opal_using_threads() ) {
-            opal_atomic_lock(fifo->tail_lock);
-        }
-
-        /* get pointer - pass in offset to change queue pointer
-         * addressing from that of the sender.  In this case, we do
-         * *not* have the same base address as the sender, so we must
-         * translate every access into the fifo to be relevant to our
-         * memory space.  Hence, we do *not* use the _same_base_addr
-         * variant. */
-        hdr = (mca_btl_sm_hdr_t *)ompi_fifo_read_from_tail( fifo );
-
-        if( OMPI_CB_FREE == hdr ) {
-            /* release thread lock */
-            if( opal_using_threads() ) {
-                opal_atomic_unlock(fifo->tail_lock);
-            }
-            continue;
-        }
-
-        /* release thread lock */
-        if( opal_using_threads() ) {
-            opal_atomic_unlock(fifo->tail_lock);
         }
 
         /* dispatch fragment by type */
@@ -482,10 +379,10 @@ int mca_btl_sm_component_progress(void)
             {
                 int status = (uintptr_t)hdr & MCA_BTL_SM_FRAG_STATUS_MASK;
                 frag = (mca_btl_sm_frag_t *)((char*)((uintptr_t)hdr &
-                        (~(MCA_BTL_SM_FRAG_TYPE_MASK |
-                           MCA_BTL_SM_FRAG_STATUS_MASK))));
+                            (~(MCA_BTL_SM_FRAG_TYPE_MASK |
+                            MCA_BTL_SM_FRAG_STATUS_MASK))));
                 /* completion callback */
-                frag->base.des_cbfunc(&mca_btl_sm[1].super, frag->endpoint,
+                frag->base.des_cbfunc(&mca_btl_sm.super, frag->endpoint,
                         &frag->base, status?OMPI_ERROR:OMPI_SUCCESS);
                 break;
             }
@@ -494,15 +391,16 @@ int mca_btl_sm_component_progress(void)
                 mca_btl_sm_recv_reg_t* reg;
                 /* change the address from address relative to the shared
                 * memory address, to a true virtual address */
-                hdr = (mca_btl_sm_hdr_t *)( (char *)hdr +
+                hdr = (mca_btl_sm_hdr_t *)((char *)hdr +
                         mca_btl_sm_component.sm_offset[peer_smp_rank]);
                 /* recv upcall */
-                reg = mca_btl_sm[1].sm_reg + hdr->tag;
+                reg = mca_btl_sm.sm_reg + hdr->tag;
                 MCA_BTL_SM_FRAG_ALLOC(frag, rc);
                 frag->segment.seg_addr.pval = ((char*)hdr) +
                     sizeof(mca_btl_sm_hdr_t);
                 frag->segment.seg_len = hdr->len;
-                reg->cbfunc(&mca_btl_sm[1].super,hdr->tag,&frag->base,reg->cbdata);
+                reg->cbfunc(&mca_btl_sm.super, hdr->tag, &frag->base,
+                        reg->cbdata);
                 MCA_BTL_SM_FRAG_RETURN(frag);
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
@@ -512,7 +410,6 @@ int mca_btl_sm_component_progress(void)
                 break;
             }
             default:
-            {
                 /* unknown */
                 hdr = (mca_btl_sm_hdr_t*)((uintptr_t)hdr->frag |
                         MCA_BTL_SM_FRAG_STATUS_MASK);
@@ -522,13 +419,12 @@ int mca_btl_sm_component_progress(void)
                 if(OMPI_SUCCESS != rc)
                     goto err;
                 break;
-            }
         }
         rc++;
-    }  /* end peer_local_smp_rank loop */
+    }
     return rc;
 err:
     BTL_ERROR(("SM faild to send message due to shortage of shared memory.\n"));
-    mca_btl_sm[btl].error_cb(&mca_btl_sm[btl].super, MCA_BTL_ERROR_FLAGS_FATAL);
+    mca_btl_sm.error_cb(&mca_btl_sm.super, MCA_BTL_ERROR_FLAGS_FATAL);
     return rc;
 }
