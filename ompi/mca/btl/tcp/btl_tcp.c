@@ -121,8 +121,8 @@ int mca_btl_tcp_add_procs(
         tcp_endpoint->endpoint_btl = tcp_btl;
         rc = mca_btl_tcp_proc_insert(tcp_proc, tcp_endpoint);
         if(rc != OMPI_SUCCESS) {
-            OBJ_RELEASE(tcp_endpoint);
             OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
+            OBJ_RELEASE(tcp_endpoint);
             continue;
         }
 
