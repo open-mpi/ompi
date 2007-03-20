@@ -224,10 +224,9 @@ finished:
 }
 
 
-int ompi_request_wait_all(
-    size_t count,
-    ompi_request_t ** requests,
-    ompi_status_public_t * statuses)
+int ompi_request_wait_all( size_t count,
+                           ompi_request_t ** requests,
+                           ompi_status_public_t * statuses )
 {
     size_t completed = 0, i;
     ompi_request_t **rptr;
