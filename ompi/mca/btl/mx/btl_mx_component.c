@@ -130,7 +130,7 @@ int mca_btl_mx_component_open(void)
                             false, false, 16, &mca_btl_mx_component.mx_max_posted_recv );
 
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "exclusivity",
-                            "Priority compared with the others devices (used only when several devices are available",
+                            "Priority compared with the others devices (used only when several devices are available)",
                             false, false, 50, (int*) &mca_btl_mx_module.super.btl_exclusivity );
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "first_frag_size",
                             "Size of the first fragment for the rendez-vous protocol over MX",
@@ -164,7 +164,7 @@ int mca_btl_mx_component_open(void)
 
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "flags",
                             "Flags to activate/deactivate the RDMA: SEND=1, PUT=2, GET=4",
-                            false, false, MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_PUT,
+                            false, false, MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND,
                             (int*)&mca_btl_mx_module.super.btl_flags );
     return OMPI_SUCCESS;
 }
