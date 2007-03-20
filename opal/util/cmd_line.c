@@ -29,7 +29,6 @@
 #include "opal/threads/mutex.h"
 #include "opal/util/argv.h"
 #include "opal/util/cmd_line.h"
-#include "opal/util/strncpy.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/constants.h"

@@ -36,7 +36,8 @@
 extern "C" {
 #endif
 
-OPAL_DECLSPEC char *opal_strncpy(char *dest, const char *src, size_t len);
+/* Might also be pure? */
+OPAL_DECLSPEC char *opal_strncpy(char *dest, const char *src, size_t len) __opal_attribute_nonnull__(1) __opal_attribute_nonnull__(2);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

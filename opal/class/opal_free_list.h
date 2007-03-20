@@ -72,7 +72,7 @@ OPAL_DECLSPEC int opal_free_list_init(
     int max_elements_to_alloc,
     int num_elements_per_alloc);
 
-OPAL_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elements);
+OPAL_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elements) __opal_attribute_nonnull__(1);
     
 /**
  * Attemp to obtain an item from a free list. 

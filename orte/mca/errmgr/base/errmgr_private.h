@@ -65,7 +65,7 @@ ORTE_DECLSPEC    int orte_errmgr_base_proc_aborted_not_avail(orte_gpr_notify_mes
 
 ORTE_DECLSPEC    int orte_errmgr_base_incomplete_start_not_avail(orte_gpr_notify_message_t *msg);
 
-ORTE_DECLSPEC    void orte_errmgr_base_error_detected(int error_code, char *fmt, ...);
+ORTE_DECLSPEC    void orte_errmgr_base_error_detected(int error_code, char *fmt, ...) __opal_attribute_format__(__printf__, 2, 3);
 
 ORTE_DECLSPEC    int orte_errmgr_base_register_job_not_avail(orte_jobid_t job);
 

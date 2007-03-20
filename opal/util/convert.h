@@ -74,7 +74,7 @@ extern "C" {
  * On platforms where sizeof(size_t) <= sizeof(int), this function
  * will aways return OPAL_SUCCESS.
  */
-OPAL_DECLSPEC int opal_size2int(size_t in, int *out, bool want_check);
+OPAL_DECLSPEC int opal_size2int(size_t in, int *out, bool want_check) __opal_attribute_nonnull__(2);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

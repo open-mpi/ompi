@@ -82,7 +82,7 @@ void opal_malloc_finalize(void);
    * This function is only used when --enable-mem-debug was specified to
    * configure (or by default if you're building in a SVN checkout).
    */
-OPAL_DECLSPEC void *opal_malloc(size_t size, const char *file, int line);
+OPAL_DECLSPEC void *opal_malloc(size_t size, const char *file, int line) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
   /**
    * \internal
@@ -98,7 +98,7 @@ OPAL_DECLSPEC void *opal_malloc(size_t size, const char *file, int line);
    * This function is only used when --enable-mem-debug was specified to
    * configure (or by default if you're building in a SVN checkout).
    */
-OPAL_DECLSPEC void *opal_calloc(size_t nmembers, size_t size, const char *file, int line);
+OPAL_DECLSPEC void *opal_calloc(size_t nmembers, size_t size, const char *file, int line) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
   /**
    * \internal
@@ -114,7 +114,7 @@ OPAL_DECLSPEC void *opal_calloc(size_t nmembers, size_t size, const char *file, 
    * This function is only used when --enable-mem-debug was specified to
    * configure (or by default if you're building in a SVN checkout).
    */
-OPAL_DECLSPEC void *opal_realloc(void *ptr, size_t size, const char *file, int line);
+OPAL_DECLSPEC void *opal_realloc(void *ptr, size_t size, const char *file, int line) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
   /**
    * \internal
@@ -130,7 +130,7 @@ OPAL_DECLSPEC void *opal_realloc(void *ptr, size_t size, const char *file, int l
    * to configure (or by default if you're building in a SVN
    * checkout).
    */
-OPAL_DECLSPEC void opal_free(void *addr, const char *file, int line);
+OPAL_DECLSPEC void opal_free(void *addr, const char *file, int line) __opal_attribute_nonnull__(1);
 
 OPAL_DECLSPEC extern int opal_malloc_debug_level;
 OPAL_DECLSPEC extern int opal_malloc_output;
