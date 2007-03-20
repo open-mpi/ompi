@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -22,6 +22,8 @@
 #include <string.h>
 
 #include "opal/util/show_help.h"
+#include "opal/prefetch.h"
+#include "opal/event/event.h"
 #include "orte/mca/ns/ns.h"
 #include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/bml/bml.h"
@@ -97,18 +99,27 @@ void mca_bml_r2_recv_callback(
 }
 
 
-int mca_bml_r2_progress( void ) { 
-    size_t i;
-    int count = 0;
+int mca_bml_r2_progress( void )
+{ 
+    int i, count = 0;
 
     /*
      * Progress each of the BTL modules
      */
-    for(i=0; i<mca_bml_r2.num_btl_progress; i++) {
-        int rc = mca_bml_r2.btl_progress[i]();
-        if(rc > 0) {
-            count += rc;
+    if( OPAL_LIKELY( 0 != mca_bml_r2.num_btl_progress ) ) {
+        for( i = 0; i < (int)mca_bml_r2.num_btl_progress; i++) {
+            int rc = mca_bml_r2.btl_progress[i]();
+            if(rc > 0) {
+                count += rc;
+            }
         }
+    } else {
+        /**
+         * If there are not callbacks registered it simply means there are no
+         * high performance BTL used by this application. Therefore, we run
+         * on the slow TCP mode, so we make the event engine blocking.
+         */
+        opal_progress_set_event_flag(OPAL_EVLOOP_ONCE);
     }
     return count;
 }
