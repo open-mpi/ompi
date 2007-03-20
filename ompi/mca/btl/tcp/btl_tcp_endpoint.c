@@ -143,16 +143,14 @@ static void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, con
 
     if((flags = fcntl(btl_endpoint->endpoint_sd, F_GETFL, 0)) < 0) {
         BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)", 
-                   strerror(opal_socket_errno),
-                   opal_socket_errno));
+                   strerror(opal_socket_errno), opal_socket_errno));
     }
 
 #if defined(SO_SNDBUF)
     obtlen = sizeof(sndbuf);
     if(getsockopt(btl_endpoint->endpoint_sd, SOL_SOCKET, SO_SNDBUF, (char *)&sndbuf, &obtlen) < 0) {
         BTL_ERROR(("SO_SNDBUF option: %s (%d)",
-                   strerror(opal_socket_errno),
-                   opal_socket_errno));
+                   strerror(opal_socket_errno), opal_socket_errno));
     }
 #else
     sndbuf = -1;
@@ -161,8 +159,7 @@ static void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, con
     obtlen = sizeof(rcvbuf);
     if(getsockopt(btl_endpoint->endpoint_sd, SOL_SOCKET, SO_RCVBUF, (char *)&rcvbuf, &obtlen) < 0) {
         BTL_ERROR(("SO_RCVBUF option: %s (%d)", 
-                   strerror(opal_socket_errno),
-                   opal_socket_errno));
+                   strerror(opal_socket_errno), opal_socket_errno));
     }
 #else
     rcvbuf = -1;
@@ -171,8 +168,7 @@ static void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, con
     obtlen = sizeof(nodelay);
     if(getsockopt(btl_endpoint->endpoint_sd, IPPROTO_TCP, TCP_NODELAY, (char *)&nodelay, &obtlen) < 0) {
         BTL_ERROR(("TCP_NODELAY option: %s (%d)", 
-                   strerror(opal_socket_errno),
-                   opal_socket_errno));
+                   strerror(opal_socket_errno), opal_socket_errno));
     }
 #else
     nodelay = 0;
@@ -264,8 +260,7 @@ static int mca_btl_tcp_endpoint_send_blocking(mca_btl_base_endpoint_t* btl_endpo
         if(retval < 0) {
             if(opal_socket_errno != EINTR && opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK) {
                 BTL_ERROR(("send() failed: %s (%d)",
-                           strerror(opal_socket_errno),
-                           opal_socket_errno));
+                           strerror(opal_socket_errno), opal_socket_errno));
                 mca_btl_tcp_endpoint_close(btl_endpoint);
                 return -1;
             }
@@ -423,8 +418,7 @@ static int mca_btl_tcp_endpoint_recv_blocking(mca_btl_base_endpoint_t* btl_endpo
         if(retval < 0) {
             if(opal_socket_errno != EINTR && opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK) {
                 BTL_ERROR(("recv() failed: %s (%d)",
-                           strerror(opal_socket_errno),
-                           opal_socket_errno));
+                           strerror(opal_socket_errno), opal_socket_errno));
                 mca_btl_tcp_endpoint_close(btl_endpoint);
                 return -1;
             }
@@ -456,7 +450,7 @@ static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_en
     /* compare this to the expected values */
     if(memcmp(&btl_proc->proc_name, &guid, sizeof(orte_process_name_t)) != 0) {
         BTL_ERROR(("received unexpected process identifier [%lu,%lu,%lu]", 
-            ORTE_NAME_ARGS(&guid)));
+                   ORTE_NAME_ARGS(&guid)));
         mca_btl_tcp_endpoint_close(btl_endpoint);
         return OMPI_ERR_UNREACH;
     }
@@ -477,24 +471,21 @@ void mca_btl_tcp_set_socket_options(int sd)
     optval = 1;
     if(setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char *)&optval, sizeof(optval)) < 0) {
         BTL_ERROR(("setsockopt(TCP_NODELAY) failed: %s (%d)", 
-                   strerror(opal_socket_errno),
-                   opal_socket_errno));
+                   strerror(opal_socket_errno), opal_socket_errno));
     }
 #endif
 #if defined(SO_SNDBUF)
     if(mca_btl_tcp_component.tcp_sndbuf > 0 &&
        setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&mca_btl_tcp_component.tcp_sndbuf, sizeof(int)) < 0) {
         BTL_ERROR(("setsockopt(SO_SNDBUF) failed: %s (%d)", 
-                   strerror(opal_socket_errno),
-                   opal_socket_errno));
+                   strerror(opal_socket_errno), opal_socket_errno));
     }
 #endif
 #if defined(SO_RCVBUF)
     if(mca_btl_tcp_component.tcp_rcvbuf > 0 &&
        setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&mca_btl_tcp_component.tcp_rcvbuf, sizeof(int)) < 0) {
         BTL_ERROR(("setsockopt(SO_RCVBUF) failed: %s (%d)", 
-                   strerror(opal_socket_errno),
-                   opal_socket_errno));
+                   strerror(opal_socket_errno), opal_socket_errno));
     }
 #endif
 }
@@ -519,7 +510,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
         btl_endpoint->endpoint_retries++;
         return OMPI_ERR_UNREACH;
     }
-
+    opal_output( 0, "start connection on socket %d\n", btl_endpoint->endpoint_sd );
     /* setup socket buffer sizes */
     mca_btl_tcp_set_socket_options(btl_endpoint->endpoint_sd);
 
@@ -529,14 +520,12 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
     /* setup the socket as non-blocking */
     if((flags = fcntl(btl_endpoint->endpoint_sd, F_GETFL, 0)) < 0) {
         BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)", 
-                   strerror(opal_socket_errno),
-                   opal_socket_errno));
+                   strerror(opal_socket_errno), opal_socket_errno));
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(btl_endpoint->endpoint_sd, F_SETFL, flags) < 0)
             BTL_ERROR(("fcntl(F_SETFL) failed: %s (%d)", 
-                       strerror(opal_socket_errno),
-                       opal_socket_errno));
+                       strerror(opal_socket_errno), opal_socket_errno));
     }
 
     /* start the connect - will likely fail with EINPROGRESS */
@@ -550,6 +539,10 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
             opal_event_add(&btl_endpoint->endpoint_send_event, 0);
             return OMPI_SUCCESS;
         }
+        BTL_PEER_ERROR( btl_endpoint->endpoint_proc->proc_ompi,
+                        ( "Unable to connect to the peer %s on port %d: %s\n",
+                          inet_ntoa(btl_endpoint->endpoint_addr->addr_inet),
+                          btl_endpoint->endpoint_addr->addr_port, strerror(opal_socket_errno) ) );
         mca_btl_tcp_endpoint_close(btl_endpoint);
         btl_endpoint->endpoint_retries++;
         return OMPI_ERR_UNREACH;
@@ -582,9 +575,7 @@ static void mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_e
 
     /* check connect completion status */
     if(getsockopt(btl_endpoint->endpoint_sd, SOL_SOCKET, SO_ERROR, (char *)&so_error, &so_length) < 0) {
-        BTL_ERROR(("getsockopt() failed: %s (%d)", 
-                   strerror(opal_socket_errno),
-                   opal_socket_errno));
+        BTL_ERROR(("getsockopt() failed: %s (%d)", strerror(opal_socket_errno), opal_socket_errno));
         mca_btl_tcp_endpoint_close(btl_endpoint);
         return;
     }
@@ -593,9 +584,7 @@ static void mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_e
         return;
     }
     if(so_error != 0) {
-        BTL_ERROR(("connect() failed: %s (%d)", 
-                   strerror(so_error),
-                   so_error));
+        BTL_ERROR(("connect() failed: %s (%d)", strerror(so_error), so_error));
         mca_btl_tcp_endpoint_close(btl_endpoint);
         return;
     }
@@ -727,8 +716,7 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
         break;
         }
     default:
-        BTL_ERROR(("invalid connection state (%d)",
-            btl_endpoint->endpoint_state));
+        BTL_ERROR(("invalid connection state (%d)", btl_endpoint->endpoint_state));
         opal_event_del(&btl_endpoint->endpoint_send_event);
         break;
     }

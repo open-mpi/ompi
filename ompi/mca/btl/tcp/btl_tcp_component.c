@@ -169,7 +169,7 @@ int mca_btl_tcp_component_open(void)
 {
 #ifdef __WINDOWS__
     WSADATA win_sock_data;
-    if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
+    if( WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0 ) {
         BTL_ERROR(("failed to initialise windows sockets:%d", WSAGetLastError()));
         return OMPI_ERROR;
     }
@@ -190,6 +190,8 @@ int mca_btl_tcp_component_open(void)
     opal_hash_table_init(&mca_btl_tcp_component.tcp_procs, 256);
 
     /* register TCP component parameters */
+    mca_btl_tcp_component.tcp_num_links =
+        mca_btl_tcp_param_register_int("links", 1);
     mca_btl_tcp_component.tcp_if_include =
         mca_btl_tcp_param_register_string("if_include", "");
     mca_btl_tcp_component.tcp_if_exclude =
@@ -283,36 +285,51 @@ int mca_btl_tcp_component_close(void)
 
 static int mca_btl_tcp_create(int if_index, const char* if_name)
 {
-    struct mca_btl_tcp_module_t* btl = (struct mca_btl_tcp_module_t *)malloc(sizeof(mca_btl_tcp_module_t));
+    struct mca_btl_tcp_module_t* btl;
     char param[256];
-    if(NULL == btl)
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    memcpy(btl, &mca_btl_tcp_module, sizeof(mca_btl_tcp_module));
-    OBJ_CONSTRUCT(&btl->tcp_endpoints, opal_list_t);
-    mca_btl_tcp_component.tcp_btls[mca_btl_tcp_component.tcp_num_btls++] = btl;
+    int i;
 
-    /* initialize the btl */
-    btl->tcp_ifindex = if_index;
+    for( i = 0; i < (int)mca_btl_tcp_component.tcp_num_links; i++ ) {
+        btl = (struct mca_btl_tcp_module_t *)malloc(sizeof(mca_btl_tcp_module_t));
+        if(NULL == btl)
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        memcpy(btl, &mca_btl_tcp_module, sizeof(mca_btl_tcp_module));
+        OBJ_CONSTRUCT(&btl->tcp_endpoints, opal_list_t);
+        mca_btl_tcp_component.tcp_btls[mca_btl_tcp_component.tcp_num_btls++] = btl;
+
+        /* initialize the btl */
+        btl->tcp_ifindex = if_index;
 #if MCA_BTL_TCP_STATISTICS
-    btl->tcp_bytes_recv = 0;
-    btl->tcp_bytes_sent = 0;
-    btl->tcp_send_handler = 0;
+        btl->tcp_bytes_recv = 0;
+        btl->tcp_bytes_sent = 0;
+        btl->tcp_send_handler = 0;
 #endif
-    opal_ifindextoaddr(if_index, (struct sockaddr*)&btl->tcp_ifaddr, sizeof(btl->tcp_ifaddr));
-    opal_ifindextomask(if_index, (struct sockaddr*)&btl->tcp_ifmask, sizeof(btl->tcp_ifmask));
+        opal_ifindextoaddr(if_index, (struct sockaddr*)&btl->tcp_ifaddr, sizeof(btl->tcp_ifaddr));
+        opal_ifindextomask(if_index, (struct sockaddr*)&btl->tcp_ifmask, sizeof(btl->tcp_ifmask));
 
-    /* allow user to specify interface bandwidth */
-    sprintf(param, "bandwidth_%s", if_name);
-    btl->super.btl_bandwidth = mca_btl_tcp_param_register_int(param, 0);
+        /* allow user to specify interface bandwidth */
+        sprintf(param, "bandwidth_%s", if_name);
+        btl->super.btl_bandwidth = mca_btl_tcp_param_register_int(param, 0);
 
-    /* allow user to override/specify latency ranking */
-    sprintf(param, "latency_%s", if_name);
-    btl->super.btl_latency = mca_btl_tcp_param_register_int(param, 0);
+        /* allow user to override/specify latency ranking */
+        sprintf(param, "latency_%s", if_name);
+        btl->super.btl_latency = mca_btl_tcp_param_register_int(param, 0);
+        if( i > 0 ) {
+            btl->super.btl_bandwidth >>= 1;
+            btl->super.btl_latency   <<= 1;
+        }
+        /* allow user to specify interface bandwidth */
+        sprintf(param, "bandwidth_%s:%d", if_name, i);
+        btl->super.btl_bandwidth = mca_btl_tcp_param_register_int(param, btl->super.btl_bandwidth);
 
+        /* allow user to override/specify latency ranking */
+        sprintf(param, "latency_%s:%d", if_name, i);
+        btl->super.btl_latency = mca_btl_tcp_param_register_int(param, btl->super.btl_latency);
 #if 0 && OMPI_ENABLE_DEBUG
-    BTL_OUTPUT(("interface: %s bandwidth %d latency %d",
-        if_name, btl->super.btl_bandwidth, btl->super.btl_latency));
+        BTL_OUTPUT(("interface %s instance %i: bandwidth %d latency %d\n", if_name, i,
+                    btl->super.btl_bandwidth, btl->super.btl_latency));
 #endif
+    }
     return OMPI_SUCCESS;
 }
 
@@ -335,7 +352,8 @@ static int mca_btl_tcp_component_create_instances(void)
         return OMPI_ERROR;
 
     /* allocate memory for btls */
-    mca_btl_tcp_component.tcp_btls = (mca_btl_tcp_module_t **)malloc(if_count * sizeof(mca_btl_tcp_module_t*));
+    mca_btl_tcp_component.tcp_btls = (mca_btl_tcp_module_t**)malloc(mca_btl_tcp_component.tcp_num_links *
+                                                                    if_count * sizeof(mca_btl_tcp_module_t*));
     if(NULL == mca_btl_tcp_component.tcp_btls)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
@@ -396,9 +414,8 @@ static int mca_btl_tcp_component_create_listen(void)
     /* create a listen socket for incoming connections */
     mca_btl_tcp_component.tcp_listen_sd = socket(AF_INET, SOCK_STREAM, 0);
     if(mca_btl_tcp_component.tcp_listen_sd < 0) {
-        BTL_ERROR(("socket() failed: %s (%d)", 
-                   strerror(opal_socket_errno),
-                   opal_socket_errno));
+        BTL_ERROR(("socket() failed: %s (%d)",
+                   strerror(opal_socket_errno), opal_socket_errno));
         return OMPI_ERROR;
     }
     mca_btl_tcp_set_socket_options(mca_btl_tcp_component.tcp_listen_sd);
@@ -410,9 +427,8 @@ static int mca_btl_tcp_component_create_listen(void)
     inaddr.sin_port = 0;
                                                                                                       
     if(bind(mca_btl_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
-        BTL_ERROR(("bind() failed: %s (%d)", 
-                   strerror(opal_socket_errno),
-                   opal_socket_errno));
+        BTL_ERROR(("bind() failed: %s (%d)",
+                   strerror(opal_socket_errno), opal_socket_errno));
         return OMPI_ERROR;
     }
                                                                                                       
@@ -420,8 +436,7 @@ static int mca_btl_tcp_component_create_listen(void)
     addrlen = sizeof(struct sockaddr_in);
     if(getsockname(mca_btl_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
         BTL_ERROR(("getsockname() failed: %s (%d)",
-                   strerror(opal_socket_errno),
-                   opal_socket_errno));
+                   strerror(opal_socket_errno), opal_socket_errno));
         return OMPI_ERROR;
     }
     mca_btl_tcp_component.tcp_listen_port = inaddr.sin_port;
@@ -429,23 +444,20 @@ static int mca_btl_tcp_component_create_listen(void)
     /* setup listen backlog to maximum allowed by kernel */
     if(listen(mca_btl_tcp_component.tcp_listen_sd, SOMAXCONN) < 0) {
         BTL_ERROR(("listen() failed: %s (%d)", 
-                   strerror(opal_socket_errno),
-                   opal_socket_errno));
+                   strerror(opal_socket_errno), opal_socket_errno));
         return OMPI_ERROR;
     }
 
     /* set socket up to be non-blocking, otherwise accept could block */
     if((flags = fcntl(mca_btl_tcp_component.tcp_listen_sd, F_GETFL, 0)) < 0) {
         BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)",
-                   strerror(opal_socket_errno),
-                   opal_socket_errno));
+                   strerror(opal_socket_errno), opal_socket_errno));
         return OMPI_ERROR;
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(mca_btl_tcp_component.tcp_listen_sd, F_SETFL, flags) < 0) {
             BTL_ERROR(("fcntl(F_SETFL) failed: %s (%d)",
-                       strerror(opal_socket_errno),
-                       opal_socket_errno));
+                       strerror(opal_socket_errno), opal_socket_errno));
             return OMPI_ERROR;
         }
     }
@@ -468,16 +480,20 @@ static int mca_btl_tcp_component_create_listen(void)
 
 static int mca_btl_tcp_component_exchange(void)
 {
-     int rc=0;
-     size_t i=0;
-     size_t size = mca_btl_tcp_component.tcp_num_btls * sizeof(mca_btl_tcp_addr_t);
+    int rc = 0, index;
+     size_t i = 0, j;
+     size_t size = mca_btl_tcp_component.tcp_num_links * mca_btl_tcp_component.tcp_num_btls
+         * sizeof(mca_btl_tcp_addr_t);
      if(mca_btl_tcp_component.tcp_num_btls != 0) {
          mca_btl_tcp_addr_t *addrs = (mca_btl_tcp_addr_t *)malloc(size);
-         for(i=0; i<mca_btl_tcp_component.tcp_num_btls; i++) {
+         for( i = 0; i < mca_btl_tcp_component.tcp_num_btls; i++ ) {
              struct mca_btl_tcp_module_t* btl = mca_btl_tcp_component.tcp_btls[i];
-             addrs[i].addr_inet    = btl->tcp_ifaddr.sin_addr;
-             addrs[i].addr_port    = mca_btl_tcp_component.tcp_listen_port;
-             addrs[i].addr_inuse   = 0;
+             index = i * mca_btl_tcp_component.tcp_num_links;
+             for( j = 0; j < mca_btl_tcp_component.tcp_num_links; j++, index++ ) {
+                 addrs[index].addr_inet  = btl->tcp_ifaddr.sin_addr;
+                 addrs[index].addr_port  = mca_btl_tcp_component.tcp_listen_port;
+                 addrs[index].addr_inuse = 0;
+             }
          }
          rc =  mca_pml_base_modex_send(&mca_btl_tcp_component.super.btl_version, addrs, size);
          free(addrs);
@@ -577,8 +593,7 @@ static void mca_btl_tcp_component_accept(void)
                 continue;
             if(opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK)
                 BTL_ERROR(("accept() failed: %s (%d).", 
-                           strerror(opal_socket_errno),
-                           opal_socket_errno));
+                           strerror(opal_socket_errno), opal_socket_errno));
             return;
         }
         mca_btl_tcp_set_socket_options(sd);
@@ -623,21 +638,18 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     /* now set socket up to be non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
         BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)",
-                   strerror(opal_socket_errno),
-                   opal_socket_errno));
+                   strerror(opal_socket_errno), opal_socket_errno));
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
             BTL_ERROR(("fcntl(F_SETFL) failed: %s (%d)",
-                       strerror(opal_socket_errno),
-                       opal_socket_errno));
+                       strerror(opal_socket_errno), opal_socket_errno));
         }
     }
    
     /* lookup the corresponding process */
     btl_proc = mca_btl_tcp_proc_lookup(&guid);
     if(NULL == btl_proc) {
-        BTL_ERROR(("errno=%d",errno));
         CLOSE_THE_SOCKET(sd);
         return;
     }
@@ -645,8 +657,7 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     /* lookup peer address */
     if(getpeername(sd, (struct sockaddr*)&addr, &addr_len) != 0) {
         BTL_ERROR(("getpeername() failed: %s (%d)", 
-                   strerror(opal_socket_errno),
-                   opal_socket_errno));
+                   strerror(opal_socket_errno), opal_socket_errno));
         CLOSE_THE_SOCKET(sd);
         return;
     }
