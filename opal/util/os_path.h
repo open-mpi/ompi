@@ -65,7 +65,7 @@ extern "C" {
  * appropriate to the local operating system. The path_name string has been malloc'd
  * and therefore the user is responsible for free'ing the field.
 */
-OPAL_DECLSPEC char *opal_os_path(bool relative, ...);
+OPAL_DECLSPEC char *opal_os_path(bool relative, ...) __opal_attribute_malloc__ __opal_attribute_sentinel__ __opal_attribute_warn_unused_result__;
 
 /**
  * Convert the path to be OS friendly. On UNIX this function will

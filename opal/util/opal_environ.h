@@ -53,14 +53,14 @@ extern "C" {
      * one of the two is NULL, the other list is simply copied to the
      * output.  If both are NULL, NULL is returned.
      */
-    OPAL_DECLSPEC char **opal_environ_merge(char **minor, char **major);
+    OPAL_DECLSPEC char **opal_environ_merge(char **minor, char **major) __opal_attribute_warn_unused_result__;
 
     /**
      * Portable version of setenv(3), allowing editing of any
      * environ-like array.
      *
      * @param name String name of the environment variable to look for
-     * @param value String value to set
+     * @param value String value to set (may be NULL)
      * @param overwrite Whether to overwrite any existing value with
      * the same name
      * @param env The environment to use
@@ -102,7 +102,7 @@ extern "C" {
      * \endcode
      */
     OPAL_DECLSPEC int opal_setenv(const char *name, const char *value,
-                                  bool overwrite, char ***env);
+                                  bool overwrite, char ***env) __opal_attribute_nonnull__(1);
 
     /**
      * Portable version of unsetenv(3), allowing editing of any
@@ -118,7 +118,7 @@ extern "C" {
      * If \em name is found in \em env, the string corresponding to
      * that entry is freed and its entry is eliminated from the array.
      */
-    OPAL_DECLSPEC int opal_unsetenv(const char *name, char ***env);
+    OPAL_DECLSPEC int opal_unsetenv(const char *name, char ***env) __opal_attribute_nonnull__(1);
 
     /**
      * So that others don't have to declare it

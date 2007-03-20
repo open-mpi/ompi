@@ -63,7 +63,7 @@ extern "C" {
    * value into the argv array; there is no need to keep the original
    * string (i.e., the arg parameter) after invoking this function.
    */
-OPAL_DECLSPEC  int opal_argv_append(int *argc, char ***argv, const char *arg);
+OPAL_DECLSPEC  int opal_argv_append(int *argc, char ***argv, const char *arg) __opal_attribute_nonnull__(1) __opal_attribute_nonnull__(3);
 
   /**
    * Append to an argv-style array, but ignore the size of the array.
@@ -111,7 +111,7 @@ OPAL_DECLSPEC  void opal_argv_free(char **argv);
    * argument (i.e., it can be freed after calling this function
    * without invalidating the output argv).
    */
-OPAL_DECLSPEC  char **opal_argv_split(const char *src_string, int delimiter);
+OPAL_DECLSPEC  char **opal_argv_split(const char *src_string, int delimiter) __opal_attribute_nonnull__(1) __opal_attribute_warn_unused_result__;
 
   /**
    * Return the length of a NULL-terminated argv array.
@@ -141,7 +141,7 @@ OPAL_DECLSPEC  int opal_argv_count(char **argv);
    *
    * It is the callers responsibility to free the returned string.
    */
-OPAL_DECLSPEC  char *opal_argv_join(char **argv, int delimiter);
+OPAL_DECLSPEC  char *opal_argv_join(char **argv, int delimiter) __opal_attribute_malloc__;
 
   /**
    * Return the number of bytes consumed by an argv array.
@@ -166,7 +166,7 @@ OPAL_DECLSPEC  size_t opal_argv_len(char **argv);
    * Specifically, the output argv will be an array of the same length
    * as the input argv, and strcmp(argv_in[i], argv_out[i]) will be 0.
    */
-OPAL_DECLSPEC  char **opal_argv_copy(char **argv);
+OPAL_DECLSPEC  char **opal_argv_copy(char **argv) __opal_attribute_malloc__;
 
     /**
      * Delete one or more tokens from the middle of an argv.

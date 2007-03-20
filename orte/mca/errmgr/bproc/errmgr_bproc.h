@@ -66,7 +66,7 @@ int orte_errmgr_bproc_proc_aborted(orte_gpr_notify_message_t *msg);
 
 int orte_errmgr_bproc_incomplete_start(orte_gpr_notify_message_t *msg);
 
-void orte_errmgr_bproc_error_detected(int error_code, char *fmt, ...);
+void orte_errmgr_bproc_error_detected(int error_code, char *fmt, ...) __opal_attribute_format__(__printf__, 2, 3);
 
 void orte_errmgr_bproc_abort(void);
 
