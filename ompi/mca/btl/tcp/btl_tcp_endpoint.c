@@ -510,7 +510,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
         btl_endpoint->endpoint_retries++;
         return OMPI_ERR_UNREACH;
     }
-    opal_output( 0, "start connection on socket %d\n", btl_endpoint->endpoint_sd );
+
     /* setup socket buffer sizes */
     mca_btl_tcp_set_socket_options(btl_endpoint->endpoint_sd);
 
