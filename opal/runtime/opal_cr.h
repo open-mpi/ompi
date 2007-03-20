@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -27,7 +27,7 @@
 #include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
 #include "opal/util/output.h"
-#include "opal/include/opal/prefetch.h"
+#include "opal/prefetch.h"
 
 #ifndef OPAL_CR_H
 #define OPAL_CR_H
