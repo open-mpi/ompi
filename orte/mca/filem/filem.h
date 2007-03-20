@@ -35,6 +35,10 @@
 
 #include "opal/class/opal_object.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * A set of flags that determine the type of the file
  * in question
@@ -205,6 +209,10 @@ ORTE_DECLSPEC extern orte_filem_base_module_t orte_filem;
     MCA_BASE_VERSION_1_0_0, \
     /* FILEM v1.0 */ \
     "filem", 1, 0, 0
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* ORTE_FILEM_H */
 

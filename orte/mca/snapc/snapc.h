@@ -85,6 +85,10 @@
 
 #include "opal/class/opal_object.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * Three types of Coordinator types, plus
  *  the case when it hasn't been defined.
@@ -260,6 +264,10 @@ ORTE_DECLSPEC extern orte_snapc_base_module_t orte_snapc;
     MCA_BASE_VERSION_1_0_0, \
     /* SNAPC v1.0 */ \
     "snapc", 1, 0, 0
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* ORTE_SNAPC_H */
 

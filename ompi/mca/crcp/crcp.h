@@ -45,6 +45,10 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * Query function for CRCP components.
  * Returns a priority to rank it agaianst other available CRCP components.
@@ -367,6 +371,10 @@ OMPI_DECLSPEC extern ompi_crcp_base_module_t ompi_crcp;
   }
 #else
 #define OMPI_CRCP_REQUEST_COMPLETE(req) ;
+#endif
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
 #endif
 
 #endif /* OMPI_CRCP_H */
