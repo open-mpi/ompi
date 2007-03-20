@@ -24,6 +24,12 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
+1.1.6
+-----
+
+- Fix compile error on OS X 10.3.x introduced with Open MPI 1.1.5.
+
+
 1.1.5
 -----
 
