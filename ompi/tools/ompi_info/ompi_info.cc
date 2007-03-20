@@ -5,7 +5,7 @@
 // Copyright (c) 2004-2006 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
@@ -93,31 +93,31 @@ int main(int argc, char *argv[])
     exit(ret);
   }
 
-  opal_cmd_line_make_opt(cmd_line, 'v', "version", 2, 
-                         "Show version of Open MPI or a component");
-  opal_cmd_line_make_opt(cmd_line, '\0', "param", 2, 
-                         "Show MCA parameters");
-  opal_cmd_line_make_opt(cmd_line, '\0', "internal", 0, 
-                         "Show internal MCA parameters (not meant to be modified by users)");
-  opal_cmd_line_make_opt(cmd_line, '\0', "path", 1, 
-                         "Show paths that Open MPI was configured with");
-  opal_cmd_line_make_opt(cmd_line, '\0', "arch", 0, 
-                         "Show architecture Open MPI was compiled on");
-  opal_cmd_line_make_opt(cmd_line, 'c', "config", 0, 
-                         "Show configuration options");
-  opal_cmd_line_make_opt(cmd_line, 'h', "help", 0, 
-                         "Show this help message");
-  opal_cmd_line_make_opt(cmd_line, '\0', "pretty", 0, 
-                         "Display output in 'prettyprint' format (default)");
-  opal_cmd_line_make_opt(cmd_line, '\0', "parsable", 0, 
-                         "Display output in parsable format");
-  opal_cmd_line_make_opt(cmd_line, '\0', "parseable", 0, 
-                         "Synonym for --parsable");
-  opal_cmd_line_make_opt(cmd_line, '\0', "hostname", 0, 
-                         "Show the hostname that Open MPI was configured "
-                         "and built on");
-  opal_cmd_line_make_opt(cmd_line, 'a', "all", 0, 
-                         "Show all configuration options and MCA parameters");
+  opal_cmd_line_make_opt3(cmd_line, 'v', NULL, "version", 2, 
+                          "Show version of Open MPI or a component");
+  opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "param", 2, 
+                          "Show MCA parameters");
+  opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "internal", 0, 
+                          "Show internal MCA parameters (not meant to be modified by users)");
+  opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "path", 1, 
+                          "Show paths that Open MPI was configured with");
+  opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "arch", 0, 
+                          "Show architecture Open MPI was compiled on");
+  opal_cmd_line_make_opt3(cmd_line, 'c', NULL, "config", 0, 
+                          "Show configuration options");
+  opal_cmd_line_make_opt3(cmd_line, 'h', NULL, "help", 0, 
+                          "Show this help message");
+  opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "pretty", 0, 
+                          "Display output in 'prettyprint' format (default)");
+  opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "parsable", 0, 
+                          "Display output in parsable format");
+  opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "parseable", 0, 
+                          "Synonym for --parsable");
+  opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "hostname", 0, 
+                          "Show the hostname that Open MPI was configured "
+                          "and built on");
+  opal_cmd_line_make_opt3(cmd_line, 'a', NULL, "all", 0, 
+                          "Show all configuration options and MCA parameters");
 
   // Call some useless functions in order to guarantee to link in some
   // global variables.  Only check the return value so that the
@@ -146,8 +146,9 @@ int main(int argc, char *argv[])
   if (OMPI_SUCCESS != opal_cmd_line_parse(cmd_line, false, argc, argv)) {
       cmd_error = true;
   }
-  if (!cmd_error && opal_cmd_line_is_taken(cmd_line, "help") || 
-      opal_cmd_line_is_taken(cmd_line, "h")) {
+  if (!cmd_error && 
+        (opal_cmd_line_is_taken(cmd_line, "help") || 
+         opal_cmd_line_is_taken(cmd_line, "h"))) {
       want_help = true;
   }
   if (cmd_error || want_help) {
