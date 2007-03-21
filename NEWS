@@ -56,7 +56,7 @@ Trunk (not on release branches yet)
 1.2.1
 -----
 
-- Fixe the fd problem when the nodelist in the N1GE PE_HOSTFILE gets too large.
+- Fix file descriptor leak in the Grid Engine/N1GE support
 - Fix compile error on OS X 10.3.x introduced with Open MPI 1.1.5.
 - Implement MPI_TYPE_CREATE_DARRAY function (was in 1.1.5 but not 1.2)
 - Recognize zsh in rsh pls
