@@ -982,37 +982,6 @@ static char* btl_openib_component_status_to_string(enum ibv_wc_status status)
     }
 }
 
-
-static inline int btl_openib_frag_progress_one(
-        mca_btl_openib_module_t* openib_btl,
-        mca_btl_openib_frag_t* frag)
-{
-    int res;
-
-    switch(frag->wr_desc.sr_desc.opcode) {
-        case IBV_WR_SEND:
-            res = mca_btl_openib_endpoint_send(frag->endpoint, frag);
-            break;
-        case IBV_WR_RDMA_WRITE:
-            res = mca_btl_openib_put((mca_btl_base_module_t*) openib_btl,
-                    frag->endpoint,
-                    (mca_btl_base_descriptor_t*) frag);
-            break;
-        case IBV_WR_RDMA_READ:
-            res = mca_btl_openib_get((mca_btl_base_module_t *) openib_btl,
-                    frag->endpoint,
-                    (mca_btl_base_descriptor_t*) frag);
-            break;
-        default:
-            res = OMPI_ERROR; 
-            BTL_ERROR(("error in posting pending operation, "
-                        "invalide opcode %d\n", frag->wr_desc.sr_desc.opcode));
-            break;
-    }
-
-    return res;
-}
-
 #define BTL_OPENIB_TOKENS(E, P) ((E)->sd_tokens[(P)] + \
         (((P) == BTL_OPENIB_HP_QP)?(E)->eager_rdma_remote.tokens:0))
 static void btl_openib_frag_progress_pending(
@@ -1032,7 +1001,7 @@ static void btl_openib_frag_progress_pending(
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
         if(NULL == (frag = (mca_btl_openib_frag_t *) frag_item))
             break;
-        if(btl_openib_frag_progress_one(openib_btl, frag) ==
+        if(mca_btl_openib_endpoint_send(frag->endpoint, frag) ==
                 OMPI_ERR_OUT_OF_RESOURCE)
             break;
     }
@@ -1046,7 +1015,8 @@ static void btl_openib_frag_progress_pending(
             OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
             if(NULL == (frag = (mca_btl_openib_frag_t *) frag_item))
                 break;
-            if(btl_openib_frag_progress_one(openib_btl, frag) ==
+            if(mca_btl_openib_get((mca_btl_base_module_t *)openib_btl,
+                        frag->endpoint, (mca_btl_base_descriptor_t*)frag) ==
                     OMPI_ERR_OUT_OF_RESOURCE)
                 break;
         }
@@ -1058,7 +1028,8 @@ static void btl_openib_frag_progress_pending(
             OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
             if(NULL == (frag = (mca_btl_openib_frag_t *) frag_item))
                 break;
-            if(btl_openib_frag_progress_one(openib_btl, frag) ==
+            if(mca_btl_openib_put((mca_btl_base_module_t*)openib_btl,
+                        frag->endpoint, (mca_btl_base_descriptor_t*)frag) ==
                     OMPI_ERR_OUT_OF_RESOURCE)
                 break;
         }
@@ -1075,7 +1046,7 @@ static void btl_openib_frag_progress_pending(
         OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
         if(NULL == (frag = (mca_btl_openib_frag_t *) frag_item))
             break;
-        if(btl_openib_frag_progress_one(openib_btl, frag) ==
+        if(mca_btl_openib_endpoint_send(frag->endpoint, frag) ==
                 OMPI_ERR_OUT_OF_RESOURCE)
             break;
      }
