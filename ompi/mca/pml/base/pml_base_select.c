@@ -56,7 +56,7 @@ int mca_pml_base_select(bool enable_progress_threads,
     mca_pml_base_module_t *module = NULL, *best_module = NULL;
     mca_pml_base_component_t *wrapper_component = NULL;
     mca_pml_base_module_t *wrapper_module = NULL;
-    int wrapper_priority;
+    int wrapper_priority = -1;
     opal_list_t opened;
     opened_component_t *om = NULL;
     bool found_pml;
