@@ -414,6 +414,7 @@ int mca_btl_sm_add_procs(
         {
             /* spin unitl local proc 0 initializes the segment */
             while(!mca_btl_sm_component.mmap_file->map_seg->seg_inited) {
+                opal_atomic_rmb();
                 opal_progress(); 
             }
         }
@@ -429,13 +430,14 @@ int mca_btl_sm_add_procs(
 
         /* memory barrier to ensure this flag is set before other
          *  flags are set */
-        opal_atomic_mb();
+        opal_atomic_wmb();
 
 		/* Set my flag to 1 (convert from relative address first) */
         tmp_int_ptr=(volatile int *)
             OFFSET2ADDR(mca_btl_sm_component.sm_ctl_header->segment_header.
                     base_shared_mem_flags, mca_btl_sm_component.sm_mpool_base);
 		tmp_int_ptr[mca_btl_sm_component.my_smp_rank]=1;
+        opal_atomic_wmb();
 
         /*
          * initialize the array of fifo's "owned" by this process
@@ -479,7 +481,7 @@ int mca_btl_sm_add_procs(
             OFFSET2ADDR(mca_btl_sm_component.sm_ctl_header->fifo,
                     mca_btl_sm_component.sm_mpool_base);
         fifo_tmp[mca_btl_sm_component.my_smp_rank]=my_fifos;
-        opal_atomic_mb();
+        opal_atomic_wmb();
 
         /* cache the pointer to the 2d fifo array.  These addresses
          * are valid in the current process space */
@@ -503,9 +505,9 @@ int mca_btl_sm_add_procs(
             mca_btl_sm_component.num_smp_procs+n_local_procs ; j++ ) {
 
         /* spin until this element is allocated */
-        while ( NULL == fifo_tmp[j] )
-        { 
-            opal_progress(); 
+        while ( NULL == fifo_tmp[j] ) {
+            opal_atomic_rmb();
+            opal_progress();
         }
 
         /* Calculate the difference as (my_base - their_base) */
