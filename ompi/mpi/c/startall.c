@@ -36,11 +36,10 @@ static const char FUNC_NAME[] = "MPI_Startall";
 
 int MPI_Startall(int count, MPI_Request *requests) 
 {
-    int i;
-
     OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
+        int i;
         int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == requests) {
@@ -49,8 +48,9 @@ int MPI_Startall(int count, MPI_Request *requests)
             rc = MPI_ERR_ARG;
         }
         for (i = 0; i < count; ++i) {
-            if (OMPI_REQUEST_PML != requests[i]->req_type &&
-                OMPI_REQUEST_NOOP != requests[i]->req_type) {
+            if (NULL == requests[i] ||
+                (OMPI_REQUEST_PML != requests[i]->req_type &&
+                 OMPI_REQUEST_NOOP != requests[i]->req_type)) {
                 rc = MPI_ERR_REQUEST;
                 break;
             }

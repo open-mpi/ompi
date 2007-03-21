@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -74,7 +74,7 @@ int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
              them out into individual tests. */
 
           if (ompi_comm_rank(comm) == root) {
-            if (recvtype == MPI_DATATYPE_NULL) {
+            if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
               return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
             }
 
@@ -108,7 +108,7 @@ int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
               return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
             }
 
-            if (MPI_DATATYPE_NULL == recvtype) {
+            if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
               return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
             }
           }

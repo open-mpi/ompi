@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -58,7 +59,7 @@ int MPI_Scan(void *sendbuf, void *recvbuf, int count,
 
         /* Unrooted operation; checks for all ranks */
 
-        else if (MPI_OP_NULL == op) {
+        else if (MPI_OP_NULL == op || NULL == op) {
           err = MPI_ERR_OP;
         } else if (MPI_IN_PLACE == recvbuf) {
           err = MPI_ERR_ARG;

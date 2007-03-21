@@ -53,6 +53,8 @@ int MPI_Recv_init(void *buf, int count, MPI_Datatype type, int source,
                    (MPI_PROC_NULL != source) &&
                    ompi_comm_peer_invalid(comm, source)) {
             rc = MPI_ERR_RANK;
+        } else if (NULL == request) {
+            rc = MPI_ERR_REQUEST;
         }
         
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);

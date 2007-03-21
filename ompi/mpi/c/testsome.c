@@ -41,13 +41,19 @@ int MPI_Testsome(int incount, MPI_Request *requests,
     OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
-        int rc = MPI_SUCCESS;
+        int index, rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if( 0 != incount ) {
             if( NULL == requests) {
                 rc = MPI_ERR_REQUEST;
             } else if ((NULL == outcount) || (NULL == indices)) {
                 rc = MPI_ERR_ARG;
+            }
+            for (index = 0; index < incount; ++index) {
+                if (NULL == requests[index]) {
+                    rc = MPI_ERR_REQUEST;
+                    break;
+                }
             }
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);

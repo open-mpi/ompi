@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -52,6 +53,8 @@ int MPI_Irecv(void *buf, int count, MPI_Datatype type, int source,
                    (MPI_PROC_NULL != source) &&
                    ompi_comm_peer_invalid(comm, source)) {
             rc = MPI_ERR_RANK;
+        } else if (NULL == request) {
+            rc = MPI_ERR_REQUEST;
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }

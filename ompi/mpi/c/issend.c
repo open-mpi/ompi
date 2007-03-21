@@ -46,8 +46,6 @@ int MPI_Issend(void *buf, int count, MPI_Datatype type, int dest,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
         } else if (count < 0) {
             rc = MPI_ERR_COUNT;
-        } else if (type == MPI_DATATYPE_NULL) {
-            rc = MPI_ERR_TYPE;
         } else if (tag < 0 || tag > mca_pml.pml_max_tag) {
             rc = MPI_ERR_TAG;
         } else if (ompi_comm_peer_invalid(comm, dest) &&

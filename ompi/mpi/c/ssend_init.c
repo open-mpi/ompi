@@ -49,7 +49,7 @@ int MPI_Ssend_init(void *buf, int count, MPI_Datatype type,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
         } else if (count < 0) {
             rc = MPI_ERR_COUNT;
-        } else if (type == MPI_DATATYPE_NULL) {
+        } else if (MPI_DATATYPE_NULL == type || NULL == type) {
             rc = MPI_ERR_TYPE;
         } else if (tag < 0 || tag > mca_pml.pml_max_tag) {
             rc = MPI_ERR_TAG;

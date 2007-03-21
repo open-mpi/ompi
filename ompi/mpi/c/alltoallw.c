@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -68,7 +69,7 @@ int MPI_Alltoallw(void *sendbuf, int *sendcounts, int *sdispls,
       for (i = 0; i < size; ++i) {
         if (recvcounts[i] < 0) {
           err = MPI_ERR_COUNT;
-        } else if (MPI_DATATYPE_NULL == recvtypes[i]) {
+        } else if (MPI_DATATYPE_NULL == recvtypes[i] || NULL == recvtypes[i]) {
           err = MPI_ERR_TYPE;
         } else {
           OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtypes[i], sendcounts[i]);

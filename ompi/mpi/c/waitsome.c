@@ -43,10 +43,16 @@ int MPI_Waitsome(int incount, MPI_Request *requests,
     OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
-        int rc = MPI_SUCCESS;
+        int index, rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if ((0 != incount) && (NULL == requests)) {
             rc = MPI_ERR_REQUEST;
+        }
+        for (index = 0; index < incount; ++index) {
+            if (NULL == requests[index]) {
+                rc = MPI_ERR_REQUEST;
+                break;
+            }
         }
         if ((NULL == outcount) || (NULL == indices)) {
             rc = MPI_ERR_ARG;

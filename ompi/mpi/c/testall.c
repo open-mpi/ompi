@@ -37,14 +37,19 @@ static const char FUNC_NAME[] = "MPI_Testall";
 int MPI_Testall(int count, MPI_Request requests[], int *flag,
                 MPI_Status statuses[]) 
 {
-
     OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
-        int rc = MPI_SUCCESS;
+        int i, rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if( (NULL == requests) && (0 != count) ) {
             rc = MPI_ERR_REQUEST;
+        }
+        for (i = 0; i < count; ++i) {
+            if (NULL == requests[i]) {
+                rc = MPI_ERR_REQUEST;
+                break;
+            }
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }

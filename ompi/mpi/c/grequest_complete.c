@@ -41,7 +41,7 @@ int MPI_Grequest_complete(MPI_Request request)
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (request == MPI_REQUEST_NULL) {
+        if (MPI_REQUEST_NULL == request || NULL == request) {
            rc = MPI_ERR_REQUEST;
         } else if (OMPI_REQUEST_GEN != request->req_type) {
             rc = MPI_ERR_REQUEST;

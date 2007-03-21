@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,6 +57,9 @@ int MPI_Put(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
             rc = MPI_ERR_RANK;
         } else if (!ompi_win_comm_allowed(win)) {
             rc = MPI_ERR_RMA_SYNC;
+        } else if (NULL == target_datatype || 
+                   MPI_DATATYPE_NULL == target_datatype) {
+            rc = MPI_ERR_TYPE;
         } else if ( target_disp < 0 ) {
             rc = MPI_ERR_DISP;
         } else if ( (origin_count < 0) || (target_count < 0) ) {
