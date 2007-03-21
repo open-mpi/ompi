@@ -177,6 +177,8 @@ int mca_btl_sm_add_procs(
            if they're on my local host and in my job) */
         if (procs[proc]->proc_name.jobid != my_proc->proc_name.jobid ||
                  0 == (procs[proc]->proc_flags & OMPI_PROC_FLAG_LOCAL)) {
+            peers[proc] = NULL;
+            mca_btl_sm_component.sm_proc_connect[proc] = 0;
             continue;
         }
 
@@ -563,7 +565,8 @@ int mca_btl_sm_add_procs(
     }
 
     /* set connectivity */
-    cnt=0;
+    cnt = 0;
+    i = mca_btl_sm_component.num_smp_procs;
     for(proc = 0 ; proc < (int32_t)nprocs ; proc++ ) {
         struct mca_btl_base_endpoint_t* peer = peers[proc];
         if(peer == NULL)
@@ -571,15 +574,14 @@ int mca_btl_sm_add_procs(
 
         if( SM_CONNECTED == mca_btl_sm_component.sm_proc_connect[proc] ) {
             /* don't count if same process */
-            if( (mca_btl_sm_component.num_smp_procs+proc ) ==
+            if( (mca_btl_sm_component.num_smp_procs+cnt ) ==
                     mca_btl_sm_component.my_smp_rank) {
+                cnt++;
                 continue;
             }
 
-            mca_btl_sm_component.list_smp_procs
-                [mca_btl_sm_component.num_smp_procs + cnt] = proc;
-            cnt++;
-            /* add this proc to shared memory accessability list */
+            mca_btl_sm_component.list_smp_procs[i++] = cnt++;
+            /* add this proc to shared memory accessibility list */
             return_code=ompi_bitmap_set_bit(reachability,proc);
             if( OMPI_SUCCESS != return_code ){
                 goto CLEANUP;
