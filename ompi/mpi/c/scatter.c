@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,7 +64,7 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
           } else if (MPI_IN_PLACE != recvbuf) {
               if (recvcount < 0) {
                   err = MPI_ERR_COUNT;
-              } else if (MPI_DATATYPE_NULL == recvtype) {
+              } else if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
                   err = MPI_ERR_TYPE;
               }
           }

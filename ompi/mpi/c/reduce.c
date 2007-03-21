@@ -52,7 +52,7 @@ int MPI_Reduce(void *sendbuf, void *recvbuf, int count,
 
         /* Checks for all ranks */
 	
-        else if (MPI_OP_NULL == op) {
+        else if (MPI_OP_NULL == op || NULL == op) {
           err = MPI_ERR_OP;
         } else if (!ompi_op_is_valid(op, datatype, &msg, FUNC_NAME)) {
             int ret = OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, msg);

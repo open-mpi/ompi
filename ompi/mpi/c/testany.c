@@ -40,6 +40,7 @@ int MPI_Testany(int count, MPI_Request requests[], int *index, int *completed, M
     OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
+        int i;
         int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if( 0 != count ) {
@@ -47,6 +48,12 @@ int MPI_Testany(int count, MPI_Request requests[], int *index, int *completed, M
                 rc = MPI_ERR_REQUEST;
             } else if (NULL == index) {
                 rc = MPI_ERR_ARG;
+            }
+            for (i = 0; i < count; ++i) {
+                if (NULL == requests[i]) {
+                    rc = MPI_ERR_REQUEST;
+                    break;
+                }
             }
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);

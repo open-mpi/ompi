@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,8 +48,6 @@ int MPI_Irsend(void *buf, int count, MPI_Datatype type, int dest,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
         } else if (count < 0) {
             rc = MPI_ERR_COUNT;
-        } else if (type == MPI_DATATYPE_NULL) {
-            rc = MPI_ERR_TYPE;
         } else if (tag < 0 || tag > mca_pml.pml_max_tag) {
             rc = MPI_ERR_TAG;
         } else if (ompi_comm_peer_invalid(comm, dest) &&
@@ -56,6 +55,9 @@ int MPI_Irsend(void *buf, int count, MPI_Datatype type, int dest,
             rc = MPI_ERR_RANK;
         } else if (request == NULL) {
             rc = MPI_ERR_REQUEST;
+        } else {
+            OMPI_CHECK_DATATYPE_FOR_SEND(rc, type, count);
+            OMPI_CHECK_USER_BUFFER(rc, buf, type, count);
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
