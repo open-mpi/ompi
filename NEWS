@@ -29,6 +29,10 @@ version 1.0.
 1.2.1
 -----
 
+- Fixed issues with backtrace code on 64 bit Intel & PPC OS X builds.
+- Fixed issues with multi-word CC variables and libtool.
+  Thanks to Bert Wesarg for the bug reports.
+- Fix issue with node naming schemes in SLURM
 - Fix file descriptor leak in the Grid Engine/N1GE support
 - Fix compile error on OS X 10.3.x introduced with Open MPI 1.1.5.
 - Implement MPI_TYPE_CREATE_DARRAY function (was in 1.1.5 but not 1.2)
