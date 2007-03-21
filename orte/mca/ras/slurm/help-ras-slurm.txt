@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -18,18 +18,27 @@
 #
 # This is the US/English help file for Open MPI MCA error messages.
 #
-[env-var-not-found]
-An expected environment variable was not found.  Open MPI should have
-been able to read the following environment variable and was unable
-to:
+[slurm-env-var-not-found]
+While trying to determine what resources are available, the SLURM
+resource allocator expects to find the following environment variables:
+
+    SLURM_NODELIST
+    SLURM_TASKS_PER_NODE
+    
+However, it was unable to find the following environment variable:
 
     %s
 
-This is a fatal error.
-[env-var-bad-value]
-The following environment variable had a value which was unexpected /
-unparsable:
+#This is a fatal error.
+[slurm-env-var-bad-value]
+While trying to determine what resources are available, the SLURM
+resource allocator uses the following environment variables:
+
+    SLURM_NODELIST       value: %s
+    SLURM_TASKS_PER_NODE value: %s
+    
+However, an error was encountered when trying to parse the following variable:
 
     %s
 
-This is a fatal error.
+#This is a fatal error.
