@@ -1696,8 +1696,8 @@ extern int MoreBacktraceMachThread(
                         asm("\tmflr %0\n"                                  \
                             "\tmr %1,r1"                                        \
                             : "=r"(tmpPC), "=r"(tmpFP));                        \
-			((ppc_thread_state_t *) threadState)->srr0 = tmpPC;	\
-			((ppc_thread_state_t *) threadState)->r1   = tmpFP;	\
+			((ppc_thread_state64_t *) threadState)->srr0 = tmpPC;	\
+			((ppc_thread_state64_t *) threadState)->r1   = tmpFP;	\
 		} while (0)
 
 #endif /* OMPI CHANGE */
