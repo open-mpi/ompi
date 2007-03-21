@@ -29,7 +29,10 @@ version 1.0.
 1.2.1
 -----
 
-- Nothing new yet.
+- Fixe the fd problem when the nodelist in the N1GE PE_HOSTFILE gets too large.
+- Fix compile error on OS X 10.3.x introduced with Open MPI 1.1.5.
+- Implement MPI_TYPE_CREATE_DARRAY function (was in 1.1.5 but not 1.2)
+- Recognize zsh in rsh pls
 
 
 1.2
