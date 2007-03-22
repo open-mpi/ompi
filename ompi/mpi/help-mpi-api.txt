@@ -9,14 +9,3 @@
 #
 # This is the US/English general help file for Open MPI.
 #
-[spawn-from-singleton]
-This version of Open MPI does not support %s from a 
-"singleton" application.  Specifically, you cannot invoke an MPI
-application like this:
-
-    shell$ ./a.out
-
-and then have a.out use the MPI-2 dynamic spawn functions.  Instead,
-you must start your MPI application via mpirun:
-
-    shell: mpirun -np 1 ./a.out
