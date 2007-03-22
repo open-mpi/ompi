@@ -106,6 +106,7 @@ struct mca_btl_sm_component_t {
                              a real virtual address */
     size_t size_of_cb_queue; /**< size of each circular buffer queue array */
     size_t cb_lazy_free_freq; /**< frequency of lazy free */
+    int cb_max_num;           /**< max number of circular buffers for each peer */
     ptrdiff_t *sm_offset;    /**< offset to be applied to shared memory
                               addresses, per local process value */
     int *sm_proc_connect;    /* scratch array used by the 0'th btl to

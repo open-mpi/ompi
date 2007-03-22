@@ -525,6 +525,7 @@ int mca_btl_sm_add_procs(
             continue;
         return_code = ompi_fifo_init((int)mca_btl_sm_component.size_of_cb_queue,
                 (int)mca_btl_sm_component.cb_lazy_free_freq,
+                (int)mca_btl_sm_component.cb_max_num,
                 0,0,0,
                 &mca_btl_sm_component.fifo[j][mca_btl_sm_component.my_smp_rank],
                 mca_btl_sm_component.sm_offset[j],
