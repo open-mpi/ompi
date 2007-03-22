@@ -159,15 +159,6 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     /* register error handlers */
     rc = mca_bml.bml_register_error(mca_pml_ob1_error_handler);
     
-    /* initialize free list of receive buffers */
-    ompi_free_list_init(
-                        &mca_pml_ob1.buffers,
-                        sizeof(mca_pml_ob1_buffer_t) + mca_pml_ob1.eager_limit,
-                        OBJ_CLASS(mca_pml_ob1_buffer_t),
-                        0,
-                        mca_pml_ob1.free_list_max,
-                        mca_pml_ob1.free_list_inc,
-                        NULL);
 
     /* we don't have any endpoint data we need to cache on the
        ompi_proc_t, so set proc_pml to NULL */

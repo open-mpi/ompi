@@ -31,13 +31,10 @@ extern "C" {
 #endif
 
 struct mca_pml_ob1_buffer_t {
-    ompi_free_list_item_t super;
     size_t len;
-    unsigned char addr[1];
+    void * addr;
 };
 typedef struct mca_pml_ob1_buffer_t mca_pml_ob1_buffer_t;
-
-OBJ_CLASS_DECLARATION(mca_pml_ob1_buffer_t);
 
 
 struct mca_pml_ob1_recv_frag_t {
@@ -47,7 +44,8 @@ struct mca_pml_ob1_recv_frag_t {
     size_t num_segments;
     mca_btl_base_module_t* btl;
     mca_btl_base_segment_t segments[MCA_BTL_DES_MAX_SEGMENTS];
-    mca_pml_ob1_buffer_t* buffers[MCA_BTL_DES_MAX_SEGMENTS];
+    mca_pml_ob1_buffer_t buffers[MCA_BTL_DES_MAX_SEGMENTS];
+    unsigned char addr[1];
 };
 typedef struct mca_pml_ob1_recv_frag_t mca_pml_ob1_recv_frag_t;
 
@@ -66,44 +64,56 @@ do {                                                            \
 do {                                                            \
     size_t i;                                                   \
     mca_btl_base_segment_t* macro_segments = frag->segments;    \
-    mca_pml_ob1_buffer_t** buffers = frag->buffers;             \
+    mca_pml_ob1_buffer_t* buffers = frag->buffers;              \
                                                                 \
     /* init recv_frag */                                        \
     frag->btl = btl;                                            \
     frag->hdr = *(mca_pml_ob1_hdr_t*)hdr;                       \
     frag->num_segments = cnt;                                   \
     /* copy over data */                                        \
-    for(i=0; i<cnt; i++) {                                      \
-        ompi_free_list_item_t* item;                            \
-        mca_pml_ob1_buffer_t* buff;                             \
-        OMPI_FREE_LIST_WAIT(&mca_pml_ob1.buffers, item, rc);    \
-        buff = (mca_pml_ob1_buffer_t*)item;                     \
-        buffers[i] = buff;                                      \
-        macro_segments[i].seg_addr.pval = buff->addr;           \
-        macro_segments[i].seg_len = segs[i].seg_len;            \
-        memcpy(buff->addr,                                      \
-               segs[i].seg_addr.pval,                           \
-               segs[i].seg_len);                                \
-    }                                                           \
-                                                                \
-} while(0)
+    if(cnt == 1 && segs[0].seg_len <= mca_pml_ob1.unexpected_limit ) { \
+        macro_segments[0].seg_addr.pval = frag->addr;                  \
+        macro_segments[0].seg_len = segs[0].seg_len;                   \
+        memcpy(frag->addr,                                             \
+               segs[0].seg_addr.pval,                                  \
+               segs[0].seg_len);                                       \
+    } else {                                                           \
+        for(i=0; i<cnt; i++) {                                          \
+            buffers[i].len = segs[i].seg_len;                           \
+            buffers[i].addr = (char*) mca_pml_ob1.allocator->alc_alloc( \
+                                                 mca_pml_ob1.allocator, \
+                                                 segs[i].seg_len,       \
+                                                 0,                     \
+                                                 NULL);                 \
+            macro_segments[i].seg_addr.pval = buffers[i].addr;          \
+            macro_segments[i].seg_len = segs[i].seg_len;                \
+            memcpy(buffers[i].addr,                                     \
+                   segs[i].seg_addr.pval,                               \
+                   segs[i].seg_len);                                    \
+        }                                                               \
+    }                                                                   \
+ } while(0)
 
 
-#define MCA_PML_OB1_RECV_FRAG_RETURN(frag)                      \
-do {                                                            \
-    size_t i;                                                   \
-                                                                \
-    /* return buffers */                                        \
-    for(i=0; i<frag->num_segments; i++) {                       \
-        OMPI_FREE_LIST_RETURN(&mca_pml_ob1.buffers,             \
-           (ompi_free_list_item_t*)frag->buffers[i]);           \
-    }                                                           \
-    frag->num_segments = 0;                                     \
-                                                                \
-    /* return recv_frag */                                      \
-    OMPI_FREE_LIST_RETURN(&mca_pml_ob1.recv_frags,              \
-        (ompi_free_list_item_t*)frag);                          \
-} while(0)
+#define MCA_PML_OB1_RECV_FRAG_RETURN(frag)                              \
+    do {                                                                \
+    size_t i;                                                           \
+    if(!(frag->num_segments == 1 && frag->segments[0].seg_len <=        \
+         mca_pml_ob1.unexpected_limit)) {                               \
+                                                                        \
+        /* return buffers */                                            \
+        for(i=0; i<frag->num_segments; i++) {                           \
+            mca_pml_ob1.allocator->alc_free(                            \
+                                            mca_pml_ob1.allocator,      \
+                                            frag->buffers[i].addr );    \
+        }                                                               \
+    }                                                                   \
+    frag->num_segments = 0;                                             \
+                                                                        \
+    /* return recv_frag */                                              \
+    OMPI_FREE_LIST_RETURN(&mca_pml_ob1.recv_frags,                      \
+                          (ompi_free_list_item_t*)frag);                \
+ } while(0)
 
 
 /**

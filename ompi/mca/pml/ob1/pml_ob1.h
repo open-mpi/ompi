@@ -35,6 +35,7 @@
 #include "pml_ob1_hdr.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/proc/proc.h"
+#include "ompi/mca/allocator/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -73,6 +74,9 @@ struct mca_pml_ob1_t {
     opal_list_t recv_pending;
     opal_list_t rdma_pending;
     bool enabled; 
+    char* allocator_name;
+    mca_allocator_base_module_t* allocator; 
+    uint32_t unexpected_limit;
 };
 typedef struct mca_pml_ob1_t mca_pml_ob1_t; 
 
