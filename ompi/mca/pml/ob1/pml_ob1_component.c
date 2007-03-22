@@ -35,6 +35,7 @@
 #include "pml_ob1_recvfrag.h"
 #include "ompi/mca/bml/base/base.h" 
 #include "pml_ob1_component.h"
+#include "ompi/mca/allocator/base/base.h"
 
 OBJ_CLASS_INSTANCE(
     mca_pml_ob1_pckt_pending_t,
@@ -71,9 +72,15 @@ mca_pml_base_component_1_0_0_t mca_pml_ob1_component = {
 
     mca_pml_ob1_component_init,  /* component init */
     mca_pml_ob1_component_fini   /* component finalize */
+    
 };
 
-
+void *mca_pml_ob1_seg_alloc( struct mca_mpool_base_module_t* mpool,
+                             size_t* size,
+                             mca_mpool_base_registration_t** registration);
+ 
+void mca_pml_ob1_seg_free( struct mca_mpool_base_module_t* mpool,
+                           void* segment );
 
 static inline int mca_pml_ob1_param_register_int(
     const char* param_name,
@@ -84,10 +91,12 @@ static inline int mca_pml_ob1_param_register_int(
     mca_base_param_lookup_int(id,&param_value);
     return param_value;
 }
-                                                                                                                        
 
+
+                          
 int mca_pml_ob1_component_open(void)
 {
+    mca_allocator_base_component_t* allocator_component; 
     mca_pml_ob1.free_list_num =
         mca_pml_ob1_param_register_int("free_list_num", 4);
     mca_pml_ob1.free_list_max =
@@ -102,8 +111,33 @@ int mca_pml_ob1_component_open(void)
         mca_pml_ob1_param_register_int("send_pipeline_depth", 3);
     mca_pml_ob1.recv_pipeline_depth =
         mca_pml_ob1_param_register_int("recv_pipeline_depth", 4);
-  
     
+    mca_pml_ob1.unexpected_limit =
+        mca_pml_ob1_param_register_int("unexpected_limit", 128);
+ 
+    mca_base_param_reg_string(&mca_pml_ob1_component.pmlm_version,
+                              "allocator",
+                              "Name of allocator component for unexpected messages",
+                              false, false,
+                              "bucket",
+                              &mca_pml_ob1.allocator_name);
+
+
+    
+    allocator_component = mca_allocator_component_lookup( mca_pml_ob1.allocator_name );
+    if(NULL == allocator_component) {
+        opal_output(0, "mca_pml_ob1_component_open: can't find allocator: %s\n", mca_pml_ob1.allocator_name);
+        return OMPI_ERROR;
+    }
+    mca_pml_ob1.allocator = allocator_component->allocator_init(true,
+                                                                mca_pml_ob1_seg_alloc, mca_pml_ob1_seg_free, NULL);
+    
+    
+    if(NULL == mca_pml_ob1.allocator) {
+        opal_output(0, "mca_pml_ob1_component_open: unable to initialize allocator\n");
+        return OMPI_ERROR;
+    }
+
     OBJ_CONSTRUCT(&mca_pml_ob1.lock, opal_mutex_t);
                                                                                                             
     /* requests */
@@ -142,13 +176,15 @@ int mca_pml_ob1_component_open(void)
 
     ompi_free_list_init(
         &mca_pml_ob1.recv_frags,
-        sizeof(mca_pml_ob1_recv_frag_t),
+        sizeof(mca_pml_ob1_recv_frag_t) + mca_pml_ob1.unexpected_limit,
         OBJ_CLASS(mca_pml_ob1_recv_frag_t),
         mca_pml_ob1.free_list_num,
         mca_pml_ob1.free_list_max,
         mca_pml_ob1.free_list_inc,
         NULL);
                                                                                                             
+        
+
     OBJ_CONSTRUCT(&mca_pml_ob1.pending_pckts, ompi_free_list_t);
     ompi_free_list_init(
         &mca_pml_ob1.pending_pckts,
@@ -158,6 +194,7 @@ int mca_pml_ob1_component_open(void)
         mca_pml_ob1.free_list_max,
         mca_pml_ob1.free_list_inc,
         NULL);
+
 
     OBJ_CONSTRUCT(&mca_pml_ob1.buffers, ompi_free_list_t);
                                                                                                             
@@ -249,3 +286,14 @@ mca_pml_base_module_t* mca_pml_ob1_component_init(int* priority,
     return &mca_pml_ob1.super;
 }
 
+
+void *mca_pml_ob1_seg_alloc( struct mca_mpool_base_module_t* mpool,
+                             size_t* size,
+                             mca_mpool_base_registration_t** registration) { 
+    return malloc(*size);
+}
+
+void mca_pml_ob1_seg_free( struct mca_mpool_base_module_t* mpool,
+                           void* segment ) { 
+    free(segment);
+}

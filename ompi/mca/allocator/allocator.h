@@ -112,7 +112,7 @@ typedef void* (*mca_allocator_base_component_segment_alloc_fn_t)(
   * back to the system. This function is to be provided by the module to the
   * allocator frmaework.
   */
-typedef void* (*mca_allocator_base_component_segment_free_fn_t)(
+typedef void (*mca_allocator_base_component_segment_free_fn_t)(
     struct mca_mpool_base_module_t* module,
     void* segment);
 
