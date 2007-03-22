@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -75,19 +75,39 @@ orte_ras_tm_component_t mca_ras_tm_component = {
 
 static int ras_tm_open(void)
 {
-    mca_base_component_t *c = &mca_ras_tm_component.super.ras_version;
-
+    mca_base_component_t *c        = &mca_ras_tm_component.super.ras_version;
+    char *pbs_nodefile_env         = NULL;
+    char *default_nodefile_dir     = NULL;
+    bool free_default_nodefile_dir = false;
+    
     param_priority = 
         mca_base_param_reg_int(c,
                                "priority",
                                "Priority of the tm ras component",
                                false, false, 100, NULL);
 
+    /* try to detect the default directory */
+    pbs_nodefile_env = getenv("PBS_NODEFILE");
+    if ( NULL != pbs_nodefile_env ) {
+        default_nodefile_dir = opal_dirname(pbs_nodefile_env);
+        if ( NULL != default_nodefile_dir ) {
+            free_default_nodefile_dir = true;
+        } else {
+            default_nodefile_dir = "/var/torque/aux";
+        }
+    } else {
+        default_nodefile_dir = "/var/torque/aux";
+    }
+    
     mca_base_param_reg_string(c, "nodefile_dir",
                               "The directory where the PBS nodefile can be found",
-                              false, false, "/var/torque/aux", 
+                              false, false, default_nodefile_dir,
                               &mca_ras_tm_component.nodefile_dir);
     
+    if ( free_default_nodefile_dir ) {
+        free(default_nodefile_dir);
+    }
+            
     return ORTE_SUCCESS;
 }
 
