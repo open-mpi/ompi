@@ -397,6 +397,7 @@ static int open_components(const char *type_name, int output_id,
         /* If it didn't open, close it out and get rid of it */
         
         if (!opened) {
+            char *name;
             if (called_open) {
                 if (NULL != component->mca_close_component) {
                     component->mca_close_component();
@@ -406,10 +407,12 @@ static int open_components(const char *type_name, int output_id,
                                     component->mca_component_name);
                 called_open = false;
             }
+            name = strdup(component->mca_component_name);
             mca_base_component_repository_release(component);
             opal_output_verbose(10, output_id, 
                                 "mca: base: components_open: component %s unloaded", 
-                                component->mca_component_name);
+                                name);
+            free(name);
         }
         
         /* If it did open, register its "priority" MCA parameter (if
