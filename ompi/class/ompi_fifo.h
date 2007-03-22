@@ -207,6 +207,9 @@ struct ompi_fifo_t {
     /* size of fifo */
     int size;
 
+    /* number of allocated circular buffers */
+    int cb_count;
+
     /* fifo memory locality index */
     int fifo_memory_locality_index;
 
@@ -256,7 +259,7 @@ typedef struct ompi_fifo_t ompi_fifo_t;
  *
  */
 static inline int ompi_fifo_init(int size_of_cb_fifo,
-        int lazy_free_freq, int fifo_memory_locality_index, 
+        int lazy_free_freq, int cb_num_limit, int fifo_memory_locality_index, 
         int head_memory_locality_index, int tail_memory_locality_index, 
         ompi_fifo_t *fifo, ptrdiff_t offset,
         mca_mpool_base_module_t *memory_allocator)
@@ -265,6 +268,8 @@ static inline int ompi_fifo_init(int size_of_cb_fifo,
 
     fifo->offset = offset;
     fifo->size = size_of_cb_fifo;
+    /*we allocate one cb below so subtract one here */
+    fifo->cb_count = cb_num_limit - 1;
     fifo->fifo_memory_locality_index = fifo_memory_locality_index;
     fifo->head_memory_locality_index = head_memory_locality_index;
     fifo->tail_memory_locality_index = tail_memory_locality_index;
@@ -353,9 +358,12 @@ static inline int ompi_fifo_write_to_head(void *data,
         /* if next queue not available, allocate new queue */
         if (next_ff->cb_overflow) {
             /* allocate head ompi_cb_fifo_t structure */
-            next_ff = (ompi_cb_fifo_wrapper_t*)fifo_allocator->mpool_alloc(
-                    fifo_allocator, sizeof(ompi_cb_fifo_wrapper_t),
-                    CACHE_LINE_SIZE, 0, NULL);
+            if(0 == fifo->cb_count)
+                next_ff = NULL;
+            else
+                next_ff = (ompi_cb_fifo_wrapper_t*)fifo_allocator->mpool_alloc(
+                        fifo_allocator, sizeof(ompi_cb_fifo_wrapper_t),
+                        CACHE_LINE_SIZE, 0, NULL);
             if (NULL == next_ff) {
                 opal_atomic_unlock(&fifo->fifo_lock);
                 return OMPI_ERR_OUT_OF_RESOURCE;
@@ -369,10 +377,11 @@ static inline int ompi_fifo_write_to_head(void *data,
                     fifo->tail_memory_locality_index,
                     &(next_ff->cb_fifo), fifo->offset, fifo_allocator);
             if (OMPI_SUCCESS != error_code) {
+                fifo_allocator->mpool_free(fifo_allocator, next_ff, NULL);
                 opal_atomic_unlock(&fifo->fifo_lock);
                 return error_code;
             }
-
+            fifo->cb_count--;
             /* finish new element initialization */
             /* only one element in the link list */
             next_ff->next_fifo_wrapper = fifo->head->next_fifo_wrapper;

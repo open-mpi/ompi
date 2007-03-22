@@ -145,6 +145,8 @@ int mca_btl_sm_component_open(void)
         mca_btl_sm_param_register_int("size_of_cb_queue", 128);
     mca_btl_sm_component.cb_lazy_free_freq =
         mca_btl_sm_param_register_int("cb_lazy_free_freq", 120);
+    mca_btl_sm_component.cb_max_num =
+        mca_btl_sm_param_register_int("cb_max_num", -1);
     /* make sure that queue size and lazy free frequency are consistent -
      * want to make sure that slots are freed at a rate they can be
      * reused, w/o allocating extra new circular buffer fifo arrays */
