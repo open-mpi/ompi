@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -104,6 +105,8 @@ typedef int (MPI_Type_internal_copy_attr_function)(MPI_Datatype, int, void *,
 typedef int (MPI_Win_internal_copy_attr_function)(MPI_Win, int, void *,
                                                   void *, void *, int *, MPI_Win);
 
+typedef void (ompi_attribute_keyval_destructor_fn_t)(int);
+
 /* Union to take care of proper casting of the function pointers
    passed from the front end functions depending on the type. This
    will avoid casting function pointers to void*  */
@@ -145,7 +148,7 @@ union ompi_attribute_fortran_ptr_t {
  */
 typedef union ompi_attribute_fortran_ptr_t ompi_attribute_fortran_ptr_t;
 
-struct ompi_attrkey_item_t {
+struct ompi_attribute_keyval_t {
     opal_object_t super;
     ompi_attribute_type_t attr_type; /**< One of COMM/WIN/DTYPE. This
 				       will be used to cast the
@@ -160,9 +163,13 @@ struct ompi_attrkey_item_t {
     void *extra_state; /**< Extra state of the attribute */
     int key; /**< Keep a track of which key this item belongs to, so that
 		the key can be deleted when this object is destroyed */
+
+    /** If non-null, call this function when the OBJ destructor for this
+        object is invoked */
+    ompi_attribute_keyval_destructor_fn_t *extra_destructor;
 };
 
-typedef struct ompi_attrkey_item_t ompi_attrkey_item_t;
+typedef struct ompi_attribute_keyval_t ompi_attribute_keyval_t;
   
 
 /* Functions */
@@ -174,14 +181,14 @@ typedef struct ompi_attrkey_item_t ompi_attrkey_item_t;
  */
 
 static inline
-int ompi_attr_hash_init(opal_hash_table_t **keyhash)
+int ompi_attr_hash_init(opal_hash_table_t **hash)
 {
-   *keyhash = OBJ_NEW(opal_hash_table_t);
-    if (NULL == keyhash) {
+   *hash = OBJ_NEW(opal_hash_table_t);
+    if (NULL == hash) {
         fprintf(stderr, "Error while creating the local attribute list\n");
         return MPI_ERR_SYSRESOURCE;
     }
-    if (OMPI_SUCCESS != opal_hash_table_init(*keyhash, ATTR_HASH_SIZE)) {
+    if (OMPI_SUCCESS != opal_hash_table_init(*hash, ATTR_HASH_SIZE)) {
         return MPI_ERR_SYSRESOURCE;
     }
   
@@ -189,7 +196,7 @@ int ompi_attr_hash_init(opal_hash_table_t **keyhash)
 }
 
 /**
- * Initialize the main attribute hash that stores the key and meta data
+ * Initialize the main attribute hash that stores the keyvals and meta data
  *
  * @return OMPI return code
  */
@@ -197,7 +204,7 @@ int ompi_attr_hash_init(opal_hash_table_t **keyhash)
 int ompi_attr_init(void);
 
 /**
- * Destroy the main attribute hash that stores the key and meta data
+ * Destroy the main attribute hash that stores the keyvals and meta data
  */
 
 int ompi_attr_finalize(void);
@@ -234,9 +241,10 @@ int ompi_attr_finalize(void);
  */
 
 int ompi_attr_create_keyval(ompi_attribute_type_t type, 
-			   ompi_attribute_fn_ptr_union_t copy_attr_fn, 
-			   ompi_attribute_fn_ptr_union_t delete_attr_fn,
-			   int *key, void *extra_state, int flags);
+                            ompi_attribute_fn_ptr_union_t copy_attr_fn, 
+                            ompi_attribute_fn_ptr_union_t delete_attr_fn,
+                            int *key, void *extra_state, int flags,
+                            ompi_attribute_keyval_destructor_fn_t *destructor);
 
 /**
  * Free an attribute keyval
@@ -253,14 +261,14 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
  *
  * @param type           Type of attribute (COMM/WIN/DTYPE) (IN)
  * @param object         The actual Comm/Win/Datatype object (IN)
- * @param keyhash        The attribute hash table hanging on the object(IN/OUT)
+ * @param attr_hash      The attribute hash table hanging on the object(IN/OUT)
  * @param key            Key val for the attribute (IN)
  * @param attribute      The actual attribute pointer (IN)
  * @param predefined     Whether the key is predefined or not 0/1 (IN)
  * @param need_lock      Whether we need to need to lock the keyval_lock or not
  * @return OMPI error code
  *
- * If (*keyhash) == NULL, a new keyhash will be created and
+ * If (*attr_hash) == NULL, a new hash will be created and
  * initialized.
  *
  * Note that need_lock should *always* be true when this function is
@@ -281,7 +289,7 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
  * (read: better) this way.
  */
 int ompi_attr_set_c(ompi_attribute_type_t type, void *object, 
-                    opal_hash_table_t **keyhash,
+                    opal_hash_table_t **attr_hash,
                     int key, void *attribute, bool predefined, bool need_lock);
 
 /**
@@ -290,14 +298,14 @@ int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
  *
  * @param type           Type of attribute (COMM/WIN/DTYPE) (IN)
  * @param object         The actual Comm/Win/Datatype object (IN)
- * @param keyhash        The attribute hash table hanging on the object(IN/OUT)
+ * @param attr_hash      The attribute hash table hanging on the object(IN/OUT)
  * @param key            Key val for the attribute (IN)
  * @param attribute      The actual attribute pointer (IN)
  * @param predefined     Whether the key is predefined or not 0/1 (IN)
  * @param need_lock      Whether we need to need to lock the keyval_lock or not
  * @return OMPI error code
  *
- * If (*keyhash) == NULL, a new keyhash will be created and
+ * If (*attr_hash) == NULL, a new hash will be created and
  * initialized.
  *
  * Note that need_lock should *always* be true when this function is
@@ -318,7 +326,7 @@ int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
  * (read: better) this way.
  */
 int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object, 
-                               opal_hash_table_t **keyhash,
+                               opal_hash_table_t **attr_hash,
                                int key, MPI_Fint attribute, 
                                bool predefined, bool need_lock);
 
@@ -328,14 +336,14 @@ int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object,
  *
  * @param type           Type of attribute (COMM/WIN/DTYPE) (IN)
  * @param object         The actual Comm/Win/Datatype object (IN)
- * @param keyhash        The attribute hash table hanging on the object(IN/OUT)
+ * @param attr_hash      The attribute hash table hanging on the object(IN/OUT)
  * @param key            Key val for the attribute (IN)
  * @param attribute      The actual attribute pointer (IN)
  * @param predefined     Whether the key is predefined or not 0/1 (IN)
  * @param need_lock      Whether we need to need to lock the keyval_lock or not
  * @return OMPI error code
  *
- * If (*keyhash) == NULL, a new keyhash will be created and
+ * If (*attr_hash) == NULL, a new hash will be created and
  * initialized.
  *
  * Note that need_lock should *always* be true when this function is
@@ -356,14 +364,14 @@ int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object,
  * (read: better) this way.
  */
 int ompi_attr_set_fortran_mpi2(ompi_attribute_type_t type, void *object, 
-                               opal_hash_table_t **keyhash,
+                               opal_hash_table_t **attr_hash,
                                int key, MPI_Aint attribute, 
                                bool predefined, bool need_lock);
 
 /**
  * Get an attribute on the comm/win/datatype in a form valid for C.
  *
- * @param keyhash        The attribute hash table hanging on the object(IN)
+ * @param attr_hash      The attribute hash table hanging on the object(IN)
  * @param key            Key val for the attribute (IN)
  * @param attribute      The actual attribute pointer (OUT)
  * @param flag           Flag whether an attribute is associated 
@@ -382,7 +390,7 @@ int ompi_attr_set_fortran_mpi2(ompi_attribute_type_t type, void *object,
  * (read: better) this way.
  */
 
-int ompi_attr_get_c(opal_hash_table_t *keyhash, int key, 
+int ompi_attr_get_c(opal_hash_table_t *attr_hash, int key, 
                     void **attribute, int *flag);
 
 
@@ -390,7 +398,7 @@ int ompi_attr_get_c(opal_hash_table_t *keyhash, int key,
  * Get an attribute on the comm/win/datatype in a form valid for
  * Fortran MPI-1.
  *
- * @param keyhash        The attribute hash table hanging on the object(IN)
+ * @param attr_hash      The attribute hash table hanging on the object(IN)
  * @param key            Key val for the attribute (IN)
  * @param attribute      The actual attribute pointer (OUT)
  * @param flag           Flag whether an attribute is associated 
@@ -409,7 +417,7 @@ int ompi_attr_get_c(opal_hash_table_t *keyhash, int key,
  * (read: better) this way.
  */
 
-int ompi_attr_get_fortran_mpi1(opal_hash_table_t *keyhash, int key, 
+int ompi_attr_get_fortran_mpi1(opal_hash_table_t *attr_hash, int key, 
                                MPI_Fint *attribute, int *flag);
 
 
@@ -417,7 +425,7 @@ int ompi_attr_get_fortran_mpi1(opal_hash_table_t *keyhash, int key,
  * Get an attribute on the comm/win/datatype in a form valid for
  * Fortran MPI-2.
  *
- * @param keyhash        The attribute hash table hanging on the object(IN)
+ * @param attrhash       The attribute hash table hanging on the object(IN)
  * @param key            Key val for the attribute (IN)
  * @param attribute      The actual attribute pointer (OUT)
  * @param flag           Flag whether an attribute is associated 
@@ -436,7 +444,7 @@ int ompi_attr_get_fortran_mpi1(opal_hash_table_t *keyhash, int key,
  * (read: better) this way.
  */
 
-int ompi_attr_get_fortran_mpi2(opal_hash_table_t *keyhash, int key, 
+int ompi_attr_get_fortran_mpi2(opal_hash_table_t *attr_hash, int key, 
                                MPI_Aint *attribute, int *flag);
 
 
@@ -444,7 +452,7 @@ int ompi_attr_get_fortran_mpi2(opal_hash_table_t *keyhash, int key,
  * Delete an attribute on the comm/win/datatype
  * @param type           Type of attribute (COMM/WIN/DTYPE) (IN)
  * @param object         The actual Comm/Win/Datatype object (IN)
- * @param keyhash        The attribute hash table hanging on the object(IN)
+ * @param attr_hash      The attribute hash table hanging on the object(IN)
  * @param key            Key val for the attribute (IN)
  * @param predefined     Whether the key is predefined or not 0/1 (IN)
  * @param need_lock      Whether we need to need to lock the keyval_lock or not
@@ -458,7 +466,7 @@ int ompi_attr_get_fortran_mpi2(opal_hash_table_t *keyhash, int key,
  */
 
 int ompi_attr_delete(ompi_attribute_type_t type, void *object, 
-                     opal_hash_table_t *keyhash , int key,
+                     opal_hash_table_t *attr_hash , int key,
                      bool predefined, bool need_lock);
 
 
@@ -469,14 +477,14 @@ int ompi_attr_delete(ompi_attribute_type_t type, void *object,
  * @param type         Type of attribute (COMM/WIN/DTYPE) (IN)
  * @param old_object   The old COMM/WIN/DTYPE object (IN)
  * @param new_object   The new COMM/WIN/DTYPE object (IN)
- * @param keyhash      The attribute hash table hanging on old object(IN)
- * @param newkeyhash   The attribute hash table hanging on new object(IN)
+ * @param attr_hash    The attribute hash table hanging on old object(IN)
+ * @param newattr_hash The attribute hash table hanging on new object(IN)
  * @return OMPI error code
  *
  */
 
 int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object, 
-		      void *new_object, opal_hash_table_t *oldkeyhash,
+		      void *new_object, opal_hash_table_t *oldattr_hash,
 		      opal_hash_table_t *newkeyhash);
 
 
@@ -485,13 +493,13 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
  * object in one shot
  * @param type         Type of attribute (COMM/WIN/DTYPE) (IN)
  * @param object       The COMM/WIN/DTYPE object (IN)
- * @param keyhash        The attribute hash table hanging on the object(IN)
+ * @param attr_hash    The attribute hash table hanging on the object(IN)
  * @return OMPI error code
  *
  */
 
 int ompi_attr_delete_all(ompi_attribute_type_t type, void *object, 
-			opal_hash_table_t *keyhash);
+			opal_hash_table_t *attr_hash);
 
 
 /**
