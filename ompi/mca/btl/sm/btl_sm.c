@@ -516,6 +516,22 @@ int mca_btl_sm_add_procs(
         diff = tmp_ptr[mca_btl_sm_component.my_smp_rank] - tmp_ptr[j];
         mca_btl_sm_component.fifo[j] = (ompi_fifo_t*)((char*)fifo_tmp[j]+diff);
         mca_btl_sm_component.sm_offset[j] = diff;
+
+    }
+
+    for( j=mca_btl_sm_component.num_smp_procs ; j <
+            mca_btl_sm_component.num_smp_procs+n_local_procs ; j++ ) {
+        if(j == mca_btl_sm_component.my_smp_rank)
+            continue;
+        return_code = ompi_fifo_init((int)mca_btl_sm_component.size_of_cb_queue,
+                (int)mca_btl_sm_component.cb_lazy_free_freq,
+                0,0,0,
+                &mca_btl_sm_component.fifo[j][mca_btl_sm_component.my_smp_rank],
+                mca_btl_sm_component.sm_offset[j],
+                mca_btl_sm_component.sm_mpool);
+
+        if(return_code != OMPI_SUCCESS)
+            goto CLEANUP;
     }
 
     /* initialize some of the free-lists */
