@@ -1082,12 +1082,8 @@ int mca_oob_tcp_init(void)
     jobid = ORTE_PROC_MY_NAME->jobid;
     
     /* create a listen socket */
-    if (OOB_TCP_EVENT == mca_oob_tcp_component.tcp_listen_type) {
-        if(mca_oob_tcp_create_listen() != ORTE_SUCCESS) {
-            opal_output(0, "mca_oob_tcp_init: unable to create listen socket");
-            return ORTE_ERROR;
-        }
-    } else if ((OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) && orte_process_info.seed) {
+    if ((OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) && 
+        orte_process_info.seed) {  
         if (mca_oob_tcp_create_listen_thread() != ORTE_SUCCESS) {
             opal_output(0, "mca_oob_tcp_init: unable to create listen thread");
             return ORTE_ERROR;
@@ -1099,6 +1095,23 @@ int mca_oob_tcp_init(void)
                             -1,  /* maximum number */
                             16);  /* increment to grow by */
         opal_progress_register(mca_oob_tcp_listen_progress);
+        if (mca_oob_tcp_component.tcp_debug) {
+            opal_output(0, "[%lu,%lu,%lu] accepting connections via listen thread",
+                        ORTE_NAME_ARGS(orte_process_info.my_name));
+        }
+    } else {
+        /* fix up the listen_type, since we might have been in thread,
+           but can't do that since we weren't the HNP. */
+        mca_oob_tcp_component.tcp_listen_type = OOB_TCP_EVENT;
+
+        if(mca_oob_tcp_create_listen() != ORTE_SUCCESS) {
+            opal_output(0, "mca_oob_tcp_init: unable to create listen socket");
+            return ORTE_ERROR;
+        }
+        if (mca_oob_tcp_component.tcp_debug) {
+            opal_output(0, "[%lu,%lu,%lu] accepting connections via event library",
+                        ORTE_NAME_ARGS(orte_process_info.my_name));
+        }
     }
 
     /* iterate through the open connections and send an ident message to all peers -
