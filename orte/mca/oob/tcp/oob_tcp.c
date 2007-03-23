@@ -487,15 +487,32 @@ static void* mca_oob_tcp_listen_thread(opal_object_t *obj)
         while (count < mca_oob_tcp_component.tcp_copy_spin_count && 
                opal_list_get_size(&mca_oob_tcp_component.tcp_copy_in_connections) < 
                (size_t) mca_oob_tcp_component.tcp_copy_max_size) {
+            /* we have to use "real" lock and unlock if */
+            /*  we don't have thread support compiled in */ 
+            /*  because OPAL_FREE_LIST_WAIT will not */
+            /*  use locks otherwise and we have a race */ 
+            /*  with the accept thread and the main thread on */
+            /*  waiting/returning items to the free list */
+#if !OMPI_HAVE_THREAD_SUPPORT
+            opal_mutex_lock(&mca_oob_tcp_component.tcp_pending_connections_lock);
+#endif
             OPAL_FREE_LIST_WAIT(&mca_oob_tcp_component.tcp_pending_connections_fl, 
                                 fl_item, rc);
+#if !OMPI_HAVE_THREAD_SUPPORT
+            opal_mutex_unlock(&mca_oob_tcp_component.tcp_pending_connections_lock);
+#endif
             item = (mca_oob_tcp_pending_connection_t*) fl_item;
             item->fd = accept(mca_oob_tcp_component.tcp_listen_sd, 
                               (struct sockaddr*)&(item->addr), &addrlen);
             if(item->fd < 0) {
+#if !OMPI_HAVE_THREAD_SUPPORT
+                opal_mutex_lock(&mca_oob_tcp_component.tcp_pending_connections_lock);
+#endif
                 OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_pending_connections_fl, 
                                       fl_item);
-
+#if !OMPI_HAVE_THREAD_SUPPORT
+                opal_mutex_unlock(&mca_oob_tcp_component.tcp_pending_connections_lock);
+#endif
                 if (mca_oob_tcp_component.tcp_shutdown) return NULL;
 
                 if(opal_socket_errno != EAGAIN || opal_socket_errno != EWOULDBLOCK) {
@@ -585,9 +602,20 @@ static int mca_oob_tcp_listen_progress(void)
             event = OBJ_NEW(mca_oob_tcp_event_t);
             opal_event_set(&event->event, item->fd, OPAL_EV_READ, mca_oob_tcp_recv_handler, event);
             opal_event_add(&event->event, 0);
+            /* we have to use "real" lock and unlock if */
+            /*  we don't have thread support compiled in */ 
+            /*  because OPAL_FREE_LIST_WAIT will not */
+            /*  use locks otherwise and we have a race */ 
+            /*  with the accept thread and the main thread on */
+            /*  waiting/returning items to the free list */
+#if !OMPI_HAVE_THREAD_SUPPORT
+            opal_mutex_lock(&mca_oob_tcp_component.tcp_pending_connections_lock);
+#endif
             OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_pending_connections_fl, 
                                 (opal_free_list_item_t *) item);
-
+#if !OMPI_HAVE_THREAD_SUPPORT
+            opal_mutex_unlock(&mca_oob_tcp_component.tcp_pending_connections_lock);
+#endif
             count++;
         }
 
