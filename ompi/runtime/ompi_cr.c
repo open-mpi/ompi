@@ -149,12 +149,6 @@ int ompi_cr_coord(int state)
         ompi_cr_coord_pre_continue();
     }
     else if (OPAL_CRS_RESTART == state ) {
-#if 0 /* JJH Do we really need this ? */
-        if(OMPI_SUCCESS != (ret = ompi_cr_init_quick_params()) ){
-            opal_output(ompi_cr_output,
-                        "ERROR: ompi_cr: coord: Unable to init CR quick parameters.");
-        }
-#endif
         /* Do Restart Phase work */
         ompi_cr_coord_pre_restart();
     }
