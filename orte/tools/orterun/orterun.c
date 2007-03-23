@@ -252,7 +252,7 @@ opal_cmd_line_init_t cmd_line_init[] = {
       "List of hosts to invoke processes on" },
 
     /* OSC mpiexec-like arguments */
-    { "rmaps", "base", "schedule_local", '\0', "nolocal", "nolocal", 1,
+    { "rmaps", "base", "schedule_local", '\0', "nolocal", "nolocal", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Do not run any MPI applications on the local node" },
 
