@@ -47,7 +47,7 @@ extern "C" {
         char * remote_sh_command;
     };
     typedef struct orte_filem_rsh_component_t orte_filem_rsh_component_t;
-    extern orte_filem_rsh_component_t mca_filem_rsh_component;
+    ORTE_MODULE_DECLSPEC extern orte_filem_rsh_component_t mca_filem_rsh_component;
 
     /*
      * Module functions
