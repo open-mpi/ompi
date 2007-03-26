@@ -47,6 +47,10 @@ Trunk (not on release branches yet)
 1.2.1
 -----
 
+- Made the --nolocal parameter work again.
+- Re-enabled MPI_Comm_spawn_multiple from singletons.
+- LoadLeveler and TM config fixes, Thanks to Martin Audet for the bug report.
+- MPI attributes fixes
 - Fixed issues with backtrace code on 64 bit Intel & PPC OS X builds.
 - Fixed issues with multi-word CC variables and libtool.
   Thanks to Bert Wesarg for the bug reports.
