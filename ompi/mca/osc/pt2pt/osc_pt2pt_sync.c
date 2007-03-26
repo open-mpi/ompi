@@ -52,6 +52,7 @@ ompi_osc_pt2pt_progress_long(ompi_osc_pt2pt_module_t *module)
             /* BWB - FIX ME - error handling */
             if (completed > 0) {
                 longreq->req_comp_cb(longreq);
+                break;
             }
         }
 
