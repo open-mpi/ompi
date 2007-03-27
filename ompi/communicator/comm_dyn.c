@@ -240,6 +240,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
                               rport,                   /* remote leader */
                               OMPI_COMM_CID_INTRA_OOB, /* mode */
                               send_first,              /* send or recv first */
+			      0,                       /* sync_flag */
                               NULL );                  /* coll component */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;

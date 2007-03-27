@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006      University of Houston. All rights reserved.
+ * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -111,6 +111,10 @@ struct ompi_communicator_t {
     ompi_group_t        *c_local_group;
     ompi_group_t       *c_remote_group;
 
+    struct ompi_communicator_t *c_local_comm; /* a duplicate of the local 
+						 communicator in case the comm is 
+						 an inter-comm*/
+					 
     /* Attributes */
     struct opal_hash_table_t       *c_keyhash;
 
@@ -306,10 +310,13 @@ struct ompi_communicator_t {
      * of the function. It has been extracted, since we need to be able
      * to dup a communicator internally as well.
      *
-     * @param comm: input communicator
+     * @param comm:      input communicator
+     *        sync_flag: 0 if processes need to synchronize in activate
+     *                   1 if the do not (optimization to c_local_comm creation)
      *
      */
-    int ompi_comm_dup (ompi_communicator_t *comm, ompi_communicator_t **newcomm);
+    int ompi_comm_dup (ompi_communicator_t *comm, ompi_communicator_t **newcomm, 
+		       int sync_flag);
 
 
     /**
@@ -410,6 +417,7 @@ struct ompi_communicator_t {
                              void* remote_leader,
                              int mode,
                              int send_first,
+			     int sync_flag,
                              mca_base_component_t *collcomponent );
 
 

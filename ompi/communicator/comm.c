@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -101,12 +102,18 @@ int ompi_comm_set ( ompi_communicator_t *newcomm,
     ompi_set_group_rank(newcomm->c_local_group, my_gpointer);
     newcomm->c_my_rank = newcomm->c_local_group->grp_my_rank;
 
-    /* Set remote group, if applicable */
+    /* Set remote group and duplicate the local comm, if applicable */
     if ( 0 < remote_size) {        
         memcpy ( newcomm->c_remote_group->grp_proc_pointers, 
                  remote_procs, remote_size * sizeof(ompi_proc_t *));
         ompi_group_increment_proc_count(newcomm->c_remote_group);
         newcomm->c_flags |= OMPI_COMM_INTER;
+	if ( OMPI_COMM_IS_INTRA(oldcomm) ) {
+	    ompi_comm_dup(oldcomm, &newcomm->c_local_comm,1);
+	}
+	else {
+	    ompi_comm_dup(oldcomm->c_local_comm, &newcomm->c_local_comm,1);
+	}
     }
 
     /* Check how many different jobids are represented in this communicator.
@@ -323,6 +330,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
                               NULL,     /* remote_leader */
                               mode,     /* mode */
                               -1,       /* send first */
+			      0,        /* sync_flag */
                               NULL );   /* coll component */
                              
     if ( OMPI_SUCCESS != rc ) {
@@ -542,13 +550,14 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
 
     /* Activate the communicator and init coll-component */
     rc = ompi_comm_activate ( newcomp,  /* new communicator */ 
-                             comm,     /* old comm */
-                             NULL,     /* bridge comm */
-                             NULL,     /* local leader */
-                             NULL,     /* remote_leader */
-                             mode,     /* mode */
-                             -1,       /* send first */
-                             NULL );   /* coll component */
+			      comm,     /* old comm */
+			      NULL,     /* bridge comm */
+			      NULL,     /* local leader */
+			      NULL,     /* remote_leader */
+			      mode,     /* mode */
+			      -1,       /* send first */
+			      0,        /* sync_flag */
+			      NULL );   /* coll component */
                              
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
@@ -588,7 +597,8 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
-int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm)
+int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm, 
+		    int sync_flag)
 {
     ompi_communicator_t *comp=NULL;
     ompi_communicator_t *newcomp=NULL;
@@ -643,18 +653,38 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm)
     snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d DUP FROM %d", 
              newcomp->c_contextid, comm->c_contextid );
 
-    /* activate communicator and init coll-module */
-    rc = ompi_comm_activate (newcomp,  /* new communicator */ 
-                             comp,     /* old comm */
-                             NULL,     /* bridge comm */
-                             NULL,     /* local leader */
-                             NULL,     /* remote_leader */
-                             mode,     /* mode */
-                             -1,      /* send_first */
-                             (mca_base_component_t *) comp->c_coll_selected_component /* coll component */
-                             );
-    if ( MPI_SUCCESS != rc ) {
-        return rc;
+    if(0 == sync_flag) {
+	/* activate communicator and init coll-module */
+	rc = ompi_comm_activate (newcomp,  /* new communicator */ 
+				 comp,     /* old comm */
+				 NULL,     /* bridge comm */
+				 NULL,     /* local leader */
+				 NULL,     /* remote_leader */
+				 mode,     /* mode */
+				 -1,       /* send_first */
+				 0,        /* sync_flag */
+				 (mca_base_component_t *) comp->c_coll_selected_component /* coll component */
+	    );
+	if ( MPI_SUCCESS != rc ) {
+	    return rc;
+	}
+    }
+    else { 
+	/* activate communicator and init coll-module without synchronizing processes*/
+	rc = ompi_comm_activate (newcomp,  /* new communicator */ 
+				 comp,     /* old comm */
+				 NULL,     /* bridge comm */
+				 NULL,     /* local leader */
+				 NULL,     /* remote_leader */
+				 mode,     /* mode */
+				 -1,       /* send_first */
+				 1,        /* sync_flag */
+				 (mca_base_component_t *) comp->c_coll_selected_component /* coll component */
+	    );
+	if ( MPI_SUCCESS != rc ) {
+	    return rc;
+	}
+	
     }
 
     *newcomm = newcomp;
@@ -796,6 +826,9 @@ int ompi_comm_free ( ompi_communicator_t **comm )
           we delay releasing the attributes -- we need to release the
           attributes right away so that we can report the error right
           away. */
+    if ( OMPI_COMM_IS_INTER(*comm) ) {
+	ompi_comm_free (&(*comm)->c_local_comm);
+    }
 
     if (NULL != (*comm)->c_keyhash) {
         ret = ompi_attr_delete_all(COMM_ATTR, *comm, (*comm)->c_keyhash);
@@ -1315,6 +1348,7 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
                                NULL,     /* remote_leader */
                                OMPI_COMM_CID_INTRA,   /* mode */
                                -1,       /* send first, doesn't matter */
+			       0,        /* sync_flag */
                                NULL );   /* coll component */
 
     if (OMPI_SUCCESS != ret) {
