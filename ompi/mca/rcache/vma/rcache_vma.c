@@ -27,8 +27,8 @@
 #include "opal/util/output.h"
 #include "ompi/mca/mpool/base/base.h" 
 
-extern unsigned int mca_mpool_base_page_size; 
-extern unsigned int mca_mpool_base_page_size_log;
+OMPI_DECLSPEC extern unsigned int mca_mpool_base_page_size; 
+OMPI_DECLSPEC extern unsigned int mca_mpool_base_page_size_log;
 
 /**
  * Initialize the rcache 

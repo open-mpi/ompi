@@ -24,6 +24,7 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
+#include <cygwin/uio.h>
 
 /* 
  * do zero byte IRECV / ISEND: upper half sends to lower half (i.e. do

@@ -19,6 +19,8 @@
 #ifndef OMPI_UTIL_H
 #define OMPI_UTIL_H
 
+#include <windows.h>
+
 static __inline int getpagesize(void)
 {
     SYSTEM_INFO sys_info;

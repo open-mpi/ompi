@@ -462,7 +462,10 @@ main(int argc, char *argv[])
             old_match = temp;
             temp = strstr( temp + 1, extension );
         }
-        *old_match = '\0';
+        /* Only if there was a match of .exe, erase the last occurence of .exe */
+        if ( NULL != old_match ) {
+            *old_match = '\0';
+        }
     }
 #endif  /* defined(EXEEXT) */
 
