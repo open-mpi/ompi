@@ -51,6 +51,6 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
     }
 
     
-    rc = ompi_comm_dup ( comm, newcomm);
+    rc = ompi_comm_dup ( comm, newcomm, 0);
     OMPI_ERRHANDLER_RETURN ( rc, comm, rc, FUNC_NAME);
 }

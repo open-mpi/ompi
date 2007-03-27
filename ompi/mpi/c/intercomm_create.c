@@ -174,6 +174,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                               &rleader,                    /* remote_leader */
                               OMPI_COMM_CID_INTRA_BRIDGE,  /* mode */
                               -1,                          /* send_first */
+			      0,                           /* sync_flag */
                               NULL );                      /* coll component */
 
     if ( MPI_SUCCESS != rc ) {

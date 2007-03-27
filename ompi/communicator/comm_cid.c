@@ -379,36 +379,38 @@ int ompi_comm_activate ( ompi_communicator_t* newcomm,
                          void* remote_leader,
                          int mode, 
                          int send_first, 
+			 int sync_flag,
                          mca_base_component_t *collcomponent )
 {
     int ok=0, gok=0;
     ompi_comm_cid_allredfct* allredfnct;
 
-    /* Step 1: the barrier, after which it is allowed to 
-     * send messages over the new communicator 
-     */
-    switch (mode) 
+    if (0 == sync_flag) {
+	/* Step 1: the barrier, after which it is allowed to 
+	 * send messages over the new communicator 
+	 */
+	switch (mode) 
         {
-        case OMPI_COMM_CID_INTRA: 
-            allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra;
-            break;
-        case OMPI_COMM_CID_INTER:
-            allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_inter;
-            break;
-        case OMPI_COMM_CID_INTRA_BRIDGE: 
-            allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_bridge;
-            break;
-        case OMPI_COMM_CID_INTRA_OOB: 
-            allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_oob;
-            break;
-        default: 
-            return MPI_UNDEFINED;
-            break;
+	    case OMPI_COMM_CID_INTRA: 
+		allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra;
+		break;
+	    case OMPI_COMM_CID_INTER:
+		allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_inter;
+		break;
+	    case OMPI_COMM_CID_INTRA_BRIDGE: 
+		allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_bridge;
+		break;
+	    case OMPI_COMM_CID_INTRA_OOB: 
+		allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_oob;
+		break;
+	    default: 
+		return MPI_UNDEFINED;
+		break;
         }
-
-    (allredfnct)(&ok, &gok, 1, MPI_MIN, comm, bridgecomm,
-                 local_leader, remote_leader, send_first );
-    
+	
+	(allredfnct)(&ok, &gok, 1, MPI_MIN, comm, bridgecomm,
+		     local_leader, remote_leader, send_first );
+    }
     /* Check to see if this process is in the new communicator.
 
        Specifically, this function is invoked by all proceses in the

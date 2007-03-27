@@ -245,7 +245,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
 
     module->p2p_win = win;
 
-    ret = ompi_comm_dup(comm, &(module->p2p_comm));
+    ret = ompi_comm_dup(comm, &(module->p2p_comm), 0);
     if (ret != OMPI_SUCCESS) {
         OBJ_DESTRUCT(&(module->p2p_acc_lock));
         OBJ_DESTRUCT(&(module->p2p_lock));
