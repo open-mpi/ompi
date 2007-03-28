@@ -88,9 +88,9 @@ int ompi_init_do_preconnect(void)
     
 int ompi_init_do_oob_preconnect(void)
 {
-    size_t world_size, i, next, prev, my_index = -1;
+    size_t world_size, next, prev;
     ompi_proc_t **procs;
-    int ret;
+    int ret, i, my_index = -1;
     struct iovec msg[1];
 
     procs = ompi_proc_world(&world_size);
