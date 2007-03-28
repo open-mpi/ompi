@@ -23,7 +23,6 @@
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "paffinity_windows.h"
-#include <windows.h>
 
 /*
  * Local functions
