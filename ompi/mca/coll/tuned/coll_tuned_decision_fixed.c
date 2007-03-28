@@ -326,6 +326,10 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     communicator_size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
+    /* need data size for decision function */
+    ompi_ddt_type_size(datatype, &dsize);
+    message_size = dsize * count;   /* needed for decision */
+
     /**
      * If the operation is non commutative we currently have choice of linear 
      * or in-order binary tree algorithm.
@@ -336,10 +340,6 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
         } 
         return ompi_coll_tuned_reduce_intra_in_order_binary (sendbuf, recvbuf, count, datatype, op, root, comm, 0); 
     }
-
-    /* need data size for decision function */
-    ompi_ddt_type_size(datatype, &dsize);
-    message_size = dsize * count;   /* needed for decision */
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_dec_fixed"
                  "root %d rank %d com_size %d msg_length %lu",
