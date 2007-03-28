@@ -28,9 +28,6 @@
 #include "ompi/mca/rcache/base/base.h"
 #include "ompi/mca/mpool/base/base.h"
 
-extern uint32_t mca_mpool_base_page_size;
-extern uint32_t mca_mpool_base_page_size_log; 
-
 /* 
  *  Initializes the mpool module.
  */ 

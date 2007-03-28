@@ -25,9 +25,6 @@
 #include "orte/util/proc_info.h"
 #include "orte/mca/ns/ns_types.h"
 
-
-extern uint32_t mca_mpool_base_page_size; 
-extern uint32_t mca_mpool_base_page_size_log; 
 ompi_pointer_array_t mca_mpool_base_mem_cb_array; 
 
 /*

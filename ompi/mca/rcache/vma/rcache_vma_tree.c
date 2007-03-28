@@ -28,8 +28,6 @@
 #include "opal/mca/mca.h"
 #include "rcache_vma_tree.h"
 
-extern unsigned int mca_mpool_base_page_size;
-
 OBJ_CLASS_INSTANCE(mca_rcache_vma_reg_list_item_t, opal_list_item_t, NULL, NULL);
 
 static void mca_rcache_vma_construct(opal_object_t *object)
