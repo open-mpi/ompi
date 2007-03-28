@@ -32,10 +32,6 @@
 #include <malloc.h>
 #endif
 
-extern uint32_t mca_mpool_base_page_size;
-extern uint32_t mca_mpool_base_page_size_log; 
-
-
 /*
  *  Initializes the mpool module.
  */ 
