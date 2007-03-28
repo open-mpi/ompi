@@ -323,6 +323,9 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     const double a4 =  0.0033 / 1024.0; /* [1/B] */
     const double b4 =  1.6761;
 
+    communicator_size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+
     /**
      * If the operation is non commutative we currently have choice of linear 
      * or in-order binary tree algorithm.
@@ -333,9 +336,6 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
         } 
         return ompi_coll_tuned_reduce_intra_in_order_binary (sendbuf, recvbuf, count, datatype, op, root, comm, 0); 
     }
-
-    communicator_size = ompi_comm_size(comm);
-    rank = ompi_comm_rank(comm);
 
     /* need data size for decision function */
     ompi_ddt_type_size(datatype, &dsize);
