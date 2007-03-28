@@ -88,9 +88,9 @@ int ompi_init_do_preconnect(void)
     
 int ompi_init_do_oob_preconnect(void)
 {
-    size_t world_size, next, prev;
+    size_t world_size, next, prev, i, my_index;
     ompi_proc_t **procs;
-    int ret, i, my_index = -1;
+    int ret;
     struct iovec msg[1];
 
     procs = ompi_proc_world(&world_size);
@@ -120,11 +120,12 @@ int ompi_init_do_oob_preconnect(void)
         for (i = 0 ; i < world_size ; ++i) {
             if (ompi_proc_local() == procs[i]) {
                 my_index = i;
-                break;
+                goto preconnect_stage;
             }
         }
-        if (my_index < 0) return OMPI_ERR_NOT_FOUND;
-
+        /* I'm not on the list ? well then just complain */
+        return OMPI_ERR_NOT_FOUND;
+  preconnect_stage:
         for (i = 1 ; i <= world_size / 2 ; ++i) {
             next = (my_index + i) % world_size;
             prev = (my_index - i + world_size) % world_size;
