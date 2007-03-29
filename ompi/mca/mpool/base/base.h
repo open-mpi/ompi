@@ -28,7 +28,9 @@
 #include "opal/mca/mca.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "opal/threads/mutex.h" 
-
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
 #if defined(HAVE_MALLOPT) && defined(M_TRIM_THRESHOLD) && defined(M_MMAP_MAX)
 #define MPOOL_BASE_CAN_DISABLE_SBRK 1
 #else
