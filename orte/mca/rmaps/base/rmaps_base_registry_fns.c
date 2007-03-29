@@ -552,6 +552,9 @@ cleanup:
             OBJ_RELEASE(values[i]);
         }
     }
+    if(NULL != segment) {
+        free(segment);
+    }
     if(NULL != values)
         free(values);
     return rc;
