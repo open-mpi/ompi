@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -23,8 +23,8 @@
  * these routines are used by both the OOB and the registry.
  */
 
-#ifndef OMPI_MCA_BASE_MSGBUF_H
-#define OMPI_MCA_BASE_MSGBUF_H
+#ifndef OPAL_MCA_BASE_MSGBUF_H
+#define OPAL_MCA_BASE_MSGBUF_H
 
 
 /**************************************************************************/
@@ -184,4 +184,4 @@ OPAL_DECLSPEC int  mca_base_msgbuf_unpack_string (mca_base_msgbuf_t bufid, char*
 #define MCA_BASE_MSGBUF_BADPARM      -2014 /* other parameters are bad/invalid pointers */
 #define MCA_BASE_MSGBUF_BADDATA	 -2015 /* to/from data addr is bad (null etc) */
 
-#endif /* OMPI_MCA_BASE_MSGBUF_H */
+#endif /* OPAL_MCA_BASE_MSGBUF_H */

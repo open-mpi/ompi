@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -19,8 +19,8 @@
  * @file
  */
 
-#ifndef OMPI_NUMTOSTR_UTIL
-#define OMPI_NUMTOSTR_UTIL
+#ifndef OPAL_NUMTOSTR_UTIL
+#define OPAL_NUMTOSTR_UTIL
 
 #include "opal_config.h"
 /**
@@ -42,4 +42,4 @@ OPAL_DECLSPEC char* opal_ltostr(long num);
  */
 OPAL_DECLSPEC char* opal_dtostr(double num);
 
-#endif /* OMPI_NUMTOSTR_UTIL */
+#endif /* OPAL_NUMTOSTR_UTIL */

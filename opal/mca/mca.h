@@ -21,8 +21,8 @@
  * Top-level interface for \em all MCA components.
  */
 
-#ifndef OMPI_MCA_H
-#define OMPI_MCA_H
+#ifndef OPAL_MCA_H
+#define OPAL_MCA_H
 
 #include "opal_config.h"
 
@@ -197,4 +197,4 @@ enum {
   /**< Maximum error code. */
 };
 
-#endif /* OMPI_MCA_H */
+#endif /* OPAL_MCA_H */

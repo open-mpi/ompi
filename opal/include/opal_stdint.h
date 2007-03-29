@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -20,8 +20,8 @@
  * gathered by configure.
  */
 
-#ifndef OMPI_STDINT_H
-#define OMPI_STDINT_H 1
+#ifndef OPAL_STDINT_H
+#define OPAL_STDINT_H 1
 
 /*
  * Include what we can and define what is missing.
@@ -187,5 +187,5 @@ typedef unsigned long long uintptr_t;
 
 #endif /* ifndef SIZE_MAX */
 
-#endif /* OMPI_STDINT_H */
+#endif /* OPAL_STDINT_H */
 

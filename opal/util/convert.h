@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -63,12 +63,12 @@ extern "C" {
  * @param out The output int value.
  * @param want_check Whether to check for truncation or not
  *
- * @returns OMPI_SUCESS If all went well
- * @returns OMPI_NOT_SUPPORTED if the size_t value was truncated
+ * @returns OPAL_SUCESS If all went well
+ * @returns OPAL_NOT_SUPPORTED if the size_t value was truncated
  *
  * The conversion will always occur.  However, if the size_t value was
  * truncated (i.e., sizeof(size_t) > sizeof(int), and the cast down to
- * the int actually changed the value), OMPI_NOT_SUPPORTED will be
+ * the int actually changed the value), OPAL_NOT_SUPPORTED will be
  * returned.
  *
  * On platforms where sizeof(size_t) <= sizeof(int), this function

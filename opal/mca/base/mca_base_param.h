@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -55,8 +55,8 @@
  * itself; it should not be required by any other Open MPI entities.
  */
 
-#ifndef OMPI_MCA_BASE_PARAM_H
-#define OMPI_MCA_BASE_PARAM_H
+#ifndef OPAL_MCA_BASE_PARAM_H
+#define OPAL_MCA_BASE_PARAM_H
 
 #include "opal_config.h"
 
@@ -818,4 +818,4 @@ extern "C" {
 }
 #endif
 
-#endif /* OMPI_MCA_BASE_PARAM_H */
+#endif /* OPAL_MCA_BASE_PARAM_H */

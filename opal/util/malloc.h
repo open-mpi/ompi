@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -26,8 +26,8 @@
 /*
  * THIS FILE CANNOT INCLUDE ANY OTHER OPAL HEADER FILES!!!
  *
- * It is included via <ompi_config_bottom.h>.  Hence, it should not
- * include ANY other files, nor should it include "ompi_config.h".
+ * It is included via <opal_config_bottom.h>.  Hence, it should not
+ * include ANY other files, nor should it include "opal_config.h".
  *
  */
 

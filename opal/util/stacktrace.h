@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -18,8 +18,8 @@
  * @file
  */
 
-#ifndef OMPI_STACKTRACE_H
-#define OMPI_STACKTRACE_H
+#ifndef OPAL_STACKTRACE_H
+#define OPAL_STACKTRACE_H
 
 #include "opal_config.h"
 
@@ -39,4 +39,4 @@
  */
 OPAL_DECLSPEC int opal_util_register_stackhandlers (void);
 
-#endif /* OMPI_STACKTRACE_H */
+#endif /* OPAL_STACKTRACE_H */
