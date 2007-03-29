@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -169,11 +169,13 @@ int mca_base_param_recache_files(bool rel_path_search)
 #else
     home = getenv("USERPROFILE");
 #endif  /* !defined(__WINDOWS__) */
-        
-    cwd = (char *) malloc(sizeof(char) * MAXPATHLEN);
-    if( NULL == (cwd = getcwd(cwd, MAXPATHLEN) )) {
-        opal_output(0, "Error: Unable to get the current working directory\n");
-        cwd = strdup(".");
+    
+    if(NULL == cwd) {
+        cwd = (char *) malloc(sizeof(char) * MAXPATHLEN);
+        if( NULL == (cwd = getcwd(cwd, MAXPATHLEN) )) {
+            opal_output(0, "Error: Unable to get the current working directory\n");
+            cwd = strdup(".");
+        }
     }
 
     asprintf(&files,
