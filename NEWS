@@ -52,6 +52,9 @@ Trunk (not on release branches yet)
 
 - Fix functionality allowing users to disable sbrk() (the
   mpool_base_disable_sbrk MCA parameter) on platforms that support it.
+- Fixed a pair of problems with the TCP "listen_thread" mode for the
+  oob_tcp_listen_mode MCA parameter that would cause failures when
+  attempting to launch applications.
 - Fixed a segfault if there was a failure opening a BTL MX endpoint.
 - Fixed a problem with mpirun's --nolocal option introduced in 1.2.
 - Re-enabled MPI_COMM_SPAWN_MULTIPLE from singletons.
