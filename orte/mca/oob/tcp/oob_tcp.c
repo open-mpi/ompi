@@ -473,15 +473,32 @@ static void* mca_oob_tcp_listen_thread(opal_object_t *obj)
         while (count < mca_oob_tcp_component.tcp_copy_spin_count && 
                opal_list_get_size(&mca_oob_tcp_component.tcp_copy_in_connections) < 
                (size_t) mca_oob_tcp_component.tcp_copy_max_size) {
+            /* we have to use "real" lock and unlock if */
+            /*  we don't have thread support compiled in */ 
+            /*  because OPAL_FREE_LIST_WAIT will not */
+            /*  use locks otherwise and we have a race */ 
+            /*  with the accept thread and the main thread on */
+            /*  waiting/returning items to the free list */
+#if !OMPI_HAVE_THREAD_SUPPORT
+            opal_mutex_lock(&mca_oob_tcp_component.tcp_pending_connections_lock);
+#endif
             OPAL_FREE_LIST_WAIT(&mca_oob_tcp_component.tcp_pending_connections_fl, 
                                 fl_item, rc);
+#if !OMPI_HAVE_THREAD_SUPPORT
+            opal_mutex_unlock(&mca_oob_tcp_component.tcp_pending_connections_lock);
+#endif
             item = (mca_oob_tcp_pending_connection_t*) fl_item;
             item->fd = accept(mca_oob_tcp_component.tcp_listen_sd, 
                               (struct sockaddr*)&(item->addr), &addrlen);
             if(item->fd < 0) {
+#if !OMPI_HAVE_THREAD_SUPPORT
+                opal_mutex_lock(&mca_oob_tcp_component.tcp_pending_connections_lock);
+#endif
                 OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_pending_connections_fl, 
                                       fl_item);
-
+#if !OMPI_HAVE_THREAD_SUPPORT
+                opal_mutex_unlock(&mca_oob_tcp_component.tcp_pending_connections_lock);
+#endif
                 if (mca_oob_tcp_component.tcp_shutdown) return NULL;
 
                 if(opal_socket_errno != EAGAIN || opal_socket_errno != EWOULDBLOCK) {
@@ -571,9 +588,20 @@ static int mca_oob_tcp_listen_progress(void)
             event = OBJ_NEW(mca_oob_tcp_event_t);
             opal_event_set(&event->event, item->fd, OPAL_EV_READ, mca_oob_tcp_recv_handler, event);
             opal_event_add(&event->event, 0);
+            /* we have to use "real" lock and unlock if */
+            /*  we don't have thread support compiled in */ 
+            /*  because OPAL_FREE_LIST_WAIT will not */
+            /*  use locks otherwise and we have a race */ 
+            /*  with the accept thread and the main thread on */
+            /*  waiting/returning items to the free list */
+#if !OMPI_HAVE_THREAD_SUPPORT
+            opal_mutex_lock(&mca_oob_tcp_component.tcp_pending_connections_lock);
+#endif
             OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_pending_connections_fl, 
                                 (opal_free_list_item_t *) item);
-
+#if !OMPI_HAVE_THREAD_SUPPORT
+            opal_mutex_unlock(&mca_oob_tcp_component.tcp_pending_connections_lock);
+#endif
             count++;
         }
 
@@ -1064,12 +1092,8 @@ int mca_oob_tcp_init(void)
     jobid = ORTE_PROC_MY_NAME->jobid;
     
     /* create a listen socket */
-    if (OOB_TCP_EVENT == mca_oob_tcp_component.tcp_listen_type) {
-        if(mca_oob_tcp_create_listen() != ORTE_SUCCESS) {
-            opal_output(0, "mca_oob_tcp_init: unable to create listen socket");
-            return ORTE_ERROR;
-        }
-    } else if ((OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) && orte_process_info.seed) {
+    if ((OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) && 
+        orte_process_info.seed) {  
         if (mca_oob_tcp_create_listen_thread() != ORTE_SUCCESS) {
             opal_output(0, "mca_oob_tcp_init: unable to create listen thread");
             return ORTE_ERROR;
@@ -1081,6 +1105,23 @@ int mca_oob_tcp_init(void)
                             -1,  /* maximum number */
                             16);  /* increment to grow by */
         opal_progress_register(mca_oob_tcp_listen_progress);
+        if (mca_oob_tcp_component.tcp_debug) {
+            opal_output(0, "[%lu,%lu,%lu] accepting connections via listen thread",
+                        ORTE_NAME_ARGS(orte_process_info.my_name));
+        }
+    } else {
+        /* fix up the listen_type, since we might have been in thread,
+           but can't do that since we weren't the HNP. */
+        mca_oob_tcp_component.tcp_listen_type = OOB_TCP_EVENT;
+
+        if(mca_oob_tcp_create_listen() != ORTE_SUCCESS) {
+            opal_output(0, "mca_oob_tcp_init: unable to create listen socket");
+            return ORTE_ERROR;
+        }
+        if (mca_oob_tcp_component.tcp_debug) {
+            opal_output(0, "[%lu,%lu,%lu] accepting connections via event library",
+                        ORTE_NAME_ARGS(orte_process_info.my_name));
+        }
     }
 
     /* iterate through the open connections and send an ident message to all peers -
