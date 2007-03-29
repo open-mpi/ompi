@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -57,7 +57,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_value_array_t);
  *
  *  @param   array       The array to initialize (IN).
  *  @param   item_size   The sizeof each array element (IN).
- *  @return  OMPI error code
+ *  @return  OPAL error code
  *
  * Note that there is no corresponding "finalize" function -- use
  * OBJ_DESTRUCT (for stack arrays) or OBJ_RELEASE (for heap arrays) to
@@ -79,7 +79,7 @@ static inline int opal_value_array_init(opal_value_array_t *array, size_t item_s
  *
  *  @param   array   The input array (IN).
  *  @param   size    The anticipated size of the array (IN).
- *  @return  OMPI error code.
+ *  @return  OPAL error code.
  */
 
 static inline int opal_value_array_reserve(opal_value_array_t* array, size_t size)
@@ -117,7 +117,7 @@ static inline size_t opal_value_array_get_size(opal_value_array_t* array)
  *  @param  array   The input array (IN).
  *  @param  size    The new array size.
  *
- *  @return  OMPI error code.
+ *  @return  OPAL error code.
  *
  *  Note that resizing the array to a smaller size may not change
  *  the underlying memory allocated by the array. However, setting
@@ -192,7 +192,7 @@ static inline void* opal_value_array_get_item(opal_value_array_t *array, size_t 
  *  @param   item_value  A pointer to the item, which is copied into 
  *                       the array.
  *
- *  @return  OMPI error code.
+ *  @return  OPAL error code.
  *
  * It is safe to free the item after returning from this call; it is
  * copied into the array by value.
@@ -216,7 +216,7 @@ static inline int opal_value_array_set_item(opal_value_array_t *array, size_t it
  *  @param   item     A pointer to the item to append, which is copied 
  *                    into the array.
  *
- *  @return  OMPI error code 
+ *  @return  OPAL error code 
  *
  * This will grow the array if it is not large enough to contain the
  * item.  It is safe to free the item after returning from this call;
@@ -236,7 +236,7 @@ static inline int opal_value_array_append_item(opal_value_array_t *array, const 
  *  @param   item_index  The index to remove, which must be less than
  *                       the current array size (IN).
  *
- *  @return  OMPI error code.
+ *  @return  OPAL error code.
  *
  * All elements following this index are shifted down.
  */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -57,7 +57,7 @@ typedef struct opal_hash_table_t opal_hash_table_t;
  *  @param   table   The input hash table (IN).
  *  @param   size    The size of the table, which will be rounded up 
  *                   (if required) to the next highest power of two (IN).
- *  @return  OMPI error code.
+ *  @return  OPAL error code.
  *
  */
 
@@ -81,7 +81,7 @@ static inline size_t opal_hash_table_get_size(opal_hash_table_t *ht)
  *  Remove all elements from the table.
  *
  *  @param   table   The input hash table (IN).
- *  @return  OMPI return code.
+ *  @return  OPAL return code.
  *
  */
 
@@ -109,7 +109,7 @@ OPAL_DECLSPEC int opal_hash_table_get_value_uint32(opal_hash_table_t* table, uin
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
  *  @param   value   The value to be associated with the key (IN).
- *  @return  OMPI return code.
+ *  @return  OPAL return code.
  *
  */
 
@@ -120,7 +120,7 @@ OPAL_DECLSPEC int opal_hash_table_set_value_uint32(opal_hash_table_t* table, uin
  *
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
- *  @return  OMPI return code.
+ *  @return  OPAL return code.
  *
  */
 
@@ -148,7 +148,7 @@ OPAL_DECLSPEC int opal_hash_table_get_value_uint64(opal_hash_table_t *table, uin
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
  *  @param   value   The value to be associated with the key (IN).
- *  @return  OMPI return code.
+ *  @return  OPAL return code.
  *
  */
 
@@ -159,7 +159,7 @@ OPAL_DECLSPEC int opal_hash_table_set_value_uint64(opal_hash_table_t *table, uin
  *
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
- *  @return  OMPI return code.
+ *  @return  OPAL return code.
  *
  */
 
@@ -187,7 +187,7 @@ OPAL_DECLSPEC int opal_hash_table_get_value_ptr(opal_hash_table_t *table, const 
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
  *  @param   value   The value to be associated with the key (IN).
- *  @return  OMPI return code.
+ *  @return  OPAL return code.
  *
  */
 
@@ -198,7 +198,7 @@ OPAL_DECLSPEC int opal_hash_table_set_value_ptr(opal_hash_table_t *table, const 
  *
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
- *  @return  OMPI return code.
+ *  @return  OPAL return code.
  *
  */
 
@@ -223,7 +223,7 @@ OPAL_DECLSPEC int opal_hash_table_remove_value_ptr(opal_hash_table_t *table, con
  *  @param  node    The pointer to the hash table internal node which stores
  *                  the key-value pair (this is required for subsequent calls
  *                  to get_next_key) (OUT)
- *  @return OMPI error code
+ *  @return OPAL error code
  *
  */
 
@@ -241,7 +241,7 @@ OPAL_DECLSPEC int opal_hash_table_get_first_key_uint32(opal_hash_table_t *table,
  *  @param  out_node The pointer to the hash table internal node which stores
  *                   the key-value pair (this is required for subsequent calls
  *                   to get_next_key) (OUT)
- *  @return OMPI error code
+ *  @return OPAL error code
  *
  */
 
@@ -259,7 +259,7 @@ OPAL_DECLSPEC int opal_hash_table_get_next_key_uint32(opal_hash_table_t *table, 
  *  @param  node    The pointer to the hash table internal node which stores
  *                  the key-value pair (this is required for subsequent calls
  *                  to get_next_key) (OUT)
- *  @return OMPI error code
+ *  @return OPAL error code
  *
  */
 
@@ -277,7 +277,7 @@ OPAL_DECLSPEC int opal_hash_table_get_first_key_uint64(opal_hash_table_t *table,
  *  @param  out_node The pointer to the hash table internal node which stores
  *                   the key-value pair (this is required for subsequent calls
  *                   to get_next_key) (OUT)
- *  @return OMPI error code
+ *  @return OPAL error code
  *
  */
     

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -142,7 +142,7 @@ typedef void (opal_mem_hooks_callback_fn_t)(void *buf, size_t length,
  *                invoked.
  *
  * @retval OPAL_SUCCESS The registration completed successfully.
- * @retval OMPI_EXISTS  The function is already registered and will not
+ * @retval OPAL_EXISTS  The function is already registered and will not
  *                      be registered again.
  * @retval OPAL_ERR_NOT_SUPPORTED There are no hooks available for 
  *                      receiving callbacks when memory is to be allocated
@@ -162,7 +162,7 @@ OPAL_DECLSPEC int opal_mem_hooks_register_alloc(opal_mem_hooks_callback_fn_t *fu
  *                invoked.
  *
  * @retval OPAL_SUCCESS The registration completed successfully.
- * @retval OMPI_EXISTS  The function is already registered and will not
+ * @retval OPAL_EXISTS  The function is already registered and will not
  *                      be registered again.
  * @retval OPAL_ERR_NOT_SUPPORTED There are no hooks available for 
  *                      receiving callbacks when memory is to be released

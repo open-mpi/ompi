@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -29,8 +29,8 @@
  * to generate internal documentation (by default, it is skipped).
  */
 
-#ifndef OMPI_MCA_BASE_PARAM_INTERNAL_H
-#define OMPI_MCA_BASE_PARAM_INTERNAL_H
+#ifndef OPAL_MCA_BASE_PARAM_INTERNAL_H
+#define OPAL_MCA_BASE_PARAM_INTERNAL_H
 
 #include "opal_config.h"
 
@@ -63,7 +63,7 @@ typedef union {
  * default value.
  */
 struct mca_base_param_t {
-    /** Allow this to be an OMPI OBJ */
+    /** Allow this to be an OPAL OBJ */
     opal_object_t mbp_super;
 
     /** Enum indicating the type of the parameter (integer or string) */
@@ -127,7 +127,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_param_t);
  * Structure for holding param names and values read in from files.
  */
 struct mca_base_param_file_value_t {
-    /** Allow this to be an OMPI OBJ */
+    /** Allow this to be an OPAL OBJ */
     opal_list_item_t super;
     
     /** Parameter name */
@@ -166,4 +166,4 @@ OPAL_DECLSPEC int mca_base_parse_paramfile(const char *paramfile);
 }
 #endif
     
-#endif /* OMPI_MCA_BASE_PARAM_INTERNAL_H */
+#endif /* OPAL_MCA_BASE_PARAM_INTERNAL_H */

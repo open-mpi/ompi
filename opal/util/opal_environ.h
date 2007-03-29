@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -66,10 +66,10 @@ extern "C" {
      * @param env The environment to use
      *
      * @retval OPAL_ERR_OUT_OF_RESOURCE If internal malloc() fails.
-     * @retval OMPI_EXISTS If the name already exists in \em env and
+     * @retval OPAL_EXISTS If the name already exists in \em env and
      * \em overwrite is false (and therefore the \em value was not
      * saved in \em env)
-     * @retval OMPI_SUCESS If the value replaced another value or is
+     * @retval OPAL_SUCESS If the value replaced another value or is
      * appended to \em env.
      *
      * \em env is expected to be a NULL-terminated array of pointers

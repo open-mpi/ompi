@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -23,8 +23,8 @@
  * these routines are used by both the OOB and the registry.
  */
 
-#ifndef OMPI_MCA_BASE_MSGBUF_INTERNAL_H
-#define OMPI_MCA_BASE_MSGBUF_INTERNAL_H
+#ifndef OPAL_MCA_BASE_MSGBUF_INTERNAL_H
+#define OPAL_MCA_BASE_MSGBUF_INTERNAL_H
 
 
 /*
@@ -62,4 +62,4 @@ struct mca_base_msgbuffer_s {
 };
 
 
-#endif /* OMPI_MCA_BASE_MSGBUF_INTERNAL_H */
+#endif /* OPAL_MCA_BASE_MSGBUF_INTERNAL_H */

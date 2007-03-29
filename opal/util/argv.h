@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -204,7 +204,7 @@ OPAL_DECLSPEC  int opal_argv_delete(int *argc, char ***argv,
      * @param source The argv to copy tokens from
      *
      * @retval OPAL_SUCCESS upon success
-     * @retval OMPI_BAD_PARAM if any parameters are non-sensical
+     * @retval OPAL_BAD_PARAM if any parameters are non-sensical
      *
      * This function takes one arg and inserts it in the middle of
      * another.  The first token in source will be insertted at index

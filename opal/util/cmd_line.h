@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -482,14 +482,14 @@ extern "C" {
      * @retval num Number of instances (to include 0) of a given potion
      * found during opal_cmd_line_parse().
      *
-     * @retval OMPI_ERR If the command line option was not found during
+     * @retval OPAL_ERR If the command line option was not found during
      * opal_cmd_line_parse(), or opal_cmd_line_parse() was not invoked on
      * this handle.
      *
      * This function should only be called after opal_cmd_line_parse().
      *
      * The function will return the number of instances of a given option
-     * (either by its short or long name) -- to include 0 -- or OMPI_ERR if
+     * (either by its short or long name) -- to include 0 -- or OPAL_ERR if
      * either the option was not specified as part of the OPAL command line
      * handle, or opal_cmd_line_parse() was not invoked on this handle.
      */

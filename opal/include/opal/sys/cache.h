@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -22,8 +22,8 @@
  *  
  */
 
-#ifndef OMPI_SYS_CACHE_H
-#define OMPI_SYS_CACHE_H 1
+#ifndef OPAL_SYS_CACHE_H
+#define OPAL_SYS_CACHE_H 1
 
 /**
  * Size of cache line.
@@ -33,4 +33,4 @@
 #define CACHE_LINE_SIZE 128
 
 
-#endif /* OMPI_SYS_CACHE_H */
+#endif /* OPAL_SYS_CACHE_H */

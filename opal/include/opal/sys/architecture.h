@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -20,8 +20,8 @@
  * List of supported architectures
  */
 
-#ifndef OMPI_SYS_ARCHITECTURE_H
-#define OMPI_SYS_ARCHITECTURE_H
+#ifndef OPAL_SYS_ARCHITECTURE_H
+#define OPAL_SYS_ARCHITECTURE_H
 
 /* Architectures */
 #define OMPI_UNSUPPORTED    0000
@@ -43,4 +43,4 @@
 #define OMPI_PPC_LINUX      1002  /* Linux on PowerPC */
 #define OMPI_AIX            1003  /* AIX on Power / PowerPC */
 
-#endif /* #ifndef OMPI_SYS_ARCHITECTURE_H */
+#endif /* #ifndef OPAL_SYS_ARCHITECTURE_H */
