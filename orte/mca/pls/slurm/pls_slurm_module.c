@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -120,13 +120,13 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     size_t num_nodes;
     orte_vpid_t vpid;
     orte_vpid_t start_vpid;
-    char *jobid_string;
+    char *jobid_string = NULL;
     char *uri, *param;
     char **argv;
     int argc;
     int rc;
     char *tmp;
-    char** env;
+    char** env = NULL;
     char* var;
     char *nodelist_flat;
     char **nodelist_argv;
@@ -246,6 +246,7 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
         opal_argv_append(&nodelist_argc, &nodelist_argv, node->nodename);
     }
     nodelist_flat = opal_argv_join(nodelist_argv, ',');
+    opal_argv_free(nodelist_argv);
     asprintf(&tmp, "--nodelist=%s", nodelist_flat);
     opal_argv_append(&argc, &argv, tmp);
     free(tmp);
@@ -435,6 +436,12 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
 
 cleanup:
     OBJ_RELEASE(map);
+    opal_argv_free(argv);
+    opal_argv_free(env);
+
+    if(NULL != jobid_string) {
+        free(jobid_string);
+    }
     
     while (NULL != (item = opal_list_remove_first(&daemons))) {
         OBJ_RELEASE(item);

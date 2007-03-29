@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -73,6 +73,10 @@ int orte_rds_base_close(void)
 
     mca_base_components_close(orte_rds_base.rds_output, 
                               &orte_rds_base.rds_components, NULL);
+
+    if(-1 != orte_rds_base.rds_output) {
+        opal_output_close(orte_rds_base.rds_output);
+    }
 
     OBJ_DESTRUCT(&orte_rds_base.rds_selected);
     return ORTE_SUCCESS;

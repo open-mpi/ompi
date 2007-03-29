@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -113,7 +113,6 @@ int orte_rds_base_open(void)
 
     /* Debugging / verbose output */
 
-    orte_rds_base.rds_output = opal_output_open(NULL);
     param = mca_base_param_reg_int_name("rds_base", "verbose", 
                                         "Verbosity level for the rds framework",
                                         false, false, 0, &value);
