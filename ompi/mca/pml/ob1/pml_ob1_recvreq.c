@@ -250,12 +250,16 @@ static int mca_pml_ob1_recv_request_ack(
 
         if(ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0 &&
            hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_CONTIG) {
+            char *base;
+            ptrdiff_t lb;
+            ompi_ddt_type_lb(recvreq->req_recv.req_convertor.pDesc, &lb);
+            base = recvreq->req_recv.req_convertor.pBaseBuf + lb;
             recvreq->req_rdma_cnt = mca_pml_ob1_rdma_btls(
-                bml_endpoint,
-                (unsigned char*)recvreq->req_recv.req_base.req_addr,
-                recvreq->req_recv.req_bytes_packed,
-                recvreq->req_rdma);
-
+                                                          bml_endpoint,
+                                                          (unsigned char*) base,
+                                                          recvreq->req_recv.req_bytes_packed,
+                                                          recvreq->req_rdma);
+            
             /* memory is already registered on both sides */
             if (hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_PIN &&
                 recvreq->req_rdma_cnt != 0) {
@@ -366,7 +370,11 @@ int mca_pml_ob1_recv_request_get_frag(
     mca_mpool_base_registration_t* reg;
     size_t save_size = frag->rdma_length;
     int rc;
-
+    
+    char *base;
+    ptrdiff_t lb;
+    ompi_ddt_type_lb(recvreq->req_recv.req_convertor.pDesc, &lb);
+    base = recvreq->req_recv.req_convertor.pBaseBuf + lb;
     bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma,
             frag->rdma_btl);
     if(NULL == bml_btl) {
@@ -374,11 +382,13 @@ int mca_pml_ob1_recv_request_get_frag(
         orte_errmgr.abort();
     }
 
+    
     /* is there an existing registration for this btl */
     reg = mca_pml_ob1_rdma_registration(
-        bml_btl, 
-        (unsigned char*)recvreq->req_recv.req_base.req_addr,
-        recvreq->req_recv.req_bytes_packed);
+                                        bml_btl, 
+                                        (unsigned char*) base,
+                                        recvreq->req_recv.req_bytes_packed);
+        
     if(NULL != reg) {
          recvreq->req_rdma[0].bml_btl = bml_btl; 
          recvreq->req_rdma[0].btl_reg = reg;

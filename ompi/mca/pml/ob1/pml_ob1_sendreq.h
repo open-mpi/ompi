@@ -318,13 +318,18 @@ static inline int mca_pml_ob1_send_request_start_btl(
             rc = mca_pml_ob1_send_request_start_buffered(sendreq, bml_btl, size);
         } else if
           (ompi_convertor_need_buffers(&sendreq->req_send.req_convertor) == false) {
+            char *base;
+            ptrdiff_t lb;
+            ompi_ddt_type_lb(sendreq->req_send.req_convertor.pDesc, &lb);
+            base = sendreq->req_send.req_convertor.pBaseBuf + lb;
+            
             if( 0 != (sendreq->req_rdma_cnt = mca_pml_ob1_rdma_btls(
-                sendreq->req_endpoint,
-                (unsigned char*)sendreq->req_send.req_addr,
-                sendreq->req_send.req_bytes_packed,
-                sendreq->req_rdma))) {
+                                                                    sendreq->req_endpoint,
+                                                                    (unsigned char *) base,
+                                                                    sendreq->req_send.req_bytes_packed,
+                                                                    sendreq->req_rdma))) {
                 rc = mca_pml_ob1_send_request_start_rdma(sendreq, bml_btl,
-                                             sendreq->req_send.req_bytes_packed);
+                                                         sendreq->req_send.req_bytes_packed);
                 if(OMPI_SUCCESS != rc) {
                     mca_pml_ob1_free_rdma_resources(sendreq);
                 }
