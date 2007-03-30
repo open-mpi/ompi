@@ -387,7 +387,6 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
 #if (OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT)
     mca_btl_gm_frag_t* frag;
     mca_mpool_base_module_t* mpool = btl->btl_mpool;
-    ptrdiff_t lb;
     int rc;
 
     MCA_BTL_GM_FRAG_ALLOC_USER(btl, frag, rc);
@@ -400,7 +399,6 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
      */
     frag->type = MCA_BTL_GM_PUT;
     
-    ompi_ddt_type_lb(convertor->pDesc, &lb);
     /* 
      *  we don't know that this is for a PUT,
      *  but it doesn't matter.. they belong 
@@ -409,7 +407,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
     frag->type = MCA_BTL_GM_PUT; 
     
     frag->segment.seg_len = *size;
-    frag->segment.seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted;
+    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
 
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;

@@ -674,7 +674,6 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
     size_t* size)
 {
     mca_btl_udapl_frag_t* frag;
-    ptrdiff_t lb;
     int rc;
 
     MCA_BTL_UDAPL_FRAG_ALLOC_USER(btl, frag, rc);
@@ -682,9 +681,8 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
         return NULL;
     }
 
-    ompi_ddt_type_lb(convertor->pDesc, &lb);
     frag->segment.seg_len = *size;
-    frag->segment.seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted;
+    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
 
     if(NULL == registration) {
         /* didn't get a memory registration passed in, so must

@@ -547,7 +547,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     mca_btl_openib_frag_t *frag;
     mca_btl_openib_reg_t *openib_reg;
     int rc;
-    ptrdiff_t lb;
 
     openib_btl = (mca_btl_openib_module_t*)btl;
     
@@ -556,9 +555,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
         return NULL;
     }
     
-    ompi_ddt_type_lb(convertor->pDesc, &lb);
-    frag->segment.seg_addr.pval = convertor->pBaseBuf + lb +
-        convertor->bConverted;
+    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
 
     if(NULL == registration){
         /* we didn't get a memory registration passed in, so we have to

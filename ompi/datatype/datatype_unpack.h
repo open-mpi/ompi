@@ -16,14 +16,14 @@
 static inline void unpack_predefined_data( ompi_convertor_t* CONVERTOR, /* the convertor */
                                            dt_elem_desc_t* ELEM,         /* the element description */
                                            uint32_t* COUNT,              /* the number of elements */
-                                           char** SOURCE,                /* the source pointer */
-                                           char** DESTINATION,           /* the destination pointer */
+                                           unsigned char** SOURCE,       /* the source pointer */
+                                           unsigned char** DESTINATION,  /* the destination pointer */
                                            size_t* SPACE )               /* the space in the destination buffer */
 {
     uint32_t _copy_count = *(COUNT);
-	size_t _copy_blength;
+    size_t _copy_blength;
     ddt_elem_desc_t* _elem = &((ELEM)->elem);
-    char* _destination = (*DESTINATION) + _elem->disp;
+    unsigned char* _destination = (*DESTINATION) + _elem->disp;
 
     _copy_blength = ompi_ddt_basicDatatypes[_elem->common.type]->size;
     if( (_copy_count * _copy_blength) > *(SPACE) ) {
@@ -62,13 +62,13 @@ static inline void unpack_predefined_data( ompi_convertor_t* CONVERTOR, /* the c
 static inline void unpack_contiguous_loop( ompi_convertor_t* CONVERTOR,
                                            dt_elem_desc_t* ELEM,
                                            uint32_t* COUNT,
-                                           char** SOURCE,
-                                           char** DESTINATION,
+                                           unsigned char** SOURCE,
+                                           unsigned char** DESTINATION,
                                            size_t* SPACE )
 {
     ddt_loop_desc_t *_loop = (ddt_loop_desc_t*)(ELEM);
     ddt_endloop_desc_t* _end_loop = (ddt_endloop_desc_t*)((ELEM) + _loop->items);
-    char* _destination = (*DESTINATION) + _end_loop->first_elem_disp;
+    unsigned char* _destination = (*DESTINATION) + _end_loop->first_elem_disp;
     uint32_t _copy_loops = *(COUNT);
     uint32_t _i;
 

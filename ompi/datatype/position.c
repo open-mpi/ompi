@@ -49,11 +49,11 @@ extern int ompi_position_debug;
 static inline void position_predefined_data( ompi_convertor_t* CONVERTOR,
                                              dt_elem_desc_t* ELEM,
                                              uint32_t* COUNT,
-                                             char** POINTER,
+                                             unsigned char** POINTER,
                                              size_t* SPACE )
 {
     uint32_t _copy_count = *(COUNT);
-	size_t _copy_blength;
+    size_t _copy_blength;
     ddt_elem_desc_t* _elem = &((ELEM)->elem);
     
     _copy_blength =  ompi_ddt_basicDatatypes[_elem->common.type]->size;
@@ -73,7 +73,7 @@ static inline void position_predefined_data( ompi_convertor_t* CONVERTOR,
 static inline void position_contiguous_loop( ompi_convertor_t* CONVERTOR,
                                              dt_elem_desc_t* ELEM,
                                              uint32_t* COUNT,
-                                             char** POINTER,
+                                             unsigned char** POINTER,
                                              size_t* SPACE )
 {
     ddt_loop_desc_t *_loop = (ddt_loop_desc_t*)(ELEM);
@@ -105,7 +105,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
     uint16_t type;            /* type at current position */
     dt_elem_desc_t* description = pConvertor->use_desc->desc;
     dt_elem_desc_t* pElem;
-    char *base_pointer = pConvertor->pBaseBuf;
+    unsigned char *base_pointer = pConvertor->pBaseBuf;
     size_t iov_len_local;
     ptrdiff_t extent = pConvertor->pDesc->ub - pConvertor->pDesc->lb;
 

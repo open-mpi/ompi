@@ -235,12 +235,12 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
          * use the bConverted to manage the conversion.
          */
         uint32_t i;
-        char* base_pointer;
+        unsigned char* base_pointer;
         size_t pending_length = pConv->local_size - pConv->bConverted;
 
         *max_data = pending_length;
-        base_pointer = pConv->pBaseBuf + pConv->bConverted + 
-            pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
+        ompi_convertor_get_current_pointer( pConv, (void**)&base_pointer );
+
         for( i = 0; i < *out_size; i++ ) {
             if( iov[i].iov_len >= pending_length ) {
                 goto complete_contiguous_data_pack;
@@ -282,12 +282,12 @@ int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
          * use the bConverted to manage the conversion.
          */
         uint32_t i;
-        char* base_pointer;
+        unsigned char* base_pointer;
         size_t pending_length = pConv->local_size - pConv->bConverted;
 
         *max_data = pending_length;
-        base_pointer = pConv->pBaseBuf + pConv->bConverted + 
-            pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
+        ompi_convertor_get_current_pointer( pConv, (void**)&base_pointer );
+
         for( i = 0; i < *out_size; i++ ) {
             if( iov[i].iov_len >= pending_length ) {
                 goto complete_contiguous_data_unpack;

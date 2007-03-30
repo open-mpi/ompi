@@ -186,7 +186,7 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
                                          size_t* max_data )
 {
     const ompi_datatype_t *pData = pConv->pDesc;
-    char *user_memory, *packed_buffer;
+    unsigned char *user_memory, *packed_buffer;
     uint32_t iov_count, i;
     size_t bConverted, remaining, length, initial_bytes_converted = pConv->bConverted;
     dt_stack_t* stack = pConv->pStack;
@@ -196,7 +196,7 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
     DO_DEBUG( opal_output( 0, "unpack_homogeneous_contig( pBaseBuf %p, iov_count %d )\n",
                            pConv->pBaseBuf, *out_size ); );
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
-        packed_buffer = (char*)iov[iov_count].iov_base;
+        packed_buffer = (unsigned char*)iov[iov_count].iov_base;
         remaining = pConv->local_size - pConv->bConverted;
         if( remaining > (uint32_t)iov[iov_count].iov_len )
             remaining = iov[iov_count].iov_len;
@@ -284,13 +284,13 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
  */
 static inline uint32_t
 ompi_unpack_partial_datatype( ompi_convertor_t* pConvertor, dt_elem_desc_t* pElem,
-                              char* partial_data,
+                              unsigned char* partial_data,
                               ptrdiff_t start_position, ptrdiff_t end_position,
-                              char** user_buffer )
+                              unsigned char** user_buffer )
 {
     char unused_byte = 0x7F, saved_data[16];
-    char temporary[16], *temporary_buffer = temporary;
-    char* real_data = *user_buffer + pElem->elem.disp;
+    unsigned char temporary[16], *temporary_buffer = temporary;
+    unsigned char* real_data = *user_buffer + pElem->elem.disp;
     uint32_t i, length, count_desc = 1;
     size_t data_length = ompi_ddt_basicDatatypes[pElem->elem.common.type]->size;
 
@@ -356,7 +356,7 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
     dt_elem_desc_t* description;
     dt_elem_desc_t* pElem;
     const ompi_datatype_t *pData = pConvertor->pDesc;
-    char *user_memory_base, *packed_buffer;
+    unsigned char *user_memory_base, *packed_buffer;
     size_t iov_len_local;
     uint32_t iov_count;
 
@@ -421,7 +421,7 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
                 type = pElem->elem.common.type;
                 assert( type < DT_MAX_PREDEFINED );
                 if( 0 != iov_len_local ) {
-                    char* temp = user_memory_base;
+                    unsigned char* temp = user_memory_base;
                     /* We have some partial data here. Let's copy it into the convertor
                      * and keep it hot until the next round.
                      */
@@ -440,7 +440,7 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
             if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
                 DO_DEBUG( opal_output( 0, "unpack end_loop count %d stack_pos %d pos_desc %d disp %ld space %lu\n",
                                        (int)pStack->count, pConvertor->stack_pos, pos_desc,
-                                      (long)pStack->disp, (unsigned long)iov_len_local ); );
+                                       (long)pStack->disp, (unsigned long)iov_len_local ); );
                 if( --(pStack->count) == 0 ) { /* end of loop */
                     if( pConvertor->stack_pos == 0 ) {
                         /* Force the conversion to stop by lowering the number of iovecs. */
