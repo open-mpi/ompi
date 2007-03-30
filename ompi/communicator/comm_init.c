@@ -84,6 +84,7 @@ int ompi_comm_init(void)
     ompi_mpi_comm_world.c_my_rank      = group->grp_my_rank;
     ompi_mpi_comm_world.c_local_group  = group;
     ompi_mpi_comm_world.c_remote_group = group;
+    OBJ_RETAIN(ompi_mpi_comm_world.c_remote_group);
     ompi_mpi_comm_world.c_cube_dim     = opal_cube_dim((int)size);
     ompi_mpi_comm_world.error_handler  = &ompi_mpi_errors_are_fatal;
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
@@ -116,6 +117,7 @@ int ompi_comm_init(void)
     ompi_mpi_comm_self.c_my_rank      = group->grp_my_rank;
     ompi_mpi_comm_self.c_local_group  = group;
     ompi_mpi_comm_self.c_remote_group = group;
+    OBJ_RETAIN(ompi_mpi_comm_self.c_remote_group);
     ompi_mpi_comm_self.error_handler  = &ompi_mpi_errors_are_fatal;
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_self);
@@ -372,6 +374,9 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
         OBJ_RELEASE ( comm->c_local_group );
         comm->c_local_group = NULL;
         if ( OMPI_COMM_IS_INTRA(comm) ) {
+	    /* WE HAVE TO DECREMENT THE REF COUNT ON THE REMOTE GROUP
+	       EVEN IF IT'S IDENTICAL TO THE LOCAL ONE IN CASE OF INTRA-COMM */
+	    OBJ_RELEASE ( comm->c_remote_group );
             comm->c_remote_group = NULL;
         }
     }
