@@ -247,9 +247,14 @@ static int mca_pml_ob1_recv_request_ack(
 
         if(ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0 &&
            hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_CONTIG) {
+            char *base;
+            ptrdiff_t lb;
+            ompi_ddt_type_lb(recvreq->req_recv.req_convertor.pDesc, &lb);
+            base = recvreq->req_recv.req_convertor.pBaseBuf + lb;
+            
             recvreq->req_rdma_cnt = mca_pml_ob1_rdma_btls(
                 bml_endpoint,
-                (unsigned char*)recvreq->req_recv.req_base.req_addr,
+                (unsigned char*) base,
                 recvreq->req_recv.req_bytes_packed,
                 recvreq->req_rdma);
 
