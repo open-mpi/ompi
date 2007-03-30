@@ -261,14 +261,14 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
                     continue;
                 }
                 if(strcmp(keyval->key, ORTE_PROC_CKPT_SNAPSHOT_REF_KEY) == 0) {
-                    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&(proc->ckpt_snapshot_ref), keyval->value, ORTE_STRING))) {
+                    if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(proc->ckpt_snapshot_ref), keyval->value, ORTE_STRING))) {
                         ORTE_ERROR_LOG(rc);
                         goto cleanup;
                     }
                     continue;
                 }
                 if(strcmp(keyval->key, ORTE_PROC_CKPT_SNAPSHOT_LOC_KEY) == 0) {
-                    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&(proc->ckpt_snapshot_loc), keyval->value, ORTE_STRING))) {
+                    if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(proc->ckpt_snapshot_loc), keyval->value, ORTE_STRING))) {
                         ORTE_ERROR_LOG(rc);
                         goto cleanup;
                     }
@@ -297,10 +297,12 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
     
     /* all done */
     *map = mapping;
-    return ORTE_SUCCESS;
+    rc = ORTE_SUCCESS;
 
 cleanup:
-    OBJ_RELEASE(mapping);
+    if(rc != ORTE_SUCCESS) {
+        OBJ_RELEASE(mapping);
+    }
     
     for (v=0; v < num_values; v++) {
         OBJ_RELEASE(values[v]);
@@ -547,7 +549,7 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
     }
 
 cleanup:
-    for(i=0; i<num_procs; i++) {
+    for(i=0; i<=num_procs; i++) {
         if(NULL != values[i]) {
             OBJ_RELEASE(values[i]);
         }
