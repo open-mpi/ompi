@@ -153,10 +153,12 @@ static void orte_rmaps_job_map_destruct(orte_job_map_t* map)
     
     if (NULL != map->mapping_mode) free(map->mapping_mode);
     
-    for(i=0; i < map->num_apps; i++) {
-        if (NULL != map->apps[i]) OBJ_RELEASE(map->apps[i]);
-    }
     if (NULL != map->apps) {
+        for(i=0; i < map->num_apps; i++) {
+            if (NULL != map->apps[i]) {
+                OBJ_RELEASE(map->apps[i]);
+            }
+        }
         free(map->apps);
     }
     

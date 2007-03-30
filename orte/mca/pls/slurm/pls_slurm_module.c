@@ -284,6 +284,8 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
         opal_output(0, "orte_pls_rsh: unable to create process name");
         goto cleanup;
     }
+    free(name);
+
     opal_argv_append(&argc, &argv, "--name");
     opal_argv_append(&argc, &argv, name_string);
     free(name_string);
@@ -400,9 +402,11 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     env = opal_argv_copy(environ);
     var = mca_base_param_environ_variable("seed", NULL, NULL);
     opal_setenv(var, "0", true, &env);
+    free(var);
     var = mca_base_param_environ_variable("orte", "slurm", "nodelist");
     opal_setenv(var, nodelist_flat, true, &env);
     free(nodelist_flat);
+    free(var);
 
     if (mca_pls_slurm_component.timing) {
         if (0 != gettimeofday(&launchstart, NULL)) {
@@ -663,6 +667,8 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
            we're not in the calling process anymore */
         exit(1);
     }
+
+    free(exec_argv);
 
     /* just in case, make sure that the srun process is not in our
        process group any more.  Stevens says always do this on both

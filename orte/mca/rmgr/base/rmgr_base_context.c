@@ -86,7 +86,6 @@ int orte_rmgr_base_put_app_context(
             goto cleanup;
         }
 
-        OBJ_RETAIN(app);
         job_slots += app->num_procs;
     }
 

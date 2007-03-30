@@ -106,13 +106,13 @@ static int filem_rsh_open(void)
                               "rcp",
                               "The rsh cp command for the FILEM rsh component",
                               false, false,
-                              strdup("rcp"),
+                              "rcp",
                               &mca_filem_rsh_component.cp_command);
     mca_base_param_reg_string(&mca_filem_rsh_component.super.filem_version,
                               "rsh",
                               "The remote shell command for the FILEM rsh component",
                               false, false,
-                              strdup("rsh"),
+                              "rsh",
                               &mca_filem_rsh_component.remote_sh_command);
 
     /*

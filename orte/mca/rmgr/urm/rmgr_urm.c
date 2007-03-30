@@ -187,6 +187,8 @@ static void orte_rmgr_urm_wireup_stdin(orte_jobid_t jobid)
     if (ORTE_SUCCESS != (rc = orte_iof.iof_push(name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDIN, 0))) {
         ORTE_ERROR_LOG(rc);
     }
+    free(name);
+
 }
 
 
