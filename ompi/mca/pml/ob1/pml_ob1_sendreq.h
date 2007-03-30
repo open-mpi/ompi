@@ -286,14 +286,12 @@ static inline int mca_pml_ob1_send_request_start_btl(
             rc = mca_pml_ob1_send_request_start_buffered(sendreq, bml_btl, size);
         } else if
           (ompi_convertor_need_buffers(&sendreq->req_send.req_convertor) == false) {
-            char *base;
-            ptrdiff_t lb;
-            ompi_ddt_type_lb(sendreq->req_send.req_convertor.pDesc, &lb);
-            base = sendreq->req_send.req_convertor.pBaseBuf + lb;
+            unsigned char *base;
+            ompi_convertor_get_current_pointer( &sendreq->req_send.req_convertor, (void**)&base );
             
             if( 0 != (sendreq->req_rdma_cnt = (uint32_t)mca_pml_ob1_rdma_btls(
                 sendreq->req_endpoint,
-                (unsigned char*) base,
+                base,
                 sendreq->req_send.req_bytes_packed,
                 sendreq->req_rdma))) {
                 rc = mca_pml_ob1_send_request_start_rdma(sendreq, bml_btl,

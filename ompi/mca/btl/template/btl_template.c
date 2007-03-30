@@ -323,7 +323,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_dst(
     }
 
     frag->segment.seg_len = *size;
-    frag->segment.seg_addr.pval = convertor->pBaseBuf + convertor->bConverted;
+    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
 
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;

@@ -56,7 +56,7 @@ ompi_pack_homogeneous_contig_function( ompi_convertor_t* pConv,
                                        size_t* max_data )
 {
     dt_stack_t* pStack = pConv->pStack;
-    char *source_base = NULL;
+    unsigned char *source_base = NULL;
     uint32_t iov_count;
     size_t length = pConv->local_size - pConv->bConverted, initial_amount = pConv->bConverted;
     ptrdiff_t initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
@@ -103,7 +103,7 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
 {
     const ompi_datatype_t* pData = pConv->pDesc;
     dt_stack_t* pStack = pConv->pStack;
-    char *user_memory, *packed_buffer;
+    unsigned char *user_memory, *packed_buffer;
     uint32_t i, index, iov_count;
     size_t max_allowed, total_bytes_converted = 0;
     ptrdiff_t extent;
@@ -254,7 +254,7 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
     dt_elem_desc_t* description;
     dt_elem_desc_t* pElem;
     const ompi_datatype_t *pData = pConvertor->pDesc;
-    char *source_base, *destination;
+    unsigned char *source_base, *destination;
     size_t iov_len_local;
     uint32_t iov_count;
 

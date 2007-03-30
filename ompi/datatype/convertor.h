@@ -84,7 +84,7 @@ struct ompi_convertor_t {
     const struct ompi_datatype_t* pDesc;        /**< the datatype description associated with the convertor */
     const struct dt_type_desc*    use_desc;     /**< the version used by the convertor (normal or optimized) */
     uint32_t                      count;        /**< the total number of full datatype elements */
-    char*                         pBaseBuf;     /**< initial buffer as supplied by the user */
+    unsigned char*                pBaseBuf;     /**< initial buffer as supplied by the user */
     dt_stack_t*                   pStack;       /**< the local stack for the actual conversion */
     uint32_t                      stack_size;   /**< size of the allocated stack */
     convertor_advance_fct_t       fAdvance;     /**< pointer to the pack/unpack functions */
@@ -188,6 +188,19 @@ ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv,
 }
 
 /**
+ * Return the current absolute position of the next pack/unpack. This function is
+ * mostly useful for contiguous datatypes, when we need to get the pointer to the
+ * contiguous piece of memory.
+ */
+static inline void
+ompi_convertor_get_current_pointer( const ompi_convertor_t* pConv,
+                                    void** position )
+{
+    unsigned char* base = pConv->pBaseBuf + pConv->bConverted + pConv->pDesc->true_lb;
+    *position = (void*)base;
+}
+
+/**
  * Basic convertor initialization. This is performed for all types of convertors,
  * but is the only thing required for convertors working on contiguous or
  * predefined datatyps.
@@ -196,7 +209,7 @@ ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv,
     {                                                                   \
         /* Compute the local in advance */                              \
         convertor->local_size = count * datatype->size;                 \
-        convertor->pBaseBuf   = (char*)pUserBuf;                        \
+        convertor->pBaseBuf   = (unsigned char*)pUserBuf;               \
         convertor->count      = count;                                  \
                                                                         \
         /* Grab the datatype part of the flags */                       \

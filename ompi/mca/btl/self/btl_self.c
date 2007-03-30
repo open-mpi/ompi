@@ -277,7 +277,6 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_dst(
 {
     mca_btl_self_frag_t* frag;
     size_t max_data = *size;
-    ptrdiff_t lb;
     int rc;
 
     MCA_BTL_SELF_FRAG_ALLOC_RDMA(frag, rc);
@@ -286,8 +285,7 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_dst(
     }
 
     /* setup descriptor to point directly to user buffer */
-    ompi_ddt_type_lb( convertor->pDesc, &lb );
-    frag->segment.seg_addr.pval = (unsigned char*)convertor->pBaseBuf + lb + convertor->bConverted; 
+    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
     frag->segment.seg_len = reserve + max_data;
     frag->segment.seg_key.key64 = (uint64_t)(intptr_t)convertor;
     frag->base.des_dst = &frag->segment;

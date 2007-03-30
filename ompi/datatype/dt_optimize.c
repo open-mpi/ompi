@@ -279,8 +279,8 @@ int32_t ompi_ddt_commit( ompi_datatype_t** data )
         dt_elem_desc_t* pElem = pData->desc.desc;
 
         index = GET_FIRST_NON_LOOP( pElem );
-        assert( pData->desc.desc[index].elem.common.flags & DT_FLAG_DATA );
-        first_elem_disp = pData->desc.desc[index].elem.disp;
+        assert( pElem[index].elem.common.flags & DT_FLAG_DATA );
+        first_elem_disp = pElem[index].elem.disp;
     }
 
     /* let's add a fake element at the end just to avoid useless comparaisons

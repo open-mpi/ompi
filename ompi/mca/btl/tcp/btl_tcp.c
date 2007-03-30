@@ -340,7 +340,6 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
     size_t* size)
 {
     mca_btl_tcp_frag_t* frag;
-    ptrdiff_t lb;
     int rc;
 
     MCA_BTL_TCP_FRAG_ALLOC_USER(frag, rc);
@@ -348,9 +347,8 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
         return NULL;
     }
 
-    ompi_ddt_type_lb(convertor->pDesc, &lb);
     frag->segments->seg_len = *size;
-    frag->segments->seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted;
+    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segments->seg_addr.pval) );
 
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;

@@ -431,7 +431,6 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
     ptl_md_t md;
     ptl_handle_me_t me_h;
     int ret;
-    ptrdiff_t lb;
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
 
@@ -448,9 +447,8 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
         return NULL;
     }
 
-    ompi_ddt_type_lb(convertor->pDesc, &lb);
     frag->segments[0].seg_len = *size;
-    frag->segments[0].seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted;
+    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
     frag->segments[0].seg_key.key64 = 
         OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
     frag->base.des_src = NULL;

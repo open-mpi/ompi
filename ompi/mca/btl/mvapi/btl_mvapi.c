@@ -397,7 +397,6 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     mca_btl_mvapi_module_t* mvapi_btl; 
     mca_btl_mvapi_frag_t* frag; 
     mca_btl_mvapi_reg_t *mvapi_reg;
-    ptrdiff_t lb;
     int rc; 
     
     mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
@@ -408,9 +407,8 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
         return NULL; 
     }
     
-    ompi_ddt_type_lb(convertor->pDesc, &lb);
-    frag->segment.seg_len = *size; 
-    frag->segment.seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted; 
+    frag->segment.seg_len = *size;
+    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
     frag->base.des_flags = 0; 
 
     if(NULL == registration) {
@@ -418,10 +416,10 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
          * ourselves 
          */ 
         rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
-            frag->segment.seg_addr.pval, *size, 0, &registration);
+                                            frag->segment.seg_addr.pval, *size, 0, &registration);
         if(OMPI_SUCCESS != rc || NULL == registration) {
-            BTL_ERROR(("mpool_register(%p,%lu) failed: base %p lb %lu offset %lu",
-                frag->segment.seg_addr.pval, *size, convertor->pBaseBuf, lb, convertor->bConverted));
+            BTL_ERROR(("mpool_register(%p,%lu) failed: base %p offset %lu",
+                frag->segment.seg_addr.pval, *size, convertor->pBaseBuf, convertor->bConverted));
             MCA_BTL_IB_FRAG_RETURN(btl, frag);
             return NULL;
         }
