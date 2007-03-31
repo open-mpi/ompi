@@ -257,7 +257,7 @@ OMPI_DECLSPEC int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actua
                                                                int count );
 #define OMPI_DDT_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT ) \
     {                                                                   \
-        char *__lower_bound = (char*)(INITPTR), *__upper_bound;         \
+        unsigned char *__lower_bound = (INITPTR), *__upper_bound;       \
         assert( ((LENGTH) != 0) && ((COUNT) != 0) );                    \
         __lower_bound += (PDATA)->true_lb;                              \
         __upper_bound = (INITPTR) + (PDATA)->true_ub +                  \
