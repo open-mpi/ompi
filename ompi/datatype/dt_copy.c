@@ -40,18 +40,18 @@ size_t ompi_datatype_memcpy_block_size = 128 * 1024;
 
 static inline void copy_predefined_data( const dt_elem_desc_t* ELEM,
                                          const ompi_datatype_t* DATATYPE,
-                                         char* SOURCE_BASE,
+                                         unsigned char* SOURCE_BASE,
                                          int32_t TOTAL_COUNT,
                                          uint32_t COUNT,
-                                         char* SOURCE,
-                                         char* DESTINATION,
+                                         unsigned char* SOURCE,
+                                         unsigned char* DESTINATION,
                                          size_t* SPACE )
 {
     uint32_t _copy_count = (COUNT);
 	size_t _copy_blength;
     const ddt_elem_desc_t* _elem = &((ELEM)->elem);
-    char* _source = (SOURCE) + _elem->disp;
-    char* _destination = (DESTINATION) + _elem->disp;
+    unsigned char* _source = (SOURCE) + _elem->disp;
+    unsigned char* _destination = (DESTINATION) + _elem->disp;
 
     _copy_blength = ompi_ddt_basicDatatypes[_elem->common.type]->size;
 
@@ -83,17 +83,17 @@ static inline void copy_predefined_data( const dt_elem_desc_t* ELEM,
 
 static inline void copy_contiguous_loop( const dt_elem_desc_t* ELEM,
                                          const ompi_datatype_t* DATATYPE,
-                                         char* SOURCE_BASE,
+                                         unsigned char* SOURCE_BASE,
                                          int32_t TOTAL_COUNT,
                                          uint32_t COUNT,
-                                         char* SOURCE,
-                                         char* DESTINATION,
+                                         unsigned char* SOURCE,
+                                         unsigned char* DESTINATION,
                                          size_t* SPACE )
 {
     ddt_loop_desc_t *_loop = (ddt_loop_desc_t*)(ELEM);
     ddt_endloop_desc_t* _end_loop = (ddt_endloop_desc_t*)((ELEM) + _loop->items);
-    char* _source = (SOURCE) + _end_loop->first_elem_disp;
-    char* _destination = (DESTINATION) + _end_loop->first_elem_disp;
+    unsigned char* _source = (SOURCE) + _end_loop->first_elem_disp;
+    unsigned char* _destination = (DESTINATION) + _end_loop->first_elem_disp;
     size_t _copy_loops = (COUNT);
     uint32_t _i;
 
@@ -135,7 +135,8 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
     dt_elem_desc_t* description;
     dt_elem_desc_t* pElem;
     size_t iov_len_local;
-    char *source = source_base, *destination = destination_base;
+    unsigned char *source = (unsigned char*)source_base,
+                  *destination = (unsigned char*)destination_base;
 
     DO_DEBUG( opal_output( 0, "ompi_ddt_copy_content_same_ddt( %p, %d, dst %p, src %p )\n",
                            (void*)datatype, count, destination_base, source_base ); );
@@ -208,7 +209,7 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
     while( 1 ) {
         while( OPAL_LIKELY(pElem->elem.common.flags & DT_FLAG_DATA) ) {
             /* now here we have a basic datatype */
-            COPY_PREDEFINED_DATATYPE( pElem, datatype, source_base, count, count_desc,
+            COPY_PREDEFINED_DATATYPE( pElem, datatype, (unsigned char*)source_base, count, count_desc,
                                       source, destination, iov_len_local );
             pos_desc++;  /* advance to the next data */
             UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
@@ -233,8 +234,8 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
                     pStack->disp += description[pStack->index].loop.extent;
                 }
             }
-            source      = source_base + pStack->disp;
-            destination = destination_base + pStack->disp;
+            source      = (unsigned char*)source_base + pStack->disp;
+            destination = (unsigned char*)destination_base + pStack->disp;
             UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
             DO_DEBUG( opal_output( 0, "copy new_loop count %d stack_pos %d pos_desc %d disp %ld space %lu\n",
                                    (int)pStack->count, stack_pos, pos_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
@@ -242,7 +243,7 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
         if( DT_LOOP == pElem->elem.common.type ) {
             ptrdiff_t local_disp = (ptrdiff_t)source;
             if( pElem->loop.common.flags & DT_FLAG_CONTIGUOUS ) {
-                COPY_CONTIGUOUS_LOOP( pElem, datatype, source_base, count, count_desc,
+                COPY_CONTIGUOUS_LOOP( pElem, datatype, (unsigned char*)source_base, count, count_desc,
                                       source, destination, iov_len_local );
                 pos_desc += pElem->loop.items + 1;
                 goto update_loop_description;
@@ -252,8 +253,8 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
                         pStack->disp + local_disp);
             pos_desc++;
         update_loop_description:  /* update the current state */
-            source      = source_base + pStack->disp;
-            destination = destination_base + pStack->disp;
+            source      = (unsigned char*)source_base + pStack->disp;
+            destination = (unsigned char*)destination_base + pStack->disp;
             UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
             DDT_DUMP_STACK( pStack, stack_pos, pElem, "advance loop" );
             continue;
