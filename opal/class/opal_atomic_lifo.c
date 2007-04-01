@@ -21,9 +21,9 @@
 
 static void opal_atomic_lifo_construct( opal_atomic_lifo_t* lifo )
 {
-    lifo->opal_lifo_head = &(lifo->opal_lifo_ghost);
     OBJ_CONSTRUCT( &(lifo->opal_lifo_ghost), opal_list_item_t );
     lifo->opal_lifo_ghost.opal_list_next = &(lifo->opal_lifo_ghost);
+    lifo->opal_lifo_head = &(lifo->opal_lifo_ghost);
 }
 
 OBJ_CLASS_INSTANCE( opal_atomic_lifo_t,
