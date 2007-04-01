@@ -34,9 +34,6 @@
 #ifdef HAVE_DIRENT_H
 #include <dirent.h>
 #endif  /* HAVE_DIRENT_H */
-#ifdef HAVE_LIBGEN_H
-#include <libgen.h>
-#endif  /* HAVE_LIBGEN_H */
 
 #include "orte/orte_constants.h"
 #include "opal/util/output.h"

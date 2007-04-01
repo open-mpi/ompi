@@ -42,9 +42,6 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>  /* for mkfifo */
 #endif  /* HAVE_SYS_STAT_H */
-#ifdef HAVE_LIBGEN_H
-#include <libgen.h>
-#endif
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
@@ -75,7 +72,9 @@
 /******************
  * Global Vars
  ******************/
+#ifndef __WINDOWS__
 extern char** environ;
+#endif  /* __WINDOWS__ */
 
 /******************
  * Local Functions

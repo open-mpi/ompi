@@ -296,14 +296,15 @@ int main(int argc, char *argv[])
         free(args);
         return 1;
     }
-
+#if !defined(__WINDOWS__)
     /* see if we were directed to separate from current session */
     if (orted_globals.set_sid) {
         setsid();
     }
-    
+#endif  /* !defined(__WINDOWS__) */
     /* see if they want us to spin until they can connect a debugger to us */
     i=0;
+	/*orted_globals.spin = 1;*/
     while (orted_globals.spin) {
         i++;
         if (1000 < i) i=0;        

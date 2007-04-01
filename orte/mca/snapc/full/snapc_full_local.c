@@ -17,8 +17,9 @@
 #include "orte_config.h"
 
 #include <sys/types.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#include <libgen.h>
+#endif  /* HAVE_UNISTD_H */
 
 #include "opal/runtime/opal_progress.h"
 #include "opal/util/output.h"
@@ -26,6 +27,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_dirpath.h"
+#include "opal/util/basename.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -71,7 +73,8 @@ static orte_jobid_t snapc_local_jobid;
 /************************
  * Function Definitions
  ************************/
-int local_coord_init() {
+int local_coord_init( void )
+{
     int ret, exit_status = ORTE_SUCCESS;
     int id, jobid;
 
@@ -121,7 +124,8 @@ int local_coord_init() {
     return exit_status;
 }
 
-int local_coord_finalize() {
+int local_coord_finalize( void )
+{
     int ret, exit_status = ORTE_SUCCESS;
     opal_list_item_t* item = NULL;
     bool is_done = true;
@@ -166,7 +170,8 @@ int local_coord_finalize() {
 /******************
  * Local functions
  ******************/
-static int snapc_full_local_reg_vpid_state_updates(void) {
+static int snapc_full_local_reg_vpid_state_updates(void)
+{
     int ret, exit_status = ORTE_SUCCESS;
     char *segment = NULL, *trig_name = NULL;
     orte_gpr_subscription_id_t id;
@@ -249,7 +254,8 @@ static int snapc_full_local_reg_vpid_state_updates(void) {
     return exit_status;
 }
 
-static int snapc_full_local_reg_job_state_updates( void ) {
+static int snapc_full_local_reg_job_state_updates( void )
+{
     int ret, exit_status = ORTE_SUCCESS;
     char *segment = NULL, *trig_name = NULL, **tokens;
     orte_gpr_subscription_id_t id;
@@ -321,7 +327,8 @@ static int snapc_full_local_reg_job_state_updates( void ) {
     return exit_status;
 }
 
-static void snapc_full_local_vpid_state_callback(orte_gpr_notify_data_t *data, void *cbdata) {
+static void snapc_full_local_vpid_state_callback(orte_gpr_notify_data_t *data, void *cbdata)
+{
     int ret, exit_status = ORTE_SUCCESS;
     orte_process_name_t *proc;
     size_t ckpt_state;
@@ -452,7 +459,8 @@ static void snapc_full_local_vpid_state_callback(orte_gpr_notify_data_t *data, v
     return;
 }
 
-static void snapc_full_local_job_state_callback( orte_gpr_notify_data_t *data, void *cbdata ) {
+static void snapc_full_local_job_state_callback( orte_gpr_notify_data_t *data, void *cbdata )
+{
     int ret, exit_status = ORTE_SUCCESS;
     size_t ckpt_state;
     char *ckpt_ref = NULL;
@@ -570,7 +578,8 @@ static void snapc_full_local_job_state_callback( orte_gpr_notify_data_t *data, v
     return;
 }
 
-static int snapc_full_local_setup_snapshot_dir(char * snapshot_ref, char * sugg_dir, char **actual_dir) {
+static int snapc_full_local_setup_snapshot_dir(char * snapshot_ref, char * sugg_dir, char **actual_dir)
+{
     int ret, exit_status = ORTE_SUCCESS;
     mode_t my_mode = S_IRWXU;
 
@@ -594,7 +603,8 @@ static int snapc_full_local_setup_snapshot_dir(char * snapshot_ref, char * sugg_
     return exit_status;
 }
 
-static int snapc_full_local_get_vpids(void) {
+static int snapc_full_local_get_vpids(void)
+{
     int ret, exit_status = ORTE_SUCCESS;
     char *segment = NULL;
     char *keys[3];
@@ -676,7 +686,8 @@ static int snapc_full_local_get_vpids(void) {
     return exit_status;
 }
 
-static int snapc_full_local_get_updated_vpids(void) {
+static int snapc_full_local_get_updated_vpids(void)
+{
     int ret, exit_status = ORTE_SUCCESS;
     char *segment = NULL;
     char *keys[4];
@@ -788,7 +799,8 @@ static int snapc_full_local_get_updated_vpids(void) {
     return exit_status;
 }
 
-static int snapc_full_local_start_checkpoint(orte_snapc_base_snapshot_t *vpid_snapshot, bool term) {
+static int snapc_full_local_start_checkpoint(orte_snapc_base_snapshot_t *vpid_snapshot, bool term)
+{
     int ret, exit_status = ORTE_SUCCESS;
     char * command   = NULL;
     char * local_dir = NULL;
@@ -833,7 +845,7 @@ static int snapc_full_local_start_checkpoint(orte_snapc_base_snapshot_t *vpid_sn
             term_str = strdup("");
 
         local_dir = strdup(vpid_snapshot->crs_snapshot_super.local_location);
-        local_dir = dirname(local_dir);
+        local_dir = opal_dirname(local_dir);
 
         asprintf(&command, "opal-checkpoint --where %s --name %s %s %d ", 
                  local_dir,
@@ -867,7 +879,8 @@ static int snapc_full_local_start_checkpoint(orte_snapc_base_snapshot_t *vpid_sn
     return exit_status;
 }
 
-static bool local_checkpoint_finished(void) {
+static bool local_checkpoint_finished(void)
+{
     opal_list_item_t* item = NULL;
     bool is_done = true;
 
@@ -888,7 +901,8 @@ static bool local_checkpoint_finished(void) {
     return is_done;
 }
 
-static void snapc_full_local_wait_ckpt_cb(pid_t pid, int status, void* cbdata) {
+static void snapc_full_local_wait_ckpt_cb(pid_t pid, int status, void* cbdata)
+{
     orte_process_name_t *proc_name = (orte_process_name_t *)cbdata;
     opal_list_item_t* item = NULL;
     orte_snapc_base_snapshot_t *vpid_snapshot = NULL;

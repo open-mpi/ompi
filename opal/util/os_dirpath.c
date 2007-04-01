@@ -22,17 +22,14 @@
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
-#ifdef HAVE_LIBGEN_H
-#include <libgen.h>
-#endif
+#endif  /* HAVE_UNISTD_H */
 #include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif
+#endif  /* HAVE_SYS_TYPES_H */
 #ifdef HAVE_DIRENT_H
 #include <dirent.h>
-#endif
+#endif  /* HAVE_DIRENT_H */
 
 #include "opal/util/os_dirpath.h"
 #include "opal/util/argv.h"
@@ -412,11 +409,10 @@ bool opal_os_dirpath_is_empty(const char *path ) {
 int opal_os_dirpath_access(const char *path, const mode_t in_mode ) {
 #ifndef __WINDOWS__
     struct stat buf;
-    mode_t loc_mode = S_IRWXU;  /* at the least, I need to be able to do anything */
 #else
     struct __stat64 buf;
-    mode_t loc_mode = _S_IREAD | _S_IWRITE | _S_IEXEC;
 #endif
+    mode_t loc_mode = S_IRWXU;  /* looking for full rights */
 
     /*
      * If there was no mode specified, use the default mode

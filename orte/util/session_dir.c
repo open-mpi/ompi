@@ -26,23 +26,20 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_LIBGEN_H 
-#include <libgen.h>
-#endif
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
-#endif
+#endif  /* HAVE_SYS_PARAM_H */
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif
+#endif  /* HAVE_SYS_TYPES_H */
 #include <sys/stat.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
+#endif  /* HAVE_UNISTD_H */
 #include <errno.h>
 #ifdef HAVE_DIRENT_H
 #include <dirent.h>
-#endif
+#endif  /* HAVE_DIRENT_H */
 
 #include "orte/orte_constants.h"
 
@@ -82,11 +79,7 @@ static bool orte_dir_check_file(const char *root, const char *path);
  */
 static int orte_create_dir(char *directory)
 {
-#ifndef __WINDOWS__
-    mode_t my_mode = S_IRWXU;  /* at the least, I need to be able to do anything */
-#else
-    mode_t my_mode = _S_IREAD | _S_IWRITE | _S_IEXEC;
-#endif
+    mode_t my_mode = S_IRWXU;  /* I'm looking for full rights */
     int ret;
 
     /* Sanity check before creating the directory with the proper mode,

@@ -19,8 +19,9 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#include <libgen.h>
+#endif  /* HAVE_UNISTD_H */
 
 #include "orte/orte_constants.h"
 #include "opal/mca/mca.h"
