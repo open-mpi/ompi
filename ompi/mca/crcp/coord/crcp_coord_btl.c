@@ -17,7 +17,9 @@
 #include "ompi_config.h"
 
 #include <sys/types.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif  /* HAVE_UNIST_H */
 
 #include "opal/runtime/opal_cr.h"
 #include "opal/event/event.h"

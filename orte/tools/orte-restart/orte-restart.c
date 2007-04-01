@@ -26,23 +26,21 @@
 
 #include <stdio.h>
 #include <errno.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#include <libgen.h>
+#endif  /* HAVE_UNISTD_H */
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif  /*  HAVE_STDLIB_H */
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
-#ifdef HAVE_LIBGEN_H
-#include <libgen.h>
-#endif
+#endif  /* HAVE_SYS_STAT_H */
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif
+#endif  /* HAVE_SYS_TYPES_H */
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
-#endif
+#endif  /* HAVE_SYS_WAIT_H */
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif  /* HAVE_STRING_H */
@@ -55,6 +53,7 @@
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_path.h"
+#include "opal/util/basename.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/crs/crs.h"
@@ -71,7 +70,10 @@
 /*****************
  * Global Vars
  *****************/
+
+#ifndef __WINDOWS__
 extern char **environ;
+#endif  /* __WINDOWS__ */
 
 /******************
  * Local Functions
@@ -170,7 +172,7 @@ main(int argc, char *argv[])
 
     snapshot = OBJ_NEW(orte_snapc_base_global_snapshot_t);
     snapshot->reference_name  = strdup(orte_restart_globals.filename);
-    snapshot->local_location  = dirname(orte_snapc_base_get_global_snapshot_directory(snapshot->reference_name));
+    snapshot->local_location  = opal_dirname(orte_snapc_base_get_global_snapshot_directory(snapshot->reference_name));
 
     /* 
      * Check for existence of the file
@@ -271,7 +273,8 @@ static int initialize(int argc, char *argv[]) {
     return exit_status;
 }
 
-static int finalize(void) {
+static int finalize(void)
+{
     int ret;
 
     if (OPAL_SUCCESS != (ret = orte_finalize())) {
@@ -281,7 +284,8 @@ static int finalize(void) {
     return ORTE_SUCCESS;
 }
 
-static int parse_args(int argc, char *argv[]) {
+static int parse_args(int argc, char *argv[])
+{
     int i, ret, len;
     opal_cmd_line_t cmd_line;
     char **app_env = NULL, **global_env = NULL;
@@ -366,7 +370,8 @@ static int parse_args(int argc, char *argv[]) {
     return ORTE_SUCCESS;
 }
 
-static int check_file(orte_snapc_base_global_snapshot_t *snapshot) {
+static int check_file(orte_snapc_base_global_snapshot_t *snapshot)
+{
     int ret, exit_status = ORTE_SUCCESS;
 
     opal_output_verbose(10, orte_restart_globals.output,
@@ -382,7 +387,8 @@ static int check_file(orte_snapc_base_global_snapshot_t *snapshot) {
     return exit_status;
 }
 
-static int create_appfile(orte_snapc_base_global_snapshot_t *snapshot) {
+static int create_appfile(orte_snapc_base_global_snapshot_t *snapshot)
+{
     int ret, exit_status = ORTE_SUCCESS;
     FILE *appfile = NULL;
     opal_list_item_t* item = NULL;
@@ -456,7 +462,8 @@ static int create_appfile(orte_snapc_base_global_snapshot_t *snapshot) {
     return exit_status;
 }
 
-static int spawn_children(orte_snapc_base_global_snapshot_t *snapshot, pid_t *child_pid) {
+static int spawn_children(orte_snapc_base_global_snapshot_t *snapshot, pid_t *child_pid)
+{
     int ret, exit_status = ORTE_SUCCESS;
     char **argv = NULL;
     int argc = 0;

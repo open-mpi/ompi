@@ -19,10 +19,9 @@
 #include "opal_config.h"
 
 #include <stdlib.h>
+#ifdef HAVE_STRING_H
 #include <string.h>
-#if HAVE_DIRNAME
-#include <libgen.h>
-#endif  /* HAVE_DIRNAME */
+#endif  /* HAVE_STRING_H */
 
 #include "opal/util/basename.h"
 #include "opal/util/os_path.h"

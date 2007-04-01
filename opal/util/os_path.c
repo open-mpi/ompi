@@ -21,13 +21,10 @@
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
-#ifdef HAVE_LIBGEN_H
-#include <libgen.h>
-#endif
+#endif  /* HAVE_UNISTD_H */
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
-#endif
+#endif  /* HAVE_SYS_PARAM_H */
 #include <stdlib.h>
 #include <stdarg.h>
 

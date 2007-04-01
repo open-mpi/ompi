@@ -80,7 +80,9 @@
 /*************
  * Global Vars
  *************/
+#ifndef __WINDOWS__
 extern char **environ;
+#endif  /* __WINDOWS__ */
 
 /*************
  * Local functions

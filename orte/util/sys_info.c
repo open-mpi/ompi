@@ -20,14 +20,11 @@
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
-#ifdef HAVE_LIBGEN_H
-#include <libgen.h>
-#endif
+#endif  /* HAVE_UNISTD_H */
 #include <stdlib.h>
 #ifdef HAVE_PWD_H
 #include <pwd.h>
-#endif
+#endif  /* HAVE_PWD_H */
 #include <sys/stat.h>
 
 

@@ -23,7 +23,6 @@
 #include <unistd.h>
 #endif
 #include <time.h>
-#include <libgen.h>
 #include <ctype.h>
 
 #include "opal/mca/mca.h"

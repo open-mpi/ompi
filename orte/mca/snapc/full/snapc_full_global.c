@@ -16,9 +16,10 @@
 
 #include "orte_config.h"
 
-#include <libgen.h>
 #include <sys/types.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
 
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
@@ -26,6 +27,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/basename.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -260,7 +262,7 @@ snapc_full_global_checkpoint(orte_jobid_t jobid, bool term, char **global_snapsh
 
     global_snapshot.seq_num = orte_snapc_base_snapshot_seq_number;
     global_snapshot.reference_name = strdup(*global_snapshot_handle);
-    global_snapshot.local_location = dirname(orte_snapc_base_get_global_snapshot_directory(global_snapshot.reference_name));
+    global_snapshot.local_location = opal_dirname(orte_snapc_base_get_global_snapshot_directory(global_snapshot.reference_name));
 
     /* Creates the directory (with metadata files):
      *   /tmp/ompi_global_snapshot_PID.ckpt/seq_num
@@ -888,7 +890,7 @@ static int snapc_full_global_gather_all_files(void) {
              */
             tmp_argc = 0;
             local_dir = strdup(vpid_snapshot->crs_snapshot_super.local_location);
-            opal_argv_append(&tmp_argc, &filem_request->local_targets, dirname(local_dir));
+            opal_argv_append(&tmp_argc, &filem_request->local_targets, opal_dirname(local_dir));
 
             /*
              * Do the transfer

@@ -28,15 +28,14 @@
 
 #include <stdio.h>
 #include <errno.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif  /*  HAVE_STDLIB_H */
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
-#ifdef HAVE_LIBGEN_H
-#include <libgen.h>
 #endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -65,8 +64,9 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
+#ifndef __WINDOWS__
 extern char **environ;
-
+#endif  /* __WINDOWS__ */
 /******************
  * Local Functions
  ******************/
@@ -289,7 +289,8 @@ main(int argc, char *argv[])
     return exit_status;
 }
 
-static int initialize(int argc, char *argv[]) {
+static int initialize(int argc, char *argv[])
+{
     int ret, exit_status = OPAL_SUCCESS;
 
     /*
@@ -331,7 +332,8 @@ static int initialize(int argc, char *argv[]) {
     return exit_status;
 }
 
-static int finalize(void) {
+static int finalize(void)
+{
     int ret;
 
     if (OPAL_SUCCESS != (ret = opal_finalize())) {
@@ -341,7 +343,8 @@ static int finalize(void) {
     return OPAL_SUCCESS;
 }
 
-static int parse_args(int argc, char *argv[]) {
+static int parse_args(int argc, char *argv[])
+{
     int i, ret, len;
     opal_cmd_line_t cmd_line;
     char **app_env = NULL, **global_env = NULL;
@@ -433,7 +436,8 @@ static int parse_args(int argc, char *argv[]) {
     return OPAL_SUCCESS;
 }
 
-static int check_file(char *given_filename) {
+static int check_file(char *given_filename)
+{
     int exit_status = OPAL_SUCCESS;
     int ret;
     char * path_to_check = NULL;
@@ -482,7 +486,8 @@ static int check_file(char *given_filename) {
     return exit_status;
 }
 
-static int post_env_vars(int prev_pid) {
+static int post_env_vars(int prev_pid)
+{
     int ret, exit_status = OPAL_SUCCESS;
     char *command = NULL;
     char *proc_file = NULL;

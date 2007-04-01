@@ -70,7 +70,9 @@
 /******************
  * Global Var Decls
  ******************/
+#ifndef __WINDOWS__
 extern char **environ;
+#endif  /* __WINDOWS__ */
 
 bool opal_cr_stall_check;
 int  opal_cr_output;
@@ -122,7 +124,8 @@ bool   opal_cr_is_enabled = true;
 bool   opal_cr_is_tool    = false;
 
 
-int opal_cr_set_enabled(bool en) {
+int opal_cr_set_enabled(bool en)
+{
     opal_cr_is_enabled = en;
     return OPAL_SUCCESS;
 }
@@ -181,13 +184,17 @@ int opal_cr_init(void )
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: Is a tool program: %d",
                         val);
-
+#ifndef __WINDOWS__
     mca_base_param_reg_int_name("opal_cr", "signal",
                                 "Checkpoint/Restart signal used to initialize a checkpoint of a program",
                                 false, false,
                                 SIGUSR1,
                                 &opal_cr_signal);
-    
+#else
+    opal_output( 0, "This feature is disabled on Windows" );
+    exit(-1);
+#endif  /* __WINDOWS__ */
+
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: Checkpoint Signal: %d",
                         opal_cr_signal);
@@ -339,7 +346,8 @@ int opal_cr_finalize(void)
 /*
  * Check if a checkpoint request needs to be operated upon
  */
-void opal_cr_test_if_checkpoint_ready(void) {
+void opal_cr_test_if_checkpoint_ready(void)
+{
     int ret;
     static int jump_to_stage = 0;
 
@@ -537,9 +545,8 @@ int opal_cr_coord(int state)
     return OPAL_SUCCESS;
 }
 
-int opal_cr_reg_coord_callback 
-(opal_cr_coord_callback_fn_t  new_func,
- opal_cr_coord_callback_fn_t *prev_func)
+int opal_cr_reg_coord_callback(opal_cr_coord_callback_fn_t  new_func,
+                               opal_cr_coord_callback_fn_t *prev_func)
 {
     /*
      * Preserve the previous callback
@@ -561,8 +568,11 @@ int opal_cr_reg_coord_callback
 
 static int cr_notify_reopen_files(int *prog_read_fd, int *prog_write_fd)
 {
-    int ret;
+    int ret = OPAL_ERR_NOT_IMPLEMENTED;
 
+#ifdef __WINDOWS__
+    return ret;
+#else
     /*
      * Open up the read pipe
      */
@@ -614,12 +624,14 @@ static int cr_notify_reopen_files(int *prog_read_fd, int *prog_write_fd)
     }
     
     return OPAL_SUCCESS;
+#endif  /* __WINDOWS__ */
 }
 
 /*
  * Respond to an asynchronous checkpoint request
  */
-int checkpoint_response(opal_cr_ckpt_cmd_state_t resp, int *jump_to_stage) {
+int checkpoint_response(opal_cr_ckpt_cmd_state_t resp, int *jump_to_stage)
+{
     static int app_term = 0, app_pid = 0;
     static opal_crs_base_snapshot_t *snapshot = NULL;
     static int prog_named_read_pipe_fd, prog_named_write_pipe_fd;
@@ -895,7 +907,8 @@ int checkpoint_response(opal_cr_ckpt_cmd_state_t resp, int *jump_to_stage) {
  * so it can communicate with the checkpoint command to take the approprate 
  * action.
  */
-static void opal_cr_signal_handler (int signo) {
+static void opal_cr_signal_handler (int signo)
+{
     if( opal_cr_signal != signo ) {
         /* Not our signal */
         return;
@@ -921,7 +934,8 @@ static void opal_cr_signal_handler (int signo) {
  * Extract environment variables from a saved file
  * and place them in the environment.
  */
-static int extract_env_vars(int prev_pid) {
+static int extract_env_vars(int prev_pid)
+{
     int exit_status = OPAL_SUCCESS;
     char *file_name = NULL;
     FILE *env_data = NULL;

@@ -37,9 +37,6 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif  /* HAVE_SYS_WAIT_H */
-#ifdef HAVE_LIBGEN_H
-#include <libgen.h>
-#endif
 
 #include "opal/event/event.h"
 #include "opal/install_dirs.h"

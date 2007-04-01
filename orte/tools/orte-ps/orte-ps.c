@@ -28,28 +28,27 @@
 
 #include <stdio.h>
 #include <errno.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#include <libgen.h>
+#endif  /* HAVE_UNISTD_H */
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif  /*  HAVE_STDLIB_H */
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
-#ifdef HAVE_LIBGEN_H
-#include <libgen.h>
-#endif
+#endif  /* HAVE_SYS_STAT_H */
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif
+#endif  /* HAVE_SYS_TYPES_H */
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
-#endif
+#endif  /* HAVE_SYS_WAIT_H */
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif  /* HAVE_STRING_H */
-#include <sys/types.h>
+#ifdef HAVE_DIRENT_H
 #include <dirent.h>
+#endif  /* HAVE_DIRENT_H */
 
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
@@ -83,7 +82,9 @@
 /******************
  * Global Vars
  ******************/
+#ifndef __WINDOWS__
 extern char** environ;
+#endif  /* __WINDOWS__ */
 
 /*******************
  * Universe/job/vpid information Objects
