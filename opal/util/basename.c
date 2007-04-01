@@ -22,6 +22,9 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif  /* HAVE_STRING_H */
+#ifdef HAVE_LIBGEN_H
+#include <libgen.h>
+#endif  /* HAVE_LIBGEN_H */
 
 #include "opal/util/basename.h"
 #include "opal/util/os_path.h"
