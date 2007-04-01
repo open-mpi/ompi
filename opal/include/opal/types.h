@@ -66,7 +66,6 @@ typedef struct ompi_fd_set_t ompi_fd_set_t;
 #define OMPI_FD_ISSET(fd,fds) FD_ISSET((fd),(fd_set*)(fds))
 
 #else /* if we are on windows */
-#include <Winsock2.h>    
 typedef fd_set ompi_fd_set_t;
 #define OMPI_FD_ZERO(fds)     FD_ZERO((fds))
 #define OMPI_FD_SET(fd,fds)   FD_SET((fd),(fds))

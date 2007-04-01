@@ -215,9 +215,7 @@
 #    endif  /* defined(OPAL_IMPORTS) */
 #    define OPAL_MODULE_DECLSPEC
 #  endif  /* defined(_USRDLL) */
-#  if OMPI_BUILDING
-#    include "opal/win32/win_compat.h"
-#  endif  /* OMPI_BUILDING */
+#  include "opal/win32/win_compat.h"
 #else
    /* On Unix - this define is plain useless */
 #  define OPAL_DECLSPEC
