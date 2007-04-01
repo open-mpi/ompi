@@ -42,11 +42,11 @@ extern "C" {
     /**
      * Global Snapshot Object Maintenance functions
      */
-    ORTE_DECLSPEC void orte_snapc_base_snapshot_construct(orte_snapc_base_snapshot_t *obj);
-    ORTE_DECLSPEC void orte_snapc_base_snapshot_destruct( orte_snapc_base_snapshot_t *obj);
+    void orte_snapc_base_snapshot_construct(orte_snapc_base_snapshot_t *obj);
+    void orte_snapc_base_snapshot_destruct( orte_snapc_base_snapshot_t *obj);
 
-    ORTE_DECLSPEC void orte_snapc_base_global_snapshot_construct(orte_snapc_base_global_snapshot_t *obj);
-    ORTE_DECLSPEC void orte_snapc_base_global_snapshot_destruct( orte_snapc_base_global_snapshot_t *obj);
+    void orte_snapc_base_global_snapshot_construct(orte_snapc_base_global_snapshot_t *obj);
+    void orte_snapc_base_global_snapshot_destruct( orte_snapc_base_global_snapshot_t *obj);
 
     /**
      * Initialize the SNAPC MCA framework

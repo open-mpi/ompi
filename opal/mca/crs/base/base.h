@@ -30,12 +30,6 @@ extern "C" {
 #endif
 
     /**
-     * Snapshot Object Maintenance functions
-     */
-    OPAL_DECLSPEC void opal_crs_base_construct(opal_crs_base_snapshot_t *obj);
-    OPAL_DECLSPEC void opal_crs_base_destruct( opal_crs_base_snapshot_t *obj);
-
-    /**
      * Initialize the CRS MCA framework
      *
      * @retval OPAL_SUCCESS Upon success

@@ -42,7 +42,7 @@ extern "C" {
 
     };
     typedef struct orte_snapc_full_component_t orte_snapc_full_component_t;
-    extern orte_snapc_full_component_t mca_snapc_full_component;
+    OPAL_MODULE_DECLSPEC extern orte_snapc_full_component_t mca_snapc_full_component;
 
     struct orte_snapc_full_global_snapshot_t {
         /** Base SNAPC Global snapshot type */
