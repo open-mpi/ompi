@@ -305,7 +305,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
     }
 
     frag->segment[0].seg_len       = *size;
-    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
+    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment[0].seg_addr.pval) );
     frag->segment[0].seg_key.key64 = (uint64_t)(intptr_t)frag;
 
     mx_segment.segment_ptr    = frag->segment[0].seg_addr.pval;
