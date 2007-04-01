@@ -92,6 +92,8 @@ typedef unsigned int uint;
 #define R_OK  0x04
 #define W_OK  0x02
 #define X_OK  R_OK  /* no execution right on Windows */
+#define S_IRWXU (_S_IREAD | _S_IWRITE | _S_IEXEC)
+
 #define WTERMSIG(EXIT_CODE)    (1)
 #define WIFEXITED(EXIT_CODE)   (1)
 #define WEXITSTATUS(EXIT_CODE) (EXIT_CODE)
@@ -125,6 +127,7 @@ typedef unsigned int uint;
 #define execvp                    _execvp
 #define pipe(array_fd)            _pipe(array_fd, 1024, O_BINARY )
 #define S_ISDIR(STAT_MODE)        ((STAT_MODE) & _S_IFDIR)
+#define S_ISREG(STAT_MODE)        ((STAT_MODE) & _S_IFREG)
 #define strncasecmp               _strnicmp
 #define strcasecmp                _stricmp
 
