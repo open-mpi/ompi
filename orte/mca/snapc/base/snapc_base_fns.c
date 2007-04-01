@@ -18,18 +18,17 @@
 
 #if HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif
-#if HAVE_UNISTD_H
+#endif  /* HAVE_SYS_TYPES_H */
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
+#endif  /* HAVE_UNISTD_H */
 #include <time.h>
-#include <libgen.h>
-#include <ctype.h>
 
 #include "orte/orte_constants.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/basename.h"
 
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -63,12 +62,13 @@ size_t orte_snapc_base_snapshot_seq_number = 0;
 /******************
  * Object stuff
  ******************/
-ORTE_DECLSPEC OBJ_CLASS_INSTANCE(orte_snapc_base_snapshot_t,
-                                 opal_crs_base_snapshot_t,
-                                 orte_snapc_base_snapshot_construct,
-                                 orte_snapc_base_snapshot_destruct);
+OBJ_CLASS_INSTANCE(orte_snapc_base_snapshot_t,
+                   opal_crs_base_snapshot_t,
+                   orte_snapc_base_snapshot_construct,
+                   orte_snapc_base_snapshot_destruct);
 
-ORTE_DECLSPEC void orte_snapc_base_snapshot_construct(orte_snapc_base_snapshot_t *snapshot) {
+void orte_snapc_base_snapshot_construct(orte_snapc_base_snapshot_t *snapshot)
+{
     snapshot->process_name.cellid = 0;
     snapshot->process_name.jobid  = 0;
     snapshot->process_name.vpid   = 0;
@@ -77,7 +77,8 @@ ORTE_DECLSPEC void orte_snapc_base_snapshot_construct(orte_snapc_base_snapshot_t
     snapshot->term  = false;
 }
 
-ORTE_DECLSPEC void orte_snapc_base_snapshot_destruct( orte_snapc_base_snapshot_t *snapshot) {
+void orte_snapc_base_snapshot_destruct( orte_snapc_base_snapshot_t *snapshot)
+{
     snapshot->process_name.cellid = 0;
     snapshot->process_name.jobid  = 0;
     snapshot->process_name.vpid   = 0;
@@ -87,24 +88,26 @@ ORTE_DECLSPEC void orte_snapc_base_snapshot_destruct( orte_snapc_base_snapshot_t
 }
 
 /****/
-ORTE_DECLSPEC OBJ_CLASS_INSTANCE(orte_snapc_base_global_snapshot_t,
-                                 opal_list_item_t,
-                                 orte_snapc_base_global_snapshot_construct,
-                                 orte_snapc_base_global_snapshot_destruct);
+OBJ_CLASS_INSTANCE(orte_snapc_base_global_snapshot_t,
+                   opal_list_item_t,
+                   orte_snapc_base_global_snapshot_construct,
+                   orte_snapc_base_global_snapshot_destruct);
 
-ORTE_DECLSPEC void orte_snapc_base_global_snapshot_construct(orte_snapc_base_global_snapshot_t *snapshot) {
+void orte_snapc_base_global_snapshot_construct(orte_snapc_base_global_snapshot_t *snapshot)
+{
     OBJ_CONSTRUCT(&(snapshot->snapshots), opal_list_t);
 
     snapshot->component_name = NULL;
     snapshot->reference_name = orte_snapc_base_unique_global_snapshot_name(getpid());
-    snapshot->local_location = dirname(orte_snapc_base_get_global_snapshot_directory(snapshot->reference_name));
+    snapshot->local_location = opal_dirname(orte_snapc_base_get_global_snapshot_directory(snapshot->reference_name));
     
     snapshot->seq_num    = 0;
     snapshot->start_time = NULL;
     snapshot->end_time   = NULL;
 }
 
-ORTE_DECLSPEC void orte_snapc_base_global_snapshot_destruct( orte_snapc_base_global_snapshot_t *snapshot) {
+void orte_snapc_base_global_snapshot_destruct( orte_snapc_base_global_snapshot_t *snapshot)
+{
     opal_list_item_t* item = NULL;
 
     while (NULL != (item = opal_list_remove_first(&snapshot->snapshots))) {
@@ -313,7 +316,8 @@ static void snapc_none_job_ckpt_request_callback(orte_gpr_notify_data_t *data, v
 /********************
  * Utility functions
  ********************/
-int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer, bool *term, orte_jobid_t *jobid) {
+int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer, bool *term, orte_jobid_t *jobid)
+{
     int ret, exit_status = ORTE_SUCCESS;
     orte_buffer_t *loc_buffer;
     orte_std_cntr_t n = 1;
@@ -397,7 +401,8 @@ int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer, bool *
     return exit_status;
 }
 
-int orte_snapc_base_global_coord_recv_ack(orte_process_name_t* peer, bool *ack) {
+int orte_snapc_base_global_coord_recv_ack(orte_process_name_t* peer, bool *ack)
+{
     int ret, exit_status = ORTE_SUCCESS;
     orte_buffer_t *loc_buffer;
     orte_std_cntr_t n = 1;
@@ -423,7 +428,8 @@ int orte_snapc_base_global_coord_recv_ack(orte_process_name_t* peer, bool *ack) 
     return exit_status;
 }
 
-int orte_snapc_base_global_coord_send_ack(orte_process_name_t* peer, bool ack) {
+int orte_snapc_base_global_coord_send_ack(orte_process_name_t* peer, bool ack)
+{
     int ret, exit_status = ORTE_SUCCESS;
     orte_buffer_t *buffer;
 
@@ -448,7 +454,8 @@ int orte_snapc_base_global_coord_send_ack(orte_process_name_t* peer, bool ack) {
     return exit_status;
 }
 
-int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char *global_snapshot_handle, int ckpt_status) {
+int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char *global_snapshot_handle, int ckpt_status)
+{
     int ret, exit_status = ORTE_SUCCESS;
     orte_buffer_t *loc_buffer = NULL;
     bool ack = true;
@@ -570,7 +577,8 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char
     return exit_status;
 }
 
-char * orte_snapc_base_unique_global_snapshot_name(pid_t pid) {
+char * orte_snapc_base_unique_global_snapshot_name(pid_t pid)
+{
     char * uniq_name;
     
     asprintf(&uniq_name, "ompi_global_snapshot_%d.ckpt", pid);
@@ -578,7 +586,8 @@ char * orte_snapc_base_unique_global_snapshot_name(pid_t pid) {
     return uniq_name;
 }
 
-char * orte_snapc_base_get_global_snapshot_metadata_file(char *uniq_snapshot_name) {
+char * orte_snapc_base_get_global_snapshot_metadata_file(char *uniq_snapshot_name)
+{
     char * path = NULL;
     
     asprintf(&path, "%s/%s/%s",
@@ -589,7 +598,8 @@ char * orte_snapc_base_get_global_snapshot_metadata_file(char *uniq_snapshot_nam
     return path;
 }
 
-char * orte_snapc_base_get_global_snapshot_directory(char *uniq_snapshot_name) {
+char * orte_snapc_base_get_global_snapshot_directory(char *uniq_snapshot_name)
+{
     char * dir_name = NULL;
     
     asprintf(&dir_name, "%s/%s/%d", 
@@ -600,7 +610,8 @@ char * orte_snapc_base_get_global_snapshot_directory(char *uniq_snapshot_name) {
     return dir_name;
 }
 
-int orte_snapc_base_init_global_snapshot_directory(char *uniq_global_snapshot_name) {
+int orte_snapc_base_init_global_snapshot_directory(char *uniq_global_snapshot_name)
+{
     char * dir_name = NULL, *meta_data_fname = NULL;
     mode_t my_mode = S_IRWXU;
     int ret;
@@ -654,7 +665,8 @@ int orte_snapc_base_init_global_snapshot_directory(char *uniq_global_snapshot_na
 
 int orte_snapc_base_global_init_request(orte_jobid_t jobid,
                                         orte_rml_buffer_callback_fn_t rml_cbfunc, void* rml_cbdata,
-                                        orte_gpr_notify_cb_fn_t       gpr_cbfunc, void* gpr_cbdata) {
+                                        orte_gpr_notify_cb_fn_t       gpr_cbfunc, void* gpr_cbdata)
+{
     int ret, exit_status = ORTE_SUCCESS;
     
     /*
@@ -681,7 +693,8 @@ int orte_snapc_base_global_init_request(orte_jobid_t jobid,
     return exit_status;
 }
 
-static int snapc_base_reg_gpr_request( orte_jobid_t jobid, orte_gpr_notify_cb_fn_t gpr_cbfunc, void* gpr_cbdata ) {
+static int snapc_base_reg_gpr_request( orte_jobid_t jobid, orte_gpr_notify_cb_fn_t gpr_cbfunc, void* gpr_cbdata )
+{
     int ret, exit_status = ORTE_SUCCESS;
     char *segment = NULL, *trig_name = NULL, *tokens[2];
     orte_gpr_subscription_id_t id;
@@ -746,7 +759,8 @@ static int snapc_base_reg_gpr_request( orte_jobid_t jobid, orte_gpr_notify_cb_fn
 int orte_snapc_base_get_job_ckpt_info( orte_jobid_t jobid, 
                                        size_t *ckpt_state, 
                                        char **ckpt_snapshot_ref, 
-                                       char **ckpt_snapshot_loc) {
+                                       char **ckpt_snapshot_loc)
+{
     int ret, exit_status = ORTE_SUCCESS;
     char *segment = NULL, *tokens[2], *keys[4];
     orte_gpr_value_t** values = NULL;
@@ -847,7 +861,8 @@ int orte_snapc_base_get_job_ckpt_info( orte_jobid_t jobid,
 int orte_snapc_base_set_job_ckpt_info( orte_jobid_t jobid,
                                        size_t ckpt_state, 
                                        char  *ckpt_snapshot_ref,
-                                       char  *ckpt_snapshot_loc) {
+                                       char  *ckpt_snapshot_loc)
+{
     int ret, exit_status = ORTE_SUCCESS;
     orte_gpr_value_t **values = NULL;
     char *segment = NULL;
@@ -933,7 +948,8 @@ int orte_snapc_base_set_job_ckpt_info( orte_jobid_t jobid,
 int orte_snapc_base_get_vpid_ckpt_info( orte_process_name_t proc, 
                                         size_t *ckpt_state,
                                         char **ckpt_snapshot_ref, 
-                                        char **ckpt_snapshot_loc) {
+                                        char **ckpt_snapshot_loc)
+{
     int ret, exit_status = ORTE_SUCCESS;
     char *segment = NULL, **tokens = NULL, *keys[4];
     orte_gpr_value_t** values = NULL;
@@ -1037,7 +1053,8 @@ int orte_snapc_base_get_vpid_ckpt_info( orte_process_name_t proc,
 int orte_snapc_base_set_vpid_ckpt_info( orte_process_name_t proc, 
                                    size_t ckpt_state, 
                                    char *ckpt_ref, 
-                                   char *ckpt_loc) {
+                                   char *ckpt_loc)
+{
     int ret, exit_status = ORTE_SUCCESS;
     orte_gpr_value_t *values[1];
     char *segment = NULL;
@@ -1290,7 +1307,8 @@ int orte_snapc_base_extract_gpr_job_ckpt_info(orte_gpr_notify_data_t *data,
  # Timestamp:          Mon Jun  5 18:32:13 2006
  *
  */
-int orte_snapc_base_add_timestamp(char * global_snapshot_ref) {
+int orte_snapc_base_add_timestamp(char * global_snapshot_ref)
+{
     int exit_status = ORTE_SUCCESS;
     FILE * meta_data = NULL;
     char * meta_data_fname = NULL;
@@ -1318,7 +1336,11 @@ int orte_snapc_base_add_timestamp(char * global_snapshot_ref) {
     return exit_status;
 }
 
-int orte_snapc_base_add_vpid_metadata(orte_process_name_t *proc, char * global_snapshot_ref, char *snapshot_ref, char *snapshot_location) {
+int orte_snapc_base_add_vpid_metadata( orte_process_name_t *proc,
+                                       char * global_snapshot_ref,
+                                       char *snapshot_ref,
+                                       char *snapshot_location)
+{
     int exit_status = ORTE_SUCCESS;
     FILE * meta_data = NULL;
     char * meta_data_fname = NULL;
@@ -1350,7 +1372,7 @@ int orte_snapc_base_add_vpid_metadata(orte_process_name_t *proc, char * global_s
 
     /* get the base of the location */
     local_dir = strdup(snapshot_location);
-    local_dir = dirname(local_dir);
+    local_dir = opal_dirname(local_dir);
 
     /* Write the string */
     fprintf(meta_data, "%s%s\n", SNAPC_METADATA_PROCESS,   proc_str);
@@ -1370,7 +1392,8 @@ int orte_snapc_base_add_vpid_metadata(orte_process_name_t *proc, char * global_s
     return exit_status;
 }
 
-int orte_snapc_base_extract_metadata(orte_snapc_base_global_snapshot_t *global_snapshot) {
+int orte_snapc_base_extract_metadata(orte_snapc_base_global_snapshot_t *global_snapshot)
+{
     int exit_status = ORTE_SUCCESS;
     FILE * meta_data = NULL;
     char * meta_data_fname = NULL;
@@ -1473,7 +1496,8 @@ int orte_snapc_base_extract_metadata(orte_snapc_base_global_snapshot_t *global_s
 /*
  * Extract the next sequence number from the file
  */
-static int get_next_seq_number(FILE *file) {
+static int get_next_seq_number(FILE *file)
+{
     char *token = NULL;
     char *value = NULL;
     int seq_int = -1;
@@ -1496,7 +1520,8 @@ static int get_next_seq_number(FILE *file) {
     return seq_int;
 }
 
-static int metadata_extract_next_token(FILE *file, char **token, char **value) {
+static int metadata_extract_next_token(FILE *file, char **token, char **value)
+{
     int exit_status = ORTE_SUCCESS;
     int max_len = 256;
     char * line = NULL;
@@ -1611,7 +1636,8 @@ static int metadata_extract_next_token(FILE *file, char **token, char **value) {
     return exit_status;
 }
 
-char * orte_snapc_ckpt_state_str(size_t state) {
+char * orte_snapc_ckpt_state_str(size_t state)
+{
     switch(state) {
     case ORTE_SNAPC_CKPT_STATE_NONE:
         return strdup(" -- ");

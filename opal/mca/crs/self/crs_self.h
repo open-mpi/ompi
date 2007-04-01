@@ -61,7 +61,7 @@ extern "C" {
         opal_crs_self_restart_callback_fn_t    ucb_restart_fn;
     };
     typedef struct opal_crs_self_component_t opal_crs_self_component_t;
-    extern opal_crs_self_component_t mca_crs_self_component;
+    OPAL_MODULE_DECLSPEC extern opal_crs_self_component_t mca_crs_self_component;
 
     /*
      * Module functions

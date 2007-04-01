@@ -17,7 +17,9 @@
 #include "opal_config.h"
 
 #include <sys/types.h>
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
 
 #include "opal/libltdl/ltdl.h"
 
@@ -69,8 +71,8 @@ struct opal_crs_self_snapshot_t {
 };
 typedef struct opal_crs_self_snapshot_t opal_crs_self_snapshot_t;
 
-void opal_crs_self_construct(opal_crs_self_snapshot_t *obj);
-void opal_crs_self_destruct( opal_crs_self_snapshot_t *obj);
+static void opal_crs_self_construct(opal_crs_self_snapshot_t *obj);
+static void opal_crs_self_destruct( opal_crs_self_snapshot_t *obj);
 
 OBJ_CLASS_INSTANCE(opal_crs_self_snapshot_t,
                    opal_crs_base_snapshot_t,
@@ -89,11 +91,13 @@ static int self_update_snapshot_metadata(opal_crs_self_snapshot_t *snapshot);
 static int opal_crs_self_restart_cmd(opal_crs_self_snapshot_t *snapshot, char **cmd);
 static int self_cold_start(opal_crs_self_snapshot_t *snapshot);
 
-void opal_crs_self_construct(opal_crs_self_snapshot_t *snapshot) {
+void opal_crs_self_construct(opal_crs_self_snapshot_t *snapshot)
+{
     snapshot->cmd_line = NULL;
 }
 
-void opal_crs_self_destruct( opal_crs_self_snapshot_t *snapshot) {
+void opal_crs_self_destruct( opal_crs_self_snapshot_t *snapshot)
+{
     if(NULL != snapshot->cmd_line)
         free(snapshot->cmd_line);
 }
@@ -127,7 +131,8 @@ opal_crs_self_component_query(int *priority)
     }
 }
 
-static int opal_crs_self_extract_callbacks(void) {
+static int opal_crs_self_extract_callbacks(void)
+{
     bool callback_matched = true;
     lt_dlhandle executable;
 

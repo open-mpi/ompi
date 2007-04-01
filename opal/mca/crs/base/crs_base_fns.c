@@ -14,7 +14,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #if HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -32,12 +32,8 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
-OMPI_DECLSPEC OBJ_CLASS_INSTANCE(opal_crs_base_snapshot_t,
-                                 opal_list_item_t,
-                                 opal_crs_base_construct,
-                                 opal_crs_base_destruct);
-
-OMPI_DECLSPEC void opal_crs_base_construct(opal_crs_base_snapshot_t *snapshot) {
+static void opal_crs_base_construct(opal_crs_base_snapshot_t *snapshot)
+{
     snapshot->component_name  = NULL;
     snapshot->reference_name  = opal_crs_base_unique_snapshot_name(getpid());
     snapshot->local_location  = opal_crs_base_get_snapshot_directory(snapshot->reference_name);
@@ -45,7 +41,8 @@ OMPI_DECLSPEC void opal_crs_base_construct(opal_crs_base_snapshot_t *snapshot) {
     snapshot->cold_start      = false;
 }
 
-OMPI_DECLSPEC void opal_crs_base_destruct( opal_crs_base_snapshot_t *snapshot) {
+static void opal_crs_base_destruct( opal_crs_base_snapshot_t *snapshot)
+{
     if(NULL != snapshot->reference_name) {
         free(snapshot->reference_name);
         snapshot->reference_name = NULL;
@@ -63,6 +60,11 @@ OMPI_DECLSPEC void opal_crs_base_destruct( opal_crs_base_snapshot_t *snapshot) {
         snapshot->component_name = NULL;
     }
 }
+
+OBJ_CLASS_INSTANCE(opal_crs_base_snapshot_t,
+                   opal_list_item_t,
+                   opal_crs_base_construct,
+                   opal_crs_base_destruct);
 
 int opal_crs_base_none_open(void)
 {
@@ -154,7 +156,8 @@ int opal_crs_base_none_enable_checkpoint(void)
 /*
  * Utility functions
  */
-char * opal_crs_base_unique_snapshot_name(pid_t pid) {
+char * opal_crs_base_unique_snapshot_name(pid_t pid)
+{
     char * loc_str;
     
     asprintf(&loc_str, "opal_snapshot_%d.ckpt", pid);
@@ -162,7 +165,8 @@ char * opal_crs_base_unique_snapshot_name(pid_t pid) {
     return loc_str;
 }
 
-FILE * opal_crs_base_open_read_metadata(char * location, char **component, int *prev_pid) {
+FILE * opal_crs_base_open_read_metadata(char * location, char **component, int *prev_pid)
+{
     char * dir_name = NULL;
     char * content = NULL;
     char * tmp_str = NULL;
@@ -214,7 +218,8 @@ FILE * opal_crs_base_open_read_metadata(char * location, char **component, int *
     return meta_data;
 }
 
-char * opal_crs_base_extract_expected_component(char *snapshot_loc, int *prev_pid) {
+char * opal_crs_base_extract_expected_component(char *snapshot_loc, int *prev_pid)
+{
     FILE * meta_data = NULL;
     char * component_name = NULL;
     
@@ -234,7 +239,8 @@ char * opal_crs_base_extract_expected_component(char *snapshot_loc, int *prev_pi
     return component_name;
 }
 
-char * opal_crs_base_get_snapshot_directory(char *uniq_snapshot_name) {
+char * opal_crs_base_get_snapshot_directory(char *uniq_snapshot_name)
+{
     char * dir_name = NULL;
 
     asprintf(&dir_name, "%s/%s", opal_crs_base_snapshot_dir, uniq_snapshot_name);
@@ -242,7 +248,8 @@ char * opal_crs_base_get_snapshot_directory(char *uniq_snapshot_name) {
     return dir_name;
 }
 
-int    opal_crs_base_init_snapshot_directory(opal_crs_base_snapshot_t *snapshot) {
+int    opal_crs_base_init_snapshot_directory(opal_crs_base_snapshot_t *snapshot)
+{
     mode_t my_mode = S_IRWXU; 
     int ret, exit_status = OPAL_SUCCESS;
     FILE * meta_data = NULL;
@@ -273,7 +280,8 @@ int    opal_crs_base_init_snapshot_directory(opal_crs_base_snapshot_t *snapshot)
     return OPAL_SUCCESS;
 }
 
-FILE *opal_crs_base_open_metadata(opal_crs_base_snapshot_t *snapshot, char mode ) {
+FILE *opal_crs_base_open_metadata(opal_crs_base_snapshot_t *snapshot, char mode )
+{
     char *meta_data_fname = NULL;
     FILE * meta_data = NULL;
 
@@ -315,7 +323,8 @@ FILE *opal_crs_base_open_metadata(opal_crs_base_snapshot_t *snapshot, char mode 
     return meta_data;
 }
 
-char * opal_crs_base_state_str(opal_crs_state_type_t state) {
+char * opal_crs_base_state_str(opal_crs_state_type_t state)
+{
     char *str = NULL;
 
     switch(state) {

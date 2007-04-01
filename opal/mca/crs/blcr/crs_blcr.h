@@ -47,7 +47,7 @@ extern "C" {
         opal_crs_base_component_t super;
     };
     typedef struct opal_crs_blcr_component_t opal_crs_blcr_component_t;
-    extern opal_crs_blcr_component_t mca_crs_blcr_component;
+    OPAL_MODULE_DECLSPEC extern opal_crs_blcr_component_t mca_crs_blcr_component;
 
     /*
      * Module functions
