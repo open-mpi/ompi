@@ -14,7 +14,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/include/opal/constants.h"
 #include "opal/util/output.h"
