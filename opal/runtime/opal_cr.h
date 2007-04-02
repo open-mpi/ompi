@@ -43,9 +43,9 @@ extern "C" {
 #define OPAL_CR_DONE       ((char) 0)
 #define OPAL_CR_ACK        ((char) 1)
 #define OPAL_CR_CHECKPOINT ((char) 2)
-#define OPAL_CR_NAMED_PROG_R  (strdup("opal_cr_prog_read"))
-#define OPAL_CR_NAMED_PROG_W  (strdup("opal_cr_prog_write"))
-#define OPAL_CR_BASE_ENV_NAME (strdup("opal_cr_restart-env"))
+#define OPAL_CR_NAMED_PROG_R  ("opal_cr_prog_read")
+#define OPAL_CR_NAMED_PROG_W  ("opal_cr_prog_write")
+#define OPAL_CR_BASE_ENV_NAME ("opal_cr_restart-env")
 
 /*
  * Possible responses to a checkpoint request from opal-checkpoint
