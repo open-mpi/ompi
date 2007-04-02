@@ -272,7 +272,9 @@ void ompi_crcp_coord_pml_bookmark_proc_destruct( ompi_crcp_coord_pml_bookmark_pr
     dup_msg_ref->mode = msg_ref->mode;                            \
     dup_msg_ref->async   = msg_ref->async;                        \
     dup_msg_ref->request = msg_ref->request;                      \
-    OBJ_RETAIN(msg_ref->request);                                 \
+    if( NULL != msg_ref->request ) {                              \
+       OBJ_RETAIN(msg_ref->request);                              \
+    }                                                             \
                                                                   \
     dup_msg_ref->proc_name.cellid = msg_ref->proc_name.cellid;    \
     dup_msg_ref->proc_name.jobid  = msg_ref->proc_name.jobid;     \
@@ -2342,10 +2344,10 @@ static int ft_event_check_bookmarks(void) {
 
     if( 15 <= mca_crcp_coord_component.super.verbose ) {
         sleep(orte_process_info.my_name->vpid);
-        opal_output_verbose(15, mca_crcp_coord_component.super.output_handle,
+        opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
                             "Process [%lu,%lu,%lu] Match Table",
                             ORTE_NAME_ARGS(orte_process_info.my_name));
-        opal_output_verbose(15, mca_crcp_coord_component.super.output_handle,
+        opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
                             "[%lu,%lu,%lu]  %5s | %7s | %7s | %7s | %7s |",
                             ORTE_NAME_ARGS(orte_process_info.my_name),
                             "Vpid", "T_Send", "M_Recv", "M_Send", "T_Recv");
@@ -2371,7 +2373,7 @@ static int ft_event_check_bookmarks(void) {
                       peer_ref->matched_irecv_msgs     +
                       peer_ref->matched_recv_init_msgs );
 
-            opal_output_verbose(15, mca_crcp_coord_component.super.output_handle,
+            opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
                                 "[%lu,%lu,%lu]  %5d | %7d | %7d | %7d | %7d |",
                                 ORTE_NAME_ARGS(orte_process_info.my_name),
                                 peer_ref->proc_name.vpid,
@@ -2401,7 +2403,7 @@ static int ft_event_check_bookmarks(void) {
                             peer_ref->matched_irecv_msgs     +
                             peer_ref->matched_recv_init_msgs );
             if( p_n_to_p_m > p_n_from_p_m) {
-                opal_output_verbose(15, mca_crcp_coord_component.super.output_handle,
+                opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: check_bookmarks: [%lu,%lu,%lu] --> [%lu,%lu,%lu] "
                                     "Sent Msgs (%4d) = Received Msgs (%4d). Peer needs %4d.\n",
                                     ORTE_NAME_ARGS(orte_process_info.my_name),
@@ -2435,7 +2437,7 @@ static int ft_event_check_bookmarks(void) {
                             peer_ref->total_recv_init_msgs   );
             
             if( p_n_to_p_m > p_n_from_p_m) {
-                opal_output_verbose(15, mca_crcp_coord_component.super.output_handle,
+                opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: check_bookmarks: [%lu,%lu,%lu] <-- [%lu,%lu,%lu] "
                                     "Received Msgs (%4d) = Sent Msgs (%4d). I need %4d.\n",
                                     ORTE_NAME_ARGS(orte_process_info.my_name),
@@ -2469,7 +2471,7 @@ static int ft_event_check_bookmarks(void) {
                             peer_ref->total_recv_init_msgs   );
             
             if( p_n_to_p_m > p_n_from_p_m) {
-                opal_output_verbose(15, mca_crcp_coord_component.super.output_handle,
+                opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: check_bookmarks: [%lu,%lu,%lu] <-- [%lu,%lu,%lu] "
                                     "Received Msgs (%4d) = Sent Msgs (%4d). I need %4d.\n",
                                     ORTE_NAME_ARGS(orte_process_info.my_name),
@@ -2501,7 +2503,7 @@ static int ft_event_check_bookmarks(void) {
                             peer_ref->matched_irecv_msgs     +
                             peer_ref->matched_recv_init_msgs );
             if( p_n_to_p_m > p_n_from_p_m) {
-                opal_output_verbose(15, mca_crcp_coord_component.super.output_handle,
+                opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: check_bookmarks: [%lu,%lu,%lu] --> [%lu,%lu,%lu] "
                                     "Sent Msgs (%4d) = Received Msgs (%4d). Peer needs %4d.\n",
                                     ORTE_NAME_ARGS(orte_process_info.my_name),
@@ -3516,14 +3518,6 @@ static int ft_event_wait_quiesce(void) {
             next = opal_list_get_next(item);
 
             if( drain_msg->already_posted) {
-                if( NULL != drain_msg->datatype) {
-                    OBJ_RELEASE(drain_msg->datatype);
-                    drain_msg->datatype = NULL;
-                }
-                if( NULL != drain_msg->request ) {
-                    OBJ_RELEASE(drain_msg->request);
-                    drain_msg->request = NULL;
-                }
                 opal_list_remove_item(&drained_msg_list, &(drain_msg->super) );
                 OBJ_RELEASE(drain_msg);
             }
