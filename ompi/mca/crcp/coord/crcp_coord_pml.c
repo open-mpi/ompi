@@ -1041,11 +1041,10 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_irecv( void *buf, size_t count, 
             tag = drain_msg_ref->tag;
             memcpy(buf,    drain_msg_ref->buffer,  tmp_ddt_size * count);
 
+            *request = drain_msg_ref->request;
+            OBJ_RETAIN(*request);
+
             /* Remove the message from the list */
-            if( NULL != drain_msg_ref->datatype ) {
-                OBJ_RELEASE(drain_msg_ref->datatype);
-                drain_msg_ref->datatype = NULL;
-            }
             opal_list_remove_item(&drained_msg_list, &(drain_msg_ref->super));
             OBJ_RELEASE(drain_msg_ref); 
 
@@ -1196,10 +1195,6 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_recv(  void *buf, size_t count, 
             memcpy(status, &drain_msg_ref->status, sizeof(ompi_status_public_t)); 
 
             /* Remove the message from the list */
-            if( NULL != drain_msg_ref->datatype ) {
-                OBJ_RELEASE(drain_msg_ref->datatype);
-                drain_msg_ref->datatype = NULL;
-            }
             opal_list_remove_item(&drained_msg_list, &(drain_msg_ref->super));
             OBJ_RELEASE(drain_msg_ref);
 
