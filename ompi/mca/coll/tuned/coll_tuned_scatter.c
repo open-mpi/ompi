@@ -43,7 +43,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
     int rank;
     int vrank;
     int size;
-    int total_recv = 0, total_send = 0;
+    int total_send = 0;
     char *ptmp     = NULL;
     char *tempbuf  = NULL;
     int err;
@@ -56,7 +56,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
     rank = ompi_comm_rank(comm);
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,
-                "ompi_coll_tuned_scatter_intra_binomial rank %d", rank));
+                 "ompi_coll_tuned_scatter_intra_binomial rank %d", rank));
 
     /* create the binomial tree */
     COLL_TUNED_UPDATE_IN_ORDER_BMTREE( comm, root );
@@ -172,7 +172,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
 		 __FILE__, line, err, rank));
-   return err;
+    return err;
 }
 
 /*
