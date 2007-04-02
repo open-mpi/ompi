@@ -202,7 +202,7 @@ int opal_cr_init(void )
     mca_base_param_reg_string_name("opal_cr", "tmp_dir",
                                    "Temporary directory to place rendezvous files for a checkpoint",
                                    false, false,
-                                   strdup("/tmp"),
+                                   "/tmp",
                                    &opal_cr_pipe_dir);
 
     opal_output_verbose(10, opal_cr_output,
