@@ -1380,10 +1380,19 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
                                 ompi_errhandler_t *errh )
 {
     int ret;
+    
+    /* properly decrement the ref counts on the groups.
+       We are doing this because this function is sort of a redo 
+       of what is done in comm.c.. No need to decrement the ref 
+       count on the proc pointers 
+       This is just a quick fix, and will be looking for a 
+       better solution */
+    OBJ_RELEASE ( comm->c_local_group );
+    OBJ_RELEASE ( comm->c_local_group );
 
     /* allocate a group structure for the new communicator */
     comm->c_local_group = ompi_group_allocate(num_procs);
-
+    
     /* free the malloced  proc pointers */
     free(comm->c_local_group->grp_proc_pointers);
     
@@ -1392,6 +1401,7 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
 
     /* set the remote group to be the same as local group */
     comm->c_remote_group = comm->c_local_group;
+    OBJ_RETAIN ( comm->c_remote_group );
 
     /* retain these proc pointers */
     ompi_group_increment_proc_count(comm->c_local_group);
