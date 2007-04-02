@@ -374,8 +374,8 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
         OBJ_RELEASE ( comm->c_local_group );
         comm->c_local_group = NULL;
         if ( OMPI_COMM_IS_INTRA(comm) ) {
-	    /* WE HAVE TO DECREMENT THE REF COUNT ON THE REMOTE GROUP
-	       EVEN IF IT'S IDENTICAL TO THE LOCAL ONE IN CASE OF INTRA-COMM */
+            /* We have to decrement the ref count on the remote group
+	       even if it is identical to the local one in case of intra-comm */
 	    OBJ_RELEASE ( comm->c_remote_group );
             comm->c_remote_group = NULL;
         }
