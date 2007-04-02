@@ -364,6 +364,10 @@ static bool ft_event_have_received_msg(uint32_t comm_id, int tag, size_t count, 
                                        opal_list_t **found_on_this_list,
                                        bool *found, bool *complete, bool *already_posted);
 
+static int coord_request_wait_all( size_t count,
+                                   ompi_request_t ** requests,
+                                   ompi_status_public_t ** statuses );
+
 static int send_bookmarks(int peer_idx);
 static int recv_bookmarks(int peer_idx);
 static int send_recv_local_bookmarks(int peer_idx);
@@ -1539,8 +1543,6 @@ int ompi_crcp_coord_request_complete(struct ompi_request_t *request)
                 goto DONE;
             }
             if( NULL != msg_ref ) {
-                peer_ref->total_isend_msgs += 1;
-
                 opal_output_verbose(15, mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: request_complete: Matched an iSend: total = %d",
                                     peer_ref->total_isend_msgs);
@@ -3467,24 +3469,11 @@ static int ft_event_wait_quiesce(void) {
          */
         prev_stall = opal_cr_stall_check;
         opal_cr_stall_check = true;
-        for( i = 0; i < wait_any_count; ++i) {
-            ompi_status_public_t   tmp_status;
-            int wait_any_idx = 0;
-
-            if( OMPI_SUCCESS != (ret = ompi_request_wait_any(wait_any_count,
-                                                             wait_any_requests,
-                                                             &wait_any_idx,
-                                                             &tmp_status) ) ) {
-                exit_status = ret;
-                goto cleanup;
-            }
-            
-            opal_output_verbose(5, mca_crcp_coord_component.super.output_handle,
-                                "crcp:coord: wait_quiesce: [%lu,%lu,%lu]  Done with idx %d of %d\n",
-                                ORTE_NAME_ARGS(orte_process_info.my_name),
-                                (int)wait_any_idx, (int)wait_any_count);
-
-            memcpy(wait_any_status[wait_any_idx], &tmp_status, sizeof(ompi_status_public_t) );
+        if( OMPI_SUCCESS != (ret = coord_request_wait_all(wait_any_count,
+                                                          wait_any_requests,
+                                                          wait_any_status) ) ) {
+            exit_status = ret;
+            goto cleanup;
         }
         opal_cr_stall_check = prev_stall;
 
@@ -3791,4 +3780,56 @@ static int find_drained_message_named(size_t ddt_size,
     }
 
     return OMPI_SUCCESS;
+}
+
+static int coord_request_wait_all( size_t count,
+                                   ompi_request_t ** requests,
+                                   ompi_status_public_t ** statuses )
+{
+    int exit_status = OMPI_SUCCESS;
+    ompi_request_t *req;
+    ompi_status_public_t * status;
+    size_t i;
+    
+    for( i = 0; i < count; ++i) {
+        req    = requests[i];
+        status = statuses[i];
+
+        if( false == req->req_complete ) {
+            while (req->req_complete == false) {
+                opal_progress();
+            }
+        }
+
+        if( MPI_STATUS_IGNORE != status ) {
+            status->MPI_TAG    = req->req_status.MPI_TAG;
+            status->MPI_SOURCE = req->req_status.MPI_SOURCE;
+            status->_count     = req->req_status._count;
+            status->_cancelled = req->req_status._cancelled;
+        }
+#if 0
+        if( req->req_persistent ) {
+            if( req->req_state == OMPI_REQUEST_INACTIVE ) {
+                exit_status = OMPI_SUCCESS;
+                goto NEXT;
+            }
+            req->req_state = OMPI_REQUEST_INACTIVE;
+            exit_status = req->req_status.MPI_ERROR;
+            goto DONE;
+        }
+
+        if (MPI_SUCCESS != req->req_status.MPI_ERROR) {
+            exit_status = req->req_status.MPI_ERROR;
+            goto DONE;
+        }
+#endif
+    NEXT:
+        opal_output_verbose(15, mca_crcp_coord_component.super.output_handle,
+                            "crcp:coord: wait_quiesce: [%lu,%lu,%lu]  Done with idx %d of %d\n",
+                            ORTE_NAME_ARGS(orte_process_info.my_name),
+                            (int)i, (int)count);
+    }
+
+ DONE:
+    return exit_status;
 }
