@@ -448,7 +448,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
     }
 
     frag->segments[0].seg_len = *size;
-    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
+    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segments[0].seg_addr.pval) );
     frag->segments[0].seg_key.key64 = 
         OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
     frag->base.des_src = NULL;
