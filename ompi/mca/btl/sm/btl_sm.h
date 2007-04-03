@@ -94,7 +94,7 @@ struct mca_btl_sm_component_t {
     size_t eager_limit;                /**< first fragment size */
     size_t max_frag_size;              /**< maximum (second and beyone) fragment size */
     opal_mutex_t sm_lock;
-    char* sm_resouce_ctl_file;         /**< name of shared memory file used 
+    char* sm_resource_ctl_file;        /**< name of shared memory file used 
                                             to coordinate resource usage */
     mca_common_sm_mmap_t *mmap_file;   /**< description of mmap'ed file */
     mca_btl_sm_module_resource_t *sm_ctl_header;  /* control header in

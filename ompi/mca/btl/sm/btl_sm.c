@@ -297,7 +297,7 @@ int mca_btl_sm_add_procs(
      */
     if ( !mca_btl_sm.btl_inited ) {
         /* set file name */
-        len=asprintf(&(mca_btl_sm_component.sm_resouce_ctl_file),
+        len=asprintf(&(mca_btl_sm_component.sm_resource_ctl_file),
                 "%s"OPAL_PATH_SEP"shared_mem_btl_module.%s",orte_process_info.job_session_dir,
                 orte_system_info.nodename);
         if( 0 > len ) {
@@ -308,7 +308,7 @@ int mca_btl_sm_add_procs(
            segment (only the shared control structure */
         size = sizeof(mca_btl_sm_module_resource_t);
         if(NULL==(mca_btl_sm_component.mmap_file=mca_common_sm_mmap_init(size,
-                        mca_btl_sm_component.sm_resouce_ctl_file,
+                        mca_btl_sm_component.sm_resource_ctl_file,
                         sizeof(mca_btl_sm_module_resource_t), 0))) 
         {
             opal_output(0, "mca_btl_sm_add_procs: unable to create shared memory BTL coordinating strucure :: size %lu \n",
