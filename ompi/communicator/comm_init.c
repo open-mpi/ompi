@@ -137,6 +137,7 @@ int ompi_comm_init(void)
     ompi_mpi_comm_null.c_local_group  = &ompi_mpi_group_null;
     ompi_mpi_comm_null.c_remote_group = &ompi_mpi_group_null;
     OBJ_RETAIN(&ompi_mpi_group_null); 
+    OBJ_RETAIN(&ompi_mpi_group_null);
 
     ompi_mpi_comm_null.c_contextid    = 2;
     ompi_mpi_comm_null.c_f_to_c_index = 2;
@@ -213,6 +214,24 @@ int ompi_comm_finalize(void)
            during init, and we just set this pointer to it.  Hence, we
            just pass in the pointer here. */
        OBJ_DESTRUCT (ompi_mpi_comm_parent);
+
+       /* Please note, that the we did increase the reference count
+	  for ompi_mpi_comm_null, ompi_mpi_group_null, and 
+	  ompi_mpi_errors_are_fatal in ompi_comm_init because of 
+          ompi_mpi_comm_parent.  In case a 
+          parent communicator is really created, the ref. counters
+	  for these objects are decreased again by one. However, in a 
+	  static scenario, we should ideally decrease the ref. counter
+	  for these objects by one here. The problem just is, that 
+	  if the app had a parent_comm, and this has been freed/disconnected,
+	  ompi_comm_parent points again to ompi_comm_null, the reference count 
+          for these objects has not been increased again.
+	  So the point is, if ompi_mpi_comm_parent == &ompi_mpi_comm_null
+	  we do not know whether we have to decrease the ref count for
+	  those three objects or not. Since this is a constant, non-increasing
+	  amount of memory, we stick with the current solution for now, 
+	  namely don't do anything.
+       */	  
     }
 
     /* Shut down MPI_COMM_NULL */
