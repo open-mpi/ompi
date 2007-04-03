@@ -266,10 +266,11 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
         return NULL;
     }
 
+    frag->segments[0].seg_addr.pval = (frag + 1);
+    frag->segments[0].seg_len = reserve;
+
     if(max_data == 0) {
 
-        frag->segments[0].seg_addr.pval = (frag + 1);
-        frag->segments[0].seg_len = reserve;
         frag->base.des_src_cnt = 1;
 
     } else if(ompi_convertor_need_buffers(convertor)) {
@@ -278,7 +279,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
             max_data = frag->size - reserve;
         }
         iov.iov_len = max_data;
-        iov.iov_base = (IOVBASE_TYPE*)(((unsigned char*)(frag+1)) + reserve);
+        iov.iov_base = (IOVBASE_TYPE*)(((unsigned char*)(frag->segments[0].seg_addr.pval)) + reserve);
 
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
         if( rc < 0 ) {
@@ -286,8 +287,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
             return NULL;
         }
 
-        frag->segments[0].seg_addr.pval = (frag + 1);
-        frag->segments[0].seg_len = max_data + reserve;
+        frag->segments[0].seg_len += max_data;
         frag->base.des_src_cnt = 1;
 
     } else {
@@ -301,8 +301,6 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
             return NULL;
         }
 
-        frag->segments[0].seg_addr.pval = frag+1;
-        frag->segments[0].seg_len = reserve;
         frag->segments[1].seg_addr.pval = iov.iov_base;
         frag->segments[1].seg_len = max_data;
         frag->base.des_src_cnt = 2;
