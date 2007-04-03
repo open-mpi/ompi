@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,8 +20,88 @@
  * @file
  *
  * I/O Forwarding Service
+ * The I/O forwarding service (IOF) is used to push file descriptor
+ * streams between ORTE processes.  It is currently primarily used to
+ * push stdin, stdout, and stderr between ORTE processes, but can be
+ * used with any file descriptor stream.
+ *
+ * In practice, the IOF acts as a multiplexor between local file
+ * descriptors and the OOB; the OOB relays information from local file
+ * descriptors to remote file descriptors.  Note that the IOF allows
+ * many-to-one mappings; SOURCE streams can be directed to multiple
+ * destinations and SINK streams can receive input from multiple
+ * sources.
+ *
+ * The design is fairly simple: streams are designated as either
+ * ORTE_IOF_SOURCEs or ORTE_IOF_SINKs.  SOURCE streams provide content
+ * that is pushed elsewhere.  SINK streams accept content that
+ * originated from elsewhere.  In short, we read from SOURCEs and we
+ * write to SINKs.
+ *
+ * Streams are identified by ORTE process name (to include wildecards,
+ * such as "all processes in ORTE job X") and tag.  There are
+ * currently 4 predefined tags, although any integer value is
+ * sufficient:
+ *
+ * - ORTE_IOF_ANY (value -1): any stream will match
+ * - ORTE_IOF_STDIN (value 0): recommended for file descriptor 0, or
+ *   wherever the standard input is currently tied.
+ * - ORTE_IOF_STDOUT (value 1): recommended for file descriptor 1, or
+ *   wherever the standard output is currently tied.
+ * - ORTE_IOF_STDERR (value 2): recommended for file descriptor 2, or
+ *   wherever the standard error is currently tied.
+ *
+ * Note that since streams are identified by ORTE process name, the
+ * caller has no idea whether the stream is on the local node or a
+ * remote node -- it's just a stream.
+ *
+ * IOF components are selected on a "one of many" basis, meaning that
+ * only one IOF component will be selected for a given process.
+ * Details for the various components are given in their source code
+ * bases.
+ *
+ * The following basic actions are supported in IOF:
+ *
+ * publish: File descriptors are "published" as a stream as a
+ * mechanism to make them available to other processes.  For example,
+ * if a stdout descriptor is available from process X, then process X
+ * needs to publish it (and make it a stream) in order to make that
+ * stdout stream available to any other process.
+ *
+ * unpublish: The opposite of publish; when a stream is unpublished,
+ * the content from that file desciptor is no longer available to
+ * other processes.
+ *
+ * push: Tie together a local file descriptor (*not* a stream!) that
+ * should be treated as a source to a stream that should be treated as
+ * a SINK.  Subsequent input that appears on the file descriptor will
+ * automatically be pushed to the SINK stream.  There is currently no
+ * way to stop a push; once it starts, it runs until an EOF is
+ * received on the file descriptor or the target stream is
+ * unpublished.
+ *
+ * pull: Tie together a local file descriptor (*not* a stream!) that
+ * should be treated as a sink to a stream that should be treated as a
+ * SOURCE.  Subsequent input that appears via the stream will
+ * automatically be sent to the target file descriptor.  There is
+ * currently no way to stop a pull; once it starts, it runs until an
+ * EOF is receives on the file descriptor or the source stream is
+ * unpublished.
+ *
+ * subscribe: Setup a callback function that is invoked whenever a
+ * fragment from a matching stream arrives.  This can be used to
+ * post-process fragment information, such as prepending a prefix to
+ * stdout data before outputting it to the user's display in order to
+ * identify the source process.
+ *
+ * unsubscribe: Remove a callback that was previously setup via the
+ * subscribe action.
+ *
+ * flush: Block until all pending data has been written down local
+ * file descriptors and/or completed sending across the OOB to remote
+ * process targets.
  */
-                                                                                         
+
 #ifndef ORTE_IOF_H
 #define ORTE_IOF_H
 
@@ -199,7 +280,7 @@ ORTE_DECLSPEC extern orte_iof_base_module_t orte_iof;
  *  IOF component descriptor. Contains component version information
  *  and component open/close/init functions.
  */
-                                                                                                                 
+
 typedef orte_iof_base_module_t* (*orte_iof_base_component_init_fn_t)(
     int *priority,
     bool *allow_user_threads,
