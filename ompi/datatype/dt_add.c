@@ -167,26 +167,20 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
         ub = LMAX( pdtBase->ub, ub );
     }
     /* While the true_lb and true_ub have to be ordered to have the true_lb lower
-     * than the true_ub, the ub and lb does not have to be ordered. They should be
+     * than the true_ub, the ub and lb do not have to be ordered. They should be
      * as the user define them.
      */
     pdtBase->lb = lb;
     pdtBase->ub = ub;
 
-    if( 0 == pdtBase->nbElems ) old_true_ub = disp;
-    else                        old_true_ub = pdtBase->true_ub;
-    pdtBase->true_lb = LMIN( true_lb, pdtBase->true_lb );
-    pdtBase->true_ub = LMAX( true_ub, pdtBase->true_ub );
-
     /* compute the new memory alignement */
     pdtBase->align = IMAX( pdtBase->align, pdtAdd->align );
-    pdtBase->size += count * pdtAdd->size;
 
     /* Now that we have the new ub and the alignment we should update the ub to match
-     * the new alignement. We have to add an epsilon that is the least nonnegative increment
-     * needed to roung the extent to the next multiple of the alignment. This rule
-     * apply only if there is user specified upper bound as stated in the MPI
-     * standard MPI 1.2 page 71.
+     * the new alignement. We have to add an epsilon that is the least nonnegative
+     * increment needed to roung the extent to the next multiple of the alignment.
+     * This rule apply only if there is user specified upper bound as stated in the
+     * MPI standard MPI 1.2 page 71.
      */
     if( !(pdtBase->flags & DT_FLAG_USER_UB) ) {
         epsilon = (pdtBase->ub - pdtBase->lb) % pdtBase->align;
@@ -196,15 +190,27 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
     }
 
     /*
-     * the count == 0 is LEGAL only for MPI_UB and MPI_LB. I accept it just as a nice way to set
-     * the soft UB for a data (without using a real UB marker). This approach can be used to
-     * create the subarray and darray datatype. However from the MPI level this function
-     * should never be called directly with a count set to 0.
-     * Adding a data-type with a size zero is legal but does not have to go through all the
-     * stuff below.
+     * the count == 0 is LEGAL only for MPI_UB and MPI_LB. Therefore we support it
+     * here in the upper part of this function. As an extension, the count set to
+     * zero can be used to reset the alignment of the data, but not for changing
+     * the true_lb and true_ub.
      */
     if( (0 == count) || (0 == pdtAdd->size) ) {
         return OMPI_SUCCESS;
+    }
+
+    /* Now, once we know everything is fine and there are some bytes in
+     * the data-type we can update the size, true_lb and true_ub.
+     */
+    pdtBase->size += count * pdtAdd->size;
+    if( 0 == pdtBase->nbElems ) old_true_ub = disp;
+    else                        old_true_ub = pdtBase->true_ub;
+    if( 0 != pdtBase->size ) {
+        pdtBase->true_lb = LMIN( true_lb, pdtBase->true_lb );
+        pdtBase->true_ub = LMAX( true_ub, pdtBase->true_ub );
+    } else {
+        pdtBase->true_lb = true_lb;
+        pdtBase->true_ub = true_ub;
     }
 
     pdtBase->bdt_used |= pdtAdd->bdt_used;
