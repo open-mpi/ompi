@@ -545,10 +545,12 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
      * Allocate a range of vpids for the daemons.
      */
     if (num_nodes == 0) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
     rc = orte_ns.reserve_range(0, num_nodes, &vpid);
     if (ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
@@ -650,6 +652,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         int i;
         tmp = opal_argv_split("( test ! -r ./.profile || . ./.profile;", ' ');
         if (NULL == tmp) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         for (i = 0; NULL != tmp[i]; ++i) {
@@ -876,6 +879,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
         pid = fork();
         if (pid < 0) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             goto cleanup;
         }
@@ -927,6 +931,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 if (NULL == exec_path && NULL == prefix_dir) {
                     rc = orte_pls_rsh_fill_exec_path (&exec_path);
                     if (ORTE_SUCCESS != rc) {
+                        ORTE_ERROR_LOG(rc);
                         return rc;
                     }
                 } else {
@@ -937,6 +942,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                     if (NULL == exec_path) {
                         rc = orte_pls_rsh_fill_exec_path (&exec_path);
                         if (ORTE_SUCCESS != rc) {
+                            ORTE_ERROR_LOG(rc);
                             return rc;
                         }
                     }
