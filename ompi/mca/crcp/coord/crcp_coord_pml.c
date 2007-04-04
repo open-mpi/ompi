@@ -174,6 +174,8 @@ void ompi_crcp_coord_pml_bookmark_proc_construct(ompi_crcp_coord_pml_bookmark_pr
 }
 
 void ompi_crcp_coord_pml_bookmark_proc_destruct( ompi_crcp_coord_pml_bookmark_proc_t *bkm_proc) {
+    opal_list_item_t* item = NULL;
+
     bkm_proc->proc_name.cellid = 0;
     bkm_proc->proc_name.jobid  = 0;
     bkm_proc->proc_name.vpid   = 0;
@@ -181,12 +183,30 @@ void ompi_crcp_coord_pml_bookmark_proc_destruct( ompi_crcp_coord_pml_bookmark_pr
     OBJ_DESTRUCT(&(bkm_proc->lock));
     OBJ_DESTRUCT(&(bkm_proc->cond));
 
+    while( NULL != (item = opal_list_remove_first(&bkm_proc->send_list)) ) {
+        OBJ_RELEASE(item);
+    }
     OBJ_DESTRUCT(&bkm_proc->send_list);
+    while( NULL != (item = opal_list_remove_first(&bkm_proc->isend_list)) ) {
+        OBJ_RELEASE(item);
+    }
     OBJ_DESTRUCT(&bkm_proc->isend_list);
+    while( NULL != (item = opal_list_remove_first(&bkm_proc->send_init_list)) ) {
+        OBJ_RELEASE(item);
+    }
     OBJ_DESTRUCT(&bkm_proc->send_init_list);
 
+    while( NULL != (item = opal_list_remove_first(&bkm_proc->recv_list)) ) {
+        OBJ_RELEASE(item);
+    }
     OBJ_DESTRUCT(&bkm_proc->recv_list);
+    while( NULL != (item = opal_list_remove_first(&bkm_proc->irecv_list)) ) {
+        OBJ_RELEASE(item);
+    }
     OBJ_DESTRUCT(&bkm_proc->irecv_list);
+    while( NULL != (item = opal_list_remove_first(&bkm_proc->recv_init_list)) ) {
+        OBJ_RELEASE(item);
+    }
     OBJ_DESTRUCT(&bkm_proc->recv_init_list);
 
     bkm_proc->total_send_msgs           = 0;
@@ -263,13 +283,17 @@ void ompi_crcp_coord_pml_bookmark_proc_destruct( ompi_crcp_coord_pml_bookmark_pr
     dup_msg_ref->buffer = NULL;                                   \
     dup_msg_ref->count    = msg_ref->count;                       \
     dup_msg_ref->datatype = msg_ref->datatype;                    \
-    OBJ_RETAIN(msg_ref->datatype);                                \
-    dup_msg_ref->ddt_size = msg_ref->ddt_size;                    \
+    if( NULL != msg_ref->datatype ) {                             \
+       OBJ_RETAIN(msg_ref->datatype);                             \
+       dup_msg_ref->ddt_size = msg_ref->ddt_size;                 \
+    } else {                                                      \
+       dup_msg_ref->ddt_size = 0;                                 \
+    }                                                             \
                                                                   \
-    dup_msg_ref->tag  = msg_ref->tag;                             \
-    dup_msg_ref->rank = msg_ref->rank;                            \
-    dup_msg_ref->comm = msg_ref->comm;                            \
-    dup_msg_ref->mode = msg_ref->mode;                            \
+    dup_msg_ref->tag     = msg_ref->tag;                          \
+    dup_msg_ref->rank    = msg_ref->rank;                         \
+    dup_msg_ref->comm    = msg_ref->comm;                         \
+    dup_msg_ref->mode    = msg_ref->mode;                         \
     dup_msg_ref->async   = msg_ref->async;                        \
     dup_msg_ref->request = msg_ref->request;                      \
     if( NULL != msg_ref->request ) {                              \
@@ -2337,7 +2361,7 @@ static int ft_event_check_bookmarks(void) {
     int p_n_to_p_m   = 0;
     int p_n_from_p_m = 0;
 
-    if( 15 <= mca_crcp_coord_component.super.verbose ) {
+    if( 10 <= mca_crcp_coord_component.super.verbose ) {
         sleep(orte_process_info.my_name->vpid);
         opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
                             "Process [%lu,%lu,%lu] Match Table",
@@ -2386,8 +2410,9 @@ static int ft_event_check_bookmarks(void) {
         item  = opal_list_get_next(item) ) {
         ompi_crcp_coord_pml_bookmark_proc_t *peer_ref;
         peer_ref = (ompi_crcp_coord_pml_bookmark_proc_t*)item;
-        
-        if( 0 == (peer_ref->proc_name.vpid) % 2) {
+
+        /* Lowest rank sends first */
+        if( orte_process_info.my_name->vpid < peer_ref->proc_name.vpid ) {
             /* Check P_n --> P_m
              * Has the peer received all the messages that I have put on the wire?
              */
@@ -2454,7 +2479,7 @@ static int ft_event_check_bookmarks(void) {
                 }
             }
         }
-        else { /* Odd */
+        else {
             /* Check P_n <-- P_m
              * Have I received all the messages that my peer has put on the wire?
              */
@@ -3234,6 +3259,10 @@ static int ft_event_post_drain_acks(void) {
     int ret;
 
     req_size  = opal_list_get_size(&drained_msg_ack_list);
+    opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
+                        "crcp:coord: post_drain_ack: [%lu,%lu,%lu] Wait on %d ACK Messages.\n",
+                        ORTE_NAME_ARGS(orte_process_info.my_name),
+                        (int)req_size);
     if(req_size <= 0) {
         return OMPI_SUCCESS;
     }
@@ -3273,6 +3302,11 @@ static int ft_event_post_drained(void) {
     int ret;
 
     req_size  = opal_list_get_size(&drained_msg_list);
+    opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
+                        "crcp:coord: post_drained: [%lu,%lu,%lu] Draining %d Messages.\n",
+                        ORTE_NAME_ARGS(orte_process_info.my_name),
+                        (int)req_size);
+
     if(req_size <= 0) {
         return OMPI_SUCCESS;
     }
