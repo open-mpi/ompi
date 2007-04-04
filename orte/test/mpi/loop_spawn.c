@@ -10,59 +10,33 @@
 #define     EXE_TEST             "./loop_child"
 
 
-
-int main( int argc, char **argv ) {
-
-    long *lpBufferMpi;
-    MPI_Comm lIntercom;
-    int lErrcode;
-    MPI_Comm lCommunicateur;
-    int lRangMain,lRangExe,lMessageEnvoi,lIter,lTailleBuffer;
-    int *lpMessageEnvoi=&lMessageEnvoi;
-    MPI_Status lStatus;             /*status de reception*/
-
-     lIter=0;
-
+int main(int argc, char **argv)
+{
+    int iter, err, rank, size;
+    MPI_Comm comm, merged;
 
     /* MPI environnement */    
 
-    printf("main*******************************\n");
-    printf("main : Lancement MPI*\n");
+    printf("parent*******************************\n");
+    printf("parent: Launching MPI*\n");
 
     MPI_Init( &argc, &argv);
-    lpBufferMpi = calloc( 10000, sizeof(long));
-    MPI_Buffer_attach( (void*)lpBufferMpi, 10000 * sizeof(long) );
 
-    while (lIter<1000){
-        lIter ++;
-        lIntercom=(MPI_Comm)-1 ;
+    for (iter = 0; iter < 1000; ++iter) {
+        MPI_Comm_spawn(EXE_TEST, NULL, 1, MPI_INFO_NULL,
+                       0, MPI_COMM_WORLD, &comm, &err);
+        printf("parent: MPI_Comm_spawn #%d return : %d\n", iter, err);
 
-        MPI_Comm_spawn( EXE_TEST, NULL, 1, MPI_INFO_NULL,
-                      0, MPI_COMM_WORLD, &lIntercom, &lErrcode );
-        printf( "%i main***MPI_Comm_spawn return : %d\n",lIter, lErrcode );
-
-        if(lIntercom == (MPI_Comm)-1 ){
-            printf("%i Intercom null\n",lIter);
-            return 0;
-        }
-        MPI_Intercomm_merge(lIntercom, 0,&lCommunicateur );
-        MPI_Comm_rank( lCommunicateur, &lRangMain);
-        lRangExe=1-lRangMain;
-
-        printf("%i main***Rang main : %i   Rang exe : %i \n",lIter,(int)lRangMain,(int)lRangExe);
+        MPI_Intercomm_merge(comm, 0, &merged);
+        MPI_Comm_rank(merged, &rank);
+        MPI_Comm_size(merged, &size);
+        printf("parent: MPI_Comm_spawn #%d rank %d, size %d\n", 
+               iter, rank, size);
 //        sleep(2);
-
+        MPI_Comm_free(&merged);
     }
 
-
-    /* Arret de l'environnement MPI */
-    lTailleBuffer=10000* sizeof(long);
-    MPI_Buffer_detach( (void*)lpBufferMpi, &lTailleBuffer );
-    MPI_Comm_free( &lCommunicateur );
-    MPI_Finalize( );
-    free( lpBufferMpi );
-
-    printf( "Main = End .\n" );
+    MPI_Finalize();
+    printf("parent: End .\n" );
     return 0;
-
 }
