@@ -477,8 +477,18 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
     if (mca_pls_rsh_component.debug_daemons &&
         mca_pls_rsh_component.num_concurrent < num_nodes) {
-        /* we can't run in this situation, so pretty print the error
-         * and exit
+        /**
+         * If we are in '--debug-daemons' we keep the ssh connection 
+         * alive for the span of the run. If we use this option 
+         * AND we launch on more than "num_concurrent" machines
+         * then we will deadlock. No connections are terminated 
+         * until the job is complete, no job is started
+         * since all the orteds are waiting for all the others
+         * to come online, and the others ore not launched because
+         * we are waiting on those that have started to terminate
+         * their ssh tunnels. :(
+         * As we cannot run in this situation, pretty print the error
+         * and return an error code.
          */
         opal_show_help("help-pls-rsh.txt", "deadlock-params",
                        true, mca_pls_rsh_component.num_concurrent, num_nodes);
@@ -1084,16 +1094,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
         } else { /* father */
             OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
-            /* JJH Bug:
-             * If we are in '--debug-daemons' we keep the ssh connection 
-             * alive for the span of the run. If we use this option 
-             * AND we launch on more than "num_concurrent" machines
-             * then we will deadlock. No connections are terminated 
-             * until the job is complete, no job is started
-             * since all the orteds are waiting for all the others
-             * to come online, and the others ore not launched because
-             * we are waiting on those that have started to terminate
-             * their ssh tunnels. :(
+            /* This situation can lead to a deadlock if '--debug-daemons' is set.
+             * However, the deadlock condition is tested at the begining of this
+             * function, so we're quite confident it should not happens here.
              */
             if (mca_pls_rsh_component.num_children++ >=
                 mca_pls_rsh_component.num_concurrent) {
