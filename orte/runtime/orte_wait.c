@@ -319,7 +319,6 @@ orte_waitpid(pid_t wpid, int *status, int options)
     return ret;
 }
 
-
 int
 orte_wait_cb(pid_t wpid, orte_wait_fn_t callback, void *data)
 {
@@ -526,7 +525,6 @@ register_callback(pid_t pid, orte_wait_fn_t callback, void *data)
     if (NULL == reg_cb) return ORTE_ERROR;
     if (NULL != reg_cb->callback) return ORTE_EXISTS;
 
-    reg_cb->pid = pid;
     reg_cb->callback = callback;
     reg_cb->data = data;
 
