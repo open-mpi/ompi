@@ -59,3 +59,8 @@ will cause the system to deadlock.
 
 To avoid deadlock, either increase the number of concurrent daemons, or
 remove the debug-daemons flag.
+
+[unknown-user]
+The user (%d) is unknown to the system (i.e. there is no corresponding
+entry in the password file). Please contact your system administrator
+for a fix.

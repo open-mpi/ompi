@@ -131,8 +131,7 @@ static const char * orte_pls_rsh_shell_name[] = {
     "tcsh",       /* tcsh has to be first otherwise strstr finds csh */
     "csh",
     "ksh",
-    "sh",
-    "unknown"
+    "sh"          /* no need for the "unknown" string */
 };
 
 /* local global storage of timing variables */
@@ -152,11 +151,9 @@ static opal_list_t active_daemons;
 static int orte_pls_rsh_probe(orte_mapped_node_t * node, orte_pls_rsh_shell * shell)
 {
     char ** argv;
-    int argc, rc, nfds, i;
+    int argc, rc, i;
     int fd[2];
     pid_t pid;
-    fd_set readset;
-    fd_set errset;
     char outbuf[4096];
 
     if (mca_pls_rsh_component.debug) {
@@ -164,13 +161,6 @@ static int orte_pls_rsh_probe(orte_mapped_node_t * node, orte_pls_rsh_shell * sh
                     node->nodename);
     }
     *shell = ORTE_PLS_RSH_SHELL_UNKNOWN;
-    /*
-     * Build argv array
-     */
-    argv = opal_argv_copy(mca_pls_rsh_component.agent_argv);
-    argc = mca_pls_rsh_component.agent_argc;
-    opal_argv_append(&argc, &argv, node->nodename);
-    opal_argv_append(&argc, &argv, "echo $SHELL");
     if (pipe(fd)) {
         opal_output(0, "pls:rsh: pipe failed with errno=%d\n", errno);
         return ORTE_ERR_IN_ERRNO;
@@ -184,6 +174,12 @@ static int orte_pls_rsh_probe(orte_mapped_node_t * node, orte_pls_rsh_shell * sh
             opal_output(0, "pls:rsh: dup2 failed with errno=%d\n", errno);
             return ORTE_ERR_IN_ERRNO;
         }
+        /* Build argv array */
+        argv = opal_argv_copy(mca_pls_rsh_component.agent_argv);
+        argc = mca_pls_rsh_component.agent_argc;
+        opal_argv_append(&argc, &argv, node->nodename);
+        opal_argv_append(&argc, &argv, "echo $SHELL");
+
         execvp(argv[0], argv);
         exit(errno);
     }
@@ -191,78 +187,45 @@ static int orte_pls_rsh_probe(orte_mapped_node_t * node, orte_pls_rsh_shell * sh
         opal_output(0, "pls:rsh: close failed with errno=%d\n", errno);
         return ORTE_ERR_IN_ERRNO;
     }
-    /* Monitor stdout */
-    FD_ZERO(&readset);
-    nfds = fd[0]+1;
 
-    memset (outbuf, 0, sizeof (outbuf));
-    rc = ORTE_SUCCESS;;
-    while (ORTE_SUCCESS == rc) {
-        int err;
-        FD_SET (fd[0], &readset);
-        errset = readset;
-        err = select(nfds, &readset, NULL, &errset, NULL);
-        if (err == -1) {
-            if (errno == EINTR)
-                continue;
-            else {
+    {
+        ssize_t ret = 1;
+        char* ptr = outbuf;
+        size_t outbufsize = sizeof(outbuf);
+        
+        do {
+            ret = read (fd[0], ptr, outbufsize-1);
+            if (ret < 0) {
+                if (errno == EINTR)
+                    continue;
                 rc = ORTE_ERR_IN_ERRNO;
                 break;
             }
-        }
-        if (FD_ISSET(fd[0], &errset) != 0)
-            rc = ORTE_ERR_FATAL;
-        /* In case we have something valid to read on stdin */
-        if (FD_ISSET(fd[0], &readset) != 0) {
-            ssize_t ret = 1;
-            char temp[4096];
-            char * ptr = outbuf;
-            ssize_t outbufsize = sizeof(outbuf);
-
-            memset (temp, 0, sizeof(temp));
-
-            while (ret != 0) {
-                ret = read (fd[0], temp, 256);
-                if (ret < 0) {
-                    if (errno == EINTR)
-                        continue;
-                    else {
-                        rc = ORTE_ERR_IN_ERRNO;
-                        break;
-                    }
-                }
-                else {
-                    if (outbufsize > 0) {
-                        memcpy (ptr, temp, (ret > outbufsize) ? outbufsize : ret);
-                        outbufsize -= ret;
-                        ptr += ret;
-                        if (outbufsize > 0)
-                            *ptr = '\0';
-                    }
-                }
+            if( outbufsize > 1 ) {
+                outbufsize -= ret;
+                ptr += ret;
             }
-            /* After reading complete string (aka read returns 0), we just break */
-            break;
-        }
+        } while( 0 != ret );
+        *ptr = '\0';
     }
+    close(fd[0]);
 
-    /* Search for the substring of known shell-names */
-    for (i = 0; i < (int)(sizeof (orte_pls_rsh_shell_name)/
-                          sizeof(orte_pls_rsh_shell_name[0])); i++) {
-        char *sh_name = NULL;
-
-        sh_name = rindex(outbuf, '/');
-        if ( sh_name != NULL ) {
+    if( outbuf[0] != '\0' ) {
+        char *sh_name = rindex(outbuf, '/');
+        if( NULL != sh_name ) {
             sh_name++; /* skip '/' */
-            
             /* We cannot use "echo -n $SHELL" because -n is not portable. Therefore
              * we have to remove the "\n" */
             if ( sh_name[strlen(sh_name)-1] == '\n' ) {
                 sh_name[strlen(sh_name)-1] = '\0';
             }
-            if ( 0 == strcmp(sh_name, orte_pls_rsh_shell_name[i]) ) {
-                *shell = i;
-                break;
+            /* Search for the substring of known shell-names */
+            for (i = 0; i < (int)(sizeof (orte_pls_rsh_shell_name)/
+                                  sizeof(orte_pls_rsh_shell_name[0])); i++) {
+                if ( 0 == strcmp(sh_name, orte_pls_rsh_shell_name[i]) ) {
+                    *shell = i;
+                    break;
+                }
             }
         }
     }
@@ -332,18 +295,18 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             item =  opal_list_get_next(item)) {
             proc = (orte_mapped_proc_t*) item;
 
-                /* Clean up the session directory as if we were the
-                   process itself.  This covers the case where the
-                   process died abnormally and didn't cleanup its own
-                   session directory. */
-
-                orte_session_dir_finalize(&(proc->name));
-
-                rc = orte_smr.set_proc_state(&(proc->name),
-                                           ORTE_PROC_STATE_ABORTED, status);
+            rc = orte_smr.set_proc_state(&(proc->name),
+                                         ORTE_PROC_STATE_ABORTED, status);
             if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
             }
+            
+            /* Clean up the session directory as if we were the
+               process itself.  This covers the case where the
+               process died abnormally and didn't cleanup its own
+               session directory. */
+            
+            orte_session_dir_finalize(&(proc->name));
         }
         OBJ_RELEASE(node);
 
@@ -452,7 +415,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     int local_exec_index, local_exec_index_end;
     char *jobid_string = NULL;
     char *uri, *param;
-    char **argv = NULL, **tmp;
+    char **argv = NULL;
     char *prefix_dir;
     int argc;
     int rc;
@@ -568,12 +531,20 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
     /* What is our local shell? */
     p = getpwuid(getuid());
-    if (NULL != p) {
-        int i         = 0;
+    if( NULL == p ) {
+        /* This user is unknown to the system. Therefore, there is no reason we
+         * spawn whatsoever in his name. Give up with a HUGE error message.
+         */
+        opal_show_help( "help-pls-rsh.txt", "unknown-user", true, (int)getuid() );
+        rc = ORTE_ERR_FATAL;
+        goto cleanup;
+    }
+    {
+        int i;
         char *sh_name = NULL;
-
+        
         sh_name = rindex(p->pw_shell, '/');
-        sh_name++;
+        sh_name++;  /* skip the '\' */
         for (i = 0; i < (int)(sizeof (orte_pls_rsh_shell_name)/
                               sizeof(orte_pls_rsh_shell_name[0])); i++) {
             if ( 0 == strcmp(sh_name, orte_pls_rsh_shell_name[i]) ) {
@@ -584,18 +555,16 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 case ORTE_PLS_RSH_SHELL_BASH: local_sh = true; break;
                 case ORTE_PLS_RSH_SHELL_TCSH: /* fall through */
                 case ORTE_PLS_RSH_SHELL_CSH:  local_csh = true; break;
-                default:
-                    opal_output(0, "WARNING: local probe returned unhandled shell:%s assuming bash\n",
-                                orte_pls_rsh_shell_name[i]);
-                    remote_sh = true;
-                    break;
+                    /* The match has been done, there is no need for a default case here */
                 }
+                /* I did match one of the known shells, so now we're done with the shell detection */
+                break;
             }
         }
         if ( i == ORTE_PLS_RSH_SHELL_UNKNOWN ) {
             opal_output(0, "WARNING: local probe returned unhandled shell:%s assuming bash\n",
                         orte_pls_rsh_shell_name[i]);
-            remote_sh = true;
+            local_sh = true;
         }
         
         if (mca_pls_rsh_component.debug) {
@@ -646,21 +615,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     node_name_index1 = argc;
     opal_argv_append(&argc, &argv, "<template>");
 
-    /* Do we need to source .profile on the remote side? */
-
-    if (!(remote_csh || remote_sh)) {
-        int i;
-        tmp = opal_argv_split("( test ! -r ./.profile || . ./.profile;", ' ');
-        if (NULL == tmp) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        for (i = 0; NULL != tmp[i]; ++i) {
-            opal_argv_append(&argc, &argv, tmp[i]);
-        }
-        opal_argv_free(tmp);
-    }
-
     /* add the daemon command (as specified by user) */
     local_exec_index = argc;
     opal_argv_append(&argc, &argv, mca_pls_rsh_component.orted);
@@ -690,7 +644,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     /* pass along the universe name and location info */
     opal_argv_append(&argc, &argv, "--universe");
     asprintf(&param, "%s@%s:%s", orte_universe_info.uid,
-                orte_universe_info.host, orte_universe_info.name);
+             orte_universe_info.host, orte_universe_info.name);
     opal_argv_append(&argc, &argv, param);
     free(param);
 
@@ -765,9 +719,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     }
 
     local_exec_index_end = argc;
-    if (!(remote_csh || remote_sh)) {
-        opal_argv_append(&argc, &argv, ")");
-    }
     if (mca_pls_rsh_component.debug) {
         param = opal_argv_join(argv, ' ');
         if (NULL != param) {
@@ -781,26 +732,26 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
        requires some explanation:
 
        - Use OPAL_LIBDIR and OPAL_BINDIR instead of -D'ing some macros
-         in this directory's Makefile.am because it makes all the
-         dependencies work out correctly.  These are defined in
-         opal/install_dirs.h.
+       in this directory's Makefile.am because it makes all the
+       dependencies work out correctly.  These are defined in
+       opal/install_dirs.h.
 
        - After a discussion on the devel-core mailing list, the
-         developers decided that we should use the local directory
-         basenames as the basis for the prefix on the remote note.
-         This does not handle a few notable cases (e.g., f the
-         libdir/bindir is not simply a subdir under the prefix, if the
-         libdir/bindir basename is not the same on the remote node as
-         it is here in the local node, etc.), but we decided that
-         --prefix was meant to handle "the common case".  If you need
-         something more complex than this, a) edit your shell startup
-         files to set PATH/LD_LIBRARY_PATH properly on the remove
-         node, or b) use some new/to-be-defined options that
-         explicitly allow setting the bindir/libdir on the remote
-         node.  We decided to implement these options (e.g.,
-         --remote-bindir and --remote-libdir) to orterun when it
-         actually becomes a problem for someone (vs. a hypothetical
-         situation).
+       developers decided that we should use the local directory
+       basenames as the basis for the prefix on the remote note.
+       This does not handle a few notable cases (e.g., if the
+       libdir/bindir is not simply a subdir under the prefix, if the
+       libdir/bindir basename is not the same on the remote node as
+       it is here on the local node, etc.), but we decided that
+       --prefix was meant to handle "the common case".  If you need
+       something more complex than this, a) edit your shell startup
+       files to set PATH/LD_LIBRARY_PATH properly on the remove
+       node, or b) use some new/to-be-defined options that
+       explicitly allow setting the bindir/libdir on the remote
+       node.  We decided to implement these options (e.g.,
+       --remote-bindir and --remote-libdir) to orterun when it
+       actually becomes a problem for someone (vs. a hypothetical
+       situation).
 
        Hence, for now, we simply take the basename of this install's
        libdir and bindir and use it to append this install's prefix
@@ -912,7 +863,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
              */
             if (!mca_pls_rsh_component.force_rsh &&
                 (0 == strcmp(rmaps_node->nodename, orte_system_info.nodename) ||
-                opal_ifislocal(rmaps_node->nodename))) {
+                 opal_ifislocal(rmaps_node->nodename))) {
                 if (mca_pls_rsh_component.debug) {
                     opal_output(0, "pls:rsh: %s is a LOCAL node\n",
                                 rmaps_node->nodename);
@@ -1041,8 +992,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                                   prefix_dir, lib_base,
                                   prefix_dir, bin_base,
                                   mca_pls_rsh_component.orted);
-                    }
-                    if (remote_csh) {
+                    } else if (remote_csh) {
                         /* [t]csh is a bit more challenging -- we
                            have to check whether LD_LIBRARY_PATH
                            is already set before we try to set it.
@@ -1079,7 +1029,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             argv[proc_name_index] = strdup(name_string);
 
             if (!mca_pls_rsh_component.debug) {
-                 /* setup stdin */
+                /* setup stdin */
                 int fd = open("/dev/null", O_RDWR);
                 dup2(fd, 0);
                 close(fd);
@@ -1090,11 +1040,11 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 close(fd);
 
             /* Set signal handlers back to the default.  Do this close
-                to the execve() because the event library may (and likely
-                will) reset them.  If we don't do this, the event
-                library may have left some set that, at least on some
-                OS's, don't get reset via fork() or exec().  Hence, the
-                orted could be unkillable (for example). */
+               to the execve() because the event library may (and likely
+               will) reset them.  If we don't do this, the event
+               library may have left some set that, at least on some
+               OS's, don't get reset via fork() or exec().  Hence, the
+               orted could be unkillable (for example). */
 
             set_handler_default(SIGTERM);
             set_handler_default(SIGINT);
@@ -1103,12 +1053,12 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             set_handler_default(SIGCHLD);
             
             /* Unblock all signals, for many of the same reasons that
-                we set the default handlers, above.  This is noticable
-                on Linux where the event library blocks SIGTERM, but we
-                don't want that blocked by the orted (or, more
-                specifically, we don't want it to be blocked by the
-                orted and then inherited by the ORTE processes that it
-                forks, making them unkillable by SIGTERM). */
+               we set the default handlers, above.  This is noticable
+               on Linux where the event library blocks SIGTERM, but we
+               don't want that blocked by the orted (or, more
+               specifically, we don't want it to be blocked by the
+               orted and then inherited by the ORTE processes that it
+               forks, making them unkillable by SIGTERM). */
             sigprocmask(0, 0, &sigs);
             sigprocmask(SIG_UNBLOCK, &sigs, 0);
             
@@ -1168,7 +1118,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         ORTE_ERROR_LOG(rc);
     }
 
-cleanup:
+ cleanup:
     OBJ_RELEASE(map);
 
     if (NULL != lib_base) {
