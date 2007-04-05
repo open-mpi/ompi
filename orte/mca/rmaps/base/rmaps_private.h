@@ -158,7 +158,7 @@ void orte_rmaps_base_recv(int status, orte_process_name_t* sender,
  * procs. If not, then add new node entry and put this proc
  * on its list.
  */
-int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_cellid_t cell, char *nodename,
+int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_cellid_t cell, char *nodename, int32_t launch_id,
                                     char *username, bool oversubscribed, orte_mapped_proc_t *proc);
 
 ORTE_DECLSPEC int orte_rmaps_base_get_target_nodes(opal_list_t* node_list, orte_jobid_t jobid,

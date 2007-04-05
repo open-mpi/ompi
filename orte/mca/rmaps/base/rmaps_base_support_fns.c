@@ -262,7 +262,7 @@ int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_list,
 }
 
 
-int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_cellid_t cell, char *nodename,
+int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_cellid_t cell, char *nodename, int32_t launch_id,
                                     char *username, bool oversubscribed, orte_mapped_proc_t *proc)
 {
     opal_list_item_t *item;
@@ -294,6 +294,7 @@ int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_cellid_t cell, cha
     if (NULL != username) {
         node->username = strdup(username);
     }
+    node->launch_id = launch_id;
     node->oversubscribed = oversubscribed;
     opal_list_append(&map->nodes, &node->super);
     
@@ -352,6 +353,7 @@ int orte_rmaps_base_claim_slot(orte_job_map_t *map,
     /* add the proc to the map */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_add_proc_to_map(map, current_node->node_cellid,
                                                               current_node->node_name,
+                                                              current_node->launch_id,
                                                               current_node->node_username,
                                                               oversub, proc))) {
         ORTE_ERROR_LOG(rc);

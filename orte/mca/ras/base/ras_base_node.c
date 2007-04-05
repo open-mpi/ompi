@@ -33,6 +33,7 @@
 static void orte_ras_base_node_construct(orte_ras_node_t* node)
 {
     node->node_name = NULL;
+    node->launch_id = -1;
     node->node_arch = NULL;
     node->node_cellid = 0;
     node->node_state = ORTE_NODE_STATE_UNKNOWN;
@@ -71,9 +72,23 @@ OBJ_CLASS_INSTANCE(
 
 int orte_ras_base_node_query(opal_list_t* nodes)
 {
+    char* keys[] = {
+        ORTE_NODE_NAME_KEY,
+        ORTE_NODE_LAUNCH_ID_KEY,
+        ORTE_NODE_ARCH_KEY,
+        ORTE_NODE_STATE_KEY,
+        ORTE_NODE_SLOTS_KEY,
+        ORTE_NODE_SLOTS_IN_USE_KEY,
+        ORTE_NODE_SLOTS_ALLOC_KEY,
+        ORTE_NODE_SLOTS_MAX_KEY,
+        ORTE_NODE_USERNAME_KEY,
+        ORTE_CELLID_KEY,
+        NULL
+    };
     orte_std_cntr_t i, cnt, *sptr;
     orte_node_state_t *nsptr;
     orte_cellid_t *cptr;
+    int32_t *i32;
     orte_gpr_value_t** values;
     int rc;
 
@@ -82,7 +97,7 @@ int orte_ras_base_node_query(opal_list_t* nodes)
         ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
         ORTE_NODE_SEGMENT,
         NULL,
-        NULL,
+        keys,
         &cnt,
         &values);
     if(ORTE_SUCCESS != rc) {
@@ -106,6 +121,14 @@ int orte_ras_base_node_query(opal_list_t* nodes)
                     ORTE_ERROR_LOG(rc);
                     continue;
                 }
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_NODE_LAUNCH_ID_KEY) == 0) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&i32, keyval->value, ORTE_INT32))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->launch_id = *i32;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_ARCH_KEY) == 0) {
@@ -193,6 +216,7 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
 {
     char* keys[] = {
         ORTE_NODE_NAME_KEY,
+        ORTE_NODE_LAUNCH_ID_KEY,
         ORTE_NODE_ARCH_KEY,
         ORTE_NODE_STATE_KEY,
         ORTE_NODE_SLOTS_KEY,
@@ -209,6 +233,7 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
     orte_std_cntr_t *sptr;
     orte_node_state_t *nsptr;
     orte_cellid_t *cptr;
+    int32_t *i32;
     int rc, alloc_key_posn=5;
 
     if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_str, jobid))) {
@@ -264,6 +289,14 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
                     ORTE_ERROR_LOG(rc);
                     continue;
                 }
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_NODE_LAUNCH_ID_KEY) == 0) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&i32, keyval->value, ORTE_INT32))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->launch_id = *i32;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_ARCH_KEY) == 0) {
@@ -363,11 +396,25 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
 
 orte_ras_node_t* orte_ras_base_node_lookup(orte_cellid_t cellid, const char* node_name)
 {
+    char* keys[] = {
+        ORTE_NODE_NAME_KEY,
+        ORTE_NODE_LAUNCH_ID_KEY,
+        ORTE_NODE_ARCH_KEY,
+        ORTE_NODE_STATE_KEY,
+        ORTE_NODE_SLOTS_KEY,
+        ORTE_NODE_SLOTS_IN_USE_KEY,
+        ORTE_NODE_SLOTS_ALLOC_KEY,
+        ORTE_NODE_SLOTS_MAX_KEY,
+        ORTE_NODE_USERNAME_KEY,
+        ORTE_CELLID_KEY,
+        NULL
+    };
     orte_ras_node_t* node = NULL;
     orte_std_cntr_t i, cnt, num_tokens;
     orte_std_cntr_t *sptr;
     orte_cellid_t *cptr;
     orte_node_state_t *nsptr;
+    int32_t *i32;
     orte_gpr_value_t** values;
     char** tokens = NULL;
     int rc;
@@ -383,7 +430,7 @@ orte_ras_node_t* orte_ras_base_node_lookup(orte_cellid_t cellid, const char* nod
         ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
         ORTE_NODE_SEGMENT,
         tokens,
-        NULL,
+        keys,
         &cnt,
         &values);
     if(ORTE_SUCCESS != rc) {
@@ -407,6 +454,14 @@ orte_ras_node_t* orte_ras_base_node_lookup(orte_cellid_t cellid, const char* nod
                     ORTE_ERROR_LOG(rc);
                     continue;
                 }
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_NODE_LAUNCH_ID_KEY) == 0) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&i32, keyval->value, ORTE_INT32))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->launch_id = *i32;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_ARCH_KEY) == 0) {
@@ -500,6 +555,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
     orte_std_cntr_t num_values, i, j;
     char *keys[] = {
         ORTE_NODE_NAME_KEY,
+        ORTE_NODE_LAUNCH_ID_KEY,
         ORTE_NODE_ARCH_KEY,
         ORTE_NODE_STATE_KEY,
         ORTE_CELLID_KEY,
@@ -510,6 +566,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
         };
     orte_data_type_t types[] = {
         ORTE_STRING,
+        ORTE_INT32,
         ORTE_STRING,
         ORTE_NODE_STATE,
         ORTE_CELLID,
@@ -535,7 +592,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
     for (i=0; i < num_values; i++) {
         if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[i]),
                                     ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
-                                    ORTE_NODE_SEGMENT, 8, 0))) {
+                                    ORTE_NODE_SEGMENT, 9, 0))) {
             ORTE_ERROR_LOG(rc);
             for (j=0; j < i; j++) {
                 OBJ_RELEASE(values[j]);
@@ -552,6 +609,12 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
 
         j = 0;
         if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[j]), keys[j], types[j], node->node_name))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        
+        ++j;
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[j]), keys[j], types[j], &(node->launch_id)))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }

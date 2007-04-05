@@ -149,6 +149,8 @@ int orte_rmaps_base_copy_mapped_node(orte_mapped_node_t **dest, orte_mapped_node
         (*dest)->nodename = strdup(src->nodename);
     }
 
+    (*dest)->launch_id = src->launch_id;
+    
     if (NULL != src->username) {
         (*dest)->username = strdup(src->username);
     }

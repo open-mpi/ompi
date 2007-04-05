@@ -63,6 +63,7 @@ OBJ_CLASS_INSTANCE(orte_mapped_proc_t,
 static void orte_rmaps_mapped_node_construct(orte_mapped_node_t* node)
 {
     node->nodename = NULL;
+    node->launch_id = -1;
     node->username = NULL;
     node->daemon = NULL;
     node->oversubscribed = false;

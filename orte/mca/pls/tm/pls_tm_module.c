@@ -89,20 +89,11 @@ static int pls_tm_finalize(void);
 
 static int pls_tm_connect(void);
 static int pls_tm_disconnect(void);
-static int pls_tm_query_hostnames(void);
-static int pls_tm_start_proc(char *nodename, int argc, char **argv, 
-                             char **env, tm_task_id *task_id, 
-                             tm_event_t *event);
 static int pls_tm_check_path(char *exe, char **env);
 
 /*
  * Local variables
  */
-/* Resolving TM hostname */
-static char **tm_hostnames = NULL;
-static tm_node_id *tm_node_ids = NULL;
-static int num_tm_hostnames = 0, num_node_ids = 0;
-
 
 
 /*
@@ -298,15 +289,6 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     }
     connected = true;
 
-    /* Resolve the TM hostnames and TD node ID's (guarantee that we
-       don't mix any of these TM events in with the TM spawn events,
-       so that we can poll for each set of events without interference
-       from the other */
-    rc = pls_tm_query_hostnames();
-    if (ORTE_SUCCESS != rc) {
-        goto cleanup;
-    }
-
     /* Figure out the basenames for the libdir and bindir.  There is a
        lengthy comment about this in pls_rsh_module.c explaining all
        the rationale for how / why we're doing this. */
@@ -440,9 +422,11 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
             }
         }
         
-        rc = pls_tm_start_proc(node->nodename, argc, argv, env,
-                                tm_task_ids + launched, 
-                                tm_events + launched);
+        rc = tm_spawn(argc, argv, env, node->launch_id, tm_task_ids + launched, tm_events + launched);
+        if (TM_SUCCESS != rc) {
+            return ORTE_ERROR;
+        }
+        
         if (ORTE_SUCCESS != rc) {
             opal_output(0, "pls:tm: start_procs returned error %d", rc);
             goto cleanup;
@@ -689,17 +673,6 @@ static int pls_tm_finalize(void)
     if (ORTE_SUCCESS != (rc = orte_pls_base_comm_stop())) {
         ORTE_ERROR_LOG(rc);
     }
-    
-    if (NULL != tm_hostnames) {
-        opal_argv_free(tm_hostnames);
-        tm_hostnames = NULL;
-        num_tm_hostnames = 0;
-    }
-    if (NULL != tm_node_ids) {
-        free(tm_node_ids);
-        tm_node_ids = NULL;
-        num_node_ids = 0;
-    }
 
     return ORTE_SUCCESS;
 }
@@ -734,142 +707,6 @@ static int pls_tm_connect(void)
 static int pls_tm_disconnect(void)
 {
     tm_finalize();
-
-    return ORTE_SUCCESS;
-}
-
-
-/*
- * For a given TM node ID, get the string hostname corresponding to
- * it.
- */
-static char *get_tm_hostname(tm_node_id node)
-{
-    char *hostname;
-    char buffer[256];
-    int ret, local_errno;
-    tm_event_t event;
-    char **argv;
-
-    /* Get the info string corresponding to this TM node ID */
-
-    ret = tm_rescinfo(node, buffer, sizeof(buffer) - 1, &event);
-    if (TM_SUCCESS != ret) {
-        opal_output(0, "tm_rescinfo returned %d\n", ret);
-        return NULL;
-    }
-
-    /* Now wait for that event to happen */
-
-    ret = tm_poll(TM_NULL_EVENT, &event, 1, &local_errno);
-    if (TM_SUCCESS != ret) {
-        opal_output(0, "tm_poll returned %d\n", ret);
-        return NULL;
-    }
-
-    /* According to the TM man page, we get back a space-separated
-       string array.  The hostname is the second item.  Use a cheap
-       trick to get it. */
-
-    buffer[sizeof(buffer) - 1] = '\0';
-    argv = opal_argv_split(buffer, ' ');
-    if (NULL == argv) {
-        opal_output(0, "opal_argv_split failed\n");
-        return NULL;
-    }
-    hostname = strdup(argv[1]);
-    opal_argv_free(argv);
-
-    /* All done */
-
-    return hostname;
-}
-
-
-static int pls_tm_query_hostnames(void)
-{
-    char *h;
-    int i, ret;
-
-    /* Get the list of nodes allocated in this PBS job */
-
-    ret = tm_nodeinfo(&tm_node_ids, &num_node_ids);
-    if (TM_SUCCESS != ret) {
-        return ORTE_ERR_NOT_FOUND;
-    }
-
-    /* TM "nodes" may actually correspond to PBS "VCPUs", which means
-       there may be multiple "TM nodes" that correspond to the same
-       physical node.  This doesn't really affect what we're doing
-       here (we actually ignore the fact that they're duplicates --
-       slightly inefficient, but no big deal); just mentioned for
-       completeness... */
-
-    tm_hostnames = NULL;
-    num_tm_hostnames = 0;
-    for (i = 0; i < num_node_ids; ++i) {
-        h = get_tm_hostname(tm_node_ids[i]);
-        if (NULL == h) {
-            opal_output(0, "get_tm_hostname returned NULL");
-            return ORTE_ERROR;
-        }
-        opal_argv_append(&num_tm_hostnames, &tm_hostnames, h);
-        free(h);
-    }
-
-    /* All done */
-
-    return ORTE_SUCCESS;
-}
-
-static int do_tm_resolve(char *hostname, tm_node_id *tnodeid)
-{
-    int i, ret;
-
-    /* Have we already queried TM for all the node info? */
-    if (NULL == tm_hostnames) {
-        return ORTE_ERR_NOT_FOUND;
-    }
-
-    /* Find the TM ID of the hostname that we're looking for */
-    for (i = 0; i < num_tm_hostnames; ++i) {
-        if (0 == strcmp(hostname, tm_hostnames[i])) {
-            *tnodeid = tm_node_ids[i];
-            if (mca_pls_tm_component.debug) {
-                opal_output(0, "pls:tm:launch: resolved host %s to node ID %d",
-                            hostname, tm_node_ids[i]);
-            }
-            break;
-        }
-    }
-
-    /* All done */
-    if (i < num_tm_hostnames) {
-        ret = ORTE_SUCCESS;
-    } else { 
-        ret = ORTE_ERR_NOT_FOUND;
-    }
-
-    return ret;
-}
-
-
-static int pls_tm_start_proc(char *nodename, int argc, char **argv, char **env,
-                             tm_task_id *task_id, tm_event_t *event)
-{
-    int ret;
-    tm_node_id node_id;
-
-    /* get the tm node id for this node */
-    ret = do_tm_resolve(nodename, &node_id);
-    if (ORTE_SUCCESS != ret) {
-        return ret;
-    }
-
-    ret = tm_spawn(argc, argv, env, node_id, task_id, event);
-    if (TM_SUCCESS != ret) {
-        return ORTE_ERROR;
-    }
 
     return ORTE_SUCCESS;
 }

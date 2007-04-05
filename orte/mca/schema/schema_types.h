@@ -62,7 +62,10 @@
 #define ORTE_JOBGRP_KEY                         "orte-jobgrp"
 #define ORTE_JOBID_KEY                          "orte-jobid"
 #define ORTE_VPID_KEY                           "orte-vpid"
+
+/* NODE specific keys */
 #define ORTE_NODE_NAME_KEY                      "orte-node-name"
+#define ORTE_NODE_LAUNCH_ID_KEY                 "orte-node-launch-id"
 #define ORTE_NODE_ARCH_KEY                      "orte-node-arch"
 #define ORTE_NODE_STATE_KEY                     "orte-node-state"
 #define ORTE_NODE_SLOTS_KEY                     "orte-node-slots"
@@ -73,6 +76,8 @@
 #define ORTE_NODE_BOOTPROXY_KEY                 "orte-node-bootproxy"
 #define ORTE_NODE_USERNAME_KEY                  "orte-node-username"
 #define ORTE_NODE_OVERSUBSCRIBED_KEY            "orte-node-oversubscribed"
+
+/* JOB specific keys */
 #define ORTE_JOB_APP_CONTEXT_KEY                "orte-job-app-context"
 #define ORTE_JOB_SLOTS_KEY                      "orte-job-slots"                /**< number of procs in job */
 #define ORTE_JOB_VPID_START_KEY                 "orte-job-vpid-start"
@@ -82,6 +87,8 @@
 #define ORTE_JOB_IOF_KEY                        "orte-job-iof"
 #define ORTE_JOB_STATE_KEY                      "orte-job-state"
 #define ORTE_JOB_MAPPING_MODE_KEY               "orte-job-mapping-mode"
+
+/* PROCESS specific keys */
 #define ORTE_PROC_NAME_KEY                      "orte-proc-name"
 #define ORTE_PROC_RANK_KEY                      "orte-proc-rank"
 #define ORTE_PROC_PID_KEY                       "orte-proc-pid"
