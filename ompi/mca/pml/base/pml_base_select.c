@@ -86,6 +86,7 @@ int mca_pml_base_select(bool enable_progress_threads,
             if(0 == strncmp(component->pmlm_version.mca_component_name, 
                             tmp_val, strlen(component->pmlm_version.mca_component_name)) ) {
                 found_pml = true;
+                break;
             }
         }
 

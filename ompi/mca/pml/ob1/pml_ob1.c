@@ -56,7 +56,7 @@ mca_pml_ob1_t mca_pml_ob1 = {
     mca_pml_ob1_probe,
     mca_pml_ob1_start,
     mca_pml_ob1_dump,
-    mca_pml_base_ft_event,
+    mca_pml_ob1_ft_event,
     32768,
     INT_MAX
     }
@@ -373,4 +373,55 @@ void mca_pml_ob1_error_handler(
         struct mca_btl_base_module_t* btl,
         int32_t flags) { 
     orte_errmgr.abort();
+}
+
+int mca_pml_ob1_ft_event( int state )
+{
+    int ret;
+
+    opal_output(0, "pml:base: ft_event: Called (%d)!!\n", state);
+
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+
+    /* Call the BML
+     * BML is expected to call ft_event in
+     * - BTL(s)
+     * - MPool(s)
+     */
+    if( OMPI_SUCCESS != (ret = mca_bml.bml_ft_event(state))) {
+        opal_output(0, "pml:base: ft_event: BML ft_event function failed: %d\n",
+                    ret);
+    }
+    
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+
+    return OMPI_SUCCESS;
 }
