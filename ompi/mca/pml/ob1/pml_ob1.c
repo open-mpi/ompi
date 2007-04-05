@@ -185,6 +185,18 @@ int mca_pml_ob1_del_procs(ompi_proc_t** procs, size_t nprocs)
 
 int mca_pml_ob1_component_fini(void)
 {
+    int rc;
+
+    /* Shutdown BML */
+    if(OMPI_SUCCESS != (rc = mca_bml.bml_finalize()))
+        return rc;
+
+
+    /* Shutdown buffered send */
+    if(OMPI_SUCCESS != (rc = mca_pml_base_bsend_fini())) {
+        return rc;
+    }
+
     /* FIX */
     return OMPI_SUCCESS;
 }
