@@ -151,7 +151,7 @@ static opal_list_t active_daemons;
 static int orte_pls_rsh_probe(orte_mapped_node_t * node, orte_pls_rsh_shell * shell)
 {
     char ** argv;
-    int argc, rc, i;
+    int argc, rc = ORTE_SUCCESS, i;
     int fd[2];
     pid_t pid;
     char outbuf[4096];
@@ -192,12 +192,14 @@ static int orte_pls_rsh_probe(orte_mapped_node_t * node, orte_pls_rsh_shell * sh
         ssize_t ret = 1;
         char* ptr = outbuf;
         size_t outbufsize = sizeof(outbuf);
-        
+
         do {
             ret = read (fd[0], ptr, outbufsize-1);
             if (ret < 0) {
                 if (errno == EINTR)
                     continue;
+                opal_output( 0, "Unable to detect the remote shell (error %s)\n",
+                             strerror(errno) );
                 rc = ORTE_ERR_IN_ERRNO;
                 break;
             }
@@ -887,7 +889,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                     }
                 } else {
                     if (NULL != prefix_dir) {
-                        exec_path = opal_os_path( false, prefix_dir, bin_base, "orted", NULL );
+                        exec_path = opal_os_path( false, prefix_dir, bin_base, mca_pls_rsh_component.orted, NULL );
                     }
                     /* If we yet did not fill up the execpath, do so now */
                     if (NULL == exec_path) {
