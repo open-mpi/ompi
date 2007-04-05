@@ -909,7 +909,7 @@ static void  signal_forward_callback(int fd, short event, void *arg)
 
     signum = OPAL_EVENT_SIGNAL(signal);
     if (!orterun_globals.quiet){
-        fprintf(stderr, "%s: Forwarding signal %d to job",
+        fprintf(stderr, "%s: Forwarding signal %d to job\n",
                 orterun_basename, signum);
     }
 
