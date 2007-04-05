@@ -130,10 +130,6 @@ static int mca_bml_r2_add_btls( void )
     btls = &mca_btl_base_modules_initialized;
     num_btls = opal_list_get_size(btls);
 
-    if(true == mca_bml_r2.btls_added) {
-        return OMPI_SUCCESS; 
-    }
-
     mca_bml_r2.num_btl_modules = 0;
     mca_bml_r2.num_btl_progress = 0;
    

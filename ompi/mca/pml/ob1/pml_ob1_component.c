@@ -223,20 +223,21 @@ int mca_pml_ob1_component_close(void)
     if(OMPI_SUCCESS != (rc = mca_bml_base_close()))
         return rc;
 
-    /* buffered send */
-    if(OMPI_SUCCESS != (rc = mca_pml_base_bsend_fini())) {
+    OBJ_DESTRUCT(&mca_pml_ob1.rdma_pending);
+    OBJ_DESTRUCT(&mca_pml_ob1.pckt_pending);
+    OBJ_DESTRUCT(&mca_pml_ob1.recv_pending);
+    OBJ_DESTRUCT(&mca_pml_ob1.send_pending);
+    OBJ_DESTRUCT(&mca_pml_ob1.buffers);
+    OBJ_DESTRUCT(&mca_pml_ob1.pending_pckts);
+    OBJ_DESTRUCT(&mca_pml_ob1.recv_frags);
+    OBJ_DESTRUCT(&mca_pml_ob1.rdma_frags);
+    OBJ_DESTRUCT(&mca_pml_ob1.recv_requests);
+    OBJ_DESTRUCT(&mca_pml_ob1.send_requests);
+    OBJ_DESTRUCT(&mca_pml_ob1.lock);
+
+    if(OMPI_SUCCESS != (rc = mca_pml_ob1.allocator->alc_finalize(mca_pml_ob1.allocator))) {
         return rc;
     }
-
-    OBJ_DESTRUCT(&mca_pml_ob1.pckt_pending);
-    OBJ_DESTRUCT(&mca_pml_ob1.send_pending);
-    OBJ_DESTRUCT(&mca_pml_ob1.recv_pending);
-    OBJ_DESTRUCT(&mca_pml_ob1.send_requests);
-    OBJ_DESTRUCT(&mca_pml_ob1.recv_requests);
-    OBJ_DESTRUCT(&mca_pml_ob1.rdma_frags);
-    OBJ_DESTRUCT(&mca_pml_ob1.recv_frags);
-    OBJ_DESTRUCT(&mca_pml_ob1.buffers);
-    OBJ_DESTRUCT(&mca_pml_ob1.lock);
 
 #if 0
     if (mca_pml_ob1.send_requests.fl_num_allocated !=
