@@ -216,6 +216,10 @@ extern int mca_pml_ob1_start(
     ompi_request_t** requests
 );
 
+extern int mca_pml_ob1_ft_event(
+    int state
+);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

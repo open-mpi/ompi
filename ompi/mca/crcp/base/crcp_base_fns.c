@@ -548,7 +548,6 @@ int ompi_crcp_base_reboot_pml(ompi_crcp_base_pml_state_t* pml_state) {
     /* Enable the PML */
     opal_output_verbose(25, ompi_crcp_base_output,
                         "crcp:coord: reboot_pml(): PML Enable");
-    /* JJH RETURN HERE -- mca_bml_r2.btl_modules is corrupted. I bet it is not removed properly....*/
     if( OMPI_SUCCESS != (ret = MCA_PML_CALL(enable(true)) ) ) {
         error_msg = "PML control failed";
         return_code = ret;

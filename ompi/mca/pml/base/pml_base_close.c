@@ -41,6 +41,8 @@ int mca_pml_base_close(void)
     mca_pml_base_selected_component.pmlm_finalize();
   }
 
+  OBJ_DESTRUCT(&mca_pml_base_pml);
+
   /* Close all remaining available modules (may be one if this is a
      OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 

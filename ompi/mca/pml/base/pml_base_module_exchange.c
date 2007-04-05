@@ -207,6 +207,8 @@ mca_pml_base_modex_finalize(void)
 	OBJ_RELEASE(item);
     OBJ_DESTRUCT(&mca_pml_base_modex_subscriptions);
 
+    OBJ_DESTRUCT(&mca_pml_base_modex_lock);
+
     return OMPI_SUCCESS;
 }
 
