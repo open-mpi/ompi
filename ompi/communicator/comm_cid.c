@@ -99,9 +99,9 @@ static void ompi_comm_reg_constructor(ompi_comm_reg_t *regcom);
 static void ompi_comm_reg_destructor(ompi_comm_reg_t *regcom);
 
 OBJ_CLASS_INSTANCE (ompi_comm_reg_t,
-		    opal_list_item_t,
-		    ompi_comm_reg_constructor,
-		    ompi_comm_reg_destructor );
+                    opal_list_item_t,
+                    ompi_comm_reg_constructor,
+                    ompi_comm_reg_destructor );
 
 #if OMPI_HAVE_THREAD_SUPPORT
 static opal_mutex_t ompi_cid_lock;
@@ -126,7 +126,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
      * for the current scenario 
      */
     switch (mode) 
-        {
+    {
         case OMPI_COMM_CID_INTRA: 
             allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra;
             break;
@@ -142,91 +142,91 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         default: 
             return MPI_UNDEFINED;
             break;
-        }
+    }
 
     /**
      * In case multi-threading is enabled, we revert to the old algorithm
      * starting from cid_block_start
      */
     if (MPI_THREAD_MULTIPLE == ompi_mpi_thread_provided) {
-	int nextlocal_cid;
-	int done=0;
-	int response=0, glresponse=0;
-	int start=ompi_mpi_communicators.lowest_free;
-	int i;
-	
-	OPAL_THREAD_LOCK(&ompi_cid_lock);
-	ompi_comm_register_cid (comm->c_contextid);
-	OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-	
-	while (!done) {
-	    /**
-	     * This is the real algorithm described in the doc 
-	     */
-	    
-	    OPAL_THREAD_LOCK(&ompi_cid_lock);
-	    if (comm->c_contextid != ompi_comm_lowest_cid() ) {
-		/* if not lowest cid, we do not continue, but sleep and try again */
-		OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-		continue;
-	    }
-	    OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-	    
-	    
-	    for (i=start; i < mca_pml.pml_max_contextid ; i++) {
-		flag=ompi_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
-							  i, comm);
-		if (true == flag) {
-		    nextlocal_cid = i;
-		    break;
-		}
-	    }
-	    
-	    (allredfnct)(&nextlocal_cid, &nextcid, 1, MPI_MAX, comm, bridgecomm,
-			 local_leader, remote_leader, send_first );
-	    if (nextcid == nextlocal_cid) {
-		response = 1; /* fine with me */
-	    }
-	    else {
-		ompi_pointer_array_set_item(&ompi_mpi_communicators, 
-					    nextlocal_cid, NULL);
-		
-		flag = ompi_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
-							    nextcid, comm );
-		if (true == flag) {
-		    response = 1; /* works as well */
-		}
-		else {
-		    response = 0; /* nope, not acceptable */
-		}
-	    }
-	    
-	    (allredfnct)(&response, &glresponse, 1, MPI_MIN, comm, bridgecomm,
+        int nextlocal_cid;
+        int done=0;
+        int response=0, glresponse=0;
+        int start=ompi_mpi_communicators.lowest_free;
+        int i;
+        
+        OPAL_THREAD_LOCK(&ompi_cid_lock);
+        ompi_comm_register_cid (comm->c_contextid);
+        OPAL_THREAD_UNLOCK(&ompi_cid_lock);
+        
+        while (!done) {
+            /**
+             * This is the real algorithm described in the doc 
+             */
+            
+            OPAL_THREAD_LOCK(&ompi_cid_lock);
+            if (comm->c_contextid != ompi_comm_lowest_cid() ) {
+                /* if not lowest cid, we do not continue, but sleep and try again */
+                OPAL_THREAD_UNLOCK(&ompi_cid_lock);
+                continue;
+            }
+            OPAL_THREAD_UNLOCK(&ompi_cid_lock);
+            
+            
+            for (i=start; i < mca_pml.pml_max_contextid ; i++) {
+                flag=ompi_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
+                                                          i, comm);
+                if (true == flag) {
+                    nextlocal_cid = i;
+                    break;
+                }
+            }
+            
+            (allredfnct)(&nextlocal_cid, &nextcid, 1, MPI_MAX, comm, bridgecomm,
                          local_leader, remote_leader, send_first );
-	    if (1 == glresponse) {
-		done = 1;             /* we are done */
-		break;
-	    }
-	    else if ( 0 == glresponse ) {
-		if ( 1 == response ) {
-		    /* we could use that, but other don't agree */
-		    ompi_pointer_array_set_item(&ompi_mpi_communicators, 
-						nextcid, NULL);
-		}
-		start = nextcid+1; /* that's where we can start the next round */
-	    }
-	}
-	
-	/* set the according values to the newcomm */
-	newcomm->c_contextid = nextcid;
-	newcomm->c_f_to_c_index = newcomm->c_contextid;
-	ompi_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
-	
-	OPAL_THREAD_LOCK(&ompi_cid_lock);
-	ompi_comm_unregister_cid (comm->c_contextid);
-	OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-	
-	return (MPI_SUCCESS);
+            if (nextcid == nextlocal_cid) {
+                response = 1; /* fine with me */
+            }
+            else {
+                ompi_pointer_array_set_item(&ompi_mpi_communicators, 
+                                            nextlocal_cid, NULL);
+                
+                flag = ompi_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
+                                                            nextcid, comm );
+                if (true == flag) {
+                    response = 1; /* works as well */
+                }
+                else {
+                    response = 0; /* nope, not acceptable */
+                }
+            }
+            
+            (allredfnct)(&response, &glresponse, 1, MPI_MIN, comm, bridgecomm,
+                         local_leader, remote_leader, send_first );
+            if (1 == glresponse) {
+                done = 1;             /* we are done */
+                break;
+            }
+            else if ( 0 == glresponse ) {
+                if ( 1 == response ) {
+                    /* we could use that, but other don't agree */
+                    ompi_pointer_array_set_item(&ompi_mpi_communicators, 
+                                                nextcid, NULL);
+                }
+                start = nextcid+1; /* that's where we can start the next round */
+            }
+        }
+        
+        /* set the according values to the newcomm */
+        newcomm->c_contextid = nextcid;
+        newcomm->c_f_to_c_index = newcomm->c_contextid;
+        ompi_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
+        
+        OPAL_THREAD_LOCK(&ompi_cid_lock);
+        ompi_comm_unregister_cid (comm->c_contextid);
+        OPAL_THREAD_UNLOCK(&ompi_cid_lock);
+        
+        return (MPI_SUCCESS);
     }
 
      /**
@@ -234,49 +234,49 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
       * highest-free algorithm
       */
     if ( OMPI_COMM_CID_INTRA_OOB == mode || OMPI_COMM_CID_INTRA_BRIDGE == mode) {
-	(allredfnct)(&cid_block_start, &global_block_start, 1, 
-		     MPI_MAX, comm, bridgecomm,
-		     local_leader, remote_leader, send_first );
-	cid_block_start = global_block_start;
-	nextcid = cid_block_start;
-	cid_block_start = cid_block_start + 1;
+        (allredfnct)(&cid_block_start, &global_block_start, 1, 
+                     MPI_MAX, comm, bridgecomm,
+                     local_leader, remote_leader, send_first );
+        cid_block_start = global_block_start;
+        nextcid = cid_block_start;
+        cid_block_start = cid_block_start + 1;
     }
     else {
-	flag=false;
-	block = 0;
-	if( 0 == comm->c_contextid ) {
-	    block = OMPI_COMM_BLOCK_WORLD;
-	}
-	else {
-	    block = OMPI_COMM_BLOCK_OTHERS;
-	}
+        flag=false;
+        block = 0;
+        if( 0 == comm->c_contextid ) {
+            block = OMPI_COMM_BLOCK_WORLD;
+        }
+        else {
+            block = OMPI_COMM_BLOCK_OTHERS;
+        }
 
-	while(!flag) {
-	    /**
-	     * If the communicator has IDs available then allocate one for the child
-	     */
-	    if(MPI_UNDEFINED != comm->c_id_available && 
-	       MPI_UNDEFINED != comm->c_id_start_index &&  
-	       block > comm->c_id_available - comm->c_id_start_index) {
-		nextcid = comm->c_id_available;
-		flag=ompi_pointer_array_test_and_set_item (&ompi_mpi_communicators,
-							   nextcid, comm);
-	    }
-	    /**
-	     * Otherwise the communicator needs to negotiate a new block of IDs
-	     */
-	    else {
-		(allredfnct)(&cid_block_start, &global_block_start, 1, 
-			     MPI_MAX, comm, bridgecomm,
-			     local_leader, remote_leader, send_first );
-		cid_block_start = global_block_start;
-		comm->c_id_available = cid_block_start;
-		comm->c_id_start_index = cid_block_start;
-		cid_block_start = cid_block_start + block;
-	    }
-	}
-	
-	comm->c_id_available++;
+        while(!flag) {
+            /**
+             * If the communicator has IDs available then allocate one for the child
+             */
+            if(MPI_UNDEFINED != comm->c_id_available && 
+               MPI_UNDEFINED != comm->c_id_start_index &&  
+               block > comm->c_id_available - comm->c_id_start_index) {
+                nextcid = comm->c_id_available;
+                flag=ompi_pointer_array_test_and_set_item (&ompi_mpi_communicators,
+                                                           nextcid, comm);
+            }
+            /**
+             * Otherwise the communicator needs to negotiate a new block of IDs
+             */
+            else {
+                (allredfnct)(&cid_block_start, &global_block_start, 1, 
+                             MPI_MAX, comm, bridgecomm,
+                             local_leader, remote_leader, send_first );
+                cid_block_start = global_block_start;
+                comm->c_id_available = cid_block_start;
+                comm->c_id_start_index = cid_block_start;
+                cid_block_start = cid_block_start + block;
+            }
+        }
+        
+        comm->c_id_available++;
     }
     /* set the according values to the newcomm */
     newcomm->c_contextid = nextcid;
@@ -318,19 +318,19 @@ static int ompi_comm_register_cid (uint32_t cid )
 
     newentry->cid = cid;
     if ( !(opal_list_is_empty (&ompi_registered_comms)) ) {
-	for (item = opal_list_get_first(&ompi_registered_comms);
-	     item != opal_list_get_end(&ompi_registered_comms);
-	     item = opal_list_get_next(item)) {
-	    regcom = (ompi_comm_reg_t *)item;
-	    if ( regcom->cid > cid ) {
-		break;
-	    }
-	}
-	opal_list_insert_pos (&ompi_registered_comms, (opal_list_item_t *)regcom, 
-			      (opal_list_item_t *)newentry);
+        for (item = opal_list_get_first(&ompi_registered_comms);
+             item != opal_list_get_end(&ompi_registered_comms);
+             item = opal_list_get_next(item)) {
+            regcom = (ompi_comm_reg_t *)item;
+            if ( regcom->cid > cid ) {
+                break;
+            }
+        }
+        opal_list_insert_pos (&ompi_registered_comms, (opal_list_item_t *)regcom, 
+                              (opal_list_item_t *)newentry);
     }
     else {
-	opal_list_append (&ompi_registered_comms, (opal_list_item_t *)newentry);
+        opal_list_append (&ompi_registered_comms, (opal_list_item_t *)newentry);
     }
 
     return OMPI_SUCCESS;
@@ -379,37 +379,37 @@ int ompi_comm_activate ( ompi_communicator_t* newcomm,
                          void* remote_leader,
                          int mode, 
                          int send_first, 
-			 int sync_flag,
+                         int sync_flag,
                          mca_base_component_t *collcomponent )
 {
     int ok=0, gok=0;
     ompi_comm_cid_allredfct* allredfnct;
 
     if (0 == sync_flag) {
-	/* Step 1: the barrier, after which it is allowed to 
-	 * send messages over the new communicator 
-	 */
-	switch (mode) 
+        /* Step 1: the barrier, after which it is allowed to 
+         * send messages over the new communicator 
+         */
+        switch (mode) 
         {
-	    case OMPI_COMM_CID_INTRA: 
-		allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra;
-		break;
-	    case OMPI_COMM_CID_INTER:
-		allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_inter;
-		break;
-	    case OMPI_COMM_CID_INTRA_BRIDGE: 
-		allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_bridge;
-		break;
-	    case OMPI_COMM_CID_INTRA_OOB: 
-		allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_oob;
-		break;
-	    default: 
-		return MPI_UNDEFINED;
-		break;
+            case OMPI_COMM_CID_INTRA: 
+                allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra;
+                break;
+            case OMPI_COMM_CID_INTER:
+                allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_inter;
+                break;
+            case OMPI_COMM_CID_INTRA_BRIDGE: 
+                allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_bridge;
+                break;
+            case OMPI_COMM_CID_INTRA_OOB: 
+                allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_oob;
+                break;
+            default: 
+                return MPI_UNDEFINED;
+                break;
         }
-	
-	(allredfnct)(&ok, &gok, 1, MPI_MIN, comm, bridgecomm,
-		     local_leader, remote_leader, send_first );
+        
+        (allredfnct)(&ok, &gok, 1, MPI_MIN, comm, bridgecomm,
+                     local_leader, remote_leader, send_first );
     }
     /* Check to see if this process is in the new communicator.
 

@@ -231,7 +231,7 @@ int ompi_comm_finalize(void)
           those three objects or not. Since this is a constant, non-increasing
           amount of memory, we stick with the current solution for now, 
           namely don't do anything.
-       */	  
+       */  
     }
 
     /* Shut down MPI_COMM_NULL */
@@ -334,7 +334,7 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
 
     /*  Check if the communicator is a topology */
     if ( MPI_COMM_NULL != comm && 
-	 (OMPI_COMM_IS_CART(comm) || OMPI_COMM_IS_GRAPH(comm))) {
+         (OMPI_COMM_IS_CART(comm) || OMPI_COMM_IS_GRAPH(comm))) {
 
         /* check and free individual things */
         
@@ -394,8 +394,8 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
         comm->c_local_group = NULL;
         if ( OMPI_COMM_IS_INTRA(comm) ) {
             /* We have to decrement the ref count on the remote group
-	       even if it is identical to the local one in case of intra-comm */
-	    OBJ_RELEASE ( comm->c_remote_group );
+               even if it is identical to the local one in case of intra-comm */
+            OBJ_RELEASE ( comm->c_remote_group );
             comm->c_remote_group = NULL;
         }
     }
