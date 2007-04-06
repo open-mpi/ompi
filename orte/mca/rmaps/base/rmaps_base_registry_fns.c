@@ -263,10 +263,12 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
     
     /* all done */
     *map = mapping;
-    return ORTE_SUCCESS;
+    rc = ORTE_SUCCESS;
 
 cleanup:
-    OBJ_RELEASE(mapping);
+    if(rc != ORTE_SUCCESS) {
+        OBJ_RELEASE(mapping);
+    }
     
     for (v=0; v < num_values; v++) {
         OBJ_RELEASE(values[v]);
@@ -477,10 +479,13 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
     }
 
 cleanup:
-    for(i=0; i<num_procs; i++) {
+    for(i=0; i<=num_procs; i++) {
         if(NULL != values[i]) {
             OBJ_RELEASE(values[i]);
         }
+    }
+    if(NULL != segment) {
+        free(segment);
     }
     if(NULL != values)
         free(values);

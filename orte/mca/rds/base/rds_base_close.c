@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -18,12 +18,11 @@
 
 #include "orte_config.h"
 
-#include <stdio.h>
-
 #include "orte/orte_constants.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -73,6 +72,10 @@ int orte_rds_base_close(void)
 
     mca_base_components_close(orte_rds_base.rds_output, 
                               &orte_rds_base.rds_components, NULL);
+
+    if(-1 != orte_rds_base.rds_output) {
+        opal_output_close(orte_rds_base.rds_output);
+    }
 
     OBJ_DESTRUCT(&orte_rds_base.rds_selected);
     return ORTE_SUCCESS;

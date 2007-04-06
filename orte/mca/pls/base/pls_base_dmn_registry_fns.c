@@ -111,6 +111,7 @@ int orte_pls_base_store_active_daemons(opal_list_t *daemons)
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
+        free(key);
         item = opal_list_get_next(item);
     }
     
@@ -124,7 +125,6 @@ CLEANUP:
         if (NULL != values[i]) OBJ_RELEASE(values[i]);
     }
     if (NULL != values) free(values);
-    free(key);
     
     return rc;
 }

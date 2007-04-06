@@ -166,7 +166,7 @@ static int orte_ras_slurm_discover(char *regexp, char *tasks_per_node,
                                    opal_list_t* nodelist)
 {
     int i, j, len, ret, count, reps, num_nodes;
-    char *base, **names = NULL, *temp;
+    char *base, **names = NULL;
     char *begptr, *endptr, *orig;
     int *slots;
     bool found_range = false;
@@ -248,12 +248,7 @@ static int orte_ras_slurm_discover(char *regexp, char *tasks_per_node,
             /* If we didn't find a range, just add the node */
             opal_output(orte_ras_base.ras_output, 
                         "ras:slurm:allocate:discover: found node %s", base);
-            if(NULL == (temp = strdup(base))) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                free(orig);
-                return ORTE_ERR_OUT_OF_RESOURCE;
-            }
-            if(ORTE_SUCCESS != (ret = opal_argv_append_nosize(&names, temp))) {
+            if(ORTE_SUCCESS != (ret = opal_argv_append_nosize(&names, base))) {
                 ORTE_ERROR_LOG(ret);
                 free(orig);
                 return ret;
@@ -423,9 +418,9 @@ static int orte_ras_slurm_parse_ranges(char *base, char *ranges, char ***names)
  */
 static int orte_ras_slurm_parse_range(char *base, char *range, char ***names)
 {
-    char *str, temp1[BUFSIZ], temp2[BUFSIZ];
+    char *str, temp1[BUFSIZ];
     size_t i, j, start, end;
-    size_t base_len, len;
+    size_t base_len, len, num_len;
     size_t str_start, str_end;
     size_t num_str_len;
     bool found;
@@ -490,34 +485,34 @@ static int orte_ras_slurm_parse_range(char *base, char *range, char ***names)
     
     /* Make strings for all values in the range */
     
+    len = base_len + num_str_len + 32;
+    str = malloc(len);
+    if (NULL == str) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    strcpy(str, base);
     for (i = start; i <= end; ++i) {
-        len = base_len + 32;
-        str = malloc(len);
-        if (NULL == str) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        
-        str[0] = '\0';
-        snprintf(temp1, BUFSIZ - 1, "%s", base);
-        snprintf(temp2, BUFSIZ - 1, "%lu", (long) i);
-        temp1[BUFSIZ - 1] = temp2[BUFSIZ - 1] = '\0';
+        str[base_len] = '\0';
+        snprintf(temp1, BUFSIZ - 1, "%lu", (long) i);
         
         /* Do we need zero pading? */
         
-        if (strlen(temp2) < num_str_len) {
-            for (j = 0; j < num_str_len - strlen(temp2); ++j) {
-                strcat(temp1, "0");
+        if ((num_len = strlen(temp1)) < num_str_len) {
+            for (j = base_len; j < base_len + (num_str_len - num_len); ++j) {
+                str[j] = '0';
             }
+            str[j] = '\0';
         }
-        snprintf(str, len - 1, "%s%s", temp1, temp2);
-        str[len - 1] = '\0';
+        strcat(str, temp1);
         ret = opal_argv_append_nosize(names, str);
         if(ORTE_SUCCESS != ret) {
             ORTE_ERROR_LOG(ret);
+            free(str);
             return ret;
         }
     }
+    free(str);
     
     /* All done */
     return ORTE_SUCCESS;
