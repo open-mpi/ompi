@@ -29,7 +29,8 @@ version 1.0.
 1.2.1
 -----
 
-- Improved launch times when using TM (PBS Pro, Torque, Open PBS)
+- Fixed various memory leaks in OPAL and ORTE.
+- Improved launch times when using TM (PBS Pro, Torque, Open PBS).
 - Fixed mpi_leave_pinned to work for all datatypes.
 - Fix functionality allowing users to disable sbrk() (the
   mpool_base_disable_sbrk MCA parameter) on platforms that support it.
