@@ -39,10 +39,14 @@ extern "C" {
 #endif
 
 /*
- * DEFINE THE DEFAULT PAGE SIZE FOR THE DSS BUFFERS - IN KILOBYTES
+ * The default starting chunk size
  */
-#define ORTE_DSS_DEFAULT_PAGE_SIZE  1
-
+#define ORTE_DSS_DEFAULT_INITIAL_SIZE  128
+/*
+ * The default threshold size when we switch from doubling the 
+ * buffer size to addatively increasing it
+ */
+#define ORTE_DSS_DEFAULT_THRESHOLD_SIZE 1024
 
 /*
  * Internal type corresponding to size_t.  Do not use this in
@@ -199,7 +203,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_dss_type_info_t);
 extern bool orte_dss_initialized;
 extern bool orte_dss_debug;
 extern int orte_dss_verbose;
-extern int orte_dss_page_size;
+extern int orte_dss_initial_size;
+extern int orte_dss_threshold_size;
 extern orte_pointer_array_t *orte_dss_types;
 extern orte_data_type_t orte_dss_num_reg_types;
 

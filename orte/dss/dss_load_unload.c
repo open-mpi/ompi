@@ -78,7 +78,7 @@ int orte_dss_unload(orte_buffer_t *buffer, void **payload,
     /* dereference everything in buffer */
     buffer->base_ptr = NULL;
     buffer->pack_ptr = buffer->unpack_ptr = NULL;
-    buffer->bytes_allocated = buffer->bytes_used = buffer->bytes_avail = 0;
+    buffer->bytes_allocated = buffer->bytes_used = 0;
 
     /* All done */
 
@@ -123,7 +123,6 @@ int orte_dss_load(orte_buffer_t *buffer, void *payload,
 
     /* set counts for size and space */
     buffer->bytes_allocated = buffer->bytes_used = bytes_used;
-    buffer->bytes_avail = 0;
 
     /* All done */
 

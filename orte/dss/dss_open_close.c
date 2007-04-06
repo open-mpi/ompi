@@ -34,7 +34,8 @@
 bool orte_dss_initialized = false;
 bool orte_dss_debug = false;
 int orte_dss_verbose = -1;  /* by default disabled */
-int orte_dss_page_size;
+int orte_dss_initial_size;
+int orte_dss_threshold_size;
 orte_pointer_array_t *orte_dss_types;
 orte_data_type_t orte_dss_num_reg_types;
 orte_dss_buffer_type_t default_buf_type;
@@ -96,7 +97,7 @@ static void orte_buffer_construct (orte_buffer_t* buffer)
     /* Make everything NULL to begin with */
 
     buffer->base_ptr = buffer->pack_ptr = buffer->unpack_ptr = NULL;
-    buffer->bytes_allocated = buffer->bytes_used = buffer->bytes_avail = 0;
+    buffer->bytes_allocated = buffer->bytes_used = 0;
 }
 
 static void orte_buffer_destruct (orte_buffer_t* buffer)
@@ -142,7 +143,7 @@ OBJ_CLASS_INSTANCE(orte_dss_type_info_t, opal_object_t,
 int orte_dss_open(void)
 {
     char *enviro_val;
-    int id, page_size, rc;
+    int id, rc;
     orte_data_type_t tmp;
     int def_type;
 
@@ -173,13 +174,16 @@ int orte_dss_open(void)
     mca_base_param_lookup_int(id, &rc);
     default_buf_type = rc;
 
-    /* setup the page size -this is for use by the BUFFER system, NOT the data type
-       manager that keeps track of registered data types!! It must be converted to
-       bytes since the buffer system will allocate a "page_size" at a time.
-    */
-    id = mca_base_param_register_int("dss", "page", "size", NULL, ORTE_DSS_DEFAULT_PAGE_SIZE);
-    mca_base_param_lookup_int(id, &page_size);
-    orte_dss_page_size = 1024*page_size;
+    /* setup the initial size of the buffer. */
+    id = mca_base_param_register_int("dss", "buffer_initial", "size", NULL, 
+                                     ORTE_DSS_DEFAULT_INITIAL_SIZE);
+    mca_base_param_lookup_int(id, &orte_dss_initial_size);
+
+    /* the threshold as to where to stop doubling the size of the buffer 
+     * allocated memory and start doing additive increases */
+    id = mca_base_param_register_int("dss", "buffer_threshold", "size", NULL, 
+                                     ORTE_DSS_DEFAULT_THRESHOLD_SIZE);
+    mca_base_param_lookup_int(id, &orte_dss_threshold_size);
 
     /* Setup the types array */
 

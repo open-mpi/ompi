@@ -39,34 +39,39 @@
  */
 char* orte_dss_buffer_extend(orte_buffer_t *buffer, size_t bytes_to_add)
 {
-    size_t required, num_pages;
+    size_t required, to_alloc;
     size_t pack_offset, unpack_offset;
 
     /* Check to see if we have enough space already */
 
-    if (buffer->bytes_avail >= bytes_to_add) {
+    if ((buffer->bytes_allocated - buffer->bytes_used) >= bytes_to_add) {
         return buffer->pack_ptr;
     }
 
-    /* If we don't, see how many pages will be required and alloc
-       that */
-
     required = buffer->bytes_used + bytes_to_add;
-    num_pages = required / orte_dss_page_size;
-    if (0 != required % orte_dss_page_size) {
-        ++num_pages;
+    if(required >= (size_t)orte_dss_threshold_size) {
+        to_alloc = ((required + orte_dss_threshold_size - 1) 
+                    / orte_dss_threshold_size) * orte_dss_threshold_size;
+    } else {
+        to_alloc = buffer->bytes_allocated;
+        if(0 == to_alloc) {
+            to_alloc = orte_dss_initial_size;
+        }
+        while(to_alloc < required) {
+            to_alloc <<= 1;
+        } 
     }
+
     if (NULL != buffer->base_ptr) {
         pack_offset = ((char*) buffer->pack_ptr) - ((char*) buffer->base_ptr);
         unpack_offset = ((char*) buffer->unpack_ptr) -
             ((char*) buffer->base_ptr);
-        buffer->base_ptr = (char*)realloc(buffer->base_ptr, 
-                                          num_pages * orte_dss_page_size);
+        buffer->base_ptr = (char*)realloc(buffer->base_ptr, to_alloc);
     } else {
         pack_offset = 0;
         unpack_offset = 0;
         buffer->bytes_used = 0;
-        buffer->base_ptr = (char*)malloc(num_pages * orte_dss_page_size);
+        buffer->base_ptr = (char*)malloc(to_alloc);
     }
     
     if (NULL == buffer->base_ptr) { 
@@ -75,8 +80,7 @@ char* orte_dss_buffer_extend(orte_buffer_t *buffer, size_t bytes_to_add)
     }
     buffer->pack_ptr = ((char*) buffer->base_ptr) + pack_offset;
     buffer->unpack_ptr = ((char*) buffer->base_ptr) + unpack_offset;
-    buffer->bytes_allocated = num_pages * orte_dss_page_size;
-    buffer->bytes_avail = buffer->bytes_allocated - buffer->bytes_used;
+    buffer->bytes_allocated = to_alloc;
     
     /* All done */
 
