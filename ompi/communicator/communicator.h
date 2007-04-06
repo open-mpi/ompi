@@ -104,17 +104,17 @@ struct ompi_communicator_t {
                                           topology, etc. */
 
     int c_id_available; /* the currently available Cid for allocation 
-			   to a child*/
+               to a child*/
     int c_id_start_index; /* the starting index of the block of cids 
-			     allocated to tthis communicator*/
+                 allocated to tthis communicator*/
 
     ompi_group_t        *c_local_group;
     ompi_group_t       *c_remote_group;
 
     struct ompi_communicator_t *c_local_comm; /* a duplicate of the local 
-						 communicator in case the comm is 
-						 an inter-comm*/
-					 
+                                                 communicator in case the comm  
+                                                 is an inter-comm*/
+                     
     /* Attributes */
     struct opal_hash_table_t       *c_keyhash;
 
@@ -316,7 +316,7 @@ struct ompi_communicator_t {
      *
      */
     int ompi_comm_dup (ompi_communicator_t *comm, ompi_communicator_t **newcomm, 
-		       int sync_flag);
+                       int sync_flag);
 
 
     /**
@@ -417,7 +417,7 @@ struct ompi_communicator_t {
                              void* remote_leader,
                              int mode,
                              int send_first,
-			     int sync_flag,
+                             int sync_flag,
                              mca_base_component_t *collcomponent );
 
 

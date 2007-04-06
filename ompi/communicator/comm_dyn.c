@@ -240,7 +240,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
                               rport,                   /* remote leader */
                               OMPI_COMM_CID_INTRA_OOB, /* mode */
                               send_first,              /* send or recv first */
-			      0,                       /* sync_flag */
+                              0,                       /* sync_flag */
                               NULL );                  /* coll component */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
@@ -307,14 +307,13 @@ int ompi_comm_get_rport(orte_process_name_t *port, int send_first,
 
         rc = orte_rml.send_buffer(port, sbuf, tag, 0);
         OBJ_RELEASE(sbuf);
-	if ( 0 > rc ) {
-	    ORTE_ERROR_LOG(rc);
-	    return rc;
-	}
-	    
+        if ( 0 > rc ) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
         *rport_name = *port;
-    }
-    else {
+    } else {
         orte_buffer_t *rbuf;
 
         rbuf = OBJ_NEW(orte_buffer_t);
@@ -406,7 +405,8 @@ ompi_comm_start_processes(int count, char **array_of_commands,
      * later override this value by providing an MPI_Info value. for now, though,
      * let's get the default value off the registry
      */
-    if (ORTE_SUCCESS != (rc = orte_rmgr.get_app_context(orte_process_info.my_name->jobid, &apps, &num_apps))) {
+    rc = orte_rmgr.get_app_context(orte_process_info.my_name->jobid, &apps, &num_apps);
+    if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -423,10 +423,12 @@ ompi_comm_start_processes(int count, char **array_of_commands,
         base_prefix = NULL;
     }
     /* cleanup the memory we used */
-    for (ai = 0; ai < num_apps; ai++) {
-        OBJ_RELEASE(apps[ai]);
+    if(NULL != apps) {
+        for (ai = 0; ai < num_apps; ai++) {
+            OBJ_RELEASE(apps[ai]);
+        }
+        free(apps);
     }
-    if (NULL != apps) free(apps);
 
     /* Convert the list of commands to an array of orte_app_context_t
        pointers */
@@ -566,7 +568,9 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     } /* for (i = 0 ; i < count ; ++i) */
 
     /* cleanup */
-    if (NULL != base_prefix) free(base_prefix);
+    if (NULL != base_prefix) {
+        free(base_prefix);
+    }
 
     /* tell the RTE that we want to be a child of this process' job */
     if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(&attributes, ORTE_NS_USE_PARENT,
@@ -617,7 +621,9 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     }
     
     /* spawn procs */
-    if (ORTE_SUCCESS != (rc = orte_rmgr.spawn_job(apps, count, &new_jobid, 0, NULL, NULL, ORTE_PROC_STATE_NONE, &attributes))) {
+    rc = orte_rmgr.spawn_job(apps, count, &new_jobid, 0, NULL, NULL, 
+                             ORTE_PROC_STATE_NONE, &attributes);
+    if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         opal_progress_event_users_decrement();
         return MPI_ERR_SPAWN;
@@ -636,11 +642,13 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     
     /* clean up */
     opal_progress_event_users_decrement();
-    while (NULL != (item = opal_list_remove_first(&attributes))) OBJ_RELEASE(item);
+    while (NULL != (item = opal_list_remove_first(&attributes))) {
+        OBJ_RELEASE(item);
+    }
     OBJ_DESTRUCT(&attributes);
 
     for ( i=0; i<count; i++) {
-    OBJ_RELEASE(apps[i]);
+        OBJ_RELEASE(apps[i]);
     }
     free (apps);
 
@@ -668,39 +676,40 @@ int ompi_comm_dyn_init (void)
 
     /* if env-variable is set, parse port and call comm_connect_accept */
     if (NULL != port_name ) {
-    ompi_communicator_t *oldcomm;
+        ompi_communicator_t *oldcomm;
 
-    /* split the content of the environment variable into
-       its pieces, which are : port_name and tag */
-    oob_port = ompi_parse_port (port_name, &tag);
-    if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(&port_proc_name, oob_port))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+        /* split the content of the environment variable into
+           its pieces, which are : port_name and tag */
+        oob_port = ompi_parse_port (port_name, &tag);
+        rc = orte_ns.convert_string_to_process_name(&port_proc_name, oob_port);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
 
-    rc = ompi_comm_connect_accept (MPI_COMM_WORLD, root, port_proc_name,
-                  send_first, &newcomm, tag );
-    if (ORTE_SUCCESS != rc) {
-        return rc;
-    }
+        rc = ompi_comm_connect_accept (MPI_COMM_WORLD, root, port_proc_name,
+                                       send_first, &newcomm, tag );
+        if (ORTE_SUCCESS != rc) {
+            return rc;
+        }
 
-    /* Set the parent communicator */
-    ompi_mpi_comm_parent = newcomm;
+        /* Set the parent communicator */
+        ompi_mpi_comm_parent = newcomm;
 
-    /* originally, we set comm_parent to comm_null (in comm_init),
-     * now we have to decrease the reference counters to the according
-     * objects
-     */
+        /* originally, we set comm_parent to comm_null (in comm_init),
+         * now we have to decrease the reference counters to the according
+         * objects
+         */
 
-    oldcomm = &ompi_mpi_comm_null;
-    OBJ_RELEASE(oldcomm);
+        oldcomm = &ompi_mpi_comm_null;
+        OBJ_RELEASE(oldcomm);
         group = &ompi_mpi_group_null;
-    OBJ_RELEASE(group);
-    errhandler = &ompi_mpi_errors_are_fatal;
-    OBJ_RELEASE(errhandler);
+        OBJ_RELEASE(group);
+        errhandler = &ompi_mpi_errors_are_fatal;
+        OBJ_RELEASE(errhandler);
 
-    /* Set name for debugging purposes */
-    snprintf(newcomm->c_name, MPI_MAX_OBJECT_NAME, "MPI_COMM_PARENT");
+        /* Set name for debugging purposes */
+        snprintf(newcomm->c_name, MPI_MAX_OBJECT_NAME, "MPI_COMM_PARENT");
     }
 
     return OMPI_SUCCESS;
@@ -718,27 +727,27 @@ int ompi_comm_dyn_finalize (void)
     ompi_communicator_t *comm=NULL;
 
     if ( 1 <ompi_comm_num_dyncomm ) {
-    objs = (ompi_comm_disconnect_obj **)malloc (ompi_comm_num_dyncomm*
-                           sizeof(ompi_comm_disconnect_obj*));
-    if ( NULL == objs ) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    max = ompi_pointer_array_get_size(&ompi_mpi_communicators);
-    for ( i=3; i<max; i++ ) {
-        comm = (ompi_communicator_t*)ompi_pointer_array_get_item(&ompi_mpi_communicators,i);
-        if ( OMPI_COMM_IS_DYNAMIC(comm)) {
-        objs[j++]=ompi_comm_disconnect_init(comm);
+        objs = (ompi_comm_disconnect_obj **)malloc (ompi_comm_num_dyncomm*
+                               sizeof(ompi_comm_disconnect_obj*));
+        if ( NULL == objs ) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
         }
-    }
 
-    if ( j != ompi_comm_num_dyncomm+1 ) {
+        max = ompi_pointer_array_get_size(&ompi_mpi_communicators);
+        for ( i=3; i<max; i++ ) {
+            comm = (ompi_communicator_t*)ompi_pointer_array_get_item(&ompi_mpi_communicators,i);
+            if ( OMPI_COMM_IS_DYNAMIC(comm)) {
+                objs[j++]=ompi_comm_disconnect_init(comm);
+            }
+        }
+
+        if ( j != ompi_comm_num_dyncomm+1 ) {
+            free (objs);
+            return OMPI_ERROR;
+        }
+
+        ompi_comm_disconnect_waitall (ompi_comm_num_dyncomm, objs);
         free (objs);
-        return OMPI_ERROR;
-    }
-
-    ompi_comm_disconnect_waitall (ompi_comm_num_dyncomm, objs);
-    free (objs);
     }
 
 
@@ -756,48 +765,46 @@ ompi_comm_disconnect_obj *ompi_comm_disconnect_init ( ompi_communicator_t *comm)
     int i;
 
     obj = (ompi_comm_disconnect_obj *) calloc(1,sizeof(ompi_comm_disconnect_obj));
-    if ( NULL == obj ) {
-    return NULL;
+        if ( NULL == obj ) {
+        return NULL;
     }
 
     if ( OMPI_COMM_IS_INTER(comm) ) {
-    obj->size = ompi_comm_remote_size (comm);
-    }
-    else {
-    obj->size = ompi_comm_size (comm);
+        obj->size = ompi_comm_remote_size (comm);
+    } else {
+        obj->size = ompi_comm_size (comm);
     }
 
     obj->comm = comm;
     obj->reqs = (ompi_request_t **) malloc(2*obj->size*sizeof(ompi_request_t *));
     if ( NULL == obj->reqs ) {
-    free (obj);
-    return NULL;
+        free (obj);
+        return NULL;
     }
 
     /* initiate all isend_irecvs. We use a dummy buffer stored on
        the object, since we are sending zero size messages anyway. */
     for ( i=0; i < obj->size; i++ ) {
-    ret = MCA_PML_CALL(irecv (&(obj->buf), 0, MPI_INT, i,
-                 OMPI_COMM_BARRIER_TAG, comm,
-                 &(obj->reqs[2*i])));
+        ret = MCA_PML_CALL(irecv (&(obj->buf), 0, MPI_INT, i,
+                     OMPI_COMM_BARRIER_TAG, comm,
+                     &(obj->reqs[2*i])));
 
-    if ( OMPI_SUCCESS != ret ) {
-        free (obj->reqs);
-        free (obj);
-        return NULL;
-    }
+        if ( OMPI_SUCCESS != ret ) {
+            free (obj->reqs);
+            free (obj);
+            return NULL;
+        }
 
-    ret = MCA_PML_CALL(isend (&(obj->buf), 0, MPI_INT, i,
-                 OMPI_COMM_BARRIER_TAG,
-                 MCA_PML_BASE_SEND_SYNCHRONOUS,
-                 comm, &(obj->reqs[2*i+1])));
+        ret = MCA_PML_CALL(isend (&(obj->buf), 0, MPI_INT, i,
+                     OMPI_COMM_BARRIER_TAG,
+                     MCA_PML_BASE_SEND_SYNCHRONOUS,
+                     comm, &(obj->reqs[2*i+1])));
 
-    if ( OMPI_SUCCESS != ret ) {
-        free (obj->reqs);
-        free (obj);
-        return NULL;
-    }
-
+        if ( OMPI_SUCCESS != ret ) {
+            free (obj->reqs);
+            free (obj);
+            return NULL;
+        }
     }
 
     /* return handle */
@@ -822,25 +829,25 @@ void ompi_comm_disconnect_waitall (int count, ompi_comm_disconnect_obj **objs)
     int ret;
 
     for (i=0; i<count; i++) {
-    if (NULL == objs[i]) {
-        printf("Error in comm_disconnect_waitall\n");
-        return;
-    }
+        if (NULL == objs[i]) {
+            printf("Error in comm_disconnect_waitall\n");
+            return;
+        }
 
-    totalcount += objs[i]->size;
+        totalcount += objs[i]->size;
     }
 
     reqs = (ompi_request_t **) malloc (2*totalcount*sizeof(ompi_request_t *));
     if ( NULL == reqs ) {
-    printf("ompi_comm_disconnect_waitall: error allocating memory\n");
-    return;
+        printf("ompi_comm_disconnect_waitall: error allocating memory\n");
+        return;
     }
 
     /* generate a single, large array of pending requests */
     treq = (char *)reqs;
     for (i=0; i<count; i++) {
-    memcpy (treq, objs[i]->reqs, 2*objs[i]->size * sizeof(ompi_request_t *));
-    treq += 2*objs[i]->size * sizeof(ompi_request_t *);
+        memcpy (treq, objs[i]->reqs, 2*objs[i]->size * sizeof(ompi_request_t *));
+        treq += 2*objs[i]->size * sizeof(ompi_request_t *);
     }
 
     /* force all non-blocking all-to-alls to finish */
@@ -848,10 +855,10 @@ void ompi_comm_disconnect_waitall (int count, ompi_comm_disconnect_obj **objs)
 
     /* Finally, free everything */
     for (i=0; i< count; i++ ) {
-    if (NULL != objs[i]->reqs ) {
-        free (objs[i]->reqs );
-        free (objs[i]);
-    }
+        if (NULL != objs[i]->reqs ) {
+            free (objs[i]->reqs );
+            free (objs[i]);
+        }
     }
 
     free (reqs);
@@ -878,7 +885,7 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
 
     /* special case for MPI_COMM_NULL */
     if ( comm == MPI_COMM_NULL ) {
-    return;
+        return;
     }
 
     size  = ompi_comm_size (comm);
@@ -920,8 +927,8 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
 
     /* if number of joibds larger than one, set the disconnect flag*/
     if ( numjobids > 1 ) {
-    ompi_comm_num_dyncomm++;
-    OMPI_COMM_SET_DYNAMIC(comm);
+        ompi_comm_num_dyncomm++;
+        OMPI_COMM_SET_DYNAMIC(comm);
     }
 
     return;
