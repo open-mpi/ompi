@@ -93,10 +93,6 @@ typedef uint8_t orte_dss_buffer_type_t;
         /** Number of bytes used by the buffer (i.e., amount of data --
             including overhead -- packed in the buffer) */
         size_t bytes_used;
-        /** How many bytes are available in the allocated buffer -- kept
-            here for convenience rather than recalculating it all the
-            time */
-        size_t bytes_avail;
     };
     /**
      * Convenience typedef

@@ -228,8 +228,6 @@ int orte_dss_pack_null(orte_buffer_t *buffer, void *src,
     /* update buffer pointers */
     buffer->pack_ptr += num_vals;
     buffer->bytes_used += num_vals;
-    buffer->bytes_avail -= num_vals;
-
 
     return ORTE_SUCCESS;
 }
@@ -255,7 +253,6 @@ int orte_dss_pack_byte(orte_buffer_t *buffer, void *src,
     /* update buffer pointers */
     buffer->pack_ptr += num_vals;
     buffer->bytes_used += num_vals;
-    buffer->bytes_avail -= num_vals;
 
     return ORTE_SUCCESS;
 }
@@ -284,7 +281,6 @@ int orte_dss_pack_int16(orte_buffer_t *buffer, void *src,
     }
     buffer->pack_ptr += num_vals * sizeof(tmp);
     buffer->bytes_used += num_vals * sizeof(tmp);
-    buffer->bytes_avail -= num_vals * sizeof(tmp);
 
     return ORTE_SUCCESS;
 }
@@ -313,7 +309,6 @@ int orte_dss_pack_int32(orte_buffer_t *buffer, void *src,
     }
     buffer->pack_ptr += num_vals * sizeof(tmp);
     buffer->bytes_used += num_vals * sizeof(tmp);
-    buffer->bytes_avail -= num_vals * sizeof(tmp);
 
     return ORTE_SUCCESS;
 }
@@ -343,7 +338,6 @@ int orte_dss_pack_int64(orte_buffer_t *buffer, void *src,
     }
     buffer->pack_ptr += bytes_packed;
     buffer->bytes_used += bytes_packed;
-    buffer->bytes_avail -= bytes_packed;
 
     return ORTE_SUCCESS;
 }
