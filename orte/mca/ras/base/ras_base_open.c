@@ -142,14 +142,6 @@ int orte_ras_base_open(void)
         orte_ras_base.timing = false;
     }
     
-    /* Open up all available components */
-    if (ORTE_SUCCESS != 
-        mca_base_components_open("ras", orte_ras_base.ras_output,
-                                 mca_ras_base_static_components, 
-                                 &orte_ras_base.ras_opened, true)) {
-        return ORTE_ERROR;
-    }
-
     /* if we are not on a HNP, select the proxy 'module' */
     if (!orte_process_info.seed) {
         orte_ras = orte_ras_base_proxy_module;
@@ -157,6 +149,14 @@ int orte_ras_base_open(void)
         orte_ras_base_proxy_init(&rc);
         orte_ras_base.ras_using_proxy = true;
         return ORTE_SUCCESS;
+    }
+    
+    /* Open up all available components */
+    if (ORTE_SUCCESS != 
+        mca_base_components_open("ras", orte_ras_base.ras_output,
+                                 mca_ras_base_static_components, 
+                                 &orte_ras_base.ras_opened, true)) {
+        return ORTE_ERROR;
     }
 
     /* All done */

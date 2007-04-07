@@ -214,6 +214,7 @@ int orte_rmgr_base_set_proc_info(const orte_process_name_t* name, pid_t pid, cha
     }
 
     OBJ_RELEASE(values[0]);
+    free(segment);
 
     return rc;
 }
