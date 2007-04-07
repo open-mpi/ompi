@@ -82,8 +82,16 @@ orte_sds_bproc_component_init(int *priority)
     id = mca_base_param_register_string("ns", "nds", NULL, NULL, NULL);
     mca_base_param_lookup_string(id, &mode);
 
-    if (NULL == mode || 0 != strcmp("bproc", mode)) { return NULL; }
+    if (NULL == mode || 0 != strcmp("bproc", mode)) { 
+        if(NULL != mode) {
+            free(mode);
+        }
+        return NULL; 
+    }
 
+    if(NULL != mode) {
+        free(mode);
+    }
     *priority = 20;
     return &orte_sds_bproc_module;
 }

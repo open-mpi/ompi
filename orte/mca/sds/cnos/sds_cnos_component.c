@@ -84,7 +84,10 @@ orte_sds_cnos_component_init(int *priority)
 
     /* if mode isn't NULL, then we have an ORTE starter.  Don't use
        this component */
-    if (NULL != mode) return NULL;
+    if (NULL != mode) {
+        free(mode);
+        return NULL;
+    }
 
     *priority = 60;
     return &orte_sds_cnos_module;
