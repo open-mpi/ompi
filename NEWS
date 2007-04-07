@@ -45,6 +45,9 @@ Trunk (not on release branches yet)
 - Added checkpoint/restart process fault tolerance support. Initially
   support a LAM/MPI-like protocol.
   --> Expected: 1.3
+- Fixed a number of connection establishment errors in the TCP out-
+  of-band messaging system.
+  --> Expected: 1.2.x
 
 
 1.2.1
