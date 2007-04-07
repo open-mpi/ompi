@@ -595,8 +595,8 @@ static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
            connection was not able to be fully established.  In that
            case, Clean up the connection and give it another go.  */
         if (peer->peer_state == MCA_OOB_TCP_CONNECT_ACK) {
+            struct timeval tv = { 1,0 };
             if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
-                struct timeval tv = { 1,0 };
                 opal_output(0,
                             "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_connect_ack "
                             "connect failed during receive.  Restarting (%s).",
