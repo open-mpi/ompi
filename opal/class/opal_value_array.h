@@ -91,7 +91,7 @@ static inline int opal_value_array_reserve(opal_value_array_t* array, size_t siz
              array->array_alloc_size = 0;
              return OPAL_ERR_OUT_OF_RESOURCE;
          }
-         array->array_alloc_size = 1;
+         array->array_alloc_size = size;
      }
      return OPAL_SUCCESS;
 }
