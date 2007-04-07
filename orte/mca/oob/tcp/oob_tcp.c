@@ -50,9 +50,6 @@
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
 
-#undef SOMAXCONN
-#define SOMAXCONN 1
-
 /*
  * Data structure for accepting connections.
  */
@@ -353,7 +350,6 @@ int mca_oob_tcp_component_close(void)
 
 static void mca_oob_tcp_accept(void)
 {
-#if 0
     while(true) {
         opal_socklen_t addrlen = sizeof(struct sockaddr_in);
         struct sockaddr_in addr;
@@ -386,7 +382,6 @@ static void mca_oob_tcp_accept(void)
         opal_event_set(&event->event, sd, OPAL_EV_READ, mca_oob_tcp_recv_handler, event);
         opal_event_add(&event->event, 0);
     }
-#endif
 }
 
 /*
