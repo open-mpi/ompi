@@ -49,15 +49,9 @@ int orte_gpr_replica_preallocate_segment(char *name, orte_std_cntr_t num_slots)
         return rc;
     }
 
-    if (0 < (seg->containers)->size) {  /* segment already exists! */
-        return ORTE_ERR_BAD_PARAM;
-    }
+    rc = orte_pointer_array_set_size(seg->containers, num_slots);
 
-    rc = orte_pointer_array_init(&(seg->containers), num_slots,
-                                            (orte_std_cntr_t)orte_gpr_array_max_size,
-                                            (orte_std_cntr_t)orte_gpr_array_block_size);
+    OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 
-     OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-
-     return rc;
+    return rc;
 }

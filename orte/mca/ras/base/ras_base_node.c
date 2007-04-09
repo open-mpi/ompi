@@ -589,6 +589,13 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
        return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
+    /** preallocate the appropriate number of containers on the segment */
+    rc = orte_gpr.preallocate_segment(ORTE_NODE_SEGMENT, num_values);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     for (i=0; i < num_values; i++) {
         if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[i]),
                                     ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,

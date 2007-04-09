@@ -29,7 +29,7 @@
 
 static void orte_pointer_array_construct(orte_pointer_array_t *);
 static void orte_pointer_array_destruct(orte_pointer_array_t *);
-static bool grow_table(orte_pointer_array_t *table);
+static bool grow_table(orte_pointer_array_t *table, orte_std_cntr_t num_needed);
 
 OBJ_CLASS_INSTANCE(
     orte_pointer_array_t,
@@ -138,7 +138,7 @@ int orte_pointer_array_add(orte_std_cntr_t *location, orte_pointer_array_t *tabl
 
         /* need to grow table */
 
-        if (!grow_table(table)) {
+        if (!grow_table(table, 1)) {
             OPAL_THREAD_UNLOCK(&(table->lock));
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
@@ -211,7 +211,7 @@ int orte_pointer_array_set_item(orte_pointer_array_t *table, orte_std_cntr_t ele
 
     OPAL_THREAD_LOCK(&(table->lock));
     if (table->size <= element_index) {
-        if (!grow_table(table)) {
+        if (!grow_table(table, 1)) {
             OPAL_THREAD_UNLOCK(&(table->lock));
 	        return ORTE_ERROR;
         }
@@ -321,7 +321,7 @@ bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table,
     /* Do we need to grow the table? */
 
     if (table->size <= element_index) {
-        if (!grow_table(table)) {
+        if (!grow_table(table, element_index + 1 - table->size)) {
             OPAL_THREAD_UNLOCK(&(table->lock));
             return false;
         }
@@ -361,8 +361,8 @@ bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table,
 int orte_pointer_array_set_size(orte_pointer_array_t *array, orte_std_cntr_t new_size)
 {
     OPAL_THREAD_LOCK(&(array->lock));
-    while (new_size > orte_pointer_array_get_size(array)) {
-        if (!grow_table(array)) {
+    if(new_size > array->size) {
+        if (!grow_table(array, new_size - array->size)) {
             OPAL_THREAD_UNLOCK(&(array->lock));
             return ORTE_ERROR;
         }
@@ -372,7 +372,7 @@ int orte_pointer_array_set_size(orte_pointer_array_t *array, orte_std_cntr_t new
 }
 
 
-static bool grow_table(orte_pointer_array_t *table)
+static bool grow_table(orte_pointer_array_t *table, orte_std_cntr_t num_needed)
 {
     orte_std_cntr_t new_size, i;
     void *p;
@@ -381,15 +381,16 @@ static bool grow_table(orte_pointer_array_t *table)
      * specified maximum
      */
     
-    if (table->size >= table->max_size) {
+    if (table->size + num_needed > table->max_size) {
         return false;
     }
     
-    if (table->block_size > (table->max_size - table->size)) { /* not enough space for a full block */
+    new_size = ((table->size + num_needed + table->block_size - 1) /
+                table->block_size) * table->block_size;
+                
+    if (new_size > table->max_size) { 
         new_size = table->max_size;
-    } else {
-        new_size = table->size + table->block_size;
-    }
+    } 
 
     p = (void **) realloc(table->addr, new_size * sizeof(void *));
     if (p == NULL) {

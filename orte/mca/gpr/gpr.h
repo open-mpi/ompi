@@ -163,12 +163,16 @@ typedef int (*orte_gpr_base_module_cleanup_job_fn_t)(orte_jobid_t jobid);
 typedef int (*orte_gpr_base_module_cleanup_proc_fn_t)(orte_process_name_t *proc);
 
 /*
- * Define and initialize a job segment
- * The registry contains a segment for each job that stores data on each
- * process within that job. Although the registry can create this segment
- * "on-the-fly", it is more efficient to initialize the segment via a separate
- * command - thus allowing the registry to allocate the base storage for all
- * the processes in a single malloc.
+ * Define and initialize a segment
+ * The registry contains segments which store containers of data.
+ * Although the registry can create segments "on-the-fly", it is often
+ * more efficient to initialize the segment via a separate command - thus 
+ * allowing the registry to allocate the base storage for all the 
+ * containers in a single malloc. 
+ *
+ * Note that if the given segment already exists, this function simply
+ * makes sure it has enough space to store at least the passed number 
+ * of containers
  *
  * @param name A character string indicating the name of the segment.
  * @param num_slots The number of containers expected in this segment. This

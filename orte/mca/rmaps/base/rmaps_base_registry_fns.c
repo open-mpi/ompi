@@ -398,6 +398,14 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
         return rc;
     }
 
+    /** preallocate the appropriate number of containers on the segment */
+    if (ORTE_SUCCESS != (rc = orte_gpr.preallocate_segment(segment, num_procs + 1))) {
+        ORTE_ERROR_LOG(rc);
+        free(values);
+        return rc;
+    }
+
+
     /** setup the last value in the array to store the vpid start/range and update the INIT counter */
     if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[num_procs]),
                                             ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_AND,
