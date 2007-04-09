@@ -11,7 +11,6 @@
 # information, see the LICENSE file in the top level directory of the
 # Open MPI source distribution.
 #
-# $Id: buildpackage.sh,v 1.3 2003/06/30 07:16:26 brbarret Exp $
 #
 
 #
@@ -31,10 +30,9 @@
 #
 # User-configurable stuff
 #
-OMPI_PREFIX="/usr/local/"
-OMPI_OPTIONS="--disable-mpi-f77 --without-cs-fs --enable-mca-no-build=ras-slurm,pls-slurm,gpr-null,sds-pipe,sds-slurm,pml-cm"
 OMPI_PACKAGE="openmpi"
-OMPI_VER_PACKAGE="openmpi"
+OMPI_PREFIX="/usr/local/"
+OMPI_OPTIONS="--disable-mpi-f77 --without-cs-fs --enable-mca-no-build=ras-slurm,pls-slurm,gpr-null,sds-pipe,sds-slurm,pml-cm,backtrace-darwin --disable-pretty-print-stacktrace NM=\"nm -p\""
 OMPI_OSX_README="ReadMe.rtf"
 # note - if want XGrid support, make sure that a cocoa-supported 
 # architecture appears first on the list.  Otherwise, we won't
@@ -56,6 +54,9 @@ echo "--> Configuration options:"
 echo "    Package Name:   $OMPI_PACKAGE"
 echo "    Prefix:         $OMPI_PREFIX"
 echo "    Config Options: $OMPI_OPTIONS"
+echo "    Architectures:  $OMPI_ARCH_LIST"
+echo "    Target SDK:     $OMPI_SDK"
+echo ""
 
 ########################################################################
 #
@@ -86,7 +87,7 @@ version="`echo $first | sed -e 's/\.tar\.gz//'`"
 unset first
 echo "--> Found OMPI version: $version"
 
-OMPI_VER_PACKAGE="${OMPI_VER_PACKAGE}-${version}"
+OMPI_VER_PACKAGE="${OMPI_PACKAGE}-${version}"
 
 #
 # Sanity check that we can continue
@@ -363,7 +364,6 @@ done
 # fail to load the XGrid components on 64 bit systems, and users don't
 # need to see that.
 echo "mca_component_show_load_errors = 0" >> $BUILD_TMP/dist/${OMPI_PREFIX}/etc/openmpi-mca-params.conf
-
 
 ########################################################################
 #
