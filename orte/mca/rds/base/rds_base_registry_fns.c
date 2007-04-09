@@ -61,6 +61,13 @@ int orte_rds_base_store_resource(opal_list_t *resources)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
+    /** preallocate the appropriate number of containers on the segment */
+    rc = orte_gpr.preallocate_segment(ORTE_RESOURCE_SEGMENT, num_vals);
+    if (ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+
     for (i=0; i < num_vals && NULL != (cell = (orte_rds_cell_desc_t*)opal_list_remove_first(resources)); i++) {
         num_attr = (orte_std_cntr_t)opal_list_get_size(&cell->attributes);
         if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[i]), ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR,

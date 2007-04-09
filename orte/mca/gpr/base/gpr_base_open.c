@@ -42,7 +42,7 @@
    value is used to set an MAC parameter, which can [currently] only
    take an int. */
 #define ORTE_GPR_ARRAY_MAX_SIZE INT_MAX
-#define ORTE_GPR_ARRAY_BLOCK_SIZE 512
+#define ORTE_GPR_ARRAY_BLOCK_SIZE 16
 
 
 
