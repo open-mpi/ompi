@@ -30,7 +30,7 @@
 #
 OMPI_PACKAGE="openmpi"
 OMPI_PREFIX="/usr/local/"
-OMPI_OPTIONS="--disable-mpi-f77 --without-cs-fs --enable-mca-no-build=ras-slurm,pls-slurm,gpr-null,sds-pipe,sds-slurm,pml-cm,backtrace-darwin --disable-pretty-print-stacktrace NM=\"nm -p\""
+OMPI_OPTIONS="--disable-mpi-f77 --without-cs-fs --enable-mca-no-build=ras-slurm,pls-slurm,gpr-null,sds-pipe,sds-slurm,pml-cm NM=\"nm -p\""
 OMPI_OSX_README="ReadMe.rtf"
 # note - if want XGrid support, make sure that a cocoa-supported 
 # architecture appears first on the list.  Otherwise, we won't
