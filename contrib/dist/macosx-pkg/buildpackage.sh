@@ -1,11 +1,9 @@
 #!/bin/bash
 
-# Copyright (c) 2001-2004 The Trustees of Indiana University.  
+# Copyright (c) 2001-2006 The Trustees of Indiana University.  
 #                         All rights reserved.
-# Copyright (c) 1998-2001 University of Notre Dame. 
-#                         All rights reserved.
-# Copyright (c) 1994-1998 The Ohio State University.  
-#                         All rights reserved.
+# Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+#                         reserved. 
 # 
 # This file is part of the Open MPI software package.  For license
 # information, see the LICENSE file in the top level directory of the
