@@ -91,7 +91,7 @@ static inline int orte_value_array_reserve(orte_value_array_t* array, orte_std_c
              array->array_alloc_size = 0;
              return ORTE_ERR_OUT_OF_RESOURCE;
          }
-         array->array_alloc_size = 1;
+         array->array_alloc_size = size;
      }
      return ORTE_SUCCESS;
 }
