@@ -185,47 +185,18 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
     opal_argv_append(&argc, &argv, "--debug-daemons");
 
     opal_argv_append(&argc, &argv, "--no-daemonize");
-    opal_argv_append(&argc, &argv, "--bootproxy");
+
     /* need integer value for command line parameter - NOT hex */
     asprintf(&tmp_string, "%lu", (unsigned long)jobid);
-    opal_argv_append(&argc, &argv, tmp_string);
+
+    /* Add basic orted command line options */
+    orte_pls_base_orted_append_basic_args(&argc, &argv,
+                                          &proc_name_index,
+                                          &node_name_index2,
+                                          tmp_string,
+                                          num_nodes
+                                          );
     free(tmp_string);
-    opal_argv_append(&argc, &argv, "--name");
-    proc_name_index = argc;
-    opal_argv_append(&argc, &argv, "");
-    opal_argv_append(&argc, &argv, "--nodename");
-    node_name_index2 = argc;
-    opal_argv_append(&argc, &argv, "");
-
-    /* pass along the universe name and location info */
-    opal_argv_append(&argc, &argv, "--universe");
-    asprintf(&tmp_string, "%s@%s:%s", orte_universe_info.uid,
-    orte_universe_info.host, orte_universe_info.name);
-    opal_argv_append(&argc, &argv, tmp_string);
-    free(tmp_string);
-
-
-    /* setup ns contact info */
-    opal_argv_append(&argc, &argv, "--nsreplica");
-    if(NULL != orte_process_info.ns_replica_uri) {
-        uri = strdup(orte_process_info.ns_replica_uri);
-    } else {
-        uri = orte_rml.get_uri();
-    }
-    asprintf(&param, "\"%s\"", uri);
-    opal_argv_append(&argc, &argv, param);
-    free(uri);
-
-    /* setup gpr contact info */
-    opal_argv_append(&argc, &argv, "--gprreplica");
-    if(NULL != orte_process_info.gpr_replica_uri) {
-        uri = strdup(orte_process_info.gpr_replica_uri);
-    } else {
-        uri = orte_rml.get_uri();
-    }
-    asprintf(&param, "\"%s\"", uri);
-    opal_argv_append(&argc, &argv, param);
-    free(uri);
 
     /*
      * Iterate through each of the nodes and spin

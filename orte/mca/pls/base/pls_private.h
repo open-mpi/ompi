@@ -108,6 +108,17 @@ typedef uint8_t orte_pls_cmd_flag_t;
     ORTE_DECLSPEC int orte_pls_base_mca_argv(int *argc, char ***argv);
     void orte_pls_base_purge_mca_params(char ***env);
 
+    /**
+     * Construct basic ORTE Daemon command line arguments
+     */
+    ORTE_DECLSPEC int orte_pls_base_orted_append_basic_args(
+                                                 int *argc, 
+                                                 char ***argv,
+                                                 int *proc_name_index,
+                                                 int *node_name_index,
+                                                 char *jobid_string,
+                                                 orte_std_cntr_t num_procs);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
