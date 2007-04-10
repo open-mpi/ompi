@@ -203,7 +203,7 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     int orted_index;
     char *jobid_string;
     char *prefix_dir;
-    char *uri, *param;
+    char *param;
     char **argv;
     char **env;
     int argc;
@@ -296,59 +296,13 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     opal_argv_append(&argc, &argv, mca_pls_gridengine_component.orted);
     opal_argv_append(&argc, &argv, "--no-daemonize");
 
-    /* check for debug flags */
-    orte_pls_base_mca_argv(&argc, &argv);
-
-    opal_argv_append(&argc, &argv, "--bootproxy");
-    opal_argv_append(&argc, &argv, jobid_string);
-    opal_argv_append(&argc, &argv, "--name");
-    proc_name_index = argc;
-    opal_argv_append(&argc, &argv, "<template>");
-
-    /* tell the daemon how many procs are in the daemon's job */
-    opal_argv_append(&argc, &argv, "--num_procs");
-    asprintf(&param, "%lu", (unsigned long)(vpid + num_nodes));
-    opal_argv_append(&argc, &argv, param);
-    free(param);
-    
-    /* tell the daemon the starting vpid of the daemon's job */
-    opal_argv_append(&argc, &argv, "--vpid_start");
-    opal_argv_append(&argc, &argv, "0");
-
-    opal_argv_append(&argc, &argv, "--nodename");
-    node_name_index2 = argc;
-    opal_argv_append(&argc, &argv, "<template>");
-
-    /* pass along the universe name and location info */
-    opal_argv_append(&argc, &argv, "--universe");
-    asprintf(&param, "%s@%s:%s", orte_universe_info.uid,
-                orte_universe_info.host, orte_universe_info.name);
-    opal_argv_append(&argc, &argv, param);
-    free(param);
-
-    /* setup ns contact info */
-    opal_argv_append(&argc, &argv, "--nsreplica");
-    if (NULL != orte_process_info.ns_replica_uri) {
-        uri = strdup(orte_process_info.ns_replica_uri);
-    } else {
-        uri = orte_rml.get_uri();
-    }
-    asprintf(&param, "\"%s\"", uri);
-    opal_argv_append(&argc, &argv, param);
-    free(uri);
-    free(param);
-
-    /* setup gpr contact info */
-    opal_argv_append(&argc, &argv, "--gprreplica");
-    if (NULL != orte_process_info.gpr_replica_uri) {
-        uri = strdup(orte_process_info.gpr_replica_uri);
-    } else {
-        uri = orte_rml.get_uri();
-    }
-    asprintf(&param, "\"%s\"", uri);
-    opal_argv_append(&argc, &argv, param);
-    free(uri);
-    free(param);
+    /* Add basic orted command line options */
+    orte_pls_base_orted_append_basic_args(&argc, &argv,
+                                          &proc_name_index,
+                                          &node_name_index2,
+                                          jobid_string,
+                                          (vpid + num_nodes)
+                                          );
 
      /* setup environment. The environment is common to all the daemons
       * so we only need to do this once

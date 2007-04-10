@@ -121,7 +121,7 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     orte_vpid_t vpid;
     orte_vpid_t start_vpid;
     char *jobid_string = NULL;
-    char *uri, *param;
+    char *param;
     char **argv;
     int argc;
     int rc;
@@ -139,6 +139,7 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     opal_list_t daemons;
     orte_pls_daemon_info_t *dmn;
     struct timeval joblaunchstart, launchstart, launchstop;
+    int proc_name_index = 0;
 
     if (mca_pls_slurm_component.timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
@@ -260,12 +261,13 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     opal_argv_append(&argc, &argv, mca_pls_slurm_component.orted);
     opal_argv_append(&argc, &argv, "--no-daemonize");
 
-    /* check for debug flags */
-    orte_pls_base_mca_argv(&argc, &argv);
-
-    /* proxy information */
-    opal_argv_append(&argc, &argv, "--bootproxy");
-    opal_argv_append(&argc, &argv, jobid_string);
+    /* Add basic orted command line options */
+    orte_pls_base_orted_append_basic_args(&argc, &argv,
+                                          &proc_name_index,
+                                          NULL,
+                                          jobid_string,
+                                          num_nodes
+                                          );
 
     /* force orted to use the slurm sds */
     opal_argv_append(&argc, &argv, "--ns-nds");
@@ -286,52 +288,9 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     }
     free(name);
 
-    opal_argv_append(&argc, &argv, "--name");
-    opal_argv_append(&argc, &argv, name_string);
+    free(argv[proc_name_index]);
+    argv[proc_name_index] = strdup(name_string);
     free(name_string);
-
-    /* tell the daemon how many procs are in the daemon's job */
-    opal_argv_append(&argc, &argv, "--num_procs");
-    asprintf(&param, "%lu", (unsigned long) num_nodes);
-    opal_argv_append(&argc, &argv, param);
-    free(param);
-
-    /* tell the daemon the starting vpid of the daemon's job */
-    opal_argv_append(&argc, &argv, "--vpid_start");
-    asprintf(&param, "%lu", (unsigned long) 0);
-    opal_argv_append(&argc, &argv, param);
-    free(param);
-
-    /* pass along the universe name and location info */
-    opal_argv_append(&argc, &argv, "--universe");
-    asprintf(&param, "%s@%s:%s", orte_universe_info.uid,
-             orte_universe_info.host, orte_universe_info.name);
-    opal_argv_append(&argc, &argv, param);
-    free(param);
-
-    /* setup ns contact info */
-    opal_argv_append(&argc, &argv, "--nsreplica");
-    if (NULL != orte_process_info.ns_replica_uri) {
-        uri = strdup(orte_process_info.ns_replica_uri);
-    } else {
-        uri = orte_rml.get_uri();
-    }
-    asprintf(&param, "\"%s\"", uri);
-    opal_argv_append(&argc, &argv, param);
-    free(uri);
-    free(param);
-
-    /* setup gpr contact info */
-    opal_argv_append(&argc, &argv, "--gprreplica");
-    if (NULL != orte_process_info.gpr_replica_uri) {
-        uri = strdup(orte_process_info.gpr_replica_uri);
-    } else {
-        uri = orte_rml.get_uri();
-    }
-    asprintf(&param, "\"%s\"", uri);
-    opal_argv_append(&argc, &argv, param);
-    free(uri);
-    free(param);
 
     if (mca_pls_slurm_component.debug) {
         param = opal_argv_join(argv, ' ');
