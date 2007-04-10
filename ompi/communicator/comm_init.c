@@ -84,6 +84,7 @@ int ompi_comm_init(void)
     ompi_mpi_comm_world.c_cube_dim     = opal_cube_dim(size);
     ompi_mpi_comm_world.error_handler  = &ompi_mpi_errors_are_fatal;
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
+    OBJ_RETAIN(ompi_mpi_comm_world.c_remote_group);
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_world);
     ompi_pointer_array_set_item (&ompi_mpi_communicators, 0, &ompi_mpi_comm_world);
 
@@ -111,6 +112,7 @@ int ompi_comm_init(void)
     ompi_mpi_comm_self.c_my_rank      = group->grp_my_rank;
     ompi_mpi_comm_self.c_local_group  = group;
     ompi_mpi_comm_self.c_remote_group = group;
+    OBJ_RETAIN(ompi_mpi_comm_self.c_remote_group);
     ompi_mpi_comm_self.error_handler  = &ompi_mpi_errors_are_fatal;
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_self);
@@ -130,6 +132,7 @@ int ompi_comm_init(void)
     ompi_mpi_comm_null.c_local_group  = &ompi_mpi_group_null;
     ompi_mpi_comm_null.c_remote_group = &ompi_mpi_group_null;
     OBJ_RETAIN(&ompi_mpi_group_null); 
+    OBJ_RETAIN(&ompi_mpi_group_null);
 
     ompi_mpi_comm_null.c_contextid    = 2;
     ompi_mpi_comm_null.c_f_to_c_index = 2;
@@ -206,6 +209,24 @@ int ompi_comm_finalize(void)
            during init, and we just set this pointer to it.  Hence, we
            just pass in the pointer here. */
        OBJ_DESTRUCT (ompi_mpi_comm_parent);
+
+       /* Please note, that the we did increase the reference count
+          for ompi_mpi_comm_null, ompi_mpi_group_null, and 
+          ompi_mpi_errors_are_fatal in ompi_comm_init because of 
+          ompi_mpi_comm_parent.  In case a 
+          parent communicator is really created, the ref. counters
+          for these objects are decreased again by one. However, in a 
+          static scenario, we should ideally decrease the ref. counter
+          for these objects by one here. The problem just is, that 
+          if the app had a parent_comm, and this has been freed/disconnected,
+          ompi_comm_parent points again to ompi_comm_null, the reference count 
+          for these objects has not been increased again.
+          So the point is, if ompi_mpi_comm_parent == &ompi_mpi_comm_null
+          we do not know whether we have to decrease the ref count for
+          those three objects or not. Since this is a constant, non-increasing
+          amount of memory, we stick with the current solution for now, 
+          namely don't do anything.
+       */	  
     }
 
     /* Shut down MPI_COMM_NULL */
@@ -365,6 +386,9 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
         OBJ_RELEASE ( comm->c_local_group );
         comm->c_local_group = NULL;
         if ( OMPI_COMM_IS_INTRA(comm) ) {
+            /* We have to decrement the ref count on the remote group
+	       even if it is identical to the local one in case of intra-comm */
+	    OBJ_RELEASE ( comm->c_remote_group );
             comm->c_remote_group = NULL;
         }
     }
