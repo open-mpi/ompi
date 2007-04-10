@@ -1987,14 +1987,7 @@ else
    F77MPIOINC="include 'mpiof.h'"
 fi
 
-# Open MPI: OMPI's top-level configure script already has a check for
-# "restrict"; PAC_C_RESTRICT seems to sometimes come up with a
-# different answer than the OMPI top-level test, resulting in
-# conflicting #define's for the keyword "restrict" (e.g., using icc
-# compilers on Linux).  So just comment out PAC_C_RESTRICT and use the
-# #define from the top-level OMPI configure test.
-# #define's for restrict).
-dnl PAC_C_RESTRICT
+PAC_C_RESTRICT
 PAC_C_GNU_ATTRIBUTE
 #
 dnl CFLAGS="$CFLAGS $DEFS"
