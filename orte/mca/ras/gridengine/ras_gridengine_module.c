@@ -48,7 +48,9 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
     orte_app_context_t** context, orte_std_cntr_t num_context);
 static int orte_ras_gridengine_deallocate(orte_jobid_t jobid);
 static int orte_ras_gridengine_finalize(void);
+#if 0
 static int get_slot_count(char* node_name, int* slot_cnt);
+#endif
 static int put_slot_keyval(orte_ras_node_t* node, int slot_cnt);
 static int get_slot_keyval(orte_ras_node_t* node, int* slot_cnt);
 
@@ -393,6 +395,7 @@ static int get_slot_keyval(orte_ras_node_t* node, int* slot_cnt) {
     return rc;
 }
 
+#if 0
 /**
  * This function is not used currently, but may be used eventually.
  * Parse the PE_HOSTFILE to determine the number of process
@@ -432,6 +435,7 @@ static int get_slot_count(char* node_name, int* slot_cnt)
     fclose(fp);
     return ORTE_ERROR;
 }
+#endif
 
 /**
  * call the base class to deallocate nodes
