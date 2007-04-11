@@ -45,14 +45,14 @@ static void orte_gpr_replica_remote_send_cb(
                    orte_rml_tag_t tag,
                    void* cbdata)
 {
-    /* Doesn't need to do anything at the moment */
+    OBJ_RELEASE(req);
     return;
 }
 
 int orte_gpr_replica_remote_notify(orte_process_name_t *recipient,
                 orte_gpr_notify_message_t *message)
 {
-    orte_buffer_t buffer;
+    orte_buffer_t * buffer;
     orte_gpr_cmd_flag_t command;
     int rc;
 
@@ -60,21 +60,25 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient,
     
     command = ORTE_GPR_NOTIFY_CMD;
 
-    OBJ_CONSTRUCT(&buffer, orte_buffer_t);
+    buffer = OBJ_NEW(orte_buffer_t);
+    if(NULL == buffer) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
 
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(buffer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &message, 1, ORTE_GPR_NOTIFY_MSG))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(buffer, &message, 1, ORTE_GPR_NOTIFY_MSG))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
        
     OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     
-    if (0 > orte_rml.send_buffer_nb(recipient, &buffer, ORTE_RML_TAG_GPR_NOTIFY, 0,
+    if (0 > orte_rml.send_buffer_nb(recipient, buffer, ORTE_RML_TAG_GPR_NOTIFY, 0,
                                     orte_gpr_replica_remote_send_cb, NULL)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
