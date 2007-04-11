@@ -74,9 +74,9 @@ struct mca_pml_base_modex_cb_t {
 typedef struct mca_pml_base_modex_cb_t mca_pml_base_modex_cb_t;
 
 OBJ_CLASS_INSTANCE(mca_pml_base_modex_cb_t,
-		   opal_list_item_t,
-		   NULL,
-		   NULL);
+                   opal_list_item_t,
+                   NULL,
+                   NULL);
 
 
 /**
@@ -113,9 +113,9 @@ mca_pml_base_modex_module_destruct(mca_pml_base_modex_module_t * module)
 }
 
 OBJ_CLASS_INSTANCE(mca_pml_base_modex_module_t,
-		   opal_list_item_t,
-		   mca_pml_base_modex_module_construct,
-		   mca_pml_base_modex_module_destruct);
+                   opal_list_item_t,
+                   mca_pml_base_modex_module_construct,
+                   mca_pml_base_modex_module_destruct);
 
 
 /**
@@ -146,9 +146,9 @@ mca_pml_base_modex_destruct(mca_pml_base_modex_t * modex)
 }
 
 OBJ_CLASS_INSTANCE(mca_pml_base_modex_t,
-		   opal_object_t,
-		   mca_pml_base_modex_construct,
-		   mca_pml_base_modex_destruct);
+                   opal_object_t,
+                   mca_pml_base_modex_construct,
+                   mca_pml_base_modex_destruct);
 
 
 /**
@@ -163,9 +163,9 @@ struct mca_pml_base_modex_subscription_t {
 typedef struct mca_pml_base_modex_subscription_t mca_pml_base_modex_subscription_t;
 
 OBJ_CLASS_INSTANCE(mca_pml_base_modex_subscription_t,
-		   opal_list_item_t,
-		   NULL,
-		   NULL);
+                   opal_list_item_t,
+                   NULL,
+                   NULL);
 
 
 /**
@@ -204,7 +204,7 @@ mca_pml_base_modex_finalize(void)
     OBJ_DESTRUCT(&mca_pml_base_modex_data);
 
     while (NULL != (item = opal_list_remove_first(&mca_pml_base_modex_subscriptions)))
-	OBJ_RELEASE(item);
+        OBJ_RELEASE(item);
     OBJ_DESTRUCT(&mca_pml_base_modex_subscriptions);
 
     OBJ_DESTRUCT(&mca_pml_base_modex_lock);
@@ -218,15 +218,15 @@ mca_pml_base_modex_finalize(void)
  */
 static mca_pml_base_modex_module_t *
 mca_pml_base_modex_lookup_module(mca_pml_base_modex_t * modex,
-				 mca_base_component_t * component)
+                                 mca_base_component_t * component)
 {
     mca_pml_base_modex_module_t *modex_module;
     for (modex_module = (mca_pml_base_modex_module_t *) opal_list_get_first(&modex->modex_modules);
-	 modex_module != (mca_pml_base_modex_module_t *) opal_list_get_end(&modex->modex_modules);
-	 modex_module = (mca_pml_base_modex_module_t *) opal_list_get_next(modex_module)) {
-	if (mca_base_component_compatible(&modex_module->component, component) == 0) {
-	    return modex_module;
-	}
+         modex_module != (mca_pml_base_modex_module_t *) opal_list_get_end(&modex->modex_modules);
+         modex_module = (mca_pml_base_modex_module_t *) opal_list_get_next(modex_module)) {
+        if (mca_base_component_compatible(&modex_module->component, component) == 0) {
+            return modex_module;
+        }
     }
     return NULL;
 }
@@ -237,15 +237,15 @@ mca_pml_base_modex_lookup_module(mca_pml_base_modex_t * modex,
  */
 static mca_pml_base_modex_module_t *
 mca_pml_base_modex_create_module(mca_pml_base_modex_t * modex,
-				 mca_base_component_t * component)
+                                 mca_base_component_t * component)
 {
     mca_pml_base_modex_module_t *modex_module;
     if (NULL == (modex_module = mca_pml_base_modex_lookup_module(modex, component))) {
-	modex_module = OBJ_NEW(mca_pml_base_modex_module_t);
-	if (NULL != modex_module) {
-	    modex_module->component = *component;
-	    opal_list_append(&modex->modex_modules, (opal_list_item_t *) modex_module);
-	}
+        modex_module = OBJ_NEW(mca_pml_base_modex_module_t);
+        if (NULL != modex_module) {
+            modex_module->component = *component;
+            opal_list_append(&modex->modex_modules, (opal_list_item_t *) modex_module);
+        }
     }
     return modex_module;
 }
@@ -256,7 +256,7 @@ mca_pml_base_modex_create_module(mca_pml_base_modex_t * modex,
  */
 static void
 mca_pml_base_modex_registry_callback(orte_gpr_notify_data_t * data,
-				     void *cbdata)
+                                     void *cbdata)
 {
     orte_std_cntr_t i, j, k;
     orte_gpr_value_t **values, *value;
@@ -271,7 +271,7 @@ mca_pml_base_modex_registry_callback(orte_gpr_notify_data_t * data,
     /* process the callback */
     values = (orte_gpr_value_t **) (data->values)->addr;
     for (i = 0, k = 0; k < data->cnt &&
-                       i < (data->values)->size; i++) {
+             i < (data->values)->size; i++) {
         if (NULL != values[i]) {
             k++;
             value = values[i];
@@ -290,7 +290,7 @@ mca_pml_base_modex_registry_callback(orte_gpr_notify_data_t * data,
                 opal_output(0, "mca_pml_base_modex_registry_callback: unable to find process name in notify message\n");
                 return;  /* if the name wasn't here, there is nothing we can do */
                 
-GOTNAME:
+            GOTNAME:
                 /* look up the modex data structure */
                 OPAL_THREAD_LOCK(&mca_pml_base_modex_lock);
                 modex = (mca_pml_base_modex_t*)orte_hash_table_get_proc(&mca_pml_base_modex_data, proc_name);
@@ -354,13 +354,13 @@ GOTNAME:
 
                     cnt = 1;
                     if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer,
-                                      &component.mca_component_major_version, &cnt, ORTE_INT32))) {
+                                               &component.mca_component_major_version, &cnt, ORTE_INT32))) {
                         ORTE_ERROR_LOG(rc);
                         continue;
                     }
                     cnt = 1;
                     if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer,
-                                      &component.mca_component_minor_version, &cnt, ORTE_INT32))) {
+                                               &component.mca_component_minor_version, &cnt, ORTE_INT32))) {
                         ORTE_ERROR_LOG(rc);
                         continue;
                     }
@@ -445,15 +445,15 @@ mca_pml_base_modex_subscribe(orte_process_name_t * name)
     /* check for an existing subscription */
     OPAL_LOCK(&mca_pml_base_modex_lock);
     if (!opal_list_is_empty(&mca_pml_base_modex_subscriptions)) {
-	for (item = opal_list_get_first(&mca_pml_base_modex_subscriptions);
-	     item != opal_list_get_end(&mca_pml_base_modex_subscriptions);
-	     item = opal_list_get_next(item)) {
-	    subscription = (mca_pml_base_modex_subscription_t *) item;
-	    if (subscription->jobid == name->jobid) {
-		OPAL_UNLOCK(&mca_pml_base_modex_lock);
-		return OMPI_SUCCESS;
-	    }
-	}
+        for (item = opal_list_get_first(&mca_pml_base_modex_subscriptions);
+             item != opal_list_get_end(&mca_pml_base_modex_subscriptions);
+             item = opal_list_get_next(item)) {
+            subscription = (mca_pml_base_modex_subscription_t *) item;
+            if (subscription->jobid == name->jobid) {
+                OPAL_UNLOCK(&mca_pml_base_modex_lock);
+                return OMPI_SUCCESS;
+            }
+        }
     }
     OPAL_UNLOCK(&mca_pml_base_modex_lock);
 
@@ -461,36 +461,36 @@ mca_pml_base_modex_subscribe(orte_process_name_t * name)
     jobid = name->jobid;
 
     if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&sub_name,
-				      OMPI_MODEX_SUBSCRIPTION, jobid))) {
-	ORTE_ERROR_LOG(rc);
-	return rc;
+                                              OMPI_MODEX_SUBSCRIPTION, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
     /* attach to the stage-1 standard trigger */
     if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&trig_name,
-					    ORTE_STG1_TRIGGER, jobid))) {
-	ORTE_ERROR_LOG(rc);
-	free(sub_name);
-	return rc;
+                                              ORTE_STG1_TRIGGER, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        free(sub_name);
+        return rc;
     }
     /* define the segment */
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
-	ORTE_ERROR_LOG(rc);
-	free(sub_name);
-	free(trig_name);
-	return rc;
+        ORTE_ERROR_LOG(rc);
+        free(sub_name);
+        free(trig_name);
+        return rc;
     }
     if (jobid != orte_process_info.my_name->jobid) {
         if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_N(&sub_id, NULL, NULL,
-                              ORTE_GPR_NOTIFY_ADD_ENTRY |
-                              ORTE_GPR_NOTIFY_VALUE_CHG |
-                              ORTE_GPR_NOTIFY_PRE_EXISTING,
-                              ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR | ORTE_GPR_STRIPPED,
-                              segment,
-                              NULL,	/* look at all
-                                     * containers on this
-                                     * segment */
-                              2, keys,
-                              mca_pml_base_modex_registry_callback, NULL))) {
+                                                       ORTE_GPR_NOTIFY_ADD_ENTRY |
+                                                       ORTE_GPR_NOTIFY_VALUE_CHG |
+                                                       ORTE_GPR_NOTIFY_PRE_EXISTING,
+                                                       ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR | ORTE_GPR_STRIPPED,
+                                                       segment,
+                                                       NULL,	/* look at all
+                                                                 * containers on this
+                                                                 * segment */
+                                                       2, keys,
+                                                       mca_pml_base_modex_registry_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
             free(sub_name);
             free(trig_name);
@@ -499,16 +499,16 @@ mca_pml_base_modex_subscribe(orte_process_name_t * name)
         }
     } else {
         if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_N(&sub_id, trig_name, sub_name,
-                              ORTE_GPR_NOTIFY_ADD_ENTRY |
-                              ORTE_GPR_NOTIFY_VALUE_CHG |
-                              ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG,
-                              ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR | ORTE_GPR_STRIPPED,
-                              segment,
-                              NULL,	/* look at all
-                                     * containers on this
-                                     * segment */
-                              2, keys,
-                              mca_pml_base_modex_registry_callback, NULL))) {
+                                                       ORTE_GPR_NOTIFY_ADD_ENTRY |
+                                                       ORTE_GPR_NOTIFY_VALUE_CHG |
+                                                       ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG,
+                                                       ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR | ORTE_GPR_STRIPPED,
+                                                       segment,
+                                                       NULL,	/* look at all
+                                                                 * containers on this
+                                                                 * segment */
+                                                       2, keys,
+                                                       mca_pml_base_modex_registry_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
             free(sub_name);
             free(trig_name);
@@ -539,8 +539,8 @@ mca_pml_base_modex_subscribe(orte_process_name_t * name)
 
 int
 mca_pml_base_modex_send(mca_base_component_t * source_component,
-			const void *data,
-			size_t size)
+                        const void *data,
+                        size_t size)
 {
     orte_jobid_t jobid;
     int rc;
@@ -553,66 +553,66 @@ mca_pml_base_modex_send(mca_base_component_t * source_component,
     jobid = ORTE_PROC_MY_NAME->jobid;
 
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
-	ORTE_ERROR_LOG(rc);
-	return rc;
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
     if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&tokens,
-			      &num_tokens, orte_process_info.my_name))) {
-	ORTE_ERROR_LOG(rc);
-	free(segment);
-	return rc;
+                                             &num_tokens, orte_process_info.my_name))) {
+        ORTE_ERROR_LOG(rc);
+        free(segment);
+        return rc;
     }
     OBJ_CONSTRUCT(&buffer, orte_buffer_t);
     ptr = source_component->mca_type_name;
     if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &ptr, 1, ORTE_STRING))) {
-	ORTE_ERROR_LOG(rc);
-	goto cleanup;
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
     ptr = source_component->mca_component_name;
     if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &ptr, 1, ORTE_STRING))) {
-	ORTE_ERROR_LOG(rc);
-	goto cleanup;
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
     if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &source_component->mca_component_major_version, 1, ORTE_INT32))) {
-	ORTE_ERROR_LOG(rc);
-	goto cleanup;
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
     if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &source_component->mca_component_minor_version, 1, ORTE_INT32))) {
-	ORTE_ERROR_LOG(rc);
-	goto cleanup;
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
     if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &size, 1, ORTE_SIZE))) {
-	ORTE_ERROR_LOG(rc);
-	goto cleanup;
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
     if (0 != size) {
-	if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, (void *) data, size, ORTE_BYTE))) {
-	    ORTE_ERROR_LOG(rc);
-	    goto cleanup;
-	}
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, (void *) data, size, ORTE_BYTE))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
     }
     if (ORTE_SUCCESS != (rc = orte_dss.unload(&buffer, (void **) &(bo.bytes), &(bo.size)))) {
-	ORTE_ERROR_LOG(rc);
-	goto cleanup;
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
     OBJ_DESTRUCT(&buffer);
 
     /* setup the data_value structure to hold the byte object */
     if (ORTE_SUCCESS != (rc = orte_dss.set(&value, (void *) &bo, ORTE_BYTE_OBJECT))) {
-	ORTE_ERROR_LOG(rc);
-	goto cleanup;
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
     rc = orte_gpr.put_1(ORTE_GPR_TOKENS_AND | ORTE_GPR_KEYS_OR,
-			segment, tokens, OMPI_MODEX_KEY, &value);
+                        segment, tokens, OMPI_MODEX_KEY, &value);
 
-cleanup:
+ cleanup:
     free(segment);
     for (i = 0; i < num_tokens; i++) {
-	free(tokens[i]);
-	tokens[i] = NULL;
+        free(tokens[i]);
+        tokens[i] = NULL;
     }
     if (NULL != tokens)
-	free(tokens);
+        free(tokens);
 
     return rc;
 }
@@ -624,9 +624,9 @@ cleanup:
 
 int
 mca_pml_base_modex_recv(mca_base_component_t * component,
-			ompi_proc_t * proc,
-			void **buffer,
-			size_t * size)
+                        ompi_proc_t * proc,
+                        void **buffer,
+                        size_t * size)
 {
     mca_pml_base_modex_t *modex;
     mca_pml_base_modex_module_t *modex_module;
@@ -667,26 +667,26 @@ mca_pml_base_modex_recv(mca_base_component_t * component,
 
     /* lookup/create the module */
     if (NULL == (modex_module = mca_pml_base_modex_create_module(modex, component))) {
-	OPAL_THREAD_UNLOCK(&modex->modex_lock);
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_THREAD_UNLOCK(&modex->modex_lock);
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     /* wait until data is available */
     while (modex_module->module_data_avail == false) {
-	opal_condition_wait(&modex_module->module_data_cond, &modex->modex_lock);
+        opal_condition_wait(&modex_module->module_data_cond, &modex->modex_lock);
     }
 
     /* copy the data out to the user */
     if (modex_module->module_data_size == 0) {
-	*buffer = NULL;
-	*size = 0;
+        *buffer = NULL;
+        *size = 0;
     } else {
-	void *copy = malloc(modex_module->module_data_size);
-	if (copy == NULL) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
-	memcpy(copy, modex_module->module_data, modex_module->module_data_size);
-	*buffer = copy;
-	*size = modex_module->module_data_size;
+        void *copy = malloc(modex_module->module_data_size);
+        if (copy == NULL) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        memcpy(copy, modex_module->module_data, modex_module->module_data_size);
+        *buffer = copy;
+        *size = modex_module->module_data_size;
     }
     OPAL_THREAD_UNLOCK(&modex->modex_lock);
     return OMPI_SUCCESS;
@@ -699,9 +699,9 @@ mca_pml_base_modex_recv(mca_base_component_t * component,
 
 int
 mca_pml_base_modex_recv_nb(mca_base_component_t * component,
-			   ompi_proc_t * proc,
-			   mca_pml_base_modex_cb_fn_t cbfunc,
-			   void *cbdata)
+                           ompi_proc_t * proc,
+                           mca_pml_base_modex_cb_fn_t cbfunc,
+                           void *cbdata)
 {
     mca_pml_base_modex_t *modex;
     mca_pml_base_modex_module_t *module;
@@ -737,8 +737,8 @@ mca_pml_base_modex_recv_nb(mca_base_component_t * component,
 
     /* lookup/create the module */
     if (NULL == (module = mca_pml_base_modex_create_module(modex, component))) {
-	OPAL_THREAD_UNLOCK(&modex->modex_lock);
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_THREAD_UNLOCK(&modex->modex_lock);
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     /* register the callback */
     cb = OBJ_NEW(mca_pml_base_modex_cb_t);
