@@ -397,7 +397,16 @@ static void mca_pml_ob1_recv_request_rget(
     mca_pml_ob1_rdma_frag_t* frag;
     size_t i, size = 0;
     int rc;
-
+    
+    /* if receive buffer is not contiguous we can't just RDMA read into it, so
+     * fall back to copy in/out protocol. It is a pity because buffer on the
+     * sender side is already registered. We need to ne smarter here, perhaps
+     * do couple of RDMA reads */
+    if(ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == true) {
+        mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, 0);
+        return;
+    }
+    
     MCA_PML_OB1_RDMA_FRAG_ALLOC(frag,rc);
     if(NULL == frag) {
         /* GLB - FIX */
@@ -465,6 +474,23 @@ void mca_pml_ob1_recv_request_progress(
             recvreq->req_send = hdr->hdr_rndv.hdr_src_req;
             MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq,&hdr->hdr_match);
             mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, bytes_received);
+            if(recvreq->req_recv.req_base.req_pml_complete) {
+                /* We must check that completion hasn't already occured */
+                /*  for the self BTL we may choose the RDMA PUT protocol */
+                /*  on the send side, in  this case we send no eager data */
+                /*  if, on the receiver side the data is not contiguous we  */
+                /*  may choose to use the copy in/out protocol */
+                /*  if this occurs, the entire request can be completed in a */
+                /*  single call to mca_pml_ob1_recv_request_ack */
+                /*  as soon as the last fragment of the copy in/out protocol */
+                /*  gets local completion. This doesn't occur in the general */
+                /*  case of the copy in/out protocol because when both sender */
+                /*  and receiver agree on the copy in/out protoocol we eagerly */
+                /*  send data, we don't update the request with this eagerly sent */
+                /*  data until the end of this function, so completion could not have */
+                /*  yet occurred. */
+                return;
+            }
             /**
              * The PUT protocol do not attach any data to the original request.
              * Therefore, we might want to avoid unpacking if there is nothing to

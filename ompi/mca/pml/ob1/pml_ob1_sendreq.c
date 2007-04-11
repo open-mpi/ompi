@@ -253,7 +253,23 @@ static void mca_pml_ob1_rndv_completion(
     /* advance the request */
     if(OPAL_THREAD_ADD32(&sendreq->req_state, 1) == 2 &&
        sendreq->req_bytes_delivered >= sendreq->req_send.req_bytes_packed) {
-        MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
+        if(!sendreq->req_send.req_base.req_pml_complete){
+            /* We must check that completion hasn't already occured */
+            /*  for the self BTL we may choose the RDMA PUT protocol */
+            /*  on the send side, in  this case we send no eager data */
+            /*  if, on the receiver side the data is not contiguous we  */
+            /*  may choose to use the copy in/out protocol */
+            /*  if this occurs, the entire request can be completed in a */
+            /*  single call to mca_pml_ob1_recv_request_ack */
+            /*  as soon as the last fragment of the copy in/out protocol */
+            /*  gets local completion. This doesn't occur in the general */
+            /*  case of the copy in/out protocol because when both sender */
+            /*  and receiver agree on the copy in/out protoocol we eagerly */
+            /*  send data, we don't update the request with this eagerly sent */
+            /*  data until here in this function, so completion could not have */
+            /*  yet occurred. */
+            MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
+        }
     }
     /* check for pending requests */
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
