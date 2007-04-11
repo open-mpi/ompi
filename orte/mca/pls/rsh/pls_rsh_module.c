@@ -416,7 +416,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     int proc_name_index;
     int local_exec_index, local_exec_index_end;
     char *jobid_string = NULL;
-    char *uri, *param;
+    char *param;
     char **argv = NULL;
     char *prefix_dir;
     int argc;
