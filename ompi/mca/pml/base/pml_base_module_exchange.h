@@ -51,7 +51,7 @@ extern "C" {
    * and makes it available to all other MCA processes during the
    * selection process.  Modules sent by one source_component can only
    * be received by a corresponding module with the same
-   * source_componennt in peer processes.
+   * source_component in peer processes.
    *
    * Two components are "corresponding" if:
    *
