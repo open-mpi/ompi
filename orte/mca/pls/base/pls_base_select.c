@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -24,6 +24,7 @@
 #include "opal/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_component_repository.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -82,8 +83,8 @@ int orte_pls_base_select(void)
                 best_priority = priority;
             } else {
                 opal_output_verbose(10, orte_pls_base.pls_output,
-                        "orte:base:select: component %s does NOT want to be considered for selection", 
-                        component->pls_version.mca_component_name);
+                                    "orte:base:select: component %s does did not win the election",
+                                    component->pls_version.mca_component_name);
                 if (NULL == module->finalize) {
                     opal_output(orte_pls_base.pls_output,
                                 "It appears you are the victim of a stale library - please delete your installation lib directory and reinstall");
@@ -106,6 +107,24 @@ int orte_pls_base_select(void)
     orte_pls = *best_module;
     orte_pls_base.selected_component = *best_component;
     orte_pls_base.selected = true;
+
+    /* unload all components that were not selected */
+    item = opal_list_get_first(&orte_pls_base.available_components);
+    while(item != opal_list_get_end(&orte_pls_base.available_components)) {
+        opal_list_item_t* next = opal_list_get_next(item);
+        orte_pls_base_component_t* component;
+        cli = (mca_base_component_list_item_t *) item;
+        component = (orte_pls_base_component_t *) cli->cli_component;
+        if(component != best_component) {
+            opal_output_verbose(10, orte_pls_base.pls_output,
+                                "orte_pls_base_select: module %s unloaded",
+                                component->pls_version.mca_component_name);
+            mca_base_component_repository_release((mca_base_component_t *) component);
+            opal_list_remove_item(&orte_pls_base.available_components, item);
+            OBJ_RELEASE(item);
+        }
+        item = next;
+    }
 
     /* if we are an HNP, then start our receive */
     if (orte_process_info.seed) {
