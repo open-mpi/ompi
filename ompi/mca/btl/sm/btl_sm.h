@@ -226,29 +226,6 @@ extern int mca_btl_sm_add_procs(
 
 /**
  * PML->BTL notification of change in the process list.
- * PML->BTL Notification that a receive fragment has been matched.
- * Called for message that is send from process with the virtual
- * address of the shared memory segment being the same as that of
- * the receiver.
- * 
- * @param btl (IN)
- * @param proc (IN)  
- * @param peer (OUT)
- * @return     OMPI_SUCCESS or error status on failure.
- * 
- */
-
-extern int mca_btl_sm_add_procs_same_base_addr(
-    struct mca_btl_base_module_t* btl,
-    size_t nprocs,
-    struct ompi_proc_t **procs,
-    struct mca_btl_base_endpoint_t** peers,
-    ompi_bitmap_t* reachability
-);
-
-                                                                                                               
-/**
- * PML->BTL notification of change in the process list.
  *
  * @param btl (IN)     BTL instance
  * @param proc (IN)    Peer process

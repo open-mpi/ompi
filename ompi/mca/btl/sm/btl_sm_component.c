@@ -286,14 +286,6 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
     mca_btl_sm.super.btl_max_send_size=mca_btl_sm_component.max_frag_size;
     mca_btl_sm.super.btl_min_rdma_size=mca_btl_sm_component.max_frag_size;
     mca_btl_sm.super.btl_max_rdma_size=mca_btl_sm_component.max_frag_size;
-    /* The order in which the SM modules are initialized is important as only
-     * the first one (the one using the mca_btl_sm_add_procs_same_base_addr)
-     * will setup all the memory for the internal structures (sm_proc_connect).
-     * Therefore, the order in which the two SM module will be after the
-     * selection is important. We have to make sure they get sorted in the
-     * correct order. The simplest way is to force the exclusivity of the
-     * second module to something lower than the exclusivity of the first one.
-     */
     mca_btl_sm.super.btl_exclusivity = mca_btl_sm_component.sm_exclusivity;
     mca_btl_sm.super.btl_latency     = mca_btl_sm_component.sm_latency; /* lowest latency */
     mca_btl_sm.super.btl_bandwidth   = 900; /* not really used now since exclusivity is set to the highest value */
