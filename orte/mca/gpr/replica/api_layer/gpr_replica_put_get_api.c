@@ -60,20 +60,25 @@ int orte_gpr_replica_put(orte_std_cntr_t cnt, orte_gpr_value_t **values)
         /* first check for error - all keyvals must have a non-NULL string key */
         for (j=0; j < val->cnt; j++) {
             if (NULL == (val->keyvals[j])->key) {
-                rc = ORTE_ERR_BAD_PARAM;
-                goto CLEANUP;
+                ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+                OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+                return ORTE_ERR_BAD_PARAM;
             }
         }
 
         /* find the segment */
         if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&seg, true, val->segment))) {
-            goto CLEANUP;
+            ORTE_ERROR_LOG(rc);
+            OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+            return rc;
         }
 
         /* convert tokens to array of itags */
         if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_itag_list(&itags, seg,
-                                                                 val->tokens, &(val->num_tokens)))) {
-            goto CLEANUP;
+                                            val->tokens, &(val->num_tokens)))) {
+            ORTE_ERROR_LOG(rc);
+            OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+            return rc;
         }
 
         if (ORTE_SUCCESS != (rc = orte_gpr_replica_put_fn(val->addr_mode, seg, itags, val->num_tokens,
@@ -82,16 +87,17 @@ int orte_gpr_replica_put(orte_std_cntr_t cnt, orte_gpr_value_t **values)
         }
 
         if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_events())) {
+            ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
 
         if (NULL != itags) {
            free(itags);
-           itags = NULL;
         }
+        itags = NULL;
     }
 
- CLEANUP:  /* or not ... */
+CLEANUP:
     /* release list of itags */
     if (NULL != itags) {
        free(itags);
@@ -99,13 +105,12 @@ int orte_gpr_replica_put(orte_std_cntr_t cnt, orte_gpr_value_t **values)
 
     if (ORTE_SUCCESS == rc) {
         rc = orte_gpr_replica_process_callbacks();
-    } else {
-        ORTE_ERROR_LOG(rc);
     }
 
     OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 
     return rc;
+
 }
 
 
