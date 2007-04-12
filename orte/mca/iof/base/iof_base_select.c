@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -57,8 +57,9 @@ int orte_iof_base_select(void)
             component->iof_version.mca_component_name);
 
         if (NULL == component->iof_init) {
-          opal_output_verbose(10, orte_iof_base.iof_output, 
-              "orte_iof_base_select: no init function; ignoring component");
+            opal_output_verbose(10, orte_iof_base.iof_output, 
+                                "orte_iof_base_select: no init function; ignoring component");
+            continue;
         } else {
             bool allow_user;
             bool have_hidden;
@@ -73,13 +74,24 @@ int orte_iof_base_select(void)
                 continue;
             }
 
+	    /* This iof component architecture is borked. There is an init function without the
+	     * corresponding finalize. The only available finalize (and looking to the SVC it
+	     * seems true) is the one attached to the module. Therefore, in order to allow
+	     * the iof to cleanly deselect we have to call the module finalize function when
+	     * we know that the component will not get selected.
+	     */
             if(priority > selected_priority) {
+                if( (NULL != selected_module) && (NULL != selected_module->iof_finalize) )
+                    selected_module->iof_finalize();
                 selected_priority = priority;
                 selected_component = component;
                 selected_module = module;
                 selected_allow_user = allow_user;
                 selected_have_hidden = have_hidden;
-            }
+            } else {
+                if( NULL != module->iof_finalize )
+                    module->iof_finalize();
+	    }
         }
     }
 
