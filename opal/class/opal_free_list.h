@@ -25,6 +25,7 @@
 #include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
 #include "opal/constants.h"
+#include "opal/prefetch.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -93,7 +94,7 @@ OPAL_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elemen
         opal_mutex_lock(&((fl)->fl_lock));                              \
         item = (opal_free_list_item_t*)                                 \
             opal_list_remove_first(&((fl)->super));                     \
-        if(NULL == item) {                                              \
+        if( OPAL_UNLIKELY(NULL == item) ) {                             \
             opal_free_list_grow((fl), (fl)->fl_num_per_alloc);          \
             item = (opal_free_list_item_t*)                             \
                 opal_list_remove_first(&((fl)->super));                 \
@@ -102,7 +103,7 @@ OPAL_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elemen
     } else {                                                            \
         item = (opal_free_list_item_t*)                                 \
             opal_list_remove_first(&((fl)->super));                     \
-        if(NULL == item) {                                              \
+        if( OPAL_UNLIKELY(NULL == item) ) {                             \
             opal_free_list_grow((fl), (fl)->fl_num_per_alloc);          \
             item = (opal_free_list_item_t*)                             \
                 opal_list_remove_first(&((fl)->super));                 \
@@ -125,21 +126,21 @@ OPAL_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elemen
  */
  
 
-#define OPAL_FREE_LIST_WAIT(fl, item, rc)                                  \
-{                                                                          \
-    OPAL_THREAD_LOCK(&((fl)->fl_lock));                                    \
-    while( NULL == (item = (opal_free_list_item_t*) opal_list_remove_first(&((fl)->super))) ) { \
-        if((fl)->fl_max_to_alloc <= (fl)->fl_num_allocated) {              \
-            (fl)->fl_num_waiting++;                                        \
-            opal_condition_wait(&((fl)->fl_condition), &((fl)->fl_lock));  \
-            (fl)->fl_num_waiting--;                                        \
-        } else {                                                           \
-            opal_free_list_grow((fl), (fl)->fl_num_per_alloc);             \
-        }                                                                  \
-    }                                                                      \
-    OPAL_THREAD_UNLOCK(&((fl)->fl_lock));                                  \
-    rc = (NULL == item) ?  OPAL_ERR_OUT_OF_RESOURCE : OPAL_SUCCESS;        \
-} 
+#define OPAL_FREE_LIST_WAIT(fl, item, rc)                               \
+    do {                                                                \
+        OPAL_THREAD_LOCK(&((fl)->fl_lock));                             \
+        while( NULL == (item = (opal_free_list_item_t*) opal_list_remove_first(&((fl)->super))) ) { \
+            if( OPAL_LIKELY((fl)->fl_max_to_alloc <= (fl)->fl_num_allocated) ) { \
+                (fl)->fl_num_waiting++;                                 \
+                opal_condition_wait(&((fl)->fl_condition), &((fl)->fl_lock)); \
+                (fl)->fl_num_waiting--;                                 \
+            } else {                                                    \
+                opal_free_list_grow((fl), (fl)->fl_num_per_alloc);      \
+            }                                                           \
+        }                                                               \
+        OPAL_THREAD_UNLOCK(&((fl)->fl_lock));                           \
+        rc = OPAL_SUCCESS;                                              \
+    } while(0)
 
 
 /**
@@ -150,15 +151,16 @@ OPAL_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elemen
  *
  */
  
-#define OPAL_FREE_LIST_RETURN(fl, item)                                    \
-{                                                                          \
-    OPAL_THREAD_LOCK(&(fl)->fl_lock);                                      \
-    opal_list_prepend(&((fl)->super), ((opal_list_item_t*) item));      \
-    if((fl)->fl_num_waiting > 0) {                                         \
-        opal_condition_signal(&((fl)->fl_condition));                      \
-    }                                                                      \
-    OPAL_THREAD_UNLOCK(&(fl)->fl_lock);                                    \
-}
+#define OPAL_FREE_LIST_RETURN(fl, item)                                 \
+    do {                                                                \
+        OPAL_THREAD_LOCK(&(fl)->fl_lock);                               \
+        opal_list_prepend(&((fl)->super), ((opal_list_item_t*) item));  \
+        if( OPAL_UNLIKELY((fl)->fl_num_waiting > 0) ) {                 \
+            opal_condition_signal(&((fl)->fl_condition));               \
+        }                                                               \
+        OPAL_THREAD_UNLOCK(&(fl)->fl_lock);                             \
+    } while(0)
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
