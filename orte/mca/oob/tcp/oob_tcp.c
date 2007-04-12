@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -18,9 +18,9 @@
  * $HEADER$
  *
  * In windows, many of the socket functions return an EWOULDBLOCK
- * instead of \ things like EAGAIN, EINPROGRESS, etc. It has been
- * verified that this will \ not conflict with other error codes that
- * are returned by these functions \ under UNIX/Linux environments 
+ * instead of things like EAGAIN, EINPROGRESS, etc. It has been
+ * verified that this will not conflict with other error codes that
+ * are returned by these functions under UNIX/Linux environments 
  */
 
 #include "orte_config.h"
@@ -930,6 +930,7 @@ void mca_oob_tcp_registry_callback(
                     &mca_oob_tcp_component.tcp_peer_names, &addr->addr_name);
                 if(NULL != existing) {
                     /* TSW - need to update existing entry */
+  		    opal_output( 0, "WHY ARE WE RECEIVING THE SAME INFORMATION SEVERAL TIMES ?!?!?!?" );
                     orte_hash_table_set_proc(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
                     OBJ_RELEASE(addr);
                     continue;
