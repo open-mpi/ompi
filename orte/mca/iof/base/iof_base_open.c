@@ -86,13 +86,12 @@ int orte_iof_base_open(void)
     }
 
     /* initialize free list */
-    opal_free_list_init(
-        &orte_iof_base.iof_fragments,
-        sizeof(orte_iof_base_frag_t),
-        OBJ_CLASS(orte_iof_base_frag_t),
-        0,   /* number to initially allocate */
-        -1,  /* maximum elements to allocate */
-        32);  /* number per allocation */
+    opal_free_list_init( &orte_iof_base.iof_fragments,
+			 sizeof(orte_iof_base_frag_t),
+			 OBJ_CLASS(orte_iof_base_frag_t),
+			 0,     /* number to initially allocate */
+			 -1,    /* maximum elements to allocate */
+			 32 );  /* number per allocation */
 
     /* Open up all available components */
     if (ORTE_SUCCESS != 
