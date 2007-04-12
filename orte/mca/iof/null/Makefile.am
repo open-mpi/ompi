@@ -42,7 +42,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_iof_null_la_SOURCES = $(null_SOURCES)
 mca_iof_null_la_LIBADD = \
     $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opallibopen-pal.la
+    $(top_ompi_builddir)/opal/libopen-pal.la
 mca_iof_null_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
