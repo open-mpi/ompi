@@ -169,7 +169,7 @@ int orte_dss_open(void)
 #endif
 
     id = mca_base_param_register_int("dss", "buffer", "type",
-                                     "Set the default mode for OpenRTE buffers (0=non-described, 1=described",
+                                     "Set the default mode for OpenRTE buffers (0=non-described, 1=described)",
                                      def_type);
     mca_base_param_lookup_int(id, &rc);
     default_buf_type = rc;
