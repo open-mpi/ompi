@@ -75,15 +75,17 @@ static int orte_odls_process_subscribe_launch_data( orte_jobid_t job,
     char *glob_keys[] = {
         ORTE_JOB_APP_CONTEXT_KEY,
         ORTE_JOB_VPID_START_KEY,
-        ORTE_JOB_VPID_RANGE_KEY
+        ORTE_JOB_VPID_RANGE_KEY,
+        ORTE_JOB_OVERSUBSCRIBE_OVERRIDE_KEY
     };
-    int num_glob_keys = 3;
+    int num_glob_keys = 4;
     char* keys[] = {
         ORTE_PROC_NAME_KEY,
         ORTE_PROC_APP_CONTEXT_KEY,
         ORTE_NODE_NAME_KEY,
+        ORTE_NODE_OVERSUBSCRIBED_KEY
     };
-    int num_keys = 3;
+    int num_keys = 4;
     int i, rc;
     
     /* get the job segment name */
@@ -136,7 +138,7 @@ static int orte_odls_process_subscribe_launch_data( orte_jobid_t job,
         }
     }
     
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[1]), ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[1]), ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR | ORTE_GPR_STRIPPED,
                                                      segment, num_keys, 0))) {
         ORTE_ERROR_LOG(rc);
         free(segment);
@@ -177,7 +179,127 @@ static int orte_odls_process_subscribe_launch_data( orte_jobid_t job,
 
 static int orte_odls_process_get_add_procs_data(orte_gpr_notify_data_t **data, orte_job_map_t *map)
 {
-    return ORTE_ERR_NOT_IMPLEMENTED;
+    orte_gpr_notify_data_t *ndat;
+    orte_gpr_value_t **values, *value;
+    orte_std_cntr_t cnt;
+    char *glob_tokens[] = {
+        ORTE_JOB_GLOBALS,
+        NULL
+    };
+    char *glob_keys[] = {
+        ORTE_JOB_APP_CONTEXT_KEY,
+        ORTE_JOB_VPID_START_KEY,
+        ORTE_JOB_VPID_RANGE_KEY,
+        NULL
+    };
+    opal_list_item_t *item, *m_item;
+    orte_mapped_node_t *node;
+    orte_mapped_proc_t *proc;
+    int rc;
+    char *segment;
+    
+    /* set default answer */
+    *data = NULL;
+    
+    ndat = OBJ_NEW(orte_gpr_notify_data_t);
+    if (NULL == ndat) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    /* construct a fake trigger name so that the we can extract the jobid from it later */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(ndat->target), "bogus", map->job))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(ndat);
+        return rc;
+    }
+    
+    /* get the segment name */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, map->job))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(ndat);
+        return rc;
+    }
+    
+    /* get the info from the job globals container first */
+    if (ORTE_SUCCESS != (rc = orte_gpr.get(ORTE_GPR_TOKENS_AND | ORTE_GPR_KEYS_OR,
+                                           segment, glob_tokens, glob_keys, &cnt, &values))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(ndat);
+        return rc;
+    }
+    
+    /* there can only be one value here since we only specified a single container.
+     * Just transfer the returned value to the ndat structure
+     */
+    if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&cnt, ndat->values, values[0]))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(ndat);
+        OBJ_RELEASE(values[0]);
+        return rc;
+    }
+    ndat->cnt = 1;
+    
+    /* the remainder of our required info is in the mapped_node objects, so all we
+     * have to do is transfer it over
+     */
+    for (m_item = opal_list_get_first(&map->nodes);
+         m_item != opal_list_get_end(&map->nodes);
+         m_item = opal_list_get_next(m_item)) {
+        node = (orte_mapped_node_t*)m_item;
+        
+        for (item = opal_list_get_first(&node->procs);
+             item != opal_list_get_end(&node->procs);
+             item = opal_list_get_next(item)) {
+            proc = (orte_mapped_proc_t*)item;
+            
+            /* must not have any tokens so that launch_procs can process it correctly */
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, 0, segment, 3, 0))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+            
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]),
+                                                            ORTE_PROC_NAME_KEY,
+                                                            ORTE_NAME, &proc->name))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+          
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[1]),
+                                                            ORTE_PROC_APP_CONTEXT_KEY,
+                                                            ORTE_STD_CNTR, &proc->app_idx))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+          
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[2]),
+                                                            ORTE_NODE_NAME_KEY,
+                                                            ORTE_STRING, node->nodename))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+          
+            if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&cnt, ndat->values, value))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(values[0]);
+                return rc;
+            }
+            ndat->cnt += 1;
+        }
+    }
+    
+    *data = ndat;
+    return ORTE_SUCCESS;
 }
 
 static bool orte_odls_process_child_died( pid_t pid, unsigned int timeout,
