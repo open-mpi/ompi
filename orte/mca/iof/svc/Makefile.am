@@ -43,7 +43,7 @@ svc_SOURCES = \
     iof_svc_sub.h \
     iof_svc_sub.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_iof_svc_la_SOURCES = $(svc_SOURCES)
 mca_iof_svc_la_LIBADD = \

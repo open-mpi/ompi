@@ -43,7 +43,7 @@ smr_SOURCES = \
     smr_bproc.h \
     smr_bproc_component.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_smr_bproc_la_SOURCES = $(smr_SOURCES)
 mca_smr_bproc_la_LIBADD = \

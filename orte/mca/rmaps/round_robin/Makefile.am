@@ -35,7 +35,7 @@ component_noinst = libmca_rmaps_round_robin.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_rmaps_round_robin_la_SOURCES = $(sources)
 mca_rmaps_round_robin_la_LDFLAGS = -module -avoid-version

@@ -41,7 +41,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_pls_tm_la_SOURCES = $(component_sources)
 mca_pls_tm_la_LDFLAGS = -module -avoid-version $(pls_tm_LDFLAGS)

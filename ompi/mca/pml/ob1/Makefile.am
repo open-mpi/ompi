@@ -51,7 +51,7 @@ component_noinst = libmca_pml_ob1.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_ob1_la_SOURCES = $(ob1_sources)
 mca_pml_ob1_la_LIBADD = \

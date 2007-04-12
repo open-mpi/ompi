@@ -45,7 +45,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_rcache_rb_la_SOURCES = $(component_sources)
 mca_rcache_rb_la_LDFLAGS = -module -avoid-version $(rcache_rb_LDFLAGS)

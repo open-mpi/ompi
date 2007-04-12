@@ -38,7 +38,7 @@ proxy_SOURCES = \
     rds_resfile.h \
     rds_resfile_component.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_rds_resfile_la_SOURCES = $(proxy_SOURCES)
 mca_rds_resfile_la_LIBADD = \

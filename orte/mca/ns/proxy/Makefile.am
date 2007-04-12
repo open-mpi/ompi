@@ -36,7 +36,7 @@ component_noinst = libmca_ns_proxy.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ns_proxy_la_SOURCES = $(sources)
 mca_ns_proxy_la_LDFLAGS = -module -avoid-version

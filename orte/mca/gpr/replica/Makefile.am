@@ -30,7 +30,7 @@ component_noinst = libmca_gpr_replica.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_gpr_replica_la_SOURCES = gpr_replica.h \
                              gpr_replica_class_instances.h \

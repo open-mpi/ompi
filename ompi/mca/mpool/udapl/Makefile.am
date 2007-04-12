@@ -37,7 +37,7 @@ component_noinst = libmca_mpool_udapl.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_udapl_la_SOURCES = $(sources)
 mca_mpool_udapl_la_LIBADD = \

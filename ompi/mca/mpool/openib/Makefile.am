@@ -42,7 +42,7 @@ endif
 # See src/mca/ptl/openib/Makefile.am for an explanation of
 # libmca_common_openib.la.
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_openib_la_SOURCES = $(sources)
 mca_mpool_openib_la_LDFLAGS = -module -avoid-version $(mpool_openib_LDFLAGS)

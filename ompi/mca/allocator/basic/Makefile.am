@@ -36,7 +36,7 @@ component_noinst = libmca_allocator_basic.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_allocator_basic_la_SOURCES = $(sources)
 mca_allocator_basic_la_LDFLAGS = -module -avoid-version

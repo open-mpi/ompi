@@ -37,7 +37,7 @@ proxy_SOURCES = \
     rmgr_urm.h \
     rmgr_urm_component.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_rmgr_urm_la_SOURCES = $(proxy_SOURCES)
 mca_rmgr_urm_la_LIBADD = \

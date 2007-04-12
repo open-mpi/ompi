@@ -49,7 +49,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_tcp_la_SOURCES = $(component_sources)
 mca_btl_tcp_la_LDFLAGS = -module -avoid-version

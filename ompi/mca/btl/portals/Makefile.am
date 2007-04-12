@@ -47,7 +47,7 @@ portals_SOURCES = \
 
 AM_CPPFLAGS = $(btl_portals_CPPFLAGS)
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_portals_la_SOURCES = $(portals_SOURCES)
 nodist_mca_btl_portals_la_SOURCES = $(portals_nodist_SOURCES)

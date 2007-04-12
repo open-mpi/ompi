@@ -42,7 +42,7 @@ local_sources = \
 	mtl_portals_send.c \
 	mtl_portals_probe.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mtl_portals_la_SOURCES = $(local_sources)
 mca_mtl_portals_la_LIBADD = \

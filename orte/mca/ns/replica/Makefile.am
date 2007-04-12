@@ -39,7 +39,7 @@ component_noinst = libmca_ns_replica.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ns_replica_la_SOURCES = $(sources)
 mca_ns_replica_la_LDFLAGS = -module -avoid-version

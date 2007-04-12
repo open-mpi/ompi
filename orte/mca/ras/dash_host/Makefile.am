@@ -33,7 +33,7 @@ dash_host_SOURCES = \
     ras_dash_host_module.c \
     ras_dash_host_component.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ras_dash_host_la_SOURCES = $(dash_host_SOURCES)
 mca_ras_dash_host_la_LIBADD = \

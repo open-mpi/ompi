@@ -36,7 +36,7 @@ sources = \
     errmgr_bproc.c \
     errmgr_bproc_component.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_errmgr_bproc_la_SOURCES = $(sources)
 mca_errmgr_bproc_la_LIBADD = \

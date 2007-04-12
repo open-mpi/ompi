@@ -33,7 +33,7 @@ component_noinst = libmca_errmgr_orted.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_errmgr_orted_la_SOURCES = $(sources)
 mca_errmgr_orted_la_LDFLAGS = -module -avoid-version

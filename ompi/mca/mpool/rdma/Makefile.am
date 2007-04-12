@@ -39,7 +39,7 @@ component_noinst = libmca_mpool_rdma.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_rdma_la_SOURCES = $(sources)
 mca_mpool_rdma_la_LDFLAGS = -module -avoid-version

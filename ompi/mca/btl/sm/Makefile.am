@@ -44,7 +44,7 @@ endif
 # See ompi/mca/common/sm/Makefile.am for an explanation of
 # libmca_common_sm.la.
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
 mca_btl_sm_la_LDFLAGS = -module -avoid-version

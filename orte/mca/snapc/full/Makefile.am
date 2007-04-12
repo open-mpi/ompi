@@ -36,7 +36,7 @@ component_noinst = libmca_snapc_full.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_snapc_full_la_SOURCES = $(sources)
 mca_snapc_full_la_LDFLAGS = -module -avoid-version

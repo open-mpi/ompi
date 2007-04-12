@@ -45,7 +45,7 @@ component_noinst = libmca_mtl_psm.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mtl_psm_la_SOURCES = $(mtl_psm_sources)
 mca_mtl_psm_la_LIBADD = \

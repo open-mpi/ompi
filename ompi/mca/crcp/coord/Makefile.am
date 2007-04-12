@@ -37,7 +37,7 @@ component_noinst = libmca_crcp_coord.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_crcp_coord_la_SOURCES = $(sources)
 mca_crcp_coord_la_LDFLAGS = -module -avoid-version

@@ -39,7 +39,7 @@ component_noinst = libmca_sds_bproc.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sds_bproc_la_SOURCES = $(sources)
 mca_sds_bproc_la_LDFLAGS = -module -avoid-version $(sds_bproc_LDFLAGS)

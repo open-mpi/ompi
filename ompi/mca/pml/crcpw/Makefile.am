@@ -31,7 +31,7 @@ component_install =
 endif
 
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_crcpw_la_SOURCES = $(crcpw_sources)
 mca_pml_crcpw_la_LIBADD = \

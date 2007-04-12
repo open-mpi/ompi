@@ -51,7 +51,7 @@ local_sources = \
 	pml_example_sendreq.h \
 	pml_example_start.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_example_la_SOURCES = $(local_sources)
 mca_pml_example_la_LIBADD = \
