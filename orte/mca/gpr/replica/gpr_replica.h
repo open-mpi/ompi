@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -23,20 +23,14 @@
 #ifndef ORTE_GPR_REPLICA_H
 #define ORTE_GPR_REPLICA_H
 
-
 #include "orte_config.h"
-
-#include <time.h>
-
-#include "orte/class/orte_bitmap.h"
-#include "orte/class/orte_pointer_array.h"
-#include "orte/class/orte_value_array.h"
 
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 
+#include "orte/class/orte_pointer_array.h"
+#include "orte/class/orte_value_array.h"
 #include "orte/mca/ns/ns_types.h"
-
 #include "orte/mca/gpr/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -125,7 +119,6 @@ typedef struct {
     orte_pointer_array_t *srch_ival;
     orte_std_cntr_t num_acted_upon;
     orte_pointer_array_t *acted_upon;
-    orte_bitmap_t srch_itag;
 } orte_gpr_replica_globals_t;
 
 
@@ -429,21 +422,6 @@ typedef struct orte_gpr_replica_write_invalidate_t orte_gpr_replica_write_invali
  */
 extern orte_gpr_replica_t orte_gpr_replica;
 extern orte_gpr_replica_globals_t orte_gpr_replica_globals;
-
-
-/*
- * Module open / close
- */
-int orte_gpr_replica_open(void);
-int orte_gpr_replica_close(void);
-
-
-/*
- * Startup / Shutdown
- */
-orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority);
-int orte_gpr_replica_finalize(void);
-int orte_gpr_replica_module_init(void);
 
 int  orte_gpr_replica_ft_event(int state);
 
