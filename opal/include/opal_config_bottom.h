@@ -477,4 +477,23 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #define OPAL_WANT_IPV6 0
 #endif
 
+#if defined(__APPLE__) && defined(HAVE_INTTYPES_H)
+/* Prior to Mac OS X 10.3, the length modifier "ll" wasn't
+   supported, but "q" was for long long.  This isn't ANSI
+   C and causes a warning when using PRI?64 macros.  We
+   don't support versions prior to OS X 10.3, so we dont'
+   need such backward compatibility.  Instead, redefine
+   the macros to be "ll", which is ANSI C and doesn't
+   cause a compiler warning. */
+#include <inttypes.h>
+#if defined(__PRI_64_LENGTH_MODIFIER__)
+#undef __PRI_64_LENGTH_MODIFIER__
+#define __PRI_64_LENGTH_MODIFIER__ "ll"
+#endif
+#if defined(__SCN_64_LENGTH_MODIFIER__)
+#undef __SCN_64_LENGTH_MODIFIER__
+#define __SCN_64_LENGTH_MODIFIER__ "ll"
+#endif
+#endif
+
 #endif /* OMPI_BUILDING */
