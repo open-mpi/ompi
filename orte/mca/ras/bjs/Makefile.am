@@ -39,7 +39,7 @@ proxy_SOURCES = \
     ras_bjs.h \
     ras_bjs_component.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ras_bjs_la_SOURCES = $(proxy_SOURCES)
 mca_ras_bjs_la_LIBADD = \

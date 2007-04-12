@@ -50,7 +50,7 @@ component_install =
 endif
 
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_dr_la_SOURCES = $(dr_sources)
 mca_pml_dr_la_LIBADD = \

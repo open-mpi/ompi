@@ -37,7 +37,7 @@ component_noinst = libmca_btl_mx.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_mx_la_SOURCES = $(btl_mx_sources)
 mca_btl_mx_la_LIBADD = \

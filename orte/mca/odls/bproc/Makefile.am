@@ -36,7 +36,7 @@ sources = \
     odls_bproc.c \
     odls_bproc_component.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_odls_bproc_la_SOURCES = $(sources)
 mca_odls_bproc_la_LIBADD = \

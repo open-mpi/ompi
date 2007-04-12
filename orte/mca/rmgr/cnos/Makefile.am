@@ -35,7 +35,7 @@ cnos_SOURCES = \
     rmgr_cnos.h \
     rmgr_cnos_component.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_rmgr_cnos_la_SOURCES = $(cnos_SOURCES)
 mca_rmgr_cnos_la_LIBADD = \

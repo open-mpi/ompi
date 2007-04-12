@@ -59,7 +59,7 @@ component_noinst = libmca_coll_demo.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_demo_la_SOURCES = $(sources)
 mca_coll_demo_la_LIBADD = $(LIBMPI_LA)

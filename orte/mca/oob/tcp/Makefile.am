@@ -46,7 +46,7 @@ component_noinst = libmca_oob_tcp.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_oob_tcp_la_SOURCES = $(sources)
 mca_oob_tcp_la_LIBADD = \

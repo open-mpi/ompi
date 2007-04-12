@@ -39,7 +39,7 @@ proxy_SOURCES = \
     iof_proxy_svc.c \
     iof_proxy_svc.h
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_iof_proxy_la_SOURCES = $(proxy_SOURCES)
 mca_iof_proxy_la_LIBADD = \

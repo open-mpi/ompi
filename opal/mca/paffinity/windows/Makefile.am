@@ -33,7 +33,7 @@ component_noinst = libmca_paffinity_windows.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_paffinity_windows_la_SOURCES = $(sources)
 mca_paffinity_windows_la_LDFLAGS = -module -avoid-version

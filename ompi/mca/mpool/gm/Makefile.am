@@ -41,7 +41,7 @@ endif
 
 # See src/mca/ptl/gm/Makefile.am for an explanation of
 # libmca_common_gm.la.
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_gm_la_SOURCES = $(sources)
 mca_mpool_gm_la_LIBADD = \

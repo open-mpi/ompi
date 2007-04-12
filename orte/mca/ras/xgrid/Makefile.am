@@ -51,7 +51,7 @@ component_noinst = libmca_ras_xgrid.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ras_xgrid_la_SOURCES = $(xgrid_sources)
 mca_ras_xgrid_la_LIBADD = \

@@ -36,7 +36,7 @@ component_noinst = libmca_crs_self.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_crs_self_la_SOURCES = $(sources)
 mca_crs_self_la_LDFLAGS = -module -avoid-version

@@ -33,7 +33,7 @@ localhost_SOURCES = \
     ras_localhost_module.c \
     ras_localhost_component.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ras_localhost_la_SOURCES = $(localhost_SOURCES)
 mca_ras_localhost_la_LIBADD = \

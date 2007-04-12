@@ -35,7 +35,7 @@ component_noinst = libmca_maffinity_libnuma.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_maffinity_libnuma_la_SOURCES = $(sources)
 mca_maffinity_libnuma_la_LDFLAGS = -module -avoid-version $(maffinity_libnuma_LDFLAGS)

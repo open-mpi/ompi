@@ -45,7 +45,7 @@ component_noinst = libmca_mtl_mx.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mtl_mx_la_SOURCES = $(mtl_mx_sources)
 mca_mtl_mx_la_LIBADD = \

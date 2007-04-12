@@ -37,7 +37,7 @@ null_SOURCES = \
     iof_null_module.c \
     iof_null_component.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_iof_null_la_SOURCES = $(null_SOURCES)
 mca_iof_null_la_LIBADD = \

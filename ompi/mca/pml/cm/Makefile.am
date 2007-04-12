@@ -40,7 +40,7 @@ local_sources = \
 	pml_cm_progress.c \
 	pml_cm_start.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_cm_la_SOURCES = $(local_sources)
 mca_pml_cm_la_LIBADD = \

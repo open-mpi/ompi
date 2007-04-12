@@ -37,7 +37,7 @@ component_noinst = libmca_sds_env.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sds_env_la_SOURCES = $(sources)
 mca_sds_env_la_LDFLAGS = -module -avoid-version

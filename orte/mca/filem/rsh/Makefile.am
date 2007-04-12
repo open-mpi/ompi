@@ -33,7 +33,7 @@ component_noinst = libmca_filem_rsh.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_filem_rsh_la_SOURCES = $(sources)
 mca_filem_rsh_la_LDFLAGS = -module -avoid-version

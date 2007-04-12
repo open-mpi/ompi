@@ -43,7 +43,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_topo_unity_la_SOURCES = $(component_sources)
 mca_topo_unity_la_LIBADD = \

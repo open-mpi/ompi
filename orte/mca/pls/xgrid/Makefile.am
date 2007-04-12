@@ -53,7 +53,7 @@ component_noinst = libmca_pls_xgrid.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pls_xgrid_la_SOURCES = $(xgrid_sources)
 mca_pls_xgrid_la_LIBADD = \

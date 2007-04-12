@@ -53,7 +53,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_mvapi_la_SOURCES = $(component_sources)
 mca_btl_mvapi_la_LDFLAGS = -module -avoid-version $(btl_mvapi_LDFLAGS)

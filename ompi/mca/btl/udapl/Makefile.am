@@ -52,7 +52,7 @@ component_noinst = libmca_btl_udapl.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_udapl_la_SOURCES = $(udapl_sources)
 mca_btl_udapl_la_LIBADD = \

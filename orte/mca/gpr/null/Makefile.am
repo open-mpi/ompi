@@ -33,7 +33,7 @@ component_noinst = libmca_gpr_null.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_gpr_null_la_SOURCES = $(sources)
 mca_gpr_null_la_LDFLAGS = -module -avoid-version

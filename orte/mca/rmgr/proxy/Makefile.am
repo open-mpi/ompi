@@ -35,7 +35,7 @@ proxy_SOURCES = \
     rmgr_proxy.h \
     rmgr_proxy_component.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_rmgr_proxy_la_SOURCES = $(proxy_SOURCES)
 mca_rmgr_proxy_la_LIBADD = \

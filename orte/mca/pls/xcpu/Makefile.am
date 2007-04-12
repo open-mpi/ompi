@@ -36,7 +36,7 @@ sources = \
     pls_xcpu_component.c \
     poll.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pls_xcpu_la_SOURCES = $(sources)
 mca_pls_xcpu_la_LIBADD = \

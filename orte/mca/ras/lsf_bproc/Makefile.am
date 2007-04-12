@@ -39,7 +39,7 @@ proxy_SOURCES = \
     ras_lsf_bproc.h \
     ras_lsf_bproc_component.c
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ras_lsf_bproc_la_SOURCES = $(proxy_SOURCES)
 mca_ras_lsf_bproc_la_LIBADD = \
