@@ -269,14 +269,14 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
                     return true;
                 }
             }
-        } while(msg->msg_rwnum);
+        } while(1);
     }
 }
 
 /*
  * Receives message data.
  * @param msg the message to be recieved into
- * @param peer the peer to recieve from
+ * @param peer the peer to receive from
  * @retval true if the whole message was received
  * @retval false if the whole message was not received
  */
@@ -306,6 +306,12 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
              msg->msg_rwiov[1].iov_base = NULL;
              msg->msg_rwiov[1].iov_len = 0;
              msg->msg_rwnum = 0;
+        }
+        if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
+            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_recv_handler*: size %lu\n",
+                        ORTE_NAME_ARGS(orte_process_info.my_name),
+                        ORTE_NAME_ARGS(&(peer->peer_name)),
+                        (unsigned long)(msg->msg_hdr.msg_size) );
         }
     }
 
@@ -343,16 +349,14 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                under UNIX/Linux environments */
             else if (opal_socket_errno == EAGAIN || opal_socket_errno == EWOULDBLOCK)
                 return false;
-            else {
-                opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_recv: readv failed: %s (%d)", 
-                    ORTE_NAME_ARGS(orte_process_info.my_name),
-                    ORTE_NAME_ARGS(&(peer->peer_name)),
-                    strerror(opal_socket_errno),
-                    opal_socket_errno);
-                mca_oob_tcp_peer_close(peer);
-                mca_oob_call_exception_handlers(&peer->peer_name, MCA_OOB_PEER_DISCONNECTED);
-                return false;
-            }
+	    opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_recv: readv failed: %s (%d)", 
+			ORTE_NAME_ARGS(orte_process_info.my_name),
+			ORTE_NAME_ARGS(&(peer->peer_name)),
+			strerror(opal_socket_errno),
+			opal_socket_errno);
+	    mca_oob_tcp_peer_close(peer);
+	    mca_oob_call_exception_handlers(&peer->peer_name, MCA_OOB_PEER_DISCONNECTED);
+	    return false;
         } else if (rc == 0)  {
             if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT_FAIL) {
                 opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_recv: peer closed connection", 
@@ -374,10 +378,11 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                 (msg->msg_rwnum)--;
                 (msg->msg_rwptr)++;
                 if(0 == msg->msg_rwnum) {
+		    assert( 0 == rc );
                     return true;
                 }
             }
-        } while(msg->msg_rwnum);
+        } while(1);
     }
     return true;
 }

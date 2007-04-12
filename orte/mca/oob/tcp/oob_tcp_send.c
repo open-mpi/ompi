@@ -100,11 +100,17 @@ int mca_oob_tcp_send(
     if(NULL == peer)
         return ORTE_ERR_UNREACH;
 
+    /* calculate the size of the message */
+    size = 0;
+    for(rc = 0; rc < count; rc++) {
+        size += iov[rc].iov_len;
+    }
+   
     if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_ALL) {
-        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_send: tag %d\n",
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_send: tag %d size %lu\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
-            tag);
+            tag, (unsigned long)size );
     }
 
     MCA_OOB_TCP_MSG_ALLOC(msg, rc);
@@ -112,12 +118,6 @@ int mca_oob_tcp_send(
         return rc;
     }
 
-    /* calculate the size of the message */
-    size = 0;
-    for(rc = 0; rc < count; rc++) {
-        size += iov[rc].iov_len;
-    }
-   
     /* turn the size to network byte order so there will be no problems */
     msg->msg_hdr.msg_type = MCA_OOB_TCP_DATA;
     msg->msg_hdr.msg_size = size;
@@ -210,6 +210,14 @@ int mca_oob_tcp_send_nb(
     for(rc = 0; rc < count; rc++) {
         size += iov[rc].iov_len;
     }
+
+    if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_ALL) {
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_send_nb: tag %d size %lu\n",
+            ORTE_NAME_ARGS(orte_process_info.my_name),
+            ORTE_NAME_ARGS(&(peer->peer_name)),
+            tag, (unsigned long)size );
+    }
+
     /* turn the size to network byte order so there will be no problems */
     msg->msg_hdr.msg_type = MCA_OOB_TCP_DATA;
     msg->msg_hdr.msg_size = size;

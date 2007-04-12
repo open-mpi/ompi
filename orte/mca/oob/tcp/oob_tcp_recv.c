@@ -64,6 +64,11 @@ int mca_oob_tcp_recv(
             return msg->msg_rc;
         }
  
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_recv*unexpected*: tag %d size %lu\n",
+		    ORTE_NAME_ARGS(orte_process_info.my_name),
+		    ORTE_NAME_ARGS(peer),
+		    tag, (unsigned long)(msg->msg_hdr.msg_size) );
+
         /* if we are returning an allocated buffer - just take it from the message */
         if(flags & MCA_OOB_ALLOC) {
 
@@ -108,6 +113,13 @@ int mca_oob_tcp_recv(
     /* determine overall size of user supplied buffer */
     for(i = 0; i < count; i++) {
         size += iov[i].iov_len;
+    }
+
+    if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_recv*expected*: tag %d size %lu\n",
+                    ORTE_NAME_ARGS(orte_process_info.my_name),
+                    ORTE_NAME_ARGS(peer),
+                    tag, (unsigned long)(size) );
     }
 
     /* fill in the struct */
