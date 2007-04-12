@@ -115,7 +115,7 @@ static opal_list_t found_files;
  * available components.
  */
 int mca_base_component_find(const char *directory, const char *type, 
-                         const mca_base_component_t *static_components[], 
+                            const mca_base_component_t *static_components[], 
                             opal_list_t *found_components,
                             bool open_dso_components)
 {
@@ -174,7 +174,7 @@ static void find_dyn_components(const char *path, const char *type_name,
                                 opal_list_t *found_components)
 {
   ltfn_data_holder_t params;
-  char *path_to_use, *dir, *end, *param;
+  char *path_to_use, *dir, *end;
   component_file_item_t *file;
   opal_list_item_t *cur;
 
@@ -195,15 +195,12 @@ static void find_dyn_components(const char *path, const char *type_name,
      the MCA param mca_base_component_path.  If path is not NULL, then
      use that as the path. */
 
-  param = NULL;
   if (NULL == path) {
-    mca_base_param_lookup_string(mca_base_param_component_path, &param);
-    if (NULL == param) {
+    mca_base_param_lookup_string(mca_base_param_component_path, &path_to_use);
+    if (NULL == path_to_use) {
       /* If there's no path, then there's nothing to search -- we're
          done */
       return;
-    } else {
-      path_to_use = strdup(param);
     }
   } else {
     path_to_use = strdup(path);
@@ -252,14 +249,9 @@ static void find_dyn_components(const char *path, const char *type_name,
     OBJ_RELEASE(cur);
   }
 
-  /* All done */
+  /* All done, now let's cleanup */
+  free(path_to_use);
 
-  if (NULL != param) {
-    free(param);
-  }
-  if (NULL != path_to_use) {
-    free(path_to_use);
-  }
   OBJ_DESTRUCT(&found_files);
 }
 
