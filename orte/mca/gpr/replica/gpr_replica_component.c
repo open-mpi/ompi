@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -27,27 +27,20 @@
  */
 #include "orte_config.h"
 
+#include "orte/class/orte_bitmap.h"
+#include "opal/class/opal_object.h"
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
+
 #include "orte/util/proc_info.h"
 
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/gpr/replica/gpr_replica.h"
 #include "orte/mca/gpr/replica/api_layer/gpr_replica_api.h"
 #include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
+#include "orte/mca/errmgr/errmgr.h"
 
-/*
- * Static functions.
- */
-static orte_gpr_base_module_t*
-orte_gpr_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads,
-                      int *priority);
-static int orte_gpr_replica_finalize(void);
-static int orte_gpr_replica_open(void);
-static int orte_gpr_replica_close(void);
-static int orte_gpr_replica_module_init(void);
 
 /*
  * Struct of function pointers that need to be initialized
@@ -148,7 +141,7 @@ orte_gpr_replica_globals_t orte_gpr_replica_globals;
 /* instantiate the classes */
 #include "orte/mca/gpr/replica/gpr_replica_class_instances.h"
 
-static int orte_gpr_replica_open(void)
+int orte_gpr_replica_open(void)
 {
     int id, tmp;
 
@@ -176,16 +169,14 @@ static int orte_gpr_replica_open(void)
 /*
  * close function
  */
-static int orte_gpr_replica_close(void)
+int orte_gpr_replica_close(void)
 {
     OPAL_TRACE(5);
 
     return ORTE_SUCCESS;
 }
 
-static orte_gpr_base_module_t*
-orte_gpr_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads,
-                      int *priority)
+orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
 {
     int rc;
 
@@ -299,6 +290,8 @@ orte_gpr_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads,
         }
         orte_gpr_replica_globals.num_acted_upon = 0;
 
+        OBJ_CONSTRUCT(&(orte_gpr_replica_globals.srch_itag), orte_bitmap_t);
+
         if (orte_gpr_replica_globals.debug) {
             opal_output(0, "nb receive setup");
         }
@@ -307,11 +300,13 @@ orte_gpr_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads,
 
         initialized = true;
         return &orte_gpr_replica_module;
+    } else {
+        return NULL;
     }
-    return NULL;
 }
 
-static int orte_gpr_replica_module_init(void)
+
+int orte_gpr_replica_module_init(void)
 {
     OPAL_TRACE(5);
 
@@ -331,7 +326,7 @@ static int orte_gpr_replica_module_init(void)
 /*
  * finalize routine
  */
-static int orte_gpr_replica_finalize(void)
+int orte_gpr_replica_finalize(void)
 {
     orte_std_cntr_t i;
     orte_gpr_subscription_id_t j;
@@ -437,6 +432,8 @@ static int orte_gpr_replica_finalize(void)
         OBJ_RELEASE(orte_gpr_replica_globals.acted_upon);
     }
 
+    OBJ_DESTRUCT(&(orte_gpr_replica_globals.srch_itag));
+
     /* All done */
     if (orte_gpr_replica_globals.isolate) {
         return ORTE_SUCCESS;
@@ -446,4 +443,3 @@ static int orte_gpr_replica_finalize(void)
 
     return ORTE_SUCCESS;
 }
-

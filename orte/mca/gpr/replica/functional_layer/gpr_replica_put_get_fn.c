@@ -139,7 +139,6 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
         for (i=0; i < num_tokens; i++) {
             orte_gpr_replica_dict_reverse_lookup(&tmp, seg, token_itags[i]);
             opal_output(0, "\t%s", tmp);
-            free(tmp); /* We all enjoy allocating and releasing memory all over the code isn't it ? */
         }
     }
 
