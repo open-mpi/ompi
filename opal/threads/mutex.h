@@ -132,11 +132,7 @@ static inline void opal_mutex_atomic_unlock(opal_mutex_t *mutex);
  * possibility that we may have multiple threads, true will be
  * returned.
  */
-static inline bool opal_using_threads(void)
-{
-    return opal_uses_threads;
-}
-
+#define opal_using_threads()  opal_uses_threads
 
 /**
  * Set whether the process is using multiple threads or not.
