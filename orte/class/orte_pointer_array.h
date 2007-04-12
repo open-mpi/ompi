@@ -173,6 +173,8 @@ ORTE_DECLSPEC int orte_pointer_array_set_size(orte_pointer_array_t *array, orte_
  */
 static inline void orte_pointer_array_clear(orte_pointer_array_t *array)
 {
+    if( array->number_free == array->size )
+        return;  /* nothing to do here this time (the array is already empty) */
     OPAL_THREAD_LOCK(&(array->lock));
     /* set the array elements to NULL */
     memset(array->addr, 0, array->size * sizeof(void*));
