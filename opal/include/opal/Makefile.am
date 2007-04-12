@@ -23,7 +23,7 @@ headers += \
 	opal/constants.h \
 	opal/opal_socket_errno.h \
 	opal/types.h	 \
-	opal/prefetch.h
+	opal/prefetch.h opal/hash_string.h
 
 nodist_headers += \
 	opal/install_dirs.h \
