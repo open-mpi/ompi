@@ -23,6 +23,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
+#include "opal/prefetch.h"
 #include "opal/class/opal_object.h"
 #include "ompi/class/ompi_pointer_array.h"
 #include "ompi/runtime/mpiruntime.h"
@@ -135,7 +136,7 @@ struct ompi_request_t;
  * we're before MPI_Init() or after MPI_Finalize()).
  */
 #define OMPI_ERR_INIT_FINALIZE(name) \
-  if (!ompi_mpi_initialized || ompi_mpi_finalized) { \
+  if( OPAL_UNLIKELY(!ompi_mpi_initialized || ompi_mpi_finalized) ) { \
     ompi_mpi_errors_are_fatal_comm_handler(NULL, NULL, name); \
   }
 
@@ -175,7 +176,7 @@ struct ompi_request_t;
  * OMPI_SUCCESS.
  */
 #define OMPI_ERRHANDLER_CHECK(rc, mpi_object, err_code, message) \
-  if (rc != OMPI_SUCCESS) { \
+  if( OPAL_UNLIKELY(rc != OMPI_SUCCESS) ) { \
     int __mpi_err_code = (err_code < 0 ? (ompi_errcode_get_mpi_code(err_code)) : err_code); \
     ompi_errhandler_invoke((mpi_object)->error_handler, \
 			   (mpi_object), \
