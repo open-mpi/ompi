@@ -488,6 +488,7 @@ static inline opal_object_t *opal_obj_new(opal_class_t * cls)
  * @param inc           Increment by which to update reference count
  * @return              New value of the reference count
  */
+static inline int opal_obj_update(opal_object_t *object, int inc) __opal_attribute_always_inline__;
 static inline int opal_obj_update(opal_object_t *object, int inc)
 {
 #if OMPI_HAVE_THREAD_SUPPORT
