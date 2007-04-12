@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -91,22 +91,16 @@ static void mca_bml_base_completion(
     des->des_cbfunc(btl,ep,des,status);
 }
 
-int mca_bml_base_send(
-    mca_bml_base_btl_t* bml_btl, 
-    mca_btl_base_descriptor_t* des, 
-    mca_btl_base_tag_t tag) 
+int mca_bml_base_send( mca_bml_base_btl_t* bml_btl, 
+                       mca_btl_base_descriptor_t* des, 
+                       mca_btl_base_tag_t tag ) 
 { 
-    des->des_context = bml_btl;
+    des->des_context = (void*)bml_btl; 
     if(mca_bml_base_error_count <= 0 && mca_bml_base_error_rate_ceiling > 0) {
         mca_bml_base_error_count = (int) ((mca_bml_base_error_rate_ceiling * rand())/(RAND_MAX+1.0));
         if(mca_bml_base_error_count < mca_bml_base_error_rate_floor) { 
             mca_bml_base_error_count = mca_bml_base_error_rate_floor;
         }
-        /* if(mca_bml_base_error_count % 3) {  */
-/*             /\* no local completion - network 'hangs' *\/  */
-/*             opal_output(0, "%s:%d: dropping dat, NO local completion\n", __FILE__, __LINE__);  */
-/*             return OMPI_SUCCESS;  */
-/*         } else */ 
         if(mca_bml_base_error_count % 2) {
             /* local completion - network "drops" packet */
             opal_output(0, "%s:%d: dropping data, with local completion\n", __FILE__, __LINE__);
@@ -128,12 +122,9 @@ int mca_bml_base_send(
         }
     }
     mca_bml_base_error_count--;
-    des->des_context = (void*) bml_btl; 
-    return bml_btl->btl_send(
-                             bml_btl->btl,
-                             bml_btl->btl_endpoint, 
-                             des,
-                             tag);
+    return bml_btl->btl_send( bml_btl->btl,
+                              bml_btl->btl_endpoint, 
+                              des, tag );
 }
 
 #endif
