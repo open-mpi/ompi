@@ -1932,40 +1932,19 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_ft_event(int state,
      * Restart from a checkpoint
      *****************************/
     else if(OPAL_CRS_RESTART == state) {
-        if( OMPI_CRCP_PML_POST != pml_state->state){
-            pml_state->error_code = OMPI_SUCCESS;
-            return pml_state;
+        if( OMPI_CRCP_PML_POST == pml_state->state){
+            /*
+             * Finish the coord protocol
+             */
+            if( OMPI_SUCCESS != (ret = ft_event_finalize_exchange() ) ) {
+                opal_output(mca_crcp_coord_component.super.output_handle,
+                            "crcp:coord: pml_ft_event: Checkpoint Finalization Failed %d",
+                            ret);
+                pml_state->error_code = ret;
+                return pml_state;
+            }
         }
 
-        /*
-         * Finish the coord protocol
-         */
-        if( OMPI_SUCCESS != (ret = ft_event_finalize_exchange() ) ) {
-            opal_output(mca_crcp_coord_component.super.output_handle,
-                        "crcp:coord: pml_ft_event: Checkpoint Finalization Failed %d",
-                        ret);
-            pml_state->error_code = ret;
-            return pml_state;
-        }
-        /*
-         * Re-boot the PML/BML/BTL stack
-         * Need to do this because:
-         * 1) BTL contact information has changed
-         * 2) PML/BML use static lists of BTLs and the list may have changed
-         *    so they need to be cleared and refreshed.
-         * - Need to:
-         *   a) del_procs, del_comm
-         *   b) shutdown PML/BML/BTL
-         *   c) Startup PML/BML/BTL including reselection
-         *   d) add_procs, add_comm
-         */
-        if( OMPI_SUCCESS != (ret = ompi_crcp_base_reboot_pml(pml_state) ) ) {
-            opal_output(mca_crcp_coord_component.super.output_handle,
-                        "crcp:coord: pml_ft_event: Rebooting the PML/BML/BTL stack Failed %d",
-                        ret);
-            pml_state->error_code = ret;
-            return pml_state;
-        }
 
 #if 0
         /* All new sends to proceed */

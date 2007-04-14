@@ -202,7 +202,6 @@ extern "C" {
                                      ompi_crcp_base_btl_state_t*);
 
     /* Utility Functions */
-    OMPI_DECLSPEC int ompi_crcp_base_reboot_pml(ompi_crcp_base_pml_state_t* pml_state);
 
     OMPI_DECLSPEC extern int  ompi_crcp_base_output;
     OMPI_DECLSPEC extern opal_list_t ompi_crcp_base_components_available;

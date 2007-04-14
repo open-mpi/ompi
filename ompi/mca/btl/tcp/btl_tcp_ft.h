@@ -15,42 +15,25 @@
  * 
  * $HEADER$
  */
-
-/** 
- * @file 
- *
- * Checkpoint/Restart Functionality for the OMPI layer
+/**
+ * @file
  */
+#ifndef MCA_BTL_TCP_FT_H
+#define MCA_BTL_TCP_FT_H
 
-#ifndef OMPI_CR_H
-#define OMPI_CR_H
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#include "opal/util/output.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
-    /*
-     * Initialization called in ompi_init()
-     */
-    OMPI_DECLSPEC int ompi_cr_init(void);
-
-    /*
-     * Finalization called in ompi_finalize()
-     */
-    OMPI_DECLSPEC int ompi_cr_finalize(void);
-
-    /*
-     * Interlayer Coodination Callback
-     */
-    OMPI_DECLSPEC int ompi_cr_coord(int state);
-
-    /*
-     * A general output handle to use for FT related messages
-     */
-    OMPI_DECLSPEC extern int ompi_cr_output;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
-#endif /* OMPI_CR_H */
+#endif
+

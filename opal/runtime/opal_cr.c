@@ -525,6 +525,15 @@ int opal_cr_coord(int state)
     }
     else if (OPAL_CRS_RESTART == state ) {
         /* Do Restart Phase work */
+
+        /*
+         * Flush if() functionality, since it caches system specific info.
+         */
+        opal_iffinalize();
+        /* Since opal_ifinit() is not exposed, the necessary
+         * functions will call it when needed. Just make sure we
+         * finalized this code so we don't get old socket addrs.
+         */
     }
     else if (OPAL_CRS_TERM == state ) {
         /* Do Continue Phase work in prep to terminate the application */

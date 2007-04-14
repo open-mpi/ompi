@@ -391,8 +391,6 @@ int mca_pml_ob1_ft_event( int state )
 {
     int ret;
 
-    opal_output(0, "pml:base: ft_event: Called (%d)!!\n", state);
-
     if(OPAL_CRS_CHECKPOINT == state) {
         ;
     }
@@ -426,7 +424,13 @@ int mca_pml_ob1_ft_event( int state )
         ;
     }
     else if(OPAL_CRS_RESTART == state) {
-        ;
+        mca_bml.bml_register(MCA_BTL_TAG_PML,
+                             mca_pml_ob1_recv_frag_callback,
+                             NULL);
+
+        /* register error handlers */
+        mca_bml.bml_register_error(mca_pml_ob1_error_handler);
+
     }
     else if(OPAL_CRS_TERM == state ) {
         ;

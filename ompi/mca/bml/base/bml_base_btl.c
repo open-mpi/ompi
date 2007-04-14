@@ -35,8 +35,13 @@ static void mca_bml_base_btl_array_construct(mca_bml_base_btl_array_t* array)
 
 static void mca_bml_base_btl_array_destruct(mca_bml_base_btl_array_t* array)
 {
-    if(NULL != array->bml_btls)
+    if(NULL != array->bml_btls) {
         free(array->bml_btls);
+        array->bml_btls = NULL;
+    }
+    array->arr_size = 0;
+    array->arr_index = 0;
+    array->arr_reserve = 0;
 }
 
 OBJ_CLASS_INSTANCE(
