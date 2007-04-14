@@ -29,6 +29,8 @@ version 1.0.
 1.2.1
 -----
 
+- Fixed a number of connection establishment errors in the TCP out-
+  of-band messaging system.
 - Fixed various memory leaks in OPAL and ORTE.
 - Improved launch times when using TM (PBS Pro, Torque, Open PBS).
 - Fixed mpi_leave_pinned to work for all datatypes.
