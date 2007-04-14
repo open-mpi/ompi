@@ -31,6 +31,8 @@ version 1.0.
 
 - Fixed a number of connection establishment errors in the TCP out-
   of-band messaging system.
+- Fixed a memory leak when using mpi_comm calls.
+  Thanks to Bas van der Vlies for reporting the problem.
 - Fixed various memory leaks in OPAL and ORTE.
 - Improved launch times when using TM (PBS Pro, Torque, Open PBS).
 - Fixed mpi_leave_pinned to work for all datatypes.
