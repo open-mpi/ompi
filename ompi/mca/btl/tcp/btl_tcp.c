@@ -495,32 +495,3 @@ int mca_btl_tcp_finalize(struct mca_btl_base_module_t* btl)
     free(tcp_btl);
     return OMPI_SUCCESS;
 }
-
-
-int mca_btl_tcp_ft_event(int state) {
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-        /* Do not remove the endpoints here
-         * We will likely be continuing from here
-         * so no need to do do much work.
-         */
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        /*
-         * Flush all of the endpoints
-         */
-        
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    return OMPI_SUCCESS;
-}

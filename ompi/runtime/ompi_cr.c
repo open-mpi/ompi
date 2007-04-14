@@ -75,7 +75,7 @@ static int ompi_cr_coord_post_continue(void);
  *************/
 static opal_cr_coord_callback_fn_t  prev_coord_callback = NULL;
 
-static int ompi_cr_output = -1;
+int ompi_cr_output = -1;
 
 /*
  * CR Init
