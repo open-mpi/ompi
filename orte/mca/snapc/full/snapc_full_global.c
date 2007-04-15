@@ -278,6 +278,7 @@ snapc_full_global_checkpoint(orte_jobid_t jobid, bool term, char **global_snapsh
     updated_job_to_running = false;
     if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(&orte_checkpoint_sender,
                                                                             global_snapshot.reference_name,
+                                                                            global_snapshot.seq_num,
                                                                             ORTE_SNAPC_CKPT_STATE_REQUEST) ) ) {
         exit_status = ret;
         goto cleanup;
@@ -362,6 +363,7 @@ static void job_ckpt_request_callback(orte_gpr_notify_data_t *data, void *cbdata
          */
         if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(&orte_checkpoint_sender,
                                                                                 global_snapshot.reference_name,
+                                                                                global_snapshot.seq_num,
                                                                                 job_ckpt_state) ) ) {
             exit_status = ret;
             goto cleanup;
@@ -751,6 +753,7 @@ static int snapc_full_global_check_for_done(orte_jobid_t jobid) {
      ************************/
     if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(&orte_checkpoint_sender, 
                                                                             global_snapshot.reference_name,
+                                                                            global_snapshot.seq_num,
                                                                             ckpt_status)) ) {
         exit_status = ret;
         goto cleanup;

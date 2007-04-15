@@ -244,7 +244,7 @@ static void snapc_none_global_recv(int status,
         /*
          * Respond with an invalid response
          */
-        if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(sender, NULL, ORTE_SNAPC_CKPT_STATE_NO_CKPT)) ) {
+        if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(sender, NULL, -1, ORTE_SNAPC_CKPT_STATE_NO_CKPT)) ) {
             exit_status = ret;
             goto cleanup;
         }
@@ -454,7 +454,7 @@ int orte_snapc_base_global_coord_send_ack(orte_process_name_t* peer, bool ack)
     return exit_status;
 }
 
-int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char *global_snapshot_handle, int ckpt_status)
+int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char *global_snapshot_handle, int seq_num, int ckpt_status)
 {
     int ret, exit_status = ORTE_SUCCESS;
     orte_buffer_t *loc_buffer = NULL;
@@ -538,7 +538,7 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char
     }
 
     /********************
-     * Send over the global snapshot handle
+     * Send over the global snapshot handle & sequence number
      ********************/
     if(NULL != loc_buffer) {
         OBJ_RELEASE(loc_buffer);
@@ -550,6 +550,10 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char
     }
 
     if (ORTE_SUCCESS != (ret = orte_dss.pack(loc_buffer, &global_snapshot_handle, 1, ORTE_STRING))) {
+        exit_status = ret;
+        goto cleanup;
+    }
+    if (ORTE_SUCCESS != (ret = orte_dss.pack(loc_buffer, &seq_num, 1, ORTE_INT))) {
         exit_status = ret;
         goto cleanup;
     }
