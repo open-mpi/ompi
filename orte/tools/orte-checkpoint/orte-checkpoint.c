@@ -90,11 +90,12 @@ extern char** environ;
 static int ckpt_init(int argc, char *argv[]); /* Initalization routine */
 static int ckpt_finalize(void); /* Finalization routine */
 static int parse_args(int argc, char *argv[]);
-static int notify_process_for_checkpoint(char **global_snapshot_handle, int term);
+static int notify_process_for_checkpoint(char **global_snapshot_handle, int *seq_num, int term);
 static int contact_hnp(orte_process_name_t *peer, char *global_snapshot_handle, int term);
-static int wait_for_checkpoint(orte_process_name_t *peer, char **global_snapshot_handle, int *ckpt_status);
+static int wait_for_checkpoint(orte_process_name_t *peer, char **global_snapshot_handle, int *seq_num, int *ckpt_status);
 static int find_universe(void);
 static int pretty_print_status(int state, char * snapshot_ref);
+static int pretty_print_reference(int seq, char * snapshot_ref);
 
 /*****************************************
  * Global Vars for Command line Arguments
@@ -163,6 +164,7 @@ main(int argc, char *argv[])
 {
     int ret, exit_status = ORTE_SUCCESS;
     char *global_snapshot_handle;
+    int seq_num = -1;
 
     /***************
      * Initialize
@@ -202,6 +204,7 @@ main(int argc, char *argv[])
     }
 
     if(ORTE_SUCCESS != (ret = notify_process_for_checkpoint(&global_snapshot_handle,
+                                                            &seq_num,
                                                             orte_checkpoint_globals.term)) ) {
         opal_show_help("help-orte-checkpoint.txt", "ckpt_failure", true,
                        orte_checkpoint_globals.pid);
@@ -209,8 +212,13 @@ main(int argc, char *argv[])
         goto cleanup;
     }
 
-    if(!orte_checkpoint_globals.nowait)
+    if( orte_checkpoint_globals.status ) {
         pretty_print_status(ORTE_SNAPC_CKPT_STATE_FINISHED, global_snapshot_handle);
+    }
+
+    if(!orte_checkpoint_globals.nowait) {
+        pretty_print_reference(seq_num, global_snapshot_handle);
+    }
 
  cleanup:
     /***************
@@ -316,7 +324,7 @@ static int parse_args(int argc, char *argv[]) {
 }
 
 static int 
-notify_process_for_checkpoint(char **global_snapshot_handle, int term)
+notify_process_for_checkpoint(char **global_snapshot_handle, int *seq_num, int term)
 {
     int ret, exit_status = ORTE_SUCCESS;
     orte_process_name_t peer;
@@ -347,7 +355,7 @@ notify_process_for_checkpoint(char **global_snapshot_handle, int term)
          * Wait for progress updates, stop waiting when 'Finished' status
          */
         do {
-            if( ORTE_SUCCESS != (ret = wait_for_checkpoint(&peer, global_snapshot_handle, &ckpt_status)) ) {
+            if( ORTE_SUCCESS != (ret = wait_for_checkpoint(&peer, global_snapshot_handle, seq_num, &ckpt_status)) ) {
                 exit_status = ORTE_ERROR;
                 goto cleanup;
             }
@@ -699,7 +707,7 @@ static int contact_hnp(orte_process_name_t *peer, char *global_snapshot_handle, 
     return exit_status;
 }
 
-static int wait_for_checkpoint(orte_process_name_t *peer, char **global_snapshot_handle, int *ckpt_status) {
+static int wait_for_checkpoint(orte_process_name_t *peer, char **global_snapshot_handle, int *seq_num, int *ckpt_status) {
     int ret, exit_status = ORTE_SUCCESS;
     orte_buffer_t *loc_buffer;
     orte_std_cntr_t n    = 1;
@@ -784,6 +792,11 @@ static int wait_for_checkpoint(orte_process_name_t *peer, char **global_snapshot
         exit_status = ret;
         goto cleanup;
     }
+    n = 1;
+    if ( ORTE_SUCCESS != (ret = orte_dss.unpack(loc_buffer, seq_num, &n, ORTE_INT)) ) {
+        exit_status = ret;
+        goto cleanup;
+    }
 
     /* ACK */
     if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_send_ack(peer, true)) ) {
@@ -808,6 +821,14 @@ static int pretty_print_status(int state, char * snapshot_ref) {
     if( NULL != state_str) {
         free(state_str);
     }
+    
+    return ORTE_SUCCESS;
+}
+
+static int pretty_print_reference(int seq, char * snapshot_ref) {
+
+    printf("Snashot Ref.: %3d %s\n",
+           seq, snapshot_ref);
     
     return ORTE_SUCCESS;
 }

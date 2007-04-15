@@ -143,7 +143,7 @@ extern "C" {
      *******************************/
     /* Initial handshake with the orte_checkpoint command */
     ORTE_DECLSPEC int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer, bool *term, orte_jobid_t *jobid);
-    ORTE_DECLSPEC int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char *global_snapshot_handle, int ckpt_status);
+    ORTE_DECLSPEC int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char *global_snapshot_handle, int seq_num, int ckpt_status);
 
     ORTE_DECLSPEC int orte_snapc_base_global_coord_recv_ack(orte_process_name_t* peer, bool *ack);
     ORTE_DECLSPEC int orte_snapc_base_global_coord_send_ack(orte_process_name_t* peer, bool  ack);
