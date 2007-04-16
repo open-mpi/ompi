@@ -23,15 +23,15 @@
  * An MCA component type that provides the P2P interface functionality
  * required by the MPI layer. The PML is a relatively thin layer that
  * primarily provides for the fragmentation and scheduling of messages
- * over multiple transports (instances of the P2P Transport Layer
- * (PTL) MCA component type) as depicted below:
+ * over multiple transports (instances of the Byte Transfer Layer
+ * (BTL) MCA component type) as depicted below:
  *
  *   ------------------------------------
  *   |                MPI               |
  *   ------------------------------------
  *   |                PML               |
  *   ------------------------------------
- *   | PTL (TCP) | PTL (SM) | PTL (...) |
+ *   | BTL (TCP) | BTL (SM) | BTL (...) |
  *   ------------------------------------
  *
  * A single PML component is selected by the MCA framework during
@@ -46,13 +46,13 @@
  * processes (ompi_proc_t instances), and notification of changes
  * (add/delete).
  * 
- * The PML module must select the set of PTL components that are to be
+ * The PML module must select the set of BTL components that are to be
  * used to reach a given destination. These should be cached on a PML
  * specific data structure that is hung off the ompi_proc_t.
  *
  * The PML should then apply a scheduling algorithm (round-robin,
  * weighted distribution, etc), to schedule the delivery of messages
- * over the available PTLs.
+ * over the available BTLs.
  *
  */
                                                                                          
@@ -168,7 +168,7 @@ typedef mca_pml_base_component_1_0_0_t mca_pml_base_component_t;
  *
  * Provides a notification to the PML that new processes have been
  * created, and provides the PML the opportunity to cache data
- * (e.g. list of PTLs to use) on the ompi_proc_t data structure.
+ * (e.g. list of BTLs to use) on the ompi_proc_t data structure.
  */
 typedef int (*mca_pml_base_module_add_procs_fn_t)(struct ompi_proc_t **procs, size_t nprocs);
 
@@ -187,7 +187,7 @@ typedef int (*mca_pml_base_module_add_procs_fn_t)(struct ompi_proc_t **procs, si
 typedef int (*mca_pml_base_module_del_procs_fn_t)(struct ompi_proc_t **procs, size_t nprocs);
 
 /**
- * Downcall from MCA layer to enable the PML/PTLs.
+ * Downcall from MCA layer to enable the PML/BTLs.
  *
  * @param   enable  Enable/Disable PML forwarding
  * @return          OMPI_SUCCESS or failure status.
