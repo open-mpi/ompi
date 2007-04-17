@@ -64,17 +64,14 @@ AC_DEFUN([OMPI_CHECK_TM],[
     # do simplistic tests looking for the tm headers and symbols
 
     AS_IF([test "$ompi_check_tm_happy" = "yes" -a "$ompi_check_tm_pbs_config" != "not found"],
-          [AC_MSG_CHECKING([for CPPFLAGS flags from pbs-config])
-           $1_CPPFLAGS=`$ompi_check_tm_pbs_config --cflags`
-           AC_MSG_RESULT([$$1_CPPFLAGS])
+          [$1_CPPFLAGS=`$ompi_check_tm_pbs_config --cflags`
+           OMPI_LOG_MSG([$1_CPPFLAGS from pbs-config: $$1_CPPFLAGS], 1)
 
-           AC_MSG_CHECKING([for LDFLAGS flags from pbs-config])
            OMPI_CHECK_TM_LIBS_FLAGS([$1], [LDFLAGS])
-           AC_MSG_RESULT([$$1_LDFLAGS])
+           OMPI_LOG_MSG([$1_LDFLAGS from pbs-config: $$1_LDFLAGS], 1)
 
-           AC_MSG_CHECKING([for LIBS flags from pbs-config])
            OMPI_CHECK_TM_LIBS_FLAGS([$1], [LIBS])
-           AC_MSG_RESULT([$$1_LIBS])
+           OMPI_LOG_MSG([$1_LIBS from pbs-config: $$1_LIBS], 1)
 
            # Now that we supposedly have the right flags, try them out.
 
