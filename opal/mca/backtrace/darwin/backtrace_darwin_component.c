@@ -20,7 +20,7 @@
 
 #include "opal/mca/backtrace/backtrace.h"
 
-const opal_backtrace_base_component_1_0_0_t mca_backtrace_darwin_component = {
+OPAL_MODULE_DECLSPEC const opal_backtrace_base_component_1_0_0_t mca_backtrace_darwin_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
     {
