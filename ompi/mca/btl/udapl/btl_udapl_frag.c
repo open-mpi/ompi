@@ -21,12 +21,12 @@
 
 #include "btl_udapl.h"
 #include "btl_udapl_frag.h" 
-#include "ompi/mca/mpool/rdma/mpool_rdma.h"
+#include "ompi/mca/mpool/udapl/mpool_udapl.h"
 
 
 static void mca_btl_udapl_frag_common_constructor(mca_btl_udapl_frag_t* frag) 
 {
-    mca_btl_udapl_reg_t* reg = (mca_btl_udapl_reg_t*)frag->base.super.user_data;
+    mca_mpool_udapl_registration_t* reg = frag->base.super.user_data;
 
 #if OMPI_ENABLE_DEBUG
     frag->base.des_src = NULL;
@@ -36,7 +36,7 @@ static void mca_btl_udapl_frag_common_constructor(mca_btl_udapl_frag_t* frag)
     frag->base.des_flags = 0;
 #endif
 
-    frag->registration = reg;
+    frag->registration = (mca_mpool_base_registration_t*)reg; 
     frag->segment.seg_addr.pval = (unsigned char*)(frag + 1); 
     frag->ftr = NULL;
 
@@ -69,8 +69,7 @@ static void mca_btl_udapl_frag_user_constructor(mca_btl_udapl_frag_t* frag)
     frag->segment.seg_len = 0;
     frag->segment.seg_addr.pval = NULL;
     frag->ftr = NULL;
-    frag->size = 0;
-    frag->registration = NULL;
+    frag->size = 0; 
 }
 
 static void mca_btl_udapl_frag_common_destructor(mca_btl_udapl_frag_t* frag)

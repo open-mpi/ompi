@@ -10,7 +10,6 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Cisco, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -30,7 +29,6 @@ AC_DEFUN([MCA_btl_openib_CONFIG],[
     AS_IF([test "$btl_openib_happy" = "yes"],
           [btl_openib_WRAPPER_EXTRA_LDFLAGS="$btl_openib_LDFLAGS"
            btl_openib_WRAPPER_EXTRA_LIBS="$btl_openib_LIBS"
-           AC_CHECK_FUNCS([ibv_fork_init])
            $1],
           [$2])
 

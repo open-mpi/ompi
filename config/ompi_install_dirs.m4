@@ -35,7 +35,6 @@ AC_DEFUN([OMPI_INSTALL_DIRS], [
     test "x$prefix" = xNONE && prefix=$ac_default_prefix
     test "x$exec_prefix" = xNONE && exec_prefix="$prefix"
     eval datarootdir="$datarootdir"
-    eval datarootdir="$datarootdir"
 
     OPAL_PREFIX="$prefix"
     OPAL_EXEC_PREFIX="$exec_prefix"

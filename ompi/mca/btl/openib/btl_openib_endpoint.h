@@ -29,6 +29,7 @@
 #include <errno.h> 
 #include <string.h> 
 #include "ompi/mca/btl/base/btl_base_error.h"
+#include "ompi/mca/mpool/openib/mpool_openib.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

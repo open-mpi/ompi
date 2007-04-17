@@ -32,7 +32,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/mpool/base/base.h" 
-#include "ompi/mca/mpool/rdma/mpool_rdma.h"
+#include "ompi/mca/mpool/gm/mpool_gm.h"
 #include "btl_gm.h"
 #include "btl_gm_frag.h"
 #include "btl_gm_endpoint.h" 
@@ -47,9 +47,6 @@
 #if OMPI_ENABLE_PROGRESS_THREADS
 static void* mca_btl_gm_progress_thread( opal_object_t* arg );
 #endif
-static int gm_reg_mr(void *reg_data, void *base, size_t size,
-        mca_mpool_base_registration_t *reg);
-static int gm_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg);
 
 
 mca_btl_gm_component_t mca_btl_gm_component = {
@@ -134,7 +131,7 @@ int mca_btl_gm_component_open(void)
     mca_btl_gm_component.gm_debug = 
         mca_btl_gm_param_register_int("debug", 0); 
     mca_btl_gm_component.gm_mpool_name = 
-        mca_btl_gm_param_register_string("mpool", "rdma");
+        mca_btl_gm_param_register_string("mpool", "gm"); 
     mca_btl_gm_component.gm_max_ports = 
         mca_btl_gm_param_register_int("max_ports", 16); 
     mca_btl_gm_component.gm_max_boards = 
@@ -201,35 +198,6 @@ int mca_btl_gm_component_close(void)
     return OMPI_SUCCESS;
 }
 
-static int gm_reg_mr(void *reg_data, void *base, size_t size,
-        mca_mpool_base_registration_t *reg)
-{
-    struct gm_port *port = (struct gm_port*)reg_data;
-    int rc;
-
-    rc = gm_register_memory(port, base, size);
-
-    if(rc != GM_SUCCESS)
-        return OMPI_ERR_OUT_OF_RESOURCE;
-
-    return MPI_SUCCESS;
-}
-
-static int gm_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg)
-{
-    struct gm_port *port = (struct gm_port*)reg_data;
-    int rc;
-
-    rc = gm_deregister_memory(port, reg->base, reg->bound - reg->base + 1);
-
-    if(rc != GM_SUCCESS) {
-        opal_output(0, "%s: error unpinning gm memory errno says %s\n",
-                 __func__, strerror(errno));
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
-}
 
 /**
  * Initialize module instance
@@ -272,10 +240,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
     }
                                                                                                   
     /* initialize memory pool */
-    resources.reg_data = (void*)btl->port;
-    resources.sizeof_reg = sizeof(mca_mpool_base_registration_t);
-    resources.register_mem = gm_reg_mr;
-    resources.deregister_mem = gm_dereg_mr;
+    resources.port = btl->port;
     btl->super.btl_mpool = mca_mpool_base_module_create(
         mca_btl_gm_component.gm_mpool_name,
         &btl->super,
@@ -450,6 +415,8 @@ static int mca_btl_gm_discover( void )
     }
     return OMPI_SUCCESS;
 }
+
+
 
 /*
  *  Register GM component addressing information. The MCA framework

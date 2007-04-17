@@ -18,21 +18,23 @@
 
 #include "btl_openib_frag.h" 
 #include "btl_openib_eager_rdma.h"
+#include "ompi/mca/mpool/openib/mpool_openib.h" 
+
 
 
 static void mca_btl_openib_frag_common_constructor( mca_btl_openib_frag_t* frag) 
 {
-    mca_btl_openib_reg_t* registration =
-        (mca_btl_openib_reg_t*)frag->base.super.user_data;
+    mca_mpool_openib_registration_t* registration = 
+        (mca_mpool_openib_registration_t*) frag->base.super.user_data;
     
     frag->hdr = (mca_btl_openib_header_t*) (frag+1);    /* initialize the btl header to start at end of frag */ 
     frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);  
     /* init the segment address to start after the btl header */ 
 
     if(registration) {    
-        frag->registration = registration;
-        frag->sg_entry.lkey = registration->mr->lkey;
-        frag->segment.seg_key.key32[0] = frag->sg_entry.lkey;
+        frag->mr = registration->mr; 
+        frag->segment.seg_key.key32[0] = (uint32_t) frag->mr->lkey; 
+        frag->sg_entry.lkey = frag->mr->lkey;
     }
     frag->segment.seg_len = frag->size;
     frag->sg_entry.addr = (unsigned long) frag->hdr; 
@@ -109,17 +111,8 @@ static void mca_btl_openib_recv_frag_eager_constructor(mca_btl_openib_frag_t* fr
 static void mca_btl_openib_send_frag_frag_constructor(mca_btl_openib_frag_t* frag) 
 { 
     frag->size = 0; 
-    frag->type = MCA_BTL_OPENIB_SEND_FRAG_FRAG;
-    frag->registration = NULL;
+    frag->type = MCA_BTL_OPENIB_FRAG_FRAG;
     mca_btl_openib_send_frag_common_constructor(frag); 
-}
-
-static void mca_btl_openib_recv_frag_frag_constructor(mca_btl_openib_frag_t* frag) 
-{ 
-    frag->size = 0; 
-    frag->type = MCA_BTL_OPENIB_RECV_FRAG_FRAG;
-    frag->registration = NULL;
-    mca_btl_openib_recv_frag_common_constructor(frag); 
 }
 
 static void mca_btl_openib_send_frag_control_constructor(mca_btl_openib_frag_t* frag) 
@@ -152,12 +145,6 @@ OBJ_CLASS_INSTANCE(
                    mca_btl_openib_send_frag_frag_t, 
                    mca_btl_base_descriptor_t, 
                    mca_btl_openib_send_frag_frag_constructor, 
-                   NULL); 
-
-OBJ_CLASS_INSTANCE(
-                   mca_btl_openib_recv_frag_frag_t, 
-                   mca_btl_base_descriptor_t, 
-                   mca_btl_openib_recv_frag_frag_constructor, 
                    NULL); 
 
 OBJ_CLASS_INSTANCE(

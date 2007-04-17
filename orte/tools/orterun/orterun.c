@@ -56,7 +56,6 @@
 #include "opal/util/show_help.h"
 #include "opal/util/trace.h"
 #include "opal/version.h"
-#include "opal/runtime/opal.h"
 
 #include "orte/orte_constants.h"
 
@@ -318,10 +317,6 @@ int orterun(int argc, char *argv[])
     opal_list_t attributes;
     opal_list_item_t *item;
     uint8_t flow;
-
-    /* Need to initialize OPAL so that install_dirs are filled in */
-
-    opal_init_util();
 
     /* Setup MCA params */
 
