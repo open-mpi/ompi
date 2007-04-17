@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -90,7 +91,11 @@ struct output_desc_t
 typedef struct output_desc_t output_desc_t;
 
 #define OPAL_OUTPUT_MAX_STREAMS 32
-
+#if defined(__WINDOWS__) || defined(HAVE_SYSLOG)
+#define USE_SYSLOG 1
+#else
+#define USE_SYSLOG 0
+#endif
 
 /*
  * Local state
@@ -230,9 +235,13 @@ void opal_output_reopen_all(void)
          */
         info[i].ldi_used = false;
 
+#if USE_SYSLOG
         lds.lds_want_syslog = info[i].ldi_syslog;
         lds.lds_syslog_priority = info[i].ldi_syslog_priority;
         lds.lds_syslog_ident = info[i].ldi_syslog_ident;
+#else
+        lds.lds_want_syslog = false;
+#endif
         lds.lds_prefix = info[i].ldi_prefix;
         lds.lds_want_stdout = info[i].ldi_stdout;
         lds.lds_want_stderr = info[i].ldi_stderr;
@@ -279,11 +288,11 @@ void opal_output_close(int output_id)
             }
         }
 
-#ifndef __WINDOWS__
+#if defined(HAVE_SYSLOG)
         if (i >= OPAL_OUTPUT_MAX_STREAMS && syslog_opened) {
             closelog();
         }
-#else
+#elif defined(__WINDOWS__)
         DeregisterEventSource(info[output_id].ldi_syslog_ident);
 #endif
     }
@@ -464,10 +473,11 @@ static int do_open(int output_id, opal_output_stream_t * lds)
         (bool) OMPI_ENABLE_DEBUG : true;
     info[i].ldi_verbose_level = lds->lds_verbose_level;
 
+#if USE_SYSLOG
     info[i].ldi_syslog = lds->lds_want_syslog;
     if (lds->lds_want_syslog) {
 
-#ifndef __WINDOWS__
+#if defined(HAVE_SYSLOG)
         if (NULL != lds->lds_syslog_ident) {
             info[i].ldi_syslog_ident = strdup(lds->lds_syslog_ident);
             openlog(lds->lds_syslog_ident, LOG_PID, LOG_USER);
@@ -475,7 +485,7 @@ static int do_open(int output_id, opal_output_stream_t * lds)
             info[i].ldi_syslog_ident = NULL;
             openlog("opal", LOG_PID, LOG_USER);
         }
-#else
+#elif defined(__WINDOWS__)
         if (NULL == (info[i].ldi_syslog_ident =
                      RegisterEventSource(NULL, TEXT("opal: ")))) {
             /* handle the error */
@@ -486,6 +496,9 @@ static int do_open(int output_id, opal_output_stream_t * lds)
         syslog_opened = true;
         info[i].ldi_syslog_priority = lds->lds_syslog_priority;
     }
+#else
+    info[i].ldi_want_syslog = false;
+#endif
 
     if (NULL != lds->lds_prefix) {
         info[i].ldi_prefix = strdup(lds->lds_prefix);
@@ -667,7 +680,7 @@ static void output(int output_id, const char *format, va_list arglist)
 
 	if (ldi->ldi_syslog) {
 
-#ifndef __WINDOWS__
+#if defined(HAVE_SYSLOG)
 	    syslog(ldi->ldi_syslog_priority, str);
 #endif
 	}
