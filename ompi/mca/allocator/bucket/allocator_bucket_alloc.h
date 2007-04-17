@@ -40,7 +40,13 @@ struct mca_allocator_bucket_chunk_header_t {
                /**< The next chunk in the memory segment */
     /**
       * Union which holds either a pointer to the next free chunk
-      * or the bucket number
+      * or the bucket number. Based on the current location of the chunk
+      * we use one or the other of these fields. If the chunk is owned
+      * by the user, then the bucket field is set, which allow us to know
+      * in which specific bucket we have to put it back on free (as the
+      * chunk don't have the size attached). When the allocator own the
+      * chunk, the next_free fild is used, which allow us to put these
+      * chunks a list of free elements.
       */
     union u {
         struct mca_allocator_bucket_chunk_header_t * next_free; 
