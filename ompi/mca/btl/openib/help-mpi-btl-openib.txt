@@ -169,3 +169,10 @@ Please see this FAQ entry for more details:
 
 NOTE: You can turn off this warning by setting the MCA parameter
       btl_openib_warn_default_gid_prefix to 0.
+[ibv_fork requested but not supported]
+WARNING: fork() support was requested for the openib BTL, but it is
+not supported on the host %s.  Deactivating the openib BTL.
+[ibv_fork_init fail]
+WARNING: fork() support was requested for the openib BTL, but the
+library call ibv_fork_init() failed on the host %s.
+Deactivating the openib BTL.

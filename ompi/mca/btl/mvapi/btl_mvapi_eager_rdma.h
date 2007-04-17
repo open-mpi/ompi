@@ -12,16 +12,16 @@
 
 #include "ompi_config.h"
 #include "btl_mvapi.h"
-#include "btl_mvapi_endpoint.h"
-#include "ompi/mca/mpool/mvapi/mpool_mvapi.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
+struct mca_btl_mvapi_reg_t;
+
 struct mca_btl_mvapi_eager_rdma_local_t {
 	ompi_ptr_t base; /**< buffer for RDMAing eager messages */
-	mca_mpool_mvapi_registration_t *reg;
+	struct mca_btl_mvapi_reg_t *reg;
 	uint16_t head; /**< RDMA buffer to poll */
     uint16_t tail; /**< Needed for credit managment */
 	int32_t credits; /**< number of RDMA credits */

@@ -19,6 +19,7 @@
 # This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
 headers += \
+        opal/align.h \
 	opal/constants.h \
 	opal/opal_socket_errno.h \
 	opal/types.h	 \

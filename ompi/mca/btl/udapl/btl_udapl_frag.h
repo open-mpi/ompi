@@ -58,7 +58,7 @@ struct mca_btl_udapl_frag_t {
 
     struct mca_btl_udapl_module_t* btl;
     struct mca_btl_base_endpoint_t *endpoint; 
-    struct mca_mpool_base_registration_t* registration;
+    struct mca_btl_udapl_reg_t* registration;
     DAT_LMR_TRIPLET triplet;
     
     mca_btl_udapl_footer_t *ftr;

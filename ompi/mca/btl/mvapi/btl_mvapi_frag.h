@@ -27,11 +27,12 @@
 #include <vapi.h> 
 #include <mtl_common.h> 
 #include <vapi_common.h> 
-#include "ompi/mca/mpool/mvapi/mpool_mvapi.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+struct mca_btl_mvapi_reg_t;
 
 struct mca_btl_mvapi_header_t {
     mca_btl_base_tag_t tag;
@@ -95,7 +96,7 @@ struct mca_btl_mvapi_frag_t {
     VAPI_sg_lst_entry_t sg_entry;  
     mca_btl_mvapi_header_t *hdr;
     mca_btl_mvapi_footer_t *ftr;
-    mca_mpool_mvapi_registration_t * vapi_reg; 
+    struct mca_btl_mvapi_reg_t *registration;
     ompi_free_list_t* my_list;
 }; 
 typedef struct mca_btl_mvapi_frag_t mca_btl_mvapi_frag_t; 

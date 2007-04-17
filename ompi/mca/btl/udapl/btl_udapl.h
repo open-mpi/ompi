@@ -106,6 +106,14 @@ struct mca_btl_udapl_module_t {
 typedef struct mca_btl_udapl_module_t mca_btl_udapl_module_t;
 extern mca_btl_udapl_module_t mca_btl_udapl_module;
 
+struct mca_btl_udapl_reg_t {
+    mca_mpool_base_registration_t base;
+    DAT_LMR_HANDLE lmr;          /* local memory region (LMR) */
+    DAT_LMR_TRIPLET lmr_triplet; /* LMR triplet - context, address, length */
+    DAT_RMR_CONTEXT rmr_context; /* remote memory region context handle */
+
+};
+typedef struct mca_btl_udapl_reg_t mca_btl_udapl_reg_t;
 
 /**
   * Report a uDAPL error - for debugging

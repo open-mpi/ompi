@@ -71,14 +71,18 @@ mca_mpool_base_registration_t* mca_rcache_vma_tree_find(
                                            unsigned char* base,
                                            unsigned char *bound
                                            );
+/**
+ * Returns all registration that overlaps given memory region
+ */
+int mca_rcache_vma_tree_find_all(
+        mca_rcache_vma_module_t *vma_rcache, unsigned char *base,
+        unsigned char *bound, ompi_pointer_array_t *regs);
 
 /* 
  * insert an item in the vma tree 
  */ 
-int mca_rcache_vma_tree_insert(
-                              mca_rcache_vma_module_t* rcache, 
-                              mca_mpool_base_registration_t* reg
-                              ); 
+int mca_rcache_vma_tree_insert(mca_rcache_vma_module_t* rcache,
+        mca_mpool_base_registration_t* reg, size_t limit);
 
 /* 
  * remove an item from the vma tree 

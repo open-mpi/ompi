@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -980,11 +980,15 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 exec_path = strdup(mca_pls_rsh_component.agent_path);
 
                 if (NULL != prefix_dir) {
+                    char *opal_prefix = getenv("OPAL_PREFIX");
                     if (remote_sh) {
                         asprintf (&argv[local_exec_index],
-                                  "PATH=%s/%s:$PATH ; export PATH ; "
+                                  "%s%s%s PATH=%s/%s:$PATH ; export PATH ; "
                                   "LD_LIBRARY_PATH=%s/%s:$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
                                   "%s/%s/%s",
+                                  (opal_prefix != NULL ? "OPAL_PREFIX=" : ""),
+                                  (opal_prefix != NULL ? opal_prefix : ""),
+                                  (opal_prefix != NULL ? " ;" : ""),
                                   prefix_dir, bin_base,
                                   prefix_dir, lib_base,
                                   prefix_dir, bin_base,
@@ -1000,7 +1004,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                            See this thread for more details:
                            http://www.open-mpi.org/community/lists/users/2006/01/0517.php. */
                         asprintf (&argv[local_exec_index],
-                                  "set path = ( %s/%s $path ) ; "
+                                  "%s%s%s set path = ( %s/%s $path ) ; "
                                   "if ( $?LD_LIBRARY_PATH == 1 ) "
                                   "set OMPI_have_llp ; "
                                   "if ( $?LD_LIBRARY_PATH == 0 ) "
@@ -1008,6 +1012,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                                   "if ( $?OMPI_have_llp == 1 ) "
                                   "setenv LD_LIBRARY_PATH %s/%s:$LD_LIBRARY_PATH ; "
                                   "%s/%s/%s",
+                                  (opal_prefix != NULL ? "setenv OPAL_PREFIX " : ""),
+                                  (opal_prefix != NULL ? opal_prefix : ""),
+                                  (opal_prefix != NULL ? " ;" : ""),
                                   prefix_dir, bin_base,
                                   prefix_dir, lib_base,
                                   prefix_dir, lib_base,
