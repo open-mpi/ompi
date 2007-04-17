@@ -1987,7 +1987,12 @@ else
    F77MPIOINC="include 'mpiof.h'"
 fi
 
-PAC_C_RESTRICT
+# Open MPI: use the exact same restrict test that we use in the
+# upper-level Open MPI configure script so that we always get the same
+# #define for "restrict" (there are a small number of files that will
+# end up including both ROMIO's romioconf.h and opal_config.h, so we
+# need to #defines to agree).
+AC_C_RESTRICT
 PAC_C_GNU_ATTRIBUTE
 #
 dnl CFLAGS="$CFLAGS $DEFS"
