@@ -59,54 +59,47 @@ do {                                                            \
     frag = (mca_pml_ob1_recv_frag_t*)item;                      \
 } while(0)
 
-
-#define MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segs, cnt, btl )  \
-do {                                                            \
-    size_t i;                                                   \
-    mca_btl_base_segment_t* macro_segments = frag->segments;    \
-    mca_pml_ob1_buffer_t* buffers = frag->buffers;              \
-                                                                \
-    /* init recv_frag */                                        \
-    frag->btl = btl;                                            \
-    frag->hdr = *(mca_pml_ob1_hdr_t*)hdr;                       \
-    frag->num_segments = cnt;                                   \
-    /* copy over data */                                        \
-    if(cnt == 1 && segs[0].seg_len <= mca_pml_ob1.unexpected_limit ) { \
-        macro_segments[0].seg_addr.pval = frag->addr;                  \
-        macro_segments[0].seg_len = segs[0].seg_len;                   \
-        memcpy(frag->addr,                                             \
-               segs[0].seg_addr.pval,                                  \
-               segs[0].seg_len);                                       \
-    } else {                                                           \
-        for(i=0; i<cnt; i++) {                                          \
-            buffers[i].len = segs[i].seg_len;                           \
-            buffers[i].addr = (char*) mca_pml_ob1.allocator->alc_alloc( \
-                                                 mca_pml_ob1.allocator, \
-                                                 segs[i].seg_len,       \
-                                                 0,                     \
-                                                 NULL);                 \
-            macro_segments[i].seg_addr.pval = buffers[i].addr;          \
-            macro_segments[i].seg_len = segs[i].seg_len;                \
-            memcpy(buffers[i].addr,                                     \
-                   segs[i].seg_addr.pval,                               \
-                   segs[i].seg_len);                                    \
-        }                                                               \
+    
+#define MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segs, cnt, btl )          \
+do {                                                                    \
+    size_t i, _size;                                                    \
+    mca_btl_base_segment_t* macro_segments = frag->segments;            \
+    mca_pml_ob1_buffer_t* buffers = frag->buffers;                      \
+    unsigned char* _ptr = (unsigned char*)frag->addr;                   \
+    /* init recv_frag */                                                \
+    frag->btl = btl;                                                    \
+    frag->hdr = *(mca_pml_ob1_hdr_t*)hdr;                               \
+    frag->num_segments = 1;                                             \
+    _size = segs[0].seg_len;                                            \
+    for( i = 1; i < cnt; i++ ) {                                        \
+        _size += segs[i].seg_len;                                       \
+    }                                                                   \
+    /* copy over data */                                                \
+    if(_size <= mca_pml_ob1.unexpected_limit ) {                        \
+        macro_segments[0].seg_addr.pval = frag->addr;                   \
+    } else {                                                            \
+        buffers[0].len = _size;                                         \
+        buffers[0].addr = (char*)                                       \
+            mca_pml_ob1.allocator->alc_alloc( mca_pml_ob1.allocator,    \
+                                              buffers[0].len,           \
+                                              0, NULL);                 \
+        _ptr = (unsigned char*)(buffers[0].addr);                       \
+        macro_segments[0].seg_addr.pval = buffers[0].addr;              \
+    }                                                                   \
+    macro_segments[0].seg_len = _size;                                  \
+    for( i = 0; i < cnt; i++ ) {                                        \
+        memcpy( _ptr, segs[i].seg_addr.pval, segs[i].seg_len);          \
+        _ptr += segs[i].seg_len;                                        \
     }                                                                   \
  } while(0)
 
 
 #define MCA_PML_OB1_RECV_FRAG_RETURN(frag)                              \
-    do {                                                                \
-    size_t i;                                                           \
-    if(!(frag->num_segments == 1 && frag->segments[0].seg_len <=        \
-         mca_pml_ob1.unexpected_limit)) {                               \
-                                                                        \
+do {                                                                    \
+    if( frag->segments[0].seg_len > mca_pml_ob1.unexpected_limit ) {    \
         /* return buffers */                                            \
-        for(i=0; i<frag->num_segments; i++) {                           \
-            mca_pml_ob1.allocator->alc_free(                            \
-                                            mca_pml_ob1.allocator,      \
-                                            frag->buffers[i].addr );    \
-        }                                                               \
+        mca_pml_ob1.allocator->alc_free( mca_pml_ob1.allocator,         \
+                                         frag->buffers[0].addr );       \
     }                                                                   \
     frag->num_segments = 0;                                             \
                                                                         \
@@ -120,12 +113,10 @@ do {                                                            \
  *  Callback from BTL on receipt of a recv_frag.
  */
 
-OMPI_DECLSPEC void mca_pml_ob1_recv_frag_callback(
-                                                  mca_btl_base_module_t *btl, 
-                                                  mca_btl_base_tag_t tag,
-                                                  mca_btl_base_descriptor_t* descriptor,
-                                                  void* cbdata
-                                                  );
+extern void mca_pml_ob1_recv_frag_callback( mca_btl_base_module_t *btl, 
+                                            mca_btl_base_tag_t tag,
+                                            mca_btl_base_descriptor_t* descriptor,
+                                            void* cbdata );
                                                                                                                
 #if defined(c_plusplus) || defined(__cplusplus)
 }
