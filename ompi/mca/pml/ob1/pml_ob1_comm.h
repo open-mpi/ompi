@@ -74,7 +74,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_comm_t);
  * @return        OMPI_SUCCESS or error status on failure.
  */
 
-OMPI_DECLSPEC extern int mca_pml_ob1_comm_init_size(mca_pml_ob1_comm_t* comm, size_t size);
+extern int mca_pml_ob1_comm_init_size(mca_pml_ob1_comm_t* comm, size_t size);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
