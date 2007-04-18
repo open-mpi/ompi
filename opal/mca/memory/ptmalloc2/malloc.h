@@ -20,6 +20,10 @@
 #ifndef _MALLOC_H
 #define _MALLOC_H 1
 
+/* add the opal config header file for the OPAL_DECLSPEC  */
+#include "opal_config.h"
+
+
 #ifdef _LIBC
 #include <features.h>
 #endif
@@ -126,41 +130,41 @@ extern "C" {
 extern int __malloc_initialized;
 
 /* Allocate SIZE bytes of memory.  */
-extern __malloc_ptr_t malloc __MALLOC_P ((size_t __size)) __attribute_malloc__;
+OPAL_DECLSPEC extern __malloc_ptr_t malloc __MALLOC_P ((size_t __size)) __attribute_malloc__;
 
 /* Allocate NMEMB elements of SIZE bytes each, all initialized to 0.  */
-extern __malloc_ptr_t calloc __MALLOC_P ((size_t __nmemb, size_t __size))
+OPAL_DECLSPEC extern __malloc_ptr_t calloc __MALLOC_P ((size_t __nmemb, size_t __size))
        __attribute_malloc__;
 
 /* Re-allocate the previously allocated block in __ptr, making the new
    block SIZE bytes long.  */
-extern __malloc_ptr_t realloc __MALLOC_P ((__malloc_ptr_t __ptr,
+OPAL_DECLSPEC extern __malloc_ptr_t realloc __MALLOC_P ((__malloc_ptr_t __ptr,
 					   size_t __size))
        __attribute_malloc__;
 
 /* Free a block allocated by `malloc', `realloc' or `calloc'.  */
-extern void free __MALLOC_P ((__malloc_ptr_t __ptr));
+OPAL_DECLSPEC extern void free __MALLOC_P ((__malloc_ptr_t __ptr));
 
 /* Free a block allocated by `calloc'. */
-extern void cfree __MALLOC_P ((__malloc_ptr_t __ptr));
+OPAL_DECLSPEC extern void cfree __MALLOC_P ((__malloc_ptr_t __ptr));
 
 /* Allocate SIZE bytes allocated to ALIGNMENT bytes.  */
-extern __malloc_ptr_t memalign __MALLOC_P ((size_t __alignment, size_t __size));
+OPAL_DECLSPEC extern __malloc_ptr_t memalign __MALLOC_P ((size_t __alignment, size_t __size));
 
 /* Allocate SIZE bytes on a page boundary.  */
-extern __malloc_ptr_t valloc __MALLOC_P ((size_t __size)) __attribute_malloc__;
+OPAL_DECLSPEC extern __malloc_ptr_t valloc __MALLOC_P ((size_t __size)) __attribute_malloc__;
 
 /* Equivalent to valloc(minimum-page-that-holds(n)), that is, round up
    __size to nearest pagesize. */
-extern __malloc_ptr_t  pvalloc __MALLOC_P ((size_t __size))
+OPAL_DECLSPEC extern __malloc_ptr_t  pvalloc __MALLOC_P ((size_t __size))
        __attribute_malloc__;
 
 /* Underlying allocation function; successive calls should return
    contiguous pieces of memory.  */
-extern __malloc_ptr_t (*__morecore) __MALLOC_PMT ((ptrdiff_t __size));
+OPAL_DECLSPEC extern __malloc_ptr_t (*__morecore) __MALLOC_PMT ((ptrdiff_t __size));
 
 /* Default value of `__morecore'.  */
-extern __malloc_ptr_t __default_morecore __MALLOC_P ((ptrdiff_t __size))
+OPAL_DECLSPEC extern __malloc_ptr_t __default_morecore __MALLOC_P ((ptrdiff_t __size))
        __attribute_malloc__;
 
 /* SVID2/XPG mallinfo structure */
@@ -179,7 +183,7 @@ struct mallinfo {
 };
 
 /* Returns a copy of the updated current mallinfo. */
-extern struct mallinfo mallinfo __MALLOC_P ((void));
+OPAL_DECLSPEC extern struct mallinfo mallinfo __MALLOC_P ((void));
 
 /* SVID2/XPG mallopt options */
 #ifndef M_MXFAST
@@ -203,61 +207,61 @@ extern struct mallinfo mallinfo __MALLOC_P ((void));
 #define M_CHECK_ACTION      -5
 
 /* General SVID/XPG interface to tunable parameters. */
-extern int mallopt __MALLOC_P ((int __param, int __val));
+OPAL_DECLSPEC extern int mallopt __MALLOC_P ((int __param, int __val));
 
 /* Release all but __pad bytes of freed top-most memory back to the
    system. Return 1 if successful, else 0. */
-extern int malloc_trim __MALLOC_P ((size_t __pad));
+OPAL_DECLSPEC extern int malloc_trim __MALLOC_P ((size_t __pad));
 
 /* Report the number of usable allocated bytes associated with allocated
    chunk __ptr. */
-extern size_t malloc_usable_size __MALLOC_P ((__malloc_ptr_t __ptr));
+OPAL_DECLSPEC extern size_t malloc_usable_size __MALLOC_P ((__malloc_ptr_t __ptr));
 
 /* Prints brief summary statistics on stderr. */
-extern void malloc_stats __MALLOC_P ((void));
+OPAL_DECLSPEC extern void malloc_stats __MALLOC_P ((void));
 
 /* Record the state of all malloc variables in an opaque data structure. */
-extern __malloc_ptr_t malloc_get_state __MALLOC_P ((void));
+OPAL_DECLSPEC extern __malloc_ptr_t malloc_get_state __MALLOC_P ((void));
 
 /* Restore the state of all malloc variables from data obtained with
    malloc_get_state(). */
-extern int malloc_set_state __MALLOC_P ((__malloc_ptr_t __ptr));
+OPAL_DECLSPEC extern int malloc_set_state __MALLOC_P ((__malloc_ptr_t __ptr));
 
 /* Called once when malloc is initialized; redefining this variable in
    the application provides the preferred way to set up the hook
    pointers. */
-extern void (*__malloc_initialize_hook) __MALLOC_PMT ((void));
+OPAL_DECLSPEC extern void (*__malloc_initialize_hook) __MALLOC_PMT ((void));
 /* Hooks for debugging and user-defined versions. */
-extern void (*__free_hook) __MALLOC_PMT ((__malloc_ptr_t __ptr,
+OPAL_DECLSPEC extern void (*__free_hook) __MALLOC_PMT ((__malloc_ptr_t __ptr,
 					__const __malloc_ptr_t));
-extern __malloc_ptr_t (*__malloc_hook) __MALLOC_PMT ((size_t __size,
+OPAL_DECLSPEC extern __malloc_ptr_t (*__malloc_hook) __MALLOC_PMT ((size_t __size,
 						    __const __malloc_ptr_t));
-extern __malloc_ptr_t (*__realloc_hook) __MALLOC_PMT ((__malloc_ptr_t __ptr,
+OPAL_DECLSPEC extern __malloc_ptr_t (*__realloc_hook) __MALLOC_PMT ((__malloc_ptr_t __ptr,
 						     size_t __size,
 						     __const __malloc_ptr_t));
-extern __malloc_ptr_t (*__memalign_hook) __MALLOC_PMT ((size_t __alignment,
+OPAL_DECLSPEC extern __malloc_ptr_t (*__memalign_hook) __MALLOC_PMT ((size_t __alignment,
 						      size_t __size,
 						      __const __malloc_ptr_t));
-extern void (*__after_morecore_hook) __MALLOC_PMT ((void));
+OPAL_DECLSPEC extern void (*__after_morecore_hook) __MALLOC_PMT ((void));
 
 /* Activate a standard set of debugging hooks. */
-extern void __malloc_check_init __MALLOC_P ((void));
+OPAL_DECLSPEC extern void __malloc_check_init __MALLOC_P ((void));
 
 /* Internal routines, operating on "arenas".  */
 struct malloc_state;
 typedef struct malloc_state *mstate;
 
-extern mstate         _int_new_arena __MALLOC_P ((size_t __ini_size));
-extern __malloc_ptr_t _int_malloc __MALLOC_P ((mstate __m, size_t __size));
-extern void           _int_free __MALLOC_P ((mstate __m, __malloc_ptr_t __ptr));
-extern __malloc_ptr_t _int_realloc __MALLOC_P ((mstate __m,
+OPAL_DECLSPEC extern mstate         _int_new_arena __MALLOC_P ((size_t __ini_size));
+OPAL_DECLSPEC extern __malloc_ptr_t _int_malloc __MALLOC_P ((mstate __m, size_t __size));
+OPAL_DECLSPEC extern void           _int_free __MALLOC_P ((mstate __m, __malloc_ptr_t __ptr));
+OPAL_DECLSPEC extern __malloc_ptr_t _int_realloc __MALLOC_P ((mstate __m,
 						__malloc_ptr_t __ptr,
 						size_t __size));
-extern __malloc_ptr_t _int_memalign __MALLOC_P ((mstate __m, size_t __alignment,
+OPAL_DECLSPEC extern __malloc_ptr_t _int_memalign __MALLOC_P ((mstate __m, size_t __alignment,
 						 size_t __size));
 /* Return arena number __n, or 0 if out of bounds.  Arena 0 is the
    main arena.  */
-extern mstate         _int_get_arena __MALLOC_P ((int __n));
+OPAL_DECLSPEC extern mstate         _int_get_arena __MALLOC_P ((int __n));
 
 /* Implementation-specific mallinfo.  More detailed than mallinfo, and
    also works for size_t wider than int.  */
@@ -283,9 +287,9 @@ struct malloc_global_info {
     int    stat_n_heaps;    /* only kept if THREAD_STATS is defined */
 };
 
-extern void _int_get_arena_info __MALLOC_P ((mstate __m,
+OPAL_DECLSPEC extern void _int_get_arena_info __MALLOC_P ((mstate __m,
 					     struct malloc_arena_info *__ma));
-extern void _int_get_global_info __MALLOC_P ((struct malloc_global_info *__m));
+OPAL_DECLSPEC extern void _int_get_global_info __MALLOC_P ((struct malloc_global_info *__m));
 
 #ifdef __cplusplus
 } /* end of extern "C" */
