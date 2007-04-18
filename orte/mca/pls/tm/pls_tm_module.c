@@ -123,7 +123,7 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     int node_name_index;
     int proc_name_index;
     char *jobid_string;
-    char *uri, *param;
+    char *param;
     char **env;
     char *var;
     char **argv;
