@@ -48,8 +48,8 @@ typedef uint8_t orte_errmgr_cmd_flag_t;
 #define ORTE_ERRMGR_REGISTER_JOB_CMD            0x02
  
 /* Internal support */
-int orte_errmgr_base_comm_start(void);
-int orte_errmgr_base_comm_stop(void);
+ORTE_DECLSPEC int orte_errmgr_base_comm_start(void);
+ORTE_DECLSPEC int orte_errmgr_base_comm_stop(void);
 void orte_errmgr_base_recv(int status, orte_process_name_t* sender,
                            orte_buffer_t* buffer, orte_rml_tag_t tag,
                            void* cbdata);
