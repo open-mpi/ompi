@@ -429,7 +429,7 @@ extern struct ompi_pointer_array_t *ompi_op_f_to_c_table;
    * ompi/mpi/cxx/op.c::ompi_mpi_cxx_op_intercept() for a full
    * expalantion.
    */
-  void ompi_op_set_cxx_callback(ompi_op_t *op, MPI_User_function *fn);
+  OMPI_DECLSPEC void ompi_op_set_cxx_callback(ompi_op_t *op, MPI_User_function *fn);
 
 /**
  * Check to see if an op is intrinsic.
