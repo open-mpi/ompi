@@ -22,7 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "opal/install_dirs.h"
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/os_path.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/util/show_help.h"
@@ -139,12 +139,12 @@ int mca_base_param_init(void)
         home = getenv("HOME");
         asprintf(&files,
                  "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"mca-params.conf:%s"OPAL_PATH_SEP"openmpi-mca-params.conf",
-                 home, OPAL_SYSCONFDIR);
+                 home, opal_install_dirs.sysconfdir);
 #else
         home = getenv("USERPROFILE");
         asprintf(&files,
                  "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"mca-params.conf;%s"OPAL_PATH_SEP"openmpi-mca-params.conf",
-                 home, OPAL_SYSCONFDIR);
+                 home, opal_install_dirs.sysconfdir);
 #endif  /* !defined(__WINDOWS__) */
 
         /* Initialize a parameter that says where MCA param files can

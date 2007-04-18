@@ -25,9 +25,7 @@ sources = \
     rcache_vma.h \
     rcache_vma_component.c \
     rcache_vma_tree.c \
-    rcache_vma_tree.h \
-    rcache_vma_mru.c \
-    rcache_vma_mru.h
+    rcache_vma_tree.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

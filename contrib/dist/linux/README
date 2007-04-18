@@ -8,7 +8,7 @@ Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -35,53 +35,23 @@ currently hard-coded in the beginning of the buildrpm.sh script.
 
 Alternatively, you can build directly from the openmpi.spec spec file
 or SRPM directly.  The following options are permissable on the
-"rpmbuild" command line via the --define option:
+"rpmbuild" command line via the --define option (listed
+alphabetically):
 
-- lanl: 0 or 1 (default: 0)
-  A shortcut for several Los Alamos-specific options (see specfile for
-  current list of values -- look for "%if %{lanl}").  
-
-- install_in_opt: 0 or 1 (default: 0)
-  If 1, use a prefix of /opt/openmpi/<version>-<release>.
-
-- install_profile_d_scripts: 0 or 1 (default: 0)
-  If 1, and install_in_opt is 1, then install the /etc/profile.d
-  scripts.
-
-- install_modulefile: 0 or 1 (default: 0)
-  If 1 and if install_in_opt is 1, then install a modulefile in
-  %{modulefile_path}/%{modulefile_subdir}/%{modulefile_name}
-
-- modulefile_path: string (default: "/etc/modulefiles")
-  Defaults to /etc/modulefiles
-
-- modulefile_subdir: string (default: "openmpi")
-  Defaults to openmpi
-
-- modulefile_name: string (default: "%{version}")
-  Defaults to %{version}
-
-- modules_rpm_name: string ("modules")
-  Name of the environment modules RPM to "require".
+- build_all_in_one_rpm: 0 or 1 (default: 1)
+  If 1 (the default), make a single RPM that contains all of the Open
+  MPI software.  If 0, build multiple sub-package RPMs to split up the
+  Open MPI code into separate functional areas.  See the spec file for
+  the exact division and subpackage definitions.
 
 - build_debuginfo_rpm: 0 or 1 (default: 0)
   If 1, builds a corresponding debuginfo rpm.
 
-- _prefix (etc.): string (default: supplied by rpmbuild)
-  Prefix directory (all other standard names are also supported, such
-  as _libdir, _sysconfdir, _includedir, etc.).
+- cflags: string (default: supplied by rpmbuild: $RPM_OPT_FLAGS)
+  CFLAGS value to use
 
 - configure_options: string (default: "")
   String to pass directly to the ./configure script.
-
-- _packager: string (default: supplied by rpmbuild)
-  Name of the packager
-
-- _vendor: string (default: supplied by rpmbuild)
-  Name of the vendor
-
-- cflags: string (default: supplied by rpmbuild: $RPM_OPT_FLAGS)
-  CFLAGS value to use
 
 - cxxflags: string (default: supplied by rpmbuild: $RPM_OPT_FLAGS)
   CXXFLAGS value to use
@@ -92,18 +62,73 @@ or SRPM directly.  The following options are permissable on the
 - fcflags: string (default: supplied by rpmbuild: $RPM_OPT_FLAGS)
   F90FLAGS value to use
 
+- install_in_opt: 0 or 1 (default: 0)
+  If 1, use a prefix of /opt/openmpi/<version>-<release>.
+
+- install_modulefile: 0 or 1 (default: 0)
+  If 1, then install a modulefile in
+  %{modulefile_path}/%{modulefile_subdir}/%{modulefile_name}
+
+- install_shell_scripts: 0 or 1 (default: 0)
+  If 1, then install shell environment setup scripts in 
+  %{shell_scripts_path}/%{shell_scripts_basename}.[sh|csh]
+
+- leave_build_root: 0 or 1 (default: 0)
+  In certain cases (such as the OFED installer), it is necessary to
+  *not* remove the RPM_BUILD_ROOT before building.  The default is 0,
+  because most users won't need this.
+
 - mflags: string (default: "")
   Flags to pass to the "make" [default] target during %build
 
 - mflags_install: string (default: "")
   Flags to pass to the "make install" target during %install
 
-- build_all_in_one_rpm: 0 or 1 (default: 1)
-  If 1 (the default), make a single RPM that contains all of the Open
-  MPI software.  If 0, build multiple sub-package RPMs to split up the
-  Open MPI code into separate functional areas.  See the spec file for
-  the exact division and subpackage definitions.
+- modulefile_name: string (default: "%{version}")
+  Defaults to %{version}
+
+- modulefile_path: string (default: "/etc/modulefiles")
+  Defaults to /etc/modulefiles
+
+- modulefile_subdir: string (default: "openmpi")
+  Defaults to openmpi
+
+- modules_rpm_name: string ("modules")
+  Name of the environment modules RPM to "require".
+
+- munge_build_into_install: 0 or 1 (default: 0)
+  In certain cases (such as the OFED installer on SuSE Linux), the
+  %build macro unconditionally removes the entire RPM_BUILD_ROOT
+  before starting.  This can be bad when building the RPM depends on
+  other things that are already in the RPM_BUILD_ROOT.  This option
+  pushes the entire "build" procedure down into the %install macro,
+  thereby avoiding the problem.  Most users should leave this option
+  as the default (0) so that %build and %install are separate phases.
 
 - name: string (default "openmpi")
   If set, used as the name of the RPM (useful if you want to add a
   compiler name -- or some other qualifier -- to the RPM name).
+
+- _packager: string (default: supplied by rpmbuild)
+  Name of the packager
+
+- _prefix (etc.): string (default: supplied by rpmbuild)
+  Prefix directory (all other standard names are also supported, such
+  as _libdir, _sysconfdir, _includedir, etc.).
+
+- shell_scripts_basename: string (default: "mpivars")
+  Defaults to installing mpivars.sh and mpivars.csh
+
+- shell_scripts_path: string (default: "%{_bindir}")
+  Defaults to the $bindir where OMPI is installed
+
+- use_check_files: 0 or 1 (default: 1)
+  In certain cases (such as the OFED installer), it is necessary to
+  disable the check for unpackaged files because the RPM_BUILD_ROOT
+  will intentionally contain files that are outside of the Open MPI
+  RPM.  The default is 1 because most users will be building the Open
+  MPI RPM individually, not in conjunction with other packages
+  simultaneously in the RPM_BUILD_ROOT.
+
+- _vendor: string (default: supplied by rpmbuild)
+  Name of the vendor

@@ -45,7 +45,7 @@
 #endif
 
 #include "opal/event/event.h"
-#include "opal/install_dirs.h"
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/base.h"
 #include "opal/threads/condition.h"
 #include "opal/util/argv.h"
@@ -56,6 +56,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/trace.h"
 #include "opal/version.h"
+#include "opal/runtime/opal.h"
 
 #include "orte/orte_constants.h"
 
@@ -317,6 +318,10 @@ int orterun(int argc, char *argv[])
     opal_list_t attributes;
     opal_list_item_t *item;
     uint8_t flow;
+
+    /* Need to initialize OPAL so that install_dirs are filled in */
+
+    opal_init_util();
 
     /* Setup MCA params */
 
@@ -1426,7 +1431,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         }
         /* --enable-orterun-prefix-default was given to orterun */
         else {
-            param = strdup(OPAL_PREFIX);
+            param = strdup(opal_install_dirs.prefix);
         }
 
         if (NULL != param) {

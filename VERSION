@@ -24,7 +24,7 @@ greek=a0
 
 want_svn=1
 
-# If svn_r=-1, then the SVN r numbere will be obtained dynamically at
+# If svn_r=-1, then the SVN r number will be obtained dynamically at
 # run time, either 1) via the "svnversion" command (if this is a
 # Subversion checkout) in the form "r<svn_r>", or b) with the date (if
 # this is not a Subversion checkout, and the svnversion command cannot

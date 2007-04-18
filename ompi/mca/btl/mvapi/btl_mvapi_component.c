@@ -47,10 +47,13 @@
 #include <vapi.h> 
 #include <vapi_common.h> 
 #include "ompi/datatype/convertor.h" 
-#include "ompi/mca/mpool/mvapi/mpool_mvapi.h" 
+#include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "btl_mvapi_endpoint.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 
+static int mvapi_reg_mr(void *reg_data, void *base, size_t size,
+        mca_mpool_base_registration_t *reg);
+static int mvapi_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg);
 
 mca_btl_mvapi_component_t mca_btl_mvapi_component = {
     {
@@ -147,7 +150,7 @@ int mca_btl_mvapi_component_open(void)
     mca_btl_mvapi_param_register_int ("free_list_inc", "increment size of free lists", 
                                        32, &mca_btl_mvapi_component.ib_free_list_inc);
     mca_btl_mvapi_param_register_string("mpool", "name of the memory pool to be used", 
-                                         "mvapi", &mca_btl_mvapi_component.ib_mpool_name); 
+                                         "rdma", &mca_btl_mvapi_component.ib_mpool_name);
     mca_btl_mvapi_param_register_int("reg_mru_len",  "length of the registration cache most recently used list", 
                                       16, (int*) &mca_btl_mvapi_component.reg_mru_len); 
 #ifdef VAPI_FEATURE_SRQ 
@@ -337,7 +340,51 @@ static void mca_btl_mvapi_control(
     }
 }
 
+static int mvapi_reg_mr(void *reg_data, void *base, size_t size,
+        mca_mpool_base_registration_t *reg)
+{
+    mca_btl_mvapi_module_t *mvapi_btl = (mca_btl_mvapi_module_t*)reg_data;
+    mca_btl_mvapi_reg_t *mvapi_reg = (mca_btl_mvapi_reg_t*)reg;
+    VAPI_mrw_t mr_in, mr_out;
+    VAPI_ret_t ret;
 
+    memset(&mr_in, 0, sizeof(VAPI_mrw_t));
+    memset(&mr_out, 0, sizeof(VAPI_mrw_t));
+    mr_in.acl =
+        VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE | VAPI_EN_REMOTE_READ;
+    mr_in.pd_hndl = mvapi_btl->ptag;
+    mr_in.size = size;
+    mr_in.start = (VAPI_virt_addr_t)(MT_virt_addr_t)base;
+    mr_in.type = VAPI_MR;
+    mvapi_reg->hndl = VAPI_INVAL_HNDL;
+
+    ret = VAPI_register_mr(mvapi_btl->nic, &mr_in, &mvapi_reg->hndl, &mr_out);
+
+    if(ret != VAPI_OK) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    mvapi_reg->l_key = mr_out.l_key;
+    mvapi_reg->r_key = mr_out.r_key;
+    return OMPI_SUCCESS;
+}
+
+static int mvapi_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg)
+{
+    mca_btl_mvapi_module_t *mvapi_btl = (mca_btl_mvapi_module_t*)reg_data;
+    mca_btl_mvapi_reg_t *mvapi_reg = (mca_btl_mvapi_reg_t*)reg;
+    VAPI_ret_t ret;
+
+    if(mvapi_reg->hndl != VAPI_INVAL_HNDL) {
+        ret = VAPI_deregister_mr(mvapi_btl->nic, mvapi_reg->hndl);
+        if(ret != VAPI_OK) {
+            opal_output(0, "%s: error unpinning mvapi memory errno says %s\n",
+                    __func__, strerror(errno));
+            return OMPI_ERROR;
+        }
+    }
+    return OMPI_SUCCESS;
+}
 
 /*
  *  IB component initialization:
@@ -513,9 +560,10 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
             return NULL;
         }
                          
-        hca_pd.hca = mvapi_btl->nic; 
-        hca_pd.pd_tag = mvapi_btl->ptag; 
-        
+        hca_pd.reg_data = mvapi_btl;
+        hca_pd.sizeof_reg = sizeof(mca_btl_mvapi_reg_t);
+        hca_pd.register_mem = mvapi_reg_mr;
+        hca_pd.deregister_mem = mvapi_dereg_mr;
         /* initialize the memory pool using the hca */ 
         mvapi_btl->super.btl_mpool = 
             mca_mpool_base_module_create(mca_btl_mvapi_component.ib_mpool_name,

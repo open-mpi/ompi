@@ -192,7 +192,13 @@ struct mca_btl_mvapi_module_t {
     uint32_t eager_rdma_buffers_count; /**< number of RDMA buffers */
 }; typedef struct mca_btl_mvapi_module_t mca_btl_mvapi_module_t;
     
-
+struct mca_btl_mvapi_reg_t {
+    mca_mpool_base_registration_t base;
+    VAPI_mr_hndl_t hndl; /* Memory region handle */
+    VAPI_lkey_t l_key;   /* Local key to registered memory */
+    VAPI_rkey_t r_key;   /* Remote key to registered memory */
+};
+typedef struct mca_btl_mvapi_reg_t mca_btl_mvapi_reg_t;
 
 #define MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, \
                                     additional) \

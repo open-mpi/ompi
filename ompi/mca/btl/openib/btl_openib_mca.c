@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,7 +21,9 @@
 
 #include <string.h>
 
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "btl_openib.h"
 #include "btl_openib_mca.h"
@@ -96,7 +98,7 @@ static inline int reg_int(const char* param_name, const char* param_desc,
 int btl_openib_register_mca_params(void) 
 {
     char *msg, *str;
-    int ival, ret, tmp;
+    int ival, ival2, ret, tmp;
 
     ret = OMPI_SUCCESS;
 #define CHECK(expr) \
@@ -116,10 +118,31 @@ int btl_openib_register_mca_params(void)
                   "Warn when there is more than one active ports and at least one of them connected to the network with only default GID prefix configured (0 = do not warn; any other value = warn)",
                   1, &ival, 0));
     mca_btl_openib_component.warn_default_gid_prefix = (0 != ival);
-    asprintf(&str, "%s/mca-btl-openib-hca-params.ini", PKGDATADIR);
+    asprintf(&str, "%s/mca-btl-openib-hca-params.ini", 
+             opal_install_dirs.pkgdatadir);
     if (NULL == str) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+#ifdef HAVE_IBV_FORK_INIT
+    ival2 = 1;
+#else
+    ival2 = 0;
+#endif
+    CHECK(reg_int("want_fork_support", 
+                  "Whether fork support is desired or not "
+                  "(0 = no fork support, nonzero = fork support)", 
+                  ival2, &ival, 0));
+#ifdef HAVE_IBV_FORK_INIT
+    mca_btl_openib_component.want_fork_support = (0 != ival);
+#else
+    if (0 != ival) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                       "ibv_fork requested but not supported", true,
+                       orte_system_info.nodename);
+        return OMPI_ERROR;
+    }
+#endif
+
     CHECK(reg_string("hca_param_files",
                      "Colon-delimited list of INI-style files that contain HCA vendor/part-specific parameters",
                      str, &mca_btl_openib_component.hca_params_file_names, 0));
@@ -145,7 +168,7 @@ int btl_openib_register_mca_params(void)
                   REGINT_GE_ONE));
     CHECK(reg_string("mpool",
                      "Name of the memory pool to be used (it is unlikely that you will ever want to change this", 
-                     "openib", &mca_btl_openib_component.ib_mpool_name,
+                     "rdma", &mca_btl_openib_component.ib_mpool_name,
                      0));
     CHECK(reg_int("reg_mru_len",  
                   "Length of the registration cache most recently used list "
@@ -206,7 +229,7 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_component.ib_min_rnr_timer = (uint32_t) ival;
 
     /* JMS is there a max? */
-    CHECK(reg_int("ib_timeout", "InfiniBand transmit timeout, in seconds"
+    CHECK(reg_int("ib_timeout", "InfiniBand transmit timeout, plugged into formula: 4.096 microseconds * (2^btl_openib_ib_timeout)"
                   "(must be >= 1)",
                   10, &ival, REGINT_GE_ONE));
     mca_btl_openib_component.ib_timeout = (uint32_t) ival;
@@ -367,11 +390,24 @@ int btl_openib_register_mca_params(void)
                   MCA_BTL_FLAGS_NEED_CSUM, &ival, REGINT_GE_ZERO));
     mca_btl_openib_module.super.btl_flags = (uint32_t) ival;
     
-    CHECK(reg_int("bandwidth", "Approximate maximum bandwidth "
-                  "of network (must be >= 1)", 
-                  800, &ival, REGINT_GE_ONE));
+    CHECK(reg_int("bandwidth", "Approximate maximum bandwidth of each network interface in megabits per second "
+                  "(if 0, filled in at run-time by querying the HCA, otherwise must be > 0) ",
+                  0, &ival, REGINT_GE_ZERO));
     mca_btl_openib_module.super.btl_bandwidth = (uint32_t) ival;
-    
+
+    /* Info only */
+
+    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version, 
+                           "have_fork_support", 
+                           "Whether this component supports applications that invoke the \"fork()\" system call or not (0 = no, 1 = yes)",
+                           false, true,
+#ifdef HAVE_IBV_FORK_INIT
+                           1,
+#else
+                           0,
+#endif
+                           NULL);
+
     return ret;
 }
 

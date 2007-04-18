@@ -27,7 +27,7 @@
 #include <unistd.h>
 #endif
 
-#include "opal/install_dirs.h"
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 #include "opal/mca/mca.h"
@@ -67,10 +67,10 @@ int mca_base_open(void)
   /* Register some params */
 #if !defined(__WINDOWS__)
   home = getenv("HOME");
-  asprintf(&value, "%s:%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", OPAL_PKGLIBDIR, home);
+  asprintf(&value, "%s:%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", opal_install_dirs.pkglibdir, home);
 #else
   home = getenv("USERPROFILE");
-  asprintf(&value, "%s;%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", OPAL_PKGLIBDIR, home);
+  asprintf(&value, "%s;%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", opal_install_dirs.pkglibdir, home);
 #endif  /* !defined(__WINDOWS__) */
 
   mca_base_param_component_path = 

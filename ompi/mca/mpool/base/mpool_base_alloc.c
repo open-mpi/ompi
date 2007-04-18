@@ -40,7 +40,9 @@ static void mca_mpool_base_registration_constructor( mca_mpool_base_registration
     reg->mpool = NULL;
     reg->base = NULL;
     reg->bound = NULL;
+    reg->alloc_base = NULL;
     reg->ref_count = 0;
+    reg->flags = 0;
 }
 
 static void mca_mpool_base_registration_destructor( mca_mpool_base_registration_t * reg )
@@ -74,58 +76,37 @@ OBJ_CLASS_INSTANCE(
  * @retval pointer to the allocated memory
  * @retval NULL on failure
  */
-void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
+void *mca_mpool_base_alloc(size_t size, ompi_info_t *info)
 {
     opal_list_item_t * item;
     int num_modules = opal_list_get_size(&mca_mpool_base_modules);
     int reg_module_num = 0;
-    int i, j, num_keys;
+    int i, num_keys;
     mca_mpool_base_selected_module_t * current;
     mca_mpool_base_selected_module_t * no_reg_function = NULL;
     mca_mpool_base_selected_module_t ** has_reg_function = NULL;
     mca_mpool_base_registration_t * registration;
-    mca_mpool_base_tree_item_t* mpool_tree_item;
-    
+    mca_mpool_base_tree_item_t* mpool_tree_item = NULL;
+    mca_mpool_base_module_t *mpool;
     void * mem = NULL;
     char * key = NULL;
     char * value = NULL;
     int flag = 0;
-    bool match_found = false;
-    bool mpool_requested = false;    
+    bool match_found = false, mpool_requested = false;
 
-    if (mca_mpool_base_use_mem_hooks && 
-        0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
-        /* if we're using memory hooks, it's possible (likely, based
-           on testing) that for some tests the memory returned from
-           any of the malloc functions below will be part of a larger
-           (lazily) freed chunk and therefore already be pinned.
-           Which causes our caches to get a little confused, as the
-           alloc/free pair are supposed to always have an exact match
-           in the rcache.  This wasn't happening, leading to badness.
-           Instead, just malloc and we'll get to the pinning later,
-           when we try to first use it.  Since we're leaving things
-           pinned, there's no advantage to doing it now over first
-           use, and it works if we wait ... */
-        return malloc(size);
-    }
-
-
-    if (num_modules > 0) {
+    if(num_modules > 0) {
         has_reg_function = (mca_mpool_base_selected_module_t **)
-                           malloc(num_modules * sizeof(mca_mpool_base_module_t *));
-        if(!has_reg_function){ 
-            return NULL;
-        }
+            malloc(num_modules * sizeof(mca_mpool_base_module_t *));
+        if(!has_reg_function)
+            goto out;
     }
 
     mpool_tree_item = mca_mpool_base_tree_item_get();
     
-    if(NULL == mpool_tree_item){ 
-        if(has_reg_function) { 
-            free(has_reg_function);
-        }
-        return NULL;
-    }
+    if(!mpool_tree_item)
+        goto out;
+
+    mpool_tree_item->count = 0;
     
     if(&ompi_mpi_info_null == info)
     {
@@ -182,10 +163,7 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
                            /* there was more than one requested mpool that lacks 
                             * a registration function, so return failure */
                             free(key);
-                            if(has_reg_function) { 
-                                free(has_reg_function);
-                            }
-                            return NULL;
+                            goto out;
                         }
                         no_reg_function = current;
                     }
@@ -200,10 +178,7 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
                 /* one of the keys given to us by the user did not match any
                  * mpools, so return an error */
                 free(key);
-                if(has_reg_function) { 
-                    free(has_reg_function);
-                }
-                return NULL;
+                goto out;
             }
         }
         free(key);
@@ -211,76 +186,59 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     
     if(NULL == no_reg_function && 0 == reg_module_num)
     {
-        if(has_reg_function) { 
-            free(has_reg_function);
-        }
         if(!mpool_requested)
         {
             /* if the info argument was NULL and there were no useable mpools
              * or there user provided info object but did not specifiy a "mpool" key,
              * just malloc the memory and return it */
             mem = malloc(size);
-            if(NULL != mem){
-                /* don't need the tree */
-                mca_mpool_base_tree_item_put(mpool_tree_item);
-                return mem;
-            }
+            goto out;
         }
         
         /* the user passed info but we were not able to use any of the mpools 
          * specified */
-        return NULL;
+        goto out;
     }
     
     
-    i = j = 0;
-    num_modules = 0;
     if(NULL != no_reg_function)
     {
-        mca_mpool_base_module_t* mpool = no_reg_function->mpool_module;
-        mem = mpool->mpool_alloc(mpool, size, 0, MCA_MPOOL_FLAGS_PERSIST, &registration);
-        num_modules++;
-        mpool_tree_item->key = mem;
-        mpool_tree_item->mpools[j] = mpool;
-        mpool_tree_item->regs[j++] = registration;
+        mpool = no_reg_function->mpool_module;
+        i = 0;
+    } else {
+        mpool = has_reg_function[0]->mpool_module;
+        i = 1;
     }
-    else
-    {
-        mca_mpool_base_module_t* mpool = has_reg_function[i]->mpool_module;
-        mem = mpool->mpool_alloc(mpool, size, 0, MCA_MPOOL_FLAGS_PERSIST, &registration);
-        i++;
-        num_modules++;
-        mpool_tree_item->key = mem;
-        mpool_tree_item->mpools[j] = mpool;
-        mpool_tree_item->regs[j++] = registration;
-    }
+    mem = mpool->mpool_alloc(mpool, size, 0, MCA_MPOOL_FLAGS_PERSIST,
+            &registration);
+    if(NULL == mem)
+        goto out;
+
+    mpool_tree_item->key = mem;
+    mpool_tree_item->mpools[mpool_tree_item->count] = mpool;
+    mpool_tree_item->regs[mpool_tree_item->count++] = registration;
     
     while(i < reg_module_num)
     {
-        mca_mpool_base_module_t* mpool = has_reg_function[i]->mpool_module;
-        if(OMPI_SUCCESS != mpool->mpool_register(mpool, mem, size, MCA_MPOOL_FLAGS_PERSIST,  &registration))
-        {
-            if (has_reg_function) {
-                free(has_reg_function);
-            }
-            return NULL;
-        } else { 
-            mpool_tree_item->mpools[j] = mpool;
-            mpool_tree_item->regs[j++] = registration;
-            num_modules++;
+        mpool = has_reg_function[i]->mpool_module;
+        if(mpool->mpool_register(mpool, mem, size, MCA_MPOOL_FLAGS_PERSIST,
+                    &registration) != OMPI_SUCCESS) {
+            goto out;
         }
+        mpool_tree_item->mpools[mpool_tree_item->count] = mpool;
+        mpool_tree_item->regs[mpool_tree_item->count++] = registration;
         i++;
     }
-    if(has_reg_function) { 
-        free(has_reg_function);
-    }
-    
-    /* null terminated array */
-    mpool_tree_item->mpools[j] = NULL;
-    mpool_tree_item->regs[j] = NULL;
 
     mca_mpool_base_tree_insert(mpool_tree_item);
-    
+    mpool_tree_item = NULL; /* prevent it to be deleted below */
+out:
+    if(mpool_tree_item)
+        mca_mpool_base_tree_item_put(mpool_tree_item);
+
+    if(has_reg_function)
+        free(has_reg_function);
+
     return mem;
 }
 
@@ -292,49 +250,38 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
  * @retval OMPI_SUCCESS
  * @retval OMPI_ERR_BAD_PARAM if the passed base pointer was invalid
  */
-int mca_mpool_base_free(void * base)
+int mca_mpool_base_free(void *base)
 {
-    int i = 0, rc = OMPI_SUCCESS;
-    mca_mpool_base_tree_item_t* mpool_tree_item = NULL;
-    mca_mpool_base_module_t* mpool;
-    mca_mpool_base_registration_t* reg;
-    
-    if(!base) { 
+    mca_mpool_base_tree_item_t *mpool_tree_item = NULL;
+    mca_mpool_base_module_t *mpool;
+    mca_mpool_base_registration_t *reg;
+    int i, rc;
+
+    if(!base) {
         return OMPI_ERROR;
     }
 
-    /* see comment in alloc function above */
-    if (mca_mpool_base_use_mem_hooks && 
-        0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
+    mpool_tree_item = mca_mpool_base_tree_find(base);
+
+    if(!mpool_tree_item) { 
+        /* nothing in the tree this was just plain old malloc'd memory */
         free(base);
         return OMPI_SUCCESS;
     }
 
-    mpool_tree_item = mca_mpool_base_tree_find(base); 
-    
-    if(!mpool_tree_item) { 
-        /* nothing in the tree this was just 
-           plain old malloc'd memory */ 
-        free(base);
-        return OMPI_SUCCESS;
-    }
-    
-    for(i = 1; i < MCA_MPOOL_BASE_TREE_MAX; i++) {
+    for(i = 1; i < mpool_tree_item->count; i++) {
         mpool = mpool_tree_item->mpools[i];
         reg = mpool_tree_item->regs[i];
-        if(mpool) { 
+        if(mpool && mpool->mpool_deregister) {
             mpool->mpool_deregister(mpool, reg); 
-        } else { 
-            break;
         }
     }
     
     mpool = mpool_tree_item->mpools[0];
     reg =  mpool_tree_item->regs[0];
     mpool->mpool_free(mpool, base, reg);
-    
+
     rc = mca_mpool_base_tree_delete(mpool_tree_item);
     
     return rc;
 }
-
