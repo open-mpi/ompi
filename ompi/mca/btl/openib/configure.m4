@@ -30,7 +30,15 @@ AC_DEFUN([MCA_btl_openib_CONFIG],[
     AS_IF([test "$btl_openib_happy" = "yes"],
           [btl_openib_WRAPPER_EXTRA_LDFLAGS="$btl_openib_LDFLAGS"
            btl_openib_WRAPPER_EXTRA_LIBS="$btl_openib_LIBS"
+
+           # With the new openib flags, look for ibv_fork_init
+           LDFLAGS_save="$LDFLAGS"
+           LIBS_save="$LIBS"
+           LDFLAGS="$LDFLAGS $btl_openib_LDFLAGS"
+           LIBS="$LIBS $btl_openib_LIBS"
            AC_CHECK_FUNCS([ibv_fork_init])
+           LDFLAGS="$LDFLAGS_save"
+           LIBS="$LIBS_save"
            $1],
           [$2])
 
