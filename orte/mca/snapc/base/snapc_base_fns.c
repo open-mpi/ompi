@@ -47,6 +47,7 @@
  ******************/
 /* Some local strings to use genericly with the global metadata file */
 #define SNAPC_METADATA_SEQ      ("# Seq: ")
+#define SNAPC_METADATA_DONE_SEQ ("# Finished Seq: ")
 #define SNAPC_METADATA_TIME     ("# Timestamp: ")
 #define SNAPC_METADATA_PROCESS  ("# Process: ")
 #define SNAPC_METADATA_CRS_COMP ("# OPAL CRS Component: ")
@@ -55,6 +56,7 @@
 
 static int snapc_base_reg_gpr_request( orte_jobid_t jobid, orte_gpr_notify_cb_fn_t gpr_cbfunc, void* gpr_cbdata );
 static int get_next_seq_number(FILE *file);
+static int get_next_valid_seq_number(FILE *file);
 static int metadata_extract_next_token(FILE *file, char **token, char **value);
 
 size_t orte_snapc_base_snapshot_seq_number = 0;
@@ -1340,6 +1342,37 @@ int orte_snapc_base_add_timestamp(char * global_snapshot_ref)
     return exit_status;
 }
 
+int orte_snapc_base_finalize_metadata(char * global_snapshot_ref)
+{
+    int exit_status = ORTE_SUCCESS;
+    FILE * meta_data = NULL;
+    char * meta_data_fname = NULL;
+
+    /* Add the final timestamp */
+    orte_snapc_base_add_timestamp(global_snapshot_ref);
+
+    meta_data_fname = orte_snapc_base_get_global_snapshot_metadata_file(global_snapshot_ref);
+
+    if (NULL == (meta_data = fopen(meta_data_fname, "a")) ) {
+        opal_output(orte_snapc_base_output,
+                    "orte:snapc:base: orte_snapc_base_add_timestamp: Error: Unable to open the file (%s)\n",
+                    meta_data_fname);
+        exit_status = ORTE_ERROR;
+        goto cleanup;
+    }
+    
+    fprintf(meta_data, "%s%d\n", SNAPC_METADATA_DONE_SEQ, (int)orte_snapc_base_snapshot_seq_number);
+
+ cleanup:
+    if( NULL != meta_data )
+        fclose(meta_data);
+    if( NULL != meta_data_fname)
+        free(meta_data_fname);
+    
+    return exit_status;
+}
+
+
 int orte_snapc_base_add_vpid_metadata( orte_process_name_t *proc,
                                        char * global_snapshot_ref,
                                        char *snapshot_ref,
@@ -1416,10 +1449,10 @@ int orte_snapc_base_extract_metadata(orte_snapc_base_global_snapshot_t *global_s
     }
 
     /* 
-     * If we were not given a sequence number, first find the largest seq number
+     * If we were not given a sequence number, first find the largest valid seq number
      */
     if(0 > global_snapshot->seq_num ) {
-        while(0 <= (next_seq_int = get_next_seq_number(meta_data)) ){
+        while(0 <= (next_seq_int = get_next_valid_seq_number(meta_data)) ){
             global_snapshot->seq_num = next_seq_int;
         }
         rewind(meta_data);
@@ -1512,6 +1545,33 @@ static int get_next_seq_number(FILE *file)
             goto cleanup;
         }
     } while(0 != strncmp(token, SNAPC_METADATA_SEQ, strlen(SNAPC_METADATA_SEQ)) );
+
+    seq_int = atoi(value);
+
+ cleanup:
+    if( NULL != token)
+        free(token);
+    if( NULL != value)
+        free(value);
+
+    return seq_int;
+}
+
+/*
+ * Extract the next Valid sequence number from the file
+ */
+static int get_next_valid_seq_number(FILE *file)
+{
+    char *token = NULL;
+    char *value = NULL;
+    int seq_int = -1;
+
+    do {
+        if( ORTE_SUCCESS != metadata_extract_next_token(file, &token, &value) ) {
+            seq_int = -1;
+            goto cleanup;
+        }
+    } while(0 != strncmp(token, SNAPC_METADATA_DONE_SEQ, strlen(SNAPC_METADATA_DONE_SEQ)) );
 
     seq_int = atoi(value);
 
