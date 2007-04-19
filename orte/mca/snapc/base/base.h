@@ -136,6 +136,7 @@ extern "C" {
                                                         char * global_snapshot_ref,
                                                         char *snapshot_ref,
                                                         char *snapshot_location);
+    ORTE_DECLSPEC int orte_snapc_base_finalize_metadata(char * global_snapshot_ref);
     ORTE_DECLSPEC int orte_snapc_base_extract_metadata(orte_snapc_base_global_snapshot_t *snapshot);
 
     /*******************************

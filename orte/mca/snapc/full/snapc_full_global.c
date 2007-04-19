@@ -935,7 +935,7 @@ static int snapc_full_global_gather_all_files(void) {
     /*
      * Now that we gathered all the files, finish off the metadata file
      */
-    orte_snapc_base_add_timestamp(global_snapshot.reference_name);
+    orte_snapc_base_finalize_metadata(global_snapshot.reference_name);
     
  cleanup:
     if(NULL != local_dir)
