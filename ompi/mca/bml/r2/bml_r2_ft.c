@@ -45,8 +45,6 @@
 #include "bml_r2.h"
 #include "bml_r2_ft.h"
 
-static int mca_bml_r2_ft_readd_procs(int num_procs, ompi_proc_t** procs);
-
 int mca_bml_r2_ft_event(int state) {
     ompi_proc_t** procs;
     size_t num_procs;
@@ -60,65 +58,9 @@ int mca_bml_r2_ft_event(int state) {
         /* Since nothing in Checkpoint, we are fine here */
     }
     else if(OPAL_CRS_RESTART == state) {
-        /*
-         * Need to del_procs to clean out the stale association between
-         * endpoints and former BTL modules.
-         * - Similar to mca_bml_r2_del_btl
-         */
         procs = ompi_proc_all(&num_procs);
         if(NULL == procs) {
             return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-
-#if 0
-        {
-        opal_list_item_t* w_item, *n_item;
-
-        opal_output(0, "bml:r2: ft_event(Reboot): Del procs");
-        for (w_item =  opal_list_get_first(&mca_btl_base_modules_initialized);
-             w_item != opal_list_get_end(&mca_btl_base_modules_initialized);
-             w_item =  n_item) {
-            mca_btl_base_selected_module_t *sm = (mca_btl_base_selected_module_t *) w_item;
-
-            n_item = opal_list_get_next(w_item);
-
-#if 1
-            mca_bml_r2_del_btl(sm->btl_module);
-#else
-            /* dont use this btl for any peers */
-            for(p=0; p<num_procs; p++) {
-                ompi_proc_t* proc = procs[p];
-                mca_bml_r2_del_proc_btl(proc, sm->btl_module);
-            }
-#endif
-        }
-        }
-#endif
-
-        /*
-         * Clean out the modex information since it is invalid now.
-         */
-        opal_output_verbose(10, ompi_cr_output,
-                            "bml:r2: ft_event(Reboot): Reboot Modex information");
-        if (OMPI_SUCCESS != (ret = mca_pml_base_modex_finalize())) {
-            opal_output(0,
-                        "bml:r2: ft_event(Restart): modex_finalize Failed %d",
-                        ret);
-            return ret;
-        }
-
-        for(p = 0; p < (int)num_procs; ++p) {
-            if( NULL != procs[p]->proc_modex ) {
-                OBJ_RELEASE(procs[p]->proc_modex);
-                procs[p]->proc_modex = NULL;
-            }
-        }
-
-        if (OMPI_SUCCESS != (ret = mca_pml_base_modex_init())) {
-            opal_output(0,
-                        "bml:r2: ft_event(Restart): modex_init Failed %d",
-                        ret);
-            return ret;
         }
     }
     else if(OPAL_CRS_TERM == state ) {
@@ -216,64 +158,15 @@ int mca_bml_r2_ft_event(int state) {
         }
 
         /*
-         * Re-exchange the Modex, and go through the stage gates
+         * Clear some structures so we can properly repopulate them
          */
-        if (OMPI_SUCCESS != (ret = mca_pml_base_modex_exchange())) {
-            opal_output(0,
-                        "bml:r2: ft_event(Restart): modex_exchange Failed %d",
-                        ret);
-            return ret;
-        }
+        mca_bml_r2.btls_added = false;
 
-        opal_output_verbose(10, ompi_cr_output,
-                            "bml:r2: ft_event(Reboot): Enter Stage Gate 1");
-        if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
-                                                           ORTE_PROC_STATE_AT_STG1, 0))) {
-            opal_output(0,
-                        "bml:r2: ft_event(Restart): Stage Gate 1 Failed %d",
-                        ret);
-            return ret;
-        }
+        for(p = 0; p < (int)num_procs; ++p) {
+            OBJ_RELEASE(procs[p]->proc_bml);
+            procs[p]->proc_bml = NULL;
 
-        if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid, true,
-                                                  NULL, orte_gpr.deliver_notify_msg))) {
-            opal_output(0,
-                        "bml:r2: ft_event(Restart): Stage Gate 1 Failed %d",
-                        ret);
-            return ret;
-        }
-
-        /*
-         * Set the STAGE 2 State
-         */
-        opal_output_verbose(10, ompi_cr_output,
-                            "bml:r2: ft_event(Reboot): Enter Stage Gate 2");
-        if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
-                                                           ORTE_PROC_STATE_AT_STG2, 0))) {
-            opal_output(0,"bml:r2: ft_event(Restart): Stage Gate 1 Failed %d",
-                        ret);
-            return ret;
-        }
-
-        if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid, false,
-                                                  NULL, orte_gpr.deliver_notify_msg))) {
-            opal_output(0,"bml:r2: ft_event(Restart): Stage Gate 1 Failed %d",
-                        ret);
-            return ret;
-        }
-
-        /*
-         * add-procs again.
-         * Now that we have:
-         * - A new list of valid BTL components and modules
-         * - A full set of modex information to exchange
-         */
-        opal_output_verbose(10, ompi_cr_output,
-                            "bml:r2: ft_event(Reboot): Re-add procs");
-        if( OMPI_SUCCESS != (ret = mca_bml_r2_ft_readd_procs(num_procs, procs) ) ) {
-            opal_output(0, "bml:r2: ft_event(Restart): Re-add Procs Failed %d",
-                        ret);
-            return ret;
+            OBJ_RELEASE(procs[p]);
         }
 
         if( NULL != procs ) {
@@ -288,51 +181,5 @@ int mca_bml_r2_ft_event(int state) {
         ;
     }
     
-    return OMPI_SUCCESS;
-}
-
-static int mca_bml_r2_ft_readd_procs(int num_procs, ompi_proc_t** procs)
-{
-    int ret;
-    int p;
-    struct mca_bml_base_endpoint_t** bml_endpoints = NULL;
-    struct ompi_bitmap_t reachable;
-
-    mca_bml_r2.btls_added = false;
-
-    for(p = 0; p < num_procs; ++p) {
-        OBJ_RELEASE(procs[p]->proc_bml);
-        procs[p]->proc_bml = NULL;
-
-        OBJ_RELEASE(procs[p]);
-    }
-
-    bml_endpoints = (struct mca_bml_base_endpoint_t**) malloc(num_procs * sizeof(struct mca_bml_base_endpoint_t*));
-    if( NULL == bml_endpoints ) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    OBJ_CONSTRUCT(&reachable, ompi_bitmap_t);
-    if( OMPI_SUCCESS != (ret = ompi_bitmap_init(&reachable, (int)num_procs) ) ) {
-        opal_output(0, "bml:r2: readd_procs: Failed in bitmap init (%d)", ret);
-        return ret;
-    }
-
-    if( OMPI_SUCCESS != (ret = mca_bml_r2_add_procs(num_procs, procs, bml_endpoints, &reachable)) ) {
-        opal_output(0, "bml:r2: readd_procs: Failed in add_procs (%d)", ret);
-        return ret;
-    }
-
-
-    for(p = 0; p < num_procs; ++p) {
-        procs[p]->proc_pml = NULL;
-    }
-
-    if( NULL != bml_endpoints) {
-        free(bml_endpoints);
-    }
-
-    OBJ_DESTRUCT(&reachable);
-
     return OMPI_SUCCESS;
 }

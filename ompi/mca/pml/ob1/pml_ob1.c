@@ -38,6 +38,12 @@
 #include "ompi/mca/bml/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 
+#include "ompi/runtime/ompi_cr.h"
+#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "orte/mca/smr/smr.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/gpr/gpr.h"
+
 mca_pml_ob1_t mca_pml_ob1 = {
     {
     mca_pml_ob1_add_procs,
@@ -139,7 +145,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     bml_endpoints = (struct mca_bml_base_endpoint_t **) malloc ( nprocs *
 		     sizeof(struct mca_bml_base_endpoint_t*));
     if ( NULL == bml_endpoints ) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
    
     rc = mca_bml.bml_add_procs(
@@ -167,7 +173,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     }
 
     if ( NULL != bml_endpoints ) {
-	free ( bml_endpoints) ;
+        free ( bml_endpoints) ;
     }
     OBJ_DESTRUCT(&reachable);
     return rc;
@@ -389,7 +395,9 @@ void mca_pml_ob1_error_handler(
 
 int mca_pml_ob1_ft_event( int state )
 {
-    int ret;
+    ompi_proc_t** procs;
+    size_t num_procs;
+    int ret, p;
 
     if(OPAL_CRS_CHECKPOINT == state) {
         ;
@@ -398,7 +406,40 @@ int mca_pml_ob1_ft_event( int state )
         ;
     }
     else if(OPAL_CRS_RESTART == state) {
-        ;
+        /*
+         * Get a list of processes
+         */
+        procs = ompi_proc_all(&num_procs);
+        if(NULL == procs) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+
+        /*
+         * Clean out the modex information since it is invalid now.
+         */
+        opal_output_verbose(10, ompi_cr_output,
+                            "pml:ob1: ft_event(Restart): Restart Modex information");
+        if (OMPI_SUCCESS != (ret = mca_pml_base_modex_finalize())) {
+            opal_output(0,
+                        "pml:ob1: ft_event(Restart): modex_finalize Failed %d",
+                        ret);
+            return ret;
+        }
+
+        for(p = 0; p < (int)num_procs; ++p) {
+            if( NULL != procs[p]->proc_modex ) {
+                OBJ_RELEASE(procs[p]->proc_modex);
+                procs[p]->proc_modex = NULL;
+            }
+        }
+
+        if (OMPI_SUCCESS != (ret = mca_pml_base_modex_init())) {
+            opal_output(0,
+                        "pml:ob1: ft_event(Restart): modex_init Failed %d",
+                        ret);
+            return ret;
+        }
+
     }
     else if(OPAL_CRS_TERM == state ) {
         ;
@@ -424,13 +465,65 @@ int mca_pml_ob1_ft_event( int state )
         ;
     }
     else if(OPAL_CRS_RESTART == state) {
-        mca_bml.bml_register(MCA_BTL_TAG_PML,
-                             mca_pml_ob1_recv_frag_callback,
-                             NULL);
+        /*
+         * Re-exchange the Modex, and go through the stage gates
+         */
+        if (OMPI_SUCCESS != (ret = mca_pml_base_modex_exchange())) {
+            opal_output(0,
+                        "pml:ob1: ft_event(Restart): modex_exchange Failed %d",
+                        ret);
+            return ret;
+        }
 
-        /* register error handlers */
-        mca_bml.bml_register_error(mca_pml_ob1_error_handler);
+        opal_output_verbose(10, ompi_cr_output,
+                            "pml:ob1: ft_event(Restart): Enter Stage Gate 1");
+        if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
+                                                           ORTE_PROC_STATE_AT_STG1, 0))) {
+            opal_output(0,
+                        "pml:ob1: ft_event(Restart): Stage Gate 1 Failed %d",
+                        ret);
+            return ret;
+        }
 
+        if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid, true,
+                                                  NULL, orte_gpr.deliver_notify_msg))) {
+            opal_output(0,
+                        "pml:ob1: ft_event(Restart): Stage Gate 1 Failed %d",
+                        ret);
+            return ret;
+        }
+
+        if( OMPI_SUCCESS != (ret = mca_pml_ob1_add_procs(procs, num_procs) ) ) {
+            opal_output(0, "pml:ob1: readd_procs: Failed in add_procs (%d)", ret);
+            return ret;
+        }
+
+        /*
+         * Set the STAGE 2 State
+         */
+        opal_output_verbose(10, ompi_cr_output,
+                            "pml:ob1: ft_event(Restart): Enter Stage Gate 2");
+        if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
+                                                           ORTE_PROC_STATE_AT_STG2, 0))) {
+            opal_output(0,"pml:ob1: ft_event(Restart): Stage Gate 1 Failed %d",
+                        ret);
+            return ret;
+        }
+
+        if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid, false,
+                                                  NULL, orte_gpr.deliver_notify_msg))) {
+            opal_output(0,"pml:ob1: ft_event(Restart): Stage Gate 1 Failed %d",
+                        ret);
+            return ret;
+        }
+
+        if( NULL != procs ) {
+            for(p = 0; p < (int)num_procs; ++p) {
+                OBJ_RELEASE(procs[p]);
+            }
+            free(procs);
+            procs = NULL;
+        }
     }
     else if(OPAL_CRS_TERM == state ) {
         ;
