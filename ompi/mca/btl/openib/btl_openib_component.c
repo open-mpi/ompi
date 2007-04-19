@@ -50,7 +50,6 @@
 
 #include "ompi/datatype/convertor.h" 
 #include "ompi/mca/mpool/mpool.h" 
-#include <sysfs/libsysfs.h>  
 #include <infiniband/verbs.h> 
 #include <errno.h> 
 #include <string.h>   /* for strerror()*/ 
@@ -613,16 +612,22 @@ btl_openib_component_init(int *num_btl_modules,
         return NULL;
     }
 
-    /* If we want fork support, enable it */
+    /* If we want fork support, try to enable it */
 #ifdef HAVE_IBV_FORK_INIT
-    if (mca_btl_openib_component.want_fork_support) {
+    if (0 != mca_btl_openib_component.want_fork_support) {
         if (0 != ibv_fork_init()) {
-            opal_show_help("help-mpi-btl-openib.txt",
-                           "ibv_fork_init fail", true,
-                           orte_system_info.nodename);
-            mca_btl_openib_component.ib_num_btls = 0;
-            btl_openib_modex_send();
-            return NULL;
+            /* If the want_fork_support MCA parameter is >0, then the
+               user was specifically asking for fork support and we
+               couldn't provide it.  So print an error and deactivate
+               this BTL. */
+            if (mca_btl_openib_component.want_fork_support > 0) {
+                opal_show_help("help-mpi-btl-openib.txt",
+                               "ibv_fork_init fail", true,
+                               orte_system_info.nodename);
+                mca_btl_openib_component.ib_num_btls = 0;
+                btl_openib_modex_send();
+                return NULL;
+            } 
         }
     }
 #endif

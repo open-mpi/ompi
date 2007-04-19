@@ -141,7 +141,7 @@ struct mca_btl_openib_component_t {
     bool warn_default_gid_prefix;
 #ifdef HAVE_IBV_FORK_INIT
     /** Whether we want fork support or not */
-    bool want_fork_support;
+    int want_fork_support;
 #endif
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 

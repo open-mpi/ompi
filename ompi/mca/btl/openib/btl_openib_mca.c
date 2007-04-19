@@ -124,16 +124,16 @@ int btl_openib_register_mca_params(void)
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 #ifdef HAVE_IBV_FORK_INIT
-    ival2 = 1;
+    ival2 = -1;
 #else
     ival2 = 0;
 #endif
     CHECK(reg_int("want_fork_support", 
                   "Whether fork support is desired or not "
-                  "(0 = no fork support, nonzero = fork support)", 
+                  "(negative = try to enable fork support, but continue even if it is not available, 0 = do not enable fork support, positive = try to enable fork support and fail if it is not available)", 
                   ival2, &ival, 0));
 #ifdef HAVE_IBV_FORK_INIT
-    mca_btl_openib_component.want_fork_support = (0 != ival);
+    mca_btl_openib_component.want_fork_support = ival;
 #else
     if (0 != ival) {
         opal_show_help("help-mpi-btl-openib.txt",
@@ -399,7 +399,7 @@ int btl_openib_register_mca_params(void)
 
     mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version, 
                            "have_fork_support", 
-                           "Whether this component supports applications that invoke the \"fork()\" system call or not (0 = no, 1 = yes)",
+                           "Whether the OpenFabrics stack supports applications that invoke the \"fork()\" system call or not (0 = no, 1 = yes).  Note that this value does NOT indicate whether the system being run on supports \"fork()\" with OpenFabrics applications or not.",
                            false, true,
 #ifdef HAVE_IBV_FORK_INIT
                            1,
