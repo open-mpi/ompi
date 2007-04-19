@@ -108,8 +108,10 @@ int mca_bml_r2_ft_event(int state) {
         }
 
         for(p = 0; p < (int)num_procs; ++p) {
-            OBJ_RELEASE(procs[p]->proc_modex);
-            procs[p]->proc_modex = NULL;
+            if( NULL != procs[p]->proc_modex ) {
+                OBJ_RELEASE(procs[p]->proc_modex);
+                procs[p]->proc_modex = NULL;
+            }
         }
 
         if (OMPI_SUCCESS != (ret = mca_pml_base_modex_init())) {
