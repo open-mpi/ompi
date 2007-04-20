@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -64,6 +64,7 @@ installdirs_env_open(void)
     SET_FIELD(bindir, "OPAL_BINDIR");
     SET_FIELD(sbindir, "OPAL_SBINDIR");
     SET_FIELD(libexecdir, "OPAL_LIBEXECDIR");
+    SET_FIELD(datarootdir, "OPAL_DATAROOTDIR");
     SET_FIELD(datadir, "OPAL_DATADIR");
     SET_FIELD(sysconfdir, "OPAL_SYSCONFDIR");
     SET_FIELD(sharedstatedir, "OPAL_SHAREDSTATEDIR");

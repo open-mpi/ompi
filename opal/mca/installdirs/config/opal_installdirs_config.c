@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -44,6 +44,7 @@ const opal_installdirs_base_component_t mca_installdirs_config_component = {
         OPAL_BINDIR,
         OPAL_SBINDIR,
         OPAL_LIBEXECDIR,
+        OPAL_DATAROOTDIR,
         OPAL_DATADIR,
         OPAL_SYSCONFDIR,
         OPAL_SHAREDSTATEDIR,
