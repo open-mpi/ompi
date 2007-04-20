@@ -16,8 +16,6 @@
 // $HEADER$
 //
 
-#include "ompi_config.h"
-
 #include <iostream>
 #include <string>
 
