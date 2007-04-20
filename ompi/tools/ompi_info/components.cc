@@ -16,17 +16,15 @@
 // $HEADER$
 //
 
-#include "ompi_config.h"
-
 #include <iostream>
 #include <string>
 
 #include <stdlib.h>
 #include <string.h>
 
+#include "ompi/tools/ompi_info/ompi_info.h"
 #include "ompi/runtime/params.h"
 #include "orte/runtime/runtime.h"
-#include "ompi/tools/ompi_info/ompi_info.h"
 
 #include "opal/event/event.h"
 #include "opal/mca/base/base.h"
