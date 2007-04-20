@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.
+ *                         All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -111,7 +113,7 @@ OPAL_DECLSPEC  void opal_argv_free(char **argv);
    * argument (i.e., it can be freed after calling this function
    * without invalidating the output argv).
    */
-OPAL_DECLSPEC  char **opal_argv_split(const char *src_string, int delimiter) __opal_attribute_nonnull__(1) __opal_attribute_warn_unused_result__;
+OPAL_DECLSPEC  char **opal_argv_split(const char *src_string, int delimiter) __opal_attribute_warn_unused_result__;
 
   /**
    * Return the length of a NULL-terminated argv array.
