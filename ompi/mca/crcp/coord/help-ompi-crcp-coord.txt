@@ -16,5 +16,5 @@
 #
 # $HEADER$
 #
-# This is the US/English general help file for ORTE SnapC framework.
+# This is the US/English general help file for CRCP Coord framework.
 #

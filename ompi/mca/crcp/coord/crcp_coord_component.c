@@ -40,7 +40,7 @@ ompi_crcp_coord_component_t mca_crcp_coord_component = {
     /* First do the base component stuff */
     {
         /* Handle the general mca_component_t struct containing 
-         *  meta information about the component itcoord
+         *  meta information about the component
          */
         {
             OMPI_CRCP_BASE_VERSION_1_0_0,
@@ -68,7 +68,7 @@ ompi_crcp_coord_component_t mca_crcp_coord_component = {
         /* opal_output handler */
         -1,
         /* Default priority */
-        20
+        10
     }
 };
 

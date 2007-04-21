@@ -33,6 +33,7 @@
 #include "opal/runtime/opal_cr.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
+#include "ompi/class/ompi_free_list.h"
 
 #include "ompi/mca/crcp/coord/crcp_coord.h"
 
@@ -128,35 +129,24 @@ extern "C" {
     int ompi_crcp_coord_request_complete(struct ompi_request_t *request);
 
     /***********************************
-     * Globally Defined Variables
+     * Globally Defined Structures
      ***********************************/
     /*
-     * List of Messages received from ANY_SOURCES
-     *  -- ompi_crcp_coord_pml_message_ref_t
+     * Types of Messages
      */
-    OMPI_MODULE_DECLSPEC extern opal_list_t unknown_recv_from_list;
-    OMPI_MODULE_DECLSPEC extern opal_list_t unknown_persist_recv_list;
+    enum ompi_crcp_coord_pml_message_type_t {
+        COORD_MSG_TYPE_UNKNOWN, /* 0 Unknown type      */
+        COORD_MSG_TYPE_B_SEND,  /* 1 Blocking Send     */
+        COORD_MSG_TYPE_I_SEND,  /* 2 Non-Blocking Send */
+        COORD_MSG_TYPE_P_SEND,  /* 3 Persistent  Send  */
+        COORD_MSG_TYPE_B_RECV,  /* 4 Blocking Recv     */
+        COORD_MSG_TYPE_I_RECV,  /* 5 Non-Blocking Recv */
+        COORD_MSG_TYPE_P_RECV   /* 6 Persistent  Recv  */
+    };
+    typedef enum ompi_crcp_coord_pml_message_type_t ompi_crcp_coord_pml_message_type_t;
 
     /*
-     * List of pending ACKs to drained messages
-     *  -- ompi_crcp_coord_pml_drain_msg_ack_ref_t
-     */
-    OMPI_MODULE_DECLSPEC extern opal_list_t drained_msg_ack_list;
-
-    /*
-     * List of drained messages to match against
-     *  -- ompi_crcp_coord_pml_message_ref_t
-     */
-    OMPI_MODULE_DECLSPEC extern opal_list_t drained_msg_list;
-
-    /*
-     * List of processes known
-     *  -- ompi_crcp_coord_pml_bookmark_proc_t
-     */
-    OMPI_MODULE_DECLSPEC extern opal_list_t ompi_crcp_coord_pml_procs;
-
-    /*
-     * Message reference
+     * Message Reference
      */
     struct ompi_crcp_coord_pml_message_ref_t {
         /** This is a list object */
@@ -164,6 +154,10 @@ extern "C" {
 
         /** Sequence Number of this message */
         uint64_t msg_id;
+
+        /** Type of message this references */
+        ompi_crcp_coord_pml_message_type_t msg_type;
+
 
         /** Buffer for data */
         void * buffer;
@@ -186,17 +180,12 @@ extern "C" {
         /** Communicator pointer */
         ompi_communicator_t* comm;
 
-        /** Message Mode */
-        mca_pml_base_send_mode_t mode;
-
-        /* Is this an asynchronous message */
-        bool async;
-
         /** Receive Request */
         ompi_request_t *request;
 
         /** Status */
         ompi_status_public_t status;
+
 
         /** Peer which we received from */
         orte_process_name_t proc_name;
@@ -247,7 +236,6 @@ extern "C" {
          * drain it to a specific peer
          */
         int suggested_rank;
-
     };
     typedef struct ompi_crcp_coord_pml_message_ref_t ompi_crcp_coord_pml_message_ref_t;
     
@@ -262,19 +250,12 @@ extern "C" {
      *  - List of received message from this peer
      *  - Message totals
      */
-    struct ompi_crcp_coord_pml_bookmark_proc_t {
+    struct ompi_crcp_coord_pml_peer_ref_t {
         /** This is a list object */
         opal_list_item_t super;
 
         /** Name of peer */
         orte_process_name_t proc_name;
-
-        /*
-         * Just to control concurrent access to some of these counters,
-         * and the PML
-         */
-        opal_mutex_t     lock;
-        opal_condition_t cond;
 
         /** List of messages sent to this peer */
         opal_list_t send_list;      /**< pml_send       */
@@ -318,262 +299,36 @@ extern "C" {
         uint32_t  matched_recv_msgs;
         uint32_t  matched_irecv_msgs;
         uint32_t  matched_recv_init_msgs;
-    };
-    typedef struct ompi_crcp_coord_pml_bookmark_proc_t ompi_crcp_coord_pml_bookmark_proc_t;
-    
-    OBJ_CLASS_DECLARATION(ompi_crcp_coord_pml_bookmark_proc_t);
-    void ompi_crcp_coord_pml_bookmark_proc_construct(ompi_crcp_coord_pml_bookmark_proc_t *bkm_proc);
-    void ompi_crcp_coord_pml_bookmark_proc_destruct( ompi_crcp_coord_pml_bookmark_proc_t *bkm_proc);
 
+        /** Total Number of messages drained */
+        uint32_t  total_drained_msgs;
+    };
+    typedef struct ompi_crcp_coord_pml_peer_ref_t ompi_crcp_coord_pml_peer_ref_t;
+    
+    OBJ_CLASS_DECLARATION(ompi_crcp_coord_pml_peer_ref_t);
+    void ompi_crcp_coord_pml_peer_ref_construct(ompi_crcp_coord_pml_peer_ref_t *bkm_proc);
+    void ompi_crcp_coord_pml_peer_ref_destruct( ompi_crcp_coord_pml_peer_ref_t *bkm_proc);
+
+    /*
+     * Local version of the PML state
+     */
     struct ompi_crcp_coord_pml_state_t {
-        ompi_crcp_base_pml_state_t super;
+        ompi_crcp_base_pml_state_t p_super;
         ompi_crcp_base_pml_state_t *prev_ptr;
-        ompi_crcp_coord_pml_bookmark_proc_t    *peer_ref;
-        ompi_crcp_coord_pml_message_ref_t      *msg_ref;
+
+        ompi_crcp_coord_pml_peer_ref_t     *peer_ref;
+        ompi_crcp_coord_pml_message_ref_t  *msg_ref;
     };
     typedef struct ompi_crcp_coord_pml_state_t ompi_crcp_coord_pml_state_t;
+    OBJ_CLASS_DECLARATION(ompi_crcp_coord_pml_state_t);
 
-    /***************
-     * A bit of locking, it's good for you
-     ***************/
+    /***********************************
+     * Globally Defined Variables
+     ***********************************/
     /*
-     * Any thread can call this when entering a critical section
-     * This in not strictly a critical section, but a protected
-     * section of code while checkpointing is occuring.
+     * List of known peers
      */
-#if OPAL_ENABLE_FT == 1
-#define OMPI_CRCP_COORD_CS_ENTER(bvar, ctr, lock, cond) \
-  {                                                  \
-     opal_mutex_lock(&lock);                         \
-     while( bvar ) {                                 \
-         opal_condition_wait(&cond,                  \
-                             &lock);                 \
-     }                                               \
-     ctr++;                                          \
-     opal_mutex_unlock(&lock);                       \
-  }
-#else
-#define OMPI_CRCP_COORD_CS_ENTER(bvar, ctr, lock, cond) ;
-#endif
-
-    /*
-     * Any thread can call this when exiting a critical section
-     */
-#if OPAL_ENABLE_FT == 1
-#define OMPI_CRCP_COORD_CS_EXIT(ctr, lock, cond)    \
-  {                                                 \
-     opal_mutex_lock(&lock);                        \
-     ctr--;                                         \
-     opal_condition_signal(&cond);                  \
-     opal_mutex_unlock(&lock);                      \
-  }
-#else
-#define OMPI_CRCP_COORD_CS_EXIT(ctr, lock, cond) ;
-#endif
-
-    /*
-     * Checkpoint protocol calls this to restrict processes
-     * from entering a specific critical section.
-     */
-#if OPAL_ENABLE_FT == 1
-#define OMPI_CRCP_COORD_CS_RESTRICT(bvar, ctr, lock, cond, wait, dbg_str)  \
-  {                                                      \
-     opal_mutex_lock(&lock);                             \
-     bvar = true;                                        \
-     while(ctr > 0 && wait) {                            \
-        opal_condition_wait(&cond,                       \
-                            &lock);                      \
-     }                                                   \
-     opal_mutex_unlock(&lock);                           \
-  }
-#else
-#define OMPI_CRCP_COORD_CS_RESTRICT(bvar, ctr, lock, cond, wait, dbg_str) ;
-#endif
-
-    /*
-     * Checkpoint protocol calls this to release all the blocking
-     * threads so that they may enter the critical section.
-     */
-#if OPAL_ENABLE_FT == 1
-#define OMPI_CRCP_COORD_CS_RELEASE(bvar, lock, cond)   \
-  {                                                    \
-     opal_mutex_lock(&lock);                           \
-     bvar = false;                                     \
-     opal_condition_signal(&cond);                     \
-     opal_mutex_unlock(&lock);                         \
-  }
-#else
-#define OMPI_CRCP_COORD_CS_RELEASE(bvar, lock, cond) ;
-#endif
-
-
-    /*
-     * Some short cuts.
-     */
-    OPAL_DECLSPEC extern opal_mutex_t     ompi_crcp_coord_ft_global_cs_lock;
-    OPAL_DECLSPEC extern opal_condition_t ompi_crcp_coord_ft_global_cs_cond;
-    OPAL_DECLSPEC extern int              ompi_crcp_coord_ft_global_cs_count;
-    OPAL_DECLSPEC extern bool             ompi_crcp_coord_ft_global_cs_block;
-
-    OPAL_DECLSPEC extern opal_mutex_t     ompi_crcp_coord_ft_send_cs_lock;
-    OPAL_DECLSPEC extern opal_condition_t ompi_crcp_coord_ft_send_cs_cond;
-    OPAL_DECLSPEC extern int              ompi_crcp_coord_ft_send_cs_count;
-    OPAL_DECLSPEC extern bool             ompi_crcp_coord_ft_send_cs_block;
-
-    OPAL_DECLSPEC extern opal_mutex_t     ompi_crcp_coord_ft_recv_cs_lock;
-    OPAL_DECLSPEC extern opal_condition_t ompi_crcp_coord_ft_recv_cs_cond;
-    OPAL_DECLSPEC extern int              ompi_crcp_coord_ft_recv_cs_count;
-    OPAL_DECLSPEC extern bool             ompi_crcp_coord_ft_recv_cs_block;
-
-#if OPAL_ENABLE_FT == 1 && OPAL_ENABLE_FT_THREAD == 1
-    /* Global stuff */
-#define OMPI_CRCP_COORD_FT_GLOBAL_INIT()                                 \
-  {                                                                      \
-    OBJ_CONSTRUCT(&ompi_crcp_coord_ft_global_cs_lock, opal_mutex_t);     \
-    OBJ_CONSTRUCT(&ompi_crcp_coord_ft_global_cs_cond, opal_condition_t); \
-    ompi_crcp_coord_ft_global_cs_count = 0;                              \
-    ompi_crcp_coord_ft_global_cs_block = false;                          \
-  }
-
-#define OMPI_CRCP_COORD_FT_GLOBAL_FINALIZE()          \
-  {                                                   \
-    OBJ_DESTRUCT(&ompi_crcp_coord_ft_global_cs_lock); \
-    OBJ_DESTRUCT(&ompi_crcp_coord_ft_global_cs_cond); \
-    ompi_crcp_coord_ft_global_cs_count = 0;           \
-    ompi_crcp_coord_ft_global_cs_block = false;       \
-  }
-
-#define OMPI_CRCP_COORD_FT_GLOBAL_CS_ENTER()                   \
-  OMPI_CRCP_COORD_CS_ENTER(ompi_crcp_coord_ft_global_cs_block, \
-                           ompi_crcp_coord_ft_global_cs_count, \
-                           ompi_crcp_coord_ft_global_cs_lock,  \
-                           ompi_crcp_coord_ft_global_cs_cond);
-
-#define OMPI_CRCP_COORD_FT_GLOBAL_CS_EXIT()                    \
-  OMPI_CRCP_COORD_CS_EXIT(ompi_crcp_coord_ft_global_cs_count,  \
-                          ompi_crcp_coord_ft_global_cs_lock,   \
-                          ompi_crcp_coord_ft_global_cs_cond);
-
-#define OMPI_CRCP_COORD_FT_GLOBAL_CS_RESTRICT(wait)               \
-  OMPI_CRCP_COORD_CS_RESTRICT(ompi_crcp_coord_ft_global_cs_block, \
-                              ompi_crcp_coord_ft_global_cs_count, \
-                              ompi_crcp_coord_ft_global_cs_lock,  \
-                              ompi_crcp_coord_ft_global_cs_cond,  \
-                              wait,                               \
-                              "CRCP GLOBAL");
-
-#define OMPI_CRCP_COORD_FT_GLOBAL_CS_RELEASE()                   \
-  OMPI_CRCP_COORD_CS_RELEASE(ompi_crcp_coord_ft_global_cs_block, \
-                             ompi_crcp_coord_ft_global_cs_lock,  \
-                             ompi_crcp_coord_ft_global_cs_cond);
-
-    /* Send stuff */
-#define OMPI_CRCP_COORD_FT_SEND_INIT()                                 \
-  {                                                                    \
-    OBJ_CONSTRUCT(&ompi_crcp_coord_ft_send_cs_lock, opal_mutex_t);     \
-    OBJ_CONSTRUCT(&ompi_crcp_coord_ft_send_cs_cond, opal_condition_t); \
-    ompi_crcp_coord_ft_send_cs_count = 0;                              \
-    ompi_crcp_coord_ft_send_cs_block = false;                          \
-  }
-
-#define OMPI_CRCP_COORD_FT_SEND_FINALIZE()          \
-  {                                                 \
-    OBJ_DESTRUCT(&ompi_crcp_coord_ft_send_cs_lock); \
-    OBJ_DESTRUCT(&ompi_crcp_coord_ft_send_cs_cond); \
-    ompi_crcp_coord_ft_send_cs_count = 0;           \
-    ompi_crcp_coord_ft_send_cs_block = false;       \
-  }
-
-#define OMPI_CRCP_COORD_FT_SEND_CS_ENTER()                   \
-  OMPI_CRCP_COORD_CS_ENTER(ompi_crcp_coord_ft_send_cs_block, \
-                           ompi_crcp_coord_ft_send_cs_count, \
-                           ompi_crcp_coord_ft_send_cs_lock,  \
-                           ompi_crcp_coord_ft_send_cs_cond);
-
-#define OMPI_CRCP_COORD_FT_SEND_CS_EXIT()                    \
-  OMPI_CRCP_COORD_CS_EXIT(ompi_crcp_coord_ft_send_cs_count,  \
-                          ompi_crcp_coord_ft_send_cs_lock,   \
-                          ompi_crcp_coord_ft_send_cs_cond);
-
-#define OMPI_CRCP_COORD_FT_SEND_CS_RESTRICT(wait)               \
-  OMPI_CRCP_COORD_CS_RESTRICT(ompi_crcp_coord_ft_send_cs_block, \
-                              ompi_crcp_coord_ft_send_cs_count, \
-                              ompi_crcp_coord_ft_send_cs_lock,  \
-                              ompi_crcp_coord_ft_send_cs_cond,  \
-                              wait,                             \
-                              "CRCP SEND");
-
-#define OMPI_CRCP_COORD_FT_SEND_CS_RELEASE()                   \
-  OMPI_CRCP_COORD_CS_RELEASE(ompi_crcp_coord_ft_send_cs_block, \
-                             ompi_crcp_coord_ft_send_cs_lock,  \
-                             ompi_crcp_coord_ft_send_cs_cond);
-
-    /* Receive stuff */
-#define OMPI_CRCP_COORD_FT_RECV_INIT()                                 \
-  {                                                                    \
-    OBJ_CONSTRUCT(&ompi_crcp_coord_ft_recv_cs_lock, opal_mutex_t);     \
-    OBJ_CONSTRUCT(&ompi_crcp_coord_ft_recv_cs_cond, opal_condition_t); \
-    ompi_crcp_coord_ft_recv_cs_count = 0;                              \
-    ompi_crcp_coord_ft_recv_cs_block = false;                          \
-  }
-
-#define OMPI_CRCP_COORD_FT_RECV_FINALIZE()          \
-  {                                                 \
-    OBJ_DESTRUCT(&ompi_crcp_coord_ft_recv_cs_lock); \
-    OBJ_DESTRUCT(&ompi_crcp_coord_ft_recv_cs_cond); \
-    ompi_crcp_coord_ft_recv_cs_count = 0;           \
-    ompi_crcp_coord_ft_recv_cs_block = false;       \
-  }
-
-#define OMPI_CRCP_COORD_FT_RECV_CS_ENTER()                   \
-  OMPI_CRCP_COORD_CS_ENTER(ompi_crcp_coord_ft_recv_cs_block, \
-                           ompi_crcp_coord_ft_recv_cs_count, \
-                           ompi_crcp_coord_ft_recv_cs_lock,  \
-                           ompi_crcp_coord_ft_recv_cs_cond);
-
-#define OMPI_CRCP_COORD_FT_RECV_CS_EXIT()                    \
-  OMPI_CRCP_COORD_CS_EXIT(ompi_crcp_coord_ft_recv_cs_count,  \
-                          ompi_crcp_coord_ft_recv_cs_lock,   \
-                          ompi_crcp_coord_ft_recv_cs_cond);
-
-#define OMPI_CRCP_COORD_FT_RECV_CS_RESTRICT(wait)               \
-  OMPI_CRCP_COORD_CS_RESTRICT(ompi_crcp_coord_ft_recv_cs_block, \
-                              ompi_crcp_coord_ft_recv_cs_count, \
-                              ompi_crcp_coord_ft_recv_cs_lock,  \
-                              ompi_crcp_coord_ft_recv_cs_cond,  \
-                              wait,                             \
-                              "CRCP RECV");
-
-#define OMPI_CRCP_COORD_FT_RECV_CS_RELEASE()                   \
-  OMPI_CRCP_COORD_CS_RELEASE(ompi_crcp_coord_ft_recv_cs_block, \
-                             ompi_crcp_coord_ft_recv_cs_lock,  \
-                             ompi_crcp_coord_ft_recv_cs_cond);
-
-#else
-
-#define OMPI_CRCP_COORD_FT_GLOBAL_INIT()      ;
-#define OMPI_CRCP_COORD_FT_GLOBAL_FINALIZE()  ;
-#define OMPI_CRCP_COORD_FT_GLOBAL_CS_ENTER()  ;
-#define OMPI_CRCP_COORD_FT_GLOBAL_CS_EXIT()   ;
-#define OMPI_CRCP_COORD_FT_GLOBAL_CS_RESTRICT(wait)  ;
-#define OMPI_CRCP_COORD_FT_GLOBAL_CS_RELEASE() ;
-
-#define OMPI_CRCP_COORD_FT_SEND_INIT()      ;
-#define OMPI_CRCP_COORD_FT_SEND_FINALIZE()  ;
-#define OMPI_CRCP_COORD_FT_SEND_CS_ENTER()  ;
-#define OMPI_CRCP_COORD_FT_SEND_CS_EXIT()   ;
-#define OMPI_CRCP_COORD_FT_SEND_CS_RESTRICT(wait)  ;
-#define OMPI_CRCP_COORD_FT_SEND_CS_RELEASE() ;
-
-#define OMPI_CRCP_COORD_FT_RECV_INIT()      ;
-#define OMPI_CRCP_COORD_FT_RECV_FINALIZE()  ;
-#define OMPI_CRCP_COORD_FT_RECV_CS_ENTER()  ;
-#define OMPI_CRCP_COORD_FT_RECV_CS_EXIT()   ;
-#define OMPI_CRCP_COORD_FT_RECV_CS_RESTRICT(wait)  ;
-#define OMPI_CRCP_COORD_FT_RECV_CS_RELEASE() ;
-
-
-#endif /* ENABLE_FT */
+    extern opal_list_t ompi_crcp_coord_pml_peer_refs;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
