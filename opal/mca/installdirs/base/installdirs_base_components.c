@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -63,6 +63,8 @@ opal_installdirs_base_open(void)
         CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          libexecdir);
         CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
+                         datarootdir);
+        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          datadir);
         CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data, 
                          sysconfdir);
@@ -97,6 +99,8 @@ opal_installdirs_base_open(void)
         opal_install_dirs_expand(opal_install_dirs.sbindir);
     opal_install_dirs.libexecdir = 
         opal_install_dirs_expand(opal_install_dirs.libexecdir);
+    opal_install_dirs.datarootdir = 
+        opal_install_dirs_expand(opal_install_dirs.datarootdir);
     opal_install_dirs.datadir = 
         opal_install_dirs_expand(opal_install_dirs.datadir);
     opal_install_dirs.sysconfdir = 
@@ -120,6 +124,26 @@ opal_installdirs_base_open(void)
     opal_install_dirs.pkgincludedir = 
         opal_install_dirs_expand(opal_install_dirs.pkgincludedir);
 
+#if 0
+    fprintf(stderr, "prefix:         %s\n", opal_install_dirs.prefix);
+    fprintf(stderr, "exec_prefix:    %s\n", opal_install_dirs.exec_prefix);
+    fprintf(stderr, "bindir:         %s\n", opal_install_dirs.bindir);
+    fprintf(stderr, "sbindir:        %s\n", opal_install_dirs.sbindir);
+    fprintf(stderr, "libexecdir:     %s\n", opal_install_dirs.libexecdir);
+    fprintf(stderr, "datarootdir:    %s\n", opal_install_dirs.datarootdir);
+    fprintf(stderr, "datadir:        %s\n", opal_install_dirs.datadir);
+    fprintf(stderr, "sysconfdir:     %s\n", opal_install_dirs.sysconfdir);
+    fprintf(stderr, "sharedstatedir: %s\n", opal_install_dirs.sharedstatedir);
+    fprintf(stderr, "localstatedir:  %s\n", opal_install_dirs.localstatedir);
+    fprintf(stderr, "libdir:         %s\n", opal_install_dirs.libdir);
+    fprintf(stderr, "includedir:     %s\n", opal_install_dirs.includedir);
+    fprintf(stderr, "infodir:        %s\n", opal_install_dirs.infodir);
+    fprintf(stderr, "mandir:         %s\n", opal_install_dirs.mandir);
+    fprintf(stderr, "pkgdatadir:     %s\n", opal_install_dirs.pkgdatadir);
+    fprintf(stderr, "pkglibdir:      %s\n", opal_install_dirs.pkglibdir);
+    fprintf(stderr, "pkgincludedir:  %s\n", opal_install_dirs.pkgincludedir);
+#endif
+
     for (i = 0 ; mca_installdirs_base_static_components[i] != NULL ; ++i) {
         if (NULL !=  mca_installdirs_base_static_components[i]->mca_close_component) {
             mca_installdirs_base_static_components[i]->mca_close_component();
@@ -140,6 +164,7 @@ opal_installdirs_base_close(void)
     free(opal_install_dirs.bindir);
     free(opal_install_dirs.sbindir);
     free(opal_install_dirs.libexecdir);
+    free(opal_install_dirs.datarootdir);
     free(opal_install_dirs.datadir);
     free(opal_install_dirs.sysconfdir);
     free(opal_install_dirs.sharedstatedir);

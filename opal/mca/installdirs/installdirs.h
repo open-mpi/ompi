@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -26,6 +26,7 @@ struct opal_install_dirs_t {
     char* bindir;
     char* sbindir;
     char* libexecdir;
+    char* datarootdir;
     char* datadir;
     char* sysconfdir;
     char* sharedstatedir;

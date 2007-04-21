@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -69,6 +69,7 @@ opal_install_dirs_expand(const char* input)
             EXPAND_STRING(bindir);
             EXPAND_STRING(sbindir);
             EXPAND_STRING(libexecdir);
+            EXPAND_STRING(datarootdir);
             EXPAND_STRING(datadir);
             EXPAND_STRING(sysconfdir);
             EXPAND_STRING(sharedstatedir);
