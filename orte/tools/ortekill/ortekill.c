@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +38,6 @@
 #endif  /* HAVE_SYS_WAIT_H */
 
 #include "opal/event/event.h"
-#include "opal/install_dirs.h"
 #include "opal/mca/base/base.h"
 #include "opal/threads/condition.h"
 #include "opal/util/argv.h"

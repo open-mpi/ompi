@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
+#include "opal/mca/installdirs/base/base.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
@@ -146,15 +148,22 @@ opal_init_util(void)
     /* initialize the output system */
     opal_output_init();
 
-    /* init the trace function */
-    opal_trace_init();
-
     /* register handler for errnum -> string converstion */
     if (OPAL_SUCCESS != (ret = opal_error_register("OPAL",
             OPAL_ERR_BASE, OPAL_ERR_MAX, opal_err2str))) {
         error = "opal_error_register";
         goto return_error;
     }
+
+    /* initialize install dirs code */
+    if (OPAL_SUCCESS != (ret = opal_installdirs_base_open())) {
+        fprintf(stderr, "opal_installdirs_base_open() failed -- process will likely abort (%s:%d, returned %d instead of OPAL_INIT)\n",
+                __FILE__, __LINE__, ret);
+        return ret;
+    }
+
+    /* init the trace function */
+    opal_trace_init();
 
     /* keyval lex-based parser */
     if (OPAL_SUCCESS != (ret = opal_util_keyval_parse_init())) {

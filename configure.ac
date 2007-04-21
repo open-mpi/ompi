@@ -1132,8 +1132,6 @@ OMPI_SETUP_WRAPPER_FINAL
 
 ompi_show_subtitle "Final output" 
 
-OMPI_INSTALL_DIRS(opal/include/opal/install_dirs.h)
-
 AM_CONFIG_HEADER([opal/include/opal_config.h orte/include/orte_config.h ompi/include/ompi_config.h ompi/include/mpi.h])
 AC_CONFIG_FILES([
     Makefile

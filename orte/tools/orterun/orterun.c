@@ -42,7 +42,7 @@
 #endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/event/event.h"
-#include "opal/install_dirs.h"
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/base.h"
 #include "opal/threads/condition.h"
 #include "opal/util/argv.h"
@@ -58,6 +58,7 @@
 #endif
 
 #include "opal/version.h"
+#include "opal/runtime/opal.h"
 
 #include "orte/orte_constants.h"
 
@@ -344,6 +345,13 @@ int orterun(int argc, char *argv[])
      * we will get to them in a moment
      */
     opal_mca_base_param_use_amca_sets = true;
+
+    /* Need to initialize OPAL so that install_dirs are filled in */
+
+    opal_init_util();
+
+    /* Setup MCA params */
+
     mca_base_param_init();
     orte_register_params(false);
 
@@ -1482,7 +1490,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         }
         /* --enable-orterun-prefix-default was given to orterun */
         else {
-            param = strdup(OPAL_PREFIX);
+            param = strdup(opal_install_dirs.prefix);
         }
 
         if (NULL != param) {

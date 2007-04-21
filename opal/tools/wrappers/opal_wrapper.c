@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,7 +37,7 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
-#include "opal/install_dirs.h"
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/runtime/opal.h"
 #include "opal/constants.h"
 #include "opal/util/argv.h"
@@ -285,7 +286,8 @@ data_callback(const char *key, const char *value)
         if (NULL != value) options_data[parse_options_idx].compiler_flags_env = strdup(value);
     } else if (0 == strcmp(key, "includedir")) {
         if (NULL != value) {
-            options_data[parse_options_idx].path_includedir = strdup(value);
+            options_data[parse_options_idx].path_includedir =
+                opal_install_dirs_expand(value);
             if (0 != strcmp(options_data[parse_options_idx].path_includedir, "/usr/include") ||
                 0 == strncmp(options_data[parse_options_idx].language, "Fortran", strlen("Fortran"))) {
                 char *line;
@@ -307,7 +309,8 @@ data_callback(const char *key, const char *value)
             }
         }
     } else if (0 == strcmp(key, "libdir")) {
-        if (NULL != value) options_data[parse_options_idx].path_libdir = strdup(value);
+        if (NULL != value) options_data[parse_options_idx].path_libdir = 
+                               opal_install_dirs_expand(value);
 #if defined(__WINDOWS__)
         opal_argv_append_nosize( &options_data[parse_options_idx].link_flags, "/link" );
 #endif  /* defined(__WINDOWS__) */
@@ -335,7 +338,7 @@ data_init(const char *appname)
 
     /* now load the data */
     asprintf(&datafile, "%s%s%s-wrapper-data.txt", 
-             OPAL_PKGDATADIR, OPAL_PATH_SEP, appname);
+             opal_install_dirs.pkgdatadir, OPAL_PATH_SEP, appname);
     if (NULL == datafile) return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
 
     ret = opal_util_keyval_parse(datafile, data_callback);

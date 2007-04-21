@@ -49,7 +49,6 @@
 
 #include "ompi/datatype/convertor.h" 
 #include "ompi/mca/mpool/mpool.h" 
-#include <sysfs/libsysfs.h>  
 #include <infiniband/verbs.h> 
 #include <errno.h> 
 #include <string.h>   /* for strerror()*/ 
@@ -305,7 +304,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
     mca_btl_base_selected_module_t *ib_selected;
     union ibv_gid gid;
     uint64_t subnet_id;
-    
+
     ibv_query_gid(hca->ib_dev_context, port_num, 0, &gid);
     subnet_id = ntoh64(gid.global.subnet_prefix);
     BTL_VERBOSE(("my subnet_id is %016x\n", subnet_id));
@@ -347,6 +346,54 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             openib_btl->port_info.mtu = hca->mtu;
             openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbfunc = btl_openib_control;
             openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbdata = NULL;
+
+            /* Auto-detect the port bandwidth */
+            if (0 == openib_btl->super.btl_bandwidth) {
+                /* To calculate the bandwidth available on this port,
+                   we have to look up the values corresponding to
+                   port->active_speed and port->active_width.  These
+                   are enums corresponding to the IB spec.  Overall
+                   forumula is 80% of the reported speed (to get the
+                   true link speed) times the number of links. */
+                switch (ib_port_attr->active_speed) {
+                case 1: 
+                    /* 2.5Gbps * 0.8, in megabits */
+                    openib_btl->super.btl_bandwidth = 2000;
+                    break;
+                case 2: 
+                    /* 5.0Gbps * 0.8, in megabits */
+                    openib_btl->super.btl_bandwidth = 4000;
+                    break;
+                case 4: 
+                    /* 10.0Gbps * 0.8, in megabits */
+                    openib_btl->super.btl_bandwidth = 8000;
+                    break;
+                default: 
+                    /* Who knows? */
+                    return OMPI_ERR_VALUE_OUT_OF_BOUNDS;
+                }
+                switch (ib_port_attr->active_width) {
+                case 1:
+                    /* 1x */
+                    /* unity */
+                    break;
+                case 2:
+                    /* 4x */
+                    openib_btl->super.btl_bandwidth *= 4;
+                    break;
+                case 4:
+                    /* 8x */
+                    openib_btl->super.btl_bandwidth *= 8;
+                    break;
+                case 8:
+                    /* 12x */
+                    openib_btl->super.btl_bandwidth *= 12;
+                    break;
+                default:
+                    /* Who knows? */
+                    return OMPI_ERR_VALUE_OUT_OF_BOUNDS;
+                }
+            }
             opal_list_append(btl_list, (opal_list_item_t*) ib_selected);
             hca->btls++;
             ++mca_btl_openib_component.ib_num_btls;
@@ -575,6 +622,26 @@ btl_openib_component_init(int *num_btl_modules,
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_ini_init())) {
         return NULL;
     }
+
+    /* If we want fork support, try to enable it */
+#ifdef HAVE_IBV_FORK_INIT
+    if (0 != mca_btl_openib_component.want_fork_support) {
+        if (0 != ibv_fork_init()) {
+            /* If the want_fork_support MCA parameter is >0, then the
+               user was specifically asking for fork support and we
+               couldn't provide it.  So print an error and deactivate
+               this BTL. */
+            if (mca_btl_openib_component.want_fork_support > 0) {
+                opal_show_help("help-mpi-btl-openib.txt",
+                               "ibv_fork_init fail", true,
+                               orte_system_info.nodename);
+                mca_btl_openib_component.ib_num_btls = 0;
+                btl_openib_modex_send();
+                return NULL;
+            } 
+        }
+    }
+#endif
 
 #if OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST
     ib_devs = ibv_get_device_list(&num_devs);

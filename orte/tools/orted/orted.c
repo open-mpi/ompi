@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,6 +49,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/trace.h"
 #include "opal/util/argv.h"
+#include "opal/runtime/opal.h"
 
 #include "orte/dss/dss.h"
 #include "orte/class/orte_value_array.h"
@@ -204,6 +206,12 @@ int main(int argc, char *argv[])
 
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals_t));
+
+    /* Ensure that enough of OPAL is setup for us to be able to run */
+    if (OPAL_SUCCESS != opal_init_util()) {
+        fprintf(stderr, "OPAL failed to initialize -- orted aborting\n");
+        exit(1);
+    }
 
     /* save the environment for use when launching application processes */
     orted_globals.saved_environ = opal_argv_copy(environ);

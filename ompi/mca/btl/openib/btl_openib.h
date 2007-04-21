@@ -138,6 +138,10 @@ struct mca_btl_openib_component_t {
     /** Whether we want a warning if non default GID prefix is not configured
         on multiport setup */
     bool warn_default_gid_prefix;
+#ifdef HAVE_IBV_FORK_INIT
+    /** Whether we want fork support or not */
+    int want_fork_support;
+#endif
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;
