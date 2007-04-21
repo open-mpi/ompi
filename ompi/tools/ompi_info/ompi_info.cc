@@ -17,6 +17,8 @@
 // $HEADER$
 //
 
+#include "ompi_config.h"
+
 #include <iostream>
 #include <string>
 #include <utility>
@@ -35,7 +37,6 @@
 #endif
 #include <errno.h>
 
-#include "ompi/tools/ompi_info/ompi_info.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/class/opal_object.h"
 #include "opal/runtime/opal.h"
@@ -46,7 +47,7 @@
 #include "opal/util/show_help.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/mca/base/base.h"
-
+#include "ompi/tools/ompi_info/ompi_info.h"
 #include "opal/threads/mutex.h"
 
 using namespace std;
