@@ -32,8 +32,9 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
 
     for(i=0; i<count; i++) {
         mca_pml_base_request_t *pml_request = (mca_pml_base_request_t*)requests[i];
-        if(NULL == pml_request)
+        if(NULL == pml_request) {
             continue;
+        }
         if (OMPI_REQUEST_PML != requests[i]->req_type) {
             continue;
         }
