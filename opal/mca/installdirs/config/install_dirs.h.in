@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.
+ *                         All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,6 +28,9 @@
  * description of each directory can be found at the following URL:
  *
  * http://www.gnu.org/prep/standards/html_node/Directory-Variables.html
+ *
+ * The line below is to shut AC 2.60 up about datarootdir.  Don't remove.
+ * datarootdir=foo
  */
 
 #ifndef OPAL_INST_DIRS_H
@@ -53,6 +58,14 @@
    $(libexecdir)/package-name/machine/version. */
 #define OPAL_LIBEXECDIR "@OPAL_LIBEXECDIR@"
 
+/* The root of the directory tree for read-only
+   architecture-independent data files.
+
+   See not about OPAL_DATADIR.  And you probably want that one, not
+   this one.  This is one of those "building block" paths, that is
+   really only used for defining other paths. */
+#define OPAL_DATAROOTDIR "@OPAL_DATAROOTDIR@"
+
 /* The directory for installing idiosyncratic read-only
   architecture-independent data files for this program. 
 
@@ -63,7 +76,7 @@
 
 /* $(datadir)/package-name/.  You probably want to use this instead of
    OPAL_DATADIR */
-#define OPAL_PKGDATADIR "@OPAL_DATADIR@/@PACKAGE@"
+#define OPAL_PKGDATADIR "${datadir}/@PACKAGE@"
 
 /* The directory for installing read-only data files that pertain to a
    single machine–that is to say, files for configuring a host. Mailer
@@ -96,14 +109,14 @@
 #define OPAL_LIBDIR "@OPAL_LIBDIR@"
 
 /* $(libdir)/package-name/.  This is where components should go */
-#define OPAL_PKGLIBDIR "@OPAL_LIBDIR@/@PACKAGE@"
+#define OPAL_PKGLIBDIR "${libdir}/@PACKAGE@"
 
 /* The directory for installing header files to be included by user
    programs with the C ‘#include’ preprocessor directive. */
 #define OPAL_INCLUDEDIR "@OPAL_INCLUDEDIR@"
 
 /* $(includedir)/package-name/.  The devel headers go in here */
-#define OPAL_PKGINCLUDEDIR "@OPAL_INCLUDEDIR@/@PACKAGE@"
+#define OPAL_PKGINCLUDEDIR "${includedir}/@PACKAGE@"
 
 /* The directory for installing the Info files for this package. */
 #define OPAL_INFODIR "@OPAL_INFODIR@"

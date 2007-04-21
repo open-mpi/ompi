@@ -18,5 +18,5 @@ compiler_flags=@OMPI_WRAPPER_EXTRA_CXXFLAGS@
 linker_flags=@OMPI_WRAPPER_EXTRA_LDFLAGS@
 libs=@OMPI_WRAPPER_CXX_LIB@ -lmpi -lopen-rte -lopen-pal @OMPI_WRAPPER_EXTRA_LIBS@
 required_file=@OMPI_WRAPPER_CXX_REQUIRED_FILE@
-includedir=@OPAL_INCLUDEDIR@
-libdir=@OPAL_LIBDIR@
+includedir=${includedir}
+libdir=${libdir}
