@@ -50,8 +50,14 @@ static void save_value(const char *name, const char *value)
          item = opal_list_get_next(item)) {
         fv = (mca_base_param_file_value_t *) item;
         if (0 == strcmp(name, fv->mbpfv_param)) {
-            free(fv->mbpfv_value);
-            fv->mbpfv_value = strdup(value);
+            if (NULL != fv->mbpfv_value ) {
+                free(fv->mbpfv_value);
+            }
+            if (NULL != value) {
+                fv->mbpfv_value = strdup(value);
+            } else {
+                fv->mbpfv_value = NULL;
+            }
             return;
         }
     }
