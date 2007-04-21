@@ -16,16 +16,18 @@
 // $HEADER$
 //
 
+#include "ompi_config.h"
+
 #include <iostream>
 #include <string>
 
 #include <stdio.h>
 
-#include "ompi/tools/ompi_info/ompi_info.h"
 #include "opal/version.h"
 #include "orte/version.h"
 #include "ompi/version.h"
 #include "opal/mca/base/base.h"
+#include "ompi/tools/ompi_info/ompi_info.h"
 #include "opal/util/printf.h"
 
 using namespace std;

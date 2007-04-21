@@ -16,11 +16,11 @@
 // $HEADER$
 //
 
+#include "ompi_config.h"
+
 #include <iostream>
 #include <string>
 #include <map>
-
-#include "ompi/tools/ompi_info/ompi_info.h"
 
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -38,6 +38,7 @@
 #include "opal/util/show_help.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "ompi/tools/ompi_info/ompi_info.h"
 
 using namespace std;
 using namespace ompi_info;
