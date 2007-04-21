@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,7 +56,7 @@
 #include <pwd.h>
 #endif
 
-#include "opal/install_dirs.h"
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/if.h"
 #include "opal/util/os_path.h"
@@ -246,14 +246,14 @@ static int orte_pls_rsh_fill_exec_path ( char ** exec_path)
 {
     struct stat buf;
 
-    asprintf(exec_path, "%s/orted", OPAL_BINDIR);
+    asprintf(exec_path, "%s/orted", opal_install_dirs.bindir);
     if (0 != stat(*exec_path, &buf)) {
         char *path = getenv("PATH");
         if (NULL == path) {
             path = ("PATH is empty!");
         }
         opal_show_help("help-pls-rsh.txt", "no-local-orted",
-                        true, path, OPAL_BINDIR);
+                        true, path, opal_install_dirs.bindir);
         return ORTE_ERR_NOT_FOUND;
     }
    return ORTE_SUCCESS;
@@ -653,10 +653,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     /* Figure out the basenames for the libdir and bindir.  This
        requires some explanation:
 
-       - Use OPAL_LIBDIR and OPAL_BINDIR instead of -D'ing some macros
-       in this directory's Makefile.am because it makes all the
-       dependencies work out correctly.  These are defined in
-       opal/install_dirs.h.
+       - Use opal_install_dirs.libdir and opal_install_dirs.bindir.
 
        - After a discussion on the devel-core mailing list, the
        developers decided that we should use the local directory
@@ -680,8 +677,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
        and use that on the remote node.
     */
 
-    lib_base = opal_basename(OPAL_LIBDIR);
-    bin_base = opal_basename(OPAL_BINDIR);
+    lib_base = opal_basename(opal_install_dirs.libdir);
+    bin_base = opal_basename(opal_install_dirs.bindir);
 
     /*
      * Iterate through each of the nodes
@@ -904,11 +901,15 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 exec_path = strdup(mca_pls_rsh_component.agent_path);
 
                 if (NULL != prefix_dir) {
+                    char *opal_prefix = getenv("OPAL_PREFIX");
                     if (remote_sh) {
                         asprintf (&argv[local_exec_index],
-                                  "PATH=%s/%s:$PATH ; export PATH ; "
+                                  "%s%s%s PATH=%s/%s:$PATH ; export PATH ; "
                                   "LD_LIBRARY_PATH=%s/%s:$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
                                   "%s/%s/%s",
+                                  (opal_prefix != NULL ? "OPAL_PREFIX=" : ""),
+                                  (opal_prefix != NULL ? opal_prefix : ""),
+                                  (opal_prefix != NULL ? " ;" : ""),
                                   prefix_dir, bin_base,
                                   prefix_dir, lib_base,
                                   prefix_dir, bin_base,
@@ -923,7 +924,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                            See this thread for more details:
                            http://www.open-mpi.org/community/lists/users/2006/01/0517.php. */
                         asprintf (&argv[local_exec_index],
-                                  "set path = ( %s/%s $path ) ; "
+                                  "%s%s%s set path = ( %s/%s $path ) ; "
                                   "if ( $?LD_LIBRARY_PATH == 1 ) "
                                   "set OMPI_have_llp ; "
                                   "if ( $?LD_LIBRARY_PATH == 0 ) "
@@ -931,6 +932,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                                   "if ( $?OMPI_have_llp == 1 ) "
                                   "setenv LD_LIBRARY_PATH %s/%s:$LD_LIBRARY_PATH ; "
                                   "%s/%s/%s",
+                                  (opal_prefix != NULL ? "setenv OPAL_PREFIX " : ""),
+                                  (opal_prefix != NULL ? opal_prefix : ""),
+                                  (opal_prefix != NULL ? " ;" : ""),
                                   prefix_dir, bin_base,
                                   prefix_dir, lib_base,
                                   prefix_dir, lib_base,

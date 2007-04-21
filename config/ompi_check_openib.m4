@@ -10,7 +10,9 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+#                         reserved.
 # Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
 # $COPYRIGHT$
 # 
@@ -28,10 +30,10 @@
 AC_DEFUN([OMPI_CHECK_OPENIB],[
     AC_ARG_WITH([openib],
         [AC_HELP_STRING([--with-openib(=DIR)],
-             [Build OpenIB (InfiniBand) support, searching for libraries in DIR])])
+             [Build OpenFabrics support, searching for libraries in DIR])])
     AC_ARG_WITH([openib-libdir],
        [AC_HELP_STRING([--with-openib-libdir=DIR],
-             [Search for OpenIB (InfiniBand) libraries in DIR])])
+             [Search for OpenFabrics libraries in DIR])])
 
     AS_IF([test ! -z "$with_openib" -a "$with_openib" != "yes"],
           [ompi_check_openib_dir="$with_openib"])
@@ -40,11 +42,19 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
     AS_IF([test "$with_openib" != "no"],
         [ # check for pthreads and emit a warning that things might go south...
          AS_IF([test "$HAVE_POSIX_THREADS" != "1"],
-               [AC_MSG_WARN([POSIX threads not enabled.  May not be able to link with OpenIB])])
+               [AC_MSG_WARN([POSIX threads not enabled.  May not be able to link with OpenFabrics])])
 
          ompi_check_openib_$1_save_CPPFLAGS="$CPPFLAGS"
          ompi_check_openib_$1_save_LDFLAGS="$LDFLAGS"
          ompi_check_openib_$1_save_LIBS="$LIBS"
+
+         AC_CHECK_HEADER([sysfs/libsysfs.h],
+                         [ompi_check_openib_sysfs_h=yes],
+                         [ompi_check_openib_sysfs_h=no])
+
+         AS_IF([test "$ompi_check_openib_sysfs_h" != "yes"],
+               [AS_IF([test ! -z "$with_openib" -a "$with_openib" != "no"],
+                      [AC_MSG_ERROR([OpenFabrics support requested (via --with-openib) but required sysfs/libsysfs.h not found.  Aborting])])])
     
          AC_CHECK_LIB([sysfs], 
 	              [sysfs_open_class], 
@@ -55,43 +65,13 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
 
          AS_IF([test "$ompi_check_openib_sysfs" != "yes"],
                [AS_IF([test ! -z "$with_openib" -a "$with_openib" != "no"],
-                      [AC_MSG_ERROR([OpenIB support requested but required sysfs not found.  Aborting])])])
-
-         AC_CHECK_HEADER([sysfs/libsysfs.h],
-                         [ompi_check_openib_sysfs_h=yes],
-                         [ompi_check_openib_sysfs_h=no])
-
-         AS_IF([test "$ompi_check_openib_sysfs_h" != "yes"],
-               [AS_IF([test ! -z "$with_openib" -a "$with_openib" != "no"],
-                      [AC_MSG_ERROR([OpenIB support requested but required sysfs/libsysfs.h not found.  Aborting])])])
-    
-         AS_IF([test "$ompi_check_openib_libdir" = ""], 
-	       [ompi_check_openib_my_libdir=$ompi_check_openib_dir], 
-	       [ompi_check_openib_my_libdir=$ompi_check_openib_libdir]) 
-
-         AS_IF([test -d "$ompi_check_openib_my_libdir/lib64/infiniband"], 
-	       [ompi_check_openib_libflag=" -L$ompi_check_openib_my_libdir/lib64/infiniband" 
-	        LDFLAGS="$LDFLAGS -L$ompi_check_openib_my_libdir/lib64/infiniband"], 
-               [AS_IF([test -d "$ompi_check_openib_my_libdir/lib/infiniband"], 
-                      [ompi_check_openib_libflag=" -L$ompi_check_openib_my_libdir/lib/infiniband"
-		       LDFLAGS="$LDFLAGS -L$ompi_check_openib_my_libdir/lib/infiniband"])])
- 
-         AS_IF([test -d "$ompi_check_openib_my_libdir/lib64"], 
-	       [ompi_check_openib_libflag="$ompi_check_openib_libflag -L$ompi_check_openib_my_libdir/lib64" 
-	        LDFLAGS="$LDFLAGS -L$ompi_check_openib_my_libdir/lib64"], 
-               [AS_IF([test -d "$ompi_check_openib_my_libdir/lib"], 
-		      [ompi_check_openib_libflag="$ompi_check_openib_libflag -L$ompi_check_openib_my_libdir/lib"
-		       LDFLAGS="$LDFLAGS -L$ompi_check_openib_my_libdir/lib"])])
-
-         AC_CHECK_LIB([cm], [cm_timeout],
-                      [ompi_check_openib_libdeps="-lcm"]
-                      [ompi_check_openib_libdeps=""])
+                      [AC_MSG_ERROR([OpenFabrics support requested (via --with-openib) but required sysfs not found.  Aborting])])])
 
          OMPI_CHECK_PACKAGE([$1],
                             [infiniband/verbs.h],
                             [ibverbs],
                             [ibv_open_device],
-                            [$ompi_check_openib_libdeps],
+                            [],
                             [$ompi_check_openib_dir],
                             [$ompi_check_openib_libdir],
                             [ompi_check_openib_happy="yes"],
@@ -126,19 +106,19 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
          AC_CHECK_FUNCS([ibv_create_srq], [ompi_check_openib_have_srq=1], [ompi_check_openib_have_srq=0])
          AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_SRQ],
                             [$ompi_check_openib_have_srq],
-		            [Whether install of OpenIB includes shared receive queue support])
+		            [Whether install of OpenFabrics includes shared receive queue support])
 
          AC_CHECK_FUNCS([ibv_get_device_list],
                         [ompi_check_openib_have_device_list=1],
                         [ompi_check_openib_have_device_list=0])
          AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_DEVICE_LIST],
                         [$ompi_check_openib_have_device_list],
-                        [Whether install of OpenIB includes ibv_get_device_list API])
+                        [Whether install of OpenFabrics includes ibv_get_device_list API])
 
 	 AC_CHECK_FUNCS([ibv_resize_cq], [ompi_check_openib_have_resize_cq=1], [ompi_check_openib_have_resize_cq=0])
          AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_RESIZE_CQ],
                             [$ompi_check_openib_have_resize_cq],
-			    [Whether install of OpenIB includes resize completion queue support])
+			    [Whether install of OpenFabrics includes resize completion queue support])
 			    
          CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
          LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
@@ -148,9 +128,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_openib" -a "$with_openib" != "no"],
-                 [AC_MSG_ERROR([OpenIB support requested but not found.  Aborting])])
+                 [AC_MSG_ERROR([OpenFabrics support requested (via --with-openib) but not found.  Aborting])])
            $3])
-    
-    $1_LDFLAGS="$$1_LDFLAGS $ompi_check_openib_libflag"
 ])
 

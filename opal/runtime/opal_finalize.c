@@ -30,6 +30,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/constants.h"
+#include "opal/mca/installdirs/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/backtrace/base/base.h"
@@ -54,6 +55,8 @@ opal_finalize_util(void)
 
     /* keyval lex-based parser */
     opal_util_keyval_parse_finalize();
+
+    opal_installdirs_base_close();
 
     /* finalize the memory allocator */
     opal_malloc_finalize();

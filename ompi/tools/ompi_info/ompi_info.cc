@@ -9,6 +9,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copryight (c) 2007      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -35,7 +36,7 @@
 #include <errno.h>
 
 #include "ompi/tools/ompi_info/ompi_info.h"
-#include "opal/install_dirs.h"
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/class/opal_object.h"
 #include "opal/runtime/opal.h"
 #include "orte/runtime/runtime.h"
@@ -183,6 +184,7 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("paffinity");
   ompi_info::mca_types.push_back("maffinity");
   ompi_info::mca_types.push_back("timer");
+  ompi_info::mca_types.push_back("installdirs");
 #if OPAL_ENABLE_FT == 1
   ompi_info::mca_types.push_back("crs");
 #endif
@@ -256,7 +258,7 @@ int main(int argc, char *argv[])
 
   if (!acted) {
     ompi_info::show_ompi_version(ver_full);
-    ompi_info::show_path(path_prefix, OPAL_PREFIX);
+    ompi_info::show_path(path_prefix, opal_install_dirs.prefix);
     ompi_info::do_arch(cmd_line);
     ompi_info::do_config(false);
     ompi_info::open_components();

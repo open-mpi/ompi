@@ -48,7 +48,7 @@
 #include <fcntl.h>
 #endif
 
-#include "opal/install_dirs.h"
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
@@ -556,8 +556,8 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
            explaining all the rationale for how / why we're doing
            this. */
 
-        lib_base = opal_basename(OPAL_LIBDIR);
-        bin_base = opal_basename(OPAL_BINDIR);
+        lib_base = opal_basename(opal_install_dirs.libdir);
+        bin_base = opal_basename(opal_install_dirs.bindir);
 
         /* If we have a prefix, then modify the PATH and
            LD_LIBRARY_PATH environment variables.  */

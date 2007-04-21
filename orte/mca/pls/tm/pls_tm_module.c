@@ -45,7 +45,7 @@
 #include <errno.h>
 #include <tm.h>
 
-#include "opal/install_dirs.h"
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/threads/condition.h"
 #include "opal/event/event.h"
 #include "opal/util/argv.h"
@@ -245,8 +245,8 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     /* Figure out the basenames for the libdir and bindir.  There is a
        lengthy comment about this in pls_rsh_module.c explaining all
        the rationale for how / why we're doing this. */
-    lib_base = opal_basename(OPAL_LIBDIR);
-    bin_base = opal_basename(OPAL_BINDIR);
+    lib_base = opal_basename(opal_install_dirs.libdir);
+    bin_base = opal_basename(opal_install_dirs.bindir);
 
     /* setup environment */
     env = opal_argv_copy(environ);

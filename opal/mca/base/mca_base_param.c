@@ -28,7 +28,7 @@
 #include <sys/param.h>
 #endif
 
-#include "opal/install_dirs.h"
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/class/opal_value_array.h"
@@ -180,8 +180,7 @@ int mca_base_param_recache_files(bool rel_path_search)
 
     asprintf(&files,
              "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"mca-params.conf%c%s"OPAL_PATH_SEP"openmpi-mca-params.conf",
-             home, OPAL_ENV_SEP, OPAL_SYSCONFDIR);
-
+             home, OPAL_ENV_SEP, opal_install_dirs.sysconfdir);
 
     /* Initialize a parameter that says where MCA param files can
        be found */
@@ -200,7 +199,7 @@ int mca_base_param_recache_files(bool rel_path_search)
     
     asprintf(&agg_default_path,
              "%s"OPAL_PATH_SEP"amca-param-sets%c%s",
-             OPAL_PKGDATADIR, OPAL_ENV_SEP, cwd);
+             opal_install_dirs.pkgdatadir, OPAL_ENV_SEP, cwd);
     id = mca_base_param_reg_string_name("mca", "base_param_file_path",
                                         "Aggregate MCA parameter Search path",
                                         false, false, agg_default_path, &new_agg_path);
@@ -228,9 +227,8 @@ int mca_base_param_recache_files(bool rel_path_search)
             free(tmp_str);
         }
     }
-
-    read_files(new_files);
     
+    read_files(new_files);
 #if defined(__WINDOWS__)
     read_keys_from_registry(HKEY_CURRENT_USER, "SOFTWARE\\Open MPI", NULL);
 #endif  /* defined(__WINDOWS__) */

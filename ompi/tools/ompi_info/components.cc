@@ -9,6 +9,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -39,6 +40,8 @@
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/timer/timer.h"
 #include "opal/mca/timer/base/base.h"
+#include "opal/mca/installdirs/installdirs.h"
+#include "opal/mca/installdirs/base/base.h"
 #if OPAL_ENABLE_FT == 1
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
@@ -208,6 +211,10 @@ void ompi_info::open_components()
   component_map["crs"] = &opal_crs_base_components_available;
 #endif
 
+  // OPAL's installdirs base open has already been called as part of
+  // opal_init_util() back in main().
+  component_map["installdirs"] = &opal_installdirs_components;
+
   // ORTE frameworks
 
   mca_oob_base_open();
@@ -362,6 +369,9 @@ void ompi_info::close_components()
 #if OPAL_ENABLE_FT == 1
         opal_crs_base_close();
 #endif
+        // Do not call OPAL's installdirs close; it will be handled in
+        // opal_finalize_util().
+
         component_map.clear();
     }
 
