@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2007      Cisco, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -391,6 +392,19 @@ EOF
 	"`grep AM_CONFIG_HEADER $file`" != ""; then
 	run_and_check $ompi_autoheader
     fi
+
+    # We only need to patch the top-level aclocal.m4 for libtool stuff
+    # because this only affects creating C++ libraries (with pathCC).
+    # This must be done before we run autoconf.
+
+    if test -f $topdir_file; then 
+        echo "Adjusting libtool for OMPI :-("
+        echo "  -- patching for pathscale multi-line output (LT 1.5.22)"
+        patch -N -p0 < config/lt1522-pathCC.diff > /dev/null 2>&1
+        echo "  -- patching for pathscale multi-line output (LT 2.1a)"
+        patch -N -p0 < config/lt21a-pathCC.diff > /dev/null 2>&1
+    fi
+
     run_and_check $ompi_autoconf
 
     # We only need the libltdl stuff for the top-level
