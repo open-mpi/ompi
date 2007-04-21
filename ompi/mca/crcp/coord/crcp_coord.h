@@ -59,9 +59,6 @@ extern "C" {
     int ompi_crcp_coord_pml_init(void);
     int ompi_crcp_coord_pml_finalize(void);
 
-    int ompi_crcp_coord_btl_init(void);
-    int ompi_crcp_coord_btl_finalize(void);
-
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

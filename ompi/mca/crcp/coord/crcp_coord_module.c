@@ -37,7 +37,6 @@
 
 #include "crcp_coord.h"
 #include "crcp_coord_pml.h"
-#include "crcp_coord_btl.h"
 
 /*
  * Coord module
@@ -97,20 +96,6 @@ static ompi_crcp_base_module_t loc_module = {
 /************************************
  * Locally Global vars & functions :)
  ************************************/
-    opal_mutex_t     ompi_crcp_coord_ft_global_cs_lock;
-    opal_condition_t ompi_crcp_coord_ft_global_cs_cond;
-    int              ompi_crcp_coord_ft_global_cs_count;
-    bool             ompi_crcp_coord_ft_global_cs_block;
-
-    opal_mutex_t     ompi_crcp_coord_ft_send_cs_lock;
-    opal_condition_t ompi_crcp_coord_ft_send_cs_cond;
-    int              ompi_crcp_coord_ft_send_cs_count;
-    bool             ompi_crcp_coord_ft_send_cs_block;
-
-    opal_mutex_t     ompi_crcp_coord_ft_recv_cs_lock;
-    opal_condition_t ompi_crcp_coord_ft_recv_cs_cond;
-    int              ompi_crcp_coord_ft_recv_cs_count;
-    bool             ompi_crcp_coord_ft_recv_cs_block;
 
 /************************
  * Function Definitions
@@ -136,8 +121,6 @@ int ompi_crcp_coord_module_init(void)
 
     ompi_crcp_coord_pml_init();
 
-    ompi_crcp_coord_btl_init();
-
     return OMPI_SUCCESS;
 }
 
@@ -147,8 +130,6 @@ int ompi_crcp_coord_module_finalize(void)
                         "crcp:coord: module_finalize()");
 
     ompi_crcp_coord_pml_finalize();
-
-    ompi_crcp_coord_btl_finalize();
 
     return OMPI_SUCCESS;
 }

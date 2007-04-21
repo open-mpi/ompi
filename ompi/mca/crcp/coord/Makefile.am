@@ -19,10 +19,8 @@ dist_pkgdata_DATA = help-ompi-crcp-coord.txt
 sources = \
         crcp_coord.h \
         crcp_coord_pml.h \
-        crcp_coord_btl.h \
         crcp_coord_component.c \
         crcp_coord_module.c \
-        crcp_coord_btl.c \
         crcp_coord_pml.c
 
 # Make the output library in this directory, and name it either
