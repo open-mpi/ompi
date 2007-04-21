@@ -36,8 +36,6 @@
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
 
-#include "ompi/class/ompi_free_list.h"
-
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

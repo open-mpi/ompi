@@ -411,6 +411,7 @@ int mca_pml_crcpw_isend( void *buf, size_t count, ompi_datatype_t *datatype, int
 
     PML_CRCP_STATE_RETURN(pml_state);
 
+    opal_cr_stall_check = false;
     OPAL_CR_TEST_CHECKPOINT_READY();
 
     return OMPI_SUCCESS;
@@ -451,6 +452,9 @@ int mca_pml_crcpw_send(  void *buf, size_t count, ompi_datatype_t *datatype, int
     }
 
     PML_CRCP_STATE_RETURN(pml_state);
+
+    opal_cr_stall_check = false;
+    OPAL_CR_TEST_CHECKPOINT_READY();
 
     return OMPI_SUCCESS;
 }
@@ -691,6 +695,10 @@ int mca_pml_crcpw_start( size_t count, ompi_request_t** requests )
         return ret;
     }
 
+    if( OMPI_CRCP_PML_DONE == pml_state->state) {
+        goto CLEANUP;
+    }
+
     if( OMPI_CRCP_PML_SKIP != pml_state->state) {
         if( OMPI_SUCCESS != (ret = mca_pml_crcpw_module.wrapped_pml_module.pml_start(count, requests) ) ) {
             PML_CRCP_STATE_RETURN(pml_state);
@@ -706,6 +714,7 @@ int mca_pml_crcpw_start( size_t count, ompi_request_t** requests )
         return ret;
     }
 
+ CLEANUP:
     PML_CRCP_STATE_RETURN(pml_state);
 
     return OMPI_SUCCESS;
