@@ -79,6 +79,13 @@ Trunk (not on release branches yet)
 - Fix compile error on OS X 10.3.x introduced with Open MPI 1.1.5.
 - Implement MPI_TYPE_CREATE_DARRAY function (was in 1.1.5 but not 1.2).
 - Recognize zsh shell when using rsh/ssh for launching MPI jobs.
+- Ability to set the OPAL_DESTDIR or OPAL_PREFIX environment
+  variables to "re-root" an existing Open MPI installation.
+- Always include -I for Fortran compiles, even if the prefix is
+  /usr/local.
+- Support for "fork()" in MPI applications that use the
+  OpenFabrics stack (OFED v1.2 or later).
+- Support for setting specific limits on registered memory.
 
 
 1.2
