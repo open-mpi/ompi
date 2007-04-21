@@ -24,16 +24,16 @@
 extern "C" {
 #endif
 
-    OPAL_DECLSPEC int opal_installdirs_base_open(void);
-    OPAL_DECLSPEC int opal_installdirs_base_close(void);
-
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+OPAL_DECLSPEC int opal_installdirs_base_open(void);
+OPAL_DECLSPEC int opal_installdirs_base_close(void);
 
 /*
  * Globals
  */
 OPAL_DECLSPEC extern opal_list_t opal_installdirs_components;
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* OPAL_BASE_INSTALLDIRS_H */

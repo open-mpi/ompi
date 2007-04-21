@@ -16,6 +16,10 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /*
  * Most of this file is just for ompi_info.  The only public interface
  * once opal_init has been called is the opal_install_dirs structure
@@ -42,12 +46,12 @@ struct opal_install_dirs_t {
 typedef struct opal_install_dirs_t opal_install_dirs_t;
 
 /* Install directories.  Only available after opal_init() */
-extern opal_install_dirs_t opal_install_dirs;
+OPAL_DECLSPEC extern opal_install_dirs_t opal_install_dirs;
 
 /**
  * Expand out path variables (such as ${prefix}) in the input string
  * using the current opal_install_dirs structure */
-char * opal_install_dirs_expand(const char* input);
+OPAL_DECLSPEC char * opal_install_dirs_expand(const char* input);
 
 
 /**
@@ -75,5 +79,9 @@ typedef struct opal_installdirs_base_component_1_0_0_t opal_installdirs_base_com
     MCA_BASE_VERSION_1_0_0, \
     /* installdirs v1.0 */ \
     "installdirs", 1, 0, 0
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* OPAL_MCA_INSTALLDIRS_INSTALLDIRS_H */
