@@ -237,6 +237,15 @@ static int initialize(int argc, char *argv[]) {
     int ret, exit_status = ORTE_SUCCESS;
 
     /*
+     * Make sure to init util before parse_args
+     * to ensure installdirs is setup properly
+     * before calling mca_base_open();
+     */
+    if( ORTE_SUCCESS != (ret = opal_init_util()) ) {
+        return ret;
+    }
+
+    /*
      * Parse command line arguments
      */
     if (ORTE_SUCCESS != (ret = parse_args(argc, argv))) {
