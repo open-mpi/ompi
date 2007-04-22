@@ -155,7 +155,8 @@ static inline bool mca_bml_base_btl_array_remove( mca_bml_base_btl_array_t* arra
     /* find the btl */
     for( i = 0; i < array->arr_size; i++ ) {
         if( array->bml_btls[i].btl == btl ) {
-            for( ; i < array->arr_size; i++ ) {
+            /* make sure not to go out of bounds */
+            for( ; i < array->arr_size-1; i++ ) {
                 /* move all btl's back by 1, so the found 
                    btl is "removed" */
                 array->bml_btls[i] = array->bml_btls[(i+1)];
