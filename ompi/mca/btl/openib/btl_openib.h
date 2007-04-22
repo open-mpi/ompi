@@ -108,6 +108,7 @@ struct mca_btl_openib_component_t {
     uint32_t ib_cq_size;   /**< Max outstanding CQE on the CQ */  
     uint32_t ib_sg_list_size; /**< Max scatter/gather descriptor entries on the WQ*/ 
     uint32_t ib_pkey_ix; 
+    uint32_t ib_pkey_val;
     uint32_t ib_psn; 
     uint32_t ib_qp_ous_rd_atom; 
     uint32_t ib_mtu; 
@@ -197,6 +198,7 @@ struct mca_btl_openib_module_t {
     mca_btl_openib_port_info_t port_info;  /* contains only the subnet id right now */ 
     mca_btl_openib_hca_t *hca;
     uint8_t port_num;           /**< ID of the PORT */ 
+    uint16_t pkey_index;
     struct ibv_cq *ib_cq[2];
     struct ibv_port_attr ib_port_attr; 
     uint16_t lid;                      /**< lid that is actually used (for LMC) */

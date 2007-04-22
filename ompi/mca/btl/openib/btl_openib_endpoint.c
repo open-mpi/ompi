@@ -969,10 +969,10 @@ int mca_btl_openib_endpoint_create_qp(
     
     {
         qp_attr->qp_state = IBV_QPS_INIT; 
-        qp_attr->pkey_index = mca_btl_openib_component.ib_pkey_ix; 
+        qp_attr->pkey_index = openib_btl->pkey_index; /*mca_btl_openib_component.ib_pkey_ix; */
         qp_attr->port_num = openib_btl->port_num; 
         qp_attr->qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ; 
-        
+
         if(ibv_modify_qp((*qp), qp_attr, 
                          IBV_QP_STATE | 
                          IBV_QP_PKEY_INDEX | 

@@ -194,6 +194,14 @@ int btl_openib_register_mca_params(void)
                   0, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.ib_pkey_ix = (uint32_t) ival;
 
+    CHECK(reg_int("ib_pkey_val", "InfiniBand pkey value"
+                  "(must be > 0 and < 0xffff)",
+                  0, &ival, REGINT_GE_ZERO));
+    if (ival > 0xffff) {
+        ret = OMPI_ERR_BAD_PARAM;
+    }
+    mca_btl_openib_component.ib_pkey_val = (uint32_t) ival;
+
     CHECK(reg_int("ib_psn", "InfiniBand packet sequence starting number "
                   "(must be >= 0)", 
                   0, &ival, REGINT_GE_ZERO));

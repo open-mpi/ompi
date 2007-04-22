@@ -66,7 +66,8 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
                                mca_btl_base_descriptor_t* descriptor,
                                void* cbdata);
 static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
-                         uint8_t port_num, struct ibv_port_attr *ib_port_attr);
+                         uint8_t port_num, uint16_t pkey_index,
+                         struct ibv_port_attr *ib_port_attr);
 static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev);
 static mca_btl_base_module_t **btl_openib_component_init(
     int *num_btl_modules, bool enable_progress_threads,
@@ -297,7 +298,8 @@ static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg)
 }
 
 static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
-                         uint8_t port_num, struct ibv_port_attr *ib_port_attr)
+                         uint8_t port_num, uint16_t pkey_index,
+                         struct ibv_port_attr *ib_port_attr)
 {
     uint16_t lid, i, lmc;
     mca_btl_openib_module_t *openib_btl;
@@ -339,6 +341,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             ib_selected->btl_module = (mca_btl_base_module_t*) openib_btl;
             openib_btl->hca = hca;
             openib_btl->port_num = (uint8_t) port_num;
+            openib_btl->pkey_index = pkey_index;
             openib_btl->lid = lid;
             openib_btl->src_path_bits = lid - ib_port_attr->lid;
             /* store the subnet for multi-nic support */
@@ -546,8 +549,22 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         }
 
         if(IBV_PORT_ACTIVE == ib_port_attr.state){
-            ret = init_one_port(btl_list, hca, i, &ib_port_attr);
 
+            if (0 == mca_btl_openib_component.ib_pkey_val) {
+                ret = init_one_port(btl_list, hca, i, mca_btl_openib_component.ib_pkey_ix,
+                                    &ib_port_attr);
+            }
+            else {
+                uint16_t pkey,j;
+                for (j=0; j < hca->ib_dev_attr.max_pkeys; j++) {
+                    ibv_query_pkey(hca->ib_dev_context, i, j, &pkey);
+                    pkey=ntohs(pkey);
+                    if(pkey == mca_btl_openib_component.ib_pkey_val){
+                        ret = init_one_port(btl_list, hca, i, j, &ib_port_attr);
+                        break;
+                    }
+                }
+            }
             if (OMPI_SUCCESS != ret) {
                 /* Out of bounds error indicates that we hit max btl number 
                  * don't propagate the error to the caller */
