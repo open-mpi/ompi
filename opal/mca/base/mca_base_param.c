@@ -1671,7 +1671,7 @@ static bool lookup_env(mca_base_param_t *param,
   if (NULL != param->mbp_env_var_name &&
       NULL != (env = getenv(param->mbp_env_var_name))) {
     if (MCA_BASE_PARAM_TYPE_INT == param->mbp_type) {
-      storage->intval = atoi(env);
+      storage->intval = (int)strtol(env,(char**)NULL,0);
     } else if (MCA_BASE_PARAM_TYPE_STRING == param->mbp_type) {
       storage->stringval = strdup(env);
     }
@@ -1712,7 +1712,7 @@ static bool lookup_file(mca_base_param_t *param,
         if (0 == strcmp(fv->mbpfv_param, param->mbp_full_name)) {
             if (MCA_BASE_PARAM_TYPE_INT == param->mbp_type) {
                 if (NULL != fv->mbpfv_value) {
-                    param->mbp_file_value.intval = atoi(fv->mbpfv_value);
+                    param->mbp_file_value.intval = (int)strtol(fv->mbpfv_value,(char**)NULL,0);
                 } else {
                     param->mbp_file_value.intval = 0;
                 }
