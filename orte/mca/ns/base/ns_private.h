@@ -83,6 +83,8 @@ typedef uint8_t orte_ns_cmd_flag_t;
 #define ORTE_NS_DUMP_JOBIDS_CMD         (int8_t) 16
 #define ORTE_NS_DUMP_TAGS_CMD           (int8_t) 17
 #define ORTE_NS_DUMP_DATATYPES_CMD      (int8_t) 18
+#define ORTE_NS_GET_VPID_RANGE_CMD      (int8_t) 19
+#define ORTE_NS_GET_JOB_FAMILY_CMD      (int8_t) 20
 
 
 /*
@@ -164,9 +166,14 @@ ORTE_DECLSPEC    int orte_ns_base_get_root_job_not_available(orte_jobid_t *root_
 
 ORTE_DECLSPEC    int orte_ns_base_get_parent_job_not_available(orte_jobid_t *parent, orte_jobid_t job);
 
+ORTE_DECLSPEC    int orte_ns_base_get_job_family_not_available(orte_jobid_t **family, orte_std_cntr_t *num_members, orte_jobid_t job);
+
+ORTE_DECLSPEC    int orte_ns_base_reserve_range_not_available(orte_jobid_t job,
+                                                              orte_vpid_t range,
+                                                              orte_vpid_t *startvpid);
+
 ORTE_DECLSPEC    int orte_ns_base_get_vpid_range_not_available(orte_jobid_t job,
-                                                               orte_vpid_t range,
-                                                               orte_vpid_t *startvpid);
+                                                               orte_vpid_t *range);
 
 ORTE_DECLSPEC    int orte_ns_base_assign_rml_tag_not_available(orte_rml_tag_t *tag, char *name);
 

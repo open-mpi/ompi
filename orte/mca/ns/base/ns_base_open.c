@@ -72,9 +72,11 @@ mca_ns_base_module_t orte_ns = {
     orte_ns_base_get_job_children_not_available,
     orte_ns_base_get_root_job_not_available,
     orte_ns_base_get_parent_job_not_available,
+    orte_ns_base_get_job_family_not_available,
     orte_ns_base_get_jobid_string,
     orte_ns_base_convert_jobid_to_string,
     orte_ns_base_convert_string_to_jobid,
+    orte_ns_base_reserve_range_not_available,
     orte_ns_base_get_vpid_range_not_available,
     /* vpid functions */
     orte_ns_base_get_vpid_string,

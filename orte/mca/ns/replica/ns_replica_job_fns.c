@@ -30,6 +30,7 @@
 #include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmgr/rmgr.h"
+#include "orte/mca/gpr/gpr.h"
 
 #include "ns_replica.h"
 
@@ -265,15 +266,36 @@ REPORT:
 }
 
 
+int orte_ns_replica_get_job_family(orte_jobid_t **family, orte_std_cntr_t *num_members, orte_jobid_t job)
+{
+    orte_jobid_t root;
+    int rc;
+    
+    if (ORTE_SUCCESS != (rc = orte_ns_replica_get_root_job(&root, job))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_ns_replica_get_job_descendants(family, num_members, job))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    return ORTE_SUCCESS;
+}
+
 int orte_ns_replica_reserve_range(orte_jobid_t job, orte_vpid_t range,
                                   orte_vpid_t *start)
 {
     orte_ns_replica_jobitem_t *ptr;
-
+    orte_gpr_value_t *value;
+    char *segment;
+    int rc;
+    
     OPAL_TRACE(1);
     
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
-
+    
     /* find the job's record */
     if (NULL == (ptr =  orte_ns_replica_find_job(job))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -284,12 +306,59 @@ int orte_ns_replica_reserve_range(orte_jobid_t job, orte_vpid_t range,
     if ((ORTE_VPID_MAX-range-(ptr->next_vpid)) > 0) {
         *start = ptr->next_vpid;
         ptr->next_vpid += range;
+        /* now store it in the registry */
+        if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, ORTE_GPR_OVERWRITE, segment, 1, 1))) {
+            ORTE_ERROR_LOG(rc);
+            free(segment);
+            return rc;
+        }
+        free(segment);
+        value->tokens[0] = strdup(ORTE_JOB_GLOBALS);
+        
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_JOB_VPID_RANGE_KEY, ORTE_VPID, &ptr->next_vpid))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(value);
+            return rc;
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &value))) {
+            ORTE_ERROR_LOG(rc);
+        }        
+        OBJ_RELEASE(value);
+        
         OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
-        return ORTE_SUCCESS;
+        return rc;
     }
-
+    
     /* get here if the range isn't available */
     ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
     OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
     return ORTE_ERR_OUT_OF_RESOURCE;
 }
+
+int orte_ns_replica_get_vpid_range(orte_jobid_t job, orte_vpid_t *range)
+{
+    orte_ns_replica_jobitem_t *ptr;
+    
+    OPAL_TRACE(1);
+    
+    OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
+    
+    /* find the job's record */
+    if (NULL == (ptr =  orte_ns_replica_find_job(job))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+        return ORTE_ERR_NOT_FOUND;        
+    }
+    
+    *range = ptr->next_vpid;
+    
+    OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+    return ORTE_SUCCESS;
+}
+
