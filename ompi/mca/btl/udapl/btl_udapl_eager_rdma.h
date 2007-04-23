@@ -23,7 +23,7 @@ extern "C" {
  * Describe endpoint local memory region.
  */
 struct mca_btl_udapl_eager_rdma_local_t {
-    ompi_ptr_t		base;
+    ompi_ptr_t		base;		/**< points to fragment structures */
     struct mca_btl_udapl_reg_t* reg;
     uint8_t 		head; 		/**< RDMA buffer to poll */
     int32_t 		credits; 	/**< number of local rdma buffers ready to be reclaimed,
@@ -36,7 +36,8 @@ typedef struct mca_btl_udapl_eager_rdma_local_t mca_btl_udapl_eager_rdma_local_t
  * Describe endpoint remote memory region.
  */
 struct mca_btl_udapl_eager_rdma_remote_t {
-    ompi_ptr_t		base;
+    ompi_ptr_t		base;   /**< points to start of data region, not
+				   fragment structures */
     DAT_RMR_CONTEXT	rkey; 	/**< key required to access remote memory */ 
     uint8_t 		head; 	/**< RDMA buffer to use */
     int32_t 		tokens; /**< number of available rdma buffers, initially equal
@@ -89,7 +90,7 @@ typedef struct mca_btl_udapl_eager_rdma_credit_t mca_btl_udapl_eager_rdma_credit
 #define MCA_BTL_UDAPL_GET_LOCAL_RDMA_FRAG(E, I)                         \
             (mca_btl_udapl_frag_t*)                                     \
             ((char*)(E)->endpoint_eager_rdma_local.base.pval +          \
-            (I) * mca_btl_udapl_component.udapl_eager_rdma_frag_size)
+            (I) * sizeof(mca_btl_udapl_frag_eager_rdma_t))
 
 /*
  * Increment the index I by one while not exceeding the total number of

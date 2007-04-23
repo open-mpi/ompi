@@ -516,10 +516,13 @@ int mca_btl_udapl_free(
 {
     mca_btl_udapl_frag_t* frag = (mca_btl_udapl_frag_t*)des;
 
-    if(frag->size == 0 && frag->registration != NULL) {
-        btl->btl_mpool->mpool_deregister(btl->btl_mpool,
-            (mca_mpool_base_registration_t*)frag->registration);
-        MCA_BTL_UDAPL_FRAG_RETURN_USER(btl, frag); 
+    if(0 == frag->size) { 
+        if (NULL != frag->registration) {
+            btl->btl_mpool->mpool_deregister(btl->btl_mpool,
+                &(frag->registration->base));
+            frag->registration = NULL;
+        }
+        MCA_BTL_UDAPL_FRAG_RETURN_USER(btl, frag);
     } else if(frag->size == mca_btl_udapl_component.udapl_eager_frag_size) {
         MCA_BTL_UDAPL_FRAG_RETURN_EAGER(btl, frag); 
     } else if(frag->size == mca_btl_udapl_component.udapl_max_frag_size) {
@@ -779,7 +782,7 @@ int mca_btl_udapl_put(
         remote_buffer.rmr_context =
             (DAT_RMR_CONTEXT)dst_segment->seg_key.key32[0];
         remote_buffer.target_address =
-            (DAT_VADDR)dst_segment->seg_addr.pval;
+            (DAT_VADDR)dst_segment->seg_addr.lval;
         remote_buffer.segment_length = dst_segment->seg_len;
 
         cookie.as_ptr = frag;

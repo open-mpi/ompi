@@ -25,6 +25,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include "ompi/types.h"
+#include "opal/include/opal/align.h"
 #include "opal/util/show_help.h"
 #include "orte/mca/ns/base/base.h"
 #include "orte/mca/oob/base/base.h"
@@ -74,15 +75,18 @@ int mca_btl_udapl_endpoint_write_eager(mca_btl_base_endpoint_t* endpoint,
     mca_btl_udapl_frag_t* frag)
 {
     DAT_DTO_COOKIE cookie;
-    mca_btl_udapl_frag_eager_rdma_t* remote_frag;        
     char* remote_buf;
     DAT_RMR_TRIPLET remote_buffer;
     DAT_LMR_TRIPLET local_iov;     /* one contiguous write */
     int rc = OMPI_SUCCESS;
     int pad = 0;
     uint8_t head = endpoint->endpoint_eager_rdma_remote.head;
-        
-    /* now that we have the head update it */
+    size_t size_plus_align = OPAL_ALIGN(
+	mca_btl_udapl_component.udapl_eager_frag_size, 
+	DAT_OPTIMAL_ALIGNMENT,
+	size_t);
+
+   /* now that we have the head update it */
     MCA_BTL_UDAPL_RDMA_NEXT_INDEX(endpoint->endpoint_eager_rdma_remote.head);
     
     MCA_BTL_UDAPL_FRAG_CALC_ALIGNMENT_PAD(pad,
@@ -101,11 +105,6 @@ int mca_btl_udapl_endpoint_write_eager(mca_btl_base_endpoint_t* endpoint,
                                                    * at the other end
                                                    */
 
-    /* find remote fragment to be used */
-    remote_frag = (mca_btl_udapl_frag_eager_rdma_t *)
-        ((char *)(endpoint->endpoint_eager_rdma_remote.base.pval) +
-        (head * mca_btl_udapl_component.udapl_eager_rdma_frag_size));
-        
     /* prep the fragment to be written out */
     frag->type = MCA_BTL_UDAPL_RDMA_WRITE;
     frag->triplet.segment_length = frag->segment.seg_len +
@@ -117,8 +116,9 @@ int mca_btl_udapl_endpoint_write_eager(mca_btl_base_endpoint_t* endpoint,
      * compute by first finding the end of the entire fragment
      * and then working way back
      */
-    remote_buf = (char *)remote_frag +
-        (sizeof(mca_btl_udapl_frag_eager_rdma_t) + frag->size) -
+    remote_buf = (char *)(endpoint->endpoint_eager_rdma_remote.base.pval) +
+	(head * size_plus_align) +
+        frag->size -
         frag->triplet.segment_length;
 
     if (mca_btl_udapl_component.udapl_eager_rdma_guarantee == 0) {
@@ -855,8 +855,8 @@ static int mca_btl_udapl_endpoint_post_recv(mca_btl_udapl_endpoint_t* endpoint,
     DAT_DTO_COOKIE cookie;
     DAT_EP_HANDLE ep;
     int rc;
-    int i;
-
+    int i; 
+    
     for(i = 0; i < mca_btl_udapl_component.udapl_num_recvs; i++) {
         if(size == mca_btl_udapl_component.udapl_eager_frag_size) {
             MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(endpoint->endpoint_btl, frag, rc);
@@ -959,6 +959,7 @@ static void mca_btl_udapl_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     udapl_btl->super.btl_mpool->mpool_free(udapl_btl->super.btl_mpool,
         NULL,
         reg);
+    free(endpoint->endpoint_eager_rdma_local.base.pval);
 }
 
 
@@ -1049,6 +1050,7 @@ static int mca_btl_udapl_endpoint_send_eager_rdma(
     mca_btl_udapl_eager_rdma_connect_t* rdma_connect;
     mca_btl_base_descriptor_t* des;    
     mca_btl_base_segment_t* segment;
+    mca_btl_udapl_frag_t* frag = (mca_btl_udapl_frag_t*)endpoint->endpoint_eager_rdma_local.base.pval;
     mca_btl_udapl_module_t* udapl_btl = endpoint->endpoint_btl;
     size_t cntrl_msg_size = sizeof(mca_btl_udapl_eager_rdma_connect_t);
     int rc = OMPI_SUCCESS;
@@ -1069,7 +1071,7 @@ static int mca_btl_udapl_endpoint_send_eager_rdma(
     rdma_connect->rkey =
         endpoint->endpoint_eager_rdma_local.reg->rmr_context;
     rdma_connect->rdma_start.pval =
-        endpoint->endpoint_eager_rdma_local.base.pval;
+	(unsigned char*)frag->base.super.ptr;
 
     /* send fragment */
     rc = mca_btl_udapl_send((mca_btl_base_module_t *)udapl_btl, endpoint,
@@ -1085,13 +1087,23 @@ static int mca_btl_udapl_endpoint_send_eager_rdma(
  * for writing into by sending a description of the area to the given
  * endpoint.
  *
- * @param endpoint (IN)    BTL addressing information
+ * Note: The local memory region is actually two areas, one is a
+ * contiguous memory region containing only the fragment structures. A
+ * pointer to the first fragment structure is held here:
+ * endpoint->endpoint_eager_rdma_local.base.pval. Each of these
+ * fragment structures will contain a pointer,
+ * frag->segment.seg_addr.pval set during a call to OBJ_CONSTRUCT(),
+ * to its associated data region. The data region for all fragments
+ * will be contiguous and created by accessing the mpool.
+ *
+ * @param endpoint (IN) BTL addressing information
  */
 void mca_btl_udapl_endpoint_connect_eager_rdma(
     mca_btl_udapl_endpoint_t* endpoint)
 {
     char* buf;
-    size_t size;
+    char* alloc_ptr;
+    size_t size_plus_align;
     int i;
     mca_btl_udapl_module_t* udapl_btl = endpoint->endpoint_btl;
 
@@ -1110,14 +1122,24 @@ void mca_btl_udapl_endpoint_connect_eager_rdma(
         goto unlock_rdma_local;
     } 
 
-    /* determine total size of buffer region */
-    size = mca_btl_udapl_component.udapl_eager_rdma_frag_size *
-        mca_btl_udapl_component.udapl_eager_rdma_num;
+    /* create space for fragment structures */
+    alloc_ptr = (char*)malloc(mca_btl_udapl_component.udapl_eager_rdma_num *
+	sizeof(mca_btl_udapl_frag_eager_rdma_t));
 
-    /* create and register memory */
+    if(NULL == alloc_ptr) {
+        goto unlock_rdma_local;
+    }
+    
+    /* get size of one fragment's data region */
+    size_plus_align = OPAL_ALIGN(
+	mca_btl_udapl_component.udapl_eager_frag_size, 
+	DAT_OPTIMAL_ALIGNMENT, size_t);
+
+    /* create and register memory for all rdma segments */
     buf = udapl_btl->super.btl_mpool->mpool_alloc(udapl_btl->super.btl_mpool,
-            size, 0, 0,
-            (mca_mpool_base_registration_t**)&endpoint->endpoint_eager_rdma_local.reg);
+        (size_plus_align * mca_btl_udapl_component.udapl_eager_rdma_num),
+	0, 0,
+        (mca_mpool_base_registration_t**)&endpoint->endpoint_eager_rdma_local.reg);
 
     if(!buf)
        goto unlock_rdma_local;
@@ -1125,10 +1147,10 @@ void mca_btl_udapl_endpoint_connect_eager_rdma(
     /* initialize the rdma segments */
     for(i = 0; i < mca_btl_udapl_component.udapl_eager_rdma_num; i++) {
          mca_btl_udapl_frag_eager_rdma_t* local_rdma_frag;
-         ompi_free_list_item_t *item = (ompi_free_list_item_t *)(buf +
-                i*mca_btl_udapl_component.udapl_eager_rdma_frag_size);
+         ompi_free_list_item_t *item = (ompi_free_list_item_t *)(alloc_ptr +
+                i*sizeof(mca_btl_udapl_frag_eager_rdma_t));
          item->registration = (void*)endpoint->endpoint_eager_rdma_local.reg;
-         item->ptr = buf + i * mca_btl_udapl_component.udapl_eager_rdma_frag_size; 
+         item->ptr = buf + i * size_plus_align; 
          OBJ_CONSTRUCT(item, mca_btl_udapl_frag_eager_rdma_t);
 
          local_rdma_frag = ((mca_btl_udapl_frag_eager_rdma_t*)item);
@@ -1150,7 +1172,8 @@ void mca_btl_udapl_endpoint_connect_eager_rdma(
                 udapl_btl->udapl_eager_rdma_endpoints, endpoint) < 0)
            goto cleanup;
 
-    endpoint->endpoint_eager_rdma_local.base.pval = buf;
+    /* record first fragment location */
+    endpoint->endpoint_eager_rdma_local.base.pval = alloc_ptr; 
     udapl_btl->udapl_eager_rdma_endpoint_count++;
 
     /* send the relevant data describing the registered space to the endpoint */
@@ -1170,6 +1193,8 @@ cleanup:
      * and this could happen because we do not lock before checking if max has
      * been reached
      */
+    free(alloc_ptr);
+    endpoint->endpoint_eager_rdma_local.base.pval = NULL;
     OPAL_THREAD_UNLOCK(&udapl_btl->udapl_eager_rdma_lock);
     udapl_btl->super.btl_mpool->mpool_free(udapl_btl->super.btl_mpool,
         buf,
