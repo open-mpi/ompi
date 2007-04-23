@@ -87,10 +87,12 @@ static mca_ns_base_module_t orte_ns_proxy_module = {
     orte_ns_proxy_get_job_children,
     orte_ns_proxy_get_root_job,
     orte_ns_proxy_get_parent_job,
+    orte_ns_proxy_get_job_family,
     orte_ns_base_get_jobid_string,
     orte_ns_base_convert_jobid_to_string,
     orte_ns_base_convert_string_to_jobid,
     orte_ns_proxy_reserve_range,
+    orte_ns_proxy_get_vpid_range,
     /* vpid functions */
     orte_ns_base_get_vpid_string,
     orte_ns_base_convert_vpid_to_string,

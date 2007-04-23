@@ -114,8 +114,12 @@ int orte_ns_proxy_get_root_job(orte_jobid_t *root_job, orte_jobid_t job);
 
 int orte_ns_proxy_get_parent_job(orte_jobid_t *parent, orte_jobid_t job);
 
+int orte_ns_proxy_get_job_family(orte_jobid_t** family, orte_std_cntr_t *num_members, orte_jobid_t job);
+
 int orte_ns_proxy_reserve_range(orte_jobid_t job, orte_vpid_t range,
                                 orte_vpid_t *startvpid);
+
+int orte_ns_proxy_get_vpid_range(orte_jobid_t job, orte_vpid_t *range);
 
 int orte_ns_proxy_get_peers(orte_process_name_t **procs, 
                             orte_std_cntr_t *num_procs, opal_list_t *attrs);

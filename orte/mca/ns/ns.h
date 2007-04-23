@@ -242,6 +242,15 @@ typedef int (*orte_ns_base_module_get_job_children_fn_t)(orte_jobid_t** children
 typedef  int (*orte_ns_base_module_get_root_job_fn_t)(orte_jobid_t *root_job, orte_jobid_t job);
 
 /*
+ * Get a job family
+ * Given a jobid, return the array of jobids (including the given one) that are members
+ * of that extended job family. This will return ALL jobs related to the given one.
+ */
+typedef  int (*orte_ns_base_module_get_job_family_fn_t)(orte_jobid_t** family,
+                                                        orte_std_cntr_t *num_members,
+                                                        orte_jobid_t job);
+
+/*
  * Get parent jobid
  * Given a jobid, return the parent job from which it descended. If the provided jobid is the
  * root (i.e., has no parent), this function will return that same value.
@@ -269,6 +278,12 @@ typedef int (*orte_ns_base_module_get_parent_job_fn_t)(orte_jobid_t *parent, ort
 typedef int (*orte_ns_base_module_reserve_range_fn_t)(orte_jobid_t job,
                                                       orte_vpid_t range,
                                                       orte_vpid_t *startvpid);
+
+/*
+ * Get the range of vpids assigned to a specified jobid
+ * Given a jobid, return the maximum vpid value assigned to that job.
+ */
+typedef  int (*orte_ns_base_module_get_vpid_range_fn_t)(orte_jobid_t job, orte_vpid_t *range);
 
 /**
  * Get the job id as a character string.
@@ -593,10 +608,12 @@ struct mca_ns_base_module_2_0_0_t {
     orte_ns_base_module_get_job_children_fn_t               get_job_children;
     orte_ns_base_module_get_root_job_fn_t                   get_root_job;
     orte_ns_base_module_get_parent_job_fn_t                 get_parent_job;
+    orte_ns_base_module_get_job_family_fn_t                 get_job_family;
     orte_ns_base_module_get_jobid_string_fn_t               get_jobid_string;
     orte_ns_base_module_convert_jobid_to_string_fn_t        convert_jobid_to_string;
     orte_ns_base_module_convert_string_to_jobid_fn_t        convert_string_to_jobid;
     orte_ns_base_module_reserve_range_fn_t                  reserve_range;
+    orte_ns_base_module_get_vpid_range_fn_t                 get_vpid_range;
     /* vpid functions */
     orte_ns_base_module_get_vpid_string_fn_t                get_vpid_string;
     orte_ns_base_module_convert_vpid_to_string_fn_t         convert_vpid_to_string;

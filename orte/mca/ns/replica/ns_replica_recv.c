@@ -306,6 +306,29 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
             }
             break;
             
+        case ORTE_NS_GET_VPID_RANGE_CMD:
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, (void*)&job, &count, ORTE_JOBID))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+                
+            if (ORTE_SUCCESS != (rc = orte_ns_replica_get_vpid_range(job, &range))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+            
+            if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&range, 1, ORTE_VPID))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+            
+            if (0 > (rc = orte_rml.send_buffer(sender, &answer, tag, 0))) {
+                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                goto RETURN_ERROR;
+            }
+            break;
+            
         case ORTE_NS_ASSIGN_OOB_TAG_CMD:
             count = 1;
             if (0 > orte_dss.unpack(buffer, &tagname, &count, ORTE_STRING)) {

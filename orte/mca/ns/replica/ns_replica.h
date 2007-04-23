@@ -168,9 +168,13 @@ int orte_ns_replica_get_root_job(orte_jobid_t *root_job, orte_jobid_t job);
 
 int orte_ns_replica_get_parent_job(orte_jobid_t *parent, orte_jobid_t job);
 
+int orte_ns_replica_get_job_family(orte_jobid_t **family, orte_std_cntr_t *num_members, orte_jobid_t job);
+
 int orte_ns_replica_reserve_range(orte_jobid_t job,
                                   orte_vpid_t range,
                                   orte_vpid_t *startvpid);
+
+int orte_ns_replica_get_vpid_range(orte_jobid_t job, orte_vpid_t *range);
 
 /*
  * GENERAL FUNCTIONS

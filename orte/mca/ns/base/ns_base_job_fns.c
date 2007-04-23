@@ -52,11 +52,20 @@ orte_ns_base_create_jobid_not_available(orte_jobid_t *jobid, opal_list_t *attrs)
 }
 
 int
-orte_ns_base_get_vpid_range_not_available(orte_jobid_t job,
-                                       orte_vpid_t range,
-                                       orte_vpid_t *startvpid)
+orte_ns_base_reserve_range_not_available(orte_jobid_t job,
+                                         orte_vpid_t range,
+                                         orte_vpid_t *startvpid)
 {
     *startvpid = ORTE_VPID_INVALID;
+    ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
+    return ORTE_ERR_UNREACH;
+}
+
+int
+orte_ns_base_get_vpid_range_not_available(orte_jobid_t job,
+                                          orte_vpid_t *range)
+{
+    *range = ORTE_VPID_INVALID;
     ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
     return ORTE_ERR_UNREACH;
 }
@@ -91,6 +100,16 @@ int orte_ns_base_get_root_job_not_available(orte_jobid_t *root_job, orte_jobid_t
 int orte_ns_base_get_parent_job_not_available(orte_jobid_t *parent, orte_jobid_t job)
 {
     *parent = ORTE_JOBID_INVALID;
+    ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
+    return ORTE_ERR_UNREACH;
+}
+
+int orte_ns_base_get_job_family_not_available(orte_jobid_t** family,
+                                              orte_std_cntr_t *num_members,
+                                              orte_jobid_t job)
+{
+    *family = NULL;
+    *num_members = 0;
     ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
     return ORTE_ERR_UNREACH;
 }
