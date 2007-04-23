@@ -45,6 +45,7 @@
 #include "opal/util/error.h"
 #include "opal/util/stacktrace.h"
 #include "opal/util/keyval_parse.h"
+#include "opal/util/sys_limits.h"
 
 
 bool opal_init_only = true;
@@ -189,6 +190,11 @@ opal_init_util(void)
         goto return_error;
     }
 
+    if (OPAL_SUCCESS != (ret = opal_util_init_sys_limits())) {
+        error = "opal_util_init_sys_limits";
+        goto return_error;
+    }
+    
     return OPAL_SUCCESS;
 
  return_error:
