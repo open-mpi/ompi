@@ -53,6 +53,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/params.h"
 
 #include "orte/util/session_dir.h"
 
@@ -103,8 +104,8 @@ static int orte_create_dir(char *directory)
  */
 int
 orte_session_dir_get_name(char **fulldirpath,
-                          char **prefix,  /* This will come back as the valid tmp dir */
-                          char **frontend,
+                          char **return_prefix,  /* This will come back as the valid tmp dir */
+                          char **return_frontend,
                           char *usr, char *hostid,
                           char *batchid, char *univ, 
                           char *job, char *proc) {
@@ -112,7 +113,10 @@ orte_session_dir_get_name(char **fulldirpath,
         *batchname = NULL,
         *sessions  = NULL, 
         *user      = NULL, 
-        *universe  = NULL;
+        *universe  = NULL,
+        *prefix = NULL,
+        *frontend = NULL;
+    bool prefix_provided = false;
     int exit_status = ORTE_SUCCESS;
     
     /* Ensure that system info is set */
@@ -198,10 +202,10 @@ orte_session_dir_get_name(char **fulldirpath,
      *    openmpi-sessions-USERNAME@HOSTNAME_BATCHID
      */
     if (NULL != orte_process_info.top_session_dir) {
-        *frontend = strdup(orte_process_info.top_session_dir);
+        frontend = strdup(orte_process_info.top_session_dir);
     }
     else { /* If not set then construct it */
-        if (0 > asprintf(frontend, "openmpi-sessions-%s@%s_%s", user, hostname, batchname)) {
+        if (0 > asprintf(&frontend, "openmpi-sessions-%s@%s_%s", user, hostname, batchname)) {
             exit_status = ORTE_ERROR;
             goto cleanup;
         }
@@ -214,7 +218,7 @@ orte_session_dir_get_name(char **fulldirpath,
      *   openmpi-sessions-USERNAME@HOSTNAME_BATCHID/UNIVERSE/JOBID/PROC
      */
     if( NULL != proc) {
-        sessions = opal_os_path( false, *frontend, universe, job, proc, NULL );
+        sessions = opal_os_path( false, frontend, universe, job, proc, NULL );
         if( NULL == sessions ) {
             exit_status = ORTE_ERROR;
             goto cleanup;
@@ -224,7 +228,7 @@ orte_session_dir_get_name(char **fulldirpath,
      *   openmpi-sessions-USERNAME@HOSTNAME_BATCHID/UNIVERSE/JOBID
      */
     else if(NULL != job) {
-        sessions = opal_os_path( false, *frontend, universe, job, NULL );
+        sessions = opal_os_path( false, frontend, universe, job, NULL );
         if( NULL == sessions ) {
             exit_status = ORTE_ERROR;
             goto cleanup;
@@ -234,7 +238,7 @@ orte_session_dir_get_name(char **fulldirpath,
      *   openmpi-sessions-USERNAME@HOSTNAME_BATCHID/UNIVERSE
      */
     else if(NULL != universe) {
-        sessions = opal_os_path( false, *frontend, universe, NULL );
+        sessions = opal_os_path( false, frontend, universe, NULL );
         if( NULL == sessions ) {
             exit_status = ORTE_ERROR;
             goto cleanup;
@@ -245,7 +249,7 @@ orte_session_dir_get_name(char **fulldirpath,
      */
     else {
         if (0 > asprintf(&sessions, "%s",
-                         *frontend) ) {
+                         frontend) ) {
             exit_status = ORTE_ERROR;
             goto cleanup;
         }
@@ -260,32 +264,42 @@ orte_session_dir_get_name(char **fulldirpath,
         *fulldirpath = NULL;
     }
 
-    if( NULL != *prefix) { /* use the user specified one, if available */
-        ;
+    if( NULL != return_prefix && NULL != *return_prefix) { /* use the user specified one, if available */ 
+        prefix = strdup(*return_prefix); 
+        prefix_provided = true;
     }
     /* Try to find a proper alternative prefix */
     else if (NULL != orte_process_info.tmpdir_base) { /* stored value */
-        *prefix = strdup(orte_process_info.tmpdir_base);
+        prefix = strdup(orte_process_info.tmpdir_base);
     }
     else if( NULL != getenv("OMPI_PREFIX_ENV") ) { /* OMPI Environment var */
-        *prefix = strdup(getenv("OMPI_PREFIX_ENV"));
+        prefix = strdup(getenv("OMPI_PREFIX_ENV"));
     }
     else if( NULL != getenv("TMPDIR") ) { /* General Environment var */
-        *prefix = strdup(getenv("TMPDIR"));
+        prefix = strdup(getenv("TMPDIR"));
     }
     else if( NULL != getenv("TMP") ) { /* Another general environment var */
-        *prefix = strdup(getenv("TMP"));
+        prefix = strdup(getenv("TMP"));
     }
     else { /* ow. just use the default tmp directory */
-        *prefix = strdup(OMPI_DEFAULT_TMPDIR);
+        prefix = strdup(OMPI_DEFAULT_TMPDIR);
     }
     
     /*
      * Construct the absolute final path
      */
-    *fulldirpath = opal_os_path(false, *prefix, sessions, NULL);
+    *fulldirpath = opal_os_path(false, prefix, sessions, NULL);
 
-    
+    /* 
+     * Return the frontend and prefix, if user requested we do so 
+     */ 
+    if (NULL != return_frontend) { 
+        *return_frontend = strdup(frontend); 
+    } 
+    if (!prefix_provided && NULL != return_prefix) { 
+        *return_prefix = strdup(prefix); 
+    } 
+
  cleanup:
     if(NULL != hostname)
         free(hostname);
@@ -297,7 +311,9 @@ orte_session_dir_get_name(char **fulldirpath,
         free(user);
     if(NULL != universe)
         free(universe);
-    
+    if (NULL != prefix) free(prefix);
+    if (NULL != frontend) free(frontend);
+
     return exit_status;
 }
 
