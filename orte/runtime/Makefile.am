@@ -22,13 +22,14 @@
 dist_pkgdata_DATA += runtime/help-orte-runtime.txt
 
 headers += \
-		runtime/orte_wait.h \
+	runtime/orte_wait.h \
+	runtime/orte_wakeup.h \
         runtime/runtime.h \
         runtime/runtime_internal.h \
         runtime/runtime_types.h \
         runtime/params.h \
-		runtime/orte_setup_hnp.h \
-		runtime/orte_cr.h
+        runtime/orte_setup_hnp.h \
+        runtime/orte_cr.h
 
 libopen_rte_la_SOURCES += \
         runtime/orte_abort.c \
@@ -44,4 +45,5 @@ libopen_rte_la_SOURCES += \
         runtime/orte_system_init.c \
         runtime/orte_universe_exists.c \
         runtime/orte_wait.c \
-		runtime/orte_cr.c
+        runtime/orte_wakeup.c \
+        runtime/orte_cr.c
