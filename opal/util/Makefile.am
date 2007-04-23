@@ -54,6 +54,7 @@ headers = \
         show_help_lex.h \
         stacktrace.h \
         strncpy.h \
+        sys_limits.h \
         trace.h
 
 libopalutil_la_SOURCES = \
@@ -84,6 +85,7 @@ libopalutil_la_SOURCES = \
         show_help_lex.l \
         stacktrace.c \
         strncpy.c \
+        sys_limits.c \
         trace.c
 libopalutil_la_LIBADD = \
 	keyval/libopalutilkeyval.la
