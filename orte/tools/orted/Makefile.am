@@ -32,6 +32,7 @@ headers = \
 
 orted_SOURCES = \
 	$(headers) \
+	orted_comm.c \
         orted.c 
 
 orted_LDADD = $(libs)

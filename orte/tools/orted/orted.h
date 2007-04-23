@@ -53,33 +53,14 @@ typedef struct {
 
 ORTE_DECLSPEC extern orted_globals_t orted_globals;
 
-/*
- * Version-related strings and functions
- */
+/* orted communication functions */
+void orte_daemon_recv(int status, orte_process_name_t* sender,
+                      orte_buffer_t *buffer, orte_rml_tag_t tag,
+                      void* cbdata);
 
-/* extern const char *ver_full; */
-/* extern const char *ver_major; */
-/* extern const char *ver_minor; */
-/* extern const char *ver_release; */
-/* extern const char *ver_alpha; */
-/* extern const char *ver_beta; */
-/* extern const char *ver_svn; */
-
-/* void do_version(bool want_all, opal_cmd_line_t *cmd_line); */
-/* void show_ompi_version(const char *scope); */
-
-/*
- * Parameter/configuration-related functions
- */
-
-/* extern char *param_all; */
-
-/* extern char *path_prefix; */
-/* extern char *path_bindir; */
-/* extern char *path_libdir; */
-/* extern char *path_incdir; */
-/* extern char *path_pkglibdir; */
-/* extern char *path_sysconfdir; */
+void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
+                          orte_buffer_t *buffer, orte_rml_tag_t tag,
+                          void* cbdata);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
