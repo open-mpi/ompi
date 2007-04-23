@@ -93,7 +93,16 @@ enum {
     ORTE_ERR_INDETERMINATE_STATE_INFO       = (ORTE_ERR_BASE - 25),
     ORTE_ERR_NODE_FULLY_USED				= (ORTE_ERR_BASE - 26),
     ORTE_ERR_INVALID_NUM_PROCS              = (ORTE_ERR_BASE - 27),
-    ORTE_ERR_SILENT                         = (ORTE_ERR_BASE - 28)
+    ORTE_ERR_SILENT                         = (ORTE_ERR_BASE - 28),
+    ORTE_ERR_ADDRESSEE_UNKNOWN              = (ORTE_ERR_BASE - 29),
+    ORTE_ERR_SYS_LIMITS_PIPES               = (ORTE_ERR_BASE - 30),
+    ORTE_ERR_PIPE_SETUP_FAILURE             = (ORTE_ERR_BASE - 31),
+    ORTE_ERR_SYS_LIMITS_CHILDREN            = (ORTE_ERR_BASE - 32),
+    ORTE_ERR_FAILED_GET_TERM_ATTRS          = (ORTE_ERR_BASE - 33),
+    ORTE_ERR_WDIR_NOT_FOUND                 = (ORTE_ERR_BASE - 34),
+    ORTE_ERR_EXE_NOT_FOUND                  = (ORTE_ERR_BASE - 35),
+    ORTE_ERR_PIPE_READ_FAILURE              = (ORTE_ERR_BASE - 36),
+    ORTE_ERR_EXE_NOT_ACCESSIBLE             = (ORTE_ERR_BASE - 37)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)

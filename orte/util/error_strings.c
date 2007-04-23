@@ -112,6 +112,33 @@ orte_err2str(int errnum)
     case ORTE_ERR_SILENT:
         retval = NULL;
         break;
+    case ORTE_ERR_ADDRESSEE_UNKNOWN:
+        retval = "A message is attempting to be sent to a process whose contact information is unknown";
+        break;
+    case ORTE_ERR_SYS_LIMITS_PIPES:
+        retval = "The system limit on number of pipes a process can open was reached";
+        break;
+    case ORTE_ERR_PIPE_SETUP_FAILURE:
+        retval = "A pipe could not be setup between a daemon and one of its local processes";
+        break;
+    case ORTE_ERR_SYS_LIMITS_CHILDREN:
+        retval = "The system limit on number of children a process can have was reached";
+        break;
+    case ORTE_ERR_FAILED_GET_TERM_ATTRS:
+        retval = "The I/O forwarding system was unable to get the attributes of your terminal";
+        break;
+    case ORTE_ERR_WDIR_NOT_FOUND:
+        retval = "The specified working directory could not be found";
+        break;
+    case ORTE_ERR_EXE_NOT_FOUND:
+        retval = "The specified executable could not be found";
+        break;
+    case ORTE_ERR_PIPE_READ_FAILURE:
+        retval = "A pipe could not be read";
+        break;
+    case ORTE_ERR_EXE_NOT_ACCESSIBLE:
+        retval = "The specified executable could not be executed";
+        break;
     default:
         retval = NULL;
     }
