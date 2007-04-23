@@ -986,8 +986,6 @@ int mca_btl_udapl_component_progress()
 
                 /* repost */
                 local_rdma_frag->rdma_ftr->active = 0; 
-                local_rdma_frag->segment.seg_addr.pval =
-                    (unsigned char*)(local_rdma_frag + 1); 
                 local_rdma_frag->segment.seg_len =
                     mca_btl_udapl_module.super.btl_eager_limit;
                 local_rdma_frag->base.des_flags = 0;
