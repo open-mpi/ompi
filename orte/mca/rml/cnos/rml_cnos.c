@@ -224,14 +224,10 @@ orte_rml_cnos_barrier(void)
 
 int
 orte_rml_cnos_xcast(orte_process_name_t * root,
-                    orte_process_name_t * peers,
-                    size_t num_peers,
-                    orte_buffer_t * buffer,
-                    orte_gpr_trigger_cb_fn_t cbfunc,
-                    void *user_tag)
+                    orte_gpr_notify_message_t *msg2,
+                    orte_gpr_trigger_cb_fn_t cbfunc)
 {
-    if (NULL != root || NULL != peers || 0 != num_peers || 
-        NULL != buffer || NULL != user_tag) {
+    if (NULL != root || NULL != msg) {
         return ORTE_ERR_NOT_SUPPORTED;
     }
 
