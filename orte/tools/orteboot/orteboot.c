@@ -37,6 +37,7 @@
 #include <sys/wait.h>
 #endif  /* HAVE_SYS_WAIT_H */
 
+#include "opal/runtime/opal.h"
 #include "opal/event/event.h"
 #include "opal/mca/base/base.h"
 #include "opal/threads/condition.h"
@@ -187,8 +188,8 @@ int main(int argc, char *argv[])
     orteboot_globals.exit = false;
     orteboot_globals.debug = false;
     
-    /* Setup MCA params */
-    mca_base_param_init();
+    /* initialize opal layer */
+    opal_init_util();
 
     /* find our basename (the name of the executable) so that we can
      * use it in pretty-print error messages
@@ -309,6 +310,7 @@ int main(int argc, char *argv[])
     
     
     free(orteboot_basename);
+    opal_finalize_util();
     return ORTE_SUCCESS;
 }
 
