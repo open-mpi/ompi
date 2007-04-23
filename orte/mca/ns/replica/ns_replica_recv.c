@@ -277,6 +277,36 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
             }
             break;
                         
+        case ORTE_NS_GET_JOB_FAMILY_CMD:
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, (void*)&job, &count, ORTE_JOBID))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+                
+            if (ORTE_SUCCESS != (rc = orte_ns_replica_get_job_family(&descendants, &nret, job))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+            
+            if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&nret, 1, ORTE_STD_CNTR))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+            
+            if (0 < nret) {
+                if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, (void*)descendants, nret, ORTE_JOBID))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto RETURN_ERROR;
+                }
+            }
+            
+            if (0 > (rc = orte_rml.send_buffer(sender, &answer, tag, 0))) {
+                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                goto RETURN_ERROR;
+            }
+            break;
+            
         case ORTE_NS_RESERVE_RANGE_CMD:
             count = 1;
             if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, (void*)&job, &count, ORTE_JOBID))) {
