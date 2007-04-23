@@ -132,7 +132,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
             ompi_coll_tuned_free_all_rules (*rules, n_collectives);
             return (-4);
         }
-
+        OPAL_OUTPUT((ompi_coll_tuned_stream, "Reading dynamic rule for collective ID %d\n", CI));
         alg_p = &alg_rules[CI];
 
         alg_p->alg_rule_id = CI;
@@ -144,7 +144,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
             OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read count of communicators for collective ID %d at around line %d\n", CI, fileline));
             goto on_file_error;
         }
-
+        OPAL_OUTPUT((ompi_coll_tuned_stream, "Read communicator count %d for dynamic rule for collective ID %d\n", NCS, CI));
         alg_p->n_com_sizes = NCS;
         alg_p->com_rules = ompi_coll_tuned_mk_com_rules (NCS, CI);
 
@@ -165,7 +165,8 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
                 OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read number of message sizes for collective ID %d com rule %d at around line %d\n", CI, ncs, fileline));
                 goto on_file_error;
             }
-
+            OPAL_OUTPUT((ompi_coll_tuned_stream, "Read message count %d for dynamic rule for collective ID %d and comm size %d\n", 
+                         NMS, CI, CS));
             com_p->n_msg_sizes = NMS;
             com_p->msg_rules = ompi_coll_tuned_mk_msg_rules (NMS, CI, ncs, CS);
 
@@ -218,6 +219,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
         } /* comm size */
 
         total_alg_count++;
+        OPAL_OUTPUT((ompi_coll_tuned_stream, "Done reading dynamic rule for collective ID %d\n", CI));
 
     } /* per collective */
    
