@@ -392,8 +392,7 @@ int orte_rml_ftrm_recv_cancel(orte_process_name_t* peer, orte_rml_tag_t tag)
  * Xcast
  */
 int orte_rml_ftrm_xcast(orte_jobid_t job,
-                        bool process_first,
-                        orte_buffer_t* buffer,
+                        orte_gpr_notify_message_t *msg,
                         orte_gpr_trigger_cb_fn_t cbfunc)
 {
     int ret;
@@ -402,7 +401,7 @@ int orte_rml_ftrm_xcast(orte_jobid_t job,
                         "orte_rml_ftrm: xcast()");
 
     if( NULL != wrapped_module.xcast ) {
-        if( ORTE_SUCCESS != (ret = wrapped_module.xcast(job, process_first, buffer, cbfunc) ) ) {
+        if( ORTE_SUCCESS != (ret = wrapped_module.xcast(job, msg, cbfunc) ) ) {
             return ret;
         }
     }
