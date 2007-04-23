@@ -485,7 +485,7 @@ int mca_pml_ob1_ft_event( int state )
             return ret;
         }
 
-        if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid, true,
+        if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid,
                                                   NULL, orte_gpr.deliver_notify_msg))) {
             opal_output(0,
                         "pml:ob1: ft_event(Restart): Stage Gate 1 Failed %d",
@@ -510,7 +510,7 @@ int mca_pml_ob1_ft_event( int state )
             return ret;
         }
 
-        if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid, false,
+        if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid,
                                                   NULL, orte_gpr.deliver_notify_msg))) {
             opal_output(0,"pml:ob1: ft_event(Restart): Stage Gate 1 Failed %d",
                         ret);

@@ -23,13 +23,16 @@
 #include "orte/orte_constants.h"
 #include "orte/util/sys_info.h"
 #include "opal/util/output.h"
+#include "opal/util/os_path.h"
 #include "opal/mca/base/mca_base_param.h"
+
 #include "orte/mca/sds/sds.h"
 #include "orte/mca/sds/base/base.h"
 #include "orte/mca/sds/bproc/sds_bproc.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/ns/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
+#include "orte/util/session_dir.h"
 
 orte_sds_base_module_t orte_sds_bproc_module = {
     orte_sds_base_basic_contact_universe,
@@ -47,8 +50,15 @@ int orte_sds_bproc_set_name(void)
 {
     int rc;
     int id;
-    char* name_string = NULL;
-
+    char *name_string = NULL;
+    char *jobid_string;
+    char *vpid_string;
+    char orted_uri[1024];
+    bool cleanup_jobid_string, cleanup_vpid_string;
+    char *session_dir;
+    char *uri_file;
+    FILE *fp;
+    
     id = mca_base_param_register_string("ns", "nds", "name", NULL, NULL);
     mca_base_param_lookup_string(id, &name_string);
     if(name_string != NULL) {
@@ -61,6 +71,18 @@ int orte_sds_bproc_set_name(void)
         }
         free(name_string);
 
+        /* get the jobid and vpid strings for use later */
+        if (ORTE_SUCCESS != (rc = orte_ns.get_jobid_string(&jobid_string, ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (ORTE_SUCCESS != (rc = orte_ns.get_vpid_string(&vpid_string, ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        cleanup_jobid_string = true;
+        cleanup_vpid_string = true;
+        
     } else {
 
         orte_cellid_t cellid;
@@ -68,8 +90,6 @@ int orte_sds_bproc_set_name(void)
         orte_vpid_t vpid;
         orte_vpid_t vpid_start;
         char* cellid_string;
-        char* jobid_string;
-        char* vpid_string;
         int num_procs;
         char *bproc_rank_string;
         int bproc_rank;
@@ -96,6 +116,7 @@ int orte_sds_bproc_set_name(void)
             ORTE_ERROR_LOG(rc);
             return(rc);
         }
+        cleanup_jobid_string = false;
 
         /* BPROC_RANK is set by bproc when we do a parallel launch */
         bproc_rank_string = getenv("BPROC_RANK");
@@ -166,7 +187,49 @@ int orte_sds_bproc_set_name(void)
         if(NULL != orte_system_info.nodename)
             free(orte_system_info.nodename);
         asprintf(&orte_system_info.nodename, "%d", bproc_currnode());
+
+        /* ensure the vpid is in the vpid_string in case we need it later */
+        if (ORTE_SUCCESS != (rc = orte_ns.get_vpid_string(&vpid_string, ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        cleanup_vpid_string = true;
     }
+    
+    /* if we are NOT a daemon, then lookup our local daemon's contact info
+     * and setup that link
+     */
+    if (!orte_process_info.daemon) {
+        /* get the session dir name so we can find the file there */
+        if (ORTE_SUCCESS != (rc = orte_session_dir_get_name(&session_dir, NULL, NULL, NULL,
+                                                            NULL, NULL, NULL, jobid_string, vpid_string))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* find the file and get the local orted's uri from it */
+        uri_file = opal_os_path(false, session_dir, "orted-uri.txt", NULL);
+        free(session_dir);
+        
+        fp = fopen(uri_file, "r");
+        if (NULL == fp) {
+            ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
+            return ORTE_ERR_FILE_OPEN_FAILURE;
+        }
+        fgets(orted_uri, 1024, fp);
+        orted_uri[strlen(orted_uri)-1] = '\0';
+        fclose(fp);
+        /* setup the link */
+        if (ORTE_SUCCESS != (rc = orte_sds_base_contact_orted(orted_uri))) {
+            ORTE_ERROR_LOG(rc);
+            return(rc);
+        }
+        free(uri_file);
+    }
+    
+    if (cleanup_jobid_string) free(jobid_string);
+    if (cleanup_vpid_string) free(vpid_string);
+    
     return ORTE_SUCCESS;
 }
 

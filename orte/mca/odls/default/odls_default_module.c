@@ -82,6 +82,7 @@
 #include "orte/util/univ_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/runtime/params.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/iof/iof.h"
@@ -113,7 +114,8 @@ orte_odls_base_module_t orte_odls_default_module = {
     orte_odls_default_get_add_procs_data,
     orte_odls_default_launch_local_procs,
     orte_odls_default_kill_local_procs,
-    orte_odls_default_signal_local_procs
+    orte_odls_default_signal_local_procs,
+    orte_odls_default_deliver_message
 };
 
 /* this entire function gets called within a GPR compound command,
@@ -171,8 +173,8 @@ int orte_odls_default_subscribe_launch_data(orte_jobid_t job, orte_gpr_notify_cb
     sub.cnt = 2;
     sub.values = values;
     
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[0]), ORTE_GPR_TOKENS_OR, segment,
-                                                     num_glob_keys, 1))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[0]), ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
+                                                    segment, num_glob_keys, 1))) {
         ORTE_ERROR_LOG(rc);
         free(segment);
         free(sub.name);
@@ -760,6 +762,13 @@ static int odls_default_fork_local_proc(
         opal_unsetenv(param, &environ_copy);
         free(param);
 
+        /* pass my contact info to the local proc so we can talk */
+        uri = orte_rml.get_uri();
+        param = mca_base_param_environ_variable("orte","local_daemon","uri");
+        opal_setenv(param, uri, true, &environ_copy);
+        free(param);
+        free(uri);
+        
         /* setup yield schedule and processor affinity
          * We default here to always setting the affinity processor if we want
          * it. The processor affinity system then determines
@@ -959,6 +968,8 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
     bool oversubscribed=false, want_processor, *bptr, override_oversubscribed=false;
     opal_list_item_t *item, *item2;
     orte_filem_base_request_t *filem_request;
+    char *job_str, *uri_file, *my_uri, *session_dir=NULL;
+    FILE *fp;
 
     /* parse the returned data to create the required structures
      * for a fork launch. Since the data will contain information
@@ -1106,6 +1117,41 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
             }
         } /* for j */
     }
+
+    /* record my uri in a file within the session directory so the local proc
+     * can contact me
+     */
+    opal_output(orte_odls_globals.output, "odls: dropping local uri file");
+
+    /* put the file in the job session dir for the job being launched */
+    orte_ns.convert_jobid_to_string(&job_str, job);
+    if (ORTE_SUCCESS != (rc = orte_session_dir(true, NULL, NULL, NULL,
+                                               NULL, NULL, job_str, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* get the session dir name so we can put the file there */
+    if (ORTE_SUCCESS != (rc = orte_session_dir_get_name(&session_dir, NULL, NULL, NULL,
+                                                        NULL, NULL, NULL, job_str, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        free(job_str);
+        return rc;
+    }
+    free(job_str);
+    
+    /* create the file and put my uri into it */
+    uri_file = opal_os_path(false, session_dir, "orted-uri.txt", NULL);
+    fp = fopen(uri_file, "w");
+    if (NULL == fp) {
+        ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
+        return ORTE_ERR_FILE_OPEN_FAILURE;
+    }
+    my_uri = orte_rml.get_uri();
+    fprintf(fp, "%s\n", my_uri);
+    fclose(fp);
+    free(uri_file);
+    free(my_uri);
 
     /* Now we preload any files that are needed. This is done on a per
      * app context basis */
@@ -1377,6 +1423,43 @@ int orte_odls_default_signal_local_procs(const orte_process_name_t *proc, int32_
     opal_condition_signal(&orte_odls_default.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_default.mutex);
     return ORTE_ERR_NOT_FOUND;
+}
+
+
+int orte_odls_default_deliver_message(orte_jobid_t job, orte_buffer_t *buffer, orte_rml_tag_t tag)
+{
+    int rc;
+    opal_list_item_t *item;
+    orte_odls_child_t *child;
+    
+    /* protect operations involving the global list of children */
+    OPAL_THREAD_LOCK(&orte_odls_default.mutex);
+    
+    for (item = opal_list_get_first(&orte_odls_default.children);
+         item != opal_list_get_end(&orte_odls_default.children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        
+        /* do we have a child from the specified job. Because the
+        *  job could be given as a WILDCARD value, we must use
+        *  the dss.compare function to check for equality.
+        */
+        if (ORTE_EQUAL != orte_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
+            continue;
+        }
+        opal_output(orte_odls_globals.output, "odls: sending message to child [%ld, %ld, %ld]",
+                    ORTE_NAME_ARGS(child->name));
+        
+        /* if so, send the message */
+        rc = orte_rml.send_buffer(child->name, buffer, tag, 0);
+        if (rc < 0) {
+            ORTE_ERROR_LOG(rc);
+        }
+    }
+    
+    opal_condition_signal(&orte_odls_default.cond);
+    OPAL_THREAD_UNLOCK(&orte_odls_default.mutex);
+    return ORTE_SUCCESS;
 }
 
 

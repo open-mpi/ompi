@@ -28,6 +28,7 @@
 #include "opal/threads/condition.h"
 #include "orte/util/sys_info.h"
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/params.h"
 #include "orte/orte_constants.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/ns/ns_types.h"

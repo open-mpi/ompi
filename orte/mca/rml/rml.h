@@ -331,8 +331,7 @@ typedef int (*orte_rml_module_recv_cancel_fn_t)(orte_process_name_t* peer, orte_
  */
 
 typedef int (*orte_rml_module_xcast_fn_t)(orte_jobid_t job,
-                                          bool process_first,
-                                          orte_buffer_t* buffer,
+                                          orte_gpr_notify_message_t *msg,
                                           orte_gpr_trigger_cb_fn_t cbfunc);
 
 /*

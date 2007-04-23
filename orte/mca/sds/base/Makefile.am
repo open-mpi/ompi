@@ -24,5 +24,6 @@ libmca_sds_la_SOURCES += \
         base/sds_base_open.c \
 	base/sds_base_select.c \
 	base/sds_base_interface.c \
+	base/sds_base_orted_contact.c \
 	base/sds_base_universe.c \
 	base/sds_base_put.c

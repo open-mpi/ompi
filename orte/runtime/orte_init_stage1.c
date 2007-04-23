@@ -204,6 +204,17 @@ int orte_init_stage1(bool infrastructure)
     }
 
     /*
+     * Initialize the daemon launch system so those types
+     * are registered (needed by the sds to talk to its
+                       * local daemon)
+     */
+    if (ORTE_SUCCESS != (ret = orte_odls_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_odls_base_open";
+        goto error;
+    }
+    
+    /*
      * Initialize schema utilities
      */
     if (ORTE_SUCCESS != (ret = orte_schema_base_open())) {
@@ -321,12 +332,6 @@ int orte_init_stage1(bool infrastructure)
     if (ORTE_SUCCESS != (ret = orte_pls_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_pls_base_select";
-        goto error;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_odls_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_odls_base_open";
         goto error;
     }
     

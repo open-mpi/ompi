@@ -64,10 +64,13 @@ extern char **environ;
 #include "opal/util/os_path.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/base/base.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmgr/rmgr_types.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/params.h"
+
 #include "totalview.h"
 
 /* +++ begin MPICH/TotalView interface definitions */

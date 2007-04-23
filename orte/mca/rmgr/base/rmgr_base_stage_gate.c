@@ -57,7 +57,6 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
 
 int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
 {
-    orte_buffer_t buffer;
     int rc;
     orte_jobid_t job;
 
@@ -119,19 +118,10 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
     msg->msg_type = ORTE_GPR_SUBSCRIPTION_MSG;
     msg->id = ORTE_GPR_TRIGGER_ID_MAX;
 
-    /* need to pack the msg for sending */
-    OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &msg, 1, ORTE_GPR_NOTIFY_MSG))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&buffer);
-        goto CLEANUP;
-    }
-
     /* send the message */
-    if (ORTE_SUCCESS != (rc = orte_rml.xcast(job, false, &buffer, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.xcast(job, msg, NULL))) {
         ORTE_ERROR_LOG(rc);
     }
-    OBJ_DESTRUCT(&buffer);
 
 CLEANUP:
     

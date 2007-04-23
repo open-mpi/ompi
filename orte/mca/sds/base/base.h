@@ -65,6 +65,7 @@ extern "C" {
      */
     ORTE_DECLSPEC int orte_sds_base_basic_contact_universe(void);
     ORTE_DECLSPEC int orte_sds_base_seed_set_name(void);
+    ORTE_DECLSPEC int orte_sds_base_contact_orted(char *orted_uri);
 
     /*
      * Put functions

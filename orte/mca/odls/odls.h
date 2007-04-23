@@ -31,9 +31,11 @@
 #include "opal/mca/mca.h"
 #include "opal/class/opal_list.h"
 
+#include "orte/dss/dss_types.h"
 #include "orte/mca/gpr/gpr_types.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/rmaps/rmaps_types.h"
+#include "orte/mca/rml/rml_types.h"
 
 #include "orte/mca/odls/odls_types.h"
 
@@ -78,6 +80,12 @@ typedef int (*orte_odls_base_module_signal_local_process_fn_t)(const orte_proces
                                                               int32_t signal);
 
 /**
+    * Deliver a message to local processes
+ */
+typedef int (*orte_odls_base_module_deliver_message_fn_t)(orte_jobid_t job, orte_buffer_t *buffer,
+                                                          orte_rml_tag_t tag);
+
+/**
  * pls module version 1.3.0
  */
 struct orte_odls_base_module_1_3_0_t {
@@ -86,6 +94,7 @@ struct orte_odls_base_module_1_3_0_t {
     orte_odls_base_module_launch_local_processes_fn_t       launch_local_procs;
     orte_odls_base_module_kill_local_processes_fn_t         kill_local_procs;
     orte_odls_base_module_signal_local_process_fn_t   		signal_local_procs;
+    orte_odls_base_module_deliver_message_fn_t              deliver_message;
 };
 
 /** shorten orte_odls_base_module_1_3_0_t declaration */

@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
     }
     
     /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
-    if (ORTE_SUCCESS != (rc = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid, true,
+    if (ORTE_SUCCESS != (rc = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid,
                                              NULL, orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(rc);
         error = "failed to see all procs register\n";
