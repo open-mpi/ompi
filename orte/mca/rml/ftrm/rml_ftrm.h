@@ -157,8 +157,7 @@ extern "C" {
      * Xcast
      */
     int orte_rml_ftrm_xcast(orte_jobid_t job,
-                            bool process_first,
-                            orte_buffer_t* buffer,
+                            orte_gpr_notify_message_t *msg,
                             orte_gpr_trigger_cb_fn_t cbfunc);
 
     /*
