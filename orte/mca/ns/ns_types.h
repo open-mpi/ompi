@@ -55,6 +55,7 @@ extern "C" {
 #define ORTE_NS_USE_NODE                "orte-ns-use-node"
 #define ORTE_NS_INCLUDE_DESCENDANTS     "orte-ns-include-desc"
 #define ORTE_NS_INCLUDE_CHILDREN        "orte-ns-include-child"
+#define ORTE_NS_USE_JOB_FAMILY          "orte-ns-use-job-family"
     
 
 #define ORTE_NAME_ARGS(n) \
