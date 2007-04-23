@@ -39,7 +39,7 @@ extern "C" {
 
 /* globals used by RTE - instanced in orte_params.c */
 
-ORTE_DECLSPEC extern int orte_debug_flag;
+ORTE_DECLSPEC extern bool orte_debug_flag;
 
 ORTE_DECLSPEC extern struct timeval orte_abort_timeout;
 

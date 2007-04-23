@@ -46,6 +46,9 @@ orte_sds_env_set_name(void)
     int vpid_start;
     int num_procs;
     char* name_string = NULL;
+    char *local_daemon_uri = NULL;
+    
+    
     id = mca_base_param_register_string("ns", "nds", "name", NULL, NULL);
     mca_base_param_lookup_string(id, &name_string);
 
@@ -117,6 +120,7 @@ orte_sds_env_set_name(void)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
+    orte_process_info.vpid_start = (orte_vpid_t)vpid_start;
 
     id = mca_base_param_register_int("ns", "nds", "num_procs", NULL, -1);
     mca_base_param_lookup_int(id, &num_procs);
@@ -124,9 +128,20 @@ orte_sds_env_set_name(void)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    
-    orte_process_info.vpid_start = (orte_vpid_t)vpid_start;
     orte_process_info.num_procs = (orte_std_cntr_t)num_procs;
+
+    id = mca_base_param_register_string("orte", "local_daemon", "uri", NULL, NULL);
+    mca_base_param_lookup_string(id, &local_daemon_uri);
+    if (NULL != local_daemon_uri) {
+        /* if we are a daemon, then we won't have this param set, so allow
+         * it not to be found
+         */
+        if (ORTE_SUCCESS != (rc = orte_sds_base_contact_orted(local_daemon_uri))) {
+            ORTE_ERROR_LOG(rc);
+            return(rc);
+        }
+    }
+    
     return ORTE_SUCCESS;
 }
 

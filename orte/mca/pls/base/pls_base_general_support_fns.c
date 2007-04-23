@@ -26,6 +26,7 @@
 
 #include "orte/util/univ_info.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/runtime/params.h"
 
 #include "orte/mca/pls/base/pls_private.h"
 

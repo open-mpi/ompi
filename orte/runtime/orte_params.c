@@ -30,8 +30,10 @@
 #include "orte/runtime/params.h"
 
 /* globals used by RTE */
-int orte_debug_flag;
+bool orte_debug_flag;
 struct timeval orte_abort_timeout;
+
+
 /*
  * Whether we have completed orte_init or not
  */

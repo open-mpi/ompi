@@ -70,10 +70,6 @@
 extern "C" {
 #endif
 
-/* globals used by RTE - instanced in orte_init.c */
-
-    ORTE_DECLSPEC extern int orte_debug_flag;
-
     /**
      * Abort the current application
      *

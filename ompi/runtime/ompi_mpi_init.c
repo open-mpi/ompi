@@ -52,6 +52,7 @@
 #include "orte/mca/schema/schema.h"
 #include "orte/mca/smr/smr.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/runtime/params.h"
 
 #include "ompi/constants.h"
 #include "ompi/mpi/f77/constants.h"
@@ -555,7 +556,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * process the STG1 message prior to sending it along the xcast chain
      * as this message contains all the oob contact info we need!
      */
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid, true,
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid,
                                               NULL, orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(ret);
         error = "ompi_mpi_init: failed to see all procs register\n";
@@ -665,7 +666,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Second barrier -- wait for message from
        RMGR_PROC_STAGE_GATE_MGR to arrive */
 
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid, false,
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid,
                                               NULL, orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(ret);
         error = "ompi_mpi_init: failed to see all procs register\n";

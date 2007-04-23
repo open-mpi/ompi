@@ -58,6 +58,7 @@ orte_sds_slurm_set_name(void)
     int num_procs;
     char* name_string = NULL;
     int slurm_nodeid;
+    char *local_daemon_uri = NULL;
 
     /* start by getting our cellid, jobid, and vpid (which is the
        starting vpid for the list of daemons) */
@@ -140,6 +141,7 @@ orte_sds_slurm_set_name(void)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
+    orte_process_info.vpid_start = (orte_vpid_t)vpid_start;
 
     id = mca_base_param_register_int("ns", "nds", "num_procs", NULL, -1);
     mca_base_param_lookup_int(id, &num_procs);
@@ -147,9 +149,20 @@ orte_sds_slurm_set_name(void)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    
-    orte_process_info.vpid_start = (orte_vpid_t)vpid_start;
-    orte_process_info.num_procs = (size_t)num_procs;
+    orte_process_info.num_procs = (orte_std_cntr_t)num_procs;
+
+    id = mca_base_param_register_string("orte", "local_daemon", "uri", NULL, NULL);
+    mca_base_param_lookup_string(id, &local_daemon_uri);
+    if (NULL != local_daemon_uri) {
+        /* if we are a daemon, then we won't have this param set, so allow
+        * it not to be found
+        */
+        if (ORTE_SUCCESS != (rc = orte_sds_base_contact_orted(local_daemon_uri))) {
+            ORTE_ERROR_LOG(rc);
+            return(rc);
+        }
+    }
+
     return ORTE_SUCCESS;
 }
 

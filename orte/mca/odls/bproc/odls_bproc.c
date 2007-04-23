@@ -534,6 +534,8 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
     bool connect_stdin;
     orte_jobid_t jobid;
     int cycle = 0;
+    char *job_str=NULL, *vpid_str, *uri_file, *my_uri=NULL, *session_dir=NULL;
+    FILE *fp;
 
     /* first, retrieve the job number we are to launch from the
      * returned data - we can extract the jobid directly from the
@@ -633,6 +635,36 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
+
+        /* record my uri in a file within the session directory so the child can contact me */
+        /* get the session dir for this proc */
+        orte_ns.convert_vpid_to_string(&vpid_str, child->name->vpid);
+        
+        if (ORTE_SUCCESS != (rc = orte_session_dir(true, NULL, NULL, NULL,
+                                                   NULL, NULL, job_str, vpid_str))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        
+        /* get the session dir name so we can put the file there */
+        if (ORTE_SUCCESS != (rc = orte_session_dir_get_name(&session_dir, NULL, NULL, NULL,
+                                                            NULL, NULL, NULL, job_str, vpid_str))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        free(vpid_str);
+        
+        /* create the file and put my uri into it */
+        uri_file = opal_os_path(false, session_dir, "orted-uri.txt", NULL);
+        fp = fopen(uri_file, "w");
+        if (NULL == fp) {
+            ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
+            rc = ORTE_ERR_FILE_OPEN_FAILURE;
+            goto cleanup;
+        }
+        fprintf(fp, "%s\n", my_uri);
+        fclose(fp);
+        free(uri_file);
 
         cycle++;
     }

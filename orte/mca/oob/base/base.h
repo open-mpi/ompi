@@ -392,19 +392,16 @@ ORTE_DECLSPEC int mca_oob_recv_packed_nb(
 
 /**
  *  A "broadcast-like" function over the specified set of peers.
- *  @param  root    The process acting as the root of the broadcast.
- *  @param  peers   The list of processes receiving the broadcast (excluding root).
- *  @param  buffer  The data to broadcast - only significant at root.
- *  @param  cbfunc  Callback function on receipt of data - not significant at root.
+ *  @param  job     The job whose processes are to receive the message.
+ *  @param  msg     The message to be sent
+ *  @param  cbfunc  Callback function on receipt of data
  *
  *  Note that the callback function is provided so that the data can be
- *  received and interpreted by the application prior to the broadcast
- *  continuing to forward data along the distribution tree.
+ *  received and interpreted by the application
  */
 
 ORTE_DECLSPEC int mca_oob_xcast(orte_jobid_t job,
-                                bool process_first,
-                                orte_buffer_t* buffer,
+                                orte_gpr_notify_message_t *msg,
                                 orte_gpr_trigger_cb_fn_t cbfunc);
 
 /*

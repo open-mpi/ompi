@@ -25,6 +25,7 @@
 
 
 #include "orte_config.h"
+#include "orte/orte_constants.h"
 
 #include <string.h>
 #ifdef HAVE_SYS_TIME_H
@@ -35,16 +36,16 @@
 #include <dirent.h>
 #endif  /* HAVE_DIRENT_H */
 
-#include "orte/orte_constants.h"
 #include "opal/util/output.h"
+#include "opal/util/os_path.h"
+#include "opal/util/os_dirpath.h"
+
 #include "orte/util/univ_info.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
-#include "opal/util/os_path.h"
-#include "opal/util/os_dirpath.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/universe_setup_file_io.h"
-
+#include "orte/runtime/params.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
