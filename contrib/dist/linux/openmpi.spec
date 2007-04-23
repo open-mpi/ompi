@@ -32,6 +32,18 @@
 #
 # Configuration Options
 #
+# Options that can be passed in via rpmbuild's --define option.  Note
+# that --define takes *1* argument: a multi-token string where the first
+# token is the name of the variable to define, and all remaining tokens
+# are the value.  For example:
+#
+# shell$ rpmbuild ... --define 'ofed 1' ...
+#
+# Or (a multi-token example):
+#
+# shell$ rpmbuild ... \
+#    --define 'configure_options CFLAGS=-g --with-openib=/usr/local/ofed' ...
+#
 #############################################################################
 
 # Help for OSCAR RPMs
@@ -108,6 +120,18 @@
 # type: bool (0/1)
 %{!?munge_build_into_install: %define munge_build_into_install 0}
 
+# By default, RPM supplies a bunch of optimization flags, some of
+# which may not work with non-gcc compilers.  We attempt to weed some
+# of these out (below), but sometimes it's better to just ignore them
+# altogether (e.g., PGI 6.2 will warn about unknown compiler flags,
+# but PGI 7.0 will error -- and RPM_OPT_FLAGS contains a lot of flags
+# that PGI 7.0 does not understand).  The default is to use the flags,
+# but you can set this variable to 0, indicating that RPM_OPT_FLAGS
+# should be erased (in which case you probabl want to supply your own
+# optimization flags!).
+# type: bool (0/1)
+%{!?use_default_rpm_opt_flags: %define use_default_rpm_opt_flags 1}
+
 #############################################################################
 #
 # OSCAR-specific defaults
@@ -176,6 +200,9 @@
 
 %{!?configure_options: %define configure_options %{nil}}
 
+%if !%{use_default_rpm_opt_flags}
+%define optflags ""
+%endif
 
 #############################################################################
 #
@@ -315,7 +342,9 @@ rm -rf $RPM_BUILD_ROOT
 # --define on the rpmbuild command line, unless they find and override
 # all "global" CFLAGS kinds of RPM macros (every distro names them
 # differently).  For example, non-gcc compilers cannot use
-# FORTIFY_SOURCE (at least, not as of 6 Oct 2006).
+# FORTIFY_SOURCE (at least, not as of 6 Oct 2006).  We can really only
+# examine the basename of the compiler, so search for it in a few
+# places.
 
 using_gcc=1
 if test "$CC" != ""; then
@@ -349,10 +378,16 @@ if test "$using_gcc" = "1"; then
     fi
 fi
 
+# If we're not using the default RPM_OPT_FLAGS, then wipe them clean
+# (the "optflags" macro has already been wiped clean, above).
+
+%if !%{use_default_rpm_opt_flags}
+RPM_OPT_FLAGS=
+export RPM_OPT_FLAGS
+%endif
+
 # If we're not GCC, strip out any GCC-specific arguments in the
-# RPM_OPT_FLAGS before potentially propagating them everywhere.  We
-# can really only examine the basename of the compiler, so search for
-# it in a few places.
+# RPM_OPT_FLAGS before potentially propagating them everywhere.
 
 if test "$using_gcc" = 0; then
 
@@ -371,6 +406,7 @@ CXXFLAGS="%{?cxxflags:%{cxxflags}}%{!?cxxflags:$RPM_OPT_FLAGS}"
 FFLAGS="%{?f77flags:%{f77flags}}%{!?f7flags:$RPM_OPT_FLAGS}"
 FCFLAGS="%{?fcflags:%{fcflags}}%{!?fcflags:$RPM_OPT_FLAGS}"
 export CFLAGS CXXFLAGS F77FLAGS FCFLAGS
+echo ================================ DONE DONE DONE
 
 %configure %{configure_options}
 %{__make} %{?mflags}
