@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -137,7 +137,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
 
     /* open the uDAPL interface */
     btl->udapl_evd_async = DAT_HANDLE_NULL;
-    rc = dat_ia_open(ia_name, mca_btl_udapl_component.udapl_evd_qlen,
+    rc = dat_ia_open(ia_name, mca_btl_udapl_module.udapl_evd_qlen,
             &btl->udapl_evd_async, &btl->udapl_ia);
     if(DAT_SUCCESS != rc) {
         char* major;
@@ -182,7 +182,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
 
     /* set up evd's */
     rc = dat_evd_create(btl->udapl_ia,
-            mca_btl_udapl_component.udapl_evd_qlen, DAT_HANDLE_NULL,
+            mca_btl_udapl_module.udapl_evd_qlen, DAT_HANDLE_NULL,
             DAT_EVD_DTO_FLAG | DAT_EVD_RMR_BIND_FLAG, &btl->udapl_evd_dto);
     if(DAT_SUCCESS != rc) {
         char* major;
@@ -196,7 +196,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     }
 
     rc = dat_evd_create(btl->udapl_ia,
-            mca_btl_udapl_component.udapl_evd_qlen, DAT_HANDLE_NULL,
+            mca_btl_udapl_module.udapl_evd_qlen, DAT_HANDLE_NULL,
             DAT_EVD_CR_FLAG | DAT_EVD_CONNECTION_FLAG, &btl->udapl_evd_conn);
     if(DAT_SUCCESS != rc) {
         char* major;
