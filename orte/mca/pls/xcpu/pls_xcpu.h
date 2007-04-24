@@ -63,7 +63,7 @@ orte_pls_base_module_t* orte_pls_xcpu_init(int *priority); /* in component file 
  */
 int orte_pls_xcpu_launch_job(orte_jobid_t);
 int orte_pls_xcpu_terminate_job(orte_jobid_t, struct timeval *timeout, opal_list_t *);
-int orte_pls_xcpu_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t * attrs);
+int orte_pls_xcpu_terminate_orteds(struct timeval *timeout, opal_list_t * attrs);
 int orte_pls_xcpu_terminate_proc(const orte_process_name_t* proc_name);
 int orte_pls_xcpu_signal_job(orte_jobid_t jobid, int32_t sig, opal_list_t*);
 int orte_pls_xcpu_signal_proc(const orte_process_name_t* proc_name, int32_t sig);

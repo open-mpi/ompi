@@ -27,5 +27,5 @@ here's some additional information (which may only be relevant to an
 Open MPI developer):
 
   %s failed
-  --> Returned value %d instead of ORTE_SUCCESS
+  --> Returned value %s (%d) instead of ORTE_SUCCESS
 

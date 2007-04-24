@@ -46,7 +46,6 @@
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/class/opal_list.h"
-#include "opal/class/opal_list.h"
 #include "opal/event/event.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
@@ -72,6 +71,7 @@
 #include "orte/mca/schema/schema_types.h"
 #include "orte/mca/smr/smr.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/runtime/orte_wakeup.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/params.h"
 
@@ -438,6 +438,10 @@ static void orte_pls_bproc_setup_env(char *** env)
  * @retval ORTE_SUCCESS
  * @retval error
  */
+/* When working in this function, ALWAYS jump to "cleanup" if
+ * you encounter an error so that orterun will be woken up and
+ * the job can cleanly terminate
+ */
 static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
     int * daemon_list = NULL;
     int num_daemons = 0;
@@ -452,9 +456,6 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
     orte_vpid_t daemon_vpid_start;
     orte_std_cntr_t idx;
     struct stat buf;
-    opal_list_t daemons;
-    orte_pls_daemon_info_t *dmn;
-    opal_list_item_t *item;
     struct timeval joblaunchstart, launchstart, launchstop;
 
     OPAL_TRACE(1);
@@ -468,11 +469,6 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
     /* indicate that the daemons have not completely launched yet */
     daemons_launched = false;
     
-    /* setup a list that will contain the info for all the daemons
-     * so we can store it on the registry when done
-     */
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
-
     /* get the number of nodes in this job and allocate an array for
      * their names so we can pass that to bproc - populate the list
      * with the node names
@@ -480,12 +476,12 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
     num_daemons = map->num_nodes;
     if (0 == num_daemons) {
         /* nothing to do */
-        OBJ_DESTRUCT(&daemons);
         return ORTE_SUCCESS;
     }
     
     if(NULL == (daemon_list = (int*)malloc(sizeof(int) * num_daemons))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
         goto cleanup;
     }
     i = 0;
@@ -500,6 +496,7 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
     /* allocate storage for bproc to return the daemon pids */
     if(NULL == (pids = (int*)malloc(sizeof(int) * num_daemons))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
         goto cleanup;
     }
 
@@ -632,6 +629,10 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
                     rc, *pids);
     }
 
+    /* we need to be smarter here - right now, we stop on the first negative pid. But
+     * daemons beyond that one might have started. This could leave a daemon stranded
+     * when we abort
+     */
     for(i = 0; i < num_daemons; i++) {
         if(0 >= pids[i]) {
             opal_show_help("help-pls-bproc.txt", "daemon-launch-bad-pid", true,
@@ -650,28 +651,10 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-
-            dmn = OBJ_NEW(orte_pls_daemon_info_t);
-            rc = orte_ns.create_process_name(&(dmn->name), ORTE_PROC_MY_NAME->cellid, 0,
-                                             daemon_vpid_start + i);
-            if(ORTE_SUCCESS != rc) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            dmn->cell = dmn->name->cellid;
-            dmn->nodename = strdup(param);
-            dmn->active_job = map->job;
-            opal_list_append(&daemons, &dmn->super);
-            
             free(param);
         }
     }
     
-    /* store the daemon info */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons))) {
-        ORTE_ERROR_LOG(rc);
-    }
-
     /* setup the callbacks - this needs to be done *after* we store the
      * daemon info so that short-lived apps don't cause mpirun to
      * try and terminate the orteds before we record them
@@ -718,7 +701,6 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
                 }
                 rc = ORTE_ERROR;
                 ORTE_ERROR_LOG(rc);
-                orte_pls_bproc_terminate_job(map->job, &orte_abort_timeout, NULL);
                 goto cleanup;
             }
         }
@@ -747,10 +729,17 @@ cleanup:
     if(NULL != orted_path) {
         free(orted_path);
     }
-    while (NULL != (item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(item);
+
+    /* check for failed launch - if so, force terminate */
+    if (!daemons_launched) {
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(map->job, ORTE_JOB_STATE_FAILED_TO_START))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_wakeup(map->job))) {
+            ORTE_ERROR_LOG(rc);
+        }        
     }
-    OBJ_DESTRUCT(&daemons);
 
     return rc;
 }
@@ -784,7 +773,7 @@ orte_pls_bproc_node_failed(orte_gpr_notify_message_t *msg)
     orte_pls_bproc_terminate_job(job, &orte_abort_timeout, NULL);
     
     /* kill the daemons */
-    orte_pls_bproc_terminate_job(0, &orte_abort_timeout, NULL);
+    orte_pls_bproc_terminate_orteds(&orte_abort_timeout, NULL);
     
     /* shouldn't ever get here.. */
     exit(1);
@@ -806,9 +795,16 @@ orte_pls_bproc_node_failed(orte_gpr_notify_message_t *msg)
  * @retval ORTE_SUCCESS
  * @retval error
  */
+
+/* When working in this function, ALWAYS jump to "cleanup" if
+* you encounter an error so that orterun will be woken up and
+* the job can cleanly terminate. Since we don't use the ORTE
+* daemons to launch the application procs, this is the *only*
+* way we have of knowing something went wrong.
+*/
 static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
                                      orte_vpid_t vpid_start, int app_context) {
-    int *node_array, num_nodes, cycle;
+    int *node_array=NULL, num_nodes, cycle;
     int rc, i, j, stride;
     orte_std_cntr_t num_processes;
     int *pids = NULL;
@@ -817,6 +813,7 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
     struct bproc_io_t bproc_io[3];
     char **env;
     int dbg;
+    bool app_launched = false;
 
     OPAL_TRACE(1);
     
@@ -862,7 +859,8 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
     node_array = (int*)malloc(map->num_nodes * sizeof(int));
     if (NULL == node_array) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
     }
     
     /* initialize the cycle count. Computing the process name under Bproc
@@ -949,6 +947,10 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
             goto cleanup;
         }
         
+        /* we need to be smarter here - right now, we stop on the first negative pid. But
+         * processes beyond that one might have started. This leaves those procs stranded
+         * when we abort
+         */
         for(j = 0; j < num_nodes; j++) {
             if(0 >= pids[j]) {
                 opal_show_help("help-pls-bproc.txt", "proc-launch-bad-pid", true,
@@ -1007,15 +1009,34 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
             goto cleanup;
         }
     }
-
+    
+    /* get here if the app procs launched cleanly */
+    apps_launched = true;
+    
 cleanup:
     if(NULL != pids) {
         free(pids);
     }
     
-    free(node_array);
+    if (NULL != node_array) {
+        free(node_array);
+    }
     
-    if (NULL != env) opal_argv_free(env);
+    if (NULL != env) {
+        opal_argv_free(env);
+    }
+    
+    /* check for failed launch - if so, force terminate */
+    if (!apps_launched) {
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(map->job, ORTE_JOB_STATE_FAILED_TO_START))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_wakeup(map->job))) {
+            ORTE_ERROR_LOG(rc);
+        }        
+    }
+    
     return rc;
 }
 
@@ -1032,8 +1053,13 @@ cleanup:
  * @retval ORTE_SUCCESS
  * @retval error
  */
+
+/* When working in this function, ALWAYS jump to "cleanup" if
+ * you encounter an error so that orterun will be woken up and
+ * the job can cleanly terminate
+ */
 int orte_pls_bproc_launch(orte_jobid_t jobid) {
-    orte_job_map_t* map;
+    orte_job_map_t* map = NULL;
     orte_mapped_node_t *map_node;
     orte_vpid_t vpid_launch;
     int rc;
@@ -1043,26 +1069,31 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
     char cwd_save[OMPI_PATH_MAX + 1];
     orte_ras_node_t *ras_node;
     char **daemon_env;
+    bool launched;
 
     OPAL_TRACE(1);
+    
+    /* indicate the launch condition */
+    launched = false;
     
     /* make sure the pls_bproc receive function has been started */
     if (ORTE_SUCCESS != (rc = orte_pls_bproc_comm_start())) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        goto cleanup;
     }
     
     /* save the current working directory */
     if (NULL == getcwd(cwd_save, sizeof(cwd_save))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_ERR_NOT_FOUND;
+        rc = ORTE_ERR_NOT_FOUND;
+        goto cleanup;
     }
     cwd_save[sizeof(cwd_save) - 1] = '\0';
     
     /* get the job map */
     if(ORTE_SUCCESS != (rc = orte_rmaps.get_job_map(&map, jobid))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        goto cleanup;
     }
 
     /* set the mapping mode */
@@ -1158,14 +1189,30 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
         vpid_launch += map->apps[context]->num_procs;
     }
 
+    /* indicate a successful launch */
+    launched = true;
+    
 cleanup:
     chdir(cwd_save);
 
-    OBJ_RELEASE(map);
+    if (NULL != map) {
+        OBJ_RELEASE(map);
+    }
 
     if (mca_pls_bproc_component.do_not_launch) {
         /* indicate that we failed to launch, but do so silently */
         return ORTE_ERR_SILENT;
+    }
+    
+    /* check for failed launch - if so, force terminate */
+    if (!launched) {
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(jobid, ORTE_JOB_STATE_FAILED_TO_START))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_wakeup(jobid))) {
+            ORTE_ERROR_LOG(rc);
+        }        
     }
     
     return rc;
@@ -1203,17 +1250,15 @@ int orte_pls_bproc_terminate_job(orte_jobid_t jobid, struct timeval *timeout, op
 /**
 * Terminate the orteds for a given job
  */
-int orte_pls_bproc_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
+int orte_pls_bproc_terminate_orteds(struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
 
-    OPAL_TRACE(1);
-    
-    /* now tell them to die! */
+    /* tell them to die! */
     if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(timeout, attrs))) {
         ORTE_ERROR_LOG(rc);
     }
-
+    
     return rc;
 }
 

@@ -75,7 +75,7 @@
  */
 static int pls_slurm_launch_job(orte_jobid_t jobid);
 static int pls_slurm_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs);
-static int pls_slurm_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs);
+static int pls_slurm_terminate_orteds(struct timeval *timeout, opal_list_t *attrs);
 static int pls_slurm_terminate_proc(const orte_process_name_t *name);
 static int pls_slurm_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs);
 static int pls_slurm_signal_proc(const orte_process_name_t *name, int32_t signal);
@@ -101,9 +101,10 @@ orte_pls_base_module_1_3_0_t orte_pls_slurm_module = {
 };
 
 /*
- * Local variable
+ * Local variables
  */
 static pid_t srun_pid = 0;
+static orte_jobid_t active_job = ORTE_JOBID_INVALID;
 
 
 /*
@@ -113,16 +114,19 @@ static pid_t srun_pid = 0;
 extern char **environ;
 #endif  /* !defined(__WINDOWS__) */
 
+/* When working in this function, ALWAYS jump to "cleanup" if
+ * you encounter an error so that orterun will be woken up and
+ * the job can cleanly terminate
+ */
 static int pls_slurm_launch_job(orte_jobid_t jobid)
 {
-    orte_job_map_t *map;
+    orte_job_map_t *map = NULL;
     opal_list_item_t *item;
     size_t num_nodes;
     orte_vpid_t vpid;
-    orte_vpid_t start_vpid;
     char *jobid_string = NULL;
     char *param;
-    char **argv;
+    char **argv = NULL;
     int argc;
     int rc;
     char *tmp;
@@ -136,10 +140,9 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     char **custom_strings;
     int num_args, i;
     char *cur_prefix;
-    opal_list_t daemons;
-    orte_pls_daemon_info_t *dmn;
     struct timeval joblaunchstart, launchstart, launchstop;
     int proc_name_index = 0;
+    bool failed_launch = true;
 
     if (mca_pls_slurm_component.timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
@@ -147,10 +150,8 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
         }        
     }
     
-    /* setup a list that will contain the info for all the daemons
-     * so we can store it on the registry when done
-     */
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
+    /* save the active jobid */
+    active_job = jobid;
     
     /* Query the map for this job.
      * We need the entire mapping for a couple of reasons:
@@ -161,8 +162,7 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     rc = orte_rmaps.get_job_map(&map, jobid);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&daemons);
-        return rc;
+        goto cleanup;
     }
 
     /* if the user requested that we re-use daemons,
@@ -171,9 +171,7 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     if (orte_pls_base.reuse_daemons) {
         if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
             ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(map);
-            OBJ_DESTRUCT(&daemons);
-            return rc;
+            goto cleanup;
         }
     }
     
@@ -186,14 +184,13 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
          * on existing daemons, so we can just return
          */
         OBJ_RELEASE(map);
-        OBJ_DESTRUCT(&daemons);
         return ORTE_SUCCESS;
     }
     rc = orte_ns.reserve_range(0, num_nodes, &vpid);
     if (ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    start_vpid = vpid; 
 
     /* setup the orted triggers for passing their launch info */
     if (ORTE_SUCCESS != (rc = orte_smr.init_orted_stage_gates(jobid, num_nodes, NULL, NULL))) {
@@ -332,31 +329,6 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
         }
     }
 
-    /* setup the daemon info for each node */
-    vpid = start_vpid;
-    for (item = opal_list_get_first(&map->nodes);
-         item != opal_list_get_end(&map->nodes);
-         item = opal_list_get_next(item)) {
-        orte_mapped_node_t* node = (orte_mapped_node_t*)item;
-        
-        /* record the daemons info for this node */
-        dmn = OBJ_NEW(orte_pls_daemon_info_t);
-        dmn->active_job = jobid;
-        dmn->cell = node->cell;
-        dmn->nodename = strdup(node->nodename);
-        if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&(dmn->name), dmn->cell, 0, vpid))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        opal_list_append(&daemons, &dmn->super);
-        vpid++;
-    }
-
-    /* store the daemon info on the registry */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    
     /* setup environment */
     env = opal_argv_copy(environ);
     var = mca_base_param_environ_variable("seed", NULL, NULL);
@@ -374,7 +346,19 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     }
     
     /* exec the daemon */
-    rc = pls_slurm_start_proc(argc, argv, env, cur_prefix);
+    if (ORTE_SUCCESS != (rc = pls_slurm_start_proc(argc, argv, env, cur_prefix))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+    /* do NOT wait for srun to complete. Srun only completes when the processes
+     * it starts - in this case, the orteds - complete. We need to go ahead and
+     * return so orterun can do the rest of its stuff. Instead, we'll catch
+     * any srun failures and deal with them elsewhere
+     */
+    
+    /* declare the launch a success */
+    failed_launch = false;
     
     if (mca_pls_slurm_component.timing) {
         if (0 != gettimeofday(&launchstop, NULL)) {
@@ -395,21 +379,32 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     }
 
     /* JMS: short we stash the srun pid in the gpr somewhere for cleanup? */
-    /* JMS: how do we catch when srun dies? */
 
 cleanup:
-    OBJ_RELEASE(map);
-    opal_argv_free(argv);
-    opal_argv_free(env);
-
+    if (NULL != map) {
+        OBJ_RELEASE(map);
+    }
+    if (NULL != argv) {
+        opal_argv_free(argv);
+    }
+    if (NULL != env) {
+        opal_argv_free(env);
+    }
+    
     if(NULL != jobid_string) {
         free(jobid_string);
     }
     
-    while (NULL != (item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(item);
+    /* check for failed launch - if so, force terminate */
+    if (failed_launch) {
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(jobid, ORTE_JOB_STATE_FAILED_TO_START))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_wakeup(jobid))) {
+            ORTE_ERROR_LOG(rc);
+        }        
     }
-    OBJ_DESTRUCT(&daemons);
     
     return rc;
 }
@@ -431,11 +426,18 @@ static int pls_slurm_terminate_job(orte_jobid_t jobid, struct timeval *timeout, 
 /**
 * Terminate the orteds for a given job
  */
-static int pls_slurm_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
+static int pls_slurm_terminate_orteds(struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
-
-    /* order them to go away */
+    
+    /* deregister the waitpid callback to ensure we don't make it look like
+    * srun failed when it didn't. Since the srun may have already completed,
+    * do NOT ERROR_LOG any return code to avoid confusing, duplicate error
+    * messages
+    */
+    orte_wait_cb_cancel(srun_pid);
+    
+    /* tell them to die! */
     if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(timeout, attrs))) {
         ORTE_ERROR_LOG(rc);
     }
@@ -495,13 +497,53 @@ static int pls_slurm_cancel_operation(void)
 static int pls_slurm_finalize(void)
 {
     int rc;
-
+    
     /* cleanup any pending recvs */
     if (ORTE_SUCCESS != (rc = orte_pls_base_comm_stop())) {
         ORTE_ERROR_LOG(rc);
     }
     
     return ORTE_SUCCESS;
+}
+
+
+static void srun_wait_cb(pid_t pid, int status, void* cbdata){
+    /* According to the SLURM folks, srun always returns the highest exit
+       code of our remote processes. Thus, a non-zero exit status doesn't
+       necessarily mean that srun failed - it could be that an orted returned
+       a non-zero exit status. Of course, that means the orted failed(!), so
+       the end result is the same - the job didn't start.
+    
+       As a result, we really can't do much with the exit status itself - it
+       could be something in errno (if srun itself failed), or it could be
+       something returned by an orted, or it could be something returned by
+       the OS (e.g., couldn't find the orted binary). Somebody is welcome
+       to sort out all the options and pretty-print a better error message. For
+       now, though, the only thing that really matters is that
+       srun failed. Report the error and make sure that orterun
+       wakes up - otherwise, do nothing!
+    */
+    
+    int rc;
+    
+    if (0 != status) {
+        /* we have a problem */
+        opal_output(0, "ERROR: srun failed to start the required daemons.");
+        opal_output(0, "ERROR: This could be due to an inability to find the orted binary");
+        opal_output(0, "ERROR: on one or more remote nodes, lack of authority to execute");
+        opal_output(0, "ERROR: on one or more specified nodes, or other factors.");
+        
+        /* set the job state so we know it failed to start */
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(active_job, ORTE_JOB_STATE_FAILED_TO_START))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        
+        /* force termination of the job */
+        if (ORTE_SUCCESS != (rc = orte_wakeup(active_job))) {
+            ORTE_ERROR_LOG(rc);
+        }
+    }
+    
 }
 
 
@@ -517,9 +559,11 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
 
     srun_pid = fork();
     if (-1 == srun_pid) {
-        opal_output(0, "pls:slurm:start_proc: fork failed");
-        return ORTE_ERR_IN_ERRNO;
-    } else if (0 == srun_pid) {
+        ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_CHILDREN);
+        return ORTE_ERR_SYS_LIMITS_CHILDREN;
+    }
+    
+    if (0 == srun_pid) {  /* child */
         char *bin_base = NULL, *lib_base = NULL;
 
         /* Figure out the basenames for the libdir and bindir.  There
@@ -596,14 +640,16 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
         /* don't return - need to exit - returning would be bad -
            we're not in the calling process anymore */
         exit(1);
+    } else {  /* parent */
+        /* just in case, make sure that the srun process is not in our
+        process group any more.  Stevens says always do this on both
+        sides of the fork... */
+        setpgid(srun_pid, srun_pid);
+        
+        /* setup the waitpid so we can find out if srun succeeds! */
+        orte_wait_cb(srun_pid, srun_wait_cb, NULL);
+        free(exec_argv);
     }
-
-    free(exec_argv);
-
-    /* just in case, make sure that the srun process is not in our
-       process group any more.  Stevens says always do this on both
-       sides of the fork... */
-    setpgid(srun_pid, srun_pid);
 
     return ORTE_SUCCESS;
 }

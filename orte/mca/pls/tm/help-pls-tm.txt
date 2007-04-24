@@ -25,20 +25,17 @@ The first two prefix values supplied for node %s were:
     %s
 and %s
 #
-[daemon-not-found]
-The TM (PBS / Torqus) process starter in Open MPI was unable to find
-its daemon executable (orted) on the node where mpirun was executed.  
+[tm-spawn-failed]
+The TM (PBS / Torque) process starter failed to spawn a daemon (orted)
+on a remote node.
 
-This sanity check is performed because the back-end PBS / Torque
-process launcher does not provide any kind of error to Open MPI if it
-tries to launch its daemon on a remote node, but the daemon cannot be
-found.  Open MPI's check for the daemon locally is somewhat of a lame
-workaround / sanity check.
+Command line: %s
+Node name: %s
+Launch id: %d
 
 If you do not understand this error mesage, please try the following:
 
-1. Try to add the Open MPI executables to your PATH
-2. Use the --prefix option to mpirun to indicate where Open MPI can
-   find its executables
-3. Set the MCA parameter "pls_tm_want_path_check" to 0
-4. Talk to your local system administration
+1. Ensure that the executable "orted" is in your PATH
+2. Use the --prefix option to indicate where we can
+   find that executable
+3. Talk to your local system administrator

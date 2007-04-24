@@ -79,9 +79,7 @@ int orte_rmgr_base_check_context_cwd(orte_app_context_t *context,
            was, barf because they specifically asked for something we
            can't provide. */
         if (context->user_specified_cwd) {
-            opal_show_help("help-rmgr-base.txt", "chdir-error",
-                           true, hostname, context->cwd, strerror(errno));
-            return ORTE_ERR_NOT_FOUND;
+            return ORTE_ERR_WDIR_NOT_FOUND;
         }
         
         /* If the user didn't specifically ask for it, then it
@@ -99,9 +97,7 @@ int orte_rmgr_base_check_context_cwd(orte_app_context_t *context,
                 good = false;
             }
             if (!good) {
-                opal_show_help("help-rmgr-base.txt", "chdir-error",
-                               true, tmp, strerror(errno));
-                return ORTE_ERR_NOT_FOUND;
+                return ORTE_ERR_WDIR_NOT_FOUND;
             }
             
             /* Reset the pwd in this local copy of the
@@ -154,19 +150,13 @@ int orte_rmgr_base_check_context_app(orte_app_context_t *context)
         free(tmp);
         tmp = opal_path_findv(context->argv[0], X_OK, environ, context->cwd);
         if (NULL == tmp) {
-            opal_show_help("help-rmgr-base.txt",
-                           "argv0-not-found",
-                           true, hostname, context->argv[0]);
-            return ORTE_ERR_NOT_FOUND;
+            return ORTE_ERR_EXE_NOT_FOUND;
         }
         free(context->app);
         context->app = tmp;
     } else {
         if (0 != access(context->app, X_OK)) {
-            opal_show_help("help-rmgr-base.txt",
-                           "argv0-not-accessible",
-                           true, hostname, context->argv[0]);
-            return ORTE_ERR_NOT_FOUND;
+            return ORTE_ERR_EXE_NOT_ACCESSIBLE;
         }
     }
     

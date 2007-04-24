@@ -55,7 +55,7 @@ int orte_pls_rsh_finalize(void);
  */
 int orte_pls_rsh_launch(orte_jobid_t);
 int orte_pls_rsh_terminate_job(orte_jobid_t, struct timeval *timeout, opal_list_t*);
-int orte_pls_rsh_terminate_orteds(orte_jobid_t, struct timeval *timeout, opal_list_t*);
+int orte_pls_rsh_terminate_orteds(struct timeval *timeout, opal_list_t*);
 int orte_pls_rsh_terminate_proc(const orte_process_name_t* proc_name);
 int orte_pls_rsh_signal_job(orte_jobid_t, int32_t, opal_list_t*);
 int orte_pls_rsh_signal_proc(const orte_process_name_t* proc_name, int32_t);

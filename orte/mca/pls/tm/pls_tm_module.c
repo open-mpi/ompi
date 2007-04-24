@@ -60,6 +60,7 @@
 #include "orte/orte_types.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/runtime/orte_wakeup.h"
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/smr/smr.h"
@@ -80,7 +81,7 @@
  */
 static int pls_tm_launch_job(orte_jobid_t jobid);
 static int pls_tm_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs);
-static int pls_tm_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs);
+static int pls_tm_terminate_orteds(struct timeval *timeout, opal_list_t *attrs);
 static int pls_tm_terminate_proc(const orte_process_name_t *name);
 static int pls_tm_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs);
 static int pls_tm_signal_proc(const orte_process_name_t *name, int32_t signal);
@@ -89,7 +90,6 @@ static int pls_tm_finalize(void);
 
 static int pls_tm_connect(void);
 static int pls_tm_disconnect(void);
-static int pls_tm_check_path(char *exe, char **env);
 
 /*
  * Local variables
@@ -114,19 +114,23 @@ orte_pls_base_module_t orte_pls_tm_module = {
 extern char **environ;
 #endif  /* !defined(__WINDOWS__) */
 
+/* When working in this function, ALWAYS jump to "cleanup" if
+ * you encounter an error so that orterun will be woken up and
+ * the job can cleanly terminate
+ */
 static int pls_tm_launch_job(orte_jobid_t jobid)
 {
-    orte_job_map_t *map;
+    orte_job_map_t *map = NULL;
     opal_list_item_t *item;
     size_t num_nodes;
     orte_vpid_t vpid;
     int node_name_index;
     int proc_name_index;
     char *jobid_string;
-    char *param;
-    char **env;
+    char *uri, *param;
+    char **env = NULL;
     char *var;
-    char **argv;
+    char **argv = NULL;
     int argc;
     int rc;
     bool connected = false;
@@ -136,12 +140,11 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     tm_task_id *tm_task_ids = NULL;
     int local_err;
     tm_event_t event;
-    opal_list_t daemons;
-    orte_pls_daemon_info_t *dmn;
     struct timeval launchstart, launchstop, completionstart, completionstop;
     struct timeval jobstart, jobstop;
     int maxtime=0, mintime=99999999, maxiter = 0, miniter = 0, deltat;
     float avgtime=0.0;
+    bool failed_launch = true;
     
     /* check for timing request - get start time if so */
     if (mca_pls_tm_component.timing) {
@@ -158,7 +161,7 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     rc = orte_rmaps.get_job_map(&map, jobid);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        goto cleanup;
     }
 
     /* if the user requested that we re-use daemons,
@@ -167,8 +170,7 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     if (orte_pls_base.reuse_daemons) {
         if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
             ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(map);
-            return rc;
+            goto cleanup;
         }
     }
     
@@ -184,6 +186,7 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
      */
     rc = orte_ns.reserve_range(0, num_nodes, &vpid);
     if (ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
@@ -193,20 +196,17 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
         goto cleanup;
     }
     
-    /* setup a list that will contain the info for all the daemons
-     * so we can store it on the registry when done
-     */
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
-    
     /* Allocate a bunch of TM events to use for tm_spawn()ing */
     tm_events = malloc(sizeof(tm_event_t) * num_nodes);
     if (NULL == tm_events) {
         rc = ORTE_ERR_OUT_OF_RESOURCE;
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
     tm_task_ids = malloc(sizeof(tm_task_id) * num_nodes);
     if (NULL == tm_task_ids) {
         rc = ORTE_ERR_OUT_OF_RESOURCE;
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
@@ -294,17 +294,6 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
         }
     }
     
-    /* Do a quick sanity check to ensure that we can find the
-        orted in the PATH */
-    
-    if (ORTE_SUCCESS != 
-        (rc = pls_tm_check_path(argv[0], env))) {
-        ORTE_ERROR_LOG(rc);
-        opal_show_help("help-pls-tm.txt", "daemon-not-found",
-                        true, argv[0]);
-        goto cleanup;
-    }
-        
     /* Iterate through each of the nodes and spin
      * up a daemon.
      */
@@ -315,28 +304,13 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
         orte_process_name_t* name;
         char* name_string;
         
-        /* new daemon - setup to record its info */
-        dmn = OBJ_NEW(orte_pls_daemon_info_t);
-        dmn->active_job = jobid;
-        opal_list_append(&daemons, &dmn->super);
-        
         /* setup node name */
         free(argv[node_name_index]);
         argv[node_name_index] = strdup(node->nodename);
         
-        /* record the node name in the daemon struct */
-        dmn->cell = node->cell;
-        dmn->nodename = strdup(node->nodename);
-        
         /* initialize daemons process name */
         rc = orte_ns.create_process_name(&name, node->cell, 0, vpid);
         if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
-        /* save it in the daemon struct */
-        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(dmn->name), name, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -352,7 +326,7 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
         rc = orte_ns.get_proc_name_string(&name_string, name);
         if (ORTE_SUCCESS != rc) {
             opal_output(0, "pls:tm: unable to create process name");
-            return rc;
+            goto cleanup;
         }
         free(argv[proc_name_index]);
         argv[proc_name_index] = strdup(name_string);
@@ -377,13 +351,12 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
         
         rc = tm_spawn(argc, argv, env, node->launch_id, tm_task_ids + launched, tm_events + launched);
         if (TM_SUCCESS != rc) {
-            return ORTE_ERROR;
-        }
-        
-        if (ORTE_SUCCESS != rc) {
-            opal_output(0, "pls:tm: start_procs returned error %d", rc);
+            opal_show_help("help-pls-tm.txt", "tm-spawn-failed",
+                           true, argv[0], node->nodename, node->launch_id);
+            rc = ORTE_ERROR;
             goto cleanup;
         }
+        
         /* check for timing request - get stop time and process if so */
         if (mca_pls_tm_component.timing) {
             if (0 != gettimeofday(&launchstop, NULL)) {
@@ -423,20 +396,18 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
         }
     }
     
-    /* all done, so store the daemon info on the registry */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    
     /* TM poll for all the spawns */
     for (i = 0; i < launched; ++i) {
         rc = tm_poll(TM_NULL_EVENT, &event, 1, &local_err);
         if (TM_SUCCESS != rc) {
             errno = local_err;
             opal_output(0, "pls:tm: failed to poll for a spawned proc, return status = %d", rc);
-            return ORTE_ERR_IN_ERRNO;
+            goto cleanup;
         }
     }
+    
+    /* if we get here, then everything launched okay - record that fact */
+    failed_launch = false;
     
     /* check for timing request - get stop time for launch completion and report */
     if (mca_pls_tm_component.timing) {
@@ -455,7 +426,15 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     
     
  cleanup:
-    OBJ_RELEASE(map);
+    if (NULL != map) {
+        OBJ_RELEASE(map);
+    }
+    if (NULL != argv) {
+        opal_argv_free(argv);
+    }
+    if (NULL != env) {
+        opal_argv_free(env);
+    }
     
     if (connected) {
         pls_tm_disconnect();
@@ -474,12 +453,17 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
         free(bin_base);
     }
 
-    /* deconstruct the daemon list */
-    while (NULL != (item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(item);
+    /* check for failed launch - if so, force terminate */
+    if (failed_launch) {
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(jobid, ORTE_JOB_STATE_FAILED_TO_START))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_wakeup(jobid))) {
+            ORTE_ERROR_LOG(rc);
+        }        
     }
-    OBJ_DESTRUCT(&daemons);
-
+        
     /* check for timing request - get stop time and process if so */
     if (mca_pls_tm_component.timing) {
         if (0 != gettimeofday(&jobstop, NULL)) {
@@ -502,11 +486,11 @@ static int pls_tm_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opa
 {
     int rc;
     
-    /* order them to kill their local procs for this job */
+   /* order all of the daemons to kill their local procs for this job */
     if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(jobid, timeout, attrs))) {
         ORTE_ERROR_LOG(rc);
     }
-    
+
     return rc;
 }
 
@@ -514,7 +498,7 @@ static int pls_tm_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opa
 /**
  * Terminate the orteds for a given job
  */
-int pls_tm_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
+int pls_tm_terminate_orteds(struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
     
@@ -618,85 +602,5 @@ static int pls_tm_disconnect(void)
 {
     tm_finalize();
 
-    return ORTE_SUCCESS;
-}
-
-
-static int pls_tm_check_path(char *exe, char **env)
-{
-    static int size = 256;
-    int i;
-    char *file;
-    char *cwd;
-    char *path = NULL;
-
-    /* Do we want this check at all? */
-
-    if (!mca_pls_tm_component.want_path_check) {
-        return ORTE_SUCCESS;
-    }
-
-    /* Find the path in the supplied environment */
-
-    for (i = 0; NULL != env[i]; ++i) {
-        if (0 == strncmp("PATH=", env[i], 5)) {
-            path = strdup(env[i]);
-            break;
-        }
-    }
-    if (NULL == env[i]) {
-        path = strdup("NULL");
-    }
-
-    /* Check the already-successful paths (i.e., be a little
-       friendlier to the filesystem -- if we find the executable
-       successfully, save it) */
-
-    for (i = 0; NULL != mca_pls_tm_component.checked_paths &&
-             NULL != mca_pls_tm_component.checked_paths[i]; ++i) {
-        if (0 == strcmp(path, mca_pls_tm_component.checked_paths[i])) {
-            return ORTE_SUCCESS;
-        }
-    }
-
-    /* We didn't already find it, so check now.  First, get the cwd. */
-
-    do {
-        cwd = malloc(size);
-        if (NULL == cwd) {
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        if (NULL == getcwd(cwd, size)) {
-            free(cwd);
-            if (ERANGE == errno) {
-                size *= 2;
-            } else {
-                return ORTE_ERR_IN_ERRNO;
-            }
-        } else {
-            break;
-        }
-    } while (1);
-
-    /* Now do the search */
-
-    file = opal_path_findv(exe, X_OK, env, cwd);
-    free(cwd);
-    if (NULL == file) {
-        free(path);
-        return ORTE_ERR_NOT_FOUND;
-    }
-    if (mca_pls_tm_component.debug) {
-        opal_output(0, "pls:tm: found %s", file);
-    }
-    free(file);
-
-    /* Success -- so cache it */
-
-    opal_argv_append_nosize(&mca_pls_tm_component.checked_paths, path);
-
-    /* All done */
-
-    free(path);
     return ORTE_SUCCESS;
 }
