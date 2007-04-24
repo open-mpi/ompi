@@ -55,6 +55,7 @@ typedef struct orte_odls_child_t {
     orte_std_cntr_t app_idx;     /* index of the app_context for this proc */
     bool alive;                  /* is this proc alive? */
     orte_proc_state_t state;     /* the state of the process */
+    int exit_code;               /* process exit code */
 } orte_odls_child_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
     

@@ -90,11 +90,15 @@ int orte_odls_base_report_spawn(opal_list_t *children)
             free(segment);
             
             /* now set the process state to LAUNCHED */
-        }
-        if (ORTE_SUCCESS !=
-            (rc = orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_LAUNCHED, 0))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
+            if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_LAUNCHED, 0))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else if (ORTE_PROC_STATE_FAILED_TO_START == child->state) {
+            if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_FAILED_TO_START, child->exit_code))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
         }
     }
     
