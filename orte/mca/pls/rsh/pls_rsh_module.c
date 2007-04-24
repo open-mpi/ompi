@@ -575,7 +575,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         }
         if ( i == ORTE_PLS_RSH_SHELL_UNKNOWN ) {
             opal_output(0, "WARNING: local probe returned unhandled shell:%s assuming bash\n",
-                        orte_pls_rsh_shell_name[i]);
+                        sh_name);
             local_sh = true;
         }
         
