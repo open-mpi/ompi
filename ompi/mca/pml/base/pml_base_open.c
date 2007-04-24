@@ -83,8 +83,10 @@ ompi_pointer_array_t mca_pml_base_pml;
 int mca_pml_base_open(void)
 {
     char* default_pml = NULL;
-    char* wrapper_pml = NULL;
     int value;
+#if OPAL_ENABLE_FT == 1
+    char* wrapper_pml = NULL;
+#endif
 
     /*
      * Register some MCA parameters
@@ -140,6 +142,7 @@ int mca_pml_base_open(void)
         ompi_pointer_array_add(&mca_pml_base_pml, strdup(default_pml));
     }
 
+#if OPAL_ENABLE_FT == 1
     /* 
      * Which PML Wrapper component to use, if any
      *  - NULL or "" = No wrapper
@@ -152,6 +155,8 @@ int mca_pml_base_open(void)
     if( NULL != wrapper_pml ) {
         ompi_pointer_array_add(&mca_pml_base_pml, strdup(wrapper_pml));
     }
+#endif
+
 #endif
 
     return OMPI_SUCCESS;

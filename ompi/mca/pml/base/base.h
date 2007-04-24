@@ -33,12 +33,14 @@
 extern "C" {
 #endif
 
+#if OPAL_ENABLE_FT == 1
 /*
  * This is the base priority for a PML wrapper component
  * If there exists more than one then it is undefined 
  * which one is picked.
  */
 #define PML_SELECT_WRAPPER_PRIORITY -128
+#endif
 
 OMPI_DECLSPEC  int mca_pml_base_open(void);
 OMPI_DECLSPEC  int mca_pml_base_progress(void);
