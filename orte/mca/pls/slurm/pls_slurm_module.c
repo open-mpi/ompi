@@ -418,27 +418,12 @@ cleanup:
 static int pls_slurm_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
-    opal_list_t daemons;
-    opal_list_item_t *item;
-    
-    /* construct the list of active daemons on this job */
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
     
     /* order them to kill their local procs for this job */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(&daemons, jobid, timeout))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(jobid, timeout, attrs))) {
         ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
     }
     
-CLEANUP:
-    while (NULL != (item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&daemons);
     return rc;
 }
 
@@ -449,26 +434,12 @@ CLEANUP:
 static int pls_slurm_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
-    opal_list_t daemons;
-    opal_list_item_t *item;
-    
-    /* construct the list of active daemons on this job */
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
-    
+
     /* order them to go away */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(&daemons, timeout))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(timeout, attrs))) {
         ORTE_ERROR_LOG(rc);
     }
     
-CLEANUP:
-    while (NULL != (item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&daemons);
     return rc;
 }
 

@@ -111,7 +111,7 @@ int orte_pls_base_launch_on_existing_daemons(orte_job_map_t *map)
     orte_pls_base_store_active_daemons(&used_daemons);
     
     /* launch any procs that are using existing daemons */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_add_local_procs(&used_daemons, ndat))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_add_local_procs(ndat))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

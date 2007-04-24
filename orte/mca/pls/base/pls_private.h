@@ -81,10 +81,10 @@ typedef uint8_t orte_pls_cmd_flag_t;
      * Utilities for pls components that use proxy daemons
      */
     ORTE_DECLSPEC int orte_pls_base_orted_cancel_operation(void);
-    ORTE_DECLSPEC int orte_pls_base_orted_exit(opal_list_t *daemons, struct timeval *timeout);
-    ORTE_DECLSPEC int orte_pls_base_orted_kill_local_procs(opal_list_t *daemons, orte_jobid_t job, struct timeval *timeout);
-    ORTE_DECLSPEC int orte_pls_base_orted_signal_local_procs(opal_list_t *daemons, int32_t signal);
-    ORTE_DECLSPEC int orte_pls_base_orted_add_local_procs(opal_list_t *dmnlist, orte_gpr_notify_data_t *ndat);
+    ORTE_DECLSPEC int orte_pls_base_orted_exit(struct timeval *timeout, opal_list_t *attrs);
+    ORTE_DECLSPEC int orte_pls_base_orted_kill_local_procs(orte_jobid_t job, struct timeval *timeout, opal_list_t *attrs);
+    ORTE_DECLSPEC int orte_pls_base_orted_signal_local_procs(orte_jobid_t job, int32_t signal, opal_list_t *attrs);
+    ORTE_DECLSPEC int orte_pls_base_orted_add_local_procs(orte_gpr_notify_data_t *ndat);
 
     ORTE_DECLSPEC int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job, opal_list_t *attrs);
     ORTE_DECLSPEC int orte_pls_base_store_active_daemons(opal_list_t *daemons);
