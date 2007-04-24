@@ -96,12 +96,14 @@ int orte_smr_base_set_proc_state(orte_process_name_t *proc,
         ORTE_PROC_STATE_AT_STG3 == state ||
         ORTE_PROC_STATE_FINALIZED == state ||
         ORTE_PROC_STATE_TERMINATED == state ||
+        ORTE_PROC_STATE_FAILED_TO_START == state ||
         ORTE_PROC_STATE_ABORTED == state) {
             
-        /* If we're setting ABORTED, we're also setting TERMINATED, so we
+        /* If we're setting ABORTED or FAILED_TO_START, we're also setting TERMINATED, so we
            need 2 keyvals.  Everything else only needs 1 keyval. */
     
-        if (ORTE_PROC_STATE_ABORTED == state) {
+        if (ORTE_PROC_STATE_ABORTED == state ||
+            ORTE_PROC_STATE_FAILED_TO_START == state) {
             if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_AND,
                                                             segment, 2, 1))) {
                 ORTE_ERROR_LOG(rc);
@@ -165,6 +167,17 @@ int orte_smr_base_set_proc_state(orte_process_name_t *proc,
     
             case ORTE_PROC_STATE_ABORTED:
                 if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_ABORTED, ORTE_UNDEF, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[1]), ORTE_PROC_NUM_TERMINATED, ORTE_UNDEF, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                break;
+
+            case ORTE_PROC_STATE_FAILED_TO_START:
+                if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_FAILED_START, ORTE_UNDEF, NULL))) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
