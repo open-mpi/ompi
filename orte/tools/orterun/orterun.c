@@ -70,6 +70,7 @@
 
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
+#include "orte/mca/odls/odls_types.h"
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rmgr/rmgr.h"
@@ -326,7 +327,7 @@ static int parse_globals(int argc, char* argv[]);
 static int parse_locals(int argc, char* argv[]);
 static int parse_appfile(char *filename, char ***env);
 static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state);
-static void dump_aborted_procs(orte_jobid_t jobid);
+static void dump_aborted_procs(orte_jobid_t jobid, orte_app_context_t **apps, orte_job_state_t state);
 
 
 int orterun(int argc, char *argv[])
@@ -506,7 +507,7 @@ int orterun(int argc, char *argv[])
             }
             if (ORTE_JOB_STATE_TERMINATED != exit_state) {
                 /* abnormal termination of some kind */
-                dump_aborted_procs(jobid);
+                dump_aborted_procs(jobid, apps, exit_state);
                 /* If we showed more abort messages than were allowed,
                 show a followup message here */
                 if (num_aborted > max_display_aborted) {
@@ -522,6 +523,9 @@ int orterun(int argc, char *argv[])
             /* Make sure we propagate the exit code */
             if (WIFEXITED(orterun_globals.exit_status)) {
                 rc = WEXITSTATUS(orterun_globals.exit_status);
+            }  else if (ORTE_JOB_STATE_FAILED_TO_START == exit_state) {
+                /* ensure we don't treat this like a signal */
+                rc = orterun_globals.exit_status;
             } else {
                 /* If a process was killed by a signal, then make the
                  * exit code of orterun be "signo + 128" so that "prog"
@@ -531,21 +535,16 @@ int orterun(int argc, char *argv[])
             }
             
             /* the job is complete - now tell the orteds that it is
-             * okay to finalize and exit, we are done with them
-             * be sure to include any descendants so nothing is
-             * left hanging
+             * okay to finalize and exit, we are done with them.
+             * Issue this as a "soft kill" so the daemons won't die
+             * if they are part of a virtual machine - since that is
+             * the default mode, we can just leave the attributes as NULL
              */
             if (ORTE_JOBID_INVALID != jobid) {
-                OBJ_CONSTRUCT(&attributes, opal_list_t);
-                orte_rmgr.add_attribute(&attributes, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
-                if (ORTE_SUCCESS != (ret = orte_pls.terminate_orteds(jobid, &orte_abort_timeout, &attributes))) {
+                if (ORTE_SUCCESS != (ret = orte_pls.terminate_orteds(&orte_abort_timeout, NULL))) {
                     opal_show_help("help-orterun.txt", "orterun:daemon-die", true,
                                    orterun_basename, ORTE_ERROR_NAME(ret));
                 }
-                while (NULL != (item = opal_list_remove_first(&attributes))) {
-                    OBJ_RELEASE(item);
-                }
-                OBJ_DESTRUCT(&attributes);
             }
             OPAL_THREAD_UNLOCK(&orterun_globals.lock);
 
@@ -575,7 +574,7 @@ DONE:
  * exit status of the aborted procs.
  */
 
-static void dump_aborted_procs(orte_jobid_t jobid)
+static void dump_aborted_procs(orte_jobid_t jobid, orte_app_context_t **apps, orte_job_state_t state)
 {
     char *segment;
     orte_gpr_value_t** values = NULL;
@@ -583,46 +582,49 @@ static void dump_aborted_procs(orte_jobid_t jobid)
     int rc;
     int32_t exit_status = 0;
     bool exit_status_set;
+    bool abort_reported=false;
     char *keys[] = {
         ORTE_PROC_NAME_KEY,
         ORTE_PROC_LOCAL_PID_KEY,
         ORTE_PROC_RANK_KEY,
         ORTE_PROC_EXIT_CODE_KEY,
         ORTE_NODE_NAME_KEY,
+        ORTE_PROC_APP_CONTEXT_KEY,
+        ORTE_PROC_STATE_KEY,
         NULL
     };
-
+    
     OPAL_TRACE_ARG1(1, jobid);
-
+    
     /* query the job segment on the registry */
     if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
         ORTE_ERROR_LOG(rc);
         return;
     }
-
-    rc = orte_gpr.get(
-        ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
-        segment,
-        NULL,
-        keys,
-        &num_values,
-        &values
-        );
+    
+    rc = orte_gpr.get(ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
+                      segment,
+                      NULL,
+                      keys,
+                      &num_values,
+                      &values
+                      );
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         free(segment);
         return;
     }
-
+    
     for (i = 0; i < num_values; i++) {
         orte_gpr_value_t* value = values[i];
         orte_process_name_t name, *nptr;
         pid_t pid = 0, *pidptr;
-        orte_std_cntr_t rank = 0, *sptr;
+        orte_std_cntr_t rank = 0, *sptr, app_idx=0;
         bool rank_found=false;
         char* node_name = NULL;
         orte_exit_code_t *ecptr;
-
+        orte_proc_state_t *pst_ptr, pst;
+        
         exit_status = 0;
         exit_status_set = false;
         for(k=0; k < value->cnt; k++) {
@@ -665,44 +667,120 @@ static void dump_aborted_procs(orte_jobid_t jobid)
                 node_name = (char*)(keyval->value->data);
                 continue;
             }
+            if(strcmp(keyval->key, ORTE_PROC_APP_CONTEXT_KEY) == 0) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_STD_CNTR))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                app_idx = *sptr;
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_PROC_STATE_KEY) == 0) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&pst_ptr, keyval->value, ORTE_PROC_STATE))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                pst = *pst_ptr;
+                continue;
+            }
         }
-
+        
         if (rank_found) {
-            if (WIFSIGNALED(exit_status)) {
-                if (9 == WTERMSIG(exit_status)) {
-                    ++num_killed;
-                } else {
-                    if (num_aborted < max_display_aborted) {
-#ifdef HAVE_STRSIGNAL
-                        if (NULL != strsignal(WTERMSIG(exit_status))) {
-                            opal_show_help("help-orterun.txt", "orterun:proc-aborted-strsignal", false,
+            if (ORTE_JOB_STATE_FAILED_TO_START == state) {
+                if (num_aborted < max_display_aborted) {
+                    if (ORTE_ERR_SYS_LIMITS_PIPES == exit_status) {
+                        opal_show_help("help-orterun.txt", "orterun:sys-limit-pipe", true,
+                                       orterun_basename, node_name, (unsigned long)rank);
+                    } else if (ORTE_ERR_PIPE_SETUP_FAILURE == exit_status) {
+                        opal_show_help("help-orterun.txt", "orterun:pipe-setup-failure", true,
+                                       orterun_basename, node_name, (unsigned long)rank);
+                    } else if (ORTE_ERR_SYS_LIMITS_CHILDREN == exit_status) {
+                        opal_show_help("help-orterun.txt", "orterun:sys-limit-children", true,
+                                       orterun_basename, node_name, (unsigned long)rank);
+                    } else if (ORTE_ERR_FAILED_GET_TERM_ATTRS == exit_status) {
+                        opal_show_help("help-orterun.txt", "orterun:failed-term-attrs", true,
+                                       orterun_basename, node_name, (unsigned long)rank);
+                    } else if (ORTE_ERR_WDIR_NOT_FOUND == exit_status) {
+                        opal_show_help("help-orterun.txt", "orterun:wdir-not-found", true,
+                                       orterun_basename, apps[app_idx]->cwd, node_name, (unsigned long)rank);
+                    } else if (ORTE_ERR_EXE_NOT_FOUND == exit_status) {
+                        opal_show_help("help-orterun.txt", "orterun:exe-not-found", true,
+                                       orterun_basename, apps[app_idx]->app, node_name, (unsigned long)rank);
+                    } else if (ORTE_ERR_EXE_NOT_ACCESSIBLE == exit_status) {
+                        opal_show_help("help-orterun.txt", "orterun:exe-not-accessible", true,
+                                       orterun_basename, apps[app_idx]->app, node_name, (unsigned long)rank);
+                    } else if (ORTE_ERR_PIPE_READ_FAILURE == exit_status) {
+                        opal_show_help("help-orterun.txt", "orterun:pipe-read-failure", true,
+                                       orterun_basename, node_name, (unsigned long)rank);
+                    } else if (0 != exit_status) {
+                        opal_show_help("help-orterun.txt", "orterun:proc-failed-to-start", true,
+                                       orterun_basename, ORTE_ERROR_NAME(exit_status), node_name,
+                                       (unsigned long)rank);
+                    } else {
+                        opal_show_help("help-orterun.txt", "orterun:proc-failed-to-start-no-status", true,
+                                       orterun_basename, node_name);
+                    }
+                }
+                ++num_aborted;
+            } else {
+                if (ORTE_PROC_STATE_ABORTED == pst) {
+                    if (!abort_reported) {
+                        opal_show_help("help-orterun.txt", "orterun:proc-ordered-abort", true,
                                        orterun_basename, (unsigned long)rank, (unsigned long)pid,
-                                       node_name, WTERMSIG(exit_status), 
-                                       strsignal(WTERMSIG(exit_status)));
-                        } else {
-#endif
-                            opal_show_help("help-orterun.txt", "orterun:proc-aborted", false,
-                                       orterun_basename, (unsigned long)rank, (unsigned long)pid,
-                                       node_name, WTERMSIG(exit_status));
-#ifdef HAVE_STRSIGNAL
-                        }
-#endif
+                                       node_name, orterun_basename);
+                        abort_reported = true;
                     }
                     ++num_aborted;
+                } else if (WIFSIGNALED(exit_status)) {
+                    if (9 == WTERMSIG(exit_status)) {
+                        ++num_killed;
+                    } else {
+                        if (num_aborted < max_display_aborted) {
+#ifdef HAVE_STRSIGNAL
+                            if (NULL != strsignal(WTERMSIG(exit_status))) {
+                                opal_show_help("help-orterun.txt", "orterun:proc-aborted-strsignal", false,
+                                               orterun_basename, (unsigned long)rank, (unsigned long)pid,
+                                               node_name, WTERMSIG(exit_status), 
+                                               strsignal(WTERMSIG(exit_status)));
+                            } else {
+#endif
+                                opal_show_help("help-orterun.txt", "orterun:proc-aborted", false,
+                                               orterun_basename, (unsigned long)rank, (unsigned long)pid,
+                                               node_name, WTERMSIG(exit_status));
+#ifdef HAVE_STRSIGNAL
+                            }
+#endif
+                        }
+                        ++num_aborted;
+                    }
                 }
             }
         }
-
+        
         /* If we haven't done so already, hold the exit_status so we
-           can return it when exiting.  Specifically, keep the first
-           non-zero entry.  If they all return zero, we'll return
-           zero.  We already have the globals.lock (from
-           job_state_callback), so don't try to get it again. */
-
-        if (0 == orterun_globals.exit_status && exit_status_set) {
+            can return it when exiting.  Specifically, keep the first
+            non-zero entry.  If they all return zero, we'll return
+            zero.  We already have the globals.lock (from
+                                                     job_state_callback), so don't try to get it again. */
+        
+        if (ORTE_JOB_STATE_FAILED_TO_START == state) {
+            /* if the job failed to start, then there cannot be
+             * an exit state set, so we force the exit state
+             * to be 1 so that scripts can tell we failed. Keep
+             * this BEFORE the exit_status_set "if" so that we
+             * can detect some procs failing to start while
+             * others did.
+             *
+             * Any exit state we find is actually just the ORTE error
+             * code we set so that orterun can output an intelligible
+             * error message. Hence, there is no sense in trying to
+             * propagate any reported exit states - just set it to "1"
+             */
+            orterun_globals.exit_status = 1;
+        } else if (0 == orterun_globals.exit_status && exit_status_set) {
             orterun_globals.exit_status = exit_status;
         }
-
+        
         OBJ_RELEASE(value);
     }
     if (NULL != values) {
