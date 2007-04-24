@@ -48,6 +48,7 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/univ_info.h"
 
+#include "orte/mca/odls/base/odls_private.h"
 #include "odls_bproc.h"
 
 /**
@@ -58,7 +59,8 @@ orte_odls_base_module_t orte_odls_bproc_module = {
     orte_odls_bproc_get_add_procs_data,
     orte_odls_bproc_launch_local_procs,
     orte_odls_bproc_kill_local_procs,
-    orte_odls_bproc_signal_local_procs
+    orte_odls_bproc_signal_local_procs,
+    orte_odls_bproc_deliver_message
 };
 
 static int odls_bproc_make_dir(char *directory);
@@ -609,6 +611,10 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
         } /* for j */
     }
 
+    /* setup some values we'll need to drop my uri for each child */
+    orte_ns.convert_jobid_to_string(&job_str, jobid);
+    my_uri = orte_rml.get_uri();
+
     /* set up the io files for our children */
     for(item =  opal_list_get_first(&mca_odls_bproc_component.children);
         item != opal_list_get_end(&mca_odls_bproc_component.children);
@@ -616,9 +622,9 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
         child = (odls_bproc_child_t *) item;
         if(0 < mca_odls_bproc_component.debug) {
             opal_output(0, "orte_odls_bproc_launch: setting up io for "
-                            "[%lu,%lu,%lu] proc rank %lu\n",
+                            "[%ld,%ld,%ld] proc rank %ld\n",
                             ORTE_NAME_ARGS((child->name)),
-                            child->name->vpid);
+                            (long)child->name->vpid);
         }
         /* only setup to forward stdin if it is rank 0, otherwise connect
             * to /dev/null */
@@ -669,6 +675,10 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
         cycle++;
     }
 
+    /* release the jobid string and uri */
+    free(job_str);
+    free(my_uri);
+
     /* message to indicate that we are ready */
     ack = OBJ_NEW(orte_buffer_t);
     rc = orte_dss.pack(ack, &src, 1, ORTE_INT);
@@ -713,6 +723,35 @@ int orte_odls_bproc_signal_local_procs(const orte_process_name_t* proc, int32_t 
     return ORTE_SUCCESS;
 }
 
+
+int orte_odls_bproc_deliver_message(orte_jobid_t job, orte_buffer_t *buffer, orte_rml_tag_t tag)
+{
+    int rc;
+    opal_list_item_t *item;
+    orte_odls_child_t *child;
+    
+    /* protect operations involving the global list of children */
+    OPAL_THREAD_LOCK(&mca_odls_bproc_component.lock);
+    
+    for (item = opal_list_get_first(&mca_odls_bproc_component.children);
+         item != opal_list_get_end(&mca_odls_bproc_component.children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        
+        /* see if this is one of the chosen */
+        if (job == child->name->jobid) {
+            /* if so, send the message */
+            rc = orte_rml.send_buffer(child->name, buffer, tag, 0);
+            if (rc < 0) {
+                ORTE_ERROR_LOG(rc);
+            }
+        }
+    }
+    
+    opal_condition_signal(&mca_odls_bproc_component.cond);
+    OPAL_THREAD_UNLOCK(&mca_odls_bproc_component.lock);
+    return ORTE_SUCCESS;
+}
 
 /**
  * Finalizes the bproc module. Cleanup tmp directory/files

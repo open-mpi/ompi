@@ -76,6 +76,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/num_procs.h"
+#include "opal/util/sys_limits.h"
 
 #include "orte/dss/dss.h"
 #include "orte/util/sys_info.h"
@@ -401,7 +402,7 @@ static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_s
 int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state)
 {
     orte_odls_child_t *child;
-    opal_list_item_t *item;
+    opal_list_item_t *item, *next;
     int rc, exit_status;
     opal_list_t procs_killed;
     orte_namelist_t *proc;
@@ -419,8 +420,11 @@ int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state)
     
     for (item = opal_list_get_first(&orte_odls_default.children);
          item != opal_list_get_end(&orte_odls_default.children);
-         item = opal_list_get_next(item)) {
+         item = next) {
         child = (orte_odls_child_t*)item;
+        
+        /* preserve the pointer to the next item in list in case we release it */
+        next = opal_list_get_next(item);
         
         opal_output(orte_odls_globals.output, "[%ld,%ld,%ld] odls_kill_local_proc: checking child process [%ld,%ld,%ld]",
                     ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), ORTE_NAME_ARGS(child->name));
@@ -429,8 +433,8 @@ int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state)
          * to do to it
          */
         if (!child->alive) {
-            opal_output(orte_odls_globals.output, "[%ld,%ld,%ld] odls_kill_local_proc: child is not alive",
-                    ORTE_NAME_ARGS(ORTE_PROC_MY_NAME));
+            opal_output(orte_odls_globals.output, "[%ld,%ld,%ld] odls_kill_local_proc: child [%ld,%ld,%ld] is not alive",
+                        ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), ORTE_NAME_ARGS(child->name));
             continue;
         }
         
@@ -442,9 +446,15 @@ int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state)
             continue;
         }
         
+        /* remove the child from the list since it is going to be dead */
+        opal_list_remove_item(&orte_odls_default.children, item);
+        
         /* de-register the SIGCHILD callback for this pid */
-        orte_wait_cb_cancel(child->pid);
-
+        if (ORTE_SUCCESS != (rc = orte_wait_cb_cancel(child->pid))) {
+            ORTE_ERROR_LOG(rc);
+            continue;
+        }
+        
         /* Send a sigterm to the process.  If we get ESRCH back, that
            means the process is already dead, so just move on. */
         if (0 != kill(child->pid, SIGTERM) && ESRCH != errno) {
@@ -482,6 +492,9 @@ MOVEON:
             return rc;
         }
         opal_list_append(&procs_killed, &proc->item);
+
+        /* release the object since we killed it */
+        OBJ_RELEASE(child);
     }
     
     /* we are done with the global list, so we can now release
@@ -522,7 +535,7 @@ static void odls_default_wait_local_proc(pid_t pid, int status, void* cbdata)
     struct stat buf;
     int rc;
 
-    opal_output(orte_odls_globals.output, "odls: child process terminated");
+    opal_output(orte_odls_globals.output, "odls: child process %ld terminated", (long)pid);
     
     /* since we are going to be working with the global list of
      * children, we need to protect that list from modification
@@ -622,13 +635,7 @@ MOVEON:
     opal_condition_signal(&orte_odls_default.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_default.mutex);
 
-    if (aborted) {
-        rc = orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_ABORTED, status);        
-    } else {
-        rc = orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_TERMINATED, status);
-    }
-
-    if (ORTE_SUCCESS != rc) {
+    if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(child->name, child->state, status))) {
         ORTE_ERROR_LOG(rc);
     }
 }
@@ -653,6 +660,22 @@ static int odls_default_fork_local_proc(
     sigset_t sigs;
     int i = 0, p[2];
 
+    /* check the system limits - if we are at our max allowed children, then
+     * we won't be allowed to do this anyway, so we may as well abort now.
+     * According to the documentation, num_procs = 0 is equivalent to
+     * to no limit, so treat it as unlimited here.
+     */
+    if (opal_sys_limits.initialized) {
+        if (0 < opal_sys_limits.num_procs &&
+            opal_sys_limits.num_procs <= (int)opal_list_get_size(&orte_odls_default.children)) {
+            /* at the system limit - abort */
+            ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_CHILDREN);
+            child->state = ORTE_PROC_STATE_FAILED_TO_START;
+            child->exit_code = ORTE_ERR_SYS_LIMITS_CHILDREN;
+            return ORTE_ERR_SYS_LIMITS_CHILDREN;
+        }
+    }
+    
     /* should pull this information from MPIRUN instead of going with
        default */
     opts.usepty = OMPI_ENABLE_PTY_SUPPORT;
@@ -665,12 +688,13 @@ static int odls_default_fork_local_proc(
         opts.connect_stdin = false;
     }
 
-    rc = orte_iof_base_setup_prefork(&opts);
-    if (ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+    if (ORTE_SUCCESS != (rc = orte_iof_base_setup_prefork(&opts))) {
+        ORTE_ERROR_LOG(rc);
+        child->state = ORTE_PROC_STATE_FAILED_TO_START;
+        child->exit_code = rc;
+        return rc;
     }
-
+    
     /* A pipe is used to communicate between the parent and child to
        indicate whether the exec ultiimately succeeded or failed.  The
        child sets the pipe to be close-on-exec; the child only ever
@@ -680,15 +704,19 @@ static int odls_default_fork_local_proc(
        then the exec() succeeded.  If the parent reads something from
        the pipe, then the child was letting us know that it failed. */
     if (pipe(p) < 0) {
-        ORTE_ERROR_LOG(ORTE_ERR_IN_ERRNO);
-        return ORTE_ERR_IN_ERRNO;
+        ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
+        child->state = ORTE_PROC_STATE_FAILED_TO_START;
+        child->exit_code = ORTE_ERR_SYS_LIMITS_PIPES;
+        return ORTE_ERR_SYS_LIMITS_PIPES;
     }
 
     /* Fork off the child */
     pid = fork();
     if(pid < 0) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+        ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_CHILDREN);
+        child->state = ORTE_PROC_STATE_FAILED_TO_START;
+        child->exit_code = ORTE_ERR_SYS_LIMITS_CHILDREN;
+        return ORTE_ERR_SYS_LIMITS_CHILDREN;
     }
 
     if (pid == 0) {
@@ -700,10 +728,6 @@ static int odls_default_fork_local_proc(
         /* Setup the pipe to be close-on-exec */
         close(p[0]);
         fcntl(p[1], F_SETFD, FD_CLOEXEC);
-
-        /* setup stdout/stderr so that any error messages that we may
-           print out will get displayed back at orterun */
-        orte_iof_base_setup_child(&opts);
 
         /* Try to change to the context cwd and check that the app
            exists and is executable The resource manager functions will
@@ -720,6 +744,22 @@ static int odls_default_fork_local_proc(
             exit(1);
         }
 
+        /*  setup stdout/stderr so that any error messages that we may
+            print out will get displayed back at orterun.
+            
+            NOTE: Definitely do this AFTER we check contexts so that any
+            error message from those two functions doesn't come out to the
+            user. IF we didn't do it in this order, THEN a user who gives
+            us a bad executable name or working directory would get N
+            error messages, where N=num_procs. This would be very annoying
+            for large jobs, so instead we set things up so that orterun
+            always outputs a nice, single message indicating what happened
+        */
+        if (ORTE_SUCCESS != (i = orte_iof_base_setup_child(&opts))) {
+            write(p[1], &i, sizeof(int));
+            exit(1);
+        }
+        
         /* setup base environment: copy the current environ and merge
            in the app context environ */
         if (NULL != context->env) {
@@ -904,39 +944,30 @@ static int odls_default_fork_local_proc(
                     continue;
                 }
                 /* Other errno's are bad */
-                return ORTE_ERR_IN_ERRNO;
+                child->state = ORTE_PROC_STATE_FAILED_TO_START;
+                child->exit_code = ORTE_ERR_PIPE_READ_FAILURE;
+                opal_output(orte_odls_globals.output, "odls: got code %d back from child", i);
+                return ORTE_ERR_PIPE_READ_FAILURE;
                 break;
             } else if (0 == rc) {
                 /* Child was successful in exec'ing! */
                 break;
             } else {
-                /* Doh -- child failed.
-                   Report the ORTE rc from child to let the calling function
-                   know about the failure.  The actual exit status of child proc
-                   cannot be found here. The calling func need to report the
-                   failure to launch this process through the SMR or else
-                   everyone else will hang.
+                /*  Doh -- child failed.
+                    Let the calling function
+                    know about the failure.  The actual exit status of child proc
+                    cannot be found here - all we can do is report the ORTE error
+                    code that was reported back to us. The calling func needs to report the
+                    failure to launch this process through the SMR or else
+                    everyone else will hang.
                 */
+                child->state = ORTE_PROC_STATE_FAILED_TO_START;
+                child->exit_code = i;
+                opal_output(orte_odls_globals.output, "odls: got code %d back from child", i);
                 return i;
             }
         }
 
-        /*
-         * Update the GPR with the PID of the child process
-         */
-        if( ORTE_SUCCESS != (rc = orte_rmgr.set_process_info(child->name, child->pid, orte_system_info.nodename) ) ) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* set the proc state to LAUNCHED and increment that counter so the trigger can fire
-         */
-        if (ORTE_SUCCESS !=
-            (rc = orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_LAUNCHED, 0))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
         /* set the proc state to LAUNCHED and save the pid */
         child->state = ORTE_PROC_STATE_LAUNCHED;
         child->pid = pid;
@@ -967,6 +998,8 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
     int num_processors;
     bool oversubscribed=false, want_processor, *bptr, override_oversubscribed=false;
     opal_list_item_t *item, *item2;
+    bool quit_flag;
+    bool node_included;
     orte_filem_base_request_t *filem_request;
     char *job_str, *uri_file, *my_uri, *session_dir=NULL;
     FILE *fp;
@@ -999,6 +1032,9 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
     /* set the default values to INVALID */
     start = ORTE_VPID_INVALID;
     range = ORTE_VPID_INVALID;
+    
+    /* set the flag indicating this node is not included in the launch data */
+    node_included = false;
     
     values = (orte_gpr_value_t**)(data->values)->addr;
     for (j=0, i=0; i < data->cnt && j < (data->values)->size; j++) {  /* loop through all returned values */
@@ -1076,6 +1112,9 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
                         }
                         /* if this is our node...must also protect against a zero-length string  */
                         if (NULL != node_name && 0 == strcmp(node_name, orte_system_info.nodename)) {
+                            /* indicate that there is something for us to do */
+                            node_included = true;
+                            
                             /* ...harvest the info into a new child structure */
                             child = OBJ_NEW(orte_odls_child_t);
                             for (kv2 = 0; kv2 < value->cnt; kv2++) {
@@ -1116,6 +1155,11 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
                 } /* for kv */
             }
         } /* for j */
+    }
+
+    /* if there is nothing for us to do, just return */
+    if (!node_included) {
+        return ORTE_SUCCESS;
     }
 
     /* record my uri in a file within the session directory so the local proc
@@ -1252,8 +1296,9 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
     OPAL_THREAD_LOCK(&orte_odls_default.mutex);
 
     
+    quit_flag = false;
     for (item = opal_list_get_first(&orte_odls_default.children);
-         item != opal_list_get_end(&orte_odls_default.children);
+         !quit_flag && item != opal_list_get_end(&orte_odls_default.children);
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
 
@@ -1262,6 +1307,8 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
          * If it has been launched, then do nothing
          */
         if (child->alive) {
+            opal_output(orte_odls_globals.output, "odls: child [%ld,%ld,%ld] is already alive",
+                        ORTE_NAME_ARGS(child->name));            
             continue;
         }
         
@@ -1270,6 +1317,8 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
         *  the dss.compare function to check for equality.
         */
         if (ORTE_EQUAL != orte_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
+            opal_output(orte_odls_globals.output, "odls: child [%ld,%ld,%ld] is not in job %ld being launched",
+                        ORTE_NAME_ARGS(child->name), (long)job);            
             continue;
         }
         
@@ -1303,10 +1352,12 @@ DOFORK:
                                                                range, want_processor,
                                                                i, oversubscribed,
                                                                base_environ))) {
-            ORTE_ERROR_LOG(rc);
-            orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_ABORTED, 0);
-            opal_condition_signal(&orte_odls_default.cond);
-            return rc;
+            /* do NOT ERROR_LOG this error - it generates
+             * a message/node as most errors will be common
+             * across the entire cluster. Instead, we let orterun
+             * output a consolidated error message for us
+             */
+            quit_flag = true;
         }
         /* reaquire lock so we don't double unlock... */
         OPAL_THREAD_LOCK(&orte_odls_default.mutex);
