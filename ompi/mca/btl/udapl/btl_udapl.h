@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -57,13 +57,6 @@ struct mca_btl_udapl_component_t {
     size_t  udapl_num_btls; /**< number of hcas available to the uDAPL component */
     size_t  udapl_max_btls; /**< maximum number of supported hcas */
     struct  mca_btl_udapl_module_t **udapl_btls; /**< array of available BTL modules */
-    size_t  udapl_evd_qlen;
-    size_t  udapl_max_request_dtos; /**< maximum number of outstanding consumer
-                                          submitted sends and rdma operations, see
-                                          section 6.6.6 of uDAPL Spec */
-    size_t  udapl_max_recv_dtos;    /**< maximum number of outstanding consumer
-                                       submitted recv operations, see section 6.6.6
-                                       of uDAPL Spec */
     int32_t udapl_num_recvs;    /**< number of recv buffers to keep posted */
     int32_t udapl_num_sends;    /**< number of sends to post on endpoint */
     int32_t udapl_sr_win;       /**< number of fragments recieved before
@@ -96,7 +89,7 @@ struct mca_btl_udapl_component_t {
     int32_t udapl_eager_rdma_win; /**< number of eager RDMA fragments
                                     recieved before returning credits to
                                     sender */
-    
+
     opal_list_t udapl_procs;   /**< list of udapl proc structures */
     opal_mutex_t udapl_lock;   /**< lock for accessing module state */
     char* udapl_mpool_name;    /**< name of memory pool */ 
@@ -143,6 +136,14 @@ struct mca_btl_udapl_module_t {
                                                          * with eager rdma
                                                          * connections
                                                          */
+    /* module specific limits */
+    int udapl_evd_qlen;
+    int udapl_max_request_dtos; /**< maximum number of outstanding consumer
+                                       submitted sends and rdma operations, see
+                                       section 6.6.6 of uDAPL Spec */
+    int udapl_max_recv_dtos;    /**< maximum number of outstanding consumer
+                                       submitted recv operations, see section
+                                       6.6.6 of uDAPL Spec */
 }; 
 typedef struct mca_btl_udapl_module_t mca_btl_udapl_module_t;
 extern mca_btl_udapl_module_t mca_btl_udapl_module;

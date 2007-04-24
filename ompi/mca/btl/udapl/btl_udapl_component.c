@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -39,6 +39,7 @@
 #include "btl_udapl.h"
 #include "btl_udapl_frag.h"
 #include "btl_udapl_endpoint.h" 
+#include "btl_udapl_mca.h"
 #include "btl_udapl_proc.h" 
 #include "ompi/mca/btl/base/base.h" 
 #include "ompi/mca/btl/base/btl_base_error.h"
@@ -140,7 +141,9 @@ static inline int mca_btl_udapl_param_register_int(
  */
 
 int mca_btl_udapl_component_open(void)
-{  
+{
+    int rc = OMPI_SUCCESS;
+
     /* initialize state */
     mca_btl_udapl_component.udapl_num_btls=0;
     mca_btl_udapl_component.udapl_btls=NULL;
@@ -149,58 +152,8 @@ int mca_btl_udapl_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_udapl_component.udapl_procs, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_udapl_component.udapl_lock, opal_mutex_t);
 
-    /* register uDAPL component parameters */
-    mca_btl_udapl_component.udapl_free_list_num =
-        mca_btl_udapl_param_register_int("free_list_num", 8);
-    mca_btl_udapl_component.udapl_free_list_max =
-        mca_btl_udapl_param_register_int("free_list_max", -1);
-    mca_btl_udapl_component.udapl_free_list_inc =
-        mca_btl_udapl_param_register_int("free_list_inc", 8);
-    mca_btl_udapl_component.udapl_mpool_name =
-        mca_btl_udapl_param_register_string("mpool", "rdma");
-    mca_btl_udapl_component.udapl_max_btls = 
-        mca_btl_udapl_param_register_int("max_modules", 8);
-    mca_btl_udapl_component.udapl_evd_qlen =
-        mca_btl_udapl_param_register_int("evd_qlen", 32);
-    mca_btl_udapl_component.udapl_max_request_dtos =
-        mca_btl_udapl_param_register_int("max_request_dtos", 18);
-    mca_btl_udapl_component.udapl_max_recv_dtos =
-        mca_btl_udapl_param_register_int("max_recv_dtos", 18);
-    mca_btl_udapl_component.udapl_num_recvs = 
-        mca_btl_udapl_param_register_int("num_recvs", 8);
-    mca_btl_udapl_component.udapl_num_sends = 
-        mca_btl_udapl_param_register_int("num_sends", 7);
-    mca_btl_udapl_component.udapl_sr_win = 
-        mca_btl_udapl_param_register_int("sr_win", 4);
-    mca_btl_udapl_component.udapl_eager_rdma_num =
-        mca_btl_udapl_param_register_int("eager_rdma_num", 8); 
-    mca_btl_udapl_component.udapl_max_eager_rdma_peers =
-        mca_btl_udapl_param_register_int("max_eager_rdma_peers", 16);
-    mca_btl_udapl_component.udapl_eager_rdma_win =
-        mca_btl_udapl_param_register_int("eager_rdma_win", 4);
-    mca_btl_udapl_component.udapl_timeout = 
-        mca_btl_udapl_param_register_int("timeout", 10000000);
-    mca_btl_udapl_component.udapl_eager_rdma_guarantee = 
-        mca_btl_udapl_param_register_int("eager_rdma_guarantee", 0);
-    
-    /* register uDAPL module parameters */
-    mca_btl_udapl_module.super.btl_exclusivity =
-        mca_btl_udapl_param_register_int ("exclusivity",
-                MCA_BTL_EXCLUSIVITY_DEFAULT - 10);
-    mca_btl_udapl_module.super.btl_eager_limit = 
-        mca_btl_udapl_param_register_int ("eager_limit", 32*1024);
-    mca_btl_udapl_module.super.btl_min_send_size =
-        mca_btl_udapl_param_register_int ("min_send_size", 16*1024);
-    mca_btl_udapl_module.super.btl_max_send_size =
-        mca_btl_udapl_param_register_int ("max_send_size", 64*1024);
-    mca_btl_udapl_module.super.btl_min_rdma_size = 
-        mca_btl_udapl_param_register_int("min_rdma_size", 512*1024); 
-    mca_btl_udapl_module.super.btl_max_rdma_size = 
-        mca_btl_udapl_param_register_int("max_rdma_size", 128*1024);
-    mca_btl_udapl_module.super.btl_flags =
-        mca_btl_udapl_param_register_int("flags", MCA_BTL_FLAGS_PUT);
-    mca_btl_udapl_module.super.btl_bandwidth  = 
-        mca_btl_udapl_param_register_int("bandwidth", 225); 
+    /* register uDAPL MCA parameters */
+    rc = mca_btl_udapl_register_mca_params();
 
     /* compute udapl_eager_frag_size and udapl_max_frag_size */
     mca_btl_udapl_component.udapl_eager_frag_size =
@@ -218,7 +171,7 @@ int mca_btl_udapl_component_open(void)
         sizeof(mca_btl_udapl_frag_eager_rdma_t) +
         mca_btl_udapl_component.udapl_eager_frag_size;
 
-    return OMPI_SUCCESS;
+    return rc;
 }
 
 

@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -32,11 +32,13 @@ udapl_sources = \
     btl_udapl.c \
     btl_udapl.h \
     btl_udapl_component.c \
+    btl_udapl_eager_rdma.h \
     btl_udapl_endpoint.c \
     btl_udapl_endpoint.h \
     btl_udapl_frag.c \
     btl_udapl_frag.h \
-    btl_udapl_eager_rdma.h \
+    btl_udapl_mca.c \
+    btl_udapl_mca.h \
     btl_udapl_proc.c \
     btl_udapl_proc.h
 

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -430,9 +430,9 @@ int mca_btl_udapl_endpoint_get_params(mca_btl_udapl_module_t* btl,
 
     /* Set values from mca parameters */
     (*ep_attr).max_recv_dtos =
-        mca_btl_udapl_component.udapl_max_recv_dtos;
+        btl->udapl_max_recv_dtos;
     (*ep_attr).max_request_dtos =
-        mca_btl_udapl_component.udapl_max_request_dtos;
+        btl->udapl_max_request_dtos;
 
     /* close the dummy endpoint */
     rc = dat_ep_free(dummy_ep);
