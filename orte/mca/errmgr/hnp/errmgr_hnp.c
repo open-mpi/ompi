@@ -29,6 +29,7 @@
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/params.h"
+#include "orte/runtime/orte_wakeup.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/pls/pls.h"
@@ -53,14 +54,6 @@
 int orte_errmgr_hnp_proc_aborted(orte_gpr_notify_message_t *msg)
 {
     orte_jobid_t job;
-    orte_vpid_t start, range;
-    orte_std_cntr_t num;
-    char *segment;
-    char *tokens[] = {
-        ORTE_JOB_GLOBALS,
-        NULL
-    };
-    orte_data_value_t dval = ORTE_DATA_VALUE_EMPTY;
     opal_list_t attrs;
     opal_list_item_t *item;
     int rc;
@@ -83,38 +76,27 @@ int orte_errmgr_hnp_proc_aborted(orte_gpr_notify_message_t *msg)
         return rc;
     }
     
-    /* tell the pls to terminate the job AND ALL ITS DESCENDANTS */
+    /* tell the pls to terminate the ENTIRE FAMLIY of this job - this is necessary to avoid
+     * "hanging" portions of the application if the aborted job was dynamically spawned
+     * from another job
+     */
     OBJ_CONSTRUCT(&attrs, opal_list_t);
-    orte_rmgr.add_attribute(&attrs, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
+    orte_rmgr.add_attribute(&attrs, ORTE_NS_USE_JOB_FAMILY, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
     if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job, &orte_abort_timeout, &attrs))) {
         ORTE_ERROR_LOG(rc);
     }
     while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
     OBJ_DESTRUCT(&attrs);
     
-    /* orterun will only wakeup when all procs report terminated. The terminate_job
+    /* orterun will only wakeup when all procs IN THE ROOT JOB report terminated. The terminate_job
      * function *should* have done that - however, it is possible during abnormal
      * startup that it will fail to happen. If we get here, we force the issue by
      * deliberately causing the TERMINATE trigger to fire
      */
-    if (ORTE_SUCCESS != (rc = orte_rmgr.get_vpid_range(job, &start, &range))) {
+    if (ORTE_SUCCESS != (rc = orte_wakeup(job))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    num = range;
-    if (ORTE_SUCCESS != (rc = orte_dss.set(&dval, (void*)&num, ORTE_STD_CNTR))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (ORTE_SUCCESS != (rc = orte_gpr.put_1(ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND | ORTE_GPR_KEYS_OR,
-                                             segment, tokens, ORTE_PROC_NUM_TERMINATED, &dval))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    
+    }    
+
     return rc;
 }
 
@@ -131,6 +113,8 @@ int orte_errmgr_hnp_proc_aborted(orte_gpr_notify_message_t *msg)
 int orte_errmgr_hnp_incomplete_start(orte_gpr_notify_message_t *msg)
 {
     orte_jobid_t job;
+    opal_list_t attrs;
+    opal_list_item_t *item;
     int rc;
     
     OPAL_TRACE(1);
@@ -143,18 +127,33 @@ int orte_errmgr_hnp_incomplete_start(orte_gpr_notify_message_t *msg)
         return rc;
     }
     
+    opal_output(orte_errmgr_base_output, "errmgr_hnp: incomplete start reported - job %lu", (unsigned long)job);
+    
     /* set the job state */
     if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_STATE_FAILED_TO_START))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    /* tell the pls to terminate the job - just kill this job, not any descendants since
-     * the job is just trying to start
+    /* tell the pls to terminate the job - kill this job and all members of its family
+     * as we have no way to handle it otherwise at this time
      */
-    if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job, &orte_abort_timeout, NULL))) {
+    OBJ_CONSTRUCT(&attrs, opal_list_t);
+    orte_rmgr.add_attribute(&attrs, ORTE_NS_USE_JOB_FAMILY, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
+    if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job, &orte_abort_timeout, &attrs))) {
         ORTE_ERROR_LOG(rc);
     }
+    while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
+    OBJ_DESTRUCT(&attrs);
+    
+    /* orterun will only wakeup when all procs IN THE ROOT JOB report terminated. The terminate_job
+     * function *should* have done that - however, it is possible during abnormal
+     * startup that it will fail to happen. If we get here, we force the issue by
+     * deliberately causing the TERMINATE trigger to fire
+     */
+    if (ORTE_SUCCESS != (rc = orte_wakeup(job))) {
+        ORTE_ERROR_LOG(rc);
+    }    
     
     return rc;
 }
