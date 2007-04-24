@@ -242,25 +242,6 @@ typedef int (*orte_rmgr_base_module_check_context_cwd_fn_t)(orte_app_context_t *
  */
 typedef int (*orte_rmgr_base_module_check_context_app_fn_t)(orte_app_context_t *context);
 
-/**
-    * VPID FUNCTIONS
- */
-
-/**
-    * Store the vpid range of a job
- */
-typedef int (*orte_rmgr_base_module_set_vpid_range_fn_t)(orte_jobid_t jobid,
-                                                         orte_vpid_t start,
-                                                         orte_vpid_t range);
-
-
-/**
-    * Retrieve the vpid range of a job
- */
-typedef int (*orte_rmgr_base_module_get_vpid_range_fn_t)(orte_jobid_t jobid,
-                                                         orte_vpid_t *start,
-                                                         orte_vpid_t *range);
-
     /**
      * Set the process' local PID
      */
@@ -290,8 +271,6 @@ struct orte_rmgr_base_module_2_0_0_t {
     orte_rmgr_base_module_store_app_context_fn_t    store_app_context;
     orte_rmgr_base_module_check_context_cwd_fn_t    check_context_cwd;
     orte_rmgr_base_module_check_context_app_fn_t    check_context_app;
-    orte_rmgr_base_module_set_vpid_range_fn_t       set_vpid_range;
-    orte_rmgr_base_module_get_vpid_range_fn_t       get_vpid_range;
     orte_rmgr_base_module_set_process_info_fn_t     set_process_info;
     orte_rmgr_base_module_get_process_info_fn_t     get_process_info;
 };

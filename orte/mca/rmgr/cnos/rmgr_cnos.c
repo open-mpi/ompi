@@ -75,14 +75,6 @@ static int orte_rmgr_cnos_check_context_app(orte_app_context_t *context);
 static int orte_rmgr_cnos_check_context_cwd(orte_app_context_t *context,
                                             bool want_chdir);
 
-static int orte_rmgr_cnos_set_vpid_range(orte_jobid_t jobid,
-                                         orte_vpid_t start,
-                                         orte_vpid_t range);
-
-static int orte_rmgr_cnos_get_vpid_range(orte_jobid_t jobid,
-                                         orte_vpid_t *start,
-                                         orte_vpid_t *range);
-
 static orte_gpr_keyval_t* orte_rmgr_cnos_find_attribute(opal_list_t* attr_list, char* key);
 
 static int orte_rmgr_cnos_add_attribute(opal_list_t* attr_list, char* key,
@@ -114,8 +106,6 @@ orte_rmgr_base_module_t orte_rmgr_cnos_module = {
     orte_rmgr_cnos_put_app_context,
     orte_rmgr_cnos_check_context_cwd,
     orte_rmgr_cnos_check_context_app,
-    orte_rmgr_cnos_set_vpid_range,
-    orte_rmgr_cnos_get_vpid_range,
     orte_rmgr_cnos_set_proc_info,
     orte_rmgr_cnos_get_proc_info
 };
@@ -192,20 +182,6 @@ static int orte_rmgr_cnos_check_context_app(orte_app_context_t *context)
 
 static int orte_rmgr_cnos_check_context_cwd(orte_app_context_t *context,
                                             bool want_chdir)
-{
-    return ORTE_ERR_NOT_SUPPORTED;
-}
-
-static int orte_rmgr_cnos_set_vpid_range(orte_jobid_t jobid,
-                                         orte_vpid_t start,
-                                         orte_vpid_t range)
-{
-    return ORTE_ERR_NOT_SUPPORTED;
-}
-
-static int orte_rmgr_cnos_get_vpid_range(orte_jobid_t jobid,
-                                         orte_vpid_t *start,
-                                         orte_vpid_t *range)
 {
     return ORTE_ERR_NOT_SUPPORTED;
 }

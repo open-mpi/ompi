@@ -201,7 +201,7 @@ int orte_pls_proxy_terminate_job(orte_jobid_t job, struct timeval *timeout, opal
     return ORTE_SUCCESS;
 }
 
-int orte_pls_proxy_terminate_orteds(orte_jobid_t job, struct timeval *timeout, opal_list_t *attrs)
+int orte_pls_proxy_terminate_orteds(struct timeval *timeout, opal_list_t *attrs)
 {
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
@@ -221,12 +221,6 @@ int orte_pls_proxy_terminate_orteds(orte_jobid_t job, struct timeval *timeout, o
     }
     
     if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &command, 1, ORTE_PLS_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(cmd);
-        return rc;
-    }
-    
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &job, 1, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
         return rc;

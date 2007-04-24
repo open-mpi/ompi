@@ -1071,7 +1071,7 @@ int orte_pls_rsh_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal
 /**
 * Terminate the orteds for a given job
  */
-int orte_pls_rsh_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
+int orte_pls_rsh_terminate_orteds(struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
     

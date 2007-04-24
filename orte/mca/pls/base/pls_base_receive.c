@@ -169,13 +169,6 @@ void orte_pls_base_recv(int status, orte_process_name_t* sender,
             break;
             
         case ORTE_PLS_TERMINATE_ORTEDS_CMD:
-            /* get the jobid whose daemons are to be terminated */
-            count = 1;
-            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
-                ORTE_ERROR_LOG(rc);
-                goto SEND_ANSWER;
-            }
-                
             /* get any attributes */
             OBJ_CONSTRUCT(&attrs, opal_list_t);
             count = 1;
@@ -199,7 +192,7 @@ void orte_pls_base_recv(int status, orte_process_name_t* sender,
             timeout.tv_usec = microsecs;
             
             /* issue the command */
-            if (ORTE_SUCCESS != (rc = orte_pls.terminate_orteds(job, &timeout, &attrs))) {
+            if (ORTE_SUCCESS != (rc = orte_pls.terminate_orteds(&timeout, &attrs))) {
                 ORTE_ERROR_LOG(rc);
             }
                 

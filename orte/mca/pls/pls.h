@@ -207,7 +207,7 @@ typedef int (*orte_pls_base_module_terminate_job_fn_t)(orte_jobid_t, struct time
 /**
  * Terminate the daemons associated with this jobid
  */
-typedef int (*orte_pls_base_module_terminate_orteds_fn_t)(orte_jobid_t, struct timeval *timeout, opal_list_t *attrs);
+typedef int (*orte_pls_base_module_terminate_orteds_fn_t)(struct timeval *timeout, opal_list_t *attrs);
 
 /**
  * Terminate a specific process.

@@ -109,12 +109,12 @@ void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
                 goto CLEANUP;
             }
 
-            if (orted_globals.debug_daemons) {
-                opal_output(0, "[%lu,%lu,%lu] orted_recv_pls: received kill_local_procs for job %ld",
-                            ORTE_NAME_ARGS(orte_process_info.my_name), (long)jobs[0]);
-            }
-            
             for (n=0; n < num_jobs; n++) {
+                if (orted_globals.debug_daemons) {
+                    opal_output(0, "[%lu,%lu,%lu] orted_recv_pls: received kill_local_procs for job %ld",
+                                ORTE_NAME_ARGS(orte_process_info.my_name), (long)jobs[n]);
+                }
+                
                 if (ORTE_SUCCESS != (ret = orte_odls.kill_local_procs(jobs[n], true))) {
                     ORTE_ERROR_LOG(ret);
                 }
@@ -382,7 +382,7 @@ static void halt_vm(void)
     /* terminate the vm - this will also wake us up so we can exit */
     OBJ_CONSTRUCT(&attrs, opal_list_t);
     orte_rmgr.add_attribute(&attrs, ORTE_DAEMON_HARD_KILL, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
-    ret = orte_pls.terminate_orteds(0, &orte_abort_timeout, &attrs);
+    ret = orte_pls.terminate_orteds(&orte_abort_timeout, &attrs);
     while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
     OBJ_DESTRUCT(&attrs);
     

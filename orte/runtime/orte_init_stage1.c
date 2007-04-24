@@ -206,7 +206,7 @@ int orte_init_stage1(bool infrastructure)
     /*
      * Initialize the daemon launch system so those types
      * are registered (needed by the sds to talk to its
-                       * local daemon)
+     * local daemon)
      */
     if (ORTE_SUCCESS != (ret = orte_odls_base_open())) {
         ORTE_ERROR_LOG(ret);
@@ -282,10 +282,9 @@ int orte_init_stage1(bool infrastructure)
 
     /*
      * Now that we know for certain if we are an HNP and/or a daemon,
-     * setup the resource management frameworks. This includes opening
-     * and selecting the daemon launch framework - that framework "knows"
-     * what to do if it isn't in a daemon, and everyone needs that framework
-     * to at least register its datatypes.
+     * setup the resource management frameworks. This includes
+     * selecting the daemon launch framework - that framework "knows"
+     * what to do if it isn't in a daemon.
      */
     if (ORTE_SUCCESS != (ret = orte_rds_base_open())) {
         ORTE_ERROR_LOG(ret);
@@ -419,12 +418,6 @@ int orte_init_stage1(bool infrastructure)
             goto error;
         }
         OBJ_RELEASE(app);
-        
-        if (ORTE_SUCCESS != (ret = orte_rmgr.set_vpid_range(my_jobid,0,1))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_rmgr.set_vpid_range for singleton/seed";
-            goto error;
-        }
         
         if (orte_process_info.singleton) {
             /* setup a fake node structure - this is required to support
@@ -734,7 +727,7 @@ error:
     if (ret != ORTE_SUCCESS) {
         opal_show_help("help-orte-runtime",
                        "orte_init:startup:internal-failure",
-                       true, error, ret);
+                       true, error, ORTE_ERROR_NAME(ret), ret);
     }
 
     return ret;

@@ -43,7 +43,7 @@
 
 static int orte_pls_cnos_launch_job(orte_jobid_t jobid);
 static int orte_pls_cnos_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs);
-static int orte_pls_cnos_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs);
+static int orte_pls_cnos_terminate_orteds(struct timeval *timeout, opal_list_t *attrs);
 static int orte_pls_cnos_terminate_proc(const orte_process_name_t* proc_name);
 static int orte_pls_cnos_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs);
 static int orte_pls_cnos_signal_proc(const orte_process_name_t* proc_name, int32_t signal);
@@ -91,18 +91,13 @@ static int orte_pls_cnos_terminate_job(orte_jobid_t jobid, struct timeval *timeo
 }
 
 
-static int orte_pls_cnos_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
+static int orte_pls_cnos_terminate_orteds(struct timeval *timeout, opal_list_t *attrs)
 {
-    orte_jobid_t my_jobid = ORTE_PROC_MY_NAME->jobid;
-    
-    /* make sure it's my job */
-    if (jobid == my_jobid) {
 #ifdef HAVE_KILLRANK
-        killrank(-1, SIGKILL);
+    killrank(-1, SIGKILL);
 #else
-        exit(0);
+    exit(0);
 #endif
-    }
 
     return ORTE_ERR_NOT_SUPPORTED;
 }

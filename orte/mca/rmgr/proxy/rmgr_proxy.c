@@ -74,8 +74,6 @@ orte_rmgr_base_module_t orte_rmgr_proxy_module = {
     orte_rmgr_base_put_app_context,
     orte_rmgr_base_check_context_cwd,
     orte_rmgr_base_check_context_app,
-    orte_rmgr_base_set_vpid_range,
-    orte_rmgr_base_get_vpid_range,
     orte_rmgr_base_set_proc_info,
     orte_rmgr_base_get_proc_info
 };

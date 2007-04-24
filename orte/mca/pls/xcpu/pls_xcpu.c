@@ -256,7 +256,8 @@ orte_pls_xcpu_launch_job(orte_jobid_t jobid)
 	num_apps = map->num_apps;
 
 	/* next, get the vpid_start and range */
-	rc = orte_rmgr.get_vpid_range(jobid, &vpid_start, &vpid_range);
+    vpid_start = 0;
+	rc = orte_ns.get_vpid_range(jobid, &vpid_range);
 	if (rc != ORTE_SUCCESS) {
 		ORTE_ERROR_LOG(rc);
 		return rc;
@@ -375,7 +376,7 @@ int orte_pls_xcpu_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opa
 	return ORTE_SUCCESS;
 }
 
-int orte_pls_xcpu_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t * attrs)
+int orte_pls_xcpu_terminate_orteds(struct timeval *timeout, opal_list_t * attrs)
 {
 	return ORTE_SUCCESS;
 }

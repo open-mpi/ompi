@@ -64,7 +64,7 @@ extern char **environ;
  */
 static int pls_poe_launch_job(orte_jobid_t jobid);
 static int pls_poe_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs);
-static int pls_poe_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs);
+static int pls_poe_terminate_orteds(struct timeval *timeout, opal_list_t *attrs);
 static int pls_poe_terminate_proc(const orte_process_name_t *name);
 static int pls_poe_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs);
 static int pls_poe_signal_proc(const orte_process_name_t *name, int32_t signal);
@@ -477,7 +477,8 @@ static inline int poe_launch_interactive_job(orte_jobid_t jobid)
         fclose(hfp);
     }
 
-    rc = orte_rmgr.get_vpid_range(jobid, &vpid_start, &vpid_range);
+    vpid_start = 0;
+    rc = orte_ns.get_vpid_range(jobid, &vpid_range);
     if (ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
 
     /* Create a temporary POE command file */
@@ -589,7 +590,7 @@ static int pls_poe_terminate_proc(const orte_process_name_t *name)
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
-static int pls_poe_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
+static int pls_poe_terminate_orteds(struct timeval *timeout, opal_list_t *attrs)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
