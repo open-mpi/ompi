@@ -501,27 +501,12 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
 static int pls_tm_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
-    opal_list_t daemons;
-    opal_list_item_t *item;
-    
-    /* construct the list of active daemons on this job */
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
     
     /* order them to kill their local procs for this job */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(&daemons, jobid, timeout))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(jobid, timeout, attrs))) {
         ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
     }
     
-CLEANUP:
-    while (NULL != (item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&daemons);
     return rc;
 }
 
@@ -532,26 +517,12 @@ CLEANUP:
 int pls_tm_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
-    opal_list_t daemons;
-    opal_list_item_t *item;
-    
-    /* construct the list of active daemons on this job */
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
     
     /* now tell them to die! */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(&daemons, timeout))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(timeout, attrs))) {
         ORTE_ERROR_LOG(rc);
     }
     
-CLEANUP:
-    while (NULL != (item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&daemons);
     return rc;
 }
 
@@ -570,26 +541,12 @@ static int pls_tm_terminate_proc(const orte_process_name_t *name)
 static int pls_tm_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs)
 {
     int rc;
-    opal_list_t daemons;
-    opal_list_item_t *item;
-    
-    /* construct the list of active daemons on this job */
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&daemons);
-        return rc;
-    }
     
     /* order them to pass this signal to their local procs */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_signal_local_procs(&daemons, signal))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_signal_local_procs(jobid, signal, attrs))) {
         ORTE_ERROR_LOG(rc);
     }
     
-    while (NULL != (item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&daemons);
     return rc;
 }
 
