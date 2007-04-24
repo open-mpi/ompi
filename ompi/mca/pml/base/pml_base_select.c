@@ -54,12 +54,14 @@ int mca_pml_base_select(bool enable_progress_threads,
     mca_base_component_list_item_t *cli = NULL;
     mca_pml_base_component_t *component = NULL, *best_component = NULL;
     mca_pml_base_module_t *module = NULL, *best_module = NULL;
-    mca_pml_base_component_t *wrapper_component = NULL;
-    mca_pml_base_module_t *wrapper_module = NULL;
-    int wrapper_priority = -1;
     opal_list_t opened;
     opened_component_t *om = NULL;
     bool found_pml;
+#if OPAL_ENABLE_FT == 1
+    mca_pml_base_component_t *wrapper_component = NULL;
+    mca_pml_base_module_t *wrapper_module = NULL;
+    int wrapper_priority = -1;
+#endif
 
     /* Traverse the list of available components; call their init
        functions. */
@@ -123,6 +125,7 @@ int mca_pml_base_select(bool enable_progress_threads,
 
         opal_output_verbose( 10, mca_pml_base_output,
                              "select: init returned priority %d", priority );
+#if OPAL_ENABLE_FT == 1
         /* Determine if this is the wrapper component */
         if( priority <= PML_SELECT_WRAPPER_PRIORITY) {
             opal_output_verbose( 10, mca_pml_base_output,
@@ -134,7 +137,9 @@ int mca_pml_base_select(bool enable_progress_threads,
             continue;
         }
         /* Otherwise determine if this is the best component */
-        else if (priority > best_priority) {
+        else 
+#endif
+        if (priority > best_priority) {
             best_priority = priority;
             best_component = component;
             best_module = module;
@@ -176,8 +181,12 @@ int mca_pml_base_select(bool enable_progress_threads,
          NULL != item;
          item = opal_list_remove_first(&opened)) {
         om = (opened_component_t *) item;
-        if (om->om_component != best_component &&
-            om->om_component != wrapper_component) {
+
+        if (om->om_component != best_component
+#if OPAL_ENABLE_FT == 1
+            && om->om_component != wrapper_component
+#endif
+            ) {
             /* Finalize */
                 
             if (NULL != om->om_component->pmlm_finalize) {
@@ -197,6 +206,7 @@ int mca_pml_base_select(bool enable_progress_threads,
     }
     OBJ_DESTRUCT( &opened );
 
+#if OPAL_ENABLE_FT == 1
     /* Remove the wrapper component from the mca_pml_base_components_available list
      * so we don't unload it prematurely in the next call
      */
@@ -212,6 +222,7 @@ int mca_pml_base_select(bool enable_progress_threads,
             }
         }
     }
+#endif
 
     /* This base function closes, unloads, and removes from the
        available list all unselected components.  The available list will
@@ -229,6 +240,7 @@ int mca_pml_base_select(bool enable_progress_threads,
                          "select: component %s selected",
                          best_component->pmlm_version.mca_component_name );
 
+#if OPAL_ENABLE_FT == 1
     /* If we have a wrapper then initalize it */
     if( NULL != wrapper_component ) {
         priority = PML_SELECT_WRAPPER_PRIORITY;
@@ -252,6 +264,7 @@ int mca_pml_base_select(bool enable_progress_threads,
         best_module = module;
         mca_pml     = *best_module;
     }
+#endif
 
     /* register the winner's callback */
     opal_progress_register(mca_pml.pml_progress);
