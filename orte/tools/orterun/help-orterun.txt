@@ -86,6 +86,13 @@ Returned value %d instead of ORTE_SUCCESS.
 [orterun:attr-failed]
 %s was unable to define an attribute
 Returned value %d instead of ORTE_SUCCESS.
+#
+[orterun:proc-ordered-abort]
+%s has exited due to process rank %lu with PID %lu on
+node %s calling "abort". This will have caused other processes
+in the application to be terminated by signals sent by %s
+(as reported here).
+#
 [orterun:proc-aborted]
 %s noticed that job rank %lu with PID %lu on node %s exited on signal %d.
 [orterun:proc-aborted-strsignal]
@@ -137,4 +144,93 @@ Things to check:
 #
 [orterun:daemon-die]
 %s was unable to cleanly terminate the daemons for this job. Returned value %s instead of ORTE_SUCCESS.
+#
+[orterun:daemon-die]
+%s was unable to cleanly terminate the daemons for this job. Returned value %s instead of ORTE_SUCCESS.
+#
+[orterun:sys-limit-pipe]
+%s was unable to launch the specified application as it encountered an error:
+
+Error: system limit exceeded on number of pipes that can be open
+Node: %s
+
+when attempting to start process rank %lu.
+
+This can be resolved by either asking the system administrator for that node to
+increase the system limit, or by rearranging your processes to place fewer of them
+on that node.
+#
+[orterun:pipe-setup-failure]
+%s was unable to launch the specified application as it encountered an error:
+
+Error: pipe function call failed when setting up I/O forwarding subsystem
+Node: %s
+
+while attempting to start process rank %lu.
+#
+[orterun:sys-limit-children]
+%s was unable to launch the specified application as it encountered an error:
+
+Error: system limit exceeded on number of processes that can be started
+Node: %s
+
+when attempting to start process rank %lu.
+
+This can be resolved by either asking the system administrator for that node to
+increase the system limit, or by rearranging your processes to place fewer of them
+on that node.
+#
+[orterun:failed-term-attrs]
+%s was unable to launch the specified application as it encountered an error:
+
+Error: reading tty attributes function call failed while setting up I/O forwarding system
+Node: %s
+
+while attempting to start process rank %lu.
+#
+[orterun:wdir-not-found]
+%s was unable to launch the specified application as it could not change to the
+specified working directory:
+
+Working directory: %s
+Node: %s
+
+while attempting to start process rank %lu.
+#
+[orterun:exe-not-found]
+%s was unable to launch the specified application as it could not find an executable:
+
+Executable: %s
+Node: %s
+
+while attempting to start process rank %lu.
+#
+[orterun:exe-not-accessible]
+%s was unable to launch the specified application as it could not access
+or execute an executable:
+
+Executable: %s
+Node: %s
+
+while attempting to start process rank %lu.
+#
+[orterun:pipe-read-failure]
+%s was unable to launch the specified application as it encountered an error:
+
+Error: reading from a pipe function call failed while spawning a local process
+Node: %s
+
+while attempting to start process rank %lu.
+#
+[orterun:proc-failed-to-start]
+%s was unable to start the specified application as it encountered an error:
+
+Error name: %s
+Node: %s
+
+when attempting to start process rank %lu.
+#
+[orterun:proc-failed-to-start-no-status]
+%s was unable to start the specified application as it encountered an error
+on node %s. More information may be available above.
 
