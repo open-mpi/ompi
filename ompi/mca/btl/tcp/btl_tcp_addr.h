@@ -35,12 +35,41 @@
 /**
  * Structure used to publish TCP connection information to peers.
  */
+
 struct mca_btl_tcp_addr_t {
-    struct in_addr addr_inet;     /**< IPv4 address in network byte order */
+    /* the following information is exchanged between different
+       machines (read: byte order), so use network byte order
+       for everything and don't add padding
+    */
+#if OPAL_WANT_IPV6
+    struct in6_addr addr_inet;    /**< IPv4/IPv6 listen address > */
+#else
+    /* Bug, FIXME: needs testing */
+    struct my_in6_addr {
+        union {
+            uint32_t u6_addr32[4];
+            struct _my_in6_addr {
+                struct in_addr _addr_inet;
+                uint32_t _pad[3];
+            } _addr__inet;
+        } _union_inet;
+#if 0
+# define s_addr     _union_inet._addr__inet._addr_inet.s_addr
+#endif
+    } addr_inet; 
+#endif
     in_port_t      addr_port;     /**< listen port */
+    uint16_t       addr_ifkindex; /**< remote interface index assigned with
+                                    this address */
     unsigned short addr_inuse;    /**< local meaning only */
+    uint8_t        addr_family;   /**< AF_INET or AF_INET6 */ 
 };
 typedef struct mca_btl_tcp_addr_t mca_btl_tcp_addr_t;
+
+#define MCA_BTL_TCP_AF_INET     0
+#if OPAL_WANT_IPV6
+# define MCA_BTL_TCP_AF_INET6   1
+#endif
 
 #endif
 

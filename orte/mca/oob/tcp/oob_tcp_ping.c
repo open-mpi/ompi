@@ -72,7 +72,11 @@ int mca_oob_tcp_ping(
     const struct timeval *timeout)
 {
     int sd, flags, rc;
+#if OPAL_WANT_IPV6
+    struct sockaddr_in6 inaddr;
+#else    
     struct sockaddr_in inaddr;
+#endif
     fd_set fdset;
     mca_oob_tcp_hdr_t hdr;
     struct timeval tv;
@@ -92,7 +96,11 @@ int mca_oob_tcp_ping(
     }
 
     /* create socket */
+#if OPAL_WANT_IPV6
+    sd = socket(inaddr.sin6_family, SOCK_STREAM, 0);
+#else
     sd = socket(AF_INET, SOCK_STREAM, 0);
+#endif
     if (sd < 0) {
        opal_output(0,
             "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: socket() failed: %s (%d)\n",

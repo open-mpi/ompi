@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC. 
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -118,18 +120,20 @@ static char unknown_retbuf[UNKNOWN_RETBUF_LEN];
 const char *
 opal_strerror(int errnum)
 {
-    const char* errmsg = opal_strerror_int(errnum);
+    const char* errmsg;
+
+    if (errnum == OPAL_ERR_IN_ERRNO) {
+        return strerror(errno);
+    }
+
+    errmsg = opal_strerror_int(errnum);
 
     if (NULL == errmsg) {
-        if (errnum == OPAL_ERR_IN_ERRNO) {
-            return strerror(errno);
-        } else {
-            char *ue_msg = opal_strerror_unknown(errnum);
-            snprintf(unknown_retbuf, UNKNOWN_RETBUF_LEN, "%s", ue_msg);
-            free(ue_msg);
-            errno = EINVAL;
-            return (const char*) unknown_retbuf;
-        }
+        char *ue_msg = opal_strerror_unknown(errnum);
+        snprintf(unknown_retbuf, UNKNOWN_RETBUF_LEN, "%s", ue_msg);
+        free(ue_msg);
+        errno = EINVAL;
+        return (const char*) unknown_retbuf;
     } else {
         return errmsg;
     }

@@ -58,6 +58,7 @@ extern "C" {
 
 struct mca_btl_tcp_component_t {
     mca_btl_base_component_1_0_1_t super;   /**< base BTL component */ 
+    uint32_t tcp_addr_count;                /**< total number of addresses */
     uint32_t tcp_num_btls;                  /**< number of hcas available to the TCP component */
     uint32_t tcp_num_links;                 /**< number of logical links per physical device */
     struct mca_btl_tcp_module_t **tcp_btls; /**< array of available BTL modules */
@@ -69,13 +70,21 @@ struct mca_btl_tcp_component_t {
     opal_hash_table_t tcp_procs;            /**< hash table of tcp proc structures */
     opal_list_t tcp_events;                 /**< list of pending tcp events */
     opal_mutex_t tcp_lock;                  /**< lock for accessing module state */
-    opal_event_t tcp_recv_event;            /**< recv event for listen socket */
-    int tcp_listen_sd;                      /**< listen socket for incoming connection requests */
-    unsigned short tcp_listen_port;         /**< listen port */
+    opal_event_t tcp_recv_event;            /**< recv event for IPv4 listen socket */
+#if OPAL_WANT_IPV6
+    opal_event_t tcp6_recv_event;           /**< recv event for IPv6 listen socket */
+#endif
+    int tcp_listen_sd;                      /**< IPv4 listen socket for incoming connection requests */
+    unsigned short tcp_listen_port;         /**< IPv4 listen port */
+#if OPAL_WANT_IPV6
+    int tcp6_listen_sd;                     /**< IPv6 listen socket for incoming connection requests */
+    unsigned short tcp6_listen_port;        /**< IPv6 listen port */
+#endif
     char*  tcp_if_include;                  /**< comma seperated list of interface to include */
     char*  tcp_if_exclude;                  /**< comma seperated list of interface to exclude */
     int    tcp_sndbuf;                      /**< socket sndbuf size */
     int    tcp_rcvbuf;                      /**< socket rcvbuf size */
+    int    tcp_disable_family;              /**< disabled AF_family */
 
     /* free list of fragment descriptors */
     ompi_free_list_t tcp_frag_eager;
@@ -92,9 +101,12 @@ OMPI_MODULE_DECLSPEC extern mca_btl_tcp_component_t mca_btl_tcp_component;
 struct mca_btl_tcp_module_t {
     mca_btl_base_module_t  super;  /**< base BTL interface */
     mca_btl_base_recv_reg_t tcp_reg[256]; 
+    uint16_t           tcp_ifkindex; /** <BTL kernel interface index */
+#if 0
     int                tcp_ifindex; /**< PTL interface index */
-    struct sockaddr_in tcp_ifaddr;  /**< PTL interface address */
-    struct sockaddr_in tcp_ifmask;  /**< PTL interface netmask */
+#endif
+    struct sockaddr_storage tcp_ifaddr; /**< PTL interface address */
+    uint32_t           tcp_ifmask;  /**< PTL interface netmask */
     opal_list_t        tcp_endpoints;
 #if MCA_BTL_TCP_STATISTICS
     size_t tcp_bytes_sent;

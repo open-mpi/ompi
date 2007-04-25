@@ -220,7 +220,11 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t*);
  */
 int mca_oob_tcp_parse_uri(
     const char* uri, 
+#if OPAL_WANT_IPV6
+    struct sockaddr_in6* inaddr
+#else 
     struct sockaddr_in* inaddr
+#endif
 );
 
 /**
@@ -247,8 +251,12 @@ struct mca_oob_tcp_component_t {
     mca_oob_base_component_1_0_0_t super;  /**< base OOB component */
     char*              tcp_include;          /**< list of ip interfaces to include */
     char*              tcp_exclude;          /**< list of ip interfaces to exclude */
-    int                tcp_listen_sd;        /**< listen socket for incoming connection requests */
-    unsigned short     tcp_listen_port;      /**< listen port */
+    int                tcp_listen_sd;        /**< listen socket for incoming IPv4 connection requests */
+    unsigned short     tcp_listen_port;      /**< IPv4 listen port */
+#if OPAL_WANT_IPV6
+    int                tcp6_listen_sd;       /**< listen socket for incoming IPv6 connection requests */
+    unsigned short     tcp6_listen_port;     /**< IPv6 listen port */
+#endif
     opal_list_t        tcp_subscriptions;    /**< list of registry subscriptions */
     opal_list_t        tcp_peer_list;        /**< list of peers sorted in mru order */
     opal_hash_table_t  tcp_peers;            /**< peers sorted by name */
@@ -259,8 +267,12 @@ struct mca_oob_tcp_component_t {
     int                tcp_sndbuf;           /**< socket send buffer size */
     int                tcp_rcvbuf;           /**< socket recv buffer size */
     opal_free_list_t   tcp_msgs;             /**< free list of messages */
-    opal_event_t       tcp_send_event;       /**< event structure for sends */
-    opal_event_t       tcp_recv_event;       /**< event structure for recvs */
+    opal_event_t       tcp_send_event;       /**< event structure for IPv4 sends */
+    opal_event_t       tcp_recv_event;       /**< event structure for IPv4 recvs */
+#if OPAL_WANT_IPV6
+    opal_event_t       tcp6_send_event;      /**< event structure for IPv6 sends */
+    opal_event_t       tcp6_recv_event;      /**< event structure for IPv6 recvs */
+#endif
     opal_mutex_t       tcp_lock;             /**< lock for accessing module state */
     opal_list_t        tcp_events;           /**< list of pending events (accepts) */
     opal_list_t        tcp_msg_post;         /**< list of recieves user has posted */
@@ -309,6 +321,7 @@ ORTE_DECLSPEC extern int mca_oob_tcp_output_handle;
 struct mca_oob_tcp_pending_connection_t {
         opal_free_list_item_t super;
         int fd;
+        /* Bug, FIXME: Port to IPv6 */
         struct sockaddr_in addr;
     };
     typedef struct mca_oob_tcp_pending_connection_t mca_oob_tcp_pending_connection_t;

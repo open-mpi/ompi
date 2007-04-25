@@ -29,6 +29,8 @@
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 #include "ompi/datatype/dt_arch.h"
+#include "opal/util/if.h"
+#include "orte/mca/oob/tcp/oob_tcp_addr.h"
 
 #include "btl_tcp.h"
 #include "btl_tcp_proc.h"
@@ -117,20 +119,20 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(ompi_proc_t* ompi_proc)
         OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
         return btl_proc;
      }
-                                                                                                                 
+
     btl_proc = OBJ_NEW(mca_btl_tcp_proc_t);
     if(NULL == btl_proc)
         return NULL;
     btl_proc->proc_ompi = ompi_proc;
     btl_proc->proc_name = ompi_proc->proc_name;
-                                                                                                                 
+
     /* add to hash table of all proc instance */
     orte_hash_table_set_proc(
         &mca_btl_tcp_component.tcp_procs,
         &btl_proc->proc_name,
          btl_proc);
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
-                                                                                                                 
+
     /* lookup tcp parameters exported by this proc */
     rc = mca_pml_base_modex_recv( &mca_btl_tcp_component.super.btl_version,
                                   ompi_proc,
@@ -142,20 +144,40 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(ompi_proc_t* ompi_proc)
         return NULL;
     }
     if(0 != (size % sizeof(mca_btl_tcp_addr_t))) {
-        BTL_ERROR(("mca_base_modex_recv: invalid size %d\n", size));
+        BTL_ERROR(("mca_base_modex_recv: invalid size %d: btl-size: %d\n",
+          size, sizeof(mca_btl_tcp_addr_t)));
         return NULL;
     }
     btl_proc->proc_addr_count = size / sizeof(mca_btl_tcp_addr_t);
-                                                                                                                 
+
     /* allocate space for endpoint array - one for each exported address */
     btl_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
-        malloc(btl_proc->proc_addr_count * sizeof(mca_btl_base_endpoint_t*));
+        malloc((1 + btl_proc->proc_addr_count) *
+                sizeof(mca_btl_base_endpoint_t*));
     if(NULL == btl_proc->proc_endpoints) {
         OBJ_RELEASE(btl_proc);
         return NULL;
     }
-    if(NULL == mca_btl_tcp_component.tcp_local && ompi_proc == ompi_proc_local())
+    if(NULL == mca_btl_tcp_component.tcp_local && ompi_proc == ompi_proc_local()) {
         mca_btl_tcp_component.tcp_local = btl_proc;
+    }
+    {
+        /* convert the OMPI addr_family field to OS constants,
+         * so we can check for AF_INET (or AF_INET6) and don't have
+         * to deal with byte ordering anymore.
+         */
+        unsigned int i;
+        for (i = 0; i < btl_proc->proc_addr_count; i++) {
+            if (MCA_BTL_TCP_AF_INET == btl_proc->proc_addrs[i].addr_family) {
+                btl_proc->proc_addrs[i].addr_family = AF_INET;
+            }
+#if OPAL_WANT_IPV6
+            if (MCA_BTL_TCP_AF_INET6 == btl_proc->proc_addrs[i].addr_family) {
+                btl_proc->proc_addrs[i].addr_family = AF_INET6;
+            }
+#endif
+        }
+    }
     return btl_proc;
 }
 
@@ -171,7 +193,7 @@ int mca_btl_tcp_proc_insert(
 {
     struct mca_btl_tcp_module_t *btl_tcp = btl_endpoint->endpoint_btl;
     size_t i;
-    unsigned long net1;
+    struct sockaddr_storage endpoint_addr_ss;
 
 #ifndef WORDS_BIGENDIAN
     /* if we are little endian and our peer is not so lucky, then we
@@ -188,7 +210,6 @@ int mca_btl_tcp_proc_insert(
     btl_endpoint->endpoint_proc = btl_proc;
     btl_proc->proc_endpoints[btl_proc->proc_endpoint_count++] = btl_endpoint;
 
-    net1 = btl_tcp->tcp_ifaddr.sin_addr.s_addr & btl_tcp->tcp_ifmask.sin_addr.s_addr;
 
     /*
      * Look through the proc instance for an address that is on the
@@ -197,90 +218,88 @@ int mca_btl_tcp_proc_insert(
     */
     for(i=0; i<btl_proc->proc_addr_count; i++) {
         mca_btl_tcp_addr_t* endpoint_addr = btl_proc->proc_addrs + i;
-        unsigned long net2 = endpoint_addr->addr_inet.s_addr & btl_tcp->tcp_ifmask.sin_addr.s_addr;
-        if(endpoint_addr->addr_inuse != 0)
+        if(endpoint_addr->addr_inuse != 0) {
             continue;
-        if(net1 == net2) {
+        }
+        mca_btl_tcp_proc_tosocks (endpoint_addr, &endpoint_addr_ss);
+
+        /* The best we could get is IPv4 public. So let's check */
+        if (true == mca_oob_tcp_addr_isipv4public (&endpoint_addr_ss)) {
             btl_endpoint->endpoint_addr = endpoint_addr;
-            break;
-        } else if(btl_endpoint->endpoint_addr != 0) {
+            btl_endpoint->endpoint_addr->addr_inuse++;
+            return OMPI_SUCCESS;
+        }
+
+#if OPAL_WANT_IPV6
+        /* Bug, FIXME: this is Thomas' job: if we have IPv6 AND RFC1918,
+         * use IPv6, else use IPv4 private */
+        /* 
+         * adi@2006-11-22: new bug. It's not sufficient to look for
+         * remote's IPv6 capabilities, we even need to check if we're
+         * able to communicate via IPv6. We might also want to look
+         * at mca_btl_tcp_component.tcp_disable_family
+         */
+        if((AF_INET6 == endpoint_addr->addr_family) &&
+           (6 != mca_btl_tcp_component.tcp_disable_family)) {
             btl_endpoint->endpoint_addr = endpoint_addr;
-	}
-    }
-    
+            btl_endpoint->endpoint_addr->addr_inuse++;
+            return OMPI_SUCCESS;
+        }
+            
+#endif
+        /* Read:
+         * if we are on the same network, accept.
+         * Bug, FIXME. May be wrong. That's only a
+         * last resort
+         */
+        
+        /* loop over our local addresses and see if we could accept it */
+        {
+            int index;
+            struct sockaddr_storage local_ss;
+            uint32_t netmask;
+            for (index = opal_ifbegin(); index >= 0; index=opal_ifnext (index)) {
+                /* we're only looking for IPv4 (private) */
+                if (AF_INET != endpoint_addr->addr_family) {
+                    continue;
+                }
+                if (OPAL_SUCCESS != 
+                        opal_ifindextoaddr (index, &local_ss, sizeof (local_ss))) {
+                    opal_output (0,
+                            "btl_tcp_proc: problems getting address for index %i (kernel index %i)\n", index, opal_ifindextokindex (index));
+                    continue;
+                }
+                if (OPAL_SUCCESS != 
+                        opal_ifindextomask (index, &netmask, sizeof (netmask))) {
+                    opal_output (0,
+                            "btl_tcp_proc: problems getting netmask for index %i (kernel index %i)\n", index, opal_ifindextokindex (index));
+                    continue;
+                }
+
+                /* we know that we're only talking about IPv4 now.
+                 * Let's talk about IPv4 _private_, so isipv4public must
+                 * return false
+                 */
+                if (false == mca_oob_tcp_addr_isipv4public (&local_ss)) {
+                    if (opal_samenetwork(&local_ss, &endpoint_addr_ss, netmask)) {
+                        btl_endpoint->endpoint_addr = endpoint_addr;
+                        btl_endpoint->endpoint_addr->addr_inuse++;
+                        return OMPI_SUCCESS;
+                    }
+                }
+            }
+        }
+    } /* end of for btl_proc_proc_addr_count */
+
     /* Make sure there is a common interface */
     if( NULL != btl_endpoint->endpoint_addr ) {
         btl_endpoint->endpoint_addr->addr_inuse++;
         return OMPI_SUCCESS;
-    }
-
-    /* There was no common interface.  So what do we do?  For the
-       moment, we'll do enough to cover 2 common cases:
-
-       1. Running MPI processes on two computers that are not on the
-          same subnet, but still have routable addresses to each
-          other.  In this case, the above subnet matching will fail,
-          but since the addresses are routable, the
-          OS/networking/routers will make it all work ok.  So we need
-          to make this function *not* return OMPI_ERR_UNREACH.
-
-       2. Running MPI processes on a typical cluster configuration
-          where a head node has 2 TCP NICs (one public IP address one
-          private IP address) and all the back-end compute nodes have
-          only private IP addresses.  In this scenario, the MPI
-          process on the head node will have 2 TCP BTL modules (one
-          for the public, one for the private).  The module with the
-          private IP address will match the subnet and all will work
-          fine.  The module with the public IP address will not match
-          anything and fall through to here -- we want it to return
-          OMPI_ERR_UNREACH so that that module will effectively have
-          no peers that it can communicate with.
-
-       To support these two scenarios, do the following:
-
-       - if my address is private (10., 192.168., or 172.16.), return
-         UNREACH.
-       - if my address is public, return the first public address from
-         my peer (and hope for the best), or UNREACH if there are none
-         available.
-
-       This does not cover some other scenarios that we'll likely need
-       to support in the future, such as:
-
-       - Flat neighborhood networks -- where all the IP's in question
-         are private, the subnet masking won't necessarily match, but
-         they're routable to each other.
-       - Really large, private TCP-based clusters, such as a 1024 node
-         TCP-based cluster.  Depending on how the subnet masks are set
-         by the admins, there may be a subnet mask that effectively
-         spans the entire cluster, or (for example) subnet masks may
-         be set such that only nodes on the same switches are on the
-         same subnet.  This latter scenario will not be supported
-         by the above cases.
-
-       To support these kinds of scenarios, we really need "something
-       better", such as allowing the user to specify a config file
-       indicating which subnets are reachable by which interface, etc.
-    */
-
-    else {
-        /* If my address is private, return UNREACH */
-        if (is_private_ipv4(&(btl_tcp->tcp_ifaddr.sin_addr))) {
-            return OMPI_ERR_UNREACH;
-        }
-
-        /* Find the first public peer address */
-        for (i = 0; i < btl_proc->proc_addr_count; ++i) {
-            mca_btl_tcp_addr_t* endpoint_addr = btl_proc->proc_addrs + i;
-            if (!is_private_ipv4(&(endpoint_addr->addr_inet))) {
-                btl_endpoint->endpoint_addr = endpoint_addr;
-                btl_endpoint->endpoint_addr->addr_inuse++;
-                return OMPI_SUCCESS;
-            }
-        }
-
-        /* Didn't find any peer addresses that were public, so return
-           UNREACH */
+    } else {
+        /* Bug, FIXME: Once upon a time, there was a lot of
+         * code in here. I've removed it. There might be better
+         * approaches. Thomas will show...
+         */
         return OMPI_ERR_UNREACH;
     }
 }
@@ -334,7 +353,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const orte_process_name_t *name)
  * loop through all available PTLs for one matching the source address
  * of the request.
  */
-bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr_in* addr, int sd)
+bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr_storage* addr, int sd)
 {
     size_t i;
     OPAL_THREAD_LOCK(&btl_proc->proc_lock);
@@ -348,5 +367,40 @@ bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr_in* a
     OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
     return false;
 }
-                                                                                                                                
 
+/*
+ * convert internal data structure (mca_btl_tcp_addr_t) to sockaddr_storage
+ *
+ */
+bool mca_btl_tcp_proc_tosocks(mca_btl_tcp_addr_t* proc_addr,
+                              struct sockaddr_storage* output)
+{
+    memset(output, 0, sizeof (*output));
+    switch (proc_addr->addr_family) {
+        case AF_INET:
+            output->ss_family = AF_INET;
+            memcpy(&((struct sockaddr_in*)output)->sin_addr,
+                    &proc_addr->addr_inet, sizeof(struct in_addr));
+            ((struct sockaddr_in*)output)->sin_port = proc_addr->addr_port;
+            break;
+#if OPAL_WANT_IPV6
+        case AF_INET6:
+            {
+                struct sockaddr_in6* inaddr = (struct sockaddr_in6*)output;
+                output->ss_family = AF_INET6;
+                memcpy(&inaddr->sin6_addr, &proc_addr->addr_inet,
+                    sizeof (proc_addr->addr_inet));
+                inaddr->sin6_port = proc_addr->addr_port;
+                inaddr->sin6_scope_id = 0;
+                inaddr->sin6_flowinfo = 0;
+            }
+            break;
+#endif
+            default:
+                 opal_output (0, 
+                   "mca_btl_tcp_proc: unknown af_family received: %d\n",
+                   proc_addr->addr_family);
+                 return false;
+        } 
+    return true;
+}                              
