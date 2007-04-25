@@ -372,7 +372,9 @@ static int mca_btl_tcp_component_create_instances(void)
     }
 
     kindexes = malloc(sizeof(int) * if_count);
-    if (NULL == kindexes) return OMPI_ERR_OUT_OF_RESOURCE;
+    if (NULL == kindexes) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     /* calculate the number of kernel indexes (number of physical NICs) */
     {
@@ -463,7 +465,9 @@ static int mca_btl_tcp_component_create_instances(void)
     opal_argv_free(exclude);
 
  cleanup:
-    if (NULL != kindexes) free(kindexes);
+    if (NULL != kindexes) {
+        free(kindexes);
+    }
     return ret;
 }
 
