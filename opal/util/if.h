@@ -209,6 +209,14 @@ OPAL_DECLSPEC char* opal_sockaddr2str(struct sockaddr_in6 *addr1);
  */
 OPAL_DECLSPEC int opal_iffinalize(void);
 
+/**
+ * Is the given address a public IPv4 address?
+ *
+ * @param addr      address as struct sockaddr_storage
+ * @return          true, if \c addr is IPv4 public, false otherwise
+ */
+OPAL_DECLSPEC bool opal_addr_isipv4public(struct sockaddr_storage *addr);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

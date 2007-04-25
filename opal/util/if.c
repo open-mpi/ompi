@@ -1375,6 +1375,44 @@ opal_ifislocal(char *hostname)
     return false;
 }
 
+
+/**
+ * Returns true if the given address is a public IPv4 address.
+ */
+bool opal_addr_isipv4public (struct sockaddr_storage *addr)
+{
+    switch (addr->ss_family) {
+#if OPAL_WANT_IPV6
+        case AF_INET6:
+            return false;
+#endif
+        case AF_INET:
+        {
+            struct sockaddr_in *inaddr = (struct sockaddr_in*) addr;
+            /* RFC1918 defines
+            - 10.0.0./8
+            - 172.16.0.0/12
+            - 192.168.0.0/16
+            
+            RFC3330 also mentiones
+            - 169.254.0.0/16 for DHCP onlink iff there's no DHCP server
+            */
+            if ((htonl(0x0a000000) == (inaddr->sin_addr.s_addr & opal_prefix2netmask(8)))  ||
+                (htonl(0xac100000) == (inaddr->sin_addr.s_addr & opal_prefix2netmask(12))) ||
+                (htonl(0xc0a80000) == (inaddr->sin_addr.s_addr & opal_prefix2netmask(16))) ||
+                (htonl(0xa9fe0000) == (inaddr->sin_addr.s_addr & opal_prefix2netmask(16)))) {
+                return false;
+            }
+        }
+            return true;
+        default:
+            opal_output (0,
+                         "unhandled sa_family %d passed to mca_oob_tcp_addr_isipv4public\n",
+                         addr->ss_family);
+    }
+    
+    return false;
+}
 #else /* HAVE_STRUCT_SOCKADDR_IN */
 
 /* if we don't have struct sockaddr_in, we don't have traditional
@@ -1480,4 +1518,9 @@ opal_iffinalize(void)
     return OPAL_SUCCESS;
 }
 
+bool
+opal_addr_isipv4public (struct sockaddr_storage *addr)
+{
+    return false;
+}
 #endif /* HAVE_STRUCT_SOCKADDR_IN */

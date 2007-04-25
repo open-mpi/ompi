@@ -224,7 +224,7 @@ int mca_btl_tcp_proc_insert(
         mca_btl_tcp_proc_tosocks (endpoint_addr, &endpoint_addr_ss);
 
         /* The best we could get is IPv4 public. So let's check */
-        if (true == mca_oob_tcp_addr_isipv4public (&endpoint_addr_ss)) {
+        if (true == opal_addr_isipv4public (&endpoint_addr_ss)) {
             btl_endpoint->endpoint_addr = endpoint_addr;
             btl_endpoint->endpoint_addr->addr_inuse++;
             return OMPI_SUCCESS;
@@ -280,7 +280,7 @@ int mca_btl_tcp_proc_insert(
                  * Let's talk about IPv4 _private_, so isipv4public must
                  * return false
                  */
-                if (false == mca_oob_tcp_addr_isipv4public (&local_ss)) {
+                if (false == opal_addr_isipv4public (&local_ss)) {
                     if (opal_samenetwork(&local_ss, &endpoint_addr_ss, netmask)) {
                         btl_endpoint->endpoint_addr = endpoint_addr;
                         btl_endpoint->endpoint_addr->addr_inuse++;
