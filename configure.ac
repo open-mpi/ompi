@@ -593,7 +593,8 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     sys/resource.h sys/select.h sys/socket.h sys/sockio.h \
     stdarg.h sys/stat.h sys/statvfs.h sys/time.h sys/tree.h \
     sys/types.h sys/uio.h sys/utsname.h sys/wait.h syslog.h \
-    time.h termios.h ulimit.h unistd.h util.h utmp.h malloc.h sys/sysctl.h])
+    time.h termios.h ulimit.h unistd.h util.h utmp.h malloc.h \
+    ifaddrs.h sys/sysctl.h])
 
 # Needed to work around Darwin requiring sys/socket.h for
 # net/if.h

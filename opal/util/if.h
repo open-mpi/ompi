@@ -26,10 +26,23 @@
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#include "opal/ipv6compat.h"
 #endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+/**
+ * Calculate netmask in network byte order from CIDR notation
+ *
+ * @param prefixlen (IN)  CIDR prefixlen
+ * @return                netmask in network byte order
+ */
+OPAL_DECLSPEC uint32_t opal_prefix2netmask (uint32_t prefixlen);
 
 /**
  *  Lookup an interface by name and return its primary address.
@@ -39,7 +52,8 @@ extern "C" {
  *  @param size    (IN)   Interface address buffer size
  */
 OPAL_DECLSPEC int opal_ifnametoaddr(const char* if_name, 
-                                    struct sockaddr* if_addr, int size);
+                                    struct sockaddr_storage* if_addr,
+                                    int size);
 
 /**
  *  Lookup an interface by address and return its name.
@@ -52,12 +66,28 @@ OPAL_DECLSPEC int opal_ifaddrtoname(const char* if_addr,
                                     char* if_name, int size);
 
 /**
+ *  Lookup an interface by name and return its opal_list index.
+ *  
+ *  @param if_name (IN)  Interface name
+ *  @return              Interface opal_list index
+ */
+OPAL_DECLSPEC int opal_ifnametoindex(const char* if_name);
+
+/**
  *  Lookup an interface by name and return its kernel index.
  *  
  *  @param if_name (IN)  Interface name
- *  @return              Interface index
+ *  @return              Interface kernel index
  */
-OPAL_DECLSPEC int opal_ifnametoindex(const char* if_name);
+OPAL_DECLSPEC uint16_t opal_ifnametokindex(const char* if_name);
+
+/**
+ *  Lookup an interface by opal_list index and return its kernel index.
+ *  
+ *  @param if_name (IN)  Interface opal_list index
+ *  @return              Interface kernel index
+ */
+OPAL_DECLSPEC int opal_ifindextokindex(int if_index);
 
 /**
  *  Returns the number of available interfaces.
@@ -88,13 +118,23 @@ OPAL_DECLSPEC int opal_ifnext(int if_index);
 OPAL_DECLSPEC int opal_ifindextoname(int if_index, char* if_name, int);
 
 /**
- *  Lookup an interface by index and return its primary address .
+ *  Lookup an interface by kernel index and return its name.
+ *
+ *  @param if_index (IN)  Interface kernel index
+ *  @param if_name (OUT)  Interface name buffer
+ *  @param size (IN)      Interface name buffer size
+ */
+OPAL_DECLSPEC int opal_ifkindextoname(int if_kindex, char* if_name, int);
+
+/**
+ *  Lookup an interface by index and return its primary address.
  *
  *  @param if_index (IN)  Interface index
  *  @param if_name (OUT)  Interface address buffer
  *  @param size (IN)      Interface address buffer size
  */
-OPAL_DECLSPEC int opal_ifindextoaddr(int if_index, struct sockaddr*, int);
+OPAL_DECLSPEC int opal_ifindextoaddr(int if_index, struct sockaddr_storage*,
+                                     unsigned int);
 
 /**
  *  Lookup an interface by index and return its network mask.
@@ -103,7 +143,15 @@ OPAL_DECLSPEC int opal_ifindextoaddr(int if_index, struct sockaddr*, int);
  *  @param if_name (OUT)  Interface address buffer
  *  @param size (IN)      Interface address buffer size
  */
-OPAL_DECLSPEC int opal_ifindextomask(int if_index, struct sockaddr*, int);
+OPAL_DECLSPEC int opal_ifindextomask(int if_index, uint32_t*, int);
+
+/**
+ *  Lookup an interface by index and return its flags.
+ *
+ *  @param if_index (IN)  Interface index
+ *  @param if_flags (OUT) Interface flags
+ */
+OPAL_DECLSPEC int opal_ifindextoflags(int if_index, uint32_t*);
 
 /**
  * Determine if given hostname / IP address is a local address
@@ -124,8 +172,34 @@ OPAL_DECLSPEC bool opal_ifislocal(char *hostname);
  * @return                 true if \c addr is a localhost address,
  *                         false otherwise.
  */
-OPAL_DECLSPEC bool opal_ifislocalhost(struct sockaddr *addr);
+OPAL_DECLSPEC bool opal_ifislocalhost(struct sockaddr_storage *addr);
 
+/**
+ * Are we on the same network?
+ *
+ * For IPv6, we only need to check for /64, there are no other
+ * local netmasks.
+ *
+ * @param addr1             struct sockaddr_storage of address
+ * @param addr2             struct sockaddr_storage of address
+ * @param prefixlen         netmask (either CIDR oder IPv6 prefixlen)
+ * @return                  true if \c addr1 and \c addr2 are on the
+ *                          same net, false otherwise.
+ */
+OPAL_DECLSPEC bool opal_samenetwork(struct sockaddr_storage *addr1,
+                                    struct sockaddr_storage *addr2,
+                                    uint32_t prefixlen);
+
+#if OPAL_WANT_IPV6
+/**
+ * Convert sockaddr_in6 to string
+ *
+ * @param addr              struct sockaddr_in6 of address
+ * @return                  literal representation of \c addr
+ */
+OPAL_DECLSPEC char* opal_sockaddr2str(struct sockaddr_in6 *addr1);
+
+#endif
 /**
  * Finalize the functions to release malloc'd data
  * 

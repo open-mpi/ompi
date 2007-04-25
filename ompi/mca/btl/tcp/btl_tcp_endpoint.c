@@ -53,6 +53,7 @@
 
 #include "ompi/types.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
+#include "opal/util/if.h"
 #include "btl_tcp.h"
 #include "btl_tcp_endpoint.h" 
 #include "btl_tcp_proc.h"
@@ -132,14 +133,38 @@ static void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, con
     char src[64];
     char dst[64];
     int sndbuf,rcvbuf,nodelay,flags;
+#if OPAL_WANT_IPV6
+    struct sockaddr_storage inaddr;
+#else
     struct sockaddr_in inaddr;
+#endif
     opal_socklen_t obtlen;
-    opal_socklen_t addrlen = sizeof(struct sockaddr_in);
+    opal_socklen_t addrlen = sizeof(inaddr);
 
     getsockname(btl_endpoint->endpoint_sd, (struct sockaddr*)&inaddr, &addrlen);
+#if OPAL_WANT_IPV6
+    {
+        char *address;
+        address = (char *) opal_sockaddr2str((struct sockaddr_in6*)&inaddr);
+        if (NULL != address) {
+            sprintf(src, "%s", address);
+        }
+    }
+#else
     sprintf(src, "%s", inet_ntoa(inaddr.sin_addr));
+#endif
     getpeername(btl_endpoint->endpoint_sd, (struct sockaddr*)&inaddr, &addrlen);
+#if OPAL_WANT_IPV6
+    {
+        char *address;
+        address = (char *) opal_sockaddr2str((struct sockaddr_in6*)&inaddr);
+        if (NULL != address) {
+            sprintf(dst, "%s", address);
+        }
+    }
+#else
     sprintf(dst, "%s", inet_ntoa(inaddr.sin_addr));
+#endif
 
     if((flags = fcntl(btl_endpoint->endpoint_sd, F_GETFL, 0)) < 0) {
         BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)", 
@@ -191,15 +216,15 @@ static inline void mca_btl_tcp_endpoint_event_init(mca_btl_base_endpoint_t* btl_
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
 
     opal_event_set( &btl_endpoint->endpoint_recv_event, 
-		    btl_endpoint->endpoint_sd, 
-		    OPAL_EV_READ|OPAL_EV_PERSIST, 
-		    mca_btl_tcp_endpoint_recv_handler,
-		    btl_endpoint );
+                   btl_endpoint->endpoint_sd, 
+                   OPAL_EV_READ|OPAL_EV_PERSIST, 
+                   mca_btl_tcp_endpoint_recv_handler,
+                   btl_endpoint );
     opal_event_set( &btl_endpoint->endpoint_send_event, 
-		    btl_endpoint->endpoint_sd, 
-		    OPAL_EV_WRITE|OPAL_EV_PERSIST, 
-		    mca_btl_tcp_endpoint_send_handler,
-		    btl_endpoint);
+                   btl_endpoint->endpoint_sd, 
+                   OPAL_EV_WRITE|OPAL_EV_PERSIST, 
+                   mca_btl_tcp_endpoint_send_handler,
+                   btl_endpoint);
 }
 
 
@@ -300,17 +325,54 @@ static int mca_btl_tcp_endpoint_send_connect_ack(mca_btl_base_endpoint_t* btl_en
  * otherwise, reject the connection and continue with the current connection 
  */
 
-bool mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint, struct sockaddr_in* addr, int sd)
+bool mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint,
+                                 struct sockaddr_storage* addr, int sd)
 {
     mca_btl_tcp_addr_t* btl_addr;
     mca_btl_tcp_proc_t* this_proc = mca_btl_tcp_proc_local();
     orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL;
     int cmpval;
+    bool addrs_match = false;
 
     OPAL_THREAD_LOCK(&btl_endpoint->endpoint_recv_lock);
     OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
-    if((btl_addr = btl_endpoint->endpoint_addr) != NULL  &&
-        btl_addr->addr_inet.s_addr == addr->sin_addr.s_addr) {
+
+    if(NULL == (btl_addr = btl_endpoint->endpoint_addr)) {
+        OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
+        OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
+        return false;
+    }
+
+#if 0
+    if (btl_addr->addr_family != addr->ss_family) {
+        OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
+        OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
+        return false;
+    }
+
+    switch (addr->ss_family) {
+    case AF_INET:
+        if (((__const uint32_t *)&btl_addr->addr_inet)[0] ==
+            ((struct sockaddr_in*)addr)->sin_addr.s_addr) {
+            addrs_match = true;
+        }
+        break;
+#if OPAL_WANT_IPV6
+    case AF_INET6:
+        if (IN6_ARE_ADDR_EQUAL (&btl_addr->addr_inet,
+            &((struct sockaddr_in6*)addr)->sin6_addr)) {
+            addrs_match = true;
+        }
+        break;
+#endif
+    default:
+        opal_output(0, "mca_btl_tcp_endpoint_accept: unknown af_family: %i\n",
+            addr->ss_family);
+    }
+#else
+    addrs_match = true;
+#endif
+    if (true == addrs_match) {
         mca_btl_tcp_proc_t *endpoint_proc = btl_endpoint->endpoint_proc;
         cmpval = orte_ns.compare_fields(mask, 
                                  &endpoint_proc->proc_ompi->proc_name,
@@ -321,10 +383,10 @@ bool mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint, struct s
             mca_btl_tcp_endpoint_close(btl_endpoint);
             btl_endpoint->endpoint_sd = sd;
             if(mca_btl_tcp_endpoint_send_connect_ack(btl_endpoint) != OMPI_SUCCESS) {
-                 mca_btl_tcp_endpoint_close(btl_endpoint);
-                 OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
-                 OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
-                 return false;
+                mca_btl_tcp_endpoint_close(btl_endpoint);
+                OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
+                OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
+                return false;
             }
             mca_btl_tcp_endpoint_event_init(btl_endpoint, sd);
             opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
@@ -503,9 +565,22 @@ void mca_btl_tcp_set_socket_options(int sd)
 static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpoint)
 {
     int rc,flags;
-    struct sockaddr_in endpoint_addr;
-
-    btl_endpoint->endpoint_sd = socket(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_storage endpoint_addr;
+    uint16_t af_family;
+    opal_socklen_t addrlen;
+    
+    if (AF_INET == btl_endpoint->endpoint_addr->addr_family) {
+        af_family = AF_INET;
+        addrlen = sizeof (struct sockaddr_in);
+    }
+#if OPAL_WANT_IPV6
+    if (AF_INET6 == btl_endpoint->endpoint_addr->addr_family) {
+        af_family = AF_INET6;
+        addrlen = sizeof (struct sockaddr_in6);
+    }
+#endif
+    
+    btl_endpoint->endpoint_sd = socket(af_family, SOCK_STREAM, 0);
     if (btl_endpoint->endpoint_sd < 0) {
         btl_endpoint->endpoint_retries++;
         return OMPI_ERR_UNREACH;
@@ -529,20 +604,26 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
     }
 
     /* start the connect - will likely fail with EINPROGRESS */
-    endpoint_addr.sin_family = AF_INET;
-    endpoint_addr.sin_addr = btl_endpoint->endpoint_addr->addr_inet;
-    endpoint_addr.sin_port = btl_endpoint->endpoint_addr->addr_port;
-    if(connect(btl_endpoint->endpoint_sd, (struct sockaddr*)&endpoint_addr, sizeof(endpoint_addr)) < 0) {
+    mca_btl_tcp_proc_tosocks(btl_endpoint->endpoint_addr, &endpoint_addr);
+    if(connect(btl_endpoint->endpoint_sd, (struct sockaddr*)&endpoint_addr, addrlen) < 0) {
         /* non-blocking so wait for completion */
         if(opal_socket_errno == EINPROGRESS || opal_socket_errno == EWOULDBLOCK) {
             btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECTING;
             opal_event_add(&btl_endpoint->endpoint_send_event, 0);
             return OMPI_SUCCESS;
         }
-        BTL_PEER_ERROR( btl_endpoint->endpoint_proc->proc_ompi,
-                        ( "Unable to connect to the peer %s on port %d: %s\n",
-                          inet_ntoa(btl_endpoint->endpoint_addr->addr_inet),
-                          btl_endpoint->endpoint_addr->addr_port, strerror(opal_socket_errno) ) );
+        {
+            char *address;
+#if OPAL_WANT_IPV6
+            address = (char *) opal_sockaddr2str((struct sockaddr_in6*)&endpoint_addr);
+#else
+            address = inet_ntoa(btl_endpoint->endpoint_addr->addr_inet._union_inet._addr__inet._addr_inet);
+#endif
+            BTL_PEER_ERROR( btl_endpoint->endpoint_proc->proc_ompi,
+                          ( "Unable to connect to the peer %s on port %d: %s\n",
+                            address,
+                           btl_endpoint->endpoint_addr->addr_port, strerror(opal_socket_errno) ) );
+        }
         mca_btl_tcp_endpoint_close(btl_endpoint);
         btl_endpoint->endpoint_retries++;
         return OMPI_ERR_UNREACH;

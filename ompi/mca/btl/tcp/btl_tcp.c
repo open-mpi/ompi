@@ -94,7 +94,9 @@ int mca_btl_tcp_add_procs(
         mca_btl_base_endpoint_t* tcp_endpoint;
 
         /* Do not create loopback TCP connections */
-        if( my_proc == ompi_proc ) continue;
+        if( my_proc == ompi_proc ) {
+            continue;
+        }
 
         if(NULL == (tcp_proc = mca_btl_tcp_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;

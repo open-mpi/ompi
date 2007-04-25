@@ -40,6 +40,13 @@
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
+#if OPAL_WANT_IPV6
+#  ifdef HAVE_NETDB_H
+#  include <netdb.h>
+#  endif
+#endif
+
+#include "opal/util/error.h"
 #include "opal/opal_socket_errno.h"
 #include "opal/util/output.h"
 #include "opal/util/if.h"
@@ -83,10 +90,10 @@ OBJ_CLASS_INSTANCE(
  * Local utility functions
  */
 
-static int  mca_oob_tcp_create_listen(void);
+static int  mca_oob_tcp_create_listen(int *target_sd, uint16_t af_family);
 static int  mca_oob_tcp_create_listen_thread(void);
 static void mca_oob_tcp_recv_handler(int sd, short flags, void* user);
-static void mca_oob_tcp_accept(void);
+static void mca_oob_tcp_accept(int incoming_sd);
 
 struct mca_oob_tcp_subscription_t {
     opal_list_item_t item;
@@ -297,6 +304,9 @@ int mca_oob_tcp_component_open(void)
     /* initialize state */
     mca_oob_tcp_component.tcp_shutdown = false;
     mca_oob_tcp_component.tcp_listen_sd = -1;
+#if OPAL_WANT_IPV6    
+    mca_oob_tcp_component.tcp6_listen_sd = -1;
+#endif
     mca_oob_tcp_component.tcp_match_count = 0;
 
     mca_oob_tcp_component.tcp_last_copy_time = 0;
@@ -348,21 +358,28 @@ int mca_oob_tcp_component_close(void)
  *  requests and queue for completion of the connection handshake.
 */
 
-static void mca_oob_tcp_accept(void)
+static void mca_oob_tcp_accept(int incoming_sd)
 {
     while(true) {
+#if OPAL_WANT_IPV6
+        opal_socklen_t addrlen = sizeof(struct sockaddr_in6);
+        struct sockaddr_in6 addr;
+#else
         opal_socklen_t addrlen = sizeof(struct sockaddr_in);
         struct sockaddr_in addr;
+#endif
         mca_oob_tcp_event_t* event;
         int sd;
 
-        sd = accept(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
+        sd = accept(incoming_sd, (struct sockaddr*)&addr, &addrlen);
         if(sd < 0) {
-            if(opal_socket_errno == EINTR)
+            if(opal_socket_errno == EINTR) {
                 continue;
-            if(opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK)
+            }
+            if(opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK) {
                 opal_output(0, "mca_oob_tcp_accept: accept() failed: %s (%d).", 
                             strerror(opal_socket_errno), opal_socket_errno);
+            }
             return;
         }
 
@@ -373,8 +390,14 @@ static void mca_oob_tcp_accept(void)
         if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
             opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_accept: %s:%d\n",
                         ORTE_NAME_ARGS(orte_process_info.my_name),
+#if OPAL_WANT_IPV6
+                        opal_sockaddr2str(&addr),
+                        addr.sin6_port
+#else
                         inet_ntoa(addr.sin_addr),
-                        addr.sin_port);
+                        addr.sin_port
+#endif
+                        );
         }
 
         /* wait for receipt of peers process identifier to complete this connection */
@@ -388,59 +411,109 @@ static void mca_oob_tcp_accept(void)
  * Create a listen socket and bind to all interfaces
  */
 
-static int mca_oob_tcp_create_listen(void)
+static int mca_oob_tcp_create_listen(int *target_sd, uint16_t af_family)
 {
     int flags;
+#if OPAL_WANT_IPV6
+    struct sockaddr_in6 inaddr;
+#else
     struct sockaddr_in inaddr;
+#endif
     opal_socklen_t addrlen;
 
     /* create a listen socket for incoming connections */
-    mca_oob_tcp_component.tcp_listen_sd = socket(AF_INET, SOCK_STREAM, 0);
-    if(mca_oob_tcp_component.tcp_listen_sd < 0) {
-        opal_output(0,"mca_oob_tcp_component_init: socket() failed: %s (%d)", 
-                    strerror(opal_socket_errno), opal_socket_errno);
-        return ORTE_ERROR;
+    *target_sd = socket(af_family, SOCK_STREAM, 0);
+    
+    if(*target_sd < 0) {
+        if (EAFNOSUPPORT != opal_socket_errno) {
+            opal_output(0,"mca_oob_tcp_component_init: socket() failed: %s (%d)", 
+                        strerror(opal_socket_errno), opal_socket_errno);
+        }
+        return ORTE_ERR_IN_ERRNO;
     }
 
     /* setup socket options */
-    mca_oob_tcp_set_socket_options(mca_oob_tcp_component.tcp_listen_sd);
+    mca_oob_tcp_set_socket_options(*target_sd);
 
     /* bind address */
     memset(&inaddr, 0, sizeof(inaddr));
+#if OPAL_WANT_IPV6
+    {
+        struct addrinfo hints, *res = NULL;
+        int error;
+        
+        memset (&hints, 0, sizeof(hints));
+        hints.ai_family = af_family;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_flags = AI_PASSIVE;
+        
+        if ((error = getaddrinfo(NULL, "0", &hints, &res))) {
+            opal_output (0,
+                         "mca_oob_tcp_create_listen: unable to resolve. %s\n",
+                         gai_strerror (error));
+            return ORTE_ERROR;
+        }
+        
+        memcpy (&inaddr, res->ai_addr, res->ai_addrlen);
+        addrlen = res->ai_addrlen;
+        freeaddrinfo (res);
+        
+        /* in case of AF_INET6, disable v4-mapped addresses */
+        if (AF_INET6 == af_family) {
+            int flg = 0;
+            if (setsockopt (*target_sd, IPPROTO_IPV6, IPV6_V6ONLY,
+                            &flg, sizeof (flg)) < 0) {
+                opal_output(0,
+                            "mca_oob_tcp_create_listen: unable to disable v4-mapped addresses\n");
+            }
+        }
+        addrlen = sizeof(struct sockaddr_in6);
+    }
+#else
     inaddr.sin_family = AF_INET;
     inaddr.sin_addr.s_addr = INADDR_ANY;
     inaddr.sin_port = 0;
+    addrlen = sizeof(struct sockaddr_in);
+#endif
 
-    if(bind(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
+    if(bind(*target_sd, (struct sockaddr*)&inaddr, addrlen) < 0) {
         opal_output(0,"mca_oob_tcp_create_listen: bind() failed: %s (%d)", 
                     strerror(opal_socket_errno), opal_socket_errno);
         return ORTE_ERROR;
     }
 
     /* resolve system assigned port */
-    addrlen = sizeof(struct sockaddr_in);
-    if(getsockname(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
+    if(getsockname(*target_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
         opal_output(0, "mca_oob_tcp_create_listen: getsockname(): %s (%d)", 
                     strerror(opal_socket_errno), opal_socket_errno);
         return ORTE_ERROR;
     }
+#if OPAL_WANT_IPV6
+    if (AF_INET == af_family) {
+        mca_oob_tcp_component.tcp_listen_port = inaddr.sin6_port;
+    }
+    if (AF_INET6 == af_family) {
+        mca_oob_tcp_component.tcp6_listen_port = inaddr.sin6_port;
+    }
+#else
     mca_oob_tcp_component.tcp_listen_port = inaddr.sin_port;
-
+#endif
+    
     /* setup listen backlog to maximum allowed by kernel */
-    if(listen(mca_oob_tcp_component.tcp_listen_sd, SOMAXCONN) < 0) {
+    if(listen(*target_sd, SOMAXCONN) < 0) {
         opal_output(0, "mca_oob_tcp_component_init: listen(): %s (%d)", 
                     strerror(opal_socket_errno), opal_socket_errno);
         return ORTE_ERROR;
     }
 
     /* set socket up to be non-blocking, otherwise accept could block */
-    if((flags = fcntl(mca_oob_tcp_component.tcp_listen_sd, F_GETFL, 0)) < 0) {
+    if((flags = fcntl(*target_sd, F_GETFL, 0)) < 0) {
         opal_output(0, "mca_oob_tcp_component_init: fcntl(F_GETFL) failed: %s (%d)", 
                     strerror(opal_socket_errno), opal_socket_errno);
         return ORTE_ERROR;
     } else {
         flags |= O_NONBLOCK;
-        if(fcntl(mca_oob_tcp_component.tcp_listen_sd, F_SETFL, flags) < 0) {
+        if(fcntl(*target_sd, F_SETFL, flags) < 0) {
             opal_output(0, "mca_oob_tcp_component_init: fcntl(F_SETFL) failed: %s (%d)", 
                         strerror(opal_socket_errno), opal_socket_errno);
             return ORTE_ERROR;
@@ -448,13 +521,35 @@ static int mca_oob_tcp_create_listen(void)
     }
 
     /* register listen port */
+#if OPAL_WANT_IPV6
+    if (AF_INET == af_family) {
+        opal_event_set(
+                       &mca_oob_tcp_component.tcp_recv_event,
+                       *target_sd,
+                       OPAL_EV_READ|OPAL_EV_PERSIST,
+                       mca_oob_tcp_recv_handler,
+                       0);
+        opal_event_add(&mca_oob_tcp_component.tcp_recv_event, 0);
+    }
+    
+    if (AF_INET6 == af_family) {
+        opal_event_set(
+                       &mca_oob_tcp_component.tcp6_recv_event,
+                       *target_sd,
+                       OPAL_EV_READ|OPAL_EV_PERSIST,
+                       mca_oob_tcp_recv_handler,
+                       0);
+        opal_event_add(&mca_oob_tcp_component.tcp6_recv_event, 0);
+    }
+#else
     opal_event_set(
-        &mca_oob_tcp_component.tcp_recv_event,
-        mca_oob_tcp_component.tcp_listen_sd,
-        OPAL_EV_READ|OPAL_EV_PERSIST,
-        mca_oob_tcp_recv_handler,
-        0);
+                   &mca_oob_tcp_component.tcp_recv_event,
+                   *target_sd,
+                   OPAL_EV_READ|OPAL_EV_PERSIST,
+                   mca_oob_tcp_recv_handler,
+                   0);
     opal_event_add(&mca_oob_tcp_component.tcp_recv_event, 0);
+#endif
     return ORTE_SUCCESS;
 }
 
@@ -774,8 +869,13 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     int rc;
 
     /* accept new connections on the listen socket */
+#if OPAL_WANT_IPV6    
+    if((mca_oob_tcp_component.tcp_listen_sd == sd) ||
+       (mca_oob_tcp_component.tcp6_listen_sd == sd)) {
+#else
     if(mca_oob_tcp_component.tcp_listen_sd == sd) {
-        mca_oob_tcp_accept();
+#endif
+        mca_oob_tcp_accept(sd);
         return;
     }
     OBJ_RELEASE(event);
@@ -855,7 +955,11 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
     /* intialize event library */
     memset(&mca_oob_tcp_component.tcp_recv_event, 0, sizeof(opal_event_t));
     memset(&mca_oob_tcp_component.tcp_send_event, 0, sizeof(opal_event_t));
-
+#if OPAL_WANT_IPV6
+    memset(&mca_oob_tcp_component.tcp6_recv_event, 0, sizeof(opal_event_t));
+    memset(&mca_oob_tcp_component.tcp6_send_event, 0, sizeof(opal_event_t));
+#endif
+                        
     return &mca_oob_tcp;
 }
 
@@ -945,8 +1049,6 @@ void mca_oob_tcp_registry_callback(
             }
         }
     }
-
-
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 }
 
@@ -1112,10 +1214,26 @@ int mca_oob_tcp_init(void)
            but can't do that since we weren't the HNP. */
         mca_oob_tcp_component.tcp_listen_type = OOB_TCP_EVENT;
 
-        if(mca_oob_tcp_create_listen() != ORTE_SUCCESS) {
-            opal_output(0, "mca_oob_tcp_init: unable to create listen socket");
-            return ORTE_ERROR;
+        rc = mca_oob_tcp_create_listen(&mca_oob_tcp_component.tcp_listen_sd,
+                                       AF_INET);
+        if (ORTE_SUCCESS != rc && 
+            (EAFNOSUPPORT != opal_socket_errno ||
+             mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT)) {
+            opal_output(0,
+                        "mca_oob_tcp_init: unable to create IPv4 listen socket: %s\n",
+                        opal_strerror(rc));
         }
+#if OPAL_WANT_IPV6
+        rc = mca_oob_tcp_create_listen(&mca_oob_tcp_component.tcp6_listen_sd,
+                                       AF_INET6);
+        if (ORTE_SUCCESS != rc && 
+            (EAFNOSUPPORT != opal_socket_errno ||
+             mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT)) {
+            opal_output(0,
+                        "mca_oob_tcp_init: unable to create IPv6 listen socket: %s\n",
+                        opal_strerror(rc));
+        }
+#endif
         if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_INFO) {
             opal_output(0, "[%lu,%lu,%lu] accepting connections via event library",
                         ORTE_NAME_ARGS(orte_process_info.my_name));
@@ -1292,8 +1410,19 @@ int mca_oob_tcp_fini(void)
         if (OOB_TCP_EVENT == mca_oob_tcp_component.tcp_listen_type) {
             opal_event_del(&mca_oob_tcp_component.tcp_recv_event);
             CLOSE_THE_SOCKET(mca_oob_tcp_component.tcp_listen_sd);
+#if OPAL_WANT_IPV6
+            if (mca_oob_tcp_component.tcp6_listen_sd >= 0) {
+                opal_event_del(&mca_oob_tcp_component.tcp6_recv_event);
+                CLOSE_THE_SOCKET(mca_oob_tcp_component.tcp6_listen_sd);
+                mca_oob_tcp_component.tcp6_listen_sd = -1;
+            }
+#endif
         } else if (OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) {
             void *data;
+            /* adi@2007-04-12: Bug, FIXME:
+             * once the thread listener is IPv6 capable, don't forget to
+             * close the v6 socket
+             */
             mca_oob_tcp_component.tcp_shutdown = true;
             CLOSE_THE_SOCKET(mca_oob_tcp_component.tcp_listen_sd);
             opal_thread_join(&mca_oob_tcp_component.tcp_listen_thread, &data);
@@ -1361,24 +1490,43 @@ char* mca_oob_tcp_get_addr(void)
     *ptr = 0;
 
     for(i=opal_ifbegin(); i>0; i=opal_ifnext(i)) {
+#if OPAL_WANT_IPV6
+        struct sockaddr_in6 addr;
+#else
         struct sockaddr_in addr;
+#endif
         char name[32];
         opal_ifindextoname(i, name, sizeof(name));
         if (mca_oob_tcp_component.tcp_include != NULL &&
-            strstr(mca_oob_tcp_component.tcp_include,name) == NULL)
+            strstr(mca_oob_tcp_component.tcp_include,name) == NULL) {
             continue;
+        }
         if (mca_oob_tcp_component.tcp_exclude != NULL &&
-            strstr(mca_oob_tcp_component.tcp_exclude,name) != NULL)
+            strstr(mca_oob_tcp_component.tcp_exclude,name) != NULL) {
             continue;
-        opal_ifindextoaddr(i, (struct sockaddr*)&addr, sizeof(addr));
+        }
+        opal_ifindextoaddr(i, (struct sockaddr_storage*)&addr, sizeof(addr));
         if(opal_ifcount() > 1 && 
-           opal_ifislocalhost((struct sockaddr*) &addr))
+           opal_ifislocalhost((struct sockaddr_storage*) &addr)) {
             continue;
+        }
         if(ptr != contact_info) {
             ptr += sprintf(ptr, ";");
         }
+#if OPAL_WANT_IPV6
+        if (addr.sin6_family == AF_INET) {
+            ptr += sprintf(ptr, "tcp://%s:%d", opal_sockaddr2str(&addr),
+                           ntohs(mca_oob_tcp_component.tcp_listen_port));
+        }
+        
+        if (addr.sin6_family == AF_INET6) {
+            ptr += sprintf(ptr, "tcp6://%s:%d", opal_sockaddr2str(&addr),
+                           ntohs(mca_oob_tcp_component.tcp6_listen_port));
+        }
+#else
         ptr += sprintf(ptr, "tcp://%s:%d", inet_ntoa(addr.sin_addr),
-                    ntohs(mca_oob_tcp_component.tcp_listen_port));
+                       ntohs(mca_oob_tcp_component.tcp_listen_port));
+#endif
     }
     return contact_info;
 }
@@ -1387,18 +1535,36 @@ char* mca_oob_tcp_get_addr(void)
 * Parse a URI string into an IP address and port number.
 */
 
+#if OPAL_WANT_IPV6
+int mca_oob_tcp_parse_uri(const char* uri, struct sockaddr_in6* inaddr)
+#else
 int mca_oob_tcp_parse_uri(const char* uri, struct sockaddr_in* inaddr)
+#endif
 {
     char* tmp = strdup(uri);
     char* ptr = tmp + 6;
     char* addr = ptr;
     char* port;
+    uint16_t af_family = AF_INET;
+    
+#if OPAL_WANT_IPV6
+    if(strncmp(tmp, "tcp6://", 7) == 0) {
+        af_family = AF_INET6;
+        addr++; /* we have one more character to skip ('[') */
+    } else {
+        if(strncmp(tmp, "tcp://", 6) != 0) {
+            free(tmp);
+            return ORTE_ERR_BAD_PARAM;
+        }
+    }
+#else    
     if(strncmp(tmp, "tcp://", 6) != 0) {
         free(tmp);
         return ORTE_ERR_BAD_PARAM;
     }
-
-    ptr = strchr(addr, ':');
+#endif
+    
+    ptr = strrchr(addr, ':');
     if(NULL == ptr) {
         free(tmp);
         return ORTE_ERR_BAD_PARAM;
@@ -1409,6 +1575,44 @@ int mca_oob_tcp_parse_uri(const char* uri, struct sockaddr_in* inaddr)
     port = ptr;
 
     memset(inaddr, 0, sizeof(inaddr));
+#if OPAL_WANT_IPV6
+    {
+        int error;
+        struct addrinfo hints, *res;
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = af_family;
+        hints.ai_socktype = SOCK_STREAM;
+        error = getaddrinfo (addr, NULL, &hints, &res);
+        
+        if (error) {
+            opal_output (0, "oob_tcp_parse_uri: Could not resolve %s. [Error: %s]\n",
+                         addr, gai_strerror (error));
+            free (tmp);
+            return ORTE_ERR_BAD_PARAM;
+        }
+        
+        if (res->ai_family != af_family) {
+            /* should never happen */
+            opal_output (0, "oob_tcp_parse_uri: getaddrinfo returned wrong af_family for %s",
+                         addr);
+            free (tmp);
+            return ORTE_ERROR;
+        }
+        
+        memcpy (inaddr, res->ai_addr, res->ai_addrlen);
+        freeaddrinfo (res);
+    }
+    
+    if (inaddr->sin6_family != af_family) {
+        /* should never happen */
+        opal_output (0, "oob_tcp_parse_uri: getaddrinfo+memcpy resulted in wrong af_family for %s",
+                     addr);
+        free (tmp);
+        return ORTE_ERROR;
+    }
+    
+    inaddr->sin6_port = htons(atoi(port));
+#else
     inaddr->sin_family = AF_INET;
     inaddr->sin_addr.s_addr = inet_addr(addr);
     if(inaddr->sin_addr.s_addr == INADDR_ANY) {
@@ -1416,6 +1620,7 @@ int mca_oob_tcp_parse_uri(const char* uri, struct sockaddr_in* inaddr)
         return ORTE_ERR_BAD_PARAM;
     }
     inaddr->sin_port = htons(atoi(port));
+#endif
     free(tmp);
     return ORTE_SUCCESS;
 }
@@ -1428,7 +1633,11 @@ int mca_oob_tcp_parse_uri(const char* uri, struct sockaddr_in* inaddr)
 
 int mca_oob_tcp_set_addr(const orte_process_name_t* name, const char* uri)
 {
+#if OPAL_WANT_IPV6
+    struct sockaddr_in6 inaddr;
+#else
     struct sockaddr_in inaddr;
+#endif
     mca_oob_tcp_addr_t* addr;
     mca_oob_tcp_peer_t* peer;
     int rc;
