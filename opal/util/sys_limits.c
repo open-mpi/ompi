@@ -75,7 +75,8 @@ int opal_util_init_sys_limits(void)
         }
         opal_sys_limits.num_files = rlim.rlim_cur;
     }
-    
+
+#if HAVE_RLIMIT_NPROC    
     /* get/set the system limits on number of child procs we can have open */
     if (getrlimit (RLIMIT_NPROC, &rlim) < 0) {
         opal_output(0, "getrlimit (RLIMIT_NPROC) failed: %s\n", strerror(errno));
@@ -88,6 +89,7 @@ int opal_util_init_sys_limits(void)
         }
         opal_sys_limits.num_procs = rlim.rlim_cur;
     }
+#endif
     
     /* get/set the system limits on max file size we can create */
     if (getrlimit (RLIMIT_FSIZE, &rlim) < 0) {
