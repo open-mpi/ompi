@@ -313,6 +313,10 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     btl->udapl_eager_rdma_endpoint_count = 0;
     OBJ_CONSTRUCT(&btl->udapl_eager_rdma_lock, opal_mutex_t);
 
+    /* initialize miscellaneous variables */
+    btl->udapl_async_events = 0;
+    btl->udapl_connect_inprogress = 0;
+    
     /* TODO - Set up SRQ when it is supported */
     return OMPI_SUCCESS;
 

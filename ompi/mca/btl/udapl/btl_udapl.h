@@ -89,7 +89,7 @@ struct mca_btl_udapl_component_t {
     int32_t udapl_eager_rdma_win; /**< number of eager RDMA fragments
                                     recieved before returning credits to
                                     sender */
-
+    int32_t udapl_async_events;  /**< dequeue asynchronous events */
     opal_list_t udapl_procs;   /**< list of udapl proc structures */
     opal_mutex_t udapl_lock;   /**< lock for accessing module state */
     char* udapl_mpool_name;    /**< name of memory pool */ 
@@ -136,6 +136,9 @@ struct mca_btl_udapl_module_t {
                                                          * with eager rdma
                                                          * connections
                                                          */
+    int32_t udapl_async_events;
+    int32_t udapl_connect_inprogress;
+
     /* module specific limits */
     int udapl_evd_qlen;
     int udapl_max_request_dtos; /**< maximum number of outstanding consumer

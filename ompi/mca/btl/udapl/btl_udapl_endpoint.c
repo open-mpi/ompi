@@ -495,6 +495,8 @@ static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
+    OPAL_THREAD_ADD32(&(endpoint->endpoint_btl->udapl_connect_inprogress), 1);
+
     /* Pack our address information */
     rc = orte_dss.pack(buf, &addr->port, 1, ORTE_UINT64);
     if(ORTE_SUCCESS != rc) {
@@ -588,7 +590,8 @@ void mca_btl_udapl_endpoint_connect(mca_btl_udapl_endpoint_t* endpoint)
     int rc;
 
     OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-
+    OPAL_THREAD_ADD32(&(btl->udapl_connect_inprogress), 1);
+    
     /* Nasty test to prevent deadlock and unwanted connection attempts */
     /* This right here is the whole point of using the ORTE/RML handshake */
     if((MCA_BTL_UDAPL_CONN_EAGER == endpoint->endpoint_state &&
@@ -766,6 +769,7 @@ static int mca_btl_udapl_endpoint_finish_max(mca_btl_udapl_endpoint_t* endpoint)
     int rc;
 
     endpoint->endpoint_state = MCA_BTL_UDAPL_CONNECTED;
+    OPAL_THREAD_ADD32(&(endpoint->endpoint_btl->udapl_connect_inprogress), -1);
 
     /* post eager/max recv buffers */
     mca_btl_udapl_endpoint_post_recv(endpoint,
