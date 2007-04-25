@@ -50,6 +50,8 @@ bool orte_oob_base_timing;
 bool orte_oob_xcast_timing;
 int orte_oob_xcast_mode;
 
+bool orte_oob_base_already_opened = false;
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
@@ -58,13 +60,12 @@ int mca_oob_base_open(void)
 {
     int param, value;
     char *mode;
-    static bool already_opened = false;
 
     /* Sanity check.  This may be able to be removed when the rml/oob
        interface is re-worked (the current infrastructure may invoke
        this function twice: once as a standalone, and once via the rml
        oob component). */
-    if (already_opened) {
+    if (orte_oob_base_already_opened) {
         return ORTE_SUCCESS;
     }
     
@@ -127,7 +128,8 @@ int mca_oob_base_open(void)
   }
   
   /* All done */
-  already_opened = true;
+  orte_oob_base_already_opened = true;
+
   return ORTE_SUCCESS;
 }
 

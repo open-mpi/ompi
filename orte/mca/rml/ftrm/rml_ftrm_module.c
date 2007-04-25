@@ -456,10 +456,45 @@ int orte_rml_ftrm_ft_event(int state)
     opal_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: ft_event()");
 
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+
+    /*
+     * The wrapped component is responsible for calling the OOB modules
+     */
     if( NULL != wrapped_module.ft_event ) {
         if( ORTE_SUCCESS != (ret = wrapped_module.ft_event(state))) {
             return ret;
         }
+    }
+
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
     }
 
     return ORTE_SUCCESS;

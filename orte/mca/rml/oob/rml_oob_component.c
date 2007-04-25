@@ -128,5 +128,72 @@ orte_rml_oob_close(void)
 }
 
 int orte_rml_oob_ft_event(int state) {
-    return mca_oob.oob_ft_event(state);
+    int exit_status = ORTE_SUCCESS;
+    int ret;
+
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+
+    if( ORTE_SUCCESS != (ret = mca_oob.oob_ft_event(state)) ) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state) {
+        if( ORTE_SUCCESS != (ret = mca_oob_base_close())) {
+            ORTE_ERROR_LOG(ret);
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        if( ORTE_SUCCESS != (ret = mca_oob_base_open())) {
+            ORTE_ERROR_LOG(ret);
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        if( ORTE_SUCCESS != (ret = mca_oob_base_init())) {
+            ORTE_ERROR_LOG(ret);
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        if(NULL != orte_process_info.ns_replica_uri) {
+            mca_oob_set_contact_info(orte_process_info.ns_replica_uri);
+        }
+
+        if(NULL != orte_process_info.gpr_replica_uri) {
+            mca_oob_set_contact_info(orte_process_info.gpr_replica_uri);
+        }
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+
+ cleanup:
+    return exit_status;
 }

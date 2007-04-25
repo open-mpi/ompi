@@ -49,7 +49,12 @@ extern "C" {
 ORTE_DECLSPEC extern bool orte_oob_base_timing;
 ORTE_DECLSPEC extern bool orte_oob_xcast_timing;
 ORTE_DECLSPEC extern int orte_oob_xcast_mode;
-    
+
+/*
+ * Flag indicating if this framework has been opened
+ */
+ORTE_DECLSPEC extern bool orte_oob_base_already_opened;
+
 /*
  * OOB API
  */
