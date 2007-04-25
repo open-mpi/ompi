@@ -836,7 +836,7 @@ static int pretty_print_status(int state, char * snapshot_ref) {
 
 static int pretty_print_reference(int seq, char * snapshot_ref) {
 
-    printf("Snashot Ref.: %3d %s\n",
+    printf("Snapshot Ref.: %3d %s\n",
            seq, snapshot_ref);
     
     return ORTE_SUCCESS;
