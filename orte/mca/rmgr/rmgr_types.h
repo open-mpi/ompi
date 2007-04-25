@@ -47,6 +47,10 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_attribute_t);
 #define ORTE_RMGR_ATTR_OVERRIDE     true
 
 /* define some useful attributes */
+
+/* Define the parts of the normal spawn "flow" that are to be used.
+ * Takes an uint8_t (based on following flags) as value
+ */
 #define ORTE_RMGR_SPAWN_FLOW    "orte-rmgr-spawn"
 
 /* flags that can be combined to script the RMGR's spawn procedure
@@ -63,9 +67,16 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_attribute_t);
 #define ORTE_RMGR_LAUNCH           0x20
 
 /* direct the RMGR spawn procedure to use the provided jobid
- * instead of getting a new one
+ * instead of getting a new one.
+ * Takes jobid as value.
  */
 #define ORTE_RMGR_USE_GIVEN_JOBID    "orte-rmgr-use-jobid"
+
+/* direct the RMGR spawn procedure to cross-connect ORTE information
+ * between the parent job and the newly spawned child.
+ * Takes parent's jobid as value.
+ */
+#define ORTE_RMGR_XCONNECT_AT_SPAWN "orte-rmgr-xconnect"
 
 
 /* RESOURCE MANAGER DATA TYPES */
