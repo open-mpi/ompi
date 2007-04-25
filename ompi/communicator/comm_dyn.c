@@ -604,6 +604,18 @@ ompi_comm_start_processes(int count, char **array_of_commands,
         return MPI_ERR_SPAWN;
     }
 
+    /* tell the RTE that we want to be cross-connected to the children so we receive
+     * their ORTE-level information - e.g., OOB contact info
+     */
+    if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(&attributes, ORTE_RMGR_XCONNECT_AT_SPAWN,
+                                                      ORTE_JOBID, &(orte_process_info.my_name->jobid),
+                                                      ORTE_RMGR_ATTR_OVERRIDE))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&attributes);
+        opal_progress_event_users_decrement();
+        return MPI_ERR_SPAWN;
+    }
+
     /* check for timing request - get stop time and report elapsed time if so */
     if (timing) {
         if (0 != gettimeofday(&ompistop, NULL)) {
