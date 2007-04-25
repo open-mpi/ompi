@@ -124,7 +124,8 @@ username           { orte_rds_hostfile_value.sval = yytext;
 [0-9]+             { orte_rds_hostfile_value.ival = atol(yytext); 
                      return ORTE_RDS_HOSTFILE_INT; }
 %{ /* First detect hosts as standard Strings (but without ".")
-    * then username@IPv4 or IPV4, then username@hostname or hostname
+    * then username@IPv4 or IPV4, then username@IPv6 or IPv6,
+    * followed by username@hostname or hostname
     */
 %}
 
@@ -134,6 +135,10 @@ username           { orte_rds_hostfile_value.sval = yytext;
 ([A-Za-z0-9][A-Za-z0-9_\-]*"@")?([0-9]{1,3}"."){3}[0-9]{1,3} {
                       orte_rds_hostfile_value.sval = yytext;
                       return ORTE_RDS_HOSTFILE_IPV4; }
+
+([A-Za-z0-9][A-Za-z0-9_\-]*"@")?([A-Fa-f0-9]{0,4}":")+[":"]*([A-Fa-f0-9]{0,4}":")+[A-Fa-f0-9]{1,4} {
+                      orte_rds_hostfile_value.sval = yytext;
+                      return ORTE_RDS_HOSTFILE_IPV6; }
 
 ([A-Za-z0-9][A-Za-z0-9_\-]*"@")?[A-Za-z][A-Za-z0-9_\-\.]*  {
                      orte_rds_hostfile_value.sval = yytext; 
