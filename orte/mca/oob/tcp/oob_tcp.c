@@ -1682,55 +1682,11 @@ int mca_oob_tcp_ft_event(int state) {
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
     }
     else if(OPAL_CRS_RESTART == state) {
-        /* Module cleanup */
+        /*
+         * Resume event processing
+         */
+        opal_event_enable();
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
-        mca_oob_tcp_fini();
-        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-
-        /* Clean up bad peer info */
-        OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_subscriptions);
-        OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_list);
-        OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peers);
-        OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_names);
-        OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_free);
-        OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_events);
-        
-        /* do subset of mca_oob_tcp_component_open() */
-        OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_subscriptions, opal_list_t);
-        OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,     opal_list_t);
-        OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peers,         opal_hash_table_t);
-        OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_names,    opal_hash_table_t);
-        OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_free,     opal_free_list_t);
-        OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_events,        opal_list_t);
-
-        mca_oob_tcp_component.tcp_shutdown = false;
-        mca_oob_tcp_component.tcp_listen_sd = -1;
-        mca_oob_tcp_component.tcp_match_count = 0;
-        
-        mca_oob_tcp_component.tcp_last_copy_time = 0;
-
-        /* Do subset of mca_oob_tcp_component_init() */
-        opal_hash_table_init(&mca_oob_tcp_component.tcp_peers, 128);
-        opal_hash_table_init(&mca_oob_tcp_component.tcp_peer_names, 128);
-        
-        opal_free_list_init(&mca_oob_tcp_component.tcp_peer_free,
-                            sizeof(mca_oob_tcp_peer_t),
-                            OBJ_CLASS(mca_oob_tcp_peer_t),
-                            8,  /* initial number */
-                            mca_oob_tcp_component.tcp_peer_limit, /* maximum number */
-                            8);  /* increment to grow by */
-        
-        
-        /* Reset seed contact information */
-        if(NULL != orte_process_info.ns_replica_uri) {
-            mca_oob_set_contact_info(orte_process_info.ns_replica_uri);
-        }
-
-        if(NULL != orte_process_info.gpr_replica_uri) {
-            mca_oob_set_contact_info(orte_process_info.gpr_replica_uri);
-        }
-        
-        mca_oob_tcp_init();
     }
     else if(OPAL_CRS_TERM == state ) {
         ;

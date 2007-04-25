@@ -423,6 +423,14 @@ static int orte_cr_coord_post_restart(void) {
     }
 
     /*
+     * Notify RML & OOB
+     */
+    if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_RESTART))) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    /*
      * Startup Discovery Service:
      *  - Connect to the universe
      * Structure Elements Refreshed:
@@ -489,14 +497,6 @@ static int orte_cr_coord_post_restart(void) {
                                                 jobid_str,
                                                 procid_str))) {
         exit_status = ret;
-    }
-
-    /*
-     * Notify RML & OOB
-     */
-    if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_RESTART))) {
-        exit_status = ret;
-        goto cleanup;
     }
 
     /*

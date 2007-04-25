@@ -31,13 +31,12 @@
 int mca_oob_base_close(void)
 {
   opal_list_item_t* item;
-  static bool already_closed = false;
 
   /* Sanity check.  This may be able to be removed when the rml/oob
      interface is re-worked (the current infrastructure may invoke
      this function twice: once as a standalone, and once via the rml
      oob component). */
-  if (already_closed) {
+  if (!orte_oob_base_already_opened) {
       return ORTE_SUCCESS;
   }
     
@@ -66,7 +65,8 @@ int mca_oob_base_close(void)
     free(mca_oob_base_exclude);
 
   /* All done */
-  already_closed = true;
+  orte_oob_base_already_opened = false;
+
   return ORTE_SUCCESS;
 }
 
