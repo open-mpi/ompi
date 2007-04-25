@@ -197,7 +197,7 @@ OPAL_DECLSPEC bool opal_samenetwork(struct sockaddr_storage *addr1,
  * @param addr              struct sockaddr_in6 of address
  * @return                  literal representation of \c addr
  */
-OPAL_DECLSPEC char* opal_sockaddr2str(struct sockaddr_in6 *addr1);
+OPAL_DECLSPEC char* opal_sockaddr2str(struct sockaddr_in6 *addr);
 
 #endif
 /**
