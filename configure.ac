@@ -917,6 +917,16 @@ OMPI_CASE_SENSITIVE_FS_SETUP
 # AIX: FIONBIO in sys/ioctl.h
 # glibc: memcpy
 
+#
+# Do we have RLIMIT_NPROC in <sys/resources.h>? (e.g., Solaris does not)
+#
+
+AC_CHECK_DECLS([RLIMIT_NPROC], [], [], [
+AC_INCLUDES_DEFAULT
+#if HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif]) 
+
 # checkpoint results
 AC_CACHE_SAVE
 
