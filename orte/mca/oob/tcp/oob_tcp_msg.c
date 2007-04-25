@@ -307,8 +307,8 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
              msg->msg_rwiov[1].iov_len = 0;
              msg->msg_rwnum = 0;
         }
-        if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
-            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_recv_handler*: size %lu\n",
+        if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_INFO) {
+            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_recv_handler: size %lu\n",
                         ORTE_NAME_ARGS(orte_process_info.my_name),
                         ORTE_NAME_ARGS(&(peer->peer_name)),
                         (unsigned long)(msg->msg_hdr.msg_size) );

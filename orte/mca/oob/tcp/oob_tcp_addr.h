@@ -33,9 +33,8 @@
 #include "orte/dss/dss.h"
 #include "opal/class/opal_object.h"
 #include "orte/mca/ns/ns_types.h"
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+
+BEGIN_C_DECLS
 
 #define MCA_OOB_TCP_ADDR_UNCLASSIFIED	0  /* we don't know anything */
 #define MCA_OOB_TCP_ADDR_MATCHED	1  /* peer has IP on the same LAN */
@@ -96,9 +95,7 @@ int mca_oob_tcp_addr_insert(mca_oob_tcp_addr_t*, const struct sockaddr_in*);
  
 int mca_oob_tcp_addr_get_next(mca_oob_tcp_addr_t*, struct sockaddr_storage*);
 
+END_C_DECLS
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 #endif 
 

@@ -32,9 +32,7 @@
 #include <netinet/in.h>
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Calculate netmask in network byte order from CIDR notation
@@ -190,24 +188,13 @@ OPAL_DECLSPEC bool opal_samenetwork(struct sockaddr_storage *addr1,
                                     struct sockaddr_storage *addr2,
                                     uint32_t prefixlen);
 
-#if OPAL_WANT_IPV6
 /**
- * Convert sockaddr_in6 to string
+ * Convert sockaddr_storage to string
  *
- * @param addr              struct sockaddr_in6 of address
+ * @param addr              struct sockaddr_storage of address
  * @return                  literal representation of \c addr
  */
-OPAL_DECLSPEC char* opal_sockaddr2str(struct sockaddr_in6 *addr);
-
-#endif
-/**
- * Finalize the functions to release malloc'd data
- * 
- * @param none
- * @return OPAL_SUCCESS if no problems encountered
- * @return OPAL_ERROR if data could not be released
- */
-OPAL_DECLSPEC int opal_iffinalize(void);
+OPAL_DECLSPEC char* opal_sockaddr2str(struct sockaddr_storage *addr);
 
 /**
  * Is the given address a public IPv4 address?
@@ -217,9 +204,16 @@ OPAL_DECLSPEC int opal_iffinalize(void);
  */
 OPAL_DECLSPEC bool opal_addr_isipv4public(struct sockaddr_storage *addr);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+/**
+ * Finalize the functions to release malloc'd data
+ * 
+ * @param none
+ * @return OPAL_SUCCESS if no problems encountered
+ * @return OPAL_ERROR if data could not be released
+ */
+OPAL_DECLSPEC int opal_iffinalize(void);
+
+END_C_DECLS
 
 #endif
 

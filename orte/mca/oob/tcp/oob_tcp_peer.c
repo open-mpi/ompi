@@ -324,11 +324,10 @@ static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
                         ORTE_NAME_ARGS(&(peer->peer_name)),
                         /* Bug, FIXME: output tcp6_listen_port for AF_INET6 */
                         ntohs(mca_oob_tcp_component.tcp_listen_port),
+                        opal_sockaddr2str((struct sockaddr_storage*) &inaddr),
 #if OPAL_WANT_IPV6
-                        opal_sockaddr2str(&inaddr),
                         ntohs(inaddr.sin6_port)
 #else
-                        inet_ntoa(inaddr.sin_addr),
                         ntohs(inaddr.sin_port)
 #endif
                         );
@@ -386,11 +385,10 @@ static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
                         "connect to %s:%d failed: %s (%d)",
                         ORTE_NAME_ARGS(orte_process_info.my_name),
                         ORTE_NAME_ARGS(&(peer->peer_name)),
+                        opal_sockaddr2str((struct sockaddr_storage*) &inaddr),
 #if OPAL_WANT_IPV6
-                        opal_sockaddr2str (&inaddr),
                         ntohs(inaddr.sin6_port),
 #else
-                        inet_ntoa(inaddr.sin_addr),
                         ntohs(inaddr.sin_port),
 #endif
                         strerror(opal_socket_errno),
@@ -419,11 +417,10 @@ static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
                         "mca_oob_tcp_peer_send_connect_ack to %s:%d failed: %s (%d)",
                         ORTE_NAME_ARGS(orte_process_info.my_name),
                         ORTE_NAME_ARGS(&(peer->peer_name)),
+                        opal_sockaddr2str((struct sockaddr_storage*) &inaddr),
 #if OPAL_WANT_IPV6
-                        opal_sockaddr2str (&inaddr),
                         ntohs(inaddr.sin6_port),
 #else
-                        inet_ntoa(inaddr.sin_addr),
         /* if we didn't successfully connect, wait 1 second and then try again */
                         ntohs(inaddr.sin_port),
 #endif
@@ -437,11 +434,10 @@ static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
                 "connect to %s:%d failed, connecting over all interfaces failed!",
                 ORTE_NAME_ARGS(orte_process_info.my_name),
                 ORTE_NAME_ARGS(&(peer->peer_name)),
+                opal_sockaddr2str((struct sockaddr_storage*) &inaddr),
 #if OPAL_WANT_IPV6
-                opal_sockaddr2str (&inaddr),
                 ntohs(inaddr.sin6_port)
 #else
-                inet_ntoa(inaddr.sin_addr),
                 ntohs(inaddr.sin_port)
 #endif
                 );
@@ -1137,15 +1133,9 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
     opal_socklen_t optlen;
                                                                                                             
     getsockname(peer->peer_sd, (struct sockaddr*)&inaddr, &addrlen);
-#if OPAL_WANT_IPV6
-    sprintf(src, "%s", opal_sockaddr2str(&inaddr));
+    sprintf(src, "%s", opal_sockaddr2str((struct sockaddr_storage*) &inaddr));
     getpeername(peer->peer_sd, (struct sockaddr*)&inaddr, &addrlen);
-    sprintf(dst, "%s", opal_sockaddr2str(&inaddr));
-#else
-    sprintf(src, "%s", inet_ntoa(inaddr.sin_addr));
-    getpeername(peer->peer_sd, (struct sockaddr*)&inaddr, &addrlen);
-    sprintf(dst, "%s", inet_ntoa(inaddr.sin_addr));
-#endif
+    sprintf(dst, "%s", opal_sockaddr2str((struct sockaddr_storage*) &inaddr));
                                                                                                             
     if((flags = fcntl(peer->peer_sd, F_GETFL, 0)) < 0) {
         opal_output(0, "mca_oob_tcp_peer_dump: fcntl(F_GETFL) failed: %s (%d)\n",

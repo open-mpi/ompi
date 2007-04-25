@@ -64,7 +64,7 @@ int mca_oob_tcp_recv(
             return msg->msg_rc;
         }
  
-        if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
+        if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_INFO) {
             opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_recv*unexpected*: tag %d size %lu\n",
     		    ORTE_NAME_ARGS(orte_process_info.my_name),
     		    ORTE_NAME_ARGS(peer),
@@ -116,7 +116,7 @@ int mca_oob_tcp_recv(
         size += iov[i].iov_len;
     }
 
-    if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
+    if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_INFO) {
         opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_recv*expected*: tag %d size %lu\n",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
                     ORTE_NAME_ARGS(peer),

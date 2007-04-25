@@ -1193,13 +1193,14 @@ int opal_ifkindextoname(int if_kindex, char* if_name, int length)
     return OPAL_ERROR;
 }
 
-#if OPAL_WANT_IPV6
 char*
-opal_sockaddr2str(struct sockaddr_in6 *addr)
+opal_sockaddr2str(struct sockaddr_storage *ss_addr)
 {
+#if OPAL_WANT_IPV6
     char *name = (char *)malloc((NI_MAXHOST + 1) * sizeof(char));
     int error;
     socklen_t addrlen;
+    struct sockaddr_in6 *addr = (struct sockaddr_in6*) ss_addr;
 
     OMPI_DEBUG_ZERO(*name);
     if (NULL == name) {
@@ -1239,8 +1240,11 @@ opal_sockaddr2str(struct sockaddr_in6 *addr)
     }
     
     return name;
-}
+#else
+    struct sockaddr_in *addr = (struct sockaddr_in*) ss_addr;
+    return inet_ntoa(addr->sin_addr);
 #endif
+}
 
 bool
 opal_ifislocalhost(struct sockaddr_storage *addr)
@@ -1413,6 +1417,7 @@ bool opal_addr_isipv4public (struct sockaddr_storage *addr)
     
     return false;
 }
+
 #else /* HAVE_STRUCT_SOCKADDR_IN */
 
 /* if we don't have struct sockaddr_in, we don't have traditional
@@ -1518,9 +1523,16 @@ opal_iffinalize(void)
     return OPAL_SUCCESS;
 }
 
+char*
+opal_sockaddr2str(struct sockaddr_storage *ss_addr)
+{
+    return NULL;
+}
+
 bool
 opal_addr_isipv4public (struct sockaddr_storage *addr)
 {
     return false;
 }
 #endif /* HAVE_STRUCT_SOCKADDR_IN */
+

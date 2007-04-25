@@ -110,11 +110,11 @@ int mca_oob_tcp_addr_pack(orte_buffer_t* buffer)
 #if OPAL_WANT_IPV6
             case AF_INET6:
                 type = MCA_OOB_TCP_ADDR_TYPE_AFINET6;
-                port =mca_oob_tcp_component.tcp6_listen_port;
+                port = mca_oob_tcp_component.tcp6_listen_port;
                 orte_dss.pack(buffer, &type, 1, ORTE_INT8); 
                 orte_dss.pack(buffer, &port, sizeof (port), ORTE_BYTE);
                 orte_dss.pack(buffer, &((struct sockaddr_in6*)&inaddr)->sin6_addr,
-                              4, ORTE_BYTE);
+                              16, ORTE_BYTE);
                 break;
 #endif
             default: 
@@ -182,11 +182,7 @@ mca_oob_tcp_addr_t* mca_oob_tcp_addr_unpack(orte_buffer_t* buffer)
             switch (type) {
                 case MCA_OOB_TCP_ADDR_TYPE_AFINET:
                 {
-#if OPAL_WANT_IPV6
-                    struct sockaddr_in6* target;
-#else
                     struct sockaddr_in* target;
-#endif
                     uint32_t ipaddr;
                     count = sizeof (ipaddr);
                     rc = orte_dss.unpack(buffer, &ipaddr, &count, ORTE_BYTE);
@@ -194,25 +190,19 @@ mca_oob_tcp_addr_t* mca_oob_tcp_addr_unpack(orte_buffer_t* buffer)
                         OBJ_RELEASE(addr);
                         return NULL;
                     }
-#if OPAL_WANT_IPV6
-                    target = (struct sockaddr_in6*)&(addr->addr_inet[i]);
-                    target->sin6_family = AF_INET;
-                    target->sin6_port = port;
-                    memcpy(&target->sin6_addr, &ipaddr, sizeof (ipaddr));
-#else
+
                     target = (struct sockaddr_in*)&(addr->addr_inet[i]);
                     target->sin_family = AF_INET;
                     target->sin_port = port;
                     target->sin_addr.s_addr = ipaddr;
-#endif
                 }
                     break;
 #if OPAL_WANT_IPV6
                 case MCA_OOB_TCP_ADDR_TYPE_AFINET6:
                 {
-                    uint32_t address[4];
+                    uint8_t address[16];
                     struct sockaddr_in6* target;
-                    count = 4;
+                    count = 16;
                     rc = orte_dss.unpack(buffer, &address, &count, ORTE_BYTE);
                     if(rc != ORTE_SUCCESS) {
                         OBJ_RELEASE(addr);

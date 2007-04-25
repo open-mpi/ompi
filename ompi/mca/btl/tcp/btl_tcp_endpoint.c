@@ -614,11 +614,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
         }
         {
             char *address;
-#if OPAL_WANT_IPV6
-            address = (char *) opal_sockaddr2str((struct sockaddr_in6*)&endpoint_addr);
-#else
-            address = inet_ntoa(btl_endpoint->endpoint_addr->addr_inet._union_inet._addr__inet._addr_inet);
-#endif
+            address = opal_sockaddr2str((struct sockaddr_storage*) &endpoint_addr);
             BTL_PEER_ERROR( btl_endpoint->endpoint_proc->proc_ompi,
                           ( "Unable to connect to the peer %s on port %d: %s\n",
                             address,
