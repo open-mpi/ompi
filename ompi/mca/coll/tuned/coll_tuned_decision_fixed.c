@@ -323,6 +323,8 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     const double a4 =  0.0033 / 1024.0; /* [1/B] */
     const double b4 =  1.6761;
 
+    const int max_requests = 0; /* no limit on # of outstanding requests */
+
     communicator_size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
@@ -338,7 +340,7 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
         if ((communicator_size < 12) && (message_size < 2048)) {
             return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm); 
         } 
-        return ompi_coll_tuned_reduce_intra_in_order_binary (sendbuf, recvbuf, count, datatype, op, root, comm, 0); 
+        return ompi_coll_tuned_reduce_intra_in_order_binary (sendbuf, recvbuf, count, datatype, op, root, comm, 0, max_requests); 
     }
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_dec_fixed"
@@ -351,23 +353,23 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     } else if ((communicator_size < 8) && (message_size < 20480)) {
         /* Binomial_0K */
         segsize = 0;
-        return ompi_coll_tuned_reduce_intra_binomial(sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
+        return ompi_coll_tuned_reduce_intra_binomial(sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
     } else if (message_size < 2048) {
         /* Binary_0K */
         segsize = 0;
-        return ompi_coll_tuned_reduce_intra_binary(sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
+        return ompi_coll_tuned_reduce_intra_binary(sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
     } else if (communicator_size > (a1 * message_size + b1)) {
         /* Binary_1K */
         segsize = 1024;
-        return ompi_coll_tuned_reduce_intra_binary(sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
+        return ompi_coll_tuned_reduce_intra_binary(sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
     } else if (communicator_size > (a2 * message_size + b2)) {
         /* Pipeline_1K */
         segsize = 1024;
-        return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
+        return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
     } else if (communicator_size > (a3 * message_size + b3)) {
         /* Binary_32K */
         segsize = 32*1024;
-        return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
+        return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
     }
     if (communicator_size > (a4 * message_size + b4)) {
         /* Pipeline_32K */
@@ -376,7 +378,7 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
         /* Pipeline_64K */
         segsize = 64*1024;
     }
-    return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
+    return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
 
 #if 0
     /* for small messages use linear algorithm */
@@ -398,10 +400,10 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
         }
         /* later swap this for a binary tree */
         /*         fanout = 2; */
-        return ompi_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout);
+        return ompi_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout, max_requests);
     }
     segsize = 1024;
-    return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
+    return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
 #endif  /* 0 */
 }
 

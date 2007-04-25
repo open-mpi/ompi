@@ -224,18 +224,22 @@ int ompi_coll_tuned_reduce_intra_dec_dynamic( void *sendbuf, void *recvbuf,
     if (comm->c_coll_selected_data->com_rules[REDUCE]) {
 
         /* we do, so calc the message size or what ever we need and use this for the evaluation */
-        int alg, faninout, segsize, ignoreme;
+        int alg, faninout, segsize, max_requests;
         size_t dsize;
 
         ompi_ddt_type_size (datatype, &dsize);
         dsize *= count;
 
         alg = ompi_coll_tuned_get_target_method_params (comm->c_coll_selected_data->com_rules[REDUCE], 
-                                                        dsize, &faninout, &segsize, &ignoreme);
+                                                        dsize, &faninout, &segsize, &max_requests);
 
         if (alg) { /* we have found a valid choice from the file based rules for this message size */
-            return  ompi_coll_tuned_reduce_intra_do_this (sendbuf, recvbuf, count, datatype, op, root, comm, 
-                                                          alg, faninout, segsize);
+            return  ompi_coll_tuned_reduce_intra_do_this (sendbuf, recvbuf, 
+                                                          count, datatype, 
+                                                          op, root, comm, 
+                                                          alg, faninout, 
+                                                          segsize, 
+                                                          max_requests);
         } /* found a method */
     } /*end if any com rules to check */
 

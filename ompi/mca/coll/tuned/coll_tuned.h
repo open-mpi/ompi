@@ -221,18 +221,18 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   int ompi_coll_tuned_gatherv_inter_dec_dynamic(GATHER_ARGS);
 
   /* Reduce */
-  int ompi_coll_tuned_reduce_generic( REDUCE_ARGS, ompi_coll_tree_t* tree, int count_by_segment );
+  int ompi_coll_tuned_reduce_generic( REDUCE_ARGS, ompi_coll_tree_t* tree, int count_by_segment, int max_outstanding_reqs );
   int ompi_coll_tuned_reduce_intra_dec_fixed(REDUCE_ARGS);
   int ompi_coll_tuned_reduce_intra_dec_dynamic(REDUCE_ARGS);
   int ompi_coll_tuned_reduce_intra_do_forced(REDUCE_ARGS);
-  int ompi_coll_tuned_reduce_intra_do_this(REDUCE_ARGS, int algorithm, int faninout, int segsize);
+  int ompi_coll_tuned_reduce_intra_do_this(REDUCE_ARGS, int algorithm, int faninout, int segsize, int max_oustanding_reqs);
   int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
   int ompi_coll_tuned_reduce_intra_basic_linear(REDUCE_ARGS);
-  int ompi_coll_tuned_reduce_intra_chain(REDUCE_ARGS, uint32_t segsize, int fanout);
-  int ompi_coll_tuned_reduce_intra_pipeline(REDUCE_ARGS, uint32_t segsize);
-  int ompi_coll_tuned_reduce_intra_binary(REDUCE_ARGS, uint32_t segsize);
-  int ompi_coll_tuned_reduce_intra_binomial(REDUCE_ARGS, uint32_t segsize);
-  int ompi_coll_tuned_reduce_intra_in_order_binary(REDUCE_ARGS, uint32_t segsize);
+  int ompi_coll_tuned_reduce_intra_chain(REDUCE_ARGS, uint32_t segsize, int fanout, int max_outstanding_reqs );
+  int ompi_coll_tuned_reduce_intra_pipeline(REDUCE_ARGS, uint32_t segsize, int max_outstanding_reqs );
+  int ompi_coll_tuned_reduce_intra_binary(REDUCE_ARGS, uint32_t segsize, int max_outstanding_reqs );
+  int ompi_coll_tuned_reduce_intra_binomial(REDUCE_ARGS, uint32_t segsize, int max_outstanding_reqs );
+  int ompi_coll_tuned_reduce_intra_in_order_binary(REDUCE_ARGS, uint32_t segsize, int max_outstanding_reqs );
   int ompi_coll_tuned_reduce_inter_dec_fixed(REDUCE_ARGS);
   int ompi_coll_tuned_reduce_inter_dec_dynamic(REDUCE_ARGS);
 
