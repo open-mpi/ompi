@@ -59,6 +59,7 @@ static void orte_rds_hostfile_parse_error(int token)
                        orte_rds_hostfile_value.sval);
         break;
     case ORTE_RDS_HOSTFILE_IPV4:
+    case ORTE_RDS_HOSTFILE_IPV6:
     case ORTE_RDS_HOSTFILE_INT:
         opal_show_help("help-rds-hostfile.txt", "rds:parse_error_int",
                        true,
@@ -131,7 +132,8 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
     if (ORTE_RDS_HOSTFILE_STRING == token ||
         ORTE_RDS_HOSTFILE_HOSTNAME == token ||
         ORTE_RDS_HOSTFILE_INT == token ||
-        ORTE_RDS_HOSTFILE_IPV4 == token) {
+        ORTE_RDS_HOSTFILE_IPV4 == token ||
+        ORTE_RDS_HOSTFILE_IPV6 == token) {
         char* value;
         char** argv;
         char* node_name = NULL;
@@ -343,6 +345,7 @@ static int orte_rds_hostfile_parse(const char *hostfile, opal_list_t* existing, 
         case ORTE_RDS_HOSTFILE_INT:
         case ORTE_RDS_HOSTFILE_HOSTNAME:
         case ORTE_RDS_HOSTFILE_IPV4:
+        case ORTE_RDS_HOSTFILE_IPV6:
             rc = orte_rds_hostfile_parse_line(token, existing, updates);
             if (ORTE_SUCCESS != rc) {
                 goto unlock;
