@@ -390,11 +390,10 @@ static void mca_oob_tcp_accept(int incoming_sd)
         if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
             opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_accept: %s:%d\n",
                         ORTE_NAME_ARGS(orte_process_info.my_name),
+                        opal_sockaddr2str((struct sockaddr_storage*) &addr),
 #if OPAL_WANT_IPV6
-                        opal_sockaddr2str(&addr),
                         addr.sin6_port
 #else
-                        inet_ntoa(addr.sin_addr),
                         addr.sin_port
 #endif
                         );
@@ -1489,11 +1488,7 @@ char* mca_oob_tcp_get_addr(void)
     *ptr = 0;
 
     for(i=opal_ifbegin(); i>0; i=opal_ifnext(i)) {
-#if OPAL_WANT_IPV6
-        struct sockaddr_in6 addr;
-#else
-        struct sockaddr_in addr;
-#endif
+        struct sockaddr_storage addr;
         char name[32];
         opal_ifindextoname(i, name, sizeof(name));
         if (mca_oob_tcp_component.tcp_include != NULL &&
@@ -1504,28 +1499,27 @@ char* mca_oob_tcp_get_addr(void)
             strstr(mca_oob_tcp_component.tcp_exclude,name) != NULL) {
             continue;
         }
-        opal_ifindextoaddr(i, (struct sockaddr_storage*)&addr, sizeof(addr));
+        opal_ifindextoaddr(i, &addr, sizeof(addr));
         if(opal_ifcount() > 1 && 
-           opal_ifislocalhost((struct sockaddr_storage*) &addr)) {
+           opal_ifislocalhost(&addr)) {
             continue;
         }
         if(ptr != contact_info) {
             ptr += sprintf(ptr, ";");
         }
-#if OPAL_WANT_IPV6
-        if (addr.sin6_family == AF_INET) {
+
+        if (addr.ss_family == AF_INET) {
             ptr += sprintf(ptr, "tcp://%s:%d", opal_sockaddr2str(&addr),
                            ntohs(mca_oob_tcp_component.tcp_listen_port));
         }
         
-        if (addr.sin6_family == AF_INET6) {
+#if OPAL_WANT_IPV6
+        if (addr.ss_family == AF_INET6) {
             ptr += sprintf(ptr, "tcp6://%s:%d", opal_sockaddr2str(&addr),
                            ntohs(mca_oob_tcp_component.tcp6_listen_port));
         }
-#else
-        ptr += sprintf(ptr, "tcp://%s:%d", inet_ntoa(addr.sin_addr),
-                       ntohs(mca_oob_tcp_component.tcp_listen_port));
 #endif
+
     }
     return contact_info;
 }

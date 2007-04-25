@@ -361,21 +361,25 @@ static int mca_btl_tcp_component_create_instances(void)
     const int if_count = opal_ifcount();
     int if_index;
     int kif_count = 0;
-    int kindexes[if_count]; /* this array is way too large, but never too small */
+    int *kindexes = NULL; /* this array is way too large, but never too small */
     char **include;
     char **exclude;
     char **argv;
+    int ret = OMPI_SUCCESS;
 
     if(if_count <= 0) {
         return OMPI_ERROR;
     }
+
+    kindexes = malloc(sizeof(int) * if_count);
+    if (NULL == kindexes) return OMPI_ERR_OUT_OF_RESOURCE;
 
     /* calculate the number of kernel indexes (number of physical NICs) */
     {
         int j;
 
         /* initialize array to 0. Assumption: 0 isn't a valid kernel index */
-        memset (&kindexes, 0, sizeof (kindexes));
+        memset (kindexes, 0, sizeof(int) * if_count);
 
         /* assign the corresponding kernel indexes for all opal_list indexes
          * (loop over all addresses)
@@ -402,7 +406,8 @@ static int mca_btl_tcp_component_create_instances(void)
     mca_btl_tcp_component.tcp_btls = (mca_btl_tcp_module_t**)malloc(mca_btl_tcp_component.tcp_num_links *
                                                                     kif_count * sizeof(mca_btl_tcp_module_t*));
     if(NULL == mca_btl_tcp_component.tcp_btls) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
     }
 
     mca_btl_tcp_component.tcp_addr_count = if_count;
@@ -420,8 +425,10 @@ static int mca_btl_tcp_component_create_instances(void)
         argv++;
     }
     opal_argv_free(include);
-    if(mca_btl_tcp_component.tcp_num_btls)
-        return OMPI_SUCCESS;
+    if(mca_btl_tcp_component.tcp_num_btls) {
+        ret = OMPI_SUCCESS;
+        goto cleanup;
+    }
 
     /* if the interface list was not specified by the user, create 
      * a BTL for each interface that was not excluded.
@@ -454,7 +461,10 @@ static int mca_btl_tcp_component_create_instances(void)
         }
     }
     opal_argv_free(exclude);
-    return OMPI_SUCCESS;
+
+ cleanup:
+    if (NULL != kindexes) free(kindexes);
+    return ret;
 }
 
 /*

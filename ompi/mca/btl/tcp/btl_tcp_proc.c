@@ -37,7 +37,6 @@
 
 static void mca_btl_tcp_proc_construct(mca_btl_tcp_proc_t* proc);
 static void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* proc);
-static bool is_private_ipv4(struct in_addr *in);
 
 
 OBJ_CLASS_INSTANCE(
@@ -73,28 +72,6 @@ void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* proc)
         free(proc->proc_endpoints);
         OBJ_DESTRUCT(&proc->proc_lock);
     }
-}
-
-
-/*
- * Check to see if an IPv4 struct in_addr is public or private.  We
- * can only do IPv4 here because some of the TCP BTL endpoint structs
- * only hold the struct in_addr, not the upper-level sin_family that
- * would indicate if the address is IPv6.
- */
-static bool is_private_ipv4(struct in_addr *in)
-{
-    /* There are definitely ways to do this more efficiently, but
-       since this is not performance-critical code, it seems better to
-       use clear code (vs. clever code) */
-
-    uint32_t addr = ntohl((uint32_t) in->s_addr);
-    unsigned int a = (addr & 0xff000000) >> 24;
-    unsigned int b = (addr & 0x00ff0000) >> 16;
-
-    return ((10 == a) ||
-            (192 == a && 168 == b) ||
-            (172 == a && 16 == b)) ? true : false;
 }
 
 
@@ -191,7 +168,6 @@ int mca_btl_tcp_proc_insert(
     mca_btl_tcp_proc_t* btl_proc, 
     mca_btl_base_endpoint_t* btl_endpoint)
 {
-    struct mca_btl_tcp_module_t *btl_tcp = btl_endpoint->endpoint_btl;
     size_t i;
     struct sockaddr_storage endpoint_addr_ss;
 
