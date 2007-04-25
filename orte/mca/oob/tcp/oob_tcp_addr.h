@@ -96,11 +96,6 @@ int mca_oob_tcp_addr_insert(mca_oob_tcp_addr_t*, const struct sockaddr_in*);
  
 int mca_oob_tcp_addr_get_next(mca_oob_tcp_addr_t*, struct sockaddr_storage*);
 
-/**
- * Returns true if the given address is a public IPv4 address.
- */
-bool mca_oob_tcp_addr_isipv4public(struct sockaddr_storage*);
-
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

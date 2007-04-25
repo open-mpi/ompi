@@ -276,11 +276,11 @@ int mca_oob_tcp_addr_get_next(mca_oob_tcp_addr_t* addr, struct sockaddr_storage*
                     - when IPv4private + IPv6, use IPv6 (this should
                       be changed when there is something like a CellID)
                     */
-                if (true == mca_oob_tcp_addr_isipv4public (&inaddr)) {
+                if (true == opal_addr_isipv4public (&inaddr)) {
                     i_have |= MCA_OOB_TCP_ADDR_IPV4public;
                 }
                 
-                if (true == mca_oob_tcp_addr_isipv4public ((struct sockaddr_storage*)&addr->addr_inet[i])) {
+                if (true == opal_addr_isipv4public ((struct sockaddr_storage*)&addr->addr_inet[i])) {
                     addr->addr_matched |= MCA_OOB_TCP_ADDR_IPV4public;
                 }
                 
@@ -364,39 +364,4 @@ int mca_oob_tcp_addr_insert(mca_oob_tcp_addr_t* addr, const struct sockaddr_in* 
 #endif
     addr->addr_count++;
     return ORTE_SUCCESS;
-}
-
-bool mca_oob_tcp_addr_isipv4public (struct sockaddr_storage *addr)
-{
-    switch (addr->ss_family) {
-#if OPAL_WANT_IPV6
-        case AF_INET6:
-            return false;
-#endif
-        case AF_INET:
-        {
-            struct sockaddr_in *inaddr = (struct sockaddr_in*) addr;
-            /* RFC1918 defines
-            - 10.0.0./8
-            - 172.16.0.0/12
-            - 192.168.0.0/16
-            
-            RFC3330 also mentiones
-            - 169.254.0.0/16 for DHCP onlink iff there's no DHCP server
-            */
-            if ((htonl(0x0a000000) == (inaddr->sin_addr.s_addr & opal_prefix2netmask(8)))  ||
-                (htonl(0xac100000) == (inaddr->sin_addr.s_addr & opal_prefix2netmask(12))) ||
-                (htonl(0xc0a80000) == (inaddr->sin_addr.s_addr & opal_prefix2netmask(16))) ||
-                (htonl(0xa9fe0000) == (inaddr->sin_addr.s_addr & opal_prefix2netmask(16)))) {
-                return false;
-            }
-        }
-            return true;
-        default:
-            opal_output (0,
-                         "unhandled sa_family %d passed to mca_oob_tcp_addr_isipv4public\n",
-                         addr->ss_family);
-    }
-    
-    return false;
 }
