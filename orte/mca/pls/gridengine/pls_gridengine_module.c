@@ -749,7 +749,7 @@ int orte_pls_gridengine_terminate_proc(const orte_process_name_t* proc)
 /**
  * Terminate the orteds for a given job
  */
-int orte_pls_gridengine_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
+int orte_pls_gridengine_terminate_orteds(struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
     
