@@ -592,9 +592,6 @@ int mca_btl_udapl_component_progress()
     mca_btl_udapl_module_t* btl;
     static int32_t inprogress = 0;
     DAT_EVENT event;
-#if defined(__SVR4) && defined(__sun)
-    DAT_COUNT nmore;  /* used by dat_evd_wait, see comment below */
-#endif
     size_t i;
     int32_t j, rdma_ep_count;
     int count = 0;
@@ -809,17 +806,9 @@ int mca_btl_udapl_component_progress()
         }
 
         /* Check connection EVD */
-        while(DAT_SUCCESS ==
-#if defined(__SVR4) && defined(__sun)
-	    /* There is a bug is Solaris udapl implementation
-	     * such that dat_evd_dequeue does not dequeue
-	     * DAT_CONNECTION_REQUEST_EVENT. Workaround is to use
-	     * wait. This should be removed when fix available.
-	     */
-	    dat_evd_wait(btl->udapl_evd_conn, 0, 1, &event, &nmore)) {
-#else
-            dat_evd_dequeue(btl->udapl_evd_conn, &event)) {
-#endif
+        while((btl->udapl_connect_inprogress > 0) && (DAT_SUCCESS ==
+            dat_evd_dequeue(btl->udapl_evd_conn, &event))) {
+
             switch(event.event_number) {
                 case DAT_CONNECTION_REQUEST_EVENT:
                     /* Accept a new connection */
@@ -857,22 +846,28 @@ int mca_btl_udapl_component_progress()
         }
 
         /* Check async EVD */
-        while(DAT_SUCCESS ==
+        if (btl->udapl_async_events == mca_btl_udapl_component.udapl_async_events) {
+            btl->udapl_async_events = 0;
+
+            while(DAT_SUCCESS ==
                 dat_evd_dequeue(btl->udapl_evd_async, &event)) {
 
-            switch(event.event_number) {
-            case DAT_ASYNC_ERROR_EVD_OVERFLOW:
-            case DAT_ASYNC_ERROR_IA_CATASTROPHIC:
-            case DAT_ASYNC_ERROR_EP_BROKEN:
-            case DAT_ASYNC_ERROR_TIMED_OUT:
-            case DAT_ASYNC_ERROR_PROVIDER_INTERNAL_ERROR:
-                 BTL_OUTPUT(("WARNING: async event ignored : %d",
-                    event.event_number));
-                 break;
-            default:
-                BTL_OUTPUT(("WARNING unknown async event: %d\n",
-                    event.event_number));
+                switch(event.event_number) {
+                case DAT_ASYNC_ERROR_EVD_OVERFLOW:
+                case DAT_ASYNC_ERROR_IA_CATASTROPHIC:
+                case DAT_ASYNC_ERROR_EP_BROKEN:
+                case DAT_ASYNC_ERROR_TIMED_OUT:
+                case DAT_ASYNC_ERROR_PROVIDER_INTERNAL_ERROR:
+                    BTL_OUTPUT(("WARNING: async event ignored : %d",
+                        event.event_number));
+                    break;
+                default:
+                    BTL_OUTPUT(("WARNING unknown async event: %d\n",
+                        event.event_number));
+                }
             }
+        } else {
+            btl->udapl_async_events++;
         }
 
         /*

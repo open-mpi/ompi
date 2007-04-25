@@ -208,6 +208,13 @@ int mca_btl_udapl_register_mca_params(void)
         &mca_btl_udapl_component.udapl_eager_rdma_guarantee,
         REGINT_GE_ZERO), tmp_rc, rc);
 
+    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("async_events",
+        "The asynchronous event queue will only be "
+        "checked after entering progress this number of times.",
+        100000000,
+        &mca_btl_udapl_component.udapl_async_events,
+        REGINT_GE_ONE), tmp_rc, rc);
+
     /* register uDAPL module parameters */
     CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("evd_qlen",
         "The event dispatcher queue length.",
