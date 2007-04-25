@@ -1545,7 +1545,9 @@ int mca_oob_tcp_parse_uri(const char* uri, struct sockaddr_in* inaddr)
     char* ptr = tmp + 6;
     char* addr = ptr;
     char* port;
+#if OPAL_WANT_IPV6
     uint16_t af_family = AF_INET;
+#endif
     
 #if OPAL_WANT_IPV6
     if(strncmp(tmp, "tcp6://", 7) == 0) {
