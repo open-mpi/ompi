@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -20,8 +20,8 @@
  * @file
  */
 
-#ifndef MCA_PTL_IB_H
-#define MCA_PTL_IB_H
+#ifndef MCA_BTL_IB_H
+#define MCA_BTL_IB_H
 
 /* Standard system includes */
 #include <sys/types.h>
@@ -65,7 +65,7 @@ struct mca_btl_openib_component_t {
     /**< number of hcas available to the IB component */
 
     struct mca_btl_openib_module_t             *openib_btls;
-    /**< array of available PTLs */
+    /**< array of available BTLs */
 
     int ib_free_list_num;
     /**< initial size of free lists */
@@ -91,23 +91,23 @@ struct mca_btl_openib_component_t {
     char* ib_mpool_name; 
     /**< name of ib memory pool */ 
    
-    int32_t rd_num; /**< the number of receive descriptors to post to each queue pair */
-    int32_t rd_low; /**< low water mark to reach before posting additional receive descriptors */
-    int32_t rd_win; /**< ack credits when window size exceeded */
-    int32_t rd_rsv; /**< descriptors held in reserve for control messages */
+    int32_t rd_num;          /**< the number of receive descriptors to post to each queue pair */
+    int32_t rd_low;          /**< low water mark to reach before posting additional receive descriptors */
+    int32_t rd_win;          /**< ack credits when window size exceeded */
+    int32_t rd_rsv;          /**< descriptors held in reserve for control messages */
 
-    int32_t srq_rd_max; /* maximum number of receive descriptors posted */
-    int32_t srq_rd_per_peer; /* number of receive descriptors to post per log2(peers) in SRQ mode */
-    int32_t srq_sd_max; /* maximum number of send descriptors posted */
+    int32_t srq_rd_max;      /**< maximum number of receive descriptors posted on shared receive queue */
+    int32_t srq_rd_per_peer; /**< number of receive descriptors to post per log2(peers) in SRQ mode */
+    int32_t srq_sd_max;      /**< maximum number of send descriptors posted in use SRQ mode */
 
-    size_t eager_limit; 
-    size_t max_send_size; 
-    uint32_t reg_mru_len; 
-    uint32_t use_srq; 
+    size_t eager_limit;      /**< Eager send limit of first fragment, in Bytes */
+    size_t max_send_size;    /**< Maximum send size, in Bytes */
+    uint32_t reg_mru_len;    /**< Length of the registration cache most recently used list */
+    uint32_t use_srq;        /**< Use the Shared Receive Queue (SRQ mode) */ 
     
-    uint32_t ib_cq_size;   /**< Max outstanding CQE on the CQ */  
-    uint32_t ib_sg_list_size; /**< Max scatter/gather descriptor entries on the WQ*/ 
-    uint32_t ib_pkey_ix; 
+    uint32_t ib_cq_size;     /**< Max outstanding CQE on the CQ */  
+    uint32_t ib_sg_list_size; /**< Max scatter/gather descriptor entries on the WQ */ 
+    uint32_t ib_pkey_ix;     /**< InfiniBand pkey index */
     uint32_t ib_pkey_val;
     uint32_t ib_psn; 
     uint32_t ib_qp_ous_rd_atom; 
@@ -120,12 +120,12 @@ struct mca_btl_openib_component_t {
     uint32_t ib_service_level; 
     uint32_t ib_static_rate; 
     uint32_t use_eager_rdma;
-    int32_t eager_rdma_threshold;
+    int32_t eager_rdma_threshold; /**< After this number of msg, use RDMA for short messages, always */
     uint32_t eager_rdma_num;
     int32_t max_eager_rdma;
     uint32_t btls_per_lid;
     uint32_t max_lmc;
-    uint32_t buffer_alignment;
+    uint32_t buffer_alignment;    /**< Preferred communication buffer alignment in Bytes (must be power of two) */
 
     /** Colon-delimited list of filenames for HCA parameters */
     char *hca_params_file_names;
@@ -188,30 +188,31 @@ struct mca_btl_openib_hca_t {
     uint8_t btls;              /** < number of btls using this HCA */
 };
 typedef struct mca_btl_openib_hca_t mca_btl_openib_hca_t;
+
 /**
- * IB PTL Interface
+ * IB BTL Interface
  */
 struct mca_btl_openib_module_t {
-    mca_btl_base_module_t  super;  /**< base PTL interface */
+    mca_btl_base_module_t  super;      /**< base BTL interface */
     bool btl_inited; 
     mca_btl_openib_recv_reg_t ib_reg[256]; 
     mca_btl_openib_port_info_t port_info;  /* contains only the subnet id right now */ 
     mca_btl_openib_hca_t *hca;
-    uint8_t port_num;           /**< ID of the PORT */ 
+    uint8_t port_num;                  /**< ID of the PORT */ 
     uint16_t pkey_index;
     struct ibv_cq *ib_cq[2];
     struct ibv_port_attr ib_port_attr; 
     uint16_t lid;                      /**< lid that is actually used (for LMC) */
     uint8_t src_path_bits;             /**< offset from base lid (for LMC) */
 
-    ompi_free_list_t send_free[2];  /**< free lists of send buffer descriptors */
+    ompi_free_list_t send_free[2];     /**< free lists of send buffer descriptors */
     ompi_free_list_t send_free_frag;   /**< free list of frags only... used for pining memory */ 
     
-    ompi_free_list_t recv_free[2];  /**< free lists of receive buffer descriptors */
+    ompi_free_list_t recv_free[2];     /**< free lists of receive buffer descriptors */
     ompi_free_list_t recv_free_frag;   /**< free list of frags only... used for pining memory */ 
 
     ompi_free_list_t send_free_control; /**< frags for control massages */ 
-    opal_mutex_t ib_lock;          /**< module level lock */ 
+    opal_mutex_t ib_lock;              /**< module level lock */ 
     
     
     /**< an array to allow posting of rr in one swoop */ 
@@ -221,22 +222,23 @@ struct mca_btl_openib_module_t {
     struct ibv_srq *srq[2]; 
     int32_t srd_posted[2]; 
     int32_t num_peers;
-    int32_t  rd_num; 
-    int32_t  rd_low;
+    int32_t rd_num; 
+    int32_t rd_low;
     
     int32_t sd_tokens[2];
     /**< number of frags that  can be outstanding (down counter) */ 
     
-    opal_list_t pending_frags[2]; /**< list of pending frags */ 
+    opal_list_t pending_frags[2];               /**< list of pending frags */ 
 
-    size_t eager_rdma_frag_size; /**< length of eager frag */
-    orte_pointer_array_t *eager_rdma_buffers; /**< RDMA buffers to poll */
-    volatile int32_t eager_rdma_buffers_count; /**< number of RDMA buffers */
+    size_t eager_rdma_frag_size;                /**< length of eager frag */
+    orte_pointer_array_t *eager_rdma_buffers;   /**< RDMA buffers to poll */
+    volatile int32_t eager_rdma_buffers_count;  /**< number of RDMA buffers */
 
     mca_btl_base_module_error_cb_fn_t error_cb; /**< error handler */
    
     orte_pointer_array_t *endpoints;
-}; typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
+};
+typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
 
 extern mca_btl_openib_module_t mca_btl_openib_module;
 
@@ -249,6 +251,7 @@ typedef struct mca_btl_openib_reg_t mca_btl_openib_reg_t;
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
 extern void* mca_btl_openib_progress_thread(opal_object_t*);
 #endif
+
 /**
  * Register a callback function that is called on receipt
  * of a fragment.
@@ -297,11 +300,11 @@ extern int mca_btl_openib_finalize(
 /**
  * PML->BTL notification of change in the process list.
  * 
- * @param btl (IN)
- * @param nprocs (IN)     Number of processes
- * @param procs (IN)      Set of processes
- * @param peers (OUT)     Set of (optional) peer addressing info.
- * @param peers (IN/OUT)  Set of processes that are reachable via this BTL.
+ * @param btl (IN)            BTL module
+ * @param nprocs (IN)         Number of processes
+ * @param procs (IN)          Set of processes
+ * @param peers (OUT)         Set of (optional) peer addressing info.
+ * @param reachable (IN/OUT)  Set of processes that are reachable via this BTL.
  * @return     OMPI_SUCCESS or error status on failure.
  * 
  */
@@ -336,11 +339,9 @@ extern int mca_btl_openib_del_procs(
  * PML->BTL Initiate a send of the specified size.
  *
  * @param btl (IN)               BTL instance
- * @param btl_base_peer (IN)     BTL peer addressing
- * @param send_request (IN/OUT)  Send request (allocated by PML via mca_btl_base_request_alloc_fn_t)
- * @param size (IN)              Number of bytes PML is requesting BTL to deliver
- * @param flags (IN)             Flags that should be passed to the peer via the message header.
- * @param request (OUT)          OMPI_SUCCESS if the BTL was able to queue one or more fragments
+ * @param btl_peer (IN)          BTL peer addressing
+ * @param descriptor (IN)        Descriptor of data to be transmitted.
+ * @param tag (IN)               Tag.
  */
 extern int mca_btl_openib_send(
     struct mca_btl_base_module_t* btl,
@@ -353,16 +354,13 @@ extern int mca_btl_openib_send(
  * PML->BTL Initiate a put of the specified size.
  *
  * @param btl (IN)               BTL instance
- * @param btl_base_peer (IN)     BTL peer addressing
- * @param send_request (IN/OUT)  Send request (allocated by PML via mca_btl_base_request_alloc_fn_t)
- * @param size (IN)              Number of bytes PML is requesting BTL to deliver
- * @param flags (IN)             Flags that should be passed to the peer via the message header.
- * @param request (OUT)          OMPI_SUCCESS if the BTL was able to queue one or more fragments
+ * @param btl_peer (IN)          BTL peer addressing
+ * @param descriptor (IN)        Descriptor of data to be transmitted.
  */
 extern int mca_btl_openib_put(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* btl_peer,
-    struct mca_btl_base_descriptor_t* decriptor
+    struct mca_btl_base_descriptor_t* descriptor
     );
 
 /**
@@ -370,15 +368,12 @@ extern int mca_btl_openib_put(
  *
  * @param btl (IN)               BTL instance
  * @param btl_base_peer (IN)     BTL peer addressing
- * @param send_request (IN/OUT)  Send request (allocated by PML via mca_btl_base_request_alloc_fn_t)
- * @param size (IN)              Number of bytes PML is requesting BTL to deliver
- * @param flags (IN)             Flags that should be passed to the peer via the message header.
- * @param request (OUT)          OMPI_SUCCESS if the BTL was able to queue one or more fragments
+ * @param descriptor (IN)        Descriptor of data to be transmitted.
  */
 extern int mca_btl_openib_get(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* btl_peer,
-    struct mca_btl_base_descriptor_t* decriptor
+    struct mca_btl_base_descriptor_t* descriptor
     );
     
 
@@ -436,48 +431,58 @@ extern mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
 /**
  * Return a send fragment to the modules free list.
  *
- * @param btl (IN)   BTL instance
+ * @param btl (IN)   BTL module
  * @param frag (IN)  IB send fragment
  *
  */
 extern void mca_btl_openib_send_frag_return(mca_btl_base_module_t* btl,
-        mca_btl_openib_frag_t*);
+                                            mca_btl_openib_frag_t* frag);
 
-
-int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t* openib_btl); 
 
 /**
  * Fault Tolerance Event Notification Function
- * @param state Checkpoint Stae
+ *
+ * @param state (IN)  Checkpoint State
  * @return OMPI_SUCCESS or failure status
  */
-int mca_btl_openib_ft_event(int state);
+extern int mca_btl_openib_ft_event(int state);
+
 
 #define BTL_OPENIB_HP_QP 0
 #define BTL_OPENIB_LP_QP 1
 
+/**
+ * Post to Shared Receive Queue with certain priority 
+ *
+ * @param openib_btl (IN) BTL module
+ * @param additional (IN) Additional Bytes to reserve
+ * @param prio (IN)       Priority (either BTL_OPENIB_HP_QP or BTL_OPENIB_LP_QP)
+ * @return OMPI_SUCCESS or failure status
+ */
+
 static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
-        const int additional, const int prio)
+                                          const int additional,
+                                          const int prio)
 {
     OPAL_THREAD_LOCK(&openib_btl->ib_lock);
     if(openib_btl->srd_posted[prio] <= openib_btl->rd_low + additional &&
              openib_btl->srd_posted[prio] < openib_btl->rd_num) {
-        int32_t i, rc;
-        int32_t num_post = openib_btl->rd_num - openib_btl->srd_posted[prio];
-        ompi_free_list_item_t* item;
-        mca_btl_openib_frag_t* frag;
+        int rc;
+        int32_t i, num_post = openib_btl->rd_num - openib_btl->srd_posted[prio];
         struct ibv_recv_wr *bad_wr;
         ompi_free_list_t *free_list;
 
         free_list = &openib_btl->recv_free[prio];
 
         for(i = 0; i < num_post; i++) {
+            ompi_free_list_item_t* item;
+            mca_btl_openib_frag_t* frag;
             OMPI_FREE_LIST_WAIT(free_list, item, rc);
             frag = (mca_btl_openib_frag_t*)item;
             if(ibv_post_srq_recv(openib_btl->srq[prio], &frag->wr_desc.rd_desc,
                         &bad_wr)) {
                 BTL_ERROR(("error posting receive descriptors to shared "
-                            "receive queue: %s", strerror(errno)));
+                           "receive queue: %s", strerror(errno)));
                 OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
                 return OMPI_ERROR;
             }
@@ -492,4 +497,4 @@ static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-#endif
+#endif /* MCA_BTL_IB_H */

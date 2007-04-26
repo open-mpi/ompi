@@ -219,7 +219,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
 
                                                                                                                
 #define MCA_BTL_DES_FLAGS_DEREGISTER   0x0001
-#define MCA_BTL_DES_FLAGS_PRIORITY 0x0002
+#define MCA_BTL_DES_FLAGS_PRIORITY     0x0002
 
 /**
  * Maximum number of allowed segments in src/dst fields of a descriptor.
@@ -353,7 +353,7 @@ typedef int (*mca_btl_base_module_finalize_fn_t)(
  * provides the BTL the option to return a pointer to a data structure defined
  * by the BTL that is returned to the BTL on subsequent calls to the BTL data
  * transfer functions (e.g btl_send). This may be used by the BTL to cache any addressing 
- * or connection information (e.g. TCP socket, IP queue pair).
+ * or connection information (e.g. TCP socket, IB queue pair).
  */
 typedef int (*mca_btl_base_module_add_procs_fn_t)(
     struct mca_btl_base_module_t* btl, 
@@ -380,7 +380,7 @@ typedef int (*mca_btl_base_module_del_procs_fn_t)(
     struct mca_btl_base_module_t* btl, 
     size_t nprocs,
     struct ompi_proc_t** procs, 
-    struct mca_btl_base_endpoint_t**
+    struct mca_btl_base_endpoint_t** peer
 );
 
 /**
@@ -469,13 +469,14 @@ typedef int (*mca_btl_base_module_free_fn_t)(
 
 /**
  * Prepare a descriptor for send/rdma using the supplied
- * convertor. If the convertor references data that is contigous,
+ * convertor. If the convertor references data that is contiguous,
  * the descriptor may simply point to the user buffer. Otherwise,
  * this routine is responsible for allocating buffer space and
  * packing if required.
  *
  * @param btl (IN)          BTL module
  * @param endpoint (IN)     BTL peer addressing
+ * @param registration (IN) Memory registration
  * @param convertor (IN)    Data type convertor
  * @param reserve (IN)      Additional bytes requested by upper layer to precede user data
  * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT)
