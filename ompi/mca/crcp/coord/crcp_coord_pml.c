@@ -664,7 +664,8 @@ OBJ_CLASS_INSTANCE(ompi_crcp_coord_pml_state_t,
    msg_ref->datatype = v_datatype;                       \
    if( NULL != msg_ref->datatype ) {                     \
       OBJ_RETAIN(msg_ref->datatype);                     \
-      msg_ref->ddt_size = msg_ref->datatype->size;       \
+      ompi_ddt_type_size(msg_ref->datatype,              \
+                         &(msg_ref->ddt_size));          \
    } else {                                              \
       msg_ref->ddt_size = 0;                             \
    }                                                     \
@@ -1388,13 +1389,22 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_irecv(
          */
         if( NULL != drain_msg_ref ) {
             opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
-                                "crcp:coord: pml_irecv(): Matched a drained message...");
+                                "crcp:coord: pml_irecv(): Matched a drained message. "
+                                "[%3d, %3d] vs [%3d, %3d]",
+                                (int)datatype->size, (int)count,
+                                (int)drain_msg_ref->ddt_size, (int)drain_msg_ref->count);
 
             /* Copy the drained message */
             src = drain_msg_ref->rank;
             tag = drain_msg_ref->tag;
-            memcpy(buf,     drain_msg_ref->buffer, ((datatype->size) * count));
 
+            if( 0 != ompi_ddt_copy_content_same_ddt(datatype, count,
+                                                    buf, drain_msg_ref->buffer) ) {
+                opal_output( mca_crcp_coord_component.super.output_handle,
+                             "crcp:coord: pml_irecv(): Datatype copy failed (%d)",
+                             ret);
+            }
+                
             *request = drain_msg_ref->request;
             OBJ_RETAIN(*request);
 
@@ -1578,7 +1588,12 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_recv(
         /* Copy the drained message */
         src = drain_msg_ref->rank;
         tag = drain_msg_ref->tag;
-        memcpy(buf,     drain_msg_ref->buffer, ((datatype->size) * count));
+        if( 0 != ompi_ddt_copy_content_same_ddt(datatype, count,
+                                                buf, drain_msg_ref->buffer) ) {
+            opal_output( mca_crcp_coord_component.super.output_handle,
+                         "crcp:coord: pml_recv(): Datatype copy failed (%d)",
+                         ret);
+        }
         if( MPI_STATUS_IGNORE != status ) {
             memcpy(status, &drain_msg_ref->status, sizeof(ompi_status_public_t)); 
         }
@@ -1790,7 +1805,13 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_recv(
             /* Copy the drained message */
             src = drain_msg_ref->rank;
             tag = drain_msg_ref->tag;
-            memcpy(buf,     drain_msg_ref->buffer, ((datatype->size) * count));
+            if( 0 != ompi_ddt_copy_content_same_ddt(datatype, count,
+                                                    buf, drain_msg_ref->buffer) ) {
+                opal_output( mca_crcp_coord_component.super.output_handle,
+                             "crcp:coord: pml_recv(): Datatype copy failed (%d)",
+                             ret);
+            }
+
             if( MPI_STATUS_IGNORE != status ) {
                 memcpy(status, &drain_msg_ref->status, sizeof(ompi_status_public_t)); 
             }
@@ -2108,7 +2129,12 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
 
 
                         /* Copy the drained message */
-                        memcpy(msg_ref->buffer,     drain_msg_ref->buffer, ((msg_ref->datatype->size) * msg_ref->count));
+                        if( 0 != ompi_ddt_copy_content_same_ddt(msg_ref->datatype, msg_ref->count,
+                                                                msg_ref->buffer, drain_msg_ref->buffer) ) {
+                            opal_output( mca_crcp_coord_component.super.output_handle,
+                                         "crcp:coord: pml_start(): Datatype copy failed (%d)",
+                                         ret);
+                        }
 
                         coord_start_req_types[iter_req] = requests[iter_req]->req_type;
                         requests[iter_req]->req_type = OMPI_REQUEST_MAX;
