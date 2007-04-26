@@ -192,6 +192,7 @@ static inline int btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpoint,
                        &bad_wr)) {
                BTL_ERROR(("error posting receive errno says %s\n",
                            strerror(errno)));
+               OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
                return OMPI_ERROR;
            }
         }

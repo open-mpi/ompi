@@ -478,6 +478,7 @@ static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
                         &bad_wr)) {
                 BTL_ERROR(("error posting receive descriptors to shared "
                             "receive queue: %s", strerror(errno)));
+                OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
                 return OMPI_ERROR;
             }
         }
