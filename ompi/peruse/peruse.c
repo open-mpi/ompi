@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -66,6 +66,10 @@ const int PERUSE_num_events = (sizeof(PERUSE_events) / sizeof(peruse_event_assoc
  */
 int PERUSE_Init (void)
 {
+    if (MPI_PARAM_CHECK) {
+        if (!ompi_mpi_initialized || ompi_mpi_finalized)
+            return PERUSE_ERR_INIT;
+    }
     ompi_peruse_init ();
     return PERUSE_SUCCESS;
 }
