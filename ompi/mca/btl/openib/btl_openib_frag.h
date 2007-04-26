@@ -101,7 +101,7 @@ typedef struct mca_btl_openib_footer_t mca_btl_openib_footer_t;
 
 
 #define MCA_BTL_OPENIB_CONTROL_CREDITS 0
-#define  MCA_BTL_OPENIB_CONTROL_RDMA   1
+#define MCA_BTL_OPENIB_CONTROL_RDMA    1
 
 struct mca_btl_openib_control_header_t {
     uint8_t type;

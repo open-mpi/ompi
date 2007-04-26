@@ -150,7 +150,8 @@ struct mca_btl_base_endpoint_t {
     mca_btl_openib_eager_rdma_local_t eager_rdma_local;
     /**< info about local RDMA buffer */
     uint32_t index;           /**< index of the endpoint in endpoints array */
-    struct mca_btl_openib_frag_t *credit_frag[2]; /**< frags for sending explicit high priority credits */
+    struct mca_btl_openib_frag_t *credit_frag[2];
+    /**< frags for sending explicit high priority credits */
     bool nbo;       /**< does the endpoint require network byte ordering? */
     bool use_eager_rdma; /**< use eager rdma for this peer? */
 };
@@ -160,14 +161,16 @@ typedef mca_btl_base_endpoint_t  mca_btl_openib_endpoint_t;
 
 OBJ_CLASS_DECLARATION(mca_btl_openib_endpoint_t);
 
-int  mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t* endpoint, struct mca_btl_openib_frag_t* frag);
+int  mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t* endpoint,
+                                  struct mca_btl_openib_frag_t* frag);
 int  mca_btl_openib_endpoint_connect(mca_btl_base_endpoint_t*);
 void mca_btl_openib_post_recv(void);
 void mca_btl_openib_endpoint_send_credits(mca_btl_base_endpoint_t*, const int);
 void mca_btl_openib_endpoint_connect_eager_rdma(mca_btl_openib_endpoint_t*);
 
 static inline int btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpoint,
-        const int additional, const int prio)
+                                              const int additional,
+                                              const int prio)
 {
     mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
 

@@ -63,7 +63,7 @@ mca_btl_openib_module_t mca_btl_openib_module = {
         0, /* exclusivity */
         0, /* latency */
         0, /* bandwidth */
-        0,  /* TODO this should be PUT btl flags */
+        0, /* TODO this should be PUT btl flags */
         mca_btl_openib_add_procs,
         mca_btl_openib_del_procs,
         mca_btl_openib_register, 
@@ -83,7 +83,11 @@ mca_btl_openib_module_t mca_btl_openib_module = {
     }
 };
 
-int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size_t nprocs);
+/*
+ * Local functions
+ */
+static int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size_t nprocs);
+static int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t* openib_btl);
 
 
 static void show_init_error(const char *file, int line, 
@@ -149,7 +153,6 @@ int mca_btl_openib_add_procs(
         mca_btl_openib_proc_t* ib_proc;
         mca_btl_base_endpoint_t* endpoint;
         
-        
         if(NULL == (ib_proc = mca_btl_openib_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -166,18 +169,18 @@ int mca_btl_openib_add_procs(
                 rem_subnet_id_port_cnt ++;
             }
         }
+        
         if(!rem_subnet_id_port_cnt ) {
             /* no use trying to communicate with this endpointlater */
             BTL_VERBOSE(("No matching subnet id was found, moving on.. \n"));
             continue;
         }
-        
-        
+
 #if 0
         num_endpoints = rem_subnet_id_port_cnt  / lcl_subnet_id_port_cnt + 
             (btl_rank < (rem_subnet_id_port_cnt  / lcl_subnet_id_port_cnt)) ? 1:0;
-        
 #endif 
+
         if(rem_subnet_id_port_cnt  < lcl_subnet_id_port_cnt && 
            btl_rank >= rem_subnet_id_port_cnt ) { 
             BTL_VERBOSE(("Not enough remote ports on this subnet id, moving on.. \n"));
@@ -186,7 +189,7 @@ int mca_btl_openib_add_procs(
         }
         OPAL_THREAD_LOCK(&ib_proc->proc_lock);
 
-        /* The btl_proc datastructure is shared by all IB PTL
+        /* The btl_proc datastructure is shared by all IB BTL
          * instances that are trying to reach this destination. 
          * Cache the peer instance on the btl_proc.
          */
@@ -219,7 +222,7 @@ int mca_btl_openib_add_procs(
 
 }
 
-int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size_t nprocs) 
+static int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size_t nprocs) 
 {
     int min_cq_size;
     int first_time = (0 == openib_btl->num_peers);
@@ -403,14 +406,14 @@ int mca_btl_openib_free(
  *  
  * prepare source's behavior depends on the following: 
  * Has a valid memory registration been passed to prepare_src? 
- *    if so we attempt to use the pre-registred user-buffer, if the memory registration 
- *    is to small (only a portion of the user buffer) then we must reregister the user buffer 
+ *    if so we attempt to use the pre-registered user-buffer, if the memory registration 
+ *    is too small (only a portion of the user buffer) then we must reregister the user buffer 
  * Has the user requested the memory to be left pinned? 
  *    if so we insert the memory registration into a memory tree for later lookup, we 
  *    may also remove a previous registration if a MRU (most recently used) list of 
- *    registions is full, this prevents resources from being exhausted.
+ *    registrations is full, this prevents resources from being exhausted.
  * Is the requested size larger than the btl's max send size? 
- *    if so and we aren't asked to leave the registration pinned than we register the memory if 
+ *    if so and we aren't asked to leave the registration pinned, then we register the memory if 
  *    the users buffer is contiguous 
  * Otherwise we choose from two free lists of pre-registered memory in which to pack the data into. 
  * 
@@ -491,7 +494,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     }
 
     if(NULL == frag) {
-        /* the data doesn't fit into eager frag or eger frag is
+        /* the data doesn't fit into eager frag or eager frag is
          * not available */
         MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc);
         if(NULL == frag) {
@@ -528,12 +531,12 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
  * @param peer (IN)     BTL peer addressing
  * prepare dest's behavior depends on the following: 
  * Has a valid memory registration been passed to prepare_src? 
- *    if so we attempt to use the pre-registred user-buffer, if the memory registration 
+ *    if so we attempt to use the pre-registered user-buffer, if the memory registration 
  *    is to small (only a portion of the user buffer) then we must reregister the user buffer 
  * Has the user requested the memory to be left pinned? 
  *    if so we insert the memory registration into a memory tree for later lookup, we 
  *    may also remove a previous registration if a MRU (most recently used) list of 
- *    registions is full, this prevents resources from being exhausted.
+ *    registrations is full, this prevents resources from being exhausted.
  */
 mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     struct mca_btl_base_module_t* btl,
@@ -671,7 +674,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
                     mca_btl_base_endpoint_t* endpoint,
                     mca_btl_base_descriptor_t* descriptor)
 {
-    int rc;
+    int rc = OMPI_SUCCESS;
     struct ibv_send_wr* bad_wr; 
     mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*) descriptor; 
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl;
@@ -687,7 +690,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
         opal_list_append(&endpoint->pending_put_frags, (opal_list_item_t *)frag);
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
-        return OMPI_SUCCESS;
+        return rc;
 
     /* post descriptor */
     } else {
@@ -702,8 +705,6 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
                          &frag->wr_desc.sr_desc, 
                          &bad_wr)){ 
             rc = OMPI_ERROR;
-        } else {
-            rc = OMPI_SUCCESS;
         }
     
         if(mca_btl_openib_component.use_srq) { 

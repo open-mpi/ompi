@@ -1034,7 +1034,7 @@ static char* btl_openib_component_status_to_string(enum ibv_wc_status status)
         return "RETRY EXCEEDED ERROR";
         break;
     case IBV_WC_RNR_RETRY_EXC_ERR:
-        return "RECEIVER NOT READY RETRY EXCEEEDED ERROR";
+        return "RECEIVER NOT READY RETRY EXCEEDED ERROR";
         break;
     case IBV_WC_LOC_RDD_VIOL_ERR:
         return "LOCAL RDD VIOLATION ERROR";
