@@ -184,7 +184,7 @@ void * ompi_rb_tree_find_with(ompi_rb_tree_t *tree, void *key,
             return(node->value);
         }
         /* else if it is less than 0, go left, else right */
-        (compvalue < 0) ? (node = node->left) : (node = node->right);
+        node = ((compvalue < 0) ? node->left : node->right);
     }
     /* if we didn't find anything, return NULL */
     return(NULL);
@@ -193,7 +193,7 @@ void * ompi_rb_tree_find_with(ompi_rb_tree_t *tree, void *key,
 /* Finds the node in the tree based on the key and returns a pointer
  * to the node. This is a bit a code duplication, but this has to be fast
  * so we go ahead with the duplication */
-ompi_rb_tree_node_t * ompi_rb_tree_find_node(ompi_rb_tree_t *tree, void *key)
+static ompi_rb_tree_node_t * ompi_rb_tree_find_node(ompi_rb_tree_t *tree, void *key)
 {
     ompi_rb_tree_node_t * node;
     int compvalue;
@@ -206,7 +206,7 @@ ompi_rb_tree_node_t * ompi_rb_tree_find_node(ompi_rb_tree_t *tree, void *key)
             return(node);
         }
         /* else if it is less than 0, go left, else right */
-        (compvalue < 0) ? (node = node->left) : (node = node->right);
+        node = ((compvalue < 0) ? node->left : node->right);
     }
     /* if we didn't find anything, return NULL */
     return(NULL);
@@ -284,7 +284,7 @@ int ompi_rb_tree_destroy(ompi_rb_tree_t *tree)
 
 /* Find the next inorder successor of a node    */
 
-ompi_rb_tree_node_t * btree_successor(ompi_rb_tree_t * tree, ompi_rb_tree_node_t * node)
+static ompi_rb_tree_node_t * btree_successor(ompi_rb_tree_t * tree, ompi_rb_tree_node_t * node)
 {
     ompi_rb_tree_node_t * p;
 
@@ -311,7 +311,7 @@ ompi_rb_tree_node_t * btree_successor(ompi_rb_tree_t * tree, ompi_rb_tree_node_t
 /* Insert an element in the normal binary search tree fashion    */
 /* this function goes through the tree and finds the leaf where
  * the node will be inserted   */
-void btree_insert(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * node)
+static void btree_insert(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * node)
 {
     ompi_rb_tree_node_t * parent = tree->root_ptr;
     ompi_rb_tree_node_t * n = parent->left; /* the real root of the tree */
@@ -325,7 +325,7 @@ void btree_insert(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * node)
     /* find the leaf where we will insert the node */
     while (n != tree->nill) {
         parent = n;
-        (tree->comp(node->key, n->key) <= 0) ? (n = n->left) : (n = n->right);
+        n = ((tree->comp(node->key, n->key) <= 0) ? n->left : n->right);
     }
 
     /* place it on either the left or the right */
@@ -344,7 +344,7 @@ void btree_insert(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * node)
 }
 
 /* Fixup the balance of the btree after deletion    */
-void btree_delete_fixup(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * x)
+static void btree_delete_fixup(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * x)
 {
     ompi_rb_tree_node_t * w;
     ompi_rb_tree_node_t * root = tree->root_ptr->left;
@@ -408,7 +408,7 @@ void btree_delete_fixup(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * x)
 
 /* Free the nodes in inorder fashion    */
 
-void
+static void
 inorder_destroy(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * node)
 {
     ompi_free_list_item_t * item;
@@ -470,7 +470,7 @@ static void inorder_traversal(ompi_rb_tree_t *tree,
 /* Left rotate the tree    */
 /* basically what we want to do is to make x be the left child
  * of its right child    */
-void left_rotate(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * x)
+static void left_rotate(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * x)
 {
     ompi_rb_tree_node_t * y;
 
@@ -501,7 +501,7 @@ void left_rotate(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * x)
 /* Right rotate the tree    */
 /* basically what we want to do is to make x be the right child
  * of its left child */
-void right_rotate(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * x)
+static void right_rotate(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * x)
 {
     ompi_rb_tree_node_t * y;
 

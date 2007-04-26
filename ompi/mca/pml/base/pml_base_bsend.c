@@ -107,7 +107,7 @@ int mca_pml_base_bsend_init(bool thread_safe)
 /*
  * One-time cleanup at shutdown - release any resources.
  */
-int mca_pml_base_bsend_fini()
+int mca_pml_base_bsend_fini(void)
 {
     if(OPAL_THREAD_ADD32(&mca_pml_bsend_init,-1) > 0) 
         return OMPI_SUCCESS;
