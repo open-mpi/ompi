@@ -20,7 +20,7 @@
 #
 [no-local-orted]
 The rsh PLS component was not able to find the executable "orted" in
-your PATH or in the directory where Open MPI was initially installed,
+your PATH or in the directory where Open MPI/OpenRTE was initially installed,
 and therefore cannot continue.
 
 For reference, your current PATH is:

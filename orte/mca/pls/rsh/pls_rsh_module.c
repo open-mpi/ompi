@@ -74,6 +74,7 @@
 #include "orte/util/session_dir.h"
 
 #include "orte/runtime/orte_wait.h"
+#include "orte/runtime/orte_wakeup.h"
 #include "orte/dss/dss.h"
 
 #include "orte/mca/ns/ns.h"
@@ -135,13 +136,10 @@ static const char * orte_pls_rsh_shell_name[] = {
 };
 
 /* local global storage of timing variables */
-static unsigned long  mintime=999999999, miniter, maxtime=0, maxiter;
-static float avgtime=0.0;
-static struct timeval *launchstart;   
 static struct timeval joblaunchstart, joblaunchstop;
 
-/* local global storage of the list of active daemons */
-static opal_list_t active_daemons;
+/* global storage of active jobid being launched */
+static orte_jobid_t active_job=ORTE_JOBID_INVALID;
 
 
 /**
@@ -265,63 +263,18 @@ static int orte_pls_rsh_fill_exec_path ( char ** exec_path)
 
 static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 {
-    orte_pls_daemon_info_t *info = (orte_pls_daemon_info_t*) cbdata;
-    orte_mapped_node_t *node;
-    orte_mapped_proc_t *proc;
-    opal_list_item_t *item;
     int rc;
     unsigned long deltat;
-    struct timeval launchstop;
-
-    /* if ssh exited abnormally, set the child processes to aborted
-       and print something useful to the user.  The usual reasons for
-       ssh to exit abnormally all are a pretty good indication that
-       the child processes aren't going to start up properly.
-
-       This should somehow be pushed up to the calling level, but we
-       don't really have a way to do that just yet.
-    */
+    
     if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
-        /* get the mapping for our node so we can cancel the right things */
-        rc = orte_rmaps.get_node_map(&node, info->cell,
-                                     info->nodename, info->active_job);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-
-        /* set state of all processes associated with the daemon as
-           terminated */
-        for(item =  opal_list_get_first(&node->procs);
-            item != opal_list_get_end(&node->procs);
-            item =  opal_list_get_next(item)) {
-            proc = (orte_mapped_proc_t*) item;
-
-            rc = orte_smr.set_proc_state(&(proc->name),
-                                         ORTE_PROC_STATE_ABORTED, status);
-            if (ORTE_SUCCESS != rc) {
-                ORTE_ERROR_LOG(rc);
-            }
-            
-            /* Clean up the session directory as if we were the
-               process itself.  This covers the case where the
-               process died abnormally and didn't cleanup its own
-               session directory. */
-            
-            orte_session_dir_finalize(&(proc->name));
-        }
-        OBJ_RELEASE(node);
-
- cleanup:
         /* tell the user something went wrong */
-        opal_output(0, "ERROR: A daemon on node %s failed to start as expected.",
-                    info->nodename);
+        opal_output(0, "ERROR: A daemon failed to start as expected.");
         opal_output(0, "ERROR: There may be more information available from");
         opal_output(0, "ERROR: the remote shell (see above).");
-
+        
         if (WIFEXITED(status)) {
             opal_output(0, "ERROR: The daemon exited unexpectedly with status %d.",
-                   WEXITSTATUS(status));
+                        WEXITSTATUS(status));
         } else if (WIFSIGNALED(status)) {
 #ifdef WCOREDUMP
             if (WCOREDUMP(status)) {
@@ -336,38 +289,23 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
         } else {
             opal_output(0, "No extra status information is available: %d.", status);
         }
-        OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
-        /* tell the system that this daemon is gone */
-        if (ORTE_SUCCESS != (rc = orte_pls_base_remove_daemon(info))) {
+        /*  The usual reasons for ssh to exit abnormally all are a pretty good
+            indication that the child processes aren't going to start up properly.
+            Set the job state to indicate we failed to launch so orterun's exit status
+            will be non-zero and forcibly terminate the job so orterun can exit
+        */
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(active_job, ORTE_JOB_STATE_FAILED_TO_START))) {
             ORTE_ERROR_LOG(rc);
         }
         
-        /* remove the daemon from our local list */
-        opal_list_remove_item(&active_daemons, &info->super);
-        OBJ_RELEASE(info);
-        OPAL_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
+        if (ORTE_SUCCESS != (rc = orte_wakeup(active_job))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        
     } /* if abnormal exit */
 
     /* release any waiting threads */
     OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
-    /* first check timing request */
-    if (mca_pls_rsh_component.timing) {
-        if (0 != gettimeofday(&launchstop, NULL)) {
-            opal_output(0, "pls_rsh: could not obtain stop time");
-        } else {
-            deltat = (launchstop.tv_sec - launchstart[info->name->vpid].tv_sec)*1000000 +
-                     (launchstop.tv_usec - launchstart[info->name->vpid].tv_usec);
-            avgtime = avgtime + deltat;
-            if (deltat < mintime) {
-                mintime = deltat;
-                miniter = (unsigned long)info->name->vpid;
-            }
-            if (deltat > maxtime) {
-                maxtime = deltat;
-                maxiter = (unsigned long)info->name->vpid;
-            }
-        }
-    }
 
     if (mca_pls_rsh_component.num_children-- >=
         mca_pls_rsh_component.num_concurrent ||
@@ -380,19 +318,9 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             opal_output(0, "pls_rsh: could not obtain job launch stop time");
         } else {
             deltat = (joblaunchstop.tv_sec - joblaunchstart.tv_sec)*1000000 +
-                     (joblaunchstop.tv_usec - joblaunchstart.tv_usec);
+            (joblaunchstop.tv_usec - joblaunchstart.tv_usec);
             opal_output(0, "pls_rsh: total time to launch job is %lu usec", deltat);
-            if (mintime < 999999999) {
-                /* had at least one non-local node */
-                avgtime = avgtime/opal_list_get_size(&active_daemons);
-                opal_output(0, "pls_rsh: average time to launch one daemon %f usec", avgtime);
-                opal_output(0, "pls_rsh: min time to launch a daemon was %lu usec for iter %lu", mintime, miniter);
-                opal_output(0, "pls_rsh: max time to launch a daemon was %lu usec for iter %lu", maxtime, maxiter);
-            } else {
-                opal_output(0, "No nonlocal launches to report for timing info");
-            }
         }
-        free(launchstart);
     }
     
     OPAL_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
@@ -404,9 +332,13 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
  * for launching the application.
  */
 
+/* When working in this function, ALWAYS jump to "cleanup" if
+ * you encounter an error so that orterun will be woken up and
+ * the job can cleanly terminate
+ */
 int orte_pls_rsh_launch(orte_jobid_t jobid)
 {
-    orte_job_map_t *map;
+    orte_job_map_t *map=NULL;
     opal_list_item_t *n_item;
     orte_mapped_node_t *rmaps_node;
     orte_std_cntr_t num_nodes;
@@ -426,7 +358,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     bool remote_sh = false, remote_csh = false; 
     bool local_sh = false, local_csh = false;
     char *lib_base = NULL, *bin_base = NULL;
-    orte_pls_daemon_info_t *dmn;
+    bool failed_launch = true;
 
     if (mca_pls_rsh_component.timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
@@ -436,12 +368,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         }        
     }
     
-    /* setup a list that will contain the info for all the daemons
-     * so we can store it on the registry when done and use it
-     * locally to track their state
-     */
-    OBJ_CONSTRUCT(&active_daemons, opal_list_t);
-
+    /* set the active jobid */
+    active_job = jobid;
+    
     /* Get the map for this job
      * We need the entire mapping for a couple of reasons:
      *  - need the prefix to start with.
@@ -451,8 +380,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     rc = orte_rmaps.get_job_map(&map, jobid);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&active_daemons);
-        return rc;
+        goto cleanup;
     }
 
     /* if the user requested that we re-use daemons,
@@ -461,18 +389,16 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     if (orte_pls_base.reuse_daemons) {
         if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
             ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(map);
-            OBJ_DESTRUCT(&active_daemons);
-            return rc;
+            goto cleanup;
         }
     }
     
     num_nodes = (orte_std_cntr_t)opal_list_get_size(&map->nodes);
     if (0 == num_nodes) {
         /* nothing left to do - just return */
-        OBJ_RELEASE(map);
-        OBJ_DESTRUCT(&active_daemons);
-        return ORTE_SUCCESS;
+        failed_launch = false;
+        rc = ORTE_SUCCESS;
+        goto cleanup;
     }
 
     if (mca_pls_rsh_component.debug_daemons &&
@@ -492,9 +418,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
          */
         opal_show_help("help-pls-rsh.txt", "deadlock-params",
                        true, mca_pls_rsh_component.num_concurrent, num_nodes);
-        OBJ_RELEASE(map);
-        OBJ_DESTRUCT(&active_daemons);
-        return ORTE_ERR_FATAL;
+        rc = ORTE_ERR_FATAL;
+        goto cleanup;
     }
 
     /*
@@ -521,7 +446,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
      */
     if (num_nodes == 0) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_BAD_PARAM;
+        rc = ORTE_ERR_BAD_PARAM;
+        goto cleanup;
     }
     rc = orte_ns.reserve_range(0, num_nodes, &vpid);
     if (ORTE_SUCCESS != rc) {
@@ -599,7 +525,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto cleanup;
         }
 
         switch (shell) {
@@ -683,10 +609,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     /*
      * Iterate through each of the nodes
      */
-    if (mca_pls_rsh_component.timing) {
-        /* allocate space to track the start times */
-        launchstart = (struct timeval*)malloc((num_nodes+vpid) * sizeof(struct timeval));
-    }
     
     for(n_item =  opal_list_get_first(&map->nodes);
         n_item != opal_list_get_end(&map->nodes);
@@ -697,17 +619,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         char **exec_argv;
         
         rmaps_node = (orte_mapped_node_t*)n_item;
-        
-        if (mca_pls_rsh_component.timing) {
-            if (0 != gettimeofday(&launchstart[vpid], NULL)) {
-                opal_output(0, "pls_rsh: could not obtain start time");
-            }
-        }
-        
-        /* new daemon - setup to record its info */
-        dmn = OBJ_NEW(orte_pls_daemon_info_t);
-        dmn->active_job = jobid;
-        opal_list_append(&active_daemons, &dmn->super);
         
         /* setup node name */
         free(argv[node_name_index1]);
@@ -722,9 +633,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         free(argv[node_name_index2]);
         argv[node_name_index2] = strdup(rmaps_node->nodename);
         
-        /* save it in the daemon info */
-        dmn->nodename = strdup(rmaps_node->nodename);
-
         /* initialize daemons process name */
         rc = orte_ns.create_process_name(&name, rmaps_node->cell, 0, vpid);
         if (ORTE_SUCCESS != rc) {
@@ -732,25 +640,12 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             goto cleanup;
         }
         
-        /* save it in the daemon info */
-        dmn->cell = rmaps_node->cell;
-        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(dmn->name), name, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-
         /* fork a child to exec the rsh/ssh session */
         
-        /* set the process state to "launched" */
-        if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(name, ORTE_PROC_STATE_LAUNCHED, 0))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-
         pid = fork();
         if (pid < 0) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
+            ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_CHILDREN);
+            rc = ORTE_ERR_SYS_LIMITS_CHILDREN;
             goto cleanup;
         }
 
@@ -760,18 +655,18 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             char** env;
             char* var;
             long fd, fdmax = sysconf(_SC_OPEN_MAX);
-
+            
             if (mca_pls_rsh_component.debug) {
                 opal_output(0, "pls:rsh: launching on node %s\n",
                             rmaps_node->nodename);
             }
-
+            
             /* We don't need to sense an oversubscribed condition and set the sched_yield
              * for the node as we are only launching the daemons at this time. The daemons
              * are now smart enough to set the oversubscribed condition themselves when
              * they launch the local procs.
              */
-
+            
             /* Is this a local launch?
              *
              * Not all node names may be resolvable (if we found
@@ -787,22 +682,20 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                     opal_output(0, "pls:rsh: %s is a LOCAL node\n",
                                 rmaps_node->nodename);
                 }
-                if (mca_pls_rsh_component.timing) {
-                    /* since this is a local launch, the daemon will never reach
-                     * the waitpid callback - so set the start value to
-                     * something nonsensical
-                     */
-                    launchstart[vpid].tv_sec = 0;
-                    launchstart[vpid].tv_usec = 0;
-                }
                 
                 exec_path = opal_path_findv(argv[local_exec_index], 0, environ, NULL);
-
+                
                 if (NULL == exec_path && NULL == prefix_dir) {
                     rc = orte_pls_rsh_fill_exec_path (&exec_path);
                     if (ORTE_SUCCESS != rc) {
-                        ORTE_ERROR_LOG(rc);
-                        exit(-1);  /* the forked process MUST exit */
+                        /* don't normally ERROR_LOG this problem as the function has already
+                        * printed out a nice error message for us - do the ERROR_LOG only
+                        * when we are in debug mode so we can see where it occurred
+                        */
+                        if (mca_pls_rsh_component.debug) {
+                            ORTE_ERROR_LOG(rc);
+                        }
+                        exit(-1);  /* the forked process MUST exit */                        
                     }
                 } else {
                     if (NULL != prefix_dir) {
@@ -812,19 +705,25 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                     if (NULL == exec_path) {
                         rc = orte_pls_rsh_fill_exec_path (&exec_path);
                         if (ORTE_SUCCESS != rc) {
-                            ORTE_ERROR_LOG(rc);
+                            /* don't normally ERROR_LOG this problem as the function has already
+                            * printed out a nice error message for us - do the ERROR_LOG only
+                            * when we are in debug mode so we can see where it occurred
+                            */
+                            if (mca_pls_rsh_component.debug) {
+                                ORTE_ERROR_LOG(rc);
+                            }
                             exit(-1);  /* the forked process MUST exit */
                         }
                     }
                 }
-
+            
                 /* If we have a prefix, then modify the PATH and
                    LD_LIBRARY_PATH environment variables.  We're
                    already in the child process, so it's ok to modify
                    environ. */
                 if (NULL != prefix_dir) {
                     char *oldenv, *newenv;
-
+                    
                     /* Reset PATH */
                     newenv = opal_os_path( false, prefix_dir, bin_base, NULL );
                     oldenv = getenv("PATH");
@@ -839,7 +738,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         opal_output(0, "pls:rsh: reset PATH: %s", newenv);
                     }
                     free(newenv);
-
+                    
                     /* Reset LD_LIBRARY_PATH */
                     newenv = opal_os_path( false, prefix_dir, lib_base, NULL );
                     oldenv = getenv("LD_LIBRARY_PATH");
@@ -856,40 +755,40 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                     }
                     free(newenv);
                 }
-
+                
                 /* Since this is a local execution, we need to
-                   potentially whack the final ")" in the argv (if
-                   sh/csh conditionals, from above).  Note that we're
-                   modifying the argv[] in the child process, so
-                   there's no need to save this and restore it
-                   afterward -- the parent's argv[] is unmodified. */
+                    potentially whack the final ")" in the argv (if
+                                                                 sh/csh conditionals, from above).  Note that we're
+                    modifying the argv[] in the child process, so
+                    there's no need to save this and restore it
+                    afterward -- the parent's argv[] is unmodified. */
                 if (NULL != argv[local_exec_index_end]) {
                     free(argv[local_exec_index_end]);
                     argv[local_exec_index_end] = NULL;
                 }
-
+                
                 /* tell the daemon to setup its own process session/group */
                 opal_argv_append(&argc, &argv, "--set-sid");
                 exec_argv = &argv[local_exec_index];
                 
                 /* Finally, chdir($HOME) because we're making the
-                   assumption that this is what will happen on
-                   remote nodes (via rsh/ssh).  This allows a user
-                   to specify a path that is relative to $HOME for
-                   both the cwd and argv[0] and it will work on
-                   all nodes -- including the local nost.
-                   Otherwise, it would work on remote nodes and
-                   not the local node.  If the user does not start
-                   in $HOME on the remote nodes... well... let's
-                   hope they start in $HOME.  :-) */
+                    assumption that this is what will happen on
+                    remote nodes (via rsh/ssh).  This allows a user
+                    to specify a path that is relative to $HOME for
+                    both the cwd and argv[0] and it will work on
+                    all nodes -- including the local nost.
+                    Otherwise, it would work on remote nodes and
+                    not the local node.  If the user does not start
+                    in $HOME on the remote nodes... well... let's
+                    hope they start in $HOME.  :-) */
                 var = getenv("HOME");
                 if (NULL != var) {
                     if (mca_pls_rsh_component.debug) {
                         opal_output(0, "pls:rsh: changing to directory %s", var);
                     }
                     /* Ignore errors -- what are we going to do?
-                       (and we ignore errors on the remote nodes
-                       in the fork pls, so this is consistent) */
+                    (and we ignore errors on the remote nodes
+                     in the fork pls, so this is consistent) */
                     chdir(var);
                 }
             } else {
@@ -899,7 +798,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 }
                 exec_argv = argv;
                 exec_path = strdup(mca_pls_rsh_component.agent_path);
-
+                
                 if (NULL != prefix_dir) {
                     char *opal_prefix = getenv("OPAL_PREFIX");
                     if (remote_sh) {
@@ -921,7 +820,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                            Must be very careful about obeying
                            [t]csh's order of evaluation and not
                            using a variable before it is defined.
-                           See this thread for more details:
+                            See this thread for more details:
                            http://www.open-mpi.org/community/lists/users/2006/01/0517.php. */
                         asprintf (&argv[local_exec_index],
                                   "%s%s%s set path = ( %s/%s $path ) ; "
@@ -943,7 +842,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                     }
                 }
             }
-
+            
             /* setup process name */
             rc = orte_ns.get_proc_name_string(&name_string, name);
             if (ORTE_SUCCESS != rc) {
@@ -952,18 +851,18 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             }
             free(argv[proc_name_index]);
             argv[proc_name_index] = strdup(name_string);
-
+            
             if (!mca_pls_rsh_component.debug) {
                 /* setup stdin */
                 int fd = open("/dev/null", O_RDWR);
                 dup2(fd, 0);
                 close(fd);
             }
-
+            
             /* close all file descriptors w/ exception of stdin/stdout/stderr */
             for(fd=3; fd<fdmax; fd++)
                 close(fd);
-
+            
             /* Set signal handlers back to the default.  Do this close
                to the execve() because the event library may (and likely
                will) reset them.  If we don't do this, the event
@@ -1020,7 +919,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             /* setup callback on sigchild - wait until setup above is complete
              * as the callback can occur in the call to orte_wait_cb
              */
-            orte_wait_cb(pid, orte_pls_rsh_wait_daemon, dmn);
+            orte_wait_cb(pid, orte_pls_rsh_wait_daemon, NULL);
 
             /* if required - add delay to avoid problems w/ X11 authentication */
             if (mca_pls_rsh_component.debug && mca_pls_rsh_component.delay) {
@@ -1030,14 +929,13 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         }
         free(name);
     }
-    
-    /* all done, so store the daemon info on the registry */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&active_daemons))) {
-        ORTE_ERROR_LOG(rc);
-    }
+    /* get here if launch went okay */
+    failed_launch = false;
 
  cleanup:
-    OBJ_RELEASE(map);
+    if (NULL != map) {
+        OBJ_RELEASE(map);
+    }
 
     if (NULL != lib_base) {
         free(lib_base);
@@ -1046,8 +944,23 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         free(bin_base);
     }
 
-    if (NULL != jobid_string) free(jobid_string);  /* done with this variable */
-    if (NULL != argv) opal_argv_free(argv);
+    if (NULL != jobid_string) {
+        free(jobid_string);  /* done with this variable */
+    }
+    if (NULL != argv) {
+        opal_argv_free(argv);
+    }
+
+    /* check for failed launch - if so, force terminate */
+    if (failed_launch) {
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(jobid, ORTE_JOB_STATE_FAILED_TO_START))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_wakeup(jobid))) {
+            ORTE_ERROR_LOG(rc);
+        }        
+    }
 
     return rc;
 }
