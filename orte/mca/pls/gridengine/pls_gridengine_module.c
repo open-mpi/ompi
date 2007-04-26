@@ -76,6 +76,7 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/sys_info.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/runtime/orte_wakeup.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/gpr/gpr.h"
@@ -109,6 +110,9 @@ static void set_handler_default(int sig);
 static int update_slot_keyval(orte_ras_node_t* node, int* slot_cnt);
 #endif
 
+/* global storage of active jobid being launched */
+static orte_jobid_t active_job=ORTE_JOBID_INVALID;
+
 /**
  * Fill the orted_path variable with the directory to the orted
  */
@@ -135,25 +139,14 @@ static int orte_pls_gridengine_fill_orted_path(char** orted_path)
  */
 static void orte_pls_gridengine_wait_daemon(pid_t pid, int status, void* cbdata)
 {
-    orte_pls_daemon_info_t *info = (orte_pls_daemon_info_t*) cbdata;
     int rc;
       
-    /* if qrsh exited abnormally, set the daemon's state to aborted
-       and print something useful to the user.  The usual reasons for
-       qrsh to exit abnormally all are a pretty good indication that
-       the child processes aren't going to start up properly, so this
-       will signal the system to kill the job.
-
-       This should somehow be pushed up to the calling level, but we
-       don't really have a way to do that just yet.
-    */
     if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
         /* tell the user something went wrong. We need to do this BEFORE we
          * set the state to ABORTED as that action will cause a trigger to
          * fire that will kill the job before any output would get printed!
          */
-        opal_output(0, "ERROR: A daemon on node %s failed to start as expected.",
-                    info->nodename);
+        opal_output(0, "ERROR: A daemon failed to start as expected.");
         opal_output(0, "ERROR: There may be more information available from");
         opal_output(0, "ERROR: the 'qstat -t' command on the Grid Engine tasks.");
         opal_output(0, "ERROR: If the problem persists, please restart the");
@@ -176,24 +169,32 @@ static void orte_pls_gridengine_wait_daemon(pid_t pid, int status, void* cbdata)
             opal_output(0, "No extra status information is available: %d.", status);
         }
         
-        /* now set the state to aborted */
-        rc = orte_smr.set_proc_state(info->name, ORTE_PROC_STATE_ABORTED, status);
-        if (ORTE_SUCCESS != rc) {
+        /*  The usual reasons for qrsh to exit abnormally all are a pretty good
+            indication that the child processes aren't going to start up properly.
+            Set the job state to indicate we failed to launch so orterun's exit status
+            will be non-zero and forcibly terminate the job so orterun can exit
+            */
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(active_job, ORTE_JOB_STATE_FAILED_TO_START))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_wakeup(active_job))) {
             ORTE_ERROR_LOG(rc);
         }
     }
-    
-    /* cleanup */
-    OBJ_RELEASE(info);
 }
 
 /**
  * Launch a daemon (bootproxy) on each node. The daemon will be responsible
  * for launching the application.
  */
+/* When working in this function, ALWAYS jump to "cleanup" if
+ * you encounter an error so that orterun will be woken up and
+ * the job can cleanly terminate
+ */
 int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
 {
-    orte_job_map_t *map;
+    orte_job_map_t *map=NULL;
     opal_list_item_t *n_item;
     orte_std_cntr_t num_nodes;
     orte_vpid_t vpid;
@@ -201,23 +202,20 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     int node_name_index2;
     int proc_name_index;
     int orted_index;
-    char *jobid_string;
+    char *jobid_string=NULL;
     char *prefix_dir;
     char *param;
-    char **argv;
-    char **env;
+    char **argv=NULL;
+    char **env=NULL;
     int argc;
     int rc;
     sigset_t sigs;
     char *lib_base = NULL, *bin_base = NULL;
     char *sge_root, *sge_arch;
-    opal_list_t daemons;
-    orte_pls_daemon_info_t *dmn;
+    bool failed_launch = true;
     
-    /* setup a list that will contain the info for all the daemons
-     * so we can store it on the registry when done
-     */
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
+    /* set the active jobid */
+    active_job = jobid;
     
     /* Get the map for this job.
      * We need the entire mapping for a couple of reasons:
@@ -228,8 +226,7 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     rc = orte_rmaps.get_job_map(&map, jobid);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&daemons);
-        return rc;
+        goto cleanup;
     }
 
     /* if the user requested that we re-use daemons,
@@ -238,18 +235,16 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     if (orte_pls_base.reuse_daemons) {
         if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
             ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(map);
-            OBJ_DESTRUCT(&daemons);
-            return rc;
+            goto cleanup;
         }
     }
     
     num_nodes = (orte_std_cntr_t)opal_list_get_size(&map->nodes);
     if (num_nodes == 0) {
         /* job must have been launched on existing daemons - just return */
-        OBJ_RELEASE(map);
-        OBJ_DESTRUCT(&daemons);
-        return ORTE_SUCCESS;
+        failed_launch = false;
+        rc = ORTE_SUCCESS;
+        goto cleanup;
     }
     
     /*
@@ -437,26 +432,17 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
             goto cleanup;
         }
 
-        /* new daemon - setup to record its info */
-        dmn = OBJ_NEW(orte_pls_daemon_info_t);
-        dmn->active_job = jobid;
-        dmn->cell = rmaps_node->cell;
-        dmn->nodename = strdup(rmaps_node->nodename);
-        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(dmn->name), name, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        opal_list_append(&daemons, &dmn->super);
-        
 #ifdef __WINDOWS__
         printf("Unimplemented feature for windows\n");
-        return ORTE_ERR_NOT_IMPLEMENTED;
+        rc = ORTE_ERR_NOT_IMPLEMENTED;
+        goto cleanup;
 #else
         /* fork a child to do qrsh */
         pid = fork();
 #endif
         if (pid < 0) {
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
+            ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_CHILDREN);
+            rc = ORTE_ERR_SYS_LIMITS_CHILDREN;
             goto cleanup;
         }
 
@@ -481,7 +467,7 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
             if (NULL == exec_path) {
                 opal_show_help("help-pls-gridengine.txt", "bad-qrsh-path",
                     true, exec_path, sge_root, sge_arch);
-                return ORTE_ERR_NOT_FOUND;
+                exit(-1);  /* forked child must ALWAYS exit, not return */
             }
 
             if (mca_pls_gridengine_component.debug) {
@@ -495,7 +481,7 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
             if (NULL == orted_path && NULL == prefix_dir) {
                 rc = orte_pls_gridengine_fill_orted_path(&orted_path);
                 if (ORTE_SUCCESS != rc) {
-                    return rc;
+                    exit(-1);  /* forked child must ALWAYS exit, not return */
                 }
             } else {
                 if (NULL != prefix_dir) {
@@ -505,7 +491,7 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
                 if (NULL == orted_path) {
                     rc = orte_pls_gridengine_fill_orted_path(&orted_path);
                     if (ORTE_SUCCESS != rc) {
-                        return rc;
+                        exit(-1);  /* forked child must ALWAYS exit, not return */
                     }
                 }
             }
@@ -592,21 +578,20 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
             /* setup callback on sigchild - wait until setup above is complete
              * as the callback can occur in the call to orte_wait_cb
              */
-           orte_wait_cb(pid, orte_pls_gridengine_wait_daemon, dmn);
+           orte_wait_cb(pid, orte_pls_gridengine_wait_daemon, NULL);
             
             vpid++;
         }
         free(name);
     }
-                     
-     /* all done, so store the daemon info on the registry */
-     if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons))) {
-         ORTE_ERROR_LOG(rc);
-     }
+    /* get here if launch went okay */
+    failed_launch = false;
                      
     
   cleanup:
-    OBJ_RELEASE(map);
+    if (NULL != map) {
+        OBJ_RELEASE(map);
+    }
                      
     if (NULL != lib_base) {
         free(lib_base);
@@ -615,10 +600,27 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
         free(bin_base);
     }
     
-    free(jobid_string);  /* done with this variable */
-    opal_argv_free(argv);
-    opal_argv_free(env);
+     if (NULL != jobid_string) {
+         free(jobid_string);  /* done with this variable */
+     }
+     if (NULL != argv) {
+         opal_argv_free(argv);
+     }
+    if (NULL != env) {
+        opal_argv_free(env);
+    }
     
+    /* check for failed launch - if so, force terminate */
+    if (failed_launch) {
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(jobid, ORTE_JOB_STATE_FAILED_TO_START))) {
+            ORTE_ERROR_LOG(rc);
+        }
+
+        if (ORTE_SUCCESS != (rc = orte_wakeup(jobid))) {
+            ORTE_ERROR_LOG(rc);
+        }        
+    }
+                     
     return rc;
 }
 
