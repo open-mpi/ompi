@@ -142,7 +142,7 @@ base as of this writing (1 March 2007):
   When compiling Open MPI with the Portland compiler suite, the
   following flags should be passed to Open MPI's configure script:
 
-  shell$ ./configure CFLAGS=-Msignextend CXXFLAGS=-signextent \
+  shell$ ./configure CFLAGS=-Msignextend CXXFLAGS=-Msignextend \
 	--with-wrapper-cflags=-Msignextend \
 	--with-wrapper-cxxflags=-Msignextend ...
 
