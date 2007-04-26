@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2007      Cisco, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -22,8 +23,10 @@ headers += \
         opal/align.h \
 	opal/constants.h \
 	opal/opal_socket_errno.h \
-	opal/types.h	 \
-	opal/prefetch.h opal/hash_string.h
+	opal/types.h \
+	opal/prefetch.h \
+        opal/hash_string.h \
+        opal/ipv6compat.h
 
 nodist_headers += \
 	opal/version.h
