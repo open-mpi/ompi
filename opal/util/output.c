@@ -681,7 +681,7 @@ static void output(int output_id, const char *format, va_list arglist)
 	if (ldi->ldi_syslog) {
 
 #if defined(HAVE_SYSLOG)
-	    syslog(ldi->ldi_syslog_priority, str);
+	    syslog(ldi->ldi_syslog_priority, "%s", str);
 #endif
 	}
 
