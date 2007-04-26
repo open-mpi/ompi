@@ -508,6 +508,31 @@ int main(int argc, char *argv[])
             return ret;
         }
 
+        /* THIS IS A TEMPORARY PATCH - REPORT NODE AND PROC NAME FOR THIS DAEMON */
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_value(&value, ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_AND,
+                                                         "orte-job-0", 2, 0))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        if (ORTE_SUCCESS != (ret = orte_schema.get_proc_tokens(&(value->tokens), &(value->num_tokens), ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_NODE_NAME_KEY, ORTE_STRING, orte_system_info.nodename))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(value->keyvals[1]), ORTE_PROC_NAME_KEY, ORTE_NAME, ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        if (ORTE_SUCCESS != (ret = orte_gpr.put(1, &value))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        OBJ_RELEASE(value);
+
+
         /* get the job segment name */
         if (ORTE_SUCCESS != (ret = orte_schema.get_job_segment_name(&segment, orted_globals.bootproxy))) {
             ORTE_ERROR_LOG(ret);
