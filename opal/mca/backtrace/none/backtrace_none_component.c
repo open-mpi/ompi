@@ -22,8 +22,8 @@
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
-    OPAL_DECLSPEC extern const opal_backtrace_base_component_1_0_0_t mca_backtrace_none_component;
 #endif
+    OPAL_DECLSPEC extern const opal_backtrace_base_component_1_0_0_t mca_backtrace_none_component;
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
