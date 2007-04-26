@@ -244,11 +244,11 @@ int ompi_attr_finalize(void);
  *
  */
 
-int ompi_attr_create_keyval(ompi_attribute_type_t type, 
-                            ompi_attribute_fn_ptr_union_t copy_attr_fn, 
-                            ompi_attribute_fn_ptr_union_t delete_attr_fn,
-                            int *key, void *extra_state, int flags,
-                            ompi_attribute_keyval_destructor_fn_t *destructor);
+OMPI_DECLSPEC int ompi_attr_create_keyval(ompi_attribute_type_t type, 
+                                          ompi_attribute_fn_ptr_union_t copy_attr_fn, 
+                                          ompi_attribute_fn_ptr_union_t delete_attr_fn,
+                                          int *key, void *extra_state, int flags,
+                                          ompi_attribute_keyval_destructor_fn_t *destructor);
 
 /**
  * Free an attribute keyval
@@ -329,10 +329,10 @@ int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
  * So yes, this is more code, but it's clearer and less error-prone
  * (read: better) this way.
  */
-int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object, 
-                               opal_hash_table_t **attr_hash,
-                               int key, MPI_Fint attribute, 
-                               bool predefined, bool need_lock);
+OMPI_DECLSPEC int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object, 
+                                             opal_hash_table_t **attr_hash,
+                                             int key, MPI_Fint attribute, 
+                                             bool predefined, bool need_lock);
 
 /**
  * Set an attribute on the comm/win/datatype in a form valid for
@@ -367,10 +367,10 @@ int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object,
  * So yes, this is more code, but it's clearer and less error-prone
  * (read: better) this way.
  */
-int ompi_attr_set_fortran_mpi2(ompi_attribute_type_t type, void *object, 
-                               opal_hash_table_t **attr_hash,
-                               int key, MPI_Aint attribute, 
-                               bool predefined, bool need_lock);
+OMPI_DECLSPEC int ompi_attr_set_fortran_mpi2(ompi_attribute_type_t type, void *object, 
+                                             opal_hash_table_t **attr_hash,
+                                             int key, MPI_Aint attribute, 
+                                             bool predefined, bool need_lock);
 
 /**
  * Get an attribute on the comm/win/datatype in a form valid for C.
@@ -421,8 +421,8 @@ int ompi_attr_get_c(opal_hash_table_t *attr_hash, int key,
  * (read: better) this way.
  */
 
-int ompi_attr_get_fortran_mpi1(opal_hash_table_t *attr_hash, int key, 
-                               MPI_Fint *attribute, int *flag);
+    OMPI_DECLSPEC int ompi_attr_get_fortran_mpi1(opal_hash_table_t *attr_hash, int key, 
+                                                 MPI_Fint *attribute, int *flag);
 
 
 /**
@@ -448,8 +448,8 @@ int ompi_attr_get_fortran_mpi1(opal_hash_table_t *attr_hash, int key,
  * (read: better) this way.
  */
 
-int ompi_attr_get_fortran_mpi2(opal_hash_table_t *attr_hash, int key, 
-                               MPI_Aint *attribute, int *flag);
+OMPI_DECLSPEC int ompi_attr_get_fortran_mpi2(opal_hash_table_t *attr_hash, int key, 
+                                             MPI_Aint *attribute, int *flag);
 
 
 /**

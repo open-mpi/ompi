@@ -19,6 +19,8 @@
 #ifndef OMPI_F77_STRINGS_H
 #define OMPI_F77_STRINGS_H
 
+#include "ompi_config.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -38,7 +40,7 @@ extern "C" {
      * assign it to the cstr to return.  The caller is responsible for
      * eventually freeing the C string.
      */
-    int ompi_fortran_string_f2c(char *fstr, int len, char **cstr);
+    OMPI_DECLSPEC int ompi_fortran_string_f2c(char *fstr, int len, char **cstr);
 
     /**
      * Convert a C string to a fortran string.
@@ -54,7 +56,7 @@ extern "C" {
      * convert C strings to fortran strings.  It is assumed that the
      * fortran string is already allocated and has a length of len.
      */
-    int ompi_fortran_string_c2f(char *cstr, char *fstr, int len);
+    OMPI_DECLSPEC int ompi_fortran_string_c2f(char *cstr, char *fstr, int len);
 
     /**
      * Convert an array of Fortran strings to an argv-style array of C
@@ -73,7 +75,7 @@ extern "C" {
      * the caller's responsibility to invoke opal_argv_free() to free
      * it later (or equivalent).
      */
-    int ompi_fortran_argv_f2c(char *farray, int len, char ***cargv);
+    OMPI_DECLSPEC int ompi_fortran_argv_f2c(char *farray, int len, char ***cargv);
 
     /**
      * Convert an array of argvs to a C style array of argvs
@@ -89,8 +91,8 @@ extern "C" {
      * each content of argv array and call free to deallocate the argv
      * array itself
      */
-    int ompi_fortran_multiple_argvs_f2c(int count, char *array, int len,
-					char ****argv);
+    OMPI_DECLSPEC int ompi_fortran_multiple_argvs_f2c(int count, char *array, int len,
+                                                      char ****argv);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

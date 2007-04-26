@@ -266,8 +266,8 @@ struct ompi_request_t;
    * If this function returns, it returns the err_code.  Note that it
    * may not return (e.g., for MPI_ERRORS_ARE_FATAL).
    */
-  int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object, 
-			     int type, int err_code, const char *message);
+  OMPI_DECLSPEC int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object, 
+                                           int type, int err_code, const char *message);
 
 
   /**
