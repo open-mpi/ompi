@@ -15,12 +15,12 @@
  * 
  * $HEADER$
  *
- * This file is included at the bottom of ompi_config.h, and is
+ * This file is included at the bottom of opal_config.h, and is
  * therefore a) after all the #define's that were output from
  * configure, and b) included in most/all files in Open MPI.
  *
- * Since this file is *only* ever included by ompi_config.h, and
- * ompi_config.h already has #ifndef/#endif protection, there is no
+ * Since this file is *only* ever included by opal_config.h, and
+ * opal_config.h already has #ifndef/#endif protection, there is no
  * need to #ifndef/#endif protection here.
  */
 
