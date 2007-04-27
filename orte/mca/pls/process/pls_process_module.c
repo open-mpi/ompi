@@ -1046,7 +1046,7 @@ int orte_pls_process_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t 
     }
     
     /* order them to pass this signal to their local procs */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_signal_local_procs(&daemons, signal))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_signal_local_procs(jobid, signal, &daemons))) {
         ORTE_ERROR_LOG(rc);
     }
     
