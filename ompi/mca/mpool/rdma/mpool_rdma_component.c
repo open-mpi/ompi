@@ -62,8 +62,8 @@ mca_mpool_rdma_component_t mca_mpool_rdma_component = {
       /* Next the MCA v1.0.0 component meta data */
 
       {
-        /* Whether the component is checkpointable or not */
-        false
+          /* The component is not checkpoint ready */
+          MCA_BASE_METADATA_PARAM_NONE
       },
 
       mca_mpool_rdma_init
