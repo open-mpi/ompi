@@ -94,7 +94,8 @@ int mca_bml_r2_ft_event(int state) {
         /*
          * Notify Mpool
          */
-        if( NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_mpool) {
+        if( NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_mpool &&
+            NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_mpool->mpool_ft_event ) {
             opal_output_verbose(10, ompi_cr_output,
                                 "bml:r2: ft_event: Notify the %s MPool.\n",
                                 (mca_bml_r2.btl_modules[btl_idx])->btl_mpool->mpool_component->mpool_version.mca_component_name);
