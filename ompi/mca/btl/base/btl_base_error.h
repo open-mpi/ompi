@@ -103,8 +103,8 @@ do {                                                         \
 extern "C" {
 #endif
 
-extern void mca_btl_base_error_no_nics(const char* transport, 
-                                       const char* nic_name);
+OMPI_DECLSPEC extern void mca_btl_base_error_no_nics(const char* transport, 
+                                                     const char* nic_name);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
