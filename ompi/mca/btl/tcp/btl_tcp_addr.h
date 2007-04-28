@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -53,9 +53,6 @@ struct mca_btl_tcp_addr_t {
                 uint32_t _pad[3];
             } _addr__inet;
         } _union_inet;
-#if 0
-# define s_addr     _union_inet._addr__inet._addr_inet.s_addr
-#endif
     } addr_inet; 
 #endif
     in_port_t      addr_port;     /**< listen port */

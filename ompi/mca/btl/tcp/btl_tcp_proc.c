@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -38,13 +38,10 @@
 static void mca_btl_tcp_proc_construct(mca_btl_tcp_proc_t* proc);
 static void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* proc);
 
-
-OBJ_CLASS_INSTANCE(
-    mca_btl_tcp_proc_t, 
-    opal_list_item_t, 
-    mca_btl_tcp_proc_construct, 
-    mca_btl_tcp_proc_destruct);
-
+OBJ_CLASS_INSTANCE( mca_btl_tcp_proc_t, 
+                    opal_list_item_t, 
+                    mca_btl_tcp_proc_construct, 
+                    mca_btl_tcp_proc_destruct );
 
 void mca_btl_tcp_proc_construct(mca_btl_tcp_proc_t* proc)
 {
@@ -95,7 +92,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(ompi_proc_t* ompi_proc)
     if(NULL != btl_proc) {
         OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
         return btl_proc;
-     }
+    }
 
     btl_proc = OBJ_NEW(mca_btl_tcp_proc_t);
     if(NULL == btl_proc)
@@ -104,10 +101,9 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(ompi_proc_t* ompi_proc)
     btl_proc->proc_name = ompi_proc->proc_name;
 
     /* add to hash table of all proc instance */
-    orte_hash_table_set_proc(
-        &mca_btl_tcp_component.tcp_procs,
-        &btl_proc->proc_name,
-         btl_proc);
+    orte_hash_table_set_proc( &mca_btl_tcp_component.tcp_procs,
+                              &btl_proc->proc_name,
+                              btl_proc );
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
 
     /* lookup tcp parameters exported by this proc */
@@ -164,9 +160,8 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(ompi_proc_t* ompi_proc)
  * already held.  Insert a btl instance into the proc array and assign 
  * it an address.
  */
-int mca_btl_tcp_proc_insert(
-    mca_btl_tcp_proc_t* btl_proc, 
-    mca_btl_base_endpoint_t* btl_endpoint)
+int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc, 
+                             mca_btl_base_endpoint_t* btl_endpoint )
 {
     size_t i;
     struct sockaddr_storage endpoint_addr_ss;
@@ -186,13 +181,12 @@ int mca_btl_tcp_proc_insert(
     btl_endpoint->endpoint_proc = btl_proc;
     btl_proc->proc_endpoints[btl_proc->proc_endpoint_count++] = btl_endpoint;
 
-
     /*
      * Look through the proc instance for an address that is on the
      * directly attached network. If we don't find one, pick the first
      * unused address.
     */
-    for(i=0; i<btl_proc->proc_addr_count; i++) {
+    for( i = 0; i < btl_proc->proc_addr_count; i++ ) {
         mca_btl_tcp_addr_t* endpoint_addr = btl_proc->proc_addrs + i;
         if(endpoint_addr->addr_inuse != 0) {
             continue;
@@ -221,7 +215,6 @@ int mca_btl_tcp_proc_insert(
             btl_endpoint->endpoint_addr->addr_inuse++;
             return OMPI_SUCCESS;
         }
-            
 #endif
         /* Read:
          * if we are on the same network, accept.
@@ -271,13 +264,12 @@ int mca_btl_tcp_proc_insert(
     if( NULL != btl_endpoint->endpoint_addr ) {
         btl_endpoint->endpoint_addr->addr_inuse++;
         return OMPI_SUCCESS;
-    } else {
-        /* Bug, FIXME: Once upon a time, there was a lot of
-         * code in here. I've removed it. There might be better
-         * approaches. Thomas will show...
-         */
-        return OMPI_ERR_UNREACH;
     }
+    /* Bug, FIXME: Once upon a time, there was a lot of
+     * code in here. I've removed it. There might be better
+     * approaches. Thomas will show...
+     */
+    return OMPI_ERR_UNREACH;
 }
 
 /*
@@ -326,15 +318,20 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const orte_process_name_t *name)
 }
 
 /*
- * loop through all available PTLs for one matching the source address
+ * loop through all available BTLs for one matching the source address
  * of the request.
  */
-bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr_storage* addr, int sd)
+bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr, int sd)
 {
     size_t i;
     OPAL_THREAD_LOCK(&btl_proc->proc_lock);
-    for(i=0; i<btl_proc->proc_endpoint_count; i++) {
+    for( i = 0; i < btl_proc->proc_endpoint_count; i++ ) {
         mca_btl_base_endpoint_t* btl_endpoint = btl_proc->proc_endpoints[i];
+        /* Check all conditions before going to try to accept the connection. */
+        if( btl_endpoint->endpoint_addr->addr_family != addr->sa_family ) continue;
+        if( memcmp( &btl_endpoint->endpoint_addr->addr_inet,
+                    &(((struct sockaddr_in*)addr)->sin_addr),
+                    (AF_INET == addr->sa_family ? sizeof(struct in_addr) : sizeof(struct in6_addr)) ) ) continue;
         if(mca_btl_tcp_endpoint_accept(btl_endpoint, addr, sd)) {
             OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
             return true;
@@ -353,30 +350,30 @@ bool mca_btl_tcp_proc_tosocks(mca_btl_tcp_addr_t* proc_addr,
 {
     memset(output, 0, sizeof (*output));
     switch (proc_addr->addr_family) {
-        case AF_INET:
-            output->ss_family = AF_INET;
-            memcpy(&((struct sockaddr_in*)output)->sin_addr,
-                    &proc_addr->addr_inet, sizeof(struct in_addr));
-            ((struct sockaddr_in*)output)->sin_port = proc_addr->addr_port;
-            break;
+    case AF_INET:
+        output->ss_family = AF_INET;
+        memcpy(&((struct sockaddr_in*)output)->sin_addr,
+               &proc_addr->addr_inet, sizeof(struct in_addr));
+        ((struct sockaddr_in*)output)->sin_port = proc_addr->addr_port;
+        break;
 #if OPAL_WANT_IPV6
-        case AF_INET6:
-            {
-                struct sockaddr_in6* inaddr = (struct sockaddr_in6*)output;
-                output->ss_family = AF_INET6;
-                memcpy(&inaddr->sin6_addr, &proc_addr->addr_inet,
-                    sizeof (proc_addr->addr_inet));
-                inaddr->sin6_port = proc_addr->addr_port;
-                inaddr->sin6_scope_id = 0;
-                inaddr->sin6_flowinfo = 0;
-            }
-            break;
+    case AF_INET6:
+        {
+            struct sockaddr_in6* inaddr = (struct sockaddr_in6*)output;
+            output->ss_family = AF_INET6;
+            memcpy(&inaddr->sin6_addr, &proc_addr->addr_inet,
+                   sizeof (proc_addr->addr_inet));
+            inaddr->sin6_port = proc_addr->addr_port;
+            inaddr->sin6_scope_id = 0;
+            inaddr->sin6_flowinfo = 0;
+        }
+        break;
 #endif
-            default:
-                 opal_output (0, 
-                   "mca_btl_tcp_proc: unknown af_family received: %d\n",
-                   proc_addr->addr_family);
-                 return false;
-        } 
+    default:
+        opal_output( 0, "mca_btl_tcp_proc: unknown af_family received: %d\n",
+                     proc_addr->addr_family );
+        return false;
+    } 
     return true;
-}                              
+}
+
