@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -15,10 +15,6 @@
  * 
  * $HEADER$
  *
- * In windows, many of the socket functions return an EWOULDBLOCK
- * instead of \ things like EAGAIN, EINPROGRESS, etc. It has been
- * verified that this will \ not conflict with other error codes that
- * are returned by these functions \ under UNIX/Linux environments 
  */
 
 #include "ompi_config.h"
@@ -161,8 +157,8 @@ OBJ_CLASS_INSTANCE(
 /*
  * functions for receiving event callbacks
  */
-
 static void mca_btl_tcp_component_recv_handler(int, short, void*);
+static void mca_btl_tcp_component_accept_handler(int, short, void*);
 
 
 /*
@@ -597,31 +593,28 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
     /* register listen port */
 #if OPAL_WANT_IPV6
     if (AF_INET == af_family) {
-        opal_event_set(
-            &mca_btl_tcp_component.tcp_recv_event,
-            sd,
-            OPAL_EV_READ|OPAL_EV_PERSIST,
-            mca_btl_tcp_component_recv_handler,
-            0);
+        opal_event_set( &mca_btl_tcp_component.tcp_recv_event,
+                        sd,
+                        OPAL_EV_READ|OPAL_EV_PERSIST,
+                        mca_btl_tcp_component_accept_handler,
+                        0 );
         opal_event_add(&mca_btl_tcp_component.tcp_recv_event, 0);
     }
 
     if (AF_INET6 == af_family) {
-        opal_event_set(
-            &mca_btl_tcp_component.tcp6_recv_event,
-            sd,
-            OPAL_EV_READ|OPAL_EV_PERSIST,
-            mca_btl_tcp_component_recv_handler,
-            0);
+        opal_event_set( &mca_btl_tcp_component.tcp6_recv_event,
+                        sd,
+                        OPAL_EV_READ|OPAL_EV_PERSIST,
+                        mca_btl_tcp_component_accept_handler,
+                        0 );
         opal_event_add(&mca_btl_tcp_component.tcp6_recv_event, 0);
     }
 #else
-    opal_event_set(
-        &mca_btl_tcp_component.tcp_recv_event,
-        mca_btl_tcp_component.tcp_listen_sd, 
-        OPAL_EV_READ|OPAL_EV_PERSIST, 
-        mca_btl_tcp_component_recv_handler, 
-        0);
+    opal_event_set( &mca_btl_tcp_component.tcp_recv_event,
+                    mca_btl_tcp_component.tcp_listen_sd, 
+                    OPAL_EV_READ|OPAL_EV_PERSIST, 
+                    mca_btl_tcp_component_accept_handler, 
+                    0 );
     opal_event_add(&mca_btl_tcp_component.tcp_recv_event,0);
 #endif
     return OMPI_SUCCESS;
@@ -634,12 +627,10 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
 
 static int mca_btl_tcp_component_exchange(void)
 {
-     int rc=0;
-     size_t i=0;
-     int index;
+     int rc = 0, index;
+     size_t i = 0;
      size_t size = mca_btl_tcp_component.tcp_addr_count * 
-                   mca_btl_tcp_component.tcp_num_links *
-                   sizeof(mca_btl_tcp_addr_t);
+                   mca_btl_tcp_component.tcp_num_links * sizeof(mca_btl_tcp_addr_t);
      /* adi@2007-04-12:
       *
       * We'll need to explain things a bit here:
@@ -652,10 +643,10 @@ static int mca_btl_tcp_component_exchange(void)
 
      if(mca_btl_tcp_component.tcp_num_btls != 0) {
          mca_btl_tcp_addr_t *addrs = (mca_btl_tcp_addr_t *)malloc(size);
-     memset (addrs, 0, size);
+         memset(addrs, 0, size);
 
          /* here we start populating our addresses */
-         for (i=0; i < mca_btl_tcp_component.tcp_num_btls; i++) {
+         for( i = 0; i < mca_btl_tcp_component.tcp_num_btls; i++ ) {
              for (index = opal_ifbegin(); index >= 0;
                      index = opal_ifnext(index)) {
                  struct sockaddr_storage my_ss;
@@ -798,14 +789,14 @@ int mca_btl_tcp_component_control(int param, void* value, size_t size)
 }
 
 
-/*
- *  Called by mca_btl_tcp_component_recv() when the TCP listen
- *  socket has pending connection requests. Accept incoming
- *  requests and queue for completion of the connection handshake.
-*/
-
-
-static void mca_btl_tcp_component_accept(int incoming_sd)
+/**
+ * Called by the event engine when the listening socket has
+ * a connection event. Accept the incoming connection request
+ * and queue them for completion of the connection handshake.
+ */
+static void mca_btl_tcp_component_accept_handler( int incoming_sd,
+                                                  short ignored,
+                                                  void* unused )
 {
     while(true) {
 #if OPAL_WANT_IPV6
@@ -836,34 +827,21 @@ static void mca_btl_tcp_component_accept(int incoming_sd)
 }
 
 
-/*
+/**
  * Event callback when there is data available on the registered 
- * socket to recv.
+ * socket to recv. This callback is triggered only once per lifetime
+ * for any socket, in the beginning when we setup the handshake
+ * protocol.
  */
 static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
 {
     orte_process_name_t guid;
-/* Bug, FIXME: use sockaddr_storage instead? */
-#if OPAL_WANT_IPV6
-    struct sockaddr_in6 addr;
-#else
-    struct sockaddr_in addr;
-#endif
+    struct sockaddr_storage addr;
     int retval;
     mca_btl_tcp_proc_t* btl_proc;
     opal_socklen_t addr_len = sizeof(addr);
     mca_btl_tcp_event_t *event = (mca_btl_tcp_event_t *)user;
 
-    /* accept new connections on the listen socket */
-#if OPAL_WANT_IPV6
-    if((mca_btl_tcp_component.tcp_listen_sd == sd) ||
-       (mca_btl_tcp_component.tcp6_listen_sd == sd)) {
-#else
-    if(mca_btl_tcp_component.tcp_listen_sd == sd) {
-#endif
-        mca_btl_tcp_component_accept(sd);
-        return;
-    }
     OBJ_RELEASE(event);
 
     /* recv the process identifier */
@@ -902,7 +880,7 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     }
 
     /* are there any existing peer instances will to accept this connection */
-    if(mca_btl_tcp_proc_accept(btl_proc, (struct sockaddr_storage*)&addr, sd) == false) {
+    if(mca_btl_tcp_proc_accept(btl_proc, (struct sockaddr*)&addr, sd) == false) {
         CLOSE_THE_SOCKET(sd);
         return;
     }
