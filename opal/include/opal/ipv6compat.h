@@ -12,46 +12,20 @@
 
 #if (!OPAL_WANT_IPV6)
 
+/* RFC2553 propose sockaddr_storage to cope with multiple address families */
 #ifndef sockaddr_storage
-# define sockaddr_storage sockaddr
-# define ss_family sa_family
+#  define sockaddr_storage sockaddr
+#  define ss_family sa_family
 #endif
 
 #ifndef AF_UNSPEC
-# define AF_UNSPEC AF_INET
+#  define AF_UNSPEC AF_INET
 #endif
 
 #ifndef PF_UNSPEC
-# define PF_UNSPEC PF_INET
+#  define PF_UNSPEC PF_INET
 #endif
 
 #endif /* if (!OPAL_WANT_IPV6) */
-
-#if 0
-/* gently borrowed from bind9 */
-#ifndef SIOCGLIFCONF
-#define SIOCGLIFCONF SIOCGIFCONF
-#define lifc_len ifc_len
-#define lifc_buf ifc_buf
-#define lifc_req ifc_req
-#define lifconf ifconf
-#endif
-
-#ifndef SIOCGLIFADDR
-#define SIOCGLIFADDR SIOCGIFADDR
-#define SIOCGLIFFLAGS SIOCGIFFLAGS
-#define SIOCGLIFDSTADDR SIOCGIFDSTADDR
-#define SIOCGLIFNETMASK SIOCGIFNETMASK
-#define lifr_addr ifr_addr
-#define lifr_name ifr_name
-#define lifr_dstaddr ifr_dstaddr
-#define lifr_flags ifr_flags
-#define lifreq ifreq
-#define lifr_family sa_family
-#else /* ifned SIOCGLIFADDR */
-#define lifr_family ss_family
-#endif
-
-#endif /* 0 */
 
 #endif /* OPAL_IPV6_OMPAT_H */
