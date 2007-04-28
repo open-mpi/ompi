@@ -1422,7 +1422,7 @@ bool opal_addr_isipv4public (struct sockaddr_storage *addr)
 
 /* if we don't have struct sockaddr_in, we don't have traditional
    ethernet devices.  Just make everything a no-op error call (except
-   for finailize, which will return successfully) */
+   for finalize, which will return successfully) */
 
 int
 opal_ifnametoaddr(const char* if_name, 

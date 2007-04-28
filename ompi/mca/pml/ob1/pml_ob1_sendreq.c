@@ -1077,7 +1077,7 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
 
     bml_btl = mca_bml_base_btl_array_find(&frag->rdma_ep->btl_rdma,
                                           frag->rdma_btl);
-    
+
     /* lookup the corresponding registration */
     for(i=0; i<sendreq->req_rdma_cnt; i++) {
        if(sendreq->req_rdma[i].bml_btl == bml_btl) {
