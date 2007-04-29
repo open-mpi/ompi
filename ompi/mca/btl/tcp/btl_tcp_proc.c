@@ -327,6 +327,30 @@ bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
     OPAL_THREAD_LOCK(&btl_proc->proc_lock);
     for( i = 0; i < btl_proc->proc_endpoint_count; i++ ) {
         mca_btl_base_endpoint_t* btl_endpoint = btl_proc->proc_endpoints[i];
+        /* Check all conditions before going to try to accept the connection. */
+        if( btl_endpoint->endpoint_addr->addr_family != addr->sa_family ) {
+            continue;
+        }
+
+        switch (addr->sa_family) {
+        case AF_INET:
+            if( memcmp( &btl_endpoint->endpoint_addr->addr_inet,
+                        &(((struct sockaddr_in*)addr)->sin_addr),
+                        sizeof(struct in_addr) ) ) {
+                continue;
+            }
+            break;
+        case AF_INET6:
+            if( memcmp( &btl_endpoint->endpoint_addr->addr_inet,
+                        &(((struct sockaddr_in6*)addr)->sin6_addr),
+                        sizeof(struct in6_addr) ) ) {
+                continue;
+            }
+            break;
+        default:
+            ;
+        }
+
         if(mca_btl_tcp_endpoint_accept(btl_endpoint, addr, sd)) {
             OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
             return true;
