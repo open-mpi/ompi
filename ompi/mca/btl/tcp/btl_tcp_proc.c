@@ -340,6 +340,7 @@ bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
                 continue;
             }
             break;
+#if OPAL_WANT_IPV6
         case AF_INET6:
             if( memcmp( &btl_endpoint->endpoint_addr->addr_inet,
                         &(((struct sockaddr_in6*)addr)->sin6_addr),
@@ -347,6 +348,7 @@ bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
                 continue;
             }
             break;
+#endif
         default:
             ;
         }
