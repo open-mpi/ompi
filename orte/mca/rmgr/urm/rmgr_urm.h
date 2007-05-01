@@ -23,6 +23,8 @@
 #ifndef ORTE_RMGR_URM_H
 #define ORTE_RMGR_URM_H
 
+#include "opal/threads/condition.h"
+
 #include "orte/mca/rmgr/rmgr.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -40,6 +42,12 @@ struct orte_rmgr_urm_component_t {
     bool urm_rds;
     /* timing tests requested */
     bool timing;
+    /* mutex lock */
+    opal_mutex_t lock;
+    /* conditioned wait variable */
+    opal_condition_t cond;
+    /* flag for tracking completion of app launch */
+    bool done;
 };
 /** Convenience typedef */
 typedef struct orte_rmgr_urm_component_t orte_rmgr_urm_component_t;

@@ -34,6 +34,7 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/opal_environ.h"
+#include "opal/threads/condition.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rds/rds.h"
@@ -306,7 +307,14 @@ static void orte_rmgr_urm_wireup_callback(orte_gpr_notify_data_t *data, void *cb
     opal_output(orte_rmgr_base.rmgr_output, "rmgr_urm:wireup_callback called for job %ld", (long)jobid);
     
     orte_rmgr_urm_wireup_stdin(jobid);
+    
+    /* signal that the application has indeed launched */
+    OPAL_THREAD_LOCK(&mca_rmgr_urm_component.lock);
+    mca_rmgr_urm_component.done = true;
+    opal_condition_signal(&mca_rmgr_urm_component.cond);
+    OPAL_THREAD_UNLOCK(&mca_rmgr_urm_component.lock);
 }
+
 
 /*
  *  Shortcut for the multiple steps involved in spawning a new job.
@@ -339,6 +347,11 @@ static int orte_rmgr_urm_spawn_job(
             urmstart.tv_usec = 0;
         }
     }
+    
+    /* mark that the spawn is not done */
+    OPAL_THREAD_LOCK(&mca_rmgr_urm_component.lock);
+    mca_rmgr_urm_component.done = false;
+    OPAL_THREAD_UNLOCK(&mca_rmgr_urm_component.lock);
     
     /* check for any flow directives to control what we do */
     if (NULL != (flow = orte_rmgr.find_attribute(attributes, ORTE_RMGR_SPAWN_FLOW))) {
@@ -413,7 +426,10 @@ static int orte_rmgr_urm_spawn_job(
             return rc;
         }
         
-        /** setup the subscription so we can complete the wireup when all processes reach LAUNCHED */
+        /** setup the subscription so we can complete the wireup when all processes reach LAUNCHED. This
+         * function has the dual purpose of setting the conditioned wait variable so that the RMGR
+         * can know that the app has indeed launched, and hence return to the caller
+         */
         rc = orte_smr.job_stage_gate_subscribe(*jobid, orte_rmgr_urm_wireup_callback, NULL, ORTE_PROC_STATE_LAUNCHED);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
@@ -487,6 +503,14 @@ static int orte_rmgr_urm_spawn_job(
         return rc;
     }
 
+     /* wait for the application to launch */
+     OPAL_THREAD_LOCK(&mca_rmgr_urm_component.lock);
+     while (!mca_rmgr_urm_component.done) {
+         opal_condition_wait(&mca_rmgr_urm_component.cond,
+                             &mca_rmgr_urm_component.lock);
+     }
+     OPAL_THREAD_UNLOCK(&mca_rmgr_urm_component.lock);
+    
      /* check for timing request - get start time if so */
      if (mca_rmgr_urm_component.timing) {
          if (0 != gettimeofday(&urmstart, NULL)) {

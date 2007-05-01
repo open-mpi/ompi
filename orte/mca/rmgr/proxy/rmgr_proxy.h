@@ -21,6 +21,8 @@
 #ifndef ORTE_RMGR_URM_H
 #define ORTE_RMGR_URM_H
 
+#include "opal/threads/condition.h"
+
 #include "orte/mca/rmgr/rmgr.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -34,6 +36,12 @@ extern "C" {
 struct orte_rmgr_proxy_component_t {
     /** Base rmgr component */
     orte_rmgr_base_component_t super;
+    /* mutex lock */
+    opal_mutex_t lock;
+    /* conditioned wait variable */
+    opal_condition_t cond;
+    /* flag for tracking completion of app launch */
+    bool done;
 };
 /** Convenience typedef */
 typedef struct orte_rmgr_proxy_component_t orte_rmgr_proxy_component_t;

@@ -16,14 +16,17 @@
 
 #include "orte_config.h"
 #include "orte/orte_constants.h"
-#include "orte/util/proc_info.h"
-#include "opal/util/output.h"
-#include "orte/mca/errmgr/errmgr.h"
 
+#include "opal/threads/condition.h"
+#include "opal/util/output.h"
+
+#include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rds/base/base.h"
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/pls/base/base.h"
+
 #include "rmgr_proxy.h"
 
 /*
@@ -76,6 +79,12 @@ static int orte_rmgr_proxy_open(void)
 
 static orte_rmgr_base_module_t *orte_rmgr_proxy_init(int* priority)
 {
+    /* setup the locks - need to do this first so that we don't crash
+     * when we close the component, even if we aren't selected
+     */
+    OBJ_CONSTRUCT(&mca_rmgr_proxy_component.lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_rmgr_proxy_component.cond, opal_condition_t);
+    
     /* if we are an HNP, then do NOT select us */
     if (orte_process_info.seed) {
         return NULL;
@@ -94,5 +103,9 @@ static orte_rmgr_base_module_t *orte_rmgr_proxy_init(int* priority)
  */
 static int orte_rmgr_proxy_close(void)
 {
+    /* destruct locks */
+    OBJ_DESTRUCT(&mca_rmgr_proxy_component.lock);
+    OBJ_DESTRUCT(&mca_rmgr_proxy_component.cond);
+
     return ORTE_SUCCESS;
 }
