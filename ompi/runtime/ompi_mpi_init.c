@@ -681,11 +681,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* wire up the oob interface, if requested.  Do this here because
        it will go much faster before the event library is switched
        into non-blocking mode */
-    if (ompi_mpi_preconnect_oob) { 
-        if (OMPI_SUCCESS != (ret = ompi_init_do_oob_preconnect())) {
-            error = "ompi_mpi_do_preconnect_oob() failed";
-            goto error;
-        }
+    if (OMPI_SUCCESS != (ret = ompi_init_preconnect_oob())) {
+        error = "ompi_mpi_do_preconnect_oob() failed";
+        goto error;
     }
 
     /* check for timing request - get stop time and report elapsed
@@ -708,6 +706,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        latency. */
     opal_progress_set_event_flag(OPAL_EVLOOP_NONBLOCK);
 #endif
+    
+    /* wire up the mpi interface, if requested.  Do this after the
+       non-block switch for non-TCP performance.  Do before the
+       polling change as anyone with a complex wire-up is going to be
+       using the oob. */
+    if (OMPI_SUCCESS != (ret = ompi_init_preconnect_mpi())) {
+        error = "ompi_mpi_do_preconnect_all() failed";
+        goto error;
+    }
 
     /* Check whether we have been spawned or not.  We introduce that
        at the very end, since we need collectives, datatypes, ptls
@@ -777,17 +784,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (value >= 0) {
         opal_progress_set_event_poll_rate(value);
     }
-    
+
     /* At this point, we are fully configured and in MPI mode.  Any
        communication calls here will work exactly like they would in
        the user's code.  Setup the connections between procs and warm
        them up with simple sends, if requested */
-   if (ompi_mpi_preconnect_all) { 
-       if (OMPI_SUCCESS != (ret = ompi_init_do_preconnect())) {
-           error = "ompi_mpi_do_preconnect_all() failed";
-           goto error;
-       }
-    }
 
  error:
     if (ret != OMPI_SUCCESS) {

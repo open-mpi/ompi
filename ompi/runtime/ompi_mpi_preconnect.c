@@ -18,6 +18,7 @@
 
 #include <stdlib.h>
 
+#include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/request/request.h"
@@ -25,126 +26,121 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 
-/* 
- * do zero byte IRECV / ISEND: upper half sends to lower half (i.e. do
- * a ping, not a ping pong)
- */ 
-int ompi_init_do_preconnect(void)
+int
+ompi_init_preconnect_mpi(void)
 {
     int comm_size = ompi_comm_size(MPI_COMM_WORLD);
-    int my_rank =  ompi_comm_rank(MPI_COMM_WORLD);
-    int i, ret;
-    int next,prev;
+    int comm_rank =  ompi_comm_rank(MPI_COMM_WORLD);
+    int param, value, next, prev, i, ret = OMPI_SUCCESS;
     struct ompi_request_t * requests[2];
-    ret = OMPI_SUCCESS;
-    if(comm_size == 2) {
-        if(my_rank){ 
-            ret = MCA_PML_CALL(send(MPI_BOTTOM, 0, MPI_BYTE,
-                                    0, 1,
-                                    MCA_PML_BASE_SEND_STANDARD,
-                                     MPI_COMM_WORLD));
-            if(OMPI_SUCCESS != ret) {
-                return ret;
-            }
-        } else {
-            ret = MCA_PML_CALL(recv(MPI_BOTTOM,0, MPI_BYTE, 1, 
-                                    1, MPI_COMM_WORLD, 
-                                    MPI_STATUS_IGNORE));
-            if(OMPI_SUCCESS != ret) {
-                return ret;
-            }
-        }   
-    } else { 
-        for (i = 1; i <= comm_size/2; ++i) {
-            next = (my_rank + i) % comm_size;
-            prev = (my_rank - i + comm_size) % comm_size;
-            ret = MCA_PML_CALL(irecv(MPI_BOTTOM,0, MPI_BYTE,
-                                     prev, 1,
-                                     MPI_COMM_WORLD, 
-                                     &requests[0]));
-            if(OMPI_SUCCESS != ret) {
-                return ret;
-            }
-            ret = MCA_PML_CALL(isend(MPI_BOTTOM, 0, MPI_BYTE,
-                                     next, 1,
-                                     MCA_PML_BASE_SEND_STANDARD,
-                                     MPI_COMM_WORLD, 
-                                     &requests[1]));
-            if (OMPI_SUCCESS != ret) {
-                return ret;
-            }
-            ret = ompi_request_wait_all(2, requests, MPI_STATUSES_IGNORE);
-            if (OMPI_SUCCESS != ret) {
-                return ret;
-            }
-            
-        }
-        
+    char inbuf[1], outbuf[1];
+
+    param = mca_base_param_find("mpi", NULL, "preconnect_mpi");
+    if (OMPI_ERROR == param) return OMPI_SUCCESS;
+    ret = mca_base_param_lookup_int(param, &value);
+    if (OMPI_SUCCESS != ret) return OMPI_SUCCESS;
+    if (0 == value) {
+        param = mca_base_param_find("mpi", NULL, "preconnect_all");
+        if (OMPI_ERROR == param) return OMPI_SUCCESS;
+        ret = mca_base_param_lookup_int(param, &value);
+        if (OMPI_SUCCESS != ret) return OMPI_SUCCESS;
     }
-    
+    if (0 == value) return OMPI_SUCCESS;
+
+    inbuf[0] = outbuf[0] = '\0';
+
+    /* Each iteration, every process sends to its neighbor i hops to
+       the right and receives from its neighbor i hops to the left.
+       Because send_complete is used, there will only ever be one
+       outstanding send and one outstanding receive in the network at
+       a time for any given process.  This limits any "flooding"
+       effect that can occur with other connection algorithms.  While
+       the flooding algorithms may be a more efficient use of
+       resources, they can overwhelm the out-of-band connection system
+       used to wire up some networks, leading to poor performance and
+       hangs. */
+    for (i = 1 ; i <= comm_size / 2 ; ++i) {
+        next = (comm_rank + i) % comm_size;
+        prev = (comm_rank - i + comm_size) % comm_size;
+
+        ret = MCA_PML_CALL(isend(outbuf, 1, MPI_CHAR,
+                                 next, 1,
+                                 MCA_PML_BASE_SEND_COMPLETE,
+                                 MPI_COMM_WORLD, 
+                                 &requests[1]));
+        if (OMPI_SUCCESS != ret) return ret;
+
+        ret = MCA_PML_CALL(irecv(inbuf, 1, MPI_CHAR,
+                                 prev, 1,
+                                 MPI_COMM_WORLD, 
+                                 &requests[0]));
+        if(OMPI_SUCCESS != ret) return ret;
+
+        ret = ompi_request_wait_all(2, requests, MPI_STATUSES_IGNORE);
+        if (OMPI_SUCCESS != ret) return ret;
+    }
+
     return ret;
 }
 
     
-int ompi_init_do_oob_preconnect(void)
+int
+ompi_init_preconnect_oob(void)
 {
-    size_t world_size, next, prev, i, my_index;
+    size_t world_size, next, prev, i, world_rank;
     ompi_proc_t **procs;
-    int ret;
-    struct iovec msg[1];
+    int ret, param, value = 0;
+    struct iovec inmsg[1], outmsg[1];
+
+    param = mca_base_param_find("mpi", NULL, "preconnect_oob");
+    if (OMPI_ERROR == param) return OMPI_SUCCESS;
+    ret = mca_base_param_lookup_int(param, &value);
+    if (OMPI_SUCCESS != ret) return OMPI_SUCCESS;
+    if (0 == value) {
+        param = mca_base_param_find("mpi", NULL, "preconnect_all");
+        if (OMPI_ERROR == param) return OMPI_SUCCESS;
+        ret = mca_base_param_lookup_int(param, &value);
+        if (OMPI_SUCCESS != ret) return OMPI_SUCCESS;
+    }
+    if (0 == value) return OMPI_SUCCESS;
 
     procs = ompi_proc_world(&world_size);
 
-    msg[0].iov_base = NULL;
-    msg[0].iov_len = 0;
+    inmsg[0].iov_base = outmsg[0].iov_base = NULL;
+    inmsg[0].iov_len = outmsg[0].iov_len = 0;
 
-    if (world_size == 2) {
-        if (ompi_proc_local() == procs[0]) {
-            ret = orte_rml.send(&procs[1]->proc_name,
-                                msg,
-                                1,
-                                ORTE_RML_TAG_WIREUP,
-                                0);
-            if (ret < 0) return ret;
-        } else {
-            ret = orte_rml.recv(&procs[0]->proc_name,
-                                msg,
-                                1,
-                                ORTE_RML_TAG_WIREUP,
-                                0);
-            if (ret < 0) return ret;
-        }
-    } else if (world_size > 2) {
-        /* find local index in proc list (which *should* be our rank
-           in MCW, aborting if not found */
-        for (i = 0 ; i < world_size ; ++i) {
-            if (ompi_proc_local() == procs[i]) {
-                my_index = i;
-                goto preconnect_stage;
-            }
-        }
-        /* I'm not on the list ? well then just complain */
+    /* proc_world and ompi_comm_world should have the same proc list... */
+    if ((int) world_size != ompi_comm_size(MPI_COMM_WORLD)) {
         return OMPI_ERR_NOT_FOUND;
-  preconnect_stage:
-        for (i = 1 ; i <= world_size / 2 ; ++i) {
-            next = (my_index + i) % world_size;
-            prev = (my_index - i + world_size) % world_size;
+    } else if (ompi_proc_local() !=
+               procs[ompi_comm_rank(MPI_COMM_WORLD)]) {
+        return OMPI_ERR_NOT_FOUND;
+    }
+    world_rank = (size_t) ompi_comm_rank(MPI_COMM_WORLD);
+
+    /* Each iteration, every process sends to its neighbor i hops to
+       the right and receives from its neighbor i hops to the left.
+       This limits any "flooding" effect that can occur with other
+       connection algorithms, which can overwhelm the out-of-band
+       connection system, leading to poor performance and hangs. */
+    for (i = 1 ; i <= world_size / 2 ; ++i) {
+        next = (world_rank + i) % world_size;
+        prev = (world_rank - i + world_size) % world_size;
                     
-            /* sends do not wait for a match */
-            ret = orte_rml.send(&procs[next]->proc_name,
-                                msg,
-                                1,
-                                ORTE_RML_TAG_WIREUP,
-                                0);
-            if (ret < 0) return ret;
+        /* sends do not wait for a match */
+        ret = orte_rml.send(&procs[next]->proc_name,
+                            outmsg,
+                            1,
+                            ORTE_RML_TAG_WIREUP,
+                            0);
+        if (ret < 0) return ret;
                     
-            ret = orte_rml.recv(&procs[prev]->proc_name,
-                                msg,
-                                1,
-                                ORTE_RML_TAG_WIREUP,
-                                0);
-            if (ret < 0) return ret;
-        }
+        ret = orte_rml.recv(&procs[prev]->proc_name,
+                            inmsg,
+                            1,
+                            ORTE_RML_TAG_WIREUP,
+                            0);
+        if (ret < 0) return ret;
     }
     
     return OMPI_SUCCESS;
