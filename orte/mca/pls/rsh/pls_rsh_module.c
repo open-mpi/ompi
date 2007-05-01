@@ -182,7 +182,7 @@ static int orte_pls_rsh_probe(orte_mapped_node_t * node, orte_pls_rsh_shell * sh
     else if (pid == 0) {          /* child */
         if (dup2(fd[1], 1) < 0) {
             opal_output(0, "pls:rsh: dup2 failed with errno=%d\n", errno);
-            return ORTE_ERR_IN_ERRNO;
+            exit(01);
         }
         execvp(argv[0], argv);
         exit(errno);
@@ -881,7 +881,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 if (NULL == exec_path && NULL == prefix_dir) {
                     rc = orte_pls_rsh_fill_exec_path (&exec_path);
                     if (ORTE_SUCCESS != rc) {
-                        return rc;
+                        exit(-1);  /* the forked process MUST exit */
                     }
                 } else {
                     if (NULL != prefix_dir) {
@@ -891,7 +891,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                     if (NULL == exec_path) {
                         rc = orte_pls_rsh_fill_exec_path (&exec_path);
                         if (ORTE_SUCCESS != rc) {
-                            return rc;
+                            exit(-1);  /* the forked process MUST exit */
                         }
                     }
                 }
@@ -963,8 +963,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 var = getenv("HOME");
                 if (NULL != var) {
                     if (mca_pls_rsh_component.debug) {
-                        opal_output(0, "pls:rsh: changing to directory %s",
-                                    var);
+                        opal_output(0, "pls:rsh: changing to directory %s", var);
                     }
                     /* Ignore errors -- what are we going to do?
                        (and we ignore errors on the remote nodes
