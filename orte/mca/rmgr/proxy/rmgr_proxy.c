@@ -27,6 +27,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
+#include "opal/threads/condition.h"
 
 #include "orte/mca/rds/rds.h"
 #include "orte/mca/ras/ras.h"
@@ -348,6 +349,12 @@ static void orte_rmgr_proxy_wireup_callback(orte_gpr_notify_data_t *data, void *
         return;
     }
     orte_rmgr_proxy_wireup_stdin(jobid);
+    
+    /* signal that the application has indeed launched */
+    OPAL_THREAD_LOCK(&mca_rmgr_proxy_component.lock);
+    mca_rmgr_proxy_component.done = true;
+    opal_condition_signal(&mca_rmgr_proxy_component.cond);
+    OPAL_THREAD_UNLOCK(&mca_rmgr_proxy_component.lock);    
 }
 
 /*
@@ -371,6 +378,11 @@ static int orte_rmgr_proxy_spawn_job(
     uint8_t flags, *fptr;
 
     OPAL_TRACE(1);
+    
+    /* mark that the spawn is not done */
+    OPAL_THREAD_LOCK(&mca_rmgr_proxy_component.lock);
+    mca_rmgr_proxy_component.done = false;
+    OPAL_THREAD_UNLOCK(&mca_rmgr_proxy_component.lock);
     
     /* check for any flow directives to control what we do */
     if (NULL != (flow = orte_rmgr.find_attribute(attributes, ORTE_RMGR_SPAWN_FLOW))) {
@@ -492,6 +504,14 @@ static int orte_rmgr_proxy_spawn_job(
         return rc;
     }
 
+    /* wait for the application to launch */
+    OPAL_THREAD_LOCK(&mca_rmgr_proxy_component.lock);
+    while (!mca_rmgr_proxy_component.done) {
+        opal_condition_wait(&mca_rmgr_proxy_component.cond,
+                            &mca_rmgr_proxy_component.lock);
+    }
+    OPAL_THREAD_UNLOCK(&mca_rmgr_proxy_component.lock);
+    
     return ORTE_SUCCESS;
 }
 

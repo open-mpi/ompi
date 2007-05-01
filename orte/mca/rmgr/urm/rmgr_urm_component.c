@@ -21,6 +21,7 @@
 
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/threads/condition.h"
 
 #include "orte/dss/dss_types.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -85,11 +86,18 @@ static orte_rmgr_base_module_t *orte_rmgr_urm_init(int* priority)
 {
     int param, value;
     
+    /* setup the locks - need to do this first so that we don't crash
+     * when we close the component, even if we aren't selected
+     */
+    OBJ_CONSTRUCT(&mca_rmgr_urm_component.lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_rmgr_urm_component.cond, opal_condition_t);
+    
     /* if we are NOT an HNP, then we do NOT want to be selected */
     if(!orte_process_info.seed) {
         return NULL;
     }
 
+    /* check for params */
     param = mca_base_param_reg_int_name("orte", "timing",
                                         "Request that critical timing loops be measured",
                                         false, false, 0, &value);
@@ -110,5 +118,9 @@ static orte_rmgr_base_module_t *orte_rmgr_urm_init(int* priority)
  */
 static int orte_rmgr_urm_close(void)
 {
+    /* destruct locks */
+    OBJ_DESTRUCT(&mca_rmgr_urm_component.lock);
+    OBJ_DESTRUCT(&mca_rmgr_urm_component.cond);
+    
     return ORTE_SUCCESS;
 }
