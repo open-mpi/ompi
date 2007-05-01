@@ -21,9 +21,8 @@
 
 #ifndef OMPI_RUNTIME_PARAMS_H
 #define OMPI_RUNTIME_PARAMS_H
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+
+BEGIN_C_DECLS
 
 /*
  * Global variables
@@ -91,71 +90,58 @@ OMPI_DECLSPEC extern char * ompi_mpi_show_mca_params_file;
  */
 OMPI_DECLSPEC extern bool ompi_mpi_paffinity_alone;
 
-    /**
-     * Whether we should keep the string hostnames of all the MPI
-     * process peers around or not (eats up a good bit of memory).
-     */
-    OMPI_DECLSPEC extern bool ompi_mpi_keep_peer_hostnames;
+/**
+ * Whether we should keep the string hostnames of all the MPI
+ * process peers around or not (eats up a good bit of memory).
+ */
+OMPI_DECLSPEC extern bool ompi_mpi_keep_peer_hostnames;
 
-    /**
-     * Whether an MPI_ABORT should print out a stack trace or not.
-     */
-    OMPI_DECLSPEC extern bool ompi_mpi_abort_print_stack;
+/**
+ * Whether an MPI_ABORT should print out a stack trace or not.
+ */
+OMPI_DECLSPEC extern bool ompi_mpi_abort_print_stack;
 
-    /**
-     * Whether we should force all connections to be created during
-     * MPI_INIT (vs. potentially making all the connection lazily upon
-     * first communication with an MPI peer process).
-     */
-    OMPI_DECLSPEC extern bool ompi_mpi_preconnect_all;
+/**
+ * Whether  MPI_ABORT  should  print  out an  identifying  message
+ * (e.g., hostname  and PID)  and loop waiting  for a  debugger to
+ * attach.  The value of the integer is how many seconds to wait:
+ *
+ * 0 = do not print the message and do not loop
+ * negative value = print the message and loop forever
+ * positive value = print the message and delay for that many seconds
+ */
+OMPI_DECLSPEC extern int ompi_mpi_abort_delay;
 
-    /**
-     * should we wireup the oob completely during MPI_INIT?
-     */
-    OMPI_DECLSPEC extern bool ompi_mpi_preconnect_oob;
+/**
+ * Whether to use the "leave pinned" protocol or not.
+ */
+OMPI_DECLSPEC extern bool ompi_mpi_leave_pinned;
 
-    /**
-     * Whether  MPI_ABORT  should  print  out an  identifying  message
-     * (e.g., hostname  and PID)  and loop waiting  for a  debugger to
-     * attach.  The value of the integer is how many seconds to wait:
-     *
-     * 0 = do not print the message and do not loop
-     * negative value = print the message and loop forever
-     * positive value = print the message and delay for that many seconds
-     */
-    OMPI_DECLSPEC extern int ompi_mpi_abort_delay;
+/**
+ * Whether to use the "leave pinned pipeline" protocol or not.
+ */
+OMPI_DECLSPEC extern bool ompi_mpi_leave_pinned_pipeline;
 
-    /**
-     * Whether to use the "leave pinned" protocol or not.
-     */
-    OMPI_DECLSPEC extern bool ompi_mpi_leave_pinned;
-
-    /**
-     * Whether to use the "leave pinned pipeline" protocol or not.
-     */
-    OMPI_DECLSPEC extern bool ompi_mpi_leave_pinned_pipeline;
-
-   /**
-     * Register MCA parameters used by the MPI layer.
-     *
-     * @returns OMPI_SUCCESS
-     *
-     * Registers several MCA parameters and initializes corresponding
-     * global variables to the values obtained from the MCA system.
-     */
+/**
+ * Register MCA parameters used by the MPI layer.
+ *
+ * @returns OMPI_SUCCESS
+ *
+ * Registers several MCA parameters and initializes corresponding
+ * global variables to the values obtained from the MCA system.
+ */
 OMPI_DECLSPEC int ompi_mpi_register_params(void);
 
 
-    /**
-     * Display all MCA parameters used 
-     * 
-     * @returns OMPI_SUCCESS
-     *
-     * Displays in key = value format
-     */
-    int ompi_show_all_mca_params(int32_t, int, char *);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+/**
+ * Display all MCA parameters used 
+ * 
+ * @returns OMPI_SUCCESS
+ *
+ * Displays in key = value format
+ */
+int ompi_show_all_mca_params(int32_t, int, char *);
+
+END_C_DECLS
 
 #endif /* OMPI_RUNTIME_PARAMS_H */

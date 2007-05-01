@@ -51,8 +51,6 @@ bool ompi_mpi_paffinity_alone = false;
 bool ompi_mpi_abort_print_stack = false;
 int ompi_mpi_abort_delay = 0;
 bool ompi_mpi_keep_peer_hostnames = true;
-bool ompi_mpi_preconnect_all = false;
-bool ompi_mpi_preconnect_oob = false;
 bool ompi_mpi_leave_pinned = false;
 bool ompi_mpi_leave_pinned_pipeline = false;
 
@@ -187,18 +185,23 @@ int ompi_mpi_register_params(void)
 #endif
 
     mca_base_param_reg_int_name("mpi", "preconnect_all",
-                                "Whether to force MPI processes to create connections / warmup with *all* peers during MPI_INIT (vs. making connections lazily -- upon the first MPI traffic between each process peer pair)",
-                                false, false, 
-                                (int) ompi_mpi_preconnect_all, &value);
-    
-    ompi_mpi_preconnect_all = OPAL_INT_TO_BOOL(value); 
+                                "Whether to force MPI processes to create OOB "
+                                "and MPI connections with *all* peers during "
+                                "MPI_INIT (vs. making connections lazily -- "
+                                "upon the first MPI traffic between each "
+                                "process peer pair)",
+                                false, false, 0, NULL);
+
+    mca_base_param_reg_int_name("mpi", "preconnect_mpi",
+                                "Whether to force MPI processes to fully "
+                                "wire-up the MPI connections between MPI "
+                                "processes.",
+                                false, false, 0, NULL);
 
     mca_base_param_reg_int_name("mpi", "preconnect_oob",
-                                "Whether to force MPI processes to fully wire-up the OOB system between MPI processes.",
-                                false, false, 
-                                (int) ompi_mpi_preconnect_oob, &value);
-    
-    ompi_mpi_preconnect_oob = OPAL_INT_TO_BOOL(value); 
+                                "Whether to force MPI processes to fully "
+                                "wire-up the OOB system between MPI processes.",
+                                false, false, 0, NULL);
 
     /* Leave pinned parameter */
 

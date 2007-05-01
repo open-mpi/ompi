@@ -105,8 +105,8 @@ extern "C" {
      * Do a preconnect of MPI connections (i.e., force connections to
      * be made if they will be made).
      */
-    int ompi_init_do_preconnect(void);
-    int ompi_init_do_oob_preconnect(void);
+    int ompi_init_preconnect_oob(void);
+    int ompi_init_preconnect_mpi(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
