@@ -69,7 +69,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
         sendtmpbuf = (char *)recvbuf; 
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_generic count %d, msg size %ld, segsize %ld, max_requests %d", original_count, num_segments * segment_increment, segment_increment, max_outstanding_reqs));
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_generic count %d, msg size %ld, segsize %ld, max_requests %d", original_count, (unsigned long)(num_segments * segment_increment), (unsigned long)segment_increment, max_outstanding_reqs));
 
     rank = ompi_comm_rank(comm);
 
