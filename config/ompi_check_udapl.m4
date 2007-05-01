@@ -35,40 +35,52 @@ AC_DEFUN([OMPI_CHECK_UDAPL],[
           [ompi_check_udapl_dir="$with_udapl"])
     AS_IF([test ! -z "$with_udapl_libdir" -a "$with_udapl_libdir" != "yes"],
           [ompi_check_udapl_libdir="$with_udapl_libdir"])
+    AS_IF([test "$with_udapl" = "no"],
+          [ompi_check_udapl_happy="no"],
+          [ompi_check_udapl_happy="yes"])
 
-    AS_IF([test "$with_udapl" != "no"],
-          [ # check for pthreads and emit a warning that
-            # things might go south...
-           AS_IF([test "$HAVE_POSIX_THREADS" != "1"],
-                 [AC_MSG_WARN([POSIX threads not enabled.  May not be able to link with udapl])])
-    
-           ompi_check_udapl$1_save_CFLAGS="$CFLAGS"
-           ompi_check_udapl$1_save_CPPFLAGS="$CPPFLAGS"
-    
-           OMPI_CHECK_PACKAGE([$1],
-	          [dat/udat.h],
-                  [dat],
-                  [dat_registry_list_providers],
-                  [],
-                  [$ompi_check_udapl_dir],
-                  [$ompi_check_udapl_libdir],
-                  [ompi_check_udapl_happy="yes"],
-                  [ompi_check_udapl_happy="no"])
+dnl Do not use ompi_check_package directly, because then we have
+dnl to test for the header file twice, and caching is disabled
+dnl for all ompi_check_package checks.  Instead, do what
+dnl ompi_check_package does, but only do the header check once.
+dnl Still do the lib check twice, the second time if it turns
+dnl out we need -ldapl to link (looks like udapl over GM).
 
-           # if needed use -ldapl as well
-           AS_IF([test "$ompi_check_udapl_happy" = "no"],
-             [OMPI_CHECK_PACKAGE([$1],
-	            [dat/udat.h],
-                   [dat],
-                   [dat_registry_list_providers],
-                   [-ldapl],
-                   [$ompi_check_udapl_dir],
-                   [$ompi_check_udapl_libdir],
-                   [ompi_check_udapl_happy="yes"],
-                   [ompi_check_udapl_happy="no"])])
+    ompi_check_package_$1_save_CPPFLAGS="$CPPFLAGS"
+    ompi_check_package_$1_save_LDFLAGS="$LDFLAGS"
+    ompi_check_package_$1_save_LIBS="$LIBS"
 
-           CPPFLAGS="$ompi_check_udapl$1_save_CPPFLAGS"],
-          [ompi_check_udapl_happy="no"])
+    ompi_check_package_$1_orig_CPPFLAGS="$$1_CPPFLAGS"
+    ompi_check_package_$1_orig_LDFLAGS="$$1_LDFLAGS"
+    ompi_check_package_$1_orig_LIBS="$$1_LIBS"
+
+    AS_IF([test "$ompi_check_udapl_happy" = "yes"],
+          [_OMPI_CHECK_PACKAGE_HEADER([$1], 
+                [dat/udat.h],
+                [$ompi_check_udapl_dir],
+                [ompi_check_udapl_happy="yes"],
+                [ompi_check_udapl_happy="no"])])
+
+    AS_IF([test "$ompi_check_udapl_happy" = "yes"],
+          [_OMPI_CHECK_PACKAGE_LIB([$1],
+                [dat],
+                [dat_registry_list_providers],
+                [],
+                [$ompi_check_udapl_dir],
+                [$ompi_check_udapl_libdir],
+                [ompi_check_udapl_happy="yes"],
+                [_OMPI_CHECK_PACKAGE_LIB([$1],
+                      [dat],
+                      [dat_registry_list_providers],
+                      [-ldapl],
+                      [$ompi_check_udapl_dir],
+                      [$ompi_check_udapl_libdir],
+                      [ompi_check_udapl_happy="yes"],
+                      [ompi_check_udapl_happy="no"])])])
+
+    CPPFLAGS="$ompi_check_package_$1_save_CPPFLAGS"
+    LDFLAGS="$ompi_check_package_$1_save_LDFLAGS"
+    LIBS="$ompi_check_package_$1_save_LIBS"
 
     AS_IF([test "$ompi_check_udapl_happy" = "yes"],
           [$2],
