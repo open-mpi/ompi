@@ -45,9 +45,14 @@ Trunk (not on release branches yet)
 - Added checkpoint/restart process fault tolerance support. Initially
   support a LAM/MPI-like protocol.
   --> Expected: 1.3
+
+
+1.2.2
+-----
+
 - If pbs-config can be found, use it to look for TM support.  Thanks
   to Bas van der Viles for the inspiration and preliminary work.
-  --> Expected: ?1.2.x?
+- Fixed a deadlock in orterun when the rsh PLS encounters some errors
 
 
 1.2.1
