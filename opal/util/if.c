@@ -1321,10 +1321,10 @@ opal_samenetwork(struct sockaddr_storage *addr1, struct sockaddr_storage *addr2,
                    endianess is not an issue on any system as long as
                    addresses are always stored in network byte order.
                 */
-                if (((__const uint32_t *) (a6_1))[0] ==
-                    ((__const uint32_t *) (a6_2))[0] &&
-                    ((__const uint32_t *) (a6_1))[1] ==
-                    ((__const uint32_t *) (a6_2))[1]) {
+                if (((const uint32_t *) (a6_1))[0] ==
+                    ((const uint32_t *) (a6_2))[0] &&
+                    ((const uint32_t *) (a6_1))[1] ==
+                    ((const uint32_t *) (a6_2))[1]) {
                     return true;
                 }
             }
