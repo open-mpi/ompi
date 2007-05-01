@@ -98,34 +98,40 @@ AC_DEFUN([OMPI_CHECK_TM],[
     # library to "libtorque".  So we have to check for both libpbs and
     # libtorque.  First, check for libpbs.
 
-    AS_IF([test "$ompi_check_tm_happy" = "yes" -a "$ompi_check_tm_found" = "no"],
-          [OMPI_CHECK_PACKAGE([$1],
-                              [tm.h],
-                              [pbs],
-                              [tm_init],
-                              [],
-                              [$ompi_check_tm_dir],
-                              [],
-                              [ompi_check_tm_found="yes"],
-                              [])])
+    ompi_check_package_$1_save_CPPFLAGS="$CPPFLAGS"
+    ompi_check_package_$1_save_LDFLAGS="$LDFLAGS"
+    ompi_check_package_$1_save_LIBS="$LIBS"
 
-    # If that failed, check for libtorque.  Admittedly, this is
-    # sub-optimal -- the above may have failed because tm.h was not
-    # found.  If so, we'll check for it again.  Life is hard.
+    ompi_check_package_$1_orig_CPPFLAGS="$$1_CPPFLAGS"
+    ompi_check_package_$1_orig_LDFLAGS="$$1_LDFLAGS"
+    ompi_check_package_$1_orig_LIBS="$$1_LIBS"
 
-    AS_IF([test "$ompi_check_tm_happy" = "yes" -a "$ompi_check_tm_found" = "no"],
-          [OMPI_CHECK_PACKAGE([$1],
-                              [tm.h],
-                              [torque],
-                              [tm_finalize],
-                              [],
-                              [$ompi_check_tm_dir],
-                              [],
-                              [ompi_check_tm_found="yes"],
-                              [])])
+    AS_IF([test "$ompi_check_tm_found" = "no"],
+          [AS_IF([test "$ompi_check_tm_happy" = "yes"],
+                 [_OMPI_CHECK_PACKAGE_HEADER([$1], 
+                       [tm.h],
+                       [$ompi_check_tm_dir],
+                       [ompi_check_tm_happy="yes"],
+                       [ompi_check_tm_happy="no"])])
+
+           AS_IF([test "$ompi_check_tm_happy" = "yes"],
+                 [_OMPI_CHECK_PACKAGE_LIB([$1],
+                       [pbs],
+                       [tm_init],
+                       [],
+                       [$ompi_check_tm_dir],
+                       [$ompi_check_tm_libdir],
+                       [ompi_check_tm_happy="yes"],
+                       [_OMPI_CHECK_PACKAGE_LIB([$1],
+                             [torque],
+                             [tm_init],
+                             [],
+                             [$ompi_check_tm_dir],
+                             [$ompi_check_tm_libdir],
+                             [ompi_check_tm_happy="yes"],
+                             [ompi_chekc_tm_happy="no"])])])])
 
     # Did we find the right stuff?
-
     AS_IF([test "$ompi_check_tm_happy" = "yes" -a "$ompi_check_tm_found" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_tm" -a "$with_tm" != "no"],

@@ -39,91 +39,93 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
           [ompi_check_openib_dir="$with_openib"])
     AS_IF([test ! -z "$with_openib_libdir" -a "$with_openib_libdir" != "yes"],
           [ompi_check_openib_libdir="$with_openib_libdir"])
-    AS_IF([test "$with_openib" != "no"],
-        [ # check for pthreads and emit a warning that things might go south...
-         AS_IF([test "$HAVE_POSIX_THREADS" != "1"],
-               [AC_MSG_WARN([POSIX threads not enabled.  May not be able to link with OpenFabrics])])
+    AS_IF([test "$with_openib" = "no"],
+          [ompi_check_openib_happy="no"],
+          [ompi_check_openib_happy="yes"])
 
-         ompi_check_openib_$1_save_CPPFLAGS="$CPPFLAGS"
-         ompi_check_openib_$1_save_LDFLAGS="$LDFLAGS"
-         ompi_check_openib_$1_save_LIBS="$LIBS"
+    ompi_check_openib_$1_save_CPPFLAGS="$CPPFLAGS"
+    ompi_check_openib_$1_save_LDFLAGS="$LDFLAGS"
+    ompi_check_openib_$1_save_LIBS="$LIBS"
 
-         AC_CHECK_HEADER([sysfs/libsysfs.h],
-                         [ompi_check_openib_sysfs_h=yes],
-                         [ompi_check_openib_sysfs_h=no])
+    AS_IF([test "$ompi_check_openib_happy" = "yes"],
+          [AS_IF([test "$THREAD_TYPE" != "posix" -a "$memory_ptmalloc2_happy" = "yes"],
+                 [AC_MSG_WARN([POSIX Threads disabled but PTMalloc2 enabled.])
+                  AC_MSG_WARN([This will cause memory corruption with OpenFabrics.])
+                  AC_MSG_WARN([Not building component.])
+                  ompi_check_openib_happy="no"])])
 
-         AS_IF([test "$ompi_check_openib_sysfs_h" != "yes"],
-               [AS_IF([test ! -z "$with_openib" -a "$with_openib" != "no"],
-                      [AC_MSG_ERROR([OpenFabrics support requested (via --with-openib) but required sysfs/libsysfs.h not found.  Aborting])])])
-    
-         AC_CHECK_LIB([sysfs], 
-	              [sysfs_open_class], 
-                      [ompi_check_openib_sysfs=yes
-                       LIBS="$LIBS -lsysfs"
-                       $1_LIBS="-lsysfs"], 
-		      [ompi_check_openib_sysfs=no])
+    AS_IF([test "$ompi_check_openib_happy" = "yes"], 
+          [AC_CHECK_HEADER(
+             [sysfs/libsysfs.h],
+             [AC_CHECK_LIB([sysfs], 
+                [sysfs_open_class], 
+                [],
+                [AC_MSG_WARN([libsysfs not found.  Can not build component.])
+                 ompi_check_openib_happy="no"])])]) 
 
-         AS_IF([test "$ompi_check_openib_sysfs" != "yes"],
-               [AS_IF([test ! -z "$with_openib" -a "$with_openib" != "no"],
-                      [AC_MSG_ERROR([OpenFabrics support requested (via --with-openib) but required sysfs not found.  Aborting])])])
+    AS_IF([test "$ompi_check_openib_happy" = "yes"], 
+          [OMPI_CHECK_PACKAGE([$1],
+                              [infiniband/verbs.h],
+                              [ibverbs],
+                              [ibv_open_device],
+                              [],
+                              [$ompi_check_openib_dir],
+                              [$ompi_check_openib_libdir],
+                              [ompi_check_openib_happy="yes"],
+                              [ompi_check_openib_happy="no"])])
 
-         OMPI_CHECK_PACKAGE([$1],
-                            [infiniband/verbs.h],
-                            [ibverbs],
-                            [ibv_open_device],
-                            [],
-                            [$ompi_check_openib_dir],
-                            [$ompi_check_openib_libdir],
-                            [ompi_check_openib_happy="yes"],
-                            [ompi_check_openib_happy="no"])
+    CPPFLAGS="$CPPFLAGS $$1_CPPFLAGS"
+    LDFLAGS="$LDFLAGS $$1_LDFLAGS"
+    LIBS="$LIBS $$1_LIBS"
 
-         # ok, now see if ibv_create_cq takes 3 arguments or 6
-         CPPFLAGS="$CPPFLAGS $$1_CPPFLAGS"
-         LDFLAGS="$LDFLAGS $$1_LDFLAGS"
-         LIBS="$LIBS $$1_LIBS"
-
-         AS_IF([test "$ompi_check_openib_happy" = "yes"],
-            [AC_CACHE_CHECK(
+    AS_IF([test "$ompi_check_openib_happy" = "yes"],
+          [AC_CACHE_CHECK(
               [number of arguments to ibv_create_cq],
               [ompi_cv_func_ibv_create_cq_args],
               [AC_LINK_IFELSE(
-                  [AC_LANG_PROGRAM(
-                     [[#include <infiniband/verbs.h> ]],
-                     [[ibv_create_cq(NULL, 0, NULL, NULL, 0);]])],
-                  [ompi_cv_func_ibv_create_cq_args=5],
-                  [AC_LINK_IFELSE(
+                 [AC_LANG_PROGRAM(
+                    [[#include <infiniband/verbs.h> ]],
+                    [[ibv_create_cq(NULL, 0, NULL, NULL, 0);]])],
+                 [ompi_cv_func_ibv_create_cq_args=5],
+                 [AC_LINK_IFELSE(
                     [AC_LANG_PROGRAM(
                        [[#include <infiniband/verbs.h> ]],
                        [[ibv_create_cq(NULL, 0, NULL);]])],
-                     [ompi_cv_func_ibv_create_cq_args=3],
-                     [ompi_cv_func_ibv_create_cq_args="unknown"])])])
-            AS_IF([test "$ompi_cv_func_ibv_create_cq_args" = "unknown"],
-                  [AC_MSG_ERROR([Can not determine number of args to ibv_create_cq.  Aborting])],
-                  [AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_IBV_CREATE_CQ_ARGS],
-                                      [$ompi_cv_func_ibv_create_cq_args],
-                                      [Number of arguments to ibv_create_cq])])])
+                    [ompi_cv_func_ibv_create_cq_args=3],
+                    [ompi_cv_func_ibv_create_cq_args="unknown"])])])
+           AS_IF([test "$ompi_cv_func_ibv_create_cq_args" = "unknown"],
+                 [AC_MSG_WARN([Can not determine number of args to ibv_create_cq.])
+                  AC_MSG_WARN([Not building component.])
+                  ompi_check_openib_happy="no"],
+                 [AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_IBV_CREATE_CQ_ARGS],
+                                     [$ompi_cv_func_ibv_create_cq_args],
+                                     [Number of arguments to ibv_create_cq])])])
 
-         AC_CHECK_FUNCS([ibv_create_srq], [ompi_check_openib_have_srq=1], [ompi_check_openib_have_srq=0])
-         AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_SRQ],
-                            [$ompi_check_openib_have_srq],
-		            [Whether install of OpenFabrics includes shared receive queue support])
+    AS_IF([test "$ompi_check_openib_happy" = "yes"],
+          [AC_CHECK_FUNCS([ibv_create_srq], 
+                          [ompi_check_openib_have_srq=1],
+                          [ompi_check_openib_have_srq=0])
+           AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_SRQ],
+                              [$ompi_check_openib_have_srq],
+                              [Whether install of OpenFabrics includes shared receive queue support])
 
-         AC_CHECK_FUNCS([ibv_get_device_list],
-                        [ompi_check_openib_have_device_list=1],
-                        [ompi_check_openib_have_device_list=0])
-         AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_DEVICE_LIST],
-                        [$ompi_check_openib_have_device_list],
-                        [Whether install of OpenFabrics includes ibv_get_device_list API])
+           AC_CHECK_FUNCS([ibv_get_device_list],
+                          [ompi_check_openib_have_device_list=1],
+                          [ompi_check_openib_have_device_list=0])
+           AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_DEVICE_LIST],
+                              [$ompi_check_openib_have_device_list],
+                              [Whether install of OpenFabrics includes ibv_get_device_list API])
 
-	 AC_CHECK_FUNCS([ibv_resize_cq], [ompi_check_openib_have_resize_cq=1], [ompi_check_openib_have_resize_cq=0])
-         AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_RESIZE_CQ],
-                            [$ompi_check_openib_have_resize_cq],
-			    [Whether install of OpenFabrics includes resize completion queue support])
-			    
-         CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
-         LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
-         LIBS="$ompi_check_openib_$1_save_LIBS"],
-        [ompi_check_openib_happy="no"])  
+           AC_CHECK_FUNCS([ibv_resize_cq],
+                          [ompi_check_openib_have_resize_cq=1],
+                          [ompi_check_openib_have_resize_cq=0])
+           AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_RESIZE_CQ],
+                              [$ompi_check_openib_have_resize_cq],
+                              [Whether install of OpenFabrics includes resize completion queue support])])
+
+    CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
+    LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
+    LIBS="$ompi_check_openib_$1_save_LIBS"
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
           [$2],
