@@ -228,24 +228,23 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
 
     /* leaf nodes 
        Depending on the value of max_outstanding_reqs and 
-       the size of the segment we have two options:
+       the number of segments we have two options:
        - send all segments using blocking send to the parent, or
        - avoid overflooding the parent nodes by limiting the number of 
          outstanding requests to max_oustanding_reqs.
+       TODO/POSSIBLE IMPROVEMENT: If there is a way to determine the eager size 
+       for the current communication, synchronization should be used only 
+       when the message/segment size is smaller than the eager size.
      */
     else {
 
-        const int small_message_size = 4000; /* 4000 bytes */
         int segment_size = typelng * count_by_segment;
 
         /* If the number of segments is less than a maximum number of oustanding
-           requests, or there is no limit on the maximum number of outstanding 
-           requests, or the segment size is greater than the 
-           "small message size" we send data to the parent using blocking 
-           send */
+           requests or there is no limit on the maximum number of outstanding 
+           requests, we send data to the parent using blocking send */
         if ((0 == max_outstanding_reqs) || 
-            (num_segments <= max_outstanding_reqs) ||
-            (segment_size > small_message_size)) {
+            (num_segments <= max_outstanding_reqs)) {
             
             segindex = 0;
             while ( original_count > 0) {
