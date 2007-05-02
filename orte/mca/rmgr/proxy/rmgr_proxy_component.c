@@ -73,18 +73,18 @@ orte_rmgr_proxy_component_t mca_rmgr_proxy_component = {
   */
 static int orte_rmgr_proxy_open(void)
 {
-    return ORTE_SUCCESS;
-}
-
-
-static orte_rmgr_base_module_t *orte_rmgr_proxy_init(int* priority)
-{
     /* setup the locks - need to do this first so that we don't crash
      * when we close the component, even if we aren't selected
      */
     OBJ_CONSTRUCT(&mca_rmgr_proxy_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_rmgr_proxy_component.cond, opal_condition_t);
     
+    return ORTE_SUCCESS;
+}
+
+
+static orte_rmgr_base_module_t *orte_rmgr_proxy_init(int* priority)
+{
     /* if we are an HNP, then do NOT select us */
     if (orte_process_info.seed) {
         return NULL;
