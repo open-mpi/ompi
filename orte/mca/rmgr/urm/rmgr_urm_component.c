@@ -79,18 +79,18 @@ orte_rmgr_urm_component_t mca_rmgr_urm_component = {
   */
 static int orte_rmgr_urm_open(void)
 {
+    /* setup the locks - need to do this first so that we don't crash
+     * when we close the component, even if we aren't selected
+     */
+    OBJ_CONSTRUCT(&mca_rmgr_urm_component.lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_rmgr_urm_component.cond, opal_condition_t);
+    
     return ORTE_SUCCESS;
 }
 
 static orte_rmgr_base_module_t *orte_rmgr_urm_init(int* priority)
 {
     int param, value;
-    
-    /* setup the locks - need to do this first so that we don't crash
-     * when we close the component, even if we aren't selected
-     */
-    OBJ_CONSTRUCT(&mca_rmgr_urm_component.lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_rmgr_urm_component.cond, opal_condition_t);
     
     /* if we are NOT an HNP, then we do NOT want to be selected */
     if(!orte_process_info.seed) {
