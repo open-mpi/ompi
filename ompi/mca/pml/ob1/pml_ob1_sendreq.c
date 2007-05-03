@@ -1071,7 +1071,6 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
     mca_mpool_base_registration_t* reg = NULL;
     mca_bml_base_btl_t* bml_btl;
     mca_btl_base_descriptor_t* des;
-    size_t offset = (size_t)frag->rdma_hdr.hdr_rdma.hdr_rdma_offset;
     size_t i, save_size = frag->rdma_length;
     int rc;
 
@@ -1086,19 +1085,18 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
        }
     } 
 
-    /* set convertor at current offset */
-    ompi_convertor_set_position(&sendreq->req_send.req_convertor, &offset);
-
     /* setup descriptor */
     mca_bml_base_prepare_src( bml_btl, 
                               reg,
-                              &sendreq->req_send.req_convertor, 
+                              &frag->convertor, 
                               0,
                               &frag->rdma_length, 
                               &des );
     
     if(NULL == des) {
+        size_t offset = (size_t)frag->rdma_hdr.hdr_rdma.hdr_rdma_offset;
         frag->rdma_length = save_size; 
+        ompi_convertor_set_position(&frag->convertor, &offset);
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
         opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
         OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
@@ -1174,6 +1172,12 @@ void mca_pml_ob1_send_request_put(
     frag->rdma_btl = btl;
     frag->rdma_length = size;
     frag->rdma_state = MCA_PML_OB1_RDMA_PUT;
+
+    /*  RDMA writes may proceed in parallel to send and to each other, so
+     *  create clone of the convertor for each RDMA fragment
+     */
+    ompi_convertor_clone_with_position(&sendreq->req_send.req_convertor,
+            &frag->convertor, 0, &hdr->hdr_rdma_offset);
 
     mca_pml_ob1_send_request_put_frag(frag);
 }
