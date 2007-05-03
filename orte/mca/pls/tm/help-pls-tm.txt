@@ -16,6 +16,22 @@
 # 
 # $HEADER$
 #
+[tm-bad-launchid]
+The TM (PBS / Torque) process starter cannot spawn the specified
+application on a remote node due to an invalid launch_id.
+
+Node name: %s
+Launch id: %d
+
+This is most likely due to use of the "--hostfile" option to the
+command line. At this time, Open MPI/OpenRTE do not support this
+method of operation. Instead, the system expects to directly read
+information regarding the nodes to be used from the environment.
+
+Removing "--hostfile" from the command line will likely allow the
+application to be launched. This will be fixed in a future release
+to support the use of "--hostfile" on the command line.
+#
 [multiple-prefixes]
 Multiple different --prefix options were specified to mpirun for the
 same node.  This is a fatal error for the TM (PBS / Torque) process

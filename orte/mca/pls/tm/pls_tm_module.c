@@ -164,6 +164,22 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
         goto cleanup;
     }
 
+    /* Iterate through each of the nodes and check to see if we have
+     * a valid launch_id (must be > 0). If not, then error out as
+     * we cannot do anything
+     */
+    for (item =  opal_list_get_first(&map->nodes);
+         item != opal_list_get_end(&map->nodes);
+         item =  opal_list_get_next(item)) {
+        orte_mapped_node_t* node = (orte_mapped_node_t*)item;
+        
+        if (node->launch_id < 0) {
+            opal_show_help("help-pls-tm.txt", "tm-bad-launchid",
+                           true, node->nodename, node->launch_id);
+            goto cleanup;
+        }
+    }    
+        
     /* if the user requested that we re-use daemons,
      * launch the procs on any existing, re-usable daemons
      */
