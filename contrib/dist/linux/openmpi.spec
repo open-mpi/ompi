@@ -213,7 +213,7 @@
 Summary: A powerful implementaion of MPI
 Name: %{?_name:%{_name}}%{!?_name:openmpi}
 Version: $VERSION
-Release: 2
+Release: 3
 License: BSD
 Group: Development/Libraries
 Source: openmpi-%{version}.tar.$EXTENSION
