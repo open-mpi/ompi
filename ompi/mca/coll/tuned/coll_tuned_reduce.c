@@ -238,8 +238,6 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
      */
     else {
 
-        int segment_size = typelng * count_by_segment;
-
         /* If the number of segments is less than a maximum number of oustanding
            requests or there is no limit on the maximum number of outstanding 
            requests, we send data to the parent using blocking send */
