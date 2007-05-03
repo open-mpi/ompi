@@ -111,25 +111,25 @@ AC_DEFUN([OMPI_CHECK_TM],[
                  [_OMPI_CHECK_PACKAGE_HEADER([$1], 
                        [tm.h],
                        [$ompi_check_tm_dir],
-                       [ompi_check_tm_happy="yes"],
-                       [ompi_check_tm_happy="no"])])
+                       [ompi_check_tm_found="yes"],
+                       [ompi_check_tm_found="no"])])
 
-           AS_IF([test "$ompi_check_tm_happy" = "yes"],
+           AS_IF([test "$ompi_check_tm_found" = "yes"],
                  [_OMPI_CHECK_PACKAGE_LIB([$1],
                        [pbs],
                        [tm_init],
                        [],
                        [$ompi_check_tm_dir],
                        [$ompi_check_tm_libdir],
-                       [ompi_check_tm_happy="yes"],
+                       [ompi_check_tm_found="yes"],
                        [_OMPI_CHECK_PACKAGE_LIB([$1],
                              [torque],
                              [tm_init],
                              [],
                              [$ompi_check_tm_dir],
                              [$ompi_check_tm_libdir],
-                             [ompi_check_tm_happy="yes"],
-                             [ompi_chekc_tm_happy="no"])])])])
+                             [ompi_check_tm_found="yes"],
+                             [ompi_check_tm_found="no"])])])])
 
     # Did we find the right stuff?
     AS_IF([test "$ompi_check_tm_happy" = "yes" -a "$ompi_check_tm_found" = "yes"],
