@@ -213,7 +213,7 @@
 Summary: A powerful implementaion of MPI
 Name: %{?_name:%{_name}}%{!?_name:openmpi}
 Version: $VERSION
-Release: 2
+Release: 1
 License: BSD
 Group: Development/Libraries
 Source: openmpi-%{version}.tar.$EXTENSION
@@ -406,7 +406,6 @@ CXXFLAGS="%{?cxxflags:%{cxxflags}}%{!?cxxflags:$RPM_OPT_FLAGS}"
 FFLAGS="%{?f77flags:%{f77flags}}%{!?f7flags:$RPM_OPT_FLAGS}"
 FCFLAGS="%{?fcflags:%{fcflags}}%{!?fcflags:$RPM_OPT_FLAGS}"
 export CFLAGS CXXFLAGS F77FLAGS FCFLAGS
-echo ================================ DONE DONE DONE
 
 %configure %{configure_options}
 %{__make} %{?mflags}
@@ -536,6 +535,10 @@ find $RPM_BUILD_ROOT -type f -o -type l | \
 #
 #############################################################################
 %clean
+# We may be in the directory that we're about to remove, so cd out of
+# there before we remove it
+cd /tmp
+
 # Remove installed driver after rpm build finished
 rm -rf $RPM_BUILD_DIR/%{name}-%{version} 
 
@@ -679,6 +682,10 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Thu May  3 2007 Jeff Squyres <jsquyres@cisco.com>
+- Ensure to move out of $RPM_BUILD_ROOT before deleting it in % clean.
+- Remove a debugging "echo" that somehow got left in there
+
 * Thu Apr 12 2007 Jeff Squyres <jsquyres@cisco.com>
 - Ensure that _pkglibdir is always defined, suggested by Greg Kurtzer.
 
