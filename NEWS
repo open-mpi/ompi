@@ -53,10 +53,11 @@ Trunk (not on release branches yet)
 1.2.2
 -----
 
+- Fixed a variety of threading/locking bugs.
 - Fixed some compiler warnings associated with ROMIO, OS X, and gridengine.
 - If pbs-config can be found, use it to look for TM support.  Thanks
   to Bas van der Viles for the inspiration and preliminary work.
-- Fixed a deadlock in orterun when the rsh PLS encounters some errors
+- Fixed a deadlock in orterun when the rsh PLS encounters some errors.
 
 
 1.2.1
