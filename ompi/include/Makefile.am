@@ -22,7 +22,7 @@
 
 # note - headers and nodist_headers will go in ${includedir}/openmpi,
 # not ${includedir}/
-headers = 
+headers =
 nodist_headers = \
 	ompi_config.h
 

@@ -96,7 +96,7 @@ typedef uint8_t orte_pls_cmd_flag_t;
     /*
      * communications utilities
      */
-    int orte_pls_base_comm_start(void);
+    ORTE_DECLSPEC int orte_pls_base_comm_start(void);
     ORTE_DECLSPEC int orte_pls_base_comm_stop(void);
     void orte_pls_base_recv(int status, orte_process_name_t* sender,
                             orte_buffer_t* buffer, orte_rml_tag_t tag,

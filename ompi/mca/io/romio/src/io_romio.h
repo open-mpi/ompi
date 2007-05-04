@@ -31,6 +31,9 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+OMPI_DECLSPEC extern mca_io_base_component_1_0_0_t mca_io_romio_component;
+
 /*
  * global variables, instantiated in module.c  
  */

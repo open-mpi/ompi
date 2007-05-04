@@ -25,6 +25,10 @@
 extern "C" {
 #endif
 
+
+OMPI_DECLSPEC extern mca_pml_base_component_1_0_0_t mca_pml_cm_component;
+
+
 struct mca_mtl_request_t;
 
 struct ompi_pml_cm_t {

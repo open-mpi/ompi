@@ -78,6 +78,7 @@ typedef struct {
 } ompi_fortran_double_complex_t;
 #endif
 
+
 #if defined(__WINDOWS__)
 
 #  if defined(_USRDLL)    /* building shared libraries (.DLL) */
@@ -100,9 +101,24 @@ typedef struct {
 #    endif  /* defined(OMPI_IMPORTS) */
 #    define OMPI_MODULE_DECLSPEC
 #  endif  /* defined(_USRDLL) */
+
 #else
-#  define OMPI_DECLSPEC
-#  define OMPI_MODULE_DECLSPEC
+
+#  if OMPI_C_HAVE_VISIBILITY
+#    ifndef OMPI_DECLSPEC
+#      define OMPI_DECLSPEC            __opal_attribute_visibility__("default")
+#    endif
+#    ifndef OMPI_MODULE_DECLSPEC
+#      define OMPI_MODULE_DECLSPEC     __opal_attribute_visibility__("default")
+#    endif
+#  else
+#    ifndef OMPI_DECLSPEC
+#      define OMPI_DECLSPEC
+#    endif
+#    ifndef OMPI_MODULE_DECLSPEC
+#      define OMPI_MODULE_DECLSPEC
+#    endif
+#  endif
 #endif  /* defined(__WINDOWS__) */
 
 #endif

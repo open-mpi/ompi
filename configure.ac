@@ -1066,6 +1066,18 @@ AC_DEFINE_UNQUOTED(OMPI_WANT_LIBLTDL, $WANT_LIBLTDL,
     [Whether to include support for libltdl or not])
 
 
+##################################
+# visibility
+##################################
+
+# check the visbility stuff at the end to avoid problem with 
+# the previous tests that are not necessarily prepeare for 
+# the visibility feature.
+ompi_show_title "Symbol Visibility Feature"
+
+OMPI_CHECK_VISIBILITY
+
+
 ############################################################################
 # final compiler config
 ############################################################################

@@ -136,7 +136,7 @@ ompi_mpi_cxx_grequest_cancel_fn_intercept(void *state, int canceled);
 namespace MPI {
 
 #if ! OMPI_HAVE_CXX_EXCEPTION_SUPPORT
-	OMPI_DECLSPEC extern int mpi_errno;
+	extern int mpi_errno;
 #endif
 
   class Comm_Null;
