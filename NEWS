@@ -29,6 +29,9 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
+- Addition of a finer symbols export control via the visibiliy feature
+  offered by some compilers.
+  --> Expected: 1.3
 - Addition of "dr" (data reliability) PML.
   --> Expected: 1.3
 - Added threaded progress for the openib BTL.

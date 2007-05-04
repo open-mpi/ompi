@@ -47,6 +47,16 @@
 #define OMPI_BUILDING 1
 #endif
 
+/***********************************************************************
+ *
+ * code that should be in ompi_config_bottom.h regardless of build
+ * status
+ *
+ **********************************************************************/
+
+/* Do we have thread support? */
+#define OMPI_HAVE_THREAD_SUPPORT (OMPI_ENABLE_MPI_THREADS || OMPI_ENABLE_PROGRESS_THREADS)
+
 /*
  * BEGIN_C_DECLS should be used at the beginning of your declarations,
  * so that C++ compilers don't mangle their names.  Use END_C_DECLS at
@@ -89,7 +99,7 @@
 #if OMPI_HAVE_ATTRIBUTE_DEPRECATED
 #    define __opal_attribute_deprecated__    __attribute__((__deprecated__))
 #else
-#    define __opal_attribute_deprecated__ 
+#    define __opal_attribute_deprecated__
 #endif
 
 #if OMPI_HAVE_ATTRIBUTE_FORMAT
@@ -174,16 +184,6 @@
 
 /***********************************************************************
  *
- * code that should be in ompi_config_bottom.h regardless of build
- * status
- *
- **********************************************************************/
-
-/* Do we have thread support? */
-#define OMPI_HAVE_THREAD_SUPPORT (OMPI_ENABLE_MPI_THREADS || OMPI_ENABLE_PROGRESS_THREADS)
-
-/***********************************************************************
- *
  * Windows library interface declaration code
  *
  **********************************************************************/
@@ -217,9 +217,13 @@
 #  endif  /* defined(_USRDLL) */
 #  include "opal/win32/win_compat.h"
 #else
-   /* On Unix - this define is plain useless */
-#  define OPAL_DECLSPEC
-#  define OPAL_MODULE_DECLSPEC
+#  if OMPI_C_HAVE_VISIBILITY
+#    define OPAL_DECLSPEC           __opal_attribute_visibility__("default")
+#    define OPAL_MODULE_DECLSPEC    __opal_attribute_visibility__("default")
+#  else
+#    define OPAL_DECLSPEC
+#    define OPAL_MODULE_DECLSPEC
+#  endif
 #endif  /* defined(__WINDOWS__) */
 
 /*

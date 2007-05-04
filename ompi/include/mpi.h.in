@@ -111,12 +111,19 @@
 /* C type corresponding to FORTRAN INTEGER */
 #undef ompi_fortran_integer_t
 
+/* Whether C compiler supports -fvisibility */
+#undef OMPI_C_HAVE_VISIBILITY
+
 #ifndef OMPI_DECLSPEC
-#if defined(WIN32) || defined(_WIN32)
-#define OMPI_DECLSPEC __declspec(dllimport)
-#else
-#define OMPI_DECLSPEC
-#endif
+#  if defined(WIN32) || defined(_WIN32)
+#    define OMPI_DECLSPEC __declspec(dllimport)
+#  else
+#    if defined(OMPI_C_HAVE_VISIBILITY)
+#       define OMPI_DECLSPEC __attribute__((visibility("default")))
+#    else
+#       define OMPI_DECLSPEC
+#    endif      
+#  endif
 #endif
 
 #ifndef MPI_Fint

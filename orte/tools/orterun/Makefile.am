@@ -26,6 +26,7 @@
 CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(TOTALVIEW_DEBUG_FLAGS)
 
 libs = \
+        $(top_builddir)/opal/libopen-pal.la 	\
         $(top_builddir)/orte/libopen-rte.la
 
 orterun_SOURCES = \
