@@ -59,10 +59,12 @@ AC_DEFUN([OMPI_CHECK_VISIBILITY],[
         fi
         CFLAGS="$CFLAGS_orig$add"
         unset add 
-        AC_DEFINE_UNQUOTED([OMPI_C_HAVE_VISIBILITY], [$have_visibility],
-            [Whether C compiler supports -fvisibility])
     else
         AC_MSG_CHECKING([disable visibilty])
         AC_MSG_RESULT([yes])        
+        have_visibility=0
     fi
+    AC_DEFINE_UNQUOTED([OMPI_C_HAVE_VISIBILITY], [$have_visibility],
+            [Whether C compiler supports -fvisibility])
+
 ])
