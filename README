@@ -136,11 +136,12 @@ base as of this writing (1 March 2007):
   Tests with later versions show that this has been fixed (e.g.,
   v6.0-5).
 
-- The Portland Group compilers require the "-Msignextend" compiler
-  flag to extend the sign bit when converting from a shorter to longer
-  integer.  This is is different than other compilers (such as GNU).
-  When compiling Open MPI with the Portland compiler suite, the
-  following flags should be passed to Open MPI's configure script:
+- The Portland Group compilers prior to version 7.0 require the
+  "-Msignextend" compiler flag to extend the sign bit when converting
+  from a shorter to longer integer.  This is is different than other
+  compilers (such as GNU).  When compiling Open MPI with the Portland
+  compiler suite, the following flags should be passed to Open MPI's
+  configure script:
 
   shell$ ./configure CFLAGS=-Msignextend CXXFLAGS=-Msignextend \
 	--with-wrapper-cflags=-Msignextend \
