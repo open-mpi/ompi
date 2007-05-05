@@ -29,6 +29,9 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
+- Fix F90 array of status dimentios.  Thanks to Randy Bramley for
+  noticing the problem.
+  --> Expected: 1.2.2
 - Addition of a finer symbols export control via the visibiliy feature
   offered by some compilers.
   --> Expected: 1.3
