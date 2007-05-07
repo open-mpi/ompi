@@ -309,7 +309,7 @@ typedef struct mca_oob_tcp_component_t mca_oob_tcp_component_t;
 
 ORTE_MODULE_DECLSPEC extern mca_oob_tcp_component_t mca_oob_tcp_component;
 
-ORTE_DECLSPEC extern int mca_oob_tcp_output_handle;
+extern int mca_oob_tcp_output_handle;
 
 #if defined(__WINDOWS__)
 #define CLOSE_THE_SOCKET(socket)    closesocket(socket)
