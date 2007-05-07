@@ -118,7 +118,7 @@
 #  if defined(WIN32) || defined(_WIN32)
 #    define OMPI_DECLSPEC __declspec(dllimport)
 #  else
-#    if defined(OMPI_C_HAVE_VISIBILITY)
+#    if OMPI_C_HAVE_VISIBILITY == 1
 #       define OMPI_DECLSPEC __attribute__((visibility("default")))
 #    else
 #       define OMPI_DECLSPEC
