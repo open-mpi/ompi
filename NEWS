@@ -29,6 +29,11 @@ version 1.0.
 1.2.2
 -----
 
+- Fix regression in 1.2.1 regarding the handling of $CC with both
+  absolute and relative path names.
+- Fix F90 array of status dimensions.  Thanks to Randy Bramley for
+  noticing the problem.
+- Add btl_openib_ib_pkey_value MCA parameter for controlling IB port selection.
 - Fixed a variety of threading/locking bugs.
 - Fixed some compiler warnings associated with ROMIO, OS X, and gridengine.
 - If pbs-config can be found, use it to look for TM support.  Thanks
