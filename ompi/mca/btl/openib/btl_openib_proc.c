@@ -98,7 +98,10 @@ static mca_btl_openib_proc_t* mca_btl_openib_proc_lookup_ompi(ompi_proc_t* ompi_
 mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
 {
     mca_btl_openib_proc_t* module_proc = NULL;
-    size_t size, i;
+    size_t size;
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    size_t i;
+#endif
     int rc;
     
     /* Check if we have already created a IB proc
