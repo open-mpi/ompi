@@ -275,6 +275,13 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_control_t);
     } while(0);                                                            \
 }
 
+#define MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(btl,list)                      \
+    while(!opal_list_is_empty(list)){                                     \
+        opal_list_item_t *frag_item;                                      \
+        frag_item = opal_list_remove_first(list);                         \
+        MCA_BTL_IB_FRAG_RETURN(btl, ((mca_btl_openib_frag_t*)frag_item)); \
+    }                                                                     \
+
 struct mca_btl_openib_module_t;
 
 #if defined(c_plusplus) || defined(__cplusplus)

@@ -87,6 +87,9 @@ static void btl_openib_frag_progress_pending(
 static int openib_reg_mr(void *reg_data, void *base, size_t size,
         mca_mpool_base_registration_t *reg);
 static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg);
+#if OMPI_HAVE_POSIX_THREADS
+void* btl_openib_async_thread(void *one_hca);
+#endif
 
 
 mca_btl_openib_component_t mca_btl_openib_component = {
@@ -179,7 +182,7 @@ static int btl_openib_modex_send(void)
         }
 
         for (i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
-            mca_btl_openib_module_t *btl = &mca_btl_openib_component.openib_btls[i];
+            mca_btl_openib_module_t *btl = mca_btl_openib_component.openib_btls[i];
             ports[i] = btl->port_info;
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
             MCA_BTL_OPENIB_PORT_INFO_HTON(ports[i]);
@@ -583,7 +586,29 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         hca->thread.t_arg = hca;
         hca->progress = false;
 #endif
-        return ret;
+        hca->got_fatal_event=false;
+#if OMPI_HAVE_POSIX_THREADS
+        /* Starting async event thread */
+        ret = pthread_create(&hca->async_thread,NULL,
+            (void*(*)(void*))btl_openib_async_thread,hca);
+        if  (ret != 0) {
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+            /* Failed to create async thread. Cancel the progress
+             * and exit 
+             */
+            if (pthread_cancel(hca->thread.t_handle)) {
+                BTL_ERROR(("Failed to cancel OpenIB progress thread"));
+            }
+            opal_thread_join(&hca->thread, NULL);
+#endif
+            BTL_ERROR(("Failed to create asyn thread for openib"));
+            ret = OMPI_ERROR;
+        } else {
+            return OMPI_SUCCESS;
+        }
+#else
+        return OMPI_SUCCESS;
+#endif
     }
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
@@ -639,6 +664,10 @@ btl_openib_component_init(int *num_btl_modules,
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_ini_init())) {
         return NULL;
     }
+#if OMPI_HAVE_POSIX_THREADS
+    /* Set the fatal counter to zero */
+    mca_btl_openib_component.fatal_counter = 0;
+#endif
 
     /* If we want fork support, try to enable it */
 #ifdef HAVE_IBV_FORK_INIT
@@ -727,15 +756,14 @@ btl_openib_component_init(int *num_btl_modules,
 
     /* Allocate space for btl modules */
     mca_btl_openib_component.openib_btls =
-        malloc(sizeof(mca_btl_openib_module_t) *
+        malloc(sizeof(mca_btl_openib_module_t*) *
                 mca_btl_openib_component.ib_num_btls);
-    
     if(NULL == mca_btl_openib_component.openib_btls) {
         BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
         return NULL;
     }
-    btls = malloc(mca_btl_openib_component.ib_num_btls *
-            sizeof(struct mca_btl_openib_module_t*));
+    btls = (struct mca_btl_base_module_t **)malloc(mca_btl_openib_component.ib_num_btls *
+            sizeof(struct mca_btl_base_module_t*));
     if(NULL == btls) {
         BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
         return NULL;
@@ -746,12 +774,9 @@ btl_openib_component_init(int *num_btl_modules,
     for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++){
         item = opal_list_remove_first(&btl_list); 
         ib_selected = (mca_btl_base_selected_module_t*)item; 
-        openib_btl = (mca_btl_openib_module_t*) ib_selected->btl_module; 
-        memcpy(&(mca_btl_openib_component.openib_btls[i]), openib_btl,
-                sizeof(mca_btl_openib_module_t)); 
-        free(openib_btl); 
+        mca_btl_openib_component.openib_btls[i] = (mca_btl_openib_module_t*)ib_selected->btl_module; 
         OBJ_RELEASE(ib_selected); 
-        openib_btl = &mca_btl_openib_component.openib_btls[i];
+        openib_btl = mca_btl_openib_component.openib_btls[i];
 
         openib_btl->rd_num = mca_btl_openib_component.rd_num +
             mca_btl_openib_component.rd_rsv;
@@ -1136,6 +1161,60 @@ static void btl_openib_frag_progress_pending(
      }
 }
 
+#if OMPI_HAVE_POSIX_THREADS
+void* btl_openib_async_thread(void *one_hca)
+{
+    struct ibv_async_event event;
+    struct mca_btl_openib_hca_t *hca = (struct mca_btl_openib_hca_t *)one_hca;
+    /* This thread enter in a cancel enabled state */
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);
+    while (1) {
+        if (ibv_get_async_event((struct ibv_context *)hca->ib_dev_context,
+                    &event)) {
+            BTL_ERROR(("Failed to get async event"));
+        }
+        switch(event.event_type) {
+            /* Fatal */
+            case IBV_EVENT_CQ_ERR:
+            case IBV_EVENT_QP_FATAL:
+            case IBV_EVENT_QP_REQ_ERR:
+            case IBV_EVENT_QP_ACCESS_ERR:
+            case IBV_EVENT_PATH_MIG:
+            case IBV_EVENT_PATH_MIG_ERR:
+            case IBV_EVENT_DEVICE_FATAL:
+            case IBV_EVENT_SRQ_ERR:
+                BTL_ERROR(( "Openib got FATAL event %d",event.event_type));
+                /* Set the flag to fatal */
+                hca->got_fatal_event=true;
+                /* It is not critical to protect the counter */
+                OPAL_THREAD_ADD32(&mca_btl_openib_component.fatal_counter, 1);
+                break;
+            case IBV_EVENT_PORT_ERR:
+                BTL_ERROR(( "Openib got port ERROR event %d",event.event_type));
+                break;
+            case IBV_EVENT_COMM_EST:
+            case IBV_EVENT_PORT_ACTIVE:
+            case IBV_EVENT_SQ_DRAINED:
+            case IBV_EVENT_LID_CHANGE:
+            case IBV_EVENT_PKEY_CHANGE:
+            case IBV_EVENT_SM_CHANGE:
+            case IBV_EVENT_QP_LAST_WQE_REACHED:
+            case IBV_EVENT_CLIENT_REREGISTER:
+                break;
+            case IBV_EVENT_SRQ_LIMIT_REACHED:
+                BTL_ERROR(("Got SRQ limit event %d",event.event_type));
+                break;
+            default:
+                BTL_ERROR(("Got unknown event %d.Continuing...",event.event_type));
+                        
+        }
+        ibv_ack_async_event(&event);
+    }
+    return PTHREAD_CANCELED;
+}
+#endif
+
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
 void* mca_btl_openib_progress_thread(opal_object_t* arg)
 {
@@ -1186,13 +1265,18 @@ static int btl_openib_component_progress(void)
     int count = 0, ret;
     mca_btl_openib_frag_t* frag; 
     mca_btl_openib_endpoint_t* endpoint; 
+    
+#if OMPI_HAVE_POSIX_THREADS
+    if(mca_btl_openib_component.fatal_counter) {
+        goto error;
+    }
+#endif
 
     /* Poll for RDMA completions - if any succeed, we don't process the slower
      * queues.
      */
     for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
-        mca_btl_openib_module_t* openib_btl = &mca_btl_openib_component.openib_btls[i];
-
+        mca_btl_openib_module_t* openib_btl = mca_btl_openib_component.openib_btls[i];
         c = openib_btl->eager_rdma_buffers_count;
 
         for(j = 0; j < c; j++) {
@@ -1245,10 +1329,24 @@ static int btl_openib_component_progress(void)
     if(count) return count;
 
     for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
-        count += btl_openib_module_progress(&mca_btl_openib_component.openib_btls[i]);
+        count += btl_openib_module_progress(mca_btl_openib_component.openib_btls[i]);
     }
 
     return count;
+
+#if OMPI_HAVE_POSIX_THREADS
+error:
+    /* Set the fatal counter to zero */
+    mca_btl_openib_component.fatal_counter = 0;
+    /* Lets found all fatal events */
+    for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
+        mca_btl_openib_module_t* openib_btl = mca_btl_openib_component.openib_btls[i];
+        if(openib_btl->hca->got_fatal_event) {
+            openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
+        }
+    }
+    return count;
+#endif
 }
 
 static int btl_openib_module_progress(mca_btl_openib_module_t* openib_btl)
@@ -1262,13 +1360,11 @@ static int btl_openib_module_progress(mca_btl_openib_module_t* openib_btl)
 
     for(qp = 0; qp < 2; qp++) {
         ne = ibv_poll_cq(openib_btl->ib_cq[qp], 1, &wc);
-
-        if(0 == ne)
+        if(0 == ne) 
             continue;
-
-        if(ne < 0 || wc.status != IBV_WC_SUCCESS)
+        if(ne < 0 || wc.status != IBV_WC_SUCCESS) 
             goto error;
-            
+
         frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id; 
         endpoint = frag->endpoint;
         /* Handle work completions */

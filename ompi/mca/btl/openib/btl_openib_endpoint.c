@@ -303,6 +303,56 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 
 static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 {
+    bool pval_clean = false;
+
+    /* Release memory resources */
+    do {
+        /* Make sure that mca_btl_openib_endpoint_connect_eager_rdma ()
+         * was not in "connect" or "bad" flow (failed to allocate memory)
+         * and changed the pointer back to NULL 
+         */
+        if(!opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, NULL,
+                    (void*)1)) {
+            if ((void*)1 != endpoint->eager_rdma_local.base.pval && 
+                    NULL != endpoint->eager_rdma_local.base.pval) {
+                endpoint->endpoint_btl->super.btl_mpool->mpool_free(endpoint->endpoint_btl->super.btl_mpool,
+                        endpoint->eager_rdma_local.base.pval, 
+                        (mca_mpool_base_registration_t*)endpoint->eager_rdma_local.reg);
+                pval_clean=true;
+            }
+        } else {
+            pval_clean=true;
+        }
+    } while (!pval_clean);
+
+    /* Close opened QPs if we have them*/
+    if (MCA_BTL_IB_CLOSED != endpoint->endpoint_state) {
+        if (ibv_destroy_qp(endpoint->lcl_qp[BTL_OPENIB_HP_QP])) {
+            BTL_ERROR(("Failed to destroy HP QP"));
+        }
+        if (ibv_destroy_qp(endpoint->lcl_qp[BTL_OPENIB_LP_QP])) {
+            BTL_ERROR(("Failed to destroy LP QP"));
+        }
+    }
+    OBJ_DESTRUCT(&endpoint->endpoint_lock);
+    /* Clean pending lists */
+    MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(endpoint->endpoint_btl,
+            &endpoint->pending_send_frags);
+    OBJ_DESTRUCT(&endpoint->pending_send_frags);
+    MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(endpoint->endpoint_btl,
+            &endpoint->pending_frags[BTL_OPENIB_HP_QP]);
+    OBJ_DESTRUCT(&endpoint->pending_frags[BTL_OPENIB_HP_QP]);
+    MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(endpoint->endpoint_btl,
+            &endpoint->pending_frags[BTL_OPENIB_LP_QP]);
+    OBJ_DESTRUCT(&endpoint->pending_frags[BTL_OPENIB_LP_QP]);
+    MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(endpoint->endpoint_btl,
+            &endpoint->pending_get_frags);
+    OBJ_DESTRUCT(&endpoint->pending_get_frags);
+    MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(endpoint->endpoint_btl,
+            &endpoint->pending_put_frags);
+    OBJ_DESTRUCT(&endpoint->pending_put_frags);
+    free(endpoint->lcl_qp_attr[BTL_OPENIB_HP_QP]);
+    free(endpoint->lcl_qp_attr[BTL_OPENIB_LP_QP]);
 }
 
 /*
@@ -1271,6 +1321,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     if(mca_btl_openib_endpoint_send_eager_rdma(endpoint) == 0) {
         /* This can never fail because max number of entries allocated
          * at init time */
+        OBJ_RETAIN(endpoint);
         orte_pointer_array_add(&index, openib_btl->eager_rdma_buffers,
                 endpoint);
         /* from this point progress function starts to poll new buffer */
