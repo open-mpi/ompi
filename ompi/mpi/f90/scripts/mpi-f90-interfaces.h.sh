@@ -7425,7 +7425,7 @@ EOF
 }
 
 start MPI_Testall small
-output_206 S "integer, dimension(count, MPI_STATUS_SIZE)"
+output_206 S "integer, dimension(MPI_STATUS_SIZE, count)"
 output_206 I "double precision"
 end MPI_Testall
 
@@ -7483,7 +7483,7 @@ EOF
 }
 
 start MPI_Testsome small
-output_208 S "integer, dimension(incount, MPI_STATUS_SIZE)"
+output_208 S "integer, dimension(MPI_STATUS_SIZE, incount)"
 output_208 I "double precision"
 end MPI_Testsome
 
@@ -8560,7 +8560,7 @@ EOF
 }
 
 start MPI_Waitall small
-output_248 S "integer, dimension(count, MPI_STATUS_SIZE)"
+output_248 S "integer, dimension(MPI_STATUS_SIZE, count)"
 output_248 I "double precision"
 end MPI_Waitall
 
@@ -8616,7 +8616,7 @@ EOF
 }
 
 start MPI_Waitsome small
-output_250 S "integer, dimension(incount, MPI_STATUS_SIZE)"
+output_250 S "integer, dimension(MPI_STATUS_SIZE, incount)"
 output_250 I "double precision"
 end MPI_Waitsome
 
