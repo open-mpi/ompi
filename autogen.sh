@@ -1152,5 +1152,38 @@ else
     run_global
 fi
 
+# BWB --- temporary time to update autoconf / automake hack
+bad=1
+ac_version="`${ompi_autoconf} --version 2>&1`"
+ac_version="`echo $ac_version | cut -f2 -d')'`"
+ac_version="`echo $ac_version | cut -f1 -d' '`"
+am_version="`${ompi_automake} --version 2>&1`"
+am_version="`echo $am_version | cut -f2 -d')'`"
+am_version="`echo $am_version | cut -f1 -d' '`"
+if check_version "2.60.0" $ac_version ; then
+    bad=0
+fi
+if check_version "1.10.0" $am_version ; then
+    bad=0
+fi
+if test $bad -eq 1 ; then
+	cat <<EOF
+
+-------------------------------------------------------------------------
+WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+
+You are currently using Autoconf $ac_version and Automake $am_version.
+Starting Saturday, May 12th, Autoconf 2.60 and Automake 1.10 or higher
+will be required to built configure for the trunk.  Note that these
+autotool versions can also safely build the v1.2 branch.  You will
+still be able to use either Libtool 1.5.22 or 2.1a.
+
+WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+-------------------------------------------------------------------------
+
+EOF
+fi
+# BWB --- end evil hack
+
 # All done
 exit 0
