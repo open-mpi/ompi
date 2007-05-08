@@ -29,11 +29,6 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
-- Fix regression in 1.2.1 regarding the handling of $CC with both
-  absolute and relative path names.
-- Fix F90 array of status dimentios.  Thanks to Randy Bramley for
-  noticing the problem.
-  --> Expected: 1.2.2
 - Addition of a finer symbols export control via the visibiliy feature
   offered by some compilers.
   --> Expected: 1.3
@@ -58,6 +53,11 @@ Trunk (not on release branches yet)
 1.2.2
 -----
 
+- Fix regression in 1.2.1 regarding the handling of $CC with both
+  absolute and relative path names.
+- Fix F90 array of status dimensions.  Thanks to Randy Bramley for
+  noticing the problem.
+- Add btl_openib_ib_pkey_value MCA parameter for controlling IB port selection.
 - Fixed a variety of threading/locking bugs.
 - Fixed some compiler warnings associated with ROMIO, OS X, and gridengine.
 - If pbs-config can be found, use it to look for TM support.  Thanks
