@@ -88,18 +88,14 @@ section.
 
 If you are building Open MPI from a developer's tree, you must first
 install fairly recent versions of the GNU tools Autoconf, Automake,
-and Libtool.  As of October 2005, the following versions are known to
-work:
+and Libtool.  The specific versions required depend on if you are
+using the trunk or a release branch (and which release branch you are
+using).  The specific versions can be found at:
 
-Autoconf: v2.59
-Automake: v1.9.6
-Libtool:  v1.5.20
+  http://www.open-mpi.org/svn/building.php
 
-More generally, we have found that using the most recent versions of
-these tools usually results in the greatest probability of a
-successful configure / build.  When in doubt, it is safe to upgrade
-these tools (at least for Open MPI!).  You can check what versions you
-have installed with the following:
+You can check what versions of the autotools you have installed with
+the following:
 
 shell$ autoconf --version
 shell$ automake --version
