@@ -29,6 +29,8 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
+- Fix regression in 1.2.1 regarding the handling of $CC with both
+  absolute and relative path names.
 - Fix F90 array of status dimentios.  Thanks to Randy Bramley for
   noticing the problem.
   --> Expected: 1.2.2
