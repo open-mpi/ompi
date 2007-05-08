@@ -36,6 +36,7 @@
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/mpool/mpool.h" 
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
+#include "ompi/runtime/params.h"
 #include "orte/util/sys_info.h"
 #include <errno.h> 
 #include <string.h> 
@@ -88,6 +89,7 @@ mca_btl_openib_module_t mca_btl_openib_module = {
  */
 static int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size_t nprocs);
 static int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t* openib_btl);
+static int mca_btl_finalize_hca(struct mca_btl_openib_hca_t *hca);
 
 
 static void show_init_error(const char *file, int line, 
@@ -139,11 +141,11 @@ int mca_btl_openib_add_procs(
     int btl_rank = 0;
 
     for(j=0; j < mca_btl_openib_component.ib_num_btls; j++){ 
-        if(mca_btl_openib_component.openib_btls[j].port_info.subnet_id
+        if(mca_btl_openib_component.openib_btls[j]->port_info.subnet_id
            == openib_btl->port_info.subnet_id) { 
             lcl_subnet_id_port_cnt++;
             }
-        if(openib_btl == &(mca_btl_openib_component.openib_btls[j])) { 
+        if(openib_btl == mca_btl_openib_component.openib_btls[j]) { 
             btl_rank = j;
         }
     }
@@ -298,10 +300,26 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
         struct ompi_proc_t **procs, 
         struct mca_btl_base_endpoint_t ** peers)
 {
-    BTL_DEBUG(("TODO\n"));
+    int i,ep_index;
+    mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl;
+    for (i=0 ; i < (int) nprocs ; i++) {
+        mca_btl_base_endpoint_t* del_endpoint = peers[i];
+        for(ep_index=0;
+                ep_index < orte_pointer_array_get_size(openib_btl->endpoints);
+                ep_index++) {
+            mca_btl_openib_endpoint_t* endpoint = 
+                orte_pointer_array_get_item(openib_btl->endpoints,ep_index);
+            if(!endpoint) {
+                continue;
+            }
+            if (endpoint == del_endpoint) {
+                orte_pointer_array_set_item(openib_btl->endpoints,ep_index,NULL);
+                OBJ_RELEASE(endpoint);
+            }
+        }
+    }
     return OMPI_SUCCESS;
 }
-
 /* 
  *Register callback function to support send/recv semantics 
  */ 
@@ -596,10 +614,135 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     return &frag->base;
 }
 
+static int mca_btl_finalize_hca(struct mca_btl_openib_hca_t *hca)
+{
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+    if(hca->progress) {
+        hca->progress = false;
+        if (pthread_cancel(hca->thread.t_handle)) {
+            BTL_ERROR(("Failed to cancel OpenIB progress thread"));
+        }
+        opal_thread_join(&hca->thread, NULL);
+    }
+    if (ibv_destroy_comp_channel(hca->ib_channel)) {
+        BTL_VERBOSE(("Failed to close comp_channel"));
+        return OMPI_ERROR;
+    }
+#endif
+#if OMPI_HAVE_POSIX_THREADS
+    if (pthread_cancel(hca->async_thread)) {
+        BTL_ERROR(("Failed to cancel OpenIB async thread"));
+    }
+    pthread_join(hca->async_thread, NULL);
+#endif
+    if (OMPI_SUCCESS != mca_mpool_base_module_destroy(hca->mpool)) {
+        BTL_VERBOSE(("Failed to release mpool"));
+        return OMPI_ERROR;
+    }
+    if (ibv_dealloc_pd(hca->ib_pd)) {
+        BTL_VERBOSE(("Failed to release PD"));
+        return OMPI_ERROR;
+    }
+    if (ibv_close_device(hca->ib_dev_context)) {
+        if (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) {
+            BTL_VERBOSE(("Warrning! Failed to close HCA"));
+        } else {
+            BTL_ERROR(("Error! Failed to close HCA"));
+        }
+        return OMPI_ERROR;
+    }
+    OBJ_DESTRUCT(&hca->hca_lock); 
+    free(hca);
+    return OMPI_SUCCESS;
+}
+
 int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
 {
     mca_btl_openib_module_t* openib_btl; 
+    mca_btl_openib_endpoint_t* endpoint;
+    int ep_index, rdma_index, i;
+
     openib_btl = (mca_btl_openib_module_t*) btl; 
+
+    /* Remove the btl from component list */
+    if ( mca_btl_openib_component.ib_num_btls > 1 ) {
+        for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++){
+            if (mca_btl_openib_component.openib_btls[i] == openib_btl){
+                mca_btl_openib_component.openib_btls[i] =
+                    mca_btl_openib_component.openib_btls[mca_btl_openib_component.ib_num_btls-1];
+                    break;
+            }
+        }
+    }
+    mca_btl_openib_component.ib_num_btls--;
+
+    /* Release eager RDMAs */
+    for(rdma_index=0;
+            rdma_index < orte_pointer_array_get_size(openib_btl->eager_rdma_buffers);
+            rdma_index++) {
+        endpoint=orte_pointer_array_get_item(openib_btl->eager_rdma_buffers,rdma_index);
+        if(!endpoint) {
+            continue;
+        }
+        OBJ_RELEASE(endpoint);
+    }
+    /* Release all QPs */
+    for(ep_index=0;
+            ep_index < orte_pointer_array_get_size(openib_btl->endpoints);
+            ep_index++) {
+        endpoint=orte_pointer_array_get_item(openib_btl->endpoints,ep_index);
+        if(!endpoint) {
+            continue;
+        }
+        OBJ_RELEASE(endpoint);
+    }
+    /* Release SRQ */
+    if(mca_btl_openib_component.use_srq) { 
+        if (ibv_destroy_srq(openib_btl->srq[BTL_OPENIB_HP_QP])) {
+            BTL_VERBOSE(("Failed to close HP SRQ"));
+            return OMPI_ERROR;
+        }
+        if (ibv_destroy_srq(openib_btl->srq[BTL_OPENIB_LP_QP])) {
+            BTL_VERBOSE(("Failed to close LP SRQ"));
+            return OMPI_ERROR;
+        }
+    }
+    /* Release CQs */
+    if (ibv_destroy_cq(openib_btl->ib_cq[BTL_OPENIB_HP_QP])) {
+        BTL_VERBOSE(("Failed to close HP CQ %p",openib_btl->ib_cq[BTL_OPENIB_HP_QP]));
+        return OMPI_ERROR;
+    }
+    if (ibv_destroy_cq(openib_btl->ib_cq[BTL_OPENIB_LP_QP])) {
+        BTL_VERBOSE(("Failed to close LP CQ"));
+        return OMPI_ERROR;
+    }
+    /* Release pending lists */
+    MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(openib_btl,
+            &openib_btl->pending_frags[BTL_OPENIB_HP_QP]);
+    OBJ_DESTRUCT(&openib_btl->pending_frags[BTL_OPENIB_HP_QP]);
+    MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(openib_btl,
+            &openib_btl->pending_frags[BTL_OPENIB_LP_QP]);
+    OBJ_DESTRUCT(&openib_btl->pending_frags[BTL_OPENIB_LP_QP]);
+    /* Destroy free lists */
+    OBJ_DESTRUCT(&openib_btl->send_free[BTL_OPENIB_HP_QP]);
+    OBJ_DESTRUCT(&openib_btl->send_free[BTL_OPENIB_LP_QP]);
+    OBJ_DESTRUCT(&openib_btl->send_free_frag);
+    OBJ_DESTRUCT(&openib_btl->send_free_control);
+    OBJ_DESTRUCT(&openib_btl->recv_free[BTL_OPENIB_HP_QP]);
+    OBJ_DESTRUCT(&openib_btl->recv_free[BTL_OPENIB_LP_QP]);
+    if (!(--openib_btl->hca->btls)) {
+        /* All btls for the HCA were closed
+         * Now we can close the HCA
+         */     
+        if (OMPI_SUCCESS != mca_btl_finalize_hca(openib_btl->hca)) {
+            BTL_VERBOSE(("Failed to close HCA"));
+            return OMPI_ERROR;
+        }
+    }
+    OBJ_DESTRUCT(&openib_btl->ib_lock); 
+    free(openib_btl);
+
+    BTL_VERBOSE(("Success to close BTL resources"));
 
 #if 0 
     if(openib_btl->send_free_eager.fl_num_allocated != 
@@ -636,14 +779,6 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
     }
 #endif 
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
-    if(openib_btl->hca->progress) {
-        openib_btl->hca->progress = false;
-        if (pthread_cancel(openib_btl->hca->thread.t_handle))
-            BTL_ERROR(("Failed to cancel OpenIB progress thread"));
-        opal_thread_join(&openib_btl->hca->thread, NULL);
-    }
-#endif
     return OMPI_SUCCESS;
 }
 

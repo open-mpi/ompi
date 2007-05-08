@@ -64,7 +64,7 @@ struct mca_btl_openib_component_t {
     int                                ib_num_btls;
     /**< number of hcas available to the IB component */
 
-    struct mca_btl_openib_module_t             *openib_btls;
+    struct mca_btl_openib_module_t             **openib_btls;
     /**< array of available BTLs */
 
     int ib_free_list_num;
@@ -126,6 +126,9 @@ struct mca_btl_openib_component_t {
     uint32_t btls_per_lid;
     uint32_t max_lmc;
     uint32_t buffer_alignment;    /**< Preferred communication buffer alignment in Bytes (must be power of two) */
+#if OMPI_HAVE_POSIX_THREADS
+    int32_t fatal_counter; /**< Counts number on fatal events that we got on all hcas */
+#endif
 
     /** Colon-delimited list of filenames for HCA parameters */
     char *hca_params_file_names;
@@ -186,6 +189,11 @@ struct mca_btl_openib_hca_t {
     /* Whether this HCA supports eager RDMA */
     uint8_t use_eager_rdma;
     uint8_t btls;              /** < number of btls using this HCA */
+#if OMPI_HAVE_POSIX_THREADS
+    /* Support for fatal event handling */
+    pthread_t   async_thread;  /* Async thread that will handle fatal errors */
+#endif
+    bool got_fatal_event;
 };
 typedef struct mca_btl_openib_hca_t mca_btl_openib_hca_t;
 
