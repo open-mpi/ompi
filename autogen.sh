@@ -56,7 +56,7 @@ fi
 
 ompi_automake_version="1.9.6"
 ompi_autoconf_version="2.59"
-ompi_libtool_version="1.5.16"
+ompi_libtool_version="1.5.22"
 
 
 ##############################################################################
