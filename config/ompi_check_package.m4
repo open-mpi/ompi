@@ -122,7 +122,8 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_LIB], [
                           unset ompi_Lib])])])])
 
     AS_IF([test "$ompi_check_package_lib_happy" = "yes"],
-          [$7], [$8])
+          [$1_LIBS="-l$2 $4"
+           $7], [$8])
 
     AS_VAR_POPDEF([ompi_Lib])dnl
 ])
@@ -157,8 +158,7 @@ AC_DEFUN([OMPI_CHECK_PACKAGE],[
           [ompi_check_package_happy="no"])
 
     AS_IF([test "$ompi_check_package_happy" = "yes"],
-          [$8
-           $1_LIBS="-l$3 $5"],
+          [$8],
           [$1_CPPFLAGS="$ompi_check_package_$1_orig_CPPFLAGS"
            $1_LDFLAGS="$ompi_check_package_$1_orig_LDFLAGS"
            $1_LIBS="$ompi_check_package_$1_orig_LIBS"

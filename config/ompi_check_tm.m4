@@ -131,6 +131,10 @@ AC_DEFUN([OMPI_CHECK_TM],[
                              [ompi_check_tm_found="yes"],
                              [ompi_check_tm_found="no"])])])])
 
+    CPPFLAGS="$ompi_check_package_$1_save_CPPFLAGS"
+    LDFLAGS="$ompi_check_package_$1_save_LDFLAGS"
+    LIBS="$ompi_check_package_$1_save_LIBS"
+
     # Did we find the right stuff?
     AS_IF([test "$ompi_check_tm_happy" = "yes" -a "$ompi_check_tm_found" = "yes"],
           [$2],
