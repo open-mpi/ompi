@@ -403,6 +403,7 @@ EOF
         patch -N -p0 < config/lt1522-pathCC.diff > /dev/null 2>&1
         echo "  -- patching for pathscale multi-line output (LT 2.1a)"
         patch -N -p0 < config/lt21a-pathCC.diff > /dev/null 2>&1
+        rm -f aclocal.m4.orig
     fi
 
     run_and_check $ompi_autoconf
@@ -451,6 +452,7 @@ EOF
         if test ! -z "`grep otool config/ltmain.sh`" -a \
               -z "`grep otool64 config/ltmain.sh`"; then
             patch -N -p0 < config/ltmain_otool.diff
+            rm -f config/ltmain.sh.orig
         else
             echo "     ==> your libtool doesn't need this! yay!"
         fi
