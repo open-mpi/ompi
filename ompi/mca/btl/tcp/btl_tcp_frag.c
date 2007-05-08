@@ -246,7 +246,13 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
                 frag->iov[1].iov_base = (IOVBASE_TYPE*)(frag->segments[0].seg_addr.pval);
                 frag->iov[1].iov_len = frag->hdr.size;
                 frag->iov_cnt++;
+#ifndef __sparcv9
+                /* The following cannot be done for sparcv9 (64bit) code 
+                 * because it causes alignment errors when accessing
+                 * structures later on in the btl and pml code.
+                 */
                 dont_copy_data = 1;
+#endif
                 goto repeat;
             }
             break;
