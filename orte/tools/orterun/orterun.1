@@ -258,11 +258,17 @@ cause orterun to exit.
 .
 .TP
 .B -wd \fR<dir>\fP
+Synonym for \fI-wdir\fP.
+.
+.
+.TP
+.B -wdir \fR<dir>\fP
 Change to the directory <dir> before the user's program executes.
 See the "Current Working Directory" section for notes on relative paths.
 .B Note:
-If the \fI-wd\fP option appears both on the command line and in an
-application context, the context will take precedence over the command line.
+If the \fI-wdir\fP option appears both on the command line and in an
+application context, the context will take precedence over the command
+line.
 .
 .
 .TP
@@ -570,23 +576,26 @@ the invocation of \fImpirun\fP.
 .
 .SS Current Working Directory
 .
-The \fI\-wd\fP mpirun option allows the user to change to an arbitrary
-directory before their program is invoked.  It can also be used in application
-context files to specify working directories on specific nodes and/or
-for specific applications.
+The \fI\-wdir\fP mpirun option (and its synonym, \fI\-wd\fP) allows
+the user to change to an arbitrary directory before their program is
+invoked.  It can also be used in application context files to specify
+working directories on specific nodes and/or for specific
+applications.
 .PP
-If the \fI\-wd\fP option appears both in a context file and on the command line,
-the context file directory will override the command line value.
+If the \fI\-wdir\fP option appears both in a context file and on the
+command line, the context file directory will override the command
+line value.
 .PP
-If the \fI-wd\fP option is specified, Open MPI will attempt to change to the
-specified directory on all of the remote nodes. If this fails, \fImpirun\fP
-will abort.
+If the \fI-wdir\fP option is specified, Open MPI will attempt to
+change to the specified directory on all of the remote nodes. If this
+fails, \fImpirun\fP will abort.
 .PP
-If the \fI-wd\fP option is \fBnot\fP specified, Open MPI will send the
-directory name where \fImpirun\fP was invoked to each of the remote nodes. The
-remote nodes will try to change to that directory. If they are unable (e.g., if
-the directory does not exit on that node), then Open MPI will use the default
-directory determined by the starter.
+If the \fI-wdir\fP option is \fBnot\fP specified, Open MPI will send
+the directory name where \fImpirun\fP was invoked to each of the
+remote nodes. The remote nodes will try to change to that
+directory. If they are unable (e.g., if the directory does not exit on
+that node), then Open MPI will use the default directory determined by
+the starter.
 .PP
 All directory changing occurs before the user's program is invoked; it
 does not wait until \fIMPI_INIT\fP is called.  
