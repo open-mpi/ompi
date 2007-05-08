@@ -77,7 +77,7 @@ cmd="$libtool --dry-run --mode=link --tag=CC $CC bar.lo libfoo.la -o bar $extra_
 ompi_check_linker_flags_work yes
 
 # eat any extra whitespace in CC, as libtool will do the same
-tmpCC=`echo $CC`
+tmpCC=`echo $CC | sed -e 's/\//\\\\\//g'`
 output=`echo $output | sed -e "s/^$tmpCC//"`
 eval "set $output"
 extra_ldflags=
