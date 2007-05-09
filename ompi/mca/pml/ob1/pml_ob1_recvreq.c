@@ -332,18 +332,10 @@ int mca_pml_ob1_recv_request_get_frag(
         mca_pml_ob1_rdma_frag_t* frag)
 {
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)frag->rdma_req;
-    mca_bml_base_endpoint_t* bml_endpoint = frag->rdma_ep;
-    mca_bml_base_btl_t* bml_btl;
+    mca_bml_base_btl_t* bml_btl = frag->rdma_bml;
     mca_btl_base_descriptor_t* descriptor;
     size_t save_size = frag->rdma_length;
     int rc;
-
-    bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma,
-            frag->rdma_btl);
-    if(NULL == bml_btl) {
-        opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
-        orte_errmgr.abort();
-    }
 
     /* prepare descriptor */
     mca_bml_base_prepare_dst(
@@ -422,12 +414,17 @@ static void mca_pml_ob1_recv_request_rget(
         size += hdr->hdr_segs[i].seg_len;
         frag->rdma_segs[i] = hdr->hdr_segs[i];
     }
+    frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
+    if(NULL == frag->rdma_bml) {
+        opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
+        orte_errmgr.abort();
+    }
     frag->rdma_hdr.hdr_rget = *hdr;
     frag->rdma_req = recvreq;
     frag->rdma_ep = bml_endpoint;
-    frag->rdma_btl = btl;
     frag->rdma_length = size;
     frag->rdma_state = MCA_PML_OB1_RDMA_GET;
+    frag->reg = NULL;
 
     mca_pml_ob1_recv_request_get_frag(frag);
 }

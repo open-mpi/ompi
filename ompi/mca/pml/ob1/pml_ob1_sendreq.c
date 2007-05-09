@@ -1067,23 +1067,11 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
 
 int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
 {
-    mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)frag->rdma_req;
     mca_mpool_base_registration_t* reg = NULL;
-    mca_bml_base_btl_t* bml_btl;
+    mca_bml_base_btl_t* bml_btl = frag->rdma_bml;
     mca_btl_base_descriptor_t* des;
-    size_t i, save_size = frag->rdma_length;
+    size_t save_size = frag->rdma_length;
     int rc;
-
-    bml_btl = mca_bml_base_btl_array_find(&frag->rdma_ep->btl_rdma,
-                                          frag->rdma_btl);
-
-    /* lookup the corresponding registration */
-    for(i=0; i<sendreq->req_rdma_cnt; i++) {
-       if(sendreq->req_rdma[i].bml_btl == bml_btl) {
-           reg = sendreq->req_rdma[i].btl_reg;
-           break;
-       }
-    } 
 
     /* setup descriptor */
     mca_bml_base_prepare_src( bml_btl, 
@@ -1166,12 +1154,21 @@ void mca_pml_ob1_send_request_put(
         size += frag->rdma_segs[i].seg_len;
     }
 
+    frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
     frag->rdma_hdr.hdr_rdma = *hdr;
     frag->rdma_req = sendreq; 
     frag->rdma_ep = bml_endpoint;
-    frag->rdma_btl = btl;
     frag->rdma_length = size;
     frag->rdma_state = MCA_PML_OB1_RDMA_PUT;
+    frag->reg = NULL;
+
+    /* lookup the corresponding registration */
+    for(i=0; i<sendreq->req_rdma_cnt; i++) {
+       if(sendreq->req_rdma[i].bml_btl == frag->rdma_bml) {
+           frag->reg = sendreq->req_rdma[i].btl_reg;
+           break;
+       }
+    } 
 
     /*  RDMA writes may proceed in parallel to send and to each other, so
      *  create clone of the convertor for each RDMA fragment

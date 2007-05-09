@@ -36,7 +36,7 @@ typedef enum {
 
 struct mca_pml_ob1_rdma_frag_t {
     ompi_free_list_item_t super;
-    mca_btl_base_module_t* rdma_btl;
+    mca_bml_base_btl_t* rdma_bml;
     mca_pml_ob1_hdr_t rdma_hdr;
     mca_pml_ob1_rdma_state_t rdma_state;
     size_t rdma_length;
@@ -44,6 +44,7 @@ struct mca_pml_ob1_rdma_frag_t {
     void *rdma_req;
     struct mca_bml_base_endpoint_t* rdma_ep;
     ompi_convertor_t convertor;
+    mca_mpool_base_registration_t* reg;
 };
 typedef struct mca_pml_ob1_rdma_frag_t mca_pml_ob1_rdma_frag_t;
 
