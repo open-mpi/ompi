@@ -1176,8 +1176,9 @@ void mca_pml_ob1_send_request_put(
     /*  RDMA writes may proceed in parallel to send and to each other, so
      *  create clone of the convertor for each RDMA fragment
      */
+    size = hdr->hdr_rdma_offset;
     ompi_convertor_clone_with_position(&sendreq->req_send.req_convertor,
-            &frag->convertor, 0, &hdr->hdr_rdma_offset);
+            &frag->convertor, 0, &size);
 
     mca_pml_ob1_send_request_put_frag(frag);
 }
