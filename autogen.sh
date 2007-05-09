@@ -113,6 +113,9 @@ check_version() {
     local min_version="$1"
     local version="$2"
 
+    min_version=`echo $min_version | sed -e 's/[A-Za-z]//g'`
+    version=`echo $version | sed -e 's/[A-Za-z]//g'`
+
     local min_major_version="`echo $min_version | cut -f1 -d.`"
     local min_minor_version="`echo $min_version | cut -f2 -d.`"
     local min_release_version="`echo $min_version | cut -f3 -d.`"
@@ -187,6 +190,7 @@ find_app() {
 
         if check_version $min_version $version ; then
             eval "ompi_${app_name}=\"${i}\""
+            eval "ompi_${app_name}_found_version=$version"
             found=1
             break
         fi
@@ -231,7 +235,7 @@ EOF
 ##############################################################################
 run_and_check() {
     local rac_progs="$*"
-    echo "[Running] $rac_progs"
+    echo "$indent[Running] $rac_progs"
     eval $rac_progs
     if test "$?" != 0; then
 	cat <<EOF
@@ -398,11 +402,14 @@ EOF
     # This must be done before we run autoconf.
 
     if test -f $topdir_file; then 
-        echo "Adjusting libtool for OMPI :-("
-        echo "  -- patching for pathscale multi-line output (LT 1.5.22)"
-        patch -N -p0 < config/lt1522-pathCC.diff > /dev/null 2>&1
-        echo "  -- patching for pathscale multi-line output (LT 2.1a)"
-        patch -N -p0 < config/lt21a-pathCC.diff > /dev/null 2>&1
+        echo "** Adjusting libtool for OMPI :-("
+        if ! check_version "2.0.0" $ompi_libtoolize_found_version ; then
+            echo "   ++ patching for pathscale multi-line output (LT 1.5.x)"
+            patch -N -p0 < config/lt1522-pathCC.diff > /dev/null 2>&1
+        else
+            echo "   ++ patching for pathscale multi-line output (LT 2.x)"
+            patch -N -p0 < config/lt21a-pathCC.diff > /dev/null 2>&1
+        fi
         rm -f aclocal.m4.orig
     fi
 
@@ -415,7 +422,23 @@ EOF
 	rm -rf libltdl opal/libltdl opal/ltdl.h
 	run_and_check $ompi_libtoolize --automake --copy --ltdl
         if test -d libltdl; then
-            mv libltdl opal
+             echo "   -- Moving libltdl to opal/"
+             mv libltdl opal
+        fi
+        if check_version "1.10.0" $ompi_automake_found_version ; then
+            ver=`grep '^am__api_version' opal/libltdl/configure | cut -f2 -d=`
+            # eat single quotes
+            eval "ver=$ver"
+            if ! check_version "1.9.7" $ver ; then
+                indent="   "
+                echo "** Updating Automake version in libltdl package"
+                pushd opal/libltdl > /dev/null 2>&1
+                run_and_check $ompi_aclocal
+                run_and_check $ompi_automake
+                run_and_check $ompi_autoconf
+                popd > /dev/null 2>&1
+                unset indent
+            fi
         fi
         if test ! -r opal/libltdl/ltdl.h; then
             cat <<EOF
@@ -425,9 +448,9 @@ EOF
             exit 1
         fi
 
-	echo "Adjusting libltdl for OMPI :-("
+	echo "** Adjusting libltdl for OMPI :-("
 
-	echo "  -- patching for argz bugfix in libtool 1.5"
+	echo "   ++ patching for argz bugfix in libtool 1.5"
 	cd opal/libltdl
         if test "`grep 'while ((before >= *pargz) && (before[-1] != LT_EOS_CHAR))' ltdl.c`" != ""; then
             patch -N -p0 <<EOF
@@ -445,27 +468,27 @@ EOF
 EOF
 #'
         else
-            echo "     ==> your libtool doesn't need this! yay!"
+            echo "      -- your libtool doesn't need this! yay!"
         fi
 	cd ../..
-        echo "  -- patching 64-bit OS X bug in ltmain.sh"
+        echo "   ++ patching 64-bit OS X bug in ltmain.sh"
         if test ! -z "`grep otool config/ltmain.sh`" -a \
               -z "`grep otool64 config/ltmain.sh`"; then
             patch -N -p0 < config/ltmain_otool.diff
             rm -f config/ltmain.sh.orig
         else
-            echo "     ==> your libtool doesn't need this! yay!"
+            echo "      -- your libtool doesn't need this! yay!"
         fi
 
-        echo "  -- RTLD_GLOBAL in libltdl"
+        echo "   ++ RTLD_GLOBAL in libltdl"
         if test -r opal/libltdl/loaders/dlopen.c && \
             test ! -z "`grep 'filename, LT_LAZY_OR_NOW' opal/libltdl/loaders/dlopen.c`"; then
             patch -N -p0 < config/libltdl_dlopen_global.diff
         else
-            echo "     ==> your libltdl doesn't need this! yay!"
+            echo "      -- your libltdl doesn't need this! yay!"
         fi
 
-	echo "  -- patching configure for broken -c/-o compiler test"
+	echo "   ++ patching configure for broken -c/-o compiler test"
 	sed -e 's/chmod -w \./#OMPI\/MPI FIX: chmod -w ./' \
 	    configure > configure.new
 	mv configure.new configure
@@ -1153,18 +1176,12 @@ else
 fi
 
 # BWB --- temporary time to update autoconf / automake hack
-bad=1
-ac_version="`${ompi_autoconf} --version 2>&1`"
-ac_version="`echo $ac_version | cut -f2 -d')'`"
-ac_version="`echo $ac_version | cut -f1 -d' '`"
-am_version="`${ompi_automake} --version 2>&1`"
-am_version="`echo $am_version | cut -f2 -d')'`"
-am_version="`echo $am_version | cut -f1 -d' '`"
-if check_version "2.60.0" $ac_version ; then
-    bad=0
+bad=0
+if ! check_version "2.60.0" $ompi_autoconf_found_version ; then
+    bad=1
 fi
-if check_version "1.10.0" $am_version ; then
-    bad=0
+if ! check_version "1.10.0" $ompi_automake_found_version ; then
+    bad=1
 fi
 if test $bad -eq 1 ; then
 	cat <<EOF
