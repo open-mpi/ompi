@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -73,9 +73,10 @@ typedef struct mca_btl_udapl_footer_t mca_btl_udapl_footer_t;
  */
 struct mca_btl_udapl_rdma_footer_t {
     uint32_t size;
-    uint8_t active;     /* 0 = not in use; 1 = data is available to be received;
-                         * this should always be the last entry in this structure
-                         */
+    volatile uint8_t active;/* 0 = not in use; 1 = data is available to be
+			     * received; this should always be the last entry
+			     * in this structure
+			     */
     char pad[3];        /* pad out be aligned on MCA_BTL_UDAPL_FRAG_ALIGN byte boundary */
 };
 typedef struct mca_btl_udapl_rdma_footer_t mca_btl_udapl_rdma_footer_t;

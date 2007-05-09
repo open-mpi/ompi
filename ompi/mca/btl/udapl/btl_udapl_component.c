@@ -618,12 +618,6 @@ int mca_btl_udapl_component_progress()
                 dto = &event.event_data.dto_completion_event_data;
 
                 frag = dto->user_cookie.as_ptr;
-                /* if we are using the "guarantee" rdma code path
-                 * the extra write sets cookie to NULL, when this
-                 * happens we ignore it because the completion
-                 * write event is coming
-                 */
-                if (frag == NULL) break;
 
 		/* Was the DTO successful? */
                 if(DAT_DTO_SUCCESS != dto->status) {
@@ -880,7 +874,6 @@ int mca_btl_udapl_component_progress()
         for (j = 0; j < rdma_ep_count; j++) {
             mca_btl_udapl_endpoint_t* endpoint;
             mca_btl_udapl_frag_t *local_rdma_frag;
-            DAT_LMR_TRIPLET         local_rdma_segment; 
 
             endpoint =
                 orte_pointer_array_get_item(btl->udapl_eager_rdma_endpoints, j);
@@ -890,19 +883,6 @@ int mca_btl_udapl_component_progress()
             local_rdma_frag =             
                 MCA_BTL_UDAPL_GET_LOCAL_RDMA_FRAG(endpoint,
                     endpoint->endpoint_eager_rdma_local.head);
-
-            /* sync local memory before checking if active
-             * Question, will narrowing sync area to just the active byte
-             * one, work and two, improve performance
-             */
-            local_rdma_segment.lmr_context =
-                local_rdma_frag->triplet.lmr_context;
-            local_rdma_segment.virtual_address =
-                (DAT_VADDR)local_rdma_frag->segment.seg_addr.pval;
-            local_rdma_segment.segment_length = local_rdma_frag->size;
-            
-            dat_lmr_sync_rdma_write(endpoint->endpoint_btl->udapl_ia,
-                &local_rdma_segment, 1);
 
             if (local_rdma_frag->rdma_ftr->active == 1) {
                 int pad = 0;

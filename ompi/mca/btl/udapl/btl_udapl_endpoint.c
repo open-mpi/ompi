@@ -77,7 +77,6 @@ int mca_btl_udapl_endpoint_write_eager(mca_btl_base_endpoint_t* endpoint,
     DAT_DTO_COOKIE cookie;
     char* remote_buf;
     DAT_RMR_TRIPLET remote_buffer;
-    DAT_LMR_TRIPLET local_iov;     /* one contiguous write */
     int rc = OMPI_SUCCESS;
     int pad = 0;
     uint8_t head = endpoint->endpoint_eager_rdma_remote.head;
@@ -121,127 +120,32 @@ int mca_btl_udapl_endpoint_write_eager(mca_btl_base_endpoint_t* endpoint,
         frag->size -
         frag->triplet.segment_length;
 
-    if (mca_btl_udapl_component.udapl_eager_rdma_guarantee == 0) {
-        /* execute transfer with one contiguous write */
+    /* execute transfer with one contiguous write */
         
-        /* establish remote memory region */
-        remote_buffer.rmr_context =
-            (DAT_RMR_CONTEXT)endpoint->endpoint_eager_rdma_remote.rkey;
-        remote_buffer.target_address = (DAT_VADDR)remote_buf;
-        remote_buffer.segment_length = frag->triplet.segment_length;
+    /* establish remote memory region */
+    remote_buffer.rmr_context =
+        (DAT_RMR_CONTEXT)endpoint->endpoint_eager_rdma_remote.rkey;
+    remote_buffer.target_address = (DAT_VADDR)remote_buf;
+    remote_buffer.segment_length = frag->triplet.segment_length;
 
-        /* write the data out */
-        cookie.as_ptr = frag;
-        rc = dat_ep_post_rdma_write(endpoint->endpoint_eager,        
-            1,
-            &(frag->triplet),
-            cookie,
-            &remote_buffer,
-            DAT_COMPLETION_DEFAULT_FLAG);
-        if(DAT_SUCCESS != rc) {
-            char* major;
-            char* minor;
+    /* write the data out */
+    cookie.as_ptr = frag;
+    rc = dat_ep_post_rdma_write(endpoint->endpoint_eager,        
+        1,
+        &(frag->triplet),
+        cookie,
+        &remote_buffer,
+        DAT_COMPLETION_DEFAULT_FLAG);
+    if(DAT_SUCCESS != rc) {
+        char* major;
+        char* minor;
 
-            dat_strerror(rc, (const char**)&major, (const char**)&minor);
-            BTL_ERROR(("ERROR: %s %s %s\n", "dat_ep_post_rdma_write",
-                major, minor));
-            return OMPI_ERROR;
-        } 
-    } else {
-        /* One must perform a few extra steps to guarantee that the last
-         * byte written is indeed the "active" value; This is
-         * acomplished by doing write-read-write; See Sections
-         * 6.6.21.0.1 and 6.8.2.1 in Verion 1.2 9/15/2004 of the UDAPL Spec.
-         *
-         * Since the frag->triplet is already prep'ed for the non
-         * guarantee single write case above, here we perform 2 writes:
-         * first the data and the udapl footer, skipping the pad,
-         * and then writing just the rdma footer. With the read
-         * inbetween as required to guarantee delivery of the
-         * second write after the first.
-         */
-        
-        /* establish remote memory region for data and udapl footer */
-        remote_buffer.rmr_context =
-            (DAT_RMR_CONTEXT)endpoint->endpoint_eager_rdma_remote.rkey;
-        remote_buffer.target_address = (DAT_VADDR)remote_buf;
-        remote_buffer.segment_length = (frag->triplet.segment_length -
-            sizeof(mca_btl_udapl_rdma_footer_t) - pad);
-        
-        /* establish local memory region for data and udapl footer */
-        local_iov.lmr_context = frag->triplet.lmr_context;
-        local_iov.virtual_address = (DAT_VADDR)frag->triplet.virtual_address;
-        local_iov.segment_length = (frag->triplet.segment_length -
-            sizeof(mca_btl_udapl_rdma_footer_t) - pad);
-        
-        /* write the data */
-        cookie.as_ptr = NULL;
-        rc = dat_ep_post_rdma_write(endpoint->endpoint_eager,        
-            1,
-            &local_iov,
-            cookie,
-            &remote_buffer,
-            DAT_COMPLETION_DEFAULT_FLAG);
-        if(DAT_SUCCESS != rc) {
-            char* major;
-            char* minor;
+        dat_strerror(rc, (const char**)&major, (const char**)&minor);
+        BTL_ERROR(("ERROR: %s %s %s\n", "dat_ep_post_rdma_write",
+            major, minor));
+        return OMPI_ERROR;
+    } 
 
-            dat_strerror(rc, (const char**)&major, (const char**)&minor);
-            BTL_ERROR(("ERROR: %s %s %s\n", "dat_ep_post_rdma_write",
-                major, minor));
-            return OMPI_ERROR;
-        }
-
-        /* perform zero byte read of the remote memory region */
-        remote_buffer.target_address = (DAT_VADDR)remote_buf;
-        remote_buffer.segment_length = frag->triplet.segment_length;
-        local_iov.virtual_address = (DAT_VADDR)NULL;
-        local_iov.segment_length = 0;
-        
-        cookie.as_ptr = NULL;
-        rc = dat_ep_post_rdma_read(endpoint->endpoint_eager,        
-            0,
-            &local_iov,
-            cookie,
-            &remote_buffer,
-            DAT_COMPLETION_DEFAULT_FLAG);
-        if(DAT_SUCCESS != rc) {
-            char* major;
-            char* minor;
-
-            dat_strerror(rc, (const char**)&major, (const char**)&minor);
-            BTL_ERROR(("ERROR: %s %s %s\n", "dat_ep_post_rdma_read",
-                major, minor));
-            return OMPI_ERROR;
-        }
-        
-        /* establish remote memory region for rdma footer */
-        remote_buffer.target_address = (DAT_VADDR)((char *)remote_buf +
-            frag->triplet.segment_length - sizeof(mca_btl_udapl_rdma_footer_t));
-        remote_buffer.segment_length = sizeof(mca_btl_udapl_rdma_footer_t);
-        
-        /* establish local memory region for rdma footer */
-        local_iov.virtual_address = (DAT_VADDR)(frag->rdma_ftr);
-        local_iov.segment_length = sizeof(mca_btl_udapl_rdma_footer_t);
-        
-        /* write the footer */
-        cookie.as_ptr = frag;
-        rc = dat_ep_post_rdma_write(endpoint->endpoint_eager,        
-            1,
-            &local_iov,
-            cookie,
-            &remote_buffer,
-            DAT_COMPLETION_DEFAULT_FLAG);
-        if(DAT_SUCCESS != rc) {
-            char* major;
-            char* minor;
-
-            dat_strerror(rc, (const char**)&major, (const char**)&minor);
-            BTL_ERROR(("ERROR: %s %s %s\n", "dat_ep_post_rdma_write",
-                major, minor));
-            return OMPI_ERROR;
-        }
-    }
     return rc;
 }
 

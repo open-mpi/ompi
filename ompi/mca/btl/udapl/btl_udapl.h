@@ -62,16 +62,6 @@ struct mca_btl_udapl_component_t {
     int32_t udapl_sr_win;       /**< number of fragments recieved before
                                    returnting credits to sendier */
     int32_t udapl_timeout;      /**< connection timeout, in microseconds */
-    int32_t udapl_eager_rdma_guarantee;/**< uDAPL does not guarantee
-                                          the order of data written to
-                                          buffer, if the interface
-                                          card in use guarantees front
-                                          to back order of data
-                                          written then this flag
-                                          should remain as set by
-                                          default (off) otherwise
-                                          latency overhead will
-                                          increase if turned on */
     size_t udapl_eager_frag_size;
     size_t udapl_max_frag_size;
     size_t udapl_eager_rdma_frag_size; /* size of the rdma fragement including data
@@ -90,6 +80,7 @@ struct mca_btl_udapl_component_t {
                                     recieved before returning credits to
                                     sender */
     int32_t udapl_async_events;  /**< dequeue asynchronous events */
+    int32_t udapl_buffer_alignment;  /**< preferred communication buffer alignment, in bytes */
     opal_list_t udapl_procs;   /**< list of udapl proc structures */
     opal_mutex_t udapl_lock;   /**< lock for accessing module state */
     char* udapl_mpool_name;    /**< name of memory pool */ 
