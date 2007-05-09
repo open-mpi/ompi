@@ -30,3 +30,12 @@ value, e.g. 16.
 
 WARNING: Using default uDAPL endpoint parameters not those that
 would have been modified by MCA parameters.
+
+[optimal buffer alignment mismatch]
+
+WARNING: DAT_OPTIMAL_ALIGNMENT = %d : BTL buffer_alignment = %d.
+The BTL buffer_alignment value may not be optimal. If all nodes
+report the same DAT_OPTIMAL_ALIGNMENT value and this differs from
+BTL buffer_alignment then setting "--mca btl_udapl_buffer_alignment
+%d" may improve performance.
+

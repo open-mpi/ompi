@@ -269,41 +269,57 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     OBJ_CONSTRUCT(&btl->udapl_frag_control, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->udapl_lock, opal_mutex_t);
     
+     /* check buffer alignment against dat library */
+    if (mca_btl_udapl_component.udapl_buffer_alignment !=
+        DAT_OPTIMAL_ALIGNMENT) {
+
+        opal_show_help("help-mpi-btl-udapl.txt",
+            "optimal buffer alignment mismatch", 
+            true,
+            DAT_OPTIMAL_ALIGNMENT,
+            mca_btl_udapl_component.udapl_buffer_alignment,
+            DAT_OPTIMAL_ALIGNMENT);
+    }
+
     /* initialize free lists */
-    ompi_free_list_init(&btl->udapl_frag_eager,
-            sizeof(mca_btl_udapl_frag_eager_t) +
-                    mca_btl_udapl_component.udapl_eager_frag_size,
-            OBJ_CLASS(mca_btl_udapl_frag_eager_t),
-            mca_btl_udapl_component.udapl_free_list_num,
-            mca_btl_udapl_component.udapl_free_list_max,
-            mca_btl_udapl_component.udapl_free_list_inc,
-            btl->super.btl_mpool);
+    ompi_free_list_init_ex(&btl->udapl_frag_eager,
+        sizeof(mca_btl_udapl_frag_eager_t) +
+            mca_btl_udapl_component.udapl_eager_frag_size,
+        mca_btl_udapl_component.udapl_buffer_alignment,
+        OBJ_CLASS(mca_btl_udapl_frag_eager_t),
+        mca_btl_udapl_component.udapl_free_list_num,
+        mca_btl_udapl_component.udapl_free_list_max,
+        mca_btl_udapl_component.udapl_free_list_inc,
+        btl->super.btl_mpool);
 
-    ompi_free_list_init(&btl->udapl_frag_max,
-            sizeof(mca_btl_udapl_frag_max_t) +
-                    mca_btl_udapl_component.udapl_max_frag_size,
-            OBJ_CLASS(mca_btl_udapl_frag_max_t),
-            mca_btl_udapl_component.udapl_free_list_num,
-            mca_btl_udapl_component.udapl_free_list_max,
-            mca_btl_udapl_component.udapl_free_list_inc,
-            btl->super.btl_mpool);
+    ompi_free_list_init_ex(&btl->udapl_frag_max,
+        sizeof(mca_btl_udapl_frag_max_t) +
+            mca_btl_udapl_component.udapl_max_frag_size,
+        mca_btl_udapl_component.udapl_buffer_alignment,
+        OBJ_CLASS(mca_btl_udapl_frag_max_t),
+        mca_btl_udapl_component.udapl_free_list_num,
+        mca_btl_udapl_component.udapl_free_list_max,
+        mca_btl_udapl_component.udapl_free_list_inc,
+        btl->super.btl_mpool);
 
-    ompi_free_list_init(&btl->udapl_frag_user,
-          sizeof(mca_btl_udapl_frag_user_t),
-          OBJ_CLASS(mca_btl_udapl_frag_user_t),
-          mca_btl_udapl_component.udapl_free_list_num,
-          mca_btl_udapl_component.udapl_free_list_max,
-          mca_btl_udapl_component.udapl_free_list_inc,
-          NULL);
+    ompi_free_list_init_ex(&btl->udapl_frag_user,
+        sizeof(mca_btl_udapl_frag_user_t),
+        mca_btl_udapl_component.udapl_buffer_alignment,
+        OBJ_CLASS(mca_btl_udapl_frag_user_t),
+        mca_btl_udapl_component.udapl_free_list_num,
+        mca_btl_udapl_component.udapl_free_list_max,
+        mca_btl_udapl_component.udapl_free_list_inc,
+        NULL);
 
-    ompi_free_list_init(&btl->udapl_frag_control,
-          sizeof(mca_btl_udapl_frag_eager_t) +
-          mca_btl_udapl_component.udapl_eager_frag_size,
-          OBJ_CLASS(mca_btl_udapl_frag_eager_t),
-          mca_btl_udapl_component.udapl_free_list_num,
-          -1,
-          mca_btl_udapl_component.udapl_free_list_inc,
-          btl->super.btl_mpool);
+    ompi_free_list_init_ex(&btl->udapl_frag_control,
+        sizeof(mca_btl_udapl_frag_eager_t) +
+        mca_btl_udapl_component.udapl_eager_frag_size,
+        mca_btl_udapl_component.udapl_buffer_alignment,
+	OBJ_CLASS(mca_btl_udapl_frag_eager_t),
+        mca_btl_udapl_component.udapl_free_list_num,
+        -1,
+        mca_btl_udapl_component.udapl_free_list_inc,
+        btl->super.btl_mpool);
 
     /* initialize eager rdma buffer info */
     orte_pointer_array_init(&btl->udapl_eager_rdma_endpoints, 

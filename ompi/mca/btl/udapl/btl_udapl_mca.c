@@ -200,19 +200,18 @@ int mca_btl_udapl_register_mca_params(void)
         REGINT_GE_ONE), tmp_rc, rc);
     mca_btl_udapl_component.udapl_timeout = (uint32_t) ival;        
 
-    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("eager_rdma_guarantee",
-        "If the interface card in use guarantees front to back order "
-	"of data written then this flag should remain as set by "
-	"default (off).",
-        0,
-        &mca_btl_udapl_component.udapl_eager_rdma_guarantee,
-        REGINT_GE_ZERO), tmp_rc, rc);
-
     CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("async_events",
         "The asynchronous event queue will only be "
         "checked after entering progress this number of times.",
         100000000,
         &mca_btl_udapl_component.udapl_async_events,
+        REGINT_GE_ONE), tmp_rc, rc);
+
+    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("buffer_alignment",
+        "Preferred communication buffer alignment, "
+        "in bytes (must be >= 1).",
+        DAT_OPTIMAL_ALIGNMENT,
+        &mca_btl_udapl_component.udapl_buffer_alignment,
         REGINT_GE_ONE), tmp_rc, rc);
 
     /* register uDAPL module parameters */
