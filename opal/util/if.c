@@ -1487,13 +1487,13 @@ opal_ifkindextoname(int kif_index, char* if_name, int length)
 }
 
 int
-opal_ifindextoaddr(int if_index, struct sockaddr_storage* if_addr, int length)
+opal_ifindextoaddr(int if_index, struct sockaddr_storage* if_addr, unsigned int length)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
 int
-opal_ifindextomask(int if_index, struct sockaddr_storage* if_addr, int length)
+opal_ifindextomask(int if_index, uint32_t* if_addr, int length)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
