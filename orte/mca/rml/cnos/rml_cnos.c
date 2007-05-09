@@ -227,7 +227,7 @@ orte_rml_cnos_xcast(orte_process_name_t * root,
                     orte_gpr_notify_message_t *msg2,
                     orte_gpr_trigger_cb_fn_t cbfunc)
 {
-    if (NULL != root || NULL != msg) {
+    if (NULL != root || NULL != msg2) {
         return ORTE_ERR_NOT_SUPPORTED;
     }
 
