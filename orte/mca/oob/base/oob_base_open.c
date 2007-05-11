@@ -83,10 +83,10 @@ int mca_oob_base_open(void)
   }
 
   /* register parameters */
-  mca_base_param_reg_string_name("oob_base", "include",
+  mca_base_param_reg_string_name("oob", "base_include",
                                  "Components to include for oob framework selection",
                                  false, false, NULL, &mca_oob_base_include);
-  mca_base_param_reg_string_name("oob_base", "exclude",
+  mca_base_param_reg_string_name("oob", "base_exclude",
                                  "Components to exclude for oob framework selection",
                                  false, false, NULL, &mca_oob_base_exclude);
 
@@ -99,7 +99,7 @@ int mca_oob_base_open(void)
       orte_oob_base_timing = false;
   }
   
-  param = mca_base_param_reg_int_name("oob_xcast", "timing",
+  param = mca_base_param_reg_int_name("oob", "xcast_timing",
                                       "Request that xcast timing loops be measured",
                                       false, false, 0, &value);
   if (value != 0) {
@@ -108,7 +108,7 @@ int mca_oob_base_open(void)
       orte_oob_xcast_timing = false;
   }
   
-  param = mca_base_param_reg_string_name("oob_xcast", "mode",
+  param = mca_base_param_reg_string_name("oob", "xcast_mode",
 #if 0
                                          "Select xcast mode (\"linear\" | \"binomial\" | \"direct [default] \")",
 #endif
