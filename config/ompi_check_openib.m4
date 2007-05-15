@@ -102,7 +102,10 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                                      [Number of arguments to ibv_create_cq])])])
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
-          [AC_CHECK_FUNCS([ibv_create_srq], 
+          [AC_CHECK_DECLS([IBV_EVENT_CLIENT_REREGISTER], [], [], 
+                          [#include <infiniband/verbs.h>])
+
+           AC_CHECK_FUNCS([ibv_create_srq], 
                           [ompi_check_openib_have_srq=1],
                           [ompi_check_openib_have_srq=0])
            AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_SRQ],

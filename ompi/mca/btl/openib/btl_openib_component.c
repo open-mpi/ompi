@@ -1200,7 +1200,9 @@ void* btl_openib_async_thread(void *one_hca)
             case IBV_EVENT_PKEY_CHANGE:
             case IBV_EVENT_SM_CHANGE:
             case IBV_EVENT_QP_LAST_WQE_REACHED:
+#if HAVE_DECL_IBV_EVENT_CLIENT_REREGISTER
             case IBV_EVENT_CLIENT_REREGISTER:
+#endif
                 break;
             case IBV_EVENT_SRQ_LIMIT_REACHED:
                 BTL_ERROR(("Got SRQ limit event %d",event.event_type));
