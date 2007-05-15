@@ -133,7 +133,7 @@ int32_t ompi_ddt_init( void );
 int32_t ompi_ddt_finalize( void );
 ompi_datatype_t* ompi_ddt_create( int32_t expectedSize );
 OMPI_DECLSPEC int32_t ompi_ddt_commit( ompi_datatype_t** );
-int32_t ompi_ddt_destroy( ompi_datatype_t** );
+OMPI_DECLSPEC int32_t ompi_ddt_destroy( ompi_datatype_t** );
 static inline int32_t ompi_ddt_is_committed( const ompi_datatype_t* type )
 { return ((type->flags & DT_FLAG_COMMITED) == DT_FLAG_COMMITED); }
 static inline int32_t ompi_ddt_is_overlapped( const ompi_datatype_t* type )
