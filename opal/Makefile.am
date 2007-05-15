@@ -33,7 +33,7 @@ SUBDIRS = \
 
 DIST_SUBDIRS = \
 	include \
-	$(LIBLTDL_SUBDIR) \
+	libltdl \
 	asm \
 	etc \
 	event \
@@ -47,7 +47,7 @@ DIST_SUBDIRS = \
 lib_LTLIBRARIES = libopen-pal.la
 libopen_pal_la_SOURCES =
 libopen_pal_la_LIBADD = \
-        $(LIBLTDL_LTLIB) \
+        $(LIBLTDL) \
         asm/libasm.la \
         event/libevent.la \
         mca/base/libmca_base.la \

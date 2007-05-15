@@ -17,7 +17,7 @@
 #
 
 AM_CPPFLAGS = \
-	$(OPAL_LTDL_CPPFLAGS) \
+	$(LTDLINCL) \
         -DBUILDDIR=\"$(OMPI_TOP_BUILDDIR)\" \
         -DSRCDIR=\"$(OMPI_TOP_SRCDIR)\"
 

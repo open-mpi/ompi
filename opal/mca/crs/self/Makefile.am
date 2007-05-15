@@ -15,7 +15,7 @@
 #
 
 AM_CPPFLAGS = \
-    $(OPAL_LTDL_CPPFLAGS)
+    $(LTDLINCL)
 
 dist_pkgdata_DATA = help-opal-crs-self.txt
 

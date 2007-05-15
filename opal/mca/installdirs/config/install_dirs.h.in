@@ -36,17 +36,17 @@
 #ifndef OPAL_INST_DIRS_H
 #define OPAL_INST_DIRS_H
 
-#define OPAL_PREFIX "@OPAL_PREFIX@"
-#define OPAL_EXEC_PREFIX "@OPAL_EXEC_PREFIX@"
+#define OPAL_PREFIX "@prefix@"
+#define OPAL_EXEC_PREFIX "@exec_prefix@"
 
 /* The directory for installing executable programs that users can
    run. */
-#define OPAL_BINDIR "@OPAL_BINDIR@"
+#define OPAL_BINDIR "@bindir@"
 
 /* The directory for installing executable programs that can be run
    from the shell, but are only generally useful to system
    administrators. */
-#define OPAL_SBINDIR "@OPAL_SBINDIR@"
+#define OPAL_SBINDIR "@sbindir@"
 
 /* The directory for installing executable programs to be run by other
    programs rather than by users.
@@ -56,7 +56,7 @@
    packages install their data under $(libexecdir)/package-name/,
    possibly within additional subdirectories thereof, such as
    $(libexecdir)/package-name/machine/version. */
-#define OPAL_LIBEXECDIR "@OPAL_LIBEXECDIR@"
+#define OPAL_LIBEXECDIR "@libexecdir@"
 
 /* The root of the directory tree for read-only
    architecture-independent data files.
@@ -64,7 +64,7 @@
    See not about OPAL_DATADIR.  And you probably want that one, not
    this one.  This is one of those "building block" paths, that is
    really only used for defining other paths. */
-#define OPAL_DATAROOTDIR "@OPAL_DATAROOTDIR@"
+#define OPAL_DATAROOTDIR "@datarootdir@"
 
 /* The directory for installing idiosyncratic read-only
   architecture-independent data files for this program. 
@@ -72,7 +72,7 @@
   The definition of ‘datadir’ is the same for all packages, so you
   should install your data in a subdirectory thereof. Most packages
   install their data under $(datadir)/package-name/. */
-#define OPAL_DATADIR "@OPAL_DATADIR@"
+#define OPAL_DATADIR "@datadir@"
 
 /* $(datadir)/package-name/.  You probably want to use this instead of
    OPAL_DATADIR */
@@ -89,11 +89,11 @@
    that are modified in the normal course of their use (programs whose
    purpose is to change the configuration of the system
    excluded). Those probably belong in $(localstatedir).  */
-#define OPAL_SYSCONFDIR "@OPAL_SYSCONFDIR@"
+#define OPAL_SYSCONFDIR "@sysconfdir@"
 
 /* The directory for installing architecture-independent data files
    which the programs modify while they run. */
-#define OPAL_SHAREDSTATEDIR "@OPAL_SHAREDSTATEDIR@"
+#define OPAL_SHAREDSTATEDIR "@sharedstatedir@"
 
 /* The directory for installing data files which the programs modify
    while they run, and that pertain to one specific machine. Users
@@ -101,28 +101,28 @@
    the package's operation; put such configuration information in
    separate files that go in $(datadir) or
    $(sysconfdir). */
-#define OPAL_LOCALSTATEDIR "@OPAL_LOCALSTATEDIR@"
+#define OPAL_LOCALSTATEDIR "@localstatedir@"
 
 /* The directory for object files and libraries of object code. Do not
    install executables here, they probably ought to go in
    $(libexecdir) instead. */
-#define OPAL_LIBDIR "@OPAL_LIBDIR@"
+#define OPAL_LIBDIR "@libdir@"
 
 /* $(libdir)/package-name/.  This is where components should go */
 #define OPAL_PKGLIBDIR "${libdir}/@PACKAGE@"
 
 /* The directory for installing header files to be included by user
    programs with the C ‘#include’ preprocessor directive. */
-#define OPAL_INCLUDEDIR "@OPAL_INCLUDEDIR@"
+#define OPAL_INCLUDEDIR "@includedir@"
 
 /* $(includedir)/package-name/.  The devel headers go in here */
 #define OPAL_PKGINCLUDEDIR "${includedir}/@PACKAGE@"
 
 /* The directory for installing the Info files for this package. */
-#define OPAL_INFODIR "@OPAL_INFODIR@"
+#define OPAL_INFODIR "@infodir@"
 
 /* The top-level directory for installing the man pages (if any) for
    this package. */
-#define OPAL_MANDIR "@OPAL_MANDIR@"
+#define OPAL_MANDIR "@mandir@"
 
 #endif

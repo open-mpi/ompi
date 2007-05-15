@@ -20,6 +20,6 @@ AC_DEFUN([MCA_installdirs_config_COMPILE_MODE], [
 #                        [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_installdirs_config_CONFIG],[
-    OMPI_INSTALL_DIRS([opal/mca/installdirs/config/install_dirs.h])
+    AC_CONFIG_FILES([opal/mca/installdirs/config/install_dirs.h])
 ])
 

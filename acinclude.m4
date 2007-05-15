@@ -52,8 +52,6 @@ m4_include(config/f90_get_range.m4)
 m4_include(config/f90_get_sizeof.m4)
 m4_include(config/f90_get_int_kind.m4)
 
-m4_include(config/ompi_objc.m4)
-
 m4_include(config/ompi_try_assemble.m4)
 m4_include(config/ompi_config_asm.m4)
 
@@ -96,7 +94,6 @@ m4_include(config/ompi_setup_f90.m4)
 m4_include(config/ompi_setup_libevent.m4)
 m4_include(config/ompi_setup_wrappers.m4)
 m4_include(config/ompi_make_stripped_flags.m4)
-m4_include(config/ompi_install_dirs.m4)
 m4_include(config/ompi_save_version.m4)
 
 m4_include(config/ompi_check_pthread_pids.m4)

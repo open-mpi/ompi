@@ -35,7 +35,7 @@
 AC_INIT([Open MPI], 
         [m4_normalize(esyscmd([config/ompi_get_version.sh VERSION --base]))],
         [http://www.open-mpi.org/community/help/], [openmpi])
-AC_PREREQ(2.58)
+AC_PREREQ(2.60)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 
@@ -44,13 +44,9 @@ AC_CONFIG_MACRO_DIR(config)
 OMPI_LOAD_PLATFORM
 
 #
-# Init automake - if we are using AC.260 or higher, require AM 1.10 or higher
+# Init automake
 #
-# XXX - FIX ME - when we drop support for 2.58 and 2.59, 
-# remove this test and require 1.10 or higher all the time.
-m4_if(m4_version_compare(m4_defn([m4_PACKAGE_VERSION]), [2.60]), -1,
-  [AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define])],
-  [AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.10])])
+AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.10])
 
 m4_pattern_allow([m4_ifval])
 
@@ -972,16 +968,11 @@ CFLAGS="$CFLAGS_save"
 
 ompi_show_subtitle "Libtool configuration"
 
-# Use convenience libltdl for the moment, because we need to force the
-# use of the newest libltdl (i.e., the one that ships with libtool
-# 1.5) because it has support for a lot more things than older
-# versions of libtool (which are generally installed by default).
-AS_IF([test "$OMPI_ENABLE_DLOPEN_SUPPORT" = "1"], 
-       [AC_LIBLTDL_CONVENIENCE(opal/libltdl)
-        AC_LIBTOOL_DLOPEN])
-AC_SUBST(LTDLINCL)
-AC_SUBST(LIBLTDL)
-AM_PROG_LIBTOOL
+AC_LIBLTDL_CONVENIENCE(opal/libltdl)
+AC_LIBTOOL_DLOPEN
+AC_PROG_LIBTOOL
+
+ompi_show_subtitle "GNU libltdl setup" 
 
 # AC_CONFIG_SUBDIRS appears to be broken for non-gcc compilers (i.e.,
 # passing precious variables down to the sub-configure).  
@@ -1000,8 +991,6 @@ AM_PROG_LIBTOOL
 # $enable_shared and $enable_static and pass down the corresponding
 # flags.
 
-ompi_show_subtitle "GNU libltdl setup" 
-
 if test "$OMPI_ENABLE_DLOPEN_SUPPORT" = "1" ; then
     ompi_subdir_args="$ompi_subdir_args --enable-ltdl-convenience --disable-ltdl-install"
     if test "$enable_shared" = "yes"; then
@@ -1017,17 +1006,17 @@ if test "$OMPI_ENABLE_DLOPEN_SUPPORT" = "1" ; then
 
     CFLAGS_save="$CFLAGS"
     CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY"
+
     OMPI_CONFIG_SUBDIR(opal/libltdl, [$ompi_subdir_args], [HAPPY=1], [HAPPY=0])
     if test "$HAPPY" = "1"; then
         LIBLTDL_SUBDIR=libltdl
-        LIBLTDL_LTLIB=libltdl/libltdlc.la
-        WANT_LIBLTDL=1
 
         # Arrgh.  This is gross.  But I can't think of any other way to do
         # it.  :-(
 
         flags="`egrep ^LIBADD_DL opal/libltdl/Makefile | cut -d= -f2-`"
         OMPI_CHECK_LINKER_FLAGS([opal/libltdl/libtool], [-export-dynamic $flags])
+
         WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $extra_ldflags"
         LDFLAGS="-export-dynamic $LDFLAGS"
     else
@@ -1037,14 +1026,10 @@ opal/libltdl/config.log.  You can also disable GNU libltdl (which will disable
 dynamic shared object loading) by configuring with --disable-dlopen.])
     fi
     CFLAGS="$CFLAGS_save"
-    OPAL_LTDL_CPPFLAGS='-I$(top_srcdir)/opal/libltdl'
 else
     AC_MSG_WARN([libltdl support disabled (by --disable-dlopen)])
 
     LIBLTDL_SUBDIR=
-    LIBLTDL_LTLIB=
-    WANT_LIBLTDL=0
-    OPAL_LTDL_CPPFLAGS=
 
     # append instead of prepend, since LIBS are going to be system
     # type things needed by everyone.  Normally, libltdl will push
@@ -1053,16 +1038,11 @@ else
     WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $LIBS"
 fi
 
+AC_SUBST(LTDLINCL)
+AC_SUBST(LIBLTDL)
 AC_SUBST(LIBLTDL_SUBDIR)
-AC_SUBST(LIBLTDL_LTLIB)
-# Have a variable that can be used to indicate where ltdl.h lives.  Do
-# this specifically so that we get the included ltdl.h (which we know
-# will work properly with the compiled code, including libltdl), not
-# the system one (which is likely to be far too old and buggy).
-AC_SUBST(OPAL_LTDL_CPPFLAGS)
 
-AM_CONDITIONAL(WANT_LIBLTDL, test "$WANT_LIBLTDL" = "1")
-AC_DEFINE_UNQUOTED(OMPI_WANT_LIBLTDL, $WANT_LIBLTDL,
+AC_DEFINE_UNQUOTED(OMPI_WANT_LIBLTDL, $OMPI_ENABLE_DLOPEN_SUPPORT,
     [Whether to include support for libltdl or not])
 
 
