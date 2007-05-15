@@ -487,12 +487,13 @@ EOF
         else
             echo "      -- your libltdl doesn't need this! yay!"
         fi
-
-	echo "   ++ patching configure for broken -c/-o compiler test"
-	sed -e 's/chmod -w \./#OMPI\/MPI FIX: chmod -w ./' \
-	    configure > configure.new
-	mv configure.new configure
-	chmod a+x configure
+        if grep 'chmod -w \.' configure ; then
+            echo "   ++ patching configure for broken -c/-o compiler test"
+            sed -e 's/chmod -w \./#OMPI\/MPI FIX: chmod -w ./' \
+                configure > configure.new
+            mv configure.new configure
+            chmod a+x configure
+        fi
     else
 	run_and_check $ompi_libtoolize --automake --copy
     fi

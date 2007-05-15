@@ -20,7 +20,7 @@
 # (by default)
 
 AM_CPPFLAGS = \
-	$(OPAL_LTDL_CPPFLAGS)
+	$(LTDLINCL)
 
 noinst_LTLIBRARIES = libmca_base.la
 
