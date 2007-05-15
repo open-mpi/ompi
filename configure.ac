@@ -1030,6 +1030,7 @@ else
     AC_MSG_WARN([libltdl support disabled (by --disable-dlopen)])
 
     LIBLTDL_SUBDIR=
+    LIBLTDL=
 
     # append instead of prepend, since LIBS are going to be system
     # type things needed by everyone.  Normally, libltdl will push
