@@ -50,6 +50,8 @@
 #include "opal/util/trace.h"
 #include "opal/util/argv.h"
 #include "opal/runtime/opal.h"
+#include "opal/mca/base/mca_base_param.h"
+
 
 #include "orte/dss/dss.h"
 #include "orte/class/orte_value_array.h"
@@ -70,6 +72,7 @@
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/pls/pls.h"
 
+
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/params.h"
 
@@ -82,6 +85,8 @@ extern char** environ;
 /*
  * Globals
  */
+
+extern bool opal_mca_base_param_use_amca_sets;
 orted_globals_t orted_globals;
 
 static struct opal_event term_handler;
@@ -214,7 +219,8 @@ int main(int argc, char *argv[])
      * Do not parse the Aggregate Parameter Sets in this pass.
      * we will get to them in a moment
      */
-    opal_mca_base_param_use_amca_sets = false;
+    /* GMS: what does this do and why is it gone now? */
+    /* opal_mca_base_param_use_mca_sets = false; */
     mca_base_param_init();
     
     /* setup to check common command line options that just report and die */
@@ -281,7 +287,9 @@ int main(int argc, char *argv[])
          * Need to recache the files since the user might have given us 
          * Aggregate MCA parameters that need to be reinitalized.
          */
+        /* GMS not sure what this does or where it went? */
         opal_mca_base_param_use_amca_sets = true;
+
         mca_base_param_recache_files(true);
     }
     else {

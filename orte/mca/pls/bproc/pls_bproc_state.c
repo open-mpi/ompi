@@ -42,12 +42,17 @@
 
 int orte_pls_bproc_set_proc_pid(const orte_process_name_t *name, pid_t pid, int nodenum)
 {
-    int rc = ORTE_SUCCESS;
-    char * nodename = NULL;
-    
+    int rc = ORTE_SUCCESS, i;
+    char *nodename = NULL;
+    char *segment = NULL, **tokens, *keys[2];
+    orte_std_cntr_t num_tokens;
+    orte_std_cntr_t num_values;
+    orte_gpr_value_t** values = NULL;
+    pid_t *pptr;
+        
     asprintf(&nodename, "%ld", (long)nodenum);
 
-    if (ORTE_SUCCESS != (rc = orte_rmgr.set_process_pid(name, pid, nodename) ) ) {
+    if (ORTE_SUCCESS != (rc = orte_rmgr.set_process_info(name, pid, nodename) ) ) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -59,7 +64,7 @@ int orte_pls_bproc_set_proc_pid(const orte_process_name_t *name, pid_t pid, int 
     }
 
     if(ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&tokens, &num_tokens, (orte_process_name_t*)name))) {
-        free(segment);
+        free(nodename);
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -94,7 +99,7 @@ int orte_pls_bproc_set_proc_pid(const orte_process_name_t *name, pid_t pid, int 
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    *pid = *pptr;
+    pid = *pptr;
 
 cleanup:
     if(NULL != values) {
