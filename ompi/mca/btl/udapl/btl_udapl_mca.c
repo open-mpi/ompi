@@ -215,10 +215,25 @@ int mca_btl_udapl_register_mca_params(void)
         REGINT_GE_ONE), tmp_rc, rc);
 
     /* register uDAPL module parameters */
-    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("evd_qlen",
-        "The event dispatcher queue length.",
+    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("async_evd_qlen",
+        "The asynchronous event dispatcher queue length.",
+        MCA_BTL_UDAPL_ASYNC_EVD_QLEN_DEFAULT,
+        (int*)&mca_btl_udapl_module.udapl_async_evd_qlen,
+        REGINT_GE_ONE), tmp_rc, rc);
+
+    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("conn_evd_qlen",
+        "The connection event dispatcher queue length is "
+        "a function of the number of connections expected.",
+        MCA_BTL_UDAPL_CONN_EVD_QLEN_DEFAULT,
+        (int*)&mca_btl_udapl_module.udapl_conn_evd_qlen,
+        REGINT_GE_ONE), tmp_rc, rc);
+
+    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("dto_evd_qlen",
+        "The data transfer operation event dispatcher queue length is "
+        "a function of the number of connections as well as the "
+        "maximum number of outstanding data transfer operations.",
         MCA_BTL_UDAPL_DTO_EVD_QLEN_DEFAULT,
-        (int*)&mca_btl_udapl_module.udapl_evd_qlen,
+        (int*)&mca_btl_udapl_module.udapl_dto_evd_qlen,
         REGINT_GE_ONE), tmp_rc, rc);
 
     CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("max_request_dtos",

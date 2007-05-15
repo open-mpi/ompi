@@ -39,3 +39,45 @@ report the same DAT_OPTIMAL_ALIGNMENT value and this differs from
 BTL buffer_alignment then setting "--mca btl_udapl_buffer_alignment
 %d" may improve performance.
 
+[max_recv_dtos too low]
+
+WARNING: The MCA parameter max_recv_dtos has been modified to a value,
+%d, that is insufficient. This value must be greater than or equal to
+num_recvs, %d. The uDAPL BTL will adjust to allow the program to
+proceed.
+
+[max_request_dtos too low]
+
+WARNING: The MCA parameter max_request_dtos has been modified to a
+value, %d, which may not be sufficient. Try setting max_request_dtos
+to %d if program fails.
+
+[max_recv_dtos system max]
+
+WARNING: The MCA parameter max_recv_dtos is trying to be set to,
+%d, which is larger than allowable so the value will be set to maximum
+allowed, %d.
+
+[max_request_dtos system max]
+
+WARNING: The MCA parameter max_request_dtos is trying to be set to,
+%d, which is larger than allowable so the value will be set to maximum
+allowed, %d.
+
+[evd_qlen adapter max]
+
+WARNING: The MCA parameter %s is trying to be set to %d,
+which is larger than allowable so the value will be set to maximum
+allowed, %d.
+
+[evd_qlen too low]
+
+WARNING: The MCA parameter %s has been modified to a value,
+%d, which may not be sufficient. Try setting %s to %d if
+program fails.
+
+[connection timeout low]
+
+WARNING: The MCA parameter %s has been modified to a value,
+%d, which may not be sufficient. Try setting %s to %d if
+program fails.

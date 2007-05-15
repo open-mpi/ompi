@@ -30,9 +30,10 @@
 #include "ompi/mca/btl/btl.h"
 
 #include "btl_udapl.h"
-#include "btl_udapl_frag.h" 
-#include "btl_udapl_proc.h"
 #include "btl_udapl_endpoint.h"
+#include "btl_udapl_frag.h"
+#include "btl_udapl_mca.h"
+#include "btl_udapl_proc.h"
 #include "ompi/datatype/convertor.h" 
 #include "ompi/datatype/datatype.h" 
 #include "ompi/mca/mpool/base/base.h" 
@@ -132,12 +133,11 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
 {
     mca_mpool_base_resources_t res;
     DAT_CONN_QUAL port;
-    DAT_IA_ATTR attr;
     DAT_RETURN rc;
 
     /* open the uDAPL interface */
     btl->udapl_evd_async = DAT_HANDLE_NULL;
-    rc = dat_ia_open(ia_name, mca_btl_udapl_module.udapl_evd_qlen,
+    rc = dat_ia_open(ia_name, btl->udapl_async_evd_qlen,
             &btl->udapl_evd_async, &btl->udapl_ia);
     if(DAT_SUCCESS != rc) {
         char* major;
@@ -164,9 +164,8 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     }
 
     /* query to get address information */
-    /* TODO - we only get the address, but there's other useful stuff here */
     rc = dat_ia_query(btl->udapl_ia, &btl->udapl_evd_async,
-            DAT_IA_FIELD_IA_ADDRESS_PTR, &attr, 0, NULL);
+            DAT_IA_ALL, &(btl->udapl_ia_attr), 0, NULL);
     if(DAT_SUCCESS != rc) {
         char* major;
         char* minor;
@@ -178,12 +177,33 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
         goto failure;
     }
 
-    memcpy(&btl->udapl_addr.addr, attr.ia_address_ptr, sizeof(DAT_SOCK_ADDR));
+    memcpy(&btl->udapl_addr.addr, (btl->udapl_ia_attr).ia_address_ptr,
+        sizeof(DAT_SOCK_ADDR));
+
+    /* check evd qlen against adapter max */
+    if (btl->udapl_dto_evd_qlen > (btl->udapl_ia_attr).max_evd_qlen) {
+	opal_show_help("help-mpi-btl-udapl.txt",
+            "evd_qlen adapter max", 
+            true,
+            "btl_udapl_dto_evd_qlen",
+            btl->udapl_dto_evd_qlen,
+            (btl->udapl_ia_attr).max_evd_qlen);        
+        btl->udapl_dto_evd_qlen = btl->udapl_ia_attr.max_evd_qlen;
+    }
+    if (btl->udapl_conn_evd_qlen > (btl->udapl_ia_attr).max_evd_qlen) {
+        opal_show_help("help-mpi-btl-udapl.txt",
+            "evd_qlen adapter max", 
+            true,
+            "btl_udapl_conn_evd_qlen",
+            btl->udapl_conn_evd_qlen,
+            (btl->udapl_ia_attr).max_evd_qlen);        
+        btl->udapl_conn_evd_qlen = btl->udapl_ia_attr.max_evd_qlen;
+    }
 
     /* set up evd's */
     rc = dat_evd_create(btl->udapl_ia,
-            mca_btl_udapl_module.udapl_evd_qlen, DAT_HANDLE_NULL,
-            DAT_EVD_DTO_FLAG | DAT_EVD_RMR_BIND_FLAG, &btl->udapl_evd_dto);
+        btl->udapl_dto_evd_qlen, DAT_HANDLE_NULL,
+        DAT_EVD_DTO_FLAG | DAT_EVD_RMR_BIND_FLAG, &btl->udapl_evd_dto);
     if(DAT_SUCCESS != rc) {
         char* major;
         char* minor;
@@ -196,7 +216,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     }
 
     rc = dat_evd_create(btl->udapl_ia,
-            mca_btl_udapl_module.udapl_evd_qlen, DAT_HANDLE_NULL,
+            btl->udapl_conn_evd_qlen, DAT_HANDLE_NULL,
             DAT_EVD_CR_FLAG | DAT_EVD_CONNECTION_FLAG, &btl->udapl_evd_conn);
     if(DAT_SUCCESS != rc) {
         char* major;
@@ -251,7 +271,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
        So, we insert the port we used for our PSP into the DAT_SOCK_ADDR for
        this IA.  uDAPL then conveniently propagates this to where we need it.
      */
-    ((struct sockaddr_in*)attr.ia_address_ptr)->sin_port = htons(port);
+    ((struct sockaddr_in*)(btl->udapl_ia_attr.ia_address_ptr))->sin_port = htons(port);
     ((struct sockaddr_in*)&btl->udapl_addr.addr)->sin_port = htons(port);
 
     /* initialize the memory pool */
@@ -332,7 +352,8 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     /* initialize miscellaneous variables */
     btl->udapl_async_events = 0;
     btl->udapl_connect_inprogress = 0;
-    
+    btl->udapl_num_peers = 0;
+	
     /* TODO - Set up SRQ when it is supported */
     return OMPI_SUCCESS;
 
@@ -382,6 +403,191 @@ int mca_btl_udapl_finalize(struct mca_btl_base_module_t* base_btl)
     return OMPI_SUCCESS;
 }
 
+
+/*
+ * Adjust parameters that are dependent on the number of peers.
+ *
+ * @param udapl_btl (IN)      BTL module
+ * @param nprocs (IN)         number of processes handed into
+ *                                mca_btl_udapl_add_procs()
+ * @return                    OMPI_SUCCESS or error status on failure
+ */
+
+int mca_btl_udapl_set_peer_parameters(
+    struct mca_btl_udapl_module_t* udapl_btl,
+    size_t nprocs) 
+{
+    int rc = OMPI_SUCCESS;
+    DAT_RETURN dat_rc = DAT_SUCCESS;
+    uint potential_udapl_timeout;
+    int first_time_sizing = (udapl_btl->udapl_num_peers == 0 ? 1 : 0);
+
+    /* nprocs includes self so subtract 1 */
+    udapl_btl->udapl_num_peers += nprocs - 1; 
+
+    /* resize dto_evd_qlen if not already at its max */
+    if (udapl_btl->udapl_dto_evd_qlen !=
+        udapl_btl->udapl_ia_attr.max_evd_qlen) {
+
+        int potential_dto_evd_qlen;
+        int max_connection_dto_events;
+        int eager_connection_dto_events;
+
+        /* eager connection dto events already factored into
+         * max_recv/request_dtos but need to calculate max connection dtos;
+         * see mca_btl_udapl_get_params() for max_recv/request_dtos 
+         */
+        eager_connection_dto_events = udapl_btl->udapl_max_recv_dtos +
+            udapl_btl->udapl_max_request_dtos;
+        max_connection_dto_events = mca_btl_udapl_component.udapl_num_recvs +
+            mca_btl_udapl_component.udapl_num_sends +
+            (mca_btl_udapl_component.udapl_num_recvs /
+                mca_btl_udapl_component.udapl_sr_win) + 1;
+        potential_dto_evd_qlen = udapl_btl->udapl_num_peers *
+            (eager_connection_dto_events + max_connection_dto_events);
+        
+        /* here we use what the library calculates as the
+         * potential_dto_evd_qlen unless the user has set
+         */
+        if (first_time_sizing) { 
+            if (udapl_btl->udapl_dto_evd_qlen < potential_dto_evd_qlen) {
+                if (MCA_BTL_UDAPL_DTO_EVD_QLEN_DEFAULT !=
+                    udapl_btl->udapl_dto_evd_qlen) {
+
+                    /* user modified so warn */
+                    opal_show_help("help-mpi-btl-udapl.txt",
+                        "evd_qlen too low", 
+                        true,
+                        "btl_udapl_dto_evd_qlen",
+                        udapl_btl->udapl_dto_evd_qlen,
+                        "btl_udapl_dto_evd_qlen",                        
+                        potential_dto_evd_qlen);
+                } else {
+                    udapl_btl->udapl_dto_evd_qlen = potential_dto_evd_qlen;
+                }
+            }
+        } else {
+            /* since this is not the first time attempting to resize the
+             * evd queue length just use the potential value; this may not
+             * be the best solution
+             */
+            udapl_btl->udapl_dto_evd_qlen = potential_dto_evd_qlen;
+        }
+
+        udapl_btl->udapl_dto_evd_qlen = ((udapl_btl->udapl_dto_evd_qlen >
+            udapl_btl->udapl_ia_attr.max_evd_qlen) ?
+            udapl_btl->udapl_ia_attr.max_evd_qlen :
+            udapl_btl->udapl_dto_evd_qlen);
+            
+        /* dat call to actually resize dto event dispatcher queue length */
+        dat_rc = dat_evd_resize(udapl_btl->udapl_evd_dto,
+            udapl_btl->udapl_dto_evd_qlen);
+        if(DAT_SUCCESS != dat_rc) {
+            char* major;
+            char* minor;
+
+            dat_strerror(dat_rc, (const char**)&major,
+                (const char**)&minor);
+
+            /* DAT_INVALID_STATE is actually OK for a call to dat_evd_resize(),
+             * all it indicates is that you are setting to the current value
+             */
+            if (strcmp(major, "DAT_INVALID_STATE")) {
+                BTL_ERROR(("ERROR: %s %s %s\n", "dat_evd_resize",
+                    major, minor));
+                rc = OMPI_ERR_OUT_OF_RESOURCE;
+            } 
+        }
+    }
+
+    /* resize connection evd qlen */
+    if (udapl_btl->udapl_conn_evd_qlen !=
+        udapl_btl->udapl_ia_attr.max_evd_qlen) {
+
+        int potential_conn_evd_qlen = 2 * udapl_btl->udapl_num_peers;
+
+        if (first_time_sizing) { 
+            if (udapl_btl->udapl_conn_evd_qlen < potential_conn_evd_qlen) {
+                if (MCA_BTL_UDAPL_CONN_EVD_QLEN_DEFAULT !=
+                    udapl_btl->udapl_conn_evd_qlen) {
+
+                    /* user modified so warn */
+                    opal_show_help("help-mpi-btl-udapl.txt",
+                        "evd_qlen too low", 
+                        true,
+                        "btl_udapl_conn_evd_qlen",
+                        udapl_btl->udapl_conn_evd_qlen,
+                        "btl_udapl_conn_evd_qlen",
+                        potential_conn_evd_qlen);
+                } else {
+                    udapl_btl->udapl_conn_evd_qlen = potential_conn_evd_qlen;
+                }
+            }
+        } else {
+            /* since this is not the first time attempting to resize the
+             * evd queue length just use the potential value; this may not
+             * be the best solution
+             */
+            udapl_btl->udapl_conn_evd_qlen = potential_conn_evd_qlen;
+        }
+
+        udapl_btl->udapl_conn_evd_qlen = ((udapl_btl->udapl_conn_evd_qlen >
+            udapl_btl->udapl_ia_attr.max_evd_qlen) ?
+            udapl_btl->udapl_ia_attr.max_evd_qlen :
+            udapl_btl->udapl_conn_evd_qlen);
+        
+        /* dat call to actually resize conn evd queue length */
+        dat_rc = dat_evd_resize(udapl_btl->udapl_evd_conn,
+            udapl_btl->udapl_conn_evd_qlen);
+        if(DAT_SUCCESS != dat_rc) {
+            char* major;
+            char* minor;
+
+            dat_strerror(dat_rc, (const char**)&major,
+                (const char**)&minor);
+
+            /* DAT_INVALID_STATE is actually OK for a call to dat_evd_resize(),
+             * all it indicates is that you are setting to the current value
+             */
+            if (strcmp(major, "DAT_INVALID_STATE")) {
+                BTL_ERROR(("ERROR: %s %s %s\n", "dat_evd_resize",
+                    major, minor));
+                rc = OMPI_ERR_OUT_OF_RESOURCE;
+            } 
+        }
+    }
+    
+    /* adjust connection timeout value, calculated in microseconds */
+    potential_udapl_timeout = MCA_BTL_UDAPL_CONN_TIMEOUT_INC *
+        udapl_btl->udapl_num_peers;
+    
+    if (mca_btl_udapl_component.udapl_timeout <
+        potential_udapl_timeout) {
+
+        if (MCA_BTL_UDAPL_CONN_TIMEOUT_DEFAULT !=
+            mca_btl_udapl_component.udapl_timeout) {
+
+            /* user modified so warn */
+            opal_show_help("help-mpi-btl-udapl.txt",
+                "connection timeout low", 
+                true,
+                "btl_udapl_timeout",
+                mca_btl_udapl_component.udapl_timeout,
+                "btl_udapl_timeout",                
+                potential_udapl_timeout);         
+        } else {
+            mca_btl_udapl_component.udapl_timeout =
+                potential_udapl_timeout;
+        }
+    }
+    mca_btl_udapl_component.udapl_timeout =
+        ((mca_btl_udapl_component.udapl_timeout >
+            MCA_BTL_UDAPL_CONN_TIMEOUT_MAX) ?
+            MCA_BTL_UDAPL_CONN_TIMEOUT_MAX :
+            mca_btl_udapl_component.udapl_timeout);
+
+    return rc;
+}
 
 /*
  *
@@ -439,6 +645,12 @@ int mca_btl_udapl_add_procs(
         ompi_bitmap_set_bit(reachable, i);
         OPAL_THREAD_UNLOCK(&udapl_proc->proc_lock);
         peers[i] = udapl_endpoint;
+    }
+
+    /* resize based on number of processes */
+    if (OMPI_SUCCESS !=
+        mca_btl_udapl_set_peer_parameters(udapl_btl, nprocs)) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     return OMPI_SUCCESS;
