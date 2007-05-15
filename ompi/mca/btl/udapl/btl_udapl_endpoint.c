@@ -37,9 +37,10 @@
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_udapl.h"
-#include "btl_udapl_endpoint.h" 
-#include "btl_udapl_proc.h"
+#include "btl_udapl_endpoint.h"
 #include "btl_udapl_frag.h"
+#include "btl_udapl_mca.h"
+#include "btl_udapl_proc.h"
 
 static void mca_btl_udapl_endpoint_send_cb(int status, orte_process_name_t* endpoint, 
                                            orte_buffer_t* buffer, orte_rml_tag_t tag,
@@ -168,6 +169,7 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
         /* just send it already.. */
         if(frag->size ==
             mca_btl_udapl_component.udapl_eager_frag_size) {
+	    
             if(OPAL_THREAD_ADD32(&endpoint->endpoint_eager_rdma_remote.tokens, -1) < 0) {
                 /* no rdma segment available so either send or queue */
                 OPAL_THREAD_ADD32(&endpoint->endpoint_eager_rdma_remote.tokens, 1);
@@ -291,6 +293,8 @@ int mca_btl_udapl_endpoint_get_params(mca_btl_udapl_module_t* btl,
     DAT_EP_PARAM* ep_param)
 {
     int        rc = OMPI_SUCCESS;
+    int request_dtos;
+    int max_control_messages;
     DAT_EP_HANDLE dummy_ep;    
     DAT_EP_ATTR* ep_attr = &((*ep_param).ep_attr);
 
@@ -332,12 +336,83 @@ int mca_btl_udapl_endpoint_get_params(mca_btl_udapl_module_t* btl,
         return OMPI_ERROR;
     }
 
-    /* Set values from mca parameters */
-    (*ep_attr).max_recv_dtos =
-        btl->udapl_max_recv_dtos;
-    (*ep_attr).max_request_dtos =
-        btl->udapl_max_request_dtos;
+    /* Set max_recv_dtos :
+     * The max_recv_dtos should be equal to the number of
+     * outstanding posted receives, which for this BTL will
+     * be mca_btl_udapl_component.udapl_num_recvs.
+     */
+    if (btl->udapl_max_recv_dtos <
+        mca_btl_udapl_component.udapl_num_recvs) {
+        
+        if (MCA_BTL_UDAPL_MAX_RECV_DTOS_DEFAULT != 
+            btl->udapl_max_recv_dtos) {        
 
+            /* user modified, this will fail and is not acceptable */
+            opal_show_help("help-mpi-btl-udapl.txt",
+                "max_recv_dtos too low", 
+                true,
+                btl->udapl_max_recv_dtos,
+                mca_btl_udapl_component.udapl_num_recvs);
+
+            btl->udapl_max_recv_dtos = 
+                mca_btl_udapl_component.udapl_num_recvs;
+        }
+
+        if (MCA_BTL_UDAPL_NUM_RECVS_DEFAULT != 
+                        mca_btl_udapl_component.udapl_num_recvs) {
+            
+            /* user modified udapl_num_recvs so adjust max_recv_dtos */
+            btl->udapl_max_recv_dtos = 
+                mca_btl_udapl_component.udapl_num_recvs;
+        }
+    } 
+
+    (*ep_attr).max_recv_dtos = btl->udapl_max_recv_dtos;
+
+    /* Set max_request_dtos :
+     * The max_request_dtos should equal the max number of
+     * outstanding sends plus RDMA operations.
+     *
+     * Note: Using the same value for both EAGER and MAX
+     * connections even though the MAX connection does not
+     * have the extra RDMA operations that the EAGER
+     * connection does.
+     */
+    max_control_messages =
+        (mca_btl_udapl_component.udapl_num_recvs /
+        mca_btl_udapl_component.udapl_sr_win) + 1 +
+        (mca_btl_udapl_component.udapl_eager_rdma_num /
+        mca_btl_udapl_component.udapl_eager_rdma_win) + 1;
+    request_dtos = mca_btl_udapl_component.udapl_num_sends +
+        (2*mca_btl_udapl_component.udapl_eager_rdma_num) +
+        max_control_messages;
+
+    if (btl->udapl_max_request_dtos < request_dtos) {
+        if (MCA_BTL_UDAPL_MAX_REQUEST_DTOS_DEFAULT != 
+            mca_btl_udapl_module.udapl_max_request_dtos) {
+
+            /* user has modified */
+            opal_show_help("help-mpi-btl-udapl.txt",
+                "max_request_dtos too low", 
+                true,
+                btl->udapl_max_request_dtos, request_dtos);
+        } else {
+            btl->udapl_max_request_dtos = request_dtos;
+        }         
+    }
+
+    if (btl->udapl_max_request_dtos > btl->udapl_ia_attr.max_dto_per_ep) {
+        /* do not go beyond what is allowed by the system */
+        opal_show_help("help-mpi-btl-udapl.txt",
+            "max_request_dtos system max", 
+            true,
+            btl->udapl_max_request_dtos,
+            btl->udapl_ia_attr.max_dto_per_ep);
+        btl->udapl_max_request_dtos = btl->udapl_ia_attr.max_dto_per_ep;
+    }
+
+    (*ep_attr).max_request_dtos = btl->udapl_max_request_dtos;
+    
     /* close the dummy endpoint */
     rc = dat_ep_free(dummy_ep);
     if (rc != DAT_SUCCESS) {
@@ -695,6 +770,7 @@ static int mca_btl_udapl_endpoint_finish_max(mca_btl_udapl_endpoint_t* endpoint)
                 frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t));
         assert(frag->size ==
                 mca_btl_udapl_component.udapl_eager_frag_size);
+	
         rc = dat_ep_post_send(endpoint->endpoint_eager, 1,
             &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
         if(DAT_SUCCESS != rc) {

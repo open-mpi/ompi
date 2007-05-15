@@ -60,7 +60,7 @@ struct mca_btl_udapl_component_t {
     int32_t udapl_num_recvs;    /**< number of recv buffers to keep posted */
     int32_t udapl_num_sends;    /**< number of sends to post on endpoint */
     int32_t udapl_sr_win;       /**< number of fragments recieved before
-                                   returnting credits to sendier */
+                                   returning credits to sender */
     int32_t udapl_timeout;      /**< connection timeout, in microseconds */
     size_t udapl_eager_frag_size;
     size_t udapl_max_frag_size;
@@ -103,12 +103,13 @@ struct mca_btl_udapl_module_t {
     DAT_IA_HANDLE udapl_ia;
     DAT_PZ_HANDLE udapl_pz;
     DAT_PSP_HANDLE udapl_psp;
-    DAT_EP_PARAM udapl_ep_param;
+    DAT_IA_ATTR udapl_ia_attr;
     
     /* event dispatchers - async, data transfer, connection negotiation */
     DAT_EVD_HANDLE udapl_evd_async;
     DAT_EVD_HANDLE udapl_evd_dto;
     DAT_EVD_HANDLE udapl_evd_conn;
+    DAT_EP_PARAM   udapl_ep_param;
 
     /* free list of fragment descriptors */
     ompi_free_list_t udapl_frag_eager;
@@ -117,7 +118,6 @@ struct mca_btl_udapl_module_t {
     ompi_free_list_t udapl_frag_control;
     
     opal_mutex_t udapl_lock;    /* lock for accessing module state */
-
     opal_mutex_t udapl_eager_rdma_lock;         /* eager rdma lock  */
     int32_t udapl_eager_rdma_endpoint_count;   /* count of the number of
                                                  * endpoints in
@@ -129,9 +129,12 @@ struct mca_btl_udapl_module_t {
                                                          */
     int32_t udapl_async_events;
     int32_t udapl_connect_inprogress;
+    int32_t udapl_num_peers;
 
     /* module specific limits */
-    int udapl_evd_qlen;
+    int     udapl_async_evd_qlen;
+    int     udapl_conn_evd_qlen;
+    int     udapl_dto_evd_qlen;
     int udapl_max_request_dtos; /**< maximum number of outstanding consumer
                                        submitted sends and rdma operations, see
                                        section 6.6.6 of uDAPL Spec */

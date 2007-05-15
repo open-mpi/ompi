@@ -112,30 +112,6 @@ mca_btl_udapl_error(DAT_RETURN ret, char* str)
 
 
 /*
- * Utility routines for parameter registration
- */
-
-static inline char* mca_btl_udapl_param_register_string(
-                                                     const char* param_name, 
-                                                     const char* default_value)
-{
-    char *param_value;
-    int id = mca_base_param_register_string("btl","udapl",param_name,NULL,default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
-}
-
-static inline int mca_btl_udapl_param_register_int(
-        const char* param_name, 
-        int default_value)
-{
-    int id = mca_base_param_register_int("btl","udapl",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-
-/*
  *  Called by MCA framework to open the component, registers
  *  component parameters.
  */
@@ -689,7 +665,7 @@ int mca_btl_udapl_component_progress()
 
                     /* setup frag ftr location and do callback */
                     frag->segment.seg_len = dto->transfered_length -
-                            sizeof(mca_btl_udapl_footer_t);
+                        sizeof(mca_btl_udapl_footer_t);
                     frag->ftr = (mca_btl_udapl_footer_t *)
                         ((char *)frag->segment.seg_addr.pval + 
                         frag->segment.seg_len);
