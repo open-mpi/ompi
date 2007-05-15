@@ -132,7 +132,7 @@ int ompi_ddt_register_params(void);
 int32_t ompi_ddt_init( void );
 int32_t ompi_ddt_finalize( void );
 ompi_datatype_t* ompi_ddt_create( int32_t expectedSize );
-int32_t ompi_ddt_commit( ompi_datatype_t** );
+OMPI_DECLSPEC int32_t ompi_ddt_commit( ompi_datatype_t** );
 int32_t ompi_ddt_destroy( ompi_datatype_t** );
 static inline int32_t ompi_ddt_is_committed( const ompi_datatype_t* type )
 { return ((type->flags & DT_FLAG_COMMITED) == DT_FLAG_COMMITED); }
