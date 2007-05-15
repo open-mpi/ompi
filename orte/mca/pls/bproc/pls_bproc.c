@@ -457,7 +457,7 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
     orte_std_cntr_t idx;
     struct stat buf;
     struct timeval joblaunchstart, launchstart, launchstop;
-
+    opal_list_item_t* item;
     OPAL_TRACE(1);
     
     if (orte_pls_base.timing) {
@@ -813,7 +813,7 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
     struct bproc_io_t bproc_io[3];
     char **env;
     int dbg;
-    bool app_launched = false;
+    bool apps_launched = false;
 
     OPAL_TRACE(1);
     
@@ -1268,10 +1268,11 @@ int orte_pls_bproc_terminate_orteds(struct timeval *timeout, opal_list_t *attrs)
 int orte_pls_bproc_terminate_proc(const orte_process_name_t* proc_name) {
     int rc;
     pid_t pid;
+    char* node_name;
 
     OPAL_TRACE(1);
     
-    if(ORTE_SUCCESS != (rc = orte_rmgr.get_process_pid(proc_name, &pid)))
+    if(ORTE_SUCCESS != (rc = orte_rmgr.get_process_info(proc_name, &pid, &node_name)))
         return rc;
     if(kill(pid, mca_pls_bproc_component.terminate_sig) != 0) {
         switch(errno) {
@@ -1320,10 +1321,10 @@ int orte_pls_bproc_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *a
 int orte_pls_bproc_signal_proc(const orte_process_name_t* proc_name, int32_t signal) {
     int rc;
     pid_t pid;
-
+    char* node_name;
     OPAL_TRACE(1);
 
-    if(ORTE_SUCCESS != (rc = orte_rmgr.get_process_pid(proc_name, &pid)))
+    if(ORTE_SUCCESS != (rc = orte_rmgr.get_process_info(proc_name, &pid, &node_name)))
         return rc;
     if(kill(pid, (int)signal) != 0) {
         switch(errno) {
