@@ -61,6 +61,7 @@ EXTRA_DIST = \
     README \
     ChangeLog \
     lran2.h \
+    opal_ptmalloc2_munmap.h \
     t-test.h \
     t-test1.c \
     t-test2.c \

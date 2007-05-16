@@ -35,10 +35,11 @@
 
 #include "opal/memoryhooks/memory_internal.h"
 
+#include "opal_ptmalloc2_munmap.h"
+
 /*
  * munmap is always intercepted
  */
-int opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc);
 #if defined(HAVE___MUNMAP)
 int  __munmap(void* addr, size_t len);
 #endif
