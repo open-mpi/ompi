@@ -28,8 +28,10 @@ do {                                             \
 } while(0)
 
 static void mca_btl_gm_frag_eager_constructor(mca_btl_gm_frag_t* frag) 
-{ 
-    frag->hdr = (mca_btl_base_header_t*)frag->base.super.ptr;
+{
+    uintptr_t *ctx = (uintptr_t*)frag->base.super.ptr;
+    *ctx = (uintptr_t)frag;
+    frag->hdr = (mca_btl_base_header_t*)(ctx + 1);
     frag->segment.seg_addr.pval = (unsigned char*)(frag->hdr + 1); 
     frag->segment.seg_len = mca_btl_gm_module.super.btl_eager_limit - sizeof(mca_btl_base_header_t);
     frag->size = mca_btl_gm_component.gm_eager_frag_size;
@@ -37,8 +39,10 @@ static void mca_btl_gm_frag_eager_constructor(mca_btl_gm_frag_t* frag)
 }
 
 static void mca_btl_gm_frag_max_constructor(mca_btl_gm_frag_t* frag) 
-{ 
-    frag->hdr = (mca_btl_base_header_t*)(frag + 1);
+{
+    uintptr_t *ctx = (uintptr_t*)frag->base.super.ptr;
+    *ctx = (uintptr_t)frag;
+    frag->hdr = (mca_btl_base_header_t*)(ctx + 1);
     frag->segment.seg_addr.pval = (unsigned char*)(frag->hdr + 1); 
     frag->segment.seg_len = mca_btl_gm_module.super.btl_max_send_size - sizeof(mca_btl_base_header_t);
     frag->size = mca_btl_gm_component.gm_max_frag_size;
