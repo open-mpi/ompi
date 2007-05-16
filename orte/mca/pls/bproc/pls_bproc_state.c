@@ -69,6 +69,12 @@ int orte_pls_bproc_set_proc_pid(const orte_process_name_t *name, pid_t pid, int 
         return rc;
     }
 
+        /* query the job segment on the registry */
+    if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, name->jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     keys[0] = ORTE_PROC_LOCAL_PID_KEY;
     keys[1] = NULL;
 
