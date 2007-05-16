@@ -129,9 +129,9 @@ typedef struct ompi_datatype_t {
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION( ompi_datatype_t );
 
 int ompi_ddt_register_params(void);
-int32_t ompi_ddt_init( void );
-int32_t ompi_ddt_finalize( void );
-ompi_datatype_t* ompi_ddt_create( int32_t expectedSize );
+OMPI_DECLSPEC int32_t ompi_ddt_init( void );
+OMPI_DECLSPEC int32_t ompi_ddt_finalize( void );
+OMPI_DECLSPEC ompi_datatype_t* ompi_ddt_create( int32_t expectedSize );
 OMPI_DECLSPEC int32_t ompi_ddt_commit( ompi_datatype_t** );
 OMPI_DECLSPEC int32_t ompi_ddt_destroy( ompi_datatype_t** );
 static inline int32_t ompi_ddt_is_committed( const ompi_datatype_t* type )
@@ -145,7 +145,7 @@ static inline int32_t ompi_ddt_is_valid( const ompi_datatype_t* type )
 static inline int32_t ompi_ddt_is_predefined( const ompi_datatype_t* type )
 { return (type->flags & DT_FLAG_PREDEFINED); }
 
-void ompi_ddt_dump( const ompi_datatype_t* pData );
+OMPI_DECLSPEC void ompi_ddt_dump( const ompi_datatype_t* pData );
 /* data creation functions */
 OMPI_DECLSPEC int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_ddt_create_contiguous( int count, const ompi_datatype_t* oldType, ompi_datatype_t** newType );
@@ -237,6 +237,14 @@ struct ompi_proc_t;
 OMPI_DECLSPEC ompi_datatype_t*
 ompi_ddt_create_from_packed_description( void** packed_buffer,
                                          struct ompi_proc_t* remote_processor );
+
+
+#if OMPI_ENABLE_DEBUG
+/* this symbols are just needed for the ompi internal tests */
+OMPI_DECLSPEC extern int ompi_unpack_debug;
+OMPI_DECLSPEC extern int ompi_pack_debug;
+OMPI_DECLSPEC extern int ompi_position_debug;
+#endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
