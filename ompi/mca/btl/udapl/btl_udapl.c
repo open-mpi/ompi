@@ -96,6 +96,8 @@ static int udapl_reg_mr(void *reg_data, void *base, size_t size,
             &dat_size, &dat_addr);
 
     if(rc != DAT_SUCCESS) {
+        opal_show_help("help-mpi-btl-udapl.txt",
+            "dat_lmr_create DAT_INSUFFICIENT_RESOURCES", true);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 

@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -81,3 +81,9 @@ program fails.
 WARNING: The MCA parameter %s has been modified to a value,
 %d, which may not be sufficient. Try setting %s to %d if
 program fails.
+
+[dat_lmr_create DAT_INSUFFICIENT_RESOURCES] 
+
+WARNING: The uDAPL BTL is not able to register memory. Possibly out of
+allowed privileged memory (i.e. memory that can be pinned). Increasing
+the allowed privileged memory may alleviate this issue.
