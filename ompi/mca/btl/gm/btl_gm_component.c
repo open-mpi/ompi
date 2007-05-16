@@ -283,7 +283,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
  
     /* initialize free lists */
     ompi_free_list_init( &btl->gm_frag_eager,
-                         sizeof (mca_btl_gm_frag_eager_t) + (1 << mca_btl_gm_component.gm_eager_frag_size),
+                         sizeof (mca_btl_gm_frag_eager_t) + (1 << mca_btl_gm_component.gm_eager_frag_size) + sizeof (uintptr_t),
                          OBJ_CLASS (mca_btl_gm_frag_eager_t),
                          btl->gm_max_send_tokens,  
                          mca_btl_gm_component.gm_free_list_max, 
@@ -291,7 +291,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
                          btl->super.btl_mpool ); 
 
     ompi_free_list_init( &btl->gm_frag_max,
-                         sizeof (mca_btl_gm_frag_max_t) + (1 << mca_btl_gm_component.gm_max_frag_size),
+                         sizeof (mca_btl_gm_frag_max_t) + (1 << mca_btl_gm_component.gm_max_frag_size) + sizeof (uintptr_t),
                          OBJ_CLASS (mca_btl_gm_frag_max_t),
                          btl->gm_max_recv_tokens,
                          mca_btl_gm_component.gm_free_list_max, 
@@ -581,7 +581,7 @@ int mca_btl_gm_component_progress()
             case GM_FAST_HIGH_PEER_RECV_EVENT:
                 {
                 unsigned char* buffer = (unsigned char*)gm_ntohp(event->recv.buffer);
-                mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)(buffer - sizeof(mca_btl_gm_frag_t));
+                mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)*((uintptr_t*)(buffer - sizeof(uintptr_t)));
                 mca_btl_base_header_t* hdr = (mca_btl_base_header_t *)gm_ntohp(event->recv.message);
                 mca_btl_base_recv_reg_t* reg;
                 frag->segment.seg_addr.pval = (hdr+1);
@@ -608,7 +608,7 @@ int mca_btl_gm_component_progress()
             case GM_HIGH_PEER_RECV_EVENT:
                 {
                 unsigned char* buffer = (unsigned char*)gm_ntohp(event->recv.buffer);
-                mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)(buffer - sizeof(mca_btl_gm_frag_t));
+                mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)*((uintptr_t*)(buffer - sizeof(uintptr_t)));
                 mca_btl_base_header_t* hdr = (mca_btl_base_header_t*)buffer;
                 mca_btl_base_recv_reg_t* reg;
                 frag->segment.seg_addr.pval = (hdr+1);
@@ -674,7 +674,7 @@ static void* mca_btl_gm_progress_thread( opal_object_t* arg )
             case GM_FAST_HIGH_PEER_RECV_EVENT:
                 {
                 unsigned char* buffer = (unsigned char*)gm_ntohp(event->recv.buffer);
-                mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)(buffer - sizeof(mca_btl_gm_frag_t));
+                mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)*((uintptr_t*)(buffer - sizeof(uintptr_t)));
                 mca_btl_base_header_t* hdr = (mca_btl_base_header_t *)gm_ntohp(event->recv.message);
                 mca_btl_base_recv_reg_t* reg;
                 frag->segment.seg_addr.pval = (hdr+1);
@@ -694,7 +694,7 @@ static void* mca_btl_gm_progress_thread( opal_object_t* arg )
             case GM_HIGH_PEER_RECV_EVENT:
                 {
                 unsigned char* buffer = (unsigned char*)gm_ntohp(event->recv.buffer);
-                mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)(buffer - sizeof(mca_btl_gm_frag_t));
+                mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)*((uintptr_t*)(buffer - sizeof(uintptr_t)));
                 mca_btl_base_header_t* hdr = (mca_btl_base_header_t*)buffer;
                 mca_btl_base_recv_reg_t* reg;
                 frag->segment.seg_addr.pval = (hdr+1);
