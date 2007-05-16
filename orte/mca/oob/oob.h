@@ -313,8 +313,8 @@ ORTE_DECLSPEC int mca_oob_base_close(void);
  * Global struct holding the selected module's function pointers
  */
 ORTE_DECLSPEC extern int mca_oob_base_output;
-ORTE_DECLSPEC extern char* mca_oob_base_include;
-ORTE_DECLSPEC extern char* mca_oob_base_exclude;
+extern char* mca_oob_base_include;
+extern char* mca_oob_base_exclude;
 ORTE_DECLSPEC extern opal_list_t mca_oob_base_components;
 ORTE_DECLSPEC extern opal_list_t mca_oob_base_modules;
 ORTE_DECLSPEC extern opal_list_t mca_oob_base_exception_handlers;

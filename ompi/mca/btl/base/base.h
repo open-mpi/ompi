@@ -27,9 +27,7 @@
 #include "opal/mca/mca.h"
 #include "ompi/mca/btl/btl.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct mca_btl_base_selected_module_t {
   opal_list_item_t super;
@@ -69,13 +67,12 @@ OMPI_DECLSPEC  void mca_btl_base_dump(
  * Globals
  */
 OMPI_DECLSPEC extern int mca_btl_base_output;
-OMPI_DECLSPEC extern char* mca_btl_base_include;
-OMPI_DECLSPEC extern char* mca_btl_base_exclude;
-OMPI_DECLSPEC extern int mca_btl_base_warn_component_unused;
+extern char* mca_btl_base_include;
+extern char* mca_btl_base_exclude;
+extern int mca_btl_base_warn_component_unused;
 OMPI_DECLSPEC extern opal_list_t mca_btl_base_components_opened;
 OMPI_DECLSPEC extern opal_list_t mca_btl_base_modules_initialized;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+    
 #endif /* MCA_BTL_BASE_H */

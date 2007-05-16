@@ -37,9 +37,7 @@
 /*
  * Global functions for MCA overall collective open and close
  */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * Internal definitions
@@ -56,8 +54,8 @@ ORTE_DECLSPEC    int orte_errmgr_base_close(void);
  */
 
 ORTE_DECLSPEC extern int orte_errmgr_base_output;
-ORTE_DECLSPEC extern bool orte_errmgr_base_selected;
-ORTE_DECLSPEC extern bool orte_errmgr_initialized;
+extern bool orte_errmgr_base_selected;
+extern bool orte_errmgr_initialized;
 ORTE_DECLSPEC extern opal_list_t orte_errmgr_base_components_available;
 ORTE_DECLSPEC extern mca_errmgr_base_component_t orte_errmgr_base_selected_component;
 
@@ -67,7 +65,6 @@ ORTE_DECLSPEC extern orte_errmgr_base_module_t orte_errmgr_default;
  * external API functions will be documented in the mca/errmgr/errmgr.h file
  */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif

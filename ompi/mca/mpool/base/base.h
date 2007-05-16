@@ -92,7 +92,7 @@ OMPI_DECLSPEC int mca_mpool_base_module_destroy(mca_mpool_base_module_t *module)
  */
 OMPI_DECLSPEC extern int mca_mpool_base_output;
 OMPI_DECLSPEC extern opal_list_t mca_mpool_base_components;
-OMPI_DECLSPEC extern opal_list_t mca_mpool_base_modules;
+extern opal_list_t mca_mpool_base_modules;
 OMPI_DECLSPEC extern uint32_t mca_mpool_base_page_size;
 OMPI_DECLSPEC extern uint32_t mca_mpool_base_page_size_log;
     
