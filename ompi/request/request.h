@@ -30,9 +30,8 @@
 #include "ompi/class/ompi_pointer_array.h"
 #include "opal/threads/condition.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
+
 /**
  * Request class
  */
@@ -182,7 +181,7 @@ OMPI_DECLSPEC extern ompi_status_public_t  ompi_status_empty;
  * Initialize the MPI_Request subsystem; invoked during MPI_INIT.
  */
 
-OMPI_DECLSPEC int ompi_request_init(void);
+int ompi_request_init(void);
 
 /**
  * Free a persistent request to a MPI_PROC_NULL peer (there's no
@@ -196,7 +195,7 @@ OMPI_DECLSPEC int ompi_request_persistent_proc_null_free(ompi_request_t **reques
  * Shut down the MPI_Request subsystem; invoked during MPI_FINALIZE.
  */
 
-OMPI_DECLSPEC int ompi_request_finalize(void);
+int ompi_request_finalize(void);
 
 
 /**
@@ -375,9 +374,7 @@ OMPI_DECLSPEC int ompi_request_wait_some(
     int * indices,
     ompi_status_public_t * statuses);
 
+END_C_DECLS
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 #endif
 

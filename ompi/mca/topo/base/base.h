@@ -29,20 +29,20 @@
 /*
  * All stuff goes in here
  */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+
+BEGIN_C_DECLS
+
 OMPI_DECLSPEC    int mca_topo_base_open(void);
     
 OMPI_DECLSPEC    int mca_topo_base_close(void);
     
-OMPI_DECLSPEC    int mca_topo_base_comm_select(struct ompi_communicator_t *comm,
-                                  struct mca_base_component_t *preferred);
+int mca_topo_base_comm_select(struct ompi_communicator_t *comm,
+                              struct mca_base_component_t *preferred);
 
-OMPI_DECLSPEC    int mca_topo_base_comm_unselect(struct ompi_communicator_t *comm);
+int mca_topo_base_comm_unselect(struct ompi_communicator_t *comm);
     
-OMPI_DECLSPEC    int mca_topo_base_find_available (bool enable_progress_threads,
-                                                   bool enable_mpi_threads);
+int mca_topo_base_find_available (bool enable_progress_threads,
+                                  bool enable_mpi_threads);
 
 
 OMPI_DECLSPEC    int mca_topo_base_init_comm (struct ompi_communicator_t *comm);
@@ -126,15 +126,14 @@ OMPI_DECLSPEC    int mca_topo_base_graph_neighbors_count (struct ompi_communicat
  * Globals
  */
 OMPI_DECLSPEC extern int mca_topo_base_output;
-OMPI_DECLSPEC extern int mca_topo_base_param;
+extern int mca_topo_base_param;
 
 OMPI_DECLSPEC extern opal_list_t mca_topo_base_components_available;
 OMPI_DECLSPEC extern opal_list_t mca_topo_base_components_opened;
 
-OMPI_DECLSPEC extern bool mca_topo_base_components_opened_valid;
-OMPI_DECLSPEC extern bool mca_topo_base_components_available_valid;
+extern bool mca_topo_base_components_opened_valid;
+extern bool mca_topo_base_components_available_valid;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif /* MCA_BASE_TOPO_H */

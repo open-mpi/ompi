@@ -28,29 +28,26 @@
 /*
  * Global functions for MCA overall collective open and close
  */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * function definitions
  */
 OMPI_DECLSPEC int ompi_osc_base_open(void);
-OMPI_DECLSPEC int ompi_osc_base_find_available(bool enable_progress_threads,
-                                              bool enable_mpi_threads);
+int ompi_osc_base_find_available(bool enable_progress_threads,
+                                 bool enable_mpi_threads);
 
-OMPI_DECLSPEC int ompi_osc_base_select(ompi_win_t *win,
-                                      ompi_info_t *info,
-                                      ompi_communicator_t *comm);
+int ompi_osc_base_select(ompi_win_t *win,
+                         ompi_info_t *info,
+                         ompi_communicator_t *comm);
 
-OMPI_DECLSPEC int ompi_osc_base_finalize(void);
+int ompi_osc_base_finalize(void);
 OMPI_DECLSPEC int ompi_osc_base_close(void);
 
 OMPI_DECLSPEC extern opal_list_t ompi_osc_base_open_components;
-OMPI_DECLSPEC extern opal_list_t ompi_osc_base_avail_components;
+extern opal_list_t ompi_osc_base_avail_components;
 OMPI_DECLSPEC extern int ompi_osc_base_output;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif
