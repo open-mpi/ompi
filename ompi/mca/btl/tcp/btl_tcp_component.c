@@ -662,7 +662,8 @@ static int mca_btl_tcp_component_exchange(void)
                  }
 
                  if (OPAL_SUCCESS != 
-                         opal_ifindextoaddr(index, &my_ss, sizeof (my_ss))) {
+                     opal_ifindextoaddr(index, (struct sockaddr*) &my_ss,
+                                        sizeof (my_ss))) {
                      opal_output (0, 
                              "btl_tcp_component: problems getting address for index %i (kernel index %i)\n",
                              index, opal_ifindextokindex (index));

@@ -17,6 +17,7 @@
  */
 
 #include "opal_config.h"
+
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -62,12 +63,9 @@
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
-
 #ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
 #endif
-
-#include "opal/ipv6compat.h"
 
 #include "opal/class/opal_list.h"
 #include "opal/util/if.h"
@@ -108,11 +106,7 @@ struct opal_if_t {
     u_long              if_flags;
 #endif
     int                 if_speed;
-#if OPAL_WANT_IPV6
-    struct sockaddr_in6 if_addr;
-#else
-    struct sockaddr_in  if_addr;
-#endif
+    struct sockaddr_storage  if_addr;
    uint32_t             if_mask;
 #ifdef __WINDOWS__
     struct sockaddr_in  if_bcast;
@@ -143,12 +137,6 @@ static int prefix (uint32_t netmask)
     }
 
     return (32 - plen);
-}
-
-/* convert a CIDR prefixlen to netmask (in network byte order) */
-uint32_t opal_prefix2netmask (uint32_t prefixlen)
-{
-    return htonl (((1 << prefixlen) - 1) << (32 - prefixlen));
 }
      
 /*
@@ -341,17 +329,10 @@ static int opal_ifinit(void)
         if(AF_INET != ifr->ifr_addr.sa_family) {
             continue;
         }
-        
-#if OPAL_WANT_IPV6
-        /* Bug, FIXME. Works iff sizeof(ifr.ifr_addr) < sizeof(intf.if_addr).
-           This is true for IPv6, but it is a bug in v4 when the source is
-           longer than the target. memcpy isn't what we really want to use
-           here.
-        */
-        memcpy(&intf.if_addr, &ifr->ifr_addr, sizeof(struct sockaddr_in6));
-#else
-        memcpy(&intf.if_addr, &ifr->ifr_addr, sizeof(intf.if_addr));
-#endif
+
+        /* based on above, we know this is an IPv4 address... */
+        memcpy(&intf.if_addr, &ifr->ifr_addr, sizeof(struct sockaddr_in));
+
         if(ioctl(sd, SIOCGIFNETMASK, ifr) < 0) {
             opal_output(0, "opal_ifinit: ioctl(SIOCGIFNETMASK) failed with errno=%d", errno);
             continue;
@@ -410,9 +391,9 @@ static int opal_ifinit(void)
                 strncpy(intf.if_name, ifname, IF_NAMESIZE);
                 intf.if_index = opal_list_get_size(&opal_if_list)+1;
                 intf.if_kernel_index = (uint16_t) idx;
-                intf.if_addr.sin6_addr = a6;
-                intf.if_addr.sin6_family = AF_INET6;
-                intf.if_addr.sin6_scope_id = scope;
+                ((struct sockaddr_in6*) &intf.if_addr)->sin6_addr = a6;
+                ((struct sockaddr_in6*) &intf.if_addr)->sin6_family = AF_INET6;
+                ((struct sockaddr_in6*) &intf.if_addr)->sin6_scope_id = scope;
                 intf.if_mask = pfxlen;
                 if (OPAL_SUCCESS == opal_ifindextoflags(opal_ifnametoindex (ifname), &flag)) {
                     intf.if_flags = flag;
@@ -835,7 +816,7 @@ int opal_iffinalize(void)
  *  as a dotted decimal formatted string.
  */
 
-int opal_ifnametoaddr(const char* if_name, struct sockaddr_storage* addr, int length)
+int opal_ifnametoaddr(const char* if_name, struct sockaddr* addr, int length)
 {
     opal_if_t* intf;
     int rc = opal_ifinit();
@@ -979,7 +960,7 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
                     return OPAL_SUCCESS;
                 }
             } else {
-                if (IN6_ARE_ADDR_EQUAL(&intf->if_addr.sin6_addr,
+                if (IN6_ARE_ADDR_EQUAL(&((struct sockaddr_in6*) &intf->if_addr)->sin6_addr,
                     &((struct sockaddr_in6*) r->ai_addr)->sin6_addr)) {
                     strncpy(if_name, intf->if_name, length);
                     return OPAL_SUCCESS;
@@ -1077,7 +1058,7 @@ int opal_ifnext(int if_index)
  *  primary address assigned to the interface.
  */
 
-int opal_ifindextoaddr(int if_index, struct sockaddr_storage* if_addr, unsigned int length)
+int opal_ifindextoaddr(int if_index, struct sockaddr* if_addr, unsigned int length)
 {
     opal_if_t* intf;
     int rc = opal_ifinit();
@@ -1193,152 +1174,6 @@ int opal_ifkindextoname(int if_kindex, char* if_name, int length)
     return OPAL_ERROR;
 }
 
-char*
-opal_sockaddr2str(struct sockaddr_storage *ss_addr)
-{
-#if OPAL_WANT_IPV6
-    char *name = (char *)malloc((NI_MAXHOST + 1) * sizeof(char));
-    int error;
-    socklen_t addrlen;
-    struct sockaddr_in6 *addr = (struct sockaddr_in6*) ss_addr;
-
-    OMPI_DEBUG_ZERO(*name);
-    if (NULL == name) {
-        opal_output(0, "opal_sockaddr2str: malloc() failed\n");
-        return NULL;
-    }
-
-    if (AF_INET6 == addr->sin6_family) {
-        /* 
-           hotfix for netbsd: on my netbsd machine, getnameinfo returns an
-           unkown error code.  
-         */
-#if defined( __NetBSD__)         
-        if(NULL == inet_ntop(AF_INET6, &addr->sin6_addr, name, NI_MAXHOST)) {
-            opal_output(0, "opal_sockaddr2str failed with error code %d", errno);
-            free(name);
-            return NULL;
-        }
-        return name;
-#else
-        addrlen = sizeof (struct sockaddr_in6);
-#endif
-    } else {
-        /* IPv4 */
-        addrlen = sizeof (struct sockaddr_in);
-    }
-
-    error = getnameinfo((struct sockaddr*)addr, addrlen,
-                        name, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-
-    if (error) {
-       int err = errno;
-       opal_output (0, "opal_sockaddr2str failed:%s (return code %i)\n",
-                    gai_strerror(err), error);
-       free (name);
-       return NULL;
-    }
-    
-    return name;
-#else
-    struct sockaddr_in *addr = (struct sockaddr_in*) ss_addr;
-    return inet_ntoa(addr->sin_addr);
-#endif
-}
-
-bool
-opal_ifislocalhost(struct sockaddr_storage *addr)
-{
-    switch (addr->ss_family) {
-    case AF_INET:
-        {
-            struct sockaddr_in *inaddr = (struct sockaddr_in*) addr;
-            /* if it's in the 127. domain, it shouldn't be routed
-               (0x7f == 127) */
-            if (0x7F000000 == (0x7F000000 & ntohl(inaddr->sin_addr.s_addr))) {
-                return true;
-            }
-            return false;
-        }
-        break;
-#if OPAL_WANT_IPV6
-    case AF_INET6:
-        {
-            struct sockaddr_in6 *inaddr = (struct sockaddr_in6*) addr;
-            if (IN6_IS_ADDR_LOOPBACK (&inaddr->sin6_addr)) {
-               return true; /* Bug, FIXME: check for 127.0.0.1/8 */
-            }
-            return false;
-        }
-        break;
-#endif
-
-    default:
-        opal_output(0, "unhandled sa_family %d passed to opal_ifislocalhost",
-                    addr->ss_family);
-        return false;
-        break;
-    }
-}
-
-bool
-opal_samenetwork(struct sockaddr_storage *addr1, struct sockaddr_storage *addr2,
-                 uint32_t prefixlen)
-{
-    if(addr1->ss_family != addr2->ss_family) {
-#if 0
-        /* very annoying debug output */
-        opal_output(0, "opal_samenetwork: uncomparable");
-#endif
-        return false; /* address families must be equal */
-    }
-    
-    switch (addr1->ss_family) {
-    case AF_INET:
-        {
-            struct sockaddr_in *inaddr1 = (struct sockaddr_in*) addr1;
-            struct sockaddr_in *inaddr2 = (struct sockaddr_in*) addr2;
-            uint32_t netmask = opal_prefix2netmask (prefixlen);
-
-            if((inaddr1->sin_addr.s_addr & netmask) ==
-              (inaddr2->sin_addr.s_addr & netmask)) {
-                return true;
-            }
-            return false;
-        }
-        break;
-#if OPAL_WANT_IPV6
-    case AF_INET6:
-        {
-            struct sockaddr_in6 *inaddr1 = (struct sockaddr_in6*) addr1;
-            struct sockaddr_in6 *inaddr2 = (struct sockaddr_in6*) addr2;
-            struct in6_addr *a6_1 = (struct in6_addr*) &inaddr1->sin6_addr;
-            struct in6_addr *a6_2 = (struct in6_addr*) &inaddr2->sin6_addr;
-
-            if (64 == prefixlen) {
-                /* prefixlen is always /64, any other case would be routing.
-                   Compare the first eight bytes (64 bits) and hope that
-                   endianess is not an issue on any system as long as
-                   addresses are always stored in network byte order.
-                */
-                if (((const uint32_t *) (a6_1))[0] ==
-                    ((const uint32_t *) (a6_2))[0] &&
-                    ((const uint32_t *) (a6_1))[1] ==
-                    ((const uint32_t *) (a6_2))[1]) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        break;
-#endif
-    default:
-        opal_output(0, "unhandled sa_family %d passed to opal_samenetwork",
-                    addr1->ss_family);
-        return false;
-        break;
-    }
-}
 
 #define ADDRLEN 100
 bool
@@ -1380,44 +1215,6 @@ opal_ifislocal(char *hostname)
 }
 
 
-/**
- * Returns true if the given address is a public IPv4 address.
- */
-bool opal_addr_isipv4public (struct sockaddr_storage *addr)
-{
-    switch (addr->ss_family) {
-#if OPAL_WANT_IPV6
-        case AF_INET6:
-            return false;
-#endif
-        case AF_INET:
-        {
-            struct sockaddr_in *inaddr = (struct sockaddr_in*) addr;
-            /* RFC1918 defines
-            - 10.0.0./8
-            - 172.16.0.0/12
-            - 192.168.0.0/16
-            
-            RFC3330 also mentiones
-            - 169.254.0.0/16 for DHCP onlink iff there's no DHCP server
-            */
-            if ((htonl(0x0a000000) == (inaddr->sin_addr.s_addr & opal_prefix2netmask(8)))  ||
-                (htonl(0xac100000) == (inaddr->sin_addr.s_addr & opal_prefix2netmask(12))) ||
-                (htonl(0xc0a80000) == (inaddr->sin_addr.s_addr & opal_prefix2netmask(16))) ||
-                (htonl(0xa9fe0000) == (inaddr->sin_addr.s_addr & opal_prefix2netmask(16)))) {
-                return false;
-            }
-        }
-            return true;
-        default:
-            opal_output (0,
-                         "unhandled sa_family %d passed to mca_oob_tcp_addr_isipv4public\n",
-                         addr->ss_family);
-    }
-    
-    return false;
-}
-
 #else /* HAVE_STRUCT_SOCKADDR_IN */
 
 /* if we don't have struct sockaddr_in, we don't have traditional
@@ -1426,7 +1223,7 @@ bool opal_addr_isipv4public (struct sockaddr_storage *addr)
 
 int
 opal_ifnametoaddr(const char* if_name, 
-                  struct sockaddr_storage* if_addr, int size)
+                  struct sockaddr* if_addr, int size)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
@@ -1487,7 +1284,7 @@ opal_ifkindextoname(int kif_index, char* if_name, int length)
 }
 
 int
-opal_ifindextoaddr(int if_index, struct sockaddr_storage* if_addr, unsigned int length)
+opal_ifindextoaddr(int if_index, struct sockaddr* if_addr, unsigned int length)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
@@ -1499,14 +1296,14 @@ opal_ifindextomask(int if_index, uint32_t* if_addr, int length)
 }
 
 bool
-opal_ifislocalhost(struct sockaddr_storage *addr)
+opal_ifislocalhost(struct sockaddr *addr)
 {
     return false;
 }
 
 bool
-opal_samenetwork(struct sockaddr_storage *addr1,
-                 struct sockaddr_storage *addr2, uint32_t prefixlen)
+opal_samenetwork(struct sockaddr *addr1,
+                 struct sockaddr *addr2, uint32_t prefixlen)
 {
     return false;
 }
@@ -1524,13 +1321,13 @@ opal_iffinalize(void)
 }
 
 char*
-opal_sockaddr2str(struct sockaddr_storage *ss_addr)
+opal_sockaddr2str(struct sockaddr *ss_addr)
 {
     return NULL;
 }
 
 bool
-opal_addr_isipv4public (struct sockaddr_storage *addr)
+opal_addr_isipv4public (struct sockaddr *addr)
 {
     return false;
 }

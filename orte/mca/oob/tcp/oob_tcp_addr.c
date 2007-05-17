@@ -32,6 +32,7 @@
 #include <string.h>
 #include "orte/orte_constants.h"
 #include "opal/util/if.h"
+#include "opal/util/net.h"
 
 #include "orte/mca/ns/ns_types.h"
 #include "orte/util/proc_info.h"
@@ -76,9 +77,9 @@ int mca_oob_tcp_addr_pack(orte_buffer_t* buffer)
 
     for(i=opal_ifbegin(); i>0; i=opal_ifnext(i)) {
         struct sockaddr_storage inaddr;
-        opal_ifindextoaddr(i, &inaddr, sizeof(inaddr));
+        opal_ifindextoaddr(i, (struct sockaddr*) &inaddr, sizeof(inaddr));
         if(opal_ifcount() > 1 && 
-           opal_ifislocalhost(&inaddr)) {
+           opal_net_islocalhost((struct sockaddr*) &inaddr)) {
             continue;
         }
         count++;
@@ -93,9 +94,9 @@ int mca_oob_tcp_addr_pack(orte_buffer_t* buffer)
         uint32_t ipaddr;
         uint16_t port;
 
-        opal_ifindextoaddr(i, &inaddr, sizeof(inaddr));
+        opal_ifindextoaddr(i, (struct sockaddr*) &inaddr, sizeof(inaddr));
         if(opal_ifcount() > 1 && 
-           opal_ifislocalhost(&inaddr))
+           opal_net_islocalhost((struct sockaddr*) &inaddr))
             continue;
 
         switch (inaddr.ss_family) {
@@ -250,8 +251,8 @@ int mca_oob_tcp_addr_get_next(mca_oob_tcp_addr_t* addr, struct sockaddr_storage*
                     strstr(mca_oob_tcp_component.tcp_exclude,name) != NULL) {
                     continue;
                 }
-                opal_ifindextoaddr(ifindex, &inaddr, sizeof(inaddr));
-                if(opal_ifcount() > 1 && opal_ifislocalhost(&inaddr)) {
+                opal_ifindextoaddr(ifindex, (struct sockaddr*) &inaddr, sizeof(inaddr));
+                if(opal_ifcount() > 1 && opal_net_islocalhost((struct sockaddr*) &inaddr)) {
                     continue;
                 }
                 opal_ifindextomask(ifindex, &inmask, sizeof(inmask));
@@ -266,11 +267,11 @@ int mca_oob_tcp_addr_get_next(mca_oob_tcp_addr_t* addr, struct sockaddr_storage*
                     - when IPv4private + IPv6, use IPv6 (this should
                       be changed when there is something like a CellID)
                     */
-                if (true == opal_addr_isipv4public (&inaddr)) {
+                if (true == opal_net_addr_isipv4public ((struct sockaddr*) &inaddr)) {
                     i_have |= MCA_OOB_TCP_ADDR_IPV4public;
                 }
                 
-                if (true == opal_addr_isipv4public ((struct sockaddr_storage*)&addr->addr_inet[i])) {
+                if (true == opal_net_addr_isipv4public ((struct sockaddr*)&addr->addr_inet[i])) {
                     addr->addr_matched |= MCA_OOB_TCP_ADDR_IPV4public;
                 }
                 
@@ -304,9 +305,9 @@ int mca_oob_tcp_addr_get_next(mca_oob_tcp_addr_t* addr, struct sockaddr_storage*
                     
                     adi@2006-09-30
                 */
-                if(opal_samenetwork(&inaddr,
-                                    (struct sockaddr_storage*)&addr->addr_inet[i],
-                                    inmask)) {
+                if(opal_net_samenetwork((struct sockaddr*) &inaddr,
+                                        (struct sockaddr*)&addr->addr_inet[i],
+                                        inmask)) {
                     addr->addr_matched |= MCA_OOB_TCP_ADDR_MATCHED;
                     addr->addr_next = i;
                    goto done;

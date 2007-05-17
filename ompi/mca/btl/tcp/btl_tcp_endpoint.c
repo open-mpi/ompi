@@ -50,6 +50,8 @@
 #include "ompi/types.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "opal/util/if.h"
+#include "opal/util/net.h"
+
 #include "btl_tcp.h"
 #include "btl_tcp_endpoint.h" 
 #include "btl_tcp_proc.h"
@@ -567,7 +569,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
         }
         {
             char *address;
-            address = opal_sockaddr2str((struct sockaddr_storage*) &endpoint_addr);
+            address = opal_net_get_hostname((struct sockaddr*) &endpoint_addr);
             BTL_PEER_ERROR( btl_endpoint->endpoint_proc->proc_ompi,
                           ( "Unable to connect to the peer %s on port %d: %s\n",
                             address,

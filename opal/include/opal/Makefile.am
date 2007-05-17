@@ -25,8 +25,7 @@ headers += \
 	opal/opal_socket_errno.h \
 	opal/types.h \
 	opal/prefetch.h \
-        opal/hash_string.h \
-        opal/ipv6compat.h
+        opal/hash_string.h
 
 nodist_headers += \
 	opal/version.h
