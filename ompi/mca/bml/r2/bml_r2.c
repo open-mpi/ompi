@@ -295,8 +295,12 @@ int mca_bml_r2_add_procs(
                 bml_btl->btl_eager_limit = btl->btl_eager_limit;
                 bml_btl->btl_min_send_size = btl->btl_min_send_size;
                 bml_btl->btl_max_send_size = btl->btl_max_send_size;
-                bml_btl->btl_min_rdma_size = btl->btl_min_rdma_size;
-                bml_btl->btl_max_rdma_size = btl->btl_max_rdma_size;
+                bml_btl->btl_rdma_pipeline_offset =
+                    btl->btl_rdma_pipeline_offset;
+                bml_btl->btl_rdma_pipeline_frag_size =
+                    btl->btl_rdma_pipeline_frag_size;
+                bml_btl->btl_min_rdma_pipeline_size =
+                    btl->btl_min_rdma_pipeline_size;
                 bml_btl->btl_cache = NULL;
                 bml_btl->btl_endpoint = btl_endpoints[p];
                 bml_btl->btl_weight = 0;
@@ -424,8 +428,11 @@ int mca_bml_r2_add_procs(
                proc->proc_arch == ompi_proc_local_proc->proc_arch) {
                 mca_bml_base_btl_t* bml_btl_rdma = mca_bml_base_btl_array_insert(&bml_endpoint->btl_rdma);
                 *bml_btl_rdma = *bml_btl;
-                if(bml_endpoint->btl_rdma_offset < bml_btl_rdma->btl_min_rdma_size) {
-                    bml_endpoint->btl_rdma_offset = bml_btl_rdma->btl_min_rdma_size;
+                if(bml_endpoint->btl_rdma_offset < bml_btl_rdma->btl_rdma_pipeline_offset) {
+                    bml_endpoint->btl_rdma_offset = bml_btl_rdma->btl_rdma_pipeline_offset;
+                }
+                if(bml_endpoint->btl_send_limit < bml_btl_rdma->btl_min_rdma_pipeline_size) {
+                    bml_endpoint->btl_send_limit = bml_btl_rdma->btl_min_rdma_pipeline_size;
                 }
             }
         }
@@ -705,9 +712,12 @@ int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl)
             mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&ep->btl_rdma, b);
             /* update aggregate endpoint info */
             total_bandwidth += bml_btl->btl->btl_bandwidth;
-            if (ep->btl_rdma_offset < bml_btl->btl_min_rdma_size) {
-                ep->btl_rdma_offset = bml_btl->btl_min_rdma_size;
-            } 
+            if (ep->btl_rdma_offset < bml_btl->btl_rdma_pipeline_offset) {
+                ep->btl_rdma_offset = bml_btl->btl_rdma_pipeline_offset;
+            }
+            if (ep->btl_send_limit < bml_btl->btl_min_rdma_pipeline_size) {
+                ep->btl_send_limit = bml_btl->btl_min_rdma_pipeline_size;
+            }
         }
         
         /* compute weighting factor for this btl */

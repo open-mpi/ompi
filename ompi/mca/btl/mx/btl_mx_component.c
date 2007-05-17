@@ -74,8 +74,6 @@ mca_btl_mx_component_t mca_btl_mx_component = {
 
 int mca_btl_mx_component_open(void)
 {
-    int tmp;
-
     /* initialize state */
     mca_btl_mx_component.mx_num_btls = 0;
     mca_btl_mx_component.mx_btls = NULL;
@@ -129,43 +127,18 @@ int mca_btl_mx_component_open(void)
                             "Number of received posted in advance. Increasing this number for communication bound application can lead to visible improvement in performances",
                             false, false, 16, &mca_btl_mx_component.mx_max_posted_recv );
 
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "exclusivity",
-                            "Priority compared with the others devices (used only when several devices are available)",
-                            false, false, 50, (int*) &mca_btl_mx_module.super.btl_exclusivity );
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "first_frag_size",
-                            "Size of the first fragment for the rendez-vous protocol over MX",
-                            false, false, 4096, &tmp);
-    mca_btl_mx_module.super.btl_eager_limit = tmp;
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "min_send_size",
-                            "Minimum send fragment size ...",
-                            false, false, 4096, &tmp);
-    mca_btl_mx_module.super.btl_min_send_size = tmp;
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_send_size",
-                            "Maximum send fragment size withour RDMA ...",
-                            false, false, 64*1024, &tmp);
-    mca_btl_mx_module.super.btl_max_send_size = tmp;
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "min_rdma_size",
-                            "Minimum size of fragment for the RDMA protocol",
-                            false, false, 256*1024, &tmp);
-    mca_btl_mx_module.super.btl_min_rdma_size = tmp;
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_rdma_size",
-                            "Maximum size of fragment for the RDMA protocol",
-                            false, false, 8*1024*1024, &tmp);
-    mca_btl_mx_module.super.btl_max_rdma_size = tmp;
-
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "bandwidth",
-                            "Maximum bandwidth for the device",
-                            false, false, 2000, &tmp);
-    mca_btl_mx_module.super.btl_bandwidth = tmp;
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "latency",
-                            "The expected latency for the device",
-                            false, false, 5, &tmp);
-    mca_btl_mx_module.super.btl_latency = tmp;
-
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "flags",
-                            "Flags to activate/deactivate the RDMA: SEND=1, PUT=2, GET=4",
-                            false, false, MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND,
-                            (int*)&mca_btl_mx_module.super.btl_flags );
+    mca_btl_mx_module.super.btl_exclusivity = 50;
+    mca_btl_mx_module.super.btl_eager_limit = 4096;
+    mca_btl_mx_module.super.btl_min_send_size = 4096;
+    mca_btl_mx_module.super.btl_max_send_size = 64*1024;
+    mca_btl_mx_module.super.btl_rdma_pipeline_offset = 256*1024;
+    mca_btl_mx_module.super.btl_rdma_pipeline_frag_size = 8*1024*1024;
+    mca_btl_mx_module.super.btl_min_rdma_pipeline_size = 0;
+    mca_btl_mx_module.super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND;
+    mca_btl_mx_module.super.btl_bandwidth = 2000;
+    mca_btl_mx_module.super.btl_latency = 5;
+    mca_btl_base_param_register(&mca_btl_mx_component.super.btl_version,
+            &mca_btl_mx_module.super);
     return OMPI_SUCCESS;
 }
 

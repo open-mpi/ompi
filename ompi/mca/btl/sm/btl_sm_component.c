@@ -127,20 +127,12 @@ int mca_btl_sm_component_open(void)
         mca_btl_sm_param_register_int("free_list_max", -1);
     mca_btl_sm_component.sm_free_list_inc =
         mca_btl_sm_param_register_int("free_list_inc", 64);
-    mca_btl_sm_component.sm_exclusivity =
-        mca_btl_sm_param_register_int("exclusivity", MCA_BTL_EXCLUSIVITY_HIGH-1);
-    mca_btl_sm_component.sm_latency =
-        mca_btl_sm_param_register_int("latency", 100);
     mca_btl_sm_component.sm_max_procs =
         mca_btl_sm_param_register_int("max_procs", -1);
     mca_btl_sm_component.sm_extra_procs =
         mca_btl_sm_param_register_int("sm_extra_procs", -1);
     mca_btl_sm_component.sm_mpool_name =
         mca_btl_sm_param_register_string("mpool", "sm");
-    mca_btl_sm_component.eager_limit =
-        mca_btl_sm_param_register_int("eager_limit", 4*1024);
-    mca_btl_sm_component.max_frag_size =
-        mca_btl_sm_param_register_int("max_frag_size", 32*1024);
     mca_btl_sm_component.size_of_cb_queue =
         mca_btl_sm_param_register_int("size_of_cb_queue", 128);
     mca_btl_sm_component.cb_lazy_free_freq =
@@ -164,6 +156,22 @@ int mca_btl_sm_component_open(void)
     /* default number of extra procs to allow for future growth */
     mca_btl_sm_component.sm_extra_procs =
         mca_btl_sm_param_register_int("sm_extra_procs", 2);
+
+    mca_btl_sm.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH-1;
+    mca_btl_sm.super.btl_eager_limit = 4*1024;
+    mca_btl_sm.super.btl_min_send_size = 32*1024;
+    mca_btl_sm.super.btl_max_send_size = 32*1024;
+    mca_btl_sm.super.btl_rdma_pipeline_offset = 32*1024;
+    mca_btl_sm.super.btl_rdma_pipeline_frag_size = 32*1024;
+    mca_btl_sm.super.btl_min_rdma_pipeline_size = 0;
+    mca_btl_sm.super.btl_flags = MCA_BTL_FLAGS_SEND;
+    mca_btl_sm.super.btl_bandwidth = 900;
+    mca_btl_sm.super.btl_latency = 100;
+
+    mca_btl_base_param_register(&mca_btl_sm_component.super.btl_version, 
+            &mca_btl_sm.super);
+    mca_btl_sm_component.max_frag_size = mca_btl_sm.super.btl_max_send_size;
+    mca_btl_sm_component.eager_limit = mca_btl_sm.super.btl_eager_limit;
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_lock, opal_mutex_t);
@@ -279,16 +287,6 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
 
     /* get pointer to the ptls */
     ptls[0] = (mca_btl_base_module_t *)(&(mca_btl_sm));
-
-    /* set scheduling parameters */
-    mca_btl_sm.super.btl_eager_limit=mca_btl_sm_component.eager_limit;
-    mca_btl_sm.super.btl_min_send_size=mca_btl_sm_component.max_frag_size;
-    mca_btl_sm.super.btl_max_send_size=mca_btl_sm_component.max_frag_size;
-    mca_btl_sm.super.btl_min_rdma_size=mca_btl_sm_component.max_frag_size;
-    mca_btl_sm.super.btl_max_rdma_size=mca_btl_sm_component.max_frag_size;
-    mca_btl_sm.super.btl_exclusivity = mca_btl_sm_component.sm_exclusivity;
-    mca_btl_sm.super.btl_latency     = mca_btl_sm_component.sm_latency; /* lowest latency */
-    mca_btl_sm.super.btl_bandwidth   = 900; /* not really used now since exclusivity is set to the highest value */
 
     /* initialize some PTL data */
     /* start with no SM procs */

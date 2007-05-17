@@ -565,8 +565,9 @@ struct mca_btl_base_module_t {
     size_t      btl_eager_limit;      /**< maximum size of first fragment -- eager send */
     size_t      btl_min_send_size;    /**< threshold below which the BTL should not fragment */
     size_t      btl_max_send_size;    /**< maximum send fragment size supported by the BTL */
-    size_t      btl_min_rdma_size;    /**< threshold below which the BTL should not fragment */
-    size_t      btl_max_rdma_size;    /**< maximum rdma fragment size supported by the BTL */
+    size_t      btl_rdma_pipeline_offset; /**< offset to start RDMAing data from */
+    size_t      btl_rdma_pipeline_frag_size; /**< maximum rdma fragment size supported by the BTL */
+    size_t      btl_min_rdma_pipeline_size; /**< minimum packet size for pipeline protocol  */
     uint32_t    btl_exclusivity;      /**< indicates this BTL should be used exclusively */
     uint32_t    btl_latency;          /**< relative ranking of latency used to prioritize btls */
     uint32_t    btl_bandwidth;        /**< bandwidth (Mbytes/sec) supported by each endpoint */

@@ -261,8 +261,9 @@ static int mca_pml_ob1_recv_request_ack(
 
                 recvreq->req_rdma_offset = bytes_received;
                 /* are rdma devices available for long rdma protocol */
-            } else if (bml_endpoint->btl_rdma_offset < hdr->hdr_msg_length &&
-                       mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma)) {
+            } else if (bml_endpoint->btl_send_limit < hdr->hdr_msg_length &&
+                    bml_endpoint->btl_rdma_offset < hdr->hdr_msg_length &&
+                    mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma)) {
                 
                 /* use convertor to figure out the rdma offset for this request */
                 recvreq->req_rdma_offset = bml_endpoint->btl_rdma_offset;
@@ -670,9 +671,9 @@ int mca_pml_ob1_recv_request_schedule_exclusive( mca_pml_ob1_recv_request_t* rec
             /* makes sure that we don't exceed BTL max rdma size
              * if memory is not pinned already */
             if(0 == recvreq->req_rdma_cnt &&
-                    bml_btl->btl_max_rdma_size != 0 &&
-                    size > bml_btl->btl_max_rdma_size) {
-                size = bml_btl->btl_max_rdma_size;
+                    bml_btl->btl_rdma_pipeline_frag_size != 0 &&
+                    size > bml_btl->btl_rdma_pipeline_frag_size) {
+                size = bml_btl->btl_rdma_pipeline_frag_size;
             }
 
             /* prepare a descriptor for RDMA */

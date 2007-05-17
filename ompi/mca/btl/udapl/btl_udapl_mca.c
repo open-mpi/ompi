@@ -252,61 +252,20 @@ int mca_btl_udapl_register_mca_params(void)
         (int*)&mca_btl_udapl_module.udapl_max_recv_dtos,
         REGINT_GE_ONE), tmp_rc, rc);
 
-    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("exclusivity",
-        "uDAPL BTL exclusivity (must be >= 0).", 
-        (MCA_BTL_EXCLUSIVITY_DEFAULT - 10),
-        &ival,
-        REGINT_GE_ZERO), tmp_rc, rc);
-    mca_btl_udapl_module.super.btl_exclusivity = (uint32_t) ival;
+    mca_btl_udapl_module.super.btl_exclusivity =
+        MCA_BTL_EXCLUSIVITY_DEFAULT - 10;
+    mca_btl_udapl_module.super.btl_eager_limit = 8*1024;
+    mca_btl_udapl_module.super.btl_min_send_size = 16*1024;
+    mca_btl_udapl_module.super.btl_max_send_size = 64*1024;
+    mca_btl_udapl_module.super.btl_rdma_pipeline_offset = 512*1024;
+    mca_btl_udapl_module.super.btl_rdma_pipeline_frag_size = 128 * 1024;
+    mca_btl_udapl_module.super.btl_min_rdma_pipeline_size = 0;
+    mca_btl_udapl_module.super.btl_flags = MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND;
+    mca_btl_udapl_module.super.btl_bandwidth = 225;
+    mca_btl_udapl_module.super.btl_latency = 0;
 
-    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("eager_limit",
-        "Eager send limit, in bytes (must be >= 1).",
-        (8 * 1024),
-        &ival,
-        REGINT_GE_ONE), tmp_rc, rc);
-    mca_btl_udapl_module.super.btl_eager_limit = (uint32_t) ival;
-    
-    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("min_send_size",
-        "Minimum send size, in bytes (must be >= 1).",
-        (16 * 1024),
-        &ival,
-        REGINT_GE_ONE), tmp_rc, rc);
-    mca_btl_udapl_module.super.btl_min_send_size = (uint32_t) ival;
-
-    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("max_send_size",
-        "Maximum send size, in bytes (must be >= 1).",
-        (64 * 1024),
-        &ival,
-        REGINT_GE_ONE), tmp_rc, rc); 
-    mca_btl_udapl_module.super.btl_max_send_size = (uint32_t) ival; 
-    
-    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("min_rdma_size",
-        "Minimum RDMA size, in bytes (must be >= 1).",
-        (512 * 1024),
-        &ival,
-        REGINT_GE_ONE), tmp_rc, rc);
-    mca_btl_udapl_module.super.btl_min_rdma_size = (uint32_t) ival;
-
-    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("max_rdma_size",
-        "Maximum RDMA size, in bytes (must be >= 1).",
-        (128 * 1024),
-        &ival,
-        REGINT_GE_ONE), tmp_rc, rc); 
-    mca_btl_udapl_module.super.btl_max_rdma_size = (uint32_t) ival; 
-
-    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("flags",
-        "BTL flags, added together: PUT=2 (cannot be 0).",
-        MCA_BTL_FLAGS_PUT,
-        &ival,
-        REGINT_GE_ZERO), tmp_rc, rc);
-    mca_btl_udapl_module.super.btl_flags = (uint32_t) ival;
-    
-    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("bandwidth",
-        "Approximate maximum bandwidth of network (must be >= 1).",
-        225,
-        &ival,
-        REGINT_GE_ONE), tmp_rc, rc);
-    mca_btl_udapl_module.super.btl_bandwidth = (uint32_t) ival;
+    mca_btl_base_param_register(&mca_btl_udapl_component.super.btl_version,
+            &mca_btl_udapl_module.super);
 
     return rc;
 }
