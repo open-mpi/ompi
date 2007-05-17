@@ -529,11 +529,11 @@ static int opal_ifinit(void)
             
             strncpy(intf.if_name, cur_ifaddrs->ifa_name, IF_NAMESIZE);
             intf.if_index = opal_list_get_size(&opal_if_list) + 1;
-            intf.if_addr.sin6_addr = a6;
-            intf.if_addr.sin6_family = AF_INET6;
+            ((struct sockaddr_in6*) &intf.if_addr)->sin6_addr = a6;
+            ((struct sockaddr_in6*) &intf.if_addr)->sin6_family = AF_INET6;
 
             /* since every scope != 0 is ignored, we just set the scope to 0 */
-            intf.if_addr.sin6_scope_id = 0;
+            ((struct sockaddr_in6*) &intf.if_addr)->sin6_scope_id = 0;
 
             /*
              * hardcoded netmask, adrian says that's ok
