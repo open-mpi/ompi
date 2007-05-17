@@ -44,6 +44,9 @@
 static int udapl_reg_mr(void *reg_data, void *base, size_t size,
         mca_mpool_base_registration_t *reg);
 static int udapl_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg);
+static int mca_btl_udapl_set_peer_parameters(
+        struct mca_btl_udapl_module_t* udapl_btl,
+        size_t nprocs);
 
 mca_btl_udapl_module_t mca_btl_udapl_module = {
     {
@@ -416,7 +419,7 @@ int mca_btl_udapl_finalize(struct mca_btl_base_module_t* base_btl)
  * @return                    OMPI_SUCCESS or error status on failure
  */
 
-int mca_btl_udapl_set_peer_parameters(
+static int mca_btl_udapl_set_peer_parameters(
     struct mca_btl_udapl_module_t* udapl_btl,
     size_t nprocs) 
 {
