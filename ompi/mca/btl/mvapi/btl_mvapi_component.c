@@ -222,28 +222,19 @@ int mca_btl_mvapi_component_open(void)
     mca_btl_mvapi_param_register_int("eager_rdma_num", "Number of RDMA buffers for eager messages",
             16, (int*)&mca_btl_mvapi_component.eager_rdma_num);
     mca_btl_mvapi_component.eager_rdma_num+=1;
-    mca_btl_mvapi_param_register_int ("exclusivity", "BTL exclusivity", 
-                                      MCA_BTL_EXCLUSIVITY_DEFAULT, (int*) &mca_btl_mvapi_module.super.btl_exclusivity);
-    mca_btl_mvapi_param_register_int ("eager_limit", "eager send limit", 
-                                      (12*1024), &tmp_int); 
-    mca_btl_mvapi_module.super.btl_eager_limit = tmp_int;  
-    mca_btl_mvapi_param_register_int ("min_send_size", "minimum send size", 
-                                      (32*1024), &tmp_int);
-    mca_btl_mvapi_module.super.btl_min_send_size = tmp_int;
-    mca_btl_mvapi_param_register_int ("max_send_size", "maximum send size", 
-                                      (64*1024), &tmp_int);
-    mca_btl_mvapi_module.super.btl_max_send_size = tmp_int; 
-    mca_btl_mvapi_param_register_int("min_rdma_size", "minimum rdma size", 
-                                     1024*1024, &tmp_int);
-    mca_btl_mvapi_module.super.btl_min_rdma_size = tmp_int;
-    mca_btl_mvapi_param_register_int("max_rdma_size", "maximium rdma size", 
-                                     1024*1024, &tmp_int);
-    mca_btl_mvapi_module.super.btl_max_rdma_size = tmp_int; 
-    mca_btl_mvapi_param_register_int("flags", "BTL flags, SEND=1, PUT=2, GET=4", 
-                                     MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_GET, (int*) &mca_btl_mvapi_module.super.btl_flags); 
-    mca_btl_mvapi_param_register_int("bandwidth", "Approximate maximum bandwidth of interconnect", 
-                                      800, (int*) &mca_btl_mvapi_module.super.btl_bandwidth); 
-    
+    mca_btl_mvapi_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT;
+    mca_btl_mvapi_module.super.btl_eager_limit = 12*1024;
+    mca_btl_mvapi_module.super.btl_min_send_size = 32*1024;
+    mca_btl_mvapi_module.super.btl_max_send_size = 64*1024;
+    mca_btl_mvapi_module.super.btl_rdma_pipeline_offset = 1024*1024;
+    mca_btl_mvapi_module.super.btl_rdma_pipeline_frag_size = 1024*1024;
+    mca_btl_mvapi_module.super.btl_min_rdma_pipeline_size = 256*1024;
+    mca_btl_mvapi_module.super.btl_flags = MCA_BTL_FLAGS_RDMA;
+    mca_btl_mvapi_module.super.btl_bandwidth = 800;
+   
+    mca_btl_base_param_register(&mca_btl_mvapi_component.super.btl_version,
+            &mca_btl_mvapi_module.super);
+
     mca_btl_mvapi_component.max_send_size = mca_btl_mvapi_module.super.btl_max_send_size; 
     mca_btl_mvapi_component.eager_limit = mca_btl_mvapi_module.super.btl_eager_limit; 
     

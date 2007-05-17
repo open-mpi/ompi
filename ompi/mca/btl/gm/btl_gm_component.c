@@ -147,29 +147,24 @@ int mca_btl_gm_component_open(void)
         mca_btl_gm_param_register_string("port_name", "OMPI"); 
 
     /* register gm module parameters */
-    mca_btl_gm_module.super.btl_exclusivity =
-        mca_btl_gm_param_register_int ("exclusivity", MCA_BTL_EXCLUSIVITY_DEFAULT);
-    mca_btl_gm_module.super.btl_eager_limit = 
-        mca_btl_gm_param_register_int ("eager_limit", 32*1024);
-    mca_btl_gm_module.super.btl_min_send_size =
-        mca_btl_gm_param_register_int ("min_send_size", 32*1024);
-    mca_btl_gm_module.super.btl_max_send_size =
-        mca_btl_gm_param_register_int ("max_send_size", 64*1024);
-    mca_btl_gm_module.super.btl_min_rdma_size = 
-        mca_btl_gm_param_register_int("min_rdma_size", 512*1024); 
-    mca_btl_gm_module.super.btl_max_rdma_size = 
-        mca_btl_gm_param_register_int("max_rdma_size", 128*1024); 
+    mca_btl_gm_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT;
+    mca_btl_gm_module.super.btl_eager_limit = 32*1024;
+    mca_btl_gm_module.super.btl_min_send_size = 32*1024;
+    mca_btl_gm_module.super.btl_max_send_size = 64*1024;
+    mca_btl_gm_module.super.btl_rdma_pipeline_offset = 512*1024; 
+    mca_btl_gm_module.super.btl_rdma_pipeline_frag_size = 128*1024;
+    mca_btl_gm_module.super.btl_min_rdma_pipeline_size = 128*1024;
 #if OMPI_MCA_BTL_GM_HAVE_RDMA_PUT 
-    mca_btl_gm_module.super.btl_flags  = 
-        mca_btl_gm_param_register_int("flags", MCA_BTL_FLAGS_PUT | 
-                                      MCA_BTL_FLAGS_NEED_ACK |
-                                      MCA_BTL_FLAGS_NEED_CSUM); 
+    mca_btl_gm_module.super.btl_flags  =  MCA_BTL_FLAGS_PUT |
+        MCA_BTL_FLAGS_NEED_ACK | MCA_BTL_FLAGS_NEED_CSUM; 
 #else
     mca_btl_gm_module.super.btl_flags = MCA_BTL_FLAGS_SEND;
 #endif
-    mca_btl_gm_module.super.btl_bandwidth  = 
-        mca_btl_gm_param_register_int("bandwidth", 250); 
-
+    mca_btl_gm_module.super.btl_bandwidth = 250;
+    mca_btl_gm_module.super.btl_latency = 0;
+    mca_btl_base_param_register(&mca_btl_gm_component.super.btl_version,
+            &mca_btl_gm_module.super);
+    
     /* compute the eager frag size */
     mca_btl_gm_component.gm_eager_frag_size =
         gm_min_size_for_length(mca_btl_gm_module.super.btl_eager_limit) - 1;

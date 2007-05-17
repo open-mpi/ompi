@@ -60,8 +60,8 @@ OMPI_DECLSPEC  void mca_btl_base_dump(
     struct mca_btl_base_module_t*,
     struct mca_btl_base_endpoint_t*,
     int verbose);
-
-
+OMPI_DECLSPEC  int mca_btl_base_param_register(mca_base_component_t *version,
+        mca_btl_base_module_t *module);
 
 /*
  * Globals

@@ -273,11 +273,6 @@ int btl_openib_register_mca_params(void)
                   0, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.ib_static_rate = (uint32_t) ival;
 
-    CHECK(reg_int("exclusivity", "OpenIB BTL exclusivity "
-                  "(must be >= 0)", 
-                  MCA_BTL_EXCLUSIVITY_DEFAULT, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_module.super.btl_exclusivity = (uint32_t) ival;
-
     CHECK(reg_int("rd_num", "Number of receive descriptors to post to a "
                   "queue pair (must be >= 1)",
                   8, &ival, REGINT_GE_ONE));
@@ -375,46 +370,6 @@ int btl_openib_register_mca_params(void)
         mca_btl_openib_component.buffer_alignment = (uint32_t) ival;
     }
 
-    CHECK(reg_int("eager_limit", "Eager send limit, in bytes "
-                  "(must be >= 1)",
-                  (12 * 1024), &ival, REGINT_GE_ONE));
-    mca_btl_openib_module.super.btl_eager_limit = (uint32_t) ival;
-
-    CHECK(reg_int("min_send_size", "Minimum send size, in bytes "
-                  "(must be >= 1)",
-                  (32 * 1024), &ival, REGINT_GE_ONE));
-    mca_btl_openib_module.super.btl_min_send_size = (uint32_t) ival;
-
-    CHECK(reg_int("max_send_size", "Maximum send size, in bytes "
-                  "(must be >= 1)",
-                  (64 * 1024), &ival, REGINT_GE_ONE)); 
-    mca_btl_openib_module.super.btl_max_send_size = (uint32_t) ival; 
-    
-    CHECK(reg_int("min_rdma_size", "Minimum RDMA size, in bytes "
-                  "(must be >= 1)",
-                  (1024 * 1024), &ival, REGINT_GE_ONE));
-    mca_btl_openib_module.super.btl_min_rdma_size = (uint32_t) ival;
-
-    CHECK(reg_int("max_rdma_size", "Maximium RDMA size, in bytes "
-                  "(must be >= 1)",
-                  (1024 * 1024), &ival, REGINT_GE_ONE)); 
-    mca_btl_openib_module.super.btl_max_rdma_size = (uint32_t) ival; 
-
-    CHECK(reg_int("flags", "BTL flags, added together: SEND=1, PUT=2, GET=4 "
-                  "(cannot be 0)",
-                  MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_NEED_ACK |
-                  MCA_BTL_FLAGS_NEED_CSUM, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_module.super.btl_flags = (uint32_t) ival;
-    
-    CHECK(reg_int("bandwidth", "Approximate maximum bandwidth of each network interface in megabits per second "
-                  "(if 0, filled in at run-time by querying the HCA, otherwise must be > 0) ",
-                  0, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_module.super.btl_bandwidth = (uint32_t) ival;
-
-    CHECK(reg_int("latency", "Approximate latency of the device (must be >= 1)", 
-                  10, &ival, REGINT_GE_ONE));
-    mca_btl_openib_module.super.btl_latency = (uint32_t) ival;
-    
     /* Info only */
 
     mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version, 
@@ -428,6 +383,19 @@ int btl_openib_register_mca_params(void)
 #endif
                            NULL);
 
+    mca_btl_openib_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT;
+    mca_btl_openib_module.super.btl_eager_limit = 12 * 1024;
+    mca_btl_openib_module.super.btl_min_send_size = 32 * 1024;
+    mca_btl_openib_module.super.btl_max_send_size = 64 * 1024;
+    mca_btl_openib_module.super.btl_rdma_pipeline_offset = 1024 * 1024;
+    mca_btl_openib_module.super.btl_rdma_pipeline_frag_size = 1024 * 1024;    
+    mca_btl_openib_module.super.btl_min_rdma_pipeline_size = 256 * 1024;
+    mca_btl_openib_module.super.btl_flags = MCA_BTL_FLAGS_RDMA |
+        MCA_BTL_FLAGS_NEED_ACK | MCA_BTL_FLAGS_NEED_CSUM;
+    mca_btl_openib_module.super.btl_bandwidth = 800;
+    mca_btl_openib_module.super.btl_latency = 10;
+    mca_btl_base_param_register(&mca_btl_openib_component.super.btl_version,
+            &mca_btl_openib_module.super);
+
     return ret;
 }
-

@@ -213,25 +213,24 @@ int mca_btl_tcp_component_open(void)
         mca_btl_tcp_param_register_int ("rcvbuf", 128*1024);
     mca_btl_tcp_component.tcp_endpoint_cache =
         mca_btl_tcp_param_register_int ("endpoint_cache", 30*1024);
-    mca_btl_tcp_module.super.btl_exclusivity =
-        mca_btl_tcp_param_register_int ("exclusivity", MCA_BTL_EXCLUSIVITY_LOW);
-    mca_btl_tcp_module.super.btl_eager_limit =
-        mca_btl_tcp_param_register_int ("eager_limit", 64*1024);
-    mca_btl_tcp_module.super.btl_min_send_size =
-        mca_btl_tcp_param_register_int ("min_send_size", 64*1024);
-    mca_btl_tcp_module.super.btl_max_send_size =
-        mca_btl_tcp_param_register_int ("max_send_size", 128*1024);
-    
-    mca_btl_tcp_module.super.btl_min_rdma_size =
-        mca_btl_tcp_param_register_int("min_rdma_size", 128*1024);
-    mca_btl_tcp_module.super.btl_max_rdma_size =
-        mca_btl_tcp_param_register_int("max_rdma_size", INT_MAX);
-    mca_btl_tcp_module.super.btl_flags  =
-        mca_btl_tcp_param_register_int("flags", MCA_BTL_FLAGS_PUT |
+
+    mca_btl_tcp_module.super.btl_exclusivity =  MCA_BTL_EXCLUSIVITY_LOW;
+    mca_btl_tcp_module.super.btl_eager_limit = 64*1024;
+    mca_btl_tcp_module.super.btl_min_send_size = 64*1024;
+    mca_btl_tcp_module.super.btl_max_send_size = 128*1024;
+    mca_btl_tcp_module.super.btl_rdma_pipeline_offset = 128*1024;
+    mca_btl_tcp_module.super.btl_rdma_pipeline_frag_size = INT_MAX;
+    mca_btl_tcp_module.super.btl_min_rdma_pipeline_size = 0;
+    mca_btl_tcp_module.super.btl_flags = MCA_BTL_FLAGS_PUT |
                                        MCA_BTL_FLAGS_SEND_INPLACE |
-                                       MCA_BTL_FLAGS_NEED_CSUM | 
+                                       MCA_BTL_FLAGS_NEED_CSUM |
                                        MCA_BTL_FLAGS_NEED_ACK |
-                                       MCA_BTL_FLAGS_FAKE_RDMA);
+                                       MCA_BTL_FLAGS_FAKE_RDMA;
+    mca_btl_tcp_module.super.btl_bandwidth = 100;
+    mca_btl_tcp_module.super.btl_latency = 0;
+    mca_btl_base_param_register(&mca_btl_tcp_component.super.btl_version,
+            &mca_btl_tcp_module.super);
+
     mca_btl_tcp_component.tcp_disable_family =
         mca_btl_tcp_param_register_int ("disable_family", 0);
     return OMPI_SUCCESS;

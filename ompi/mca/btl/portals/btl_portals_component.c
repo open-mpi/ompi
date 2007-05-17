@@ -72,7 +72,6 @@ int
 mca_btl_portals_component_open(void)
 {
     int i;
-    int dummy;
 
     ompi_common_portals_register_mca();
 
@@ -129,77 +128,22 @@ mca_btl_portals_component_open(void)
     /* 
      * fill default module state 
      */
-    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
-                           "eager_limit",
-                           "Maximum size for eager frag",
-                           false,
-                           false,
-                           32 * 1024,
-                           &dummy);
-    mca_btl_portals_module.super.btl_eager_limit = dummy;
+    mca_btl_portals_module.super.btl_exclusivity = 60;
+    mca_btl_portals_module.super.btl_eager_limit = 32 * 1024;
+    mca_btl_portals_module.super.btl_min_send_size = 32 * 1024;
+    mca_btl_portals_module.super.btl_max_send_size = 64 * 1024;
+    mca_btl_portals_module.super.btl_rdma_pipeline_offset = 64 * 1024;
+    mca_btl_portals_module.super.btl_rdma_pipeline_frag_size = INT_MAX;
+    mca_btl_portals_module.super.btl_min_rdma_pipeline_size = 0;
+    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_RDMA;
+    mca_btl_portals_module.super.btl_bandwidth = 1000;
+    mca_btl_portals_module.super.btl_latency = 0;
 
-    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
-                           "min_send_size",
-                           "Minimum size for a send frag",
-                           false,
-                           false,
-                           32 * 1024,
-                           &dummy);
-    mca_btl_portals_module.super.btl_min_send_size = dummy;
-    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
-                           "max_send_size",
-                           "Maximum size for a send frag",
-                           false,
-                           false,
-                           64 * 1024,
-                           &dummy);
-    mca_btl_portals_module.super.btl_max_send_size = dummy;
-    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
-                           "min_rdma_size",
-                           "Minimum size for a rdma frag",
-                           false,
-                           false,
-                           64 * 1024,
-                           &dummy);
-    mca_btl_portals_module.super.btl_min_rdma_size = dummy;
-    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
-                           "max_rdma_size",
-                           "Maximum size for a rdma frag",
-                           false,
-                           false,
-                           INT_MAX,
-                           &dummy);
-    mca_btl_portals_module.super.btl_max_rdma_size = dummy;
-
-    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
-                           "exclusivity",
-                           "Exclusivity level for selection process",
-                           false,
-                           false,
-                           60,
-                           &dummy);
-    mca_btl_portals_module.super.btl_exclusivity = dummy;
-    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
-                           "latency",
-                           "Latency level for short message scheduling",
-                           false,
-                           false,
-                           0,
-                           &dummy);
-    mca_btl_portals_module.super.btl_latency = dummy;
-    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
-                           "bandwidth",
-                           "Bandwidth level for frag scheduling",
-                           false,
-                           false,
-                           1000,
-                           &dummy);
-    mca_btl_portals_module.super.btl_bandwidth = dummy;
-
+    mca_btl_base_param_register(&mca_btl_portals_component.super.btl_version,
+            &mca_btl_portals_module.super);
     /* send in place actually increases our latency because we have to
        hold on to the buffer until we're done with it, rather than
        copy and send.  So don't use it for now. */
-    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_RDMA;
 
     mca_btl_portals_module.portals_num_procs = 0;
     bzero(&(mca_btl_portals_module.portals_reg),
