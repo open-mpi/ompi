@@ -39,6 +39,7 @@ headers = \
         if.h \
 	keyval_parse.h \
         malloc.h \
+	net.h \
         numtostr.h \
         num_procs.h \
         opal_environ.h \
@@ -70,6 +71,7 @@ libopalutil_la_SOURCES = \
         if.c \
 	keyval_parse.c \
         malloc.c \
+	net.c \
         numtostr.c \
         num_procs.c \
         opal_environ.c \

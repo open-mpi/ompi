@@ -1,4 +1,3 @@
-/* @file */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,30 +18,22 @@
  * $HEADER$
  */
 
+/* @file */
+
 #ifndef OPAL_IF_UTIL_
 #define OPAL_IF_UTIL_
 
-#include "opal_config.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#include "opal/ipv6compat.h"
 #endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
 
 BEGIN_C_DECLS
-
-/**
- * Calculate netmask in network byte order from CIDR notation
- *
- * @param prefixlen (IN)  CIDR prefixlen
- * @return                netmask in network byte order
- */
-OPAL_DECLSPEC uint32_t opal_prefix2netmask (uint32_t prefixlen);
 
 /**
  *  Lookup an interface by name and return its primary address.
@@ -50,7 +43,7 @@ OPAL_DECLSPEC uint32_t opal_prefix2netmask (uint32_t prefixlen);
  *  @param size    (IN)   Interface address buffer size
  */
 OPAL_DECLSPEC int opal_ifnametoaddr(const char* if_name, 
-                                    struct sockaddr_storage* if_addr,
+                                    struct sockaddr* if_addr,
                                     int size);
 
 /**
@@ -131,7 +124,7 @@ OPAL_DECLSPEC int opal_ifkindextoname(int if_kindex, char* if_name, int);
  *  @param if_name (OUT)  Interface address buffer
  *  @param size (IN)      Interface address buffer size
  */
-OPAL_DECLSPEC int opal_ifindextoaddr(int if_index, struct sockaddr_storage*,
+OPAL_DECLSPEC int opal_ifindextoaddr(int if_index, struct sockaddr*,
                                      unsigned int);
 
 /**
@@ -158,51 +151,6 @@ OPAL_DECLSPEC int opal_ifindextoflags(int if_index, uint32_t*);
  * @return                 true if \c hostname is local, false otherwise
  */
 OPAL_DECLSPEC bool opal_ifislocal(char *hostname);
-
-/**
- * Determine if given IP address is in the localhost range
- *
- * Determine if the given IP address is in the localhost range
- * (127.0.0.0/8), meaning that it can't be used to connect to machines
- * outside the current host.
- *
- * @param addr             struct sockaddr_in of IP address
- * @return                 true if \c addr is a localhost address,
- *                         false otherwise.
- */
-OPAL_DECLSPEC bool opal_ifislocalhost(struct sockaddr_storage *addr);
-
-/**
- * Are we on the same network?
- *
- * For IPv6, we only need to check for /64, there are no other
- * local netmasks.
- *
- * @param addr1             struct sockaddr_storage of address
- * @param addr2             struct sockaddr_storage of address
- * @param prefixlen         netmask (either CIDR oder IPv6 prefixlen)
- * @return                  true if \c addr1 and \c addr2 are on the
- *                          same net, false otherwise.
- */
-OPAL_DECLSPEC bool opal_samenetwork(struct sockaddr_storage *addr1,
-                                    struct sockaddr_storage *addr2,
-                                    uint32_t prefixlen);
-
-/**
- * Convert sockaddr_storage to string
- *
- * @param addr              struct sockaddr_storage of address
- * @return                  literal representation of \c addr
- */
-OPAL_DECLSPEC char* opal_sockaddr2str(struct sockaddr_storage *addr);
-
-/**
- * Is the given address a public IPv4 address?
- *
- * @param addr      address as struct sockaddr_storage
- * @return          true, if \c addr is IPv4 public, false otherwise
- */
-OPAL_DECLSPEC bool opal_addr_isipv4public(struct sockaddr_storage *addr);
 
 /**
  * Finalize the functions to release malloc'd data

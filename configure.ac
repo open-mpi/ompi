@@ -651,9 +651,7 @@ ompi_show_title "Type tests"
 # Size of pid_t
 AC_CHECK_SIZEOF(pid_t)
 
-AC_CHECK_TYPES([socklen_t], [AC_DEFINE([HAVE_SOCKLEN_T], [1], 
-                                       [Whether we have socklen_t or not])],
-               [], [AC_INCLUDES_DEFAULT
+AC_CHECK_TYPES([socklen_t], [], [], [AC_INCLUDES_DEFAULT
 #include <sys/socket.h>])
 
 AC_CHECK_TYPES([struct sockaddr_in], [], [], [AC_INCLUDES_DEFAULT
@@ -663,6 +661,14 @@ AC_CHECK_TYPES([struct sockaddr_in], [], [], [AC_INCLUDES_DEFAULT
 
 # Do we have IPv6 support?
 AC_CHECK_TYPES([struct sockaddr_in6], [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif])
+AC_CHECK_TYPES([struct sockaddr_storage], [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif])
+AC_CHECK_DECLS([AF_UNSPEC, PF_UNSPEC], [], [], [AC_INCLUDES_DEFAULT
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif])

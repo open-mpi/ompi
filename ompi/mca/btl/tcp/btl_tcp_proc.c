@@ -30,6 +30,7 @@
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 #include "ompi/datatype/dt_arch.h"
 #include "opal/util/if.h"
+#include "opal/util/net.h"
 #include "orte/mca/oob/tcp/oob_tcp_addr.h"
 
 #include "btl_tcp.h"
@@ -194,7 +195,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
         mca_btl_tcp_proc_tosocks (endpoint_addr, &endpoint_addr_ss);
 
         /* The best we could get is IPv4 public. So let's check */
-        if (true == opal_addr_isipv4public (&endpoint_addr_ss)) {
+        if (true == opal_net_addr_isipv4public((struct sockaddr*) &endpoint_addr_ss)) {
             btl_endpoint->endpoint_addr = endpoint_addr;
             btl_endpoint->endpoint_addr->addr_inuse++;
             return OMPI_SUCCESS;
@@ -233,7 +234,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                     continue;
                 }
                 if (OPAL_SUCCESS != 
-                        opal_ifindextoaddr (index, &local_ss, sizeof (local_ss))) {
+                    opal_ifindextoaddr (index, (struct sockaddr*) &local_ss, sizeof (local_ss))) {
                     opal_output (0,
                             "btl_tcp_proc: problems getting address for index %i (kernel index %i)\n", index, opal_ifindextokindex (index));
                     continue;
@@ -249,8 +250,10 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                  * Let's talk about IPv4 _private_, so isipv4public must
                  * return false
                  */
-                if (false == opal_addr_isipv4public (&local_ss)) {
-                    if (opal_samenetwork(&local_ss, &endpoint_addr_ss, netmask)) {
+                if (false == opal_net_addr_isipv4public((struct sockaddr*) &local_ss)) {
+                    if (opal_net_samenetwork((struct sockaddr*) &local_ss,
+                                             (struct sockaddr*) &endpoint_addr_ss, 
+                                             netmask)) {
                         btl_endpoint->endpoint_addr = endpoint_addr;
                         btl_endpoint->endpoint_addr->addr_inuse++;
                         return OMPI_SUCCESS;

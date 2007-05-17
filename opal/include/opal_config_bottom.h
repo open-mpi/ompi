@@ -481,6 +481,17 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #define OPAL_WANT_IPV6 0
 #endif
 
+#if !defined(HAVE_STRUCT_SOCKADDR_STORAGE)
+#define sockaddr_storage sockaddr
+#define ss_family sa_family
+#endif
+#if !HAVE_DECL_AF_UNSPEC
+#define AF_UNSPEC AF_INET
+#endif
+#if !HAVE_DECL_PF_UNSPEC
+#define PF_UNSPEC PF_INET
+#endif
+
 #if defined(__APPLE__) && defined(HAVE_INTTYPES_H)
 /* Prior to Mac OS X 10.3, the length modifier "ll" wasn't
    supported, but "q" was for long long.  This isn't ANSI
