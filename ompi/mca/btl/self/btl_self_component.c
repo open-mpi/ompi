@@ -79,8 +79,6 @@ mca_btl_self_component_t mca_btl_self_component = {
 
 int mca_btl_self_component_open(void)
 {
-    int tmp;
-
     /* register SELF component parameters */
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "free_list_num",
                             "Number of fragments by default", false, false,
