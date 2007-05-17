@@ -61,7 +61,7 @@ struct mca_btl_udapl_component_t {
     int32_t udapl_num_sends;    /**< number of sends to post on endpoint */
     int32_t udapl_sr_win;       /**< number of fragments recieved before
                                    returning credits to sender */
-    int32_t udapl_timeout;      /**< connection timeout, in microseconds */
+    uint32_t udapl_timeout;      /**< connection timeout, in microseconds */
     size_t udapl_eager_frag_size;
     size_t udapl_max_frag_size;
     size_t udapl_eager_rdma_frag_size; /* size of the rdma fragement including data
