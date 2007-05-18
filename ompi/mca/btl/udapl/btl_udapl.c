@@ -264,20 +264,11 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     /* TODO - since we're doing the hack below, do we need our own port? */
     btl->udapl_addr.port = port;
 
-    /* TODO - big bad evil hack! */
-    /* uDAPL doesn't ever seem to keep track of ports with addresses.  This
-       becomes a problem when we use dat_ep_query() to obtain a remote address
-       on an endpoint.  In this case, both the DAT_PORT_QUAL and the sin_port
-       field in the DAT_SOCK_ADDR are 0, regardless of the actual port. This is
-       a problem when we have more than one uDAPL process per IA - these
-       processes will have exactly the same address, as the port is all
-       we have to differentiate who is who.  Thus, our uDAPL EP -> BTL EP
-       matching algorithm will break down.
-
-       So, we insert the port we used for our PSP into the DAT_SOCK_ADDR for
-       this IA.  uDAPL then conveniently propagates this to where we need it.
+    /* Using dat_ep_query to obtain the remote port would be ideal but
+     * since the current udapl implementations don't seem to support
+     * this we store the port in udapl_addr and explictly exchange the
+     * information later.
      */
-    ((struct sockaddr_in*)(btl->udapl_ia_attr.ia_address_ptr))->sin_port = htons(port);
     ((struct sockaddr_in*)&btl->udapl_addr.addr)->sin_port = htons(port);
 
     /* initialize the memory pool */
