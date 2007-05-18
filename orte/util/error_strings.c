@@ -139,6 +139,9 @@ orte_err2str(int errnum)
     case ORTE_ERR_EXE_NOT_ACCESSIBLE:
         retval = "The specified executable could not be executed";
         break;
+    case ORTE_ERR_FAILED_TO_START:
+        retval = "The specified application failed to start";
+        break;
     default:
         retval = NULL;
     }
