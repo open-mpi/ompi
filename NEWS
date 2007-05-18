@@ -26,6 +26,13 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
+1.2.3
+-----
+
+- Fix the mvapi BTL to compile properly with compilers that do not support
+  anonymous unions.  Thanks to Luis Kornblueh for reporting the bug.
+
+
 1.2.2
 -----
 
@@ -37,7 +44,7 @@ version 1.0.
 - Fixed a variety of threading/locking bugs.
 - Fixed some compiler warnings associated with ROMIO, OS X, and gridengine.
 - If pbs-config can be found, use it to look for TM support.  Thanks
-  to Bas van der Viles for the inspiration and preliminary work.
+  to Bas van der Vlies for the inspiration and preliminary work.
 - Fixed a deadlock in orterun when the rsh PLS encounters some errors.
 
 
