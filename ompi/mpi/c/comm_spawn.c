@@ -40,7 +40,7 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
 {
     int rank, rc, i;
     int send_first=0; /* we wait to be contacted */
-    ompi_communicator_t *newcomp;
+    ompi_communicator_t *newcomp=NULL;
     char port_name[MPI_MAX_PORT_NAME];
     char *tmp_port;
     orte_rml_tag_t tag;
@@ -91,8 +91,10 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
        /* Open a port. The port_name is passed as an environment variable
 	  to the children. */
        ompi_open_port (port_name);
-       ompi_comm_start_processes (1, &command, &argv, &maxprocs, 
-                                  &info, port_name);
+       if (OMPI_SUCCESS != (rc = ompi_comm_start_processes (1, &command, &argv, &maxprocs, 
+                                                            &info, port_name))) {
+           goto ERROR;
+       }
        tmp_port = ompi_parse_port (port_name, &tag);
        free(tmp_port);
    }
@@ -100,7 +102,8 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
    
    rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
 
-   /* close the port again. Nothing has to be done for that at the moment.*/
+ERROR:
+    /* close the port again. Nothing has to be done for that at the moment.*/
 
    /* set error codes */
     if (MPI_ERRCODES_IGNORE != array_of_errcodes) {
