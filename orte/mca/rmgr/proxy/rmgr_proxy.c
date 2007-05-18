@@ -353,15 +353,26 @@ static void orte_rmgr_proxy_wireup_callback(orte_gpr_notify_data_t *data, void *
     /* signal that the application has indeed launched */
     OPAL_THREAD_LOCK(&mca_rmgr_proxy_component.lock);
     mca_rmgr_proxy_component.done = true;
+    mca_rmgr_proxy_component.rc = ORTE_SUCCESS;
     opal_condition_signal(&mca_rmgr_proxy_component.cond);
     OPAL_THREAD_UNLOCK(&mca_rmgr_proxy_component.lock);    
 }
 
 /*
+ * callback that tells us when we can leave the spawn function and return to caller
+ */
+static void app_terminated(orte_gpr_notify_data_t *data, void *cbdata)
+{
+    /* signal that we can leave */
+    OPAL_THREAD_LOCK(&mca_rmgr_proxy_component.lock);
+    mca_rmgr_proxy_component.done = true;
+    opal_condition_signal(&mca_rmgr_proxy_component.cond);
+    OPAL_THREAD_UNLOCK(&mca_rmgr_proxy_component.lock);
+}
+
+/*
  *  Shortcut for the multiple steps involved in spawning a new job.
  */
-
-
 static int orte_rmgr_proxy_spawn_job(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
@@ -382,6 +393,7 @@ static int orte_rmgr_proxy_spawn_job(
     /* mark that the spawn is not done */
     OPAL_THREAD_LOCK(&mca_rmgr_proxy_component.lock);
     mca_rmgr_proxy_component.done = false;
+    mca_rmgr_proxy_component.rc = ORTE_ERR_FAILED_TO_START;
     OPAL_THREAD_UNLOCK(&mca_rmgr_proxy_component.lock);
     
     /* check for any flow directives to control what we do */
@@ -457,6 +469,13 @@ static int orte_rmgr_proxy_spawn_job(
             return rc;
         }
 
+        /* setup the subscription so we will know if things fail to launch */
+        rc = orte_smr.job_stage_gate_subscribe(*jobid, app_terminated, NULL, ORTE_PROC_STATE_TERMINATED);
+        if(ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
         /*
          * Define the ERRMGR's callbacks as required
          */
@@ -512,7 +531,8 @@ static int orte_rmgr_proxy_spawn_job(
     }
     OPAL_THREAD_UNLOCK(&mca_rmgr_proxy_component.lock);
     
-    return ORTE_SUCCESS;
+    /* return the status code contained in the component */
+    return mca_rmgr_proxy_component.rc;
 }
 
 
