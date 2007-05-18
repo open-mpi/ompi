@@ -107,15 +107,18 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
         /* Open a port. The port_name is passed as an environment variable
          * to the children. */
         ompi_open_port (port_name);
-        ompi_comm_start_processes(count, array_of_commands,
-                                  array_of_argv, array_of_maxprocs,
-                                  array_of_info, port_name);
+        if (OMPI_SUCCESS != (rc = ompi_comm_start_processes(count, array_of_commands,
+                                                            array_of_argv, array_of_maxprocs,
+                                                            array_of_info, port_name))) {
+            goto ERROR;
+        }
         tmp_port = ompi_parse_port (port_name, &tag);
         free(tmp_port);
     }
 
     rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
 
+ERROR:
     /* close the port again. Nothing has to be done for that at the moment.*/
 
     /* set array of errorcodes */
