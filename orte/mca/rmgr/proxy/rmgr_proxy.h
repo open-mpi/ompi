@@ -42,6 +42,8 @@ struct orte_rmgr_proxy_component_t {
     opal_condition_t cond;
     /* flag for tracking completion of app launch */
     bool done;
+    /* return status code */
+    int rc;
 };
 /** Convenience typedef */
 typedef struct orte_rmgr_proxy_component_t orte_rmgr_proxy_component_t;
