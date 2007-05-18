@@ -102,7 +102,8 @@ enum {
     ORTE_ERR_WDIR_NOT_FOUND                 = (ORTE_ERR_BASE - 34),
     ORTE_ERR_EXE_NOT_FOUND                  = (ORTE_ERR_BASE - 35),
     ORTE_ERR_PIPE_READ_FAILURE              = (ORTE_ERR_BASE - 36),
-    ORTE_ERR_EXE_NOT_ACCESSIBLE             = (ORTE_ERR_BASE - 37)
+    ORTE_ERR_EXE_NOT_ACCESSIBLE             = (ORTE_ERR_BASE - 37),
+    ORTE_ERR_FAILED_TO_START                = (ORTE_ERR_BASE - 38)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)

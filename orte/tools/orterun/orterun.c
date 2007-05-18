@@ -480,84 +480,77 @@ int orterun(int argc, char *argv[])
     while (NULL != (item = opal_list_remove_first(&attributes))) OBJ_RELEASE(item);
     OBJ_DESTRUCT(&attributes);
     
-    if (ORTE_SUCCESS != rc) {
-        /* JMS show_help unless it is ERR_SILENT */
-        if (ORTE_ERR_SILENT != rc) {
-            opal_output(0, "%s: spawn failed with errno=%d\n", orterun_basename, rc);
-        }
-    } else {
-
-        if (orterun_globals.do_not_launch) {
-            /* we are done! */
-            goto DONE;
-        }
+    if (orterun_globals.do_not_launch) {
+        /* we are done! */
+        goto DONE;
+    }
         
-        /* Wait for the app to complete */
-        if (wait_for_job_completion) {
-            OPAL_THREAD_LOCK(&orterun_globals.lock);
-            while (!orterun_globals.exit) {
-                opal_condition_wait(&orterun_globals.cond,
-                                    &orterun_globals.lock);
-            }
-            /* check to see if the job was aborted */
-            if (ORTE_JOBID_INVALID != jobid &&
-                ORTE_SUCCESS != (rc = orte_smr.get_job_state(&exit_state, jobid))) {
-                if (ORTE_SUCCESS != rc) {
-                    ORTE_ERROR_LOG(rc);
-                }
-                /* define the exit state as abnormal by default */
-                exit_state = ORTE_JOB_STATE_ABORTED;
-            }
-            if (ORTE_JOB_STATE_TERMINATED != exit_state) {
-                /* abnormal termination of some kind */
-                dump_aborted_procs(jobid, apps, exit_state);
-                /* If we showed more abort messages than were allowed,
-                show a followup message here */
-                if (num_aborted > max_display_aborted) {
-                    i = num_aborted - max_display_aborted;
-                    printf("%d additional process%s aborted (not shown)\n",
-                           i, ((i > 1) ? "es" : ""));
-                }
-                if (num_killed > 0) {
-                    printf("%d process%s killed (possibly by Open MPI)\n",
-                           num_killed, ((num_killed > 1) ? "es" : ""));
-                }
-            }
-            /* Make sure we propagate the exit code */
-            if (WIFEXITED(orterun_globals.exit_status)) {
-                rc = WEXITSTATUS(orterun_globals.exit_status);
-            }  else if (ORTE_JOB_STATE_FAILED_TO_START == exit_state) {
-                /* ensure we don't treat this like a signal */
-                rc = orterun_globals.exit_status;
-            } else {
-                /* If a process was killed by a signal, then make the
-                 * exit code of orterun be "signo + 128" so that "prog"
-                 * and "orterun prog" will both set the same status
-                 * value for the shell */
-                rc = WTERMSIG(orterun_globals.exit_status) + 128;
-            }
-            
-            /* the job is complete - now tell the orteds that it is
-             * okay to finalize and exit, we are done with them.
-             * Issue this as a "soft kill" so the daemons won't die
-             * if they are part of a virtual machine - since that is
-             * the default mode, we can just leave the attributes as NULL
-             */
-            if (ORTE_JOBID_INVALID != jobid) {
-                if (ORTE_SUCCESS != (ret = orte_pls.terminate_orteds(&orte_abort_timeout, NULL))) {
-                    opal_show_help("help-orterun.txt", "orterun:daemon-die", true,
-                                   orterun_basename, ORTE_ERROR_NAME(ret));
-                }
-            }
-            OPAL_THREAD_UNLOCK(&orterun_globals.lock);
-
-            /* If we were forcibly killed, print a warning that the
-               user may still have some manual cleanup to do. */
-            if (ORTE_JOBID_INVALID == jobid) {
-                opal_show_help("help-orterun.txt", "orterun:abnormal-exit",
-                               true, orterun_basename, orterun_basename);
-            }
+    OPAL_THREAD_LOCK(&orterun_globals.lock);
+    /* If the spawn was successful, wait for the app to complete */
+    if (ORTE_SUCCESS == rc) {
+        while (!orterun_globals.exit) {
+            opal_condition_wait(&orterun_globals.cond,
+                                &orterun_globals.lock);
         }
+    }
+    
+    /* check to see if the job was aborted */
+    if (ORTE_JOBID_INVALID != jobid &&
+        ORTE_SUCCESS != (rc = orte_smr.get_job_state(&exit_state, jobid))) {
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+        }
+        /* define the exit state as abnormal by default */
+        exit_state = ORTE_JOB_STATE_ABORTED;
+    }
+    if (ORTE_JOB_STATE_TERMINATED != exit_state) {
+        /* abnormal termination of some kind */
+        dump_aborted_procs(jobid, apps, exit_state);
+        /* If we showed more abort messages than were allowed,
+        show a followup message here */
+        if (num_aborted > max_display_aborted) {
+            i = num_aborted - max_display_aborted;
+            printf("%d additional process%s aborted (not shown)\n",
+                   i, ((i > 1) ? "es" : ""));
+        }
+        if (num_killed > 0) {
+            printf("%d process%s killed (possibly by Open MPI)\n",
+                   num_killed, ((num_killed > 1) ? "es" : ""));
+        }
+    }
+    /* Make sure we propagate the exit code */
+    if (WIFEXITED(orterun_globals.exit_status)) {
+        rc = WEXITSTATUS(orterun_globals.exit_status);
+    }  else if (ORTE_JOB_STATE_FAILED_TO_START == exit_state) {
+        /* ensure we don't treat this like a signal */
+        rc = orterun_globals.exit_status;
+    } else {
+        /* If a process was killed by a signal, then make the
+         * exit code of orterun be "signo + 128" so that "prog"
+         * and "orterun prog" will both set the same status
+         * value for the shell */
+        rc = WTERMSIG(orterun_globals.exit_status) + 128;
+    }
+    
+    /* the job is complete - now tell the orteds that it is
+     * okay to finalize and exit, we are done with them.
+     * Issue this as a "soft kill" so the daemons won't die
+     * if they are part of a virtual machine - since that is
+     * the default mode, we can just leave the attributes as NULL
+     */
+    if (ORTE_JOBID_INVALID != jobid) {
+        if (ORTE_SUCCESS != (ret = orte_pls.terminate_orteds(&orte_abort_timeout, NULL))) {
+            opal_show_help("help-orterun.txt", "orterun:daemon-die", true,
+                           orterun_basename, ORTE_ERROR_NAME(ret));
+        }
+    }
+    OPAL_THREAD_UNLOCK(&orterun_globals.lock);
+
+    /* If we were forcibly killed, print a warning that the
+       user may still have some manual cleanup to do. */
+    if (ORTE_JOBID_INVALID == jobid) {
+        opal_show_help("help-orterun.txt", "orterun:abnormal-exit",
+                       true, orterun_basename, orterun_basename);
     }
 
 DONE:

@@ -307,14 +307,26 @@ static void orte_rmgr_urm_wireup_callback(orte_gpr_notify_data_t *data, void *cb
     opal_output(orte_rmgr_base.rmgr_output, "rmgr_urm:wireup_callback called for job %ld", (long)jobid);
     
     orte_rmgr_urm_wireup_stdin(jobid);
-    
-    /* signal that the application has indeed launched */
+   
+    /* signal that we can leave */
+    OPAL_THREAD_LOCK(&mca_rmgr_urm_component.lock);
+    mca_rmgr_urm_component.done = true;
+    mca_rmgr_urm_component.rc = ORTE_SUCCESS;
+    opal_condition_signal(&mca_rmgr_urm_component.cond);
+    OPAL_THREAD_UNLOCK(&mca_rmgr_urm_component.lock);    
+}
+
+/*
+ * callback that tells us when we can leave the spawn function and return to caller
+ */
+static void app_terminated(orte_gpr_notify_data_t *data, void *cbdata)
+{
+    /* signal that we can leave */
     OPAL_THREAD_LOCK(&mca_rmgr_urm_component.lock);
     mca_rmgr_urm_component.done = true;
     opal_condition_signal(&mca_rmgr_urm_component.cond);
     OPAL_THREAD_UNLOCK(&mca_rmgr_urm_component.lock);
 }
-
 
 /*
  *  Shortcut for the multiple steps involved in spawning a new job.
@@ -351,6 +363,7 @@ static int orte_rmgr_urm_spawn_job(
     /* mark that the spawn is not done */
     OPAL_THREAD_LOCK(&mca_rmgr_urm_component.lock);
     mca_rmgr_urm_component.done = false;
+    mca_rmgr_urm_component.rc = ORTE_ERR_FAILED_TO_START;
     OPAL_THREAD_UNLOCK(&mca_rmgr_urm_component.lock);
     
     /* check for any flow directives to control what we do */
@@ -426,7 +439,7 @@ static int orte_rmgr_urm_spawn_job(
             return rc;
         }
         
-        /** setup the subscription so we can complete the wireup when all processes reach LAUNCHED. This
+        /* setup the subscription so we can complete the wireup when all processes reach LAUNCHED. This
          * function has the dual purpose of setting the conditioned wait variable so that the RMGR
          * can know that the app has indeed launched, and hence return to the caller
          */
@@ -436,7 +449,14 @@ static int orte_rmgr_urm_spawn_job(
             return rc;
         }
 
-         /*
+        /* setup the subscription so we will know if things fail to launch */
+        rc = orte_smr.job_stage_gate_subscribe(*jobid, app_terminated, NULL, ORTE_PROC_STATE_TERMINATED);
+        if(ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /*
           * Define the ERRMGR's callbacks as required
           */
          if (ORTE_SUCCESS != (rc = orte_errmgr.register_job(*jobid))) {
@@ -522,7 +542,8 @@ static int orte_rmgr_urm_spawn_job(
          }
      }
      
-     return ORTE_SUCCESS;
+     /* return the status code contained in the component */
+     return mca_rmgr_urm_component.rc;
 }
 
 
