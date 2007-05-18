@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All Rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -234,7 +235,7 @@ do { \
         frag->sg_entry.len = frag->size + \
             ((unsigned char*) frag->segment.seg_addr.pval-  \
              (unsigned char*) frag->hdr);  \
-       desc_post[i] = frag->rr_desc; \
+       desc_post[i] = frag->desc.rr_desc; \
     }\
     rc = EVAPI_post_rr_list( nic, \
                              qp, \

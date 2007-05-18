@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -260,7 +261,7 @@ typedef struct mca_btl_mvapi_reg_t mca_btl_mvapi_reg_t;
         frag->sg_entry.len = frag->size + \
             ((unsigned char*) frag->segment.seg_addr.pval-  \
              (unsigned char*) frag->hdr);  \
-       desc_post[i] = frag->rr_desc; \
+       desc_post[i] = frag->desc.rr_desc; \
     }\
     ret = VAPI_post_srq( nic, \
                          srq_hndl, \
