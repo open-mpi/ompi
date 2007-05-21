@@ -19,8 +19,11 @@ int main(int argc, char* argv[])
     if (MPI_COMM_NULL == parent) {
         pid = getpid();
         printf("Parent [pid %ld] about to spawn!\n", (long)pid);
-        MPI_Comm_spawn(argv[0], MPI_ARGV_NULL, size, MPI_INFO_NULL, 
-                       0, MPI_COMM_WORLD, &child, MPI_ERRCODES_IGNORE);
+        if (MPI_SUCCESS != MPI_Comm_spawn(argv[0], MPI_ARGV_NULL, size, MPI_INFO_NULL, 
+                       0, MPI_COMM_WORLD, &child, MPI_ERRCODES_IGNORE)) {
+            printf("Child failed to spawn\n");
+            exit(1);
+        }
         printf("Parent done with spawn\n");
         if (0 == rank) {
             msg = 38;

@@ -47,9 +47,37 @@ int orte_wakeup(orte_jobid_t job) {
     };
     orte_data_value_t dval = ORTE_DATA_VALUE_EMPTY;
     
+    /* first, let's ensure we cause any triggers on this job to fire */
+    if (ORTE_SUCCESS != (rc = orte_ns.get_vpid_range(job, &range))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    num = range;
+    if (ORTE_SUCCESS != (rc = orte_dss.set(&dval, (void*)&num, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_gpr.put_1(ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND | ORTE_GPR_KEYS_OR,
+                                             segment, tokens, ORTE_PROC_NUM_TERMINATED, &dval))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    /* clear the dval for future use */
+    dval.data = NULL;
+
+    /* now let's get the root job - note, this may not actually happen IF the
+     * prior trigger was enough to cause us to terminate the job
+     */
     if (ORTE_SUCCESS != (rc = orte_ns.get_root_job(&root, job))) {
         ORTE_ERROR_LOG(rc);
     }
+
+    /* if the root and the specified job are the same, stop here */
+    if (root == job) {
+        return ORTE_SUCCESS;
+    }
+
     if (ORTE_SUCCESS != (rc = orte_ns.get_vpid_range(root, &range))) {
         ORTE_ERROR_LOG(rc);
     }
