@@ -64,7 +64,7 @@ orte_rml_component_t mca_rml_oob_component = {
 orte_rml_module_t orte_rml_oob_module = {
     mca_oob_base_module_init,
     NULL,
-    (orte_rml_module_get_uri_fn_t)mca_oob_get_contact_info,
+    (orte_rml_module_get_uri_fn_t)mca_oob_get_my_contact_info,
     (orte_rml_module_set_uri_fn_t)mca_oob_set_contact_info,
     (orte_rml_module_parse_uris_fn_t)mca_oob_parse_contact_info,
     (orte_rml_module_ping_fn_t)mca_oob_ping,
@@ -78,9 +78,15 @@ orte_rml_module_t orte_rml_oob_module = {
     (orte_rml_module_recv_buffer_nb_fn_t)mca_oob_recv_packed_nb,
     (orte_rml_module_recv_cancel_fn_t)mca_oob_recv_cancel,
     (orte_rml_module_xcast_fn_t)mca_oob_xcast,
+    (orte_rml_module_xcast_nb_fn_t)mca_oob_xcast_nb,
+    (orte_rml_module_xcast_gate_fn_t)mca_oob_xcast_gate,
     (orte_rml_module_exception_fn_t)mca_oob_add_exception_handler,
     (orte_rml_module_exception_fn_t)mca_oob_del_exception_handler,
-    (orte_rml_module_ft_event_fn_t)orte_rml_oob_ft_event
+    (orte_rml_module_ft_event_fn_t)orte_rml_oob_ft_event,
+    (orte_rml_module_register_contact_info_fn_t) mca_oob_register_contact_info,
+    (orte_rml_module_register_subscription_fn_t) mca_oob_register_subscription,
+    (orte_rml_module_get_contact_info_fn_t) mca_oob_get_contact_info,
+    (orte_rml_module_update_contact_info_fn_t) mca_oob_update_contact_info
 };
 
 
@@ -89,6 +95,7 @@ static orte_rml_module_t* orte_rml_oob_init(int* priority)
     if(mca_oob_base_init() != ORTE_SUCCESS)
         return NULL;
     *priority = 1;
+    
     return &orte_rml_oob_module;
 }
 

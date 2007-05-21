@@ -74,6 +74,7 @@ void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
     orte_std_cntr_t daemon_start, num_daemons;
     int i, bitmap, peer, size, rank, hibit, mask;
     orte_process_name_t target;
+    orte_rml_tag_t target_tag;
 
     OPAL_TRACE(1);
 
@@ -214,6 +215,13 @@ void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
                 goto CLEANUP;
             }
             
+            /* unpack the tag where we are to deliver the message */
+            n = 1;
+            if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &target_tag, &n, ORTE_RML_TAG))) {
+                ORTE_ERROR_LOG(ret);
+                goto CLEANUP;
+            }
+            
             /* unpack the message */
             msg = OBJ_NEW(orte_gpr_notify_message_t);
             if (NULL == msg) {
@@ -301,7 +309,7 @@ void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
             }
 
             /* deliver the message to the children */
-            if (ORTE_SUCCESS != (ret = orte_odls.deliver_message(job, &relay, ORTE_RML_TAG_XCAST))) {
+            if (ORTE_SUCCESS != (ret = orte_odls.deliver_message(job, &relay, target_tag))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }

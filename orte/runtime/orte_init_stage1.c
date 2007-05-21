@@ -579,7 +579,9 @@ int orte_init_stage1(bool infrastructure)
 
     /* initialize the rml module so it can open its interfaces - this
      * is needed so that we can get a uri for ourselves if we are an
-     * HNP
+     * HNP.  Note that this function creates listeners to the HNP
+     * (for non-HNP procs) - if we are an HNP, it sets up the listener
+     * for incoming connections from daemons and application procs.
      */
     if (ORTE_SUCCESS != (ret = orte_rml.init())) {
         ORTE_ERROR_LOG(ret);

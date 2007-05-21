@@ -41,39 +41,48 @@
  */
 
 typedef uint32_t orte_rml_tag_t;
-#define ORTE_RML_TAG    ORTE_UINT32
+#define ORTE_RML_TAG_T    ORTE_UINT32
+#define ORTE_RML_TAG_MAX UINT32_MAX
 
-#define ORTE_RML_TAG_NS              1
-#define ORTE_RML_TAG_GPR             2
-#define ORTE_RML_TAG_GPR_NOTIFY      3
-#define ORTE_RML_TAG_DAEMON          4
-#define ORTE_RML_TAG_IOF_SVC         5
-#define ORTE_RML_TAG_IOF_CLNT        6
-#define ORTE_RML_TAG_XCAST           7
-#define ORTE_RML_TAG_RMGR            8
-#define ORTE_RML_TAG_PROBE           9
-#define ORTE_RML_TAG_RDS            10
-#define ORTE_RML_TAG_RAS            11
-#define ORTE_RML_TAG_RMAPS          12
-#define ORTE_RML_TAG_PLS            13
-#define ORTE_RML_TAG_PLS_ORTED      14
-#define ORTE_RML_TAG_PLS_ORTED_ACK  15
-#define ORTE_RML_TAG_ERRMGR         16
-#define ORTE_RML_TAG_BPROC          17
-#define ORTE_RML_TAG_BPROC_ABORT    18
-#define ORTE_RML_TAG_SM_BACK_FILE_CREATED    19
-#define ORTE_RML_TAG_WIREUP         20
 
-#define ORTE_RML_TAG_FILEM          21
-#define ORTE_RML_TAG_CKPT           22
+#define ORTE_RML_TAG_NS                      1
+#define ORTE_RML_TAG_GPR                     2
+#define ORTE_RML_TAG_GPR_NOTIFY              3
+#define ORTE_RML_TAG_DAEMON                  4
+#define ORTE_RML_TAG_IOF_SVC                 5
+#define ORTE_RML_TAG_IOF_CLNT                6
+#define ORTE_RML_TAG_XCAST_BARRIER           7
+#define ORTE_RML_TAG_XCAST_NB                8
+#define ORTE_RML_TAG_RMGR                    9
+#define ORTE_RML_TAG_PROBE                  10
+#define ORTE_RML_TAG_RDS                    11
+#define ORTE_RML_TAG_RAS                    12
+#define ORTE_RML_TAG_RMAPS                  13
+#define ORTE_RML_TAG_PLS                    14
+#define ORTE_RML_TAG_PLS_ORTED              15
+#define ORTE_RML_TAG_PLS_ORTED_ACK          16
+#define ORTE_RML_TAG_ERRMGR                 17
+#define ORTE_RML_TAG_BPROC                  18
+#define ORTE_RML_TAG_BPROC_ABORT            19
+#define ORTE_RML_TAG_SM_BACK_FILE_CREATED   20
+#define ORTE_RML_TAG_WIREUP                 21
+#define ORTE_RML_TAG_RML                    22
+
+#define ORTE_RML_TAG_FILEM                  23
+#define ORTE_RML_TAG_CKPT                   24
 /* For CRCP Coord Component */
-#define OMPI_CRCP_COORD_BOOKMARK_TAG 4242
+#define OMPI_CRCP_COORD_BOOKMARK_TAG        4242
 
 
 #define ORTE_RML_TAG_DYNAMIC     2000
 
-#define ORTE_RML_TAG_MAX UINT32_MAX
-                                                                                                                                        
+/*
+ * RML proxy commands
+ */
+typedef uint8_t orte_rml_cmd_flag_t;
+#define ORTE_RML_CMD    ORTE_UINT8
+#define ORTE_RML_UPDATE_CMD    1
+
 /**
  * Flags to send/recv
  */

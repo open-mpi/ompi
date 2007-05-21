@@ -312,7 +312,7 @@ int main(int argc, char *argv[])
      * require
      */
     daemon_is_active = true;
-    if (ORTE_SUCCESS != (ret = orte_init(true)) ) {
+    if (ORTE_SUCCESS != (ret = orte_init(ORTE_INFRASTRUCTURE, ORTE_NON_BARRIER)) ) {
         if (ORTE_ERR_UNREACH == ret) {
             opal_output(0, "Specified universe could not be reached - please ensure it has been started\n");
             return ret;

@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    if (ORTE_SUCCESS != (rc = orte_init(true))) { 
+    if (ORTE_SUCCESS != (rc = orte_init(ORTE_NON_INFRASTRUCTURE, ORTE_NON_BARRIER))) { 
         fprintf(stderr, "couldn't complete init - error code %d\n", rc);
         exit(1);
     }

@@ -22,4 +22,12 @@ headers += \
 libmca_rml_la_SOURCES += \
 	base/rml_base_open.c \
 	base/rml_base_close.c \
-	base/rml_base_select.c
+	base/rml_base_select.c \
+	base/rml_base_receive.c \
+	base/data_type_support/rml_data_type_compare_fns.c \
+	base/data_type_support/rml_data_type_copy_fns.c \
+	base/data_type_support/rml_data_type_packing_fns.c \
+	base/data_type_support/rml_data_type_print_fns.c \
+	base/data_type_support/rml_data_type_release_fns.c \
+	base/data_type_support/rml_data_type_size_fns.c \
+	base/data_type_support/rml_data_type_unpacking_fns.c

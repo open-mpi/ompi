@@ -232,6 +232,98 @@ static int orte_rmgr_proxy_setup_stage_gates(orte_jobid_t jobid)
 }
 
 
+static void orte_rmgr_proxy_xconnect_callback(orte_gpr_notify_data_t *data, void *cbdata)
+{
+    orte_buffer_t cmd;
+    orte_buffer_t rsp;
+    orte_std_cntr_t count;
+    orte_rmgr_cmd_t command=ORTE_RMGR_XCONNECT_CMD;
+    orte_gpr_value_t **values;
+    orte_jobid_t child;
+    int rc;
+    
+    OPAL_TRACE(1);
+    
+    /* we made sure in the subscriptions that at least one
+     * value is always returned
+     * get the jobid from the segment name in the first value
+     */
+    values = (orte_gpr_value_t**)(data->values)->addr;
+    if (ORTE_SUCCESS != (rc = orte_schema.extract_jobid_from_segment_name(&child,
+                                                                     values[0]->segment))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    
+    /* construct command */
+    OBJ_CONSTRUCT(&cmd, orte_buffer_t);
+    
+    /* pack the command */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &command, 1, ORTE_RMGR_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&cmd);
+        return;
+    }
+    
+    /* pack the child */
+    if(ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &child, 1, ORTE_JOBID))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&cmd);
+        return;
+    }
+    
+    /* pack the parent jobid (which is mine!) */
+    if(ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &(ORTE_PROC_MY_NAME->jobid), 1, ORTE_JOBID))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&cmd);
+        return;
+    }
+    
+    /* send the command */
+    if(0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &cmd, ORTE_RML_TAG_RMGR, 0))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&cmd);
+        return;
+    }
+    OBJ_DESTRUCT(&cmd);
+    
+    /* wait for response */
+    OBJ_CONSTRUCT(&rsp, orte_buffer_t);
+    if(0 > (rc = orte_rml.recv_buffer(ORTE_PROC_MY_HNP, &rsp, ORTE_RML_TAG_RMGR))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&rsp);
+        return;
+    }
+    
+    /* get the returned command */
+    count = 1;
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(&rsp, &command, &count, ORTE_RMGR_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&rsp);
+        return;
+    }
+    /* and check it to ensure valid comm */
+    if (ORTE_RMGR_XCONNECT_CMD != command) {
+        OBJ_DESTRUCT(&rsp);
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        return;
+    }
+    
+    OBJ_DESTRUCT(&rsp);
+
+    /* signal that the application has completed xconnect */
+    OPAL_THREAD_LOCK(&mca_rmgr_proxy_component.lock);
+    mca_rmgr_proxy_component.xconnect = true;
+    /* if the launch is also done, then spawn complete */
+    if (mca_rmgr_proxy_component.launched) {
+        mca_rmgr_proxy_component.done = true;
+        mca_rmgr_proxy_component.rc = ORTE_SUCCESS;
+        opal_condition_signal(&mca_rmgr_proxy_component.cond);
+    }
+    OPAL_THREAD_UNLOCK(&mca_rmgr_proxy_component.lock);    
+}
+
+
 static void orte_rmgr_proxy_wireup_stdin(orte_jobid_t jobid)
 {
     int rc;
@@ -352,9 +444,13 @@ static void orte_rmgr_proxy_wireup_callback(orte_gpr_notify_data_t *data, void *
     
     /* signal that the application has indeed launched */
     OPAL_THREAD_LOCK(&mca_rmgr_proxy_component.lock);
-    mca_rmgr_proxy_component.done = true;
-    mca_rmgr_proxy_component.rc = ORTE_SUCCESS;
-    opal_condition_signal(&mca_rmgr_proxy_component.cond);
+    mca_rmgr_proxy_component.launched = true;
+    /* if the xconnect is also done, then spawn complete */
+    if (mca_rmgr_proxy_component.xconnect) {
+        mca_rmgr_proxy_component.done = true;
+        mca_rmgr_proxy_component.rc = ORTE_SUCCESS;
+        opal_condition_signal(&mca_rmgr_proxy_component.cond);
+    }
     OPAL_THREAD_UNLOCK(&mca_rmgr_proxy_component.lock);    
 }
 
@@ -385,21 +481,24 @@ static int orte_rmgr_proxy_spawn_job(
 {
     int rc;
     orte_process_name_t name = {0, ORTE_JOBID_INVALID, 0};
-    orte_attribute_t *flow;
+    orte_attribute_t *attr;
     uint8_t flags, *fptr;
+    orte_proc_state_t *gate;
 
     OPAL_TRACE(1);
     
     /* mark that the spawn is not done */
     OPAL_THREAD_LOCK(&mca_rmgr_proxy_component.lock);
     mca_rmgr_proxy_component.done = false;
+    mca_rmgr_proxy_component.launched = false;
+    mca_rmgr_proxy_component.xconnect = false;
     mca_rmgr_proxy_component.rc = ORTE_ERR_FAILED_TO_START;
     OPAL_THREAD_UNLOCK(&mca_rmgr_proxy_component.lock);
     
     /* check for any flow directives to control what we do */
-    if (NULL != (flow = orte_rmgr.find_attribute(attributes, ORTE_RMGR_SPAWN_FLOW))) {
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMGR_SPAWN_FLOW))) {
         /* something was specified - get the value */
-        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&fptr, flow->value, ORTE_UINT8))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&fptr, attr->value, ORTE_UINT8))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -469,6 +568,26 @@ static int orte_rmgr_proxy_spawn_job(
             return rc;
         }
 
+        /* see if we need to setup a cross-connect of ORTE information with the new job */
+        if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMGR_XCONNECT_AT_SPAWN))) {
+            /* cross-connect was requested - get the stage gate name where this is to occur */
+            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&gate, attr->value, ORTE_PROC_STATE))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* setup the xconnect subscription on the new job so we can complete the procedure */
+            if (ORTE_SUCCESS != (rc = orte_smr.job_stage_gate_subscribe(*jobid,
+                                                orte_rmgr_proxy_xconnect_callback, NULL, *gate))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else {
+            /* indicate that we don't need to wait for xconnect */
+            OPAL_THREAD_LOCK(&mca_rmgr_proxy_component.lock);
+            mca_rmgr_proxy_component.xconnect = true;
+            OPAL_THREAD_UNLOCK(&mca_rmgr_proxy_component.lock);            
+        }
+        
         /* setup the subscription so we will know if things fail to launch */
         rc = orte_smr.job_stage_gate_subscribe(*jobid, app_terminated, NULL, ORTE_PROC_STATE_TERMINATED);
         if(ORTE_SUCCESS != rc) {
@@ -485,7 +604,7 @@ static int orte_rmgr_proxy_spawn_job(
         }
         
         /*
-         * setup callback
+         * setup any user-provided callback
          */
 
         if(NULL != cbfunc) {
@@ -509,7 +628,7 @@ static int orte_rmgr_proxy_spawn_job(
         }
 
     }
-    
+
     /* if we don't want to launch, then just return here */
     if (!(flags & ORTE_RMGR_LAUNCH)) {
         return ORTE_SUCCESS;

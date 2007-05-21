@@ -90,11 +90,26 @@ extern "C"
 				  orte_rml_tag_t tag);
 
 
+  int orte_rml_cnos_xcast(orte_jobid_t job,
+                          orte_buffer_t *buffer,
+                          orte_rml_tag_t tag);
+  
+  int orte_rml_cnos_xcast_nb(orte_jobid_t job,
+                             orte_buffer_t *buffer,
+                             orte_rml_tag_t tag);
+  
+  int orte_rml_cnos_xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc);
+
   int orte_rml_cnos_barrier(void);
 
-  int orte_rml_cnos_xcast(orte_process_name_t * root,
-                          orte_gpr_notify_message_t *msg,
-                          orte_gpr_trigger_cb_fn_t cbfunc);
+  int orte_rml_cnos_register_contact_info(void);
+  
+  int orte_rml_cnos_register_subscription(orte_jobid_t job, char *trigger);
+  
+  int orte_rml_cnos_get_contact_info(orte_process_name_t *name, orte_gpr_notify_data_t **data);
+
+  void orte_rml_cnos_update_contact_info(orte_gpr_notify_data_t* data,
+                                         void* cbdata);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

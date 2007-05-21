@@ -33,11 +33,13 @@
 #endif
 
 #include "opal/mca/mca.h"
+#include "opal/threads/condition.h"
 
 #include "orte/dss/dss_types.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/gpr/gpr_types.h"
 #include "orte/mca/oob/oob_types.h"
+#include "orte/mca/rml/rml_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -49,6 +51,8 @@ extern "C" {
 ORTE_DECLSPEC extern bool orte_oob_base_timing;
 ORTE_DECLSPEC extern bool orte_oob_xcast_timing;
 ORTE_DECLSPEC extern int orte_oob_xcast_mode;
+ORTE_DECLSPEC extern opal_mutex_t orte_oob_xcast_mutex;
+ORTE_DECLSPEC extern opal_condition_t orte_oob_xcast_cond;
 
 /*
  * Flag indicating if this framework has been opened
@@ -89,7 +93,7 @@ ORTE_DECLSPEC extern bool orte_oob_base_already_opened;
 *  an OOB module prior to calling this routine.
 */
 
-ORTE_DECLSPEC char* mca_oob_get_contact_info(void);
+ORTE_DECLSPEC char* mca_oob_get_my_contact_info(void);
 
 /**
 *  Pre-populate the cache of contact information required by the OOB
@@ -140,6 +144,11 @@ ORTE_DECLSPEC int mca_oob_parse_contact_info(const char* uri, orte_process_name_
  */
 
 ORTE_DECLSPEC int mca_oob_set_contact_info(const char*);
+
+/**
+ * Update the contact info tables
+ */
+ORTE_DECLSPEC void mca_oob_update_contact_info(orte_gpr_notify_data_t* data, void* cbdata);
 
 /**
 *  Similiar to unix writev(2).
@@ -406,8 +415,41 @@ ORTE_DECLSPEC int mca_oob_recv_packed_nb(
  */
 
 ORTE_DECLSPEC int mca_oob_xcast(orte_jobid_t job,
-                                orte_gpr_notify_message_t *msg,
-                                orte_gpr_trigger_cb_fn_t cbfunc);
+                                orte_buffer_t *buffer,
+                                orte_rml_tag_t tag);
+
+ORTE_DECLSPEC int mca_oob_xcast_nb(orte_jobid_t job,
+                                   orte_buffer_t *buffer,
+                                   orte_rml_tag_t tag);
+
+ORTE_DECLSPEC int mca_oob_xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc);
+
+/*
+ * Register my contact info with the General Purpose Registry
+ * This function causes the component to "put" its contact info
+ * on the registry.
+ */
+ORTE_DECLSPEC int mca_oob_register_contact_info(void);
+
+/*
+ * Register a subscription to receive contact info on other processes
+ * This function will typically be called from within a GPR compound command
+ * to register a subscription against a stage gate trigger. When fired, this
+ * will return the OOB contact info for all processes in the specified job
+ */
+ORTE_DECLSPEC int mca_oob_register_subscription(orte_jobid_t job, char *trigger);
+
+/*
+ * Get contact info for a process or job
+ * Returns contact info for the specified process. If the vpid in the process name
+ * is WILDCARD, then it returns the contact info for all processes in the specified
+ * job. If the jobid is WILDCARD, then it returns the contact info for processes
+ * of the specified vpid across all jobs. Obviously, combining the two WILDCARD
+ * values will return contact info for everyone!
+ */
+ORTE_DECLSPEC int mca_oob_get_contact_info(orte_process_name_t *name, orte_gpr_notify_data_t **data);
+
+
 
 /*
  * Callback on exception condition.

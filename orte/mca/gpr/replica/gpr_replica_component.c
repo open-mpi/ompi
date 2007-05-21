@@ -91,6 +91,7 @@ static orte_gpr_base_module_t orte_gpr_replica_module = {
     orte_gpr_replica_preallocate_segment,
     orte_gpr_replica_deliver_notify_msg,
     /* ARITHMETIC OPERATIONS */
+    orte_gpr_replica_arith,
     orte_gpr_replica_increment_value,
     orte_gpr_replica_decrement_value,
     /* SUBSCRIBE OPERATIONS */

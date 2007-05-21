@@ -72,6 +72,13 @@ typedef char* (*orte_rml_module_get_uri_fn_t)(void);
 typedef int (*orte_rml_module_set_uri_fn_t)(const char*);
 
 /**
+ * Update the RML contact tables
+ */
+
+typedef void (*orte_rml_module_update_contact_info_fn_t)(orte_gpr_notify_data_t* data,
+                                                        void* cbdata);
+
+/**
 *  orte_rml.rml_parse_uris()
 *
 *  Extract from the contact info the peer process name and uri.
@@ -331,8 +338,40 @@ typedef int (*orte_rml_module_recv_cancel_fn_t)(orte_process_name_t* peer, orte_
  */
 
 typedef int (*orte_rml_module_xcast_fn_t)(orte_jobid_t job,
-                                          orte_gpr_notify_message_t *msg,
-                                          orte_gpr_trigger_cb_fn_t cbfunc);
+                                          orte_buffer_t *buffer,
+                                          orte_rml_tag_t tag);
+
+typedef int (*orte_rml_module_xcast_nb_fn_t)(orte_jobid_t job,
+                                             orte_buffer_t *buffer,
+                                             orte_rml_tag_t tag);
+
+typedef int (*orte_rml_module_xcast_gate_fn_t)(orte_gpr_trigger_cb_fn_t cbfunc);
+
+/*
+ * Register my contact info with the General Purpose Registry
+ * This function is called while within the GPR's compound command. In turn,
+ * it calls the open OOB components and has each "put" its contact info
+ * on the registry.
+ */
+typedef int (*orte_rml_module_register_contact_info_fn_t)(void);
+
+/*
+ * Register a subscription to receive contact info on other processes
+ * This function will typically be called from within a GPR compound command
+ * to register a subscription against a stage gate trigger. When fired, this
+ * will return the RML contact info for all processes in the specified job
+ */
+typedef int (*orte_rml_module_register_subscription_fn_t)(orte_jobid_t job, char *trigger);
+
+/*
+ * Get contact info for a process or job
+ * Returns contact info for the specified process. If the vpid in the process name
+ * is WILDCARD, then it returns the contact info for all processes in the specified
+ * job. If the jobid is WILDCARD, then it returns the contact info for processes
+ * of the specified vpid across all jobs. Obviously, combining the two WILDCARD
+ * values will return contact info for everyone!
+ */
+typedef int (*orte_rml_module_get_contact_info_fn_t)(orte_process_name_t *name, orte_gpr_notify_data_t **data);
 
 /*
  * Callback on exception condition.
@@ -379,25 +418,31 @@ typedef int  (*orte_rml_module_ft_event_fn_t)(int state);
  * RML Module
  */
 struct orte_rml_module_t {
-    orte_rml_module_init_fn_t            init;
-    orte_rml_module_fini_fn_t            fini;
-    orte_rml_module_get_uri_fn_t         get_uri;
-    orte_rml_module_set_uri_fn_t         set_uri;
-    orte_rml_module_parse_uris_fn_t      parse_uris;
-    orte_rml_module_ping_fn_t            ping;
-    orte_rml_module_send_fn_t            send;
-    orte_rml_module_send_nb_fn_t         send_nb;
-    orte_rml_module_send_buffer_fn_t     send_buffer;
-    orte_rml_module_send_buffer_nb_fn_t  send_buffer_nb;
-    orte_rml_module_recv_fn_t            recv;
-    orte_rml_module_recv_nb_fn_t         recv_nb;
-    orte_rml_module_recv_buffer_fn_t     recv_buffer;
-    orte_rml_module_recv_buffer_nb_fn_t  recv_buffer_nb;
-    orte_rml_module_recv_cancel_fn_t     recv_cancel;
-    orte_rml_module_xcast_fn_t           xcast;
-    orte_rml_module_exception_fn_t       add_exception_handler;
-    orte_rml_module_exception_fn_t       del_exception_handler;
-    orte_rml_module_ft_event_fn_t        ft_event;
+    orte_rml_module_init_fn_t                    init;
+    orte_rml_module_fini_fn_t                    fini;
+    orte_rml_module_get_uri_fn_t                 get_uri;
+    orte_rml_module_set_uri_fn_t                 set_uri;
+    orte_rml_module_parse_uris_fn_t              parse_uris;
+    orte_rml_module_ping_fn_t                    ping;
+    orte_rml_module_send_fn_t                    send;
+    orte_rml_module_send_nb_fn_t                 send_nb;
+    orte_rml_module_send_buffer_fn_t             send_buffer;
+    orte_rml_module_send_buffer_nb_fn_t          send_buffer_nb;
+    orte_rml_module_recv_fn_t                    recv;
+    orte_rml_module_recv_nb_fn_t                 recv_nb;
+    orte_rml_module_recv_buffer_fn_t             recv_buffer;
+    orte_rml_module_recv_buffer_nb_fn_t          recv_buffer_nb;
+    orte_rml_module_recv_cancel_fn_t             recv_cancel;
+    orte_rml_module_xcast_fn_t                   xcast;
+    orte_rml_module_xcast_nb_fn_t                xcast_nb;
+    orte_rml_module_xcast_gate_fn_t              xcast_gate;
+    orte_rml_module_exception_fn_t               add_exception_handler;
+    orte_rml_module_exception_fn_t               del_exception_handler;
+    orte_rml_module_ft_event_fn_t                ft_event;
+    orte_rml_module_register_contact_info_fn_t   register_contact_info;
+    orte_rml_module_register_subscription_fn_t   register_subscription;
+    orte_rml_module_get_contact_info_fn_t        get_contact_info;
+    orte_rml_module_update_contact_info_fn_t     update_contact_info;
 };
 typedef struct orte_rml_module_t orte_rml_module_t;
 

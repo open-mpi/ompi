@@ -152,7 +152,13 @@ static mca_oob_t mca_oob_tcp = {
     mca_oob_tcp_init,
     mca_oob_tcp_fini,
     mca_oob_xcast,
-    mca_oob_tcp_ft_event
+    mca_oob_xcast_nb,
+    mca_oob_xcast_gate,
+    mca_oob_tcp_ft_event,
+    mca_oob_tcp_register_contact_info,
+    mca_oob_tcp_register_subscription,
+    mca_oob_tcp_get_contact_info,
+    mca_oob_tcp_registry_callback
 };
 
 /*
@@ -1028,7 +1034,8 @@ void mca_oob_tcp_registry_callback(
                     &mca_oob_tcp_component.tcp_peer_names, &addr->addr_name);
                 if(NULL != existing) {
                     /* TSW - need to update existing entry */
-  		    opal_output( 0, "WHY ARE WE RECEIVING THE SAME INFORMATION SEVERAL TIMES ?!?!?!?" );
+                    opal_output( 0, "[%ld,%ld,%ld] Received OOB update for [%ld,%ld,%ld]",
+                                 ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), ORTE_NAME_ARGS(&addr->addr_name) );
                     orte_hash_table_set_proc(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
                     OBJ_RELEASE(addr);
                     continue;
@@ -1053,12 +1060,6 @@ void mca_oob_tcp_registry_callback(
 int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
 {
     mca_oob_tcp_addr_t* addr;
-    mca_oob_tcp_subscription_t* subscription;
-    char *segment, *sub_name, *trig_name;
-    char *key = ORTE_OOB_TCP_KEY;
-    orte_gpr_subscription_id_t sub_id;
-    opal_list_item_t* item;
-    int rc;
 
     /* if the address is already cached - simply return it */
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
@@ -1070,83 +1071,8 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
          return ORTE_SUCCESS;
     }
 
-    /* check to see if we have subscribed to this registry segment */
-    for( item =  opal_list_get_first(&mca_oob_tcp_component.tcp_subscriptions);
-         item != opal_list_get_end(&mca_oob_tcp_component.tcp_subscriptions);
-         item =  opal_list_get_next(item)) {
-        subscription = (mca_oob_tcp_subscription_t*)item;
-        if(subscription->jobid == peer->peer_name.jobid) {
-            OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
-            return ORTE_SUCCESS;
-        }
-    }
-
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&sub_name,
-                                ORTE_OOB_SUBSCRIPTION, peer->peer_name.jobid))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /* attach to the stage-1 standard trigger */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&trig_name,
-                                    ORTE_STG1_TRIGGER, peer->peer_name.jobid))) {
-        ORTE_ERROR_LOG(rc);
-        free(sub_name);
-        return rc;
-    }
-
-    /* define the segment */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment,
-                                peer->peer_name.jobid))) {
-        ORTE_ERROR_LOG(rc);
-        free(sub_name);
-        free(trig_name);
-        return rc;
-    }
-
-    /* If we do not release the mutex before the subscrition we will deadlock
-     * as the suscription involve oob_tcp_send who involve again a lookup
-     * call. Before unlocking the mutex (just to be protected by it) we can
-     * create the subscription and add it to the list.
-     */
-    subscription = OBJ_NEW(mca_oob_tcp_subscription_t);
-    subscription->jobid = peer->peer_name.jobid;
-    opal_list_append(&mca_oob_tcp_component.tcp_subscriptions, &subscription->item);
-
-    OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
-    if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_1(&sub_id, NULL, NULL,
-                                         ORTE_GPR_NOTIFY_ADD_ENTRY |
-                                         ORTE_GPR_NOTIFY_VALUE_CHG |
-                                         ORTE_GPR_NOTIFY_PRE_EXISTING,
-                                         ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR | ORTE_GPR_STRIPPED,
-                                         segment,
-                                         NULL,  /* look at all containers on this segment */
-                                         key,
-                                         mca_oob_tcp_registry_callback, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        free(sub_name);
-        free(trig_name);
-        free(segment);
-        /* Subscription registration failed, we should activate the cleaning logic:
-         * remove the subscription from the list (protected by the mutex).
-         */
-        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-        opal_list_remove_item( &mca_oob_tcp_component.tcp_subscriptions,
-                               &subscription->item );
-        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
-        return rc;
-    }
-
-    /* the id of each subscription is recorded
-     * here so we can (if desired) cancel that subscription later
-     */
-    subscription->subid = sub_id;
-    /* done with these, so release any memory */
-    free(trig_name);
-    free(sub_name);
-    free(segment);
-
-    return rc;
+    /* if we don't know it, then report unknown - don't try to go get it */
+    return ORTE_ERR_ADDRESSEE_UNKNOWN;
 }
 
 
@@ -1156,17 +1082,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
 int mca_oob_tcp_init(void)
 {
     orte_jobid_t jobid;
-    orte_buffer_t *buffer;
-    orte_gpr_subscription_id_t sub_id;
-    char *sub_name, *segment, *trig_name, **tokens;
-    char *keys[] = { ORTE_OOB_TCP_KEY, ORTE_PROC_RML_IP_ADDRESS_KEY};
-    orte_data_value_t *values[2];
-    orte_byte_object_t bo;
-    mca_oob_tcp_subscription_t *subscription;
     int rc;
-    opal_list_item_t* item;
-    char *tmp, *tmp2, *tmp3;
-    orte_std_cntr_t i, num_tokens;
     int randval = orte_process_info.num_procs;
 
     if (0 == randval) randval = 10; 
@@ -1234,19 +1150,17 @@ int mca_oob_tcp_init(void)
         }
     }
 
-    /* iterate through the open connections and send an ident message to all peers -
-     * note that we initially come up w/out knowing our process name - and are assigned
-     * a temporary name by our peer. once we have determined our real name - we send it
-     * to the peer.
-    */
-    OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    for(item =  opal_list_get_first(&mca_oob_tcp_component.tcp_peer_list);
-        item != opal_list_get_end(&mca_oob_tcp_component.tcp_peer_list);
-        item =  opal_list_get_next(item)) {
-        mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)item;
-        mca_oob_tcp_peer_send_ident(peer);
-    }
+    return ORTE_SUCCESS;
+}
 
+
+int mca_oob_tcp_register_subscription(orte_jobid_t jobid, char *trigger)
+{
+    char *sub_name, *segment, *trig_name;
+    mca_oob_tcp_subscription_t *subscription;
+    orte_gpr_subscription_id_t sub_id;
+    int rc;
+    
     /* register subscribe callback to receive notification when all processes have registered */
     subscription = OBJ_NEW(mca_oob_tcp_subscription_t);
     subscription->jobid = jobid;
@@ -1264,9 +1178,9 @@ int mca_oob_tcp_init(void)
         return rc;
     }
 
-    /* attach to the stage-1 standard trigger */
+    /* attach to the specified trigger */
     if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&trig_name,
-                                    ORTE_STG1_TRIGGER, jobid))) {
+                                    trigger, jobid))) {
         ORTE_ERROR_LOG(rc);
         free(sub_name);
         return rc;
@@ -1281,13 +1195,11 @@ int mca_oob_tcp_init(void)
     }
 
     if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_1(&sub_id, trig_name, sub_name,
-                                         ORTE_GPR_NOTIFY_ADD_ENTRY |
-                                         ORTE_GPR_NOTIFY_VALUE_CHG |
-                                         ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG,
+                                         ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG,
                                          ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR | ORTE_GPR_STRIPPED,
                                          segment,
                                          NULL,  /* look at all containers on this segment */
-                                         keys[0],
+                                         ORTE_OOB_TCP_KEY,
                                          mca_oob_tcp_registry_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         free(sub_name);
@@ -1305,8 +1217,21 @@ int mca_oob_tcp_init(void)
     free(trig_name);
     free(sub_name);
 
+    return ORTE_SUCCESS;    
+}
 
-    /* now setup to put our contact info on registry */
+int mca_oob_tcp_register_contact_info(void)
+{
+    orte_std_cntr_t i, num_tokens;
+    orte_buffer_t *buffer;
+    orte_data_value_t *values[2];
+    orte_byte_object_t bo;
+    char *tmp, *tmp2, *tmp3;
+    char *segment, **tokens;
+    char *keys[] = { ORTE_OOB_TCP_KEY, ORTE_PROC_RML_IP_ADDRESS_KEY};
+    int rc;
+    
+    /* setup to put our contact info on registry */
     buffer = OBJ_NEW(orte_buffer_t);
     if(buffer == NULL) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -1362,6 +1287,14 @@ int mca_oob_tcp_init(void)
     values[1]->data = strdup(tmp2);
     free(tmp);
 
+    /* define the segment */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, ORTE_PROC_MY_NAME->jobid))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(values[0]);
+        OBJ_RELEASE(values[1]);
+        return rc;
+    }
+        
     /* get the process tokens */
     if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&tokens, &num_tokens,
                                     orte_process_info.my_name))) {
@@ -1389,6 +1322,84 @@ int mca_oob_tcp_init(void)
 
     return rc;
 }
+
+
+static int get_contact_info(orte_jobid_t job, char **tokens, orte_gpr_notify_data_t **data)
+{
+    char *segment;
+    char *keys[] = { ORTE_OOB_TCP_KEY, ORTE_PROC_RML_IP_ADDRESS_KEY};
+    orte_gpr_value_t **values;
+    orte_std_cntr_t cnt, i, idx;
+    int rc;
+    
+    /* define the segment */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* get the data */
+    if (ORTE_SUCCESS != (rc = orte_gpr.get(ORTE_GPR_TOKENS_AND | ORTE_GPR_KEYS_OR,
+                                           segment, tokens, keys, &cnt, &values))) {
+        ORTE_ERROR_LOG(rc);
+        free(segment);
+        return rc;
+    }
+    
+    /* see if we got data back */
+    if (0 < cnt) {
+        /* build the data into the notify_data object. If the data
+         * pointer is NULL, then we are the first values, so initialize
+         * it. Otherwise, just add the data to it
+         */
+        if (NULL == *data) {
+            *data = OBJ_NEW(orte_gpr_notify_data_t);
+        }
+        for (i=0; i < cnt; i++) {
+            if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&idx, (*data)->values, (void*)values[i]))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            ++(*data)->cnt;
+        }
+    }
+    
+
+    return ORTE_SUCCESS;
+}
+
+int mca_oob_tcp_get_contact_info(orte_process_name_t *name, orte_gpr_notify_data_t **data)
+{
+    char **tokens=NULL;
+    orte_std_cntr_t num_tokens;
+    int rc;
+    
+    /* if the vpid is WILDCARD, then we want the info from all procs in the specified job. This
+     * is the default condition, so do nothing for this case. If the vpid is not WILDCARD,
+     * then go get the process tokens
+     */
+    if (ORTE_VPID_WILDCARD != name->vpid) {
+        if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&tokens, &num_tokens, name))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    
+    /* If the jobid is not WILDCARD, then we only want the info from the specified job -
+     * this is the most common case, so treat it first
+     */
+    if (ORTE_JOBID_WILDCARD != name->jobid) {
+        if (ORTE_SUCCESS != (rc = get_contact_info(name->jobid, tokens, data))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
+    }
+    
+    /* if the jobid is WILDCARD, then we want the info from all jobs. */
+    
+    return ORTE_SUCCESS;
+}
+
 
 /*
  * Module cleanup.

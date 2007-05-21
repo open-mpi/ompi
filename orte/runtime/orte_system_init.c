@@ -24,7 +24,11 @@
 
 #include "opal/runtime/opal.h"
 
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/smr/smr.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rml/rml.h"
+
 #include "orte/runtime/runtime.h"
 
 /**
@@ -34,7 +38,7 @@
  * @retval ORTE_ERROR Upon failure.
  */
 
-int orte_system_init(bool infrastructure)
+int orte_system_init(bool infrastructure, bool barrier)
 {
     int rc;
 
@@ -43,9 +47,36 @@ int orte_system_init(bool infrastructure)
         return rc;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_init_stage2())) {
+    /* begin recording registry actions */
+    if (ORTE_SUCCESS != (rc = orte_gpr.begin_compound_cmd())) {
         ORTE_ERROR_LOG(rc);
         return rc;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_init_stage2(ORTE_STARTUP_TRIGGER))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* indicate we are at the ORTE_STARTUP_COMPLETE state */
+    if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(ORTE_PROC_MY_NAME,
+                                                      ORTE_PROC_ORTE_STARTUP_COMPLETE, 0))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* send the information */
+    if (ORTE_SUCCESS != (rc = orte_gpr.exec_compound_cmd())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* if we want to wait for receipt of info and release, do so here */
+    if (barrier) {
+        if (ORTE_SUCCESS != (rc = orte_rml.xcast_gate(orte_gpr.deliver_notify_msg))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
     
     return ORTE_SUCCESS;

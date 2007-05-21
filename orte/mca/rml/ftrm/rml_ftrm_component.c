@@ -84,6 +84,8 @@ orte_rml_module_t orte_rml_ftrm_module = {
     orte_rml_ftrm_recv_cancel,
 
     orte_rml_ftrm_xcast,
+    orte_rml_ftrm_xcast_nb,
+    orte_rml_ftrm_xcast_gate,
 
     orte_rml_ftrm_add_exception_handler,
     orte_rml_ftrm_del_exception_handler,

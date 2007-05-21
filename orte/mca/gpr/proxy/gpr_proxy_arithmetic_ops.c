@@ -41,6 +41,68 @@
 #include "gpr_proxy.h"
 
 
+int orte_gpr_proxy_arith(orte_gpr_addr_mode_t addr_mode,
+                         char *segment, char **tokens, char **keys,
+                         orte_dss_arith_op_t operation,
+                         orte_data_value_t *value)
+{
+    orte_buffer_t *cmd, *answer;
+    int rc, ret;
+    
+    OPAL_TRACE(1);
+    
+    if (orte_gpr_proxy_globals.compound_cmd_mode) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_arith(orte_gpr_proxy_globals.compound_cmd,
+                                                           addr_mode, segment, tokens,
+                                                           keys, operation, value))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
+    }
+    
+    cmd = OBJ_NEW(orte_buffer_t);
+    if (NULL == cmd) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_arith(cmd, addr_mode, segment, tokens,
+                                                       keys, operation, value))) {
+        OBJ_RELEASE(cmd);
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, ORTE_RML_TAG_GPR, 0)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_RELEASE(cmd);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    OBJ_RELEASE(cmd);
+    
+    answer = OBJ_NEW(orte_buffer_t);
+    if (NULL == answer) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_RELEASE(answer);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_unpack_arith(answer, &ret))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(answer);
+        return rc;
+    }
+    
+    OBJ_RELEASE(answer);
+    
+    return ret;
+}
+
 int orte_gpr_proxy_increment_value(orte_gpr_value_t *value)
 {
     orte_buffer_t *cmd, *answer;

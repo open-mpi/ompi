@@ -151,7 +151,7 @@ int orte_gpr_replica_add_keyval(orte_gpr_replica_itagval_t **ivalptr,
                                 orte_gpr_replica_container_t *cptr,
                                 orte_gpr_keyval_t *kptr)
 {
-    orte_gpr_replica_itagval_t *iptr;
+    orte_gpr_replica_itag_t itag;
     int rc;
 
     OPAL_TRACE(3);
@@ -162,33 +162,50 @@ int orte_gpr_replica_add_keyval(orte_gpr_replica_itagval_t **ivalptr,
         return ORTE_ERR_BAD_PARAM;
     }
 
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_create_itag(&itag, seg, kptr->key))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_add_itagval(ivalptr, seg, cptr, itag, kptr->value))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    return ORTE_SUCCESS;
+}
+
+int orte_gpr_replica_add_itagval(orte_gpr_replica_itagval_t **ivalptr,
+                                 orte_gpr_replica_segment_t *seg,
+                                 orte_gpr_replica_container_t *cptr,
+                                 orte_gpr_replica_itag_t itag,
+                                 orte_data_value_t *dval)
+{
+    orte_gpr_replica_itagval_t *iptr;
+    int rc;
+    
     iptr = OBJ_NEW(orte_gpr_replica_itagval_t);
     if (NULL == iptr) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    iptr->itag = itag;
+    
     iptr->value = OBJ_NEW(orte_data_value_t);
     if (NULL == iptr->value) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         OBJ_RELEASE(iptr);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_create_itag(&(iptr->itag),
-                                            seg, kptr->key))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(iptr);
-        return rc;
-    }
-
-    /* it is perfectly acceptable to give us a keyval that doesn't have a value. For
+    
+    /* it is perfectly acceptable to give us an itag that doesn't have a value. For
      * example, we may want to predefine a location when we setup a trigger, then actually
      * put a value in it later.
     */
-    if (NULL != kptr->value) {
-        iptr->value->type = kptr->value->type;
-        if (NULL != kptr->value->data) {
-            if (ORTE_SUCCESS != (rc = orte_dss.copy(&((iptr->value)->data), kptr->value->data, kptr->value->type))) {
+    if (NULL != dval) {
+        iptr->value->type = dval->type;
+        if (NULL != dval->data) {
+            if (ORTE_SUCCESS != (rc = orte_dss.copy(&((iptr->value)->data), dval->data, dval->type))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(iptr);
                 return rc;

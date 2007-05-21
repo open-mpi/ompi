@@ -156,7 +156,9 @@ int mca_oob_tcp_send(
     MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
     rc = mca_oob_tcp_peer_send(peer, msg);
     if(rc != ORTE_SUCCESS) {
-        MCA_OOB_TCP_MSG_RETURN(msg);
+        if (rc != ORTE_ERR_ADDRESSEE_UNKNOWN) {
+            MCA_OOB_TCP_MSG_RETURN(msg);
+        }
         return rc;
     }
 
@@ -255,7 +257,9 @@ int mca_oob_tcp_send_nb(
     MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
     rc = mca_oob_tcp_peer_send(peer, msg);
     if(rc != ORTE_SUCCESS) {
-        MCA_OOB_TCP_MSG_RETURN(msg);
+        if (rc != ORTE_ERR_ADDRESSEE_UNKNOWN) {
+            MCA_OOB_TCP_MSG_RETURN(msg);
+        }
         return rc;
     }
 

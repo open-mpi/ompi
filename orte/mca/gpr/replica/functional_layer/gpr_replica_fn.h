@@ -42,6 +42,15 @@ extern "C" {
  /*
   * Arithemetic operations
   */
+int orte_gpr_replica_arith_op_fn(orte_gpr_addr_mode_t addr_mode,
+                                 orte_gpr_replica_segment_t *seg,
+                                 orte_gpr_replica_itag_t *itags,
+                                 orte_std_cntr_t num_tokens,
+                                 orte_std_cntr_t cnt,
+                                 orte_gpr_replica_itag_t *keytags,
+                                 orte_dss_arith_op_t op_flag,
+                                 orte_data_value_t *operand);
+
 int orte_gpr_replica_increment_value_fn(orte_gpr_addr_mode_t addr_mode,
                                 orte_gpr_replica_segment_t *seg,
                                 orte_gpr_replica_itag_t *itags,
@@ -176,6 +185,12 @@ int orte_gpr_replica_add_keyval(orte_gpr_replica_itagval_t **ivalptr,
                                 orte_gpr_replica_container_t *cptr,
                                 orte_gpr_keyval_t *kptr);
 
+int orte_gpr_replica_add_itagval(orte_gpr_replica_itagval_t **ivalptr,
+                                 orte_gpr_replica_segment_t *seg,
+                                 orte_gpr_replica_container_t *cptr,
+                                 orte_gpr_replica_itag_t itag,
+                                 orte_data_value_t *dval);
+    
 int orte_gpr_replica_update_keyval(orte_gpr_replica_itagval_t **iptr,
                                    orte_gpr_replica_segment_t *seg,
                                    orte_gpr_replica_container_t *cptr,

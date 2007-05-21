@@ -1054,7 +1054,7 @@ static int connect_to_universe(orte_universe_t universe_info) {
      * Restart ORTE in the requested universe
      */
     if(!orte_ps_globals.attached) {
-        if (ORTE_SUCCESS != (ret = orte_system_init(true)) ) {
+        if (ORTE_SUCCESS != (ret = orte_system_init(ORTE_INFRASTRUCTURE, ORTE_NON_BARRIER)) ) {
             exit_status = ret;
             goto cleanup;
         }

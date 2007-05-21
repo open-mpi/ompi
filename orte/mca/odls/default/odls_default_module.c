@@ -1535,8 +1535,8 @@ int orte_odls_default_deliver_message(orte_jobid_t job, orte_buffer_t *buffer, o
         if (ORTE_EQUAL != orte_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
             continue;
         }
-        opal_output(orte_odls_globals.output, "odls: sending message to child [%ld, %ld, %ld]",
-                    ORTE_NAME_ARGS(child->name));
+        opal_output(orte_odls_globals.output, "odls: sending message to tag %lu on child [%ld, %ld, %ld]",
+                    (unsigned long)tag, ORTE_NAME_ARGS(child->name));
         
         /* if so, send the message */
         rc = orte_rml.send_buffer(child->name, buffer, tag, 0);

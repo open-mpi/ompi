@@ -94,7 +94,7 @@ void orte_rmgr_base_recv(int status, orte_process_name_t* sender,
     orte_buffer_t answer;
     orte_rmgr_cmd_t command;
     orte_std_cntr_t i, count, num_context;
-    orte_jobid_t job;
+    orte_jobid_t job, parent;
     orte_app_context_t **context;
     opal_list_item_t *item;
     opal_list_t attrs;
@@ -241,6 +241,27 @@ CLEANUP_SPAWN:
             }
             break;
 
+        case ORTE_RMGR_XCONNECT_CMD:
+            /* get the child jobid */
+            count = 1;
+            if(ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
+                ORTE_ERROR_LOG(rc);
+                goto SEND_ANSWER;
+            }
+                
+            /* get the parent jobid */
+            count = 1;
+            if(ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &parent, &count, ORTE_JOBID))) {
+                ORTE_ERROR_LOG(rc);
+                goto SEND_ANSWER;
+            }
+                
+            /* execute the xchg */
+            if (ORTE_SUCCESS != (rc = orte_rmgr_base_xconnect(job, parent))) {
+                ORTE_ERROR_LOG(rc);
+                goto SEND_ANSWER;
+            }
+            break;
                 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);

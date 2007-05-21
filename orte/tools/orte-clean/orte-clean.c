@@ -246,7 +246,7 @@ static int orte_clean_init(void) {
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_system_init(true))) {
+    if (ORTE_SUCCESS != (ret = orte_system_init(ORTE_INFRASTRUCTURE, ORTE_NON_BARRIER))) {
         exit_status = ret;
         goto cleanup;
     }

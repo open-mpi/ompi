@@ -91,6 +91,7 @@ static orte_gpr_base_module_t orte_gpr_proxy = {
     orte_gpr_proxy_preallocate_segment,
     orte_gpr_proxy_deliver_notify_msg,
     /* ARITHMETIC OPERATIONS */
+    orte_gpr_proxy_arith,
     orte_gpr_proxy_increment_value,
     orte_gpr_proxy_decrement_value,
     /* SUBSCRIBE OPERATIONS */

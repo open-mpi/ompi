@@ -8,6 +8,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ras/ras_types.h"
 #include "orte/mca/rmaps/rmaps_types.h"
+#include "orte/runtime/runtime.h"
 
 bool waitexit;
 opal_mutex_t lock;
@@ -31,7 +32,7 @@ int main(int argc, char* argv[])
     OBJ_CONSTRUCT(&cond, opal_condition_t);
     waitexit = false;
     
-    if (0 > (rc = orte_init(false))) {
+    if (0 > (rc = orte_init(ORTE_NON_INFRASTRUCTURE, ORTE_NON_BARRIER))) {
         fprintf(stderr, "couldn't init orte - error code %d\n", rc);
         return rc;
     }

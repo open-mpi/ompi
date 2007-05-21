@@ -157,9 +157,25 @@ extern "C" {
      * Xcast
      */
     int orte_rml_ftrm_xcast(orte_jobid_t job,
-                            orte_gpr_notify_message_t *msg,
-                            orte_gpr_trigger_cb_fn_t cbfunc);
+                            orte_buffer_t *buffer,
+                            orte_rml_tag_t tag);
+    
+    int orte_rml_ftrm_xcast_nb(orte_jobid_t job,
+                               orte_buffer_t *buffer,
+                               orte_rml_tag_t tag);
 
+    int orte_rml_ftrm_xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc);
+
+
+    int orte_rml_ftrm_register_contact_info(void);
+    
+    int orte_rml_ftrm_register_subscription(orte_jobid_t job, char *trigger);
+    
+    int orte_rml_ftrm_get_contact_info(orte_process_name_t *name, orte_gpr_notify_data_t **data);
+    
+    void orte_rml_ftrm_update_contact_info(orte_gpr_notify_data_t* data,
+                                           void* cbdata);
+    
     /*
      * Register a callback on loss of connection
      */

@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include "orte/util/proc_info.h"
+#include "orte/runtime/runtime.h"
 
 int main(int argc, char* argv[])
 {
@@ -15,7 +16,7 @@ int main(int argc, char* argv[])
     char hostname[512];
     pid_t pid;
     
-    if (0 > (rc = orte_init())) {
+    if (0 > (rc = orte_init(ORTE_NON_INFRASTRUCTURE, ORTE_USE_BARRIER))) {
         fprintf(stderr, "orte_nodename: couldn't init orte - error code %d\n", rc);
         return rc;
     }

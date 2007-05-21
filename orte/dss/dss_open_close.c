@@ -57,6 +57,8 @@ orte_dss_t orte_dss = {
     orte_dss_peek,
     orte_dss_unload,
     orte_dss_load,
+    orte_dss_xfer_payload,
+    orte_dss_copy_payload,
     orte_dss_register,
     orte_dss_lookup_data_type,
     orte_dss_dump_data_types,

@@ -34,6 +34,7 @@ libmca_rmgr_la_SOURCES += \
         base/rmgr_base_stage_gate.c \
         base/rmgr_base_stubs.c \
         base/rmgr_base_vpid_support_fns.c \
+        base/rmgr_base_xconnect.c \
         base/data_type_support/rmgr_data_type_compare_fns.c \
         base/data_type_support/rmgr_data_type_copy_fns.c \
         base/data_type_support/rmgr_data_type_print_fns.c \

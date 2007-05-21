@@ -34,6 +34,7 @@
 #include "opal/runtime/opal.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/runtime/runtime.h"
 
 #include "orte/dss/dss.h"
 
@@ -60,7 +61,7 @@ int main (int argc, char* argv[])
 {
     int ret;
 
-    orte_init(true);
+    orte_init(ORTE_INFRASTRUCTURE, ORTE_NON_BARRIER);
 
     test_out = stderr;
 

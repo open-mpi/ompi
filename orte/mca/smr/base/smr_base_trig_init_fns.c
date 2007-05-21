@@ -37,7 +37,6 @@
 
 #include "orte/mca/smr/base/smr_private.h"
 
-
 int orte_smr_base_init_job_stage_gates(orte_jobid_t job,
                                         orte_gpr_trigger_cb_fn_t cbfunc,
                                         void *user_tag)
@@ -46,40 +45,45 @@ int orte_smr_base_init_job_stage_gates(orte_jobid_t job,
     orte_std_cntr_t zero=0;
     int rc, num_start_routing;
     orte_gpr_value_t *value;
+    char *segment, *trig_name, *tokens[2], *trig_keys[2];
+    orte_gpr_trigger_id_t id;
+    orte_gpr_trigger_action_t trig_mode, trig_mode_routed;
     char* keys[] = {
         /* changes to this ordering need to be reflected in code below */
         /* We need to set up counters for all the defined ORTE process states, even though
-         * the launch system doesn't actually use them all. This must be done so that
-         * user-defined callbacks can be generated - otherwise, they won't happen!
-         */
+        * a given launch system may not actually use them all. This must be done so that
+        * user-defined callbacks can be generated - otherwise, they won't happen!
+        */
         ORTE_PROC_NUM_AT_INIT,
         ORTE_PROC_NUM_LAUNCHED,
         ORTE_PROC_NUM_RUNNING,
         ORTE_PROC_NUM_TERMINATED,
         /* the following stage gates need data routed through them */
+        ORTE_PROC_NUM_AT_ORTE_STARTUP,
         ORTE_PROC_NUM_AT_STG1,
         ORTE_PROC_NUM_AT_STG2,
         ORTE_PROC_NUM_AT_STG3,
         ORTE_PROC_NUM_FINALIZED
     };
     char* trig_names[] = {
-        /* changes to this ordering need to be reflected in code below */
+        /* this ordering needs to be identical to that in the array above! */
         ORTE_ALL_INIT_TRIGGER,
         ORTE_ALL_LAUNCHED_TRIGGER,
         ORTE_ALL_RUNNING_TRIGGER,
         ORTE_NUM_TERMINATED_TRIGGER,
         /* the following triggers need data routed through them */
+        ORTE_STARTUP_TRIGGER,
         ORTE_STG1_TRIGGER,
         ORTE_STG2_TRIGGER,
         ORTE_STG3_TRIGGER,
         ORTE_NUM_FINALIZED_TRIGGER,
     };
-    char *segment, *trig_name, *tokens[2], *trig_keys[2];
-    orte_gpr_trigger_id_t id;
-    orte_gpr_trigger_action_t trig_mode, trig_mode_routed;
-
+    
+    
+    
     num_counters = sizeof(keys)/sizeof(keys[0]);
     num_named_trigs= sizeof(trig_names)/sizeof(trig_names[0]);
+    /* the index where the triggers that need data routed through them begin */
     num_start_routing = 4;
 
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {
@@ -87,7 +91,7 @@ int orte_smr_base_init_job_stage_gates(orte_jobid_t job,
         return rc;
     }
 
-    /* setup the counters */
+    /* setup the counters - set initial values to 0 */
     if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value,
                              ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR,
                              segment, num_counters, 1))) {
@@ -113,7 +117,7 @@ int orte_smr_base_init_job_stage_gates(orte_jobid_t job,
         return rc;
     }
     OBJ_RELEASE(value);
-
+    
     /*** DEFINE STAGE GATE STANDARD TRIGGERS ***/
     /* The standard triggers will return the trigger counters so that we
      * can get required information for notifying processes. Other
@@ -373,6 +377,7 @@ int orte_smr_base_job_stage_gate_subscribe(orte_jobid_t job,
     orte_gpr_subscription_id_t id;
     /** the order of the next three definitions MUST match */
     orte_proc_state_t state[] = {
+        ORTE_PROC_ORTE_STARTUP_COMPLETE,
         ORTE_PROC_STATE_INIT,
         ORTE_PROC_STATE_LAUNCHED,
         ORTE_PROC_STATE_RUNNING,
@@ -383,6 +388,7 @@ int orte_smr_base_job_stage_gate_subscribe(orte_jobid_t job,
         ORTE_PROC_STATE_TERMINATED
     };
     char* keys[] = {
+        ORTE_PROC_NUM_AT_ORTE_STARTUP,
         ORTE_PROC_NUM_AT_INIT,
         ORTE_PROC_NUM_LAUNCHED,
         ORTE_PROC_NUM_RUNNING,
@@ -393,6 +399,7 @@ int orte_smr_base_job_stage_gate_subscribe(orte_jobid_t job,
         ORTE_PROC_NUM_TERMINATED
     };
     char* trig_names[] = {
+        ORTE_STARTUP_TRIGGER,
         ORTE_ALL_INIT_TRIGGER,
         ORTE_ALL_LAUNCHED_TRIGGER,
         ORTE_ALL_RUNNING_TRIGGER,

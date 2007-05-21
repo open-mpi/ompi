@@ -24,8 +24,12 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
+
+#include "orte/dss/dss.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/oob/base/base.h"
+
 #include "orte/mca/rml/base/base.h"
 
 /*
@@ -55,6 +59,7 @@ int orte_rml_base_open(void)
     int int_value;
     int rc;
     char *rml_wrapper = NULL;
+    orte_data_type_t tmp;
 
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_rml_base.rml_components, opal_list_t);
@@ -71,6 +76,20 @@ int orte_rml_base_open(void)
     orte_rml_base.rml_debug = int_value;
     opal_output_set_verbosity(orte_rml_base.rml_output, int_value);
 
+    /* register the base system types with the DPS */
+    tmp = ORTE_RML_TAG;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_rml_base_pack_tag,
+                                                     orte_rml_base_unpack_tag,
+                                                     (orte_dss_copy_fn_t)orte_rml_base_copy_tag,
+                                                     (orte_dss_compare_fn_t)orte_rml_base_compare_tags,
+                                                     (orte_dss_size_fn_t)orte_rml_base_size_tag,
+                                                     (orte_dss_print_fn_t)orte_rml_base_print_tag,
+                                                     (orte_dss_release_fn_t)orte_rml_base_std_obj_release,
+                                                     ORTE_DSS_UNSTRUCTURED,
+                                                     "ORTE_RML_TAG", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     /* 
      * Which RML Wrapper component to use, if any
      *  - NULL or "" = No wrapper

@@ -141,6 +141,8 @@ int orte_gpr_replica_recv_cleanup_job_cmd(orte_buffer_t *input_buffer,
 int orte_gpr_replica_recv_cleanup_proc_cmd(orte_buffer_t *input_buffer,
                                            orte_buffer_t *output_buffer);
 
+int orte_gpr_replica_recv_arith_op_cmd(orte_buffer_t *cmd, orte_buffer_t *answer);
+
 int orte_gpr_replica_recv_increment_value_cmd(orte_buffer_t *input_buffer,
                                               orte_buffer_t *output_buffer);
 

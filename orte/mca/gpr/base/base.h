@@ -100,14 +100,15 @@ extern "C" {
 #define ORTE_GPR_DUMP_TRIGGERS_CMD          (uint8_t) 14
 #define ORTE_GPR_DUMP_SUBSCRIPTIONS_CMD     (uint8_t) 15
 #define ORTE_GPR_DUMP_CALLBACKS_CMD         (uint8_t) 16
-#define ORTE_GPR_INCREMENT_VALUE_CMD        (uint8_t) 17
-#define ORTE_GPR_DECREMENT_VALUE_CMD        (uint8_t) 18
-#define ORTE_GPR_COMPOUND_CMD               (uint8_t) 19
-#define ORTE_GPR_CLEANUP_JOB_CMD            (uint8_t) 20
-#define ORTE_GPR_CLEANUP_PROC_CMD           (uint8_t) 21
-#define ORTE_GPR_DUMP_A_TRIGGER_CMD         (uint8_t) 22
-#define ORTE_GPR_DUMP_A_SUBSCRIPTION_CMD    (uint8_t) 23
-#define ORTE_GPR_DUMP_SEGMENT_SIZE_CMD      (uint8_t) 24
+#define ORTE_GPR_ARITH_CMD                  (uint8_t) 17
+#define ORTE_GPR_INCREMENT_VALUE_CMD        (uint8_t) 18
+#define ORTE_GPR_DECREMENT_VALUE_CMD        (uint8_t) 19
+#define ORTE_GPR_COMPOUND_CMD               (uint8_t) 20
+#define ORTE_GPR_CLEANUP_JOB_CMD            (uint8_t) 21
+#define ORTE_GPR_CLEANUP_PROC_CMD           (uint8_t) 22
+#define ORTE_GPR_DUMP_A_TRIGGER_CMD         (uint8_t) 23
+#define ORTE_GPR_DUMP_A_SUBSCRIPTION_CMD    (uint8_t) 24
+#define ORTE_GPR_DUMP_SEGMENT_SIZE_CMD      (uint8_t) 25
 #define ORTE_GPR_ERROR                      (uint8_t)0xff
 
 typedef uint8_t orte_gpr_cmd_flag_t;
@@ -262,6 +263,13 @@ typedef uint8_t orte_gpr_cmd_flag_t;
                                                       orte_process_name_t *proc);
     ORTE_DECLSPEC int orte_gpr_base_unpack_cleanup_proc(orte_buffer_t *buffer, int *ret);
 
+    ORTE_DECLSPEC int orte_gpr_base_pack_arith(orte_buffer_t *cmd,
+                                 orte_gpr_addr_mode_t addr_mode,
+                                 char *segment, char **tokens, char **keys,
+                                 orte_dss_arith_op_t operation,
+                                 orte_data_value_t *operand);
+    ORTE_DECLSPEC int orte_gpr_base_unpack_arith(orte_buffer_t *buffer, int *ret);
+    
     ORTE_DECLSPEC int orte_gpr_base_pack_increment_value(orte_buffer_t *cmd, orte_gpr_value_t *value);
     ORTE_DECLSPEC int orte_gpr_base_unpack_increment_value(orte_buffer_t *buffer, int *ret);
 
