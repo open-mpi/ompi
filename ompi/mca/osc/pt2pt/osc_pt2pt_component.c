@@ -357,9 +357,11 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
 #else
         ret = opal_progress_register(ompi_osc_pt2pt_component_progress);
 #endif
+    } else {
+        ret = OMPI_SUCCESS;
     }
-    if (OMPI_SUCCESS != ret) goto cleanup;
     OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.p2p_c_lock); 
+    if (OMPI_SUCCESS != ret) goto cleanup;
 
     /* fill in window information */
     win->w_osc_module = (ompi_osc_base_module_t*) module;
@@ -572,11 +574,10 @@ component_fragment_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
     case OMPI_OSC_PT2PT_HDR_POST:
         {
             int32_t count;
-
-            count = OPAL_THREAD_ADD32(&(module->p2p_num_post_msgs), -1);
-            if (count == 0) {
-                opal_condition_broadcast(&module->p2p_cond);
-            }
+            OPAL_THREAD_LOCK(&module->p2p_lock);
+            count = (module->p2p_num_post_msgs -= 1);
+            OPAL_THREAD_UNLOCK(&module->p2p_lock);
+            if (count == 0) opal_condition_broadcast(&module->p2p_cond);
         }
         break;
 
@@ -594,10 +595,11 @@ component_fragment_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
 
             /* we've heard from one more place, and have value reqs to
                process */
-            /* BWB -- need to check to see if we can do this better */
-            count = OPAL_THREAD_ADD32(&(module->p2p_num_complete_msgs), -1);
-            if (count == 0) opal_condition_broadcast(&module->p2p_cond);
-            count = OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), header->hdr_value[0]);
+            OPAL_THREAD_LOCK(&module->p2p_lock);
+            count = (module->p2p_num_complete_msgs -= 1);
+            count += (module->p2p_num_pending_in += header->hdr_value[0]);
+            OPAL_THREAD_UNLOCK(&module->p2p_lock);
+
             if (count == 0) opal_condition_broadcast(&module->p2p_cond);
         }
         break;
@@ -618,9 +620,10 @@ component_fragment_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
                 ompi_osc_pt2pt_passive_lock(module, header->hdr_value[0], 
                                             header->hdr_value[1]);
             } else {
-                count = OPAL_THREAD_ADD32(&(module->p2p_lock_received_ack), 1);
-                OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
-                                     "received lock request ack, count %d", count));
+                OPAL_THREAD_LOCK(&module->p2p_lock);
+                count = (module->p2p_lock_received_ack += 1);
+                OPAL_THREAD_UNLOCK(&module->p2p_lock);
+
                 if (count != 0) opal_condition_broadcast(&module->p2p_cond);
             }
         }
@@ -646,10 +649,10 @@ component_fragment_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
         {
             int32_t count;
 
-            count = OPAL_THREAD_ADD32(&(module->p2p_num_pending_out), -1);
-            if (count == 0) {
-                opal_condition_broadcast(&module->p2p_cond);
-            }
+            OPAL_THREAD_LOCK(&module->p2p_lock);
+            count = (module->p2p_num_pending_out -= 1);
+            OPAL_THREAD_UNLOCK(&module->p2p_lock);
+            if (count == 0) opal_condition_broadcast(&module->p2p_cond);
         }
         break;
 
@@ -724,11 +727,15 @@ ompi_osc_pt2pt_component_progress(void)
 static void*
 component_thread_fn(opal_object_t *obj)
 {
+    struct timespec waittime;
+
     while (mca_osc_pt2pt_component.p2p_c_thread_run) {
         /* wake up whenever a request completes, to make sure it's not
            for us */
+        waittime.tv_sec = 1;
+        waittime.tv_usec = 0;
         OPAL_THREAD_LOCK(&ompi_request_lock);
-        opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
+        opal_condition_timedwait(&ompi_request_cond, &ompi_request_lock);
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
         ompi_osc_pt2pt_component_progress();
     }
