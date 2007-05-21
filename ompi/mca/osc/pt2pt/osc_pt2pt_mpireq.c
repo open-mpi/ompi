@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
@@ -14,25 +14,14 @@
  * $HEADER$
  */
 
-#ifndef OMPI_OSC_PT2PT_BUFFER_H
-#define OMPI_OSC_PT2PT_BUFFER_H
+#include "ompi_config.h"
 
+#include "osc_pt2pt.h"
 #include "osc_pt2pt_mpireq.h"
 
-BEGIN_C_DECLS
+#include "opal/class/opal_free_list.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_mpireq_t, opal_free_list_item_t,
+                   NULL, NULL);
 
-struct ompi_osc_pt2pt_buffer_t {
-    ompi_osc_pt2pt_mpireq_t mpireq;
-    void *payload;
-    size_t len;
-};
-typedef struct ompi_osc_pt2pt_buffer_t ompi_osc_pt2pt_buffer_t;
-OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_buffer_t);
 
-END_C_DECLS
-
-#endif
