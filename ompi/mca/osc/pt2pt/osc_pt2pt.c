@@ -19,6 +19,7 @@
 #include "osc_pt2pt.h"
 #include "osc_pt2pt_sendreq.h"
 
+#include "ompi/mca/osc/base/base.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/threads/mutex.h"
 #include "ompi/win/win.h"
@@ -32,6 +33,11 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
     int ret = OMPI_SUCCESS;
     int tmp;
     ompi_osc_pt2pt_module_t *module = P2P_MODULE(win);
+    void *foo;
+
+    opal_output_verbose(1, ompi_osc_base_output,
+                        "pt2pt component destroying window with id %d",
+                        module->p2p_comm->c_contextid);
 
     OPAL_THREAD_LOCK(&module->p2p_lock);
     while (OMPI_WIN_EXPOSE_EPOCH & ompi_win_get_mode(win)) {
@@ -55,7 +61,7 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
 #if OMPI_ENABLE_PROGRESS_THREADS
         mca_osc_pt2pt_component.p2p_c_thread_run = false;
         opal_condition_broadcast(&ompi_request_cond);
-        opal_thread_join(&mca_osc_pt2pt_component.p2p_c_thread, &ret);
+        opal_thread_join(&mca_osc_pt2pt_component.p2p_c_thread, &foo);
 #else
         opal_progress_unregister(ompi_osc_pt2pt_component_progress);
 #endif

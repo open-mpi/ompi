@@ -135,6 +135,7 @@ int opal_thread_start(opal_thread_t *t)
 int opal_thread_join(opal_thread_t *t, void **thr_return)
 {
     int rc = pthread_join(t->t_handle, thr_return);
+    t->t_handle = (pthread_t) -1;
     return (rc == 0) ? OPAL_SUCCESS : OPAL_ERROR;
 }
 
@@ -164,7 +165,7 @@ int opal_thread_start(opal_thread_t *t)
     int rc;
 
     if (OMPI_ENABLE_DEBUG) {
-        if (NULL == t->t_run || t->t_handle != (pthread_t) -1) {
+        if (NULL == t->t_run || t->t_handle != (thread_t) -1) {
             return OPAL_ERR_BAD_PARAM;
         }
     }
@@ -179,6 +180,7 @@ int opal_thread_start(opal_thread_t *t)
 int opal_thread_join(opal_thread_t *t, void **thr_return)
 {
     int rc = thr_join(t->t_handle, NULL, thr_return);
+    t->t_handle = (thread_t) -1;
     return (rc == 0) ? OPAL_SUCCESS : OPAL_ERROR;
 }
 
