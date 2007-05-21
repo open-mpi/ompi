@@ -251,6 +251,10 @@ extern orte_data_type_t orte_dss_num_reg_types;
                         orte_std_cntr_t *bytes_used);
     int orte_dss_load(orte_buffer_t *buffer, void *payload, orte_std_cntr_t bytes_used);
 
+    int orte_dss_xfer_payload(orte_buffer_t *dest, orte_buffer_t *src);
+
+    int orte_dss_copy_payload(orte_buffer_t *dest, orte_buffer_t *src);
+
     int orte_dss_register(orte_dss_pack_fn_t pack_fn,
                           orte_dss_unpack_fn_t unpack_fn,
                           orte_dss_copy_fn_t copy_fn,

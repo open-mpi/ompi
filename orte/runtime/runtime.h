@@ -38,33 +38,12 @@
 #include "orte/util/univ_info.h"
 #include "orte/mca/ns/ns.h"
 
-/* constants for spawn constraints */
+/* some convenience definitions for code clarity */
+#define ORTE_INFRASTRUCTURE         true
+#define ORTE_NON_INFRASTRUCTURE     false
 
-/** Spawn constraint - require multi-cell support.  The selected spawn
-    system must be capable of starting across multiple cells.  This
-    allows multiple pcms to be used to satisfy a single resource
-    allocation request */
-#define OMPI_RTE_SPAWN_MULTI_CELL 0x0001
-/** Spawn constraint - require ability to launch daemons.  The
-    selected spawn system must be capable of starting daemon process.
-    Setting this flag will result in a spawn service that does not
-    neccessarily provide process monitoring or standard I/O
-    forwarding.  The calling process may exit before all children have
-    exited. */
-#define OMPI_RTE_SPAWN_DAEMON     0x0002
-/** Spawn constraint - require quality of service support.  The
-    selected spawn system must provide I/O forwarding, quick process
-    shutdown, and process status monitoring. */
-#define OMPI_RTE_SPAWN_HIGH_QOS   0x0004
-/** Spawn constraint - caller is an MPI process.  The caller is an MPI
-    application (has called MPI_Init).  This should be used only for
-    MPI_COMM_SPAWN and MPI_COMM_SPAWN_MULTIPLE.  The calling process
-    will follow the semantics of the MPI_COMM_SPAWN_* functions. */
-#define OMPI_RTE_SPAWN_FROM_MPI   0x0008
-/** Spawn constraint - require ability to launch either MPMD (hence
-    the name) applications or applications with specific placement of
-    processes. */
-#define OMPI_RTE_SPAWN_MPMD       0x0010
+#define ORTE_USE_BARRIER        true
+#define ORTE_NON_BARRIER        false
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -96,10 +75,10 @@ ORTE_DECLSPEC    int orte_abort(int status, bool report);
      * @param infrastructure Whether we are ORTE infrastructure or an ORTE 
      * application
      */
-ORTE_DECLSPEC    int orte_init(bool infrastructure);
-ORTE_DECLSPEC    int orte_system_init(bool infrastructure);
+ORTE_DECLSPEC    int orte_init(bool infrastructure, bool barrier);
+ORTE_DECLSPEC    int orte_system_init(bool infrastructure, bool barrier);
 ORTE_DECLSPEC    int orte_init_stage1(bool infrastructure);
-ORTE_DECLSPEC    int orte_init_stage2(void);
+ORTE_DECLSPEC    int orte_init_stage2(char *trigger);
 
     /**
      * Initialize parameters for ORTE.
@@ -160,20 +139,13 @@ ORTE_DECLSPEC    int orte_monitor_procs_unregistered(void);
      * is to be stored
      *
      * @retval ORTE_SUCCESS Universe found and connection accepted
-     * @retval OMPI_NO_CONNECTION_ALLOWED Universe found, but not persistent or
+     * @retval ORTE_ERR_NO_CONNECTION_ALLOWED Universe found, but not persistent or
      * restricted to local scope
-     * @retval OMPI_CONNECTION_FAILED Universe found, but connection attempt
+     * @retval ORTE_ERR_CONNECTION_FAILED Universe found, but connection attempt
      * failed. Probably caused by unclean termination of the universe seed
      * daemon.
-     * @retval OMPI_CONNECTION_REFUSED Universe found and contact made, but
-     * universe refused to allow connection.
      */
 ORTE_DECLSPEC    int orte_universe_exists(orte_universe_t *univ);
-
-    /**
-     * Setup I/O forwarding.
-     */
-ORTE_DECLSPEC   int ompi_rte_init_io(void);
 
     /**
      * Establish a Head Node Process on a cluster's front end
@@ -192,4 +164,4 @@ ORTE_DECLSPEC   void orte_universe_clean_directories(char *my_universe, int verb
 }
 #endif
 
-#endif /* OMPI_RUNTIME_H */
+#endif /* RUNTIME_H */

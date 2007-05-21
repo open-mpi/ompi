@@ -31,15 +31,16 @@
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 
+#include "orte/class/orte_pointer_array.h"
 #include "orte/dss/dss.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/smr/smr.h"
+#include "orte/runtime/runtime.h"
 
 #include "orte/mca/rmgr/base/rmgr_private.h"
-
 
 int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
 {
@@ -59,15 +60,18 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
 {
     int rc;
     orte_jobid_t job;
+    orte_buffer_t *buffer;
 
     OPAL_TRACE(1);
 
     /* check to see if this came from a trigger that we ignore because
      * that stage gate does NOT set an xcast barrier - processes simply
      * record their state and continue processing. The only triggers that
-     * involve a xcast barrier are the STGx and FINALIZED ones - ignore the rest.
-      */
-    if (!orte_schema.check_std_trigger_name(msg->target, ORTE_STG1_TRIGGER) &&
+     * involve a xcast barrier are the ORTE_STARTUP_TRIGGER,
+     * STGx, and FINALIZED ones - ignore the rest.
+     */
+    if (!orte_schema.check_std_trigger_name(msg->target, ORTE_STARTUP_TRIGGER) &&
+        !orte_schema.check_std_trigger_name(msg->target, ORTE_STG1_TRIGGER) &&
         !orte_schema.check_std_trigger_name(msg->target, ORTE_STG2_TRIGGER) &&
         !orte_schema.check_std_trigger_name(msg->target, ORTE_STG3_TRIGGER) &&
         !orte_schema.check_std_trigger_name(msg->target, ORTE_NUM_FINALIZED_TRIGGER)) {
@@ -85,7 +89,12 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
     OPAL_TRACE_ARG1(1, job);
             
     /* set the job state to the appropriate level */
-    if (orte_schema.check_std_trigger_name(msg->target, ORTE_ALL_LAUNCHED_TRIGGER)) {
+    if (orte_schema.check_std_trigger_name(msg->target, ORTE_STARTUP_TRIGGER)) {
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_ORTE_STARTUP_COMPLETE))) {
+            ORTE_ERROR_LOG(rc);
+            goto CLEANUP;
+        }
+    } else if (orte_schema.check_std_trigger_name(msg->target, ORTE_ALL_LAUNCHED_TRIGGER)) {
         if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_STATE_LAUNCHED))) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
@@ -118,10 +127,19 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
     msg->msg_type = ORTE_GPR_SUBSCRIPTION_MSG;
     msg->id = ORTE_GPR_TRIGGER_ID_MAX;
 
+    /* setup the buffer */
+    buffer = OBJ_NEW(orte_buffer_t);
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(buffer, &msg, 1, ORTE_GPR_NOTIFY_MSG))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buffer);
+        return rc;
+    }
+
     /* send the message */
-    if (ORTE_SUCCESS != (rc = orte_rml.xcast(job, msg, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.xcast(job, buffer, ORTE_RML_TAG_XCAST_BARRIER))) {
         ORTE_ERROR_LOG(rc);
     }
+    OBJ_RELEASE(buffer);
 
 CLEANUP:
     

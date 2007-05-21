@@ -129,13 +129,15 @@ typedef void* orte_iov_base_ptr_t;
 #define    ORTE_MAPPED_NODE         (orte_data_type_t)   56 /**< node entry on map */
 #define    ORTE_ATTRIBUTE           (orte_data_type_t)   57 /**< attribute used to control framework behavior */
 #define    ORTE_ATTR_LIST           (orte_data_type_t)   58 /**< list of attributes */
+/* RML types */
+#define    ORTE_RML_TAG             (orte_data_type_t)   59 /**< tag for sending/receiving messages */
 
-    /* DAEMON communication type */
-#define    ORTE_DAEMON_CMD          (orte_data_type_t)   59 /**< command flag for communicating with the daemon */
+/* DAEMON communication type */
+#define    ORTE_DAEMON_CMD          (orte_data_type_t)   60 /**< command flag for communicating with the daemon */
 
 /* Need a command separate from ORTE_DAEMON_CMD, so that we can receive on 
  * them both at the same time */
-#define    ORTE_CKPT_CMD            (orte_data_type_t)   60 /**< command flag for communicating with HNP */
+#define    ORTE_CKPT_CMD            (orte_data_type_t)   61 /**< command flag for communicating with HNP */
 
 
 /* define the starting point for dynamically assigning data types */

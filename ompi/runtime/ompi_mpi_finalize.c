@@ -156,8 +156,7 @@ int ompi_mpi_finalize(void)
     /*
      * Wait for everyone to get here
      */
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid,
-                                              NULL, orte_gpr.deliver_notify_msg))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast_gate(orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -308,8 +307,7 @@ int ompi_mpi_finalize(void)
      * the RTE while the smr is trying to do the update - which causes
      * an ugly race condition
      */
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid,
-                                              NULL, orte_gpr.deliver_notify_msg))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast_gate(orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }

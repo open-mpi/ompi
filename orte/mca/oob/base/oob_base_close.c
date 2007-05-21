@@ -41,6 +41,10 @@ int mca_oob_base_close(void)
   }
     
 
+  /* destruct the condition variables for xcast */
+  OBJ_DESTRUCT(&orte_oob_xcast_mutex);
+  OBJ_DESTRUCT(&orte_oob_xcast_cond);
+  
   /* Finalize all the oob modules and free their list items */
   for (item =  opal_list_remove_first(&mca_oob_base_modules);
        item != NULL;

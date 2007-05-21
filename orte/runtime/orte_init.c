@@ -35,7 +35,7 @@
  * @retval ORTE_ERROR Upon failure.
  */
 
-int orte_init(bool infrastructure)
+int orte_init(bool infrastructure, bool barrier)
 {
     int rc;
     
@@ -54,7 +54,7 @@ int orte_init(bool infrastructure)
         return rc;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_system_init(infrastructure))) {
+    if (ORTE_SUCCESS != (rc = orte_system_init(infrastructure, barrier))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

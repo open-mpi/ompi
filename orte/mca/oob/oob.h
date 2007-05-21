@@ -81,6 +81,11 @@ typedef char* (*mca_oob_base_module_get_addr_fn_t)(void);
 
 typedef int (*mca_oob_base_module_set_addr_fn_t)(const orte_process_name_t*, const char* uri);
 
+/**
+ * Implementation of mca_oob_base_module_update_contact_info()
+ */
+typedef void (*mca_oob_module_update_contact_info_fn_t)(orte_gpr_notify_data_t* data,
+                                                        void* cbdata);
 
 /**
 *  Implementation of mca_oob_ping().
@@ -200,27 +205,67 @@ typedef int (*mca_oob_base_module_fini_fn_t)(void);
  * xcast function for sending common messages to all processes
  */
 typedef int (*mca_oob_base_module_xcast_fn_t)(orte_jobid_t job,
-                                              orte_gpr_notify_message_t *msg,
-                                              orte_gpr_trigger_cb_fn_t cbfunc);
+                                              orte_buffer_t *buffer,
+                                              orte_rml_tag_t tag);
 
+typedef int (*mca_oob_base_module_xcast_nb_fn_t)(orte_jobid_t job,
+                                                 orte_buffer_t *buffer,
+                                                 orte_rml_tag_t tag);
+
+typedef int (*mca_oob_base_module_xcast_gate_fn_t)(orte_gpr_trigger_cb_fn_t cbfunc);
+
+/* ft event */
 typedef int (*mca_oob_base_module_ft_event_fn_t)( int state );
+
+/*
+ * Register my contact info with the General Purpose Registry
+ * This function causes the component to "put" its contact info
+ * on the registry.
+ */
+typedef int (*mca_oob_module_register_contact_info_fn_t)(void);
+
+/*
+ * Register a subscription to receive contact info on other processes
+ * This function will typically be called from within a GPR compound command
+ * to register a subscription against a stage gate trigger. When fired, this
+ * will return the OOB contact info for all processes in the specified job
+ */
+typedef int (*mca_oob_module_register_subscription_fn_t)(orte_jobid_t job, char *trigger);
+
+/*
+ * Get contact info for a process or job
+ * Returns contact info for the specified process. If the vpid in the process name
+ * is WILDCARD, then it returns the contact info for all processes in the specified
+ * job. If the jobid is WILDCARD, then it returns the contact info for processes
+ * of the specified vpid across all jobs. Obviously, combining the two WILDCARD
+ * values will return contact info for everyone!
+ */
+typedef int (*mca_oob_module_get_contact_info_fn_t)(orte_process_name_t *name, orte_gpr_notify_data_t **data);
+
 
 /**
  * OOB Module
  */
 struct mca_oob_1_0_0_t {
-    mca_oob_base_module_get_addr_fn_t    oob_get_addr;
-    mca_oob_base_module_set_addr_fn_t    oob_set_addr;
-    mca_oob_base_module_ping_fn_t        oob_ping;
-    mca_oob_base_module_send_fn_t        oob_send;
-    mca_oob_base_module_recv_fn_t        oob_recv;
-    mca_oob_base_module_send_nb_fn_t     oob_send_nb;
-    mca_oob_base_module_recv_nb_fn_t     oob_recv_nb;
-    mca_oob_base_module_recv_cancel_fn_t oob_recv_cancel;
-    mca_oob_base_module_init_fn_t        oob_init;
-    mca_oob_base_module_fini_fn_t        oob_fini;
-    mca_oob_base_module_xcast_fn_t       oob_xcast;
-    mca_oob_base_module_ft_event_fn_t    oob_ft_event;
+    mca_oob_base_module_get_addr_fn_t            oob_get_addr;
+    mca_oob_base_module_set_addr_fn_t            oob_set_addr;
+    mca_oob_base_module_ping_fn_t                oob_ping;
+    mca_oob_base_module_send_fn_t                oob_send;
+    mca_oob_base_module_recv_fn_t                oob_recv;
+    mca_oob_base_module_send_nb_fn_t             oob_send_nb;
+    mca_oob_base_module_recv_nb_fn_t             oob_recv_nb;
+    mca_oob_base_module_recv_cancel_fn_t         oob_recv_cancel;
+    mca_oob_base_module_init_fn_t                oob_init;
+    mca_oob_base_module_fini_fn_t                oob_fini;
+    mca_oob_base_module_xcast_fn_t               oob_xcast;
+    mca_oob_base_module_xcast_nb_fn_t            oob_xcast_nb;
+    mca_oob_base_module_xcast_gate_fn_t          oob_xcast_gate;
+    mca_oob_base_module_ft_event_fn_t            oob_ft_event;
+    mca_oob_module_register_contact_info_fn_t    oob_register_contact_info;
+    mca_oob_module_register_subscription_fn_t    oob_register_subscription;
+    mca_oob_module_get_contact_info_fn_t         oob_get_contact_info;
+    mca_oob_module_update_contact_info_fn_t      oob_update_contact_info;
+
 };
 
 /**

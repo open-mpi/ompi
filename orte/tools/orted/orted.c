@@ -391,12 +391,11 @@ int main(int argc, char *argv[])
      * up incorrect infrastructure that only a singleton would
      * require
      */
-    if (ORTE_SUCCESS != (ret = orte_init(true))) {
-        opal_show_help("help-orted.txt", "orted:init-failure", false,
-                       "orte_init()", ret);
+    if (ORTE_SUCCESS != (ret = orte_init(ORTE_INFRASTRUCTURE, ORTE_NON_BARRIER))) {
+        ORTE_ERROR_LOG(ret);
         return ret;
     }
-
+    
     /* Set signal handlers to catch kill signals so we can properly clean up
      * after ourselves. 
      */

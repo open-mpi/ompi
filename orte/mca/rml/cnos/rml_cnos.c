@@ -72,7 +72,13 @@ orte_rml_module_t orte_rml_cnos_module = {
     orte_rml_cnos_recv_buffer_nb,
     orte_rml_cnos_recv_cancel,
     orte_rml_cnos_barrier,
-    orte_rml_cnos_xcast
+    orte_rml_cnos_xcast,
+    orte_rml_cnos_xcast_nb,
+    orte_rml_cnos_xcast_gate,
+    orte_rml_cnos_register_contact_info,
+    orte_rml_cnos_register_subscription,
+    orte_rml_cnos_get_contact_info,
+    orte_rml_cnos_update_contact_info
 };
 
 
@@ -223,14 +229,24 @@ orte_rml_cnos_barrier(void)
 }
 
 int
-orte_rml_cnos_xcast(orte_process_name_t * root,
-                    orte_gpr_notify_message_t *msg2,
-                    orte_gpr_trigger_cb_fn_t cbfunc)
+orte_rml_cnos_xcast(orte_jobid_t job,
+                    orte_buffer_t *buffer,
+                    orte_rml_tag_t tag)
 {
-    if (NULL != root || NULL != msg2) {
-        return ORTE_ERR_NOT_SUPPORTED;
-    }
+    return ORTE_SUCCESS;
+}
 
+int
+orte_rml_cnos_xcast_nb(orte_jobid_t job,
+                       orte_buffer_t *buffer,
+                       orte_rml_tag_t tag)
+{
+    return ORTE_SUCCESS;
+}
+
+int
+orte_rml_cnos_xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc)
+{
     orte_rml_cnos_barrier();
     if (NULL != cbfunc) {
         orte_gpr_notify_message_t *msg;
@@ -245,3 +261,25 @@ orte_rml_cnos_xcast(orte_process_name_t * root,
 
     return ORTE_SUCCESS;
 }
+
+int orte_rml_cnos_register_contact_info(void)
+{
+    return ORTE_SUCCESS;
+}
+
+int orte_rml_cnos_register_subscription(orte_jobid_t job, char *trigger)
+{
+    return ORTE_SUCCESS;
+}
+
+int orte_rml_cnos_get_contact_info(orte_process_name_t *name, orte_gpr_notify_data_t **data)
+{
+    return ORTE_SUCCESS;
+}
+
+void orte_rml_cnos_update_contact_info(orte_gpr_notify_data_t* data,
+                                       void* cbdata)
+{
+    return;
+}
+

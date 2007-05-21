@@ -36,6 +36,69 @@
 #include "gpr_replica_api.h"
 
 
+int orte_gpr_replica_arith(orte_gpr_addr_mode_t addr_mode,
+                           char *segment, char **tokens, char **keys,
+                           orte_dss_arith_op_t operation,
+                           orte_data_value_t *operand)
+{
+    int rc;
+    orte_std_cntr_t num_tokens, num_keys;
+    orte_gpr_replica_segment_t *seg=NULL;
+    orte_gpr_replica_itag_t *itags=NULL, *keytags=NULL;
+    
+    OPAL_TRACE(1);
+    
+    OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+    
+    /** find the segment */
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&seg, true, segment))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    
+    /** convert tokens to array of itags */
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_itag_list(&itags, seg,
+                                                             tokens, &num_tokens))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    
+    /** convert keys to array of itags */
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_itag_list(&keytags, seg,
+                                                             keys, &num_keys))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_arith_op_fn(addr_mode, seg, itags, num_tokens,
+                                                           num_keys, keytags, operation, operand))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+CLEANUP:
+    /** release lists of itags */
+    if (NULL != itags) {
+        free(itags);
+    }
+    if (NULL != keytags) {
+        free(keytags);
+    }
+    
+    if (ORTE_SUCCESS == rc) {
+        if (ORTE_SUCCESS !=
+            (rc = orte_gpr_replica_check_events())) {
+            ORTE_ERROR_LOG(rc);
+            OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+            return rc;
+        }
+        rc = orte_gpr_replica_process_callbacks();
+    }
+    
+    OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+    
+    return rc;
+}
+
 int orte_gpr_replica_increment_value(orte_gpr_value_t *value)
 {
     int rc;

@@ -41,6 +41,10 @@ struct orte_rmgr_proxy_component_t {
     /* conditioned wait variable */
     opal_condition_t cond;
     /* flag for tracking completion of app launch */
+    bool launched;
+    /* flag indicating that an xconnect is underway */
+    bool xconnect;
+    /* flag for tracking completion of spawn */
     bool done;
     /* return status code */
     int rc;

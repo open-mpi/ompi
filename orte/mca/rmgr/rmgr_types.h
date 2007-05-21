@@ -74,9 +74,10 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_attribute_t);
 
 /* direct the RMGR spawn procedure to cross-connect ORTE information
  * between the parent job and the newly spawned child.
- * Takes parent's jobid as value.
+ * Takes process state corresponding to the stage gate where
+ * the cross-connect is to be done
  */
-#define ORTE_RMGR_XCONNECT_AT_SPAWN "orte-rmgr-xconnect"
+#define ORTE_RMGR_XCONNECT_AT_SPAWN "orte-rmgr-xconnect-job"
 
 
 /* RESOURCE MANAGER DATA TYPES */

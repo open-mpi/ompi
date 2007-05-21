@@ -331,6 +331,29 @@ typedef int (*orte_dss_load_fn_t)(orte_buffer_t *buffer,
 
 
 /**
+ * Transfer a payload from one buffer to another
+ * This function is a convenience shortcut that basically unloads the
+ * payload from one buffer and loads it into another. This is a destructive
+ * action - see the unload and load descriptions above.
+ */
+typedef int (*orte_dss_xfer_payload_fn_t)(orte_buffer_t *dest,
+                                          orte_buffer_t *src);
+
+/**
+ * Copy a payload from one buffer to another
+ * This function will append a copy of the payload in one buffer into
+ * another buffer. If the destination buffer is NOT empty, then the
+ * type of the two buffers MUST match or else an
+ * error will be returned. If the destination buffer IS empty, then
+ * its type will be set to that of the source buffer.
+ * NOTE: This is NOT a destructive procedure - the
+ * source buffer's payload will remain intact, as will any pre-existing
+ * payload in the destination's buffer.
+ */
+typedef int (*orte_dss_copy_payload_fn_t)(orte_buffer_t *dest,
+                                          orte_buffer_t *src);
+
+/**
  * DSS initialization function.
  *
  * In dynamic libraries, declared objects and functions don't get
@@ -598,6 +621,8 @@ struct orte_dss_t {
     orte_dss_peek_next_item_fn_t 	peek;
     orte_dss_unload_fn_t 			unload;
     orte_dss_load_fn_t 				load;
+    orte_dss_xfer_payload_fn_t      xfer_payload;
+    orte_dss_copy_payload_fn_t      copy_payload;
     orte_dss_register_fn_t 			register_type;
     orte_dss_lookup_data_type_fn_t 	lookup_data_type;
     orte_dss_dump_data_types_fn_t 	dump_data_types;

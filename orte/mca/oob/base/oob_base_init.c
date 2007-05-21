@@ -186,7 +186,7 @@ int mca_oob_base_init(void)
 *  The caller is responsible for freeing the returned string.
 */
                                                                                                              
-char* mca_oob_get_contact_info()
+char* mca_oob_get_my_contact_info()
 {
     char *proc_name=NULL;
     char *proc_addr = mca_oob.oob_get_addr();
@@ -242,15 +242,14 @@ int mca_oob_set_contact_info(const char* contact_info)
 }
 
 /**
-* Called to request the selected oob components to
-* register their address with the seed daemon.
-*/
-
+ * Called to request the selected oob components to
+ * initialize their connections to the HNP (if not an HNP), or
+ * to setup a listener for incoming connections (if an HNP)
+ */
 int mca_oob_base_module_init(void)
 {
   opal_list_item_t* item;
 
-  /* Initialize all modules after oob/gpr/ns have initialized */
   for (item =  opal_list_get_first(&mca_oob_base_modules);
        item != opal_list_get_end(&mca_oob_base_modules);
        item =  opal_list_get_next(item)) {
@@ -261,3 +260,89 @@ int mca_oob_base_module_init(void)
   return ORTE_SUCCESS;
 }
 
+/**
+ * Called to have all selected oob components register their
+ * contact info on the GPR
+ */
+int mca_oob_register_contact_info(void)
+{
+    opal_list_item_t* item;
+    int rc;
+    
+    for (item =  opal_list_get_first(&mca_oob_base_modules);
+         item != opal_list_get_end(&mca_oob_base_modules);
+         item =  opal_list_get_next(item)) {
+        mca_oob_base_info_t* base = (mca_oob_base_info_t *) item;
+        if (NULL != base->oob_module->oob_register_contact_info) {
+            if (ORTE_SUCCESS != (rc = base->oob_module->oob_register_contact_info())) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+    }
+    return ORTE_SUCCESS;
+}
+
+/**
+ * Called to have all selected oob components register a subscription
+ * to receive their required contact info from all processes in the
+ * specified job when the provided trigger fires
+ */
+int mca_oob_register_subscription(orte_jobid_t job, char *trigger)
+{
+    opal_list_item_t* item;
+    int rc;
+    
+    for (item =  opal_list_get_first(&mca_oob_base_modules);
+         item != opal_list_get_end(&mca_oob_base_modules);
+         item =  opal_list_get_next(item)) {
+        mca_oob_base_info_t* base = (mca_oob_base_info_t *) item;
+        if (NULL != base->oob_module->oob_register_subscription) {
+            if (ORTE_SUCCESS != (rc = base->oob_module->oob_register_subscription(job, trigger))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+    }
+    return ORTE_SUCCESS;
+}
+
+/*
+ * Called to get contact info for a process or job from all selected
+ * oob components
+ */
+int mca_oob_get_contact_info(orte_process_name_t *name, orte_gpr_notify_data_t **data)
+{
+    opal_list_item_t* item;
+    int rc;
+    
+    for (item =  opal_list_get_first(&mca_oob_base_modules);
+         item != opal_list_get_end(&mca_oob_base_modules);
+         item =  opal_list_get_next(item)) {
+        mca_oob_base_info_t* base = (mca_oob_base_info_t *) item;
+        if (NULL != base->oob_module->oob_get_contact_info) {
+            if (ORTE_SUCCESS != (rc = base->oob_module->oob_get_contact_info(name, data))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+    }
+    return ORTE_SUCCESS;
+}
+
+/*
+ * Called to update contact info tables in all selected oob components
+ */
+void mca_oob_update_contact_info(orte_gpr_notify_data_t* data, void* cbdata)
+{
+    opal_list_item_t* item;
+    
+    for (item =  opal_list_get_first(&mca_oob_base_modules);
+         item != opal_list_get_end(&mca_oob_base_modules);
+         item =  opal_list_get_next(item)) {
+        mca_oob_base_info_t* base = (mca_oob_base_info_t *) item;
+        if (NULL != base->oob_module->oob_update_contact_info) {
+            base->oob_module->oob_update_contact_info(data, cbdata);
+        }
+    }
+}

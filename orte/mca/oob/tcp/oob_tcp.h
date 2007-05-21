@@ -72,6 +72,31 @@ int mca_oob_tcp_init(void);
  */
 int mca_oob_tcp_fini(void);
 
+/*
+ * Register my contact info with the General Purpose Registry
+ * This function causes the component to "put" its contact info
+ * on the registry.
+ */
+int mca_oob_tcp_register_contact_info(void);
+
+/*
+ * Register a subscription to receive contact info on other processes
+ * This function will typically be called from within a GPR compound command
+ * to register a subscription against a stage gate trigger. When fired, this
+ * will return the OOB contact info for all processes in the specified job
+ */
+int mca_oob_tcp_register_subscription(orte_jobid_t job, char *trigger);
+
+/*
+ * Get contact info for a process or job
+ * Returns contact info for the specified process. If the vpid in the process name
+ * is WILDCARD, then it returns the contact info for all processes in the specified
+ * job. If the jobid is WILDCARD, then it returns the contact info for processes
+ * of the specified vpid across all jobs. Obviously, combining the two WILDCARD
+ * values will return contact info for everyone!
+ */
+ORTE_DECLSPEC int mca_oob_tcp_get_contact_info(orte_process_name_t *name, orte_gpr_notify_data_t **data);
+
 /**
 * Compare two process names for equality.
 *

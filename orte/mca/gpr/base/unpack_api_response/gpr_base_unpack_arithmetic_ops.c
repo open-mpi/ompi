@@ -36,6 +36,34 @@
 
 #include "orte/mca/gpr/base/base.h"
 
+int orte_gpr_base_unpack_arith(orte_buffer_t *buffer, int *ret)
+{
+    orte_gpr_cmd_flag_t command;
+    int rc;
+    orte_std_cntr_t n;
+    
+    OPAL_TRACE(3);
+    
+    n=1;
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &command, &n, ORTE_GPR_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    if (ORTE_GPR_ARITH_CMD != command) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    
+    n=1;
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, ret, &n, ORTE_INT))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    return ORTE_SUCCESS;
+}
+
 int orte_gpr_base_unpack_increment_value(orte_buffer_t *cmd, int *ret)
 {
     orte_gpr_cmd_flag_t command;
@@ -62,7 +90,6 @@ int orte_gpr_base_unpack_increment_value(orte_buffer_t *cmd, int *ret)
     }
 
     return ORTE_SUCCESS;
-
 }
 
 int orte_gpr_base_unpack_decrement_value(orte_buffer_t *cmd, int *ret)

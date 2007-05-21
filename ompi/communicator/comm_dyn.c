@@ -361,6 +361,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     orte_std_cntr_t num_apps, ai;
     orte_jobid_t new_jobid=ORTE_JOBID_INVALID;
     orte_app_context_t **apps=NULL;
+    orte_proc_state_t state;
     
     opal_list_t attributes;
     opal_list_item_t *item;
@@ -572,7 +573,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
         free(base_prefix);
     }
 
-    /* tell the RTE that we want to be a child of this process' job */
+    /* tell the RTE that we want to be the new job to be a child of this process' job */
     if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(&attributes, ORTE_NS_USE_PARENT,
                                                       ORTE_JOBID, &(orte_process_info.my_name->jobid),
                                                       ORTE_RMGR_ATTR_OVERRIDE))) {
@@ -605,10 +606,12 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     }
 
     /* tell the RTE that we want to be cross-connected to the children so we receive
-     * their ORTE-level information - e.g., OOB contact info
+     * their ORTE-level information - e.g., OOB contact info - when they
+     * reach the STG1 stage gate
      */
+    state = ORTE_PROC_STATE_AT_STG1;
     if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(&attributes, ORTE_RMGR_XCONNECT_AT_SPAWN,
-                                                      ORTE_JOBID, &(orte_process_info.my_name->jobid),
+                                                      ORTE_PROC_STATE, &state,
                                                       ORTE_RMGR_ATTR_OVERRIDE))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&attributes);

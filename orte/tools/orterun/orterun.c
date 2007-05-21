@@ -430,12 +430,12 @@ int orterun(int argc, char *argv[])
      * up incorrect infrastructure that only a singleton would
      * require
      */
-    if (ORTE_SUCCESS != (rc = orte_init(true))) {
-        opal_show_help("help-orterun.txt", "orterun:init-failure", true,
-                       "orte_init()", rc);
+    if (ORTE_SUCCESS != (rc = orte_init(ORTE_INFRASTRUCTURE, ORTE_NON_BARRIER))) {
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
-
+    
+    
     /* pre-condition any network transports that require it */
     if (ORTE_SUCCESS != (rc = orte_pre_condition_transports(apps, num_apps))) {
         ORTE_ERROR_LOG(rc);

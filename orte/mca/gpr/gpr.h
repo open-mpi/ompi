@@ -624,6 +624,28 @@ typedef int (*orte_gpr_base_module_increment_value_fn_t)(orte_gpr_value_t *value
  */
 typedef int (*orte_gpr_base_module_decrement_value_fn_t)(orte_gpr_value_t *value);
 
+/*
+ * General arithmetic operation
+ * This function performs the specified arithmetic operation on registry entries
+ * defined by the search criteria. Note that the operation flags are those defined in
+ * orte/dss/dss_types.h (ORTE_DSS_ADD, ORTE_DSS_SUB, etc.).
+ *
+ * @param operation orte_dss_arith_op_t value indicating the operation to be performed
+ * @param value Pointer to an orte_data_value_t object containing the value to be used
+ * in the operation. This value will be added to or subtracted from the values found by
+ * the search criteria, or will multiply or divide those values, according to what was
+ * specified. The point here is that this value is always the right most in the specified
+ * operation (e.g., for division, it is (found entry) / value).
+ *
+ * The results of the operation are stored back in their original location, thus overwriting
+ * the original values. If no pre-existing entry is found, the entry will be created
+ * with the specified value.
+ */
+typedef int (*orte_gpr_base_module_arith_fn_t)(orte_gpr_addr_mode_t addr_mode,
+                                               char *segment, char **tokens, char **keys,
+                                               orte_dss_arith_op_t operation,
+                                               orte_data_value_t *value);
+
 
 /* Deliver a notify message
  * To support the broadcast of stage gate messages that supply all subscribed
@@ -682,61 +704,62 @@ typedef int (*orte_gpr_base_module_create_keyval_fn_t)(orte_gpr_keyval_t **keyva
  */
 struct orte_gpr_base_module_1_0_0_t {
     /* INIT */
-    orte_gpr_base_module_init_fn_t init;
+    orte_gpr_base_module_init_fn_t                      init;
     /* BLOCKING OPERATIONS */
-    orte_gpr_base_module_get_fn_t get;
-    orte_gpr_base_module_get_conditional_fn_t get_conditional;
-    orte_gpr_base_module_put_fn_t put;
-    orte_gpr_base_module_put_1_fn_t put_1;
-    orte_gpr_base_module_put_N_fn_t put_N;
-    orte_gpr_base_module_delete_entries_fn_t delete_entries;
-    orte_gpr_base_module_delete_segment_fn_t delete_segment;
-    orte_gpr_base_module_index_fn_t index;
+    orte_gpr_base_module_get_fn_t                       get;
+    orte_gpr_base_module_get_conditional_fn_t           get_conditional;
+    orte_gpr_base_module_put_fn_t                       put;
+    orte_gpr_base_module_put_1_fn_t                     put_1;
+    orte_gpr_base_module_put_N_fn_t                     put_N;
+    orte_gpr_base_module_delete_entries_fn_t            delete_entries;
+    orte_gpr_base_module_delete_segment_fn_t            delete_segment;
+    orte_gpr_base_module_index_fn_t                     index;
     /* NON-BLOCKING OPERATIONS */
-    orte_gpr_base_module_get_nb_fn_t get_nb;
-    orte_gpr_base_module_put_nb_fn_t put_nb;
-    orte_gpr_base_module_delete_entries_nb_fn_t delete_entries_nb;
-    orte_gpr_base_module_delete_segment_nb_fn_t delete_segment_nb;
-    orte_gpr_base_module_index_nb_fn_t index_nb;
+    orte_gpr_base_module_get_nb_fn_t                    get_nb;
+    orte_gpr_base_module_put_nb_fn_t                    put_nb;
+    orte_gpr_base_module_delete_entries_nb_fn_t         delete_entries_nb;
+    orte_gpr_base_module_delete_segment_nb_fn_t         delete_segment_nb;
+    orte_gpr_base_module_index_nb_fn_t                  index_nb;
     /* GENERAL OPERATIONS */
-    orte_gpr_base_module_create_value_fn_t create_value;
-    orte_gpr_base_module_create_keyval_fn_t create_keyval;
-    orte_gpr_base_module_preallocate_segment_fn_t preallocate_segment;
-    orte_gpr_base_module_deliver_notify_msg_t deliver_notify_msg;
+    orte_gpr_base_module_create_value_fn_t              create_value;
+    orte_gpr_base_module_create_keyval_fn_t             create_keyval;
+    orte_gpr_base_module_preallocate_segment_fn_t       preallocate_segment;
+    orte_gpr_base_module_deliver_notify_msg_t           deliver_notify_msg;
     /* ARITHMETIC OPERATIONS */
-    orte_gpr_base_module_increment_value_fn_t increment_value;
-    orte_gpr_base_module_decrement_value_fn_t decrement_value;
+    orte_gpr_base_module_arith_fn_t                     arith;
+    orte_gpr_base_module_increment_value_fn_t           increment_value;
+    orte_gpr_base_module_decrement_value_fn_t           decrement_value;
     /* SUBSCRIBE OPERATIONS */
-    orte_gpr_base_module_subscribe_fn_t subscribe;
-    orte_gpr_base_module_subscribe_1_fn_t subscribe_1;
-    orte_gpr_base_module_subscribe_N_fn_t subscribe_N;
-    orte_gpr_base_module_define_trigger_fn_t define_trigger;
-    orte_gpr_base_module_define_trigger_level_fn_t define_trigger_level;
-    orte_gpr_base_module_unsubscribe_fn_t unsubscribe;
-    orte_gpr_base_module_cancel_trigger_fn_t cancel_trigger;
+    orte_gpr_base_module_subscribe_fn_t                 subscribe;
+    orte_gpr_base_module_subscribe_1_fn_t               subscribe_1;
+    orte_gpr_base_module_subscribe_N_fn_t               subscribe_N;
+    orte_gpr_base_module_define_trigger_fn_t            define_trigger;
+    orte_gpr_base_module_define_trigger_level_fn_t      define_trigger_level;
+    orte_gpr_base_module_unsubscribe_fn_t               unsubscribe;
+    orte_gpr_base_module_cancel_trigger_fn_t            cancel_trigger;
     /* COMPOUND COMMANDS */
-    orte_gpr_base_module_begin_compound_cmd_fn_t begin_compound_cmd;
-    orte_gpr_base_module_stop_compound_cmd_fn_t stop_compound_cmd;
-    orte_gpr_base_module_exec_compound_cmd_fn_t exec_compound_cmd;
+    orte_gpr_base_module_begin_compound_cmd_fn_t        begin_compound_cmd;
+    orte_gpr_base_module_stop_compound_cmd_fn_t         stop_compound_cmd;
+    orte_gpr_base_module_exec_compound_cmd_fn_t         exec_compound_cmd;
     /* DIAGNOSTIC OPERATIONS */
-    orte_gpr_base_module_dump_all_fn_t dump_all;
-    orte_gpr_base_module_dump_segment_fn_t dump_segment;
-    orte_gpr_base_module_dump_triggers_fn_t dump_triggers;
-    orte_gpr_base_module_dump_subscriptions_fn_t dump_subscriptions;
-    orte_gpr_base_module_dump_a_trigger_fn_t dump_a_trigger;
-    orte_gpr_base_module_dump_a_subscription_fn_t dump_a_subscription;
-    orte_gpr_base_module_dump_local_triggers_fn_t dump_local_triggers;
-    orte_gpr_base_module_dump_local_subscriptions_fn_t dump_local_subscriptions;
-    orte_gpr_base_module_dump_callbacks_fn_t dump_callbacks;
-    orte_gpr_base_module_dump_notify_msg_fn_t dump_notify_msg;
-    orte_gpr_base_module_dump_notify_data_fn_t dump_notify_data;
-    orte_gpr_base_module_dump_value_fn_t dump_value;
-    orte_gpr_base_module_dump_segment_size_fn_t dump_segment_size;
+    orte_gpr_base_module_dump_all_fn_t                  dump_all;
+    orte_gpr_base_module_dump_segment_fn_t              dump_segment;
+    orte_gpr_base_module_dump_triggers_fn_t             dump_triggers;
+    orte_gpr_base_module_dump_subscriptions_fn_t        dump_subscriptions;
+    orte_gpr_base_module_dump_a_trigger_fn_t            dump_a_trigger;
+    orte_gpr_base_module_dump_a_subscription_fn_t       dump_a_subscription;
+    orte_gpr_base_module_dump_local_triggers_fn_t       dump_local_triggers;
+    orte_gpr_base_module_dump_local_subscriptions_fn_t  dump_local_subscriptions;
+    orte_gpr_base_module_dump_callbacks_fn_t            dump_callbacks;
+    orte_gpr_base_module_dump_notify_msg_fn_t           dump_notify_msg;
+    orte_gpr_base_module_dump_notify_data_fn_t          dump_notify_data;
+    orte_gpr_base_module_dump_value_fn_t                dump_value;
+    orte_gpr_base_module_dump_segment_size_fn_t         dump_segment_size;
     /* CLEANUP OPERATIONS */
-    orte_gpr_base_module_cleanup_job_fn_t cleanup_job;
-    orte_gpr_base_module_cleanup_proc_fn_t cleanup_process;
+    orte_gpr_base_module_cleanup_job_fn_t               cleanup_job;
+    orte_gpr_base_module_cleanup_proc_fn_t              cleanup_process;
 
-    orte_gpr_base_module_ft_event_fn_t ft_event;
+    orte_gpr_base_module_ft_event_fn_t                  ft_event;
 };
 typedef struct orte_gpr_base_module_1_0_0_t orte_gpr_base_module_1_0_0_t;
 typedef orte_gpr_base_module_1_0_0_t orte_gpr_base_module_t;

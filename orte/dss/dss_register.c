@@ -55,7 +55,13 @@ int orte_dss_register(orte_dss_pack_fn_t pack_fn,
          i < orte_dss_types->size; i++) {
         if (NULL != ptr[i]) {
             j++;
+            /* check if the name exists */
             if (0 == strcmp(ptr[i]->odti_name, name)) {
+                ORTE_ERROR_LOG(ORTE_ERR_DATA_TYPE_REDEF);
+                return ORTE_ERR_DATA_TYPE_REDEF;
+            }
+            /* check if the specified type exists */
+            if (*type > 0 && ptr[i]->odti_type == *type) {
                 ORTE_ERROR_LOG(ORTE_ERR_DATA_TYPE_REDEF);
                 return ORTE_ERR_DATA_TYPE_REDEF;
             }

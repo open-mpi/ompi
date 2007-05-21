@@ -20,10 +20,13 @@
 
 #include "orte_config.h"
 #include "orte/orte_constants.h"
+
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/threads/condition.h"
+
 #include "orte/mca/oob/oob.h"
 
 
@@ -49,6 +52,8 @@ opal_list_t mca_oob_base_exception_handlers;
 bool orte_oob_base_timing;
 bool orte_oob_xcast_timing;
 int orte_oob_xcast_mode;
+opal_mutex_t orte_oob_xcast_mutex;
+opal_condition_t orte_oob_xcast_cond;
 
 bool orte_oob_base_already_opened = false;
 
@@ -69,7 +74,11 @@ int mca_oob_base_open(void)
         return ORTE_SUCCESS;
     }
     
-  /* Open up all available components */
+    /* initialize the condition variables for xcast */
+    OBJ_CONSTRUCT(&orte_oob_xcast_mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&orte_oob_xcast_cond, opal_condition_t);
+    
+    /* Open up all available components */
 
   OBJ_CONSTRUCT(&mca_oob_base_components, opal_list_t);
   OBJ_CONSTRUCT(&mca_oob_base_modules, opal_list_t);
@@ -110,26 +119,26 @@ int mca_oob_base_open(void)
   
   param = mca_base_param_reg_string_name("oob", "xcast_mode",
 #if 0
-                                         "Select xcast mode (\"linear\" | \"binomial\" | \"direct [default] \")",
+                                           "Select xcast mode (\"linear\" | \"binomial\" | \"direct [default] \")",
 #endif
-                                         "Select xcast mode (\"linear\" | \"direct [default] \")",
-                                         false, false, "direct", &mode);
-  if (0 == strcmp(mode, "binomial")) {
-      opal_output(0, "oob_xcast_mode: %s option not supported at this time", mode);
-      return ORTE_ERROR;
-      orte_oob_xcast_mode = 0;
-  } else if (0 == strcmp(mode, "linear")) {
-      orte_oob_xcast_mode = 1;
-  } else if (0 == strcmp(mode, "direct")) {
-      orte_oob_xcast_mode = 2;
-  } else {
-      opal_output(0, "oob_xcast_mode: unknown option %s", mode);
-      return ORTE_ERROR;
-  }
-  
-  /* All done */
-  orte_oob_base_already_opened = true;
-
-  return ORTE_SUCCESS;
+                                           "Select xcast mode (\"linear\" | \"direct [default] \")",
+                                           false, false, "direct", &mode);
+    if (0 == strcmp(mode, "binomial")) {
+        opal_output(0, "oob_xcast_mode: %s option not supported at this time", mode);
+        return ORTE_ERROR;
+        orte_oob_xcast_mode = 0;
+    } else if (0 == strcmp(mode, "linear")) {
+        orte_oob_xcast_mode = 1;
+    } else if (0 == strcmp(mode, "direct")) {
+        orte_oob_xcast_mode = 2;
+    } else {
+        opal_output(0, "oob_xcast_mode: unknown option %s", mode);
+        return ORTE_ERROR;
+    }
+    
+    /* All done */
+    orte_oob_base_already_opened = true;
+    
+    return ORTE_SUCCESS;
 }
 

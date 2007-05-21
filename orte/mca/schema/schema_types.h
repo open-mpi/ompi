@@ -88,6 +88,7 @@
 #define ORTE_JOB_IOF_KEY                        "orte-job-iof"
 #define ORTE_JOB_STATE_KEY                      "orte-job-state"
 #define ORTE_JOB_MAPPING_MODE_KEY               "orte-job-mapping-mode"
+#define ORTE_JOB_PARENT_JOBID_KEY               "orte-job-parent-jobid"
 
 /* PROCESS specific keys */
 #define ORTE_PROC_NAME_KEY                      "orte-proc-name"
@@ -101,6 +102,7 @@
 #define ORTE_PROC_NUM_ALIVE                     "orte-proc-num-alive"
 #define ORTE_PROC_NUM_ABORTED                   "orte-proc-num-aborted"
 #define ORTE_PROC_NUM_FAILED_START              "orte-proc-num-failed-start"
+#define ORTE_PROC_NUM_AT_ORTE_STARTUP           "orte-proc-num-orte-startup"
 #define ORTE_PROC_NUM_AT_INIT                   "orte-proc-num-init"
 #define ORTE_PROC_NUM_LAUNCHED                  "orte-proc-num-launched"
 #define ORTE_PROC_NUM_RUNNING                   "orte-proc-num-running"
@@ -122,6 +124,15 @@
 /*
  * ORTE-wide names for specific system triggers and subscriptions
  */
+
+/* trigger during orte_init to allow exchange of ORTE info within a job */
+#define ORTE_STARTUP_TRIGGER            "orte-startup-trig"
+/* subscription to allow exchange of ORTE info between jobs */
+#define ORTE_XCONNECT_SUB               "orte-xconnect-sub"
+/* standard subscription required for xconnect */
+#define ORTE_PARENT_JOBID_SUBSCRIPTION  "orte-parent-jobid"
+
+/* process state triggers - fire when all procs reach corresponding point */
 #define ORTE_ALL_INIT_TRIGGER           "orte-init-trig"
 #define ORTE_ALL_LAUNCHED_TRIGGER       "orte-launch-trig"
 #define ORTE_ALL_RUNNING_TRIGGER        "orte-running-trig"
@@ -129,12 +140,13 @@
 #define ORTE_STG2_TRIGGER               "orte-stage2"
 #define ORTE_STG3_TRIGGER               "orte-stage3"
 #define ORTE_NUM_FINALIZED_TRIGGER      "orte-num-finalized"
-#define ORTE_NUM_ABORTED_TRIGGER        "orte-num-aborted"
 #define ORTE_NUM_TERMINATED_TRIGGER     "orte-num-terminated"
 
 #define ORTE_JOB_CKPT_STATE_TRIGGER     "orte-job-ckpt-trig"
 #define ORTE_PROC_CKPT_STATE_TRIGGER    "orte-proc-ckpt-trig"
 
+/* exception triggers - fired when one process meets condition */
+#define ORTE_NUM_ABORTED_TRIGGER        "orte-num-aborted"
 #define ORTE_FAILED_TO_START_TRIGGER    "orte-failed-start-trig"
 
 /*

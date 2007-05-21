@@ -45,22 +45,36 @@ int main(int argc, char* argv[])
     }
     
     /* Setup ORTE stage 1, note that we are not infrastructre  */
-    if (ORTE_SUCCESS != (rc = orte_init_stage1(false))) {
+    if (ORTE_SUCCESS != (rc = orte_init_stage1(ORTE_NON_INFRASTRUCTURE))) {
         error = "orte_init_stage1 failed";
         goto error;
     }
     
-    /* setup a compound command to capture info to be rcurned in the xcast */
+    /* begin recording registry actions */
     if (ORTE_SUCCESS != (rc = orte_gpr.begin_compound_cmd())) {
         ORTE_ERROR_LOG(rc);
-        error = "orte_gpr.begin_compound_cmd failed";
+        error = "begin compound cmd failed";
         goto error;
     }
     
-    /* Now do the things that hit the registry */
-    if (ORTE_SUCCESS != (rc = orte_init_stage2())) {
+    if (ORTE_SUCCESS != (rc = orte_init_stage2(ORTE_STARTUP_TRIGGER))) {
         ORTE_ERROR_LOG(rc);
         error = "orte_init_stage2 failed";
+        goto error;
+    }
+    
+    /* indicate we are at the ORTE_STARTUP_COMPLETE state */
+    if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(ORTE_PROC_MY_NAME,
+                                                      ORTE_PROC_ORTE_STARTUP_COMPLETE, 0))) {
+        ORTE_ERROR_LOG(rc);
+        error = "set proc state failed";
+        goto error;
+    }
+    
+    /* send the information */
+    if (ORTE_SUCCESS != (rc = orte_gpr.exec_compound_cmd())) {
+        ORTE_ERROR_LOG(rc);
+        error = "exec compound cmd failed";
         goto error;
     }
     
@@ -74,56 +88,20 @@ int main(int argc, char* argv[])
         gettimeofday(&ortestart, NULL);
     }
 
-    /* Let system know we are at STG1 Barrier */
-    if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(orte_process_info.my_name,
-                                                       ORTE_PROC_STATE_AT_STG1, 0))) {
-        ORTE_ERROR_LOG(rc);
-        error = "set process state failed";
-        goto error;
-    }
-    
-    /* check for timing request - get stop time and report elapsed time if so */
-    if (timing) {
-        gettimeofday(&ortestop, NULL);
-        opal_output(0, "[%ld]: time from completion of orte_init to exec_compound_cmd %ld usec",
-                    (long)ORTE_PROC_MY_NAME->vpid,
-                    (long int)((ortestop.tv_sec - ortestart.tv_sec)*1000000 +
-                               (ortestop.tv_usec - ortestart.tv_usec)));
-        gettimeofday(&ortestart, NULL);
-    }
-    
-    if (ORTE_SUCCESS != (rc = orte_gpr.exec_compound_cmd())) {
-        ORTE_ERROR_LOG(rc);
-        error = "orte_gpr.exec_compound_cmd failed";
-        goto error;
-    }
-    
-    /* check for timing request - get stop time and report elapsed time if so */
-    if (timing) {
-        gettimeofday(&ortestop, NULL);
-        opal_output(0, "[%ld]: time to execute compound command %ld usec",
-                    (long)ORTE_PROC_MY_NAME->vpid,
-                    (long int)((ortestop.tv_sec - ortestart.tv_sec)*1000000 +
-                               (ortestop.tv_usec - ortestart.tv_usec)));
-        gettimeofday(&ortestart, NULL);
-    }
-    
     /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
-    if (ORTE_SUCCESS != (rc = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid,
-                                             NULL, orte_gpr.deliver_notify_msg))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.xcast_gate(orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(rc);
         error = "failed to see all procs register\n";
         goto error;
     }
 
-    /* check for timing request - get start time */
+    /* check for timing request - report time */
     if (timing) {
         gettimeofday(&ortestop, NULL);
         opal_output(0, "[%ld]: time to execute xcast %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
                     (long int)((ortestop.tv_sec - ortestart.tv_sec)*1000000 +
                                (ortestop.tv_usec - ortestart.tv_usec)));
-        gettimeofday(&ortestart, NULL);
     }
     
     gethostname(hostname, 512);

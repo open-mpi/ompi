@@ -290,7 +290,22 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
                 break;
                     
                     
-            case ORTE_GPR_INCREMENT_VALUE_CMD:  /*****     INCREMENT_VALUE     *****/
+                case ORTE_GPR_ARITH_CMD:  /*****     ARITH     *****/
+                    
+                    if (orte_gpr_replica_globals.debug) {
+                        opal_output(0, "\tarith cmd");
+                    }
+                    
+                    if (ORTE_SUCCESS != (ret =
+                                         orte_gpr_replica_recv_arith_op_cmd(input_buffer, answer))) {
+                        ORTE_ERROR_LOG(ret);
+                        goto RETURN_ERROR;
+                    }
+                    break;
+                    
+                    
+                    
+                case ORTE_GPR_INCREMENT_VALUE_CMD:  /*****     INCREMENT_VALUE     *****/
                 if (orte_gpr_replica_globals.debug) {
                     opal_output(0, "\tincrement_value cmd");
                 }
