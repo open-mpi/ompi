@@ -121,6 +121,12 @@ int
 orte_sds_base_seed_set_name(void)
 {
     int id, flag, rc;
+    
+    /* if we are a seed, then there can be only one proc */
+    orte_process_info.num_procs = 1;
+    orte_process_info.vpid_start = 0;
+    orte_process_info.local_rank = 0;
+    orte_process_info.num_local_procs = 1;
 
     /* if we're a seed and we're not infrastructure, we're also a
        singleton.  So set the singleton flag in that case */

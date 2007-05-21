@@ -52,17 +52,18 @@ orte_sds_singleton_set_name(void)
     
     orte_process_info.num_procs = 1;
     orte_process_info.vpid_start = vpid;
+    /* since we are a singleton, then we must have a local_rank of 0
+     * and only 1 local process
+     */
+    orte_process_info.local_rank = 0;
+    orte_process_info.num_local_procs = 1;
+
     /* only set the singleton flag is we are NOT infrastructure, 
        and it has not been previously set. */
     id = mca_base_param_find("orte", NULL, "infrastructure");
     mca_base_param_lookup_int(id, &flag);
     if (!flag) {
         orte_process_info.singleton = true;
-        /* since we are a singleton, then we must have a local_rank of 0
-         * and only 1 local process
-         */
-        orte_process_info.local_rank = 0;
-        orte_process_info.num_local_procs = 1;
     }
     
     return ORTE_SUCCESS;
