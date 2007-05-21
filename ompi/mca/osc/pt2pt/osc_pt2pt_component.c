@@ -195,6 +195,11 @@ ompi_osc_pt2pt_component_init(bool enable_progress_threads,
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.p2p_c_pending_requests,
                   opal_list_t);
 
+#if OMPI_ENABLE_PROGRESS_THREADS
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.p2p_c_thread, opal_thread_t);
+    mca_osc_pt2pt_component.p2p_c_thread_run = false;
+#endif
+
     return OMPI_SUCCESS;
 }
 
@@ -279,6 +284,10 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     ret = ompi_comm_dup(comm, &(module->p2p_comm), 0);
     if (ret != OMPI_SUCCESS) goto cleanup;
 
+    opal_output_verbose(1, ompi_osc_base_output,
+                        "pt2pt component creating window with id %d",
+                        module->p2p_comm->c_contextid);
+
     module->p2p_num_pending_sendreqs = (unsigned int*)
         malloc(sizeof(unsigned int) * ompi_comm_size(module->p2p_comm));
     if (NULL == module->p2p_num_pending_sendreqs) goto cleanup;
@@ -339,7 +348,6 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
                                      module->p2p_comm->c_contextid,
                                      module);
     ret = opal_hash_table_get_size(&mca_osc_pt2pt_component.p2p_c_modules);
-
     if (ret == 1) {
 #if OMPI_ENABLE_PROGRESS_THREADS
         mca_osc_pt2pt_component.p2p_c_thread_run = true;
@@ -350,6 +358,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
         ret = opal_progress_register(ompi_osc_pt2pt_component_progress);
 #endif
     }
+    if (OMPI_SUCCESS != ret) goto cleanup;
     OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.p2p_c_lock); 
 
     /* fill in window information */
@@ -382,7 +391,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
     opal_list_append(&mca_osc_pt2pt_component.p2p_c_pending_requests,
                      &buffer->mpireq.super.super);
-    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
+    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
 
     return OMPI_SUCCESS;
 
