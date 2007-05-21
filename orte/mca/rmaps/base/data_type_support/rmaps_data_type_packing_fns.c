@@ -129,7 +129,13 @@ int orte_rmaps_base_pack_mapped_proc(orte_buffer_t *buffer, void *src,
         }
         
         /* pack the rank */
-        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(procs[i]->rank), 1, ORTE_STD_CNTR))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(procs[i]->rank), 1, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* pack the local rank */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(procs[i]->local_rank), 1, ORTE_VPID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

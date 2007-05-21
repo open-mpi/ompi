@@ -76,6 +76,7 @@
 #define ORTE_NODE_BOOTPROXY_KEY                 "orte-node-bootproxy"
 #define ORTE_NODE_USERNAME_KEY                  "orte-node-username"
 #define ORTE_NODE_OVERSUBSCRIBED_KEY            "orte-node-oversubscribed"
+#define ORTE_NODE_NUM_PROCS_KEY                 "orte-node-num-procs"
 
 /* JOB specific keys */
 #define ORTE_JOB_APP_CONTEXT_KEY                "orte-job-app-context"
@@ -91,6 +92,7 @@
 /* PROCESS specific keys */
 #define ORTE_PROC_NAME_KEY                      "orte-proc-name"
 #define ORTE_PROC_RANK_KEY                      "orte-proc-rank"
+#define ORTE_PROC_LOCAL_RANK_KEY                "orte-proc-local-rank"
 #define ORTE_PROC_PID_KEY                       "orte-proc-pid"
 #define ORTE_PROC_LOCAL_PID_KEY                 "orte-proc-local-pid"
 #define ORTE_PROC_STATE_KEY                     "orte-proc-state"

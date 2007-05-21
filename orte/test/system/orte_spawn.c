@@ -87,7 +87,8 @@ int main(int argc, char* argv[])
      * when it completes
      */
     
-    fprintf(stderr, "Parent: spawning children!\n");
+    fprintf(stderr, "Parent: My local rank is %ld with %ld num_local_procs - spawning children!\n",
+                    (long)orte_process_info.local_rank, (long)orte_process_info.num_local_procs);
     cb_states = ORTE_PROC_STATE_TERMINATED;
     spawned = true;
     if (ORTE_SUCCESS != (rc = orte_rmgr.spawn_job(&app, 1, &job, 0, NULL, job_state_callback, cb_states, &attributes))) {

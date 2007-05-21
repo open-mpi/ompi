@@ -53,8 +53,9 @@ static void orte_rmaps_mapped_proc_construct(orte_mapped_proc_t* proc)
     proc->name.cellid = ORTE_CELLID_INVALID;
     proc->name.jobid = ORTE_JOBID_INVALID;
     proc->name.vpid = ORTE_VPID_INVALID;
-    proc->rank = 0;
-    proc->app_idx = 0;
+    proc->rank = ORTE_VPID_INVALID;
+    proc->local_rank = ORTE_VPID_INVALID;
+    proc->app_idx = -1;
     proc->pid = 0;
 #if OPAL_ENABLE_FT == 1
     proc->ckpt_state = ORTE_SNAPC_CKPT_STATE_NONE;
@@ -68,8 +69,9 @@ static void orte_rmaps_mapped_proc_destruct(orte_mapped_proc_t* proc)
     proc->name.cellid = ORTE_CELLID_INVALID;
     proc->name.jobid = ORTE_JOBID_INVALID;
     proc->name.vpid = ORTE_VPID_INVALID;
-    proc->rank = 0;
-    proc->app_idx = 0;
+    proc->rank = ORTE_VPID_INVALID;
+    proc->local_rank = ORTE_VPID_INVALID;
+    proc->app_idx = -1;
     proc->pid = 0;
 #if OPAL_ENABLE_FT == 1
     proc->ckpt_state = ORTE_SNAPC_CKPT_STATE_NONE;

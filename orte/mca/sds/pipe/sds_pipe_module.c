@@ -50,7 +50,6 @@ orte_sds_pipe_set_name(void)
 {
         int rc, fd, id;
     orte_process_name_t name;
-    size_t num_procs;
 
     /* lookup the fd to use */
     id = mca_base_param_register_int("nds","pipe","fd", NULL, 3);
@@ -73,14 +72,27 @@ orte_sds_pipe_set_name(void)
         return ORTE_ERR_NOT_FOUND;
     }
 
-    rc = read(fd,&num_procs, sizeof(num_procs));
-    if(rc != sizeof(num_procs)) {
+    rc = read(fd,&orte_process_info.num_procs, sizeof(orte_process_info.num_procs));
+    if(rc != sizeof(orte_process_info.num_procs)) {
         opal_output(0, "orte_ns_nds_pipe_get: read returned %d, errno=%d\n", rc, errno);
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    orte_process_info.num_procs = (orte_std_cntr_t)num_procs;
 
+    rc = read(fd,&orte_process_info.local_rank, sizeof(orte_process_info.local_rank));
+    if(rc != sizeof(orte_process_info.local_rank)) {
+        opal_output(0, "orte_ns_nds_pipe_get: read returned %d, errno=%d\n", rc, errno);
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
+    rc = read(fd,&orte_process_info.num_local_procs, sizeof(orte_process_info.num_local_procs));
+    if(rc != sizeof(orte_process_info.num_local_procs)) {
+        opal_output(0, "orte_ns_nds_pipe_get: read returned %d, errno=%d\n", rc, errno);
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
     close(fd);
     return ORTE_SUCCESS;
 }

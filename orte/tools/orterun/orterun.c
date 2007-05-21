@@ -642,7 +642,7 @@ static void dump_aborted_procs(orte_jobid_t jobid, orte_app_context_t **apps, or
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
-                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_STD_CNTR))) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_VPID))) {
                     ORTE_ERROR_LOG(rc);
                     continue;
                 }

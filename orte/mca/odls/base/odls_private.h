@@ -51,6 +51,8 @@ extern "C" {
 typedef struct orte_odls_child_t {
     opal_list_item_t super;      /* required to place this on a list */
     orte_process_name_t *name;   /* the OpenRTE name of the proc */
+    orte_vpid_t local_rank;      /* local rank of the proc on this node */
+    orte_std_cntr_t num_procs;   /* number of procs from this job on this node */
     pid_t pid;                   /* local pid of the proc */
     orte_std_cntr_t app_idx;     /* index of the app_context for this proc */
     bool alive;                  /* is this proc alive? */

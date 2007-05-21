@@ -159,7 +159,15 @@ int orte_rmaps_base_unpack_mapped_proc(orte_buffer_t *buffer, void *dest,
         /* unpack the rank */
         n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
-                                                         &(procs[i]->rank), &n, ORTE_STD_CNTR))) {
+                                                         &(procs[i]->rank), &n, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* unpack the local rank */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
+                                                         &(procs[i]->local_rank), &n, ORTE_VPID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

@@ -72,21 +72,31 @@ extern "C" {
      */
     ORTE_DECLSPEC int orte_ns_nds_env_put(const orte_process_name_t* proc, 
                                           orte_vpid_t vpid_start,
-                                          size_t num_procs,
+                                          orte_std_cntr_t num_procs,
+                                          orte_vpid_t local_rank,
+                                          orte_std_cntr_t num_local_procs,
                                           char ***environ);
     ORTE_DECLSPEC int orte_ns_nds_pipe_put(const orte_process_name_t* proc, 
                                            orte_vpid_t vpid_start, 
-                                           size_t num_procs, 
+                                           orte_std_cntr_t num_procs, 
+                                           orte_vpid_t local_rank,
+                                           orte_std_cntr_t num_local_procs,
                                            int fd);
     ORTE_DECLSPEC int orte_ns_nds_bproc_put(orte_cellid_t cell, 
                                             orte_jobid_t job,
                                             orte_vpid_t vpid_start, 
                                             orte_vpid_t global_vpid_start,
-                                            int num_procs, char ***env);
+                                            orte_std_cntr_t num_procs,
+                                            orte_vpid_t local_rank,
+                                            orte_std_cntr_t num_local_procs,
+                                            char ***env);
     ORTE_DECLSPEC int orte_ns_nds_xcpu_put(orte_cellid_t cell, 
-					   orte_jobid_t job,
-					   orte_vpid_t vpid_start, 
-					   int num_procs, char ***env);
+                                           orte_jobid_t job,
+                                           orte_vpid_t vpid_start, 
+                                           orte_std_cntr_t num_procs,
+                                           orte_vpid_t local_rank,
+                                           orte_std_cntr_t num_local_procs,
+                                           char ***env);
 
     ORTE_DECLSPEC extern opal_list_t orte_sds_base_components_available;
 

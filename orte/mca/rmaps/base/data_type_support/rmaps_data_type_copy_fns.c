@@ -113,6 +113,7 @@ int orte_rmaps_base_copy_mapped_proc(orte_mapped_proc_t **dest, orte_mapped_proc
     (*dest)->name = src->name;
     
     (*dest)->rank = src->rank;
+    (*dest)->local_rank = src->local_rank;
     
     (*dest)->app_idx = src->app_idx;
     
@@ -166,6 +167,7 @@ int orte_rmaps_base_copy_mapped_node(orte_mapped_node_t **dest, orte_mapped_node
     (*dest)->oversubscribed = src->oversubscribed;
     
     (*dest)->num_procs = src->num_procs;
+    
     for (item = opal_list_get_first(&(src->procs));
          item != opal_list_get_end(&(src->procs));
          item = opal_list_get_next(item)) {

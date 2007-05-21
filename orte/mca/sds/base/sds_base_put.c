@@ -34,8 +34,10 @@
 #include "orte/mca/errmgr/base/base.h"
 
 int orte_ns_nds_env_put(const orte_process_name_t* name, 
-                     orte_vpid_t vpid_start, size_t num_procs,
-                     char ***env)
+                        orte_vpid_t vpid_start, orte_std_cntr_t num_procs,
+                        orte_vpid_t local_rank,
+                        orte_std_cntr_t num_local_procs,
+                        char ***env)
 {
     char* param;
     char* cellid;
@@ -125,6 +127,25 @@ int orte_ns_nds_env_put(const orte_process_name_t* name,
     opal_setenv(param, value, true, env);
     free(param);
     free(value);
+
+    asprintf(&value, "%lu", (unsigned long) local_rank);
+    if(NULL == (param = mca_base_param_environ_variable("ns","nds","local_rank"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_setenv(param, value, true, env);
+    free(param);
+    free(value);
+    
+    asprintf(&value, "%lu", (unsigned long) num_local_procs);
+    if(NULL == (param = mca_base_param_environ_variable("ns","nds","num_local_procs"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_setenv(param, value, true, env);
+    free(param);
+    free(value);
+    
     return ORTE_SUCCESS;
 }
 
@@ -142,7 +163,11 @@ int orte_ns_nds_env_put(const orte_process_name_t* name,
  */
 int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job, 
                           orte_vpid_t vpid_start, orte_vpid_t global_vpid_start,
-                          int num_procs, char ***env) {
+                          orte_std_cntr_t num_procs,
+                          orte_vpid_t local_rank,
+                          orte_std_cntr_t num_local_procs,
+                          char ***env)
+{
     char* param;
     char* value;
     int rc;
@@ -224,7 +249,7 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
     free(param);
     free(value);
 
-    asprintf(&value, "%d", num_procs);
+    asprintf(&value, "%d", (int)num_procs);
     if(NULL == (param = mca_base_param_environ_variable("ns","nds","num_procs")))
  {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -234,6 +259,24 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
     free(param);
     free(value);
 
+    asprintf(&value, "%lu", (unsigned long) local_rank);
+    if(NULL == (param = mca_base_param_environ_variable("ns","nds","local_rank"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_setenv(param, value, true, env);
+    free(param);
+    free(value);
+    
+    asprintf(&value, "%lu", (unsigned long) num_local_procs);
+    if(NULL == (param = mca_base_param_environ_variable("ns","nds","num_local_procs"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_setenv(param, value, true, env);
+    free(param);
+    free(value);
+    
     /* we have to set this environmental variable so bproc will give us our rank
      * after the launch */
     
@@ -256,8 +299,10 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
  * @retval error
  */
 int orte_ns_nds_xcpu_put(orte_cellid_t cell, orte_jobid_t job, 
-			 orte_vpid_t vpid_start, int num_procs,
-			 char ***env)
+                         orte_vpid_t vpid_start, orte_std_cntr_t num_procs,
+                         orte_vpid_t local_rank,
+                         orte_std_cntr_t num_local_procs,
+                         char ***env)
 {
     char* param;
     char* value;
@@ -319,7 +364,7 @@ int orte_ns_nds_xcpu_put(orte_cellid_t cell, orte_jobid_t job,
     free(param);
     free(value);
 
-    asprintf(&value, "%d", num_procs);
+    asprintf(&value, "%d", (int)num_procs);
     if(NULL == (param = mca_base_param_environ_variable("ns","nds","num_procs"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -328,10 +373,33 @@ int orte_ns_nds_xcpu_put(orte_cellid_t cell, orte_jobid_t job,
     free(param);
     free(value);
 
+    asprintf(&value, "%lu", (unsigned long) local_rank);
+    if(NULL == (param = mca_base_param_environ_variable("ns","nds","local_rank"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_setenv(param, value, true, env);
+    free(param);
+    free(value);
+    
+    asprintf(&value, "%lu", (unsigned long) num_local_procs);
+    if(NULL == (param = mca_base_param_environ_variable("ns","nds","num_local_procs"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_setenv(param, value, true, env);
+    free(param);
+    free(value);
+    
     return ORTE_SUCCESS;
 }
 
-int orte_ns_nds_pipe_put(const orte_process_name_t* name, orte_vpid_t vpid_start, size_t num_procs, int fd)
+int orte_ns_nds_pipe_put(const orte_process_name_t* name,
+                         orte_vpid_t vpid_start,
+                         orte_std_cntr_t num_procs,
+                         orte_vpid_t local_rank,
+                         orte_std_cntr_t num_local_procs,
+                         int fd)
 {
     int rc;
 
@@ -353,6 +421,18 @@ int orte_ns_nds_pipe_put(const orte_process_name_t* name, orte_vpid_t vpid_start
         return ORTE_ERR_NOT_FOUND;
     }
 
+    rc = write(fd,&local_rank, sizeof(local_rank));
+    if(rc != sizeof(local_rank)) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
+    rc = write(fd,&num_local_procs, sizeof(num_local_procs));
+    if(rc != sizeof(num_local_procs)) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
     return ORTE_SUCCESS;
 }
 
