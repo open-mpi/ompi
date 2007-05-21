@@ -66,7 +66,7 @@ struct ompi_osc_pt2pt_component_t {
 
 #if OMPI_ENABLE_PROGRESS_THREADS
     opal_thread_t p2p_c_thread;
-    bool p2p_c_thread_run = false;
+    bool p2p_c_thread_run;
 #endif
 };
 typedef struct ompi_osc_pt2pt_component_t ompi_osc_pt2pt_component_t;

@@ -37,7 +37,7 @@
 static int component_open(void);
 static void component_fragment_cb(ompi_osc_pt2pt_mpireq_t *mpireq);
 #if OMPI_ENABLE_PROGRESS_THREADS
-static void component_thread_fn(opal_obect_t *obj);
+static void* component_thread_fn(opal_object_t *obj);
 #endif
 
 ompi_osc_pt2pt_component_t mca_osc_pt2pt_component = {
@@ -343,7 +343,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     if (ret == 1) {
 #if OMPI_ENABLE_PROGRESS_THREADS
         mca_osc_pt2pt_component.p2p_c_thread_run = true;
-        mca_osc_pt2pt_component.p2p_c_thread.t_run = component_thread;
+        mca_osc_pt2pt_component.p2p_c_thread.t_run = component_thread_fn;
         mca_osc_pt2pt_component.p2p_c_thread.t_arg = NULL;
         ret = opal_thread_start(&mca_osc_pt2pt_component.p2p_c_thread);
 #else
@@ -382,7 +382,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
     opal_list_append(&mca_osc_pt2pt_component.p2p_c_pending_requests,
                      &buffer->mpireq.super.super);
-    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_unlock);
+    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
 
     return OMPI_SUCCESS;
 
@@ -712,16 +712,18 @@ ompi_osc_pt2pt_component_progress(void)
 
 
 #if OMPI_ENABLE_PROGRESS_THREADS
-static void
-component_thread(opal_obect_t *obj)
+static void*
+component_thread_fn(opal_object_t *obj)
 {
-    while (component_thread_run) {
+    while (mca_osc_pt2pt_component.p2p_c_thread_run) {
         /* wake up whenever a request completes, to make sure it's not
            for us */
-        OPAL_MUTEX_LOCK(&ompi_request_lock);
+        OPAL_THREAD_LOCK(&ompi_request_lock);
         opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-        OPAL_MUTEX_UNLOCK(&ompi_request_lock);
-        component_progress();
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
+        ompi_osc_pt2pt_component_progress();
     }
+
+    return NULL;
 }
 #endif
