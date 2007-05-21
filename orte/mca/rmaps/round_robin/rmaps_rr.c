@@ -357,7 +357,6 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
     opal_list_t master_node_list, mapped_node_list, max_used_nodes, *working_node_list;
     opal_list_item_t *item, *item2;
     orte_ras_node_t *node, *node2;
-    orte_mapped_node_t *mnode;
     char *save_bookmark;
     orte_vpid_t vpid_start;
     orte_std_cntr_t num_procs = 0, total_num_slots, mapped_num_slots, num_nodes, num_slots;
@@ -704,17 +703,14 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
     }
 
     /* compute and save convenience values */
-    map->vpid_range = num_procs;
-    map->num_nodes = opal_list_get_size(&map->nodes);
-    for (item = opal_list_get_first(&map->nodes);
-         item != opal_list_get_end(&map->nodes);
-         item = opal_list_get_next(item)) {
-        mnode = (orte_mapped_node_t*)item;
-        mnode->num_procs = opal_list_get_size(&mnode->procs);
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_usage(map, num_procs))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
     
     /* save mapping to the registry */
     if(ORTE_SUCCESS != (rc = orte_rmaps_base_put_job_map(map))) {
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
     

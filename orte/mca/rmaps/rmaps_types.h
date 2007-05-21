@@ -52,7 +52,8 @@ extern "C" {
 struct orte_mapped_proc_t {
     opal_list_item_t super;
     orte_process_name_t name;	/* process name */
-    orte_std_cntr_t	rank;		/* process rank */
+    orte_vpid_t	rank;           /* process rank */
+    orte_vpid_t local_rank;     /* local rank on the node */
     orte_std_cntr_t	app_idx;	/* index of app_context for this process */
     pid_t pid;
 #if OPAL_ENABLE_FT == 1

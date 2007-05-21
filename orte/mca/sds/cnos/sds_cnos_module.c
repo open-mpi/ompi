@@ -87,7 +87,7 @@ orte_sds_cnos_set_name(void)
     }
     
     orte_process_info.vpid_start = (orte_vpid_t) 0;
-    orte_process_info.num_procs = (size_t) cnos_get_size();
+    orte_process_info.num_procs = (orte_std_cntr_t) cnos_get_size();
 
     return ORTE_SUCCESS;
 }

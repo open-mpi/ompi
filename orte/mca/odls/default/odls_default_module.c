@@ -138,11 +138,13 @@ int orte_odls_default_subscribe_launch_data(orte_jobid_t job, orte_gpr_notify_cb
     int num_glob_keys = 4;
     char* keys[] = {
         ORTE_PROC_NAME_KEY,
+        ORTE_PROC_LOCAL_RANK_KEY,
         ORTE_PROC_APP_CONTEXT_KEY,
         ORTE_NODE_NAME_KEY,
+        ORTE_NODE_NUM_PROCS_KEY,
         ORTE_NODE_OVERSUBSCRIBED_KEY
     };
-    int num_keys = 4;
+    int num_keys = 6;
     int i, rc;
     
     /* get the job segment name */
@@ -312,7 +314,7 @@ int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
             proc = (orte_mapped_proc_t*)item;
             
             /* must not have any tokens so that launch_procs can process it correctly */
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, 0, segment, 3, 0))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, 0, segment, 5, 0))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(ndat);
                 OBJ_RELEASE(value);
@@ -346,6 +348,24 @@ int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
                 return rc;
             }
           
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[3]),
+                                                             ORTE_PROC_LOCAL_RANK_KEY,
+                                                             ORTE_VPID, &proc->local_rank))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+            
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[4]),
+                                                             ORTE_NODE_NUM_PROCS_KEY,
+                                                             ORTE_STD_CNTR, &node->num_procs))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+            
             if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&cnt, ndat->values, value))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(ndat);
@@ -884,8 +904,9 @@ static int odls_default_fork_local_proc(
         opal_setenv(param, orte_system_info.nodename, true, &environ_copy);
         free(param);
 
-        /* push name into environment */
+        /* push data into environment */
         orte_ns_nds_env_put(child->name, vpid_start, vpid_range,
+                            child->local_rank, child->num_procs,
                             &environ_copy);
 
 
@@ -1133,6 +1154,22 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
                                         return rc;
                                     }
                                     child->app_idx = *sptr;  /* save the index into the app_context objects */
+                                    continue;
+                                }
+                                if(strcmp(kval->key, ORTE_PROC_LOCAL_RANK_KEY) == 0) {
+                                    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&vptr, kval->value, ORTE_VPID))) {
+                                        ORTE_ERROR_LOG(rc);
+                                        return rc;
+                                    }
+                                    child->local_rank = *vptr;  /* save the local_rank */
+                                    continue;
+                                }
+                                if(strcmp(kval->key, ORTE_NODE_NUM_PROCS_KEY) == 0) {
+                                    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, kval->value, ORTE_STD_CNTR))) {
+                                        ORTE_ERROR_LOG(rc);
+                                        return rc;
+                                    }
+                                    child->num_procs = *sptr;  /* save the number of procs from this job on this node */
                                     continue;
                                 }
                                 if(strcmp(kval->key, ORTE_NODE_OVERSUBSCRIBED_KEY) == 0) {

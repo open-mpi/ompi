@@ -58,6 +58,8 @@ int orte_sds_bproc_set_name(void)
     char *session_dir;
     char *uri_file;
     FILE *fp;
+    int local_rank;
+    int num_local_procs;
     
     id = mca_base_param_register_string("ns", "nds", "name", NULL, NULL);
     mca_base_param_lookup_string(id, &name_string);
@@ -170,7 +172,7 @@ int orte_sds_bproc_set_name(void)
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
-        orte_process_info.num_procs = (size_t)num_procs;
+        orte_process_info.num_procs = (orte_std_cntr_t)num_procs;
 
         id = mca_base_param_register_string("ns", "nds", "global_vpid_start", NULL, NULL);
         mca_base_param_lookup_string(id, &vpid_string);
@@ -195,6 +197,22 @@ int orte_sds_bproc_set_name(void)
         }
         cleanup_vpid_string = true;
     }
+    
+    /* it is okay for this param not to be found - for example, we don't bother
+     * to set it for orteds - so just set it to an invalid value which indicates
+     * it wasn't found if it isn't there
+     */
+    id = mca_base_param_register_int("ns", "nds", "local_rank", NULL, ORTE_VPID_INVALID);
+    mca_base_param_lookup_int(id, &local_rank);
+    orte_process_info.local_rank = (orte_vpid_t)local_rank;
+    
+    /* it is okay for this param not to be found - for example, we don't bother
+     * to set it for orteds - so just set it to a value which indicates
+     * it wasn't found if it isn't there
+     */
+    id = mca_base_param_register_int("ns", "nds", "num_local_procs", NULL, 0);
+    mca_base_param_lookup_int(id, &num_local_procs);
+    orte_process_info.num_local_procs = (orte_std_cntr_t)num_local_procs;
     
     /* if we are NOT a daemon, then lookup our local daemon's contact info
      * and setup that link

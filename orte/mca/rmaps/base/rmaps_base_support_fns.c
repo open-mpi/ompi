@@ -446,3 +446,59 @@ cleanup:
     
     return rc;
 }
+
+int orte_rmaps_base_compute_usage(orte_job_map_t *map, orte_std_cntr_t num_procs)
+{
+    opal_list_item_t *item, *item2;
+    orte_mapped_node_t *mnode;
+    orte_mapped_proc_t *mproc, *psave;
+    orte_vpid_t minv, local_rank;
+    
+    /* set the vpid range for the job */
+    map->vpid_range = num_procs;
+    
+    /* set the number of total nodes involved */
+    map->num_nodes = opal_list_get_size(&map->nodes);
+    
+    /* for each node being used by this job... */
+    for (item = opal_list_get_first(&map->nodes);
+         item != opal_list_get_end(&map->nodes);
+         item = opal_list_get_next(item)) {
+        mnode = (orte_mapped_node_t*)item;
+        
+        /* set the number of procs for this job on that node */
+        mnode->num_procs = opal_list_get_size(&mnode->procs);
+        
+        /* cycle through the list of procs, looking for the minimum
+         * vpid one and setting that local rank, until we have
+         * done so for all procs on the node
+         */
+        /* init search values */
+        local_rank = 0;
+        
+        while (local_rank < mnode->num_procs) {
+            minv = ORTE_VPID_MAX;
+            /* find the minimum vpid proc */
+            for (item2 = opal_list_get_first(&mnode->procs);
+                 item2 != opal_list_get_end(&mnode->procs);
+                 item2 = opal_list_get_next(item2)) {
+                mproc = (orte_mapped_proc_t*)item2;
+            
+                if (ORTE_VPID_INVALID != mproc->local_rank) {
+                    /* already done this one */
+                    continue;
+                }
+                
+                if (mproc->rank < minv) {
+                    minv = mproc->rank;
+                    psave = mproc;
+                }
+            }
+            
+            psave->local_rank = local_rank;
+            ++local_rank;
+        }
+    }
+    
+    return ORTE_SUCCESS;
+}

@@ -126,8 +126,8 @@ int orte_rmaps_base_print_mapped_proc(char **output, char *prefix, orte_mapped_p
         free(tmp3);
         return rc;
     }
-    asprintf(&tmp, "%s\n%s\n%sProc Rank: %ld\tProc PID: %ld\tApp_context index: %ld\n", tmp3, tmp2, pfx,
-                                                    (long)src->rank, (long)src->pid, (long)src->app_idx);
+    asprintf(&tmp, "%s\n%s\n%sProc Rank: %ld\tLocal Rank: %ld\tProc PID: %ld\tApp_context index: %ld\n", tmp3, tmp2, pfx,
+                                                    (long)src->rank, (long)src->local_rank, (long)src->pid, (long)src->app_idx);
     free(tmp2);
     free(tmp3);
     
@@ -173,7 +173,7 @@ int orte_rmaps_base_print_mapped_node(char **output, char *prefix, orte_mapped_n
         return rc;
     }
     
-    asprintf(&tmp3, "%s\n\t%s\n%sOversubscribed: %s\tNum elements in procs list: %ld", tmp, tmp2, pfx,
+    asprintf(&tmp3, "%s\n\t%s\n%sOversubscribed: %s\tNum procs from this job on node: %ld", tmp, tmp2, pfx,
              (src->oversubscribed ? "True" : "False"), (long)src->num_procs);
     free(tmp);
     free(tmp2);

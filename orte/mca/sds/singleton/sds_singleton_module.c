@@ -58,6 +58,11 @@ orte_sds_singleton_set_name(void)
     mca_base_param_lookup_int(id, &flag);
     if (!flag) {
         orte_process_info.singleton = true;
+        /* since we are a singleton, then we must have a local_rank of 0
+         * and only 1 local process
+         */
+        orte_process_info.local_rank = 0;
+        orte_process_info.num_local_procs = 1;
     }
     
     return ORTE_SUCCESS;
