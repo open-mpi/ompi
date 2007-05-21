@@ -33,17 +33,16 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
     int tmp;
     ompi_osc_pt2pt_module_t *module = P2P_MODULE(win);
 
+    OPAL_THREAD_LOCK(&module->p2p_lock);
     while (OMPI_WIN_EXPOSE_EPOCH & ompi_win_get_mode(win)) {
-        opal_progress();
+        opal_condition_wait(&module->p2p_cond, &module->p2p_lock);
     }
+    OPAL_THREAD_UNLOCK(&module->p2p_lock);
 
     /* finish with a barrier */
     if (ompi_group_size(win->w_group) > 1) {
         ret = module->p2p_comm->c_coll.coll_barrier(module->p2p_comm);
     }
-
-    /* remove window information */
-    win->w_osc_module = NULL;
 
     /* remove from component information */
     OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
@@ -53,40 +52,47 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
     ret = (ret != OMPI_SUCCESS) ? ret : tmp;
 
     if (0 == opal_hash_table_get_size(&mca_osc_pt2pt_component.p2p_c_modules)) {
-        /* stop progress thread */
-        opal_progress_unregister(ompi_osc_pt2pt_progress);
+#if OMPI_ENABLE_PROGRESS_THREADS
+        mca_osc_pt2pt_component.p2p_c_thread_run = false;
+        opal_condition_broadcast(&ompi_request_cond);
+        opal_thread_join(&mca_osc_pt2pt_component.p2p_c_thread, &ret);
+#else
+        opal_progress_unregister(ompi_osc_pt2pt_component_progress);
+#endif
     }
-
     OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
 
-    OBJ_DESTRUCT(&(module->p2p_locks_pending));
+    win->w_osc_module = NULL;
 
-    free(module->p2p_sc_remote_ranks);
-    free(module->p2p_sc_remote_active_ranks);
-    assert(module->p2p_sc_group == NULL);
-    assert(module->p2p_pw_group == NULL);
-    free(module->p2p_fence_coll_counts);
+    OBJ_DESTRUCT(&module->p2p_unlocks_pending);
+    OBJ_DESTRUCT(&module->p2p_locks_pending);
+    OBJ_DESTRUCT(&module->p2p_copy_pending_sendreqs);
+    OBJ_DESTRUCT(&module->p2p_pending_sendreqs);
+    OBJ_DESTRUCT(&module->p2p_acc_lock);
+    OBJ_DESTRUCT(&module->p2p_cond);
+    OBJ_DESTRUCT(&module->p2p_lock);
 
-    free(module->p2p_copy_num_pending_sendreqs);
-    OBJ_DESTRUCT(&(module->p2p_copy_pending_sendreqs));
+    if (NULL != module->p2p_sc_remote_ranks) {
+        free(module->p2p_sc_remote_ranks);
+    }
+    if (NULL != module->p2p_sc_remote_active_ranks) {
+        free(module->p2p_sc_remote_active_ranks);
+    }
+    if (NULL != module->p2p_fence_coll_counts) {
+        free(module->p2p_fence_coll_counts);
+    }
+    if (NULL != module->p2p_copy_num_pending_sendreqs) {
+        free(module->p2p_copy_num_pending_sendreqs);
+    }
+    if (NULL != module->p2p_num_pending_sendreqs) {
+        free(module->p2p_num_pending_sendreqs);
+    }
+    if (NULL != module->p2p_comm) ompi_comm_free(&module->p2p_comm);
 
-    OBJ_DESTRUCT(&(module->p2p_long_msgs));
-
-    free(module->p2p_num_pending_sendreqs);
-
-    OBJ_DESTRUCT(&(module->p2p_pending_sendreqs));
-
-    OBJ_DESTRUCT(&(module->p2p_pending_control_sends));
-
-    ompi_comm_free(&(module->p2p_comm));
-    module->p2p_comm = NULL;
-
-    module->p2p_win = NULL;
-
-    OBJ_DESTRUCT(&(module->p2p_acc_lock));
-    OBJ_DESTRUCT(&(module->p2p_lock));
-
-    free(module);
+#if OMPI_ENABLE_DEBUG
+    memset(module, 0, sizeof(ompi_osc_base_module_t));
+#endif
+    if (NULL != module) free(module);
 
     return ret;
 }

@@ -48,25 +48,3 @@ int ompi_osc_pt2pt_process_op(ompi_osc_pt2pt_module_t *module,
                               ompi_op_t *op,
                               void *inbuf,
                               size_t inbuflen);
-
-/**
- * Convert a window index number into a module instance.
- */
-static inline ompi_osc_pt2pt_module_t*
-ompi_osc_pt2pt_windx_to_module(uint32_t windx)
-{
-    int ret;
-    ompi_osc_pt2pt_module_t *module;
-
-    /* find the right module and dispatch */
-    ret = opal_hash_table_get_value_uint32(&mca_osc_pt2pt_component.p2p_c_modules,
-                                           windx,
-                                           (void**) (&module));
-    if (OMPI_SUCCESS != ret) {
-        opal_output(0, "Could not translate windx %d to a local MPI_Win instance",
-                    windx);
-        return NULL;
-    }
-
-    return module;
-}

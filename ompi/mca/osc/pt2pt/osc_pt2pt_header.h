@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,8 +39,10 @@
 
 struct ompi_osc_pt2pt_base_header_t {
     uint8_t hdr_type;
-    /* eventually, this will include endian information */
     uint8_t hdr_flags;
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t padding[2];
+#endif
 };
 typedef struct ompi_osc_pt2pt_base_header_t ompi_osc_pt2pt_base_header_t;
 
@@ -47,7 +51,6 @@ typedef struct ompi_osc_pt2pt_base_header_t ompi_osc_pt2pt_base_header_t;
 
 struct ompi_osc_pt2pt_send_header_t {
     ompi_osc_pt2pt_base_header_t hdr_base;
-    uint16_t hdr_windx;
 
     int32_t hdr_origin;
     ompi_ptr_t hdr_origin_sendreq;
@@ -64,7 +67,6 @@ typedef struct ompi_osc_pt2pt_send_header_t ompi_osc_pt2pt_send_header_t;
 #define OMPI_OSC_PT2PT_SEND_HDR_HTON(hdr) \
     do { \
         OMPI_OSC_PT2PT_BASE_HDR_HTON((hdr).hdr_base) \
-        (hdr).hdr_windx = htons((hdr).hdr_windx); \
         (hdr).hdr_origin = htonl((hdr).hdr_origin); \
         (hdr).hdr_origin_tag = htonl((hdr).hdr_origin_tag); \
         (hdr).hdr_target_disp = htonl((hdr).hdr_target_disp); \
@@ -76,7 +78,6 @@ typedef struct ompi_osc_pt2pt_send_header_t ompi_osc_pt2pt_send_header_t;
 #define OMPI_OSC_PT2PT_SEND_HDR_NTOH(hdr) \
     do { \
         OMPI_OSC_PT2PT_BASE_HDR_NTOH((hdr).hdr_base) \
-        (hdr).hdr_windx = ntohs((hdr).hdr_windx); \
         (hdr).hdr_origin = ntohl((hdr).hdr_origin); \
         (hdr).hdr_origin_tag = ntohl((hdr).hdr_origin_tag); \
         (hdr).hdr_target_disp = ntohl((hdr).hdr_target_disp); \
@@ -113,7 +114,6 @@ typedef struct ompi_osc_pt2pt_reply_header_t ompi_osc_pt2pt_reply_header_t;
 
 struct ompi_osc_pt2pt_control_header_t {
     ompi_osc_pt2pt_base_header_t hdr_base;
-    int16_t hdr_windx;
     int32_t hdr_value[2];
 };
 typedef struct ompi_osc_pt2pt_control_header_t ompi_osc_pt2pt_control_header_t;
@@ -121,7 +121,6 @@ typedef struct ompi_osc_pt2pt_control_header_t ompi_osc_pt2pt_control_header_t;
 #define OMPI_OSC_PT2PT_CONTROL_HDR_HTON(hdr) \
     do { \
         OMPI_OSC_PT2PT_BASE_HDR_HTON((hdr).hdr_base) \
-        (hdr).hdr_windx = htons((hdr).hdr_windx); \
         (hdr).hdr_value[0] = htonl((hdr).hdr_value[0]); \
         (hdr).hdr_value[1] = htonl((hdr).hdr_value[1]); \
     } while (0)
@@ -129,7 +128,6 @@ typedef struct ompi_osc_pt2pt_control_header_t ompi_osc_pt2pt_control_header_t;
 #define OMPI_OSC_PT2PT_CONTROL_HDR_NTOH(hdr) \
     do { \
         OMPI_OSC_PT2PT_BASE_HDR_NTOH((hdr).hdr_base) \
-        (hdr).hdr_windx = ntohs((hdr).hdr_windx); \
         (hdr).hdr_value[0] = ntohl((hdr).hdr_value[0]); \
         (hdr).hdr_value[1] = ntohl((hdr).hdr_value[1]); \
     } while (0)

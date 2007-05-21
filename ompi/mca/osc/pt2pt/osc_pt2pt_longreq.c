@@ -16,11 +16,10 @@
 
 #include "ompi_config.h"
 
+#include "osc_pt2pt.h"
+#include "osc_pt2pt_mpireq.h"
 #include "osc_pt2pt_longreq.h"
 
-#include "opal/class/opal_list.h"
-
-
-OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_longreq_t, opal_free_list_item_t,
+OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_longreq_t, ompi_osc_pt2pt_mpireq_t,
                    NULL, NULL);
 
