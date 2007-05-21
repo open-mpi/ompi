@@ -535,7 +535,7 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
 
     /* set up the base environment so the daemons can get their names once launched */
     rc = orte_ns_nds_bproc_put(ORTE_PROC_MY_NAME->cellid, 0, daemon_vpid_start,
-                               0, num_daemons, envp);
+                               0, num_daemons, ORTE_VPID_INVALID, 1, envp);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
@@ -806,7 +806,7 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
                                      orte_vpid_t vpid_start, int app_context) {
     int *node_array=NULL, num_nodes, cycle;
     int rc, i, j, stride;
-    orte_std_cntr_t num_processes;
+    orte_std_cntr_t num_processes, num_cycles;
     int *pids = NULL;
     char *var, *param;
     orte_process_name_t * proc_name;
@@ -863,6 +863,9 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
         goto cleanup;
     }
     
+    /* compute the total number of cycles that will be required */
+    num_cycles = 2;
+
     /* initialize the cycle count. Computing the process name under Bproc
      * is a complex matter when mapping by slot as Bproc's inherent
      * methodology is to do everything by node. When mapping by slot, the
@@ -904,7 +907,7 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
 
         /* setup environment so the procs can figure out their names */
         rc = orte_ns_nds_bproc_put(ORTE_PROC_MY_NAME->cellid, map->job, vpid_start, map->vpid_start,
-                                   num_processes, &env);
+                                   num_processes, i, num_cycles, &env);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
@@ -1228,7 +1231,7 @@ int orte_pls_bproc_terminate_job(orte_jobid_t jobid, struct timeval *timeout, op
     OPAL_TRACE(1);
     
     if(0 < mca_pls_bproc_component.debug) {
-        opal_output(0, "orte_pls_bproc: terminating job %ld", jobid);
+        opal_output(0, "orte_pls_bproc: terminating job %ld", (long)jobid);
     }
     
     /* kill application process */
