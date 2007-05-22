@@ -1032,8 +1032,8 @@ void mca_oob_tcp_registry_callback(
                 /* check for existing cache entry */
                 existing = (mca_oob_tcp_addr_t *)orte_hash_table_get_proc(
                     &mca_oob_tcp_component.tcp_peer_names, &addr->addr_name);
-                if(NULL != existing) {
-                    /* TSW - need to update existing entry */
+                if(NULL != existing && ORTE_EQUAL != orte_dss.compare(ORTE_PROC_MY_NAME, &addr->addr_name, ORTE_NAME)) {
+                    /* need to update existing entry - but don't update our own entry! */
                     opal_output( 0, "[%ld,%ld,%ld] Received OOB update for [%ld,%ld,%ld]",
                                  ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), ORTE_NAME_ARGS(&addr->addr_name) );
                     orte_hash_table_set_proc(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
