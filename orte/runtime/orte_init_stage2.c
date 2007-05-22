@@ -45,36 +45,6 @@ int orte_init_stage2(char *trigger)
         return ORTE_SUCCESS;
     }
 
-    /* 
-     * Initialize the selected modules now that all components/name are available.
-     */
-
-    if (ORTE_SUCCESS != (ret = orte_ns.init())) {
-        ORTE_ERROR_LOG(ret);
-        error_str = "orte_ns.init";
-        goto return_error;
-    }
-
-    if (ORTE_SUCCESS != (ret = orte_gpr.init())) {
-        ORTE_ERROR_LOG(ret);
-        error_str = "orte_gpr.init";
-        goto return_error;
-    }
-
-    /*
-     * setup I/O forwarding system
-     */
-    if (ORTE_SUCCESS != (ret = orte_iof_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error_str = "orte_iof_base_open";
-        goto return_error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_iof_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error_str = "orte_iof_base_select";
-        goto return_error;
-    }
-
     /* register our contact info with the HNP.
      * NOTE: it is critical that this be done in stage2 so that
      * the embedded GPR actions can be "trapped" in a compound
