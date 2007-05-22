@@ -89,8 +89,6 @@ int orte_init_stage1(bool infrastructure)
     char *jobid_str = NULL;
     char *procid_str = NULL;
     char *contact_path = NULL;
-    orte_jobid_t my_jobid;
-    orte_cellid_t my_cellid;
 
     if (orte_initialized) {
         return ORTE_SUCCESS;
@@ -376,207 +374,6 @@ int orte_init_stage1(bool infrastructure)
         goto error;
     }
     
-    /* if we are a singleton or the seed, setup the infrastructure for our job */
-    
-    if(orte_process_info.singleton || orte_process_info.seed) {
-        char *site, *resource;
-        orte_app_context_t *app;
-        
-        my_jobid = ORTE_PROC_MY_NAME->jobid;
-        
-        /* If there is no existing cellid, create one */
-        my_cellid = 0; /* JJH Assertion/Repair until cellid's are fixed */
-        ret = orte_ns.get_cell_info(my_cellid, &site, &resource);
-        if (ORTE_ERR_NOT_FOUND == ret) {
-            /* Create a new Cell ID */
-            ret = orte_ns.create_cellid(&my_cellid, "unknown", orte_system_info.nodename);
-            if (ORTE_SUCCESS != ret ) {
-                ORTE_ERROR_LOG(ret);
-                error = "orte_ns.create_cellid for singleton/seed";
-                goto error;
-            }
-            
-            if(my_cellid != 0) { /* JJH Assertion/Repair until cellid's are fixed */
-                my_cellid = 0;
-            }
-        }
-        else if (ORTE_SUCCESS != ret) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_ns.get_cell_inf for singleton/seedo";
-            goto error;
-        }
-        
-        my_cellid = ORTE_PROC_MY_NAME->cellid;
-        
-        /* set the rest of the infrastructure */
-        app = OBJ_NEW(orte_app_context_t);
-        app->app = strdup("unknown");
-        app->num_procs = 1;
-        if (ORTE_SUCCESS != (ret = orte_rmgr_base_put_app_context(my_jobid, &app, 1))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_rmgr_base_put_app_context for singleton/seed";
-            goto error;
-        }
-        OBJ_RELEASE(app);
-        
-        if (orte_process_info.singleton) {
-            /* setup a fake node structure - this is required to support
-            * the MPI attributes function that is sitting on a trigger
-            * waiting for info on available node slots. since we can't
-            * really know that info for a singleton, we make the assumption
-            * that the allocation is unity and place a structure on the
-            * registry for it
-            *
-            * THIS ONLY SHOULD BE DONE FOR SINGLETONS - DO NOT DO IT
-            * FOR ANY OTHER CASE
-            */
-            opal_list_t single_host, rds_single_host;
-            orte_rds_cell_desc_t *rds_item;
-            orte_rds_cell_attr_t *new_attr;
-            orte_ras_node_t *ras_item;
-            opal_list_t attrs;
-            opal_list_item_t *item;
-            
-            OBJ_CONSTRUCT(&single_host, opal_list_t);
-            OBJ_CONSTRUCT(&rds_single_host, opal_list_t);
-            ras_item = OBJ_NEW(orte_ras_node_t);
-            rds_item = OBJ_NEW(orte_rds_cell_desc_t);
-            if (NULL == ras_item || NULL == rds_item) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                error = "singleton node structure construction";
-                ret = ORTE_ERR_OUT_OF_RESOURCE;
-                goto error;
-            }
-            
-            rds_item->site   = strdup("Singleton");
-            rds_item->name   = strdup(orte_system_info.nodename);
-            rds_item->cellid = my_cellid;
-            
-            /* Set up data structure for RAS item */
-            ras_item->node_name        = strdup(rds_item->name);
-            ras_item->node_arch        = strdup("unknown");
-            ras_item->node_cellid      = rds_item->cellid;
-            ras_item->node_slots_inuse = 0;
-            ras_item->node_slots       = 1;
-            
-            opal_list_append(&single_host, &ras_item->super);
-            
-            /* Set up data structure for RDS item */
-            new_attr = OBJ_NEW(orte_rds_cell_attr_t);
-            if (NULL == new_attr) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                error = "singleton OBJ_NEW(orte_rds_cell_attr_t) for ORTE_RDS_NAME";
-                ret = ORTE_ERR_OUT_OF_RESOURCE;
-                goto error;
-            }
-            new_attr->keyval.key          = strdup(ORTE_RDS_NAME);
-            new_attr->keyval.value = OBJ_NEW(orte_data_value_t);
-            if (NULL == new_attr->keyval.value) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                error = "singleton OBJ_NEW(orte_data_value_t) for ORTE_RDS_NAME";
-                ret = ORTE_ERR_OUT_OF_RESOURCE;
-                goto error;
-            }
-            new_attr->keyval.value->type   = ORTE_STRING;
-            new_attr->keyval.value->data   = strdup(ras_item->node_name);
-            opal_list_append(&(rds_item->attributes), &new_attr->super);
-            
-            new_attr = OBJ_NEW(orte_rds_cell_attr_t);
-            if (NULL == new_attr) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                error = "singleton OBJ_NEW(orte_rds_cell_attr_t) for ORTE_CELLID_KEY";
-                ret = ORTE_ERR_OUT_OF_RESOURCE;
-                goto error;
-            }
-            new_attr->keyval.key          = strdup(ORTE_CELLID_KEY);
-            new_attr->keyval.value = OBJ_NEW(orte_data_value_t);
-            if (NULL == new_attr->keyval.value) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                error = "singleton OBJ_NEW(orte_data_value_t) for ORTE_CELLID";
-                ret = ORTE_ERR_OUT_OF_RESOURCE;
-                goto error;
-            }
-            new_attr->keyval.value->type   = ORTE_CELLID;
-            if (ORTE_SUCCESS != (ret = orte_dss.copy(&(new_attr->keyval.value->data), &(rds_item->cellid), ORTE_CELLID))) {
-                ORTE_ERROR_LOG(ret);
-                error = "singleton orte_dss.copy for ORTE_CELLID";
-                goto error;
-            }
-            opal_list_append(&(rds_item->attributes), &new_attr->super);
-            
-            opal_list_append(&rds_single_host, &rds_item->super);
-            
-            /* Store into registry */
-            ret = orte_rds.store_resource(&rds_single_host);
-            if (ORTE_SUCCESS != ret ) {
-                ORTE_ERROR_LOG(ret);
-                error = "singleton orte_rds.store_resource";
-                goto error;
-            }
-            
-            /* JMS: This isn't quite right and should be fixed after
-                1.0 -- we shouldn't be doing this manually here.  We
-                should somehow be invoking a real RAS component to do
-                this for us. */
-            ret = orte_ras_base_node_insert(&single_host);
-            if (ORTE_SUCCESS != ret ) {
-                ORTE_ERROR_LOG(ret);
-                error = "singleton orte_ras.node_insert";
-                goto error;;
-            }
-            
-            /* JMS: Same as above -- fix this after 1.0: force a
-                selection so that orte_ras has initialized pointers in
-                case anywhere else tries to use it.  This may end up
-                putting a bunch more nodes on the node segment - e.g.,
-                if you're in a SLURM allocation and you "./a.out",
-                you'll end up with the localhost *and* all the other
-                nodes in your allocation on the node segment -- which
-                is probably fine */
-            if (ORTE_SUCCESS != (ret = orte_ras.allocate_job(my_jobid, NULL))) {
-                ORTE_ERROR_LOG(ret);
-                error = "allocate for a singleton";
-                goto error;
-            }
-            
-            /* even though the map in this case is trivial, we still
-             * need to call the RMAPS framework so the proper data
-             * structures get set into the registry
-             */
-            OBJ_CONSTRUCT(&attrs, opal_list_t);
-            if (ORTE_SUCCESS != (ret = orte_rmgr.add_attribute(&attrs, ORTE_RMAPS_NO_ALLOC_RANGE,
-                                                               ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE))) {
-                ORTE_ERROR_LOG(ret);
-                error = "could not create attribute for map";
-                goto error;
-            }
-            if (ORTE_SUCCESS != (ret = orte_rmaps.map_job(my_jobid, &attrs))) {
-                ORTE_ERROR_LOG(ret);
-                error = "map for a singleton";
-                goto error;
-            }
-            while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
-            OBJ_DESTRUCT(&attrs);
-            
-            /* cleanup data structs */
-            OBJ_DESTRUCT(&single_host);
-            OBJ_DESTRUCT(&rds_single_host);
-        }
-        
-        if (ORTE_SUCCESS != (ret = orte_rmgr_base_proc_stage_gate_init(my_jobid))) {
-            ORTE_ERROR_LOG(ret);
-            error = "singleton orte_rmgr_base_proc_stage_gate_init";
-            goto error;
-        }
-        
-        /* set our state to LAUNCHED */
-        if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name, ORTE_PROC_STATE_LAUNCHED, 0))) {
-            ORTE_ERROR_LOG(ret);
-            error = "singleton could not set launched state";
-            goto error;
-        }
-    }
-
     /* initialize the rml module so it can open its interfaces - this
      * is needed so that we can get a uri for ourselves if we are an
      * HNP.  Note that this function creates listeners to the HNP
@@ -679,6 +476,123 @@ int orte_init_stage1(bool infrastructure)
         free(contact_path);
     }
 
+    /* 
+     * Initialize the selected modules now that all components/name are available.
+     */
+    if (ORTE_SUCCESS != (ret = orte_ns.init())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_ns.init";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_gpr.init())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_gpr.init";
+        goto error;
+    }
+    
+    /*
+     * setup I/O forwarding system
+     */
+    if (ORTE_SUCCESS != (ret = orte_iof_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_iof_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_iof_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_iof_base_select";
+        goto error;
+    }
+    
+    /* if we are a singleton or the seed, setup an app_context for us.
+     * Since we don't have access to the argv used to start this app,
+     * we can only fake a name for the executable
+     */
+    
+    if(orte_process_info.singleton || orte_process_info.seed) {
+        orte_app_context_t *app;
+        
+        app = OBJ_NEW(orte_app_context_t);
+        app->app = strdup("unknown");
+        app->num_procs = 1;
+        if (ORTE_SUCCESS != (ret = orte_rmgr_base_put_app_context(ORTE_PROC_MY_NAME->jobid, &app, 1))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_rmgr_base_put_app_context for singleton/seed";
+            goto error;
+        }
+        OBJ_RELEASE(app);
+        
+        if (orte_process_info.singleton) {
+            /* since all frameworks are now open and active, walk through
+             * the spawn sequence to ensure that we collect info on all
+             * available resources. Although we are a singleton and hence
+             * don't need to be spawned, we may choose to dynamically spawn
+             * additional processes. If we do that, then we need to know
+             * about any resources that have been allocated to us - executing
+             * the RDS and RAS frameworks is the only way to get that info.
+             *
+             * THIS ONLY SHOULD BE DONE FOR SINGLETONS - DO NOT DO IT
+             * FOR ANY OTHER CASE
+             */
+            opal_list_t attrs;
+            opal_list_item_t *item;
+            
+            OBJ_CONSTRUCT(&attrs, opal_list_t);
+            
+            if (ORTE_SUCCESS != (ret = orte_rds.query(ORTE_PROC_MY_NAME->jobid))) {
+                ORTE_ERROR_LOG(ret);
+                error = "singleton rds query";
+                goto error;
+            }
+            /* Note that, due to the way the RAS works, this might very well NOT result
+             * in the localhost being on our allocation, even though we are executing
+             * on it. This should be okay, though - if the localhost isn't included
+             * in the official allocation, then we probably wouldn't want to launch
+             * any dynamic processes on it anyway.
+             */
+            if (ORTE_SUCCESS != (ret = orte_ras.allocate_job(ORTE_PROC_MY_NAME->jobid, &attrs))) {
+                ORTE_ERROR_LOG(ret);
+                error = "singleton ras allocate job";
+                goto error;
+            }
+            
+            /* even though the map in this case is trivial, we still
+             * need to call the RMAPS framework so the proper data
+             * structures get set into the registry
+             */
+            if (ORTE_SUCCESS != (ret = orte_rmgr.add_attribute(&attrs, ORTE_RMAPS_NO_ALLOC_RANGE,
+                                                               ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE))) {
+                ORTE_ERROR_LOG(ret);
+                error = "could not create attribute for map";
+                goto error;
+            }
+            if (ORTE_SUCCESS != (ret = orte_rmaps.map_job(ORTE_PROC_MY_NAME->jobid, &attrs))) {
+                ORTE_ERROR_LOG(ret);
+                error = "map for a singleton";
+                goto error;
+            }
+            while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
+            OBJ_DESTRUCT(&attrs);
+        }
+    
+        /* for singleton or seed, need to define our stage gates and fire the LAUNCHED gate
+         * to ensure that everything in the rest of the system runs smoothly
+         */
+        if (ORTE_SUCCESS != (ret = orte_rmgr_base_proc_stage_gate_init(ORTE_PROC_MY_NAME->jobid))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton/seed orte_rmgr_base_proc_stage_gate_init";
+            goto error;
+        }
+        
+        /* set our state to LAUNCHED */
+        if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name, ORTE_PROC_STATE_LAUNCHED, 0))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton/seed could not set launched state";
+            goto error;
+        }
+    }
+    
     /*
      * Setup the FileM
      */
