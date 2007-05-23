@@ -203,6 +203,11 @@ int ompi_mpi_register_params(void)
                                 "wire-up the OOB system between MPI processes.",
                                 false, false, 0, NULL);
 
+    mca_base_param_reg_int_name("mpi", "preconnect_oob_simultaneous",
+                                "Number of simultaneous outstanding "
+                                "OOB connections to allow during preconnect.",
+                                false, false, 4, NULL);
+
     /* Leave pinned parameter */
 
     mca_base_param_reg_int_name("mpi", "leave_pinned",

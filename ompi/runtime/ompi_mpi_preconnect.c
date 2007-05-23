@@ -87,9 +87,9 @@ ompi_init_preconnect_mpi(void)
 int
 ompi_init_preconnect_oob(void)
 {
-    size_t world_size, next, prev, i, world_rank;
+    size_t world_size, next, prev, i, j, world_rank;
     ompi_proc_t **procs;
-    int ret, param, value = 0;
+    int ret, simultaneous, param, value = 0;
     struct iovec inmsg[1], outmsg[1];
 
     param = mca_base_param_find("mpi", NULL, "preconnect_oob");
@@ -103,6 +103,12 @@ ompi_init_preconnect_oob(void)
         if (OMPI_SUCCESS != ret) return OMPI_SUCCESS;
     }
     if (0 == value) return OMPI_SUCCESS;
+
+    param = mca_base_param_find("mpi", NULL, "preconnect_oob_simultaneous");
+    if (OMPI_ERROR == param) return OMPI_SUCCESS;
+    ret = mca_base_param_lookup_int(param, &value);
+    if (OMPI_SUCCESS != ret) return OMPI_SUCCESS;
+    simultaneous = (value < 1) ? 1 : value;
 
     procs = ompi_proc_world(&world_size);
 
@@ -123,24 +129,28 @@ ompi_init_preconnect_oob(void)
        This limits any "flooding" effect that can occur with other
        connection algorithms, which can overwhelm the out-of-band
        connection system, leading to poor performance and hangs. */
-    for (i = 1 ; i <= world_size / 2 ; ++i) {
-        next = (world_rank + i) % world_size;
-        prev = (world_rank - i + world_size) % world_size;
+    for (i = 1 ; i <= world_size / 2 ; i += simultaneous) {
+        for (j = 0 ; j < (size_t) simultaneous ; ++j) {
+            next = (world_rank + (i + j )) % world_size;
                     
-        /* sends do not wait for a match */
-        ret = orte_rml.send(&procs[next]->proc_name,
-                            outmsg,
-                            1,
-                            ORTE_RML_TAG_WIREUP,
-                            0);
-        if (ret < 0) return ret;
+            /* sends do not wait for a match */
+            ret = orte_rml.send(&procs[next]->proc_name,
+                                outmsg,
+                                1,
+                                ORTE_RML_TAG_WIREUP,
+                                0);
+            if (ret < 0) return ret;
+        }
+        for (j = 0 ; j < (size_t) simultaneous ; ++j) {
+            prev = (world_rank - (i + j) + world_size) % world_size;
                     
-        ret = orte_rml.recv(&procs[prev]->proc_name,
-                            inmsg,
-                            1,
-                            ORTE_RML_TAG_WIREUP,
-                            0);
-        if (ret < 0) return ret;
+            ret = orte_rml.recv(&procs[prev]->proc_name,
+                                inmsg,
+                                1,
+                                ORTE_RML_TAG_WIREUP,
+                                0);
+            if (ret < 0) return ret;
+        }
     }
     
     return OMPI_SUCCESS;
