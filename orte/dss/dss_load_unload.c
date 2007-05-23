@@ -41,7 +41,7 @@ int orte_dss_unload(orte_buffer_t *buffer, void **payload,
 {
     char *hdr_dst = NULL;
     orte_dss_buffer_type_t type;
-
+    
     /* check that buffer is not null */
     if (!buffer) {
         return ORTE_ERR_BAD_PARAM;
@@ -73,8 +73,8 @@ int orte_dss_unload(orte_buffer_t *buffer, void **payload,
     
     /* okay, we have something to provide - pass it back */
     *payload = buffer->base_ptr;
-    *bytes_used = (orte_std_cntr_t)buffer->bytes_used;
-
+    *bytes_used = buffer->bytes_used;
+    
     /* dereference everything in buffer */
     buffer->base_ptr = NULL;
     buffer->pack_ptr = buffer->unpack_ptr = NULL;
@@ -129,10 +129,18 @@ int orte_dss_load(orte_buffer_t *buffer, void *payload,
     return ORTE_SUCCESS;    
 }
 
+
+/* Move the UNPACKED portion of a source buffer into a destination buffer
+ * The complete contents of the src buffer are NOT moved - only that
+ * portion that has not been previously unpacked. However, we must ensure
+ * that we don't subsequently "free" memory from inside a previously
+ * malloc'd block. Hence, we must obtain a new memory allocation for the
+ * dest buffer's storage before we move the data across. As a result, this
+ * looks functionally a lot more like a destructive "copy" - both for
+ * the source and destination buffers - then a direct transfer of data!
+ */
 int orte_dss_xfer_payload(orte_buffer_t *dest, orte_buffer_t *src)
 {
-    void *payload;
-    orte_std_cntr_t bytes_used;
     int rc;
     
     /* ensure we have valid source and destination */
@@ -141,25 +149,44 @@ int orte_dss_xfer_payload(orte_buffer_t *dest, orte_buffer_t *src)
         return ORTE_ERR_BAD_PARAM;
     }
     
-    /* unload the src payload */
-    if (ORTE_SUCCESS != (rc = orte_dss_unload(src, &payload, &bytes_used))) {
+    /* if the dest is already populated, release the data */
+    if (0 != dest->bytes_used) {
+        free(dest->base_ptr);
+        dest->base_ptr = NULL;
+        dest->pack_ptr = dest->unpack_ptr = NULL;
+        dest->bytes_allocated = dest->bytes_used = 0;
+    }
+    
+    /* ensure the dest buffer type matches the src */
+    dest->type = src->type;
+    
+    /* copy the src payload to the dest - this will allocate "fresh"
+     * memory for the unpacked payload remaining in the src buffer
+     */
+    if (ORTE_SUCCESS != (rc = orte_dss_copy_payload(dest, src))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    /* load it into the dest, overwriting anything already there */
-    if (ORTE_SUCCESS != (rc = orte_dss_load(dest, payload, bytes_used))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    /* dereference everything in src */
+    free(src->base_ptr);
+    src->base_ptr = NULL;
+    src->pack_ptr = src->unpack_ptr = NULL;
+    src->bytes_allocated = src->bytes_used = 0;
     
     return ORTE_SUCCESS;
 }
 
+
+/* Copy the UNPACKED portion of a source buffer into a destination buffer
+ * The complete contents of the src buffer are NOT copied - only that
+ * portion that has not been previously unpacked is copied.
+ */
 int orte_dss_copy_payload(orte_buffer_t *dest, orte_buffer_t *src)
 {
     char *dst_ptr;
-    
+    orte_std_cntr_t bytes_left;
+
     /* ensure we have valid source and destination */
     if (NULL == dest || NULL == src) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -181,17 +208,31 @@ int orte_dss_copy_payload(orte_buffer_t *dest, orte_buffer_t *src)
      */
     dest->type = src->type;
     
+    /* compute how much of the src buffer remains unpacked
+     * buffer->bytes_used is the total number of bytes in the buffer that
+     * have been packed. However, we may have already unpacked some of
+     * that data. We only want to unload what remains unpacked. This
+     * means we have to look at how much of the buffer remains "used"
+     * beyond the unpack_ptr
+     */
+    bytes_left = src->bytes_used - (src->unpack_ptr - src->base_ptr);
+    
+    /* if nothing is left, then nothing to do */
+    if (0 == bytes_left) {
+        return ORTE_SUCCESS;
+    }
+    
     /* add room to the dest for the src buffer's payload */
-    if (NULL == (dst_ptr = orte_dss_buffer_extend(dest, src->bytes_used))) {
+    if (NULL == (dst_ptr = orte_dss_buffer_extend(dest, bytes_left))) {
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
     /* copy the src payload to the specified location in dest */
-    memcpy(dst_ptr, src->base_ptr, src->bytes_used);
+    memcpy(dst_ptr, src->unpack_ptr, bytes_left);
     
     /* adjust the dest buffer's bookkeeping */
-    dest->bytes_used += src->bytes_used;
-    dest->pack_ptr = ((char*)dest->pack_ptr) + src->bytes_used;
+    dest->bytes_used += bytes_left;
+    dest->pack_ptr = ((char*)dest->pack_ptr) + bytes_left;
     
     return ORTE_SUCCESS;
 }

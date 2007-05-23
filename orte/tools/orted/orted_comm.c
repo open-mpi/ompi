@@ -58,22 +58,20 @@
 
 #include "orte/tools/orted/orted.h"
 
+static int binomial_route_msg(orte_buffer_t *buf, orte_jobid_t job, orte_rml_tag_t target_tag);
+
 void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
                           orte_buffer_t *buffer, orte_rml_tag_t tag,
                           void* cbdata)
 {
     orte_daemon_cmd_flag_t command, routing_mode;
-    orte_buffer_t answer, relay;
+    orte_buffer_t answer, *relay;
     int ret;
     orte_std_cntr_t n;
     int32_t signal;
     orte_gpr_notify_data_t *ndat;
     orte_jobid_t *jobs, job;
     orte_std_cntr_t num_jobs;
-    orte_gpr_notify_message_t *msg;
-    orte_std_cntr_t daemon_start, num_daemons;
-    int i, bitmap, peer, size, rank, hibit, mask;
-    orte_process_name_t target;
     orte_rml_tag_t target_tag;
 
     OPAL_TRACE(1);
@@ -192,130 +190,37 @@ void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
                 goto CLEANUP;
             }
             
-            /* if the mode is BINOMIAL, then we will be routing the message elsewhere, so
-             * copy the message for later use and unpack routing info we'll need
-             */
-            if (ORTE_DAEMON_ROUTE_BINOMIAL == routing_mode) {
-                n = 1;
-                if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &daemon_start, &n, ORTE_STD_CNTR))) {
-                    ORTE_ERROR_LOG(ret);
-                    goto CLEANUP;
-                }
-                n = 1;
-                if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &num_daemons, &n, ORTE_STD_CNTR))) {
-                    ORTE_ERROR_LOG(ret);
-                    goto CLEANUP;
-                }
-            }
-                
             /* unpack the jobid of the procs that are to receive the message */
             n = 1;
             if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }
-            
+                
             /* unpack the tag where we are to deliver the message */
             n = 1;
             if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &target_tag, &n, ORTE_RML_TAG))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }
-            
-            /* unpack the message */
-            msg = OBJ_NEW(orte_gpr_notify_message_t);
-            if (NULL == msg) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                goto CLEANUP;
-            }
                 
-            n = 1;
-            if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &msg, &n, ORTE_GPR_NOTIFY_MSG))) {
-                ORTE_ERROR_LOG(ret);
-                OBJ_RELEASE(msg);
-                goto CLEANUP;
-            }
-            
-            /* if the mode is BINOMIAL, then we have to reconstruct and route this message on */
+            /* if the mode is BINOMIAL, then relay it on before doing anything else */
             if (ORTE_DAEMON_ROUTE_BINOMIAL == routing_mode) {
-                OBJ_CONSTRUCT(&relay, orte_buffer_t);
-                /* tell the daemon this is a message for its local procs */
-                command=ORTE_DAEMON_MESSAGE_LOCAL_PROCS;
-                if (ORTE_SUCCESS != (ret = orte_dss.pack(&relay, &command, 1, ORTE_DAEMON_CMD))) {
+                if (ORTE_SUCCESS != (ret = binomial_route_msg(buffer, job, target_tag))) {
                     ORTE_ERROR_LOG(ret);
                     goto CLEANUP;
                 }
-                
-                /* tell the daemon the routing algorithm is binomial so it can figure
-                    * out who to forward the message to
-                    */
-                if (ORTE_SUCCESS != (ret = orte_dss.pack(&relay, &routing_mode, 1, ORTE_DAEMON_CMD))) {
-                    ORTE_ERROR_LOG(ret);
-                    goto CLEANUP;
-                }
-                
-                /* tell the daemon the number of daemons currently in the system so
-                    * it can properly route
-                    */
-                if (ORTE_SUCCESS != (ret = orte_dss.pack(&relay, &daemon_start, 1, ORTE_STD_CNTR))) {
-                    ORTE_ERROR_LOG(ret);
-                    goto CLEANUP;
-                }
-                if (ORTE_SUCCESS != (ret = orte_dss.pack(&relay, &num_daemons, 1, ORTE_STD_CNTR))) {
-                    ORTE_ERROR_LOG(ret);
-                    goto CLEANUP;
-                }
-                
-                /* tell the daemon the jobid of the procs that are to receive the message */
-                if (ORTE_SUCCESS != (ret = orte_dss.pack(&relay, &job, 1, ORTE_JOBID))) {
-                    ORTE_ERROR_LOG(ret);
-                    goto CLEANUP;
-                }
-                /* pack the message itself */
-                if (ORTE_SUCCESS != (ret = orte_dss.pack(&relay, &msg, 1, ORTE_GPR_NOTIFY_MSG))) {
-                    ORTE_ERROR_LOG(ret);
-                    goto CLEANUP;
-                }
-                
-                /* compute the bitmap */
-                bitmap = opal_cube_dim((int)num_daemons);
-                rank = (int)ORTE_PROC_MY_NAME->vpid;
-                size = (int)num_daemons;
-                
-                hibit = opal_hibit(rank, bitmap);
-                --bitmap;
-                
-                target.cellid = ORTE_PROC_MY_NAME->cellid;
-                target.jobid = 0;
-                for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
-                    peer = rank | mask;
-                    if (peer < size) {
-                        target.vpid = (orte_vpid_t)peer;
-                        if (0 > (ret = orte_rml.send_buffer(&target, &relay, ORTE_RML_TAG_PLS_ORTED, 0))) {
-                            ORTE_ERROR_LOG(ret);
-                            OBJ_DESTRUCT(&relay);
-                            goto CLEANUP;
-                        }
-                    }
-                }
-                OBJ_DESTRUCT(&relay);
             }
+                
+            relay = OBJ_NEW(orte_buffer_t);
+            orte_dss.copy_payload(relay, buffer);
             
-            /* construct a buffer for local delivery to our children */
-            OBJ_CONSTRUCT(&relay, orte_buffer_t);
-            if (ORTE_SUCCESS != (ret = orte_dss.pack(&relay, &msg, 1, ORTE_GPR_NOTIFY_MSG))) {
+            /* now deliver the message to our children */
+            if (ORTE_SUCCESS != (ret = orte_odls.deliver_message(job, relay, target_tag))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }
-
-            /* deliver the message to the children */
-            if (ORTE_SUCCESS != (ret = orte_odls.deliver_message(job, &relay, target_tag))) {
-                ORTE_ERROR_LOG(ret);
-                goto CLEANUP;
-            }
-            OBJ_DESTRUCT(&relay);
-            
-            OBJ_RELEASE(msg);
+            OBJ_RELEASE(relay);
             break;
     
             /****    EXIT COMMAND    ****/
@@ -507,3 +412,91 @@ DONE:
     return;
 }
 
+static int binomial_route_msg(orte_buffer_t *buf, orte_jobid_t job, orte_rml_tag_t target_tag)
+{
+    orte_std_cntr_t n, num_daemons;
+    int i, bitmap, peer, size, rank, hibit, mask;
+    orte_process_name_t target;
+    orte_daemon_cmd_flag_t command;
+    orte_buffer_t *relay=NULL;
+    int ret;
+    
+    /* initialize the relay buffer */
+    relay = OBJ_NEW(orte_buffer_t);
+    if (NULL == relay) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* tell the downstream daemons this is a message for their local procs */
+    command=ORTE_DAEMON_MESSAGE_LOCAL_PROCS;
+    if (ORTE_SUCCESS != (ret = orte_dss.pack(relay, &command, 1, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(ret);
+        goto CLEANUP;
+    }
+    
+    /* tell the downstream daemons the routing algorithm is binomial */
+    command = ORTE_DAEMON_ROUTE_BINOMIAL;
+    if (ORTE_SUCCESS != (ret = orte_dss.pack(relay, &command, 1, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(ret);
+        goto CLEANUP;
+    }
+    
+    /* tell the downstream daemons the jobid of the procs that are to receive the message */
+    if (ORTE_SUCCESS != (ret = orte_dss.pack(relay, &job, 1, ORTE_JOBID))) {
+        ORTE_ERROR_LOG(ret);
+        goto CLEANUP;
+    }
+    
+    /* tell the downstream daemons the tag where the message is to be delivered */
+    if (ORTE_SUCCESS != (ret = orte_dss.pack(relay, &target_tag, 1, ORTE_RML_TAG))) {
+        ORTE_ERROR_LOG(ret);
+        goto CLEANUP;
+    }
+    
+    /* unpack the current number of daemons */
+    n = 1;
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buf, &num_daemons, &n, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(ret);
+        goto CLEANUP;
+    }
+    
+    /* pass that value to the downstream daemons */
+    if (ORTE_SUCCESS != (ret = orte_dss.pack(relay, &num_daemons, 1, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(ret);
+        goto CLEANUP;
+    }
+        
+    /* copy the message payload to the relay buffer - this is non-destructive */
+    if (ORTE_SUCCESS != (ret = orte_dss.copy_payload(relay, buf))) {
+        ORTE_ERROR_LOG(ret);
+        goto CLEANUP;
+    }
+        
+    /* compute the bitmap */
+    bitmap = opal_cube_dim((int)num_daemons);
+    rank = (int)ORTE_PROC_MY_NAME->vpid;
+    size = (int)num_daemons;
+    
+    hibit = opal_hibit(rank, bitmap);
+    --bitmap;
+    
+    target.cellid = ORTE_PROC_MY_NAME->cellid;
+    target.jobid = 0;
+    for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
+        peer = rank | mask;
+        if (peer < size) {
+            target.vpid = (orte_vpid_t)peer;
+            opal_output(0, "[%ld,%ld,%ld] relaying to [%ld,%ld,%ld]", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), ORTE_NAME_ARGS(&target));
+            if (0 > (ret = orte_rml.send_buffer(&target, relay, ORTE_RML_TAG_PLS_ORTED, 0))) {
+                ORTE_ERROR_LOG(ret);
+                goto CLEANUP;
+            }
+        }
+    }
+
+CLEANUP:
+    if (NULL != relay) OBJ_RELEASE(relay);
+    
+    return ORTE_SUCCESS;
+}
