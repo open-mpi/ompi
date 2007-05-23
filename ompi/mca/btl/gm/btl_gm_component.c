@@ -28,6 +28,10 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/request/request.h"
 
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/mpool/base/base.h" 
@@ -424,8 +428,12 @@ static int mca_btl_gm_discover( void )
 #endif  /* GM_API_VERSION > 0x200 */
 
         if(mca_btl_gm_component.gm_debug > 0) {
-            opal_output(0, "[%ld,%ld,%ld] gm_port %08X, board %lu, global %lu node %lu port %lu\n", 
-                        ORTE_NAME_ARGS(orte_process_info.my_name), port, board_no, global_id, node_id, port_no);
+            opal_output(0,
+                        "[%ld,%ld,%ld] gm_port %08lX, "
+                        "board %" PRIu32 ", global %" PRIu32 " "
+                        "node %" PRIu32 "port %" PRIu32 "\n", 
+                        ORTE_NAME_ARGS(orte_process_info.my_name), 
+                        (unsigned long) port, board_no, global_id, node_id, port_no);
         }
 
         if((rc = mca_btl_gm_module_init(btl)) != OMPI_SUCCESS) {
