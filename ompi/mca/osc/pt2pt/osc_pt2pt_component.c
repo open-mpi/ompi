@@ -733,9 +733,9 @@ component_thread_fn(opal_object_t *obj)
         /* wake up whenever a request completes, to make sure it's not
            for us */
         waittime.tv_sec = 1;
-        waittime.tv_usec = 0;
+        waittime.tv_nsec = 0;
         OPAL_THREAD_LOCK(&ompi_request_lock);
-        opal_condition_timedwait(&ompi_request_cond, &ompi_request_lock);
+        opal_condition_timedwait(&ompi_request_cond, &ompi_request_lock, &waittime);
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
         ompi_osc_pt2pt_component_progress();
     }
