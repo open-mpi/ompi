@@ -984,7 +984,7 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
     for(intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
         intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
         intf =  (opal_if_t*)opal_list_get_next(intf)) {
-        if(intf->if_addr.sin_addr.s_addr == inaddr) {
+        if(((struct sockaddr_in*) &intf->if_addr)->sin_addr.s_addr == inaddr) {
             strncpy(if_name, intf->if_name, length);
             return OPAL_SUCCESS;
         }
