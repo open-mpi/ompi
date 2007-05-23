@@ -269,7 +269,7 @@ static int initialize(int argc, char *argv[]) {
                 true, &environ);
     opal_cr_set_enabled(false);
 
-    if (OPAL_SUCCESS != (ret = orte_init(true))) {
+    if (OPAL_SUCCESS != (ret = orte_init(ORTE_INFRASTRUCTURE, ORTE_NON_BARRIER))) {
         exit_status = ret;
         goto cleanup;
     }
