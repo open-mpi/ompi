@@ -93,9 +93,9 @@ ompi_osc_pt2pt_sendreq_send_long_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
                          sendreq->req_module->p2p_comm->c_my_rank,
                          sendreq->req_target_rank));
 
-    OPAL_THREAD_LOCK(&module->p2p_lock);
+    OPAL_THREAD_LOCK(&sendreq->req_module->p2p_lock);
     count = (sendreq->req_module->p2p_num_pending_out -= 1);
-    OPAL_THREAD_UNLOCK(&module->p2p_lock);
+    OPAL_THREAD_UNLOCK(&sendreq->req_module->p2p_lock);
 
     ompi_osc_pt2pt_longreq_free(longreq);
     ompi_osc_pt2pt_sendreq_free(sendreq);
@@ -131,9 +131,9 @@ ompi_osc_pt2pt_sendreq_send_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
         /* do we need to post a send? */
         if (header->hdr_msg_length != 0) {
             /* sendreq is done.  Mark it as so and get out of here */
-            OPAL_THREAD_LOCK(&module->p2p_lock);
+            OPAL_THREAD_LOCK(&sendreq->req_module->p2p_lock);
             count = (sendreq->req_module->p2p_num_pending_out -= 1);
-            OPAL_THREAD_UNLOCK(&module->p2p_lock);
+            OPAL_THREAD_UNLOCK(&sendreq->req_module->p2p_lock);
             ompi_osc_pt2pt_sendreq_free(sendreq);
             if (0 == count) opal_condition_broadcast(&sendreq->req_module->p2p_cond);
         }
@@ -728,9 +728,9 @@ ompi_osc_pt2pt_replyreq_recv_long_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
         (ompi_osc_pt2pt_sendreq_t*) longreq->mpireq.cbdata;
     int32_t count;
 
-    OPAL_THREAD_LOCK(&module->p2p_lock);
+    OPAL_THREAD_LOCK(&sendreq->req_module->p2p_lock);
     count = (sendreq->req_module->p2p_num_pending_out -= 1);
-    OPAL_THREAD_UNLOCK(&module->p2p_lock);
+    OPAL_THREAD_UNLOCK(&sendreq->req_module->p2p_lock);
 
     ompi_osc_pt2pt_longreq_free(longreq);
     ompi_osc_pt2pt_sendreq_free(sendreq);
