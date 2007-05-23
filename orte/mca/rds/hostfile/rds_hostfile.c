@@ -439,15 +439,15 @@ static int orte_rds_hostfile_query(orte_jobid_t job)
             rds_item->site  = strdup("Hostfile");
             rds_item->name  = strdup(ras_item->node_name);
             if (need_cellid) {
-#if 0 /* JJH Repair when cellid's are fixed */
-                /* Create a new cellid for this hostfile */
+                /* need to store the info for this hostfile so the NS can get it
+                 * later when requested
+                 */
+                local_cellid = 0;
                 rc = orte_ns.create_cellid(&local_cellid, rds_item->site, rds_item->name);
                 if (ORTE_SUCCESS != rc) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
-#endif
-                local_cellid = 0;
                 need_cellid = false;
             }
 

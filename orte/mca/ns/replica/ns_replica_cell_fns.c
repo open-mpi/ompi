@@ -48,8 +48,33 @@ int orte_ns_replica_create_cellid(orte_cellid_t *cellid, char *site, char *resou
     
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
-    *cellid = ORTE_CELLID_INVALID;
-
+    /* if a valid cellid is given to us, then all we need to do is
+     * update the descriptive info
+     */
+    if (ORTE_CELLID_INVALID != *cellid) {
+        /* see if the cell info is already present */
+        cell = (orte_ns_replica_cell_tracker_t**)(orte_ns_replica.cells)->addr;
+        for (i=0, j=0; j < orte_ns_replica.num_cells &&
+             i < (orte_ns_replica.cells)->size; i++) {
+            if (NULL != cell[i]) {
+                j++;
+                if (cell[i]->cell == *cellid) {
+                    /* it is here - update the info */
+                    if (NULL != cell[i]->site) {
+                        free(cell[i]->site);
+                    }
+                    if (NULL != cell[i]->resource) {
+                        free(cell[i]->resource);
+                    }
+                    new_cell = cell[i];
+                    goto UPDATE;                    
+                }
+            }
+        }
+        /* get here if one isn't already present - create one */
+        goto NEWSITE;
+    }
+    
     /* check for error */
     if (NULL == site || NULL == resource) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -72,12 +97,15 @@ int orte_ns_replica_create_cellid(orte_cellid_t *cellid, char *site, char *resou
         }
     }
     
+    *cellid = orte_ns_replica.num_cells;
+
+NEWSITE:
     /* new cell - check if cellid is available */
     if (ORTE_CELLID_MAX-1 < orte_ns_replica.num_cells) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
         return ORTE_ERR_OUT_OF_RESOURCE;
-     }
+    }
 
     new_cell = OBJ_NEW(orte_ns_replica_cell_tracker_t);
     if (NULL == new_cell) {
@@ -85,18 +113,18 @@ int orte_ns_replica_create_cellid(orte_cellid_t *cellid, char *site, char *resou
         OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&index,
-                                orte_ns_replica.cells, new_cell))) {
+    if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&index, orte_ns_replica.cells, new_cell))) {
         ORTE_ERROR_LOG(rc);
         OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
         return rc;
     }
+    (orte_ns_replica.num_cells)++;
+
+    new_cell->cell = *cellid;
+  
+UPDATE:
     new_cell->site = strdup(site);
     new_cell->resource = strdup(resource);
-
-    new_cell->cell = orte_ns_replica.num_cells;
-    *cellid = new_cell->cell;
-    (orte_ns_replica.num_cells)++;
 
     OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
     return ORTE_SUCCESS;

@@ -55,9 +55,6 @@ int orte_ns_proxy_create_cellid(orte_cellid_t *cellid, char *site, char *resourc
 
     OPAL_TRACE(1);
     
-    /* set the default value of error */
-    *cellid = ORTE_CELLID_INVALID;
-
     command = ORTE_NS_CREATE_CELLID_CMD;
 
     cmd = OBJ_NEW(orte_buffer_t);
@@ -72,6 +69,12 @@ int orte_ns_proxy_create_cellid(orte_cellid_t *cellid, char *site, char *resourc
         return rc;
     }
 
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, cellid, 1, ORTE_CELLID))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+    
     if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &site, 1, ORTE_STRING))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);

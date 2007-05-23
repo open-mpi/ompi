@@ -84,20 +84,27 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
     switch (command) {
         case ORTE_NS_CREATE_CELLID_CMD:
             count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &cell, &count, ORTE_CELLID))) {
+                ORTE_ERROR_LOG(rc);
+                rc = ORTE_ERR_BAD_PARAM;
+                goto RETURN_ERROR;
+            }
+                
+            count = 1;
             if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &site, &count, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 rc = ORTE_ERR_BAD_PARAM;
                 goto RETURN_ERROR;
             }
                 
-                count = 1;
+            count = 1;
             if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &resource, &count, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 rc = ORTE_ERR_BAD_PARAM;
                 goto RETURN_ERROR;
             }
                 
-                rc = orte_ns_replica_create_cellid(&cell, site, resource);
+            rc = orte_ns_replica_create_cellid(&cell, site, resource);
             
             if (ORTE_SUCCESS != (ret = orte_dss.pack(&answer, &cell, 1, ORTE_CELLID))) {
                 ORTE_ERROR_LOG(ret);
