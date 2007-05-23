@@ -154,8 +154,8 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
     if( 0 != btl_endpoint->endpoint_cache_length ) {
         size_t length;
         /* It's strange at the first look but cnt have to be set to the full amount of data
-	 * available. After going to advance_iov_position we will use cnt to detect if there
-	 * is still some data pending.
+         * available. After going to advance_iov_position we will use cnt to detect if there
+         * is still some data pending.
          */
         cnt = length = btl_endpoint->endpoint_cache_length;
         for( i = 0; i < frag->iov_cnt; i++ ) {
@@ -171,9 +171,9 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
             btl_endpoint->endpoint_cache_length -= length;
             length = btl_endpoint->endpoint_cache_length;
             if( 0 == length ) {
-		btl_endpoint->endpoint_cache_pos = btl_endpoint->endpoint_cache;
-	        break;
-	    }
+                btl_endpoint->endpoint_cache_pos = btl_endpoint->endpoint_cache;
+                break;
+            }
         }
         goto advance_iov_position;
     }

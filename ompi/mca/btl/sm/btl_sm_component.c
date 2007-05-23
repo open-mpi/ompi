@@ -245,13 +245,13 @@ CLEANUP:
  *  SM component initialization
  */
 mca_btl_base_module_t** mca_btl_sm_component_init(
-    int *num_ptls, 
+    int *num_btls, 
     bool enable_progress_threads,
     bool enable_mpi_threads)
 {
-    mca_btl_base_module_t **ptls = NULL;
+    mca_btl_base_module_t **btls = NULL;
 
-    *num_ptls = 0;
+    *num_btls = 0;
 
     /* lookup/create shared memory pool only when used */
     mca_btl_sm_component.sm_mpool = NULL;
@@ -278,25 +278,25 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
     opal_thread_start(&mca_btl_sm_component.sm_fifo_thread);
 #endif
 
-    /* allocate the Shared Memory PTL */
-    *num_ptls = 1;
-    ptls = (mca_btl_base_module_t**)malloc((*num_ptls)*sizeof(mca_btl_base_module_t*));
-    if (NULL == ptls) {
+    /* allocate the Shared Memory BTL */
+    *num_btls = 1;
+    btls = (mca_btl_base_module_t**)malloc((*num_btls)*sizeof(mca_btl_base_module_t*));
+    if (NULL == btls) {
         return NULL;
     }
 
-    /* get pointer to the ptls */
-    ptls[0] = (mca_btl_base_module_t *)(&(mca_btl_sm));
+    /* get pointer to the btls */
+    btls[0] = (mca_btl_base_module_t *)(&(mca_btl_sm));
 
     /* initialize some PTL data */
     /* start with no SM procs */
     mca_btl_sm_component.num_smp_procs = 0;
     mca_btl_sm_component.my_smp_rank   = -1;  /* not defined */
 
-    /* set flag indicating ptl not inited */
+    /* set flag indicating btl not inited */
     mca_btl_sm.btl_inited=false;
 
-    return ptls;
+    return btls;
 }
 
 
