@@ -118,14 +118,9 @@ int mca_oob_base_open(void)
   }
   
   param = mca_base_param_reg_string_name("oob", "xcast_mode",
-#if 0
                                            "Select xcast mode (\"linear\" | \"binomial\" | \"direct [default] \")",
-#endif
-                                           "Select xcast mode (\"linear\" | \"direct [default] \")",
                                            false, false, "direct", &mode);
     if (0 == strcmp(mode, "binomial")) {
-        opal_output(0, "oob_xcast_mode: %s option not supported at this time", mode);
-        return ORTE_ERROR;
         orte_oob_xcast_mode = 0;
     } else if (0 == strcmp(mode, "linear")) {
         orte_oob_xcast_mode = 1;
