@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,7 +35,6 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
     int ret = OMPI_SUCCESS;
     int tmp;
     ompi_osc_pt2pt_module_t *module = P2P_MODULE(win);
-    void *foo;
 
     opal_output_verbose(1, ompi_osc_base_output,
                         "pt2pt component destroying window with id %d",
@@ -59,6 +60,8 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
 
     if (0 == opal_hash_table_get_size(&mca_osc_pt2pt_component.p2p_c_modules)) {
 #if OMPI_ENABLE_PROGRESS_THREADS
+        void *foo;
+
         mca_osc_pt2pt_component.p2p_c_thread_run = false;
         opal_condition_broadcast(&ompi_request_cond);
         opal_thread_join(&mca_osc_pt2pt_component.p2p_c_thread, &foo);

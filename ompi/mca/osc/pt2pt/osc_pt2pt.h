@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,10 +23,10 @@
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_hash_table.h"
 
-#include "ompi/mca/osc/osc.h"
 #include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/request/request.h"
+#include "ompi/mca/osc/osc.h"
 
 BEGIN_C_DECLS
 
@@ -79,6 +81,7 @@ struct ompi_osc_pt2pt_module_t {
     /** lock access to data structures in the current module */
     opal_mutex_t p2p_lock;
 
+    /** condition variable for access to current module */
     opal_condition_t p2p_cond;
 
     /** lock for "atomic" window updates from reductions */
@@ -136,7 +139,6 @@ struct ompi_osc_pt2pt_module_t {
     int *p2p_fence_coll_counts;
 
     /* ********************* PWSC data ************************ */
-
     struct ompi_group_t *p2p_pw_group;
     struct ompi_group_t *p2p_sc_group;
     bool *p2p_sc_remote_active_ranks;
@@ -163,7 +165,7 @@ OMPI_MODULE_DECLSPEC extern ompi_osc_pt2pt_component_t mca_osc_pt2pt_component;
  */
 
 int ompi_osc_pt2pt_component_init(bool enable_progress_threads,
-                                 bool enable_mpi_threads);
+                                  bool enable_mpi_threads);
 
 int ompi_osc_pt2pt_component_finalize(void);
 
@@ -176,10 +178,6 @@ int ompi_osc_pt2pt_component_select(struct ompi_win_t *win,
                                    struct ompi_communicator_t *comm);
 
 int ompi_osc_pt2pt_component_progress(void);
-
-int ompi_osc_pt2pt_request_test(ompi_request_t ** rptr,
-                                int *completed,
-                                ompi_status_public_t * status );
 
 /*
  * Module interface function types 
@@ -248,6 +246,7 @@ int ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
 int ompi_osc_pt2pt_passive_unlock(ompi_osc_pt2pt_module_t *module,
                                   int32_t origin,
                                   int32_t count);
+
 int ompi_osc_pt2pt_passive_unlock_complete(ompi_osc_pt2pt_module_t *module);
 
 END_C_DECLS

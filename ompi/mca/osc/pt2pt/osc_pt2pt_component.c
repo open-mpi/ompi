@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -290,7 +292,10 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
 
     module->p2p_num_pending_sendreqs = (unsigned int*)
         malloc(sizeof(unsigned int) * ompi_comm_size(module->p2p_comm));
-    if (NULL == module->p2p_num_pending_sendreqs) goto cleanup;
+    if (NULL == module->p2p_num_pending_sendreqs) {
+        ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+        goto cleanup;
+    }
     memset(module->p2p_num_pending_sendreqs, 0, 
            sizeof(unsigned int) * ompi_comm_size(module->p2p_comm));
 
@@ -682,7 +687,11 @@ ompi_osc_pt2pt_component_progress(void)
     opal_list_item_t *item;
     int ret, done = 0;
 
+#if OMPI_ENABLE_PROGRESS_THREADS
+    ret = OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
+#else
     ret = OPAL_THREAD_TRYLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
+#endif
     if (ret != 0) return 0;
 
     for (item = opal_list_get_first(&mca_osc_pt2pt_component.p2p_c_pending_requests) ;
