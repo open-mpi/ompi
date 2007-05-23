@@ -214,7 +214,7 @@ opal_net_addr_isipv4public (struct sockaddr *addr)
             return true;
         default:
             opal_output (0,
-                         "unhandled sa_family %d passed to mca_oob_tcp_addr_isipv4public\n",
+                         "unhandled sa_family %d passed to opal_net_addr_isipv4public\n",
                          addr->sa_family);
     }
     
