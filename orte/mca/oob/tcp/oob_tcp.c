@@ -1330,7 +1330,8 @@ static int get_contact_info(orte_jobid_t job, char **tokens, orte_gpr_notify_dat
     char *keys[] = {
         ORTE_OOB_TCP_KEY,
         ORTE_PROC_RML_IP_ADDRESS_KEY,
-        NULL};
+        NULL
+    };
     orte_gpr_value_t **values;
     orte_std_cntr_t cnt, i, idx;
     int rc;
