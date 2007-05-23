@@ -1414,7 +1414,9 @@ DOFORK:
         child = (orte_odls_child_t*)item;
         
         if (ORTE_PROC_STATE_LAUNCHED == child->state) {
+            OPAL_THREAD_UNLOCK(&orte_odls_default.mutex);
             orte_wait_cb(child->pid, odls_default_wait_local_proc, NULL);
+            OPAL_THREAD_LOCK(&orte_odls_default.mutex);
             child->state = ORTE_PROC_STATE_RUNNING;
         }
     }
