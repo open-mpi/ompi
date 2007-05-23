@@ -225,7 +225,7 @@ int main( int argc, char* argv[] )
 
     ompi_ddt_init();
 
-#if OMPI_ENABLE_DEBUG
+#if (OMPI_ENABLE_DEBUG == 1) && (OMPI_C_HAVE_VISIBILITY == 0)
     ompi_unpack_debug   = 0;
     ompi_pack_debug     = 0;
     ompi_position_debug = 0;
@@ -267,6 +267,8 @@ int main( int argc, char* argv[] )
         free( segments[i].buffer );
     }
     free(segments);
+
+    ompi_ddt_finalize();
 
     return (0 == errors ? 0 : -1);
 }
