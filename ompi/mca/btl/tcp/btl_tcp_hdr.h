@@ -25,9 +25,7 @@
 #include "btl_tcp.h" 
 #include "opal/types.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * TCP header.
@@ -37,32 +35,25 @@ extern "C" {
 #define MCA_BTL_TCP_HDR_TYPE_PUT  2
 #define MCA_BTL_TCP_HDR_TYPE_GET  3
 
-
 struct mca_btl_tcp_hdr_t {
     mca_btl_base_header_t base;
     uint8_t  type;
     uint16_t count;
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    /* uint64_t may be required to be 8 byte aligned. */
-    uint8_t padding[4];
-#endif
-    uint64_t size; 
+    uint32_t size; 
 }; 
 typedef struct mca_btl_tcp_hdr_t mca_btl_tcp_hdr_t; 
 
 #define MCA_BTL_TCP_HDR_HTON(hdr)     \
     do {                              \
         hdr.count = htons(hdr.count); \
-        hdr.size = hton64(hdr.size);  \
+        hdr.size = htonl(hdr.size);   \
     } while (0)
 
 #define MCA_BTL_TCP_HDR_NTOH(hdr)     \
     do {                              \
         hdr.count = ntohs(hdr.count); \
-        hdr.size = ntoh64(hdr.size);  \
+        hdr.size = ntohl(hdr.size);   \
     } while (0)
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif
