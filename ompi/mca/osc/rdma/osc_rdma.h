@@ -130,6 +130,8 @@ struct ompi_osc_rdma_module_t {
     opal_list_t m_copy_pending_sendreqs;
     unsigned int *m_copy_num_pending_sendreqs;
 
+    opal_list_t m_queued_sendreqs;
+
     /** start sending data eagerly */
     bool m_eager_send;
 

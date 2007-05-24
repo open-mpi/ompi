@@ -282,6 +282,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     OBJ_CONSTRUCT(&module->m_acc_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->m_pending_sendreqs, opal_list_t);
     OBJ_CONSTRUCT(&module->m_copy_pending_sendreqs, opal_list_t);
+    OBJ_CONSTRUCT(&module->m_queued_sendreqs, opal_list_t);
     OBJ_CONSTRUCT(&module->m_locks_pending, opal_list_t);
     OBJ_CONSTRUCT(&module->m_unlocks_pending, opal_list_t);
 
@@ -405,6 +406,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
  cleanup:
     OBJ_DESTRUCT(&module->m_unlocks_pending);
     OBJ_DESTRUCT(&module->m_locks_pending);
+    OBJ_DESTRUCT(&module->m_queued_sendreqs);
     OBJ_DESTRUCT(&module->m_copy_pending_sendreqs);
     OBJ_DESTRUCT(&module->m_pending_sendreqs);
     OBJ_DESTRUCT(&module->m_acc_lock);

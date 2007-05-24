@@ -41,12 +41,6 @@ ompi_osc_rdma_module_free(ompi_win_t *win)
                         "rdma component destroying window with id %d",
                         module->m_comm->c_contextid);
 
-    OPAL_THREAD_LOCK(&module->m_lock);
-    while (OMPI_WIN_EXPOSE_EPOCH & ompi_win_get_mode(win)) {
-        opal_condition_wait(&module->m_cond, &module->m_lock);
-    }
-    OPAL_THREAD_UNLOCK(&module->m_lock);
-
     /* finish with a barrier */
     if (ompi_group_size(win->w_group) > 1) {
         ret = module->m_comm->c_coll.coll_barrier(module->m_comm);
@@ -76,6 +70,7 @@ ompi_osc_rdma_module_free(ompi_win_t *win)
 
     OBJ_DESTRUCT(&module->m_unlocks_pending);
     OBJ_DESTRUCT(&module->m_locks_pending);
+    OBJ_DESTRUCT(&module->m_queued_sendreqs);
     OBJ_DESTRUCT(&module->m_copy_pending_sendreqs);
     OBJ_DESTRUCT(&module->m_pending_sendreqs);
     OBJ_DESTRUCT(&module->m_acc_lock);
