@@ -274,7 +274,7 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_component.ib_static_rate = (uint32_t) ival;
 
     CHECK(reg_int("rd_num", "Number of receive descriptors to post to a "
-                  "queue pair (must be >= 1)",
+                  "per-peer queue pair (must be >= 1)",
                   8, &ival, REGINT_GE_ONE));
     mca_btl_openib_component.rd_num = (uint32_t) ival;
 
@@ -298,9 +298,11 @@ int btl_openib_register_mca_params(void)
                   "queue (\"SRQ\")", 
                   0, &ival, 0));
     mca_btl_openib_component.use_srq = (0 != ival);
-    CHECK(reg_int("srq_rd_max", "Maxium number of receive descriptors "
-                  "posted per SRQ (only relevant if btl_openib_use_srq is "
-                  "true; must be >= 1)",
+    CHECK(reg_int("srq_rd_max", "Total number of receive descriptors "
+                  "posted per SRQ.  This value is only used if it is larger "
+                  "than (rd_num + log2(num_MPI_processes) * srq_rd_per_peer), "
+                  "and is only relevant if btl_openib_use_srq is "
+                  "true (must be >= 1)",
                   1000, &ival, REGINT_GE_ONE));
     mca_btl_openib_component.srq_rd_max = (uint32_t) ival;
 
