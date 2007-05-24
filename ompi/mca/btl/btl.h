@@ -135,6 +135,8 @@ struct ompi_proc_t;
 /* send/recv operations require tag matching */
 typedef uint8_t mca_btl_base_tag_t;
 
+#define MCA_BTL_NO_ORDER       255
+
 /* reserved tag values */
 #define MCA_BTL_TAG_BTL        0
 #define MCA_BTL_TAG_PML        1
@@ -157,6 +159,9 @@ typedef uint8_t mca_btl_base_tag_t;
 
 /* btl can report put/get completion before data hits the other side */
 #define MCA_BTL_FLAGS_FAKE_RDMA 0x40
+
+/* btl needs local rdma completion */
+#define MCA_BTL_FLAGS_RDMA_COMPLETION 0x80
 
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     64*1024   /* internal loopback */
@@ -212,6 +217,7 @@ struct mca_btl_base_descriptor_t {
     void* des_cbdata;
     void* des_context; 
     int32_t des_flags;
+    uint8_t order;
 };
 typedef struct mca_btl_base_descriptor_t mca_btl_base_descriptor_t;
 
@@ -449,9 +455,12 @@ typedef int (*mca_btl_base_module_register_error_fn_t)(
  *
  * @param btl (IN)      BTL module
  * @param size (IN)     Request segment size.
+ * @param order (IN)    The ordering tag (may be MCA_BTL_NO_ORDER)
  */
+
 typedef mca_btl_base_descriptor_t* (*mca_btl_base_module_alloc_fn_t)(
     struct mca_btl_base_module_t* btl,
+    uint8_t order,
     size_t size
 );
 
@@ -486,6 +495,7 @@ typedef struct mca_btl_base_descriptor_t* (*mca_btl_base_module_prepare_fn_t)(
     struct mca_btl_base_endpoint_t* endpoint,
     mca_mpool_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
+    uint8_t order,
     size_t reserve,
     size_t* size
 );

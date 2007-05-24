@@ -360,12 +360,14 @@ int mca_btl_openib_register_error_cb(
  *
  * @param btl (IN)      BTL module
  * @param size (IN)     Request segment size.
+  * @param size (IN) Size of segment to allocate    
  * 
  * When allocating a segment we pull a pre-alllocated segment 
  * from one of two free lists, an eager list and a max list
  */
 mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     struct mca_btl_base_module_t* btl,
+    uint8_t order,
     size_t size)
 {
     mca_btl_openib_frag_t* frag = NULL;
@@ -375,14 +377,27 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     
     if(size <= mca_btl_openib_component.eager_limit){ 
         MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc);
+        if(order == MCA_BTL_NO_ORDER) {
+            order = BTL_OPENIB_HP_QP;
+        } 
+        frag->base.order = order;
+        
     } else if(size <= mca_btl_openib_component.max_send_size) { 
+        if(order == MCA_BTL_NO_ORDER) { 
+            order = BTL_OPENIB_LP_QP; 
+        } else if(order != BTL_OPENIB_LP_QP) { 
+            return NULL;
+        }
+        
         MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc); 
+        frag->base.order = order;
     }
     
     if(NULL == frag)
         return NULL;
 
-    frag->segment.seg_len = size <= openib_btl->super.btl_eager_limit ? size : openib_btl->super.btl_eager_limit;  
+    frag->segment.seg_len = 
+        size <= openib_btl->super.btl_eager_limit ? size : openib_btl->super.btl_eager_limit;  
     frag->base.des_flags = 0; 
     
     return (mca_btl_base_descriptor_t*)frag;
@@ -442,6 +457,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     struct mca_btl_base_endpoint_t* endpoint,
     mca_mpool_base_registration_t* registration, 
     struct ompi_convertor_t* convertor,
+    uint8_t order,
     size_t reserve,
     size_t* size
 )
@@ -496,7 +512,13 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             frag->segment.seg_len = max_data;
             frag->segment.seg_addr.pval = iov.iov_base;
             frag->segment.seg_key.key32[0] = (uint32_t)frag->sg_entry.lkey;
-
+            
+            if(MCA_BTL_NO_ORDER == order) { 
+                frag->base.order = BTL_OPENIB_LP_QP;
+            } else { 
+                frag->base.order = order;
+            }
+            
             BTL_VERBOSE(("frag->sg_entry.lkey = %lu .addr = %llu "
                         "frag->segment.seg_key.key32[0] = %lu",
                         frag->sg_entry.lkey, frag->sg_entry.addr,
@@ -509,13 +531,26 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     if(max_data + reserve <= btl->btl_eager_limit) {
         /* the data is small enough to fit in the eager frag and
          * memory is not prepinned */
+        
         MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc);
+        if(MCA_BTL_NO_ORDER == order) { 
+            frag->base.order = BTL_OPENIB_LP_QP;
+        } else { 
+            frag->base.order = order;
+        }
     }
 
     if(NULL == frag) {
         /* the data doesn't fit into eager frag or eager frag is
          * not available */
+        if(MCA_BTL_NO_ORDER == order) { 
+            order = BTL_OPENIB_LP_QP;
+        } else if(BTL_OPENIB_HP_QP == order){ 
+            return NULL;
+        } 
         MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc);
+        frag->base.order = order;
+
         if(NULL == frag) {
             return NULL;
         }
@@ -539,7 +574,9 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
+    
 
+    
     return &frag->base;
 }
 
@@ -562,6 +599,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     struct mca_btl_base_endpoint_t* endpoint,
     mca_mpool_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
+    uint8_t order,
     size_t reserve,
     size_t* size)
 {
@@ -606,6 +644,13 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
     frag->base.des_flags = 0;
+
+    if(MCA_BTL_NO_ORDER == order) { 
+        frag->base.order = BTL_OPENIB_LP_QP;
+    } else { 
+        frag->base.order = order;
+    }
+
 
     BTL_VERBOSE(("frag->sg_entry.lkey = %lu .addr = %llu "
                 "frag->segment.seg_key.key32[0] = %lu",

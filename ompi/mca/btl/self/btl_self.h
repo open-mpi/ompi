@@ -163,6 +163,7 @@ int mca_btl_self_register(
  */
 mca_btl_base_descriptor_t* mca_btl_self_alloc(
     struct mca_btl_base_module_t* btl,
+    uint8_t order,
     size_t size
 );
 
@@ -188,6 +189,7 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_src(
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_mpool_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
+    uint8_t order,
     size_t reserve,
     size_t* size
 );
@@ -203,6 +205,7 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_dst(
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_mpool_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
+    uint8_t order,
     size_t reserve,
     size_t* size
 );

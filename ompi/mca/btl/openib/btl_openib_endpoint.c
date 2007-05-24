@@ -177,9 +177,10 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
     int do_rdma = 0, prio;
     
     frag->sg_entry.addr = (unsigned long) frag->hdr;
-
-    prio = (frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY) ?
-        BTL_OPENIB_HP_QP : BTL_OPENIB_LP_QP;
+    
+    prio = frag->base.order; 
+    /* (frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY) ? */
+    /*         BTL_OPENIB_HP_QP : BTL_OPENIB_LP_QP; */
 
     if(btl_openib_acquire_send_resources(openib_btl, endpoint, frag,
                 prio, &do_rdma) == OMPI_ERR_OUT_OF_RESOURCE)

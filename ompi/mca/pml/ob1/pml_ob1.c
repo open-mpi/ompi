@@ -249,18 +249,20 @@ static void mca_pml_ob1_fin_completion(
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
 
-int mca_pml_ob1_send_fin_btl(
+int mca_pml_ob1_send_fin(
         ompi_proc_t* proc,
         mca_bml_base_btl_t* bml_btl,
-        void *hdr_des
+        void *hdr_des,
+        uint8_t order
         )
 {
     mca_btl_base_descriptor_t* fin;
     mca_pml_ob1_fin_hdr_t* hdr;
     int rc;
 
-    MCA_PML_OB1_DES_ALLOC(bml_btl, fin, sizeof(mca_pml_ob1_fin_hdr_t));
+    MCA_PML_OB1_DES_ALLOC(bml_btl, fin, order,  sizeof(mca_pml_ob1_fin_hdr_t));
     if(NULL == fin) {
+        MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_des, bml_btl, order);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     fin->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
@@ -347,12 +349,13 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                 }
                 break;
             case MCA_PML_OB1_HDR_TYPE_FIN:
-                rc = mca_pml_ob1_send_fin_btl(pckt->proc, send_dst,
-                        pckt->hdr.hdr_fin.hdr_des.pval);
+                rc = mca_pml_ob1_send_fin(pckt->proc, send_dst,
+                                          pckt->hdr.hdr_fin.hdr_des.pval,
+                                          pckt->order);
                 MCA_PML_OB1_PCKT_PENDING_RETURN(pckt);
                 if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
-                     MCA_PML_OB1_ADD_FIN_TO_PENDING(pckt->proc,
-                             pckt->hdr.hdr_fin.hdr_des.pval, pckt->bml_btl);
+                    MCA_PML_OB1_ADD_FIN_TO_PENDING(pckt->proc,
+                                                   pckt->hdr.hdr_fin.hdr_des.pval, pckt->bml_btl, pckt->order);
                      return;
                 }
                 break;

@@ -163,6 +163,7 @@ int mca_btl_mx_register( struct mca_btl_base_module_t* btl,
  */
 
 mca_btl_base_descriptor_t* mca_btl_mx_alloc( struct mca_btl_base_module_t* btl,
+                                             uint8_t order,
                                              size_t size )
 {
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; 
@@ -180,6 +181,8 @@ mca_btl_base_descriptor_t* mca_btl_mx_alloc( struct mca_btl_base_module_t* btl,
     frag->base.des_src = frag->segment;
     frag->base.des_src_cnt = 1;
     frag->base.des_flags = 0;
+    frag->base.order = MCA_BTL_NO_ORDER;
+
     return (mca_btl_base_descriptor_t*)frag;
 }
 
@@ -210,6 +213,7 @@ mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
                         struct mca_btl_base_endpoint_t* endpoint,
                         struct mca_mpool_base_registration_t* registration,
                         struct ompi_convertor_t* convertor,
+                        uint8_t order,
                         size_t reserve,
                         size_t* size )
 {
@@ -269,6 +273,8 @@ mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
         frag->segment[1].seg_addr.pval = iov.iov_base;
     }
     frag->base.des_src = frag->segment;
+    frag->base.order = MCA_BTL_NO_ORDER;
+
     return &frag->base;
 }
 
@@ -290,6 +296,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
                                                    struct mca_btl_base_endpoint_t* endpoint,
                                                    struct mca_mpool_base_registration_t* registration,
                                                    struct ompi_convertor_t* convertor,
+                                                   uint8_t order,
                                                    size_t reserve,
                                                    size_t* size)
 {
@@ -323,6 +330,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
 
     frag->base.des_dst = frag->segment;
     frag->base.des_dst_cnt = 1;
+    frag->base.order = MCA_BTL_NO_ORDER;
 
     return &frag->base;
 }

@@ -124,10 +124,12 @@ int mca_btl_template_component_open(void)
         mca_btl_template_param_register_int ("min_send_size", 64*1024) - sizeof(mca_btl_base_header_t);
     mca_btl_template_module.super.btl_max_send_size =
         mca_btl_template_param_register_int ("max_send_size", 128*1024) - sizeof(mca_btl_base_header_t);
-    mca_btl_template_module.super.btl_min_rdma_size = 
-        mca_btl_template_param_register_int("min_rdma_size", 1024*1024); 
-    mca_btl_template_module.super.btl_max_rdma_size = 
-        mca_btl_template_param_register_int("max_rdma_size", 1024*1024); 
+    mca_btl_template_module.super.btl_min_rdma_pipeline_size = 
+        mca_btl_template_param_register_int("min_rdma_pipeline_size", 1024*1024); 
+    mca_btl_template_module.super.btl_rdma_pipeline_frag_size = 
+        mca_btl_template_param_register_int("rdma_pipeline_frag_size", 1024*1024); 
+    mca_btl_template_module.super.btl_rdma_pipeline_offset = 
+        mca_btl_template_param_register_int("rdma_pipeline_offset", 1024*1024); 
     mca_btl_template_module.super.btl_flags  = 
         mca_btl_template_param_register_int("flags", MCA_BTL_FLAGS_PUT); 
     return OMPI_SUCCESS;

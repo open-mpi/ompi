@@ -427,9 +427,11 @@ static inline int mca_btl_udapl_sendrecv(mca_btl_udapl_module_t* btl,
     int rc;
 
     /* Post a receive to get the peer's address data */
-    frag = (mca_btl_udapl_frag_t*)mca_btl_udapl_alloc(
-            (mca_btl_base_module_t*)btl, sizeof(mca_btl_udapl_addr_t) +
-            sizeof(int32_t));
+    frag = (mca_btl_udapl_frag_t*)
+        mca_btl_udapl_alloc(
+                            (mca_btl_base_module_t*)btl, MCA_BTL_NO_ORDER, 
+                            sizeof(mca_btl_udapl_addr_t) +
+                            sizeof(int32_t));
     cookie.as_ptr = frag;
 
     frag->type = MCA_BTL_UDAPL_CONN_RECV;
@@ -449,9 +451,12 @@ static inline int mca_btl_udapl_sendrecv(mca_btl_udapl_module_t* btl,
 
 
     /* Send our local address data over this EP */
-    frag = (mca_btl_udapl_frag_t*)mca_btl_udapl_alloc(
-            (mca_btl_base_module_t*)btl, sizeof(mca_btl_udapl_addr_t) +
-            sizeof(int32_t));
+    frag = (mca_btl_udapl_frag_t*)
+        mca_btl_udapl_alloc(
+                            (mca_btl_base_module_t*)btl, 
+                            MCA_BTL_NO_ORDER,
+                            sizeof(mca_btl_udapl_addr_t) +
+                            sizeof(int32_t));
     cookie.as_ptr = frag;
 
     memcpy(frag->segment.seg_addr.pval,
