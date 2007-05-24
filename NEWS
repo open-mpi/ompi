@@ -29,6 +29,9 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
+- Fix issue found by Josh England: ompi_info would not show framework
+  MCA parameters set in the environment properly.
+  --> Expected ?1.2.x?
 - Release tarballs now use Autoconf 2.61 and Automake 1.10.
   --> Expected: 1.3
 - Addition of a finer symbols export control via the visibiliy feature
