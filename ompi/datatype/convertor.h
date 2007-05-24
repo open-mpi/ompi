@@ -30,10 +30,7 @@
 #include <sys/uio.h>
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
+BEGIN_C_DECLS
 /*
  * CONVERTOR SECTION
  */
@@ -63,7 +60,7 @@ typedef void*(*memalloc_fct_t)( size_t* pLength, void* userdata );
 struct ompi_convertor_master_t;
 
 typedef struct dt_stack {
-    int16_t   index;    /**< index in the element description */
+    int32_t   index;    /**< index in the element description */
     int16_t   type;     /**< the type used for the last pack/unpack (original or DT_BYTE) */
     size_t    count;    /**< number of times we still have to do it */
     ptrdiff_t disp;     /**< actual displacement depending on the count field */
@@ -83,7 +80,7 @@ struct ompi_convertor_t {
     size_t                        remote_size;
     const struct ompi_datatype_t* pDesc;        /**< the datatype description associated with the convertor */
     const struct dt_type_desc*    use_desc;     /**< the version used by the convertor (normal or optimized) */
-    uint32_t                      count;        /**< the total number of full datatype elements */
+    opal_ddt_count_t              count;        /**< the total number of full datatype elements */
     unsigned char*                pBaseBuf;     /**< initial buffer as supplied by the user */
     dt_stack_t*                   pStack;       /**< the local stack for the actual conversion */
     uint32_t                      stack_size;   /**< size of the allocated stack */
@@ -376,8 +373,5 @@ OMPI_DECLSPEC int
 ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
                                         size_t* position );
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
+END_C_DECLS
 #endif  /* CONVERTOR_H_HAS_BEEN_INCLUDED */

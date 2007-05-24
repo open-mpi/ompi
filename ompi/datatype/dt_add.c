@@ -117,7 +117,18 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
         place_needed = (extent == (ptrdiff_t)pdtAdd->size ? 1 : 3);
     } else {
         place_needed = pdtAdd->desc.used;
-        if( count != 1 ) place_needed += 2;  /* for the loop markers */
+        if( count != 1 ) {
+            if( place_needed < (MAX_DT_COMPONENT_COUNT - 2) ) {
+                place_needed += 2;  /* for the loop markers */
+            } else {
+                /* The data-type contain too many elements. We will be unable
+                 * to handle it, so let's just complain by now.
+                 */
+                opal_output( 0, "Too many elements in the datatype. The limit is %ud\n",
+                             MAX_DT_COMPONENT_COUNT );
+                return OMPI_ERROR;
+            }
+        }
     }
 
     /*
