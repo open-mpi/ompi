@@ -45,9 +45,7 @@
 #include "ompi/class/ompi_pointer_array.h"
 #include "mpi.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
 
@@ -89,9 +87,16 @@ extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
 
 typedef union dt_elem_desc dt_elem_desc_t;
 
+/**
+ * The number of supported entries in the data-type definition and the
+ * associated type.
+ */
+#define MAX_DT_COMPONENT_COUNT UINT_MAX
+typedef uint32_t opal_ddt_count_t;
+
 typedef struct dt_type_desc {
-    uint32_t          length;  /* the maximum number of elements in the description array */
-    uint32_t          used;    /* the number of used elements in the description array */
+    opal_ddt_count_t  length;  /* the maximum number of elements in the description array */
+    opal_ddt_count_t  used;    /* the number of used elements in the description array */
     dt_elem_desc_t*   desc;
 } dt_type_desc_t;
 
@@ -238,7 +243,5 @@ OMPI_DECLSPEC ompi_datatype_t*
 ompi_ddt_create_from_packed_description( void** packed_buffer,
                                          struct ompi_proc_t* remote_processor );
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif  /* DATATYPE_H_HAS_BEEN_INCLUDED */

@@ -136,9 +136,7 @@ static inline void DUMP( char* fmt, ... )
 
 #define DT_INCREASE_STACK     8
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct ddt_elem_id_description {
     uint16_t   flags;  /**< flags for the record */
@@ -296,7 +294,5 @@ static inline int GET_FIRST_NON_LOOP( const dt_elem_desc_t* _pElem )
 
 OMPI_DECLSPEC int32_t ompi_ddt_print_args( const ompi_datatype_t* pData );
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif  /* DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED */
