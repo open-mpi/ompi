@@ -162,32 +162,6 @@ static mca_oob_t mca_oob_tcp = {
 };
 
 /*
- * Utility function to register/lookup module parameters.
- */
-
-static inline int mca_oob_tcp_param_register_int(
-    const char* param_name,
-    int default_value)
-{
-    int id = mca_base_param_register_int("oob","tcp",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-
-
-static inline char* mca_oob_tcp_param_register_str(
-    const char* param_name,
-    const char* default_value)
-{
-    int id = mca_base_param_register_string("oob","tcp",param_name,NULL,default_value);
-    char* param_value = NULL;
-    mca_base_param_lookup_string(id,&param_value);
-    return param_value;
-}
-
-
-/*
  * Initialize global variables used w/in this module.
  */
 int mca_oob_tcp_component_open(void)
@@ -236,16 +210,35 @@ int mca_oob_tcp_component_open(void)
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_pending_connections_lock, opal_mutex_t);
 
     /* register oob module parameters */
-    mca_oob_tcp_component.tcp_peer_limit =
-        mca_oob_tcp_param_register_int("peer_limit", -1);
-    mca_oob_tcp_component.tcp_peer_retries =
-        mca_oob_tcp_param_register_int("peer_retries", 60);
-    mca_oob_tcp_component.tcp_debug =
-        mca_oob_tcp_param_register_int("debug", 0);
-    mca_oob_tcp_component.tcp_sndbuf =
-        mca_oob_tcp_param_register_int("sndbuf", 128*1024);
-    mca_oob_tcp_component.tcp_rcvbuf =
-        mca_oob_tcp_param_register_int("rcvbuf", 128*1024);
+    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
+                           "peer_limit",
+                           "Maximum number of peer connections to simultaneously maintain (-1 = infinite)",
+                           false, false, -1,
+                           &mca_oob_tcp_component.tcp_peer_limit);
+
+    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
+                           "peer_retries",
+                           "Number of times to try shutting down a connection before giving up",
+                           false, false, 60,
+                           &mca_oob_tcp_component.tcp_peer_retries);
+
+    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
+                           "debug",
+                           "Enable (1) / disable (0) debugging output for this component",
+                           false, false, 0,
+                           &mca_oob_tcp_component.tcp_debug);
+
+    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
+                           "sndbuf",
+                           "TCP socket send buffering size (in bytes)",
+                           false, false, 128 * 1024,
+                           &mca_oob_tcp_component.tcp_sndbuf);
+
+    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
+                           "rcvbuf",
+                           "TCP socket receive buffering size (in bytes)",
+                           false, false, 128 * 1024,
+                           &mca_oob_tcp_component.tcp_rcvbuf);
 
     mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
                               "if_include",
