@@ -247,49 +247,45 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
     size_t max_data = *size;
     int rc;
 
+    if( OPAL_UNLIKELY(max_data > UINT32_MAX) ) {  /* limit the size to what we support */
+        max_data = (size_t)UINT32_MAX;
+    }
     /*
      * if we aren't pinning the data and the requested size is less
      * than the eager limit pack into a fragment from the eager pool
-    */
-
+     */
     if (max_data+reserve <= btl->btl_eager_limit) {
         MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag, rc);
-    }
-
-    /* 
-     * otherwise pack as much data as we can into a fragment
-     * that is the max send size.
-     */
-    else {
+    } else {
+        /* 
+         * otherwise pack as much data as we can into a fragment
+         * that is the max send size.
+         */
         MCA_BTL_TCP_FRAG_ALLOC_MAX(frag, rc);
     }
-    if(NULL == frag) {
+    if( OPAL_UNLIKELY(NULL == frag) ) {
         return NULL;
     }
 
     frag->segments[0].seg_addr.pval = (frag + 1);
     frag->segments[0].seg_len = reserve;
 
-    if(max_data == 0) {
-
-        frag->base.des_src_cnt = 1;
-
-    } else if(ompi_convertor_need_buffers(convertor)) {
+    frag->base.des_src_cnt = 1;
+    if(ompi_convertor_need_buffers(convertor)) {
 
         if (max_data + reserve > frag->size) {
             max_data = frag->size - reserve;
         }
         iov.iov_len = max_data;
         iov.iov_base = (IOVBASE_TYPE*)(((unsigned char*)(frag->segments[0].seg_addr.pval)) + reserve);
-
+        
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
-        if( rc < 0 ) {
+        if( OPAL_UNLIKELY(rc < 0) ) {
             mca_btl_tcp_free(btl, &frag->base);
             return NULL;
         }
-
+        
         frag->segments[0].seg_len += max_data;
-        frag->base.des_src_cnt = 1;
 
     } else {
 
@@ -297,7 +293,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
         iov.iov_base = NULL;
 
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
-        if( rc < 0 ) {
+        if( OPAL_UNLIKELY(rc < 0) ) {
             mca_btl_tcp_free(btl, &frag->base);
             return NULL;
         }
@@ -341,8 +337,11 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
     mca_btl_tcp_frag_t* frag;
     int rc;
 
+    if( OPAL_UNLIKELY((*size) > UINT32_MAX) ) {  /* limit the size to what we support */
+        *size = (size_t)UINT32_MAX;
+    }
     MCA_BTL_TCP_FRAG_ALLOC_USER(frag, rc);
-    if(NULL == frag) {
+    if( OPAL_UNLIKELY(NULL == frag) ) {
         return NULL;
     }
 
