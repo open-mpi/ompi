@@ -226,12 +226,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     int num_processors;
 #endif
     
-    /*
-     * ORTE takes the responsibility of starting the progress and event
-     * (and other) engines.
-     */
-    opal_init_only = false;
-
     /* Join the run-time environment - do the things that don't hit
        the registry */
 

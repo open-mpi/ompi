@@ -39,12 +39,6 @@ int orte_init(bool infrastructure, bool barrier)
 {
     int rc;
     
-    /*
-     * ORTE takes the responsibility of starting the progress and event
-     * (and other) engines.
-     */
-    opal_init_only = false;
-
     if (orte_initialized) {
         return ORTE_SUCCESS;
     }

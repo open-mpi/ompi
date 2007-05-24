@@ -534,7 +534,6 @@ static int ckpt_init(int argc, char *argv[]) {
      * Note: This must happen before opal_init().
      */
     opal_cr_set_enabled(false);
-    opal_init_only = false;
 
     /* Select the none component, since we don't actually use a checkpointer */
     opal_setenv(mca_base_param_env_var("crs"),

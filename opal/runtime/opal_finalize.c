@@ -88,14 +88,12 @@ opal_finalize(void)
         return OPAL_SUCCESS;
     }
 
-    if( opal_init_only ) {
-        /* close the checkpoint and restart service */
-        opal_cr_finalize();
+    /* close the checkpoint and restart service */
+    opal_cr_finalize();
 
-        opal_progress_finalize();
+    opal_progress_finalize();
 
-        opal_event_fini();
-    }
+    opal_event_fini();
 
     /* close high resolution timers */
     opal_timer_base_close();
