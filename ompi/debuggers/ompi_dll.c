@@ -77,7 +77,6 @@
 #include <stdlib.h>
 #endif  /* defined(HAVE_STDLIB_H) */
 
-#include "ompi/request/request.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 
 /* 
