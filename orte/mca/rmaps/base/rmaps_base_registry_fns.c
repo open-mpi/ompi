@@ -675,12 +675,9 @@ int orte_rmaps_base_get_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
         ORTE_RMAPS_BOOKMARK,
         NULL
     };
-    orte_std_cntr_t num_attrs_defd;
     char **tokens;
     
     OPAL_TRACE(2);
-    
-    num_attrs_defd = sizeof(attrs)/sizeof(char*);
     
     /* setup the tokens to point to this job's container */
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_tokens(&tokens, &num_tokens, job))) {
