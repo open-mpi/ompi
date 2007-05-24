@@ -43,6 +43,11 @@ opal_installdirs_base_component_t mca_installdirs_env_component = {
         /* Whether the component is checkpointable or not */
         true
     },
+
+    /* Next the opal_install_dirs_t install_dirs_data information */
+    {
+        NULL,
+    },
 };
 
 

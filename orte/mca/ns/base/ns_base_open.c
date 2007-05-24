@@ -98,7 +98,9 @@ mca_ns_base_module_t orte_ns = {
     orte_ns_base_dump_cells_not_available,
     orte_ns_base_dump_jobs_not_available,
     orte_ns_base_dump_tags_not_available,
-    orte_ns_base_dump_datatypes_not_available
+    orte_ns_base_dump_datatypes_not_available,
+
+    orte_ns_base_ft_event_not_available
 };
 
 bool mca_ns_base_selected = false;

@@ -73,6 +73,10 @@ orte_filem_rsh_component_t mca_filem_rsh_component = {
         20
     },
 
+    /* cp_command */
+    NULL,
+
+    /* remote_sh_command */
     NULL
 };
 

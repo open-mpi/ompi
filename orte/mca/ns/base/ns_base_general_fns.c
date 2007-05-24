@@ -68,11 +68,21 @@ orte_ns_base_define_data_type_not_available(
 }
 
 /****    GET PEERS    ****/
-int orte_ns_base_get_peers_not_available(orte_process_name_t **procs,
-                                         orte_std_cntr_t *num_procs, opal_list_t *attributes)
+int
+orte_ns_base_get_peers_not_available(orte_process_name_t **procs,
+                                     orte_std_cntr_t *num_procs, opal_list_t *attributes)
 {
     *procs = NULL;
     *num_procs = 0;
+    ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
+    return ORTE_ERR_UNREACH;
+}
+
+
+/****    FT Event     ****/
+int
+orte_ns_base_ft_event_not_available(int state)
+{
     ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
     return ORTE_ERR_UNREACH;
 }
