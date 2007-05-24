@@ -58,21 +58,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_COORDS,
 #endif
 
 void mpi_cart_coords_f(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxdims,
-		       MPI_Fint *coords, MPI_Fint *ierr)
+                       MPI_Fint *coords, MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
-    int size;
     OMPI_ARRAY_NAME_DECL(coords);
-    
-    c_comm = MPI_Comm_f2c(*comm);
-    size = OMPI_FINT_2_INT(*maxdims);
 
-    OMPI_ARRAY_FINT_2_INT_ALLOC(coords, size);
-    *ierr = OMPI_INT_2_FINT(MPI_Cart_coords(c_comm, 
-					    OMPI_FINT_2_INT(*rank),
-					    OMPI_FINT_2_INT(*maxdims),
-					    OMPI_ARRAY_NAME_CONVERT(coords)));
+    c_comm = MPI_Comm_f2c(*comm);
+
+    OMPI_ARRAY_FINT_2_INT_ALLOC(coords, OMPI_FINT_2_INT(*maxdims));
+    *ierr = OMPI_INT_2_FINT(MPI_Cart_coords(c_comm,
+                                            OMPI_FINT_2_INT(*rank),
+                                            OMPI_FINT_2_INT(*maxdims),
+                                            OMPI_ARRAY_NAME_CONVERT(coords)));
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
-        OMPI_ARRAY_INT_2_FINT(coords, size);
+        OMPI_ARRAY_INT_2_FINT(coords, OMPI_FINT_2_INT(*maxdims));
     }
 }
