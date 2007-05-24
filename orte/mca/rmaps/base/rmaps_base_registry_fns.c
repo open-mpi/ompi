@@ -79,27 +79,27 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
     };
 
     OPAL_TRACE(1);
-    
+
     /* define default answer */
     *map = NULL;
-    
+
     /* create the object */
     mapping = OBJ_NEW(orte_job_map_t);
     if (NULL == mapping) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     /* set the jobid */
     mapping->job = jobid;
-    
+
     /* get the job segment name */
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(mapping);
         return rc;
     }
-        
+
     /* query the application context */
     if(ORTE_SUCCESS != (rc = orte_rmgr.get_app_context(jobid, &(mapping->apps), &(mapping->num_apps)))) {
         ORTE_ERROR_LOG(rc);
@@ -114,7 +114,7 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
         keys,
         &num_values,
         &values);
-    
+
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(mapping);
@@ -149,7 +149,7 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
                     }
                     mapping->vpid_range = *vptr;
                     continue;
-                }                
+                }
                 if(strcmp(value->keyvals[kv]->key, ORTE_JOB_MAPPING_MODE_KEY) == 0) {
                     /* use the dss.copy function here to protect us against zero-length strings */
                     if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&mapping->mapping_mode, value->keyvals[kv]->value->data, ORTE_STRING))) {
@@ -157,10 +157,10 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
                         goto cleanup;
                     }
                     continue;
-                }                
+                }
             }
         }
-        
+
         else {
             /* this came from a process container */
             proc = OBJ_NEW(orte_mapped_proc_t);
@@ -169,10 +169,10 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            
+
             for(kv = 0; kv<value->cnt; kv++) {
                 keyval = value->keyvals[kv];
-                
+
                 if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
                     if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&vptr, keyval->value, ORTE_VPID))) {
                         ORTE_ERROR_LOG(rc);
@@ -289,8 +289,8 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    
-    
+
+
     /* all done */
     *map = mapping;
     rc = ORTE_SUCCESS;
@@ -299,12 +299,12 @@ cleanup:
     if(rc != ORTE_SUCCESS) {
         OBJ_RELEASE(mapping);
     }
-    
+
     for (v=0; v < num_values; v++) {
         OBJ_RELEASE(values[v]);
     }
     if (NULL != values) free(values);
-    
+
     return rc;
 }
 
@@ -315,21 +315,21 @@ int orte_rmaps_base_get_node_map(orte_mapped_node_t **node, orte_cellid_t cell,
     opal_list_item_t *item;
     orte_mapped_node_t *nptr;
     int rc;
-    
+
     /* set default answer */
     *node = NULL;
-    
+
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_job_map(&map, job))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     /* scan the map for the indicated node */
     for (item = opal_list_get_first(&map->nodes);
          item != opal_list_get_end(&map->nodes);
          item = opal_list_get_next(item)) {
         nptr = (orte_mapped_node_t*)item;
-        
+
         if (cell == nptr->cell && 0 == strcmp(nodename, nptr->nodename)) {
             *node = nptr;
             /* protect the node object from release when we get rid
@@ -340,7 +340,7 @@ int orte_rmaps_base_get_node_map(orte_mapped_node_t **node, orte_cellid_t cell,
             return ORTE_SUCCESS;
         }
     }
-    
+
     /* if we get here, then the node wasn't found */
     OBJ_RELEASE(map);
     return ORTE_ERR_NOT_FOUND;
@@ -365,7 +365,7 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
     orte_proc_state_t proc_state=ORTE_PROC_STATE_INIT;
 
     OPAL_TRACE(2);
-    
+
     for(item =  opal_list_get_first(&map->nodes);
         item != opal_list_get_end(&map->nodes);
         item =  opal_list_get_next(item)) {
@@ -387,7 +387,7 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, map->job))) {
         ORTE_ERROR_LOG(rc);
         free(values);
@@ -459,7 +459,7 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
              item2 != opal_list_get_end(&node->procs);
              item2 = opal_list_get_next(item2)) {
             proc = (orte_mapped_proc_t*)item2;
-            
+
             value = values[index++];
 
             /* initialize keyvals */
@@ -487,17 +487,17 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            
+
             if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[5]), ORTE_NODE_USERNAME_KEY, ORTE_STRING, node->username))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            
+
             if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[6]), ORTE_NODE_OVERSUBSCRIBED_KEY, ORTE_BOOL, &(node->oversubscribed)))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            
+
             if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[7]), ORTE_PROC_APP_CONTEXT_KEY, ORTE_STD_CNTR, &(proc->app_idx)))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
@@ -512,12 +512,12 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            
+
             if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[10]), ORTE_NODE_NUM_PROCS_KEY, ORTE_STD_CNTR, &(node->num_procs)))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            
+
 #if OPAL_ENABLE_FT == 1
             /*
              * Checkpoint tokens
@@ -527,7 +527,7 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
             if( NULL == proc->ckpt_snapshot_loc)
                 proc->ckpt_snapshot_loc = strdup("");
 
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[11]), 
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[11]),
                                                              ORTE_PROC_CKPT_STATE_KEY, ORTE_SIZE,
                                                              &(proc->ckpt_state)))) {
                 ORTE_ERROR_LOG(rc);
@@ -535,14 +535,14 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
             }
 
             if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[12]),
-                                                             ORTE_PROC_CKPT_SNAPSHOT_REF_KEY, ORTE_STRING, 
+                                                             ORTE_PROC_CKPT_SNAPSHOT_REF_KEY, ORTE_STRING,
                                                              proc->ckpt_snapshot_ref))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
 
             if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[13]),
-                                                             ORTE_PROC_CKPT_SNAPSHOT_LOC_KEY, ORTE_STRING, 
+                                                             ORTE_PROC_CKPT_SNAPSHOT_LOC_KEY, ORTE_STRING,
                                                              proc->ckpt_snapshot_loc))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
@@ -596,11 +596,11 @@ int orte_rmaps_base_store_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
         ORTE_RMAPS_BOOKMARK
     };
     orte_std_cntr_t num_attrs_defd;
-    
+
     OPAL_TRACE(2);
-    
+
     num_attrs_defd = sizeof(attrs)/sizeof(char*);
-    
+
     /* count the number of attributes we will need to store */
     num_attrs_found = 0;
     for (i=0; i < num_attrs_defd; i++) {
@@ -609,7 +609,7 @@ int orte_rmaps_base_store_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
 
     /* if nothing found, then nothing to do! */
     if (0 == num_attrs_found) return ORTE_SUCCESS;
-    
+
     /* setup to store the found values */
     if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value,
                                                     ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_AND,
@@ -617,14 +617,14 @@ int orte_rmaps_base_store_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     /* setup the tokens to point to this job's container */
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_tokens(&(value->tokens), &num_tokens, job))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(value);
         return rc;
     }
-    
+
     /* copy the data that is to be stored */
     for (i=0, j=0; i < num_attrs_defd; i++) {
         if (NULL != (attr = orte_rmgr.find_attribute(attr_list, attrs[i]))) {
@@ -646,15 +646,15 @@ int orte_rmaps_base_store_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
             j++;
         }
     }
-    
+
     /* put the data onto the registry */
     if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &value))) {
         ORTE_ERROR_LOG(rc);
     }
-    
+
     /* cleanup memory */
     OBJ_RELEASE(value);
-    
+
     return rc;
 }
 
@@ -676,15 +676,15 @@ int orte_rmaps_base_get_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
         NULL
     };
     char **tokens;
-    
+
     OPAL_TRACE(2);
-    
+
     /* setup the tokens to point to this job's container */
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_tokens(&tokens, &num_tokens, job))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     /* query the mapping plan data from the registry */
     if (ORTE_SUCCESS != (rc = orte_gpr.get(ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
                                            ORTE_JOBINFO_SEGMENT,
@@ -693,14 +693,14 @@ int orte_rmaps_base_get_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     /*  It is okay for there to be 0 values returned as this just means a mapping plan
      * was not previously stored on the registry
      */
     if (0 == num_vals) {
         return ORTE_SUCCESS;
     }
-    
+
     /* should only be one value returned here since there is only one
      * container/job on the segment - error otherwise.
      */
@@ -708,14 +708,14 @@ int orte_rmaps_base_get_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
         ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
         return ORTE_ERR_GPR_DATA_CORRUPT;
     }
-    
+
     /* update the data on the list. This will OVERWRITE any matching data
      * on that list....USER BEWARE!
      */
     value = values[0];
     for (i=0; i < value->cnt; i++) {
         kval = value->keyvals[i];
-        
+
         if (NULL != kval->value) {
             if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attr_list, kval->key,
                                                               kval->value->type,
@@ -736,9 +736,9 @@ int orte_rmaps_base_get_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
             }
         }
     }
-    
+
     OBJ_RELEASE(value);
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -750,16 +750,16 @@ int orte_rmaps_base_update_mapping_state(orte_jobid_t parent_job,
     orte_attribute_t *attr;
     orte_gpr_value_t *value;
     orte_std_cntr_t num_tokens;
-    
+
     OPAL_TRACE(2);
-    
+
     /* see if the bookmark is present - if not, we report this as an error so
      * that the RMAPS component developer can correct it
      */
     if (NULL == (attr = orte_rmgr.find_attribute(attrs, ORTE_RMAPS_BOOKMARK))) {
         return ORTE_ERR_NOT_FOUND;
     }
-    
+
     /* setup to store the bookmark */
     if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value,
                                                     ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_AND,
@@ -767,14 +767,14 @@ int orte_rmaps_base_update_mapping_state(orte_jobid_t parent_job,
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     /* setup the tokens to point to this job's container */
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_tokens(&(value->tokens), &num_tokens, parent_job))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(value);
         return rc;
     }
-    
+
     /* copy the data that is to be stored */
     if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), attr->key,
                                                      attr->value->type, attr->value->data))) {
@@ -782,15 +782,15 @@ int orte_rmaps_base_update_mapping_state(orte_jobid_t parent_job,
         OBJ_RELEASE(value);
         return rc;
     }
-    
+
     /* put the data onto the registry */
     if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &value))) {
         ORTE_ERROR_LOG(rc);
     }
-    
+
     /* cleanup memory */
     OBJ_RELEASE(value);
-    
+
     return rc;
 }
 
