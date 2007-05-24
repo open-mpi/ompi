@@ -166,16 +166,6 @@ extern "C" {
 
     int orte_rml_ftrm_xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc);
 
-
-    int orte_rml_ftrm_register_contact_info(void);
-    
-    int orte_rml_ftrm_register_subscription(orte_jobid_t job, char *trigger);
-    
-    int orte_rml_ftrm_get_contact_info(orte_process_name_t *name, orte_gpr_notify_data_t **data);
-    
-    void orte_rml_ftrm_update_contact_info(orte_gpr_notify_data_t* data,
-                                           void* cbdata);
-    
     /*
      * Register a callback on loss of connection
      */
@@ -186,6 +176,14 @@ extern "C" {
      * FT Event
      */
     int orte_rml_ftrm_ft_event(int state);
+
+    int orte_rml_ftrm_register_contact_info(void);
+
+    int orte_rml_ftrm_register_subscription(orte_jobid_t job, char *trigger);
+
+    int orte_rml_ftrm_get_contact_info(orte_process_name_t *name, orte_gpr_notify_data_t **data);
+
+    void orte_rml_ftrm_update_contact_info(orte_gpr_notify_data_t* data, void* cbdata);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
