@@ -444,65 +444,6 @@ int orte_rml_ftrm_xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc)
 }
 
 
-int orte_rml_ftrm_register_contact_info(void)
-{
-    int ret;
-    
-    opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: register_contact_info()");
-    
-    if( NULL != wrapped_module.register_contact_info ) {
-        if( ORTE_SUCCESS != (ret = wrapped_module.register_contact_info() ) ) {
-            return ret;
-        }
-    }
-    
-    return ORTE_SUCCESS;
-}
-
-int orte_rml_ftrm_register_subscription(orte_jobid_t job, char *trigger)
-{
-    int ret;
-    
-    opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: register_subscription()");
-    
-    if( NULL != wrapped_module.register_subscription ) {
-        if( ORTE_SUCCESS != (ret = wrapped_module.register_subscription(job, trigger) ) ) {
-            return ret;
-        }
-    }
-    
-    return ORTE_SUCCESS;
-}
-
-int orte_rml_ftrm_get_contact_info(orte_process_name_t *name, orte_gpr_notify_data_t **data)
-{
-    int ret;
-    
-    opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: get_contact_info()");
-    
-    if( NULL != wrapped_module.get_contact_info ) {
-        if( ORTE_SUCCESS != (ret = wrapped_module.get_contact_info(name, data) ) ) {
-            return ret;
-        }
-    }
-    
-    return ORTE_SUCCESS;
-}
-
-void orte_rml_ftrm_update_contact_info(orte_gpr_notify_data_t* data,
-                                      void* cbdata)
-{
-    opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: update_contact_info()");
-    
-    if( NULL != wrapped_module.update_contact_info ) {
-        wrapped_module.update_contact_info(data, cbdata);
-    }
-}
-
 /*
  * Register a callback on loss of connection
  */
@@ -538,6 +479,64 @@ int orte_rml_ftrm_del_exception_handler(orte_rml_exception_callback_t cbfunc)
     return ORTE_SUCCESS;
 }
 
+int orte_rml_ftrm_register_contact_info(void)
+{
+    int ret;
+
+    opal_output_verbose(20, rml_ftrm_output_handle,
+                        "orte_rml_ftrm: register_contact_info()");
+
+    if( NULL != wrapped_module.register_contact_info ) {
+        if( ORTE_SUCCESS != (ret = wrapped_module.register_contact_info() ) ) {
+            return ret;
+        }
+    }
+
+    return ORTE_SUCCESS;
+}
+
+int orte_rml_ftrm_register_subscription(orte_jobid_t job, char *trigger)
+{
+    int ret;
+
+    opal_output_verbose(20, rml_ftrm_output_handle,
+                        "orte_rml_ftrm: register_subscription()");
+
+    if( NULL != wrapped_module.register_subscription ) {
+        if( ORTE_SUCCESS != (ret = wrapped_module.register_subscription(job, trigger) ) ) {
+            return ret;
+        }
+    }
+
+    return ORTE_SUCCESS;
+}
+
+int orte_rml_ftrm_get_contact_info(orte_process_name_t *name, orte_gpr_notify_data_t **data)
+{
+    int ret;
+
+    opal_output_verbose(20, rml_ftrm_output_handle,
+                        "orte_rml_ftrm: get_contact_info()");
+
+    if( NULL != wrapped_module.get_contact_info ) {
+        if( ORTE_SUCCESS != (ret = wrapped_module.get_contact_info(name, data) ) ) {
+            return ret;
+        }
+    }
+
+    return ORTE_SUCCESS;
+}
+
+void orte_rml_ftrm_update_contact_info(orte_gpr_notify_data_t* data, void* cbdata)
+{
+
+    opal_output_verbose(20, rml_ftrm_output_handle,
+                        "orte_rml_ftrm: update_contact_info()");
+
+    if( NULL != wrapped_module.update_contact_info ) {
+        wrapped_module.update_contact_info(data, cbdata);
+    }
+}
 
 /*
  * FT Event

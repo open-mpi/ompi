@@ -90,7 +90,12 @@ orte_rml_module_t orte_rml_ftrm_module = {
     orte_rml_ftrm_add_exception_handler,
     orte_rml_ftrm_del_exception_handler,
 
-    orte_rml_ftrm_ft_event
+    orte_rml_ftrm_ft_event,
+
+    orte_rml_ftrm_register_contact_info,
+    orte_rml_ftrm_register_subscription,
+    orte_rml_ftrm_get_contact_info,
+    orte_rml_ftrm_update_contact_info
 };
 
 int rml_ftrm_output_handle;
