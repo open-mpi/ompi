@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -45,6 +45,27 @@ typedef struct __dt_args {
 } ompi_ddt_args_t;
 
 /**
+ * Compute the next value which is a multiple of PWROF2. Works fine
+ * only for power of 2 alignements.
+ */
+#define ALIGN_PTR_TO( VALUE, PWROF2 )                           \
+    do {                                                        \
+        intptr_t _align = (intptr_t)((1 << PWROF2) - 1);        \
+        intptr_t _ptr = (intptr_t)(VALUE) + _align;             \
+        (VALUE) = (void*)(_ptr & (~_align));                    \
+    } while(0)
+
+#define ALIGN_INT_TO( VALUE, PWROF2 )                           \
+    do {                                                        \
+        int _align = (intptr_t)((1 << PWROF2) - 1);             \
+        int _val = (int)(VALUE) + _align;                       \
+        (VALUE) = (_val & (~_align));                           \
+    } while(0)
+
+#define CHECK_ALIGN_TO( VALUE, PWROF2 )                 \
+    assert( 0 == ((VALUE) & ((1 << PWROF2) - 1)) );     \
+
+/**
  * Some architecture require that 64 bits pointers (to pointers) has to
  * be 64 bits aligned. As in the ompi_ddt_args_t structure we have 2 such
  * pointers and one to an array of ints, if we start by setting the 64
@@ -76,6 +97,7 @@ typedef struct __dt_args {
         pArgs->ref_count = 1;                                           \
         pArgs->total_pack_size = (4 + (IC)) * sizeof(int) +             \
             (AC) * sizeof(MPI_Aint) + (DC) * sizeof(int);               \
+        ALIGN_INT_TO( pArgs->total_pack_size, sizeof(MPI_Aint) );       \
         (PDATA)->args = (void*)pArgs;					\
         (PDATA)->packed_description = NULL;                             \
     } while(0)
@@ -207,6 +229,10 @@ int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
              */
             OBJ_RETAIN( d[pos] );
             pArgs->total_pack_size += ((ompi_ddt_args_t*)d[pos]->args)->total_pack_size;
+            /* as total_pack_size is always aligned to MPI_Aint size their sum
+             * will be aligned to ...
+             */
+            CHECK_ALIGN_TO( pArgs->total_pack_size, sizeof(MPI_Aint) );
         }
     }
     return MPI_SUCCESS;
@@ -383,7 +409,7 @@ static inline int __ompi_ddt_pack_description( ompi_datatype_t* datatype,
                                                void** packed_buffer, int* next_index )
 {
     int* position = (int*)*packed_buffer;
-    int local_index = 0, i;
+    int local_index, i;
     ompi_ddt_args_t* args = (ompi_ddt_args_t*)datatype->args;
     char* next_packed = (char*)*packed_buffer;
 
@@ -394,23 +420,39 @@ static inline int __ompi_ddt_pack_description( ompi_datatype_t* datatype,
     }
     /* For duplicated datatype we don't have to store all the information */
     if( MPI_COMBINER_DUP == args->create_type ) {
-        position[local_index++] = args->create_type;
-        position[local_index++] = args->d[0]->id;
+        position[0] = args->create_type;
+        position[1] = args->d[0]->id;
         return OMPI_SUCCESS;
     }
-    position[local_index++] = args->create_type;
-    position[local_index++] = args->ci;
-    position[local_index++] = args->ca;
-    position[local_index++] = args->cd;
-    memcpy( &(position[local_index]), args->i, sizeof(int) * args->ci );
-    next_packed += ( 4 + args->ci) * sizeof(int);
-    local_index += args->ci;
+    position[0] = args->create_type;
+    position[1] = args->ci;
+    position[2] = args->ca;
+    position[3] = args->cd;
+    /* So far there are 4 integers in the array, so we're still 64 bits aligned
+     * if we suppose that the original buffer was 64 bits aligned.
+     *
+     * In order to solve issues with the Sparc 64 which require 64 bits pointers
+     * to be correctly aligned, we have to start adding the data in a smart way,
+     * just to keep everything as aligned as possible. Therefore, the first
+     * array we have to copy is the array of displacements, followed by the
+     * array of datatypes (both of them might be arrays of pointers) and then
+     * finally the array of counts.
+     */
+    local_index = 4;
+    /* copy the array of displacements (usually 64 bits aligned) */
     if( 0 < args->ca ) {
         memcpy( &(position[local_index]), args->a, sizeof(MPI_Aint) * args->ca );
         next_packed += sizeof(MPI_Aint) * args->ca;
     }
     position = (int*)next_packed;
     next_packed += sizeof(int) * args->cd;
+
+    /* copy the aray of counts (32 bits aligned) */
+    memcpy( &(position[local_index]), args->i, sizeof(int) * args->ci );
+    next_packed += ( 4 + args->ci) * sizeof(int);
+    local_index += args->ci;
+
+    /* copy the rest of the data */
     for( i = 0; i < args->cd; i++ ) {
         ompi_datatype_t* temp_data = args->d[i];
         if( temp_data->flags & DT_FLAG_PREDEFINED ) {
@@ -453,14 +495,14 @@ static ompi_datatype_t*
 __ompi_ddt_create_from_packed_description( void** packed_buffer,
                                            struct ompi_proc_t* remote_processor )
 {
-    int* position = (int*)*packed_buffer;
+    int* position;
     ompi_datatype_t* datatype = NULL;
     ompi_datatype_t** array_of_datatype;
     MPI_Aint* array_of_disp;
     int* array_of_length;
     int number_of_length, number_of_disp, number_of_datatype;
     int create_type, i;
-    char* next_buffer = (char*)*packed_buffer;
+    char* next_buffer;
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     bool need_swap = false;
 
@@ -469,6 +511,15 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
          need_swap = true;
     }
 #endif
+
+    /* In order to solve alignment issues (for the 64 bits variables) on some
+     * architectures (Sparc 64) we have to make sure the packed_buffer is always
+     * aligned to MPI_Aint when we enter this function. If this condition is true,
+     * then we know the remaining data will be aligned as we expect.
+     */
+    next_buffer = (char*)*packed_buffer;
+    ALIGN_PTR_TO( next_buffer, sizeof(MPI_Aint) );
+    position = (int*)next_buffer;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     if (need_swap) {
@@ -508,12 +559,16 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
         position[4] = opal_swap_bytes4(position[4]);
     }
 #endif
-    array_of_length    = &(position[4]);
-    next_buffer += (4 + number_of_length) * sizeof(int);
-    array_of_disp      = (MPI_Aint*)next_buffer;
-    next_buffer += number_of_disp * sizeof(MPI_Aint);
-    position = (int*)next_buffer;
-    next_buffer += number_of_datatype * sizeof(int);
+    /* the array of displacements (64 bits aligned) */
+    array_of_disp   = (MPI_Aint*)&(position[4]);
+    next_buffer    += number_of_disp * sizeof(MPI_Aint);
+    /* the array of lengths (32 bits aligned) */
+    array_of_length = (int*)next_buffer;
+    next_buffer    += (4 + number_of_length) * sizeof(int);
+    /* the other datatypes */
+    position        = (int*)next_buffer;
+    next_buffer    += number_of_datatype * sizeof(int);
+
     for( i = 0; i < number_of_datatype; i++ ) {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
         if (need_swap) {
