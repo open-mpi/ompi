@@ -30,6 +30,7 @@ static void mca_bml_base_endpoint_construct(mca_bml_base_endpoint_t* ep)
     ep->btl_rdma_offset = 0;
     ep->btl_max_send_size = 0;
     ep->btl_rdma_align = 0;
+    ep->btl_send_limit = 0;
 
     OBJ_CONSTRUCT(&ep->btl_eager, mca_bml_base_btl_array_t);
     OBJ_CONSTRUCT(&ep->btl_send,  mca_bml_base_btl_array_t);
