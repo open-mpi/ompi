@@ -100,13 +100,23 @@ static int pretty_print_reference(int seq, char * snapshot_ref);
 /*****************************************
  * Global Vars for Command line Arguments
  *****************************************/
+enum orte_checkpoint_stage_t {
+    ORTE_CKPT_STAGE_NULL,
+    ORTE_CKPT_STAGE_INIT_OPAL_UTIL,
+    ORTE_CKPT_STAGE_INIT_OPAL,
+    ORTE_CKPT_STAGE_INIT_ORTE,
+    ORTE_CKPT_STAGE_FINALIZE
+    
+};
+typedef enum orte_checkpoint_stage_t orte_checkpoint_stage_t;
+
 typedef struct {
     bool help;
     int  pid;
     bool term;
     bool verbose;
     char *req_universe_name; /**< User Requested Universe */
-    bool ready;   /* Has completed init fully */
+    int  stage;   /* Has completed init fully */
     bool nowait;  /* Do not wait for checkpoint to complete before returning */
     bool status;  /* Display status messages while checkpoint is progressing */
     int output;
@@ -243,7 +253,7 @@ static int parse_args(int argc, char *argv[]) {
     orte_checkpoint_globals.term     = false;
     orte_checkpoint_globals.verbose  = false;
     orte_checkpoint_globals.req_universe_name = NULL;
-    orte_checkpoint_globals.ready    = false;
+    orte_checkpoint_globals.stage    = ORTE_CKPT_STAGE_NULL;
     orte_checkpoint_globals.nowait   = false;
     orte_checkpoint_globals.status   = false;
     orte_checkpoint_globals.output   = -1;
@@ -492,6 +502,7 @@ static int ckpt_init(int argc, char *argv[]) {
     if( ORTE_SUCCESS != (ret = opal_init_util()) ) {
         return ret;
     }
+    orte_checkpoint_globals.stage    = ORTE_CKPT_STAGE_INIT_OPAL_UTIL;
 
     /*
      * Parse Command Line Arguments
@@ -537,6 +548,7 @@ static int ckpt_init(int argc, char *argv[]) {
         exit_status = ret;
         goto cleanup;
     }
+    orte_checkpoint_globals.stage    = ORTE_CKPT_STAGE_INIT_OPAL; 
 
     /***************************
      * And ORTE, but need to do a bit of a dance first
@@ -583,7 +595,7 @@ static int ckpt_init(int argc, char *argv[]) {
         goto cleanup;
     }
 
-    orte_checkpoint_globals.ready    = true; 
+    orte_checkpoint_globals.stage    = ORTE_CKPT_STAGE_INIT_ORTE; 
 
  cleanup:
     return exit_status;
@@ -592,14 +604,20 @@ static int ckpt_init(int argc, char *argv[]) {
 static int ckpt_finalize(void) {
     int exit_status = ORTE_SUCCESS, ret;
 
-    if(orte_checkpoint_globals.ready) {
-        if (ORTE_SUCCESS != (ret = orte_finalize())) {
+    if( ORTE_CKPT_STAGE_INIT_OPAL_UTIL == orte_checkpoint_globals.stage) {
+        if (ORTE_SUCCESS != (ret = opal_finalize_util())) {
+            exit_status = ret;
+            goto cleanup;
+        }
+    }
+    else if( ORTE_CKPT_STAGE_INIT_OPAL == orte_checkpoint_globals.stage) {
+        if (ORTE_SUCCESS != (ret = opal_finalize())) {
             exit_status = ret;
             goto cleanup;
         }
     }
     else {
-        if (ORTE_SUCCESS != (ret = opal_finalize())) {
+        if (ORTE_SUCCESS != (ret = orte_finalize())) {
             exit_status = ret;
             goto cleanup;
         }
