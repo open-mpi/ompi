@@ -193,7 +193,7 @@ static inline char* mca_oob_tcp_param_register_str(
 int mca_oob_tcp_component_open(void)
 {
     int value = 0;
-    char *listen_type;
+    char *listen_type, *str;
     int tmp;
 
 #ifdef __WINDOWS__
@@ -242,18 +242,48 @@ int mca_oob_tcp_component_open(void)
         mca_oob_tcp_param_register_int("peer_retries", 60);
     mca_oob_tcp_component.tcp_debug =
         mca_oob_tcp_param_register_int("debug", 0);
-    mca_oob_tcp_component.tcp_include =
-        mca_oob_tcp_param_register_str("include", NULL);
-    mca_oob_tcp_component.tcp_exclude =
-        mca_oob_tcp_param_register_str("exclude", NULL);
     mca_oob_tcp_component.tcp_sndbuf =
         mca_oob_tcp_param_register_int("sndbuf", 128*1024);
     mca_oob_tcp_component.tcp_rcvbuf =
         mca_oob_tcp_param_register_int("rcvbuf", 128*1024);
-    
+
+    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
+                              "if_include",
+                              "Comma-delimited list of TCP interfaces to use",
+                              false, false, NULL, 
+                              &mca_oob_tcp_component.tcp_include);
+    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
+                              "include",
+                              "Obsolete synonym for oob_tcp_if_include",
+                              true, false, NULL, &str);
+    if (NULL != str) {
+        if (NULL == mca_oob_tcp_component.tcp_include) {
+            mca_oob_tcp_component.tcp_include = str;
+        } else {
+            free(str);
+        }
+    }
+
+    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
+                              "if_exclude",
+                              "Comma-delimited list of TCP interfaces to exclude",
+                              false, false, NULL, 
+                              &mca_oob_tcp_component.tcp_exclude);
+    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
+                              "exclude",
+                              "Obsolete synonym for oob_tcp_if_exclude",
+                              true, false, NULL, &str);
+    if (NULL != str) {
+        if (NULL == mca_oob_tcp_component.tcp_exclude) {
+            mca_oob_tcp_component.tcp_exclude = str;
+        } else {
+            free(str);
+        }
+    }
+
     mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
                            "connect_sleep",
-                           "Enable (1) /Disable (0)  random sleep for connection wireup",
+                           "Enable (1) / disable (0) random sleep for connection wireup",
                            false,
                            false,
                            1,
