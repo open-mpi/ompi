@@ -43,7 +43,6 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     ompi_proc_t **procs=NULL;
     int local_size, remote_size;
-    int local_rank;
     int first;
     int total_size;
     int rc=MPI_SUCCESS;
@@ -65,7 +64,6 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     }
 
     local_size  = ompi_comm_size ( intercomm );
-    local_rank  = ompi_comm_rank ( intercomm );
     remote_size = ompi_comm_remote_size ( intercomm );
     total_size  = local_size + remote_size;
     procs = (ompi_proc_t **) malloc ( total_size * sizeof(ompi_proc_t *));

@@ -36,8 +36,6 @@ static const char FUNC_NAME[] = "MPI_Type_dup";
 int MPI_Type_dup (MPI_Datatype type,
                   MPI_Datatype *newtype)
 {
-   int rc;
-
    OPAL_CR_TEST_CHECKPOINT_READY();
 
    if( MPI_PARAM_CHECK ) {
@@ -58,30 +56,30 @@ int MPI_Type_dup (MPI_Datatype type,
        return OMPI_SUCCESS;
    }
 
-   if( (rc = ompi_ddt_duplicate( type, newtype )) != MPI_SUCCESS ) {
-      ompi_ddt_destroy( newtype );
-      OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
-                             MPI_ERR_INTERN, FUNC_NAME );
+   if (OMPI_SUCCESS != ompi_ddt_duplicate( type, newtype)) {
+       ompi_ddt_destroy( newtype );
+       OMPI_ERRHANDLER_RETURN (MPI_ERR_INTERN, MPI_COMM_WORLD,
+                               MPI_ERR_INTERN, FUNC_NAME );
    }
 
    ompi_ddt_set_args( *newtype, 0, NULL, 0, NULL, 1, &type, MPI_COMBINER_DUP );
 
-    /* Copy all the old attributes, if there were any.  This is done
-       here (vs. ompi_ddt_duplicate()) because MPI_TYPE_DUP is the
-       only MPI function that copies attributes.  All other MPI
-       functions that take an old type and generate a newtype do not
-       copy attributes.  Really. */
-    if (NULL != type->d_keyhash) {
-        ompi_attr_hash_init(&(*newtype)->d_keyhash);
-        if (OMPI_SUCCESS != (rc = ompi_attr_copy_all(TYPE_ATTR,
-                                                     type, *newtype,
-                                                     type->d_keyhash,
-                                                     (*newtype)->d_keyhash))) {
-            ompi_ddt_destroy(newtype);
-            OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
-                                    MPI_ERR_INTERN, FUNC_NAME );
-        }                                    
-    }
+   /* Copy all the old attributes, if there were any.  This is done
+      here (vs. ompi_ddt_duplicate()) because MPI_TYPE_DUP is the
+      only MPI function that copies attributes.  All other MPI
+      functions that take an old type and generate a newtype do not
+      copy attributes.  Really. */
+   if (NULL != type->d_keyhash) {
+       ompi_attr_hash_init(&(*newtype)->d_keyhash);
+       if (OMPI_SUCCESS != ompi_attr_copy_all(TYPE_ATTR,
+                                              type, *newtype,
+                                              type->d_keyhash,
+                                              (*newtype)->d_keyhash)) {
+           ompi_ddt_destroy(newtype);
+           OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
+                                   MPI_ERR_INTERN, FUNC_NAME );
+       }                                    
+   }
 
    return MPI_SUCCESS;
 }
