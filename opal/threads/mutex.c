@@ -45,19 +45,28 @@ static void opal_mutex_destruct(opal_mutex_t *m)
 static void opal_mutex_construct(opal_mutex_t *m)
 {
 #if OMPI_HAVE_POSIX_THREADS
+
+#if OMPI_ENABLE_DEBUG
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
 
-#if OMPI_ENABLE_DEBUG && OMPI_HAVE_PTHREAD_MUTEX_ERRORCHECK_NP
     /* set type to ERRORCHECK so that we catch recursive locks */
+#if OMPI_HAVE_PTHREAD_MUTEX_ERRORCHECK_NP
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK_NP);
-#elif OMPI_ENABLE_DEBUG && OMPI_HAVE_PTHREAD_MUTEX_ERRORCHECK
-    /* set type to ERRORCHECK so that we catch recursive locks */
+#elif OMPI_HAVE_PTHREAD_MUTEX_ERRORCHECK
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
-#endif
-    
+#endif /* OMPI_HAVE_PTHREAD_MUTEX_ERRORCHECK_NP */
+
     pthread_mutex_init(&m->m_lock_pthread, &attr);
     pthread_mutexattr_destroy(&attr);
+
+#else
+
+    /* Without debugging, choose the fastest available mutexes */
+    pthread_mutex_init(&m->m_lock_pthread, NULL);
+
+#endif /* OMPI_ENABLE_DEBUG */
+
 #endif /* OMPI_HAVE_POSIX_THREADS */
 
 #if OMPI_HAVE_SOLARIS_THREADS
@@ -76,7 +85,7 @@ static void opal_mutex_destruct(opal_mutex_t *m)
 #endif
 }
 
-#endif
+#endif /* __WINDOWS__ */
 
 OBJ_CLASS_INSTANCE(opal_mutex_t,
                    opal_object_t,
