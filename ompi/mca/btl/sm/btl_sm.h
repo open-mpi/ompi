@@ -267,6 +267,7 @@ extern int mca_btl_sm_register(
  */
 extern mca_btl_base_descriptor_t* mca_btl_sm_alloc(
     struct mca_btl_base_module_t* btl,
+    uint8_t order,
     size_t size
 );
 
@@ -293,6 +294,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     struct mca_btl_base_endpoint_t* endpoint,
     mca_mpool_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
+    uint8_t order,
     size_t reserve,
     size_t* size
 );

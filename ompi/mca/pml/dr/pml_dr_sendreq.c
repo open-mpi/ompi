@@ -383,7 +383,8 @@ int mca_pml_dr_send_request_start_buffered(
         (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM); 
     
     /* allocate descriptor */
-    mca_bml_base_alloc(bml_btl, &descriptor, sizeof(mca_pml_dr_rendezvous_hdr_t) + size);
+    mca_bml_base_alloc(bml_btl, &descriptor, MCA_BTL_NO_ORDER,
+                       sizeof(mca_pml_dr_rendezvous_hdr_t) + size);
     if(NULL == descriptor) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
@@ -497,7 +498,9 @@ int mca_pml_dr_send_request_start_copy(
         (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM); 
 
     /* allocate descriptor */
-    mca_bml_base_alloc(bml_btl, &descriptor, sizeof(mca_pml_dr_match_hdr_t) + size);
+    mca_bml_base_alloc(bml_btl, &descriptor, 
+                       MCA_BTL_NO_ORDER,
+                       sizeof(mca_pml_dr_match_hdr_t) + size);
     if(NULL == descriptor) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -585,6 +588,7 @@ int mca_pml_dr_send_request_start_prepare(
             bml_btl, 
             NULL,
             &sendreq->req_send.req_convertor,
+            MCA_BTL_NO_ORDER,
             sizeof(mca_pml_dr_match_hdr_t),
             &size,
             &descriptor);
@@ -656,6 +660,7 @@ int mca_pml_dr_send_request_start_rndv(
         mca_bml_base_alloc(
                            bml_btl, 
                            &des, 
+                           MCA_BTL_NO_ORDER,
                            sizeof(mca_pml_dr_rendezvous_hdr_t)
                            ); 
     } else {
@@ -663,6 +668,7 @@ int mca_pml_dr_send_request_start_rndv(
                                  bml_btl, 
                                  NULL,
                                  &sendreq->req_send.req_convertor,
+                                 MCA_BTL_NO_ORDER,
                                  sizeof(mca_pml_dr_rendezvous_hdr_t),
                                  &size,
                                  &des);
@@ -774,6 +780,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                                                  bml_btl, 
                                                  NULL, 
                                                  &sendreq->req_send.req_convertor,
+                                                 MCA_BTL_NO_ORDER,
                                                  sizeof(mca_pml_dr_frag_hdr_t),
                                                  &size,
                                                  &des
@@ -898,6 +905,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                                          bml_btl, 
                                          NULL, 
                                          &sendreq->req_send.req_convertor,
+                                         MCA_BTL_NO_ORDER,
                                          sizeof(mca_pml_dr_frag_hdr_t),
                                          &size,
                                          &des

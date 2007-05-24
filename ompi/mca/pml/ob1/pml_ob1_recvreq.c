@@ -186,7 +186,7 @@ int mca_pml_ob1_recv_request_ack_send_btl(
     int rc;
 
     /* allocate descriptor */
-    MCA_PML_OB1_DES_ALLOC(bml_btl, des, sizeof(mca_pml_ob1_ack_hdr_t));
+    MCA_PML_OB1_DES_ALLOC(bml_btl, des, MCA_BTL_NO_ORDER, sizeof(mca_pml_ob1_ack_hdr_t));
     if(NULL == des) {
         return OMPI_ERR_OUT_OF_RESOURCE; 
     }
@@ -307,7 +307,9 @@ static void mca_pml_ob1_rget_completion(
     }
 
     mca_pml_ob1_send_fin(recvreq->req_recv.req_base.req_proc,
-            frag->rdma_hdr.hdr_rget.hdr_des.pval, bml_btl); 
+                         bml_btl,
+                         frag->rdma_hdr.hdr_rget.hdr_des.pval,
+                         des->order); 
 
     /* is receive request complete */
     if( OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, frag->rdma_length)
@@ -343,6 +345,7 @@ int mca_pml_ob1_recv_request_get_frag(
         bml_btl, 
         NULL,
         &recvreq->req_recv.req_convertor,
+        MCA_BTL_NO_ORDER,
         0,
         &frag->rdma_length, 
         &descriptor);
@@ -677,8 +680,9 @@ int mca_pml_ob1_recv_request_schedule_exclusive( mca_pml_ob1_recv_request_t* rec
             }
 
             /* prepare a descriptor for RDMA */
-            mca_bml_base_prepare_dst(bml_btl, reg,
-                    &recvreq->req_recv.req_convertor, 0, &size, &dst);
+            mca_bml_base_prepare_dst(bml_btl, reg, 
+                                     &recvreq->req_recv.req_convertor, MCA_BTL_NO_ORDER, 
+                                     0, &size, &dst);
             if(dst == NULL) {
                 continue;
             }
@@ -693,7 +697,7 @@ int mca_pml_ob1_recv_request_schedule_exclusive( mca_pml_ob1_recv_request_t* rec
                         (dst->des_dst_cnt-1));
             }
 
-            MCA_PML_OB1_DES_ALLOC(bml_btl, ctl, hdr_size);
+            MCA_PML_OB1_DES_ALLOC(bml_btl, ctl, MCA_BTL_NO_ORDER, hdr_size);
             if(ctl == NULL) {
                 mca_bml_base_free(bml_btl,dst);
                 continue;

@@ -186,6 +186,7 @@ int mca_btl_tcp_register(
 
 mca_btl_base_descriptor_t* mca_btl_tcp_alloc(
     struct mca_btl_base_module_t* btl,
+    uint8_t order,
     size_t size)
 {
     mca_btl_tcp_frag_t* frag;
@@ -208,6 +209,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_alloc(
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0; 
+    frag->base.order = MCA_BTL_NO_ORDER;
     frag->btl = (mca_btl_tcp_module_t*)btl;
     return (mca_btl_base_descriptor_t*)frag;
 }
@@ -238,6 +240,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_mpool_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
+    uint8_t order,
     size_t reserve,
     size_t* size)
 {
@@ -307,6 +310,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
+    frag->base.order = MCA_BTL_NO_ORDER;
     *size = max_data;
     return &frag->base;
 }
@@ -331,6 +335,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_mpool_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
+    uint8_t order,
     size_t reserve,
     size_t* size)
 {
@@ -353,6 +358,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
     frag->base.des_dst = frag->segments;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = 0;
+    frag->base.order = MCA_BTL_NO_ORDER;
     return &frag->base;
 }
 

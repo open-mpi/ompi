@@ -374,7 +374,7 @@ do {                                                                  \
                                                                         \
         des_old = sendreq->req_descriptor;                              \
         mca_bml_base_alloc(vfrag->bml_btl, &des_new,                    \
-                           des_old->des_src->seg_len);                  \
+                           MCA_BTL_NO_ORDER, des_old->des_src->seg_len); \
         sendreq->req_descriptor = des_new;                              \
         memcpy(des_new->des_src->seg_addr.pval,                         \
                des_old->des_src->seg_addr.pval,                         \
@@ -406,6 +406,7 @@ do {                                                                 \
                                                                      \
     assert(sendreq->req_descriptor->des_src != NULL);                \
     mca_bml_base_alloc(bml_btl, &des_new,                            \
+                       MCA_BTL_NO_ORDER,                             \
                        sizeof(mca_pml_dr_rendezvous_hdr_t));         \
     des_old = sendreq->req_descriptor;                               \
     /* build hdr */                                                  \

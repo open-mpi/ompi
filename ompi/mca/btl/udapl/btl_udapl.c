@@ -691,6 +691,7 @@ int mca_btl_udapl_register(
 
 mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
     struct mca_btl_base_module_t* btl,
+    uint8_t order,
     size_t size)
 {
     mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*) btl; 
@@ -730,7 +731,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
-
+    frag->base.order = MCA_BTL_NO_ORDER;
     return &frag->base;
 }
 
@@ -775,6 +776,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_mpool_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
+    uint8_t order,
     size_t reserve,
     size_t* size
 )
@@ -832,7 +834,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
             frag->base.des_dst = NULL;
             frag->base.des_dst_cnt = 0;
             frag->base.des_flags = 0;
-            
+            frag->base.order = MCA_BTL_NO_ORDER;
             return &frag->base;
         }
     }
@@ -879,7 +881,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
-
+    frag->base.order = MCA_BTL_NO_ORDER;
     return &frag->base;
 }
 
@@ -902,6 +904,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_mpool_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
+    uint8_t order,
     size_t reserve,
     size_t* size)
 {
@@ -941,6 +944,8 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
     frag->segment.seg_key.key32[0] =
         ((mca_btl_udapl_reg_t*)registration)->rmr_context;
     
+    frag->base.order = MCA_BTL_NO_ORDER;
+
     return &frag->base;
 }
 

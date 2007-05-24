@@ -237,6 +237,7 @@ mca_btl_portals_register(struct mca_btl_base_module_t* btl_base,
 
 mca_btl_base_descriptor_t*
 mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base,
+                      uint8_t order,
                        size_t size)
 {
     int rc;
@@ -260,6 +261,7 @@ mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base,
     
     frag->base.des_src_cnt = 1;
     frag->base.des_flags = 0; 
+    frag->base.order = MCA_BTL_NO_ORDER;
 
     return &frag->base;
 }
@@ -304,6 +306,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
                             struct mca_btl_base_endpoint_t* peer,
                             mca_mpool_base_registration_t* registration, 
                             struct ompi_convertor_t* convertor,
+                            uint8_t order,
                             size_t reserve,
                             size_t* size)
 {
@@ -415,7 +418,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
-
+    frag->base.order = MCA_BTL_NO_ORDER;
     return &frag->base;
 }
 
@@ -425,6 +428,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
                             struct mca_btl_base_endpoint_t* peer,
                             mca_mpool_base_registration_t* registration, 
                             struct ompi_convertor_t* convertor,
+                            uint8_t order,
                             size_t reserve,
                             size_t* size)
 {
@@ -500,7 +504,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
         OMPI_BTL_PORTALS_FRAG_RETURN_USER(&mca_btl_portals_module.super, frag);
         return NULL;
     }
-
+    frag->base.order = MCA_BTL_NO_ORDER;
     return &frag->base;
 }
 

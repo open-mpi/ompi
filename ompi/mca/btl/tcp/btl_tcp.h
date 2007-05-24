@@ -286,6 +286,7 @@ extern int mca_btl_tcp_register(
 
 extern mca_btl_base_descriptor_t* mca_btl_tcp_alloc(
     struct mca_btl_base_module_t* btl, 
+    uint8_t order,
     size_t size); 
 
 
@@ -320,6 +321,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
     struct mca_btl_base_endpoint_t* peer,
     struct mca_mpool_base_registration_t*,
     struct ompi_convertor_t* convertor,
+    uint8_t order,
     size_t reserve,
     size_t* size
 );
@@ -329,6 +331,7 @@ extern mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
     struct mca_btl_base_endpoint_t* peer,
     struct mca_mpool_base_registration_t*,
     struct ompi_convertor_t* convertor,
+    uint8_t order,
     size_t reserve,
     size_t* size); 
 

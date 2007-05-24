@@ -38,8 +38,9 @@ mca_btl_template_module_t mca_btl_template_module = {
         0, /* max size of first fragment */
         0, /* min send fragment size */
         0, /* max send fragment size */
-        0, /* min rdma fragment size */
-        0, /* max rdma fragment size */
+        0, /* rdma pipeline offset */
+        0, /* rdma pipeline frag size */
+        0, /* min rdma pipeline size */
         0, /* exclusivity */
         0, /* latency */
         0, /* bandwidth */
@@ -164,6 +165,7 @@ int mca_btl_template_register(
 
 mca_btl_base_descriptor_t* mca_btl_template_alloc(
     struct mca_btl_base_module_t* btl,
+    uint8_t order,
     size_t size)
 {
     mca_btl_template_module_t* template_btl = (mca_btl_template_module_t*) btl; 
@@ -223,6 +225,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_mpool_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
+    uint8_t order,
     size_t reserve,
     size_t* size
 )
@@ -311,6 +314,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_dst(
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_mpool_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
+    uint8_t order,
     size_t reserve,
     size_t* size)
 {

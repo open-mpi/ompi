@@ -260,8 +260,8 @@ typedef struct mca_bml_base_endpoint_t mca_bml_base_endpoint_t;
     
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_bml_base_endpoint_t);
 
-static inline void mca_bml_base_alloc(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t** des, size_t size) { 
-    *des = bml_btl->btl_alloc(bml_btl->btl, size);
+static inline void mca_bml_base_alloc(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t** des, uint8_t order, size_t size) { 
+    *des = bml_btl->btl_alloc(bml_btl->btl, order, size);
 }
 
 static inline void mca_bml_base_free(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t* des) { 
@@ -316,14 +316,16 @@ static inline int mca_bml_base_get(mca_bml_base_btl_t* bml_btl, mca_btl_base_des
 static inline void mca_bml_base_prepare_src(mca_bml_base_btl_t* bml_btl, 
                                             mca_mpool_base_registration_t* reg, 
                                             struct ompi_convertor_t* conv, 
+                                            uint8_t order,
                                             size_t reserve, 
-                                            size_t *size, 
+                                            size_t *size,
                                             mca_btl_base_descriptor_t** des) { 
     *des = bml_btl->btl_prepare_src(
                                    bml_btl->btl, 
                                    bml_btl->btl_endpoint, 
                                    reg, 
                                    conv,
+                                   order,
                                    reserve,
                                    size
                                    );
@@ -335,6 +337,7 @@ static inline void mca_bml_base_prepare_src(mca_bml_base_btl_t* bml_btl,
 static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl, 
                                             mca_mpool_base_registration_t* reg, 
                                             struct ompi_convertor_t* conv, 
+                                            uint8_t order,
                                             size_t reserve, 
                                             size_t *size, 
                                             mca_btl_base_descriptor_t** des) { 
@@ -343,6 +346,7 @@ static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl,
                                    bml_btl->btl_endpoint, 
                                    reg, 
                                    conv,
+                                   order,
                                    reserve,
                                    size
                                    );
@@ -352,16 +356,19 @@ static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl,
 }
 
 #if OMPI_HAVE_THREAD_SUPPORT
-#define MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, alloc_size, seg_size)  \
+#define MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, order,                 \
+                                   alloc_size, seg_size)                \
     do {                                                                \
-        if( NULL != (des = bml_btl->btl_cache) ) {                      \
+        if( MCA_BTL_NO_ORDER == order &&                                \
+            NULL != (des = bml_btl->btl_cache) ) {                      \
             /* atomically acquire the cached descriptor */              \
             if(opal_atomic_cmpset_ptr(&bml_btl->btl_cache,              \
                                       des, NULL) == 0) {                \
-                des = bml_btl->btl_alloc(bml_btl->btl, alloc_size);     \
+                des = bml_btl->btl_alloc(bml_btl->btl, order,           \
+                                         alloc_size);                   \
             }                                                           \
         } else {                                                        \
-            des = bml_btl->btl_alloc(bml_btl->btl, alloc_size);         \
+            des = bml_btl->btl_alloc(bml_btl->btl, order, alloc_size);  \
         }                                                               \
         if(des != NULL) {                                               \
             des->des_src->seg_len = seg_size;                           \
@@ -369,12 +376,14 @@ static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl,
         }                                                               \
     } while(0)
 #else
-#define MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, alloc_size, seg_size)  \
+#define MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, order,                 \
+                                   alloc_size, seg_size)                \
     do {                                                                \
-        if( NULL != (des = bml_btl->btl_cache) ) {                      \
+        if( MCA_BTL_NO_ORDER == order &&                                \
+            NULL != (des = bml_btl->btl_cache) ) {                      \
             bml_btl->btl_cache = NULL;                                  \
         } else {                                                        \
-            des = bml_btl->btl_alloc(bml_btl->btl, alloc_size);         \
+            des = bml_btl->btl_alloc(bml_btl->btl, order, alloc_size);  \
         }                                                               \
         if(des != NULL) {                                               \
             des->des_src->seg_len = seg_size;                           \
