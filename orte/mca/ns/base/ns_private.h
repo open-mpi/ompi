@@ -191,6 +191,9 @@ ORTE_DECLSPEC    int orte_ns_base_dump_jobs_not_available(void);
 ORTE_DECLSPEC    int orte_ns_base_dump_tags_not_available(void);
 ORTE_DECLSPEC    int orte_ns_base_dump_datatypes_not_available(void);
 
+ORTE_DECLSPEC    int orte_ns_base_ft_event_not_available(int state);
+
+
 /* Base functions used everywhere */
 ORTE_DECLSPEC    int orte_ns_base_pack_name(orte_buffer_t *buffer, void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
