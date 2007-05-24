@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,11 +30,11 @@ static int
 enqueue_sendreq(ompi_osc_rdma_module_t *module,
                 ompi_osc_rdma_sendreq_t *sendreq)
 {
-    OPAL_THREAD_LOCK(&(module->p2p_lock));
-    opal_list_append(&(module->p2p_pending_sendreqs),
+    OPAL_THREAD_LOCK(&(module->m_lock));
+    opal_list_append(&(module->m_pending_sendreqs),
                      (opal_list_item_t*) sendreq);
-    module->p2p_num_pending_sendreqs[sendreq->req_target_rank]++;
-    OPAL_THREAD_UNLOCK(&(module->p2p_lock));
+    module->m_num_pending_sendreqs[sendreq->req_target_rank]++;
+    OPAL_THREAD_UNLOCK(&(module->m_lock));
 
     return OMPI_SUCCESS;
 }
@@ -50,7 +52,7 @@ ompi_osc_rdma_module_accumulate(void *origin_addr, int origin_count,
     ompi_osc_rdma_sendreq_t *sendreq;
 
     if ((OMPI_WIN_STARTED & ompi_win_get_mode(win)) &&
-        (!P2P_MODULE(win)->p2p_sc_remote_active_ranks[target])) {
+        (!GET_MODULE(win)->m_sc_remote_active_ranks[target])) {
         return MPI_ERR_RMA_SYNC;
     }
 
@@ -82,14 +84,14 @@ ompi_osc_rdma_module_accumulate(void *origin_addr, int origin_count,
                                             target_disp,
                                             target_count,
                                             target_dt,
-                                            P2P_MODULE(win),
+                                            GET_MODULE(win),
                                             &sendreq);
     if (OMPI_SUCCESS != ret) return ret;
 
     sendreq->req_op_id = op->o_f_to_c_index;
 
     /* enqueue sendreq */
-    ret = enqueue_sendreq(P2P_MODULE(win), sendreq);
+    ret = enqueue_sendreq(GET_MODULE(win), sendreq);
 
     return ret;
 }
@@ -107,9 +109,10 @@ ompi_osc_rdma_module_get(void *origin_addr,
 {
     int ret;
     ompi_osc_rdma_sendreq_t *sendreq;
+    ompi_osc_rdma_module_t *module = GET_MODULE(win);
 
     if ((OMPI_WIN_STARTED & ompi_win_get_mode(win)) &&
-        (!P2P_MODULE(win)->p2p_sc_remote_active_ranks[target])) {
+        (!module->m_sc_remote_active_ranks[target])) {
         return MPI_ERR_RMA_SYNC;
     }
 
@@ -126,36 +129,39 @@ ompi_osc_rdma_module_get(void *origin_addr,
 
     /* create sendreq */
     ret = ompi_osc_rdma_sendreq_alloc_init(OMPI_OSC_RDMA_GET,
-                                            origin_addr,
-                                            origin_count,
-                                            origin_dt,
-                                            target,
-                                            target_disp,
-                                            target_count,
-                                            target_dt,
-                                            P2P_MODULE(win),
-                                            &sendreq);
+                                           origin_addr,
+                                           origin_count,
+                                           origin_dt,
+                                           target,
+                                           target_disp,
+                                           target_count,
+                                           target_dt,
+                                           module,
+                                           &sendreq);
     if (OMPI_SUCCESS != ret) return ret;
 
     /* if we're doing fence synchronization, try to actively send
        right now */
-    if (P2P_MODULE(win)->p2p_eager_send &&
+    if (module->m_eager_send &&
         (OMPI_WIN_FENCE & ompi_win_get_mode(win))) {
-        OPAL_THREAD_ADD32(&(sendreq->req_module->p2p_num_pending_out), 1);
+        OPAL_THREAD_LOCK(&module->m_lock);
+        sendreq->req_module->m_num_pending_out += 1;
+        module->m_num_pending_sendreqs[sendreq->req_target_rank] += 1;
+        OPAL_THREAD_UNLOCK(&(module->m_lock));
 
-        ret  = ompi_osc_rdma_sendreq_send(P2P_MODULE(win), sendreq);
+        ret  = ompi_osc_rdma_sendreq_send(module, sendreq);
 
-        if (OMPI_SUCCESS == ret) {
-            OPAL_THREAD_LOCK(&(P2P_MODULE(win)->p2p_lock));
-            P2P_MODULE(win)->p2p_num_pending_sendreqs[sendreq->req_target_rank]++;
-            OPAL_THREAD_UNLOCK(&(P2P_MODULE(win)->p2p_lock));
-        } else {
-            OPAL_THREAD_ADD32(&(sendreq->req_module->p2p_num_pending_out), -1);
-            ret = enqueue_sendreq(P2P_MODULE(win), sendreq);
+        if (OMPI_SUCCESS != ret) {
+            OPAL_THREAD_LOCK(&module->m_lock);
+            sendreq->req_module->m_num_pending_out -= 1;
+            opal_list_append(&(module->m_pending_sendreqs),
+                             (opal_list_item_t*) sendreq);
+            OPAL_THREAD_LOCK(&module->m_lock);
+            ret = OMPI_SUCCESS;
         }
     } else {
         /* enqueue sendreq */
-        ret = enqueue_sendreq(P2P_MODULE(win), sendreq);
+        ret = enqueue_sendreq(module, sendreq);
     }
 
     return ret;
@@ -170,9 +176,10 @@ ompi_osc_rdma_module_put(void *origin_addr, int origin_count,
 {
     int ret;
     ompi_osc_rdma_sendreq_t *sendreq;
+    ompi_osc_rdma_module_t *module = GET_MODULE(win);
 
     if ((OMPI_WIN_STARTED & ompi_win_get_mode(win)) &&
-        (!P2P_MODULE(win)->p2p_sc_remote_active_ranks[target])) {
+        (!module->m_sc_remote_active_ranks[target])) {
         return MPI_ERR_RMA_SYNC;
     }
 
@@ -196,29 +203,32 @@ ompi_osc_rdma_module_put(void *origin_addr, int origin_count,
                                             target_disp,
                                             target_count,
                                             target_dt,
-                                            P2P_MODULE(win),
+                                            module,
                                             &sendreq);
     if (OMPI_SUCCESS != ret) return ret;
 
     /* if we're doing fence synchronization, try to actively send
        right now */
-    if (P2P_MODULE(win)->p2p_eager_send && 
+    if (module->m_eager_send && 
         (OMPI_WIN_FENCE & ompi_win_get_mode(win))) {
-        OPAL_THREAD_ADD32(&(sendreq->req_module->p2p_num_pending_out), 1);
+        OPAL_THREAD_LOCK(&module->m_lock);
+        sendreq->req_module->m_num_pending_out += 1;
+        module->m_num_pending_sendreqs[sendreq->req_target_rank] += 1;
+        OPAL_THREAD_UNLOCK(&(module->m_lock));
 
-        ret  = ompi_osc_rdma_sendreq_send(P2P_MODULE(win), sendreq);
+        ret  = ompi_osc_rdma_sendreq_send(module, sendreq);
 
-        if (OMPI_SUCCESS == ret) {
-            OPAL_THREAD_LOCK(&(P2P_MODULE(win)->p2p_lock));
-            P2P_MODULE(win)->p2p_num_pending_sendreqs[sendreq->req_target_rank]++;
-            OPAL_THREAD_UNLOCK(&(P2P_MODULE(win)->p2p_lock));
-        } else {
-            OPAL_THREAD_ADD32(&(sendreq->req_module->p2p_num_pending_out), -1);
-            ret = enqueue_sendreq(P2P_MODULE(win), sendreq);
+        if (OMPI_SUCCESS != ret) {
+            OPAL_THREAD_LOCK(&module->m_lock);
+            sendreq->req_module->m_num_pending_out -= 1;
+            opal_list_append(&(module->m_pending_sendreqs),
+                             (opal_list_item_t*) sendreq);
+            OPAL_THREAD_LOCK(&module->m_lock);
+            ret = OMPI_SUCCESS;
         }
     } else {
         /* enqueue sendreq */
-        ret = enqueue_sendreq(P2P_MODULE(win), sendreq);
+        ret = enqueue_sendreq(module, sendreq);
     }
 
     return ret;

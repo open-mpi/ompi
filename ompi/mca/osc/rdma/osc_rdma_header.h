@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -23,16 +25,17 @@
 
 #include "opal/types.h"
 
-#define OMPI_OSC_RDMA_HDR_PUT        0x0001
-#define OMPI_OSC_RDMA_HDR_ACC        0x0002
-#define OMPI_OSC_RDMA_HDR_GET        0x0004
-#define OMPI_OSC_RDMA_HDR_REPLY      0x0008
-#define OMPI_OSC_RDMA_HDR_POST       0x0010
-#define OMPI_OSC_RDMA_HDR_COMPLETE   0x0020
-#define OMPI_OSC_RDMA_HDR_LOCK_REQ   0x0040
-#define OMPI_OSC_RDMA_HDR_UNLOCK_REQ 0x0080
+#define OMPI_OSC_RDMA_HDR_PUT          0x0001
+#define OMPI_OSC_RDMA_HDR_ACC          0x0002
+#define OMPI_OSC_RDMA_HDR_GET          0x0003
+#define OMPI_OSC_RDMA_HDR_REPLY        0x0004
+#define OMPI_OSC_RDMA_HDR_POST         0x0005
+#define OMPI_OSC_RDMA_HDR_COMPLETE     0x0006
+#define OMPI_OSC_RDMA_HDR_LOCK_REQ     0x0007
+#define OMPI_OSC_RDMA_HDR_UNLOCK_REQ   0x0008
+#define OMPI_OSC_RDMA_HDR_UNLOCK_REPLY 0x0009
 
-#define OMPI_OSC_RDMA_HDR_FLAG_NBO   0x0001
+#define OMPI_OSC_RDMA_HDR_FLAG_NBO      0x0001
 
 struct ompi_osc_rdma_base_header_t {
     uint8_t hdr_type;
