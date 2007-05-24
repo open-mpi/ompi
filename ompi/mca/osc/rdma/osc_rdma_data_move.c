@@ -43,7 +43,7 @@ create_send_tag(ompi_osc_rdma_module_t *module)
         newval = (oldval + 1) % mca_pml.pml_max_tag;
     } while (0 == opal_atomic_cmpset_32(&module->m_tag_counter, oldval, newval));
     return newval;
-#elif OMPI_HAVE_THREAD_SUPPORT 
+#else
     int32_t ret;
     /* no compare and swap - have to lock the module */
     OPAL_THREAD_LOCK(&module->m_lock);
@@ -51,9 +51,6 @@ create_send_tag(ompi_osc_rdma_module_t *module)
     ret = module->m_tag_counter;
     OPAL_THREAD_UNLOCK(&module->m_lock);
     return ret;
-#else
-    module->m_tag_counter = (module->m_tag_counter + 1) % mca_pml.pml_max_tag;
-    return module->m_tag_counter;
 #endif
 }
 
@@ -117,7 +114,6 @@ ompi_osc_rdma_sendreq_send_cb(struct mca_btl_base_module_t* btl,
         (ompi_osc_rdma_sendreq_t*) descriptor->des_cbdata;
     ompi_osc_rdma_send_header_t *header =
         (ompi_osc_rdma_send_header_t*) descriptor->des_src[0].seg_addr.pval;
-    opal_list_item_t *item;
     ompi_osc_rdma_module_t *module = sendreq->req_module;
     int32_t count;
 
@@ -179,25 +175,21 @@ ompi_osc_rdma_sendreq_send_cb(struct mca_btl_base_module_t* btl,
     /* release the descriptor and sendreq */
     btl->btl_free(btl, descriptor);
 
-    /* any other sendreqs to restart? */
-    while (NULL != 
-           (item = opal_list_remove_first(&(module->m_copy_pending_sendreqs)))) {
-        ompi_osc_rdma_sendreq_t *req = 
-            (ompi_osc_rdma_sendreq_t*) item;
+    while (opal_list_get_size(&module->m_queued_sendreqs)) {
+        opal_list_item_t *item;
         int ret;
 
-        ret = ompi_osc_rdma_sendreq_send(module, req);
+        OPAL_THREAD_LOCK(&module->m_lock);
+        item = opal_list_remove_first(&module->m_queued_sendreqs);
+        OPAL_THREAD_UNLOCK(&module->m_lock);
+        if (NULL == item) break;
 
+        ret = ompi_osc_rdma_sendreq_send(module, (ompi_osc_rdma_sendreq_t*) item);
         if (OMPI_SUCCESS != ret) {
-            opal_output_verbose(5, ompi_osc_base_output,
-                                "fence: failure in starting sendreq (%d).  Will try later.",
-                                ret);
-            opal_list_append(&(module->m_copy_pending_sendreqs), item);
-
-            if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret ||
-                OMPI_ERR_OUT_OF_RESOURCE == ret) {
-                break;
-            }
+            OPAL_THREAD_LOCK(&module->m_lock);
+            opal_list_append(&(module->m_queued_sendreqs), item);
+            OPAL_THREAD_UNLOCK(&module->m_lock);
+            break;
         }
     }
 }

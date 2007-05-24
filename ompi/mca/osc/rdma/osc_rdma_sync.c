@@ -122,22 +122,21 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
                 (ompi_osc_rdma_sendreq_t*) item;
 
             ret = ompi_osc_rdma_sendreq_send(module, req);
-
             if (OMPI_SUCCESS != ret) {
-                opal_output_verbose(5, ompi_osc_base_output,
-                                    "fence: failure in starting sendreq (%d).  "
-                                    "Will try later.",
-                                    ret);
                 opal_list_append(&(module->m_copy_pending_sendreqs), item);
-
-                if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret ||
-                    OMPI_ERR_OUT_OF_RESOURCE == ret) {
-                    break;
-                }
+                break;
             }
         }
 
         OPAL_THREAD_LOCK(&module->m_lock);
+        /* if some requests couldn't be started, push into the
+           "queued" list, where we will try to restart them later. */
+        if (opal_list_get_size(&module->m_copy_pending_sendreqs)) {
+                opal_list_join(&module->m_queued_sendreqs,
+                               opal_list_get_end(&module->m_queued_sendreqs),
+                               &module->m_copy_pending_sendreqs);
+        }
+
         /* possible we've already received a couple in messages, so
            atomicall add however many we're going to wait for */
         module->m_num_pending_in += incoming_reqs;
@@ -277,17 +276,22 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
             (ompi_osc_rdma_sendreq_t*) item;
 
         ret = ompi_osc_rdma_sendreq_send(module, req);
-
         if (OMPI_SUCCESS != ret) {
-            opal_output_verbose(5, ompi_osc_base_output,
-                                "complete: failure in starting sendreq (%d).  Will try later.",
-                                ret);
             opal_list_append(&(module->m_copy_pending_sendreqs), item);
+            break;
         }
     }
 
-    /* wait for all the requests */
     OPAL_THREAD_LOCK(&module->m_lock);
+    /* if some requests couldn't be started, push into the
+       "queued" list, where we will try to restart them later. */
+    if (opal_list_get_size(&module->m_copy_pending_sendreqs)) {
+        opal_list_join(&module->m_queued_sendreqs,
+                       opal_list_get_end(&module->m_queued_sendreqs),
+                       &module->m_copy_pending_sendreqs);
+    }
+
+    /* wait for all the requests */
     while (0 != module->m_num_pending_out) {
         opal_condition_wait(&module->m_cond, &module->m_lock);
     }
@@ -480,24 +484,31 @@ ompi_osc_rdma_module_unlock(int target,
                                 module->m_comm->c_my_rank,
                                 out_count);
 
+    /* try to start all the requests.  We've copied everything we
+       need out of pending_sendreqs, so don't need the lock
+       here */
     while (NULL != 
            (item = opal_list_remove_first(&(module->m_copy_pending_sendreqs)))) {
         ompi_osc_rdma_sendreq_t *req = 
             (ompi_osc_rdma_sendreq_t*) item;
 
         ret = ompi_osc_rdma_sendreq_send(module, req);
-
         if (OMPI_SUCCESS != ret) {
-            opal_output_verbose(5, ompi_osc_base_output,
-                                "unlock: failure in starting sendreq (%d).  Will try later.",
-                                ret);
             opal_list_append(&(module->m_copy_pending_sendreqs), item);
             break;
         }
     }
 
-    /* wait for all the requests */
     OPAL_THREAD_LOCK(&module->m_lock);
+    /* if some requests couldn't be started, push into the
+       "queued" list, where we will try to restart them later. */
+    if (opal_list_get_size(&module->m_copy_pending_sendreqs)) {
+        opal_list_join(&module->m_queued_sendreqs,
+                       opal_list_get_end(&module->m_queued_sendreqs),
+                       &module->m_copy_pending_sendreqs);
+    }
+
+    /* wait for all the requests */
     while (0 != module->m_num_pending_out) {
         opal_condition_wait(&module->m_cond, &module->m_lock);
     }
