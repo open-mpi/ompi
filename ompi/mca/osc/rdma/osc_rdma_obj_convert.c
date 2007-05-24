@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,8 +40,8 @@ ompi_osc_rdma_process_op(ompi_osc_rdma_module_t *module,
     unsigned char *target_buffer;
 
     /* compute target buffer location */
-    target_buffer = (unsigned char*) module->p2p_win->w_baseptr + 
-        (header->hdr_target_disp * module->p2p_win->w_disp_unit);
+    target_buffer = (unsigned char*) module->m_win->w_baseptr + 
+        (header->hdr_target_disp * module->m_win->w_disp_unit);
 
     /* BWB - fix me - change back to the pointer comparison when the
        replace o_f_to_c_index is set properly */
@@ -55,7 +57,7 @@ ompi_osc_rdma_process_op(ompi_osc_rdma_module_t *module,
         OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
 
         /* initialize convertor */
-        proc = ompi_comm_peer_lookup(module->p2p_comm, header->hdr_origin);
+        proc = ompi_comm_peer_lookup(module->m_comm, header->hdr_origin);
         ompi_convertor_copy_and_prepare_for_recv(proc->proc_convertor,
                                                  datatype,
                                                  header->hdr_target_count,

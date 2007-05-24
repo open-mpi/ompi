@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -89,12 +91,12 @@ ompi_osc_rdma_sendreq_alloc(ompi_osc_rdma_module_t *module,
 {
     int ret;
     opal_free_list_item_t *item;
-    ompi_proc_t *proc = ompi_comm_peer_lookup( module->p2p_comm, target_rank );
+    ompi_proc_t *proc = ompi_comm_peer_lookup( module->m_comm, target_rank );
 
     /* BWB - FIX ME - is this really the right return code? */
     if (NULL == proc) return OMPI_ERR_OUT_OF_RESOURCE;
 
-    OPAL_FREE_LIST_GET(&mca_osc_rdma_component.p2p_c_sendreqs,
+    OPAL_FREE_LIST_GET(&mca_osc_rdma_component.c_sendreqs,
                        item, ret);
     if (OMPI_SUCCESS != ret) return ret;
     *sendreq = (ompi_osc_rdma_sendreq_t*) item;
@@ -166,7 +168,7 @@ ompi_osc_rdma_sendreq_free(ompi_osc_rdma_sendreq_t *sendreq)
     OBJ_RELEASE(sendreq->req_target_datatype);
     OBJ_RELEASE(sendreq->req_origin_datatype);
 
-    OPAL_FREE_LIST_RETURN(&mca_osc_rdma_component.p2p_c_sendreqs,
+    OPAL_FREE_LIST_RETURN(&mca_osc_rdma_component.c_sendreqs,
                           (opal_list_item_t*) sendreq);
  
     return OMPI_SUCCESS;

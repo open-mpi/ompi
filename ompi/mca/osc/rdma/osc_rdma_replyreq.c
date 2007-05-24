@@ -31,8 +31,8 @@ ompi_osc_rdma_replyreq_alloc_init(ompi_osc_rdma_module_t *module,
                                 ompi_osc_rdma_replyreq_t **replyreq)
 {
     int ret;
-    void *target_addr = (unsigned char*) module->p2p_win->w_baseptr + 
-        (target_displacement * module->p2p_win->w_disp_unit);    
+    void *target_addr = (unsigned char*) module->m_win->w_baseptr + 
+        (target_displacement * module->m_win->w_disp_unit);    
 
 
     /* allocate a replyreq */

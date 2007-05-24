@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,7 +61,7 @@ ompi_osc_rdma_windx_to_module(uint32_t windx)
     ompi_osc_rdma_module_t *module;
 
     /* find the right module and dispatch */
-    ret = opal_hash_table_get_value_uint32(&mca_osc_rdma_component.p2p_c_modules,
+    ret = opal_hash_table_get_value_uint32(&mca_osc_rdma_component.c_modules,
                                            windx,
                                            (void**) (&module));
     if (OMPI_SUCCESS != ret) {

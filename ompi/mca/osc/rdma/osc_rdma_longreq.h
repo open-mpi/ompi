@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,22 +28,18 @@
 struct ompi_osc_rdma_longreq_t;
 typedef struct ompi_osc_rdma_longreq_t ompi_osc_rdma_longreq_t;
 
-typedef void (*ompi_osc_rdma_longreq_comp_cb_t)(ompi_osc_rdma_longreq_t *longreq);
+typedef void (*ompi_osc_rdma_longreq_cb_fn_t)(ompi_osc_rdma_longreq_t *longreq);
 
 struct ompi_osc_rdma_longreq_t {
     opal_free_list_item_t super;
+    ompi_request_t *request;
+    ompi_osc_rdma_longreq_cb_fn_t cbfunc;
+    void *cbdata;
 
     /* warning - this doesn't always have a sane value */
     ompi_osc_rdma_module_t *req_module;
 
-    ompi_request_t *req_pml_req;
-    ompi_osc_rdma_longreq_comp_cb_t req_comp_cb;
-
-    /* general storage place - usually holds a request of some type */
-    void *req_comp_cbdata;
-
     /* for long receives, to avoid a longrecvreq type */
-    /* BWB - I don't like this, but I don't want another free list.  What to do? */
     struct ompi_op_t *req_op;
     struct ompi_datatype_t *req_datatype;
 };
@@ -53,7 +51,7 @@ ompi_osc_rdma_longreq_alloc(ompi_osc_rdma_longreq_t **longreq)
     opal_free_list_item_t *item;
     int ret;
 
-    OPAL_FREE_LIST_GET(&mca_osc_rdma_component.p2p_c_longreqs,
+    OPAL_FREE_LIST_GET(&mca_osc_rdma_component.c_longreqs,
                        item, ret);
 
     *longreq = (ompi_osc_rdma_longreq_t*) item;
@@ -63,7 +61,7 @@ ompi_osc_rdma_longreq_alloc(ompi_osc_rdma_longreq_t **longreq)
 static inline int
 ompi_osc_rdma_longreq_free(ompi_osc_rdma_longreq_t *longreq)
 {
-    OPAL_FREE_LIST_RETURN(&mca_osc_rdma_component.p2p_c_longreqs,
+    OPAL_FREE_LIST_RETURN(&mca_osc_rdma_component.c_longreqs,
                           &longreq->super.super);
     return OMPI_SUCCESS;
 }
