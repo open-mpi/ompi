@@ -105,22 +105,22 @@ struct ompi_osc_rdma_module_t {
         Complete.  For lock, the number of
         messages waiting for completion on on the origin side.  Not
         protected by m_lock - must use atomic counter operations. */
-    volatile int32_t m_num_pending_out;
+    int32_t m_num_pending_out;
 
     /** For MPI_Fence synchronization, the number of expected incoming
         messages.  For Post/Wait, the number of expected updates from
         complete. For lock, the number of messages on the passive side
         we are waiting for.  Not protected by m_lock - must use
         atomic counter operations. */
-    volatile int32_t m_num_pending_in;
+    int32_t m_num_pending_in;
 
     /** Number of "ping" messages from the remote post group we've
         received */
-    volatile int32_t m_num_post_msgs;
+    int32_t m_num_post_msgs;
 
     /** Number of "count" messages from the remote complete group
         we've received */
-    volatile int32_t m_num_complete_msgs;
+    int32_t m_num_complete_msgs;
 
     /** cyclic counter for a unique tage for long messages.  Not
         protected by the m_lock - must use create_send_tag() to
