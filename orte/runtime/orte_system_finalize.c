@@ -107,10 +107,6 @@ int orte_system_finalize(void)
     orte_rml_base_close();
     orte_dss_close();
     
-    opal_progress_finalize();
-
-    opal_event_fini();
-
     orte_session_dir_finalize(orte_process_info.my_name);
 
     /* clean out the global structures */

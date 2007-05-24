@@ -130,12 +130,21 @@ int opal_cr_set_enabled(bool en)
     return OPAL_SUCCESS;
 }
 
+int opal_cr_initalized = 0;
+
 int opal_cr_init(void )
 {
     int ret, exit_status = OPAL_SUCCESS;
     char *tmp_pid = NULL;
     opal_cr_coord_callback_fn_t prev_coord_func;
     int val;
+
+    if( ++opal_cr_initalized != 1 ) {
+        if( opal_cr_initalized < 1 ) {
+            return OPAL_ERROR;
+        }
+        return OPAL_SUCCESS;
+    }
 
     /*
      * Some startup MCA parameters
@@ -297,6 +306,13 @@ int opal_cr_init(void )
 int opal_cr_finalize(void)
 {
     int exit_status = OPAL_SUCCESS;
+
+    if( --opal_cr_initalized != 0 ) {
+        if( opal_cr_initalized < 0 ) {
+            return OPAL_ERROR;
+        }
+        return OPAL_SUCCESS;
+    }
 
     if( !opal_cr_is_tool ) {
 #if OPAL_ENABLE_FT_THREAD == 1

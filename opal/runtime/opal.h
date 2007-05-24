@@ -28,17 +28,6 @@ extern "C" {
 #endif
 
 /**
- * Determine if this is an OPAL level applicaiton or something else.
- * If something else (e.g., ORTE) then we don't want to start the
- * event and progress engines since ORTE does that during it's init.
- *
- * So if we are only doing opal_init, and not someone elses as well.
- * See the opal_init() function for the components that needed to be 
- * called if you are going to set this value to 'false'.
- */
-OPAL_DECLSPEC extern bool opal_init_only;
-
-/**
  * Initialize the OPAL layer, including the MCA system.
  *
  * @retval OPAL_SUCCESS Upon success.

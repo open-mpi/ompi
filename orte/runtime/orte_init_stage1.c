@@ -145,23 +145,6 @@ int orte_init_stage1(bool infrastructure)
 
     /*****   ERROR LOGGING NOW AVAILABLE *****/
 
-    /*
-     * Initialize the event library
-    */
-    if (ORTE_SUCCESS != (ret = opal_event_init())) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_event_init";
-        goto error;
-    }
-
-    /*
-     * Intialize the general progress engine
-     */
-    if (ORTE_SUCCESS != (ret = opal_progress_init())) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_progress_init";
-        goto error;
-    }
     /* we want to tick the event library whenever possible */
     opal_progress_event_users_increment();
 
