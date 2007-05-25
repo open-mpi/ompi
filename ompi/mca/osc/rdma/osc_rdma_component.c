@@ -220,7 +220,10 @@ ompi_osc_rdma_component_finalize(void)
 #if OMPI_ENABLE_PROGRESS_THREADS
         mca_osc_rdma_component.c_thread_run = false;
         opal_condition_broadcast(&ompi_request_cond);
-        opal_thread_join(&mca_osc_rdma_component.c_thread, &ret);
+        {
+            void* ret;
+            opal_thread_join(&mca_osc_rdma_component.c_thread, &ret);
+        }
 #else
         opal_progress_unregister(ompi_osc_rdma_component_progress);
 #endif
@@ -734,7 +737,7 @@ ompi_osc_rdma_component_progress(void)
     int ret, done = 0;
 
 #if OMPI_ENABLE_PROGRESS_THREADS
-    ret = OPAL_THREAD_LOCK(&mca_osc_rdma_component.c_lock);
+    OPAL_THREAD_LOCK(&mca_osc_rdma_component.c_lock);
 #else
     ret = OPAL_THREAD_TRYLOCK(&mca_osc_rdma_component.c_lock);
 #endif
@@ -760,7 +763,7 @@ ompi_osc_rdma_component_progress(void)
 #else
         ret = ompi_request_test(&longreq->request,
                                 &done,
-                                &longreq->status);
+                                0);
 #endif
         if (OMPI_SUCCESS == ret && 0 != done) {
             opal_list_remove_item(&mca_osc_rdma_component.c_pending_requests,
@@ -788,7 +791,7 @@ component_thread_fn(opal_object_t *obj)
         /* wake up whenever a request completes, to make sure it's not
            for us */
         waittime.tv_sec = 1;
-        waittime.tv_usec = 0;
+        waittime.tv_nsec = 0;
         OPAL_THREAD_LOCK(&ompi_request_lock);
         opal_condition_timedwait(&ompi_request_cond, &ompi_request_lock, &waittime);
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
