@@ -688,7 +688,7 @@ ompi_osc_pt2pt_component_progress(void)
     int ret, done = 0;
 
 #if OMPI_ENABLE_PROGRESS_THREADS
-    ret = OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
+    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
 #else
     ret = OPAL_THREAD_TRYLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
 #endif
