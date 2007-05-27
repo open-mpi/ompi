@@ -670,6 +670,7 @@ AC_CHECK_TYPES([struct sockaddr_storage], [], [], [AC_INCLUDES_DEFAULT
 #include <netinet/in.h>
 #endif])
 AC_CHECK_DECLS([AF_UNSPEC, PF_UNSPEC], [], [], [AC_INCLUDES_DEFAULT
+#include <sys/socket.h>
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif])
