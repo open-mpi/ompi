@@ -17,9 +17,21 @@
  * $HEADER$
  */
 
-
+#define OMPI_DISABLE_ENABLE_MEM_DEBUG 1
 #include "ompi_config.h"
+
 #include <stdio.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h> 
+#endif  /* HAVE_UNISTD_H */
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
+#if defined(HAVE_MALLOPT) && defined(M_TRIM_THRESHOLD) && defined(M_MMAP_MAX)
+#define MPOOL_BASE_CAN_DISABLE_SBRK 1
+#else
+#define MPOOL_BASE_CAN_DISABLE_SBRK 0
+#endif
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -27,9 +39,6 @@
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/constants.h"
-#ifdef HAVE_UNISTD_H
-#include <unistd.h> 
-#endif  /* HAVE_UNISTD_H */
 
 /*
  * The following file was created by configure.  It contains extern
