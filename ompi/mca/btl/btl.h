@@ -157,9 +157,6 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_FLAGS_NEED_ACK 0x10
 #define MCA_BTL_FLAGS_NEED_CSUM 0x20
 
-/* btl can report put/get completion before data hits the other side */
-#define MCA_BTL_FLAGS_FAKE_RDMA 0x40
-
 /* btl needs local rdma completion */
 #define MCA_BTL_FLAGS_RDMA_COMPLETION 0x80
 
