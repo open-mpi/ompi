@@ -286,8 +286,8 @@ do {                                                            \
 int mca_pml_ob1_send_fin_btl(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, 
         void *hdr_des, uint8_t order);
 
-static inline int mca_pml_ob1_send_fin(ompi_proc_t* proc, void *hdr_des,
-        mca_bml_base_btl_t* bml_btl, uint8_t order)
+static inline int mca_pml_ob1_send_fin(ompi_proc_t* proc,
+        mca_bml_base_btl_t* bml_btl, void *hdr_des, uint8_t order)
 {
      if(mca_pml_ob1_send_fin_btl(proc, bml_btl, hdr_des, order) == OMPI_SUCCESS)
          return OMPI_SUCCESS;
