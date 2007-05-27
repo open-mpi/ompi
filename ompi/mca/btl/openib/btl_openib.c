@@ -380,8 +380,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
         if(order == MCA_BTL_NO_ORDER) {
             order = BTL_OPENIB_HP_QP;
         } 
-        frag->base.order = order;
-        
     } else if(size <= mca_btl_openib_component.max_send_size) { 
         if(order == MCA_BTL_NO_ORDER) { 
             order = BTL_OPENIB_LP_QP; 
@@ -390,7 +388,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
         }
         
         MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc); 
-        frag->base.order = order;
     }
     
     if(NULL == frag)
@@ -398,6 +395,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
 
     frag->segment.seg_len = 
         size <= openib_btl->super.btl_eager_limit ? size : openib_btl->super.btl_eager_limit;  
+    frag->base.order = order;
     frag->base.des_flags = 0; 
     
     return (mca_btl_base_descriptor_t*)frag;
@@ -534,9 +532,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         
         MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc);
         if(MCA_BTL_NO_ORDER == order) { 
-            frag->base.order = BTL_OPENIB_LP_QP;
-        } else { 
-            frag->base.order = order;
+            order = BTL_OPENIB_LP_QP;
         }
     }
 
@@ -549,7 +545,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             return NULL;
         } 
         MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc);
-        frag->base.order = order;
 
         if(NULL == frag) {
             return NULL;
@@ -569,6 +564,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     *size  = max_data;
     frag->segment.seg_len = max_data + reserve;
     frag->segment.seg_key.key32[0] = (uint32_t)frag->sg_entry.lkey;
+    frag->base.order = order;
     frag->base.des_src = &frag->segment;
     frag->base.des_src_cnt = 1;
     frag->base.des_dst = NULL;
