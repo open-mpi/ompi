@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -408,8 +409,14 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
                 appctx = map->apps[proc->app_idx];
                 
                 MPIR_proctable[i].host_name = strdup(node->nodename);
-                MPIR_proctable[i].executable_name =
-                    opal_os_path( false, appctx->cwd, appctx->app, NULL );
+                if ( NULL == strncmp(appctx->app, OPAL_PATH_SEP, 1 )) { 
+                   MPIR_proctable[i].executable_name = 
+                     opal_os_path( false, appctx->app, NULL ); 
+                }   
+                else {
+                   MPIR_proctable[i].executable_name =
+                     opal_os_path( true, appctx->app, NULL ); 
+                } 
                 MPIR_proctable[i].pid = proc->pid;
                 i++;
             }
