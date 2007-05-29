@@ -128,7 +128,7 @@ OMPI_DECLSPEC ompi_datatype_t ompi_mpi_packed = INIT_BASIC_DATA( char, OMPI_ALIG
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_wchar = INIT_BASIC_DATA( wchar_t, OMPI_ALIGNMENT_WCHAR, WCHAR, DT_FLAG_DATA_C );
 #else
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_wchar = INIT_UNAVAILABLE_DATA( WCHAR );
-#endif  /* FTMPI_HAVE_WCHAR_T */
+#endif  /* OMPI_ALIGNMENT_WCHAR */
 
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_cxx_bool = INIT_BASIC_DATA( bool, OMPI_ALIGNMENT_CXX_BOOL, CXX_BOOL, DT_FLAG_DATA_CPP );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_logic = INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, LOGIC, OMPI_SIZEOF_FORTRAN_LOGICAL, OMPI_ALIGNMENT_FORTRAN_LOGICAL, 0 );
@@ -412,7 +412,7 @@ int32_t ompi_ddt_init( void )
 
         datatype->desc.length       = 1;
         datatype->desc.used         = 1;
-        /* By default the optimized descritption is the same as the default
+        /* By default the optimized description is the same as the default
          * description for predefined datatypes.
          */
         datatype->opt_desc          = datatype->desc;
@@ -532,6 +532,10 @@ int32_t ompi_ddt_init( void )
             ompi_ddt_number_of_predefined_data = (ompi_mpi_##name).d_f_to_c_index; \
     }
 
+    /*
+     * This MUST match the order of ompi/include/mpif-common.h
+     * Any change will break binary compatability of Fortran programs.
+     */
     MOOG(datatype_null);
     MOOG(byte);
     MOOG(packed);
