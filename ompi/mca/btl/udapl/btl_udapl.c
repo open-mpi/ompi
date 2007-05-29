@@ -188,7 +188,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
 
     /* check evd qlen against adapter max */
     if (btl->udapl_dto_evd_qlen > (btl->udapl_ia_attr).max_evd_qlen) {
-	opal_show_help("help-mpi-btl-udapl.txt",
+        opal_show_help("help-mpi-btl-udapl.txt",
             "evd_qlen adapter max", 
             true,
             "btl_udapl_dto_evd_qlen",
@@ -332,7 +332,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
         sizeof(mca_btl_udapl_frag_eager_t) +
         mca_btl_udapl_component.udapl_eager_frag_size,
         mca_btl_udapl_component.udapl_buffer_alignment,
-	OBJ_CLASS(mca_btl_udapl_frag_eager_t),
+        OBJ_CLASS(mca_btl_udapl_frag_eager_t),
         mca_btl_udapl_component.udapl_free_list_num,
         -1,
         mca_btl_udapl_component.udapl_free_list_inc,
@@ -350,7 +350,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     btl->udapl_async_events = 0;
     btl->udapl_connect_inprogress = 0;
     btl->udapl_num_peers = 0;
-	
+
     /* TODO - Set up SRQ when it is supported */
     return OMPI_SUCCESS;
 
@@ -418,7 +418,8 @@ static int mca_btl_udapl_set_peer_parameters(
     DAT_RETURN dat_rc = DAT_SUCCESS;
     uint potential_udapl_timeout;
     int first_time_sizing = (udapl_btl->udapl_num_peers == 0 ? 1 : 0);
-
+    DAT_EVD_PARAM evd_param;
+    
     /* nprocs includes self so subtract 1 */
     udapl_btl->udapl_num_peers += nprocs - 1; 
 
@@ -476,20 +477,33 @@ static int mca_btl_udapl_set_peer_parameters(
             udapl_btl->udapl_ia_attr.max_evd_qlen :
             udapl_btl->udapl_dto_evd_qlen);
             
-        /* dat call to actually resize dto event dispatcher queue length */
-        dat_rc = dat_evd_resize(udapl_btl->udapl_evd_dto,
-            udapl_btl->udapl_dto_evd_qlen);
+        /* OFED stack does not return DAT_INVALID_STATE when
+         * the new qlen is less than current value so here we find
+         * current value and if greater than what we intend to set
+         * it to skip the resize. 
+         */
+        dat_rc = dat_evd_query(udapl_btl->udapl_evd_dto,
+            DAT_EVD_FIELD_EVD_QLEN, &evd_param);
         if(DAT_SUCCESS != dat_rc) {
             char* major;
             char* minor;
 
             dat_strerror(dat_rc, (const char**)&major,
                 (const char**)&minor);
+            BTL_ERROR(("ERROR: %s %s %s\n", "dat_evd_query",
+                major, minor));
+        }
 
-            /* DAT_INVALID_STATE is actually OK for a call to dat_evd_resize(),
-             * all it indicates is that you are setting to the current value
-             */
-            if (strcmp(major, "DAT_INVALID_STATE")) {
+        if (udapl_btl->udapl_dto_evd_qlen > evd_param.evd_qlen) {
+            /* resize dto event dispatcher queue length */
+            dat_rc = dat_evd_resize(udapl_btl->udapl_evd_dto,
+                udapl_btl->udapl_dto_evd_qlen);
+            if(DAT_SUCCESS != dat_rc) {
+                char* major;
+                char* minor;
+
+                dat_strerror(dat_rc, (const char**)&major,
+                    (const char**)&minor);
                 BTL_ERROR(("ERROR: %s %s %s\n", "dat_evd_resize",
                     major, minor));
                 rc = OMPI_ERR_OUT_OF_RESOURCE;
@@ -533,20 +547,33 @@ static int mca_btl_udapl_set_peer_parameters(
             udapl_btl->udapl_ia_attr.max_evd_qlen :
             udapl_btl->udapl_conn_evd_qlen);
         
-        /* dat call to actually resize conn evd queue length */
-        dat_rc = dat_evd_resize(udapl_btl->udapl_evd_conn,
-            udapl_btl->udapl_conn_evd_qlen);
+        /* OFED stack does not return DAT_INVALID_STATE when
+         * the new qlen is less than current value so here we find
+         * current value and if greater than what we intend to set
+         * it to skip the resize. 
+         */
+        dat_rc = dat_evd_query(udapl_btl->udapl_evd_conn,
+            DAT_EVD_FIELD_EVD_QLEN, &evd_param);
         if(DAT_SUCCESS != dat_rc) {
             char* major;
             char* minor;
 
             dat_strerror(dat_rc, (const char**)&major,
                 (const char**)&minor);
+            BTL_ERROR(("ERROR: %s %s %s\n", "dat_evd_query",
+                major, minor));
+        }
 
-            /* DAT_INVALID_STATE is actually OK for a call to dat_evd_resize(),
-             * all it indicates is that you are setting to the current value
-             */
-            if (strcmp(major, "DAT_INVALID_STATE")) {
+        if (udapl_btl->udapl_conn_evd_qlen > evd_param.evd_qlen) {
+            /* resize conn evd queue length */
+            dat_rc = dat_evd_resize(udapl_btl->udapl_evd_conn,
+                udapl_btl->udapl_conn_evd_qlen);
+            if(DAT_SUCCESS != dat_rc) {
+                char* major;
+                char* minor;
+
+                dat_strerror(dat_rc, (const char**)&major,
+                    (const char**)&minor);
                 BTL_ERROR(("ERROR: %s %s %s\n", "dat_evd_resize",
                     major, minor));
                 rc = OMPI_ERR_OUT_OF_RESOURCE;
