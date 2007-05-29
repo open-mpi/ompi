@@ -135,8 +135,8 @@ int main(int argc, char* argv[])
     msg.iov_len  = sizeof(i);
     for (i=0; i < range; i++) {
         name.vpid = i;
-        if (0 > orte_rml.send(&name, &msg, 1, MY_TAG, 0)) {
-            printf("error %d\n", __LINE__);
+        if (0 > (rc = orte_rml.send(&name, &msg, 1, MY_TAG, 0))) {
+            ORTE_ERROR_LOG(rc);
         }
     }
     
