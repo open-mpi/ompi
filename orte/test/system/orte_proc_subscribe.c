@@ -8,7 +8,9 @@
 #include <stdio.h>
 
 #include "opal/threads/condition.h"
+#include "opal/util/argv.h"
 
+#include "orte/runtime/runtime.h"
 #include "orte/util/proc_info.h"
 #include "orte/dss/dss.h"
 #include "orte/mca/gpr/gpr.h"
@@ -37,7 +39,7 @@ int main(int argc, char* argv[])
     OBJ_CONSTRUCT(&cond, opal_condition_t);
     waitexit = false;
 
-    if (0 > (rc = orte_init())) {
+    if (0 > (rc = orte_init(ORTE_NON_INFRASTRUCTURE, ORTE_USE_BARRIER))) {
         fprintf(stderr, "couldn't init orte - error code %d\n", rc);
         return rc;
     }
@@ -106,6 +108,7 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
 
 static void eclipse_launch_cb(orte_gpr_notify_data_t *notify_data, void *user_tag)
 {
+#if 0
 	int						len;
 	orte_std_cntr_t			i;
 	orte_std_cntr_t			j;
@@ -118,6 +121,7 @@ static void eclipse_launch_cb(orte_gpr_notify_data_t *notify_data, void *user_ta
 	char *					res;
 	char *					kv = NULL;
 	char *					vpid = NULL;
+#endif
 	
     fprintf(stderr, "launch cb entered\n");
     orte_dss.dump(0, notify_data, ORTE_GPR_NOTIFY_DATA);

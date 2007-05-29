@@ -10,7 +10,7 @@
 #include "orte/runtime/runtime.h"
 
 #define MY_TAG 12345
-#define MAX_COUNT 20
+#define MAX_COUNT 3
 
 #            define false 0
 #            define true 1
@@ -25,7 +25,6 @@ main(int argc, char *argv[]){
     orte_process_name_t left_peer_orte_name;
     int num_peers = 0;
     struct iovec msg;
-    int ret;
 
     /*
      * Init
@@ -81,6 +80,7 @@ main(int argc, char *argv[]){
         }
     }
 
+
     while (counter <= MAX_COUNT ) {
         int *cnt;
 
@@ -100,16 +100,19 @@ main(int argc, char *argv[]){
         cnt = (int *) msg.iov_base;
         counter = *cnt;
 
-        if(counter > MAX_COUNT)
-            break;
-        
         /* Update */
         printf("%s) Recv %d ... Send %d\n", my_name, counter, counter + 1);
         if( orte_process_info.my_name->vpid == 0 ) {
             sleep(2);
         }
-        counter++;
+        if(orte_process_info.my_name->vpid == 0) {
+            counter++;
+        }
         
+        if(counter > MAX_COUNT && right_peer_orte_name.vpid == 0) {
+            break;
+        }
+
         /* Send to right */
         msg.iov_base = (void *) &counter;
         msg.iov_len  = sizeof(counter);
@@ -123,8 +126,6 @@ main(int argc, char *argv[]){
             printf("error B... %d\n", __LINE__);;
         }
     }
-
- cleanup:
 
     orte_finalize();
 
