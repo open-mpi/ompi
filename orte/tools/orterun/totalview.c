@@ -409,7 +409,7 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
                 appctx = map->apps[proc->app_idx];
                 
                 MPIR_proctable[i].host_name = strdup(node->nodename);
-                if ( NULL == strncmp(appctx->app, OPAL_PATH_SEP, 1 )) { 
+                if ( 0 == strncmp(appctx->app, OPAL_PATH_SEP, 1 )) { 
                    MPIR_proctable[i].executable_name = 
                      opal_os_path( false, appctx->app, NULL ); 
                 }   
