@@ -690,7 +690,7 @@ start() {
 end() {
     if test "$output" = "1"; then
         cat &lt;&lt;EOF
-end interface $1
+end interface
 
 
 EOF
