@@ -99,7 +99,7 @@ static void orte_gpr_replica_segment_construct(orte_gpr_replica_segment_t* seg)
 static void orte_gpr_replica_segment_destructor(orte_gpr_replica_segment_t* seg)
 {
     orte_std_cntr_t i, k;
-    char **dptr;
+    orte_gpr_replica_dict_entry_t **dptr;
     orte_gpr_replica_itag_t j;
     orte_gpr_replica_container_t **cptr;
 
@@ -108,7 +108,7 @@ static void orte_gpr_replica_segment_destructor(orte_gpr_replica_segment_t* seg)
     }
 
     if (NULL != seg->dict) {
-        dptr = (char**)(seg->dict)->addr;
+        dptr = (orte_gpr_replica_dict_entry_t**)(seg->dict->addr);
         for (i=0, j=0; j < seg->num_dict_entries &&
                        i < (seg->dict)->size; i++) {
             if (NULL != dptr[i]) {

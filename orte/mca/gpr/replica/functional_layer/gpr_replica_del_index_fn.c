@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -159,9 +159,8 @@ int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
 {
     char **ptr;
     orte_gpr_replica_segment_t **segs;
-    char **dict;
+    orte_gpr_replica_dict_entry_t **dict;
     orte_std_cntr_t i, j;
-
 
     OPAL_TRACE(2);
     
@@ -185,7 +184,7 @@ int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
         ptr = *index;
         segs = (orte_gpr_replica_segment_t**) (orte_gpr_replica.segments)->addr;
         for (i=0, j=0; j < orte_gpr_replica.num_segs &&
-                       i < (orte_gpr_replica.segments)->size; i++) {
+                 i < (orte_gpr_replica.segments)->size; i++) {
             if (NULL != segs[i]) {
                 ptr[j] = strdup(segs[i]->name);
                 if (NULL == ptr[j]) {
@@ -208,19 +207,18 @@ int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         ptr = *index;
-        dict = (char**)(seg->dict)->addr;
+        dict = (orte_gpr_replica_dict_entry_t**)(seg->dict)->addr;
     
-        for (i=0, j=0; j < seg->num_dict_entries &&
-                       i < (seg->dict)->size; i++) {
-            if (NULL != dict[i]) {
-                ptr[j] = strdup(dict[i]);
-                if (NULL == ptr[j]) {
-                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                    *cnt = j;
-                    return ORTE_ERR_OUT_OF_RESOURCE;
-                }
-                j++;
+        for( i = 0, j = 0; ((j < seg->num_dict_entries) &&
+                            (i < (seg->dict)->size)); i++ ) {
+            if(NULL == dict[i]) continue;
+            ptr[j] = strdup(dict[i]->string);
+            if (NULL == ptr[j]) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                *cnt = j;
+                return ORTE_ERR_OUT_OF_RESOURCE;
             }
+            j++;
         }
         *cnt = seg->num_dict_entries;
         return ORTE_SUCCESS;

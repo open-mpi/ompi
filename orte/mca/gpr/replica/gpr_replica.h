@@ -152,6 +152,18 @@ struct orte_gpr_replica_t {
 };
 typedef struct orte_gpr_replica_t orte_gpr_replica_t;
 
+/**
+ * This structure will be used for all dictionary entries. Instead of using strcmp (& co.)
+ * we will compute a quick hash value for each string and store this value together with
+ * the string in the orte_pointer_array. The string have to be the last entry in the
+ * structure, in order to allow us to allocate it only once.
+ */
+struct orte_gpr_replica_dict_entry_t {
+    uint32_t   hash_key;  /**< the associated hash value */
+    uint32_t   length;    /**< the length of the string computed once */
+    char       string[1]; /**< the real string (i.e. the structure will have a variable size) */
+};
+typedef struct orte_gpr_replica_dict_entry_t orte_gpr_replica_dict_entry_t;
 
 /** Registry segment definition.
  * The registry is subdivided into segments, each defining a unique domain. The "universe" segment

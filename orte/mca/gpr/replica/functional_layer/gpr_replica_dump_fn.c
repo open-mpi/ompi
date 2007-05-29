@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -833,7 +833,7 @@ static int orte_gpr_replica_get_segment_size_fn(size_t *segsize, orte_gpr_replic
 {
     size_t data_size, isize;
     orte_std_cntr_t i, j, k, m;
-    char **dict;
+    orte_gpr_replica_dict_entry_t **dict;
     orte_gpr_replica_container_t **cptr;
     orte_gpr_replica_itagval_t **iptr;
     int rc;
@@ -842,48 +842,48 @@ static int orte_gpr_replica_get_segment_size_fn(size_t *segsize, orte_gpr_replic
     data_size += 2*sizeof(orte_gpr_replica_itag_t); /* itag, num_dict_entries */
 
     data_size += (seg->dict)->size * sizeof(void*);  /* account for size of pointer array */
-    dict = (char**)(seg->dict)->addr;
+    dict = (orte_gpr_replica_dict_entry_t**)(seg->dict)->addr;
     for (i=0, j=0; j < seg->num_dict_entries &&
-         i < (seg->dict)->size; i++) {
-             if (NULL != dict[i]) {
-                 j++;
-                 data_size += strlen(dict[i]) + 1;
-             }
-         }
+             i < (seg->dict)->size; i++) {
+        if (NULL != dict[i]) {
+            j++;
+            data_size += dict[i]->length + 1;
+        }
+    }
 
-         data_size += sizeof(orte_std_cntr_t);  /* num_containers */
-         cptr = (orte_gpr_replica_container_t**)(seg->containers)->addr;
-         for (i=0, j=0; j < (seg->num_containers) &&
-              i < (seg->containers)->size; i++) {
-                  if (NULL != cptr[i]) {
-                      j++;
-                      data_size += sizeof(orte_std_cntr_t);  /* index */
-                      data_size += cptr[i]->num_itags * sizeof(orte_gpr_replica_itag_t);  /* itags array */
-                      data_size += sizeof(orte_std_cntr_t);  /* num_itags */
-                      data_size += (cptr[i]->itagvals)->size * sizeof(void*);  /* account for size of pointer array */
-                      data_size += sizeof(orte_std_cntr_t);  /* num_itagvals */
-                      iptr = (orte_gpr_replica_itagval_t**)(cptr[i]->itagvals)->addr;
-                      for (k=0, m=0; m < cptr[i]->num_itagvals &&
-                           k < (cptr[i]->itagvals)->size; k++) {
-                               if (NULL != iptr[k]) {
-                                   m++;
-                                   data_size += sizeof(orte_std_cntr_t);  /* index */
-                                   data_size += sizeof(orte_gpr_replica_itag_t);
-                                   data_size += sizeof(orte_data_type_t);
-                                   if (ORTE_SUCCESS != (rc = orte_dss.size(&isize, iptr[k]->value->data, iptr[k]->value->type))) {
-                                       ORTE_ERROR_LOG(rc);
-                                       *segsize = 0;
-                                       return rc;
-                                   }
-                                   data_size += isize;
-                               }
-                           }
-                           data_size += 3*sizeof(orte_std_cntr_t);
-                           data_size += (cptr[i]->itaglist).array_size * sizeof(unsigned char*);
-                  }
-              }
+    data_size += sizeof(orte_std_cntr_t);  /* num_containers */
+    cptr = (orte_gpr_replica_container_t**)(seg->containers)->addr;
+    for (i=0, j=0; j < (seg->num_containers) &&
+             i < (seg->containers)->size; i++) {
+        if (NULL != cptr[i]) {
+            j++;
+            data_size += sizeof(orte_std_cntr_t);  /* index */
+            data_size += cptr[i]->num_itags * sizeof(orte_gpr_replica_itag_t);  /* itags array */
+            data_size += sizeof(orte_std_cntr_t);  /* num_itags */
+            data_size += (cptr[i]->itagvals)->size * sizeof(void*);  /* account for size of pointer array */
+            data_size += sizeof(orte_std_cntr_t);  /* num_itagvals */
+            iptr = (orte_gpr_replica_itagval_t**)(cptr[i]->itagvals)->addr;
+            for (k=0, m=0; m < cptr[i]->num_itagvals &&
+                     k < (cptr[i]->itagvals)->size; k++) {
+                if (NULL != iptr[k]) {
+                    m++;
+                    data_size += sizeof(orte_std_cntr_t);  /* index */
+                    data_size += sizeof(orte_gpr_replica_itag_t);
+                    data_size += sizeof(orte_data_type_t);
+                    if (ORTE_SUCCESS != (rc = orte_dss.size(&isize, iptr[k]->value->data, iptr[k]->value->type))) {
+                        ORTE_ERROR_LOG(rc);
+                        *segsize = 0;
+                        return rc;
+                    }
+                    data_size += isize;
+                }
+            }
+            data_size += 3*sizeof(orte_std_cntr_t);
+            data_size += (cptr[i]->itaglist).array_size * sizeof(unsigned char*);
+        }
+    }
 
-              *segsize = data_size;
-              return ORTE_SUCCESS;
+    *segsize = data_size;
+    return ORTE_SUCCESS;
 }
 
