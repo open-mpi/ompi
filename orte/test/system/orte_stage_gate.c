@@ -6,12 +6,13 @@
  */
 
 #include <stdio.h>
-
+#include "orte_config.h"
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/runtime/opal.h"
+#include "opal/util/output.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/runtime/runtime.h"

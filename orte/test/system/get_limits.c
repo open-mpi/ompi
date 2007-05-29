@@ -4,25 +4,24 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/resource.h>
+#include <string.h>
 
 int main(int argc, char* argv[]) 
 {
-    int i = 0;
-    pid_t pid;
     struct rlimit rlim;
 
     if (getrlimit (RLIMIT_NOFILE, &rlim) < 0)
         fprintf (stderr, "getrlimit (RLIMIT_NOFILE): %s\n", strerror (errno));
     else {
-        printf("softlimit on num_files: %d\thardlimit on num_files: %d\n", rlim.rlim_cur, rlim.rlim_max);
+        printf("softlimit on num_files: %d\thardlimit on num_files: %d\n", (int)rlim.rlim_cur, (int)rlim.rlim_max);
     } 
     if (getrlimit (RLIMIT_NPROC, &rlim) < 0)
         fprintf (stderr, "getrlimit (RLIMIT_NPROC): %s\n", strerror (errno));
     else {
-        printf("softlimit on num_child: %d\thardlimit on num_child: %d\n", rlim.rlim_cur, rlim.rlim_max);
+        printf("softlimit on num_child: %d\thardlimit on num_child: %d\n", (int)rlim.rlim_cur, (int)rlim.rlim_max);
     } 
     
-    printf("RLIM_INFINITY: %d\n", RLIM_INFINITY);
+    printf("RLIM_INFINITY: %d\n", (int)RLIM_INFINITY);
     
     return 0;
 }

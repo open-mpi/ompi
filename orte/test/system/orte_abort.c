@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "orte/runtime/runtime.h"
 #include "orte/util/proc_info.h"
 
 int main(int argc, char* argv[])
@@ -19,7 +20,7 @@ int main(int argc, char* argv[])
     pid_t pid;
     char hostname[500];
 
-    if (0 > (rc = orte_init())) {
+    if (0 > (rc = orte_init(ORTE_NON_INFRASTRUCTURE, ORTE_USE_BARRIER))) {
         fprintf(stderr, "orte_abort: couldn't init orte - error code %d\n", rc);
         return rc;
     }
@@ -34,7 +35,9 @@ int main(int argc, char* argv[])
         i++;
         pi = i / 3.14159256;
         if (i > 10000) i = 0;
-        if (orte_process_info.my_name->vpid == 3 && i == 9995) {
+        if ((orte_process_info.my_name->vpid == 3 || 
+             (orte_process_info.num_procs <= 3 && orte_process_info.my_name->vpid == 0))
+            && i == 9995) {
             orte_abort(1, true);
         }
     }

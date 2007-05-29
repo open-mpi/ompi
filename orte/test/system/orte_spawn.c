@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include "opal/threads/condition.h"
+#include "opal/util/argv.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/mca/rmgr/rmgr.h"
