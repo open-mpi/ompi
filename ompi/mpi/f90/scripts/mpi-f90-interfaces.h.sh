@@ -46,7 +46,7 @@ start() {
 end() {
     if test "$output" = "1"; then
         cat <<EOF
-end interface $1
+end interface
 
 
 EOF
