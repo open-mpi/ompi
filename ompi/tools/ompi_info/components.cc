@@ -125,10 +125,13 @@ void ompi_info::open_components()
 {
   ompi_info::type_vector_t::size_type i;
   string env;
-  char *target;
+  char *target, *save;
+  vector<std::string> env_save;
+  vector<std::string>::iterator esi;
 
-  if (opened_components)
-    return;
+  if (opened_components) {
+      return;
+  }
 
   // Clear out the environment.  Use strdup() to orphan the resulting
   // strings because items are placed in the environment by reference,
@@ -136,8 +139,9 @@ void ompi_info::open_components()
 
   for (i = 0; i < mca_types.size(); ++i) {
     env = "OMPI_MCA_" + mca_types[i];
-    if (NULL != getenv(env.c_str())) {
+    if (NULL != (save = getenv(env.c_str()))) {
       env += "=";
+      env_save.push_back(env + save);
       target = strdup(env.c_str());
       putenv(target);
     }
@@ -271,6 +275,17 @@ void ompi_info::open_components()
 
   mca_topo_base_open();
   component_map["topo"] = &mca_topo_base_components_opened;
+
+  // Restore the environment to what it was before we started so that
+  // if users setenv OMPI_MCA_<framework name> to some value, they'll
+  // see that value when it is shown via --param output.
+
+  if (!env_save.empty()) {
+      for (esi = env_save.begin(); esi != env_save.end(); ++esi) {
+          target = strdup(esi->c_str());
+          putenv(target);
+      }
+  }
 
   // All done
 
