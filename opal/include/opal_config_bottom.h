@@ -481,7 +481,7 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #define OPAL_WANT_IPV6 0
 #endif
 
-#if !defined(HAVE_STRUCT_SOCKADDR_STORAGE)
+#if !defined(HAVE_STRUCT_SOCKADDR_STORAGE) && defined(HAVE_STRUCT_SOCKADDR_IN)
 #define sockaddr_storage sockaddr
 #define ss_family sa_family
 #endif
