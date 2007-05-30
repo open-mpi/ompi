@@ -96,7 +96,7 @@ int orte_init_stage2(char *trigger)
 return_error:
     opal_show_help("help-orte-runtime",
                    "orte_init:startup:internal-failure",
-                   true, error_str, ret);
+                   true, error_str, ORTE_ERROR_NAME(ret), ret);
     
     return ret;
 }
