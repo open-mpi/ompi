@@ -1187,6 +1187,7 @@ int mca_oob_tcp_register_subscription(orte_jobid_t jobid, char *trigger)
     /* register subscribe callback to receive notification when all processes have registered */
     subscription = OBJ_NEW(mca_oob_tcp_subscription_t);
     subscription->jobid = jobid;
+    OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     opal_list_append(&mca_oob_tcp_component.tcp_subscriptions, &subscription->item);
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 
@@ -1269,7 +1270,6 @@ int mca_oob_tcp_register_contact_info(void)
     /* extract payload for storage */
     if (ORTE_SUCCESS != (rc = orte_dss.unload(buffer, (void**)&(bo.bytes), &(bo.size)))) {
         ORTE_ERROR_LOG(rc);
-        free(segment);
         OBJ_RELEASE(buffer);
         return rc;
     }
@@ -1282,7 +1282,6 @@ int mca_oob_tcp_register_contact_info(void)
     values[0]->type = ORTE_BYTE_OBJECT;
     if (ORTE_SUCCESS != (rc = orte_dss.copy(&(values[0]->data), &bo, ORTE_BYTE_OBJECT))) {
         ORTE_ERROR_LOG(rc);
-        free(segment);
         return rc;
     }
 
@@ -1295,7 +1294,6 @@ int mca_oob_tcp_register_contact_info(void)
                     "returned for selected oob interfaces.\n",
                     ORTE_NAME_ARGS(orte_process_info.my_name), tmp);
         ORTE_ERROR_LOG(ORTE_ERROR);
-        free(segment);
         free(tmp);
         free(bo.bytes);
         return ORTE_ERROR;
