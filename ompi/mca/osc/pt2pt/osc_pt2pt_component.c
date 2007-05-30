@@ -540,7 +540,7 @@ component_fragment_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
             if (NULL == datatype) {
                 opal_output(ompi_osc_base_output,
                             "Error recreating datatype.  Aborting.");
-                ompi_mpi_abort(module->m_comm, 1, false);
+                ompi_mpi_abort(module->p2p_comm, 1, false);
             }
 
             /* create replyreq sendreq */
