@@ -37,7 +37,7 @@ main(int argc, char* argv[])
     int ret = 0;
     int         blen[2];
     MPI_Aint    disp[2];
-    MPI_Datatype	newType;
+    MPI_Datatype newType, types[2], struct_type;
 
     MPI_Init(&argc, &argv);
 
@@ -77,6 +77,35 @@ main(int argc, char* argv[])
     packed_ddt_len = ompi_ddt_pack_description_length(newType);
     ptr = payload = malloc(packed_ddt_len);
     ret = ompi_ddt_get_pack_description(newType, &packed_ddt);
+    if (ret != 0) goto cleanup;
+    memcpy(payload, packed_ddt, packed_ddt_len);
+    unpacked_dt = ompi_ddt_create_from_packed_description(&payload,
+                                                          ompi_proc_local());
+    free(ptr);
+    if (unpacked_dt != NULL) {
+        printf("\tPASSED\n");
+    } else {
+        printf("\tFAILED: datatypes don't match\n");
+        ret = 1;
+        goto cleanup;
+    }
+
+    printf("---> Even more advanced test using the previous type and struct\n");
+    blen[0] = 11;
+    blen[1] = 2;
+    disp[0] = 0;
+    disp[1] = 64;
+    types[0] = MPI_INT;
+    types[1] = newType;
+    MPI_Type_create_struct( 2, blen, disp, types, &struct_type );
+    if (ret != 0) goto cleanup;
+
+    ret = MPI_Type_commit(&struct_type);
+    if (ret != 0) goto cleanup;
+
+    packed_ddt_len = ompi_ddt_pack_description_length(struct_type);
+    ptr = payload = malloc(packed_ddt_len);
+    ret = ompi_ddt_get_pack_description(struct_type, &packed_ddt);
     if (ret != 0) goto cleanup;
     memcpy(payload, packed_ddt, packed_ddt_len);
     unpacked_dt = ompi_ddt_create_from_packed_description(&payload,
