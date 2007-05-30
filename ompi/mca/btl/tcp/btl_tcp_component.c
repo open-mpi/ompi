@@ -319,15 +319,16 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
 
         /* allow user to specify interface bandwidth */
         sprintf(param, "bandwidth_%s", if_name);
-        btl->super.btl_bandwidth = mca_btl_tcp_param_register_int(param, 0);
+        btl->super.btl_bandwidth = mca_btl_tcp_param_register_int(param, btl->super.btl_bandwidth);
 
         /* allow user to override/specify latency ranking */
         sprintf(param, "latency_%s", if_name);
-        btl->super.btl_latency = mca_btl_tcp_param_register_int(param, 0);
+        btl->super.btl_latency = mca_btl_tcp_param_register_int(param, btl->super.btl_bandwidth);
         if( i > 0 ) {
             btl->super.btl_bandwidth >>= 1;
             btl->super.btl_latency   <<= 1;
         }
+
         /* allow user to specify interface bandwidth */
         sprintf(param, "bandwidth_%s:%d", if_name, i);
         btl->super.btl_bandwidth = mca_btl_tcp_param_register_int(param, btl->super.btl_bandwidth);
