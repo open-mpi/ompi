@@ -527,6 +527,12 @@ ompi_osc_pt2pt_sendreq_recv_put(ompi_osc_pt2pt_module_t *module,
     struct ompi_datatype_t *datatype = 
         ompi_osc_pt2pt_datatype_create(proc, &inbuf);
 
+    if (NULL == datatype) {
+        opal_output(ompi_osc_base_output,
+                    "Error recreating datatype.  Aborting.");
+        ompi_mpi_abort(module->m_comm, 1, false);
+    }
+
     if (header->hdr_msg_length > 0) {
         ompi_convertor_t convertor;
         struct iovec iov;
@@ -640,6 +646,12 @@ ompi_osc_pt2pt_sendreq_recv_accum(ompi_osc_pt2pt_module_t *module,
     ompi_proc_t *proc = ompi_comm_peer_lookup( module->p2p_comm, header->hdr_origin );
     struct ompi_datatype_t *datatype = 
         ompi_osc_pt2pt_datatype_create(proc, &payload);
+
+    if (NULL == datatype) {
+        opal_output(ompi_osc_base_output,
+                    "Error recreating datatype.  Aborting.");
+        ompi_mpi_abort(module->m_comm, 1, false);
+    }
 
     if (header->hdr_msg_length > 0) {
         /* lock the window for accumulates */

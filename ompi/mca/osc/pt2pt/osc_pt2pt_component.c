@@ -537,6 +537,12 @@ component_fragment_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
             proc = ompi_comm_peer_lookup( module->p2p_comm, header->hdr_origin );
             datatype = ompi_osc_pt2pt_datatype_create(proc, &payload);
 
+            if (NULL == datatype) {
+                opal_output(ompi_osc_base_output,
+                            "Error recreating datatype.  Aborting.");
+                ompi_mpi_abort(module->m_comm, 1, false);
+            }
+
             /* create replyreq sendreq */
             ret = ompi_osc_pt2pt_replyreq_alloc_init(module,
                                                   header->hdr_origin,
