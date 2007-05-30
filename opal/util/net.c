@@ -75,6 +75,7 @@
 #include "opal/util/strncpy.h"
 #include "opal/constants.h"
 
+#ifdef HAVE_STRUCT_SOCKADDR_IN
 
 /* convert a CIDR prefixlen to netmask (in network byte order) */
 uint32_t
@@ -294,3 +295,51 @@ opal_net_get_port(struct sockaddr *addr)
 
     return -1;
 }
+
+
+#else /* HAVE_STRUCT_SOCKADDR_IN */
+
+
+uint32_t
+opal_net_prefix2netmask(uint32_t prefixlen)
+{
+    return 0;
+}
+
+
+bool
+opal_net_islocalhost(struct sockaddr *addr)
+{
+    return false;
+}
+
+
+bool
+opal_net_samenetwork(struct sockaddr *addr1, struct sockaddr *addr2,
+                     uint32_t prefixlen)
+{
+    return false;
+}
+
+
+bool
+opal_net_addr_isipv4public (struct sockaddr *addr)
+{
+    return false;
+}
+
+
+char*
+opal_net_get_hostname(struct sockaddr *addr)
+{
+    return NULL;
+}
+
+
+int
+opal_net_get_port(struct sockaddr *addr)
+{
+    return -1;
+}
+
+#endif /* HAVE_STRUCT_SOCKADDR_IN */
