@@ -408,8 +408,7 @@ size_t ompi_ddt_pack_description_length( const ompi_datatype_t* datatype )
 static inline int __ompi_ddt_pack_description( ompi_datatype_t* datatype,
                                                void** packed_buffer, int* next_index )
 {
-    int* position = (int*)*packed_buffer;
-    int local_index, i;
+    int i, *position = (int*)*packed_buffer;
     ompi_ddt_args_t* args = (ompi_ddt_args_t*)datatype->args;
     char* next_packed = (char*)*packed_buffer;
 
@@ -428,6 +427,7 @@ static inline int __ompi_ddt_pack_description( ompi_datatype_t* datatype,
     position[1] = args->ci;
     position[2] = args->ca;
     position[3] = args->cd;
+    next_packed += (4 * sizeof(int));
     /* So far there are 4 integers in the array, so we're still 64 bits aligned
      * if we suppose that the original buffer was 64 bits aligned.
      *
@@ -438,19 +438,17 @@ static inline int __ompi_ddt_pack_description( ompi_datatype_t* datatype,
      * array of datatypes (both of them might be arrays of pointers) and then
      * finally the array of counts.
      */
-    local_index = 4;
     /* copy the array of displacements (usually 64 bits aligned) */
     if( 0 < args->ca ) {
-        memcpy( &(position[local_index]), args->a, sizeof(MPI_Aint) * args->ca );
+        memcpy( next_packed, args->a, sizeof(MPI_Aint) * args->ca );
         next_packed += sizeof(MPI_Aint) * args->ca;
     }
     position = (int*)next_packed;
     next_packed += sizeof(int) * args->cd;
 
     /* copy the aray of counts (32 bits aligned) */
-    memcpy( &(position[local_index]), args->i, sizeof(int) * args->ci );
+    memcpy( next_packed, args->i, sizeof(int) * args->ci );
     next_packed += ( 4 + args->ci) * sizeof(int);
-    local_index += args->ci;
 
     /* copy the rest of the data */
     for( i = 0; i < args->cd; i++ ) {
@@ -554,20 +552,17 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
     }
     array_of_datatype = (ompi_datatype_t**)malloc( sizeof(ompi_datatype_t*) *
                                                    number_of_datatype );
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    if (need_swap) {
-        position[4] = opal_swap_bytes4(position[4]);
-    }
-#endif
+    position += 4;  /* move after the header */
+
     /* the array of displacements (64 bits aligned) */
-    array_of_disp   = (MPI_Aint*)&(position[4]);
+    array_of_disp   = (MPI_Aint*)position;
     next_buffer    += number_of_disp * sizeof(MPI_Aint);
-    /* the array of lengths (32 bits aligned) */
-    array_of_length = (int*)next_buffer;
-    next_buffer    += (4 + number_of_length) * sizeof(int);
     /* the other datatypes */
     position        = (int*)next_buffer;
     next_buffer    += number_of_datatype * sizeof(int);
+    /* the array of lengths (32 bits aligned) */
+    array_of_length = (int*)next_buffer;
+    next_buffer    += (4 + number_of_length) * sizeof(int);
 
     for( i = 0; i < number_of_datatype; i++ ) {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -582,8 +577,15 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
             array_of_datatype[i] =
                 __ompi_ddt_create_from_packed_description( (void**)&next_buffer,
                                                            remote_processor );
-            if( NULL == array_of_datatype[i] )
+            if( NULL == array_of_datatype[i] ) {
+                /* don't cleanup more than required. We can now modify these
+                 * values as we already know we have failed to rebuild the
+                 * datatype.
+                 */
+                array_of_datatype[i] = (ompi_datatype_t*)ompi_ddt_basicDatatypes[DT_BYTE];
+                number_of_datatype = i;
                 goto cleanup_and_exit;
+            }
         }
     }
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
