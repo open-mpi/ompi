@@ -322,7 +322,11 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     memset(module->m_num_pending_sendreqs, 0, 
            sizeof(unsigned int) * ompi_comm_size(module->m_comm));
 
-    module->m_eager_send = check_config_value_bool("eager_send", info);
+    module->m_eager_send_ok = check_config_value_bool("eager_send", info);
+    /* initially, we're in that pseudo-fence state, so we allow eager
+       sends (yay for Fence).  Other protocols will disable before
+       they start their epochs, so this isn't a problem. */
+    module->m_eager_send_active = module->m_eager_send_ok;
 
     /* fence data */
     module->m_fence_coll_counts = (int*)
@@ -623,7 +627,39 @@ component_fragment_cb(struct mca_btl_base_module_t *btl,
             OPAL_THREAD_LOCK(&module->m_lock);
             count = (module->m_num_post_msgs -= 1);
             OPAL_THREAD_UNLOCK(&module->m_lock);
-            if (count == 0) opal_condition_broadcast(&module->m_cond);
+            if (count == 0) {
+                module->m_eager_send_active = module->m_eager_send_ok;
+
+                while (module->m_eager_send_active && 
+                       opal_list_get_size(&module->m_pending_sendreqs)) {
+                    ompi_osc_rdma_sendreq_t *sendreq;
+
+                    OPAL_THREAD_LOCK(&module->m_lock);
+                    sendreq = (ompi_osc_rdma_sendreq_t*) 
+                        opal_list_remove_first(&module->m_pending_sendreqs);
+
+                    if (NULL == sendreq) {
+                        OPAL_THREAD_UNLOCK(&module->m_lock);
+                        break;
+                    }
+
+                    sendreq->req_module->m_num_pending_out += 1;
+                    OPAL_THREAD_UNLOCK(&module->m_lock);
+
+                    ret = ompi_osc_rdma_sendreq_send(module, sendreq);
+
+                    if (OMPI_SUCCESS != ret) {
+                        OPAL_THREAD_LOCK(&module->m_lock);
+                        sendreq->req_module->m_num_pending_out -= 1;
+                        opal_list_append(&(module->m_pending_sendreqs),
+                                         (opal_list_item_t*) sendreq);
+                        OPAL_THREAD_UNLOCK(&module->m_lock);
+                        break;
+                    }
+                }
+
+                opal_condition_broadcast(&module->m_cond);
+            }
         }
         break;
     case OMPI_OSC_RDMA_HDR_COMPLETE:

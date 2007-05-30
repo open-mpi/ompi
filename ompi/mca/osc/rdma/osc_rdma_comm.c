@@ -50,9 +50,10 @@ ompi_osc_rdma_module_accumulate(void *origin_addr, int origin_count,
 {
     int ret;
     ompi_osc_rdma_sendreq_t *sendreq;
+    ompi_osc_rdma_module_t *module = GET_MODULE(win);
 
     if ((OMPI_WIN_STARTED & ompi_win_get_mode(win)) &&
-        (!GET_MODULE(win)->m_sc_remote_active_ranks[target])) {
+        (!module->m_sc_remote_active_ranks[target])) {
         return MPI_ERR_RMA_SYNC;
     }
 
@@ -84,14 +85,32 @@ ompi_osc_rdma_module_accumulate(void *origin_addr, int origin_count,
                                             target_disp,
                                             target_count,
                                             target_dt,
-                                            GET_MODULE(win),
+                                            module,
                                             &sendreq);
     if (OMPI_SUCCESS != ret) return ret;
 
     sendreq->req_op_id = op->o_f_to_c_index;
 
-    /* enqueue sendreq */
-    ret = enqueue_sendreq(GET_MODULE(win), sendreq);
+    if (0 && module->m_eager_send_active) {
+        OPAL_THREAD_LOCK(&module->m_lock);
+        sendreq->req_module->m_num_pending_out += 1;
+        module->m_num_pending_sendreqs[sendreq->req_target_rank] += 1;
+        OPAL_THREAD_UNLOCK(&(module->m_lock));
+
+        ret  = ompi_osc_rdma_sendreq_send(module, sendreq);
+
+        if (OMPI_SUCCESS != ret) {
+            OPAL_THREAD_LOCK(&module->m_lock);
+            sendreq->req_module->m_num_pending_out -= 1;
+            opal_list_append(&(module->m_pending_sendreqs),
+                             (opal_list_item_t*) sendreq);
+            OPAL_THREAD_UNLOCK(&module->m_lock);
+            ret = OMPI_SUCCESS;
+        }
+    } else {
+        /* enqueue sendreq */
+        ret = enqueue_sendreq(module, sendreq);
+    }
 
     return ret;
 }
@@ -140,10 +159,7 @@ ompi_osc_rdma_module_get(void *origin_addr,
                                            &sendreq);
     if (OMPI_SUCCESS != ret) return ret;
 
-    /* if we're doing fence synchronization, try to actively send
-       right now */
-    if (module->m_eager_send &&
-        (OMPI_WIN_FENCE & ompi_win_get_mode(win))) {
+    if (module->m_eager_send_active) {
         OPAL_THREAD_LOCK(&module->m_lock);
         sendreq->req_module->m_num_pending_out += 1;
         module->m_num_pending_sendreqs[sendreq->req_target_rank] += 1;
@@ -156,7 +172,7 @@ ompi_osc_rdma_module_get(void *origin_addr,
             sendreq->req_module->m_num_pending_out -= 1;
             opal_list_append(&(module->m_pending_sendreqs),
                              (opal_list_item_t*) sendreq);
-            OPAL_THREAD_LOCK(&module->m_lock);
+            OPAL_THREAD_UNLOCK(&module->m_lock);
             ret = OMPI_SUCCESS;
         }
     } else {
@@ -209,8 +225,7 @@ ompi_osc_rdma_module_put(void *origin_addr, int origin_count,
 
     /* if we're doing fence synchronization, try to actively send
        right now */
-    if (module->m_eager_send && 
-        (OMPI_WIN_FENCE & ompi_win_get_mode(win))) {
+    if (module->m_eager_send_active) {
         OPAL_THREAD_LOCK(&module->m_lock);
         sendreq->req_module->m_num_pending_out += 1;
         module->m_num_pending_sendreqs[sendreq->req_target_rank] += 1;
@@ -223,7 +238,7 @@ ompi_osc_rdma_module_put(void *origin_addr, int origin_count,
             sendreq->req_module->m_num_pending_out -= 1;
             opal_list_append(&(module->m_pending_sendreqs),
                              (opal_list_item_t*) sendreq);
-            OPAL_THREAD_LOCK(&module->m_lock);
+            OPAL_THREAD_UNLOCK(&module->m_lock);
             ret = OMPI_SUCCESS;
         }
     } else {

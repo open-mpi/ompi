@@ -168,11 +168,15 @@ ompi_osc_rdma_module_start(ompi_group_t *group,
 {
     int i, ret = OMPI_SUCCESS;
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
+    int32_t count;
 
     OBJ_RETAIN(group);
     ompi_group_increment_proc_count(group);
 
+    module->m_eager_send_active = false;
+
     OPAL_THREAD_LOCK(&module->m_lock);
+
     if (NULL != module->m_sc_group) {
         OPAL_THREAD_UNLOCK(&module->m_lock);
         ret = MPI_ERR_RMA_SYNC;
@@ -182,7 +186,7 @@ ompi_osc_rdma_module_start(ompi_group_t *group,
 
     /* possible we've already received a couple in messages, so
        add however many we're going to wait for */
-    module->m_num_post_msgs += ompi_group_size(module->m_sc_group);
+    count = (module->m_num_post_msgs += ompi_group_size(module->m_sc_group));
     OPAL_THREAD_UNLOCK(&(module->m_lock));
 
     memset(module->m_sc_remote_active_ranks, 0,
@@ -221,6 +225,10 @@ ompi_osc_rdma_module_start(ompi_group_t *group,
     ompi_win_remove_mode(win, OMPI_WIN_FENCE);
     ompi_win_append_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_STARTED);
 
+    if (count == 0) {
+        module->m_eager_send_active = module->m_eager_send_ok;
+    }
+
     return OMPI_SUCCESS;
 
  clean:
@@ -249,12 +257,8 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
 
     /* for each process in group, send a control message with number
        of updates coming, then start all the requests */
-    for (i = 0 ; i < ompi_group_size(module->m_sc_group) ; ++i) {
-        int comm_rank = module->m_sc_remote_ranks[i];
-
-        module->m_num_pending_out += 
-            module->m_copy_num_pending_sendreqs[comm_rank];
-    }
+    module->m_num_pending_out += 
+        (int32_t) opal_list_get_size(&module->m_copy_pending_sendreqs);
     OPAL_THREAD_UNLOCK(&module->m_lock);
 
     for (i = 0 ; i < ompi_group_size(module->m_sc_group) ; ++i) {
@@ -390,12 +394,12 @@ ompi_osc_rdma_module_test(ompi_win_t *win,
 
     *flag = 1;
 
-    ompi_win_remove_mode(win, OMPI_WIN_EXPOSE_EPOCH | OMPI_WIN_POSTED);
-
     OPAL_THREAD_LOCK(&(module->m_lock));
     group = module->m_pw_group;
     module->m_pw_group = NULL;
     OPAL_THREAD_UNLOCK(&(module->m_lock));
+
+    ompi_win_remove_mode(win, OMPI_WIN_EXPOSE_EPOCH | OMPI_WIN_POSTED);
 
     ompi_group_decrement_proc_count(group);
     OBJ_RELEASE(group);
@@ -438,6 +442,8 @@ ompi_osc_rdma_module_lock(int lock_type,
                                OMPI_OSC_RDMA_HDR_LOCK_REQ,
                                module->m_comm->c_my_rank,
                                lock_type);
+
+    module->m_eager_send_active = false;
 
     /* return */
     return OMPI_SUCCESS;
@@ -516,6 +522,8 @@ ompi_osc_rdma_module_unlock(int target,
 
     /* set our mode on the window */
     ompi_win_remove_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_LOCK_ACCESS);
+
+    module->m_eager_send_active = module->m_eager_send_ok;
 
     return OMPI_SUCCESS;
 }
