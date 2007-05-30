@@ -530,7 +530,7 @@ ompi_osc_pt2pt_sendreq_recv_put(ompi_osc_pt2pt_module_t *module,
     if (NULL == datatype) {
         opal_output(ompi_osc_base_output,
                     "Error recreating datatype.  Aborting.");
-        ompi_mpi_abort(module->m_comm, 1, false);
+        ompi_mpi_abort(module->p2p_comm, 1, false);
     }
 
     if (header->hdr_msg_length > 0) {
@@ -650,7 +650,7 @@ ompi_osc_pt2pt_sendreq_recv_accum(ompi_osc_pt2pt_module_t *module,
     if (NULL == datatype) {
         opal_output(ompi_osc_base_output,
                     "Error recreating datatype.  Aborting.");
-        ompi_mpi_abort(module->m_comm, 1, false);
+        ompi_mpi_abort(module->p2p_comm, 1, false);
     }
 
     if (header->hdr_msg_length > 0) {
