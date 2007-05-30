@@ -133,7 +133,8 @@ struct ompi_osc_rdma_module_t {
     opal_list_t m_queued_sendreqs;
 
     /** start sending data eagerly */
-    bool m_eager_send;
+    bool m_eager_send_active;
+    bool m_eager_send_ok;
 
     /* ********************* FENCE data ************************ */
     /* an array of <sizeof(m_comm)> ints, each containing the value
