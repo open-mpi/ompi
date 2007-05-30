@@ -29,6 +29,12 @@ version 1.0.
 1.2.3
 -----
 
+- Fix issue found by Josh England: ompi_info would not show framework
+  MCA parameters set in the environment properly.
+- Rename the oob_tcp_include/exclude MCA params to oob_tcp_if_include/exclude
+  so that they match the naming convention of the btl_tcp_if_include/exclude
+  params.  The old names are depreciated, but will still work.
+- Add -wd as a synonymn for the -wdir orterun/mpirun option.
 - Fix the mvapi BTL to compile properly with compilers that do not support
   anonymous unions.  Thanks to Luis Kornblueh for reporting the bug.
 
