@@ -138,15 +138,16 @@ component_open(void)
 {
     mca_base_param_reg_int(&mca_osc_rdma_component.super.osc_version,
                            "eager_send",
-                           "Attempt to start data movement during communication call, "
-                           "instead of at synchrnoization time.  "
-                           "Info key of same name overrides this value, "
-                           "if info key given.",
-                           false, false, 0, NULL);
+                           "Attempt to start data movement during communication "
+                           "call, instead of at synchrnoization time.  "
+                           "Info key of same name overrides this value.",
+                           false, false, 1, NULL);
 
     mca_base_param_reg_int(&mca_osc_rdma_component.super.osc_version,
                            "no_locks",
-                           "Enable optimizations available only if MPI_LOCK is not used.",
+                           "Enable optimizations available only if MPI_LOCK is "
+                           "not used.  "
+                           "Info key of same name overrides this value.",
                            false, false, 0, NULL);
 
     return OMPI_SUCCESS;
