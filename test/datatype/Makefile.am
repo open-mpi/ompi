@@ -10,7 +10,7 @@
 # $HEADER$
 #
 
-TESTS = ddt_test checksum position ddt_pack
+TESTS = ddt_test checksum position
 
 check_PROGRAMS = $(TESTS) to_self
 
