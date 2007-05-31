@@ -46,7 +46,7 @@
 /* Local variables */
 static orte_std_cntr_t xcast_num_active;
 static bool xcast_in_progress=false;
-static char *strmode[] = {"binomial", "linear", "direct", "unknown"};
+static char *mode_string[] = {"binomial", "linear", "direct", "unknown"};
 
 /* Local functions */
 static int mca_oob_xcast_binomial_tree(orte_jobid_t job,
@@ -135,7 +135,7 @@ int mca_oob_xcast_nb(orte_jobid_t job,
         gettimeofday(&stop, NULL);
         opal_output(0, "xcast_nb [%ld,%ld,%ld]: mode %s time %ld usec", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME),
                     (orte_oob_xcast_mode < 0 || orte_oob_xcast_mode > 2) ?
-                         strmode[3] : strmode[orte_oob_xcast_mode],
+                         mode_string[3] : mode_string[orte_oob_xcast_mode],
                     (long int)((stop.tv_sec - start.tv_sec)*1000000 +
                                (stop.tv_usec - start.tv_usec)));
     }
@@ -196,7 +196,7 @@ int mca_oob_xcast(orte_jobid_t job,
         gettimeofday(&stop, NULL);
         opal_output(0, "xcast_nb [%ld,%ld,%ld]: mode %s time %ld usec", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME),
                     (orte_oob_xcast_mode < 0 || orte_oob_xcast_mode > 2) ?
-                         strmode[3] : strmode[orte_oob_xcast_mode],
+                         mode_string[3] : mode_string[orte_oob_xcast_mode],
                     (long int)((stop.tv_sec - start.tv_sec)*1000000 +
                                (stop.tv_usec - start.tv_usec)));
     }
