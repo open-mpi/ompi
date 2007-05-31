@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,6 +46,7 @@
 /* Local variables */
 static orte_std_cntr_t xcast_num_active;
 static bool xcast_in_progress=false;
+static char *strmode[] = {"binomial", "linear", "direct", "unknown"};
 
 /* Local functions */
 static int mca_oob_xcast_binomial_tree(orte_jobid_t job,
@@ -132,7 +134,8 @@ int mca_oob_xcast_nb(orte_jobid_t job,
     if (orte_oob_xcast_timing) {
         gettimeofday(&stop, NULL);
         opal_output(0, "xcast_nb [%ld,%ld,%ld]: mode %s time %ld usec", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME),
-                    orte_oob_xcast_mode ? "linear" : "binomial",
+                    (orte_oob_xcast_mode < 0 || orte_oob_xcast_mode > 2) ?
+                         strmode[3] : strmode[orte_oob_xcast_mode],
                     (long int)((stop.tv_sec - start.tv_sec)*1000000 +
                                (stop.tv_usec - start.tv_usec)));
     }
@@ -192,7 +195,8 @@ int mca_oob_xcast(orte_jobid_t job,
     if (orte_oob_xcast_timing) {
         gettimeofday(&stop, NULL);
         opal_output(0, "xcast_nb [%ld,%ld,%ld]: mode %s time %ld usec", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME),
-                    orte_oob_xcast_mode ? "linear" : "binomial",
+                    (orte_oob_xcast_mode < 0 || orte_oob_xcast_mode > 2) ?
+                         strmode[3] : strmode[orte_oob_xcast_mode],
                     (long int)((stop.tv_sec - start.tv_sec)*1000000 +
                                (stop.tv_usec - start.tv_usec)));
     }
@@ -273,7 +277,7 @@ static int mca_oob_xcast_binomial_tree(orte_jobid_t job,
     }
         
     if (orte_oob_xcast_timing) {
-        opal_output(0, "xcast [%ld,%ld,%ld]: buffer size %ld",
+        opal_output(0, "xcast [%ld,%ld,%ld]: mode binomial buffer size %ld",
                     ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), (long)buf->bytes_used);
     }
     
@@ -399,7 +403,7 @@ static int mca_oob_xcast_linear(orte_jobid_t job,
     }
     
     if (orte_oob_xcast_timing) {
-        opal_output(0, "xcast [%ld,%ld,%ld]: buffer size %ld",
+        opal_output(0, "xcast [%ld,%ld,%ld]: mode linear buffer size %ld",
                     ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), (long)buf->bytes_used);
     }
     
@@ -494,7 +498,7 @@ static int mca_oob_xcast_direct(orte_jobid_t job,
      */
     
     if (orte_oob_xcast_timing) {
-        opal_output(0, "xcast [%ld,%ld,%ld]: buffer size %ld",
+        opal_output(0, "xcast [%ld,%ld,%ld]: mode direct buffer size %ld",
                     ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), (long)buffer->bytes_used);
     }
     
