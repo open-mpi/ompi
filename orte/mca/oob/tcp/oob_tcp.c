@@ -341,6 +341,9 @@ int mca_oob_tcp_component_open(void)
 
     mca_oob_tcp_component.tcp_last_copy_time = 0;
 
+    /* updated with real value during tcp_init */
+    mca_oob_tcp_component.tcp_ignore_localhost = true;
+
     return ORTE_SUCCESS;
 }
 
@@ -951,11 +954,36 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
  */
 mca_oob_t* mca_oob_tcp_component_init(int* priority)
 {
+    int i;
+
     *priority = 1;
 
     /* are there any interfaces? */
     if(opal_ifcount() <= 0)
         return NULL;
+
+    /* see if we should use localhost as an address.  We should do so
+       if after looking at all available interfaces (based on what we
+       find and what the user restricts with MCA parameters) there are
+       only local addresses available. */
+    mca_oob_tcp_component.tcp_ignore_localhost = false;
+    for (i = opal_ifbegin() ; i > 0 ; i = opal_ifnext(i)) {
+        char name[32];
+        struct sockaddr_storage inaddr;
+        opal_ifindextoname(i, name, sizeof(name));
+        if (mca_oob_tcp_component.tcp_include != NULL &&
+            strstr(mca_oob_tcp_component.tcp_include,name) == NULL) {
+            continue;
+        }
+        if (mca_oob_tcp_component.tcp_exclude != NULL &&
+            strstr(mca_oob_tcp_component.tcp_exclude,name) != NULL) {
+            continue;
+        }
+        opal_ifindextoaddr(i, (struct sockaddr*) &inaddr, sizeof(inaddr));
+        if(!opal_net_islocalhost((struct sockaddr*) &inaddr)) {
+            mca_oob_tcp_component.tcp_ignore_localhost = true;
+        }
+    }
 
     /* initialize data structures */
     opal_hash_table_init(&mca_oob_tcp_component.tcp_peers, 128);
@@ -1532,7 +1560,7 @@ char* mca_oob_tcp_get_addr(void)
             continue;
         }
         opal_ifindextoaddr(i, (struct sockaddr*) &addr, sizeof(addr));
-        if(opal_ifcount() > 1 && 
+        if(mca_oob_tcp_component.tcp_ignore_localhost && 
            opal_net_islocalhost((struct sockaddr*) &addr)) {
             continue;
         }

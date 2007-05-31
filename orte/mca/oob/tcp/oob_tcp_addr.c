@@ -78,7 +78,7 @@ int mca_oob_tcp_addr_pack(orte_buffer_t* buffer)
     for(i=opal_ifbegin(); i>0; i=opal_ifnext(i)) {
         struct sockaddr_storage inaddr;
         opal_ifindextoaddr(i, (struct sockaddr*) &inaddr, sizeof(inaddr));
-        if(opal_ifcount() > 1 && 
+        if(mca_oob_tcp_component.tcp_ignore_localhost && 
            opal_net_islocalhost((struct sockaddr*) &inaddr)) {
             continue;
         }
@@ -95,7 +95,7 @@ int mca_oob_tcp_addr_pack(orte_buffer_t* buffer)
         uint16_t port;
 
         opal_ifindextoaddr(i, (struct sockaddr*) &inaddr, sizeof(inaddr));
-        if(opal_ifcount() > 1 && 
+        if(mca_oob_tcp_component.tcp_ignore_localhost && 
            opal_net_islocalhost((struct sockaddr*) &inaddr))
             continue;
 
@@ -252,7 +252,8 @@ int mca_oob_tcp_addr_get_next(mca_oob_tcp_addr_t* addr, struct sockaddr_storage*
                     continue;
                 }
                 opal_ifindextoaddr(ifindex, (struct sockaddr*) &inaddr, sizeof(inaddr));
-                if(opal_ifcount() > 1 && opal_net_islocalhost((struct sockaddr*) &inaddr)) {
+                if(mca_oob_tcp_component.tcp_ignore_localhost &&
+                   opal_net_islocalhost((struct sockaddr*) &inaddr)) {
                     continue;
                 }
                 opal_ifindextomask(ifindex, &inmask, sizeof(inmask));

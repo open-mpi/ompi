@@ -325,6 +325,8 @@ struct mca_oob_tcp_component_t {
     int tcp_copy_max_size;
     int tcp_copy_spin_count;
     int connect_sleep;
+
+    bool tcp_ignore_localhost;               /**< should use localhost as an address or not */
 };
 
 /**
