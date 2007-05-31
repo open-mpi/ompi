@@ -490,29 +490,137 @@ int32_t ompi_ddt_init( void )
     ompi_mpi_cxx_ldblcplex.flags |= DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX;
 #endif  /* HAVE_LONG_DOUBLE */
 
-    /* FORTRAN types */
+    /* Optional Fortran REAL types */
+
+#if OMPI_HAVE_FORTRAN_REAL4
+#if (OMPI_SIZEOF_FORTRAN_REAL4 == SIZEOF_FLOAT)
     DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real4, "MPI_REAL4", &ompi_mpi_float );
+#else
+#   warning "No proper C type found for REAL4"
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real4, "MPI_REAL4", &ompi_mpi_unavailable );
+#endif
     ompi_mpi_real4.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT;
+#endif /* OMPI_HAVE_FORTRAN_REAL4 */
+
+#if OMPI_HAVE_FORTRAN_REAL8
+#if (OMPI_SIZEOF_FORTRAN_REAL8 == SIZEOF_FLOAT)
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real8, "MPI_REAL8", &ompi_mpi_float );
+#elif (OMPI_SIZEOF_FORTRAN_REAL8 == SIZEOF_DOUBLE)
     DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real8, "MPI_REAL8", &ompi_mpi_double );
+#elif (OMPI_SIZEOF_FORTRAN_REAL8 == SIZEOF_LONG_DOUBLE)
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real8, "MPI_REAL8", &ompi_mpi_long_double );
+#else
+#   warning "No proper C type found for REAL8"
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real8, "MPI_REAL8", &ompi_mpi_unavailable );
+#endif
     ompi_mpi_real8.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT;
+#endif /* OMPI_HAVE_FORTRAN_REAL8 */
+
+#if OMPI_HAVE_FORTRAN_REAL16
+#if (OMPI_SIZEOF_FORTRAN_REAL16 == SIZEOF_LONG_DOUBLE)
     DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real16, "MPI_REAL16", &ompi_mpi_long_double );
+#else
+#   warning "No proper C type found for REAL16"
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real16, "MPI_REAL16", &ompi_mpi_unavailable );
+#endif
     ompi_mpi_real16.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT;
+#endif /* OMPI_HAVE_FORTRAN_REAL16 */
+
+    /* Optional Fortran INTEGER types */
+
+#if OMPI_HAVE_FORTRAN_INTEGER1
+#if (OMPI_SIZEOF_FORTRAN_INTEGER1 == SIZEOF_CHAR)
     DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer1, "MPI_INTEGER1", &ompi_mpi_char );
+#elif (OMPI_SIZEOF_FORTRAN_INTEGER1 == SIZEOF_SHORT)
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer1, "MPI_INTEGER1", &ompi_mpi_short );
+#elif (OMPI_SIZEOF_FORTRAN_INTEGER1 == SIZEOF_INT)
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer1, "MPI_INTEGER1", &ompi_mpi_int );
+#else
+#   warning "No proper C type found for INTEGER1"
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer1, "MPI_INTEGER1", &ompi_mpi_unavailable );
+#endif
     ompi_mpi_integer1.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
+#endif /* OMPI_HAVE_FORTRAN_INTEGER1 */
+
+#if OMPI_HAVE_FORTRAN_INTEGER2
+#if (OMPI_SIZEOF_FORTRAN_INTEGER2 == SIZEOF_SHORT)
     DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer2, "MPI_INTEGER2", &ompi_mpi_short );
+#elif (OMPI_SIZEOF_FORTRAN_INTEGER2 == SIZEOF_INT)
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer2, "MPI_INTEGER2", &ompi_mpi_int );
+#else
+#   warning "No proper C type found for INTEGER2"
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer2, "MPI_INTEGER2", &ompi_mpi_unavailable );
+#endif
     ompi_mpi_integer2.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
+#endif /* OMPI_HAVE_FORTRAN_INTEGER2 */
+
+#if OMPI_HAVE_FORTRAN_INTEGER4
+#if (OMPI_SIZEOF_FORTRAN_INTEGER4 == SIZEOF_INT)
     DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer4, "MPI_INTEGER4", &ompi_mpi_int );
+#elif (OMPI_SIZEOF_FORTRAN_INTEGER4 == SIZEOF_LONG)
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer4, "MPI_INTEGER4", &ompi_mpi_long );
+#else
+#   warning "No proper C type found for INTEGER4"
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer4, "MPI_INTEGER4", &ompi_mpi_unavailable );
+#endif
     ompi_mpi_integer4.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
+#endif /* OMPI_HAVE_FORTRAN_INTEGER4 */
+
+#if OMPI_HAVE_FORTRAN_INTEGER8
+#if (OMPI_SIZEOF_FORTRAN_INTEGER8 == SIZEOF_LONG)
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer8, "MPI_INTEGER8", &ompi_mpi_long );
+#elif (OMPI_SIZEOF_FORTRAN_INTEGER8 == SIZEOF_LONG_LONG)
     DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer8, "MPI_INTEGER8", &ompi_mpi_long_long_int );
+#else
+#   warning "No proper C type found for INTEGER8"
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer8, "MPI_INTEGER8", &ompi_mpi_unavailable );
+#endif
     ompi_mpi_integer8.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
+#endif /* OMPI_HAVE_FORTRAN_INTEGER8 */
+
+#if OMPI_HAVE_FORTRAN_INTEGER16
+#if (OMPI_SIZEOF_FORTRAN_INTEGER16 == SIZEOF_LONG_LONG)
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer16, "MPI_INTEGER16", &ompi_mpi_long_long_int );
+#else
+#   warning "No proper C type found for INTEGER16"
     DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer16, "MPI_INTEGER16", &ompi_mpi_unavailable );
+#endif
     ompi_mpi_integer16.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
+#endif /* OMPI_HAVE_FORTRAN_INTEGER16 */
+
+    /* Optional Fortran COMPLEX types */
+
+#if OMPI_HAVE_FORTRAN_COMPLEX8
+#if (OMPI_SIZEOF_FORTRAN_COMPLEX8 == 2*SIZEOF_FLOAT)
     DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex8, "MPI_COMPLEX8", &ompi_mpi_cplex );
+#else
+#   warning "No proper C type found for COMPLEX8"
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex8, "MPI_COMPLEX8", &ompi_mpi_unavailable );
+#endif
     ompi_mpi_complex8.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX;
+#endif /* OMPI_HAVE_FORTRAN_COMPLEX8 */
+
+#if OMPI_HAVE_FORTRAN_COMPLEX16
+#if (OMPI_SIZEOF_FORTRAN_COMPLEX16 == 2*SIZEOF_FLOAT)
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex16, "MPI_COMPLEX16", &ompi_mpi_cplex );
+#elif (OMPI_SIZEOF_FORTRAN_COMPLEX16 == 2*SIZEOF_DOUBLE)
     DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex16, "MPI_COMPLEX16", &ompi_mpi_dblcplex );
+#else
+#   warning "No proper C type found for COMPLEX16"
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex16, "MPI_COMPLEX16", &ompi_mpi_unavailable );
+#endif
     ompi_mpi_complex16.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX;
+#endif /* OMPI_HAVE_FORTRAN_COMPLEX16 */
+
+#if OMPI_HAVE_FORTRAN_COMPLEX32
+#if (OMPI_SIZEOF_FORTRAN_COMPLEX32 == 2*SIZEOF_LONG_DOUBLE)
     DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex32, "MPI_COMPLEX32", &ompi_mpi_ldblcplex );
+#else
+#   warning "No proper C type found for COMPLEX32"
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex32, "MPI_COMPLEX32", &ompi_mpi_unavailable );
+#endif
     ompi_mpi_complex32.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX;
+#endif /* OMPI_HAVE_FORTRAN_COMPLEX32 */
 
     /* Start to populate the f2c index translation table */
 
