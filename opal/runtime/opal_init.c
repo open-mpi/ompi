@@ -136,12 +136,6 @@ opal_init_util(void)
     int ret;
     char *error = NULL;
 
-    if( ++opal_initialized != 1 ) {
-        if( opal_initialized < 1 ) {
-            return OPAL_ERROR;
-        }
-        return OPAL_SUCCESS;
-    }
     /* initialize the memory allocator */
     opal_malloc_init();
 
@@ -209,6 +203,13 @@ opal_init(void)
 {
     int ret;
     char *error = NULL;
+
+    if( ++opal_initialized != 1 ) {
+        if( opal_initialized < 1 ) {
+            return OPAL_ERROR;
+        }
+        return OPAL_SUCCESS;
+    }
 
     /* initialize util code */
     if (OPAL_SUCCESS != (ret = opal_init_util())) {
