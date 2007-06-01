@@ -145,9 +145,6 @@ int orte_init_stage1(bool infrastructure)
 
     /*****   ERROR LOGGING NOW AVAILABLE *****/
 
-    /* we want to tick the event library whenever possible */
-    opal_progress_event_users_increment();
-
     /*
      * Internal startup
      */
