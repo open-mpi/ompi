@@ -10,9 +10,9 @@
 # $HEADER$
 #
 
-TESTS = ddt_test ddt_pack checksum position
+TESTS = ddt_test checksum position
 
-check_PROGRAMS = $(TESTS) to_self
+check_PROGRAMS = $(TESTS) to_self ddt_pack
 
 ddt_test_SOURCES = ddt_test.c
 ddt_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
