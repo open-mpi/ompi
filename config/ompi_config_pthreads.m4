@@ -139,14 +139,14 @@ if test "$ompi_pthread_c_success" = "0"; then
         run_this_test=0
       ;;
       *-aix* | *-freebsd*)
-        if test "`echo $CPPFLAGS | grep 'D_THREAD_SAFE'`" = ""; then
+        if test "`echo $CPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
           PTRHEAD_CPPFLAGS="-D_THREAD_SAFE"
           CPPFLAGS="$CPPFLAGS $PTHREAD_CPPFLAGS"
         fi
         run_this_test=1
       ;;
       *)
-        if test "`echo $CPPFLAGS | grep 'D_REENTRANT'`" = ""; then
+        if test "`echo $CPPFLAGS | $GREP 'D_REENTRANT'`" = ""; then
           PTHREAD_CPPFLAGS="-D_REENTRANT"
           CPPFLAGS="$CPPFLAGS $PTHREAD_CPPFLAGS"
         fi
@@ -187,14 +187,14 @@ if test "$ompi_pthread_cxx_success" = "0"; then
         run_this_test=0
       ;;
       *-aix* | *-freebsd*)
-        if test "`echo $CXXCPPFLAGS | grep 'D_THREAD_SAFE'`" = ""; then
+        if test "`echo $CXXCPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
           PTRHEAD_CXXCPPFLAGS="-D_THREAD_SAFE"
           CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
         fi
         run_this_test=1
       ;;
       *)
-        if test "`echo $CXXCPPFLAGS | grep 'D_REENTRANT'`" = ""; then
+        if test "`echo $CXXCPPFLAGS | $GREP 'D_REENTRANT'`" = ""; then
           PTHREAD_CXXCPPFLAGS="-D_REENTRANT"
           CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
         fi
@@ -422,13 +422,13 @@ if test "$ompi_pthread_c_success" = "0"; then
     AC_MSG_CHECKING([if C compiler and POSIX threads work with $pl])
     case "${host_cpu}-${host-_os}" in
       *-aix* | *-freebsd*)
-        if test "`echo $CPPFLAGS | grep 'D_THREAD_SAFE'`" = ""; then
+        if test "`echo $CPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
           PTRHEAD_CPPFLAGS="-D_THREAD_SAFE"
           CPPFLAGS="$CPPFLAGS $PTHREAD_CPPFLAGS"
         fi
       ;;
       *)
-        if test "`echo $CPPFLAGS | grep 'D_REENTRANT'`" = ""; then
+        if test "`echo $CPPFLAGS | $GREP 'D_REENTRANT'`" = ""; then
           PTHREAD_CPPFLAGS="-D_REENTRANT"
           CPPFLAGS="$CPPFLAGS $PTHREAD_CPPFLAGS"
         fi
@@ -462,13 +462,13 @@ if test "$ompi_pthread_cxx_success" = "0"; then
     AC_MSG_CHECKING([if C++ compiler and POSIX threads work with $PTHREAD_LIBS])
     case "${host_cpu}-${host-_os}" in
       *-aix* | *-freebsd*)
-        if test "`echo $CXXCPPFLAGS | grep 'D_THREAD_SAFE'`" = ""; then
+        if test "`echo $CXXCPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
           PTRHEAD_CXXCPPFLAGS="-D_THREAD_SAFE"
           CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
         fi
       ;;
       *)
-        if test "`echo $CXXCPPFLAGS | grep 'D_REENTRANT'`" = ""; then
+        if test "`echo $CXXCPPFLAGS | $GREP 'D_REENTRANT'`" = ""; then
           PTHREAD_CXXCPPFLAGS="-D_REENTRANT"
           CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
         fi
@@ -491,13 +491,13 @@ if test "$ompi_pthread_cxx_success" = "0"; then
       AC_MSG_CHECKING([if C++ compiler and POSIX threads work with $pl])
       case "${host_cpu}-${host-_os}" in
         *-aix* | *-freebsd*)
-          if test "`echo $CXXCPPFLAGS | grep 'D_THREAD_SAFE'`" = ""; then
+          if test "`echo $CXXCPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
             PTRHEAD_CXXCPPFLAGS="-D_THREAD_SAFE"
             CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
           fi
         ;;
         *)
-          if test "`echo $CXXCPPFLAGS | grep 'D_REENTRANT'`" = ""; then
+          if test "`echo $CXXCPPFLAGS | $GREP 'D_REENTRANT'`" = ""; then
             PTHREAD_CXXCPPFLAGS="-D_REENTRANT"
             CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
           fi
@@ -599,6 +599,8 @@ AC_PROVIDE_IFELSE([AC_PROG_F77],
 #
 #********************************************************************
 AC_DEFUN([OMPI_CONFIG_POSIX_THREADS],[
+    AC_REQUIRE([AC_PROG_GREP])
+
 ompi_pthread_c_success=0
 ompi_pthread_f77_success=0
 ompi_pthread_cxx_success=0

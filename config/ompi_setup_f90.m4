@@ -32,6 +32,7 @@ dnl am_conditional:
 dnl  OMPI_WANT_F90_BINDINGS :
 
 AC_DEFUN([OMPI_SETUP_F90],[
+    AC_REQUIRE([AC_PROG_GREP])
 
 # Modularize this setup so that sub-configure.in scripts can use this
 # same setup code.
@@ -118,7 +119,7 @@ AS_IF([test $OMPI_WANT_F90_BINDINGS -eq 1],
 # 
 AS_IF([test $OMPI_WANT_F90_BINDINGS -eq 1],
       [if test $BASEF77 != $BASEF90; then
-           lt_ver=`grep '^VERSION' $srcdir/config/ltmain.sh | cut -f2 -d= | cut -f1 -d'.'`
+           lt_ver=`$GREP '^VERSION' $srcdir/config/ltmain.sh | cut -f2 -d= | cut -f1 -d'.'`
            if test $lt_ver -lt 2 ; then 
                AC_MSG_ERROR([You appear to be trying to build the Fortran 90
  layer with Libtool 1.5.x or earlier and a Fortran 77 / Fortran 90 compiler

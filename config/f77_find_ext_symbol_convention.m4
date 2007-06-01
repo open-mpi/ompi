@@ -20,6 +20,7 @@ dnl
 
 AC_DEFUN([OMPI_F77_FIND_EXT_SYMBOL_CONVENTION], [
     AC_REQUIRE([AC_PROG_NM])
+    AC_REQUIRE([AC_PROG_GREP])
 
     # invalidate cache if result came from a run where F77 was disabled
     if test "$ompi_cv_f77_external_symbol" = "skipped" ; then
@@ -39,15 +40,15 @@ AC_DEFUN([OMPI_F77_FIND_EXT_SYMBOL_CONVENTION], [
        end
 EOF
              OMPI_LOG_COMMAND([$F77 $FFLAGS -c conftest.f $LDFLAGS $LIBS],
-                 [if $NM conftest.o | grep foo_bar__ >/dev/null 2>&1 ; then
+                 [if $NM conftest.o | $GREP foo_bar__ >/dev/null 2>&1 ; then
                       ompi_cv_f77_external_symbol="double underscore"
-                  elif $NM conftest.o | grep foo_bar_ >/dev/null 2>&1 ; then
+                  elif $NM conftest.o | $GREP foo_bar_ >/dev/null 2>&1 ; then
                       ompi_cv_f77_external_symbol="single underscore"
-                  elif $NM conftest.o | grep FOO_bar >/dev/null 2>&1 ; then
+                  elif $NM conftest.o | $GREP FOO_bar >/dev/null 2>&1 ; then
                       ompi_cv_f77_external_symbol="mixed case"
-                  elif $NM conftest.o | grep foo_bar >/dev/null 2>&1 ; then
+                  elif $NM conftest.o | $GREP foo_bar >/dev/null 2>&1 ; then
                       ompi_cv_f77_external_symbol="no underscore"
-                  elif $NM conftest.o | grep FOO_BAR >/dev/null 2>&1 ; then
+                  elif $NM conftest.o | $GREP FOO_BAR >/dev/null 2>&1 ; then
                       ompi_cv_f77_external_symbol="upper case"
                   else
                       $NM conftest.o >conftest.out 2>&1
@@ -100,7 +101,7 @@ AC_DEFUN([OMPI_F77_MAKE_C_FUNCTION], [
         # name, then there are two trailing underscores.  Otherwise,
         # there is only one trailing underscore.  Any idea how to do
         # that with m4_translit?
-        if echo $2 | grep _ >/dev/null 2>&1 ; then
+        if echo $2 | $GREP _ >/dev/null 2>&1 ; then
             $1[=]m4_translit([$2], [A-Z], [a-z])[__]
         else
             $1[=]m4_translit([$2], [A-Z], [a-z])[_]

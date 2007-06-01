@@ -95,6 +95,8 @@ dnl #################################################################
 # _OMPI_CHECK_ASM_LSYM([variable-to-set])
 # ---------------------------------------
 AC_DEFUN([_OMPI_CHECK_ASM_LSYM],[
+    AC_REQUIRE([AC_PROG_GREP])
+
     $1="L"
 
     for sym in L .L $ L$ ; do
@@ -105,11 +107,11 @@ ${sym}mytestlabel$ompi_cv_asm_label_suffix],
             [# ok, we succeeded at assembling.  see if we can nm, 
              # throwing the results in a file
             if $NM conftest.$OBJEXT > conftest.out 2>&AC_FD_CC ; then
-                if test "`grep mytestlabel conftest.out`" = "" ; then
+                if test "`$GREP mytestlabel conftest.out`" = "" ; then
                     # there was no symbol...  looks promising to me
                     $1="$sym"
                     asm_result=1
-                elif test ["`grep ' [Nt] .*mytestlabel' conftest.out`"] = "" ; then
+                elif test ["`$GREP ' [Nt] .*mytestlabel' conftest.out`"] = "" ; then
                     # see if we have a non-global-ish symbol
                     # but we should see if we can do better.
                     $1="$sym"
@@ -294,6 +296,7 @@ dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CHECK_ASM_ALIGN_LOG],[
     AC_REQUIRE([AC_PROG_NM])
+    AC_REQUIRE([AC_PROG_GREP])
 
     AC_CACHE_CHECK([if .align directive takes logarithmic value],
                    [ompi_cv_asm_align_log],
@@ -304,7 +307,7 @@ AC_DEFUN([OMPI_CHECK_ASM_ALIGN_LOG],[
         .align 4
 foo$ompi_cv_asm_label_suffix
         .byte 2], 
-        [ompi_asm_addr=[`$NM conftest.$OBJEXT | grep foo | sed -e 's/.*\([0-9a-fA-F][0-9a-fA-F]\).*foo.*/\1/'`]],
+        [ompi_asm_addr=[`$NM conftest.$OBJEXT | $GREP foo | sed -e 's/.*\([0-9a-fA-F][0-9a-fA-F]\).*foo.*/\1/'`]],
         [ompi_asm_addr=""])
     # test for both 16 and 10 (decimal and hex notations)
     echo "configure: .align test address offset is $ompi_asm_addr" >&AC_FD_CC
@@ -416,6 +419,8 @@ AC_DEFUN([OMPI_CHECK_ASM_SIZE],[
 # sets shell variable var to the things necessary to
 # disable execable stacks with GAS
 AC_DEFUN([OMPI_CHECK_ASM_GNU_STACKEXEC], [
+    AC_REQUIRE([AC_PROG_GREP])
+
     AC_CHECK_PROG([OBJDUMP], [objdump], [objdump])
     AC_CACHE_CHECK([if .note.GNU-stack is needed],
         [ompi_cv_asm_gnu_stack_result],
@@ -425,7 +430,7 @@ AC_DEFUN([OMPI_CHECK_ASM_GNU_STACKEXEC], [
 int testfunc() {return 0; }
 EOF
              OMPI_LOG_COMMAND([$CC $CFLAGS -c conftest.c -o conftest.$OBJEXT],
-                 [$OBJDUMP -x conftest.$OBJEXT | grep '\.note\.GNU-stack' > /dev/null && ompi_cv_asm_gnu_stack_result=yes],
+                 [$OBJDUMP -x conftest.$OBJEXT | $GREP '\.note\.GNU-stack' > /dev/null && ompi_cv_asm_gnu_stack_result=yes],
                  [OMPI_LOG_MSG([the failed program was:], 1)
                   OMPI_LOG_FILE([conftest.c])
                   ompi_cv_asm_gnu_stack_result=no])
@@ -991,6 +996,7 @@ dnl do all the evil mojo to provide a working assembly file
 dnl
 dnl #################################################################
 AC_DEFUN([OMPI_ASM_FIND_FILE], [
+    AC_REQUIRE([AC_PROG_GREP])
     AC_REQUIRE([AC_PROG_FGREP])
 
 if test "$ompi_cv_asm_arch" != "WINDOWS" ; then
@@ -999,7 +1005,7 @@ if test "$ompi_cv_asm_arch" != "WINDOWS" ; then
     # see if we have a pre-built one already
     AC_MSG_CHECKING([for pre-built assembly file])
     ompi_cv_asm_file=""
-    if grep "$ompi_cv_asm_arch" "${top_ompi_srcdir}/opal/asm/asm-data.txt" | $FGREP "$ompi_cv_asm_format" >conftest.out 2>&1 ; then
+    if $GREP "$ompi_cv_asm_arch" "${top_ompi_srcdir}/opal/asm/asm-data.txt" | $FGREP "$ompi_cv_asm_format" >conftest.out 2>&1 ; then
         ompi_cv_asm_file="`cut -f3 conftest.out`"
         if test ! "$ompi_cv_asm_file" = "" ; then
             ompi_cv_asm_file="atomic-${ompi_cv_asm_file}.s"
