@@ -24,10 +24,10 @@
 #   Sun C++: skip
 #
 AC_DEFUN([_OMPI_ATTRIBUTE_FAIL_SEARCH],[
-    # AC_REQUIRE([AC_PROG_GREP]) # Requires autoconf-2.61
+    AC_REQUIRE([AC_PROG_GREP])
     if test -s conftest.err ; then
         for i in ignore skip ; do
-            grep -iq $i conftest.err
+            $GREP -iq $i conftest.err
             if test "$?" = "0" ; then
                 ompi_cv___attribute__[$1]=0
                 break;

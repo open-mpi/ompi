@@ -22,6 +22,8 @@
 # OMPI_CHECK_VISIBILITY
 # --------------------------------------------------------
 AC_DEFUN([OMPI_CHECK_VISIBILITY],[
+    AC_REQUIRE([AC_PROG_GREP])
+
     # Check if the compiler has support for visibilty, like some versions of gcc, icc.
     AC_ARG_ENABLE(visibility, 
         AC_HELP_STRING([--enable-visibility],
@@ -38,7 +40,7 @@ AC_DEFUN([OMPI_CHECK_VISIBILITY],[
                     void bar(void) { fprintf(stderr, "bar\n"); };
                     ],[],
                     [if test -s conftest.err ; then
-                        grep -iq "visibility" conftest.err
+                        $GREP -iq "visibility" conftest.err
                         if test "$?" = "0" ; then
                             ompi_vc_cc_fvisibility="no"
                         else

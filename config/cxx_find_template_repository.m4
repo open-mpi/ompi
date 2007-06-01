@@ -18,6 +18,8 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([OMPI_CXX_FIND_TEMPLATE_REPOSITORY],[
+    AC_REQUIRE([AC_PROG_GREP])
+
     #
     # Arguments: None
     #
@@ -139,7 +141,7 @@ else
 			temp_mask="`echo $ompi_file | cut -d. -f2`"
 			if test "$ompi_template_filemask" = ""; then
 			ompi_template_filemask="$temp_mask";
-			elif test "`echo $ompi_template_filemask | grep $temp_mask`" = ""; then
+			elif test "`echo $ompi_template_filemask | EGREP $temp_mask`" = ""; then
 			ompi_template_filemask="$ompi_template_filemask $temp_mask"
 			fi
 		    fi

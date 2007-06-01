@@ -876,6 +876,9 @@ WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS $THREAD_LDFLAGS"
 
 AC_PROG_LN_S
 
+AC_PROG_GREP
+AC_PROG_EGREP
+
 #
 # We need as and lex
 #
@@ -889,7 +892,7 @@ AM_PROG_LEX
 # is *only* required for developers, we decided that it really was not
 # worth it to be portable between different versions of lex ;-).
 
-if test -z "$LEX" -o -n "`echo $LEX | grep missing`" -o \
+if test -z "$LEX" -o -n "`echo $LEX | $GREP missing`" -o \
     "`basename $LEX`" != "flex"; then
     if test ! -f "$srcdir/opal/util/show_help_lex.c"; then
         AC_MSG_WARN([*** Could not find GNU Flex on your system.])
@@ -1022,7 +1025,7 @@ if test "$OMPI_ENABLE_DLOPEN_SUPPORT" = "1" ; then
         # Arrgh.  This is gross.  But I can't think of any other way to do
         # it.  :-(
 
-        flags="`egrep ^LIBADD_DL opal/libltdl/Makefile | cut -d= -f2-`"
+        flags=`$EGREP ^LIBADD_DL opal/libltdl/Makefile | cut -d= -f2-`
         OMPI_CHECK_LINKER_FLAGS([opal/libltdl/libtool], [-export-dynamic $flags])
 
         WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $extra_ldflags"

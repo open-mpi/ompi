@@ -678,6 +678,8 @@ AC_DEFUN([MCA_COMPONENT_COMPILE_MODE],[
 #
 ######################################################################
 AC_DEFUN([MCA_PROCESS_COMPONENT],[
+    AC_REQUIRE([AC_PROG_GREP])
+
     project=$1
     framework=$2
     component=$3
@@ -707,7 +709,7 @@ AC_DEFUN([MCA_PROCESS_COMPONENT],[
     if test -f $infile; then
 
         # First check for the ABORT tag
-        line="`grep ABORT= $infile | cut -d= -f2-`"
+        line="`$GREP ABORT= $infile | cut -d= -f2-`"
         if test -n "$line" -a "$line" != "no"; then
             AC_MSG_WARN([MCA component configure script told me to abort])
             AC_MSG_ERROR([cannot continue])
@@ -718,7 +720,7 @@ AC_DEFUN([MCA_PROCESS_COMPONENT],[
         # component.
         if test "$8" = "static"; then
             m4_foreach(flags, [LDFLAGS, LIBS],
-               [[line="`grep WRAPPER_EXTRA_]flags[= $infile | cut -d= -f2-`"]
+               [[line="`$GREP WRAPPER_EXTRA_]flags[= $infile | cut -d= -f2-`"]
                 eval "line=$line"
                 if test -n "$line"; then
                     $1[_WRAPPER_EXTRA_]flags[="$]$1[_WRAPPER_EXTRA_]flags[ $line"]
@@ -729,8 +731,8 @@ AC_DEFUN([MCA_PROCESS_COMPONENT],[
         dnl check for direct call header to include.  This will be
         dnl AC_SUBSTed later.
         if test "$DIRECT_$2" = "$component" ; then
-            if test "`grep DIRECT_CALL_HEADER $infile`" != "" ; then
-                line="`grep DIRECT_CALL_HEADER $infile | cut -d= -f2-`"
+            if test "`$GREP DIRECT_CALL_HEADER $infile`" != "" ; then
+                line="`$GREP DIRECT_CALL_HEADER $infile | cut -d= -f2-`"
                 str="MCA_${framework}_DIRECT_CALL_HEADER=$line"
                 eval $str
             else
@@ -820,6 +822,8 @@ AC_DEFUN([MCA_PROCESS_DEAD_COMPONENT],[
 #
 ######################################################################
 AC_DEFUN([MCA_COMPONENT_BUILD_CHECK],[
+    AC_REQUIRE([AC_PROG_GREP])
+
     project=$1
     framework=$2
     component=$3
@@ -849,7 +853,7 @@ AC_DEFUN([MCA_COMPONENT_BUILD_CHECK],[
             # If userid is in the file, unignore the ignore file.
             if test ! -s $component_path/.ompi_unignore ; then
                 want_component=1
-            elif test ! -z "`grep $OMPI_CONFIGURE_USER $component_path/.ompi_unignore`" ; then
+            elif test ! -z "`$GREP $OMPI_CONFIGURE_USER $component_path/.ompi_unignore`" ; then
                 want_component=1
             fi
         fi
