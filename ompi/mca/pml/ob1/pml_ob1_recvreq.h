@@ -47,6 +47,7 @@ struct mca_pml_ob1_recv_request_t {
     size_t  req_bytes_received;
     size_t  req_bytes_delivered;
     size_t  req_rdma_offset;
+    size_t  req_send_offset;
     mca_pml_ob1_rdma_btl_t req_rdma[MCA_PML_OB1_MAX_RDMA_PER_REQUEST];
     uint32_t req_rdma_cnt;
     uint32_t req_rdma_idx;
@@ -350,7 +351,7 @@ static inline void mca_pml_ob1_recv_request_schedule(
         _pckt->hdr.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;      \
         _pckt->hdr.hdr_ack.hdr_src_req.lval = (S);                      \
         _pckt->hdr.hdr_ack.hdr_dst_req.pval = (D);                      \
-        _pckt->hdr.hdr_ack.hdr_rdma_offset = (O);                       \
+        _pckt->hdr.hdr_ack.hdr_send_offset = (O);                       \
         _pckt->proc = (P);                                              \
         _pckt->bml_btl = NULL;                                          \
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);                            \
@@ -364,7 +365,7 @@ int mca_pml_ob1_recv_request_ack_send_btl(ompi_proc_t* proc,
         uint64_t hdr_rdma_offset);
 
 static inline int mca_pml_ob1_recv_request_ack_send(ompi_proc_t* proc,
-        uint64_t hdr_src_req, void *hdr_dst_req, uint64_t hdr_rdma_offset)
+        uint64_t hdr_src_req, void *hdr_dst_req, uint64_t hdr_send_offset)
 {
     size_t i;
     mca_bml_base_btl_t* bml_btl;
@@ -374,12 +375,12 @@ static inline int mca_pml_ob1_recv_request_ack_send(ompi_proc_t* proc,
     for(i = 0; i < mca_bml_base_btl_array_get_size(&endpoint->btl_eager); i++) {
         bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
         if(mca_pml_ob1_recv_request_ack_send_btl(proc, bml_btl, hdr_src_req,
-                    hdr_dst_req, hdr_rdma_offset) == OMPI_SUCCESS)
+                    hdr_dst_req, hdr_send_offset) == OMPI_SUCCESS)
             return OMPI_SUCCESS;
     }
 
     MCA_PML_OB1_ADD_ACK_TO_PENDING(proc, hdr_src_req, hdr_dst_req,
-            hdr_rdma_offset);
+            hdr_send_offset);
 
     return OMPI_ERR_OUT_OF_RESOURCE;
 }

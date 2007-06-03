@@ -166,7 +166,7 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
     if( OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received)
         >= recvreq->req_recv.req_bytes_packed ) {
         MCA_PML_OB1_RECV_REQUEST_PML_COMPLETE( recvreq );
-    } else if (recvreq->req_rdma_offset < recvreq->req_recv.req_bytes_packed) {
+    } else if (recvreq->req_rdma_offset < recvreq->req_send_offset) {
         /* schedule additional rdma operations */
         mca_pml_ob1_recv_request_schedule(recvreq);
     }
@@ -179,7 +179,7 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
 
 int mca_pml_ob1_recv_request_ack_send_btl(
         ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl,
-        uint64_t hdr_src_req, void *hdr_dst_req, uint64_t hdr_rdma_offset)
+        uint64_t hdr_src_req, void *hdr_dst_req, uint64_t hdr_send_offset)
 {
     mca_btl_base_descriptor_t* des;
     mca_pml_ob1_ack_hdr_t* ack;
@@ -197,7 +197,7 @@ int mca_pml_ob1_recv_request_ack_send_btl(
     ack->hdr_common.hdr_flags = 0;
     ack->hdr_src_req.lval = hdr_src_req;
     ack->hdr_dst_req.pval = hdr_dst_req;
-    ack->hdr_rdma_offset = hdr_rdma_offset;
+    ack->hdr_send_offset = hdr_send_offset;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
@@ -235,11 +235,9 @@ static int mca_pml_ob1_recv_request_ack(
 
     bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml; 
 
-    /* by default copy */
-    recvreq->req_rdma_offset = hdr->hdr_msg_length;
+    /* by default copy everything */
+    recvreq->req_send_offset = bytes_received;
     if(hdr->hdr_msg_length > bytes_received) {
-        
-
         /*
          * lookup request buffer to determine if memory is already
          * registered. 
@@ -259,29 +257,30 @@ static int mca_pml_ob1_recv_request_ack(
             if (hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_PIN &&
                 recvreq->req_rdma_cnt != 0) {
 
-                recvreq->req_rdma_offset = bytes_received;
+                recvreq->req_send_offset = hdr->hdr_msg_length;
                 /* are rdma devices available for long rdma protocol */
             } else if (bml_endpoint->btl_send_limit < hdr->hdr_msg_length &&
                     bml_endpoint->btl_rdma_offset < hdr->hdr_msg_length &&
                     mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma)) {
                 
                 /* use convertor to figure out the rdma offset for this request */
-                recvreq->req_rdma_offset = bml_endpoint->btl_rdma_offset;
-                if(recvreq->req_rdma_offset < bytes_received) {
-                    recvreq->req_rdma_offset = bytes_received;
+                recvreq->req_send_offset = hdr->hdr_msg_length - 
+                    bml_endpoint->btl_rdma_offset;
+                if(recvreq->req_send_offset < bytes_received) {
+                    recvreq->req_send_offset = bytes_received;
                 }
                 ompi_convertor_set_position( &recvreq->req_recv.req_convertor,
-                                             &recvreq->req_rdma_offset );
+                                             &recvreq->req_send_offset );
             }
         }
-        /* start rdma at current fragment offset - no need to ack */
-        if(recvreq->req_rdma_offset == bytes_received)
+        /* nothing to send by copy in/out - no need to ack */
+        if(recvreq->req_send_offset == hdr->hdr_msg_length)
             return OMPI_SUCCESS;
     }
     /* let know to shedule function there is no need to put ACK flag */
     recvreq->req_ack_sent = true;
     return mca_pml_ob1_recv_request_ack_send(proc, hdr->hdr_src_req.lval,
-            recvreq, recvreq->req_rdma_offset);
+            recvreq, recvreq->req_send_offset);
 }
 
                                                                                                             
@@ -473,6 +472,7 @@ void mca_pml_ob1_recv_request_progress(
             bytes_received -= sizeof(mca_pml_ob1_rendezvous_hdr_t);
             recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
             recvreq->req_send = hdr->hdr_rndv.hdr_src_req;
+            recvreq->req_rdma_offset = bytes_received;
             MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq,&hdr->hdr_match);
             mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, bytes_received);
             if(recvreq->req_recv.req_base.req_pml_complete) {
@@ -537,7 +537,7 @@ void mca_pml_ob1_recv_request_progress(
     if( OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received)
         >= recvreq->req_recv.req_bytes_packed ) {
         MCA_PML_OB1_RECV_REQUEST_PML_COMPLETE( recvreq );
-    } else if (recvreq->req_rdma_offset < recvreq->req_recv.req_bytes_packed) {
+    } else if (recvreq->req_rdma_offset < recvreq->req_send_offset) {
         /* schedule additional rdma operations */
         mca_pml_ob1_recv_request_schedule(recvreq);
     }
@@ -599,7 +599,7 @@ int mca_pml_ob1_recv_request_schedule_exclusive( mca_pml_ob1_recv_request_t* rec
         num_tries = recvreq->req_rdma_cnt;
 
     do {
-        size_t bytes_remaining = recvreq->req_recv.req_bytes_packed -
+        size_t bytes_remaining = recvreq->req_send_offset -
             recvreq->req_rdma_offset;
         size_t prev_bytes_remaining = 0;
         int num_fail = 0;

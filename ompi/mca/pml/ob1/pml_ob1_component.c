@@ -197,7 +197,16 @@ int mca_pml_ob1_component_open(void)
 
 
     OBJ_CONSTRUCT(&mca_pml_ob1.buffers, ompi_free_list_t);
-                                                                                                            
+    OBJ_CONSTRUCT(&mca_pml_ob1.send_ranges, ompi_free_list_t);
+    ompi_free_list_init(
+        &mca_pml_ob1.send_ranges,
+        sizeof(mca_pml_ob1_send_range_t),
+        OBJ_CLASS(mca_pml_ob1_send_range_t),
+        mca_pml_ob1.free_list_num,
+        mca_pml_ob1.free_list_max,
+        mca_pml_ob1.free_list_inc,
+        NULL);
+
     /* pending operations */
     OBJ_CONSTRUCT(&mca_pml_ob1.send_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.recv_pending, opal_list_t);
