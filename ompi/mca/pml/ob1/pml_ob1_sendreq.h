@@ -51,18 +51,26 @@ struct mca_pml_ob1_send_request_t {
     int32_t req_state;
     int32_t req_lock;
 #endif
+    bool req_throttle_sends;
     size_t req_pipeline_depth;
     size_t req_bytes_delivered;
-    size_t req_send_offset;
-    size_t req_rdma_offset;
     mca_pml_ob1_rdma_btl_t req_rdma[MCA_PML_OB1_MAX_RDMA_PER_REQUEST]; 
     uint32_t req_rdma_cnt; 
     mca_pml_ob1_send_pending_t req_pending;
+    opal_mutex_t req_send_range_lock; 
+    opal_list_t req_send_ranges;
 };
 typedef struct mca_pml_ob1_send_request_t mca_pml_ob1_send_request_t;
 
 OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 
+struct mca_pml_ob1_send_range_t {
+    ompi_free_list_item_t base;
+    uint64_t range_send_offset;
+    uint64_t range_send_length;
+};
+typedef struct mca_pml_ob1_send_range_t mca_pml_ob1_send_range_t;
+OBJ_CLASS_DECLARATION(mca_pml_ob1_send_range_t);
 
 #define MCA_PML_OB1_SEND_REQUEST_ALLOC(                                    \
     comm,                                                                  \
@@ -328,7 +336,6 @@ static inline int mca_pml_ob1_send_request_start(
     sendreq->req_lock = 0;
     sendreq->req_pipeline_depth = 0;
     sendreq->req_bytes_delivered = 0;
-    sendreq->req_send_offset = 0;
     sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_NONE;
     sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(
         &comm->procs[sendreq->req_send.req_base.req_peer].send_sequence,1);
@@ -394,6 +401,8 @@ int mca_pml_ob1_send_request_put_frag(mca_pml_ob1_rdma_frag_t* frag);
  * should be considered for sending packets */
 void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl);
 
+void mca_pml_ob1_send_requst_copy_in_out(mca_pml_ob1_send_request_t *sendreq,
+                uint64_t send_offset, uint64_t send_length);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

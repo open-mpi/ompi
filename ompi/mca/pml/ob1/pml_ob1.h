@@ -67,6 +67,7 @@ struct mca_pml_ob1_t {
     ompi_free_list_t recv_frags;
     ompi_free_list_t pending_pckts;
     ompi_free_list_t buffers;
+    ompi_free_list_t send_ranges;
 
     /* list of pending operations */
     opal_list_t pckt_pending;

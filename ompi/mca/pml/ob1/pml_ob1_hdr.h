@@ -172,7 +172,7 @@ struct mca_pml_ob1_ack_hdr_t {
 #endif
     ompi_ptr_t hdr_src_req;                   /**< source request */
     ompi_ptr_t hdr_dst_req;                   /**< matched receive request */
-    uint64_t hdr_rdma_offset;                 /**< starting point rdma protocol */
+    uint64_t hdr_send_offset;                 /**< starting point of copy in/out */
 };
 typedef struct mca_pml_ob1_ack_hdr_t mca_pml_ob1_ack_hdr_t;
 
@@ -183,13 +183,13 @@ typedef struct mca_pml_ob1_ack_hdr_t mca_pml_ob1_ack_hdr_t;
 #define MCA_PML_OB1_ACK_HDR_NTOH(h) \
     do { \
     MCA_PML_OB1_COMMON_HDR_NTOH(h.hdr_common); \
-    (h).hdr_rdma_offset = ntoh64((h).hdr_rdma_offset); \
+    (h).hdr_send_offset = ntoh64((h).hdr_send_offset); \
     } while (0)
 
 #define MCA_PML_OB1_ACK_HDR_HTON(h) \
     do { \
     MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
-    (h).hdr_rdma_offset = hton64((h).hdr_rdma_offset); \
+    (h).hdr_send_offset = hton64((h).hdr_send_offset); \
     } while (0) 
 
 /**
