@@ -1074,7 +1074,7 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
     mca_pml_ob1_send_fin(sendreq->req_send.req_base.req_proc, 
                          bml_btl,
                          frag->rdma_hdr.hdr_rdma.hdr_des.pval,
-                         des->order);
+                         des->order, 0);
     
     /* check for request completion */
     if( OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length)
@@ -1115,12 +1115,27 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
                               &des );
     
     if(NULL == des) {
-        size_t offset = (size_t)frag->rdma_hdr.hdr_rdma.hdr_rdma_offset;
-        frag->rdma_length = save_size; 
-        ompi_convertor_set_position(&frag->convertor, &offset);
-        OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
-        opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
-        OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+        if(frag->retries < mca_pml_ob1.rdma_put_retries_limit) {
+            size_t offset = (size_t)frag->rdma_hdr.hdr_rdma.hdr_rdma_offset;
+            frag->rdma_length = save_size; 
+            ompi_convertor_set_position(&frag->convertor, &offset);
+            OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+            opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
+            OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+        } else {
+            mca_pml_ob1_send_request_t *sendreq =
+                (mca_pml_ob1_send_request_t*)frag->rdma_req;
+
+            /* tell receiver to unregister memory */
+            mca_pml_ob1_send_fin(sendreq->req_send.req_base.req_proc,
+                    frag->rdma_hdr.hdr_rdma.hdr_des.pval, bml_btl,
+                    MCA_BTL_NO_ORDER, 1);
+
+            /* send fragment by copy in/out */
+            mca_pml_ob1_send_requst_copy_in_out(sendreq,
+                    frag->rdma_hdr.hdr_rdma.hdr_rdma_offset, frag->rdma_length);
+            mca_pml_ob1_send_request_schedule(sendreq);
+        }
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
@@ -1194,6 +1209,7 @@ void mca_pml_ob1_send_request_put(
     frag->rdma_length = size;
     frag->rdma_state = MCA_PML_OB1_RDMA_PUT;
     frag->reg = NULL;
+    frag->retries = 0;
 
     /* lookup the corresponding registration */
     for(i=0; i<sendreq->req_rdma_cnt; i++) {

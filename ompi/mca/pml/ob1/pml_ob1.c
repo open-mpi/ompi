@@ -253,7 +253,8 @@ int mca_pml_ob1_send_fin(
         ompi_proc_t* proc,
         mca_bml_base_btl_t* bml_btl,
         void *hdr_des,
-        uint8_t order
+        uint8_t order,
+        uint32_t status
         )
 {
     mca_btl_base_descriptor_t* fin;
@@ -262,7 +263,7 @@ int mca_pml_ob1_send_fin(
 
     MCA_PML_OB1_DES_ALLOC(bml_btl, fin, order, sizeof(mca_pml_ob1_fin_hdr_t));
     if(NULL == fin) {
-        MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_des, bml_btl, order);
+        MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_des, bml_btl, order, status);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     fin->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
@@ -274,6 +275,7 @@ int mca_pml_ob1_send_fin(
     hdr->hdr_common.hdr_flags = 0;
     hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FIN;
     hdr->hdr_des.pval = hdr_des;
+    hdr->hdr_fail = status;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
@@ -296,12 +298,11 @@ int mca_pml_ob1_send_fin(
                            MCA_BTL_TAG_PML
                            );
     if(OMPI_SUCCESS != rc) {
-        MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_des, bml_btl, order);
         MCA_BML_BASE_BTL_DES_RETURN(bml_btl, fin);
+        MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_des, bml_btl, order, status);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
-
     return OMPI_SUCCESS;
 }
 
@@ -352,7 +353,8 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
             case MCA_PML_OB1_HDR_TYPE_FIN:
                 rc = mca_pml_ob1_send_fin(pckt->proc, send_dst,
                                           pckt->hdr.hdr_fin.hdr_des.pval,
-                                          pckt->order);
+                                          pckt->order,
+                                          pckt->hdr.hdr_fin.hdr_fail);
                 MCA_PML_OB1_PCKT_PENDING_RETURN(pckt);
                 if(OMPI_ERR_OUT_OF_RESOURCE == rc)
                      return;
@@ -378,6 +380,7 @@ void mca_pml_ob1_process_pending_rdma(void)
         if(NULL == frag)
             break;
         if(frag->rdma_state == MCA_PML_OB1_RDMA_PUT) {
+            frag->retries++;
             rc = mca_pml_ob1_send_request_put_frag(frag);
         } else {
             rc = mca_pml_ob1_recv_request_get_frag(frag);

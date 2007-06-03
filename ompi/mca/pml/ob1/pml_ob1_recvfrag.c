@@ -182,7 +182,8 @@ void mca_pml_ob1_recv_frag_callback(
             }
 #endif
             rdma = (mca_btl_base_descriptor_t*)hdr->hdr_fin.hdr_des.pval;
-            rdma->des_cbfunc(btl, NULL, rdma, OMPI_SUCCESS);
+            rdma->des_cbfunc(btl, NULL, rdma,
+                    hdr->hdr_fin.hdr_fail ? OMPI_ERROR : OMPI_SUCCESS);
             break;
         }
     default:
