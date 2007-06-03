@@ -157,8 +157,10 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)des->des_cbdata;
     size_t bytes_received = 0;
 
-    MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( des->des_dst, des->des_dst_cnt,
-                                        0, bytes_received );
+    if(status == OMPI_SUCCESS) {
+        MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( des->des_dst, des->des_dst_cnt,
+                0, bytes_received );
+    }
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,-1);
     mca_bml_base_free(bml_btl, des);
 
@@ -308,7 +310,7 @@ static void mca_pml_ob1_rget_completion(
     mca_pml_ob1_send_fin(recvreq->req_recv.req_base.req_proc,
                          bml_btl,
                          frag->rdma_hdr.hdr_rget.hdr_des.pval,
-                         des->order); 
+                         des->order, 0); 
 
     /* is receive request complete */
     if( OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, frag->rdma_length)

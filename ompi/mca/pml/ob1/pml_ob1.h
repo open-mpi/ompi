@@ -54,6 +54,7 @@ struct mca_pml_ob1_t {
     size_t eager_limit;     /* maximum eager limit size - overrides btl setting */
     size_t send_pipeline_depth;
     size_t recv_pipeline_depth;
+    size_t rdma_put_retries_limit;
     bool leave_pinned; 
     int leave_pinned_pipeline;
     
@@ -266,7 +267,7 @@ do {                                                            \
         (ompi_free_list_item_t*)pckt);                          \
 } while(0)
 
-#define MCA_PML_OB1_ADD_FIN_TO_PENDING(P, D, B, O)                  \
+#define MCA_PML_OB1_ADD_FIN_TO_PENDING(P, D, B, O, S)               \
     do {                                                            \
         mca_pml_ob1_pckt_pending_t *_pckt;                          \
         int _rc;                                                    \
@@ -274,6 +275,7 @@ do {                                                            \
         MCA_PML_OB1_PCKT_PENDING_ALLOC(_pckt,_rc);                  \
         _pckt->hdr.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FIN;  \
         _pckt->hdr.hdr_fin.hdr_des.pval = (D);                      \
+        _pckt->hdr.hdr_fin.hdr_fail = (S);                          \
         _pckt->proc = (P);                                          \
         _pckt->bml_btl = (B);                                       \
         _pckt->order = (O);                                         \
@@ -285,7 +287,7 @@ do {                                                            \
 
 
 int mca_pml_ob1_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, 
-        void *hdr_des, uint8_t order);
+        void *hdr_des, uint8_t order, uint32_t status);
 
 /* This function tries to resend FIN/ACK packets from pckt_pending queue.
  * Packets are added to the queue when sending of FIN or ACK is failed due to

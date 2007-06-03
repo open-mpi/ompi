@@ -45,6 +45,7 @@ struct mca_pml_ob1_rdma_frag_t {
     struct mca_bml_base_endpoint_t* rdma_ep;
     ompi_convertor_t convertor;
     mca_mpool_base_registration_t* reg;
+    uint32_t retries;
 };
 typedef struct mca_pml_ob1_rdma_frag_t mca_pml_ob1_rdma_frag_t;
 

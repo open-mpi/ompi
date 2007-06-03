@@ -219,6 +219,7 @@ struct mca_pml_ob1_fin_hdr_t {
     uint8_t hdr_padding[6];
 #endif
     ompi_ptr_t hdr_des;                       /**< completed descriptor */
+    uint32_t hdr_fail;                        /**< RDMA operation failed */
 };
 typedef struct mca_pml_ob1_fin_hdr_t mca_pml_ob1_fin_hdr_t;
 
