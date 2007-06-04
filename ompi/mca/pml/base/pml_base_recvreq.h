@@ -99,6 +99,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
          * request. This field is used if cancelled to find out if the request  \
          * has been matched or not.                                             \
          */                                                                     \
+        (request)->req_ompi.req_status.MPI_SOURCE = OMPI_ANY_SOURCE;            \  
         (request)->req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;                  \
         (request)->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;                \
         (request)->req_ompi.req_status._cancelled = 0;                          \
