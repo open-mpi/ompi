@@ -51,7 +51,9 @@ OPAL_DECLSPEC opal_sys_limits_t opal_sys_limits = {
 
 int opal_util_init_sys_limits(void)
 {
+#ifndef __WINDOWS__    
     struct rlimit rlim;
+#endif
     int value;
     bool set_lims;
 
