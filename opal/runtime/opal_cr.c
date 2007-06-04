@@ -201,7 +201,7 @@ int opal_cr_init(void )
                                 &opal_cr_signal);
 #else
     opal_output( 0, "This feature is disabled on Windows" );
-    exit(-1);
+    return 0;
 #endif  /* __WINDOWS__ */
 
     opal_output_verbose(10, opal_cr_output,
