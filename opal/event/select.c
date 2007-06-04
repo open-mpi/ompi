@@ -42,7 +42,9 @@
 #endif
 #include <sys/queue.h>
 #include <sys/tree.h>
+#ifndef __WINDOWS__
 #include <signal.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -71,6 +73,11 @@ extern opal_mutex_t opal_event_lock;
 
 #if OPAL_EVENT_USE_SIGNALS
 extern volatile sig_atomic_t opal_evsignal_caught;
+#endif
+
+#ifdef __WINDOWS__
+#define NFDBITS 32
+int fd_mask;
 #endif
 
 struct selectop {
@@ -198,8 +205,8 @@ select_dispatch(struct event_base *base, void *arg, struct timeval *tv)
            the lock and it just takes up time we could spend doing
            something else. */
         OPAL_THREAD_UNLOCK(&opal_event_lock);
-	res = select(sop->event_fds + 1, sop->event_readset_out,
-	    sop->event_writeset_out, NULL, tv);
+	    res = select(sop->event_fds + 1, sop->event_readset_out,
+	                 sop->event_writeset_out, NULL, tv);
         OPAL_THREAD_LOCK(&opal_event_lock);
 
         check_selectop(sop);
@@ -219,13 +226,13 @@ select_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 
                     tv->tv_sec = 0;
                     tv->tv_usec = 0;
-	            memset(sop->event_readset, 0, sop->event_fdsz);
-	            memset(sop->event_writeset, 0, sop->event_fdsz);
+	                memset(sop->event_readset, 0, sop->event_fdsz);
+	                memset(sop->event_writeset, 0, sop->event_fdsz);
                     if (ev->ev_events & OPAL_EV_WRITE)
                         FD_SET(ev->ev_fd, sop->event_writeset);
                     if (ev->ev_events & OPAL_EV_READ)
                         FD_SET(ev->ev_fd, sop->event_readset);
-	            res = select(sop->event_fds + 1, sop->event_readset, 
+	                res = select(sop->event_fds + 1, sop->event_readset, 
                                  sop->event_writeset, NULL, tv);
                     if(res < 0) {
                         opal_output(0, "bad file descriptor: %d\n", ev->ev_fd);
