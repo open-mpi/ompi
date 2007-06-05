@@ -333,7 +333,7 @@ static inline int mca_pml_ob1_send_request_start(
 
     sendreq->req_endpoint = endpoint;
     sendreq->req_state = 0;
-    sendreq->req_lock = 0;
+    OPAL_THREAD_UNLOCK(&(sendreq->req_lock)) ;
     sendreq->req_pipeline_depth = 0;
     sendreq->req_bytes_delivered = 0;
     sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_NONE;
