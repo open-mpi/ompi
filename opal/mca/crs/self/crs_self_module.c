@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -23,6 +25,7 @@
 
 #include "opal/libltdl/ltdl.h"
 
+#include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"
@@ -542,8 +545,6 @@ crs_self_find_function(lt_dlhandle handle, char *prefix, char *suffix){
  */
 static int opal_crs_self_restart_cmd(opal_crs_self_snapshot_t *snapshot, char **cmd)
 {
-    extern char **environ;
-    
     opal_output_verbose(10, mca_crs_self_component.super.output_handle,
                         "crs:self: restart_cmd(%s, ---)", snapshot->cmd_line);
 

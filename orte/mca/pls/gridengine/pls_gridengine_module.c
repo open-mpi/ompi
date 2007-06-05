@@ -12,6 +12,8 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  *                         Use is subject to license terms.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -89,10 +91,6 @@
 #include "orte/mca/pls/base/base.h"
 #include "orte/mca/pls/base/pls_private.h"
 #include "orte/mca/pls/gridengine/pls_gridengine.h"
-
-#if !defined(__WINDOWS__)
-extern char **environ;
-#endif  /* !defined(__WINDOWS__) */
 
 orte_pls_base_module_t orte_pls_gridengine_module = {
     orte_pls_gridengine_launch_job,

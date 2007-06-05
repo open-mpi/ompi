@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -109,10 +111,6 @@ orte_pls_base_module_t orte_pls_tm_module = {
     pls_tm_cancel_operation,
     pls_tm_finalize
 };
-
-#if !defined(__WINDOWS__)
-extern char **environ;
-#endif  /* !defined(__WINDOWS__) */
 
 /* When working in this function, ALWAYS jump to "cleanup" if
  * you encounter an error so that orterun will be woken up and

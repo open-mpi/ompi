@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -78,13 +80,6 @@
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/ras/ras_types.h"
 #include "orte/mca/ras/base/ras_private.h"
-
-/******************
- * Global Vars
- ******************/
-#ifndef __WINDOWS__
-extern char** environ;
-#endif  /* __WINDOWS__ */
 
 /*******************
  * Universe/job/vpid information Objects

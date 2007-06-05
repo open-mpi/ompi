@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -72,13 +74,6 @@
 #include "opal/runtime/opal_cr.h"
 #endif
 #include "orte/runtime/runtime.h"
-
-/******************
- * Global Vars
- ******************/
-#ifndef __WINDOWS__
-extern char** environ;
-#endif  /* __WINDOWS__ */
 
 /******************
  * Local Functions

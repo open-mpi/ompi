@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,9 +66,6 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
-#ifndef __WINDOWS__
-extern char **environ;
-#endif  /* __WINDOWS__ */
 /******************
  * Local Functions
  ******************/

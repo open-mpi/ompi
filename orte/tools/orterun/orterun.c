@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -314,9 +316,6 @@ opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
 
-#if !defined(__WINDOWS__)
-extern char** environ;
-#endif   /* !defined(__WINDOWS__) */
 /*
  * Local functions
  */

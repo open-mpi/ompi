@@ -75,8 +75,6 @@
 #include "strutil.h"
 #include "libxcpu.h"
 
-extern char **environ;
-
 /**
  * Initialization of the xcpu module with all the needed function pointers
  */

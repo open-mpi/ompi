@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -108,13 +110,6 @@ orte_pls_base_module_1_3_0_t orte_pls_slurm_module = {
 static pid_t srun_pid = 0;
 static orte_jobid_t active_job = ORTE_JOBID_INVALID;
 
-
-/*
- * External
- */
-#if !defined(__WINDOWS__)
-extern char **environ;
-#endif  /* !defined(__WINDOWS__) */
 
 /* When working in this function, ALWAYS jump to "cleanup" if
  * you encounter an error so that orterun will be woken up and
