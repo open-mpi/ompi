@@ -70,6 +70,10 @@ char *opal_os_path(bool relative, ...)
     /* setup path with enough room for the string terminator, the elements, and
        the separator between each of the elements */
     total_length = total_length + num_elements * strlen(path_sep) + 1;
+    if(relative) {
+        total_length++;
+    }
+        
     if (total_length > MAXPATHLEN) {  /* path length is too long - reject it */
     	return(NULL);
     }
