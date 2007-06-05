@@ -93,7 +93,7 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
        ompi_open_port (port_name);
        if (OMPI_SUCCESS != (rc = ompi_comm_start_processes (1, &command, &argv, &maxprocs, 
                                                             &info, port_name))) {
-           goto ERROR;
+           goto error;
        }
        tmp_port = ompi_parse_port (port_name, &tag);
        free(tmp_port);
@@ -102,7 +102,7 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
    
    rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
 
-ERROR:
+error:
     /* close the port again. Nothing has to be done for that at the moment.*/
 
    /* set error codes */
