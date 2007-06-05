@@ -258,7 +258,7 @@ ompi_convertor_copy_and_prepare_for_send( const ompi_convertor_t* pSrcConv,
                                           ompi_convertor_t* convertor )
 {
     convertor->remoteArch = pSrcConv->remoteArch;
-    convertor->flags      = (pSrcConv->flags | flags | CONVERTOR_SEND);
+    convertor->flags      = (pSrcConv->flags | flags);
     convertor->master     = pSrcConv->master;
 
     return ompi_convertor_prepare_for_send( convertor, datatype, count, pUserBuf );
@@ -281,7 +281,7 @@ ompi_convertor_copy_and_prepare_for_recv( const ompi_convertor_t* pSrcConv,
                                           ompi_convertor_t* convertor )
 {
     convertor->remoteArch = pSrcConv->remoteArch;
-    convertor->flags      = (pSrcConv->flags | flags | CONVERTOR_RECV);
+    convertor->flags      = (pSrcConv->flags | flags);
     convertor->master     = pSrcConv->master;
 
     return ompi_convertor_prepare_for_recv( convertor, datatype, count, pUserBuf );
