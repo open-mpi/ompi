@@ -413,21 +413,55 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
     return rc;
 }
 
-/* This macro will initialize a convertor based on a previously created convertor. The idea
- * is the move outside these function the heavy selection of architecture features for the convertors.
- *
- * I consider here that the convertor is clean, either never initialized or already cleanup.
+/**
+ * This macro will initialize a convertor based on a previously created
+ * convertor. The idea is the move outside these function the heavy
+ * selection of architecture features for the convertors. I consider
+ * here that the convertor is clean, either never initialized or already
+ * cleaned.
  */
-#define OMPI_CONVERTOR_PREPARE_INTERNAL( convertor, datatype, count, pUserBuf )  \
+#define OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf )  \
     {                                                                   \
         uint64_t bdt_mask;                                              \
                                                                         \
         bdt_mask = datatype->bdt_used & convertor->master->hetero_mask; \
-        OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf ); \
+        /* Compute the local in advance */                              \
+        convertor->local_size = count * datatype->size;                 \
+        convertor->pBaseBuf   = (unsigned char*)pUserBuf;               \
+        convertor->count      = count;                                  \
                                                                         \
-        if( 0 == bdt_mask ) {                                           \
+        /* Grab the datatype part of the flags */                       \
+        convertor->flags     &= CONVERTOR_TYPE_MASK;                    \
+        convertor->flags     |= (CONVERTOR_DATATYPE_MASK & datatype->flags); \
+        convertor->flags     |= (CONVERTOR_NO_OP | CONVERTOR_HOMOGENEOUS); \
+        convertor->pDesc      = (ompi_datatype_t*)datatype;             \
+        convertor->bConverted = 0;                                      \
+        /* By default consider the optimized description */             \
+        convertor->use_desc = &(datatype->opt_desc);                    \
+                                                                        \
+        /* If the data is empty we just mark the convertor as           \
+         * completed. With this flag set the pack and unpack functions  \
+         * will not do anything.                                        \
+         */                                                             \
+        if( OPAL_UNLIKELY(0 == convertor->local_size) ) {               \
+            convertor->flags |= CONVERTOR_COMPLETED;                    \
+            convertor->remote_size = 0;                                 \
+            return OMPI_SUCCESS;                                        \
+        }                                                               \
+                                                                        \
+        if( convertor->remoteArch == ompi_mpi_local_arch ) {            \
             convertor->remote_size = convertor->local_size;             \
-            convertor->use_desc = &(datatype->opt_desc);                \
+            if( (convertor->flags & (CONVERTOR_WITH_CHECKSUM | DT_FLAG_NO_GAPS)) == DT_FLAG_NO_GAPS ) { \
+                return OMPI_SUCCESS;                                    \
+            }                                                           \
+            if( ((convertor->flags & (CONVERTOR_WITH_CHECKSUM | DT_FLAG_CONTIGUOUS)) \
+                 == DT_FLAG_CONTIGUOUS) && (1 == count) ) {             \
+                return OMPI_SUCCESS;                                    \
+            }                                                           \
+        }                                                               \
+                                                                        \
+        if( OPAL_LIKELY(0 == bdt_mask) ) {                              \
+            convertor->remote_size = convertor->local_size;             \
         } else {                                                        \
             ompi_convertor_master_t* master;                            \
             int i;                                                      \
@@ -478,7 +512,7 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
 
     convertor->flags |= CONVERTOR_RECV;
 
-    OMPI_CONVERTOR_PREPARE_INTERNAL( convertor, datatype, count, pUserBuf );
+    OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
 
     if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -514,7 +548,7 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
 {
     convertor->flags |= CONVERTOR_SEND;
 
-    OMPI_CONVERTOR_PREPARE_INTERNAL( convertor, datatype, count, pUserBuf );
+    OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
 
     if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
         if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
