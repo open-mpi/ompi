@@ -89,10 +89,8 @@ typedef struct ompi_osc_pt2pt_send_header_t ompi_osc_pt2pt_send_header_t;
 
 struct ompi_osc_pt2pt_reply_header_t {
     ompi_osc_pt2pt_base_header_t hdr_base;
-
-    ompi_ptr_t hdr_origin_sendreq;
-
     int32_t hdr_target_tag;
+    ompi_ptr_t hdr_origin_sendreq;
     int32_t hdr_msg_length;
 };
 typedef struct ompi_osc_pt2pt_reply_header_t ompi_osc_pt2pt_reply_header_t;
