@@ -197,50 +197,6 @@ ompi_convertor_get_current_pointer( const ompi_convertor_t* pConv,
     *position = (void*)base;
 }
 
-/**
- * Basic convertor initialization. This is performed for all types of convertors,
- * but is the only thing required for convertors working on contiguous or
- * predefined datatyps.
- */
-#define OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf )  \
-    {                                                                   \
-        /* Compute the local in advance */                              \
-        convertor->local_size = count * datatype->size;                 \
-        convertor->pBaseBuf   = (unsigned char*)pUserBuf;               \
-        convertor->count      = count;                                  \
-                                                                        \
-        /* Grab the datatype part of the flags */                       \
-        convertor->flags     &= CONVERTOR_TYPE_MASK;                    \
-        convertor->flags     |= (CONVERTOR_DATATYPE_MASK & datatype->flags); \
-        convertor->flags     |= (CONVERTOR_NO_OP | CONVERTOR_HOMOGENEOUS); \
-        convertor->pDesc      = (ompi_datatype_t*)datatype;             \
-        convertor->bConverted = 0;                                      \
-                                                                        \
-        /* If the data is empty we just mark the convertor as           \
-         * completed. With this flag set the pack and unpack functions  \
-         * will not do anything. In order to decrease the data          \
-         * dependencies (and to speed-up this code) we will not test    \
-         * the convertor->local_size but we can test the 2 components.  \
-         */                                                             \
-        if( (0 == convertor->count) || (0 == datatype->size) ) {        \
-            convertor->flags |= CONVERTOR_COMPLETED;                    \
-            convertor->remote_size = 0;                                 \
-            return OMPI_SUCCESS;                                        \
-        }                                                               \
-                                                                        \
-        if( convertor->remoteArch == ompi_mpi_local_arch ) {            \
-            convertor->remote_size = convertor->local_size;             \
-            convertor->use_desc = &(datatype->opt_desc);                \
-            if( (convertor->flags & (CONVERTOR_WITH_CHECKSUM | DT_FLAG_NO_GAPS)) == DT_FLAG_NO_GAPS ) { \
-                return OMPI_SUCCESS;                                    \
-            }                                                           \
-            if( ((convertor->flags & (CONVERTOR_WITH_CHECKSUM | DT_FLAG_CONTIGUOUS)) \
-                 == DT_FLAG_CONTIGUOUS) && (1 == count) ) {             \
-                return OMPI_SUCCESS;                                    \
-            }                                                           \
-        }                                                               \
-    }
-
 /*
  *
  */
