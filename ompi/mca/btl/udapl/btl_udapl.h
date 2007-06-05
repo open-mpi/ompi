@@ -79,6 +79,7 @@ struct mca_btl_udapl_component_t {
     int32_t udapl_eager_rdma_win; /**< number of eager RDMA fragments
                                     recieved before returning credits to
                                     sender */
+    int32_t udapl_conn_priv_data; /**< use connect priv data for proc data */
     int32_t udapl_async_events;  /**< dequeue asynchronous events */
     int32_t udapl_buffer_alignment;  /**< preferred communication buffer alignment, in bytes */
     opal_list_t udapl_procs;   /**< list of udapl proc structures */
