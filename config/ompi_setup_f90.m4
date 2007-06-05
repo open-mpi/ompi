@@ -10,6 +10,8 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+dnl                         reserved. 
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -131,22 +133,34 @@ AS_IF([test $OMPI_WANT_F90_BINDINGS -eq 1],
        fi
  ])
 
-# OS X does not allow undefined common symbols in shared libraries.
-# Because we can't figure out how to implement MPI_STATUSES_IGNORE and
-# friends wihtout common symbols, on OS X we can't build the F90
-# bindings as a shared library.
-AC_MSG_CHECKING([if need to force static library])
+# OS X before 10.3 (deployment target) does not allow undefined common
+# symbols in shared libraries.  Because we can't figure out how to
+# implement MPI_STATUSES_IGNORE and friends wihtout common symbols, on
+# OS X we can't build the F90 bindings as a shared library.
+AC_MSG_CHECKING([for extra arguments to build a shard library])
 case "$host" in
     *apple-darwin*)
-        AC_MSG_RESULT([yes])
-        ompi_f90_force_static="yes"
+        if test -z ${MACOSX_DEPLOYMENT_TARGET} ; then
+            AC_MSG_RESULT([impossible -- -static])
+            OMPI_F90_EXTRA_SHARED_LIBRARY_FLAGS="-static"
+        else
+            case ${MACOSX_DEPLOYMENT_TARGET} in
+            10.[012])
+                AC_MSG_RESULT([impossible -- -static])
+                OMPI_F90_EXTRA_SHARED_LIBRARY_FLAGS="-static"
+                ;;
+            10.*)
+                AC_MSG_RESULT([-Wl,-single_module])
+                OMPI_F90_EXTRA_SHARED_LIBRARY_FLAGS="-Wl,-single_module"
+            esac
+        fi
     ;;
     *)
-        AC_MSG_RESULT([no])
-        ompi_f90_force_static="no"
+        AC_MSG_RESULT([none needed])
+        OMPI_F90_EXTRA_SHARED_LIBRARY_FLAGS=""
     ;;
 esac
-AM_CONDITIONAL(OMPI_F90_FORCE_STATIC, test "$ompi_f90_force_static" = "yes")
+AC_SUBST(OMPI_F90_EXTRA_SHARED_LIBRARY_FLAGS)
 
 # if we're still good, then save the extra file types.  Do this last
 # because it implies tests that should be invoked by the above tests

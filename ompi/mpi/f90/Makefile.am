@@ -11,6 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+#                         reserved. 
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -246,11 +248,7 @@ nodist_libmpi_f90_la_SOURCES += $(small_sources) $(medium_sources) $(large_sourc
 endif
 
 # see note in config/ompi_setup_f90.m4
-if OMPI_F90_FORCE_STATIC
-libmpi_f90_la_LDFLAGS = -static
-else
-libmpi_f90_la_LDFLAGS = 
-endif
+libmpi_f90_la_LDFLAGS = $(OMPI_F90_EXTRA_SHARED_LIBRARY_FLAGS)
 
 #
 # Clean up all F90 module files and all generated files

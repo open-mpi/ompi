@@ -29,6 +29,9 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
+- On OS X, when MACOSX_DEPLOYMENT_TARGET is 10.3 or higher, support
+  building the Fortran 90 bindings as a shared library.  Thanks to
+  Jack Howarth for his advice on making this work.
 - Use _NSGetEnviron instead of environ on Mac OS X so that there
   are no undefined symbols in the shared libraries.
   --> Expected 1.2.3
