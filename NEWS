@@ -29,6 +29,8 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
+- No longer require extra include flag for the C++ bindings.
+  --> Expected 1.2.3
 - Fix problem with optional Fortran types to be correctly initialized.
   --> Expected ?1.2.x?
 - Release tarballs now use Autoconf 2.61 and Automake 1.10.
