@@ -18,10 +18,12 @@
 # $HEADER$
 #
 
-# *_DATA files are not automatically included in the tarball.  Need to
-# ensure that README.txt is picked up so that people who disable the
-# C++ MPI bindings can still build properly.
-EXTRA_DIST = README.txt
+# Need the first so that we can get the path names correct inside the
+# MPI C++ library.  The second is necessary so that mpi.h doesn't
+# include mpicxx.h through the incorrect pathname in any of the C++
+# bindings .c files.  Just use the define for this purpose from user
+# code.
+AM_CPPFLAGS = -DOMPI_BUILDING_CXX_BINDINGS_LIBRARY=1 -DOMPI_SKIP_MPICXX=1
 
 if WANT_MPI_CXX_BINDINGS
 
@@ -72,10 +74,4 @@ headers = \
 ompidir = $(includedir)/openmpi/ompi/mpi/cxx
 ompi_HEADERS = \
         $(headers)
-else
-# If the C++ bindings were disabled, still ensure that this directory
-# is created so that the default -I flags in the wrapper compilers
-# point to a directory that exists.
-ompidir = $(includedir)/openmpi
-ompi_DATA = README.txt
 endif
