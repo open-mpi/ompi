@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,6 +45,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/error.h"
 #include "opal/util/keyval_parse.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/show_help.h"
 #include "opal/util/path.h"
 #include "opal/util/few.h"
@@ -50,7 +53,6 @@
 #include "opal/util/os_path.h"
 
 #if !defined(__WINDOWS__)
-extern char **environ;
 #define OPAL_INCLUDE_FLAG  "-I"
 #define OPAL_LIBDIR_FLAG   "-L"
 #else

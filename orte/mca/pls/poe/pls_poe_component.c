@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,13 +26,15 @@
 
 #include "orte_config.h"
 
-#include "orte/orte_constants.h"
-#include "orte/mca/pls/pls.h"
 #include "pls_poe.h"
-#include "opal/util/path.h"
+
 #include "opal/util/argv.h"
+#include "opal/util/path.h"
+#include "opal/util/opal_environ.h"
 #include "opal/mca/base/mca_base_param.h"
 
+#include "orte/orte_constants.h"
+#include "orte/mca/pls/pls.h"
 #include "orte/util/proc_info.h"
 
 
@@ -150,10 +154,6 @@ int orte_pls_poe_component_open(void)
 
     return ORTE_SUCCESS;
 }
-
-#if !defined(__WINDOWS__)
-extern char **environ;
-#endif  /* !defined(__WINDOWS__) */
 
 /**
 orte_pls_poe_component_init - initialize component, check if we can run on this machine.

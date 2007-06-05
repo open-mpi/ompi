@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,6 +44,7 @@
 #endif
 
 #include "opal/class/opal_object.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/trace.h"
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
@@ -70,9 +73,6 @@
 /******************
  * Global Var Decls
  ******************/
-#ifndef __WINDOWS__
-extern char **environ;
-#endif  /* __WINDOWS__ */
 
 bool opal_cr_stall_check;
 int  opal_cr_output;

@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,6 +33,7 @@
 #endif
 #include <ctype.h>
 
+#include "opal/util/opal_environ.h"
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
 #include "opal/util/basename.h"
@@ -43,10 +46,6 @@
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/pls/base/pls_private.h"
 #include "orte/mca/pls/rsh/pls_rsh.h"
-
-#if !defined(__WINDOWS__)
-extern char **environ;
-#endif  /* !defined(__WINDOWS__) */
 
 /*
  * Local function
@@ -188,10 +187,6 @@ int orte_pls_rsh_component_open(void)
     return ORTE_SUCCESS;
 }
 
-
-#if !defined(__WINDOWS__)
-extern char **environ;
-#endif  /* !defined(__WINDOWS__) */
 
 orte_pls_base_module_t *orte_pls_rsh_component_init(int *priority)
 {

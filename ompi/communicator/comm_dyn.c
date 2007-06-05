@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  *
  * $COPYRIGHT$
@@ -33,6 +33,7 @@
 #include <sys/time.h>
 #endif  /* HAVE_SYS_TIME_H */
 
+#include "opal/util/opal_environ.h"
 #include "opal/util/printf.h"
 #include "opal/util/convert.h"
 #include "opal/threads/mutex.h"
@@ -60,10 +61,6 @@
 #include "orte/mca/rml/rml.h"
 
 #include "orte/runtime/runtime.h"
-
-#if !defined(__WINDOWS__)
-extern char **environ;
-#endif  /* !defined(__WINDOWS__) */
 
 static int ompi_comm_get_rport (orte_process_name_t *port,
                                 int send_first, struct ompi_proc_t *proc,

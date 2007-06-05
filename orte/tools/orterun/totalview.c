@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,13 +51,6 @@
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
 #include <ctype.h>
-
-/*
- * The environment
- */
-#if !defined(__WINDOWS__)
-extern char **environ;
-#endif  /* !defined(__WINDOWS__) */
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"

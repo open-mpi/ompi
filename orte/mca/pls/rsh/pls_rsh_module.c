@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -89,8 +91,6 @@
 #include "orte/mca/pls/base/base.h"
 #include "orte/mca/pls/base/pls_private.h"
 #include "orte/mca/pls/rsh/pls_rsh.h"
-
-extern char **environ;
 
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
 static int orte_pls_rsh_launch_threaded(orte_jobid_t jobid);
