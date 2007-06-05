@@ -83,7 +83,7 @@ AC_DEFUN([_OMPI_CHECK_MX_CONFIG],[
 
     AC_MSG_CHECKING(for MX_API)
     AS_IF([test x"$have_recent_api" = "xyes"],
-          [AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_API_VERSION], $mx_api_ver,
+          [AC_DEFINE_UNQUOTED([OMPI_MX_API_VERSION], $mx_api_ver,
                 [Version of the MX API to use])
            unset mx_api_ver have_mx_api_ver_msg found val msg
            $2],

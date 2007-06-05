@@ -97,34 +97,14 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                  [AC_MSG_WARN([Can not determine number of args to ibv_create_cq.])
                   AC_MSG_WARN([Not building component.])
                   ompi_check_openib_happy="no"],
-                 [AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_IBV_CREATE_CQ_ARGS],
+                 [AC_DEFINE_UNQUOTED([OMPI_IBV_CREATE_CQ_ARGS],
                                      [$ompi_cv_func_ibv_create_cq_args],
                                      [Number of arguments to ibv_create_cq])])])
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
           [AC_CHECK_DECLS([IBV_EVENT_CLIENT_REREGISTER], [], [], 
                           [#include <infiniband/verbs.h>])
-
-           AC_CHECK_FUNCS([ibv_create_srq], 
-                          [ompi_check_openib_have_srq=1],
-                          [ompi_check_openib_have_srq=0])
-           AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_SRQ],
-                              [$ompi_check_openib_have_srq],
-                              [Whether install of OpenFabrics includes shared receive queue support])
-
-           AC_CHECK_FUNCS([ibv_get_device_list],
-                          [ompi_check_openib_have_device_list=1],
-                          [ompi_check_openib_have_device_list=0])
-           AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_DEVICE_LIST],
-                              [$ompi_check_openib_have_device_list],
-                              [Whether install of OpenFabrics includes ibv_get_device_list API])
-
-           AC_CHECK_FUNCS([ibv_resize_cq],
-                          [ompi_check_openib_have_resize_cq=1],
-                          [ompi_check_openib_have_resize_cq=0])
-           AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_RESIZE_CQ],
-                              [$ompi_check_openib_have_resize_cq],
-                              [Whether install of OpenFabrics includes resize completion queue support])])
+           AC_CHECK_FUNCS([ibv_get_device_list ibv_resize_cq])])
 
     CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
     LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"

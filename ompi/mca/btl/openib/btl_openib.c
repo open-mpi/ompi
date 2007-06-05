@@ -267,7 +267,7 @@ static int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_bt
     if(min_cq_size > (int32_t) mca_btl_openib_component.ib_cq_size) { 
         mca_btl_openib_component.ib_cq_size = min_cq_size > openib_btl->hca->ib_dev_attr.max_cq ? 
             openib_btl->hca->ib_dev_attr.max_cq : min_cq_size;
-#if OMPI_MCA_BTL_OPENIB_HAVE_RESIZE_CQ
+#ifdef HAVE_IBV_RESIZE_CQ
         if(!first_time) { 
             rc = ibv_resize_cq(openib_btl->ib_cq[BTL_OPENIB_LP_QP], mca_btl_openib_component.ib_cq_size);
             if(rc) {
@@ -1000,7 +1000,7 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
     
     /* Create the low and high priority queue pairs */ 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
-#if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
+#if OMPI_IBV_CREATE_CQ_ARGS == 3
     openib_btl->ib_cq[BTL_OPENIB_LP_QP] =
         ibv_create_cq(openib_btl->hca->ib_dev_context,
                 mca_btl_openib_component.ib_cq_size, openib_btl->hca->ib_channel); 
@@ -1010,7 +1010,7 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
                 mca_btl_openib_component.ib_cq_size, openib_btl, openib_btl->hca->ib_channel, 0); 
 #endif
 #else /* OMPI_ENABLE_PROGRESS_THREADS DISABLED */
-#if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
+#if OMPI_IBV_CREATE_CQ_ARGS == 3
     openib_btl->ib_cq[BTL_OPENIB_LP_QP] =
         ibv_create_cq(openib_btl->hca->ib_dev_context,
                 mca_btl_openib_component.ib_cq_size, NULL); 
@@ -1034,7 +1034,7 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
         return OMPI_ERROR;
     }
 
-#if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
+#if OMPI_IBV_CREATE_CQ_ARGS == 3
     openib_btl->ib_cq[BTL_OPENIB_HP_QP] =
         ibv_create_cq(openib_btl->hca->ib_dev_context,
                 mca_btl_openib_component.ib_cq_size, openib_btl->hca->ib_channel); 
@@ -1044,7 +1044,7 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
                 mca_btl_openib_component.ib_cq_size, openib_btl, openib_btl->hca->ib_channel, 0); 
 #endif    
 #else /* OMPI_ENABLE_PROGRESS_THREADS DISABLED */
-#if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
+#if OMPI_IBV_CREATE_CQ_ARGS == 3
     openib_btl->ib_cq[BTL_OPENIB_HP_QP] =
         ibv_create_cq(openib_btl->hca->ib_dev_context,
                 mca_btl_openib_component.ib_cq_size, NULL); 
