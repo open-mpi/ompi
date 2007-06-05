@@ -226,7 +226,7 @@ int mca_btl_tcp_component_open(void)
                                        MCA_BTL_FLAGS_NEED_CSUM |
                                        MCA_BTL_FLAGS_NEED_ACK;
     mca_btl_tcp_module.super.btl_bandwidth = 100;
-    mca_btl_tcp_module.super.btl_latency = 0;
+    mca_btl_tcp_module.super.btl_latency = 100;
     mca_btl_base_param_register(&mca_btl_tcp_component.super.btl_version,
             &mca_btl_tcp_module.super);
 
