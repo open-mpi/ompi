@@ -102,6 +102,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
         (request)->req_ompi.req_status.MPI_SOURCE = OMPI_ANY_SOURCE;            \
         (request)->req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;                  \
         (request)->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;                \
+        (request)->req_ompi.req_status._count = 0;                              \
         (request)->req_ompi.req_status._cancelled = 0;                          \
                                                                                 \
         (request)->req_ompi.req_complete = false;                               \
