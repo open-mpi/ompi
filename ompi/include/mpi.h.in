@@ -1786,7 +1786,7 @@ OMPI_DECLSPEC  double PMPI_Wtime(void);
  */
 #if !defined(OMPI_SKIP_MPICXX) && OMPI_WANT_CXX_BINDINGS && !OMPI_BUILDING
 #if defined(__cplusplus) || defined(c_plusplus) 
-#include "ompi/mpi/cxx/mpicxx.h"
+#include "openmpi/ompi/mpi/cxx/mpicxx.h"
 #endif
 #endif
 
