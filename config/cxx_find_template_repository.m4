@@ -141,7 +141,7 @@ else
 			temp_mask="`echo $ompi_file | cut -d. -f2`"
 			if test "$ompi_template_filemask" = ""; then
 			ompi_template_filemask="$temp_mask";
-			elif test "`echo $ompi_template_filemask | EGREP $temp_mask`" = ""; then
+			elif test "`echo $ompi_template_filemask | $GREP $temp_mask`" = ""; then
 			ompi_template_filemask="$ompi_template_filemask $temp_mask"
 			fi
 		    fi
