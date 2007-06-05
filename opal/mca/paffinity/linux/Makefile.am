@@ -9,12 +9,15 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
 # $HEADER$
 #
+
+SUBDIRS = plpa
 
 sources = \
         paffinity_linux.h \
@@ -38,6 +41,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_paffinity_linux_la_SOURCES = $(sources)
 mca_paffinity_linux_la_LDFLAGS = -module -avoid-version
 mca_paffinity_linux_la_LIBADD = \
+        $(top_ompi_builddir)/opal/mca/paffinity/linux/plpa/src/libplpa/libplpa_included.la \
         $(top_ompi_builddir)/opal/libopen-pal.la
 
 noinst_LTLIBRARIES = $(component_noinst)

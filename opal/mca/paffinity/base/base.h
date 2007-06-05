@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -88,58 +89,39 @@ extern "C" {
     OPAL_DECLSPEC int opal_paffinity_base_select(void);
 
     /**
-     * Get the available number of processors
-     *
-     * @param num_procs Pointer to int where the number of processors
-     * is returned
-     *
-     * @retval OPAL_SUCCESS upon success.
-     * @retval OPAL_NOT_FOUND if no paffinity components are available.
-     * @retval OPAL_ERROR upon other error.
-     *
-     * This function queries the selected paffinity component to find
-     * out how many physical processors exist.  
-     *
-     * If no paffinity components were available, or if the
-     * opal_paffinity_base_select() was never invoked, OPAL_NOT_FOUND
-     * is returned and num_procs is set to -1.
-     */
-    OPAL_DECLSPEC int opal_paffinity_base_get_num_processors(int *num_procs);
-
-    /**
      * Set this process' affinity.
      *
-     * @param id Virtual processor ID number
+     * @param cpumask Virtual processor bitmask
      *
      * @retval OPAL_SUCCESS upon success
      * @retval OPAL_NOT_FOUND if no paffinity components are available.
      * @retval OPAL_ERROR upon other error.
      *
-     * Set this process' affinity to the CPU ID \em id.  
+     * Set this process' affinity to the CPU's specified in \em cpumask
      *
      * If no paffinity components were available, or if the
      * opal_paffinity_base_select() was never invoked, OPAL_NOT_FOUND
      * is returned.
      */
-    OPAL_DECLSPEC int opal_paffinity_base_set(int id);
+    OPAL_DECLSPEC int opal_paffinity_base_set(opal_paffinity_base_cpu_set_t cpumask);
 
     /**
      * Get this process' affinity.
      *
-     * @param id Pointer to virtual processor ID number
+     * @param cpumask Pointer to virtual processor bitmask
      *
      * @retval OPAL_SUCCESS upon success
      * @retval OPAL_NOT_FOUND if no paffinity components are available.
      * @retval OPAL_ERROR upon other error.
      *
-     * Get this process' CPU affinitity virtual ID number and assign
-     * it to \em id.  
+     * Get this process' CPU affinity virtual bitmask and assign
+     * it to \em cpumask.  
      *
      * If no paffinity components were available, or if the
      * opal_paffinity_base_select() was never invoked, OPAL_NOT_FOUND
-     * is returned and id is set to -1.
+     * is returned and cpumask is zeroed out.
      */
-    OPAL_DECLSPEC int opal_paffinity_base_get(int *id);
+    OPAL_DECLSPEC int opal_paffinity_base_get(opal_paffinity_base_cpu_set_t *cpumask);
 
     /**
      * Shut down the paffinity MCA framework.
@@ -163,12 +145,12 @@ extern "C" {
     /**
      * Global component struct for the selected component
      */
-    OPAL_DECLSPEC extern const opal_paffinity_base_component_1_0_0_t 
+    OPAL_DECLSPEC extern const opal_paffinity_base_component_1_1_0_t 
         *opal_paffinity_base_component;
     /**
      * Global module struct for the selected module
      */
-    OPAL_DECLSPEC extern const opal_paffinity_base_module_1_0_0_t 
+    OPAL_DECLSPEC extern const opal_paffinity_base_module_1_1_0_t 
         *opal_paffinity_base_module;
 
     /**

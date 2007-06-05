@@ -302,8 +302,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         if (param >= 0) {
             if (OMPI_SUCCESS == mca_base_param_lookup_int(param, &value)) {
                 if (value >= 0) {
-                    if (OPAL_SUCCESS == opal_paffinity_base_set(value)) {
-                        set = true;
+
+                    opal_paffinity_base_cpu_set_t mpi_cpumask;
+                    OPAL_PAFFINITY_CPU_ZERO(mpi_cpumask);
+                    OPAL_PAFFINITY_CPU_SET(value,mpi_cpumask);
+                    if (OPAL_SUCCESS == opal_paffinity_base_set(mpi_cpumask)) {
+                         set = true;
                     }
                 }
             }

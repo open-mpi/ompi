@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,16 +45,16 @@ static int linux_open(void);
  * and pointers to our public functions in it
  */
 
-const opal_paffinity_base_component_1_0_0_t mca_paffinity_linux_component = {
+const opal_paffinity_base_component_1_1_0_t mca_paffinity_linux_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
     {
-        /* Indicate that we are a paffinity v1.0.0 component (which also
+        /* Indicate that we are a paffinity v1.1.0 component (which also
            implies a specific MCA version) */
         
-        OPAL_PAFFINITY_BASE_VERSION_1_0_0,
+        OPAL_PAFFINITY_BASE_VERSION_1_1_0,
 
         /* Component name and version */
 
@@ -67,10 +68,8 @@ const opal_paffinity_base_component_1_0_0_t mca_paffinity_linux_component = {
         linux_open,
         NULL
     },
-
-    /* Next the MCA v1.0.0 component meta data */
-
     {
+
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
@@ -87,45 +86,6 @@ static int linux_open(void)
                            "priority",
                            "Priority of the linux paffinity component",
                            false, false, 10, NULL);
-
-    mca_base_param_reg_int(&mca_paffinity_linux_component.paffinityc_version,
-                           "have_cpu_set_t",
-                           "Whether this component was compiled on a system with the type cpu_set_t or not (1 = yes, 0 = no)",
-                           false, true,
-#ifdef HAVE_cpu_set_t
-                           HAVE_cpu_set_t,
-#else
-                           0,
-#endif
-                           NULL);
-    mca_base_param_reg_int(&mca_paffinity_linux_component.paffinityc_version,
-                           "CPU_ZERO_ok",
-                           "Whether this component was compiled on a system where CPU_ZERO() is functional or broken (1 = functional, 0 = broken/not available)",
-                           false, true, 
-#ifdef HAVE_CPU_ZERO
-                           HAVE_CPU_ZERO,
-#else
-                           /* If we don't have cpu_set_t, then the
-                              macro CPU_ZERO does not exist */
-                           0,
-#endif
-                           NULL);
-    mca_base_param_reg_int(&mca_paffinity_linux_component.paffinityc_version,
-                           "sched_setaffinity_num_params",
-                           "The number of parameters that sched_set_affinity() takes on the machine where this component was compiled",
-                           false, true, 
-#ifdef OPAL_PAFFINITY_LINUX_SCHED_SETAFF_NUM_PARAMS
-                           OPAL_PAFFINITY_LINUX_SCHED_SETAFF_NUM_PARAMS,
-#else
-                           /* If we do not have cpu_set_t, we don't
-                              check for the number of params (and
-                              therefore OPAL_..._SETAFF_NUM_PARAMS is
-                              undefined), because the only variant
-                              that does not have the type cpu_set_t
-                              has 3 params for sched_set_affinity() */
-                           3,
-#endif
-                           NULL);
 
     return OPAL_SUCCESS;
 }
