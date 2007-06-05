@@ -592,7 +592,7 @@ void mca_btl_udapl_endpoint_connect(mca_btl_udapl_endpoint_t* endpoint)
 
     rc = dat_ep_connect(endpoint->endpoint_eager, &endpoint->endpoint_addr.addr,
             endpoint->endpoint_addr.port, mca_btl_udapl_component.udapl_timeout,
-            0, NULL, 0, DAT_CONNECT_DEFAULT_FLAG);
+            sizeof(mca_btl_udapl_addr_t), &btl->udapl_addr, 0, DAT_CONNECT_DEFAULT_FLAG);
     if(DAT_SUCCESS != rc) {
         char* major;
         char* minor;
@@ -650,7 +650,8 @@ int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
                     !memcmp(addr, &ep->endpoint_addr, sizeof(DAT_SOCK_ADDR))) {
                 OPAL_THREAD_LOCK(&ep->endpoint_lock);
                 if(MCA_BTL_UDAPL_CONN_EAGER == ep->endpoint_state) {
-                    ep->endpoint_connection_seq = *connection_seq;
+                    ep->endpoint_connection_seq = (NULL != connection_seq) ?
+                        *connection_seq:0;
                     ep->endpoint_eager = endpoint;
                     rc = mca_btl_udapl_endpoint_finish_eager(ep);
                } else if(MCA_BTL_UDAPL_CONN_MAX == ep->endpoint_state) {
@@ -662,7 +663,8 @@ int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
                      * receive the sendrecv messages from the max connection
                      * before the eager connection.
                      */
-                    if (ep->endpoint_connection_seq < *connection_seq) {
+                    if (NULL == connection_seq ||
+                        ep->endpoint_connection_seq < *connection_seq) {
                         /* normal order connection matching */
                         ep->endpoint_max = endpoint;
                     } else {
@@ -720,9 +722,10 @@ static int mca_btl_udapl_endpoint_finish_eager(
         }
 
         rc = dat_ep_connect(endpoint->endpoint_max,
-                &endpoint->endpoint_addr.addr, endpoint->endpoint_addr.port,
-                mca_btl_udapl_component.udapl_timeout,
-                0, NULL, 0, DAT_CONNECT_DEFAULT_FLAG);
+            &endpoint->endpoint_addr.addr, endpoint->endpoint_addr.port,
+            mca_btl_udapl_component.udapl_timeout,
+            sizeof(mca_btl_udapl_addr_t),&btl->udapl_addr , 0,
+            DAT_CONNECT_DEFAULT_FLAG);
         if(DAT_SUCCESS != rc) {
             char* major;
             char* minor;

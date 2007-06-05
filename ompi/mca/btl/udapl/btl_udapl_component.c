@@ -402,7 +402,8 @@ static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl,
         return OMPI_ERROR;
     }
     
-    rc = dat_cr_accept(cr_handle, endpoint, 0, NULL);
+    rc = dat_cr_accept(cr_handle, endpoint, sizeof(mca_btl_udapl_addr_t),
+        &btl->udapl_addr);
     if(DAT_SUCCESS != rc) {
         char* major;
         char* minor;
@@ -794,10 +795,17 @@ int mca_btl_udapl_component_progress()
                 case DAT_CONNECTION_EVENT_ESTABLISHED:
                     /* Both the client and server side of a connection generate
                        this event */
-
-                    mca_btl_udapl_sendrecv(btl,
+                    if (mca_btl_udapl_component.udapl_conn_priv_data) {
+                        /* use dat private data to exchange process data */
+                        mca_btl_udapl_endpoint_finish_connect(btl,
+                            event.event_data.connect_event_data.private_data,
+                            NULL,
                             event.event_data.connect_event_data.ep_handle);
-                    
+                    } else {
+                        /* explicitly exchange process data */
+                        mca_btl_udapl_sendrecv(btl,
+                            event.event_data.connect_event_data.ep_handle);
+                    }
                     count++;
                     break;
                 case DAT_CONNECTION_EVENT_PEER_REJECTED:
