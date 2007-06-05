@@ -73,6 +73,8 @@ OMPI_SAVE_VERSION([ORTE], [Open Run-Time Environment], [$srcdir/VERSION],
 OMPI_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
                   [opal/include/opal/version.h])
 
+AM_CONFIG_HEADER([opal/include/opal_config.h orte/include/orte_config.h ompi/include/ompi_config.h ompi/include/mpi.h])
+
 # override/fixup the version numbers set by AC_INIT, since on
 # developer builds, there's no good way to know what the version is
 # before running configure :(.  We only use the base version number
@@ -1147,7 +1149,6 @@ OMPI_SETUP_WRAPPER_FINAL
 
 ompi_show_subtitle "Final output" 
 
-AM_CONFIG_HEADER([opal/include/opal_config.h orte/include/orte_config.h ompi/include/ompi_config.h ompi/include/mpi.h])
 AC_CONFIG_FILES([
     Makefile
 

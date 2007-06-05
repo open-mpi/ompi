@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,8 +32,8 @@
  * Globals
  */
 bool opal_paffinity_base_selected = false;
-const opal_paffinity_base_component_1_0_0_t *opal_paffinity_base_component = NULL;
-const opal_paffinity_base_module_1_0_0_t *opal_paffinity_base_module = NULL;
+const opal_paffinity_base_component_1_1_0_t *opal_paffinity_base_component = NULL;
+const opal_paffinity_base_module_1_1_0_t *opal_paffinity_base_module = NULL;
 
 
 int opal_paffinity_base_select(void)
@@ -40,9 +41,9 @@ int opal_paffinity_base_select(void)
     int priority = 0, best_priority = 0;
     opal_list_item_t *item = NULL;
     mca_base_component_list_item_t *cli = NULL;
-    opal_paffinity_base_component_1_0_0_t *component = NULL,
+    opal_paffinity_base_component_1_1_0_t *component = NULL,
         *best_component = NULL;
-    const opal_paffinity_base_module_1_0_0_t *module = NULL, 
+    const opal_paffinity_base_module_1_1_0_t *module = NULL, 
         *best_module = NULL;
     char *value;
 
@@ -71,7 +72,7 @@ int opal_paffinity_base_select(void)
          opal_list_get_end(&opal_paffinity_base_components_opened) != item;
          item = opal_list_get_next(item) ) {
         cli = (mca_base_component_list_item_t *) item;
-        component = (opal_paffinity_base_component_1_0_0_t *) cli->cli_component;
+        component = (opal_paffinity_base_component_1_1_0_t *) cli->cli_component;
 
         /* if there is an include list - item must be in the list to
            be included */

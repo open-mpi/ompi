@@ -1,0 +1,53 @@
+The requirements are:
+
+1. devise a relatively simple command line syntax to bind a single
+   process to a set of (socket,core) tuples
+
+2. be compatible with the "taskset" precedent, meaning:
+    - specify the sets of tuples in a single command line token (e.g.,
+      comma delimited?)
+    - be able to clearly differentiate this notation from the
+      "taskset" processor mask and list specifications (so that it's
+      clear when to treat a command line token as a processor mask, a
+      processor list, and a set of (socket,core) tuples)
+
+3. be able to specify a single tuple with a some kind of "stride" for
+   repeating simple patterns (analogous to taskset's "x-y:step" range
+   notation)
+
+4. include ability to wildcard sockets or cores.  For example:
+    - bind to all cores on sockets x, y, z
+    - bind to cores x, y, z on all sockets
+
+5. not force the user to use escapes in common shells (e.g., avoid the
+   use of *, !, and other shell-special characters)
+
+Here's what I have figured out so far:
+
+- use the general notation "<core>@<socket>"
+- wildcard values:
+    - "all" -- all sockets/cores (depending on context)
+    - "even" -- even numbered sockets/cores
+    - "odd" -- odd numbered sockets/cores
+    - "not" -- negate the specified sockets and/or cores
+    - ...easy enough to add others
+- sockets and cores are numbered starting with 0 (just like processor
+  IDs) 
+- multiple tuples can be specified as a comma delimited list
+- core/socket ranges can be specified as "x-y", where x<=y
+- {} can be used to specify lists of cores or sockets, and can be used
+  to make complex tuples
+- examples:
+    - binding to core 3 on socket 1 is "3@1"
+    - binding to core 1 on all sockets is "1@all"
+    - binding to all cores on socket 2 is "all@2"
+    - binding to all cores on sockets 2 and 3 is "all@2,all@3" OR
+      "all@{2,3}" 
+    - binding to cores 1 and 2 on sockets 0, 1, and 3 is
+      "{1,2}@{0,1,3}" 
+    - binding to cores 0, 1, and 2 on sockets 0, 1, 2, and 5 is
+      "{0-2}@{0-2,5}"
+    - binding to all cores on all sockets (effectively disables PA) is
+      "all@all"
+    - binding to all cores on all sockets *except* all cores on socket
+      0 is "all@not0"
