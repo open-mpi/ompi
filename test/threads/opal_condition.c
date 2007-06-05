@@ -4,6 +4,7 @@
 #include <time.h>
 
 #include "support.h"
+#include "opal/runtime/opal.h"
 #include "opal/constants.h"
 #include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
@@ -33,7 +34,7 @@ static volatile int thr1_count = 0;
 static volatile int thr2_count = 0;
 
 
-#define TEST_COUNT 1000000
+#define TEST_COUNT 100000
 
 
 static void* thr1_run(opal_object_t* obj)
@@ -79,6 +80,9 @@ int main(int argc, char** argv)
 
     test_init("opal_condition_t");
 
+    opal_init();
+    opal_set_using_threads(true);
+
     OBJ_CONSTRUCT(&mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&thr1_cond, opal_condition_t);
     OBJ_CONSTRUCT(&thr2_cond, opal_condition_t);
@@ -101,6 +105,8 @@ int main(int argc, char** argv)
     rc = opal_thread_join(thr2, NULL);
     test_verify_int(OPAL_SUCCESS, rc);
     test_verify_int(TEST_COUNT, thr2_count);
+
+    opal_finalize();
 
     return test_finalize();
 }
