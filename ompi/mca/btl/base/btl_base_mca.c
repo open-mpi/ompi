@@ -63,8 +63,8 @@ int mca_btl_base_param_register(mca_base_component_t *version,
         }
 
         REG_INT("rdma_pipeline_offset", "Offset the pipeline protocol starts "
-            "using RDMA from (must be >= 1)", module->btl_rdma_pipeline_offset,
-            1, size_t);
+            "using RDMA from (must be >= 0)", module->btl_rdma_pipeline_offset,
+            0, size_t);
 
         mca_base_param_reg_int(version, "max_rdma_size", "", true, false,
                 0, &value);
