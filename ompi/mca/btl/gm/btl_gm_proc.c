@@ -21,6 +21,10 @@
 #include "opal/class/opal_hash_table.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+
 #include "btl_gm.h"
 #include "btl_gm_proc.h"
 
@@ -185,7 +189,8 @@ int mca_btl_gm_proc_insert(
         return OMPI_ERROR;
     }
     if(mca_btl_gm_component.gm_debug > 0) {
-        opal_output(0, "[%ld,%ld,%ld] mapped global id %lu to node id %lu\n", 
+        opal_output(0, "[%ld,%ld,%ld] mapped global id %" PRIu32 
+            " to node id %" PRIu32 "\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name),
             gm_endpoint->endpoint_addr.global_id,
             gm_endpoint->endpoint_addr.node_id);
