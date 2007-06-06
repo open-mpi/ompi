@@ -19,6 +19,9 @@
 
 SUBDIRS = plpa
 
+# To find plpa_bottom.h
+AM_CPPFLAGS = -I$(top_srcdir)/opal/mca/paffinity/linux/plpa/src/libplpa
+
 sources = \
         paffinity_linux.h \
         paffinity_linux_component.c \
@@ -27,8 +30,6 @@ sources = \
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
-
-AM_CPPFLAGS = -I$(top_srcdir)/opal/mca/paffinity/linux/plpa/src/libplpa
 
 if OMPI_BUILD_paffinity_linux_DSO
 component_noinst =

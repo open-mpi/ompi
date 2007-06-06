@@ -15,5 +15,7 @@ SUBDIRS = src
 DIST_SUBDIRS = config $(SUBDIRS)
 EXTRA_DIST = README VERSION LICENSE AUTHORS
 
+if PLPA_BUILD_STANDALONE
 dist-hook:
 	csh "$(top_srcdir)/config/distscript.csh" "$(top_srcdir)" "$(distdir)" "$(PLPA_VERSION)" "$(PLPA_SVN_R)"
+endif

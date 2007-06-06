@@ -264,9 +264,10 @@ AC_DEFUN([_PLPA_INIT],[
     # If we're building executables, we need some things for plpa-taskset
     if test "$plpa_executables" = "yes"; then
         AC_C_INLINE
-        AM_PROG_LEX
-        AC_PROG_YACC
     fi
+    # Always need these for make dist (both included and standalone)
+    AM_PROG_LEX
+    AC_PROG_YACC
 
     # Success
     $1
