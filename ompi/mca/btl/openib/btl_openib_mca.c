@@ -289,10 +289,10 @@ int btl_openib_register_mca_params(void)
                   "(must be >= 1)",
                   4, &ival, REGINT_GE_ONE));
     mca_btl_openib_component.rd_win = (uint32_t) ival;
-    mca_btl_openib_component.rd_rsv = 
-        ((mca_btl_openib_component.rd_num << 1) - 1) / 
-        mca_btl_openib_component.rd_win;
     
+    /* we only allow one outstanding ctrl message at a time  */
+    mca_btl_openib_component.rd_rsv = 1;
+
     CHECK(reg_int("use_srq", 
                   "If nonzero, use the InfiniBand shared receive "
                   "queue (\"SRQ\")", 

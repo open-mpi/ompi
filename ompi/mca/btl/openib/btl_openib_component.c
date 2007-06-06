@@ -782,8 +782,10 @@ btl_openib_component_init(int *num_btl_modules,
             mca_btl_openib_component.rd_rsv;
         openib_btl->rd_low = mca_btl_openib_component.rd_low;
         openib_btl->num_peers = 0; 
-        openib_btl->sd_tokens[BTL_OPENIB_HP_QP] =
-            openib_btl->sd_tokens[BTL_OPENIB_LP_QP] = mca_btl_openib_component.srq_sd_max;
+        if(mca_btl_openib_component.use_srq) { 
+            openib_btl->sd_credits[BTL_OPENIB_HP_QP] =
+                openib_btl->sd_credits[BTL_OPENIB_LP_QP] = mca_btl_openib_component.srq_sd_max;
+        } 
 
         /* Initialize module state */
 
@@ -963,7 +965,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
             BTL_OPENIB_CREDITS(frag->hdr->credits));
     else
         if(!mca_btl_openib_component.use_srq && frag->hdr->credits > 0)
-            OPAL_THREAD_ADD32(&endpoint->sd_tokens[prio], frag->hdr->credits);
+            OPAL_THREAD_ADD32(&endpoint->sd_credits[prio], frag->hdr->credits);
     if (!MCA_BTL_OPENIB_RDMA_FRAG(frag)) {
         OMPI_FREE_LIST_RETURN(free_list, (ompi_free_list_item_t*) frag);
     } else {
@@ -1091,7 +1093,7 @@ static char* btl_openib_component_status_to_string(enum ibv_wc_status status)
     }
 }
 
-#define BTL_OPENIB_TOKENS(E, P) ((E)->sd_tokens[(P)] + \
+#define BTL_OPENIB_TOKENS(E, P) ((E)->sd_credits[(P)] + \
         (((P) == BTL_OPENIB_HP_QP)?(E)->eager_rdma_remote.tokens:0))
 static void btl_openib_frag_progress_pending(
         mca_btl_openib_module_t* openib_btl, mca_btl_base_endpoint_t *endpoint,
@@ -1148,7 +1150,7 @@ static void btl_openib_frag_progress_pending(
         return;
 
     len = opal_list_get_size(&openib_btl->pending_frags[prio]);
-    for(i = 0; i < len && openib_btl->sd_tokens[prio] > 0; i++) {
+    for(i = 0; i < len && openib_btl->sd_credits[prio] > 0; i++) {
         /* dequeue resources due to global flow control */
         OPAL_THREAD_LOCK(&openib_btl->ib_lock);
         frag_item = opal_list_remove_first(&openib_btl->pending_frags[prio]);
@@ -1400,7 +1402,7 @@ static int btl_openib_module_progress(mca_btl_openib_module_t* openib_btl)
                 /* return send wqe */
                 OPAL_THREAD_ADD32(&endpoint->sd_wqe[qp], 1);
                 if(mca_btl_openib_component.use_srq)
-                    OPAL_THREAD_ADD32(&openib_btl->sd_tokens[qp], 1);
+                    OPAL_THREAD_ADD32(&openib_btl->sd_credits[qp], 1);
                 /* check to see if we need to progress any pending descriptors */
                 btl_openib_frag_progress_pending(openib_btl, endpoint, qp);
 
