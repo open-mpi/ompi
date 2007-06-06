@@ -596,7 +596,6 @@ int orte_rmaps_base_store_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
         ORTE_RMAPS_BOOKMARK
     };
     orte_std_cntr_t num_attrs_defd;
-    bool tval = true;
 
     OPAL_TRACE(2);
 
@@ -638,7 +637,7 @@ int orte_rmaps_base_store_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
                 }
             } else {
                 if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[j]), attr->key,
-                                                                 ORTE_BOOL, &tval))) {
+                                                                 ORTE_UNDEF, NULL))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_RELEASE(value);
                     return rc;
@@ -716,7 +715,7 @@ int orte_rmaps_base_get_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
     value = values[0];
     for (i=0; i < value->cnt; i++) {
         kval = value->keyvals[i];
-
+        
         if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attr_list, kval->key,
                                                           kval->value->type,
                                                           kval->value->data,
@@ -727,7 +726,7 @@ int orte_rmaps_base_get_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
         }
     }
 
-    OBJ_RELEASE(value);
+OBJ_RELEASE(value);
 
     return ORTE_SUCCESS;
 }
