@@ -171,8 +171,15 @@ typedef int (*opal_paffinity_base_module_get_fn_t)(opal_paffinity_base_cpu_set_t
 
 
 /**
+ * Module finalize function.  Invoked by the base on the selected
+ * module when the paffinity framework is being shut down.
+ */
+typedef int (*opal_paffinity_base_module_finalize_fn_t)(void);
+
+
+/**
  * Structure for paffinity v1.1.0 components.
- * Chained to MCA v1.1.0
+ * Chained to MCA v1.0.0
  */
 struct opal_paffinity_base_component_1_1_0_t {
     /** MCA base component */
@@ -202,6 +209,9 @@ struct opal_paffinity_base_module_1_1_0_t {
 
     /** Get this process' affinity */
     opal_paffinity_base_module_get_fn_t paff_module_get;
+
+    /** Shut down this module */
+    opal_paffinity_base_module_finalize_fn_t paff_module_finalize;
 };
 /**
  * Convenience typedef
@@ -215,7 +225,7 @@ typedef struct opal_paffinity_base_module_1_1_0_t opal_paffinity_base_module_1_1
 #define OPAL_PAFFINITY_BASE_VERSION_1_1_0 \
     /* paffinity v1.1 is chained to MCA v1.0 */ \
     MCA_BASE_VERSION_1_0_0, \
-    /* paffinity v1.0 */ \
-    "paffinity", 1, 0, 0
+    /* paffinity v1.1 */ \
+    "paffinity", 1, 1, 0
 
 #endif /* OPAL_PAFFINITY_H */
