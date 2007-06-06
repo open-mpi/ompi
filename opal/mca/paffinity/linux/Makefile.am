@@ -28,6 +28,8 @@ sources = \
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
+AM_CPPFLAGS = -I$(top_srcdir)/opal/mca/paffinity/linux/plpa/src/libplpa
+
 if OMPI_BUILD_paffinity_linux_DSO
 component_noinst =
 component_install = mca_paffinity_linux.la
