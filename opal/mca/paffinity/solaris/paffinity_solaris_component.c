@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,16 +45,16 @@ static int solaris_open(void);
  * and pointers to our public functions in it
  */
 
-const opal_paffinity_base_component_1_0_0_t mca_paffinity_solaris_component = {
+const opal_paffinity_base_component_1_1_0_t mca_paffinity_solaris_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
     {
-        /* Indicate that we are a paffinity v1.0.0 component (which also
+        /* Indicate that we are a paffinity v1.1.0 component (which also
            implies a specific MCA version) */
         
-        OPAL_PAFFINITY_BASE_VERSION_1_0_0,
+        OPAL_PAFFINITY_BASE_VERSION_1_1_0,
 
         /* Component name and version */
 
