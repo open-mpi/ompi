@@ -197,6 +197,7 @@ find_options_index(const char *arg)
             }
 
             if (0 == regexec(&res, arg, (size_t) 0, NULL, 0)) {
+                regfree(&res);
                 return i;
             }
 
