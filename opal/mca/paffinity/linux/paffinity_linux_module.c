@@ -56,7 +56,8 @@ static const opal_paffinity_base_module_1_1_0_t module = {
     /* Module function pointers */
 
     linux_module_set,
-    linux_module_get
+    linux_module_get,
+    NULL
 };
 
 
@@ -146,4 +147,3 @@ static int linux_module_get(opal_paffinity_base_cpu_set_t *mask)
 
     return OPAL_SUCCESS;
 }
-

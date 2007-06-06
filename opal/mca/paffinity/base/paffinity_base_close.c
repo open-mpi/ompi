@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,6 +27,13 @@
 
 int opal_paffinity_base_close(void)
 {
+    /* If there is a selected paffinity module, finalize it */
+
+    if (NULL != opal_paffinity_base_module &&
+        NULL != opal_paffinity_base_module->paff_module_finalize) {
+        opal_paffinity_base_module->paff_module_finalize();
+    }
+
     /* Close all components that are still open (this should only
        happen during ompi_info). */
 
