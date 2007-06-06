@@ -514,7 +514,7 @@ static int orte_rmgr_urm_spawn_job(
             /* indicate that we don't need to wait for xconnect */
             OPAL_THREAD_LOCK(&mca_rmgr_urm_component.lock);
             mca_rmgr_urm_component.xconnect = true;
-            OPAL_THREAD_UNLOCK(&mca_urm_proxy_component.lock);            
+            OPAL_THREAD_UNLOCK(&mca_rmgr_urm_component.lock);            
         }
         
         /* setup the subscription so we will know if things fail to launch */
