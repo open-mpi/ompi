@@ -406,10 +406,15 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
                         }
                         ival_list->itag = iptr[j]->itag;
                         ival_list->value.type = iptr[j]->value->type;
-                        if (ORTE_SUCCESS != (rc = orte_dss.copy(&((ival_list->value).data), iptr[j]->value->data, iptr[j]->value->type))) {
-                            ORTE_ERROR_LOG(rc);
-                            OBJ_RELEASE(ival_list);
-                            return rc;
+                        /* it is okay for the data to be NULL as we may not have stored a value yet
+                         * or we may be dealing with an UNDEF type
+                         */
+                        if (NULL != iptr[j]->value->data) {
+                            if (ORTE_SUCCESS != (rc = orte_dss.copy(&((ival_list->value).data), iptr[j]->value->data, iptr[j]->value->type))) {
+                                ORTE_ERROR_LOG(rc);
+                                OBJ_RELEASE(ival_list);
+                                return rc;
+                            }
                         }
                         opal_list_append(gptr->ival_list, &ival_list->item);
                     }
@@ -489,9 +494,12 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
                 goto CLEANUP;
             }
             kptr[j]->value->type = ival_list->value.type;
-            if (ORTE_SUCCESS != (rc = orte_dss.copy(&((kptr[j]->value)->data), ival_list->value.data, ival_list->value.type))) {
-                ORTE_ERROR_LOG(rc);
-                goto CLEANUP;
+            /* okay to have NULL data */
+            if (NULL != ival_list->value.data) {
+                if (ORTE_SUCCESS != (rc = orte_dss.copy(&((kptr[j]->value)->data), ival_list->value.data, ival_list->value.type))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto CLEANUP;
+                }
             }
             OBJ_RELEASE(ival_list);
         }
@@ -599,10 +607,13 @@ int orte_gpr_replica_get_conditional_fn(orte_gpr_addr_mode_t addr_mode,
                         }
                         ival_list->itag = iptr[j]->itag;
                         ival_list->value.type = iptr[j]->value->type;
-                        if (ORTE_SUCCESS != (rc = orte_dss.copy(&((ival_list->value).data), iptr[j]->value->data, iptr[j]->value->type))) {
-                            ORTE_ERROR_LOG(rc);
-                            OBJ_RELEASE(ival_list);
-                            return rc;
+                        /* it is okay to have NULL data */
+                        if (NULL != iptr[j]->value->data) {
+                            if (ORTE_SUCCESS != (rc = orte_dss.copy(&((ival_list->value).data), iptr[j]->value->data, iptr[j]->value->type))) {
+                                ORTE_ERROR_LOG(rc);
+                                OBJ_RELEASE(ival_list);
+                                return rc;
+                            }
                         }
                         opal_list_append(gptr->ival_list, &ival_list->item);
                     }
@@ -684,10 +695,13 @@ MOVEON:
                 goto CLEANUP;
             }
             kptr[j]->value->type = ival_list->value.type;
-            if (ORTE_SUCCESS != (rc = orte_dss.copy(&((kptr[j]->value)->data), ival_list->value.data, ival_list->value.type))) {
-                ORTE_ERROR_LOG(rc);
-                goto CLEANUP;
+            /* okay to have NULL data */
+            if (NULL != ival_list->value.data) {
+                if (ORTE_SUCCESS != (rc = orte_dss.copy(&((kptr[j]->value)->data), ival_list->value.data, ival_list->value.type))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto CLEANUP;
                 }
+            }
             OBJ_RELEASE(ival_list);
         }
         OBJ_RELEASE(gptr);
