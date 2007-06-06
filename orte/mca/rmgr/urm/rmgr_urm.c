@@ -172,6 +172,47 @@ static int orte_rmgr_urm_setup_job(orte_app_context_t** app_context,
 }
 
 
+/* the xconnect functionality in this RMGR component is only utilized
+ * when a singleton does a dynamic spawn. Hence, the "parent" jobid
+ * is just my own
+ */
+static void orte_rmgr_urm_xconnect_callback(orte_gpr_notify_data_t *data, void *cbdata)
+{
+    orte_gpr_value_t **values;
+    orte_jobid_t child;
+    int rc;
+    
+    OPAL_TRACE(1);
+    
+    /* we made sure in the subscriptions that at least one
+     * value is always returned
+     * get the jobid from the segment name in the first value
+     */
+    values = (orte_gpr_value_t**)(data->values)->addr;
+    if (ORTE_SUCCESS != (rc = orte_schema.extract_jobid_from_segment_name(&child,
+                                                                          values[0]->segment))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_rmgr_base_xconnect(child, ORTE_PROC_MY_NAME->jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    
+    /* signal that the application has completed xconnect */
+    OPAL_THREAD_LOCK(&mca_rmgr_urm_component.lock);
+    mca_rmgr_urm_component.xconnect = true;
+    /* if the launch is also done, then spawn complete */
+    if (mca_rmgr_urm_component.launched) {
+        mca_rmgr_urm_component.done = true;
+        mca_rmgr_urm_component.rc = ORTE_SUCCESS;
+        opal_condition_signal(&mca_rmgr_urm_component.cond);
+    }
+    OPAL_THREAD_UNLOCK(&mca_rmgr_urm_component.lock);    
+
+}
+
 static void orte_rmgr_urm_wireup_stdin(orte_jobid_t jobid)
 {
     int rc;
@@ -310,9 +351,13 @@ static void orte_rmgr_urm_wireup_callback(orte_gpr_notify_data_t *data, void *cb
    
     /* signal that we can leave */
     OPAL_THREAD_LOCK(&mca_rmgr_urm_component.lock);
-    mca_rmgr_urm_component.done = true;
-    mca_rmgr_urm_component.rc = ORTE_SUCCESS;
-    opal_condition_signal(&mca_rmgr_urm_component.cond);
+    mca_rmgr_urm_component.launched = true;
+    /* if the xconnect is also done, then spawn complete */
+    if (mca_rmgr_urm_component.xconnect) {
+        mca_rmgr_urm_component.done = true;
+        mca_rmgr_urm_component.rc = ORTE_SUCCESS;
+        opal_condition_signal(&mca_rmgr_urm_component.cond);
+    }
     OPAL_THREAD_UNLOCK(&mca_rmgr_urm_component.lock);    
 }
 
@@ -346,8 +391,9 @@ static int orte_rmgr_urm_spawn_job(
     int rc;
     orte_process_name_t* name;
     struct timeval urmstart, urmstop;
-    orte_attribute_t *flow;
+    orte_attribute_t *flow, *attr;
     uint8_t flags, *fptr;
+    orte_proc_state_t *gate;
 
     OPAL_TRACE(1);
 
@@ -362,7 +408,9 @@ static int orte_rmgr_urm_spawn_job(
     
     /* mark that the spawn is not done */
     OPAL_THREAD_LOCK(&mca_rmgr_urm_component.lock);
+    mca_rmgr_urm_component.xconnect = false;
     mca_rmgr_urm_component.done = false;
+    mca_rmgr_urm_component.launched = false;
     mca_rmgr_urm_component.rc = ORTE_ERR_FAILED_TO_START;
     OPAL_THREAD_UNLOCK(&mca_rmgr_urm_component.lock);
     
@@ -449,6 +497,26 @@ static int orte_rmgr_urm_spawn_job(
             return rc;
         }
 
+        /* see if we need to setup a cross-connect of ORTE information with the new job */
+        if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMGR_XCONNECT_AT_SPAWN))) {
+            /* cross-connect was requested - get the stage gate name where this is to occur */
+            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&gate, attr->value, ORTE_PROC_STATE))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* setup the xconnect subscription on the new job so we can complete the procedure */
+            if (ORTE_SUCCESS != (rc = orte_smr.job_stage_gate_subscribe(*jobid,
+                                                                        orte_rmgr_urm_xconnect_callback, NULL, *gate))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else {
+            /* indicate that we don't need to wait for xconnect */
+            OPAL_THREAD_LOCK(&mca_rmgr_urm_component.lock);
+            mca_rmgr_urm_component.xconnect = true;
+            OPAL_THREAD_UNLOCK(&mca_urm_proxy_component.lock);            
+        }
+        
         /* setup the subscription so we will know if things fail to launch */
         rc = orte_smr.job_stage_gate_subscribe(*jobid, app_terminated, NULL, ORTE_PROC_STATE_TERMINATED);
         if(ORTE_SUCCESS != rc) {
