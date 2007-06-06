@@ -134,12 +134,17 @@ struct mca_btl_base_endpoint_t {
     struct ibv_qp_attr*         lcl_qp_attr[2]; 
     /* Local QP attributes (Low and High) */
     
-    int32_t                     sd_tokens[2];  /**< number of send tokens */
+    int32_t                     sd_credits[2];  /**< this rank's view of the credits 
+                                                  *  available for sending: 
+                                                  *  this is the credits granted by the 
+                                                  *  remote peer which has some relation to the 
+                                                  *  number of receive buffers posted remotely 
+                                                  */
     int32_t                     get_tokens;    /**< number of available get tokens */
 
     int32_t rd_posted[2];   /**< number of descriptors posted to the nic*/
     int32_t rd_credits[2];  /**< number of credits to return to peer */
-    int32_t sd_credits[2];  /**< number of send wqe entries being used to return credits */
+    int32_t rd_pending_credit_chks[2];  /**< number of outstanding return credit requests */
     int32_t sd_wqe[2];      /**< number of available send wqe entries */
 
     uint64_t subnet_id; /**< subnet id of this endpoint*/
@@ -211,14 +216,14 @@ static inline int btl_openib_check_send_credits(
 {
     if(!mca_btl_openib_component.use_srq &&
             endpoint->rd_credits[prio] >= mca_btl_openib_component.rd_win)
-        return OPAL_THREAD_ADD32(&endpoint->sd_credits[prio], 1) == 1;
+        return OPAL_THREAD_ADD32(&endpoint->rd_pending_credit_chks[prio], 1) == 1;
 
     if(BTL_OPENIB_LP_QP == prio) /* nothing more for low prio QP */
         return 0;
 
     /* for high prio check eager RDMA credits */
     if(endpoint->eager_rdma_local.credits >= mca_btl_openib_component.rd_win)
-        return OPAL_THREAD_ADD32(&endpoint->sd_credits[prio], 1) == 1;
+        return OPAL_THREAD_ADD32(&endpoint->rd_pending_credit_chks[prio], 1) == 1;
 
     return 0;
 }

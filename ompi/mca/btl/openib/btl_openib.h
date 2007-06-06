@@ -233,7 +233,7 @@ struct mca_btl_openib_module_t {
     int32_t rd_num; 
     int32_t rd_low;
     
-    int32_t sd_tokens[2];
+    int32_t sd_credits[2];  /* the max number of outstanding sends on a QP when using SRQ */ 
     /**< number of frags that  can be outstanding (down counter) */ 
     
     opal_list_t pending_frags[2];               /**< list of pending frags */ 

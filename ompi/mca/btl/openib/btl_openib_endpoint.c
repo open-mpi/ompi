@@ -148,8 +148,8 @@ static int btl_openib_acquire_send_resources(
     }
 
     if(mca_btl_openib_component.use_srq) {
-        if(OPAL_THREAD_ADD32(&openib_btl->sd_tokens[prio], -1) < 0) {
-           OPAL_THREAD_ADD32(&openib_btl->sd_tokens[prio], 1);
+        if(OPAL_THREAD_ADD32(&openib_btl->sd_credits[prio], -1) < 0) {
+           OPAL_THREAD_ADD32(&openib_btl->sd_credits[prio], 1);
            OPAL_THREAD_ADD32(&endpoint->sd_wqe[prio], 1);
            OPAL_THREAD_LOCK(&openib_btl->ib_lock);
            opal_list_append(&openib_btl->pending_frags[prio],
@@ -158,8 +158,8 @@ static int btl_openib_acquire_send_resources(
            return OMPI_ERR_OUT_OF_RESOURCE;
         }
     } else {
-        if(OPAL_THREAD_ADD32(&endpoint->sd_tokens[prio], -1) < 0) {
-            OPAL_THREAD_ADD32(&endpoint->sd_tokens[prio], 1);
+        if(OPAL_THREAD_ADD32(&endpoint->sd_credits[prio], -1) < 0) {
+            OPAL_THREAD_ADD32(&endpoint->sd_credits[prio], 1);
             OPAL_THREAD_ADD32(&endpoint->sd_wqe[prio], 1);
             opal_list_append(&endpoint->pending_frags[prio],
                     (opal_list_item_t *)frag);
@@ -213,9 +213,9 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
             OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens, 1);
         } else {
             if(mca_btl_openib_component.use_srq) {
-                OPAL_THREAD_ADD32(&openib_btl->sd_tokens[prio], 1);
+                OPAL_THREAD_ADD32(&openib_btl->sd_credits[prio], 1);
             } else {
-                OPAL_THREAD_ADD32(&endpoint->sd_tokens[prio], 1);
+                OPAL_THREAD_ADD32(&endpoint->sd_credits[prio], 1);
             }
         }
         BTL_ERROR(("error posting send request errno says %s\n", 
@@ -254,14 +254,17 @@ static void mca_btl_openib_endpoint_construct_qp(
     endpoint->rd_posted[prio] = 0;
     /* number of available send wqes */
     endpoint->sd_wqe[prio] = mca_btl_openib_component.rd_num;
-    /* zero these out w/ initial posting, so that we start out w/
-     * zero credits to return to peer
+    /* local credits are set here such that on initial posting
+     * of the receive buffers we end up with zero credits to return
+     * to our peer. The peer initializes his sd_credits to reflect this 
+     * below. Note that this may be a problem for iWARP as the sender 
+     * now has credits even if the receive buffers are not yet posted 
      */
     endpoint->rd_credits[prio] =
         -(mca_btl_openib_component.rd_num + mca_btl_openib_component.rd_rsv);
-    endpoint->sd_credits[prio] = 0;
-    /* initialize the tokens */
-    endpoint->sd_tokens[prio] = mca_btl_openib_component.rd_num;
+    endpoint->rd_pending_credit_chks[prio] = 0;
+    /* initialize the local view of credits */
+    endpoint->sd_credits[prio] = mca_btl_openib_component.rd_num;
     endpoint->rem_info.rem_qp_num[prio] = 0; 
     endpoint->rem_info.rem_psn[prio] = 0;
 }
@@ -1131,8 +1134,8 @@ static void mca_btl_openib_endpoint_credits(
     OPAL_THREAD_ADD32(&endpoint->sd_wqe[prio],-1);
 
     /* check to see if there are additional credits to return */
-    if((credits = OPAL_THREAD_ADD32(&endpoint->sd_credits[prio],-1)) > 0) {
-        OPAL_THREAD_ADD32(&endpoint->sd_credits[prio], -credits);
+    if((credits = OPAL_THREAD_ADD32(&endpoint->rd_pending_credit_chks[prio],-1)) > 0) {
+        OPAL_THREAD_ADD32(&endpoint->rd_pending_credit_chks[prio], -credits);
         if(btl_openib_check_send_credits(endpoint, prio)) {
             mca_btl_openib_endpoint_send_credits(endpoint, prio);
         }
@@ -1195,7 +1198,7 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
             BTL_OPENIB_HEADER_NTOH((*frag->hdr));
             BTL_OPENIB_RDMA_CREDITS_HEADER_NTOH((*credits_hdr));
         }
-        OPAL_THREAD_ADD32(&endpoint->sd_credits[prio], -1);
+        OPAL_THREAD_ADD32(&endpoint->rd_pending_credit_chks[prio], -1);
         OPAL_THREAD_ADD32(&endpoint->rd_credits[prio], frag->hdr->credits);
         OPAL_THREAD_ADD32(&endpoint->eager_rdma_local.credits, credits_hdr->rdma_credits);
         if(do_rdma)
