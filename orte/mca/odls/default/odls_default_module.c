@@ -101,7 +101,16 @@ static int orte_pls_fork_preload_append_binary(orte_app_context_t* context,
 static int orte_pls_fork_preload_append_files(orte_app_context_t* context,
                                               orte_filem_base_request_t *filem_request);
 static bool is_preload_local_dup(char *local_ref, orte_filem_base_request_t *filem_request);
-
+/*
+ * External Interface
+ */
+static int orte_odls_default_subscribe_launch_data(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc);
+static int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data, orte_job_map_t *map);
+static int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **base_environ);
+static int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state);
+static int orte_odls_default_signal_local_procs(const orte_process_name_t *proc,
+                                                int32_t signal);
+static int orte_odls_default_deliver_message(orte_jobid_t job, orte_buffer_t *buffer, orte_rml_tag_t tag);
 
 static void set_handler_default(int sig);
 
