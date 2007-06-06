@@ -43,23 +43,23 @@ extern "C" {
 struct mca_btl_mx_addr_t {
     uint64_t nic_id;
     uint32_t endpoint_id;
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    uint8_t padding[4];
-#endif
+    uint32_t unique_network_id;  /* Unique identifier for each MX network */
 };
 typedef struct mca_btl_mx_addr_t mca_btl_mx_addr_t;
 
-#define BTL_MX_ADDR_HTON(h)                     \
-do {                                            \
-    h.nic_id = hton64(h.nic_id);                \
-    h.endpoint_id = htonl(h.endpoint_id);       \
-} while (0)
+#define BTL_MX_ADDR_HTON(h)                                     \
+    do {                                                        \
+        h.nic_id = hton64(h.nic_id);                            \
+        h.endpoint_id = htonl(h.endpoint_id);                   \
+        h.unique_network_id = htonl(h.unique_network_id);       \
+    } while (0)
 
-#define BTL_MX_ADDR_NTOH(h)                     \
-do {                                            \
-    h.nic_id = ntoh64(h.nic_id);                \
-    h.endpoint_id = ntohl(h.endpoint_id);       \
-} while (0)
+#define BTL_MX_ADDR_NTOH(h)                                     \
+    do {                                                        \
+        h.nic_id = ntoh64(h.nic_id);                            \
+        h.endpoint_id = ntohl(h.endpoint_id);                   \
+        h.unique_network_id = ntohl(h.unique_network_id);       \
+    } while (0)
 
 
 /**
