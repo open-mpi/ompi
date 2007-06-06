@@ -32,6 +32,9 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */
+#ifdef HAVE_REGEX_H
+#include <regex.h>
+#endif
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif  /* HAVE_SYS_WAIT_H */
@@ -176,26 +179,36 @@ static int
 find_options_index(const char *arg)
 {
     int i, j;
+#ifdef HAVE_REGEXEC
+    int args_count;
+    regex_t res;
+#endif
 
     for (i = 0 ; i <= parse_options_idx ; ++i) {
         if (NULL == options_data[i].compiler_args) {
             continue;
         }
+
+#ifdef HAVE_REGEXEC
+        args_count = opal_argv_count(options_data[i].compiler_args);
+        for (j = 0 ; j < args_count ; ++j) {
+            if (0 != regcomp(&res, options_data[i].compiler_args[j], REG_NOSUB)) {
+                return -1;
+            }
+
+            if (0 == regexec(&res, arg, (size_t) 0, NULL, 0)) {
+                return i;
+            }
+
+            regfree(&res);
+        }
+#else
         for (j = 0 ; j < opal_argv_count(options_data[i].compiler_args) ; ++j) {
-            /* BWB: If in the future, we want to allow architecture
-               flags to be wildcard specified (like, say,
-               -xarch=amd64*), this strcmp would have to be changed to
-               something that understands wildcards.  This is the only
-               change that will have to be made, provided you didn't
-               want to add some extra logic to have a general
-               -xarch=amd64* rule and another one that was an exact
-               match (like, say, -xarch=amd64a).  Then this entire
-               loop will have to be modified, but no other parts of
-               this file would have to change. */
             if (0 == strcmp(arg, options_data[i].compiler_args[j])) {
                 return i;
             }
         }
+#endif
     }
 
     return -1;
