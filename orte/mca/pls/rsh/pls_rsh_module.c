@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -132,7 +132,8 @@ static const char * orte_pls_rsh_shell_name[] = {
     "tcsh",       /* tcsh has to be first otherwise strstr finds csh */
     "csh",
     "ksh",
-    "sh"          /* no need for the "unknown" string */
+    "sh",
+    "unknown"
 };
 
 /* local global storage of timing variables */
