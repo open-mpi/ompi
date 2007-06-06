@@ -80,8 +80,10 @@ int orte_init_stage2(char *trigger)
     /* Since we are now finished with init, change the state to running */
     orte_universe_info.state = ORTE_UNIVERSE_STATE_RUNNING;
 
-    /* startup the receive if we are not the HNP */
-    if (!orte_process_info.seed) {
+    /* startup the receive if we are not the HNP - unless we are a singleton,
+     * in which case we must start it up in case we do a comm_spawn!
+     */
+    if (orte_process_info.singleton || !orte_process_info.seed) {
         if (ORTE_SUCCESS != (ret = orte_rml_base_comm_start())) {
             ORTE_ERROR_LOG(ret);
             error_str = "orte_rml_base_comm_start";
