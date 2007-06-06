@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -107,18 +107,24 @@ typedef struct mca_btl_mx_component_t mca_btl_mx_component_t;
 OMPI_MODULE_DECLSPEC extern mca_btl_mx_component_t mca_btl_mx_component;
 
 /**
- * BTL Module Interface
+ * BTL Module Interface.
+ * Each BTL correspond to a high level vision of a network interface. The 
+ * current version of the MX BTL is not able to handle stripping of the
+ * messages by itself. Therefore, it rely on the PML layer for that.
  */
 struct mca_btl_mx_module_t {
-    mca_btl_base_module_t  super;  /**< base BTL interface */
-    mca_btl_base_recv_reg_t mx_reg[MCA_BTL_TAG_MAX]; 
+    mca_btl_base_module_t   super;                   /**< base BTL interface */
+    mca_btl_base_recv_reg_t mx_reg[MCA_BTL_TAG_MAX]; /**< the PML registered callbacks */
+    mx_endpoint_t           mx_endpoint;             /**< local MX endpoint */
+    mx_endpoint_addr_t      mx_endpoint_addr;        /**<  local MX endpoint address */
+    uint32_t                mx_unique_network_id;    /**< unique identifier for this BTL,
+                                                      *   based on the MAC address of the
+                                                      *   mapper used to route messages.
+                                                      */
+    opal_list_t             mx_peers;                /**<  list of peers */
 
-    mx_endpoint_t      mx_endpoint;        /**<  */
-    mx_endpoint_addr_t mx_endpoint_addr;   /**<  */
-    opal_list_t        mx_peers;           /**<  */
-
-    int32_t            mx_posted_request;  /**< number of posted MX request */
-    opal_mutex_t       mx_lock;            /**< lock for accessing module state */
+    int32_t                 mx_posted_request;       /**< number of posted MX request */
+    opal_mutex_t            mx_lock;                 /**< lock for accessing module state */
 }; 
 typedef struct mca_btl_mx_module_t mca_btl_mx_module_t;
 extern mca_btl_mx_module_t mca_btl_mx_module;

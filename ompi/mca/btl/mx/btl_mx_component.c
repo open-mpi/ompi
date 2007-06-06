@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -35,6 +35,12 @@
 #include "btl_mx.h"
 #include "btl_mx_frag.h"
 #include "btl_mx_endpoint.h" 
+
+#if MX_HAVE_MAPPER_STATE
+#include "mx_io.h"
+#include "mx_internals/mx__fops.h"
+#include "mx_internals/mx__driver_interface.h"
+#endif  /* MX_HAVE_MAPPER_STATE */
 
 mca_btl_mx_component_t mca_btl_mx_component = {
     {
@@ -239,6 +245,35 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
         mca_btl_mx_finalize( &mx_btl->super );
         return NULL;
     }
+#if MX_HAVE_MAPPER_STATE
+    {
+        mx_return_t ret;
+        mx_endpt_handle_t endp_handle;
+        mx_mapper_state_t ms;
+
+        ret = mx_open_board( nic_id, &endp_handle );
+        if( MX_SUCCESS != ret ) {
+            opal_output( 0, "Unable to open board %d: %s\n", nic_id, mx_strerror(ret) );
+            mca_btl_mx_finalize( &mx_btl->super );
+            return NULL;
+        }
+
+        ms.board_number = nic_id;
+        ms.iport = 0;
+        ret = mx__get_mapper_state( endp_handle, &ms );
+        if( MX_SUCCESS != ret ) {
+            opal_output( 0, "get_mapper_state failed for board %d: %s\n",
+                         nic_id, mx_strerror(ret) );
+            mca_btl_mx_finalize( &mx_btl->super );
+            return NULL;
+        }
+        mx_btl->mx_unique_network_id = ((ms.mapper_mac[2] << 24) +
+                                        (ms.mapper_mac[3] << 16) +
+                                        (ms.mapper_mac[4] << 8)  +
+                                        (ms.mapper_mac[5]));
+    }
+#endif  /* MX_HAVE_MAPPER_STATE */
+
 #if 0
     {
         int counters, board, i, value, *counters_value;
@@ -352,9 +387,8 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     opal_setenv( "MX_PIPELINE_LOG", "0", true, &environ );
 
     /* First check if MX is available ... */
-    if(OMPI_SUCCESS!=ompi_common_mx_initialize()) { 
-        mca_pml_base_modex_send(&mca_btl_mx_component.super.btl_version, 
-                                NULL, 0);
+    if( OMPI_SUCCESS != ompi_common_mx_initialize() ) { 
+        mca_pml_base_modex_send( &mca_btl_mx_component.super.btl_version, NULL, 0 );
         return NULL;
     }
         
@@ -437,7 +471,7 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     }
 
     size = sizeof(mca_btl_mx_addr_t) * mca_btl_mx_component.mx_num_btls;
-    mx_addrs = (mca_btl_mx_addr_t*)malloc( size );
+    mx_addrs = (mca_btl_mx_addr_t*)calloc( mca_btl_mx_component.mx_num_btls, sizeof(mca_btl_mx_addr_t) );
     if( NULL == mx_addrs ) {
         free( nic_addrs );
         return NULL;
@@ -445,27 +479,30 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
 
     /* create a btl for each NIC */
     for( i = count = 0; i < mca_btl_mx_component.mx_num_btls; i++ ) {
-        mca_btl_mx_module_t* btl = mca_btl_mx_create(nic_addrs[i]);
-        if( NULL == btl ) {
+        mca_btl_mx_module_t* mx_btl = mca_btl_mx_create(nic_addrs[i]);
+        if( NULL == mx_btl ) {
             continue;
         }
-        status = mx_decompose_endpoint_addr( btl->mx_endpoint_addr, &(mx_addrs[i].nic_id),
+        status = mx_decompose_endpoint_addr( mx_btl->mx_endpoint_addr, &(mx_addrs[i].nic_id),
                                              &(mx_addrs[i].endpoint_id) );
         if( MX_SUCCESS != status ) {
-            OBJ_RELEASE( btl );
+            mca_btl_mx_finalize( &mx_btl->super );
             continue;
         }
+        mx_addrs[i].unique_network_id = mx_btl->mx_unique_network_id;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
         BTL_MX_ADDR_HTON(mx_addrs[i]);
 #endif
-        mca_btl_mx_component.mx_btls[count++] = btl;
+        mca_btl_mx_component.mx_btls[count++] = mx_btl;
     }
+    mca_btl_mx_component.mx_num_btls = count;
+    *num_btl_modules = count;
     size = sizeof(mca_btl_mx_addr_t) * count;
     if( 0 == count ) {
         /* No active BTL module */
+        return NULL;
     }
-    mca_btl_mx_component.mx_num_btls = count;
 
     /* publish the MX addresses via the MCA framework */
     mca_pml_base_modex_send( &mca_btl_mx_component.super.btl_version, mx_addrs, size );
@@ -482,7 +519,6 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     }
     memcpy( btls,  mca_btl_mx_component.mx_btls,
             mca_btl_mx_component.mx_num_btls*sizeof(mca_btl_mx_module_t*) );
-    *num_btl_modules = mca_btl_mx_component.mx_num_btls;
     return btls;
 }
 

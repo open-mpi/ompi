@@ -135,7 +135,8 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
                             mca_btl_mx_endpoint_t* module_endpoint )
 {
     mca_btl_mx_addr_t  *mx_peers;
-    int rc;
+    int rc, i, j;
+    mca_btl_mx_module_t* mx_btl;
     size_t size;
 
     /* query for the peer address info */
@@ -160,13 +161,40 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
     }
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    {
-        int i;
-        for (i = 0 ; i < module_proc->mx_peers_count ; ++i) {
-            BTL_MX_ADDR_NTOH(mx_peers[i]);
-        }
+    for (i = 0 ; i < module_proc->mx_peers_count ; ++i) {
+        BTL_MX_ADDR_NTOH(mx_peers[i]);
     }
 #endif
+
+    /**
+     * Check if there is any Myrinet network between myself and the peer
+     */
+    for( i = 0; i < mca_btl_mx_component.mx_num_btls; i++ ) {
+        mx_btl = mca_btl_mx_component.mx_btls[i];
+
+        for( j = 0; j < module_proc->mx_peers_count; j++ ) {
+            if( mx_btl->mx_unique_network_id == mx_peers[j].unique_network_id ) {
+                /* There is at least one connection between these two nodes */
+                goto create_peer_endpoint;
+            }
+        }
+    }
+    module_proc->mx_peers_count = 0;
+    /**
+     * No Myrinet connectivity. Let the PML layer figure out another
+     * way to communicate with the peer.
+     */
+    return OMPI_ERROR;
+ create_peer_endpoint:
+    mx_btl = module_endpoint->endpoint_btl;
+    for( j = 0; j < module_proc->mx_peers_count; j++ ) {
+        if( mx_btl->mx_unique_network_id == mx_peers[j].unique_network_id ) {
+            module_endpoint->mx_peer.nic_id      = mx_peers[j].nic_id;
+            module_endpoint->mx_peer.endpoint_id = mx_peers[j].endpoint_id;
+            module_proc->proc_addr_index         = j;
+            break;
+        }
+    }
 
     module_proc->mx_peers = mx_peers;
 
@@ -191,39 +219,28 @@ int mca_btl_mx_proc_connect( mca_btl_mx_endpoint_t* module_endpoint )
 
     module_endpoint->status = MCA_BTL_MX_CONNECTION_PENDING;
 
-    for( i = module_proc->proc_addr_index; i < module_proc->mx_peers_count; i++ ) {
-        
-    retry_connect:
-        mx_status = mx_connect( module_endpoint->endpoint_btl->mx_endpoint,
-                                module_proc->mx_peers[i].nic_id, module_proc->mx_peers[i].endpoint_id,
-                                mca_btl_mx_component.mx_filter, mca_btl_mx_component.mx_timeout, &mx_remote_addr );
-        if( MX_SUCCESS != mx_status ) {
-            if( MX_TIMEOUT == mx_status )
-                if( num_retry++ < mca_btl_mx_component.mx_connection_retries )
-                    goto retry_connect;
-            {
-                char peer_name[MX_MAX_HOSTNAME_LEN];
-
-                if( MX_SUCCESS != mx_nic_id_to_hostname( module_proc->mx_peers[i].nic_id, peer_name ) )
-                    sprintf( peer_name, "unknown %lx nic_id", (long)module_proc->mx_peers[i].nic_id );
-
-                opal_output( 0, "mx_connect fail for %s(%dth remote address) with key %x (error %s)\n", 
-                             peer_name, i, mca_btl_mx_component.mx_filter, mx_strerror(mx_status) );
-            }
-            continue;
+ retry_connect:
+    mx_status = mx_connect( module_endpoint->endpoint_btl->mx_endpoint,
+                            module_endpoint->mx_peer.nic_id, module_endpoint->mx_peer.endpoint_id,
+                            mca_btl_mx_component.mx_filter, mca_btl_mx_component.mx_timeout, &mx_remote_addr );
+    if( MX_SUCCESS != mx_status ) {
+        if( MX_TIMEOUT == mx_status )
+            if( num_retry++ < mca_btl_mx_component.mx_connection_retries )
+                goto retry_connect;
+        {
+            char peer_name[MX_MAX_HOSTNAME_LEN];
+            
+            if( MX_SUCCESS != mx_nic_id_to_hostname( module_endpoint->mx_peer.nic_id, peer_name ) )
+                sprintf( peer_name, "unknown %lx nic_id", (long)module_endpoint->mx_peer.nic_id );
+            
+            opal_output( 0, "mx_connect fail for %s(%dth remote address) with key %x (error %s)\n", 
+                         peer_name, i, mca_btl_mx_component.mx_filter, mx_strerror(mx_status) );
         }
-        module_endpoint->mx_peer.nic_id      = module_proc->mx_peers[i].nic_id;
-        module_endpoint->mx_peer.endpoint_id = module_proc->mx_peers[i].endpoint_id;
-        module_endpoint->mx_peer_addr        = mx_remote_addr;
-        module_endpoint->status              = MCA_BTL_MX_CONNECTED;
-        module_proc->proc_addr_index         = i;
-        break;
-    }
-
-    if( i == module_proc->mx_peers_count ) {  /* no available connection */
         module_endpoint->status = MCA_BTL_MX_NOT_REACHEABLE;
         return OMPI_ERROR;
     }
+    module_endpoint->mx_peer_addr = mx_remote_addr;
+    module_endpoint->status       = MCA_BTL_MX_CONNECTED;
 
     module_proc->proc_endpoints[module_proc->proc_endpoint_count++] = module_endpoint;
     return OMPI_SUCCESS;
