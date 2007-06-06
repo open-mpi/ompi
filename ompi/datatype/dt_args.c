@@ -50,20 +50,20 @@ typedef struct __dt_args {
  */
 #define ALIGN_PTR_TO( VALUE, PWROF2 )                           \
     do {                                                        \
-        intptr_t _align = (intptr_t)((1 << PWROF2) - 1);        \
+        intptr_t _align = (intptr_t)((PWROF2) - 1);             \
         intptr_t _ptr = (intptr_t)(VALUE) + _align;             \
         (VALUE) = (void*)(_ptr & (~_align));                    \
     } while(0)
 
 #define ALIGN_INT_TO( VALUE, PWROF2 )                           \
     do {                                                        \
-        int _align = (intptr_t)((1 << PWROF2) - 1);             \
+        int _align = (intptr_t)((PWROF2) - 1);                  \
         int _val = (int)(VALUE) + _align;                       \
         (VALUE) = (_val & (~_align));                           \
     } while(0)
 
 #define CHECK_ALIGN_TO( VALUE, PWROF2 )                 \
-    assert( 0 == ((VALUE) & ((1 << PWROF2) - 1)) );     \
+    assert( 0 == ((VALUE) & ((PWROF2) - 1)) );          \
 
 /**
  * Some architecture require that 64 bits pointers (to pointers) has to
@@ -440,6 +440,7 @@ static inline int __ompi_ddt_pack_description( ompi_datatype_t* datatype,
      */
     /* copy the array of displacements (usually 64 bits aligned) */
     if( 0 < args->ca ) {
+        ALIGN_PTR_TO( next_packed, sizeof(MPI_Aint) );
         memcpy( next_packed, args->a, sizeof(MPI_Aint) * args->ca );
         next_packed += sizeof(MPI_Aint) * args->ca;
     }
@@ -448,7 +449,7 @@ static inline int __ompi_ddt_pack_description( ompi_datatype_t* datatype,
 
     /* copy the aray of counts (32 bits aligned) */
     memcpy( next_packed, args->i, sizeof(int) * args->ci );
-    next_packed += ( 4 + args->ci) * sizeof(int);
+    next_packed += args->ci * sizeof(int);
 
     /* copy the rest of the data */
     for( i = 0; i < args->cd; i++ ) {
@@ -516,7 +517,6 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
      * then we know the remaining data will be aligned as we expect.
      */
     next_buffer = (char*)*packed_buffer;
-    ALIGN_PTR_TO( next_buffer, sizeof(MPI_Aint) );
     position = (int*)next_buffer;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -552,17 +552,20 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
     }
     array_of_datatype = (ompi_datatype_t**)malloc( sizeof(ompi_datatype_t*) *
                                                    number_of_datatype );
-    position += 4;  /* move after the header */
+    next_buffer += (4 * sizeof(int));  /* move after the header */
 
     /* the array of displacements (64 bits aligned) */
-    array_of_disp   = (MPI_Aint*)position;
+    if( 0 != number_of_disp ) {
+        ALIGN_PTR_TO( next_buffer, sizeof(MPI_Aint) );
+    }
+    array_of_disp   = (MPI_Aint*)next_buffer;
     next_buffer    += number_of_disp * sizeof(MPI_Aint);
     /* the other datatypes */
     position        = (int*)next_buffer;
     next_buffer    += number_of_datatype * sizeof(int);
     /* the array of lengths (32 bits aligned) */
     array_of_length = (int*)next_buffer;
-    next_buffer    += (4 + number_of_length) * sizeof(int);
+    next_buffer    += (number_of_length * sizeof(int));
 
     for( i = 0; i < number_of_datatype; i++ ) {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
