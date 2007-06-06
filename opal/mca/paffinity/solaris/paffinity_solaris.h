@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,7 +33,7 @@ extern "C" {
      * Globally exported variable
      */
 
-    OPAL_DECLSPEC extern const opal_paffinity_base_component_1_0_0_t
+    OPAL_DECLSPEC extern const opal_paffinity_base_component_1_1_0_t
         mca_paffinity_solaris_component;
 
 
@@ -40,7 +41,7 @@ extern "C" {
      * paffinity API functions
      */
 
-    const opal_paffinity_base_module_1_0_0_t *
+    const opal_paffinity_base_module_1_1_0_t *
         opal_paffinity_solaris_component_query(int *query);
 
 #if defined(c_plusplus) || defined(__cplusplus)

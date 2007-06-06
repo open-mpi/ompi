@@ -44,7 +44,7 @@ static int solaris_module_finalize(void);
 /*
  * Solaris paffinity module
  */
-static const opal_paffinity_base_module_1_0_0_t module = {
+static const opal_paffinity_base_module_1_1_0_t module = {
 
     /* Initialization function */
 
@@ -58,7 +58,7 @@ static const opal_paffinity_base_module_1_0_0_t module = {
 };
 
 
-const opal_paffinity_base_module_1_0_0_t *
+const opal_paffinity_base_module_1_1_0_t *
 opal_paffinity_solaris_component_query(int *query)
 {
     int param;
