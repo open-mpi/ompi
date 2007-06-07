@@ -80,6 +80,8 @@ int i = 1;],
           [_PLPA_INIT($1, $2)],
           [$2])
     AM_CONDITIONAL([PLPA_BUILD_STANDALONE], [test "$plpa_mode" = "standalone"])
+    AM_CONDITIONAL(PLPA_BUILD_FORTRAN, [test "$plpa_fortran" = "yes"])
+    AM_CONDITIONAL(PLPA_BUILD_EXECUTABLES, [test "$plpa_executables" = "yes"])
 
     # Cleanup
     unset happy
@@ -253,12 +255,10 @@ AC_DEFUN([_PLPA_INIT],[
 
     # Check for fortran
     AC_MSG_CHECKING([whether to build PLPA Fortran API])
-    AM_CONDITIONAL(PLPA_BUILD_FORTRAN, [test "$plpa_fortran" = "yes"])
     AC_MSG_RESULT([$plpa_fortran])
 
     # Check whether to build the exectuables or not
     AC_MSG_CHECKING([whether to build PLPA executables])
-    AM_CONDITIONAL(PLPA_BUILD_EXECUTABLES, [test "$plpa_executables" = "yes"])
     AC_MSG_RESULT([$plpa_executables])
 
     # If we're building executables, we need some things for plpa-taskset
