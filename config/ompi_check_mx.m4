@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2006 The University of Tennessee and The University
+# Copyright (c) 2004-2007 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -16,6 +16,44 @@
 # 
 # $HEADER$
 #
+
+AC_DEFUN([_OMPI_CHECK_MX_EXTENSIONS],[
+    #
+    # Check if the MX library provide the necessary functions in order to
+    # figure out the mapper version and MAC for each board.
+    #
+
+    AC_MSG_CHECKING([for a MX version with mx_open_board])
+    AC_TRY_LINK([#include <mx_extensions.h>
+                 #include <mx_io.h>
+                 #include <mx_internals/mx__fops.h>
+                 ],
+                 [mx_open_board(0, NULL);],
+                 [mx_provide_open_board="yes"],
+                 [mx_provide_open_board="no"])
+    AC_MSG_RESULT([$mx_provide_open_board])
+
+    AC_MSG_CHECKING([for a MX version with mx__get_mapper_state])
+    AC_TRY_LINK([#include <mx_extensions.h>
+                 #include <mx_io.h>
+                 #include <mx_internals/mx__driver_interface.h>
+                 ],
+             [mx__get_mapper_state(NULL, NULL);],
+             [mx_provide_get_mapper_state="yes"],
+             [mx_provide_get_mapper_state="no"])
+    AC_MSG_RESULT([$mx_provide_get_mapper_state])
+
+    AS_IF([test x"$mx_provide_open_board" = "xyes" -a "$mx_provide_get_mapper_state" = "yes"],
+          [mx_provide_mapper_state=1
+           $2],
+          [mx_provide_mapper_state=0
+           $3])
+    AC_DEFINE_UNQUOTED([MX_HAVE_MAPPER_STATE], [$mx_provide_mapper_state],
+                       [MX installation provide access to the mx_open_board and mx__get_mapper_state functions])
+    unset mx_provide_open_board
+    unset mx_provide_get_mapper_state
+    unset mx_provide_mapper_state
+])
 
 AC_DEFUN([_OMPI_CHECK_MX_UNEXP_HANDLER],[
     #
@@ -149,8 +187,11 @@ AC_DEFUN([OMPI_CHECK_MX],[
           [_OMPI_CHECK_MX_UNEXP_HANDLER($1, [ompi_check_mx_register="yes"],
                                         [ompi_check_mx_register="no"])])
     AS_IF([test "$ompi_check_mx_happy" = "yes"],
-          [_OMPI_CHECK_MX_FORGET($1, [ompi_check_mx_register="yes"],
-                                 [ompi_check_mx_register="no"])])
+          [_OMPI_CHECK_MX_FORGET($1, [ompi_check_mx_forget="yes"],
+                                 [ompi_check_mx_forget="no"])])
+    AS_IF([test "$ompi_check_mx_happy" = "yes"],
+          [_OMPI_CHECK_MX_EXTENSIONS( $1, [ompi_check_mx_extensions="yes"],
+                                          [ompi_check_mx_extensions="no"])])
 
     CPPFLAGS="$ompi_check_mx_$1_save_CPPFLAGS"
     LDFLAGS="$ompi_check_mx_$1_save_LDFLAGS"
