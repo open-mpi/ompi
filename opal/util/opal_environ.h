@@ -27,6 +27,10 @@
 
 #include "opal_config.h"
 
+#ifdef HAVE_CRT_EXTERNS_H
+#include <crt_externs.h>
+#endif
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -120,10 +124,19 @@ extern "C" {
      */
     OPAL_DECLSPEC int opal_unsetenv(const char *name, char ***env);
 
-    /**
-     * So that others don't have to declare it
-     */
-    OPAL_DECLSPEC extern char **opal_environ;
+/* Some care is needed with environ on OS X when dealing with shared
+   libraries.  Handle that care here... */
+#if !defined(__WINDOWS__)
+
+#ifdef HAVE__NSGETENVIRON
+#define environ (*_NSGetEnviron())
+#else
+OPAL_DECLSPEC extern char **environ;
+#endif
+
+#endif  /* !defined(__WINDOWS__) */
+
+END_C_DECLS
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

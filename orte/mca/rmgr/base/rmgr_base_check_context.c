@@ -4,6 +4,8 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,10 +47,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/rmgr/base/rmgr_private.h"
-
-#if !defined(__WINDOWS__)
-extern char **environ;
-#endif  /* !defined(__WINDOWS__) */
 
 int orte_rmgr_base_check_context_cwd(orte_app_context_t *context,
                                      bool want_chdir)

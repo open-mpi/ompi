@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+# Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
 # $COPYRIGHT$
 # 
@@ -583,7 +583,8 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     sys/resource.h sys/select.h sys/socket.h sys/sockio.h \
     stdarg.h sys/stat.h sys/statvfs.h sys/time.h sys/tree.h \
     sys/types.h sys/uio.h sys/utsname.h sys/wait.h syslog.h \
-    time.h termios.h ulimit.h unistd.h util.h utmp.h malloc.h])
+    time.h termios.h ulimit.h unistd.h util.h utmp.h malloc.h \
+    crt_externs.h])
 
 # Needed to work around Darwin requiring sys/socket.h for
 # net/if.h
@@ -713,7 +714,7 @@ OMPI_CHECK_FUNC_LIB([dirname], [gen])
 # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
 OMPI_CHECK_FUNC_LIB([ceil], [m])
 
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve pipe ptsname setsid mmap mallopt tcgetpgrp posix_memalign strsignal])
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve pipe ptsname setsid mmap mallopt tcgetpgrp posix_memalign strsignal _NSGetEnviron])
 
 #
 # Make sure we can copy va_lists (need check declared, not linkable)
