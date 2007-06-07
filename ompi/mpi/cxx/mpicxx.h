@@ -159,9 +159,15 @@ namespace MPI {
   typedef MPI_Aint Aint;
   typedef MPI_Offset Offset;
 
+#ifdef OMPI_BUILDING_CXX_BINDINGS_LIBRARY
 #include "ompi/mpi/cxx/constants.h"
 #include "ompi/mpi/cxx/functions.h"
 #include "ompi/mpi/cxx/datatype.h"
+#else
+#include "openmpi/ompi/mpi/cxx/constants.h"
+#include "openmpi/ompi/mpi/cxx/functions.h"
+#include "openmpi/ompi/mpi/cxx/datatype.h"
+#endif
 
   typedef void User_function(const void* invec, void* inoutvec, int len,
 			     const Datatype& datatype);
