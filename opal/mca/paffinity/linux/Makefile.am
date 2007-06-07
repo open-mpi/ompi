@@ -50,3 +50,5 @@ mca_paffinity_linux_la_LIBADD = \
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_paffinity_linux_la_SOURCES =$(sources)
 libmca_paffinity_linux_la_LDFLAGS = -module -avoid-version
+libmca_paffinity_linux_la_LIBADD = \
+        $(top_ompi_builddir)/opal/mca/paffinity/linux/plpa/src/libplpa/libplpa_included.la
