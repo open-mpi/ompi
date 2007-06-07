@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -63,7 +63,7 @@ struct mca_mtl_psm_component_t {
 };
 typedef struct mca_mtl_psm_component_t mca_mtl_psm_component_t;
 
-extern mca_mtl_psm_component_t mca_mtl_psm_component;
+OMPI_DECLSPEC mca_mtl_psm_component_t mca_mtl_psm_component;
     
 #define PSM_MAKE_MQTAG(ctxt,rank,utag)		    \
         ( (((ctxt)&0xffffULL)<<48)| (((rank)&0xffffULL)<<32)| \

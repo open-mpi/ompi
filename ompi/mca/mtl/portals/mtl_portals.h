@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -62,6 +62,8 @@ struct mca_mtl_portals_module_t {
 typedef struct mca_mtl_portals_module_t mca_mtl_portals_module_t;
 
 extern mca_mtl_portals_module_t ompi_mtl_portals;
+
+OMPI_DECLSPEC mca_mtl_base_component_1_0_0_t mca_mtl_portals_component;
 
 
 struct ompi_mtl_portals_event_t {

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -31,18 +31,6 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-
-
-/* MTL interface functions */
-extern int ompi_mtl_mx_add_procs(struct mca_mtl_base_module_t* mtl, 
-                          size_t nprocs,
-                          struct ompi_proc_t** procs, 
-                          struct mca_mtl_base_endpoint_t **mtl_peer_data);
-    
-extern int ompi_mtl_mx_del_procs(struct mca_mtl_base_module_t* mtl, 
-                                 size_t nprocs,
-                                 struct ompi_proc_t** procs, 
-                                 struct mca_mtl_base_endpoint_t **mtl_peer_data);
 
 int
 ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl, 
