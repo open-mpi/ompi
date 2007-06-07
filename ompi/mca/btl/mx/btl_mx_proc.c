@@ -34,7 +34,6 @@ OBJ_CLASS_INSTANCE(mca_btl_mx_proc_t,
 void mca_btl_mx_proc_construct(mca_btl_mx_proc_t* proc)
 {
     proc->proc_ompi           = 0;
-    proc->proc_addr_index     = 0;
     proc->proc_endpoints      = NULL;
     proc->proc_endpoint_count = 0;
     proc->mx_peers_count      = 0;
@@ -191,7 +190,6 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
         if( mx_btl->mx_unique_network_id == mx_peers[j].unique_network_id ) {
             module_endpoint->mx_peer.nic_id      = mx_peers[j].nic_id;
             module_endpoint->mx_peer.endpoint_id = mx_peers[j].endpoint_id;
-            module_proc->proc_addr_index         = j;
             break;
         }
     }
@@ -212,7 +210,7 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
 
 int mca_btl_mx_proc_connect( mca_btl_mx_endpoint_t* module_endpoint )
 {
-    int num_retry = 0, i;
+    int num_retry = 0;
     mx_return_t mx_status;
     mx_endpoint_addr_t mx_remote_addr;
     mca_btl_mx_proc_t* module_proc = module_endpoint->endpoint_proc;
@@ -233,8 +231,8 @@ int mca_btl_mx_proc_connect( mca_btl_mx_endpoint_t* module_endpoint )
             if( MX_SUCCESS != mx_nic_id_to_hostname( module_endpoint->mx_peer.nic_id, peer_name ) )
                 sprintf( peer_name, "unknown %lx nic_id", (long)module_endpoint->mx_peer.nic_id );
             
-            opal_output( 0, "mx_connect fail for %s(%dth remote address) with key %x (error %s)\n", 
-                         peer_name, i, mca_btl_mx_component.mx_filter, mx_strerror(mx_status) );
+            opal_output( 0, "mx_connect fail for %s with key %x (error %s)\n", 
+                         peer_name, mca_btl_mx_component.mx_filter, mx_strerror(mx_status) );
         }
         module_endpoint->status = MCA_BTL_MX_NOT_REACHEABLE;
         return OMPI_ERROR;
