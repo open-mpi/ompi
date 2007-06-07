@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -30,6 +30,17 @@
 #include "mtl_mx_types.h"
 #include "mtl_mx_endpoint.h"
 #include "mtl_mx_request.h"
+
+static int
+ompi_mtl_mx_add_procs(struct mca_mtl_base_module_t *mtl,
+                      size_t nprocs,
+                      struct ompi_proc_t** procs, 
+                      struct mca_mtl_base_endpoint_t **mtl_peer_data);
+static int
+ompi_mtl_mx_del_procs(struct mca_mtl_base_module_t *mtl,
+                      size_t nprocs,
+                      struct ompi_proc_t** procs, 
+                      struct mca_mtl_base_endpoint_t **mtl_peer_data);
 
 mca_mtl_mx_module_t ompi_mtl_mx = {
     {
