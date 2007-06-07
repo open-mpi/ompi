@@ -922,7 +922,7 @@ int mca_pml_ob1_send_request_schedule_exclusive(
             mca_pml_ob1_frag_hdr_t* hdr;
             mca_btl_base_descriptor_t* des;
             int rc;
-            size_t size;
+            size_t size, offset;
             opal_list_item_t *item;
             mca_bml_base_btl_t* bml_btl =
                 mca_bml_base_btl_array_get_next(&bml_endpoint->btl_send);
@@ -986,8 +986,10 @@ int mca_pml_ob1_send_request_schedule_exclusive(
             }
                 
             /* pack into a descriptor */
+            offset = (size_t)range->range_send_offset;
             ompi_convertor_set_position(&sendreq->req_send.req_convertor, 
-                                        &range->range_send_offset);
+                                        &offset);
+            range->range_send_offset = (uint64_t)offset;
 
             mca_bml_base_prepare_src(bml_btl, NULL,
                                      &sendreq->req_send.req_convertor,
