@@ -164,9 +164,7 @@ int mca_btl_mx_component_close(void)
     /* release resources */
     OBJ_DESTRUCT(&mca_btl_mx_component.mx_send_eager_frags);
     OBJ_DESTRUCT(&mca_btl_mx_component.mx_send_user_frags);
-    OBJ_DESTRUCT(&mca_btl_mx_component.mx_recv_frags);
     OBJ_DESTRUCT(&mca_btl_mx_component.mx_procs);
-    OBJ_DESTRUCT(&mca_btl_mx_component.mx_pending_acks);
     OBJ_DESTRUCT(&mca_btl_mx_component.mx_lock);
     return OMPI_SUCCESS;
 }
@@ -267,10 +265,28 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
             mca_btl_mx_finalize( &mx_btl->super );
             return NULL;
         }
-        mx_btl->mx_unique_network_id = ((ms.mapper_mac[2] << 24) +
-                                        (ms.mapper_mac[3] << 16) +
+	/* Keep the first 4 bytes for the network speed */
+        mx_btl->mx_unique_network_id = ((ms.mapper_mac[3] << 16) +
                                         (ms.mapper_mac[4] << 8)  +
                                         (ms.mapper_mac[5]));
+#if defined(MX_HAS_NET_TYPE)
+        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_LINE_SPEED, NULL, 0,
+                                   &value, sizeof(int))) != MX_SUCCESS ) {
+            opal_output( 0, "mx_get_info(MX_LINE_SPEED) failed with status %d (%s)\n",
+                         status, mx_strerror(status) );
+	}
+	if( MX_SPEED_2G == value ) {
+	    mx_btl->mx_unique_network_id |= 0xaa00000000;
+	    mx_btl->super.btl_bandwidth = 2000;
+	} else if( MX_SPEED_10G == value ) {
+	    mx_btl->mx_unique_network_id |= 0xbb00000000;
+	    mx_btl->super.btl_bandwidth = 10000;
+	} else {
+	    mx_btl->mx_unique_network_id |= 0xcc00000000;
+	    mx_btl->super.btl_bandwidth = 1000;  /* some value */
+	}
+#endif  /* defined(MX_HAS_NET_TYPE) */
+
     }
 #endif  /* MX_HAVE_MAPPER_STATE */
 
@@ -395,9 +411,7 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_mx_component.mx_send_eager_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_mx_component.mx_send_user_frags, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_mx_component.mx_recv_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_mx_component.mx_procs, opal_list_t);
-    OBJ_CONSTRUCT(&mca_btl_mx_component.mx_pending_acks, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_mx_component.mx_lock, opal_mutex_t);
 
     ompi_free_list_init( &mca_btl_mx_component.mx_send_eager_frags,
@@ -409,14 +423,6 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
                          NULL ); /* use default allocator */
 
     ompi_free_list_init( &mca_btl_mx_component.mx_send_user_frags,
-                         sizeof(mca_btl_mx_frag_t),
-                         OBJ_CLASS(mca_btl_mx_frag_t),
-                         mca_btl_mx_component.mx_free_list_num,
-                         mca_btl_mx_component.mx_free_list_max,
-                         mca_btl_mx_component.mx_free_list_inc,
-                         NULL ); /* use default allocator */
-
-    ompi_free_list_init( &mca_btl_mx_component.mx_recv_frags,
                          sizeof(mca_btl_mx_frag_t),
                          OBJ_CLASS(mca_btl_mx_frag_t),
                          mca_btl_mx_component.mx_free_list_num,

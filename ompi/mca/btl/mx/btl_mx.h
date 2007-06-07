@@ -94,13 +94,14 @@ struct mca_btl_mx_component_t {
     ompi_free_list_t mx_send_eager_frags;      /**< free list of mx eager send fragments */
     ompi_free_list_t mx_send_user_frags;       /**< free list of mx user send fragments */
 
-    ompi_free_list_t mx_recv_frags;            /**< free list of mx recv fragments */
-
-    opal_list_t      mx_pending_acks;          /**< queue of pending sends */
-
     opal_mutex_t     mx_lock;                  /**< lock for accessing module state */
 
-    char* mx_mpool_name;                       /**< name of memory pool */ 
+    char* mx_if_include;                       /**< include the following NICs */
+    char* mx_if_exclude;                       /**< Exclude the following NICs. These
+                                                 *   values are based on the last 6
+                                                 *   digits in hexadecimal of the MAC
+                                                 *   address of the mapper.
+                                                 */
 }; 
 typedef struct mca_btl_mx_component_t mca_btl_mx_component_t;
 

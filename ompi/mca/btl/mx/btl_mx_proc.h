@@ -45,9 +45,6 @@ extern "C" {
         mca_btl_mx_addr_t  *mx_peers;  /**< peers addresses */
         int mx_peers_count;
 
-        size_t proc_addr_index;                  
-        /**< next remote address that will be used to establish the connection */
-
         struct mca_btl_base_endpoint_t **proc_endpoints; 
         /**< array of endpoints that have been created to access this proc */    
 
