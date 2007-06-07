@@ -29,6 +29,8 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
+- Add Portable Linux Processor Affinity (PLPA) for Linux
+  --> Expected: 1.3
 - Fix problem with optional Fortran types to be correctly initialized.
   --> Expected ?1.2.x?
 - Release tarballs now use Autoconf 2.61 and Automake 1.10.
