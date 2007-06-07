@@ -136,8 +136,6 @@ OPAL_DECLSPEC extern char **environ;
 
 #endif  /* !defined(__WINDOWS__) */
 
-END_C_DECLS
-
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
