@@ -66,8 +66,8 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 
 struct mca_pml_ob1_send_range_t {
     ompi_free_list_item_t base;
-    size_t range_send_offset;
-    size_t range_send_length;
+    uint64_t range_send_offset;
+    uint64_t range_send_length;
 };
 typedef struct mca_pml_ob1_send_range_t mca_pml_ob1_send_range_t;
 OBJ_CLASS_DECLARATION(mca_pml_ob1_send_range_t);
