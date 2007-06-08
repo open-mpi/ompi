@@ -228,7 +228,6 @@ static void orte_rmgr_urm_wireup_stdin(orte_jobid_t jobid)
         ORTE_ERROR_LOG(rc);
     }
     free(name);
-
 }
 
 
@@ -481,6 +480,13 @@ static int orte_rmgr_urm_spawn_job(
         }
         free(name); /* done with this */
 
+#if 0
+    {
+        int i = 0;
+        printf("orte_rmgr_urm_wireup_stdin callback: pid %d\n", getpid());
+        while (i == 0) sleep(5);
+    }
+#endif
         /* setup the launch system's stage gate counters and subscriptions */
         if (ORTE_SUCCESS != (rc = orte_rmgr_base_proc_stage_gate_init(*jobid))) {
             ORTE_ERROR_LOG(rc);

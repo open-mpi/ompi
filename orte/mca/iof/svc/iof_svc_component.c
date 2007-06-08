@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -74,23 +75,12 @@ orte_iof_svc_component_t mca_iof_svc_component = {
     }
 };
 
-static  int orte_iof_svc_param_register_int(
-    const char* param_name,
-    int default_value)
-{
-    int id = mca_base_param_register_int("iof","svc",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-
-
 /**
   * component open/close/init function
   */
 static int orte_iof_svc_open(void)
 {
-    mca_iof_svc_component.svc_debug = orte_iof_svc_param_register_int("debug", 1);
+    /* Nothing to do */
     return ORTE_SUCCESS;
 }
 
@@ -122,8 +112,31 @@ static int orte_iof_svc_close(void)
 static void
 orte_iof_svc_exception_handler(const orte_process_name_t* peer, orte_rml_exception_t reason)
 {
+    orte_iof_base_endpoint_t *endpoint;
+    opal_output(orte_iof_base.iof_output, 
+                "iof svc exception handler! [%lu,%lu,%lu]\n",
+                ORTE_NAME_ARGS(peer));
+
+    /* If we detect an exception on the RML connection to a peer,
+       delete all of its subscriptions and publications.  Note that
+       exceptions can be detected during a normal RML shutdown; they
+       are recoverable events (no need to abort). */
     orte_iof_svc_sub_delete_all(peer);
     orte_iof_svc_pub_delete_all(peer);
+    opal_output(orte_iof_base.iof_output, "deleted all pubs and subs\n");
+
+    /* Find any streams on any endpoints for this peer and close them */
+    while (NULL != 
+           (endpoint = orte_iof_base_endpoint_match(peer, ORTE_NS_CMP_ALL,
+                                                    ORTE_IOF_ANY))) {
+        orte_iof_base_endpoint_closed(endpoint);
+    };
+    /* Then delete them */
+    while (ORTE_SUCCESS == 
+           orte_iof_base_endpoint_delete(peer, ORTE_NS_CMP_ALL, ORTE_IOF_ANY)) {
+        continue;
+    }
+    opal_output(orte_iof_base.iof_output, "done with exception handler\n");
 }
 
 
@@ -162,7 +175,8 @@ orte_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidd
         NULL
     );
     if(rc != ORTE_SUCCESS) {
-        opal_output(0, "orte_iof_svc_init: unable to post non-blocking recv");
+        opal_output(orte_iof_base.iof_output,
+                    "orte_iof_svc_init: unable to post non-blocking recv");
         return NULL;
     }
 

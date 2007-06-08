@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -91,7 +91,7 @@ int orte_iof_base_open(void)
 			 OBJ_CLASS(orte_iof_base_frag_t),
 			 0,     /* number to initially allocate */
 			 -1,    /* maximum elements to allocate */
-			 32 );  /* number per allocation */
+			 16 );  /* number per allocation */
 
     /* Open up all available components */
     if (ORTE_SUCCESS != 
