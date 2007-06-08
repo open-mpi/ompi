@@ -105,6 +105,9 @@ static mca_btl_mx_proc_t* mca_btl_mx_proc_lookup_ompi(ompi_proc_t* ompi_proc)
 mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc)
 {
     mca_btl_mx_proc_t* module_proc = NULL;
+    mca_btl_mx_addr_t  *mx_peers;
+    int rc, i;
+    size_t size;
 
     /* Check if we have already created a MX proc
      * structure for this ompi process */
@@ -114,12 +117,36 @@ mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc)
         return module_proc;
     }
 
-    /* Oops! First time, gotta create a new MX proc
-     * out of the ompi_proc ... */
+    /* query for the peer address info */
+    rc = mca_pml_base_modex_recv( &mca_btl_mx_component.super.btl_version,
+				  ompi_proc, (void*)&mx_peers, &size );
+    if( OMPI_SUCCESS != rc ) {
+        opal_output( 0, "mca_pml_base_modex_recv failed for peer [%ld,%ld,%ld]",
+		     ORTE_NAME_ARGS(&ompi_proc->proc_name) );
+	return NULL;
+    }
+
+    if( size < sizeof(mca_btl_mx_addr_t) ) {  /* no available connection */
+        return NULL;
+    }
+    if( (size % sizeof(mca_btl_mx_addr_t)) != 0 ) {
+        opal_output( 0, "invalid mx address for peer [%ld,%ld,%ld]",
+		     ORTE_NAME_ARGS(&ompi_proc->proc_name) );
+	return NULL;
+    }
+
 
     module_proc = OBJ_NEW(mca_btl_mx_proc_t);
-
     module_proc->proc_ompi = ompi_proc;
+
+    module_proc->mx_peers_count = size / sizeof(mca_btl_mx_addr_t);
+
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    for (i = 0 ; i < module_proc->mx_peers_count ; ++i) {
+        BTL_MX_ADDR_NTOH(mx_peers[i]);
+    }
+#endif
+    module_proc->mx_peers = mx_peers;
 
     return module_proc;
 }
@@ -133,37 +160,8 @@ mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc)
 int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc, 
                             mca_btl_mx_endpoint_t* module_endpoint )
 {
-    mca_btl_mx_addr_t  *mx_peers;
-    int rc, i, j;
     mca_btl_mx_module_t* mx_btl;
-    size_t size;
-
-    /* query for the peer address info */
-    rc = mca_pml_base_modex_recv( &mca_btl_mx_component.super.btl_version,
-                                  module_proc->proc_ompi, (void*)&mx_peers, &size );
-    if( OMPI_SUCCESS != rc ) {
-        opal_output( 0, "mca_pml_base_modex_recv failed for peer [%ld,%ld,%ld]",
-                     ORTE_NAME_ARGS(&module_proc->proc_ompi->proc_name) );
-        OBJ_RELEASE(module_proc);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    if( (size % sizeof(mca_btl_mx_addr_t)) != 0 ) {
-        opal_output( 0, "invalid mx address for peer [%ld,%ld,%ld]",
-                     ORTE_NAME_ARGS(&module_proc->proc_ompi->proc_name) );
-        OBJ_RELEASE(module_proc);
-        return OMPI_ERROR;
-    }
-    module_proc->mx_peers_count = size / sizeof(mca_btl_mx_addr_t);
-    if( 0 == module_proc->mx_peers_count ) {  /* no available connection */
-        return OMPI_ERROR;
-    }
-
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    for (i = 0 ; i < module_proc->mx_peers_count ; ++i) {
-        BTL_MX_ADDR_NTOH(mx_peers[i]);
-    }
-#endif
+    int i, j;
 
     /**
      * Check if there is any Myrinet network between myself and the peer
@@ -172,7 +170,7 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
         mx_btl = mca_btl_mx_component.mx_btls[i];
 
         for( j = 0; j < module_proc->mx_peers_count; j++ ) {
-            if( mx_btl->mx_unique_network_id == mx_peers[j].unique_network_id ) {
+            if( mx_btl->mx_unique_network_id == module_proc->mx_peers[j].unique_network_id ) {
                 /* There is at least one connection between these two nodes */
                 goto create_peer_endpoint;
             }
@@ -187,14 +185,12 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
  create_peer_endpoint:
     mx_btl = module_endpoint->endpoint_btl;
     for( j = 0; j < module_proc->mx_peers_count; j++ ) {
-        if( mx_btl->mx_unique_network_id == mx_peers[j].unique_network_id ) {
-            module_endpoint->mx_peer.nic_id      = mx_peers[j].nic_id;
-            module_endpoint->mx_peer.endpoint_id = mx_peers[j].endpoint_id;
+        if( mx_btl->mx_unique_network_id == module_proc->mx_peers[j].unique_network_id ) {
+            module_endpoint->mx_peer.nic_id      = module_proc->mx_peers[j].nic_id;
+            module_endpoint->mx_peer.endpoint_id = module_proc->mx_peers[j].endpoint_id;
             break;
         }
     }
-
-    module_proc->mx_peers = mx_peers;
 
     if( NULL == module_proc->proc_endpoints ) {
         module_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
@@ -231,8 +227,10 @@ int mca_btl_mx_proc_connect( mca_btl_mx_endpoint_t* module_endpoint )
             if( MX_SUCCESS != mx_nic_id_to_hostname( module_endpoint->mx_peer.nic_id, peer_name ) )
                 sprintf( peer_name, "unknown %lx nic_id", (long)module_endpoint->mx_peer.nic_id );
             
-            opal_output( 0, "mx_connect fail for %s with key %x (error %s)\n", 
-                         peer_name, mca_btl_mx_component.mx_filter, mx_strerror(mx_status) );
+            opal_output( 0, "mx_connect fail for %s with key %x (error %s)\n\tUnique ID (local %x remote %x)\n",
+                         peer_name, mca_btl_mx_component.mx_filter, mx_strerror(mx_status),
+			 module_endpoint->endpoint_btl->mx_unique_network_id,
+			 module_endpoint->mx_peer.unique_network_id );
         }
         module_endpoint->status = MCA_BTL_MX_NOT_REACHEABLE;
         return OMPI_ERROR;
