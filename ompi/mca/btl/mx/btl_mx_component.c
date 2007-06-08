@@ -130,8 +130,17 @@ int mca_btl_mx_component_open(void)
     }
 
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_posted_recv",
-                            "Number of received posted in advance. Increasing this number for communication bound application can lead to visible improvement in performances",
+                            "Number of received posted in advance. Increasing this number for"
+			    " communication bound application can lead to visible improvement"
+			    " in performances",
                             false, false, 16, &mca_btl_mx_component.mx_max_posted_recv );
+
+    mca_base_param_reg_string( (mca_base_component_t*)&mca_btl_mx_component, "if_include",
+			       "Myrinet card to use (last 6 digits from the mapper MAC)",
+			       false, false, NULL, &mca_btl_mx_component.mx_if_include );
+    mca_base_param_reg_string( (mca_base_component_t*)&mca_btl_mx_component, "if_exclude",
+			       "Myrinet card to avoid (last 6 digits from the mapper MAC)",
+			       false, false, NULL, &mca_btl_mx_component.mx_if_exclude );
 
     mca_btl_mx_module.super.btl_exclusivity = 50;
     mca_btl_mx_module.super.btl_eager_limit = 4096;
@@ -166,6 +175,15 @@ int mca_btl_mx_component_close(void)
     OBJ_DESTRUCT(&mca_btl_mx_component.mx_send_user_frags);
     OBJ_DESTRUCT(&mca_btl_mx_component.mx_procs);
     OBJ_DESTRUCT(&mca_btl_mx_component.mx_lock);
+
+    if( NULL != mca_btl_mx_component.mx_if_include ) {
+        free( mca_btl_mx_component.mx_if_include );
+	mca_btl_mx_component.mx_if_include = NULL;
+    }
+    if( NULL != mca_btl_mx_component.mx_if_exclude ) {
+        free( mca_btl_mx_component.mx_if_exclude );
+	mca_btl_mx_component.mx_if_exclude = NULL;
+    }
     return OMPI_SUCCESS;
 }
 
@@ -218,10 +236,55 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
 {
     mca_btl_mx_module_t* mx_btl;
     mx_return_t status;
-    uint32_t nic_id;
+    uint32_t nic_id, mx_unique_network_id = 0;
+    char mapper_mac[7], *where;
 
     status = mx_nic_id_to_board_number( addr, &nic_id );
     if( MX_SUCCESS != status ) {
+        return NULL;
+    }
+
+#if MX_HAVE_MAPPER_STATE
+    {
+        mx_return_t ret;
+        mx_endpt_handle_t endp_handle;
+        mx_mapper_state_t ms;
+
+        ret = mx_open_board( nic_id, &endp_handle );
+        if( MX_SUCCESS != ret ) {
+            opal_output( 0, "Unable to open board %d: %s\n", nic_id, mx_strerror(ret) );
+            return NULL;
+        }
+
+        ms.board_number = nic_id;
+        ms.iport = 0;
+        ret = mx__get_mapper_state( endp_handle, &ms );
+        if( MX_SUCCESS != ret ) {
+            opal_output( 0, "get_mapper_state failed for board %d: %s\n",
+                         nic_id, mx_strerror(ret) );
+            return NULL;
+        }
+	/* Keep the first 4 bytes for the network speed */
+	mx_unique_network_id = ((ms.mapper_mac[3] << 16) +
+				(ms.mapper_mac[4] << 8)  +
+				(ms.mapper_mac[5]));
+
+    }
+#endif  /* MX_HAVE_MAPPER_STATE */
+
+    /* Try to figure out if we are allowed to use this network */
+    snprintf( mapper_mac, 7, "%6x", mx_unique_network_id );
+
+    if( (NULL != mca_btl_mx_component.mx_if_exclude) &&
+	(NULL != (where = strstr(mca_btl_mx_component.mx_if_exclude, mapper_mac))) ) {
+        opal_output( 0, "MX network %d connected to the mapper %s has been excluded\n",
+		     nic_id, mapper_mac );
+        return NULL;
+    }
+    else if( (NULL != mca_btl_mx_component.mx_if_include) &&
+	     (NULL == (where = strstr(mca_btl_mx_component.mx_if_include, mapper_mac))) ) {
+        opal_output( 0, "MX network %d connected to the mapper %s has not been included\n",
+		     nic_id, mapper_mac );
         return NULL;
     }
 
@@ -243,52 +306,27 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
         mca_btl_mx_finalize( &mx_btl->super );
         return NULL;
     }
-#if MX_HAVE_MAPPER_STATE
-    {
-        mx_return_t ret;
-        mx_endpt_handle_t endp_handle;
-        mx_mapper_state_t ms;
-
-        ret = mx_open_board( nic_id, &endp_handle );
-        if( MX_SUCCESS != ret ) {
-            opal_output( 0, "Unable to open board %d: %s\n", nic_id, mx_strerror(ret) );
-            mca_btl_mx_finalize( &mx_btl->super );
-            return NULL;
-        }
-
-        ms.board_number = nic_id;
-        ms.iport = 0;
-        ret = mx__get_mapper_state( endp_handle, &ms );
-        if( MX_SUCCESS != ret ) {
-            opal_output( 0, "get_mapper_state failed for board %d: %s\n",
-                         nic_id, mx_strerror(ret) );
-            mca_btl_mx_finalize( &mx_btl->super );
-            return NULL;
-        }
-	/* Keep the first 4 bytes for the network speed */
-        mx_btl->mx_unique_network_id = ((ms.mapper_mac[3] << 16) +
-                                        (ms.mapper_mac[4] << 8)  +
-                                        (ms.mapper_mac[5]));
+    mx_btl->mx_unique_network_id = mx_unique_network_id;
 #if defined(MX_HAS_NET_TYPE)
+    {
+        int value;
         if( (status = mx_get_info( mx_btl->mx_endpoint, MX_LINE_SPEED, NULL, 0,
                                    &value, sizeof(int))) != MX_SUCCESS ) {
             opal_output( 0, "mx_get_info(MX_LINE_SPEED) failed with status %d (%s)\n",
                          status, mx_strerror(status) );
-	}
-	if( MX_SPEED_2G == value ) {
-	    mx_btl->mx_unique_network_id |= 0xaa00000000;
-	    mx_btl->super.btl_bandwidth = 2000;
-	} else if( MX_SPEED_10G == value ) {
-	    mx_btl->mx_unique_network_id |= 0xbb00000000;
-	    mx_btl->super.btl_bandwidth = 10000;
-	} else {
-	    mx_btl->mx_unique_network_id |= 0xcc00000000;
-	    mx_btl->super.btl_bandwidth = 1000;  /* some value */
-	}
-#endif  /* defined(MX_HAS_NET_TYPE) */
-
+        }
+        if( MX_SPEED_2G == value ) {
+            mx_btl->mx_unique_network_id |= 0xaa00000000;
+            mx_btl->super.btl_bandwidth = 2000;
+        } else if( MX_SPEED_10G == value ) {
+            mx_btl->mx_unique_network_id |= 0xbb00000000;
+            mx_btl->super.btl_bandwidth = 10000;
+        } else {
+            mx_btl->mx_unique_network_id |= 0xcc00000000;
+            mx_btl->super.btl_bandwidth = 1000;  /* whatever */
+        }
     }
-#endif  /* MX_HAVE_MAPPER_STATE */
+#endif  /* defined(MX_HAS_NET_TYPE) */
 
 #if 0
     {
@@ -476,7 +514,6 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
         return NULL;
     }
 
-    size = sizeof(mca_btl_mx_addr_t) * mca_btl_mx_component.mx_num_btls;
     mx_addrs = (mca_btl_mx_addr_t*)calloc( mca_btl_mx_component.mx_num_btls, sizeof(mca_btl_mx_addr_t) );
     if( NULL == mx_addrs ) {
         free( nic_addrs );
@@ -489,29 +526,30 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
         if( NULL == mx_btl ) {
             continue;
         }
-        status = mx_decompose_endpoint_addr( mx_btl->mx_endpoint_addr, &(mx_addrs[i].nic_id),
-                                             &(mx_addrs[i].endpoint_id) );
+        status = mx_decompose_endpoint_addr( mx_btl->mx_endpoint_addr, &(mx_addrs[count].nic_id),
+                                             &(mx_addrs[count].endpoint_id) );
         if( MX_SUCCESS != status ) {
             mca_btl_mx_finalize( &mx_btl->super );
             continue;
         }
-        mx_addrs[i].unique_network_id = mx_btl->mx_unique_network_id;
+        mx_addrs[count].unique_network_id = mx_btl->mx_unique_network_id;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        BTL_MX_ADDR_HTON(mx_addrs[i]);
+        BTL_MX_ADDR_HTON(mx_addrs[count]);
 #endif
-        mca_btl_mx_component.mx_btls[count++] = mx_btl;
+        mca_btl_mx_component.mx_btls[count] = mx_btl;
+	count++;  /* one more succesfully initialized MX interface */
     }
     mca_btl_mx_component.mx_num_btls = count;
     *num_btl_modules = count;
-    size = sizeof(mca_btl_mx_addr_t) * count;
     if( 0 == count ) {
         /* No active BTL module */
         return NULL;
     }
 
     /* publish the MX addresses via the MCA framework */
-    mca_pml_base_modex_send( &mca_btl_mx_component.super.btl_version, mx_addrs, size );
+    mca_pml_base_modex_send( &mca_btl_mx_component.super.btl_version, mx_addrs,
+			     sizeof(mca_btl_mx_addr_t) * mca_btl_mx_component.mx_num_btls );
 
     free( nic_addrs );
     free( mx_addrs );
