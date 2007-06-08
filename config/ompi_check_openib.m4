@@ -55,15 +55,6 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                   ompi_check_openib_happy="no"])])
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"], 
-          [AC_CHECK_HEADER(
-             [sysfs/libsysfs.h],
-             [AC_CHECK_LIB([sysfs], 
-                [sysfs_open_class], 
-                [],
-                [AC_MSG_WARN([libsysfs not found.  Can not build component.])
-                 ompi_check_openib_happy="no"])])]) 
-
-    AS_IF([test "$ompi_check_openib_happy" = "yes"], 
           [OMPI_CHECK_PACKAGE([$1],
                               [infiniband/verbs.h],
                               [ibverbs],
@@ -113,7 +104,9 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_openib" -a "$with_openib" != "no"],
-                 [AC_MSG_ERROR([OpenFabrics support requested (via --with-openib) but not found.  Aborting])])
+                 [AC_MSG_WARN([OpenFabrics support requested (via --with-openib) but not found.])
+                  AC_MSG_WARN([If you are using libibverbs v1.0 (i.e., OFED v1.0 or v1.1), you *MUST* have both the libsysfs headers and libraries installed.  Later versions of libibverbs do not require libsysfs.])
+                  AC_MSG_ERROR([Aborting.])])
            $3])
 ])
 
