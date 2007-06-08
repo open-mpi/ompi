@@ -577,16 +577,46 @@ static void odls_default_wait_local_proc(pid_t pid, int status, void* cbdata)
             goto GOTCHILD;
         }
     }
-    /* get here if we didn't find the child, or if the specified child is already
-    * dead. If the latter, then we have a problem as it means we are detecting
-    * it exiting multiple times
+   /* get here if we didn't find the child, or if the specified child
+    * is already dead. If the latter, then we have a problem as it
+    * means we are detecting it exiting multiple times
     */
+    opal_output(orte_odls_globals.output, "odls: did not find pid %ld in table!", (long) pid);
     ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
     opal_condition_signal(&orte_odls_default.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_default.mutex);
     return;
 
 GOTCHILD:
+    /* If this child was the (vpid==0), we hooked it up to orterun's
+       STDIN SOURCE earlier (do not change this without also changing
+       odsl_default_fork_local_proc()).  So we have to tell the SOURCE
+       a) that we don't want any more data and b) that it should not
+       expect any more ACKs from this endpoint (so that the svc
+       component can still flush/shut down cleanly).
+
+       Note that the source may have already detected that this
+       process died as part of an OOB/RML exception, but that's ok --
+       its "exception" detection capabilities are not reliable, so we
+       *have* to do this unpublish here, even if it arrives after an
+       exception is detected and handled (in which case this unpublish
+       request will be ignored/discarded. */
+    opal_output(orte_odls_globals.output,
+                "odls: pid %ld corresponds to [%lu,%lu,%lu]\n",
+                (long) pid, ORTE_NAME_ARGS(child->name));
+    if (0 == child->name->vpid) {
+        rc = orte_iof.iof_unpublish(child->name, ORTE_NS_CMP_ALL, 
+                                    ORTE_IOF_STDIN);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            /* We can't really abort, so keep going... */
+        }
+    }
+    opal_output(orte_odls_globals.output, "orted sent IOF unpub message!\n");
+
+    /* Note that the svc IOF component will detect an exception on the
+       oob because we're shutting it down, so it will take care of
+       closing down any streams that it has open to us. */
     orte_iof.iof_flush();
 
     /* determine the state of this process */
@@ -704,8 +734,10 @@ static int odls_default_fork_local_proc(
        default */
     opts.usepty = OMPI_ENABLE_PTY_SUPPORT;
 
-    /* BWB - Fix post beta.  Should setup stdin in orterun and
-       make part of the app_context */
+    /* BWB - Fix post beta.  Should setup stdin in orterun and make
+       part of the app_context.  Do not change this without also
+       changing the reverse of this in
+       odls_default_wait_local_proc(). */
     if (child->name->vpid == 0) {
         opts.connect_stdin = true;
     } else {

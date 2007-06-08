@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,9 +27,7 @@
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/iof_base_header.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Structure store callbacks
@@ -47,16 +47,39 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_base_callback_t);
  */
 
 struct orte_iof_base_endpoint_t {
+    /** Parent */
     opal_list_item_t super;
+    /** ORTE_IOF_SOURCE or ORTE_IOF_SINK */
     orte_iof_base_mode_t ep_mode;
-    orte_process_name_t ep_name;
+    /** The origin process for this endpoint.  Will either by myself
+        (i.e., it's an fd that represents a source or a sink in my
+        process) or another process (i.e., this process is acting as a
+        proxy for another process and [typically] has a pipe/fd optn
+        to that process to get their stdin, stdout, or stderr). */
+    orte_process_name_t ep_origin;
+    /** Predefined tags: ORTE_IOF_ANY, ORTE_IOF_STDIN, ORTE_IOF_STDOUT,
+        ORTE_IOF_STDERR */
     int ep_tag;
+    /** File descriptor to read or write from (or -1 if it has been
+        closed */
     int ep_fd;
+    /** Rollover byte count of what has been forwarded from the fd to
+        other targets */
     uint32_t ep_seq;
+    /** Minimum byte count of what has been ACK'ed from all the targets
+        that are listening to this endpoint */
     uint32_t ep_ack;
+    /** Event library event for this file descriptor */
     opal_event_t ep_event;
+    /** Special event library event for the case of stdin */
     opal_event_t ep_stdin_event;
-    opal_list_t ep_frags;
+    /** The list for fragments that are in-flight from a SOURCE 
+        endpoint */
+    opal_list_t ep_source_frags;
+    /** The list for fragments that are in-flight from a SINK
+        endpoint */
+    opal_list_t ep_sink_frags;
+    /** List of callbacks for subscriptions */
     opal_list_t ep_callbacks;
 };
 typedef struct orte_iof_base_endpoint_t orte_iof_base_endpoint_t;
@@ -74,10 +97,14 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_base_endpoint_t);
 /**
  * Create a local endpoint.
  * 
- * @param name  Process name corresponding to endpoint.
+ * @param name  Origin process name corresponding to endpoint.
  * @param mode  Source or sink of data (exclusive).
  * @param tag   Logical tag for matching.
- * @aram  fd    Local file descriptor corresponding to endpoint.
+ * @param fd Local file descriptor corresponding to endpoint.  If the
+ * endpoint originates in this process, it'll be an fd in this
+ * process.  If this process is acting as a proxy for another process,
+ * then the fd will be a pipe to that other process (e.g., the origin
+ * process' stdin, stdout, or stderr).
  */
 
 ORTE_DECLSPEC int orte_iof_base_endpoint_create(
@@ -106,10 +133,10 @@ ORTE_DECLSPEC int orte_iof_base_callback_delete(
 
 
 /**
- * Delete all local endpoints matching the specified 
- * name/mask/tag parameters.
+ * Delete all local endpoints matching the specified origin / mask /
+ * tag parameters.
  *
- * @paran name  Process name corresponding to one or more endpoint(s).
+ * @paran name  Origin process name corresponding to one or more endpoint(s).
  * @param mask  Mask used for name comparisons.
  * @param tag   Tag for matching endpoints.
  */
@@ -127,14 +154,14 @@ ORTE_DECLSPEC int orte_iof_base_endpoint_close(
     orte_iof_base_endpoint_t* endpoint);
 
 /**
- * Attempt to match an endpoint based on the destination
- * process name/mask/tag.
+ * Attempt to match an endpoint based on the origin process name /
+ * mask / tag.
  */
 
 ORTE_DECLSPEC orte_iof_base_endpoint_t* orte_iof_base_endpoint_match(
-    const orte_process_name_t* dst_name,
-    orte_ns_cmp_bitmask_t dst_mask,
-    int dst_tag);
+    const orte_process_name_t* target_name,
+    orte_ns_cmp_bitmask_t target_mask,
+    int target_tag);
 
 /**
  * Forward the specified message out the endpoint.
@@ -142,20 +169,20 @@ ORTE_DECLSPEC orte_iof_base_endpoint_t* orte_iof_base_endpoint_match(
 
 ORTE_DECLSPEC int orte_iof_base_endpoint_forward(
     orte_iof_base_endpoint_t* endpoint,
-    const orte_process_name_t* src,
+    const orte_process_name_t* origin,
     orte_iof_base_msg_header_t* hdr,
     const unsigned char* data);
 
 /*
- * Callback when peer has closed endpoint.
+ * Close the file descriptor associated with an endpoint and perform
+ * any necessary cleanup.
  */
 
 ORTE_DECLSPEC void orte_iof_base_endpoint_closed(
     orte_iof_base_endpoint_t* endpoint);
 
 /**
- * Callback when the specified sequence has been 
- * acknowledged.
+ * Callback when the next set of bytes has been acknowledged.
  */
 
 ORTE_DECLSPEC int orte_iof_base_endpoint_ack(
@@ -163,18 +190,30 @@ ORTE_DECLSPEC int orte_iof_base_endpoint_ack(
     uint32_t seq);
 
 /**
- * Check for pending I/O
+ * Simple check for whether we have any frags "in flight".
+ *
+ * Return "true" for SOURCEs if source_frags is not empty, indicating
+ * that there are frags in-flight via the RML.
+ *
+ * Return "true" for SINKs if sink_frags is not empty, indicating that
+ * there are pending frags for the fd that are either partially
+ * written or have not yet been written (because writing to the fd
+ * would have blocked).
  */
+bool orte_iof_base_endpoint_have_pending_frags(
+    orte_iof_base_endpoint_t* endpoint);
 
-static inline bool orte_iof_base_endpoint_pending(
-    orte_iof_base_endpoint_t* endpoint)
-{
-    return opal_list_get_size(&endpoint->ep_frags) || (endpoint->ep_seq != endpoint->ep_ack);
-}
+/**
+ * Simple check for whether we have all the ACKs that we expect.
+ *
+ * Return "true" for SOURCEs if ep_seq == ep_ack.
+ *
+ * Return "true" for SINKs always; SINK endpoints don't receive ACKs.
+ */
+bool orte_iof_base_endpoint_have_pending_acks(
+    orte_iof_base_endpoint_t* endpoint);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif
 

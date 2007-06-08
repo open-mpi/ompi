@@ -74,8 +74,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_base_frag_t);
  * Send an acknowledgment to the peer that this fragment has been received.
  */
 
-#define orte_iof_base_frag_ack(frag) _orte_iof_base_frag_ack(frag,__FILE__,__LINE__)
-int _orte_iof_base_frag_ack(orte_iof_base_frag_t*, const char*, int);
+#define orte_iof_base_frag_ack(frag, do_close) _orte_iof_base_frag_ack((frag), (do_close), __FILE__,__LINE__)
+int _orte_iof_base_frag_ack(orte_iof_base_frag_t*, bool do_close, const char*, int);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -9,21 +9,10 @@
 
 
 
-static void orte_iof_svc_pub_construct(orte_iof_svc_pub_t* publish)
-{
-}
-
-
-static void orte_iof_svc_pub_destruct(orte_iof_svc_pub_t* publish)
-{
-}
-
-
 OBJ_CLASS_INSTANCE(
     orte_iof_svc_pub_t,
     opal_list_item_t,
-    orte_iof_svc_pub_construct,
-    orte_iof_svc_pub_destruct);
+    NULL, NULL);
 
 
 /**
@@ -31,7 +20,7 @@ OBJ_CLASS_INSTANCE(
  *  (2) Lookup any subscriptions that match and install on the
  *      subscription as a destination endpoint.
  */
-                                                                                                           
+
 int orte_iof_svc_pub_create(
     const orte_process_name_t *pub_name,
     const orte_process_name_t *pub_proxy,
@@ -43,7 +32,7 @@ int orte_iof_svc_pub_create(
 
     OPAL_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
 
-    /* has this endpoint already been published */
+    /* has matching publish already been created? */
     for(item  = opal_list_get_first(&mca_iof_svc_component.svc_published);
         item != opal_list_get_end(&mca_iof_svc_component.svc_published);
         item =  opal_list_get_next(item)) {
@@ -56,13 +45,18 @@ int orte_iof_svc_pub_create(
         }
     }
 
-    /* create a new entry for this endponit */
+    /* create a new publish entry; associate it with the corresponding
+       endpoint */
     pub = OBJ_NEW(orte_iof_svc_pub_t);
     pub->pub_name = *pub_name;
     pub->pub_proxy = *pub_proxy;
     pub->pub_mask = pub_mask;
     pub->pub_tag = pub_tag;
-    pub->pub_endpoint = orte_iof_base_endpoint_match(pub_name,pub_mask,pub_tag);
+    pub->pub_endpoint = 
+        orte_iof_base_endpoint_match(pub_name,pub_mask,pub_tag);
+    opal_output(orte_iof_base.iof_output, "created svc pub, name [%lu,%lu,%lu], proxy [%lu,%lu,%lu], tag %d / mask %x, endpoint %p\n",
+                ORTE_NAME_ARGS(pub_name), ORTE_NAME_ARGS(pub_proxy),
+                pub_tag, pub_mask, (char*) pub->pub_endpoint);
 
     /* append this published endpoint to any matching subscription */
     for(item  = opal_list_get_first(&mca_iof_svc_component.svc_subscribed);
@@ -80,9 +74,9 @@ int orte_iof_svc_pub_create(
     return ORTE_SUCCESS;
 }
 
-                                                                                                           
+
 /**
- *  Look for a matching endpoint.
+ *  Look for a matching publish
  */
 
 orte_iof_svc_pub_t* orte_iof_svc_pub_lookup(
@@ -110,7 +104,7 @@ orte_iof_svc_pub_t* orte_iof_svc_pub_lookup(
  * Remove the published endpoint and cleanup any associated
  * forwarding entries.
  */
-                                                                                                           
+
 int orte_iof_svc_pub_delete(
     const orte_process_name_t *pub_name,
     const orte_process_name_t *pub_proxy,
@@ -140,7 +134,7 @@ int orte_iof_svc_pub_delete(
     OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
     return ORTE_SUCCESS;
 }
-                                                                                                           
+
 
 /*
  * Remove all publications associated w/ the given process name.

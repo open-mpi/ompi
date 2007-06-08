@@ -90,12 +90,14 @@ static void orte_iof_base_frag_send_cb(
  *
  */
 
-int _orte_iof_base_frag_ack(orte_iof_base_frag_t* frag, const char* file, int line)
+int _orte_iof_base_frag_ack(orte_iof_base_frag_t* frag, bool do_close, 
+                            const char* file, int line)
 {
     int rc = ORTE_SUCCESS;
   
     if(frag->frag_hdr.hdr_msg.msg_len > 0) {
-        frag->frag_hdr.hdr_common.hdr_type = ORTE_IOF_BASE_HDR_ACK;
+        frag->frag_hdr.hdr_common.hdr_type = 
+            do_close ? ORTE_IOF_BASE_HDR_CLOSE : ORTE_IOF_BASE_HDR_ACK;
         ORTE_IOF_BASE_HDR_MSG_HTON(frag->frag_hdr.hdr_msg);
 
         /* start non-blocking OOB call to forward header */
