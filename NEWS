@@ -29,6 +29,9 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
+- Removed dependency on sysfsutils from the openib BTL for libibverbs
+  >=v1.1 (i.e., OFED 1.2 and beyond).
+  --> Expected 1.2.x
 - Fix several problems with redirecting large files into mpirun's
   stdin.
   --> Expected 1.2.x
