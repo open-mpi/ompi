@@ -29,7 +29,6 @@ version 1.0.
 1.2.3
 -----
 
-- Fix a compiler warning in the openib BTL.
 - Fix some error messages in the tcp BTL.
 - Use _NSGetEnviron instead of environ on Mac OS X so that there
   are no undefined symbols in the shared libraries.
