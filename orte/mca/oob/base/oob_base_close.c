@@ -63,11 +63,6 @@ int mca_oob_base_close(void)
   OBJ_DESTRUCT(&mca_oob_base_components);
   OBJ_DESTRUCT(&mca_oob_base_exception_handlers);
 
-  if( NULL != mca_oob_base_include )
-    free(mca_oob_base_include);
-  if( NULL != mca_oob_base_exclude )
-    free(mca_oob_base_exclude);
-
   /* All done */
   orte_oob_base_already_opened = false;
 
