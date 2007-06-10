@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -102,9 +103,6 @@ int mca_oob_base_init(void)
     mca_oob_t *s_module = NULL;
     int  s_priority = -1;
 
-    char** include = opal_argv_split(mca_oob_base_include, ',');
-    char** exclude = opal_argv_split(mca_oob_base_exclude, ',');
-
     /* Traverse the list of available modules; call their init functions. */
     for (item = opal_list_get_first(&mca_oob_base_components);
         item != opal_list_get_end(&mca_oob_base_components);
@@ -113,38 +111,6 @@ int mca_oob_base_init(void)
 
         cli = (mca_base_component_list_item_t *) item;
         component = (mca_oob_base_component_t *) cli->cli_component;
-
-        /* if there is an include list - item must be in the list to be included */
-        if ( NULL != include ) {
-            char** argv = include;
-            bool found = false;
-            while(argv && *argv) {
-                if(strcmp(component->oob_base.mca_component_name,*argv) == 0) {
-                    found = true;
-                    break;
-                }
-                argv++;
-            }
-            if(found == false) {
-                continue;
-            }
-                                                                                                                     
-        /* otherwise - check the exclude list to see if this item has been specifically excluded */
-        } else if ( NULL != exclude ) {
-            char** argv = exclude;
-            bool found = false;
-            while(argv && *argv) {
-                if(strcmp(component->oob_base.mca_component_name,*argv) == 0) {
-                    found = true;
-                    break;
-                }
-                argv++;
-            }
-            if(found == true) {
-                continue;
-            }
-        }
-                                                                                                                     
 
         if (NULL == component->oob_init) {
             opal_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: no init function; ignoring component");

@@ -44,8 +44,6 @@
  */
 mca_oob_t mca_oob;
 int mca_oob_base_output = -1;
-char* mca_oob_base_include = NULL;
-char* mca_oob_base_exclude = NULL;
 opal_list_t mca_oob_base_components;
 opal_list_t mca_oob_base_modules;
 opal_list_t mca_oob_base_exception_handlers;
@@ -92,13 +90,6 @@ int mca_oob_base_open(void)
   }
 
   /* register parameters */
-  mca_base_param_reg_string_name("oob", "base_include",
-                                 "Components to include for oob framework selection",
-                                 false, false, NULL, &mca_oob_base_include);
-  mca_base_param_reg_string_name("oob", "base_exclude",
-                                 "Components to exclude for oob framework selection",
-                                 false, false, NULL, &mca_oob_base_exclude);
-
   param = mca_base_param_reg_int_name("orte", "timing",
                                       "Request that critical timing loops be measured",
                                       false, false, 0, &value);
