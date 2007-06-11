@@ -38,7 +38,8 @@
 */
 int orte_wakeup(orte_jobid_t job) {
     int rc;
-    orte_vpid_t root, range;
+    orte_jobid_t root;
+    orte_vpid_t range;
     char *segment;
     orte_std_cntr_t num;
     char *tokens[] = {
