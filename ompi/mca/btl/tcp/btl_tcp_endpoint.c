@@ -469,7 +469,7 @@ static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_en
     }
     ORTE_PROCESS_NAME_NTOH(guid);
     /* compare this to the expected values */
-    if(memcmp(&btl_proc->proc_name, &guid, sizeof(orte_process_name_t)) != 0) {
+    if (0 != orte_ns.compare_fields(ORTE_NS_CMP_ALL, &btl_proc->proc_name, &guid)) {
         BTL_ERROR(("received unexpected process identifier [%lu,%lu,%lu]", 
                    ORTE_NAME_ARGS(&guid)));
         mca_btl_tcp_endpoint_close(btl_endpoint);

@@ -24,7 +24,8 @@
 #include "orte/orte_constants.h"
 #include "opal/util/output.h"
 #include "orte/class/orte_proc_table.h"
-
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/ns/ns_types.h"
 
 /*
  *  orte_process_name_hash_node_t
@@ -44,11 +45,13 @@ static OBJ_CLASS_INSTANCE(
     NULL, 
     NULL);
 
+#define GET_KEY(proc) \
+    ( (((uint32_t) proc->cellid) << 24) + (((uint32_t) proc->jobid) << 16) + ((uint32_t) proc->vpid) )
 
 void* orte_hash_table_get_proc(opal_hash_table_t* ht, 
     const orte_process_name_t* proc)
 {
-    uint32_t key = (proc->cellid << 24) + (proc->jobid << 16) + proc->vpid;
+    uint32_t key = GET_KEY(proc);
     opal_list_t* list = ht->ht_table + (key & ht->ht_mask);
     orte_proc_hash_node_t *node;
 
@@ -62,7 +65,7 @@ void* orte_hash_table_get_proc(opal_hash_table_t* ht,
     for(node =  (orte_proc_hash_node_t*)opal_list_get_first(list);
         node != (orte_proc_hash_node_t*)opal_list_get_end(list);
         node =  (orte_proc_hash_node_t*)opal_list_get_next(node)) {
-        if (memcmp(&node->hn_key,proc,sizeof(orte_process_name_t)) == 0) {
+        if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &node->hn_key, proc)) {
             return node->hn_value;
         }
     } 
@@ -75,7 +78,7 @@ int orte_hash_table_set_proc(
     const orte_process_name_t* proc, 
     void* value)
 {
-    uint32_t key = (proc->cellid << 24) + (proc->jobid << 16) + proc->vpid;
+    uint32_t key = GET_KEY(proc);
     opal_list_t* list = ht->ht_table + (key & ht->ht_mask);
     orte_proc_hash_node_t *node;
 
@@ -89,7 +92,7 @@ int orte_hash_table_set_proc(
     for(node =  (orte_proc_hash_node_t*)opal_list_get_first(list);
         node != (orte_proc_hash_node_t*)opal_list_get_end(list);
         node =  (orte_proc_hash_node_t*)opal_list_get_next(node)) {
-        if (memcmp(&node->hn_key,proc,sizeof(orte_process_name_t)) == 0) {
+        if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &node->hn_key, proc)) {
             node->hn_value = value;
             return ORTE_SUCCESS;
         }
@@ -113,7 +116,7 @@ int orte_hash_table_remove_proc(
     opal_hash_table_t* ht, 
     const orte_process_name_t* proc)
 {
-    uint32_t key = (proc->cellid << 24) + (proc->jobid << 16) + proc->vpid;
+    uint32_t key = GET_KEY(proc);
     opal_list_t* list = ht->ht_table + (key & ht->ht_mask);
     orte_proc_hash_node_t *node;
 
@@ -127,7 +130,7 @@ int orte_hash_table_remove_proc(
     for(node =  (orte_proc_hash_node_t*)opal_list_get_first(list);
         node != (orte_proc_hash_node_t*)opal_list_get_end(list);
         node =  (orte_proc_hash_node_t*)opal_list_get_next(node)) {
-        if (memcmp(&node->hn_key,proc,sizeof(orte_process_name_t)) == 0) {
+        if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &node->hn_key, proc)) {
             opal_list_remove_item(list, (opal_list_item_t*)node);
             opal_list_append(&ht->ht_nodes, (opal_list_item_t*)node);
             ht->ht_size--;
