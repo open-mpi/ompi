@@ -118,10 +118,10 @@ typedef struct orte_process_name_t orte_process_name_t;
 /*
  * define invalid values
  */
-#define ORTE_CELLID_INVALID     -999
-#define ORTE_JOBID_INVALID      -999
-#define ORTE_VPID_INVALID       -999
-#define ORTE_NODEID_INVALID     -999
+#define ORTE_CELLID_INVALID     (ORTE_CELLID_MIN + 1)
+#define ORTE_JOBID_INVALID      (ORTE_JOBID_MIN + 1)
+#define ORTE_VPID_INVALID       (ORTE_VPID_MIN + 1)
+#define ORTE_NODEID_INVALID     (ORTE_NODEID_MIN + 1)
 
 /*
  * define wildcard values  (should be -1)
@@ -152,8 +152,8 @@ ORTE_DECLSPEC extern orte_process_name_t orte_ns_name_my_hnp;  /** instantiated 
  * @param name
  */
 #define ORTE_PROCESS_NAME_HTON(n) \
-    n.cellid = htonl(n.cellid); \
-    n.jobid = htonl(n.jobid); \
+    n.cellid = htonl(n.cellid);   \
+    n.jobid = htonl(n.jobid);     \
     n.vpid = htonl(n.vpid);  
 
 /**
@@ -161,9 +161,9 @@ ORTE_DECLSPEC extern orte_process_name_t orte_ns_name_my_hnp;  /** instantiated 
  *
  * @param name
  */
-#define ORTE_PROCESS_NAME_NTOH(n) \
-    n.cellid = ntohl(n.cellid); \
-    n.jobid = ntohl(n.jobid); \
+#define ORTE_PROCESS_NAME_NTOH(n)              \
+    n.cellid = ntohl(n.cellid);                \
+    n.jobid = ntohl(n.jobid);                  \
     n.vpid = ntohl(n.vpid);  
 
 

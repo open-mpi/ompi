@@ -230,7 +230,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     peer = (mca_oob_tcp_peer_t*)orte_hash_table_get_proc(
        &mca_oob_tcp_component.tcp_peers, name);
-    if(NULL != peer && memcmp(&peer->peer_name,name,sizeof(peer->peer_name)) == 0) {
+    if (NULL != peer && 0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &peer->peer_name, name)) {
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
         return peer;
     }
@@ -690,7 +690,7 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
 #endif
 
     /* if we lose the connection to the seed - abort */
-    if(memcmp(&peer->peer_name,ORTE_PROC_MY_HNP,sizeof(orte_process_name_t)) == 0) {
+    if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &peer->peer_name, ORTE_PROC_MY_HNP)) {
         /* If we are not already inside orte_finalize, then call abort */
         if (ORTE_UNIVERSE_STATE_FINALIZE > orte_universe_info.state) {
             /* Should free the peer lock before we abort so we don't 
@@ -826,7 +826,7 @@ static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer, int sd)
     }
 
     /* compare the peers name to the expected value */
-    if(memcmp(&peer->peer_name, &hdr.msg_src, sizeof(orte_process_name_t)) != 0) {
+    if (0 != orte_ns.compare_fields(ORTE_NS_CMP_ALL, &peer->peer_name, &hdr.msg_src)) {
         opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_connect_ack: "
             "received unexpected process identifier [%ld,%ld,%ld]\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
