@@ -47,7 +47,7 @@ void print_double_mat( unsigned int N, double* mat );
 ompi_datatype_t* lower_matrix( unsigned int mat_size );
 
 
-#ifdef OMPI_C_HAVE_VISIBILITY
+#if OMPI_C_HAVE_VISIBILITY
 /**
  * empty dummy function for the case the we use visibility and cannot access the 
  * real one.
@@ -56,7 +56,7 @@ void ompi_ddt_dump( const ompi_datatype_t* pData )
 {
     printf("**** Compile without visibility of you want to see a dump ****\n");
 }
-#endif 
+#endif
 
 /**
  * Cache cleanup.
