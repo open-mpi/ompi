@@ -284,7 +284,7 @@ void orte_iof_svc_sub_ack(
     /* If we're closing and there's no longer anyone subscribed,
        then we're done. */
 
-    if (close && first) {
+    if (do_close && first) {
         return;
     }
 
