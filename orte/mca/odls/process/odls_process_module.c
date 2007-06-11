@@ -555,6 +555,7 @@ static int orte_odls_process_fork_local_proc(
     char** environ_copy;
     char *param, *param2;
     char *uri;
+    size_t num_processors;
 
     /* should pull this information from MPIRUN instead of going with
        default */
@@ -670,8 +671,12 @@ static int orte_odls_process_fork_local_proc(
     opal_setenv(param, orte_system_info.nodename, true, &environ_copy);
     free(param);
 
+    opal_paffinity_base_get_num_processors(&rc);
+    num_processors = (size_t)rc;
     /* push name into environment */
-    orte_ns_nds_env_put(child->name, vpid_start, vpid_range,
+    orte_ns_nds_env_put(child->name, vpid_start,
+                        num_processors,vpid_range,
+                        orte_process_info.num_local_procs,
                         &environ_copy);
 
     if (context->argv == NULL) {
