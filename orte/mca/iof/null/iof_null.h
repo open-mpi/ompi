@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,9 +23,8 @@
 #define ORTE_IOF_NULL_H
 
 #include "orte/mca/iof/iof.h"
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+
+BEGIN_C_DECLS
 
 int orte_iof_null_finalize(void);
 
@@ -134,7 +134,7 @@ int orte_iof_null_ft_event( int state );
  */
 struct orte_iof_null_component_t {
     orte_iof_base_component_t super;
-    int null_debug;
+    int null_override;
     struct iovec null_iov[1];
 };
 typedef struct orte_iof_null_component_t orte_iof_null_component_t;
@@ -142,8 +142,6 @@ typedef struct orte_iof_null_component_t orte_iof_null_component_t;
 ORTE_MODULE_DECLSPEC extern orte_iof_null_component_t mca_iof_null_component;
 extern orte_iof_base_module_t orte_iof_null_module;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif
