@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +32,6 @@
  * Local functions
  */
 static int orte_iof_null_open(void);
-static int orte_iof_null_close(void);
 static orte_iof_base_module_t* orte_iof_null_init(
     int* priority, 
     bool *allow_multi_user_threads,
@@ -54,7 +54,7 @@ orte_iof_null_component_t mca_iof_null_component = {
         ORTE_MINOR_VERSION,  /* MCA component minor version */
         ORTE_RELEASE_VERSION,  /* MCA component release version */
         orte_iof_null_open,  /* component open  */
-        orte_iof_null_close  /* component close */
+        NULL
       },
 
       /* Next the MCA v1.0.0 component meta data */
@@ -69,26 +69,16 @@ orte_iof_null_component_t mca_iof_null_component = {
     /*{{NULL, 0}}*/
 };
 
-static  int orte_iof_null_param_register_int(
-    const char* param_name,
-    int default_value)
-{
-    int id = mca_base_param_register_int("iof","null",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-
-
-/**
-  * component open/close/init function
-  */
+/*
+ * component open/init function
+ */
 static int orte_iof_null_open(void)
 {
-    mca_iof_null_component.null_debug = 
-        orte_iof_null_param_register_int("debug", 1);
-    mca_iof_null_component.null_debug = 
-        orte_iof_null_param_register_int("override", 0);
+    mca_base_param_reg_int(&mca_iof_null_component.super.iof_version,
+                           "override",
+                           "Whether to use the null IOF component or not",
+                           false, false, 0, 
+                           &mca_iof_null_component.null_override);
     return ORTE_SUCCESS;
 }
 
@@ -97,15 +87,10 @@ static orte_iof_base_module_t*
 orte_iof_null_init(int* priority, bool *allow_multi_user_threads, 
                    bool *have_hidden_threads)
 {
-    int param, override;
-
-    param = mca_base_param_find("iof", "null", "override");
-    mca_base_param_lookup_int(param, &override);
-
     /* Only be used in a PBS environment -- this component is
        currently *only* for debugging */
 
-    if (0 != override ||
+    if (0 != mca_iof_null_component.null_override ||
         (NULL != getenv("PBS_ENVIRONMENT") &&
          NULL != getenv("PBS_JOBID"))) {
         *priority = 50;
@@ -117,14 +102,3 @@ orte_iof_null_init(int* priority, bool *allow_multi_user_threads,
 
     return NULL;
 }
-
-/**
- *
- */
-
-static int orte_iof_null_close(void)
-{
-    return ORTE_SUCCESS;
-}
-
-

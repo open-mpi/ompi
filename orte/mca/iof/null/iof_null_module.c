@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,10 +38,10 @@
 orte_iof_base_module_t orte_iof_null_module = {
     orte_iof_null_publish,
     orte_iof_null_unpublish,
-    orte_iof_null_push,
-    orte_iof_null_pull,
     orte_iof_null_subscribe,
     orte_iof_null_unsubscribe,
+    orte_iof_null_push,
+    orte_iof_null_pull,
     orte_iof_base_flush,
     orte_iof_null_finalize,
     orte_iof_null_ft_event
