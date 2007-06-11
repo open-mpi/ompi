@@ -24,8 +24,6 @@
 m4_include(opal/mca/paffinity/linux/plpa/config/plpa.m4)
 
 AC_DEFUN([MCA_paffinity_linux_CONFIG],[
-    paffinity_linux_CPPFLAGS="-Iopal/mca/paffinity/linux/plpa/src/libplpa"
-    AC_SUBST([paffinity_linux_CPPFLAGS])
     PLPA_SET_SYMBOL_PREFIX([opal_paffinity_linux_plpa_])
     PLPA_INCLUDED([opal/mca/paffinity/linux/plpa])
     PLPA_INIT([$1],[$2])
