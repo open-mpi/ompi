@@ -9,7 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * $COPYRIGHT$
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  *
  * Additional copyrights may follow
  *
