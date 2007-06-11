@@ -60,7 +60,6 @@ ompi_mtl_mx_iprobe(struct mca_mtl_base_module_t* mtl,
 
     if (result) {
         if(MPI_STATUS_IGNORE != status) { 
-            status->MPI_ERROR = OMPI_SUCCESS;
             MX_GET_SRC(mx_status.match_info, status->MPI_SOURCE);
             MX_GET_TAG(mx_status.match_info, status->MPI_TAG); 
             status->_count = mx_status.msg_length;
