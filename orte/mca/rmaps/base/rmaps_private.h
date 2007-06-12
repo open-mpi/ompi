@@ -189,7 +189,7 @@ void orte_rmaps_base_std_obj_release(orte_data_value_t *value);
 /* JOB_MAP */
 int orte_rmaps_base_copy_map(orte_job_map_t **dest, orte_job_map_t *src, orte_data_type_t type);
 int orte_rmaps_base_compare_map(orte_job_map_t *value1, orte_job_map_t *value2, orte_data_type_t type);
-int orte_rmaps_base_pack_map(orte_buffer_t *buffer, void *src,
+int orte_rmaps_base_pack_map(orte_buffer_t *buffer, const void *src,
                             orte_std_cntr_t num_vals, orte_data_type_t type);
 int orte_rmaps_base_print_map(char **output, char *prefix, orte_job_map_t *src, orte_data_type_t type);
 int orte_rmaps_base_size_map(size_t *size, orte_job_map_t *src, orte_data_type_t type);
@@ -199,7 +199,7 @@ int orte_rmaps_base_unpack_map(orte_buffer_t *buffer, void *dest,
 /* MAPPED_PROC */
 int orte_rmaps_base_copy_mapped_proc(orte_mapped_proc_t **dest, orte_mapped_proc_t *src, orte_data_type_t type);
 int orte_rmaps_base_compare_mapped_proc(orte_mapped_proc_t *value1, orte_mapped_proc_t *value2, orte_data_type_t type);
-int orte_rmaps_base_pack_mapped_proc(orte_buffer_t *buffer, void *src,
+int orte_rmaps_base_pack_mapped_proc(orte_buffer_t *buffer, const void *src,
                              orte_std_cntr_t num_vals, orte_data_type_t type);
 int orte_rmaps_base_print_mapped_proc(char **output, char *prefix, orte_mapped_proc_t *src, orte_data_type_t type);
 int orte_rmaps_base_size_mapped_proc(size_t *size, orte_mapped_proc_t *src, orte_data_type_t type);
@@ -209,7 +209,7 @@ int orte_rmaps_base_unpack_mapped_proc(orte_buffer_t *buffer, void *dest,
 /* MAPPED_NODE */
 int orte_rmaps_base_copy_mapped_node(orte_mapped_node_t **dest, orte_mapped_node_t *src, orte_data_type_t type);
 int orte_rmaps_base_compare_mapped_node(orte_mapped_node_t *value1, orte_mapped_node_t *value2, orte_data_type_t type);
-int orte_rmaps_base_pack_mapped_node(orte_buffer_t *buffer, void *src,
+int orte_rmaps_base_pack_mapped_node(orte_buffer_t *buffer, const void *src,
                              orte_std_cntr_t num_vals, orte_data_type_t type);
 int orte_rmaps_base_print_mapped_node(char **output, char *prefix, orte_mapped_node_t *src, orte_data_type_t type);
 int orte_rmaps_base_size_mapped_node(size_t *size, orte_mapped_node_t *src, orte_data_type_t type);

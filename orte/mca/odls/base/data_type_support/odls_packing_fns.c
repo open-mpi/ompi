@@ -27,7 +27,7 @@
 /*
  * ORTE_DAEMON_CMD
  */
-int orte_odls_pack_daemon_cmd(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_vals,
+int orte_odls_pack_daemon_cmd(orte_buffer_t *buffer, const void *src, orte_std_cntr_t num_vals,
                               orte_data_type_t type)
 {
     int ret;

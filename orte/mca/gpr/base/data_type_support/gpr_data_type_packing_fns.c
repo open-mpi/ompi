@@ -33,7 +33,7 @@
 /*
  * GPR CMD
  */
-int orte_gpr_base_pack_cmd(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_cmd(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
@@ -50,7 +50,7 @@ int orte_gpr_base_pack_cmd(orte_buffer_t *buffer, void *src,
 /*
  * SUBSCRIPTION ID
  */
-int orte_gpr_base_pack_subscription_id(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_subscription_id(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
@@ -67,7 +67,7 @@ int orte_gpr_base_pack_subscription_id(orte_buffer_t *buffer, void *src,
 /*
  * TRIGGER ID
  */
-int orte_gpr_base_pack_trigger_id(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_trigger_id(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
@@ -84,7 +84,7 @@ int orte_gpr_base_pack_trigger_id(orte_buffer_t *buffer, void *src,
 /*
  * NOTIFY ACTION
  */
-int orte_gpr_base_pack_notify_action(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_notify_action(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
@@ -101,7 +101,7 @@ int orte_gpr_base_pack_notify_action(orte_buffer_t *buffer, void *src,
 /*
  * TRIGGER ACTION
  */
-int orte_gpr_base_pack_trigger_action(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_trigger_action(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
@@ -118,7 +118,7 @@ int orte_gpr_base_pack_trigger_action(orte_buffer_t *buffer, void *src,
 /*
  * ADDR MODE
  */
-int orte_gpr_base_pack_addr_mode(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_addr_mode(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
@@ -135,7 +135,7 @@ int orte_gpr_base_pack_addr_mode(orte_buffer_t *buffer, void *src,
 /*
  * NOTIFY MSG TYPE
  */
-int orte_gpr_base_pack_notify_msg_type(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_notify_msg_type(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
@@ -153,7 +153,7 @@ int orte_gpr_base_pack_notify_msg_type(orte_buffer_t *buffer, void *src,
 /*
  * KEYVAL
  */
-int orte_gpr_base_pack_keyval(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_keyval(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
@@ -187,7 +187,7 @@ int orte_gpr_base_pack_keyval(orte_buffer_t *buffer, void *src,
 /*
  * VALUE
  */
-int orte_gpr_base_pack_value(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_value(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
@@ -252,7 +252,7 @@ int orte_gpr_base_pack_value(orte_buffer_t *buffer, void *src,
 /*
  * SUBSCRIPTION
  */
-int orte_gpr_base_pack_subscription(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_subscription(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
@@ -310,7 +310,7 @@ int orte_gpr_base_pack_subscription(orte_buffer_t *buffer, void *src,
 /*
  * TRIGGER
  */
-int orte_gpr_base_pack_trigger(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_trigger(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
@@ -366,7 +366,7 @@ int orte_gpr_base_pack_trigger(orte_buffer_t *buffer, void *src,
 /*
  * NOTIFY DATA
  */
-int orte_gpr_base_pack_notify_data(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_notify_data(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
@@ -433,7 +433,7 @@ int orte_gpr_base_pack_notify_data(orte_buffer_t *buffer, void *src,
 /*
  * NOTIFY MSG
  */
-int orte_gpr_base_pack_notify_msg(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_notify_msg(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;

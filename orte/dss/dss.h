@@ -108,7 +108,7 @@ typedef int (*orte_dss_set_buffer_type_fn_t)(orte_buffer_t *buffer, orte_dss_buf
  * status_code = orte_dss.pack(buffer, &src, 1, ORTE_INT32);
  * @endcode
  */
-typedef int (*orte_dss_pack_fn_t)(orte_buffer_t *buffer, void *src,
+typedef int (*orte_dss_pack_fn_t)(orte_buffer_t *buffer, const void *src,
                                   orte_std_cntr_t num_values,
                                   orte_data_type_t type);
 

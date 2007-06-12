@@ -33,7 +33,7 @@
 /*
  * NAME
  */
-int orte_ns_base_pack_name(orte_buffer_t *buffer, void *src,
+int orte_ns_base_pack_name(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
@@ -109,7 +109,7 @@ int orte_ns_base_pack_name(orte_buffer_t *buffer, void *src,
 /*
  * CELLID
  */
-int orte_ns_base_pack_cellid(orte_buffer_t *buffer, void *src,
+int orte_ns_base_pack_cellid(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;
@@ -143,7 +143,7 @@ int orte_ns_base_pack_nodeid(orte_buffer_t *buffer, void *src,
 /*
  * JOBID
  */
-int orte_ns_base_pack_jobid(orte_buffer_t *buffer, void *src,
+int orte_ns_base_pack_jobid(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;
@@ -160,7 +160,7 @@ int orte_ns_base_pack_jobid(orte_buffer_t *buffer, void *src,
 /*
  * VPID
  */
-int orte_ns_base_pack_vpid(orte_buffer_t *buffer, void *src,
+int orte_ns_base_pack_vpid(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;

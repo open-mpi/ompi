@@ -33,7 +33,7 @@
 /*
  * JOB_MAP
  */
-int orte_rmaps_base_pack_map(orte_buffer_t *buffer, void *src,
+int orte_rmaps_base_pack_map(orte_buffer_t *buffer, const void *src,
                              orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
@@ -123,7 +123,7 @@ int orte_rmaps_base_pack_map(orte_buffer_t *buffer, void *src,
 /*
  * MAPPED_PROC
  */
-int orte_rmaps_base_pack_mapped_proc(orte_buffer_t *buffer, void *src,
+int orte_rmaps_base_pack_mapped_proc(orte_buffer_t *buffer, const void *src,
                                      orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
@@ -173,7 +173,7 @@ int orte_rmaps_base_pack_mapped_proc(orte_buffer_t *buffer, void *src,
 /*
  * MAPPED_NODE
  */
-int orte_rmaps_base_pack_mapped_node(orte_buffer_t *buffer, void *src,
+int orte_rmaps_base_pack_mapped_node(orte_buffer_t *buffer, const void *src,
                                      orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
