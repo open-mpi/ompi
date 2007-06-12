@@ -277,43 +277,43 @@ typedef uint8_t orte_gpr_cmd_flag_t;
     ORTE_DECLSPEC int orte_gpr_base_unpack_decrement_value(orte_buffer_t *buffer, int *ret);
 
 /* GPR DATA TYPE PACKING FUNCTIONS */
-int orte_gpr_base_pack_cmd(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_cmd(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
-int orte_gpr_base_pack_subscription_id(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_subscription_id(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
-int orte_gpr_base_pack_trigger_id(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_trigger_id(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
-int orte_gpr_base_pack_notify_action(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_notify_action(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
-int orte_gpr_base_pack_trigger_action(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_trigger_action(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
-int orte_gpr_base_pack_notify_msg_type(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_notify_msg_type(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
-int orte_gpr_base_pack_addr_mode(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_addr_mode(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
-int orte_gpr_base_pack_keyval(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_keyval(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
-int orte_gpr_base_pack_value(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_value(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
-int orte_gpr_base_pack_subscription(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_subscription(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
-int orte_gpr_base_pack_trigger(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_trigger(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
-int orte_gpr_base_pack_notify_data(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_notify_data(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
-int orte_gpr_base_pack_notify_msg(orte_buffer_t *buffer, void *src,
+int orte_gpr_base_pack_notify_msg(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
 /* GPR DATA TYPE UNPACKING FUNCTIONS */

@@ -40,7 +40,7 @@ ORTE_DECLSPEC int orte_rml_base_close(void);
  */
 ORTE_DECLSPEC int orte_rml_base_compare_tags(orte_rml_tag_t *value1, orte_rml_tag_t *value2, orte_data_type_t type);
 ORTE_DECLSPEC int orte_rml_base_copy_tag(orte_rml_tag_t **dest, orte_rml_tag_t *src, orte_data_type_t type);
-ORTE_DECLSPEC int orte_rml_base_pack_tag(orte_buffer_t *buffer, void *src,
+ORTE_DECLSPEC int orte_rml_base_pack_tag(orte_buffer_t *buffer, const void *src,
                                          orte_std_cntr_t num_vals, orte_data_type_t type);
 ORTE_DECLSPEC int orte_rml_base_print_tag(char **output, char *prefix, orte_rml_tag_t *src, orte_data_type_t type);
 ORTE_DECLSPEC void orte_rml_base_std_obj_release(orte_data_value_t *value);

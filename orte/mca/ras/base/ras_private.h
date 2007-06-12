@@ -130,7 +130,7 @@ void orte_ras_base_recv(int status, orte_process_name_t* sender,
 /** Local data type functions */
 int orte_ras_base_copy_node(orte_ras_node_t **dest, orte_ras_node_t *src, orte_data_type_t type);
 int orte_ras_base_compare_node(orte_ras_node_t *value1, orte_ras_node_t *value2, orte_data_type_t type);
-int orte_ras_base_pack_node(orte_buffer_t *buffer, void *src,
+int orte_ras_base_pack_node(orte_buffer_t *buffer, const void *src,
                             orte_std_cntr_t num_vals, orte_data_type_t type);
 int orte_ras_base_print_node(char **output, char *prefix, orte_ras_node_t *src, orte_data_type_t type);
 void orte_ras_base_std_obj_release(orte_data_value_t *value);

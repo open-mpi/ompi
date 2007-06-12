@@ -81,7 +81,7 @@ int orte_odls_compare_daemon_cmd(orte_daemon_cmd_flag_t *value1, orte_daemon_cmd
 
 int orte_odls_copy_daemon_cmd(orte_daemon_cmd_flag_t **dest, orte_daemon_cmd_flag_t *src, orte_data_type_t type);
 
-int orte_odls_pack_daemon_cmd(orte_buffer_t *buffer, void *src,
+int orte_odls_pack_daemon_cmd(orte_buffer_t *buffer, const void *src,
                               orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_odls_print_daemon_cmd(char **output, char *prefix, orte_daemon_cmd_flag_t *src, orte_data_type_t type);

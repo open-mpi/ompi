@@ -120,4 +120,4 @@ typedef uint8_t orte_pls_cmd_flag_t;
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-#endif
+#endif  /* MCA_PLS_PRIVATE_H */

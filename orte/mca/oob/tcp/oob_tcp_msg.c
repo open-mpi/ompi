@@ -275,7 +275,7 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
 
 /*
  * Receives message data.
- * @param msg the message to be recieved into
+ * @param msg the message to be received into
  * @param peer the peer to receive from
  * @retval true if the whole message was received
  * @retval false if the whole message was not received

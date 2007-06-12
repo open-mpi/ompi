@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -30,7 +30,7 @@
 
 #include "orte/dss/dss_internal.h"
 
-int orte_dss_pack(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_vals,
+int orte_dss_pack(orte_buffer_t *buffer, const void *src, orte_std_cntr_t num_vals,
                   orte_data_type_t type)
 {
     int rc;
@@ -61,7 +61,7 @@ int orte_dss_pack(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_vals,
     return rc;
 }
 
-int orte_dss_pack_buffer(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_vals,
+int orte_dss_pack_buffer(orte_buffer_t *buffer, const void *src, orte_std_cntr_t num_vals,
                   orte_data_type_t type)
 {
     int rc;
@@ -98,7 +98,7 @@ int orte_dss_pack_buffer(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_v
 /*
  * BOOL
  */
-int orte_dss_pack_bool(orte_buffer_t *buffer, void *src,
+int orte_dss_pack_bool(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;
@@ -125,7 +125,7 @@ int orte_dss_pack_bool(orte_buffer_t *buffer, void *src,
 /*
  * INT
  */
-int orte_dss_pack_int(orte_buffer_t *buffer, void *src,
+int orte_dss_pack_int(orte_buffer_t *buffer, const void *src,
                       orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;
@@ -152,7 +152,7 @@ int orte_dss_pack_int(orte_buffer_t *buffer, void *src,
 /*
  * SIZE_T
  */
-int orte_dss_pack_sizet(orte_buffer_t *buffer, void *src,
+int orte_dss_pack_sizet(orte_buffer_t *buffer, const void *src,
                         orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;
@@ -179,7 +179,7 @@ int orte_dss_pack_sizet(orte_buffer_t *buffer, void *src,
 /*
  * PID_T
  */
-int orte_dss_pack_pid(orte_buffer_t *buffer, void *src,
+int orte_dss_pack_pid(orte_buffer_t *buffer, const void *src,
                       orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;
@@ -209,7 +209,7 @@ int orte_dss_pack_pid(orte_buffer_t *buffer, void *src,
 /*
  * NULL
  */
-int orte_dss_pack_null(orte_buffer_t *buffer, void *src,
+int orte_dss_pack_null(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     char null=0x00;
@@ -235,7 +235,7 @@ int orte_dss_pack_null(orte_buffer_t *buffer, void *src,
 /*
  * BYTE, CHAR, INT8
  */
-int orte_dss_pack_byte(orte_buffer_t *buffer, void *src,
+int orte_dss_pack_byte(orte_buffer_t *buffer, const void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     char *dst;
@@ -260,7 +260,7 @@ int orte_dss_pack_byte(orte_buffer_t *buffer, void *src,
 /*
  * INT16
  */
-int orte_dss_pack_int16(orte_buffer_t *buffer, void *src,
+int orte_dss_pack_int16(orte_buffer_t *buffer, const void *src,
                         orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     orte_std_cntr_t i;
@@ -288,7 +288,7 @@ int orte_dss_pack_int16(orte_buffer_t *buffer, void *src,
 /*
  * INT32
  */
-int orte_dss_pack_int32(orte_buffer_t *buffer, void *src,
+int orte_dss_pack_int32(orte_buffer_t *buffer, const void *src,
                         orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     orte_std_cntr_t i;
@@ -316,7 +316,7 @@ int orte_dss_pack_int32(orte_buffer_t *buffer, void *src,
 /*
  * INT64
  */
-int orte_dss_pack_int64(orte_buffer_t *buffer, void *src,
+int orte_dss_pack_int64(orte_buffer_t *buffer, const void *src,
                         orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     orte_std_cntr_t i;
@@ -345,7 +345,7 @@ int orte_dss_pack_int64(orte_buffer_t *buffer, void *src,
 /*
  * STRING
  */
-int orte_dss_pack_string(orte_buffer_t *buffer, void *src,
+int orte_dss_pack_string(orte_buffer_t *buffer, const void *src,
                          orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret = ORTE_SUCCESS;
@@ -381,7 +381,7 @@ int orte_dss_pack_string(orte_buffer_t *buffer, void *src,
 /*
  * ORTE_STD_CNTR
  */
-int orte_dss_pack_std_cntr(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_vals,
+int orte_dss_pack_std_cntr(orte_buffer_t *buffer, const void *src, orte_std_cntr_t num_vals,
                             orte_data_type_t type)
 {
     int ret;
@@ -397,7 +397,7 @@ int orte_dss_pack_std_cntr(orte_buffer_t *buffer, void *src, orte_std_cntr_t num
 /*
  * ORTE_DATA_TYPE
  */
-int orte_dss_pack_data_type(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_vals,
+int orte_dss_pack_data_type(orte_buffer_t *buffer, const void *src, orte_std_cntr_t num_vals,
                              orte_data_type_t type)
 {
     int ret;
@@ -413,7 +413,7 @@ int orte_dss_pack_data_type(orte_buffer_t *buffer, void *src, orte_std_cntr_t nu
 /*
  * ORTE_DATA_VALUE
  */
-int orte_dss_pack_data_value(orte_buffer_t *buffer, void *src, orte_std_cntr_t num, orte_data_type_t type)
+int orte_dss_pack_data_value(orte_buffer_t *buffer, const void *src, orte_std_cntr_t num, orte_data_type_t type)
 {
     orte_dss_type_info_t *info;
     orte_data_value_t **sdv;
@@ -470,7 +470,7 @@ int orte_dss_pack_data_value(orte_buffer_t *buffer, void *src, orte_std_cntr_t n
 /*
  * ORTE_CKPT_CMD
  */
-int orte_dss_pack_ckpt_cmd(orte_buffer_t *buffer, void *src, orte_std_cntr_t num,
+int orte_dss_pack_ckpt_cmd(orte_buffer_t *buffer, const void *src, orte_std_cntr_t num,
                            orte_data_type_t type)
 {
     size_t required;
@@ -519,7 +519,7 @@ int orte_dss_pack_ckpt_cmd(orte_buffer_t *buffer, void *src, orte_std_cntr_t num
 /*
  * ORTE_BYTE_OBJECT
  */
-int orte_dss_pack_byte_object(orte_buffer_t *buffer, void *src, orte_std_cntr_t num,
+int orte_dss_pack_byte_object(orte_buffer_t *buffer, const void *src, orte_std_cntr_t num,
                              orte_data_type_t type)
 {
     orte_byte_object_t **sbyteptr;

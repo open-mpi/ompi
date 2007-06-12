@@ -26,7 +26,7 @@
 /*
  * RML TAG
  */
-int orte_rml_base_pack_tag(orte_buffer_t *buffer, void *src,
+int orte_rml_base_pack_tag(orte_buffer_t *buffer, const void *src,
                            orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
