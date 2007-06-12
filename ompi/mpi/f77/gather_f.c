@@ -73,8 +73,9 @@ void mpi_gather_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
         sendbuf = MPI_IN_PLACE;
     }
 
-    *ierr = OMPI_INT_2_FINT(MPI_Gather(sendbuf, OMPI_FINT_2_INT(*sendcount),
-				       c_sendtype, recvbuf, 
+    *ierr = OMPI_INT_2_FINT(MPI_Gather(OMPI_ADDR(sendbuf),
+                                       OMPI_FINT_2_INT(*sendcount),
+				       c_sendtype, OMPI_ADDR(recvbuf), 
 				       OMPI_FINT_2_INT(*recvcount),
 				       c_recvtype,
 				       OMPI_FINT_2_INT(*root),

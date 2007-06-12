@@ -74,7 +74,7 @@ void mpi_scan_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
         sendbuf = MPI_IN_PLACE;
     }
 
-    *ierr = OMPI_INT_2_FINT(MPI_Scan(sendbuf, recvbuf,
+    *ierr = OMPI_INT_2_FINT(MPI_Scan(OMPI_ADDR(sendbuf), OMPI_ADDR(recvbuf),
 				     OMPI_FINT_2_INT(*count),
 				     c_type, c_op, 
 				     c_comm));

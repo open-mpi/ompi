@@ -19,6 +19,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/f77/bindings.h"
+#include "ompi/mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_ALLTOALL = mpi_alltoall_f
@@ -68,10 +69,10 @@ void mpi_alltoall_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
     c_sendtype = MPI_Type_f2c(*sendtype);
     c_recvtype = MPI_Type_f2c(*recvtype);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Alltoall(sendbuf,
+    *ierr = OMPI_INT_2_FINT(MPI_Alltoall(OMPI_ADDR(sendbuf),
 					  OMPI_FINT_2_INT(*sendcount),
 					  c_sendtype, 
-					  recvbuf, 
+					  OMPI_ADDR(recvbuf),
 					  OMPI_FINT_2_INT(*recvcount),
 					  c_recvtype, c_comm));
 }

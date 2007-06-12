@@ -73,10 +73,10 @@ void mpi_allgather_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
         sendbuf = MPI_IN_PLACE;
     }
 
-    *ierr = OMPI_INT_2_FINT(MPI_Allgather(sendbuf,
+    *ierr = OMPI_INT_2_FINT(MPI_Allgather(OMPI_ADDR(sendbuf),
 					  OMPI_FINT_2_INT(*sendcount),
 					  c_sendtype, 
-					  recvbuf,
+					  OMPI_ADDR(recvbuf),
 					  OMPI_FINT_2_INT(*recvcount),
 					  c_recvtype, c_comm));
 
