@@ -164,10 +164,9 @@ void orte_iof_svc_sub_ack(
     bool do_close)
 {
     opal_list_item_t *s_item;
-    uint32_t seq_min;
+    uint32_t seq_min = UINT32_MAX;
     uint32_t last_ack_forwarded = 0;
     bool has_been_acked = false;
-    bool first = true;
     union {
         uint32_t uval;
         void *vval;
@@ -198,7 +197,8 @@ void orte_iof_svc_sub_ack(
 
         /* If the subscription origin/tag doesn't match the ACK
            origin/tag, skip it */
-        if (orte_ns.compare_fields(sub->origin_mask,&sub->origin_name,&hdr->msg_origin) != 0 ||
+        if (orte_ns.compare_fields(sub->origin_mask,
+                                   &sub->origin_name, &hdr->msg_origin) != 0 ||
             sub->origin_tag != hdr->msg_tag) {
             continue;
         }
@@ -263,28 +263,20 @@ void orte_iof_svc_sub_ack(
             }
 
             /* If we got a valid value, update the seq_min calculation */
-            if (value_set) {
-                /* If this is the first time we got a valid value,
-                   just set it */
-                if (first) {
-                    seq_min = value.uval;
-                    first = false;
-                } 
-                /* Otherwise, only set it if it's a new minimum */
-                else {
-                    if (value.uval < seq_min) {
-                        seq_min = value.uval;
-                    }
-                }
+            if (value_set && value.uval < seq_min) {
+                seq_min = value.uval;
             }
         }
     }
     OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
 
-    /* If we're closing and there's no longer anyone subscribed,
-       then we're done. */
+    /* If nothing changed ACK-wise (including the situation where we
+       are closing and there's no subscriber left to ACK), then we're
+       done.  NOTE: this isn't technically right; if there's no
+       subscribers left, we should do some more cleanup than this.
+       But that's coming in ticket #1049 and/or #1051. */
 
-    if (do_close && first) {
+    if (seq_min == UINT32_MAX) {
         return;
     }
 
