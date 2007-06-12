@@ -452,7 +452,7 @@ int orte_rmaps_base_compute_usage(orte_job_map_t *map, orte_std_cntr_t num_procs
 {
     opal_list_item_t *item, *item2;
     orte_mapped_node_t *mnode;
-    orte_mapped_proc_t *mproc, *psave;
+    orte_mapped_proc_t *mproc, *psave = NULL;
     orte_vpid_t minv, local_rank;
     
     /* set the vpid range for the job */

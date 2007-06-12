@@ -304,11 +304,11 @@ static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
 #endif
     int rc;
     int connect_sd = -1;
-    opal_socklen_t addrlen;
+    opal_socklen_t addrlen = 0;
 
     do {
         /* pick an address in round-robin fashion from the list exported by the peer */
-        if(ORTE_SUCCESS != mca_oob_tcp_addr_get_next(peer->peer_addr, (struct sockaddr_storage*) &inaddr)) {
+        if(ORTE_SUCCESS != (rc = mca_oob_tcp_addr_get_next(peer->peer_addr, (struct sockaddr_storage*) &inaddr))) {
             opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_try_connect: "
                         "mca_oob_tcp_addr_get_next failed with error=%d",
                         ORTE_NAME_ARGS(orte_process_info.my_name),
