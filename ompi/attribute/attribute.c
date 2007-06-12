@@ -406,7 +406,6 @@ static opal_hash_table_t *keyval_hash;
 static ompi_bitmap_t *key_bitmap;
 static unsigned int int_pos = 12345;
 
-#if OMPI_HAVE_THREAD_SUPPORT
 /*
  * Have one lock protect all access to any attribute stuff (keyval
  * hash, key bitmap, attribute hashes on MPI objects, etc.).
@@ -416,7 +415,6 @@ static unsigned int int_pos = 12345;
  * So why bother?
  */
 static opal_mutex_t alock;
-#endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 
 /*
@@ -498,9 +496,7 @@ int ompi_attr_init(void)
         }
     }
 
-#if OMPI_HAVE_THREAD_SUPPORT
     OBJ_CONSTRUCT(&alock, opal_mutex_t);
-#endif
 
     if (OMPI_SUCCESS != (ret = opal_hash_table_init(keyval_hash,
                                                     ATTR_TABLE_SIZE))) {

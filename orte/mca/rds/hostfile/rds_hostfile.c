@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -313,7 +315,7 @@ static int orte_rds_hostfile_parse(const char *hostfile, opal_list_t* existing, 
     int token;
     int rc = ORTE_SUCCESS;
 
-    OPAL_LOCK(&mca_rds_hostfile_component.lock);
+    OPAL_THREAD_LOCK(&mca_rds_hostfile_component.lock);
     
     cur_hostfile_name = strdup(hostfile);
     
@@ -366,7 +368,7 @@ unlock:
         cur_hostfile_name = NULL;
     }
 
-    OPAL_UNLOCK(&mca_rds_hostfile_component.lock);
+    OPAL_THREAD_UNLOCK(&mca_rds_hostfile_component.lock);
     return rc;
 }
 

@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -102,10 +104,16 @@ int mca_pml_ob1_recv(void *addr,
             ompi_request_waiting--;
             opal_mutex_unlock(&ompi_request_lock);
         } else {
+#if OMPI_ENABLE_DEBUG && !OMPI_HAVE_THREAD_SUPPORT
+            OPAL_THREAD_LOCK(&ompi_request_lock);
+#endif 
             ompi_request_waiting++;
             while (recvreq->req_recv.req_base.req_ompi.req_complete == false)
                 opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
             ompi_request_waiting--;
+#if OMPI_ENABLE_DEBUG && !OMPI_HAVE_THREAD_SUPPORT
+            OPAL_THREAD_UNLOCK(&ompi_request_lock);
+#endif 
         }
     }
 

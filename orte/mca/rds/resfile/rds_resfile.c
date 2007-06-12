@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -236,7 +238,7 @@ int orte_rds_resfile_query(orte_jobid_t job)
         return ORTE_SUCCESS;
     }
     
-    OPAL_LOCK(&mca_rds_resfile_component.lock);
+    OPAL_THREAD_LOCK(&mca_rds_resfile_component.lock);
 
     orte_rds_resfile_queried = true;
 
@@ -246,7 +248,7 @@ int orte_rds_resfile_query(orte_jobid_t job)
 
     if (NULL == mca_rds_resfile_component.filename) {  /* no resource file provided */
         /* DO NOT ORTE_ERROR_LOG OR RETURN AN ERROR - THIS IS NOT AN ERROR CONDITION */
-       OPAL_UNLOCK(&mca_rds_resfile_component.lock);
+       OPAL_THREAD_UNLOCK(&mca_rds_resfile_component.lock);
        return ORTE_SUCCESS;
     }
 
@@ -254,7 +256,7 @@ int orte_rds_resfile_query(orte_jobid_t job)
     fp = fopen(mca_rds_resfile_component.filename, "r");
     if (NULL == fp) {
        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-       OPAL_UNLOCK(&mca_rds_resfile_component.lock);
+       OPAL_THREAD_UNLOCK(&mca_rds_resfile_component.lock);
        return ORTE_ERR_NOT_FOUND;
     }
 
@@ -299,7 +301,7 @@ CLEANUP:
     fclose(fp);
     OBJ_DESTRUCT(&orte_rds_resfile_resource_list);
 
-    OPAL_UNLOCK(&mca_rds_resfile_component.lock);
+    OPAL_THREAD_UNLOCK(&mca_rds_resfile_component.lock);
 
     return ORTE_SUCCESS;
 }

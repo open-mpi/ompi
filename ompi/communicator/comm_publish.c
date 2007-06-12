@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,9 +32,7 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rml/rml_types.h"
 
-#if OMPI_HAVE_THREAD_SUPPORT
 static opal_mutex_t ompi_port_lock;
-#endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 #define OMPI_COMM_PORT_KEY  "ompi-port-name"
 

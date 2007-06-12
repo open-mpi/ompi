@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -443,19 +443,19 @@ mca_pml_base_modex_subscribe(orte_process_name_t * name)
     };
 
     /* check for an existing subscription */
-    OPAL_LOCK(&mca_pml_base_modex_lock);
+    OPAL_THREAD_LOCK(&mca_pml_base_modex_lock);
     if (!opal_list_is_empty(&mca_pml_base_modex_subscriptions)) {
         for (item = opal_list_get_first(&mca_pml_base_modex_subscriptions);
              item != opal_list_get_end(&mca_pml_base_modex_subscriptions);
              item = opal_list_get_next(item)) {
             subscription = (mca_pml_base_modex_subscription_t *) item;
             if (subscription->jobid == name->jobid) {
-                OPAL_UNLOCK(&mca_pml_base_modex_lock);
+                OPAL_THREAD_UNLOCK(&mca_pml_base_modex_lock);
                 return OMPI_SUCCESS;
             }
         }
     }
-    OPAL_UNLOCK(&mca_pml_base_modex_lock);
+    OPAL_THREAD_UNLOCK(&mca_pml_base_modex_lock);
 
     /* otherwise - subscribe to get this jobid's contact info */
     jobid = name->jobid;
@@ -521,11 +521,11 @@ mca_pml_base_modex_subscribe(orte_process_name_t * name)
     free(segment);
 
     /* add this jobid to our list of subscriptions */
-    OPAL_LOCK(&mca_pml_base_modex_lock);
+    OPAL_THREAD_LOCK(&mca_pml_base_modex_lock);
     subscription = OBJ_NEW(mca_pml_base_modex_subscription_t);
     subscription->jobid = name->jobid;
     opal_list_append(&mca_pml_base_modex_subscriptions, &subscription->item);
-    OPAL_UNLOCK(&mca_pml_base_modex_lock);
+    OPAL_THREAD_UNLOCK(&mca_pml_base_modex_lock);
     return OMPI_SUCCESS;
 }
 
