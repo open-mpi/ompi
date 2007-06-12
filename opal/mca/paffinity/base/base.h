@@ -25,7 +25,6 @@
 
 #include "opal/mca/paffinity/paffinity.h"
 
-
 /*
  * Global functions for MCA overall paffinity open and close
  */
