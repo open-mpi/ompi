@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      QLogic Corporation. All rights reserved.
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,11 +43,12 @@ int ompi_mtl_psm_iprobe(struct mca_mtl_base_module_t* mtl,
     err = psm_mq_iprobe(ompi_mtl_psm.mq, mqtag, tagsel, &mqstat);
     if (err == PSM_OK) {
 	*flag = 1;
-	status->MPI_SOURCE = PSM_GET_MQRANK(mqstat.msg_tag);
-	status->MPI_TAG = PSM_GET_MQUTAG(mqstat.msg_tag);
-        status->_count = mqstat.nbytes;
+	if(MPI_STATUS_IGNORE != status) { 
+            status->MPI_SOURCE = PSM_GET_MQRANK(mqstat.msg_tag);
+            status->MPI_TAG = PSM_GET_MQUTAG(mqstat.msg_tag);
+            status->_count = mqstat.nbytes;
 
-	switch (mqstat.error_code) {
+            switch (mqstat.error_code) {
 	    case PSM_OK:
 		status->MPI_ERROR = OMPI_SUCCESS;
 		break;
@@ -54,8 +57,10 @@ int ompi_mtl_psm_iprobe(struct mca_mtl_base_module_t* mtl,
 		break;
 	    default:
 		status->MPI_ERROR = MPI_ERR_INTERN;
-	}
-	return OMPI_SUCCESS;
+            }
+        }
+        
+        return OMPI_SUCCESS;
     }
     else if (err == PSM_MQ_INCOMPLETE) {
 	*flag = 0;
