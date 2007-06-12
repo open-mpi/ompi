@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -103,9 +104,7 @@ OBJ_CLASS_INSTANCE (ompi_comm_reg_t,
                     ompi_comm_reg_constructor,
                     ompi_comm_reg_destructor );
 
-#if OMPI_HAVE_THREAD_SUPPORT
 static opal_mutex_t ompi_cid_lock;
-#endif  /* OMPI_HAVE_THREAD_SUPPORT */
 static opal_list_t ompi_registered_comms;
 
 int ompi_comm_nextcid ( ompi_communicator_t* newcomm, 

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,9 +29,7 @@
  */
 static bool initialized = false;
 static opal_list_t components_in_use;
-#if OMPI_HAVE_THREAD_SUPPORT
 static opal_mutex_t mutex;
-#endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 struct component_item_t {
     opal_list_item_t super;

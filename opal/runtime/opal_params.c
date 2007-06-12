@@ -31,6 +31,7 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/threads/mutex.h"
 
 int opal_register_params(void)
 {
@@ -75,9 +76,21 @@ int opal_register_params(void)
     }
 
 #if OMPI_ENABLE_DEBUG
+
+
     mca_base_param_reg_int_name("opal", "progress_debug", 
                                 "Set to non-zero to debug progress engine features",
                                 false, false, 0, NULL);
+
+    {
+        int value;
+        mca_base_param_reg_int_name("opal", "debug_locks",
+                                    "Debug mutex usage within Open MPI.  On a "
+                                    "non-threaded build, this enables integer counters and "
+                                    "warning messages when double-locks are detected.",
+                                    false, false, 0, &value);
+        if (value) opal_mutex_check_locks = true;
+    }
 #endif
 
     return OPAL_SUCCESS;

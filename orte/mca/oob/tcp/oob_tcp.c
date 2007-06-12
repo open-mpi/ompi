@@ -1123,6 +1123,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
          mca_oob_tcp_peer_resolved(peer, addr);
          return ORTE_SUCCESS;
     }
+    OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 
     /* if we don't know it, then report unknown - don't try to go get it */
     return ORTE_ERR_ADDRESSEE_UNKNOWN;

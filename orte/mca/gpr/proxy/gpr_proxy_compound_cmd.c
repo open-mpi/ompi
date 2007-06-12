@@ -111,9 +111,9 @@ int orte_gpr_proxy_exec_compound_cmd(void)
 		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
-    OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.wait_for_compound_mutex);
     rc = ORTE_SUCCESS;
     
+    OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.wait_for_compound_mutex);
     if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, orte_gpr_proxy_globals.compound_cmd, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         rc = ORTE_ERR_COMM_FAILURE;

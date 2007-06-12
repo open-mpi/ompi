@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,6 +27,7 @@
  * Otherwise, wait and see if some upper layer wants to use threads.
  */
 bool opal_uses_threads = (bool) OMPI_ENABLE_PROGRESS_THREADS;
+bool opal_mutex_check_locks = false;
 
 
 #ifdef __WINDOWS__
@@ -34,6 +37,11 @@ bool opal_uses_threads = (bool) OMPI_ENABLE_PROGRESS_THREADS;
 static void opal_mutex_construct(opal_mutex_t *m)
 {
     InterlockedExchange(&m->m_lock, 0);
+#if OMPI_ENABLE_DEBUG
+    m->m_lock_debug = 0;
+    m->m_lock_file = NULL;
+    m->m_lock_line = 0;
+#endif
 }
 
 static void opal_mutex_destruct(opal_mutex_t *m)
@@ -67,10 +75,14 @@ static void opal_mutex_construct(opal_mutex_t *m)
 
 #endif /* OMPI_ENABLE_DEBUG */
 
-#endif /* OMPI_HAVE_POSIX_THREADS */
-
-#if OMPI_HAVE_SOLARIS_THREADS
+#elif OMPI_HAVE_SOLARIS_THREADS
     mutex_init(&m->m_lock_solaris, USYNC_THREAD, NULL);
+#endif
+
+#if OMPI_ENABLE_DEBUG
+    m->m_lock_debug = 0;
+    m->m_lock_file = NULL;
+    m->m_lock_line = 0;
 #endif
 
 #if OPAL_HAVE_ATOMIC_SPINLOCKS
@@ -82,6 +94,8 @@ static void opal_mutex_destruct(opal_mutex_t *m)
 {
 #if OMPI_HAVE_POSIX_THREADS
     pthread_mutex_destroy(&m->m_lock_pthread);
+#elif OMPI_HAVE_SOLARIS_THREADS
+    mutex_destory(&m->m_lock_solaris);
 #endif
 }
 

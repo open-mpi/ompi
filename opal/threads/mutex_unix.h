@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,8 +39,7 @@
 #endif
 #include <errno.h>
 #include <stdio.h>
-#endif
-#if OMPI_HAVE_SOLARIS_THREADS
+#elif OMPI_HAVE_SOLARIS_THREADS
 #include <thread.h>
 #include <synch.h>
 #endif
@@ -46,20 +47,25 @@
 #include "opal/class/opal_object.h"
 #include "opal/sys/atomic.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
+
 struct opal_mutex_t {
     opal_object_t super;
+
 #if OMPI_HAVE_POSIX_THREADS
     pthread_mutex_t m_lock_pthread;
-#endif
-#if OMPI_HAVE_SOLARIS_THREADS
+#elif OMPI_HAVE_SOLARIS_THREADS
     mutex_t m_lock_solaris;
 #endif
+
+#if !OMPI_HAVE_THREAD_SUPPORT && OMPI_ENABLE_DEBUG
+    int m_lock_debug;
+    char *m_lock_file;
+    int m_lock_line;
+#endif
+
     opal_atomic_lock_t m_lock_atomic;
 };
-
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
 
 /************************************************************************
@@ -217,7 +223,6 @@ static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
 
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif                          /* OPAL_MUTEX_UNIX_H */

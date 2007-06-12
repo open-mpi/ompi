@@ -9,6 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -23,10 +26,11 @@
 #if OMPI_HAVE_THREAD_SUPPORT
 #include "opal/sys/atomic.h"
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
+#if OMPI_ENABLE_DEBUG
+#include "opal/util/output.h"
 #endif
+
+BEGIN_C_DECLS
 
 /**
  * @file:
@@ -35,10 +39,15 @@ extern "C" {
  *
  * Functions for locking of critical sections.
  */
+
 /*
  * declaring this here so that CL does not complain
  */ 
 OPAL_DECLSPEC extern bool opal_uses_threads;
+
+#if OMPI_ENABLE_DEBUG
+OPAL_DECLSPEC extern bool opal_mutex_check_locks;
+#endif
 
 /**
  * Opaque mutex object
@@ -95,6 +104,15 @@ static inline void opal_mutex_atomic_lock(opal_mutex_t *mutex);
  */
 static inline void opal_mutex_atomic_unlock(opal_mutex_t *mutex);
 
+END_C_DECLS
+
+#ifdef __WINDOWS__
+#include "mutex_windows.h"
+#else
+#include "mutex_unix.h"
+#endif
+
+BEGIN_C_DECLS
 
 /**
  * Check and see if the process is using multiple threads.
@@ -183,14 +201,68 @@ static inline bool opal_set_using_threads(bool have)
             opal_mutex_lock(mutex);             \
         }                                       \
     } while (0)
+#elif OMPI_ENABLE_DEBUG
+#define OPAL_THREAD_LOCK(mutex)                                         \
+    do {                                                                \
+        (mutex)->m_lock_debug++;                                        \
+        if (opal_mutex_check_locks && 1 != (mutex)->m_lock_debug) {     \
+            opal_output(0, "Warning -- mutex already locked at %s:%d,"  \
+                        " now at %s:%d",                                \
+                        (mutex)->m_lock_file,                           \
+                        (mutex)->m_lock_line,                           \
+                        __FILE__, __LINE__);                            \
+        }                                                               \
+        (mutex)->m_lock_file = __FILE__;                                \
+        (mutex)->m_lock_line = __LINE__;                                \
+    } while (0)
 #else
 #define OPAL_THREAD_LOCK(mutex)
 #endif
 
+
+/**
+ * Try to lock a mutex if opal_using_threads() says that multiple
+ * threads may be active in the process.
+ *
+ * @param mutex Pointer to a opal_mutex_t to trylock
+ *
+ * If there is a possibility that multiple threads are running in the
+ * process (as determined by opal_using_threads()), this function will
+ * trylock the mutex.
+ *
+ * If there is no possibility that multiple threads are running in the
+ * process, return immediately without modifying the mutex.
+ *
+ * Returns 0 if mutex was locked, non-zero otherwise.
+ */
 #if OMPI_HAVE_THREAD_SUPPORT
-#define OPAL_THREAD_TRYLOCK(mutex)   (opal_using_threads() ? opal_mutex_trylock(mutex) : 0)
+#define OPAL_THREAD_TRYLOCK(mutex) (opal_using_threads() ? opal_mutex_trylock(mutex) : 0)
+#elif OMPI_ENABLE_DEBUG
+static inline int
+opal_thread_debug_trylock(opal_mutex_t *mutex, char *file, int line)
+{
+    int ret = -1;
+
+    if (0 == (mutex)->m_lock_debug) {
+        (mutex)->m_lock_debug++;
+        (mutex)->m_lock_file = file;
+        (mutex)->m_lock_line = line;
+        ret = 0;
+    } else {
+        if (opal_mutex_check_locks) {
+            opal_output(0, "Warning -- during trylock, mutex already locked at %s:%d "
+                        "now at %s:%d",  
+                        file, line,
+                        (mutex)->m_lock_file,
+                        (mutex)->m_lock_line);
+        }
+    }
+
+    return ret;
+}
+#define OPAL_THREAD_TRYLOCK(mutex) opal_thread_debug_trylock(mutex, __FILE__, __LINE__)
 #else
-#define OPAL_THREAD_TRYLOCK(mutex)   0
+#define OPAL_THREAD_TRYLOCK(mutex) 0
 #endif
 
 
@@ -207,13 +279,27 @@ static inline bool opal_set_using_threads(bool have)
  * If there is no possibility that multiple threads are running in the
  * process, return immediately without modifying the mutex.
  */
-
 #if OMPI_HAVE_THREAD_SUPPORT
 #define OPAL_THREAD_UNLOCK(mutex)               \
     do {                                        \
         if (opal_using_threads()) {             \
             opal_mutex_unlock(mutex);           \
         }                                       \
+    } while (0)
+#elif OMPI_ENABLE_DEBUG
+#define OPAL_THREAD_UNLOCK(mutex)                                       \
+    do {                                                                \
+        (mutex)->m_lock_debug--;                                        \
+        if (opal_mutex_check_locks && 0 > (mutex)->m_lock_debug) {      \
+            opal_output(0, "Warning -- mutex was double locked from %s:%d", \
+                        __FILE__, __LINE__);                            \
+        } else if (opal_mutex_check_locks && 0 > (mutex)->m_lock_debug) { \
+            opal_output(0, "Warning -- mutex not locked from %s:%d",    \
+                        __FILE__, __LINE__);                            \
+        } else {                                                        \
+            (mutex)->m_lock_file = NULL;                                \
+            (mutex)->m_lock_line = 0;                                   \
+        }                                                               \
     } while (0)
 #else
 #define OPAL_THREAD_UNLOCK(mutex)
@@ -247,8 +333,22 @@ static inline bool opal_set_using_threads(bool have)
             (action);                           \
         }                                       \
     } while (0)
+#elif OMPI_ENABLE_DEBUG
+#define OPAL_THREAD_SCOPED_LOCK(mutex, action)                          \
+    do {                                                                \
+        if (0 != (mutex)->m_lock_debug) {                               \
+            opal_output(0, "scoped_lock: Warning -- mutex already "     \
+                        "locked at %s:%d, now at %s:%d",                \
+                        __FILE__, __LINE__,                             \
+                        (mutex)->m_lock_file,                           \
+                        (mutex)->m_lock_line);                          \
+        }                                                               \
+        (mutex)->m_lock_debug--;                                        \
+        (action);                                                       \
+        (mutex)->m_lock_debug++;                                        \
+    } while (0)
 #else
-#define OPAL_THREAD_SCOPED_LOCK(mutex,action) (action)
+#define OPAL_THREAD_SCOPED_LOCK(mutex, action) (action)
 #endif
 
 /**
@@ -258,79 +358,25 @@ static inline bool opal_set_using_threads(bool have)
 
 #if OMPI_HAVE_THREAD_SUPPORT
 #define OPAL_THREAD_ADD32(x,y) \
-   ((OMPI_HAVE_THREAD_SUPPORT && opal_using_threads()) ? \
-   opal_atomic_add_32(x,y) : (*x += y))
+   (opal_using_threads() ? opal_atomic_add_32(x,y) : (*x += y))
 #else
 #define OPAL_THREAD_ADD32(x,y) (*x += y)
 #endif
 
 #if OMPI_HAVE_THREAD_SUPPORT
 #define OPAL_THREAD_ADD64(x,y) \
-   ((OMPI_HAVE_THREAD_SUPPORT && opal_using_threads()) ? \
-    opal_atomic_add_64(x,y) : (*x += y))
+    (opal_using_threads() ? opal_atomic_add_64(x,y) : (*x += y))
 #else
 #define OPAL_THREAD_ADD64(x,y) (*x += y)
 #endif
 
 #if OMPI_HAVE_THREAD_SUPPORT
 #define OPAL_THREAD_ADD_SIZE_T(x,y) \
-   ((OMPI_HAVE_THREAD_SUPPORT && opal_using_threads()) ? \
-    opal_atomic_add_size_t(x,y) : (*x += y))
+    (opal_using_threads() ? opal_atomic_add_size_t(x,y) : (*x += y))
 #else
 #define OPAL_THREAD_ADD_SIZE_T(x,y) (*x += y)
 #endif
 
-
-/**
- * Always locks a mutex (never compile- or run-time removed)
- *
- * @param mutex A pointer to a opal_mutex_t.
- *
- * Locks the mutex.  This is the macro that you should use for mutexes
- * that should always be locked, regardless of whether the process has
- * multiple threads or not.  This is useful, for example, with shared
- * memory.
- */
-#define OPAL_LOCK(mutex)	opal_mutex_atomic_lock(mutex)
-
-/**
- * Always unlocks a mutex (never compile- or run-time removed)
- *
- * @param mutex A pointer to a opal_mutex_t.
- *
- * Unlocks the mutex.  This is the macro that you should use for
- * mutexes that should always be unlocked, regardless of whether the
- * process has multiple threads or not.  This is useful, for example,
- * with shared memory.
- */
-#define OPAL_UNLOCK(mutex)      opal_mutex_atomic_unlock(mutex)
-
-
-/**
- * Lock a mutex for the duration of the specified action.
- *
- * @param mutex    Pointer to a opal_mutex_t to lock.
- * @param action   A scope over which the lock is held.
- *
- * This is the macro that you should use for mutexes that should
- * always be locked, regardless of whether the process has multiple
- * threads or not.  This is useful, for example, with shared memory.
- */
-#define OPAL_SCOPED_LOCK(mutex, action)         \
-    do {                                        \
-        opal_mutex_lock(mutex);                 \
-        (action);                               \
-        opal_mutex_unlock(mutex);               \
-    } while (0)
-
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
-#ifdef __WINDOWS__
-#include "mutex_windows.h"
-#else
-#include "mutex_unix.h"
-#endif
+END_C_DECLS
 
 #endif                          /* OPAL_MUTEX_H */

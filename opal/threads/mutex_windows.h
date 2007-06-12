@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,12 +34,17 @@
 #include "opal/class/opal_object.h"
 #include "opal/sys/atomic.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
+
 struct opal_mutex_t {
     opal_object_t super;
     volatile LONG m_lock;
+
+#if !OMPI_HAVE_THREAD_SUPPORT && OMPI_ENABLE_DEBUG
+    int m_lock_debug;
+    char *m_lock_file;
+    int m_lock_line;
+#endif
 };
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
@@ -82,8 +89,6 @@ static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
     opal_mutex_unlock(m);
 }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif  /* OPAL_MUTEX_WINDOWS_H */

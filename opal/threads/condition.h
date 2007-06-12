@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,9 +37,7 @@
 
 #include "opal/runtime/opal_cr.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * Combine pthread support w/ polled progress to allow run-time selection
@@ -61,6 +61,14 @@ static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
 {
     int rc = 0;
     c->c_waiting++;
+
+#if OMPI_ENABLE_DEBUG && !OMPI_HAVE_THREAD_SUPPORT
+    if (1 != m->m_lock_debug) {                                         \
+        opal_output(0, "Warning -- mutex not locked in condition_wait"); \
+    }                                                                   \
+    m->m_lock_debug--;
+#endif
+
     if (opal_using_threads()) {
 #if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
         rc = pthread_cond_wait(&c->c_cond, &m->m_lock_pthread);
@@ -84,6 +92,11 @@ static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
             OPAL_CR_TEST_CHECKPOINT_READY_STALL();
         }
     }
+
+#if OMPI_ENABLE_DEBUG && !OMPI_HAVE_THREAD_SUPPORT
+    m->m_lock_debug++;
+#endif
+
     c->c_signaled--;
     c->c_waiting--;
     return rc;
@@ -96,6 +109,13 @@ static inline int opal_condition_timedwait(opal_condition_t *c,
     struct timeval tv;
     struct timeval absolute;
     int rc = 0;
+
+#if OMPI_ENABLE_DEBUG && !OMPI_HAVE_THREAD_SUPPORT
+    if (1 != m->m_lock_debug) {                                         \
+        opal_output(0, "Warning -- mutex not locked in condition_wait"); \
+    }                                                                   \
+    m->m_lock_debug--;
+#endif
 
     c->c_waiting++;
     if (opal_using_threads()) {
@@ -125,6 +145,11 @@ static inline int opal_condition_timedwait(opal_condition_t *c,
             gettimeofday(&tv,NULL);
         }
     }
+
+#if OMPI_ENABLE_DEBUG && !OMPI_HAVE_THREAD_SUPPORT
+    m->m_lock_debug++;
+#endif
+
     c->c_signaled--;
     c->c_waiting--;
     return rc;
@@ -160,8 +185,7 @@ static inline int opal_condition_broadcast(opal_condition_t *c)
     return 0;
 }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif
 
