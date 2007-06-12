@@ -26,7 +26,7 @@
 #include <unistd.h>
 #endif
 #include <errno.h>
-#if HAVE_SYS_TYPES_H
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_WAIT_H
@@ -266,8 +266,8 @@ int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
     return ORTE_SUCCESS;
 }
 
-
-static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_status)
+static bool odls_default_child_died(pid_t pid, unsigned int timeout,
+                                    int *exit_status)
 {
     time_t end;
     pid_t ret;
@@ -831,7 +831,6 @@ static int odls_default_fork_local_proc(
         orte_ns_nds_env_put(child->name, vpid_start, vpid_range,
                             child->local_rank, child->num_procs,
                             &environ_copy);
-
 
         /* close all file descriptors w/ exception of stdin/stdout/stderr */
         for(fd=3; fd<fdmax; fd++)
