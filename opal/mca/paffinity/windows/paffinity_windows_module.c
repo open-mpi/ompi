@@ -28,30 +28,30 @@
  * Local functions
  */
 static int windows_module_init(void);
+static int windows_module_finalize(void);
 static int windows_module_get_num_procs(int *num_procs);
-static int windows_module_set(int id);
-static int windows_module_get(int *id);
+static int windows_module_set(opal_paffinity_base_cpu_set_t cpumask);
+static int windows_module_get(opal_paffinity_base_cpu_set_t *cpumask);
 
 static SYSTEM_INFO sys_info;
 
 /*
  * Linux paffinity module
  */
-static const opal_paffinity_base_module_1_0_0_t module = {
+static const opal_paffinity_base_module_1_1_0_t module = {
 
     /* Initialization function */
 
     windows_module_init,
 
     /* Module function pointers */
-
-    windows_module_get_num_procs,
     windows_module_set,
-    windows_module_get
+    windows_module_get,
+    windows_module_finalize
 };
 
 
-const opal_paffinity_base_module_1_0_0_t *
+const opal_paffinity_base_module_1_1_0_t *
 opal_paffinity_windows_component_query(int *query)
 {
     int param;
@@ -62,6 +62,10 @@ opal_paffinity_windows_component_query(int *query)
     return &module;
 }
 
+static int windows_module_finalize(void)
+{
+    return OPAL_SUCCESS;
+}
 
 static int windows_module_init(void)
 {
@@ -77,7 +81,7 @@ static int windows_module_get_num_procs(int *num_procs)
     return OPAL_SUCCESS;
 }
 
-static int windows_module_set(int id)
+static int windows_module_set(opal_paffinity_base_cpu_set_t cpumask)
 {
     HANDLE threadid = GetCurrentThread();
     DWORD_PTR process_mask, system_mask;
@@ -86,8 +90,8 @@ static int windows_module_set(int id)
         return OPAL_ERR_NOT_FOUND;
     }
 
-    if( (int)(1 << id) & (system_mask & 0xFFFFFFFF) ) {
-        process_mask = (int)(1 << id);
+    if( (int)(1 << cpumask.bitmask[0]) & (system_mask & 0xFFFFFFFF) ) {
+        process_mask = (int)(1 << cpumask.bitmask[0]);
         if( SetThreadAffinityMask( threadid, process_mask ) )
             return OPAL_SUCCESS;
         /* otherwise something went wrong */
@@ -97,16 +101,16 @@ static int windows_module_set(int id)
 }
 
 
-static int windows_module_get(int *id)
+static int windows_module_get(opal_paffinity_base_cpu_set_t *cpumask)
 {
     HANDLE threadid = GetCurrentThread();
     DWORD_PTR process_mask, system_mask;
 
     if( GetProcessAffinityMask( threadid, &process_mask, &system_mask ) ) {
-        *id = (int)process_mask;
+        cpumask->bitmask[0] = (opal_paffinity_base_bitmask_t)process_mask;
         return OPAL_SUCCESS;
     }
-    *id = 1;
+    cpumask->bitmask[0] = 1;
     return OPAL_ERR_BAD_PARAM;
 }
 

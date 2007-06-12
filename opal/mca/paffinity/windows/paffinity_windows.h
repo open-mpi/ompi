@@ -52,14 +52,14 @@ extern "C" {
     /**
      * Globally exported variable
      */
-    OPAL_MODULE_DECLSPEC extern const opal_paffinity_base_component_1_0_0_t
+    OPAL_MODULE_DECLSPEC extern const opal_paffinity_base_component_1_1_0_t
         mca_paffinity_windows_component;
 
 
     /**
      * paffinity query API function
      */
-    const opal_paffinity_base_module_1_0_0_t *
+    const opal_paffinity_base_module_1_1_0_t *
         opal_paffinity_windows_component_query(int *query);
 
 #if defined(c_plusplus) || defined(__cplusplus)
