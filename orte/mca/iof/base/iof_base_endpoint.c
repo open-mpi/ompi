@@ -369,6 +369,7 @@ int orte_iof_base_endpoint_create(
  
     OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
 
+#if !defined(__WINDOWS__)
     /* If we haven't initialized the event yet, do so now */
     if (!sigpipe_event_initialized) {
         opal_signal_set(&sigpipe_event, SIGPIPE,
@@ -376,6 +377,7 @@ int orte_iof_base_endpoint_create(
         opal_signal_add(&sigpipe_event, NULL);
         sigpipe_event_initialized = true;
     }
+#endif  /* !defined(__WINDOWS__) */
 
     if((endpoint = orte_iof_base_endpoint_lookup(proc,mode,tag)) != NULL) {
         OBJ_RETAIN(endpoint);
