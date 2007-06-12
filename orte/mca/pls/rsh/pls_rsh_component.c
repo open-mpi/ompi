@@ -170,10 +170,6 @@ int orte_pls_rsh_component_open(void)
                            "Delay (in seconds) between invocations of the remote agent, but only used when the \"debug\" MCA parameter is true, or the top-level MCA debugging is enabled (otherwise this value is ignored)",
                            false, false, 1,
                            &mca_pls_rsh_component.delay);
-    mca_base_param_reg_int(c, "reap",
-                           "If set to 1, wait for all the processes to complete before exiting.  Otherwise, quit immediately -- without waiting for confirmation that all other processes in the job have completed.",
-                           false, false, 1, &tmp);
-    mca_pls_rsh_component.reap = OPAL_INT_TO_BOOL(tmp);
     mca_base_param_reg_int(c, "assume_same_shell",
                            "If set to 1, assume that the shell on the remote node is the same as the shell on the local node.  Otherwise, probe for what the remote shell.",
                            false, false, 1, &tmp);
