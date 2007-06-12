@@ -343,7 +343,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     opal_list_item_t *n_item;
     orte_mapped_node_t *rmaps_node;
     orte_std_cntr_t num_nodes;
-    orte_vpid_t vpid;
     int node_name_index1;
     int node_name_index2;
     int proc_name_index;
@@ -397,7 +396,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         rc = ORTE_SUCCESS;
         goto cleanup;
     }
-
+    
     if (mca_pls_rsh_component.debug_daemons &&
         mca_pls_rsh_component.num_concurrent < num_nodes) {
         /**
@@ -534,7 +533,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     orte_pls_base_orted_append_basic_args(&argc, &argv,
                                           &proc_name_index,
                                           &node_name_index2,
-                                          (vpid + num_nodes));
+                                          map->num_nodes);
     
     local_exec_index_end = argc;
     if (mca_pls_rsh_component.debug) {
@@ -898,7 +897,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             if (mca_pls_rsh_component.debug && mca_pls_rsh_component.delay) {
                 sleep(mca_pls_rsh_component.delay);
             }
-            vpid++;
         }
     }
     /* get here if launch went okay */
