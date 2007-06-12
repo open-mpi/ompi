@@ -697,13 +697,11 @@ static int opal_ifinit(void)
      */
 
     #define MAX_INTERFACES 10 /* Anju: for now assume there are no more than this */
-    int ret;
     SOCKET sd; 
     INTERFACE_INFO if_list[MAX_INTERFACES];
     int num_interfaces;
     unsigned long num_bytes_returned;
     int i;
-    SOCKADDR_IN *sock_address;
     unsigned int interface_counter = 0;
     opal_if_t intf;
     opal_if_t *intf_ptr;
