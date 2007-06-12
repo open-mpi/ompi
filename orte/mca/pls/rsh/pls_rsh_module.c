@@ -231,8 +231,13 @@ static int orte_pls_rsh_probe(orte_mapped_node_t * node, orte_pls_rsh_shell * sh
         }
     }
     if (mca_pls_rsh_component.debug) {
-        opal_output(0, "pls:rsh: node:%s has SHELL: %s\n",
-                    node->nodename, orte_pls_rsh_shell_name[*shell]);
+        if( ORTE_PLS_RSH_SHELL_UNKNOWN == *shell ) {
+            opal_output(0, "pls:rsh: node:%s has unhandled SHELL: %s\n",
+                        node->nodename, sh_name);
+        } else {
+            opal_output(0, "pls:rsh: node:%s has SHELL: %s\n",
+                        node->nodename, orte_pls_rsh_shell_name[*shell]);
+        }
     }
     return rc;
 }
@@ -446,8 +451,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         opal_show_help( "help-pls-rsh.txt", "unknown-user", true, (int)getuid() );
         rc = ORTE_ERR_FATAL;
         goto cleanup;
-    }
-    {
+    } else {
         int i;
         char *sh_name = NULL;
         
