@@ -126,7 +126,7 @@ int orte_ns_base_pack_cellid(orte_buffer_t *buffer, const void *src,
 /*
  * NODEID
  */
-int orte_ns_base_pack_nodeid(orte_buffer_t *buffer, void *src,
+int orte_ns_base_pack_nodeid(orte_buffer_t *buffer, const void *src,
                              orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;
