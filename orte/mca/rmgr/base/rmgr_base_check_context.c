@@ -98,7 +98,7 @@ int orte_rmgr_base_check_context_cwd(orte_app_context_t *context,
             }
             if (!good) {
                 opal_show_help("help-rmgr-base.txt", "chdir-error",
-                               true, tmp, strerror(errno));
+                               true, hostname, tmp, strerror(errno));
                 return ORTE_ERR_NOT_FOUND;
             }
             
