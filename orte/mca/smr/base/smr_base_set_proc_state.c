@@ -89,16 +89,10 @@ int orte_smr_base_set_proc_state(orte_process_name_t *proc,
     }
     OBJ_RELEASE(value);
 
-    /* check to see if we need to increment orte-standard counters */
-    if (ORTE_PROC_ORTE_STARTUP_COMPLETE == state ||
-        ORTE_PROC_STATE_LAUNCHED == state ||
-        ORTE_PROC_STATE_AT_STG1 == state ||
-        ORTE_PROC_STATE_AT_STG2 == state ||
-        ORTE_PROC_STATE_AT_STG3 == state ||
-        ORTE_PROC_STATE_FINALIZED == state ||
-        ORTE_PROC_STATE_TERMINATED == state ||
-        ORTE_PROC_STATE_FAILED_TO_START == state ||
-        ORTE_PROC_STATE_ABORTED == state) {
+    /* we don't need to increment the INIT counter as this is done
+     * prior to process launch
+     */
+    if (ORTE_PROC_STATE_INIT != state) {
             
         /* If we're setting ABORTED or FAILED_TO_START, we're also setting TERMINATED, so we
            need 2 keyvals.  Everything else only needs 1 keyval. */
@@ -120,6 +114,7 @@ int orte_smr_base_set_proc_state(orte_process_name_t *proc,
             }
         }
         
+        /* all counters are in the JOB_GLOBALS container */
         value->tokens[0] = strdup(ORTE_JOB_GLOBALS);
     
         /* see which state we are in - let that determine the counter */
@@ -138,13 +133,20 @@ int orte_smr_base_set_proc_state(orte_process_name_t *proc,
                 }
                 break;
                 
+            case ORTE_PROC_STATE_RUNNING:
+                if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_RUNNING, ORTE_UNDEF, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                break;
+    
             case ORTE_PROC_STATE_AT_STG1:
                 if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_AT_STG1, ORTE_UNDEF, NULL))) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
                 break;
-    
+                
             case ORTE_PROC_STATE_AT_STG2:
                 if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_AT_STG2, ORTE_UNDEF, NULL))) {
                     ORTE_ERROR_LOG(rc);

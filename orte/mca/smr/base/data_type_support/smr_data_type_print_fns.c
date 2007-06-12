@@ -71,36 +71,36 @@ static void orte_smr_base_quick_print(char **output, char *type_name, char *pref
         case 1:
             ui8 = (uint8_t*)src;
             if (NULL == prefix) {
-                asprintf(output, "Data type: %s\tValue: %d", type_name, (int) *ui8);
+                asprintf(output, "Data type: %s\tData size: 8-bit\tValue: %d", type_name, (int) *ui8);
             } else {
-                asprintf(output, "%sData type: %s\tValue: %d", prefix, type_name, (int) *ui8);
+                asprintf(output, "%sData type: %s\tData size: 8-bit\tValue: %d", prefix, type_name, (int) *ui8);
             }
             break;
 
         case 2:
             ui16 = (uint16_t*)src;
             if (NULL == prefix) {
-                asprintf(output, "Data type: %s\tValue: %d", type_name, (int) *ui16);
+                asprintf(output, "Data type: %s\tData size: 16-bit\tValue: %d", type_name, (int) *ui16);
             } else {
-                asprintf(output, "%sData type: %s\tValue: %d", prefix, type_name, (int) *ui16);
+                asprintf(output, "%sData type: %s\tData size: 16-bit\tValue: %d", prefix, type_name, (int) *ui16);
             }
             break;
 
         case 4:
             ui32 = (uint32_t*)src;
             if (NULL == prefix) {
-                asprintf(output, "Data type: %s\tValue: %lu", type_name, (unsigned long) *ui32);
+                asprintf(output, "Data type: %s\tData size: 32-bit\tValue: %lu", type_name, (unsigned long) *ui32);
             } else {
-                asprintf(output, "%sData type: %s\tValue: %lu", prefix, type_name, (unsigned long) *ui32);
+                asprintf(output, "%sData type: %s\tData size: 32-bit\tValue: %lu", prefix, type_name, (unsigned long) *ui32);
             }
             break;
 
         case 8:
             ui64 = (uint64_t*)src;
             if (NULL == prefix) {
-                asprintf(output, "Data type: %s\tValue: %lu", type_name, (unsigned long) *ui64);
+                asprintf(output, "Data type: %s\tData size: 64-bit\tValue: %lu", type_name, (unsigned long) *ui64);
             } else {
-                asprintf(output, "%sData type: %s\tValue: %lu", prefix, type_name, (unsigned long) *ui64);
+                asprintf(output, "%sData type: %s\tData size: 64-bit\tValue: %lu", prefix, type_name, (unsigned long) *ui64);
             }
             break;
 

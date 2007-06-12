@@ -66,7 +66,6 @@ static orte_pls_base_module_t orte_pls_proxy_module = {
     orte_pls_proxy_terminate_proc,
     orte_pls_proxy_signal_job,
     orte_pls_proxy_signal_proc,
-    orte_pls_proxy_cancel_operation,
     orte_pls_proxy_finalize
 };
 

@@ -43,6 +43,8 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
 {
     orte_job_map_t *mapping;
     orte_mapped_proc_t *proc;
+    orte_mapped_node_t *node;
+    opal_list_item_t *item;
     orte_cellid_t *cellptr, cell=ORTE_CELLID_INVALID;
     orte_vpid_t *vptr;
     orte_std_cntr_t *sptr;
@@ -50,12 +52,12 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
     pid_t *pidptr;
     orte_process_name_t *pptr;
     int32_t *i32, launch_id;
-    char *segment;
+    char *segment=NULL;
     char *node_name=NULL;
     char *username=NULL;
-    orte_gpr_value_t **values, *value;
+    orte_gpr_value_t **values=NULL, **dvalues=NULL, *value;
     orte_gpr_keyval_t* keyval;
-    orte_std_cntr_t v, kv, num_values;
+    orte_std_cntr_t v, kv, num_values=0, num_dvalues=0;
     int rc;
     char* keys[] = {
         ORTE_PROC_RANK_KEY,
@@ -70,6 +72,8 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
         ORTE_JOB_VPID_START_KEY,
         ORTE_JOB_VPID_RANGE_KEY,
         ORTE_JOB_MAPPING_MODE_KEY,
+        ORTE_JOB_NUM_NEW_DAEMONS_KEY,
+        ORTE_JOB_DAEMON_VPID_START_KEY,
 #if OPAL_ENABLE_FT == 1
         ORTE_PROC_CKPT_STATE_KEY,
         ORTE_PROC_CKPT_SNAPSHOT_REF_KEY,
@@ -77,7 +81,11 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
 #endif
         NULL
     };
-
+    char* dkeys[] = {
+        ORTE_PROC_NAME_KEY,
+        ORTE_NODE_NAME_KEY,
+        NULL
+    };
     OPAL_TRACE(1);
 
     /* define default answer */
@@ -107,21 +115,16 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
     }
 
     /* query the process list from the registry */
-    rc = orte_gpr.get(
-        ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
-        segment,
-        NULL,
-        keys,
-        &num_values,
-        &values);
-
-    if(ORTE_SUCCESS != rc) {
+    if (ORTE_SUCCESS != (rc = orte_gpr.get(ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
+                                           segment,
+                                           NULL,
+                                           keys,
+                                           &num_values,
+                                           &values))) {
+        
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(mapping);
-        free(segment);
-        return rc;
+        goto cleanup;
     }
-    free(segment);
 
     /* build the node and proc lists. each value corresponds
      * to a process in the map
@@ -156,6 +159,22 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
                         ORTE_ERROR_LOG(rc);
                         goto cleanup;
                     }
+                    continue;
+                }
+                if(strcmp(value->keyvals[kv]->key, ORTE_JOB_NUM_NEW_DAEMONS_KEY) == 0) {
+                    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, value->keyvals[kv]->value, ORTE_STD_CNTR))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto cleanup;
+                    }
+                    mapping->num_new_daemons = *sptr;
+                    continue;
+                }
+                if(strcmp(value->keyvals[kv]->key, ORTE_JOB_DAEMON_VPID_START_KEY) == 0) {
+                    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&vptr, value->keyvals[kv]->value, ORTE_VPID))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto cleanup;
+                    }
+                    mapping->daemon_vpid_start = *vptr;
                     continue;
                 }
             }
@@ -284,6 +303,55 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
         }
     }
 
+    /* query the daemon info from the registry */
+    if (ORTE_SUCCESS != (rc = orte_gpr.get(ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
+                                           "orte-job-0",
+                                           NULL,
+                                           dkeys,
+                                           &num_dvalues,
+                                           &dvalues))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+    /* process the results, storing info in the mapped_node objects */
+    for(v=0; v<num_dvalues; v++) {
+        value = dvalues[v];
+        node_name = NULL;
+        for(kv = 0; kv<value->cnt; kv++) {
+            keyval = value->keyvals[kv];
+            if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
+                /* use the dss.copy function here to protect us against zero-length strings */
+                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&node_name, keyval->value->data, ORTE_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                continue;
+            }
+            if (strcmp(keyval->key, ORTE_PROC_NAME_KEY) == 0) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&pptr, keyval->value, ORTE_NAME))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                continue;
+            }
+        }
+        if (NULL == node_name) continue;
+        /* find this node on the map */
+        for (item = opal_list_get_first(&mapping->nodes);
+             item != opal_list_get_end(&mapping->nodes);
+             item = opal_list_get_next(item)) {
+            node = (orte_mapped_node_t*)item;
+            if (strcmp(node->nodename, node_name) == 0) {
+                /* got it! store the daemon name here */
+                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&node->daemon, pptr, ORTE_NAME))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+            }
+        }
+    }
+    
     /* compute and save convenience values */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_usage(mapping, mapping->vpid_range))) {
         ORTE_ERROR_LOG(rc);
@@ -294,17 +362,24 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
     /* all done */
     *map = mapping;
     rc = ORTE_SUCCESS;
-
+    
 cleanup:
     if(rc != ORTE_SUCCESS) {
         OBJ_RELEASE(mapping);
     }
 
+    if (NULL != segment) free(segment);
+    
     for (v=0; v < num_values; v++) {
         OBJ_RELEASE(values[v]);
     }
     if (NULL != values) free(values);
 
+    for (v=0; v < num_dvalues; v++) {
+        OBJ_RELEASE(dvalues[v]);
+    }
+    if (NULL != dvalues) free(dvalues);
+    
     return rc;
 }
 
@@ -353,13 +428,13 @@ int orte_rmaps_base_get_node_map(orte_mapped_node_t **node, orte_cellid_t cell,
 
 int orte_rmaps_base_put_job_map(orte_job_map_t *map)
 {
-    orte_std_cntr_t i, j;
-    orte_std_cntr_t index=0;
-    orte_std_cntr_t num_procs = 0;
+    orte_std_cntr_t i;
+    orte_std_cntr_t index;
+    orte_std_cntr_t num_procs = 0, num_vals;
     int rc = ORTE_SUCCESS;
     opal_list_item_t *item, *item2;
-    orte_gpr_value_t **values, *value;
-    char *segment;
+    orte_gpr_value_t **values=NULL, *value;
+    char *segment=NULL;
     orte_mapped_node_t *node;
     orte_mapped_proc_t *proc;
     orte_proc_state_t proc_state=ORTE_PROC_STATE_INIT;
@@ -370,7 +445,7 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
         item != opal_list_get_end(&map->nodes);
         item =  opal_list_get_next(item)) {
         node = (orte_mapped_node_t*)item;
-        num_procs += (orte_std_cntr_t)opal_list_get_size(&node->procs);
+        num_procs += node->num_procs;
     }
     if(num_procs == 0) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -378,38 +453,39 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
     }
 
     /**
-     * allocate value array. We need to reserve one extra spot so we can set the counter
-     * for the process INIT state to indicate that all procs are at that state. This will
-     * allow the INIT trigger to fire.
+     * allocate value array. We need enough spots to allow us to store all of the
+     * proc info on the job segment and all of the daemon info on the job-0 segment.
+     * In addition, we need to reserve one extra spot so we can set the counter
+     * on the job segment for the process INIT state to indicate that all procs
+     * are at that state to allow the INIT trigger to fire and store some map-level
+     * information on the number of new daemons
      */
-    values = (orte_gpr_value_t**)malloc((1+num_procs) * sizeof(orte_gpr_value_t*));
+    num_vals = 1+num_procs+map->num_nodes;
+    values = (orte_gpr_value_t**)malloc(num_vals * sizeof(orte_gpr_value_t*));
     if(NULL == values) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
+    /* let's deal with the procs first - start by getting their job segment name */
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, map->job))) {
         ORTE_ERROR_LOG(rc);
-        free(values);
-        return rc;
+        goto cleanup;
     }
 
-    /** preallocate the appropriate number of containers on the segment */
+    /** preallocate the appropriate number of containers on that segment */
     if (ORTE_SUCCESS != (rc = orte_gpr.preallocate_segment(segment, num_procs + 1))) {
         ORTE_ERROR_LOG(rc);
-        free(values);
-        return rc;
+        goto cleanup;
     }
 
 
     /** setup the last value in the array to store the vpid start/range and update the INIT counter */
     if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[num_procs]),
                                             ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_AND,
-                                            segment, 4, 1))) {
+                                            segment, 6, 1))) {
         ORTE_ERROR_LOG(rc);
-        free(values);
-        free(segment);
-        return rc;
+        goto cleanup;
     }
     if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[num_procs]->keyvals[0]), ORTE_PROC_NUM_AT_INIT, ORTE_STD_CNTR, &num_procs))) {
         ORTE_ERROR_LOG(rc);
@@ -427,6 +503,14 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[num_procs]->keyvals[4]), ORTE_JOB_NUM_NEW_DAEMONS_KEY, ORTE_STD_CNTR, &map->num_new_daemons))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[num_procs]->keyvals[5]), ORTE_JOB_DAEMON_VPID_START_KEY, ORTE_VPID, &map->daemon_vpid_start))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
     values[num_procs]->tokens[0] = strdup(ORTE_JOB_GLOBALS); /* counter is in the job's globals container */
 
 
@@ -440,16 +524,12 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
 #endif
                                     0))) {
              ORTE_ERROR_LOG(rc);
-             for(j=0; j<i; j++) {
-                 OBJ_RELEASE(values[j]);
-             }
-             free(values);
-             free(segment);
-             return rc;
+            goto cleanup;
          }
     }
 
     /* iterate through all processes and initialize value array */
+    index = 0;
     for(item =  opal_list_get_first(&map->nodes);
         item != opal_list_get_end(&map->nodes);
         item =  opal_list_get_next(item)) {
@@ -557,13 +637,60 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
         }
     }
 
+    /* now let's deal with the daemons. We know this info goes onto the job-0 segment, so
+     * let's begin by preallocating the appropriate number of containers on that segment
+     * to make sure it is just big enough
+     */
+    if (ORTE_SUCCESS != (rc = orte_gpr.preallocate_segment("orte-job-0", map->num_nodes + 1))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+    /* now iterate through the nodes and create a value object for each daemon
+     * being sure to start from the right place in the array
+     */
+    i = num_procs+1;
+    for(item =  opal_list_get_first(&map->nodes);
+        item != opal_list_get_end(&map->nodes);
+        item =  opal_list_get_next(item)) {
+        node = (orte_mapped_node_t*)item;
+        
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[i]),
+                                                        ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_AND,
+                                                        "orte-job-0", 2,
+                                                        0))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        
+        /* store the node name and the daemon's name */
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[0]), ORTE_NODE_NAME_KEY, ORTE_STRING, node->nodename))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[1]), ORTE_PROC_NAME_KEY, ORTE_NAME, node->daemon))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        
+        /* set the tokens */
+        if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&(values[i]->tokens), &(values[i]->num_tokens), node->daemon))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        
+        /* move to next position */
+        ++i;
+    }
+
     /* insert all values in one call */
-    if (ORTE_SUCCESS != (rc = orte_gpr.put((1+num_procs), values))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr.put(num_vals, values))) {
         ORTE_ERROR_LOG(rc);
     }
 
 cleanup:
-    for(i=0; i<=num_procs; i++) {
+    for(i=0; i < num_vals; i++) {
         if(NULL != values[i]) {
             OBJ_RELEASE(values[i]);
         }

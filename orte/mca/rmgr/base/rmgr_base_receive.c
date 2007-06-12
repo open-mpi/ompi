@@ -241,6 +241,21 @@ CLEANUP_SPAWN:
             }
             break;
 
+        case ORTE_RMGR_SETUP_ORTED_GATES_CMD:
+            /* get the jobid */
+            count = 1;
+            if(ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
+                ORTE_ERROR_LOG(rc);
+                goto SEND_ANSWER;
+            }
+                
+            /* setup the stage gates */
+            if (ORTE_SUCCESS != (rc = orte_rmgr_base_orted_stage_gate_init(job))) {
+                ORTE_ERROR_LOG(rc);
+                goto SEND_ANSWER;
+            }
+            break;
+            
         case ORTE_RMGR_XCONNECT_CMD:
             /* get the child jobid */
             count = 1;

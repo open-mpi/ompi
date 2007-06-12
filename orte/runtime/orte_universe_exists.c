@@ -240,6 +240,8 @@ int orte_universe_search(opal_list_t *universe_list, bool report_broken_files, b
 
 static int orte_universe_check_connect(orte_universe_t *uni)
 {
+    int rc;
+    
 	if (!orte_universe_info.console) {  /* if we aren't trying to connect a console */
 	    if (!uni->persistence ||   /* if the target universe is not persistent... */
             (0 == strncmp(uni->scope, "exclusive", strlen("exclusive")))) {  /* ...or no connection allowed */
@@ -258,11 +260,16 @@ static int orte_universe_check_connect(orte_universe_t *uni)
         opal_output(0, "connect_uni: contact info to set: %s", uni->seed_uri);
     }
 
+    /* insert the universe contact info into the RML hash tables */
+    if (ORTE_SUCCESS != (rc = orte_rml.set_uri(uni->seed_uri))) {
+        ORTE_ERROR_LOG(rc);
+        return(rc);
+    }
 
     /* ping to verify it's alive */
-    if (ORTE_SUCCESS != orte_rml.ping(uni->seed_uri, &ompi_rte_ping_wait)) {
+    if (ORTE_SUCCESS != (rc = orte_rml.ping(uni->seed_uri, &ompi_rte_ping_wait))) {
         if (orte_debug_flag) {
-            ORTE_ERROR_LOG(ORTE_ERR_CONNECTION_FAILED);
+            ORTE_ERROR_LOG(rc);
         }
         return ORTE_ERR_CONNECTION_FAILED;
     }

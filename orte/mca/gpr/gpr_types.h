@@ -112,6 +112,7 @@ typedef int32_t orte_gpr_trigger_id_t;
 #define ORTE_GPR_STRIPPED       (uint16_t)0x2000    /**< Return values should contain no descriptive info */
 #define ORTE_GPR_OVERWRITE      (uint16_t)0x8000    /**< Allow overwrite of existing info */
 #define ORTE_GPR_NO_OVERWRITE   (uint16_t)0x0000    /**< Do not allow overwrite of existing info */
+#define ORTE_GPR_NO_DUPLICATE   (uint16_t)0x4000    /**< Do not duplicate an existing entry - just ignore the new one */
 
 typedef uint16_t orte_gpr_addr_mode_t;
 #define ORTE_GPR_ADDR_MODE_T ORTE_UINT16

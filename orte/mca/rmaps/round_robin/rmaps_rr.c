@@ -708,6 +708,12 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
         goto cleanup;
     }
     
+    /* define the daemons that we will use for this job */
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(map))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
     /* save mapping to the registry */
     if(ORTE_SUCCESS != (rc = orte_rmaps_base_put_job_map(map))) {
         ORTE_ERROR_LOG(rc);

@@ -47,13 +47,16 @@ int mca_oob_base_output = -1;
 opal_list_t mca_oob_base_components;
 opal_list_t mca_oob_base_modules;
 opal_list_t mca_oob_base_exception_handlers;
-bool orte_oob_base_timing;
-bool orte_oob_xcast_timing;
-int orte_oob_xcast_mode;
 opal_mutex_t orte_oob_xcast_mutex;
 opal_condition_t orte_oob_xcast_cond;
+int orte_oob_xcast_linear_xover;
+int orte_oob_xcast_binomial_xover;
 
 bool orte_oob_base_already_opened = false;
+
+#define ORTE_OOB_XCAST_LINEAR_XOVER_DEFAULT     10
+#define ORTE_OOB_XCAST_BINOMIAL_XOVER_DEFAULT   INT_MAX
+
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -63,7 +66,7 @@ int mca_oob_base_open(void)
 {
     int param, value;
     char *mode;
-
+    
     /* Sanity check.  This may be able to be removed when the rml/oob
        interface is re-worked (the current infrastructure may invoke
        this function twice: once as a standalone, and once via the rml
@@ -76,49 +79,50 @@ int mca_oob_base_open(void)
     OBJ_CONSTRUCT(&orte_oob_xcast_mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&orte_oob_xcast_cond, opal_condition_t);
     
-    /* Open up all available components */
-
-  OBJ_CONSTRUCT(&mca_oob_base_components, opal_list_t);
-  OBJ_CONSTRUCT(&mca_oob_base_modules, opal_list_t);
-  OBJ_CONSTRUCT(&mca_oob_base_exception_handlers, opal_list_t);
-
-  if (ORTE_SUCCESS != 
-      mca_base_components_open("oob", mca_oob_base_output,
-                               mca_oob_base_static_components, 
-                               &mca_oob_base_components, true)) {
-    return ORTE_ERROR;
-  }
-
-  /* register parameters */
-  param = mca_base_param_reg_int_name("orte", "timing",
-                                      "Request that critical timing loops be measured",
-                                      false, false, 0, &value);
-  if (value != 0) {
-      orte_oob_base_timing = true;
-  } else {
-      orte_oob_base_timing = false;
-  }
-  
-  param = mca_base_param_reg_int_name("oob", "xcast_timing",
-                                      "Request that xcast timing loops be measured",
-                                      false, false, 0, &value);
-  if (value != 0) {
-      orte_oob_xcast_timing = true;
-  } else {
-      orte_oob_xcast_timing = false;
-  }
-  
-  param = mca_base_param_reg_string_name("oob", "xcast_mode",
-                                           "Select xcast mode (\"linear\" | \"binomial\" | \"direct [default] \")",
-                                           false, false, "direct", &mode);
-    if (0 == strcmp(mode, "binomial")) {
-        orte_oob_xcast_mode = 0;
-    } else if (0 == strcmp(mode, "linear")) {
-        orte_oob_xcast_mode = 1;
-    } else if (0 == strcmp(mode, "direct")) {
-        orte_oob_xcast_mode = 2;
+    /* register parameters */
+    param = mca_base_param_reg_int_name("oob", "base_verbose",
+                                        "Verbosity level for the oob framework",
+                                        false, false, 0, &value);
+    if (value != 0) {
+        mca_oob_base_output = opal_output_open(NULL);
     } else {
-        opal_output(0, "oob_xcast_mode: unknown option %s", mode);
+        mca_oob_base_output = -1;
+    }
+    
+    param = mca_base_param_reg_int_name("oob", "xcast_linear_xover",
+                                        "Number of daemons where use of linear xcast mode is to begin",
+                                        false, false, ORTE_OOB_XCAST_LINEAR_XOVER_DEFAULT, &orte_oob_xcast_linear_xover);
+    
+    param = mca_base_param_reg_int_name("oob", "xcast_binomial_xover",
+                                        "Number of daemons where use of binomial xcast mode is to begin",
+                                        false, false, ORTE_OOB_XCAST_BINOMIAL_XOVER_DEFAULT, &orte_oob_xcast_binomial_xover);
+    
+    param = mca_base_param_reg_string_name("oob", "xcast_mode",
+                                           "Select xcast mode (\"linear\" | \"binomial\" | \"direct\")",
+                                           false, false, "none", &mode);
+    if (0 == strcmp(mode, "binomial")) {
+        orte_oob_xcast_binomial_xover = 0;
+        orte_oob_xcast_linear_xover = 0;
+    } else if (0 == strcmp(mode, "linear")) {
+        orte_oob_xcast_linear_xover = 0;
+        orte_oob_xcast_binomial_xover = INT_MAX;
+    } else if (0 == strcmp(mode, "direct")) {
+        orte_oob_xcast_binomial_xover = INT_MAX;
+        orte_oob_xcast_linear_xover = INT_MAX;
+    } else if (0 != strcmp(mode, "none")) {
+        opal_output(0, "oob_xcast_mode: unknown option %s - using defaults", mode);
+    }
+    
+    
+    /* Open up all available components */
+    OBJ_CONSTRUCT(&mca_oob_base_components, opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_base_modules, opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_base_exception_handlers, opal_list_t);
+    
+    if (ORTE_SUCCESS != 
+        mca_base_components_open("oob", mca_oob_base_output,
+                                 mca_oob_base_static_components, 
+                                 &mca_oob_base_components, true)) {
         return ORTE_ERROR;
     }
     

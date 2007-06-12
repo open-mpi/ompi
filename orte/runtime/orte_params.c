@@ -30,7 +30,7 @@
 #include "orte/runtime/params.h"
 
 /* globals used by RTE */
-bool orte_debug_flag;
+bool orte_debug_flag, orte_timing;
 struct timeval orte_abort_timeout;
 
 
@@ -48,7 +48,7 @@ int orte_register_params(bool infrastructure)
                                 false, false, (int)false, &value);
     orte_debug_flag = OPAL_INT_TO_BOOL(value);
     
-    mca_base_param_reg_int_name("orte_debug", "daemons_file",
+    mca_base_param_reg_int_name("orte", "debug_daemons_file",
                                 "Whether want stdout/stderr of daemons to go to a file or not",
                                 false, false, (int)false, NULL);
 
@@ -56,7 +56,7 @@ int orte_register_params(bool infrastructure)
                                 "Whether to properly daemonize the ORTE daemons or not",
                                 false, false, (int)false, NULL);
 
-    mca_base_param_reg_int_name("orte_debug", "daemons",
+    mca_base_param_reg_int_name("orte", "debug_daemons",
                                 "Whether to debug the ORTE daemons or not",
                                 false, false, (int)false, NULL);
 
@@ -64,6 +64,12 @@ int orte_register_params(bool infrastructure)
                                 "Whether we are ORTE infrastructure or an ORTE application",
                                 true, true, (int)infrastructure, NULL);
 
+    /* check for timing requests */
+    mca_base_param_reg_int_name("orte", "timing",
+                                "Request that critical timing loops be measured",
+                                false, false, (int)false, &value);
+    orte_timing = OPAL_INT_TO_BOOL(value);
+    
     /* User-level debugger info string */
 
     mca_base_param_reg_string_name("orte", "base_user_debugger",

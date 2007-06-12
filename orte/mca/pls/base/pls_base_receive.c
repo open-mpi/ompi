@@ -259,13 +259,6 @@ void orte_pls_base_recv(int status, orte_process_name_t* sender,
             }
             break;
             
-        case ORTE_PLS_CANCEL_OPERATION_CMD:
-            /* issue the command */
-            if (ORTE_SUCCESS != (rc = orte_pls.cancel_operation())) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-            
         default:
             ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
     }

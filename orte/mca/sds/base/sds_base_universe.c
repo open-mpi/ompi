@@ -87,6 +87,7 @@ orte_sds_base_basic_contact_universe(void)
                 /* user-specified name - abort */
                 opal_output(0, "orte_init: could not contact the specified universe name %s",
                             orte_universe_info.name);
+                ORTE_ERROR_LOG(ret);
                 return ORTE_ERR_UNREACH;
             }
             orte_process_info.seed = true;

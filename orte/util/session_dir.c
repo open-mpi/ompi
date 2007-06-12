@@ -518,32 +518,44 @@ orte_session_dir_cleanup(orte_jobid_t jobid)
 {
     int rc;
     char *tmp;
-    char *job, *job_session_dir;
+    char *job=NULL, *job_session_dir=NULL;
 
     /* need to setup the top_session_dir with the prefix */
     tmp = opal_os_path(false,
                        orte_process_info.tmpdir_base,
                        orte_process_info.top_session_dir, NULL);
     
-    /* define the proc and job session directories for this process */
-    if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&job, jobid))) {
-        ORTE_ERROR_LOG(rc);
-        free(tmp);
-        return rc;
-    }
-    job_session_dir = opal_os_path( false, orte_process_info.universe_session_dir,
-                                    job, NULL );
-    if( NULL == job_session_dir ) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        free(tmp);
-        free(job);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+    if (ORTE_JOBID_WILDCARD != jobid) {
+        /* define the proc and job session directories for this process */
+        if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&job, jobid))) {
+            ORTE_ERROR_LOG(rc);
+            free(tmp);
+            return rc;
+        }
+        job_session_dir = opal_os_path( false, orte_process_info.universe_session_dir,
+                                        job, NULL );
+        if( NULL == job_session_dir ) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            free(tmp);
+            free(job);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        
+        opal_os_dirpath_destroy(job_session_dir,
+                                true, orte_dir_check_file);
+        /* take out the universe session dir, but only if there
+         * are no remaining job session dirs around
+         */
+        opal_os_dirpath_destroy(orte_process_info.universe_session_dir,
+                                false, orte_dir_check_file);
+    } else {
+        /* if we want the session_dir removed for ALL jobids, then
+         * just recursively blow the whole universe session away
+         */
+        opal_os_dirpath_destroy(orte_process_info.universe_session_dir,
+                                true, orte_dir_check_file);
     }
     
-    opal_os_dirpath_destroy(job_session_dir,
-                            true, orte_dir_check_file);
-    opal_os_dirpath_destroy(orte_process_info.universe_session_dir,
-                            false, orte_dir_check_file);
     opal_os_dirpath_destroy(tmp,
                             false, orte_dir_check_file);
 
@@ -584,8 +596,8 @@ orte_session_dir_cleanup(orte_jobid_t jobid)
 
 CLEANUP:
     free(tmp);
-    free(job);
-    free(job_session_dir);
+    if (NULL != job) free(job);
+    if (NULL != job_session_dir) free(job_session_dir);
     return ORTE_SUCCESS;
 }
 

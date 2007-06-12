@@ -56,7 +56,6 @@ typedef uint8_t orte_pls_cmd_flag_t;
 #define ORTE_PLS_SIGNAL_JOB_CMD         4
 #define ORTE_PLS_SIGNAL_PROC_CMD        5
 #define ORTE_PLS_TERMINATE_ORTEDS_CMD   6
-#define ORTE_PLS_CANCEL_OPERATION_CMD   7
 
     /*
      * object for daemon information
@@ -116,7 +115,6 @@ typedef uint8_t orte_pls_cmd_flag_t;
                                                  char ***argv,
                                                  int *proc_name_index,
                                                  int *node_name_index,
-                                                 char *jobid_string,
                                                  orte_std_cntr_t num_procs);
 
 #if defined(c_plusplus) || defined(__cplusplus)

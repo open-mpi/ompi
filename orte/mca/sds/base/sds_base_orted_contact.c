@@ -68,7 +68,7 @@ int orte_sds_base_contact_orted(char *orted_uri)
     /* do the send - it will be ignored on the far end, so don't worry about
      * getting a response
      */
-    if (0 > orte_rml.send_buffer(&orted, &buffer, ORTE_RML_TAG_PLS_ORTED, 0)) {
+    if (0 > orte_rml.send_buffer(&orted, &buffer, ORTE_RML_TAG_DAEMON, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_CONNECTION_FAILED);
         OBJ_DESTRUCT(&buffer);
         return ORTE_ERR_CONNECTION_FAILED;

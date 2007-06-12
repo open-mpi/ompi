@@ -55,7 +55,6 @@
  * Initialization of the bproc_orted module with all the needed function pointers
  */
 orte_odls_base_module_t orte_odls_bproc_module = {
-    orte_odls_bproc_subscribe_launch_data,
     orte_odls_bproc_get_add_procs_data,
     orte_odls_bproc_launch_local_procs,
     orte_odls_bproc_kill_local_procs,
@@ -77,7 +76,108 @@ static int odls_bproc_setup_stdio(orte_process_name_t *proc_name,
 
 int orte_odls_bproc_get_add_procs_data(orte_gpr_notify_data_t **data, orte_job_map_t *map)
 {
-    return ORTE_ERR_NOT_IMPLEMENTED;
+    orte_gpr_notify_data_t *ndat;
+    orte_gpr_value_t **values, *value;
+    orte_std_cntr_t cnt;
+    opal_list_item_t *item, *m_item;
+    orte_mapped_node_t *node;
+    orte_mapped_proc_t *proc;
+    int rc;
+    
+    /* set default answer */
+    *data = NULL;
+    
+    ndat = OBJ_NEW(orte_gpr_notify_data_t);
+    if (NULL == ndat) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    /* construct a fake trigger name so that the we can extract the jobid from it later */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(ndat->target), "bogus", map->job))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(ndat);
+        return rc;
+    }
+    
+    /* our required info is in the mapped_node objects, so all we
+     * have to do is transfer it over
+     */
+    for (m_item = opal_list_get_first(&map->nodes);
+         m_item != opal_list_get_end(&map->nodes);
+         m_item = opal_list_get_next(m_item)) {
+        node = (orte_mapped_node_t*)m_item;
+        
+        for (item = opal_list_get_first(&node->procs);
+             item != opal_list_get_end(&node->procs);
+             item = opal_list_get_next(item)) {
+            proc = (orte_mapped_proc_t*)item;
+            
+            /* must not have any tokens so that launch_procs can process it correctly */
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, 0, "bogus", 5, 0))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+            
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]),
+                                                             ORTE_PROC_NAME_KEY,
+                                                             ORTE_NAME, &proc->name))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+            
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[1]),
+                                                             ORTE_PROC_APP_CONTEXT_KEY,
+                                                             ORTE_STD_CNTR, &proc->app_idx))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+            
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[2]),
+                                                             ORTE_NODE_NAME_KEY,
+                                                             ORTE_STRING, node->nodename))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+            
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[3]),
+                                                             ORTE_PROC_LOCAL_RANK_KEY,
+                                                             ORTE_VPID, &proc->local_rank))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+            
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[4]),
+                                                             ORTE_NODE_NUM_PROCS_KEY,
+                                                             ORTE_STD_CNTR, &node->num_procs))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+            
+            if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&cnt, ndat->values, value))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(values[0]);
+                return rc;
+            }
+            ndat->cnt += 1;
+        }
+    }
+    
+    *data = ndat;
+    return ORTE_SUCCESS;
 }
 
 
@@ -432,89 +532,6 @@ cleanup:
 }
 
 
-/* this entire function gets called within a GPR compound command,
- * so the subscription actually doesn't get done until the orted
- * executes the compound command
- */
-int orte_odls_bproc_subscribe_launch_data(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc)
-{
-    char *segment;
-    orte_gpr_value_t *values[1];
-    orte_gpr_subscription_t *subs, sub=ORTE_GPR_SUBSCRIPTION_EMPTY;
-    orte_gpr_trigger_t *trigs, trig=ORTE_GPR_TRIGGER_EMPTY;
-    char* keys[] = {
-        ORTE_PROC_NAME_KEY,
-        ORTE_PROC_APP_CONTEXT_KEY,
-        ORTE_NODE_NAME_KEY,
-    };
-    int num_keys = 3;
-    int i, rc;
-    
-    /* get the job segment name */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* attach ourselves to the "standard" orted trigger */
-    if (ORTE_SUCCESS !=
-        (rc = orte_schema.get_std_trigger_name(&(trig.name),
-                                               ORTED_LAUNCH_STAGE_GATE_TRIGGER, job))) {
-        ORTE_ERROR_LOG(rc);
-        free(segment);
-        return rc;
-    }
-    
-    /* ask for return of all data required for launching local processes */
-    subs = &sub;
-    sub.action = ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG;
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&(sub.name),
-                                                                    ORTED_LAUNCH_STG_SUB,
-                                                                    job))) {
-        ORTE_ERROR_LOG(rc);
-        free(segment);
-        free(trig.name);
-        return rc;
-    }
-    sub.cnt = 1;
-    sub.values = values;
-    
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[0]), ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
-                                                    segment, num_keys, 0))) {
-        ORTE_ERROR_LOG(rc);
-        free(segment);
-        free(sub.name);
-        free(trig.name);
-        return rc;
-    }
-    for (i=0; i < num_keys; i++) {
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[0]->keyvals[i]),
-                                                         keys[i], ORTE_UNDEF, NULL))) {
-            ORTE_ERROR_LOG(rc);
-            free(segment);
-            free(sub.name);
-            free(trig.name);
-            OBJ_RELEASE(values[0]);
-            return rc;
-        }
-    }
-    
-    sub.cbfunc = cbfunc;
-    
-    trigs = &trig; 
-    
-    /* do the subscription */
-    if (ORTE_SUCCESS != (rc = orte_gpr.subscribe(1, &subs, 1, &trigs))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    free(segment);
-    free(sub.name);
-    free(trig.name);
-    OBJ_RELEASE(values[0]);
-    
-    return rc;
-}
-
 /**
  * Setup io for the current node, then tell orterun we are ready for the actual
  * processes.
@@ -538,6 +555,8 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
     int cycle = 0;
     char *job_str=NULL, *vpid_str, *uri_file, *my_uri=NULL, *session_dir=NULL;
     FILE *fp;
+    orte_vpid_t *vptr;
+    bool node_included;
 
     /* first, retrieve the job number we are to launch from the
      * returned data - we can extract the jobid directly from the
@@ -545,7 +564,8 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
      */
     if (ORTE_SUCCESS != (rc = orte_schema.extract_jobid_from_std_trigger_name(&jobid, data->target))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        src = rc;
+        goto CALLHOME;
     }
 
     /**
@@ -555,6 +575,9 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
     */
     setpgid(0,0);
 
+    /* set the flag indicating this node is not included in the launch data */
+    node_included = false;
+    
     /* loop through the returned data to find the global info and
      * the info for processes going onto this node
      */
@@ -574,11 +597,15 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
                     * so we can access it */
                     if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&node_name, kval->value, ORTE_STRING))) {
                         ORTE_ERROR_LOG(rc);
-                        return rc;
+                        src = rc;
+                        goto CALLHOME;
                     }
                     /* if this is our node...must also protect against a zero-length string  */
                     if (NULL != node_name && 0 == strcmp(node_name, orte_system_info.nodename)) {
-                        /* ...harvest the info into a new child structure */
+                        /* indicate that there is something for us to do */
+                        node_included = true;
+                        
+                        /* setup and populate the child object */
                         child = OBJ_NEW(odls_bproc_child_t);
                         for (kv2 = 0; kv2 < value->cnt; kv2++) {
                             kval = value->keyvals[kv2];
@@ -586,16 +613,36 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
                                 /* copy the name into the child object */
                                 if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(child->name), kval->value->data, ORTE_NAME))) {
                                     ORTE_ERROR_LOG(rc);
-                                    return rc;
+                                    src = rc;
+                                    goto CALLHOME;
                                 }
                                 continue;
                             }
                             if(strcmp(kval->key, ORTE_PROC_APP_CONTEXT_KEY) == 0) {
                                 if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, kval->value, ORTE_STD_CNTR))) {
                                     ORTE_ERROR_LOG(rc);
-                                    return rc;
+                                    src = rc;
+                                    goto CALLHOME;
                                 }
                                 child->app_idx = *sptr;  /* save the index into the app_context objects */
+                                continue;
+                            }
+                            if(strcmp(kval->key, ORTE_PROC_LOCAL_RANK_KEY) == 0) {
+                                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&vptr, kval->value, ORTE_VPID))) {
+                                    ORTE_ERROR_LOG(rc);
+                                    src = rc;
+                                    goto CALLHOME;
+                                }
+                                child->local_rank = *vptr;  /* save the local_rank */
+                                continue;
+                            }
+                            if(strcmp(kval->key, ORTE_NODE_NUM_PROCS_KEY) == 0) {
+                                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, kval->value, ORTE_STD_CNTR))) {
+                                    ORTE_ERROR_LOG(rc);
+                                    src = rc;
+                                    goto CALLHOME;
+                                }
+                                child->num_procs = *sptr;  /* save the number of procs from this job on this node */
                                 continue;
                             }
                         } /* kv2 */
@@ -609,6 +656,14 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
                 }
             } /* for kv */
         } /* for j */
+    }
+
+    /* if there is nothing for us to do, we still have to report back
+     * before we just return
+     */
+    if (!node_included) {
+        rc = ORTE_SUCCESS;
+        goto CALLHOME;
     }
 
     /* setup some values we'll need to drop my uri for each child */
@@ -639,7 +694,8 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
                                     connect_stdin);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
-            goto cleanup;
+            src = rc;
+            goto CALLHOME;
         }
 
         /* record my uri in a file within the session directory so the child can contact me */
@@ -649,26 +705,32 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
         if (ORTE_SUCCESS != (rc = orte_session_dir(true, NULL, NULL, NULL,
                                                    NULL, NULL, job_str, vpid_str))) {
             ORTE_ERROR_LOG(rc);
-            goto cleanup;
+            src = rc;
+            goto CALLHOME;
         }
         
         /* get the session dir name so we can put the file there */
         if (ORTE_SUCCESS != (rc = orte_session_dir_get_name(&session_dir, NULL, NULL, NULL,
                                                             NULL, NULL, NULL, job_str, vpid_str))) {
             ORTE_ERROR_LOG(rc);
-            goto cleanup;
+            src = rc;
+            goto CALLHOME;
         }
         free(vpid_str);
         
-        /* create the file and put my uri into it */
+        /* create the file and put my uri, this child's local rank, and the
+         * number of local procs into it */
         uri_file = opal_os_path(false, session_dir, "orted-uri.txt", NULL);
         fp = fopen(uri_file, "w");
         if (NULL == fp) {
             ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
             rc = ORTE_ERR_FILE_OPEN_FAILURE;
-            goto cleanup;
+            src = rc;
+            goto CALLHOME;
         }
         fprintf(fp, "%s\n", my_uri);
+        fprintf(fp, "%ld\n", (long)child->local_rank);
+        fprintf(fp, "%ld\n", (long)child->num_procs);
         fclose(fp);
         free(uri_file);
 
@@ -679,6 +741,7 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
     free(job_str);
     free(my_uri);
 
+CALLHOME:
     /* message to indicate that we are ready */
     ack = OBJ_NEW(orte_buffer_t);
     rc = orte_dss.pack(ack, &src, 1, ORTE_INT);
@@ -738,13 +801,18 @@ int orte_odls_bproc_deliver_message(orte_jobid_t job, orte_buffer_t *buffer, ort
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
         
-        /* see if this is one of the chosen */
-        if (job == child->name->jobid) {
-            /* if so, send the message */
-            rc = orte_rml.send_buffer(child->name, buffer, tag, 0);
-            if (rc < 0) {
-                ORTE_ERROR_LOG(rc);
-            }
+        /* do we have a child from the specified job. Because the
+         *  job could be given as a WILDCARD value, we must use
+         *  the dss.compare function to check for equality.
+         */
+        if (ORTE_EQUAL != orte_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
+            continue;
+        }
+        
+        /* if so, send the message */
+        rc = orte_rml.send_buffer(child->name, buffer, tag, 0);
+        if (rc < 0) {
+            ORTE_ERROR_LOG(rc);
         }
     }
     

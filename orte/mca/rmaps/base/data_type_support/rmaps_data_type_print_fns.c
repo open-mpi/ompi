@@ -90,8 +90,12 @@ int orte_rmaps_base_print_map(char **output, char *prefix, orte_job_map_t *src, 
         tmp = tmp3;
     }
     
+    asprintf(&tmp2, "%s\n%sNum new daemons: %ld\tNew daemon starting vpid %ld", tmp, pfx,
+             (long)src->num_new_daemons, (long)src->daemon_vpid_start);
+    free(tmp);
+    
     /* set the return */
-    *output = tmp;
+    *output = tmp2;
 
     free(pfx);
     return ORTE_SUCCESS;
@@ -173,8 +177,8 @@ int orte_rmaps_base_print_mapped_node(char **output, char *prefix, orte_mapped_n
         return rc;
     }
     
-    asprintf(&tmp3, "%s\n\t%s\n%sOversubscribed: %s\tNum procs from this job on node: %ld", tmp, tmp2, pfx,
-             (src->oversubscribed ? "True" : "False"), (long)src->num_procs);
+    asprintf(&tmp3, "%s\n\t%s\n%s\tPreexists: %s\n%sOversubscribed: %s\tNum procs from this job on node: %ld", tmp, tmp2, pfx,
+             (src->daemon_preexists ? "True" : "False"), pfx, (src->oversubscribed ? "True" : "False"), (long)src->num_procs);
     free(tmp);
     free(tmp2);
     

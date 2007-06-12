@@ -59,7 +59,6 @@ int orte_odls_bproc_finalize(void);
 /*
  * Interface
  */
-int orte_odls_bproc_subscribe_launch_data(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc);
 int orte_odls_bproc_get_add_procs_data(orte_gpr_notify_data_t **data, orte_job_map_t *map);
 int orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_environ);
 int orte_odls_bproc_kill_local_procs(orte_jobid_t job, bool set_state);
@@ -100,6 +99,8 @@ typedef struct odls_bproc_child_t {
     pid_t pid;                   /* local pid of the proc */
     orte_std_cntr_t app_idx;     /* index of the app_context for this proc */
     bool alive;                  /* is this proc alive? */
+    orte_vpid_t local_rank;      /* local rank of this proc */
+    orte_std_cntr_t num_procs;   /* number of local procs sharing this node */
 } odls_bproc_child_t;
 OBJ_CLASS_DECLARATION(odls_bproc_child_t);
 

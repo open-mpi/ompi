@@ -48,11 +48,12 @@ extern "C" {
 /*
  * global flag for use in timing tests
  */
+ORTE_DECLSPEC extern int mca_oob_base_output;
 ORTE_DECLSPEC extern bool orte_oob_base_timing;
 ORTE_DECLSPEC extern bool orte_oob_xcast_timing;
-ORTE_DECLSPEC extern int orte_oob_xcast_mode;
 ORTE_DECLSPEC extern opal_mutex_t orte_oob_xcast_mutex;
 ORTE_DECLSPEC extern opal_condition_t orte_oob_xcast_cond;
+ORTE_DECLSPEC extern int orte_oob_xcast_linear_xover, orte_oob_xcast_binomial_xover;
 
 /*
  * Flag indicating if this framework has been opened

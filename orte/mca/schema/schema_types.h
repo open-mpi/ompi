@@ -89,6 +89,9 @@
 #define ORTE_JOB_STATE_KEY                      "orte-job-state"
 #define ORTE_JOB_MAPPING_MODE_KEY               "orte-job-mapping-mode"
 #define ORTE_JOB_PARENT_JOBID_KEY               "orte-job-parent-jobid"
+#define ORTE_JOB_NUM_NEW_DAEMONS_KEY            "orte-job-num-new-daemons"
+#define ORTE_JOB_DAEMON_VPID_START_KEY          "orte-job-daemon-vpid-start"
+#define ORTE_JOB_BEING_LAUNCHED_KEY             "orte-job-being-launched"
 
 /* PROCESS specific keys */
 #define ORTE_PROC_NAME_KEY                      "orte-proc-name"
@@ -139,8 +142,8 @@
 #define ORTE_STG1_TRIGGER               "orte-stage1"
 #define ORTE_STG2_TRIGGER               "orte-stage2"
 #define ORTE_STG3_TRIGGER               "orte-stage3"
-#define ORTE_NUM_FINALIZED_TRIGGER      "orte-num-finalized"
-#define ORTE_NUM_TERMINATED_TRIGGER     "orte-num-terminated"
+#define ORTE_ALL_FINALIZED_TRIGGER      "orte-finalized-trig"
+#define ORTE_ALL_TERMINATED_TRIGGER     "orte-terminated-trig"
 
 #define ORTE_JOB_CKPT_STATE_TRIGGER     "orte-job-ckpt-trig"
 #define ORTE_PROC_CKPT_STATE_TRIGGER    "orte-proc-ckpt-trig"
@@ -149,13 +152,12 @@
 #define ORTE_NUM_ABORTED_TRIGGER        "orte-num-aborted"
 #define ORTE_FAILED_TO_START_TRIGGER    "orte-failed-start-trig"
 
+
 /*
  * ORTED (ORTE DAEMON) TRIGGER DEFINITIONS
  */
-#define ORTED_LAUNCH_STAGE_GATE_TRIGGER     "orted-launch-gate"
-#define ORTED_LAUNCH_STG_SUB                "orted-launch-sub"
-#define ORTED_LAUNCH_STAGE_GATE_CNTR        "orted-num-at-launch-gate"
-#define ORTED_NUM_TO_BE_LAUNCHED            "orted-num-to-be-launched"
+#define ORTED_LAUNCH_STG_SUB            "orted-launch-sub"
+
 
 /*
  * BPROC-SPECIFIC SEGMENT FOR STORING CLUSTER-WIDE NODE STATES
