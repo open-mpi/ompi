@@ -232,8 +232,8 @@ static int orte_pls_rsh_probe(orte_mapped_node_t * node, orte_pls_rsh_shell * sh
     }
     if (mca_pls_rsh_component.debug) {
         if( ORTE_PLS_RSH_SHELL_UNKNOWN == *shell ) {
-            opal_output(0, "pls:rsh: node:%s has unhandled SHELL: %s\n",
-                        node->nodename, sh_name);
+            opal_output(0, "pls:rsh: node:%s has unhandled SHELL\n",
+                        node->nodename);
         } else {
             opal_output(0, "pls:rsh: node:%s has SHELL: %s\n",
                         node->nodename, orte_pls_rsh_shell_name[*shell]);
