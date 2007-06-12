@@ -34,13 +34,14 @@
 #include "orte/dss/dss.h"
 #include "orte/mca/gpr/gpr_types.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/odls/odls_types.h"
 #include "orte/mca/rml/rml.h"
 
 #include "orte/mca/rmgr/base/rmgr_private.h"
 
 int orte_rmgr_base_xconnect(orte_jobid_t child, orte_jobid_t parent)
 {
-    orte_rml_cmd_flag_t command=ORTE_RML_UPDATE_CMD;
+    orte_rml_cmd_flag_t command;
     orte_gpr_notify_data_t *data=NULL;
     orte_process_name_t name;
     orte_buffer_t *buf;
@@ -60,7 +61,8 @@ int orte_rmgr_base_xconnect(orte_jobid_t child, orte_jobid_t parent)
     /* send that info to everyone in the parent */
     if (NULL != data) {
         buf = OBJ_NEW(orte_buffer_t);
-        /* pack the update command */
+        /* pack the update-RML command */
+        command = ORTE_RML_UPDATE_CMD;
         if (ORTE_SUCCESS != (rc = orte_dss.pack(buf, &command, 1, ORTE_RML_CMD))) {
             ORTE_ERROR_LOG(rc);
         }
@@ -94,7 +96,8 @@ int orte_rmgr_base_xconnect(orte_jobid_t child, orte_jobid_t parent)
     /* send that info to everyone in the child */
     if (NULL != data) {
         buf = OBJ_NEW(orte_buffer_t);
-        /* pack the update command */
+        /* pack the update-RML command */
+        command = ORTE_RML_UPDATE_CMD;
         if (ORTE_SUCCESS != (rc = orte_dss.pack(buf, &command, 1, ORTE_RML_CMD))) {
             ORTE_ERROR_LOG(rc);
         }

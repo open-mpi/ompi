@@ -84,7 +84,6 @@ void orte_pls_base_purge_mca_params(char ***env)
 int orte_pls_base_orted_append_basic_args(int *argc, char ***argv,
                                           int *proc_name_index,
                                           int *node_name_index,
-                                          char *jobid_string,
                                           orte_std_cntr_t num_procs)
 {
     char *param = NULL, *uri = NULL;
@@ -94,10 +93,6 @@ int orte_pls_base_orted_append_basic_args(int *argc, char ***argv,
 
     /* check for debug flags */
     orte_pls_base_mca_argv(argc, argv);
-
-    /* Bootproxy */
-    opal_argv_append(argc, argv, "--bootproxy");
-    opal_argv_append(argc, argv, jobid_string);
 
     /* Name */
     if( NULL != proc_name_index ) {

@@ -122,6 +122,21 @@ int orte_rmaps_base_unpack_map(orte_buffer_t *buffer, void *dest,
             }
             opal_list_append(&(maps[i]->nodes), &node->super);
         }
+        
+        /* unpack the number of daemons to be created */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(maps[i]->num_new_daemons), &n, ORTE_STD_CNTR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* unpack the starting vpid of the new daemons */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(maps[i]->daemon_vpid_start), &n, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
     }
 
     return ORTE_SUCCESS;
@@ -253,6 +268,14 @@ int orte_rmaps_base_unpack_mapped_node(orte_buffer_t *buffer, void *dest,
             return rc;
         }
 
+        /* unpack the daemon_preexists flag */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
+                                                         &(nodes[i]->daemon_preexists), &n, ORTE_BOOL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
         /* unpack the oversubscribed flag */
         n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,

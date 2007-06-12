@@ -36,6 +36,8 @@ static void odls_bproc_child_constructor(odls_bproc_child_t *ptr)
     ptr->name = NULL;
     ptr->app_idx = -1;
     ptr->alive = false;
+    ptr->local_rank = ORTE_VPID_INVALID;
+    ptr->num_procs = 0;
 }
 static void odls_bproc_child_destructor(odls_bproc_child_t *ptr)
 {

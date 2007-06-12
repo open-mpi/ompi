@@ -100,6 +100,7 @@ static void orte_rmaps_mapped_node_construct(orte_mapped_node_t* node)
     node->launch_id = -1;
     node->username = NULL;
     node->daemon = NULL;
+    node->daemon_preexists = false;
     node->oversubscribed = false;
     node->num_procs = 0;
     OBJ_CONSTRUCT(&node->procs, opal_list_t);
@@ -145,6 +146,8 @@ static void orte_rmaps_job_map_construct(orte_job_map_t* map)
     map->num_apps = 0;
     map->apps = NULL;
     map->num_nodes = 0;
+    map->num_new_daemons = 0;
+    map->daemon_vpid_start = ORTE_VPID_INVALID;
     OBJ_CONSTRUCT(&map->nodes, opal_list_t);
 }
 

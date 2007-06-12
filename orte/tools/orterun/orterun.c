@@ -300,10 +300,6 @@ opal_cmd_line_init_t cmd_line_init[] = {
         &orterun_globals.do_not_launch, OPAL_CMD_LINE_TYPE_BOOL,
         "Perform all necessary operations to prepare to launch the application, but do not actually launch it" },
     
-    { "pls", "base", "reuse_daemons", '\0', "reuse-daemons", "reuse-daemons", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "If set, reuse daemons to launch dynamically spawned processes"},
-
     { NULL, NULL, NULL, '\0', NULL, "prefix", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Prefix where Open MPI is installed on remote nodes" },
@@ -898,13 +894,6 @@ static void abort_signal_callback(int fd, short flags, void *arg)
                         orterun_basename);
             }
 
-            /* tell the pls to cancel the terminate request -
-             * obviously, something is wrong at this point
-             */
-            if (ORTE_SUCCESS != (ret = orte_pls.cancel_operation())) {
-                ORTE_ERROR_LOG(ret);
-            }
-            
             /* We are in an event handler; exit_callback() will delete
                the handler that is currently running (which is a Bad
                Thing), so we can't call it directly.  Instead, we have

@@ -42,7 +42,7 @@ int orte_gpr_replica_arith(orte_gpr_addr_mode_t addr_mode,
                            orte_data_value_t *operand)
 {
     int rc;
-    orte_std_cntr_t num_tokens, num_keys;
+    orte_std_cntr_t num_tokens=0, num_keys=0;
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *itags=NULL, *keytags=NULL;
     

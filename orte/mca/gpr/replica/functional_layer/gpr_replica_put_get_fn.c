@@ -121,7 +121,7 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
     orte_gpr_replica_itag_t itag;
     orte_gpr_replica_addr_mode_t tok_mode;
     orte_gpr_replica_itagval_t *iptr, **iptrs;
-    bool overwrite, overwritten;
+    bool overwrite, duplicate, overwritten;
     int rc;
     orte_std_cntr_t i, j, k, m, n, index;
 
@@ -151,9 +151,13 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
 
     /* extract the token address mode and overwrite permissions */
     overwrite = false;
+    duplicate = true;
     if (addr_mode & ORTE_GPR_OVERWRITE) {
         overwrite = true;
+    } else if (addr_mode & ORTE_GPR_NO_DUPLICATE) {
+        duplicate = false;
     }
+    
     tok_mode = ORTE_GPR_REPLICA_TOKMODE(addr_mode);
     if (0x00 == tok_mode) {  /* default tokens addressing mode to AND */
         tok_mode = ORTE_GPR_REPLICA_AND;
@@ -205,9 +209,7 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
                                                 ORTE_GPR_REPLICA_OR,
                                                 &itag, 1, cptr[j])) {
                         if (0 < orte_gpr_replica_globals.num_srch_ival) {
-                            /* this key already exists - overwrite, if permission given
-                             * else add this keyval to the container as a new entry
-                             */
+                            /* this key already exists - overwrite, if permission given */
                              if (overwrite) {
                                 /* check to see if we have already overwritten this keyval. if so,
                                  * then we add the remaining values - otherwise, only the
@@ -220,7 +222,7 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
                                     if (NULL != iptrs[m]) {
                                         n++;
                                         if (iptrs[m]->itag == itag) {
-                                            /* keyval was previously overwritten */
+                                            /* keyval was previously overwritten so just add this one as another entry */
                                             if (ORTE_SUCCESS != (rc = orte_gpr_replica_add_keyval(&iptr, seg, cptr[j], keyvals[i]))) {
                                                 ORTE_ERROR_LOG(rc);
                                                 return rc;
@@ -248,7 +250,10 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
                                     }
                                     (orte_gpr_replica_globals.num_overwritten)++;
                                 }
-                             } else {
+                             } else if (duplicate) {
+                                 /* no overwrite permission - add this keyval to the container as a new entry
+                                  * if we are allowed to duplicate. Otherwise, we just ignore it.
+                                  */
                                 if (ORTE_SUCCESS != (rc = orte_gpr_replica_add_keyval(&iptr, seg, cptr[j], keyvals[i]))) {
                                     ORTE_ERROR_LOG(rc);
                                     return rc;

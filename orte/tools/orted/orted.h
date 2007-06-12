@@ -42,13 +42,11 @@ typedef struct {
     char* num_procs;
     char* universe;
     char **saved_environ;
-    int bootproxy;
     int uri_pipe;
     opal_mutex_t mutex;
     opal_condition_t condition;
     bool exit_condition;
     bool spin;
-    int reap;
 } orted_globals_t;
 
 ORTE_DECLSPEC extern orted_globals_t orted_globals;
@@ -58,9 +56,14 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                       orte_buffer_t *buffer, orte_rml_tag_t tag,
                       void* cbdata);
 
-void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
-                          orte_buffer_t *buffer, orte_rml_tag_t tag,
-                          void* cbdata);
+void orte_daemon_recv_routed(int status, orte_process_name_t* sender,
+                             orte_buffer_t *buffer, orte_rml_tag_t tag,
+                             void* cbdata);
+
+void orte_daemon_recv_gate(int status, orte_process_name_t* sender,
+                           orte_buffer_t *buffer, orte_rml_tag_t tag,
+                           void* cbdata);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

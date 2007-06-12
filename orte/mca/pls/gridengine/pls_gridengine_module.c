@@ -74,6 +74,7 @@
 #include "opal/util/output.h"
 #include "opal/util/basename.h"
 
+#include "orte/runtime/params.h"
 #include "orte/util/univ_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/sys_info.h"
@@ -99,7 +100,6 @@ orte_pls_base_module_t orte_pls_gridengine_module = {
     orte_pls_gridengine_terminate_proc,
     orte_pls_gridengine_signal_job,
     orte_pls_gridengine_signal_proc,
-    orte_pls_gridengine_cancel_operation,
     orte_pls_gridengine_finalize
 };
 
@@ -227,16 +227,6 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
         goto cleanup;
     }
 
-    /* if the user requested that we re-use daemons,
-     * launch the procs on any existing, re-usable daemons
-     */
-    if (orte_pls_base.reuse_daemons) {
-        if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-    }
-    
     num_nodes = (orte_std_cntr_t)opal_list_get_size(&map->nodes);
     if (num_nodes == 0) {
         /* job must have been launched on existing daemons - just return */
@@ -245,27 +235,6 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
         goto cleanup;
     }
     
-    /*
-     * Allocate a range of vpids for the daemons.
-     */
-    rc = orte_ns.reserve_range(0, num_nodes, &vpid);
-    if (ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    /* setup the orted triggers for passing their launch info */
-    if (ORTE_SUCCESS != (rc = orte_smr.init_orted_stage_gates(jobid, num_nodes, NULL, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    /* need integer value for command line parameter */
-    if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
     /*
      * Build argv array
      */
@@ -293,7 +262,6 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     orte_pls_base_orted_append_basic_args(&argc, &argv,
                                           &proc_name_index,
                                           &node_name_index2,
-                                          jobid_string,
                                           (vpid + num_nodes)
                                           );
 
@@ -782,20 +750,6 @@ int orte_pls_gridengine_signal_job(orte_jobid_t jobid, int32_t signal, opal_list
 int orte_pls_gridengine_signal_proc(const orte_process_name_t* proc, int32_t signal)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
-}
-
-/**
- * Cancel an operation involving comm to an orted
- */
-int orte_pls_gridengine_cancel_operation(void)
-{
-    int rc;
-    
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_cancel_operation())) {
-        ORTE_ERROR_LOG(rc);
-    }
-    
-    return rc;
 }
 
 

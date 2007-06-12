@@ -91,7 +91,6 @@ static struct opal_event term_handler;
 static struct opal_event int_handler;
 
 static void signal_callback(int fd, short flags, void *arg);
-static void orted_local_cb_launcher(orte_gpr_notify_data_t *data, void *user_tag);
 
 /*
  * define the orted context table for obtaining parameters
@@ -121,10 +120,6 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
     { "orte", "debug", "daemons_file", '\0', NULL, "debug-daemons-file", 0,
       &orted_globals.debug_daemons_file, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of OpenRTE daemons, storing output in files" },
-
-    { "rmgr", "bootproxy", "jobid", '\0', NULL, "bootproxy", 1,
-      &orted_globals.bootproxy, OPAL_CMD_LINE_TYPE_INT,
-      "Run as boot proxy for <job-id>" },
 
     { NULL, NULL, NULL, '\0', NULL, "set-sid", 0,
       &orted_globals.set_sid, OPAL_CMD_LINE_TYPE_BOOL,
@@ -195,10 +190,7 @@ int main(int argc, char *argv[])
     char *log_path = NULL;
     char log_file[PATH_MAX];
     char *jobidstring;
-    orte_gpr_value_t *value;
-    char *segment;
     int i;
-    orte_buffer_t answer;
     char * orted_amca_param_path = NULL;
 
     /* initialize the globals */
@@ -320,7 +312,7 @@ int main(int argc, char *argv[])
     
     /* Okay, now on to serious business! */
     
-    /* Ensure the process info structure in instantiated and initialized
+    /* Ensure the process info structure is instantiated and initialized
      * and set the daemon flag to true
      */
     orte_process_info.daemon = true;
@@ -383,13 +375,70 @@ int main(int argc, char *argv[])
         opal_daemon_init(NULL);
     }
 
-    /* Intialize the Open RTE */
-    /* Set the flag telling orte_init that I am NOT a
+    /* Intialize OPAL */
+    if (ORTE_SUCCESS != (ret = opal_init())) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+
+    /* Set the flag telling OpenRTE that I am NOT a
      * singleton, but am "infrastructure" - prevents setting
      * up incorrect infrastructure that only a singleton would
-     * require
+     * require.
      */
-    if (ORTE_SUCCESS != (ret = orte_init(ORTE_INFRASTRUCTURE, ORTE_NON_BARRIER))) {
+    if (ORTE_SUCCESS != (ret = orte_init_stage1(ORTE_INFRASTRUCTURE))) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    
+    /* setup our receive functions - this will allow us to relay messages
+     * during start for better scalability
+     */
+    /* register the daemon main receive functions */
+    /* setup to listen for broadcast commands via routed messaging algorithms */
+    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_ROUTED,
+                                  ORTE_RML_NON_PERSISTENT, orte_daemon_recv_routed, NULL);
+    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    /* setup to listen for commands sent specifically to me */
+    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON, ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
+    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    
+    /* Complete initializing the rte - begin recording registry actions */
+    if (ORTE_SUCCESS != (ret = orte_gpr.begin_compound_cmd())) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_init_stage2(ORTE_STARTUP_TRIGGER))) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    
+    /* indicate we are at the ORTE_STARTUP_COMPLETE state */
+    if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(ORTE_PROC_MY_NAME,
+                                                      ORTE_PROC_ORTE_STARTUP_COMPLETE, 0))) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    
+    /* send the information */
+    if (ORTE_SUCCESS != (ret = orte_gpr.exec_compound_cmd())) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    
+    /* Use the barrier capability to hold us
+     * in orte_init until the orte_setup state is achieved. This
+     * will allow us to obtain a complete set of contact info
+     * for all of our fellow daemons
+     */
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast_gate(orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -461,146 +510,17 @@ int main(int argc, char *argv[])
     OBJ_CONSTRUCT(&orted_globals.mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&orted_globals.condition, opal_condition_t);
 
-    /* register the daemon main receive functions */
-    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_PLS_ORTED, ORTE_RML_NON_PERSISTENT, orte_daemon_recv_pls, NULL);
+    /* a daemon should *always* yield the processor when idle */
+    opal_progress_set_yield_when_idle(true);
+
+    /* setup to listen for xcast stage gate commands. We need to do this because updates to the
+     * contact info for dynamically spawned daemons will come to the gate RML-tag
+     */
+    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_XCAST_BARRIER,
+                                  ORTE_RML_NON_PERSISTENT, orte_daemon_recv_gate, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
         return ret;
-    }
-    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON, ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
-    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(ret);
-        return ret;
-    }
-
-    /* check to see if I'm a bootproxy */
-    if (orted_globals.bootproxy) { /* perform bootproxy-specific things */
-        /* a daemon should *always* yield the processor when idle */
-        opal_progress_set_yield_when_idle(true);
-
-        /* attach a subscription to the orted standard trigger so I can get
-         * information on the processes I am to locally launch as soon as all
-         * the orteds for this job are started.
-         *
-         * Once the registry gets to 2.0, we will be able to setup the
-         * subscription so we only get our own launch info back. In the interim,
-         * we setup the subscription so that ALL launch info for this job
-         * is returned. We will then have to parse that message to get our
-         * own local launch info.
-         *
-         * Since we have chosen this approach, we can take advantage of the
-         * fact that the callback function will directly receive this data.
-         * By setting up that callback function to actually perform the launch
-         * based on the received data, all we have to do here is go into our
-         * conditioned wait until the job completes!
-         *
-         * Sometimes, life can be good! :-)
-         */
-
-        /** put all this registry stuff in a compound command to limit communications */
-        if (ORTE_SUCCESS != (ret = orte_gpr.begin_compound_cmd())) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-
-        /* let the local launcher setup a subscription for its required data. We
-         * pass the local_cb_launcher function so that this gets called back - this
-         * allows us to wakeup the orted so it can exit cleanly if the callback
-         * generates an error
-         */
-        if (ORTE_SUCCESS != (ret = orte_odls.subscribe_launch_data(orted_globals.bootproxy, orted_local_cb_launcher))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-
-        /* THIS IS A TEMPORARY PATCH - REPORT NODE AND PROC NAME FOR THIS DAEMON */
-        if (ORTE_SUCCESS != (ret = orte_gpr.create_value(&value, ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_AND,
-                                                         "orte-job-0", 2, 0))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        if (ORTE_SUCCESS != (ret = orte_schema.get_proc_tokens(&(value->tokens), &(value->num_tokens), ORTE_PROC_MY_NAME))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_NODE_NAME_KEY, ORTE_STRING, orte_system_info.nodename))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(value->keyvals[1]), ORTE_PROC_NAME_KEY, ORTE_NAME, ORTE_PROC_MY_NAME))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        if (ORTE_SUCCESS != (ret = orte_gpr.put(1, &value))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        OBJ_RELEASE(value);
-
-
-        /* get the job segment name */
-        if (ORTE_SUCCESS != (ret = orte_schema.get_job_segment_name(&segment, orted_globals.bootproxy))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-
-       /** increment the orted stage gate counter */
-        if (ORTE_SUCCESS != (ret = orte_gpr.create_value(&value, ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_AND,
-                                                         segment, 1, 1))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        free(segment); /* done with this now */
-
-        value->tokens[0] = strdup(ORTE_JOB_GLOBALS);
-        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(value->keyvals[0]), ORTED_LAUNCH_STAGE_GATE_CNTR, ORTE_UNDEF, NULL))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-
-        /* do the increment */
-        if (ORTE_SUCCESS != (ret = orte_gpr.increment_value(value))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        OBJ_RELEASE(value);  /* done with this now */
-
-        /** send the compound command */
-        if (ORTE_SUCCESS != (ret = orte_gpr.exec_compound_cmd())) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-
-        /* setup and enter the event monitor to wait for a wakeup call */
-        OPAL_THREAD_LOCK(&orted_globals.mutex);
-        while (false == orted_globals.exit_condition) {
-            opal_condition_wait(&orted_globals.condition, &orted_globals.mutex);
-        }
-        OPAL_THREAD_UNLOCK(&orted_globals.mutex);
-
-        /* make sure our local procs are dead - but don't update their state
-         * on the HNP as this may be redundant
-         */
-        orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
-
-        /* cleanup their session directory */
-        orte_session_dir_cleanup(orted_globals.bootproxy);
-
-        /* send an ack - we are as close to done as we can be while
-         * still able to communicate
-         */
-        OBJ_CONSTRUCT(&answer, orte_buffer_t);
-        if (0 > orte_rml.send_buffer(ORTE_PROC_MY_HNP, &answer, ORTE_RML_TAG_PLS_ORTED_ACK, 0)) {
-            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        }
-        OBJ_DESTRUCT(&answer);
-
-
-        /* Finalize and clean up ourselves */
-        if (ORTE_SUCCESS != (ret = orte_finalize())) {
-            ORTE_ERROR_LOG(ret);
-        }
-        exit(ret);
     }
 
     /*
@@ -614,15 +534,7 @@ int main(int argc, char *argv[])
     }
 
     if (orted_globals.debug_daemons) {
-        opal_output(0, "[%lu,%lu,%lu] ompid: issuing callback", ORTE_NAME_ARGS(orte_process_info.my_name));
-    }
-
-   /* go through the universe fields and see what else I need to do
-     * - could be setup a virtual machine, spawn a console, etc.
-     */
-
-    if (orted_globals.debug_daemons) {
-        opal_output(0, "[%lu,%lu,%lu] ompid: setting up event monitor", ORTE_NAME_ARGS(orte_process_info.my_name));
+        opal_output(0, "[%lu,%lu,%lu] orted: up and running - waiting for commands!", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
      /* setup and enter the event monitor */
@@ -643,45 +555,20 @@ int main(int argc, char *argv[])
         unlink(log_path);
     }
 
-    /* finalize the system */
-    orte_finalize();
+    /* make sure our local procs are dead - but don't update their state
+    * on the HNP as this may be redundant
+    */
+    orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
 
-    if (orted_globals.debug_daemons) {
-       opal_output(0, "[%lu,%lu,%lu] orted: done - exiting", ORTE_NAME_ARGS(orte_process_info.my_name));
+    /* cleanup any lingering session directories */
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+
+    /* Finalize and clean up ourselves */
+    if (ORTE_SUCCESS != (ret = orte_finalize())) {
+        ORTE_ERROR_LOG(ret);
     }
-
-    exit(0);
+    exit(ret);
 }
-
-/* this function receives the trigger callback from the orted launch stage gate
- * and passes it to the orted local launcher for processing. We do this intermediate
- * step so that we can get an error code if anything went wrong and, if so, wakeup the
- * orted so we can gracefully die
- */
-static void orted_local_cb_launcher(orte_gpr_notify_data_t *data, void *user_tag)
-{
-    int rc;
-    
-    if (orted_globals.debug_daemons) {
-        opal_output(0, "[%lu,%lu,%lu] orted: received launch callback", ORTE_NAME_ARGS(orte_process_info.my_name));
-    }
-    
-    /* pass the data to the orted_local_launcher and get a report on
-     * success or failure of the launch
-     */
-    if (ORTE_SUCCESS != (rc = orte_odls.launch_local_procs(data, orted_globals.saved_environ))) {
-        /* if there was an error, report it.
-         * NOTE: it is absolutely imperative that we do not cause the orted to EXIT when
-         * this happens!!! If we do, then the HNP will "hang" as the orted will no longer
-         * be around to receive messages telling it what to do in response to the failure
-         */
-        ORTE_ERROR_LOG(rc);
-    }
-    
-    /* all done - return and let the orted sleep until something happens */
-    return;
-}
-
 
 static void signal_callback(int fd, short flags, void *arg)
 {

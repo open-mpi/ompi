@@ -77,6 +77,7 @@ struct orte_mapped_node_t {
     orte_process_name_t *daemon;	/* name of the daemon on this node
                                      * NULL => daemon not assigned yet
                                      */
+    bool daemon_preexists;          /* whether or not the daemon already exists */
     bool oversubscribed;            /* whether or not the #procs > #process slots on this node */
     orte_std_cntr_t num_procs;      /* #procs on this node - just the length of the procs list, but
                                      * stored here so we don't have to keep recomputing it elsewhere
@@ -101,6 +102,8 @@ struct orte_job_map_t {
     orte_std_cntr_t num_nodes;  /* #nodes in this map - just the length of the nodes list, but
                                  * stored here so we don't have to keep recomputing it elsewhere
                                  */
+    orte_std_cntr_t num_new_daemons;
+    orte_vpid_t daemon_vpid_start;
     opal_list_t nodes;			/* list of mapped_node_t */
 };
 typedef struct orte_job_map_t orte_job_map_t;

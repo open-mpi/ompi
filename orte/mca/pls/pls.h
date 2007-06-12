@@ -226,11 +226,6 @@ typedef int (*orte_pls_base_module_signal_job_fn_t)(orte_jobid_t, int32_t, opal_
 typedef int (*orte_pls_base_module_signal_proc_fn_t)(const orte_process_name_t*, int32_t);
 
 /**
- * Cancel an ongoing operation involving communication to the orteds
- */
-typedef int (*orte_pls_base_module_cancel_operation_fn_t)(void);
-
-/**
  * Cleanup all resources held by the module
  */
 typedef int (*orte_pls_base_module_finalize_fn_t)(void);
@@ -245,7 +240,6 @@ struct orte_pls_base_module_1_3_0_t {
    orte_pls_base_module_terminate_proc_fn_t     terminate_proc;
    orte_pls_base_module_signal_job_fn_t         signal_job;
    orte_pls_base_module_signal_proc_fn_t        signal_proc;
-   orte_pls_base_module_cancel_operation_fn_t   cancel_operation;
    orte_pls_base_module_finalize_fn_t           finalize;
 };
 

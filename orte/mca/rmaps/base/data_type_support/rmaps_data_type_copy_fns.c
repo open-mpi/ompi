@@ -89,6 +89,9 @@ int orte_rmaps_base_copy_map(orte_job_map_t **dest, orte_job_map_t *src, orte_da
         opal_list_append(&((*dest)->nodes), &nodeptr->super);
     }
     
+    (*dest)->num_new_daemons = src->num_new_daemons;
+    (*dest)->daemon_vpid_start = src->daemon_vpid_start;
+
     return ORTE_SUCCESS;
 }
 
@@ -163,7 +166,8 @@ int orte_rmaps_base_copy_mapped_node(orte_mapped_node_t **dest, orte_mapped_node
             return rc;
         }
     }
-    
+    (*dest)->daemon_preexists = src->daemon_preexists;
+        
     (*dest)->oversubscribed = src->oversubscribed;
     
     (*dest)->num_procs = src->num_procs;

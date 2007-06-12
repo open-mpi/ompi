@@ -554,15 +554,21 @@ int orte_init_stage1(bool infrastructure)
             }
             while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
             OBJ_DESTRUCT(&attrs);
-        }
-    
-        /* for singleton or seed, need to define our stage gates and fire the LAUNCHED gate
-         * to ensure that everything in the rest of the system runs smoothly
-         */
-        if (ORTE_SUCCESS != (ret = orte_rmgr_base_proc_stage_gate_init(ORTE_PROC_MY_NAME->jobid))) {
-            ORTE_ERROR_LOG(ret);
-            error = "singleton/seed orte_rmgr_base_proc_stage_gate_init";
-            goto error;
+
+            /* need to define our stage gates and fire the LAUNCHED gate
+             * to ensure that everything in the rest of the system runs smoothly
+             */            
+            if (ORTE_SUCCESS != (ret = orte_rmgr_base_proc_stage_gate_init(ORTE_PROC_MY_NAME->jobid))) {
+                ORTE_ERROR_LOG(ret);
+                error = "singleton orte_rmgr_base_proc_stage_gate_init";
+                goto error;
+            }
+        } else { /* if we an HNP, then we need to define the orted stage gates */
+            if (ORTE_SUCCESS != (ret = orte_rmgr_base_orted_stage_gate_init(ORTE_PROC_MY_NAME->jobid))) {
+                ORTE_ERROR_LOG(ret);
+                error = "seed orte_rmgr_base_orted_stage_gate_init";
+                goto error;
+            }
         }
         
         /* set our state to LAUNCHED */

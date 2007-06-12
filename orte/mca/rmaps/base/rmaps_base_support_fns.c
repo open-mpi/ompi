@@ -29,6 +29,7 @@
 #include "opal/util/if.h"
 #include "opal/util/show_help.h"
 
+#include "orte/runtime/params.h"
 #include "orte/util/sys_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/smr/smr_types.h"
@@ -498,6 +499,122 @@ int orte_rmaps_base_compute_usage(orte_job_map_t *map, orte_std_cntr_t num_procs
             psave->local_rank = local_rank;
             ++local_rank;
         }
+    }
+    
+    return ORTE_SUCCESS;
+}
+
+int orte_rmaps_base_define_daemons(orte_job_map_t *map)
+{
+    opal_list_item_t *item;
+    orte_mapped_node_t *node;
+    orte_vpid_t vpid;
+    orte_std_cntr_t num_daemons;
+    char* dkeys[] = {
+        ORTE_PROC_NAME_KEY,
+        ORTE_NODE_NAME_KEY,
+        NULL
+    };
+    orte_gpr_value_t **dvalues=NULL, *value;
+    orte_gpr_keyval_t* keyval;
+    orte_std_cntr_t v, kv, num_dvalues=0;
+    char *node_name;
+    orte_process_name_t *pptr;
+    int rc;
+    
+    /* save the default number of daemons we will need */
+    num_daemons = map->num_nodes;
+    
+    /* with the new launch system based on xcast messages to all daemons,
+     * there is no choice but to reuse existing daemons for dynamic spawns
+     */
+
+    /* get the current list of daemons off of the registry */
+    if (ORTE_SUCCESS != (rc = orte_gpr.get(ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
+                                           "orte-job-0",
+                                           NULL,
+                                           dkeys,
+                                           &num_dvalues,
+                                           &dvalues))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* process the results, storing info in the mapped_node objects */
+    for(v=0; v<num_dvalues; v++) {
+        value = dvalues[v];
+        node_name = NULL;
+        for(kv = 0; kv<value->cnt; kv++) {
+            keyval = value->keyvals[kv];
+            if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
+                /* use the dss.copy function here to protect us against zero-length strings */
+                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&node_name, keyval->value->data, ORTE_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                continue;
+            }
+            if (strcmp(keyval->key, ORTE_PROC_NAME_KEY) == 0) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&pptr, keyval->value, ORTE_NAME))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                continue;
+            }
+        }
+        if (NULL == node_name) continue;
+        /* find this node on the map */
+        for (item = opal_list_get_first(&map->nodes);
+             item != opal_list_get_end(&map->nodes);
+             item = opal_list_get_next(item)) {
+            node = (orte_mapped_node_t*)item;
+            if (strcmp(node->nodename, node_name) == 0) {
+                /* got it! store the daemon name here */
+                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&node->daemon, pptr, ORTE_NAME))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                /* flag that this daemon already exists */
+                node->daemon_preexists = true;
+                /* decrease the number of daemons we will need to start */
+                --num_daemons;
+            }
+        }
+    }
+    
+    /* do we need to create any new ones? */
+    if (0 >= num_daemons) {
+        /* nope - we are done! */
+        return ORTE_SUCCESS;
+    }
+    
+    /* get a vpid range for the daemons still to be created */
+    if (ORTE_SUCCESS != (rc = orte_ns.reserve_range(0, num_daemons, &vpid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* store the info in the map */
+    map->num_new_daemons = num_daemons;
+    map->daemon_vpid_start = vpid;
+    
+    /* for each node being used by this job... */
+    for (item = opal_list_get_first(&map->nodes);
+         item != opal_list_get_end(&map->nodes);
+         item = opal_list_get_next(item)) {
+        node = (orte_mapped_node_t*)item;
+        
+        /* if the daemon already exists...do nothing */
+        if (node->daemon_preexists) continue;
+        
+        /* otherwise, create the daemon's process name and store it on the mapped_node... */
+        if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&node->daemon, ORTE_PROC_MY_NAME->cellid,
+                                                              0, vpid))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* ...and increment the vpid for the next one */
+        ++vpid;
     }
     
     return ORTE_SUCCESS;

@@ -87,7 +87,6 @@ static int pls_tm_terminate_orteds(struct timeval *timeout, opal_list_t *attrs);
 static int pls_tm_terminate_proc(const orte_process_name_t *name);
 static int pls_tm_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs);
 static int pls_tm_signal_proc(const orte_process_name_t *name, int32_t signal);
-static int pls_tm_cancel_operation(void);
 static int pls_tm_finalize(void);
 
 static int pls_tm_connect(void);
@@ -108,7 +107,6 @@ orte_pls_base_module_t orte_pls_tm_module = {
     pls_tm_terminate_proc,
     pls_tm_signal_job,
     pls_tm_signal_proc,
-    pls_tm_cancel_operation,
     pls_tm_finalize
 };
 
@@ -124,7 +122,6 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     orte_vpid_t vpid;
     int node_name_index;
     int proc_name_index;
-    char *jobid_string;
     char *param;
     char **env = NULL;
     char *var;
@@ -178,35 +175,17 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
         }
     }    
         
-    /* if the user requested that we re-use daemons,
-     * launch the procs on any existing, re-usable daemons
-     */
-    if (orte_pls_base.reuse_daemons) {
-        if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-    }
-    
-    num_nodes = opal_list_get_size(&map->nodes);
-    if (0 == num_nodes) {
-        /* must have been launched on existing daemons - just return */
-        OBJ_RELEASE(map);
-        return ORTE_SUCCESS;
-    }
-    
-    /*
-     * Allocate a range of vpids for the daemons.
-     */
-    rc = orte_ns.reserve_range(0, num_nodes, &vpid);
-    if (ORTE_SUCCESS != rc) {
+    /* account for any reuse of daemons */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-
-    /* setup the orted triggers for passing their launch info */
-    if (ORTE_SUCCESS != (rc = orte_smr.init_orted_stage_gates(jobid, num_nodes, NULL, NULL))) {
-        ORTE_ERROR_LOG(rc);
+    
+    num_nodes = map->num_new_daemons;
+    if (0 == num_nodes) {
+        /* must have been launched on existing daemons - just return */
+        failed_launch = false;
+        rc = ORTE_SUCCESS;
         goto cleanup;
     }
     
@@ -224,9 +203,6 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
         goto cleanup;
     }
 
-    /* need integer value for command line parameter */
-    asprintf(&jobid_string, "%lu", (unsigned long) jobid);
-
     /* add the daemon command (as specified by user) */
     argv = opal_argv_split(mca_pls_tm_component.orted, ' ');
     argc = opal_argv_count(argv);
@@ -237,9 +213,7 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     orte_pls_base_orted_append_basic_args(&argc, &argv,
                                           &proc_name_index,
                                           &node_name_index,
-                                          jobid_string,
-                                          (vpid + num_nodes)
-                                          );
+                                          (vpid + num_nodes));
 
     if (mca_pls_tm_component.debug) {
         param = opal_argv_join(argv, ' ');
@@ -552,21 +526,6 @@ static int pls_tm_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *at
 static int pls_tm_signal_proc(const orte_process_name_t *name, int32_t signal)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
-}
-
-
-/**
- * Cancel an operation involving comm to an orted
- */
-static int pls_tm_cancel_operation(void)
-{
-    int rc;
-
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_cancel_operation())) {
-        ORTE_ERROR_LOG(rc);
-    }
-    
-    return rc;
 }
 
 

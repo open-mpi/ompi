@@ -198,22 +198,6 @@ int orte_sds_bproc_set_name(void)
         cleanup_vpid_string = true;
     }
     
-    /* it is okay for this param not to be found - for example, we don't bother
-     * to set it for orteds - so just set it to an invalid value which indicates
-     * it wasn't found if it isn't there
-     */
-    id = mca_base_param_register_int("ns", "nds", "local_rank", NULL, ORTE_VPID_INVALID);
-    mca_base_param_lookup_int(id, &local_rank);
-    orte_process_info.local_rank = (orte_vpid_t)local_rank;
-    
-    /* it is okay for this param not to be found - for example, we don't bother
-     * to set it for orteds - so just set it to a value which indicates
-     * it wasn't found if it isn't there
-     */
-    id = mca_base_param_register_int("ns", "nds", "num_local_procs", NULL, 0);
-    mca_base_param_lookup_int(id, &num_local_procs);
-    orte_process_info.num_local_procs = (orte_std_cntr_t)num_local_procs;
-    
     /* if we are NOT a daemon, then lookup our local daemon's contact info
      * and setup that link
      */
@@ -236,8 +220,14 @@ int orte_sds_bproc_set_name(void)
         }
         fgets(orted_uri, 1024, fp);
         orted_uri[strlen(orted_uri)-1] = '\0';
+        /* now get the local rank */
+        fscanf(fp, "%d", &local_rank);
+        orte_process_info.local_rank = (orte_vpid_t)local_rank;
+        /* and the number of local procs */
+        fscanf(fp, "%d", &num_local_procs);
+        orte_process_info.num_local_procs = (orte_std_cntr_t)num_local_procs;
         fclose(fp);
-        /* setup the link */
+        /* setup the link to the local orted */
         if (ORTE_SUCCESS != (rc = orte_sds_base_contact_orted(orted_uri))) {
             ORTE_ERROR_LOG(rc);
             return(rc);

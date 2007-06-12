@@ -123,7 +123,6 @@ int orte_pls_gridengine_terminate_orteds(struct timeval *timeout, opal_list_t *a
 int orte_pls_gridengine_terminate_proc(const orte_process_name_t*);
 int orte_pls_gridengine_signal_job(orte_jobid_t, int32_t, opal_list_t *attrs);
 int orte_pls_gridengine_signal_proc(const orte_process_name_t*, int32_t);
-int orte_pls_gridengine_cancel_operation(void);
 
 /**
  * PLS Component

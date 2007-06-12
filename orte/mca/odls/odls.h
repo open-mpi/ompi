@@ -46,11 +46,6 @@
 extern "C" {
 #endif
     
-/**
- * Subscribe to receive the launch data for local processes
- */
-typedef int (*orte_odls_base_module_subscribe_launch_data_fn_t)(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc);
-
 /*
  * Construct a notify data object for use in adding local processes
  * In order to reuse daemons, we need a way for the HNP to construct a notify_data object that
@@ -89,7 +84,6 @@ typedef int (*orte_odls_base_module_deliver_message_fn_t)(orte_jobid_t job, orte
  * pls module version 1.3.0
  */
 struct orte_odls_base_module_1_3_0_t {
-    orte_odls_base_module_subscribe_launch_data_fn_t        subscribe_launch_data;
     orte_odls_base_module_get_add_procs_data_fn_t           get_add_procs_data;
     orte_odls_base_module_launch_local_processes_fn_t       launch_local_procs;
     orte_odls_base_module_kill_local_processes_fn_t         kill_local_procs;

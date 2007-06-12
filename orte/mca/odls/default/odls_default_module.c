@@ -101,10 +101,10 @@ static int orte_pls_fork_preload_append_binary(orte_app_context_t* context,
 static int orte_pls_fork_preload_append_files(orte_app_context_t* context,
                                               orte_filem_base_request_t *filem_request);
 static bool is_preload_local_dup(char *local_ref, orte_filem_base_request_t *filem_request);
+
 /*
  * External Interface
  */
-static int orte_odls_default_subscribe_launch_data(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc);
 static int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data, orte_job_map_t *map);
 static int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **base_environ);
 static int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state);
@@ -115,130 +115,12 @@ static int orte_odls_default_deliver_message(orte_jobid_t job, orte_buffer_t *bu
 static void set_handler_default(int sig);
 
 orte_odls_base_module_t orte_odls_default_module = {
-    orte_odls_default_subscribe_launch_data,
     orte_odls_default_get_add_procs_data,
     orte_odls_default_launch_local_procs,
     orte_odls_default_kill_local_procs,
     orte_odls_default_signal_local_procs,
     orte_odls_default_deliver_message
 };
-
-/* this entire function gets called within a GPR compound command,
- * so the subscription actually doesn't get done until the orted
- * executes the compound command
- */
-int orte_odls_default_subscribe_launch_data(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc)
-{
-    char *segment;
-    orte_gpr_value_t *values[2];
-    orte_gpr_subscription_t *subs, sub=ORTE_GPR_SUBSCRIPTION_EMPTY;
-    orte_gpr_trigger_t *trigs, trig=ORTE_GPR_TRIGGER_EMPTY;
-    char *glob_keys[] = {
-        ORTE_JOB_APP_CONTEXT_KEY,
-        ORTE_JOB_VPID_START_KEY,
-        ORTE_JOB_VPID_RANGE_KEY,
-        ORTE_JOB_OVERSUBSCRIBE_OVERRIDE_KEY
-    };
-    int num_glob_keys = 4;
-    char* keys[] = {
-        ORTE_PROC_NAME_KEY,
-        ORTE_PROC_LOCAL_RANK_KEY,
-        ORTE_PROC_APP_CONTEXT_KEY,
-        ORTE_NODE_NAME_KEY,
-        ORTE_NODE_NUM_PROCS_KEY,
-        ORTE_NODE_OVERSUBSCRIBED_KEY
-    };
-    int num_keys = 6;
-    int i, rc;
-    
-    /* get the job segment name */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* attach ourselves to the "standard" orted trigger */
-    if (ORTE_SUCCESS !=
-        (rc = orte_schema.get_std_trigger_name(&(trig.name),
-                                                ORTED_LAUNCH_STAGE_GATE_TRIGGER, job))) {
-        ORTE_ERROR_LOG(rc);
-        free(segment);
-        return rc;
-    }
-    
-    /* ask for return of all data required for launching local processes */
-    subs = &sub;
-    sub.action = ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG;
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&(sub.name),
-                                                                     ORTED_LAUNCH_STG_SUB,
-                                                                     job))) {
-        ORTE_ERROR_LOG(rc);
-        free(segment);
-        free(trig.name);
-        return rc;
-    }
-    sub.cnt = 2;
-    sub.values = values;
-    
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[0]), ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
-                                                    segment, num_glob_keys, 1))) {
-        ORTE_ERROR_LOG(rc);
-        free(segment);
-        free(sub.name);
-        free(trig.name);
-        return rc;
-    }
-    values[0]->tokens[0] = strdup(ORTE_JOB_GLOBALS);
-    for (i=0; i < num_glob_keys; i++) {
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[0]->keyvals[i]),
-                                                          glob_keys[i], ORTE_UNDEF, NULL))) {
-            ORTE_ERROR_LOG(rc);
-            free(segment);
-            free(sub.name);
-            free(trig.name);
-            OBJ_RELEASE(values[0]);
-            return rc;
-        }
-    }
-    
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[1]), ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR | ORTE_GPR_STRIPPED,
-                                                     segment, num_keys, 0))) {
-        ORTE_ERROR_LOG(rc);
-        free(segment);
-        free(sub.name);
-        free(trig.name);
-        OBJ_RELEASE(values[0]);
-        return rc;
-    }
-    for (i=0; i < num_keys; i++) {
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[1]->keyvals[i]),
-                                                          keys[i], ORTE_UNDEF, NULL))) {
-            ORTE_ERROR_LOG(rc);
-            free(segment);
-            free(sub.name);
-            free(trig.name);
-            OBJ_RELEASE(values[0]);
-            OBJ_RELEASE(values[1]);
-            return rc;
-        }
-    }
-    
-    sub.cbfunc = cbfunc;
-    
-    trigs = &trig; 
-    
-    /* do the subscription */
-    if (ORTE_SUCCESS != (rc = orte_gpr.subscribe(1, &subs, 1, &trigs))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    free(segment);
-    free(sub.name);
-    free(trig.name);
-    OBJ_RELEASE(values[0]);
-    OBJ_RELEASE(values[1]);
-
-    return rc;
-}
 
 int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
                                          orte_job_map_t *map)
@@ -453,30 +335,33 @@ int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state)
         opal_output(orte_odls_globals.output, "[%ld,%ld,%ld] odls_kill_local_proc: checking child process [%ld,%ld,%ld]",
                     ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), ORTE_NAME_ARGS(child->name));
 
+        /* do we have a child from the specified job? Because the
+         *  job could be given as a WILDCARD value, we must use
+         *  the dss.compare function to check for equality.
+         */
+        if (ORTE_EQUAL != orte_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
+            continue;
+        }
+        
+        /* remove the child from the list since it is either already dead or soon going to be dead */
+        opal_list_remove_item(&orte_odls_default.children, item);
+        
         /* is this process alive? if not, then nothing for us
          * to do to it
          */
         if (!child->alive) {
             opal_output(orte_odls_globals.output, "[%ld,%ld,%ld] odls_kill_local_proc: child [%ld,%ld,%ld] is not alive",
                         ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), ORTE_NAME_ARGS(child->name));
-            continue;
+            /* ensure, though, that the state is terminated so we don't lockup if
+             * the proc never started
+             */
+            goto MOVEON;
         }
-        
-        /* do we have a child from the specified job? Because the
-        *  job could be given as a WILDCARD value, we must use
-        *  the dss.compare function to check for equality.
-        */
-        if (ORTE_EQUAL != orte_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
-            continue;
-        }
-        
-        /* remove the child from the list since it is going to be dead */
-        opal_list_remove_item(&orte_odls_default.children, item);
         
         /* de-register the SIGCHILD callback for this pid */
         if (ORTE_SUCCESS != (rc = orte_wait_cb_cancel(child->pid))) {
-            ORTE_ERROR_LOG(rc);
-            continue;
+            /* no need to error_log this - it just means that the pid is already gone */
+            goto MOVEON;
         }
         
         /* Send a sigterm to the process.  If we get ESRCH back, that
@@ -614,10 +499,12 @@ GOTCHILD:
     }
     opal_output(orte_odls_globals.output, "orted sent IOF unpub message!\n");
 
+#if 0
     /* Note that the svc IOF component will detect an exception on the
        oob because we're shutting it down, so it will take care of
        closing down any streams that it has open to us. */
     orte_iof.iof_flush();
+#endif
 
     /* determine the state of this process */
     aborted = false;

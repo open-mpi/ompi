@@ -77,6 +77,7 @@
 
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_wakeup.h"
+#include "orte/runtime/params.h"
 #include "orte/dss/dss.h"
 
 #include "orte/mca/ns/ns.h"
@@ -108,7 +109,6 @@ orte_pls_base_module_t orte_pls_rsh_module = {
     orte_pls_rsh_terminate_proc,
     orte_pls_rsh_signal_job,
     orte_pls_rsh_signal_proc,
-    orte_pls_rsh_cancel_operation,
     orte_pls_rsh_finalize
 };
 
@@ -384,19 +384,15 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         goto cleanup;
     }
 
-    /* if the user requested that we re-use daemons,
-     * launch the procs on any existing, re-usable daemons
-     */
-    if (orte_pls_base.reuse_daemons) {
-        if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
+    /* account for any reuse of daemons */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
     
-    num_nodes = (orte_std_cntr_t)opal_list_get_size(&map->nodes);
+    num_nodes = map->num_new_daemons;
     if (0 == num_nodes) {
-        /* nothing left to do - just return */
+        /* nothing to do - just return */
         failed_launch = false;
         rc = ORTE_SUCCESS;
         goto cleanup;
@@ -442,32 +438,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
      */
     prefix_dir = map->apps[0]->prefix_dir;
     
-    /*
-     * Allocate a range of vpids for the daemons.
-     */
-    if (num_nodes == 0) {
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        rc = ORTE_ERR_BAD_PARAM;
-        goto cleanup;
-    }
-    rc = orte_ns.reserve_range(0, num_nodes, &vpid);
-    if (ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    /* setup the orted triggers for passing their launch info */
-    if (ORTE_SUCCESS != (rc = orte_smr.init_orted_stage_gates(jobid, num_nodes, NULL, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    /* need integer value for command line parameter */
-    if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
     /* What is our local shell? */
     p = getpwuid(getuid());
     if( NULL == p ) {
@@ -564,7 +534,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     orte_pls_base_orted_append_basic_args(&argc, &argv,
                                           &proc_name_index,
                                           &node_name_index2,
-                                          jobid_string,
                                           (vpid + num_nodes));
     
     local_exec_index_end = argc;
@@ -614,12 +583,16 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     for(n_item =  opal_list_get_first(&map->nodes);
         n_item != opal_list_get_end(&map->nodes);
         n_item =  opal_list_get_next(n_item)) {
-        orte_process_name_t* name;
         pid_t pid;
         char *exec_path;
         char **exec_argv;
         
         rmaps_node = (orte_mapped_node_t*)n_item;
+        
+        /* if this daemon already exists, don't launch it! */
+        if (rmaps_node->daemon_preexists) {
+            continue;
+        }
         
         /* setup node name */
         free(argv[node_name_index1]);
@@ -633,13 +606,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
         free(argv[node_name_index2]);
         argv[node_name_index2] = strdup(rmaps_node->nodename);
-        
-        /* initialize daemons process name */
-        rc = orte_ns.create_process_name(&name, rmaps_node->cell, 0, vpid);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
         
         /* fork a child to exec the rsh/ssh session */
         
@@ -759,7 +725,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 
                 /* Since this is a local execution, we need to
                     potentially whack the final ")" in the argv (if
-                                                                 sh/csh conditionals, from above).  Note that we're
+                    sh/csh conditionals, from above).  Note that we're
                     modifying the argv[] in the child process, so
                     there's no need to save this and restore it
                     afterward -- the parent's argv[] is unmodified. */
@@ -845,9 +811,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             }
             
             /* setup process name */
-            rc = orte_ns.get_proc_name_string(&name_string, name);
+            rc = orte_ns.get_proc_name_string(&name_string, rmaps_node->daemon);
             if (ORTE_SUCCESS != rc) {
-                opal_output(0, "orte_pls_rsh: unable to create process name");
+                opal_output(0, "orte_pls_rsh: unable to get daemon name as string");
                 exit(-1);
             }
             free(argv[proc_name_index]);
@@ -906,6 +872,12 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             exit(-1);
 
         } else { /* father */
+            /* indicate this daemon has been launched in case anyone is sitting on that trigger */
+            if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(rmaps_node->daemon, ORTE_PROC_STATE_LAUNCHED, 0))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            
             OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
             /* This situation can lead to a deadlock if '--debug-daemons' is set.
              * However, the deadlock condition is tested at the begining of this
@@ -928,7 +900,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             }
             vpid++;
         }
-        free(name);
     }
     /* get here if launch went okay */
     failed_launch = false;
@@ -1025,23 +996,6 @@ int orte_pls_rsh_signal_proc(const orte_process_name_t* proc, int32_t signal)
     
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
-
-/**
- * Cancel an operation involving comm to an orted
- */
-int orte_pls_rsh_cancel_operation(void)
-{
-    int rc;
-    
-    OPAL_TRACE(1);
-    
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_cancel_operation())) {
-        ORTE_ERROR_LOG(rc);
-    }
-    
-    return rc;
-}
-
 
 int orte_pls_rsh_finalize(void)
 {

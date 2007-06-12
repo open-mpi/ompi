@@ -101,6 +101,19 @@ int orte_rmaps_base_pack_map(orte_buffer_t *buffer, void *src,
                 }
             }
         }
+
+        /* pack the number of new daemons */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(maps[i]->num_new_daemons), 1, ORTE_STD_CNTR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* pack the daemon starting vpid */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(maps[i]->daemon_vpid_start), 1, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
     }
         
     return ORTE_SUCCESS;
@@ -203,6 +216,12 @@ int orte_rmaps_base_pack_mapped_node(orte_buffer_t *buffer, void *src,
             return rc;
         }
 
+        /* pack the daemon_preexists flag */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(nodes[i]->daemon_preexists), 1, ORTE_BOOL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
         /* pack the oversubscribed flag */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(nodes[i]->oversubscribed), 1, ORTE_BOOL))) {
             ORTE_ERROR_LOG(rc);

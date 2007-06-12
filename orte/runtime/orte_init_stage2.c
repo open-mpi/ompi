@@ -31,6 +31,7 @@
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/iof/base/base.h"
+#include "orte/mca/smr/smr.h"
 
 #include "orte/runtime/orte_cr.h"
 
@@ -79,6 +80,17 @@ int orte_init_stage2(char *trigger)
 
     /* Since we are now finished with init, change the state to running */
     orte_universe_info.state = ORTE_UNIVERSE_STATE_RUNNING;
+
+    /* for singleton or seed, need to fire the RUNNING gate
+     * to ensure that everything in the rest of the system runs smoothly
+     */
+    if (orte_process_info.seed || orte_process_info.singleton) {
+        if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name, ORTE_PROC_STATE_RUNNING, 0))) {
+            ORTE_ERROR_LOG(ret);
+            error_str = "singleton/seed could not set RUNNING state";
+            goto return_error;
+        }
+    }
 
     /* startup the receive if we are not the HNP - unless we are a singleton,
      * in which case we must start it up in case we do a comm_spawn!
