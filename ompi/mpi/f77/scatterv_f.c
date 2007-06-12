@@ -82,10 +82,10 @@ void mpi_scatterv_f(char *sendbuf, MPI_Fint *sendcounts,
         sendbuf = MPI_IN_PLACE;
     }
 
-    *ierr = OMPI_INT_2_FINT(MPI_Scatterv(sendbuf, 
+    *ierr = OMPI_INT_2_FINT(MPI_Scatterv(OMPI_ADDR(sendbuf),
 					 OMPI_ARRAY_NAME_CONVERT(sendcounts),
 					 OMPI_ARRAY_NAME_CONVERT(displs),
-					 c_sendtype, recvbuf,
+					 c_sendtype, OMPI_ADDR(recvbuf),
 					 OMPI_FINT_2_INT(*recvcount),
 					 c_recvtype, 
 					 OMPI_FINT_2_INT(*root), c_comm));

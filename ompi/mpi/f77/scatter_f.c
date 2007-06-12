@@ -73,8 +73,8 @@ void mpi_scatter_f(char *sendbuf, MPI_Fint *sendcount,
         sendbuf = MPI_IN_PLACE;
     }
 
-    *ierr = OMPI_INT_2_FINT(MPI_Scatter(sendbuf,OMPI_FINT_2_INT(*sendcount),
-					c_sendtype, recvbuf, 
+    *ierr = OMPI_INT_2_FINT(MPI_Scatter(OMPI_ADDR(sendbuf),OMPI_FINT_2_INT(*sendcount),
+					c_sendtype, OMPI_ADDR(recvbuf), 
 					OMPI_FINT_2_INT(*recvcount),
 					c_recvtype, 
 					OMPI_FINT_2_INT(*root), c_comm));
