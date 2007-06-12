@@ -48,7 +48,6 @@ static int orte_pls_cnos_terminate_proc(const orte_process_name_t* proc_name);
 static int orte_pls_cnos_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs);
 static int orte_pls_cnos_signal_proc(const orte_process_name_t* proc_name, int32_t signal);
 static int orte_pls_cnos_finalize(void);
-static int orte_pls_cnos_cancel_operation(void);
 
 
 orte_pls_base_module_t orte_pls_cnos_module = {
@@ -58,7 +57,6 @@ orte_pls_base_module_t orte_pls_cnos_module = {
     orte_pls_cnos_terminate_proc,
     orte_pls_cnos_signal_job,
     orte_pls_cnos_signal_proc,
-    orte_pls_cnos_cancel_operation,
     orte_pls_cnos_finalize
 };
 
@@ -128,11 +126,6 @@ static int orte_pls_cnos_signal_job(orte_jobid_t jobid, int32_t signal, opal_lis
 }
 
 static int orte_pls_cnos_signal_proc(const orte_process_name_t* proc_name, int32_t signal)
-{
-    return ORTE_ERR_NOT_SUPPORTED;
-}
-
-int orte_pls_cnos_cancel_operation(void)
 {
     return ORTE_ERR_NOT_SUPPORTED;
 }
