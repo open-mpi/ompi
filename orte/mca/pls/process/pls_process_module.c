@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -30,12 +30,6 @@
 
 #include <stdlib.h>
 
-
-#include <windows.h>    //daniel
-#include <process.h>    //
-#include <stdio.h>      //
-#include <tchar.h>      //daniel
-
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -62,7 +56,7 @@
 #include <pwd.h>
 #endif
 
-#include "opal/install_dirs.h"
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/if.h"
 #include "opal/util/os_path.h"
@@ -80,6 +74,8 @@
 #include "orte/util/session_dir.h"
 
 #include "orte/runtime/orte_wait.h"
+#include "orte/runtime/orte_wakeup.h"
+#include "orte/runtime/params.h"
 #include "orte/dss/dss.h"
 
 #include "orte/mca/ns/ns.h"
@@ -102,6 +98,15 @@
 static int orte_pls_process_launch_threaded(orte_jobid_t jobid);
 #endif
 
+/*
+ * Interface
+ */
+static int orte_pls_process_launch(orte_jobid_t);
+static int orte_pls_process_terminate_job(orte_jobid_t, struct timeval *timeout, opal_list_t*);
+static int orte_pls_process_terminate_orteds(struct timeval *timeout, opal_list_t*);
+static int orte_pls_process_terminate_proc(const orte_process_name_t* proc_name);
+static int orte_pls_process_signal_job(orte_jobid_t, int32_t, opal_list_t*);
+static int orte_pls_process_signal_proc(const orte_process_name_t* proc_name, int32_t);
 
 orte_pls_base_module_t orte_pls_process_module = {
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
@@ -114,7 +119,6 @@ orte_pls_base_module_t orte_pls_process_module = {
     orte_pls_process_terminate_proc,
     orte_pls_process_signal_job,
     orte_pls_process_signal_proc,
-    orte_pls_process_cancel_operation,
     orte_pls_process_finalize
 };
 
@@ -122,6 +126,7 @@ static void set_handler_default(int sig);
 
 enum {
     ORTE_PLS_RSH_SHELL_BASH = 0,
+    ORTE_PLS_RSH_SHELL_ZSH,
     ORTE_PLS_RSH_SHELL_TCSH,
     ORTE_PLS_RSH_SHELL_CSH,
     ORTE_PLS_RSH_SHELL_KSH,
@@ -133,6 +138,7 @@ typedef int orte_pls_process_shell;
 
 static const char * orte_pls_process_shell_name[] = {
     "bash",
+    "zsh",
     "tcsh",       /* tcsh has to be first otherwise strstr finds csh */
     "csh",
     "ksh",
@@ -142,14 +148,10 @@ static const char * orte_pls_process_shell_name[] = {
 
 
 /* local global storage of timing variables */
-static unsigned long  mintime=999999999, miniter, maxtime=0, maxiter;
-static float avgtime=0.0;
-static struct timeval *launchstart;   
 static struct timeval joblaunchstart, joblaunchstop;
 
-/* local global storage of the list of active daemons */
-static opal_list_t active_daemons;
-
+/* global storage of active jobid being launched */
+static orte_jobid_t active_job = ORTE_JOBID_INVALID;
 
 /**
  * Check the Shell variable on the specified node
@@ -350,14 +352,14 @@ static int orte_pls_process_fill_exec_path( char ** exec_path )
 {
     struct stat buf;
 
-    asprintf(exec_path, "%s/orted", OPAL_BINDIR);
+    asprintf(exec_path, "%s/orted", opal_install_dirs.bindir);
     if (0 != stat(*exec_path, &buf)) {
         char *path = getenv("PATH");
         if (NULL == path) {
             path = "PATH is empty!";
         }
         opal_show_help("help-pls-process.txt", "no-local-orted",
-                        true, path, OPAL_BINDIR);
+                        true, path, opal_install_dirs.bindir);
         return ORTE_ERR_NOT_FOUND;
     }
    return ORTE_SUCCESS;
@@ -370,56 +372,12 @@ static int orte_pls_process_fill_exec_path( char ** exec_path )
 static void orte_pls_process_wait_daemon(pid_t pid, int status, void* cbdata)
 {
     orte_pls_daemon_info_t *info = (orte_pls_daemon_info_t*) cbdata;
-    orte_mapped_node_t *node;
-    orte_mapped_proc_t *proc;
-    opal_list_item_t *item;
     int rc;
     unsigned long deltat;
-    struct timeval launchstop;
 
-    /* if ssh exited abnormally, set the child processes to aborted
-       and print something useful to the user.  The usual reasons for
-       ssh to exit abnormally all are a pretty good indication that
-       the child processes aren't going to start up properly.
-
-       This should somehow be pushed up to the calling level, but we
-       don't really have a way to do that just yet.
-    */
     if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
-        /* get the mapping for our node so we can cancel the right things */
-        rc = orte_rmaps.get_node_map(&node, info->cell,
-                                     info->nodename, info->active_job);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-
-        /* set state of all processes associated with the daemon as
-           terminated */
-        for(item =  opal_list_get_first(&node->procs);
-            item != opal_list_get_end(&node->procs);
-            item =  opal_list_get_next(item)) {
-            proc = (orte_mapped_proc_t*) item;
-
-                /* Clean up the session directory as if we were the
-                   process itself.  This covers the case where the
-                   process died abnormally and didn't cleanup its own
-                   session directory. */
-
-                orte_session_dir_finalize(&(proc->name));
-
-                rc = orte_smr.set_proc_state(&(proc->name),
-                                           ORTE_PROC_STATE_ABORTED, status);
-            if (ORTE_SUCCESS != rc) {
-                ORTE_ERROR_LOG(rc);
-            }
-        }
-        OBJ_RELEASE(node);
-
- cleanup:
         /* tell the user something went wrong */
-        opal_output(0, "ERROR: A daemon on node %s failed to start as expected.",
-                    info->nodename);
+        opal_output(0, "ERROR: A daemon failed to start as expected.");
         opal_output(0, "ERROR: There may be more information available from");
         opal_output(0, "ERROR: the remote shell (see above).");
 
@@ -440,38 +398,23 @@ static void orte_pls_process_wait_daemon(pid_t pid, int status, void* cbdata)
         } else {
             opal_output(0, "No extra status information is available: %d.", status);
         }
-        OPAL_THREAD_LOCK(&mca_pls_process_component.lock);
-        /* tell the system that this daemon is gone */
-        if (ORTE_SUCCESS != (rc = orte_pls_base_remove_daemon(info))) {
+        /*  The usual reasons for ssh to exit abnormally all are a pretty good
+            indication that the child processes aren't going to start up properly.
+            Set the job state to indicate we failed to launch so orterun's exit status
+            will be non-zero and forcibly terminate the job so orterun can exit
+        */
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(active_job, ORTE_JOB_STATE_FAILED_TO_START))) {
             ORTE_ERROR_LOG(rc);
         }
         
-        /* remove the daemon from our local list */
-        opal_list_remove_item(&active_daemons, &info->super);
-        OBJ_RELEASE(info);
-        OPAL_THREAD_UNLOCK(&mca_pls_process_component.lock);
+        if (ORTE_SUCCESS != (rc = orte_wakeup(active_job))) {
+            ORTE_ERROR_LOG(rc);
+        }
+
     } /* if abnormal exit */
 
     /* release any waiting threads */
     OPAL_THREAD_LOCK(&mca_pls_process_component.lock);
-    /* first check timing request */
-    if (mca_pls_process_component.timing) {
-        if (0 != gettimeofday(&launchstop, NULL)) {
-            opal_output(0, "pls_process: could not obtain stop time");
-        } else {
-            deltat = (launchstop.tv_sec - launchstart[info->name->vpid].tv_sec)*1000000 +
-                     (launchstop.tv_usec - launchstart[info->name->vpid].tv_usec);
-            avgtime = avgtime + deltat;
-            if (deltat < mintime) {
-                mintime = deltat;
-                miniter = (unsigned long)info->name->vpid;
-            }
-            if (deltat > maxtime) {
-                maxtime = deltat;
-                maxiter = (unsigned long)info->name->vpid;
-            }
-        }
-    }
 
     if (mca_pls_process_component.num_children-- >=
         mca_pls_process_component.num_concurrent ||
@@ -486,17 +429,7 @@ static void orte_pls_process_wait_daemon(pid_t pid, int status, void* cbdata)
             deltat = (joblaunchstop.tv_sec - joblaunchstart.tv_sec)*1000000 +
                      (joblaunchstop.tv_usec - joblaunchstart.tv_usec);
             opal_output(0, "pls_process: total time to launch job is %lu usec", deltat);
-            if (mintime < 999999999) {
-                /* had at least one non-local node */
-                avgtime = avgtime/opal_list_get_size(&active_daemons);
-                opal_output(0, "pls_process: average time to launch one daemon %f usec", avgtime);
-                opal_output(0, "pls_process: min time to launch a daemon was %lu usec for iter %lu", mintime, miniter);
-                opal_output(0, "pls_process: max time to launch a daemon was %lu usec for iter %lu", maxtime, maxiter);
-            } else {
-                opal_output(0, "No nonlocal launches to report for timing info");
-            }
         }
-        free(launchstart);
     }
     
     OPAL_THREAD_UNLOCK(&mca_pls_process_component.lock);
@@ -510,22 +443,21 @@ static void orte_pls_process_wait_daemon(pid_t pid, int status, void* cbdata)
 
 int orte_pls_process_launch(orte_jobid_t jobid)
 {
-    orte_job_map_t *map;
+    orte_job_map_t *map = NULL;
     opal_list_item_t *n_item;
     orte_mapped_node_t *rmaps_node;
     orte_std_cntr_t num_nodes;
-    orte_vpid_t vpid;
     int node_name_index2;
     int proc_name_index;
     int local_exec_index;
     char *jobid_string = NULL;
-    char *uri, *param;
+    char *param;
     char **argv = NULL;
     char *prefix_dir;
     int argc = 0;
     int rc;
     char *lib_base = NULL, *bin_base = NULL;
-    orte_pls_daemon_info_t *dmn;
+    bool failed_launch = true;
 
     if (mca_pls_process_component.timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
@@ -535,11 +467,8 @@ int orte_pls_process_launch(orte_jobid_t jobid)
         }        
     }
     
-    /* setup a list that will contain the info for all the daemons
-     * so we can store it on the registry when done and use it
-     * locally to track their state
-     */
-    OBJ_CONSTRUCT(&active_daemons, opal_list_t);
+    /* set the active jobid */
+    active_job = jobid;
 
     /* Get the map for this job
      * We need the entire mapping for a couple of reasons:
@@ -550,40 +479,42 @@ int orte_pls_process_launch(orte_jobid_t jobid)
     rc = orte_rmaps.get_job_map(&map, jobid);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&active_daemons);
         return rc;
     }
 
-    /* if the user requested that we re-use daemons,
-     * launch the procs on any existing, re-usable daemons
-     */
-    if (orte_pls_base.reuse_daemons) {
-        if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(map);
-            OBJ_DESTRUCT(&active_daemons);
-            return rc;
-        }
-    }
-    
-    num_nodes = (orte_std_cntr_t)opal_list_get_size(&map->nodes);
-    if (0 == num_nodes) {
-        /* nothing left to do - just return */
+    /* account for any reuse of daemons */ 
+ 	if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) { 
+        ORTE_ERROR_LOG(rc); 
+        goto cleanup; 
+  	}
+
+    num_nodes = map->num_new_daemons;
+ 	if (0 == num_nodes) {
+        /* nothing to do - just return */
+        failed_launch = false;
         OBJ_RELEASE(map);
-        OBJ_DESTRUCT(&active_daemons);
         return ORTE_SUCCESS;
     }
 
     if (mca_pls_process_component.debug_daemons &&
         mca_pls_process_component.num_concurrent < num_nodes) {
-        /* we can't run in this situation, so pretty print the error
-         * and exit
+        /**
+         * If we are in '--debug-daemons' we keep the ssh connection 
+         * alive for the span of the run. If we use this option 
+         * AND we launch on more than "num_concurrent" machines
+         * then we will deadlock. No connections are terminated 
+         * until the job is complete, no job is started
+         * since all the orteds are waiting for all the others
+         * to come online, and the others ore not launched because
+         * we are waiting on those that have started to terminate
+         * their ssh tunnels. :(
+         * As we cannot run in this situation, pretty print the error
+         * and return an error code.
          */
         opal_show_help("help-pls-process.txt", "deadlock-params",
                        true, mca_pls_process_component.num_concurrent, num_nodes);
-        OBJ_RELEASE(map);
-        OBJ_DESTRUCT(&active_daemons);
-        return ORTE_ERR_FATAL;
+        rc = ORTE_ERR_FATAL;
+        goto cleanup;
     }
 
     /*
@@ -606,29 +537,6 @@ int orte_pls_process_launch(orte_jobid_t jobid)
     prefix_dir = map->apps[0]->prefix_dir;
     
     /*
-     * Allocate a range of vpids for the daemons.
-     */
-    if (num_nodes == 0) {
-        return ORTE_ERR_BAD_PARAM;
-    }
-    rc = orte_ns.reserve_range(0, num_nodes, &vpid);
-    if (ORTE_SUCCESS != rc) {
-        goto cleanup;
-    }
-
-    /* setup the orted triggers for passing their launch info */
-    if (ORTE_SUCCESS != (rc = orte_smr.init_orted_stage_gates(jobid, num_nodes, NULL, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    /* need integer value for command line parameter */
-    if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    /*
      * Build argv array
      */
     opal_argv_append(&argc, &argv, "<template>");
@@ -641,9 +549,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
     orte_pls_base_orted_append_basic_args(&argc, &argv,
                                           &proc_name_index,
                                           &node_name_index2,
-                                          jobid_string,
-                                          (vpid + num_nodes)
-                                          );
+                                          map->num_nodes);
 
     if (mca_pls_process_component.debug) {
         param = opal_argv_join(argv, ' ');
@@ -684,63 +590,25 @@ int orte_pls_process_launch(orte_jobid_t jobid)
        and use that on the remote node.
     */
 
-    lib_base = opal_basename(OPAL_LIBDIR);
-    bin_base = opal_basename(OPAL_BINDIR);
+    lib_base = opal_basename(opal_install_dirs.libdir);
+    bin_base = opal_basename(opal_install_dirs.bindir);
 
     /*
      * Iterate through each of the nodes
      */
-    if (mca_pls_process_component.timing) {
-        /* allocate space to track the start times */
-        launchstart = (struct timeval*)malloc((num_nodes+vpid) * sizeof(struct timeval));
-    }
     
     for(n_item =  opal_list_get_first(&map->nodes);
         n_item != opal_list_get_end(&map->nodes);
         n_item =  opal_list_get_next(n_item)) {
-        orte_process_name_t* name;
         pid_t pid;
         char *exec_path = NULL;
         char **exec_argv;
         
         rmaps_node = (orte_mapped_node_t*)n_item;
         
-        if (mca_pls_process_component.timing) {
-            if (0 != gettimeofday(&launchstart[vpid], NULL)) {
-                opal_output(0, "pls_process: could not obtain start time");
-            }
-        }
-        
-        /* new daemon - setup to record its info */
-        dmn = OBJ_NEW(orte_pls_daemon_info_t);
-        dmn->active_job = jobid;
-        opal_list_append(&active_daemons, &dmn->super);
-        
-        /* setup node name */
-        free(argv[node_name_index2]);
-        argv[node_name_index2] = strdup(rmaps_node->nodename);
-        
-        /* save it in the daemon info */
-        dmn->nodename = strdup(rmaps_node->nodename);
-
-        /* initialize daemons process name */
-        rc = orte_ns.create_process_name(&name, rmaps_node->cell, 0, vpid);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
-        /* save it in the daemon info */
-        dmn->cell = rmaps_node->cell;
-        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(dmn->name), name, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-
-        /* set the process state to "launched" */
-        if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(name, ORTE_PROC_STATE_LAUNCHED, 0))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
+        /* if this daemon already exists, don't launch it! */ 
+        if (rmaps_node->daemon_preexists) { 
+            continue; 
         }
 
         if (mca_pls_process_component.debug) {
@@ -772,15 +640,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                 opal_output(0, "pls:process: %s is a LOCAL node\n",
                             rmaps_node->nodename);
             }
-            if (mca_pls_process_component.timing) {
-                /* since this is a local launch, the daemon will never reach
-                 * the waitpid callback - so set the start value to
-                 * something nonsensical
-                 */
-                launchstart[vpid].tv_sec = 0;
-                launchstart[vpid].tv_usec = 0;
-            }
-                
+
             exec_argv = &argv[local_exec_index];
             /* If the user provide a prefix then first try to find the application there */
             if( NULL != prefix_dir ) {
@@ -798,7 +658,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                 if( NULL == exec_path ) {
                     char* full_path[2];
                     
-                    full_path[0] = opal_os_path( false, OPAL_BINDIR, NULL );
+                    full_path[0] = opal_os_path( false, opal_install_dirs.bindir, NULL );
                     full_path[1] = NULL;
                     exec_path = opal_path_find(exec_argv[0], full_path, F_OK, NULL);
                     free(full_path[0]);
@@ -881,9 +741,9 @@ int orte_pls_process_launch(orte_jobid_t jobid)
 #endif                
         
             /* setup process name */
-            rc = orte_ns.get_proc_name_string(&name_string, name);
+            rc = orte_ns.get_proc_name_string(&name_string, rmaps_node->daemon);
             if (ORTE_SUCCESS != rc) {
-                opal_output(0, "orte_pls_process: unable to create process name");
+                opal_output(0, "orte_pls_process: unable to get daemon name as string");
                 exit(-1);
             }
             free(argv[proc_name_index]);
@@ -915,31 +775,51 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                     free(param);
                 }
             }
-            pid = _spawnve( _P_NOWAIT, exec_path, exec_argv, env); //,NULL); daniel
-            if (pid == -1) opal_output(0, "pls:process: execv failed spawning process %s; errno=%d\n", exec_path, errno);
-            else opal_output(0, "pls:process: execv %s hopefully started (pid %d)\n", exec_path, pid);
-            
+            pid = _spawnve( _P_NOWAIT, exec_path, exec_argv, env);
+            if (pid == -1) {
+                /* indicate this daemon has been launched in case anyone is sitting on that trigger */ 
+                if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(rmaps_node->daemon, ORTE_PROC_STATE_LAUNCHED, 0))) { 
+                    ORTE_ERROR_LOG(rc); 
+                    goto cleanup; 
+                }
+                failed_launch = true;
+                rc = ORTE_ERROR;
+                goto cleanup;
+            }
+            /* indicate this daemon has been launched in case anyone is sitting on that trigger */
+            if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(rmaps_node->daemon, ORTE_PROC_STATE_LAUNCHED, 0))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            opal_output(0, "pls:process: execv %s hopefully started (pid %d)\n", exec_path, pid);
+        
+            OPAL_THREAD_LOCK(&mca_pls_process_component.lock);
+            /* This situation can lead to a deadlock if '--debug-daemons' is set.
+             * However, the deadlock condition is tested at the begining of this
+             * function, so we're quite confident it should not happens here.
+             */
+            if (mca_pls_process_component.num_children++ >=
+                mca_pls_process_component.num_concurrent) {
+                opal_condition_wait(&mca_pls_process_component.cond, &mca_pls_process_component.lock);
+            }
+            OPAL_THREAD_UNLOCK(&mca_pls_process_component.lock);
+
             /* setup callback on sigchild - wait until setup above is complete
              * as the callback can occur in the call to orte_wait_cb
              */
-            orte_wait_cb(pid, orte_pls_process_wait_daemon, dmn);
+            orte_wait_cb(pid, orte_pls_process_wait_daemon, NULL);
             
             /* if required - add delay to avoid problems w/ X11 authentication */
             if (mca_pls_process_component.debug && mca_pls_process_component.delay) {
                 sleep(mca_pls_process_component.delay);
             }
-            vpid++;
         }
-        free(name);
     }
     
-    /* all done, so store the daemon info on the registry */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&active_daemons))) {
-        ORTE_ERROR_LOG(rc);
-    }
-
  cleanup:
-    OBJ_RELEASE(map);
+    if (NULL != map) {
+        OBJ_RELEASE(map);
+    }
 
     if (NULL != lib_base) {
         free(lib_base);
@@ -948,8 +828,23 @@ int orte_pls_process_launch(orte_jobid_t jobid)
         free(bin_base);
     }
 
-    if (NULL != jobid_string) free(jobid_string);  /* done with this variable */
-    if (NULL != argv) opal_argv_free(argv);
+    if (NULL != jobid_string) {
+        free(jobid_string);  /* done with this variable */
+    }
+    if (NULL != argv) {
+        opal_argv_free(argv);
+    }
+
+    /* check for failed launch - if so, force terminate */
+    if( failed_launch ) {
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(jobid, ORTE_JOB_STATE_FAILED_TO_START))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_wakeup(jobid))) {
+            ORTE_ERROR_LOG(rc);
+        }        
+    }
 
     return rc;
 }
@@ -961,60 +856,27 @@ int orte_pls_process_launch(orte_jobid_t jobid)
 int orte_pls_process_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
-    opal_list_t daemons;
-    opal_list_item_t *item;
-    
-    OPAL_TRACE(1);
-    
-    /* construct the list of active daemons on this job */
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
     
     /* order them to kill their local procs for this job */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(&daemons, jobid, timeout))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(jobid, timeout, attrs))) {
         ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
     }
     
-CLEANUP:
-    while (NULL != (item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&daemons);
     return rc;
 }
 
 /**
 * Terminate the orteds for a given job
  */
-int orte_pls_process_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
+int orte_pls_process_terminate_orteds(struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
-    opal_list_t daemons;
-    opal_list_item_t *item;
-    
-    OPAL_TRACE(1);
-    
-    /* construct the list of active daemons on this job */
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
     
     /* now tell them to die! */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(&daemons, timeout))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(timeout, attrs))) {
         ORTE_ERROR_LOG(rc);
     }
     
-CLEANUP:
-    while (NULL != (item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&daemons);
     return rc;
 }
 
@@ -1031,28 +893,12 @@ int orte_pls_process_terminate_proc(const orte_process_name_t* proc)
 int orte_pls_process_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs)
 {
     int rc;
-    opal_list_t daemons;
-    opal_list_item_t *item;
-    
-    OPAL_TRACE(1);
-    
-    /* construct the list of active daemons on this job */
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&daemons);
-        return rc;
-    }
     
     /* order them to pass this signal to their local procs */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_signal_local_procs(jobid, signal, &daemons))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_signal_local_procs(jobid, signal, attrs))) {
         ORTE_ERROR_LOG(rc);
     }
     
-    while (NULL != (item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&daemons);
     return rc;
 }
 
@@ -1062,23 +908,6 @@ int orte_pls_process_signal_proc(const orte_process_name_t* proc, int32_t signal
     
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
-
-/**
- * Cancel an operation involving comm to an orted
- */
-int orte_pls_process_cancel_operation(void)
-{
-    int rc;
-    
-    OPAL_TRACE(1);
-    
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_cancel_operation())) {
-        ORTE_ERROR_LOG(rc);
-    }
-    
-    return rc;
-}
-
 
 int orte_pls_process_finalize(void)
 {
