@@ -230,6 +230,7 @@ int mca_base_param_recache_files(bool rel_path_search)
     
     read_files(new_files);
 #if defined(__WINDOWS__)
+    read_keys_from_registry(HKEY_LOCAL_MACHINE, "SOFTWARE\\Open MPI", NULL);
     read_keys_from_registry(HKEY_CURRENT_USER, "SOFTWARE\\Open MPI", NULL);
 #endif  /* defined(__WINDOWS__) */
     
@@ -1047,7 +1048,7 @@ static int read_keys_from_registry(HKEY hKey, char *sub_key, char *current_key)
                     tmp_key = NULL;
                     asprintf(&current_key, "%s", achKey);
                 }
-                read_keys_from_registry(HKEY_CURRENT_USER, sub_sub_key, current_key);
+                read_keys_from_registry(hKey, sub_sub_key, current_key);
                 free(current_key);
                 if (tmp_key!=NULL) {
                     asprintf(&current_key, "%s", tmp_key);
