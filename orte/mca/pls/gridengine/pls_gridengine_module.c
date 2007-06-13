@@ -195,7 +195,6 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     orte_job_map_t *map=NULL;
     opal_list_item_t *n_item;
     orte_std_cntr_t num_nodes;
-    orte_vpid_t vpid;
     int node_name_index1;
     int node_name_index2;
     int proc_name_index;
@@ -227,7 +226,13 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
         goto cleanup;
     }
 
-    num_nodes = (orte_std_cntr_t)opal_list_get_size(&map->nodes);
+    /* account for any reuse of daemons */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+    num_nodes = map->num_new_daemons;
     if (num_nodes == 0) {
         /* job must have been launched on existing daemons - just return */
         failed_launch = false;
@@ -262,8 +267,7 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     orte_pls_base_orted_append_basic_args(&argc, &argv,
                                           &proc_name_index,
                                           &node_name_index2,
-                                          (vpid + num_nodes)
-                                          );
+                                          map->num_nodes);
 
      /* setup environment. The environment is common to all the daemons
       * so we only need to do this once
@@ -345,7 +349,6 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
         n_item != opal_list_get_end(&map->nodes);
         n_item =  opal_list_get_next(n_item)) {
         orte_mapped_node_t* rmaps_node = (orte_mapped_node_t*)n_item;
-        orte_process_name_t* name;
         pid_t pid;
         char *exec_path, *orted_path;
         char **exec_argv;
@@ -390,13 +393,6 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
 
         free(argv[node_name_index2]);
         argv[node_name_index2] = strdup(rmaps_node->nodename);
-
-        /* initialize daemons process name */
-        rc = orte_ns.create_process_name(&name, rmaps_node->cell, 0, vpid);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
 
 #ifdef __WINDOWS__
         printf("Unimplemented feature for windows\n");
@@ -479,7 +475,7 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
             }
         
             /* setup process name */
-            rc = orte_ns.get_proc_name_string(&name_string, name);
+            rc = orte_ns.get_proc_name_string(&name_string, rmaps_node->daemon);
             if (ORTE_SUCCESS != rc) {
                 opal_output(0, "pls:gridengine: unable to create process name");
                 exit(-1);
@@ -546,9 +542,7 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
              */
            orte_wait_cb(pid, orte_pls_gridengine_wait_daemon, NULL);
             
-            vpid++;
         }
-        free(name);
     }
     /* get here if launch went okay */
     failed_launch = false;
