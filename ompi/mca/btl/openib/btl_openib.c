@@ -145,9 +145,9 @@ int mca_btl_openib_add_procs(
         if(mca_btl_openib_component.openib_btls[j]->port_info.subnet_id
            == openib_btl->port_info.subnet_id) { 
             lcl_subnet_id_port_cnt++;
+            if(openib_btl == mca_btl_openib_component.openib_btls[j]) { 
+                btl_rank = lcl_subnet_id_port_cnt;
             }
-        if(openib_btl == mca_btl_openib_component.openib_btls[j]) { 
-            btl_rank = j;
         }
     }
     for(i = 0; i < (int) nprocs; i++) {
