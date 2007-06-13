@@ -299,6 +299,14 @@ static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg)
     openib_reg->mr = NULL;
     return OMPI_SUCCESS;
 }
+static inline int param_register_int(const char* param_name, int default_value)
+{
+    int param_value = default_value;
+    int id = mca_base_param_register_int("btl", "openib", param_name, NULL,
+            default_value);
+    mca_base_param_lookup_int(id, &param_value);
+    return param_value;
+}
 
 static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
                          uint8_t port_num, uint16_t pkey_index,
@@ -331,6 +339,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
     for(lid = ib_port_attr->lid;
             lid < ib_port_attr->lid + lmc; lid++){
         for(i = 0; i < mca_btl_openib_component.btls_per_lid; i++){
+            char param[40];
             openib_btl = malloc(sizeof(mca_btl_openib_module_t));
             if(NULL == openib_btl) {
                 BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
@@ -352,6 +361,40 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             openib_btl->port_info.mtu = hca->mtu;
             openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbfunc = btl_openib_control;
             openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbdata = NULL;
+
+            /* Check bandwidth configured for this HCA */
+            sprintf(param, "bandwidth_%s", ibv_get_device_name(hca->ib_dev));
+            openib_btl->super.btl_bandwidth =
+                param_register_int(param, openib_btl->super.btl_bandwidth);
+
+            /* Check bandwidth configured for this HCA/port */
+            sprintf(param, "bandwidth_%s:%d", ibv_get_device_name(hca->ib_dev),
+                    port_num);
+            openib_btl->super.btl_bandwidth =
+                param_register_int(param, openib_btl->super.btl_bandwidth);
+
+            /* Check bandwidth configured for this HCA/port/LID */
+            sprintf(param, "bandwidth_%s:%d:%d",
+                    ibv_get_device_name(hca->ib_dev), port_num, lid);
+            openib_btl->super.btl_bandwidth =
+                param_register_int(param, openib_btl->super.btl_bandwidth);
+
+            /* Check latency configured for this HCA */
+            sprintf(param, "latency_%s", ibv_get_device_name(hca->ib_dev));
+            openib_btl->super.btl_latency =
+                param_register_int(param, openib_btl->super.btl_latency);
+
+            /* Check latency configured for this HCA/port */
+            sprintf(param, "latency_%s:%d", ibv_get_device_name(hca->ib_dev),
+                    port_num);
+            openib_btl->super.btl_latency =
+                param_register_int(param, openib_btl->super.btl_latency);
+
+            /* Check latency configured for this HCA/port/LID */
+            sprintf(param, "latency_%s:%d:%d", ibv_get_device_name(hca->ib_dev),
+                    port_num, lid);
+            openib_btl->super.btl_latency =
+                param_register_int(param, openib_btl->super.btl_latency);
 
             /* Auto-detect the port bandwidth */
             if (0 == openib_btl->super.btl_bandwidth) {
