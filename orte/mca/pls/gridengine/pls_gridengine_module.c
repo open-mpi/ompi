@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
  *                         Use is subject to license terms.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -199,7 +199,6 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     int node_name_index2;
     int proc_name_index;
     int orted_index;
-    char *jobid_string=NULL;
     char *prefix_dir;
     char *param;
     char **argv=NULL;
@@ -342,7 +341,7 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
          free(newenv);
      }
                      
-                     /*
+    /*
      * Iterate through the nodes.
      */
     for(n_item =  opal_list_get_first(&map->nodes);
@@ -380,6 +379,11 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
             exit(-1); /* exit instead of return ORTE_ERR_OUT_OF_RESOURCE */
         }
 #endif
+
+        /* if this daemon already exists, don't launch it! */
+        if (rmaps_node->daemon_preexists) {
+            continue;
+        }
         
         /* setup node name */
         free(argv[node_name_index1]);
@@ -477,7 +481,7 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
             /* setup process name */
             rc = orte_ns.get_proc_name_string(&name_string, rmaps_node->daemon);
             if (ORTE_SUCCESS != rc) {
-                opal_output(0, "pls:gridengine: unable to create process name");
+                opal_output(0, "pls:gridengine: unable to get daemon name as string");
                 exit(-1);
             }
             free(argv[proc_name_index]);
@@ -535,8 +539,14 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
         } else { /* parent */
             if (mca_pls_gridengine_component.debug) {
                 opal_output(0, "pls:gridengine: parent");
-            }   
-                          
+            }
+            
+            /* indicate this daemon has been launched in case anyone is sitting on that trigger */ 
+            if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(rmaps_node->daemon, ORTE_PROC_STATE_LAUNCHED, 0))) { 
+                ORTE_ERROR_LOG(rc); 
+ 	        goto cleanup; 
+            }
+            
             /* setup callback on sigchild - wait until setup above is complete
              * as the callback can occur in the call to orte_wait_cb
              */
@@ -559,13 +569,9 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     if (NULL != bin_base) {
         free(bin_base);
     }
-    
-     if (NULL != jobid_string) {
-         free(jobid_string);  /* done with this variable */
-     }
-     if (NULL != argv) {
-         opal_argv_free(argv);
-     }
+    if (NULL != argv) {
+        opal_argv_free(argv);
+    }
     if (NULL != env) {
         opal_argv_free(env);
     }
