@@ -1325,7 +1325,7 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" ; then
     # actually use the aio_write interface).  Note that this will 
     # fail for some pre-POSIX implementations of the aio interface 
     # (an old IBM interface needs an fd argument as well)
-    AC_TRY_RUN([
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 #include <sys/types.h>
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
@@ -1336,24 +1336,20 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" ; then
 #ifdef HAVE_SYS_AIO_H
 #include <sys/aio.h>
 #endif
-	int main(int argc, char **argv)
-	{
+],[
             struct aiocb *aiocbp;
-	    if (argc > 10) aio_write(aiocbp);
+	    aio_write(aiocbp);
 	    return 0;
-	}
-	],
-	aio_runs=yes
-	AC_MSG_RESULT(yes),
-	aio_runs=no
-	AC_MSG_RESULT(no),
-	aio_runs=unknown
-	AC_MSG_RESULT(unknown)
+])],
+	[aio_runs=yes
+	 AC_MSG_RESULT(yes)],
+	[aio_runs=no
+	 AC_MSG_RESULT(no)]
     )
     if test "$aio_runs" != "no" ; then
 	AC_DEFINE(ROMIO_HAVE_WORKING_AIO, 1, Define if AIO calls seem to work)
     fi
-    
+
     # now about that old IBM interface...
     # modern AIO interfaces have the file descriptor in the aiocb structure,
     # and will set ROMIO_HAVE_STRUCT_AIOCB_WITH_AIO_FILDES.  Old IBM
@@ -1365,7 +1361,7 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" ; then
     # aio_read correctly
 
     AC_MSG_CHECKING([for obsolete two-argument aio_write])
-    AC_TRY_RUN([
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 #include <sys/types.h>
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
@@ -1376,20 +1372,16 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" ; then
 #ifdef HAVE_SYS_AIO_H
 #include <sys/aio.h>
 #endif
-	int main(int argc, char **argv)
-	{
+],[
 		int fd;
 		struct aiocb *aiocbp;
-		if (argc > 10) aio_write(fd, aiocbp);
+		aio_write(fd, aiocbp);
 		return 0;
-	}
-	],
-	aio_two_arg_write=yes
-	AC_MSG_RESULT(yes),
-	aio_two_arg_write=no 
-	AC_MSG_RESULT(no),
-	aio_two_arg_write=unknown
-	AC_MSG_RESULT(unknown)
+])],
+	[aio_two_arg_write=yes
+	 AC_MSG_RESULT(yes)],
+	[aio_two_arg_write=no 
+	 AC_MSG_RESULT(no)]
     )
 
     if test "$aio_two_arg_write" != "no" -a "$aio_runs" != "yes" ; then
@@ -1398,7 +1390,7 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" ; then
     fi
 
     AC_MSG_CHECKING([for obsolete two-argument aio_suspend])
-    AC_TRY_RUN([
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 #include <sys/types.h>
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
@@ -1409,19 +1401,15 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" ; then
 #ifdef HAVE_SYS_AIO_H
 #include <sys/aio.h>
 #endif
-	int main(int argc, char **argv)
-	{
+],[
 		struct aiocb *aiocbp;
-		if (argc > 10) aio_suspend(1, &aiocbp);
+		aio_suspend(1, &aiocbp);
 		return 0;
-	}
-	],
-	aio_two_arg_suspend=yes
-	AC_MSG_RESULT(yes),
-	aio_two_arg_suspend=no 
-	AC_MSG_RESULT(no),
-	aio_two_arg_suspend=unknown
-	AC_MSG_RESULT(unknown)
+])],
+	[aio_two_arg_suspend=yes
+	 AC_MSG_RESULT(yes)],
+	[aio_two_arg_suspend=no 
+	 AC_MSG_RESULT(no)]
     )
 
     if test "$aio_two_arg_suspend" != "no" -a "$aio_runs" != "yes" ; then
