@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
  *                         Use is subject to license terms.
  * $COPYRIGHT$
  * 
@@ -129,10 +129,10 @@ int orte_pls_gridengine_signal_proc(const orte_process_name_t*, int32_t);
  */
 struct orte_pls_gridengine_component_t {
     orte_pls_base_component_t super;
-    orte_jobid_t jobid;
+    bool debug;
+    bool verbose;
+    bool daemonize_orted;
     int priority;
-    int verbose;
-    int debug;
     char* orted;
 };
 typedef struct orte_pls_gridengine_component_t orte_pls_gridengine_component_t;

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
  *                         Use is subject to license terms.
  * $COPYRIGHT$
  * 
@@ -103,21 +103,28 @@ orte_pls_gridengine_component_open - open component and register all parameters
 */
 int orte_pls_gridengine_component_open(void)
 {
+    int tmp;
     mca_base_component_t *c = &mca_pls_gridengine_component.super.pls_version;
 
     mca_base_param_reg_int(c, "debug",
         "Enable debugging of gridengine pls component",
-        false, false, 0, &mca_pls_gridengine_component.debug);
+        false, false, false, &tmp);
+    mca_pls_gridengine_component.debug = OPAL_INT_TO_BOOL(tmp);
     mca_base_param_reg_int(c, "verbose",
         "Enable verbose output of the gridengine qrsh -inherit command",
-        false, false, 0, &mca_pls_gridengine_component.verbose);
+        false, false, false, &tmp);
+    mca_pls_gridengine_component.verbose = OPAL_INT_TO_BOOL(tmp);
     mca_base_param_reg_int(c, "priority",
         "Priority of the gridengine pls component",
         false , false, 100, &mca_pls_gridengine_component.priority);
     mca_base_param_reg_string(c, "orted",
         "The command name that the gridengine pls component will invoke for the ORTE daemon",
         false, false, "orted", &mca_pls_gridengine_component.orted);
-
+    mca_base_param_reg_int(c, "daemonize_orted",
+        "Daemonize orted on remote nodes",
+        false, false, false, &tmp);
+    mca_pls_gridengine_component.daemonize_orted = OPAL_INT_TO_BOOL(tmp);
+    
     return ORTE_SUCCESS;
 }
 
