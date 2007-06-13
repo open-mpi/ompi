@@ -255,13 +255,20 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
 
     node_name_index1 = argc;
     opal_argv_append(&argc, &argv, "<template>");
-
-    /* add the orted daemon in command and
-     * force orted in the same ptree as sge_shephard with no daemonize */
+    
+    /* add the daemon command */
     orted_index = argc;
     opal_argv_append(&argc, &argv, mca_pls_gridengine_component.orted);
-    opal_argv_append(&argc, &argv, "--no-daemonize");
 
+    /* By default, --no-daemonize will be used and orted will be forced to
+     * to stay in the same ptree as sge_shephard. The problem with
+     * --no-daemonize is that the qrsh -inherit connections will stay
+     * persistent for the whole duration of the task to the remote nodes,
+     * which may not be ideal for large number of nodes */
+    if (! mca_pls_gridengine_component.daemonize_orted) {
+        opal_argv_append(&argc, &argv, "--no-daemonize");
+    }
+    
     /* Add basic orted command line options */
     orte_pls_base_orted_append_basic_args(&argc, &argv,
                                           &proc_name_index,
@@ -542,9 +549,9 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
             }
             
             /* indicate this daemon has been launched in case anyone is sitting on that trigger */ 
-            if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(rmaps_node->daemon, ORTE_PROC_STATE_LAUNCHED, 0))) { 
-                ORTE_ERROR_LOG(rc); 
- 	        goto cleanup; 
+            if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(rmaps_node->daemon, ORTE_PROC_STATE_LAUNCHED, 0))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
             }
             
             /* setup callback on sigchild - wait until setup above is complete
