@@ -391,7 +391,7 @@ static int mca_oob_xcast_binomial_tree(orte_jobid_t job,
         peer = rank | mask;
         if (peer < size) {
             target.vpid = (orte_vpid_t)peer;
-            opal_output(0, "[%ld,%ld,%ld] xcast to [%ld,%ld,%ld]", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), ORTE_NAME_ARGS(&target));
+            opal_output(mca_oob_base_output, "[%ld,%ld,%ld] xcast to [%ld,%ld,%ld]", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), ORTE_NAME_ARGS(&target));
             if (0 > (rc = mca_oob_send_packed_nb(&target, buf, ORTE_RML_TAG_ORTED_ROUTED,
                                                  0, mca_oob_xcast_send_cb, NULL))) {
                 if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
