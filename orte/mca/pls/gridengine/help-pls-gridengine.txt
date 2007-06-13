@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
 #                         Use is subject to license terms.
 # $COPYRIGHT$
 # 
@@ -45,9 +45,3 @@ The $SGE_ROOT environment variable points to:
 The $ARC environment variable points to:
   %s
 
-[insufficient-pe-slot]
-Exiting from the gridengine pls module. There are not enough PE slots
-available in the Grid Engine Parallel Environment (PE) to satisfy the
-slot requirement needed to launch ORTE daemon to this host:
-
-  %s

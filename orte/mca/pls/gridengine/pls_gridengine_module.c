@@ -104,9 +104,6 @@ orte_pls_base_module_t orte_pls_gridengine_module = {
 };
 
 static void set_handler_default(int sig);
-#if 0
-static int update_slot_keyval(orte_ras_node_t* node, int* slot_cnt);
-#endif
 
 /* global storage of active jobid being launched */
 static orte_jobid_t active_job=ORTE_JOBID_INVALID;
@@ -358,34 +355,6 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
         pid_t pid;
         char *exec_path, *orted_path;
         char **exec_argv;
-#if 0
-        int remain_slot_cnt;
-        
-        /* RHC - I don't believe this code is really necessary any longer.
-         * The mapper correctly accounts for slots that have already been
-         * used. Even if another job starts to run between the time the
-         * mapper maps this job and we get to this point, the new job
-         * will have gone through the mapper and will not overuse the node.
-         * As this code consumes considerable time, I have sliced it out
-         * of the code for now.
-         *
-         * query the registry for the remaining gridengine slot count on
-         * this node, and update the registry for the count for the
-         * current process launch */
-        if (ORTE_SUCCESS != (rc =
-            update_slot_keyval(ras_node, &remain_slot_cnt))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* check for the unlikely scenario, because gridengine ras already
-         * checks for it, but still provide a check there. */
-        if (remain_slot_cnt < 0) {
-            opal_show_help("help-pls-gridengine.txt", "insufficient-pe-slot",
-                true, ras_node->node_name, true);
-            exit(-1); /* exit instead of return ORTE_ERR_OUT_OF_RESOURCE */
-        }
-#endif
 
         /* if this daemon already exists, don't launch it! */
         if (rmaps_node->daemon_preexists) {
@@ -596,110 +565,6 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
                      
     return rc;
 }
-
-#if 0
-/**
- * Query the registry for the gridengine slot count, and update it
- */
-static int update_slot_keyval(orte_ras_node_t* ras_node, int* slot_cnt)
-{
-    int rc, *iptr, ivalue;
-    orte_std_cntr_t num_tokens, i, get_cnt;
-    orte_gpr_value_t** get_values;
-    char **tokens;
-    char *get_keys[] = {"orte-gridengine-slot-cnt", NULL};
-    orte_gpr_keyval_t *condition;
-
-    /* get token */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&tokens,
-        &num_tokens, ras_node->node_cellid, ras_node->node_name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* setup condition/filter for query - return only processes that
-     * are assigned to the specified node name
-     */
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&condition, ORTE_NODE_NAME_KEY, ORTE_STRING, (void*)ras_node->node_name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    rc = orte_gpr.get_conditional(
-        ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
-            ORTE_NODE_SEGMENT,
-            tokens,
-            get_keys,
-            1,
-            &condition,
-            &get_cnt,
-            &get_values);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-     
-    /* parse the response */
-    for(i=0; i<get_cnt; i++) {
-        orte_gpr_value_t* value = get_values[i];
-        orte_std_cntr_t k;
-
-        /* looking in each GPR container for the keyval */
-        for(k=0; k < value->cnt; k++) {
-            orte_gpr_keyval_t* keyval = value->keyvals[k];
-            orte_data_value_t *put_value;
-            
-            if(strcmp(keyval->key, "orte-gridengine-slot-cnt") == 0) {
-                if (ORTE_SUCCESS != (rc = orte_dss.get(
-                    (void**)&iptr, keyval->value, ORTE_INT))) {
-                    ORTE_ERROR_LOG(rc);
-                    continue;
-                }
-                *slot_cnt = *iptr;
-                free(iptr);
-                if (mca_pls_gridengine_component.debug) {
-                    opal_output(0, "pls:gridengine: %s: registry shows PE slots=%d",
-                        ras_node->node_name, *slot_cnt);
-                }
-
-                (*slot_cnt)--; /* account for the current launch */
-
-                if (mca_pls_gridengine_component.debug) {
-                    opal_output(0,"pls:gridengine: %s: decrementing, PE slots=%d",
-                        ras_node->node_name, *slot_cnt);
-                }
-                
-                put_value = OBJ_NEW(orte_data_value_t);
-                if (NULL == put_value) {
-                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                    return ORTE_ERR_OUT_OF_RESOURCE;
-                }
-                ivalue = *slot_cnt;
-                put_value->type = ORTE_INT;
-                put_value->data = &ivalue;
-
-                /* put the keyvalue in the segment */
-                if (ORTE_SUCCESS != (rc = orte_gpr.put_1(
-                    ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_XAND,
-                        ORTE_NODE_SEGMENT,
-                        tokens,
-                        "orte-gridengine-slot-cnt",
-                        put_value
-                    ))) {
-                    ORTE_ERROR_LOG(rc);
-                }
-                continue;
-            }
-        }
-    }
-
-    for(i=1; i<get_cnt; i++)
-        OBJ_RELEASE(get_values[i]);
-    if (NULL != get_values) free(get_values);
-    opal_argv_free(tokens);
-
-    return rc;
-}
-#endif
 
 /**
  * Query the registry for all nodes participating in the job
