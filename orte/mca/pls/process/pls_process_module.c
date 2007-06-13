@@ -611,6 +611,10 @@ int orte_pls_process_launch(orte_jobid_t jobid)
             continue; 
         }
 
+        /* setup node name */
+        free(argv[node_name_index2]);
+        argv[node_name_index2] = strdup(rmaps_node->nodename);
+
         if (mca_pls_process_component.debug) {
             param = opal_argv_join(argv, ' ');
             if (NULL != param) {
@@ -815,6 +819,9 @@ int orte_pls_process_launch(orte_jobid_t jobid)
             }
         }
     }
+
+    /* get here if launch went okay */
+    failed_launch = false;
     
  cleanup:
     if (NULL != map) {
