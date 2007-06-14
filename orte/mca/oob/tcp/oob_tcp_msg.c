@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -186,6 +186,19 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
         /* post to a global list of completed messages */
         OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
         opal_list_append(&mca_oob_tcp_component.tcp_msg_completed, (opal_list_item_t*)msg);
+#if defined(__WINDOWS__)
+        /**
+         * In order to be able to generate TCP events reccursively, Windows need
+         * to get out of the callback attached to a specific socket. Therefore,
+         * as our OOB allow to block on a connection from a callback on the same
+         * connection, we have to trigger the completion callbacks outside of the
+         * OOB callbacks. We add them to the completed list here, and the progress
+         * engine will call our progress function later once all socket related
+         * callbacks have been triggered.
+         */
+         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+         return ORTE_SUCCESS;        
+#else
         if(opal_list_get_size(&mca_oob_tcp_component.tcp_msg_completed) > 1) {
             OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
             return ORTE_SUCCESS;
@@ -214,7 +227,7 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
             MCA_OOB_TCP_MSG_RETURN(msg);
         }
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
-
+#endif  /* defined(__WINDOWS__) */
     } else {
         opal_condition_broadcast(&msg->msg_condition);
         OPAL_THREAD_UNLOCK(&msg->msg_lock);
