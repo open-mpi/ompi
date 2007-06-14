@@ -1532,9 +1532,9 @@ int mca_oob_tcp_fini(void)
     }
 
     /* delete any pending events */
-    for(item =  opal_list_remove_first(&mca_oob_tcp_component.tcp_events);
-        item != NULL;
-        item =  opal_list_remove_first(&mca_oob_tcp_component.tcp_events)) {
+    for( item = opal_list_get_first(&mca_oob_tcp_component.tcp_events);
+        item != opal_list_get_end(&mca_oob_tcp_component.tcp_events);
+        item = opal_list_get_first(&mca_oob_tcp_component.tcp_events) ) {
         mca_oob_tcp_event_t* event = (mca_oob_tcp_event_t*)item;
         opal_event_del(&event->event);
         OBJ_RELEASE(event);
