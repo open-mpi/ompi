@@ -20,14 +20,13 @@ AC_DEFUN([MCA_installdirs_windows_COMPILE_MODE], [
 #                        [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_installdirs_windows_CONFIG],[
-    # check for GetProcessAffinityMask, which is defined only for some
-    # flavors of Windows. We should first check that the function is defined,
+    # check for RegOpenKeyEx allowing access to the Windows
+    # registry. We should first check that the function is defined,
     # and then check for it's presence in the kernel32 library.
-    AC_MSG_CHECKING(for working GetProcessAffinityMask)
+    AC_MSG_CHECKING(for working RegOpenKeyEx)
     AC_TRY_RUN( [#include <windows.h>
 int main( int argc, char** argv ) {
-    DWORD aff, mask;
-    GetProcessAffinityMask( NULL, &aff, &mask );
+    RegOpenKeyEx( HKEY_CURRENT_USER, "Software\\Open MPI", 0, KEY_READ, NULL);
     return 0; }],
         [AC_MSG_RESULT([yes])
          $1],
@@ -35,8 +34,7 @@ int main( int argc, char** argv ) {
          $2],
         [AC_COMPILE_IFELSE([#include <windows.h>
 int main( int argc, char** argv ) {
-    DWORD aff, mask;
-    GetProcessAffinityMask( NULL, &aff, &mask );
+    RegOpenKeyEx( HKEY_CURRENT_USER, "Software\\Open MPI", 0, KEY_READ, NULL);
     return 0; }],
         [AC_MSG_RESULT([yes])
          $1],
