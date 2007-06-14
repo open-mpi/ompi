@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  * 
@@ -32,6 +32,7 @@
 #include "ompi/mca/btl/btl.h"
 #include "opal/sys/timer.h"
 #include "opal/sys/atomic.h"
+#include "opal/util/argv.h"
 
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -87,6 +88,7 @@ static void btl_openib_frag_progress_pending(
 static int openib_reg_mr(void *reg_data, void *base, size_t size,
         mca_mpool_base_registration_t *reg);
 static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg);
+static int get_port_list(mca_btl_openib_hca_t *hca, int *allowed_ports);
 #if OMPI_HAVE_POSIX_THREADS
 void* btl_openib_async_thread(void *one_hca);
 #endif
@@ -461,10 +463,11 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
 {
     struct mca_mpool_base_resources_t mpool_resources;
     mca_btl_openib_hca_t *hca;
-    uint8_t i;
-    int ret = -1;
+    uint8_t i, k = 0;
+    int ret = -1, port_cnt;
     ompi_btl_openib_ini_values_t values, default_values;
-
+    int *allowed_ports; 
+    
     hca = malloc(sizeof(mca_btl_openib_hca_t));
     if(NULL == hca){
         BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
@@ -486,7 +489,13 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
                     ibv_get_device_name(ib_dev), strerror(errno))); 
         goto close_hca;
     }
-
+    /* If mca_btl_if_include/exclude were specified, get usable ports */
+    allowed_ports = (int*) malloc(hca->ib_dev_attr.phys_port_cnt * sizeof(int));
+    port_cnt = get_port_list(hca, allowed_ports);
+    if(0 == port_cnt) {
+        ret = OMPI_SUCCESS;
+        goto close_hca;
+    }
     /* Load in vendor/part-specific HCA parameters.  Note that even if
        we don't find values for this vendor/part, "values" will be set
        indicating that it does not have good values */
@@ -583,17 +592,16 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
 
     ret = OMPI_SUCCESS; 
 
-    /* Note ports are 1 based hence j = 1 */
-    for(i = 1; i <= hca->ib_dev_attr.phys_port_cnt; i++){
+    /* Note ports are 1 based (i >= 1) */
+    for(k = 0; k < port_cnt; k++){
         struct ibv_port_attr ib_port_attr;
-
+        i = allowed_ports[k];
         if(ibv_query_port(hca->ib_dev_context, i, &ib_port_attr)){
             BTL_ERROR(("error getting port attributes for device %s "
                         "port number %d errno says %s",
                         ibv_get_device_name(ib_dev), i, strerror(errno)));
             break; 
         }
-
         if(IBV_PORT_ACTIVE == ib_port_attr.state){
 
             if (0 == mca_btl_openib_component.ib_pkey_val) {
@@ -663,6 +671,9 @@ dealloc_pd:
     ibv_dealloc_pd(hca->ib_pd);
 close_hca:
     ibv_close_device(hca->ib_dev_context);
+    if(NULL != allowed_ports) {
+        free(allowed_ports);
+    }
 free_hca:
     free(hca);
     return ret;
@@ -705,7 +716,7 @@ btl_openib_component_init(int *num_btl_modules,
 
     /* Read in INI files with HCA-specific parameters */
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_ini_init())) {
-        return NULL;
+        goto no_btls;
     }
 #if OMPI_HAVE_POSIX_THREADS
     /* Set the fatal counter to zero */
@@ -724,13 +735,35 @@ btl_openib_component_init(int *num_btl_modules,
                 opal_show_help("help-mpi-btl-openib.txt",
                                "ibv_fork_init fail", true,
                                orte_system_info.nodename);
-                mca_btl_openib_component.ib_num_btls = 0;
-                btl_openib_modex_send();
-                return NULL;
+                goto no_btls;
             } 
         }
     }
 #endif
+
+    /* Parse the include and exclude lists, checking for errors */
+
+    mca_btl_openib_component.if_include_list =
+        mca_btl_openib_component.if_exclude_list = 
+        mca_btl_openib_component.if_list = NULL;
+    if (NULL != mca_btl_openib_component.if_include &&
+        NULL != mca_btl_openib_component.if_exclude) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                       "specified include and exclude", true,
+                       mca_btl_openib_component.if_include,
+                       mca_btl_openib_component.if_exclude, NULL);
+        goto no_btls;
+    } else if (NULL != mca_btl_openib_component.if_include) {
+        mca_btl_openib_component.if_include_list = 
+            opal_argv_split(mca_btl_openib_component.if_include, ',');
+        mca_btl_openib_component.if_list = 
+            opal_argv_copy(mca_btl_openib_component.if_include_list);
+    } else if (NULL != mca_btl_openib_component.if_exclude) {
+        mca_btl_openib_component.if_exclude_list = 
+            opal_argv_split(mca_btl_openib_component.if_exclude, ',');
+        mca_btl_openib_component.if_list = 
+            opal_argv_copy(mca_btl_openib_component.if_exclude_list);
+    }
 
 #ifdef HAVE_IBV_GET_DEVICE_LIST
     ib_devs = ibv_get_device_list(&num_devs);
@@ -776,7 +809,6 @@ btl_openib_component_init(int *num_btl_modules,
 
     OBJ_CONSTRUCT(&btl_list, opal_list_t); 
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_lock, opal_mutex_t);
-
     for (i = 0; i < num_devs &&
              (-1 == mca_btl_openib_component.ib_max_btls ||
               mca_btl_openib_component.ib_num_btls <
@@ -789,6 +821,21 @@ btl_openib_component_init(int *num_btl_modules,
     if(ret != OMPI_SUCCESS) {
         opal_show_help("help-mpi-btl-openib.txt",
                 "error in hca init", true, orte_system_info.nodename);
+    }
+
+    /* If we got back from checking all the HCAs and find that there
+       are still items in the component.if_list, that means that they
+       didn't exist.  Show an appropriate warning if the warning was
+       not disabled. */
+
+    if (0 != opal_argv_count(mca_btl_openib_component.if_list) &&
+        mca_btl_openib_component.warn_nonexistent_if) {
+        char *str = opal_argv_join(mca_btl_openib_component.if_list, ',');
+        opal_show_help("help-mpi-btl-openib.txt", "nonexistent port",
+                       true, orte_system_info.nodename,
+                       ((NULL != mca_btl_openib_component.if_include) ? 
+                        "in" : "ex"), str);
+        free(str);
     }
        
     if(0 == mca_btl_openib_component.ib_num_btls) {
@@ -962,7 +1009,23 @@ btl_openib_component_init(int *num_btl_modules,
 #else
     free(ib_devs);
 #endif
+    if (NULL != mca_btl_openib_component.if_include_list) {
+        opal_argv_free(mca_btl_openib_component.if_include_list);
+        mca_btl_openib_component.if_include_list = NULL;
+    }
+    if (NULL != mca_btl_openib_component.if_exclude_list) {
+        opal_argv_free(mca_btl_openib_component.if_exclude_list);
+        mca_btl_openib_component.if_exclude_list = NULL;
+    }
     return btls;
+
+ no_btls:
+    /* If we fail early enough in the setup, we just modex around that
+       there are no openib BTL's in this process and return NULL. */
+
+    mca_btl_openib_component.ib_num_btls = 0;
+    btl_openib_modex_send();
+    return NULL;
 }
 
 
@@ -1513,4 +1576,115 @@ error:
     }
     openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
     return count;
+}
+
+static int
+get_port_list(mca_btl_openib_hca_t *hca, int *allowed_ports)
+{
+    int i, j, k, num_ports = 0;
+    const char *dev_name;
+    char *name;
+
+    dev_name = ibv_get_device_name(hca->ib_dev);
+    name = (char*) malloc(strlen(dev_name) + 4);
+    if (NULL == name) {
+        return 0;
+    }
+
+    /* Assume that all ports are allowed.  num_ports will be adjusted
+       below to reflect whether this is true or not. */
+    for (i = 1; i <= hca->ib_dev_attr.phys_port_cnt; ++i) {
+        allowed_ports[num_ports++] = i;
+    }
+    num_ports = 0;
+    if (NULL != mca_btl_openib_component.if_include_list) {
+        /* If only the HCA name is given (eg. mthca0,mthca1) use all
+           ports */
+        i = 0;
+        while (mca_btl_openib_component.if_include_list[i]) {
+            if (0 == strcmp(dev_name, 
+                            mca_btl_openib_component.if_include_list[i])) {
+                num_ports = hca->ib_dev_attr.phys_port_cnt;
+                goto done;
+            }
+            ++i;
+        }
+        /* Include only requested ports on the HCA */
+        for (i = 1; i <= hca->ib_dev_attr.phys_port_cnt; ++i) {
+            sprintf(name,"%s:%d",dev_name,i);
+            for (j = 0; 
+                 NULL != mca_btl_openib_component.if_include_list[j]; ++j) {
+                if (0 == strcmp(name, 
+                                mca_btl_openib_component.if_include_list[j])) {
+                    allowed_ports[num_ports++] = i;
+                    break;
+                }
+            }
+        }
+    } else if (NULL != mca_btl_openib_component.if_exclude_list) {
+        /* If only the HCA name is given (eg. mthca0,mthca1) exclude
+           all ports */
+        i = 0;
+        while (mca_btl_openib_component.if_exclude_list[i]) {
+            if (0 == strcmp(dev_name, 
+                            mca_btl_openib_component.if_exclude_list[i])) {
+                num_ports = 0;
+                goto done;
+            }
+            ++i;
+        }
+        /* Exclude the specified ports on this HCA */
+        for (i = 1; i <= hca->ib_dev_attr.phys_port_cnt; ++i) {
+            sprintf(name,"%s:%d",dev_name,i);
+            for (j = 0; 
+                 NULL != mca_btl_openib_component.if_exclude_list[j]; ++j) {
+                if (0 == strcmp(name, 
+                                mca_btl_openib_component.if_exclude_list[j])) {
+                    /* If found, set a sentinel value */
+                    j = -1;
+                    break;
+                }
+            }
+            /* If we didn't find it, it's ok to include in the list */
+            if (-1 != j) {
+                allowed_ports[num_ports++] = i;
+            }
+        }
+    } else {
+        num_ports = hca->ib_dev_attr.phys_port_cnt;
+    }
+
+done:
+
+    /* Remove the following from the error-checking if_list:
+       - bare device name
+       - device name suffixed with port number */
+    if (NULL != mca_btl_openib_component.if_list) {
+        for (i = 0; NULL != mca_btl_openib_component.if_list[i]; ++i) {
+
+            /* Look for raw device name */
+            if (0 == strcmp(mca_btl_openib_component.if_list[i], dev_name)) {
+                j = opal_argv_count(mca_btl_openib_component.if_list);
+                opal_argv_delete(&j, &(mca_btl_openib_component.if_list),
+                                 i, 1);
+                --i;
+            }
+        }
+        for (i = 1; i <= hca->ib_dev_attr.phys_port_cnt; ++i) {
+            sprintf(name, "%s:%d", dev_name, i);
+            for (j = 0; NULL != mca_btl_openib_component.if_list[j]; ++j) {
+                if (0 == strcmp(mca_btl_openib_component.if_list[j], name)) {
+                    k = opal_argv_count(mca_btl_openib_component.if_list);
+                    opal_argv_delete(&k, &(mca_btl_openib_component.if_list),
+                                     j, 1);
+                    --j;
+                    break;
+                }
+            }
+        }
+    }
+
+    free(name);
+
+    return num_ports;
 }

@@ -120,6 +120,31 @@ int btl_openib_register_mca_params(void)
                   "Warn when there is more than one active ports and at least one of them connected to the network with only default GID prefix configured (0 = do not warn; any other value = warn)",
                   1, &ival, 0));
     mca_btl_openib_component.warn_default_gid_prefix = (0 != ival);
+    CHECK(reg_int("warn_nonexistent_if", 
+                  "Warn if non-existent HCAs and/or ports are specified in the btl_openib_if_[in|ex]clude MCA parameters (0 = do not warn; any other value = warn)",
+                  1, &ival, 0));
+    mca_btl_openib_component.warn_nonexistent_if = (0 != ival);
+
+#ifdef HAVE_IBV_FORK_INIT
+    ival2 = -1;
+#else
+    ival2 = 0;
+#endif
+    CHECK(reg_int("want_fork_support", 
+                  "Whether fork support is desired or not "
+                  "(negative = try to enable fork support, but continue even if it is not available, 0 = do not enable fork support, positive = try to enable fork support and fail if it is not available)", 
+                  ival2, &ival, 0));
+#ifdef HAVE_IBV_FORK_INIT
+    mca_btl_openib_component.want_fork_support = ival;
+#else
+    if (0 != ival) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                       "ibv_fork requested but not supported", true,
+                       orte_system_info.nodename);
+        return OMPI_ERROR;
+    }
+#endif
+
     asprintf(&str, "%s/mca-btl-openib-hca-params.ini", 
              opal_install_dirs.pkgdatadir);
     if (NULL == str) {
@@ -398,6 +423,16 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_module.super.btl_latency = 10;
     mca_btl_base_param_register(&mca_btl_openib_component.super.btl_version,
             &mca_btl_openib_module.super);
+
+    CHECK(reg_string("if_include",
+                     "List of HCAs/ports to be used (eg. mthca0,mthca1:2)",
+                     NULL, &mca_btl_openib_component.if_include,
+                     0));    
+
+    CHECK(reg_string("if_exclude",
+                     "List of HCAs/ports to be excluded ",
+                     NULL, &mca_btl_openib_component.if_exclude,
+                     0));    
 
     return ret;
 }

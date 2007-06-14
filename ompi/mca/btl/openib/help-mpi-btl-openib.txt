@@ -17,7 +17,8 @@
 # 
 # $HEADER$
 #
-# This is the US/English general help file for Open MPI.
+# This is the US/English help file for Open MPI's OpenFabrics support
+# (the openib BTL).
 #
 [ini file:file not found]
 The Open MPI OpenIB BTL component was unable to find or read an INI
@@ -26,6 +27,7 @@ parameter.  Please check this file and/or modify the
 btl_openib_hca_param_files MCA parameter:
 
     %s
+#
 [ini file:not in a section]
 In parsing OpenIB BTL parameter file, values were found that were not
 in a valid INI section.  These values will be ignored.  Please
@@ -36,6 +38,7 @@ re-check this file:
 At line %d, near the following text:
 
     %s
+#
 [ini file:unexpected token]
 In parsing OpenIB BTL parameter file, unexpected tokens were found
 (this may cause significant portions of the INI file to be ignored).
@@ -46,6 +49,7 @@ Please re-check this file:
 At line %d, near the following text:
 
     %s
+#
 [ini file:expected equals]
 In parsing OpenIB BTL parameter file, unexpected tokens were found
 (this may cause significant portions of the INI file to be ignored).
@@ -57,6 +61,7 @@ this file:
 At line %d, near the following text:
 
     %s
+#
 [ini file:expected newline]
 In parsing OpenIB BTL parameter file, unexpected tokens were found
 (this may cause significant portions of the INI file to be ignored).
@@ -67,6 +72,7 @@ A newline was expected but was not found.  Please re-check this file:
 At line %d, near the following text:
 
     %s
+#
 [ini file:unknown field]
 In parsing OpenIB BTL parameter file, an unrecognized field name was
 found.  Please re-check this file:
@@ -78,6 +84,7 @@ At line %d, the field named:
     %s
 
 This field, and any other unrecognized fields, will be skipped.
+#
 [no hca params found]
 WARNING: No HCA parameters were found for the HCA that Open MPI
 detected:
@@ -92,6 +99,7 @@ btl_openib_hca_param_files MCA parameter to set values for your HCA.
 
 NOTE: You can turn off this warning by setting the MCA parameter
       btl_openib_warn_no_hca_params_found to 0.
+#
 [init-fail-no-mem]
 The OpenIB BTL failed to initialize while trying to allocate some
 locked memory.  This typically can indicate that the memlock limits
@@ -109,6 +117,7 @@ problem fixed.  This FAQ entry on the Open MPI web site may also be
 helpful:
 
     http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
+#
 [init-fail-create-q]
 The OpenIB BTL failed to initialize while trying to create an internal
 queue.  This typically indicates a failed OpenFabrics installation or
@@ -122,6 +131,7 @@ faulty hardware.  The failure occured here:
 
 You may need to consult with your system administrator to get this
 problem fixed.
+#
 [btl_openib:retry-exceeded]
 The InfiniBand retry count between two MPI processes has been
 exceeded.  "Retry count" is defined in the InfiniBand spec 1.2
@@ -148,12 +158,15 @@ respect to the retry count:
      4.096 microseconds * (2^btl_openib_ib_timeout)
 
   See the InfiniBand spec 1.2 (section 12.7.34) for more details.
+#
 [no active ports found]
 WARNING: There is at least on IB HCA found on host '%s', but there is
 no active ports detected. This is most certainly not what you wanted.
 Check your cables and SM configuration.
+#
 [error in hca init]
 WARNING: There were errors during IB HCA initialization on host '%s'.
+#
 [default subnet prefix]
 WARNING: There are more than one active ports on host '%s', but the
 default subnet GID prefix was detected on more than one of these
@@ -169,16 +182,39 @@ Please see this FAQ entry for more details:
 
 NOTE: You can turn off this warning by setting the MCA parameter
       btl_openib_warn_default_gid_prefix to 0.
+#
 [wrong buffer alignment]
 Wrong buffer alignment %d configured on host '%s'. Should be bigger
 than zero and power of two. Use default %d instead.
+#
 [ibv_fork requested but not supported]
 WARNING: fork() support was requested for the openib BTL, but it is
 not supported on the host %s.  Deactivating the openib BTL.
+#
 [ibv_fork_init fail]
 WARNING: fork() support was requested for the openib BTL, but the
 library call ibv_fork_init() failed on the host %s.
 Deactivating the openib BTL.
+#
 [wrong buffer alignment]
 Wrong buffer alignment %d configured on host '%s'. Should be bigger
 than zero and power of two. Use default %d instead.
+#
+[specified include and exclude]
+ERROR: You have specified both the btl_openib_if_include and
+btl_openib_if_exclude MCA parameters.  These two parameters are
+mutually exclusive; you can only specify one or the other.  
+
+For reference, the values that you specified are:
+
+  btl_openib_if_include: %s
+  btl_openib_if_exclude: %s
+[nonexistent port]
+WARNING: One or more nonexistent HCAs/ports were specified:
+
+  Host:                 %s
+  MCA parameter:        mca_btl_if_%sclude
+  Nonexistent entities: %s
+
+These entities will be ignored.  You can disable this warning by
+setting the btl_openib_warn_nonexistent_if MCA parameter to 0.
