@@ -58,6 +58,10 @@
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
 
+#if defined(__WINDOWS__)
+static opal_mutex_t windows_callback;
+#endif  /* defined(__WINDOWS__) */
+
 /*
  * Data structure for accepting connections.
  */
@@ -352,6 +356,11 @@ static int oob_tcp_windows_progress_callback( void )
 {
     opal_list_item_t* item;
     mca_oob_tcp_msg_t* msg;
+	int event_count = 0;
+
+	/* Only one thread at the time is allowed to execute callbacks */
+	if( !opal_mutex_trylock(&windows_callback) )
+		return 0;
 
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     while(NULL != 
@@ -364,12 +373,15 @@ static int oob_tcp_windows_progress_callback( void )
                          msg->msg_ucnt, 
                          msg->msg_hdr.msg_tag, 
                          msg->msg_cbdata);
+		event_count++;
         OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
         MCA_OOB_TCP_MSG_RETURN(msg);
     }
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 
-    return 0;
+	opal_mutex_unlock(&windows_callback);
+
+    return event_count;
 }
 #endif  /* defined(__WINDOWS__) */
 
@@ -381,6 +393,7 @@ int mca_oob_tcp_component_close(void)
 {
 #if defined(__WINDOWS__)
     opal_progress_unregister(oob_tcp_windows_progress_callback);
+	OBJ_DESTRUCT( &windows_callback );
     WSACleanup();
 #endif  /* defined(__WINDOWS__) */
 
@@ -1040,6 +1053,7 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
 #if defined(__WINDOWS__)
     /* Register the libevent callback which will trigger the OOB
      * completion callbacks. */
+	 OBJ_CONSTRUCT(&windows_callback, opal_mutex_t);
      opal_progress_register(oob_tcp_windows_progress_callback);
 #endif  /* defined(__WINDOWS__) */
 

@@ -188,13 +188,13 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
         opal_list_append(&mca_oob_tcp_component.tcp_msg_completed, (opal_list_item_t*)msg);
 #if defined(__WINDOWS__)
         /**
-         * In order to be able to generate TCP events reccursively, Windows need
+         * In order to be able to generate TCP events recursively, Windows need
          * to get out of the callback attached to a specific socket. Therefore,
          * as our OOB allow to block on a connection from a callback on the same
          * connection, we have to trigger the completion callbacks outside of the
          * OOB callbacks. We add them to the completed list here, and the progress
          * engine will call our progress function later once all socket related
-         * callbacks have been triggered.
+         * events have been processed.
          */
          OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
          return ORTE_SUCCESS;        
