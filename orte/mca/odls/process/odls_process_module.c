@@ -241,7 +241,7 @@ static int orte_odls_process_kill_local_procs(orte_jobid_t job, bool set_state)
 {
     orte_odls_child_t *child;
     opal_list_item_t *item, *next;
-    int rc, exit_status;
+    int rc, exit_status = -1;
     opal_list_t procs_killed;
     orte_namelist_t *proc;
 
@@ -1137,6 +1137,7 @@ DOFORK:
              * across the entire cluster. Instead, we let orterun
              * output a consolidated error message for us
              */
+            child->state = ORTE_PROC_STATE_FAILED_TO_START;
             quit_flag = true;
         }
         /* reaquire lock so we don't double unlock... */
