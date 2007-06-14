@@ -71,10 +71,12 @@ orte_rml_module_t orte_rml_cnos_module = {
     orte_rml_cnos_recv_buffer,
     orte_rml_cnos_recv_buffer_nb,
     orte_rml_cnos_recv_cancel,
-    orte_rml_cnos_barrier,
     orte_rml_cnos_xcast,
     orte_rml_cnos_xcast_nb,
     orte_rml_cnos_xcast_gate,
+    orte_rml_cnos_add_exception_handler,
+    orte_rml_cnos_del_exception_handler,
+    NULL, /* No FT Event function */
     orte_rml_cnos_register_contact_info,
     orte_rml_cnos_register_subscription,
     orte_rml_cnos_get_contact_info,
@@ -283,3 +285,12 @@ void orte_rml_cnos_update_contact_info(orte_gpr_notify_data_t* data,
     return;
 }
 
+int orte_rml_cnos_add_exception_handler(orte_rml_exception_callback_t cbfunc)
+{
+    return ORTE_SUCCESS;
+}
+
+int orte_rml_cnos_del_exception_handler(orte_rml_exception_callback_t cbfunc)
+{
+    return ORTE_SUCCESS;
+}

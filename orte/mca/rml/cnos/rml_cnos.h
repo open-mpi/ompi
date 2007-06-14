@@ -111,6 +111,10 @@ extern "C"
   void orte_rml_cnos_update_contact_info(orte_gpr_notify_data_t* data,
                                          void* cbdata);
 
+  int orte_rml_cnos_add_exception_handler(orte_rml_exception_callback_t cbfunc);
+
+  int orte_rml_cnos_del_exception_handler(orte_rml_exception_callback_t cbfunc);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
