@@ -144,14 +144,14 @@ int mca_btl_openib_add_procs(
     for(j=0; j < mca_btl_openib_component.ib_num_btls; j++){ 
         if(mca_btl_openib_component.openib_btls[j]->port_info.subnet_id
            == openib_btl->port_info.subnet_id) { 
-            lcl_subnet_id_port_cnt++;
             if(openib_btl == mca_btl_openib_component.openib_btls[j]) { 
                 btl_rank = lcl_subnet_id_port_cnt;
             }
+            lcl_subnet_id_port_cnt++;
         }
     }
+
     for(i = 0; i < (int) nprocs; i++) {
-        
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
         mca_btl_openib_proc_t* ib_proc;
         mca_btl_base_endpoint_t* endpoint;
@@ -185,7 +185,7 @@ int mca_btl_openib_add_procs(
 #endif 
 
         if(rem_subnet_id_port_cnt  < lcl_subnet_id_port_cnt && 
-           btl_rank >= rem_subnet_id_port_cnt ) { 
+           btl_rank >= rem_subnet_id_port_cnt ) {
             BTL_VERBOSE(("Not enough remote ports on this subnet id, moving on.. \n"));
             continue;
             
