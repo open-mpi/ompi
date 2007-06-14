@@ -32,16 +32,14 @@ bool opal_mutex_check_locks = false;
 
 #ifdef __WINDOWS__
 
-#include <windows.h>
-
 static void opal_mutex_construct(opal_mutex_t *m)
 {
     InterlockedExchange(&m->m_lock, 0);
-#if OMPI_ENABLE_DEBUG
+#if !OMPI_HAVE_THREAD_SUPPORT && OMPI_ENABLE_DEBUG
     m->m_lock_debug = 0;
     m->m_lock_file = NULL;
     m->m_lock_line = 0;
-#endif
+#endif  /* !OMPI_HAVE_THREAD_SUPPORT && OMPI_ENABLE_DEBUG */
 }
 
 static void opal_mutex_destruct(opal_mutex_t *m)
