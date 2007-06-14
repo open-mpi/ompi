@@ -466,7 +466,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     uint8_t i, k = 0;
     int ret = -1, port_cnt;
     ompi_btl_openib_ini_values_t values, default_values;
-    int *allowed_ports; 
+    int *allowed_ports = NULL;
     
     hca = malloc(sizeof(mca_btl_openib_hca_t));
     if(NULL == hca){
