@@ -52,7 +52,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
 
 static inline int opal_mutex_trylock(opal_mutex_t *m)
 {
-    return (int) InterlockedExchange(&m->m_lock, 1);
+	return (0 == InterlockedExchange(&m->m_lock, 1) ? 1 : 0);
 }
 
 
