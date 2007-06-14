@@ -44,9 +44,7 @@
 
 #include "btl_openib_frag.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 #define MCA_BTL_IB_LEAVE_PINNED 1
 #define IB_DEFAULT_GID_PREFIX 0xfe80000000000000ll
@@ -129,6 +127,10 @@ struct mca_btl_openib_component_t {
 #if OMPI_HAVE_POSIX_THREADS
     int32_t fatal_counter; /**< Counts number on fatal events that we got on all hcas */
 #endif
+    char *if_include;
+    char **if_include_list;
+    char *if_exclude;
+    char **if_exclude_list;
 
     /** Colon-delimited list of filenames for HCA parameters */
     char *hca_params_file_names;
@@ -142,6 +144,13 @@ struct mca_btl_openib_component_t {
     /** Whether we want a warning if non default GID prefix is not configured
         on multiport setup */
     bool warn_default_gid_prefix;
+    /** Whether we want a warning if the user specifies a non-existent
+        HCA and/or port via btl_openib_if_[in|ex]clude MCA params */
+    bool warn_nonexistent_if;
+    /** Dummy argv-style list; a copy of names from the
+        if_[in|ex]clude list that we use for error checking (to ensure
+        that they all exist) */
+    char **if_list;
 #ifdef HAVE_IBV_FORK_INIT
     /** Whether we want fork support or not */
     int want_fork_support;
@@ -505,7 +514,6 @@ static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
     return OMPI_SUCCESS;
 }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif /* MCA_BTL_IB_H */
