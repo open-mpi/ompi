@@ -93,7 +93,7 @@ static void opal_mutex_destruct(opal_mutex_t *m)
 #if OMPI_HAVE_POSIX_THREADS
     pthread_mutex_destroy(&m->m_lock_pthread);
 #elif OMPI_HAVE_SOLARIS_THREADS
-    mutex_destory(&m->m_lock_solaris);
+    mutex_destroy(&m->m_lock_solaris);
 #endif
 }
 
