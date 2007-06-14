@@ -786,9 +786,6 @@ static void CALLBACK trigger_process_detection( void* lpParameter, BOOLEAN Timer
 		 */
         int error = GetLastError();
     }
-    /*if( 0 == CloseHandle( handle->registered_handle ) ) {
-        int error = GetLastError();
-    }*/
     handle->registered_handle = INVALID_HANDLE_VALUE;
     /**
      * Get the exit code of the process.
@@ -821,8 +818,18 @@ orte_wait_cb(pid_t wpid, orte_wait_fn_t callback, void *data)
     handle->callback = callback;
     handle->data = data;
 
-    RegisterWaitForSingleObject( &handle->registered_handle, (HANDLE)handle->pid, 
-                                 trigger_process_detection, (void*)handle, INFINITE, WT_EXECUTEINWAITTHREAD);
+    if( false == RegisterWaitForSingleObject( &handle->registered_handle, (HANDLE)handle->pid, 
+                                              trigger_process_detection, (void*)handle, INFINITE,
+                                              WT_EXECUTEONLYONCE | WT_EXECUTELONGFUNCTION) ) {
+        DWORD errcode = GetLastError();
+        char* localbuf = NULL;
+
+        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                       NULL, errcode, 0, (LPTSTR)&localbuf, 1024, NULL );
+        opal_output( 0, "Failed to initialize the process callback for pid %lu error %s\n",
+                        (unsigned long)(handle->pid), localbuf );
+        LocalFree( localbuf );
+    }
 
     OPAL_THREAD_UNLOCK(&mutex);
 
