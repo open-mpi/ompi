@@ -347,6 +347,31 @@ int mca_oob_tcp_component_open(void)
     return ORTE_SUCCESS;
 }
 
+#if defined(__WINDOWS__)
+static int oob_tcp_windows_progress_callback( void )
+{
+    opal_list_item_t* item;
+    mca_oob_tcp_msg_t* msg;
+
+    OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+    while(NULL != 
+         (item = opal_list_remove_first(&mca_oob_tcp_component.tcp_msg_completed))) {
+        msg = (mca_oob_tcp_msg_t*)item;
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+        msg->msg_cbfunc( msg->msg_rc, 
+                         &msg->msg_peer, 
+                         msg->msg_uiov, 
+                         msg->msg_ucnt, 
+                         msg->msg_hdr.msg_tag, 
+                         msg->msg_cbdata);
+        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+        MCA_OOB_TCP_MSG_RETURN(msg);
+    }
+    OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+
+    return 0;
+}
+#endif  /* defined(__WINDOWS__) */
 
 /*
  * Cleanup of global variables used by this module.
@@ -354,9 +379,10 @@ int mca_oob_tcp_component_open(void)
 
 int mca_oob_tcp_component_close(void)
 {
-#ifdef __WINDOWS__
+#if defined(__WINDOWS__)
+    opal_progress_unregister(oob_tcp_windows_progress_callback);
     WSACleanup();
-#endif
+#endif  /* defined(__WINDOWS__) */
 
     /* cleanup resources */
 
@@ -1010,10 +1036,15 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
     memset(&mca_oob_tcp_component.tcp6_recv_event, 0, sizeof(opal_event_t));
     memset(&mca_oob_tcp_component.tcp6_send_event, 0, sizeof(opal_event_t));
 #endif
-                        
+
+#if defined(__WINDOWS__)
+    /* Register the libevent callback which will trigger the OOB
+     * completion callbacks. */
+     opal_progress_register(oob_tcp_windows_progress_callback);
+#endif  /* defined(__WINDOWS__) */
+
     return &mca_oob_tcp;
 }
-
 
 /*
  * Callback from registry on change to subscribed segments.
