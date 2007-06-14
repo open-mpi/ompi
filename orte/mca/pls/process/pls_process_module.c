@@ -795,7 +795,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            opal_output(0, "pls:process: execv %s hopefully started (pid %d)\n", exec_path, pid);
+            opal_output(orte_pls_base.pls_output, "pls:process: execv %s hopefully started (pid %d)\n", exec_path, pid);
         
             OPAL_THREAD_LOCK(&mca_pls_process_component.lock);
             /* This situation can lead to a deadlock if '--debug-daemons' is set.
