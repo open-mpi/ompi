@@ -119,7 +119,6 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     orte_job_map_t *map = NULL;
     opal_list_item_t *item;
     size_t num_nodes;
-    orte_vpid_t vpid;
     int node_name_index;
     int proc_name_index;
     char *param;
@@ -213,7 +212,7 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     orte_pls_base_orted_append_basic_args(&argc, &argv,
                                           &proc_name_index,
                                           &node_name_index,
-                                          (vpid + num_nodes));
+                                          map->num_nodes);
 
     if (mca_pls_tm_component.debug) {
         param = opal_argv_join(argv, ' ');
@@ -289,19 +288,16 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
          item != opal_list_get_end(&map->nodes);
          item =  opal_list_get_next(item)) {
         orte_mapped_node_t* node = (orte_mapped_node_t*)item;
-        orte_process_name_t* name;
         char* name_string;
         
+        /* if this daemon already exists, don't launch it! */
+        if (node->daemon_preexists) {
+            continue;
+        }
+                
         /* setup node name */
         free(argv[node_name_index]);
         argv[node_name_index] = strdup(node->nodename);
-        
-        /* initialize daemons process name */
-        rc = orte_ns.create_process_name(&name, node->cell, 0, vpid);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
         
         /* setup per-node options */
         if (mca_pls_tm_component.debug ||
@@ -311,7 +307,7 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
         }
         
         /* setup process name */
-        rc = orte_ns.get_proc_name_string(&name_string, name);
+        rc = orte_ns.get_proc_name_string(&name_string, node->daemon);
         if (ORTE_SUCCESS != rc) {
             opal_output(0, "pls:tm: unable to create process name");
             goto cleanup;
@@ -365,9 +361,13 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
         }
         
         launched++;
-        ++vpid;
-        free(name);
-
+        
+        /* indicate this daemon has been launched in case anyone is sitting on that trigger */
+        if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(node->daemon, ORTE_PROC_STATE_LAUNCHED, 0))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        
         /* Allow some progress to occur */
         opal_event_loop(OPAL_EVLOOP_NONBLOCK);
     }
