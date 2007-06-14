@@ -1254,7 +1254,6 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_default.mutex);
 
-    
     quit_flag = false;
     for (item = opal_list_get_first(&orte_odls_default.children);
          !quit_flag && item != opal_list_get_end(&orte_odls_default.children);
