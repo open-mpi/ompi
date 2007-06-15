@@ -23,6 +23,10 @@
 # -----------------------------------------------------------
 m4_include(opal/mca/paffinity/linux/plpa/config/plpa.m4)
 
+AC_DEFUN([MCA_paffinity_linux_POST_CONFIG],[
+    PLPA_DO_AM_CONDITIONALS
+])dnl
+
 AC_DEFUN([MCA_paffinity_linux_CONFIG],[
     PLPA_SET_SYMBOL_PREFIX([opal_paffinity_linux_plpa_])
     PLPA_INCLUDED([opal/mca/paffinity/linux/plpa])

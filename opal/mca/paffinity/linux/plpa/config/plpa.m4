@@ -79,9 +79,7 @@ int i = 1;],
     AS_IF([test "$happy" = "1"],
           [_PLPA_INIT($1, $2)],
           [$2])
-    AM_CONDITIONAL([PLPA_BUILD_STANDALONE], [test "$plpa_mode" = "standalone"])
-    AM_CONDITIONAL(PLPA_BUILD_FORTRAN, [test "$plpa_fortran" = "yes"])
-    AM_CONDITIONAL(PLPA_BUILD_EXECUTABLES, [test "$plpa_executables" = "yes"])
+    PLPA_DO_AM_CONDITIONALS
 
     # Cleanup
     unset happy
@@ -273,3 +271,16 @@ AC_DEFUN([_PLPA_INIT],[
     $1
 ])dnl
 
+
+#-----------------------------------------------------------------------
+
+# This must be a standalone routine so that it can be called both by
+# PLPA_INIT and an external caller (if PLPA_INIT is not invoked).
+AC_DEFUN([PLPA_DO_AM_CONDITIONALS],[
+    if test "$plpa_did_am_conditionals" != "yes"; then
+        AM_CONDITIONAL([PLPA_BUILD_STANDALONE], [test "$plpa_mode" = "standalone"])
+        AM_CONDITIONAL(PLPA_BUILD_FORTRAN, [test "$plpa_fortran" = "yes"])
+        AM_CONDITIONAL(PLPA_BUILD_EXECUTABLES, [test "$plpa_executables" = "yes"])
+    fi
+    plpa_did_am_conditionals=yes
+])dnl
