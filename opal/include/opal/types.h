@@ -113,6 +113,7 @@ typedef int opal_socklen_t;
 /*
  * Convert a 64 bit value to network byte order.
  */
+static inline uint64_t hton64(uint64_t val) __opal_attribute_const__;
 static inline uint64_t hton64(uint64_t val)
 {
 #ifdef HAVE_HTONL
@@ -136,6 +137,7 @@ static inline uint64_t hton64(uint64_t val)
  * Convert a 64 bit value from network to host byte order.
  */
 
+static inline uint64_t ntoh64(uint64_t val) __opal_attribute_const__;
 static inline uint64_t ntoh64(uint64_t val)
 {
 #ifdef HAVE_NTOHL
@@ -159,11 +161,13 @@ static inline uint64_t ntoh64(uint64_t val)
 /**
  * Convert between a local representation of pointer and a 64 bits value.
  */
+static inline uint64_t ompi_ptr_ptol( void* ptr ) __opal_attribute_const__;
 static inline uint64_t ompi_ptr_ptol( void* ptr )
 {
     return (uint64_t)(uintptr_t) ptr;
 }
 
+static inline void* ompi_ptr_ltop( uint64_t value ) __opal_attribute_const__;
 static inline void* ompi_ptr_ltop( uint64_t value )
 {
 #if SIZEOF_VOID_P == 4 && OMPI_ENABLE_DEBUG
@@ -175,6 +179,7 @@ static inline void* ompi_ptr_ltop( uint64_t value )
 }
 
 #if defined(WORDS_BIGENDIAN) || !defined(HAVE_HTONS) || !defined(HAVE_HTONL)
+static inline uint16_t opal_swap_bytes2(uint16_t val) __opal_attribute_const__;
 static inline uint16_t opal_swap_bytes2(uint16_t val) 
 {
     union { uint16_t bigval;
