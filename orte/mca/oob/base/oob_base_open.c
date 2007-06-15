@@ -51,6 +51,7 @@ opal_mutex_t orte_oob_xcast_mutex;
 opal_condition_t orte_oob_xcast_cond;
 int orte_oob_xcast_linear_xover;
 int orte_oob_xcast_binomial_xover;
+orte_std_cntr_t orte_oob_xcast_num_active;
 
 bool orte_oob_base_already_opened = false;
 
@@ -78,6 +79,7 @@ int mca_oob_base_open(void)
     /* initialize the condition variables for xcast */
     OBJ_CONSTRUCT(&orte_oob_xcast_mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&orte_oob_xcast_cond, opal_condition_t);
+    orte_oob_xcast_num_active = 0;
     
     /* register parameters */
     param = mca_base_param_reg_int_name("oob", "base_verbose",
