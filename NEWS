@@ -65,6 +65,8 @@ Trunk (not on release branches yet)
 1.2.3
 -----
 
+- Fix a regression in comm_spawn functionality when using options like pernode.
+- Fix segfault when the home directory is unavailable on a remote node.
 - Fix MPI_IPROBE to properly handle MPI_STATUS_IGNORE on mx and psm
   MTLs. Thanks to Sophia Corwell for finding this and supplying a reproducer.
 - Fix some error messages in the tcp BTL.
