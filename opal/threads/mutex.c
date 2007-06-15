@@ -77,7 +77,7 @@ static void opal_mutex_construct(opal_mutex_t *m)
     mutex_init(&m->m_lock_solaris, USYNC_THREAD, NULL);
 #endif
 
-#if OMPI_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG && !OMPI_HAVE_THREAD_SUPPORT
     m->m_lock_debug = 0;
     m->m_lock_file = NULL;
     m->m_lock_line = 0;
