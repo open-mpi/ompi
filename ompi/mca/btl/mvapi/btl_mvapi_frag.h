@@ -43,7 +43,7 @@ struct mca_btl_mvapi_header_t {
 typedef struct mca_btl_mvapi_header_t mca_btl_mvapi_header_t;
 
 struct mca_btl_mvapi_footer_t {
-#ifdef OMPI_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG
     uint32_t seq;
 #endif
     union {
