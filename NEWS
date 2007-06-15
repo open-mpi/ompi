@@ -65,10 +65,16 @@ Trunk (not on release branches yet)
 1.2.3
 -----
 
-- Fix a regression in comm_spawn functionality when using options like pernode.
-- Fix segfault when the home directory is unavailable on a remote node.
+- Fix a regression in comm_spawn functionality that inadvertently
+  caused the mapping of child processes to always start at the same
+  place.  Thanks to Prakash Velayutham for helping discover the
+  problem.
+- Fix segfault when a user's home directory is unavailable on a remote
+  node.  Thanks to Guillaume Thomas-Collignon for bringing the issue
+  to our attention.
 - Fix MPI_IPROBE to properly handle MPI_STATUS_IGNORE on mx and psm
-  MTLs. Thanks to Sophia Corwell for finding this and supplying a reproducer.
+  MTLs. Thanks to Sophia Corwell for finding this and supplying a
+  reproducer.
 - Fix some error messages in the tcp BTL.
 - Use _NSGetEnviron instead of environ on Mac OS X so that there
   are no undefined symbols in the shared libraries.
