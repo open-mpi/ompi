@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2004-2006 The University of Tennessee and The University
+dnl Copyright (c) 2004-2007 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
 dnl $COPYRIGHT$
@@ -27,10 +27,14 @@ AC_DEFUN([OMPI_MICROSOFT_COMPILER],[
     # in this file. If we check for it here it will get included in the
     # default list of header files.
     if test "x$ompi_cv_c_compiler_vendor" = "xmicrosoft" ; then
+
+        ompi_show_subtitle "Microsoft specific detection"
+
         #
+        # These 2 libraries are a minimum ...
         SAVE_LDFLAGS="$LDFLAGS"
         LDFLAGS="$LDFLAGS Ws2_32.lib Advapi32.lib"
-        #
+
         AC_CHECK_HEADERS([windows.h winsock2.h wdm.h])
 
         # The atomic functions are defined in a very unuasual manner.
@@ -104,7 +108,7 @@ AC_DEFUN([OMPI_MICROSOFT_COMPILER],[
 
         ompi_show_title "Windows Type tests"
 
-        AC_DEFINE([pid_t], [int], [Windows pid_t type is an int])
+        AC_DEFINE([pid_t], [intptr_t], [Windows pid_t type is a pointer])
         AC_DEFINE_UNQUOTED([SIZEOF_PID_T], $ac_cv_sizeof_int,
                            [and here is it's size])
         AC_CHECK_TYPES([socklen_t], [AC_DEFINE([HAVE_SOCKLEN_T], [1],
