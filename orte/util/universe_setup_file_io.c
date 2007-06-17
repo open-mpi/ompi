@@ -49,6 +49,8 @@ int orte_write_universe_setup_file(char *filename, orte_universe_t *info)
 
     fp = fopen(filename, "w");
     if (NULL == fp) {
+        opal_output( 0, "Impossible to open the file %s in write mode\n",
+                     filename );
         ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
         return ORTE_ERR_FILE_OPEN_FAILURE;
     }
