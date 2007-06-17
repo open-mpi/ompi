@@ -160,7 +160,7 @@ static inline int mca_btl_mvapi_endpoint_post_send(
         frag->desc.sr_desc.opcode = VAPI_RDMA_WRITE;
         MCA_BTL_MVAPI_RDMA_FRAG_SET_SIZE(ftr, frag->sg_entry.len);
         MCA_BTL_MVAPI_RDMA_MAKE_LOCAL(ftr);
-#ifdef OMPI_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG
         ftr->seq = endpoint->eager_rdma_remote.seq++;
 #endif
         frag->desc.sr_desc.r_key = (VAPI_rkey_t)endpoint->eager_rdma_remote.rkey;
