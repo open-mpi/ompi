@@ -30,4 +30,5 @@ EXTRA_DIST = \
 	dist/macosx-pkg/ReadMe.rtf \
 	platform/optimized \
 	platform/redstorm \
-	platform/cray_xt3
+	platform/cray_xt3 \
+	platform/cray_xt3_romio
