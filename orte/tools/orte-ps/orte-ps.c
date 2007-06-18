@@ -1430,7 +1430,7 @@ static int gather_vpid_info(orte_ps_universe_info_t* universe) {
                     
                     if( 0 == strncmp(keyval->key, ORTE_PROC_RANK_KEY, strlen(ORTE_PROC_RANK_KEY)) ) {
                         orte_std_cntr_t *tmp_size;
-                        if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_size, keyval->value, ORTE_STD_CNTR))) {
+                        if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_size, keyval->value, ORTE_VPID))) {
                             exit_status = ret;
                             goto cleanup;
                         }
