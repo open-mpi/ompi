@@ -167,13 +167,15 @@ FUNC_FUNC(max, fortran_integer16, ompi_fortran_integer16_t)
 /* Floating point */
 FUNC_FUNC(max, float, float)
 FUNC_FUNC(max, double, double)
+#if HAVE_LONG_DOUBLE
+FUNC_FUNC(max, long_double, long double)
+#endif
 #if OMPI_HAVE_FORTRAN_REAL
 FUNC_FUNC(max, fortran_real, ompi_fortran_real_t)
 #endif
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 FUNC_FUNC(max, fortran_double_precision, ompi_fortran_double_precision_t)
 #endif
-FUNC_FUNC(max, long_double, long double)
 #if OMPI_HAVE_FORTRAN_REAL4
 FUNC_FUNC(max, fortran_real4, ompi_fortran_real4_t)
 #endif
@@ -226,13 +228,15 @@ FUNC_FUNC(min, fortran_integer16, ompi_fortran_integer16_t)
 /* Floating point */
 FUNC_FUNC(min, float, float)
 FUNC_FUNC(min, double, double)
+#if HAVE_LONG_DOUBLE
+FUNC_FUNC(min, long_double, long double)
+#endif
 #if OMPI_HAVE_FORTRAN_REAL
 FUNC_FUNC(min, fortran_real, ompi_fortran_real_t)
 #endif
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 FUNC_FUNC(min, fortran_double_precision, ompi_fortran_double_precision_t)
 #endif
-FUNC_FUNC(min, long_double, long double)
 #if OMPI_HAVE_FORTRAN_REAL4
 FUNC_FUNC(min, fortran_real4, ompi_fortran_real4_t)
 #endif
@@ -282,13 +286,15 @@ OP_FUNC(sum, fortran_integer16, ompi_fortran_integer16_t, +=)
 /* Floating point */
 OP_FUNC(sum, float, float, +=)
 OP_FUNC(sum, double, double, +=)
+#if HAVE_LONG_DOUBLE
+OP_FUNC(sum, long_double, long double, +=)
+#endif
 #if OMPI_HAVE_FORTRAN_REAL
 OP_FUNC(sum, fortran_real, ompi_fortran_real_t, +=)
 #endif
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 OP_FUNC(sum, fortran_double_precision, ompi_fortran_double_precision_t, +=)
 #endif
-OP_FUNC(sum, long_double, long double, +=)
 #if OMPI_HAVE_FORTRAN_REAL4
 OP_FUNC(sum, fortran_real4, ompi_fortran_real4_t, +=)
 #endif
@@ -354,13 +360,15 @@ OP_FUNC(prod, fortran_integer16, ompi_fortran_integer16_t, *=)
 /* Floating point */
 OP_FUNC(prod, float, float, *=)
 OP_FUNC(prod, double, double, *=)
+#if HAVE_LONG_DOUBLE
+OP_FUNC(prod, long_double, long double, *=)
+#endif
 #if OMPI_HAVE_FORTRAN_REAL
 OP_FUNC(prod, fortran_real, ompi_fortran_real_t, *=)
 #endif
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 OP_FUNC(prod, fortran_double_precision, ompi_fortran_double_precision_t, *=)
 #endif
-OP_FUNC(prod, long_double, long double, *=)
 #if OMPI_HAVE_FORTRAN_REAL4
 OP_FUNC(prod, fortran_real4, ompi_fortran_real4_t, *=)
 #endif
@@ -606,7 +614,9 @@ LOC_STRUCT(double_int, double, int)
 LOC_STRUCT(long_int, long, int)
 LOC_STRUCT(2int, int, int)
 LOC_STRUCT(short_int, short, int)
+#if HAVE_LONG_DOUBLE
 LOC_STRUCT(long_double_int, long double, int)
+#endif
 
 /*************************************************************************
  * Max location
@@ -626,7 +636,9 @@ LOC_FUNC(maxloc, double_int, >)
 LOC_FUNC(maxloc, long_int, >)
 LOC_FUNC(maxloc, 2int, >)
 LOC_FUNC(maxloc, short_int, >)
+#if HAVE_LONG_DOUBLE
 LOC_FUNC(maxloc, long_double_int, >)
+#endif
 
 /*************************************************************************
  * Min location
@@ -646,4 +658,6 @@ LOC_FUNC(minloc, double_int, <)
 LOC_FUNC(minloc, long_int, <)
 LOC_FUNC(minloc, 2int, <)
 LOC_FUNC(minloc, short_int, <)
+#if HAVE_LONG_DOUBLE
 LOC_FUNC(minloc, long_double_int, <)
+#endif
