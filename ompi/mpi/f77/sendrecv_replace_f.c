@@ -69,7 +69,7 @@ void mpi_sendrecv_replace_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
 
    c_comm = MPI_Comm_f2c (*comm);
    
-   *ierr = OMPI_INT_2_FINT(MPI_Sendrecv_replace(OMPI_ADDR(buf),
+   *ierr = OMPI_INT_2_FINT(MPI_Sendrecv_replace(OMPI_F2C_BOTTOM(buf),
                                                 OMPI_FINT_2_INT(*count),
                                                 c_type, 
                                                 OMPI_FINT_2_INT(*dest), 

@@ -64,7 +64,7 @@ void mpi_file_iwrite_f(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datat
    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
    MPI_Request c_request;
    
-   *ierr = OMPI_INT_2_FINT(MPI_File_iwrite(c_fh, OMPI_ADDR(buf),
+   *ierr = OMPI_INT_2_FINT(MPI_File_iwrite(c_fh, OMPI_F2C_BOTTOM(buf),
 					   OMPI_FINT_2_INT(*count),
 					   c_type, &c_request));
    

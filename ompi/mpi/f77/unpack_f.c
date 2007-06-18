@@ -72,7 +72,7 @@ void mpi_unpack_f(char *inbuf, MPI_Fint *insize, MPI_Fint *position,
 
    *ierr = OMPI_INT_2_FINT(MPI_Unpack(inbuf, OMPI_FINT_2_INT(*insize),
                                       OMPI_SINGLE_NAME_CONVERT(position),
-                                      OMPI_ADDR(outbuf), OMPI_FINT_2_INT(*outcount),
+                                      OMPI_F2C_BOTTOM(outbuf), OMPI_FINT_2_INT(*outcount),
                                       c_type, c_comm));
    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         OMPI_SINGLE_INT_2_FINT(position);

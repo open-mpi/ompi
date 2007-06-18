@@ -70,7 +70,11 @@ void mpi_exscan_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     c_type = MPI_Type_f2c(*datatype);
     c_op = MPI_Op_f2c(*op);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Exscan(OMPI_ADDR(sendbuf), OMPI_ADDR(recvbuf),
+    /* MPI_IN_PLACE is not supported */
+    sendbuf = OMPI_F2C_BOTTOM (sendbuf);
+    recvbuf = OMPI_F2C_BOTTOM (recvbuf);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Exscan(sendbuf, recvbuf, 
 				       OMPI_FINT_2_INT(*count),
 				       c_type, c_op, c_comm));
 }

@@ -71,11 +71,11 @@ void mpi_sendrecv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
    
    c_comm = MPI_Comm_f2c (*comm);
    
-   *ierr = OMPI_INT_2_FINT(MPI_Sendrecv(OMPI_ADDR(sendbuf), OMPI_FINT_2_INT(*sendcount),
+   *ierr = OMPI_INT_2_FINT(MPI_Sendrecv(OMPI_F2C_BOTTOM(sendbuf), OMPI_FINT_2_INT(*sendcount),
                                         c_sendtype,
                                         OMPI_FINT_2_INT(*dest),
                                         OMPI_FINT_2_INT(*sendtag),
-                                        OMPI_ADDR(recvbuf), *recvcount,
+                                        OMPI_F2C_BOTTOM(recvbuf), *recvcount,
                                         c_recvtype, OMPI_FINT_2_INT(*source),
                                         OMPI_FINT_2_INT(*recvtag),
                                         c_comm, &c_status));

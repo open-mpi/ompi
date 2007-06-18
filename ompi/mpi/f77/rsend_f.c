@@ -66,7 +66,7 @@ void mpi_rsend_f(char *ibuf, MPI_Fint *count, MPI_Fint *datatype,
 
    c_comm = MPI_Comm_f2c (*comm);
 
-   *ierr = OMPI_INT_2_FINT(MPI_Rsend(OMPI_ADDR(ibuf), OMPI_FINT_2_INT(*count),
+   *ierr = OMPI_INT_2_FINT(MPI_Rsend(OMPI_F2C_BOTTOM(ibuf), OMPI_FINT_2_INT(*count),
                                      c_type, OMPI_FINT_2_INT(*dest),
                                      OMPI_FINT_2_INT(*tag), c_comm));
 }

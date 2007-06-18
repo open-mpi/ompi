@@ -67,7 +67,7 @@ void mpi_bcast_f(char *buffer, MPI_Fint *count, MPI_Fint *datatype,
     c_comm = MPI_Comm_f2c(*comm);
     c_type = MPI_Type_f2c(*datatype);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Bcast(OMPI_ADDR(buffer),
+    *ierr = OMPI_INT_2_FINT(MPI_Bcast(OMPI_F2C_BOTTOM(buffer), 
 				      OMPI_FINT_2_INT(*count), 
 				      c_type,
 				      OMPI_FINT_2_INT(*root),
