@@ -70,11 +70,11 @@ void mpi_scan_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     c_op = MPI_Op_f2c(*op);
     c_comm = MPI_Comm_f2c(*comm);
 
-    if (OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
-        sendbuf = MPI_IN_PLACE;
-    }
+    sendbuf = OMPI_F2C_IN_PLACE(sendbuf);
+    sendbuf = OMPI_F2C_BOTTOM(sendbuf);
+    recvbuf = OMPI_F2C_BOTTOM(recvbuf);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Scan(OMPI_ADDR(sendbuf), OMPI_ADDR(recvbuf),
+    *ierr = OMPI_INT_2_FINT(MPI_Scan(sendbuf, recvbuf,
 				     OMPI_FINT_2_INT(*count),
 				     c_type, c_op, 
 				     c_comm));

@@ -86,7 +86,7 @@ void mpi_file_read_f(MPI_Fint *fh, char *buf, MPI_Fint *count,
 #endif
    }
     
-   *ierr = OMPI_INT_2_FINT(MPI_File_read(c_fh, OMPI_ADDR(buf),
+   *ierr = OMPI_INT_2_FINT(MPI_File_read(c_fh, OMPI_F2C_BOTTOM(buf),
                                          OMPI_FINT_2_INT(*count),
                                          c_type, c_status));
 

@@ -89,11 +89,15 @@ void mpi_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
         --size;
     }
 
-    *ierr = OMPI_INT_2_FINT(MPI_Alltoallw(OMPI_ADDR(sendbuf),
+    /* Alltoallw does not support MPI_IN_PLACE */
+    sendbuf = OMPI_F2C_BOTTOM(sendbuf);
+    recvbuf = OMPI_F2C_BOTTOM(recvbuf);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Alltoallw(sendbuf, 
 					  OMPI_ARRAY_NAME_CONVERT(sendcounts),
 					  OMPI_ARRAY_NAME_CONVERT(sdispls),
 					  c_sendtypes, 
-					  OMPI_ADDR(recvbuf),
+					  recvbuf, 
 					  OMPI_ARRAY_NAME_CONVERT(recvcounts),
 					  OMPI_ARRAY_NAME_CONVERT(rdispls),
 					  c_recvtypes, c_comm));

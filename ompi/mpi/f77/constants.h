@@ -89,7 +89,7 @@ OMPI_DECLSPEC extern type double_u
 
 /* Note that the rationale for the types of each of these variables is
    discussed in ompi/include/mpif-common.h.  Do not change the types
-   without also changing ompi/mpi/runtime/ompi_mpi_init.c and
+   without also changing ompi/runtime/ompi_mpi_init.c and
    ompi/include/mpif-common.h. */
 
 DECL(int, MPI_FORTRAN_BOTTOM, mpi_fortran_bottom,
@@ -215,7 +215,7 @@ DECL(double, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
 #endif /* weak / specific symbol type */
 
 /* Convert between Fortran and C MPI_BOTTOM */
-#define OMPI_ADDR(addr)  (OMPI_IS_FORTRAN_BOTTOM(addr) ? MPI_BOTTOM : (addr))
-#define OMPI_IN_PLACE(addr)  (OMPI_IS_FORTRAN_IN_PLACE(addr) ? MPI_IN_PLACE : (addr))
+#define OMPI_F2C_BOTTOM(addr)    (OMPI_IS_FORTRAN_BOTTOM(addr) ? MPI_BOTTOM : (addr))
+#define OMPI_F2C_IN_PLACE(addr)  (OMPI_IS_FORTRAN_IN_PLACE(addr) ? MPI_IN_PLACE : (addr))
 
 #endif /* OMPI_F77_CONSTANTS_H */
