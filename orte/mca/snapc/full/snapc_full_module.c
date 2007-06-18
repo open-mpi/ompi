@@ -196,6 +196,11 @@ int orte_snapc_full_setup_job(orte_jobid_t jobid) {
             exit_status = ret;
         }
     }
+    else if( ORTE_SNAPC_LOCAL_COORD_TYPE == mca_snapc_full_component.super.coord_type ) {
+        if(ORTE_SUCCESS != (ret = local_coord_setup_job(jobid) ) ) {
+            exit_status = ret;
+        }
+    }
 
     return exit_status;
 }
@@ -205,6 +210,11 @@ int orte_snapc_full_release_job(orte_jobid_t jobid) {
 
     if( ORTE_SNAPC_GLOBAL_COORD_TYPE == mca_snapc_full_component.super.coord_type ) {
         if(ORTE_SUCCESS != (ret = global_coord_release_job(jobid) ) ) {
+            exit_status = ret;
+        }
+    }
+    else if( ORTE_SNAPC_LOCAL_COORD_TYPE == mca_snapc_full_component.super.coord_type ) {
+        if(ORTE_SUCCESS != (ret = local_coord_release_job(jobid) ) ) {
             exit_status = ret;
         }
     }

@@ -75,15 +75,30 @@ static orte_jobid_t snapc_local_jobid;
  ************************/
 int local_coord_init( void )
 {
+    snapc_local_jobid = -1;
+
+    return ORTE_SUCCESS;
+}
+
+int local_coord_finalize( void )
+{
+    if( snapc_local_jobid >= 0 ) {
+        return local_coord_release_job(snapc_local_jobid);
+    }
+
+    return ORTE_SUCCESS;
+}
+
+int local_coord_setup_job(orte_jobid_t jobid)
+{
     int ret, exit_status = ORTE_SUCCESS;
-    int id, jobid;
 
     /*
-     * Get the jobid that we are responsible for
+     * Set the jobid that we are responsible for
      */
-    id = mca_base_param_register_int("rmgr","bootproxy","jobid",NULL,0);
-    mca_base_param_lookup_int(id,&jobid);
     snapc_local_jobid = jobid;
+    opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
+                        "local) Monitor local jobid (%d)\n", snapc_local_jobid);
 
     /*
      * Get the list of vpid's that we care about
@@ -118,13 +133,12 @@ int local_coord_init( void )
     }
 
     ret = exit_status;
-    goto cleanup;
 
  cleanup:
     return exit_status;
 }
 
-int local_coord_finalize( void )
+int local_coord_release_job(orte_jobid_t jobid)
 {
     int ret, exit_status = ORTE_SUCCESS;
     opal_list_item_t* item = NULL;
@@ -161,9 +175,7 @@ int local_coord_finalize( void )
     OBJ_DESTRUCT(&snapc_local_vpids);
 
     ret = exit_status;
-    goto cleanup;
 
- cleanup:
     return exit_status;
 }
 

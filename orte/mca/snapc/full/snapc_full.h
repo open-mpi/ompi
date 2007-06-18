@@ -76,6 +76,8 @@ extern "C" {
      */
     int local_coord_init(void);
     int local_coord_finalize(void);
+    int local_coord_setup_job(orte_jobid_t jobid);
+    int local_coord_release_job(orte_jobid_t jobid);
 
     /*
      * Application Coordinator Functionality
