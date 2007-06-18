@@ -726,7 +726,7 @@ static int orte_odls_process_fork_local_proc(
         if( -1 == handle ) {
             child->state = ORTE_PROC_STATE_FAILED_TO_START;
             child->exit_code = ORTE_ERR_PIPE_READ_FAILURE;
-            opal_show_help("help-orted-launcer.txt", "orted-launcher:execv-error",
+            opal_show_help("help-orted-launcher.txt", "orted-launcher:execv-error",
                            true, context->app, "TODO: some error");
             orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_ABORTED, -1);
             return ORTE_ERROR;
