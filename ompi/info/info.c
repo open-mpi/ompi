@@ -209,7 +209,6 @@ int ompi_info_get (ompi_info_t *info, char *key, int valuelen,
 int ompi_info_delete (ompi_info_t *info, char *key) 
 {
     ompi_info_entry_t *search;
-    ompi_info_entry_t *found;
 
     OPAL_THREAD_LOCK(info->i_lock);
     search = info_find_key (info, key);
@@ -219,11 +218,11 @@ int ompi_info_delete (ompi_info_t *info, char *key)
     } else {
          /*
           * An entry with this key value was found. Remove the item
-          * and free the memory allocated to it
+          * and free the memory allocated to it.
+          * As this key *must* be available, we do not check for errors.
           */
-          found = (ompi_info_entry_t *)
-            opal_list_remove_item (&(info->super),
-                                   (opal_list_item_t *)search);
+          opal_list_remove_item (&(info->super),
+                                 (opal_list_item_t *)search);
           OBJ_RELEASE(search);
     }
     OPAL_THREAD_UNLOCK(info->i_lock);
