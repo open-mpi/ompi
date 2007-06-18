@@ -296,4 +296,4 @@ const int LOCK_SHARED = MPI_LOCK_SHARED;
 const Datatype UB(MPI_UB);
 const Datatype LB(MPI_LB);
 
-}; /* namespace MPI */
+} /* namespace MPI */
