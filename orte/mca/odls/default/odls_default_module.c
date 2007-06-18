@@ -92,6 +92,9 @@
 #include "orte/mca/smr/smr.h"
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
+#if OPAL_ENABLE_FT == 1
+#include "orte/mca/snapc/snapc.h"
+#endif
 
 #include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/odls/default/odls_default.h"
@@ -963,7 +966,7 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
     }
     
     opal_output(orte_odls_globals.output, "odls: setting up launch for job %ld", (long)job);
-    
+
     /* We need to create a list of the app_contexts
      * so we can know what to launch - the process info only gives
      * us an index into the app_context array, not the app_context
@@ -1155,6 +1158,16 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
     fclose(fp);
     free(uri_file);
     free(my_uri);
+
+#if OPAL_ENABLE_FT == 1
+    /*
+     * Notify the local SnapC component regarding new job
+     */
+    if( ORTE_SUCCESS != (rc = orte_snapc.setup_job(job) ) ) {
+        /* Silent Failure :/ JJH */
+        ORTE_ERROR_LOG(rc);
+    }
+#endif
 
     /* Now we preload any files that are needed. This is done on a per
      * app context basis */
