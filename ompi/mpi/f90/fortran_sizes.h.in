@@ -5,7 +5,7 @@
 ! Copyright (c) 2004-2005 The University of Tennessee and The University
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
-! Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+! Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
 !                         University of Stuttgart.  All rights reserved.
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
@@ -27,6 +27,7 @@ integer :: OMPI_SIZEOF_F90_INT4
 integer :: OMPI_SIZEOF_F90_INT8
 integer :: OMPI_SIZEOF_F90_INT16
 
+integer :: OMPI_SIZEOF_F90_REAL2
 integer :: OMPI_SIZEOF_F90_REAL4
 integer :: OMPI_SIZEOF_F90_REAL8
 integer :: OMPI_SIZEOF_F90_REAL16
@@ -43,6 +44,7 @@ parameter(OMPI_SIZEOF_F90_INT4 = @OMPI_SIZEOF_F90_INTEGER4@)
 parameter(OMPI_SIZEOF_F90_INT8 = @OMPI_SIZEOF_F90_INTEGER8@)
 parameter(OMPI_SIZEOF_F90_INT16 = @OMPI_SIZEOF_F90_INTEGER16@)
 
+parameter(OMPI_SIZEOF_F90_REAL2 = @OMPI_SIZEOF_F90_REAL2@)
 parameter(OMPI_SIZEOF_F90_REAL4 = @OMPI_SIZEOF_F90_REAL4@)
 parameter(OMPI_SIZEOF_F90_REAL8 = @OMPI_SIZEOF_F90_REAL8@)
 parameter(OMPI_SIZEOF_F90_REAL16 = @OMPI_SIZEOF_F90_REAL16@)

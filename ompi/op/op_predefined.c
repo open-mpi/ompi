@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -176,6 +176,9 @@ FUNC_FUNC(max, fortran_real, ompi_fortran_real_t)
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 FUNC_FUNC(max, fortran_double_precision, ompi_fortran_double_precision_t)
 #endif
+#if OMPI_HAVE_FORTRAN_REAL2
+FUNC_FUNC(max, fortran_real2, ompi_fortran_real2_t)
+#endif
 #if OMPI_HAVE_FORTRAN_REAL4
 FUNC_FUNC(max, fortran_real4, ompi_fortran_real4_t)
 #endif
@@ -237,6 +240,9 @@ FUNC_FUNC(min, fortran_real, ompi_fortran_real_t)
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 FUNC_FUNC(min, fortran_double_precision, ompi_fortran_double_precision_t)
 #endif
+#if OMPI_HAVE_FORTRAN_REAL2
+FUNC_FUNC(min, fortran_real2, ompi_fortran_real2_t)
+#endif
 #if OMPI_HAVE_FORTRAN_REAL4
 FUNC_FUNC(min, fortran_real4, ompi_fortran_real4_t)
 #endif
@@ -294,6 +300,9 @@ OP_FUNC(sum, fortran_real, ompi_fortran_real_t, +=)
 #endif
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 OP_FUNC(sum, fortran_double_precision, ompi_fortran_double_precision_t, +=)
+#endif
+#if OMPI_HAVE_FORTRAN_REAL2
+OP_FUNC(sum, fortran_real2, ompi_fortran_real2_t, +=)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4
 OP_FUNC(sum, fortran_real4, ompi_fortran_real4_t, +=)
@@ -368,6 +377,9 @@ OP_FUNC(prod, fortran_real, ompi_fortran_real_t, *=)
 #endif
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 OP_FUNC(prod, fortran_double_precision, ompi_fortran_double_precision_t, *=)
+#endif
+#if OMPI_HAVE_FORTRAN_REAL2
+OP_FUNC(prod, fortran_real2, ompi_fortran_real2_t, *=)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4
 OP_FUNC(prod, fortran_real4, ompi_fortran_real4_t, *=)

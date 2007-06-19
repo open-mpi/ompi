@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -152,6 +152,11 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 #else
 #define FLOATING_POINT_FORTRAN_REAL_PLAIN(name) { NULL }
 #endif
+#if OMPI_HAVE_FORTRAN_REAL2
+#define FLOATING_POINT_FORTRAN_REAL2(name) { ompi_mpi_op_##name##_fortran_real2 }
+#else
+#define FLOATING_POINT_FORTRAN_REAL2(name) { NULL }
+#endif
 #if OMPI_HAVE_FORTRAN_REAL4
 #define FLOATING_POINT_FORTRAN_REAL4(name) { ompi_mpi_op_##name##_fortran_real4 }
 #else
@@ -170,6 +175,7 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 
 #define FLOATING_POINT_FORTRAN_REAL(name) \
   FLOATING_POINT_FORTRAN_REAL_PLAIN(name),      /* OMPI_OP_TYPE_REAL */ \
+  FLOATING_POINT_FORTRAN_REAL2(name),           /* OMPI_OP_TYPE_REAL2 */ \
   FLOATING_POINT_FORTRAN_REAL4(name),           /* OMPI_OP_TYPE_REAL4 */ \
   FLOATING_POINT_FORTRAN_REAL8(name),           /* OMPI_OP_TYPE_REAL8 */ \
   FLOATING_POINT_FORTRAN_REAL16(name)           /* OMPI_OP_TYPE_REAL16 */
@@ -195,6 +201,7 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
   { NULL }, /* OMPI_OP_TYPE_FLOAT */ \
   { NULL }, /* OMPI_OP_TYPE_DOUBLE */ \
   { NULL }, /* OMPI_OP_TYPE_REAL */ \
+  { NULL }, /* OMPI_OP_TYPE_REAL2 */ \
   { NULL }, /* OMPI_OP_TYPE_REAL4 */ \
   { NULL }, /* OMPI_OP_TYPE_REAL8 */ \
   { NULL }, /* OMPI_OP_TYPE_REAL16 */ \
