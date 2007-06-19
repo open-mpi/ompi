@@ -6,7 +6,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -431,6 +431,8 @@ OMPI_F77_CHECK([INTEGER*16], [no],
 
 OMPI_F77_CHECK([REAL], [yes],
                [float, double, long double], [-1])
+OMPI_F77_CHECK([REAL*2], [no],
+               [float, double, long double], [2])
 OMPI_F77_CHECK([REAL*4], [no],
                [float, double, long double], [4])
 OMPI_F77_CHECK([REAL*8], [no],
@@ -522,9 +524,10 @@ OMPI_F90_CHECK([INTEGER*16], [16])
 
 # REAL, DOUBLE PRECISION, REAL*4, *8, *16
 OMPI_F90_CHECK([REAL])
-OMPI_F90_CHECK([REAL*4], [4], [1])
-OMPI_F90_CHECK([REAL*8], [8], [1])
-OMPI_F90_CHECK([REAL*16], [16], [1])
+OMPI_F90_CHECK([REAL*2], [2])
+OMPI_F90_CHECK([REAL*4], [4])
+OMPI_F90_CHECK([REAL*8], [8])
+OMPI_F90_CHECK([REAL*16], [16])
 OMPI_F90_CHECK([DOUBLE PRECISION])
 
 # COMPLEX, DOUBLE COMPLEX, COMPLEX*8, *16, *32

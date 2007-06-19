@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -120,6 +120,8 @@ enum {
   /**< Floating point: double */
   OMPI_OP_TYPE_REAL,
   /**< Floating point: real */
+  OMPI_OP_TYPE_REAL2,
+  /**< Floating point: real*2 */
   OMPI_OP_TYPE_REAL4,
   /**< Floating point: real*4 */
   OMPI_OP_TYPE_REAL8,
