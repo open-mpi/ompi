@@ -6,7 +6,7 @@
 ! Copyright (c) 2004-2005 The University of Tennessee and The University
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
-! Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+! Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
 !                         University of Stuttgart.  All rights reserved.
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
@@ -429,13 +429,16 @@
       integer MPI_CHARACTER, MPI_LOGICAL
       integer MPI_INTEGER, MPI_INTEGER1, MPI_INTEGER2, MPI_INTEGER4
       integer MPI_INTEGER8, MPI_INTEGER16
-      integer MPI_REAL, MPI_REAL4, MPI_REAL8, MPI_REAL16
+      integer MPI_REAL, MPI_REAL2, MPI_REAL4, MPI_REAL8, MPI_REAL16
       integer MPI_DOUBLE_PRECISION
       integer MPI_COMPLEX, MPI_COMPLEX8, MPI_COMPLEX16, MPI_COMPLEX32
       integer MPI_DOUBLE_COMPLEX
       integer MPI_2REAL, MPI_2DOUBLE_PRECISION, MPI_2INTEGER
       integer MPI_2COMPLEX, MPI_2DOUBLE_COMPLEX
-      
+
+!
+!     Do NOT change the order of these parameters
+!
       parameter (MPI_BYTE=1)
       parameter (MPI_PACKED=2)
       parameter (MPI_UB=3)
@@ -463,6 +466,7 @@
       parameter (MPI_2INTEGER=25)
       parameter (MPI_2COMPLEX=26)
       parameter (MPI_2DOUBLE_COMPLEX=27)
+      parameter (MPI_REAL2=28)
       
       integer MPI_MAX, MPI_MIN, MPI_SUM, MPI_PROD, MPI_LAND
       integer MPI_BAND, MPI_LOR, MPI_BOR, MPI_LXOR, MPI_BXOR
