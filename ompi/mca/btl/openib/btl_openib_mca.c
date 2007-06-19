@@ -425,12 +425,12 @@ int btl_openib_register_mca_params(void)
             &mca_btl_openib_module.super);
 
     CHECK(reg_string("if_include",
-                     "List of HCAs/ports to be used (eg. mthca0,mthca1:2)",
+                     "Comma-delimited list of HCAs/ports to be used (e.g. \"mthca0,mthca1:2\"; empty value means to use all ports found).  Mutually exclusive with btl_openib_if_exclude.",
                      NULL, &mca_btl_openib_component.if_include,
                      0));    
 
     CHECK(reg_string("if_exclude",
-                     "List of HCAs/ports to be excluded ",
+                     "Comma-delimited list of HCAs/ports to be excluded (empty value means to not exclude any ports).  Mutually exclusive with btl_openib_if_include.",
                      NULL, &mca_btl_openib_component.if_exclude,
                      0));    
 
