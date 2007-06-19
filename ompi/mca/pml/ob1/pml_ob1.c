@@ -399,7 +399,7 @@ void mca_pml_ob1_error_handler(
 
 int mca_pml_ob1_ft_event( int state )
 {
-    ompi_proc_t** procs;
+    ompi_proc_t** procs = NULL;
     size_t num_procs;
     int ret, p;
 

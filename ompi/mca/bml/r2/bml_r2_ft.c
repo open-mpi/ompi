@@ -46,7 +46,7 @@
 #include "bml_r2_ft.h"
 
 int mca_bml_r2_ft_event(int state) {
-    ompi_proc_t** procs;
+    ompi_proc_t** procs = NULL;
     size_t num_procs;
     size_t btl_idx;
     int ret, p;
