@@ -171,6 +171,11 @@ OMPI_DECLSPEC ompi_datatype_t ompi_mpi_2cplex = INIT_BASIC_TYPE( DT_2COMPLEX, 2C
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_2dblcplex = INIT_BASIC_TYPE( DT_2DOUBLE_COMPLEX, 2DOUBLE_COMPLEX );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unavailable = INIT_UNAVAILABLE_DATA( UNAVAILABLE );
 
+#if OMPI_HAVE_FORTRAN_REAL2
+OMPI_DECLSPEC ompi_datatype_t ompi_mpi_real2 = INIT_BASIC_FORTRAN_TYPE( DT_FLOAT, REAL2, OMPI_SIZEOF_FORTRAN_REAL2, OMPI_ALIGNMENT_FORTRAN_REAL2, DT_FLAG_DATA_FLOAT );
+#else
+OMPI_DECLSPEC ompi_datatype_t ompi_mpi_real2 = INIT_UNAVAILABLE_DATA( REAL2 );
+#endif
 #if OMPI_HAVE_FORTRAN_REAL4
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_real4 = INIT_BASIC_FORTRAN_TYPE( DT_FLOAT, REAL4, OMPI_SIZEOF_FORTRAN_REAL4, OMPI_ALIGNMENT_FORTRAN_REAL4, DT_FLAG_DATA_FLOAT );
 #else
@@ -492,6 +497,16 @@ int32_t ompi_ddt_init( void )
 
     /* Optional Fortran REAL types */
 
+#if OMPI_HAVE_FORTRAN_REAL2
+#if (OMPI_SIZEOF_FORTRAN_REAL2 == SIZEOF_FLOAT)
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real2, "MPI_REAL2", &ompi_mpi_float );
+#else
+#   warning "No proper C type found for REAL2"
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real2, "MPI_REAL2", &ompi_mpi_unavailable );
+#endif
+    ompi_mpi_real2.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT;
+#endif /* OMPI_HAVE_FORTRAN_REAL2 */
+
 #if OMPI_HAVE_FORTRAN_REAL4
 #if (OMPI_SIZEOF_FORTRAN_REAL4 == SIZEOF_FLOAT)
     DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real4, "MPI_REAL4", &ompi_mpi_float );
@@ -672,6 +687,7 @@ int32_t ompi_ddt_init( void )
     MOOG(2integer);
     MOOG(2cplex);
     MOOG(2dblcplex);
+    MOOG(real2);
 
     /* Now the C types */
 

@@ -38,6 +38,10 @@ Trunk (not on release branches yet)
 - Fix a problem with MPI_BOTTOM in various places of the f77-interface.
   Thanks to Daniel Spangberg for bringing this up.
   --> Expected 1.2.x
+- Add the optional datatype MPI_REAL2. As this is added to the "end of"
+  predefined datatypes in the fortran header files, there will not be
+  any compatibility issues.
+  --> Expected 1.3
 - Fix several problems with redirecting large files into mpirun's
   stdin.
   --> Expected 1.2.x
