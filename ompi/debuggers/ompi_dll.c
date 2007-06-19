@@ -220,7 +220,6 @@ enum {
     err_comm_first,
 
     err_failed_communicator,
-    err_np,
     err_lrank_to_grank,
     err_send_context,
     err_recv_context,
@@ -228,6 +227,7 @@ enum {
     err_comm_name,
 
     err_all_communicators,
+    err_mpid_sends,
     err_mpid_recvs,
     err_group_corrupt
 };
@@ -613,8 +613,9 @@ OMPI_DECLSPEC int mqs_image_has_queues (mqs_image *image, char **message)
 
  type_missing:
     /**
-     * One of the required types are missing in the image. We are unable to extract
-     * the information we need from the pointers. Give up!
+     * One of the required types is missing in the image. We are unable to extract
+     * the information we need from the pointers. We did our best but here
+     * we're at our limit. Give up!
      */
     *message = missing_in_action;
     return err_missing_type;
@@ -670,7 +671,7 @@ OMPI_DECLSPEC int mqs_process_has_queues (mqs_process *proc, char **msg)
         return err_all_communicators;
   
     if (mqs_find_symbol (image, "mca_pml_base_send_requests", &p_info->send_queue_base) != mqs_ok)
-        return err_mpid_recvs;
+        return err_mpid_sends;
   
     if (mqs_find_symbol (image, "mca_pml_base_recv_requests", &p_info->recv_queue_base) != mqs_ok)
         return err_mpid_recvs;
@@ -1560,8 +1561,6 @@ OMPI_DECLSPEC char * mqs_dll_error_string (int errcode)
         return "Failed to find field 'comm_first' in MPIR_Comm_list";
     case err_failed_communicator: 
         return "Failed to find type MPIR_Communicator";
-    case err_np: 
-        return "Failed to find field 'np' in MPIR_Communicator";
     case err_lrank_to_grank: 
         return "Failed to find field 'lrank_to_grank' in MPIR_Communicator";
     case err_send_context: 
@@ -1574,8 +1573,10 @@ OMPI_DECLSPEC char * mqs_dll_error_string (int errcode)
         return "Failed to find field 'comm_name' in MPIR_Communicator";
     case err_all_communicators: 
         return "Failed to find the global symbol MPIR_All_communicators";
+    case err_mpid_sends: 
+        return "Failed to access the global send requests list";
     case err_mpid_recvs: 
-        return "Failed to find the global symbol MPID_recvs";
+        return "Failed to access the global receive requests list";
     case err_group_corrupt:
         return "Could not read a communicator's group from the process (probably a store corruption)";
 
