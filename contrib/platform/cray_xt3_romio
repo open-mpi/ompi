@@ -30,6 +30,8 @@ ompi_cv_f77_sizeof_INTEGERp16=${ompi_cv_f77_sizeof_INTEGERp16=16}
 ompi_cv_f77_alignment_INTEGERp16=${ompi_cv_f77_alignment_INTEGERp16=8}
 ompi_cv_f77_sizeof_REAL=${ompi_cv_f77_sizeof_REAL=4}
 ompi_cv_f77_alignment_REAL=${ompi_cv_f77_alignment_REAL=4}
+ompi_cv_f77_sizeof_REALp2=${ompi_cv_f77_sizeof_REALp2=2}
+ompi_cv_f77_alignment_REALp2=${ompi_cv_f77_alignment_REALp2=2}
 ompi_cv_f77_sizeof_REALp4=${ompi_cv_f77_sizeof_REALp4=4}
 ompi_cv_f77_alignment_REALp4=${ompi_cv_f77_alignment_REALp4=4}
 ompi_cv_f77_sizeof_REALp8=${ompi_cv_f77_sizeof_REALp8=8}
@@ -65,6 +67,8 @@ ompi_cv_f90_sizeof_INTEGERp16=${ompi_cv_f90_sizeof_INTEGERp16=16}
 ompi_cv_f90_alignment_INTEGERp16=${ompi_cv_f90_alignment_INTEGERp16=8}
 ompi_cv_f90_sizeof_REAL=${ompi_cv_f90_sizeof_REAL=4}
 ompi_cv_f90_alignment_REAL=${ompi_cv_f90_alignment_REAL=4}
+ompi_cv_f90_sizeof_REALp2=${ompi_cv_f90_sizeof_REALp2=2}
+ompi_cv_f90_alignment_REALp2=${ompi_cv_f90_alignment_REALp2=2}
 ompi_cv_f90_sizeof_REALp4=${ompi_cv_f90_sizeof_REALp4=4}
 ompi_cv_f90_alignment_REALp4=${ompi_cv_f90_alignment_REALp4=4}
 ompi_cv_f90_sizeof_REALp8=${ompi_cv_f90_sizeof_REALp8=8}
