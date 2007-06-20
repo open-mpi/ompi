@@ -83,8 +83,6 @@
 /*
  * Globals
  */
-
-extern bool opal_mca_base_param_use_amca_sets;
 orted_globals_t orted_globals;
 
 static struct opal_event term_handler;
@@ -196,6 +194,12 @@ int main(int argc, char *argv[])
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals_t));
 
+    /* Need to set this so that the orted does not throw a warning message
+     * about missing AMCA param files that are located in the relative or
+     * absolute paths (e.g., not in the package directory).
+     */
+    opal_mca_base_param_use_amca_sets = false;
+
     /* Ensure that enough of OPAL is setup for us to be able to run */
     if (OPAL_SUCCESS != opal_init_util()) {
         fprintf(stderr, "OPAL failed to initialize -- orted aborting\n");
@@ -209,8 +213,6 @@ int main(int argc, char *argv[])
      * Do not parse the Aggregate Parameter Sets in this pass.
      * we will get to them in a moment
      */
-    /* GMS: what does this do and why is it gone now? */
-    /* opal_mca_base_param_use_mca_sets = false; */
     mca_base_param_init();
     
     /* setup to check common command line options that just report and die */
