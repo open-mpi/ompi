@@ -539,7 +539,9 @@ static int blcr_checkpoint_peer(pid_t pid, char ** fname)
         /* Don't waitpid here since we don't really want to restart from inside waitpid ;) */
         while(OPAL_CRS_RESTART  != blcr_current_state  &&
               OPAL_CRS_CONTINUE != blcr_current_state ) {
+            OPAL_THREAD_LOCK(&blcr_lock);
             opal_condition_wait(&blcr_cond, &blcr_lock);
+            OPAL_THREAD_UNLOCK(&blcr_lock);
         }
 
         opal_output(mca_crs_blcr_component.super.output_handle,
@@ -576,6 +578,7 @@ static int opal_crs_blcr_thread_callback(void *arg) {
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: thread_callback()");
 
+    OPAL_THREAD_LOCK(&blcr_lock);
     blcr_current_state = OPAL_CRS_CHECKPOINT;
 
     /*
@@ -600,6 +603,7 @@ static int opal_crs_blcr_thread_callback(void *arg) {
         blcr_current_state = OPAL_CRS_CONTINUE;
     }
 
+    OPAL_THREAD_UNLOCK(&blcr_lock);
     opal_condition_signal(&blcr_cond);
 
     return 0;
