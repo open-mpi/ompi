@@ -412,8 +412,6 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
                      opal_os_path( false, appctx->cwd, appctx->app, NULL ); 
                 } 
                 MPIR_proctable[i].pid = proc->pid;
-                opal_output( 0, "PID %d app %s\n", MPIR_proctable[i].pid,
-                             MPIR_proctable[i].executable_name );
                 i++;
             }
         }
