@@ -212,7 +212,7 @@ main(int argc, char *argv[])
                                                             &seq_num,
                                                             orte_checkpoint_globals.term)) ) {
         opal_show_help("help-orte-checkpoint.txt", "ckpt_failure", true,
-                       orte_checkpoint_globals.pid);
+                       orte_checkpoint_globals.pid, ret);
         exit_status = ret;
         goto cleanup;
     }
@@ -373,6 +373,7 @@ notify_process_for_checkpoint(char **global_snapshot_handle, int *seq_num, int t
                 opal_show_help("help-orte-checkpoint.txt", "non-ckptable", 
                                true,
                                orte_checkpoint_globals.pid);
+                exit_status = ORTE_ERROR;
                 break;
             }
             /*
