@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -31,6 +32,8 @@ int mca_btl_base_param_register(mca_base_component_t *version,
         mca_btl_base_module_t *module)
 {
     int value, err = 0;
+    char *msg;
+
 #define REG_INT(N, H, D, L, T) \
     mca_base_param_reg_int(version, N, H, false, false, D, &value); \
     if(value < (L)) \
@@ -41,49 +44,61 @@ int mca_btl_base_param_register(mca_base_component_t *version,
     REG_INT("exclusivity", "BTL exclusivity (must be >= 0)",
             module->btl_exclusivity, 0, uint32_t);
 
-    REG_INT("flags", "BTL flags, SEND=1, PUT=2, GET=4", module->btl_flags,
+    asprintf(&msg, "BTL bit flags (general flags: SEND=%d, PUT=%d, GET=%d, SEND_INPLACE=%d; flags only used by the \"dr\" PML (ignored by others): ACK=%d, CHECKSUM=%d, RDMA_COMPLETION=%d)",
+             MCA_BTL_FLAGS_SEND,
+             MCA_BTL_FLAGS_PUT,
+             MCA_BTL_FLAGS_GET,
+             MCA_BTL_FLAGS_SEND_INPLACE,
+             MCA_BTL_FLAGS_NEED_ACK,
+             MCA_BTL_FLAGS_NEED_CSUM,
+             MCA_BTL_FLAGS_RDMA_COMPLETION);
+    REG_INT("flags", msg,
+            module->btl_flags,
             0, uint32_t);
+    free(msg);
 
-    REG_INT("eager_limit", "Eager send limit, in bytes (must be >= 1)",
-            module->btl_eager_limit, 1, size_t);
-
-    REG_INT("min_send_size", "Maximum send size, in bytes (must be >= 1)",
+    REG_INT("min_send_size", "Minimum message size (in bytes) that will be striped across multiple network devices when using send/receive semantics.  Messages shorter than this size will be sent across a single network (must be >= 1)",
             module->btl_min_send_size, 1, size_t);
 
-    REG_INT("max_send_size", "Maximum send size, in bytes (must be >= 1)",
+    REG_INT("eager_limit", "Size (in bytes) of the first fragment sent of any message.  It is the maximum size of \"short\" messages and the maximum size of the \"phase 1\" fragment sent for all large messages (must be >= 1).",
+            module->btl_eager_limit, 1, size_t);
+
+    REG_INT("max_send_size", "Maximum size (in bytes) of a single \"phase 2\" fragment of a long message when using the pipeline protocol (must be >= 1)",
              module->btl_max_send_size, 1, size_t);
 
     if(module->btl_flags & MCA_BTL_FLAGS_PUT) {
+        /* Obsolete synonym for rdma_pipeline_offset -- no help
+           message needed because it's a "hidden" parameter. */
         mca_base_param_reg_int(version, "min_rdma_size", "", true, false,
-                0, &value);
-        if(value != 0) {
-            opal_output(0, "min_rdma_size parameter is deprecated. Please use "
-                    "rdma_pipeline_offset instead\n");
+                               0, &value);
+        if (0 != value) {
+            opal_output(0, "The min_rdma_size BTL parameter is deprecated.  Please use the rdma_pipeline_offset BTL parameter instead");
             module->btl_rdma_pipeline_offset = (size_t)value;
         }
 
-        REG_INT("rdma_pipeline_offset", "Offset the pipeline protocol starts "
-            "using RDMA from (must be >= 0)", module->btl_rdma_pipeline_offset,
-            0, size_t);
+        REG_INT("rdma_pipeline_offset", "Length of the \"phase 2\" portion of a large message (in bytes) when using the pipeline protocol.  This part of the message will be split into fragments of size max_send_size and sent using send/receive semantics (must be >= 0; only relevant when the PUT flag is set)",
+                module->btl_rdma_pipeline_offset,
+                0, size_t);
 
+        /* Obsolete synonym for rdma_pipeline_frag_size -- no help
+           message needed because it's a "hidden" parameter. */
         mca_base_param_reg_int(version, "max_rdma_size", "", true, false,
-                0, &value);
-        if(value != 0) {
-            opal_output(0, "max_rdma_size parameter is deprecated. Please use "
-                    "rdma_pipeline_frag_size instead\n");
+                               0, &value);
+        if (0 != value) {
+            opal_output(0, "The max_rdma_size BTL parameter is deprecated.  Please use the rdma_pipeline_frag_size BTL parameter instead");
             module->btl_rdma_pipeline_frag_size = (size_t)value;
         }
 
-        REG_INT("rdma_pipeline_frag_size", "The size of the chunk the data "
-            "RDMAed by pipeline protocol (must be >= 1)",
-            module->btl_rdma_pipeline_frag_size, 1, size_t);
+        REG_INT("rdma_pipeline_frag_size", "Maximum size (in bytes) of a single \"phase 3\" fragment from a long message when using the pipeline protocol.  These fragments will be sent using RDMA semantics (must be >= 1; only relevant when the PUT flag is set)",
+                module->btl_rdma_pipeline_frag_size, 1, size_t);
 
-        REG_INT("min_rdma_pipeline_size", "Packets smaller than this value will"
-            " not be subject for pipeline protocol "
-            "(must be >= 0, 0 means the same as rdma_pipeline_offset)",
-            module->btl_min_rdma_pipeline_size, 0, size_t);
-    if(module->btl_min_rdma_pipeline_size == 0)
-        module->btl_min_rdma_pipeline_size = module->btl_rdma_pipeline_offset;
+        REG_INT("min_rdma_pipeline_size", "Messages smaller than this size (in bytes) will not use the RDMA pipeline protocol.  Instead, they will be split into fragments of max_send_size and sent using send/receive semantics (must be >=0, and is automatically adjusted up to at least (eager_limit+rdma_pipeline_offset); only relevant when the PUT flag is set)",
+                module->btl_min_rdma_pipeline_size, 0, size_t);
+        if (module->btl_min_rdma_pipeline_size < 
+            (module->btl_eager_limit + module->btl_rdma_pipeline_offset)) {
+            module->btl_min_rdma_pipeline_size = 
+                module->btl_eager_limit + module->btl_rdma_pipeline_offset;
+        }
     }
 
     REG_INT("bandwidth", "Approximate maximum bandwidth of interconnect"
