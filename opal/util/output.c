@@ -293,7 +293,8 @@ void opal_output_close(int output_id)
             closelog();
         }
 #elif defined(__WINDOWS__)
-        DeregisterEventSource(info[output_id].ldi_syslog_ident);
+        if(info[output_id].ldi_syslog_ident != NULL)
+            DeregisterEventSource(info[output_id].ldi_syslog_ident);
 #endif
     }
 
