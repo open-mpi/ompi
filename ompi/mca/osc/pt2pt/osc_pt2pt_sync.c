@@ -571,9 +571,9 @@ ompi_osc_pt2pt_passive_unlock(ompi_osc_pt2pt_module_t *module,
 
     assert(module->p2p_lock_status != 0);
 
-    opal_output_verbose(50, ompi_osc_base_output,
-                        "received unlock request from %d with %d requests\n",
-                        origin, count);
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                         "received unlock request from %d with %d requests\n",
+                         origin, count));
 
     new_pending = OBJ_NEW(ompi_osc_pt2pt_pending_lock_t);
     new_pending->proc = proc;
@@ -607,8 +607,8 @@ ompi_osc_pt2pt_passive_unlock_complete(ompi_osc_pt2pt_module_t *module)
     /* issue whichever unlock acks we should issue */
     while (NULL != (new_pending = (ompi_osc_pt2pt_pending_lock_t*)
                     opal_list_remove_first(&module->p2p_unlocks_pending))) {
-        opal_output_verbose(50, ompi_osc_base_output,
-                            "sending unlock reply to proc");
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                             "sending unlock reply to proc"));
         ompi_osc_pt2pt_control_send(module,
                                    new_pending->proc,
                                    OMPI_OSC_PT2PT_HDR_UNLOCK_REPLY,
@@ -621,9 +621,9 @@ ompi_osc_pt2pt_passive_unlock_complete(ompi_osc_pt2pt_module_t *module)
         opal_list_remove_first(&(module->p2p_locks_pending));
 
     if (NULL != new_pending) {
-        opal_output_verbose(50, ompi_osc_base_output,
-                            "sending unlock ack to proc %d",
-                            new_pending->proc->proc_name.vpid);
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                             "sending unlock ack to proc %d",
+                             new_pending->proc->proc_name.vpid));
         ompi_win_append_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
         /* set lock state and generate a lock request */
         module->p2p_lock_status = new_pending->lock_type;
