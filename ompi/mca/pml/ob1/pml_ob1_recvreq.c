@@ -262,12 +262,13 @@ static int mca_pml_ob1_recv_request_ack(
                 recvreq->req_send_offset = hdr->hdr_msg_length;
                 /* are rdma devices available for long rdma protocol */
             } else if (bml_endpoint->btl_send_limit < hdr->hdr_msg_length &&
-                    bml_endpoint->btl_rdma_offset < hdr->hdr_msg_length &&
+                    bml_endpoint->btl_pipeline_send_length <
+                    hdr->hdr_msg_length &&
                     mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma)) {
                 
                 /* use convertor to figure out the rdma offset for this request */
                 recvreq->req_send_offset = hdr->hdr_msg_length - 
-                    bml_endpoint->btl_rdma_offset;
+                    bml_endpoint->btl_pipeline_send_length;
                 if(recvreq->req_send_offset < bytes_received) {
                     recvreq->req_send_offset = bytes_received;
                 }

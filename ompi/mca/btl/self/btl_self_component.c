@@ -94,7 +94,7 @@ int mca_btl_self_component_open(void)
     mca_btl_self.btl_eager_limit = 128 * 1024;
     mca_btl_self.btl_min_send_size = 256 * 1024;
     mca_btl_self.btl_max_send_size = 256 * 1024;
-    mca_btl_self.btl_rdma_pipeline_offset = INT_MAX;
+    mca_btl_self.btl_rdma_pipeline_send_length = INT_MAX;
     mca_btl_self.btl_rdma_pipeline_frag_size = INT_MAX;
     mca_btl_self.btl_min_rdma_pipeline_size = 0;
     mca_btl_self.btl_flags = MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND_INPLACE;

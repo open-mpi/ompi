@@ -27,7 +27,7 @@
 
 static void mca_bml_base_endpoint_construct(mca_bml_base_endpoint_t* ep)
 {
-    ep->btl_rdma_offset = 0;
+    ep->btl_pipeline_send_length = 0;
     ep->btl_max_send_size = 0;
     ep->btl_rdma_align = 0;
     ep->btl_send_limit = 0;

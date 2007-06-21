@@ -45,7 +45,7 @@ mca_btl_portals_module_t mca_btl_portals_module = {
         0,   /* max size of first frag */
         0,   /* min send size */
         0,   /* max send size */
-        0,   /* btl_rdma_pipeline_offset */
+        0,   /* btl_rdma_pipeline_send_length */
         0,   /* btl_rdma_pipeline_frag_size */
         0,   /* btl_min_rdma_pipeline_size */
         0,   /* exclusivity - higher than sm, lower than self */
