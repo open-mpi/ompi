@@ -88,15 +88,6 @@ int opal_show_help_finish_parsing(void)
         YY_CURRENT_BUFFER = NULL;
 #endif  /* YY_CURRENT_BUFFER_LVALUE */
     }
-
-    /* Put in this dumb thing to avoid a compiler warning about
-       yy_flex_realloc being defined but not used.  @#$@!#$!@#$ */
-    {
-        char *foo = malloc(1);
-        foo = yy_flex_realloc(foo, 2);
-        free(foo);
-    }
-
     return YY_NULL;
 }
 
