@@ -112,9 +112,7 @@ orte_pls_base_module_t orte_pls_rsh_module = {
     orte_pls_rsh_finalize
 };
 
-static void set_handler_default(int sig);
-
-enum {
+typedef enum {
     ORTE_PLS_RSH_SHELL_BASH = 0,
     ORTE_PLS_RSH_SHELL_ZSH,
     ORTE_PLS_RSH_SHELL_TCSH,
@@ -122,10 +120,10 @@ enum {
     ORTE_PLS_RSH_SHELL_KSH,
     ORTE_PLS_RSH_SHELL_SH,
     ORTE_PLS_RSH_SHELL_UNKNOWN
-};
+} orte_pls_rsh_shell_t;
 
-typedef int orte_pls_rsh_shell;
-
+/* These strings *must* follow the same order as the enum
+   ORTE_PLS_RSH_SHELL_* */
 static const char * orte_pls_rsh_shell_name[] = {
     "bash",
     "zsh",
@@ -135,6 +133,12 @@ static const char * orte_pls_rsh_shell_name[] = {
     "sh",
     "unknown"
 };
+
+/*
+ * Local functions
+ */
+static void set_handler_default(int sig);
+static orte_pls_rsh_shell_t find_shell(char *shell);
 
 /* local global storage of timing variables */
 static struct timeval joblaunchstart, joblaunchstop;
@@ -147,7 +151,8 @@ static orte_jobid_t active_job=ORTE_JOBID_INVALID;
  * Check the Shell variable on the specified node
  */
 
-static int orte_pls_rsh_probe(orte_mapped_node_t * node, orte_pls_rsh_shell * shell)
+static int orte_pls_rsh_probe(orte_mapped_node_t *node, 
+                              orte_pls_rsh_shell_t *shell)
 {
     char ** argv;
     int argc, rc = ORTE_SUCCESS, i;
@@ -364,6 +369,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     bool local_sh = false, local_csh = false;
     char *lib_base = NULL, *bin_base = NULL;
     bool failed_launch = true;
+    orte_pls_rsh_shell_t shell;
 
     if (mca_pls_rsh_component.timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
@@ -452,37 +458,34 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         rc = ORTE_ERR_FATAL;
         goto cleanup;
     } else {
-        int i;
-        char *sh_name = NULL;
-        
-        sh_name = rindex(p->pw_shell, '/');
-        sh_name++;  /* skip the '\' */
-        for (i = 0; i < (int)(sizeof (orte_pls_rsh_shell_name)/
-                              sizeof(orte_pls_rsh_shell_name[0])); i++) {
-            if ( 0 == strcmp(sh_name, orte_pls_rsh_shell_name[i]) ) {
-                switch (i) {
-                case ORTE_PLS_RSH_SHELL_SH:  /* fall through */
-                case ORTE_PLS_RSH_SHELL_KSH: /* fall through */
-                case ORTE_PLS_RSH_SHELL_ZSH: /* fall through */
-                case ORTE_PLS_RSH_SHELL_BASH: local_sh = true; break;
-                case ORTE_PLS_RSH_SHELL_TCSH: /* fall through */
-                case ORTE_PLS_RSH_SHELL_CSH:  local_csh = true; break;
-                    /* The match has been done, there is no need for a default case here */
-                }
-                /* I did match one of the known shells, so now we're done with the shell detection */
-                break;
-            }
-        }
-        if ( i == ORTE_PLS_RSH_SHELL_UNKNOWN ) {
-            opal_output(0, "WARNING: local probe returned unhandled shell:%s assuming bash\n",
-                        sh_name);
-            local_sh = true;
-        }
-        
-        if (mca_pls_rsh_component.debug) {
-            opal_output(0, "pls:rsh: local csh: %d, local sh: %d\n",
-                        local_csh, local_sh);
-        }
+        param = p->pw_shell;
+        shell = find_shell(p->pw_shell);
+    }
+    /* If we didn't find it in getpwuid(), try looking at the $SHELL
+       environment variable (see
+       https://svn.open-mpi.org/trac/ompi/ticket/1060) */
+    if (ORTE_PLS_RSH_SHELL_UNKNOWN == shell && 
+        NULL != (param = getenv("SHELL"))) {
+        shell = find_shell(param);
+    }
+
+    switch (shell) {
+    case ORTE_PLS_RSH_SHELL_SH:  /* fall through */
+    case ORTE_PLS_RSH_SHELL_KSH: /* fall through */
+    case ORTE_PLS_RSH_SHELL_ZSH: /* fall through */
+    case ORTE_PLS_RSH_SHELL_BASH: local_sh = true; break;
+    case ORTE_PLS_RSH_SHELL_TCSH: /* fall through */
+    case ORTE_PLS_RSH_SHELL_CSH:  local_csh = true; break;
+    default:
+        opal_output(0, "WARNING: local probe returned unhandled shell:%s assuming bash\n",
+                    (NULL != param) ? param : "unknown");
+        remote_sh = true;
+        break;
+    }
+
+    if (mca_pls_rsh_component.debug) {
+        opal_output(0, "pls:rsh: local csh: %d, local sh: %d\n",
+                    local_csh, local_sh);
     }
 
     /* What is our remote shell? */
@@ -493,7 +496,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             opal_output(0, "pls:rsh: assuming same remote shell as local shell");
         }
     } else {
-        orte_pls_rsh_shell shell;
+        orte_pls_rsh_shell_t shell;
         rmaps_node = (orte_mapped_node_t*)opal_list_get_first(&map->nodes);
         rc = orte_pls_rsh_probe(rmaps_node, &shell);
 
@@ -505,12 +508,12 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         switch (shell) {
         case ORTE_PLS_RSH_SHELL_SH:  /* fall through */
         case ORTE_PLS_RSH_SHELL_KSH: /* fall through */
+        case ORTE_PLS_RSH_SHELL_ZSH: /* fall through */
         case ORTE_PLS_RSH_SHELL_BASH: remote_sh = true; break;
         case ORTE_PLS_RSH_SHELL_TCSH: /* fall through */
         case ORTE_PLS_RSH_SHELL_CSH:  remote_csh = true; break;
         default:
-            opal_output(0, "WARNING: rsh probe returned unhandled shell:%s assuming bash\n",
-                        orte_pls_rsh_shell_name[shell]);
+            opal_output(0, "WARNING: rsh probe returned unhandled shell; assuming bash\n");
             remote_sh = true;
         }
     }
@@ -1093,4 +1096,24 @@ static void set_handler_default(int sig)
     sigemptyset(&act.sa_mask);
 
     sigaction(sig, &act, (struct sigaction *)0);
+}
+
+
+static orte_pls_rsh_shell_t find_shell(char *shell) 
+{
+    int i         = 0;
+    char *sh_name = NULL;
+
+    sh_name = rindex(shell, '/');
+    /* skip the '/' */
+    ++sh_name;
+    for (i = 0; i < (int)(sizeof (orte_pls_rsh_shell_name) /
+                          sizeof(orte_pls_rsh_shell_name[0])); ++i) {
+        if (0 == strcmp(sh_name, orte_pls_rsh_shell_name[i])) {
+            return i;
+        }
+    }
+
+    /* We didn't find it */
+    return ORTE_PLS_RSH_SHELL_UNKNOWN;
 }
