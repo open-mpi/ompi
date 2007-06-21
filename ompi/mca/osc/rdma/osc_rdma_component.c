@@ -406,8 +406,8 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
        before the window is fully created... */
     module->m_comm->c_coll.coll_barrier(module->m_comm);
 
-    opal_output_verbose(50, ompi_osc_base_output,
-                        "done creating window %d", module->m_comm->c_contextid);
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                         "done creating window %d", module->m_comm->c_contextid));
 
     return OMPI_SUCCESS;
 

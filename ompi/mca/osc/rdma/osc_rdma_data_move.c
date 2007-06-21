@@ -88,10 +88,10 @@ ompi_osc_rdma_sendreq_send_long_cb(ompi_osc_rdma_longreq_t *longreq)
         (ompi_osc_rdma_sendreq_t*) longreq->cbdata;
     int32_t count;
 
-    opal_output_verbose(50, ompi_osc_base_output,
-                        "%d completed long sendreq to %d",
-                        sendreq->req_module->m_comm->c_my_rank,
-                        sendreq->req_target_rank);
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                         "%d completed long sendreq to %d",
+                         sendreq->req_module->m_comm->c_my_rank,
+                         sendreq->req_target_rank));
 
     OPAL_THREAD_LOCK(&sendreq->req_module->m_lock);
     count = (sendreq->req_module->m_num_pending_out -= 1);
@@ -321,10 +321,10 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
 #endif
 
     /* send fragment */
-    opal_output_verbose(50, ompi_osc_base_output,
-                        "%d sending sendreq to %d",
-                        sendreq->req_module->m_comm->c_my_rank,
-                        sendreq->req_target_rank);
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                         "%d sending sendreq to %d",
+                         sendreq->req_module->m_comm->c_my_rank,
+                         sendreq->req_target_rank));
                 
     ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_RDMA);
     goto done;
@@ -623,10 +623,10 @@ ompi_osc_rdma_sendreq_recv_accum_long_cb(ompi_osc_rdma_longreq_t *longreq)
     /* unlock the window for accumulates */
     OPAL_THREAD_UNLOCK(&longreq->req_module->m_acc_lock);
     
-    opal_output_verbose(50, ompi_osc_base_output,
-                        "%d finished receiving long accum message from %d",
-                        longreq->req_module->m_comm->c_my_rank, 
-                        header->hdr_origin);               
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                         "%d finished receiving long accum message from %d",
+                         longreq->req_module->m_comm->c_my_rank, 
+                         header->hdr_origin));
 
     /* free the temp buffer */
     free(longreq->cbdata);
@@ -675,10 +675,10 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
 
         inmsg_mark_complete(module);
 
-        opal_output_verbose(50, ompi_osc_base_output,
-                            "%d received accum message from %d",
-                            module->m_comm->c_my_rank,
-                            header->hdr_origin);
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                             "%d received accum message from %d",
+                             module->m_comm->c_my_rank,
+                             header->hdr_origin));
     } else {
         ompi_osc_rdma_longreq_t *longreq;
         ptrdiff_t lb, extent, true_lb, true_extent;
@@ -714,11 +714,11 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
                                 module->m_comm,
                                 &(longreq->request));
 
-        opal_output_verbose(50, ompi_osc_base_output,
-                            "%d started long recv accum message from %d (%d)",
-                            module->m_comm->c_my_rank,
-                            header->hdr_origin,
-                            header->hdr_origin_tag);
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                             "%d started long recv accum message from %d (%d)",
+                             module->m_comm->c_my_rank,
+                             header->hdr_origin,
+                             header->hdr_origin_tag));
 
         /* put the send request in the waiting list */
         OPAL_THREAD_LOCK(&mca_osc_rdma_component.c_lock);
