@@ -59,7 +59,7 @@ mca_btl_openib_module_t mca_btl_openib_module = {
         0, /* max size of first fragment */
         0, /* min send fragment size */
         0, /* max send fragment size */
-        0, /* btl_rdma_pipeline_offset */
+        0, /* btl_rdma_pipeline_send_length */
         0, /* btl_rdma_pipeline_frag_size */
         0, /* btl_min_rdma_pipeline_size */
         0, /* exclusivity */

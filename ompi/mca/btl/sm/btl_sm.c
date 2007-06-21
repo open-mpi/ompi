@@ -88,7 +88,7 @@ mca_btl_sm_t mca_btl_sm = {
         0, /* btl_eager_limit */
         0, /* btl_min_send_size */
         0, /* btl_max_send_size */
-        0, /* btl_rdma_pipeline_offset */
+        0, /* btl_rdma_pipeline_send_length */
         0, /* btl_rdma_pipeline_frag_size */
         0, /* btl_min_rdma_pipeline_size */
         0, /* btl_exclusivity */

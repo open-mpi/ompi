@@ -59,7 +59,7 @@ struct mca_bml_base_btl_t {
     size_t btl_eager_limit;                       /**< BTL eager limit */
     size_t btl_min_send_size;                     /**< BTL min send size */
     size_t btl_max_send_size;                     /**< BTL max send size */
-    size_t btl_rdma_pipeline_offset;              /**< BTL rdma offset */
+    size_t btl_rdma_pipeline_send_length;         /**< BTL send length */
     size_t btl_rdma_pipeline_frag_size;           /**< BTL rdma frag size */
     size_t btl_min_rdma_pipeline_size;            /**< BTL min rdma size */
     struct mca_btl_base_module_t *btl;            /**< BTL module */
@@ -242,7 +242,7 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_find(
 struct mca_bml_base_endpoint_t {
     opal_list_item_t         super;             /**< base_endpoint is a list item */
     struct ompi_proc_t*      btl_proc;          /**< backpointer to target ompi_proc_t */
-    size_t                   btl_rdma_offset;   /**< max of min rdma size for available rmda btls */
+    size_t                   btl_pipeline_send_length;   /**< max of pipeline send_length of available BTLs */
     size_t                   btl_send_limit;    /**< max of min rdma pipeline for available rmda btls */
     size_t                   btl_max_send_size; /**< min of max send size for available send btls */
     size_t                   btl_rdma_align;    /**< max of min rdma size for available rmda btls */

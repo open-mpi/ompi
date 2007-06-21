@@ -67,18 +67,18 @@ int mca_btl_base_param_register(mca_base_component_t *version,
              module->btl_max_send_size, 1, size_t);
 
     if(module->btl_flags & MCA_BTL_FLAGS_PUT) {
-        /* Obsolete synonym for rdma_pipeline_offset -- no help
+        /* Obsolete synonym for rdma_pipeline_send_length -- no help
            message needed because it's a "hidden" parameter. */
         mca_base_param_reg_int(version, "min_rdma_size", "", true, false,
-                               0, &value);
-        if (0 != value) {
-            opal_output(0, "The min_rdma_size BTL parameter is deprecated.  Please use the rdma_pipeline_offset BTL parameter instead");
-            module->btl_rdma_pipeline_offset = (size_t)value;
+                0, &value);
+        if(value != 0) {
+            opal_output(0, "min_rdma_size BTL parameter is deprecated. Please "
+                   "use the rdma_pipeline_send_length BTL parameter instead\n");
+            module->btl_rdma_pipeline_send_length = (size_t)value;
         }
 
-        REG_INT("rdma_pipeline_offset", "Length of the \"phase 2\" portion of a large message (in bytes) when using the pipeline protocol.  This part of the message will be split into fragments of size max_send_size and sent using send/receive semantics (must be >= 0; only relevant when the PUT flag is set)",
-                module->btl_rdma_pipeline_offset,
-                0, size_t);
+        REG_INT("rdma_pipeline_send_length", "Length of the \"phase 2\" portion of a large message (in bytes) when using the pipeline protocol.  This part of the message will be split into fragments of size max_send_size and sent using send/receive semantics (must be >= 0; only relevant when the PUT flag is set)",
+                module->btl_rdma_pipeline_send_length, 0, size_t);
 
         /* Obsolete synonym for rdma_pipeline_frag_size -- no help
            message needed because it's a "hidden" parameter. */
@@ -92,12 +92,12 @@ int mca_btl_base_param_register(mca_base_component_t *version,
         REG_INT("rdma_pipeline_frag_size", "Maximum size (in bytes) of a single \"phase 3\" fragment from a long message when using the pipeline protocol.  These fragments will be sent using RDMA semantics (must be >= 1; only relevant when the PUT flag is set)",
                 module->btl_rdma_pipeline_frag_size, 1, size_t);
 
-        REG_INT("min_rdma_pipeline_size", "Messages smaller than this size (in bytes) will not use the RDMA pipeline protocol.  Instead, they will be split into fragments of max_send_size and sent using send/receive semantics (must be >=0, and is automatically adjusted up to at least (eager_limit+rdma_pipeline_offset); only relevant when the PUT flag is set)",
+        REG_INT("min_rdma_pipeline_size", "Messages smaller than this size (in bytes) will not use the RDMA pipeline protocol.  Instead, they will be split into fragments of max_send_size and sent using send/receive semantics (must be >=0, and is automatically adjusted up to at least (eager_limit+btl_rdma_pipeline_send_length); only relevant when the PUT flag is set)",
                 module->btl_min_rdma_pipeline_size, 0, size_t);
         if (module->btl_min_rdma_pipeline_size < 
-            (module->btl_eager_limit + module->btl_rdma_pipeline_offset)) {
+            (module->btl_eager_limit + module->btl_rdma_pipeline_send_length)) {
             module->btl_min_rdma_pipeline_size = 
-                module->btl_eager_limit + module->btl_rdma_pipeline_offset;
+                module->btl_eager_limit + module->btl_rdma_pipeline_send_length;
         }
     }
 

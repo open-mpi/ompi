@@ -414,7 +414,7 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_module.super.btl_eager_limit = 12 * 1024;
     mca_btl_openib_module.super.btl_min_send_size = 32 * 1024;
     mca_btl_openib_module.super.btl_max_send_size = 64 * 1024;
-    mca_btl_openib_module.super.btl_rdma_pipeline_offset = 1024 * 1024;
+    mca_btl_openib_module.super.btl_rdma_pipeline_send_length = 1024 * 1024;
     mca_btl_openib_module.super.btl_rdma_pipeline_frag_size = 1024 * 1024;    
     mca_btl_openib_module.super.btl_min_rdma_pipeline_size = 256 * 1024;
     mca_btl_openib_module.super.btl_flags = MCA_BTL_FLAGS_RDMA |

@@ -155,7 +155,7 @@ int mca_btl_gm_component_open(void)
     mca_btl_gm_module.super.btl_eager_limit = 32*1024;
     mca_btl_gm_module.super.btl_min_send_size = 32*1024;
     mca_btl_gm_module.super.btl_max_send_size = 64*1024;
-    mca_btl_gm_module.super.btl_rdma_pipeline_offset = 512*1024; 
+    mca_btl_gm_module.super.btl_rdma_pipeline_send_length = 512*1024;
     mca_btl_gm_module.super.btl_rdma_pipeline_frag_size = 128*1024;
     mca_btl_gm_module.super.btl_min_rdma_pipeline_size = 128*1024;
 #if OMPI_MCA_BTL_GM_HAVE_RDMA_PUT 
