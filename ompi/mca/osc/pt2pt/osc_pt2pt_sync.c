@@ -595,16 +595,14 @@ ompi_osc_pt2pt_passive_unlock_complete(ompi_osc_pt2pt_module_t *module)
     if (module->p2p_num_pending_in != 0) return OMPI_SUCCESS;
 
     OPAL_THREAD_LOCK(&(module->p2p_lock));
-    if (module->p2p_lock_status == MPI_LOCK_EXCLUSIVE) {
-        ompi_win_remove_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
-        module->p2p_lock_status = 0;
-    } else {
-        module->p2p_shared_count -= opal_list_get_size(&module->p2p_unlocks_pending);
-        if (module->p2p_shared_count == 0) {
-            ompi_win_remove_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
-            module->p2p_lock_status = 0;
-        }
+    if (module->p2p_num_pending_in != 0) {
+        OPAL_THREAD_UNLOCK(&(module->p2p_lock));
+        return OMPI_SUCCESS;
     }
+
+    ompi_win_remove_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
+    module->p2p_lock_status = 0;
+    opal_condition_broadcast(&module->p2p_cond);
 
     /* issue whichever unlock acks we should issue */
     while (NULL != (new_pending = (ompi_osc_pt2pt_pending_lock_t*)
@@ -615,26 +613,31 @@ ompi_osc_pt2pt_passive_unlock_complete(ompi_osc_pt2pt_module_t *module)
                                    new_pending->proc,
                                    OMPI_OSC_PT2PT_HDR_UNLOCK_REPLY,
                                    OMPI_SUCCESS, OMPI_SUCCESS);
-        OBJ_DESTRUCT(new_pending);
+        OBJ_RELEASE(new_pending);
     }
 
     /* if we were really unlocked, see if we have more to process */
     new_pending = (ompi_osc_pt2pt_pending_lock_t*) 
         opal_list_remove_first(&(module->p2p_locks_pending));
-    OPAL_THREAD_UNLOCK(&(module->p2p_lock));
 
     if (NULL != new_pending) {
         opal_output_verbose(50, ompi_osc_base_output,
-                            "sending lock request to proc");
+                            "sending unlock ack to proc %d",
+                            new_pending->proc->proc_name.vpid);
         ompi_win_append_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
         /* set lock state and generate a lock request */
         module->p2p_lock_status = new_pending->lock_type;
+    }
+
+    OPAL_THREAD_UNLOCK(&(module->p2p_lock));
+
+    if (NULL != new_pending) {
         ompi_osc_pt2pt_control_send(module,
                                     new_pending->proc,
                                     OMPI_OSC_PT2PT_HDR_LOCK_REQ,
                                     module->p2p_comm->c_my_rank,
                                     OMPI_SUCCESS);
-        OBJ_DESTRUCT(new_pending);
+        OBJ_RELEASE(new_pending);
     }
 
     return OMPI_SUCCESS;
