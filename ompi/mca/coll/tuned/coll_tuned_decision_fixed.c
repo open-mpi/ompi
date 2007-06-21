@@ -574,13 +574,55 @@ int ompi_coll_tuned_gather_intra_dec_fixed(void *sbuf, int scount,
 					   struct ompi_datatype_t *sdtype,
 					   void* rbuf, int rcount, 
 					   struct ompi_datatype_t *rdtype, 
-					   int root, struct ompi_communicator_t *comm)
+					   int root,
+                                           struct ompi_communicator_t *comm)
 {
+    const int large_segment_size = 32768;
+    const int small_segment_size = 1024;
+
+    const size_t large_block_size = 92160;
+    const size_t intermediate_block_size = 6000;
+    const size_t small_block_size = 1024;
+
+    const int large_communicator_size = 60;
+    const int small_communicator_size = 10;
+
+    int communicator_size;
+    size_t sdsize, block_size;
+
     OPAL_OUTPUT((ompi_coll_tuned_stream, 
 		 "ompi_coll_tuned_gather_intra_dec_fixed"));
+
+    communicator_size = ompi_comm_size(comm);
+   
+    /* Determine block size */
+    ompi_ddt_type_size(sdtype, &sdsize);
+    block_size = sdsize * scount;
+
+    if (block_size > large_block_size) {
+        return ompi_coll_tuned_gather_intra_linear_sync (sbuf, scount, sdtype, 
+                                                         rbuf, rcount, rdtype, 
+                                                         root, comm,
+                                                         large_segment_size);
+
+    } else if (block_size > intermediate_block_size) {
+        return ompi_coll_tuned_gather_intra_linear_sync (sbuf, scount, sdtype, 
+                                                         rbuf, rcount, rdtype, 
+                                                         root, comm,
+                                                         small_segment_size);
+
+    } else if ((communicator_size > large_communicator_size) ||
+               ((communicator_size > small_communicator_size) &&
+                (block_size < small_block_size))) {
+        return ompi_coll_tuned_gather_intra_binomial (sbuf, scount, sdtype, 
+                                                      rbuf, rcount, rdtype, 
+                                                      root, comm);
+
+    }
+    /* Otherwise, use basic linear */
     return ompi_coll_tuned_gather_intra_basic_linear (sbuf, scount, sdtype, 
-						      rbuf, rcount, rdtype, 
-						      root, comm);
+                                                          rbuf, rcount, rdtype, 
+                                                          root, comm);
 }
 
 /*

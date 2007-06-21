@@ -211,6 +211,7 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   int ompi_coll_tuned_gather_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
   int ompi_coll_tuned_gather_intra_basic_linear(GATHER_ARGS);
   int ompi_coll_tuned_gather_intra_binomial(GATHER_ARGS);
+  int ompi_coll_tuned_gather_intra_linear_sync(GATHER_ARGS, int first_segment_size);
   int ompi_coll_tuned_gather_inter_dec_fixed(GATHER_ARGS);
   int ompi_coll_tuned_gather_inter_dec_dynamic(GATHER_ARGS);
 
