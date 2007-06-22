@@ -407,7 +407,8 @@ static void snapc_full_local_vpid_state_callback(orte_gpr_notify_data_t *data, v
     /*
      * This process has finished their checkpoint, see if we are done yet
      */
-    if( ORTE_SNAPC_CKPT_STATE_FINISHED == ckpt_state ) {
+    if( ORTE_SNAPC_CKPT_STATE_FINISHED == ckpt_state ||
+        ORTE_SNAPC_CKPT_STATE_ERROR    == ckpt_state ) {
         if(local_checkpoint_finished()) {
             /*
              * Currently we don't need to do anything when done
@@ -904,7 +905,8 @@ static bool local_checkpoint_finished(void)
         vpid_snapshot = (orte_snapc_base_snapshot_t*)item;
         
         /* Searching for any vpid's that have not completed */
-        if(ORTE_SNAPC_CKPT_STATE_FINISHED != vpid_snapshot->state) {
+        if(ORTE_SNAPC_CKPT_STATE_FINISHED != vpid_snapshot->state &&
+           ORTE_SNAPC_CKPT_STATE_ERROR    != vpid_snapshot->state ) {
             is_done = false;
             break;
         }
@@ -919,6 +921,14 @@ static void snapc_full_local_wait_ckpt_cb(pid_t pid, int status, void* cbdata)
     opal_list_item_t* item = NULL;
     orte_snapc_base_snapshot_t *vpid_snapshot = NULL;
     int ret, exit_status = ORTE_SUCCESS;
+    size_t loc_state = ORTE_SNAPC_CKPT_STATE_FINISHED;
+
+    if( status == OPAL_SUCCESS ) {
+        loc_state = ORTE_SNAPC_CKPT_STATE_FINISHED;
+    }
+    else {
+        loc_state = ORTE_SNAPC_CKPT_STATE_ERROR;
+    }
 
     /*
      * Find the process in the list
@@ -930,7 +940,7 @@ static void snapc_full_local_wait_ckpt_cb(pid_t pid, int status, void* cbdata)
 
         if( 0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, proc_name, &vpid_snapshot->process_name) ) {
             /* Update it's state */
-            vpid_snapshot->state = ORTE_SNAPC_CKPT_STATE_FINISHED;
+            vpid_snapshot->state = loc_state;
             break;
         }
     }
@@ -940,7 +950,7 @@ static void snapc_full_local_wait_ckpt_cb(pid_t pid, int status, void* cbdata)
      * Update our status information
      */
     if( ORTE_SUCCESS != (ret = orte_snapc_base_set_vpid_ckpt_info( vpid_snapshot->process_name,
-                                                                   ORTE_SNAPC_CKPT_STATE_FINISHED,
+                                                                   loc_state,
                                                                    vpid_snapshot->crs_snapshot_super.reference_name,
                                                                    vpid_snapshot->crs_snapshot_super.local_location ) ) ) {
         exit_status = ret;

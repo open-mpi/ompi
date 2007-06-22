@@ -456,7 +456,8 @@ int orte_snapc_base_global_coord_send_ack(orte_process_name_t* peer, bool ack)
     return exit_status;
 }
 
-int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char *global_snapshot_handle, int seq_num, int ckpt_status)
+int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char *global_snapshot_handle,
+                                                 int seq_num, int ckpt_status)
 {
     int ret, exit_status = ORTE_SUCCESS;
     orte_buffer_t *loc_buffer = NULL;
@@ -1406,6 +1407,10 @@ int orte_snapc_base_add_vpid_metadata( orte_process_name_t *proc,
 
     /* Extract the checkpointer */
     crs_comp = opal_crs_base_extract_expected_component(snapshot_location, &prev_pid);
+    if( NULL == crs_comp ) {
+        exit_status = ORTE_ERROR;
+        goto cleanup;
+    }
 
     /* get the base of the location */
     local_dir = strdup(snapshot_location);

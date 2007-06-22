@@ -85,6 +85,8 @@ static orte_snapc_base_global_snapshot_t global_snapshot;
 static orte_process_name_t orte_checkpoint_sender;
 static bool updated_job_to_running;
 
+static size_t cur_job_ckpt_state = ORTE_SNAPC_CKPT_STATE_NONE;
+
 /************************
  * Function Definitions
  ************************/
@@ -348,6 +350,8 @@ static void job_ckpt_request_callback(orte_gpr_notify_data_t *data, void *cbdata
         }
     }
     
+    cur_job_ckpt_state = job_ckpt_state;
+
     if(ORTE_SNAPC_CKPT_STATE_REQUEST == job_ckpt_state ) {
         /*
          * Start the checkpoint, now that we have the jobid
@@ -357,7 +361,8 @@ static void job_ckpt_request_callback(orte_gpr_notify_data_t *data, void *cbdata
             goto cleanup;
         }
     }
-    else if( ORTE_SNAPC_CKPT_STATE_FINISHED != job_ckpt_state) {
+    else if( ORTE_SNAPC_CKPT_STATE_FINISHED != job_ckpt_state &&
+             ORTE_SNAPC_CKPT_STATE_ERROR    != job_ckpt_state ) {
         /*
          * Update the orte-checkpoint cmd
          */
@@ -422,7 +427,8 @@ static void vpid_ckpt_state_callback(orte_gpr_notify_data_t *data, void *cbdata)
             vpid_snapshot->crs_snapshot_super.reference_name  = strdup(ckpt_ref);
             vpid_snapshot->crs_snapshot_super.remote_location = strdup(ckpt_loc);
             
-            if(ckpt_state == ORTE_SNAPC_CKPT_STATE_FINISHED) {
+            if(ckpt_state == ORTE_SNAPC_CKPT_STATE_FINISHED ||
+               ckpt_state == ORTE_SNAPC_CKPT_STATE_ERROR ) {
                 snapc_full_global_check_for_done(vpid_snapshot->process_name.jobid);
             }
             break;
@@ -692,7 +698,6 @@ static int snapc_full_global_notify_checkpoint( char * global_snapshot_handle,
 
 static int snapc_full_global_check_for_done(orte_jobid_t jobid) {
     int ret, exit_status = ORTE_SUCCESS;
-    size_t ckpt_status = ORTE_SNAPC_CKPT_STATE_FINISHED;
     opal_list_item_t* item = NULL;
     char * global_dir = NULL;
     bool term_job  = false;
@@ -701,13 +706,17 @@ static int snapc_full_global_check_for_done(orte_jobid_t jobid) {
     if(!snapc_full_global_is_done_yet()) {
         return exit_status;
     }
+
+    cur_job_ckpt_state = ORTE_SNAPC_CKPT_STATE_FINISHED;
     
     /**********************
      * Gather all of the files locally
+     * Note: We don't need to worry about the return code in as much since the
+     *       rest of the functions know what to do with an error scenario.
      **********************/
     if( ORTE_SUCCESS != (ret = snapc_full_global_gather_all_files()) ) {
         exit_status = ret;
-        goto cleanup;
+        cur_job_ckpt_state = ORTE_SNAPC_CKPT_STATE_ERROR;
     }
     
     /**********************************
@@ -716,7 +725,7 @@ static int snapc_full_global_check_for_done(orte_jobid_t jobid) {
     global_dir = orte_snapc_base_get_global_snapshot_directory(global_snapshot.reference_name);
 
     if( ORTE_SUCCESS != (ret = orte_snapc_base_set_job_ckpt_info(jobid,
-                                                                 ORTE_SNAPC_CKPT_STATE_FINISHED,
+                                                                 cur_job_ckpt_state,
                                                                  global_snapshot.reference_name,
                                                                  global_dir) ) ) {
         exit_status = ret;
@@ -754,7 +763,7 @@ static int snapc_full_global_check_for_done(orte_jobid_t jobid) {
     if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(&orte_checkpoint_sender, 
                                                                             global_snapshot.reference_name,
                                                                             global_snapshot.seq_num,
-                                                                            ckpt_status)) ) {
+                                                                            cur_job_ckpt_state)) ) {
         exit_status = ret;
         goto cleanup;
     }
@@ -798,7 +807,8 @@ static bool snapc_full_global_is_done_yet(void) {
         vpid_snapshot = (orte_snapc_base_snapshot_t*)item;
         
         /* If they are working, then we are not done yet */
-        if(ORTE_SNAPC_CKPT_STATE_FINISHED != vpid_snapshot->state) {
+        if(ORTE_SNAPC_CKPT_STATE_FINISHED != vpid_snapshot->state &&
+           ORTE_SNAPC_CKPT_STATE_ERROR    != vpid_snapshot->state ) {
             done_yet = false;
             return done_yet;
         }
@@ -813,7 +823,6 @@ static int snapc_full_global_gather_all_files(void) {
     char * local_dir = NULL;
     orte_filem_base_request_t *filem_request = OBJ_NEW(orte_filem_base_request_t);
     int tmp_argc = 0;
-
 
     /*
      * If it is stored in place, then we do not need to transfer anything
@@ -831,6 +840,13 @@ static int snapc_full_global_gather_all_files(void) {
                                 "global)   Remote Location: (%s)\n", vpid_snapshot->crs_snapshot_super.remote_location);
             opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
                                 "global)   Local Location:  (%s)\n", vpid_snapshot->crs_snapshot_super.local_location);
+            opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
+                                "global)   Status:          (%d)\n", (int)vpid_snapshot->state);
+
+            if( ORTE_SNAPC_CKPT_STATE_ERROR == vpid_snapshot->state ) {
+                exit_status = ORTE_ERROR;
+                goto cleanup;
+            }
 
             /*
              * Update the metadata file
@@ -874,6 +890,13 @@ static int snapc_full_global_gather_all_files(void) {
                                 "global)   Remote Location: (%s)\n", vpid_snapshot->crs_snapshot_super.remote_location);
             opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
                                 "global)   Local Location:  (%s)\n", vpid_snapshot->crs_snapshot_super.local_location);
+            opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
+                                "global)   Status:          (%d)\n", (int)vpid_snapshot->state);
+
+            if( ORTE_SNAPC_CKPT_STATE_ERROR == vpid_snapshot->state ) {
+                exit_status = ORTE_ERROR;
+                goto cleanup;
+            }
 
             /*
              * Construct the process information
