@@ -63,7 +63,7 @@ static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
     c->c_waiting++;
 
 #if OMPI_ENABLE_DEBUG && !OMPI_HAVE_THREAD_SUPPORT
-    if (1 != m->m_lock_debug) {                                         \
+    if (opal_mutex_check_locks && 0 == m->m_lock_debug) {                                         \
         opal_output(0, "Warning -- mutex not locked in condition_wait"); \
     }                                                                   \
     m->m_lock_debug--;
@@ -111,7 +111,7 @@ static inline int opal_condition_timedwait(opal_condition_t *c,
     int rc = 0;
 
 #if OMPI_ENABLE_DEBUG && !OMPI_HAVE_THREAD_SUPPORT
-    if (1 != m->m_lock_debug) {                                         \
+    if (opal_mutex_check_locks && 0 == m->m_lock_debug) {                                         \
         opal_output(0, "Warning -- mutex not locked in condition_wait"); \
     }                                                                   \
     m->m_lock_debug--;
