@@ -482,8 +482,9 @@ ompi_osc_rdma_module_unlock(int target,
 
     /* send the unlock request */
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
-                         "%d sending unlock request to %d", 
-                         module->m_comm->c_my_rank, target));
+                         "%d sending unlock request to %d with %d requests", 
+                         module->m_comm->c_my_rank, target,
+                         out_count));
     ompi_osc_rdma_control_send(module, 
                                 proc,
                                 OMPI_OSC_RDMA_HDR_UNLOCK_REQ,
@@ -618,10 +619,16 @@ int
 ompi_osc_rdma_passive_unlock_complete(ompi_osc_rdma_module_t *module)
 {
     ompi_osc_rdma_pending_lock_t *new_pending = NULL;
+    opal_list_t copy_unlock_acks;
 
     if (module->m_num_pending_in != 0) return OMPI_SUCCESS;
 
     OPAL_THREAD_LOCK(&module->m_lock);
+    if (module->m_num_pending_in != 0) {
+        OPAL_THREAD_UNLOCK(&module->m_lock);
+        return OMPI_SUCCESS;
+    }
+
     if (module->m_lock_status == MPI_LOCK_EXCLUSIVE) {
         ompi_win_remove_mode(module->m_win, OMPI_WIN_EXPOSE_EPOCH);
         module->m_lock_status = 0;
@@ -633,35 +640,54 @@ ompi_osc_rdma_passive_unlock_complete(ompi_osc_rdma_module_t *module)
         }
     }
 
+    OBJ_CONSTRUCT(&copy_unlock_acks, opal_list_t);
+    /* copy over any unlocks that have been satisfied (possibly
+       multiple if SHARED) */
+    opal_list_join(&copy_unlock_acks,
+                   opal_list_get_end(&copy_unlock_acks),
+                   &module->p2p_unlocks_pending);
+    OPAL_THREAD_UNLOCK(&module->p2p_lock);
+
     /* issue whichever unlock acks we should issue */
     while (NULL != (new_pending = (ompi_osc_rdma_pending_lock_t*)
-                    opal_list_remove_first(&module->m_unlocks_pending))) {
+                    opal_list_remove_first(&copy_unlock_acks))) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "sending unlock reply to proc"));
         ompi_osc_rdma_control_send(module,
                                    new_pending->proc,
                                    OMPI_OSC_RDMA_HDR_UNLOCK_REPLY,
                                    OMPI_SUCCESS, OMPI_SUCCESS);
-        OBJ_DESTRUCT(new_pending);
+        OBJ_RELEASE(new_pending);
     }
 
-    /* if we were really unlocked, see if we have more to process */
+    /* if we were really unlocked, see if we have another lock request
+       we can satisfy */
+    OPAL_THREAD_LOCK(&(module->m_lock));
     new_pending = (ompi_osc_rdma_pending_lock_t*) 
         opal_list_remove_first(&(module->m_locks_pending));
+    if (0 == module->m_lock_status) {
+        if (NULL != new_pending) {
+            ompi_win_append_mode(module->m_win, OMPI_WIN_EXPOSE_EPOCH);
+            /* set lock state and generate a lock request */
+            module->m_lock_status = new_pending->lock_type;
+            if (MPI_LOCK_SHARED == new_pending->lock_type) {
+                module->m_shared_count++;
+            }
+        }
+    } else {
+        new_pending = NULL;
+    }
     OPAL_THREAD_UNLOCK(&(module->m_lock));
 
     if (NULL != new_pending) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "sending lock request to proc"));
-        ompi_win_append_mode(module->m_win, OMPI_WIN_EXPOSE_EPOCH);
-        /* set lock state and generate a lock request */
-        module->m_lock_status = new_pending->lock_type;
         ompi_osc_rdma_control_send(module,
                                     new_pending->proc,
                                     OMPI_OSC_RDMA_HDR_LOCK_REQ,
                                     module->m_comm->c_my_rank,
                                     OMPI_SUCCESS);
-        OBJ_DESTRUCT(new_pending);
+        OBJ_RELEASE(new_pending);
     }
 
     return OMPI_SUCCESS;
