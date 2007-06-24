@@ -40,12 +40,6 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
                         "pt2pt component destroying window with id %d",
                         module->p2p_comm->c_contextid);
 
-    OPAL_THREAD_LOCK(&module->p2p_lock);
-    while (OMPI_WIN_EXPOSE_EPOCH & ompi_win_get_mode(win)) {
-        opal_condition_wait(&module->p2p_cond, &module->p2p_lock);
-    }
-    OPAL_THREAD_UNLOCK(&module->p2p_lock);
-
     /* finish with a barrier */
     if (ompi_group_size(win->w_group) > 1) {
         ret = module->p2p_comm->c_coll.coll_barrier(module->p2p_comm);
