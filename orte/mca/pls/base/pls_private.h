@@ -105,7 +105,7 @@ typedef uint8_t orte_pls_cmd_flag_t;
      * general utilities
      */
     ORTE_DECLSPEC int orte_pls_base_mca_argv(int *argc, char ***argv);
-    void orte_pls_base_purge_mca_params(char ***env);
+    ORTE_DECLSPEC void orte_pls_base_purge_mca_params(char ***env);
 
     /**
      * Construct basic ORTE Daemon command line arguments
