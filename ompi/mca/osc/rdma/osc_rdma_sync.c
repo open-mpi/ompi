@@ -645,8 +645,8 @@ ompi_osc_rdma_passive_unlock_complete(ompi_osc_rdma_module_t *module)
        multiple if SHARED) */
     opal_list_join(&copy_unlock_acks,
                    opal_list_get_end(&copy_unlock_acks),
-                   &module->p2p_unlocks_pending);
-    OPAL_THREAD_UNLOCK(&module->p2p_lock);
+                   &module->m_unlocks_pending);
+    OPAL_THREAD_UNLOCK(&module->m_lock);
 
     /* issue whichever unlock acks we should issue */
     while (NULL != (new_pending = (ompi_osc_rdma_pending_lock_t*)
