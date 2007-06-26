@@ -291,6 +291,8 @@ OPAL_DECLSPEC extern void _int_get_arena_info __MALLOC_P ((mstate __m,
 					     struct malloc_arena_info *__ma));
 OPAL_DECLSPEC extern void _int_get_global_info __MALLOC_P ((struct malloc_global_info *__m));
 
+OPAL_DECLSPEC extern int posix_memalign (void **memptr, size_t alignment, size_t size);
+
 #ifdef __cplusplus
 } /* end of extern "C" */
 #endif
