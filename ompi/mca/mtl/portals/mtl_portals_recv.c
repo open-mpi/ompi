@@ -142,7 +142,10 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
 
             ret = PtlMDBind(ompi_mtl_portals.ptl_ni_h, md,
                             PTL_UNLINK, &md_h);
-            if (PTL_OK != ret) abort();
+            if (PTL_OK != ret) {
+                opal_output(stderr," Error returned from PtlMDBind.  Error code - %d \n",ret);
+                abort();
+            }
 
             OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
                                  "acking recv: 0x%016llx\n", 
@@ -156,7 +159,10 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
                          recv_event->ev.hdr_data,
                          0,
                          0);
-            if (PTL_OK != ret) abort();
+            if (PTL_OK != ret) {
+                opal_output(stderr," Error returned from PtlPut.  Error code - %d \n",ret);
+                abort();
+            }
         }
 
         /* finished with our buffer space */
@@ -183,7 +189,10 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
     } else {
         ret = ompi_mtl_datatype_recv_buf(convertor, &md.start, &buflen,
                                          &ptl_request->free_after);
-        if (OMPI_SUCCESS != ret) abort();
+        if (OMPI_SUCCESS != ret) {
+            opal_output(stderr," Error returned from ompi_mtl_datatype_recv_buf.  Error code - %d \n",ret);
+            abort();
+        }
         md.length = (recv_event->ev.rlength > buflen) ? buflen : recv_event->ev.rlength;
         md.threshold = 2; /* send and get */
         md.options = PTL_MD_EVENT_START_DISABLE;
@@ -195,7 +204,10 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
            and REPLY */
         ret = PtlMDBind(ompi_mtl_portals.ptl_ni_h, md,
                         PTL_RETAIN, &md_h);
-        if (PTL_OK != ret) abort();
+        if (PTL_OK != ret) {
+            opal_output(stderr," Error returned from ompi_mtl_datatype_recv_buf.  Error code - %d \n",ret);
+            abort();
+        }
 
         ptl_request->event_callback = ompi_mtl_portals_recv_progress;
 
@@ -205,7 +217,10 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
                      0, 
                      recv_event->ev.hdr_data,
                      0);
-        if (PTL_OK != ret) abort();
+        if (PTL_OK != ret) {
+            opal_output(stderr," Error returned from PtlGet.  Error code - %d \n",ret);
+            abort();
+        }
 
         ptl_request->super.ompi_req->req_status.MPI_SOURCE =
             PTL_GET_SOURCE(recv_event->ev.match_bits);
@@ -238,6 +253,7 @@ ompi_mtl_portals_match_up_put_end(ptl_seq_t link)
     }
 
     /* should never get here */
+    opal_output(stderr," ompi_mtl_portals_match_up_put_end failed \n");
     abort(); 
 }
 
@@ -277,9 +293,11 @@ ompi_mtl_portals_wait_for_put_end(ptl_seq_t link)
                 /* otherwise match it up */
                 ompi_mtl_portals_match_up_put_end(ev.link);
             } else {
+                opal_output(stderr," Unrecognised event type - %d - ompi_mtl_portals_wait_for_put_end : %d \n",ev.type,ret);
                 abort(); 
             }
         } else {
+            opal_output(stderr," Error returned in ompi_mtl_portals_wait_for_put_end from PtlEQWait : %d \n",ret);
             abort();
         }
     }
@@ -324,11 +342,13 @@ ompi_mtl_portals_search_unex_events(ptl_match_bits_t match_bits,
                 /* can't be the one we want */
                 ompi_mtl_portals_match_up_put_end(ev.link);
             } else {
+                opal_output(stderr," Unrecognised event type - %d - ompi_mtl_portals_search_unex_events : %d \n",ev.type,ret);
                 abort();
             }
         } else if (PTL_EQ_EMPTY == ret) {
             break; 
         } else {
+            opal_output(stderr," Error returned in ompi_mtl_portals_search_unex_events from PtlEQWait : %d \n",ret);
             abort();
         }
     }
