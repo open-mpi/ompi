@@ -197,6 +197,7 @@ int mca_btl_mvapi_register(
  */
 mca_btl_base_descriptor_t* mca_btl_mvapi_alloc(
     struct mca_btl_base_module_t* btl,
+    uint8_t order,
     size_t size)
 {
     mca_btl_mvapi_frag_t* frag;
@@ -218,6 +219,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_alloc(
     
     frag->segment.seg_len = size <= mvapi_btl->super.btl_eager_limit ? size : mvapi_btl->super.btl_eager_limit;  
     frag->base.des_flags = 0; 
+    frag->base.order = MCA_BTL_NO_ORDER;
     
     return (mca_btl_base_descriptor_t*)frag;
 }
@@ -271,6 +273,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
     struct mca_btl_base_endpoint_t* endpoint,
     mca_mpool_base_registration_t* registration, 
     struct ompi_convertor_t* convertor,
+    uint8_t order,
     size_t reserve,
     size_t* size
 )
@@ -317,7 +320,8 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
             frag->base.des_dst = NULL;
             frag->base.des_dst_cnt = 0;
             frag->base.des_flags = 0;
-
+            frag->base.order = MCA_BTL_NO_ORDER;
+            
             frag->sg_entry.len = max_data;
             frag->sg_entry.lkey = mvapi_reg->l_key;
             frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t)iov.iov_base;
@@ -367,7 +371,8 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
-
+    frag->base.order = MCA_BTL_NO_ORDER;
+    
     return &frag->base;
 }
 
