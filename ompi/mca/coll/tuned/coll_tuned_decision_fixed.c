@@ -351,7 +351,8 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     if ((communicator_size < 8) && (message_size < 512)){
         /* Linear_0K */
         return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm); 
-    } else if ((communicator_size < 8) && (message_size < 20480)) {
+    } else if (((communicator_size < 8) && (message_size < 20480)) || 
+               (count <= 1)){
         /* Binomial_0K */
         segsize = 0;
         return ompi_coll_tuned_reduce_intra_binomial(sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
