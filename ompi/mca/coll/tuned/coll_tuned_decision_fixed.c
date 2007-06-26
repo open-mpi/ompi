@@ -225,8 +225,9 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
                  " root %d rank %d com_size %d msg_length %lu",
                  root, rank, communicator_size, (unsigned long)message_size));
 
-    /* Handle messages of small and intermediate size */
-    if (message_size < small_message_size) {
+    /* Handle messages of small and intermediate size, and 
+       single-element broadcasts */
+    if ((message_size < small_message_size) || (count <= 1)) {
        /* Binomial without segmentation */
        segsize = 0;
        return  ompi_coll_tuned_bcast_intra_binomial (buff, count, datatype, 
