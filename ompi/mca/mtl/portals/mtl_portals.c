@@ -83,13 +83,13 @@ ompi_mtl_portals_add_procs(struct mca_mtl_base_module_t *mtl,
 
         /* initialize the event queues */
         ret = PtlEQAlloc(ompi_mtl_portals.ptl_ni_h,
-                        1024, /* BWB - fix me */
+                         ompi_mtl_portals.ptl_expected_queue_size,
                          PTL_EQ_HANDLER_NONE,
                          &(ompi_mtl_portals.ptl_eq_h));
         assert(ret == PTL_OK);
 
         ret = PtlEQAlloc(ompi_mtl_portals.ptl_ni_h,
-                         1024, /* BWB - fix me */
+                         ompi_mtl_portals.ptl_unexpected_queue_size,
                          PTL_EQ_HANDLER_NONE,
                          &(ompi_mtl_portals.ptl_unexpected_recv_eq_h));
         assert(ret == PTL_OK);

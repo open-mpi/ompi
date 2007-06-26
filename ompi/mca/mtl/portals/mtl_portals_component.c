@@ -100,6 +100,22 @@ ompi_mtl_portals_component_open(void)
 
     ompi_mtl_portals.ptl_ni_h = PTL_INVALID_HANDLE;
 
+    mca_base_param_reg_int(&mca_mtl_portals_component.mtl_version,
+                           "expected_queue_size",
+                           "Size of the expected receive queue in bytes",
+                           false,
+                           false,
+                           1024,
+                           &ompi_mtl_portals.ptl_expected_queue_size);
+
+    mca_base_param_reg_int(&mca_mtl_portals_component.mtl_version,
+                           "unexpected_queue_size",
+                           "Size of the unexpected receive queue in bytes",
+                           false,
+                           false,
+                           1024,
+                           &ompi_mtl_portals.ptl_unexpected_queue_size);
+
     return OMPI_SUCCESS;
 }
 

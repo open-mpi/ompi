@@ -58,6 +58,9 @@ struct mca_mtl_portals_module_t {
     
     opal_list_t ptl_recv_short_blocks;
     opal_list_t unexpected_messages;
+
+    int ptl_expected_queue_size;
+    int ptl_unexpected_queue_size;
 };
 typedef struct mca_mtl_portals_module_t mca_mtl_portals_module_t;
 
