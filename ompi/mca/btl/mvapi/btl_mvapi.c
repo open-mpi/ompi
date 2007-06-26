@@ -397,6 +397,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     struct mca_btl_base_endpoint_t* endpoint,
     mca_mpool_base_registration_t* registration, 
     struct ompi_convertor_t* convertor,
+    uint8_t order,
     size_t reserve,
     size_t* size)
 {
@@ -416,6 +417,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     frag->segment.seg_len = *size;
     ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
     frag->base.des_flags = 0; 
+    frag->base.order = MCA_BTL_NO_ORDER;
 
     if(NULL == registration) {
         /* we didn't get a memory registration passed in, so we have to register the region
