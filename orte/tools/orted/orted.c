@@ -189,32 +189,13 @@ int main(int argc, char *argv[])
     char log_file[PATH_MAX];
     char *jobidstring;
     int i;
-    char * orted_amca_param_path = NULL;
 
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals_t));
 
-    /* Need to set this so that the orted does not throw a warning message
-     * about missing AMCA param files that are located in the relative or
-     * absolute paths (e.g., not in the package directory).
-     */
-    opal_mca_base_param_use_amca_sets = false;
-
-    /* Ensure that enough of OPAL is setup for us to be able to run */
-    if (OPAL_SUCCESS != opal_init_util()) {
-        fprintf(stderr, "OPAL failed to initialize -- orted aborting\n");
-        exit(1);
-    }
-
     /* save the environment for use when launching application processes */
     orted_globals.saved_environ = opal_argv_copy(environ);
 
-    /* setup mca param system 
-     * Do not parse the Aggregate Parameter Sets in this pass.
-     * we will get to them in a moment
-     */
-    mca_base_param_init();
-    
     /* setup to check common command line options that just report and die */
     cmd_line = OBJ_NEW(opal_cmd_line_t);
     opal_cmd_line_create(cmd_line, orte_cmd_line_opts);
@@ -235,58 +216,10 @@ int main(int argc, char *argv[])
      */
     mca_base_cmd_line_process_args(cmd_line, &environ, &environ);
 
-    /*
-     * orterun may have given us an additional path to use when looking for 
-     * Aggregate MCA parameter sets. Look it up, and prepend it to the 
-     * search list.
-     */
-    mca_base_param_reg_string_name("mca", "base_param_file_path_orted",
-                                   "[INTERNAL] Current working directory from MPIRUN to help in finding Aggregate MCA parameters",
-                                   true, false,
-                                   NULL,
-                                   &orted_amca_param_path);
-
-    if( NULL != orted_amca_param_path ) {
-        int loc_id;
-        char * amca_param_path = NULL;
-        char * tmp_str = NULL;
-
-        /* Lookup the current Aggregate MCA Parameter set path */
-        loc_id = mca_base_param_find("mca", NULL, "base_param_file_path");
-        mca_base_param_lookup_string(loc_id, &amca_param_path);
-
-        asprintf(&tmp_str, "%s%c%s", orted_amca_param_path, OPAL_ENV_SEP, amca_param_path); 
-
-        mca_base_param_set_string(loc_id, tmp_str);
-
-        loc_id = mca_base_param_find("mca", NULL, "base_param_file_path");
-        mca_base_param_lookup_string(loc_id, &amca_param_path);
-        
-        if( NULL != amca_param_path) {
-            free(amca_param_path);
-            amca_param_path = NULL;
-        }
-        if( NULL != orted_amca_param_path) {
-            free(orted_amca_param_path);
-            orted_amca_param_path = NULL;
-        }
-        if( NULL != tmp_str) {
-            free(tmp_str);
-            tmp_str = NULL;
-        }
-
-        /*
-         * Need to recache the files since the user might have given us 
-         * Aggregate MCA parameters that need to be reinitalized.
-         */
-        /* GMS not sure what this does or where it went? */
-        opal_mca_base_param_use_amca_sets = true;
-
-        mca_base_param_recache_files(true);
-    }
-    else {
-        opal_mca_base_param_use_amca_sets = true;
-        mca_base_param_recache_files(false);
+    /* Ensure that enough of OPAL is setup for us to be able to run */
+    if (OPAL_SUCCESS != opal_init_util()) {
+        fprintf(stderr, "OPAL failed to initialize -- orted aborting\n");
+        exit(1);
     }
 
     /* check for help request */

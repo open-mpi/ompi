@@ -48,16 +48,6 @@
 #include "opal/util/output.h"
 
 /*
- * A boolean to temporarily skip over the Aggregate MCA Paramater Set
- * reading.
- * We need to do this as a global variable since all other entry
- * functions to the _param_ funcitons make sure that the init function
- * has been called. By calling init the system will pick up the 
- * wrong files
- */
-bool opal_mca_base_param_use_amca_sets = true;
-
-/*
  * Public variables
  *
  * This variable is public, but not advertised in mca_base_param.h.
@@ -74,7 +64,7 @@ static const char *mca_prefix = "OMPI_MCA_";
 static char *home = NULL;
 static char *cwd  = NULL;
 static bool initialized = false;
-
+static char * force_agg_path = NULL;
 
 /*
  * local functions
@@ -203,8 +193,25 @@ int mca_base_param_recache_files(bool rel_path_search)
     id = mca_base_param_reg_string_name("mca", "base_param_file_path",
                                         "Aggregate MCA parameter Search path",
                                         false, false, agg_default_path, &new_agg_path);
-    
-    if( opal_mca_base_param_use_amca_sets && NULL != new_agg_files ) {
+
+    id = mca_base_param_reg_string_name("mca", "base_param_file_path_force",
+                                        "Forced Aggregate MCA parameter Search path",
+                                        false, false, NULL, &force_agg_path);
+
+    if( NULL != force_agg_path ) {
+        char *tmp_str = NULL;
+        if( NULL == new_agg_path ) {
+            new_agg_path = strdup(force_agg_path);
+        }
+        else {
+            tmp_str = strdup(new_agg_path);
+            free(new_agg_path);
+            asprintf(&new_agg_path, "%s%c%s", force_agg_path, OPAL_ENV_SEP, tmp_str);
+            free(tmp_str);
+        }
+    }
+
+    if( NULL != new_agg_files ) {
         char *tmp_str = NULL;
         
         /*
@@ -867,6 +874,11 @@ int mca_base_param_finalize(void)
             cwd = NULL;
         }
 
+        if( NULL != force_agg_path ) {
+            free(force_agg_path);
+            force_agg_path = NULL;
+        }
+
         initialized = false;
     }
 
@@ -911,7 +923,14 @@ static int fixup_files(char **file_list, char * path, bool rel_path_search) {
          *    - ow warn/error
          */
         else if (!rel_path_search && NULL != strchr(files[i], OPAL_PATH_SEP[0]) ) {
-            if( NULL == (tmp_file = opal_path_access(files[i], cwd, mode) ) ) {
+            if( NULL != force_agg_path ) {
+                tmp_file = opal_path_access(files[i], force_agg_path, mode);
+            }
+            else {
+                tmp_file = opal_path_access(files[i], cwd, mode);
+            }
+
+            if( NULL == tmp_file ) {
                 opal_show_help("help-mca-param.txt", "missing-param-file",
                                true, getpid(), files[i], cwd);
                 exit_status = OPAL_ERROR;
