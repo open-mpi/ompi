@@ -321,7 +321,7 @@ static void signal_forward_callback(int fd, short event, void *arg);
 static int create_app(int argc, char* argv[], orte_app_context_t **app,
                       bool *made_app, char ***app_env);
 static int init_globals(void);
-static int parse_globals(int argc, char* argv[]);
+static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line);
 static int parse_locals(int argc, char* argv[]);
 static int parse_appfile(char *filename, char ***env);
 static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state);
@@ -337,57 +337,34 @@ int orterun(int argc, char *argv[])
     opal_list_t attributes;
     opal_list_item_t *item;
     uint8_t flow;
-    char * cwd = NULL;
-
-    /* Setup MCA params
-     * Do not parse the Aggregate Parameter Sets in this pass.
-     * we will get to them in a moment
-     */
-    opal_mca_base_param_use_amca_sets = true;
-
-    /* Need to initialize OPAL so that install_dirs are filled in */
-
-    opal_init_util();
-
-    /* Setup MCA params */
-
-    mca_base_param_init();
-    orte_register_params(false);
+    opal_cmd_line_t cmd_line;
 
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
     orterun_basename = opal_basename(argv[0]);
 
-    /* Check for some "global" command line params */
-
-    parse_globals(argc, argv);
-
-    /* If we're still here, parse each app */
-
-    parse_locals(argc, argv);
-
-    /*
-     * Get the current working directory
-     */
-    cwd = (char *) malloc(sizeof(char) * MAXPATHLEN);
-    if( NULL == (cwd = getcwd(cwd, MAXPATHLEN) )) {
-        cwd = strdup("");
+    /* Setup and parse the command line */
+    init_globals();
+    opal_cmd_line_create(&cmd_line, cmd_line_init);
+    mca_base_cmd_line_setup(&cmd_line);
+    if (ORTE_SUCCESS != (ret = opal_cmd_line_parse(&cmd_line, true,
+                                                   argc, argv)) ) {
+        return ret;
     }
 
-    /*
-     * Need to recache the files since the user might have given us 
-     * Aggregate MCA parameters that need to be reinitalized.
-     * In addition we need to let the orted know about the current working
-     * directory so that it has another place to look for any Aggregate MCA 
-     * parameter set files
-     */
-    mca_base_param_reg_string_name("mca", "base_param_file_path_orted",
-                                   "[INTERNAL] Current working directory from MPIRUN to help in finding Aggregate MCA parameters",
-                                   true, false,
-                                   cwd,
-                                   &cwd);
-    opal_mca_base_param_use_amca_sets = true;
-    mca_base_param_recache_files(false);
+    /* Need to initialize OPAL so that install_dirs are filled in */
+    opal_init_util();
+
+    /* Setup MCA params */
+    orte_register_params(false);
+
+
+    /* Check for some "global" command line params */
+    parse_globals(argc, argv, &cmd_line);
+    OBJ_DESTRUCT(&cmd_line);
+
+    /* If we're still here, parse each app */
+    parse_locals(argc, argv);
 
     /* Convert the list of apps to an array of orte_app_context_t
        pointers */
@@ -1048,20 +1025,9 @@ static int init_globals(void)
 }
 
 
-static int parse_globals(int argc, char* argv[])
+static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
 {
-    opal_cmd_line_t cmd_line;
-    int id, ret;
-
-    /* Setup and parse the command line */
-
-    init_globals();
-    opal_cmd_line_create(&cmd_line, cmd_line_init);
-    mca_base_cmd_line_setup(&cmd_line);
-    if (ORTE_SUCCESS != (ret = opal_cmd_line_parse(&cmd_line, true,
-                                                   argc, argv)) ) {
-        return ret;
-    }
+    int id;
 
     /* print version if requested.  Do this before check for help so
        that --version --help works as one might expect. */
@@ -1081,7 +1047,6 @@ static int parse_globals(int argc, char* argv[])
     }
 
     /* Check for help request */
-
     if (1 == argc || orterun_globals.help) {
         char *args = NULL;
         char *project_name = NULL;
@@ -1090,7 +1055,7 @@ static int parse_globals(int argc, char* argv[])
         } else {
             project_name = "OpenRTE";
         }
-        args = opal_cmd_line_get_usage_msg(&cmd_line);
+        args = opal_cmd_line_get_usage_msg(cmd_line);
         opal_show_help("help-orterun.txt", "orterun:usage", false,
                        orterun_basename, project_name, OPAL_VERSION,
                        orterun_basename, args,
@@ -1139,7 +1104,6 @@ static int parse_globals(int argc, char* argv[])
         wait_for_job_completion = false;
     }
 
-    OBJ_DESTRUCT(&cmd_line);
     return ORTE_SUCCESS;
 }
 

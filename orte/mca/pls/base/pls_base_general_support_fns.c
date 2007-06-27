@@ -20,6 +20,10 @@
 #include "orte_config.h"
 #include "orte/orte_constants.h"
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -90,6 +94,7 @@ int orte_pls_base_orted_append_basic_args(int *argc, char ***argv,
     int loc_id;
     char * amca_param_path = NULL;
     char * amca_param_prefix = NULL;
+    char * tmp_force = NULL;
 
     /* check for debug flags */
     orte_pls_base_mca_argv(argc, argv);
@@ -173,14 +178,21 @@ int orte_pls_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, amca_param_path);
     }
 
-    /* Add the ORTED hint 'path' param */
-    loc_id = mca_base_param_find("mca", NULL, "base_param_file_path_orted");
-    mca_base_param_lookup_string(loc_id, &amca_param_path);
-    if( NULL != amca_param_path ) {
-        opal_argv_append(argc, argv, "-mca");
-        opal_argv_append(argc, argv, "mca_base_param_file_path_orted");
-        opal_argv_append(argc, argv, amca_param_path);
+    /* Add the 'path' param */
+    loc_id = mca_base_param_find("mca", NULL, "base_param_file_path_force");
+    mca_base_param_lookup_string(loc_id, &tmp_force);
+    if( NULL == tmp_force ) {
+        /* Get the current working directory */
+        tmp_force = (char *) malloc(sizeof(char) * OMPI_PATH_MAX);
+        if( NULL == (tmp_force = getcwd(tmp_force, OMPI_PATH_MAX) )) {
+            tmp_force = strdup("");
+        }
     }
+    opal_argv_append(argc, argv, "-mca");
+    opal_argv_append(argc, argv, "mca_base_param_file_path_force");
+    opal_argv_append(argc, argv, tmp_force);
+
+    free(tmp_force);
 
     if( NULL != amca_param_path ) {
         free(amca_param_path);
