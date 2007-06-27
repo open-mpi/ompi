@@ -29,6 +29,9 @@
 #endif
 #if OMPI_HAVE_POSIX_THREADS
 #include <pthread.h>
+#elif OMPI_HAVE_SOLARIS_THREADS
+#include <thread.h>
+#include <synch.h>
 #endif
 
 #include "opal/threads/condition.h"
@@ -50,6 +53,8 @@ struct opal_condition_t {
     volatile int c_signaled;
 #if OMPI_HAVE_POSIX_THREADS
     pthread_cond_t c_cond;
+#elif OMPI_HAVE_SOLARIS_THREADS
+    cond_t c_cond;
 #endif
 };
 typedef struct opal_condition_t opal_condition_t;
@@ -72,6 +77,8 @@ static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
     if (opal_using_threads()) {
 #if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
         rc = pthread_cond_wait(&c->c_cond, &m->m_lock_pthread);
+#elif OMPI_HAVE_SOLARIS_THREADS && OMPI_ENABLE_PROGRESS_THREADS
+        rc = cond_wait(&c->c_cond, &m->m_lock_solaris);
 #else
         if (c->c_signaled) {
             c->c_waiting--;
@@ -121,6 +128,12 @@ static inline int opal_condition_timedwait(opal_condition_t *c,
     if (opal_using_threads()) {
 #if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
         rc = pthread_cond_timedwait(&c->c_cond, &m->m_lock_pthread, abstime);
+#elif OMPI_HAVE_SOLARIS_THREADS && OMPI_ENABLE_PROGRESS_THREADS
+        /* deal with const-ness */
+        timestruc_t to;
+        to.tv_sec = abstime->tv_sec;
+        to.tv_nsec = abstime->tv_nsec;
+        rc = cond_timedwait(&c->c_cond, &m->m_lock_solaris, &to);
 #else
         absolute.tv_sec = abstime->tv_sec;
         absolute.tv_usec = abstime->tv_nsec * 1000;
@@ -163,6 +176,10 @@ static inline int opal_condition_signal(opal_condition_t *c)
         if(opal_using_threads()) {
             pthread_cond_signal(&c->c_cond);
         }
+#elif OMPI_HAVE_SOLARIS_THREADS && OMPI_ENABLE_PROGRESS_THREADS
+        if(opal_using_threads()) {
+            cond_signal(&c->c_cond);
+        }
 #endif
     }
     return 0;
@@ -171,8 +188,6 @@ static inline int opal_condition_signal(opal_condition_t *c)
 static inline int opal_condition_broadcast(opal_condition_t *c)
 {
     c->c_signaled = c->c_waiting;
-    /* Should be amended for the case, when we do not have Posix-Threads
-       but do have a progress Thread */
 #if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
     if(opal_using_threads()) {
         if( 1 == c->c_waiting ) {
@@ -180,6 +195,10 @@ static inline int opal_condition_broadcast(opal_condition_t *c)
         } else {
             pthread_cond_broadcast(&c->c_cond);
         }
+    }
+#elif OMPI_HAVE_SOLARIS_THREADS && OMPI_ENABLE_PROGRESS_THREADS
+    if(opal_using_threads()) {
+        cond_broadcast(&c->c_cond);
     }
 #endif
     return 0;
