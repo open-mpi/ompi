@@ -175,8 +175,6 @@ opal_net_samenetwork(struct sockaddr *addr1, struct sockaddr *addr2,
     default:
         opal_output(0, "unhandled sa_family %d passed to opal_samenetwork",
                     addr1->sa_family);
-        return false;
-        break;
     }
 
     return false;
