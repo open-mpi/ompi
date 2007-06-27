@@ -241,6 +241,22 @@ add_extra_includes(const char *includes, const char* includedir)
 
 
 static void
+expand_flags(char **argv)
+{
+    int i;
+    char *tmp;
+
+    for (i = 0 ; argv[i] != NULL ; ++i) {
+        tmp = opal_install_dirs_expand(argv[i]);
+        if (tmp != argv[i]) {
+            free(argv[i]);
+            argv[i] = tmp;
+        }
+    }
+}
+
+
+static void
 data_callback(const char *key, const char *value)
 {
     /* handle case where text file does not contain any special
@@ -273,18 +289,21 @@ data_callback(const char *key, const char *value)
         opal_argv_insert(&options_data[parse_options_idx].preproc_flags, 
                          opal_argv_count(options_data[parse_options_idx].preproc_flags),
                          values);
+        expand_flags(options_data[parse_options_idx].preproc_flags);
         opal_argv_free(values);
     } else if (0 == strcmp(key, "compiler_flags")) {
         char **values = opal_argv_split(value, ' ');
         opal_argv_insert(&options_data[parse_options_idx].comp_flags,
                          opal_argv_count(options_data[parse_options_idx].comp_flags),
                          values);
+        expand_flags(options_data[parse_options_idx].comp_flags);
         opal_argv_free(values);
     } else if (0 == strcmp(key, "linker_flags")) {
         char **values = opal_argv_split(value, ' ');
         opal_argv_insert(&options_data[parse_options_idx].link_flags,
                          opal_argv_count(options_data[parse_options_idx].link_flags),
                          values);
+        expand_flags(options_data[parse_options_idx].link_flags);
         opal_argv_free(values);
     } else if (0 == strcmp(key, "libs")) {
         char **values = opal_argv_split(value, ' ');
