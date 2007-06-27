@@ -364,11 +364,15 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
          */
         if( 0 > (ret = access(prog_named_pipe_r, F_OK) )) {
             /* File doesn't exist yet, keep waiting */
+            opal_output(0, "opal-checkpoint: File does not exit yet: <%s> rtn = %d (waited %d/%d sec)\n",
+                        prog_named_pipe_r, ret, s, max_wait_time);
             sleep(1);
             continue;
         }
         else if( 0 > (ret = access(prog_named_pipe_w, F_OK) )) {
             /* File doesn't exist yet, keep waiting */
+            opal_output(0, "opal-checkpoint: File does not exit yet: <%s> rtn = %d (waited %d/%d sec)\n",
+                        prog_named_pipe_w, ret, s, max_wait_time);
             sleep(1);
             continue;
         }
