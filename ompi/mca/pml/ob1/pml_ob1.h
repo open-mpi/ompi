@@ -229,17 +229,6 @@ extern int mca_pml_ob1_ft_event(
 #define MCA_PML_OB1_DES_ALLOC(bml_btl, des, order, size) \
     MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, order,                     \
    sizeof(mca_pml_ob1_hdr_t) + (sizeof(mca_btl_base_segment_t) << 4), size)
-                                                                                                                       
-
-/**
- * structure to associate rdma btl with a registration
- */
-
-struct mca_pml_ob1_rdma_reg_t {
-    struct mca_bml_base_btl_t* bml_btl;
-    struct mca_mpool_base_registration_t* btl_reg;
-};
-typedef struct mca_pml_ob1_rdma_reg_t mca_pml_ob1_rdma_reg_t;
 
 #define MCA_PML_OB1_MAX_REGISTRATIONS 4
 
