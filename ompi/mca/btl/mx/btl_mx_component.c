@@ -307,6 +307,8 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
         return NULL;
     }
     mx_btl->mx_unique_network_id = mx_unique_network_id;
+    mx_btl->super.btl_bandwidth = 1000;  /* whatever */
+    mx_btl->super.btl_latency = 10;
 #if defined(MX_HAS_NET_TYPE)
     {
         int value;
@@ -318,12 +320,13 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
         if( MX_SPEED_2G == value ) {
             mx_btl->mx_unique_network_id |= 0xaa00000000;
             mx_btl->super.btl_bandwidth = 2000;
+            mx_btl->super.btl_latency = 5;
         } else if( MX_SPEED_10G == value ) {
             mx_btl->mx_unique_network_id |= 0xbb00000000;
             mx_btl->super.btl_bandwidth = 10000;
+            mx_btl->super.btl_latency = 3;
         } else {
             mx_btl->mx_unique_network_id |= 0xcc00000000;
-            mx_btl->super.btl_bandwidth = 1000;  /* whatever */
         }
     }
 #endif  /* defined(MX_HAS_NET_TYPE) */
