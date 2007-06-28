@@ -312,7 +312,8 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
 #if defined(MX_HAS_NET_TYPE)
     {
         int value;
-        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_LINE_SPEED, NULL, 0,
+        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_LINE_SPEED,
+                                   &nic_id, sizeof(nic_id),
                                    &value, sizeof(int))) != MX_SUCCESS ) {
             opal_output( 0, "mx_get_info(MX_LINE_SPEED) failed with status %d (%s)\n",
                          status, mx_strerror(status) );
