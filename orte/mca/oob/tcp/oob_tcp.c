@@ -524,6 +524,7 @@ static int mca_oob_tcp_create_listen(int *target_sd, uint16_t af_family)
         addrlen = res->ai_addrlen;
         freeaddrinfo (res);
         
+#ifdef IPV6_V6ONLY
         /* in case of AF_INET6, disable v4-mapped addresses */
         if (AF_INET6 == af_family) {
             int flg = 0;
@@ -533,6 +534,7 @@ static int mca_oob_tcp_create_listen(int *target_sd, uint16_t af_family)
                             "mca_oob_tcp_create_listen: unable to disable v4-mapped addresses\n");
             }
         }
+#endif /* IPV6_V6ONLY */
     }
 #else
     inaddr.sin_family = AF_INET;
