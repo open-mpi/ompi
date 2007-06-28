@@ -28,14 +28,14 @@
  * @retval OMPI_SUCCESS MX successfully initialized
  * @retval OMPI_ERR_NOT_AVAILABLE MX could not be initialized
  */
-int ompi_common_mx_initialize(void);
+OMPI_DECLSPEC int ompi_common_mx_initialize(void);
 
 
 /**
  * Shut down mx library 
  *
  */
-int ompi_common_mx_finalize(void);
+OMPI_DECLSPEC int ompi_common_mx_finalize(void);
 
 
 
