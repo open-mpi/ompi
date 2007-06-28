@@ -296,7 +296,7 @@ ompi_coll_tuned_scatter_intra_check_forced_init(coll_tuned_force_algorithm_mca_p
 
     mca_param_indices->segsize_param_index
 	= mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-				 "Scatter_algorithm_segmentsize",
+				 "scatter_algorithm_segmentsize",
 				 "Segment size in bytes used by default for scatter algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation. Currently, available algorithms do not support segmentation.",
 				 false, false, 0, NULL);
 
