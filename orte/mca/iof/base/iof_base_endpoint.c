@@ -709,7 +709,7 @@ int orte_iof_base_callback_create(
         endpoint->ep_fd = -1;
         opal_list_append(&orte_iof_base.iof_endpoints, &endpoint->super);
     } else {
-        OBJ_RELEASE(endpoint);
+        OBJ_RETAIN(endpoint);
     }
     cb->cb_func = cbfunc;
     cb->cb_data = cbdata;
