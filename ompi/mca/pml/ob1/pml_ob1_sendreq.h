@@ -54,11 +54,11 @@ struct mca_pml_ob1_send_request_t {
     bool req_throttle_sends;
     size_t req_pipeline_depth;
     size_t req_bytes_delivered;
-    mca_pml_ob1_rdma_btl_t req_rdma[MCA_PML_OB1_MAX_RDMA_PER_REQUEST]; 
     uint32_t req_rdma_cnt; 
     mca_pml_ob1_send_pending_t req_pending;
     opal_mutex_t req_send_range_lock; 
     opal_list_t req_send_ranges;
+    mca_pml_ob1_rdma_btl_t req_rdma[1]; 
 };
 typedef struct mca_pml_ob1_send_request_t mca_pml_ob1_send_request_t;
 
@@ -122,7 +122,7 @@ static inline void mca_pml_ob1_free_rdma_resources(mca_pml_ob1_send_request_t* s
     /* return mpool resources */
     for(r = 0; r < sendreq->req_rdma_cnt; r++) {
         mca_mpool_base_registration_t* reg = sendreq->req_rdma[r].btl_reg;
-        if( NULL != reg ) {
+        if( NULL != reg && reg->mpool != NULL ) {
             reg->mpool->mpool_deregister(reg->mpool, reg);
         }
     }
