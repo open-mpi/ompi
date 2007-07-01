@@ -47,7 +47,7 @@ void mca_pml_ob1_recv_request_process_pending(void)
         if(NULL == recvreq)
             break;
         recvreq->req_pending = false;
-        if(mca_pml_ob1_recv_request_schedule_exclusive(recvreq) == 
+        if(mca_pml_ob1_recv_request_schedule_exclusive(recvreq, NULL) == 
                 OMPI_ERR_OUT_OF_RESOURCE)
             break;
     }
@@ -170,7 +170,7 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
         MCA_PML_OB1_RECV_REQUEST_PML_COMPLETE( recvreq );
     } else if (recvreq->req_rdma_offset < recvreq->req_send_offset) {
         /* schedule additional rdma operations */
-        mca_pml_ob1_recv_request_schedule(recvreq);
+        mca_pml_ob1_recv_request_schedule(recvreq, bml_btl);
     }
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
@@ -548,7 +548,7 @@ void mca_pml_ob1_recv_request_progress(
         MCA_PML_OB1_RECV_REQUEST_PML_COMPLETE( recvreq );
     } else if (recvreq->req_rdma_offset < recvreq->req_send_offset) {
         /* schedule additional rdma operations */
-        mca_pml_ob1_recv_request_schedule(recvreq);
+        mca_pml_ob1_recv_request_schedule(recvreq, NULL);
     }
 }
 
@@ -595,22 +595,42 @@ void mca_pml_ob1_recv_request_matched_probe(
  *
 */
 
-int mca_pml_ob1_recv_request_schedule_exclusive( mca_pml_ob1_recv_request_t* recvreq )
+int mca_pml_ob1_recv_request_schedule_exclusive(
+        mca_pml_ob1_recv_request_t* recvreq,
+        mca_bml_base_btl_t *start_bml_btl)
 {
     ompi_proc_t* proc = recvreq->req_recv.req_base.req_proc;
     mca_bml_base_btl_t* bml_btl; 
     int num_tries = recvreq->req_rdma_cnt;
+    size_t i;
+    size_t bytes_remaining = recvreq->req_send_offset -
+        recvreq->req_rdma_offset;
+
+    if(bytes_remaining == 0) {
+        OPAL_THREAD_ADD32(&recvreq->req_lock, -recvreq->req_lock);
+        return;
+    }
+
+    /* if starting bml_btl is provided schedule next fragment on it first */
+    if(start_bml_btl != NULL) {
+        for(i = 0; i < recvreq->req_rdma_cnt; i++) {
+            if(recvreq->req_rdma[i].bml_btl != start_bml_btl)
+                continue;
+            /* something left to be send? */
+            if(recvreq->req_rdma[i].length)
+                recvreq->req_rdma_idx = i;
+            break;
+        }
+    }
 
     do {
-        size_t bytes_remaining = recvreq->req_send_offset -
-            recvreq->req_rdma_offset;
         size_t prev_bytes_remaining = 0;
         int num_fail = 0;
 
         while( bytes_remaining > 0 &&
                recvreq->req_pipeline_depth < mca_pml_ob1.recv_pipeline_depth ) {
             size_t hdr_size;
-            size_t size, i;
+            size_t size;
             mca_pml_ob1_rdma_hdr_t* hdr;
             mca_btl_base_descriptor_t* dst;
             mca_btl_base_descriptor_t* ctl;
@@ -733,6 +753,7 @@ int mca_pml_ob1_recv_request_schedule_exclusive( mca_pml_ob1_recv_request_t* rec
             /* run progress as the prepare (pinning) can take some time */
             mca_bml.bml_progress();
         }
+        bytes_remaining = recvreq->req_send_offset - recvreq->req_rdma_offset;
     } while(OPAL_THREAD_ADD32(&recvreq->req_lock,-1) > 0);
 
     return OMPI_SUCCESS;

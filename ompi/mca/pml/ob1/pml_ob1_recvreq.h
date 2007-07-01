@@ -333,13 +333,14 @@ void mca_pml_ob1_recv_request_matched_probe(
  */
 
 int mca_pml_ob1_recv_request_schedule_exclusive(
-    mca_pml_ob1_recv_request_t* req);
+    mca_pml_ob1_recv_request_t* req, mca_bml_base_btl_t* start_bml_btl);
 
 static inline void mca_pml_ob1_recv_request_schedule(
-        mca_pml_ob1_recv_request_t* req)
+        mca_pml_ob1_recv_request_t* req,
+        mca_bml_base_btl_t* start_bml_btl)
 {
     if(OPAL_THREAD_ADD32(&req->req_lock,1) == 1)
-        mca_pml_ob1_recv_request_schedule_exclusive(req);
+        mca_pml_ob1_recv_request_schedule_exclusive(req, start_bml_btl);
 }
 
 #define MCA_PML_OB1_ADD_ACK_TO_PENDING(P, S, D, O)                      \
