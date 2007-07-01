@@ -122,6 +122,12 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(nprocs == 0)
         return OMPI_SUCCESS;
 
+    /* we don't have any endpoint data we need to cache on the
+       ompi_proc_t, so set proc_pml to NULL */
+    for (i = 0 ; i < nprocs ; ++i) {
+        procs[i]->proc_pml = NULL;
+    }
+
     OBJ_CONSTRUCT(&reachable, ompi_bitmap_t);
     rc = ompi_bitmap_init(&reachable, (int)nprocs);
     if(OMPI_SUCCESS != rc)
@@ -145,37 +151,34 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     bml_endpoints = (struct mca_bml_base_endpoint_t **) malloc ( nprocs *
 		     sizeof(struct mca_bml_base_endpoint_t*));
     if ( NULL == bml_endpoints ) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        goto cleanup_and_return;
     }
    
-    rc = mca_bml.bml_add_procs(
-                               nprocs,
-                               procs,
-                               bml_endpoints,
-                               &reachable
-                               );
+    rc = mca_bml.bml_add_procs( nprocs,
+                                procs,
+                                bml_endpoints,
+                                &reachable );
     if(OMPI_SUCCESS != rc)
-        return rc;
+        goto cleanup_and_return;
 
-    rc = mca_bml.bml_register(
-                              MCA_BTL_TAG_PML,
-                              mca_pml_ob1_recv_frag_callback,
-                              NULL);
+    rc = mca_bml.bml_register( MCA_BTL_TAG_PML,
+                               mca_pml_ob1_recv_frag_callback,
+                               NULL );
+    if(OMPI_SUCCESS != rc)
+        goto cleanup_and_return;
     
     /* register error handlers */
     rc = mca_bml.bml_register_error(mca_pml_ob1_error_handler);
+    if(OMPI_SUCCESS != rc)
+        goto cleanup_and_return;
     
-
-    /* we don't have any endpoint data we need to cache on the
-       ompi_proc_t, so set proc_pml to NULL */
-    for (i = 0 ; i < nprocs ; ++i) {
-        procs[i]->proc_pml = NULL;
-    }
-
-    if ( NULL != bml_endpoints ) {
-        free ( bml_endpoints) ;
+  cleanup_and_return:
+    if( NULL != bml_endpoints) {
+        free ( bml_endpoints);
     }
     OBJ_DESTRUCT(&reachable);
+
     return rc;
 }
 
