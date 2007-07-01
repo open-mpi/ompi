@@ -423,8 +423,8 @@ static void mca_pml_ob1_recv_request_rget(
 
     /* allocate/initialize a fragment */
     for(i = 0; i < hdr->hdr_seg_cnt; i++) {
-        size += hdr->hdr_segs[i].seg_len;
         frag->rdma_segs[i] = hdr->hdr_segs[i];
+        size += frag->rdma_segs[i].seg_len;
     }
     frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
     if(NULL == frag->rdma_bml) {
@@ -526,7 +526,6 @@ void mca_pml_ob1_recv_request_progress(
             return;
 
         case MCA_PML_OB1_HDR_TYPE_FRAG:
-
             bytes_received -= sizeof(mca_pml_ob1_frag_hdr_t);
             data_offset = hdr->hdr_frag.hdr_frag_offset;
             MCA_PML_OB1_RECV_REQUEST_UNPACK(
@@ -599,7 +598,6 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
         mca_pml_ob1_recv_request_t* recvreq,
         mca_bml_base_btl_t *start_bml_btl)
 {
-    ompi_proc_t* proc = recvreq->req_recv.req_base.req_proc;
     mca_bml_base_btl_t* bml_btl; 
     int num_tries = recvreq->req_rdma_cnt;
     size_t i;
@@ -608,7 +606,7 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
 
     if(bytes_remaining == 0) {
         OPAL_THREAD_ADD32(&recvreq->req_lock, -recvreq->req_lock);
-        return;
+        return OMPI_SUCCESS;
     }
 
     /* if starting bml_btl is provided schedule next fragment on it first */
