@@ -47,9 +47,10 @@ char *opal_os_path(bool relative, ...)
 
     num_elements = 0;
     total_length = 0;
-    while (NULL != (element=va_arg(ap, char*))) {
-	   num_elements++;
-	   total_length = total_length + strlen(element);
+    while (NULL != (element = va_arg(ap, char*))) {
+        num_elements++;
+        total_length = total_length + strlen(element);
+        if( path_sep[0] != element[0] ) total_length++;
     }
 
     if (0 == num_elements) { /* must be looking for a simple answer */
@@ -58,8 +59,7 @@ char *opal_os_path(bool relative, ...)
     	if (relative) {
     	    strcpy(path, ".");
             strcat(path, path_sep);
-    	}
-    	else {
+    	} else {
 #ifndef __WINDOWS__
     	    strcpy(path, path_sep);
 #endif
@@ -89,12 +89,13 @@ char *opal_os_path(bool relative, ...)
     }
 
     /* Windows does not require to have the initial separator. */
-    if( NULL != (element=va_arg(ap1, char*)) ) {
-#ifndef __WINDOWS__
+    if( NULL != (element = va_arg(ap1, char*)) ) {
     	if (path_sep[0] != element[0]) {
-            strcat(path, path_sep);
-        }
+#ifdef __WINDOWS__
+            if( relative )
 #endif  /* __WINDOWS__ */
+                strcat(path, path_sep);
+        }
         strcat(path, element);
     }
     while (NULL != (element=va_arg(ap1, char*))) {

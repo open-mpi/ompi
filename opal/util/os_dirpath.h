@@ -41,17 +41,11 @@
 #define OPAL_OS_DIRPATH_CREATE_H
 
 #include "opal_config.h"
-#include <stdio.h>
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * @param path A pointer to a string that contains the path name to be built.
@@ -119,8 +113,6 @@ OPAL_DECLSPEC int opal_os_dirpath_destroy(const char *path,
                                           bool recursive, 
                                           opal_os_dirpath_destroy_callback_fn_t cbfunc);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif

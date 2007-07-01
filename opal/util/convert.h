@@ -52,9 +52,7 @@
 
 #include "opal_config.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Convert a size_t to an int.
@@ -76,8 +74,6 @@ extern "C" {
  */
 OPAL_DECLSPEC int opal_size2int(size_t in, int *out, bool want_check) __opal_attribute_nonnull__(2);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif
