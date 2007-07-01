@@ -34,16 +34,15 @@ static char *list_env_get(char *var, char **list);
 bool opal_path_is_absolute( const char *path )
 {
 #if defined(__WINDOWS__)
-	/* On Windows an absolute path always start with [a-z]:\ */
-	if( ':' == path[1] ) {
-		return true;
-	}
+    /* On Windows an absolute path always start with [a-z]:\ or with \\ */
+    if( (isalpha(path[0]) && (':' == path[1])) ||
+        ('\' == path[0]) && ('\' == path[1]) ) return true;
 #else
     if( OPAL_PATH_SEP[0] == *path ) {
         return true;
     }
 #endif  /* defined(__WINDOWS__) */
-	return false;
+    return false;
 }
 
 /**
@@ -176,8 +175,7 @@ char *opal_path_access(char *fname, char *path, int mode)
     /* Allocate space for the full pathname. */
     if( NULL == path ) {
         fullpath = opal_os_path( false, fname, NULL );
-    }
-    else {
+    } else {
         fullpath = opal_os_path( false, path, fname, NULL );
     }
     if( NULL == fullpath )
@@ -219,7 +217,7 @@ static void path_env_load(char *path, int *pargc, char ***pargv)
 
     while ('\0' != *path) {
 
-       /* Locate the delimiter. */
+        /* Locate the delimiter. */
 
         for (p = path; *p && (*p != OPAL_ENV_SEP); ++p) {
             continue;
@@ -272,3 +270,41 @@ static char *list_env_get(char *var, char **list)
     return getenv(var);
 }
 
+/**
+ * Try to figure out the absolute path based on the application name
+ * (usually argv[0]). If the path is already absolute return a copy, if
+ * it start with . look into the current directory, if not dig into
+ * the $PATH.
+ * In case of error or if executable was not found (as an example if
+ * the application did a cwd between the start and this call), the
+ * function will return NULL. Otherwise, an newly allocated string
+ * will be returned.
+ */
+char* opal_find_absolute_path( char* app_name )
+{
+    char* abs_app_name;
+
+    if( opal_path_is_absolute(app_name) ) { /* already absolute path */
+        abs_app_name = app_name;
+    } else if( '.' == app_name[0] ) { /* the app is in the current directory */
+        char cwd[PATH_MAX], *pcwd;
+        pcwd = getcwd( cwd, PATH_MAX );
+        if( NULL == pcwd ) {
+            /* too bad there is no way we can get the app absolute name */
+            return NULL;
+        }
+        abs_app_name = opal_os_path( false, pcwd, app_name, NULL );
+    } else {
+        /* Otherwise try to search for the application in the PATH ... */
+        abs_app_name = opal_path_findv( app_name, X_OK, NULL, NULL );
+    }
+    
+    if( NULL != abs_app_name ) {
+        char resolved_path[PATH_MAX];
+
+        realpath( abs_app_name, resolved_path );
+        if( abs_app_name != app_name ) free(abs_app_name);
+        return strdup(resolved_path);
+    }
+    return NULL;
+}
