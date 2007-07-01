@@ -228,7 +228,7 @@ static void mca_pml_ob1_rndv_completion(
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)descriptor->des_context;
     size_t req_bytes_delivered = 0;
 
-    if( sendreq->req_send.req_bytes_packed > 0 ) {
+    if( sendreq->req_send.req_bytes_packed == 0 ) {
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
                                  &(sendreq->req_send.req_base), PERUSE_SEND );
     }
@@ -1183,10 +1183,9 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
  *  (3) Queue the RDMA put 
  */
 
-void mca_pml_ob1_send_request_put(
-    mca_pml_ob1_send_request_t* sendreq,
-    mca_btl_base_module_t* btl, 
-    mca_pml_ob1_rdma_hdr_t* hdr)
+void mca_pml_ob1_send_request_put( mca_pml_ob1_send_request_t* sendreq,
+                                   mca_btl_base_module_t* btl, 
+                                   mca_pml_ob1_rdma_hdr_t* hdr )
 {
     mca_bml_base_endpoint_t *bml_endpoint = sendreq->req_endpoint;
     mca_pml_ob1_rdma_frag_t* frag;
