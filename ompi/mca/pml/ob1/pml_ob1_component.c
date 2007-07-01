@@ -115,6 +115,8 @@ int mca_pml_ob1_component_open(void)
         mca_pml_ob1_param_register_int("rdma_put_retries_limit", 5);
     mca_pml_ob1.max_rdma_per_request =
         mca_pml_ob1_param_register_int("max_rdma_per_request", 4);
+    mca_pml_ob1.max_send_per_range =
+        mca_pml_ob1_param_register_int("max_send_per_range", 4);
 
     mca_pml_ob1.unexpected_limit =
         mca_pml_ob1_param_register_int("unexpected_limit", 128);
@@ -149,7 +151,7 @@ int mca_pml_ob1_component_open(void)
     ompi_free_list_init(
         &mca_pml_ob1.send_requests,
         sizeof(mca_pml_ob1_send_request_t) +
-        (mca_pml_ob1.max_rdma_per_request - 1) * sizeof(mca_pml_ob1_rdma_btl_t),
+        (mca_pml_ob1.max_rdma_per_request - 1) * sizeof(mca_pml_ob1_com_btl_t),
         OBJ_CLASS(mca_pml_ob1_send_request_t),
         mca_pml_ob1.free_list_num,
         mca_pml_ob1.free_list_max,
@@ -160,7 +162,7 @@ int mca_pml_ob1_component_open(void)
     ompi_free_list_init(
         &mca_pml_ob1.recv_requests,
         sizeof(mca_pml_ob1_recv_request_t) +
-        (mca_pml_ob1.max_rdma_per_request - 1) * sizeof(mca_pml_ob1_rdma_btl_t),
+        (mca_pml_ob1.max_rdma_per_request - 1) * sizeof(mca_pml_ob1_com_btl_t),
         OBJ_CLASS(mca_pml_ob1_recv_request_t),
         mca_pml_ob1.free_list_num,
         mca_pml_ob1.free_list_max,
@@ -189,8 +191,6 @@ int mca_pml_ob1_component_open(void)
         mca_pml_ob1.free_list_inc,
         NULL);
                                                                                                             
-        
-
     OBJ_CONSTRUCT(&mca_pml_ob1.pending_pckts, ompi_free_list_t);
     ompi_free_list_init(
         &mca_pml_ob1.pending_pckts,
@@ -206,7 +206,8 @@ int mca_pml_ob1_component_open(void)
     OBJ_CONSTRUCT(&mca_pml_ob1.send_ranges, ompi_free_list_t);
     ompi_free_list_init(
         &mca_pml_ob1.send_ranges,
-        sizeof(mca_pml_ob1_send_range_t),
+        sizeof(mca_pml_ob1_send_range_t) +
+        (mca_pml_ob1.max_send_per_range - 1) * sizeof(mca_pml_ob1_com_btl_t),
         OBJ_CLASS(mca_pml_ob1_send_range_t),
         mca_pml_ob1.free_list_num,
         mca_pml_ob1.free_list_max,

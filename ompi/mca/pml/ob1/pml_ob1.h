@@ -56,6 +56,7 @@ struct mca_pml_ob1_t {
     size_t recv_pipeline_depth;
     size_t rdma_put_retries_limit;
     int max_rdma_per_request;
+    int max_send_per_range;
     bool leave_pinned; 
     int leave_pinned_pipeline;
     
@@ -231,8 +232,6 @@ extern int mca_pml_ob1_ft_event(
     MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, order,                     \
    sizeof(mca_pml_ob1_hdr_t) + (sizeof(mca_btl_base_segment_t) << 4), size)
 
-#define MCA_PML_OB1_MAX_REGISTRATIONS 4
-
 struct mca_pml_ob1_pckt_pending_t {
     ompi_free_list_item_t super;
     ompi_proc_t* proc;
@@ -315,5 +314,54 @@ do {                                                                        \
    }                                                                        \
    length -= hdrlen;                                                        \
 } while(0)
+
+/* represent BTL chosen for sending request */
+struct mca_pml_ob1_com_btl_t {
+    mca_bml_base_btl_t *bml_btl;
+    struct mca_mpool_base_registration_t* btl_reg;
+    size_t length;
+};
+typedef struct mca_pml_ob1_com_btl_t mca_pml_ob1_com_btl_t;
+
+int mca_pml_ob1_com_btl_comp(const void *v1, const void *v2);
+
+/* Calculate what percentage of a message to send through each BTL according to
+ * relative weight */
+static inline void mca_pml_ob1_calc_weighted_length(
+        mca_pml_ob1_com_btl_t *btls, int num_btls, size_t size,
+        double weight_total)
+{
+    int i;
+    size_t length_left = size;
+
+    /* shortcut for common case for only one BTL */
+    if(num_btls == 1) {
+        btls[0].length = size;
+        return;
+    }
+
+    /* sort BTLs according of their weights so BTLs with smaller weight will
+     * not hijack all of the traffic */
+    qsort(btls, num_btls, sizeof(mca_pml_ob1_com_btl_t),
+            mca_pml_ob1_com_btl_comp);
+
+    for(i = 0; i < num_btls; i++) {
+        mca_bml_base_btl_t* bml_btl = btls[i].bml_btl;
+        size_t length = 0;
+        if(length_left != 0) {
+            length = (length_left > bml_btl->btl_eager_limit)?
+                ((size_t)(size * (bml_btl->btl_weight / weight_total))) :
+                length_left;
+
+            if(length > length_left)
+                length = length_left;
+            length_left -= length;
+        }
+        btls[i].length = length;
+    }
+
+    /* account for rounding errors */
+    btls[0].length += length_left;
+}
 
 #endif

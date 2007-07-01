@@ -52,7 +52,7 @@ struct mca_pml_ob1_recv_request_t {
     uint32_t req_rdma_idx;
     bool req_pending;
     bool req_ack_sent; /**< whether ack was sent to the sender */
-    mca_pml_ob1_rdma_btl_t req_rdma[1];
+    mca_pml_ob1_com_btl_t req_rdma[1];
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
 
