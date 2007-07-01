@@ -58,7 +58,7 @@ struct mca_pml_ob1_send_request_t {
     mca_pml_ob1_send_pending_t req_pending;
     opal_mutex_t req_send_range_lock; 
     opal_list_t req_send_ranges;
-    mca_pml_ob1_rdma_btl_t req_rdma[1]; 
+    mca_pml_ob1_com_btl_t req_rdma[1]; 
 };
 typedef struct mca_pml_ob1_send_request_t mca_pml_ob1_send_request_t;
 
@@ -68,6 +68,9 @@ struct mca_pml_ob1_send_range_t {
     ompi_free_list_item_t base;
     uint64_t range_send_offset;
     uint64_t range_send_length;
+    int range_btl_idx;
+    int range_btl_cnt;
+    mca_pml_ob1_com_btl_t range_btls[1];
 };
 typedef struct mca_pml_ob1_send_range_t mca_pml_ob1_send_range_t;
 OBJ_CLASS_DECLARATION(mca_pml_ob1_send_range_t);

@@ -883,7 +883,10 @@ void mca_pml_ob1_send_requst_copy_in_out(mca_pml_ob1_send_request_t *sendreq,
 {
     mca_pml_ob1_send_range_t *sr;
     ompi_free_list_item_t *i;
-    int rc = OMPI_SUCCESS;
+    mca_bml_base_endpoint_t* bml_endpoint = sendreq->req_endpoint;
+    int num_btls = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
+    int rc = OMPI_SUCCESS, n;
+    double weight_total = 0;
 
     if(0 == send_length)
         return;
@@ -894,6 +897,18 @@ void mca_pml_ob1_send_requst_copy_in_out(mca_pml_ob1_send_request_t *sendreq,
 
     sr->range_send_offset = send_offset;
     sr->range_send_length = send_length;
+    sr->range_btl_idx = 0;
+
+    for(n = 0; n < num_btls && n < mca_pml_ob1.max_send_per_range; n++) {
+        sr->range_btls[n].bml_btl =
+            mca_bml_base_btl_array_get_next(&bml_endpoint->btl_send);
+        weight_total += sr->range_btls[n].bml_btl->btl_weight;
+    }
+
+    sr->range_btl_cnt = n;
+    mca_pml_ob1_calc_weighted_length(sr->range_btls, n, send_length,
+            weight_total);
+
     OPAL_THREAD_LOCK(&sendreq->req_send_range_lock);
     opal_list_append(&sendreq->req_send_ranges, (opal_list_item_t*)sr);
     OPAL_THREAD_UNLOCK(&sendreq->req_send_range_lock);
@@ -910,22 +925,19 @@ void mca_pml_ob1_send_requst_copy_in_out(mca_pml_ob1_send_request_t *sendreq,
 int mca_pml_ob1_send_request_schedule_exclusive(
         mca_pml_ob1_send_request_t* sendreq)
 { 
-    mca_bml_base_endpoint_t* bml_endpoint = sendreq->req_endpoint;
-    size_t num_btl_avail =
-        mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
 
     do {
-        size_t prev_bytes_remaining = 0, num_fail = 0;
+        size_t prev_bytes_remaining = 0;
         mca_pml_ob1_send_range_t *range = NULL;
+        int num_fail = 0;
 
         while(true) {
             mca_pml_ob1_frag_hdr_t* hdr;
             mca_btl_base_descriptor_t* des;
-            int rc;
+            int rc, btl_idx;
             size_t size, offset;
             opal_list_item_t *item;
-            mca_bml_base_btl_t* bml_btl =
-                mca_bml_base_btl_array_get_next(&bml_endpoint->btl_send);
+            mca_bml_base_btl_t* bml_btl;
 
             if(NULL == range || 0 == range->range_send_length) {
                 OPAL_THREAD_LOCK(&sendreq->req_send_range_lock);
@@ -957,7 +969,7 @@ int mca_pml_ob1_send_request_schedule_exclusive(
 
             prev_bytes_remaining = range->range_send_length;
 
-            if (num_fail == num_btl_avail) {
+            if (num_fail == range->range_btl_cnt) {
                 assert(sendreq->req_pending == MCA_PML_OB1_SEND_PENDING_NONE);
                 OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
                 sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_SCHEDULE;
@@ -967,17 +979,13 @@ int mca_pml_ob1_send_request_schedule_exclusive(
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
-            if(num_btl_avail == 1 ||
-                    range->range_send_length < bml_btl->btl_min_send_size) {
-                size = range->range_send_length;
-            } else {
-                /* otherwise attempt to give the BTL a percentage of the message
-                 * based on a weighting factor. for simplicity calculate this as
-                 * a percentage of the overall message length (regardless of
-                 * amount previously assigned)
-                 */
-                size = (size_t)(bml_btl->btl_weight * range->range_send_length);
-            } 
+            do {
+                btl_idx = range->range_btl_idx;
+                bml_btl = range->range_btls[btl_idx].bml_btl;
+                size = range->range_btls[btl_idx].length;
+                if(++range->range_btl_idx == range->range_btl_cnt)
+                    range->range_btl_idx = 0;
+            } while(!size);
 
             /* makes sure that we don't exceed BTL max send size */
             if (bml_btl->btl_max_send_size != 0 &&
@@ -1035,8 +1043,9 @@ int mca_pml_ob1_send_request_schedule_exclusive(
             rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
                 
             if(rc == OMPI_SUCCESS) {
-                range->range_send_length -= size;
                 /* update state */
+                range->range_btls[btl_idx].length -= size;
+                range->range_send_length -= size;
                 range->range_send_offset += size;
                 OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth, 1);
             } else { 

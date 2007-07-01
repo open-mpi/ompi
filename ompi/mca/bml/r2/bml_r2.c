@@ -157,6 +157,14 @@ static int mca_bml_r2_add_btls( void )
     return OMPI_SUCCESS;
 }
 
+static int btl_bandwidth_compare(const void *v1, const void *v2)
+{
+    mca_bml_base_btl_t *b1 = (mca_bml_base_btl_t*)v1,
+                       *b2 = (mca_bml_base_btl_t*)v2;
+
+    return b2->btl->btl_bandwidth - b1->btl->btl_bandwidth;
+}
+
 /*
  *   For each proc setup a datastructure that indicates the PTLs
  *   that can be used to reach the destination.
@@ -380,6 +388,11 @@ int mca_bml_r2_add_procs(
          *     start using the weight to compute the correct amount.
          */
         n_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send); 
+        
+        /* sort BTLs in descending order according to bandwidth value */
+        qsort(bml_endpoint->btl_send.bml_btls, n_size,
+                sizeof(mca_bml_base_btl_t), btl_bandwidth_compare);
+
         bml_endpoint->bml_max_send_length = 0;
         bml_endpoint->bml_max_rdma_length = 0;
         bml_endpoint->btl_rdma_index = 0;
