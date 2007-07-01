@@ -24,6 +24,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
+#include "opal/prefetch.h"
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
@@ -640,7 +641,7 @@ rematch:
                                 hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
 #endif  /* OMPI_WANT_PERUSE */
     } 
-    if(additional_match) {
+    if( OPAL_UNLIKELY(additional_match) ) {
         opal_list_item_t* item;
         while(NULL != (item = opal_list_remove_first(&additional_matches))) {
             mca_pml_ob1_recv_frag_t* frag = (mca_pml_ob1_recv_frag_t*)item;
