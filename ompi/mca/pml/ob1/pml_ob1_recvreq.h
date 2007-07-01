@@ -48,11 +48,11 @@ struct mca_pml_ob1_recv_request_t {
     size_t  req_bytes_delivered;
     size_t  req_rdma_offset;
     size_t  req_send_offset;
-    mca_pml_ob1_rdma_btl_t req_rdma[MCA_PML_OB1_MAX_RDMA_PER_REQUEST];
     uint32_t req_rdma_cnt;
     uint32_t req_rdma_idx;
     bool req_pending;
     bool req_ack_sent; /**< whether ack was sent to the sender */
+    mca_pml_ob1_rdma_btl_t req_rdma[1];
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
 
@@ -135,7 +135,7 @@ do {                                                                            
                                                                                 \
     for( r = 0; r < recvreq->req_rdma_cnt; r++ ) {                              \
         mca_mpool_base_registration_t* btl_reg = recvreq->req_rdma[r].btl_reg;  \
-        if( NULL != btl_reg ) {                                                 \
+        if( NULL != btl_reg  && btl_reg->mpool != NULL) {                       \
             btl_reg->mpool->mpool_deregister( btl_reg->mpool, btl_reg );           \
         }                                                                       \
     }                                                                           \
