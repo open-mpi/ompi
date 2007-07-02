@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,9 +20,12 @@
 DEFS="-DEXEEXT=\"$(EXEEXT)\""
 
 EXTRA_DIST = \
+	generic_wrapper.1 \
 	opal_wrapper.1 \
 	opalcc.1 \
 	opalc++.1
+
+man_MANS = opal_wrapper.1
 
 if OMPI_INSTALL_BINARIES
 
@@ -55,7 +58,7 @@ if OMPI_INSTALL_BINARIES
 
 # List all man pages that will be installed
 
-man_MANS = \
+man_MANS += \
 	opalcc.1 \
 	opalc++.1
 
@@ -74,10 +77,10 @@ endif # WANT_INSTALL_HEADERS
 maintainer-clean-local:
 	rm -f opalcc.1 opalc++.1
 
-opalcc.1: opal_wrapper.1
+opalcc.1: generic_wrapper.1
 	rm -f opalcc.1
-	sed -e 's/@COMMAND@/opalcc/g' -e 's/@PROJECT@/Open PAL/g' -e 's/@PROJECT_SHORT@/OPAL/g' -e 's/@LANGUAGE@/C/g' < $(top_srcdir)/opal/tools/wrappers/opal_wrapper.1 > opalcc.1
+	sed -e 's/@COMMAND@/opalcc/g' -e 's/@PROJECT@/Open PAL/g' -e 's/@PROJECT_SHORT@/OPAL/g' -e 's/@LANGUAGE@/C/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > opalcc.1
 
-opalc++.1: opal_wrapper.1
+opalc++.1: generic_wrapper.1
 	rm -f opalc++.1
-	sed -e 's/@COMMAND@/opalc++/g' -e 's/@PROJECT@/Open PAL/g' -e 's/@PROJECT_SHORT@/OPAL/g' -e 's/@LANGUAGE@/C++/g' < $(top_srcdir)/opal/tools/wrappers/opal_wrapper.1 > opalc++.1
+	sed -e 's/@COMMAND@/opalc++/g' -e 's/@PROJECT@/Open PAL/g' -e 's/@PROJECT_SHORT@/OPAL/g' -e 's/@LANGUAGE@/C++/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > opalc++.1

@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2007      Cisco, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -29,6 +30,10 @@ libs = \
 
 headers = \
 	orted.h
+
+man_MANS = orted.1
+
+EXTRA_DIST = $(man_MANS)
 
 orted_SOURCES = \
 	$(headers) \
