@@ -252,7 +252,17 @@ typedef int (*orte_rmgr_base_module_check_context_app_fn_t)(orte_app_context_t *
      */
     typedef int (*orte_rmgr_base_module_get_process_info_fn_t)(const orte_process_name_t *name, pid_t *pid, char ** nodename);
 
-/*
+    /**
+     * Set the universe size for the job
+     */
+    typedef int (*orte_rmgr_base_module_set_universe_size_fn_t)(orte_jobid_t job, orte_std_cntr_t univ_size);
+    
+    /**
+     * Get the universe size for the job
+     */
+    typedef int (*orte_rmgr_base_module_get_universe_size_fn_t)(orte_jobid_t job, orte_std_cntr_t *univ_size);
+    
+    /*
  * Ver 2.0
  */
 struct orte_rmgr_base_module_2_0_0_t {
@@ -273,6 +283,8 @@ struct orte_rmgr_base_module_2_0_0_t {
     orte_rmgr_base_module_check_context_app_fn_t    check_context_app;
     orte_rmgr_base_module_set_process_info_fn_t     set_process_info;
     orte_rmgr_base_module_get_process_info_fn_t     get_process_info;
+    orte_rmgr_base_module_set_universe_size_fn_t    set_universe_size;
+    orte_rmgr_base_module_get_universe_size_fn_t    get_universe_size;
 };
 
 typedef struct orte_rmgr_base_module_2_0_0_t orte_rmgr_base_module_2_0_0_t;

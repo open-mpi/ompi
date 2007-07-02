@@ -647,10 +647,10 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
                             }
                         } /* kv2 */
                         /* protect operation on the global list of children */
-                        OPAL_THREAD_LOCK(&mca_odls_bproc_component.mutex);
+                        OPAL_THREAD_LOCK(&mca_odls_bproc_component.lock);
                         opal_list_append(&mca_odls_bproc_component.children, &child->super);
                         opal_condition_signal(&mca_odls_bproc_component.cond);
-                        OPAL_THREAD_UNLOCK(&mca_odls_bproc_component.mutex);
+                        OPAL_THREAD_UNLOCK(&mca_odls_bproc_component.lock);
 
                     }
                 }

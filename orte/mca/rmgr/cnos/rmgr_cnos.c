@@ -90,6 +90,10 @@ static int orte_rmgr_cnos_set_proc_info(const orte_process_name_t* name,
 int orte_rmgr_cnos_get_proc_info(const orte_process_name_t* name, 
     pid_t* pid, char **nodename);
 
+static int orte_rmgr_cnos_set_universe_size(orte_jobid_t job, orte_std_cntr_t univ_size);
+
+static int orte_rmgr_cnos_get_universe_size(orte_jobid_t job, orte_std_cntr_t *univ_size);
+ 
 orte_rmgr_base_module_t orte_rmgr_cnos_module = {
     NULL, /* don't need special init */
     orte_rmgr_cnos_setup_job,
@@ -107,7 +111,9 @@ orte_rmgr_base_module_t orte_rmgr_cnos_module = {
     orte_rmgr_cnos_check_context_cwd,
     orte_rmgr_cnos_check_context_app,
     orte_rmgr_cnos_set_proc_info,
-    orte_rmgr_cnos_get_proc_info
+    orte_rmgr_cnos_get_proc_info,
+    orte_rmgr_cnos_set_universe_size,
+    orte_rmgr_cnos_get_universe_size
 };
 
 
@@ -216,6 +222,16 @@ static int orte_rmgr_cnos_set_proc_info(const orte_process_name_t* name,
 
 int orte_rmgr_cnos_get_proc_info(const orte_process_name_t* name, 
     pid_t* pid, char **nodename)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+static int orte_rmgr_cnos_set_universe_size(orte_jobid_t job, orte_std_cntr_t univ_size)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+static int orte_rmgr_cnos_get_universe_size(orte_jobid_t job, orte_std_cntr_t *univ_size)
 {
     return ORTE_ERR_NOT_SUPPORTED;
 }

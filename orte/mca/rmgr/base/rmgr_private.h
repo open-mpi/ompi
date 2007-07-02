@@ -86,6 +86,9 @@ ORTE_DECLSPEC int orte_rmgr_base_check_context_cwd(orte_app_context_t *context,
 ORTE_DECLSPEC int orte_rmgr_base_set_proc_info(const orte_process_name_t* name, pid_t pid, char * nodename);
 ORTE_DECLSPEC int orte_rmgr_base_get_proc_info(const orte_process_name_t* name, pid_t* pid, char **nodename);
 
+ORTE_DECLSPEC int orte_rmgr_base_set_universe_size(orte_jobid_t job, orte_std_cntr_t univ_size);
+ORTE_DECLSPEC int orte_rmgr_base_get_universe_size(orte_jobid_t job, orte_std_cntr_t *univ_size);
+
 ORTE_DECLSPEC int orte_rmgr_base_connect(orte_std_cntr_t num_connect,
                                          orte_process_name_t *connect);
 
