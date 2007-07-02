@@ -36,6 +36,7 @@
 ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_name =              */   NULL,
     /*  ,app_num =              */   -1,
+    /*  ,universe_size =        */   -1,
     /*  .singleton =            */   false,
     /*  .vpid_start =           */   0,
     /*  .num_procs =            */   1,
@@ -79,6 +80,10 @@ int orte_proc_info(void)
     id = mca_base_param_register_int("orte", "app", "num", NULL, -1);
     mca_base_param_lookup_int(id, &tmp);
     orte_process_info.app_num = tmp;
+
+    id = mca_base_param_register_int("orte", "universe", "size", NULL, -1);
+    mca_base_param_lookup_int(id, &tmp);
+    orte_process_info.universe_size = tmp;
 
     id = mca_base_param_register_string("gpr", "replica", "uri", NULL, orte_process_info.gpr_replica_uri);
     mca_base_param_lookup_string(id, &(orte_process_info.gpr_replica_uri));

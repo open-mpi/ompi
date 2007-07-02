@@ -139,6 +139,7 @@ int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
         ORTE_JOB_APP_CONTEXT_KEY,
         ORTE_JOB_VPID_START_KEY,
         ORTE_JOB_VPID_RANGE_KEY,
+        ORTE_JOB_TOTAL_SLOTS_ALLOC_KEY,
         NULL
     };
     opal_list_item_t *item, *m_item;
@@ -593,6 +594,7 @@ static int odls_default_fork_local_proc(
     orte_odls_child_t *child,
     orte_vpid_t vpid_start,
     orte_vpid_t vpid_range,
+    orte_std_cntr_t total_slots_alloc,
     bool want_processor,
     size_t processor,
     bool oversubscribed,
@@ -825,6 +827,13 @@ static int odls_default_fork_local_proc(
         free(param);
         free(param2);
         
+        /* set the universe size in the environment */
+        param = mca_base_param_environ_variable("orte","universe","size");
+        asprintf(&param2, "%ld", (long)total_slots_alloc);
+        opal_setenv(param, param2, true, &environ_copy);
+        free(param);
+        free(param2);
+        
         /* use same nodename as the starting daemon (us) */
         param = mca_base_param_environ_variable("orte", "base", "nodename");
         opal_setenv(param, orte_system_info.nodename, true, &environ_copy);
@@ -931,7 +940,7 @@ static int odls_default_fork_local_proc(
 int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **base_environ)
 {
     int rc;
-    orte_std_cntr_t i, j, kv, kv2, *sptr;
+    orte_std_cntr_t i, j, kv, kv2, *sptr, total_slots_alloc;
     orte_gpr_value_t *value, **values;
     orte_gpr_keyval_t *kval;
     orte_app_context_t *app;
@@ -1038,6 +1047,15 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
                             return rc;
                         }
                         override_oversubscribed = *bptr;
+                        continue;
+                    }
+                    if (strcmp(kval->key, ORTE_JOB_TOTAL_SLOTS_ALLOC_KEY) == 0) {
+                        /* this can only occur once, so just store it */
+                        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, kval->value, ORTE_STD_CNTR))) {
+                            ORTE_ERROR_LOG(rc);
+                            return rc;
+                        }
+                        total_slots_alloc = *sptr;
                         continue;
                     }
                 } /* end for loop to process global data */
@@ -1320,7 +1338,8 @@ DOFORK:
         OPAL_THREAD_UNLOCK(&orte_odls_default.mutex);
         
         if (ORTE_SUCCESS != (rc = odls_default_fork_local_proc(app, child, start,
-                                                               range, want_processor,
+                                                               range, total_slots_alloc,
+                                                               want_processor,
                                                                i, oversubscribed,
                                                                base_environ))) {
             /* do NOT ERROR_LOG this error - it generates
