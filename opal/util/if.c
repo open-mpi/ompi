@@ -399,8 +399,6 @@ static int opal_ifinit(void)
                     intf.if_flags = flag;
                 } else {
                     intf.if_flags = IFF_UP;
-                    opal_output(0, "Warning: interface flags not known for %s\n",
-                                   intf.if_name);
                 }
                 
                 /* copy new interface information to heap and append
