@@ -33,7 +33,6 @@
 #include "ompi/constants.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_hash_table.h"
-#include "orte/mca/gpr/gpr_types.h"
 
 #define ATTR_HASH_SIZE 10
 
@@ -45,9 +44,8 @@
 #define OMPI_KEYVAL_F77_MPI1       0x0004
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
+
 enum ompi_attribute_type_t {
     UNUSED_ATTR = 0, /**< Make the compilers happy when we have to construct
                       * an attribute */
@@ -524,20 +522,7 @@ int ompi_attr_create_predefined(void);
  */
 int ompi_attr_free_predefined(void);
 
-/**
- * \internal
- * Callback function to get data from registry and create predefined attributes
- *
- * @returns Nothing
- */
-void ompi_attr_create_predefined_callback(
-        orte_gpr_notify_data_t *data,
-        void *cbdata);
 
-
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
+END_C_DECLS
 
 #endif /* OMPI_ATTRIBUTE_H */
