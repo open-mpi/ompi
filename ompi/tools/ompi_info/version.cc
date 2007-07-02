@@ -104,8 +104,8 @@ void ompi_info::do_version(bool want_all, opal_cmd_line_t *cmd_line)
       // Specific type and component
 
       else if (string::npos != (pos = arg1.find(':'))) {
-        type = arg1.substr(0, pos - 1);
-        component = arg1.substr(pos);
+        type = arg1.substr(0, pos);
+        component = arg1.substr(pos + 1);
 
         show_component_version(type, component, scope, ver_all);
       }

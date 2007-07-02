@@ -60,5 +60,10 @@ ompi_info_LDADD = $(libs)
 ompi_info_LDFLAGS = 
 ompi_info_DEPENDENCIES = $(libs)
 
+# AM 1.9.6 seems to have a bug in its dependencies for install-man if
+# dist_ and nodist_ are used, so explicitly add to EXTRA_DIST...
+man_MANS = ompi_info.1
+EXTRA_DIST = $(man_MANS)
+
 clean-local:
 	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)

@@ -9,6 +9,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2007      Cisco, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -85,7 +86,8 @@ namespace ompi_info {
   void do_path(bool want_all, opal_cmd_line_t *cmd_line);
   void show_path(const std::string& type, const std::string& value);
 
-  void do_arch(opal_cmd_line_t *cmd_line);
+  void do_arch();
+  void do_hostname();
   void do_config(bool want_all);
 
   //
