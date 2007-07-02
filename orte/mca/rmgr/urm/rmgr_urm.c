@@ -91,7 +91,9 @@ orte_rmgr_base_module_t orte_rmgr_urm_module = {
     orte_rmgr_base_check_context_cwd,
     orte_rmgr_base_check_context_app,
     orte_rmgr_base_set_proc_info,
-    orte_rmgr_base_get_proc_info
+    orte_rmgr_base_get_proc_info,
+    orte_rmgr_base_set_universe_size,
+    orte_rmgr_base_get_universe_size
 };
 
 

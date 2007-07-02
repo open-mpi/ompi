@@ -797,7 +797,7 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
                                      orte_vpid_t vpid_start, int app_context) {
     int *node_array=NULL, num_nodes, cycle;
     int rc, i, j, stride;
-    orte_std_cntr_t num_processes, num_cycles;
+    orte_std_cntr_t num_processes, num_cycles, univ_size;
     int *pids = NULL;
     char *var, *param;
     orte_process_name_t * proc_name;
@@ -825,6 +825,17 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
     free(param);
     free(var);
  
+    /* set the universe size in the environment */
+    if (ORTE_SUCCESS != (rc = orte_rmgr.get_universe_size(map->job, &univ_size))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    var = mca_base_param_environ_variable("orte","universe","size");
+    asprintf(&param, "%ld", (long)univ_size);
+    opal_setenv(var, param, true, &env);
+    free(param);
+    free(var);
+    
     /* set the vpid-to-vpid stride based on the mapping mode */
     if (bynode) {
         /* we are mapping by node, so we want to set the stride
