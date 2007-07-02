@@ -27,6 +27,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/btl/btl.h"
+#include "ompi/mca/bml/bml.h"
 
 BEGIN_C_DECLS
 
@@ -67,13 +68,50 @@ struct ompi_osc_rdma_component_t {
 #endif
 
     bool c_btl_registered;
+
+    uint32_t c_sequence_number;
 };
 typedef struct ompi_osc_rdma_component_t ompi_osc_rdma_component_t;
+
+
+struct ompi_osc_rdma_btl_t {
+    uint64_t peer_seg_key;
+    mca_bml_base_btl_t *bml_btl;
+    int      rdma_order;
+};
+typedef struct ompi_osc_rdma_btl_t ompi_osc_rdma_btl_t;
+
+
+struct ompi_osc_rdma_peer_info_t {
+    uint64_t             peer_base;
+    uint64_t             peer_len;
+
+    int                  peer_num_btls;
+    volatile int         peer_index_btls;
+    ompi_osc_rdma_btl_t *peer_btls;
+
+    int                             local_num_btls;
+    mca_bml_base_btl_t            **local_btls;
+    mca_mpool_base_registration_t **local_registrations;
+    mca_btl_base_descriptor_t     **local_descriptors;
+};
+typedef struct ompi_osc_rdma_peer_info_t ompi_osc_rdma_peer_info_t;
+
+
+struct ompi_osc_rdma_setup_info_t {
+    volatile int32_t num_btls_callin;
+    int32_t num_btls_expected;
+    volatile int32_t num_btls_outgoing;
+    opal_list_t *outstanding_btl_requests;
+};
+typedef struct ompi_osc_rdma_setup_info_t ompi_osc_rdma_setup_info_t;
 
 
 struct ompi_osc_rdma_module_t {
     /** Extend the basic osc module interface */
     ompi_osc_base_module_t super;
+
+    uint32_t m_sequence_number;
 
     /** lock access to data structures in the current module */
     opal_mutex_t m_lock;
@@ -136,6 +174,15 @@ struct ompi_osc_rdma_module_t {
     bool m_eager_send_active;
     bool m_eager_send_ok;
 
+    /* RDMA data */
+    bool m_use_rdma;
+    ompi_osc_rdma_setup_info_t *m_setup_info;
+    ompi_osc_rdma_peer_info_t *m_peer_info;
+
+    int32_t m_num_pending_rdma;
+
+    volatile int32_t m_num_complete_rdma;
+
     /* ********************* FENCE data ************************ */
     /* an array of <sizeof(m_comm)> ints, each containing the value
        1. */
@@ -157,6 +204,7 @@ struct ompi_osc_rdma_module_t {
 typedef struct ompi_osc_rdma_module_t ompi_osc_rdma_module_t;
 OMPI_MODULE_DECLSPEC extern ompi_osc_rdma_component_t mca_osc_rdma_component;
 
+
 #define GET_MODULE(win) ((ompi_osc_rdma_module_t*) win->w_osc_module)
 
 /*
@@ -177,6 +225,8 @@ int ompi_osc_rdma_component_select(struct ompi_win_t *win,
                                    struct ompi_communicator_t *comm);
 
 int ompi_osc_rdma_component_progress(void);
+
+int ompi_osc_rdma_peer_info_free(ompi_osc_rdma_peer_info_t *peer_info);
 
 /*
  * Module interface function types 
@@ -247,6 +297,7 @@ int ompi_osc_rdma_passive_unlock(ompi_osc_rdma_module_t *module,
                                   int32_t count);
 
 int ompi_osc_rdma_passive_unlock_complete(ompi_osc_rdma_module_t *module);
+
 
 END_C_DECLS
 
