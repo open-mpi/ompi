@@ -9,6 +9,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2007      Cisco, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -297,16 +298,15 @@ void ompi_info::show_path(const string& type, const string& value)
 }
 
 
-void ompi_info::do_arch(opal_cmd_line_t *cmd_line)
+void ompi_info::do_arch()
 {
-  string prefix;
-  char hostname[MAXHOSTNAMELEN];
+    out("Configured architecture", "config:arch", OMPI_ARCH);
+}
 
-  if (opal_cmd_line_is_taken(cmd_line, "hostname")) {
-    gethostname(hostname, MAXHOSTNAMELEN);
-    prefix = hostname + string(":");
-  }
-  out("Configured architecture", prefix + "config:arch", OMPI_ARCH);
+
+void ompi_info::do_hostname()
+{
+    out("Configure host", "config:host", OMPI_CONFIGURE_HOST);
 }
 
 

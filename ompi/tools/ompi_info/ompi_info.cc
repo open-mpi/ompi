@@ -95,13 +95,13 @@ int main(int argc, char *argv[])
   }
 
   opal_cmd_line_make_opt3(cmd_line, 'v', NULL, "version", 2, 
-                          "Show version of Open MPI or a component");
+                          "Show version of Open MPI or a component.  The first parameter can be the keywords \"ompi\" or \"all\", a framework name (indicating all components in a framework), or a framework:component string (indicating a specific component).  The second parameter can be one of: full, major, minor, release, greek, svn.");
   opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "param", 2, 
-                          "Show MCA parameters");
+                          "Show MCA parameters.  The first parameter is the framework (or the keyword \"all\"); the second parameter is the specific component name (or the keyword \"all\").");
   opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "internal", 0, 
                           "Show internal MCA parameters (not meant to be modified by users)");
   opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "path", 1, 
-                          "Show paths that Open MPI was configured with");
+                          "Show paths that Open MPI was configured with.  Accepts the following parameters: prefix, bindir, libdir, incdir, pkglibdir, sysconfdir");
   opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "arch", 0, 
                           "Show architecture Open MPI was compiled on");
   opal_cmd_line_make_opt3(cmd_line, 'c', NULL, "config", 0, 
@@ -109,9 +109,9 @@ int main(int argc, char *argv[])
   opal_cmd_line_make_opt3(cmd_line, 'h', NULL, "help", 0, 
                           "Show this help message");
   opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "pretty", 0, 
-                          "Display output in 'prettyprint' format (default)");
+                          "When used in conjunction with other parameters, the output is displayed in 'prettyprint' format (default)");
   opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "parsable", 0, 
-                          "Display output in parsable format");
+                          "When used in conjunction with other parameters, the output is displayed in a machine-parsable format");
   opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "parseable", 0, 
                           "Synonym for --parsable");
   opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "hostname", 0, 
@@ -243,7 +243,11 @@ int main(int argc, char *argv[])
     acted = true;
   }
   if (want_all || opal_cmd_line_is_taken(cmd_line, "arch")) {
-    do_arch(cmd_line);
+    do_arch();
+    acted = true;
+  }
+  if (want_all || opal_cmd_line_is_taken(cmd_line, "hostname")) {
+    do_hostname();
     acted = true;
   }
   if (want_all || opal_cmd_line_is_taken(cmd_line, "config")) {
@@ -260,7 +264,8 @@ int main(int argc, char *argv[])
   if (!acted) {
     ompi_info::show_ompi_version(ver_full);
     ompi_info::show_path(path_prefix, opal_install_dirs.prefix);
-    ompi_info::do_arch(cmd_line);
+    ompi_info::do_arch();
+    ompi_info::do_hostname();
     ompi_info::do_config(false);
     ompi_info::open_components();
     for (ompi_info::type_vector_t::size_type i = 0; 
