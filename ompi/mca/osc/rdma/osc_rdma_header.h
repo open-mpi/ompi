@@ -25,17 +25,18 @@
 
 #include "opal/types.h"
 
-#define OMPI_OSC_RDMA_HDR_PUT          0x0001
-#define OMPI_OSC_RDMA_HDR_ACC          0x0002
-#define OMPI_OSC_RDMA_HDR_GET          0x0003
-#define OMPI_OSC_RDMA_HDR_REPLY        0x0004
-#define OMPI_OSC_RDMA_HDR_POST         0x0005
-#define OMPI_OSC_RDMA_HDR_COMPLETE     0x0006
-#define OMPI_OSC_RDMA_HDR_LOCK_REQ     0x0007
-#define OMPI_OSC_RDMA_HDR_UNLOCK_REQ   0x0008
-#define OMPI_OSC_RDMA_HDR_UNLOCK_REPLY 0x0009
+#define OMPI_OSC_RDMA_HDR_PUT          0x01
+#define OMPI_OSC_RDMA_HDR_ACC          0x02
+#define OMPI_OSC_RDMA_HDR_GET          0x03
+#define OMPI_OSC_RDMA_HDR_REPLY        0x04
+#define OMPI_OSC_RDMA_HDR_POST         0x05
+#define OMPI_OSC_RDMA_HDR_COMPLETE     0x06
+#define OMPI_OSC_RDMA_HDR_LOCK_REQ     0x07
+#define OMPI_OSC_RDMA_HDR_UNLOCK_REQ   0x08
+#define OMPI_OSC_RDMA_HDR_UNLOCK_REPLY 0x09
+#define OMPI_OSC_RDMA_HDR_RDMA_INFO    0x0A
 
-#define OMPI_OSC_RDMA_HDR_FLAG_NBO      0x0001
+#define OMPI_OSC_RDMA_HDR_FLAG_NBO     0x01
 
 struct ompi_osc_rdma_base_header_t {
     uint8_t hdr_type;
@@ -122,18 +123,44 @@ typedef struct ompi_osc_rdma_control_header_t ompi_osc_rdma_control_header_t;
 
 #define OMPI_OSC_RDMA_CONTROL_HDR_HTON(hdr) \
     do { \
-        OMPI_OSC_RDMA_BASE_HDR_HTON((hdr).hdr_base) \
-        (hdr).hdr_windx = htons((hdr).hdr_windx); \
+        OMPI_OSC_RDMA_BASE_HDR_HTON((hdr).hdr_base);    \
+        (hdr).hdr_windx = htons((hdr).hdr_windx);       \
         (hdr).hdr_value[0] = htonl((hdr).hdr_value[0]); \
         (hdr).hdr_value[1] = htonl((hdr).hdr_value[1]); \
     } while (0)
 
 #define OMPI_OSC_RDMA_CONTROL_HDR_NTOH(hdr) \
     do { \
-        OMPI_OSC_RDMA_BASE_HDR_NTOH((hdr).hdr_base) \
-        (hdr).hdr_windx = ntohs((hdr).hdr_windx); \
+        OMPI_OSC_RDMA_BASE_HDR_NTOH((hdr).hdr_base);    \
+        (hdr).hdr_windx = ntohs((hdr).hdr_windx);       \
         (hdr).hdr_value[0] = ntohl((hdr).hdr_value[0]); \
         (hdr).hdr_value[1] = ntohl((hdr).hdr_value[1]); \
     } while (0)
+
+
+struct ompi_osc_rdma_rdma_info_header_t {
+    ompi_osc_rdma_base_header_t hdr_base;
+    int16_t  hdr_windx;
+    int32_t  hdr_origin;
+    uint64_t hdr_segkey;
+};
+typedef struct ompi_osc_rdma_rdma_info_header_t ompi_osc_rdma_rdma_info_header_t;
+
+#define OMPI_OSC_RDMA_RDMA_INFO_HDR_HTON(hdr)           \
+    do {                                                \
+        OMPI_OSC_RDMA_BASE_HDR_HTON((hdr).hdr_base);    \
+        (hdr).hdr_windx = htons((hdr).hdr_windx);       \
+        (hdr).hdr_origin = htonl((hdr).hdr_origin);     \
+        (hdr).hdr_segkey = hton64((hdr).hdr_segkey);    \
+    } while (0)
+
+#define OMPI_OSC_RDMA_RDMA_INFO_HDR_NTOH(hdr)           \
+    do {                                                \
+        OMPI_OSC_RDMA_BASE_HDR_NTOH((hdr).hdr_base);    \
+        (hdr).hdr_windx = ntohs((hdr).hdr_windx);       \
+        (hdr).hdr_origin = ntohl((hdr).hdr_origin);     \
+        (hdr).hdr_segkey = ntoh64((hdr).hdr_segkey);    \
+    } while (0)
+
 
 #endif /* OMPI_MCA_OSC_RDMA_HDR_H */

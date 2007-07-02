@@ -34,7 +34,7 @@ int
 ompi_osc_rdma_module_free(ompi_win_t *win)
 {
     int ret = OMPI_SUCCESS;
-    int tmp;
+    int tmp, i;
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
 
     opal_output_verbose(1, ompi_osc_base_output,
@@ -92,9 +92,57 @@ ompi_osc_rdma_module_free(ompi_win_t *win)
     if (NULL != module->m_num_pending_sendreqs) {
         free(module->m_num_pending_sendreqs);
     }
+    if (NULL != module->m_peer_info) {
+        for (i = 0 ; i < ompi_comm_size(module->m_comm) ; ++i) {
+            ompi_osc_rdma_peer_info_free(&module->m_peer_info[i]);
+        }
+        free(module->m_peer_info);
+    }
     if (NULL != module->m_comm) ompi_comm_free(&module->m_comm);
-
     if (NULL != module) free(module);
 
     return ret;
+}
+
+
+int
+ompi_osc_rdma_peer_info_free(ompi_osc_rdma_peer_info_t *peer_info)
+{
+    int i;
+
+    if (NULL != peer_info->peer_btls) {
+        free(peer_info->peer_btls);
+    }
+
+    if (NULL != peer_info->local_descriptors) {
+        for (i = 0 ; i < peer_info->local_num_btls ; ++i) {
+            if (NULL != peer_info->local_descriptors[i]) {
+                mca_bml_base_btl_t *bml_btl =
+                    peer_info->local_btls[i];
+                bml_btl->btl_free(bml_btl->btl,
+                                 peer_info->local_descriptors[i]);
+            }
+        }
+        free(peer_info->local_descriptors);
+    }
+
+    if (NULL != peer_info->local_registrations) {
+        for (i = 0 ; i < peer_info->local_num_btls ; ++i) {
+            if (NULL != peer_info->local_registrations[i]) {
+                mca_mpool_base_module_t *module = 
+                    peer_info->local_registrations[i]->mpool;
+                module->mpool_deregister(module,
+                                         peer_info->local_registrations[i]);
+            }
+        }
+        free(peer_info->local_registrations);
+    }
+
+    if (NULL != peer_info->local_btls) {
+        free(peer_info->local_btls);
+    }
+    
+    memset(peer_info, 0, sizeof(ompi_osc_rdma_peer_info_t));
+
+    return OMPI_SUCCESS;
 }
