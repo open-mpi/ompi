@@ -54,8 +54,8 @@ static const mca_coll_base_module_1_0_0_t intra_fixed = {
 
     ompi_coll_tuned_allgather_intra_dec_fixed,
     /*     NULL, */
-    /*   ompi_coll_tuned_allgatherv_intra_dec_fixed, */
-    NULL,
+    ompi_coll_tuned_allgatherv_intra_dec_fixed, 
+    /*     NULL, */
     ompi_coll_tuned_allreduce_intra_dec_fixed,
     /*     NULL, */
     ompi_coll_tuned_alltoall_intra_dec_fixed,
@@ -98,8 +98,8 @@ static const mca_coll_base_module_1_0_0_t intra_dynamic = {
 
     ompi_coll_tuned_allgather_intra_dec_dynamic,
     /*     NULL, */
-    /*   ompi_coll_tuned_allgatherv_intra_dec_dynamic, */
-    NULL,
+    ompi_coll_tuned_allgatherv_intra_dec_dynamic,
+    /*     NULL, */
     ompi_coll_tuned_allreduce_intra_dec_dynamic,
     /*     NULL, */
     ompi_coll_tuned_alltoall_intra_dec_dynamic,
@@ -401,6 +401,7 @@ ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
         ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[ALLREDUCE], &(data->user_forced[ALLREDUCE]));
         ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[ALLTOALL],  &(data->user_forced[ALLTOALL]));
         ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[ALLGATHER],  &(data->user_forced[ALLGATHER]));
+        ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[ALLGATHERV],  &(data->user_forced[ALLGATHERV]));
         /*         ompi_coll_tuned_forced_getvalues (ompi_coll_tuned_forced_params[ALLTOALLV], &(data->user_forced[ALLTOALLV])); */
         ompi_coll_tuned_forced_getvalues_barrier (ompi_coll_tuned_forced_params[BARRIER],   &(data->user_forced[BARRIER]));
         ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[BCAST],     &(data->user_forced[BCAST]));

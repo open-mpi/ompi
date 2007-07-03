@@ -360,6 +360,67 @@ int ompi_coll_tuned_allgather_intra_dec_dynamic(void *sbuf, int scount,
                                                      comm);
 }
 
+/*
+ *    allgatherv_intra_dec 
+ *
+ *    Function:    - seletects allgatherv algorithm to use
+ *    Accepts:    - same arguments as MPI_Allgatherv()
+ *    Returns:    - MPI_SUCCESS or error code (passed from the selected
+ *                        allgatherv function).
+ */
+
+int ompi_coll_tuned_allgatherv_intra_dec_dynamic(void *sbuf, int scount, 
+                                                 struct ompi_datatype_t *sdtype,
+                                                 void* rbuf, int *rcounts, 
+                                                 int *rdispls,
+                                                 struct ompi_datatype_t *rdtype, 
+                                                 struct ompi_communicator_t *comm)
+{
+   
+   OPAL_OUTPUT((ompi_coll_tuned_stream, 
+                "ompi_coll_tuned_allgatherv_intra_dec_dynamic"));
+   
+   if (comm->c_coll_selected_data->com_rules[ALLGATHERV]) {
+      /* We have file based rules:
+         - calculate message size and other necessary information */
+      int comsize, i;
+      int alg, faninout, segsize, ignoreme;
+      size_t dsize, total_size;
+
+      comsize = ompi_comm_size(comm);      
+      ompi_ddt_type_size (sdtype, &dsize);
+      total_size = 0;
+      for (i = 0; i < comsize; i++) { total_size += dsize * rcounts[i]; }
+      
+      alg = ompi_coll_tuned_get_target_method_params (comm->c_coll_selected_data->com_rules[ALLGATHERV], 
+                                                      total_size, &faninout, &segsize, &ignoreme);
+      if (alg) { 
+         /* we have found a valid choice from the file based rules for 
+            this message size */
+         return ompi_coll_tuned_allgatherv_intra_do_this (sbuf, scount, sdtype,
+                                                          rbuf, rcounts, 
+                                                          rdispls, rdtype,
+                                                          comm, alg, faninout, 
+                                                          segsize);
+      }
+   } 
+
+   /* We do not have file based rules */
+   if (comm->c_coll_selected_data->user_forced[ALLGATHERV].algorithm) {
+      /* User-forced algorithm */
+      return ompi_coll_tuned_allgatherv_intra_do_forced (sbuf, scount, sdtype, 
+                                                         rbuf, rcounts, 
+                                                         rdispls, rdtype, 
+                                                         comm);
+   }
+
+   /* Use default decision */
+   return ompi_coll_tuned_allgatherv_intra_dec_fixed (sbuf, scount, sdtype, 
+                                                      rbuf, rcounts, 
+                                                      rdispls, rdtype, 
+                                                      comm);
+}
+
 int ompi_coll_tuned_gather_intra_dec_dynamic(void *sbuf, int scount, 
 					     struct ompi_datatype_t *sdtype,
 					     void* rbuf, int rcount, 

@@ -564,6 +564,76 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
 }
 
 /*
+ *	allgatherv_intra_dec 
+ *
+ *	Function:	- seletects allgatherv algorithm to use
+ *	Accepts:	- same arguments as MPI_Allgatherv()
+ *	Returns:	- MPI_SUCCESS or error code, passed from corresponding
+ *                        internal allgatherv function.
+ */
+
+int ompi_coll_tuned_allgatherv_intra_dec_fixed(void *sbuf, int scount, 
+                                               struct ompi_datatype_t *sdtype,
+                                               void* rbuf, int *rcounts, 
+                                               int *rdispls,
+                                               struct ompi_datatype_t *rdtype, 
+                                               struct ompi_communicator_t *comm)
+{
+    int i;
+    int communicator_size, rank, pow2_size;
+    size_t dsize, total_dsize;
+    
+    communicator_size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+    
+    /* Special case for 2 processes */
+    if (communicator_size == 2) {
+        return ompi_coll_tuned_allgatherv_intra_two_procs (sbuf, scount, sdtype,
+                                                           rbuf, rcounts, 
+                                                           rdispls, rdtype, 
+                                                           comm);
+    }
+    
+    /* Determine complete data size */
+    ompi_ddt_type_size(sdtype, &dsize);
+    total_dsize = 0;
+    for (i = 0; i < communicator_size; i++) {
+        total_dsize += dsize * rcounts[i];
+    }
+    
+    OPAL_OUTPUT((ompi_coll_tuned_stream, 
+                 "ompi_coll_tuned_allgatherv_intra_dec_fixed"
+                 " rank %d com_size %d msg_length %lu",
+                 rank, communicator_size, (unsigned long)total_dsize));
+    
+    for (pow2_size  = 1; pow2_size <= communicator_size; pow2_size <<=1); 
+    pow2_size >>=1;
+
+   /* Decision based on allgather decision.   */
+   if (total_dsize < 50000) {
+       return ompi_coll_tuned_allgatherv_intra_bruck(sbuf, scount, sdtype, 
+                                                     rbuf, rcounts, 
+                                                     rdispls, rdtype, 
+                                                     comm);
+   } else {
+       if (communicator_size % 2) {
+           return ompi_coll_tuned_allgatherv_intra_ring(sbuf, scount, sdtype, 
+                                                        rbuf, rcounts, 
+                                                        rdispls, rdtype, 
+                                                        comm);
+      } else {
+         return  ompi_coll_tuned_allgatherv_intra_neighborexchange(sbuf, scount,
+                                                                   sdtype,
+                                                                   rbuf, 
+                                                                   rcounts,
+                                                                   rdispls, 
+                                                                   rdtype, 
+                                                                   comm);
+      }
+   }
+}
+
+/*
  *	gather_intra_dec 
  *
  *	Function:	- seletects gather algorithm to use

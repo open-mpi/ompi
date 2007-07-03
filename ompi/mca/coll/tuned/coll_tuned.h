@@ -124,6 +124,14 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   /* All GatherV */
   int ompi_coll_tuned_allgatherv_intra_dec_fixed(ALLGATHERV_ARGS);
   int ompi_coll_tuned_allgatherv_intra_dec_dynamic(ALLGATHERV_ARGS);
+  int ompi_coll_tuned_allgatherv_intra_do_forced(ALLGATHERV_ARGS);
+  int ompi_coll_tuned_allgatherv_intra_do_this(ALLGATHERV_ARGS, int algorithm, int faninout, int segsize);
+  int ompi_coll_tuned_allgatherv_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
+  int ompi_coll_tuned_allgatherv_intra_bruck(ALLGATHERV_ARGS);
+  int ompi_coll_tuned_allgatherv_intra_ring(ALLGATHERV_ARGS);
+  int ompi_coll_tuned_allgatherv_intra_neighborexchange(ALLGATHERV_ARGS);
+  int ompi_coll_tuned_allgatherv_intra_basic_default(ALLGATHERV_ARGS);
+  int ompi_coll_tuned_allgatherv_intra_two_procs(ALLGATHERV_ARGS);
   int ompi_coll_tuned_allgatherv_inter_dec_fixed(ALLGATHERV_ARGS);
   int ompi_coll_tuned_allgatherv_inter_dec_dynamic(ALLGATHERV_ARGS);
 
