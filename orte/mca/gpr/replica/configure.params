@@ -22,3 +22,4 @@
 # Specific to this module
 
 PARAM_CONFIG_FILES="Makefile api_layer/Makefile transition_layer/Makefile functional_layer/Makefile communications/Makefile"
+PARAM_CONFIG_PRIORITY=10

@@ -351,22 +351,17 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     AC_MSG_CHECKING([for m4 configure components in framework $2])
     AC_MSG_RESULT([mca_$2_m4_config_component_list])
 
-    # if we only want the first successful component, set the variable
-    # happy_value to 0 so we stop on first assignment.  Otherwise, set
-    # it to zero so that components_looking_for_succeed is always 1
-    m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), 
-          [STOP_AT_FIRST],
-          [happy_value=0],
-          [happy_value=1])
-
-    components_looking_for_succeed=1
-
     # configure components that don't have any component-specific
     # configuration.  See comment in CONFIGURE_PROJECT about the
-    # m4_ifval
-    # if there isn't a component list, abort
+    # m4_ifval in the m4_foreach.  If there isn't a component list,
+    # abort with a reasonable message.  If there are components in the
+    # list, but we're doing one of the "special" selection logics,
+    # abort with a reasonable message.
     m4_ifdef([mca_$2_no_config_component_list], [], 
              [m4_fatal([Could not find mca_$2_no_config_component_list - rerun autogen.sh without -l])])
+    m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST],
+          [m4_ifval(mca_$2_no_config_component_list,
+                   [m4_fatal([Framework $2 using STOP_AT_FIRST but at least one component has no configure.m4])])])
     m4_foreach(mca_component, [mca_$2_no_config_component_list],
                [m4_ifval(mca_component,
                   [MCA_CONFIGURE_NO_CONFIG_COMPONENT($1, $2, mca_component, 
@@ -374,27 +369,41 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
                                                      [static_components],
                                                      [dso_components],
                                                      [static_ltlibs],
-                                                     [$components_looking_for_succeed])])])
+                                                     [1])])])
 
-    # configure components that use built-in configuration scripts
-    # see comment in CONFIGURE_PROJECT about the m4_ifval
-    # if there isn't a component list, abort
+    # configure components that use built-in configuration scripts see
+    # comment in CONFIGURE_PROJECT about the m4_ifval in the
+    # m4_foreach.  if there isn't a component list, abort
     m4_ifdef([mca_$2_m4_config_component_list], [], 
              [m4_fatal([Could not find mca_$2_m4_config_component_list - rerun autogen.sh without -l])])
+    best_mca_component_priority=0
+    components_looking_for_succeed=1
+    components_last_result=0
     m4_foreach(mca_component, [mca_$2_m4_config_component_list],
                [m4_ifval(mca_component,
-                  [MCA_CONFIGURE_M4_CONFIG_COMPONENT($1, $2, mca_component, 
+                  [m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
+                         [ # get the component's priority...
+                          infile="$srcdir/$1/mca/$2/mca_component/configure.params"
+                          mca_component_priority="`$GREP PARAM_CONFIG_PRIORITY= $infile | cut -d= -f2-`"
+                          AS_IF([test -z "$mca_component_priority"], [mca_component_priority=0])
+                          AS_IF([test $best_mca_component_priority -gt $mca_component_priority], [components_looking_for_succeed=0])])
+                   MCA_CONFIGURE_M4_CONFIG_COMPONENT($1, $2, mca_component, 
                                                      [all_components],
                                                      [static_components],
                                                      [dso_components],
                                                      [static_ltlibs],
                                                      [$components_looking_for_succeed],
-                                                     [components_looking_for_succeed="$happy_value"])])])
+                                                     [components_last_result=1],
+                                                     [components_last_result=0])
+                   m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST],
+                         [AS_IF([test $components_last_result -eq 1], [components_looking_for_succeed=0])])
+                   m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
+                         [AS_IF([test $components_last_result -eq 1], [best_mca_component_priority=$mca_component_priority])])])])
 
     # configure components that provide their own configure script.
     # It would be really hard to run these for "find first that
     # works", so we don't :)
-    AS_IF([test "$happy_value" = "1"],
+    m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST], [],
           [MCA_CONFIGURE_ALL_CONFIG_COMPONENTS($1, $2, [all_components],
                                                [static_components], [dso_components],
                                                [static_ltlibs])])
