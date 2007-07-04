@@ -105,11 +105,11 @@ int mca_btl_mx_component_open(void)
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "shared_mem",
                             "Enable the MX support for shared memory",
                             false, false, 0, &mca_btl_mx_component.mx_support_sharedmem );
-#if MX_HAVE_UNEXPECTED_HANDLER
+#ifdef HAVE_MX_REGISTER_UNEXP_HANDLER
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "register_unexp",
                             "Enable the MX support for the unexpected request handler (Open MPI matching)",
 			    false, false, 0, &mca_btl_mx_component.mx_use_unexpected );
-#endif  /* MX_HAVE_UNEXPECTED_HANDLER */
+#endif  /* HAVE_MX_REGISTER_UNEXP_HANDLER */
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "free_list_num",
                             "Number of allocated default request",
                             false, false, 8, &mca_btl_mx_component.mx_free_list_num );
@@ -187,7 +187,7 @@ int mca_btl_mx_component_close(void)
     return OMPI_SUCCESS;
 }
 
-#if MX_HAVE_UNEXPECTED_HANDLER
+#ifdef HAVE_MX_REGISTER_UNEXP_HANDLER
 /**
  * In order to avoid useless memcpy, the unexpected handler will be called
  * by the MX library before doing any match in the MX internal queues. Here
@@ -226,7 +226,7 @@ mca_btl_mx_unexpected_handler( void *context, mx_endpoint_addr_t source,
 
     return MX_RECV_FINISHED;
 }
-#endif  /* MX_HAVE_UNEXPECTED_HANDLER */
+#endif  /* HAVE_MX_REGISTER_UNEXP_HANDLER */
 
 /*
  * Create and intialize an MX PTL module, where each module
@@ -391,7 +391,7 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
         mca_btl_mx_finalize( &mx_btl->super );
         return NULL;
     }
-#if MX_HAVE_UNEXPECTED_HANDLER
+#ifdef HAVE_MX_REGISTER_UNEXP_HANDLER
     if( mca_btl_mx_component.mx_use_unexpected ) {
         status = mx_register_unexp_handler( mx_btl->mx_endpoint, mca_btl_mx_unexpected_handler,
                                             (void*)mx_btl );
@@ -402,7 +402,7 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
             return NULL;
         }
     }
-#endif  /* MX_HAVE_UNEXPECTED_HANDLER */
+#endif  /* HAVE_MX_REGISTER_UNEXP_HANDLER */
     return mx_btl;
 }
 

@@ -17,134 +17,46 @@
 # $HEADER$
 #
 
-AC_DEFUN([_OMPI_CHECK_MX_EXTENSIONS],[
-    #
-    # Check if the MX library provide the necessary functions in order to
-    # figure out the mapper version and MAC for each board.
-    #
+# _OMPI_CHECK_MX_MAPPER()
+# ------------------------
+# Check if the MX library provide the necessary functions in order to
+# figure out the mapper version and MAC for each board.
+AC_DEFUN([_OMPI_CHECK_MX_MAPPER],[
+    AC_CACHE_CHECK([for mx_open_board],
+        [ompi_cv_func_mx_open_board],
+        [AC_LINK_IFELSE([AC_LANG_PROGRAM(
+                [
+#include <mx_extensions.h>
+#include <mx_io.h>
+#include <mx_internals/mx__fops.h>
+                ], [
+mx_open_board(0, NULL);
+                ])],
+            [ompi_cv_func_mx_open_board="yes"],
+            [ompi_cv_func_mx_open_board="no"])])
 
-    AC_MSG_CHECKING([for a MX version with mx_open_board])
-    AC_TRY_LINK([#include <mx_extensions.h>
-                 #include <mx_io.h>
-                 #include <mx_internals/mx__fops.h>
-                 ],
-                 [mx_open_board(0, NULL);],
-                 [mx_provide_open_board="yes"],
-                 [mx_provide_open_board="no"])
-    AC_MSG_RESULT([$mx_provide_open_board])
+    AC_CACHE_CHECK([for mx__get_mapper_state],
+        [ompi_cv_func_mx__get_mapper_state],
+        [AC_LINK_IFELSE([AC_LANG_PROGRAM(
+                [
+#include <mx_extensions.h>
+#include <mx_io.h>
+#include <mx_internals/mx__driver_interface.h>
+                ], [
+mx__get_mapper_state(NULL, NULL);
+                ])],
+             [ompi_cv_func_mx__get_mapper_state="yes"],
+             [ompi_cv_func_mx__get_mapper_state="no"])])
 
-    AC_MSG_CHECKING([for a MX version with mx__get_mapper_state])
-    AC_TRY_LINK([#include <mx_extensions.h>
-                 #include <mx_io.h>
-                 #include <mx_internals/mx__driver_interface.h>
-                 ],
-             [mx__get_mapper_state(NULL, NULL);],
-             [mx_provide_get_mapper_state="yes"],
-             [mx_provide_get_mapper_state="no"])
-    AC_MSG_RESULT([$mx_provide_get_mapper_state])
-
-    AS_IF([test x"$mx_provide_open_board" = "xyes" -a "$mx_provide_get_mapper_state" = "yes"],
+    AS_IF([test "$ompi_cv_func_mx_open_board" = "yes" -a "$ompi_cv_func_mx__get_mapper_state" = "yes"],
           [mx_provide_mapper_state=1
            $2],
           [mx_provide_mapper_state=0
            $3])
     AC_DEFINE_UNQUOTED([MX_HAVE_MAPPER_STATE], [$mx_provide_mapper_state],
                        [MX installation provide access to the mx_open_board and mx__get_mapper_state functions])
-    unset mx_provide_open_board
-    unset mx_provide_get_mapper_state
-    unset mx_provide_mapper_state
 ])
 
-AC_DEFUN([_OMPI_CHECK_MX_UNEXP_HANDLER],[
-    #
-    # Check if the MX library provide the mx_register_unexp_handler function.
-    # With this function, OMPI can avoid having a double matching logic
-    # (one on the MX library and one on OMPI) by registering our own matching
-    # function. Moreover, we can handle all eager messages with just one
-    # memcpy.
-
-    AC_MSG_CHECKING([for a MX version with mx_register_unexp_handler])
-    AC_TRY_LINK([#include <mx_extensions.h>],
-             [mx_register_unexp_handler(0, 0, 0);],
-             [mx_provide_unexp_handler="yes"],
-             [mx_provide_unexp_handler="no"])
-    AC_MSG_RESULT([$mx_provide_unexp_handler])
-    AS_IF([test x"$mx_provide_unexp_handler" = "xyes"],
-          [mx_provide_unexp_handler=1
-           $2],
-          [mx_provide_unexp_handler=0
-           $3])
-    AC_DEFINE_UNQUOTED([MX_HAVE_UNEXPECTED_HANDLER], [$mx_provide_unexp_handler],
-                       [MX allow registration of an unexpected handler])
-    unset mx_provide_unexp_handler
-])
-
-AC_DEFUN([_OMPI_CHECK_MX_FORGET],[
-    #
-    # Check if the MX library provide the mx_forget function.
-    #
-    AC_MSG_CHECKING([for a MX version with mx_forget])
-    AC_TRY_LINK([#include <mx_extensions.h>],
-             [mx_forget(0, 0);],
-             [mx_provide_forget="yes"],
-             [mx_provide_forget="no"])
-    AC_MSG_RESULT([$mx_provide_forget])
-    AS_IF([test x"$mx_provide_forget" = "xyes"],
-          [mx_provide_forget=1
-           $2],
-          [mx_provide_forget=0
-           $3])
-    AC_DEFINE_UNQUOTED([MX_HAVE_FORGET], [$mx_provide_forget],
-                       [MX allow to forget the completion event for mx_requests])
-    unset mx_provide_forget
-])
-
-AC_DEFUN([_OMPI_CHECK_MX_CONFIG],[
-    #
-    # See if we have MX_API. OpenMPI require a MX version bigger than
-    # the first MX relase (0x300)
-    #
-
-    # restored at end of OMPI_CHECK_MX
-    CPPFLAGS="$ompi_check_mx_$1_save_CPPFLAGS $$1_CPPFLAGS"
-    LDFLAGS="$ompi_check_mx_$1_save_LDFLAGS $$1_LDFLAGS"
-    LIBS="$ompi_check_mx_$1_save_LIBS $$1_LIBS"
-
-    AC_MSG_CHECKING([for MX version 1.0 or later])
-    AC_TRY_COMPILE([#include <myriexpress.h>],
-        [#if MX_API < 0x300
-         #error "Version less than 0x300"
-         #endif],
-         [have_recent_api="yes"],
-         [have_recent_api="no"])
-    AC_MSG_RESULT([$have_recent_api])
-
-    AC_MSG_CHECKING(for MX_API)
-    AS_IF([test x"$have_recent_api" = "xyes"],
-          [AC_DEFINE_UNQUOTED([OMPI_MX_API_VERSION], $mx_api_ver,
-                [Version of the MX API to use])
-           unset mx_api_ver have_mx_api_ver_msg found val msg
-           $2],
-          [$3])
-    AC_MSG_RESULT([$mx_api_ver])
-    # Check for the mx_extensions.h
-    AC_MSG_CHECKING([for mx_extensions.h header])
-    AC_TRY_COMPILE([#include <mx_extensions.h>],
-         [return 0;],
-         [have_mx_extensions="yes"],
-         [have_mx_extensions="no"])
-    AS_IF([test x"$have_mx_extensions" = "xyes"],
-          [have_mx_extensions=1],
-          [have_mx_extensions=0
-           AC_MSG_WARN([The MX support for Open MPI will be compiled without the
-                        MX extensions. This will result on lower performances.
-                        Please install the MX library > 1.2.0 to increase the
-                        performance of your cluster])
-          ])
-    AC_DEFINE_UNQUOTED([MX_HAVE_EXTENSIONS_H], [$have_mx_extensions],
-                       [The MX library have support for the mx_extensions.h])
-    unset have_recent_api have_mx_extensions
-])dnl
 
 # OMPI_CHECK_MX(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
@@ -180,18 +92,33 @@ AC_DEFUN([OMPI_CHECK_MX],[
                               [ompi_check_mx_happy="no"])],
           [ompi_check_mx_happy="no"])
 
+    CPPFLAGS="$CPPFLAGS $$1_CPPFLAGS"
+    LDFLAGS="$LDFLAGS $$1_LDFLAGS"
+    LIBS="$LIBS $$1_LIBS"
+
+    # need at least version 1.0
+    AS_IF([test "ompi_check_mx_happy" = "yes"],
+          [AC_CACHE_CHECK([for MX version 1.0 or later],
+            [ompi_cv_mx_version_ok],
+            [AC_PREPROC_IFELSE(
+                [AC_LANG_PROGRAM([
+#include <myriexpress.h>
+                             ],[
+#if MX_API < 0x300
+#error "Version less than 0x300"
+#endif
+                             ])],
+            [ompi_cv_mx_version_ok="yes"],
+            [ompi_cv_mx_version_ok="no"])])])
+    AS_IF([test "$ompi_cv_mx_version_ok" = "no"], [ompi_check_mx_happy="no"])
+
     AS_IF([test "$ompi_check_mx_happy" = "yes"],
-          [_OMPI_CHECK_MX_CONFIG($1, [ompi_check_mx_happy="yes"],
-                                 [ompi_check_mx_happy="no"])])
-    AS_IF([test "$ompi_check_mx_happy" = "yes"],
-          [_OMPI_CHECK_MX_UNEXP_HANDLER($1, [ompi_check_mx_register="yes"],
-                                        [ompi_check_mx_register="no"])])
-    AS_IF([test "$ompi_check_mx_happy" = "yes"],
-          [_OMPI_CHECK_MX_FORGET($1, [ompi_check_mx_forget="yes"],
-                                 [ompi_check_mx_forget="no"])])
-    AS_IF([test "$ompi_check_mx_happy" = "yes"],
-          [_OMPI_CHECK_MX_EXTENSIONS( $1, [ompi_check_mx_extensions="yes"],
-                                          [ompi_check_mx_extensions="no"])])
+          [AC_CHECK_HEADERS([mx_extensions.h],
+               [AC_CHECK_FUNCS([mx_forget mx_register_unexp_handler])
+                _OMPI_CHECK_MX_MAPPER()],
+               [AC_MSG_WARN([The MX support for Open MPI will be compiled without the
+MX extensions, which may result in lower performance.  Please upgrade
+to at least MX 1.2.0 to enable the MX extensions.])])])
 
     CPPFLAGS="$ompi_check_mx_$1_save_CPPFLAGS"
     LDFLAGS="$ompi_check_mx_$1_save_LDFLAGS"
