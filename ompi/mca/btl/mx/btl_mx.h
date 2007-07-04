@@ -36,11 +36,11 @@
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/mpool/mpool.h" 
 
-#if MX_HAVE_EXTENSIONS_H
-#include "mx_extensions.h"
-#else
-#include "myriexpress.h"
-#endif  /* MX_HAVE_EXTENSIONS_H */
+#include <myriexpress.h>
+
+#ifdef HAVE_MX_EXTENSIONS_H
+#include <mx_extensions.h>
+#endif  /* HAVE_MX_EXTENSIONS_H */
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

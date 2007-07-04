@@ -428,7 +428,7 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
         return OMPI_ERROR;
     }
 
-#if MX_HAVE_FORGET
+#ifdef HAVE_MX_FORGET
     {
         uint32_t mx_result;
         mx_return = mx_ibuffered( mx_btl->mx_endpoint, &(frag->mx_request), &mx_result );
