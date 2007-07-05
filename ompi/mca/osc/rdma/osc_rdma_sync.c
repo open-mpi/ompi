@@ -108,11 +108,6 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
             return ret;
         }
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
-                             "fence: waiting on %d in and %d out",
-                             module->m_num_pending_in,
-                             module->m_num_pending_out));
-
         /* try to start all the requests.  We've copied everything we
            need out of pending_sendreqs, so don't need the lock
            here */
@@ -168,6 +163,13 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
            atomicall add however many we're going to wait for */
         module->m_num_pending_in += incoming_reqs;
         module->m_num_pending_out += num_outgoing;
+
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                             "fence: waiting on %d in and %d out, now %d, %d",
+                             incoming_reqs,
+                             num_outgoing,
+                             module->m_num_pending_in,
+                             module->m_num_pending_out));
 
         /* now we know how many things we're waiting for - wait for them... */
         while (module->m_num_pending_in > 0 ||
