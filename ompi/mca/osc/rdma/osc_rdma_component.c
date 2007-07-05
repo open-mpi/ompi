@@ -150,6 +150,13 @@ component_open(void)
                            "Info key of same name overrides this value.",
                            false, false, 0, NULL);
 
+     mca_base_param_reg_int(&mca_osc_rdma_component.super.osc_version,
+                            "rdma_completion_wait",
+                            "Wait for all completion of rdma events before "
+                            "sending acknowledgment.  Info key of same name "
+                            "overrides this value.",
+                            false, false, 1, NULL);
+
     mca_base_param_reg_int(&mca_osc_rdma_component.super.osc_version,
                            "no_locks",
                            "Enable optimizations available only if MPI_LOCK is "
@@ -344,6 +351,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
 
     /* allocate space for rdma information */
     module->m_use_rdma = check_config_value_bool("use_rdma", info);
+    module->m_rdma_wait_completion = check_config_value_bool("rdma_completion_wait", info);
     module->m_setup_info = NULL;
     module->m_peer_info = NULL;
 

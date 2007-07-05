@@ -129,11 +129,13 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
         }
 
         if (module->m_use_rdma) {
-            OPAL_THREAD_LOCK(&module->m_lock);
-            while (module->m_rdma_num_pending != 0) {
-                opal_condition_wait(&module->m_cond, &module->m_lock);
+            if (module->m_rdma_wait_completion) {
+                OPAL_THREAD_LOCK(&module->m_lock);
+                while (module->m_rdma_num_pending != 0) {
+                    opal_condition_wait(&module->m_cond, &module->m_lock);
+                }
+                OPAL_THREAD_UNLOCK(&module->m_lock);
             }
-            OPAL_THREAD_UNLOCK(&module->m_lock);
 
             for (i = 0 ; i < ompi_comm_size(module->m_comm) ; ++i) {
                 int j;
@@ -289,11 +291,13 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
     for (i = 0 ; i < ompi_group_size(module->m_sc_group) ; ++i) {
         int comm_rank = module->m_sc_remote_ranks[i];
         if (module->m_use_rdma) {
-            OPAL_THREAD_LOCK(&module->m_lock);
-            while (module->m_rdma_num_pending != 0) {
-                opal_condition_wait(&module->m_cond, &module->m_lock);
+            if (module->m_rdma_wait_completion) {
+                OPAL_THREAD_LOCK(&module->m_lock);
+                while (module->m_rdma_num_pending != 0) {
+                    opal_condition_wait(&module->m_cond, &module->m_lock);
+                }
+                OPAL_THREAD_UNLOCK(&module->m_lock);
             }
-            OPAL_THREAD_UNLOCK(&module->m_lock);
 
             for (j = 0 ; j < module->m_peer_info[comm_rank].peer_num_btls ; ++j) {
                 if (module->m_peer_info[comm_rank].peer_btls[j].num_sent > 0) {
