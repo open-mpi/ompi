@@ -217,7 +217,6 @@ ompi_coll_tuned_gather_intra_linear_sync(void *sbuf, int scount,
     int rank, size;
     int first_segment_count;
     size_t typelng;
-    MPI_Aint incr;
     MPI_Aint extent;
     MPI_Aint lb;
 
@@ -280,7 +279,7 @@ ompi_coll_tuned_gather_intra_linear_sync(void *sbuf, int scount,
                                       first_segment_count );
 
         ptmp = (char *) rbuf;
-        for (i = 0; i < size; ++i, ptmp += incr) {
+        for (i = 0; i < size; ++i) {
             if (i == rank) {  
                 /* skip myself */
                 reqs[i] = MPI_REQUEST_NULL; 
