@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -518,6 +518,11 @@ int mca_btl_sm_add_procs(
         mca_btl_sm_component.fifo[j] = (ompi_fifo_t*)((char*)fifo_tmp[j]+diff);
         mca_btl_sm_component.sm_offset[j] = diff;
 
+        /* don't forget to update the head_lock if allocated because this address is also in the remote process */
+        if ( mca_btl_sm_component.fifo[j][mca_btl_sm_component.my_smp_rank].head_lock != NULL ) {
+            mca_btl_sm_component.fifo[j][mca_btl_sm_component.my_smp_rank].head_lock =
+                (opal_atomic_lock_t*)((char*)mca_btl_sm_component.fifo[j][mca_btl_sm_component.my_smp_rank].head_lock+diff);
+        }
     }
 
     for( j=mca_btl_sm_component.num_smp_procs ; j <
