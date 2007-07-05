@@ -99,7 +99,6 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
    ptrdiff_t slb, rlb, sext, rext;
    char *tmpsend = NULL, *tmprecv = NULL;
    struct ompi_datatype_t *new_rdtype, *new_sdtype;
-   ompi_request_t *req;
 
    size = ompi_comm_size(comm);
    rank = ompi_comm_rank(comm);
