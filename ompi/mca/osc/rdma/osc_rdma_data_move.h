@@ -52,4 +52,8 @@ int ompi_osc_rdma_control_send(ompi_osc_rdma_module_t *module,
                                 ompi_proc_t *proc,
                                 uint8_t type, int32_t value0, int32_t value1);
 
+int ompi_osc_rdma_rdma_ack_send(ompi_osc_rdma_module_t *module,
+                                ompi_proc_t *proc,
+                                ompi_osc_rdma_btl_t *rdma_btl);
+
 #endif

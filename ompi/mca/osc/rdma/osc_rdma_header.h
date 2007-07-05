@@ -25,16 +25,18 @@
 
 #include "opal/types.h"
 
-#define OMPI_OSC_RDMA_HDR_PUT          0x01
-#define OMPI_OSC_RDMA_HDR_ACC          0x02
-#define OMPI_OSC_RDMA_HDR_GET          0x03
-#define OMPI_OSC_RDMA_HDR_REPLY        0x04
-#define OMPI_OSC_RDMA_HDR_POST         0x05
-#define OMPI_OSC_RDMA_HDR_COMPLETE     0x06
-#define OMPI_OSC_RDMA_HDR_LOCK_REQ     0x07
-#define OMPI_OSC_RDMA_HDR_UNLOCK_REQ   0x08
-#define OMPI_OSC_RDMA_HDR_UNLOCK_REPLY 0x09
-#define OMPI_OSC_RDMA_HDR_RDMA_INFO    0x0A
+/* Note -- 0x05 to 0x0A are of control_hdr type */
+#define OMPI_OSC_RDMA_HDR_PUT           0x01
+#define OMPI_OSC_RDMA_HDR_ACC           0x02
+#define OMPI_OSC_RDMA_HDR_GET           0x03
+#define OMPI_OSC_RDMA_HDR_REPLY         0x04
+#define OMPI_OSC_RDMA_HDR_POST          0x05
+#define OMPI_OSC_RDMA_HDR_COMPLETE      0x06
+#define OMPI_OSC_RDMA_HDR_LOCK_REQ      0x07
+#define OMPI_OSC_RDMA_HDR_UNLOCK_REQ    0x08
+#define OMPI_OSC_RDMA_HDR_UNLOCK_REPLY  0x09
+#define OMPI_OSC_RDMA_HDR_RDMA_COMPLETE 0x0A
+#define OMPI_OSC_RDMA_HDR_RDMA_INFO     0x0B
 
 #define OMPI_OSC_RDMA_HDR_FLAG_NBO     0x01
 
