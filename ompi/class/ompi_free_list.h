@@ -135,22 +135,19 @@ OMPI_DECLSPEC int ompi_free_list_parse( ompi_free_list_t* list,
  
 #define OMPI_FREE_LIST_GET(fl, item, rc) \
 { \
-    if(opal_using_threads()) { \
-        item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
-        if(NULL == item) { \
+    rc = OMPI_SUCCESS; \
+    item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
+    if( NULL == item ) { \
+        if(opal_using_threads()) { \
             opal_mutex_lock(&((fl)->fl_lock)); \
             ompi_free_list_grow((fl), (fl)->fl_num_per_alloc); \
             opal_mutex_unlock(&((fl)->fl_lock)); \
-            item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
-        } \
-    } else { \
-        item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
-        if(NULL == item) { \
+        } else { \
             ompi_free_list_grow((fl), (fl)->fl_num_per_alloc); \
-            item =(ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
         } \
+        item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
+        if( NULL == item ) rc = OMPI_ERR_TEMP_OUT_OF_RESOURCE; \
     }  \
-    rc = (NULL == item) ?  OMPI_ERR_TEMP_OUT_OF_RESOURCE : OMPI_SUCCESS; \
 } 
 
 /**
