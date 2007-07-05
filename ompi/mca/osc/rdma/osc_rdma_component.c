@@ -144,6 +144,13 @@ component_open(void)
                            "Info key of same name overrides this value.",
                            false, false, 1, NULL);
 
+     mca_base_param_reg_int(&mca_osc_rdma_component.super.osc_version,
+                            "use_buffers",
+                            "Coalesce messages during an epoch to reduce "
+                            "network utilization.  Info key of same name "
+                            "overrides this value.",
+                            false, false, 0, NULL);
+
     mca_base_param_reg_int(&mca_osc_rdma_component.super.osc_version,
                            "use_rdma",
                            "Use real RDMA operations to transfer data.  "
@@ -355,6 +362,13 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     module->m_setup_info = NULL;
     module->m_peer_info = NULL;
 
+    /* buffer setup */
+    module->m_use_buffers = check_config_value_bool("use_buffers", info);
+    module->m_pending_buffers = malloc(sizeof(ompi_osc_rdma_buffer_t) *
+                                       ompi_comm_size(module->m_comm));
+    memset(module->m_pending_buffers, 0, 
+           sizeof(ompi_osc_rdma_buffer_t) * ompi_comm_size(module->m_comm));
+
     /* fence data */
     module->m_fence_coll_counts = (int*)
         malloc(sizeof(int) * ompi_comm_size(module->m_comm));
@@ -484,410 +498,419 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
 /* dispatch for callback on message completion */
 static void
 component_fragment_cb(struct mca_btl_base_module_t *btl,
-                                mca_btl_base_tag_t tag,
-                                mca_btl_base_descriptor_t *descriptor,
-                                void *cbdata)
+                      mca_btl_base_tag_t tag,
+                      mca_btl_base_descriptor_t *descriptor,
+                      void *cbdata)
 {
     int ret;
     ompi_osc_rdma_module_t *module;
     void *payload;
-    uint8_t hdr_type;
+    bool done = false;
+    ompi_osc_rdma_base_header_t *base_header = 
+        (ompi_osc_rdma_base_header_t*) descriptor->des_dst[0].seg_addr.pval;
 
     assert(descriptor->des_dst[0].seg_len >= 
            sizeof(ompi_osc_rdma_base_header_t));
 
-    hdr_type = ((ompi_osc_rdma_base_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval)->hdr_type;
-
     /* handle message */
-    switch (hdr_type) {
-    case OMPI_OSC_RDMA_HDR_PUT:
-        {
-            ompi_osc_rdma_send_header_t *header;
+    while (!done) {
+        switch (base_header->hdr_type) {
+        case OMPI_OSC_RDMA_HDR_PUT:
+            {
+                ompi_osc_rdma_send_header_t *header;
 
-            /* get our header and payload */
-            header = (ompi_osc_rdma_send_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
-            payload = (void*) (header + 1);
+                /* get our header and payload */
+                header = (ompi_osc_rdma_send_header_t*) base_header;
+                payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
-                OMPI_OSC_RDMA_SEND_HDR_NTOH(*header);
-            }
-#endif
-
-            /* get our module pointer */
-            module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
-
-            if (!ompi_win_exposure_epoch(module->m_win)) {
-                if (OMPI_WIN_FENCE & ompi_win_get_mode(module->m_win)) {
-                    /* well, we're definitely in an access epoch now */
-                    ompi_win_set_mode(module->m_win, 
-                                      OMPI_WIN_FENCE | 
-                                      OMPI_WIN_ACCESS_EPOCH |
-                                      OMPI_WIN_EXPOSE_EPOCH);
+                if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                    OMPI_OSC_RDMA_SEND_HDR_NTOH(*header);
                 }
-            }
-
-            ret = ompi_osc_rdma_sendreq_recv_put(module, header, payload);
-        }
-        break;
-
-    case OMPI_OSC_RDMA_HDR_ACC: 
-        {
-            ompi_osc_rdma_send_header_t *header;
-
-            /* get our header and payload */
-            header = (ompi_osc_rdma_send_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
-            payload = (void*) (header + 1);
-
-#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
-                OMPI_OSC_RDMA_SEND_HDR_NTOH(*header);
-            }
 #endif
 
-            /* get our module pointer */
-            module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
+                /* get our module pointer */
+                module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
+                if (NULL == module) return;
 
-            if (!ompi_win_exposure_epoch(module->m_win)) {
-                if (OMPI_WIN_FENCE & ompi_win_get_mode(module->m_win)) {
-                    /* well, we're definitely in an access epoch now */
-                    ompi_win_set_mode(module->m_win, 
-                                      OMPI_WIN_FENCE | 
-                                      OMPI_WIN_ACCESS_EPOCH |
-                                      OMPI_WIN_EXPOSE_EPOCH);
-                }
-            }
-
-            /* receive into temporary buffer */
-            ret = ompi_osc_rdma_sendreq_recv_accum(module, header, payload);
-        }
-        break;
-
-    case OMPI_OSC_RDMA_HDR_GET:
-        {
-            ompi_datatype_t *datatype;
-            ompi_osc_rdma_send_header_t *header;
-            ompi_osc_rdma_replyreq_t *replyreq;
-            ompi_proc_t *proc;
-
-            /* get our header and payload */
-            header = (ompi_osc_rdma_send_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
-            payload = (void*) (header + 1);
-
-#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
-                OMPI_OSC_RDMA_SEND_HDR_NTOH(*header);
-            }
-#endif
-
-            /* get our module pointer */
-            module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
-
-            if (!ompi_win_exposure_epoch(module->m_win)) {
-                if (OMPI_WIN_FENCE & ompi_win_get_mode(module->m_win)) {
-                    /* well, we're definitely in an access epoch now */
-                    ompi_win_set_mode(module->m_win, 
-                                      OMPI_WIN_FENCE | 
-                                      OMPI_WIN_ACCESS_EPOCH |
-                                      OMPI_WIN_EXPOSE_EPOCH);
-                }
-            }
-
-            /* create or get a pointer to our datatype */
-            proc = ompi_comm_peer_lookup( module->m_comm, header->hdr_origin );
-            datatype = ompi_osc_rdma_datatype_create(proc, &payload);
-
-            if (NULL == datatype) {
-                opal_output(ompi_osc_base_output,
-                            "Error recreating datatype.  Aborting.");
-                ompi_mpi_abort(module->m_comm, 1, false);
-            }
-
-            /* create replyreq sendreq */
-            ret = ompi_osc_rdma_replyreq_alloc_init(module,
-                                                  header->hdr_origin,
-                                                  header->hdr_origin_sendreq,
-                                                  header->hdr_target_disp,
-                                                  header->hdr_target_count,
-                                                  datatype,
-                                                  &replyreq);
-
-            /* send replyreq */
-            ompi_osc_rdma_replyreq_send(module, replyreq);
-
-            /* sendreq does the right retain, so we can release safely */
-            OBJ_RELEASE(datatype);
-        }
-        break;
-
-    case OMPI_OSC_RDMA_HDR_REPLY:
-        {
-            ompi_osc_rdma_reply_header_t *header;
-            ompi_osc_rdma_sendreq_t *sendreq;
-
-            /* get our header and payload */
-            header = (ompi_osc_rdma_reply_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
-            payload = (void*) (header + 1);
-
-#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
-                OMPI_OSC_RDMA_REPLY_HDR_NTOH(*header);
-            }
-#endif
-
-            /* get original sendreq pointer */
-            sendreq = (ompi_osc_rdma_sendreq_t*) header->hdr_origin_sendreq.pval;
-            module = sendreq->req_module;
-
-            /* receive data */
-            ompi_osc_rdma_replyreq_recv(module, sendreq, header, payload);
-        }
-        break;
-    case OMPI_OSC_RDMA_HDR_POST:
-        {
-            ompi_osc_rdma_control_header_t *header = 
-                (ompi_osc_rdma_control_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
-            int32_t count;
-
-#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
-                OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
-            }
-#endif
-
-            /* get our module pointer */
-            module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
-
-            OPAL_THREAD_LOCK(&module->m_lock);
-            count = (module->m_num_post_msgs -= 1);
-            OPAL_THREAD_UNLOCK(&module->m_lock);
-            if (count == 0) {
-                module->m_eager_send_active = module->m_eager_send_ok;
-
-                while (module->m_eager_send_active && 
-                       opal_list_get_size(&module->m_pending_sendreqs)) {
-                    ompi_osc_rdma_sendreq_t *sendreq;
-
-                    OPAL_THREAD_LOCK(&module->m_lock);
-                    sendreq = (ompi_osc_rdma_sendreq_t*) 
-                        opal_list_remove_first(&module->m_pending_sendreqs);
-
-                    if (NULL == sendreq) {
-                        OPAL_THREAD_UNLOCK(&module->m_lock);
-                        break;
-                    }
-
-                    sendreq->req_module->m_num_pending_out += 1;
-                    OPAL_THREAD_UNLOCK(&module->m_lock);
-
-                    ret = ompi_osc_rdma_sendreq_send(module, sendreq);
-
-                    if (OMPI_SUCCESS != ret) {
-                        OPAL_THREAD_LOCK(&module->m_lock);
-                        sendreq->req_module->m_num_pending_out -= 1;
-                        opal_list_append(&(module->m_pending_sendreqs),
-                                         (opal_list_item_t*) sendreq);
-                        OPAL_THREAD_UNLOCK(&module->m_lock);
-                        break;
+                if (!ompi_win_exposure_epoch(module->m_win)) {
+                    if (OMPI_WIN_FENCE & ompi_win_get_mode(module->m_win)) {
+                        /* well, we're definitely in an access epoch now */
+                        ompi_win_set_mode(module->m_win, 
+                                          OMPI_WIN_FENCE | 
+                                          OMPI_WIN_ACCESS_EPOCH |
+                                          OMPI_WIN_EXPOSE_EPOCH);
                     }
                 }
 
-                opal_condition_broadcast(&module->m_cond);
+                ret = ompi_osc_rdma_sendreq_recv_put(module, header, &payload);
             }
-        }
-        break;
-    case OMPI_OSC_RDMA_HDR_COMPLETE:
-        {
-            ompi_osc_rdma_control_header_t *header = 
-                (ompi_osc_rdma_control_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
-            int32_t count;
+            break;
+
+        case OMPI_OSC_RDMA_HDR_ACC: 
+            {
+                ompi_osc_rdma_send_header_t *header;
+
+                /* get our header and payload */
+                header = (ompi_osc_rdma_send_header_t*) base_header;
+                payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
-                OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
-            }
+                if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                    OMPI_OSC_RDMA_SEND_HDR_NTOH(*header);
+                }
 #endif
 
-            /* get our module pointer */
-            module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
+                /* get our module pointer */
+                module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
+                if (NULL == module) return;
 
-            /* we've heard from one more place, and have value reqs to
-               process */
-            OPAL_THREAD_LOCK(&module->m_lock);
-            count = (module->m_num_complete_msgs -= 1);
-            count += (module->m_num_pending_in += header->hdr_value[0]);
-            OPAL_THREAD_UNLOCK(&module->m_lock);
+                if (!ompi_win_exposure_epoch(module->m_win)) {
+                    if (OMPI_WIN_FENCE & ompi_win_get_mode(module->m_win)) {
+                        /* well, we're definitely in an access epoch now */
+                        ompi_win_set_mode(module->m_win, 
+                                          OMPI_WIN_FENCE | 
+                                          OMPI_WIN_ACCESS_EPOCH |
+                                          OMPI_WIN_EXPOSE_EPOCH);
+                    }
+                }
 
-            if (count == 0) opal_condition_broadcast(&module->m_cond);
-        }
-        break;
+                /* receive into temporary buffer */
+                ret = ompi_osc_rdma_sendreq_recv_accum(module, header, &payload);
+            }
+            break;
 
-    case OMPI_OSC_RDMA_HDR_LOCK_REQ:
-        {
-            ompi_osc_rdma_control_header_t *header = 
-                (ompi_osc_rdma_control_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
-            int32_t count;
+        case OMPI_OSC_RDMA_HDR_GET:
+            {
+                ompi_datatype_t *datatype;
+                ompi_osc_rdma_send_header_t *header;
+                ompi_osc_rdma_replyreq_t *replyreq;
+                ompi_proc_t *proc;
+
+                /* get our header and payload */
+                header = (ompi_osc_rdma_send_header_t*) base_header;
+                payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
-                OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
-            }
+                if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                    OMPI_OSC_RDMA_SEND_HDR_NTOH(*header);
+                }
 #endif
 
-            /* get our module pointer */
-            module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
+                /* get our module pointer */
+                module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
+                if (NULL == module) return;
 
-            if (header->hdr_value[1] > 0) {
-                ompi_osc_rdma_passive_lock(module, header->hdr_value[0], 
-                                            header->hdr_value[1]);
-            } else {
+                if (!ompi_win_exposure_epoch(module->m_win)) {
+                    if (OMPI_WIN_FENCE & ompi_win_get_mode(module->m_win)) {
+                        /* well, we're definitely in an access epoch now */
+                        ompi_win_set_mode(module->m_win, 
+                                          OMPI_WIN_FENCE | 
+                                          OMPI_WIN_ACCESS_EPOCH |
+                                          OMPI_WIN_EXPOSE_EPOCH);
+                    }
+                }
+
+                /* create or get a pointer to our datatype */
+                proc = ompi_comm_peer_lookup( module->m_comm, header->hdr_origin );
+                datatype = ompi_osc_rdma_datatype_create(proc, &payload);
+
+                if (NULL == datatype) {
+                    opal_output(ompi_osc_base_output,
+                                "Error recreating datatype.  Aborting.");
+                    ompi_mpi_abort(module->m_comm, 1, false);
+                }
+
+                /* create replyreq sendreq */
+                ret = ompi_osc_rdma_replyreq_alloc_init(module,
+                                                        header->hdr_origin,
+                                                        header->hdr_origin_sendreq,
+                                                        header->hdr_target_disp,
+                                                        header->hdr_target_count,
+                                                        datatype,
+                                                        &replyreq);
+
+                /* send replyreq */
+                ompi_osc_rdma_replyreq_send(module, replyreq);
+
+                /* sendreq does the right retain, so we can release safely */
+                OBJ_RELEASE(datatype);
+            }
+            break;
+
+        case OMPI_OSC_RDMA_HDR_REPLY:
+            {
+                ompi_osc_rdma_reply_header_t *header;
+                ompi_osc_rdma_sendreq_t *sendreq;
+
+                /* get our header and payload */
+                header = (ompi_osc_rdma_reply_header_t*) base_header;
+                payload = (void*) (header + 1);
+
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+                if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                    OMPI_OSC_RDMA_REPLY_HDR_NTOH(*header);
+                }
+#endif
+
+                /* get original sendreq pointer */
+                sendreq = (ompi_osc_rdma_sendreq_t*) header->hdr_origin_sendreq.pval;
+                module = sendreq->req_module;
+
+                /* receive data */
+                ompi_osc_rdma_replyreq_recv(module, sendreq, header, &payload);
+            }
+            break;
+        case OMPI_OSC_RDMA_HDR_POST:
+            {
+                ompi_osc_rdma_control_header_t *header = 
+                    (ompi_osc_rdma_control_header_t*) base_header;
+                int32_t count;
+                payload = (void*) (header + 1);
+
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+                if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                    OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
+                }
+#endif
+
+                /* get our module pointer */
+                module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
+                if (NULL == module) return;
+
                 OPAL_THREAD_LOCK(&module->m_lock);
-                count = (module->m_lock_received_ack += 1);
+                count = (module->m_num_post_msgs -= 1);
+                OPAL_THREAD_UNLOCK(&module->m_lock);
+                if (count == 0) {
+                    module->m_eager_send_active = module->m_eager_send_ok;
+
+                    while (module->m_eager_send_active && 
+                           opal_list_get_size(&module->m_pending_sendreqs)) {
+                        ompi_osc_rdma_sendreq_t *sendreq;
+
+                        OPAL_THREAD_LOCK(&module->m_lock);
+                        sendreq = (ompi_osc_rdma_sendreq_t*) 
+                            opal_list_remove_first(&module->m_pending_sendreqs);
+
+                        if (NULL == sendreq) {
+                            OPAL_THREAD_UNLOCK(&module->m_lock);
+                            break;
+                        }
+
+                        sendreq->req_module->m_num_pending_out += 1;
+                        OPAL_THREAD_UNLOCK(&module->m_lock);
+
+                        ret = ompi_osc_rdma_sendreq_send(module, sendreq);
+
+                        if (OMPI_SUCCESS != ret) {
+                            OPAL_THREAD_LOCK(&module->m_lock);
+                            sendreq->req_module->m_num_pending_out -= 1;
+                            opal_list_append(&(module->m_pending_sendreqs),
+                                             (opal_list_item_t*) sendreq);
+                            OPAL_THREAD_UNLOCK(&module->m_lock);
+                            break;
+                        }
+                    }
+
+                    opal_condition_broadcast(&module->m_cond);
+                }
+            }
+            break;
+
+        case OMPI_OSC_RDMA_HDR_COMPLETE:
+            {
+                ompi_osc_rdma_control_header_t *header = 
+                    (ompi_osc_rdma_control_header_t*) base_header;
+                int32_t count;
+                payload = (void*) (header + 1);
+
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+                if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                    OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
+                }
+#endif
+
+                /* get our module pointer */
+                module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
+                if (NULL == module) return;
+
+                /* we've heard from one more place, and have value reqs to
+                   process */
+                OPAL_THREAD_LOCK(&module->m_lock);
+                count = (module->m_num_complete_msgs -= 1);
+                count += (module->m_num_pending_in += header->hdr_value[0]);
                 OPAL_THREAD_UNLOCK(&module->m_lock);
 
-                if (count != 0) opal_condition_broadcast(&module->m_cond);
+                if (count == 0) opal_condition_broadcast(&module->m_cond);
             }
-        }
-        break;
+            break;
 
-    case OMPI_OSC_RDMA_HDR_UNLOCK_REQ:
-        {
-            ompi_osc_rdma_control_header_t *header = 
-                (ompi_osc_rdma_control_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+        case OMPI_OSC_RDMA_HDR_LOCK_REQ:
+            {
+                ompi_osc_rdma_control_header_t *header = 
+                    (ompi_osc_rdma_control_header_t*) base_header;
+                int32_t count;
+                payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
-                OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
-            }
+                if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                    OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
+                }
 #endif
 
-            /* get our module pointer */
-            module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
+                /* get our module pointer */
+                module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
+                if (NULL == module) return;
 
-            ompi_osc_rdma_passive_unlock(module, header->hdr_value[0],
-                                          header->hdr_value[1]);
-        }
-        break;
+                if (header->hdr_value[1] > 0) {
+                    ompi_osc_rdma_passive_lock(module, header->hdr_value[0], 
+                                               header->hdr_value[1]);
+                } else {
+                    OPAL_THREAD_LOCK(&module->m_lock);
+                    count = (module->m_lock_received_ack += 1);
+                    OPAL_THREAD_UNLOCK(&module->m_lock);
 
-    case OMPI_OSC_RDMA_HDR_UNLOCK_REPLY:
-        {
-            ompi_osc_rdma_control_header_t *header = 
-                (ompi_osc_rdma_control_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
-            int32_t count;
+                    if (count != 0) opal_condition_broadcast(&module->m_cond);
+                }
+            }
+            break;
+
+        case OMPI_OSC_RDMA_HDR_UNLOCK_REQ:
+            {
+                ompi_osc_rdma_control_header_t *header = 
+                    (ompi_osc_rdma_control_header_t*) base_header;
+                payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
-                OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
-            }
+                if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                    OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
+                }
 #endif
 
-            /* get our module pointer */
-            module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
+                /* get our module pointer */
+                module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
+                if (NULL == module) return;
 
-            OPAL_THREAD_LOCK(&module->m_lock);
-            count = (module->m_num_pending_out -= 1);
-            OPAL_THREAD_UNLOCK(&module->m_lock);
-            if (count == 0) opal_condition_broadcast(&module->m_cond);
-        }
-        break;
+                ompi_osc_rdma_passive_unlock(module, header->hdr_value[0],
+                                             header->hdr_value[1]);
+            }
+            break;
 
-    case OMPI_OSC_RDMA_HDR_RDMA_COMPLETE:
-        {
-            ompi_osc_rdma_control_header_t *header = 
-                (ompi_osc_rdma_control_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
-            int32_t count;
+        case OMPI_OSC_RDMA_HDR_UNLOCK_REPLY:
+            {
+                ompi_osc_rdma_control_header_t *header = 
+                    (ompi_osc_rdma_control_header_t*) base_header;
+                int32_t count;
+                payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
-                OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
-            }
+                if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                    OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
+                }
 #endif
 
-            /* get our module pointer */
-            module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
+                /* get our module pointer */
+                module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
+                if (NULL == module) return;
 
-            OPAL_THREAD_LOCK(&module->m_lock);
-            count = (module->m_num_pending_in -= header->hdr_value[0]);
-            OPAL_THREAD_UNLOCK(&module->m_lock);
-            if (count == 0) opal_condition_broadcast(&module->m_cond);
-        }
-        break;
+                OPAL_THREAD_LOCK(&module->m_lock);
+                count = (module->m_num_pending_out -= 1);
+                OPAL_THREAD_UNLOCK(&module->m_lock);
+                if (count == 0) opal_condition_broadcast(&module->m_cond);
+            }
+            break;
 
-    case OMPI_OSC_RDMA_HDR_RDMA_INFO:
-        {
-            ompi_osc_rdma_rdma_info_header_t *header = 
-                (ompi_osc_rdma_rdma_info_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
-            ompi_proc_t *proc = NULL;
-            mca_bml_base_endpoint_t *endpoint = NULL;
-            mca_bml_base_btl_t *bml_btl;
-            ompi_osc_rdma_btl_t *rdma_btl;
-            int origin, index;
+        case OMPI_OSC_RDMA_HDR_RDMA_COMPLETE:
+            {
+                ompi_osc_rdma_control_header_t *header = 
+                    (ompi_osc_rdma_control_header_t*) base_header;
+                int32_t count;
+                payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
-                OMPI_OSC_RDMA_RDMA_INFO_HDR_NTOH(*header);
-            }
+                if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                    OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
+                }
 #endif
 
-            /* get our module pointer */
-            module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
+                /* get our module pointer */
+                module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
+                if (NULL == module) return;
 
-            origin = header->hdr_origin;
-
-            /* find the bml_btl */
-            proc = ompi_comm_peer_lookup(module->m_comm, origin);
-            endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
-            bml_btl = mca_bml_base_btl_array_find(&endpoint->btl_rdma, btl);
-            if (NULL == bml_btl) {
-                opal_output(ompi_osc_base_output,
-                            "received rdma info for unknown btl from rank %d",
-                            origin);
-                return;
+                OPAL_THREAD_LOCK(&module->m_lock);
+                count = (module->m_num_pending_in -= header->hdr_value[0]);
+                OPAL_THREAD_UNLOCK(&module->m_lock);
+                if (count == 0) opal_condition_broadcast(&module->m_cond);
             }
+            break;
 
-            OPAL_THREAD_LOCK(&module->m_lock);
-            index = module->m_peer_info[origin].peer_num_btls++;
-            rdma_btl = &(module->m_peer_info[origin].peer_btls[index]);
+        case OMPI_OSC_RDMA_HDR_RDMA_INFO:
+            {
+                ompi_osc_rdma_rdma_info_header_t *header = 
+                    (ompi_osc_rdma_rdma_info_header_t*) base_header;
+                ompi_proc_t *proc = NULL;
+                mca_bml_base_endpoint_t *endpoint = NULL;
+                mca_bml_base_btl_t *bml_btl;
+                ompi_osc_rdma_btl_t *rdma_btl;
+                int origin, index;
+                payload = (void*) (header + 1);
 
-            rdma_btl->peer_seg_key = header->hdr_segkey;
-            rdma_btl->bml_btl = bml_btl;
-            rdma_btl->rdma_order = MCA_BTL_NO_ORDER;
-            rdma_btl->num_sent = 0;
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+                if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                    OMPI_OSC_RDMA_RDMA_INFO_HDR_NTOH(*header);
+                }
+#endif
 
-            module->m_setup_info->num_btls_callin++;
-            OPAL_THREAD_UNLOCK(&module->m_lock);
+                /* get our module pointer */
+                module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
+                if (NULL == module) return;
+
+                origin = header->hdr_origin;
+
+                /* find the bml_btl */
+                proc = ompi_comm_peer_lookup(module->m_comm, origin);
+                endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
+                bml_btl = mca_bml_base_btl_array_find(&endpoint->btl_rdma, btl);
+                if (NULL == bml_btl) {
+                    opal_output(ompi_osc_base_output,
+                                "received rdma info for unknown btl from rank %d",
+                                origin);
+                    return;
+                }
+
+                OPAL_THREAD_LOCK(&module->m_lock);
+                index = module->m_peer_info[origin].peer_num_btls++;
+                rdma_btl = &(module->m_peer_info[origin].peer_btls[index]);
+
+                rdma_btl->peer_seg_key = header->hdr_segkey;
+                rdma_btl->bml_btl = bml_btl;
+                rdma_btl->rdma_order = MCA_BTL_NO_ORDER;
+                rdma_btl->num_sent = 0;
+
+                module->m_setup_info->num_btls_callin++;
+                OPAL_THREAD_UNLOCK(&module->m_lock);
             
-            opal_condition_broadcast(&module->m_cond);
-        }
-        break;
+                opal_condition_broadcast(&module->m_cond);
+            }
+            break;
 
-    default:
-        /* BWB - FIX ME - this sucks */
-        opal_output(ompi_osc_base_output,
-                    "received packet for Window with unknown type");
-   }
+        case OMPI_OSC_RDMA_HDR_MULTI_END:
+            payload = base_header;
+            done = true;
+            break;
+
+        default:
+            /* BWB - FIX ME - this sucks */
+            opal_output(ompi_osc_base_output,
+                        "received packet for Window with unknown type");
+        }
+
+        if ((base_header->hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_MULTI) != 0) {
+            base_header = (ompi_osc_rdma_base_header_t*) payload;
+        } else {
+            done = true;
+        }
+    }
 }
 
 int

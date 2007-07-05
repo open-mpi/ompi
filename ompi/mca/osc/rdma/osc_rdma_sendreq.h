@@ -41,6 +41,8 @@ typedef enum {
 struct ompi_osc_rdma_sendreq_t {
     ompi_request_t super;
 
+    int req_refcount;
+
     /** type of sendreq (from ompi_osc_rdma_req_type_t) */
     ompi_osc_rdma_req_type_t req_type;
     /** pointer to the module that created the sendreq */
@@ -106,6 +108,7 @@ ompi_osc_rdma_sendreq_alloc(ompi_osc_rdma_module_t *module,
     (*sendreq)->req_module = module;
     (*sendreq)->req_target_rank = target_rank;
     (*sendreq)->req_target_proc = proc;
+    (*sendreq)->req_refcount = 1;
 
     return OMPI_SUCCESS;
 }
@@ -165,14 +168,16 @@ ompi_osc_rdma_sendreq_init_target(ompi_osc_rdma_sendreq_t *sendreq,
 static inline int
 ompi_osc_rdma_sendreq_free(ompi_osc_rdma_sendreq_t *sendreq)
 {
-    ompi_convertor_cleanup(&sendreq->req_origin_convertor);
+    if (0 == (--sendreq->req_refcount)) {
+        ompi_convertor_cleanup(&sendreq->req_origin_convertor);
 
-    OBJ_RELEASE(sendreq->req_target_datatype);
-    OBJ_RELEASE(sendreq->req_origin_datatype);
+        OBJ_RELEASE(sendreq->req_target_datatype);
+        OBJ_RELEASE(sendreq->req_origin_datatype);
 
-    OPAL_FREE_LIST_RETURN(&mca_osc_rdma_component.c_sendreqs,
-                          (opal_list_item_t*) sendreq);
- 
+        OPAL_FREE_LIST_RETURN(&mca_osc_rdma_component.c_sendreqs,
+                              (opal_list_item_t*) sendreq);
+    }
+
     return OMPI_SUCCESS;
 }
 

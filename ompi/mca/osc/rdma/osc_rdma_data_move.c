@@ -75,7 +75,55 @@ inmsg_mark_complete(ompi_osc_rdma_module_t *module)
     }
 }
 
+/**********************************************************************
+ *
+ * Multi-buffer support
+ *
+ **********************************************************************/
+static int
+send_multi_buffer(ompi_osc_rdma_module_t *module, int rank)
+{
+    ompi_osc_rdma_base_header_t *header = (ompi_osc_rdma_base_header_t*)
+        ((char*) module->m_pending_buffers[rank].descriptor->des_src[0].seg_addr.pval +
+         module->m_pending_buffers[rank].descriptor->des_src[0].seg_len);
 
+    header->hdr_type = OMPI_OSC_RDMA_HDR_MULTI_END;
+    header->hdr_flags = 0;
+
+    module->m_pending_buffers[rank].descriptor->des_src[0].seg_len +=
+        sizeof(ompi_osc_rdma_base_header_t);
+    mca_bml_base_send(module->m_pending_buffers[rank].bml_btl, 
+                      module->m_pending_buffers[rank].descriptor, 
+                      MCA_BTL_TAG_OSC_RDMA);
+
+    module->m_pending_buffers[rank].descriptor = NULL;
+    module->m_pending_buffers[rank].bml_btl = NULL;
+    module->m_pending_buffers[rank].remain_len = 0;
+
+    return OMPI_SUCCESS;
+}
+
+
+int
+ompi_osc_rdma_flush(ompi_osc_rdma_module_t *module)
+{
+    int i;
+
+    for (i = 0 ; i < ompi_comm_size(module->m_comm) ; ++i) {
+        if (module->m_pending_buffers[i].descriptor != NULL) {
+            send_multi_buffer(module, i);
+        }
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
+/**********************************************************************
+ *
+ * RDMA data transfers (put / get)
+ *
+ **********************************************************************/
 static void
 rdma_cb(struct mca_btl_base_module_t* btl,
         struct mca_btl_base_endpoint_t* endpoint,
@@ -240,12 +288,12 @@ ompi_osc_rdma_sendreq_send_cb(struct mca_btl_base_module_t* btl,
                            struct mca_btl_base_descriptor_t* descriptor,
                            int status)
 {
-    ompi_osc_rdma_sendreq_t *sendreq = 
-        (ompi_osc_rdma_sendreq_t*) descriptor->des_cbdata;
     ompi_osc_rdma_send_header_t *header =
         (ompi_osc_rdma_send_header_t*) descriptor->des_src[0].seg_addr.pval;
-    ompi_osc_rdma_module_t *module = sendreq->req_module;
+    ompi_osc_rdma_sendreq_t *sendreq = NULL;
+    ompi_osc_rdma_module_t *module = NULL;
     int32_t count;
+    bool done = false;
 
     if (OMPI_SUCCESS != status) {
         /* requeue and return */
@@ -254,53 +302,80 @@ ompi_osc_rdma_sendreq_send_cb(struct mca_btl_base_module_t* btl,
         return;
     }
 
-    /* have to look at header, and not the sendreq because in the case
-       of get, it's possible that the sendreq has been freed already
-       (if the remote side replies before we get our send completion
-       callback) and already allocated to another request.  We don't
-       wait for this completion before exiting a synchronization point
-       in the case of get, as we really don't care when it completes -
-       only when the data arrives. */
-    if (OMPI_OSC_RDMA_HDR_GET != header->hdr_base.hdr_type) {
+    if (header->hdr_base.hdr_type == OMPI_OSC_RDMA_HDR_MULTI_END) {
+        done = true;
+    }
+
+    while (!done) {
+        sendreq = (ompi_osc_rdma_sendreq_t*) header->hdr_origin_sendreq.pval;
+        module = sendreq->req_module;
+
+        /* have to look at header, and not the sendreq because in the
+           case of get, it's possible that the sendreq has been freed
+           already (if the remote side replies before we get our send
+           completion callback) and already allocated to another
+           request.  We don't wait for this completion before exiting
+           a synchronization point in the case of get, as we really
+           don't care when it completes - only when the data
+           arrives. */
+        if (OMPI_OSC_RDMA_HDR_GET != header->hdr_base.hdr_type) {
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
-            OMPI_OSC_RDMA_SEND_HDR_NTOH(*header);
-        }
+            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                OMPI_OSC_RDMA_SEND_HDR_NTOH(*header);
+            }
 #endif
-        /* do we need to post a send? */
-        if (header->hdr_msg_length != 0) {
-            /* sendreq is done.  Mark it as so and get out of here */
-            OPAL_THREAD_LOCK(&sendreq->req_module->m_lock);
-            count = sendreq->req_module->m_num_pending_out -= 1;
-            OPAL_THREAD_UNLOCK(&sendreq->req_module->m_lock);
-            ompi_osc_rdma_sendreq_free(sendreq);
-            if (0 == count) opal_condition_broadcast(&sendreq->req_module->m_cond);
-        } else {
-            ompi_osc_rdma_longreq_t *longreq;
-            ompi_osc_rdma_longreq_alloc(&longreq);
-
-            longreq->cbfunc = ompi_osc_rdma_sendreq_send_long_cb;
-            longreq->cbdata = sendreq;
-            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
-                                 "%d starting long sendreq to %d (%d)",
-                                 sendreq->req_module->m_comm->c_my_rank,
-                                 sendreq->req_target_rank,
-                                 header->hdr_origin_tag));
+            /* do we need to post a send? */
+            if (header->hdr_msg_length != 0) {
+                /* sendreq is done.  Mark it as so and get out of here */
+                OPAL_THREAD_LOCK(&sendreq->req_module->m_lock);
+                count = sendreq->req_module->m_num_pending_out -= 1;
+                OPAL_THREAD_UNLOCK(&sendreq->req_module->m_lock);
+                ompi_osc_rdma_sendreq_free(sendreq);
+                if (0 == count) {
+                    opal_condition_broadcast(&sendreq->req_module->m_cond);
+                }
+            } else {
+                ompi_osc_rdma_longreq_t *longreq;
+                ompi_osc_rdma_longreq_alloc(&longreq);
+                
+                longreq->cbfunc = ompi_osc_rdma_sendreq_send_long_cb;
+                longreq->cbdata = sendreq;
+                OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                                     "%d starting long sendreq to %d (%d)",
+                                     sendreq->req_module->m_comm->c_my_rank,
+                                     sendreq->req_target_rank,
+                                     header->hdr_origin_tag));
                         
-            mca_pml.pml_isend(sendreq->req_origin_convertor.pBaseBuf,
-                              sendreq->req_origin_convertor.count,
-                              sendreq->req_origin_datatype,
-                              sendreq->req_target_rank,
-                              header->hdr_origin_tag,
-                              MCA_PML_BASE_SEND_STANDARD,
-                              sendreq->req_module->m_comm,
-                              &(longreq->request));
+                mca_pml.pml_isend(sendreq->req_origin_convertor.pBaseBuf,
+                                  sendreq->req_origin_convertor.count,
+                                  sendreq->req_origin_datatype,
+                                  sendreq->req_target_rank,
+                                  header->hdr_origin_tag,
+                                  MCA_PML_BASE_SEND_STANDARD,
+                                  sendreq->req_module->m_comm,
+                                  &(longreq->request));
 
-            /* put the send request in the waiting list */
-            OPAL_THREAD_LOCK(&mca_osc_rdma_component.c_lock);
-            opal_list_append(&mca_osc_rdma_component.c_pending_requests,
-                             &(longreq->super.super));
-            OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.c_lock);
+                /* put the send request in the waiting list */
+                OPAL_THREAD_LOCK(&mca_osc_rdma_component.c_lock);
+                opal_list_append(&mca_osc_rdma_component.c_pending_requests,
+                                 &(longreq->super.super));
+                OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.c_lock);
+            }
+        } else {
+            ompi_osc_rdma_sendreq_free(sendreq);
+        }
+
+        if (0 == (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_MULTI)) {
+            done = true;
+        } else {
+            header = (ompi_osc_rdma_send_header_t*)
+                (((char*) header) + 
+                 sizeof(ompi_osc_rdma_send_header_t) + 
+                 ompi_ddt_pack_description_length(sendreq->req_target_datatype) +
+                 header->hdr_msg_length);
+            if (header->hdr_base.hdr_type == OMPI_OSC_RDMA_HDR_MULTI_END) {
+                done = true;
+            }
         }
     }
     
@@ -341,7 +416,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
     size_t written_data = 0;
     size_t needed_len = sizeof(ompi_osc_rdma_send_header_t);
     const void *packed_ddt;
-    size_t packed_ddt_len;
+    size_t packed_ddt_len, remain;
 
     if ((module->m_eager_send_active) && 
         (module->m_use_rdma) &&
@@ -353,39 +428,60 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
         if (OPAL_LIKELY(OMPI_SUCCESS == ret)) return ret;
     }
 
-    packed_ddt_len = ompi_ddt_pack_description_length(sendreq->req_target_datatype);
-
     /* we always need to send the ddt */
+    packed_ddt_len = ompi_ddt_pack_description_length(sendreq->req_target_datatype);
     needed_len += packed_ddt_len;
     if (OMPI_OSC_RDMA_GET != sendreq->req_type) {
         needed_len += sendreq->req_origin_bytes_packed;
     }
 
-    /* Get a BTL so we have the eager limit */
-    endpoint = (mca_bml_base_endpoint_t*) sendreq->req_target_proc->proc_bml;
-    bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
-    descriptor = bml_btl->btl_alloc(bml_btl->btl,
-                                    MCA_BTL_NO_ORDER,
-                                    needed_len < bml_btl->btl_eager_limit ? needed_len :
-                                    bml_btl->btl_eager_limit);
-    if (NULL == descriptor) {
-        ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-        goto cleanup;
-    }
+    /* see if we already have a buffer */
+    if ((module->m_pending_buffers[sendreq->req_target_rank].remain_len >=
+         sizeof(ompi_osc_rdma_send_header_t) + sendreq->req_origin_bytes_packed) ||
+        (0 < module->m_pending_buffers[sendreq->req_target_rank].remain_len && 
+         sendreq->req_origin_bytes_packed > 2048)) {
+        bml_btl = module->m_pending_buffers[sendreq->req_target_rank].bml_btl;
+        descriptor = module->m_pending_buffers[sendreq->req_target_rank].descriptor;
+        remain = module->m_pending_buffers[sendreq->req_target_rank].remain_len;
+    } else {
+        /* send the existing buffer */
+        if (module->m_pending_buffers[sendreq->req_target_rank].descriptor) {
+            send_multi_buffer(module, sendreq->req_target_rank);
+        }
+        assert(OMPI_SUCCESS == ret);
 
-    /* verify at least enough space for header */
-    if (descriptor->des_src[0].seg_len < sizeof(ompi_osc_rdma_send_header_t)) {
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto cleanup;
-    }
+        /* get a buffer... */
+        endpoint = (mca_bml_base_endpoint_t*) sendreq->req_target_proc->proc_bml;
+        bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
+        descriptor = bml_btl->btl_alloc(bml_btl->btl,
+                                        MCA_BTL_NO_ORDER,
+                                        module->m_use_buffers ? bml_btl->btl_eager_limit : needed_len < bml_btl->btl_eager_limit ? needed_len :
+                                        bml_btl->btl_eager_limit);
+        if (NULL == descriptor) {
+            ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+            goto cleanup;
+        }
 
-    /* setup descriptor */
-    descriptor->des_cbfunc = ompi_osc_rdma_sendreq_send_cb;
-    descriptor->des_cbdata = (void*) sendreq;
-    descriptor->des_flags = MCA_BTL_DES_FLAGS_PRIORITY;
+        /* verify at least enough space for header */
+        if (descriptor->des_src[0].seg_len < sizeof(ompi_osc_rdma_send_header_t)) {
+            ret = OMPI_ERR_OUT_OF_RESOURCE;
+            goto cleanup;
+        }
+
+        /* setup descriptor */
+        descriptor->des_cbfunc = ompi_osc_rdma_sendreq_send_cb;
+        descriptor->des_flags = MCA_BTL_DES_FLAGS_PRIORITY;
+
+        module->m_pending_buffers[sendreq->req_target_rank].bml_btl = bml_btl;
+        module->m_pending_buffers[sendreq->req_target_rank].descriptor = descriptor;
+        module->m_pending_buffers[sendreq->req_target_rank].remain_len = descriptor->des_src[0].seg_len - sizeof(ompi_osc_rdma_base_header_t);
+        remain = module->m_pending_buffers[sendreq->req_target_rank].remain_len;
+        descriptor->des_src[0].seg_len = 0;
+    }
 
     /* pack header */
-    header = (ompi_osc_rdma_send_header_t*) descriptor->des_src[0].seg_addr.pval;
+    header = (ompi_osc_rdma_send_header_t*) 
+        ((char*) descriptor->des_src[0].seg_addr.pval + descriptor->des_src[0].seg_len);
     written_data += sizeof(ompi_osc_rdma_send_header_t);
     header->hdr_base.hdr_flags = 0;
     header->hdr_windx = sendreq->req_module->m_comm->c_contextid;
@@ -413,26 +509,26 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
 #if OMPI_ENABLE_MEM_DEBUG
         header->hdr_target_op = 0;
 #endif
+        sendreq->req_refcount++;
         break;
     }
 
     /* Set datatype id and / or pack datatype */
     ret = ompi_ddt_get_pack_description(sendreq->req_target_datatype, &packed_ddt);
     if (OMPI_SUCCESS != ret) goto cleanup;
-    memcpy((unsigned char*) descriptor->des_src[0].seg_addr.pval + written_data,
+    memcpy((unsigned char*) descriptor->des_src[0].seg_addr.pval + descriptor->des_src[0].seg_len + written_data,
            packed_ddt, packed_ddt_len);
     written_data += packed_ddt_len;
 
     if (OMPI_OSC_RDMA_GET != sendreq->req_type) {
         /* if sending data and it fits, pack payload */
-        if (descriptor->des_src[0].seg_len >=
-            written_data + sendreq->req_origin_bytes_packed) {
+        if (remain >= written_data + sendreq->req_origin_bytes_packed) {
             struct iovec iov;
             uint32_t iov_count = 1;
             size_t max_data = sendreq->req_origin_bytes_packed;
 
             iov.iov_len = max_data;
-            iov.iov_base = (IOVBASE_TYPE*)((unsigned char*) descriptor->des_src[0].seg_addr.pval + written_data);
+            iov.iov_base = (IOVBASE_TYPE*)((unsigned char*) descriptor->des_src[0].seg_addr.pval + descriptor->des_src[0].seg_len + written_data);
 
             ret = ompi_convertor_pack(&sendreq->req_origin_convertor, &iov, &iov_count,
                                       &max_data );
@@ -441,37 +537,66 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
                 goto cleanup;
             }
 
-            assert(max_data == sendreq->req_origin_bytes_packed);
             written_data += max_data;
-            descriptor->des_src[0].seg_len = written_data;
+            descriptor->des_src[0].seg_len += written_data;
 
             header->hdr_msg_length = sendreq->req_origin_bytes_packed;
         } else {
+            descriptor->des_src[0].seg_len += written_data;
+
             header->hdr_msg_length = 0;
             header->hdr_origin_tag = create_send_tag(module);
         }
     } else {
-        descriptor->des_src[0].seg_len = written_data;
+        descriptor->des_src[0].seg_len += written_data;
         header->hdr_msg_length = 0;
     }
+    module->m_pending_buffers[sendreq->req_target_rank].remain_len -= written_data;
+
+    if (module->m_use_buffers) {
+        header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_MULTI;
 
 #ifdef WORDS_BIGENDIAN
-    header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    if (sendreq->req_target_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
         header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
-        OMPI_OSC_RDMA_SEND_HDR_HTON(*header);
-    }
+#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        if (sendreq->req_target_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+            header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
+            OMPI_OSC_RDMA_SEND_HDR_HTON(*header);
+        }
 #endif
 
-    /* send fragment */
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
-                         "%d sending sendreq to %d",
-                         sendreq->req_module->m_comm->c_my_rank,
-                         sendreq->req_target_rank));
-                
-    ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_RDMA);
-    goto done;
+        if (module->m_pending_buffers[sendreq->req_target_rank].remain_len <
+            sizeof(ompi_osc_rdma_send_header_t) + 128) {
+            /* not enough space left - send now */
+            ret = send_multi_buffer(module, sendreq->req_target_rank);
+        } else {
+            ret = OMPI_SUCCESS;
+        }
+
+        goto done;
+    } else {
+#ifdef WORDS_BIGENDIAN
+        header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
+#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        if (sendreq->req_target_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+            header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
+            OMPI_OSC_RDMA_SEND_HDR_HTON(*header);
+        }
+#endif
+
+        /* send fragment */
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                             "%d sending sendreq to %d",
+                             sendreq->req_module->m_comm->c_my_rank,
+                             sendreq->req_target_rank));
+
+        module->m_pending_buffers[sendreq->req_target_rank].bml_btl = NULL;
+        module->m_pending_buffers[sendreq->req_target_rank].descriptor = NULL;
+        module->m_pending_buffers[sendreq->req_target_rank].remain_len = 0;
+        
+        ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_RDMA);
+        goto done;
+    }
 
  cleanup:
     if (descriptor != NULL) {
@@ -659,6 +784,10 @@ ompi_osc_rdma_sendreq_recv_put_long_cb(ompi_osc_rdma_longreq_t *longreq)
 {
     OBJ_RELEASE(longreq->req_datatype);
     ompi_osc_rdma_longreq_free(longreq);
+    
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                         "%d finished receiving long put message",
+                         longreq->req_module->m_comm->c_my_rank)); 
 
     inmsg_mark_complete(longreq->req_module);
 }
@@ -667,14 +796,14 @@ ompi_osc_rdma_sendreq_recv_put_long_cb(ompi_osc_rdma_longreq_t *longreq)
 int
 ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
                                ompi_osc_rdma_send_header_t *header,
-                               void *inbuf)
+                               void **inbuf)
 {
     int ret = OMPI_SUCCESS;
     void *target = (unsigned char*) module->m_win->w_baseptr + 
         (header->hdr_target_disp * module->m_win->w_disp_unit);    
     ompi_proc_t *proc = ompi_comm_peer_lookup( module->m_comm, header->hdr_origin );
     struct ompi_datatype_t *datatype = 
-        ompi_osc_rdma_datatype_create(proc, &inbuf);
+        ompi_osc_rdma_datatype_create(proc, inbuf);
 
     if (NULL == datatype) {
         opal_output(ompi_osc_base_output,
@@ -701,7 +830,7 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
                                                  0,
                                                  &convertor);
         iov.iov_len = header->hdr_msg_length;
-        iov.iov_base = (IOVBASE_TYPE*)inbuf;
+        iov.iov_base = (IOVBASE_TYPE*)*inbuf;
         max_data = iov.iov_len;
         ompi_convertor_unpack(&convertor, 
                               &iov,
@@ -710,28 +839,41 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
         OBJ_DESTRUCT(&convertor);
         OBJ_RELEASE(datatype);
         inmsg_mark_complete(module);
+        *inbuf = ((char*) *inbuf) + header->hdr_msg_length;
+
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                             "%d received put message from %d",
+                             module->m_comm->c_my_rank,
+                             header->hdr_origin));
+
     } else {
-            ompi_osc_rdma_longreq_t *longreq;
-            ompi_osc_rdma_longreq_alloc(&longreq);
+        ompi_osc_rdma_longreq_t *longreq;
+        ompi_osc_rdma_longreq_alloc(&longreq);
 
-            longreq->cbfunc = ompi_osc_rdma_sendreq_recv_put_long_cb;
-            longreq->cbdata = NULL;
-            longreq->req_datatype = datatype;
-            longreq->req_module = module;
+        longreq->cbfunc = ompi_osc_rdma_sendreq_recv_put_long_cb;
+        longreq->cbdata = NULL;
+        longreq->req_datatype = datatype;
+        longreq->req_module = module;
 
-            ret = mca_pml.pml_irecv(target,
-                                    header->hdr_target_count,
-                                    datatype,
-                                    header->hdr_origin,
-                                    header->hdr_origin_tag,
-                                    module->m_comm,
-                                    &(longreq->request));
+        ret = mca_pml.pml_irecv(target,
+                                header->hdr_target_count,
+                                datatype,
+                                header->hdr_origin,
+                                header->hdr_origin_tag,
+                                module->m_comm,
+                                &(longreq->request));
 
-            /* put the send request in the waiting list */
-            OPAL_THREAD_LOCK(&mca_osc_rdma_component.c_lock);
-            opal_list_append(&mca_osc_rdma_component.c_pending_requests,
-                             &(longreq->super.super));
-            OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.c_lock);
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                             "%d started long recv put message from %d (%d)",
+                             module->m_comm->c_my_rank,
+                             header->hdr_origin,
+                             header->hdr_origin_tag));
+
+        /* put the send request in the waiting list */
+        OPAL_THREAD_LOCK(&mca_osc_rdma_component.c_lock);
+        opal_list_append(&mca_osc_rdma_component.c_pending_requests,
+                         &(longreq->super.super));
+        OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.c_lock);
     }
 
     return ret;
@@ -788,13 +930,13 @@ ompi_osc_rdma_sendreq_recv_accum_long_cb(ompi_osc_rdma_longreq_t *longreq)
 int
 ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
                                   ompi_osc_rdma_send_header_t *header,
-                                  void *payload)
+                                  void **payload)
 {
     int ret = OMPI_SUCCESS;
     struct ompi_op_t *op = ompi_osc_rdma_op_create(header->hdr_target_op);
     ompi_proc_t *proc = ompi_comm_peer_lookup( module->m_comm, header->hdr_origin );
     struct ompi_datatype_t *datatype = 
-        ompi_osc_rdma_datatype_create(proc, &payload);
+        ompi_osc_rdma_datatype_create(proc, payload);
 
     if (NULL == datatype) {
         opal_output(ompi_osc_base_output,
@@ -807,7 +949,7 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
         OPAL_THREAD_LOCK(&module->m_acc_lock);
 
         /* copy the data from the temporary buffer into the user window */
-        ret = ompi_osc_rdma_process_op(module, header, datatype, op, payload, 
+        ret = ompi_osc_rdma_process_op(module, header, datatype, op, *payload, 
                                         header->hdr_msg_length);
 
         /* unlock the window for accumulates */
@@ -823,6 +965,8 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
                              "%d received accum message from %d",
                              module->m_comm->c_my_rank,
                              header->hdr_origin));
+        *payload = ((char*) *payload) + header->hdr_msg_length;
+
     } else {
         ompi_osc_rdma_longreq_t *longreq;
         ptrdiff_t lb, extent, true_lb, true_extent;
@@ -902,7 +1046,7 @@ int
 ompi_osc_rdma_replyreq_recv(ompi_osc_rdma_module_t *module,
                              ompi_osc_rdma_sendreq_t *sendreq,
                              ompi_osc_rdma_reply_header_t *header,
-                             void *payload)
+                             void **payload)
 {
     int ret = OMPI_SUCCESS;
 
@@ -916,7 +1060,7 @@ ompi_osc_rdma_replyreq_recv(ompi_osc_rdma_module_t *module,
         int32_t count;
 
         iov.iov_len = header->hdr_msg_length;
-        iov.iov_base = (IOVBASE_TYPE*)payload;
+        iov.iov_base = (IOVBASE_TYPE*)*payload;
         max_data = iov.iov_len;
         ompi_convertor_unpack(&sendreq->req_origin_convertor,
                               &iov,
@@ -925,6 +1069,8 @@ ompi_osc_rdma_replyreq_recv(ompi_osc_rdma_module_t *module,
 
         count = sendreq->req_module->m_num_pending_out -= 1;
         ompi_osc_rdma_sendreq_free(sendreq);
+        *payload = ((char*) *payload) + header->hdr_msg_length;
+
         if (0 == count) opal_condition_broadcast(&sendreq->req_module->m_cond);
     } else {
         ompi_osc_rdma_longreq_t *longreq;
