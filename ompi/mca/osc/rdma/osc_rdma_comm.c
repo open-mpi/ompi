@@ -40,7 +40,6 @@ enqueue_sendreq(ompi_osc_rdma_module_t *module,
 }
 
 
-
 int
 ompi_osc_rdma_module_accumulate(void *origin_addr, int origin_count,
                                  struct ompi_datatype_t *origin_dt,
@@ -223,8 +222,6 @@ ompi_osc_rdma_module_put(void *origin_addr, int origin_count,
                                             &sendreq);
     if (OMPI_SUCCESS != ret) return ret;
 
-    /* if we're doing fence synchronization, try to actively send
-       right now */
     if (module->m_eager_send_active) {
         OPAL_THREAD_LOCK(&module->m_lock);
         sendreq->req_module->m_num_pending_out += 1;
@@ -234,6 +231,7 @@ ompi_osc_rdma_module_put(void *origin_addr, int origin_count,
         ret  = ompi_osc_rdma_sendreq_send(module, sendreq);
 
         if (OMPI_SUCCESS != ret) {
+            opal_output(0, "rdma_senreq_send from put failed: %d", ret);
             OPAL_THREAD_LOCK(&module->m_lock);
             sendreq->req_module->m_num_pending_out -= 1;
             opal_list_append(&(module->m_pending_sendreqs),

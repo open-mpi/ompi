@@ -128,6 +128,31 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
             }
         }
 
+        if (module->m_use_rdma) {
+            OPAL_THREAD_LOCK(&module->m_lock);
+            while (module->m_rdma_num_pending != 0) {
+                opal_condition_wait(&module->m_cond, &module->m_lock);
+            }
+            OPAL_THREAD_UNLOCK(&module->m_lock);
+
+            for (i = 0 ; i < ompi_comm_size(module->m_comm) ; ++i) {
+                int j;
+                for (j = 0 ; j < module->m_peer_info[i].peer_num_btls ; ++j) {
+                    if (module->m_peer_info[i].peer_btls[j].num_sent > 0) {
+                        ret = ompi_osc_rdma_rdma_ack_send(module,
+                                                          ompi_comm_peer_lookup(module->m_comm, i),
+                                                          &(module->m_peer_info[i].peer_btls[j]));
+                        if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
+                            module->m_peer_info[i].peer_btls[j].num_sent = 0;
+                        } else {
+                            /* BWB - fix me */
+                            abort();
+                        }
+                    }
+                }
+            }
+        }
+
         OPAL_THREAD_LOCK(&module->m_lock);
         /* if some requests couldn't be started, push into the
            "queued" list, where we will try to restart them later. */
@@ -241,7 +266,7 @@ ompi_osc_rdma_module_start(ompi_group_t *group,
 int
 ompi_osc_rdma_module_complete(ompi_win_t *win)
 {
-    int i;
+    int i, j;
     int ret = OMPI_SUCCESS;
     ompi_group_t *group;
     opal_list_item_t *item;
@@ -263,6 +288,27 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
 
     for (i = 0 ; i < ompi_group_size(module->m_sc_group) ; ++i) {
         int comm_rank = module->m_sc_remote_ranks[i];
+        if (module->m_use_rdma) {
+            OPAL_THREAD_LOCK(&module->m_lock);
+            while (module->m_rdma_num_pending != 0) {
+                opal_condition_wait(&module->m_cond, &module->m_lock);
+            }
+            OPAL_THREAD_UNLOCK(&module->m_lock);
+
+            for (j = 0 ; j < module->m_peer_info[comm_rank].peer_num_btls ; ++j) {
+                if (module->m_peer_info[comm_rank].peer_btls[j].num_sent > 0) {
+                    ret = ompi_osc_rdma_rdma_ack_send(module,
+                                                      module->m_sc_group->grp_proc_pointers[i],
+                                                      &(module->m_peer_info[comm_rank].peer_btls[j]));
+                    if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
+                        module->m_peer_info[comm_rank].peer_btls[j].num_sent = 0;
+                    } else {
+                        /* BWB - fix me */
+                        abort();
+                    }
+                }
+            }
+        }
         ret = ompi_osc_rdma_control_send(module, 
                                          module->m_sc_group->grp_proc_pointers[i],
                                          OMPI_OSC_RDMA_HDR_COMPLETE,

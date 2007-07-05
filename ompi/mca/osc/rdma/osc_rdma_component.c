@@ -784,12 +784,42 @@ component_fragment_cb(struct mca_btl_base_module_t *btl,
                 descriptor->des_dst[0].seg_addr.pval;
             int32_t count;
 
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
+            }
+#endif
+
             /* get our module pointer */
             module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
             if (NULL == module) return;
 
             OPAL_THREAD_LOCK(&module->m_lock);
             count = (module->m_num_pending_out -= 1);
+            OPAL_THREAD_UNLOCK(&module->m_lock);
+            if (count == 0) opal_condition_broadcast(&module->m_cond);
+        }
+        break;
+
+    case OMPI_OSC_RDMA_HDR_RDMA_COMPLETE:
+        {
+            ompi_osc_rdma_control_header_t *header = 
+                (ompi_osc_rdma_control_header_t*) 
+                descriptor->des_dst[0].seg_addr.pval;
+            int32_t count;
+
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
+            }
+#endif
+
+            /* get our module pointer */
+            module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
+            if (NULL == module) return;
+
+            OPAL_THREAD_LOCK(&module->m_lock);
+            count = (module->m_num_pending_in -= header->hdr_value[0]);
             OPAL_THREAD_UNLOCK(&module->m_lock);
             if (count == 0) opal_condition_broadcast(&module->m_cond);
         }
@@ -836,6 +866,7 @@ component_fragment_cb(struct mca_btl_base_module_t *btl,
             rdma_btl->peer_seg_key = header->hdr_segkey;
             rdma_btl->bml_btl = bml_btl;
             rdma_btl->rdma_order = MCA_BTL_NO_ORDER;
+            rdma_btl->num_sent = 0;
 
             module->m_setup_info->num_btls_callin++;
             OPAL_THREAD_UNLOCK(&module->m_lock);
@@ -996,6 +1027,7 @@ rdma_send_info_send(ompi_osc_rdma_module_t *module,
     /* pack header */
     header = (ompi_osc_rdma_rdma_info_header_t*) descriptor->des_src[0].seg_addr.pval;
     header->hdr_base.hdr_type = OMPI_OSC_RDMA_HDR_RDMA_INFO;
+    header->hdr_base.hdr_flags = 0;
     header->hdr_segkey = peer_send_info->seg_key;
     header->hdr_origin = ompi_comm_rank(module->m_comm);
     header->hdr_windx = module->m_comm->c_contextid;
@@ -1219,7 +1251,7 @@ setup_rdma(ompi_osc_rdma_module_t *module)
                                                 module->m_comm);
     if (OMPI_SUCCESS != ret) goto cleanup;
     for (i = 0 ; i < ompi_comm_size(module->m_comm) ; ++i) {
-        module->m_peer_info[i].peer_base = remote[i];
+        module->m_peer_info[i].peer_len = remote[i];
     }
 
     /* get number of btls we're expecting from everyone */

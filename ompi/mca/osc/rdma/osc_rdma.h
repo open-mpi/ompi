@@ -78,6 +78,7 @@ struct ompi_osc_rdma_btl_t {
     uint64_t peer_seg_key;
     mca_bml_base_btl_t *bml_btl;
     int      rdma_order;
+    int32_t  num_sent;
 };
 typedef struct ompi_osc_rdma_btl_t ompi_osc_rdma_btl_t;
 
@@ -178,10 +179,7 @@ struct ompi_osc_rdma_module_t {
     bool m_use_rdma;
     ompi_osc_rdma_setup_info_t *m_setup_info;
     ompi_osc_rdma_peer_info_t *m_peer_info;
-
-    int32_t m_num_pending_rdma;
-
-    volatile int32_t m_num_complete_rdma;
+    int32_t m_rdma_num_pending;
 
     /* ********************* FENCE data ************************ */
     /* an array of <sizeof(m_comm)> ints, each containing the value
