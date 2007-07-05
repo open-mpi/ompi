@@ -177,6 +177,7 @@ struct ompi_osc_rdma_module_t {
 
     /* RDMA data */
     bool m_use_rdma;
+    bool m_rdma_wait_completion;
     ompi_osc_rdma_setup_info_t *m_setup_info;
     ompi_osc_rdma_peer_info_t *m_peer_info;
     int32_t m_rdma_num_pending;
