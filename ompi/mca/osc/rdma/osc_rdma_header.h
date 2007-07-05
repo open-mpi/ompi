@@ -25,7 +25,7 @@
 
 #include "opal/types.h"
 
-/* Note -- 0x05 to 0x0A are of control_hdr type */
+/* Note -- 0x05 to 0x0C are of control_hdr type */
 #define OMPI_OSC_RDMA_HDR_PUT           0x01
 #define OMPI_OSC_RDMA_HDR_ACC           0x02
 #define OMPI_OSC_RDMA_HDR_GET           0x03
@@ -36,9 +36,11 @@
 #define OMPI_OSC_RDMA_HDR_UNLOCK_REQ    0x08
 #define OMPI_OSC_RDMA_HDR_UNLOCK_REPLY  0x09
 #define OMPI_OSC_RDMA_HDR_RDMA_COMPLETE 0x0A
-#define OMPI_OSC_RDMA_HDR_RDMA_INFO     0x0B
+#define OMPI_OSC_RDMA_HDR_MULTI_END     0x0B
+#define OMPI_OSC_RDMA_HDR_RDMA_INFO     0x0C
 
-#define OMPI_OSC_RDMA_HDR_FLAG_NBO     0x01
+#define OMPI_OSC_RDMA_HDR_FLAG_NBO      0x01
+#define OMPI_OSC_RDMA_HDR_FLAG_MULTI    0x02
 
 struct ompi_osc_rdma_base_header_t {
     uint8_t hdr_type;

@@ -31,6 +31,13 @@
 
 BEGIN_C_DECLS
 
+struct ompi_osc_rdma_buffer_t {
+    mca_btl_base_descriptor_t* descriptor;
+    size_t remain_len;
+    mca_bml_base_btl_t *bml_btl;
+};
+typedef struct ompi_osc_rdma_buffer_t ompi_osc_rdma_buffer_t;
+
 struct ompi_osc_rdma_component_t {
     /** Extend the basic osc component interface */
     ompi_osc_base_component_t super;
@@ -181,6 +188,10 @@ struct ompi_osc_rdma_module_t {
     ompi_osc_rdma_setup_info_t *m_setup_info;
     ompi_osc_rdma_peer_info_t *m_peer_info;
     int32_t m_rdma_num_pending;
+
+     /*** buffering ***/
+     bool m_use_buffers;
+     ompi_osc_rdma_buffer_t *m_pending_buffers;
 
     /* ********************* FENCE data ************************ */
     /* an array of <sizeof(m_comm)> ints, each containing the value

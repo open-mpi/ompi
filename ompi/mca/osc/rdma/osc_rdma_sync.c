@@ -150,6 +150,8 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
             }
         }
 
+        ompi_osc_rdma_flush(module);
+
         OPAL_THREAD_LOCK(&module->m_lock);
         /* if some requests couldn't be started, push into the
            "queued" list, where we will try to restart them later. */
@@ -337,6 +339,8 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
             break;
         }
     }
+
+    ompi_osc_rdma_flush(module);
 
     OPAL_THREAD_LOCK(&module->m_lock);
     /* if some requests couldn't be started, push into the
@@ -557,6 +561,8 @@ ompi_osc_rdma_module_unlock(int target,
             break;
         }
     }
+
+    ompi_osc_rdma_flush(module);
 
     OPAL_THREAD_LOCK(&module->m_lock);
     /* if some requests couldn't be started, push into the
