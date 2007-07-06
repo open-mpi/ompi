@@ -163,7 +163,9 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
             while( total_length > 0 ) {
                 if( memcpy_chunk > total_length ) memcpy_chunk = total_length;
                 OMPI_DDT_SAFEGUARD_POINTER( destination, memcpy_chunk,
-                                            destination, datatype, count );
+                                            (unsigned char*)destination_base, datatype, count );
+                OMPI_DDT_SAFEGUARD_POINTER( source, memcpy_chunk,
+                                            (unsigned char*)source_base, datatype, count );
                 DO_DEBUG( opal_output( 0, "copy c1. memcpy( %p, %p, %lu ) => space %lu\n",
                                        destination, source, (unsigned long)memcpy_chunk, (unsigned long)iov_len_local ); );
                 MEMCPY( destination, source, memcpy_chunk );
@@ -175,7 +177,9 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
         } else {
             for( pos_desc = 0; (int32_t)pos_desc < count; pos_desc++ ) {
                 OMPI_DDT_SAFEGUARD_POINTER( destination, datatype->size,
-                                            destination, datatype, count );
+                                            (unsigned char*)destination_base, datatype, count );
+                OMPI_DDT_SAFEGUARD_POINTER( source, datatype->size,
+                                            (unsigned char*)source_base, datatype, count );
                 DO_DEBUG( opal_output( 0, "copy c2. memcpy( %p, %p, %lu ) => space %lu\n",
                                        destination, source, (unsigned long)datatype->size,
                                        (unsigned long)(iov_len_local - (pos_desc * datatype->size)) ); );
@@ -261,3 +265,4 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
         }
     }
 }
+
