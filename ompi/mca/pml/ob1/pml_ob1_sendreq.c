@@ -228,7 +228,7 @@ static void mca_pml_ob1_rndv_completion(
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)descriptor->des_context;
     size_t req_bytes_delivered = 0;
 
-    if( sendreq->req_send.req_bytes_packed == 0 ) {
+    if( sendreq->req_send.req_bytes_packed > 0 ) {
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
                                  &(sendreq->req_send.req_base), PERUSE_SEND );
     }
