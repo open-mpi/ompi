@@ -229,7 +229,7 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
 {
     OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
 
-    if( pConv->flags & CONVERTOR_NO_OP ) {
+    if( OPAL_LIKELY(pConv->flags & CONVERTOR_NO_OP) ) {
         /* We are doing conversion on a contiguous datatype on a homogeneous
          * environment. The convertor contain minimal informations, we only
          * use the bConverted to manage the conversion.
@@ -245,7 +245,7 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
             if( iov[i].iov_len >= pending_length ) {
                 goto complete_contiguous_data_pack;
             }
-            if( NULL == iov[i].iov_base )
+            if( OPAL_LIKELY(NULL == iov[i].iov_base) )
                 iov[i].iov_base = base_pointer;
             else
                 MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
@@ -257,7 +257,7 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
         return 0;
     complete_contiguous_data_pack:
         iov[i].iov_len = pending_length;
-        if( NULL == iov[i].iov_base )
+        if( OPAL_LIKELY(NULL == iov[i].iov_base) )
             iov[i].iov_base = base_pointer;
         else
             MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
@@ -276,7 +276,7 @@ int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
 {
     OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
 
-    if( pConv->flags & CONVERTOR_NO_OP ) {
+    if( OPAL_LIKELY(pConv->flags & CONVERTOR_NO_OP) ) {
         /* We are doing conversion on a contiguous datatype on a homogeneous
          * environment. The convertor contain minimal informations, we only
          * use the bConverted to manage the conversion.
@@ -340,7 +340,7 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
     /* we save the current displacement starting from the begining
      * of this data.
      */
-    if( 0 == count ) {
+    if( OPAL_LIKELY(0 == count) ) {
         pStack[1].type     = pElems->elem.common.type;
         pStack[1].count    = pElems->elem.count;
         pStack[1].disp     = pElems->elem.disp;
@@ -403,7 +403,7 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
         rc = ompi_convertor_create_stack_at_begining( convertor, ompi_ddt_local_sizes );
         if( 0 == (*position) ) return rc;
     }
-    if( convertor->flags & DT_FLAG_CONTIGUOUS ) {
+    if( OPAL_LIKELY(convertor->flags & DT_FLAG_CONTIGUOUS) ) {
         rc = ompi_convertor_create_stack_with_pos_contig( convertor, (*position),
                                                           ompi_ddt_local_sizes );
     } else {
@@ -443,13 +443,13 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
          * completed. With this flag set the pack and unpack functions  \
          * will not do anything.                                        \
          */                                                             \
-        if( OPAL_UNLIKELY(0 == convertor->local_size) ) {               \
+        if( OPAL_UNLIKELY((0 == count) || (0 == datatype->size)) ) {    \
             convertor->flags |= CONVERTOR_COMPLETED;                    \
             convertor->remote_size = 0;                                 \
             return OMPI_SUCCESS;                                        \
         }                                                               \
                                                                         \
-        if( convertor->remoteArch == ompi_mpi_local_arch ) {            \
+        if( OPAL_LIKELY(convertor->remoteArch == ompi_mpi_local_arch) ) { \
             convertor->remote_size = convertor->local_size;             \
             if( (convertor->flags & (CONVERTOR_WITH_CHECKSUM | DT_FLAG_NO_GAPS)) == DT_FLAG_NO_GAPS ) { \
                 return OMPI_SUCCESS;                                    \
@@ -599,7 +599,7 @@ int ompi_convertor_clone( const ompi_convertor_t* source,
     destination->local_size        = source->local_size;
     destination->remote_size       = source->remote_size;
     /* create the stack */
-    if( source->stack_size > DT_STATIC_STACK_SIZE ) {
+    if( OPAL_UNLIKELY(source->stack_size > DT_STATIC_STACK_SIZE) ) {
         destination->pStack = (dt_stack_t*)malloc(sizeof(dt_stack_t) * source->stack_size );
     } else {
         destination->pStack = destination->static_stack;
@@ -607,7 +607,7 @@ int ompi_convertor_clone( const ompi_convertor_t* source,
     destination->stack_size = source->stack_size;
 
     /* initialize the stack */
-    if( 0 == copy_stack ) {
+    if( OPAL_LIKELY(0 == copy_stack) ) {
         destination->bConverted = -1;
         destination->stack_pos  = -1;
     } else {
