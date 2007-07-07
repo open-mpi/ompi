@@ -23,6 +23,7 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/datatype.h"
+#include "opal/prefetch.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -143,7 +144,7 @@ OMPI_DECLSPEC ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int3
  */
 static inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
 {
-    if( convertor->stack_size > DT_STATIC_STACK_SIZE ) {
+    if( OPAL_UNLIKELY(convertor->stack_size > DT_STATIC_STACK_SIZE) ) {
         free( convertor->pStack );
         convertor->pStack     = convertor->static_stack;
         convertor->stack_size = DT_STATIC_STACK_SIZE;
@@ -256,13 +257,13 @@ ompi_convertor_set_position( ompi_convertor_t* convertor,
     /*
      * If the convertor is already at the correct position we are happy.
      */
-    if( (*position) == convertor->bConverted ) return OMPI_SUCCESS;
+    if( OPAL_LIKELY((*position) == convertor->bConverted) ) return OMPI_SUCCESS;
 
     /*
      * Do not allow the convertor to go outside the data boundaries. This test include
      * the check for datatype with size zero as well as for convertors with a count of zero.
      */
-    if( convertor->local_size <= *position) {
+    if( OPAL_UNLIKELY(convertor->local_size <= *position) ) {
         convertor->flags |= CONVERTOR_COMPLETED;
         convertor->bConverted = convertor->local_size;
         *position = convertor->bConverted;
@@ -291,7 +292,7 @@ ompi_convertor_personalize( ompi_convertor_t* convertor, uint32_t flags,
 {
     convertor->flags |= flags;
 
-    if( NULL == position )
+    if( OPAL_UNLIKELY(NULL == position) )
         return OMPI_SUCCESS;
     return ompi_convertor_set_position( convertor, position );
 }
