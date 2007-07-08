@@ -56,6 +56,25 @@ OBJ_CLASS_INSTANCE(
     mca_mpool_base_registration_constructor,
     mca_mpool_base_registration_destructor);
 
+static void unregister_tree_item(mca_mpool_base_tree_item_t *mpool_tree_item)
+{
+    mca_mpool_base_module_t *mpool;
+    mca_mpool_base_registration_t *reg;
+    int i;
+
+    for(i = 1; i < mpool_tree_item->count; i++) {
+        mpool = mpool_tree_item->mpools[i];
+        reg = mpool_tree_item->regs[i];
+        if(mpool && mpool->mpool_deregister) {
+            mpool->mpool_deregister(mpool, reg); 
+        }
+    }
+    
+    mpool = mpool_tree_item->mpools[0];
+    reg =  mpool_tree_item->regs[0];
+    mpool->mpool_free(mpool, mpool_tree_item->key, reg);
+}
+
 /**
  * Function to allocate special memory according to what the user requests in
  * the info object.
@@ -199,35 +218,45 @@ void *mca_mpool_base_alloc(size_t size, ompi_info_t *info)
          * specified */
         goto out;
     }
-    
-    
-    if(NULL != no_reg_function)
-    {
-        mpool = no_reg_function->mpool_module;
-        i = 0;
-    } else {
-        mpool = has_reg_function[0]->mpool_module;
-        i = 1;
-    }
-    mem = mpool->mpool_alloc(mpool, size, 0, MCA_MPOOL_FLAGS_PERSIST,
-            &registration);
-    if(NULL == mem)
-        goto out;
-
-    mpool_tree_item->key = mem;
-    mpool_tree_item->mpools[mpool_tree_item->count] = mpool;
-    mpool_tree_item->regs[mpool_tree_item->count++] = registration;
-    
-    while(i < reg_module_num)
-    {
-        mpool = has_reg_function[i]->mpool_module;
-        if(mpool->mpool_register(mpool, mem, size, MCA_MPOOL_FLAGS_PERSIST,
-                    &registration) != OMPI_SUCCESS) {
-            goto out;
+   
+    for(i = -1; i < reg_module_num; i++) {
+        if(-1 == i) {
+            if(NULL != no_reg_function)
+                mpool = no_reg_function->mpool_module;
+            else
+                continue;
+        } else {
+            mpool = has_reg_function[i]->mpool_module;
         }
-        mpool_tree_item->mpools[mpool_tree_item->count] = mpool;
-        mpool_tree_item->regs[mpool_tree_item->count++] = registration;
-        i++;
+
+        if(NULL == mem) {
+            mem = mpool->mpool_alloc(mpool, size, 0, MCA_MPOOL_FLAGS_PERSIST,
+                    &registration);
+            if(NULL == mem) {
+                if(mpool_requested)
+                    goto out;
+                continue;
+            }
+            mpool_tree_item->key = mem;
+            mpool_tree_item->mpools[mpool_tree_item->count] = mpool;
+            mpool_tree_item->regs[mpool_tree_item->count++] = registration;
+        } else {
+            if(mpool->mpool_register(mpool, mem, size, MCA_MPOOL_FLAGS_PERSIST,
+                        &registration) != OMPI_SUCCESS) {
+                if(mpool_requested) {
+                    unregister_tree_item(mpool_tree_item);
+                    goto out;
+                }
+                continue;
+            }
+            mpool_tree_item->mpools[mpool_tree_item->count] = mpool;
+            mpool_tree_item->regs[mpool_tree_item->count++] = registration;
+        }
+    }
+
+    if(NULL == mem) {
+        mem = malloc(size);
+        goto out;
     }
 
     mca_mpool_base_tree_insert(mpool_tree_item);
@@ -253,9 +282,7 @@ out:
 int mca_mpool_base_free(void *base)
 {
     mca_mpool_base_tree_item_t *mpool_tree_item = NULL;
-    mca_mpool_base_module_t *mpool;
-    mca_mpool_base_registration_t *reg;
-    int i, rc;
+    int rc;
 
     if(!base) {
         return OMPI_ERROR;
@@ -269,18 +296,7 @@ int mca_mpool_base_free(void *base)
         return OMPI_SUCCESS;
     }
 
-    for(i = 1; i < mpool_tree_item->count; i++) {
-        mpool = mpool_tree_item->mpools[i];
-        reg = mpool_tree_item->regs[i];
-        if(mpool && mpool->mpool_deregister) {
-            mpool->mpool_deregister(mpool, reg); 
-        }
-    }
-    
-    mpool = mpool_tree_item->mpools[0];
-    reg =  mpool_tree_item->regs[0];
-    mpool->mpool_free(mpool, base, reg);
-
+    unregister_tree_item(mpool_tree_item);
     rc = mca_mpool_base_tree_delete(mpool_tree_item);
     
     return rc;
