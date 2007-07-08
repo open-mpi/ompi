@@ -1139,7 +1139,7 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
 
             /* tell receiver to unregister memory */
             mca_pml_ob1_send_fin(sendreq->req_send.req_base.req_proc,
-                    frag->rdma_hdr.hdr_rdma.hdr_des.pval, bml_btl,
+                    bml_btl, frag->rdma_hdr.hdr_rdma.hdr_des.pval,
                     MCA_BTL_NO_ORDER, 1);
 
             /* send fragment by copy in/out */
