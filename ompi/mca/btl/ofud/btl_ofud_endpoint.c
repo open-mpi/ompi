@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2007      The Regents of the University of California.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -82,7 +84,7 @@ int mca_btl_ud_endpoint_post_send(mca_btl_ud_module_t* ud_btl,
        out of the critical section, allowing us to use OPAL_THREAD_ADD32
        instead of a full mutex. */
     ib_qp = ud_btl->ib_qp[ud_btl->ib_qp_next % MCA_BTL_UD_NUM_QP];
-    OPAL_THREAD_ADD32(&ud_btl->ib_qp_next, 1);
+    OPAL_THREAD_ADD32(((int32_t*)&ud_btl->ib_qp_next), 1);
 
     wr->wr.ud.ah = endpoint->rmt_ah;
     wr->wr.ud.remote_qpn = endpoint->rem_addr.qp_num;
