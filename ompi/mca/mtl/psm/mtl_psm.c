@@ -22,7 +22,7 @@
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/class/opal_list.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 #include "ompi/proc/proc.h"
 
@@ -131,7 +131,7 @@ int ompi_mtl_psm_module_init() {
     ompi_mtl_psm.mq   = mq;
 
     if (OMPI_SUCCESS != 
-	mca_pml_base_modex_send( &mca_mtl_psm_component.super.mtl_version, 
+	ompi_modex_send( &mca_mtl_psm_component.super.mtl_version, 
                              &ompi_mtl_psm.epid, 
 			     sizeof(psm_epid_t))) {
 	opal_output(0, "Open MPI couldn't send PSM epid to head node process"); 
@@ -233,7 +233,7 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
 
     /* Get the epids for all the processes from modex */
     for (i = 0; i < (int) nprocs; i++) {
-	rc = mca_pml_base_modex_recv(&mca_mtl_psm_component.super.mtl_version, 
+	rc = ompi_modex_recv(&mca_mtl_psm_component.super.mtl_version, 
 				     procs[i], (void**)&epid, &size);
 	if (rc != OMPI_SUCCESS || size != sizeof(psm_epid_t))
 	    return OMPI_ERROR;

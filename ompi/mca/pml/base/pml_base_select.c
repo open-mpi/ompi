@@ -29,7 +29,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/proc/proc.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 
 typedef struct opened_component_t {
   opal_list_item_t super;
@@ -294,7 +294,7 @@ static mca_base_component_t pml_base_component = {
 int
 mca_pml_base_pml_selected(const char *name)
 {
-    return mca_pml_base_modex_send(&pml_base_component, name, strlen(name) + 1);
+    return ompi_modex_send(&pml_base_component, name, strlen(name) + 1);
 }
 
 int
@@ -309,7 +309,7 @@ mca_pml_base_pml_check_selected(const char *my_pml,
     for (i = 0 ; i < nprocs ; ++i) {
         if (ompi_proc_local() == procs[i]) continue;
 
-        ret = mca_pml_base_modex_recv(&pml_base_component,
+        ret = ompi_modex_recv(&pml_base_component,
                                       procs[i],
                                       (void**) &remote_pml, &size);
         /* if modex isn't implemented, then just assume all is well... */

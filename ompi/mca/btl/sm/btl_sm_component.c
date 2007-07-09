@@ -46,7 +46,7 @@
 #include "orte/util/proc_info.h"
 #include "ompi/mca/pml/pml.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
 #include "ompi/mca/btl/base/btl_base_error.h"

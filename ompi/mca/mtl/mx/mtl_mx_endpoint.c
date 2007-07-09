@@ -29,7 +29,7 @@
 #include "mtl_mx.h"
 #include "mtl_mx_types.h"
 #include "mtl_mx_endpoint.h" 
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 
 /*
  * Initialize state of the endpoint instance.
@@ -70,7 +70,7 @@ mca_mtl_mx_endpoint_t* mca_mtl_mx_endpoint_create(ompi_proc_t* ompi_proc) {
     mx_return_t mx_return;
     int num_retry = 0;
     /* get the remote proc's address (only one) */
-    rc = mca_pml_base_modex_recv(&mca_mtl_mx_component.super.mtl_version, 
+    rc = ompi_modex_recv(&mca_mtl_mx_component.super.mtl_version, 
                                  ompi_proc, (void**)&mx_peer, &size);
     if( rc != OMPI_SUCCESS || size != sizeof(mca_mtl_mx_addr_t)) { 
         return NULL; 

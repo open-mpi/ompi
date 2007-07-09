@@ -28,7 +28,7 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/mca/common/mx/common_mx.h"
 
@@ -427,7 +427,7 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
 
     if (enable_progress_threads) { 
         opal_output( 0, "mca_btl_mx_component_init: progress threads requested but not supported");
-        mca_pml_base_modex_send(&mca_btl_mx_component.super.btl_version, 
+        ompi_modex_send(&mca_btl_mx_component.super.btl_version, 
                                 NULL, 0);
         return NULL;
     }
@@ -446,7 +446,8 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
 
     /* First check if MX is available ... */
     if( OMPI_SUCCESS != ompi_common_mx_initialize() ) { 
-        mca_pml_base_modex_send( &mca_btl_mx_component.super.btl_version, NULL, 0 );
+        ompi_modex_send(&mca_btl_mx_component.super.btl_version, 
+                                NULL, 0);
         return NULL;
     }
         
@@ -480,14 +481,14 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
                                &mca_btl_mx_component.mx_num_btls, sizeof(uint32_t))) != MX_SUCCESS ) {
         opal_output( 0, "mca_btl_mx_component_init: mx_get_info(MX_NIC_COUNT) failed with status %d(%s)\n",
                      status, mx_strerror(status) );
-        mca_pml_base_modex_send(&mca_btl_mx_component.super.btl_version, 
+        ompi_modex_send(&mca_btl_mx_component.super.btl_version, 
                                 NULL, 0);
         return NULL;
     }
 
     if (0 == mca_btl_mx_component.mx_num_btls) {
         mca_btl_base_error_no_nics("Myrinet/MX", "NIC");
-        mca_pml_base_modex_send(&mca_btl_mx_component.super.btl_version, 
+        ompi_modex_send(&mca_btl_mx_component.super.btl_version, 
                                 NULL, 0);
         return NULL;
     }
@@ -552,8 +553,8 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     }
 
     /* publish the MX addresses via the MCA framework */
-    mca_pml_base_modex_send( &mca_btl_mx_component.super.btl_version, mx_addrs,
-			     sizeof(mca_btl_mx_addr_t) * mca_btl_mx_component.mx_num_btls );
+    ompi_modex_send(&mca_btl_mx_component.super.btl_version, mx_addrs,
+			     sizeof(mca_btl_mx_addr_t) * mca_btl_mx_component.mx_num_btls);
 
     free( nic_addrs );
     free( mx_addrs );

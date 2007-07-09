@@ -49,7 +49,7 @@
 #include "ompi/datatype/convertor.h" 
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "btl_mvapi_endpoint.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 
 static int mvapi_reg_mr(void *reg_data, void *base, size_t size,
         mca_mpool_base_registration_t *reg);
@@ -277,7 +277,7 @@ mca_btl_mvapi_modex_send(void)
             ports[i] = btl->port_info;
         }
     }
-    rc = mca_pml_base_modex_send (&mca_btl_mvapi_component.super.btl_version, ports, size);
+    rc = ompi_modex_send (&mca_btl_mvapi_component.super.btl_version, ports, size);
     if (NULL != ports) {
         free (ports);
     }

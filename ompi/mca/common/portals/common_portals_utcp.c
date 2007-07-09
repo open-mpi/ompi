@@ -25,7 +25,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/proc/proc.h"
 #include "ompi/constants.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 
 #ifdef __APPLE__
 static char *ptl_ifname = "en0";
@@ -153,7 +153,7 @@ ompi_common_portals_initialize(void)
         }
     }
 
-    ret = mca_pml_base_modex_send(&portals_component,
+    ret = ompi_modex_send(&portals_component,
                                   &info, sizeof(ptl_process_id_t));
     if (OMPI_SUCCESS != ret) {
         return ret;
@@ -201,14 +201,14 @@ ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle)
         for (i = 0 ; i < nprocs ; ++i) {
             if (proc_self == procs[i]) my_rid = i;
 
-            ret = mca_pml_base_modex_recv(&portals_component,
+            ret = ompi_modex_recv(&portals_component,
                                           procs[i], (void**) &info, &size);
             if (OMPI_SUCCESS != ret) {
-                opal_output(0, "%5d: mca_pml_base_modex_recv failed: %d", 
+                opal_output(0, "%5d: ompi_modex_recv failed: %d", 
                             getpid(), ret);
                 return ret;
             } else if (sizeof(ptl_process_id_t) != size) {
-                opal_output(0, "%5d: mca_pml_base_modex_recv returned size %d, expected %d", 
+                opal_output(0, "%5d: ompi_modex_recv returned size %d, expected %d", 
                             getpid(), size, sizeof(ptl_process_id_t));
                 return OMPI_ERROR;
             }
@@ -288,14 +288,14 @@ ompi_common_portals_get_procs(size_t nprocs,
     ptl_process_id_t *info;
 
     for (i = 0 ; i < nprocs ; ++i) {
-        ret = mca_pml_base_modex_recv(&portals_component,
+        ret = ompi_modex_recv(&portals_component,
                                       procs[i], (void**) &info, &size);
         if (OMPI_SUCCESS != ret) {
-            opal_output(0, "%5d: mca_pml_base_modex_recv failed: %d", 
+            opal_output(0, "%5d: ompi_modex_recv failed: %d", 
                         getpid(), ret);
             return ret;
         } else if (sizeof(ptl_process_id_t) != size) {
-            opal_output(0, "%5d: mca_pml_base_modex_recv returned size %d, expected %d", 
+            opal_output(0, "%5d: ompi_modex_recv returned size %d, expected %d", 
                         getpid(), size, sizeof(ptl_process_id_t));
             return OMPI_ERROR;
         }

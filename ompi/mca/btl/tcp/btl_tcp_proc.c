@@ -27,7 +27,7 @@
 
 #include "orte/class/orte_proc_table.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/datatype/dt_arch.h"
 #include "opal/util/if.h"
 #include "opal/util/net.h"
@@ -108,7 +108,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(ompi_proc_t* ompi_proc)
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
 
     /* lookup tcp parameters exported by this proc */
-    rc = mca_pml_base_modex_recv( &mca_btl_tcp_component.super.btl_version,
+    rc = ompi_modex_recv( &mca_btl_tcp_component.super.btl_version,
                                   ompi_proc,
                                   (void**)&btl_proc->proc_addrs,
                                   &size );

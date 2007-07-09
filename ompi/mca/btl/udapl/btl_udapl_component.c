@@ -46,7 +46,7 @@
 #include "ompi/datatype/convertor.h" 
 #include "btl_udapl_endpoint.h"
 #include "orte/util/proc_info.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 
 /*
  * Local Functions
@@ -190,7 +190,7 @@ mca_btl_udapl_modex_send(void)
         }
     }
 
-    rc = mca_pml_base_modex_send(
+    rc = ompi_modex_send(
             &mca_btl_udapl_component.super.btl_version, addrs, size);
     if (NULL != addrs) {
         free (addrs);

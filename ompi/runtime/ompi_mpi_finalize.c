@@ -64,7 +64,7 @@
 #include "ompi/info/info.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/attribute/attribute.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/osc/base/base.h"
@@ -264,7 +264,7 @@ int ompi_mpi_finalize(void)
     }
 
     /* free module exchange resources */
-    if (OMPI_SUCCESS != (ret = mca_pml_base_modex_finalize())) {
+    if (OMPI_SUCCESS != (ret = ompi_modex_finalize())) {
 	return ret;
     }
 

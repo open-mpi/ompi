@@ -54,7 +54,7 @@
 #include <errno.h> 
 #include <string.h>   /* for strerror()*/ 
 
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 
 /*
  * Local functions
@@ -191,7 +191,7 @@ static int btl_openib_modex_send(void)
 #endif
         }
     }
-    rc = mca_pml_base_modex_send (&mca_btl_openib_component.super.btl_version, ports, size);
+    rc = ompi_modex_send (&mca_btl_openib_component.super.btl_version, ports, size);
     if (NULL != ports) {
         free (ports);
     }

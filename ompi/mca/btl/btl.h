@@ -45,8 +45,8 @@
  * information required by its peers. An example would be the TCP
  * listen port opened by the TCP module for incoming connection
  * requests. This information is published to peers via the
- * mca_pml_base_modex_send() interface. Note that peer information is not
- * guaranteed to be available via mca_pml_base_modex_recv() during the
+ * ompi_modex_send() interface. Note that peer information is not
+ * guaranteed to be available via ompi_modex_recv() during the
  * module's init function. However, it will be available during
  * BTL selection (mca_btl_base_add_proc_fn_t()).
  *
@@ -267,7 +267,7 @@ typedef struct mca_btl_base_header_t mca_btl_base_header_t;
  * the physical devices that are available for the given transport,
  * and create a BTL module to represent each device. Any addressing 
  * information required by peers to reach the device should be published 
- * during this function via the mca_pml_base_modex_send() interface. 
+ * during this function via the ompi_modex_send() interface. 
  *
  */
 
@@ -346,9 +346,9 @@ typedef int (*mca_btl_base_module_finalize_fn_t)(
  *
  * The mca_btl_base_module_add_procs_fn_t() is called by the PML to 
  * determine the set of BTLs that should be used to reach each process.
- * Any addressing information exported by the peer via the mca_pml_base_modex_send()
+ * Any addressing information exported by the peer via the ompi_modex_send()
  * function should be available during this call via the corresponding 
- * mca_pml_base_modex_recv() function. The BTL may utilize this information to 
+ * ompi_modex_recv() function. The BTL may utilize this information to 
  * determine reachability of each peer process. 
  *
  * For each process that is reachable by the BTL, the bit corresponding to the index 

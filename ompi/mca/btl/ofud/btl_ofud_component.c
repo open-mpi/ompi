@@ -32,7 +32,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 
 #include "btl_ofud.h"
 #include "btl_ofud_frag.h"
@@ -224,7 +224,7 @@ static int mca_btl_ud_modex_send(void)
         }
     }
 
-    rc = mca_pml_base_modex_send(
+    rc = ompi_modex_send(
             &mca_btl_ofud_component.super.btl_version, addrs, size);
     if(NULL != addrs) {
         free(addrs);
