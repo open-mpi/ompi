@@ -44,7 +44,7 @@
 #include "ompi/datatype/convertor.h" 
 #include "btl_gm_endpoint.h"
 #include "orte/util/proc_info.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 
 
 #if OMPI_ENABLE_PROGRESS_THREADS
@@ -476,7 +476,7 @@ mca_btl_gm_modex_send(void)
             MCA_BTL_GM_ADDR_HTON(addrs[i]);
         }
     }
-    rc = mca_pml_base_modex_send (&mca_btl_gm_component.super.btl_version, addrs, size);
+    rc = ompi_modex_send (&mca_btl_gm_component.super.btl_version, addrs, size);
     if (NULL != addrs) {
         free (addrs);
     }

@@ -124,8 +124,8 @@ typedef int (*mca_mtl_base_module_finalize_fn_t)(struct mca_mtl_base_module_t* m
  * The mca_mtl_base_module_add_procs_fn_t() is used by the PML to
  * notify the MTL that new processes are connected to the current
  * process.  Any addressing information exported by the peer via the
- * mca_pml_base_modex_send() function should be available during this
- * call via the corresponding mca_pml_base_modex_recv() function. The
+ * ompi_modex_send() function should be available during this
+ * call via the corresponding ompi_modex_recv() function. The
  * MTL may utilize this information to determine reachability of each
  * peer process.
  *

@@ -18,7 +18,9 @@
  * $HEADER$
  */
 
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi_config.h"
+
+#include "ompi/runtime/ompi_module_exchange.h"
 
 #include "btl_ofud.h"
 #include "btl_ofud_proc.h"
@@ -119,13 +121,13 @@ mca_btl_ud_proc_t* mca_btl_ud_proc_create(ompi_proc_t* ompi_proc)
 
 
     /* query for the peer address info */
-    rc = mca_pml_base_modex_recv(&mca_btl_ofud_component.super.btl_version,
+    rc = ompi_modex_recv(&mca_btl_ofud_component.super.btl_version,
                                  ompi_proc, (void*)&module_proc->proc_addrs,
                                  &size);
 
     if(OMPI_SUCCESS != rc) {
         opal_output(0,
-                "[%s:%d] mca_pml_base_modex_recv failed for peer [%ld,%ld,%ld]",
+                "[%s:%d] ompi_modex_recv failed for peer [%ld,%ld,%ld]",
                 __FILE__,__LINE__,ORTE_NAME_ARGS(&ompi_proc->proc_name));
         OBJ_RELEASE(module_proc);
         return NULL;

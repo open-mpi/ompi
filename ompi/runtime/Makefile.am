@@ -23,8 +23,10 @@ dist_pkgdata_DATA += runtime/help-mpi-runtime.txt
 
 headers += \
         runtime/mpiruntime.h \
+	runtime/params.h \
+	runtime/ompi_cr.h \
         runtime/params.h \
-		runtime/ompi_cr.h
+	runtime/ompi_module_exchange.h
 
 libmpi_la_SOURCES += \
         runtime/ompi_mpi_abort.c \
@@ -32,4 +34,5 @@ libmpi_la_SOURCES += \
         runtime/ompi_mpi_finalize.c \
         runtime/ompi_mpi_params.c \
         runtime/ompi_mpi_preconnect.c \
-		runtime/ompi_cr.c
+	runtime/ompi_cr.c \
+	runtime/ompi_module_exchange.c

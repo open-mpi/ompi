@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_hash_table.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
@@ -122,13 +122,13 @@ mca_btl_gm_proc_t* mca_btl_gm_proc_create(ompi_proc_t* ompi_proc)
     gm_proc->proc_guid = ompi_proc->proc_name;
 
     /* query for the peer address info */
-    rc = mca_pml_base_modex_recv(
+    rc = ompi_modex_recv(
                  &mca_btl_gm_component.super.btl_version,
                  ompi_proc,
                  (void*)&gm_proc->proc_addrs,
                  &size); 
     if(OMPI_SUCCESS != rc) {
-        opal_output(0, "[%s:%d] mca_pml_base_modex_recv failed for peer [%ld,%ld,%ld]",
+        opal_output(0, "[%s:%d] ompi_modex_recv failed for peer [%ld,%ld,%ld]",
             __FILE__,__LINE__,ORTE_NAME_ARGS(&ompi_proc->proc_name));
         OBJ_RELEASE(gm_proc);
         return NULL;

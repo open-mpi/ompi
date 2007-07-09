@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_hash_table.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 
 #include "btl_template.h"
 #include "btl_template_proc.h"

@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_hash_table.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 
 #include "btl_mx.h"
 #include "btl_mx_proc.h"
@@ -118,7 +118,7 @@ mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc)
     }
 
     /* query for the peer address info */
-    rc = mca_pml_base_modex_recv( &mca_btl_mx_component.super.btl_version,
+    rc = ompi_modex_recv( &mca_btl_mx_component.super.btl_version,
 				  ompi_proc, (void*)&mx_peers, &size );
     if( OMPI_SUCCESS != rc ) {
         opal_output( 0, "mca_pml_base_modex_recv failed for peer [%ld,%ld,%ld]",

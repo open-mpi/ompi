@@ -73,7 +73,7 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/coll/coll.h"
@@ -400,8 +400,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Initialize module exchange */
 
-    if (OMPI_SUCCESS != (ret = mca_pml_base_modex_init())) {
-        error = "mca_pml_base_modex_init() failed";
+    if (OMPI_SUCCESS != (ret = ompi_modex_init())) {
+        error = "ompi_modex_init() failed";
         goto error;
     }
 
@@ -506,8 +506,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
     /* do module exchange */
-    if (OMPI_SUCCESS != (ret = mca_pml_base_modex_exchange())) {
-        error = "mca_pml_base_modex_exchange() failed";
+    if (OMPI_SUCCESS != (ret = ompi_modex_subscribe_job(ORTE_PROC_MY_NAME->jobid))) {
+        error = "ompi_modex_subscribe_job() failed";
         goto error;
     }
 

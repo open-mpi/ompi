@@ -175,7 +175,6 @@
 #include "ompi/datatype/dt_arch.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"

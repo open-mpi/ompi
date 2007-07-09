@@ -54,7 +54,7 @@
 #include "ompi/mca/btl/btl.h"
 
 #include "opal/mca/base/mca_base_param.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/btl/base/btl_base_error.h"
@@ -703,8 +703,8 @@ static int mca_btl_tcp_component_exchange(void)
 #endif
              } /* end of for opal_ifbegin() */
          } /* end of for tcp_num_btls */
-         rc =  mca_pml_base_modex_send(&mca_btl_tcp_component.super.btl_version,
-	                               addrs, xfer_size);
+         rc =  ompi_modex_send(&mca_btl_tcp_component.super.btl_version, 
+                               addrs, xfer_size);
          free(addrs);
      } /* end if */
      return rc;

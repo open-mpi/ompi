@@ -39,7 +39,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "ompi/runtime/ompi_cr.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 #include "orte/mca/smr/smr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/gpr/gpr.h"
@@ -426,7 +426,7 @@ int mca_pml_ob1_ft_event( int state )
          */
         opal_output_verbose(10, ompi_cr_output,
                             "pml:ob1: ft_event(Restart): Restart Modex information");
-        if (OMPI_SUCCESS != (ret = mca_pml_base_modex_finalize())) {
+        if (OMPI_SUCCESS != (ret = ompi_modex_finalize())) {
             opal_output(0,
                         "pml:ob1: ft_event(Restart): modex_finalize Failed %d",
                         ret);
@@ -440,7 +440,7 @@ int mca_pml_ob1_ft_event( int state )
             }
         }
 
-        if (OMPI_SUCCESS != (ret = mca_pml_base_modex_init())) {
+        if (OMPI_SUCCESS != (ret = ompi_modex_init())) {
             opal_output(0,
                         "pml:ob1: ft_event(Restart): modex_init Failed %d",
                         ret);
@@ -473,11 +473,11 @@ int mca_pml_ob1_ft_event( int state )
     }
     else if(OPAL_CRS_RESTART == state) {
         /*
-         * Re-exchange the Modex, and go through the stage gates
+         * Re-subscribe to the modex information
          */
-        if (OMPI_SUCCESS != (ret = mca_pml_base_modex_exchange())) {
+        if (OMPI_SUCCESS != (ret = ompi_modex_subscribe_job(ORTE_PROC_MY_NAME->jobid))) {
             opal_output(0,
-                        "pml:ob1: ft_event(Restart): modex_exchange Failed %d",
+                        "pml:ob1: ft_event(Restart): Failed to subscribe to the modex information %d",
                         ret);
             return ret;
         }

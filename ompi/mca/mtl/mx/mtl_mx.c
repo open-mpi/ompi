@@ -23,7 +23,7 @@
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/class/opal_list.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 #include "ompi/mca/common/mx/common_mx.h"
 #include "mtl_mx.h"
@@ -109,7 +109,7 @@ int ompi_mtl_mx_module_init(){
 
 
     
-    mca_pml_base_modex_send( &mca_mtl_mx_component.super.mtl_version, 
+    ompi_modex_send( &mca_mtl_mx_component.super.mtl_version, 
                              &ompi_mtl_mx.mx_addr, 
                              sizeof(mca_mtl_mx_addr_t));
     
