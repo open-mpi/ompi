@@ -213,7 +213,7 @@ static int process(char *orig_line, char *basename, int argc, char **argv,
     /* Split up into argv */
 
     *new_argv = opal_argv_split(line, ' ');
-    free(line);
+    free(full_line);
 
     /* Can we find argv[0] in the path? */
 
