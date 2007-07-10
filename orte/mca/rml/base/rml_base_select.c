@@ -99,6 +99,6 @@ int orte_rml_base_select(void)
     if(NULL != selected_module) {
         orte_rml = *selected_module;
     }
-    return ORTE_SUCCESS;
+    return (NULL != selected_module) ? ORTE_SUCCESS : ORTE_ERR_NOT_FOUND;
 }
 

@@ -67,54 +67,44 @@ OBJ_CLASS_INSTANCE(
 int mca_oob_tcp_addr_pack(orte_buffer_t* buffer)
 {
     uint32_t count = 0;
-    int i;
     int rc;
+    opal_list_item_t *item;
   
     rc = orte_dss.pack(buffer, ORTE_PROC_MY_NAME, 1, ORTE_NAME);
     if(rc != ORTE_SUCCESS)
         return rc;
 
-    for(i=opal_ifbegin(); i>0; i=opal_ifnext(i)) {
-        struct sockaddr_in inaddr;
-        opal_ifindextoaddr(i, (struct sockaddr*)&inaddr, sizeof(inaddr));
-        if(opal_ifcount() > 1 && 
-           opal_ifislocalhost((struct sockaddr*) &inaddr))
-            continue;
-        count++;
-    } 
+    count = opal_list_get_size(&mca_oob_tcp_component.tcp_available_devices);
     rc = orte_dss.pack(buffer, &count, 1, ORTE_INT32);
     if(rc != ORTE_SUCCESS)
         return rc;
 
-    for(i=opal_ifbegin(); i>0; i=opal_ifnext(i)) {
-        struct sockaddr_in inaddr;
+    for (item = opal_list_get_first(&mca_oob_tcp_component.tcp_available_devices) ;
+         item != opal_list_get_end(&mca_oob_tcp_component.tcp_available_devices) ;
+         item = opal_list_get_next(item)) {
+        mca_oob_tcp_device_t *dev = (mca_oob_tcp_device_t*) item;
         uint8_t type;
         uint32_t ipaddr;
         uint16_t port;
 
-        opal_ifindextoaddr(i, (struct sockaddr*)&inaddr, sizeof(inaddr));
-        if(opal_ifcount() > 1 && 
-           opal_ifislocalhost((struct sockaddr*) &inaddr))
-            continue;
-
-           switch (inaddr.sin_family) { 
- 	        case AF_INET: 
- 	            type = MCA_OOB_TCP_ADDR_TYPE_AFINET; 
- 	            break; 
- 	        default: 
- 	            /* shouldn't get here, as opal_if shouldn't allow anything 
- 	               but AFINET.  Will need another case once IPv6 code is 
- 	               committed. */ 
- 	            continue; 
- 	        } 
- 	        orte_dss.pack(buffer, &type, 1, ORTE_INT8); 
+        switch (dev->if_addr.sin_family) { 
+        case AF_INET: 
+            type = MCA_OOB_TCP_ADDR_TYPE_AFINET; 
+            break; 
+        default: 
+            /* shouldn't get here, as opal_if shouldn't allow anything 
+               but AFINET.  Will need another case once IPv6 code is 
+               committed. */ 
+            continue; 
+        } 
+        orte_dss.pack(buffer, &type, 1, ORTE_INT8); 
  	 
- 	        port = mca_oob_tcp_component.tcp_listen_port; 
- 	        orte_dss.pack(buffer, &port, sizeof(port), ORTE_BYTE); 
+        port = mca_oob_tcp_component.tcp_listen_port; 
+        orte_dss.pack(buffer, &port, sizeof(port), ORTE_BYTE); 
  	 
- 	        /* This will need to be adjusted for IPv6 */ 
- 	        ipaddr = (uint32_t) inaddr.sin_addr.s_addr; 
- 	        orte_dss.pack(buffer, &ipaddr, sizeof(ipaddr), ORTE_BYTE); 
+        /* This will need to be adjusted for IPv6 */ 
+        ipaddr = (uint32_t) dev->if_addr.sin_addr.s_addr; 
+        orte_dss.pack(buffer, &ipaddr, sizeof(ipaddr), ORTE_BYTE); 
     }
     return ORTE_SUCCESS;
 }
@@ -200,26 +190,18 @@ int mca_oob_tcp_addr_get_next(mca_oob_tcp_addr_t* addr, struct sockaddr_in* retv
     if(addr->addr_matched == false) {
         orte_std_cntr_t i=0;
         for(i=0; i<addr->addr_count; i++) {
-            int ifindex;
-            for(ifindex=opal_ifbegin(); ifindex>0; ifindex=opal_ifnext(ifindex)) {
-                struct sockaddr_in inaddr;
+            opal_list_item_t *item;
+
+            for (item = opal_list_get_first(&mca_oob_tcp_component.tcp_available_devices) ;
+                 item != opal_list_get_end(&mca_oob_tcp_component.tcp_available_devices) ;
+                 item = opal_list_get_next(item)) {
+                mca_oob_tcp_device_t *dev = (mca_oob_tcp_device_t*) item;
                 struct sockaddr_in inmask;
-                char name[32];
-                opal_ifindextoname(i, name, sizeof(name));
-                if (mca_oob_tcp_component.tcp_include != NULL &&
-                    strstr(mca_oob_tcp_component.tcp_include,name) == NULL)
-                    continue;
-                if (mca_oob_tcp_component.tcp_exclude != NULL &&
-                    strstr(mca_oob_tcp_component.tcp_exclude,name) != NULL)
-                    continue;
-                opal_ifindextoaddr(ifindex, (struct sockaddr*)&inaddr, sizeof(inaddr));
-                if(opal_ifcount() > 1 && 
-                   opal_ifislocalhost((struct sockaddr*) &inaddr))
-                    continue;
-                opal_ifindextomask(ifindex, (struct sockaddr*)&inmask, sizeof(inmask));
+
+                opal_ifindextomask(dev->if_index, (struct sockaddr*)&inmask, sizeof(inmask));
 
                 /* if match on network prefix - start here */
-                if((inaddr.sin_addr.s_addr & inmask.sin_addr.s_addr) ==
+                if((dev->if_addr.sin_addr.s_addr & inmask.sin_addr.s_addr) ==
                    (addr->addr_inet[i].sin_addr.s_addr & inmask.sin_addr.s_addr)) {
                    addr->addr_next = i;
                    goto done;

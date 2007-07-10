@@ -39,9 +39,9 @@
 #include "opal/mca/timer/base/base.h"
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
+
+#define ORTE_OOB_TCP_KEY "oob-tcp"
 
 #define OOB_TCP_DEBUG_CONNECT_FAIL 1  /* debug connection establishment failures */
 #define OOB_TCP_DEBUG_CONNECT      2  /* other connection information */
@@ -267,6 +267,8 @@ struct mca_oob_tcp_component_t {
     bool               tcp_shutdown;
     mca_oob_tcp_listen_type_t tcp_listen_type;
 
+    opal_list_t tcp_available_devices;
+
     opal_thread_t tcp_listen_thread;
     opal_free_list_t tcp_pending_connections_fl;
     opal_list_t tcp_pending_connections;
@@ -297,16 +299,25 @@ ORTE_MODULE_DECLSPEC extern mca_oob_tcp_component_t mca_oob_tcp_component;
 #endif  /* defined(__WINDOWS__) */
 
 struct mca_oob_tcp_pending_connection_t {
-        opal_free_list_item_t super;
-        int fd;
-        struct sockaddr_in addr;
-    };
-    typedef struct mca_oob_tcp_pending_connection_t mca_oob_tcp_pending_connection_t;
-    OBJ_CLASS_DECLARATION(mca_oob_tcp_pending_connection_t);
+    opal_free_list_item_t super;
+    int fd;
+    struct sockaddr_in addr;
+};
+typedef struct mca_oob_tcp_pending_connection_t mca_oob_tcp_pending_connection_t;
+OBJ_CLASS_DECLARATION(mca_oob_tcp_pending_connection_t);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+
+struct mca_oob_tcp_device_t {
+    opal_list_item_t super;
+    int if_index;
+    bool if_local;
+    struct sockaddr_in if_addr;
+};
+typedef struct mca_oob_tcp_device_t mca_oob_tcp_device_t;
+OBJ_CLASS_DECLARATION(mca_oob_tcp_device_t);
+
+
+END_C_DECLS
 
 #endif /* MCA_OOB_TCP_H_ */
 

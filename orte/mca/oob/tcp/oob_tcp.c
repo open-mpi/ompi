@@ -108,6 +108,7 @@ OBJ_CLASS_INSTANCE(
                    NULL,
                    NULL);
 
+OBJ_CLASS_INSTANCE(mca_oob_tcp_device_t, opal_list_item_t, NULL, NULL);
 
 
 /*
@@ -202,6 +203,7 @@ int mca_oob_tcp_component_open(void)
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_match_lock,    opal_mutex_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_match_cond,    opal_condition_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_listen_thread, opal_thread_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_available_devices, opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_pending_connections_fl, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_pending_connections, opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_copy_out_connections, opal_list_t);
@@ -328,12 +330,18 @@ int mca_oob_tcp_component_open(void)
 
 int mca_oob_tcp_component_close(void)
 {
+    opal_list_item_t *item;
+
 #ifdef __WINDOWS__
     WSACleanup();
 #endif
 
     /* cleanup resources */
+    while (NULL != (item = opal_list_remove_first(&mca_oob_tcp_component.tcp_available_devices))) {
+        OBJ_RELEASE(item);
+    }
 
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_available_devices);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_pending_connections_lock);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_connections_return_copy);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_connections_return);
@@ -843,11 +851,65 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
  */
 mca_oob_t* mca_oob_tcp_component_init(int* priority)
 {
+    int i;
+    bool found_local = false;
+    bool found_nonlocal = false;
+
     *priority = 1;
 
     /* are there any interfaces? */
     if(opal_ifcount() <= 0)
         return NULL;
+
+    for (i = opal_ifbegin() ; i > 0 ; i = opal_ifnext(i)) {
+        char name[32];
+        mca_oob_tcp_device_t *dev;
+
+        opal_ifindextoname(i, name, sizeof(name));
+        if (mca_oob_tcp_component.tcp_include != NULL &&
+            strstr(mca_oob_tcp_component.tcp_include,name) == NULL) {
+            continue;
+        }
+        if (mca_oob_tcp_component.tcp_exclude != NULL &&
+            strstr(mca_oob_tcp_component.tcp_exclude,name) != NULL) {
+            continue;
+        }
+
+        dev = OBJ_NEW(mca_oob_tcp_device_t);
+        dev->if_index = i;
+
+        opal_ifindextoaddr(i, (struct sockaddr*) &dev->if_addr, sizeof(struct sockaddr_in));
+        if(opal_ifislocalhost((struct sockaddr*) &dev->if_addr)) {
+            dev->if_local = true;
+            found_local = true;
+        } else {
+            dev->if_local = false;
+            found_nonlocal = true;
+        }
+
+        opal_list_append(&mca_oob_tcp_component.tcp_available_devices,
+                         &dev->super);
+    }
+    if (found_local && found_nonlocal) {
+        opal_list_item_t *item;
+        for (item = opal_list_get_first(&mca_oob_tcp_component.tcp_available_devices) ;
+             item != opal_list_get_end(&mca_oob_tcp_component.tcp_available_devices) ;
+             item = opal_list_get_next(item)) {
+            mca_oob_tcp_device_t *dev = (mca_oob_tcp_device_t*) item;
+            if (dev->if_local) {
+                item = opal_list_remove_item(&mca_oob_tcp_component.tcp_available_devices,
+                                             item);
+            }
+        }
+    }
+
+    if (opal_list_get_size(&mca_oob_tcp_component.tcp_available_devices) == 0) {
+        if (NULL != mca_oob_tcp_component.tcp_include) {
+            opal_output(0, "None of the specified TCP interfaces found (%s)",
+                        mca_oob_tcp_component.tcp_include);
+        }
+        return NULL;
+    }
 
     /* initialize data structures */
     opal_hash_table_init(&mca_oob_tcp_component.tcp_peers, 128);
@@ -1364,29 +1426,20 @@ int mca_oob_tcp_process_name_compare(const orte_process_name_t* n1, const orte_p
 
 char* mca_oob_tcp_get_addr(void)
 {
-    int i;
-    char *contact_info = (char *)malloc((opal_ifcount()+1) * 32);
+    char *contact_info = malloc(opal_list_get_size(&mca_oob_tcp_component.tcp_available_devices) * 32);
     char *ptr = contact_info;
+    opal_list_item_t *item;
     *ptr = 0;
 
-    for(i=opal_ifbegin(); i>0; i=opal_ifnext(i)) {
-        struct sockaddr_in addr;
-        char name[32];
-        opal_ifindextoname(i, name, sizeof(name));
-        if (mca_oob_tcp_component.tcp_include != NULL &&
-            strstr(mca_oob_tcp_component.tcp_include,name) == NULL)
-            continue;
-        if (mca_oob_tcp_component.tcp_exclude != NULL &&
-            strstr(mca_oob_tcp_component.tcp_exclude,name) != NULL)
-            continue;
-        opal_ifindextoaddr(i, (struct sockaddr*)&addr, sizeof(addr));
-        if(opal_ifcount() > 1 && 
-           opal_ifislocalhost((struct sockaddr*) &addr))
-            continue;
-        if(ptr != contact_info) {
+    for (item = opal_list_get_first(&mca_oob_tcp_component.tcp_available_devices) ;
+         item != opal_list_get_end(&mca_oob_tcp_component.tcp_available_devices) ;
+         item = opal_list_get_next(item)) {
+        mca_oob_tcp_device_t *dev = (mca_oob_tcp_device_t*) item;
+
+        if (ptr != contact_info) {
             ptr += sprintf(ptr, ";");
         }
-        ptr += sprintf(ptr, "tcp://%s:%d", inet_ntoa(addr.sin_addr),
+        ptr += sprintf(ptr, "tcp://%s:%d", inet_ntoa(dev->if_addr.sin_addr),
                     ntohs(mca_oob_tcp_component.tcp_listen_port));
     }
     return contact_info;
