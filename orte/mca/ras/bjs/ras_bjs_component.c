@@ -110,7 +110,6 @@ static orte_ras_base_module_t *orte_ras_bjs_init(int* priority)
         return NULL;
     }
     
-#if 0
     /* see if bjs is running */
     if (getenv("BJS_SOCKET") == NULL) {
         return NULL;
@@ -122,7 +121,6 @@ static orte_ras_base_module_t *orte_ras_bjs_init(int* priority)
     if (getenv("NODES") == NULL) {
         return NULL;
     }
-#endif
     
     *priority = mca_ras_bjs_component.priority;
     return &orte_ras_bjs_module;
