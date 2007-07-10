@@ -37,9 +37,8 @@
 #include "ompi/proc/proc.h"
 #include "ompi/mca/allocator/base/base.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
+
 /**
  * OB1 PML module
  */
@@ -84,25 +83,6 @@ typedef struct mca_pml_ob1_t mca_pml_ob1_t;
 
 extern mca_pml_ob1_t mca_pml_ob1;
 
-
-/*
- * PML module functions.
- */
-
-
-extern int mca_pml_ob1_component_open(void);
-extern int mca_pml_ob1_component_close(void);
-
-extern mca_pml_base_module_t* mca_pml_ob1_component_init(
-    int *priority, 
-    bool enable_progress_threads,
-    bool enable_mpi_threads
-);
-
-extern int mca_pml_ob1_component_fini(void);
-
-
-
 /*
  * PML interface functions.
  */
@@ -125,106 +105,80 @@ extern int mca_pml_ob1_del_procs(
     size_t nprocs
 );
 
-extern int mca_pml_ob1_enable(
-    bool enable
-);
+extern int mca_pml_ob1_enable( bool enable );
 
 extern int mca_pml_ob1_progress(void);
 
-extern int mca_pml_ob1_iprobe(
-    int dst,
-    int tag,
-    struct ompi_communicator_t* comm,
-    int *matched,
-    ompi_status_public_t* status
-);
+extern int mca_pml_ob1_iprobe( int dst,
+                               int tag,
+                               struct ompi_communicator_t* comm,
+                               int *matched,
+                               ompi_status_public_t* status );
 
-extern int mca_pml_ob1_probe(
-    int dst,
-    int tag,
-    struct ompi_communicator_t* comm,
-    ompi_status_public_t* status
-);
+extern int mca_pml_ob1_probe( int dst,
+                              int tag,
+                              struct ompi_communicator_t* comm,
+                              ompi_status_public_t* status );
 
-extern int mca_pml_ob1_isend_init(
-    void *buf,
-    size_t count,
-    ompi_datatype_t *datatype,
-    int dst,
-    int tag,
-    mca_pml_base_send_mode_t mode,
-    struct ompi_communicator_t* comm,
-    struct ompi_request_t **request
-);
+extern int mca_pml_ob1_isend_init( void *buf,
+                                   size_t count,
+                                   ompi_datatype_t *datatype,
+                                   int dst,
+                                   int tag,
+                                   mca_pml_base_send_mode_t mode,
+                                   struct ompi_communicator_t* comm,
+                                   struct ompi_request_t **request );
 
-extern int mca_pml_ob1_isend(
-    void *buf,
-    size_t count,
-    ompi_datatype_t *datatype,
-    int dst,
-    int tag,
-    mca_pml_base_send_mode_t mode,
-    struct ompi_communicator_t* comm,
-    struct ompi_request_t **request
-);
+extern int mca_pml_ob1_isend( void *buf,
+                              size_t count,
+                              ompi_datatype_t *datatype,
+                              int dst,
+                              int tag,
+                              mca_pml_base_send_mode_t mode,
+                              struct ompi_communicator_t* comm,
+                              struct ompi_request_t **request );
 
-extern int mca_pml_ob1_send(
-    void *buf,
-    size_t count,
-    ompi_datatype_t *datatype,
-    int dst,
-    int tag,
-    mca_pml_base_send_mode_t mode,
-    struct ompi_communicator_t* comm
-);
+extern int mca_pml_ob1_send( void *buf,
+                             size_t count,
+                             ompi_datatype_t *datatype,
+                             int dst,
+                             int tag,
+                             mca_pml_base_send_mode_t mode,
+                             struct ompi_communicator_t* comm );
 
-extern int mca_pml_ob1_irecv_init(
-    void *buf,
-    size_t count,
-    ompi_datatype_t *datatype,
-    int src,
-    int tag,
-    struct ompi_communicator_t* comm,
-    struct ompi_request_t **request
-);
+extern int mca_pml_ob1_irecv_init( void *buf,
+                                   size_t count,
+                                   ompi_datatype_t *datatype,
+                                   int src,
+                                   int tag,
+                                   struct ompi_communicator_t* comm,
+                                   struct ompi_request_t **request );
 
-extern int mca_pml_ob1_irecv(
-    void *buf,
-    size_t count,
-    ompi_datatype_t *datatype,
-    int src,
-    int tag,
-    struct ompi_communicator_t* comm,
-    struct ompi_request_t **request
-);
+extern int mca_pml_ob1_irecv( void *buf,
+                              size_t count,
+                              ompi_datatype_t *datatype,
+                              int src,
+                              int tag,
+                              struct ompi_communicator_t* comm,
+                              struct ompi_request_t **request );
 
-extern int mca_pml_ob1_recv(
-    void *buf,
-    size_t count,
-    ompi_datatype_t *datatype,
-    int src,
-    int tag,
-    struct ompi_communicator_t* comm,
-    ompi_status_public_t* status
-);
+extern int mca_pml_ob1_recv( void *buf,
+                             size_t count,
+                             ompi_datatype_t *datatype,
+                             int src,
+                             int tag,
+                             struct ompi_communicator_t* comm,
+                             ompi_status_public_t* status );
 
-extern int mca_pml_ob1_dump(
-    struct ompi_communicator_t* comm,
-    int verbose
-);
+extern int mca_pml_ob1_dump( struct ompi_communicator_t* comm,
+                             int verbose );
 
-extern int mca_pml_ob1_start(
-    size_t count,
-    ompi_request_t** requests
-);
+extern int mca_pml_ob1_start( size_t count,
+                              ompi_request_t** requests );
 
-extern int mca_pml_ob1_ft_event(
-    int state
-);
+extern int mca_pml_ob1_ft_event( int state );
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #define MCA_PML_OB1_DES_ALLOC(bml_btl, des, order, size) \
     MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, order,                     \
@@ -300,6 +254,7 @@ void mca_pml_ob1_process_pending_rdma(void);
         if(opal_list_get_size(&mca_pml_ob1.rdma_pending))       \
             mca_pml_ob1_process_pending_rdma();                 \
     } while (0)
+
 /*
  * Compute the total number of bytes on supplied descriptor
  */
@@ -325,28 +280,28 @@ int mca_pml_ob1_com_btl_comp(const void *v1, const void *v2);
 
 /* Calculate what percentage of a message to send through each BTL according to
  * relative weight */
-static inline void mca_pml_ob1_calc_weighted_length(
-        mca_pml_ob1_com_btl_t *btls, int num_btls, size_t size,
-        double weight_total)
+static inline void
+mca_pml_ob1_calc_weighted_length( mca_pml_ob1_com_btl_t *btls, int num_btls, size_t size,
+                                  double weight_total )
 {
     int i;
-    size_t length_left = size;
+    size_t length_left;
 
     /* shortcut for common case for only one BTL */
-    if(num_btls == 1) {
+    if( OPAL_LIKELY(1 == num_btls) ) {
         btls[0].length = size;
         return;
     }
 
     /* sort BTLs according of their weights so BTLs with smaller weight will
      * not hijack all of the traffic */
-    qsort(btls, num_btls, sizeof(mca_pml_ob1_com_btl_t),
-            mca_pml_ob1_com_btl_comp);
+    qsort( btls, num_btls, sizeof(mca_pml_ob1_com_btl_t),
+           mca_pml_ob1_com_btl_comp );
 
-    for(i = 0; i < num_btls; i++) {
+    for(length_left = size, i = 0; i < num_btls; i++) {
         mca_bml_base_btl_t* bml_btl = btls[i].bml_btl;
         size_t length = 0;
-        if(length_left != 0) {
+        if( OPAL_UNLIKELY(0 != length_left) ) {
             length = (length_left > bml_btl->btl_eager_limit)?
                 ((size_t)(size * (bml_btl->btl_weight / weight_total))) :
                 length_left;

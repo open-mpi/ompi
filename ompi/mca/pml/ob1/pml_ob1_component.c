@@ -35,12 +35,17 @@
 #include "pml_ob1_component.h"
 #include "ompi/mca/allocator/base/base.h"
 
-OBJ_CLASS_INSTANCE(
-    mca_pml_ob1_pckt_pending_t,
-    ompi_free_list_item_t,
-    NULL,
-    NULL
-);
+OBJ_CLASS_INSTANCE( mca_pml_ob1_pckt_pending_t,
+                    ompi_free_list_item_t,
+                    NULL,
+                    NULL );
+
+static int mca_pml_ob1_component_open(void);
+static int mca_pml_ob1_component_close(void);
+static mca_pml_base_module_t*
+mca_pml_ob1_component_init( int* priority, bool enable_progress_threads,
+                            bool enable_mpi_threads );
+static int mca_pml_ob1_component_fini(void);
 
 mca_pml_base_component_1_0_0_t mca_pml_ob1_component = {
 
@@ -90,11 +95,10 @@ static inline int mca_pml_ob1_param_register_int(
     return param_value;
 }
 
-
-                          
-int mca_pml_ob1_component_open(void)
+static int mca_pml_ob1_component_open(void)
 {
-    mca_allocator_base_component_t* allocator_component; 
+    mca_allocator_base_component_t* allocator_component;
+
     mca_pml_ob1.free_list_num =
         mca_pml_ob1_param_register_int("free_list_num", 4);
     mca_pml_ob1.free_list_max =
@@ -126,74 +130,18 @@ int mca_pml_ob1_component_open(void)
                               "bucket",
                               &mca_pml_ob1.allocator_name);
 
-
-    
     allocator_component = mca_allocator_component_lookup( mca_pml_ob1.allocator_name );
     if(NULL == allocator_component) {
         opal_output(0, "mca_pml_ob1_component_open: can't find allocator: %s\n", mca_pml_ob1.allocator_name);
         return OMPI_ERROR;
     }
     mca_pml_ob1.allocator = allocator_component->allocator_init(true,
-                                                                mca_pml_ob1_seg_alloc, mca_pml_ob1_seg_free, NULL);
-    
-    
+                                                                mca_pml_ob1_seg_alloc,
+                                                                mca_pml_ob1_seg_free, NULL);
     if(NULL == mca_pml_ob1.allocator) {
         opal_output(0, "mca_pml_ob1_component_open: unable to initialize allocator\n");
         return OMPI_ERROR;
     }
-
-    OBJ_CONSTRUCT(&mca_pml_ob1.lock, opal_mutex_t);
-
-    /* fragments */
-    OBJ_CONSTRUCT(&mca_pml_ob1.rdma_frags, ompi_free_list_t);
-    ompi_free_list_init(
-        &mca_pml_ob1.rdma_frags,
-        sizeof(mca_pml_ob1_rdma_frag_t),
-        OBJ_CLASS(mca_pml_ob1_rdma_frag_t),
-        mca_pml_ob1.free_list_num,
-        mca_pml_ob1.free_list_max,
-        mca_pml_ob1.free_list_inc,
-        NULL);
-                                                                                                            
-    OBJ_CONSTRUCT(&mca_pml_ob1.recv_frags, ompi_free_list_t);
-
-    ompi_free_list_init(
-        &mca_pml_ob1.recv_frags,
-        sizeof(mca_pml_ob1_recv_frag_t) + mca_pml_ob1.unexpected_limit,
-        OBJ_CLASS(mca_pml_ob1_recv_frag_t),
-        mca_pml_ob1.free_list_num,
-        mca_pml_ob1.free_list_max,
-        mca_pml_ob1.free_list_inc,
-        NULL);
-                                                                                                            
-    OBJ_CONSTRUCT(&mca_pml_ob1.pending_pckts, ompi_free_list_t);
-    ompi_free_list_init(
-        &mca_pml_ob1.pending_pckts,
-        sizeof(mca_pml_ob1_pckt_pending_t),
-        OBJ_CLASS(mca_pml_ob1_pckt_pending_t),
-        mca_pml_ob1.free_list_num,
-        mca_pml_ob1.free_list_max,
-        mca_pml_ob1.free_list_inc,
-        NULL);
-
-
-    OBJ_CONSTRUCT(&mca_pml_ob1.buffers, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_pml_ob1.send_ranges, ompi_free_list_t);
-    ompi_free_list_init(
-        &mca_pml_ob1.send_ranges,
-        sizeof(mca_pml_ob1_send_range_t) +
-        (mca_pml_ob1.max_send_per_range - 1) * sizeof(mca_pml_ob1_com_btl_t),
-        OBJ_CLASS(mca_pml_ob1_send_range_t),
-        mca_pml_ob1.free_list_num,
-        mca_pml_ob1.free_list_max,
-        mca_pml_ob1.free_list_inc,
-        NULL);
-
-    /* pending operations */
-    OBJ_CONSTRUCT(&mca_pml_ob1.send_pending, opal_list_t);
-    OBJ_CONSTRUCT(&mca_pml_ob1.recv_pending, opal_list_t);
-    OBJ_CONSTRUCT(&mca_pml_ob1.pckt_pending, opal_list_t);
-    OBJ_CONSTRUCT(&mca_pml_ob1.rdma_pending, opal_list_t);
 
     mca_pml_ob1.leave_pinned = ompi_mpi_leave_pinned;
     mca_pml_ob1.leave_pinned_pipeline = (int) ompi_mpi_leave_pinned_pipeline;
@@ -204,55 +152,21 @@ int mca_pml_ob1_component_open(void)
 }
 
 
-int mca_pml_ob1_component_close(void)
+static int mca_pml_ob1_component_close(void)
 {
     int rc;
 
-    if(!mca_pml_ob1.enabled)
-        return OMPI_SUCCESS; /* never selected.. return success.. */  
-
     if(OMPI_SUCCESS != (rc = mca_bml_base_close()))
         return rc;
-
-    OBJ_DESTRUCT(&mca_pml_ob1.rdma_pending);
-    OBJ_DESTRUCT(&mca_pml_ob1.pckt_pending);
-    OBJ_DESTRUCT(&mca_pml_ob1.recv_pending);
-    OBJ_DESTRUCT(&mca_pml_ob1.send_pending);
-    OBJ_DESTRUCT(&mca_pml_ob1.buffers);
-    OBJ_DESTRUCT(&mca_pml_ob1.pending_pckts);
-    OBJ_DESTRUCT(&mca_pml_ob1.recv_frags);
-    OBJ_DESTRUCT(&mca_pml_ob1.rdma_frags);
-    OBJ_DESTRUCT(&mca_pml_ob1.lock);
-
-    /* destroy the global free lists */
-    OBJ_DESTRUCT(&mca_pml_base_send_requests);
-    OBJ_DESTRUCT(&mca_pml_base_recv_requests);
-    if(OMPI_SUCCESS != (rc = mca_pml_ob1.allocator->alc_finalize(mca_pml_ob1.allocator))) {
-        return rc;
-    }
-
-#if 0
-    if (mca_pml_ob1.send_requests.fl_num_allocated !=
-        mca_pml_ob1.send_requests.super.opal_list_length) {
-        opal_output(0, "ob1 send requests: %d allocated %d returned\n",
-            mca_pml_ob1.send_requests.fl_num_allocated,
-            mca_pml_ob1.send_requests.super.opal_list_length);
-    }
-    if (mca_pml_ob1.recv_requests.fl_num_allocated !=
-        mca_pml_ob1.recv_requests.super.opal_list_length) {
-        opal_output(0, "ob1 recv requests: %d allocated %d returned\n",
-            mca_pml_ob1.recv_requests.fl_num_allocated,
-            mca_pml_ob1.recv_requests.super.opal_list_length);
-    }
-#endif
 
     return OMPI_SUCCESS;
 }
 
 
-mca_pml_base_module_t* mca_pml_ob1_component_init(int* priority, 
-                                                  bool enable_progress_threads,
-                                                  bool enable_mpi_threads)
+static mca_pml_base_module_t*
+mca_pml_ob1_component_init( int* priority, 
+                            bool enable_progress_threads,
+                            bool enable_mpi_threads )
 {
     opal_output_verbose( 10, 0, 
                          "in ob1, my priority is %d\n", mca_pml_ob1.priority);
@@ -282,30 +196,57 @@ mca_pml_base_module_t* mca_pml_ob1_component_init(int* priority,
      */
     mca_pml_ob1.super.pml_progress = mca_bml.bml_progress;
 
-    /**
-     * If we get here this is the PML who get selected for the run. We
-     * should get ownership for the send and receive requests list, and
-     * initialize them with the size of our own requests.
-     */
-    OBJ_CONSTRUCT(&mca_pml_base_send_requests, ompi_free_list_t);
-    ompi_free_list_init( &mca_pml_base_send_requests,
-                         sizeof(mca_pml_ob1_send_request_t),
-                         OBJ_CLASS(mca_pml_ob1_send_request_t),
-                         mca_pml_ob1.free_list_num,
-                         mca_pml_ob1.free_list_max,
-                         mca_pml_ob1.free_list_inc,
-                         NULL );
-
-    OBJ_CONSTRUCT(&mca_pml_base_recv_requests, ompi_free_list_t);
-    ompi_free_list_init( &mca_pml_base_recv_requests,
-                         sizeof(mca_pml_ob1_recv_request_t),
-                         OBJ_CLASS(mca_pml_ob1_recv_request_t),
-                         mca_pml_ob1.free_list_num,
-                         mca_pml_ob1.free_list_max,
-                         mca_pml_ob1.free_list_inc,
-                         NULL );
-
     return &mca_pml_ob1.super;
+}
+
+int mca_pml_ob1_component_fini(void)
+{
+    int rc;
+
+    /* Shutdown BML */
+    if(OMPI_SUCCESS != (rc = mca_bml.bml_finalize()))
+        return rc;
+
+
+    /* Shutdown buffered send */
+    if(OMPI_SUCCESS != (rc = mca_pml_base_bsend_fini())) {
+        return rc;
+    }
+
+    if(!mca_pml_ob1.enabled)
+        return OMPI_SUCCESS; /* never selected.. return success.. */  
+    mca_pml_ob1.enabled = false;  /* not anymore */
+
+    OBJ_DESTRUCT(&mca_pml_ob1.rdma_pending);
+    OBJ_DESTRUCT(&mca_pml_ob1.pckt_pending);
+    OBJ_DESTRUCT(&mca_pml_ob1.recv_pending);
+    OBJ_DESTRUCT(&mca_pml_ob1.send_pending);
+    OBJ_DESTRUCT(&mca_pml_ob1.buffers);
+    OBJ_DESTRUCT(&mca_pml_ob1.pending_pckts);
+    OBJ_DESTRUCT(&mca_pml_ob1.recv_frags);
+    OBJ_DESTRUCT(&mca_pml_ob1.rdma_frags);
+    OBJ_DESTRUCT(&mca_pml_ob1.lock);
+
+    if(OMPI_SUCCESS != (rc = mca_pml_ob1.allocator->alc_finalize(mca_pml_ob1.allocator))) {
+        return rc;
+    }
+
+#if 0
+    if (mca_pml_base_send_requests.fl_num_allocated !=
+        mca_pml_base_send_requests.super.opal_list_length) {
+        opal_output(0, "ob1 send requests: %d allocated %d returned\n",
+                    mca_pml_base_send_requests.fl_num_allocated,
+                    mca_pml_base_send_requests.super.opal_list_length);
+    }
+    if (mca_pml_base_recv_requests.fl_num_allocated !=
+        mca_pml_base_recv_requests.super.opal_list_length) {
+        opal_output(0, "ob1 recv requests: %d allocated %d returned\n",
+                    mca_pml_base_recv_requests.fl_num_allocated,
+                    mca_pml_base_recv_requests.super.opal_list_length);
+    }
+#endif
+
+    return OMPI_SUCCESS;
 }
 
 void *mca_pml_ob1_seg_alloc( struct mca_mpool_base_module_t* mpool,

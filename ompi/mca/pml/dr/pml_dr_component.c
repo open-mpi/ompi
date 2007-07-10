@@ -112,59 +112,9 @@ int mca_pml_dr_component_open(void)
     /* default is to csum all data */
     mca_pml_dr.enable_csum = 
         mca_pml_dr_param_register_int("enable_csum", 1);
-    
-    /* requests */
-    OBJ_CONSTRUCT(&mca_pml_base_send_requests, ompi_free_list_t);
-    ompi_free_list_init(
-        &mca_pml_base_send_requests,
-        sizeof(mca_pml_dr_send_request_t),
-        OBJ_CLASS(mca_pml_dr_send_request_t),
-        mca_pml_dr.free_list_num,
-        mca_pml_dr.free_list_max,
-        mca_pml_dr.free_list_inc,
-        NULL);
-                                                                                                            
-    OBJ_CONSTRUCT(&mca_pml_base_recv_requests, ompi_free_list_t);
-    ompi_free_list_init(
-        &mca_pml_base_recv_requests,
-        sizeof(mca_pml_dr_recv_request_t),
-        OBJ_CLASS(mca_pml_dr_recv_request_t),
-        mca_pml_dr.free_list_num,
-        mca_pml_dr.free_list_max,
-        mca_pml_dr.free_list_inc,
-        NULL);
-                                                                                                            
-    /* fragments */
-    OBJ_CONSTRUCT(&mca_pml_dr.recv_frags, ompi_free_list_t);
-    ompi_free_list_init(
-        &mca_pml_dr.recv_frags,
-        sizeof(mca_pml_dr_recv_frag_t),
-        OBJ_CLASS(mca_pml_dr_recv_frag_t),
-        mca_pml_dr.free_list_num,
-        mca_pml_dr.free_list_max,
-        mca_pml_dr.free_list_inc,
-        NULL);
-
-    OBJ_CONSTRUCT(&mca_pml_dr.vfrags, ompi_free_list_t);
-    ompi_free_list_init(
-        &mca_pml_dr.vfrags,
-        sizeof(mca_pml_dr_vfrag_t),
-        OBJ_CLASS(mca_pml_dr_vfrag_t),
-        mca_pml_dr.free_list_num,
-        mca_pml_dr.free_list_max,
-        mca_pml_dr.free_list_inc,
-        NULL);
-
-    OBJ_CONSTRUCT(&mca_pml_dr.send_pending, opal_list_t);
-    OBJ_CONSTRUCT(&mca_pml_dr.send_active, opal_list_t);
-    OBJ_CONSTRUCT(&mca_pml_dr.acks_pending, opal_list_t);
-    OBJ_CONSTRUCT(&mca_pml_dr.buffers, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_pml_dr.endpoints, ompi_pointer_array_t);
-    OBJ_CONSTRUCT(&mca_pml_dr.lock, opal_mutex_t);
 
     mca_pml_dr.enabled = false; 
-    return mca_bml_base_open(); 
-    
+    return mca_bml_base_open();
 }
 
 
@@ -172,19 +122,9 @@ int mca_pml_dr_component_close(void)
 {
     int rc;
 
-    if(!mca_pml_dr.enabled)
-        return OMPI_SUCCESS; /* never selected.. return success.. */  
-
     if(OMPI_SUCCESS != (rc = mca_bml_base_close()))
         return rc;
 
-    OBJ_DESTRUCT(&mca_pml_dr.send_pending);
-    OBJ_DESTRUCT(&mca_pml_dr.send_active);
-    OBJ_DESTRUCT(&mca_pml_dr.acks_pending);
-    OBJ_DESTRUCT(&mca_pml_base_recv_requests);
-    OBJ_DESTRUCT(&mca_pml_base_send_requests);
-    OBJ_DESTRUCT(&mca_pml_dr.recv_frags);
-    OBJ_DESTRUCT(&mca_pml_dr.buffers);
     return OMPI_SUCCESS;
 }
 
@@ -207,8 +147,7 @@ mca_pml_base_module_t* mca_pml_dr_component_init(int* priority,
     
     
     if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, 
-                                          enable_mpi_threads 
-                                          )) {
+                                          enable_mpi_threads )) {
         return NULL; 
     }
     

@@ -45,11 +45,12 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
         mca_pml_ob1_send_pending_t pending_type;
         mca_pml_ob1_send_request_t* sendreq;
         mca_bml_base_btl_t *send_dst;
+
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
         sendreq = (mca_pml_ob1_send_request_t*)
             opal_list_remove_first(&mca_pml_ob1.send_pending);
         OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
-        if(NULL == sendreq)
+        if( OPAL_UNLIKELY(NULL == sendreq) )
             break;
         pending_type = sendreq->req_pending;
         sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_NONE;
@@ -70,7 +71,7 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
                      * endpoint or no resources put request back on the list */
                     OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
                     sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_START;
-                    if(NULL == send_dst) {
+                    if( OPAL_UNLIKELY(NULL == send_dst) ) {
                         opal_list_append(&mca_pml_ob1.send_pending,
                                 (opal_list_item_t*)sendreq);
                     } else {
@@ -137,22 +138,21 @@ static void mca_pml_ob1_send_request_construct(mca_pml_ob1_send_request_t* req)
     OBJ_CONSTRUCT(&req->req_send_ranges, opal_list_t);
 }
 
-OBJ_CLASS_INSTANCE(
-    mca_pml_ob1_send_request_t,
-    mca_pml_base_send_request_t,
-    mca_pml_ob1_send_request_construct,
-    NULL);
+OBJ_CLASS_INSTANCE( mca_pml_ob1_send_request_t,
+                    mca_pml_base_send_request_t,
+                    mca_pml_ob1_send_request_construct,
+                    NULL );
 
 /**
  * Completion of a short message - nothing left to schedule. Note that this
  * function is only called for 0 sized messages.
  */
 
-void mca_pml_ob1_match_completion_cache(
-    struct mca_btl_base_module_t* btl,  
-    struct mca_btl_base_endpoint_t* ep,
-    struct mca_btl_base_descriptor_t* descriptor,
-    int status)
+static void
+mca_pml_ob1_match_completion_cache( struct mca_btl_base_module_t* btl,  
+                                    struct mca_btl_base_endpoint_t* ep,
+                                    struct mca_btl_base_descriptor_t* descriptor,
+                                    int status )
 {
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context; 
@@ -163,7 +163,7 @@ void mca_pml_ob1_match_completion_cache(
     }
 
     /* check completion status */
-    if(OMPI_SUCCESS != status) {
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         orte_errmgr.abort();
@@ -183,11 +183,11 @@ void mca_pml_ob1_match_completion_cache(
  * Completion of a short message - nothing left to schedule.
  */
 
-void mca_pml_ob1_match_completion_free(
-    struct mca_btl_base_module_t* btl,  
-    struct mca_btl_base_endpoint_t* ep,
-    struct mca_btl_base_descriptor_t* descriptor,
-    int status)
+static void
+mca_pml_ob1_match_completion_free( struct mca_btl_base_module_t* btl,  
+                                   struct mca_btl_base_endpoint_t* ep,
+                                   struct mca_btl_base_descriptor_t* descriptor,
+                                   int status )
 {
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context; 
@@ -198,7 +198,7 @@ void mca_pml_ob1_match_completion_free(
     }
 
     /* check completion status */
-    if(OMPI_SUCCESS != status) {
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         orte_errmgr.abort();
@@ -218,11 +218,11 @@ void mca_pml_ob1_match_completion_free(
  *  Completion of the first fragment of a long message that 
  *  requires an acknowledgement
  */
-static void mca_pml_ob1_rndv_completion(
-    mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* ep,
-    struct mca_btl_base_descriptor_t* descriptor,
-    int status)
+static void
+mca_pml_ob1_rndv_completion( mca_btl_base_module_t* btl,
+                             struct mca_btl_base_endpoint_t* ep,
+                             struct mca_btl_base_descriptor_t* descriptor,
+                             int status )
 {
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)descriptor->des_context;
@@ -234,7 +234,7 @@ static void mca_pml_ob1_rndv_completion(
     }
 
     /* check completion status */
-    if(OMPI_SUCCESS != status) {
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         orte_errmgr.abort();
@@ -284,11 +284,11 @@ static void mca_pml_ob1_rndv_completion(
  * Completion of a get request.
  */
 
-static void mca_pml_ob1_rget_completion(
-    mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* ep,
-    struct mca_btl_base_descriptor_t* des,
-    int status)
+static void
+mca_pml_ob1_rget_completion( mca_btl_base_module_t* btl,
+                             struct mca_btl_base_endpoint_t* ep,
+                             struct mca_btl_base_descriptor_t* des,
+                             int status )
 {
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)des->des_cbdata;
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
@@ -312,11 +312,11 @@ static void mca_pml_ob1_rget_completion(
  * Completion of a control message - return resources.
  */
 
-static void mca_pml_ob1_send_ctl_completion(
-    mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* ep,
-    struct mca_btl_base_descriptor_t* descriptor,
-    int status)
+static void
+mca_pml_ob1_send_ctl_completion( mca_btl_base_module_t* btl,
+                                 struct mca_btl_base_endpoint_t* ep,
+                                 struct mca_btl_base_descriptor_t* descriptor,
+                                 int status )
 {
     /* return the descriptor */
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context; 
@@ -331,18 +331,18 @@ static void mca_pml_ob1_send_ctl_completion(
  * to schedule additional fragments.
  */
 
-static void mca_pml_ob1_frag_completion(
-    mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* ep,
-    struct mca_btl_base_descriptor_t* descriptor,
-    int status)
+static void
+mca_pml_ob1_frag_completion( mca_btl_base_module_t* btl,
+                             struct mca_btl_base_endpoint_t* ep,
+                             struct mca_btl_base_descriptor_t* descriptor,
+                             int status )
 {
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context;
     size_t req_bytes_delivered = 0;
 
     /* check completion status */
-    if(OMPI_SUCCESS != status) {
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         orte_errmgr.abort();
@@ -370,8 +370,6 @@ static void mca_pml_ob1_frag_completion(
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
 
-
-
 /**
  *  Buffer the entire message and mark as complete.
  */
@@ -392,7 +390,7 @@ int mca_pml_ob1_send_request_start_buffered(
     /* allocate descriptor */
     mca_bml_base_alloc(bml_btl, &descriptor, 
                        MCA_BTL_NO_ORDER, sizeof(mca_pml_ob1_rendezvous_hdr_t) + size);
-    if(NULL == descriptor) {
+    if( OPAL_UNLIKELY(NULL == descriptor) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
     segment = descriptor->des_src;
@@ -445,7 +443,7 @@ int mca_pml_ob1_send_request_start_buffered(
 
     /* buffer the remainder of the message */
     rc = mca_pml_base_bsend_request_alloc((ompi_request_t*)sendreq);
-    if(OMPI_SUCCESS != rc) {
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
         mca_bml_base_free(bml_btl, descriptor);
         return rc;
     }
@@ -473,7 +471,7 @@ int mca_pml_ob1_send_request_start_buffered(
 
     /* send */
     rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML);
-    if(OMPI_SUCCESS != rc) {
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
         mca_bml_base_free(bml_btl, descriptor );
     }
     return rc;
@@ -643,9 +641,9 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
  */
 
 int mca_pml_ob1_send_request_start_rdma(
-    mca_pml_ob1_send_request_t* sendreq,
-    mca_bml_base_btl_t* bml_btl,
-    size_t size)
+                                        mca_pml_ob1_send_request_t* sendreq,
+                                        mca_bml_base_btl_t* bml_btl,
+                                        size_t size)
 {
     /*
      * When req_rdma array is constructed the firs element of the array always
@@ -676,114 +674,114 @@ int mca_pml_ob1_send_request_start_rdma(
                                   0,
                                   &size,
                                   &src );
-         if( OPAL_UNLIKELY(NULL == src) ) {
-             ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
-                     &old_position);
-             return OMPI_ERR_OUT_OF_RESOURCE;
-         } 
-         src->des_cbfunc = mca_pml_ob1_rget_completion;
-         src->des_cbdata = sendreq;
+        if( OPAL_UNLIKELY(NULL == src) ) {
+            ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
+                                        &old_position);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        } 
+        src->des_cbfunc = mca_pml_ob1_rget_completion;
+        src->des_cbdata = sendreq;
 
-         /* allocate space for get hdr + segment list */
-         mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER,
-            sizeof(mca_pml_ob1_rget_hdr_t) + (sizeof(mca_btl_base_segment_t)*(src->des_src_cnt-1)));
-         if(NULL == des) {
-             ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
-                     &old_position);
-             mca_bml_base_free(bml_btl, src);
-             return OMPI_ERR_OUT_OF_RESOURCE;
-         }
-         segment = des->des_src;
+        /* allocate space for get hdr + segment list */
+        mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER,
+                           sizeof(mca_pml_ob1_rget_hdr_t) + (sizeof(mca_btl_base_segment_t)*(src->des_src_cnt-1)));
+        if( OPAL_UNLIKELY(NULL == des) ) {
+            ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
+                                        &old_position);
+            mca_bml_base_free(bml_btl, src);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        segment = des->des_src;
 
-         /* build match header */
-         hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
-         hdr->hdr_common.hdr_flags = MCA_PML_OB1_HDR_FLAGS_CONTIG|MCA_PML_OB1_HDR_FLAGS_PIN;
-         hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_RGET;
-         hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
-         hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
-         hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
-         hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
-         hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
-         hdr->hdr_rndv.hdr_src_req.pval = sendreq;
-         hdr->hdr_rget.hdr_des.pval = src;
-         hdr->hdr_rget.hdr_seg_cnt = src->des_src_cnt;
+        /* build match header */
+        hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
+        hdr->hdr_common.hdr_flags = MCA_PML_OB1_HDR_FLAGS_CONTIG|MCA_PML_OB1_HDR_FLAGS_PIN;
+        hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_RGET;
+        hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
+        hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
+        hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
+        hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
+        hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
+        hdr->hdr_rndv.hdr_src_req.pval = sendreq;
+        hdr->hdr_rget.hdr_des.pval = src;
+        hdr->hdr_rget.hdr_seg_cnt = src->des_src_cnt;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
-         hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
+        hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
 #else
-         /* if we are little endian and the remote side is big endian,
-            we're responsible for making sure the data is in network byte
-            order */
-         /* RDMA is currently disabled by bml if arch doesn't
-            match, so this shouldn't be needed.  here to make sure
-            we remember if we ever change the bml. */
-         assert(0 == (sendreq->req_send.req_base.req_proc->proc_arch & 
-                             OMPI_ARCH_ISBIGENDIAN));
+        /* if we are little endian and the remote side is big endian,
+           we're responsible for making sure the data is in network byte
+           order */
+        /* RDMA is currently disabled by bml if arch doesn't
+           match, so this shouldn't be needed.  here to make sure
+           we remember if we ever change the bml. */
+        assert(0 == (sendreq->req_send.req_base.req_proc->proc_arch & 
+                     OMPI_ARCH_ISBIGENDIAN));
 #endif
 #endif
 
-         for( i = 0; i < src->des_src_cnt; i++ ) {
-             hdr->hdr_rget.hdr_segs[i].seg_addr.lval = ompi_ptr_ptol(src->des_src[i].seg_addr.pval);
-             hdr->hdr_rget.hdr_segs[i].seg_len       = src->des_src[i].seg_len;
-             hdr->hdr_rget.hdr_segs[i].seg_key.key64 = src->des_src[i].seg_key.key64;
-         }
+        for( i = 0; i < src->des_src_cnt; i++ ) {
+            hdr->hdr_rget.hdr_segs[i].seg_addr.lval = ompi_ptr_ptol(src->des_src[i].seg_addr.pval);
+            hdr->hdr_rget.hdr_segs[i].seg_len       = src->des_src[i].seg_len;
+            hdr->hdr_rget.hdr_segs[i].seg_key.key64 = src->des_src[i].seg_key.key64;
+        }
 
-         des->des_cbfunc = mca_pml_ob1_send_ctl_completion;
+        des->des_cbfunc = mca_pml_ob1_send_ctl_completion;
 
-         /**
-          * Well, it's a get so we will not know when the peer get the data anyway.
-          * If we generate the PERUSE event here, at least we will know when do we
-          * sent the GET message ...
-          */
-         if( sendreq->req_send.req_bytes_packed > 0 ) {
-             PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
-                                      &(sendreq->req_send.req_base), PERUSE_SEND );
-         }
+        /**
+         * Well, it's a get so we will not know when the peer get the data anyway.
+         * If we generate the PERUSE event here, at least we will know when do we
+         * sent the GET message ...
+         */
+        if( sendreq->req_send.req_bytes_packed > 0 ) {
+            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
+                                     &(sendreq->req_send.req_base), PERUSE_SEND );
+        }
 
-      } else {
+    } else {
 
-         /* allocate a rendezvous header - dont eager send any data 
-          * receiver will schedule rdma put(s) of the entire message
-          */
+        /* allocate a rendezvous header - dont eager send any data 
+         * receiver will schedule rdma put(s) of the entire message
+         */
 
-         mca_bml_base_alloc(bml_btl, &des, 
-                            MCA_BTL_NO_ORDER, sizeof(mca_pml_ob1_rendezvous_hdr_t));
-         if(NULL == des) {
-             return OMPI_ERR_OUT_OF_RESOURCE;
-         }
-         segment = des->des_src;
+        mca_bml_base_alloc(bml_btl, &des, 
+                           MCA_BTL_NO_ORDER, sizeof(mca_pml_ob1_rendezvous_hdr_t));
+        if( OPAL_UNLIKELY(NULL == des)) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        segment = des->des_src;
             
-         /* build hdr */
-         hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
-         hdr->hdr_common.hdr_flags = MCA_PML_OB1_HDR_FLAGS_CONTIG|MCA_PML_OB1_HDR_FLAGS_PIN;
-         hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_RNDV;
-         hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
-         hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
-         hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
-         hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
-         hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
-         hdr->hdr_rndv.hdr_src_req.pval = sendreq;
+        /* build hdr */
+        hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
+        hdr->hdr_common.hdr_flags = MCA_PML_OB1_HDR_FLAGS_CONTIG|MCA_PML_OB1_HDR_FLAGS_PIN;
+        hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_RNDV;
+        hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
+        hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
+        hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
+        hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
+        hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
+        hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
-         hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
+        hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
 #else
-         /* if we are little endian and the remote side is big endian,
-            we're responsible for making sure the data is in network byte
-            order */
-         if (sendreq->req_send.req_base.req_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
-             hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
-             MCA_PML_OB1_RNDV_HDR_HTON(hdr->hdr_rndv);
-         }
+        /* if we are little endian and the remote side is big endian,
+           we're responsible for making sure the data is in network byte
+           order */
+        if (sendreq->req_send.req_base.req_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+            hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
+            MCA_PML_OB1_RNDV_HDR_HTON(hdr->hdr_rndv);
+        }
 #endif
 #endif
 
-         /* update lengths with number of bytes actually packed */
-         segment->seg_len = sizeof(mca_pml_ob1_rendezvous_hdr_t);
+        /* update lengths with number of bytes actually packed */
+        segment->seg_len = sizeof(mca_pml_ob1_rendezvous_hdr_t);
     
-         /* first fragment of a long message */
-         des->des_cbfunc = mca_pml_ob1_rndv_completion;
+        /* first fragment of a long message */
+        des->des_cbfunc = mca_pml_ob1_rndv_completion;
     }
 
     des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
@@ -791,7 +789,7 @@ int mca_pml_ob1_send_request_start_rdma(
 
     /* send */
     rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
-    if(OMPI_SUCCESS != rc) {
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
         mca_bml_base_free(bml_btl, des);
     }
     return rc;
@@ -803,11 +801,10 @@ int mca_pml_ob1_send_request_start_rdma(
  *  the btls eager limit.
  */
 
-int mca_pml_ob1_send_request_start_rndv(
-    mca_pml_ob1_send_request_t* sendreq,
-    mca_bml_base_btl_t* bml_btl,
-    size_t size,
-    int flags)
+int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
+                                         mca_bml_base_btl_t* bml_btl,
+                                         size_t size,
+                                         int flags )
 {
     mca_btl_base_descriptor_t* des;
     mca_btl_base_segment_t* segment;
@@ -830,7 +827,7 @@ int mca_pml_ob1_send_request_start_rndv(
                                   &des );
     }
 
-    if( NULL == des ) {
+    if( OPAL_UNLIKELY(NULL == des) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
     segment = des->des_src;
@@ -867,14 +864,15 @@ int mca_pml_ob1_send_request_start_rndv(
 
     /* send */
     rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
-    if(OMPI_SUCCESS != rc) {
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
         mca_bml_base_free(bml_btl, des );
     }
     return rc;
 }
 
-void mca_pml_ob1_send_request_copy_in_out(mca_pml_ob1_send_request_t *sendreq,
-        uint64_t send_offset, uint64_t send_length)
+void mca_pml_ob1_send_request_copy_in_out( mca_pml_ob1_send_request_t *sendreq,
+                                           uint64_t send_offset,
+                                           uint64_t send_length )
 {
     mca_pml_ob1_send_range_t *sr;
     ompi_free_list_item_t *i;
@@ -883,7 +881,7 @@ void mca_pml_ob1_send_request_copy_in_out(mca_pml_ob1_send_request_t *sendreq,
     int rc = OMPI_SUCCESS, n;
     double weight_total = 0;
 
-    if(0 == send_length)
+    if( OPAL_UNLIKELY(0 == send_length) )
         return;
 
     OMPI_FREE_LIST_WAIT(&mca_pml_ob1.send_ranges, i, rc);
@@ -934,7 +932,7 @@ int mca_pml_ob1_send_request_schedule_exclusive(
             opal_list_item_t *item;
             mca_bml_base_btl_t* bml_btl;
 
-            if(NULL == range || 0 == range->range_send_length) {
+            if( OPAL_UNLIKELY(NULL == range || 0 == range->range_send_length) ) {
                 OPAL_THREAD_LOCK(&sendreq->req_send_range_lock);
                 if(range) {
                     opal_list_remove_first(&sendreq->req_send_ranges);
@@ -964,7 +962,7 @@ int mca_pml_ob1_send_request_schedule_exclusive(
 
             prev_bytes_remaining = range->range_send_length;
 
-            if (num_fail == range->range_btl_cnt) {
+            if( OPAL_UNLIKELY(num_fail == range->range_btl_cnt) ) {
                 assert(sendreq->req_pending == MCA_PML_OB1_SEND_PENDING_NONE);
                 OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
                 sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_SCHEDULE;
@@ -1037,7 +1035,7 @@ int mca_pml_ob1_send_request_schedule_exclusive(
             /* initiate send - note that this may complete before the call returns */
             rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
                 
-            if(rc == OMPI_SUCCESS) {
+            if( OPAL_LIKELY(rc == OMPI_SUCCESS) ) {
                 /* update state */
                 range->range_btls[btl_idx].length -= size;
                 range->range_send_length -= size;
@@ -1071,7 +1069,7 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context;
 
     /* check completion status */
-    if(OMPI_SUCCESS != status) {
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
         ORTE_ERROR_LOG(status);
         orte_errmgr.abort();
@@ -1120,7 +1118,7 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
                               &frag->rdma_length, 
                               &des );
     
-    if(NULL == des) {
+    if( OPAL_UNLIKELY(NULL == des) ) {
         if(frag->retries < mca_pml_ob1.rdma_put_retries_limit) {
             size_t offset = (size_t)frag->rdma_hdr.hdr_rdma.hdr_rdma_offset;
             frag->rdma_length = save_size; 
@@ -1153,7 +1151,8 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
     PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
                                   &(((mca_pml_ob1_send_request_t*)frag->rdma_req)->req_send.req_base), save_size, PERUSE_SEND );
 
-    if(OMPI_SUCCESS != (rc = mca_bml_base_put(bml_btl, des))) {
+    rc = mca_bml_base_put(bml_btl, des);
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
         mca_bml_base_free(bml_btl, des);
         frag->rdma_length = save_size;
         if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
@@ -1193,7 +1192,7 @@ void mca_pml_ob1_send_request_put( mca_pml_ob1_send_request_t* sendreq,
 
     MCA_PML_OB1_RDMA_FRAG_ALLOC(frag, rc); 
 
-    if(NULL == frag) {
+    if( OPAL_UNLIKELY(NULL == frag) ) {
         /* TSW - FIX */
         ORTE_ERROR_LOG(rc);
         orte_errmgr.abort();
