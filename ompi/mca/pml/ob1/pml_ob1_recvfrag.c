@@ -37,19 +37,15 @@
 #include "ompi/datatype/dt_arch.h"
 #include "ompi/peruse/peruse-internal.h"
 
-OBJ_CLASS_INSTANCE(
-    mca_pml_ob1_buffer_t,
-    ompi_free_list_item_t,
-    NULL,
-    NULL
-);
+OBJ_CLASS_INSTANCE( mca_pml_ob1_buffer_t,
+                    ompi_free_list_item_t,
+                    NULL,
+                    NULL );
 
-OBJ_CLASS_INSTANCE(
-    mca_pml_ob1_recv_frag_t,
-    opal_list_item_t,
-    NULL,
-    NULL
-);
+OBJ_CLASS_INSTANCE( mca_pml_ob1_recv_frag_t,
+                    opal_list_item_t,
+                    NULL,
+                    NULL );
 
 /**
  * Static functions.
@@ -74,15 +70,15 @@ static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
  *  Callback from BTL on receive.
  */
                                                                                                                       
-void mca_pml_ob1_recv_frag_callback(
-                                    mca_btl_base_module_t* btl, 
-                                    mca_btl_base_tag_t tag,
-                                    mca_btl_base_descriptor_t* des,
-                                    void* cbdata)
+void mca_pml_ob1_recv_frag_callback( mca_btl_base_module_t* btl, 
+                                     mca_btl_base_tag_t tag,
+                                     mca_btl_base_descriptor_t* des,
+                                     void* cbdata )
 {
     mca_btl_base_segment_t* segments = des->des_dst;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
-    if(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) {
+
+    if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) ) {
         return;
     }
 
@@ -234,7 +230,7 @@ void mca_pml_ob1_recv_frag_callback(
                      ((opal_list_item_t *)generic_recv)->opal_list_next) {         \
                 /* Check for a match */                                            \
                 recv_tag = generic_recv->req_recv.req_base.req_tag;                \
-                if ( frag_tag == recv_tag ) {                                      \
+                if( OPAL_UNLIKELY(frag_tag == recv_tag) ) {                        \
                     break;                                                         \
                 }                                                                  \
             }                                                                      \
@@ -267,12 +263,12 @@ void mca_pml_ob1_recv_frag_callback(
  * set by the upper level routine.
  */
 
-#define MCA_PML_OB1_CHECK_WILD_RECEIVES_FOR_MATCH(hdr,comm,proc,return_match) \
-do { \
-    /* local parameters */ \
-    opal_list_t* wild_receives = &comm->wild_receives; \
-    MCA_PML_OB1_MATCH_GENERIC_RECEIVES(hdr,wild_receives,proc,return_match); \
-} while(0)
+#define MCA_PML_OB1_CHECK_WILD_RECEIVES_FOR_MATCH(hdr,comm,proc,return_match)    \
+    do {                                                                         \
+        /* local parameters */                                                   \
+        opal_list_t* wild_receives = &comm->wild_receives;                       \
+        MCA_PML_OB1_MATCH_GENERIC_RECEIVES(hdr,wild_receives,proc,return_match); \
+    } while(0)
 
 
 /**
@@ -289,12 +285,12 @@ do { \
  * This routine assumes that the appropriate matching locks are
  * set by the upper level routine.
  */
-#define MCA_PML_OB1_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr,comm,proc,return_match) \
-do { \
-    /* local variables */ \
-    opal_list_t* specific_receives = &proc->specific_receives; \
-    MCA_PML_OB1_MATCH_GENERIC_RECEIVES(hdr,specific_receives,proc,return_match); \
-} while(0)
+#define MCA_PML_OB1_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr,comm,proc,return_match)    \
+    do {                                                                             \
+        /* local variables */                                                        \
+        opal_list_t* specific_receives = &proc->specific_receives;                   \
+        MCA_PML_OB1_MATCH_GENERIC_RECEIVES(hdr,specific_receives,proc,return_match); \
+    } while(0)
 
 /**
  * Try and match the incoming message fragment to the list of
@@ -313,137 +309,120 @@ do { \
  * set by the upper level routine.
  */
 
-#define MCA_PML_OB1_CHECK_SPECIFIC_AND_WILD_RECEIVES_FOR_MATCH( \
-    hdr,comm,proc,return_match) \
-do {  \
-    /* local variables */  \
-    mca_pml_ob1_recv_request_t *specific_recv, *wild_recv; \
-    mca_pml_sequence_t wild_recv_seq, specific_recv_seq;  \
-    int frag_tag, wild_recv_tag, specific_recv_tag;  \
-  \
-    /* initialization */  \
-    frag_tag=hdr->hdr_tag;  \
-  \
-    /*  \
-     * We know that when this is called, both specific and wild irecvs  \
-     *  have been posted.  \
-     */  \
-    specific_recv = (mca_pml_ob1_recv_request_t *)   \
-            opal_list_get_first(&(proc)->specific_receives);  \
-    wild_recv = (mca_pml_ob1_recv_request_t *)  \
-            opal_list_get_first(&comm->wild_receives);  \
-  \
-    specific_recv_seq = specific_recv->req_recv.req_base.req_sequence;  \
-    wild_recv_seq = wild_recv->req_recv.req_base.req_sequence;  \
-  \
-    while (true) {  \
-        if (wild_recv_seq < specific_recv_seq) {  \
-            /*  \
-             * wild recv is earlier than the specific one.  \
-             */  \
-            /*  \
-             * try and match  \
-             */  \
-            wild_recv_tag = wild_recv->req_recv.req_base.req_tag;  \
-            if ( (frag_tag == wild_recv_tag) ||  \
-                 ( (wild_recv_tag == OMPI_ANY_TAG) && (0 <= frag_tag) ) ) {  \
-                /*  \
-                 * Match made  \
-                 */  \
-                return_match=wild_recv;  \
-  \
-                /* remove this recv from the wild receive queue */  \
-                opal_list_remove_item(&comm->wild_receives,  \
-                        (opal_list_item_t *)wild_recv);  \
-\
-                PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q, \
-                                         &(wild_recv->req_recv.req_base), \
-                                         PERUSE_RECV); \
-\
-                break;  \
-            }  \
-  \
-            /*  \
-             * No match, go to the next.  \
-             */  \
-            wild_recv=(mca_pml_ob1_recv_request_t *)  \
-                ((opal_list_item_t *)wild_recv)->opal_list_next;  \
-  \
-            /*  \
-             * If that was the last wild one, just look at the  \
-             * rest of the specific ones.  \
-             */  \
-            if (wild_recv == (mca_pml_ob1_recv_request_t *)  \
-                    opal_list_get_end(&comm->wild_receives) )   \
-            {   \
-                MCA_PML_OB1_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr, comm, proc, return_match);  \
-                break;  \
-            }  \
-  \
-            /*  \
-             * Get the sequence number for this recv, and go  \
-             * back to the top of the loop.  \
-             */  \
-            wild_recv_seq = wild_recv->req_recv.req_base.req_sequence;  \
-  \
-        } else {  \
-            /*  \
-             * specific recv is earlier than the wild one.  \
-             */  \
-            specific_recv_tag=specific_recv->req_recv.req_base.req_tag;  \
-            if ( (frag_tag == specific_recv_tag) || \
-                 ( (specific_recv_tag == OMPI_ANY_TAG) && (0<=frag_tag)) )   \
-            {  \
-                /*  \
-                 * Match made  \
-                 */  \
-                return_match = specific_recv;  \
-                /* remove descriptor from specific receive list */  \
-                opal_list_remove_item(&(proc)->specific_receives,  \
-                    (opal_list_item_t *)specific_recv);  \
-\
-                PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q, \
-                                         &(specific_recv->req_recv.req_base), \
-                                         PERUSE_RECV); \
-\
-                break; \
-            }  \
-  \
-            /*  \
-             * No match, go on to the next specific irecv.  \
-             */  \
-            specific_recv = (mca_pml_ob1_recv_request_t *)  \
-                ((opal_list_item_t *)specific_recv)->opal_list_next;  \
-  \
-            /*  \
-             * If that was the last specific irecv, process the  \
-             * rest of the wild ones.  \
-             */  \
-            if (specific_recv == (mca_pml_ob1_recv_request_t *)  \
-                    opal_list_get_end(&(proc)->specific_receives))  \
-            {  \
-                MCA_PML_OB1_CHECK_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, return_match);  \
-                break; \
-            }  \
-            /*  \
-             * Get the sequence number for this recv, and go  \
-             * back to the top of the loop.  \
-             */ \
-            specific_recv_seq = specific_recv->req_recv.req_base.req_sequence;  \
-        }  \
-    }  \
-} while(0)
+#define MCA_PML_OB1_CHECK_SPECIFIC_AND_WILD_RECEIVES_FOR_MATCH( hdr,comm,proc,return_match) \
+    do {                                                                \
+        /* local variables */                                           \
+        mca_pml_ob1_recv_request_t *specific_recv, *wild_recv;          \
+        mca_pml_sequence_t wild_recv_seq, specific_recv_seq;            \
+        int frag_tag, wild_recv_tag, specific_recv_tag;                 \
+                                                                        \
+        /* initialization */                                            \
+        frag_tag=hdr->hdr_tag;                                          \
+                                                                        \
+        /*                                                              \
+         * We know that when this is called, both specific and wild irecvs \
+         *  have been posted.                                           \
+         */                                                             \
+        specific_recv = (mca_pml_ob1_recv_request_t *)                  \
+            opal_list_get_first(&(proc)->specific_receives);            \
+        wild_recv = (mca_pml_ob1_recv_request_t *)                      \
+            opal_list_get_first(&comm->wild_receives);                  \
+                                                                        \
+        specific_recv_seq = specific_recv->req_recv.req_base.req_sequence; \
+        wild_recv_seq = wild_recv->req_recv.req_base.req_sequence;      \
+                                                                        \
+        while (true) {                                                  \
+            if (wild_recv_seq < specific_recv_seq) {                    \
+                /* wild recv is earlier than the specific one. */       \
+                /* try and match */                                     \
+                wild_recv_tag = wild_recv->req_recv.req_base.req_tag;   \
+                if ( (frag_tag == wild_recv_tag) ||                     \
+                     ( (wild_recv_tag == OMPI_ANY_TAG) && (0 <= frag_tag) ) ) { \
+                    /* Match made */                                    \
+                    return_match=wild_recv;                             \
+                                                                        \
+                    /* remove this recv from the wild receive queue */  \
+                    opal_list_remove_item(&comm->wild_receives,         \
+                                          (opal_list_item_t *)wild_recv); \
+                                                                        \
+                    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q, \
+                                             &(wild_recv->req_recv.req_base), \
+                                             PERUSE_RECV);              \
+                                                                        \
+                    break;                                              \
+                }                                                       \
+                                                                        \
+                /* No match, go to the next */                          \
+                wild_recv=(mca_pml_ob1_recv_request_t *)                \
+                    ((opal_list_item_t *)wild_recv)->opal_list_next;    \
+                                                                        \
+                /*                                                      \
+                 * If that was the last wild one, just look at the      \
+                 * rest of the specific ones.                           \
+                 */                                                     \
+                if (wild_recv == (mca_pml_ob1_recv_request_t *)         \
+                    opal_list_get_end(&comm->wild_receives) )           \
+                    {                                                   \
+                        MCA_PML_OB1_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr, comm, proc, return_match); \
+                        break;                                          \
+                    }                                                   \
+                                                                        \
+                /*                                                      \
+                 * Get the sequence number for this recv, and go        \
+                 * back to the top of the loop.                         \
+                 */                                                     \
+                wild_recv_seq = wild_recv->req_recv.req_base.req_sequence; \
+                                                                        \
+            } else {                                                    \
+                /* specific recv is earlier than the wild one. */       \
+                specific_recv_tag=specific_recv->req_recv.req_base.req_tag; \
+                if ( (frag_tag == specific_recv_tag) ||                 \
+                     ( (specific_recv_tag == OMPI_ANY_TAG) && (0<=frag_tag)) ) \
+                    {                                                   \
+                        /* Match made */                                \
+                        return_match = specific_recv;                   \
+                        /* remove descriptor from specific receive list */ \
+                        opal_list_remove_item(&(proc)->specific_receives, \
+                                              (opal_list_item_t *)specific_recv); \
+                                                                        \
+                        PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q, \
+                                                 &(specific_recv->req_recv.req_base), \
+                                                 PERUSE_RECV);          \
+                                                                        \
+                        break;                                          \
+                    }                                                   \
+                                                                        \
+                /* No match, go on to the next specific irecv. */       \
+                specific_recv = (mca_pml_ob1_recv_request_t *)          \
+                    ((opal_list_item_t *)specific_recv)->opal_list_next; \
+                                                                        \
+                /*                                                      \
+                 * If that was the last specific irecv, process the     \
+                 * rest of the wild ones.                               \
+                 */                                                     \
+                if (specific_recv == (mca_pml_ob1_recv_request_t *)     \
+                    opal_list_get_end(&(proc)->specific_receives))      \
+                    {                                                   \
+                        MCA_PML_OB1_CHECK_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, return_match); \
+                        break;                                          \
+                    }                                                   \
+                /*                                                      \
+                 * Get the sequence number for this recv, and go        \
+                 * back to the top of the loop.                         \
+                 */                                                     \
+                specific_recv_seq = specific_recv->req_recv.req_base.req_sequence; \
+            }                                                           \
+        }                                                               \
+    } while(0)
 
 
 /*
  * Specialized matching routines for internal use only.
  */
 
-static bool mca_pml_ob1_check_cantmatch_for_match(
-    opal_list_t *additional_matches,
-    mca_pml_ob1_comm_t* comm,
-    mca_pml_ob1_comm_proc_t *proc);
-
+static bool mca_pml_ob1_check_cantmatch_for_match( opal_list_t *additional_matches,
+                                                   mca_pml_ob1_comm_t* comm,
+                                                   mca_pml_ob1_comm_proc_t *proc );
 
 /**
  * RCS/CTS receive side matching
@@ -518,7 +497,7 @@ static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
 
     /* get sequence number of next message that can be processed */
     next_msg_seq_expected = (uint16_t)proc->expected_sequence;
-    if (frag_msg_seq == next_msg_seq_expected) {
+    if( OPAL_LIKELY(frag_msg_seq == next_msg_seq_expected) ) {
 
         /*
          * This is the sequence number we were expecting,
@@ -563,7 +542,7 @@ rematch:
         }
 
         /* if match found, process data */
-        if (match) {
+        if( OPAL_LIKELY(match) ) {
             match->req_recv.req_base.req_proc = proc->ompi_proc;
 
             /*
@@ -583,7 +562,7 @@ rematch:
             /* if no match found, place on unexpected queue */
             mca_pml_ob1_recv_frag_t* frag;
             MCA_PML_OB1_RECV_FRAG_ALLOC(frag, rc);
-            if(OMPI_SUCCESS != rc) {
+            if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
                 /**
                  * As we return from the match function, we should generate the expected event.
@@ -610,7 +589,7 @@ rematch:
          *   any fragments on the c_c_frags_cant_match list
          *   may now be used to form new matchs
          */
-        if (0 < opal_list_get_size(&proc->frags_cant_match)) {
+        if( OPAL_UNLIKELY(0 < opal_list_get_size(&proc->frags_cant_match)) ) {
             additional_match = mca_pml_ob1_check_cantmatch_for_match(&additional_matches,comm,proc);
         }
 
@@ -622,7 +601,7 @@ rematch:
          */
         mca_pml_ob1_recv_frag_t* frag;
         MCA_PML_OB1_RECV_FRAG_ALLOC(frag, rc);
-        if(OMPI_SUCCESS != rc) {
+        if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
             OPAL_THREAD_UNLOCK(&comm->matching_lock);
             return rc;
         }
@@ -633,13 +612,11 @@ rematch:
     /* release matching lock before processing fragment */
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
 
-    if(match != NULL) {
+    if( OPAL_LIKELY(match != NULL) ) {
         mca_pml_ob1_recv_request_progress(match,btl,segments,num_segments);
-#if OMPI_WANT_PERUSE
     } else {
         PERUSE_TRACE_MSG_EVENT( PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm_ptr,
                                 hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
-#endif  /* OMPI_WANT_PERUSE */
     } 
     if( OPAL_UNLIKELY(additional_match) ) {
         opal_list_item_t* item;
@@ -669,10 +646,9 @@ rematch:
  * set by the upper level routine.
  */
 
-static bool mca_pml_ob1_check_cantmatch_for_match(
-    opal_list_t *additional_matches,
-    mca_pml_ob1_comm_t* comm,
-    mca_pml_ob1_comm_proc_t *proc)
+static bool mca_pml_ob1_check_cantmatch_for_match( opal_list_t *additional_matches,
+                                                   mca_pml_ob1_comm_t* comm,
+                                                   mca_pml_ob1_comm_proc_t *proc )
 {
     /* local parameters */
     int match_found;
@@ -698,11 +674,11 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
          * number next_msg_seq_expected
          */
         for(frag = (mca_pml_ob1_recv_frag_t *) 
-            opal_list_get_first(&proc->frags_cant_match);
+                opal_list_get_first(&proc->frags_cant_match);
             frag != (mca_pml_ob1_recv_frag_t *)
-            opal_list_get_end(&proc->frags_cant_match);
+                opal_list_get_end(&proc->frags_cant_match);
             frag = (mca_pml_ob1_recv_frag_t *) 
-            opal_list_get_next(frag))
+                opal_list_get_next(frag))
         {
             /*
              * If the message has the next expected seq from that proc...
@@ -750,7 +726,7 @@ rematch:
                 }
 
                 /* if match found, process data */
-                if (match) {
+                if( OPAL_LIKELY(match) ) {
                     match->req_recv.req_base.req_proc = proc->ompi_proc;
 
                     /*

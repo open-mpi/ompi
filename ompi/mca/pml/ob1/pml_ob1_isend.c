@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -42,11 +42,11 @@ int mca_pml_ob1_isend_init(void *buf,
         return rc;
 
     MCA_PML_OB1_SEND_REQUEST_INIT(sendreq,
-                                   buf,
-                                   count,
-                                   datatype,
-                                   dst, tag,
-                                   comm, sendmode, true);
+                                  buf,
+                                  count,
+                                  datatype,
+                                  dst, tag,
+                                  comm, sendmode, true);
 
     *request = (ompi_request_t *) sendreq;
     return OMPI_SUCCESS;
@@ -69,11 +69,11 @@ int mca_pml_ob1_isend(void *buf,
         return rc;
     
     MCA_PML_OB1_SEND_REQUEST_INIT(sendreq,
-                                   buf,
-                                   count,
-                                   datatype,
-                                   dst, tag,
-                                   comm, sendmode, false);
+                                  buf,
+                                  count,
+                                  datatype,
+                                  dst, tag,
+                                  comm, sendmode, false);
 
     MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc);
     *request = (ompi_request_t *) sendreq;

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -46,36 +46,106 @@
 
 mca_pml_ob1_t mca_pml_ob1 = {
     {
-    mca_pml_ob1_add_procs,
-    mca_pml_ob1_del_procs,
-    mca_pml_ob1_enable,
-    mca_pml_ob1_progress,
-    mca_pml_ob1_add_comm,
-    mca_pml_ob1_del_comm,
-    mca_pml_ob1_irecv_init,
-    mca_pml_ob1_irecv,
-    mca_pml_ob1_recv,
-    mca_pml_ob1_isend_init,
-    mca_pml_ob1_isend,
-    mca_pml_ob1_send,
-    mca_pml_ob1_iprobe,
-    mca_pml_ob1_probe,
-    mca_pml_ob1_start,
-    mca_pml_ob1_dump,
-    mca_pml_ob1_ft_event,
-    32768,
-    INT_MAX
+        mca_pml_ob1_add_procs,
+        mca_pml_ob1_del_procs,
+        mca_pml_ob1_enable,
+        mca_pml_ob1_progress,
+        mca_pml_ob1_add_comm,
+        mca_pml_ob1_del_comm,
+        mca_pml_ob1_irecv_init,
+        mca_pml_ob1_irecv,
+        mca_pml_ob1_recv,
+        mca_pml_ob1_isend_init,
+        mca_pml_ob1_isend,
+        mca_pml_ob1_send,
+        mca_pml_ob1_iprobe,
+        mca_pml_ob1_probe,
+        mca_pml_ob1_start,
+        mca_pml_ob1_dump,
+        mca_pml_ob1_ft_event,
+        32768,
+        INT_MAX
     }
 };
 
 
-void mca_pml_ob1_error_handler(
-        struct mca_btl_base_module_t* btl,
-        int32_t flags);
+void mca_pml_ob1_error_handler( struct mca_btl_base_module_t* btl,
+                                int32_t flags );
 
 int mca_pml_ob1_enable(bool enable)
 {
     if( false == enable ) return OMPI_SUCCESS;
+
+    OBJ_CONSTRUCT(&mca_pml_ob1.lock, opal_mutex_t);
+
+    /* fragments */
+    OBJ_CONSTRUCT(&mca_pml_ob1.rdma_frags, ompi_free_list_t);
+    ompi_free_list_init( &mca_pml_ob1.rdma_frags,
+                         sizeof(mca_pml_ob1_rdma_frag_t),
+                         OBJ_CLASS(mca_pml_ob1_rdma_frag_t),
+                         mca_pml_ob1.free_list_num,
+                         mca_pml_ob1.free_list_max,
+                         mca_pml_ob1.free_list_inc,
+                         NULL );
+                                                                                                            
+    OBJ_CONSTRUCT(&mca_pml_ob1.recv_frags, ompi_free_list_t);
+
+    ompi_free_list_init( &mca_pml_ob1.recv_frags,
+                         sizeof(mca_pml_ob1_recv_frag_t) + mca_pml_ob1.unexpected_limit,
+                         OBJ_CLASS(mca_pml_ob1_recv_frag_t),
+                         mca_pml_ob1.free_list_num,
+                         mca_pml_ob1.free_list_max,
+                         mca_pml_ob1.free_list_inc,
+                         NULL );
+                                                                                                            
+    OBJ_CONSTRUCT(&mca_pml_ob1.pending_pckts, ompi_free_list_t);
+    ompi_free_list_init( &mca_pml_ob1.pending_pckts,
+                         sizeof(mca_pml_ob1_pckt_pending_t),
+                         OBJ_CLASS(mca_pml_ob1_pckt_pending_t),
+                         mca_pml_ob1.free_list_num,
+                         mca_pml_ob1.free_list_max,
+                         mca_pml_ob1.free_list_inc,
+                         NULL );
+
+
+    OBJ_CONSTRUCT(&mca_pml_ob1.buffers, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.send_ranges, ompi_free_list_t);
+    ompi_free_list_init( &mca_pml_ob1.send_ranges,
+                         sizeof(mca_pml_ob1_send_range_t) +
+                         (mca_pml_ob1.max_send_per_range - 1) * sizeof(mca_pml_ob1_com_btl_t),
+                         OBJ_CLASS(mca_pml_ob1_send_range_t),
+                         mca_pml_ob1.free_list_num,
+                         mca_pml_ob1.free_list_max,
+                         mca_pml_ob1.free_list_inc,
+                         NULL );
+
+    /* pending operations */
+    OBJ_CONSTRUCT(&mca_pml_ob1.send_pending, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.recv_pending, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.pckt_pending, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.rdma_pending, opal_list_t);
+
+    /**
+     * If we get here this is the PML who get selected for the run. We
+     * should get ownership for the send and receive requests list, and
+     * initialize them with the size of our own requests.
+     */
+    ompi_free_list_init( &mca_pml_base_send_requests,
+                         sizeof(mca_pml_ob1_send_request_t),
+                         OBJ_CLASS(mca_pml_ob1_send_request_t),
+                         mca_pml_ob1.free_list_num,
+                         mca_pml_ob1.free_list_max,
+                         mca_pml_ob1.free_list_inc,
+                         NULL );
+
+    ompi_free_list_init( &mca_pml_base_recv_requests,
+                         sizeof(mca_pml_ob1_recv_request_t),
+                         OBJ_CLASS(mca_pml_ob1_recv_request_t),
+                         mca_pml_ob1.free_list_num,
+                         mca_pml_ob1.free_list_max,
+                         mca_pml_ob1.free_list_inc,
+                         NULL );
+
     mca_pml_ob1.enabled = true;
     return OMPI_SUCCESS;
 }
@@ -192,24 +262,6 @@ int mca_pml_ob1_del_procs(ompi_proc_t** procs, size_t nprocs)
     return mca_bml.bml_del_procs(nprocs, procs);
 }
 
-int mca_pml_ob1_component_fini(void)
-{
-    int rc;
-
-    /* Shutdown BML */
-    if(OMPI_SUCCESS != (rc = mca_bml.bml_finalize()))
-        return rc;
-
-
-    /* Shutdown buffered send */
-    if(OMPI_SUCCESS != (rc = mca_pml_base_bsend_fini())) {
-        return rc;
-    }
-
-    /* FIX */
-    return OMPI_SUCCESS;
-}
-
 /*
  * diagnostics
  */
@@ -237,11 +289,10 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
     return OMPI_SUCCESS;
 }
 
-static void mca_pml_ob1_fin_completion(
-    mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* ep,
-    struct mca_btl_base_descriptor_t* des,
-    int status)
+static void mca_pml_ob1_fin_completion( mca_btl_base_module_t* btl,
+                                        struct mca_btl_base_endpoint_t* ep,
+                                        struct mca_btl_base_descriptor_t* des,
+                                        int status )
 {
     
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context; 
@@ -252,13 +303,11 @@ static void mca_pml_ob1_fin_completion(
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
 
-int mca_pml_ob1_send_fin(
-        ompi_proc_t* proc,
-        mca_bml_base_btl_t* bml_btl,
-        void *hdr_des,
-        uint8_t order,
-        uint32_t status
-        )
+int mca_pml_ob1_send_fin( ompi_proc_t* proc,
+                          mca_bml_base_btl_t* bml_btl,
+                          void *hdr_des,
+                          uint8_t order,
+                          uint32_t status )
 {
     mca_btl_base_descriptor_t* fin;
     mca_pml_ob1_fin_hdr_t* hdr;

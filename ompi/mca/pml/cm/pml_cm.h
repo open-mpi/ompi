@@ -34,6 +34,10 @@ struct mca_mtl_request_t;
 
 struct ompi_pml_cm_t {
     mca_pml_base_module_t super;
+    int                   free_list_num;
+    int                   free_list_max;
+    int                   free_list_inc;
+    int                   default_priority;
 };
 typedef struct ompi_pml_cm_t ompi_pml_cm_t;
 extern ompi_pml_cm_t ompi_pml_cm;

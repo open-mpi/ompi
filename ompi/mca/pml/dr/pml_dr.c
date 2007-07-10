@@ -62,13 +62,56 @@ mca_pml_dr_t mca_pml_dr = {
     }
 };
 
-void mca_pml_dr_error_handler(
-        struct mca_btl_base_module_t* btl,
-        int32_t flags);
+void mca_pml_dr_error_handler( struct mca_btl_base_module_t* btl,
+                               int32_t flags );
 
 int mca_pml_dr_enable(bool enable)
 {
     if( false == enable ) return OMPI_SUCCESS;
+
+    /* requests */
+    ompi_free_list_init( &mca_pml_base_send_requests,
+                         sizeof(mca_pml_dr_send_request_t),
+                         OBJ_CLASS(mca_pml_dr_send_request_t),
+                         mca_pml_dr.free_list_num,
+                         mca_pml_dr.free_list_max,
+                         mca_pml_dr.free_list_inc,
+                         NULL );
+                                                                                                            
+    ompi_free_list_init( &mca_pml_base_recv_requests,
+                         sizeof(mca_pml_dr_recv_request_t),
+                         OBJ_CLASS(mca_pml_dr_recv_request_t),
+                         mca_pml_dr.free_list_num,
+                         mca_pml_dr.free_list_max,
+                         mca_pml_dr.free_list_inc,
+                         NULL );
+                                                                                                            
+    /* fragments */
+    OBJ_CONSTRUCT(&mca_pml_dr.recv_frags, ompi_free_list_t);
+    ompi_free_list_init( &mca_pml_dr.recv_frags,
+                         sizeof(mca_pml_dr_recv_frag_t),
+                         OBJ_CLASS(mca_pml_dr_recv_frag_t),
+                         mca_pml_dr.free_list_num,
+                         mca_pml_dr.free_list_max,
+                         mca_pml_dr.free_list_inc,
+                         NULL );
+
+    OBJ_CONSTRUCT(&mca_pml_dr.vfrags, ompi_free_list_t);
+    ompi_free_list_init( &mca_pml_dr.vfrags,
+                         sizeof(mca_pml_dr_vfrag_t),
+                         OBJ_CLASS(mca_pml_dr_vfrag_t),
+                         mca_pml_dr.free_list_num,
+                         mca_pml_dr.free_list_max,
+                         mca_pml_dr.free_list_inc,
+                         NULL );
+
+    OBJ_CONSTRUCT(&mca_pml_dr.send_pending, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pml_dr.send_active, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pml_dr.acks_pending, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pml_dr.buffers, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_pml_dr.endpoints, ompi_pointer_array_t);
+    OBJ_CONSTRUCT(&mca_pml_dr.lock, opal_mutex_t);
+
     mca_pml_dr.enabled = true;
     return OMPI_SUCCESS;
 }
@@ -234,7 +277,16 @@ int mca_pml_dr_del_procs(ompi_proc_t** procs, size_t nprocs)
 
 int mca_pml_dr_component_fini(void)
 {
-    /* FIX */
+    if(!mca_pml_dr.enabled)
+        return OMPI_SUCCESS; /* never selected.. return success.. */  
+    mca_pml_dr.enabled = false;  /* not anymore */
+
+    OBJ_DESTRUCT(&mca_pml_dr.send_pending);
+    OBJ_DESTRUCT(&mca_pml_dr.send_active);
+    OBJ_DESTRUCT(&mca_pml_dr.acks_pending);
+    OBJ_DESTRUCT(&mca_pml_dr.recv_frags);
+    OBJ_DESTRUCT(&mca_pml_dr.buffers);
+
     return OMPI_SUCCESS;
 }
 
