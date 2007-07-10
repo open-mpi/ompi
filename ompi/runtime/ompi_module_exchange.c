@@ -399,10 +399,12 @@ ompi_modex_lookup_proc(ompi_proc_t *proc)
         if (NULL == proc->proc_modex) {
             OBJ_RETAIN(proc_data);
             proc->proc_modex = &proc_data->super.super;
+            OPAL_THREAD_UNLOCK(&ompi_modex_lock);
             /* verify that we have subscribed to this segment */
             ompi_modex_subscribe_job(proc->proc_name.jobid);
-        } 
-        OPAL_THREAD_LOCK(&ompi_modex_lock);
+        } else {
+            OPAL_THREAD_UNLOCK(&ompi_modex_lock);
+        }
     }
 
     return proc_data;
