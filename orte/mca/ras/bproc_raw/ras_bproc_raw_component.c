@@ -18,10 +18,14 @@
 
 #include "orte_config.h"
 #include "orte/orte_constants.h"
+
+#include <sys/bproc.h>
+
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/output.h"
+
 #include "ras_bproc_raw.h"
 
 /*

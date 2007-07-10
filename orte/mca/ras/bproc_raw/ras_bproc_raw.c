@@ -91,7 +91,7 @@ static int orte_ras_bproc_raw_allocate(orte_jobid_t jobid, opal_list_t *attribut
     }
     
     /* if no nodes available, let the user know and return error */
-    if (0 == ns->size) {
+    if (0 == ns.size) {
         opal_show_help("help-ras-broc-raw.txt", "no-nodes-found", true);
         return ORTE_ERR_NOT_AVAILABLE;
     }
@@ -100,8 +100,8 @@ static int orte_ras_bproc_raw_allocate(orte_jobid_t jobid, opal_list_t *attribut
     OBJ_CONSTRUCT(&nodes, opal_list_t);
 
     /* cycle through the list */
-    for (i=0; i < ns->size; i++) {
-        ni = &ns->node[i];
+    for (i=0; i < ns.size; i++) {
+        ni = &ns.node[i];
         
         /* check that the node is alive */
         if(orte_ras_bproc_raw_node_state(ni->node) != ORTE_NODE_STATE_UP) {
@@ -118,7 +118,15 @@ static int orte_ras_bproc_raw_allocate(orte_jobid_t jobid, opal_list_t *attribut
         /* okay, we have access and it is alive - create a new node entry */
         node = OBJ_NEW(orte_ras_node_t);
         asprintf(&node->node_name, "%d", ni->node);
-        node->node_state = ni->status;
+        if (strcmp(ni->status, "up") == 0) {
+            node->node_state = ORTE_NODE_STATE_UP;
+        } else if (strcmp(ni->status, "down") == 0) {
+            node->node_state = ORTE_NODE_STATE_DOWN;
+        } else if (strcmp(ni->status, "boot") == 0) {
+            node->node_state = ORTE_NODE_STATE_REBOOT;
+        } else {
+            node->node_state = ORTE_NODE_STATE_UNKNOWN;
+        }
         /* RHC - until we can find some way of querying bproc for the number of
          * available slots, just assume two
          */

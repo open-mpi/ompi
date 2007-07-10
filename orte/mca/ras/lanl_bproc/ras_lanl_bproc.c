@@ -107,10 +107,7 @@ static int orte_ras_lanl_bproc_node_resolve(char* node_name, int* node_num)
  *  - check for additional nodes that have already been allocated
  */
 
-static int orte_ras_lanl_bproc_discover(
-    opal_list_t* nodelist,
-    orte_app_context_t** context,
-    size_t num_context)
+static int orte_ras_lanl_bproc_discover(opal_list_t* nodelist)
 {
     char* nodes;
     char* ptr;
@@ -138,6 +135,7 @@ static int orte_ras_lanl_bproc_discover(
             continue;
         }
 
+        /* ensure that the node is "up" */
         if(orte_ras_lanl_bproc_node_state(node_num) != ORTE_NODE_STATE_UP) {
             opal_list_remove_item(nodelist,item);
             OBJ_DESTRUCT(item);
@@ -145,6 +143,7 @@ static int orte_ras_lanl_bproc_discover(
             continue;
         }
 
+        /* ensure that we have execution authority on it */
         if(bproc_access(node_num, BPROC_X_OK) != 0) {
             opal_list_remove_item(nodelist,item);
             OBJ_DESTRUCT(item);
@@ -186,11 +185,14 @@ static int orte_ras_lanl_bproc_discover(
             continue;
         }
 
+        /* check that the node is alive */
         if(ORTE_NODE_STATE_UP != (node_state = orte_ras_lanl_bproc_node_state(node_num))) {
             opal_output(0, "error: a specified node (%d) is not up.\n", node_num);
             rc = ORTE_ERROR;
             goto cleanup;
         }
+
+        /* check that we have execution authority on it */
         if(bproc_access(node_num, BPROC_X_OK) != 0) {
             opal_output(0, "error: a specified node (%d) is not accessible.\n", node_num);
             rc = ORTE_ERROR;
@@ -239,18 +241,10 @@ static int orte_ras_lanl_bproc_allocate(orte_jobid_t jobid, opal_list_t *attribu
     opal_list_t nodes;
     opal_list_item_t* item;
     int rc;
-    orte_app_context_t **context = NULL;
-    orte_std_cntr_t i, num_context = 0;
 
     OBJ_CONSTRUCT(&nodes, opal_list_t);
     
-    rc = orte_rmgr.get_app_context(jobid, &context, &num_context);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    if(ORTE_SUCCESS != (rc = orte_ras_lanl_bproc_discover(&nodes, context, num_context))) {
+    if(ORTE_SUCCESS != (rc = orte_ras_lanl_bproc_discover(&nodes))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -265,12 +259,6 @@ cleanup:
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);
-    for(i=0; i<num_context; i++) {
-        OBJ_RELEASE(context[i]);
-    }
-    if (NULL != context) {
-        free(context);
-    }
     return rc;
 }
 
