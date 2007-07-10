@@ -337,7 +337,7 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t* ud_btl);
  * @return OMPI_SUCCESS or failure status
  */
 
-extern int mca_btl_udapl_ft_event(int state);
+extern int mca_btl_ud_ft_event(int state);
 
 
 
