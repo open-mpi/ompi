@@ -22,18 +22,18 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/output.h"
-#include "ras_bjs.h"
+#include "ras_lanl_bproc.h"
 
 /*
  * Local functions
  */
 
-static int orte_ras_bjs_open(void);
-static int orte_ras_bjs_close(void);
-static orte_ras_base_module_t* orte_ras_bjs_init(int* priority);
+static int orte_ras_lanl_bproc_open(void);
+static int orte_ras_lanl_bproc_close(void);
+static orte_ras_base_module_t* orte_ras_lanl_bproc_init(int* priority);
 
 
-orte_ras_bjs_component_t mca_ras_bjs_component = {
+orte_ras_lanl_bproc_component_t mca_ras_lanl_bproc_component = {
     {
       /* First, the mca_base_component_t struct containing meta
          information about the component itself */
@@ -44,12 +44,12 @@ orte_ras_bjs_component_t mca_ras_bjs_component = {
 
         ORTE_RAS_BASE_VERSION_1_3_0,
 
-        "bjs", /* MCA component name */
+        "lanl_bproc", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */
         ORTE_MINOR_VERSION,  /* MCA component minor version */
         ORTE_RELEASE_VERSION,  /* MCA component release version */
-        orte_ras_bjs_open,  /* component open  */
-        orte_ras_bjs_close  /* component close */
+        orte_ras_lanl_bproc_open,  /* component open  */
+        orte_ras_lanl_bproc_close  /* component close */
       },
 
       /* Next the MCA v1.0.0 component meta data */
@@ -58,81 +58,60 @@ orte_ras_bjs_component_t mca_ras_bjs_component = {
           MCA_BASE_METADATA_PARAM_CHECKPOINT
       },
 
-      orte_ras_bjs_init
+      orte_ras_lanl_bproc_init
     }
 };
 
 
 /**
- *  Convience functions to lookup MCA parameter values.
- */
-
-static  int orte_ras_bjs_param_register_int(
-    const char* param_name,
-    int default_value)
-{
-    int id = mca_base_param_register_int("ras","bjs",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-
-
-static char* orte_ras_bjs_param_register_string(
-    const char * a, const char *b, const char *c,
-    const char* default_value)
-{
-    char *param_value;
-    int id = mca_base_param_register_string(a, b, c, NULL, default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
-}
-
-
-/**
   * component open/close/init function
   */
-static int orte_ras_bjs_open(void)
+static int orte_ras_lanl_bproc_open(void)
 {
-    mca_ras_bjs_component.debug = orte_ras_bjs_param_register_int("debug",1);
-    mca_ras_bjs_component.priority = orte_ras_bjs_param_register_int("priority",75);
-    /* JMS To be changed post-beta to LAM's C/N command line notation */
-    mca_ras_bjs_component.schedule_policy = 
-        orte_ras_bjs_param_register_string("ras", "base", "schedule_policy", "slot");
+    mca_base_component_t *c = &mca_ras_lanl_bproc_component.super.ras_version;
+    int tmp;
+    
+    mca_base_param_reg_int(c, "debug",
+                           "Whether or not to enable debugging output for the LANL-BPROC component (0 or 1)",
+                           false, false, (int)false, &tmp);
+    mca_ras_lanl_bproc_component.debug = OPAL_INT_TO_BOOL(tmp);
+    
+    /* we default to a negative priority so that we will *only* be selected
+     * if directed by the user via -mca ras lanl_bproc or -mca ras_lanl_bproc_priority xxx
+     */
+    mca_base_param_reg_int(c, "priority",
+                           "Selection priority for LANL-BPROC component",
+                           false, false, -1, &mca_ras_lanl_bproc_component.priority);
+    
     return ORTE_SUCCESS;
 }
 
 
-static orte_ras_base_module_t *orte_ras_bjs_init(int* priority)
+static orte_ras_base_module_t *orte_ras_lanl_bproc_init(int* priority)
 {
+    int ret;
+    struct bproc_version_t version;
+    
     /* if we are not an HNP, then we must not be selected */
     if (!orte_process_info.seed) {
         return NULL;
     }
     
-#if 0
-    /* see if bjs is running */
-    if (getenv("BJS_SOCKET") == NULL) {
+    /* okay, we are in an HNP - now check to see if BProc is running here */
+    ret =  bproc_version(&version);
+    if (ret != 0) {
         return NULL;
     }
     
-    /* bjs sticks our allocation into a NODES enviro variable -
-     * see if it is there. If not, then nothing was allocated
-     */
-    if (getenv("NODES") == NULL) {
-        return NULL;
-    }
-#endif
-    
-    *priority = mca_ras_bjs_component.priority;
-    return &orte_ras_bjs_module;
+    *priority = mca_ras_lanl_bproc_component.priority;
+    return &orte_ras_lanl_bproc_module;
 }
 
 /**
  *  Close all subsystems.
  */
 
-static int orte_ras_bjs_close(void)
+static int orte_ras_lanl_bproc_close(void)
 {
     return ORTE_SUCCESS;
 }

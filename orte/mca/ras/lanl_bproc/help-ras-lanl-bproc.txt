@@ -1,0 +1,34 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English help file for Open MPI MCA error messages.
+#
+[nodelist-failed]
+While trying to determine what resources are available, Bproc failed to
+find a list of available nodes in your NODES environmental variable.
+This may indicate that you failed to request an allocation prior to
+executing your application, or a problem with Bproc or your cluster.
+
+Please ensure you have requested and received an allocation and try again,
+or contact your system administrator for advice.
+#
+[no-nodes-avail]
+While trying to determine what resources are available, Bproc returned
+a list of available nodes that didn't contain any upon which you have
+execution privileges. This may indicate a problem with Bproc, your cluster,
+or your privileges.

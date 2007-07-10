@@ -22,18 +22,18 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/output.h"
-#include "ras_lsf_bproc.h"
+#include "ras_bproc_raw.h"
 
 /*
  * Local functions
  */
 
-static int orte_ras_lsf_bproc_open(void);
-static int orte_ras_lsf_bproc_close(void);
-static orte_ras_base_module_t* orte_ras_lsf_bproc_init(int* priority);
+static int orte_ras_bproc_raw_open(void);
+static int orte_ras_bproc_raw_close(void);
+static orte_ras_base_module_t* orte_ras_bproc_raw_init(int* priority);
 
 
-orte_ras_lsf_bproc_component_t mca_ras_lsf_bproc_component = {
+orte_ras_bproc_raw_component_t mca_ras_bproc_raw_component = {
     {
       /* First, the mca_base_component_t struct containing meta
          information about the component itself */
@@ -44,12 +44,12 @@ orte_ras_lsf_bproc_component_t mca_ras_lsf_bproc_component = {
 
         ORTE_RAS_BASE_VERSION_1_3_0,
 
-        "lsf_bproc", /* MCA component name */
+        "bproc_raw", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */
         ORTE_MINOR_VERSION,  /* MCA component minor version */
         ORTE_RELEASE_VERSION,  /* MCA component release version */
-        orte_ras_lsf_bproc_open,  /* component open  */
-        orte_ras_lsf_bproc_close  /* component close */
+        orte_ras_bproc_raw_open,  /* component open  */
+        orte_ras_bproc_raw_close  /* component close */
       },
 
       /* Next the MCA v1.0.0 component meta data */
@@ -58,52 +58,60 @@ orte_ras_lsf_bproc_component_t mca_ras_lsf_bproc_component = {
           MCA_BASE_METADATA_PARAM_CHECKPOINT
       },
 
-      orte_ras_lsf_bproc_init
+      orte_ras_bproc_raw_init
     }
 };
 
 
 /**
- *  Convience functions to lookup MCA parameters
- */
-static  int orte_ras_lsf_bproc_param_register_int(
-    const char* param_name,
-    int default_value)
-{
-    int id = mca_base_param_register_int("ras","lsf_bproc",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-
-
-/**
   * component open/close/init function
   */
-static int orte_ras_lsf_bproc_open(void)
+static int orte_ras_bproc_raw_open(void)
 {
-    mca_ras_lsf_bproc_component.debug = orte_ras_lsf_bproc_param_register_int("debug",1);
-    mca_ras_lsf_bproc_component.priority = orte_ras_lsf_bproc_param_register_int("priority",-1);
+    mca_base_component_t *c = &mca_ras_bproc_raw_component.super.ras_version;
+    int tmp;
+
+    mca_base_param_reg_int(c, "debug",
+                           "Whether or not to enable debugging output for the BPROC-RAW component (0 or 1)",
+                           false, false, (int)false, &tmp);
+    mca_ras_bproc_raw_component.debug = OPAL_INT_TO_BOOL(tmp);
+    
+    /* we default to a low priority so that any bproc + resource manager combination
+     * will override us
+     */
+    mca_base_param_reg_int(c, "priority",
+                           "Selection priority for BPROC_RAW component",
+                           false, false, 10, &mca_ras_bproc_raw_component.priority);
+
     return ORTE_SUCCESS;
 }
 
 
-static orte_ras_base_module_t *orte_ras_lsf_bproc_init(int* priority)
+static orte_ras_base_module_t *orte_ras_bproc_raw_init(int* priority)
 {
+    int ret;
+    struct bproc_version_t version;
+
     /* if we are not an HNP, then we must not be selected */
     if (!orte_process_info.seed) {
         return NULL;
     }
     
-    *priority = mca_ras_lsf_bproc_component.priority;
-    return NULL;
+    /* okay, we are in an HNP - now check to see if BProc is running here */
+    ret =  bproc_version(&version);
+    if (ret != 0) {
+        return NULL;
+    }
+    
+    *priority = mca_ras_bproc_raw_component.priority;
+    return &orte_ras_bproc_raw_module;
 }
 
 /**
  *  Close all subsystems.
  */
 
-static int orte_ras_lsf_bproc_close(void)
+static int orte_ras_bproc_raw_close(void)
 {
     return ORTE_SUCCESS;
 }

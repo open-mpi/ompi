@@ -18,12 +18,13 @@
 /**
  * @file
  *
- * Resource Allocation (LSF over BPROC)
+ * Resource Allocation (BPROC - without any resource manager)
  */
-#ifndef ORTE_RAS_LSF_BPROC_H
-#define ORTE_RAS_LSF_BPROC_H
+#ifndef ORTE_RAS_BPROC_RAW_H
+#define ORTE_RAS_BPROC_RAW_H
 
 #include "orte/mca/ras/ras.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -32,15 +33,16 @@ extern "C" {
 /**
  * RAS Component 
  */
-struct orte_ras_lsf_bproc_component_t {
+struct orte_ras_bproc_raw_component_t {
     orte_ras_base_component_t super;
     int debug;
     int priority;
+    char *schedule_policy;
 };
-typedef struct orte_ras_lsf_bproc_component_t orte_ras_lsf_bproc_component_t;
+typedef struct orte_ras_bproc_raw_component_t orte_ras_bproc_raw_component_t;
 
-ORTE_DECLSPEC extern orte_ras_lsf_bproc_component_t mca_ras_lsf_bproc_component;
-ORTE_DECLSPEC extern orte_ras_base_module_t orte_ras_lsf_bproc_module;
+ORTE_DECLSPEC extern orte_ras_bproc_raw_component_t mca_ras_bproc_raw_component;
+ORTE_DECLSPEC extern orte_ras_base_module_t orte_ras_bproc_raw_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

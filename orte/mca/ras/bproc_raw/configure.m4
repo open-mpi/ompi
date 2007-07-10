@@ -17,22 +17,22 @@
 # $HEADER$
 #
 
-# MCA_ras_lsf_bproc_CONFIG([action-if-found], [action-if-not-found])
+# MCA_ras_bproc_raw_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_ras_lsf_bproc_CONFIG],[
-    OMPI_CHECK_BPROC([ras_lsf_bproc], [ras_lsf_bproc_good=1], 
-                     [ras_lsf_bproc_good=1], [ras_lsf_bproc_good=0])
+AC_DEFUN([MCA_ras_bproc_raw_CONFIG],[
+    OMPI_CHECK_BPROC([ras_bproc_raw], [ras_bproc_raw_good=1], [ras_bproc_raw_good=1], 
+                     [ras_bproc_raw_good=0])
 
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
-    AS_IF([test "$ras_lsf_bproc_good" = "1"],
-          [ras_lsf_bproc_WRAPPER_EXTRA_LDFLAGS="$ras_lsf_bproc_LDFLAGS"
-           ras_lsf_bproc_WRAPPER_EXTRA_LIBS="$ras_lsf_bproc_LIBS"
+    AS_IF([test "$ras_bproc_raw_good" = "1"],
+          [ras_bproc_raw_WRAPPER_EXTRA_LDFLAGS="$ras_bproc_raw_LDFLAGS"
+           ras_bproc_raw_WRAPPER_EXTRA_LIBS="$ras_bproc_raw_LIBS"
            $1],
           [$2])
 
     # set build flags to use in makefile
-    AC_SUBST([ras_lsf_bproc_CPPFLAGS])
-    AC_SUBST([ras_lsf_bproc_LDFLAGS])
-    AC_SUBST([ras_lsf_bproc_LIBS])
+    AC_SUBST([ras_bproc_raw_CPPFLAGS])
+    AC_SUBST([ras_bproc_raw_LDFLAGS])
+    AC_SUBST([ras_bproc_raw_LIBS])
 ])dnl
