@@ -65,7 +65,7 @@ mca_btl_ud_module_t mca_btl_ofud_module = {
         mca_btl_base_dump,
         NULL, /* mpool */
         NULL, /* register error */
-        mca_btl_udapl_ft_event
+        mca_btl_ud_ft_event
     }
 };
 
@@ -684,7 +684,7 @@ dealloc_pd:
 }
 
 
-int mca_btl_udapl_ft_event(int state) {
+int mca_btl_ud_ft_event(int state) {
     return OMPI_SUCCESS;
 }
 
