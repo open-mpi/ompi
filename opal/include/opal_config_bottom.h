@@ -511,4 +511,27 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #endif
 #endif
 
+#ifdef MCS_VXWORKS
+/* VXWorks puts some common functions in oddly named headers.  Rather
+   than update all the places the functions are used, which would be a
+   maintenance disatster, just update here... */
+#ifdef HAVE_IOLIB_H
+/* pipe(), ioctl() */
+#include <ioLib.h>
+#endif
+#ifdef HAVE_SOCKLIB_H
+/* socket() */
+#include <sockLib.h>
+#endif
+#ifdef HAVE_HOSTLIB_H
+/* gethostname() */
+#include <hostLib.h>
+
+#ifndef MAXHOSTNAMELEN
+#define MAXHOSTNAMELEN 64
+#endif
+#endif
+
+#endif
+
 #endif /* OMPI_BUILDING */

@@ -32,6 +32,9 @@
 /* for struct iovec */
 #include <sys/uio.h>
 #endif
+#ifdef HAVE_NET_UIO_H
+#include <net/uio.h>
+#endif
 
 #include "orte/orte_constants.h"
 #include "orte/util/proc_info.h"

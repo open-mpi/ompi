@@ -29,6 +29,9 @@
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
 #endif
+#ifdef HAVE_NET_UIO_H
+#include <net/uio.h>
+#endif
 
 #include "btl_tcp.h" 
 #include "btl_tcp_hdr.h"

@@ -31,6 +31,9 @@
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
 #endif
+#ifdef HAVE_NET_UIO_H
+#include <net/uio.h>
+#endif
 
 #include "opal/mca/mca.h"
 #include "opal/threads/condition.h"

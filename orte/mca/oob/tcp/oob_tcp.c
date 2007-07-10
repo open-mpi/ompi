@@ -1193,7 +1193,7 @@ int mca_oob_tcp_init(void)
     if(1 == mca_oob_tcp_component.connect_sleep) {
         Sleep((orte_process_info.my_name->vpid % randval % 1000) * 100);
     }
-#else
+#elif defined(HAVE_USLEEP)
     if(1 == mca_oob_tcp_component.connect_sleep) {
         usleep((orte_process_info.my_name->vpid % randval % 1000) * 1000);
     }

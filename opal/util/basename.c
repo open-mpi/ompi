@@ -143,13 +143,21 @@ char* opal_dirname(const char* filename)
             }
             if( p != filename ) {
                 char* ret = (char*)malloc( p - filename + 1 );
+#ifdef HAVE_STRNCPY_S
                 strncpy_s( ret, (p - filename + 1), filename, p - filename );
+#else
+                strncpy(ret, filename, p - filename);
+#endif
                 ret[p - filename] = '\0';
                 return opal_make_filename_os_friendly(ret);
             }
             break;  /* return the duplicate of "." */
         }
     }
+#ifdef HAVE__STRDUP
     return _strdup(".");
+#else
+    return strdup(".");
+#endif
 #endif  /* defined(HAVE_DIRNAME) */
 }
