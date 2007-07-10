@@ -62,7 +62,7 @@ int orte_dss_compare_int(int *value1, int *value2, orte_data_type_t type)
     return ORTE_EQUAL;
 }
 
-int orte_dss_compare_uint(uint *value1, uint *value2, orte_data_type_t type)
+int orte_dss_compare_uint(unsigned int *value1, unsigned int *value2, orte_data_type_t type)
 {
     if (*value1 > *value2) return ORTE_VALUE1_GREATER;
 

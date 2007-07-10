@@ -33,7 +33,7 @@ EOF
 if test "$CC" = "$CCAS" ; then
     ompi_assemble="$CCAS $CCASFLAGS -c conftest.s >conftest.out 2>&1"
 else
-    ompi_assemble="$CCAS $CCASFLAGS conftest.s >conftest.out 2>&1"
+    ompi_assemble="$CCAS $CCASFLAGS -o conftest.o conftest.s >conftest.out 2>&1"
 fi
 if AC_TRY_EVAL(ompi_assemble); then
   # save the warnings

@@ -53,6 +53,9 @@
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
 #endif  /* HAVE_SYS_UIO_H */
+#ifdef HAVE_NET_UIO_H
+#include <net/uio.h>
+#endif  /* HAVE_NET_UIO_H */
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

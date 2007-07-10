@@ -61,7 +61,13 @@
 
 extern struct opal_event_list opal_signalqueue;
 
-static sig_atomic_t opal_evsigcaught[NSIG];
+#if defined(VXWORKS)
+#define OPAL_NSIG (_NSIGS + 1)
+#else
+#define OPAL_NSIG NSIG
+#endif
+
+static sig_atomic_t opal_evsigcaught[OPAL_NSIG];
 static int opal_needrecalc;
 volatile sig_atomic_t opal_evsignal_caught = 0;
 
@@ -106,8 +112,13 @@ opal_evsignal_init(sigset_t *evsigmask)
 	 * pair to wake up our event loop.  The event loop then scans for
 	 * signals that got delivered.
 	 */
+#ifdef HAVE_SOCKETPAIR
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, ev_signal_pair) == -1)
 		event_err(1, "%s: socketpair", __func__);
+#else
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, ev_signal_pair) == -1)
+		event_err(1, "%s: pipe", __func__);
+#endif
 
 	FD_CLOSEONEXEC(ev_signal_pair[0]);
 	FD_CLOSEONEXEC(ev_signal_pair[1]);

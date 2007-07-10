@@ -535,7 +535,7 @@ static int open_file(int i)
     /* Setup the filename and open flags */
 
     if (NULL != output_dir) {
-	filename = (char *) malloc(MAXPATHLEN);
+	filename = (char *) malloc(OMPI_PATH_MAX);
 	if (NULL == filename) {
 	    return OPAL_ERR_OUT_OF_RESOURCE;
 	}

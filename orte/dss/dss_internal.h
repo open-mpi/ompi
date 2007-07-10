@@ -396,7 +396,7 @@ extern orte_data_type_t orte_dss_num_reg_types;
     int orte_dss_compare_bool(bool *value1, bool *value2, orte_data_type_t type);
 
     int orte_dss_compare_int(int *value1, int *value2, orte_data_type_t type);
-    int orte_dss_compare_uint(uint *value1, uint *value2, orte_data_type_t type);
+    int orte_dss_compare_uint(unsigned int *value1, unsigned int *value2, orte_data_type_t type);
 
     int orte_dss_compare_size(size_t *value1, size_t *value2, orte_data_type_t type);
 
