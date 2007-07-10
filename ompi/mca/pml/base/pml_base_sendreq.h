@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -41,7 +41,6 @@ struct mca_pml_base_send_request_t {
     void *req_addr;                          /**< pointer to send buffer - may not be application buffer */
     size_t req_bytes_packed;                 /**< packed size of a message given the datatype and count */
     mca_pml_base_send_mode_t req_send_mode;  /**< type of send */
-    ompi_convertor_t req_convertor;          /**< convertor that describes this datatype */
 };
 typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
 
@@ -104,8 +103,8 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
                             (request)->req_base.req_count,                \
                             (request)->req_base.req_addr,                 \
                             0,                                            \
-                            &(request)->req_convertor );                  \
-         ompi_convertor_get_packed_size( &(request)->req_convertor,       \
+                            &(request)->req_base.req_convertor );         \
+         ompi_convertor_get_packed_size( &(request)->req_base.req_convertor, \
                                          &((request)->req_bytes_packed) );\
       }                                                                   \
       PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,                  \
@@ -139,7 +138,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
         OBJ_RELEASE((request)->req_base.req_comm);                        \
         if( 0 != (request)->req_base.req_count )                          \
             OBJ_RELEASE((request)->req_base.req_datatype);                \
-        ompi_convertor_cleanup( &((request)->req_convertor) );            \
+        ompi_convertor_cleanup( &((request)->req_base.req_convertor) );   \
     } while (0)
 
 

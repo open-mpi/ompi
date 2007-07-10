@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -24,6 +24,7 @@
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/mtl/mtl.h"
+#include "opal/prefetch.h"
 
 struct mca_pml_cm_send_request_t { 
     mca_pml_cm_request_t req_base;
@@ -47,7 +48,7 @@ struct mca_pml_cm_hvy_send_request_t {
     size_t req_count;                     /**< count of user datatype elements */
     int32_t req_peer;                     /**< peer process - rank w/in this communicator */
     int32_t req_tag;                      /**< user defined tag */
-    void *req_buff;                  /**< pointer to send buffer - may not be application buffer */
+    void *req_buff;                       /**< pointer to send buffer - may not be application buffer */
     bool req_blocking;
     mca_mtl_request_t req_mtl;            /**< the mtl specific memory. This field should be the last in the struct */
 };
@@ -61,14 +62,15 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_send_request_t);
         ompi_free_list_item_t* item;                                    \
         ompi_proc = ompi_comm_peer_lookup( comm, dst );                 \
                                                                         \
-        if(NULL == ompi_proc) {                                         \
+        if(OPAL_UNLIKELY(NULL == ompi_proc)) {                          \
             rc = OMPI_ERR_OUT_OF_RESOURCE;                              \
             sendreq = NULL;                                             \
         } else {                                                        \
             rc = OMPI_SUCCESS;                                          \
-            OMPI_FREE_LIST_WAIT(&ompi_pml_cm.cm_thin_send_requests,     \
+            OMPI_FREE_LIST_WAIT(&mca_pml_base_send_requests,            \
                                 item, rc);                              \
             sendreq = (mca_pml_cm_thin_send_request_t*)item;            \
+            sendreq->req_send.req_base.req_pml_type = MCA_PML_CM_REQUEST_SEND_THIN; \
         }                                                               \
     } while(0)
 
@@ -78,14 +80,15 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_send_request_t);
 {                                                                       \
     ompi_free_list_item_t* item;                                        \
     ompi_proc = ompi_comm_peer_lookup( comm, dst );                     \
-    if(NULL == ompi_proc) {                                             \
+    if(OPAL_UNLIKELY(NULL == ompi_proc)) {                              \
         rc = OMPI_ERR_OUT_OF_RESOURCE;                                  \
         sendreq = NULL;                                                 \
     } else {                                                            \
         rc = OMPI_SUCCESS;                                              \
-        OMPI_FREE_LIST_WAIT(&ompi_pml_cm.cm_hvy_send_requests,          \
+        OMPI_FREE_LIST_WAIT(&mca_pml_base_send_requests,                \
                             item, rc);                                  \
         sendreq = (mca_pml_cm_hvy_send_request_t*)item;                 \
+        sendreq->req_send.req_base.req_pml_type = MCA_PML_CM_REQUEST_SEND_HEAVY; \
     }                                                                   \
 }
 
@@ -305,7 +308,7 @@ do {                                                                    \
         OBJ_RELEASE(sendreq->req_send.req_base.req_comm);               \
         OMPI_REQUEST_FINI(&sendreq->req_send.req_base.req_ompi);        \
         ompi_convertor_cleanup( &(sendreq->req_send.req_base.req_convertor) ); \
-        OMPI_FREE_LIST_RETURN( &ompi_pml_cm.cm_hvy_send_requests,       \
+        OMPI_FREE_LIST_RETURN( &mca_pml_base_send_requests,             \
                                (ompi_free_list_item_t*)sendreq);        \
     }
 
@@ -344,7 +347,7 @@ do {                                                                    \
         OBJ_RELEASE(sendreq->req_send.req_base.req_comm);               \
         OMPI_REQUEST_FINI(&sendreq->req_send.req_base.req_ompi);        \
         ompi_convertor_cleanup( &(sendreq->req_send.req_base.req_convertor) ); \
-        OMPI_FREE_LIST_RETURN( &ompi_pml_cm.cm_thin_send_requests,      \
+        OMPI_FREE_LIST_RETURN( &mca_pml_base_send_requests,             \
                                (ompi_free_list_item_t*)sendreq);        \
     }
 

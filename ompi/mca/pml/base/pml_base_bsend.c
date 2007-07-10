@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -249,7 +249,7 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
         iov.iov_len = sendreq->req_bytes_packed;
         iov_count = 1;
         max_data = iov.iov_len;
-        if((rc = ompi_convertor_pack( &sendreq->req_convertor, 
+        if((rc = ompi_convertor_pack( &sendreq->req_base.req_convertor, 
                                       &iov, 
                                       &iov_count, 
                                       &max_data )) < 0) {
@@ -257,7 +257,7 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
         }
  
         /* setup convertor to point to packed buffer (at position zero) */
-        ompi_convertor_prepare_for_send( &sendreq->req_convertor, MPI_PACKED,
+        ompi_convertor_prepare_for_send( &sendreq->req_base.req_convertor, MPI_PACKED,
                                          max_data, sendreq->req_addr );
         /* increment count of pending requests */
         mca_pml_bsend_count++;

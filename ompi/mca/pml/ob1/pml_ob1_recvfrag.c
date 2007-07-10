@@ -135,7 +135,7 @@ void mca_pml_ob1_recv_frag_callback(
             if(sendreq->req_bytes_delivered == hdr->hdr_ack.hdr_send_offset)
                 sendreq->req_throttle_sends = true;
 
-            mca_pml_ob1_send_requst_copy_in_out(sendreq,
+            mca_pml_ob1_send_request_copy_in_out(sendreq,
                     hdr->hdr_ack.hdr_send_offset,
                     sendreq->req_send.req_bytes_packed -
                     hdr->hdr_ack.hdr_send_offset);

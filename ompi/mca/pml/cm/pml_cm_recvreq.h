@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -51,18 +51,20 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_recv_request_t);
  *  @param rc (OUT)  OMPI_SUCCESS or error status on failure.
  *  @return          Receive request.
  */
-#define MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq, rc)              \
-do {                                                                 \
-    ompi_free_list_item_t*item;                                      \
-    OMPI_FREE_LIST_GET(&ompi_pml_cm.cm_thin_recv_requests, item, rc);   \
+#define MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq, rc)                 \
+    do {                                                                \
+    ompi_free_list_item_t*item;                                         \
+    OMPI_FREE_LIST_GET(&mca_pml_base_recv_requests, item, rc);          \
     recvreq = (mca_pml_cm_thin_recv_request_t*) item;                   \
+    recvreq->req_base.req_pml_type = MCA_PML_CM_REQUEST_RECV_THIN;      \
  } while (0)
 
 #define MCA_PML_CM_HVY_RECV_REQUEST_ALLOC(recvreq, rc)                  \
 do {                                                                    \
     ompi_free_list_item_t*item;                                         \
-    OMPI_FREE_LIST_GET(&ompi_pml_cm.cm_hvy_recv_requests, item, rc);    \
+    OMPI_FREE_LIST_GET(&mca_pml_base_recv_requests, item, rc);          \
     recvreq = (mca_pml_cm_hvy_recv_request_t*) item;                    \
+    recvreq->req_base.req_pml_type = MCA_PML_CM_REQUEST_RECV_HEAVY;     \
  } while (0)
 
 
@@ -271,8 +273,8 @@ do {                                                                    \
     OBJ_RELEASE((recvreq)->req_base.req_datatype);                      \
     OMPI_REQUEST_FINI(&(recvreq)->req_base.req_ompi);                   \
     ompi_convertor_cleanup( &((recvreq)->req_base.req_convertor) );     \
-    OMPI_FREE_LIST_RETURN( &ompi_pml_cm.cm_hvy_recv_requests,      \
-                           (ompi_free_list_item_t*)(recvreq)); \
+    OMPI_FREE_LIST_RETURN( &mca_pml_base_recv_requests,                 \
+                           (ompi_free_list_item_t*)(recvreq));          \
 }
 
 /**
@@ -284,7 +286,7 @@ do {                                                                    \
     OBJ_RELEASE((recvreq)->req_base.req_datatype);                      \
     OMPI_REQUEST_FINI(&(recvreq)->req_base.req_ompi);                   \
     ompi_convertor_cleanup( &((recvreq)->req_base.req_convertor) );     \
-    OMPI_FREE_LIST_RETURN( &ompi_pml_cm.cm_thin_recv_requests,          \
+    OMPI_FREE_LIST_RETURN( &mca_pml_base_recv_requests,                 \
                            (ompi_free_list_item_t*)(recvreq));          \
 }
 

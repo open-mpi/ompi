@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -67,7 +67,7 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_recv_request_t);
 do {                                                               \
    ompi_free_list_item_t* item;                                    \
    rc = OMPI_SUCCESS;                                              \
-   OMPI_FREE_LIST_GET(&mca_pml_dr.recv_requests, item, rc);        \
+   OMPI_FREE_LIST_GET(&mca_pml_base_recv_requests, item, rc);      \
    recvreq = (mca_pml_dr_recv_request_t*)item;                     \
 } while(0)
 
@@ -153,7 +153,8 @@ do {                                                                            
 do {                                                                                \
     /* decrement reference counts */                                                \
     MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);                           \
-    OMPI_FREE_LIST_RETURN(&mca_pml_dr.recv_requests, (ompi_free_list_item_t*)(recvreq)); \
+    OMPI_FREE_LIST_RETURN(&mca_pml_base_recv_requests,                              \
+                          (ompi_free_list_item_t*)(recvreq)); \
 } while(0)
 
 /**
@@ -254,7 +255,7 @@ do {                                                                            
                                          (request)->req_recv.req_base.req_count,     \
                                          (request)->req_recv.req_base.req_addr,      \
                                          (do_csum ? CONVERTOR_WITH_CHECKSUM: 0),     \
-                                         &(request)->req_recv.req_convertor );       \
+                                         &(request)->req_recv.req_base.req_convertor ); \
     }                                                                                \
 } while (0)
 
@@ -292,19 +293,17 @@ do {                                                                            
                 iov_count++;                                                      \
             }                                                                     \
         }                                                                         \
-        ompi_convertor_set_position(                                              \
-            &(request->req_recv.req_convertor),                                   \
-            &data_offset);                                                        \
-        assert((request->req_recv.req_convertor.flags & CONVERTOR_COMPLETED) == 0); \
-        ompi_convertor_unpack(                                                    \
-            &(request)->req_recv.req_convertor,                                   \
-            iov,                                                                  \
-            &iov_count,                                                           \
-            &max_data);                                                           \
+        ompi_convertor_set_position( &(request->req_recv.req_base.req_convertor), \
+                                     &data_offset);                               \
+        assert((request->req_recv.req_base.req_convertor.flags & CONVERTOR_COMPLETED) == 0); \
+        ompi_convertor_unpack( &(request)->req_recv.req_base.req_convertor,       \
+                               iov,                                               \
+                               &iov_count,                                        \
+                               &max_data);                                        \
         bytes_delivered = max_data;                                               \
         if(bytes_received && !bytes_delivered) assert(0);                         \
         csum = (do_csum ?                                                         \
-                  request->req_recv.req_convertor.checksum : OPAL_CSUM_ZERO);     \
+                request->req_recv.req_base.req_convertor.checksum : OPAL_CSUM_ZERO); \
     } else {                                                                      \
         bytes_delivered = 0;                                                      \
         csum = OPAL_CSUM_ZERO;                                                    \

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -114,9 +114,9 @@ int mca_pml_dr_component_open(void)
         mca_pml_dr_param_register_int("enable_csum", 1);
     
     /* requests */
-    OBJ_CONSTRUCT(&mca_pml_dr.send_requests, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_pml_base_send_requests, ompi_free_list_t);
     ompi_free_list_init(
-        &mca_pml_dr.send_requests,
+        &mca_pml_base_send_requests,
         sizeof(mca_pml_dr_send_request_t),
         OBJ_CLASS(mca_pml_dr_send_request_t),
         mca_pml_dr.free_list_num,
@@ -124,9 +124,9 @@ int mca_pml_dr_component_open(void)
         mca_pml_dr.free_list_inc,
         NULL);
                                                                                                             
-    OBJ_CONSTRUCT(&mca_pml_dr.recv_requests, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_pml_base_recv_requests, ompi_free_list_t);
     ompi_free_list_init(
-        &mca_pml_dr.recv_requests,
+        &mca_pml_base_recv_requests,
         sizeof(mca_pml_dr_recv_request_t),
         OBJ_CLASS(mca_pml_dr_recv_request_t),
         mca_pml_dr.free_list_num,
@@ -181,7 +181,8 @@ int mca_pml_dr_component_close(void)
     OBJ_DESTRUCT(&mca_pml_dr.send_pending);
     OBJ_DESTRUCT(&mca_pml_dr.send_active);
     OBJ_DESTRUCT(&mca_pml_dr.acks_pending);
-    OBJ_DESTRUCT(&mca_pml_dr.recv_requests);
+    OBJ_DESTRUCT(&mca_pml_base_recv_requests);
+    OBJ_DESTRUCT(&mca_pml_base_send_requests);
     OBJ_DESTRUCT(&mca_pml_dr.recv_frags);
     OBJ_DESTRUCT(&mca_pml_dr.buffers);
     return OMPI_SUCCESS;

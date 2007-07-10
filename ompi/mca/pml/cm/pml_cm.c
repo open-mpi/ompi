@@ -2,6 +2,9 @@
  * Copyright (c) 2006-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -154,38 +157,3 @@ mca_pml_cm_dump(struct ompi_communicator_t* comm, int verbose)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
-
-
-void
-mca_pml_cm_thin_send_request_completion(struct mca_mtl_request_t *mtl_request)
-{
-    mca_pml_cm_send_request_t *base_request = 
-        (mca_pml_cm_send_request_t*) mtl_request->ompi_req;
-    MCA_PML_CM_THIN_SEND_REQUEST_PML_COMPLETE(((mca_pml_cm_thin_send_request_t*) base_request));
-}
-void
-mca_pml_cm_hvy_send_request_completion(struct mca_mtl_request_t *mtl_request)
-{
-    mca_pml_cm_send_request_t *base_request = 
-        (mca_pml_cm_send_request_t*) mtl_request->ompi_req;
-    MCA_PML_CM_HVY_SEND_REQUEST_PML_COMPLETE(((mca_pml_cm_hvy_send_request_t*) base_request));
-}
-
-
-
-void
-mca_pml_cm_thin_recv_request_completion(struct mca_mtl_request_t *mtl_request)
-{
-    mca_pml_cm_request_t *base_request = 
-        (mca_pml_cm_request_t*) mtl_request->ompi_req;
-    MCA_PML_CM_THIN_RECV_REQUEST_PML_COMPLETE(((mca_pml_cm_thin_recv_request_t*) base_request));
-}
-
-void
-mca_pml_cm_hvy_recv_request_completion(struct mca_mtl_request_t *mtl_request)
-{
-    mca_pml_cm_request_t *base_request = 
-        (mca_pml_cm_request_t*) mtl_request->ompi_req;
-    MCA_PML_CM_HVY_RECV_REQUEST_PML_COMPLETE(((mca_pml_cm_hvy_recv_request_t*) base_request));
-}
-
