@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -23,8 +23,6 @@
 #include "mpi.h"
 #include "ompi/runtime/params.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "pml_ob1.h"
@@ -145,30 +143,7 @@ int mca_pml_ob1_component_open(void)
     }
 
     OBJ_CONSTRUCT(&mca_pml_ob1.lock, opal_mutex_t);
-                                                                                                            
-    /* requests */
-    OBJ_CONSTRUCT(&mca_pml_ob1.send_requests, ompi_free_list_t);
-    ompi_free_list_init(
-        &mca_pml_ob1.send_requests,
-        sizeof(mca_pml_ob1_send_request_t) +
-        (mca_pml_ob1.max_rdma_per_request - 1) * sizeof(mca_pml_ob1_com_btl_t),
-        OBJ_CLASS(mca_pml_ob1_send_request_t),
-        mca_pml_ob1.free_list_num,
-        mca_pml_ob1.free_list_max,
-        mca_pml_ob1.free_list_inc,
-        NULL);
-                                                                                                            
-    OBJ_CONSTRUCT(&mca_pml_ob1.recv_requests, ompi_free_list_t);
-    ompi_free_list_init(
-        &mca_pml_ob1.recv_requests,
-        sizeof(mca_pml_ob1_recv_request_t) +
-        (mca_pml_ob1.max_rdma_per_request - 1) * sizeof(mca_pml_ob1_com_btl_t),
-        OBJ_CLASS(mca_pml_ob1_recv_request_t),
-        mca_pml_ob1.free_list_num,
-        mca_pml_ob1.free_list_max,
-        mca_pml_ob1.free_list_inc,
-        NULL);
-                                                                                                            
+
     /* fragments */
     OBJ_CONSTRUCT(&mca_pml_ob1.rdma_frags, ompi_free_list_t);
     ompi_free_list_init(
@@ -247,10 +222,11 @@ int mca_pml_ob1_component_close(void)
     OBJ_DESTRUCT(&mca_pml_ob1.pending_pckts);
     OBJ_DESTRUCT(&mca_pml_ob1.recv_frags);
     OBJ_DESTRUCT(&mca_pml_ob1.rdma_frags);
-    OBJ_DESTRUCT(&mca_pml_ob1.recv_requests);
-    OBJ_DESTRUCT(&mca_pml_ob1.send_requests);
     OBJ_DESTRUCT(&mca_pml_ob1.lock);
 
+    /* destroy the global free lists */
+    OBJ_DESTRUCT(&mca_pml_base_send_requests);
+    OBJ_DESTRUCT(&mca_pml_base_recv_requests);
     if(OMPI_SUCCESS != (rc = mca_pml_ob1.allocator->alc_finalize(mca_pml_ob1.allocator))) {
         return rc;
     }
@@ -298,6 +274,7 @@ mca_pml_base_module_t* mca_pml_ob1_component_init(int* priority,
                                           enable_mpi_threads)) {
         return NULL;
     }
+
     /* As our own progress function does nothing except calling the BML
      * progress, let's modify the progress function pointer in our structure
      * to avoid useless functions calls. The event library will instead call
@@ -305,9 +282,31 @@ mca_pml_base_module_t* mca_pml_ob1_component_init(int* priority,
      */
     mca_pml_ob1.super.pml_progress = mca_bml.bml_progress;
 
+    /**
+     * If we get here this is the PML who get selected for the run. We
+     * should get ownership for the send and receive requests list, and
+     * initialize them with the size of our own requests.
+     */
+    OBJ_CONSTRUCT(&mca_pml_base_send_requests, ompi_free_list_t);
+    ompi_free_list_init( &mca_pml_base_send_requests,
+                         sizeof(mca_pml_ob1_send_request_t),
+                         OBJ_CLASS(mca_pml_ob1_send_request_t),
+                         mca_pml_ob1.free_list_num,
+                         mca_pml_ob1.free_list_max,
+                         mca_pml_ob1.free_list_inc,
+                         NULL );
+
+    OBJ_CONSTRUCT(&mca_pml_base_recv_requests, ompi_free_list_t);
+    ompi_free_list_init( &mca_pml_base_recv_requests,
+                         sizeof(mca_pml_ob1_recv_request_t),
+                         OBJ_CLASS(mca_pml_ob1_recv_request_t),
+                         mca_pml_ob1.free_list_num,
+                         mca_pml_ob1.free_list_max,
+                         mca_pml_ob1.free_list_inc,
+                         NULL );
+
     return &mca_pml_ob1.super;
 }
-
 
 void *mca_pml_ob1_seg_alloc( struct mca_mpool_base_module_t* mpool,
                              size_t* size,

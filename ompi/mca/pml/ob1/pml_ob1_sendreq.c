@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -403,11 +403,10 @@ int mca_pml_ob1_send_request_start_buffered(
     iov.iov_len = size;
     iov_count = 1;
     max_data = size;
-    if((rc = ompi_convertor_pack(
-        &sendreq->req_send.req_convertor,
-        &iov,
-        &iov_count,
-        &max_data)) < 0) {
+    if((rc = ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor,
+                                  &iov,
+                                  &iov_count,
+                                  &max_data)) < 0) {
         mca_bml_base_free(bml_btl, descriptor);
         return rc;
     }
@@ -454,7 +453,7 @@ int mca_pml_ob1_send_request_start_buffered(
     iov.iov_base = (IOVBASE_TYPE*)(((unsigned char*)sendreq->req_send.req_addr) + max_data);
     iov.iov_len = max_data = sendreq->req_send.req_bytes_packed - max_data;
 
-    if((rc = ompi_convertor_pack( &sendreq->req_send.req_convertor,
+    if((rc = ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor,
                                   &iov,
                                   &iov_count,
                                   &max_data)) < 0) {
@@ -463,7 +462,7 @@ int mca_pml_ob1_send_request_start_buffered(
     }
 
     /* re-init convertor for packed data */
-    ompi_convertor_prepare_for_send( &sendreq->req_send.req_convertor,
+    ompi_convertor_prepare_for_send( &sendreq->req_send.req_base.req_convertor,
                                      MPI_BYTE,
                                      sendreq->req_send.req_bytes_packed,
                                      sendreq->req_send.req_addr );
@@ -522,7 +521,7 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
         iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + sizeof(mca_pml_ob1_match_hdr_t));
         iov.iov_len = size;
         iov_count = 1;
-        (void)ompi_convertor_pack( &sendreq->req_send.req_convertor,
+        (void)ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor,
                                    &iov, &iov_count, &max_data );
         descriptor->des_cbfunc = mca_pml_ob1_match_completion_free;
     }
@@ -590,7 +589,7 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
     /* prepare descriptor */
     mca_bml_base_prepare_src( bml_btl,
                               NULL,
-                              &sendreq->req_send.req_convertor,
+                              &sendreq->req_send.req_base.req_convertor,
                               MCA_BTL_NO_ORDER,
                               sizeof(mca_pml_ob1_match_hdr_t),
                               &size,
@@ -667,19 +666,18 @@ int mca_pml_ob1_send_request_start_rdma(
     bml_btl = sendreq->req_rdma[0].bml_btl;
     if(sendreq->req_rdma_cnt == 1 &&
        bml_btl->btl_flags & MCA_BTL_FLAGS_GET) {
-        size_t old_position = sendreq->req_send.req_convertor.bConverted;
+        size_t old_position = sendreq->req_send.req_base.req_convertor.bConverted;
 
         /* prepare source descriptor/segment(s) */
-        mca_bml_base_prepare_src(
-             bml_btl, 
-             reg,
-             &sendreq->req_send.req_convertor,
-             MCA_BTL_NO_ORDER,
-             0,
-             &size,
-             &src);
-         if(NULL == src) {
-             ompi_convertor_set_position(&sendreq->req_send.req_convertor,
+        mca_bml_base_prepare_src( bml_btl, 
+                                  reg,
+                                  &sendreq->req_send.req_base.req_convertor,
+                                  MCA_BTL_NO_ORDER,
+                                  0,
+                                  &size,
+                                  &src );
+         if( OPAL_UNLIKELY(NULL == src) ) {
+             ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
                      &old_position);
              return OMPI_ERR_OUT_OF_RESOURCE;
          } 
@@ -690,7 +688,7 @@ int mca_pml_ob1_send_request_start_rdma(
          mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER,
             sizeof(mca_pml_ob1_rget_hdr_t) + (sizeof(mca_btl_base_segment_t)*(src->des_src_cnt-1)));
          if(NULL == des) {
-             ompi_convertor_set_position(&sendreq->req_send.req_convertor,
+             ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
                      &old_position);
              mca_bml_base_free(bml_btl, src);
              return OMPI_ERR_OUT_OF_RESOURCE;
@@ -818,24 +816,21 @@ int mca_pml_ob1_send_request_start_rndv(
 
     /* prepare descriptor */
     if(size == 0) {
-        mca_bml_base_alloc(
-                           bml_btl, 
-                           &des, 
-                           MCA_BTL_NO_ORDER,
-                           sizeof(mca_pml_ob1_rendezvous_hdr_t)
-                           ); 
+        mca_bml_base_alloc( bml_btl, 
+                            &des, 
+                            MCA_BTL_NO_ORDER,
+                            sizeof(mca_pml_ob1_rendezvous_hdr_t) ); 
     } else {
-        mca_bml_base_prepare_src(
-                                 bml_btl, 
-                                 NULL,
-                                 &sendreq->req_send.req_convertor,
-                                 MCA_BTL_NO_ORDER,
-                                 sizeof(mca_pml_ob1_rendezvous_hdr_t),
-                                 &size,
-                                 &des);
+        mca_bml_base_prepare_src( bml_btl, 
+                                  NULL,
+                                  &sendreq->req_send.req_base.req_convertor,
+                                  MCA_BTL_NO_ORDER,
+                                  sizeof(mca_pml_ob1_rendezvous_hdr_t),
+                                  &size,
+                                  &des );
     }
 
-    if(NULL == des) {
+    if( NULL == des ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
     segment = des->des_src;
@@ -878,7 +873,7 @@ int mca_pml_ob1_send_request_start_rndv(
     return rc;
 }
 
-void mca_pml_ob1_send_requst_copy_in_out(mca_pml_ob1_send_request_t *sendreq,
+void mca_pml_ob1_send_request_copy_in_out(mca_pml_ob1_send_request_t *sendreq,
         uint64_t send_offset, uint64_t send_length)
 {
     mca_pml_ob1_send_range_t *sr;
@@ -995,15 +990,15 @@ int mca_pml_ob1_send_request_schedule_exclusive(
                 
             /* pack into a descriptor */
             offset = (size_t)range->range_send_offset;
-            ompi_convertor_set_position(&sendreq->req_send.req_convertor, 
+            ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor, 
                                         &offset);
             range->range_send_offset = (uint64_t)offset;
 
             mca_bml_base_prepare_src(bml_btl, NULL,
-                                     &sendreq->req_send.req_convertor,
+                                     &sendreq->req_send.req_base.req_convertor,
                                      MCA_BTL_NO_ORDER,
                                      sizeof(mca_pml_ob1_frag_hdr_t), &size, &des);
-            if(des == NULL) {
+            if( OPAL_UNLIKELY(des == NULL) ) {
                 continue;
             }
             des->des_cbfunc = mca_pml_ob1_frag_completion;
@@ -1143,7 +1138,7 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
                     MCA_BTL_NO_ORDER, 1);
 
             /* send fragment by copy in/out */
-            mca_pml_ob1_send_requst_copy_in_out(sendreq,
+            mca_pml_ob1_send_request_copy_in_out(sendreq,
                     frag->rdma_hdr.hdr_rdma.hdr_rdma_offset, frag->rdma_length);
             mca_pml_ob1_send_request_schedule(sendreq);
         }
@@ -1233,8 +1228,9 @@ void mca_pml_ob1_send_request_put( mca_pml_ob1_send_request_t* sendreq,
      *  create clone of the convertor for each RDMA fragment
      */
     size = hdr->hdr_rdma_offset;
-    ompi_convertor_clone_with_position(&sendreq->req_send.req_convertor,
+    ompi_convertor_clone_with_position(&sendreq->req_send.req_base.req_convertor,
             &frag->convertor, 0, &size);
 
     mca_pml_ob1_send_request_put_frag(frag);
 }
+

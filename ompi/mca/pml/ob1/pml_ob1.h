@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -64,8 +64,6 @@ struct mca_pml_ob1_t {
     opal_mutex_t lock;
 
     /* free lists */
-    ompi_free_list_t send_requests;
-    ompi_free_list_t recv_requests;
     ompi_free_list_t rdma_frags;
     ompi_free_list_t recv_frags;
     ompi_free_list_t pending_pckts;

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -75,47 +75,44 @@ struct mca_pml_ob1_send_range_t {
 typedef struct mca_pml_ob1_send_range_t mca_pml_ob1_send_range_t;
 OBJ_CLASS_DECLARATION(mca_pml_ob1_send_range_t);
 
-#define MCA_PML_OB1_SEND_REQUEST_ALLOC(                                    \
-    comm,                                                                  \
-    dst,                                                                   \
-    sendreq,                                                               \
-    rc)                                                                    \
-{                                                                          \
-    ompi_proc_t *proc = ompi_comm_peer_lookup( comm, dst );                \
-    ompi_free_list_item_t* item;                                           \
-                                                                           \
-    if(NULL == proc) {                                                     \
-        rc = OMPI_ERR_OUT_OF_RESOURCE;                                     \
-    } else {                                                               \
-        rc = OMPI_SUCCESS;                                                 \
-        OMPI_FREE_LIST_WAIT(&mca_pml_ob1.send_requests, item, rc);         \
-        sendreq = (mca_pml_ob1_send_request_t*)item;                       \
-        sendreq->req_send.req_base.req_proc = proc;                        \
-    }                                                                      \
-}
+#define MCA_PML_OB1_SEND_REQUEST_ALLOC( comm,                           \
+                                        dst,                            \
+                                        sendreq,                        \
+                                        rc)                             \
+    {                                                                   \
+        ompi_proc_t *proc = ompi_comm_peer_lookup( comm, dst );         \
+        ompi_free_list_item_t* item;                                    \
+                                                                        \
+        rc = OMPI_ERR_OUT_OF_RESOURCE;                                  \
+        if( OPAL_LIKELY(NULL != proc) ) {                               \
+            rc = OMPI_SUCCESS;                                          \
+            OMPI_FREE_LIST_WAIT(&mca_pml_base_send_requests, item, rc); \
+            sendreq = (mca_pml_ob1_send_request_t*)item;                \
+            sendreq->req_send.req_base.req_proc = proc;                 \
+        }                                                               \
+    }
 
 
-#define MCA_PML_OB1_SEND_REQUEST_INIT(                                     \
-    sendreq,                                                               \
-    buf,                                                                   \
-    count,                                                                 \
-    datatype,                                                              \
-    dst,                                                                   \
-    tag,                                                                   \
-    comm,                                                                  \
-    sendmode,                                                              \
-    persistent)                                                            \
-{                                                                          \
-    MCA_PML_BASE_SEND_REQUEST_INIT(&sendreq->req_send,                     \
-        buf,                                                               \
-        count,                                                             \
-        datatype,                                                          \
-        dst,                                                               \
-        tag,                                                               \
-        comm,                                                              \
-        sendmode,                                                          \
-        persistent);                                                       \
-}
+#define MCA_PML_OB1_SEND_REQUEST_INIT( sendreq,                         \
+                                       buf,                             \
+                                       count,                           \
+                                       datatype,                        \
+                                       dst,                             \
+                                       tag,                             \
+                                       comm,                            \
+                                       sendmode,                        \
+                                       persistent)                      \
+    {                                                                   \
+        MCA_PML_BASE_SEND_REQUEST_INIT(&sendreq->req_send,              \
+                                       buf,                             \
+                                       count,                           \
+                                       datatype,                        \
+                                       dst,                             \
+                                       tag,                             \
+                                       comm,                            \
+                                       sendmode,                        \
+                                       persistent);                     \
+    }
 
 
 static inline void mca_pml_ob1_free_rdma_resources(mca_pml_ob1_send_request_t* sendreq)
@@ -226,12 +223,12 @@ static inline void mca_pml_ob1_send_request_schedule(
  * Release resources associated with a request
  */
 
-#define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                            \
-{                                                                           \
-    /*  Let the base handle the reference counts */                         \
-    MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));                 \
-    OMPI_FREE_LIST_RETURN(                                                  \
-        &mca_pml_ob1.send_requests, (ompi_free_list_item_t*)sendreq);       \
+#define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                        \
+    {                                                                   \
+    /*  Let the base handle the reference counts */                     \
+    MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));             \
+    OMPI_FREE_LIST_RETURN( &mca_pml_base_send_requests,                 \
+                           (ompi_free_list_item_t*)sendreq);            \
 }
 
 /**
@@ -296,9 +293,9 @@ static inline int mca_pml_ob1_send_request_start_btl(
         if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {
             rc = mca_pml_ob1_send_request_start_buffered(sendreq, bml_btl, size);
         } else if
-          (ompi_convertor_need_buffers(&sendreq->req_send.req_convertor) == false) {
+          (ompi_convertor_need_buffers(&sendreq->req_send.req_base.req_convertor) == false) {
             unsigned char *base;
-            ompi_convertor_get_current_pointer( &sendreq->req_send.req_convertor, (void**)&base );
+            ompi_convertor_get_current_pointer( &sendreq->req_send.req_base.req_convertor, (void**)&base );
             
             if( 0 != (sendreq->req_rdma_cnt = (uint32_t)mca_pml_ob1_rdma_btls(
                 sendreq->req_endpoint,
@@ -404,10 +401,10 @@ int mca_pml_ob1_send_request_put_frag(mca_pml_ob1_rdma_frag_t* frag);
  * should be considered for sending packets */
 void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl);
 
-void mca_pml_ob1_send_requst_copy_in_out(mca_pml_ob1_send_request_t *sendreq,
+void mca_pml_ob1_send_request_copy_in_out(mca_pml_ob1_send_request_t *sendreq,
                 uint64_t send_offset, uint64_t send_length);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-#endif
+
+END_C_DECLS
+
+#endif  /* !defined(OMPI_PML_OB1_SEND_REQUEST_H) */
 

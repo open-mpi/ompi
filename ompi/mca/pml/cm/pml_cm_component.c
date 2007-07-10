@@ -2,6 +2,9 @@
  * Copyright (c) 2006-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -149,40 +152,20 @@ mca_pml_cm_component_init(int* priority,
     ompi_pml_cm.super.pml_max_contextid = ompi_mtl->mtl_max_contextid;
     ompi_pml_cm.super.pml_max_tag = ompi_mtl->mtl_max_tag;
     
-    OBJ_CONSTRUCT(&ompi_pml_cm.cm_thin_send_requests, ompi_free_list_t);
-    ompi_free_list_init(&ompi_pml_cm.cm_thin_send_requests,
-                        sizeof(mca_pml_cm_thin_send_request_t) +
-                        ompi_mtl->mtl_request_size,
-                        OBJ_CLASS(mca_pml_cm_thin_send_request_t),
-                        free_list_num,
-                        free_list_max,
-                        free_list_inc,
-                        NULL);
-
-    OBJ_CONSTRUCT(&ompi_pml_cm.cm_hvy_send_requests, ompi_free_list_t);
-    ompi_free_list_init(&ompi_pml_cm.cm_hvy_send_requests,
-                        sizeof(mca_pml_cm_hvy_send_request_t) +
-                        ompi_mtl->mtl_request_size,
+    OBJ_CONSTRUCT(&mca_pml_base_send_requests, ompi_free_list_t);
+    ompi_free_list_init(&mca_pml_base_send_requests,
+                        MAX(sizeof(mca_pml_cm_thin_send_request_t),
+                            sizeof(mca_pml_cm_hvy_send_request_t)) + ompi_mtl->mtl_request_size,
                         OBJ_CLASS(mca_pml_cm_hvy_send_request_t),
                         free_list_num,
                         free_list_max,
                         free_list_inc,
                         NULL);
 
-    OBJ_CONSTRUCT(&ompi_pml_cm.cm_thin_recv_requests, ompi_free_list_t);
-    ompi_free_list_init(&ompi_pml_cm.cm_thin_recv_requests,
-                        sizeof(mca_pml_cm_thin_recv_request_t) + 
-                        ompi_mtl->mtl_request_size,
-                        OBJ_CLASS(mca_pml_cm_thin_recv_request_t),
-                        free_list_num,
-                        free_list_max,
-                        free_list_inc,
-                        NULL);
-
-    OBJ_CONSTRUCT(&ompi_pml_cm.cm_hvy_recv_requests, ompi_free_list_t);
-    ompi_free_list_init(&ompi_pml_cm.cm_hvy_recv_requests,
-                        sizeof(mca_pml_cm_hvy_recv_request_t) + 
-                        ompi_mtl->mtl_request_size,
+    OBJ_CONSTRUCT(&mca_pml_base_recv_requests, ompi_free_list_t);
+    ompi_free_list_init(&mca_pml_base_send_requests,
+                        MAX(sizeof(mca_pml_cm_thin_recv_request_t),
+                            sizeof(mca_pml_cm_hvy_recv_request_t)) + ompi_mtl->mtl_request_size,
                         OBJ_CLASS(mca_pml_cm_hvy_recv_request_t),
                         free_list_num,
                         free_list_max,
@@ -205,10 +188,8 @@ mca_pml_cm_component_fini(void)
     /* shut down buffered send code */
     mca_pml_base_bsend_fini();
 
-    OBJ_DESTRUCT(&ompi_pml_cm.cm_thin_send_requests);
-    OBJ_DESTRUCT(&ompi_pml_cm.cm_hvy_send_requests);
-    OBJ_DESTRUCT(&ompi_pml_cm.cm_thin_recv_requests);
-    OBJ_DESTRUCT(&ompi_pml_cm.cm_hvy_recv_requests);
+    OBJ_DESTRUCT(&mca_pml_base_send_requests);
+    OBJ_DESTRUCT(&mca_pml_base_recv_requests);
 
     if (NULL != ompi_mtl && NULL != ompi_mtl->mtl_finalize) {
         return ompi_mtl->mtl_finalize(ompi_mtl);

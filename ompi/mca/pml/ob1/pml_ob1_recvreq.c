@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -246,11 +246,11 @@ static int mca_pml_ob1_recv_request_ack(
          * registered. 
          */
 
-        if(ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0 &&
+        if(ompi_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == 0 &&
            hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_CONTIG &&
            rdma_num != 0) {
             unsigned char *base;
-            ompi_convertor_get_current_pointer( &recvreq->req_recv.req_convertor, (void**)&(base) );
+            ompi_convertor_get_current_pointer( &recvreq->req_recv.req_base.req_convertor, (void**)&(base) );
             
             recvreq->req_rdma_cnt = mca_pml_ob1_rdma_btls( bml_endpoint,
                                                            base,
@@ -273,7 +273,7 @@ static int mca_pml_ob1_recv_request_ack(
 
                 /* use converter to figure out the rdma offset for this
                  * request */
-                ompi_convertor_set_position(&recvreq->req_recv.req_convertor,
+                ompi_convertor_set_position(&recvreq->req_recv.req_base.req_convertor,
                         &recvreq->req_send_offset);
 
                 recvreq->req_rdma_cnt =
@@ -339,8 +339,7 @@ static void mca_pml_ob1_rget_completion(
 /*
  *
  */
-int mca_pml_ob1_recv_request_get_frag(
-        mca_pml_ob1_rdma_frag_t* frag)
+int mca_pml_ob1_recv_request_get_frag( mca_pml_ob1_rdma_frag_t* frag )
 {
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)frag->rdma_req;
     mca_bml_base_btl_t* bml_btl = frag->rdma_bml;
@@ -349,15 +348,14 @@ int mca_pml_ob1_recv_request_get_frag(
     int rc;
 
     /* prepare descriptor */
-    mca_bml_base_prepare_dst(
-        bml_btl, 
-        NULL,
-        &recvreq->req_recv.req_convertor,
-        MCA_BTL_NO_ORDER,
-        0,
-        &frag->rdma_length, 
-        &descriptor);
-    if(NULL == descriptor) {
+    mca_bml_base_prepare_dst( bml_btl, 
+                              NULL,
+                              &recvreq->req_recv.req_base.req_convertor,
+                              MCA_BTL_NO_ORDER,
+                              0,
+                              &frag->rdma_length, 
+                              &descriptor );
+    if( OPAL_UNLIKELY(NULL == descriptor) ) {
         frag->rdma_length = save_size;
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
         opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
@@ -406,13 +404,13 @@ static void mca_pml_ob1_recv_request_rget(
      * fall back to copy in/out protocol. It is a pity because buffer on the
      * sender side is already registered. We need to ne smarter here, perhaps
      * do couple of RDMA reads */
-    if(ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == true) {
+    if(ompi_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == true) {
         mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, 0);
         return;
     }
     
     MCA_PML_OB1_RDMA_FRAG_ALLOC(frag,rc);
-    if(NULL == frag) {
+    if( OPAL_UNLIKELY(NULL == frag) ) {
         /* GLB - FIX */
          ORTE_ERROR_LOG(rc);
          orte_errmgr.abort();
@@ -651,7 +649,7 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
                 prev_bytes_remaining = bytes_remaining;
             }
 
-            ompi_convertor_set_position(&recvreq->req_recv.req_convertor,
+            ompi_convertor_set_position(&recvreq->req_recv.req_base.req_convertor,
                                         &recvreq->req_rdma_offset);
 
             do {
@@ -673,9 +671,9 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
 
             /* prepare a descriptor for RDMA */
             mca_bml_base_prepare_dst(bml_btl, reg, 
-                                     &recvreq->req_recv.req_convertor,
+                                     &recvreq->req_recv.req_base.req_convertor,
                                      MCA_BTL_NO_ORDER, 0, &size, &dst);
-            if(dst == NULL) {
+            if( OPAL_UNLIKELY(dst == NULL) ) {
                 continue;
             }
 
