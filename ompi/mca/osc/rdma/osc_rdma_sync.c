@@ -229,16 +229,10 @@ ompi_osc_rdma_module_start(ompi_group_t *group,
     for (i = 0 ; i < ompi_group_size(group) ; i++) {
         int comm_rank = -1, j;
         
-        /* no need to increment ref count - the communicator isn't
-           going anywhere while we're here */
-        ompi_group_t *comm_group = module->m_comm->c_local_group;
-
         /* find the rank in the communicator associated with this windows */
-        for (j = 0 ; 
-             j < ompi_group_size(comm_group) ;
-             ++j) {
-            if (module->m_sc_group->grp_proc_pointers[i] ==
-                comm_group->grp_proc_pointers[j]) {
+        for (j = 0 ; j < ompi_comm_size(module->m_comm) ; ++j) {
+            if (ompi_group_peer_lookup(module->m_sc_group, i) ==
+                ompi_comm_peer_lookup(module->m_comm, j)) {
                 comm_rank = j;
                 break;
             }
@@ -306,7 +300,7 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
             for (j = 0 ; j < module->m_peer_info[comm_rank].peer_num_btls ; ++j) {
                 if (module->m_peer_info[comm_rank].peer_btls[j].num_sent > 0) {
                     ret = ompi_osc_rdma_rdma_ack_send(module,
-                                                      module->m_sc_group->grp_proc_pointers[i],
+                                                      ompi_group_peer_lookup(module->m_sc_group, i),
                                                       &(module->m_peer_info[comm_rank].peer_btls[j]));
                     if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
                         module->m_peer_info[comm_rank].peer_btls[j].num_sent = 0;
@@ -318,7 +312,7 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
             }
         }
         ret = ompi_osc_rdma_control_send(module, 
-                                         module->m_sc_group->grp_proc_pointers[i],
+                                         ompi_group_peer_lookup(module->m_sc_group, i),
                                          OMPI_OSC_RDMA_HDR_COMPLETE,
                                          module->m_copy_num_pending_sendreqs[comm_rank],
                                          0);
@@ -384,7 +378,7 @@ ompi_osc_rdma_module_post(ompi_group_t *group,
 
     OPAL_THREAD_LOCK(&(module->m_lock));
     assert(NULL == module->m_pw_group);
-    module->m_pw_group = group;    
+    module->m_pw_group = group;
 
     /* Set our mode to expose w/ post */
     ompi_win_remove_mode(win, OMPI_WIN_FENCE);
@@ -398,8 +392,8 @@ ompi_osc_rdma_module_post(ompi_group_t *group,
     /* send a hello counter to everyone in group */
     for (i = 0 ; i < ompi_group_size(module->m_pw_group) ; ++i) {
         ompi_osc_rdma_control_send(module, 
-                                    group->grp_proc_pointers[i],
-                                    OMPI_OSC_RDMA_HDR_POST, 1, 0);
+                                   ompi_group_peer_lookup(group, i),
+                                   OMPI_OSC_RDMA_HDR_POST, 1, 0);
     }    
 
     return OMPI_SUCCESS;
@@ -491,12 +485,12 @@ ompi_osc_rdma_module_lock(int lock_type,
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                          "%d sending lock request to %d", 
-                         module->m_comm->c_my_rank, target));
+                         ompi_comm_rank(module->m_comm), target));
     /* generate a lock request */
     ompi_osc_rdma_control_send(module, 
                                proc,
                                OMPI_OSC_RDMA_HDR_LOCK_REQ,
-                               module->m_comm->c_my_rank,
+                               ompi_comm_rank(module->m_comm),
                                lock_type);
 
     module->m_eager_send_active = false;
@@ -539,13 +533,13 @@ ompi_osc_rdma_module_unlock(int target,
     /* send the unlock request */
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                          "%d sending unlock request to %d with %d requests", 
-                         module->m_comm->c_my_rank, target,
+                         ompi_comm_rank(module->m_comm), target,
                          out_count));
     ompi_osc_rdma_control_send(module, 
-                                proc,
-                                OMPI_OSC_RDMA_HDR_UNLOCK_REQ,
-                                module->m_comm->c_my_rank,
-                                out_count);
+                               proc,
+                               OMPI_OSC_RDMA_HDR_UNLOCK_REQ,
+                               ompi_comm_rank(module->m_comm),
+                               out_count);
 
     /* try to start all the requests.  We've copied everything we
        need out of pending_sendreqs, so don't need the lock
@@ -607,7 +601,8 @@ ompi_osc_rdma_passive_lock(ompi_osc_rdma_module_t *module,
         } else {
             OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                                  "%d queuing lock request from %d (%d)", 
-                                 module->m_comm->c_my_rank, origin, lock_type));
+                                 ompi_comm_rank(module->m_comm), 
+                                 origin, lock_type));
             new_pending = OBJ_NEW(ompi_osc_rdma_pending_lock_t);
             new_pending->proc = proc;
             new_pending->lock_type = lock_type;
@@ -622,7 +617,8 @@ ompi_osc_rdma_passive_lock(ompi_osc_rdma_module_t *module,
         } else {
             OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                                  "queuing lock request from %d (%d) lock_type:%d", 
-                                 module->m_comm->c_my_rank, origin, lock_type));
+                                 ompi_comm_rank(module->m_comm), 
+                                 origin, lock_type));
             new_pending = OBJ_NEW(ompi_osc_rdma_pending_lock_t);
             new_pending->proc = proc;
             new_pending->lock_type = lock_type;
@@ -636,10 +632,10 @@ ompi_osc_rdma_passive_lock(ompi_osc_rdma_module_t *module,
     if (send_ack) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "%d sending lock ack to %d", 
-                             module->m_comm->c_my_rank, origin));
+                             ompi_comm_rank(module->m_comm), origin));
         ompi_osc_rdma_control_send(module, proc,
                                    OMPI_OSC_RDMA_HDR_LOCK_REQ,
-                                   module->m_comm->c_my_rank,
+                                   ompi_comm_rank(module->m_comm),
                                    OMPI_SUCCESS);
     }
 
@@ -741,10 +737,10 @@ ompi_osc_rdma_passive_unlock_complete(ompi_osc_rdma_module_t *module)
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "sending lock request to proc"));
         ompi_osc_rdma_control_send(module,
-                                    new_pending->proc,
-                                    OMPI_OSC_RDMA_HDR_LOCK_REQ,
-                                    module->m_comm->c_my_rank,
-                                    OMPI_SUCCESS);
+                                   new_pending->proc,
+                                   OMPI_OSC_RDMA_HDR_LOCK_REQ,
+                                   ompi_comm_rank(module->m_comm),
+                                   OMPI_SUCCESS);
         OBJ_RELEASE(new_pending);
     }
 
