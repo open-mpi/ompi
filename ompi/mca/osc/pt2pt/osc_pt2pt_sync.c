@@ -188,16 +188,10 @@ ompi_osc_pt2pt_module_start(ompi_group_t *group,
     for (i = 0 ; i < ompi_group_size(group) ; i++) {
         int comm_rank = -1, j;
         
-        /* no need to increment ref count - the communicator isn't
-           going anywhere while we're here */
-        ompi_group_t *comm_group = module->p2p_comm->c_local_group;
-
         /* find the rank in the communicator associated with this windows */
-        for (j = 0 ; 
-             j < ompi_group_size(comm_group) ;
-             ++j) {
-            if (module->p2p_sc_group->grp_proc_pointers[i] ==
-                comm_group->grp_proc_pointers[j]) {
+        for (j = 0 ; j < ompi_comm_size(module->p2p_comm) ; ++j) {
+            if (ompi_group_peer_lookup(module->p2p_sc_group, i) ==
+                ompi_comm_peer_lookup(module->p2p_comm, j)) {
                 comm_rank = j;
                 break;
             }
@@ -254,7 +248,7 @@ ompi_osc_pt2pt_module_complete(ompi_win_t *win)
     for (i = 0 ; i < ompi_group_size(module->p2p_sc_group) ; ++i) {
         int comm_rank = module->p2p_sc_remote_ranks[i];
         ret = ompi_osc_pt2pt_control_send(module, 
-                                          module->p2p_sc_group->grp_proc_pointers[i],
+                                          ompi_group_peer_lookup(module->p2p_sc_group, i),
                                           OMPI_OSC_PT2PT_HDR_COMPLETE,
                                           module->p2p_copy_num_pending_sendreqs[comm_rank],
                                           0);
@@ -327,7 +321,7 @@ ompi_osc_pt2pt_module_post(ompi_group_t *group,
     /* send a hello counter to everyone in group */
     for (i = 0 ; i < ompi_group_size(module->p2p_pw_group) ; ++i) {
         ompi_osc_pt2pt_control_send(module, 
-                                    group->grp_proc_pointers[i],
+                                    ompi_group_peer_lookup(group, i),
                                     OMPI_OSC_PT2PT_HDR_POST, 1, 0);
     }
 
@@ -420,13 +414,13 @@ ompi_osc_pt2pt_module_lock(int lock_type,
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                          "%d: sending lock request to %d", 
-                         module->p2p_comm->c_my_rank,
+                         ompi_comm_rank(module->p2p_comm),
                          target));
     /* generate a lock request */
     ompi_osc_pt2pt_control_send(module, 
                                 proc,
                                 OMPI_OSC_PT2PT_HDR_LOCK_REQ,
-                                module->p2p_comm->c_my_rank,
+                                ompi_comm_rank(module->p2p_comm),
                                 lock_type);
 
     /* return */
@@ -467,12 +461,12 @@ ompi_osc_pt2pt_module_unlock(int target,
     /* send the unlock request */
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                          "%d: sending unlock request to %d with %d requests", 
-                         module->p2p_comm->c_my_rank, target,
+                         ompi_comm_rank(module->p2p_comm), target,
                          out_count));
     ompi_osc_pt2pt_control_send(module, 
                                 proc,
                                 OMPI_OSC_PT2PT_HDR_UNLOCK_REQ,
-                                module->p2p_comm->c_my_rank,
+                                ompi_comm_rank(module->p2p_comm),
                                 out_count);
 
     while (NULL != 
@@ -499,7 +493,7 @@ ompi_osc_pt2pt_module_unlock(int target,
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                          "%d: finished unlock to %d",
-                         module->p2p_comm->c_my_rank, target));
+                         ompi_comm_rank(module->p2p_comm), target));
 
     /* set our mode on the window */
     ompi_win_remove_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_LOCK_ACCESS);
@@ -524,13 +518,13 @@ ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
             module->p2p_lock_status = MPI_LOCK_EXCLUSIVE;
             OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                                  "%d: setting lock status to EXCLUSIVE (from %d)",
-                                 module->p2p_comm->c_my_rank, origin));
+                                 ompi_comm_rank(module->p2p_comm), origin));
             ompi_win_append_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
             send_ack = true;
         } else {
             OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                                  "%d: queuing lock request from %d (type=%d)", 
-                                 module->p2p_comm->c_my_rank, origin, lock_type));
+                                 ompi_comm_rank(module->p2p_comm), origin, lock_type));
             new_pending = OBJ_NEW(ompi_osc_pt2pt_pending_lock_t);
             new_pending->proc = proc;
             new_pending->lock_type = lock_type;
@@ -542,13 +536,13 @@ ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
             module->p2p_shared_count++;
             OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                                  "%d: setting lock status to SHARED (from %d), count %d",
-                                 module->p2p_comm->c_my_rank, origin, module->p2p_shared_count));
+                                 ompi_comm_rank(module->p2p_comm), origin, module->p2p_shared_count));
             ompi_win_append_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
             send_ack = true;
         } else {
             OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                                  "%d: queuing lock request from %d (type=%d)", 
-                                 module->p2p_comm->c_my_rank, origin, lock_type));
+                                 ompi_comm_rank(module->p2p_comm), origin, lock_type));
             new_pending = OBJ_NEW(ompi_osc_pt2pt_pending_lock_t);
             new_pending->proc = proc;
             new_pending->lock_type = lock_type;
@@ -562,10 +556,10 @@ ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
     if (send_ack) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "%d: sending lock ack to %d", 
-                             module->p2p_comm->c_my_rank, origin));
+                             ompi_comm_rank(module->p2p_comm), origin));
         ompi_osc_pt2pt_control_send(module, proc,
                                     OMPI_OSC_PT2PT_HDR_LOCK_REQ,
-                                    module->p2p_comm->c_my_rank,
+                                    ompi_comm_rank(module->p2p_comm),
                                     OMPI_SUCCESS);
     }
 
@@ -585,7 +579,7 @@ ompi_osc_pt2pt_passive_unlock(ompi_osc_pt2pt_module_t *module,
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                          "%d: received unlock request from %d with %d requests\n",
-                         module->p2p_comm->c_my_rank,
+                         ompi_comm_rank(module->p2p_comm),
                          origin, count));
 
     new_pending = OBJ_NEW(ompi_osc_pt2pt_pending_lock_t);
@@ -621,7 +615,8 @@ ompi_osc_pt2pt_passive_unlock_complete(ompi_osc_pt2pt_module_t *module)
         module->p2p_shared_count -= opal_list_get_size(&module->p2p_unlocks_pending);
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "%d: decrementing shared count to %d",
-                             module->p2p_comm->c_my_rank, module->p2p_shared_count));
+                             ompi_comm_rank(module->p2p_comm), 
+                             module->p2p_shared_count));
         if (module->p2p_shared_count == 0) {
             ompi_win_remove_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
             module->p2p_lock_status = 0;
@@ -641,7 +636,7 @@ ompi_osc_pt2pt_passive_unlock_complete(ompi_osc_pt2pt_module_t *module)
                     opal_list_remove_first(&copy_unlock_acks))) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "%d: sending unlock ack to proc %d",
-                             module->p2p_comm->c_my_rank,
+                             ompi_comm_rank(module->p2p_comm),
                              new_pending->proc->proc_name.vpid));
         ompi_osc_pt2pt_control_send(module,
                                    new_pending->proc,
@@ -661,7 +656,7 @@ ompi_osc_pt2pt_passive_unlock_complete(ompi_osc_pt2pt_module_t *module)
         if (NULL != new_pending) {
             OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                                  "%d: sending lock ack to proc %d",
-                                 module->p2p_comm->c_my_rank,
+                                 ompi_comm_rank(module->p2p_comm),
                                  new_pending->proc->proc_name.vpid));
             ompi_win_append_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
             /* set lock state and generate a lock request */
@@ -679,7 +674,7 @@ ompi_osc_pt2pt_passive_unlock_complete(ompi_osc_pt2pt_module_t *module)
         ompi_osc_pt2pt_control_send(module,
                                     new_pending->proc,
                                     OMPI_OSC_PT2PT_HDR_LOCK_REQ,
-                                    module->p2p_comm->c_my_rank,
+                                    ompi_comm_rank(module->p2p_comm),
                                     OMPI_SUCCESS);
         OBJ_RELEASE(new_pending);
     }

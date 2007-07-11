@@ -90,7 +90,7 @@ ompi_osc_pt2pt_sendreq_send_long_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                          "%d completed long sendreq to %d",
-                         sendreq->req_module->p2p_comm->c_my_rank,
+                         ompi_comm_rank(sendreq->req_module->p2p_comm),
                          sendreq->req_target_rank));
 
     OPAL_THREAD_LOCK(&sendreq->req_module->p2p_lock);
@@ -189,7 +189,7 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
     header = (ompi_osc_pt2pt_send_header_t*) buffer->payload;
     written_data += sizeof(ompi_osc_pt2pt_send_header_t);
     header->hdr_base.hdr_flags = 0;
-    header->hdr_origin = sendreq->req_module->p2p_comm->c_my_rank;
+    header->hdr_origin = ompi_comm_rank(sendreq->req_module->p2p_comm);
     header->hdr_origin_sendreq.pval = (void*) sendreq;
     header->hdr_origin_tag = 0;
     header->hdr_target_disp = sendreq->req_target_disp;
@@ -267,7 +267,7 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
     /* send fragment */
     OPAL_OUTPUT_VERBOSE((51, ompi_osc_base_output,
                          "%d sending sendreq to %d",
-                         sendreq->req_module->p2p_comm->c_my_rank,
+                         ompi_comm_rank(sendreq->req_module->p2p_comm),
                          sendreq->req_target_rank));
 
     ret = MCA_PML_CALL(isend(buffer->payload,
@@ -292,7 +292,7 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
         longreq->mpireq.cbdata = sendreq;
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "%d starting long sendreq to %d (%d)",
-                             sendreq->req_module->p2p_comm->c_my_rank,
+                             ompi_comm_rank(sendreq->req_module->p2p_comm),
                              sendreq->req_target_rank,
                              header->hdr_origin_tag));
 
@@ -620,7 +620,7 @@ ompi_osc_pt2pt_sendreq_recv_accum_long_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
     
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                          "%d finished receiving long accum message from %d",
-                         longreq->req_module->p2p_comm->c_my_rank, 
+                         ompi_comm_rank(longreq->req_module->p2p_comm),
                          header->hdr_origin));
 
     /* free the temp buffer */
@@ -672,7 +672,7 @@ ompi_osc_pt2pt_sendreq_recv_accum(ompi_osc_pt2pt_module_t *module,
 
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "%d received accum message from %d",
-                             module->p2p_comm->c_my_rank,
+                             ompi_comm_rank(module->p2p_comm),
                              header->hdr_origin));
     } else {
         ompi_osc_pt2pt_longreq_t *longreq;
@@ -711,7 +711,7 @@ ompi_osc_pt2pt_sendreq_recv_accum(ompi_osc_pt2pt_module_t *module,
 
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "%d started long recv accum message from %d (%d)",
-                             module->p2p_comm->c_my_rank,
+                             ompi_comm_rank(module->p2p_comm),
                              header->hdr_origin,
                              header->hdr_origin_tag));
 
@@ -838,8 +838,8 @@ ompi_osc_pt2pt_control_send(ompi_osc_pt2pt_module_t *module,
     int rank = -1, i;
 
     /* find the rank */
-    for (i = 0 ; i < module->p2p_comm->c_remote_group->grp_proc_count ; ++i) {
-        if (proc == module->p2p_comm->c_remote_group->grp_proc_pointers[i]) {
+    for (i = 0 ; i < ompi_comm_size(module->p2p_comm) ; ++i) {
+        if (proc == ompi_comm_peer_lookup(module->p2p_comm, i)) {
             rank = i;
         }
     }

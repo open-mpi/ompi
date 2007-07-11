@@ -288,7 +288,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
 
     opal_output_verbose(1, ompi_osc_base_output,
                         "pt2pt component creating window with id %d",
-                        module->p2p_comm->c_contextid);
+                        ompi_comm_get_cid(module->p2p_comm));
 
     module->p2p_num_pending_sendreqs = (unsigned int*)
         malloc(sizeof(unsigned int) * ompi_comm_size(module->p2p_comm));
@@ -350,7 +350,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     /* update component data */
     OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
     opal_hash_table_set_value_uint32(&mca_osc_pt2pt_component.p2p_c_modules,
-                                     module->p2p_comm->c_contextid,
+                                     ompi_comm_get_cid(module->p2p_comm),
                                      module);
     ret = opal_hash_table_get_size(&mca_osc_pt2pt_component.p2p_c_modules);
     if (ret == 1) {

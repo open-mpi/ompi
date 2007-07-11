@@ -324,7 +324,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
 
     opal_output_verbose(1, ompi_osc_base_output,
                         "rdma component creating window with id %d",
-                        module->m_comm->c_contextid);
+                        ompi_comm_get_cid(module->m_comm));
 
     module->m_num_pending_sendreqs = (unsigned int*)
         malloc(sizeof(unsigned int) * ompi_comm_size(module->m_comm));
@@ -404,7 +404,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     /* update component data */
     OPAL_THREAD_LOCK(&mca_osc_rdma_component.c_lock);
     opal_hash_table_set_value_uint32(&mca_osc_rdma_component.c_modules,
-                                     module->m_comm->c_contextid,
+                                     ompi_comm_get_cid(module->m_comm),
                                      module);
     ret = opal_hash_table_get_size(&mca_osc_rdma_component.c_modules);
     if (ret == 1) {
@@ -453,7 +453,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     if (OMPI_SUCCESS != ret) goto cleanup;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
-                         "done creating window %d", module->m_comm->c_contextid));
+                         "done creating window %d", ompi_comm_get_cid(module->m_comm)));
 
     return OMPI_SUCCESS;
 
@@ -1061,7 +1061,7 @@ rdma_send_info_send(ompi_osc_rdma_module_t *module,
     header->hdr_base.hdr_flags = 0;
     header->hdr_segkey = peer_send_info->seg_key;
     header->hdr_origin = ompi_comm_rank(module->m_comm);
-    header->hdr_windx = module->m_comm->c_contextid;
+    header->hdr_windx = ompi_comm_get_cid(module->m_comm);
 
 #ifdef WORDS_BIGENDIAN
     header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;

@@ -38,7 +38,7 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
 
     opal_output_verbose(1, ompi_osc_base_output,
                         "pt2pt component destroying window with id %d",
-                        module->p2p_comm->c_contextid);
+                        ompi_comm_get_cid(module->p2p_comm));
 
     /* finish with a barrier */
     if (ompi_group_size(win->w_group) > 1) {
@@ -48,7 +48,7 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
     /* remove from component information */
     OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
     tmp = opal_hash_table_remove_value_uint32(&mca_osc_pt2pt_component.p2p_c_modules,
-                                              module->p2p_comm->c_contextid);
+                                              ompi_comm_get_cid(module->p2p_comm));
     /* only take the output of hast_table_remove if there wasn't already an error */
     ret = (ret != OMPI_SUCCESS) ? ret : tmp;
 
