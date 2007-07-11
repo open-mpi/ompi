@@ -57,8 +57,7 @@ mca_pml_cm_enable(bool enable)
     /* BWB - FIX ME - need to have this actually do something,
        maybe? */
     ompi_free_list_init(&mca_pml_base_send_requests,
-                        MAX(sizeof(mca_pml_cm_thin_send_request_t),
-                            sizeof(mca_pml_cm_hvy_send_request_t)) + ompi_mtl->mtl_request_size,
+                        sizeof(mca_pml_cm_hvy_send_request_t) + ompi_mtl->mtl_request_size,
                         OBJ_CLASS(mca_pml_cm_hvy_send_request_t),
                         ompi_pml_cm.free_list_num,
                         ompi_pml_cm.free_list_max,
@@ -66,8 +65,7 @@ mca_pml_cm_enable(bool enable)
                         NULL);
 
     ompi_free_list_init(&mca_pml_base_send_requests,
-                        MAX(sizeof(mca_pml_cm_thin_recv_request_t),
-                            sizeof(mca_pml_cm_hvy_recv_request_t)) + ompi_mtl->mtl_request_size,
+                        sizeof(mca_pml_cm_hvy_recv_request_t) + ompi_mtl->mtl_request_size,
                         OBJ_CLASS(mca_pml_cm_hvy_recv_request_t),
                         ompi_pml_cm.free_list_num,
                         ompi_pml_cm.free_list_max,
