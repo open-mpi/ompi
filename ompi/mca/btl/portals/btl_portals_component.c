@@ -135,7 +135,9 @@ mca_btl_portals_component_open(void)
     mca_btl_portals_module.super.btl_rdma_pipeline_send_length = 64 * 1024;
     mca_btl_portals_module.super.btl_rdma_pipeline_frag_size = INT_MAX;
     mca_btl_portals_module.super.btl_min_rdma_pipeline_size = 0;
-    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_RDMA;
+    mca_btl_portals_module.super.btl_flags = 
+        MCA_BTL_FLAGS_RDMA |
+        MCA_BTL_FLAGS_RDMA_MATCHED;
     mca_btl_portals_module.super.btl_bandwidth = 1000;
     mca_btl_portals_module.super.btl_latency = 0;
 
