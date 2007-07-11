@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,9 +80,9 @@ mca_btl_tcp_component_t mca_btl_tcp_component = {
             MCA_BTL_BASE_VERSION_1_0_1,
 
             "tcp", /* MCA component name */
-            1,  /* MCA component major version */
-            0,  /* MCA component minor version */
-            0,  /* MCA component release version */
+            OMPI_MAJOR_VERSION,  /* MCA component major version */
+            OMPI_MINOR_VERSION,  /* MCA component minor version */
+            OMPI_RELEASE_VERSION,  /* MCA component release version */
             mca_btl_tcp_component_open,  /* component open */
             mca_btl_tcp_component_close  /* component close */
         },
