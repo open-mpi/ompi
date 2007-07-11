@@ -118,11 +118,6 @@ orte_odls_base_module_t *orte_odls_bproc_init(int *priority)
         return NULL;
     }
 
-    /* only launch if we are not the master node */
-    if (bproc_currnode() == BPROC_NODE_MASTER) {
-        return NULL;
-    }
-
     *priority = mca_odls_bproc_component.priority;
     return &orte_odls_bproc_module;
 }
