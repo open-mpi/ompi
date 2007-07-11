@@ -92,25 +92,6 @@ typedef struct mca_pml_dr_t mca_pml_dr_t;
 
 extern mca_pml_dr_t mca_pml_dr;
 
-
-/*
- * PML module functions.
- */
-
-
-extern int mca_pml_dr_component_open(void);
-extern int mca_pml_dr_component_close(void);
-
-extern mca_pml_base_module_t* mca_pml_dr_component_init(
-    int *priority, 
-    bool enable_progress_threads,
-    bool enable_mpi_threads
-);
-
-extern int mca_pml_dr_component_fini(void);
-
-
-
 /*
  * PML interface functions.
  */

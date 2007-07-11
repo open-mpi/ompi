@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -28,50 +28,55 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 
-extern bool already_opened;
+extern int already_opened;
 
 int mca_btl_base_close(void)
 {
-  opal_list_item_t *item;
-  mca_btl_base_selected_module_t *sm;
+    opal_list_item_t *item;
+    mca_btl_base_selected_module_t *sm;
 
-  /* disable event processing while cleaning up btls */
-  opal_event_disable();
+    if( already_opened <= 0 ) {
+        return OMPI_ERROR;
+    } else {
+        if( --already_opened > 0 ) {
+            return OMPI_SUCCESS;
+        }
+    }
+    /* disable event processing while cleaning up btls */
+    opal_event_disable();
 
-  /* Finalize all the btl components and free their list items */
+    /* Finalize all the btl components and free their list items */
 
-  for (item = opal_list_remove_first(&mca_btl_base_modules_initialized);
-       NULL != item; 
-       item = opal_list_remove_first(&mca_btl_base_modules_initialized)) {
-    sm = (mca_btl_base_selected_module_t *) item;
+    for (item = opal_list_remove_first(&mca_btl_base_modules_initialized);
+         NULL != item; 
+         item = opal_list_remove_first(&mca_btl_base_modules_initialized)) {
+        sm = (mca_btl_base_selected_module_t *) item;
 
-    /* Blatebtly ignore the return code (what would we do to recover,
-       anyway?  This component is going away, so errors don't matter
-       anymore) */
+        /* Blatebtly ignore the return code (what would we do to recover,
+           anyway?  This component is going away, so errors don't matter
+           anymore) */
 
-    sm->btl_module->btl_finalize(sm->btl_module);
-    free(sm);
-  }
+        sm->btl_module->btl_finalize(sm->btl_module);
+        free(sm);
+    }
 
-  /* Close all remaining opened components (may be one if this is a
-     OMPI RTE program, or [possibly] multiple if this is ompi_info) */
+    /* Close all remaining opened components (may be one if this is a
+       OMPI RTE program, or [possibly] multiple if this is ompi_info) */
   
-  if (0 != opal_list_get_size(&mca_btl_base_components_opened)) {
-      mca_base_components_close(mca_btl_base_output, 
-                                &mca_btl_base_components_opened, NULL);
-  }
+    if (0 != opal_list_get_size(&mca_btl_base_components_opened)) {
+        mca_base_components_close(mca_btl_base_output, 
+                                  &mca_btl_base_components_opened, NULL);
+    }
 
-  /* cleanup */
-  if(NULL != mca_btl_base_include)
-     free(mca_btl_base_include);
-  if(NULL != mca_btl_base_exclude)
-     free(mca_btl_base_exclude);
+    /* cleanup */
+    if(NULL != mca_btl_base_include)
+        free(mca_btl_base_include);
+    if(NULL != mca_btl_base_exclude)
+        free(mca_btl_base_exclude);
 
-  /* restore event processing */
-  opal_event_enable();
+    /* restore event processing */
+    opal_event_enable();
 
-  already_opened = false;
-
-  /* All done */
-  return OMPI_SUCCESS;
+    /* All done */
+    return OMPI_SUCCESS;
 }

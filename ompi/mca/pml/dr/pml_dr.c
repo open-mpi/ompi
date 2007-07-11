@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -273,21 +273,6 @@ int mca_pml_dr_del_procs(ompi_proc_t** procs, size_t nprocs)
     }
 
     return mca_bml.bml_del_procs(nprocs, procs);
-}
-
-int mca_pml_dr_component_fini(void)
-{
-    if(!mca_pml_dr.enabled)
-        return OMPI_SUCCESS; /* never selected.. return success.. */  
-    mca_pml_dr.enabled = false;  /* not anymore */
-
-    OBJ_DESTRUCT(&mca_pml_dr.send_pending);
-    OBJ_DESTRUCT(&mca_pml_dr.send_active);
-    OBJ_DESTRUCT(&mca_pml_dr.acks_pending);
-    OBJ_DESTRUCT(&mca_pml_dr.recv_frags);
-    OBJ_DESTRUCT(&mca_pml_dr.buffers);
-
-    return OMPI_SUCCESS;
 }
 
 int mca_pml_dr_dump(
