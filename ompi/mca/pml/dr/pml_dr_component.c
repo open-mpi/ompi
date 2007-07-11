@@ -34,6 +34,14 @@
 #include "ompi/mca/bml/base/base.h" 
 #include "pml_dr_component.h"
 
+static int mca_pml_dr_component_open(void);
+static int mca_pml_dr_component_close(void);
+static mca_pml_base_module_t*
+mca_pml_dr_component_init( int* priority, 
+                           bool enable_progress_threads,
+                           bool enable_mpi_threads );
+static int mca_pml_dr_component_fini(void);
+
 mca_pml_base_component_1_0_0_t mca_pml_dr_component = {
 
     /* First, the mca_base_component_t struct containing meta
@@ -65,17 +73,15 @@ mca_pml_base_component_1_0_0_t mca_pml_dr_component = {
 };
 
 
-
-static inline int mca_pml_dr_param_register_int(
-    const char* param_name,
-    int default_value)
+static inline int
+mca_pml_dr_param_register_int( const char* param_name,
+                               int default_value )
 {
     int id = mca_base_param_register_int("pml","dr",param_name,NULL,default_value);
     int param_value = default_value;
     mca_base_param_lookup_int(id,&param_value);
     return param_value;
 }
-                                                                                                                        
 
 int mca_pml_dr_component_open(void)
 {
@@ -117,7 +123,6 @@ int mca_pml_dr_component_open(void)
     return mca_bml_base_open();
 }
 
-
 int mca_pml_dr_component_close(void)
 {
     int rc;
@@ -127,7 +132,6 @@ int mca_pml_dr_component_close(void)
 
     return OMPI_SUCCESS;
 }
-
 
 mca_pml_base_module_t* mca_pml_dr_component_init(int* priority, 
                                                   bool enable_progress_threads,
@@ -154,5 +158,26 @@ mca_pml_base_module_t* mca_pml_dr_component_init(int* priority,
     mca_pml_dr.super.pml_progress = mca_bml.bml_progress;
 
     return &mca_pml_dr.super;
+}
+
+int mca_pml_dr_component_fini(void)
+{
+    int rc;
+
+    /* Shutdown BML */
+    if(OMPI_SUCCESS != (rc = mca_bml.bml_finalize()))
+        return rc;
+
+    if(!mca_pml_dr.enabled)
+        return OMPI_SUCCESS; /* never selected.. return success.. */  
+    mca_pml_dr.enabled = false;  /* not anymore */
+
+    OBJ_DESTRUCT(&mca_pml_dr.send_pending);
+    OBJ_DESTRUCT(&mca_pml_dr.send_active);
+    OBJ_DESTRUCT(&mca_pml_dr.acks_pending);
+    OBJ_DESTRUCT(&mca_pml_dr.recv_frags);
+    OBJ_DESTRUCT(&mca_pml_dr.buffers);
+
+    return OMPI_SUCCESS;
 }
 
