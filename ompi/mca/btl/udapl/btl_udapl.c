@@ -151,8 +151,10 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
 
         dat_strerror(rc, (const char**)&major,
             (const char**)&minor);
-        BTL_ERROR(("ERROR: %s %s %s\n", "dat_ia_open",
-            major, minor));
+
+        opal_show_help("help-mpi-btl-udapl.txt",
+            "dat_ia_open fail", true, ia_name, major, minor);
+
         return OMPI_ERROR;
     }
 

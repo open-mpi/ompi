@@ -87,3 +87,11 @@ program fails.
 WARNING: The uDAPL BTL is not able to register memory. Possibly out of
 allowed privileged memory (i.e. memory that can be pinned). Increasing
 the allowed privileged memory may alleviate this issue.
+
+[dat_ia_open fail]
+
+WARNING: Failed to open "%s" [%s:%s]. 
+This may be a real error or it may be an invalid entry in the uDAPL
+Registry which is contained in the dat.conf file. Contact your local
+System Administrator to confirm the availability of the interfaces in
+the dat.conf file.
