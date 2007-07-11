@@ -145,23 +145,27 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_TAG_MAX      255 /* 1 + highest allowed tag num */
 
 /* prefered protocol */
-#define MCA_BTL_FLAGS_SEND  0x1
-#define MCA_BTL_FLAGS_PUT   0x2
-#define MCA_BTL_FLAGS_GET   0x4
+#define MCA_BTL_FLAGS_SEND            0x0001
+#define MCA_BTL_FLAGS_PUT             0x0002
+#define MCA_BTL_FLAGS_GET             0x0004
 #define MCA_BTL_FLAGS_RDMA (MCA_BTL_FLAGS_GET|MCA_BTL_FLAGS_PUT)
 
 /* btl can send directly from user buffer w/out registration */
-#define MCA_BTL_FLAGS_SEND_INPLACE  0x8
+#define MCA_BTL_FLAGS_SEND_INPLACE    0x0008
 
 /* btl transport is reliable */
-#define MCA_BTL_FLAGS_NEED_ACK 0x10
-#define MCA_BTL_FLAGS_NEED_CSUM 0x20
+#define MCA_BTL_FLAGS_NEED_ACK        0x0010
+#define MCA_BTL_FLAGS_NEED_CSUM       0x0020
+
+/** RDMA put/get calls must have a matching prepare_{src,dst} call
+    on the target with the same base (and possibly bound). */
+#define MCA_BTL_FLAGS_RDMA_MATCHED    0x0040
 
 /* btl needs local rdma completion */
-#define MCA_BTL_FLAGS_RDMA_COMPLETION 0x80
+#define MCA_BTL_FLAGS_RDMA_COMPLETION 0x0080
 
 /* Default exclusivity levels */
-#define MCA_BTL_EXCLUSIVITY_HIGH     64*1024   /* internal loopback */
+#define MCA_BTL_EXCLUSIVITY_HIGH     (64*1024) /* internal loopback */
 #define MCA_BTL_EXCLUSIVITY_DEFAULT  1024      /* GM/IB/etc. */
 #define MCA_BTL_EXCLUSIVITY_LOW      0         /* TCP used as a last resort */
 

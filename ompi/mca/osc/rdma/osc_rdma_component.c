@@ -876,6 +876,13 @@ component_fragment_cb(struct mca_btl_base_module_t *btl,
                                 "received rdma info for unknown btl from rank %d",
                                 origin);
                     return;
+                } else {
+                    OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_output,
+                                         "received rdma info from rank %d for BTL %s",
+                                         origin,
+                                         bml_btl->btl->
+                                         btl_component->btl_version.
+                                         mca_component_name));
                 }
 
                 OPAL_THREAD_LOCK(&module->m_lock);
@@ -1089,8 +1096,9 @@ rdma_send_info_send(ompi_osc_rdma_module_t *module,
 static bool
 is_valid_rdma(mca_bml_base_btl_t *bml_btl)
 {
-    if (((bml_btl->btl_flags & MCA_BTL_FLAGS_PUT) != 0) &&
-        ((bml_btl->btl_flags & MCA_BTL_FLAGS_GET) != 0)) {
+    if ((bml_btl->btl->btl_put != NULL) &&
+        (bml_btl->btl->btl_get != NULL) &&
+        ((bml_btl->btl_flags & MCA_BTL_FLAGS_RDMA_MATCHED) == 0)) {
         return true;
     }
 
