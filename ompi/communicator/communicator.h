@@ -235,6 +235,15 @@ struct ompi_communicator_t {
         return (comm->c_flags & OMPI_COMM_INTER ? comm->c_remote_group->grp_proc_count : 0);
     }
 
+    /** 
+     * Context ID for the communicator, suitable for passing to
+     * ompi_comm_lookup for getting the communicator back 
+     */
+    static inline uint32_t ompi_comm_get_cid(ompi_communicator_t* comm) 
+    {
+        return comm->c_contextid;
+    }
+
     /* return pointer to communicator associated with context id cid,
      * No error checking is done*/
     static inline ompi_communicator_t *ompi_comm_lookup(uint32_t cid)
