@@ -2,6 +2,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Sun Microsystem, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,7 +40,7 @@ opal_install_dirs_expand(const char* input)
 {
     size_t len, i;
     bool needs_expand = false;
-    char *retval = strdup(input);
+    char *retval = NULL;
     char *destdir = getenv("OPAL_DESTDIR");
     size_t destdir_offset = 0;
 
