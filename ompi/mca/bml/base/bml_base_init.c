@@ -96,6 +96,4 @@ int mca_bml_base_init( bool enable_progress_threads,
                                          &mca_bml_base_components_available, 
                                          (mca_base_component_t*) best_component); 
     }
-
-
 }

@@ -329,7 +329,7 @@ static inline void mca_bml_base_prepare_src(mca_bml_base_btl_t* bml_btl,
                                    reserve,
                                    size
                                    );
-    if((*des) != NULL) { 
+    if( OPAL_LIKELY((*des) != NULL) ) { 
         (*des)->des_context = (void*) bml_btl;
     }
 }
@@ -350,7 +350,7 @@ static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl,
                                    reserve,
                                    size
                                    );
-    if((*des) != NULL) { 
+    if( OPAL_LIKELY((*des) != NULL) ) { 
         (*des)->des_context = (void*) bml_btl;  
     }
 }
@@ -370,7 +370,7 @@ static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl,
         } else {                                                        \
             des = bml_btl->btl_alloc(bml_btl->btl, order, alloc_size);  \
         }                                                               \
-        if(des != NULL) {                                               \
+        if( OPAL_LIKELY(des != NULL) ) {                                \
             des->des_src->seg_len = seg_size;                           \
             des->des_context = (void*) bml_btl;                         \
         }                                                               \
@@ -385,7 +385,7 @@ static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl,
         } else {                                                        \
             des = bml_btl->btl_alloc(bml_btl->btl, order, alloc_size);  \
         }                                                               \
-        if(des != NULL) {                                               \
+        if( OPAL_LIKELY(des != NULL) ) {                                \
             des->des_src->seg_len = seg_size;                           \
             des->des_context = (void*) bml_btl;                         \
         }                                                               \
