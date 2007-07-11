@@ -64,7 +64,7 @@ mca_pml_cm_enable(bool enable)
                         ompi_pml_cm.free_list_inc,
                         NULL);
 
-    ompi_free_list_init(&mca_pml_base_send_requests,
+    ompi_free_list_init(&mca_pml_base_recv_requests,
                         sizeof(mca_pml_cm_hvy_recv_request_t) + ompi_mtl->mtl_request_size,
                         OBJ_CLASS(mca_pml_cm_hvy_recv_request_t),
                         ompi_pml_cm.free_list_num,
