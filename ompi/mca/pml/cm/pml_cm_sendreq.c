@@ -51,7 +51,7 @@ mca_pml_cm_send_request_free(struct ompi_request_t** request)
     return OMPI_SUCCESS;
 }
 
-static void
+void
 mca_pml_cm_send_request_completion(struct mca_mtl_request_t *mtl_request)
 {
     mca_pml_cm_send_request_t *base_request = 
@@ -66,8 +66,6 @@ mca_pml_cm_send_request_completion(struct mca_mtl_request_t *mtl_request)
 static void mca_pml_cm_send_request_construct(mca_pml_cm_hvy_send_request_t* sendreq)
 {
     /* no need to reinit for every send -- never changes */
-    sendreq->req_mtl.ompi_req = (ompi_request_t*) sendreq;
-    sendreq->req_mtl.completion_callback = mca_pml_cm_send_request_completion;
     sendreq->req_send.req_base.req_ompi.req_free = mca_pml_cm_send_request_free;
     sendreq->req_send.req_base.req_ompi.req_cancel = mca_pml_cm_cancel;
 }
