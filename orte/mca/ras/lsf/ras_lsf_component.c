@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,6 +18,9 @@
  */
 
 #include "orte_config.h"
+
+#include <lsf/lsbatch.h>
+
 #include "orte/orte_constants.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -93,7 +97,7 @@ static orte_ras_base_module_t *orte_ras_lsf_init(int* priority)
     }
     
     /* check if lsf is running here */
-    if (lsb_init() < 0) {
+    if (lsb_init("ORTE launcher") < 0) {
         /* nope, not here */
         return NULL;
     }
