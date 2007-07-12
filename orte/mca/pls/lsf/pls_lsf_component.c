@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,6 +24,8 @@
  */
 
 #include "orte_config.h"
+
+#include <lsf/lsbatch.h>
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
@@ -135,7 +137,7 @@ static orte_pls_base_module_t *pls_lsf_init(int *priority)
     }
     
     /* check if lsf is running here */
-    if (lsb_init() < 0) {
+    if (lsb_init("ORTE launcher") < 0) {
         /* nope, not here */
         opal_output_verbose(10, orte_pls_base.pls_output,
                             "pls:lsf: NOT available for selection");
