@@ -734,7 +734,7 @@ OMPI_CHECK_FUNC_LIB([dirname], [gen])
 # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
 OMPI_CHECK_FUNC_LIB([ceil], [m])
 
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve pipe ptsname setsid mmap mallopt tcgetpgrp posix_memalign strsignal sysconf syslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s _strdup usleep])
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve pipe ptsname setsid mmap mallopt tcgetpgrp posix_memalign strsignal sysconf syslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s _strdup usleep mkfifo])
 
 #
 # Make sure we can copy va_lists (need check declared, not linkable)
