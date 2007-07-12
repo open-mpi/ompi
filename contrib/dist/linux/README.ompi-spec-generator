@@ -1,18 +1,21 @@
 Open MPI specfile generator
 ===========================
 
-The Open MPI specfile generator is a tool that scans the Open MPI source
-tree for package description files. Based on this file a specfile will be generated 
-which will produce a RPM for each specified package (if the corresponding files have 
-been created). All files that are not specified to belong to a package will be put in 
-the base package.
+The Open MPI specfile generator is a tool that scans the Open MPI
+source tree for package description files. Based on this file a
+specfile will be generated which will produce a RPM for each specified
+package (if the corresponding files have been created). All files that
+are not specified to belong to a package will be put in the base
+package.
 
-The produced specfile is able to detect at build time if a package RPM should be build
-or not (e.g. if the gm component hasn't been build the gm package section will be skipped).
-This approach allows to have one big specfile for all possible build systems.
-The specfile also dynamically extracts the version information for each package at build
-time. This is necessary because a static approach would require to know the exact low level
-library version we want to use for this package. 
+The produced specfile is able to detect at build time if a package RPM
+should be build or not (e.g. if the gm component hasn't been build the
+gm package section will be skipped).  This approach allows to have one
+big specfile for all possible build systems.  The specfile also
+dynamically extracts the version information for each package at build
+time. This is necessary because a static approach would require to
+know the exact low level library version we want to use for this
+package.
 
 -- Naming Convention
 The base RPM will have the following naming convention:
@@ -20,7 +23,8 @@ The base RPM will have the following naming convention:
 <OMPI_NAME>-<OMPI_VERSION>-<OMPI_RELEASE>.<ARCH>.rpm
 e.g. openmpi-1.2a1r10877M-1.x86_64.rpm
 
-Each RPM that is build based in a package description will have the following format:
+Each RPM that is build based in a package description will have the
+following format:
 
 <OMPI_NAME>-<TYPE>-<PACKAGE_NAME>-<OMPI_VERSIO><PACKAGE_NAME>_<PACKAGE_VERSION>-<OMPI_RELEASE>.<ARCH>.rpm
 e.g. openmpi-btl-mvapi-1.2a1r10877Mmvapi_4.1.0-1.x86_64.rpm
@@ -28,8 +32,9 @@ e.g. openmpi-btl-mvapi-1.2a1r10877Mmvapi_4.1.0-1.x86_64.rpm
 
 Package Description File 
 ========================
-Package description files a simple INI files with the suffix ".package" instead of
-".ini". Here is an example of a descriptor file :
+
+Package description files a simple INI files with the suffix
+".package" instead of ".ini". Here is an example of a descriptor file:
 
 > cat mvapi.package
 [mvapi]
@@ -62,22 +67,27 @@ The license of the RPM. (default : BSD)
 The group where this package belongs to. (default = Development/Libraries)
 
 -- version 
-The version field specifies a command that is executed during the RPM build process to obtain 
-the version number of the package. This command is executed after the source code has been configured,
-compiled and installed. The %{ompi_compile_root} specifies the top level directory of the source tree.
+The version field specifies a command that is executed during the RPM
+build process to obtain the version number of the package. This
+command is executed after the source code has been configured,
+compiled and installed. The %{ompi_compile_root} specifies the top
+level directory of the source tree.
 
 -- files
-List of files that should be part of the package. The %{_prefix} can be used to identify the prefix
-where Open MPI will be installed. If at least on of the specified files exists the package will be build.
+List of files that should be part of the package. The %{_prefix} can
+be used to identify the prefix where Open MPI will be installed. If at
+least on of the specified files exists the package will be build.
 
 -- vendor
 The vendor field of RPM. (default = Open MPI)
 
 -- requires
-Additional dependencies for this package. The specfile generator will automatically add a default dependency
-for the Open MPI base RPM.
+Additional dependencies for this package. The specfile generator will
+automatically add a default dependency for the Open MPI base RPM.
 
-If the Open MPI specfile generator should find multiple definitions of the same package then the "files" 
-information will be merged and all the other fields will be overwritten by the latest information. This
-allows a decentralized package description (e.g. mvapi BTL + mvapi MPOOL).
+If the Open MPI specfile generator should find multiple definitions of
+the same package then the "files" information will be merged and all
+the other fields will be overwritten by the latest information. This
+allows a decentralized package description (e.g. mvapi BTL + mvapi
+MPOOL).
 
