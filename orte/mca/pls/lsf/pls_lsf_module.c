@@ -50,6 +50,9 @@
 #include <fcntl.h>
 #endif
 
+#define SR1_PJOBS
+#include <lsf/lsbatch.h>
+
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
