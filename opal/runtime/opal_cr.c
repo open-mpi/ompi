@@ -595,6 +595,9 @@ static int cr_notify_reopen_files(int *prog_read_fd, int *prog_write_fd)
 {
     int ret = OPAL_ERR_NOT_IMPLEMENTED;
 
+#ifndef HAVE_MKFIFO
+    return ret;
+#else
 #ifdef __WINDOWS__
     return ret;
 #else
@@ -650,6 +653,7 @@ static int cr_notify_reopen_files(int *prog_read_fd, int *prog_write_fd)
     
     return OPAL_SUCCESS;
 #endif  /* __WINDOWS__ */
+#endif  /* HAVE_MKFIFO */
 }
 
 /*
