@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,6 +22,9 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+
+#define SR1_PJOBS
+#include <lsf/lsbatch.h>
 
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
