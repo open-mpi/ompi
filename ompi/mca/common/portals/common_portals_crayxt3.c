@@ -92,24 +92,23 @@ ompi_common_portals_get_procs(size_t nprocs,
     int i;
 
     /*
-     * FIXME - XXX - FIXME 
-     * BWB - implicit assumption that cnos procs list will match our
-     *       procs list.  Don't know what to do about that...
+     * assumption that the vpid of the process name is the rank in the
+     * nidpid map.  THis will not be true if someone changes the sds
+     * component...
      */
     nptl_procs = cnos_get_nidpid_map(&map);
     if (nptl_procs <= 0) {
         opal_output(0, "%5d: cnos_get_nidpid_map() returned %d", 
                     cnos_get_rank(), nptl_procs);
         return OMPI_ERR_FATAL;
-    } else if (nptl_procs != nprocs) {
-        opal_output(0, "%5d: nptl_procs != nprocs (%d, %d)", nptl_procs,
-                    cnos_get_rank(), nprocs);
-        return OMPI_ERR_FATAL;
     }
 
     for (i = 0 ; i < nprocs ; ++i) {
-	portals_procs[i].nid = map[i].nid;
-	portals_procs[i].pid = map[i].pid;
+        size_t idx = (size_t) procs[i]->proc_name.vpid;
+        if (idx >= nptl_procs) return OMPI_ERR_NOT_FOUND;
+
+	portals_procs[i].nid = map[idx].nid;
+	portals_procs[i].pid = map[idx].pid;
     }
 
     return OMPI_SUCCESS;
