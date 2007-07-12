@@ -180,6 +180,11 @@
 %define _includedir /opt/%{name}/%{version}/include
 %define _mandir /opt/%{name}/%{version}/man
 %define _pkgdatadir /opt/%{name}/%{version}/share/%{name}
+# Per advice from Doug Ledford at Red Hat, docdir is supposed to be in
+# a fixed location.  But if you're installing a package in /opt, all
+# bets are off.  So feel free to install it anywhere in your tree.  He
+# suggests $prefix/doc.
+%define _defaultdocdir /opt/%{name}/%{version}/doc
 %endif
 
 %if !%{build_debuginfo_rpm}
@@ -682,6 +687,11 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Thu Jul 12 2007 Jeff Squyres <jsquyres@cisco.com>
+- Change default doc location when using install_in_opt.  Thanks to
+  Alex Tumanov for pointing this out and to Doug Ledford for
+  suggestions where to put docdir in this case.
+
 * Thu May  3 2007 Jeff Squyres <jsquyres@cisco.com>
 - Ensure to move out of $RPM_BUILD_ROOT before deleting it in % clean.
 - Remove a debugging "echo" that somehow got left in there
