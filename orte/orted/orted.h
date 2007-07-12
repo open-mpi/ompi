@@ -20,37 +20,24 @@
 #define ORTED_H
 
 #include "orte_config.h"
-#include "orte/orte_types.h"
 
-#include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
-#
+#include "orte/dss/dss_types.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/rml/rml_types.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
-typedef struct {
-    bool help;
-    bool no_daemonize;
-    bool debug;
-    bool debug_daemons;
-    bool debug_daemons_file;
-    bool set_sid;
-    char* ns_nds;
-    char* name;
-    char* vpid_start;
-    char* num_procs;
-    char* universe;
-    char **saved_environ;
-    int uri_pipe;
-    opal_mutex_t mutex;
-    opal_condition_t condition;
-    bool exit_condition;
-    bool spin;
-} orted_globals_t;
+/* main orted routine */
+int orte_daemon(int argc, char *argv[]);
 
-ORTE_DECLSPEC extern orted_globals_t orted_globals;
-
+/* setup routine - needed to instantiate the orted globals in libopenrte. To
+ * make it at least be useful, will also start the necessary communication
+ * receive calls for daemon comm
+ */
+int orte_daemon_setup(void);
+    
 /* orted communication functions */
 void orte_daemon_recv(int status, orte_process_name_t* sender,
                       orte_buffer_t *buffer, orte_rml_tag_t tag,
@@ -64,7 +51,7 @@ void orte_daemon_recv_gate(int status, orte_process_name_t* sender,
                            orte_buffer_t *buffer, orte_rml_tag_t tag,
                            void* cbdata);
 
-
+    
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

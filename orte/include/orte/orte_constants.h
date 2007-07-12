@@ -103,7 +103,9 @@ enum {
     ORTE_ERR_EXE_NOT_FOUND                  = (ORTE_ERR_BASE - 35),
     ORTE_ERR_PIPE_READ_FAILURE              = (ORTE_ERR_BASE - 36),
     ORTE_ERR_EXE_NOT_ACCESSIBLE             = (ORTE_ERR_BASE - 37),
-    ORTE_ERR_FAILED_TO_START                = (ORTE_ERR_BASE - 38)
+    ORTE_ERR_FAILED_TO_START                = (ORTE_ERR_BASE - 38),
+    ORTE_ERR_FILE_NOT_EXECUTABLE            = (ORTE_ERR_BASE - 39),
+    ORTE_ERR_HNP_COULD_NOT_START            = (ORTE_ERR_BASE - 40)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)

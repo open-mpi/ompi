@@ -591,15 +591,6 @@ static int orte_rmgr_urm_spawn_job(
     }
 #endif
 
-     /* setup the orted's stage gate triggers - do this here as, if there are no
-      * new orteds to launch, the trigger will fire immediately and launch
-      * the procs
-      */
-     if (ORTE_SUCCESS != (rc = orte_rmgr_base_orted_stage_gate_init(*jobid))) {
-         ORTE_ERROR_LOG(rc);
-         return rc;
-     }
-     
      /*
      * launch the job
      */

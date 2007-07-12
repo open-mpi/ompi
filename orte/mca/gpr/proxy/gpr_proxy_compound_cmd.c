@@ -41,7 +41,7 @@
 #include "gpr_proxy.h"
 
 
-int orte_gpr_proxy_begin_compound_cmd(void)
+int orte_gpr_proxy_begin_compound_cmd(orte_buffer_t *buffer)
 {
     orte_gpr_cmd_flag_t command;
     int rc;
@@ -57,22 +57,12 @@ int orte_gpr_proxy_begin_compound_cmd(void)
     }
 
     orte_gpr_proxy_globals.compound_cmd_mode = true;
-    if (NULL != orte_gpr_proxy_globals.compound_cmd) {
-        OBJ_RELEASE(orte_gpr_proxy_globals.compound_cmd);
-    }
-
-    orte_gpr_proxy_globals.compound_cmd = OBJ_NEW(orte_buffer_t);
-    if (NULL == orte_gpr_proxy_globals.compound_cmd) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        orte_gpr_proxy_globals.compound_cmd_mode = false;
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
+    orte_gpr_proxy_globals.compound_cmd = buffer;
     
     if (ORTE_SUCCESS != (rc = orte_dss.pack(orte_gpr_proxy_globals.compound_cmd, &command,
                                             1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         orte_gpr_proxy_globals.compound_cmd_mode = false;
-        OBJ_RELEASE(orte_gpr_proxy_globals.compound_cmd);
         return rc;
     }
     
@@ -86,10 +76,8 @@ int orte_gpr_proxy_stop_compound_cmd(void)
     OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.wait_for_compound_mutex);
 
     orte_gpr_proxy_globals.compound_cmd_mode = false;
-    if (NULL != orte_gpr_proxy_globals.compound_cmd) {
-	   OBJ_RELEASE(orte_gpr_proxy_globals.compound_cmd);
-    }
-
+    orte_gpr_proxy_globals.compound_cmd = NULL;
+    
     if (orte_gpr_proxy_globals.compound_cmd_waiting) {
 	   opal_condition_signal(&orte_gpr_proxy_globals.compound_cmd_condition);
     }
@@ -99,7 +87,7 @@ int orte_gpr_proxy_stop_compound_cmd(void)
 }
 
 
-int orte_gpr_proxy_exec_compound_cmd(void)
+int orte_gpr_proxy_exec_compound_cmd(orte_buffer_t *buffer)
 {
     orte_buffer_t *answer;
     orte_gpr_cmd_flag_t command;
@@ -120,7 +108,6 @@ int orte_gpr_proxy_exec_compound_cmd(void)
 	    goto CLEANUP;
     }
     orte_gpr_proxy_globals.compound_cmd_mode = false;
-    OBJ_RELEASE(orte_gpr_proxy_globals.compound_cmd);
         
     answer = OBJ_NEW(orte_buffer_t);
     if (NULL == answer) {
@@ -154,6 +141,7 @@ int orte_gpr_proxy_exec_compound_cmd(void)
     if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &response, &n, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
     }
+    OBJ_RELEASE(answer);  /* done with this */
     
     if (ORTE_SUCCESS == rc) {
         rc = (int)response;
@@ -169,4 +157,9 @@ int orte_gpr_proxy_exec_compound_cmd(void)
     return rc;
 }
 
+int orte_gpr_proxy_process_compound_cmd(orte_buffer_t *buffer,
+                                        orte_process_name_t *name)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
 

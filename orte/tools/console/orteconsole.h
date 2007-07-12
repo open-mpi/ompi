@@ -27,8 +27,6 @@
 
 #include "orte/mca/odls/odls_types.h"
 
-#include "orte/tools/orted/orted.h"
-
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

@@ -52,7 +52,6 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/pls/base/base.h"
 #include "orte/runtime/orte_setup_hnp.h"
-#include "orte/tools/orted/orted.h"
 
 #include "orte/tools/console/orteconsole.h"
 

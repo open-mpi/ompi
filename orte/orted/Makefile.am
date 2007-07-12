@@ -1,5 +1,6 @@
+# -*- makefile -*-
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -16,17 +17,13 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA += base/help-sds-base.txt
+# This makefile.am does not stand on its own - it is included from orte/Makefile.am
+
+dist_pkgdata_DATA += orted/help-orted.txt
 
 headers += \
-        base/base.h
+	orted/orted.h
 
-libmca_sds_la_SOURCES += \
-        base/sds_base_close.c \
-        base/sds_base_open.c \
-	base/sds_base_select.c \
-	base/sds_base_interface.c \
-	base/sds_base_orted_contact.c \
-	base/sds_base_universe.c \
-	base/sds_base_get.c \
-	base/sds_base_put.c
+libopen_rte_la_SOURCES += \
+        orted/orted_main.c
+

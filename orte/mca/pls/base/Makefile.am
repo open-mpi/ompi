@@ -28,6 +28,5 @@ libmca_pls_la_SOURCES += \
         base/pls_base_open.c \
         base/pls_base_receive.c \
         base/pls_base_select.c \
-	base/pls_base_dmn_registry_fns.c \
 	base/pls_base_reuse_daemon_launch.c \
 	base/pls_base_orted_cmds.c

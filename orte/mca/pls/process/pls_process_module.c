@@ -374,6 +374,8 @@ static void orte_pls_process_wait_daemon(pid_t pid, int status, void* cbdata)
     orte_pls_daemon_info_t *info = (orte_pls_daemon_info_t*) cbdata;
     int rc;
     unsigned long deltat;
+    orte_buffer_t ack;
+    int src[3] = {-1, -1};
 
     if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
         /* tell the user something went wrong */
@@ -398,6 +400,23 @@ static void orte_pls_process_wait_daemon(pid_t pid, int status, void* cbdata)
         } else {
             opal_output(0, "No extra status information is available: %d.", status);
         }
+        /* need to fake a message to the daemon callback system so it can break out
+            * of its receive loop
+            */
+        src[2] = pid;
+        if(WIFSIGNALED(status)) {
+            src[1] = WTERMSIG(status);
+        }
+        OBJ_CONSTRUCT(&ack, orte_buffer_t);
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(&ack, &src, 3, ORTE_INT))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        rc = orte_rml.send_buffer(ORTE_PROC_MY_NAME, &ack, ORTE_RML_TAG_ORTED_CALLBACK, 0);
+        if (0 > rc) {
+            ORTE_ERROR_LOG(rc);
+        }
+        OBJ_DESTRUCT(&ack);
+        
         /*  The usual reasons for ssh to exit abnormally all are a pretty good
             indication that the child processes aren't going to start up properly.
             Set the job state to indicate we failed to launch so orterun's exit status
@@ -482,18 +501,10 @@ int orte_pls_process_launch(orte_jobid_t jobid)
         return rc;
     }
 
-    /* account for any reuse of daemons */ 
- 	if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) { 
-        ORTE_ERROR_LOG(rc); 
-        goto cleanup; 
-  	}
-
     num_nodes = map->num_new_daemons;
  	if (0 == num_nodes) {
-        /* nothing to do - just return */
-        failed_launch = false;
-        OBJ_RELEASE(map);
-        return ORTE_SUCCESS;
+        /* have all the daemons we need - launch app */
+        goto launch_apps;
     }
 
     if (mca_pls_process_component.debug_daemons &&
@@ -820,6 +831,18 @@ int orte_pls_process_launch(orte_jobid_t jobid)
         }
     }
 
+    /* wait for daemons to callback */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_daemon_callback(map->num_new_daemons))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+launch_apps:
+    if (ORTE_SUCCESS != (rc = orte_pls_base_launch_apps(map))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
     /* get here if launch went okay */
     failed_launch = false;
     

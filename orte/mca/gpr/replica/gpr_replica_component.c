@@ -96,6 +96,7 @@ static orte_gpr_base_module_t orte_gpr_replica_module = {
     orte_gpr_base_create_value,
     orte_gpr_base_create_keyval,
     orte_gpr_replica_preallocate_segment,
+    orte_gpr_replica_get_number_entries,
     orte_gpr_replica_deliver_notify_msg,
     /* ARITHMETIC OPERATIONS */
     orte_gpr_replica_arith,
@@ -113,6 +114,7 @@ static orte_gpr_base_module_t orte_gpr_replica_module = {
     orte_gpr_replica_begin_compound_cmd,
     orte_gpr_replica_stop_compound_cmd,
     orte_gpr_replica_exec_compound_cmd,
+    orte_gpr_replica_process_compound_cmd,
     /* DIAGNOSTIC OPERATIONS */
     orte_gpr_replica_dump_all,
     orte_gpr_replica_dump_segments,

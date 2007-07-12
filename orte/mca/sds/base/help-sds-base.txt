@@ -1,3 +1,4 @@
+# -*- text -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -15,18 +16,19 @@
 # 
 # $HEADER$
 #
+# This is the US/English general help file for the SDS base.
+#
+[sds-base:execv-error]
+The singleton application was not able to find the executable "orted" in
+your PATH or in the directory where Open MPI/OpenRTE was initially installed,
+and therefore cannot continue.
 
-dist_pkgdata_DATA += base/help-sds-base.txt
+For reference, we tried the following command:
 
-headers += \
-        base/base.h
+  %s
 
-libmca_sds_la_SOURCES += \
-        base/sds_base_close.c \
-        base/sds_base_open.c \
-	base/sds_base_select.c \
-	base/sds_base_interface.c \
-	base/sds_base_orted_contact.c \
-	base/sds_base_universe.c \
-	base/sds_base_get.c \
-	base/sds_base_put.c
+and got the error %s.
+
+This could mean that your PATH or executable name is wrong, or that you do not
+have the necessary permissions.  Please ensure that the executable is able to be
+found and executed as it is required for singleton operations.

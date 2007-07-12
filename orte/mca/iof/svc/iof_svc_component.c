@@ -130,11 +130,9 @@ orte_iof_svc_exception_handler(const orte_process_name_t* peer, orte_rml_excepti
            (endpoint = orte_iof_base_endpoint_match(peer, ORTE_NS_CMP_ALL,
                                                     ORTE_IOF_ANY))) {
         orte_iof_base_endpoint_closed(endpoint);
-    };
-    /* Then delete them */
-    while (ORTE_SUCCESS == 
-           orte_iof_base_endpoint_delete(peer, ORTE_NS_CMP_ALL, ORTE_IOF_ANY)) {
-        continue;
+
+        /* Delete the endpoint that we just matched */
+        orte_iof_base_endpoint_delete(peer, ORTE_NS_CMP_ALL, ORTE_IOF_ANY);
     }
     opal_output(orte_iof_base.iof_output, "done with exception handler\n");
 }

@@ -76,6 +76,7 @@
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rmgr/rmgr.h"
+#include "orte/mca/rml/rml.h"
 #include "orte/mca/schema/schema.h"
 #include "orte/mca/smr/smr.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -83,6 +84,9 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/params.h"
 #include "orte/runtime/orte_wait.h"
+
+/* ensure I can behave like a daemon */
+#include "orte/orted/orted.h"
 
 #include "orterun.h"
 #include "totalview.h"
@@ -332,7 +336,6 @@ int orterun(int argc, char *argv[])
     opal_init_util();
 
     /* Setup MCA params */
-    orte_register_params(false);
 
 
     /* Check for some "global" command line params */
@@ -384,6 +387,9 @@ int orterun(int argc, char *argv[])
     }
     
     
+    /* since we are a daemon, we should *always* yield the processor when idle */
+    opal_progress_set_yield_when_idle(true);
+
     /* pre-condition any network transports that require it */
     if (ORTE_SUCCESS != (rc = orte_pre_condition_transports(apps, num_apps))) {
         ORTE_ERROR_LOG(rc);
@@ -392,7 +398,38 @@ int orterun(int argc, char *argv[])
         return rc;
     }
 
-
+    /* setup our receive functions so we can fully participate in daemon
+     * communications - this will allow us to relay messages
+     * during start for better scalability
+    */
+    /* register the daemon main receive functions */
+    /* setup to listen for broadcast commands via routed messaging algorithms */
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_ROUTED,
+                                  ORTE_RML_NON_PERSISTENT, orte_daemon_recv_routed, NULL);
+    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* setup to listen for commands sent specifically to me, even though I would probably
+     * be the one sending them! Unfortunately, since I am a participating daemon,
+     * there are times I need to send a command to "all daemons", and that means *I* have
+     * to receive it too
+     */
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON, ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
+    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* setup to listen for xcast stage gate commands. We need to do this because updates to the
+     * contact info for dynamically spawned daemons will come to the gate RML-tag
+     */
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_XCAST_BARRIER,
+                                  ORTE_RML_NON_PERSISTENT, orte_daemon_recv_gate, NULL);
+    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /* Prep to start the application */
     /* construct the list of attributes */
     OBJ_CONSTRUCT(&attributes, opal_list_t);
@@ -432,7 +469,7 @@ int orterun(int argc, char *argv[])
         /* we are done! */
         goto DONE;
     }
-        
+    
     OPAL_THREAD_LOCK(&orterun_globals.lock);
     /* If the spawn was successful, wait for the app to complete */
     if (ORTE_SUCCESS == rc) {

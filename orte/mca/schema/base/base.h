@@ -70,9 +70,8 @@ int orte_schema_base_get_std_subscription_name(char **name,
                                                char *subscription,
                                                orte_jobid_t jobid);
 
-
 /*
- * globals that might be needed inside the gpr
+ * globals that might be needed inside the schema framework
  */
 extern int orte_schema_base_output;
 extern bool orte_schema_base_selected;

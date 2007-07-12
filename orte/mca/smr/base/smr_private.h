@@ -80,11 +80,6 @@ int orte_smr_base_init_job_stage_gates(orte_jobid_t job,
                                        orte_gpr_trigger_cb_fn_t cbfunc,
                                        void *user_tag);
 
-int orte_smr_base_init_orted_stage_gates(orte_jobid_t job,
-                                         orte_std_cntr_t num_orteds,
-                                         orte_gpr_trigger_cb_fn_t cbfunc,
-                                         void *user_tag);
-    
 int orte_smr_base_define_alert_monitor(orte_jobid_t job,
                                         char *trigger_name,
                                         char *counter_key,

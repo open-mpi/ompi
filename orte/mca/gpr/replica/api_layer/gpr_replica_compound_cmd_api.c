@@ -27,13 +27,18 @@
 
 #include "orte_config.h"
 
+#include "orte/dss/dss_types.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
+
 #include "gpr_replica_api.h"
 
 /* COMPOUND COMMANDS ARE NOT USED ON THE REPLICA
  * Any process co-located with the replica will "drive" the registry
  * directly
  */
-int orte_gpr_replica_begin_compound_cmd(void)
+int orte_gpr_replica_begin_compound_cmd(orte_buffer_t *buffer)
 {
     return ORTE_SUCCESS;
 }
@@ -45,7 +50,22 @@ int orte_gpr_replica_stop_compound_cmd(void)
 }
 
 
-int orte_gpr_replica_exec_compound_cmd(void)
+int orte_gpr_replica_exec_compound_cmd(orte_buffer_t *buffer)
 {
     return ORTE_SUCCESS;
+}
+
+int orte_gpr_replica_process_compound_cmd(orte_buffer_t *buffer,
+                                          orte_process_name_t *name)
+{
+    orte_buffer_t *answer=NULL;
+    int rc;
+
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_process_command_buffer(buffer, name, &answer))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (NULL != answer) OBJ_RELEASE(answer); /* don't need this */
+    
+    return rc;
 }

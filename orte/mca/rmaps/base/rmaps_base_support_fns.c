@@ -513,6 +513,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
     char* dkeys[] = {
         ORTE_PROC_NAME_KEY,
         ORTE_NODE_NAME_KEY,
+        ORTE_PROC_RML_IP_ADDRESS_KEY,
         NULL
     };
     orte_gpr_value_t **dvalues=NULL, *value;
@@ -521,6 +522,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
     char *node_name;
     orte_process_name_t *pptr;
     int rc;
+    bool daemon_exists;
     
     /* save the default number of daemons we will need */
     num_daemons = map->num_nodes;
@@ -544,6 +546,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
     for(v=0; v<num_dvalues; v++) {
         value = dvalues[v];
         node_name = NULL;
+        daemon_exists = false;
         for(kv = 0; kv<value->cnt; kv++) {
             keyval = value->keyvals[kv];
             if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
@@ -561,6 +564,13 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
                 }
                 continue;
             }
+            if (strcmp(keyval->key, ORTE_PROC_RML_IP_ADDRESS_KEY) == 0) {
+                /* we don't care about the value here - the existence of the key is
+                 * enough to indicate that this daemon must already exist, so flag it
+                 */
+                daemon_exists = true;
+                continue;
+            }
         }
         if (NULL == node_name) continue;
         /* find this node on the map */
@@ -574,10 +584,12 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
-                /* flag that this daemon already exists */
-                node->daemon_preexists = true;
-                /* decrease the number of daemons we will need to start */
-                --num_daemons;
+                /* flag that this daemon already exists, if it does */
+                if (daemon_exists) {
+                    node->daemon_preexists = true;
+                    /* decrease the number of daemons we will need to start */
+                    --num_daemons;
+                }
             }
         }
     }

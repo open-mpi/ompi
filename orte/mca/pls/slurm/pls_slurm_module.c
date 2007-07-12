@@ -59,6 +59,7 @@
 #include "opal/util/basename.h"
 #include "opal/mca/base/mca_base_param.h"
 
+#include "orte/runtime/params.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wakeup.h"
 #include "orte/runtime/orte_wait.h"
@@ -159,18 +160,10 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
         goto cleanup;
     }
     
-    /* account for any reuse of daemons */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
     num_nodes = map->num_new_daemons;
     if (num_nodes == 0) {
-        /* nothing to do - just return */
-        failed_launch = false;
-        rc = ORTE_SUCCESS;
-        goto cleanup;
+        /* no new daemons required - just launch apps */
+        goto launch_apps;
     }
 
     /* need integer value for command line parameter */
@@ -228,6 +221,11 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
          */
         opal_argv_append(&nodelist_argc, &nodelist_argv, node->nodename);
     }
+    if (0 == opal_argv_count(nodelist_argv)) {
+        opal_show_help("help-pls-slurm.txt", "no-hosts-in-list", true);
+        rc = ORTE_ERR_FAILED_TO_START;
+        goto cleanup;
+    }
     nodelist_flat = opal_argv_join(nodelist_argv, ',');
     opal_argv_free(nodelist_argv);
     asprintf(&tmp, "--nodelist=%s", nodelist_flat);
@@ -241,14 +239,15 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
 
     /* add the daemon command (as specified by user) */
     opal_argv_append(&argc, &argv, mca_pls_slurm_component.orted);
-    opal_argv_append(&argc, &argv, "--no-daemonize");
+    
+    /* ensure we don't lose contact */
+    orte_no_daemonize_flag = true;
 
-    /* Add basic orted command line options */
+    /* Add basic orted command line options, including debug flags */
     orte_pls_base_orted_append_basic_args(&argc, &argv,
                                           &proc_name_index,
                                           NULL,
-                                          num_nodes
-                                          );
+                                          num_nodes);
 
     /* force orted to use the slurm sds */
     opal_argv_append(&argc, &argv, "--ns-nds");
@@ -312,9 +311,11 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
 
     /* setup environment */
     env = opal_argv_copy(environ);
-    var = mca_base_param_environ_variable("seed", NULL, NULL);
-    opal_setenv(var, "0", true, &env);
-    free(var);
+    
+    /* purge it of any params not for orteds */
+    orte_pls_base_purge_mca_params(&env);
+    
+    /* add the nodelist */
     var = mca_base_param_environ_variable("orte", "slurm", "nodelist");
     opal_setenv(var, nodelist_flat, true, &env);
     free(nodelist_flat);
@@ -333,11 +334,22 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     }
     
     /* do NOT wait for srun to complete. Srun only completes when the processes
-     * it starts - in this case, the orteds - complete. We need to go ahead and
-     * return so orterun can do the rest of its stuff. Instead, we'll catch
+     * it starts - in this case, the orteds - complete. Instead, we'll catch
      * any srun failures and deal with them elsewhere
      */
     
+    /* wait for daemons to callback */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_daemon_callback(map->num_new_daemons))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+launch_apps:
+    if (ORTE_SUCCESS != (rc = orte_pls_base_launch_apps(map))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+
     /* declare the launch a success */
     failed_launch = false;
     
@@ -516,7 +528,7 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
 static int pls_slurm_start_proc(int argc, char **argv, char **env,
                                 char *prefix)
 {
-    int fd, id, debug_daemons;
+    int fd;
     char *exec_argv = opal_path_findv(argv[0], 0, env, NULL);
 
     if (NULL == exec_argv) {
@@ -575,12 +587,7 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
 
         /* When not in debug mode and --debug-daemons was not passed,
          * tie stdout/stderr to dev null so we don't see messages from orted */
-        id = mca_base_param_find("orte", "debug", "daemons");
-        if(id < 0) {
-            id = mca_base_param_register_int("orte", "debug", "daemons", NULL, 0);
-        }
-        mca_base_param_lookup_int(id, &debug_daemons);
-        if (0 == mca_pls_slurm_component.debug && 0 == debug_daemons) {
+        if (0 == mca_pls_slurm_component.debug && !orte_debug_daemons_flag) {
             fd = open("/dev/null", O_CREAT|O_WRONLY|O_TRUNC, 0666);
             if (fd >= 0) {
                 if (fd != 1) {

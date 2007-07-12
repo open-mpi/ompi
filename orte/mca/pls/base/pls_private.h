@@ -57,19 +57,6 @@ typedef uint8_t orte_pls_cmd_flag_t;
 #define ORTE_PLS_SIGNAL_PROC_CMD        5
 #define ORTE_PLS_TERMINATE_ORTEDS_CMD   6
 
-    /*
-     * object for daemon information
-     */
-    typedef struct orte_pls_daemon_info_t {
-        opal_list_item_t super;
-        orte_cellid_t cell;
-        char *nodename;
-        orte_process_name_t *name;
-        orte_jobid_t active_job;
-      } orte_pls_daemon_info_t;
-    ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_pls_daemon_info_t);
-    
-    
     /**
      * Utility routine to set progress engine schedule
      */
@@ -79,18 +66,13 @@ typedef uint8_t orte_pls_cmd_flag_t;
     /**
      * Utilities for pls components that use proxy daemons
      */
-    ORTE_DECLSPEC int orte_pls_base_orted_cancel_operation(void);
     ORTE_DECLSPEC int orte_pls_base_orted_exit(struct timeval *timeout, opal_list_t *attrs);
     ORTE_DECLSPEC int orte_pls_base_orted_kill_local_procs(orte_jobid_t job, struct timeval *timeout, opal_list_t *attrs);
     ORTE_DECLSPEC int orte_pls_base_orted_signal_local_procs(orte_jobid_t job, int32_t signal, opal_list_t *attrs);
-    ORTE_DECLSPEC int orte_pls_base_orted_add_local_procs(orte_gpr_notify_data_t *ndat);
 
-    ORTE_DECLSPEC int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job, opal_list_t *attrs);
-    ORTE_DECLSPEC int orte_pls_base_store_active_daemons(opal_list_t *daemons);
-    ORTE_DECLSPEC int orte_pls_base_remove_daemon(orte_pls_daemon_info_t *info);
-    int orte_pls_base_check_avail_daemons(opal_list_t *daemons, orte_jobid_t job);
+    ORTE_DECLSPEC int orte_pls_base_launch_apps(orte_job_map_t *map);
     
-    ORTE_DECLSPEC int orte_pls_base_launch_on_existing_daemons(orte_job_map_t *map);
+    ORTE_DECLSPEC int orte_pls_base_daemon_callback(orte_std_cntr_t num_daemons);
 
     /*
      * communications utilities
@@ -104,7 +86,6 @@ typedef uint8_t orte_pls_cmd_flag_t;
     /*
      * general utilities
      */
-    ORTE_DECLSPEC int orte_pls_base_mca_argv(int *argc, char ***argv);
     ORTE_DECLSPEC void orte_pls_base_purge_mca_params(char ***env);
 
     /**

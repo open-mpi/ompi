@@ -106,22 +106,36 @@ int orte_iof_svc_unpublish(
     orte_iof_base_tag_t tag)
 {
     int rc;
+
+    /* Delete the corresponding publish.  Note that it may have
+       already been deleted by some other entity (e.g., message
+       arriving saying to unpublish), so we may get a NOT_FOUND.
+       That's ok/not an error -- the only end result that we want is
+       that there is no corresponding publish. */
     rc = orte_iof_svc_pub_delete(
         origin,
         ORTE_PROC_MY_NAME,
         mask,
         tag);
-    if (ORTE_SUCCESS != rc) {
+    if (ORTE_SUCCESS != rc && ORTE_ERR_NOT_FOUND != rc) {
         return rc;
     }
 
-    /* setup a local endpoint to reflect registration */
+    /* delete local endpoint.  Note that the endpoint may have already
+       been deleted (e.g., if some entity noticed that the fd closed
+       and called orte_iof_base_endpoint_delete on the corresopnding
+       endpoint already).  So if we get NOT_FOUND, ignore that error
+       -- the end result is what we want: the endpoint is deleted when
+       we return. */
     rc = orte_iof_base_endpoint_delete(
         origin,
         mask,
         tag);
-
-    return rc;
+    if (ORTE_ERR_NOT_FOUND == rc || ORTE_SUCCESS == rc) {
+        return ORTE_SUCCESS;
+    } else {
+        return rc;
+    }
 }
 
 

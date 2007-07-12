@@ -49,8 +49,6 @@ static int orte_rmgr_proxy_setup_job(orte_app_context_t** app_context,
 
 static int orte_rmgr_proxy_setup_stage_gates(orte_jobid_t jobid);
 
-static int orte_rmgr_proxy_orted_stage_gate_init(orte_jobid_t jobid);
-
 static int orte_rmgr_proxy_spawn_job(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
@@ -168,67 +166,6 @@ static int orte_rmgr_proxy_setup_job(orte_app_context_t** app_context,
     count = 1;
     if(ORTE_SUCCESS != (rc = orte_dss.unpack(&rsp, jobid, &count, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
-    }
-    
-    OBJ_DESTRUCT(&rsp);
-    return rc;
-}
-
-static int orte_rmgr_proxy_orted_stage_gate_init(orte_jobid_t jobid)
-{
-    orte_buffer_t cmd;
-    orte_buffer_t rsp;
-    orte_std_cntr_t count;
-    orte_rmgr_cmd_t command=ORTE_RMGR_SETUP_ORTED_GATES_CMD;
-    int rc;
-    
-    OPAL_TRACE(1);
-    
-    /* construct command */
-    OBJ_CONSTRUCT(&cmd, orte_buffer_t);
-    
-    /* pack the command */
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &command, 1, ORTE_RMGR_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&cmd);
-        return rc;
-    }
-    
-    /* pack the jobid */
-    if(ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &jobid, 1, ORTE_JOBID))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&cmd);
-        return rc;
-    }
-    
-    /* send the command */
-    if(0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &cmd, ORTE_RML_TAG_RMGR, 0))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&cmd);
-        return rc;
-    }
-    OBJ_DESTRUCT(&cmd);
-    
-    /* wait for response */
-    OBJ_CONSTRUCT(&rsp, orte_buffer_t);
-    if(0 > (rc = orte_rml.recv_buffer(ORTE_PROC_MY_HNP, &rsp, ORTE_RML_TAG_RMGR))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&rsp);
-        return rc;
-    }
-    
-    /* get the returned command */
-    count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(&rsp, &command, &count, ORTE_RMGR_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&rsp);
-        return rc;
-    }
-    /* and check it to ensure valid comm */
-    if (ORTE_RMGR_SETUP_ORTED_GATES_CMD != command) {
-        OBJ_DESTRUCT(&rsp);
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        return ORTE_ERR_COMM_FAILURE;
     }
     
     OBJ_DESTRUCT(&rsp);
@@ -571,7 +508,7 @@ static int orte_rmgr_proxy_spawn_job(
     } else {
         flags = 0xff;
     }
-    
+
     /*
      * Setup job and allocate resources
      */
@@ -582,21 +519,21 @@ static int orte_rmgr_proxy_spawn_job(
             return rc;
         }
     }
-    
+        
     if (flags & ORTE_RMGR_RES_DISC) {
         if (ORTE_SUCCESS != (rc = orte_rds.query(*jobid))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
     }
-    
+        
     if (flags & ORTE_RMGR_ALLOC) {
         if (ORTE_SUCCESS != (rc = orte_ras.allocate_job(*jobid, attributes))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
     }
-    
+        
     if (flags & ORTE_RMGR_MAP) {    
         if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(*jobid, attributes))) {
             ORTE_ERROR_LOG(rc);
@@ -667,7 +604,7 @@ static int orte_rmgr_proxy_spawn_job(
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        
+                
         /*
          * setup any user-provided callback
          */
@@ -698,16 +635,7 @@ static int orte_rmgr_proxy_spawn_job(
     if (!(flags & ORTE_RMGR_LAUNCH)) {
         return ORTE_SUCCESS;
     }
-        
-    /* setup the orted's stage gate triggers - do this here as, if there are no
-     * new orteds to launch, the trigger will fire immediately and launch
-     * the procs
-     */
-    if (ORTE_SUCCESS != (rc = orte_rmgr_proxy_orted_stage_gate_init(*jobid))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
+
     /*
      * launch the job
      */

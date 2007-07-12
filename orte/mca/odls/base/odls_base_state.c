@@ -46,10 +46,13 @@ int orte_odls_base_report_spawn(opal_list_t *children)
     orte_std_cntr_t num_tokens;
     orte_gpr_addr_mode_t mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND | ORTE_GPR_KEYS_OR;
     orte_data_value_t dval = ORTE_DATA_VALUE_EMPTY;
+    orte_buffer_t *buffer;
     int rc;
     
-    if (ORTE_SUCCESS != (rc = orte_gpr.begin_compound_cmd())) {
+    buffer = OBJ_NEW(orte_buffer_t);
+    if (ORTE_SUCCESS != (rc = orte_gpr.begin_compound_cmd(buffer))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buffer);
         return rc;
     }
     
@@ -66,23 +69,27 @@ int orte_odls_base_report_spawn(opal_list_t *children)
              */
             if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&tokens, &num_tokens, child->name))) {
                 ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(buffer);
                 return rc;
             }
             if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, child->name->jobid))) {
                 ORTE_ERROR_LOG(rc);
                 opal_argv_free(tokens);
+                OBJ_RELEASE(buffer);
                 return rc;
             }
             if (ORTE_SUCCESS != (rc = orte_dss.set(&dval, (void*)&(child->pid), ORTE_PID))) {
                 ORTE_ERROR_LOG(rc);
                 opal_argv_free(tokens);
                 free(segment);
+                OBJ_RELEASE(buffer);
                 return rc;
             }
             if (ORTE_SUCCESS != (rc = orte_gpr.put_1(mode, segment, tokens, ORTE_PROC_LOCAL_PID_KEY, &dval))) {
                 ORTE_ERROR_LOG(rc);
                 opal_argv_free(tokens);
                 free(segment);
+                OBJ_RELEASE(buffer);
                 return rc;
             }
             dval.data = NULL;
@@ -92,20 +99,24 @@ int orte_odls_base_report_spawn(opal_list_t *children)
             /* now set the process state to LAUNCHED */
             if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_LAUNCHED, 0))) {
                 ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(buffer);
                 return rc;
             }
         } else if (ORTE_PROC_STATE_FAILED_TO_START == child->state) {
             if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_FAILED_TO_START, child->exit_code))) {
                 ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(buffer);
                 return rc;
             }
         }
     }
     
-    if (ORTE_SUCCESS != (rc = orte_gpr.exec_compound_cmd())) {
+    if (ORTE_SUCCESS != (rc = orte_gpr.exec_compound_cmd(buffer))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buffer);
         return rc;
     }
+    OBJ_RELEASE(buffer);
     
     /* All done */
     return ORTE_SUCCESS;

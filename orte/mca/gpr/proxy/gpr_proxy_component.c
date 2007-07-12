@@ -89,6 +89,7 @@ static orte_gpr_base_module_t orte_gpr_proxy = {
     orte_gpr_base_create_value,
     orte_gpr_base_create_keyval,
     orte_gpr_proxy_preallocate_segment,
+    orte_gpr_proxy_get_number_entries,
     orte_gpr_proxy_deliver_notify_msg,
     /* ARITHMETIC OPERATIONS */
     orte_gpr_proxy_arith,
@@ -106,6 +107,7 @@ static orte_gpr_base_module_t orte_gpr_proxy = {
     orte_gpr_proxy_begin_compound_cmd,
     orte_gpr_proxy_stop_compound_cmd,
     orte_gpr_proxy_exec_compound_cmd,
+    orte_gpr_proxy_process_compound_cmd,
     /* DIAGNOSTIC OPERATIONS */
     orte_gpr_proxy_dump_all,
     orte_gpr_proxy_dump_segments,

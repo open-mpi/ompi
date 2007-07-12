@@ -63,7 +63,6 @@ orte_smr_base_module_t orte_smr = {
     orte_smr_base_set_job_state,
     orte_smr_base_begin_monitoring_not_available,
     orte_smr_base_init_job_stage_gates,
-    orte_smr_base_init_orted_stage_gates,
     orte_smr_base_define_alert_monitor,
     orte_smr_base_job_stage_gate_subscribe,
     orte_smr_base_module_finalize_not_available

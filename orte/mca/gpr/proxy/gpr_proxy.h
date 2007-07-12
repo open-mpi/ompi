@@ -103,11 +103,14 @@ extern orte_gpr_proxy_globals_t orte_gpr_proxy_globals;
 /*
  * Compound cmd functions
  */
-int orte_gpr_proxy_begin_compound_cmd(void);
+int orte_gpr_proxy_begin_compound_cmd(orte_buffer_t *buffer);
 
 int orte_gpr_proxy_stop_compound_cmd(void);
 
-int orte_gpr_proxy_exec_compound_cmd(void);
+int orte_gpr_proxy_exec_compound_cmd(orte_buffer_t *buffer);
+
+int orte_gpr_proxy_process_compound_cmd(orte_buffer_t *buffer,
+                                        orte_process_name_t *name);
 
 /*
  * Arithmetic operations
@@ -221,6 +224,8 @@ int orte_gpr_proxy_dump_segment_size(char *segment);
  * General operations
  */
 int orte_gpr_proxy_preallocate_segment(char *name, orte_std_cntr_t num_slots);
+
+int orte_gpr_proxy_get_number_entries(orte_std_cntr_t *n, char *segment, char **tokens);
 
 int orte_gpr_proxy_deliver_notify_msg(orte_gpr_notify_message_t *msg);
 

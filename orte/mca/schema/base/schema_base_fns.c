@@ -313,3 +313,4 @@ int orte_schema_base_get_std_subscription_name(char **name,
     free(jobidstring);
     return ORTE_SUCCESS;
 }
+

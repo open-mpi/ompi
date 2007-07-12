@@ -174,18 +174,10 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
         }
     }    
         
-    /* account for any reuse of daemons */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
     num_nodes = map->num_new_daemons;
     if (0 == num_nodes) {
-        /* must have been launched on existing daemons - just return */
-        failed_launch = false;
-        rc = ORTE_SUCCESS;
-        goto cleanup;
+        /* have all the daemons we need - launch app */
+        goto launch_apps;
     }
     
     /* Allocate a bunch of TM events to use for tm_spawn()ing */
@@ -294,7 +286,7 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
         if (node->daemon_preexists) {
             continue;
         }
-                
+ 
         /* setup node name */
         free(argv[node_name_index]);
         argv[node_name_index] = strdup(node->nodename);
@@ -361,13 +353,7 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
         }
         
         launched++;
-        
-        /* indicate this daemon has been launched in case anyone is sitting on that trigger */
-        if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(node->daemon, ORTE_PROC_STATE_LAUNCHED, 0))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
+
         /* Allow some progress to occur */
         opal_event_loop(OPAL_EVLOOP_NONBLOCK);
     }
@@ -392,6 +378,18 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
             opal_output(0, "pls:tm: failed to poll for a spawned proc, return status = %d", rc);
             goto cleanup;
         }
+    }
+    
+    /* wait for daemons to callback */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_daemon_callback(map->num_new_daemons))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+launch_apps:
+    if (ORTE_SUCCESS != (rc = orte_pls_base_launch_apps(map))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
     
     /* if we get here, then everything launched okay - record that fact */

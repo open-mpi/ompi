@@ -32,3 +32,10 @@ a fatal error for the SLURM process starter in Open MPI.
 The first two prefix values supplied were:
     %s
 and %s
+#
+[no-hosts-in-list]
+The SLURM process starter for Open MPI didn't find any hosts in
+the map for this application. This can be caused by a lack of
+an allocation, or by an error in the Open MPI code. Please check
+to ensure you have a SLURM allocation. If you do, then please pass
+the error to the Open MPI user's mailing list for assistance.

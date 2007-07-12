@@ -62,3 +62,4 @@ include dss/Makefile.am
 include runtime/Makefile.am
 include util/Makefile.am
 include tools/Makefile.am
+include orted/Makefile.am
