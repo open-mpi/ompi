@@ -222,6 +222,9 @@ void ompi_info::open_components()
   component_map["installdirs"] = &opal_installdirs_components;
 
   // ORTE frameworks
+  // Set orte_process_info.seed to true to force all frameworks to
+  // open components
+  orte_process_info.seed = true;
 
   mca_oob_base_open();
   component_map["oob"] = &mca_oob_base_components;
