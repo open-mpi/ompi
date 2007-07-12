@@ -108,6 +108,11 @@ static int pls_lsf_open(void)
     mca_base_param_reg_int(comp, "priority", "Default selection priority",
                            false, false, 75, &mca_pls_lsf_component.priority);
 
+    mca_base_param_reg_string(comp, "orted",
+                              "Command to use to start proxy orted",
+                              false, false, "orted",
+                              &mca_pls_lsf_component.orted);
+
     tmp = mca_base_param_reg_int_name("orte", "timing",
                                         "Request that critical timing loops be measured",
                                         false, false, 0, &value);

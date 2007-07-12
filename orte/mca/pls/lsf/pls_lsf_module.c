@@ -89,7 +89,7 @@ static int pls_lsf_signal_proc(const orte_process_name_t *name, int32_t signal);
 static int pls_lsf_finalize(void);
 
 static int pls_lsf_start_proc(int argc, char **argv, char **env,
-                                char *prefix);
+                              char *prefix);
 
 
 /*
@@ -290,12 +290,13 @@ static int pls_lsf_launch_job(orte_jobid_t jobid)
         }        
     }
     
-    /* exec the daemon(s). Do NOT wait for lsb_launch to complete as it only
-     * completes when the processes it starts - in this case, the orteds -
-     * complete. We need to go ahead and return so orterun can do the rest
-     * of its stuff. Instead, we'll catch any failures and deal with them elsewhere
+    /* exec the daemon(s). Do NOT wait for lsb_launch to complete as
+     * it only completes when the processes it starts - in this case,
+     * the orteds - complete. We need to go ahead and return so
+     * orterun can do the rest of its stuff. Instead, we'll catch any
+     * failures and deal with them elsewhere
      */
-    if (0 > lsb_launch(nodeargv, argv, LSF_DJOB_NOWAIT, env)) {
+    if (0 > lsb_launch(nodelist_argv, argv, LSF_DJOB_NOWAIT, env)) {
         ORTE_ERROR_LOG(ORTE_ERR_FAILED_TO_START);
         rc = ORTE_ERR_FAILED_TO_START;
         goto cleanup;
@@ -420,7 +421,8 @@ static int pls_lsf_finalize(void)
 }
 
 
-static void lsf_wait_cb(pid_t pid, int status, void* cbdata){
+static void lsf_wait_cb(pid_t pid, int status, void* cbdata)
+{
     /* not sure yet about how this will be used */
     
     int rc;
@@ -442,5 +444,4 @@ static void lsf_wait_cb(pid_t pid, int status, void* cbdata){
             ORTE_ERROR_LOG(rc);
         }
     }
-    
 }

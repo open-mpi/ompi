@@ -35,6 +35,7 @@ extern "C" {
         int debug;
         int verbose;
         bool timing;
+        char *orted;
     };
     typedef struct orte_pls_lsf_component_t orte_pls_lsf_component_t;
 
