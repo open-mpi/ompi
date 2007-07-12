@@ -89,7 +89,7 @@ typedef int (*orte_gpr_base_module_init_fn_t)(void);
  * @endcode
  *
  */
-typedef int (*orte_gpr_base_module_begin_compound_cmd_fn_t)(void);
+typedef int (*orte_gpr_base_module_begin_compound_cmd_fn_t)(orte_buffer_t *buffer);
 
 /*
  * Stop recording a compound command
@@ -123,7 +123,13 @@ typedef int (*orte_gpr_base_module_stop_compound_cmd_fn_t)(void);
  * @endcode
  *
  */
-typedef int (*orte_gpr_base_module_exec_compound_cmd_fn_t)(void);
+typedef int (*orte_gpr_base_module_exec_compound_cmd_fn_t)(orte_buffer_t *buffer);
+
+/*
+ * Process a compound command buffer for a third-party (BLOCKING)
+ */
+typedef int (*orte_gpr_base_module_process_compound_cmd_fn_t)(orte_buffer_t *buffer,
+                                                              orte_process_name_t *name);
 
 
 /*
@@ -187,6 +193,13 @@ typedef int (*orte_gpr_base_module_cleanup_proc_fn_t)(orte_process_name_t *proc)
  * @endcode
  */
 typedef int (*orte_gpr_base_module_preallocate_segment_fn_t)(char *name, orte_std_cntr_t num_slots);
+
+/*
+ * Get the number of entries on a segment or in a container
+ * Returns the number of containers on a segment (if NULL tokens provided) or in a container
+ * (if tokens provided - NULL terminated list)
+ */
+typedef int (*orte_gpr_base_module_get_number_entries_fn_t)(orte_std_cntr_t *n, char *segment, char **tokens);
 
 /*
  * Delete a segment from the registry (BLOCKING)
@@ -724,6 +737,7 @@ struct orte_gpr_base_module_1_0_0_t {
     orte_gpr_base_module_create_value_fn_t              create_value;
     orte_gpr_base_module_create_keyval_fn_t             create_keyval;
     orte_gpr_base_module_preallocate_segment_fn_t       preallocate_segment;
+    orte_gpr_base_module_get_number_entries_fn_t        get_number_entries;
     orte_gpr_base_module_deliver_notify_msg_t           deliver_notify_msg;
     /* ARITHMETIC OPERATIONS */
     orte_gpr_base_module_arith_fn_t                     arith;
@@ -741,6 +755,7 @@ struct orte_gpr_base_module_1_0_0_t {
     orte_gpr_base_module_begin_compound_cmd_fn_t        begin_compound_cmd;
     orte_gpr_base_module_stop_compound_cmd_fn_t         stop_compound_cmd;
     orte_gpr_base_module_exec_compound_cmd_fn_t         exec_compound_cmd;
+    orte_gpr_base_module_process_compound_cmd_fn_t      process_compound_cmd;
     /* DIAGNOSTIC OPERATIONS */
     orte_gpr_base_module_dump_all_fn_t                  dump_all;
     orte_gpr_base_module_dump_segment_fn_t              dump_segment;

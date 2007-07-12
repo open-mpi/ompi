@@ -229,15 +229,12 @@ char **environ;
 
 -(int) launchJob:(orte_jobid_t) jobid
 {
-    orte_job_map_t *map;
+    orte_job_map_t *map=NULL;
     opal_list_item_t *item;
-    size_t num_nodes;
-    orte_vpid_t vpid;
     int rc, i = 0;  
-    opal_list_t daemons;
-    orte_pls_daemon_info_t *dmn;
     char *orted_path;
     char *nsuri = NULL, *gpruri = NULL;
+    bool failed_launch = true;
 
    /* Query the map for this job.
      * We need the entire mapping for a couple of reasons:
@@ -249,29 +246,10 @@ char **environ;
         goto cleanup;
     }
 
-    num_nodes = opal_list_get_size(&map->nodes);
-
-    /*
-     * Allocate a range of vpids for the daemons.
-     */
-    if (0 == num_nodes) {
-        return ORTE_ERR_BAD_PARAM;
+    if (0 == map->num_new_daemons) {
+        /* have all the daemons we need - launch app */
+        goto launch_apps;
     }
-    rc = orte_ns.reserve_range(0, num_nodes, &vpid);
-    if (ORTE_SUCCESS != rc) {
-        goto cleanup;
-    }
-
-    /* setup the orted triggers for passing their launch info */
-    if (ORTE_SUCCESS != (rc = orte_smr.init_orted_stage_gates(jobid, num_nodes, NULL, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    /* setup a list that will contain the info for all the daemons
-     * so we can store it on the registry when done
-     */
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
 
     /* find orted */
     orted_path = opal_path_findv((char*) [orted cString], 0, environ, NULL); 
@@ -303,26 +281,9 @@ char **environ;
         orte_process_name_t* name;
         char* name_string;
         
-        /* new daemon - setup to record its info */
-        dmn = OBJ_NEW(orte_pls_daemon_info_t);
-        dmn->active_job = jobid;
-        opal_list_append(&daemons, &dmn->super);
-        
-        /* record the node name in the daemon struct */
-        dmn->cell = rmaps_node->cell;
-        dmn->nodename = strdup(rmaps_node->nodename);
-        
-        /* initialize daemons process name */
-        rc = orte_ns.create_process_name(&name, rmaps_node->cell, 0, vpid);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
-        /* save it in the daemon struct */
-        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(dmn->name), name, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
+        /* if this daemon already exists, don't launch it! */
+        if (rmaps_node->daemon_preexists) {
+            continue;
         }
         
         /* setup per-node options */
@@ -331,7 +292,7 @@ char **environ;
             rmaps_node->nodename);
         
         /* setup process name */
-        rc = orte_ns.get_proc_name_string(&name_string, name);
+        rc = orte_ns.get_proc_name_string(&name_string, rmaps_node->daemon);
         if (ORTE_SUCCESS != rc) {
             opal_output(orte_pls_base.pls_output,
             "orte:pls:xgrid: unable to create process name");
@@ -343,7 +304,6 @@ char **environ;
             forKey: XGJobSpecificationCommandKey];
         NSArray *taskArguments = 
         [NSArray arrayWithObjects: @"--no-daemonize",
-                @"--bootproxy", [NSString stringWithFormat: @"%d", jobid],
                 @"--name", [NSString stringWithCString: name_string],
                             @"--num_procs", [NSString stringWithFormat: @"%d", 1],
                 @"--nodename", [NSString stringWithCString: rmaps_node->nodename],
@@ -355,7 +315,7 @@ char **environ;
         [taskSpecifications setObject: task 
                 forKey: [NSString stringWithFormat: @"%d", i]];
     
-        vpid++; i++;
+        i++;
     }
 
     /* job specification */
@@ -396,23 +356,39 @@ char **environ;
     [active_jobs setObject: [[actionMonitor results] objectForKey: @"jobIdentifier"]
 		 forKey: [NSString stringWithFormat: @"%d", jobid]];
 
-    /* all done, so store the daemon info on the registry */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons))) {
+    /* wait for daemons to callback */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_daemon_callback(map->num_new_daemons))) {
         ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
+    
+launch_apps:
+    if (ORTE_SUCCESS != (rc = orte_pls_base_launch_apps(map))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+    /* get here if launch went okay */
+    failed_launch = false;
 
 cleanup:
-    OBJ_RELEASE(map);
+    if (NULL != map) OBJ_RELEASE(map);
     
     if (NULL != nsuri) free(nsuri);
     if (NULL != gpruri) free(gpruri);
 
-    /* deconstruct the daemon list */
-    while (NULL != (item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&daemons);
 
+    /* check for failed launch - if so, force terminate */
+    if (failed_launch) {
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(jobid, ORTE_JOB_STATE_FAILED_TO_START))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_wakeup(jobid))) {
+            ORTE_ERROR_LOG(rc);
+        }        
+    }
+    
     opal_output_verbose(1, orte_pls_base.pls_output,
 			"orte:pls:xgrid:launch: finished\n");
 

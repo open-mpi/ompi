@@ -53,7 +53,6 @@ int orte_pls_xgrid_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout,
 int orte_pls_xgrid_terminate_proc(const orte_process_name_t* proc);
 int orte_pls_xgrid_signal_job(orte_jobid_t job, int32_t signal, opal_list_t *attrs);
 int orte_pls_xgrid_signal_proc(const orte_process_name_t* proc_name, int32_t signal);
-int orte_pls_xgrid_cancel_operation(void);
 int orte_pls_xgrid_finalize(void);
 
 orte_pls_base_module_1_3_0_t orte_pls_xgrid_module = {
@@ -63,7 +62,6 @@ orte_pls_base_module_1_3_0_t orte_pls_xgrid_module = {
     orte_pls_xgrid_terminate_proc,
     orte_pls_xgrid_signal_job,
     orte_pls_xgrid_signal_proc,
-    orte_pls_xgrid_cancel_operation,
     orte_pls_xgrid_finalize
 };
 
@@ -88,28 +86,14 @@ int
 orte_pls_xgrid_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
-    opal_list_t daemons;
-    opal_list_item_t *item;
-    
-    /* construct the list of active daemons on this job */
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
     
     /* order them to kill their local procs for this job */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(&daemons, jobid, timeout))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(jobid, timeout, attrs))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
     
 CLEANUP:
-    while (NULL != (item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&daemons);
-
     if (ORTE_SUCCESS != rc) {
 	rc = [mca_pls_xgrid_component.client terminateJob:jobid];
     }
@@ -125,27 +109,13 @@ int
 orte_pls_xgrid_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
-    opal_list_t daemons;
-    opal_list_item_t *item;
-    
-    /* construct the list of active daemons on this job */
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
     
     /* now tell them to die! */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(&daemons, timeout))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(timeout, attrs))) {
         ORTE_ERROR_LOG(rc);
     }
     
 CLEANUP:
-    while (NULL != (item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&daemons);
-
     if (ORTE_SUCCESS != rc) {
 	rc = [mca_pls_xgrid_component.client terminateJob:jobid];
     }
@@ -168,27 +138,13 @@ int
 orte_pls_xgrid_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs)
 {
     int rc;
-    opal_list_t daemons;
-    opal_list_item_t *item;
-    
-    /* construct the list of active daemons on this job */
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&daemons);
-        return rc;
-    }
     
     /* order them to pass this signal to their local procs */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_signal_local_procs(&daemons, signal))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_signal_local_procs(jobid, signal, attrs))) {
         ORTE_ERROR_LOG(rc);
     }
     
-    while (NULL != (item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&daemons);
-    return rc;
+   return rc;
 }
 
 
@@ -196,19 +152,6 @@ int
 orte_pls_xgrid_signal_proc(const orte_process_name_t* proc, int32_t signal)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
-}
-
-
-int
-orte_pls_xgrid_cancel_operation(void)
-{
-    int rc;
-    
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_cancel_operation())) {
-        ORTE_ERROR_LOG(rc);
-    }
-    
-    return rc;
 }
 
 

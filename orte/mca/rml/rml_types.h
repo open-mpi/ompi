@@ -68,9 +68,10 @@ typedef uint32_t orte_rml_tag_t;
 #define ORTE_RML_TAG_SM_BACK_FILE_CREATED   18
 #define ORTE_RML_TAG_WIREUP                 19
 #define ORTE_RML_TAG_RML                    20
+#define ORTE_RML_TAG_ORTED_CALLBACK         21
 
-#define ORTE_RML_TAG_FILEM                  21
-#define ORTE_RML_TAG_CKPT                   22
+#define ORTE_RML_TAG_FILEM                  22
+#define ORTE_RML_TAG_CKPT                   23
 /* For CRCP Coord Component */
 #define OMPI_CRCP_COORD_BOOKMARK_TAG        4242
 

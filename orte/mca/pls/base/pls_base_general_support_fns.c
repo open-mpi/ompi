@@ -35,39 +35,16 @@
 #include "orte/mca/pls/base/pls_private.h"
 
 
-static int lookup_set(char *a, char *b, char *c, int default_val,
-                      char *token, int *argc, char ***argv)
-{
-    int id, rc;
-    
-    id = mca_base_param_find(a, b, c);
-    if (id < 0) {
-        id = mca_base_param_register_int(a, b, c, NULL, default_val);
-    }
-    mca_base_param_lookup_int(id, &rc);
-    if (rc) {
-        opal_argv_append(argc, argv, token);
-    }
-    
-    return ORTE_SUCCESS;
-}
-
-
-int orte_pls_base_mca_argv(int *argc, char ***argv)
-{
-    lookup_set("orted", "spin", NULL, 0, "--spin", argc, argv);
-    lookup_set("orte", "no_daemonize", NULL, 0, "--no-daemonize", argc, argv);
-    lookup_set("orte", "debug", NULL, 0, "--debug", argc, argv);
-    lookup_set("orte", "debug", "daemons", 0, "--debug-daemons", argc, argv);
-    lookup_set("orte", "debug", "daemons_file", 0, "--debug-daemons-file", argc, argv);
-    
-    return ORTE_SUCCESS;
-}
-
 void orte_pls_base_purge_mca_params(char ***env)
 {
     char *var;
     
+    /* ensure we do not think we are an HNP */
+    var = mca_base_param_environ_variable("seed",NULL,NULL);
+    opal_setenv(var, "0", true, env);
+    free(var);
+    
+    /* tell critical frameworks to only use their proxy components */
     var = mca_base_param_environ_variable("rds",NULL,NULL);
     opal_setenv(var, "proxy", true, env);
     free(var);
@@ -97,8 +74,22 @@ int orte_pls_base_orted_append_basic_args(int *argc, char ***argv,
     char * tmp_force = NULL;
 
     /* check for debug flags */
-    orte_pls_base_mca_argv(argc, argv);
-
+    if (orte_debug_flag) {
+        opal_argv_append(argc, argv, "--debug");
+    }
+    if (orte_debug_daemons_flag) {
+        opal_argv_append(argc, argv, "--debug-daemons");
+    }
+    if (orte_debug_daemons_file_flag) {
+        opal_argv_append(argc, argv, "--debug-daemons-file");
+    }
+    if (orted_spin_flag) {
+        opal_argv_append(argc, argv, "--spin");
+    }
+    if (orte_no_daemonize_flag) {
+        opal_argv_append(argc, argv, "--no-daemonize");
+    }
+    
     /* Name */
     if( NULL != proc_name_index ) {
         opal_argv_append(argc, argv, "--name");

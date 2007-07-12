@@ -135,6 +135,8 @@ static int orte_pls_gridengine_fill_orted_path(char** orted_path)
 static void orte_pls_gridengine_wait_daemon(pid_t pid, int status, void* cbdata)
 {
     int rc;
+    orte_buffer_t ack;
+    int src[3] = {-1, -1};
       
     if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
         /* tell the user something went wrong. We need to do this BEFORE we
@@ -163,6 +165,23 @@ static void orte_pls_gridengine_wait_daemon(pid_t pid, int status, void* cbdata)
         } else {
             opal_output(0, "No extra status information is available: %d.", status);
         }
+        
+        /* need to fake a message to the daemon callback system so it can break out
+         * of its receive loop
+         */
+        src[2] = pid;
+        if(WIFSIGNALED(status)) {
+            src[1] = WTERMSIG(status);
+        }
+        OBJ_CONSTRUCT(&ack, orte_buffer_t);
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(&ack, &src, 3, ORTE_INT))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        rc = orte_rml.send_buffer(ORTE_PROC_MY_NAME, &ack, ORTE_RML_TAG_ORTED_CALLBACK, 0);
+        if (0 > rc) {
+            ORTE_ERROR_LOG(rc);
+        }
+        OBJ_DESTRUCT(&ack);
         
         /*  The usual reasons for qrsh to exit abnormally all are a pretty good
             indication that the child processes aren't going to start up properly.
@@ -222,18 +241,13 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
         goto cleanup;
     }
 
-    /* account for any reuse of daemons */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
     num_nodes = map->num_new_daemons;
     if (num_nodes == 0) {
-        /* job must have been launched on existing daemons - just return */
-        failed_launch = false;
-        rc = ORTE_SUCCESS;
-        goto cleanup;
+        /* have all the daemons we need - launch app */
+        if (mca_pls_gridengine_component.debug) {
+            opal_output(0, "pls:rsh: no new daemons to launch");
+        }
+        goto launch_apps;
     }
     
     /*
@@ -252,8 +266,8 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
 
     node_name_index1 = argc;
     opal_argv_append(&argc, &argv, "<template>");
-    
-    /* add the daemon command */
+                     
+    /* add the orted daemon in command */
     orted_index = argc;
     opal_argv_append(&argc, &argv, mca_pls_gridengine_component.orted);
 
@@ -263,10 +277,15 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
      * persistent for the whole duration of the task to the remote nodes,
      * which may not be ideal for large number of nodes */
     if (! mca_pls_gridengine_component.daemonize_orted) {
-        opal_argv_append(&argc, &argv, "--no-daemonize");
+        /* the actual orted option will be added when we
+         * append_basic_args
+         */
+        orte_no_daemonize_flag = true;
     }
     
-    /* Add basic orted command line options */
+    /* Add basic orted command line options, including
+     * all debug options
+     */
     orte_pls_base_orted_append_basic_args(&argc, &argv,
                                           &proc_name_index,
                                           &node_name_index2,
@@ -276,8 +295,6 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
       * so we only need to do this once
       */
      env = opal_argv_copy(environ);
-     param = mca_base_param_environ_variable("seed",NULL,NULL);
-     opal_setenv(param, "0", true, &env);
      
      /* clean out any MCA component selection directives that
       * won't work on remote nodes
@@ -517,24 +534,31 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
                 opal_output(0, "pls:gridengine: parent");
             }
             
-            /* indicate this daemon has been launched in case anyone is sitting on that trigger */ 
-            if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(rmaps_node->daemon, ORTE_PROC_STATE_LAUNCHED, 0))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            
             /* setup callback on sigchild - wait until setup above is complete
              * as the callback can occur in the call to orte_wait_cb
              */
-           orte_wait_cb(pid, orte_pls_gridengine_wait_daemon, NULL);
+            orte_wait_cb(pid, orte_pls_gridengine_wait_daemon, NULL);
             
         }
     }
-    /* get here if launch went okay */
+
+     /* wait for daemons to callback */
+     if (ORTE_SUCCESS != (rc = orte_pls_base_daemon_callback(map->num_new_daemons))) {
+         ORTE_ERROR_LOG(rc);
+         goto cleanup;
+     }
+     
+launch_apps:
+     if (ORTE_SUCCESS != (rc = orte_pls_base_launch_apps(map))) {
+         ORTE_ERROR_LOG(rc);
+         goto cleanup;
+     }
+     
+
+     /* get here if launch went okay */
     failed_launch = false;
-                     
     
-  cleanup:
+cleanup:
     if (NULL != map) {
         OBJ_RELEASE(map);
     }

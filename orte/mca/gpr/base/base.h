@@ -109,6 +109,7 @@ extern "C" {
 #define ORTE_GPR_DUMP_A_TRIGGER_CMD         (uint8_t) 23
 #define ORTE_GPR_DUMP_A_SUBSCRIPTION_CMD    (uint8_t) 24
 #define ORTE_GPR_DUMP_SEGMENT_SIZE_CMD      (uint8_t) 25
+#define ORTE_GPR_GET_NUMBER_ENTRIES_CMD     (uint8_t) 26
 #define ORTE_GPR_ERROR                      (uint8_t)0xff
 
 typedef uint8_t orte_gpr_cmd_flag_t;

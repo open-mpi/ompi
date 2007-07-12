@@ -19,8 +19,6 @@
 
 if OMPI_INSTALL_BINARIES
 
-dist_pkgdata_DATA = help-orted.txt
-
 bin_PROGRAMS = orted
 
 endif
@@ -28,16 +26,11 @@ endif
 libs = \
         $(top_builddir)/orte/libopen-rte.la
 
-headers = \
-	orted.h
-
 man_MANS = orted.1
 
 EXTRA_DIST = $(man_MANS)
 
 orted_SOURCES = \
-	$(headers) \
-	orted_comm.c \
         orted.c 
 
 orted_LDADD = $(libs)
@@ -49,7 +42,6 @@ orted_DEPENDENCIES = $(libs)
 
 if WANT_INSTALL_HEADERS
 ortedir = $(includedir)/openmpi/orte/tools/orted
-orte_HEADERS = $(headers)
 else
 ortedir = $(includedir)
 endif

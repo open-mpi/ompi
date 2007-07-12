@@ -251,7 +251,13 @@ int mca_oob_tcp_send_nb(
     
     if (ORTE_EQUAL == mca_oob_tcp_process_name_compare(name, orte_process_info.my_name)) {  /* local delivery */
         rc = mca_oob_tcp_send_self(peer,msg,iov,count);
-        return rc;
+        if (rc < 0 ) {
+            return rc;
+        } else if (size == rc) {
+            return ORTE_SUCCESS;
+        } else {
+            return ORTE_ERROR;
+        }
     }
 
     MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);

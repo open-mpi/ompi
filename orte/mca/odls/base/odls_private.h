@@ -73,6 +73,8 @@ ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;
         
 ORTE_DECLSPEC int orte_odls_base_report_spawn(opal_list_t *children);
 
+ORTE_DECLSPEC void orte_odls_base_purge_mca_params(char ***env);
+
 /*
  * data type functions
  */

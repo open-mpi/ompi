@@ -52,7 +52,6 @@ extern "C" {
 #define ORTE_RMGR_SPAWN_JOB_CMD             2
 #define ORTE_RMGR_SETUP_GATES_CMD           3
 #define ORTE_RMGR_XCONNECT_CMD              4
-#define ORTE_RMGR_SETUP_ORTED_GATES_CMD     5
 
 #define ORTE_RMGR_CMD  ORTE_UINT8
 typedef uint8_t orte_rmgr_cmd_t;
@@ -134,10 +133,6 @@ ORTE_DECLSPEC void orte_rmgr_base_purge_mca_params(char ***env);
 ORTE_DECLSPEC int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job);
 
 ORTE_DECLSPEC int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg);
-
-ORTE_DECLSPEC int orte_rmgr_base_orted_stage_gate_init(orte_jobid_t job);
-
-ORTE_DECLSPEC int orte_rmgr_base_orted_stage_gate_mgr(orte_gpr_notify_message_t *msg);
 
 ORTE_DECLSPEC int orte_rmgr_base_xconnect(orte_jobid_t child, orte_jobid_t parent);
 

@@ -23,6 +23,7 @@
 #include "orte/orte_constants.h"
 #include "opal/util/output.h"
 #include "orte/mca/gpr/base/base.h"
+#include "orte/dss/dss_types.h"
 
 
 static int
@@ -33,7 +34,7 @@ orte_gpr_null_module_init(void)
 
 
 static int
-orte_gpr_null_begin_compound_cmd(void)
+orte_gpr_null_begin_compound_cmd(orte_buffer_t *buffer)
 {
   return ORTE_SUCCESS;
 }
@@ -45,9 +46,16 @@ orte_gpr_null_stop_compound_cmd(void)
 }
 
 static int
-orte_gpr_null_exec_compound_cmd(void)
+orte_gpr_null_exec_compound_cmd(orte_buffer_t *buffer)
 {
   return ORTE_SUCCESS;
+}
+
+static int
+orte_gpr_null_process_compound_cmd(orte_buffer_t *buffer,
+                                   orte_process_name_t *name)
+{
+    return ORTE_SUCCESS;
 }
 
 static int
@@ -66,6 +74,13 @@ static int
 orte_gpr_null_preallocate_segment(char *name, orte_std_cntr_t num_slots)
 {
   return ORTE_SUCCESS;
+}
+
+static int
+orte_gpr_null_get_number_entries(orte_std_cntr_t *n, char *segment, char **tokens)
+{
+    *n = 0;
+    return ORTE_SUCCESS;
 }
 
 static int
@@ -379,6 +394,7 @@ orte_gpr_base_module_t orte_gpr_null_module = {
     orte_gpr_base_create_value,
     orte_gpr_base_create_keyval,
     orte_gpr_null_preallocate_segment,
+    orte_gpr_null_get_number_entries,
     orte_gpr_null_deliver_notify_msg,
     /* ARITHMETIC OPERATIONS */
     orte_gpr_null_arith,
@@ -396,6 +412,7 @@ orte_gpr_base_module_t orte_gpr_null_module = {
     orte_gpr_null_begin_compound_cmd,
     orte_gpr_null_stop_compound_cmd,
     orte_gpr_null_exec_compound_cmd,
+    orte_gpr_null_process_compound_cmd,
     /* DIAGNOSTIC OPERATIONS */
     orte_gpr_null_dump_all,
     orte_gpr_null_dump_segments,

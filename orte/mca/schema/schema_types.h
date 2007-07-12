@@ -157,7 +157,8 @@
  * ORTED (ORTE DAEMON) TRIGGER DEFINITIONS
  */
 #define ORTED_LAUNCH_STG_SUB            "orted-launch-sub"
-
+#define ORTED_LAUNCH_TRIGGER            "orted-launch-trig"
+#define ORTED_LAUNCH_CNTR               "orted-launch-cntr"
 
 /*
  * BPROC-SPECIFIC SEGMENT FOR STORING CLUSTER-WIDE NODE STATES

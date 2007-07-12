@@ -95,15 +95,6 @@ typedef int (*orte_smr_base_module_job_stage_gate_init_fn_t)(orte_jobid_t job,
                                                              void *user_tag);
 
 /*
- * Define the orted standard stage gates
- * This function creates all of the orted-standard stage gates. 
- */
-typedef int (*orte_smr_base_module_orted_stage_gate_init_fn_t)(orte_jobid_t job,
-                                                               orte_std_cntr_t num_orteds,
-                                                               orte_gpr_trigger_cb_fn_t cbfunc,
-                                                               void *user_tag);
-
-/*
  * Define an "alert" monitor
  * This function will establish an appropriate trigger to notify the specified
  * callback function when an event takes place. In this case, event is defined
@@ -185,7 +176,6 @@ struct orte_smr_base_module_1_3_0_t {
     orte_smr_base_module_begin_monitoring_fn_t          begin_monitoring;
     /* TRIGGER INIT FUNCTIONS */
     orte_smr_base_module_job_stage_gate_init_fn_t       init_job_stage_gates;
-    orte_smr_base_module_orted_stage_gate_init_fn_t     init_orted_stage_gates;
     orte_smr_base_module_define_alert_monitor_fn_t      define_alert_monitor;
     orte_smr_base_module_job_stage_gate_subscribe_fn_t  job_stage_gate_subscribe;
     orte_smr_base_module_finalize_fn_t                  finalize;

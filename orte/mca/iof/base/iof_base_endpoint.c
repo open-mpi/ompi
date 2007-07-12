@@ -489,12 +489,15 @@ int orte_iof_base_endpoint_delete(
     while(item != opal_list_get_end(&orte_iof_base.iof_endpoints)) {
         opal_list_item_t* next =  opal_list_get_next(item);
         orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
-        if(orte_ns.compare_fields(mask,proc,&endpoint->ep_origin) == 0 &&
-           endpoint->ep_tag == tag) {
-            opal_list_remove_item(&orte_iof_base.iof_endpoints,&endpoint->super);
-            OBJ_RELEASE(endpoint);
-            OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
-            return ORTE_SUCCESS;
+        if (orte_ns.compare_fields(mask,proc,&endpoint->ep_origin) == 0) {
+            if (endpoint->ep_tag == tag || 
+                ORTE_IOF_ANY == endpoint->ep_tag || 
+                ORTE_IOF_ANY == tag) {
+                opal_list_remove_item(&orte_iof_base.iof_endpoints,&endpoint->super);
+                OBJ_RELEASE(endpoint);
+                OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+                return ORTE_SUCCESS;
+            }
         }
         item = next;
     }

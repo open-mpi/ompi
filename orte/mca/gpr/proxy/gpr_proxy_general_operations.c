@@ -45,3 +45,10 @@ int orte_gpr_proxy_preallocate_segment(char *name, orte_std_cntr_t num_slots)
 
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
+
+int orte_gpr_proxy_get_number_entries(orte_std_cntr_t *n, char *segment, char **tokens)
+{
+    OPAL_TRACE(1);
+    
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}

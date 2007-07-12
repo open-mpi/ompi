@@ -72,7 +72,6 @@ orte_smr_base_module_t orte_smr_bproc_module = {
     orte_smr_base_set_job_state,
     orte_smr_bproc_begin_monitoring,
     orte_smr_base_init_job_stage_gates,
-    orte_smr_base_init_orted_stage_gates,
     orte_smr_base_define_alert_monitor,
     orte_smr_base_job_stage_gate_subscribe,    
     orte_smr_bproc_finalize

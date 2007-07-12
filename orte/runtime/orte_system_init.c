@@ -48,11 +48,12 @@ int orte_system_init(bool infrastructure, bool barrier)
     }
     
     /* begin recording registry actions */
+#if 0
     if (ORTE_SUCCESS != (rc = orte_gpr.begin_compound_cmd())) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-
+#endif
     if (ORTE_SUCCESS != (rc = orte_init_stage2(ORTE_STARTUP_TRIGGER))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -64,13 +65,13 @@ int orte_system_init(bool infrastructure, bool barrier)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+#if 0
     /* send the information */
     if (ORTE_SUCCESS != (rc = orte_gpr.exec_compound_cmd())) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+#endif
     /* if we want to wait for receipt of info and release, do so here */
     if (barrier) {
         if (ORTE_SUCCESS != (rc = orte_rml.xcast_gate(orte_gpr.deliver_notify_msg))) {

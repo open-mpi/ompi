@@ -202,7 +202,10 @@ int orte_init_stage1(bool infrastructure)
     }
 
     /*
-     * Initialize and select the Startup Discovery Service
+     * Initialize and select the Startup Discovery Service. This must
+     * be done here since some environments have different requirements
+     * for detecting/connecting to a universe. Note that this does
+     * *not* set our name - that will come later
      */
     if (ORTE_SUCCESS != (ret = orte_sds_base_open())) {
         ORTE_ERROR_LOG(ret);
@@ -214,8 +217,12 @@ int orte_init_stage1(bool infrastructure)
         error = "orte_sds_base_select";
         goto error;
     }
-
-    /* Try to connect to the universe */
+    
+    /* Try to connect to the universe. If we don't find one and are a
+     * singleton, this will startup a new HNP and define our name
+     * within it - in which case, we will skip the name discovery
+     * process since we already have one
+     */
     if (ORTE_SUCCESS != (ret = orte_sds_base_contact_universe())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_sds_base_contact_universe";
@@ -248,7 +255,7 @@ int orte_init_stage1(bool infrastructure)
         orte_rml.set_uri(orte_process_info.gpr_replica_uri);
     }
 
-    /* set my name and the names of the procs I was started with */
+    /* Set my name */
     if (ORTE_SUCCESS != (ret = orte_sds_base_set_name())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_sds_base_set_name";
@@ -429,16 +436,6 @@ int orte_init_stage1(bool infrastructure)
 
     /* if i'm the seed, get my contact info and write my setup file for others to find */
     if (orte_process_info.seed) {
-        if (NULL != orte_universe_info.seed_uri) {
-            free(orte_universe_info.seed_uri);
-            orte_universe_info.seed_uri = NULL;
-        }
-        if (NULL == (orte_universe_info.seed_uri = orte_rml.get_uri())) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            error = "orte_rml_get_uri";
-            ret = ORTE_ERR_NOT_FOUND;
-            goto error;
-        }
         contact_path = opal_os_path(false, orte_process_info.universe_session_dir,
                     "universe-setup.txt", NULL);
         if (orte_debug_flag) {
@@ -485,96 +482,243 @@ int orte_init_stage1(bool infrastructure)
         goto error;
     }
     
-    /* if we are a singleton or the seed, setup an app_context for us.
-     * Since we don't have access to the argv used to start this app,
-     * we can only fake a name for the executable
-     */
-    
-    if(orte_process_info.singleton || orte_process_info.seed) {
+    if (orte_process_info.seed) {
+        /* if we are an HNP, we have to setup an app_context for ourselves so
+         * various frameworks can find their required info
+         */
         orte_app_context_t *app;
+        orte_gpr_value_t *value;
         
         app = OBJ_NEW(orte_app_context_t);
-        app->app = strdup("unknown");
+        app->app = strdup("orted");
         app->num_procs = 1;
-        if (ORTE_SUCCESS != (ret = orte_rmgr_base_put_app_context(ORTE_PROC_MY_NAME->jobid, &app, 1))) {
+        if (ORTE_SUCCESS != (ret = orte_rmgr.store_app_context(ORTE_PROC_MY_NAME->jobid, &app, 1))) {
             ORTE_ERROR_LOG(ret);
-            error = "orte_rmgr_base_put_app_context for singleton/seed";
+            error = "HNP store app context";
             goto error;
         }
         OBJ_RELEASE(app);
         
-        if (orte_process_info.singleton) {
-            /* since all frameworks are now open and active, walk through
-             * the spawn sequence to ensure that we collect info on all
-             * available resources. Although we are a singleton and hence
-             * don't need to be spawned, we may choose to dynamically spawn
-             * additional processes. If we do that, then we need to know
-             * about any resources that have been allocated to us - executing
-             * the RDS and RAS frameworks is the only way to get that info.
-             *
-             * THIS ONLY SHOULD BE DONE FOR SINGLETONS - DO NOT DO IT
-             * FOR ANY OTHER CASE
-             */
-            opal_list_t attrs;
-            opal_list_item_t *item;
-            
-            OBJ_CONSTRUCT(&attrs, opal_list_t);
-            
-            if (ORTE_SUCCESS != (ret = orte_rds.query(ORTE_PROC_MY_NAME->jobid))) {
-                ORTE_ERROR_LOG(ret);
-                error = "singleton rds query";
-                goto error;
-            }
-            /* Note that, due to the way the RAS works, this might very well NOT result
-             * in the localhost being on our allocation, even though we are executing
-             * on it. This should be okay, though - if the localhost isn't included
-             * in the official allocation, then we probably wouldn't want to launch
-             * any dynamic processes on it anyway.
-             */
-            if (ORTE_SUCCESS != (ret = orte_ras.allocate_job(ORTE_PROC_MY_NAME->jobid, &attrs))) {
-                ORTE_ERROR_LOG(ret);
-                error = "singleton ras allocate job";
-                goto error;
-            }
-            
-            /* even though the map in this case is trivial, we still
-             * need to call the RMAPS framework so the proper data
-             * structures get set into the registry
-             */
-            if (ORTE_SUCCESS != (ret = orte_rmgr.add_attribute(&attrs, ORTE_RMAPS_NO_ALLOC_RANGE,
-                                                               ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE))) {
-                ORTE_ERROR_LOG(ret);
-                error = "could not create attribute for map";
-                goto error;
-            }
-            if (ORTE_SUCCESS != (ret = orte_rmaps.map_job(ORTE_PROC_MY_NAME->jobid, &attrs))) {
-                ORTE_ERROR_LOG(ret);
-                error = "map for a singleton";
-                goto error;
-            }
-            while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
-            OBJ_DESTRUCT(&attrs);
-
-            /* need to define our stage gates and fire the LAUNCHED gate
-             * to ensure that everything in the rest of the system runs smoothly
-             */            
-            if (ORTE_SUCCESS != (ret = orte_rmgr_base_proc_stage_gate_init(ORTE_PROC_MY_NAME->jobid))) {
-                ORTE_ERROR_LOG(ret);
-                error = "singleton orte_rmgr_base_proc_stage_gate_init";
-                goto error;
-            }
-        } else { /* if we an HNP, then we need to define the orted stage gates */
-            if (ORTE_SUCCESS != (ret = orte_rmgr_base_orted_stage_gate_init(ORTE_PROC_MY_NAME->jobid))) {
-                ORTE_ERROR_LOG(ret);
-                error = "seed orte_rmgr_base_orted_stage_gate_init";
-                goto error;
-            }
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_value(&value,
+                                                        ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_AND,
+                                                        "orte-job-0", 2,
+                                                        0))) {
+            ORTE_ERROR_LOG(ret);
+            error = "HNP create value";
+            goto error;
         }
         
-        /* set our state to LAUNCHED */
-        if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name, ORTE_PROC_STATE_LAUNCHED, 0))) {
+        /* store the node name and the daemon's name */
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_NODE_NAME_KEY,
+                                                         ORTE_STRING, orte_system_info.nodename))) {
             ORTE_ERROR_LOG(ret);
-            error = "singleton/seed could not set launched state";
+            error = "HNP create keyval";
+            goto error;
+        }
+        
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(value->keyvals[1]), ORTE_PROC_NAME_KEY,
+                                                         ORTE_NAME, ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            error = "HNP create keyval";
+            goto error;
+        }
+        
+        /* set the tokens */
+        if (ORTE_SUCCESS != (ret = orte_schema.get_proc_tokens(&(value->tokens), &(value->num_tokens), ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            error = "HNP get proc tokens";
+            goto error;
+        }
+        
+        /* insert values */
+        if (ORTE_SUCCESS != (ret = orte_gpr.put(1, &value))) {
+            ORTE_ERROR_LOG(ret);
+            error = "HNP put values";
+            goto error;
+        }
+        OBJ_RELEASE(value);
+        
+        /* and set our state to LAUNCHED */
+        if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(ORTE_PROC_MY_NAME, ORTE_PROC_STATE_LAUNCHED, 0))) {
+            ORTE_ERROR_LOG(ret);
+            error = "HNP could not set launched state";
+            goto error;
+        }
+    }
+    
+    if (orte_process_info.singleton) {
+        /* since all frameworks are now open and active, walk through
+        * the spawn sequence to ensure that we collect info on all
+        * available resources. Although we are a singleton and hence
+        * don't need to be spawned, we may choose to dynamically spawn
+        * additional processes. If we do that, then we need to know
+        * about any resources that have been allocated to us - executing
+        * the RDS and RAS frameworks is the only way to get that info.
+        *
+        * THIS ONLY SHOULD BE DONE FOR SINGLETONS - DO NOT DO IT
+        * FOR ANY OTHER CASE
+        */
+        orte_app_context_t *app;
+        orte_gpr_value_t *values[2];
+        orte_std_cntr_t one=1, zero=0;
+        orte_proc_state_t init=ORTE_PROC_STATE_INIT;
+        orte_vpid_t lrank=0, vone=1;
+        char *segment;
+
+        app = OBJ_NEW(orte_app_context_t);
+        app->app = strdup("singleton");
+        app->num_procs = 1;
+        
+        if (ORTE_SUCCESS !=
+            (ret = orte_rmgr_base_put_app_context(ORTE_PROC_MY_NAME->jobid, &app, 1))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not store app context";
+            goto error;
+        }
+        OBJ_RELEASE(app);
+        
+        /* ensure we read the allocation, even if we are not sitting on a node that is within it */
+        if (ORTE_SUCCESS != (ret = orte_ras.allocate_job(ORTE_PROC_MY_NAME->jobid, NULL))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not allocate job";
+            goto error;
+        }
+        
+        /* setup the launch system's stage gate counters and subscriptions */
+        if (ORTE_SUCCESS != (ret = orte_rmgr_base_proc_stage_gate_init(ORTE_PROC_MY_NAME->jobid))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not init triggers";
+            goto error;
+        }
+        
+        /* let's deal with the procs first - start by getting their job segment name */
+        if (ORTE_SUCCESS != (ret = orte_schema.get_job_segment_name(&segment, ORTE_PROC_MY_NAME->jobid))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not create job segment name";
+            goto error;
+        }
+        
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_value(&(values[0]),
+                                                        ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_AND,
+                                                        segment, 8, 0))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not create gpr value";
+            goto error;
+        }
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[0]), ORTE_PROC_RANK_KEY, ORTE_VPID, &(ORTE_PROC_MY_NAME->vpid)))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not create keyval";
+            goto error;
+        }
+        
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[1]), ORTE_PROC_NAME_KEY, ORTE_NAME, ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not create keyval";
+            goto error;
+        }
+        
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[2]), ORTE_CELLID_KEY, ORTE_CELLID, &(ORTE_PROC_MY_NAME->cellid)))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not create keyval";
+            goto error;
+        }
+        
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[3]), ORTE_NODE_NAME_KEY, ORTE_STRING, orte_system_info.nodename))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not create keyval";
+            goto error;
+        }
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[4]), ORTE_PROC_APP_CONTEXT_KEY, ORTE_STD_CNTR, &zero))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not create keyval";
+            goto error;
+        }
+        
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[5]), ORTE_PROC_STATE_KEY, ORTE_PROC_STATE, &init))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not create keyval";
+            goto error;
+        }
+        
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[6]), ORTE_PROC_LOCAL_RANK_KEY, ORTE_VPID, &lrank))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not create keyval";
+            goto error;
+        }
+        
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[7]), ORTE_NODE_NUM_PROCS_KEY, ORTE_STD_CNTR, &one))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not create keyval";
+            goto error;
+        }
+        if (ORTE_SUCCESS != (ret = orte_schema.get_proc_tokens(&(values[0]->tokens), &(values[0]->num_tokens), ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not get gpr tokens";
+            goto error;
+        }
+        
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_value(&values[1],
+                                                        ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_AND,
+                                                        segment, 3, 1))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not create gpr value";
+            goto error;
+        }
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[1]->keyvals[0]), ORTE_PROC_NUM_AT_INIT, ORTE_STD_CNTR, &one))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not create keyval";
+            goto error;
+        }
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[1]->keyvals[1]), ORTE_JOB_VPID_START_KEY, ORTE_VPID, &(ORTE_PROC_MY_NAME->vpid)))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not create keyval";
+            goto error;
+        }
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[1]->keyvals[2]), ORTE_JOB_VPID_RANGE_KEY, ORTE_VPID, &vone))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not create keyval";
+            goto error;
+        }
+        values[1]->tokens[0] = strdup(ORTE_JOB_GLOBALS); /* counter is in the job's globals container */
+
+        /* insert all values in one call */
+        if (ORTE_SUCCESS != (ret = orte_gpr.put(2, values))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not put its launch data";
+            goto error;
+        }
+        OBJ_RELEASE(values[0]);
+        OBJ_RELEASE(values[1]);
+        free(segment);
+
+        /* wireup our io */
+        if (ORTE_SUCCESS != (ret = orte_iof.iof_pull(ORTE_PROC_MY_NAME, ORTE_NS_CMP_JOBID, ORTE_IOF_STDOUT, 1))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not setup iof";
+            goto error;
+        }
+        if (ORTE_SUCCESS != (ret = orte_iof.iof_pull(ORTE_PROC_MY_NAME, ORTE_NS_CMP_JOBID, ORTE_IOF_STDERR, 2))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not setup iof";
+            goto error;
+        }
+        if (ORTE_SUCCESS != (ret = orte_iof.iof_push(ORTE_PROC_MY_NAME, ORTE_NS_CMP_JOBID, ORTE_IOF_STDIN, 0))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not setup iof";
+            goto error;
+        }
+        
+        /* setup the errmgr, as required */
+        if (ORTE_SUCCESS != (ret = orte_errmgr.register_job(ORTE_PROC_MY_NAME->jobid))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not setup errmgr callbacks";
+            goto error;
+        }
+        
+       /* set our state to LAUNCHED */
+        if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(ORTE_PROC_MY_NAME, ORTE_PROC_STATE_LAUNCHED, 0))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not set launched state";
             goto error;
         }
     }

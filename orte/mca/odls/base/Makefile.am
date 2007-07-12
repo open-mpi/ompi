@@ -25,6 +25,7 @@ libmca_odls_la_SOURCES += \
         base/odls_base_open.c \
         base/odls_base_select.c \
         base/odls_base_state.c \
+        base/odls_base_purge_params.c \
         base/data_type_support/odls_compare_fns.c \
         base/data_type_support/odls_copy_fns.c \
         base/data_type_support/odls_packing_fns.c \

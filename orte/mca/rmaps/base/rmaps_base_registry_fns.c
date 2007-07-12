@@ -84,8 +84,11 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
     char* dkeys[] = {
         ORTE_PROC_NAME_KEY,
         ORTE_NODE_NAME_KEY,
+        ORTE_PROC_RML_IP_ADDRESS_KEY,
         NULL
     };
+    bool daemon_exists;
+    
     OPAL_TRACE(1);
 
     /* define default answer */
@@ -318,6 +321,7 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
     for(v=0; v<num_dvalues; v++) {
         value = dvalues[v];
         node_name = NULL;
+        daemon_exists = false;
         for(kv = 0; kv<value->cnt; kv++) {
             keyval = value->keyvals[kv];
             if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
@@ -335,6 +339,13 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
                 }
                 continue;
             }
+            if (strcmp(keyval->key, ORTE_PROC_RML_IP_ADDRESS_KEY) == 0) {
+                /* we don't care about the value here - the existence of the key is
+                 * enough to indicate that this daemon must already exist, so flag it
+                 */
+                daemon_exists = true;
+                continue;
+            }
         }
         if (NULL == node_name) continue;
         /* find this node on the map */
@@ -347,6 +358,10 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
                 if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&node->daemon, pptr, ORTE_NAME))) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
+                }
+                if (daemon_exists) {
+                    /* set the pre-existing flag */
+                    node->daemon_preexists = true;
                 }
             }
         }

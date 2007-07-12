@@ -29,7 +29,6 @@
 
 #include "opal/util/cmd_line.h"
 #include "opal/mca/mca.h"
-#include "orte/tools/orted/orted.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

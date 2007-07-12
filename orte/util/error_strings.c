@@ -142,6 +142,12 @@ orte_err2str(int errnum)
     case ORTE_ERR_FAILED_TO_START:
         retval = "The specified application failed to start";
         break;
+    case ORTE_ERR_FILE_NOT_EXECUTABLE:
+        retval = "A system-required executable either could not be found or was not executable by this user";
+        break;
+    case ORTE_ERR_HNP_COULD_NOT_START:
+        retval = "Unable to start a daemon on the local node";
+        break;
     default:
         retval = NULL;
     }

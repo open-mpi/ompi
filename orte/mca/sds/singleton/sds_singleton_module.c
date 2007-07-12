@@ -40,31 +40,20 @@ orte_sds_base_module_t orte_sds_singleton_module = {
 int
 orte_sds_singleton_set_name(void)
 {
-    int rc, id, flag;
-    orte_vpid_t vpid;
+    int rc;
 
     if (ORTE_SUCCESS != (rc = orte_ns.create_my_name())) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-    vpid = ORTE_PROC_MY_NAME->vpid;
-    
     orte_process_info.num_procs = 1;
-    orte_process_info.vpid_start = vpid;
+    orte_process_info.vpid_start = ORTE_PROC_MY_NAME->vpid;
     /* since we are a singleton, then we must have a local_rank of 0
      * and only 1 local process
      */
     orte_process_info.local_rank = 0;
     orte_process_info.num_local_procs = 1;
-
-    /* only set the singleton flag is we are NOT infrastructure, 
-       and it has not been previously set. */
-    id = mca_base_param_find("orte", NULL, "infrastructure");
-    mca_base_param_lookup_int(id, &flag);
-    if (!flag) {
-        orte_process_info.singleton = true;
-    }
     
     return ORTE_SUCCESS;
 }

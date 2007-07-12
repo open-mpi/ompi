@@ -139,12 +139,21 @@ int orte_iof_proxy_unpublish(
         mask,
         tag);
 
-    /* delete local endpoint */
+    /* delete local endpoint.  Note that the endpoint may have already
+       been deleted (e.g., if some entity noticed that the fd closed
+       and called orte_iof_base_endpoint_delete on the corresopnding
+       endpoint already).  So if we get NOT_FOUND, ignore that error
+       -- the end result is what we want: the endpoint is deleted when
+       we return. */
     rc = orte_iof_base_endpoint_delete(
         origin,
         mask,
         tag);
-    return rc;
+    if (ORTE_ERR_NOT_FOUND == rc || ORTE_SUCCESS == rc) {
+        return ORTE_SUCCESS;
+    } else {
+        return rc;
+    }
 }
 
 

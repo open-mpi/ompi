@@ -558,6 +558,7 @@ static int mca_oob_xcast_direct(orte_jobid_t job,
     OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
 
     for(i=0; i<n; i++) {
+        opal_output(mca_oob_base_output, "oob_xcast: sending to [%ld,%ld,%ld]", ORTE_NAME_ARGS(peers+i));
         if (0 > (rc = mca_oob_send_packed_nb(peers+i, buffer, tag, 0, mca_oob_xcast_send_cb, NULL))) {
             if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);

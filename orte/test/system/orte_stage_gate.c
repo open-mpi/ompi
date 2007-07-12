@@ -29,6 +29,7 @@ int main(int argc, char* argv[])
     bool timing = false;
     int param, value;
     struct timeval ortestart, ortestop;
+    orte_buffer_t *buf;
     
     /* setup the OPAL environment */
     if (ORTE_SUCCESS != (rc = opal_init())) {
@@ -52,7 +53,8 @@ int main(int argc, char* argv[])
     }
     
     /* begin recording registry actions */
-    if (ORTE_SUCCESS != (rc = orte_gpr.begin_compound_cmd())) {
+    buf = OBJ_NEW(orte_buffer_t);
+    if (ORTE_SUCCESS != (rc = orte_gpr.begin_compound_cmd(buf))) {
         ORTE_ERROR_LOG(rc);
         error = "begin compound cmd failed";
         goto error;
@@ -73,11 +75,12 @@ int main(int argc, char* argv[])
     }
     
     /* send the information */
-    if (ORTE_SUCCESS != (rc = orte_gpr.exec_compound_cmd())) {
+    if (ORTE_SUCCESS != (rc = orte_gpr.exec_compound_cmd(buf))) {
         ORTE_ERROR_LOG(rc);
         error = "exec compound cmd failed";
         goto error;
     }
+    OBJ_RELEASE(buf);
     
     /* check for timing request - get stop time and report elapsed time if so */
     if (timing) {

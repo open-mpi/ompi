@@ -218,6 +218,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     size_t nprocs;
     char *error = NULL;
     bool compound_cmd = false;
+    orte_buffer_t *cmd_buffer;
     bool timing = false;
     int param, value;
     struct timeval ompistart, ompistop;
@@ -261,7 +262,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         orte_debug_flag) {
         compound_cmd = false;
     } else {
-        if (ORTE_SUCCESS != (ret = orte_gpr.begin_compound_cmd())) {
+        cmd_buffer = OBJ_NEW(orte_buffer_t);
+        if (ORTE_SUCCESS != (ret = orte_gpr.begin_compound_cmd(cmd_buffer))) {
             ORTE_ERROR_LOG(ret);
             error = "ompi_mpi_init: orte_gpr.begin_compound_cmd failed";
             goto error;
@@ -532,11 +534,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* if the compound command is operative, execute it */
 
     if (compound_cmd) {
-        if (OMPI_SUCCESS != (ret = orte_gpr.exec_compound_cmd())) {
+        if (OMPI_SUCCESS != (ret = orte_gpr.exec_compound_cmd(cmd_buffer))) {
             ORTE_ERROR_LOG(ret);
             error = "ompi_rte_init: orte_gpr.exec_compound_cmd failed";
             goto error;
         }
+        OBJ_RELEASE(cmd_buffer);
     }
 
     /* check for timing request - get stop time and report elapsed time if so */

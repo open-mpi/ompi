@@ -135,6 +135,7 @@ int main(int argc, char* argv[])
     msg.iov_len  = sizeof(i);
     for (i=0; i < range; i++) {
         name.vpid = i;
+        fprintf(stderr, "Parent: sending message to child [%ld,%ld,%ld]\n", ORTE_NAME_ARGS(&name));
         if (0 > (rc = orte_rml.send(&name, &msg, 1, MY_TAG, 0))) {
             ORTE_ERROR_LOG(rc);
         }

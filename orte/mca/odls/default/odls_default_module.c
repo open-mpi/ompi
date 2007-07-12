@@ -503,12 +503,10 @@ GOTCHILD:
     }
     opal_output(orte_odls_globals.output, "orted sent IOF unpub message!\n");
 
-#if 0
     /* Note that the svc IOF component will detect an exception on the
        oob because we're shutting it down, so it will take care of
        closing down any streams that it has open to us. */
     orte_iof.iof_flush();
-#endif
 
     /* determine the state of this process */
     aborted = false;
@@ -745,10 +743,6 @@ static int odls_default_fork_local_proc(
                 free(newenv);
             }
         }
-
-        param = mca_base_param_environ_variable("rmgr","bootproxy","jobid");
-        opal_unsetenv(param, &environ_copy);
-        free(param);
 
         /* pass my contact info to the local proc so we can talk */
         uri = orte_rml.get_uri();
