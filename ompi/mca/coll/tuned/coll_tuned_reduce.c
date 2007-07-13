@@ -437,7 +437,7 @@ int ompi_coll_tuned_reduce_intra_binomial( void *sendbuf, void *recvbuf,
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_binomial rank %d ss %5d",
                  ompi_comm_rank(comm), segsize));
 
-    COLL_TUNED_UPDATE_BMTREE( comm, root );
+    COLL_TUNED_UPDATE_IN_ORDER_BMTREE( comm, root );
 
     /**
      * Determine number of segments and number of elements
@@ -448,7 +448,7 @@ int ompi_coll_tuned_reduce_intra_binomial( void *sendbuf, void *recvbuf,
 
     return ompi_coll_tuned_reduce_generic( sendbuf, recvbuf, count, datatype, 
                                            op, root, comm,
-                                           comm->c_coll_selected_data->cached_bmtree, 
+                                           comm->c_coll_selected_data->cached_in_order_bmtree, 
                                            segcount, max_outstanding_reqs );
 }
 

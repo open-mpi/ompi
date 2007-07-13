@@ -351,19 +351,15 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     if ((communicator_size < 8) && (message_size < 512)){
         /* Linear_0K */
         return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm); 
-    } else if ((communicator_size < 8) && (message_size < 20480)) {
+    } else if (((communicator_size < 8) && (message_size < 20480)) ||
+               (message_size < 2048) || (count <= 1)) {
         /* Binomial_0K */
         segsize = 0;
         return ompi_coll_tuned_reduce_intra_binomial(sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
-    } else if ((message_size < 2048) ||
-               (count <= 1)){
-        /* Binary_0K */
-        segsize = 0;
-        return ompi_coll_tuned_reduce_intra_binary(sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
     } else if (communicator_size > (a1 * message_size + b1)) {
-        /* Binary_1K */
+        /* Binomial_1K */
         segsize = 1024;
-        return ompi_coll_tuned_reduce_intra_binary(sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
+        return ompi_coll_tuned_reduce_intra_binomial(sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
     } else if (communicator_size > (a2 * message_size + b2)) {
         /* Pipeline_1K */
         segsize = 1024;
