@@ -218,7 +218,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     size_t nprocs;
     char *error = NULL;
     bool compound_cmd = false;
-    orte_buffer_t *cmd_buffer;
+    orte_buffer_t *cmd_buffer = NULL;
     bool timing = false;
     int param, value;
     struct timeval ompistart, ompistop;
