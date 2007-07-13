@@ -62,14 +62,6 @@ ompi_osc_rdma_module_accumulate(void *origin_addr, int origin_count,
                           OMPI_WIN_EXPOSE_EPOCH);
     }
 
-    if (op != &ompi_mpi_op_replace && 
-        !ompi_ddt_is_predefined(target_dt)) {
-        fprintf(stderr, "MPI_Accumulate currently does not support reductions\n");
-        fprintf(stderr, "with any user-defined types.  This will be rectified\n");
-        fprintf(stderr, "in a future release.\n");
-        return MPI_ERR_UNSUPPORTED_OPERATION;
-    }
-
     /* shortcut 0 count case */
     if (0 == origin_count || 0 == target_count) {
             return OMPI_SUCCESS;

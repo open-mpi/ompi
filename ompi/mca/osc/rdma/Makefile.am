@@ -29,7 +29,6 @@ pt2pt_sources = \
 	osc_rdma_longreq.h \
 	osc_rdma_longreq.c \
 	osc_rdma_obj_convert.h \
-	osc_rdma_obj_convert.c \
 	osc_rdma_replyreq.h \
 	osc_rdma_replyreq.c \
 	osc_rdma_sendreq.h \

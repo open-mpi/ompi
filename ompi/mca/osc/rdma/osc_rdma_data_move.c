@@ -30,6 +30,7 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/osc/base/base.h"
+#include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/dt_arch.h"
 
@@ -803,7 +804,7 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
         (header->hdr_target_disp * module->m_win->w_disp_unit);    
     ompi_proc_t *proc = ompi_comm_peer_lookup( module->m_comm, header->hdr_origin );
     struct ompi_datatype_t *datatype = 
-        ompi_osc_rdma_datatype_create(proc, inbuf);
+        ompi_osc_base_datatype_create(proc, inbuf);
 
     if (NULL == datatype) {
         opal_output(ompi_osc_base_output,
@@ -887,6 +888,8 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
  * Receive an accumulate on the target side
  *
  **********************************************************************/
+
+
 static void
 ompi_osc_rdma_sendreq_recv_accum_long_cb(ompi_osc_rdma_longreq_t *longreq)
 {
@@ -894,17 +897,48 @@ ompi_osc_rdma_sendreq_recv_accum_long_cb(ompi_osc_rdma_longreq_t *longreq)
         (ompi_osc_rdma_send_header_t*) longreq->cbdata;
     void *payload = (void*) (header + 1);
     int ret;
+    ompi_osc_rdma_module_t *module = longreq->req_module;
+    unsigned char *target_buffer =
+        (unsigned char*) module->m_win->w_baseptr + 
+        (header->hdr_target_disp * module->m_win->w_disp_unit);
 
     /* lock the window for accumulates */
     OPAL_THREAD_LOCK(&longreq->req_module->m_acc_lock);
 
-    /* copy the data from the temporary buffer into the user window */
-    ret = ompi_osc_rdma_process_op(longreq->req_module, 
-                                   header, 
-                                   longreq->req_datatype, 
-                                   longreq->req_op, 
-                                   payload,
-                                   header->hdr_msg_length);
+    if (longreq->req_op == &ompi_mpi_op_replace) {
+        ompi_convertor_t convertor;
+        struct iovec iov;
+        uint32_t iov_count = 1;
+        size_t max_data;
+
+        /* create convertor */
+        OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
+
+        /* initialize convertor */
+        ompi_convertor_copy_and_prepare_for_recv(ompi_proc_local()->proc_convertor,
+                                                 longreq->req_datatype,
+                                                 header->hdr_target_count,
+                                                 target_buffer,
+                                                 0,
+                                                 &convertor);
+
+        iov.iov_len = header->hdr_msg_length;
+        iov.iov_base = (IOVBASE_TYPE*) payload;
+        max_data = iov.iov_len;
+        ompi_convertor_unpack(&convertor, 
+                              &iov,
+                              &iov_count,
+                              &max_data);
+        OBJ_DESTRUCT(&convertor);
+    } else {
+        /* copy the data from the temporary buffer into the user window */
+        ret = ompi_osc_base_process_op(target_buffer,
+                                       payload,
+                                       header->hdr_msg_length,
+                                       longreq->req_datatype,
+                                       header->hdr_target_count,
+                                       longreq->req_op);
+    }
 
     /* unlock the window for accumulates */
     OPAL_THREAD_UNLOCK(&longreq->req_module->m_acc_lock);
@@ -933,10 +967,10 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
                                   void **payload)
 {
     int ret = OMPI_SUCCESS;
-    struct ompi_op_t *op = ompi_osc_rdma_op_create(header->hdr_target_op);
+    struct ompi_op_t *op = ompi_osc_base_op_create(header->hdr_target_op);
     ompi_proc_t *proc = ompi_comm_peer_lookup( module->m_comm, header->hdr_origin );
     struct ompi_datatype_t *datatype = 
-        ompi_osc_rdma_datatype_create(proc, payload);
+        ompi_osc_base_datatype_create(proc, payload);
 
     if (NULL == datatype) {
         opal_output(ompi_osc_base_output,
@@ -945,12 +979,100 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
     }
 
     if (header->hdr_msg_length > 0) {
+        unsigned char *target_buffer;
+
+        target_buffer = (unsigned char*) module->m_win->w_baseptr + 
+            (header->hdr_target_disp * module->m_win->w_disp_unit);
+
         /* lock the window for accumulates */
         OPAL_THREAD_LOCK(&module->m_acc_lock);
 
-        /* copy the data from the temporary buffer into the user window */
-        ret = ompi_osc_rdma_process_op(module, header, datatype, op, *payload, 
-                                        header->hdr_msg_length);
+        if (op == &ompi_mpi_op_replace) {
+            ompi_convertor_t convertor;
+            struct iovec iov;
+            uint32_t iov_count = 1;
+            size_t max_data;
+
+            /* create convertor */
+            OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
+
+            /* initialize convertor */
+            ompi_convertor_copy_and_prepare_for_recv(proc->proc_convertor,
+                                                     datatype,
+                                                     header->hdr_target_count,
+                                                     target_buffer,
+                                                     0,
+                                                     &convertor);
+
+            iov.iov_len = header->hdr_msg_length;
+            iov.iov_base = (IOVBASE_TYPE*)*payload;
+            max_data = iov.iov_len;
+            ompi_convertor_unpack(&convertor, 
+                                  &iov,
+                                  &iov_count,
+                                  &max_data);
+            OBJ_DESTRUCT(&convertor);
+        } else {
+            void *buffer = NULL;
+
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (proc->proc_arch != ompi_proc_local()->proc_arch) {
+                ompi_convertor_t convertor;
+                struct iovec iov;
+                uint32_t iov_count = 1;
+                size_t max_data;
+                struct ompi_datatype_t *primitive_datatype = NULL;
+                uint32_t primitive_count;
+                size_t buflen;
+
+                ompi_osc_base_get_primitive_type_info(datatype, &primitive_datatype, &primitive_count);
+                primitive_count *= header->hdr_target_count;
+
+                /* figure out how big a buffer we need */
+                ompi_ddt_type_size(primitive_datatype, &buflen);
+                buflen *= primitive_count;
+
+                /* create convertor */
+                OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
+
+                payload = (void*) malloc(buflen);
+
+                /* initialize convertor */
+                ompi_convertor_copy_and_prepare_for_recv(proc->proc_convertor,
+                                                         primitive_datatype,
+                                                         primitive_count,
+                                                         buffer,
+                                                         0,
+                                                         &convertor);
+
+                iov.iov_len = header->hdr_msg_length;
+                iov.iov_base = (IOVBASE_TYPE*)*payload;
+                max_data = iov.iov_len;
+                ompi_convertor_unpack(&convertor, 
+                                      &iov,
+                                      &iov_count,
+                                      &max_data);
+                OBJ_DESTRUCT(&convertor);
+            } else {
+                buffer = *payload;
+            }
+#else
+            buffer = *payload;
+#endif
+            /* copy the data from the temporary buffer into the user window */
+            ret = ompi_osc_base_process_op(target_buffer,
+                                           buffer,
+                                           header->hdr_msg_length,
+                                           datatype,
+                                           header->hdr_target_count,
+                                           op);
+
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (proc->proc_arch != ompi_proc_local()->proc_arch) {
+                if (NULL == buffer) free(buffer);
+            }
+#endif
+        }
 
         /* unlock the window for accumulates */
         OPAL_THREAD_UNLOCK(&module->m_acc_lock);
@@ -969,13 +1091,17 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
 
     } else {
         ompi_osc_rdma_longreq_t *longreq;
-        ptrdiff_t lb, extent, true_lb, true_extent;
         size_t buflen;
+        struct ompi_datatype_t *primitive_datatype = NULL;
+        uint32_t primitive_count;
+
+        /* get underlying type... */
+        ompi_osc_base_get_primitive_type_info(datatype, &primitive_datatype, &primitive_count);
+        primitive_count *= header->hdr_target_count;
 
         /* figure out how big a buffer we need */
-        ompi_ddt_get_extent(datatype, &lb, &extent);
-        ompi_ddt_get_true_extent(datatype, &true_lb, &true_extent);
-        buflen = true_extent + (header->hdr_target_count - 1) * extent;
+        ompi_ddt_type_size(primitive_datatype, &buflen);
+        buflen *= primitive_count;
 
         /* get a longreq and fill it in */
         ompi_osc_rdma_longreq_alloc(&longreq);
@@ -995,8 +1121,8 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
         ((ompi_osc_rdma_send_header_t*) longreq->cbdata)->hdr_msg_length = buflen;
 
         ret = mca_pml.pml_irecv(((char*) longreq->cbdata) + sizeof(ompi_osc_rdma_send_header_t),
-                                header->hdr_target_count,
-                                datatype,
+                                primitive_count,
+                                primitive_datatype,
                                 header->hdr_origin,
                                 header->hdr_origin_tag,
                                 module->m_comm,
