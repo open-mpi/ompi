@@ -79,6 +79,7 @@ Trunk (not on release branches yet)
 1.2.4
 -----
 
+- Updated the udapl BTL to use RDMA capabilities.
 - Fixed a segfault crash on large SMPs when doing collectives.
 - Allow use of the Bproc head node if it was allocated to the user.
   Thanks to Sean Kelly for reporting the problem and helping debug it.
