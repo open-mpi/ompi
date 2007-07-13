@@ -164,9 +164,6 @@ mca_pml_cm_component_fini(void)
     /* shut down buffered send code */
     mca_pml_base_bsend_fini();
 
-    OBJ_DESTRUCT(&mca_pml_base_send_requests);
-    OBJ_DESTRUCT(&mca_pml_base_recv_requests);
-
     if (NULL != ompi_mtl && NULL != ompi_mtl->mtl_finalize) {
         return ompi_mtl->mtl_finalize(ompi_mtl);
     }
