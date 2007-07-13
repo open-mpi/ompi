@@ -88,9 +88,6 @@ static int pls_lsf_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *a
 static int pls_lsf_signal_proc(const orte_process_name_t *name, int32_t signal);
 static int pls_lsf_finalize(void);
 
-static int pls_lsf_start_proc(int argc, char **argv, char **env,
-                              char *prefix);
-
 
 /*
  * Global variable
@@ -124,21 +121,19 @@ static int pls_lsf_launch_job(orte_jobid_t jobid)
     char **argv = NULL;
     int argc;
     int rc;
-    char *tmp;
     char** env = NULL;
     char* var;
-    char *nodelist_flat;
     char **nodelist_argv;
     int nodelist_argc;
     orte_process_name_t name;
     char *name_string;
-    char **custom_strings;
-    int num_args, i;
+    int i;
     char *cur_prefix;
     struct timeval joblaunchstart, launchstart, launchstop;
     int proc_name_index = 0;
     bool failed_launch = true;
 
+    printf("pls lsf being used to launch!\n");
     if (mca_pls_lsf_component.timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
             opal_output(0, "pls_lsf: could not obtain job start time");
@@ -296,7 +291,22 @@ static int pls_lsf_launch_job(orte_jobid_t jobid)
      * orterun can do the rest of its stuff. Instead, we'll catch any
      * failures and deal with them elsewhere
      */
-    if (0 > lsb_launch(nodelist_argv, argv, LSF_DJOB_NOWAIT, env)) {
+    argv = NULL;
+    argc = 0;
+    opal_argv_append(&argc, &argv, "env");
+    opal_output(0, "launching on: %s", opal_argv_join(nodelist_argv, ' '));
+    opal_output(0, "launching: %s", opal_argv_join(argv, ' '));
+    if (lsb_launch(nodelist_argv, argv, LSF_DJOB_NOWAIT, env) < 0) {
+        ORTE_ERROR_LOG(ORTE_ERR_FAILED_TO_START);
+        opal_output(0, "got nonzero: %d", rc);
+        rc = ORTE_ERR_FAILED_TO_START;
+        goto cleanup;
+    }
+    opal_output(0, "launched ok");
+    sleep(5);
+    exit(0);
+
+    if (lsb_launch(nodelist_argv, argv, LSF_DJOB_NOWAIT, env) < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_FAILED_TO_START);
         rc = ORTE_ERR_FAILED_TO_START;
         goto cleanup;
@@ -336,7 +346,9 @@ cleanup:
     
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(jobid, ORTE_JOB_STATE_FAILED_TO_START))) {
+        if (ORTE_SUCCESS != 
+            (rc = orte_smr.set_job_state(jobid, 
+                                         ORTE_JOB_STATE_FAILED_TO_START))) {
             ORTE_ERROR_LOG(rc);
         }
         
@@ -354,7 +366,8 @@ static int pls_lsf_terminate_job(orte_jobid_t jobid, struct timeval *timeout, op
     int rc;
     
     /* order them to kill their local procs for this job */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(jobid, timeout, attrs))) {
+    if (ORTE_SUCCESS !=
+        (rc = orte_pls_base_orted_kill_local_procs(jobid, timeout, attrs))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -418,30 +431,4 @@ static int pls_lsf_finalize(void)
     }
     
     return ORTE_SUCCESS;
-}
-
-
-static void lsf_wait_cb(pid_t pid, int status, void* cbdata)
-{
-    /* not sure yet about how this will be used */
-    
-    int rc;
-    
-    if (0 != status) {
-        /* we have a problem */
-        opal_output(0, "ERROR: lsb_launch failed to start the required daemons.");
-        opal_output(0, "ERROR: This could be due to an inability to find the orted binary");
-        opal_output(0, "ERROR: on one or more remote nodes, lack of authority to execute");
-        opal_output(0, "ERROR: on one or more specified nodes, or other factors.");
-        
-        /* set the job state so we know it failed to start */
-        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(active_job, ORTE_JOB_STATE_FAILED_TO_START))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        
-        /* force termination of the job */
-        if (ORTE_SUCCESS != (rc = orte_wakeup(active_job))) {
-            ORTE_ERROR_LOG(rc);
-        }
-    }
 }

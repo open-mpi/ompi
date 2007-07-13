@@ -19,45 +19,33 @@
 
 AM_CPPFLAGS = $(pls_lsf_CPPFLAGS)
 
-dist_pkgdata_DATA = help-pls-lsf.txt
-
-bin_PROGRAMS = mytest
-
-mytest_SOURCES = mytest.c
-mytest_LDFLAGS = $(pls_lsf_LDFLAGS)
-mytest_LDADD = $(pls_lsf_LIBS)
-
 sources = \
-        pls_lsf.h \
-        pls_lsf_component.c \
-        pls_lsf_module.c
+        sds_lsf.h \
+        sds_lsf_component.c \
+        sds_lsf_module.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_pls_lsf_DSO
-lib =
-lib_sources = 
-component = mca_pls_lsf.la
-component_sources = $(sources)
+if OMPI_BUILD_sds_lsf_DSO
+component_noinst =
+component_install = mca_sds_lsf.la
 else
-lib = libmca_pls_lsf.la
-lib_sources = $(sources)
-component =
-component_sources =
+component_noinst = libmca_sds_lsf.la
+component_install =
 endif
 
 mcacomponentdir = $(pkglibdir)
-mcacomponent_LTLIBRARIES = $(component)
-mca_pls_lsf_la_SOURCES = $(component_sources)
-mca_pls_lsf_la_LDFLAGS = -module -avoid-version $(pls_lsf_LDFLAGS)
-mca_pls_lsf_la_LIBADD = \
-    $(pls_lsf_LIBS) \
+mcacomponent_LTLIBRARIES = $(component_install)
+mca_sds_lsf_la_SOURCES = $(sources)
+mca_sds_lsf_la_LDFLAGS = -module -avoid-version $(sds_lsf_LDFLAGS)
+mca_sds_lsf_la_LIBADD = \
+    $(sds_lsf_LIBS) \
     $(top_ompi_builddir)/orte/libopen-rte.la \
     $(top_ompi_builddir)/opal/libopen-pal.la
 
-noinst_LTLIBRARIES = $(lib)
-libmca_pls_lsf_la_SOURCES = $(lib_sources)
-libmca_pls_lsf_la_LDFLAGS = -module -avoid-version $(pls_lsf_LDFLAGS)
-libmca_pls_lsf_la_LIBADD = $(pls_lsf_LIBS)
+noinst_LTLIBRARIES = $(component_noinst)
+libmca_sds_lsf_la_SOURCES =$(sources)
+libmca_sds_lsf_la_LDFLAGS = -module -avoid-version $(sds_lsf_LDFLAGS)
+libmca_sds_lsf_la_LIBADD = $(sds_lsf_LIBS)
