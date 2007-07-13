@@ -42,7 +42,7 @@ static int orte_ras_lsf_allocate(orte_jobid_t jobid, opal_list_t *attributes)
     opal_list_item_t *item;
     orte_ras_node_t *node;
     int i, rc, num_nodes;
-    
+
     /* get the list of allocated nodes */
     if ((num_nodes = lsb_getalloc(&nodelist)) < 0) {
         opal_show_help("help-ras-lsf.txt", "nodelist-failed", true);
@@ -54,6 +54,7 @@ static int orte_ras_lsf_allocate(orte_jobid_t jobid, opal_list_t *attributes)
     
     /* step through the list */
     for (i=0; i < num_nodes; i++) {
+        printf("lsf got node: %s\n", nodelist[i]);
         /* is this a repeat of the current node? */
         if (NULL != node && 0 == strcmp(nodelist[i], node->node_name)) {
             /* it is a repeat - just bump the slot count */
@@ -66,7 +67,6 @@ static int orte_ras_lsf_allocate(orte_jobid_t jobid, opal_list_t *attributes)
         node->node_name = strdup(nodelist[i]);
         node->node_slots = 1;
         opal_list_append(&nodes, &node->super);
-        
     }
     
     /* add any newly discovered nodes to the registry */
@@ -97,7 +97,7 @@ cleanup:
     
     /* release the nodelist from lsf */
     opal_argv_free(nodelist);
-    
+
     return rc;
 }
 
