@@ -24,8 +24,8 @@
 #include "osc_rdma_sendreq.h"
 #include "osc_rdma_replyreq.h"
 #include "osc_rdma_header.h"
-#include "osc_rdma_obj_convert.h"
 #include "osc_rdma_data_move.h"
+#include "osc_rdma_obj_convert.h"
 
 #include "opal/threads/condition.h"
 #include "opal/threads/mutex.h"
@@ -33,6 +33,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
+#include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/pml/pml.h"
@@ -613,7 +614,7 @@ component_fragment_cb(struct mca_btl_base_module_t *btl,
 
                 /* create or get a pointer to our datatype */
                 proc = ompi_comm_peer_lookup( module->m_comm, header->hdr_origin );
-                datatype = ompi_osc_rdma_datatype_create(proc, &payload);
+                datatype = ompi_osc_base_datatype_create(proc, &payload);
 
                 if (NULL == datatype) {
                     opal_output(ompi_osc_base_output,

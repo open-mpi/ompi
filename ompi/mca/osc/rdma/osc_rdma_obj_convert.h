@@ -20,39 +20,6 @@
  * utility functions for dealing with remote datatype and op structures
  */
 
-#include "mpi.h"
-
-#include "ompi/datatype/datatype.h"
-
-static inline
-struct ompi_datatype_t*
-ompi_osc_rdma_datatype_create(ompi_proc_t *remote_proc,  void **payload)
-{
-    struct ompi_datatype_t *datatype =
-        ompi_ddt_create_from_packed_description(payload, remote_proc);
-    if (NULL == datatype) return NULL;
-    if (ompi_ddt_is_predefined(datatype)) OBJ_RETAIN(datatype);
-    return datatype;
-}
-
-
-static inline
-ompi_op_t *
-ompi_osc_rdma_op_create(int op_id)
-{
-    ompi_op_t *op = MPI_Op_f2c(op_id);
-    OBJ_RETAIN(op);
-    return op;
-}
-
-
-int ompi_osc_rdma_process_op(ompi_osc_rdma_module_t *module,
-                              ompi_osc_rdma_send_header_t *header,
-                              struct ompi_datatype_t *datatype,
-                              ompi_op_t *op,
-                              void *inbuf,
-                              size_t inbuflen);
-
 /**
  * Convert a window index number into a module instance.
  */

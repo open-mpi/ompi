@@ -24,7 +24,6 @@
 #include "osc_pt2pt_sendreq.h"
 #include "osc_pt2pt_replyreq.h"
 #include "osc_pt2pt_header.h"
-#include "osc_pt2pt_obj_convert.h"
 #include "osc_pt2pt_data_move.h"
 #include "osc_pt2pt_buffer.h"
 
@@ -33,6 +32,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
+#include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/datatype/dt_arch.h"
 
@@ -535,7 +535,7 @@ component_fragment_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
 
             /* create or get a pointer to our datatype */
             proc = ompi_comm_peer_lookup( module->p2p_comm, header->hdr_origin );
-            datatype = ompi_osc_pt2pt_datatype_create(proc, &payload);
+            datatype = ompi_osc_base_datatype_create(proc, &payload);
 
             if (NULL == datatype) {
                 opal_output(ompi_osc_base_output,
