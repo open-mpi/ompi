@@ -45,6 +45,8 @@ ORTE_DECLSPEC extern bool orte_infrastructure, orted_spin_flag, orte_no_daemoniz
 
 ORTE_DECLSPEC extern struct timeval orte_abort_timeout;
 
+ORTE_DECLSPEC extern char **orte_launch_environ;
+
 /**
  * Whether ORTE is initialized or not
  */

@@ -109,7 +109,6 @@ static struct {
     char* vpid_start;
     char* num_procs;
     char* universe;
-    char **saved_environ;
     int uri_pipe;
     opal_mutex_t mutex;
     opal_condition_t condition;
@@ -235,7 +234,7 @@ int orte_daemon(int argc, char *argv[])
     }
 
     /* save the environment for use when launching application processes */
-    orted_globals.saved_environ = opal_argv_copy(environ);
+    orte_launch_environ = opal_argv_copy(environ);
 
     /* setup to check common command line options that just report and die */
     cmd_line = OBJ_NEW(opal_cmd_line_t);
@@ -808,7 +807,7 @@ static int process_commands(orte_process_name_t* sender,
             }
             
             /* launch the processes */
-            if (ORTE_SUCCESS != (ret = orte_odls.launch_local_procs(ndat, orted_globals.saved_environ))) {
+            if (ORTE_SUCCESS != (ret = orte_odls.launch_local_procs(ndat))) {
                 ORTE_ERROR_LOG(ret);
             }
 

@@ -35,7 +35,7 @@ bool orte_debug_flag, orte_timing, orte_infrastructure;
 bool orte_debug_daemons_flag, orte_debug_daemons_file_flag;
 bool orted_spin_flag, orte_no_daemonize_flag;
 struct timeval orte_abort_timeout;
-
+char **orte_launch_environ;
 
 /*
  * Whether we have completed orte_init or not
