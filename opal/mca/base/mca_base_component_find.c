@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -83,7 +83,8 @@ typedef struct ltfn_data_holder_t ltfn_data_holder_t;
  * Private functions
  */
 static void find_dyn_components(const char *path, const char *type, 
-                             const char *name, opal_list_t *found_components);
+                                const char **name, bool include_mode,
+                                opal_list_t *found_components);
 static int save_filename(const char *filename, lt_ptr data);
 static int open_component(component_file_item_t *target_file, 
                        opal_list_t *found_components);
@@ -116,44 +117,48 @@ static opal_list_t found_files;
  */
 int mca_base_component_find(const char *directory, const char *type, 
                             const mca_base_component_t *static_components[], 
+                            char **requested_component_names,
+                            bool include_mode,
                             opal_list_t *found_components,
                             bool open_dso_components)
 {
-  int i;
-  mca_base_component_list_item_t *cli;
+    int i;
+    mca_base_component_list_item_t *cli;
 
-  /* Find all the components that were statically linked in */
+    /* Find all the components that were statically linked in */
 
-  OBJ_CONSTRUCT(found_components, opal_list_t);
-  for (i = 0; NULL != static_components[i]; ++i) {
-    cli = OBJ_NEW(mca_base_component_list_item_t);
-    if (NULL == cli) {
-      return OPAL_ERR_OUT_OF_RESOURCE;
+    OBJ_CONSTRUCT(found_components, opal_list_t);
+    for (i = 0; NULL != static_components[i]; ++i) {
+        cli = OBJ_NEW(mca_base_component_list_item_t);
+        if (NULL == cli) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        cli->cli_component = static_components[i];
+        opal_list_append(found_components, (opal_list_item_t *) cli);
     }
-    cli->cli_component = static_components[i];
-    opal_list_append(found_components, (opal_list_item_t *) cli);
-  }
 
 #if OMPI_WANT_LIBLTDL
-  /* Find any available dynamic components in the specified directory */
-  if (open_dso_components) {
-      int param, param_disable_dlopen;
-      param = mca_base_param_find("mca", NULL, "component_disable_dlopen");
-      mca_base_param_lookup_int(param, &param_disable_dlopen);
+    /* Find any available dynamic components in the specified directory */
+    if (open_dso_components) {
+        int param, param_disable_dlopen;
+        param = mca_base_param_find("mca", NULL, "component_disable_dlopen");
+        mca_base_param_lookup_int(param, &param_disable_dlopen);
 
-      if (0 == param_disable_dlopen) {
-          find_dyn_components(directory, type, NULL, found_components);
-      }
-  } else {
-    opal_output_verbose(40, 0, 
-                        "mca: base: component_find: dso loading for %s MCA components disabled", 
-                        type);
-  }
+        if (0 == param_disable_dlopen) {
+            find_dyn_components(directory, type,
+                                (const char**)requested_component_names,
+                                include_mode, found_components); 
+        }
+    } else {
+        opal_output_verbose(40, 0, 
+                            "mca: base: component_find: dso loading for %s MCA components disabled", 
+                            type);
+    }
 #endif
 
-  /* All done */
+    /* All done */
 
-  return OPAL_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 #if OMPI_WANT_LIBLTDL
@@ -170,89 +175,107 @@ int mca_base_component_find(const char *directory, const char *type,
  * finally opened in recursive dependency traversals.
  */
 static void find_dyn_components(const char *path, const char *type_name, 
-                                const char *name,
+                                const char **name, bool include_mode,
                                 opal_list_t *found_components)
 {
-  ltfn_data_holder_t params;
-  char *path_to_use, *dir, *end;
-  component_file_item_t *file;
-  opal_list_item_t *cur;
+    ltfn_data_holder_t params;
+    char *path_to_use, *dir, *end;
+    component_file_item_t *file;
+    opal_list_item_t *cur;
 
-  strcpy(params.type, type_name);
+    strcpy(params.type, type_name);
 
-  if (NULL == name) {
     params.name[0] = '\0';
-    opal_output_verbose(40, 0, "mca: base: component_find: looking for all dynamic %s MCA components", 
-                       type_name);
-  } else {
-    strcpy(params.name, name);
-    opal_output_verbose(40, 0,
-                       "mca: base: component_find: looking for dynamic %s MCA component named \"%s\"",
-                       type_name, name);
-  }
-
-  /* If path is NULL, iterate over the set of directories specified by
-     the MCA param mca_base_component_path.  If path is not NULL, then
-     use that as the path. */
-
-  if (NULL == path) {
-    mca_base_param_lookup_string(mca_base_param_component_path, &path_to_use);
-    if (NULL == path_to_use) {
-      /* If there's no path, then there's nothing to search -- we're
-         done */
-      return;
-    }
-  } else {
-    path_to_use = strdup(path);
-  }
-
-  /* Iterate over all the files in the directories in the path and
-     make a master array of all the matching filenames that we
-     find. */
-
-  OBJ_CONSTRUCT(&found_files, opal_list_t);
-  dir = path_to_use;
-  if (NULL != dir) {
-    do {
-      end = strchr(dir, OPAL_ENV_SEP);
-      if (NULL != end) {
-        *end = '\0';
-      }
-      if (0 != lt_dlforeachfile(dir, save_filename, &params)) {
-        break;
-      }
-      dir = end + 1;
-    } while (NULL != end);
-  }
-
-  /* Iterate through all the filenames that we found.  Since one
-     component may [try to] call another to be loaded, only try to load
-     the UNVISITED files.  Also, ignore the return code -- basically,
-     give every file one chance to try to load.  If they load, great.
-     If not, great. */
-
-  for (cur = opal_list_get_first(&found_files); 
-       opal_list_get_end(&found_files) != cur;
-       cur = opal_list_get_next(cur)) {
-    file = (component_file_item_t *) cur;
-    if (UNVISITED == file->status) {
-      open_component(file, found_components);
-    }
-  }
-
-  /* So now we have a final list of loaded components.  We can free all
-     the file information. */
   
-  for (cur = opal_list_remove_first(&found_files); 
-       NULL != cur;
-       cur = opal_list_remove_first(&found_files)) {
-    OBJ_RELEASE(cur);
-  }
+    /* If path is NULL, iterate over the set of directories specified by
+       the MCA param mca_base_component_path.  If path is not NULL, then
+       use that as the path. */
+  
+    if (NULL == path) {
+        mca_base_param_lookup_string(mca_base_param_component_path, &path_to_use);
+        if (NULL == path_to_use) {
+            /* If there's no path, then there's nothing to search -- we're
+               done */
+            return;
+        }
+    } else {
+        path_to_use = strdup(path);
+    }
+  
+    /* Iterate over all the files in the directories in the path and
+       make a master array of all the matching filenames that we
+       find. */
+  
+    OBJ_CONSTRUCT(&found_files, opal_list_t);
+    dir = path_to_use;
+    if (NULL != dir) {
+        do {
+            end = strchr(dir, OPAL_ENV_SEP);
+            if (NULL != end) {
+                *end = '\0';
+            }
+            if (0 != lt_dlforeachfile(dir, save_filename, &params)) {
+                break;
+            }
+            dir = end + 1;
+        } while (NULL != end);
+    }
+  
+    /* Iterate through all the filenames that we found.  Since one
+       component may [try to] call another to be loaded, only try to load
+       the UNVISITED files.  Also, ignore the return code -- basically,
+       give every file one chance to try to load.  If they load, great.
+       If not, great. */
 
-  /* All done, now let's cleanup */
-  free(path_to_use);
+    for (cur = opal_list_get_first(&found_files); 
+         opal_list_get_end(&found_files) != cur;
+         cur = opal_list_get_next(cur)) {
+        file = (component_file_item_t *) cur;
 
-  OBJ_DESTRUCT(&found_files);
+        if( UNVISITED == file->status ) {
+            int i = 0;
+            bool op = true;
+            file->status = CHECKING_CYCLE;
+
+            if( NULL != name ) {
+                if( false == include_mode) {
+                    /* exclude mode */
+                    for( i = 0; NULL != name[i]; i++ ) {
+                        if( 0 == strcmp(name[i], file->name) ){
+                            op = false;
+                            break;
+                        }
+                    }
+                } else {
+                    /* include mode */
+                    for( op = false, i = 0; NULL != name[i]; i++ ) {
+                        if( 0 == strcmp(name[i], file->name) ){
+                            op = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if( true == op ) {
+                open_component(file, found_components);
+            }
+        }
+    }
+    
+
+    /* So now we have a final list of loaded components.  We can free all
+       the file information. */
+  
+    for (cur = opal_list_remove_first(&found_files); 
+         NULL != cur;
+         cur = opal_list_remove_first(&found_files)) {
+        OBJ_RELEASE(cur);
+    }
+
+    /* All done, now let's cleanup */
+    free(path_to_use);
+
+    OBJ_DESTRUCT(&found_files);
 }
 
 

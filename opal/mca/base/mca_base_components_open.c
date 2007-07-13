@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -40,6 +40,17 @@ struct component_name_t {
 typedef struct component_name_t component_name_t;
 
 /*
+ * Dummy structure for casting for open_only logic
+ */
+struct mca_base_open_only_dummy_component_t {
+    /** MCA base component */
+    mca_base_component_t version;
+    /** MCA base data */
+    mca_base_component_data_1_0_0_t data;
+};
+typedef struct mca_base_open_only_dummy_component_t mca_base_open_only_dummy_component_t;
+
+/*
  * Local variables
  */
 static bool show_errors = false;
@@ -53,10 +64,6 @@ static int parse_requested(int mca_param, bool *include_mode,
                            char ***requested_component_names);
 static int open_components(const char *type_name, int output_id, 
                            opal_list_t *src, opal_list_t *dest);
-static int distill(bool include_mode, const char *type_name,
-                   int output_id, opal_list_t *src, opal_list_t *dest,
-                   char **names);
-
 
 /**
  * Function for finding and opening either all MCA components, or the
@@ -67,92 +74,146 @@ int mca_base_components_open(const char *type_name, int output_id,
                              opal_list_t *components_available,
                              bool open_dso_components)
 {
-  int ret, param;
-  opal_list_item_t *item;
-  opal_list_t components_found, components_distilled;
-  char **requested_component_names;
-  int param_verbose = -1;
-  int param_type = -1;
-  int verbose_level;
-  char *str;
-  bool include_mode;
-  bool distilled = false;
+    int ret, param;
+    opal_list_item_t *item, *next;
+    opal_list_t components_found;
+    char **requested_component_names;
+    int param_verbose = -1;
+    int param_type = -1;
+    int verbose_level;
+    char *str;
+    bool include_mode;
+    uint32_t open_only_flags = MCA_BASE_METADATA_PARAM_NONE;
+    const mca_base_component_t *component;
+ 
+    /* Register MCA parameters */
+    /* Check to see if it exists first */
+    if( 0 > (param_type = mca_base_param_find(type_name, NULL, NULL) ) ) {
+        asprintf(&str, "Default selection set of components for the %s framework (<none>"
+                 " means use all components that can be found)", type_name);
+        param_type = 
+            mca_base_param_reg_string_name(type_name, NULL, str, 
+                                           false, false, NULL, NULL);
+        free(str);
+    }
 
-  /* Register MCA parameters */
-  /* Check to see if it exists first */
-  if( 0 > (param_type = mca_base_param_find(type_name, NULL, NULL) ) ) {
-      asprintf(&str, "Default selection set of components for the %s framework (<none> means \"use all components that can be found\")", type_name);
-      param_type = 
-          mca_base_param_reg_string_name(type_name, NULL, str, 
-                                         false, false, NULL, NULL);
-      free(str);
-  }
+    param = mca_base_param_find("mca", NULL, "component_show_load_errors");
+    mca_base_param_lookup_int(param, &ret);
+    show_errors = OPAL_INT_TO_BOOL(ret);
 
-  asprintf(&str, "Verbosity level for the %s framework (0 = no verbosity)", type_name);
-  param_verbose = 
-      mca_base_param_reg_int_name(type_name, "base_verbose",
-                                  str, false, false, 0, NULL);
-  free(str);
+    /* Setup verbosity for this MCA type */
+    asprintf(&str, "Verbosity level for the %s framework (0 = no verbosity)", type_name);
+    param_verbose = 
+        mca_base_param_reg_int_name(type_name, "base_verbose",
+                                    str, false, false, 0, NULL);
+    free(str);
+    mca_base_param_lookup_int(param_verbose, &verbose_level);
+    if (output_id != 0) {
+        opal_output_set_verbosity(output_id, verbose_level);
+    }
+    opal_output_verbose(10, output_id, 
+                        "mca: base: components_open: Looking for %s components",
+                        type_name);
 
-  param = mca_base_param_find("mca", NULL, "component_show_load_errors");
-  mca_base_param_lookup_int(param, &ret);
-  show_errors = OPAL_INT_TO_BOOL(ret);
+    ret = parse_requested(param_type, &include_mode, &requested_component_names);
+    if( OPAL_SUCCESS != ret ) {
+        return ret;
+    }
 
-  /* Setup verbosity for this MCA type */
+    /* Find and load requested components */
+    if (OPAL_SUCCESS != 
+        mca_base_component_find(NULL, type_name, static_components,
+                                requested_component_names, include_mode, 
+                                &components_found, open_dso_components)) {
+        return OPAL_ERROR;
+    }
 
-  mca_base_param_lookup_int(param_verbose, &verbose_level);
-  if (output_id != 0) {
-    opal_output_set_verbosity(output_id, verbose_level);
-  }
-  opal_output_verbose(10, output_id, 
-                      "mca: base: components_open: Looking for %s components",
-                      type_name);
+#if (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1)
+    {
+        int param_id = -1;
+        int param_val = 0;
+        /*
+         * Extract supported mca parameters for selection contraints
+         * Supported Options:
+         *   - mca_base_component_distill_checkpoint_ready = Checkpoint Ready
+         */
+        param_id = mca_base_param_reg_int_name("mca", "base_component_distill_checkpoint_ready",
+                                               "Distill only those components that are Checkpoint Ready", 
+                                               false, false,
+                                               0, &param_val);
+        if( 0 != param_val ) { /* Select Checkpoint Ready */
+            open_only_flags |= MCA_BASE_METADATA_PARAM_CHECKPOINT;
+        }
+    }
+#endif  /* (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1) */
 
-  /* Find and load all available components */
+    /*
+     * Pre-process the list with parameter constraints
+     * e.g., If requested to select only CR enabled components
+     *       then only make available those components.
+     */
+    if( !(MCA_BASE_METADATA_PARAM_NONE & open_only_flags) ) {
+#if (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1)
+        if( MCA_BASE_METADATA_PARAM_CHECKPOINT & open_only_flags) {
+            opal_output_verbose(10, output_id,
+                                "mca: base: components_open: "
+                                "including only %s components that are checkpoint enabled", type_name);
+        }
+#endif  /* (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1) */
+      
+        for(item  = opal_list_get_first(&components_found);
+            item != opal_list_get_end(&components_found);
+            item  = next ) {
+            mca_base_open_only_dummy_component_t *dummy;
+            mca_base_component_list_item_t *cli = (mca_base_component_list_item_t *) item;
+            dummy = (mca_base_open_only_dummy_component_t*) cli->cli_component;
+            component = cli->cli_component;
+      
+            next = opal_list_get_next(item);
+      
+#if (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1)
+            /*
+             * If the user asked for a checkpoint enabled run
+             * then only load checkpoint enabled components.
+             */
+            if( MCA_BASE_METADATA_PARAM_CHECKPOINT & open_only_flags) {
+                if( MCA_BASE_METADATA_PARAM_CHECKPOINT & dummy->data.param_field) {
+                    opal_output_verbose(10, output_id,
+                                        "mca: base: components_open: "
+                                        "(%s) Component %s is Checkpointable",
+                                        type_name,
+                                        dummy->version.mca_component_name);
+                }
+                else {
+                    opal_output_verbose(10, output_id,
+                                        "mca: base: components_open: "
+                                        "(%s) Component %s is *NOT* Checkpointable - Disabled",
+                                        type_name,
+                                        dummy->version.mca_component_name);
+                    opal_list_remove_item(&components_found, item);
+                }
+            }
+#endif  /* (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1) */
+        }
+    }
 
-  if (OPAL_SUCCESS != 
-      mca_base_component_find(NULL, type_name, static_components,
-                              &components_found, open_dso_components)) {
-    return OPAL_ERROR;
-  }
+    /* Open all remaining components */
+    ret = open_components(type_name, output_id,
+                          &components_found, components_available);
 
-  /* See if one or more specific components were requested */
+    /* Free resources */
+    for (item = opal_list_remove_first(&components_found); NULL != item;
+         item = opal_list_remove_first(&components_found)) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&components_found);
 
-  ret = parse_requested(param_type, &include_mode, &requested_component_names);
-  if (OPAL_SUCCESS == ret) {
-      ret = distill(include_mode, type_name, output_id, &components_found,
-                    &components_distilled, requested_component_names);
-      distilled = true;
-  }
+    if (NULL != requested_component_names) {
+        opal_argv_free(requested_component_names);
+    }
 
-  /* Now open whatever we have left */
-
-  if (OPAL_SUCCESS == ret) {
-      ret = open_components(type_name, output_id,
-                            &components_distilled, components_available);
-  }
-
-  /* Free resources */
-
-  for (item = opal_list_remove_first(&components_found); NULL != item;
-       item = opal_list_remove_first(&components_found)) {
-      OBJ_RELEASE(item);
-  }
-  OBJ_DESTRUCT(&components_found);
-  if (distilled) {
-      for (item = opal_list_remove_first(&components_distilled); NULL != item;
-           item = opal_list_remove_first(&components_distilled)) {
-          OBJ_RELEASE(item);
-      }
-      OBJ_DESTRUCT(&components_distilled);
-  }
-  if (NULL != requested_component_names) {
-      opal_argv_free(requested_component_names);
-  }
-
-  /* All done */
-
-  return ret;
+    /* All done */
+    return ret;
 }
 
 
@@ -207,212 +268,6 @@ static int parse_requested(int mca_param, bool *include_mode,
 
   free(requested_orig);
   return OPAL_SUCCESS;
-}
-
-/*
- * Dummy structure for casting in distill
- */
-struct mca_base_distill_dummy_component_t {
-    /** MCA base component */
-    mca_base_component_t version;
-    /** MCA base data */
-    mca_base_component_data_1_0_0_t data;
-};
-typedef struct mca_base_distill_dummy_component_t mca_base_distill_dummy_component_t;
-
-
-/*
- * Parse the list of found components and factor in the included /
- * excluded names to come up with a distilled list of components that
- * we should try to open.
- */
-static int distill(bool include_mode, const char *type_name,
-                   int output_id, opal_list_t *src, opal_list_t *dest,
-                   char **names)
-{
-    int i;
-    bool good;
-    opal_list_item_t *item, *next;
-    const mca_base_component_t *component;
-    mca_base_component_list_item_t *cli;
-    uint32_t open_only_flags = MCA_BASE_METADATA_PARAM_NONE;
-#if OPAL_ENABLE_FT    == 1
-#if OPAL_ENABLE_FT_CR == 1
-    int param_id = -1;
-    int param_val = 0;
-#endif
-#endif
-
-    opal_output_verbose(10, output_id,
-                        "mca: base: components_open: "
-                        "distilling %s components", type_name);
-    OBJ_CONSTRUCT(dest, opal_list_t);
-
-    /*
-     * Extract supported mca parameters for selection contraints
-     * Supported Options:
-     *   - mca_base_component_distill_checkpoint_ready = Checkpoint Ready
-     */
-#if OPAL_ENABLE_FT    == 1
-#if OPAL_ENABLE_FT_CR == 1
-    param_id = mca_base_param_reg_int_name("mca", "base_component_distill_checkpoint_ready",
-                                           "Distill only those components that are Checkpoint Ready", 
-                                           false, false,
-                                           0, &param_val);
-    if( 0 != param_val ) { /* Select Checkpoint Ready */
-        open_only_flags |= MCA_BASE_METADATA_PARAM_CHECKPOINT;
-    }
-#endif
-#endif
-
-    /*
-     * Pre-process the list with parameter constraints
-     * e.g., If requested to select only CR enabled components
-     *       then only make available those components.
-     */
-    if( !(MCA_BASE_METADATA_PARAM_NONE & open_only_flags) ) {
-#if OPAL_ENABLE_FT    == 1
-#if OPAL_ENABLE_FT_CR == 1
-        if( MCA_BASE_METADATA_PARAM_CHECKPOINT & open_only_flags) {
-            opal_output_verbose(10, output_id,
-                                "mca: base: components_open: "
-                                "including only %s components that are checkpoint enabled", type_name);
-        }
-#endif
-#endif
-
-        for(item  = opal_list_get_first(src);
-            item != opal_list_get_end(src);
-            item  = next ) {
-            mca_base_distill_dummy_component_t *dummy;
-            cli = (mca_base_component_list_item_t *) item;
-            dummy = (mca_base_distill_dummy_component_t*) cli->cli_component;
-            component = cli->cli_component;
-
-            next = opal_list_get_next(item);
-
-#if OPAL_ENABLE_FT    == 1
-#if OPAL_ENABLE_FT_CR == 1
-            /*
-             * If the user asked for a checkpoint enabled run
-             * then only load checkpoint enabled components.
-             */
-            if( MCA_BASE_METADATA_PARAM_CHECKPOINT & open_only_flags) {
-                if( MCA_BASE_METADATA_PARAM_CHECKPOINT & dummy->data.param_field) {
-                    opal_output_verbose(10, output_id,
-                                        "mca: base: components_open: "
-                                        "(%s) Component %s is Checkpointable",
-                                        type_name,
-                                        dummy->version.mca_component_name);
-                }
-                else {
-                    opal_output_verbose(10, output_id,
-                                        "mca: base: components_open: "
-                                        "(%s) Component %s is *NOT* Checkpointable - Disabled",
-                                        type_name,
-                                        dummy->version.mca_component_name);
-                    opal_list_remove_item(src, item);
-                }
-            }
-#endif
-#endif
-        }
-    }
-
-    /* Bozo case */
-
-    if (NULL == names) {
-        opal_output_verbose(10, output_id,
-                            "mca: base: components_open: "
-                            "accepting all %s components", type_name);
-        opal_list_join(dest, opal_list_get_end(dest), src);
-        return OPAL_SUCCESS;
-    }
-
-
-    /* Are we including components? */
-
-    if (include_mode) {
-        opal_output_verbose(10, output_id,
-                            "mca: base: components_open: "
-                            "including %s components", type_name);
-
-        /* Go through all the components and only keep the ones that
-           are specifically mentioned in the list */
-
-        for (i = 0; NULL != names[i]; ++i) {
-            good = false;
-
-            for (item = opal_list_get_first(src);
-                 opal_list_get_end(src) != item;
-                 item = next) {
-                next = opal_list_get_next(item);
-                cli = (mca_base_component_list_item_t *) item;
-                component = cli->cli_component;
-                if (0 == strcmp(names[i], component->mca_component_name)) {
-                    opal_list_remove_item(src, item);
-                    opal_list_append(dest, item);
-                    good = true;
-                    break;
-                }
-            }
-
-            if (good) {
-                opal_output_verbose(10, output_id, 
-                                    "mca: base: components_open:   "
-                                    "%s --> included", names[i]);
-            } else {
-                opal_output_verbose(10, output_id, 
-                                    "mca: base: components_open:   "
-                                    "%s --> not found", names[i]);
-            }
-        }
-    }
-
-    /* No, we are excluding components */
-   
-    else {
-        opal_output_verbose(10, output_id,
-                            "mca: base: components_open: "
-                            "excluding %s components", type_name);
-
-        /* Go through all the components and only keep the ones that
-           are specifically mentioned in the list */
-
-        for (item = opal_list_get_first(src);
-             opal_list_get_end(src) != item;
-             item = next) {
-            next = opal_list_get_next(item);
-            good = true;
-            cli = (mca_base_component_list_item_t *) item;
-            component = cli->cli_component;
-
-            for (i = 0; NULL != names[i]; ++i) {
-                if (0 == strcmp(names[i], component->mca_component_name)) {
-                    good = false;
-                    break;
-                }
-            }
-
-            if (!good) {
-                opal_output_verbose(10, output_id, 
-                                    "mca: base: components_open:   "
-                                    "%s --> excluded", 
-                                    component->mca_component_name);
-            } else {
-                opal_list_remove_item(src, item);
-                opal_list_append(dest, item);
-                opal_output_verbose(10, output_id, 
-                                    "mca: base: components_open:   "
-                                    "%s --> included",
-                                    component->mca_component_name);
-            }
-        }
-    }
-
-    /* All done */
-
-    return OPAL_SUCCESS;
 }
 
 
