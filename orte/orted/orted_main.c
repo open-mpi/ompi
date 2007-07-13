@@ -227,12 +227,6 @@ int orte_daemon(int argc, char *argv[])
     /* initialize the singleton died pipe to an illegal value so we can detect it was set */
     orted_globals.singleton_died_pipe = -1;
  
-    /* Ensure that enough of OPAL is setup for us to be able to run */
-    if (OPAL_SUCCESS != opal_init_util()) {
-        fprintf(stderr, "OPAL failed to initialize -- orted aborting\n");
-        exit(1);
-    }
-
     /* save the environment for use when launching application processes */
     orte_launch_environ = opal_argv_copy(environ);
 
@@ -256,7 +250,12 @@ int orte_daemon(int argc, char *argv[])
      */
     mca_base_cmd_line_process_args(cmd_line, &environ, &environ);
     
-    
+    /* Ensure that enough of OPAL is setup for us to be able to run */
+    if (OPAL_SUCCESS != opal_init_util()) {
+        fprintf(stderr, "OPAL failed to initialize -- orted aborting\n");
+        exit(1);
+    }
+
     /* register and process the orte params */
     if (ORTE_SUCCESS != (ret = orte_register_params(ORTE_INFRASTRUCTURE))) {
         return ret;
