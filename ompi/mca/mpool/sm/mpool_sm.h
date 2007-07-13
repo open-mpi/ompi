@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,6 +37,7 @@ struct mca_mpool_sm_component_t {
   /*      mca_allocator_base_module_t* sm_allocator; */
   char*  sm_allocator_name;
   size_t sm_size;
+  int    verbose;
   /*      struct mca_mpool_sm_mmap_t *sm_mmap; */
 };
 typedef struct mca_mpool_sm_component_t mca_mpool_sm_component_t;
