@@ -848,6 +848,24 @@ AC_C_BIGENDIAN
 
 OMPI_CHECK_BROKEN_QSORT
 
+AC_CACHE_CHECK([if word-sized integers must be word-size aligned],
+    [ompi_cv_c_word_size_align],
+    [AC_LANG_PUSH(C)
+     AC_RUN_IFELSE([AC_LANG_PROGRAM([dnl
+#include <stdlib.h>], [[    long data[2] = {0, 0};
+    long *lp;
+    int *ip;
+    ip = (int*) data;
+    ip++;
+    lp = (long*) ip;
+    return lp[0]; ]])],
+        [ompi_cv_c_word_size_align=no],
+        [ompi_cv_c_word_size_align=yes],
+        [ompi_cv_c_word_size_align=yes])])
+AS_IF([test $ompi_cv_c_word_size_align = yes], [results=1], [results=0])
+AC_DEFINE_UNQUOTED([OMPI_ALIGN_WORD_SIZE_INTEGERS], [$results],
+    [set to 1 if word-size integers must be aligned to word-size padding to prevent bus errors])
+
 # all: SYSV semaphores
 # all: SYSV shared memory
 # all: size of FD_SET
