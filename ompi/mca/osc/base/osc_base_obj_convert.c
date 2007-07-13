@@ -39,18 +39,30 @@ struct ompi_osc_base_convertor_t {
 typedef struct ompi_osc_base_convertor_t ompi_osc_base_convertor_t;
 static OBJ_CLASS_INSTANCE(ompi_osc_base_convertor_t, ompi_convertor_t, NULL, NULL);
 
-#define COPY_TYPE( TYPENAME, TYPE, COUNT )                                      \
-static int copy_##TYPENAME( ompi_convertor_t *pConvertor, uint32_t count,       \
+#define COPY_TYPE( TYPENAME, TYPE, COUNT )                              \
+static int copy_##TYPENAME( ompi_convertor_t *pConvertor, uint32_t count, \
                             char* from, size_t from_len, ptrdiff_t from_extent, \
-                            char* to, size_t to_len, ptrdiff_t to_extent,       \
-                            ptrdiff_t *advance)                                 \
-{                                                                               \
-    ompi_osc_base_convertor_t *osc_convertor =                                  \
-        (ompi_osc_base_convertor_t*) pConvertor;                                \
-                                                                                \
-    ompi_op_reduce(osc_convertor->op, from, to, count, osc_convertor->datatype);  \
-    *advance = count * from_extent;                                             \
-    return count;                                                               \
+                            char* to, size_t to_len, ptrdiff_t to_extent, \
+                            ptrdiff_t *advance)                         \
+{                                                                       \
+    size_t remote_TYPE_size = sizeof(TYPE) * (COUNT); /* TODO */        \
+    size_t local_TYPE_size = (COUNT) * sizeof(TYPE);                    \
+    ompi_osc_base_convertor_t *osc_convertor =                          \
+        (ompi_osc_base_convertor_t*) pConvertor;                        \
+                                                                        \
+    if( (from_extent == (ptrdiff_t)local_TYPE_size) &&                  \
+        (to_extent == (ptrdiff_t)remote_TYPE_size) ) {                  \
+        ompi_op_reduce(osc_convertor->op, from, to, count, osc_convertor->datatype); \
+    } else {                                                            \
+        uint32_t i;                                                     \
+        for( i = 0; i < count; i++ ) {                                  \
+            ompi_op_reduce(osc_convertor->op, from, to, 1, osc_convertor->datatype); \
+            to += to_extent;                                            \
+            from += from_extent;                                        \
+        }                                                               \
+    }                                                                   \
+    *advance = count * from_extent;                                     \
+    return count;                                                       \
 }
 
 /* set up copy functions for the basic C MPI data types */
