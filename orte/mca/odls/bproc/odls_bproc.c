@@ -539,7 +539,7 @@ cleanup:
  * @retval error
  */
 int
-orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_environ)
+orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data,)
 {
     odls_bproc_child_t *child;
     opal_list_item_t* item;

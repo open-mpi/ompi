@@ -334,6 +334,9 @@ int orterun(int argc, char *argv[])
 
     /* Need to initialize OPAL so that install_dirs are filled in */
     opal_init_util();
+    
+    /* save the environment for launch purposes */
+    orte_launch_environ = opal_argv_copy(environ);
 
     /* Setup MCA params */
 
@@ -384,8 +387,7 @@ int orterun(int argc, char *argv[])
     if (ORTE_SUCCESS != (rc = orte_init(ORTE_INFRASTRUCTURE, ORTE_NON_BARRIER))) {
         ORTE_ERROR_LOG(rc);
         return rc;
-    }
-    
+    }    
     
     /* since we are a daemon, we should *always* yield the processor when idle */
     opal_progress_set_yield_when_idle(true);

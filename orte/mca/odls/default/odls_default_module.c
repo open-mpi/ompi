@@ -109,7 +109,7 @@ static bool is_preload_local_dup(char *local_ref, orte_filem_base_request_t *fil
  * External Interface
  */
 static int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data, orte_job_map_t *map);
-static int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **base_environ);
+static int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data);
 static int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state);
 static int orte_odls_default_signal_local_procs(const orte_process_name_t *proc,
                                                 int32_t signal);
@@ -597,8 +597,7 @@ static int odls_default_fork_local_proc(
     orte_std_cntr_t total_slots_alloc,
     bool want_processor,
     size_t processor,
-    bool oversubscribed,
-    char **base_environ)
+    bool oversubscribed)
 {
     pid_t pid;
     orte_iof_base_io_conf_t opts;
@@ -711,9 +710,9 @@ static int odls_default_fork_local_proc(
         /* setup base environment: copy the current environ and merge
            in the app context environ */
         if (NULL != context->env) {
-            environ_copy = opal_environ_merge(base_environ, context->env);
+            environ_copy = opal_environ_merge(orte_launch_environ, context->env);
         } else {
-            environ_copy = opal_argv_copy(base_environ);
+            environ_copy = opal_argv_copy(orte_launch_environ);
         }
 
         /* special case handling for --prefix: this is somewhat icky,
@@ -933,7 +932,7 @@ static int odls_default_fork_local_proc(
  * Launch all processes allocated to the current node.
  */
 
-int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **base_environ)
+int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data)
 {
     int rc;
     orte_std_cntr_t i, j, kv, kv2, *sptr, total_slots_alloc;
@@ -1336,8 +1335,7 @@ DOFORK:
         if (ORTE_SUCCESS != (rc = odls_default_fork_local_proc(app, child, start,
                                                                range, total_slots_alloc,
                                                                want_processor,
-                                                               i, oversubscribed,
-                                                               base_environ))) {
+                                                               i, oversubscribed))) {
             /* do NOT ERROR_LOG this error - it generates
              * a message/node as most errors will be common
              * across the entire cluster. Instead, we let orterun
