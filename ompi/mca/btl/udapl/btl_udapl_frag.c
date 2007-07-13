@@ -73,6 +73,18 @@ static void mca_btl_udapl_frag_user_constructor(mca_btl_udapl_frag_t* frag)
     frag->registration = NULL;
 }
 
+static void mca_btl_udapl_frag_eager_rdma_constructor(mca_btl_udapl_frag_t* frag) 
+{ 
+    mca_btl_udapl_frag_eager_constructor(frag);
+    frag->segment.seg_len = mca_btl_udapl_module.super.btl_eager_limit;
+    frag->size = mca_btl_udapl_component.udapl_eager_frag_size;
+    frag->rdma_ftr = (mca_btl_udapl_rdma_footer_t *)
+        ((char *)(frag->segment.seg_addr.pval) +
+                frag->size -
+                sizeof(mca_btl_udapl_rdma_footer_t));
+    frag->rdma_ftr->active=0;
+}
+
 static void mca_btl_udapl_frag_common_destructor(mca_btl_udapl_frag_t* frag)
 {
 #if OMPI_ENABLE_DEBUG
@@ -115,3 +127,8 @@ OBJ_CLASS_INSTANCE(
     mca_btl_udapl_frag_user_constructor, 
     NULL); 
 
+OBJ_CLASS_INSTANCE(
+    mca_btl_udapl_frag_eager_rdma_t, 
+    mca_btl_base_descriptor_t, 
+    mca_btl_udapl_frag_eager_rdma_constructor, 
+    mca_btl_udapl_frag_common_destructor); 

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -29,6 +29,7 @@
 #include <dat/udat.h>
 
 /* Open MPI includes */
+#include "orte/class/orte_pointer_array.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_bitmap.h"
 #include "opal/event/event.h"
@@ -55,18 +56,31 @@ struct mca_btl_udapl_component_t {
     size_t  udapl_num_btls; /**< number of hcas available to the uDAPL component */
     size_t  udapl_max_btls; /**< maximum number of supported hcas */
     struct  mca_btl_udapl_module_t **udapl_btls; /**< array of available BTL modules */
-    size_t  udapl_evd_qlen;
     int32_t udapl_num_recvs;    /**< number of recv buffers to keep posted */
     int32_t udapl_num_sends;    /**< number of sends to post on endpoint */
-    int32_t udapl_timeout;      /**< connection timeout, in microseconds */
-
+    int32_t udapl_sr_win;       /**< number of fragments recieved before
+                                   returning credits to sender */
+    uint32_t udapl_timeout;      /**< connection timeout, in microseconds */
     size_t udapl_eager_frag_size;
     size_t udapl_max_frag_size;
-
+    size_t udapl_eager_rdma_frag_size; /* size of the rdma fragement including data
+                                        * payload space
+                                        */
+    
     int udapl_free_list_num;   /**< initial size of free lists */
     int udapl_free_list_max;   /**< maximum size of free lists */
     int udapl_free_list_inc;   /**< number of elements to alloc when growing */
-
+    int32_t udapl_eager_rdma_num;  /**< number of rdma buffers allocated
+                                      for short messages */
+    int32_t udapl_max_eager_rdma_peers; /**< maximum number of peers allowed to
+                                           use RDMA for short messages (cap)
+                                        */
+    int32_t udapl_eager_rdma_win; /**< number of eager RDMA fragments
+                                    recieved before returning credits to
+                                    sender */
+    int32_t udapl_conn_priv_data; /**< use connect priv data for proc data */
+    int32_t udapl_async_events;  /**< dequeue asynchronous events */
+    int32_t udapl_buffer_alignment;  /**< preferred communication buffer alignment, in bytes */
     opal_list_t udapl_procs;   /**< list of udapl proc structures */
     opal_mutex_t udapl_lock;   /**< lock for accessing module state */
     char* udapl_mpool_name;    /**< name of memory pool */ 
@@ -90,18 +104,44 @@ struct mca_btl_udapl_module_t {
     DAT_IA_HANDLE udapl_ia;
     DAT_PZ_HANDLE udapl_pz;
     DAT_PSP_HANDLE udapl_psp;
-
+    DAT_IA_ATTR udapl_ia_attr;
+    
     /* event dispatchers - async, data transfer, connection negotiation */
     DAT_EVD_HANDLE udapl_evd_async;
     DAT_EVD_HANDLE udapl_evd_dto;
     DAT_EVD_HANDLE udapl_evd_conn;
+    DAT_EP_PARAM   udapl_ep_param;
 
     /* free list of fragment descriptors */
     ompi_free_list_t udapl_frag_eager;
     ompi_free_list_t udapl_frag_max;
     ompi_free_list_t udapl_frag_user;
-
+    ompi_free_list_t udapl_frag_control;
+    
     opal_mutex_t udapl_lock;    /* lock for accessing module state */
+    opal_mutex_t udapl_eager_rdma_lock;         /* eager rdma lock  */
+    int32_t udapl_eager_rdma_endpoint_count;   /* count of the number of
+                                                 * endpoints in
+                                                 * udapl_eager_rdma_endpoints
+                                                 */
+    orte_pointer_array_t *udapl_eager_rdma_endpoints;   /* array of endpoints
+                                                         * with eager rdma
+                                                         * connections
+                                                         */
+    int32_t udapl_async_events;
+    int32_t udapl_connect_inprogress;
+    int32_t udapl_num_peers;
+
+    /* module specific limits */
+    int     udapl_async_evd_qlen;
+    int     udapl_conn_evd_qlen;
+    int     udapl_dto_evd_qlen;
+    int udapl_max_request_dtos; /**< maximum number of outstanding consumer
+                                       submitted sends and rdma operations, see
+                                       section 6.6.6 of uDAPL Spec */
+    int udapl_max_recv_dtos;    /**< maximum number of outstanding consumer
+                                       submitted recv operations, see section
+                                       6.6.6 of uDAPL Spec */
 }; 
 typedef struct mca_btl_udapl_module_t mca_btl_udapl_module_t;
 extern mca_btl_udapl_module_t mca_btl_udapl_module;
@@ -231,7 +271,7 @@ extern int mca_btl_udapl_del_procs(
  *
  * @param btl (IN)         BTL module
  * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transfered
+ * @param descriptor (IN)  Description of the data to be transferred
  * @param tag (IN)         The tag value used to notify the peer.
  */
 

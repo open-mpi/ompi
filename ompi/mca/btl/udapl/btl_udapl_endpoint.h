@@ -27,12 +27,18 @@
 #include "opal/event/event.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
+#include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_udapl_frag.h"
 #include "btl_udapl.h"
+#include "btl_udapl_eager_rdma.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
+
+#define BTL_UDAPL_TOKENS(E, C) ((E)->endpoint_sr_tokens[(C)] + \
+        (((C) == BTL_UDAPL_EAGER_CONNECTION)?(E)->endpoint_eager_rdma_remote.tokens:0))
 
 /**
  * Structure used to publish uDAPL id information to peers.
@@ -43,7 +49,7 @@ struct mca_btl_udapl_addr_t {
 };
 typedef struct mca_btl_udapl_addr_t mca_btl_udapl_addr_t;
 
-
+    
 /**
  * State of uDAPL endpoint connection.
  */
@@ -56,6 +62,25 @@ typedef enum {
     MCA_BTL_UDAPL_FAILED
 } mca_btl_udapl_endpoint_state_t;
 
+/*
+ * Establish a name for the 2 connections opened per peer
+ */
+typedef enum {
+    BTL_UDAPL_EAGER_CONNECTION,
+    BTL_UDAPL_MAX_CONNECTION,
+    BTL_UDAPL_NUM_CONNECTION
+} mca_btl_udapl_endpoint_conn_t;
+    
+/*
+ * Encapsulate data that describes sendrecv credit information.
+ */
+struct mca_btl_udapl_sr_credit_t {
+        mca_btl_udapl_control_header_t control;
+        uint32_t credits;
+        int connection; /* 0 == BTL_UDAPL_EAGER_CONNECTION;
+                           1 == BTL_UDAPL_MAX_CONNECTION */
+};
+typedef struct mca_btl_udapl_sr_credit_t mca_btl_udapl_sr_credit_t;
 
 /**
  * An abstraction that represents a connection to a endpoint process.
@@ -84,6 +109,12 @@ struct mca_btl_base_endpoint_t {
     int32_t endpoint_max_sends;
     /**< number of sends that may be posted */
 
+    int32_t endpoint_sr_tokens[BTL_UDAPL_NUM_CONNECTION];
+    /**< number of sends that may be posted */
+
+    int32_t endpoint_sr_credits[BTL_UDAPL_NUM_CONNECTION];
+    /**< number of recvs that are now available */
+
     int32_t endpoint_connection_seq;
     /**< sequence number of sendrecv message for the connection est */
 
@@ -96,6 +127,13 @@ struct mca_btl_base_endpoint_t {
     DAT_EP_HANDLE endpoint_eager;
     DAT_EP_HANDLE endpoint_max;
     /**< uDAPL endpoint handle */
+
+    int32_t endpoint_eager_rdma_index;
+    /**< index into array of endpoints with RDMA buffers */
+    mca_btl_udapl_eager_rdma_local_t endpoint_eager_rdma_local;
+    /**< info about local RDMA buffer */
+    mca_btl_udapl_eager_rdma_remote_t endpoint_eager_rdma_remote; 
+    /**< info about remote RDMA buffer */
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
@@ -125,6 +163,29 @@ int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
                                           mca_btl_udapl_addr_t* addr,
                                           int32_t* seq,
                                           DAT_EP_HANDLE endpoint);
+
+/*
+ * Send number of eager rdma credits
+ */
+int mca_btl_udapl_endpoint_send_eager_rdma_credits(mca_btl_base_endpoint_t* endpoint);
+
+/*
+ * Establish uDAPL endpoint parameters
+ */
+int mca_btl_udapl_endpoint_get_params(struct mca_btl_udapl_module_t* btl,
+                                      DAT_EP_PARAM* ep_param);
+
+/*
+ * Create uDAPL endpoint
+ */
+int mca_btl_udapl_endpoint_create(struct mca_btl_udapl_module_t* btl,
+                                  DAT_EP_HANDLE* udapl_endpoint);
+
+ /*
+ * Send number of send recv credits
+ */
+int mca_btl_udapl_endpoint_send_sr_credits(mca_btl_base_endpoint_t* endpoint,
+                                           const int connection);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

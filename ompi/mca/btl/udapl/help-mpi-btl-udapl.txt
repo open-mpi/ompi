@@ -1,0 +1,97 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2006 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+#
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English general help file for Open MPI.
+#
+[invalid num rdma segments] 
+
+WARNING: MCA parameter [btl_udapl_eager_rdma_num = %d] is not valid.
+RDMA will not be used for short messages. Try setting to positive
+value, e.g. 16.
+
+[use default endpoint params]
+
+WARNING: Using default uDAPL endpoint parameters not those that
+would have been modified by MCA parameters.
+
+[optimal buffer alignment mismatch]
+
+WARNING: DAT_OPTIMAL_ALIGNMENT = %d : BTL buffer_alignment = %d.
+The BTL buffer_alignment value may not be optimal. If all nodes
+report the same DAT_OPTIMAL_ALIGNMENT value and this differs from
+BTL buffer_alignment then setting "--mca btl_udapl_buffer_alignment
+%d" may improve performance.
+
+[max_recv_dtos too low]
+
+WARNING: The MCA parameter max_recv_dtos has been modified to a value,
+%d, that is insufficient. This value must be greater than or equal to
+num_recvs, %d. The uDAPL BTL will adjust to allow the program to
+proceed.
+
+[max_request_dtos too low]
+
+WARNING: The MCA parameter max_request_dtos has been modified to a
+value, %d, which may not be sufficient. Try setting max_request_dtos
+to %d if program fails.
+
+[max_recv_dtos system max]
+
+WARNING: The MCA parameter max_recv_dtos is trying to be set to,
+%d, which is larger than allowable so the value will be set to maximum
+allowed, %d.
+
+[max_request_dtos system max]
+
+WARNING: The MCA parameter max_request_dtos is trying to be set to,
+%d, which is larger than allowable so the value will be set to maximum
+allowed, %d.
+
+[evd_qlen adapter max]
+
+WARNING: The MCA parameter %s is trying to be set to %d,
+which is larger than allowable so the value will be set to maximum
+allowed, %d.
+
+[evd_qlen too low]
+
+WARNING: The MCA parameter %s has been modified to a value,
+%d, which may not be sufficient. Try setting %s to %d if
+program fails.
+
+[connection timeout low]
+
+WARNING: The MCA parameter %s has been modified to a value,
+%d, which may not be sufficient. Try setting %s to %d if
+program fails.
+
+[dat_lmr_create DAT_INSUFFICIENT_RESOURCES] 
+
+WARNING: The uDAPL BTL is not able to register memory. Possibly out of
+allowed privileged memory (i.e. memory that can be pinned). Increasing
+the allowed privileged memory may alleviate this issue.
+
+[dat_ia_open fail]
+
+WARNING: Failed to open "%s" [%s:%s]. 
+This may be a real error or it may be an invalid entry in the uDAPL
+Registry which is contained in the dat.conf file. Contact your local
+System Administrator to confirm the availability of the interfaces in
+the dat.conf file.

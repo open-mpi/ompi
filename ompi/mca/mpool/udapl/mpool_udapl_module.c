@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -71,6 +73,8 @@ void* mca_mpool_udapl_alloc(
         free(addr);
         return NULL;
     }
+    (*registration)->alloc_base = addr;
+    
     return addr;
 }
 
