@@ -49,7 +49,7 @@
 
 int orte_pls_xgrid_launch(orte_jobid_t jobid);
 int orte_pls_xgrid_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs);
-int orte_pls_xgrid_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs);
+int orte_pls_xgrid_terminate_orteds(struct timeval *timeout, opal_list_t *attrs);
 int orte_pls_xgrid_terminate_proc(const orte_process_name_t* proc);
 int orte_pls_xgrid_signal_job(orte_jobid_t job, int32_t signal, opal_list_t *attrs);
 int orte_pls_xgrid_signal_proc(const orte_process_name_t* proc_name, int32_t signal);
@@ -103,10 +103,10 @@ CLEANUP:
 
 
 /**
-* Terminate the orteds for a given job
+ * Terminate the orteds for a given job
  */
 int
-orte_pls_xgrid_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
+orte_pls_xgrid_terminate_orteds(struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
     
@@ -115,11 +115,6 @@ orte_pls_xgrid_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opa
         ORTE_ERROR_LOG(rc);
     }
     
-CLEANUP:
-    if (ORTE_SUCCESS != rc) {
-	rc = [mca_pls_xgrid_component.client terminateJob:jobid];
-    }
-
     return rc;
 }
 
