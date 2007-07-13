@@ -111,7 +111,7 @@ int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
     char *keys[4], *tokens[3], *cellname;
     struct timeval tv;
     struct timespec ts;
-    bool infrastructure = true, *bptr, tf_flag;
+    bool *bptr, tf_flag;
 
     /* get the nodename for the headnode of the target cluster */
     if (NULL == headnode) {  /* not provided, so try to look it up */
@@ -486,13 +486,6 @@ MOVEON:
         OPAL_THREAD_UNLOCK(&orte_setup_hnp_mutex);
 
         if (ORTE_SUCCESS == orte_setup_hnp_rc) {
-            /* Remember if we were infrastructure or not */
-            id = mca_base_param_find("orte", NULL, "infrastructure");
-            mca_base_param_lookup_int(id, &intparam);
-            if ( ((int)true) != intparam) {
-                infrastructure = false;
-            }
-
             /* need to restart the local system so it can connect to the remote daemon. */
             if (ORTE_SUCCESS != (rc = orte_restart(orte_setup_hnp_cbdata.name, orte_setup_hnp_orted_uri))) {
                /** can't use ORTE_ERROR_LOG here as it may no longer be valid. Since we may

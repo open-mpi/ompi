@@ -194,7 +194,7 @@ CLEANUP:
 int
 orte_sds_base_seed_set_name(void)
 {
-    int id, flag, rc;
+    int rc;
     
     /* if we are a seed, then there can be only one proc */
     orte_process_info.num_procs = 1;
@@ -204,9 +204,7 @@ orte_sds_base_seed_set_name(void)
 
     /* if we're a seed and we're not infrastructure, we're also a
        singleton.  So set the singleton flag in that case */
-    id = mca_base_param_find("orte", NULL, "infrastructure");
-    mca_base_param_lookup_int(id, &flag);
-    if (!flag) {
+    if (!orte_infrastructure) {
         orte_process_info.singleton = true;
     }
     /* now need to create our name in a manner that puts our job info on the name service
