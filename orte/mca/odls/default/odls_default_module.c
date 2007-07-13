@@ -503,10 +503,12 @@ GOTCHILD:
     }
     opal_output(orte_odls_globals.output, "orted sent IOF unpub message!\n");
 
+#if 0
     /* Note that the svc IOF component will detect an exception on the
        oob because we're shutting it down, so it will take care of
        closing down any streams that it has open to us. */
     orte_iof.iof_flush();
+#endif
 
     /* determine the state of this process */
     aborted = false;
