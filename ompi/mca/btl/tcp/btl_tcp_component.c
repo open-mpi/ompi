@@ -722,7 +722,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                                                    bool enable_progress_threads,
                                                    bool enable_mpi_threads)
 {
-    int ret;
+    int ret = OMPI_SUCCESS;
     mca_btl_base_module_t **btls;
     *num_btl_modules = 0;
 
@@ -754,12 +754,12 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                          NULL );
                                                                                                                                   
     /* create a BTL TCP module for selected interfaces */
-    if(mca_btl_tcp_component_create_instances() != OMPI_SUCCESS) {
+    if(OMPI_SUCCESS != (ret = mca_btl_tcp_component_create_instances() )) {
         return 0;
     }
 
     /* create a TCP listen socket for incoming connection attempts */
-    if(mca_btl_tcp_component_create_listen(AF_INET) != OMPI_SUCCESS) {
+    if(OMPI_SUCCESS != (ret = mca_btl_tcp_component_create_listen(AF_INET) )) {
         return 0;
     }
 #if OPAL_WANT_IPV6
@@ -772,7 +772,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
 #endif
 
     /* publish TCP parameters with the MCA framework */
-    if(mca_btl_tcp_component_exchange() != OMPI_SUCCESS) {
+    if(OMPI_SUCCESS != (ret = mca_btl_tcp_component_exchange() )) {
         return 0;
     }
 
