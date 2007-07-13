@@ -48,13 +48,6 @@ typedef struct __dt_args {
  * Compute the next value which is a multiple of PWROF2. Works fine
  * only for power of 2 alignements.
  */
-#define ALIGN_PTR_TO( VALUE, PWROF2 )                           \
-    do {                                                        \
-        intptr_t _align = (intptr_t)((PWROF2) - 1);             \
-        intptr_t _ptr = (intptr_t)(VALUE) + _align;             \
-        (VALUE) = (void*)(_ptr & (~_align));                    \
-    } while(0)
-
 #define ALIGN_INT_TO( VALUE, PWROF2 )                           \
     do {                                                        \
         int _align = (intptr_t)((PWROF2) - 1);                  \
@@ -438,9 +431,7 @@ static inline int __ompi_ddt_pack_description( ompi_datatype_t* datatype,
      * array of datatypes (both of them might be arrays of pointers) and then
      * finally the array of counts.
      */
-    /* copy the array of displacements (usually 64 bits aligned) */
     if( 0 < args->ca ) {
-        ALIGN_PTR_TO( next_packed, sizeof(MPI_Aint) );
         memcpy( next_packed, args->a, sizeof(MPI_Aint) * args->ca );
         next_packed += sizeof(MPI_Aint) * args->ca;
     }
@@ -492,72 +483,63 @@ int ompi_ddt_get_pack_description( ompi_datatype_t* datatype,
 
 static ompi_datatype_t*
 __ompi_ddt_create_from_packed_description( void** packed_buffer,
-                                           struct ompi_proc_t* remote_processor )
+                                           const struct ompi_proc_t* remote_processor )
 {
     int* position;
     ompi_datatype_t* datatype = NULL;
     ompi_datatype_t** array_of_datatype;
     MPI_Aint* array_of_disp;
     int* array_of_length;
-    int number_of_length, number_of_disp, number_of_datatype;
+    int number_of_length, number_of_disp, number_of_datatype, data_id;
     int create_type, i;
     char* next_buffer;
+    bool free_array_of_disp = false;
+
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     bool need_swap = false;
 
-    if ((remote_processor->proc_arch & OMPI_ARCH_ISBIGENDIAN) != 
-        (ompi_proc_local()->proc_arch & OMPI_ARCH_ISBIGENDIAN)) {
-         need_swap = true;
+    if( (remote_processor->proc_arch ^ ompi_proc_local()->proc_arch) &
+        OMPI_ARCH_ISBIGENDIAN ) {
+        need_swap = true;
     }
 #endif
 
-    /* In order to solve alignment issues (for the 64 bits variables) on some
-     * architectures (Sparc 64) we have to make sure the packed_buffer is always
-     * aligned to MPI_Aint when we enter this function. If this condition is true,
-     * then we know the remaining data will be aligned as we expect.
-     */
     next_buffer = (char*)*packed_buffer;
     position = (int*)next_buffer;
 
+    create_type = position[0];
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     if (need_swap) {
-        create_type = opal_swap_bytes4(position[0]);
-    } else 
-#endif
-    {
-        create_type = position[0];
+        create_type = opal_swap_bytes4(create_type);
     }
+#endif
     if( MPI_COMBINER_DUP == create_type ) {
         /* there we have a simple predefined datatype */
+        data_id = position[1];
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
         if (need_swap) {
-            position[1] = opal_swap_bytes4(position[1]);
+            data_id = opal_swap_bytes4(data_id);
         }
 #endif
-        assert( position[1] < DT_MAX_PREDEFINED );
+        assert( data_id < DT_MAX_PREDEFINED );
         *packed_buffer = position + 2;
-        return (ompi_datatype_t*)ompi_ddt_basicDatatypes[position[1]];
+        return (ompi_datatype_t*)ompi_ddt_basicDatatypes[data_id];
     }
+
+    number_of_length   = position[1];
+    number_of_disp     = position[2];
+    number_of_datatype = position[3];
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     if (need_swap) {
-        number_of_length   = opal_swap_bytes4(position[1]);
-        number_of_disp     = opal_swap_bytes4(position[2]);
-        number_of_datatype = opal_swap_bytes4(position[3]);
-    } else
-#endif
-    {
-        number_of_length   = position[1];
-        number_of_disp     = position[2];
-        number_of_datatype = position[3];
+        number_of_length   = opal_swap_bytes4(number_of_length);
+        number_of_disp     = opal_swap_bytes4(number_of_disp);
+        number_of_datatype = opal_swap_bytes4(number_of_datatype);
     }
+#endif
     array_of_datatype = (ompi_datatype_t**)malloc( sizeof(ompi_datatype_t*) *
                                                    number_of_datatype );
     next_buffer += (4 * sizeof(int));  /* move after the header */
 
-    /* the array of displacements (64 bits aligned) */
-    if( 0 != number_of_disp ) {
-        ALIGN_PTR_TO( next_buffer, sizeof(MPI_Aint) );
-    }
     array_of_disp   = (MPI_Aint*)next_buffer;
     next_buffer    += number_of_disp * sizeof(MPI_Aint);
     /* the other datatypes */
@@ -568,29 +550,47 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
     next_buffer    += (number_of_length * sizeof(int));
 
     for( i = 0; i < number_of_datatype; i++ ) {
+        data_id = position[i];
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
         if (need_swap) {
-            position[i] = opal_swap_bytes4(position[i]);
+            data_id = opal_swap_bytes4(data_id);
         }
 #endif
-        if( position[i] < DT_MAX_PREDEFINED ) {
-            assert( position[i] < DT_MAX_PREDEFINED );
-            array_of_datatype[i] = (ompi_datatype_t*)ompi_ddt_basicDatatypes[position[i]];
-        } else {
-            array_of_datatype[i] =
-                __ompi_ddt_create_from_packed_description( (void**)&next_buffer,
-                                                           remote_processor );
-            if( NULL == array_of_datatype[i] ) {
-                /* don't cleanup more than required. We can now modify these
-                 * values as we already know we have failed to rebuild the
-                 * datatype.
-                 */
-                array_of_datatype[i] = (ompi_datatype_t*)ompi_ddt_basicDatatypes[DT_BYTE];
-                number_of_datatype = i;
-                goto cleanup_and_exit;
-            }
+        if( data_id < DT_MAX_PREDEFINED ) {
+            array_of_datatype[i] = (ompi_datatype_t*)ompi_ddt_basicDatatypes[data_id];
+            continue;
+        }
+        array_of_datatype[i] =
+            __ompi_ddt_create_from_packed_description( (void**)&next_buffer,
+                                                       remote_processor );
+        if( NULL == array_of_datatype[i] ) {
+            /* don't cleanup more than required. We can now modify these
+             * values as we already know we have failed to rebuild the
+             * datatype.
+             */
+            array_of_datatype[i] = (ompi_datatype_t*)ompi_ddt_basicDatatypes[DT_BYTE];
+            number_of_datatype = i;
+            goto cleanup_and_exit;
         }
     }
+
+#if OMPI_ALIGN_WORD_SIZE_INTEGERS
+    /**
+     * some architectures really don't like having unaligned
+     * accesses.  We'll be int aligned, because any sane system will
+     * require that.  But we might not be long aligned, and some
+     * architectures will complain if a long is accessed on int
+     * alignment (but not long alignment).  On those architectures,
+     * copy the buffer into an aligned buffer first.
+     */
+    if( 0 != number_of_disp ) {
+        char* ptr = array_of_disp;
+        free_array_of_disp = true;
+        array_of_disp = malloc(sizeof(MPI_Aint) * number_of_disp);
+        memcpy(array_of_disp, ptr, sizeof(MPI_Aint) * number_of_disp);
+    }
+#endif
+
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     if (need_swap) {
         for (i = 0 ; i < number_of_length ; ++i) {
@@ -616,6 +616,7 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
             OBJ_RELEASE(array_of_datatype[i]);
         }
     }
+    if (free_array_of_disp) free(array_of_disp);
     free( array_of_datatype );
     return datatype;
 }
