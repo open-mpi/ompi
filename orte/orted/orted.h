@@ -30,24 +30,24 @@ extern "C" {
 #endif
 
 /* main orted routine */
-int orte_daemon(int argc, char *argv[]);
+ORTE_DECLSPEC int orte_daemon(int argc, char *argv[]);
 
 /* setup routine - needed to instantiate the orted globals in libopenrte. To
  * make it at least be useful, will also start the necessary communication
  * receive calls for daemon comm
  */
-int orte_daemon_setup(void);
+ORTE_DECLSPEC int orte_daemon_setup(void);
     
 /* orted communication functions */
-void orte_daemon_recv(int status, orte_process_name_t* sender,
+ORTE_DECLSPEC void orte_daemon_recv(int status, orte_process_name_t* sender,
                       orte_buffer_t *buffer, orte_rml_tag_t tag,
                       void* cbdata);
 
-void orte_daemon_recv_routed(int status, orte_process_name_t* sender,
+ORTE_DECLSPEC void orte_daemon_recv_routed(int status, orte_process_name_t* sender,
                              orte_buffer_t *buffer, orte_rml_tag_t tag,
                              void* cbdata);
 
-void orte_daemon_recv_gate(int status, orte_process_name_t* sender,
+ORTE_DECLSPEC void orte_daemon_recv_gate(int status, orte_process_name_t* sender,
                            orte_buffer_t *buffer, orte_rml_tag_t tag,
                            void* cbdata);
 
