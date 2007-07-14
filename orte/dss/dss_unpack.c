@@ -135,7 +135,6 @@ int orte_dss_unpack_buffer(orte_buffer_t *buffer, void *dst, orte_std_cntr_t *nu
     }
 
     rc = info->odti_unpack_fn(buffer, dst, num_vals, type);
-
     return rc;
 }
 

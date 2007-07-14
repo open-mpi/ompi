@@ -98,14 +98,36 @@ static int orte_rds_hostfile_parse_int(void)
 static char * orte_rds_hostfile_parse_string(void)
 {
     int rc;
-    if (ORTE_RDS_HOSTFILE_EQUAL != orte_rds_hostfile_lex())
+    if (ORTE_RDS_HOSTFILE_EQUAL != orte_rds_hostfile_lex()){
         return NULL;
+    }
     rc = orte_rds_hostfile_lex();
-    if (ORTE_RDS_HOSTFILE_STRING != rc)
+    if (ORTE_RDS_HOSTFILE_STRING != rc){
         return NULL;
+    }
     return strdup(orte_rds_hostfile_value.sval);
 }
 
+static char * orte_rds_hostfile_parse_string_or_int(void)
+{
+  int rc;
+  char tmp_str[64];
+
+  if (ORTE_RDS_HOSTFILE_EQUAL != orte_rds_hostfile_lex()){
+      return NULL;
+  }
+  rc = orte_rds_hostfile_lex();
+  switch (rc) {
+  case ORTE_RDS_HOSTFILE_STRING:
+      return strdup(orte_rds_hostfile_value.sval);
+  case ORTE_RDS_HOSTFILE_INT:
+      sprintf(tmp_str,"%d",orte_rds_hostfile_value.ival);
+      return strdup(tmp_str);
+  default:
+      return NULL;
+  }
+
+}
 
 static orte_ras_node_t* orte_rds_hostfile_lookup(opal_list_t* nodes, const char* name)
 {
@@ -122,25 +144,53 @@ static orte_ras_node_t* orte_rds_hostfile_lookup(opal_list_t* nodes, const char*
     return NULL;
 }
 
-static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_list_t* updates)
+static int validate_slot_list (char *cpu_list)
+{
+    int i,list_len = strlen(cpu_list);
+
+    for(i=0; i < list_len; i++){
+        if ('0' <= cpu_list[i] && '9' >= cpu_list[i]) {
+            continue;
+        }
+        else if (':' == cpu_list[i]) {
+            continue;
+        }
+        else if (',' == cpu_list[i]) {
+            continue;
+        }
+        else if ('*' == cpu_list[i]) {
+            continue;
+        }
+        else if ('-' == cpu_list[i]) {
+            continue;
+        }
+        return ORTE_ERROR;
+    }
+    return ORTE_SUCCESS;
+}
+
+static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_list_t* updates, opal_list_t* procs)
 {
     char buff[64];
+    char *tmp;
     int rc;
     orte_ras_node_t* node;
+    orte_ras_proc_t* proc;
     bool update = false;
     bool got_count = false;
     bool got_max = false;
+    char* value;
+    char** argv;
+    char* node_name = NULL;
+    char* username = NULL;
+    int cnt;
+    int number_of_slots = 0;
 
     if (ORTE_RDS_HOSTFILE_STRING == token ||
         ORTE_RDS_HOSTFILE_HOSTNAME == token ||
         ORTE_RDS_HOSTFILE_INT == token ||
         ORTE_RDS_HOSTFILE_IPV4 == token ||
         ORTE_RDS_HOSTFILE_IPV6 == token) {
-        char* value;
-        char** argv;
-        char* node_name = NULL;
-        char* username = NULL;
-        int cnt;
 
         if(ORTE_RDS_HOSTFILE_INT == token) {
             sprintf(buff,"%d", orte_rds_hostfile_value.ival);
@@ -256,6 +306,48 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
             }
             break;
 
+        case ORTE_RDS_HOSTFILE_SLOT:
+            tmp = orte_rds_hostfile_parse_string_or_int();
+            proc = OBJ_NEW(orte_ras_proc_t);
+            proc->node_name = strdup(node_name);
+            argv = opal_argv_split (tmp, '@');
+            cnt = opal_argv_count (argv);
+            switch (cnt) {
+            case 1:
+                proc->cpu_list = strdup(argv[0]);
+                if (ORTE_SUCCESS != (rc = validate_slot_list(proc->cpu_list))) {
+                    OBJ_RELEASE(proc);
+                    OBJ_RELEASE(node);
+                    opal_argv_free (argv);
+                    ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+                    orte_rds_hostfile_parse_error(token);
+                    return ORTE_ERROR;
+                }
+                break;
+            case 2:
+                proc->rank = strtol(argv[0],(char **)NULL,0);
+                proc->cpu_list = strdup(argv[1]);
+                if (ORTE_SUCCESS != (rc = validate_slot_list(proc->cpu_list))) {
+                    OBJ_RELEASE(proc);
+                    OBJ_RELEASE(node);
+                    opal_argv_free (argv);
+                    ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+                    orte_rds_hostfile_parse_error(token);
+                    return ORTE_ERROR;
+                }
+                break;
+            default:
+                OBJ_RELEASE(proc);
+                OBJ_RELEASE(node);
+                opal_argv_free (argv);
+                ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+                orte_rds_hostfile_parse_error(token);
+                return ORTE_ERROR;
+            }
+            opal_argv_free (argv);
+            opal_list_append(procs, &proc->super);
+            number_of_slots++;
+            break;
         case ORTE_RDS_HOSTFILE_SLOTS_MAX:
             rc = orte_rds_hostfile_parse_int();
             if (rc < 0) {
@@ -287,6 +379,11 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
             OBJ_RELEASE(node);
             return ORTE_ERROR;
         }
+        if (number_of_slots > node->node_slots) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            OBJ_RELEASE(node);
+            return ORTE_ERROR;
+        }
     }
 
 done:
@@ -310,7 +407,7 @@ done:
  * Parse the specified file into a node list.
  */
 
-static int orte_rds_hostfile_parse(const char *hostfile, opal_list_t* existing, opal_list_t* updates)
+static int orte_rds_hostfile_parse(const char *hostfile, opal_list_t* existing, opal_list_t* updates, opal_list_t* procs)
 {
     int token;
     int rc = ORTE_SUCCESS;
@@ -348,7 +445,7 @@ static int orte_rds_hostfile_parse(const char *hostfile, opal_list_t* existing, 
         case ORTE_RDS_HOSTFILE_HOSTNAME:
         case ORTE_RDS_HOSTFILE_IPV4:
         case ORTE_RDS_HOSTFILE_IPV6:
-            rc = orte_rds_hostfile_parse_line(token, existing, updates);
+            rc = orte_rds_hostfile_parse_line(token, existing, updates, procs);
             if (ORTE_SUCCESS != rc) {
                 goto unlock;
             }
@@ -380,7 +477,7 @@ unlock:
 static int orte_rds_hostfile_query(orte_jobid_t job)
 {
     opal_list_t existing;
-    opal_list_t updates, rds_updates;
+    opal_list_t updates, rds_updates, procs;
     opal_list_item_t *item;
     orte_rds_cell_desc_t *rds_item;
     orte_rds_cell_attr_t *new_attr;
@@ -403,6 +500,7 @@ static int orte_rds_hostfile_query(orte_jobid_t job)
     OBJ_CONSTRUCT(&existing, opal_list_t);
     OBJ_CONSTRUCT(&updates, opal_list_t);
     OBJ_CONSTRUCT(&rds_updates, opal_list_t);
+    OBJ_CONSTRUCT(&procs, opal_list_t);
     rc = orte_ras_base_node_query(&existing);
     if(ORTE_SUCCESS != rc) {
         goto cleanup;
@@ -411,7 +509,7 @@ static int orte_rds_hostfile_query(orte_jobid_t job)
     rc = mca_base_param_find("rds", "hostfile", "path");
     mca_base_param_lookup_string(rc, &mca_rds_hostfile_component.path);
 
-    rc = orte_rds_hostfile_parse(mca_rds_hostfile_component.path, &existing, &updates);
+    rc = orte_rds_hostfile_parse(mca_rds_hostfile_component.path, &existing, &updates, &procs);
     if (ORTE_ERR_NOT_FOUND == rc) {
         if(mca_rds_hostfile_component.default_hostfile) {
             rc = ORTE_SUCCESS;
@@ -519,6 +617,12 @@ static int orte_rds_hostfile_query(orte_jobid_t job)
             goto cleanup;
         }
     }
+    if ( !opal_list_is_empty(&procs) ) {
+        rc = orte_ras_base_proc_insert(&procs, local_cellid, job);
+        if (ORTE_SUCCESS != rc) {
+            goto cleanup;
+        }
+    }
 
 cleanup:
     if (NULL != mca_rds_hostfile_component.path) {
@@ -533,6 +637,9 @@ cleanup:
     while(NULL != (item = opal_list_remove_first(&updates))) {
         OBJ_RELEASE(item);
     }
+    while(NULL != (item = opal_list_remove_first(&procs))) {
+        OBJ_RELEASE(item);
+    }
 
     while (NULL != (rds_item = (orte_rds_cell_desc_t*)opal_list_remove_first(&rds_updates))) {
         while (NULL != (new_attr = (orte_rds_cell_attr_t*)opal_list_remove_first(&(rds_item->attributes)))) {
@@ -543,6 +650,7 @@ cleanup:
 
     OBJ_DESTRUCT(&existing);
     OBJ_DESTRUCT(&updates);
+    OBJ_DESTRUCT(&procs);
     OBJ_DESTRUCT(&rds_updates);
 
     return rc;

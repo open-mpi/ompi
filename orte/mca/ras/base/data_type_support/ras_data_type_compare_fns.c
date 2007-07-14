@@ -43,3 +43,4 @@ int orte_ras_base_compare_node(orte_ras_node_t *value1, orte_ras_node_t *value2,
 
     return ORTE_VALUE1_GREATER;
 }
+

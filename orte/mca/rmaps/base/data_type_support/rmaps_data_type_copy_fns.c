@@ -117,10 +117,14 @@ int orte_rmaps_base_copy_mapped_proc(orte_mapped_proc_t **dest, orte_mapped_proc
     
     (*dest)->rank = src->rank;
     (*dest)->local_rank = src->local_rank;
+    (*dest)->maped_rank = src->maped_rank;
     
     (*dest)->app_idx = src->app_idx;
     
     (*dest)->pid = src->pid;
+    if (NULL != src->slot_list) {
+        (*dest)->slot_list = strdup(src->slot_list);
+    }
     
     return ORTE_SUCCESS;
 }

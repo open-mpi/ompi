@@ -46,6 +46,7 @@
  */
 #define ORTE_JOB_SEGMENT        "orte-job"
 #define ORTE_NODE_SEGMENT       "orte-node"
+#define ORTE_PROC_SEGMENT       "orte-proc"
 #define ORTE_JOBINFO_SEGMENT    "orte-active-jobs"
 #define ORTE_RESOURCE_SEGMENT   "orte-resources"
 
@@ -96,6 +97,7 @@
 /* PROCESS specific keys */
 #define ORTE_PROC_NAME_KEY                      "orte-proc-name"
 #define ORTE_PROC_RANK_KEY                      "orte-proc-rank"
+#define ORTE_PROC_MAPED_RANK_KEY                "orte-proc-maped-rank"
 #define ORTE_PROC_LOCAL_RANK_KEY                "orte-proc-local-rank"
 #define ORTE_PROC_PID_KEY                       "orte-proc-pid"
 #define ORTE_PROC_LOCAL_PID_KEY                 "orte-proc-local-pid"
@@ -115,6 +117,7 @@
 #define ORTE_PROC_NUM_FINALIZED                 "orte-proc-num-finalized"
 #define ORTE_PROC_NUM_TERMINATED                "orte-proc-num-terminated"
 #define ORTE_PROC_RML_IP_ADDRESS_KEY            "orte-proc-rml-ip-addr"
+#define ORTE_PROC_CPU_LIST_KEY                  "orte-proc-cpu-list"
 
 #define ORTE_JOB_CKPT_STATE_KEY                "orte-job-ckpt-state"
 #define ORTE_JOB_CKPT_SNAPSHOT_REF_KEY         "orte-job-ckpt-snapshot-ref"

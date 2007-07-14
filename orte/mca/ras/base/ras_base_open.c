@@ -51,6 +51,7 @@ orte_ras_base_module_t orte_ras = {
     orte_ras_base_node_query,
     orte_ras_base_node_query_alloc,
     orte_ras_base_node_lookup,
+    orte_ras_base_proc_query_alloc,
     orte_ras_base_deallocate,
     orte_ras_base_finalize
 };
@@ -61,6 +62,7 @@ orte_ras_base_module_t orte_ras_no_op = {
     orte_ras_base_node_query_no_op,
     orte_ras_base_node_query_alloc_no_op,
     orte_ras_base_node_lookup_no_op,
+    orte_ras_base_proc_query_alloc_no_op,
     orte_ras_base_deallocate_no_op,
     orte_ras_base_finalize
 };

@@ -67,6 +67,30 @@ OBJ_CLASS_INSTANCE(
     orte_ras_base_node_construct,
     orte_ras_base_node_destruct);
 
+static void orte_ras_base_proc_construct(orte_ras_proc_t* proc)
+{
+    proc->node_name = NULL;
+    proc->cpu_list = NULL;
+    proc->rank = ORTE_VPID_MAX;
+}
+
+static void orte_ras_base_proc_destruct(orte_ras_proc_t* proc)
+{
+    if (NULL != proc->node_name) {
+        free(proc->node_name);
+    }
+    if (NULL != proc->cpu_list) {
+        free(proc->cpu_list);
+    }
+}
+
+
+OBJ_CLASS_INSTANCE(
+    orte_ras_proc_t,
+    opal_list_item_t,
+    orte_ras_base_proc_construct,
+    orte_ras_base_proc_destruct);
+
 
 /*
  * Query the registry for all available nodes
@@ -209,6 +233,80 @@ int orte_ras_base_node_query(opal_list_t* nodes)
 
     return ORTE_SUCCESS;
 }
+
+
+int orte_ras_base_proc_query_alloc(opal_list_t* procs)
+{
+    char* keys[] = {
+        ORTE_NODE_NAME_KEY,
+        ORTE_PROC_RANK_KEY,
+        ORTE_PROC_CPU_LIST_KEY,
+        NULL
+    };
+    orte_std_cntr_t i, cnt;
+    orte_gpr_value_t** values;
+    orte_std_cntr_t *sptr;
+    int rc;
+
+    /* query selected node entries */
+    rc = orte_gpr.get(
+        ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
+        ORTE_PROC_SEGMENT,
+        NULL,
+        keys,
+        &cnt,
+        &values);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* parse the response */
+    for(i=0; i<cnt; i++) {
+        orte_gpr_value_t* value = values[i];
+        orte_ras_proc_t* proc;
+        orte_std_cntr_t k;
+
+        proc = OBJ_NEW(orte_ras_proc_t);
+
+        for(k=0; k < value->cnt; k++) {
+            orte_gpr_keyval_t* keyval = value->keyvals[k];
+            if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
+                /* we use the dss.copy function here instead of strdup because that function
+                 * automatically protects us against a NULL (or zero-length) string
+                 */
+                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(proc->node_name), keyval->value->data, ORTE_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_PROC_CPU_LIST_KEY) == 0) {
+                /* we use the dss.copy function here instead of strdup because that function
+                 * automatically protects us against a NULL (or zero-length) string
+                 */
+                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(proc->cpu_list), keyval->value->data, ORTE_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_STD_CNTR))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                proc->rank = *sptr;
+                continue;
+            }
+        }
+        opal_list_append(procs, &proc->super);
+        OBJ_RELEASE(value);
+    }
+
+    if (NULL != values) free(values);
+    return ORTE_SUCCESS;
+}
+
 
 
 /*
@@ -690,6 +788,112 @@ cleanup:
     if (NULL != values) free(values);
     return rc;
 }
+
+
+
+int orte_ras_base_proc_insert(opal_list_t* procs, orte_cellid_t cellid, orte_jobid_t jobid)
+{
+    opal_list_item_t* item;
+    orte_gpr_value_t **values;
+    orte_process_name_t *proc_name;
+    int rc;
+    orte_std_cntr_t num_values, i, j;
+    char *keys[] = {
+        ORTE_NODE_NAME_KEY,
+        ORTE_PROC_RANK_KEY,
+        ORTE_PROC_CPU_LIST_KEY,
+
+        };
+    orte_data_type_t types[] = {
+        ORTE_STRING,
+        ORTE_STD_CNTR,
+        ORTE_STRING,
+    };
+    orte_ras_proc_t* proc;
+
+    num_values = (orte_std_cntr_t)opal_list_get_size(procs);
+    if (0 >= num_values) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+
+    values = (orte_gpr_value_t**)malloc(num_values * sizeof(orte_gpr_value_t*));
+    if (NULL == values) {
+       ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+       return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    /** preallocate the appropriate number of containers on the segment */
+    rc = orte_gpr.preallocate_segment(ORTE_PROC_SEGMENT, num_values);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    for (i=0; i < num_values; i++) {
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[i]),
+                                    ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
+                                    ORTE_PROC_SEGMENT, 3, 0))) {
+            ORTE_ERROR_LOG(rc);
+            for (j=0; j < i; j++) {
+                OBJ_RELEASE(values[j]);
+            }
+            free(values);
+            return rc;
+        }
+    }
+    for(i=0, item =  opal_list_get_first(procs);
+        i < num_values && item != opal_list_get_end(procs);
+        i++, item =  opal_list_get_next(item)) {
+        proc = (orte_ras_proc_t*)item;
+
+        j = 0;
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[j]), keys[j], types[j], proc->node_name))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+
+        ++j;
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[j]), keys[j], types[j], &(proc->rank)))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+
+        ++j;
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[j]), keys[j], types[j], proc->cpu_list))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+
+        ++j;
+        rc = orte_ns.create_process_name(&proc_name, cellid, jobid, i);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+
+        /* setup index/keys for this node */
+        rc = orte_schema.get_proc_tokens(&(values[i]->tokens), &(values[i]->num_tokens), proc_name);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+    }
+
+    /* try the insert */
+    if (ORTE_SUCCESS != (rc = orte_gpr.put(num_values, values))) {
+        ORTE_ERROR_LOG(rc);
+    }
+
+cleanup:
+    for (j=0; j < num_values; j++) {
+          OBJ_RELEASE(values[j]);
+    }
+    if (NULL != values) free(values);
+    return rc;
+
+}
+
 
 /*
  * Delete the specified nodes from the registry

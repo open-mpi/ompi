@@ -42,7 +42,7 @@ extern "C" {
 /*
  * General ODLS types
  */
-    
+
 /*
  * List object to locally store the process names and pids of
  * our children. This can subsequently be used to order termination
@@ -58,6 +58,7 @@ typedef struct orte_odls_child_t {
     bool alive;                  /* is this proc alive? */
     orte_proc_state_t state;     /* the state of the process */
     int exit_code;               /* process exit code */
+    unsigned long cpu_set;
 } orte_odls_child_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
     

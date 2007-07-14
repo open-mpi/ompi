@@ -202,6 +202,9 @@ typedef int (*orte_ras_base_module_node_insert_fn_t)(opal_list_t *);
  */
 typedef int (*orte_ras_base_module_node_query_fn_t)(opal_list_t *);
 
+
+typedef int (*orte_ras_base_module_proc_query_fn_t)(opal_list_t*);
+
 /**
     * Query the registry for all nodes allocated to a specific job
  */
@@ -226,6 +229,8 @@ struct orte_ras_base_module_1_3_0_t {
     orte_ras_base_module_node_query_alloc_fn_t      node_query_alloc;
     /* node lookup */
     orte_ras_base_module_node_lookup_fn_t           node_lookup;
+    /** proc Query function pointer */
+    orte_ras_base_module_proc_query_fn_t            proc_query;
     /** Deallocation function pointer */
     orte_ras_base_module_deallocate_fn_t            deallocate_job;
     /** Finalization function pointer */

@@ -138,8 +138,6 @@ typedef void* orte_iov_base_ptr_t;
 /* Need a command separate from ORTE_DAEMON_CMD, so that we can receive on 
  * them both at the same time */
 #define    ORTE_CKPT_CMD            (orte_data_type_t)   61 /**< command flag for communicating with HNP */
-
-
 /* define the starting point for dynamically assigning data types */
 #define ORTE_DSS_ID_DYNAMIC 70
 
