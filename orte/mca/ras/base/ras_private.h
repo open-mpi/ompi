@@ -69,6 +69,8 @@ int orte_ras_base_deallocate_no_op(orte_jobid_t job);
 
 int orte_ras_base_node_query_alloc_no_op(opal_list_t*, orte_jobid_t);
 
+int orte_ras_base_proc_query_alloc_no_op(opal_list_t* procs);
+
 orte_ras_node_t* orte_ras_base_node_lookup_no_op(orte_cellid_t, const char* nodename);
 
 /*
@@ -97,10 +99,14 @@ ORTE_DECLSPEC orte_ras_node_t* orte_ras_base_node_lookup(orte_cellid_t, const ch
  */
 ORTE_DECLSPEC int orte_ras_base_node_query_alloc(opal_list_t*, orte_jobid_t);
 
+ORTE_DECLSPEC int orte_ras_base_proc_query_alloc(opal_list_t* procs);
+
 /**
     * Add the specified node definitions to the registry
  */
 ORTE_DECLSPEC int orte_ras_base_node_insert(opal_list_t*);
+
+ORTE_DECLSPEC int orte_ras_base_proc_insert(opal_list_t* procs, orte_cellid_t cellid, orte_jobid_t jobid);
 
 /**
     * Delete the specified nodes from the registry
@@ -137,8 +143,6 @@ void orte_ras_base_std_obj_release(orte_data_value_t *value);
 int orte_ras_base_size_node(size_t *size, orte_ras_node_t *src, orte_data_type_t type);
 int orte_ras_base_unpack_node(orte_buffer_t *buffer, void *dest,
                               orte_std_cntr_t *num_vals, orte_data_type_t type);
-
-
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -53,9 +53,11 @@ struct orte_mapped_proc_t {
     opal_list_item_t super;
     orte_process_name_t name;	/* process name */
     orte_vpid_t	rank;           /* process rank */
+    bool maped_rank;            /* Wether or not this rank is maped according to hostfile */
     orte_vpid_t local_rank;     /* local rank on the node */
     orte_std_cntr_t	app_idx;	/* index of app_context for this process */
     pid_t pid;
+    char *slot_list;
 #if OPAL_ENABLE_FT == 1
     size_t ckpt_state;
     char * ckpt_snapshot_ref;

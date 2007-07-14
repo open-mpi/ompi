@@ -54,6 +54,57 @@ static opal_list_t fully_used_nodes;
 static orte_std_cntr_t num_per_node;
 
 
+
+
+static int map_app_by_allocated_ranks(
+    orte_app_context_t* app,
+    orte_job_map_t* map,
+    orte_jobid_t jobid,
+    orte_vpid_t vpid_start,
+    opal_list_t* nodes,
+    opal_list_t* max_used_nodes,
+    opal_list_t* procs,
+    orte_std_cntr_t *num_alloc)
+{
+    int rc = ORTE_SUCCESS;
+    orte_ras_proc_t *proc;
+    opal_list_item_t *proc_item, *node_item;
+    orte_ras_node_t *node;
+
+
+    for (proc_item = opal_list_get_first(procs);
+         proc_item != opal_list_get_end(procs);
+         proc_item = opal_list_get_next(proc_item)) {
+        proc = (orte_ras_proc_t *)proc_item;
+        if(proc->rank >= vpid_start && proc->rank < (vpid_start + app->num_procs)){
+            for (node_item = opal_list_get_first(nodes);
+                 node_item != opal_list_get_end(nodes);
+                 node_item = opal_list_get_next(node_item)) {
+                node = (orte_ras_node_t *)node_item;
+                if(0 == strcmp(node->node_name, proc->node_name)){
+                    if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, proc->rank, app->idx,
+                                                         nodes, max_used_nodes, false))) {
+                        /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
+                         * really isn't an error - we just need to break from the loop
+                         * since the node is fully used up. For now, just don't report
+                         * an error
+                         */
+                        if (ORTE_ERR_NODE_FULLY_USED != rc) {
+                            ORTE_ERROR_LOG(rc);
+                            return rc;
+                        }
+                    }
+                    (*num_alloc)++;
+                    break;
+                }
+            }
+        }       
+    }
+    return ORTE_SUCCESS;
+}
+
+
+
 /*
  * Create a default mapping for the application, scheduling round
  * robin by node.
@@ -64,10 +115,10 @@ static int map_app_by_node(
     orte_jobid_t jobid,
     orte_vpid_t vpid_start,
     opal_list_t* nodes,
-    opal_list_t* max_used_nodes)
+    opal_list_t* max_used_nodes,
+    orte_std_cntr_t num_alloc)
 {
     int rc = ORTE_SUCCESS;
-    orte_std_cntr_t num_alloc = 0;
     opal_list_item_t *next;
     orte_ras_node_t *node;
 
@@ -148,11 +199,11 @@ static int map_app_by_slot(
     orte_jobid_t jobid,
     orte_vpid_t vpid_start,
     opal_list_t* nodes,
-    opal_list_t* max_used_nodes)
+    opal_list_t* max_used_nodes,
+    orte_std_cntr_t num_alloc)
 {
     int rc = ORTE_SUCCESS;
     orte_std_cntr_t i, num_slots_to_take;
-    orte_std_cntr_t num_alloc = 0;
     orte_ras_node_t *node;
     opal_list_item_t *next;
 
@@ -165,7 +216,6 @@ static int map_app_by_slot(
        have reached their soft limit and the user directed us to "no oversubscribe".
        If we still have processes that haven't been mapped yet, then it's an
        "out of resources" error. */
-    num_alloc = 0;
     
     while ( num_alloc < app->num_procs) {
 
@@ -354,7 +404,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
     orte_app_context_t *app;
     orte_job_map_t* map;
     orte_std_cntr_t i;
-    opal_list_t master_node_list, mapped_node_list, max_used_nodes, *working_node_list;
+    opal_list_t master_node_list, mapped_node_list, max_used_nodes, *working_node_list ,procs;
     opal_list_item_t *item, *item2;
     orte_ras_node_t *node, *node2;
     char *save_bookmark;
@@ -365,6 +415,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
     char *sptr;
     orte_attribute_t *attr;
     orte_std_cntr_t slots_per_node;
+    orte_std_cntr_t num_alloc = 0;
 
     OPAL_TRACE(1);
     
@@ -395,6 +446,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
      * mappings from the user
      */
     OBJ_CONSTRUCT(&master_node_list, opal_list_t);
+    OBJ_CONSTRUCT(&procs, opal_list_t);
     if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&master_node_list, jobid,
                                                               &total_num_slots,
                                                               mca_rmaps_round_robin_component.no_use_local))) {
@@ -453,7 +505,11 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
 
     /** construct a list to hold any nodes involved in a user-specified mapping */
     OBJ_CONSTRUCT(&mapped_node_list, opal_list_t);
-    
+
+    if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_procs(&procs))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
     for(i=0; i < map->num_apps; i++) {
         app = map->apps[i];
 
@@ -569,13 +625,19 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
         /** track the total number of processes we mapped */
         num_procs += app->num_procs;
 
+        if(!opal_list_is_empty(&procs)){
+            if (ORTE_SUCCESS != (rc = map_app_by_allocated_ranks(app, map, jobid, vpid_start, working_node_list, &max_used_nodes, &procs, &num_alloc))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+        }
         /* Make assignments */
         if (mca_rmaps_round_robin_component.bynode) {
             map->mapping_mode = strdup("bynode");
-            rc = map_app_by_node(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
+            rc = map_app_by_node(app, map, jobid, vpid_start, working_node_list, &max_used_nodes, num_alloc);
         } else {
             map->mapping_mode = strdup("byslot");
-            rc = map_app_by_slot(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
+            rc = map_app_by_slot(app, map, jobid, vpid_start, working_node_list, &max_used_nodes, num_alloc);
         }
 
         
@@ -707,7 +769,12 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    
+    if(!opal_list_is_empty(&procs)){
+        if(ORTE_SUCCESS != (rc = orte_rmaps_base_rearrange_map(app, map, &procs))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+    }
     /* define the daemons that we will use for this job */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(map))) {
         ORTE_ERROR_LOG(rc);
@@ -760,6 +827,7 @@ cleanup:
     OBJ_DESTRUCT(&max_used_nodes);
     OBJ_DESTRUCT(&fully_used_nodes);
     OBJ_DESTRUCT(&mapped_node_list);
+    OBJ_DESTRUCT(&procs);
     OBJ_RELEASE(map);
 
 

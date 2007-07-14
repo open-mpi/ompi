@@ -246,7 +246,15 @@ int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
                 OBJ_RELEASE(value);
                 return rc;
             }
-            
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[3]),
+                                                             ORTE_PROC_CPU_LIST_KEY,
+                                                             ORTE_STRING, proc->slot_list))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+
             if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[4]),
                                                              ORTE_NODE_NUM_PROCS_KEY,
                                                              ORTE_STD_CNTR, &node->num_procs))) {
@@ -267,6 +275,209 @@ int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
     }
     
     *data = ndat;
+    return ORTE_SUCCESS;
+}
+
+/**
+ *  This function receives a slot string ant translate it to
+ *  cpu_set (long bitmap) using the PLPA module.
+ *  currently this function is doing nothig because PLPA is not
+ *  part of the oprn MPI project.
+ */
+
+static int socket_to_cpu_set(char **socket_list, int socket_cnt, orte_odls_child_t *child)
+{
+    int i, j;
+    char **range;
+    int range_cnt;
+    int lower_range, upper_range, socket_num;
+
+    for (i=0; i < socket_cnt; i++) {
+        if (0 == strcmp("*", socket_list[i])) {
+            /* use PLPA to construct the child->cpu_set */
+            opal_output(orte_odls_globals.output,"rank %d can run on any socket", child->name->vpid);
+            continue;
+        }
+        range = opal_argv_split(socket_list[i], '-');
+        range_cnt = opal_argv_count(range);
+        switch (range_cnt) {
+        case 1:
+            socket_num = atoi(range[0]);
+            /* use PLPA to construct the child->cpu_set */
+            opal_output(orte_odls_globals.output,"rank %d runs on socket #%d", child->name->vpid, socket_num); 
+            break;
+        case 2:
+            lower_range = atoi(range[0]);
+            upper_range = atoi(range[1]);
+            for (j=lower_range; j<= upper_range; j++) {
+                socket_num = j;
+                /* use PLPA to construct the child->cpu_set */
+                opal_output(orte_odls_globals.output,"rank %d runs on socket #%d", child->name->vpid, socket_num); 
+            }
+            break;
+        default:
+            opal_argv_free(range);
+            ORTE_ERROR_LOG(ORTE_ERROR);
+            return ORTE_ERROR;
+        }
+        opal_argv_free(range);
+    }
+    return ORTE_SUCCESS;
+}
+
+static int socket_core_to_cpu_set(char **socket_core_list, int socket_core_list_cnt, orte_odls_child_t *child)
+{
+    int i, j;
+    char **socket_core;
+    int socket_core_cnt;
+    char **range;
+    int range_cnt;
+    int lower_range, upper_range;
+    int socket, core;
+
+    socket_core = opal_argv_split (socket_core_list[0], ':');
+    socket_core_cnt = opal_argv_count(socket_core);
+
+    socket = atoi(socket_core[0]);
+    if (0 == strcmp("*",socket_core[1])) {
+        /* use PLPA to construct the child->cpu_set */
+        opal_output(orte_odls_globals.output,"rank %d runs on socket #%d any core", child->name->vpid, socket);
+    }
+    else {
+        range = opal_argv_split(socket_core[1], '-');
+        range_cnt = opal_argv_count(range);
+        switch (range_cnt) {
+        case 1:
+            core = atoi(range[0]);
+            /* use PLPA to construct the child->cpu_set */
+            opal_output(orte_odls_globals.output,"rank %d runs on socket #%d core #%d", child->name->vpid, socket, core);
+            break;
+        case 2:
+            lower_range = atoi(range[0]);
+            upper_range = atoi(range[1]);
+            for (j=lower_range; j<= upper_range; j++) {
+                core = j;
+                /* use PLPA to construct the child->cpu_set */
+                opal_output(orte_odls_globals.output,"rank %d runs on socket #%d core #%d", child->name->vpid, socket, core);
+            }
+            break;
+        default:
+            opal_argv_free(range);
+            opal_argv_free(socket_core);
+            ORTE_ERROR_LOG(ORTE_ERROR);
+            return ORTE_ERROR;
+        }
+        opal_argv_free(range);
+        opal_argv_free(socket_core);
+    }
+    for (i=1; i < socket_core_list_cnt; i++) {
+        socket_core = opal_argv_split (socket_core_list[i], ':');
+        socket_core_cnt = opal_argv_count(socket_core);
+        switch (socket_core_cnt) {
+        case 1:
+            range = opal_argv_split(socket_core[0], '-');
+            range_cnt = opal_argv_count(range);
+            switch (range_cnt) {
+            case 1:
+                core = atoi(range[0]);
+                /* use PLPA to construct the child->cpu_set */
+                opal_output(orte_odls_globals.output,"and on core #%d", core);
+                break;
+            case 2:
+                lower_range = atoi(range[0]);
+                upper_range = atoi(range[1]);
+                for (j=lower_range; j<= upper_range; j++) {
+                    core = j;
+                    /* use PLPA to construct the child->cpu_set */
+                    opal_output(orte_odls_globals.output,"and on core #%d", core);
+                }
+                break;
+            default:
+                opal_argv_free(range);
+                opal_argv_free(socket_core);
+                ORTE_ERROR_LOG(ORTE_ERROR);
+                return ORTE_ERROR;
+            }
+            opal_argv_free(range);
+            break;
+        case 2:
+            socket = atoi(socket_core[0]);
+            if (0 == strcmp("*",socket_core[1])) {
+                /* use PLPA to construct the child->cpu_set */
+                opal_output(orte_odls_globals.output,"and on socket #%d any core", socket);
+            }
+            else {
+                range = opal_argv_split(socket_core[1], '-');
+                range_cnt = opal_argv_count(range);
+                switch (range_cnt) {
+                case 1:
+                    core = atoi(range[0]);
+                    /* use PLPA to construct the child->cpu_set */
+                    opal_output(orte_odls_globals.output,"and on socket #%d core #%d", socket, core);
+                    break;
+                case 2:
+                    lower_range = atoi(range[0]);
+                    upper_range = atoi(range[1]);
+                    for (j=lower_range; j<= upper_range; j++) {
+                        core = j;
+                        /* use PLPA to construct the child->cpu_set */
+                        opal_output(orte_odls_globals.output,"and on socket #%d core #%d", socket, core);
+                    }
+                    break;
+                default:
+                    opal_argv_free(range);
+                    opal_argv_free(socket_core);
+                    ORTE_ERROR_LOG(ORTE_ERROR);
+                    return ORTE_ERROR;
+                }
+                opal_argv_free(range);
+            }
+            break;
+        default: 
+            opal_argv_free(socket_core);
+            ORTE_ERROR_LOG(ORTE_ERROR);
+            return ORTE_ERROR;
+        }
+        opal_argv_free(socket_core);
+    }
+    return ORTE_SUCCESS;
+}
+
+static int slot_list_to_cpu_set(char *slot_str, orte_odls_child_t *child)
+{
+    char **item;
+    char **socket_core;
+    int item_cnt, socket_core_cnt;
+    int rc;
+
+    item = opal_argv_split (slot_str, ',');
+    item_cnt = opal_argv_count (item);
+
+    socket_core = opal_argv_split (item[0], ':');
+    socket_core_cnt = opal_argv_count(socket_core);
+    opal_argv_free(socket_core);
+
+    switch (socket_core_cnt) {
+    case 1:
+        if (ORTE_SUCCESS != (rc = socket_to_cpu_set(item, item_cnt, child))) {
+            opal_argv_free(item);
+            ORTE_ERROR_LOG(rc);
+            return ORTE_ERROR;
+        }
+        break;
+    case 2:
+        if (ORTE_SUCCESS != (rc = socket_core_to_cpu_set(item, item_cnt, child))) {
+            opal_argv_free(item);
+            ORTE_ERROR_LOG(rc);
+            return ORTE_ERROR;
+        }
+        break;
+    default:
+        opal_argv_free(item);
+        ORTE_ERROR_LOG(rc);
+        return ORTE_ERROR;
+    }
+    opal_argv_free(item);
     return ORTE_SUCCESS;
 }
 
@@ -951,7 +1162,7 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data)
     bool quit_flag;
     bool node_included;
     orte_filem_base_request_t *filem_request;
-    char *job_str, *uri_file, *my_uri, *session_dir=NULL;
+    char *job_str, *uri_file, *my_uri, *session_dir=NULL, *slot_str;
     FILE *fp;
 
     /* parse the returned data to create the required structures
@@ -1083,6 +1294,22 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data)
                                     if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(child->name), kval->value->data, ORTE_NAME))) {
                                         ORTE_ERROR_LOG(rc);
                                         return rc;
+                                    }
+                                    continue;
+                                }
+                                if(strcmp(kval->key, ORTE_PROC_CPU_LIST_KEY) == 0) {
+                                    /* copy the name into the child object */
+                                    if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&slot_str, kval->value->data, ORTE_STRING))) {
+                                        ORTE_ERROR_LOG(rc);
+                                        return rc;
+                                    }
+                                    if (NULL != slot_str) {
+                                        if (ORTE_SUCCESS != (rc = slot_list_to_cpu_set(slot_str, child))){
+                                            ORTE_ERROR_LOG(rc);
+                                            free(slot_str);
+                                            return rc;
+                                        }
+                                        free(slot_str);
                                     }
                                     continue;
                                 }

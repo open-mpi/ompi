@@ -54,3 +54,4 @@ int orte_ras_base_size_node(size_t *size, orte_ras_node_t *src, orte_data_type_t
 
     return ORTE_SUCCESS;
 }
+

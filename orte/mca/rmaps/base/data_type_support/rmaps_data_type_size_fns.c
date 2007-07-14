@@ -50,6 +50,8 @@ int orte_rmaps_base_size_mapped_proc(size_t *size, orte_mapped_proc_t *src, orte
 {
     /* account for the object itself */
     *size = sizeof(orte_mapped_proc_t);
+
+    *size += strlen(src->slot_list);
     
     /* if src is NULL, then that's all we wanted */
     if (NULL == src) return ORTE_SUCCESS;

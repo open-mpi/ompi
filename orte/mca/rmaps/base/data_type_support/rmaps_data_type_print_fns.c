@@ -129,8 +129,13 @@ int orte_rmaps_base_print_mapped_proc(char **output, char *prefix, orte_mapped_p
         free(tmp3);
         return rc;
     }
-    asprintf(&tmp, "%s\n%s\n%sProc Rank: %ld\tLocal Rank: %ld\tProc PID: %ld\tApp_context index: %ld\n", tmp3, tmp2, pfx,
-                                                    (long)src->rank, (long)src->local_rank, (long)src->pid, (long)src->app_idx);
+    if(src->maped_rank){
+        asprintf(&tmp, "%s\n%s\n%sProc Rank: %ld(Maped)\tLocal Rank: %ld\tProc PID: %ld\tApp_context index: %ld slot list: %s\n", tmp3, tmp2, pfx,
+                                                        (long)src->rank, (long)src->local_rank, (long)src->pid, (long)src->app_idx, src->slot_list);
+    }else{
+        asprintf(&tmp, "%s\n%s\n%sProc Rank: %ld\tLocal Rank: %ld\tProc PID: %ld\tApp_context index: %ld slot list: %s\n", tmp3, tmp2, pfx,
+                                                        (long)src->rank, (long)src->local_rank, (long)src->pid, (long)src->app_idx, src->slot_list);
+    }
     free(tmp2);
     free(tmp3);
     

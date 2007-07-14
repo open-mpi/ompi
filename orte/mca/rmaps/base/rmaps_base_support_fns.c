@@ -177,6 +177,33 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_jobid_t 
 
 
 /*
+ * Query the registry for all nodes allocated to a specified job
+ */
+
+static int compare(opal_list_item_t **a, opal_list_item_t **b)
+{
+    orte_ras_proc_t *aa = *((orte_ras_proc_t **) a);
+    orte_ras_proc_t *bb = *((orte_ras_proc_t **) b);
+
+    return (aa->rank - bb->rank);
+}
+
+int orte_rmaps_base_get_target_procs(opal_list_t *procs)
+{
+    int rc;
+
+    /* get the allocation for this job */
+    if(ORTE_SUCCESS != (rc = orte_ras.proc_query(procs))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    opal_list_sort(procs, compare);
+    return ORTE_SUCCESS;
+}
+
+
+
+/*
  * Create a sub-list of nodes to be used for user-specified mappings
  */
 int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_list,
@@ -446,6 +473,99 @@ cleanup:
     if (NULL != values) free(values);
     
     return rc;
+}
+
+
+static int orte_find_unallocated_proc_in_map(orte_ras_proc_t *proc, orte_job_map_t *map, orte_mapped_proc_t **mproc)
+{
+    orte_mapped_node_t *mnode;
+    opal_list_item_t *item, *item2;
+    int i;
+
+    for (item = opal_list_get_first(&map->nodes);
+         item != opal_list_get_end(&map->nodes);
+         item = opal_list_get_next(item)) {
+        mnode = (orte_mapped_node_t*)item;
+        if (strcmp(proc->node_name, mnode->nodename)) {
+            continue;
+        }
+        for (item2 = opal_list_get_first(&mnode->procs),i=1;
+             item2 != opal_list_get_end(&mnode->procs);
+             item2 = opal_list_get_next(item2),i++) {
+            *mproc = (orte_mapped_proc_t*)item2;
+            if (NULL == (*mproc)->slot_list) {
+                return ORTE_SUCCESS;
+            }
+        }
+    }
+    return ORTE_ERROR;
+}
+
+int orte_rmaps_base_rearrange_map(orte_app_context_t *app, orte_job_map_t *map, opal_list_t *procs)
+{
+    opal_list_item_t *proc_item, *map_node_item, *map_proc_item;
+    orte_mapped_node_t *mnode;
+    bool *used_ranks; /* an array for string used ranks */
+    orte_std_cntr_t used_rank_index;
+    orte_std_cntr_t assigned_procs = 0;
+    orte_ras_proc_t *proc;
+    orte_mapped_proc_t *mproc;
+    int rc;
+
+    used_ranks = (bool *)calloc(map->vpid_range, sizeof(bool));
+
+    for (proc_item = opal_list_get_first(procs);
+         proc_item != opal_list_get_end(procs) && assigned_procs < app->num_procs;
+         proc_item = opal_list_get_next(proc_item)) {
+        proc = (orte_ras_proc_t *)proc_item;
+        if (proc->rank != ORTE_VPID_MAX) {
+            /* Check if this proc belong to this map */
+            if (proc->rank >= map->vpid_start && proc->rank < (map->vpid_start + map->vpid_range)) {
+                if (ORTE_SUCCESS != (rc = orte_find_unallocated_proc_in_map(proc, map, &mproc))){
+                    free (used_ranks);
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                mproc->slot_list = strdup(proc->cpu_list);
+                mproc->rank = proc->rank;
+                mproc->name.vpid = proc->rank;
+                mproc->maped_rank = true;
+                used_rank_index = proc->rank - map->vpid_start;
+                used_ranks[used_rank_index] = true;
+                assigned_procs ++;
+            }
+        }else if (NULL != proc->cpu_list) {
+            if (ORTE_SUCCESS != (rc = orte_find_unallocated_proc_in_map(proc, map, &mproc))){
+                continue; /* since there is not a specifiv rank continue searching */
+            }
+            mproc->slot_list = strdup(proc->cpu_list);
+            assigned_procs ++;
+        }
+    }
+    if(assigned_procs > 0) {
+        used_rank_index = 0;
+        for (map_node_item = opal_list_get_first(&map->nodes);
+             map_node_item != opal_list_get_end(&map->nodes);
+             map_node_item = opal_list_get_next(map_node_item)) {
+            mnode = (orte_mapped_node_t*)map_node_item;
+            for (map_proc_item = opal_list_get_first(&mnode->procs);
+                 map_proc_item != opal_list_get_end(&mnode->procs);
+                 map_proc_item = opal_list_get_next(map_proc_item)) {
+                mproc = (orte_mapped_proc_t*)map_proc_item;
+                if (mproc->maped_rank) {
+                    continue;
+                }
+                while (used_ranks[used_rank_index]){
+                    used_rank_index++;
+                }
+                mproc->rank = map->vpid_start + used_rank_index;
+                mproc->name.vpid = mproc->rank;
+                used_rank_index++;
+            }
+        }
+    }
+    free (used_ranks);
+    return ORTE_SUCCESS;
 }
 
 int orte_rmaps_base_compute_usage(orte_job_map_t *map, orte_std_cntr_t num_procs)

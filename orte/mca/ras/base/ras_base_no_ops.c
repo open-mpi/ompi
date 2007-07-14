@@ -46,6 +46,11 @@ int orte_ras_base_node_query_alloc_no_op(opal_list_t* list, orte_jobid_t job)
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
+int orte_ras_base_proc_query_alloc_no_op(opal_list_t* list)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
 orte_ras_node_t* orte_ras_base_node_lookup_no_op(orte_cellid_t cell, const char* nodename)
 {
     return NULL;

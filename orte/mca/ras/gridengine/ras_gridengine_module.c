@@ -63,6 +63,7 @@ orte_ras_base_module_t orte_ras_gridengine_module = {
     orte_ras_base_node_query,
     orte_ras_base_node_query_alloc,
     orte_ras_base_node_lookup,
+    orte_ras_base_proc_query_alloc,
     orte_ras_gridengine_deallocate,
     orte_ras_gridengine_finalize
 };

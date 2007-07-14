@@ -179,6 +179,14 @@ int orte_rmaps_base_unpack_mapped_proc(orte_buffer_t *buffer, void *dest,
             return rc;
         }
         
+        /* unpack the rank */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
+                                                         &(procs[i]->maped_rank), &n, ORTE_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* unpack the local rank */
         n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
@@ -199,6 +207,14 @@ int orte_rmaps_base_unpack_mapped_proc(orte_buffer_t *buffer, void *dest,
         n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
                                                          &(procs[i]->app_idx), &n, ORTE_STD_CNTR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* unpack the slot_list */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
+                                                         &(procs[i]->slot_list), &n, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

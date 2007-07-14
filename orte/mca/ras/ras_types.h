@@ -92,6 +92,25 @@ typedef struct orte_ras_node_t orte_ras_node_t;
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_ras_node_t);
 
+struct orte_ras_proc_t{
+    /** Base object */
+    opal_list_item_t super;
+    /** String node name */
+    char *node_name;
+    /* the rank of this proc (default -1) */
+    orte_std_cntr_t rank;
+    /* cpu list as defined (if defined) in the hostfile */
+    char *cpu_list;
+    /* whther or not this process is allocated to a map */
+};
+
+typedef struct orte_ras_proc_t orte_ras_proc_t;
+
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_ras_proc_t);
+
+
+
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

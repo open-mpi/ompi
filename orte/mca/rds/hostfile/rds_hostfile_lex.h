@@ -70,5 +70,6 @@ extern orte_rds_value_t  orte_rds_hostfile_value;
 #define ORTE_RDS_HOSTFILE_HOSTNAME       12
 #define ORTE_RDS_HOSTFILE_NEWLINE        13
 #define ORTE_RDS_HOSTFILE_IPV6           14
+#define ORTE_RDS_HOSTFILE_SLOT           15
 
 #endif

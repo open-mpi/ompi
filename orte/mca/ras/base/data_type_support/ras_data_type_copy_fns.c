@@ -58,4 +58,3 @@ int orte_ras_base_copy_node(orte_ras_node_t **dest, orte_ras_node_t *src, orte_d
 
     return ORTE_SUCCESS;
 }
-

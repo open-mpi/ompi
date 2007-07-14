@@ -163,6 +163,8 @@ int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_cellid_t cell, cha
 
 ORTE_DECLSPEC int orte_rmaps_base_get_target_nodes(opal_list_t* node_list, orte_jobid_t jobid,
                                                    orte_std_cntr_t *total_num_slots, bool no_use_local);
+ORTE_DECLSPEC int orte_rmaps_base_get_target_procs(opal_list_t *procs);
+
 ORTE_DECLSPEC int orte_rmaps_base_update_node_usage(opal_list_t *nodes);
 ORTE_DECLSPEC int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_list,
                                                      orte_app_context_t *app,
@@ -180,6 +182,8 @@ ORTE_DECLSPEC int orte_rmaps_base_claim_slot(orte_job_map_t *map,
 ORTE_DECLSPEC int orte_rmaps_base_proxy_map_job(orte_jobid_t job, opal_list_t *attributes);
 
 ORTE_DECLSPEC int orte_rmaps_base_compute_usage(orte_job_map_t *map, orte_std_cntr_t num_procs);
+
+ORTE_DECLSPEC int orte_rmaps_base_rearrange_map(orte_app_context_t *app, orte_job_map_t *map, opal_list_t *procs);
 
 ORTE_DECLSPEC int orte_rmaps_base_define_daemons(orte_job_map_t *map);
 
