@@ -281,14 +281,14 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
 
     if( (NULL != mca_btl_mx_component.mx_if_exclude) &&
 	(NULL != (where = strstr(mca_btl_mx_component.mx_if_exclude, mapper_mac))) ) {
-        opal_output( 0, "MX network %d connected to the mapper %s has been excluded\n",
-		     nic_id, mapper_mac );
+        /*opal_output( 0, "MX network %d connected to the mapper %s has been excluded\n",
+		     nic_id, mapper_mac );*/
         return NULL;
     }
     else if( (NULL != mca_btl_mx_component.mx_if_include) &&
 	     (NULL == (where = strstr(mca_btl_mx_component.mx_if_include, mapper_mac))) ) {
-        opal_output( 0, "MX network %d connected to the mapper %s has not been included\n",
-		     nic_id, mapper_mac );
+        /*opal_output( 0, "MX network %d connected to the mapper %s has not been included\n",
+		     nic_id, mapper_mac );*/
         return NULL;
     }
 
@@ -321,17 +321,18 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
                                    &value, sizeof(int))) != MX_SUCCESS ) {
             opal_output( 0, "mx_get_info(MX_LINE_SPEED) failed with status %d (%s)\n",
                          status, mx_strerror(status) );
-        }
-        if( MX_SPEED_2G == value ) {
-            mx_btl->mx_unique_network_id |= 0xaa00000000;
-            mx_btl->super.btl_bandwidth = 2000;
-            mx_btl->super.btl_latency = 5;
-        } else if( MX_SPEED_10G == value ) {
-            mx_btl->mx_unique_network_id |= 0xbb00000000;
-            mx_btl->super.btl_bandwidth = 10000;
-            mx_btl->super.btl_latency = 3;
         } else {
-            mx_btl->mx_unique_network_id |= 0xcc00000000;
+            if( MX_SPEED_2G == value ) {
+                mx_btl->mx_unique_network_id |= 0xaa00000000;
+                mx_btl->super.btl_bandwidth = 2000;
+                mx_btl->super.btl_latency = 5;
+            } else if( MX_SPEED_10G == value ) {
+                mx_btl->mx_unique_network_id |= 0xbb00000000;
+                mx_btl->super.btl_bandwidth = 10000;
+                mx_btl->super.btl_latency = 3;
+            } else {
+                mx_btl->mx_unique_network_id |= 0xcc00000000;
+            }
         }
     }
 #endif  /* defined(MX_HAS_NET_TYPE) */
