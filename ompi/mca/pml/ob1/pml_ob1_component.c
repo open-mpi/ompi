@@ -177,13 +177,6 @@ mca_pml_ob1_component_init( int* priority,
     }
     *priority = mca_pml_ob1.priority;
 
-    /* buffered send */
-    if(OMPI_SUCCESS != mca_pml_base_bsend_init(enable_mpi_threads)) {
-        opal_output(0, "mca_pml_ob1_component_init: mca_pml_bsend_init failed\n");
-        return NULL;
-    }
-
-    
     if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, 
                                           enable_mpi_threads)) {
         return NULL;

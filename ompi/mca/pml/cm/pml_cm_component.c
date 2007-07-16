@@ -148,12 +148,6 @@ mca_pml_cm_component_init(int* priority,
     ompi_pml_cm.super.pml_max_contextid = ompi_mtl->mtl_max_contextid;
     ompi_pml_cm.super.pml_max_tag = ompi_mtl->mtl_max_tag;
     
-    /* initialize buffered send code */
-    if(OMPI_SUCCESS != mca_pml_base_bsend_init(enable_mpi_threads)) {
-        opal_output(0, "mca_pml_cm_component_init: mca_pml_bsend_init failed\n");
-        return NULL;
-    }
-
     return &ompi_pml_cm.super;
 }
 

@@ -423,6 +423,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /* select buffered send allocator component to be used */
+    ret=mca_pml_base_bsend_init(OMPI_ENABLE_MPI_THREADS);
+    if( OMPI_SUCCESS != ret ) {
+        error = "mca_pml_base_bsend_init() failed";
+        goto error;
+    }
+
     if (OMPI_SUCCESS != 
         (ret = mca_coll_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
                                             OMPI_ENABLE_MPI_THREADS))) {
