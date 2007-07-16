@@ -31,6 +31,40 @@
 
 #include "osc_base_obj_convert.h"
 
+int
+ompi_osc_base_get_primitive_type_info(ompi_datatype_t *datatype,
+                                      ompi_datatype_t **prim_datatype, 
+                                      uint32_t *prim_count)
+{
+    struct ompi_datatype_t *primitive_datatype = NULL;
+    uint32_t primitive_count;
+
+    /* get underlying type... */
+    if (ompi_ddt_is_predefined(datatype)) {
+        primitive_datatype = datatype;
+        primitive_count = 1;
+    } else {
+        int i, found_index = -1;
+        uint64_t mask = 1;
+        for (i = 0 ; i < DT_MAX_PREDEFINED ; ++i) {
+            if (datatype->bdt_used & mask) {
+                found_index = i;
+                break;
+            }
+            mask *= 2;
+        }
+        primitive_datatype = (ompi_datatype_t*)
+            ompi_ddt_basicDatatypes[found_index];
+        primitive_count = datatype->nbElems;
+    }
+
+    *prim_datatype = primitive_datatype;
+    *prim_count = primitive_count;
+
+    return OMPI_SUCCESS;
+}
+
+
 struct ompi_osc_base_convertor_t {
     ompi_convertor_t convertor;
     ompi_op_t *op;

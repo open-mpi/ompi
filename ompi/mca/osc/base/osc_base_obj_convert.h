@@ -24,7 +24,6 @@
  */
 
 #include "ompi/datatype/datatype.h"
-#include "ompi/datatype/datatype_internal.h"
 #include "ompi/proc/proc.h"
 #include "ompi/op/op.h"
 
@@ -95,38 +94,9 @@ ompi_osc_base_op_create(int op_id)
  *
  * @retval OMPI_SUCCESS Success
  */
-static inline int
-ompi_osc_base_get_primitive_type_info(ompi_datatype_t *datatype,
-                                      ompi_datatype_t **prim_datatype, 
-                                      uint32_t *prim_count)
-{
-    struct ompi_datatype_t *primitive_datatype = NULL;
-    uint32_t primitive_count;
-
-    /* get underlying type... */
-    if (ompi_ddt_is_predefined(datatype)) {
-        primitive_datatype = datatype;
-        primitive_count = 1;
-    } else {
-        int i, found_index = -1;
-        uint64_t mask = 1;
-        for (i = 0 ; i < DT_MAX_PREDEFINED ; ++i) {
-            if (datatype->bdt_used & mask) {
-                found_index = i;
-                break;
-            }
-            mask *= 2;
-        }
-        primitive_datatype = (ompi_datatype_t*)
-            ompi_ddt_basicDatatypes[found_index];
-        primitive_count = datatype->nbElems;
-    }
-
-    *prim_datatype = primitive_datatype;
-    *prim_count = primitive_count;
-
-    return OMPI_SUCCESS;
-}
+OMPI_DECLSPEC int ompi_osc_base_get_primitive_type_info(ompi_datatype_t *datatype,
+                                                        ompi_datatype_t **prim_datatype, 
+                                                        uint32_t *prim_count);
 
 
 /**
@@ -139,11 +109,11 @@ ompi_osc_base_get_primitive_type_info(ompi_datatype_t *datatype,
  * @retval OMPI_SUCCESS           Success
  * @retval OMPI_ERR_NOT_SUPPORTED Called with op == ompi_mpi_op_replace
  */
-int ompi_osc_base_process_op(void *outbuf,
-                             void *inbuf,
-                             size_t inbuflen,
-                             struct ompi_datatype_t *datatype,
-                             int count,
-                             ompi_op_t *op);
+OMPI_DECLSPEC int ompi_osc_base_process_op(void *outbuf,
+                                           void *inbuf,
+                                           size_t inbuflen,
+                                           struct ompi_datatype_t *datatype,
+                                           int count,
+                                           ompi_op_t *op);
 
 END_C_DECLS
