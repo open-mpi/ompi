@@ -570,7 +570,7 @@ int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state)
             /* ensure, though, that the state is terminated so we don't lockup if
              * the proc never started
              */
-            goto MOVEON;
+            continue;
         }
         
         /* de-register the SIGCHILD callback for this pid */
