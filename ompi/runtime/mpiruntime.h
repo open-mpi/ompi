@@ -40,9 +40,9 @@ struct opal_thread_t;
 /* Global variables and symbols for the MPI layer */
 
 /** Is mpi initialized? */
-extern bool ompi_mpi_initialized;
+OMPI_DECLSPEC extern bool ompi_mpi_initialized;
 /** Has mpi been finalized? */
-extern bool ompi_mpi_finalized;
+OMPI_DECLSPEC extern bool ompi_mpi_finalized;
 
 /** Do we have multiple threads? */
 OMPI_DECLSPEC extern bool ompi_mpi_thread_multiple;
