@@ -180,7 +180,9 @@ static void orte_iof_svc_proxy_msg(
                         ORTE_NAME_ARGS(&hdr->msg_proxy),
                         hdr->msg_tag, hdr->msg_seq, hdr->msg_len);
             /* Everthing matched -- forward the message */
+            OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
             orte_iof_svc_sub_forward(sub,peer,hdr,data,&forward);
+            OPAL_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
         }
     }
     OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
