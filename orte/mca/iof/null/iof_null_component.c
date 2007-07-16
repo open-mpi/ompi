@@ -90,7 +90,7 @@ orte_iof_null_init(int* priority, bool *allow_multi_user_threads,
     /* Only be used in a PBS environment -- this component is
        currently *only* for debugging */
 
-    if (0 != mca_iof_null_component.null_override ||
+    if (0 != mca_iof_null_component.null_override &&
         (NULL != getenv("PBS_ENVIRONMENT") &&
          NULL != getenv("PBS_JOBID"))) {
         *priority = 50;
