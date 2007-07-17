@@ -110,14 +110,14 @@ typedef enum {
     MCA_PML_BASE_SEND_COMPLETE,
     MCA_PML_BASE_SEND_BUFFERED,
     MCA_PML_BASE_SEND_READY,
-    MCA_PML_BASE_SEND_STANDARD
+    MCA_PML_BASE_SEND_STANDARD,
+    MCA_PML_BASE_SEND_SIZE
 } mca_pml_base_send_mode_t;
 
 
 #define OMPI_ANY_TAG    MPI_ANY_TAG
 #define OMPI_ANY_SOURCE MPI_ANY_SOURCE
 #define OMPI_PROC_NULL  MPI_PROC_NULL
-
 
 /**
  * MCA->PML Called by MCA framework to initialize the component.
