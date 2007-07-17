@@ -32,6 +32,13 @@ OMPI_DECLSPEC extern mca_pml_base_component_1_0_0_t mca_pml_cm_component;
 
 struct mca_mtl_request_t;
 
+/* Array of send completion callback - one per send type  
+ * These are called internally by the library when the send 
+ * is completed from its perspective. 
+ */
+OMPI_DECLSPEC extern void (*send_completion_callbacks[])    
+    (struct mca_mtl_request_t *mtl_request);
+
 struct ompi_pml_cm_t {
     mca_pml_base_module_t super;
     int                   free_list_num;

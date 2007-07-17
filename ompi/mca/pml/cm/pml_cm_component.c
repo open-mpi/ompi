@@ -64,6 +64,18 @@ mca_pml_base_component_1_0_0_t mca_pml_cm_component = {
      mca_pml_cm_component_fini   /* component finalize */
 };
 
+/* Array of send completion callback - one per send type 
+ * These are called internally by the library when the send
+ * is completed from its perspective.
+ */
+void (*send_completion_callbacks[MCA_PML_BASE_SEND_SIZE])
+    (struct mca_mtl_request_t *mtl_request) =
+  { mca_pml_cm_send_request_completion,
+    mca_pml_cm_send_request_completion,
+    mca_pml_cm_send_request_completion,
+    mca_pml_cm_send_request_completion,
+    mca_pml_cm_send_request_completion } ;
+
 static int
 mca_pml_cm_component_open(void)
 {
