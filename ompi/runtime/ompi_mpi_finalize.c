@@ -76,6 +76,7 @@
 #include "ompi/mca/io/base/base.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/rcache/base/base.h"
+#include "ompi/mca/pml/base/pml_base_bsend.h"
 
 #if OPAL_ENABLE_FT == 1
 #include "ompi/mca/crcp/crcp.h"
@@ -203,6 +204,9 @@ int ompi_mpi_finalize(void)
     if (OMPI_SUCCESS != (ret = mca_pml_base_close())) {
 	return ret;
     }
+
+    /* shut down buffered send code */
+    mca_pml_base_bsend_fini();
 
 #if OPAL_ENABLE_FT == 1
     /*

@@ -155,9 +155,6 @@ mca_pml_cm_component_init(int* priority,
 static int
 mca_pml_cm_component_fini(void)
 {
-    /* shut down buffered send code */
-    mca_pml_base_bsend_fini();
-
     if (NULL != ompi_mtl && NULL != ompi_mtl->mtl_finalize) {
         return ompi_mtl->mtl_finalize(ompi_mtl);
     }
