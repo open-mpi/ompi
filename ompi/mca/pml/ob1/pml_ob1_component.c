@@ -200,11 +200,6 @@ int mca_pml_ob1_component_fini(void)
     if(OMPI_SUCCESS != (rc = mca_bml.bml_finalize()))
         return rc;
 
-    /* Shutdown buffered send */
-    if(OMPI_SUCCESS != (rc = mca_pml_base_bsend_fini())) {
-        return rc;
-    }
-
     if(!mca_pml_ob1.enabled)
         return OMPI_SUCCESS; /* never selected.. return success.. */  
     mca_pml_ob1.enabled = false;  /* not anymore */
