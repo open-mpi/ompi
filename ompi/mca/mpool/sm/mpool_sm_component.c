@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,6 +21,10 @@
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H*/
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif  /* HAVE_STDLIB_H */
+#include <errno.h>
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -68,14 +73,21 @@ mca_mpool_sm_component_t mca_mpool_sm_component = {
     }
 };
 
-static int max_size_param, min_size_param, peer_size_param;
-
+static char *max_size_param, *min_size_param, *peer_size_param;
+static size_t default_max, default_min, default_peer;
 
 /**
   * component open/close/init function
   */
 static int mca_mpool_sm_open(void)
 {
+    int value = 0;
+    char size_str[100];
+    
+    default_max = 512*1024*1024;
+    default_min = 128*1024*1024;
+    default_peer = 32*1024*1024;
+    
     /* register SM component parameters */
     mca_base_param_reg_string(&mca_mpool_sm_component.super.mpool_version,
                               "allocator",
@@ -84,26 +96,36 @@ static int mca_mpool_sm_open(void)
                               "bucket",
                               &mca_mpool_sm_component.sm_allocator_name);
 
-    max_size_param = 
-        mca_base_param_reg_int(&mca_mpool_sm_component.super.mpool_version,
+    /* register values as string instead of int, to allow max_size and sm_size
+     * to be set greater than 2GB for 32 bit, and even more for 64 bit */
+    sprintf(size_str, "%lu", default_max);
+    mca_base_param_reg_string(&mca_mpool_sm_component.super.mpool_version,
                                "max_size",
                                "Maximum size of the sm mpool shared memory file",
-                               false, false, 512 * 1024 * 1024, NULL);
+                               false, false, size_str, &max_size_param);
 
-    min_size_param = 
-        mca_base_param_reg_int(&mca_mpool_sm_component.super.mpool_version,
+    sprintf(size_str, "%lu", default_min);
+    mca_base_param_reg_string(&mca_mpool_sm_component.super.mpool_version,
                                "min_size",
                                "Minimum size of the sm mpool shared memory file",
-                               false, false, 128 * 1024 * 1024, NULL);
+                               false, false, size_str, &min_size_param);
 
-    peer_size_param = 
-        mca_base_param_reg_int(&mca_mpool_sm_component.super.mpool_version,
+    sprintf(size_str, "%lu", default_peer);
+    mca_base_param_reg_string(&mca_mpool_sm_component.super.mpool_version,
                                "per_peer_size",
                                "Size (in bytes) to allocate per local peer in "
                                "the sm mpool shared memory file, bounded by "
                                "min_size and max_size",
-                               false, false, 32 * 1024 * 1024, NULL);
-
+                               false, false, size_str, &peer_size_param);
+    mca_base_param_reg_int(&mca_mpool_sm_component.super.mpool_version,
+                               "verbose",
+                               "Enable verbose output for mpool sm component",
+                               false, false, 0, &value);
+    if (value != 0) {
+            mca_mpool_sm_component.verbose = opal_output_open(NULL);
+    } else {
+            mca_mpool_sm_component.verbose = -1;
+    }
     mca_mpool_sm_component.sm_size = 0;
 
     return OMPI_SUCCESS;
@@ -126,16 +148,11 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     char *file_name;
     int len;
     mca_mpool_sm_module_t* mpool_module; 
-    mca_allocator_base_component_t* allocator_component; 
-    int max_size, min_size, peer_size;
+    mca_allocator_base_component_t* allocator_component;
+    size_t max_size, min_size, peer_size;
     ompi_proc_t **procs;
     size_t num_all_procs, i, num_local_procs = 0;
-
-    /* determine size of shared memory file */
-    mca_base_param_lookup_int(max_size_param, &max_size);
-    mca_base_param_lookup_int(min_size_param, &min_size);
-    mca_base_param_lookup_int(peer_size_param, &peer_size);
-
+    
     /* README: this needs to change if procs in different jobs (even
        spawned ones) are to talk using shared memory */
     procs = ompi_proc_world(&num_all_procs);
@@ -145,14 +162,60 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
         }
     }
 
+    /* parse the max, min and peer sizes, and validate them */
+    /* absolutely necessary to reset errno each time */ 
+    errno = 0;
+    max_size  = strtoul(max_size_param, (char **)NULL, 10);
+    if (errno == ERANGE) {
+        opal_output(0, "mca_mpool_sm_init: max_size overflows! set to default (%lu)", default_max);
+        max_size = default_max;
+    } else if (errno == EINVAL) {
+        opal_output(0, "mca_mpool_sm_init: invalid max_size entered. set it to (%lu)", default_max);
+        max_size = default_max;
+    }
+    
+    errno = 0;
+    min_size  = strtoul(min_size_param, (char **)NULL, 10);
+    if (errno == ERANGE) {
+        opal_output(0, "mca_mpool_sm_init: min_size overflows! set to default (%lu)", default_min);
+        min_size = default_min;
+    } else if (errno == EINVAL) {
+        opal_output(0, "mca_mpool_sm_init: invalid min_size entered. set it to (%lu)", default_min);
+        min_size = default_min;
+    }
+
+    errno = 0;
+    peer_size  = strtoul(peer_size_param, (char **)NULL, 10);
+    if (errno == ERANGE) {
+        opal_output(0, "mca_mpool_sm_init: peer_size overflows! set to default (%lu)", default_peer);
+        peer_size = default_peer;
+    } else if (errno == EINVAL) {
+        opal_output(0, "mca_mpool_sm_init: invalid peer_size entered. set it to (%lu)", default_peer);
+        peer_size = default_peer;
+    }
+
+    /* more checks... */
     if (min_size > max_size) {
-        opal_output(0, "mca_mpool_sm_init: adjusting max_size to be min_size (%d)",
+        opal_output(0, "mca_mpool_sm_init: adjusting max_size to be min_size (%lu)",
                     min_size);
         max_size = min_size;
     }
 
-    /* set sm_size based on num_procs, then adjust from there */
-    mca_mpool_sm_component.sm_size = peer_size * num_local_procs;
+    /* sm_size is a product of peer_size * num_local_procs. To prevent the
+     * sm_size from overflowing SIZE_MAX, we first calculate the quotient.
+     * If quotient is less than the peer_size, it means the product
+     * (peer_size * num_local_procs) is going to overflow SIZE_MAX, then we'll
+     * set sm_size to max_size. */
+    if ((double)SIZE_MAX / num_local_procs < peer_size) {
+        /* enable verbose would show if sm_size overflows */ 
+        opal_output(mca_mpool_sm_component.verbose,
+            "mca_mpool_sm_init: sm_size overflows, set sm_size to max_size (%lu)",
+            SIZE_MAX);
+        mca_mpool_sm_component.sm_size = max_size;
+    } else {
+        mca_mpool_sm_component.sm_size = peer_size * num_local_procs;
+    }
+
     if ((size_t) min_size > mca_mpool_sm_component.sm_size) {
         mca_mpool_sm_component.sm_size = min_size;
     }
@@ -163,7 +226,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     allocator_component = mca_allocator_component_lookup(
         mca_mpool_sm_component.sm_allocator_name);
 
-    /* if specified allocator cannout be loaded - look for an alternative */
+    /* if specified allocator cannot be loaded - look for an alternative */
     if(NULL == allocator_component) {
         if(opal_list_get_size(&mca_allocator_base_components) == 0) {
             mca_base_component_list_item_t* item = (mca_base_component_list_item_t*)
@@ -177,8 +240,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
             return NULL;
         }
     }
-    
-    
+
     mpool_module = (mca_mpool_sm_module_t*)malloc(sizeof(mca_mpool_sm_module_t)); 
     mca_mpool_sm_module_init(mpool_module); 
 
@@ -189,6 +251,10 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     if ( 0 > len ) {
         return NULL;
     }
+    
+    opal_output(mca_mpool_sm_component.verbose,
+        "mca_mpool_sm_init: shared memory size used: (%lu)",
+        mca_mpool_sm_component.sm_size);
 
     if(NULL == 
             (mca_common_sm_mmap = 
