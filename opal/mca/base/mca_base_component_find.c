@@ -239,12 +239,10 @@ static void find_dyn_components(const char *path, const char *type_name,
         file = (component_file_item_t *) cur;
 
         if( UNVISITED == file->status ) {
-            int i = 0;
             bool op = true;
             file->status = CHECKING_CYCLE;
 
             op = use_component(include_mode, name, file->name);
-                              
             if( true == op ) {
                 open_component(file, found_components);
             }
