@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -66,7 +67,7 @@ int orte_register_params(bool infrastructure)
 
     mca_base_param_reg_string_name("orte", "base_user_debugger",
                                    "Sequence of user-level debuggers to search for in orterun",
-                                   false, false, "totalview @mpirun@ -a @mpirun_args@ : fxp @mpirun@ -a @mpirun_args@", NULL);
+                                   false, false, "totalview @mpirun@ -a @mpirun_args@ : ddt -n @np@ -start @executable@ @executable_argv@ @single_app@ : fxp @mpirun@ -a @mpirun_args@", NULL);
 
 
     mca_base_param_reg_int_name("orte", "abort_timeout",

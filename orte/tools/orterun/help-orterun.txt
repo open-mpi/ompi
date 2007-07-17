@@ -137,4 +137,31 @@ Things to check:
 #
 [orterun:daemon-die]
 %s was unable to cleanly terminate the daemons for this job. Returned value %s instead of ORTE_SUCCESS.
+#
+[debugger requires -np]
+The number of MPI processes to launch was not specified on the command
+line.
 
+The %s debugger requires that you specify a number of MPI processes to
+launch on the command line via the "-np" command line parameter.  For
+example:
+
+    %s -np 4 %s
+
+Skipping the %s debugger for now.
+#
+[debugger requires executable]
+The %s debugger requires that you specify an executable on the %s
+command line; you cannot specify application context files when
+launching this job in the %s debugger.  For example:
+
+    %s -np 4 my_mpi_executable
+
+Skipping the %s debugger for now.
+#
+[debugger only accepts single app]
+The %s debugger only accepts SPMD-style launching; specifying an
+MPMD-style launch (with multiple applications separated via ':') is
+not permitted.
+
+Skipping the %s debugger for now.
