@@ -96,6 +96,9 @@ static int check_dependency(char *line, component_file_item_t *target_file,
                             opal_list_t *found_components);
 static void free_dependency_list(opal_list_t *dependencies);
 
+static bool use_component(const bool include_mode,
+                          const char **requested_component_names,
+                          const char *component_name);
 
 /*
  * Private variables
@@ -126,15 +129,18 @@ int mca_base_component_find(const char *directory, const char *type,
     mca_base_component_list_item_t *cli;
 
     /* Find all the components that were statically linked in */
-
     OBJ_CONSTRUCT(found_components, opal_list_t);
     for (i = 0; NULL != static_components[i]; ++i) {
-        cli = OBJ_NEW(mca_base_component_list_item_t);
-        if (NULL == cli) {
-            return OPAL_ERR_OUT_OF_RESOURCE;
+        if ( use_component(include_mode,
+                           (const char**)requested_component_names,
+                           static_components[i]->mca_component_name) ) {
+            cli = OBJ_NEW(mca_base_component_list_item_t);
+            if (NULL == cli) {
+                return OPAL_ERR_OUT_OF_RESOURCE;
+            }
+            cli->cli_component = static_components[i];
+            opal_list_append(found_components, (opal_list_item_t *) cli);
         }
-        cli->cli_component = static_components[i];
-        opal_list_append(found_components, (opal_list_item_t *) cli);
     }
 
 #if OMPI_WANT_LIBLTDL
@@ -237,25 +243,8 @@ static void find_dyn_components(const char *path, const char *type_name,
             bool op = true;
             file->status = CHECKING_CYCLE;
 
-            if( NULL != name ) {
-                if( false == include_mode) {
-                    /* exclude mode */
-                    for( i = 0; NULL != name[i]; i++ ) {
-                        if( 0 == strcmp(name[i], file->name) ){
-                            op = false;
-                            break;
-                        }
-                    }
-                } else {
-                    /* include mode */
-                    for( op = false, i = 0; NULL != name[i]; i++ ) {
-                        if( 0 == strcmp(name[i], file->name) ){
-                            op = true;
-                            break;
-                        }
-                    }
-                }
-            }
+            op = use_component(include_mode, name, file->name);
+                              
             if( true == op ) {
                 open_component(file, found_components);
             }
@@ -723,5 +712,48 @@ static void free_dependency_list(opal_list_t *dependencies)
   }
   OBJ_DESTRUCT(dependencies);
 }
+
+static bool use_component(const bool include_mode,
+                          const char **requested_component_names,
+                          const char *component_name)
+{
+    bool found = false;
+    const char **req_comp_name = requested_component_names;
+    
+    /*
+     * If no selection is specified then we use all components
+     * we can find.
+     */
+    if (NULL == req_comp_name) {
+        return true;
+    }
+
+    while ( *req_comp_name != NULL ) {
+        if ( strcmp(component_name, *req_comp_name) == 0 ) {
+            found = true;
+            break;
+        }
+        req_comp_name++;
+    }
+
+    /*
+     * include_mode  found |   use
+     * --------------------+------
+     *            0      0 |  true
+     *            0      1 | false
+     *            1      0 | false
+     *            1      1 |  true
+     *
+     * -> inverted xor
+     * As xor is a binary operator let's implement it manually before
+     * a compiler screws it up.
+     */
+    if ( (include_mode && found) || !(include_mode || found) ) {
+        return true;
+    } else {    
+        return false;
+    }
+}
+
 
 #endif /* OMPI_WANT_LIBLTDL */
