@@ -150,14 +150,20 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
     if (MPI_THREAD_MULTIPLE == ompi_mpi_thread_provided) {
         int nextlocal_cid;
         int done=0;
-        int response=0, glresponse=0;
-        int start=ompi_mpi_communicators.lowest_free;
+        int response, glresponse=0;
+        int start;
         int i;
         
-        OPAL_THREAD_LOCK(&ompi_cid_lock);
-        ompi_comm_register_cid (comm->c_contextid);
-        OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-        
+        do {
+            /* Only one communicator function allowed in same time on the
+             * same communicator.
+             */
+            OPAL_THREAD_LOCK(&ompi_cid_lock);
+            response = ompi_comm_register_cid (comm->c_contextid);
+            OPAL_THREAD_UNLOCK(&ompi_cid_lock);
+        } while (OMPI_SUCCESS != response );
+        start = ompi_mpi_communicators.lowest_free;
+
         while (!done) {
             /**
              * This is the real algorithm described in the doc 
@@ -311,8 +317,8 @@ void ompi_comm_reg_finalize (void)
 
 static int ompi_comm_register_cid (uint32_t cid )
 {
-    opal_list_item_t *item=NULL;
-    ompi_comm_reg_t *regcom=NULL;
+    opal_list_item_t *item;
+    ompi_comm_reg_t *regcom;
     ompi_comm_reg_t *newentry = OBJ_NEW(ompi_comm_reg_t);
 
     newentry->cid = cid;
@@ -324,8 +330,22 @@ static int ompi_comm_register_cid (uint32_t cid )
             if ( regcom->cid > cid ) {
                 break;
             }
+#if OMPI_ENABLE_MPI_THREADS
+            if( regcom->cid == cid ) {
+                /**
+                 * The MPI standard state that is the user responsability to
+                 * schedule the global communications in order to avoid any
+                 * kind of troubles. As, managing communicators involve several
+                 * collective communications, we should enforce a sequential
+                 * execution order. This test only allow one communicator
+                 * creation function based on the same communicator.
+                 */
+                OBJ_RELEASE(newentry);
+                return OMPI_ERROR;
+            }
+#endif  /* OMPI_ENABLE_MPI_THREADS */
         }
-        opal_list_insert_pos (&ompi_registered_comms, (opal_list_item_t *)regcom, 
+        opal_list_insert_pos (&ompi_registered_comms, item, 
                               (opal_list_item_t *)newentry);
     }
     else {
@@ -342,7 +362,6 @@ static int ompi_comm_unregister_cid (uint32_t cid)
 
     regcom = (ompi_comm_reg_t *) item;
     OBJ_RELEASE(regcom);
-
     return OMPI_SUCCESS;
 }
 
