@@ -176,3 +176,7 @@ not supported on the host %s.  Deactivating the openib BTL.
 WARNING: fork() support was requested for the openib BTL, but the
 library call ibv_fork_init() failed on the host %s.
 Deactivating the openib BTL.
+[invalid mca param value]
+WARNING: OpenFabric btl paramet configured to illegal value:
+%s
+%s

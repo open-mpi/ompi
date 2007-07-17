@@ -232,34 +232,77 @@ int btl_openib_register_mca_params(void)
     /* JMS Is this really in seconds?  Is there a max? */
     CHECK(reg_int("ib_min_rnr_timer", "InfiniBand minimum "
                   "\"receiver not ready\" timer, in seconds "
-                  "(must be >= 1)",
-                  5, &ival, REGINT_GE_ONE));
+                  "(must be >= 0 and <= 31)",
+                  5, &ival, 0));
+    if (ival > 31) {
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                true, "btl_openib_ib_min_rnr_timer > 31",
+                "btl_openib_ib_min_rnr_timer reset to 31");
+        ival = 31;
+    } else if (ival < 0){
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                true, "btl_openib_ib_min_rnr_timer < 0",
+                "btl_openib_ib_min_rnr_timer reset to 0");
+        ival = 0;
+    }
     mca_btl_openib_component.ib_min_rnr_timer = (uint32_t) ival;
 
     /* JMS is there a max? */
     CHECK(reg_int("ib_timeout", "InfiniBand transmit timeout, plugged into formula: 4.096 microseconds * (2^btl_openib_ib_timeout)"
-                  "(must be >= 1)",
-                  10, &ival, REGINT_GE_ONE));
+                "(must be >= 0 and <= 31)",
+                10, &ival, 0));
+    if (ival > 31) {
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                true, "btl_openib_ib_timeout > 31",
+                "btl_openib_ib_timeout reset to 31");
+        ival = 31;
+    } else if (ival < 0) {
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                true, "btl_openib_ib_timeout < 0",
+                "btl_openib_ib_timeout reset to 0");
+        ival = 0;
+    }
     mca_btl_openib_component.ib_timeout = (uint32_t) ival;
 
-    /* JMS What is the difference between these two counts? */
     /* JMS is there a max? */
     CHECK(reg_int("ib_retry_count", "InfiniBand transmit retry count "
-                  "(must be >= 1)",
-                  7, &ival, REGINT_GE_ONE));
+                  "(must be >= 0 and <= 7)",
+                  7, &ival, 0));
+    if (ival > 7) {
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                true, "btl_openib_ib_retry_count > 7",
+                "btl_openib_ib_retry_count reset to 7");
+        ival = 7;
+    } else if (ival < 0) {
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                true, "btl_openib_ib_retry_count < 0",
+                "btl_openib_ib_retry_count reset to 0");
+        ival = 0;
+    }
     mca_btl_openib_component.ib_retry_count = (uint32_t) ival;
 
     /* JMS: is there a max? */
     CHECK(reg_int("ib_rnr_retry", "InfiniBand \"receiver not ready\" "
-                  "retry count "
-                  "(must be >= 1)", 
-                  7, &ival, REGINT_GE_ONE));
+                "retry count "
+                "(must be >= 0 and <= 7)", 
+                7, &ival, 0));
+    if (ival > 7) {
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                true, "btl_openib_ib_rnr_retry > 7",
+                "btl_openib_ib_rnr_retry reset to 7");
+        ival = 7;
+    } else if (ival < 0) {
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                true, "btl_openib_ib_rnr_retry < 0",
+                "btl_openib_ib_rnr_retry reset to 0");
+        ival = 0;
+    }
     mca_btl_openib_component.ib_rnr_retry = (uint32_t) ival;
 
     CHECK(reg_int("ib_max_rdma_dst_ops", "InfiniBand maximum pending RDMA "
                   "destination operations "
-                  "(must be >= 1)",
-                  4, &ival, REGINT_GE_ONE));
+                  "(must be >= 0)",
+                  4, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.ib_max_rdma_dst_ops = (uint32_t) ival;
 
     /* JMS is there a max? */
