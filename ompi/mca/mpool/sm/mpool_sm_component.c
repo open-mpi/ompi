@@ -210,7 +210,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
         /* enable verbose would show if sm_size overflows */ 
         opal_output(mca_mpool_sm_component.verbose,
             "mca_mpool_sm_init: sm_size overflows, set sm_size to max_size (%lu)",
-            SIZE_MAX);
+            (long unsigned int)SIZE_MAX);
         mca_mpool_sm_component.sm_size = max_size;
     } else {
         mca_mpool_sm_component.sm_size = peer_size * num_local_procs;
