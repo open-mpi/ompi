@@ -82,6 +82,7 @@
 #include "ompi/mca/io/base/base.h"
 #include "ompi/debuggers/debuggers.h"
 #include "ompi/proc/proc.h"
+#include "ompi/mca/pml/base/pml_base_bsend.h"
 
 #if OPAL_ENABLE_FT == 1
 #include "ompi/mca/crcp/crcp.h"
