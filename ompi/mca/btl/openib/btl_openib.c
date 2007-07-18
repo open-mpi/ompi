@@ -141,7 +141,6 @@ int mca_btl_openib_add_procs(
     int lcl_subnet_id_port_cnt = 0;
     int btl_rank = 0;
     mca_btl_base_endpoint_t* endpoint;
-    int ep_index;
     
     for(j=0; j < mca_btl_openib_component.ib_num_btls; j++){ 
         if(mca_btl_openib_component.openib_btls[j]->port_info.subnet_id
@@ -223,17 +222,8 @@ int mca_btl_openib_add_procs(
         
         peers[i] = endpoint;
     }
-    for(ep_index=0;
-        ep_index < orte_pointer_array_get_size(openib_btl->endpoints);
-        ep_index++) {
-        endpoint=orte_pointer_array_get_item(openib_btl->endpoints,ep_index);
-        if(0xffffffff == (uint64_t) endpoint) {
-            opal_output(0, "WTF?\n");
-            abort();
-        }
-    }
-    return mca_btl_openib_size_queues(openib_btl, nprocs);
 
+    return mca_btl_openib_size_queues(openib_btl, nprocs);
 }
 
 static int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size_t nprocs) 
@@ -334,19 +324,7 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
                 orte_pointer_array_set_item(openib_btl->endpoints,ep_index,NULL);
                 assert(((opal_object_t*)endpoint)->obj_reference_count == 1);
                 OBJ_RELEASE(endpoint);
-            } else if(0xffffffff == (uint64_t) endpoint) { 
-                opal_output(0, "WTF?");
-                abort();
             }
-        }
-    }
-    for(ep_index=0;
-        ep_index < orte_pointer_array_get_size(openib_btl->endpoints);
-        ep_index++) {
-        endpoint=orte_pointer_array_get_item(openib_btl->endpoints,ep_index);
-        if(0xffffffff == (uint64_t) endpoint) {
-            opal_output(0, "WTF?\n");
-            abort();
         }
     }
 
@@ -743,9 +721,6 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
         if(!endpoint) {
             BTL_VERBOSE(("In finalize, got another null endpoint\n"));
             continue;
-        } else if(0xffffffff == (uint64_t) endpoint) { 
-            opal_output(0,"Got brocken pointer to endpoint. Internal error");
-            abort();
         }
         OBJ_RELEASE(endpoint);
     }
