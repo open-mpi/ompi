@@ -55,6 +55,13 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                   ompi_check_openib_happy="no"])])
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"], 
+            [AC_CHECK_HEADERS(
+                fcntl.h sys/poll.h,
+                    [],
+                    [AC_MSG_WARN([fcntl.h sys/poll.h not found.  Can not build component.])
+                    ompi_check_openib_happy="no"])]) 
+
+    AS_IF([test "$ompi_check_openib_happy" = "yes"], 
           [OMPI_CHECK_PACKAGE([$1],
                               [infiniband/verbs.h],
                               [ibverbs],

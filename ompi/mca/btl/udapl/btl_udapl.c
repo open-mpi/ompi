@@ -309,7 +309,9 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
         mca_btl_udapl_component.udapl_free_list_num,
         mca_btl_udapl_component.udapl_free_list_max,
         mca_btl_udapl_component.udapl_free_list_inc,
-        btl->super.btl_mpool);
+                           btl->super.btl_mpool,
+                           NULL,
+                           NULL);
 
     ompi_free_list_init_ex(&btl->udapl_frag_max,
         sizeof(mca_btl_udapl_frag_max_t) +
@@ -319,7 +321,9 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
         mca_btl_udapl_component.udapl_free_list_num,
         mca_btl_udapl_component.udapl_free_list_max,
         mca_btl_udapl_component.udapl_free_list_inc,
-        btl->super.btl_mpool);
+                           btl->super.btl_mpool,
+                           NULL,
+                           NULL);
 
     ompi_free_list_init_ex(&btl->udapl_frag_user,
         sizeof(mca_btl_udapl_frag_user_t),
@@ -328,7 +332,9 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
         mca_btl_udapl_component.udapl_free_list_num,
         mca_btl_udapl_component.udapl_free_list_max,
         mca_btl_udapl_component.udapl_free_list_inc,
-        NULL);
+                           NULL,
+                           NULL,
+                           NULL);
 
     ompi_free_list_init_ex(&btl->udapl_frag_control,
         sizeof(mca_btl_udapl_frag_eager_t) +
@@ -338,7 +344,9 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
         mca_btl_udapl_component.udapl_free_list_num,
         -1,
         mca_btl_udapl_component.udapl_free_list_inc,
-        btl->super.btl_mpool);
+                           btl->super.btl_mpool,
+                           NULL,
+                           NULL);
 
     /* initialize eager rdma buffer info */
     orte_pointer_array_init(&btl->udapl_eager_rdma_endpoints, 

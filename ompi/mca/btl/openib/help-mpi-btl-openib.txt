@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007      Mellanox Technologies. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -183,10 +184,6 @@ Please see this FAQ entry for more details:
 NOTE: You can turn off this warning by setting the MCA parameter
       btl_openib_warn_default_gid_prefix to 0.
 #
-[wrong buffer alignment]
-Wrong buffer alignment %d configured on host '%s'. Should be bigger
-than zero and power of two. Use default %d instead.
-#
 [ibv_fork requested but not supported]
 WARNING: fork() support was requested for the openib BTL, but it is
 not supported on the host %s.  Deactivating the openib BTL.
@@ -200,6 +197,31 @@ Deactivating the openib BTL.
 Wrong buffer alignment %d configured on host '%s'. Should be bigger
 than zero and power of two. Use default %d instead.
 #
+[of error event] 
+The OpenFabrics stack has reported a network error event
+Open MPI will try to continue, but your job may end up failing.
+
+Host:              %s
+MPI process PID:   %d
+Error number:      %d
+Error description: %s
+
+This error may indicate connectivity problems within the fabric;
+please contact your system administrator.
+#
+[of unknown event]
+The OpenFabrics stack has reported an unknown network error event.
+Open MPI will try to continue, but the job may end up failing.
+
+Host:              %s
+MPI process PID:   %d
+Error number:      %d
+
+This error may indicate that you are using an OpenFabrics library
+version that is not currently supported by Open MPI.  You might try
+recompiling Open MPI against your OpenFabrics library installation to
+get more information.
+#
 [specified include and exclude]
 ERROR: You have specified both the btl_openib_if_include and
 btl_openib_if_exclude MCA parameters.  These two parameters are
@@ -209,6 +231,7 @@ For reference, the values that you specified are:
 
   btl_openib_if_include: %s
   btl_openib_if_exclude: %s
+#
 [nonexistent port]
 WARNING: One or more nonexistent HCAs/ports were specified:
 
@@ -218,3 +241,9 @@ WARNING: One or more nonexistent HCAs/ports were specified:
 
 These entities will be ignored.  You can disable this warning by
 setting the btl_openib_warn_nonexistent_if MCA parameter to 0.
+#
+[invalid mca param value]
+WARNING: the openib BTL detected an illegal MCA parameter value:
+
+%s
+%s

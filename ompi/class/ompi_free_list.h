@@ -31,6 +31,11 @@ extern "C" {
 #endif
 
 struct mca_mem_pool_t;
+struct ompi_free_list_item_t;
+    
+typedef void (*ompi_free_list_item_init_fn_t) (
+                                               struct ompi_free_list_item_t*, 
+                                               void* ctx);
 
 struct ompi_free_list_t
 {
@@ -46,6 +51,8 @@ struct ompi_free_list_t
     opal_mutex_t fl_lock;
     opal_condition_t fl_condition; 
     opal_list_t fl_allocations;
+    ompi_free_list_item_init_fn_t item_init;
+    void* ctx;
 };
 typedef struct ompi_free_list_t ompi_free_list_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_free_list_t);
@@ -60,6 +67,7 @@ struct ompi_free_list_item_t
 typedef struct ompi_free_list_item_t ompi_free_list_item_t; 
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_free_list_item_t);
+
 
 /**
  * Initialize a free list.
@@ -81,7 +89,10 @@ OMPI_DECLSPEC int ompi_free_list_init_ex(
     int num_elements_to_alloc,
     int max_elements_to_alloc,
     int num_elements_per_alloc,
-    struct mca_mpool_base_module_t*);
+    struct mca_mpool_base_module_t*,
+    ompi_free_list_item_init_fn_t item_init,
+    void *ctx
+    );
 
 static inline int ompi_free_list_init(
     ompi_free_list_t *free_list, 
@@ -94,7 +105,7 @@ static inline int ompi_free_list_init(
 {
     return ompi_free_list_init_ex(free_list, element_size, CACHE_LINE_SIZE,
             element_class, num_elements_to_alloc, max_elements_to_alloc,
-            num_elements_per_alloc, mpool);
+                                  num_elements_per_alloc, mpool, NULL, NULL);
 }
 
 

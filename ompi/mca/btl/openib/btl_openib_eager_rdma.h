@@ -18,16 +18,18 @@ extern "C" {
 #endif
 
 struct mca_btl_openib_eager_rdma_local_t {
-	ompi_ptr_t base; /**< buffer for RDMAing eager messages */
-    mca_btl_openib_recv_frag_eager_t *frags;
-	mca_btl_openib_reg_t *reg;
-	uint16_t head; /**< RDMA buffer to poll */
+    ompi_ptr_t base; /**< buffer for RDMAing eager messages */
+    mca_btl_openib_recv_frag_t *frags;
+    mca_btl_openib_reg_t *reg;
+    uint16_t head; /**< RDMA buffer to poll */
     uint16_t tail; /**< Needed for credit managment */
-	int32_t credits; /**< number of RDMA credits */
+    int32_t credits; /**< number of RDMA credits */
+    int32_t rd_win;
 #if OMPI_ENABLE_DEBUG
     uint32_t seq;
 #endif
-	opal_mutex_t lock; /**< guard access to RDMA buffer */
+    opal_mutex_t lock; /**< guard access to RDMA buffer */
+    int32_t rd_low;
 };
 typedef struct mca_btl_openib_eager_rdma_local_t mca_btl_openib_eager_rdma_local_t;
 
