@@ -712,6 +712,8 @@ static void free_dependency_list(opal_list_t *dependencies)
   OBJ_DESTRUCT(dependencies);
 }
 
+#endif /* OMPI_WANT_LIBLTDL */
+
 static bool use_component(const bool include_mode,
                           const char **requested_component_names,
                           const char *component_name)
@@ -755,4 +757,3 @@ static bool use_component(const bool include_mode,
 }
 
 
-#endif /* OMPI_WANT_LIBLTDL */
