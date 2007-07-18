@@ -493,9 +493,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     if(ompi_convertor_need_buffers(convertor) == false && 0 == reserve) {
         /* GMS  bloody HACK! */
         if(registration != NULL || max_data > btl->btl_max_send_size) {
-            opal_output(mca_btl_base_output, "prepare_src called on endpoint %p\n", 
-                        (void*) endpoint);
-        
             MCA_BTL_IB_FRAG_ALLOC_SEND_USER(btl, frag, rc);
             if(NULL == frag) {
                 return NULL;
@@ -604,8 +601,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     int rc;
 
     openib_btl = (mca_btl_openib_module_t*)btl;
-    opal_output(mca_btl_base_output, "prepare_dst called on endpoint %p\n", 
-                (void*) endpoint);
         
     MCA_BTL_IB_FRAG_ALLOC_RECV_USER(btl, frag, rc);
     if(NULL == frag) {
@@ -869,8 +864,6 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     
     /* check for a send wqe */
     if (OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe,-1) < 0) {
-        opal_output(mca_btl_base_output, "can't get sd_wqe for put on qp %d endpoint %p\n", 
-                    qp, (void*) endpoint);
         OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe,1);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
         opal_list_append(&endpoint->pending_put_frags, (opal_list_item_t *)frag);
@@ -881,9 +874,6 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     } else {
         int ib_rc;
         
-        opal_output(mca_btl_base_output, "schedule put on qp %d endpoint %p\n", 
-                    qp, (void*) endpoint);
-        
         frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
         frag->wr_desc.sr_desc.wr.rdma.remote_addr = frag->base.des_dst->seg_addr.lval; 
         frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_dst->seg_key.key32[0]; 
@@ -892,11 +882,8 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
        
         frag->base.order = qp;
         ib_rc = ibv_post_send(endpoint->qps[qp].lcl_qp, &frag->wr_desc.sr_desc, &bad_wr); 
-        if(ib_rc){ 
-            opal_output(0, "got error: %d : %s \n", ib_rc, strerror(ib_rc));
-            abort();
+        if(ib_rc)
             rc = OMPI_ERROR;
-        }
     
         /* mca_btl_openib_post_srr_all(openib_btl, 1); */
 /*         mca_btl_openib_endpoint_post_rr_all(endpoint, 1); */

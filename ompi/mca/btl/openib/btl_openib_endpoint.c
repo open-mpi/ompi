@@ -137,7 +137,6 @@ static int btl_openib_acquire_send_resources(
         mca_btl_openib_endpoint_t *endpoint,
         mca_btl_openib_frag_t *frag, int *qp, int *do_rdma)
 {
-    opal_output(mca_btl_base_output, "trying to acquire send resources qp: %d\n", *qp); 
     if(*do_rdma) {
         if(OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens, -1) < 0) {
             OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens, 1);
@@ -155,7 +154,6 @@ static int btl_openib_acquire_send_resources(
         opal_list_append(&endpoint->qps[*qp].pending_frags,
                 (opal_list_item_t *)frag);
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
-        opal_output(mca_btl_base_output, "trying to acquire send resources no wqe  qp: %d\n", *qp); 
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -170,10 +168,8 @@ static int btl_openib_acquire_send_resources(
             opal_list_append(&endpoint->qps[*qp].pending_frags,
                     (opal_list_item_t *)frag);
             OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
-             opal_output(mca_btl_base_output,"can't acquire resources on qp %d endpoint %p\n", *qp, (void*) endpoint);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        opal_output(mca_btl_base_output,"got me some resources on qp %d endpoint %p\n", *qp, (void*) endpoint);
     } else {
         if(OPAL_THREAD_ADD32(&openib_btl->qps[*qp].u.srq_qp.sd_credits, -1) < 0) {
             OPAL_THREAD_ADD32(&openib_btl->qps[*qp].u.srq_qp.sd_credits, 1);
@@ -1265,20 +1261,15 @@ static void mca_btl_openib_endpoint_credits(
     qp = frag->qp_idx;
    
     /* we don't acquire a wqe or token for credit message - so decrement */
-    opal_output(mca_btl_base_output, "CREDIT FRAG callback! rd_pending_credit_checks: %d  qp: %d \n", 
-                endpoint->qps[qp].rd_pending_credit_chks, qp);
     OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe, -1);
 
     /* check to see if there are additional credits to return */
     if((checks = OPAL_THREAD_ADD32(&endpoint->qps[qp].rd_pending_credit_chks,-1)) > 0) {
         OPAL_THREAD_ADD32(&endpoint->qps[qp].rd_pending_credit_chks, -checks);
-        opal_output(mca_btl_base_output, "CREDIT FRAG zero out credit checks qp: %d\n", qp);
         if(btl_openib_check_send_credits(endpoint, qp)) {
             mca_btl_openib_endpoint_send_credits(endpoint, qp);
         }
     }
-    opal_output(mca_btl_base_output, "CREDIT FRAG callback, leaving rd_pending_credit_checks: %d qp: %d\n", 
-                endpoint->qps[qp].rd_pending_credit_chks, qp);
 }
 
 /**
@@ -1293,7 +1284,6 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     mca_btl_openib_rdma_credits_header_t *credits_hdr;
     int do_rdma = 0, ib_rc;
 
-    opal_output(mca_btl_base_output, "time to send credits qp: %d \n", qp);
     frag = endpoint->qps[qp].credit_frag;
 
     if(NULL == frag) {

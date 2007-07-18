@@ -224,7 +224,6 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
     mca_btl_openib_rdma_credits_header_t *credits_hdr;
     int qp = frag->qp_idx;
     
-    opal_output(mca_btl_base_output, "got a control message\n");
     if(BTL_OPENIB_EAGER_RDMA_QP(qp)) {
 	    /* if not sent via rdma */
         if(!MCA_BTL_OPENIB_RDMA_FRAG(frag) &&
@@ -241,7 +240,6 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
     
     switch (ctl_hdr->type) {
     case MCA_BTL_OPENIB_CONTROL_CREDITS:
-        opal_output(mca_btl_base_output, "got me some credits \n");
         credits_hdr = (mca_btl_openib_rdma_credits_header_t*)ctl_hdr;
         if(endpoint->nbo) {
             BTL_OPENIB_RDMA_CREDITS_HEADER_NTOH((*credits_hdr));
@@ -1162,8 +1160,6 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
                           BTL_OPENIB_CREDITS(frag->hdr->credits));
     else
         if(MCA_BTL_OPENIB_PP_QP == endpoint->qps[qp].qp_type && frag->hdr->credits > 0) {
-            opal_output(mca_btl_base_output, "got %d sd_credits on qp:%d endpoint %p\n", 
-                        frag->hdr->credits, qp, (void*) endpoint);
             OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits, 
                               frag->hdr->credits);
             assert(endpoint->qps[qp].u.pp_qp.sd_credits <= 
@@ -1576,7 +1572,6 @@ static int btl_openib_module_progress(mca_btl_openib_module_t* openib_btl)
                     return 0;
                 }
                 count++; 
-                opal_output(mca_btl_base_output, "completed a recv\n");
                 break; 
 
             default:
