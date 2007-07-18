@@ -96,10 +96,6 @@ static int check_dependency(char *line, component_file_item_t *target_file,
                             opal_list_t *found_components);
 static void free_dependency_list(opal_list_t *dependencies);
 
-static bool use_component(const bool include_mode,
-                          const char **requested_component_names,
-                          const char *component_name);
-
 /*
  * Private variables
  */
@@ -108,6 +104,11 @@ static const char *key_dependency = "dependency=";
 static const char component_template[] = "mca_%s_";
 static opal_list_t found_files;
 #endif /* OMPI_WANT_LIBLTDL */
+
+static bool use_component(const bool include_mode,
+                          const char **requested_component_names,
+                          const char *component_name);
+
 
 /*
  * Function to find as many components of a given type as possible.  This
