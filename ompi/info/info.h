@@ -193,7 +193,7 @@ extern "C" {
    *   character.  If the 'key' is not found on 'info', 'valuelen' is left
    *   alone.
    */
-  int ompi_info_get_valuelen (ompi_info_t *info, char *key, int *valuelen,
+  OMPI_DECLSPEC int ompi_info_get_valuelen (ompi_info_t *info, char *key, int *valuelen,
                               int *flag);
 
   /**

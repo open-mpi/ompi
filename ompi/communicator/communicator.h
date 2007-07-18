@@ -324,14 +324,14 @@ struct ompi_communicator_t {
      *                   1 if the do not (optimization to c_local_comm creation)
      *
      */
-    int ompi_comm_dup (ompi_communicator_t *comm, ompi_communicator_t **newcomm, 
+    OMPI_DECLSPEC int ompi_comm_dup (ompi_communicator_t *comm, ompi_communicator_t **newcomm, 
                        int sync_flag);
 
 
     /**
      * free a communicator
      */
-    int ompi_comm_free (ompi_communicator_t **comm);
+    OMPI_DECLSPEC int ompi_comm_free (ompi_communicator_t **comm);
 
     /**
      * allocate a new communicator structure
