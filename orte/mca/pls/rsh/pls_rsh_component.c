@@ -228,12 +228,22 @@ orte_pls_base_module_t *orte_pls_rsh_component_init(int *priority)
        component */
     if (NULL == mca_pls_rsh_component.agent_argv || 
         NULL == mca_pls_rsh_component.agent_argv[0]) {
+        if (mca_pls_rsh_component.debug) {
+            opal_output(0, "pls:rsh: unable to be used: cannot find the "
+                        "launching agent. Looked for: %s\n", 
+                        mca_pls_rsh_component.agent_param);
+        }
         return NULL;
     }
     mca_pls_rsh_component.agent_path = 
         opal_path_findv(mca_pls_rsh_component.agent_argv[0], X_OK,
                         environ, NULL);
     if (NULL == mca_pls_rsh_component.agent_path) {
+        if (mca_pls_rsh_component.debug) {
+            opal_output(0, "pls:rsh: unable to be used: cannot find path "
+                        "for launching agent \"%s\"\n", 
+                        mca_pls_rsh_component.agent_argv[0]);
+        }
         return NULL;
     }
     *priority = mca_pls_rsh_component.priority;
