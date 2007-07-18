@@ -25,6 +25,7 @@
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
 #include "opal/util/if.h"
+#include "opal/util/net.h"
 #include "opal/util/keyval_parse.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/base.h"
@@ -52,6 +53,8 @@ opal_finalize_util(void)
     /* close interfaces code.  This is lazy opened, but protected from
        close when not opened internally */
     opal_iffinalize();
+
+    opal_net_finalize();
 
     /* keyval lex-based parser */
     opal_util_keyval_parse_finalize();

@@ -74,8 +74,61 @@
 #include "opal/util/output.h"
 #include "opal/util/strncpy.h"
 #include "opal/constants.h"
+#include "opal/threads/tsd.h"
 
 #ifdef HAVE_STRUCT_SOCKADDR_IN
+
+#if OPAL_WANT_IPV6
+static opal_tsd_key_t hostname_tsd_key;
+
+
+static void
+hostname_cleanup(void *value)
+{
+    opal_output(0, "cleaning up buffer: 0x%lx", value);
+    if (NULL != value) free(value);
+}
+
+
+static char*
+get_hostname_buffer(void)
+{
+    void *buffer;
+    int ret;
+
+    ret = opal_tsd_getspecific(hostname_tsd_key, &buffer);
+    if (OPAL_SUCCESS != ret) return NULL;
+
+    if (NULL == buffer) {
+        opal_output(0, "getting a buffer");
+        buffer = (void*) malloc((NI_MAXHOST + 1) * sizeof(char));
+        ret = opal_tsd_setspecific(hostname_tsd_key, buffer);
+    }
+
+    opal_output(0, "returning buffer: 0x%lx", buffer);
+
+    return (char*) buffer;
+}
+#endif
+
+
+int
+opal_net_init()
+{
+#if OPAL_WANT_IPV6
+    return opal_tsd_key_create(&hostname_tsd_key, hostname_cleanup);
+#else
+    return OPAL_SUCCESS;
+#endif
+}
+
+
+int
+opal_net_finalize()
+{
+    return OPAL_SUCCESS;
+}
+
 
 /* convert a CIDR prefixlen to netmask (in network byte order) */
 uint32_t
@@ -225,7 +278,7 @@ char*
 opal_net_get_hostname(struct sockaddr *addr)
 {
 #if OPAL_WANT_IPV6
-    char *name = (char *)malloc((NI_MAXHOST + 1) * sizeof(char));
+    char *name = get_hostname_buffer();
     int error;
     socklen_t addrlen;
 
@@ -296,6 +349,19 @@ opal_net_get_port(struct sockaddr *addr)
 
 
 #else /* HAVE_STRUCT_SOCKADDR_IN */
+
+int
+opal_net_init()
+{
+    return OPAL_SUCCESS;
+}
+
+
+int
+opal_net_finalize()
+{
+    return OPAL_SUCCESS;
+}
 
 
 uint32_t
