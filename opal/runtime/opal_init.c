@@ -28,6 +28,7 @@
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
+#include "opal/util/net.h"
 #include "opal/mca/installdirs/base/base.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
@@ -162,6 +163,11 @@ opal_init_util(void)
     /* keyval lex-based parser */
     if (OPAL_SUCCESS != (ret = opal_util_keyval_parse_init())) {
         error = "opal_util_keyval_parse_init";
+        goto return_error;
+    }
+
+    if (OPAL_SUCCESS != (ret = opal_net_init())) {
+        error = "opal_net_init";
         goto return_error;
     }
 

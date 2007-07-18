@@ -35,6 +35,31 @@
 
 BEGIN_C_DECLS
 
+/**
+ * Intiailize the network helper subsystem
+ *
+ * Initialize the network helper subsystem.  Should be called exactly
+ * once for any process that will use any function in the network
+ * helper subsystem.
+ *
+ * @retval OPAL_SUCCESS   Success
+ * @retval OPAL_ERR_TEMP_OUT_OF_RESOURCE Not enough memory for static
+ *                        buffer creation
+ */
+OPAL_DECLSPEC int opal_net_init(void);
+
+
+/**
+ * Finalize the network helper subsystem
+ *
+ * Finalize the network helper subsystem.  Should be called exactly
+ * once for any process that will use any function in the network
+ * helper subsystem.
+ *
+ * @retval OPAL_SUCCESS   Success
+ */
+OPAL_DECLSPEC int opal_net_finalize(void);
+
 
 /**
  * Calculate netmask in network byte order from CIDR notation
@@ -90,7 +115,8 @@ OPAL_DECLSPEC bool opal_net_addr_isipv4public(struct sockaddr *addr);
  * Get string version of address
  *
  * Return the un-resolved address in a string format.  The string will
- * be created with malloc and the user must free the string.
+ * be returned in a per-thread static buffer and should not be freed
+ * by the user.
  *
  * @param addr              struct sockaddr of address
  * @return                  literal representation of \c addr
