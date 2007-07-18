@@ -250,12 +250,7 @@ static inline int mca_btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpo
         OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_credits, num_post);
         assert(endpoint->qps[qp].u.pp_qp.rd_credits < rd_num);
         assert(endpoint->qps[qp].u.pp_qp.rd_credits >= 0);
-        opal_output(mca_btl_base_output, "posting %d on qp %d \n", num_post, qp);
-        
     }
-    opal_output(mca_btl_base_output, "not posting on qp %d: rd_posted %d, rd_low %d, additional %d, rd_num %d rd_credits %d\n"
-                ,  qp, endpoint->qps[qp].u.pp_qp.rd_posted, mca_btl_openib_component.qp_infos[qp].rd_low , additional, rd_num, 
-                endpoint->qps[qp].u.pp_qp.rd_credits);
     OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
     return OMPI_SUCCESS;
 }
@@ -275,14 +270,8 @@ static inline int mca_btl_openib_endpoint_post_rr_all(mca_btl_base_endpoint_t *e
 static inline int btl_openib_check_send_credits(
         mca_btl_openib_endpoint_t *endpoint, const int qp)
 {
-    opal_output(mca_btl_base_output, "check_send_credits says rd_credits is %d, rd_win is %d qp: %d endpoint %p\n", 
-                endpoint->qps[qp].u.pp_qp.rd_credits, 
-                mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win, qp, (void*) endpoint);
-
-    /* GMS, this is busted for high prio check eager RDMA credits */
     if(BTL_OPENIB_EAGER_RDMA_QP(qp)) { 
         if(endpoint->eager_rdma_local.credits >= endpoint->eager_rdma_local.rd_win) {
-            opal_output(mca_btl_base_output, "check_send_credits says sending RDMA credits qp: %d\n", qp);
             return OPAL_THREAD_ADD32(&endpoint->qps[qp].rd_pending_credit_chks, 1) == 1;
         }
     }
@@ -292,9 +281,6 @@ static inline int btl_openib_check_send_credits(
 
     if(endpoint->qps[qp].u.pp_qp.rd_credits >= 
        mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win) { 
-        opal_output(mca_btl_base_output, "we need to try and send credits rd_pending_credit_chks says %d qp: %d\n", 
-                    endpoint->qps[qp].rd_pending_credit_chks, qp);
-        
         return OPAL_THREAD_ADD32(&endpoint->qps[qp].rd_pending_credit_chks, 1) == 1;
     } 
    
