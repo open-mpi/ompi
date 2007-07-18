@@ -658,13 +658,8 @@ static int mca_btl_finalize_hca(struct mca_btl_openib_hca_t *hca)
         return OMPI_ERROR;
     }
     if (ibv_dealloc_pd(hca->ib_pd)) {
-        if (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) {
-            BTL_VERBOSE(("Warning! Failed to release PD"));
-            return OMPI_SUCCESS;
-        } else {
-            BTL_ERROR(("Error! Failed to release PD"));
-            return OMPI_ERROR;
-        }
+        BTL_VERBOSE(("Warning! Failed to release PD"));
+        return OMPI_ERROR;
     }
     if (ibv_close_device(hca->ib_dev_context)) {
         if (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) {
