@@ -85,18 +85,23 @@ static int orte_create_dir(char *directory)
 
     /* Sanity check before creating the directory with the proper mode,
      * Make sure it doesn't exist already */
-    if( OPAL_ERR_NOT_FOUND != (ret = opal_os_dirpath_access(directory, my_mode)) ) {
+    if( ORTE_ERR_NOT_FOUND != (ret = opal_os_dirpath_access(directory, my_mode)) ) {
         /* Failure because opal_os_dirpath_access() indicated that either:
          * - The directory exists and we can access it (no need to create it again), 
          *    return OPAL_SUCCESS, or
          * - don't have access rights, return OPAL_ERROR
          */
+        if (ORTE_SUCCESS != ret) {
+            ORTE_ERROR_LOG(ret);
+        }
         return(ret);
     }
-    /* The directory doesn't exist so create it */
-    else {
-	    return(opal_os_dirpath_create(directory, my_mode));
+    
+    /* Get here if the directory doesn't exist, so create it */
+    if (ORTE_SUCCESS != (ret = opal_os_dirpath_create(directory, my_mode))) {
+        ORTE_ERROR_LOG(ret);
     }
+    return ret;
 }
 
 /*
@@ -133,7 +138,8 @@ orte_session_dir_get_name(char **fulldirpath,
             user = strdup(orte_system_info.user);
         else {
             /* Couldn't find it, so fail */
-            exit_status = ORTE_ERROR;
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            exit_status = ORTE_ERR_BAD_PARAM;
             goto cleanup;
         }
     }
@@ -149,7 +155,8 @@ orte_session_dir_get_name(char **fulldirpath,
             hostname = strdup(orte_system_info.nodename);
         else {
             /* Couldn't find it, so fail */
-            exit_status = ORTE_ERROR;
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            exit_status = ORTE_ERR_BAD_PARAM;
             goto cleanup;
         }
     }
@@ -183,7 +190,8 @@ orte_session_dir_get_name(char **fulldirpath,
     if( NULL == universe &&
         (NULL != proc ||
          NULL != job) ) {
-        exit_status = ORTE_ERROR;
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        exit_status = ORTE_ERR_BAD_PARAM;
         goto cleanup;
     }
 
@@ -192,7 +200,8 @@ orte_session_dir_get_name(char **fulldirpath,
      */
     if( NULL == job &&
         NULL != proc) {
-        exit_status = ORTE_ERROR;
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        exit_status = ORTE_ERR_BAD_PARAM;
         goto cleanup;
     }
     
@@ -206,7 +215,8 @@ orte_session_dir_get_name(char **fulldirpath,
     }
     else { /* If not set then construct it */
         if (0 > asprintf(&frontend, "openmpi-sessions-%s@%s_%s", user, hostname, batchname)) {
-            exit_status = ORTE_ERROR;
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            exit_status = ORTE_ERR_OUT_OF_RESOURCE;
             goto cleanup;
         }
     }
@@ -220,6 +230,7 @@ orte_session_dir_get_name(char **fulldirpath,
     if( NULL != proc) {
         sessions = opal_os_path( false, frontend, universe, job, proc, NULL );
         if( NULL == sessions ) {
+            ORTE_ERROR_LOG(ORTE_ERROR);
             exit_status = ORTE_ERROR;
             goto cleanup;
         }
@@ -230,6 +241,7 @@ orte_session_dir_get_name(char **fulldirpath,
     else if(NULL != job) {
         sessions = opal_os_path( false, frontend, universe, job, NULL );
         if( NULL == sessions ) {
+            ORTE_ERROR_LOG(ORTE_ERROR);
             exit_status = ORTE_ERROR;
             goto cleanup;
         }
@@ -240,6 +252,7 @@ orte_session_dir_get_name(char **fulldirpath,
     else if(NULL != universe) {
         sessions = opal_os_path( false, frontend, universe, NULL );
         if( NULL == sessions ) {
+            ORTE_ERROR_LOG(ORTE_ERROR);
             exit_status = ORTE_ERROR;
             goto cleanup;
         }
@@ -250,7 +263,8 @@ orte_session_dir_get_name(char **fulldirpath,
     else {
         if (0 > asprintf(&sessions, "%s",
                          frontend) ) {
-            exit_status = ORTE_ERROR;
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            exit_status = ORTE_ERR_OUT_OF_RESOURCE;
             goto cleanup;
         }
     }
@@ -366,6 +380,7 @@ int orte_session_dir(bool create,
             goto try_again;
         }
         else {
+            ORTE_ERROR_LOG(return_code);
             goto cleanup;
         }
     }
@@ -382,6 +397,7 @@ int orte_session_dir(bool create,
                 goto try_again;
             }
             else {
+                ORTE_ERROR_LOG(return_code);
                 goto cleanup;
             }
         }
@@ -399,6 +415,7 @@ int orte_session_dir(bool create,
                 goto try_again;
             }
             else {
+                ORTE_ERROR_LOG(return_code);
                 goto cleanup;
             }
         }
