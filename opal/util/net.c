@@ -85,7 +85,6 @@ static opal_tsd_key_t hostname_tsd_key;
 static void
 hostname_cleanup(void *value)
 {
-    opal_output(0, "cleaning up buffer: 0x%lx", value);
     if (NULL != value) free(value);
 }
 
@@ -100,12 +99,9 @@ get_hostname_buffer(void)
     if (OPAL_SUCCESS != ret) return NULL;
 
     if (NULL == buffer) {
-        opal_output(0, "getting a buffer");
         buffer = (void*) malloc((NI_MAXHOST + 1) * sizeof(char));
         ret = opal_tsd_setspecific(hostname_tsd_key, buffer);
     }
-
-    opal_output(0, "returning buffer: 0x%lx", buffer);
 
     return (char*) buffer;
 }
