@@ -147,10 +147,10 @@ do {                                               \
 } while (0)
 
 enum mca_btl_openib_frag_type_t {
-    MCA_BTL_OPENIB_FRAG_EAGER,
-    MCA_BTL_OPENIB_FRAG_MAX,
-    MCA_BTL_OPENIB_SEND_FRAG_FRAG,
-    MCA_BTL_OPENIB_RECV_FRAG_FRAG,
+    MCA_BTL_OPENIB_FRAG_RECV,
+    MCA_BTL_OPENIB_FRAG_RECV_USER,
+    MCA_BTL_OPENIB_FRAG_SEND,
+    MCA_BTL_OPENIB_FRAG_SEND_USER,
     MCA_BTL_OPENIB_FRAG_EAGER_RDMA,
     MCA_BTL_OPENIB_FRAG_CONTROL
 };
@@ -174,33 +174,26 @@ struct mca_btl_openib_frag_t {
     } wr_desc;  
     struct ibv_sge sg_entry;  
     struct mca_btl_openib_reg_t *registration;
+    ompi_free_list_t* list;
+    uint8_t qp_idx;
 }; 
 typedef struct mca_btl_openib_frag_t mca_btl_openib_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_openib_frag_t);
 
-typedef struct mca_btl_openib_frag_t mca_btl_openib_send_frag_eager_t; 
-    
-OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_eager_t); 
+typedef struct mca_btl_openib_frag_t mca_btl_openib_send_frag_t; 
+OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_t);
 
-typedef struct mca_btl_openib_frag_t mca_btl_openib_send_frag_max_t; 
+typedef struct mca_btl_openib_frag_t mca_btl_openib_send_user_frag_t; 
     
-OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_max_t); 
+OBJ_CLASS_DECLARATION(mca_btl_openib_send_user_frag_t); 
 
-typedef struct mca_btl_openib_frag_t mca_btl_openib_send_frag_frag_t; 
+typedef struct mca_btl_openib_frag_t mca_btl_openib_recv_user_frag_t; 
     
-OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_frag_t); 
+OBJ_CLASS_DECLARATION(mca_btl_openib_recv_user_frag_t); 
 
-typedef struct mca_btl_openib_frag_t mca_btl_openib_recv_frag_frag_t; 
+typedef struct mca_btl_openib_frag_t mca_btl_openib_recv_frag_t; 
     
-OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_frag_t); 
-
-typedef struct mca_btl_openib_frag_t mca_btl_openib_recv_frag_eager_t; 
-    
-OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_eager_t); 
-
-typedef struct mca_btl_openib_frag_t mca_btl_openib_recv_frag_max_t; 
-    
-OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_max_t); 
+OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_t); 
 
 typedef struct mca_btl_openib_frag_t mca_btl_openib_send_frag_control_t; 
     
@@ -227,52 +220,44 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_control_t);
                  item, rc);                                            \
         frag = (mca_btl_openib_frag_t*)item;                           \
     } while (0)
-
-#define MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc)                     \
-    MCA_BTL_IB_FRAG_ALLOC(btl, frag, rc, BTL_OPENIB_HP_QP)
-
-#define MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc)                       \
-    MCA_BTL_IB_FRAG_ALLOC(btl, frag, rc, BTL_OPENIB_LP_QP)
-
-#define MCA_BTL_IB_FRAG_ALLOC_SEND_FRAG(btl, frag, rc)                               \
-{                                                                      \
+    
+#define MCA_BTL_IB_FRAG_ALLOC_BY_SIZE(btl, frag, _size, rc)             \
+    do {                                                                \
+        int qp;                                                         \
+        ompi_free_list_item_t* item = NULL;                             \
+        for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {      \
+            if(mca_btl_openib_component.qp_infos[qp].size >= _size) {   \
+                OMPI_FREE_LIST_GET(                                     \
+                  &((mca_btl_openib_module_t*) btl)->qps[qp].send_free, \
+                    item, rc);                                          \
+                if(item)                                                \
+                    break;                                              \
+            }                                                           \
+        }                                                               \
+        frag = (mca_btl_openib_frag_t*) item;                           \
+    } while(0);
+        
+#define MCA_BTL_IB_FRAG_ALLOC_SEND_USER(btl, frag, rc)                 \
+    {                                                                  \
                                                                        \
-    ompi_free_list_item_t *item;                                            \
-    OMPI_FREE_LIST_GET(&((mca_btl_openib_module_t*)btl)->send_free_frag, item, rc);       \
-    frag = (mca_btl_openib_frag_t*) item;                                  \
-}
+        ompi_free_list_item_t *item;                                    \
+        OMPI_FREE_LIST_GET(&((mca_btl_openib_module_t*)btl)->send_user_free, item, rc); \
+        frag = (mca_btl_openib_frag_t*) item;                           \
+    }
 
-#define MCA_BTL_IB_FRAG_ALLOC_RECV_FRAG(btl, frag, rc)                               \
-{                                                                      \
-                                                                       \
-    ompi_free_list_item_t *item;                                            \
-    OMPI_FREE_LIST_GET(&((mca_btl_openib_module_t*)btl)->recv_free_frag, item, rc);       \
-    frag = (mca_btl_openib_frag_t*) item;                                  \
-}
+#define MCA_BTL_IB_FRAG_ALLOC_RECV_USER(btl, frag, rc)                  \
+    {                                                                   \
+                                                                        \
+        ompi_free_list_item_t *item;                                    \
+        OMPI_FREE_LIST_GET(&((mca_btl_openib_module_t*)btl)->recv_user_free, item, rc); \
+        frag = (mca_btl_openib_frag_t*) item;                           \
+    }
 
 #define MCA_BTL_IB_FRAG_RETURN(btl, frag)                                  \
-{   do {                                                                   \
-        ompi_free_list_t* my_list = NULL;                                  \
-        switch(frag->type) {                                               \
-         case MCA_BTL_OPENIB_FRAG_EAGER_RDMA:                              \
-         case MCA_BTL_OPENIB_FRAG_EAGER:                                   \
-          my_list = &btl->send_free[BTL_OPENIB_HP_QP];                     \
-          break;                                                           \
-         case MCA_BTL_OPENIB_FRAG_MAX:                                     \
-          my_list = &btl->send_free[BTL_OPENIB_LP_QP];                     \
-          break;                                                           \
-         case MCA_BTL_OPENIB_FRAG_CONTROL:                                 \
-          my_list = &btl->send_free_control;                               \
-          break;                                                           \
-         case MCA_BTL_OPENIB_RECV_FRAG_FRAG:                               \
-          my_list = &btl->recv_free_frag;                                  \
-          break;                                                           \
-         case MCA_BTL_OPENIB_SEND_FRAG_FRAG:                               \
-          my_list = &btl->send_free_frag;                                  \
-          break;                                                           \
-        }                                                                  \
-        OMPI_FREE_LIST_RETURN(my_list, (ompi_free_list_item_t*)(frag));    \
-    } while(0);                                                            \
+{ do {                                                              \
+        OMPI_FREE_LIST_RETURN(frag->list,                               \
+                              (ompi_free_list_item_t*)(frag));          \
+    } while(0);                                                         \
 }
 
 #define MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(btl,list)                      \
@@ -283,6 +268,17 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_control_t);
     }                                                                     \
 
 struct mca_btl_openib_module_t;
+
+struct mca_btl_openib_frag_init_data_t {
+    uint8_t order;
+    size_t length;
+    mca_btl_openib_frag_type_t type;
+    ompi_free_list_t* list;
+};
+typedef struct mca_btl_openib_frag_init_data_t mca_btl_openib_frag_init_data_t;
+
+void mca_btl_openib_frag_init(ompi_free_list_item_t* item, void* ctx);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

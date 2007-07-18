@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,10 +48,10 @@ typedef enum {
 
     /* Waiting for ack from endpoint */
     MCA_BTL_IB_CONNECT_ACK,
-    
-    /*Waiting for final connection ACK from endpoint */ 
-    MCA_BTL_IB_WAITING_ACK, 
 
+    /*Waiting for final connection ACK from endpoint */
+    MCA_BTL_IB_WAITING_ACK, 
+    
     /* Connected ... both sender & receiver have
      * buffers associated with this connection */
     MCA_BTL_IB_CONNECTED,
@@ -64,29 +65,68 @@ typedef enum {
     MCA_BTL_IB_FAILED
 } mca_btl_openib_endpoint_state_t;
 
-struct mca_btl_openib_rem_info_t { 
-    
-    uint32_t                    rem_qp_num[2];
-    /* Remote QP number  (Low and High priority) */ 
+struct mca_btl_openib_rem_qp_info_t { 
+    uint32_t                    rem_qp_num; 
+    /* Remote QP number */ 
+    uint32_t                    rem_psn; 
+    /* Remote processes port sequence number */ 
+}; typedef struct mca_btl_openib_rem_qp_info_t mca_btl_openib_rem_qp_info_t; 
 
+struct mca_btl_openib_rem_info_t { 
     uint16_t                    rem_lid;
     /* Local identifier of the remote process */
-    
-    
-    uint32_t                    rem_psn[2]; 
-    /* Remote processes port sequence number (Low and High) */ 
-   
     uint64_t                    rem_subnet_id; 
     /* subnet id of remote process */     
-
-    /* MTU of remote process */
     uint32_t                    rem_mtu;
-
-    /* index of remote endpoint in endpoint array */
+    /* MTU of remote process */
     uint32_t                    rem_index;
-}; 
-typedef struct mca_btl_openib_rem_info_t mca_btl_openib_rem_info_t; 
+    /* index of remote endpoint in endpoint array */
+    mca_btl_openib_rem_qp_info_t *rem_qps;
+}; typedef struct mca_btl_openib_rem_info_t mca_btl_openib_rem_info_t; 
 
+
+/**
+ *  Agggregates all per peer qp info for an endpoint 
+ */
+struct mca_btl_openib_endpoint_pp_qp_t { 
+    int32_t sd_credits;  /**< this rank's view of the credits 
+                          *  available for sending: 
+                          *  this is the credits granted by the 
+                          *  remote peer which has some relation to the 
+                          *  number of receive buffers posted remotely 
+                          */
+    int32_t  rd_posted;   /**< number of descriptors posted to the nic*/
+    int32_t  rd_credits;  /**< number of credits to return to peer */
+}; typedef struct mca_btl_openib_endpoint_pp_qp_t mca_btl_openib_endpoint_pp_qp_t;
+
+
+/**
+ *  Aggregates all srq qp info for an endpoint 
+ */
+struct mca_btl_openib_endpoint_srq_qp_t { 
+    int32_t dummy;
+}; typedef struct mca_btl_openib_endpoint_srq_qp_t mca_btl_openib_endpoint_srq_qp_t;
+
+
+struct mca_btl_openib_endpoint_qp_t { 
+    struct ibv_qp*              lcl_qp; /* Local QP (Low and High) */
+    struct ibv_qp_attr*         lcl_qp_attr; 
+    /* Local QP attrnibutes (Low and High) */
+    uint32_t lcl_psn; 
+    int32_t  sd_wqe;      /**< number of available send wqe entries */
+    int qp_type;
+    opal_list_t                 pending_frags; /**< put fragments here if there
+                                                    is no wqe available or, in
+                                                    case of PP QP, if there is
+                                                    no credit available */
+    int32_t  rd_pending_credit_chks;  /**< number of outstanding return credit requests */
+    struct mca_btl_openib_frag_t *credit_frag;
+    union {
+        mca_btl_openib_endpoint_srq_qp_t srq_qp;
+        mca_btl_openib_endpoint_pp_qp_t pp_qp;
+    } u;
+    
+}; typedef struct mca_btl_openib_endpoint_qp_t mca_btl_openib_endpoint_qp_t;
 
 
 /**
@@ -117,35 +157,24 @@ struct mca_btl_base_endpoint_t {
     opal_mutex_t                endpoint_lock;
     /**< lock for concurrent access to endpoint state */
     
-    opal_list_t                 pending_send_frags;
-    /**< list of pending send frags for this endpotint */
+    opal_list_t                 pending_lazy_frags;
+    /**< list of pending frags due to lazy connection establishment 
+     *   for this endpotint 
+     */
     
-    opal_list_t                 pending_frags[2]; /**< list of pending frags */ 
+    mca_btl_openib_endpoint_qp_t * qps;
+       
     opal_list_t                 pending_get_frags; /**< list of pending rget ops */
     opal_list_t                 pending_put_frags; /**< list of pending rput ops */
 
-    mca_btl_openib_rem_info_t   rem_info;
     
-    uint32_t                    lcl_psn[2]; 
+    
+    
     /* Local processes port sequence number (Low and High) */
  
-    struct ibv_qp*              lcl_qp[2]; /* Local QP (Low and High) */
-
-    struct ibv_qp_attr*         lcl_qp_attr[2]; 
-    /* Local QP attributes (Low and High) */
     
-    int32_t                     sd_credits[2];  /**< this rank's view of the credits 
-                                                  *  available for sending: 
-                                                  *  this is the credits granted by the 
-                                                  *  remote peer which has some relation to the 
-                                                  *  number of receive buffers posted remotely 
-                                                  */
     int32_t                     get_tokens;    /**< number of available get tokens */
 
-    int32_t rd_posted[2];   /**< number of descriptors posted to the nic*/
-    int32_t rd_credits[2];  /**< number of credits to return to peer */
-    int32_t rd_pending_credit_chks[2];  /**< number of outstanding return credit requests */
-    int32_t sd_wqe[2];      /**< number of available send wqe entries */
 
     uint64_t subnet_id; /**< subnet id of this endpoint*/
 
@@ -155,10 +184,12 @@ struct mca_btl_base_endpoint_t {
     mca_btl_openib_eager_rdma_local_t eager_rdma_local;
     /**< info about local RDMA buffer */
     uint32_t index;           /**< index of the endpoint in endpoints array */
-    struct mca_btl_openib_frag_t *credit_frag[2];
+    
     /**< frags for sending explicit high priority credits */
     bool nbo;       /**< does the endpoint require network byte ordering? */
     bool use_eager_rdma; /**< use eager rdma for this peer? */
+    
+    mca_btl_openib_rem_info_t rem_info; 
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
@@ -173,22 +204,31 @@ void mca_btl_openib_post_recv(void);
 void mca_btl_openib_endpoint_send_credits(mca_btl_base_endpoint_t*, const int);
 void mca_btl_openib_endpoint_connect_eager_rdma(mca_btl_openib_endpoint_t*);
 
-static inline int btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpoint,
-                                              const int additional,
-                                              const int prio)
+
+
+static inline int mca_btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpoint,
+                                                  const int additional,
+                                                  const int qp)
 {
     mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
-
+    int rd_num = 
+        mca_btl_openib_component.qp_infos[qp].rd_num + 
+        mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
+    
+    assert(MCA_BTL_OPENIB_PP_QP == endpoint->qps[qp].qp_type);
     OPAL_THREAD_LOCK(&openib_btl->ib_lock);
-    if(endpoint->rd_posted[prio] <=
-            mca_btl_openib_component.rd_low + additional &&
-            endpoint->rd_posted[prio] < openib_btl->rd_num) {
+    if((endpoint->qps[qp].u.pp_qp.rd_posted - mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv) <=
+       mca_btl_openib_component.qp_infos[qp].rd_low + additional &&
+       endpoint->qps[qp].u.pp_qp.rd_posted < 
+       rd_num) {
         int rc;
-        int32_t i, num_post = openib_btl->rd_num - endpoint->rd_posted[prio];
+        int32_t i, num_post = rd_num - endpoint->qps[qp].u.pp_qp.rd_posted;
         struct ibv_recv_wr* bad_wr;
         ompi_free_list_t *free_list;
+        
+        assert(num_post >= 0);
 
-        free_list = &openib_btl->recv_free[prio];
+        free_list = &openib_btl->qps[qp].recv_free;
 
         for(i = 0; i < num_post; i++) {
            ompi_free_list_item_t* item;
@@ -196,35 +236,68 @@ static inline int btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpoint,
            OMPI_FREE_LIST_WAIT(free_list, item, rc);
            frag = (mca_btl_openib_frag_t*)item;
            frag->endpoint = endpoint;
-           if(ibv_post_recv(endpoint->lcl_qp[prio], &frag->wr_desc.rd_desc,
-                       &bad_wr)) {
+           frag->base.order = qp;
+           if(ibv_post_recv(endpoint->qps[qp].lcl_qp, 
+                            &frag->wr_desc.rd_desc,
+                            &bad_wr)) {
                BTL_ERROR(("error posting receive errno says %s\n",
-                           strerror(errno)));
+                          strerror(errno)));
                OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
                return OMPI_ERROR;
            }
         }
-        OPAL_THREAD_ADD32(&endpoint->rd_posted[prio], num_post);
-        OPAL_THREAD_ADD32(&endpoint->rd_credits[prio], num_post);
-     }
-     OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
-     return OMPI_SUCCESS;
+        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_posted, num_post);
+        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_credits, num_post);
+        assert(endpoint->qps[qp].u.pp_qp.rd_credits < rd_num);
+        assert(endpoint->qps[qp].u.pp_qp.rd_credits >= 0);
+        opal_output(mca_btl_base_output, "posting %d on qp %d \n", num_post, qp);
+        
+    }
+    opal_output(mca_btl_base_output, "not posting on qp %d: rd_posted %d, rd_low %d, additional %d, rd_num %d rd_credits %d\n"
+                ,  qp, endpoint->qps[qp].u.pp_qp.rd_posted, mca_btl_openib_component.qp_infos[qp].rd_low , additional, rd_num, 
+                endpoint->qps[qp].u.pp_qp.rd_credits);
+    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+    return OMPI_SUCCESS;
+}
+
+static inline int mca_btl_openib_endpoint_post_rr_all(mca_btl_base_endpoint_t *endpoint,
+                                                      const int additional) 
+{
+    int qp;
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++){ 
+        if(MCA_BTL_OPENIB_PP_QP == mca_btl_openib_component.qp_infos[qp].type) { 
+            mca_btl_openib_endpoint_post_rr(endpoint, additional, qp);
+        }
+    }
+    return OMPI_SUCCESS;
 }
 
 static inline int btl_openib_check_send_credits(
-        mca_btl_openib_endpoint_t *endpoint, const int prio)
+        mca_btl_openib_endpoint_t *endpoint, const int qp)
 {
-    if(!mca_btl_openib_component.use_srq &&
-            endpoint->rd_credits[prio] >= mca_btl_openib_component.rd_win)
-        return OPAL_THREAD_ADD32(&endpoint->rd_pending_credit_chks[prio], 1) == 1;
+    opal_output(mca_btl_base_output, "check_send_credits says rd_credits is %d, rd_win is %d qp: %d endpoint %p\n", 
+                endpoint->qps[qp].u.pp_qp.rd_credits, 
+                mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win, qp, (void*) endpoint);
 
-    if(BTL_OPENIB_LP_QP == prio) /* nothing more for low prio QP */
+    /* GMS, this is busted for high prio check eager RDMA credits */
+    if(BTL_OPENIB_EAGER_RDMA_QP(qp)) { 
+        if(endpoint->eager_rdma_local.credits >= endpoint->eager_rdma_local.rd_win) {
+            opal_output(mca_btl_base_output, "check_send_credits says sending RDMA credits qp: %d\n", qp);
+            return OPAL_THREAD_ADD32(&endpoint->qps[qp].rd_pending_credit_chks, 1) == 1;
+        }
+    }
+
+    if(MCA_BTL_OPENIB_PP_QP != mca_btl_openib_component.qp_infos[qp].type)
         return 0;
 
-    /* for high prio check eager RDMA credits */
-    if(endpoint->eager_rdma_local.credits >= mca_btl_openib_component.rd_win)
-        return OPAL_THREAD_ADD32(&endpoint->rd_pending_credit_chks[prio], 1) == 1;
-
+    if(endpoint->qps[qp].u.pp_qp.rd_credits >= 
+       mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win) { 
+        opal_output(mca_btl_base_output, "we need to try and send credits rd_pending_credit_chks says %d qp: %d\n", 
+                    endpoint->qps[qp].rd_pending_credit_chks, qp);
+        
+        return OPAL_THREAD_ADD32(&endpoint->qps[qp].rd_pending_credit_chks, 1) == 1;
+    } 
+   
     return 0;
 }
 

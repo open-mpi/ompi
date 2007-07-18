@@ -87,6 +87,10 @@ static void ompi_free_list_destruct(ompi_free_list_t* fl)
     OBJ_DESTRUCT(&fl->fl_allocations);
     OBJ_DESTRUCT(&fl->fl_condition);
     OBJ_DESTRUCT(&fl->fl_lock);
+    if(fl->ctx) { 
+        free(fl->ctx);
+    }
+
 }
 
 int ompi_free_list_init_ex(
@@ -97,7 +101,9 @@ int ompi_free_list_init_ex(
     int num_elements_to_alloc,
     int max_elements_to_alloc,
     int num_elements_per_alloc,
-    mca_mpool_base_module_t* mpool)
+    mca_mpool_base_module_t* mpool,
+    ompi_free_list_item_init_fn_t item_init,
+    void* ctx)
 {
     /* alignment must be more than zero and power of two */
     if(alignment <= 1 || (alignment & (alignment - 1)))
@@ -112,6 +118,8 @@ int ompi_free_list_init_ex(
     flist->fl_num_per_alloc = num_elements_per_alloc;
     flist->fl_mpool = mpool;
     flist->fl_alignment = alignment;
+    flist->item_init = item_init;
+    flist->ctx = ctx;
     if(num_elements_to_alloc)
         return ompi_free_list_grow(flist, num_elements_to_alloc);
     return OMPI_SUCCESS;
@@ -176,12 +184,17 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
         item->ptr = mpool_alloc_ptr;
 
         OBJ_CONSTRUCT_INTERNAL(item, flist->fl_elem_class);
+        
+        /* run the initialize function if present */
+        if(flist->item_init) { 
+            flist->item_init(item, flist->ctx);
+        }
 
         opal_atomic_lifo_push(&(flist->super), &(item->super));
         ptr += head_size;
         mpool_alloc_ptr += elem_size;
+        
     }
-
     flist->fl_num_allocated += num_elements;
     return OMPI_SUCCESS;
 }
