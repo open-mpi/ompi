@@ -78,22 +78,6 @@ ompi_init_preconnect_mpi(void)
 
         ret = ompi_request_wait_all(2, requests, MPI_STATUSES_IGNORE);
         if (OMPI_SUCCESS != ret) return ret;
-
-        ret = MCA_PML_CALL(isend(outbuf, 1, MPI_CHAR,
-                                 next, 1,
-                                 MCA_PML_BASE_SEND_COMPLETE,
-                                 MPI_COMM_WORLD, 
-                                 &requests[1]));
-        if (OMPI_SUCCESS != ret) return ret;
-
-        ret = MCA_PML_CALL(irecv(inbuf, 1, MPI_CHAR,
-                                 prev, 1,
-                                 MPI_COMM_WORLD, 
-                                 &requests[0]));
-        if(OMPI_SUCCESS != ret) return ret;
-
-        ret = ompi_request_wait_all(2, requests, MPI_STATUSES_IGNORE);
-        if (OMPI_SUCCESS != ret) return ret;
     }
 
     return ret;

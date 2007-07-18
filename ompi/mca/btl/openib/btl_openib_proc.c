@@ -137,7 +137,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
     
 
     if(OMPI_SUCCESS != rc) {
-        opal_output(mca_btl_base_output, "[%s:%d] mca_pml_base_modex_recv failed for peer [%ld,%ld,%ld]",
+        opal_output(mca_btl_base_output, "[%s:%d] ompi_modex_recv failed for peer [%ld,%ld,%ld]",
             __FILE__,__LINE__,ORTE_NAME_ARGS(&ompi_proc->proc_name));
         OBJ_RELEASE(module_proc);
         return NULL;
