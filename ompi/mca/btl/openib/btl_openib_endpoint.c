@@ -413,7 +413,6 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(endpoint->endpoint_btl,
                                        &endpoint->pending_put_frags);
     OBJ_DESTRUCT(&endpoint->pending_put_frags);
-    endpoint = (mca_btl_base_endpoint_t*) 0xffffffffffffffff;
 }
 
 /*
