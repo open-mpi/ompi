@@ -11,6 +11,11 @@
 
 #include "opal_config.h"
 
+#include <stdio.h>
+# if HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+
 #include <errno.h>
 
 #include "opal/threads/tsd.h"
