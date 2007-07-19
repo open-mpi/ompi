@@ -71,7 +71,7 @@ static int guess_strlen(const char *fmt, va_list ap)
                     len += (int)strlen(sarg);
                 } else {
 #if OMPI_ENABLE_DEBUG
-                    opal_output(0, "OPAL DEBUG WARNING: Got a NULL argument to opal_vasprintf %s!\n");
+                    opal_output(0, "OPAL DEBUG WARNING: Got a NULL argument to opal_vasprintf!\n");
 #endif
                     len += 5;
                 }
