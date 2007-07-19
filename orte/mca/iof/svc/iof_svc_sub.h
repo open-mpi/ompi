@@ -34,7 +34,7 @@ extern "C" {
 struct orte_iof_svc_fwd_t {
     opal_list_item_t super;
     orte_iof_svc_pub_t* fwd_pub;
-    opal_hash_table_t fwd_seq;
+    opal_hash_table_t fwd_seq_hash;
 };
 typedef struct orte_iof_svc_fwd_t orte_iof_svc_fwd_t;
 
@@ -43,14 +43,16 @@ OBJ_CLASS_DECLARATION(orte_iof_svc_fwd_t);
 
 struct orte_iof_svc_sub_t {
     opal_list_item_t super;
-    orte_process_name_t           src_name;
-    orte_ns_cmp_bitmask_t         src_mask;
-    orte_iof_base_tag_t           src_tag;
-    orte_process_name_t           dst_name;
-    orte_ns_cmp_bitmask_t         dst_mask;
-    orte_iof_base_tag_t           dst_tag;
+    orte_process_name_t           origin_name;
+    orte_ns_cmp_bitmask_t         origin_mask;
+    orte_iof_base_tag_t           origin_tag;
+    orte_process_name_t           target_name;
+    orte_ns_cmp_bitmask_t         target_mask;
+    orte_iof_base_tag_t           target_tag;
     orte_iof_base_endpoint_t*     sub_endpoint;
     opal_list_t                   sub_forward;
+    bool                          has_been_acked;
+    uint32_t                      last_ack_forwarded;
 };
 typedef struct orte_iof_svc_sub_t orte_iof_svc_sub_t;
 
@@ -62,7 +64,7 @@ OBJ_CLASS_DECLARATION(orte_iof_svc_sub_t);
  */
 
 orte_iof_svc_sub_t* orte_iof_svc_sub_lookup(
-    const orte_process_name_t* src
+    const orte_process_name_t* origin
 );
 
 /**
@@ -70,27 +72,36 @@ orte_iof_svc_sub_t* orte_iof_svc_sub_lookup(
  */
 
 int orte_iof_svc_sub_create(
-    const orte_process_name_t *src_name,
-    orte_ns_cmp_bitmask_t src_mask,
-    orte_iof_base_tag_t src_tag,
-    const orte_process_name_t *dst_name,
-    orte_ns_cmp_bitmask_t dst_mask,
-    orte_iof_base_tag_t dst_tag);
+    const orte_process_name_t *origin_name,
+    orte_ns_cmp_bitmask_t origin_mask,
+    orte_iof_base_tag_t origin_tag,
+    const orte_process_name_t *target_name,
+    orte_ns_cmp_bitmask_t target_mask,
+    orte_iof_base_tag_t target_tag);
+
+/**
+ * Receive an ACK from a single endpoint on a subscription
+ */
+
+void orte_iof_svc_sub_ack(
+    const orte_process_name_t* peer,
+    orte_iof_base_msg_header_t* hdr,
+    bool do_close);
 
 /**
  * Cleanup/remove a subscription
  */
 
 int orte_iof_svc_sub_delete(
-    const orte_process_name_t *src_name,
-    orte_ns_cmp_bitmask_t src_mask,
-    orte_iof_base_tag_t src_tag,
-    const orte_process_name_t *dst_name,
-    orte_ns_cmp_bitmask_t dst_mask,
-    orte_iof_base_tag_t dst_tag);
+    const orte_process_name_t *origin_name,
+    orte_ns_cmp_bitmask_t origin_mask,
+    orte_iof_base_tag_t origin_tag,
+    const orte_process_name_t *target_name,
+    orte_ns_cmp_bitmask_t target_mask,
+    orte_iof_base_tag_t target_tag);
 
 int orte_iof_svc_sub_delete_all(
-    const orte_process_name_t *dst_name);
+    const orte_process_name_t *target_name);
 
 /**
  * Forward message to any endpoints that

@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
 #ifndef _IOF_BASE_HEADER_
 #define _IOF_BASE_HEADER_
 
@@ -10,13 +29,14 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-                                                                                                                                        
+
 #define ORTE_IOF_BASE_HDR_MSG    0
 #define ORTE_IOF_BASE_HDR_ACK    1 
 #define ORTE_IOF_BASE_HDR_PUB    2
 #define ORTE_IOF_BASE_HDR_UNPUB  3
 #define ORTE_IOF_BASE_HDR_SUB    4
 #define ORTE_IOF_BASE_HDR_UNSUB  5
+#define ORTE_IOF_BASE_HDR_CLOSE  6
 
 
 /*
@@ -48,7 +68,7 @@ typedef struct orte_iof_base_common_header_t orte_iof_base_common_header_t;
 
 struct orte_iof_base_msg_header_t {
     orte_iof_base_common_header_t hdr_common;
-    orte_process_name_t msg_src;
+    orte_process_name_t msg_origin;
     orte_process_name_t msg_proxy;
     int32_t  msg_tag;
     uint32_t msg_seq;
@@ -58,7 +78,7 @@ typedef struct orte_iof_base_msg_header_t orte_iof_base_msg_header_t;
 
 #define ORTE_IOF_BASE_HDR_MSG_NTOH(h) \
     ORTE_IOF_BASE_HDR_CMN_NTOH((h).hdr_common); \
-    ORTE_PROCESS_NAME_NTOH((h).msg_src); \
+    ORTE_PROCESS_NAME_NTOH((h).msg_origin); \
     ORTE_PROCESS_NAME_NTOH((h).msg_proxy); \
     (h).msg_tag = ntohl((h).msg_tag); \
     (h).msg_seq = ntohl((h).msg_seq); \
@@ -66,7 +86,7 @@ typedef struct orte_iof_base_msg_header_t orte_iof_base_msg_header_t;
 
 #define ORTE_IOF_BASE_HDR_MSG_HTON(h) \
     ORTE_IOF_BASE_HDR_CMN_HTON((h).hdr_common); \
-    ORTE_PROCESS_NAME_HTON((h).msg_src); \
+    ORTE_PROCESS_NAME_HTON((h).msg_origin); \
     ORTE_PROCESS_NAME_HTON((h).msg_proxy); \
     (h).msg_tag = htonl((h).msg_tag); \
     (h).msg_seq = htonl((h).msg_seq); \
@@ -106,28 +126,28 @@ typedef struct orte_iof_base_pub_header_t orte_iof_base_pub_header_t;
 
 struct orte_iof_base_sub_header_t {
     orte_iof_base_common_header_t hdr_common;
-    orte_process_name_t src_name;
-    orte_ns_cmp_bitmask_t src_mask;
-    int32_t src_tag;
-    orte_process_name_t dst_name;
-    orte_ns_cmp_bitmask_t dst_mask;
-    int32_t dst_tag;
+    orte_process_name_t origin_name;
+    orte_ns_cmp_bitmask_t origin_mask;
+    int32_t origin_tag;
+    orte_process_name_t target_name;
+    orte_ns_cmp_bitmask_t target_mask;
+    int32_t target_tag;
 };
 typedef struct orte_iof_base_sub_header_t orte_iof_base_sub_header_t;
 
 #define ORTE_IOF_BASE_HDR_SUB_NTOH(h) \
     ORTE_IOF_BASE_HDR_CMN_NTOH((h).hdr_common); \
-    ORTE_PROCESS_NAME_NTOH((h).src_name); \
-    (h).src_tag = ntohl((h).src_tag); \
-    ORTE_PROCESS_NAME_NTOH((h).dst_name); \
-    (h).dst_tag = ntohl((h).dst_tag);
+    ORTE_PROCESS_NAME_NTOH((h).origin_name); \
+    (h).origin_tag = ntohl((h).origin_tag); \
+    ORTE_PROCESS_NAME_NTOH((h).target_name); \
+    (h).target_tag = ntohl((h).target_tag);
 
 #define ORTE_IOF_BASE_HDR_SUB_HTON(h) \
     ORTE_IOF_BASE_HDR_CMN_HTON((h).hdr_common); \
-    ORTE_PROCESS_NAME_HTON((h).src_name); \
-    (h).src_tag = htonl((h).src_tag); \
-    ORTE_PROCESS_NAME_HTON((h).dst_name); \
-    (h).dst_tag = htonl((h).dst_tag);
+    ORTE_PROCESS_NAME_HTON((h).origin_name); \
+    (h).origin_tag = htonl((h).origin_tag); \
+    ORTE_PROCESS_NAME_HTON((h).target_name); \
+    (h).target_tag = htonl((h).target_tag);
 
 /**
  * Union of all header types.

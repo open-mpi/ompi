@@ -15,9 +15,7 @@
  * 
  * $HEADER$
  */
-/**
- * @file
- */
+
 #ifndef ORTE_IOF_SVC_PROXY_H
 #define ORTE_IOF_SVC_PROXY_H
 
@@ -32,7 +30,7 @@ extern "C" {
 
 
 /**
- *  Callback function from OOB on receipt of IOF request.
+ *  Callback function from RML on receipt of IOF request.
  *
  *  @param status (IN)  Completion status.
  *  @param peer (IN)    Opaque name of peer process.
@@ -40,8 +38,8 @@ extern "C" {
  *  @param count (IN)   Number of elements in iovec array.
  *  @param tag (IN)     User defined tag for matching send/recv.
  *  @param cbdata (IN)  User data.
-*/
-                                                                                                               
+ */
+
 void orte_iof_svc_proxy_recv(
     int status,
     orte_process_name_t* peer,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -71,42 +72,15 @@ orte_iof_proxy_component_t mca_iof_proxy_component = {
       },
 
       orte_iof_proxy_init
-    },
-    false,
-    /* {{NULL, 0}} - Let the compiler initialize it so it won't complain on Windows
-	 * where the order of the length and the pointer is different.
-	 */
+    }
 };
-
-#if 0
-static char* orte_iof_proxy_param_register_string(
-    const char* param_name,
-    const char* default_value)
-{
-    char *param_value;
-    int id = mca_base_param_register_string("iof","proxy",param_name,NULL,default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
-}
-#endif
-
-static  int orte_iof_proxy_param_register_int(
-    const char* param_name,
-    int default_value)
-{
-    int id = mca_base_param_register_int("iof","proxy",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-
 
 /**
   * component open/close/init function
   */
 static int orte_iof_proxy_open(void)
 {
-    mca_iof_proxy_component.proxy_debug = orte_iof_proxy_param_register_int("debug",1);
+    /* Nothing to do */
     return ORTE_SUCCESS;
 }
 
@@ -122,10 +96,10 @@ orte_iof_proxy_init(int* priority, bool *allow_multi_user_threads, bool *have_hi
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
 
-    /* post receive with oob */
+    /* post a non-blocking, persistent RML receive to get messages
+       from the svc IOF component */
     mca_iof_proxy_component.proxy_iov[0].iov_base = NULL;
     mca_iof_proxy_component.proxy_iov[0].iov_len = 0;
-
     rc = orte_rml.recv_nb(
         ORTE_NAME_WILDCARD,
         mca_iof_proxy_component.proxy_iov,
@@ -136,22 +110,20 @@ orte_iof_proxy_init(int* priority, bool *allow_multi_user_threads, bool *have_hi
         NULL
     );
     if(rc < 0) {
-        opal_output(0, "orte_iof_proxy_init: unable to post non-blocking recv");
+        opal_output(orte_iof_base.iof_output, 
+                    "orte_iof_proxy_init: unable to post non-blocking recv");
         return NULL;
     }
     initialized = true;
     return &orte_iof_proxy_module;
 }
 
-/**
- *
- */
-
 static int orte_iof_proxy_close(void)
 {
     int rc = ORTE_SUCCESS;
 
     if (initialized) {
+        /* Cancel the RML receive */
         rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_SVC);
     }
     return rc;

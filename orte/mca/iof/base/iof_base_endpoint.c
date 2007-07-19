@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,6 +52,21 @@
 #include "orte/mca/iof/base/iof_base_endpoint.h"
 #include "orte/mca/iof/base/iof_base_fragment.h"
 
+
+/*
+ * Globals
+ */
+static bool sigpipe_event_initialized = false;
+static struct opal_event sigpipe_event;
+
+static void sigpipe_signal_callback(int fd, short event, void *arg) 
+{
+    /* Do nothing -- the purpose of this handler is so that we don't
+       die due to SIGPIPE, but we don't need to *do* anything in this
+       handler. */
+}
+
+
 /**
  *  Construct/Destructor
  */
@@ -61,7 +78,8 @@ static void orte_iof_base_endpoint_construct(orte_iof_base_endpoint_t* endpoint)
     endpoint->ep_ack = 0;
     endpoint->ep_fd = -1;
     memset(&endpoint->ep_event,0,sizeof(endpoint->ep_event));
-    OBJ_CONSTRUCT(&endpoint->ep_frags, opal_list_t);
+    OBJ_CONSTRUCT(&endpoint->ep_source_frags, opal_list_t);
+    OBJ_CONSTRUCT(&endpoint->ep_sink_frags, opal_list_t);
     OBJ_CONSTRUCT(&endpoint->ep_callbacks, opal_list_t);
 }
 
@@ -70,7 +88,8 @@ static void orte_iof_base_endpoint_destruct(orte_iof_base_endpoint_t* endpoint)
     if(endpoint->ep_fd >= 0) {
         opal_event_del(&endpoint->ep_event);
     }
-    OBJ_DESTRUCT(&endpoint->ep_frags);
+    OBJ_DESTRUCT(&endpoint->ep_source_frags);
+    OBJ_DESTRUCT(&endpoint->ep_sink_frags);
     OBJ_DESTRUCT(&endpoint->ep_callbacks);
 }
 
@@ -83,29 +102,22 @@ OBJ_CLASS_INSTANCE(
 /**
  *  Construct/Destructor
  */
-
 static void orte_iof_base_callback_construct(orte_iof_base_callback_t* cb)
 {
     cb->cb_func = 0;
     cb->cb_data = NULL;
 }
 
-static void orte_iof_base_callback_destruct(orte_iof_base_callback_t* cb)
-{
-}
 
 OBJ_CLASS_INSTANCE(
     orte_iof_base_callback_t,
     opal_list_item_t,
     orte_iof_base_callback_construct,
-    orte_iof_base_callback_destruct);
-
-
+    NULL);
 
 /*
- * Callback when non-blocking OOB send completes.
+ * Callback when non-blocking RML send completes.
  */
-
 static void orte_iof_base_endpoint_send_cb(
     int status,
     orte_process_name_t* peer,
@@ -116,7 +128,9 @@ static void orte_iof_base_endpoint_send_cb(
 {
     orte_iof_base_frag_t* frag = (orte_iof_base_frag_t*)cbdata;
     orte_iof_base_endpoint_t* endpoint = frag->frag_owner;
-    opal_list_remove_item(&endpoint->ep_frags, &frag->super.super);
+    opal_list_remove_item(&endpoint->ep_source_frags, &frag->super.super);
+    opal_output(orte_iof_base.iof_output, "iof_base_endpoint: send cb, source_frags list len: %d",
+                (int) opal_list_get_size(&endpoint->ep_source_frags));
     ORTE_IOF_BASE_FRAG_RETURN(frag);
 
     /* Decrement the refcount on the endpoint; matches the RETAIN for
@@ -140,6 +154,7 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
     /* allocate a fragment */
     ORTE_IOF_BASE_FRAG_ALLOC(frag,rc);
     if(NULL == frag) {
+        /* JMS shouldn't we do something here? */
         return;
     }
 
@@ -156,30 +171,39 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
         rc = (int)readed;
     }
 #endif  /* !defined(__WINDOWS__) */
-    if(rc < 0) {
+    if (rc < 0) {
         /* non-blocking, retry */
-        if(errno == EAGAIN || errno == EINTR) {
+        if (EAGAIN == errno || EINTR == errno) {
             ORTE_IOF_BASE_FRAG_RETURN(frag);
-        /* error on the connection */
-        } else {
-            orte_iof_base_endpoint_closed(endpoint);
-        }
-        OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
-        return;
+            OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+            return;
+        } 
+
+        /* Error on the connection */
+        orte_iof_base_endpoint_closed(endpoint);
+        /* Fall through to send 0 byte message to other side
+           indicating that the endpoint is now closed. */
+        rc = 0;
     } else if (rc == 0) {
-        /* peer has closed connection - send 0 byte message to subscribers */
+        /* peer has closed connection (will fall through to send a 0
+           byte message, therefore telling the RML side that the fd
+           side has closed its connection) */
         orte_iof_base_endpoint_closed(endpoint);
     }
 
-    /* Do not append the fragment before we know that we have some data (even 0 bytes it's OK) */
+    /* Do not append the fragment before we know that we have some
+       data (even a 0 byte mesage is OK -- that indicates that the
+       file descriptor has closed) */
     frag->frag_owner = endpoint;
-    opal_list_append(&endpoint->ep_frags, &frag->super.super);
+    opal_list_append(&endpoint->ep_source_frags, &frag->super.super);
+    opal_output(orte_iof_base.iof_output, "iof_base_endpoint: read handler, source_frags list len: %d",
+                (int) opal_list_get_size(&endpoint->ep_source_frags));
     frag->frag_iov[1].iov_len = frag->frag_len = rc;
 
     /* fill in the header */
     hdr = &frag->frag_hdr;
     hdr->hdr_common.hdr_type = ORTE_IOF_BASE_HDR_MSG;
-    hdr->hdr_msg.msg_src = endpoint->ep_name;
+    hdr->hdr_msg.msg_origin = endpoint->ep_origin;
     hdr->hdr_msg.msg_proxy = *ORTE_PROC_MY_NAME;
     hdr->hdr_msg.msg_tag = endpoint->ep_tag;
     hdr->hdr_msg.msg_seq = endpoint->ep_seq;
@@ -189,6 +213,7 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
     /* if window size has been exceeded - disable forwarding */
     endpoint->ep_seq += frag->frag_len;
     if(ORTE_IOF_BASE_SEQDIFF(endpoint->ep_seq,endpoint->ep_ack) > orte_iof_base.iof_window_size) {
+        opal_output(orte_iof_base.iof_output, "iof_base_endpoint read handler: window exceeded -- reading disabled");
         opal_event_del(&endpoint->ep_event);
     }
     OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
@@ -197,7 +222,7 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
        deleted before the frag */
     OBJ_RETAIN(endpoint);
 
-    /* start non-blocking OOB call to forward received data */
+    /* start non-blocking RML call to forward received data */
     rc = orte_rml.send_nb(
         orte_iof_base.iof_service, 
         frag->frag_iov, 
@@ -215,6 +240,7 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
 
 static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user)
 {
+    int errno_save;
     orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)user; 
 
     /*
@@ -222,8 +248,8 @@ static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user
      * until the output descriptor would block
     */
     OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
-    while(opal_list_get_size(&endpoint->ep_frags)) {
-        orte_iof_base_frag_t* frag = (orte_iof_base_frag_t*)opal_list_get_first(&endpoint->ep_frags);
+    while(opal_list_get_size(&endpoint->ep_sink_frags)) {
+        orte_iof_base_frag_t* frag = (orte_iof_base_frag_t*)opal_list_get_first(&endpoint->ep_sink_frags);
         int rc;
 
         /* close connection on zero byte message */
@@ -235,12 +261,23 @@ static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user
 
         /* progress pending messages */
         rc = write(endpoint->ep_fd, frag->frag_ptr, frag->frag_len);
-        if(rc < 0) {
-            if(errno == EAGAIN)
+        errno_save = errno;
+        if (rc < 0) {
+            if (EAGAIN == errno_save) {
                break;
-            if(errno == EINTR)
-               continue;
+            }
+            if (EINTR == errno_save) {
+                continue;
+            }
+            /* All other errors -- to include sigpipe -- mean that
+               Something Bad happened and we should abort in
+               despair. */
             orte_iof_base_endpoint_closed(endpoint);
+
+            /* Send a ACK-AND-CLOSE back to the service so that it
+               knows not to wait for any further ACKs */
+            orte_iof_base_frag_ack(frag, true);
+
             OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
             return;
         }
@@ -249,14 +286,14 @@ static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user
         if(frag->frag_len > 0) {
             break;
         }
-        opal_list_remove_item(&endpoint->ep_frags, &frag->super.super);
+        opal_list_remove_item(&endpoint->ep_sink_frags, &frag->super.super);
         OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
-        orte_iof_base_frag_ack(frag);
+        orte_iof_base_frag_ack(frag, false);
         OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     }
 
     /* is there anything left to write? */
-    if(opal_list_get_size(&endpoint->ep_frags) == 0) {
+    if(opal_list_get_size(&endpoint->ep_sink_frags) == 0) {
         opal_event_del(&endpoint->ep_event);
         if(orte_iof_base.iof_waiting) {
             opal_condition_signal(&orte_iof_base.iof_condition);
@@ -306,7 +343,7 @@ static orte_iof_base_endpoint_t* orte_iof_base_endpoint_lookup(
         item != opal_list_get_end(&orte_iof_base.iof_endpoints);
         item =  opal_list_get_next(item)) {
         orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
-        if(orte_ns.compare_fields(ORTE_NS_CMP_ALL,proc,&endpoint->ep_name) == 0 &&
+        if(orte_ns.compare_fields(ORTE_NS_CMP_ALL,proc,&endpoint->ep_origin) == 0 &&
            endpoint->ep_tag == tag && endpoint->ep_mode == mode) {
             OBJ_RETAIN(endpoint);
             return endpoint;
@@ -331,8 +368,19 @@ int orte_iof_base_endpoint_create(
     int rc;
  
     OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
+
+#if !defined(__WINDOWS__)
+    /* If we haven't initialized the event yet, do so now */
+    if (!sigpipe_event_initialized) {
+        opal_signal_set(&sigpipe_event, SIGPIPE,
+                        sigpipe_signal_callback, &sigpipe_event);
+        opal_signal_add(&sigpipe_event, NULL);
+        sigpipe_event_initialized = true;
+    }
+#endif  /* !defined(__WINDOWS__) */
+
     if((endpoint = orte_iof_base_endpoint_lookup(proc,mode,tag)) != NULL) {
-        OBJ_RELEASE(endpoint);
+        OBJ_RETAIN(endpoint);
         OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
         return ORTE_SUCCESS;
     }
@@ -341,7 +389,7 @@ int orte_iof_base_endpoint_create(
         OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    endpoint->ep_name = *proc;
+    endpoint->ep_origin = *proc;
     endpoint->ep_mode = mode;
     endpoint->ep_tag = tag;
     endpoint->ep_fd = fd;
@@ -365,7 +413,7 @@ int orte_iof_base_endpoint_create(
             (ORTE_IOF_SINK == mode && ORTE_IOF_STDOUT == tag && 1 == fd) ||
             (ORTE_IOF_SINK == mode && ORTE_IOF_STDERR == tag && 2 == fd))) {
         if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-            opal_output(0, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+            opal_output(orte_iof_base.iof_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
                         __FILE__, __LINE__, errno);
         } else {
             flags |= O_NONBLOCK;
@@ -407,6 +455,7 @@ int orte_iof_base_endpoint_create(
             }
             break;
         case ORTE_IOF_SINK:
+            /* Create the event for use later; don't add it now */
             opal_event_set(
                 &endpoint->ep_event,
                 endpoint->ep_fd,
@@ -415,7 +464,7 @@ int orte_iof_base_endpoint_create(
                 endpoint);
             break;
         default:
-            opal_output(0, "orte_iof_base_endpoint_create: invalid mode %d\n", mode);
+            opal_output(orte_iof_base.iof_output, "orte_iof_base_endpoint_create: invalid mode %d\n", mode);
             return ORTE_ERR_BAD_PARAM;
     }
 
@@ -440,10 +489,15 @@ int orte_iof_base_endpoint_delete(
     while(item != opal_list_get_end(&orte_iof_base.iof_endpoints)) {
         opal_list_item_t* next =  opal_list_get_next(item);
         orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
-        if(orte_ns.compare_fields(mask,proc,&endpoint->ep_name) == 0 &&
-           endpoint->ep_tag == tag) {
-            OBJ_RELEASE(endpoint);
-            opal_list_remove_item(&orte_iof_base.iof_endpoints,&endpoint->super);
+        if (orte_ns.compare_fields(mask,proc,&endpoint->ep_origin) == 0) {
+            if (endpoint->ep_tag == tag || 
+                ORTE_IOF_ANY == endpoint->ep_tag || 
+                ORTE_IOF_ANY == tag) {
+                opal_list_remove_item(&orte_iof_base.iof_endpoints,&endpoint->super);
+                OBJ_RELEASE(endpoint);
+                OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+                return ORTE_SUCCESS;
+            }
         }
         item = next;
     }
@@ -457,6 +511,19 @@ int orte_iof_base_endpoint_delete(
 
 void orte_iof_base_endpoint_closed(orte_iof_base_endpoint_t* endpoint)
 {
+    /* For sinks: discard any fragments that were waiting to be
+       written down the fd (because the process on the other side of
+       the fd is no longer there -- we're just about to close the
+       fd). */
+    if (ORTE_IOF_SINK == endpoint->ep_mode) {
+        while (NULL != opal_list_remove_first(&(endpoint->ep_sink_frags))){
+            continue;
+        }
+
+        /* Upper layer will take care of signaling any waiting
+           condition variable -- no need to do it here */
+    }
+
     /* Special case: if we're a sink and one of the special streams
        (stdout or stderr), don't close anything because we don't want
        to *actually* close stdout or stderr just because a remote
@@ -470,16 +537,7 @@ void orte_iof_base_endpoint_closed(orte_iof_base_endpoint_t* endpoint)
     }
 
     /* remove any event handlers */
-    switch(endpoint->ep_mode) {
-    case ORTE_IOF_SOURCE:
-        opal_event_del(&endpoint->ep_event);
-        break;
-    case ORTE_IOF_SINK:
-        if(opal_list_get_size(&endpoint->ep_frags)) {
-            opal_event_del(&endpoint->ep_event);
-        }
-        break;
-    }
+    opal_event_del(&endpoint->ep_event);
 
     /* close associated file descriptor */
     close(endpoint->ep_fd);
@@ -491,9 +549,9 @@ void orte_iof_base_endpoint_closed(orte_iof_base_endpoint_t* endpoint)
  */
 
 orte_iof_base_endpoint_t* orte_iof_base_endpoint_match(
-    const orte_process_name_t* dst_name, 
-    orte_ns_cmp_bitmask_t dst_mask,
-    int dst_tag)
+    const orte_process_name_t* target_name, 
+    orte_ns_cmp_bitmask_t target_mask,
+    int target_tag)
 {
     opal_list_item_t* item;
     OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
@@ -501,8 +559,10 @@ orte_iof_base_endpoint_t* orte_iof_base_endpoint_match(
         item != opal_list_get_end(&orte_iof_base.iof_endpoints);
         item =  opal_list_get_next(item)) {
         orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
-        if(orte_ns.compare_fields(dst_mask,dst_name,&endpoint->ep_name) == 0) {
-            if(endpoint->ep_tag == dst_tag || endpoint->ep_tag == ORTE_IOF_ANY || dst_tag == ORTE_IOF_ANY) {
+        if(orte_ns.compare_fields(target_mask,target_name,&endpoint->ep_origin) == 0) {
+            if(endpoint->ep_tag == target_tag || 
+               endpoint->ep_tag == ORTE_IOF_ANY || 
+               target_tag == ORTE_IOF_ANY) {
                 OBJ_RETAIN(endpoint);
                 OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
                 return endpoint;
@@ -521,7 +581,7 @@ orte_iof_base_endpoint_t* orte_iof_base_endpoint_match(
 
 int orte_iof_base_endpoint_forward(
     orte_iof_base_endpoint_t* endpoint, 
-    const orte_process_name_t* src,
+    const orte_process_name_t* origin,
     orte_iof_base_msg_header_t* hdr,
     const unsigned char* data)
 {
@@ -542,7 +602,7 @@ int orte_iof_base_endpoint_forward(
 
     OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     frag->frag_owner = endpoint;
-    frag->frag_src = *src;
+    frag->frag_src = *origin;
     frag->frag_hdr.hdr_msg = *hdr;
     frag->frag_len = len;
 
@@ -552,7 +612,7 @@ int orte_iof_base_endpoint_forward(
         item =  opal_list_get_next(item)) {
         orte_iof_base_callback_t* cb = (orte_iof_base_callback_t*)item;
         cb->cb_func(
-           &hdr->msg_src, 
+           &hdr->msg_origin, 
             hdr->msg_tag, 
             cb->cb_data, 
             data, 
@@ -563,8 +623,11 @@ int orte_iof_base_endpoint_forward(
 
         /* try to write w/out copying data */
        
-        if(opal_list_get_size(&endpoint->ep_frags) == 0) {
+        if(opal_list_get_size(&endpoint->ep_sink_frags) == 0) {
             if(len == 0) {
+                /* No ACK required because the frag is of 0 length
+                   (ACKs are based on fragment length; an ACK of 0
+                   bytes would do nothing) */
                 ORTE_IOF_BASE_FRAG_RETURN(frag);
                 orte_iof_base_endpoint_closed(endpoint);
                 OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
@@ -573,8 +636,13 @@ int orte_iof_base_endpoint_forward(
             rc = write(endpoint->ep_fd,data,len);
             if(rc < 0) {
                 if (errno != EAGAIN && errno != EINTR) {
-                    ORTE_IOF_BASE_FRAG_RETURN(frag);
                     orte_iof_base_endpoint_closed(endpoint);
+
+                    /* Send a ACK-AND-CLOSE back to the service so
+                       that it knows not to wait for any further
+                       ACKs */
+                    orte_iof_base_frag_ack(frag, true);
+
                     OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
                     return ORTE_SUCCESS;
                 }
@@ -583,27 +651,34 @@ int orte_iof_base_endpoint_forward(
             frag->frag_len -= rc;
         }
 
-        if(frag->frag_len > 0) {
+        /* Ensure to handle both cases:
+           1. When ep_sink_frags was not empty (regardless of frag_len)
+           2. When ep_sink_frags was empty, but we fell through from above */
+        if(frag->frag_len > 0 || 0 == len) {
             /* handle incomplete write - also queue up 0 byte message 
              * and recognize this as a request to close the descriptor
              * when all pending operations complete
              */
             frag->frag_ptr = frag->frag_data;
             memcpy(frag->frag_ptr, data+rc, frag->frag_len);
-            opal_list_append(&endpoint->ep_frags, &frag->super.super);
-            if(opal_list_get_size(&endpoint->ep_frags) == 1) {
+            opal_list_append(&endpoint->ep_sink_frags, &frag->super.super);
+            /* If we're the first frag to be put on the sink_frags
+               list, then enable the event that will tell us when the
+               fd becomes writeable */
+            if(opal_list_get_size(&endpoint->ep_sink_frags) == 1) {
+                opal_output(orte_iof_base.iof_output, "iof_base_endpoint forwarding frag; re-enabled reading for endpoint");
                 opal_event_add(&endpoint->ep_event,0);
             }
             OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
         } else {
             OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
             /* acknowledge fragment */
-            orte_iof_base_frag_ack(frag);
+            orte_iof_base_frag_ack(frag, false);
         }
     } else {
         OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
         /* acknowledge fragment */
-        orte_iof_base_frag_ack(frag);
+        orte_iof_base_frag_ack(frag, false);
     }
     return ORTE_SUCCESS;
 }
@@ -631,13 +706,13 @@ int orte_iof_base_callback_create(
             OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
-        endpoint->ep_name = *proc;
+        endpoint->ep_origin = *proc;
         endpoint->ep_mode = ORTE_IOF_SINK;
         endpoint->ep_tag = tag;
         endpoint->ep_fd = -1;
         opal_list_append(&orte_iof_base.iof_endpoints, &endpoint->super);
     } else {
-        OBJ_RELEASE(endpoint);
+        OBJ_RETAIN(endpoint);
     }
     cb->cb_func = cbfunc;
     cb->cb_data = cbdata;
@@ -693,7 +768,7 @@ int orte_iof_base_endpoint_ack(
     endpoint->ep_ack = seq;
     window_open =
             ORTE_IOF_BASE_SEQDIFF(endpoint->ep_seq,endpoint->ep_ack) < orte_iof_base.iof_window_size;
-                                                                                                              
+
     /* someone is waiting on all output to be flushed */
     if(orte_iof_base.iof_waiting && endpoint->ep_seq == endpoint->ep_ack) {
         opal_condition_signal(&orte_iof_base.iof_condition);
@@ -701,9 +776,37 @@ int orte_iof_base_endpoint_ack(
 
     /* check to see if we need to reenable forwarding */
     if(window_closed && window_open) {
+        opal_output(orte_iof_base.iof_output, "iof_base_endpoint ack; re-enabled reading for endpoint");
         opal_event_add(&endpoint->ep_event, 0);
     }
     OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     return ORTE_SUCCESS;
 }
 
+
+/*
+ * See description in iof_base_endpoint.h
+ */
+bool orte_iof_base_endpoint_have_pending_frags(
+    orte_iof_base_endpoint_t* endpoint)
+{
+    if (ORTE_IOF_SOURCE == endpoint->ep_mode) {
+        return !opal_list_is_empty(&endpoint->ep_source_frags);
+    } else {
+        return !opal_list_is_empty(&endpoint->ep_sink_frags);
+    }
+}
+
+
+/*
+ * See description in iof_base_endpoint.h
+ */
+bool orte_iof_base_endpoint_have_pending_acks(
+    orte_iof_base_endpoint_t* endpoint)
+{
+    if (ORTE_IOF_SOURCE == endpoint->ep_mode) {
+        return (endpoint->ep_seq == endpoint->ep_ack);
+    } else {
+        return true;
+    }
+}

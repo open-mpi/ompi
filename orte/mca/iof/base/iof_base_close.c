@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -36,7 +36,7 @@ int orte_iof_base_close(void)
        selected */
 
     if (orte_iof_base.iof_flush) {
-        orte_iof_base_flush();
+        orte_iof.iof_flush();
         orte_iof_base.iof_flush = false;
     }
 
@@ -56,11 +56,18 @@ int orte_iof_base_close(void)
     while((item = opal_list_remove_first(&orte_iof_base.iof_endpoints)) != NULL) {
         OBJ_RELEASE(item);
     }
-    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
 
     if (NULL != orte_iof_base.iof_service) {
         free(orte_iof_base.iof_service);
     }
+
+    OBJ_DESTRUCT(&orte_iof_base.iof_components_opened);
+    OBJ_DESTRUCT(&orte_iof_base.iof_endpoints);
+    OBJ_DESTRUCT(&orte_iof_base.iof_lock);
+    OBJ_DESTRUCT(&orte_iof_base.iof_condition);
+    OBJ_DESTRUCT(&orte_iof_base.iof_fragments);
+
+    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
 
     return ORTE_SUCCESS;
 }

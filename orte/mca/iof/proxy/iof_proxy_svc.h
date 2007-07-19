@@ -9,15 +9,14 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights resereved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
  * $HEADER$
  */
-/**
- * @file
- */
+
 #ifndef MCA_IOF_PROXY_SVC_H
 #define MCA_IOF_PROXY_SVC_H
 
@@ -29,8 +28,8 @@
 extern "C" {
 #endif
 
-/**
- *  Publish endpoint to forwarding service.
+/*
+ * Send requests to the svc component
  */
 
 int orte_iof_proxy_svc_publish(
@@ -44,12 +43,6 @@ int orte_iof_proxy_svc_unpublish(
     int tag
     );
 
-/**
- * Subscribe one/more destination processes as
- * specified by the process name/mask to one/more
- * source processes.
- */
-
 int orte_iof_proxy_svc_subscribe(
     const orte_process_name_t* src_name,
     orte_ns_cmp_bitmask_t src_mask,
@@ -58,11 +51,6 @@ int orte_iof_proxy_svc_subscribe(
     orte_ns_cmp_bitmask_t dst_mask,
     int dst_tag
     );
-
-/**
- * Remove subscription from forwarding
- * service.
- */
 
 int orte_iof_proxy_svc_unsubscribe(
     const orte_process_name_t* src_name,
@@ -74,8 +62,7 @@ int orte_iof_proxy_svc_unsubscribe(
     );
 
 /**
- * Dispatch messages received from forwarding
- * service.
+ * Received RML messages from the svc component
  */
 
 void orte_iof_proxy_svc_recv(
