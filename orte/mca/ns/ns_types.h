@@ -96,7 +96,7 @@ typedef struct orte_process_name_t orte_process_name_t;
 
 
 /* useful define to print name args in output messages */
-char* orte_ns_base_print_name_args(orte_process_name_t *name);
+ORTE_DECLSPEC extern char* orte_ns_base_print_name_args(orte_process_name_t *name);
 #define ORTE_NAME_PRINT(n) \
     orte_ns_base_print_name_args(n)
 
