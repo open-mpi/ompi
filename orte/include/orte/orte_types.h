@@ -92,48 +92,44 @@ typedef void* orte_iov_base_ptr_t;
 #define    ORTE_NAME                (orte_data_type_t)   22 /**< an orte_process_name_t */
 #define    ORTE_VPID                (orte_data_type_t)   23 /**< a vpid */
 #define    ORTE_JOBID               (orte_data_type_t)   24 /**< a jobid */
-#define    ORTE_PSET                (orte_data_type_t)   25 /**< a process set */
-#define    ORTE_CELLID              (orte_data_type_t)   26 /**< a cellid */
-#define    ORTE_NODEID              (orte_data_type_t)   27 /**< a node id */
+#define    ORTE_NODEID              (orte_data_type_t)   25 /**< a node id */
     /* SMR types */
-#define    ORTE_NODE_STATE          (orte_data_type_t)   28 /**< node status flag */
-#define    ORTE_PROC_STATE          (orte_data_type_t)   29 /**< process/resource status */
-#define    ORTE_PSET_STATE          (orte_data_type_t)   30 /**< process set state */
-#define    ORTE_JOB_STATE           (orte_data_type_t)   31 /**< job status flag */
-#define    ORTE_EXIT_CODE           (orte_data_type_t)   32 /**< process exit code */
+#define    ORTE_NODE_STATE          (orte_data_type_t)   26 /**< node status flag */
+#define    ORTE_PROC_STATE          (orte_data_type_t)   27 /**< process/resource status */
+#define    ORTE_JOB_STATE           (orte_data_type_t)   28 /**< job status flag */
+#define    ORTE_EXIT_CODE           (orte_data_type_t)   29 /**< process exit code */
     /* GPR types */
-#define    ORTE_GPR_KEYVAL          (orte_data_type_t)   33 /**< registry key-value pair */
-#define    ORTE_GPR_NOTIFY_ACTION   (orte_data_type_t)   34 /**< registry notify action */
-#define    ORTE_GPR_TRIGGER_ACTION  (orte_data_type_t)   35 /**< registry trigger action */
-#define    ORTE_GPR_CMD             (orte_data_type_t)   36 /**< registry command */
-#define    ORTE_GPR_SUBSCRIPTION_ID (orte_data_type_t)   37 /**< registry notify id tag */
-#define    ORTE_GPR_TRIGGER_ID      (orte_data_type_t)   38 /**< registry notify id tag */
-#define    ORTE_GPR_VALUE           (orte_data_type_t)   39 /**< registry return value */
-#define    ORTE_GPR_ADDR_MODE       (orte_data_type_t)   40 /**< Addressing mode for registry cmds */
-#define    ORTE_GPR_SUBSCRIPTION    (orte_data_type_t)   41 /**< describes data returned by subscription */
-#define    ORTE_GPR_TRIGGER         (orte_data_type_t)   42 /**< describes trigger conditions */
-#define    ORTE_GPR_NOTIFY_DATA     (orte_data_type_t)   43 /**< data returned from a subscription */
-#define    ORTE_GPR_NOTIFY_MSG      (orte_data_type_t)   44 /**< notify message containing notify_data objects */
-#define    ORTE_GPR_NOTIFY_MSG_TYPE (orte_data_type_t)   45 /**< notify message type (subscription or trigger) */
-#define    ORTE_GPR_SEARCH          (orte_data_type_t)   46 /**< search criteria */
-#define    ORTE_GPR_UPDATE          (orte_data_type_t)   47 /**< update data on the registry */
+#define    ORTE_GPR_KEYVAL          (orte_data_type_t)   30 /**< registry key-value pair */
+#define    ORTE_GPR_NOTIFY_ACTION   (orte_data_type_t)   31 /**< registry notify action */
+#define    ORTE_GPR_TRIGGER_ACTION  (orte_data_type_t)   32 /**< registry trigger action */
+#define    ORTE_GPR_CMD             (orte_data_type_t)   33 /**< registry command */
+#define    ORTE_GPR_SUBSCRIPTION_ID (orte_data_type_t)   34 /**< registry notify id tag */
+#define    ORTE_GPR_TRIGGER_ID      (orte_data_type_t)   35 /**< registry notify id tag */
+#define    ORTE_GPR_VALUE           (orte_data_type_t)   36 /**< registry return value */
+#define    ORTE_GPR_ADDR_MODE       (orte_data_type_t)   37 /**< Addressing mode for registry cmds */
+#define    ORTE_GPR_SUBSCRIPTION    (orte_data_type_t)   38 /**< describes data returned by subscription */
+#define    ORTE_GPR_TRIGGER         (orte_data_type_t)   39 /**< describes trigger conditions */
+#define    ORTE_GPR_NOTIFY_DATA     (orte_data_type_t)   40 /**< data returned from a subscription */
+#define    ORTE_GPR_NOTIFY_MSG      (orte_data_type_t)   41 /**< notify message containing notify_data objects */
+#define    ORTE_GPR_NOTIFY_MSG_TYPE (orte_data_type_t)   42 /**< notify message type (subscription or trigger) */
+#define    ORTE_GPR_SEARCH          (orte_data_type_t)   43 /**< search criteria */
+#define    ORTE_GPR_UPDATE          (orte_data_type_t)   44 /**< update data on the registry */
 /* Resource Manager types */
-#define    ORTE_APP_CONTEXT         (orte_data_type_t)   48 /**< argv and enviro arrays */
-#define    ORTE_APP_CONTEXT_MAP     (orte_data_type_t)   49 /**< application context mapping array */
-#define    ORTE_NODE_DESC           (orte_data_type_t)   50 /**< describes capabilities of nodes */
-#define    ORTE_CELL_DESC           (orte_data_type_t)   51 /**< describe attributes of cells */
-#define    ORTE_SLOT_DESC           (orte_data_type_t)   52 /**< describes slot allocations/reservations */
-#define    ORTE_RAS_NODE			(orte_data_type_t)	 53 /**< node information */
-#define    ORTE_JOB_MAP             (orte_data_type_t)   54 /**< map of process locations */
-#define    ORTE_MAPPED_PROC         (orte_data_type_t)   55 /**< process entry on map */
-#define    ORTE_MAPPED_NODE         (orte_data_type_t)   56 /**< node entry on map */
-#define    ORTE_ATTRIBUTE           (orte_data_type_t)   57 /**< attribute used to control framework behavior */
-#define    ORTE_ATTR_LIST           (orte_data_type_t)   58 /**< list of attributes */
+#define    ORTE_APP_CONTEXT         (orte_data_type_t)   45 /**< argv and enviro arrays */
+#define    ORTE_APP_CONTEXT_MAP     (orte_data_type_t)   46 /**< application context mapping array */
+#define    ORTE_NODE_DESC           (orte_data_type_t)   47 /**< describes capabilities of nodes */
+#define    ORTE_SLOT_DESC           (orte_data_type_t)   48 /**< describes slot allocations/reservations */
+#define    ORTE_RAS_NODE			(orte_data_type_t)	 49 /**< node information */
+#define    ORTE_JOB_MAP             (orte_data_type_t)   50 /**< map of process locations */
+#define    ORTE_MAPPED_PROC         (orte_data_type_t)   51 /**< process entry on map */
+#define    ORTE_MAPPED_NODE         (orte_data_type_t)   52 /**< node entry on map */
+#define    ORTE_ATTRIBUTE           (orte_data_type_t)   53 /**< attribute used to control framework behavior */
+#define    ORTE_ATTR_LIST           (orte_data_type_t)   54 /**< list of attributes */
 /* RML types */
-#define    ORTE_RML_TAG             (orte_data_type_t)   59 /**< tag for sending/receiving messages */
+#define    ORTE_RML_TAG             (orte_data_type_t)   55 /**< tag for sending/receiving messages */
 
 /* DAEMON communication type */
-#define    ORTE_DAEMON_CMD          (orte_data_type_t)   60 /**< command flag for communicating with the daemon */
+#define    ORTE_DAEMON_CMD          (orte_data_type_t)   56 /**< command flag for communicating with the daemon */
 
 /* Need a command separate from ORTE_DAEMON_CMD, so that we can receive on 
  * them both at the same time */

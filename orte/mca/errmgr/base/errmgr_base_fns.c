@@ -42,14 +42,9 @@ void orte_errmgr_base_log(int error_code, char *filename, int line)
         return;
     }
     
-    if (NULL == orte_process_info.my_name) {
-        opal_output(0, "[NO-NAME] ORTE_ERROR_LOG: %s in file %s at line %d",
-                                ORTE_ERROR_NAME(error_code), filename, line);
-    } else {
-        opal_output(0, "[%lu,%lu,%lu] ORTE_ERROR_LOG: %s in file %s at line %d",
-                        ORTE_NAME_ARGS(orte_process_info.my_name),
-                        ORTE_ERROR_NAME(error_code), filename, line);
-    }
+    opal_output(0, "%s ORTE_ERROR_LOG: %s in file %s at line %d",
+                ORTE_NAME_PRINT(orte_process_info.my_name),
+                ORTE_ERROR_NAME(error_code), filename, line);
 }
 
 int orte_errmgr_base_proc_aborted_not_avail(orte_gpr_notify_message_t *msg)

@@ -429,10 +429,10 @@ static int mca_btl_gm_discover( void )
 
         if(mca_btl_gm_component.gm_debug > 0) {
             opal_output(0,
-                        "[%ld,%ld,%ld] gm_port %08lX, "
+                        "%s gm_port %08lX, "
                         "board %" PRIu32 ", global %" PRIu32 " "
                         "node %" PRIu32 "port %" PRIu32 "\n", 
-                        ORTE_NAME_ARGS(orte_process_info.my_name), 
+                        ORTE_NAME_PRINT(orte_process_info.my_name), 
                         (unsigned long) port, board_no, global_id, node_id, port_no);
         }
 

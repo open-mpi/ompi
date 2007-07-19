@@ -151,7 +151,6 @@ int orte_rmaps_base_copy_mapped_node(orte_mapped_node_t **dest, orte_mapped_node
     }
     
     /* copy data into it */
-    (*dest)->cell = src->cell;
     
     if (NULL != src->nodename) {
         (*dest)->nodename = strdup(src->nodename);

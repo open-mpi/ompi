@@ -54,9 +54,8 @@ extern "C" {
 
     /* general usage functions */
 int orte_schema_base_get_proc_tokens(char ***tokens, orte_std_cntr_t* num_tokens, orte_process_name_t *proc);
-int orte_schema_base_get_node_tokens(char ***tokens, orte_std_cntr_t* num_tokens, orte_cellid_t cellid, char *nodename);
+int orte_schema_base_get_node_tokens(char ***tokens, orte_std_cntr_t* num_tokens, char *nodename);
 int orte_schema_base_get_job_tokens(char ***tokens, orte_std_cntr_t* num_tokens, orte_jobid_t jobid);
-int orte_schema_base_get_cell_tokens(char ***tokens, orte_std_cntr_t* num_tokens, orte_cellid_t cellid);
 int orte_schema_base_get_job_segment_name(char **name, orte_jobid_t jobid);
 int orte_schema_base_extract_jobid_from_segment_name(orte_jobid_t *jobid, char *name);
 int orte_schema_base_store_my_info(void);

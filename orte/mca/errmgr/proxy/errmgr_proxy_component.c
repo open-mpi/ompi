@@ -153,8 +153,8 @@ orte_errmgr_proxy_component_init(bool *allow_multi_user_threads, bool *have_hidd
 int orte_errmgr_proxy_finalize(void)
 {
     if (orte_errmgr_proxy_globals.debug) {
-       opal_output(0, "[%lu,%lu,%lu] errmgr_proxy_finalize called",
-                        ORTE_NAME_ARGS(orte_process_info.my_name));
+       opal_output(0, "%s errmgr_proxy_finalize called",
+                        ORTE_NAME_PRINT(orte_process_info.my_name));
     }
 
     initialized = false;

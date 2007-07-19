@@ -46,13 +46,6 @@
  */
 
 int
-orte_ns_base_dump_cells_not_available(void)
-{
-    ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
-    return ORTE_ERR_UNREACH;
-}
-
-int
 orte_ns_base_dump_jobs_not_available(void)
 {
     ORTE_ERROR_LOG(ORTE_ERR_UNREACH);

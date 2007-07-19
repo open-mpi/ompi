@@ -489,8 +489,8 @@ int orte_daemon(int argc, char *argv[])
      * for debugging purposes
      */
     if (orte_debug_daemons_flag) {
-        fprintf(stderr, "Daemon [%ld,%ld,%ld] checking in as pid %ld on host %s\n",
-                ORTE_NAME_ARGS(orte_process_info.my_name), (long)orte_process_info.pid,
+        fprintf(stderr, "Daemon %s checking in as pid %ld on host %s\n",
+                ORTE_NAME_PRINT(orte_process_info.my_name), (long)orte_process_info.pid,
                 orte_system_info.nodename);
     }
 
@@ -550,7 +550,7 @@ int orte_daemon(int argc, char *argv[])
     }
 
     if (orte_debug_daemons_flag) {
-        opal_output(0, "[%lu,%lu,%lu] orted: up and running - waiting for commands!", ORTE_NAME_ARGS(orte_process_info.my_name));
+        opal_output(0, "%s orted: up and running - waiting for commands!", ORTE_NAME_PRINT(orte_process_info.my_name));
     }
 
     while (false == orted_globals.exit_condition) {
@@ -560,7 +560,7 @@ int orte_daemon(int argc, char *argv[])
     OPAL_THREAD_UNLOCK(&orted_globals.mutex);
 
     if (orte_debug_daemons_flag) {
-       opal_output(0, "[%lu,%lu,%lu] orted: mutex cleared - finalizing", ORTE_NAME_ARGS(orte_process_info.my_name));
+       opal_output(0, "%s orted: mutex cleared - finalizing", ORTE_NAME_PRINT(orte_process_info.my_name));
     }
 
     /* cleanup */
@@ -607,9 +607,9 @@ void orte_daemon_recv_routed(int status, orte_process_name_t* sender,
     OPAL_THREAD_LOCK(&orted_globals.mutex);
 
     if (orte_debug_daemons_flag) {
-       opal_output(0, "[%lu,%lu,%lu] orted_recv_routed: received message from [%ld,%ld,%ld]",
-                   ORTE_NAME_ARGS(orte_process_info.my_name),
-                   ORTE_NAME_ARGS(sender));
+       opal_output(0, "%s orted_recv_routed: received message from %s",
+                   ORTE_NAME_PRINT(orte_process_info.my_name),
+                   ORTE_NAME_PRINT(sender));
     }
 
     /* unpack the routing algorithm */
@@ -654,9 +654,9 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
     OPAL_THREAD_LOCK(&orted_globals.mutex);
     
     if (orte_debug_daemons_flag) {
-        opal_output(0, "[%lu,%lu,%lu] orted_recv_cmd: received message from [%ld,%ld,%ld]",
-                    ORTE_NAME_ARGS(orte_process_info.my_name),
-                    ORTE_NAME_ARGS(sender));
+        opal_output(0, "%s orted_recv_cmd: received message from %s",
+                    ORTE_NAME_PRINT(orte_process_info.my_name),
+                    ORTE_NAME_PRINT(sender));
     }
     
     /* process the command */
@@ -757,8 +757,8 @@ static int process_commands(orte_process_name_t* sender,
 
             for (n=0; n < num_jobs; n++) {
                 if (orte_debug_daemons_flag) {
-                    opal_output(0, "[%lu,%lu,%lu] orted_cmd: received kill_local_procs for job %ld",
-                                ORTE_NAME_ARGS(orte_process_info.my_name), (long)jobs[n]);
+                    opal_output(0, "%s orted_cmd: received kill_local_procs for job %ld",
+                                ORTE_NAME_PRINT(orte_process_info.my_name), (long)jobs[n]);
                 }
                 
                 if (ORTE_SUCCESS != (ret = orte_odls.kill_local_procs(jobs[n], true))) {
@@ -771,8 +771,8 @@ static int process_commands(orte_process_name_t* sender,
         /****    SIGNAL_LOCAL_PROCS   ****/
         case ORTE_DAEMON_SIGNAL_LOCAL_PROCS:
             if (orte_debug_daemons_flag) {
-                opal_output(0, "[%lu,%lu,%lu] orted_cmd: received signal_local_procs",
-                            ORTE_NAME_ARGS(orte_process_info.my_name));
+                opal_output(0, "%s orted_cmd: received signal_local_procs",
+                            ORTE_NAME_PRINT(orte_process_info.my_name));
             }
             /* unpack the number of jobids */
             n = 1;
@@ -806,8 +806,8 @@ static int process_commands(orte_process_name_t* sender,
             /****    ADD_LOCAL_PROCS   ****/
         case ORTE_DAEMON_ADD_LOCAL_PROCS:
             if (orte_debug_daemons_flag) {
-                opal_output(0, "[%lu,%lu,%lu] orted_cmd: received add_local_procs",
-                            ORTE_NAME_ARGS(orte_process_info.my_name));
+                opal_output(0, "%s orted_cmd: received add_local_procs",
+                            ORTE_NAME_PRINT(orte_process_info.my_name));
             }
             /* unpack the notify data object */
             n = 1;
@@ -828,8 +828,8 @@ static int process_commands(orte_process_name_t* sender,
             /****    DELIVER A MESSAGE TO THE LOCAL PROCS    ****/
         case ORTE_DAEMON_MESSAGE_LOCAL_PROCS:
             if (orte_debug_daemons_flag) {
-                opal_output(0, "[%lu,%lu,%lu] orted_cmd: received message_local_procs",
-                            ORTE_NAME_ARGS(orte_process_info.my_name));
+                opal_output(0, "%s orted_cmd: received message_local_procs",
+                            ORTE_NAME_PRINT(orte_process_info.my_name));
             }
                         
             /* unpack the jobid of the procs that are to receive the message */
@@ -931,8 +931,8 @@ static int process_commands(orte_process_name_t* sender,
              * the same as an exit_vm "hard kill" command
              */
             if (orte_debug_daemons_flag) {
-                opal_output(0, "[%lu,%lu,%lu] orted_cmd: received exit",
-                            ORTE_NAME_ARGS(orte_process_info.my_name));
+                opal_output(0, "%s orted_cmd: received exit",
+                            ORTE_NAME_PRINT(orte_process_info.my_name));
             }
             /* no response to send here - we'll send it when nearly exit'd */
             orted_globals.exit_condition = true;
@@ -947,8 +947,8 @@ static int process_commands(orte_process_name_t* sender,
             /****    HALT VM COMMAND    ****/
         case ORTE_DAEMON_HALT_VM_CMD:
             if (orte_debug_daemons_flag) {
-                opal_output(0, "[%lu,%lu,%lu] orted_cmd: received halt vm",
-                            ORTE_NAME_ARGS(orte_process_info.my_name));
+                opal_output(0, "%s orted_cmd: received halt vm",
+                            ORTE_NAME_PRINT(orte_process_info.my_name));
             }
             /* if we are the HNP, then terminate all orteds reporting to us */
             if (orte_process_info.seed) {
@@ -971,8 +971,8 @@ static int process_commands(orte_process_name_t* sender,
             /****     CONTACT QUERY COMMAND    ****/
         case ORTE_DAEMON_CONTACT_QUERY_CMD:
             if (orte_debug_daemons_flag) {
-                opal_output(0, "[%lu,%lu,%lu] orted_cmd: received contact query",
-                            ORTE_NAME_ARGS(orte_process_info.my_name));
+                opal_output(0, "%s orted_cmd: received contact query",
+                            ORTE_NAME_PRINT(orte_process_info.my_name));
             }
             /* send back contact info */
             contact_info = orte_rml.get_uri();
@@ -1020,8 +1020,8 @@ static int process_commands(orte_process_name_t* sender,
         case ORTE_DAEMON_WARMUP_LOCAL_CONN:
             /* nothing to do here - just ignore it */
             if (orte_debug_daemons_flag) {
-                opal_output(0, "[%lu,%lu,%lu] orted_recv: received connection from local proc",
-                            ORTE_NAME_ARGS(orte_process_info.my_name));
+                opal_output(0, "%s orted_recv: received connection from local proc",
+                            ORTE_NAME_PRINT(orte_process_info.my_name));
             }
             ret = ORTE_SUCCESS;
             break;
@@ -1100,7 +1100,6 @@ static int binomial_route_msg(orte_process_name_t *sender,
     hibit = opal_hibit(rank, bitmap);
     --bitmap;
     
-    target.cellid = ORTE_PROC_MY_NAME->cellid;
     target.jobid = 0;
     for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
         peer = rank | mask;

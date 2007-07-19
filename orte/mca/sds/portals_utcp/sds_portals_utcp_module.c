@@ -66,7 +66,6 @@ int
 orte_sds_portals_utcp_set_name(void)
 {
     int rc, i, len, num_procs;
-    orte_cellid_t cellid;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
     char* vpid_string;
@@ -81,10 +80,9 @@ orte_sds_portals_utcp_set_name(void)
 
     /* Get our process information
      *
-     * we're going to make up the cellid and jobid.  find our vpid,
+     * we're going to make up the jobid.  find our vpid,
      * assuming range starts at 0 
      */
-    cellid = 0;
     jobid = 1; /* not 0, since it has special meaning */
     if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_vpid(&vpid, vpid_string))) {
         ORTE_ERROR_LOG(rc);
@@ -92,7 +90,6 @@ orte_sds_portals_utcp_set_name(void)
     }
     if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(
                                                           &(orte_process_info.my_name),
-                                                          cellid,
                                                           jobid,
                                                           vpid))) {
         ORTE_ERROR_LOG(rc);

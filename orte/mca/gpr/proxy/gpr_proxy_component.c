@@ -229,8 +229,8 @@ orte_gpr_proxy_component_init(bool *allow_multi_user_threads, bool *have_hidden_
     if (NULL != orte_process_info.gpr_replica_uri) {
 
         if (orte_gpr_proxy_globals.debug) {
-            opal_output(0, "[%lu,%lu,%lu] gpr_proxy_init: proxy selected",
-                        ORTE_NAME_ARGS(orte_process_info.my_name));
+            opal_output(0, "%s gpr_proxy_init: proxy selected",
+                        ORTE_NAME_PRINT(orte_process_info.my_name));
         }
 
         /* setup the replica location */
@@ -325,8 +325,8 @@ int orte_gpr_proxy_finalize(void)
     orte_gpr_proxy_trigger_t **ltrigs;
     
     if (orte_gpr_proxy_globals.debug) {
-       opal_output(0, "[%lu,%lu,%lu] gpr_proxy_finalize called",
-                        ORTE_NAME_ARGS(orte_process_info.my_name));
+       opal_output(0, "%s gpr_proxy_finalize called",
+                        ORTE_NAME_PRINT(orte_process_info.my_name));
     }
 
     if (initialized) {

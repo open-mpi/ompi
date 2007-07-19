@@ -71,7 +71,7 @@ int orte_ras_base_node_query_alloc_no_op(opal_list_t*, orte_jobid_t);
 
 int orte_ras_base_proc_query_alloc_no_op(opal_list_t* procs);
 
-orte_ras_node_t* orte_ras_base_node_lookup_no_op(orte_cellid_t, const char* nodename);
+orte_ras_node_t* orte_ras_base_node_lookup_no_op(const char* nodename);
 
 /*
  * Internal support functions
@@ -92,7 +92,7 @@ ORTE_DECLSPEC int orte_ras_base_node_query(opal_list_t*);
 /*
  * Query the registry for a specific node 
  */
-ORTE_DECLSPEC orte_ras_node_t* orte_ras_base_node_lookup(orte_cellid_t, const char* nodename);
+ORTE_DECLSPEC orte_ras_node_t* orte_ras_base_node_lookup(const char* nodename);
 
 /**
     * Query the registry for all nodes allocated to a specific job
@@ -106,7 +106,7 @@ ORTE_DECLSPEC int orte_ras_base_proc_query_alloc(opal_list_t* procs);
  */
 ORTE_DECLSPEC int orte_ras_base_node_insert(opal_list_t*);
 
-ORTE_DECLSPEC int orte_ras_base_proc_insert(opal_list_t* procs, orte_cellid_t cellid, orte_jobid_t jobid);
+ORTE_DECLSPEC int orte_ras_base_proc_insert(opal_list_t* procs, orte_jobid_t jobid);
 
 /**
     * Delete the specified nodes from the registry

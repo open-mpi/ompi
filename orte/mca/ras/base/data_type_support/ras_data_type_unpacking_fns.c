@@ -77,14 +77,6 @@ int orte_ras_base_unpack_node(orte_buffer_t *buffer, void *dest,
             return rc;
         }
 
-        /* unpack the cellid */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
-                                (&(nodes[i]->node_cellid)), &n, ORTE_CELLID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
         /* unpack the state */
         n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,

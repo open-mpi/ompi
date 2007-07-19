@@ -130,8 +130,8 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
     if (orte_gpr_replica_globals.debug) {
         char *tmp;
 
-        opal_output(0, "[%lu,%lu,%lu] gpr_replica_put: entered on segment %s\nValues:",
-                   ORTE_NAME_ARGS(orte_process_info.my_name), seg->name);
+        opal_output(0, "%s gpr_replica_put: entered on segment %s\nValues:",
+                   ORTE_NAME_PRINT(orte_process_info.my_name), seg->name);
         for (i=0; i < cnt; i++) {
             opal_output(0, "\tKey: %s", keyvals[i]->key);
         }
@@ -282,7 +282,7 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
     }
 
     if (orte_gpr_replica_globals.debug) {
-        opal_output(0, "[%lu,%lu,%lu] gpr_replica_put: complete", ORTE_NAME_ARGS(orte_process_info.my_name));
+        opal_output(0, "%s gpr_replica_put: complete", ORTE_NAME_PRINT(orte_process_info.my_name));
     }
 
     return ORTE_SUCCESS;
@@ -322,8 +322,8 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
 
     if (orte_gpr_replica_globals.debug) {
             char *token;
-            opal_output(0, "[%lu,%lu,%lu] gpr_replica_get: entered",
-                    ORTE_NAME_ARGS(orte_process_info.my_name));
+            opal_output(0, "%s gpr_replica_get: entered",
+                    ORTE_NAME_PRINT(orte_process_info.my_name));
             opal_output(0, "\tGetting data from segment %s with %d tokens and %d keys",
                     seg->name, num_tokens, num_keys);
             for (i=0; i < num_tokens; i++) {
@@ -520,8 +520,8 @@ CLEANUP:
     OBJ_DESTRUCT(&get_list);
 
     if (orte_gpr_replica_globals.debug) {
-        opal_output(0, "[%lu,%lu,%lu] gpr_replica_get: finished search",
-                    ORTE_NAME_ARGS(orte_process_info.my_name));
+        opal_output(0, "%s gpr_replica_get: finished search",
+                    ORTE_NAME_PRINT(orte_process_info.my_name));
     }
 
     return rc;
@@ -721,8 +721,8 @@ CLEANUP:
     OBJ_DESTRUCT(&get_list);
 
     if (orte_gpr_replica_globals.debug) {
-        opal_output(0, "[%lu,%lu,%lu] gpr_replica_get: finished search",
-                    ORTE_NAME_ARGS(orte_process_info.my_name));
+        opal_output(0, "%s gpr_replica_get: finished search",
+                    ORTE_NAME_PRINT(orte_process_info.my_name));
     }
 
     return rc;

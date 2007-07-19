@@ -95,7 +95,7 @@ int orte_gpr_proxy_exec_compound_cmd(orte_buffer_t *buffer)
     int rc, response;
     
     if (orte_gpr_proxy_globals.debug) {
-	   opal_output(0, "[%lu,%lu,%lu] transmitting compound command",
+	   opal_output(0, "[%ld,%ld] transmitting compound command",
 		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 

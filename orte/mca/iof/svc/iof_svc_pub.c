@@ -54,8 +54,8 @@ int orte_iof_svc_pub_create(
     pub->pub_tag = pub_tag;
     pub->pub_endpoint = 
         orte_iof_base_endpoint_match(pub_name,pub_mask,pub_tag);
-    opal_output(orte_iof_base.iof_output, "created svc pub, name [%lu,%lu,%lu], proxy [%lu,%lu,%lu], tag %d / mask %x, endpoint %p\n",
-                ORTE_NAME_ARGS(pub_name), ORTE_NAME_ARGS(pub_proxy),
+    opal_output(orte_iof_base.iof_output, "created svc pub, name %s, proxy %s, tag %d / mask %x, endpoint %p\n",
+                ORTE_NAME_PRINT((orte_process_name_t*)pub_name), ORTE_NAME_PRINT((orte_process_name_t*)pub_proxy),
                 pub_tag, pub_mask, (char*) pub->pub_endpoint);
 
     /* append this published endpoint to any matching subscription */
