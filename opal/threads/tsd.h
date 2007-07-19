@@ -177,7 +177,7 @@ opal_tsd_key_create(opal_tsd_key_t *key,
 static inline int
 opal_tsd_key_delete(opal_tsd_key_t key)
 {
-    OPAL_SUCCESS
+    OPAL_SUCCESS;
 }
 
 static inline int
