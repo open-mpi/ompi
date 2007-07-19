@@ -11,6 +11,8 @@
 
 #include "opal_config.h"
 
+#include <errno.h>
+
 #include "opal/threads/tsd.h"
 
 #if !OMPI_HAVE_POSIX_THREADS && !OMPI_HAVE_SOLARIS_THREADS && !defined(__WINDOWS__)
@@ -27,23 +29,25 @@ typedef struct tsd_entry_t tsd_entry_t;
 static tsd_entry_t entries[TSD_ENTRIES];
 static bool atexit_registered = false;
 
-void
+static void
 run_destructors(void)
 {
     int i;
 
-    for (i = 0 i < TSD_ENTRIES ; ++i) {
+    for (i = 0; i < TSD_ENTRIES ; ++i) {
         opal_tsd_destructor_t destructor;
         void *value;
 
-        destructor = entries[i].destructor;
-        value = entries[i].value;
-        
-        entries[i].used = false;
-        entries[i].destructor = NULL;
-        entries[i].value = NULL;
-
-        destructor(value);
+        if (entries[i].used) {
+            destructor = entries[i].destructor;
+            value = entries[i].value;
+            
+            entries[i].used = false;
+            entries[i].destructor = NULL;
+            entries[i].value = NULL;
+            
+            destructor(value);
+        }
     }
 }
 
@@ -66,6 +70,7 @@ opal_tsd_key_create(opal_tsd_key_t *key,
             entries[i].value = NULL;
             entries[i].destructor = destructor;
             *key = i;
+            break;
         }
     }
     if (i == TSD_ENTRIES) return ENOMEM;
