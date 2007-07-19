@@ -51,7 +51,7 @@ int orte_ras_base_proc_query_alloc_no_op(opal_list_t* list)
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
-orte_ras_node_t* orte_ras_base_node_lookup_no_op(orte_cellid_t cell, const char* nodename)
+orte_ras_node_t* orte_ras_base_node_lookup_no_op(const char* nodename)
 {
     return NULL;
 }

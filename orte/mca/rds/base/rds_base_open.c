@@ -45,48 +45,6 @@
  * Local functions.
  */
 
-static void orte_rds_base_cell_desc_constructor(orte_rds_cell_desc_t *cell)
-{
-    cell->site = NULL;
-    cell->name = NULL;
-    cell->type = NULL;
-    
-    OBJ_CONSTRUCT(&cell->attributes, opal_list_t);
-}
-
-static void orte_rds_base_cell_desc_destructor(orte_rds_cell_desc_t *cell)
-{
-    if (NULL != cell->site) free(cell->site);
-    if (NULL != cell->name) free(cell->name);
-    if (NULL != cell->type) free(cell->type);
-    
-    OBJ_DESTRUCT(&cell->attributes);
-}
-
-OBJ_CLASS_INSTANCE(
-    orte_rds_cell_desc_t, 
-    opal_list_item_t,
-    orte_rds_base_cell_desc_constructor, 
-    orte_rds_base_cell_desc_destructor);
-
-
-static void orte_rds_base_cell_attr_constructor(orte_rds_cell_attr_t *cell)
-{
-    OBJ_CONSTRUCT(&cell->keyval, orte_gpr_keyval_t);
-}
-
-static void orte_rds_base_cell_attr_destructor(orte_rds_cell_attr_t *cell)
-{
-    OBJ_DESTRUCT(&cell->keyval);
-}
-
-OBJ_CLASS_INSTANCE(
-    orte_rds_cell_attr_t, 
-    opal_list_item_t,
-    orte_rds_base_cell_attr_constructor, 
-    orte_rds_base_cell_attr_destructor);
-
-
 /*
  * Global variables
  */

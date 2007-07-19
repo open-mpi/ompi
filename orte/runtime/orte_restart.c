@@ -177,8 +177,8 @@ int orte_restart(orte_process_name_t *name, const char* uri)
     }
  
     if (orte_debug_flag) {
-        opal_output(0, "[%lu,%lu,%lu] setting up session dir with",
-                    ORTE_NAME_ARGS(orte_process_info.my_name));
+        opal_output(0, "%s setting up session dir with",
+                    ORTE_NAME_PRINT(orte_process_info.my_name));
         if (NULL != orte_process_info.tmpdir_base) {
             opal_output(0, "\ttmpdir %s", orte_process_info.tmpdir_base);
         }

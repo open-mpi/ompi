@@ -423,16 +423,6 @@ static void orte_pls_bproc_setup_env(char *** env)
 
 /**
  * Launches the daemons
- * @param cellid         the cellid of the job
- * @param envp           a pointer to the environment to use for the daemons
- * @param node_arrays    an array that holds the node arrays for each app context
- * @param node_array_lens an array of lengths of the node arrays
- * @param num_contexts   the number of application contexts
- * @param num_procs      the numer of processes in the job
- * @param global_vpid_start the starting vpid for the user's processes
- * @param jobid          the jobid for the user processes
- * @retval ORTE_SUCCESS
- * @retval error
  */
 /* When working in this function, ALWAYS jump to "cleanup" if
  * you encounter an error so that orterun will be woken up and
@@ -529,7 +519,7 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
     free(var);
 
     /* set up the base environment so the daemons can get their names once launched */
-    rc = orte_ns_nds_bproc_put(ORTE_PROC_MY_NAME->cellid, 0, map->daemon_vpid_start,
+    rc = orte_ns_nds_bproc_put(0, map->daemon_vpid_start,
                                0, num_daemons, ORTE_VPID_INVALID, 1, envp);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
@@ -636,7 +626,7 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 goto cleanup;
             }
-            rc = orte_pls_bproc_set_node_pid(ORTE_PROC_MY_NAME->cellid, param, map->job, pids[i]);
+            rc = orte_pls_bproc_set_node_pid(param, map->job, pids[i]);
             if(ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
@@ -774,17 +764,6 @@ orte_pls_bproc_node_failed(orte_gpr_notify_message_t *msg)
 
 /**
  * Launches the application processes
- * @param cellid         the cellid of the job
- * @param jobid          the jobid of the job
- * @param map            a pointer to the mapping of this application
- * @param num_processes  the number of processes in this job
- * @param vpid_start     the starting vpid for this app context
- * @param global_vpid_start the starting vpid for the user's processes
- * @param app_context    the application context number
- * @param node_array     the node array for this context
- * @param node_array_len the length of the node array
- * @retval ORTE_SUCCESS
- * @retval error
  */
 
 /* When working in this function, ALWAYS jump to "cleanup" if
@@ -908,7 +887,7 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
         }
 
         /* setup environment so the procs can figure out their names */
-        rc = orte_ns_nds_bproc_put(ORTE_PROC_MY_NAME->cellid, map->job, vpid_start, map->vpid_start,
+        rc = orte_ns_nds_bproc_put(map->job, vpid_start, map->vpid_start,
                                    num_processes, i, num_cycles, &env);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
@@ -964,7 +943,7 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             } else {
-                rc = orte_ns.create_process_name(&proc_name, ORTE_PROC_MY_NAME->cellid, map->job,
+                rc = orte_ns.create_process_name(&proc_name, map->job,
                                                  vpid_start + j*stride);
                 if(ORTE_SUCCESS != rc) {
                     ORTE_ERROR_LOG(rc);

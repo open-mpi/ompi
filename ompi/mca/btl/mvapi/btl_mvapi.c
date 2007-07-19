@@ -798,8 +798,8 @@ void mca_btl_mvapi_dump(
         opal_output( 0, "No endpoint for this peer\n" );
         return;
     }
-    opal_output( 0, "endpoint with processor (%lu.%lu.%lu)\n", 
-                 ORTE_NAME_ARGS( &(endpoint->endpoint_proc->proc_ompi->proc_name) ) );
+    opal_output( 0, "endpoint with processor %s\n", 
+                 ORTE_NAME_PRINT( &(endpoint->endpoint_proc->proc_ompi->proc_name) ) );
     opal_output( 0, "endpoint state: %s\n",
                  (endpoint->endpoint_state == MCA_BTL_IB_CONNECTING ? "connecting" :
                   (endpoint->endpoint_state == MCA_BTL_IB_CONNECT_ACK ? "waiting ack" :

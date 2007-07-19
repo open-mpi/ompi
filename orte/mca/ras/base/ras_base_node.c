@@ -37,7 +37,6 @@ static void orte_ras_base_node_construct(orte_ras_node_t* node)
     node->node_name = NULL;
     node->launch_id = -1;
     node->node_arch = NULL;
-    node->node_cellid = 0;
     node->node_state = ORTE_NODE_STATE_UNKNOWN;
     node->node_slots = 0;
     node->node_slots_inuse = 0;
@@ -108,12 +107,10 @@ int orte_ras_base_node_query(opal_list_t* nodes)
         ORTE_NODE_SLOTS_ALLOC_KEY,
         ORTE_NODE_SLOTS_MAX_KEY,
         ORTE_NODE_USERNAME_KEY,
-        ORTE_CELLID_KEY,
         NULL
     };
     orte_std_cntr_t i, cnt, *sptr;
     orte_node_state_t *nsptr;
-    orte_cellid_t *cptr;
     int32_t *i32;
     orte_gpr_value_t** values;
     int rc;
@@ -217,14 +214,6 @@ int orte_ras_base_node_query(opal_list_t* nodes)
                 }
                 continue;
             }
-            if(strcmp(keyval->key, ORTE_CELLID_KEY) == 0) {
-                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&cptr, keyval->value, ORTE_CELLID))) {
-                    ORTE_ERROR_LOG(rc);
-                    continue;
-                }
-                node->node_cellid = *cptr;
-                continue;
-            }
         }
         opal_list_append(nodes, &node->super);
         OBJ_RELEASE(value);
@@ -324,7 +313,6 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
         ORTE_NODE_SLOTS_ALLOC_KEY,
         ORTE_NODE_SLOTS_MAX_KEY,
         ORTE_NODE_USERNAME_KEY,
-        ORTE_CELLID_KEY,
         NULL
     };
     orte_std_cntr_t i, cnt, keys_len;
@@ -332,7 +320,6 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
     char* jobid_str;
     orte_std_cntr_t *sptr;
     orte_node_state_t *nsptr;
-    orte_cellid_t *cptr;
     int32_t *i32;
     int rc, alloc_key_posn=5;
 
@@ -459,15 +446,7 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
                 }
                 continue;
             }
-            if(strcmp(keyval->key, ORTE_CELLID_KEY) == 0) {
-                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&cptr, keyval->value, ORTE_CELLID))) {
-                    ORTE_ERROR_LOG(rc);
-                    continue;
-                }
-                node->node_cellid = *cptr;
-                continue;
-            }
-        }
+       }
         /* check to see if any slots were reserved on this node for us
          * The "get" command will return data from ALL nodes on the node
          * segment. We ONLY want to include here nodes that are assigned
@@ -494,7 +473,7 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
  * Query the registry for a specific node
  */
 
-orte_ras_node_t* orte_ras_base_node_lookup(orte_cellid_t cellid, const char* node_name)
+orte_ras_node_t* orte_ras_base_node_lookup(const char* node_name)
 {
     char* keys[] = {
         ORTE_NODE_NAME_KEY,
@@ -506,20 +485,18 @@ orte_ras_node_t* orte_ras_base_node_lookup(orte_cellid_t cellid, const char* nod
         ORTE_NODE_SLOTS_ALLOC_KEY,
         ORTE_NODE_SLOTS_MAX_KEY,
         ORTE_NODE_USERNAME_KEY,
-        ORTE_CELLID_KEY,
         NULL
     };
     orte_ras_node_t* node = NULL;
     orte_std_cntr_t i, cnt, num_tokens;
     orte_std_cntr_t *sptr;
-    orte_cellid_t *cptr;
     orte_node_state_t *nsptr;
     int32_t *i32;
     orte_gpr_value_t** values;
     char** tokens = NULL;
     int rc;
 
-    rc = orte_schema.get_node_tokens(&tokens, &num_tokens, cellid, (char*)node_name);
+    rc = orte_schema.get_node_tokens(&tokens, &num_tokens, (char*)node_name);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return NULL;
@@ -624,14 +601,6 @@ orte_ras_node_t* orte_ras_base_node_lookup(orte_cellid_t cellid, const char* nod
                 }
                 continue;
             }
-            if(strcmp(keyval->key, ORTE_CELLID_KEY) == 0) {
-                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&cptr, keyval->value, ORTE_CELLID))) {
-                    ORTE_ERROR_LOG(rc);
-                    continue;
-                }
-                node->node_cellid = *cptr;
-                continue;
-            }
         }
         OBJ_RELEASE(values[i]);
         break;
@@ -658,7 +627,6 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
         ORTE_NODE_LAUNCH_ID_KEY,
         ORTE_NODE_ARCH_KEY,
         ORTE_NODE_STATE_KEY,
-        ORTE_CELLID_KEY,
         ORTE_NODE_SLOTS_KEY,
         ORTE_NODE_SLOTS_IN_USE_KEY,
         ORTE_NODE_SLOTS_MAX_KEY,
@@ -669,7 +637,6 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
         ORTE_INT32,
         ORTE_STRING,
         ORTE_NODE_STATE,
-        ORTE_CELLID,
         ORTE_STD_CNTR,
         ORTE_STD_CNTR,
         ORTE_STD_CNTR,
@@ -699,7 +666,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
     for (i=0; i < num_values; i++) {
         if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[i]),
                                     ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
-                                    ORTE_NODE_SEGMENT, 9, 0))) {
+                                    ORTE_NODE_SEGMENT, 8, 0))) {
             ORTE_ERROR_LOG(rc);
             for (j=0; j < i; j++) {
                 OBJ_RELEASE(values[j]);
@@ -739,12 +706,6 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
         }
 
         ++j;
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[j]), keys[j], types[j], &(node->node_cellid)))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-
-        ++j;
         if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[j]), keys[j], types[j], &(node->node_slots)))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
@@ -769,7 +730,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
         }
 
         /* setup index/keys for this node */
-        rc = orte_schema.get_node_tokens(&(values[i]->tokens), &(values[i]->num_tokens), node->node_cellid, node->node_name);
+        rc = orte_schema.get_node_tokens(&(values[i]->tokens), &(values[i]->num_tokens), node->node_name);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
@@ -791,11 +752,11 @@ cleanup:
 
 
 
-int orte_ras_base_proc_insert(opal_list_t* procs, orte_cellid_t cellid, orte_jobid_t jobid)
+int orte_ras_base_proc_insert(opal_list_t* procs, orte_jobid_t jobid)
 {
     opal_list_item_t* item;
     orte_gpr_value_t **values;
-    orte_process_name_t *proc_name;
+    orte_process_name_t proc_name;
     int rc;
     orte_std_cntr_t num_values, i, j;
     char *keys[] = {
@@ -842,6 +803,8 @@ int orte_ras_base_proc_insert(opal_list_t* procs, orte_cellid_t cellid, orte_job
             return rc;
         }
     }
+    
+    proc_name.jobid = jobid;
     for(i=0, item =  opal_list_get_first(procs);
         i < num_values && item != opal_list_get_end(procs);
         i++, item =  opal_list_get_next(item)) {
@@ -866,14 +829,10 @@ int orte_ras_base_proc_insert(opal_list_t* procs, orte_cellid_t cellid, orte_job
         }
 
         ++j;
-        rc = orte_ns.create_process_name(&proc_name, cellid, jobid, i);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
 
         /* setup index/keys for this node */
-        rc = orte_schema.get_proc_tokens(&(values[i]->tokens), &(values[i]->num_tokens), proc_name);
+        proc_name.vpid = (orte_vpid_t)i;
+        rc = orte_schema.get_proc_tokens(&(values[i]->tokens), &(values[i]->num_tokens), &proc_name);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
@@ -918,7 +877,7 @@ int orte_ras_base_node_delete(opal_list_t* nodes)
         node = (orte_ras_node_t*)item;
 
         /* setup index/keys for this node */
-        rc = orte_schema.get_node_tokens(&tokens, &num_tokens, node->node_cellid, node->node_name);
+        rc = orte_schema.get_node_tokens(&tokens, &num_tokens, node->node_name);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -999,7 +958,7 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
             continue;
 
         /* setup index/keys for this node */
-        rc = orte_schema.get_node_tokens(&(values[i]->tokens), &(values[i]->num_tokens), node->node_cellid, node->node_name);
+        rc = orte_schema.get_node_tokens(&(values[i]->tokens), &(values[i]->num_tokens), node->node_name);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             free(jobid_str);

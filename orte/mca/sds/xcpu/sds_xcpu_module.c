@@ -63,27 +63,14 @@ int orte_sds_xcpu_set_name(void)
 
     } else {
 
-        orte_cellid_t cellid;
         orte_jobid_t jobid;
         orte_vpid_t vpid_start;
-        char* cellid_string;
         char* jobid_string;
         char* vpid_string;
         char *xcpu_rank_string;
         int xcpu_rank;
         int stride;
       
-        id = mca_base_param_register_string("ns", "nds", "cellid", NULL, NULL);
-        mca_base_param_lookup_string(id, &cellid_string);
-        if (NULL == cellid_string) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-        }
-        if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_cellid(&cellid, cellid_string))) {
-            ORTE_ERROR_LOG(rc);
-            return(rc);
-        }
-            
         id = mca_base_param_register_string("ns", "nds", "jobid", NULL, NULL);
         mca_base_param_lookup_string(id, &jobid_string);
         if (NULL == jobid_string) {
@@ -112,6 +99,11 @@ int orte_sds_xcpu_set_name(void)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        
+        /* RHC: Hmmm...I don't see where the process name actually
+         * gets created here....does it always come in as a complete name?
+         * If so, then why have the above computation?
+         */
         
 #if 0
         id = mca_base_param_register_string("ns", "nds", "global_vpid_start", NULL, NULL);

@@ -214,7 +214,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
         fprintf(hfp,"%s\n",node->node_name);
 
         /* initialize daemons process name */
-        rc = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid);
+        rc = orte_ns.create_process_name(&name, 0, vpid);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;

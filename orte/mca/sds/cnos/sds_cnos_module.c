@@ -66,20 +66,17 @@ int
 orte_sds_cnos_set_name(void)
 {
     int rc;
-    orte_cellid_t cellid;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
 
     /* Get our process information
      *
-     * we're going to make up the cellid and jobid.  find our vpid,
+     * we're going to make up the jobid.  find our vpid,
      * assuming range starts at 0 
      */
-    cellid = 0;
     jobid = 1; /* not 0, since it has special meaning */
     vpid = (orte_vpid_t) cnos_get_rank();
     if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&(orte_process_info.my_name),
-                                                          cellid,
                                                           jobid,
                                                           vpid))) {
         ORTE_ERROR_LOG(rc);

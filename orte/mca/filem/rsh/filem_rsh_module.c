@@ -426,9 +426,9 @@ static void orte_filem_rsh_query_callback(int status,
                                           void* cbdata) 
 {
     opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                        "filem:rsh: query_callback([%lu,%lu,%lu] -> [%lu,%lu,%lu])",
-                        ORTE_NAME_ARGS(orte_process_info.my_name),
-                        ORTE_NAME_ARGS(peer));
+                        "filem:rsh: query_callback(%s -> %s)",
+                        ORTE_NAME_PRINT(orte_process_info.my_name),
+                        ORTE_NAME_PRINT(peer));
 
     /* Call the base callback function */
     orte_filem_base_query_callback(status, peer, buffer, tag, cbdata);

@@ -45,7 +45,6 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
     orte_mapped_proc_t *proc;
     orte_mapped_node_t *node;
     opal_list_item_t *item;
-    orte_cellid_t *cellptr, cell=ORTE_CELLID_INVALID;
     orte_vpid_t *vptr;
     orte_std_cntr_t *sptr;
     bool *bptr, oversub=false;
@@ -65,7 +64,6 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
         ORTE_PROC_NAME_KEY,
         ORTE_PROC_APP_CONTEXT_KEY,
         ORTE_PROC_LOCAL_PID_KEY,
-        ORTE_CELLID_KEY,
         ORTE_NODE_NAME_KEY,
         ORTE_NODE_LAUNCH_ID_KEY,
         ORTE_NODE_USERNAME_KEY,
@@ -245,14 +243,6 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
                     proc->pid = *pidptr;
                     continue;
                 }
-                if(strcmp(keyval->key, ORTE_CELLID_KEY) == 0) {
-                    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&cellptr, keyval->value, ORTE_CELLID))) {
-                        ORTE_ERROR_LOG(rc);
-                        goto cleanup;
-                    }
-                    cell = *cellptr;
-                    continue;
-                }
                 if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
                     /* use the dss.copy function here to protect us against zero-length strings */
                     if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&node_name, keyval->value->data, ORTE_STRING))) {
@@ -315,7 +305,7 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
             }
 
             /* store this process in the map */
-            if (ORTE_SUCCESS != (rc = orte_rmaps_base_add_proc_to_map(mapping, cell, node_name, launch_id, username, oversub, proc))) {
+            if (ORTE_SUCCESS != (rc = orte_rmaps_base_add_proc_to_map(mapping, node_name, launch_id, username, oversub, proc))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -415,7 +405,7 @@ cleanup:
     return rc;
 }
 
-int orte_rmaps_base_get_node_map(orte_mapped_node_t **node, orte_cellid_t cell,
+int orte_rmaps_base_get_node_map(orte_mapped_node_t **node,
                                  char *nodename, orte_jobid_t job)
 {
     orte_job_map_t *map;
@@ -437,7 +427,7 @@ int orte_rmaps_base_get_node_map(orte_mapped_node_t **node, orte_cellid_t cell,
          item = opal_list_get_next(item)) {
         nptr = (orte_mapped_node_t*)item;
 
-        if (cell == nptr->cell && 0 == strcmp(nodename, nptr->nodename)) {
+        if (0 == strcmp(nodename, nptr->nodename)) {
             *node = nptr;
             /* protect the node object from release when we get rid
              * of the map object
@@ -550,9 +540,9 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
         if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[i]),
                                     ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_AND,
 #if OPAL_ENABLE_FT == 1
-                                    segment, 16,
+                                    segment, 15,
 #else
-                                    segment, 13,
+                                    segment, 12,
 #endif
                                     0))) {
              ORTE_ERROR_LOG(rc);
@@ -585,42 +575,42 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
                 goto cleanup;
             }
 
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[2]), ORTE_CELLID_KEY, ORTE_CELLID, &(node->cell)))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[2]), ORTE_NODE_NAME_KEY, ORTE_STRING, node->nodename))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
 
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[3]), ORTE_NODE_NAME_KEY, ORTE_STRING, node->nodename))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[3]), ORTE_NODE_LAUNCH_ID_KEY, ORTE_INT32, &(node->launch_id)))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
 
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[4]), ORTE_NODE_LAUNCH_ID_KEY, ORTE_INT32, &(node->launch_id)))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[4]), ORTE_NODE_USERNAME_KEY, ORTE_STRING, node->username))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
 
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[5]), ORTE_NODE_USERNAME_KEY, ORTE_STRING, node->username))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[5]), ORTE_NODE_OVERSUBSCRIBED_KEY, ORTE_BOOL, &(node->oversubscribed)))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
 
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[6]), ORTE_NODE_OVERSUBSCRIBED_KEY, ORTE_BOOL, &(node->oversubscribed)))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[6]), ORTE_PROC_APP_CONTEXT_KEY, ORTE_STD_CNTR, &(proc->app_idx)))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
 
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[7]), ORTE_PROC_APP_CONTEXT_KEY, ORTE_STD_CNTR, &(proc->app_idx)))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[7]), ORTE_PROC_STATE_KEY, ORTE_PROC_STATE, &proc_state))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
 
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[8]), ORTE_PROC_STATE_KEY, ORTE_PROC_STATE, &proc_state))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[8]), ORTE_PROC_LOCAL_RANK_KEY, ORTE_VPID, &(proc->local_rank)))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
 
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[9]), ORTE_PROC_LOCAL_RANK_KEY, ORTE_VPID, &(proc->local_rank)))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[9]), ORTE_NODE_NUM_PROCS_KEY, ORTE_STD_CNTR, &(node->num_procs)))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -630,11 +620,7 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
                 goto cleanup;
             }
 
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[11]), ORTE_NODE_NUM_PROCS_KEY, ORTE_STD_CNTR, &(node->num_procs)))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[12]), ORTE_PROC_CPU_LIST_KEY, ORTE_STRING, proc->slot_list))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[11]), ORTE_PROC_CPU_LIST_KEY, ORTE_STRING, proc->slot_list))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -648,21 +634,21 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
             if( NULL == proc->ckpt_snapshot_loc)
                 proc->ckpt_snapshot_loc = strdup("");
 
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[13]),
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[12]),
                                                              ORTE_PROC_CKPT_STATE_KEY, ORTE_SIZE,
                                                              &(proc->ckpt_state)))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
 
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[14]),
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[13]),
                                                              ORTE_PROC_CKPT_SNAPSHOT_REF_KEY, ORTE_STRING,
                                                              proc->ckpt_snapshot_ref))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
 
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[15]),
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[14]),
                                                              ORTE_PROC_CKPT_SNAPSHOT_LOC_KEY, ORTE_STRING,
                                                              proc->ckpt_snapshot_loc))) {
                 ORTE_ERROR_LOG(rc);

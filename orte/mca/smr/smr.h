@@ -65,13 +65,11 @@ typedef int (*orte_smr_base_module_set_proc_state_fn_t)(orte_process_name_t *pro
  * Query a node state
  */
 typedef int (*orte_smr_base_module_get_node_state_fn_t)(orte_node_state_t *state,
-                                                      orte_cellid_t cell,
                                                       char *nodename);
 /*
  * Set a node state
  */
-typedef int (*orte_smr_base_module_set_node_state_fn_t)(orte_cellid_t cell,
-                                                      char *nodename,
+typedef int (*orte_smr_base_module_set_node_state_fn_t)(char *nodename,
                                                       orte_node_state_t state);
 
 /*

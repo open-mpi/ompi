@@ -677,8 +677,8 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data,)
         child = (odls_bproc_child_t *) item;
         if(0 < mca_odls_bproc_component.debug) {
             opal_output(0, "orte_odls_bproc_launch: setting up io for "
-                            "[%ld,%ld,%ld] proc rank %ld\n",
-                            ORTE_NAME_ARGS((child->name)),
+                            "%s proc rank %ld\n",
+                            ORTE_NAME_PRINT((child->name)),
                             (long)child->name->vpid);
         }
         /* only setup to forward stdin if it is rank 0, otherwise connect

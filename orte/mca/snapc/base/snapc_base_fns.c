@@ -71,7 +71,6 @@ OBJ_CLASS_INSTANCE(orte_snapc_base_snapshot_t,
 
 void orte_snapc_base_snapshot_construct(orte_snapc_base_snapshot_t *snapshot)
 {
-    snapshot->process_name.cellid = 0;
     snapshot->process_name.jobid  = 0;
     snapshot->process_name.vpid   = 0;
     snapshot->process_pid  = 0;
@@ -81,7 +80,6 @@ void orte_snapc_base_snapshot_construct(orte_snapc_base_snapshot_t *snapshot)
 
 void orte_snapc_base_snapshot_destruct( orte_snapc_base_snapshot_t *snapshot)
 {
-    snapshot->process_name.cellid = 0;
     snapshot->process_name.jobid  = 0;
     snapshot->process_name.vpid   = 0;
     snapshot->process_pid  = 0;
@@ -1505,7 +1503,6 @@ int orte_snapc_base_extract_metadata(orte_snapc_base_global_snapshot_t *global_s
 
             vpid_snapshot = OBJ_NEW(orte_snapc_base_snapshot_t);
 
-            vpid_snapshot->process_name.cellid = proc->cellid;
             vpid_snapshot->process_name.jobid  = proc->jobid;
             vpid_snapshot->process_name.vpid   = proc->vpid;
         }

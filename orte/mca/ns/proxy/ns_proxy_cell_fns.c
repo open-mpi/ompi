@@ -45,186 +45,7 @@
  * functions
  */
 
-int orte_ns_proxy_create_cellid(orte_cellid_t *cellid, char *site, char *resource)
-{
-    orte_buffer_t* cmd;
-    orte_buffer_t* answer;
-    orte_ns_cmd_flag_t command;
-    orte_std_cntr_t count;
-    int rc;
-
-    OPAL_TRACE(1);
-    
-    command = ORTE_NS_CREATE_CELLID_CMD;
-
-    cmd = OBJ_NEW(orte_buffer_t);
-    if (cmd == NULL) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &command, 1, ORTE_NS_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(cmd);
-        return rc;
-    }
-
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, cellid, 1, ORTE_CELLID))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(cmd);
-        return rc;
-    }
-    
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &site, 1, ORTE_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(cmd);
-        return rc;
-    }
-
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &resource, 1, ORTE_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(cmd);
-        return rc;
-    }
-
-    if (0 > orte_rml.send_buffer(ORTE_NS_MY_REPLICA, cmd, ORTE_RML_TAG_NS, 0)) {
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        OBJ_RELEASE(cmd);
-        return ORTE_ERR_COMM_FAILURE;
-    }
-    OBJ_RELEASE(cmd);
-
-    answer = OBJ_NEW(orte_buffer_t);
-    if(answer == NULL) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS)) {
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        OBJ_RELEASE(answer);
-        return ORTE_ERR_COMM_FAILURE;
-    }
-
-    count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &command, &count, ORTE_NS_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(answer);
-        return rc;
-    }
-
-    if (ORTE_NS_CREATE_CELLID_CMD != command) {
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        OBJ_RELEASE(answer);
-        return ORTE_ERR_COMM_FAILURE;
-    }
-
-    count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, cellid, &count, ORTE_CELLID))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(answer);
-        return rc;
-    }
-    OBJ_RELEASE(answer);
-
-    OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-    return ORTE_SUCCESS;
-}
-
-
-int orte_ns_proxy_get_cell_info(orte_cellid_t cellid,
-                                char **site, char **resource)
-{
-    orte_buffer_t* cmd;
-    orte_buffer_t* answer;
-    orte_ns_cmd_flag_t command;
-    orte_std_cntr_t count;
-    int rc;
-
-    OPAL_TRACE(1);
-    
-    command = ORTE_NS_GET_CELL_INFO_CMD;
-
-    cmd = OBJ_NEW(orte_buffer_t);
-    if (cmd == NULL) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &command, 1, ORTE_NS_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(cmd);
-        OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-        return rc;
-    }
-
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &cellid, 1, ORTE_CELLID))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(cmd);
-        OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-        return rc;
-    }
-
-    if (0 > orte_rml.send_buffer(ORTE_NS_MY_REPLICA, cmd, ORTE_RML_TAG_NS, 0)) {
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        OBJ_RELEASE(cmd);
-        OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-        return ORTE_ERR_COMM_FAILURE;
-    }
-    OBJ_RELEASE(cmd);
-
-    answer = OBJ_NEW(orte_buffer_t);
-    if(answer == NULL) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS)) {
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        OBJ_RELEASE(answer);
-        OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-        return ORTE_ERR_COMM_FAILURE;
-    }
-
-    count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &command, &count, ORTE_NS_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(answer);
-        OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-        return rc;
-    }
-
-    if (ORTE_NS_GET_CELL_INFO_CMD != command) {
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        OBJ_RELEASE(answer);
-        OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-        return ORTE_ERR_COMM_FAILURE;
-    }
-
-    count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, site, &count, ORTE_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(answer);
-        OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-        return rc;
-    }
-
-    count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, resource, &count, ORTE_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(answer);
-        OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-        return rc;
-    }
-
-     OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-     return ORTE_SUCCESS;
-}
-
-int orte_ns_proxy_create_nodeids(orte_nodeid_t **nodeids, orte_std_cntr_t *nnodes,
-                                 orte_cellid_t cellid, char **nodenames)
+int orte_ns_proxy_create_nodeids(orte_nodeid_t **nodeids, orte_std_cntr_t *nnodes, char **nodenames)
 {
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
@@ -243,12 +64,6 @@ int orte_ns_proxy_create_nodeids(orte_nodeid_t **nodeids, orte_std_cntr_t *nnode
     }
     
     if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &command, 1, ORTE_NS_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(cmd);
-        return rc;
-    }
-    
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &cellid, 1, ORTE_CELLID))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
         return rc;
@@ -323,8 +138,7 @@ int orte_ns_proxy_create_nodeids(orte_nodeid_t **nodeids, orte_std_cntr_t *nnode
     return ORTE_SUCCESS;
 }
 
-int orte_ns_proxy_get_node_info(char ***nodenames, orte_cellid_t cellid,
-                                orte_std_cntr_t num_nodes, orte_nodeid_t *nodeids)
+int orte_ns_proxy_get_node_info(char ***nodenames, orte_std_cntr_t num_nodes, orte_nodeid_t *nodeids)
 {
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
@@ -344,13 +158,6 @@ int orte_ns_proxy_get_node_info(char ***nodenames, orte_cellid_t cellid,
     }
     
     if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &command, 1, ORTE_NS_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(cmd);
-        OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-        return rc;
-    }
-    
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &cellid, 1, ORTE_CELLID))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);

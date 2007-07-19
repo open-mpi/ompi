@@ -40,66 +40,6 @@
 /*
  * DIAGNOSTIC functions
  */
-int orte_ns_proxy_dump_cells(void)
-{
-    orte_buffer_t cmd;
-    orte_buffer_t answer;
-    orte_ns_cmd_flag_t command;
-    orte_std_cntr_t count;
-    int rc;
-
-    command = ORTE_NS_DUMP_CELLS_CMD;
-
-    OPAL_THREAD_LOCK(&orte_ns_proxy.mutex);
-
-    /* dump name service replica cell tracker */
-    OBJ_CONSTRUCT(&cmd, orte_buffer_t);
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &command, 1, ORTE_NS_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-        OBJ_DESTRUCT(&cmd);
-        return rc;
-    }
-
-    if (0 > orte_rml.send_buffer(ORTE_NS_MY_REPLICA, &cmd, ORTE_RML_TAG_NS, 0)) {
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        OBJ_DESTRUCT(&cmd);
-        OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-        return ORTE_ERR_COMM_FAILURE;
-    }
-    OBJ_DESTRUCT(&cmd);
-
-    OBJ_CONSTRUCT(&answer, orte_buffer_t);
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, &answer, ORTE_RML_TAG_NS)) {
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        OBJ_DESTRUCT(&answer);
-        OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-        return ORTE_ERR_COMM_FAILURE;
-    }
-
-    count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(&answer, &command, &count, ORTE_NS_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&answer);
-        return rc;
-    }
-    
-    if (ORTE_NS_DUMP_CELLS_CMD != command) {
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        OBJ_DESTRUCT(&answer);
-        return ORTE_ERR_COMM_FAILURE;
-    }
-    
-    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&answer))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&answer);
-        return rc;
-    }
-
-    return ORTE_SUCCESS;
-}
-
-
 int orte_ns_proxy_dump_jobs(void)
 {
     orte_buffer_t cmd;
@@ -220,8 +160,8 @@ int orte_ns_proxy_dump_tags(void)
     }
 
     /* dump local tag tracker */
-    opal_output(mca_ns_base_output, "\n\n[%lu,%lu,%lu] Dump of Local Tag Tracker\n",
-        ORTE_NAME_ARGS(orte_process_info.my_name));
+    opal_output(mca_ns_base_output, "\n\n%s Dump of Local Tag Tracker\n",
+        ORTE_NAME_PRINT(orte_process_info.my_name));
     ptr = (orte_ns_proxy_tagitem_t**)(orte_ns_proxy.tags)->addr;
     for (i=0, j=0; j < orte_ns_proxy.num_tags &&
                    i < (orte_ns_proxy.tags)->size; i++) {
@@ -295,8 +235,8 @@ int orte_ns_proxy_dump_datatypes(void)
     }
 
     /* dump local datatype tracker */
-    opal_output(mca_ns_base_output, "\n\n[%lu,%lu,%lu] Dump of Local Datatype Tracker\n",
-        ORTE_NAME_ARGS(orte_process_info.my_name));
+    opal_output(mca_ns_base_output, "\n\n%s Dump of Local Datatype Tracker\n",
+        ORTE_NAME_PRINT(orte_process_info.my_name));
     ptr = (orte_ns_proxy_dti_t**)(orte_ns_proxy.dts)->addr;
     for (i=0, j=0; j < orte_ns_proxy.num_dts &&
                    i < (orte_ns_proxy.dts)->size; i++) {

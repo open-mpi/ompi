@@ -27,6 +27,7 @@
 
 #include "orte/util/proc_info.h"
 #include "orte/util/sys_info.h"
+#include "orte/mca/ns/ns_types.h"
 
 OMPI_DECLSPEC extern int mca_btl_base_debug;
 
@@ -35,9 +36,9 @@ extern int mca_btl_base_out(const char*, ...);
 
 #define BTL_OUTPUT(args)                                     \
 do {                                                         \
-    mca_btl_base_out("[%s][%ld,%ld,%ld][%s:%d:%s] ",         \
+    mca_btl_base_out("[%s]%s[%s:%d:%s] ",         \
             orte_system_info.nodename,                       \
-            ORTE_NAME_ARGS(orte_process_info.my_name),       \
+            ORTE_NAME_PRINT(orte_process_info.my_name),       \
             __FILE__, __LINE__, __func__);                   \
     mca_btl_base_out args;                                   \
     mca_btl_base_out("\n");                                  \
@@ -46,9 +47,9 @@ do {                                                         \
 
 #define BTL_ERROR(args)                                      \
 do {                                                         \
-    mca_btl_base_err("[%s][%ld,%ld,%ld][%s:%d:%s] ",         \
+    mca_btl_base_err("[%s]%s[%s:%d:%s] ",         \
             orte_system_info.nodename,                       \
-            ORTE_NAME_ARGS(orte_process_info.my_name),       \
+            ORTE_NAME_PRINT(orte_process_info.my_name),       \
             __FILE__, __LINE__, __func__);                   \
     mca_btl_base_err args;                                   \
     mca_btl_base_err("\n");                                  \
@@ -56,8 +57,8 @@ do {                                                         \
 
 #define BTL_PEER_ERROR(proc, args)                               \
 do {                                                             \
-    mca_btl_base_err("[%ld,%ld,%ld][%s:%d:%s] from %s ",         \
-                     ORTE_NAME_ARGS(orte_process_info.my_name),  \
+    mca_btl_base_err("%s[%s:%d:%s] from %s ",         \
+                     ORTE_NAME_PRINT(orte_process_info.my_name),  \
                      __FILE__, __LINE__, __func__,               \
                      orte_system_info.nodename);                 \
     if(proc && proc->proc_hostname) {                            \
@@ -72,9 +73,9 @@ do {                                                             \
 #define BTL_DEBUG(args)                                      \
 do {                                                         \
    if(mca_btl_base_debug) {                                  \
-        mca_btl_base_err("[%s][%ld,%ld,%ld][%s:%d:%s] ",     \
+        mca_btl_base_err("[%s]%s[%s:%d:%s] ",     \
                 orte_system_info.nodename,                   \
-                ORTE_NAME_ARGS(orte_process_info.my_name),   \
+                ORTE_NAME_PRINT(orte_process_info.my_name),   \
                 __FILE__, __LINE__, __func__);               \
         mca_btl_base_err args;                               \
         mca_btl_base_err("\n");                              \
@@ -83,9 +84,9 @@ do {                                                         \
 #define BTL_VERBOSE(args)                                    \
 do {                                                         \
    if(mca_btl_base_debug > 1) {                              \
-        mca_btl_base_err("[%s][%ld,%ld,%ld][%s:%d:%s] ",     \
+        mca_btl_base_err("[%s]%s[%s:%d:%s] ",     \
                 orte_system_info.nodename,                   \
-                ORTE_NAME_ARGS(orte_process_info.my_name),   \
+                ORTE_NAME_PRINT(orte_process_info.my_name),   \
                 __FILE__, __LINE__, __func__);               \
         mca_btl_base_err args;                               \
         mca_btl_base_err("\n");                              \

@@ -245,14 +245,6 @@ int orte_rmaps_base_unpack_mapped_node(orte_buffer_t *buffer, void *dest,
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         
-        /* unpack the cellid */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
-                                                         &(nodes[i]->cell), &n, ORTE_CELLID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
         /* unpack the nodename */
         n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,

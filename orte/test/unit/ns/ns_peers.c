@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 
     jptr = peers;
     for (j=0; j < npeers; j++) {
-        fprintf(stderr, "get peers local: peer %ld, %ld, %ld\n", ORTE_NAME_ARGS(jptr));
+        fprintf(stderr, "get peers local: peer %s\n", ORTE_NAME_PRINT(jptr));
         jptr++;
     }
     free(peers);
@@ -146,7 +146,7 @@ int main(int argc, char **argv)
 
     jptr = peers;
     for (j=0; j < npeers; j++) {
-        fprintf(stderr, "get peers for job %ld: peer %ld, %ld, %ld\n", (long)jobs[1], ORTE_NAME_ARGS(jptr));
+        fprintf(stderr, "get peers for job %ld: peer %s\n", (long)jobs[1], ORTE_NAME_PRINT(jptr));
         jptr++;
     }
     if (NULL != peers) free(peers);
@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 
     jptr = peers;
     for (j=0; j < npeers; j++) {
-        fprintf(stderr, "get peers with descendants for job %ld: peer %ld, %ld, %ld\n", (long)parent, ORTE_NAME_ARGS(jptr));
+        fprintf(stderr, "get peers with descendants for job %ld: peer %s\n", (long)parent, ORTE_NAME_PRINT(jptr));
         jptr++;
     }
     if (NULL != peers) free(peers);
@@ -182,7 +182,7 @@ int main(int argc, char **argv)
 
     jptr = peers;
     for (j=0; j < npeers; j++) {
-        fprintf(stderr, "get peers with children only for job %ld: peer %ld, %ld, %ld\n", (long)parent, ORTE_NAME_ARGS(jptr));
+        fprintf(stderr, "get peers with children only for job %ld: peer %s\n", (long)parent, ORTE_NAME_PRINT(jptr));
         jptr++;
     }
     if (NULL != peers) free(peers);

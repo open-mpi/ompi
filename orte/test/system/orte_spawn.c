@@ -128,14 +128,13 @@ int main(int argc, char* argv[])
     
     /* send messages to all children - this will verify that we know their contact info */
     orte_ns.get_vpid_range(job, &range);
-    name.cellid = ORTE_PROC_MY_NAME->cellid;
     name.jobid = job;
     i = 1;
     msg.iov_base = (void *) &i;
     msg.iov_len  = sizeof(i);
     for (i=0; i < range; i++) {
         name.vpid = i;
-        fprintf(stderr, "Parent: sending message to child [%ld,%ld,%ld]\n", ORTE_NAME_ARGS(&name));
+        fprintf(stderr, "Parent: sending message to child %s\n", ORTE_NAME_PRINT(&name));
         if (0 > (rc = orte_rml.send(&name, &msg, 1, MY_TAG, 0))) {
             ORTE_ERROR_LOG(rc);
         }

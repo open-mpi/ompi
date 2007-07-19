@@ -198,7 +198,6 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
         node->node_name = strdup(ptr);
         node->node_arch = strdup(arch);
         node->node_state = ORTE_NODE_STATE_UP;
-        node->node_cellid = 0;
         node->node_slots_inuse = 0;
         node->node_slots_max = 0;
         node->node_slots = (int)strtol(num, (char **)NULL, 10);
@@ -303,7 +302,7 @@ static int put_slot_keyval(orte_ras_node_t* node, int slot_cnt)
     
     /* get token */
     if (ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&tokens,
-        &num_tokens, node->node_cellid, node->node_name))) {
+        &num_tokens, node->node_name))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -337,7 +336,7 @@ static int get_slot_keyval(orte_ras_node_t* node, int* slot_cnt) {
 
     /* get token */
     if (ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&tokens,
-        &num_tokens, node->node_cellid, node->node_name))) {
+        &num_tokens, node->node_name))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }

@@ -214,7 +214,6 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
             node = OBJ_NEW(orte_ras_node_t);
             node->node_name = hostname;
             node->launch_id = nodeid;
-            node->node_cellid = 0;
             node->node_slots_inuse = 0;
             node->node_slots_max = 0;
             node->node_slots = 1;

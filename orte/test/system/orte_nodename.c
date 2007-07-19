@@ -25,8 +25,8 @@ int main(int argc, char* argv[])
     gethostname(hostname, 512);
     pid = getpid();
 
-    printf("orte_nodename: Node %s Name [%lu,%lu,%lu] Pid %ld Local Rank: %ld Num_local_procs %ld\n",
-           hostname, ORTE_NAME_ARGS(orte_process_info.my_name), (long)pid,
+    printf("orte_nodename: Node %s Name %s Pid %ld Local Rank: %ld Num_local_procs %ld\n",
+           hostname, ORTE_NAME_PRINT(orte_process_info.my_name), (long)pid,
            (long)orte_process_info.local_rank, (long)orte_process_info.num_local_procs);
 
     orte_finalize();
