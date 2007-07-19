@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -23,6 +24,7 @@
 #include "opal_config.h"
 
 #include "opal/util/printf.h"
+#include "opal/util/output.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -65,10 +67,14 @@ static int guess_strlen(const char *fmt, va_list ap)
                 /* If there's an arg, get the strlen, otherwise we'll
                  * use (null) */
 
-                if (NULL != sarg)
+                if (NULL != sarg) {
                     len += (int)strlen(sarg);
-                else
+                } else {
+#if OMPI_ENABLE_DEBUG
+                    opal_output(0, "OPAL DEBUG WARNING: Got a NULL argument to opal_vasprintf %s!\n");
+#endif
                     len += 5;
+                }
                 break;
 
             case 'd':
