@@ -59,6 +59,8 @@ Trunk (not on release branches yet)
   support a LAM/MPI-like protocol.
   --> Expected: 1.3
 
+- Fixed a segfault crash on large SMPs when doing collectives.
+  --> Expected: 1.2.4
 - Add support for the DDT parallel debugger via orterun's --debug
   command line option.
   --> Expected: 1.2.4
@@ -82,7 +84,6 @@ Trunk (not on release branches yet)
 -----
 
 - Updated the udapl BTL to use RDMA capabilities.
-- Fixed a segfault crash on large SMPs when doing collectives.
 - Allow use of the Bproc head node if it was allocated to the user.
   Thanks to Sean Kelly for reporting the problem and helping debug it.
 - Fixed a ROMIO problem where non-blocking I/O errors were not properly
