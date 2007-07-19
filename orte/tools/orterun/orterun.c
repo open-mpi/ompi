@@ -22,6 +22,8 @@
  */
 
 #include "orte_config.h"
+#include "orte/orte_constants.h"
+
 
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
@@ -61,8 +63,7 @@
 
 #include "opal/version.h"
 #include "opal/runtime/opal.h"
-
-#include "orte/orte_constants.h"
+#include "opal/util/os_path.h"
 
 #include "orte/class/orte_pointer_array.h"
 #include "orte/util/proc_info.h"
@@ -351,7 +352,6 @@ int orterun(int argc, char *argv[])
 
     /* Setup MCA params */
 
-
     /* Check for some "global" command line params */
     parse_globals(argc, argv, &cmd_line);
     OBJ_DESTRUCT(&cmd_line);
@@ -399,6 +399,55 @@ int orterun(int argc, char *argv[])
         ORTE_ERROR_LOG(rc);
         return rc;
     }    
+    
+    /* If we have a prefix, then modify the PATH and
+        LD_LIBRARY_PATH environment variables in our copy. This
+        will ensure that any locally-spawned children will
+        have our executables and libraries in their path
+
+        For now, default to the prefix_dir provided in the first app_context.
+        Since there always MUST be at least one app_context, we are safe in
+        doing this.
+    */    
+    if (NULL != apps[0]->prefix_dir) {
+        char *oldenv, *newenv, *lib_base, *bin_base;
+        
+        lib_base = opal_basename(opal_install_dirs.libdir);
+        bin_base = opal_basename(opal_install_dirs.bindir);
+
+        /* Reset PATH */
+        newenv = opal_os_path( false, apps[0]->prefix_dir, bin_base, NULL );
+        oldenv = getenv("PATH");
+        if (NULL != oldenv) {
+            char *temp;
+            asprintf(&temp, "%s:%s", newenv, oldenv );
+            free( newenv );
+            newenv = temp;
+        }
+        opal_setenv("PATH", newenv, true, &orte_launch_environ);
+        if (orte_debug_flag) {
+            opal_output(0, "%s: reset PATH: %s", orterun_basename, newenv);
+        }
+        free(newenv);
+        free(bin_base);
+        
+        /* Reset LD_LIBRARY_PATH */
+        newenv = opal_os_path( false, apps[0]->prefix_dir, lib_base, NULL );
+        oldenv = getenv("LD_LIBRARY_PATH");
+        if (NULL != oldenv) {
+            char* temp;
+            asprintf(&temp, "%s:%s", newenv, oldenv);
+            free(newenv);
+            newenv = temp;
+        }
+        opal_setenv("LD_LIBRARY_PATH", newenv, true, &orte_launch_environ);
+        if (orte_debug_flag) {
+            opal_output(0, "%s: reset LD_LIBRARY_PATH: %s",
+                        orterun_basename, newenv);
+        }
+        free(newenv);
+        free(lib_base);
+    }
     
     /* since we are a daemon, we should *always* yield the processor when idle */
     opal_progress_set_yield_when_idle(true);
