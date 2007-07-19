@@ -62,7 +62,6 @@ ompi_common_mx_finalize(void)
             opal_output(0, "Error in mx_finalize (error %s)\n", mx_strerror(mx_return));
             return OMPI_ERROR;
         } 
-    } else {
-        return OMPI_SUCCESS;
     }
+    return OMPI_SUCCESS;
 }
