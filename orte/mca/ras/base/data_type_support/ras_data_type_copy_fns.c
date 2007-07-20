@@ -47,7 +47,6 @@ int orte_ras_base_copy_node(orte_ras_node_t **dest, orte_ras_node_t *src, orte_d
     if (NULL != src->node_name) (*dest)->node_name = strdup(src->node_name);
     (*dest)->launch_id = src->launch_id;
     if (NULL != src->node_arch) (*dest)->node_arch = strdup(src->node_arch);
-    (*dest)->node_cellid = src->node_cellid;
     (*dest)->node_state = src->node_state;
     (*dest)->node_slots = src->node_slots;
     (*dest)->node_slots_inuse = src->node_slots_inuse;

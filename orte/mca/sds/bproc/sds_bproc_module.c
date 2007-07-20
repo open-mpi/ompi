@@ -87,27 +87,14 @@ int orte_sds_bproc_set_name(void)
         
     } else {
 
-        orte_cellid_t cellid;
         orte_jobid_t jobid;
         orte_vpid_t vpid;
         orte_vpid_t vpid_start;
-        char* cellid_string;
         int num_procs;
         char *bproc_rank_string;
         int bproc_rank;
         int stride;
       
-        id = mca_base_param_register_string("ns", "nds", "cellid", NULL, NULL);
-        mca_base_param_lookup_string(id, &cellid_string);
-        if (NULL == cellid_string) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-        }
-        if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_cellid(&cellid, cellid_string))) {
-            ORTE_ERROR_LOG(rc);
-            return(rc);
-        }
-            
         id = mca_base_param_register_string("ns", "nds", "jobid", NULL, NULL);
         mca_base_param_lookup_string(id, &jobid_string);
         if (NULL == jobid_string) {
@@ -159,7 +146,6 @@ int orte_sds_bproc_set_name(void)
         /* create our name */
         if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(
            &(orte_process_info.my_name),
-           cellid,
            jobid,
            vpid))) {
            ORTE_ERROR_LOG(rc);

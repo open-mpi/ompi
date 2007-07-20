@@ -73,7 +73,6 @@ orte_smr_base_module_t orte_smr = {
  */
 static void orte_smr_node_tracker_construct(orte_smr_node_state_tracker_t* node)
 {
-    node->cell = ORTE_CELLID_INVALID;
     node->nodename = NULL;
     node->state = ORTE_NODE_STATE_UNKNOWN;
 }

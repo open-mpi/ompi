@@ -28,7 +28,6 @@ headers += \
         runtime/runtime_internal.h \
         runtime/runtime_types.h \
         runtime/params.h \
-        runtime/orte_setup_hnp.h \
         runtime/orte_cr.h
 
 libopen_rte_la_SOURCES += \
@@ -40,7 +39,6 @@ libopen_rte_la_SOURCES += \
         runtime/orte_init_stage2.c \
         runtime/orte_monitor.c \
         runtime/orte_restart.c \
-        runtime/orte_setup_hnp.c \
         runtime/orte_system_finalize.c \
         runtime/orte_system_init.c \
         runtime/orte_universe_exists.c \

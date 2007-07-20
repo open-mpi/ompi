@@ -50,7 +50,6 @@ extern "C" {
 /****    NS ATTRIBUTES    ****/
 #define ORTE_NS_USE_PARENT              "orte-ns-use-parent"
 #define ORTE_NS_USE_ROOT                "orte-ns-use-root"
-#define ORTE_NS_USE_CELL                "orte-ns-use-cell"
 #define ORTE_NS_USE_JOBID               "orte-ns-use-job"
 #define ORTE_NS_USE_NODE                "orte-ns-use-node"
 #define ORTE_NS_INCLUDE_DESCENDANTS     "orte-ns-include-desc"
@@ -59,7 +58,6 @@ extern "C" {
     
 
 #define ORTE_NAME_ARGS(n) \
-    (long) ((NULL == n) ? (long)-1 : (long)(n)->cellid), \
     (long) ((NULL == n) ? (long)-1 : (long)(n)->jobid), \
     (long) ((NULL == n) ? (long)-1 : (long)(n)->vpid)
 
@@ -69,7 +67,6 @@ extern "C" {
  */
 
 #define ORTE_NS_CMP_NONE       0x00
-#define ORTE_NS_CMP_CELLID     0x01
 #define ORTE_NS_CMP_JOBID      0x02
 #define ORTE_NS_CMP_VPID       0x04
 #define ORTE_NS_CMP_ALL        0Xff
@@ -86,23 +83,26 @@ extern "C" {
  * ns_private.h
  */
 typedef orte_std_cntr_t orte_jobid_t;
-typedef orte_std_cntr_t orte_cellid_t;
 typedef orte_std_cntr_t orte_nodeid_t;
 typedef orte_std_cntr_t orte_vpid_t;
 
 typedef uint8_t  orte_ns_cmp_bitmask_t;  /**< Bit mask for comparing process names */
 
 struct orte_process_name_t {
-    orte_cellid_t cellid;   /**< Cell number */
     orte_jobid_t jobid;     /**< Job number */
     orte_vpid_t vpid;       /**< Process number */
 };
 typedef struct orte_process_name_t orte_process_name_t;
 
+
+/* useful define to print name args in output messages */
+ORTE_DECLSPEC extern char* orte_ns_base_print_name_args(orte_process_name_t *name);
+#define ORTE_NAME_PRINT(n) \
+    orte_ns_base_print_name_args(n)
+
 /*
  * define maximum value for id's in any field
  */
-#define ORTE_CELLID_MAX     ORTE_STD_CNTR_MAX
 #define ORTE_JOBID_MAX      ORTE_STD_CNTR_MAX
 #define ORTE_VPID_MAX       ORTE_STD_CNTR_MAX
 #define ORTE_NODEID_MAX     ORTE_STD_CNTR_MAX
@@ -110,7 +110,6 @@ typedef struct orte_process_name_t orte_process_name_t;
 /*
  * define minimum value for id's in any field
  */
-#define ORTE_CELLID_MIN     ORTE_STD_CNTR_MIN
 #define ORTE_JOBID_MIN      ORTE_STD_CNTR_MIN
 #define ORTE_VPID_MIN       ORTE_STD_CNTR_MIN
 #define ORTE_NODEID_MIN     ORTE_STD_CNTR_MIN
@@ -118,7 +117,6 @@ typedef struct orte_process_name_t orte_process_name_t;
 /*
  * define invalid values
  */
-#define ORTE_CELLID_INVALID     (ORTE_CELLID_MIN + 1)
 #define ORTE_JOBID_INVALID      (ORTE_JOBID_MIN + 1)
 #define ORTE_VPID_INVALID       (ORTE_VPID_MIN + 1)
 #define ORTE_NODEID_INVALID     (ORTE_NODEID_MIN + 1)
@@ -126,7 +124,6 @@ typedef struct orte_process_name_t orte_process_name_t;
 /*
  * define wildcard values  (should be -1)
  */
-#define ORTE_CELLID_WILDCARD     -1
 #define ORTE_JOBID_WILDCARD      -1
 #define ORTE_VPID_WILDCARD       -1
 #define ORTE_NODEID_WILDCARD     -1
@@ -152,7 +149,6 @@ ORTE_DECLSPEC extern orte_process_name_t orte_ns_name_my_hnp;  /** instantiated 
  * @param name
  */
 #define ORTE_PROCESS_NAME_HTON(n) \
-    n.cellid = htonl(n.cellid);   \
     n.jobid = htonl(n.jobid);     \
     n.vpid = htonl(n.vpid);  
 
@@ -162,7 +158,6 @@ ORTE_DECLSPEC extern orte_process_name_t orte_ns_name_my_hnp;  /** instantiated 
  * @param name
  */
 #define ORTE_PROCESS_NAME_NTOH(n)              \
-    n.cellid = ntohl(n.cellid);                \
     n.jobid = ntohl(n.jobid);                  \
     n.vpid = ntohl(n.vpid);  
 

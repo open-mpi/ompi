@@ -197,9 +197,9 @@ orte_rml_base_register_contact_info(void)
     tmp2 = strrchr(tmp, '/') + 1;
     tmp3 = strrchr(tmp, ':');
     if(NULL == tmp2 || NULL == tmp3) {
-        opal_output(0, "[%lu,%lu,%lu] orte_rml_base_init: invalid address \'%s\' "
+        opal_output(0, "%s orte_rml_base_init: invalid address \'%s\' "
                     "returned for selected oob interfaces.\n",
-                    ORTE_NAME_ARGS(orte_process_info.my_name), tmp);
+                    ORTE_NAME_PRINT(orte_process_info.my_name), tmp);
         ORTE_ERROR_LOG(ORTE_ERROR);
         free(tmp);
         return ORTE_ERROR;

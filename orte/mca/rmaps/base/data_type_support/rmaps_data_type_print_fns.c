@@ -167,8 +167,8 @@ int orte_rmaps_base_print_mapped_node(char **output, char *prefix, orte_mapped_n
         asprintf(&pfx2, "%s", prefix);
     }
 
-    asprintf(&tmp, "%sMapped node:\n%s\tCell: %ld\tNodename: %s\tLaunch id: %ld\tUsername: %s\n%s\tDaemon name:", pfx2, pfx2,
-             (long)src->cell, (NULL == src->nodename ? "NULL" : src->nodename), (long)src->launch_id,
+    asprintf(&tmp, "%sMapped node:\n%s\tNodename: %s\tLaunch id: %ld\tUsername: %s\n%s\tDaemon name:", pfx2, pfx2,
+             (NULL == src->nodename ? "NULL" : src->nodename), (long)src->launch_id,
              (NULL == src->username ? "NULL" : src->username), pfx2);
     
     asprintf(&pfx, "%s\t", pfx2);

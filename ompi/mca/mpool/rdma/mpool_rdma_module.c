@@ -400,9 +400,9 @@ int mca_mpool_rdma_release_memory(struct mca_mpool_base_module_t *mpool,
 void mca_mpool_rdma_finalize(struct mca_mpool_base_module_t *mpool)
 {
     mca_mpool_rdma_module_t *mpool_rdma = (mca_mpool_rdma_module_t*)mpool;
-    opal_output(0, "[%lu,%lu,%lu] rdma: stats "
+    opal_output(0, "%s rdma: stats "
             "(hit/miss/found/not found/evicted): %d/%d/%d/%d/%d\n",
-            ORTE_NAME_ARGS(orte_process_info.my_name),
+            ORTE_NAME_PRINT(orte_process_info.my_name),
             mpool_rdma->stat_cache_hit, mpool_rdma->stat_cache_miss,
             mpool_rdma->stat_cache_found, mpool_rdma->stat_cache_notfound,
             mpool_rdma->stat_evicted);

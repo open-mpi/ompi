@@ -330,15 +330,13 @@ static void orte_rmgr_proxy_xconnect_callback(orte_gpr_notify_data_t *data, void
 static void orte_rmgr_proxy_wireup_stdin(orte_jobid_t jobid)
 {
     int rc;
-    orte_process_name_t* name;
+    orte_process_name_t name = {ORTE_JOBID_INVALID, 0};
 
     OPAL_TRACE(1);
 
-    if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&name, 0, jobid, 0))) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_push(name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDIN, 0))) {
+    name.jobid = jobid;
+    
+    if (ORTE_SUCCESS != (rc = orte_iof.iof_push(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDIN, 0))) {
         ORTE_ERROR_LOG(rc);
     }
 }
@@ -483,7 +481,7 @@ static int orte_rmgr_proxy_spawn_job(
     opal_list_t *attributes)
 {
     int rc;
-    orte_process_name_t name = {0, ORTE_JOBID_INVALID, 0};
+    orte_process_name_t name = {ORTE_JOBID_INVALID, 0};
     orte_attribute_t *attr;
     uint8_t flags, *fptr;
     orte_proc_state_t *gate;

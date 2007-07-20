@@ -665,7 +665,6 @@ static int pretty_print_nodes(opal_list_t *nodes) {
     int i, line_len;
     int len_name    = 0,
         len_arch    = 0,
-        len_cell    = 0,
         len_state   = 0,
         len_slots   = 0,
         len_slots_i = 0,
@@ -676,7 +675,6 @@ static int pretty_print_nodes(opal_list_t *nodes) {
      */
     len_name    = (int) strlen("Node Name");
     len_arch    = (int) strlen("Arch");
-    len_cell    = (int) strlen("Cell ID");
     len_state   = (int) strlen("State");
     len_slots   = (int) strlen("Slots");
     len_slots_i = (int) strlen("Slots In Use");
@@ -702,7 +700,6 @@ static int pretty_print_nodes(opal_list_t *nodes) {
 
     line_len = (len_name    + 3 +
                 len_arch    + 3 +
-                len_cell    + 3 +
                 len_state   + 3 +
                 len_slots   + 3 +
                 len_slots_i + 3 +
@@ -713,7 +710,6 @@ static int pretty_print_nodes(opal_list_t *nodes) {
      */
     printf("%*s | ", len_name,    "Node Name");
     printf("%*s | ", len_arch,    "Arch");
-    printf("%*s | ", len_cell,    "Cell ID");
     printf("%*s | ", len_state,   "State");
     printf("%*s | ", len_slots,   "Slots");
     printf("%*s | ", len_slots_m, "Slots Max");
@@ -738,7 +734,6 @@ static int pretty_print_nodes(opal_list_t *nodes) {
         printf("%*s | ", len_arch,    (NULL == node->node_arch ?
                                        "" :
                                        node->node_arch));
-        printf("%*d | ", len_cell,    node->node_cellid);
         printf("%*s | ", len_state,   pretty_node_state(node->node_state));
         printf("%*d | ", len_slots,   (uint)node->node_slots);
         printf("%*d | ", len_slots_m, (uint)node->node_slots_max);
@@ -908,7 +903,7 @@ static int pretty_print_vpids(orte_ps_job_info_t *job) {
             }
         }
         
-        asprintf(&proc_name, "%d.%d.%d", vpid->name.cellid, vpid->name.jobid, vpid->name.vpid);
+        asprintf(&proc_name, "%d.%d", vpid->name.jobid, vpid->name.vpid);
         if( (int)strlen(proc_name) > len_o_proc_name )
             len_o_proc_name = strlen(proc_name);
         
@@ -983,7 +978,7 @@ static int pretty_print_vpids(orte_ps_job_info_t *job) {
         
         printf("\t");
 
-        asprintf(&proc_name, "%d.%d.%d", vpid->name.cellid, vpid->name.jobid, vpid->name.vpid);
+        asprintf(&proc_name, "%d.%d", vpid->name.jobid, vpid->name.vpid);
 
         for( i = 0; i < (int)job->num_app_context; ++i) {
             if( job->app_context[i]->idx == vpid->app_context_idx ) {
@@ -1399,7 +1394,6 @@ static int gather_vpid_info(orte_ps_universe_info_t* universe) {
             /*
              * Access the vpid container
              */
-            proc.cellid = 0;
             proc.jobid  = job->id;
             proc.vpid   = v;
             
@@ -1461,7 +1455,6 @@ static int gather_vpid_info(orte_ps_universe_info_t* universe) {
                             exit_status = ret;
                             goto cleanup;
                         }
-                        vpid->name.cellid = tmp_proc->cellid;
                         vpid->name.jobid  = tmp_proc->jobid;
                         vpid->name.vpid   = tmp_proc->vpid;
                         continue;

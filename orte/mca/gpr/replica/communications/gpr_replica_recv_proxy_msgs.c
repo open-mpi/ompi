@@ -64,8 +64,8 @@ void orte_gpr_replica_recv(int status, orte_process_name_t* sender,
     OPAL_TRACE(3);
     
     if (orte_gpr_replica_globals.debug) {
-	   opal_output(0, "[%lu,%lu,%lu] gpr replica: received message from [%lu,%lu,%lu]",
-			    ORTE_NAME_ARGS(orte_process_info.my_name), ORTE_NAME_ARGS(sender));
+	   opal_output(0, "%s gpr replica: received message from %s",
+			    ORTE_NAME_PRINT(orte_process_info.my_name), ORTE_NAME_PRINT(sender));
     }
 
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);

@@ -88,9 +88,9 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     /* parse uri string */
     if(ORTE_SUCCESS != (rc = mca_oob_tcp_parse_uri(uri, (struct sockaddr*) &inaddr))) {
        opal_output(0,
-            "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: invalid uri: %s\n",
-            ORTE_NAME_ARGS(orte_process_info.my_name),
-            ORTE_NAME_ARGS(name),
+            "%s-%s mca_oob_tcp_ping: invalid uri: %s\n",
+            ORTE_NAME_PRINT(orte_process_info.my_name),
+            ORTE_NAME_PRINT(name),
             uri);
         return rc;
     }
@@ -99,9 +99,9 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     sd = socket(inaddr.ss_family, SOCK_STREAM, 0);
     if (sd < 0) {
        opal_output(0,
-            "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: socket() failed: %s (%d)\n",
-            ORTE_NAME_ARGS(orte_process_info.my_name),
-            ORTE_NAME_ARGS(name),
+            "%s-%s mca_oob_tcp_ping: socket() failed: %s (%d)\n",
+            ORTE_NAME_PRINT(orte_process_info.my_name),
+            ORTE_NAME_PRINT(name),
             strerror(opal_socket_errno),
             opal_socket_errno);
         return ORTE_ERR_UNREACH;
@@ -109,17 +109,17 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
 
     /* setup the socket as non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: fcntl(F_GETFL) failed: %s (%d)\n", 
-            ORTE_NAME_ARGS(orte_process_info.my_name),
-            ORTE_NAME_ARGS(name),
+        opal_output(0, "%s-%s mca_oob_tcp_ping: fcntl(F_GETFL) failed: %s (%d)\n", 
+            ORTE_NAME_PRINT(orte_process_info.my_name),
+            ORTE_NAME_PRINT(name),
             strerror(opal_socket_errno),
             opal_socket_errno);
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
-            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: fcntl(F_SETFL) failed: %s (%d)\n",
-                ORTE_NAME_ARGS(orte_process_info.my_name),
-                ORTE_NAME_ARGS(name),
+            opal_output(0, "%s-%s mca_oob_tcp_ping: fcntl(F_SETFL) failed: %s (%d)\n",
+                ORTE_NAME_PRINT(orte_process_info.my_name),
+                ORTE_NAME_PRINT(name),
                 strerror(opal_socket_errno),
                 opal_socket_errno);
         }
@@ -141,9 +141,9 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     if(connect(sd, (struct sockaddr*)&inaddr, addrlen) < 0) {
         /* connect failed? */
         if(opal_socket_errno != EINPROGRESS && opal_socket_errno != EWOULDBLOCK) {
-            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: connect failed: %s (%d)\n",
-                        ORTE_NAME_ARGS(orte_process_info.my_name),
-                        ORTE_NAME_ARGS(name),
+            opal_output(0, "%s-%s mca_oob_tcp_ping: connect failed: %s (%d)\n",
+                        ORTE_NAME_PRINT(orte_process_info.my_name),
+                        ORTE_NAME_PRINT(name),
                         strerror(opal_socket_errno),
                         opal_socket_errno);
             CLOSE_THE_SOCKET(sd);
@@ -163,9 +163,9 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     /* set socket back to blocking */
     flags &= ~O_NONBLOCK;
     if(fcntl(sd, F_SETFL, flags) < 0) {
-         opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: fcntl(F_SETFL) failed: %s (%d)\n",
-             ORTE_NAME_ARGS(orte_process_info.my_name),
-             ORTE_NAME_ARGS(name),
+         opal_output(0, "%s-%s mca_oob_tcp_ping: fcntl(F_SETFL) failed: %s (%d)\n",
+             ORTE_NAME_PRINT(orte_process_info.my_name),
+             ORTE_NAME_PRINT(name),
              strerror(opal_socket_errno),
              opal_socket_errno);
     }

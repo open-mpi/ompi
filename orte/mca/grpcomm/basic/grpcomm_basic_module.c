@@ -166,7 +166,7 @@ static int xcast_nb(orte_jobid_t job,
 DONE:
     if (orte_timing) {
         gettimeofday(&stop, NULL);
-        opal_output(0, "xcast_nb [%ld,%ld,%ld]: time %ld usec", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME),
+        opal_output(0, "xcast_nb %s: time %ld usec", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                         (long int)((stop.tv_sec - start.tv_sec)*1000000 +
                                (stop.tv_usec - start.tv_usec)));
     }
@@ -248,7 +248,7 @@ DONE:
     
     if (orte_timing) {
         gettimeofday(&stop, NULL);
-        opal_output(0, "xcast [%ld,%ld,%ld]: time %ld usec", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME),
+        opal_output(0, "xcast %s: time %ld usec", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     (long int)((stop.tv_sec - start.tv_sec)*1000000 +
                                (stop.tv_usec - start.tv_usec)));
     }
@@ -335,12 +335,11 @@ static int xcast_binomial_tree(orte_jobid_t job,
     }
         
     if (orte_timing) {
-        opal_output(0, "xcast [%ld,%ld,%ld]: mode binomial buffer size %ld",
-                    ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), (long)buf->bytes_used);
+        opal_output(0, "xcast %s: mode binomial buffer size %ld",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)buf->bytes_used);
     }
     
     /* start setting up the target recipients */
-    target.cellid = ORTE_PROC_MY_NAME->cellid;
     target.jobid = 0;
     
     /* compute the bitmap */
@@ -374,13 +373,12 @@ static int xcast_binomial_tree(orte_jobid_t job,
     }
     OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
 
-    target.cellid = ORTE_PROC_MY_NAME->cellid;
     target.jobid = 0;
     for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
         peer = rank | mask;
         if (peer < size) {
             target.vpid = (orte_vpid_t)peer;
-            opal_output(orte_grpcomm_basic.output, "[%ld,%ld,%ld] xcast to [%ld,%ld,%ld]", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), ORTE_NAME_ARGS(&target));
+            opal_output(orte_grpcomm_basic.output, "%s xcast to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&target));
             if (0 > (rc = orte_rml.send_buffer_nb(&target, buf, ORTE_RML_TAG_ORTED_ROUTED,
                                                   0, xcast_send_cb, NULL))) {
                 if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
@@ -466,8 +464,8 @@ static int xcast_linear(orte_jobid_t job,
     }
     
     if (orte_timing) {
-        opal_output(0, "xcast [%ld,%ld,%ld]: mode linear buffer size %ld",
-                    ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), (long)buf->bytes_used);
+        opal_output(0, "xcast %s: mode linear buffer size %ld",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)buf->bytes_used);
     }
     
     /* get the number of daemons out there */
@@ -497,7 +495,6 @@ static int xcast_linear(orte_jobid_t job,
     OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
     
     /* send the message to each daemon as fast as we can */
-    dummy.cellid = ORTE_PROC_MY_NAME->cellid;
     dummy.jobid = 0;
     for (i=0; i < range; i++) {            
         if (ORTE_PROC_MY_NAME->vpid != i) { /* don't send to myself */
@@ -553,8 +550,8 @@ static int xcast_direct(orte_jobid_t job,
     OBJ_DESTRUCT(&attrs);
     
     if (orte_timing) {
-        opal_output(0, "xcast [%ld,%ld,%ld]: mode direct buffer size %ld",
-                    ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), (long)buffer->bytes_used);
+        opal_output(0, "xcast %s: mode direct buffer size %ld",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)buffer->bytes_used);
     }
     
     /* we have to account for all of the messages we are about to send

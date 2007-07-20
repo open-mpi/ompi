@@ -47,7 +47,6 @@ int orte_ns_proxy_get_peers(orte_process_name_t **procs,
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
     orte_std_cntr_t count, nprocs, i;
-    orte_cellid_t *cptr;
     orte_attribute_t *attr;
     int rc;
 
@@ -59,35 +58,12 @@ int orte_ns_proxy_get_peers(orte_process_name_t **procs,
     *procs = NULL;
     *num_procs = 0;
 
-    /* check the attributes to see if USE_JOB or USE_CELL has been set. If not, then this is
+    /* check the attributes to see if USE_JOB has been set. If not, then this is
      * a request for my own job peers - process that one locally
      */
 
-    /* if the cell is given AND it matches my own, then we can process this
-     * quickly. Otherwise, we have to do some more work.
-     *
-     * RHC: when we go multi-cell, we need a way to find all the cells upon
-     * which a job is executing so we can make this work!
-     */
-    if (NULL != (attr = orte_rmgr.find_attribute(attrs, ORTE_NS_USE_CELL))) {
-        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&cptr, attr->value, ORTE_CELLID))) {
-            ORTE_ERROR_LOG(rc);
-            OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-            return rc;
-        }
-        if (*cptr != ORTE_PROC_MY_NAME->cellid && *cptr != ORTE_CELLID_WILDCARD) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
-            OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
-            return ORTE_ERR_NOT_IMPLEMENTED;            
-        }
-    }
-    
     if (NULL == (attr = orte_rmgr.find_attribute(attrs, ORTE_NS_USE_JOBID))) {
-        /* get my own job peers, assuming all are on this cell - process here
-         *
-         * RHC: This is a bad assumption. When we go multi-cell, we are going to have to process
-         * get peer requests solely on the HNP since we won't know the cellid otherwise
-         */
+        /* get my own job peers */
         *procs = (orte_process_name_t*)malloc(orte_process_info.num_procs * sizeof(orte_process_name_t));
         if (NULL == *procs) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -96,7 +72,6 @@ int orte_ns_proxy_get_peers(orte_process_name_t **procs,
         }
         
         for (i=0; i < orte_process_info.num_procs; i++) {
-            (*procs)[i].cellid = ORTE_PROC_MY_NAME->cellid;
             (*procs)[i].jobid = ORTE_PROC_MY_NAME->jobid;
             (*procs)[i].vpid = orte_process_info.vpid_start + i;
         }

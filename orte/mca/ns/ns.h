@@ -59,116 +59,25 @@ extern "C" {
  */
 typedef int (*orte_ns_base_module_init_fn_t)(void);
 
-/****   CELL FUNCTIONS   ****/
-/**
- * Create a new cell id.
- * Allocates a new cell id for use by the caller. The function returns an
- * existing cellid if the specified site/resource already has been assigned
- * one.
- *
- * @param site The name of the site where the cell is located.
- * @param resource The name of the resource associated with this cell (e.g., the name
- * of the cluster).
- * @param cellid The location where the cellid is to be stored.
- *
- * @retval ORTE_SUCCESS A cellid was created and returned.
- * @retval ORTE_ERROR_VALUE An error code indicative of the problem.
- *
- * @endcode
- */
-typedef int (*orte_ns_base_module_create_cellid_fn_t)(orte_cellid_t *cellid,
-                                char *site, char *resource);
-
-/**
- * Get cell info
- * Retrieve the site and resource info on a cell.
- *
- * @param cellid The id of the cell who's info is being requested.
- * @param site Returns a pointer to a strdup'd string containing the site name.
- * @param resource Returns a pointer to a strdup'd string containg the resource name.
- * @retval ORTE_SUCCESS A cellid was created and returned.
- * @retval ORTE_ERROR_VALUE An error code indicative of the problem.
- */
-typedef int (*orte_ns_base_module_get_cell_info_fn_t)(orte_cellid_t cellid,
-                                char **site, char **resource);
-
-/**
- * Get the cell id as a character string.
- * The get_cellid_string() function returns the cell id in a character string
- * representation. The string is created by expressing the field in hexadecimal. Memory
- * for the string is allocated by the function - releasing that allocation is the
- * responsibility of the calling program.
- *
- * @param *name A pointer to the name structure containing the name to be
- * "translated" to a string.
- *
- * @retval *name_string A pointer to the character string representation of the
- * cell id.
- * @retval NULL Indicates an error occurred - either no memory could be allocated
- * or the caller provided an incorrect name pointer (e.g., NULL).
- *
- * @code
- * cellid-string = ompi_name_server.get_cellid_string(&name)
- * @endcode
- */
-typedef int (*orte_ns_base_module_get_cellid_string_fn_t)(char **cellid_string, const orte_process_name_t* name);
-
-/**
- * Convert cellid to character string
- * Returns the cellid in a character string representation. The string is created
- * by expressing the provided cellid in hexadecimal. Memory for the string is
- * allocated by the function - releasing that allocation is the responsibility of
- * the calling program.
- *
- * @param cellid The cellid to be converted.
- *
- * @retval *cellid_string A pointer to a character string representation of the cellid.
- * @retval NULL Indicates an error occurred - probably no memory could be allocated.
- *
- * @code
- * cellid-string = ompi_name_server.convert_cellid_to_string(cellid);
- * @endcode
- */
- typedef int (*orte_ns_base_module_convert_cellid_to_string_fn_t)(char **cellid_string, const orte_cellid_t cellid);
-
- /**
-  * Convert a string to a cellid.
-  * Converts a characters string into a cellid. The character string must be a
-  * hexadecimal representation of a valid cellid.
-  *
-  * @param cellidstring The string to be converted.
-  *
-  * @retval cellid The resulting cellid
-  * @retval MCA_NS_BASE_CELLID_MAX String could not be converted.
-  *
-  * @code
-  * cellid = ompi_name_server.convert_string_to_cellid(cellidstring);
-  * @endcode
-  */
-typedef int (*orte_ns_base_module_convert_string_to_cellid_fn_t)(orte_cellid_t *cellid, const char *cellidstring);
-
-
 /****    NODE FUNCTIONS    ****/
 /*
  * Get an array of node id's
- * Given the cell and a NULL-terminated array of names of nodes within it, this function assigns an id to represent
- * each node within the cell.
+ * Given a NULL-terminated array of names of nodes within it, this function assigns an id to represent
+ * each node.
  */
 typedef int (*orte_ns_base_module_create_nodeids_fn_t)(orte_nodeid_t **nodes, orte_std_cntr_t *nnodes,
-                                                       orte_cellid_t cellid, char **nodename);
+                                                       char **nodenames);
 
 /*
  * Get node info
- * Retrieve the names of an array of nodes given their cellid and nodeids. The cellid
- * is required as the nodeids are only unique within a given cell.
+ * Retrieve the names of an array of nodes given their nodeids.
  *
- * @param cellid The id of the cell of the node.
  * @param nodeids The ids of the node.
  * @param nodenames Returns a pointer to a NULL-terminated array of strdup'd strings containing the node names.
  * @retval ORTE_SUCCESS The nodename was created and returned.
  * @retval ORTE_ERROR_VALUE An error code indicative of the problem.
  */
-typedef int (*orte_ns_base_module_get_node_info_fn_t)(char ***nodename, orte_cellid_t cellid,
+typedef int (*orte_ns_base_module_get_node_info_fn_t)(char ***nodename,
                                                       orte_std_cntr_t num_nodes, orte_nodeid_t *nodeids);
 
 /*
@@ -260,8 +169,6 @@ typedef int (*orte_ns_base_module_get_parent_job_fn_t)(orte_jobid_t *parent, ort
 /**
  * Reserve a range of process id's.
  * The reserve_range() function reserves a range of vpid's for the given jobid.
- * Note that the cellid does not factor into this request - jobid's span the entire universe,
- * hence the cell where the process is currently executing is irrelevant to this request.
  *
  * @param jobid The id of the job for which the vpid's are to be reserved.
  * @param range The number of vpid's to be reserved. The function will find the
@@ -350,13 +257,7 @@ typedef int (*orte_ns_base_module_convert_string_to_jobid_fn_t)(orte_jobid_t *jo
  * The create_process_name() function creates a single process name structure and fills the
  * fields with the provided values.
  *
- * @param cell The cell for which the process name is intended. Usually, this is
- * the id of the cell where the process is initially planning to be spawned.
- * @param job The id of the job to which the process will belong. Process id's are
- * tracked according to jobid, but not cellid. Thus, two processes
- * can have the same process id if and only if they have different jobid's. However,
- * two processes in the same jobid cannot have the same process id, regardless
- * of whether or not they are in the same cell.
+ * @param job The id of the job to which the process will belong.
  * @param vpid The virtual process id for the name. Note that no check is made for uniqueness -
  * the caller is responsible for ensuring that the requested name is, in fact, unique
  * by first requesting reservation of an appropriate range of virtual process id's.
@@ -370,7 +271,6 @@ typedef int (*orte_ns_base_module_convert_string_to_jobid_fn_t)(orte_jobid_t *jo
  * @endcode
  */
 typedef int (*orte_ns_base_module_create_proc_name_fn_t)(orte_process_name_t **name,
-                                                         orte_cellid_t cell,
                                                          orte_jobid_t job,
                                                          orte_vpid_t vpid);
 
@@ -389,17 +289,14 @@ typedef int (*orte_ns_base_module_create_my_name_fn_t)(void);
  * Convert a string representation to a process name.
  * The convert_string_to_process_name() function converts a string representation of a process
  * name into an Open MPI name structure. The string must be of the proper form - i.e., it
- * must be in the form "cellid.jobid.vpid", where each field is expressed in hexadecimal form.
+ * must be in the form "jobid.vpid", where each field is expressed in hexadecimal form.
  *
  * @param *name_string A character string representation of a process name.
  *
- * @retval *name Pointer to an ompi_process_name_t structure containing the name.
+ * @retval *name Pointer to an orte_process_name_t structure containing the name.
  * @retval NULL Indicates an error, probably due to inability to allocate memory for
  * the name structure.
  *
- * @code
- * name = ompi_name_server.convert_string_to_process_name(name_string);
- * @endcode
  */
 typedef int (*orte_ns_base_module_convert_string_to_process_name_fn_t)(orte_process_name_t **name,
                                                                        const char* name_string);
@@ -408,10 +305,7 @@ typedef int (*orte_ns_base_module_convert_string_to_process_name_fn_t)(orte_proc
 /**
  * Get the process name as a character string.
  * The get_proc_name_string() function returns the entire process name in a
- * character string representation. The string is created by expressing each
- * field in hexadecimal separated by periods, as follows:
- *
- * sprintf(string_name, "%x.%x.%x", cellid, jobid, vpid)
+ * character string representation.
  *
  * The memory required for the string is allocated by the function - releasing
  * that allocation is the responsibility of the calling program.
@@ -436,13 +330,13 @@ typedef int (*orte_ns_base_module_get_proc_name_string_fn_t)(char **name_string,
  * The compare() function checks the value of the fields in the two
  * provided names, and returns a value indicating if the first one is less than, greater
  * than, or equal to the second. The value of each field is compared in a hierarchical
- * fashion, with cellid first, followed by jobid and vpid in sequence. The bit-mask
+ * fashion, with jobid and vpid in sequence. The bit-mask
  * indicates which fields are to be included in the comparison. Fields not included via the
- * bit-mask are ignored. Thus, the caller may request that any combination of the three fields
+ * bit-mask are ignored. Thus, the caller may request that any combination of the two fields
  * be included in the comparison.
  *
  * @param fields A bit-mask indicating which fields are to be included in the comparison. The
- * comparison is performed on a hierarchical basis, with cellid being first, followed by
+ * comparison is performed on a hierarchical basis, with
  * jobid and then vpid. Each field can be included separately, thus allowing the caller
  * to configure the comparison to meet their needs.
  * @param *name1 A pointer to the first name structure.
@@ -454,11 +348,6 @@ typedef int (*orte_ns_base_module_get_proc_name_string_fn_t)(char **name_string,
  * @retval +1 The indicated fields of the first provided name is greater than the same
  * fields of the second provided name.
  *
- * The function returns a large negative value if there is an error.
- *
- * @code
- * result = ompi_name_server.compare(bit_mask, &name1, &name2)
- * @endcode
  */
 typedef int (*orte_ns_base_module_compare_fields_fn_t)(orte_ns_cmp_bitmask_t fields,
                                                        const orte_process_name_t* name1,
@@ -562,9 +451,9 @@ typedef int (*orte_ns_base_module_define_data_type_fn_t)(
  * request that all peers for the parent job be returned, for example.
  * More common options would be to specify a cell or job.
  *
- * NOTE The combination of ORTE_CELLID_WILDCARD and ORTE_JOBID_WILDCARD
+ * NOTE ORTE_JOBID_WILDCARD
  * in the attribute list will cause the function to return the names of *all*
- * processes currently active in the universe.
+ * processes currently active.
  *
  */
 typedef int (*orte_ns_base_module_get_peers_fn_t)(orte_process_name_t **procs,
@@ -575,8 +464,6 @@ typedef int (*orte_ns_base_module_get_peers_fn_t)(orte_process_name_t **procs,
 /*
  * DIAGNOSTIC INTERFACES
  */
-typedef int (*orte_ns_base_module_dump_cells_fn_t)(void);
-
 typedef int (*orte_ns_base_module_dump_jobs_fn_t)(void);
 
 typedef int (*orte_ns_base_module_dump_tags_fn_t)(void);
@@ -591,12 +478,6 @@ typedef int (*orte_ns_base_module_ft_event_fn_t)(int state);
 struct mca_ns_base_module_2_0_0_t {
     /* init */
     orte_ns_base_module_init_fn_t                           init;
-    /* cell functions */
-    orte_ns_base_module_create_cellid_fn_t                  create_cellid;
-    orte_ns_base_module_get_cell_info_fn_t                  get_cell_info;
-    orte_ns_base_module_get_cellid_string_fn_t              get_cellid_string;
-    orte_ns_base_module_convert_cellid_to_string_fn_t       convert_cellid_to_string;
-    orte_ns_base_module_convert_string_to_cellid_fn_t       convert_string_to_cellid;
     /** node functions */
     orte_ns_base_module_create_nodeids_fn_t                 create_nodeids;
     orte_ns_base_module_get_node_info_fn_t                  get_node_info;
@@ -631,7 +512,6 @@ struct mca_ns_base_module_2_0_0_t {
     /* data type functions */
     orte_ns_base_module_define_data_type_fn_t               define_data_type;
     /* diagnostic functions */
-    orte_ns_base_module_dump_cells_fn_t                     dump_cells;
     orte_ns_base_module_dump_jobs_fn_t                      dump_jobs;
     orte_ns_base_module_dump_tags_fn_t                      dump_tags;
     orte_ns_base_module_dump_datatypes_fn_t                 dump_datatypes;

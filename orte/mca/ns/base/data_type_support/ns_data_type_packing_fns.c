@@ -39,29 +39,8 @@ int orte_ns_base_pack_name(orte_buffer_t *buffer, const void *src,
     int rc;
     orte_std_cntr_t i;
     orte_process_name_t* proc;
-    orte_cellid_t *cellid;
     orte_jobid_t *jobid;
     orte_vpid_t *vpid;
-
-    /* collect all the cellids in a contiguous array */
-    cellid = (orte_cellid_t*)malloc(num_vals * sizeof(orte_cellid_t));
-    if (NULL == cellid) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    proc = (orte_process_name_t*)src;
-    for (i=0; i < num_vals; i++) {
-        cellid[i] = proc->cellid;
-        proc++;
-    }
-    /* now pack them in one shot */
-    if (ORTE_SUCCESS != (rc =
-            orte_ns_base_pack_cellid(buffer, cellid, num_vals, ORTE_CELLID))) {
-        ORTE_ERROR_LOG(rc);
-        free(cellid);
-        return rc;
-    }
-    free(cellid);
 
     /* collect all the jobids in a contiguous array */
     jobid = (orte_jobid_t*)malloc(num_vals * sizeof(orte_jobid_t));
@@ -104,23 +83,6 @@ int orte_ns_base_pack_name(orte_buffer_t *buffer, const void *src,
     free(vpid);
 
     return ORTE_SUCCESS;
-}
-
-/*
- * CELLID
- */
-int orte_ns_base_pack_cellid(orte_buffer_t *buffer, const void *src,
-                       orte_std_cntr_t num_vals, orte_data_type_t type)
-{
-    int ret;
-
-    /* Turn around and pack the real type */
-    if (ORTE_SUCCESS != (
-        ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_CELLID_T))) {
-        ORTE_ERROR_LOG(ret);
-    }
-
-    return ret;
 }
 
 /*

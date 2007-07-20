@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
         printf("error at line %d\n", __LINE__);
     }
     
-    printf("CHILD  [%lu,%lu,%lu] Node %s Pid %ld\n", ORTE_NAME_ARGS(orte_process_info.my_name), hostname, (long)pid);
+    printf("CHILD  %s Node %s Pid %ld\n", ORTE_NAME_PRINT(orte_process_info.my_name), hostname, (long)pid);
 
     orte_finalize();
     return 0;

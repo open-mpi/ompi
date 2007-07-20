@@ -33,10 +33,7 @@ int orte_ras_base_compare_node(orte_ras_node_t *value1, orte_ras_node_t *value2,
 {
     int test;
     
-    if (value1->node_cellid > value2->node_cellid) return ORTE_VALUE1_GREATER;
-    if (value2->node_cellid > value1->node_cellid) return ORTE_VALUE2_GREATER;
-
-    /** same cell - check node names */
+    /** check node names */
     test = strcmp(value1->node_name, value2->node_name);
     if (0 == test) return ORTE_EQUAL;
     if (0 < test) return ORTE_VALUE2_GREATER;
