@@ -474,7 +474,6 @@ static int slot_list_to_cpu_set(char *slot_str, orte_odls_child_t *child)
         break;
     default:
         opal_argv_free(item);
-        ORTE_ERROR_LOG(rc);
         return ORTE_ERROR;
     }
     opal_argv_free(item);
@@ -1146,7 +1145,7 @@ static int odls_default_fork_local_proc(
 int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data)
 {
     int rc;
-    orte_std_cntr_t i, j, kv, kv2, *sptr, total_slots_alloc;
+    orte_std_cntr_t i, j, kv, kv2, *sptr, total_slots_alloc = 0;
     orte_gpr_value_t *value, **values;
     orte_gpr_keyval_t *kval;
     orte_app_context_t *app;
