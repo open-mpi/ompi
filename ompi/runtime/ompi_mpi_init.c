@@ -805,8 +805,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_mpi_initialized = true;
 
     if (orte_debug_flag) {
-        opal_output(0, "[%lu,%lu,%lu] ompi_mpi_init completed",
-                    ORTE_NAME_ARGS(orte_process_info.my_name));
+        opal_output(0, "%s ompi_mpi_init completed",
+                    ORTE_NAME_PRINT(orte_process_info.my_name));
     }
 
     /* Do we need to wait for a TotalView-like debugger? */

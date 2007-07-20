@@ -155,8 +155,7 @@ int orte_filem_base_get_proc_node_name(orte_process_name_t *proc, char **machine
      * Contact GPR and get the 'orte-node-name' for this process
      */
     /* if it is the root then we need a different key :/ */
-    if(proc->cellid == 0 && 
-       proc->jobid  == 0 &&
+    if(proc->jobid  == 0 &&
        proc->vpid   == 0) {
         keys[0] = ORTE_PROC_RML_IP_ADDRESS_KEY;
     }
@@ -361,9 +360,9 @@ void orte_filem_base_query_callback(int status,
     }
 
     opal_output_verbose(10, orte_filem_base_output,
-                        "filem:base: filem_base_query_callback: [%lu,%lu,%lu] -> [%lu,%lu,%lu]: Filename Requested (%s) translated to (%s)",
-                        ORTE_NAME_ARGS(orte_process_info.my_name),
-                        ORTE_NAME_ARGS(peer),
+                        "filem:base: filem_base_query_callback: %s -> %s: Filename Requested (%s) translated to (%s)",
+                        ORTE_NAME_PRINT(orte_process_info.my_name),
+                        ORTE_NAME_PRINT(peer),
                         filename, tmp_name);
 
     /*

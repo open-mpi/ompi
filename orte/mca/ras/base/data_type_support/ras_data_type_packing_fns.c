@@ -65,13 +65,6 @@ int orte_ras_base_pack_node(orte_buffer_t *buffer, const void *src,
             return rc;
         }
 
-        /* pack the cellid */
-        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                        (void*)(&(nodes[i]->node_cellid)), 1, ORTE_CELLID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
         /* pack the state */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(nodes[i]->node_state)), 1, ORTE_NODE_STATE))) {

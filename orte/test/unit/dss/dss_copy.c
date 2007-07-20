@@ -75,7 +75,6 @@ int main (int argc, char* argv[])
 
     orte_process_info.seed = true;
     orte_process_info.my_name = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
-    orte_process_info.my_name->cellid = 0;
     orte_process_info.my_name->jobid = 0;
     orte_process_info.my_name->vpid = 0;
 

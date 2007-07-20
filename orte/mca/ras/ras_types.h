@@ -51,8 +51,6 @@ struct orte_ras_node_t {
     /** String of the architecture for the node.  This is permitted to
         be NULL if it is not known. */
     char *node_arch;
-    /** The cell ID of this node */
-    orte_cellid_t node_cellid;
     /** State of this node; see include/orte_types.h */
     orte_node_state_t node_state;
     /** A "soft" limit on the number of slots available on the node.

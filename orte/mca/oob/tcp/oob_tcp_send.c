@@ -117,9 +117,9 @@ int mca_oob_tcp_send_nb(
     }
 
     if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_ALL) {
-        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_send_nb: tag %d size %lu\n",
-            ORTE_NAME_ARGS(orte_process_info.my_name),
-            ORTE_NAME_ARGS(&(peer->peer_name)),
+        opal_output(0, "%s-%s mca_oob_tcp_send_nb: tag %d size %lu\n",
+            ORTE_NAME_PRINT(orte_process_info.my_name),
+            ORTE_NAME_PRINT(&(peer->peer_name)),
             tag, (unsigned long)size );
     }
 

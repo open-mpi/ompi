@@ -102,9 +102,6 @@ static int orte_ras_localhost_allocate(orte_jobid_t jobid, opal_list_t *attribut
     node->node_name = strdup(orte_system_info.nodename);
     node->node_arch = NULL;
     node->node_state = ORTE_NODE_STATE_UP;
-    /* JMS: this should not be hard-wired to 0, but there's no
-       other value to put it to [yet]... */
-    node->node_cellid = 0;
     node->node_slots_inuse = 0;
     node->node_slots_max = 0;
     node->node_slots = 1;

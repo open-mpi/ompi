@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
     }
     pid = getpid();
 
-    printf("spin: Name [%lu,%lu,%lu] Pid %ld\n", ORTE_NAME_ARGS(orte_process_info.my_name), (long)pid);
+    printf("spin: Name %s Pid %ld\n", ORTE_NAME_PRINT(orte_process_info.my_name), (long)pid);
     
     i = 0;
     while (1) {

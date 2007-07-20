@@ -240,7 +240,6 @@ orte_pls_xcpu_launch_job(orte_jobid_t jobid)
 {
 	int i, fanout, rc;
 	int num_processes = 0;
-	orte_cellid_t cellid;
 	opal_list_item_t *node_item, *proc_item;
 	orte_job_map_t *map;
 	orte_vpid_t vpid_start, vpid_range;
@@ -260,9 +259,6 @@ orte_pls_xcpu_launch_job(orte_jobid_t jobid)
 		ORTE_ERROR_LOG(rc);
 		return rc;
 	}
-
-	/* get the cellid */
-	cellid = orte_process_info.my_name->cellid;
 
 	/* create num_apps of pointers to Xpnodeset and Xpcommand */
 	node_sets = (Xpnodeset **) malloc(num_apps * sizeof(Xpnodeset *));
@@ -298,7 +294,7 @@ orte_pls_xcpu_launch_job(orte_jobid_t jobid)
 	}
 
 	for (i = 0; i < num_apps; i++) {
-		rc = orte_ns_nds_xcpu_put(cellid, jobid, vpid_start,
+		rc = orte_ns_nds_xcpu_put(jobid, vpid_start,
 					  num_processes, &map->apps[i]->env);
 		if (rc != ORTE_SUCCESS) {
 			ORTE_ERROR_LOG(rc);

@@ -75,8 +75,6 @@ int orte_ns_proxy_finalize(void);
 typedef struct {
     size_t max_size, block_size;
     int debug;
-    orte_cellid_t num_cells;
-    orte_pointer_array_t *cells;
     orte_pointer_array_t *tags;
     orte_rml_tag_t num_tags;
     orte_pointer_array_t *dts;
@@ -95,14 +93,9 @@ extern orte_ns_proxy_globals_t orte_ns_proxy;
 /*
  * proxy function prototypes
  */
-int orte_ns_proxy_create_cellid(orte_cellid_t *cellid, char *site, char *resource);
+int orte_ns_proxy_create_nodeids(orte_nodeid_t **nodeids, orte_std_cntr_t *nnodes, char **nodenames);
 
-int orte_ns_proxy_get_cell_info(orte_cellid_t cellid, char **site, char **resource);
-
-int orte_ns_proxy_create_nodeids(orte_nodeid_t **nodeids, orte_std_cntr_t *nnodes,
-                                 orte_cellid_t cellid, char **nodenames);
-
-int orte_ns_proxy_get_node_info(char ***nodename, orte_cellid_t cellid, orte_std_cntr_t num_nodes, orte_nodeid_t *nodeids);
+int orte_ns_proxy_get_node_info(char ***nodename, orte_std_cntr_t num_nodes, orte_nodeid_t *nodeids);
 
 int orte_ns_proxy_create_jobid(orte_jobid_t *jobid, opal_list_t *attrs);
 
@@ -134,8 +127,6 @@ int orte_ns_proxy_create_my_name(void);
 /*
  * Diagnostic functions
  */
-int orte_ns_proxy_dump_cells(void);
-
 int orte_ns_proxy_dump_jobs(void);
 
 int orte_ns_proxy_dump_tags(void);

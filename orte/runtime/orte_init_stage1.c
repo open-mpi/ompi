@@ -426,10 +426,10 @@ int orte_init_stage1(bool infrastructure)
         error = "orte_ns.get_vpid_string";
         goto error;
     }
-
+                
     if (orte_debug_flag) {
-        opal_output(0, "[%lu,%lu,%lu] setting up session dir with",
-                    ORTE_NAME_ARGS(orte_process_info.my_name));
+        opal_output(0, "%s setting up session dir with",
+                    ORTE_NAME_PRINT(orte_process_info.my_name));
         if (NULL != orte_process_info.tmpdir_base) {
             opal_output(0, "\ttmpdir %s", orte_process_info.tmpdir_base);
         }
@@ -469,16 +469,16 @@ int orte_init_stage1(bool infrastructure)
         contact_path = opal_os_path(false, orte_process_info.universe_session_dir,
                     "universe-setup.txt", NULL);
         if (orte_debug_flag) {
-            opal_output(0, "[%lu,%lu,%lu] contact_file %s",
-                        ORTE_NAME_ARGS(orte_process_info.my_name), contact_path);
+            opal_output(0, "%s contact_file %s",
+                        ORTE_NAME_PRINT(orte_process_info.my_name), contact_path);
         }
 
         if (ORTE_SUCCESS != (ret = orte_write_universe_setup_file(contact_path, &orte_universe_info))) {
             if (orte_debug_flag) {
-                opal_output(0, "[%lu,%lu,%lu] couldn't write setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
+                opal_output(0, "%s couldn't write setup file", ORTE_NAME_PRINT(orte_process_info.my_name));
             }
         } else if (orte_debug_flag) {
-            opal_output(0, "[%lu,%lu,%lu] wrote setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
+            opal_output(0, "%s wrote setup file", ORTE_NAME_PRINT(orte_process_info.my_name));
         }
         free(contact_path);
     }
@@ -630,7 +630,7 @@ int orte_init_stage1(bool infrastructure)
         
         if (ORTE_SUCCESS != (ret = orte_gpr.create_value(&(values[0]),
                                                         ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_AND,
-                                                        segment, 8, 0))) {
+                                                        segment, 7, 0))) {
             ORTE_ERROR_LOG(ret);
             error = "singleton could not create gpr value";
             goto error;
@@ -647,36 +647,30 @@ int orte_init_stage1(bool infrastructure)
             goto error;
         }
         
-        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[2]), ORTE_CELLID_KEY, ORTE_CELLID, &(ORTE_PROC_MY_NAME->cellid)))) {
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[2]), ORTE_NODE_NAME_KEY, ORTE_STRING, orte_system_info.nodename))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not create keyval";
+            goto error;
+        }
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[3]), ORTE_PROC_APP_CONTEXT_KEY, ORTE_STD_CNTR, &zero))) {
             ORTE_ERROR_LOG(ret);
             error = "singleton could not create keyval";
             goto error;
         }
         
-        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[3]), ORTE_NODE_NAME_KEY, ORTE_STRING, orte_system_info.nodename))) {
-            ORTE_ERROR_LOG(ret);
-            error = "singleton could not create keyval";
-            goto error;
-        }
-        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[4]), ORTE_PROC_APP_CONTEXT_KEY, ORTE_STD_CNTR, &zero))) {
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[4]), ORTE_PROC_STATE_KEY, ORTE_PROC_STATE, &init))) {
             ORTE_ERROR_LOG(ret);
             error = "singleton could not create keyval";
             goto error;
         }
         
-        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[5]), ORTE_PROC_STATE_KEY, ORTE_PROC_STATE, &init))) {
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[5]), ORTE_PROC_LOCAL_RANK_KEY, ORTE_VPID, &lrank))) {
             ORTE_ERROR_LOG(ret);
             error = "singleton could not create keyval";
             goto error;
         }
         
-        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[6]), ORTE_PROC_LOCAL_RANK_KEY, ORTE_VPID, &lrank))) {
-            ORTE_ERROR_LOG(ret);
-            error = "singleton could not create keyval";
-            goto error;
-        }
-        
-        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[7]), ORTE_NODE_NUM_PROCS_KEY, ORTE_STD_CNTR, &one))) {
+        if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[6]), ORTE_NODE_NUM_PROCS_KEY, ORTE_STD_CNTR, &one))) {
             ORTE_ERROR_LOG(ret);
             error = "singleton could not create keyval";
             goto error;

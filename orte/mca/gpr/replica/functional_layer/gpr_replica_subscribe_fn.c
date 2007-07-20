@@ -52,8 +52,8 @@ int orte_gpr_replica_subscribe_fn(orte_process_name_t *requestor,
     OPAL_TRACE(2);
 
     if (orte_gpr_replica_globals.debug) {
-        opal_output(0, "[%lu,%lu,%lu] gpr_replica_subscribe: entered with num_trigs:%d",
-                    ORTE_NAME_ARGS(orte_process_info.my_name), num_trigs);
+        opal_output(0, "%s gpr_replica_subscribe: entered with num_trigs:%d",
+                    ORTE_NAME_PRINT(orte_process_info.my_name), num_trigs);
     }
 
     /* ensure one of the search arrays is clear - in this case, we

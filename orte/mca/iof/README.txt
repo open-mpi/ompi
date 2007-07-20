@@ -74,7 +74,7 @@ in the job.  Note that the jobid=1 and the mask=2.  So, we expect this
 to collect the stdout from any of the ranks.  Obviously the second 
 subscriber says the same thing but for stderr.  The third subscriber
 is for receving data from stdin and sending it out to rank 0 of
-the job.  Notice the mask=ff which means compare cellid,jobid,vpid
+the job.  Notice the mask=ff which means compare jobid,vpid
 when addressing where the data goes.
 
 The first endpoint is created by a call to pull by the rmgr.  After
@@ -90,7 +90,6 @@ tied to the subscription.  Hmmm, this I do not really understand.
 APPENDIX A
 These are the defines that go with the mask.  
 #define ORTE_NS_CMP_NONE       0x00
-#define ORTE_NS_CMP_CELLID     0x01
 #define ORTE_NS_CMP_JOBID      0x02
 #define ORTE_NS_CMP_VPID       0x04
 #define ORTE_NS_CMP_ALL        0Xff

@@ -79,9 +79,9 @@ orte_routed_unity_update_route(orte_process_name_t *target,
                                orte_process_name_t *route)
 {
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                         "routed_unity_update: [%ld,%ld,%ld] --> [%ld,%ld,%ld]",
-                         ORTE_NAME_ARGS(target), 
-                         ORTE_NAME_ARGS(route)));
+                         "routed_unity_update: %s --> %s",
+                         ORTE_NAME_PRINT(target), 
+                         ORTE_NAME_PRINT(route)));
     return ORTE_SUCCESS;
 }
 
@@ -90,8 +90,8 @@ orte_process_name_t
 orte_routed_unity_get_route(orte_process_name_t *target)
 {
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                         "routed_unity_get([%ld,%ld,%ld]) --> [%ld,%ld,%ld]",
-                         ORTE_NAME_ARGS(target), 
-                         ORTE_NAME_ARGS(target)));
+                         "routed_unity_get(%s) --> %s",
+                         ORTE_NAME_PRINT(target), 
+                         ORTE_NAME_PRINT(target)));
     return *target;
 }

@@ -121,8 +121,8 @@ mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc)
     rc = ompi_modex_recv( &mca_btl_mx_component.super.btl_version,
 				  ompi_proc, (void*)&mx_peers, &size );
     if( OMPI_SUCCESS != rc ) {
-        opal_output( 0, "mca_pml_base_modex_recv failed for peer [%ld,%ld,%ld]",
-		     ORTE_NAME_ARGS(&ompi_proc->proc_name) );
+        opal_output( 0, "mca_pml_base_modex_recv failed for peer %s",
+		     ORTE_NAME_PRINT(&ompi_proc->proc_name) );
 	return NULL;
     }
 
@@ -130,8 +130,8 @@ mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc)
         return NULL;
     }
     if( (size % sizeof(mca_btl_mx_addr_t)) != 0 ) {
-        opal_output( 0, "invalid mx address for peer [%ld,%ld,%ld]",
-		     ORTE_NAME_ARGS(&ompi_proc->proc_name) );
+        opal_output( 0, "invalid mx address for peer %s",
+		     ORTE_NAME_PRINT(&ompi_proc->proc_name) );
 	return NULL;
     }
 

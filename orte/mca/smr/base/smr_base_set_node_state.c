@@ -30,8 +30,7 @@
 
 #include "orte/mca/smr/base/smr_private.h"
 
-int orte_smr_base_set_node_state(orte_cellid_t cell,
-                                 char *nodename,
+int orte_smr_base_set_node_state(char *nodename,
                                  orte_node_state_t state)
 {
     orte_gpr_value_t *value;
@@ -43,7 +42,7 @@ int orte_smr_base_set_node_state(orte_cellid_t cell,
         return rc;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&(value->tokens), &(value->num_tokens), cell, nodename))) {
+    if (ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&(value->tokens), &(value->num_tokens), nodename))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(value);
         return rc;

@@ -159,8 +159,8 @@ int orte_errmgr_hnp_finalize(void)
     int rc;
     
     if (orte_errmgr_hnp_globals.debug) {
-       opal_output(0, "[%lu,%lu,%lu] errmgr_hnp_finalize called",
-                        ORTE_NAME_ARGS(orte_process_info.my_name));
+       opal_output(0, "%s errmgr_hnp_finalize called",
+                        ORTE_NAME_PRINT(orte_process_info.my_name));
     }
 
     /* stop the receive function */

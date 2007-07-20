@@ -29,35 +29,6 @@
 extern "C" {
 #endif
 
-/* resource descriptor object */
-typedef struct {
-    /** Base object */
-    opal_list_item_t super;
-    /** id of cell in which this resource resides */
-    orte_cellid_t cellid;
-    /** string name of the site */
-    char *site;
-    /** string name of the resource */
-    char *name;
-    /** string type of the resource */
-    char *type;
-    /** list of attributes */
-    opal_list_t attributes;
-} orte_rds_cell_desc_t;
-
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rds_cell_desc_t);
-
-/* resource attribute object */
-typedef struct {
-    /** Base object */
-    opal_list_item_t super;
-    /** key-value pair describing attribute */
-    orte_gpr_keyval_t keyval;
-} orte_rds_cell_attr_t;
-
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rds_cell_attr_t);
-
-
 /* name of resource */
 #define ORTE_RDS_NAME               "orte-rds-name"
 

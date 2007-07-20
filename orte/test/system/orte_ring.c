@@ -36,14 +36,12 @@ main(int argc, char *argv[]){
     /*
      * Construct Peer name in a ring
      */
-    right_peer_orte_name.cellid = orte_process_info.my_name->cellid;
     right_peer_orte_name.jobid  = orte_process_info.my_name->jobid;
     right_peer_orte_name.vpid   = orte_process_info.my_name->vpid + 1;
     if( right_peer_orte_name.vpid >= num_peers ) {
         right_peer_orte_name.vpid = 0;
     }
 
-    left_peer_orte_name.cellid = orte_process_info.my_name->cellid;
     left_peer_orte_name.jobid  = orte_process_info.my_name->jobid;
     left_peer_orte_name.vpid   = orte_process_info.my_name->vpid - 1;
     if( orte_process_info.my_name->vpid == 0 ) {
