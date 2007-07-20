@@ -35,13 +35,36 @@
 #include "ras_lsf.h"
 
 
-static int orte_ras_lsf_allocate(orte_jobid_t jobid, opal_list_t *attributes)
+/*
+ * Local functions
+ */
+static int allocate(orte_jobid_t jobid, opal_list_t *attributes);
+static int deallocate(orte_jobid_t jobid);
+static int finalize(void);
+
+
+/*
+ * Global variable
+ */
+orte_ras_base_module_t orte_ras_lsf_module = {
+    allocate,
+    orte_ras_base_node_insert,
+    orte_ras_base_node_query,
+    orte_ras_base_node_query_alloc,
+    orte_ras_base_node_lookup,
+    orte_ras_base_proc_query_alloc,
+    deallocate,
+    finalize
+};
+
+
+static int allocate(orte_jobid_t jobid, opal_list_t *attributes)
 {
     char **nodelist;
     opal_list_t nodes;
     opal_list_item_t *item;
     orte_ras_node_t *node;
-    int i, rc, num_nodes;
+    int i, count, rc, num_nodes;
 
     /* get the list of allocated nodes */
     if ((num_nodes = lsb_getalloc(&nodelist)) < 0) {
@@ -53,18 +76,24 @@ static int orte_ras_lsf_allocate(orte_jobid_t jobid, opal_list_t *attributes)
     node = NULL;
     
     /* step through the list */
-    for (i=0; i < num_nodes; i++) {
-        printf("lsf got node: %s\n", nodelist[i]);
+    for (count = i = 0; i < num_nodes; i++) {
+        opal_output(0, "lsf got node: %s", nodelist[i]);
         /* is this a repeat of the current node? */
         if (NULL != node && 0 == strcmp(nodelist[i], node->node_name)) {
             /* it is a repeat - just bump the slot count */
             ++node->node_slots;
+            opal_output(0, "lsf ras repeat -- slot count now %d",
+                        node->node_slots);
             continue;
         }
         
+        opal_output(0, "lsf ras new node");
         /* not a repeat - create a node entry for it */
         node = OBJ_NEW(orte_ras_node_t);
         node->node_name = strdup(nodelist[i]);
+        node->launch_id = count++;
+        node->node_slots_inuse = 0;
+        node->node_slots_max = 0;
         node->node_slots = 1;
         opal_list_append(&nodes, &node->super);
     }
@@ -101,25 +130,13 @@ cleanup:
     return rc;
 }
 
-static int orte_ras_lsf_deallocate(orte_jobid_t jobid)
+static int deallocate(orte_jobid_t jobid)
 {
     return ORTE_SUCCESS;
 }
 
 
-static int orte_ras_lsf_finalize(void)
+static int finalize(void)
 {
     return ORTE_SUCCESS;
 }
-
-
-orte_ras_base_module_t orte_ras_lsf_module = {
-    orte_ras_lsf_allocate,
-    orte_ras_base_node_insert,
-    orte_ras_base_node_query,
-    orte_ras_base_node_query_alloc,
-    orte_ras_base_node_lookup,
-    orte_ras_lsf_deallocate,
-    orte_ras_lsf_finalize
-};
-
