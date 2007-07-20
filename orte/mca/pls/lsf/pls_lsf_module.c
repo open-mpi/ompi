@@ -133,7 +133,7 @@ static int pls_lsf_launch_job(orte_jobid_t jobid)
     int proc_name_index = 0;
     bool failed_launch = true;
 
-    printf("pls lsf being used to launch!\n");
+    opal_output(0, "pls lsf being used to launch!\n");
     if (mca_pls_lsf_component.timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
             opal_output(0, "pls_lsf: could not obtain job start time");
@@ -155,18 +155,28 @@ static int pls_lsf_launch_job(orte_jobid_t jobid)
         goto cleanup;
     }
     
-    /* account for any reuse of daemons */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
+    /* Iterate through each of the nodes and check to see if we have
+     * a valid launch_id (must be > 0). If not, then error out as
+     * we cannot do anything
+     */
+    for (item =  opal_list_get_first(&map->nodes);
+         item != opal_list_get_end(&map->nodes);
+         item =  opal_list_get_next(item)) {
+        orte_mapped_node_t* node = (orte_mapped_node_t*)item;
+        
+        if (node->launch_id < 0) {
+            /* JMS fix me */
+            opal_show_help("help-pls-lsf.txt", "lsf-bad-launchid",
+                           true, node->nodename, node->launch_id);
+            goto cleanup;
+        }
+    }    
+        
     num_nodes = map->num_new_daemons;
+    opal_output(0, "pls lsf num new daemons: %d!\n", num_nodes);
     if (num_nodes == 0) {
-        /* nothing to do - just return */
-        failed_launch = false;
-        rc = ORTE_SUCCESS;
-        goto cleanup;
+        /* no new daemons required - just launch apps */
+        goto launch_apps;
     }
 
     /* create nodelist */
@@ -290,29 +300,39 @@ static int pls_lsf_launch_job(orte_jobid_t jobid)
      * orterun can do the rest of its stuff. Instead, we'll catch any
      * failures and deal with them elsewhere
      */
-    argv = NULL;
-    argc = 0;
-    opal_argv_append(&argc, &argv, "env");
     opal_output(0, "launching on: %s", opal_argv_join(nodelist_argv, ' '));
     opal_output(0, "launching: %s", opal_argv_join(argv, ' '));
     if (lsb_launch(nodelist_argv, argv, LSF_DJOB_NOWAIT, env) < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_FAILED_TO_START);
-        opal_output(0, "got nonzero: %d", rc);
+        opal_output(0, "lsb_launch failed: %d", rc);
         rc = ORTE_ERR_FAILED_TO_START;
         goto cleanup;
     }
-    opal_output(0, "launched ok");
-    sleep(5);
-    exit(0);
+    opal_output(0, "lsb_launch launched ok; waiting for %d daemons\n",
+                map->num_new_daemons);
+    
+    /* wait for daemons to callback */
+    if (ORTE_SUCCESS != 
+        (rc = orte_pls_base_daemon_callback(map->num_new_daemons))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
 
-    if (lsb_launch(nodelist_argv, argv, LSF_DJOB_NOWAIT, env) < 0) {
-        ORTE_ERROR_LOG(ORTE_ERR_FAILED_TO_START);
-        rc = ORTE_ERR_FAILED_TO_START;
+launch_apps:
+    {
+        int i = 0;
+        opal_output(0, "waiting for attach");
+        while (i == 0) sleep(5);
+    }
+    opal_output(0, "laounching apps using lsf");
+    if (ORTE_SUCCESS != (rc = orte_pls_base_launch_apps(map))) {
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
     
     /* declare the launch a success */
     failed_launch = false;
+    opal_output(0, "launched apps with lsf ok");
     
     if (mca_pls_lsf_component.timing) {
         if (0 != gettimeofday(&launchstop, NULL)) {
@@ -355,7 +375,8 @@ cleanup:
             ORTE_ERROR_LOG(rc);
         }        
     }
-    
+
+    opal_output(0, "lsf pls returning: %d\n", rc);
     return rc;
 }
 

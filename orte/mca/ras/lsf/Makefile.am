@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2007      Cisco, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -36,8 +37,8 @@ endif
 AM_CPPFLAGS= $(ras_lsf_CPPFLAGS)
 
 proxy_SOURCES = \
-    ras_lsf.c \
     ras_lsf.h \
+    ras_lsf_module.c \
     ras_lsf_component.c
 
 mcacomponentdir = $(pkglibdir)
