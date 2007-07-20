@@ -1,0 +1,90 @@
+#ifndef __INCLUDE_VPROTOCOL_PESSIMIST_H__
+#define __INCLUDE_VPROTOCOL_PESSIMIST_H__
+
+#include "ompi_config.h"
+#include "../pml_v.h"
+#include "../pml_v_protocol.h"
+#include "ompi/communicator/communicator.h"
+#include "vprotocol_pessimist_event.h"
+#include "vprotocol_pessimist_sender_based.h"
+
+typedef struct mca_vprotocol_pessimist_module_t {
+  mca_pml_v_protocol_base_module_t super;
+
+    /* event tagging clock */
+  vprotocol_pessimist_clock_t clock;
+
+  /* list of events to send to Event Logger */
+  opal_list_t pending_events;
+
+  /* output buffer for messages to event logger */
+  vprotocol_pessimist_mem_event_t *event_buffer;
+  size_t event_buffer_length;
+  size_t event_buffer_max_length;
+  
+  /* space for allocating events */ 
+  ompi_free_list_t events_pool;
+  
+  /* Sender Based repository */
+  vprotocol_pessimist_sender_based_t sender_based;
+    
+  /* replay mode variables */
+  bool replay;
+  opal_list_t replay_events;
+} mca_vprotocol_pessimist_module_t;
+
+extern mca_vprotocol_pessimist_module_t mca_vprotocol_pessimist;
+
+
+int mca_vprotocol_pessimist_dump(struct ompi_communicator_t* comm, int verbose);
+
+int mca_vprotocol_pessimist_add_procs(struct ompi_proc_t **procs, size_t nprocs);
+int mca_vprotocol_pessimist_del_procs(struct ompi_proc_t **procs, size_t nprocs);
+int mca_vprotocol_pessimist_progress(void);
+int mca_vprotocol_pessimist_add_comm(struct ompi_communicator_t* comm);
+int mca_vprotocol_pessimist_del_comm(struct ompi_communicator_t* comm);
+
+int mca_vprotocol_pessimist_irecv(void *addr,
+                                  size_t count,
+                                  ompi_datatype_t * datatype,
+                                  int src,
+                                  int tag,
+                                  struct ompi_communicator_t *comm,
+                                  struct ompi_request_t **request );
+int mca_vprotocol_pessimist_recv(void *addr,
+                                 size_t count,
+                                 ompi_datatype_t * datatype,
+                                 int src,
+                                 int tag,
+                                 struct ompi_communicator_t *comm,
+                                 ompi_status_public_t * status );
+
+int mca_vprotocol_pessimist_isend(void *buf,
+                                  size_t count,
+                                  ompi_datatype_t* datatype,
+                                  int dst,
+                                  int tag,
+                                  mca_pml_base_send_mode_t sendmode,
+                                  ompi_communicator_t* comm,
+                                  ompi_request_t** request );
+int mca_vprotocol_pessimist_send(void *buf,
+                                 size_t count,
+                                 ompi_datatype_t* datatype,
+                                 int dst,
+                                 int tag,
+                                 mca_pml_base_send_mode_t sendmode,
+                                 ompi_communicator_t* comm );
+
+int mca_vprotocol_pessimist_iprobe(int src, int tag,
+                                   struct ompi_communicator_t *comm,
+                                   int *matched, ompi_status_public_t * status );
+int mca_vprotocol_pessimist_probe(int src, int tag,
+                                  struct ompi_communicator_t *comm,
+                                  ompi_status_public_t * status );
+
+#include "vprotocol_pessimist_request.h"
+#include "vprotocol_pessimist_start.h"
+#include "vprotocol_pessimist_wait.h"
+#include "vprotocol_pessimist_eventlog.h"
+
+#endif /* __INCLUDE_VPROTOCOL_PESSIMIST_H__ */
