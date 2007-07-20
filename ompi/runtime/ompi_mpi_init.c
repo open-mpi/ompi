@@ -43,8 +43,6 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/runtime/runtime.h"
-#include "orte/mca/oob/oob.h"
-#include "orte/mca/oob/base/base.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/ns/base/base.h"
 #include "orte/mca/gpr/gpr.h"
@@ -52,6 +50,7 @@
 #include "orte/mca/schema/schema.h"
 #include "orte/mca/smr/smr.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/runtime/params.h"
 
 #include "ompi/constants.h"
@@ -561,7 +560,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     
     /* FIRST BARRIER - WAIT FOR XCAST STG1 MESSAGE TO ARRIVE */
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast_gate(orte_gpr.deliver_notify_msg))) {
+    if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast_gate(orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(ret);
         error = "ompi_mpi_init: failed to see all procs register\n";
         goto error;
@@ -669,7 +668,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     
     /* Second barrier -- wait for XCAST STG2 MESSAGE to arrive */
 
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast_gate(orte_gpr.deliver_notify_msg))) {
+    if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast_gate(orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(ret);
         error = "ompi_mpi_init: failed to see all procs register\n";
         goto error;

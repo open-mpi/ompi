@@ -261,7 +261,7 @@ static int orte_universe_check_connect(orte_universe_t *uni)
     }
 
     /* insert the universe contact info into the RML hash tables */
-    if (ORTE_SUCCESS != (rc = orte_rml.set_uri(uni->seed_uri))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(uni->seed_uri))) {
         ORTE_ERROR_LOG(rc);
         return(rc);
     }

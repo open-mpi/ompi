@@ -82,7 +82,7 @@ int orte_rds_proxy_query(orte_jobid_t job)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (0 > orte_rml.recv_buffer(orte_rds_proxy_replica, answer, ORTE_RML_TAG_RDS)) {
+    if (0 > orte_rml.recv_buffer(orte_rds_proxy_replica, answer, ORTE_RML_TAG_RDS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;

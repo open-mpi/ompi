@@ -924,7 +924,7 @@ static int orte_console_contactinfo(orte_console_input_command_t input_command) 
         return ret;
     }
 
-    ret = orte_rml.recv_buffer(&seed, buffer, ORTE_RML_TAG_DAEMON);
+    ret = orte_rml.recv_buffer(&seed, buffer, ORTE_RML_TAG_DAEMON, 0);
     if ( 0 > ret) {
         ORTE_ERROR_LOG(ret);
         return ret;

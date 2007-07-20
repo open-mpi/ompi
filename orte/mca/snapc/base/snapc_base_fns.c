@@ -367,7 +367,7 @@ int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer, bool *
         goto cleanup;
     }
 
-    if( 0 > (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT)) ) {
+    if( 0 > (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0)) ) {
         exit_status = ret;
         goto cleanup;
     }
@@ -387,7 +387,7 @@ int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer, bool *
         goto cleanup;
     }
 
-    if( 0 > (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT)) ) {
+    if( 0 > (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0)) ) {
         exit_status = ret;
         goto cleanup;
     }
@@ -414,7 +414,7 @@ int orte_snapc_base_global_coord_recv_ack(orte_process_name_t* peer, bool *ack)
         goto cleanup;
     }
 
-    if( 0 > (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT)) ) {
+    if( 0 > (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0)) ) {
         exit_status = ret;
         goto cleanup;
     }

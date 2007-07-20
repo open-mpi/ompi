@@ -24,9 +24,6 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/rml/base/base.h"
 
-#include "orte/mca/oob/oob.h"
-#include "orte/mca/oob/base/base.h"
-
 #include "rml_ftrm.h"
 
 
@@ -63,13 +60,13 @@ orte_rml_component_t mca_rml_ftrm_component = {
 };
 
 orte_rml_module_t orte_rml_ftrm_module = {
-    orte_rml_ftrm_module_init,
+    orte_rml_ftrm_module_enable_comm,
     orte_rml_ftrm_module_finalize,
 
-    orte_rml_ftrm_get_uri,
-    orte_rml_ftrm_set_uri,
-    orte_rml_ftrm_parse_uris,
+    orte_rml_ftrm_get_contact_info,
+    orte_rml_ftrm_set_contact_info,
 
+    orte_rml_ftrm_get_new_name,
     orte_rml_ftrm_ping,
 
     orte_rml_ftrm_send,
@@ -83,19 +80,10 @@ orte_rml_module_t orte_rml_ftrm_module = {
     orte_rml_ftrm_recv_buffer_nb,
     orte_rml_ftrm_recv_cancel,
 
-    orte_rml_ftrm_xcast,
-    orte_rml_ftrm_xcast_nb,
-    orte_rml_ftrm_xcast_gate,
-
     orte_rml_ftrm_add_exception_handler,
     orte_rml_ftrm_del_exception_handler,
 
-    orte_rml_ftrm_ft_event,
-
-    orte_rml_ftrm_register_contact_info,
-    orte_rml_ftrm_register_subscription,
-    orte_rml_ftrm_get_contact_info,
-    orte_rml_ftrm_update_contact_info
+    orte_rml_ftrm_ft_event
 };
 
 int rml_ftrm_output_handle;

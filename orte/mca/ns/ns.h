@@ -39,7 +39,7 @@
 #include "orte/dss/dss.h"
 
 #include "opal/mca/mca.h"
-#include "orte/mca/rml/rml_types.h"
+#include "orte/mca/rml/rml.h"
 
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"

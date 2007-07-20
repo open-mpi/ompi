@@ -57,7 +57,7 @@ struct mca_oob_tcp_msg_t {
     int                   msg_rwnum;     /**< number of iovecs left for read/write */
     int                   msg_rwcnt;     /**< total number of iovecs for read/write */
     void*                 msg_rwbuf;     /**< optional buffer for send/recv */
-    mca_oob_callback_fn_t msg_cbfunc;    /**< the callback function for the send/receive */    
+    orte_rml_callback_fn_t msg_cbfunc;    /**< the callback function for the send/receive */    
     void *                msg_cbdata;    /**< the data for the callback fnuction */
     bool                  msg_complete;  /**< whether the message is done sending or not */
     orte_process_name_t   msg_peer;      /**< the name of the peer */

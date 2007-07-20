@@ -20,20 +20,26 @@
 
 #include <stdio.h>
 
-#include "orte/orte_constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "orte/mca/rml/base/base.h"
+#include "orte/mca/grpcomm/base/base.h"
 
 
-int orte_rml_base_close(void)
+int orte_grpcomm_base_close(void)
 {
-    /* shutdown any remaining opened components */
-    if (! opal_list_is_empty(&orte_rml_base.rml_components)) {
-        mca_base_components_close(orte_rml_base.rml_output, 
-                              &orte_rml_base.rml_components, NULL);
-    }
-    OBJ_DESTRUCT(&orte_rml_base.rml_components);
-    return ORTE_SUCCESS;
-}
+  /* If we have a selected component and module, then finalize it */
 
+  if (mca_grpcomm_base_selected) {
+    mca_grpcomm_base_selected_component.grpcomm_finalize();
+  }
+
+  /* Close all remaining available components (may be one if this is a
+     OpenRTE program, or [possibly] multiple if this is ompi_info) */
+
+  mca_base_components_close(orte_grpcomm_base_output, 
+                            &mca_grpcomm_base_components_available, NULL);
+
+  /* All done */
+
+  return ORTE_SUCCESS;
+}

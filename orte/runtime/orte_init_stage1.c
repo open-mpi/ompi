@@ -47,7 +47,9 @@
 
 #include "orte/dss/dss.h"
 #include "orte/mca/rml/base/base.h"
+#include "orte/mca/routed/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
+#include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/ns/base/base.h"
 #include "orte/mca/sds/base/base.h"
@@ -173,6 +175,39 @@ int orte_init_stage1(bool infrastructure)
     }
 
     /*
+     * Routed system
+     */
+    if (ORTE_SUCCESS != (ret = orte_routed_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_routed_base_open";
+        goto error;
+    }
+
+    /*
+     * Routed system
+     */
+    if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_routed_base_select";
+        goto error;
+    }
+
+    /*
+     * Group communications
+     */
+    if (ORTE_SUCCESS != (ret = orte_grpcomm_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_grpcomm_base_open";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_grpcomm_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_grpcomm_base_select";
+        goto error;
+    }
+    
+    /*
      * Registry
      */
     if (ORTE_SUCCESS != (ret = orte_gpr_base_open())) {
@@ -249,10 +284,10 @@ int orte_init_stage1(bool infrastructure)
 
     /* set contact info for ns/gpr */
     if(NULL != orte_process_info.ns_replica_uri) {
-        orte_rml.set_uri(orte_process_info.ns_replica_uri);
+        orte_rml.set_contact_info(orte_process_info.ns_replica_uri);
     }
     if(NULL != orte_process_info.gpr_replica_uri) {
-        orte_rml.set_uri(orte_process_info.gpr_replica_uri);
+        orte_rml.set_contact_info(orte_process_info.gpr_replica_uri);
     }
 
     /* Set my name */
@@ -361,15 +396,10 @@ int orte_init_stage1(bool infrastructure)
         goto error;
     }
     
-    /* initialize the rml module so it can open its interfaces - this
-     * is needed so that we can get a uri for ourselves if we are an
-     * HNP.  Note that this function creates listeners to the HNP
-     * (for non-HNP procs) - if we are an HNP, it sets up the listener
-     * for incoming connections from daemons and application procs.
-     */
-    if (ORTE_SUCCESS != (ret = orte_rml.init())) {
+    /* enable communication with the rml */
+    if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_rml.init";
+        error = "orte_rml.enable_comm";
         goto error;
     }
 
@@ -378,7 +408,7 @@ int orte_init_stage1(bool infrastructure)
         if (NULL != orte_universe_info.seed_uri) {
             free(orte_universe_info.seed_uri);
         }
-        orte_universe_info.seed_uri = orte_rml.get_uri();
+        orte_universe_info.seed_uri = orte_rml.get_contact_info();
         /* and make sure that the daemon flag is NOT set so that
          * components unique to non-HNP orteds can be selected
          */

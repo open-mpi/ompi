@@ -27,7 +27,7 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/smr/smr.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/rml/rml.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 
 #include "orte/runtime/runtime.h"
 
@@ -74,7 +74,7 @@ int orte_system_init(bool infrastructure, bool barrier)
 #endif
     /* if we want to wait for receipt of info and release, do so here */
     if (barrier) {
-        if (ORTE_SUCCESS != (rc = orte_rml.xcast_gate(orte_gpr.deliver_notify_msg))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast_gate(orte_gpr.deliver_notify_msg))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

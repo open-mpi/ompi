@@ -260,7 +260,7 @@ static int opal_ifinit(void)
         OBJ_CONSTRUCT(&intf, opal_list_item_t);
 
         /* compute offset for entries */
-#if OMPI_HAVE_SA_LEN
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
         length = sizeof(struct sockaddr);
 
         if (ifr->ifr_addr.sa_len > length) {

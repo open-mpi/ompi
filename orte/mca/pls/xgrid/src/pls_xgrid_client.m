@@ -258,14 +258,14 @@ char **environ;
     if (NULL != orte_process_info.ns_replica_uri) {
         nsuri = strdup(orte_process_info.ns_replica_uri);
     } else {
-        nsuri = orte_rml.get_uri();
+        nsuri = orte_rml.get_contact_info();
     }
 
     /* setup gpr contact info */
     if (NULL != orte_process_info.gpr_replica_uri) {
         gpruri = strdup(orte_process_info.gpr_replica_uri);
     } else {
-        gpruri = orte_rml.get_uri();
+        gpruri = orte_rml.get_contact_info();
     }
 
     /* build up the array of task specifications */

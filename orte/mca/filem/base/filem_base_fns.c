@@ -277,7 +277,7 @@ int orte_filem_base_query_remote_path(char **remote_ref, orte_process_name_t *pe
     /*
      * Get the response
      */
-    if( 0 > (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_FILEM)) ) {
+    if( 0 > (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_FILEM, 0)) ) {
         exit_status = ret;
         goto cleanup;
     }

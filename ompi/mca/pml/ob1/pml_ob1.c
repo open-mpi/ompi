@@ -37,6 +37,7 @@
 #include "pml_ob1_rdmafrag.h"
 #include "ompi/mca/bml/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 
 #include "ompi/runtime/ompi_cr.h"
 #include "ompi/runtime/ompi_module_exchange.h"
@@ -541,7 +542,7 @@ int mca_pml_ob1_ft_event( int state )
             return ret;
         }
 
-        if (ORTE_SUCCESS != (ret = orte_rml.xcast_gate(orte_gpr.deliver_notify_msg))) {
+        if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast_gate(orte_gpr.deliver_notify_msg))) {
             opal_output(0,
                         "pml:ob1: ft_event(Restart): Stage Gate 1 Failed %d",
                         ret);
@@ -565,7 +566,7 @@ int mca_pml_ob1_ft_event( int state )
             return ret;
         }
 
-        if (ORTE_SUCCESS != (ret = orte_rml.xcast_gate(orte_gpr.deliver_notify_msg))) {
+        if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast_gate(orte_gpr.deliver_notify_msg))) {
             opal_output(0,"pml:ob1: ft_event(Restart): Stage Gate 1 Failed %d",
                         ret);
             return ret;

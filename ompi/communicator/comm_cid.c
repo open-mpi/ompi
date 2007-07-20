@@ -759,10 +759,10 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
 
         if ( send_first ) {
             rc = orte_rml.send_buffer(remote_leader, sbuf, 0, 0);
-            rc = orte_rml.recv_buffer(remote_leader, rbuf, 0);
+            rc = orte_rml.recv_buffer(remote_leader, rbuf, 0, 0);
         }
         else {
-            rc = orte_rml.recv_buffer(remote_leader, rbuf, 0);
+            rc = orte_rml.recv_buffer(remote_leader, rbuf, 0, 0);
             rc = orte_rml.send_buffer(remote_leader, sbuf, 0, 0);
         }
 

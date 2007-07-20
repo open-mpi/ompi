@@ -142,7 +142,7 @@ static int orte_rmgr_proxy_setup_job(orte_app_context_t** app_context,
 
     /* wait for response */
     OBJ_CONSTRUCT(&rsp, orte_buffer_t);
-    if(0 > (rc = orte_rml.recv_buffer(ORTE_PROC_MY_HNP, &rsp, ORTE_RML_TAG_RMGR))) {
+    if(0 > (rc = orte_rml.recv_buffer(ORTE_PROC_MY_HNP, &rsp, ORTE_RML_TAG_RMGR, 0))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&rsp);
         return rc;
@@ -171,6 +171,7 @@ static int orte_rmgr_proxy_setup_job(orte_app_context_t** app_context,
     OBJ_DESTRUCT(&rsp);
     return rc;
 }
+
 
 static int orte_rmgr_proxy_setup_stage_gates(orte_jobid_t jobid)
 {
@@ -209,7 +210,7 @@ static int orte_rmgr_proxy_setup_stage_gates(orte_jobid_t jobid)
 
     /* wait for response */
     OBJ_CONSTRUCT(&rsp, orte_buffer_t);
-    if(0 > (rc = orte_rml.recv_buffer(ORTE_PROC_MY_HNP, &rsp, ORTE_RML_TAG_RMGR))) {
+    if(0 > (rc = orte_rml.recv_buffer(ORTE_PROC_MY_HNP, &rsp, ORTE_RML_TAG_RMGR, 0))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&rsp);
         return rc;
@@ -291,7 +292,7 @@ static void orte_rmgr_proxy_xconnect_callback(orte_gpr_notify_data_t *data, void
     
     /* wait for response */
     OBJ_CONSTRUCT(&rsp, orte_buffer_t);
-    if(0 > (rc = orte_rml.recv_buffer(ORTE_PROC_MY_HNP, &rsp, ORTE_RML_TAG_RMGR))) {
+    if(0 > (rc = orte_rml.recv_buffer(ORTE_PROC_MY_HNP, &rsp, ORTE_RML_TAG_RMGR, 0))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&rsp);
         return;

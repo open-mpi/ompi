@@ -406,7 +406,7 @@ MOVEON:
     if(NULL != orte_process_info.ns_replica_uri) {
         uri = strdup(orte_process_info.ns_replica_uri);
     } else {
-        uri = orte_rml.get_uri();
+        uri = orte_rml.get_contact_info();
     }
     asprintf(&param, "\"%s\"", uri);
     opal_argv_append(&argc, &argv, param);
@@ -418,7 +418,7 @@ MOVEON:
     if(NULL != orte_process_info.gpr_replica_uri) {
         uri = strdup(orte_process_info.gpr_replica_uri);
     } else {
-        uri = orte_rml.get_uri();
+        uri = orte_rml.get_contact_info();
     }
     asprintf(&param, "\"%s\"", uri);
     opal_argv_append(&argc, &argv, param);
@@ -426,7 +426,7 @@ MOVEON:
     free(uri);
 
     /* tell the probe who to report to */
-    uri = orte_rml.get_uri();
+    uri = orte_rml.get_contact_info();
     asprintf(&param, "\"%s\"", uri);
     opal_argv_append(&argc, &argv, "--requestor");
     opal_argv_append(&argc, &argv, param);

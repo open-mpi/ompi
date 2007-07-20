@@ -38,7 +38,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/rmaps/rmaps.h"
-#include "orte/mca/rml/rml.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/smr/smr.h"
 #include "orte/runtime/runtime.h"
 
@@ -165,7 +165,7 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
      * destination here since these messages are intended to release
      * a process from an xcast gate
      */
-    if (ORTE_SUCCESS != (rc = orte_rml.xcast(job, buffer, ORTE_RML_TAG_XCAST_BARRIER))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(job, buffer, ORTE_RML_TAG_XCAST_BARRIER))) {
         ORTE_ERROR_LOG(rc);
     }
     OBJ_RELEASE(buffer);
@@ -174,4 +174,3 @@ CLEANUP:
     
     return rc;
 }
-

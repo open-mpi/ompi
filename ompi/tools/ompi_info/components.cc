@@ -257,7 +257,7 @@ void ompi_info::open_components()
   component_map["rmgr"] = &orte_rmgr_base.rmgr_components;
 
   orte_rml_base_open();
-  component_map["rml"] = &orte_rml_base.rml_components;
+  component_map["rml"] = &orte_rml_base_components;
 
   orte_pls_base_open();
   component_map["pls"] = &orte_pls_base.available_components;

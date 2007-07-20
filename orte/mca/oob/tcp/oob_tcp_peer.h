@@ -59,14 +59,9 @@ struct mca_oob_tcp_peer_t {
     int peer_retries;                 /**< number of times connection attempt has failed */
     mca_oob_tcp_addr_t* peer_addr;    /**< the addresses of the peer process */
     int peer_sd;                      /**< socket descriptor of the connection */
+    uint16_t peer_current_af;         /**< currently connecting af */
     opal_event_t peer_send_event;     /**< registration with event thread for send events */
     opal_event_t peer_recv_event;     /**< registration with event thread for recv events */
-#if OPAL_WANT_IPV6
-    int peer6_sd;                     /**< socket descriptor of the connection */
-    uint16_t current_af;              /**< EXPERIMENTAL: select currently connecting af */
-    opal_event_t peer6_send_event;    /**< registration with event thread for send events */
-    opal_event_t peer6_recv_event;    /**< registration with event thread for recv events */
-#endif
     opal_event_t peer_timer_event;    /**< timer for retrying connection failures */
     opal_mutex_t peer_lock;           /**< protect critical data structures */
     opal_list_t peer_send_queue;      /**< list of messages to send */

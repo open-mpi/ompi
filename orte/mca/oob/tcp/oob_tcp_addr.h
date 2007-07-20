@@ -42,9 +42,7 @@ BEGIN_C_DECLS
 #define MCA_OOB_TCP_ADDR_IPV4public	4  /* peer has public IPv4 address */
 
 #define MCA_OOB_TCP_ADDR_TYPE_AFINET   0x01
-#if OPAL_WANT_IPV6
-# define MCA_OOB_TCP_ADDR_TYPE_AFINET6 0x02
-#endif
+#define MCA_OOB_TCP_ADDR_TYPE_AFINET6  0x02
 
 /**
  * Address info published to registry
@@ -56,44 +54,23 @@ struct mca_oob_tcp_addr_t {
     orte_std_cntr_t addr_next;
     orte_std_cntr_t addr_alloc;
     orte_std_cntr_t addr_matched;/* status of already tried address classes */
-#if OPAL_WANT_IPV6
-    struct sockaddr_in6* addr_inet;
-#else
-    struct sockaddr_in* addr_inet;    
-#endif
+    struct sockaddr_storage *addr_inet; /* yes, we want storage here, so the indexes work out... */
 };
 typedef struct mca_oob_tcp_addr_t mca_oob_tcp_addr_t;
 
 OBJ_CLASS_DECLARATION(mca_oob_tcp_addr_t);
 
 /**
- * Unpack the contact information posted by the peer.
- */
-
-mca_oob_tcp_addr_t* mca_oob_tcp_addr_unpack(orte_buffer_t*);
-
-/**
- * Pack this hosts addressing info into a buffer for posting
- * into the registry.
- */
-
-int mca_oob_tcp_addr_pack(orte_buffer_t*);
-
-/**
  *
  */
 
-#if OPAL_WANT_IPV6
-int mca_oob_tcp_addr_insert(mca_oob_tcp_addr_t*, const struct sockaddr_in6*);
-#else
-int mca_oob_tcp_addr_insert(mca_oob_tcp_addr_t*, const struct sockaddr_in*);
-#endif
+int mca_oob_tcp_addr_insert(mca_oob_tcp_addr_t*, const struct sockaddr*);
 
 /**
  * 
  */
  
-int mca_oob_tcp_addr_get_next(mca_oob_tcp_addr_t*, struct sockaddr_storage*);
+int mca_oob_tcp_addr_get_next(mca_oob_tcp_addr_t*, struct sockaddr*);
 
 END_C_DECLS
 

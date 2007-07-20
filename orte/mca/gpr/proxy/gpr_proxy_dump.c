@@ -79,7 +79,7 @@ int orte_gpr_proxy_dump_all(void)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
 	    return ORTE_ERR_COMM_FAILURE;
     }
@@ -140,7 +140,7 @@ int orte_gpr_proxy_dump_segments(char *segment)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
        return ORTE_ERR_COMM_FAILURE;
     }
@@ -201,7 +201,7 @@ int orte_gpr_proxy_dump_triggers(orte_gpr_trigger_id_t start)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
        return ORTE_ERR_COMM_FAILURE;
     }
@@ -262,7 +262,7 @@ int orte_gpr_proxy_dump_subscriptions(orte_gpr_subscription_id_t start)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
        return ORTE_ERR_COMM_FAILURE;
     }
@@ -324,7 +324,7 @@ int orte_gpr_proxy_dump_a_trigger(char *name,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
        return ORTE_ERR_COMM_FAILURE;
     }
@@ -387,7 +387,7 @@ int orte_gpr_proxy_dump_a_subscription(char *name,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
        return ORTE_ERR_COMM_FAILURE;
     }
@@ -449,7 +449,7 @@ int orte_gpr_proxy_dump_callbacks(void)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
        return ORTE_ERR_COMM_FAILURE;
     }
@@ -586,7 +586,7 @@ int orte_gpr_proxy_dump_segment_size(char *segment)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         return ORTE_ERR_COMM_FAILURE;
     }

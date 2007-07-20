@@ -17,13 +17,13 @@
 #
 
 headers += \
-    base/base.h 
+	base/base.h \
+	base/rml_contact.h
 
 libmca_rml_la_SOURCES += \
-	base/rml_base_open.c \
-	base/rml_base_close.c \
-	base/rml_base_select.c \
+	base/rml_base_components.c \
 	base/rml_base_receive.c \
+	base/rml_base_contact.c \
 	base/data_type_support/rml_data_type_compare_fns.c \
 	base/data_type_support/rml_data_type_copy_fns.c \
 	base/data_type_support/rml_data_type_packing_fns.c \

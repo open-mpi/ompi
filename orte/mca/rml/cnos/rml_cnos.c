@@ -56,31 +56,30 @@ orte_rml_component_t mca_rml_cnos_component = {
 };
 
 orte_rml_module_t orte_rml_cnos_module = {
-    orte_rml_cnos_module_init,
+    orte_rml_cnos_module_enable_comm,
     orte_rml_cnos_module_fini,
-    orte_rml_cnos_get_uri,
-    orte_rml_cnos_set_uri,
-    orte_rml_cnos_parse_uris,
+
+    orte_rml_cnos_get_contact_info,
+    orte_rml_cnos_set_contact_info,
+
+    orte_rml_cnos_get_new_name,
     orte_rml_cnos_ping,
+
     orte_rml_cnos_send,
     orte_rml_cnos_send_nb,
     orte_rml_cnos_send_buffer,
     orte_rml_cnos_send_buffer_nb,
+
     orte_rml_cnos_recv,
     orte_rml_cnos_recv_nb,
     orte_rml_cnos_recv_buffer,
     orte_rml_cnos_recv_buffer_nb,
     orte_rml_cnos_recv_cancel,
-    orte_rml_cnos_xcast,
-    orte_rml_cnos_xcast_nb,
-    orte_rml_cnos_xcast_gate,
+
     orte_rml_cnos_add_exception_handler,
     orte_rml_cnos_del_exception_handler,
-    NULL, /* No FT Event function */
-    orte_rml_cnos_register_contact_info,
-    orte_rml_cnos_register_subscription,
-    orte_rml_cnos_get_contact_info,
-    orte_rml_cnos_update_contact_info
+
+    NULL /* No FT Event function */
 };
 
 
@@ -107,7 +106,7 @@ orte_rml_cnos_close(void)
 }
 
 int
-orte_rml_cnos_module_init(void)
+orte_rml_cnos_module_enable_comm(void)
 {
     return ORTE_SUCCESS;
 }
@@ -119,23 +118,24 @@ orte_rml_cnos_module_fini(void)
 }
 
 char *
-orte_rml_cnos_get_uri(void)
+orte_rml_cnos_get_contact_info(void)
 {
     return "(none)";
 }
 
 int
-orte_rml_cnos_set_uri(const char *name)
+orte_rml_cnos_set_contact_info(const char *name)
 {
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
+
 int
-orte_rml_cnos_parse_uris(const char *uri,
-			   orte_process_name_t * peer, char ***uris)
+orte_rml_cnos_get_new_name(orte_process_name_t *name)
 {
     return ORTE_ERR_NOT_SUPPORTED;
 }
+
 
 int
 orte_rml_cnos_ping(const char *uri, const struct timeval *tv)
@@ -168,7 +168,7 @@ orte_rml_cnos_recv(orte_process_name_t * peer,
 
 int
 orte_rml_cnos_recv_buffer(orte_process_name_t * peer,
-			    orte_buffer_t * buf, orte_rml_tag_t tag)
+                          orte_buffer_t * buf, orte_rml_tag_t tag, int flags)
 {
     return ORTE_ERR_NOT_SUPPORTED;
 }
@@ -218,71 +218,6 @@ int
 orte_rml_cnos_recv_cancel(orte_process_name_t * peer, orte_rml_tag_t tag)
 {
     return ORTE_ERR_NOT_SUPPORTED;
-}
-
-int
-orte_rml_cnos_barrier(void)
-{
-#if OMPI_RML_CNOS_HAVE_BARRIER
-    cnos_barrier();
-#endif
-
-    return ORTE_SUCCESS;
-}
-
-int
-orte_rml_cnos_xcast(orte_jobid_t job,
-                    orte_buffer_t *buffer,
-                    orte_rml_tag_t tag)
-{
-    return ORTE_SUCCESS;
-}
-
-int
-orte_rml_cnos_xcast_nb(orte_jobid_t job,
-                       orte_buffer_t *buffer,
-                       orte_rml_tag_t tag)
-{
-    return ORTE_SUCCESS;
-}
-
-int
-orte_rml_cnos_xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc)
-{
-    orte_rml_cnos_barrier();
-    if (NULL != cbfunc) {
-        orte_gpr_notify_message_t *msg;
-        msg = OBJ_NEW(orte_gpr_notify_message_t);
-        if (NULL == msg) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        cbfunc(msg);
-        OBJ_RELEASE(msg);
-    }
-
-    return ORTE_SUCCESS;
-}
-
-int orte_rml_cnos_register_contact_info(void)
-{
-    return ORTE_SUCCESS;
-}
-
-int orte_rml_cnos_register_subscription(orte_jobid_t job, char *trigger)
-{
-    return ORTE_SUCCESS;
-}
-
-int orte_rml_cnos_get_contact_info(orte_process_name_t *name, orte_gpr_notify_data_t **data)
-{
-    return ORTE_SUCCESS;
-}
-
-void orte_rml_cnos_update_contact_info(orte_gpr_notify_data_t* data,
-                                       void* cbdata)
-{
-    return;
 }
 
 int orte_rml_cnos_add_exception_handler(orte_rml_exception_callback_t cbfunc)

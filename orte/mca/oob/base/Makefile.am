@@ -21,12 +21,5 @@ headers += \
 
 libmca_oob_la_SOURCES += \
         base/oob_base_close.c \
-        base/oob_base_except.c \
         base/oob_base_init.c \
-        base/oob_base_open.c \
-        base/oob_base_ping.c \
-        base/oob_base_recv.c \
-        base/oob_base_recv_nb.c \
-        base/oob_base_send.c \
-        base/oob_base_xcast.c \
-        base/oob_base_send_nb.c 
+        base/oob_base_open.c

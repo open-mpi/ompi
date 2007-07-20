@@ -46,7 +46,7 @@ extern "C" {
     /*
      * Init (Module)
      */
-    int orte_rml_ftrm_module_init(void);
+    int orte_rml_ftrm_module_enable_comm(void);
     
     /*
      * Finalize (Module)
@@ -56,18 +56,14 @@ extern "C" {
     /*
      * Get URI
      */
-    char * orte_rml_ftrm_get_uri(void);
+    char * orte_rml_ftrm_get_contact_info(void);
 
     /*
      * Set URI
      */
-    int orte_rml_ftrm_set_uri(const char* uri);
+    int orte_rml_ftrm_set_contact_info(const char* uri);
 
-    /*
-     * Parse URis
-     */
-    int orte_rml_ftrm_parse_uris(const char* uri,
-                                 orte_process_name_t* peer, char*** uris);
+    int orte_rml_ftrm_get_new_name(orte_process_name_t *name);
 
     /*
      * Ping
@@ -137,7 +133,8 @@ extern "C" {
      */
     int orte_rml_ftrm_recv_buffer(orte_process_name_t* peer,
                                   orte_buffer_t *buf,
-                                  orte_rml_tag_t tag);
+                                  orte_rml_tag_t tag,
+                                  int flags);
 
     /*
      * Recv Buffer Non-blocking
@@ -154,19 +151,6 @@ extern "C" {
     int orte_rml_ftrm_recv_cancel(orte_process_name_t* peer, orte_rml_tag_t tag);
 
     /*
-     * Xcast
-     */
-    int orte_rml_ftrm_xcast(orte_jobid_t job,
-                            orte_buffer_t *buffer,
-                            orte_rml_tag_t tag);
-    
-    int orte_rml_ftrm_xcast_nb(orte_jobid_t job,
-                               orte_buffer_t *buffer,
-                               orte_rml_tag_t tag);
-
-    int orte_rml_ftrm_xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc);
-
-    /*
      * Register a callback on loss of connection
      */
     int orte_rml_ftrm_add_exception_handler(orte_rml_exception_callback_t cbfunc);
@@ -176,14 +160,6 @@ extern "C" {
      * FT Event
      */
     int orte_rml_ftrm_ft_event(int state);
-
-    int orte_rml_ftrm_register_contact_info(void);
-
-    int orte_rml_ftrm_register_subscription(orte_jobid_t job, char *trigger);
-
-    int orte_rml_ftrm_get_contact_info(orte_process_name_t *name, orte_gpr_notify_data_t **data);
-
-    void orte_rml_ftrm_update_contact_info(orte_gpr_notify_data_t* data, void* cbdata);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

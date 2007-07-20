@@ -38,6 +38,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
 
 #include "ns_proxy.h"
 
@@ -222,7 +223,7 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
             *priority = 10;
 
             /* define the proxy for us to use */
-           if(ORTE_SUCCESS != (ret = orte_rml.parse_uris(orte_process_info.ns_replica_uri, &name, NULL))) {
+           if(ORTE_SUCCESS != (ret = orte_rml_base_parse_uris(orte_process_info.ns_replica_uri, &name, NULL))) {
                ORTE_ERROR_LOG(ret);
                return NULL;
            }

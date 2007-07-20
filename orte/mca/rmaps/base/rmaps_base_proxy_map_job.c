@@ -85,7 +85,7 @@ int orte_rmaps_base_proxy_map_job(orte_jobid_t job, opal_list_t *attributes)
     }
     
     /* enter a blocking receive until we hear back */
-    if (0 > orte_rml.recv_buffer(ORTE_PROC_MY_HNP, answer, ORTE_RML_TAG_RMAPS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_PROC_MY_HNP, answer, ORTE_RML_TAG_RMAPS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;

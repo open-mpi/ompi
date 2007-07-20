@@ -31,10 +31,12 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/rml/base/base.h"
+#include "orte/mca/routed/base/base.h"
 #include "orte/dss/dss.h"
 #include "orte/mca/ns/base/base.h"
 #include "orte/mca/gpr/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
+#include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/rds/base/base.h"
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -103,7 +105,9 @@ int orte_system_finalize(void)
      */
     orte_errmgr_base_close();
     
-    /* now can close the rml */
+    /* now can close the rml and its friendly group comm */
+    orte_grpcomm_base_close();
+    orte_routed_base_close();
     orte_rml_base_close();
     orte_dss_close();
     

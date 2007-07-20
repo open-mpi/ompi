@@ -183,9 +183,6 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
         opal_list_item_t* item;
         OPAL_THREAD_UNLOCK(&msg->msg_lock);
 
-        /* post to a global list of completed messages */
-        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-        opal_list_append(&mca_oob_tcp_component.tcp_msg_completed, (opal_list_item_t*)msg);
 #if defined(__WINDOWS__)
         /**
          * In order to be able to generate TCP events recursively, Windows need
@@ -196,37 +193,50 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
          * engine will call our progress function later once all socket related
          * events have been processed.
          */
-         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
-         return ORTE_SUCCESS;        
-#else
-        if(opal_list_get_size(&mca_oob_tcp_component.tcp_msg_completed) > 1) {
-            OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
-            return ORTE_SUCCESS;
-        }
+        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+        opal_list_append(&mca_oob_tcp_component.tcp_msg_completed, (opal_list_item_t*)msg);
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+        return ORTE_SUCCESS;        
+#else
+
+        /* post to a global list of completed messages */
+        if ((msg->msg_flags & ORTE_RML_FLAG_RECURSIVE_CALLBACK) == 0) {
+            int size;
+            OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+            opal_list_append(&mca_oob_tcp_component.tcp_msg_completed, (opal_list_item_t*)msg);
+            size = opal_list_get_size(&mca_oob_tcp_component.tcp_msg_completed);
+            OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+            if(size > 1) {
+                return ORTE_SUCCESS;
+            }
+        }
 
         /* invoke message callback */
         msg->msg_cbfunc(msg->msg_rc, peer, msg->msg_uiov, msg->msg_ucnt, msg->msg_hdr.msg_tag, msg->msg_cbdata);
 
-        /* dispatch any completed events */
-        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-        opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_completed, (opal_list_item_t*)msg);
-        MCA_OOB_TCP_MSG_RETURN(msg);
-        while(NULL != 
-            (item = opal_list_remove_first(&mca_oob_tcp_component.tcp_msg_completed))) {
-            msg = (mca_oob_tcp_msg_t*)item;
-            OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
-            msg->msg_cbfunc(
-                msg->msg_rc, 
-                &msg->msg_peer, 
-                msg->msg_uiov, 
-                msg->msg_ucnt, 
-                msg->msg_hdr.msg_tag, 
-                msg->msg_cbdata);
+        /* dispatch any completed events */ 
+        if ((msg->msg_flags & ORTE_RML_FLAG_RECURSIVE_CALLBACK) == 0) {
             OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+            opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_completed, (opal_list_item_t*)msg);
+            MCA_OOB_TCP_MSG_RETURN(msg);
+            while(NULL != 
+                  (item = opal_list_remove_first(&mca_oob_tcp_component.tcp_msg_completed))) {
+                msg = (mca_oob_tcp_msg_t*)item;
+                OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+                msg->msg_cbfunc(
+                                msg->msg_rc, 
+                                &msg->msg_peer, 
+                                msg->msg_uiov, 
+                                msg->msg_ucnt, 
+                                msg->msg_hdr.msg_tag, 
+                                msg->msg_cbdata);
+                OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+                MCA_OOB_TCP_MSG_RETURN(msg);
+            }
+            OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+        } else {
             MCA_OOB_TCP_MSG_RETURN(msg);
         }
-        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 #endif  /* defined(__WINDOWS__) */
     } else {
         opal_condition_broadcast(&msg->msg_condition);
@@ -368,7 +378,9 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
 			strerror(opal_socket_errno),
 			opal_socket_errno);
 	    mca_oob_tcp_peer_close(peer);
-	    mca_oob_call_exception_handlers(&peer->peer_name, MCA_OOB_PEER_DISCONNECTED);
+            if (NULL != mca_oob_tcp.oob_exception_callback) {
+                mca_oob_tcp.oob_exception_callback(&peer->peer_name, ORTE_RML_PEER_DISCONNECTED);
+            }
 	    return false;
         } else if (rc == 0)  {
             if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT_FAIL) {
@@ -377,7 +389,9 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                    ORTE_NAME_ARGS(&(peer->peer_name)));
             }
             mca_oob_tcp_peer_close(peer);
-            mca_oob_call_exception_handlers(&peer->peer_name, MCA_OOB_PEER_DISCONNECTED);
+            if (NULL != mca_oob_tcp.oob_exception_callback) {
+                mca_oob_tcp.oob_exception_callback(&peer->peer_name, ORTE_RML_PEER_DISCONNECTED);
+            }
             return false;
         }
 
@@ -473,26 +487,14 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
     post = mca_oob_tcp_msg_match_post(&peer->peer_name, msg->msg_hdr.msg_tag);
     if(NULL != post) {
 
-        if(post->msg_flags & MCA_OOB_ALLOC) {
-
-            /* set the users iovec struct to point to pre-allocated buffer */
-            if(NULL == post->msg_uiov || 0 == post->msg_ucnt) {
-                post->msg_rc = ORTE_ERR_BAD_PARAM;
-            } else {
-                /* first iovec of recv message contains the header -
-                 * subsequent contain user data
-                */
-                post->msg_uiov[0].iov_base = (ompi_iov_base_ptr_t)msg->msg_rwbuf;
-                post->msg_uiov[0].iov_len = msg->msg_hdr.msg_size;
-		        post->msg_rc = msg->msg_hdr.msg_size;
-                msg->msg_rwbuf = NULL;
-            }
-
+        if(NULL == post->msg_uiov || 0 == post->msg_ucnt) {
+            opal_output(0, "msg_data returning bad param");
+            post->msg_rc = ORTE_ERR_BAD_PARAM;
         } else {
-
             /* copy msg data into posted recv */
+            if (post->msg_flags & ORTE_RML_ALLOC) msg->msg_flags |= ORTE_RML_ALLOC;
             post->msg_rc = mca_oob_tcp_msg_copy(msg, post->msg_uiov, post->msg_ucnt);
-            if(post->msg_flags & MCA_OOB_TRUNC) {
+            if(post->msg_flags & ORTE_RML_TRUNC) {
                  int i, size = 0;
                  for(i=1; i<msg->msg_rwcnt+1; i++)
                      size += msg->msg_rwiov[i].iov_len;
@@ -500,7 +502,7 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
             }
         }
 
-        if(post->msg_flags & MCA_OOB_PEEK) {
+        if(post->msg_flags & ORTE_RML_PEEK) {
             /* will need message for actual receive */
             opal_list_append(&mca_oob_tcp_component.tcp_msg_recv, &msg->super.super);
         } else {
@@ -509,7 +511,7 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
         mca_oob_tcp_component.tcp_match_count++;
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
 
-        if(post->msg_flags & MCA_OOB_PERSISTENT) {
+        if(post->msg_flags & ORTE_RML_PERSISTENT) {
             post->msg_cbfunc(
                 post->msg_rc, 
                 &peer->peer_name, 
@@ -542,30 +544,38 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
 
 int mca_oob_tcp_msg_copy(mca_oob_tcp_msg_t* msg, struct iovec* iov, int count)
 {
-    int i;
-    unsigned char* src_ptr = (unsigned char*)msg->msg_rwbuf;
+    int i, ret = 0;
+    unsigned char* src_ptr = (unsigned char*) msg->msg_rwbuf;
     size_t src_len = msg->msg_hdr.msg_size;
-    struct iovec *dst = iov;
-    int rc = 0;
 
-    for(i=0; i<count; i++) {
-        unsigned char* dst_ptr = (unsigned char*)dst->iov_base;
-        size_t dst_len = dst->iov_len;
-        while(dst_len > 0) {
-            size_t len = (dst_len <= src_len) ? dst_len : src_len;
-            memcpy(dst_ptr, src_ptr, len);
-            rc += len;
-            dst_ptr += len;
-            dst_len -= len;
-            src_ptr += len;
-            src_len -= len;
-            if(src_len == 0) {
-                return rc;
+    for (i = 0 ; i < count ; i++) {
+        if ((msg->msg_flags & ORTE_RML_ALLOC) && (i == count - 1)) {
+            if (i == 0) {
+                iov[i].iov_base = src_ptr;
+                iov[i].iov_len = src_len;
+                msg->msg_rwbuf = NULL;
+            } else {
+                iov[i].iov_base = malloc(src_len);
+                iov[i].iov_len = src_len;
+                memcpy(iov[i].iov_base, src_ptr, src_len);
+            }
+        } else {
+            if (iov[i].iov_len > src_len) {
+                memcpy(iov[i].iov_base, src_ptr, src_len);
+                iov[i].iov_len = src_len;
+            } else {
+                memcpy(iov[i].iov_base, src_ptr, iov[i].iov_len);
             }
         }
-        dst++;
+
+        ret += iov[i].iov_len;
+        src_len -= iov[i].iov_len;
+        src_ptr += iov[i].iov_len;
+
+        if (0 == src_len) break;
     }
-    return rc;
+
+    return ret;
 }
 
 /*
@@ -611,7 +621,7 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(orte_process_name_t* name, int tag
 
         if(ORTE_EQUAL == orte_dss.compare(name, &msg->msg_peer, ORTE_NAME)) {
             if (msg->msg_hdr.msg_tag == tag) {
-                if((msg->msg_flags & MCA_OOB_PERSISTENT) == 0) {
+                if((msg->msg_flags & ORTE_RML_PERSISTENT) == 0) {
                     opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super.super);
                 }
                 return msg;

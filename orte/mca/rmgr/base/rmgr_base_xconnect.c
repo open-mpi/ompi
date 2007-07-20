@@ -36,6 +36,8 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 
 #include "orte/mca/rmgr/base/rmgr_private.h"
 
@@ -53,7 +55,7 @@ int orte_rmgr_base_xconnect(orte_jobid_t child, orte_jobid_t parent)
     
     /* get the child's contact info */
     name.jobid = child;
-    if (ORTE_SUCCESS != (rc = orte_rml.get_contact_info(&name, &data))) {
+    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(&name, &data))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -74,7 +76,7 @@ int orte_rmgr_base_xconnect(orte_jobid_t child, orte_jobid_t parent)
             return rc;
         }
         /* now send it */
-        if (ORTE_SUCCESS != (rc = orte_rml.xcast(parent, buf, ORTE_RML_TAG_RML))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(parent, buf, ORTE_RML_TAG_RML_INFO_UPDATE))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(buf);
             OBJ_RELEASE(data);
@@ -88,7 +90,7 @@ int orte_rmgr_base_xconnect(orte_jobid_t child, orte_jobid_t parent)
     
     /* get the parent's contact info */
     name.jobid = parent;
-    if (ORTE_SUCCESS != (rc = orte_rml.get_contact_info(&name, &data))) {
+    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(&name, &data))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -109,7 +111,7 @@ int orte_rmgr_base_xconnect(orte_jobid_t child, orte_jobid_t parent)
             return rc;
         }
         /* now send it */
-        if (ORTE_SUCCESS != (rc = orte_rml.xcast(child, buf, ORTE_RML_TAG_RML))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(child, buf, ORTE_RML_TAG_RML_INFO_UPDATE))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(buf);
             OBJ_RELEASE(data);

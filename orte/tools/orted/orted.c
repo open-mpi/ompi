@@ -21,7 +21,6 @@
 
 #include "orte/orted/orted.h"
 
-
 int main(int argc, char *argv[])
 {
     return orte_daemon(argc, argv);

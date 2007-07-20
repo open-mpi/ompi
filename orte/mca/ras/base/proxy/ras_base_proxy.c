@@ -77,7 +77,7 @@ int orte_ras_base_proxy_allocate(orte_jobid_t job, opal_list_t *attributes)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (0 > orte_rml.recv_buffer(orte_ras_base_proxy_replica, answer, ORTE_RML_TAG_RAS)) {
+    if (0 > orte_rml.recv_buffer(orte_ras_base_proxy_replica, answer, ORTE_RML_TAG_RAS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;
@@ -141,7 +141,7 @@ int orte_ras_base_proxy_deallocate(orte_jobid_t job)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_ras_base_proxy_replica, answer, ORTE_RML_TAG_RAS)) {
+    if (0 > orte_rml.recv_buffer(orte_ras_base_proxy_replica, answer, ORTE_RML_TAG_RAS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;

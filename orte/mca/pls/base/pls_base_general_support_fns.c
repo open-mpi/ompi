@@ -67,7 +67,7 @@ int orte_pls_base_orted_append_basic_args(int *argc, char ***argv,
                                           int *node_name_index,
                                           orte_std_cntr_t num_procs)
 {
-    char *param = NULL, *uri = NULL;
+    char *param = NULL, *contact_info = NULL;
     int loc_id;
     char * amca_param_path = NULL;
     char * amca_param_prefix = NULL;
@@ -124,25 +124,25 @@ int orte_pls_base_orted_append_basic_args(int *argc, char ***argv,
     /* setup ns contact info */
     opal_argv_append(argc, argv, "--nsreplica");
     if (NULL != orte_process_info.ns_replica_uri) {
-        uri = strdup(orte_process_info.ns_replica_uri);
+        contact_info = strdup(orte_process_info.ns_replica_uri);
     } else {
-        uri = orte_rml.get_uri();
+        contact_info = orte_rml.get_contact_info();
     }
-    asprintf(&param, "\"%s\"", uri);
+    asprintf(&param, "\"%s\"", contact_info);
     opal_argv_append(argc, argv, param);
-    free(uri);
+    free(contact_info);
     free(param);
 
     /* setup gpr contact info */
     opal_argv_append(argc, argv, "--gprreplica");
     if (NULL != orte_process_info.gpr_replica_uri) {
-        uri = strdup(orte_process_info.gpr_replica_uri);
+        contact_info = strdup(orte_process_info.gpr_replica_uri);
     } else {
-        uri = orte_rml.get_uri();
+        contact_info = orte_rml.get_contact_info();
     }
-    asprintf(&param, "\"%s\"", uri);
+    asprintf(&param, "\"%s\"", contact_info);
     opal_argv_append(argc, argv, param);
-    free(uri);
+    free(contact_info);
     free(param);
 
     /* 
