@@ -34,7 +34,7 @@
 #include "orte/dss/dss.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/odls/odls_types.h"
-#include "orte/mca/rml/rml.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmgr/rmgr.h"
 
@@ -105,7 +105,7 @@ int orte_pls_base_orted_exit(struct timeval *timeout, opal_list_t *attrs)
     }
     
     /* send it! */
-    if (ORTE_SUCCESS != (rc = orte_rml.xcast(0, &cmd, ORTE_RML_TAG_DAEMON))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(0, &cmd, ORTE_RML_TAG_DAEMON))) {
         ORTE_ERROR_LOG(rc);
     }
     OBJ_DESTRUCT(&cmd);
@@ -159,7 +159,7 @@ int orte_pls_base_orted_kill_local_procs(orte_jobid_t job, struct timeval *timeo
     if (allocated) free(jobs);  /* not needed any more */
     
     /* send it! */
-    if (ORTE_SUCCESS != (rc = orte_rml.xcast(0, &cmd, ORTE_RML_TAG_DAEMON))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(0, &cmd, ORTE_RML_TAG_DAEMON))) {
         ORTE_ERROR_LOG(rc);
     }
     OBJ_DESTRUCT(&cmd);
@@ -222,7 +222,7 @@ int orte_pls_base_orted_signal_local_procs(orte_jobid_t job, int32_t signal, opa
     }
     
     /* send it! */
-    if (ORTE_SUCCESS != (rc = orte_rml.xcast(0, &cmd, ORTE_RML_TAG_DAEMON))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(0, &cmd, ORTE_RML_TAG_DAEMON))) {
         ORTE_ERROR_LOG(rc);
     }
     OBJ_DESTRUCT(&cmd);

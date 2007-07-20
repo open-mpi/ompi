@@ -21,6 +21,7 @@
 #include "orte_config.h"
 
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/gpr/gpr_types.h"
 #include "orte/dss/dss.h"
 
 #include "orte/mca/snapc/snapc.h"

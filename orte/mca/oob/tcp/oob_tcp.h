@@ -41,9 +41,8 @@
 #include "opal/mca/timer/base/base.h"
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
+
 
 #define ORTE_OOB_TCP_KEY "oob-tcp"
 
@@ -52,6 +51,7 @@ extern "C" {
 #define OOB_TCP_DEBUG_INFO         3  /* information about startup, connection establish, etc. */
 #define OOB_TCP_DEBUG_ALL          4  /* everything else */
 
+extern mca_oob_t mca_oob_tcp;
 
 /*
  * standard component functions
@@ -71,31 +71,6 @@ int mca_oob_tcp_init(void);
  * Cleanup resources during shutdown.
  */
 int mca_oob_tcp_fini(void);
-
-/*
- * Register my contact info with the General Purpose Registry
- * This function causes the component to "put" its contact info
- * on the registry.
- */
-int mca_oob_tcp_register_contact_info(void);
-
-/*
- * Register a subscription to receive contact info on other processes
- * This function will typically be called from within a GPR compound command
- * to register a subscription against a stage gate trigger. When fired, this
- * will return the OOB contact info for all processes in the specified job
- */
-int mca_oob_tcp_register_subscription(orte_jobid_t job, char *trigger);
-
-/*
- * Get contact info for a process or job
- * Returns contact info for the specified process. If the vpid in the process name
- * is WILDCARD, then it returns the contact info for all processes in the specified
- * job. If the jobid is WILDCARD, then it returns the contact info for processes
- * of the specified vpid across all jobs. Obviously, combining the two WILDCARD
- * values will return contact info for everyone!
- */
-ORTE_DECLSPEC int mca_oob_tcp_get_contact_info(orte_process_name_t *name, orte_gpr_notify_data_t **data);
 
 /**
 * Compare two process names for equality.
@@ -122,6 +97,8 @@ char* mca_oob_tcp_get_addr(void);
 
 int mca_oob_tcp_set_addr(const orte_process_name_t*, const char*);
 
+int mca_oob_tcp_get_new_name(orte_process_name_t* name);
+
 /**
  *  A routine to ping a given process name to determine if it is reachable.
  *
@@ -134,43 +111,6 @@ int mca_oob_tcp_set_addr(const orte_process_name_t*, const char*);
  */
                                                                                                        
 int mca_oob_tcp_ping(const orte_process_name_t*, const char* uri, const struct timeval* tv);
-
-/**
- *  Similiar to unix writev(2).
- *
- * @param peer (IN)   Opaque name of peer process.
- * @param msg (IN)    Array of iovecs describing user buffers and lengths.
- * @param count (IN)  Number of elements in iovec array.
- * @param tag (IN)    User defined tag for matching send/recv.
- * @param flags (IN)  Currently unused.
- * @return            OMPI error code (<0) on error number of bytes actually sent.
- */
-
-int mca_oob_tcp_send(
-    orte_process_name_t* peer, 
-    struct iovec *msg, 
-    int count, 
-    int tag,
-    int flags);
-
-/**
- * Similiar to unix readv(2)
- *
- * @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
- * @param msg (IN)     Array of iovecs describing user buffers and lengths.
- * @param count (IN)   Number of elements in iovec array.
- * @param tag (IN)     User defined tag for matching send/recv.
- * @param flags (IN)   May be MCA_OOB_PEEK to return up to the number of bytes provided in the
- *                     iovec array without removing the message from the queue.
- * @return             OMPI error code (<0) on error or number of bytes actually received.
- */
-
-int mca_oob_tcp_recv(
-    orte_process_name_t* peer, 
-    struct iovec * msg, 
-    int count, 
-    int tag,
-    int flags);
 
 
 /*
@@ -197,7 +137,7 @@ int mca_oob_tcp_send_nb(
     int count,
     int tag,
     int flags, 
-    mca_oob_callback_fn_t cbfunc, 
+    orte_rml_callback_fn_t cbfunc, 
     void* cbdata);
 
 /**
@@ -219,7 +159,7 @@ int mca_oob_tcp_recv_nb(
     int count, 
     int tag,
     int flags,
-    mca_oob_callback_fn_t cbfunc, 
+    orte_rml_callback_fn_t cbfunc, 
     void* cbdata);
 
 /**
@@ -245,11 +185,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t*);
  */
 int mca_oob_tcp_parse_uri(
     const char* uri, 
-#if OPAL_WANT_IPV6
-    struct sockaddr_in6* inaddr
-#else 
-    struct sockaddr_in* inaddr
-#endif
+    struct sockaddr* inaddr
 );
 
 /**
@@ -278,11 +214,8 @@ struct mca_oob_tcp_component_t {
     char*              tcp_exclude;          /**< list of ip interfaces to exclude */
     int                tcp_listen_sd;        /**< listen socket for incoming IPv4 connection requests */
     unsigned short     tcp_listen_port;      /**< IPv4 listen port */
-#if OPAL_WANT_IPV6
     int                tcp6_listen_sd;       /**< listen socket for incoming IPv6 connection requests */
     unsigned short     tcp6_listen_port;     /**< IPv6 listen port */
-#endif
-    opal_list_t        tcp_subscriptions;    /**< list of registry subscriptions */
     opal_list_t        tcp_peer_list;        /**< list of peers sorted in mru order */
     opal_hash_table_t  tcp_peers;            /**< peers sorted by name */
     opal_hash_table_t  tcp_peer_names;       /**< cache of peer contact info sorted by name */
@@ -292,12 +225,8 @@ struct mca_oob_tcp_component_t {
     int                tcp_sndbuf;           /**< socket send buffer size */
     int                tcp_rcvbuf;           /**< socket recv buffer size */
     opal_free_list_t   tcp_msgs;             /**< free list of messages */
-    opal_event_t       tcp_send_event;       /**< event structure for IPv4 sends */
     opal_event_t       tcp_recv_event;       /**< event structure for IPv4 recvs */
-#if OPAL_WANT_IPV6
-    opal_event_t       tcp6_send_event;      /**< event structure for IPv6 sends */
     opal_event_t       tcp6_recv_event;      /**< event structure for IPv6 recvs */
-#endif
     opal_mutex_t       tcp_lock;             /**< lock for accessing module state */
     opal_list_t        tcp_events;           /**< list of pending events (accepts) */
     opal_list_t        tcp_msg_post;         /**< list of recieves user has posted */
@@ -310,6 +239,8 @@ struct mca_oob_tcp_component_t {
 
     bool               tcp_shutdown;
     mca_oob_tcp_listen_type_t tcp_listen_type;
+
+    opal_list_t tcp_available_devices;
 
     opal_thread_t tcp_listen_thread;
     opal_free_list_t tcp_pending_connections_fl;
@@ -325,8 +256,6 @@ struct mca_oob_tcp_component_t {
     int tcp_copy_max_size;
     int tcp_copy_spin_count;
     int connect_sleep;
-
-    bool tcp_ignore_localhost;               /**< should use localhost as an address or not */
 };
 
 /**
@@ -346,18 +275,27 @@ extern int mca_oob_tcp_output_handle;
 
 
 struct mca_oob_tcp_pending_connection_t {
-        opal_free_list_item_t super;
-        int fd;
-        /* Bug, FIXME: Port to IPv6 */
-        struct sockaddr_in addr;
-    };
-    typedef struct mca_oob_tcp_pending_connection_t mca_oob_tcp_pending_connection_t;
-    OBJ_CLASS_DECLARATION(mca_oob_tcp_pending_connection_t);
+    opal_free_list_item_t super;
+    int fd;
+    /* Bug, FIXME: Port to IPv6 */
+    struct sockaddr_in addr;
+};
+typedef struct mca_oob_tcp_pending_connection_t mca_oob_tcp_pending_connection_t;
+OBJ_CLASS_DECLARATION(mca_oob_tcp_pending_connection_t);
+
+struct mca_oob_tcp_device_t {
+    opal_list_item_t super;
+    int if_index;
+    bool if_local;
+    struct sockaddr_storage if_addr;
+};
+typedef struct mca_oob_tcp_device_t mca_oob_tcp_device_t;
+OBJ_CLASS_DECLARATION(mca_oob_tcp_device_t);
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+
+
+END_C_DECLS
 
 #endif /* MCA_OOB_TCP_H_ */
 

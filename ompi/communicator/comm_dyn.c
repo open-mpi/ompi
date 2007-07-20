@@ -130,9 +130,9 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         /* Exchange the number and the list of processes in the groups */
         if ( send_first ) {
             rc = orte_rml.send_buffer(rport, nbuf, tag, 0);
-            rc = orte_rml.recv_buffer(rport, nrbuf, tag);
+            rc = orte_rml.recv_buffer(rport, nrbuf, tag, 0);
         } else {
-            rc = orte_rml.recv_buffer(rport, nrbuf, tag);
+            rc = orte_rml.recv_buffer(rport, nrbuf, tag, 0);
             rc = orte_rml.send_buffer(rport, nbuf, tag, 0);
         }
 
@@ -320,7 +320,7 @@ int ompi_comm_get_rport(orte_process_name_t *port, int send_first,
         if (NULL == rbuf) {
             return ORTE_ERROR;
         }
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, rbuf, tag))) {
+        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, rbuf, tag, 0))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(rbuf);
             return rc;

@@ -71,6 +71,7 @@
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/smr/smr.h"
 #include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/rmgr/base/rmgr_private.h"
@@ -896,7 +897,7 @@ static int process_commands(orte_process_name_t* sender,
                     } else {
                         ret = ORTE_SUCCESS;
                     }
-                } else if (ORTE_RML_TAG_RML == target_tag) {
+                } else if (ORTE_RML_TAG_RML_INFO_UPDATE == target_tag) {
                     n = 1;
                     if (ORTE_SUCCESS != (ret = orte_dss.unpack(relay, &rml_cmd, &n, ORTE_RML_CMD))) {
                         ORTE_ERROR_LOG(ret);
@@ -906,7 +907,7 @@ static int process_commands(orte_process_name_t* sender,
                         ORTE_ERROR_LOG(ret);
                         goto CLEANUP;
                     }
-                    orte_rml.update_contact_info(ndat, NULL);                    
+                    orte_rml_base_contact_info_notify(ndat, NULL);                    
                 } else {
                     /* just deliver it to ourselves */
                     if ((ret = orte_rml.send_buffer(ORTE_PROC_MY_NAME, relay, target_tag, 0)) < 0) {
@@ -975,7 +976,7 @@ static int process_commands(orte_process_name_t* sender,
                             ORTE_NAME_ARGS(orte_process_info.my_name));
             }
             /* send back contact info */
-            contact_info = orte_rml.get_uri();
+            contact_info = orte_rml.get_contact_info();
             
             if (NULL == contact_info) {
                 ORTE_ERROR_LOG(ORTE_ERROR);

@@ -33,59 +33,41 @@
 #include "opal/mca/mca.h"
 
 #include "orte/mca/ns/ns_types.h"
-#include "orte/mca/gpr/gpr_types.h"
 
+#include "orte/mca/rml/rml.h"
 #include "orte/mca/oob/oob_types.h"
-#include "orte/mca/oob/base/base.h"
 
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-struct mca_oob_1_0_0_t;
 
-/**
- * Convenience Typedef
- */
+BEGIN_C_DECLS
+
+
+struct mca_oob_1_0_0_t;
 typedef struct mca_oob_1_0_0_t mca_oob_1_0_0_t;
-/**
- * Convenience typedef
- */
 typedef struct mca_oob_1_0_0_t mca_oob_t;
 
 
-/********
- * NOTE: these are functions and prototypes for the use of the modules
- *       and components. 
- *       THESE ARE NOT USER INTERFACE FUNCTIONS.
- *       the user interface is in mca/oob/base/base.h
- */
+typedef mca_oob_t* (*mca_oob_base_component_init_fn_t)(int  *priority);
 
-/*
- * OOB Component/Module function prototypes.
- */
+struct mca_oob_base_component_1_0_0_t {
+   mca_base_component_t oob_base;
+   mca_base_component_data_1_0_0_t oob_data;
+   mca_oob_base_component_init_fn_t oob_init;
+};
+typedef struct mca_oob_base_component_1_0_0_t mca_oob_base_component_1_0_0_t;
+typedef mca_oob_base_component_1_0_0_t mca_oob_base_component_t;
 
-/**
-*  Implementation of mca_oob_base_module_get_addr().
-*/
+
 
 typedef char* (*mca_oob_base_module_get_addr_fn_t)(void);
 
-/**
-*  Implementation of mca_oob_base_module_set_addr().
-*
-*  @param addr    Address of seed in component specific uri format.
-*/
+typedef int (*mca_oob_base_module_set_addr_fn_t)(const orte_process_name_t* peer, 
+                                                 const char* uri);
 
-typedef int (*mca_oob_base_module_set_addr_fn_t)(const orte_process_name_t*, const char* uri);
 
-/**
- * Implementation of mca_oob_base_module_update_contact_info()
- */
-typedef void (*mca_oob_module_update_contact_info_fn_t)(orte_gpr_notify_data_t* data,
-                                                        void* cbdata);
+typedef int (*mca_oob_base_module_get_new_name_fn_t)(orte_process_name_t*);
 
 /**
 *  Implementation of mca_oob_ping().
@@ -94,46 +76,10 @@ typedef void (*mca_oob_module_update_contact_info_fn_t)(orte_gpr_notify_data_t* 
 *  @param tv (IN)     Timeout to wait in connection response.
 *  @return            OMPI error code (<0) or ORTE_SUCCESS
 */
+typedef int (*mca_oob_base_module_ping_fn_t)(const orte_process_name_t*, 
+                                             const char* uri, 
+                                             const struct timeval* tv);
 
-typedef int (*mca_oob_base_module_ping_fn_t)(const orte_process_name_t*, const char* uri, const struct timeval* tv);
-
-/**
-*  Implementation of mca_oob_send().
-*   
-*  @param peer (IN)   Opaque name of peer process.
-*  @param msg (IN)    Array of iovecs describing user buffers and lengths.
-*  @param count (IN)  Number of elements in iovec array.
-*  @param tag (IN)    User defined tag for matching send/recv.
-*  @param flags (IN)  Currently unused.
-*  @return            OMPI error code (<0) on error number of bytes actually sent.
-*/
-
-typedef int (*mca_oob_base_module_send_fn_t)(
-    orte_process_name_t* peer,
-    struct iovec *msg,
-    int count,
-    int tag,
-    int flags);
-
-/**
-*  Implementation of mca_oob_recv().
-*
-*  @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
-*  @param msg (IN)     Array of iovecs describing user buffers and lengths.
-*  @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
-*  @param count (IN)   Number of elements in iovec array.
-*  @param tag (IN)     User defined tag for matching send/recv.
-*  @param flags (IN)   May be MCA_OOB_PEEK to return up to the number of bytes provided in the
-*                      iovec array without removing the message from the queue.
-*  @return             OMPI error code (<0) on error or number of bytes actually received.
-*/
-
-typedef int (*mca_oob_base_module_recv_fn_t)(
-    orte_process_name_t* peer,
-    struct iovec *msg,
-    int count,
-    int tag,
-    int flags);
 
 /**
 *  Implementation of mca_oob_send_nb().
@@ -155,7 +101,7 @@ typedef int (*mca_oob_base_module_send_nb_fn_t)(
     int count,
     int tag,
     int flags,
-    mca_oob_callback_fn_t cbfunc,
+    orte_rml_callback_fn_t cbfunc,
     void* cbdata);
 
 /**
@@ -177,7 +123,7 @@ typedef int (*mca_oob_base_module_recv_nb_fn_t)(
     int count,
     int tag,
     int flags,
-    mca_oob_callback_fn_t cbfunc,
+    orte_rml_callback_fn_t cbfunc,
     void* cbdata);
 
 /**
@@ -201,96 +147,32 @@ typedef int (*mca_oob_base_module_init_fn_t)(void);
  */
 typedef int (*mca_oob_base_module_fini_fn_t)(void);
 
-/**
- * xcast function for sending common messages to all processes
- */
-typedef int (*mca_oob_base_module_xcast_fn_t)(orte_jobid_t job,
-                                              orte_buffer_t *buffer,
-                                              orte_rml_tag_t tag);
-
-typedef int (*mca_oob_base_module_xcast_nb_fn_t)(orte_jobid_t job,
-                                                 orte_buffer_t *buffer,
-                                                 orte_rml_tag_t tag);
-
-typedef int (*mca_oob_base_module_xcast_gate_fn_t)(orte_gpr_trigger_cb_fn_t cbfunc);
-
 /* ft event */
 typedef int (*mca_oob_base_module_ft_event_fn_t)( int state );
-
-/*
- * Register my contact info with the General Purpose Registry
- * This function causes the component to "put" its contact info
- * on the registry.
- */
-typedef int (*mca_oob_module_register_contact_info_fn_t)(void);
-
-/*
- * Register a subscription to receive contact info on other processes
- * This function will typically be called from within a GPR compound command
- * to register a subscription against a stage gate trigger. When fired, this
- * will return the OOB contact info for all processes in the specified job
- */
-typedef int (*mca_oob_module_register_subscription_fn_t)(orte_jobid_t job, char *trigger);
-
-/*
- * Get contact info for a process or job
- * Returns contact info for the specified process. If the vpid in the process name
- * is WILDCARD, then it returns the contact info for all processes in the specified
- * job. If the jobid is WILDCARD, then it returns the contact info for processes
- * of the specified vpid across all jobs. Obviously, combining the two WILDCARD
- * values will return contact info for everyone!
- */
-typedef int (*mca_oob_module_get_contact_info_fn_t)(orte_process_name_t *name, orte_gpr_notify_data_t **data);
 
 
 /**
  * OOB Module
  */
 struct mca_oob_1_0_0_t {
-    mca_oob_base_module_get_addr_fn_t            oob_get_addr;
-    mca_oob_base_module_set_addr_fn_t            oob_set_addr;
-    mca_oob_base_module_ping_fn_t                oob_ping;
-    mca_oob_base_module_send_fn_t                oob_send;
-    mca_oob_base_module_recv_fn_t                oob_recv;
-    mca_oob_base_module_send_nb_fn_t             oob_send_nb;
-    mca_oob_base_module_recv_nb_fn_t             oob_recv_nb;
-    mca_oob_base_module_recv_cancel_fn_t         oob_recv_cancel;
     mca_oob_base_module_init_fn_t                oob_init;
     mca_oob_base_module_fini_fn_t                oob_fini;
-    mca_oob_base_module_xcast_fn_t               oob_xcast;
-    mca_oob_base_module_xcast_nb_fn_t            oob_xcast_nb;
-    mca_oob_base_module_xcast_gate_fn_t          oob_xcast_gate;
+
+    mca_oob_base_module_get_addr_fn_t            oob_get_addr;
+    mca_oob_base_module_set_addr_fn_t            oob_set_addr;
+
+    mca_oob_base_module_get_new_name_fn_t        oob_get_new_name;
+    mca_oob_base_module_ping_fn_t                oob_ping;
+
+    mca_oob_base_module_send_nb_fn_t             oob_send_nb;
+
+    mca_oob_base_module_recv_nb_fn_t             oob_recv_nb;
+    mca_oob_base_module_recv_cancel_fn_t         oob_recv_cancel;
+
     mca_oob_base_module_ft_event_fn_t            oob_ft_event;
-    mca_oob_module_register_contact_info_fn_t    oob_register_contact_info;
-    mca_oob_module_register_subscription_fn_t    oob_register_subscription;
-    mca_oob_module_get_contact_info_fn_t         oob_get_contact_info;
-    mca_oob_module_update_contact_info_fn_t      oob_update_contact_info;
 
+    orte_rml_exception_callback_t                oob_exception_callback;
 };
-
-/**
- * OOB Component
- */
-typedef mca_oob_t* (*mca_oob_base_component_init_fn_t)(int  *priority);
-
-/**
- * the standard component data structure
- */
-struct mca_oob_base_component_1_0_0_t {
-   mca_base_component_t oob_base;
-   mca_base_component_data_1_0_0_t oob_data;
-   mca_oob_base_component_init_fn_t oob_init;
-};
-
-/**
- * Convenience Typedef
- */
-typedef struct mca_oob_base_component_1_0_0_t mca_oob_base_component_1_0_0_t;
-/**
- * Convenience Typedef
- */
-typedef mca_oob_base_component_1_0_0_t mca_oob_base_component_t;
-
 
 /**
  * Macro for use in components that are of type oob v1.0.0
@@ -302,69 +184,12 @@ typedef mca_oob_base_component_1_0_0_t mca_oob_base_component_t;
   "oob", 1, 0, 0
 
 /*
- * This is the first module on the list. This is here temporarily
- * to make things work
+ * BWB - FIX ME - This is the first module on the list. This is here
+ * temporarily to make things work
  */
 
 ORTE_DECLSPEC extern mca_oob_t mca_oob;
 
-/**
- * associate a component and a module that belongs to it
- */
-struct mca_oob_base_info_t {
-  opal_list_item_t super;
-  mca_oob_base_component_t *oob_component;
-  mca_oob_t *oob_module;
-};
-/**
- * Convenience Typedef
- */
-typedef struct mca_oob_base_info_t mca_oob_base_info_t;
+END_C_DECLS
 
-/**
- * declare the association structure as a class
- */
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(mca_oob_base_info_t);
-
-/**
- * List of registrations of exception callbacks
- */
-struct mca_oob_base_exception_handler_t {
-  opal_list_item_t super;
-  mca_oob_base_exception_fn_t cbfunc;
-};
-
-/**
- * Convenience Typedef
- */
-typedef struct mca_oob_base_exception_handler_t mca_oob_base_exception_handler_t;
-
-/**
- * declare the association structure as a class
- */
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(mca_oob_base_exception_handler_t);
-
-
-/*
- * Global functions for MCA overall collective open and close
- */
-ORTE_DECLSPEC int mca_oob_base_open(void);
-ORTE_DECLSPEC int mca_oob_base_init(void);
-ORTE_DECLSPEC int mca_oob_base_module_init(void);
-ORTE_DECLSPEC int mca_oob_base_close(void);
-
-
-/*
- * Global struct holding the selected module's function pointers
- */
-ORTE_DECLSPEC extern int mca_oob_base_output;
-extern char* mca_oob_base_include;
-extern char* mca_oob_base_exclude;
-ORTE_DECLSPEC extern opal_list_t mca_oob_base_components;
-ORTE_DECLSPEC extern opal_list_t mca_oob_base_modules;
-ORTE_DECLSPEC extern opal_list_t mca_oob_base_exception_handlers;
-
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 #endif

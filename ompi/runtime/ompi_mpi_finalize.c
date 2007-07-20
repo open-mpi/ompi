@@ -51,6 +51,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/smr/smr.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/runtime/runtime.h"
 
 #include "mpi.h"
@@ -157,7 +158,7 @@ int ompi_mpi_finalize(void)
     /*
      * Wait for everyone to get here
      */
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast_gate(orte_gpr.deliver_notify_msg))) {
+    if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast_gate(orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -311,7 +312,7 @@ int ompi_mpi_finalize(void)
      * the RTE while the smr is trying to do the update - which causes
      * an ugly race condition
      */
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast_gate(orte_gpr.deliver_notify_msg))) {
+    if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast_gate(orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }

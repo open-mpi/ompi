@@ -29,7 +29,7 @@
 
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/gpr/gpr_types.h"
-#include "orte/mca/rml/rml_types.h"
+#include "orte/mca/rml/rml.h"
 
 
 /*

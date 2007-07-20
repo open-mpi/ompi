@@ -91,7 +91,7 @@ int orte_pls_proxy_launch(orte_jobid_t job)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (0 > orte_rml.recv_buffer(orte_pls_proxy_replica, answer, ORTE_RML_TAG_PLS)) {
+    if (0 > orte_rml.recv_buffer(orte_pls_proxy_replica, answer, ORTE_RML_TAG_PLS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;
@@ -178,7 +178,7 @@ int orte_pls_proxy_terminate_job(orte_jobid_t job, struct timeval *timeout, opal
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_pls_proxy_replica, answer, ORTE_RML_TAG_PLS)) {
+    if (0 > orte_rml.recv_buffer(orte_pls_proxy_replica, answer, ORTE_RML_TAG_PLS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;
@@ -259,7 +259,7 @@ int orte_pls_proxy_terminate_orteds(struct timeval *timeout, opal_list_t *attrs)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_pls_proxy_replica, answer, ORTE_RML_TAG_PLS)) {
+    if (0 > orte_rml.recv_buffer(orte_pls_proxy_replica, answer, ORTE_RML_TAG_PLS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;
@@ -337,7 +337,7 @@ int orte_pls_proxy_signal_job(orte_jobid_t job, int32_t signal, opal_list_t *att
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_pls_proxy_replica, answer, ORTE_RML_TAG_PLS)) {
+    if (0 > orte_rml.recv_buffer(orte_pls_proxy_replica, answer, ORTE_RML_TAG_PLS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;
@@ -404,7 +404,7 @@ int orte_pls_proxy_terminate_proc(const orte_process_name_t* name)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_pls_proxy_replica, answer, ORTE_RML_TAG_PLS)) {
+    if (0 > orte_rml.recv_buffer(orte_pls_proxy_replica, answer, ORTE_RML_TAG_PLS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;
@@ -476,7 +476,7 @@ int orte_pls_proxy_signal_proc(const orte_process_name_t* name, int32_t signal)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_pls_proxy_replica, answer, ORTE_RML_TAG_PLS)) {
+    if (0 > orte_rml.recv_buffer(orte_pls_proxy_replica, answer, ORTE_RML_TAG_PLS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;

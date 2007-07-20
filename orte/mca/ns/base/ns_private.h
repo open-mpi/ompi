@@ -78,7 +78,7 @@ typedef uint8_t orte_ns_cmd_flag_t;
 #define ORTE_NS_ASSIGN_OOB_TAG_CMD      (int8_t) 11
 #define ORTE_NS_GET_PEERS_CMD           (int8_t) 12
 #define ORTE_NS_DEFINE_DATA_TYPE_CMD    (int8_t) 13
-#define ORTE_NS_CREATE_MY_NAME_CMD      (int8_t) 14
+
 #define ORTE_NS_DUMP_CELLS_CMD          (int8_t) 15
 #define ORTE_NS_DUMP_JOBIDS_CMD         (int8_t) 16
 #define ORTE_NS_DUMP_TAGS_CMD           (int8_t) 17

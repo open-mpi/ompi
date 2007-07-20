@@ -15,24 +15,142 @@
  * 
  * $HEADER$
  */
-/**
- * @file
- */
-#ifndef MCA_RML_OOB_H
-#define MCA_RML_OOB_H
 
+#ifndef MCA_RML_OOB_RML_OOB_H
+#define MCA_RML_OOB_RML_OOB_H
+
+#include "opal/threads/condition.h"
+#include "opal/threads/mutex.h"
 #include "orte/mca/rml/rml.h"
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+#include "orte/mca/oob/oob.h"
+#include "orte/dss/dss_types.h"
+
+BEGIN_C_DECLS
+
+struct orte_rml_oob_module_t {
+    struct orte_rml_module_t super;
+    mca_oob_t               *active_oob;
+    opal_list_t              exceptions;
+    opal_mutex_t             exceptions_lock;
+};
+typedef struct orte_rml_oob_module_t orte_rml_oob_module_t;
 
 ORTE_MODULE_DECLSPEC extern orte_rml_component_t mca_rml_oob_component;
-extern orte_rml_module_t orte_rml_oob_module;
+extern orte_rml_oob_module_t orte_rml_oob_module;
 
+
+typedef enum {
+    ORTE_RML_BLOCKING_SEND,
+    ORTE_RML_NONBLOCKING_IOV_SEND,
+    ORTE_RML_NONBLOCKING_BUFFER_SEND,
+    ORTE_RML_BLOCKING_RECV,
+    ORTE_RML_NONBLOCKING_IOV_RECV,
+    ORTE_RML_NONBLOCKING_BUFFER_RECV
+} orte_rml_oob_msg_type_t;
+
+struct orte_rml_oob_msg_header_t {
+    orte_process_name_t origin;
+    orte_process_name_t destination;
+    int tag;
+};
+typedef struct orte_rml_oob_msg_header_t orte_rml_oob_msg_header_t;
+
+
+struct orte_rml_oob_msg_t {
+    opal_object_t             super;
+
+    opal_mutex_t                      msg_lock;
+    opal_condition_t                  msg_cond;
+
+    orte_rml_oob_msg_type_t           msg_type;
+    int                               msg_status;
+    volatile bool                     msg_complete;
+    bool                              msg_persistent;
+
+    union {
+        orte_rml_callback_fn_t        iov;
+        orte_rml_buffer_callback_fn_t buffer;
+    }                                 msg_cbfunc;
+    void                             *msg_cbdata;
+
+    struct iovec                     *msg_data;
+
+    /** buffer for non-blocking buffer sends */
+    orte_buffer_t                     msg_recv_buffer;
+    /** pointer to user buffer for buffered sends */
+    orte_buffer_t                    *user_buffer;
+  
+    orte_rml_oob_msg_header_t         msg_header;  
+};
+typedef struct orte_rml_oob_msg_t orte_rml_oob_msg_t;
+OBJ_CLASS_DECLARATION(orte_rml_oob_msg_t);
+
+
+int orte_rml_oob_init(void);
+int orte_rml_oob_fini(void);
 int orte_rml_oob_ft_event(int state);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+int orte_rml_oob_send(orte_process_name_t* peer,
+                      struct iovec *msg,
+                      int count,
+                      int tag,
+                      int flags);
+int orte_rml_oob_send_nb(orte_process_name_t* peer,
+                         struct iovec* msg,
+                         int count,
+                         orte_rml_tag_t tag,
+                         int flags,
+                         orte_rml_callback_fn_t cbfunc,
+                         void* cbdata);
+int orte_rml_oob_send_buffer(orte_process_name_t* peer,
+                             orte_buffer_t* buffer,
+                             orte_rml_tag_t tag,
+                             int flags);
+
+int orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
+                                orte_buffer_t* buffer,
+                                orte_rml_tag_t tag,
+                                int flags,
+                                orte_rml_buffer_callback_fn_t cbfunc,
+                                void* cbdata);
+
+int orte_rml_oob_recv(orte_process_name_t* peer,
+                      struct iovec *msg,
+                      int count,
+                      orte_rml_tag_t tag,
+                      int flags);
+int orte_rml_oob_recv_nb(orte_process_name_t* peer,
+                         struct iovec* msg,
+                         int count,
+                         orte_rml_tag_t tag,
+                         int flags,
+                         orte_rml_callback_fn_t cbfunc,
+                         void* cbdata);
+int orte_rml_oob_recv_buffer(orte_process_name_t* peer,
+                             orte_buffer_t *buf,
+                             orte_rml_tag_t tag,
+                             int flags);
+int orte_rml_oob_recv_buffer_nb(orte_process_name_t* peer,
+                                orte_rml_tag_t tag,
+                                int flags,
+                                orte_rml_buffer_callback_fn_t cbfunc,
+                                void* cbdata);
+int orte_rml_oob_recv_cancel(orte_process_name_t* peer, 
+                                orte_rml_tag_t tag);
+
+int orte_rml_oob_ping(const char* uri, 
+                      const struct timeval* tv);
+
+char* orte_rml_oob_get_uri(void);
+int orte_rml_oob_set_uri(const char*);
+int orte_rml_oob_get_new_name(orte_process_name_t *name);
+
+int orte_rml_oob_add_exception(orte_rml_exception_callback_t cbfunc);
+int orte_rml_oob_del_exception(orte_rml_exception_callback_t cbfunc);
+void orte_rml_oob_exception_callback(const orte_process_name_t *peer,
+                                    orte_rml_exception_t exception);
+
+
+END_C_DECLS
 
 #endif

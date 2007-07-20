@@ -40,40 +40,56 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/runtime/params.h"
 
-#include "orte/mca/oob/oob.h"
-#include "orte/mca/oob/base/base.h"
+#include "grpcomm_basic.h"
 
+/* API functions */
+static int xcast_nb(orte_jobid_t job,
+                    orte_buffer_t *buffer,
+                    orte_rml_tag_t tag);
+
+static int xcast(orte_jobid_t job,
+                 orte_buffer_t *buffer,
+                 orte_rml_tag_t tag);
+
+static int xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc);
+
+orte_grpcomm_base_module_t orte_grpcomm_basic_module = {
+    xcast,
+    xcast_nb,
+    xcast_gate
+};
 
 /* Local functions */
-static int mca_oob_xcast_binomial_tree(orte_jobid_t job,
-                                       orte_buffer_t *buffer,
-                                       orte_rml_tag_t tag);
+static int xcast_binomial_tree(orte_jobid_t job,
+                               orte_buffer_t *buffer,
+                               orte_rml_tag_t tag);
 
-static int mca_oob_xcast_linear(orte_jobid_t job,
-                                orte_buffer_t *buffer,
-                                orte_rml_tag_t tag);
+static int xcast_linear(orte_jobid_t job,
+                        orte_buffer_t *buffer,
+                        orte_rml_tag_t tag);
 
-static int mca_oob_xcast_direct(orte_jobid_t job,
-                                orte_buffer_t *buffer,
-                                orte_rml_tag_t tag);
+static int xcast_direct(orte_jobid_t job,
+                        orte_buffer_t *buffer,
+                        orte_rml_tag_t tag);
 
 /* define a callback function for use by the blocking version
  * of xcast so we can "hold" the caller here until all non-blocking
  * sends have completed
  */
-static void mca_oob_xcast_send_cb(int status,
-                                  orte_process_name_t* peer,
-                                  orte_buffer_t* buffer,
-                                  int tag,
-                                  void* cbdata)
+static void xcast_send_cb(int status,
+                          orte_process_name_t* peer,
+                          orte_buffer_t* buffer,
+                          orte_rml_tag_t tag,
+                          void* cbdata)
 {
-    OPAL_THREAD_LOCK(&orte_oob_xcast_mutex);
+    OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
     
-    orte_oob_xcast_num_active--;
-    if (orte_oob_xcast_num_active == 0) {
-        opal_condition_signal(&orte_oob_xcast_cond);
+    orte_grpcomm_basic.num_active--;
+    if (orte_grpcomm_basic.num_active <= 0) {
+        orte_grpcomm_basic.num_active = 0; /* just to be safe */
+        opal_condition_signal(&orte_grpcomm_basic.cond);
     }
-    OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
+    OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
     return;
 }
 
@@ -84,13 +100,15 @@ static void mca_oob_xcast_send_cb(int status,
  */
 
 /* Non-blocking version */
-int mca_oob_xcast_nb(orte_jobid_t job,
-                     orte_buffer_t *buffer,
-                     orte_rml_tag_t tag)
+static int xcast_nb(orte_jobid_t job,
+                    orte_buffer_t *buffer,
+                    orte_rml_tag_t tag)
 {
     int rc = ORTE_SUCCESS;
     struct timeval start, stop;
     orte_vpid_t num_daemons;
+    
+    opal_output(orte_grpcomm_basic.output, "oob_xcast_nb: sent to job %ld tag %ld", (long)job, (long)tag);
     
     /* if there is no message to send, then just return ok */
     if (NULL == buffer) {
@@ -109,8 +127,9 @@ int mca_oob_xcast_nb(orte_jobid_t job,
         return rc;
     }
     
-    opal_output(mca_oob_base_output, "oob_xcast_nb: num_daemons %ld linear xover: %ld binomial xover: %ld",
-                (long)num_daemons, (long)orte_oob_xcast_linear_xover, (long)orte_oob_xcast_binomial_xover);
+    opal_output(orte_grpcomm_basic.output, "oob_xcast_nb: num_daemons %ld linear xover: %ld binomial xover: %ld",
+                (long)num_daemons, (long)orte_grpcomm_basic.xcast_linear_xover,
+                (long)orte_grpcomm_basic.xcast_binomial_xover);
     
     if (num_daemons < 2) {
         /* if there is only one daemon in the system, then we must
@@ -126,7 +145,7 @@ int mca_oob_xcast_nb(orte_jobid_t job,
          * use-case behavior MUST always be retained or else
          * singletons and HNP startup will fail!
          */
-        rc = mca_oob_xcast_direct(job, buffer, tag);
+        rc = xcast_direct(job, buffer, tag);
         goto DONE;
     }
     
@@ -136,12 +155,12 @@ int mca_oob_xcast_nb(orte_jobid_t job,
      * they wish via MCA params
      */
     
-    if (num_daemons < orte_oob_xcast_linear_xover) {
-        rc = mca_oob_xcast_direct(job, buffer, tag);
-    } else if (num_daemons < orte_oob_xcast_binomial_xover) {
-        rc = mca_oob_xcast_linear(job, buffer, tag);
+    if (num_daemons < orte_grpcomm_basic.xcast_linear_xover) {
+        rc = xcast_direct(job, buffer, tag);
+    } else if (num_daemons < orte_grpcomm_basic.xcast_binomial_xover) {
+        rc = xcast_linear(job, buffer, tag);
     } else {
-        rc = mca_oob_xcast_binomial_tree(job, buffer, tag);
+        rc = xcast_binomial_tree(job, buffer, tag);
     }
     
 DONE:
@@ -156,13 +175,15 @@ DONE:
 }
 
 /* Blocking version */
-int mca_oob_xcast(orte_jobid_t job,
-                  orte_buffer_t *buffer,
-                  orte_rml_tag_t tag)
+static int xcast(orte_jobid_t job,
+                 orte_buffer_t *buffer,
+                 orte_rml_tag_t tag)
 {
     int rc = ORTE_SUCCESS;
     struct timeval start, stop;
     orte_vpid_t num_daemons;
+    
+    opal_output(orte_grpcomm_basic.output, "oob_xcast: sent to job %ld tag %ld", (long)job, (long)tag);
     
     /* if there is no message to send, then just return ok */
     if (NULL == buffer) {
@@ -181,8 +202,9 @@ int mca_oob_xcast(orte_jobid_t job,
         return rc;
     }
     
-    opal_output(mca_oob_base_output, "oob_xcast: num_daemons %ld linear xover: %ld binomial xover: %ld",
-                (long)num_daemons, (long)orte_oob_xcast_linear_xover, (long)orte_oob_xcast_binomial_xover);
+    opal_output(orte_grpcomm_basic.output, "oob_xcast: num_daemons %ld linear xover: %ld binomial xover: %ld",
+                (long)num_daemons, (long)orte_grpcomm_basic.xcast_linear_xover,
+                (long)orte_grpcomm_basic.xcast_binomial_xover);
 
     if (num_daemons < 2) {
         /* if there is only one daemon in the system, then we must
@@ -198,7 +220,7 @@ int mca_oob_xcast(orte_jobid_t job,
          * use-case behavior MUST always be retained or else
          * singletons and HNP startup will fail!
          */
-        rc = mca_oob_xcast_direct(job, buffer, tag);
+        rc = xcast_direct(job, buffer, tag);
         goto DONE;
     }
     
@@ -208,21 +230,21 @@ int mca_oob_xcast(orte_jobid_t job,
      * they wish via MCA params
      */
     
-    if (num_daemons < orte_oob_xcast_linear_xover) {
-        rc = mca_oob_xcast_direct(job, buffer, tag);
-    } else if (num_daemons < orte_oob_xcast_binomial_xover) {
-        rc = mca_oob_xcast_linear(job, buffer, tag);
+    if (num_daemons < orte_grpcomm_basic.xcast_linear_xover) {
+        rc = xcast_direct(job, buffer, tag);
+    } else if (num_daemons < orte_grpcomm_basic.xcast_binomial_xover) {
+        rc = xcast_linear(job, buffer, tag);
     } else {
-        rc = mca_oob_xcast_binomial_tree(job, buffer, tag);
+        rc = xcast_binomial_tree(job, buffer, tag);
     }
     
 DONE:
     /* now go to sleep until woken up */
-    OPAL_THREAD_LOCK(&orte_oob_xcast_mutex);
-    if (orte_oob_xcast_num_active > 0) {
-        opal_condition_wait(&orte_oob_xcast_cond, &orte_oob_xcast_mutex);
+    OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
+    if (orte_grpcomm_basic.num_active > 0) {
+        opal_condition_wait(&orte_grpcomm_basic.cond, &orte_grpcomm_basic.mutex);
     }
-    OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
+    OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
     
     if (orte_timing) {
         gettimeofday(&stop, NULL);
@@ -233,9 +255,9 @@ DONE:
     return rc;
 }
 
-static int mca_oob_xcast_binomial_tree(orte_jobid_t job,
-                                       orte_buffer_t *buffer,
-                                       orte_rml_tag_t tag)
+static int xcast_binomial_tree(orte_jobid_t job,
+                               orte_buffer_t *buffer,
+                               orte_rml_tag_t tag)
 {
     orte_daemon_cmd_flag_t command, mode;
     orte_std_cntr_t i;
@@ -245,9 +267,8 @@ static int mca_oob_xcast_binomial_tree(orte_jobid_t job,
     orte_buffer_t *buf;
     orte_vpid_t num_daemons;
     int bitmap;
-    orte_std_cntr_t binomial_xcast_num_active;
 
-    opal_output(mca_oob_base_output, "oob_xcast_mode: binomial");
+    opal_output(orte_grpcomm_basic.output, "oob_xcast_mode: binomial");
 
     /* this is the HNP end, so it starts the procedure. Since the HNP is always the
      * vpid=0 at this time, we take advantage of that fact to figure out who we
@@ -335,29 +356,23 @@ static int mca_oob_xcast_binomial_tree(orte_jobid_t job,
      * we would get the chance to increment the num_active. This causes us
      * to not correctly wakeup and reset the xcast_in_progress flag
      */
-    OPAL_THREAD_LOCK(&orte_oob_xcast_mutex);
+    OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
     /* compute the number of sends we are going to do - it would be nice
      * to have a simple algo to do this, but for now just brute force
      * is fine
      */
-    binomial_xcast_num_active = 0;
     for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
         peer = rank | mask;
         if (peer < size) {            
-            ++binomial_xcast_num_active;
+            ++orte_grpcomm_basic.num_active;
         }
     }
-    if (binomial_xcast_num_active == 0) {
-        /* if we aren't going to send anything at all, we
-         * need to reset the xcast_in_progress flag so
-         * we don't block the entire system and return
-         */
-        OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
+    if (orte_grpcomm_basic.num_active == 0) {
+        OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
         rc = ORTE_SUCCESS;
         goto CLEANUP;
     }
-    orte_oob_xcast_num_active += binomial_xcast_num_active;
-    OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
+    OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
 
     target.cellid = ORTE_PROC_MY_NAME->cellid;
     target.jobid = 0;
@@ -365,21 +380,21 @@ static int mca_oob_xcast_binomial_tree(orte_jobid_t job,
         peer = rank | mask;
         if (peer < size) {
             target.vpid = (orte_vpid_t)peer;
-            opal_output(mca_oob_base_output, "[%ld,%ld,%ld] xcast to [%ld,%ld,%ld]", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), ORTE_NAME_ARGS(&target));
-            if (0 > (rc = mca_oob_send_packed_nb(&target, buf, ORTE_RML_TAG_ORTED_ROUTED,
-                                                 0, mca_oob_xcast_send_cb, NULL))) {
+            opal_output(orte_grpcomm_basic.output, "[%ld,%ld,%ld] xcast to [%ld,%ld,%ld]", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), ORTE_NAME_ARGS(&target));
+            if (0 > (rc = orte_rml.send_buffer_nb(&target, buf, ORTE_RML_TAG_ORTED_ROUTED,
+                                                  0, xcast_send_cb, NULL))) {
                 if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
                     ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                     rc = ORTE_ERR_COMM_FAILURE;
-                    OPAL_THREAD_LOCK(&orte_oob_xcast_mutex);
-                    orte_oob_xcast_num_active -= (num_daemons-i);
-                    OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
+                    OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
+                    orte_grpcomm_basic.num_active -= (num_daemons-i);
+                    OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
                     goto CLEANUP;
                 }
                 /* decrement the number we are waiting to see */
-                OPAL_THREAD_LOCK(&orte_oob_xcast_mutex);
-                orte_oob_xcast_num_active--;
-                OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
+                OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
+                orte_grpcomm_basic.num_active--;
+                OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
             }
         }
     }
@@ -390,18 +405,17 @@ CLEANUP:
     return rc;
 }
 
-static int mca_oob_xcast_linear(orte_jobid_t job,
-                                orte_buffer_t *buffer,
-                                orte_rml_tag_t tag)
+static int xcast_linear(orte_jobid_t job,
+                        orte_buffer_t *buffer,
+                        orte_rml_tag_t tag)
 {
     int rc;
     orte_buffer_t *buf;
     orte_daemon_cmd_flag_t command, mode=ORTE_DAEMON_ROUTE_NONE;
     orte_vpid_t i, range;
     orte_process_name_t dummy;
-    orte_std_cntr_t linear_xcast_num_active;
     
-    opal_output(mca_oob_base_output, "oob_xcast_mode: linear");
+    opal_output(orte_grpcomm_basic.output, "oob_xcast_mode: linear");
 
     /* since we have to pack some additional info into the buffer to be
      * sent to the daemons, we create a new buffer into which we will
@@ -464,8 +478,8 @@ static int mca_oob_xcast_linear(orte_jobid_t job,
      * we would get the chance to increment the num_active. This causes us
      * to not correctly wakeup and reset the xcast_in_progress flag
      */
-    OPAL_THREAD_LOCK(&orte_oob_xcast_mutex);
-    linear_xcast_num_active = range;
+    OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
+    orte_grpcomm_basic.num_active += range;
     if (orte_process_info.daemon ||
         orte_process_info.seed ||
         orte_process_info.singleton) {
@@ -473,19 +487,14 @@ static int mca_oob_xcast_linear(orte_jobid_t job,
          * so we need to adjust the number of sends
          * we are expecting to complete
          */
-        linear_xcast_num_active--;
-        if (linear_xcast_num_active <= 0) {
-            /* if we aren't going to send anything at all, we
-             * need to reset the xcast_in_progress flag so
-             * we don't block the entire system and return
-             */
-            OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
+        orte_grpcomm_basic.num_active--;
+        if (orte_grpcomm_basic.num_active <= 0) {
+            OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
             rc = ORTE_SUCCESS;
             goto CLEANUP;
         }
     }
-    orte_oob_xcast_num_active += linear_xcast_num_active;
-    OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
+    OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
     
     /* send the message to each daemon as fast as we can */
     dummy.cellid = ORTE_PROC_MY_NAME->cellid;
@@ -493,20 +502,20 @@ static int mca_oob_xcast_linear(orte_jobid_t job,
     for (i=0; i < range; i++) {            
         if (ORTE_PROC_MY_NAME->vpid != i) { /* don't send to myself */
             dummy.vpid = i;
-            if (0 > (rc = mca_oob_send_packed_nb(&dummy, buf, ORTE_RML_TAG_ORTED_ROUTED,
-                                                 0, mca_oob_xcast_send_cb, NULL))) {
+            if (0 > (rc = orte_rml.send_buffer_nb(&dummy, buf, ORTE_RML_TAG_ORTED_ROUTED,
+                                                  0, xcast_send_cb, NULL))) {
                 if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
                     ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                     rc = ORTE_ERR_COMM_FAILURE;
-                    OPAL_THREAD_LOCK(&orte_oob_xcast_mutex);
-                    orte_oob_xcast_num_active -= (range-i);
-                    OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
+                    OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
+                    orte_grpcomm_basic.num_active -= (range-i);
+                    OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
                     goto CLEANUP;
                 }
                 /* decrement the number we are waiting to see */
-                OPAL_THREAD_LOCK(&orte_oob_xcast_mutex);
-                orte_oob_xcast_num_active--;
-                OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
+                OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
+                orte_grpcomm_basic.num_active--;
+                OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
             }
         }
     }
@@ -518,9 +527,9 @@ CLEANUP:
     return rc;    
 }
 
-static int mca_oob_xcast_direct(orte_jobid_t job,
-                                orte_buffer_t *buffer,
-                                orte_rml_tag_t tag)
+static int xcast_direct(orte_jobid_t job,
+                        orte_buffer_t *buffer,
+                        orte_rml_tag_t tag)
 {
     orte_std_cntr_t i;
     int rc;
@@ -529,7 +538,7 @@ static int mca_oob_xcast_direct(orte_jobid_t job,
     opal_list_t attrs;
     opal_list_item_t *item;
     
-    opal_output(mca_oob_base_output, "oob_xcast_mode: direct");
+    opal_output(orte_grpcomm_basic.output, "oob_xcast_mode: direct");
 
     /* need to get the job peers so we know who to send the message to */
     OBJ_CONSTRUCT(&attrs, opal_list_t);
@@ -553,25 +562,26 @@ static int mca_oob_xcast_direct(orte_jobid_t job,
      * we would get the chance to increment the num_active. This causes us
      * to not correctly wakeup and reset the xcast_in_progress flag
      */
-    OPAL_THREAD_LOCK(&orte_oob_xcast_mutex);
-    orte_oob_xcast_num_active += n;
-    OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
+    OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
+    orte_grpcomm_basic.num_active += n;
+    OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
 
+    opal_output(orte_grpcomm_basic.output, "oob_xcast_direct: num_active now %ld", (long)orte_grpcomm_basic.num_active);
+    
     for(i=0; i<n; i++) {
-        opal_output(mca_oob_base_output, "oob_xcast: sending to [%ld,%ld,%ld]", ORTE_NAME_ARGS(peers+i));
-        if (0 > (rc = mca_oob_send_packed_nb(peers+i, buffer, tag, 0, mca_oob_xcast_send_cb, NULL))) {
+        if (0 > (rc = orte_rml.send_buffer_nb(peers+i, buffer, tag, 0, xcast_send_cb, NULL))) {
             if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                 rc = ORTE_ERR_COMM_FAILURE;
-                OPAL_THREAD_LOCK(&orte_oob_xcast_mutex);
-                orte_oob_xcast_num_active -= (n-i);
-                OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
+                OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
+                orte_grpcomm_basic.num_active -= (n-i);
+                OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
                 goto CLEANUP;
             }
             /* decrement the number we are waiting to see */
-            OPAL_THREAD_LOCK(&orte_oob_xcast_mutex);
-            orte_oob_xcast_num_active--;
-            OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
+            OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
+            orte_grpcomm_basic.num_active--;
+            OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
         }          
     }
     rc = ORTE_SUCCESS;
@@ -582,7 +592,7 @@ CLEANUP:
     return rc;
 }
 
-int mca_oob_xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc)
+static int xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc)
 {
     int rc;
     orte_std_cntr_t i;
@@ -590,7 +600,7 @@ int mca_oob_xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc)
     orte_gpr_notify_message_t *mesg;
     
     OBJ_CONSTRUCT(&rbuf, orte_buffer_t);
-    rc = mca_oob_recv_packed(ORTE_NAME_WILDCARD, &rbuf, ORTE_RML_TAG_XCAST_BARRIER);
+    rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &rbuf, ORTE_RML_TAG_XCAST_BARRIER, 0);
     if(rc < 0) {
         OBJ_DESTRUCT(&rbuf);
         return rc;

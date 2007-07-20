@@ -38,6 +38,7 @@
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/base.h"
+#include "orte/mca/rml/base/rml_contact.h"
 
 static bool recv_issued=false;
 
@@ -50,7 +51,7 @@ int orte_rml_base_comm_start(void)
     }
     
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_RML,
+                                                      ORTE_RML_TAG_RML_INFO_UPDATE,
                                                       ORTE_RML_PERSISTENT,
                                                       orte_rml_base_recv,
                                                       NULL))) {
@@ -70,7 +71,7 @@ int orte_rml_base_comm_stop(void)
         return ORTE_SUCCESS;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_RML))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_RML_INFO_UPDATE))) {
         ORTE_ERROR_LOG(rc);
     }
     recv_issued = false;
@@ -107,7 +108,7 @@ void orte_rml_base_recv(int status, orte_process_name_t* sender,
                 ORTE_ERROR_LOG(rc);
                 return;
             }
-            orte_rml.update_contact_info(data, NULL);
+            orte_rml_base_contact_info_notify(data, NULL);
             break;
             
         default:

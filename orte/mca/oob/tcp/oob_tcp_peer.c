@@ -99,11 +99,7 @@ static void mca_oob_tcp_peer_construct(mca_oob_tcp_peer_t* peer)
     memset(&peer->peer_send_event, 0, sizeof(peer->peer_send_event));
     memset(&peer->peer_recv_event, 0, sizeof(peer->peer_recv_event));
     peer->peer_sd = -1;
-#if OPAL_WANT_IPV6
-    memset(&peer->peer6_recv_event, 0, sizeof(peer->peer6_recv_event));
-    memset(&peer->peer6_send_event, 0, sizeof(peer->peer6_send_event));
-    peer->peer6_sd = -1;
-#endif
+    peer->peer_current_af = AF_UNSPEC;
     memset(&peer->peer_timer_event, 0, sizeof(peer->peer_timer_event));
     opal_evtimer_set(&peer->peer_timer_event, mca_oob_tcp_peer_timer_handler, peer);
 }
@@ -130,10 +126,7 @@ static int mca_oob_tcp_peer_event_init(mca_oob_tcp_peer_t* peer)
 {
     memset(&peer->peer_recv_event, 0, sizeof(peer->peer_recv_event));
     memset(&peer->peer_send_event, 0, sizeof(peer->peer_send_event));
-#if OPAL_WANT_IPV6
-    memset(&peer->peer6_recv_event, 0, sizeof(peer->peer6_recv_event));
-    memset(&peer->peer6_send_event, 0, sizeof(peer->peer6_send_event));
-#endif
+
     if (peer->peer_sd >= 0) {
         opal_event_set(
                        &peer->peer_recv_event,
@@ -148,23 +141,6 @@ static int mca_oob_tcp_peer_event_init(mca_oob_tcp_peer_t* peer)
                        mca_oob_tcp_peer_send_handler,
                        peer);
     }
-
-#if OPAL_WANT_IPV6
-    if (peer->peer6_sd >= 0) {
-        opal_event_set(
-                       &peer->peer6_recv_event,
-                       peer->peer6_sd,
-                       OPAL_EV_READ|OPAL_EV_PERSIST,
-                       mca_oob_tcp_peer_recv_handler,
-                       peer);
-        opal_event_set(
-                       &peer->peer6_send_event,
-                       peer->peer6_sd,
-                       OPAL_EV_WRITE|OPAL_EV_PERSIST,
-                       mca_oob_tcp_peer_send_handler,
-                       peer);
-    }
-#endif
 
     return ORTE_SUCCESS;
 }
@@ -249,9 +225,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
     peer->peer_name = *name;
     peer->peer_addr = NULL;
     peer->peer_sd = -1;
-#if OPAL_WANT_IPV6
-    peer->peer6_sd = -1;
-#endif
+    peer->peer_current_af = AF_UNSPEC;
     peer->peer_state = MCA_OOB_TCP_CLOSED;
     peer->peer_recv_msg = NULL;
     peer->peer_send_msg = NULL;
@@ -294,24 +268,73 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
 }
 
 
+static int
+mca_oob_tcp_peer_create_socket(mca_oob_tcp_peer_t* peer,
+                               uint16_t af_family)
+{
+    int flags;
+
+    if (peer->peer_current_af == af_family && peer->peer_sd > 0) {
+        return ORTE_SUCCESS;
+    } else if (peer->peer_sd > 0) {
+        mca_oob_tcp_peer_shutdown(peer);
+    }
+
+    peer->peer_sd = socket(af_family, SOCK_STREAM, 0);
+    peer->peer_current_af = af_family;
+
+    if (peer->peer_sd < 0) {
+        opal_output(0, 
+            "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_create_socket: socket() failed: %s (%d)\n",
+            ORTE_NAME_ARGS(orte_process_info.my_name),
+            ORTE_NAME_ARGS(&(peer->peer_name)),
+            strerror(opal_socket_errno),
+            opal_socket_errno);
+        mca_oob_tcp_peer_shutdown(peer);
+        return ORTE_ERR_UNREACH;
+    }
+
+    /* setup socket options */
+    mca_oob_tcp_set_socket_options(peer->peer_sd);
+
+    /* setup event callbacks */
+    mca_oob_tcp_peer_event_init(peer);
+
+    /* setup the socket as non-blocking */
+    if (peer->peer_sd >= 0) {
+        if((flags = fcntl(peer->peer_sd, F_GETFL, 0)) < 0) {
+            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_connect: fcntl(F_GETFL) failed: %s (%d)\n", 
+                        ORTE_NAME_ARGS(orte_process_info.my_name),
+                        ORTE_NAME_ARGS(&(peer->peer_name)),
+                        strerror(opal_socket_errno),
+                        opal_socket_errno);
+        } else {
+            flags |= O_NONBLOCK;
+            if(fcntl(peer->peer_sd, F_SETFL, flags) < 0)
+                opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_connect: fcntl(F_SETFL) failed: %s (%d)\n", 
+                            ORTE_NAME_ARGS(orte_process_info.my_name),
+                            ORTE_NAME_ARGS(&(peer->peer_name)),
+                            strerror(opal_socket_errno),
+                            opal_socket_errno);
+        }
+    }
+
+    return ORTE_SUCCESS;
+}
+
+
 /*
  * Try connecting to a peer using all the addresses that peer exported.
  */
-
 static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
 {
-#if OPAL_WANT_IPV6
-    struct sockaddr_in6 inaddr;
-#else
-    struct sockaddr_in inaddr;
-#endif
+    struct sockaddr_storage inaddr;
     int rc;
-    int connect_sd = -1;
     opal_socklen_t addrlen = 0;
 
     do {
         /* pick an address in round-robin fashion from the list exported by the peer */
-        if(ORTE_SUCCESS != (rc = mca_oob_tcp_addr_get_next(peer->peer_addr, (struct sockaddr_storage*) &inaddr))) {
+        if(ORTE_SUCCESS != (rc = mca_oob_tcp_addr_get_next(peer->peer_addr, (struct sockaddr*) &inaddr))) {
             opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_try_connect: "
                         "mca_oob_tcp_addr_get_next failed with error=%d",
                         ORTE_NAME_ARGS(orte_process_info.my_name),
@@ -331,52 +354,24 @@ static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
                         opal_net_get_hostname((struct sockaddr*) &inaddr),
                         opal_net_get_port((struct sockaddr*) &inaddr));
         }
-        
-        /* start the connect - will likely fail with EINPROGRESS */
-#if OPAL_WANT_IPV6
-        /* select the right outgoing socket according to the
-           af_family information in inaddr
-        */
-        if (AF_INET6 == inaddr.sin6_family) {
-            /* if we couldn't initialize an IPv6 device, skip this
-               address */
-            if (peer->peer6_sd < 0) {
-                continue;
-            }
 
-            connect_sd = peer->peer6_sd;
-            addrlen = sizeof (struct sockaddr_in6);
+        rc = mca_oob_tcp_peer_create_socket(peer, inaddr.ss_family);
+        if (ORTE_SUCCESS != rc) {
+            struct timeval tv = { 1,0 };
+            opal_evtimer_add(&peer->peer_timer_event, &tv);
+            return rc;
         }
 
-        if (AF_INET == inaddr.sin6_family) {
-            connect_sd = peer->peer_sd;
-            addrlen = sizeof (struct sockaddr_in);
+        if (AF_INET == inaddr.ss_family) {
+            addrlen = sizeof(struct sockaddr_in);
+        } else if (AF_INET6 == inaddr.ss_family) {
+            addrlen = sizeof(struct sockaddr_in6);
         }
-#else
-        connect_sd = peer->peer_sd;
-        addrlen = sizeof (struct sockaddr_in);
-#endif
 
-        if(connect(connect_sd, (struct sockaddr*)&inaddr, addrlen) < 0) {
+        if (connect(peer->peer_sd, (struct sockaddr*)&inaddr, addrlen) < 0) {
             /* non-blocking so wait for completion */
             if(opal_socket_errno == EINPROGRESS || opal_socket_errno == EWOULDBLOCK) {
-#if OPAL_WANT_IPV6
-                /* I don't know what I'm doing here. Let's hope it results
-                   in the right callback. Bug, FIXME
-                */
-                if (AF_INET == inaddr.sin6_family) {
-                    opal_event_add (&peer->peer_send_event, 0);
-                    peer->current_af = AF_INET;
-                }
-
-                if (AF_INET6 == inaddr.sin6_family) {
-                    opal_event_add (&peer->peer6_send_event, 0);
-                    peer->current_af = AF_INET6;
-                }
-#else
                 opal_event_add(&peer->peer_send_event, 0);
-#endif
-
                 return ORTE_SUCCESS;
             }
 
@@ -392,19 +387,9 @@ static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
         }
         
         /* send our globally unique process identifier to the peer */
-        if((rc = mca_oob_tcp_peer_send_connect_ack(peer, connect_sd)) == ORTE_SUCCESS) {
+        if((rc = mca_oob_tcp_peer_send_connect_ack(peer, peer->peer_sd)) == ORTE_SUCCESS) {
             peer->peer_state = MCA_OOB_TCP_CONNECT_ACK;
-#if OPAL_WANT_IPV6
-            if (AF_INET == inaddr.sin6_family) {
-                opal_event_add (&peer->peer_recv_event, 0);
-            }
-
-            if (AF_INET6 == inaddr.sin6_family) {
-                opal_event_add (&peer->peer6_recv_event, 0);
-            }
-#else
             opal_event_add(&peer->peer_recv_event, 0);
-#endif
             return ORTE_SUCCESS;
         } else {
             opal_output(0, 
@@ -441,83 +426,14 @@ static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
 
 static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
 {
-    int flags;
-
     /* create socket */
     peer->peer_state = MCA_OOB_TCP_CONNECTING;
-    /* adi@2006-10-25: Former Bug. */
-    peer->peer_sd = socket(AF_INET, SOCK_STREAM, 0);
-#if OPAL_WANT_IPV6
-    peer->peer6_sd = socket(AF_INET6, SOCK_STREAM, 0);
-    if ((peer->peer_sd < 0) && (peer->peer6_sd < 0)) {
-#else
-    if (peer->peer_sd < 0) {
-#endif
-        struct timeval tv = { 1,0 };
-        opal_output(0, 
-            "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: socket() failed: %s (%d)\n",
-            ORTE_NAME_ARGS(orte_process_info.my_name),
-            ORTE_NAME_ARGS(&(peer->peer_name)),
-            strerror(opal_socket_errno),
-            opal_socket_errno);
-        mca_oob_tcp_peer_shutdown(peer);
-        opal_evtimer_add(&peer->peer_timer_event, &tv);
-        return ORTE_ERR_UNREACH;
-    }
 
-    /* setup socket options */
-    if (peer->peer_sd >= 0) {
-        mca_oob_tcp_set_socket_options(peer->peer_sd);
-    }
-#if OPAL_WANT_IPV6
-    if (peer->peer6_sd >= 0) {
-        mca_oob_tcp_set_socket_options(peer->peer6_sd);
-    }
-#endif
-
-    /* setup event callbacks */
-    mca_oob_tcp_peer_event_init(peer);
-
-    /* setup the socket as non-blocking */
-    if (peer->peer_sd >= 0) {
-        if((flags = fcntl(peer->peer_sd, F_GETFL, 0)) < 0) {
-            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_connect: fcntl(F_GETFL) failed: %s (%d)\n", 
-                        ORTE_NAME_ARGS(orte_process_info.my_name),
-                        ORTE_NAME_ARGS(&(peer->peer_name)),
-                        strerror(opal_socket_errno),
-                        opal_socket_errno);
-        } else {
-            flags |= O_NONBLOCK;
-            if(fcntl(peer->peer_sd, F_SETFL, flags) < 0)
-                opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_connect: fcntl(F_SETFL) failed: %s (%d)\n", 
-                            ORTE_NAME_ARGS(orte_process_info.my_name),
-                            ORTE_NAME_ARGS(&(peer->peer_name)),
-                            strerror(opal_socket_errno),
-                            opal_socket_errno);
-        }
-    }
-#if OPAL_WANT_IPV6
-    if (peer->peer6_sd >= 0) {
-        if((flags = fcntl(peer->peer6_sd, F_GETFL, 0)) < 0) {
-            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_connect: fcntl(F_GETFL) failed with errno=%d\n", 
-                        ORTE_NAME_ARGS(orte_process_info.my_name),
-                        ORTE_NAME_ARGS(&(peer->peer_name)),
-                        opal_socket_errno);
-        } else {
-            flags |= O_NONBLOCK;
-            if(fcntl(peer->peer6_sd, F_SETFL, flags) < 0)
-                opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_connect: fcntl(F_SETFL) failed with errno=%d\n", 
-                            ORTE_NAME_ARGS(orte_process_info.my_name),
-                            ORTE_NAME_ARGS(&(peer->peer_name)),
-                            opal_socket_errno);
-        }
-    }
-#endif
 
     /* 
-     * We should parse all the IP addresses exported by the peer and try to connect to each of them.
+     * We should parse all the IP addresses exported by the peer and
+     * try to connect to each of them.
      */
-
     return mca_oob_tcp_peer_try_connect(peer);
 }
 
@@ -533,18 +449,7 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer, int sd)
     opal_socklen_t so_length = sizeof(so_error);
 
     /* unregister from receiving event notifications */
-#if OPAL_WANT_IPV6
-    /* Bug, FIXME: I don't know what I'm doing */
-    if (sd == peer->peer_sd) {
-        opal_event_del (&peer->peer_send_event);
-    }
-
-    if (sd == peer->peer6_sd) {
-        opal_event_del (&peer->peer6_send_event);
-    }
-#else
     opal_event_del(&peer->peer_send_event);
-#endif
 
     /* check connect completion status */
     if(getsockopt(sd, SOL_SOCKET, SO_ERROR, (char *)&so_error, &so_length) < 0) {
@@ -558,18 +463,7 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer, int sd)
     }
 
     if(so_error == EINPROGRESS) {
-#if OPAL_WANT_IPV6
-        /* Bug, FIXME: I don't know what I'm doing here */
-        if (sd == peer->peer_sd) {
-            opal_event_add (&peer->peer_send_event, 0);
-        }
-
-        if (sd == peer->peer6_sd) {
-            opal_event_add (&peer->peer6_send_event, 0);
-        }
-#else
         opal_event_add(&peer->peer_send_event, 0);
-#endif
         return;
     } else if (so_error == ECONNREFUSED || so_error == ETIMEDOUT) {
         struct timeval tv = { 1,0 };
@@ -579,12 +473,12 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer, int sd)
             ORTE_NAME_ARGS(&(peer->peer_name)),
             strerror(so_error),
             so_error);
-    if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
-        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_complete_connect: "
-                    "sending ack, %d",
-                    ORTE_NAME_ARGS(orte_process_info.my_name),
-                    ORTE_NAME_ARGS(&(peer->peer_name)), so_error);
-    }
+        if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
+            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_complete_connect: "
+                        "sending ack, %d",
+                        ORTE_NAME_ARGS(orte_process_info.my_name),
+                        ORTE_NAME_ARGS(&(peer->peer_name)), so_error);
+        }
 
         mca_oob_tcp_peer_shutdown(peer);
         opal_evtimer_add(&peer->peer_timer_event, &tv);
@@ -597,20 +491,9 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer, int sd)
         return;
     }
 
-    if(mca_oob_tcp_peer_send_connect_ack(peer, sd) == ORTE_SUCCESS) {
+    if (mca_oob_tcp_peer_send_connect_ack(peer, sd) == ORTE_SUCCESS) {
         peer->peer_state = MCA_OOB_TCP_CONNECT_ACK;
-#if OPAL_WANT_IPV6
-        /* Bug, FIXME: I don't know what I'm doing... */
-        if (sd == peer->peer_sd) {
-            opal_event_add (&peer->peer_recv_event, 0);
-        }
-
-        if (sd == peer->peer6_sd) {
-            opal_event_add (&peer->peer6_recv_event, 0);
-        }
-#else
         opal_event_add(&peer->peer_recv_event, 0);
-#endif
     } else {
         opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_complete_connect: unable to send connect ack.",
             ORTE_NAME_ARGS(orte_process_info.my_name),
@@ -633,34 +516,6 @@ static void mca_oob_tcp_peer_connected(mca_oob_tcp_peer_t* peer, int sd)
             peer->peer_send_msg = (mca_oob_tcp_msg_t*)
                 opal_list_remove_first(&peer->peer_send_queue);
         }
-#if OPAL_WANT_IPV6
-        /* so we're connected. Let's close the other socket.
-           (some kind of magic --> might be a bug
-        */
-        if (sd == peer->peer_sd) {
-            /* we've got an IPv4 connect; gently borrowed from
-               mca_oob_tcp_peer_shutdown. Refactor? Bug, FIXME
-            */
-            if (peer->peer6_sd >= 0) {
-                opal_event_del(&peer->peer6_recv_event);
-                opal_event_del(&peer->peer6_send_event);
-                close(peer->peer6_sd);
-                peer->peer6_sd = -1;
-            }
-        } else {
-            if (sd == peer->peer6_sd) {
-                /* IPv6 connect successful, so let's close
-                   the IPv4 socket. Update the whole event structure.
-                */
-                opal_event_del(&peer->peer_recv_event);
-                opal_event_del(&peer->peer_send_event);
-                peer->peer_recv_event = peer->peer6_recv_event;
-                peer->peer_send_event = peer->peer6_send_event;
-                close(peer->peer_sd);
-                peer->peer_sd = sd;
-            }
-        }
-#endif
         opal_event_add(&peer->peer_send_event, 0);
     }
 }
@@ -680,17 +535,6 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
             peer->peer_sd,
             peer->peer_state);
     }
-
-#if OPAL_WANT_IPV6
-    if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
-        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_close(%p) sd6 %d state %d\n",
-            ORTE_NAME_ARGS(orte_process_info.my_name),
-            ORTE_NAME_ARGS(&(peer->peer_name)),
-            (void*)peer,
-            peer->peer6_sd,
-            peer->peer_state);
-    }
-#endif
 
     /* if we lose the connection to the seed - abort */
     if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &peer->peer_name, ORTE_PROC_MY_HNP)) {
@@ -744,16 +588,8 @@ void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer)
         opal_event_del(&peer->peer_send_event);
         CLOSE_THE_SOCKET(peer->peer_sd);
         peer->peer_sd = -1;
+        peer->peer_current_af = AF_UNSPEC;
     } 
-
-#if OPAL_WANT_IPV6
-    if (peer->peer6_sd >= 0) {
-        opal_event_del(&peer->peer6_recv_event);
-        opal_event_del(&peer->peer6_send_event);
-        CLOSE_THE_SOCKET(peer->peer6_sd);
-        peer->peer6_sd = -1;
-    } 
-#endif
       
     opal_event_del(&peer->peer_timer_event);
     peer->peer_state = MCA_OOB_TCP_CLOSED;
@@ -809,9 +645,6 @@ static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer, int sd)
                             strerror(opal_socket_errno));
             }
             opal_event_del(&peer->peer_recv_event);
-#if OPAL_WANT_IPV6
-            opal_event_del(&peer->peer6_recv_event);
-#endif
             mca_oob_tcp_peer_shutdown(peer);
             opal_evtimer_add(&peer->peer_timer_event, &tv);
             return ORTE_SUCCESS;
@@ -963,16 +796,7 @@ int mca_oob_tcp_peer_send_ident(mca_oob_tcp_peer_t* peer)
     hdr.msg_tag = 0;
     MCA_OOB_TCP_HDR_HTON(&hdr);
     if(mca_oob_tcp_peer_send_blocking(peer, peer->peer_sd, &hdr, sizeof(hdr)) != sizeof(hdr)) {
-#if OPAL_WANT_IPV6
-        if (-1 < peer->peer6_sd) {
-            if(mca_oob_tcp_peer_send_blocking(peer, peer->peer6_sd,
-                                  &hdr, sizeof(hdr)) != sizeof(hdr)) {
-                return ORTE_ERR_UNREACH;
-            }
-        }
-#else
         return ORTE_ERR_UNREACH;
-#endif
     }
     return ORTE_SUCCESS;
 }
@@ -1070,7 +894,8 @@ static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user)
 
             /* complete the current send */
             mca_oob_tcp_msg_t* msg = peer->peer_send_msg;
-            if(mca_oob_tcp_msg_send_handler(msg, peer)) {
+            if(ntohl(msg->msg_hdr.msg_type) == MCA_OOB_TCP_PING ||
+               mca_oob_tcp_msg_send_handler(msg, peer)) {
                 mca_oob_tcp_msg_complete(msg, &peer->peer_name);
             } else {
                 break;
@@ -1108,13 +933,8 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
     char dst[64];
     char buff[255];
     int sndbuf,rcvbuf,nodelay,flags;
-#if OPAL_WANT_IPV6
-    struct sockaddr_in6 inaddr;
-    opal_socklen_t addrlen = sizeof(struct sockaddr_in6);
-#else
-    struct sockaddr_in inaddr;
-    opal_socklen_t addrlen = sizeof(struct sockaddr_in);
-#endif
+    struct sockaddr_storage inaddr;
+    opal_socklen_t addrlen = sizeof(struct sockaddr_storage);
     opal_socklen_t optlen;
                                                                                                             
     getsockname(peer->peer_sd, (struct sockaddr*)&inaddr, &addrlen);
@@ -1207,11 +1027,6 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd)
         if (sd == peer->peer_sd) {
             opal_event_add(&peer->peer_recv_event, 0);
         }
-#if OPAL_WANT_IPV6
-        if (sd == peer->peer6_sd) {
-            opal_event_add(&peer->peer6_recv_event, 0);
-        }
-#endif
         if(mca_oob_tcp_component.tcp_debug > 0) {
             mca_oob_tcp_peer_dump(peer, "accepted");
         }

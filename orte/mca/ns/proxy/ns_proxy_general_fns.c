@@ -145,7 +145,7 @@ int orte_ns_proxy_get_peers(orte_process_name_t **procs,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
@@ -272,7 +272,7 @@ int orte_ns_proxy_assign_rml_tag(orte_rml_tag_t *tag,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
@@ -404,7 +404,7 @@ int orte_ns_proxy_define_data_type(const char *name,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
@@ -467,31 +467,13 @@ int orte_ns_proxy_define_data_type(const char *name,
  */
 int orte_ns_proxy_create_my_name(void)
 {
-    orte_buffer_t* cmd;
-    orte_ns_cmd_flag_t command;
-    int rc;
+    orte_process_name_t new_name;
+    int ret;
 
-    command = ORTE_NS_CREATE_MY_NAME_CMD;
-
-    cmd = OBJ_NEW(orte_buffer_t);
-    if (cmd == NULL) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+    ret = orte_rml.get_new_name(&new_name);
+    if (ORTE_SUCCESS == ret) {
+        memcpy(ORTE_PROC_MY_NAME, &new_name, sizeof(orte_process_name_t));
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &command, 1, ORTE_NS_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(cmd);
-        return rc;
-    }
-
-    if (0 > orte_rml.send_buffer(ORTE_NS_MY_REPLICA, cmd, ORTE_RML_TAG_NS, 0)) {
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        OBJ_RELEASE(cmd);
-        return ORTE_ERR_COMM_FAILURE;
-    }
-    OBJ_RELEASE(cmd);
-
-    return ORTE_SUCCESS;
+    return ret;
 }
-

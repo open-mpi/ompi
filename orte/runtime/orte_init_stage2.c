@@ -28,6 +28,7 @@
 #include "orte/runtime/params.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/base.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/iof/base/base.h"
@@ -51,7 +52,7 @@ int orte_init_stage2(char *trigger)
      * the embedded GPR actions can be "trapped" in a compound
      * command for later transmission to the HNP
      */
-    if (ORTE_SUCCESS != (ret = orte_rml.register_contact_info())) {
+    if (ORTE_SUCCESS != (ret = orte_rml_base_register_contact_info())) {
         ORTE_ERROR_LOG(ret);
         error_str = "orte_rml.register_contact_info";
         goto return_error;
@@ -62,7 +63,7 @@ int orte_init_stage2(char *trigger)
      * trigger fires
      */
     if (NULL != trigger) {
-        if (ORTE_SUCCESS != (ret = orte_rml.register_subscription(ORTE_PROC_MY_NAME->jobid, trigger))) {
+        if (ORTE_SUCCESS != (ret = orte_rml_base_register_subscription(ORTE_PROC_MY_NAME->jobid, trigger))) {
             ORTE_ERROR_LOG(ret);
             error_str = "orte_rml.register_subscription";
             goto return_error;

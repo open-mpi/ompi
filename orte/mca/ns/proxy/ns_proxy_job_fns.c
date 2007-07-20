@@ -80,7 +80,7 @@ int orte_ns_proxy_create_jobid(orte_jobid_t *job, opal_list_t *attrs)
         OBJ_RELEASE(answer);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;
@@ -157,7 +157,7 @@ int orte_ns_proxy_get_job_descendants(orte_jobid_t **descendants, orte_std_cntr_
         OBJ_RELEASE(answer);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;
@@ -253,7 +253,7 @@ int orte_ns_proxy_get_job_children(orte_jobid_t **descendants, orte_std_cntr_t *
         OBJ_RELEASE(answer);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;
@@ -346,7 +346,7 @@ int orte_ns_proxy_get_root_job(orte_jobid_t *root_job, orte_jobid_t job)
         OBJ_RELEASE(answer);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;
@@ -419,7 +419,7 @@ int orte_ns_proxy_get_parent_job(orte_jobid_t *parent, orte_jobid_t job)
         OBJ_RELEASE(answer);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;
@@ -495,7 +495,7 @@ int orte_ns_proxy_get_job_family(orte_jobid_t** family, orte_std_cntr_t *num_mem
         OBJ_RELEASE(answer);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;
@@ -596,7 +596,7 @@ int orte_ns_proxy_reserve_range(orte_jobid_t job, orte_vpid_t range, orte_vpid_t
        return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS, 0)) {
        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
        OBJ_RELEASE(answer);
        return ORTE_ERR_COMM_FAILURE;
@@ -664,7 +664,7 @@ int orte_ns_proxy_get_vpid_range(orte_jobid_t job, orte_vpid_t *range)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, answer, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;

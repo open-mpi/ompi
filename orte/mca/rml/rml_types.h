@@ -39,14 +39,19 @@
 #include "orte/orte_constants.h"
 #include "orte/util/proc_info.h"
 
+
+BEGIN_C_DECLS
+
+
+/* ******************************************************************** */
+
+
 /**
  * Constant tag values for well-known services
  */
 
-typedef uint32_t orte_rml_tag_t;
 #define ORTE_RML_TAG_T    ORTE_UINT32
-#define ORTE_RML_TAG_MAX UINT32_MAX
-
+#define ORTE_RML_TAG_MAX  UINT32_MAX
 
 #define ORTE_RML_TAG_NS                      1
 #define ORTE_RML_TAG_GPR                     2
@@ -67,16 +72,34 @@ typedef uint32_t orte_rml_tag_t;
 #define ORTE_RML_TAG_BPROC_ABORT            17
 #define ORTE_RML_TAG_SM_BACK_FILE_CREATED   18
 #define ORTE_RML_TAG_WIREUP                 19
-#define ORTE_RML_TAG_RML                    20
+#define ORTE_RML_TAG_RML_INFO_UPDATE        20
 #define ORTE_RML_TAG_ORTED_CALLBACK         21
 
 #define ORTE_RML_TAG_FILEM                  22
 #define ORTE_RML_TAG_CKPT                   23
+
+#define ORTE_RML_TAG_RML_ROUTE              24
+
 /* For CRCP Coord Component */
-#define OMPI_CRCP_COORD_BOOKMARK_TAG        4242
+#define OMPI_CRCP_COORD_BOOKMARK_TAG      4242
 
 
-#define ORTE_RML_TAG_DYNAMIC     2000
+#define ORTE_RML_TAG_DYNAMIC              2000
+
+
+/** 
+ * Message matching tag
+ *
+ * Message matching tag.  Unlike MPI, there is no wildcard receive,
+ * all messages must match exactly. Tag values less than
+ * ORTE_RML_TAG_DYNAMIC are reserved and may only be referenced using
+ * a defined constant.
+ */
+typedef uint32_t orte_rml_tag_t;
+
+
+/* ******************************************************************** */
+
 
 /*
  * RML proxy commands
@@ -85,19 +108,55 @@ typedef uint8_t orte_rml_cmd_flag_t;
 #define ORTE_RML_CMD    ORTE_UINT8
 #define ORTE_RML_UPDATE_CMD    1
 
-/**
- * Flags to send/recv
- */
 
-#define ORTE_RML_PEEK  0x01   /**< flag to oob_recv to allow caller to peek a portion of the next available
-                               * message w/out removing the message from the queue.  */
-#define ORTE_RML_TRUNC 0x02   /**< flag to oob_recv to return the actual size of the message even if
-                               * the receive buffer is smaller than the number of bytes available */
-#define ORTE_RML_ALLOC 0x04   /**< flag to oob_recv to request the oob to allocate a buffer of the appropriate
-                               * size for the receive and return the allocated buffer and size in the first
-                               * element of the iovec array. */
-#define ORTE_RML_PERSISTENT 0x08 /**< posted non-blocking recv is persistent */
-#define ORTE_RML_NON_PERSISTENT  0x00
-                                                                                                                                        
+/* ******************************************************************** */
+/* Flags to send/recv */
+
+/**
+ * Non-persistent request that can be deleted when the request is
+ * completed.  This is the default behavior.
+ */
+#define ORTE_RML_NON_PERSISTENT          0x00000000
+
+/**
+ * flag to oob_recv to allow caller to peek a portion of the next
+ * available message w/out removing the message from the queue.
+ */
+#define ORTE_RML_PEEK                    0x00000001
+
+/** 
+ * flag to oob_recv to return the actual size of the message even if
+ * the receive buffer is smaller than the number of bytes available 
+ */
+#define ORTE_RML_TRUNC                   0x00000002
+
+/** 
+ * flag to oob_recv to request the oob to allocate a buffer of the
+ * appropriate size for the receive and return the allocated buffer
+ * and size in the first element of the iovec array.
+ */
+#define ORTE_RML_ALLOC                   0x00000004
+
+/**
+ * posted non-blocking recv is persistent 
+ */
+#define ORTE_RML_PERSISTENT              0x00000008
+
+/**
+ * The request is a non-blocking request that can have its callback
+ * triggered as soon as the request is completed, even if the OOB is
+ * currently in the middle of another non-blocking request callback.
+ */
+#define ORTE_RML_FLAG_RECURSIVE_CALLBACK 0x00000010
+
+
+typedef enum {
+    ORTE_RML_PEER_UNREACH,
+    ORTE_RML_PEER_DISCONNECTED
+} orte_rml_exception_t;
+
+
+END_C_DECLS
+
 
 #endif  /* RML_TYPES */

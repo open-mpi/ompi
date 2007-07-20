@@ -457,11 +457,11 @@ static int orte_cr_coord_post_restart(void) {
      * - Reset Contact information
      */
     if(NULL != orte_process_info.ns_replica_uri) {
-        orte_rml.set_uri(orte_process_info.ns_replica_uri);
+        orte_rml.set_contact_info(orte_process_info.ns_replica_uri);
     }
 
     if(NULL != orte_process_info.gpr_replica_uri) {
-        orte_rml.set_uri(orte_process_info.gpr_replica_uri);
+        orte_rml.set_contact_info(orte_process_info.gpr_replica_uri);
     }
 
     if( ORTE_SUCCESS != (ret = orte_sds_base_set_name() ) ) {

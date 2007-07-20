@@ -379,7 +379,7 @@ static int fork_hnp(void)
              * Set the contact info into our RML - it will bark
              * if the returned info isn't a uri
              */
-            if (ORTE_SUCCESS != (rc = orte_rml.set_uri(orted_uri))) {
+            if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orted_uri))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }

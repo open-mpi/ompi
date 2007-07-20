@@ -27,11 +27,12 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/odls/odls_types.h"
 
 #include "orte/mca/sds/base/base.h"
 
-int orte_sds_base_contact_orted(char *orted_uri)
+int orte_sds_base_contact_orted(char *orted_contact_info)
 {
     orte_buffer_t buffer;
     int rc;
@@ -39,13 +40,13 @@ int orte_sds_base_contact_orted(char *orted_uri)
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_WARMUP_LOCAL_CONN;
 
     /* set the contact info into the OOB's hash table */
-    if (ORTE_SUCCESS != (rc = orte_rml.set_uri(orted_uri))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orted_contact_info))) {
         ORTE_ERROR_LOG(rc);
         return(rc);
     }
     
     /* extract the daemon's name from the uri */
-    if (ORTE_SUCCESS != (rc = orte_rml.parse_uris(orted_uri, &orted, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orted_contact_info, &orted, NULL))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

@@ -162,7 +162,7 @@ int orte_errmgr_proxy_abort_procs_request(orte_process_name_t *procs, orte_std_c
     }
     
     /* enter a blocking receive until we hear back */
-    if (0 > orte_rml.recv_buffer(orte_errmgr_proxy_globals.replica, answer, ORTE_RML_TAG_ERRMGR)) {
+    if (0 > orte_rml.recv_buffer(orte_errmgr_proxy_globals.replica, answer, ORTE_RML_TAG_ERRMGR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;
@@ -238,7 +238,7 @@ int orte_errmgr_proxy_register_job(orte_jobid_t job)
     }
     
     /* enter a blocking receive until we hear back */
-    if (0 > orte_rml.recv_buffer(orte_errmgr_proxy_globals.replica, answer, ORTE_RML_TAG_ERRMGR)) {
+    if (0 > orte_rml.recv_buffer(orte_errmgr_proxy_globals.replica, answer, ORTE_RML_TAG_ERRMGR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;

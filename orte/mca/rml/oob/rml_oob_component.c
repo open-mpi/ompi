@@ -17,19 +17,29 @@
  */
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+
+#include "rml_oob.h"
+
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "orte/orte_constants.h"
 #include "orte/mca/rml/base/base.h"
+#include "orte/mca/routed/routed.h"
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/oob/base/base.h"
-#include "rml_oob.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns.h"
 
-static orte_rml_module_t* orte_rml_oob_init(int* priority);
-static int orte_rml_oob_open(void);
-static int orte_rml_oob_close(void);
+static orte_rml_module_t* rml_oob_init(int* priority);
+static int rml_oob_open(void);
+static int rml_oob_close(void);
+static void rml_oob_recv_route_callback(int status,
+                                        struct orte_process_name_t* peer,
+                                        struct iovec* iov,
+                                        int count,
+                                        orte_rml_tag_t tag,
+                                        void *cbdata);
 
 
 /**
@@ -49,8 +59,8 @@ orte_rml_component_t mca_rml_oob_component = {
         ORTE_MAJOR_VERSION,  /* MCA component major version */
         ORTE_MINOR_VERSION,  /* MCA component minor version */
         ORTE_RELEASE_VERSION,  /* MCA component release version */
-        orte_rml_oob_open,  /* component open */
-        orte_rml_oob_close, /* component close */
+        rml_oob_open,  /* component open */
+        rml_oob_close, /* component close */
       },
 
       /* Next the MCA v1.0.0 component meta data */
@@ -58,54 +68,41 @@ orte_rml_component_t mca_rml_oob_component = {
           /* The component is checkpoint ready */
           MCA_BASE_METADATA_PARAM_CHECKPOINT
       },
-      orte_rml_oob_init
+      rml_oob_init
 };
 
-orte_rml_module_t orte_rml_oob_module = {
-    mca_oob_base_module_init,
-    NULL,
-    (orte_rml_module_get_uri_fn_t)mca_oob_get_my_contact_info,
-    (orte_rml_module_set_uri_fn_t)mca_oob_set_contact_info,
-    (orte_rml_module_parse_uris_fn_t)mca_oob_parse_contact_info,
-    (orte_rml_module_ping_fn_t)mca_oob_ping,
-    (orte_rml_module_send_fn_t)mca_oob_send,
-    (orte_rml_module_send_nb_fn_t)mca_oob_send_nb,
-    (orte_rml_module_send_buffer_fn_t)mca_oob_send_packed,
-    (orte_rml_module_send_buffer_nb_fn_t)mca_oob_send_packed_nb,
-    (orte_rml_module_recv_fn_t)mca_oob_recv,
-    (orte_rml_module_recv_nb_fn_t)mca_oob_recv_nb,
-    (orte_rml_module_recv_buffer_fn_t)mca_oob_recv_packed,
-    (orte_rml_module_recv_buffer_nb_fn_t)mca_oob_recv_packed_nb,
-    (orte_rml_module_recv_cancel_fn_t)mca_oob_recv_cancel,
-    (orte_rml_module_xcast_fn_t)mca_oob_xcast,
-    (orte_rml_module_xcast_nb_fn_t)mca_oob_xcast_nb,
-    (orte_rml_module_xcast_gate_fn_t)mca_oob_xcast_gate,
-    (orte_rml_module_exception_fn_t)mca_oob_add_exception_handler,
-    (orte_rml_module_exception_fn_t)mca_oob_del_exception_handler,
-    (orte_rml_module_ft_event_fn_t)orte_rml_oob_ft_event,
-    (orte_rml_module_register_contact_info_fn_t) mca_oob_register_contact_info,
-    (orte_rml_module_register_subscription_fn_t) mca_oob_register_subscription,
-    (orte_rml_module_get_contact_info_fn_t) mca_oob_get_contact_info,
-    (orte_rml_module_update_contact_info_fn_t) mca_oob_update_contact_info
+orte_rml_oob_module_t orte_rml_oob_module = {
+    {
+        orte_rml_oob_init,
+        orte_rml_oob_fini,
+
+        orte_rml_oob_get_uri,
+        orte_rml_oob_set_uri,
+
+        orte_rml_oob_get_new_name,
+        orte_rml_oob_ping,
+
+        orte_rml_oob_send,
+        orte_rml_oob_send_nb,
+        orte_rml_oob_send_buffer,
+        orte_rml_oob_send_buffer_nb,
+
+        orte_rml_oob_recv,
+        orte_rml_oob_recv_nb,
+        orte_rml_oob_recv_buffer,
+        orte_rml_oob_recv_buffer_nb,
+        orte_rml_oob_recv_cancel,
+
+        orte_rml_oob_add_exception,
+        orte_rml_oob_del_exception,
+
+        orte_rml_oob_ft_event
+    }
 };
 
 
-static orte_rml_module_t* orte_rml_oob_init(int* priority)
-{
-    if(mca_oob_base_init() != ORTE_SUCCESS)
-        return NULL;
-    *priority = 1;
-    
-    return &orte_rml_oob_module;
-}
-
-
-/*
- * initialize the underlying oob infrastructure so that all the
- * pointers in the RML struct can be valid.
- */
 static int
-orte_rml_oob_open(void)
+rml_oob_open(void)
 {
     int rc;
 
@@ -118,14 +115,10 @@ orte_rml_oob_open(void)
 }
 
 
-/*
- * shut down the OOB, since we started it.
- */
 static int
-orte_rml_oob_close(void)
+rml_oob_close(void)
 {
     int rc;
-
 
     if (ORTE_SUCCESS != (rc = mca_oob_base_close())) {
         return rc;
@@ -134,7 +127,65 @@ orte_rml_oob_close(void)
     return rc;
 }
 
-int orte_rml_oob_ft_event(int state) {
+static orte_rml_module_t*
+rml_oob_init(int* priority)
+{
+    if (mca_oob_base_init() != ORTE_SUCCESS)
+        return NULL;
+    *priority = 1;
+    
+    OBJ_CONSTRUCT(&orte_rml_oob_module.exceptions, opal_list_t);
+    OBJ_CONSTRUCT(&orte_rml_oob_module.exceptions_lock, opal_mutex_t);
+
+    orte_rml_oob_module.active_oob = &mca_oob;
+    orte_rml_oob_module.active_oob->oob_exception_callback = 
+        orte_rml_oob_exception_callback;
+
+    return &orte_rml_oob_module.super;
+}
+
+
+int
+orte_rml_oob_init(void)
+{
+    int ret;
+    struct iovec iov[1];
+
+    ret = orte_rml_oob_module.active_oob->oob_init();
+
+    iov[0].iov_base = NULL;
+    iov[0].iov_len = 0;
+
+    ret = orte_rml_oob_module.active_oob->oob_recv_nb(ORTE_NAME_WILDCARD,
+                                                      iov, 1,
+                                                      ORTE_RML_TAG_RML_ROUTE,
+                                                      ORTE_RML_ALLOC|ORTE_RML_PERSISTENT,
+                                                      rml_oob_recv_route_callback,
+                                                      NULL);
+
+    return ret;
+}
+
+
+int
+orte_rml_oob_fini(void)
+{
+    opal_list_item_t *item;
+
+    while (NULL != 
+           (item = opal_list_remove_first(&orte_rml_oob_module.exceptions))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&orte_rml_oob_module.exceptions);
+    OBJ_DESTRUCT(&orte_rml_oob_module.exceptions_lock);
+    orte_rml_oob_module.active_oob->oob_exception_callback = NULL;
+
+    return ORTE_SUCCESS;
+}
+
+
+int
+orte_rml_oob_ft_event(int state) {
     int exit_status = ORTE_SUCCESS;
     int ret;
 
@@ -154,7 +205,8 @@ int orte_rml_oob_ft_event(int state) {
         ;
     }
 
-    if( ORTE_SUCCESS != (ret = mca_oob.oob_ft_event(state)) ) {
+    if( ORTE_SUCCESS != 
+        (ret = orte_rml_oob_module.active_oob->oob_ft_event(state)) ) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
@@ -187,11 +239,11 @@ int orte_rml_oob_ft_event(int state) {
         }
 
         if(NULL != orte_process_info.ns_replica_uri) {
-            mca_oob_set_contact_info(orte_process_info.ns_replica_uri);
+            orte_rml_oob_set_uri(orte_process_info.ns_replica_uri);
         }
 
         if(NULL != orte_process_info.gpr_replica_uri) {
-            mca_oob_set_contact_info(orte_process_info.gpr_replica_uri);
+            orte_rml_oob_set_uri(orte_process_info.gpr_replica_uri);
         }
     }
     else if(OPAL_CRS_TERM == state ) {
@@ -203,4 +255,82 @@ int orte_rml_oob_ft_event(int state) {
 
  cleanup:
     return exit_status;
+}
+
+
+static void
+msg_construct(orte_rml_oob_msg_t *msg)
+{
+    OBJ_CONSTRUCT(&msg->msg_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&msg->msg_cond, opal_condition_t);
+    msg->msg_status = 0;
+    msg->msg_complete = false;
+    msg->msg_persistent = false;
+    OBJ_CONSTRUCT(&msg->msg_recv_buffer, orte_buffer_t);
+    msg->msg_data = NULL;
+}
+
+static void
+msg_destruct(orte_rml_oob_msg_t *msg)
+{
+    if (NULL != msg->msg_data) free(msg->msg_data);
+    OBJ_DESTRUCT(&msg->msg_recv_buffer);
+    OBJ_DESTRUCT(&msg->msg_lock);
+    OBJ_DESTRUCT(&msg->msg_cond);
+}
+
+OBJ_CLASS_INSTANCE(orte_rml_oob_msg_t, opal_object_t,
+                   msg_construct, msg_destruct);
+
+static void
+rml_oob_recv_route_send_callback(int status,
+                                 struct orte_process_name_t* peer,
+                                 struct iovec* iov,
+                                 int count,
+                                 orte_rml_tag_t tag,
+                                 void* cbdata)
+{
+    /* BWB -- propogate errors here... */
+    if (NULL != iov[0].iov_base) free(iov[0].iov_base);
+}
+
+
+
+static void
+rml_oob_recv_route_callback(int status,
+                            struct orte_process_name_t* peer,
+                            struct iovec* iov,
+                            int count,
+                            orte_rml_tag_t tag,
+                            void *cbdata)
+{
+    orte_rml_oob_msg_header_t *hdr = 
+        (orte_rml_oob_msg_header_t*) iov[0].iov_base;
+    int real_tag;
+    int ret;
+    orte_process_name_t next;
+
+    /* BWB -- propogate errors here... */
+    assert(status >= 0);
+
+    next = orte_routed.get_route(&hdr->destination);
+    if (next.vpid == ORTE_VPID_INVALID) {
+        ORTE_ERROR_LOG(ORTE_ERR_ADDRESSEE_UNKNOWN);
+        abort();
+    }
+
+    if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &next, peer)) {
+        real_tag = hdr->tag;
+    } else {
+        real_tag = ORTE_RML_TAG_RML_ROUTE;
+    }
+
+    ret = orte_rml_oob_module.active_oob->oob_send_nb(&next,
+                                                      iov,
+                                                      count,
+                                                      real_tag,
+                                                      0,
+                                                      rml_oob_recv_route_send_callback,
+                                                      NULL);
+    assert(ret == ORTE_SUCCESS);
 }

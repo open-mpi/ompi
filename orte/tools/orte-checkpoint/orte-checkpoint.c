@@ -663,7 +663,7 @@ static int contact_hnp(orte_process_name_t *peer, char *global_snapshot_handle, 
      * Receive the PID of the HNP, just to be doubly sure we are talking to 
      *  the right HNP.
      ********************/
-    if( 0 > (ret = orte_rml.recv_buffer(peer, buffer, ORTE_RML_TAG_CKPT)) ) {
+    if( 0 > (ret = orte_rml.recv_buffer(peer, buffer, ORTE_RML_TAG_CKPT, 0)) ) {
         exit_status = ret;
         goto cleanup;
     }
@@ -759,7 +759,7 @@ static int wait_for_checkpoint(orte_process_name_t *peer, char **global_snapshot
         goto cleanup;
     }
 
-    if( ORTE_SUCCESS != (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT))) {
+    if( ORTE_SUCCESS != (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0))) {
         exit_status = ret;
         goto cleanup;
     }
@@ -792,7 +792,7 @@ static int wait_for_checkpoint(orte_process_name_t *peer, char **global_snapshot
         goto cleanup;
     }
 
-    if( ORTE_SUCCESS != (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT))) {
+    if( ORTE_SUCCESS != (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0))) {
         exit_status = ret;
         goto cleanup;
     }
@@ -817,7 +817,7 @@ static int wait_for_checkpoint(orte_process_name_t *peer, char **global_snapshot
         goto cleanup;
     }
 
-    if( ORTE_SUCCESS != (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT))) {
+    if( ORTE_SUCCESS != (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0))) {
         exit_status = ret;
         goto cleanup;
     }

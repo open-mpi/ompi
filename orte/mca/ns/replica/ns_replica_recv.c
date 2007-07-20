@@ -413,11 +413,7 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                 goto RETURN_ERROR;
             }
             break;
-            
-        case ORTE_NS_CREATE_MY_NAME_CMD:
-            /* ignore this command */
-            break;
-            
+
         case ORTE_NS_GET_PEERS_CMD:
             /* get the list of attributes */
             OBJ_CONSTRUCT(&attrs, opal_list_t);

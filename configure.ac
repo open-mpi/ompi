@@ -657,26 +657,21 @@ ompi_show_title "Type tests"
 # Size of pid_t
 AC_CHECK_SIZEOF(pid_t)
 
-AC_CHECK_TYPES([socklen_t], [], [], [AC_INCLUDES_DEFAULT
-#include <sys/socket.h>])
-
-AC_CHECK_TYPES([struct sockaddr_in], [], [], [AC_INCLUDES_DEFAULT
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif])
-
-# Do we have IPv6 support?
-AC_CHECK_TYPES([struct sockaddr_in6], [], [], [AC_INCLUDES_DEFAULT
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif])
-AC_CHECK_TYPES([struct sockaddr_storage], [], [], [AC_INCLUDES_DEFAULT
+AC_CHECK_TYPES([socklen_t, struct sockaddr_in, struct sockaddr_in6, 
+                struct sockaddr_storage],
+               [], [], [AC_INCLUDES_DEFAULT
+#if HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif])
-AC_CHECK_DECLS([AF_UNSPEC, PF_UNSPEC], [], [], [AC_INCLUDES_DEFAULT
+
+AC_CHECK_DECLS([AF_UNSPEC, PF_UNSPEC, AF_INET6, PF_INET6], 
+               [], [], [AC_INCLUDES_DEFAULT
+#if HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif])
@@ -692,14 +687,11 @@ AC_DEFINE_UNQUOTED(OMPI_HAVE_SA_RESTART, $VALUE,
     [Whether we have SA_RESTART in <signal.h> or not])
 AC_MSG_RESULT([$MSG])
 
-# sa_len in struct sockaddr
-AC_MSG_CHECKING([for sa_len in struct sockaddr])
-AC_TRY_COMPILE([#include <sys/types.h>
-#include <sys/socket.h>], [struct sockaddr s; s.sa_len;],
-[MSG=yes VALUE=1], [MSG=no VALUE=0])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_SA_LEN, $VALUE,
-    [Whether we have the sa_len struct in <sys/socket.h> or not])
-AC_MSG_RESULT([$MSG])
+AC_CHECK_MEMBERS([struct sockaddr.sa_len], [], [], [
+#include <sys/types.h>
+#if HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif])
 
 AC_CHECK_MEMBERS([struct dirent.d_type], [], [], [
 #include <sys/types.h>

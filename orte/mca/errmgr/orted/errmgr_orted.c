@@ -158,7 +158,7 @@ int orte_errmgr_orted_abort_procs_request(orte_process_name_t *procs, orte_std_c
     }
     
     /* enter a blocking receive until we hear back */
-    if (0 > orte_rml.recv_buffer(orte_errmgr_orted_globals.replica, answer, ORTE_RML_TAG_ERRMGR)) {
+    if (0 > orte_rml.recv_buffer(orte_errmgr_orted_globals.replica, answer, ORTE_RML_TAG_ERRMGR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;

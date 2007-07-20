@@ -487,11 +487,27 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #define sockaddr_storage sockaddr
 #define ss_family sa_family
 #endif
+
+/* Compatibility structure so that we don't have to have as many
+   #if checks in the code base */
+#if !defined(HAVE_STRUCT_SOCKADDR_IN6) && defined(HAVE_STRUCT_SOCKADDR_IN)
+#define sockaddr_in6 sockaddr_in
+#define sin6_len sin_len
+#define sin6_family sin_family
+#define sin6_port sin_port
+#endif
+
 #if !HAVE_DECL_AF_UNSPEC
-#define AF_UNSPEC AF_INET
+#define AF_UNSPEC 0
 #endif
 #if !HAVE_DECL_PF_UNSPEC
-#define PF_UNSPEC PF_INET
+#define PF_UNSPEC 0
+#endif
+#if !HAVE_DECL_AF_INET6
+#define AF_INET6 AF_UNSPEC
+#endif
+#if !HAVE_DECL_PF_INET6
+#define PF_INET6 PF_UNSPEC
 #endif
 
 #if defined(__APPLE__) && defined(HAVE_INTTYPES_H)

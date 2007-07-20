@@ -26,9 +26,6 @@
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/rml.h"
 
-#include "orte/mca/oob/oob.h"
-#include "orte/mca/oob/base/base.h"
-
 #include "rml_ftrm.h"
 
 orte_rml_component_t wrapped_component;
@@ -39,7 +36,7 @@ orte_rml_module_t   wrapped_module;
  */
 static int num_inits = 0;
 
-int orte_rml_ftrm_module_init(void)
+int orte_rml_ftrm_module_enable_comm(void)
 {
     int ret;
 
@@ -51,10 +48,10 @@ int orte_rml_ftrm_module_init(void)
     if( 0 == num_inits ) {
         /* Copy the wrapped versions */
         wrapped_module    = orte_rml;
-        wrapped_component = orte_rml_component;
+        wrapped_component = *orte_rml_component;
         /* Replace with ourselves */
         orte_rml           = orte_rml_ftrm_module;
-        orte_rml_component = mca_rml_ftrm_component;
+        orte_rml_component = &mca_rml_ftrm_component;
 
         opal_output_verbose(20, rml_ftrm_output_handle,
                             "orte_rml_ftrm: module_init(): Wrapped Component (%s)",
@@ -70,8 +67,8 @@ int orte_rml_ftrm_module_init(void)
         opal_output_verbose(20, rml_ftrm_output_handle,
                             "orte_rml_ftrm: module_init(): Normal...");
 
-        if( NULL != wrapped_module.init ) {
-            if( ORTE_SUCCESS != (ret = wrapped_module.init() ) ) {
+        if( NULL != wrapped_module.enable_comm ) {
+            if( ORTE_SUCCESS != (ret = wrapped_module.enable_comm() ) ) {
                 return ret;
             }
         }
@@ -93,8 +90,25 @@ int orte_rml_ftrm_module_finalize(void)
                         "orte_rml_ftrm: module_finalize()");
 
 
-    if( NULL != wrapped_module.fini ) {
-        if( ORTE_SUCCESS != (ret = wrapped_module.fini() ) ) {
+    if( NULL != wrapped_module.finalize ) {
+        if( ORTE_SUCCESS != (ret = wrapped_module.finalize() ) ) {
+            return ret;
+        }
+    }
+
+    return ORTE_SUCCESS;
+}
+
+
+int orte_rml_ftrm_get_new_name(orte_process_name_t *name)
+{
+    int ret;
+
+    opal_output_verbose(20, rml_ftrm_output_handle,
+                        "orte_rml_ftrm: get_new_name()");
+
+    if( NULL != wrapped_module.get_new_name ) {
+        if( ORTE_SUCCESS != (ret = wrapped_module.get_new_name(name) ) ) {
             return ret;
         }
     }
@@ -106,7 +120,7 @@ int orte_rml_ftrm_module_finalize(void)
 /*
  * Get URI
  */
-char * orte_rml_ftrm_get_uri(void)
+char * orte_rml_ftrm_get_contact_info(void)
 {
     char * rtn_val = NULL;
 
@@ -114,45 +128,25 @@ char * orte_rml_ftrm_get_uri(void)
                         "orte_rml_ftrm: get_uri()");
 
 
-    if( NULL != wrapped_module.get_uri ) {
-        rtn_val = wrapped_module.get_uri();
+    if( NULL != wrapped_module.get_contact_info ) {
+        rtn_val = wrapped_module.get_contact_info();
     }
 
     return rtn_val;
 }
 
 /*
- * Set URI
+ * Set CONTACT_INFO
  */
-int orte_rml_ftrm_set_uri(const char* uri)
+int orte_rml_ftrm_set_contact_info(const char* contact_info)
 {
     int ret;
 
     opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: set_uri()");
+                        "orte_rml_ftrm: set_contact_info()");
 
-    if( NULL != wrapped_module.set_uri ) {
-        if( ORTE_SUCCESS != (ret = wrapped_module.set_uri(uri) ) ) {
-            return ret;
-        }
-    }
-
-    return ORTE_SUCCESS;
-}
-
-/*
- * Parse URis
- */
-int orte_rml_ftrm_parse_uris(const char* uri,
-                             orte_process_name_t* peer, char*** uris)
-{
-    int ret;
-
-    opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: parse_uris()");
-
-    if( NULL != wrapped_module.parse_uris ) {
-        if( ORTE_SUCCESS != (ret = wrapped_module.parse_uris(uri, peer, uris) ) ) {
+    if( NULL != wrapped_module.set_contact_info ) {
+        if( ORTE_SUCCESS != (ret = wrapped_module.set_contact_info(contact_info) ) ) {
             return ret;
         }
     }
@@ -329,7 +323,8 @@ int orte_rml_ftrm_recv_nb(orte_process_name_t* peer,
  */
 int orte_rml_ftrm_recv_buffer(orte_process_name_t* peer,
                               orte_buffer_t *buf,
-                              orte_rml_tag_t tag)
+                              orte_rml_tag_t tag,
+                              int flags)
 {
     int ret;
 
@@ -337,7 +332,7 @@ int orte_rml_ftrm_recv_buffer(orte_process_name_t* peer,
                         "orte_rml_ftrm: recv_buffer()");
 
     if( NULL != wrapped_module.recv_buffer ) {
-        if( ORTE_SUCCESS != (ret = wrapped_module.recv_buffer(peer, buf, tag) ) ) {
+        if( ORTE_SUCCESS != (ret = wrapped_module.recv_buffer(peer, buf, tag, flags) ) ) {
             return ret;
         }
     }
@@ -389,62 +384,6 @@ int orte_rml_ftrm_recv_cancel(orte_process_name_t* peer, orte_rml_tag_t tag)
 
 
 /*
- * Xcast
- */
-int orte_rml_ftrm_xcast(orte_jobid_t job,
-                        orte_buffer_t *buffer,
-                        orte_rml_tag_t tag)
-{
-    int ret;
-    
-    opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: xcast()");
-    
-    if( NULL != wrapped_module.xcast ) {
-        if( ORTE_SUCCESS != (ret = wrapped_module.xcast(job, buffer, tag) ) ) {
-            return ret;
-        }
-    }
-    
-    return ORTE_SUCCESS;
-}
-
-int orte_rml_ftrm_xcast_nb(orte_jobid_t job,
-                           orte_buffer_t *buffer,
-                           orte_rml_tag_t tag)
-{
-    int ret;
-    
-    opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: xcast_nb()");
-    
-    if( NULL != wrapped_module.xcast_gate ) {
-        if( ORTE_SUCCESS != (ret = wrapped_module.xcast_nb(job, buffer, tag) ) ) {
-            return ret;
-        }
-    }
-    
-    return ORTE_SUCCESS;
-}
-
-int orte_rml_ftrm_xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc)
-{
-    int ret;
-
-    opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: xcast_gate()");
-
-    if( NULL != wrapped_module.xcast_gate ) {
-        if( ORTE_SUCCESS != (ret = wrapped_module.xcast_gate(cbfunc) ) ) {
-            return ret;
-        }
-    }
-
-    return ORTE_SUCCESS;
-}
-
-
-/*
  * Register a callback on loss of connection
  */
 int orte_rml_ftrm_add_exception_handler(orte_rml_exception_callback_t cbfunc)
@@ -477,65 +416,6 @@ int orte_rml_ftrm_del_exception_handler(orte_rml_exception_callback_t cbfunc)
     }
 
     return ORTE_SUCCESS;
-}
-
-int orte_rml_ftrm_register_contact_info(void)
-{
-    int ret;
-
-    opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: register_contact_info()");
-
-    if( NULL != wrapped_module.register_contact_info ) {
-        if( ORTE_SUCCESS != (ret = wrapped_module.register_contact_info() ) ) {
-            return ret;
-        }
-    }
-
-    return ORTE_SUCCESS;
-}
-
-int orte_rml_ftrm_register_subscription(orte_jobid_t job, char *trigger)
-{
-    int ret;
-
-    opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: register_subscription()");
-
-    if( NULL != wrapped_module.register_subscription ) {
-        if( ORTE_SUCCESS != (ret = wrapped_module.register_subscription(job, trigger) ) ) {
-            return ret;
-        }
-    }
-
-    return ORTE_SUCCESS;
-}
-
-int orte_rml_ftrm_get_contact_info(orte_process_name_t *name, orte_gpr_notify_data_t **data)
-{
-    int ret;
-
-    opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: get_contact_info()");
-
-    if( NULL != wrapped_module.get_contact_info ) {
-        if( ORTE_SUCCESS != (ret = wrapped_module.get_contact_info(name, data) ) ) {
-            return ret;
-        }
-    }
-
-    return ORTE_SUCCESS;
-}
-
-void orte_rml_ftrm_update_contact_info(orte_gpr_notify_data_t* data, void* cbdata)
-{
-
-    opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: update_contact_info()");
-
-    if( NULL != wrapped_module.update_contact_info ) {
-        wrapped_module.update_contact_info(data, cbdata);
-    }
 }
 
 /*

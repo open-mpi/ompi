@@ -70,7 +70,7 @@ int orte_ns_proxy_dump_cells(void)
     OBJ_DESTRUCT(&cmd);
 
     OBJ_CONSTRUCT(&answer, orte_buffer_t);
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, &answer, ORTE_RML_TAG_NS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, &answer, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_DESTRUCT(&answer);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
@@ -130,7 +130,7 @@ int orte_ns_proxy_dump_jobs(void)
     OBJ_DESTRUCT(&cmd);
 
     OBJ_CONSTRUCT(&answer, orte_buffer_t);
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, &answer, ORTE_RML_TAG_NS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, &answer, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_DESTRUCT(&answer);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
@@ -193,7 +193,7 @@ int orte_ns_proxy_dump_tags(void)
     OBJ_DESTRUCT(&cmd);
 
     OBJ_CONSTRUCT(&answer, orte_buffer_t);
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, &answer, ORTE_RML_TAG_NS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, &answer, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_DESTRUCT(&answer);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
@@ -268,7 +268,7 @@ int orte_ns_proxy_dump_datatypes(void)
     OBJ_DESTRUCT(&cmd);
 
     OBJ_CONSTRUCT(&answer, orte_buffer_t);
-    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, &answer, ORTE_RML_TAG_NS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_NS_MY_REPLICA, &answer, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_DESTRUCT(&answer);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);

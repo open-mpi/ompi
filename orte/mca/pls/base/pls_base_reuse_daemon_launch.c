@@ -27,6 +27,7 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/odls/odls.h"
 
 #include "orte/mca/pls/base/pls_private.h"
@@ -62,7 +63,7 @@ int orte_pls_base_launch_apps(orte_job_map_t *map)
     }
     
     /* send the command to the daemons */
-    if (ORTE_SUCCESS != (rc = orte_rml.xcast(0, buffer, ORTE_RML_TAG_DAEMON))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(0, buffer, ORTE_RML_TAG_DAEMON))) {
         ORTE_ERROR_LOG(rc);
     }
     OBJ_RELEASE(buffer);
@@ -80,7 +81,7 @@ int orte_pls_base_daemon_callback(orte_std_cntr_t num_daemons)
     
     for(i = 0; i < num_daemons; i++) {
         OBJ_CONSTRUCT(&ack, orte_buffer_t);
-        rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &ack, ORTE_RML_TAG_ORTED_CALLBACK);
+        rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &ack, ORTE_RML_TAG_ORTED_CALLBACK, 0);
         if(0 > rc) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&ack);

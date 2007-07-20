@@ -116,7 +116,7 @@ int orte_gpr_proxy_exec_compound_cmd(orte_buffer_t *buffer)
         goto CLEANUP;
     }
     
-	if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         rc = ORTE_ERR_COMM_FAILURE;

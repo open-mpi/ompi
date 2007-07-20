@@ -26,7 +26,6 @@
 #include "opal/util/show_help.h"
 #include "orte/util/sys_info.h"
 #include "orte/dss/dss.h"
-#include "orte/mca/oob/oob.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/errmgr/errmgr.h"

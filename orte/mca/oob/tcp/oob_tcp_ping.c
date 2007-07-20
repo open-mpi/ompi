@@ -69,17 +69,13 @@ static void noop(int fd, short event, void *arg);
  * @return            OMPI error code (<0) on error number of bytes actually sent.
  */
 
-int mca_oob_tcp_ping(
-    const orte_process_name_t* name,
-    const char* uri,
-    const struct timeval *timeout)
+int
+mca_oob_tcp_ping(const orte_process_name_t* name,
+                 const char* uri,
+                 const struct timeval *timeout)
 {
     int sd, flags, rc;
-#if OPAL_WANT_IPV6
-    struct sockaddr_in6 inaddr;
-#else    
-    struct sockaddr_in inaddr;
-#endif
+    struct sockaddr_storage inaddr;
     fd_set fdset;
     mca_oob_tcp_hdr_t hdr;
     struct timeval tv;
@@ -87,9 +83,10 @@ int mca_oob_tcp_ping(
 #ifndef __WINDOWS__
     struct opal_event sigpipe_handler;
 #endif
+    socklen_t addrlen;
 
     /* parse uri string */
-    if(ORTE_SUCCESS != (rc = mca_oob_tcp_parse_uri(uri, &inaddr))) {
+    if(ORTE_SUCCESS != (rc = mca_oob_tcp_parse_uri(uri, (struct sockaddr*) &inaddr))) {
        opal_output(0,
             "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: invalid uri: %s\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
@@ -99,11 +96,7 @@ int mca_oob_tcp_ping(
     }
 
     /* create socket */
-#if OPAL_WANT_IPV6
-    sd = socket(inaddr.sin6_family, SOCK_STREAM, 0);
-#else
-    sd = socket(AF_INET, SOCK_STREAM, 0);
-#endif
+    sd = socket(inaddr.ss_family, SOCK_STREAM, 0);
     if (sd < 0) {
        opal_output(0,
             "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: socket() failed: %s (%d)\n",
@@ -132,11 +125,27 @@ int mca_oob_tcp_ping(
         }
     }
 
+    switch (inaddr.ss_family) {
+    case AF_INET:
+        addrlen = sizeof(struct sockaddr_in);
+        break;
+    case AF_INET6:
+        addrlen = sizeof(struct sockaddr_in6);
+        break;
+    default:
+        addrlen = 0;
+    }
+
     /* start the connect - will likely fail with EINPROGRESS */
     FD_ZERO(&fdset);
-    if(connect(sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
+    if(connect(sd, (struct sockaddr*)&inaddr, addrlen) < 0) {
         /* connect failed? */
         if(opal_socket_errno != EINPROGRESS && opal_socket_errno != EWOULDBLOCK) {
+            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: connect failed: %s (%d)\n",
+                        ORTE_NAME_ARGS(orte_process_info.my_name),
+                        ORTE_NAME_ARGS(name),
+                        strerror(opal_socket_errno),
+                        opal_socket_errno);
             CLOSE_THE_SOCKET(sd);
             return ORTE_ERR_UNREACH;
         }

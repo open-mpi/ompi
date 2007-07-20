@@ -258,11 +258,11 @@ int orte_restart(orte_process_name_t *name, const char* uri)
      * Set contact info for the replicas
      */
 
-    if (ORTE_SUCCESS != (rc = orte_rml.set_uri(orte_process_info.ns_replica_uri))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_process_info.ns_replica_uri))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_rml.set_uri(orte_process_info.gpr_replica_uri))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_process_info.gpr_replica_uri))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -270,7 +270,7 @@ int orte_restart(orte_process_name_t *name, const char* uri)
     /*
      * Re-init selected modules.
      */
-    if (ORTE_SUCCESS != (rc = orte_rml.init())) {
+    if (ORTE_SUCCESS != (rc = orte_rml.enable_comm())) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

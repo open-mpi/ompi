@@ -35,13 +35,13 @@ extern "C"
   int orte_rml_cnos_close(void);
   orte_rml_module_t * orte_rml_cnos_init(int *priority);
 
-  int orte_rml_cnos_module_init(void);
+  int orte_rml_cnos_module_enable_comm(void);
   int orte_rml_cnos_module_fini(void);
 
-  char *orte_rml_cnos_get_uri(void);
-  int orte_rml_cnos_set_uri(const char *);
-  int orte_rml_cnos_parse_uris(const char *uri,
-				 orte_process_name_t * peer, char ***uris);
+  char *orte_rml_cnos_get_contact_info(void);
+  int orte_rml_cnos_set_contact_info(const char *);
+
+  int orte_rml_cnos_get_new_name(orte_process_name_t *name);
   int orte_rml_cnos_ping(const char *uri, const struct timeval *tv);
 
   int orte_rml_cnos_send(orte_process_name_t * peer,
@@ -71,7 +71,7 @@ extern "C"
 			   int count, orte_rml_tag_t tag, int flags);
 
   int orte_rml_cnos_recv_buffer(orte_process_name_t * peer,
-				  orte_buffer_t * buf, orte_rml_tag_t tag);
+                                orte_buffer_t * buf, orte_rml_tag_t tag, int flags);
 
   int orte_rml_cnos_recv_nb(orte_process_name_t * peer,
 			      struct iovec *msg,
@@ -88,28 +88,6 @@ extern "C"
 
   int orte_rml_cnos_recv_cancel(orte_process_name_t * peer,
 				  orte_rml_tag_t tag);
-
-
-  int orte_rml_cnos_xcast(orte_jobid_t job,
-                          orte_buffer_t *buffer,
-                          orte_rml_tag_t tag);
-  
-  int orte_rml_cnos_xcast_nb(orte_jobid_t job,
-                             orte_buffer_t *buffer,
-                             orte_rml_tag_t tag);
-  
-  int orte_rml_cnos_xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc);
-
-  int orte_rml_cnos_barrier(void);
-
-  int orte_rml_cnos_register_contact_info(void);
-  
-  int orte_rml_cnos_register_subscription(orte_jobid_t job, char *trigger);
-  
-  int orte_rml_cnos_get_contact_info(orte_process_name_t *name, orte_gpr_notify_data_t **data);
-
-  void orte_rml_cnos_update_contact_info(orte_gpr_notify_data_t* data,
-                                         void* cbdata);
 
   int orte_rml_cnos_add_exception_handler(orte_rml_exception_callback_t cbfunc);
 
