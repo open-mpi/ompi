@@ -21,12 +21,6 @@ AM_CPPFLAGS = $(pls_lsf_CPPFLAGS)
 
 dist_pkgdata_DATA = help-pls-lsf.txt
 
-bin_PROGRAMS = mytest
-
-mytest_SOURCES = mytest.c
-mytest_LDFLAGS = $(pls_lsf_LDFLAGS)
-mytest_LDADD = $(pls_lsf_LIBS)
-
 sources = \
         pls_lsf.h \
         pls_lsf_component.c \
