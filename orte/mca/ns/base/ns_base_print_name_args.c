@@ -58,7 +58,7 @@ get_print_name_buffer(void)
     return (char*) buffer;
 }
 
-char* orte_ns_base_print_name_args(orte_process_name_t *name)
+char* orte_ns_base_print_name_args(const orte_process_name_t *name)
 {
     char *print_name_buf = get_print_name_buffer();
     
