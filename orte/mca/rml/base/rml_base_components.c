@@ -9,6 +9,7 @@
 #include "orte_config.h"
 
 #include "opal/mca/mca.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/base.h"
