@@ -58,14 +58,15 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
     orte_buffer_t answer, error_answer;
     orte_ns_cmd_flag_t command;
     opal_list_t attrs;
+    orte_cellid_t cell;
     orte_jobid_t job, root, *descendants;
     orte_vpid_t startvpid, range;
-    char *tagname;
+    char *tagname, *site, *resource;
     orte_rml_tag_t oob_tag;
     orte_data_type_t type;
     orte_std_cntr_t count, nprocs, nret;
     orte_process_name_t *procs;
-    int rc=ORTE_SUCCESS;
+    int rc=ORTE_SUCCESS, ret;
     
     count = 1;
     if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &command, &count, ORTE_NS_CMD))) {
@@ -81,6 +82,69 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
     }
         
     switch (command) {
+        case ORTE_NS_CREATE_CELLID_CMD:
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &cell, &count, ORTE_CELLID))) {
+                ORTE_ERROR_LOG(rc);
+                rc = ORTE_ERR_BAD_PARAM;
+                goto RETURN_ERROR;
+            }
+                
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &site, &count, ORTE_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                rc = ORTE_ERR_BAD_PARAM;
+                goto RETURN_ERROR;
+            }
+                
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &resource, &count, ORTE_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                rc = ORTE_ERR_BAD_PARAM;
+                goto RETURN_ERROR;
+            }
+                
+            rc = orte_ns_replica_create_cellid(&cell, site, resource);
+            
+            if (ORTE_SUCCESS != (ret = orte_dss.pack(&answer, &cell, 1, ORTE_CELLID))) {
+                ORTE_ERROR_LOG(ret);
+                goto RETURN_ERROR;
+            }
+               
+            if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
+                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                goto RETURN_ERROR;
+            }
+            break;
+            
+        case ORTE_NS_GET_CELL_INFO_CMD:
+           count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &cell, &count, ORTE_CELLID))) {
+                ORTE_ERROR_LOG(rc);
+                rc = ORTE_ERR_BAD_PARAM;
+                goto RETURN_ERROR;
+            }
+                
+            site = NULL;
+            resource = NULL;
+            rc = orte_ns_replica_get_cell_info(cell, &site, &resource);
+            
+            if (ORTE_SUCCESS != (ret = orte_dss.pack(&answer, &site, 1, ORTE_STRING))) {
+                ORTE_ERROR_LOG(ret);
+                goto RETURN_ERROR;
+            }
+                
+            if (ORTE_SUCCESS != (ret = orte_dss.pack(&answer, &resource, 1, ORTE_STRING))) {
+                ORTE_ERROR_LOG(ret);
+                goto RETURN_ERROR;
+            }
+            
+            if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
+                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                goto RETURN_ERROR;
+            }
+            break;
+            
         case ORTE_NS_CREATE_NODEID_CMD:
         case ORTE_NS_GET_NODE_INFO_CMD:
             ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
@@ -384,6 +448,17 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                 }
             }
                 
+            if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
+                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                goto RETURN_ERROR;
+            }
+            break;
+            
+        case ORTE_NS_DUMP_CELLS_CMD:
+            if (ORTE_SUCCESS != (rc = orte_ns_replica_dump_cells_fn(&answer))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
             if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                 goto RETURN_ERROR;

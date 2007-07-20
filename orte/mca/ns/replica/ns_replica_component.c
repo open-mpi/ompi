@@ -77,6 +77,12 @@ orte_ns_replica_finalize /* module shutdown */
 static mca_ns_base_module_t orte_ns_replica_module = {
     /* init */
     orte_ns_replica_module_init,
+    /* cell functions */
+    orte_ns_replica_create_cellid,
+    orte_ns_replica_get_cell_info,
+    orte_ns_base_get_cellid_string,
+    orte_ns_base_convert_cellid_to_string,
+    orte_ns_base_convert_string_to_cellid,
     /** node functions */
     orte_ns_replica_create_nodeids,
     orte_ns_replica_get_node_info,
@@ -111,6 +117,7 @@ static mca_ns_base_module_t orte_ns_replica_module = {
     /* data type functions */
     orte_ns_replica_define_data_type,
     /* diagnostic functions */
+    orte_ns_replica_dump_cells,
     orte_ns_replica_dump_jobs,
     orte_ns_replica_dump_tags,
     orte_ns_replica_dump_datatypes,
@@ -188,15 +195,15 @@ mca_ns_base_module_t* orte_ns_replica_init(int *priority)
         
         *priority = 50;
         
-        /* initialize the node tracker */
-        if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_replica.nodenames),
+        /* initialize the cell info tracker */
+        if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_replica.cells),
                                                           (orte_std_cntr_t)orte_ns_replica.block_size,
                                                           (orte_std_cntr_t)orte_ns_replica.max_size,
                                                           (orte_std_cntr_t)orte_ns_replica.block_size))) {
             ORTE_ERROR_LOG(rc);
             return NULL;
         }
-        orte_ns_replica.next_nodeid = 0;
+        orte_ns_replica.num_cells = 0;
         
         /* initialize the job tracking system */
         OBJ_CONSTRUCT(&orte_ns_replica.jobs, opal_list_t);
@@ -258,25 +265,22 @@ int orte_ns_replica_module_init(void)
  */
 int orte_ns_replica_finalize(void)
 {
-    char **cptr;
+    orte_ns_replica_cell_tracker_t **cptr;
     opal_list_item_t *item;
     orte_ns_replica_tagitem_t **tag;
     orte_ns_replica_dti_t **dti;
     orte_std_cntr_t i;
-    orte_nodeid_t j;
     
     /* free all tracking storage, but only if this component was initialized */
     
     if (initialized) {
-        cptr = (char**)(orte_ns_replica.nodenames)->addr;
-        for (i=0, j=0; j < orte_ns_replica.next_nodeid &&
-                       i < (orte_ns_replica.nodenames)->size; i++) {
+        cptr = (orte_ns_replica_cell_tracker_t**)(orte_ns_replica.cells)->addr;
+        for (i=0; i < (orte_ns_replica.cells)->size; i++) {
             if (NULL != cptr[i]) {
-                j++;
-                free(cptr[i]);
+                OBJ_RELEASE(cptr[i]);
             }
         }
-        OBJ_RELEASE(orte_ns_replica.nodenames);
+        OBJ_RELEASE(orte_ns_replica.cells);
         
         while (NULL != (item = opal_list_remove_first(&orte_ns_replica.jobs))) {
             OBJ_RELEASE(item);

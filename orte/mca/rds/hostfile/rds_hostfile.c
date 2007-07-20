@@ -45,6 +45,8 @@
 #include "orte/mca/rds/hostfile/rds_hostfile_lex.h"
 
 static bool orte_rds_hostfile_queried = false;
+static orte_cellid_t local_cellid;
+static bool need_cellid = true;
 static char *cur_hostfile_name = NULL;
 
 static void orte_rds_hostfile_parse_error(int token)
@@ -205,7 +207,7 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
             username = strdup(argv[0]);
             node_name = strdup(argv[1]);
         } else {
-            opal_output(0, "WARNING: Unhandled user@host-combination\n"); /* XXX */
+            opal_output(0, "WARNING: Unhandeled user@host-combination\n"); /* XXX */
         }
         opal_argv_free (argv);
 
@@ -229,6 +231,22 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
                 node->node_name = node_name;
                 node->node_username = username;
                 node->node_slots = 0;
+
+#if 0
+                /* get a new cellid for this node */
+                /* JMS Temporarily turned off until cell IDs are
+                   properly handled elsewhere in the code */
+                /* JJH This assumes that each hostname listed should be
+                   placed in a new cell. Is this accurate to the design?
+                */
+                if (ORTE_SUCCESS !=
+                    (rc = orte_ns.create_cellid(&(node->node_cellid),
+                                                "UNKNOWN-SITE",
+                                                node->node_name))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+#endif
             }
 
             /* Note that we need to set update to true regardless of
@@ -240,6 +258,12 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
                to be added to the updates list. */
 
             update = true;
+        }
+        else {
+            /* If it was in the existing list, then we can use its cellid
+             * to add the reset of the hosts in the file to. */
+            local_cellid = node->node_cellid;
+            need_cellid = false;
         }
     } else {
         orte_rds_hostfile_parse_error(token);
@@ -453,8 +477,11 @@ unlock:
 static int orte_rds_hostfile_query(orte_jobid_t job)
 {
     opal_list_t existing;
-    opal_list_t updates, procs;
+    opal_list_t updates, rds_updates, procs;
     opal_list_item_t *item;
+    orte_rds_cell_desc_t *rds_item;
+    orte_rds_cell_attr_t *new_attr;
+    orte_ras_node_t *ras_item;
     int rc;
 
     if (orte_rds_hostfile_queried) {
@@ -472,6 +499,7 @@ static int orte_rds_hostfile_query(orte_jobid_t job)
     
     OBJ_CONSTRUCT(&existing, opal_list_t);
     OBJ_CONSTRUCT(&updates, opal_list_t);
+    OBJ_CONSTRUCT(&rds_updates, opal_list_t);
     OBJ_CONSTRUCT(&procs, opal_list_t);
     rc = orte_ras_base_node_query(&existing);
     if(ORTE_SUCCESS != rc) {
@@ -497,7 +525,78 @@ static int orte_rds_hostfile_query(orte_jobid_t job)
 
     if ( !opal_list_is_empty(&updates) ) {
 
-        /* Insert the results into the RAS, since we can assume that any
+        /* Convert RAS update list to RDS update list */
+        for ( ras_item  = (orte_ras_node_t*)opal_list_get_first(&updates);
+              ras_item != (orte_ras_node_t*)opal_list_get_end(&updates);
+              ras_item  = (orte_ras_node_t*)opal_list_get_next(ras_item)) {
+
+            rds_item = OBJ_NEW(orte_rds_cell_desc_t);
+            if (NULL == rds_item) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+
+            rds_item->site  = strdup("Hostfile");
+            rds_item->name  = strdup(ras_item->node_name);
+            if (need_cellid) {
+                /* need to store the info for this hostfile so the NS can get it
+                 * later when requested
+                 */
+                local_cellid = 0;
+                rc = orte_ns.create_cellid(&local_cellid, rds_item->site, rds_item->name);
+                if (ORTE_SUCCESS != rc) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                need_cellid = false;
+            }
+
+            rds_item->cellid      = local_cellid;
+            ras_item->node_cellid = local_cellid;
+
+            new_attr = OBJ_NEW(orte_rds_cell_attr_t);
+            if (NULL == new_attr) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            new_attr->keyval.key          = strdup(ORTE_RDS_NAME);
+            new_attr->keyval.value = OBJ_NEW(orte_data_value_t);
+            if (NULL == new_attr->keyval.value) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            new_attr->keyval.value->type   = ORTE_STRING;
+            new_attr->keyval.value->data   = strdup(ras_item->node_name);
+            opal_list_append(&(rds_item->attributes), &new_attr->super);
+
+            new_attr = OBJ_NEW(orte_rds_cell_attr_t);
+            if (NULL == new_attr) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            new_attr->keyval.key          = strdup(ORTE_CELLID_KEY);
+            new_attr->keyval.value = OBJ_NEW(orte_data_value_t);
+            if (NULL == new_attr->keyval.value) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            new_attr->keyval.value->type   = ORTE_CELLID;
+            if (ORTE_SUCCESS != (rc = orte_dss.copy(&(new_attr->keyval.value->data), &(rds_item->cellid), ORTE_CELLID))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            opal_list_append(&(rds_item->attributes), &new_attr->super);
+
+            opal_list_append(&rds_updates, &rds_item->super);
+        }
+
+        /* Insert the new node into the RDS */
+        rc = orte_rds.store_resource(&rds_updates);
+        if (ORTE_SUCCESS != rc) {
+            goto cleanup;
+        }
+
+        /* Then the RAS, since we can assume that any
          * resources listed in the hostfile have been
          * already allocated for our use.
          */
@@ -519,7 +618,7 @@ static int orte_rds_hostfile_query(orte_jobid_t job)
         }
     }
     if ( !opal_list_is_empty(&procs) ) {
-        rc = orte_ras_base_proc_insert(&procs, job);
+        rc = orte_ras_base_proc_insert(&procs, local_cellid, job);
         if (ORTE_SUCCESS != rc) {
             goto cleanup;
         }
@@ -542,9 +641,17 @@ cleanup:
         OBJ_RELEASE(item);
     }
 
+    while (NULL != (rds_item = (orte_rds_cell_desc_t*)opal_list_remove_first(&rds_updates))) {
+        while (NULL != (new_attr = (orte_rds_cell_attr_t*)opal_list_remove_first(&(rds_item->attributes)))) {
+            OBJ_RELEASE(new_attr);
+        }
+        OBJ_RELEASE(rds_item);
+    }
+
     OBJ_DESTRUCT(&existing);
     OBJ_DESTRUCT(&updates);
     OBJ_DESTRUCT(&procs);
+    OBJ_DESTRUCT(&rds_updates);
 
     return rc;
 }

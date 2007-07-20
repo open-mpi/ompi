@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
     pid = getpid();
     gethostname(hostname, 500);
 
-    printf("orte_abort: Name %s Host: %s Pid %ld\n", ORTE_NAME_PRINT(orte_process_info.my_name),
+    printf("orte_abort: Name [%lu,%lu,%lu] Host: %s Pid %ld\n", ORTE_NAME_ARGS(orte_process_info.my_name),
               hostname, (long)pid);
     
     i = 0;

@@ -93,7 +93,7 @@ ORTE_DECLSPEC int orte_pls_bproc_get_proc_pids(orte_jobid_t jobid, pid_t** pids,
 /**
  * Utility routine to get/set daemon pid
  */
-ORTE_DECLSPEC int orte_pls_bproc_set_node_pid(char* node_name, orte_jobid_t jobid, pid_t pid);
+ORTE_DECLSPEC int orte_pls_bproc_set_node_pid(orte_cellid_t cellid, char* node_name, orte_jobid_t jobid, pid_t pid);
 ORTE_DECLSPEC int orte_pls_bproc_get_node_pids(orte_jobid_t jobid, pid_t** pids, orte_std_cntr_t* num_pids);
 
 /* utility functions for abort communications */

@@ -46,9 +46,9 @@ int mca_oob_tcp_recv(
     int i, rc = 0, size = 0;
 
     if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_ALL) {
-        opal_output(0, "%s-%s mca_oob_tcp_recv: tag %d\n",
-            ORTE_NAME_PRINT(orte_process_info.my_name),
-            ORTE_NAME_PRINT(peer),
+        opal_output(0, "[%lu,%lu,%lu]-[%ld,%ld,%ld] mca_oob_tcp_recv: tag %d\n",
+            ORTE_NAME_ARGS(orte_process_info.my_name),
+            ORTE_NAME_ARGS(peer),
             tag);
     }
 
@@ -65,9 +65,9 @@ int mca_oob_tcp_recv(
         }
  
         if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_INFO) {
-            opal_output(0, "%s-%s mca_oob_tcp_recv*unexpected*: tag %d size %lu\n",
-    		    ORTE_NAME_PRINT(orte_process_info.my_name),
-    		    ORTE_NAME_PRINT(peer),
+            opal_output(0, "[%lu,%lu,%lu]-[%ld,%ld,%ld] mca_oob_tcp_recv*unexpected*: tag %d size %lu\n",
+    		    ORTE_NAME_ARGS(orte_process_info.my_name),
+    		    ORTE_NAME_ARGS(peer),
     		    tag, (unsigned long)(msg->msg_hdr.msg_size) );
         }
         /* if we are returning an allocated buffer - just take it from the message */
@@ -117,9 +117,9 @@ int mca_oob_tcp_recv(
     }
 
     if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_INFO) {
-        opal_output(0, "%s-%s mca_oob_tcp_recv*expected*: tag %d size %lu\n",
-                    ORTE_NAME_PRINT(orte_process_info.my_name),
-                    ORTE_NAME_PRINT(peer),
+        opal_output(0, "[%lu,%lu,%lu]-[%ld,%ld,%ld] mca_oob_tcp_recv*expected*: tag %d size %lu\n",
+                    ORTE_NAME_ARGS(orte_process_info.my_name),
+                    ORTE_NAME_ARGS(peer),
                     tag, (unsigned long)(size) );
     }
 

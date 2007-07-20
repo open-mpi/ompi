@@ -38,7 +38,6 @@
 
 int orte_rds_base_store_resource(opal_list_t *resources)
 {
-#if 0
     orte_rds_cell_desc_t *cell;
     opal_list_item_t *item;
     orte_gpr_value_t **values;
@@ -107,6 +106,4 @@ CLEANUP:
     if (NULL != values) free(values);
 
     return rc;
-#endif
-    return ORTE_SUCCESS;
 }

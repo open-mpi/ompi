@@ -218,15 +218,18 @@ static void orte_rmgr_urm_xconnect_callback(orte_gpr_notify_data_t *data, void *
 static void orte_rmgr_urm_wireup_stdin(orte_jobid_t jobid)
 {
     int rc;
-    orte_process_name_t name = {ORTE_JOBID_INVALID, 0};
+    orte_process_name_t* name;
 
     OPAL_TRACE(1);
 
-    name.jobid = jobid;
-    
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_push(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDIN, 0))) {
+    if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&name, 0, jobid, 0))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    if (ORTE_SUCCESS != (rc = orte_iof.iof_push(name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDIN, 0))) {
         ORTE_ERROR_LOG(rc);
     }
+    free(name);
 }
 
 
@@ -387,7 +390,7 @@ static int orte_rmgr_urm_spawn_job(
     opal_list_t *attributes)
 {
     int rc;
-    orte_process_name_t name = {ORTE_JOBID_INVALID, 0};
+    orte_process_name_t* name;
     struct timeval urmstart, urmstop;
     orte_attribute_t *flow, *attr;
     uint8_t flags, *fptr;
@@ -465,15 +468,19 @@ static int orte_rmgr_urm_spawn_job(
          * setup I/O forwarding
          */
 
-         name.jobid = *jobid;
-         if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDOUT, 1))) {
-             ORTE_ERROR_LOG(rc);
-             return rc;
-         }
-         if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDERR, 2))) {
-             ORTE_ERROR_LOG(rc);
-             return rc;
-         }
+        if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&name, 0, *jobid, 0))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDOUT, 1))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDERR, 2))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        free(name); /* done with this */
 
 #if 0
     {

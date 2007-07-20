@@ -174,10 +174,10 @@ static void orte_iof_svc_proxy_msg(
         /* if the subscription origin doesn't match the message's
            origin, skip this subscription */
         if(orte_ns.compare_fields(sub->origin_mask,&sub->origin_name,&hdr->msg_origin) == 0) {
-            opal_output(orte_iof_base.iof_output, "sub origin %s, msg origin %s, msg proxy %s orte_iof_svc_proxy_msg: tag %d sequence %d, len %d\n",
-                        ORTE_NAME_PRINT(&sub->origin_name),
-                        ORTE_NAME_PRINT(&hdr->msg_origin),
-                        ORTE_NAME_PRINT(&hdr->msg_proxy),
+            opal_output(orte_iof_base.iof_output, "sub origin [%lu,%lu,%lu], msg origin [%lu,%lu,%lu], msg proxy [%lu,%lu,%lu] orte_iof_svc_proxy_msg: tag %d sequence %d, len %d\n",
+                        ORTE_NAME_ARGS(&sub->origin_name),
+                        ORTE_NAME_ARGS(&hdr->msg_origin),
+                        ORTE_NAME_ARGS(&hdr->msg_proxy),
                         hdr->msg_tag, hdr->msg_seq, hdr->msg_len);
             /* Everthing matched -- forward the message */
             OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
@@ -239,10 +239,10 @@ static void orte_iof_svc_proxy_pub(
     orte_iof_base_pub_header_t* hdr)
 {
     int rc;
-    opal_output(orte_iof_base.iof_output, "orte_iof_svc_proxy_pub: mask %d, tag %d, proc %s, proxy %s",
+    opal_output(orte_iof_base.iof_output, "orte_iof_svc_proxy_pub: mask %d, tag %d, proc [%lu,%lu,%lu], proxy [%lu,%lu,%lu]",
                 hdr->pub_mask, hdr->pub_tag, 
-                ORTE_NAME_PRINT(&hdr->pub_name),
-                ORTE_NAME_PRINT(&hdr->pub_proxy));
+                ORTE_NAME_ARGS(&hdr->pub_name),
+                ORTE_NAME_ARGS(&hdr->pub_proxy));
 
     rc = orte_iof_svc_pub_create(
         &hdr->pub_name,
@@ -264,10 +264,10 @@ static void orte_iof_svc_proxy_unpub(
     orte_iof_base_pub_header_t* hdr)
 {
     int rc;
-    opal_output(orte_iof_base.iof_output, "orte_iof_svc_proxy_unpub: mask %d, tag %d, proc %s, proxy %s",
+    opal_output(orte_iof_base.iof_output, "orte_iof_svc_proxy_unpub: mask %d, tag %d, proc [%lu,%lu,%lu], proxy [%lu,%lu,%lu]",
                 hdr->pub_mask, hdr->pub_tag, 
-                ORTE_NAME_PRINT(&hdr->pub_name),
-                ORTE_NAME_PRINT(&hdr->pub_proxy));
+                ORTE_NAME_ARGS(&hdr->pub_name),
+                ORTE_NAME_ARGS(&hdr->pub_proxy));
 
     rc = orte_iof_svc_pub_delete(
         &hdr->pub_name,

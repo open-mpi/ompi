@@ -188,7 +188,7 @@ cleanup:
  * the daemons.
  */
 
-int orte_pls_bproc_set_node_pid(char* node_name, orte_jobid_t jobid, pid_t pid)
+int orte_pls_bproc_set_node_pid(orte_cellid_t cellid, char* node_name, orte_jobid_t jobid, pid_t pid)
 {
     orte_gpr_value_t *values[1];
     char *jobid_string, *key;
@@ -202,7 +202,7 @@ int orte_pls_bproc_set_node_pid(char* node_name, orte_jobid_t jobid, pid_t pid)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&(values[0]->tokens), &(values[0]->num_tokens), node_name))) {
+    if (ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&(values[0]->tokens), &(values[0]->num_tokens), cellid, node_name))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(values[0]);
         return rc;

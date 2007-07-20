@@ -220,6 +220,7 @@ static int pls_lsf_launch_job(orte_jobid_t jobid)
     /* tell the new daemons the base of the name list so they can compute
      * their own name on the other end
      */
+    name.cellid = ORTE_PROC_MY_NAME->cellid;
     name.jobid = 0;
     name.vpid = map->daemon_vpid_start;
     rc = orte_ns.get_proc_name_string(&name_string, &name);

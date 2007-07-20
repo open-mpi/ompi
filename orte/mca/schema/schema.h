@@ -46,7 +46,13 @@ typedef int (*orte_schema_get_job_tokens_fn_t)(
 typedef int (*orte_schema_get_node_tokens_fn_t)(
     char ***tokens, 
     orte_std_cntr_t* num_tokens, 
+    orte_cellid_t cellid, 
     char *nodename);
+
+typedef int (*orte_schema_get_cell_tokens_fn_t)(
+    char ***tokens, 
+    orte_std_cntr_t* num_tokens, 
+    orte_cellid_t cellid);
 
 typedef int (*orte_schema_get_job_segment_name_fn_t)(char **name, orte_jobid_t jobid);
 
@@ -72,6 +78,7 @@ struct orte_schema_base_module_1_0_0_t {
     orte_schema_get_proc_tokens_fn_t                        get_proc_tokens;
     orte_schema_get_node_tokens_fn_t                        get_node_tokens;
     orte_schema_get_job_tokens_fn_t                         get_job_tokens;
+    orte_schema_get_cell_tokens_fn_t                        get_cell_tokens;
     orte_schema_get_job_segment_name_fn_t                   get_job_segment_name;
     orte_schema_extract_jobid_from_segment_name_fn_t        extract_jobid_from_segment_name;
     orte_schema_get_std_trigger_name_fn_t                   get_std_trigger_name;

@@ -37,16 +37,34 @@ int orte_ns_base_unpack_name(orte_buffer_t *buffer, void *dest,
     int rc;
     orte_std_cntr_t i, num;
     orte_process_name_t* proc;
+    orte_cellid_t *cellid;
     orte_jobid_t *jobid;
     orte_vpid_t *vpid;
 
     num = *num_vals;
+
+    /* allocate space for all the cellids in a contiguous array */
+    cellid = (orte_cellid_t*)malloc(num * sizeof(orte_cellid_t));
+    if (NULL == cellid) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        *num_vals = 0;
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    /* now unpack them in one shot */
+    if (ORTE_SUCCESS != (rc =
+            orte_ns_base_unpack_cellid(buffer, cellid, num_vals, ORTE_CELLID))) {
+        ORTE_ERROR_LOG(rc);
+        *num_vals = 0;
+        free(cellid);
+        return rc;
+    }
 
     /* allocate space for all the jobids in a contiguous array */
     jobid = (orte_jobid_t*)malloc(num * sizeof(orte_jobid_t));
     if (NULL == jobid) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         *num_vals = 0;
+        free(cellid);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     /* now unpack them in one shot */
@@ -55,6 +73,7 @@ int orte_ns_base_unpack_name(orte_buffer_t *buffer, void *dest,
         ORTE_ERROR_LOG(rc);
         *num_vals = 0;
         free(jobid);
+        free(cellid);
         return rc;
     }
 
@@ -64,6 +83,7 @@ int orte_ns_base_unpack_name(orte_buffer_t *buffer, void *dest,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         *num_vals = 0;
         free(jobid);
+        free(cellid);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     /* now unpack them in one shot */
@@ -73,12 +93,14 @@ int orte_ns_base_unpack_name(orte_buffer_t *buffer, void *dest,
         *num_vals = 0;
         free(vpid);
         free(jobid);
+        free(cellid);
         return rc;
     }
 
-    /* build the names from the jobid/vpid arrays */
+    /* build the names from the cellid/jobid/vpid arrays */
     proc = (orte_process_name_t*)dest;
     for (i=0; i < num; i++) {
+        proc->cellid = cellid[i];
         proc->jobid = jobid[i];
         proc->vpid = vpid[i];
         proc++;
@@ -87,8 +109,25 @@ int orte_ns_base_unpack_name(orte_buffer_t *buffer, void *dest,
     /* cleanup */
     free(vpid);
     free(jobid);
+    free(cellid);
 
     return ORTE_SUCCESS;
+}
+
+/*
+ * CELLID
+ */
+int orte_ns_base_unpack_cellid(orte_buffer_t *buffer, void *dest,
+                       orte_std_cntr_t *num_vals, orte_data_type_t type)
+{
+    int ret;
+
+    /* Turn around and unpack the real type */
+    if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_CELLID_T))) {
+        ORTE_ERROR_LOG(ret);
+    }
+
+    return ret;
 }
 
 /*

@@ -109,12 +109,12 @@ int main(int argc, char* argv[])
     }
     
     gethostname(hostname, 512);
-    printf("orte_nodename: Node %s Name %s\n", hostname, ORTE_NAME_PRINT(orte_process_info.my_name));
+    printf("orte_nodename: Node %s Name [%lu,%lu,%lu]\n", hostname, ORTE_NAME_ARGS(orte_process_info.my_name));
 
     orte_finalize();
     return 0;
 
 error:
-    opal_output(0, "%s: %s", ORTE_NAME_PRINT(orte_process_info.my_name), error);
+    opal_output(0, "[%lu,%lu,%lu]: %s", ORTE_NAME_ARGS(orte_process_info.my_name), error);
     return rc;
 }

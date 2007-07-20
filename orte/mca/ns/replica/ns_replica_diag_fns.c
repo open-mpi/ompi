@@ -37,6 +37,72 @@
 /*
  * DIAGNOSTIC functions
  */
+int orte_ns_replica_dump_cells(void)
+{
+    orte_buffer_t buffer;
+    int rc;
+
+    OBJ_CONSTRUCT(&buffer, orte_buffer_t);
+    if (ORTE_SUCCESS != (rc = orte_ns_replica_dump_cells_fn(&buffer))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&buffer))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buffer);
+        return rc;
+    }
+
+    OBJ_DESTRUCT(&buffer);
+    return ORTE_SUCCESS;
+}
+
+int orte_ns_replica_dump_cells_fn(orte_buffer_t *buffer)
+{
+    orte_std_cntr_t i;
+    orte_cellid_t j;
+    orte_ns_replica_cell_tracker_t **cell;
+    char tmp_out[NS_REPLICA_MAX_STRING_SIZE], *tmp;
+    int rc;
+
+    OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
+
+    tmp = tmp_out;
+    snprintf(tmp, NS_REPLICA_MAX_STRING_SIZE, "Dump of Name Service Cell Tracker\n");
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(buffer, &tmp, 1, ORTE_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+        return rc;
+    }
+    cell = (orte_ns_replica_cell_tracker_t**)(orte_ns_replica.cells)->addr;
+    for (i=0, j=0; j < orte_ns_replica.num_cells &&
+                   i < (orte_ns_replica.cells)->size; i++) {
+        if (NULL != cell[i]) {
+            j++;
+            snprintf(tmp, NS_REPLICA_MAX_STRING_SIZE, "Num: %lu\tCell: %lu\n",
+                (unsigned long)j, (unsigned long)cell[i]->cell);
+            if (ORTE_SUCCESS != (rc = orte_dss.pack(buffer, &tmp, 1, ORTE_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+                return rc;
+            }
+            snprintf(tmp, NS_REPLICA_MAX_STRING_SIZE, "\tSite: %s\n\tResource: %s\n",
+                cell[i]->site, cell[i]->resource);
+            if (ORTE_SUCCESS != (rc = orte_dss.pack(buffer, &tmp, 1, ORTE_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+                return rc;
+            }
+        }
+    }
+
+    OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+
+    return ORTE_SUCCESS;
+}
+
+
 int orte_ns_replica_dump_jobs(void)
 {
     orte_buffer_t buffer;

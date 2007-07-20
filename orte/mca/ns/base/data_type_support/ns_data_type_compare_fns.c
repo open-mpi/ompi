@@ -49,6 +49,18 @@ int orte_ns_base_compare_name(orte_process_name_t *value1,
      * value - a totally useless result, but consistent in behavior.
      */
 
+    /** check the cellids - if one of them is WILDCARD, then ignore
+    * this field since anything is okay
+    */
+    if (value1->cellid != ORTE_CELLID_WILDCARD &&
+        value2->cellid != ORTE_CELLID_WILDCARD) {
+        if (value1->cellid < value2->cellid) {
+            return ORTE_VALUE2_GREATER;
+        } else if (value1->cellid > value2->cellid) {
+            return ORTE_VALUE1_GREATER;
+        }
+    }
+    
     /** check the jobids - if one of them is WILDCARD, then ignore
     * this field since anything is okay
     */
@@ -100,6 +112,21 @@ int orte_ns_base_compare_jobid(orte_jobid_t *value1,
     /** if either value is WILDCARD, then return equal */
     if (*value1 == ORTE_JOBID_WILDCARD ||
         *value2 == ORTE_JOBID_WILDCARD) return ORTE_EQUAL;
+    
+    if (*value1 > *value2) return ORTE_VALUE1_GREATER;
+    
+    if (*value2 > *value1) return ORTE_VALUE2_GREATER;
+    
+    return ORTE_EQUAL;
+}
+
+int orte_ns_base_compare_cellid(orte_cellid_t *value1,
+                                orte_cellid_t *value2,
+                                orte_data_type_t type)
+{
+    /** if either value is WILDCARD, then return equal */
+    if (*value1 == ORTE_CELLID_WILDCARD ||
+        *value2 == ORTE_CELLID_WILDCARD) return ORTE_EQUAL;
     
     if (*value1 > *value2) return ORTE_VALUE1_GREATER;
     

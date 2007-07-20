@@ -248,8 +248,8 @@ static int orte_odls_process_kill_local_procs(orte_jobid_t job, bool set_state)
 
     OBJ_CONSTRUCT(&procs_killed, opal_list_t);
     
-    opal_output(orte_odls_globals.output, "%s odls_kill_local_proc: working on job %ld",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)job);
+    opal_output(orte_odls_globals.output, "[%ld,%ld,%ld] odls_kill_local_proc: working on job %ld",
+                    ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), (long)job);
 
     /* since we are going to be working with the global list of
      * children, we need to protect that list from modification
@@ -265,8 +265,8 @@ static int orte_odls_process_kill_local_procs(orte_jobid_t job, bool set_state)
         /* preserve the pointer to the next item in list in case we release it */
         next = opal_list_get_next(item);
 
-        opal_output(orte_odls_globals.output, "%s odls_kill_local_proc: checking child process %s",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(child->name));
+        opal_output(orte_odls_globals.output, "[%ld,%ld,%ld] odls_kill_local_proc: checking child process [%ld,%ld,%ld]",
+                    ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), ORTE_NAME_ARGS(child->name));
 
         /* do we have a child from the specified job? Because the
          *  job could be given as a WILDCARD value, we must use
@@ -283,8 +283,8 @@ static int orte_odls_process_kill_local_procs(orte_jobid_t job, bool set_state)
          * to do to it
          */
         if (!child->alive) {
-            opal_output(orte_odls_globals.output, "%s odls_kill_local_proc: child %s is not alive",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(child->name));
+            opal_output(orte_odls_globals.output, "[%ld,%ld,%ld] odls_kill_local_proc: child [%ld,%ld,%ld] is not alive",
+                        ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), ORTE_NAME_ARGS(child->name));
             /* ensure, though, that the state is terminated so we don't lockup if
              * the proc never started
              */
@@ -418,8 +418,8 @@ GOTCHILD:
        exception is detected and handled (in which case this unpublish
        request will be ignored/discarded. */
     opal_output(orte_odls_globals.output,
-                "odls: pid %ld corresponds to %s\n",
-                (long) pid, ORTE_NAME_PRINT(child->name));
+                "odls: pid %ld corresponds to [%lu,%lu,%lu]\n",
+                (long) pid, ORTE_NAME_ARGS(child->name));
 #if 0
     if (0 == child->name->vpid) {
         rc = orte_iof.iof_unpublish(child->name, ORTE_NS_CMP_ALL, 
@@ -461,20 +461,20 @@ GOTCHILD:
             /* the abort file must exist - there is nothing in it we need. It's
              * meer existence indicates that an abnormal termination occurred
              */
-            opal_output(orte_odls_globals.output, "odls: child %s died by abort",
-                        ORTE_NAME_PRINT(child->name));
+            opal_output(orte_odls_globals.output, "odls: child [%ld,%ld,%ld] died by abort",
+                        ORTE_NAME_ARGS(child->name));
             aborted = true;
             free(abort_file);
         } else {
-            opal_output(orte_odls_globals.output, "odls: child process %s terminated normally",
-                        ORTE_NAME_PRINT(child->name));
+            opal_output(orte_odls_globals.output, "odls: child process [%ld,%ld,%ld] terminated normally",
+                        ORTE_NAME_ARGS(child->name));
         }
     } else {
         /* the process was terminated with a signal! That's definitely
          * abnormal, so indicate that condition
          */
-        opal_output(orte_odls_globals.output, "odls: child process %s terminated with signal",
-                    ORTE_NAME_PRINT(child->name));
+        opal_output(orte_odls_globals.output, "odls: child process [%ld,%ld,%ld] terminated with signal",
+                    ORTE_NAME_ARGS(child->name));
         aborted = true;
     }
 
@@ -1007,6 +1007,7 @@ static int orte_odls_process_launch_local_procs(orte_gpr_notify_data_t *data)
             filem_request = OBJ_NEW(orte_filem_base_request_t);
             filem_request->num_procs = 1;
             filem_request->proc_name = (orte_process_name_t*)malloc(sizeof(orte_process_name_t) * filem_request->num_procs);
+            filem_request->proc_name[0].cellid = orte_process_info.gpr_replica->cellid;
             filem_request->proc_name[0].jobid  = orte_process_info.gpr_replica->jobid;
             filem_request->proc_name[0].vpid   = orte_process_info.gpr_replica->vpid;
             if(app_item->app_context->preload_binary) {
@@ -1105,8 +1106,8 @@ static int orte_odls_process_launch_local_procs(orte_gpr_notify_data_t *data)
          * If it has been launched, then do nothing
          */
         if (child->alive) {
-            opal_output(orte_odls_globals.output, "odls: child %s is already alive",
-                        ORTE_NAME_PRINT(child->name));            
+            opal_output(orte_odls_globals.output, "odls: child [%ld,%ld,%ld] is already alive",
+                        ORTE_NAME_ARGS(child->name));            
             continue;
         }
         
@@ -1115,13 +1116,13 @@ static int orte_odls_process_launch_local_procs(orte_gpr_notify_data_t *data)
         *  the dss.compare function to check for equality.
         */
         if (ORTE_EQUAL != orte_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
-            opal_output(orte_odls_globals.output, "odls: child %s is not in job %ld being launched",
-                        ORTE_NAME_PRINT(child->name), (long)job);            
+            opal_output(orte_odls_globals.output, "odls: child [%ld,%ld,%ld] is not in job %ld being launched",
+                        ORTE_NAME_ARGS(child->name), (long)job);            
             continue;
         }
         
-        opal_output(orte_odls_globals.output, "odls: preparing to launch child %s",
-                                              ORTE_NAME_PRINT(child->name));
+        opal_output(orte_odls_globals.output, "odls: preparing to launch child [%ld, %ld, %ld]",
+                                              ORTE_NAME_ARGS(child->name));
 
         /* find the indicated app_context in the list */
         for (item2 = opal_list_get_first(&app_context_list);
@@ -1272,8 +1273,8 @@ int orte_odls_process_deliver_message(orte_jobid_t job, orte_buffer_t *buffer, o
         if (ORTE_EQUAL != orte_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
             continue;
         }
-        opal_output(orte_odls_globals.output, "odls: sending message to tag %lu on child %s",
-                    (unsigned long)tag, ORTE_NAME_PRINT(child->name));
+        opal_output(orte_odls_globals.output, "odls: sending message to tag %lu on child [%ld, %ld, %ld]",
+                    (unsigned long)tag, ORTE_NAME_ARGS(child->name));
         
         /* if so, send the message */
         rc = orte_rml.send_buffer(child->name, buffer, tag, 0);

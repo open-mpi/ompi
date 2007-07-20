@@ -236,8 +236,8 @@ int orte_gpr_replica_dump_callbacks_fn(orte_buffer_t *buffer)
              if (NULL == cb->requestor) {
                 sprintf(tmp_out, "Local requestor");
              } else {
-                sprintf(tmp_out, "Requestor: %s",
-                        ORTE_NAME_PRINT(cb->requestor));
+                sprintf(tmp_out, "Requestor: [%lu,%lu,%lu]",
+                        ORTE_NAME_ARGS(cb->requestor));
              }
              orte_gpr_replica_dump_load_string(buffer, &tmp_out);
              orte_gpr_base_dump_notify_msg(buffer, cb->message);
@@ -420,8 +420,8 @@ int orte_gpr_replica_dump_trigger(orte_buffer_t *buffer,
                 sprintf(tmp_out, "\t\tRequestor %lu: LOCAL@idtag %lu",
                     (unsigned long)j, (unsigned long)attached[i]->idtag);
             } else {
-                sprintf(tmp_out, "\t\tRequestor %lu: %s@idtag %lu",
-                    (unsigned long)j, ORTE_NAME_PRINT(attached[i]->requestor),
+                sprintf(tmp_out, "\t\tRequestor %lu: [%lu,%lu,%lu]@idtag %lu",
+                    (unsigned long)j, ORTE_NAME_ARGS(attached[i]->requestor),
                     (unsigned long)attached[i]->idtag);
             }
             orte_gpr_replica_dump_load_string(buffer, &tmp_out);
@@ -435,8 +435,8 @@ int orte_gpr_replica_dump_trigger(orte_buffer_t *buffer,
             sprintf(tmp_out, "\tTRIGGER MASTER: LOCAL@idtag %lu",
                 (unsigned long)trig->master->idtag);
         } else {
-            sprintf(tmp_out, "\tTRIGGER MASTER: %s@idtag %lu",
-                ORTE_NAME_PRINT(trig->master->requestor),
+            sprintf(tmp_out, "\tTRIGGER MASTER: [%lu,%lu,%lu]@idtag %lu",
+                ORTE_NAME_ARGS(trig->master->requestor),
                 (unsigned long)trig->master->idtag);
         }
     }
@@ -612,8 +612,8 @@ int orte_gpr_replica_dump_subscription(orte_buffer_t *buffer,
                 sprintf(tmp_out, "\t\tRequestor: LOCAL @ subscription id %lu",
                         (unsigned long) reqs[j]->idtag);
             } else {
-                sprintf(tmp_out, "\t\tRequestor: %s @ subscription id %lu",
-                        ORTE_NAME_PRINT(reqs[j]->requestor),
+                sprintf(tmp_out, "\t\tRequestor: [%lu,%lu,%lu] @ subscription id %lu",
+                        ORTE_NAME_ARGS(reqs[j]->requestor),
                         (unsigned long) reqs[j]->idtag);
             }
             orte_gpr_replica_dump_load_string(buffer, &tmp_out);

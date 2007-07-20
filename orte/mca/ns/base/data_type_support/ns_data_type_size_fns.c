@@ -40,6 +40,10 @@ int orte_ns_base_std_size(size_t *size, void *src, orte_data_type_t type)
             *size = sizeof(orte_jobid_t);
             break;
 
+        case ORTE_CELLID:
+            *size = sizeof(orte_cellid_t);
+            break;
+
         case ORTE_NODEID:
             *size = sizeof(orte_nodeid_t);
             break;

@@ -198,7 +198,13 @@ int orte_rmaps_base_pack_mapped_node(orte_buffer_t *buffer, const void *src,
     nodes = (orte_mapped_node_t**) src;
     
     for (i=0; i < num_vals; i++) {
-       /* pack the nodename */
+        /* pack the cellid */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(nodes[i]->cell), 1, ORTE_CELLID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* pack the nodename */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(nodes[i]->nodename), 1, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;

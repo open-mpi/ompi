@@ -48,6 +48,7 @@ extern "C" {
  */
 typedef struct {
     opal_list_item_t super;
+    orte_cellid_t cell;
     char *nodename;
     orte_node_state_t state;
 } orte_smr_node_state_tracker_t;
@@ -62,9 +63,11 @@ int orte_smr_base_set_proc_state(orte_process_name_t *proc,
                                int status);
 
 int orte_smr_base_get_node_state(orte_node_state_t *state,
+                                 orte_cellid_t cell,
                                  char *nodename);
 
-int orte_smr_base_set_node_state(char *nodename,
+int orte_smr_base_set_node_state(orte_cellid_t cell,
+                                 char *nodename,
                                  orte_node_state_t state);
 
 int orte_smr_base_get_job_state(orte_job_state_t *state,

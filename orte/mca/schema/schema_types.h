@@ -59,6 +59,7 @@
  * ORTE-wide key names for storing/retrieving data from the registry.
  * Subsystem-specific keys will be defined in each=/ subsystem's xxx_types.h file.
  */
+#define ORTE_CELLID_KEY                         "orte-cellid"
 #define ORTE_JOBGRP_KEY                         "orte-jobgrp"
 #define ORTE_JOBID_KEY                          "orte-jobid"
 #define ORTE_VPID_KEY                           "orte-vpid"

@@ -105,8 +105,8 @@ typedef int (*orte_rmgr_base_module_spawn_job_fn_t)(
  * Connect a process to other processes, possibly in other jobs. Note that this
  * function supports WILDCARD process name fields. Thus, a process can request
  * connection to all other processes in another job by providing a single
- * entry in the connect array that has the
- * desired jobid and a vpid of ORTE_VPID_WILDCARD.
+ * entry in the connect array that has a cellid of ORTE_CELLID_WILDCARD, the
+ * desired jobid, and a vpid of ORTE_VPID_WILDCARD.
  */
 typedef int (*orte_rmgr_base_module_connect_fn_t)(orte_std_cntr_t num_connect,
                                                   orte_process_name_t *connect);
@@ -115,7 +115,7 @@ typedef int (*orte_rmgr_base_module_connect_fn_t)(orte_std_cntr_t num_connect,
  * Disconnect a process from one or more other processes. Note that this
  * function supports WILDCARD process name fields. Thus, a process can request
  * to disconnect from all other processes in another job by providing a single
- * entry in the connect array that has the
+ * entry in the connect array that has a cellid of ORTE_CELLID_WILDCARD, the
  * desired jobid, and a vpid of ORTE_VPID_WILDCARD.
  */
 typedef int (*orte_rmgr_base_module_disconnect_fn_t)(orte_std_cntr_t num_disconnect,

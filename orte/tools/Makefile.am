@@ -21,6 +21,7 @@
 # This makefile.am does not stand on its own - it is included from orte/Makefile.am
 
 SUBDIRS += \
+	tools/console \
 	tools/orteboot \
 	tools/orted \
 	tools/ortehalt \
@@ -32,6 +33,7 @@ SUBDIRS += \
 	tools/orte-clean
 
 DIST_SUBDIRS += \
+	tools/console \
 	tools/orteboot \
 	tools/orted \
 	tools/ortehalt \

@@ -70,6 +70,12 @@ mca_ns_base_component_t mca_ns_proxy_component = {
 static mca_ns_base_module_t orte_ns_proxy_module = {
     /* init */
     orte_ns_proxy_module_init,
+    /* cell functions */
+    orte_ns_proxy_create_cellid,
+    orte_ns_proxy_get_cell_info,
+    orte_ns_base_get_cellid_string,
+    orte_ns_base_convert_cellid_to_string,
+    orte_ns_base_convert_string_to_cellid,
     /** node functions */
     orte_ns_proxy_create_nodeids,
     orte_ns_proxy_get_node_info,
@@ -104,6 +110,7 @@ static mca_ns_base_module_t orte_ns_proxy_module = {
     /* data type functions */
     orte_ns_proxy_define_data_type,
     /* diagnostic functions */
+    orte_ns_proxy_dump_cells,
     orte_ns_proxy_dump_jobs,
     orte_ns_proxy_dump_tags,
     orte_ns_proxy_dump_datatypes,
@@ -223,6 +230,17 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
                ORTE_ERROR_LOG(ret);
                return NULL;
            }
+
+          /* initialize the cell info tracker */
+          if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_proxy.cells),
+                                    (orte_std_cntr_t)orte_ns_proxy.block_size,
+                                    (orte_std_cntr_t)orte_ns_proxy.max_size,
+                                    (orte_std_cntr_t)orte_ns_proxy.block_size))) {
+                ORTE_ERROR_LOG(rc);
+                return NULL;
+            }
+            orte_ns_proxy.num_cells = 0;
+
 
           /* initialize the taglist */
 

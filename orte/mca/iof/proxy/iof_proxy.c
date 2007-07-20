@@ -127,7 +127,7 @@ int orte_iof_proxy_unpublish(
 #if 0
         {
             int i = 0;
-            opal_output(orte_iof_base.iof_output, "%s orted: ******** ABOUT TO IOF PROXY UNPUBLISH, %d", ORTE_NAME_PRINT(orte_process_info.my_name), getpid());
+            opal_output(orte_iof_base.iof_output, "[%lu,%lu,%lu] orted: ******** ABOUT TO IOF PROXY UNPUBLISH, %d", ORTE_NAME_ARGS(orte_process_info.my_name), getpid());
             fflush(stderr);
             while (0 == i) sleep(5);
         }

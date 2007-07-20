@@ -47,7 +47,7 @@ int orte_gpr_proxy_dump_local_triggers(void)
     orte_gpr_proxy_trigger_t **trigs;
     orte_std_cntr_t j, k;
     
-    opal_output(orte_gpr_base_output, "DUMP OF LOCAL TRIGGERS for [%ld,%ld]\n",
+    opal_output(orte_gpr_base_output, "DUMP OF LOCAL TRIGGERS for [%lu,%lu,%lu]\n",
             ORTE_NAME_ARGS(orte_process_info.my_name));
     opal_output(orte_gpr_base_output, "Number of triggers: %lu\n", (unsigned long) orte_gpr_proxy_globals.num_trigs);
 
@@ -72,7 +72,7 @@ int orte_gpr_proxy_dump_local_subscriptions(void)
     orte_gpr_proxy_subscriber_t **subs;
     orte_std_cntr_t j, k;
     
-    opal_output(orte_gpr_base_output, "DUMP OF LOCAL SUBSCRIPTIONS for [%ld,%ld]\n",
+    opal_output(orte_gpr_base_output, "DUMP OF LOCAL SUBSCRIPTIONS for [%lu,%lu,%lu]\n",
             ORTE_NAME_ARGS(orte_process_info.my_name));
     opal_output(orte_gpr_base_output, "Number of subscriptions: %lu\n", (unsigned long) orte_gpr_proxy_globals.num_subs);
 

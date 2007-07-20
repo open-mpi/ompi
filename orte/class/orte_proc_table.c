@@ -46,7 +46,7 @@ static OBJ_CLASS_INSTANCE(
     NULL);
 
 #define GET_KEY(proc) \
-    ( (((uint32_t) proc->jobid) << 24) + ((uint32_t) proc->vpid) )
+    ( (((uint32_t) proc->cellid) << 24) + (((uint32_t) proc->jobid) << 16) + ((uint32_t) proc->vpid) )
 
 void* orte_hash_table_get_proc(opal_hash_table_t* ht, 
     const orte_process_name_t* proc)

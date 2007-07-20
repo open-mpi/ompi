@@ -143,6 +143,7 @@ static int discover(orte_jobid_t jobid, opal_list_t* nodelist)
         node->node_name = hostname;
         node->node_arch = NULL;
         node->node_state = ORTE_NODE_STATE_UP;
+        node->node_cellid = 0;
         node->node_slots_inuse = 0;
         node->node_slots_max = 0;
         node->node_slots = 1;

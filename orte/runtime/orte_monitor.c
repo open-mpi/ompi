@@ -51,8 +51,8 @@ static bool ompi_rte_waiting = false;
 void orte_all_procs_registered(orte_gpr_notify_message_t* match, void* cbdata)
 {
     if (orte_debug_flag) {
-	    opal_output(0, "%s all procs registered",
-		    ORTE_NAME_PRINT(orte_process_info.my_name));
+	    opal_output(0, "[%lu,%lu,%lu] all procs registered",
+		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     OPAL_THREAD_LOCK(&ompi_rte_mutex);

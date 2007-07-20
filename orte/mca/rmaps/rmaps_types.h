@@ -72,6 +72,7 @@ OBJ_CLASS_DECLARATION(orte_mapped_proc_t);
  */
 struct orte_mapped_node_t {
     opal_list_item_t super;
+    orte_cellid_t cell;	 			/* cell where this node is located */
     char *nodename;		 			/* name of node */
     int32_t launch_id;              /* launch id of node - needed by some systems */
     char *username;

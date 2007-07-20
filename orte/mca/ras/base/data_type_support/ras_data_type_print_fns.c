@@ -48,8 +48,8 @@ int orte_ras_base_print_node(char **output, char *prefix, orte_ras_node_t *src, 
         asprintf(&pfx2, "%s", prefix);
     }
 
-    asprintf(&tmp, "%sData for node: Name: %s\tLaunch id: %ld",
-                    pfx2, src->node_name, (long)src->launch_id);
+    asprintf(&tmp, "%sData for node: cellid: %lu\tName: %s\tLaunch id: %ld",
+                    pfx2, (unsigned long)src->node_cellid, src->node_name, (long)src->launch_id);
 
     asprintf(&tmp2, "%s\n%s\tArch: %s\tState: %lu", tmp, pfx2,
              src->node_arch, (unsigned long)src->node_state);

@@ -100,6 +100,9 @@
  * beginning at node 512, then the RAS can derive the nodenames from
  * this information).
  * 
+ * - cellid: the id assigned to the cell within which this node
+ * exists. This id is provided in the ORTE_RESOURCE_SEGMENT.
+ * 
  * For each node, the RAS stores the following information on the segment:
  * 
  * - number of cpus allocated from this node to the user. This will
@@ -210,7 +213,7 @@ typedef int (*orte_ras_base_module_node_query_alloc_fn_t)(opal_list_t*, orte_job
 /*
  * Query the registry for a specific node 
  */
-typedef orte_ras_node_t* (*orte_ras_base_module_node_lookup_fn_t)(const char* nodename);
+typedef orte_ras_node_t* (*orte_ras_base_module_node_lookup_fn_t)(orte_cellid_t, const char* nodename);
 
 /**
  * ras module version 1.3.0

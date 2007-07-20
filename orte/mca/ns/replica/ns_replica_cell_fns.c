@@ -38,14 +38,141 @@
  * functions
  */
 
+int orte_ns_replica_create_cellid(orte_cellid_t *cellid, char *site, char *resource)
+{
+    orte_ns_replica_cell_tracker_t *new_cell, **cell;
+    int rc;
+    orte_std_cntr_t i, j, index;
+
+    OPAL_TRACE(1);
+    
+    OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
+
+    /* if a valid cellid is given to us, then all we need to do is
+     * update the descriptive info
+     */
+    if (ORTE_CELLID_INVALID != *cellid) {
+        /* see if the cell info is already present */
+        cell = (orte_ns_replica_cell_tracker_t**)(orte_ns_replica.cells)->addr;
+        for (i=0, j=0; j < orte_ns_replica.num_cells &&
+             i < (orte_ns_replica.cells)->size; i++) {
+            if (NULL != cell[i]) {
+                j++;
+                if (cell[i]->cell == *cellid) {
+                    /* it is here - update the info */
+                    if (NULL != cell[i]->site) {
+                        free(cell[i]->site);
+                    }
+                    if (NULL != cell[i]->resource) {
+                        free(cell[i]->resource);
+                    }
+                    new_cell = cell[i];
+                    goto UPDATE;                    
+                }
+            }
+        }
+        /* get here if one isn't already present - create one */
+        goto NEWSITE;
+    }
+    
+    /* check for error */
+    if (NULL == site || NULL == resource) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+        return ORTE_ERR_BAD_PARAM;                
+    }
+    
+    /* is this a known cellid? */
+    cell = (orte_ns_replica_cell_tracker_t**)(orte_ns_replica.cells)->addr;
+    for (i=0, j=0; j < orte_ns_replica.num_cells &&
+         i < (orte_ns_replica.cells)->size; i++) {
+        if (NULL != cell[i]) {
+            j++;
+            if (0 == strcmp(site, cell[i]->site) &&
+                0 == strcmp(resource, cell[i]->resource)) {
+                *cellid = cell[i]->cell;
+                OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+                return ORTE_SUCCESS;                
+            }
+        }
+    }
+    
+    *cellid = orte_ns_replica.num_cells;
+
+NEWSITE:
+    /* new cell - check if cellid is available */
+    if (ORTE_CELLID_MAX-1 < orte_ns_replica.num_cells) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    new_cell = OBJ_NEW(orte_ns_replica_cell_tracker_t);
+    if (NULL == new_cell) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&index, orte_ns_replica.cells, new_cell))) {
+        ORTE_ERROR_LOG(rc);
+        OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+        return rc;
+    }
+    (orte_ns_replica.num_cells)++;
+
+    new_cell->cell = *cellid;
+  
+UPDATE:
+    new_cell->site = strdup(site);
+    new_cell->resource = strdup(resource);
+
+    OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+    return ORTE_SUCCESS;
+}
+
+int orte_ns_replica_get_cell_info(orte_cellid_t cellid,
+                                char **site, char **resource)
+{
+    orte_std_cntr_t i;
+    orte_cellid_t j;
+    orte_ns_replica_cell_tracker_t **cell;
+
+    OPAL_TRACE(1);
+    
+    OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
+
+    cell = (orte_ns_replica_cell_tracker_t**)(orte_ns_replica.cells)->addr;
+    for (i=0, j=0; j < orte_ns_replica.num_cells &&
+                   i < (orte_ns_replica.cells)->size; i++) {
+        if (NULL != cell[i]) {
+            j++;
+            if (cellid == cell[i]->cell) {
+                *site = strdup(cell[i]->site);
+                *resource = strdup(cell[i]->resource);
+                OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+                return ORTE_SUCCESS;
+            }
+         }
+     }
+    
+    /* it isn't an error to not find the cell - so do NOT
+     * report it via ORTE_ERROR_LOG
+     */
+
+    OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+    return ORTE_ERR_NOT_FOUND;
+}
+
 /*
  * NODEID
  */
-int orte_ns_replica_create_nodeids(orte_nodeid_t **nodeids, orte_std_cntr_t *nnodes, char **nodenames)
+int orte_ns_replica_create_nodeids(orte_nodeid_t **nodeids, orte_std_cntr_t *nnodes,
+                                   orte_cellid_t cellid, char **nodenames)
 {
-    orte_nodeid_t *nds, nid, m;
-    orte_std_cntr_t k, n, num_nodes;
-    char **nodes;
+    orte_ns_replica_cell_tracker_t **cell, *cptr;
+    orte_ns_replica_nodeid_tracker_t **nodes, *node;
+    orte_nodeid_t *nds, nid;
+    orte_std_cntr_t i, j, k, m, n, num_nodes;
     
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
     
@@ -62,20 +189,54 @@ int orte_ns_replica_create_nodeids(orte_nodeid_t **nodeids, orte_std_cntr_t *nno
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    nodes = (char**)(orte_ns_replica.nodenames->addr);
+    /** find the cell */
+    cell = (orte_ns_replica_cell_tracker_t**)(orte_ns_replica.cells)->addr;
+    for (i=0, j=0; j < orte_ns_replica.num_cells &&
+         i < (orte_ns_replica.cells)->size; i++) {
+        if (NULL != cell[i]) {
+            j++;
+            if (cellid == cell[i]->cell) {
+                /** found the specified cell - check to see if nodename has already been
+                * defined. if so, just return the nodeid. if not, create a new one
+                */
+                cptr = cell[i];
+                goto PROCESS;
+            }
+        }
+    }
+    /** get here if we didn't find the cell */
+    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+    free(nds);
+    *nodeids = NULL;
+    OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+    return ORTE_ERR_NOT_FOUND;
+
+PROCESS:
+    nodes = (orte_ns_replica_nodeid_tracker_t**)(cptr->nodeids->addr);
     for (n=0; n < num_nodes; n++) {
-        for (k=0, m=0; m < orte_ns_replica.next_nodeid &&
-                       k < (orte_ns_replica.nodenames)->size; k++) {
+        for (k=0, m=0; m < cptr->next_nodeid &&
+             k < (cptr->nodeids)->size; k++) {
             if (NULL != nodes[k]) {
                 m++;
-                if (strcmp(nodenames[n], nodes[k]) == 0) { /** found same name */
-                    nid = m;
+                if (strcmp(nodenames[n], nodes[k]->nodename) == 0) { /** found same name */
+                    nid = nodes[k]->nodeid;
                     goto ASSIGN;
                 }
             }
         }
-        /** get here if we don't find this nodename - add it */
-        nid = orte_ns_replica.next_nodeid++;
+        /** get here if we don't find this nodename - add one */
+        node = OBJ_NEW(orte_ns_replica_nodeid_tracker_t);
+        if (NULL == node) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            free(nds);
+            *nodeids = NULL;
+            OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        node->nodename = strdup(nodenames[n]);
+        node->nodeid = cptr->next_nodeid;
+        cptr->next_nodeid++;
+        nid = node->nodeid;
 
 ASSIGN:
         nds[n] = nid;
@@ -88,13 +249,16 @@ ASSIGN:
     return ORTE_SUCCESS;
 }
 
-int orte_ns_replica_get_node_info(char ***nodenames, orte_std_cntr_t num_nodes, orte_nodeid_t *nodeids)
+int orte_ns_replica_get_node_info(char ***nodenames, orte_cellid_t cellid,
+                                  orte_std_cntr_t num_nodes, orte_nodeid_t *nodeids)
 {
-    char **names;
-    orte_std_cntr_t n;
-    char **nodes;
+    char **names, *nm;
+    orte_ns_replica_cell_tracker_t **cell, *cptr;
+    orte_ns_replica_nodeid_tracker_t **nodes;
+    orte_std_cntr_t i, j, k, m, n;
+    char *err_name = "NODE_NOT_FOUND";
         
-    OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
+        OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
     
     if (0 == num_nodes) {
         *nodenames = NULL;
@@ -109,15 +273,48 @@ int orte_ns_replica_get_node_info(char ***nodenames, orte_std_cntr_t num_nodes, 
     }
     names[num_nodes] = NULL;  /** NULL-terminate the list */
     
-    nodes = (char**)(orte_ns_replica.nodenames->addr);
-    for (n=0; n < num_nodes; n++) {
-        if (nodeids[n] >= orte_ns_replica.next_nodeid) {
-            names[n] = strdup("invalid nodeid");
-        } else if (NULL != nodes[nodeids[n]]) {
-            names[n] = strdup(nodes[nodeids[n]]);
-        } else {
-            names[n] = strdup("unknown nodeid");
+    /** find the cell */
+    cell = (orte_ns_replica_cell_tracker_t**)(orte_ns_replica.cells)->addr;
+    for (i=0, j=0; j < orte_ns_replica.num_cells &&
+         i < (orte_ns_replica.cells)->size; i++) {
+        if (NULL != cell[i]) {
+            j++;
+            if (cellid == cell[i]->cell) {
+                /** found the specified cell - check to see if nodename has already been
+                * defined. if so, just return the nodeid. if not, create a new one
+                */
+                cptr = cell[i];
+                goto PROCESS;
+            }
         }
+    }
+    /** get here if we didn't find the cell */
+    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+    free(names);
+    *nodenames = NULL;
+    OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+    return ORTE_ERR_NOT_FOUND;
+    
+PROCESS:
+    nodes = (orte_ns_replica_nodeid_tracker_t**)(cell[i]->nodeids->addr);
+    for (n=0; n < num_nodes; n++) {
+        for (k=0, m=0; m < cell[i]->next_nodeid &&
+             k < (cell[i]->nodeids)->size; k++) {
+            if (NULL != nodes[k]) {
+                m++;
+                if (nodeids[n] == nodes[k]->nodeid) { /** found it */
+                    nm = nodes[k]->nodename;
+                    goto ASSIGN;
+                }
+            }
+        }
+        /** node not found - set name to error name. Can't set it to NULL since
+        * the list is a NULL-terminated one
+        */
+        nm = err_name;
+        
+ASSIGN:
+        names[n] = strdup(nm);
     }
 
     *nodenames = names;
