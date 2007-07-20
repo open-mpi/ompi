@@ -58,7 +58,8 @@ int app_coord_init() {
      */
 
     opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
-                        "app) Initalized for Application (%d.%d)\n", 
+                        "app) Initalized for Application (%d.%d.%d)\n", 
+                        orte_process_info.my_name->cellid,
                         orte_process_info.my_name->jobid,
                         orte_process_info.my_name->vpid);
 

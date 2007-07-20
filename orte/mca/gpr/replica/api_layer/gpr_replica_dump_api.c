@@ -42,8 +42,8 @@ int orte_gpr_replica_dump_all(void)
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
-	   opal_output(0, "%s gpr_replica_dump_all: entered",
-		    ORTE_NAME_PRINT(orte_process_info.my_name));
+	   opal_output(0, "[%lu,%lu,%lu] gpr_replica_dump_all: entered",
+		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
@@ -74,8 +74,8 @@ int orte_gpr_replica_dump_segments(char *segment)
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
-      opal_output(0, "%s gpr_replica_dump_segments: entered",
-         ORTE_NAME_PRINT(orte_process_info.my_name));
+      opal_output(0, "[%lu,%lu,%lu] gpr_replica_dump_segments: entered",
+         ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
@@ -106,8 +106,8 @@ int orte_gpr_replica_dump_triggers(orte_gpr_trigger_id_t start)
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
-      opal_output(0, "%s gpr_replica_dump_triggers: entered",
-         ORTE_NAME_PRINT(orte_process_info.my_name));
+      opal_output(0, "[%lu,%lu,%lu] gpr_replica_dump_triggers: entered",
+         ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
@@ -290,8 +290,8 @@ int orte_gpr_replica_dump_callbacks(void)
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
-      opal_output(0, "%s gpr_replica_dump_callbacks: entered",
-         ORTE_NAME_PRINT(orte_process_info.my_name));
+      opal_output(0, "[%lu,%lu,%lu] gpr_replica_dump_callbacks: entered",
+         ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);

@@ -96,7 +96,7 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient,
          * process is done
          */
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        opal_output(0, "send failed to %s", ORTE_NAME_PRINT(recipient));
+        opal_output(0, "send failed to [%ld,%ld,%ld]", ORTE_NAME_ARGS(recipient));
         orte_dss.dump(0, message, ORTE_GPR_NOTIFY_MSG);
         OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
         return ORTE_ERR_COMM_FAILURE;

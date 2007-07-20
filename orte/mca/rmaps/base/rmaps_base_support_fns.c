@@ -290,7 +290,7 @@ int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_list,
 }
 
 
-int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, char *nodename, int32_t launch_id,
+int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_cellid_t cell, char *nodename, int32_t launch_id,
                                     char *username, bool oversubscribed, orte_mapped_proc_t *proc)
 {
     opal_list_item_t *item;
@@ -301,7 +301,7 @@ int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, char *nodename, int32_t
          item = opal_list_get_next(item)) {
         node = (orte_mapped_node_t*)item;
         
-        if (0 == strcmp(nodename, node->nodename)) {
+        if (cell == node->cell && 0 == strcmp(nodename, node->nodename)) {
             /* node was found - add this proc to that list */
             opal_list_append(&node->procs, &proc->super);
             /* set the oversubscribed flag */
@@ -317,6 +317,7 @@ int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, char *nodename, int32_t
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
+    node->cell = cell;
     node->nodename = strdup(nodename);
     if (NULL != username) {
         node->username = strdup(username);
@@ -356,7 +357,8 @@ int orte_rmaps_base_claim_slot(orte_job_map_t *map,
     }
     
     /* create the process name as an offset from the vpid-start */
-    rc = orte_ns.create_process_name(&name, jobid, vpid);
+    rc = orte_ns.create_process_name(&name, current_node->node_cellid,
+                                     jobid, vpid);
     if (rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(proc);
@@ -377,7 +379,8 @@ int orte_rmaps_base_claim_slot(orte_job_map_t *map,
     }
     
     /* add the proc to the map */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_add_proc_to_map(map, current_node->node_name,
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_add_proc_to_map(map, current_node->node_cellid,
+                                                              current_node->node_name,
                                                               current_node->launch_id,
                                                               current_node->node_username,
                                                               oversub, proc))) {
@@ -451,7 +454,7 @@ int orte_rmaps_base_update_node_usage(opal_list_t *nodes)
         }
 
         /* setup index/keys for this node */
-        rc = orte_schema.get_node_tokens(&(values[i]->tokens), &(values[i]->num_tokens), node->node_name);
+        rc = orte_schema.get_node_tokens(&(values[i]->tokens), &(values[i]->num_tokens), node->node_cellid, node->node_name);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
@@ -736,7 +739,8 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
         if (node->daemon_preexists) continue;
         
         /* otherwise, create the daemon's process name and store it on the mapped_node... */
-        if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&node->daemon, 0, vpid))) {
+        if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&node->daemon, ORTE_PROC_MY_NAME->cellid,
+                                                              0, vpid))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

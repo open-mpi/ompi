@@ -39,6 +39,31 @@ extern "C" {
  */
 #define NS_REPLICA_MAX_STRING_SIZE  256
     
+    
+/* class for tracking cellid's */
+struct orte_ns_replica_cell_tracker_t {
+    opal_object_t super;
+    orte_cellid_t cell;
+    char *site;
+    char *resource;
+    orte_nodeid_t next_nodeid;
+    orte_pointer_array_t *nodeids;
+};
+typedef struct orte_ns_replica_cell_tracker_t orte_ns_replica_cell_tracker_t;
+
+OBJ_CLASS_DECLARATION(orte_ns_replica_cell_tracker_t);
+
+/* object for tracking nodeid's */
+struct orte_ns_replica_nodeid_tracker_t {
+    opal_object_t super;
+    char *nodename;
+    orte_nodeid_t nodeid;
+};
+typedef struct orte_ns_replica_nodeid_tracker_t orte_ns_replica_nodeid_tracker_t;
+
+OBJ_CLASS_DECLARATION(orte_ns_replica_nodeid_tracker_t);
+
+
 /*
  * object for tracking vpids and jobids for job families
  * This structure is used to track the parent-child relationship between
@@ -81,8 +106,8 @@ OBJ_CLASS_DECLARATION(orte_ns_replica_dti_t);
  */
 typedef struct {
     size_t max_size, block_size;
-    orte_nodeid_t next_nodeid;
-    orte_pointer_array_t *nodenames;
+    orte_cellid_t num_cells;
+    orte_pointer_array_t *cells;
     orte_jobid_t num_jobids;
     opal_list_t jobs;
     orte_pointer_array_t *tags;
@@ -118,11 +143,17 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                           orte_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata);
 
 /*
- * NODE FUNCTIONS
+ * CELL FUNCTIONS
  */
-int orte_ns_replica_create_nodeids(orte_nodeid_t **nodeids, orte_std_cntr_t *nnodes, char **nodenames);
+int orte_ns_replica_create_cellid(orte_cellid_t *cellid, char *site, char *resource);
 
-int orte_ns_replica_get_node_info(char ***nodenames, orte_std_cntr_t num_nodes, orte_nodeid_t *nodeids);
+int orte_ns_replica_get_cell_info(orte_cellid_t cellid,
+                                char **site, char **resource);
+
+int orte_ns_replica_create_nodeids(orte_nodeid_t **nodeids, orte_std_cntr_t *nnodes,
+                                   orte_cellid_t cellid, char **nodenames);
+
+int orte_ns_replica_get_node_info(char ***nodenames, orte_cellid_t cellid, orte_std_cntr_t num_nodes, orte_nodeid_t *nodeids);
 
 /*
  * JOB FUNCTIONS
@@ -164,6 +195,9 @@ int orte_ns_replica_create_my_name(void);
 /*
  * DIAGNOSTIC FUNCTIONS
  */
+int orte_ns_replica_dump_cells(void);
+int orte_ns_replica_dump_cells_fn(orte_buffer_t *buffer);
+
 int orte_ns_replica_dump_jobs(void);
 int orte_ns_replica_dump_jobs_fn(orte_buffer_t *buffer);
 

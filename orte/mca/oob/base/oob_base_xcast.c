@@ -147,7 +147,7 @@ int mca_oob_xcast_nb(orte_jobid_t job,
 DONE:
     if (orte_timing) {
         gettimeofday(&stop, NULL);
-        opal_output(0, "xcast_nb %s: time %ld usec", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+        opal_output(0, "xcast_nb [%ld,%ld,%ld]: time %ld usec", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME),
                                         (long int)((stop.tv_sec - start.tv_sec)*1000000 +
                                (stop.tv_usec - start.tv_usec)));
     }
@@ -226,7 +226,7 @@ DONE:
     
     if (orte_timing) {
         gettimeofday(&stop, NULL);
-        opal_output(0, "xcast %s: time %ld usec", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+        opal_output(0, "xcast [%ld,%ld,%ld]: time %ld usec", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME),
                     (long int)((stop.tv_sec - start.tv_sec)*1000000 +
                                (stop.tv_usec - start.tv_usec)));
     }
@@ -314,11 +314,12 @@ static int mca_oob_xcast_binomial_tree(orte_jobid_t job,
     }
         
     if (orte_timing) {
-        opal_output(0, "xcast %s: mode binomial buffer size %ld",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)buf->bytes_used);
+        opal_output(0, "xcast [%ld,%ld,%ld]: mode binomial buffer size %ld",
+                    ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), (long)buf->bytes_used);
     }
     
     /* start setting up the target recipients */
+    target.cellid = ORTE_PROC_MY_NAME->cellid;
     target.jobid = 0;
     
     /* compute the bitmap */
@@ -358,12 +359,13 @@ static int mca_oob_xcast_binomial_tree(orte_jobid_t job,
     orte_oob_xcast_num_active += binomial_xcast_num_active;
     OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
 
+    target.cellid = ORTE_PROC_MY_NAME->cellid;
     target.jobid = 0;
     for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
         peer = rank | mask;
         if (peer < size) {
             target.vpid = (orte_vpid_t)peer;
-            opal_output(mca_oob_base_output, "%s xcast to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&target));
+            opal_output(mca_oob_base_output, "[%ld,%ld,%ld] xcast to [%ld,%ld,%ld]", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), ORTE_NAME_ARGS(&target));
             if (0 > (rc = mca_oob_send_packed_nb(&target, buf, ORTE_RML_TAG_ORTED_ROUTED,
                                                  0, mca_oob_xcast_send_cb, NULL))) {
                 if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
@@ -450,8 +452,8 @@ static int mca_oob_xcast_linear(orte_jobid_t job,
     }
     
     if (orte_timing) {
-        opal_output(0, "xcast %s: mode linear buffer size %ld",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)buf->bytes_used);
+        opal_output(0, "xcast [%ld,%ld,%ld]: mode linear buffer size %ld",
+                    ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), (long)buf->bytes_used);
     }
     
     /* get the number of daemons out there */
@@ -486,6 +488,7 @@ static int mca_oob_xcast_linear(orte_jobid_t job,
     OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
     
     /* send the message to each daemon as fast as we can */
+    dummy.cellid = ORTE_PROC_MY_NAME->cellid;
     dummy.jobid = 0;
     for (i=0; i < range; i++) {            
         if (ORTE_PROC_MY_NAME->vpid != i) { /* don't send to myself */
@@ -541,8 +544,8 @@ static int mca_oob_xcast_direct(orte_jobid_t job,
     OBJ_DESTRUCT(&attrs);
     
     if (orte_timing) {
-        opal_output(0, "xcast %s: mode direct buffer size %ld",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)buffer->bytes_used);
+        opal_output(0, "xcast [%ld,%ld,%ld]: mode direct buffer size %ld",
+                    ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), (long)buffer->bytes_used);
     }
     
     /* we have to account for all of the messages we are about to send
@@ -555,7 +558,7 @@ static int mca_oob_xcast_direct(orte_jobid_t job,
     OPAL_THREAD_UNLOCK(&orte_oob_xcast_mutex);
 
     for(i=0; i<n; i++) {
-        opal_output(mca_oob_base_output, "oob_xcast: sending to %s", ORTE_NAME_PRINT(peers+i));
+        opal_output(mca_oob_base_output, "oob_xcast: sending to [%ld,%ld,%ld]", ORTE_NAME_ARGS(peers+i));
         if (0 > (rc = mca_oob_send_packed_nb(peers+i, buffer, tag, 0, mca_oob_xcast_send_cb, NULL))) {
             if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);

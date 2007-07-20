@@ -681,6 +681,7 @@ static int snapc_full_local_get_vpids(void)
 
         /* The pid is not known at this time, we will update it later */
         vpid_snapshot->process_pid = 0;
+        vpid_snapshot->process_name.cellid = proc_name->cellid;
         vpid_snapshot->process_name.jobid  = proc_name->jobid;
         vpid_snapshot->process_name.vpid   = proc_name->vpid;
 

@@ -50,6 +50,7 @@ extern "C" {
  */
 static void orte_rmaps_mapped_proc_construct(orte_mapped_proc_t* proc)
 {
+    proc->name.cellid = ORTE_CELLID_INVALID;
     proc->name.jobid = ORTE_JOBID_INVALID;
     proc->name.vpid = ORTE_VPID_INVALID;
     proc->rank = ORTE_VPID_INVALID;
@@ -67,6 +68,7 @@ static void orte_rmaps_mapped_proc_construct(orte_mapped_proc_t* proc)
 
 static void orte_rmaps_mapped_proc_destruct(orte_mapped_proc_t* proc)
 {
+    proc->name.cellid = ORTE_CELLID_INVALID;
     proc->name.jobid = ORTE_JOBID_INVALID;
     proc->name.vpid = ORTE_VPID_INVALID;
     proc->rank = ORTE_VPID_INVALID;

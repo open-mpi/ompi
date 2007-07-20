@@ -45,6 +45,10 @@ int orte_ns_base_std_print(char **output, char *prefix, void *src, orte_data_typ
             orte_ns_base_quick_print(output, "ORTE_JOBID", prefix, src, sizeof(orte_jobid_t));
             break;
 
+        case ORTE_CELLID:
+            orte_ns_base_quick_print(output, "ORTE_CELLID", prefix, src, sizeof(orte_cellid_t));
+            break;
+
         case ORTE_NODEID:
             orte_ns_base_quick_print(output, "ORTE_NODEID", prefix, src, sizeof(orte_nodeid_t));
             break;
@@ -69,8 +73,8 @@ int orte_ns_base_print_name(char **output, char *prefix, orte_process_name_t *na
         asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: NULL",
                  (NULL == prefix ? " " : prefix));
     } else {
-        asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: [%ld,%ld]",
-             (NULL == prefix ? " " : prefix),
+        asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: [%ld,%ld,%ld]",
+             (NULL == prefix ? " " : prefix), (long)name->cellid,
              (long)name->jobid, (long)name->vpid);
     }
 

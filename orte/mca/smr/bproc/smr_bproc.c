@@ -246,7 +246,8 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     	return;
     }
 
-    ret = orte_schema.get_node_tokens(&(value->tokens), &(value->num_tokens), node_name);
+    ret = orte_schema.get_node_tokens(&(value->tokens), &(value->num_tokens), 
+	    ORTE_PROC_MY_NAME->cellid, node_name);
 
     if (ret != ORTE_SUCCESS) {
     	ORTE_ERROR_LOG(ret);

@@ -44,9 +44,9 @@
  * globals
  */
 
-orte_process_name_t orte_ns_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD};
-orte_process_name_t orte_ns_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID}; 
-orte_process_name_t orte_ns_name_my_hnp = {0, 0}; 
+orte_process_name_t orte_ns_name_wildcard = {ORTE_CELLID_WILDCARD, ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD};
+orte_process_name_t orte_ns_name_invalid = {ORTE_CELLID_INVALID, ORTE_JOBID_INVALID, ORTE_VPID_INVALID}; 
+orte_process_name_t orte_ns_name_my_hnp = {0, 0, 0}; 
 
 /*
  * Global variables
@@ -55,6 +55,12 @@ int mca_ns_base_output = -1;
 mca_ns_base_module_t orte_ns = {
     /* init */
     orte_ns_base_module_init_not_available,
+    /* cell functions */
+    orte_ns_base_create_cellid_not_available,
+    orte_ns_base_get_cell_info_not_available,
+    orte_ns_base_get_cellid_string,
+    orte_ns_base_convert_cellid_to_string,
+    orte_ns_base_convert_string_to_cellid,
     /* node functions */
     orte_ns_base_create_nodeids_not_available,
     orte_ns_base_get_node_info_not_available,
@@ -89,6 +95,7 @@ mca_ns_base_module_t orte_ns = {
     /* data type functions */
     orte_ns_base_define_data_type_not_available,
     /* diagnostic functions */
+    orte_ns_base_dump_cells_not_available,
     orte_ns_base_dump_jobs_not_available,
     orte_ns_base_dump_tags_not_available,
     orte_ns_base_dump_datatypes_not_available,
@@ -150,12 +157,6 @@ int orte_ns_base_open(void)
     }
     mca_ns_base_output = opal_output_open(&kill_prefix);
 
-    /* setup the print_args function */
-    if (ORTE_SUCCESS != (rc = orte_ns_base_init_print_args())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
     /* register the base system types with the DPS */
     tmp = ORTE_NAME;
     if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_ns_base_pack_name,
@@ -199,7 +200,21 @@ int orte_ns_base_open(void)
             return rc;
         }
 
-    /* Open up all available components */
+    tmp = ORTE_CELLID;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_ns_base_pack_cellid,
+                                        orte_ns_base_unpack_cellid,
+                                        (orte_dss_copy_fn_t)orte_ns_base_copy_cellid,
+                                        (orte_dss_compare_fn_t)orte_ns_base_compare_cellid,
+                                        (orte_dss_size_fn_t)orte_ns_base_std_size,
+                                        (orte_dss_print_fn_t)orte_ns_base_std_print,
+                                        (orte_dss_release_fn_t)orte_ns_base_std_release,
+                                        ORTE_DSS_UNSTRUCTURED,
+                                        "ORTE_CELLID", &tmp))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+                    /* Open up all available components */
 
     if (ORTE_SUCCESS !=
         mca_base_components_open("ns", mca_ns_base_output,

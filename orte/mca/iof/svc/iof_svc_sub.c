@@ -104,9 +104,9 @@ int orte_iof_svc_sub_create(
     sub->target_mask = target_mask;
     sub->target_tag = target_tag;
     sub->sub_endpoint = orte_iof_base_endpoint_match(&sub->target_name, sub->target_mask, sub->target_tag);
-    opal_output(orte_iof_base.iof_output, "created svc sub, origin %s tag %d / mask %x, target %s, tag %d / mask %x\n",
-                ORTE_NAME_PRINT((orte_process_name_t*)origin_name), origin_tag, origin_mask,
-                ORTE_NAME_PRINT((orte_process_name_t*)target_name), target_tag, target_mask);
+    opal_output(orte_iof_base.iof_output, "created svc sub, origin [%lu,%lu,%lu] tag %d / mask %x, target [%lu,%lu,%lu], tag %d / mask %x\n",
+                ORTE_NAME_ARGS(origin_name), origin_tag, origin_mask,
+                ORTE_NAME_ARGS(target_name), target_tag, target_mask);
 
     /* search through published endpoints for a match */
     for(item  = opal_list_get_first(&mca_iof_svc_component.svc_published);
@@ -191,9 +191,9 @@ void orte_iof_svc_sub_ack(
         orte_iof_svc_sub_t* sub = (orte_iof_svc_sub_t*)s_item;
         opal_list_item_t *f_item;
 
-        opal_output(orte_iof_base.iof_output, "ack: checking sub origin %s tag %d / mask %x, target %s, tag %d / mask %x\n",
-                    ORTE_NAME_PRINT(&sub->origin_name), sub->origin_tag, sub->origin_mask,
-                    ORTE_NAME_PRINT(&sub->target_name), sub->target_tag, sub->target_mask);
+        opal_output(orte_iof_base.iof_output, "ack: checking sub origin [%lu,%lu,%lu] tag %d / mask %x, target [%lu,%lu,%lu], tag %d / mask %x\n",
+                    ORTE_NAME_ARGS(&sub->origin_name), sub->origin_tag, sub->origin_mask,
+                    ORTE_NAME_ARGS(&sub->target_name), sub->target_tag, sub->target_mask);
 
         /* If the subscription origin/tag doesn't match the ACK
            origin/tag, skip it */
@@ -223,8 +223,8 @@ void orte_iof_svc_sub_ack(
             orte_iof_svc_pub_t* pub = fwd->fwd_pub;
             bool value_set = true;
 
-            opal_output(orte_iof_base.iof_output, "ack: checking fwd %s tag %d / mask %x\n",
-                        ORTE_NAME_PRINT(&pub->pub_name), pub->pub_tag, pub->pub_mask);
+            opal_output(orte_iof_base.iof_output, "ack: checking fwd [%lu,%lu,%lu] tag %d / mask %x\n",
+                        ORTE_NAME_ARGS(&pub->pub_name), pub->pub_tag, pub->pub_mask);
 
             /* If the publication origin or publication proxy matches
                the ACK'ing proxy, save the ACK'ed byte count for this
@@ -521,12 +521,12 @@ int orte_iof_svc_fwd_create(
     }
     OBJ_RETAIN(pub);
     fwd->fwd_pub = pub;
-    opal_output(orte_iof_base.iof_output, "created svc forward, sub origin %s, tag %d / mask %x, sub target %s, tag %d / mask %x :::: pub name %s, tag %d / mask %x\n",
-                ORTE_NAME_PRINT(&sub->origin_name), sub->origin_tag,
+    opal_output(orte_iof_base.iof_output, "created svc forward, sub origin [%lu,%lu,%lu], tag %d / mask %x, sub target [%lu,%lu,%lu], tag %d / mask %x :::: pub name [%lu,%lu,%lu], tag %d / mask %x\n",
+                ORTE_NAME_ARGS(&sub->origin_name), sub->origin_tag,
                 sub->origin_mask,
-                ORTE_NAME_PRINT(&sub->target_name), sub->target_tag,
+                ORTE_NAME_ARGS(&sub->target_name), sub->target_tag,
                 sub->target_mask,
-                ORTE_NAME_PRINT(&pub->pub_name), pub->pub_tag, pub->pub_mask);
+                ORTE_NAME_ARGS(&pub->pub_name), pub->pub_tag, pub->pub_mask);
     opal_list_append(&sub->sub_forward, &fwd->super);
     return ORTE_SUCCESS;
 }

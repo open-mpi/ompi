@@ -257,9 +257,9 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
             else if (opal_socket_errno == EAGAIN || opal_socket_errno == EWOULDBLOCK)
                 return false;
             else {
-                opal_output(0, "%s-%s mca_oob_tcp_msg_send_handler: writev failed: %s (%d)", 
-                    ORTE_NAME_PRINT(orte_process_info.my_name), 
-                    ORTE_NAME_PRINT(&(peer->peer_name)), 
+                opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_send_handler: writev failed: %s (%d)", 
+                    ORTE_NAME_ARGS(orte_process_info.my_name), 
+                    ORTE_NAME_ARGS(&(peer->peer_name)), 
                     strerror(opal_socket_errno),
                     opal_socket_errno);
                 mca_oob_tcp_peer_close(peer);
@@ -305,9 +305,9 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
         if(msg->msg_hdr.msg_size > 0) {
              msg->msg_rwbuf = malloc(msg->msg_hdr.msg_size);
              if(NULL == msg->msg_rwbuf) {
-                 opal_output(0, "%s-%s mca_oob_tcp_msg_recv_handler: malloc(%d) failed\n", 
-                     ORTE_NAME_PRINT(orte_process_info.my_name),
-                     ORTE_NAME_PRINT(&(peer->peer_name)),
+                 opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_recv_handler: malloc(%d) failed\n", 
+                     ORTE_NAME_ARGS(orte_process_info.my_name),
+                     ORTE_NAME_ARGS(&(peer->peer_name)),
                      msg->msg_hdr.msg_size);
                  mca_oob_tcp_peer_close(peer);
                  return false;
@@ -321,9 +321,9 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
              msg->msg_rwnum = 0;
         }
         if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_INFO) {
-            opal_output(0, "%s-%s mca_oob_tcp_msg_recv_handler: size %lu\n",
-                        ORTE_NAME_PRINT(orte_process_info.my_name),
-                        ORTE_NAME_PRINT(&(peer->peer_name)),
+            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_recv_handler: size %lu\n",
+                        ORTE_NAME_ARGS(orte_process_info.my_name),
+                        ORTE_NAME_ARGS(&(peer->peer_name)),
                         (unsigned long)(msg->msg_hdr.msg_size) );
         }
     }
@@ -362,9 +362,9 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                under UNIX/Linux environments */
             else if (opal_socket_errno == EAGAIN || opal_socket_errno == EWOULDBLOCK)
                 return false;
-	    opal_output(0, "%s-%s mca_oob_tcp_msg_recv: readv failed: %s (%d)", 
-			ORTE_NAME_PRINT(orte_process_info.my_name),
-			ORTE_NAME_PRINT(&(peer->peer_name)),
+	    opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_recv: readv failed: %s (%d)", 
+			ORTE_NAME_ARGS(orte_process_info.my_name),
+			ORTE_NAME_ARGS(&(peer->peer_name)),
 			strerror(opal_socket_errno),
 			opal_socket_errno);
 	    mca_oob_tcp_peer_close(peer);
@@ -372,9 +372,9 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
 	    return false;
         } else if (rc == 0)  {
             if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT_FAIL) {
-                opal_output(0, "%s-%s mca_oob_tcp_msg_recv: peer closed connection", 
-                   ORTE_NAME_PRINT(orte_process_info.my_name),
-                   ORTE_NAME_PRINT(&(peer->peer_name)));
+                opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_recv: peer closed connection", 
+                   ORTE_NAME_ARGS(orte_process_info.my_name),
+                   ORTE_NAME_ARGS(&(peer->peer_name)));
             }
             mca_oob_tcp_peer_close(peer);
             mca_oob_call_exception_handlers(&peer->peer_name, MCA_OOB_PEER_DISCONNECTED);
@@ -417,9 +417,11 @@ void mca_oob_tcp_msg_recv_complete(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* p
             mca_oob_tcp_msg_data(msg,peer);
             break;
         default:
-            opal_output(0, "%s mca_oob_tcp_msg_recv_complete: invalid message type: %d from peer %s\n",
-                        ORTE_NAME_PRINT(orte_process_info.my_name), msg->msg_hdr.msg_type, 
-                        ORTE_NAME_PRINT(&peer->peer_name));
+            opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_msg_recv_complete: invalid message type: %d from peer [%lu,%lu,%lu]\n",
+                        ORTE_NAME_ARGS(orte_process_info.my_name), msg->msg_hdr.msg_type, 
+                        (long)(peer->peer_name.cellid),
+                        (long)(peer->peer_name.jobid),
+                        (long)(peer->peer_name.vpid));
             MCA_OOB_TCP_MSG_RETURN(msg);
             break;
     }

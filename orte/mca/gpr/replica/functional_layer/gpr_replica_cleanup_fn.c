@@ -79,8 +79,8 @@ int orte_gpr_replica_cleanup_proc_fn(orte_process_name_t *proc)
     OPAL_TRACE(2);
     
 	if (orte_gpr_replica_globals.debug) {
-		opal_output(0, "%s gpr_replica_cleanup_proc: function entered for process %s",
-					ORTE_NAME_PRINT(orte_process_info.my_name), ORTE_NAME_PRINT(proc));
+		opal_output(0, "[%lu,%lu,%lu] gpr_replica_cleanup_proc: function entered for process [%lu,%lu,%lu]",
+					ORTE_NAME_ARGS(orte_process_info.my_name), ORTE_NAME_ARGS(proc));
 	}
 	
     if (ORTE_SUCCESS != (rc = orte_ns.get_proc_name_string(&procname, proc))) {

@@ -292,7 +292,7 @@ ompi_proc_t * ompi_proc_find ( const orte_process_name_t * name )
     orte_ns_cmp_bitmask_t mask;
 
     /* return the proc-struct which matches this jobid+process id */
-    mask = ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
+    mask = ORTE_NS_CMP_CELLID | ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
         proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
@@ -315,7 +315,7 @@ ompi_proc_find_and_add(const orte_process_name_t * name, bool* isnew)
     orte_ns_cmp_bitmask_t mask;
 
     /* return the proc-struct which matches this jobid+process id */
-    mask = ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
+    mask = ORTE_NS_CMP_CELLID | ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
         proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
@@ -550,7 +550,7 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
     OPAL_THREAD_LOCK(&ompi_proc_lock);
 
     /* loop over the data returned in the subscription */
-    mask = ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
+    mask = ORTE_NS_CMP_CELLID | ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
     value = (orte_gpr_value_t**)(data->values)->addr;
     for (i = 0, k=0; k < data->cnt &&
                      i < (data->values)->size; ++i) {

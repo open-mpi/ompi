@@ -49,7 +49,6 @@ extern "C" {
 ORTE_DECLSPEC    int orte_ns_base_open(void);
 ORTE_DECLSPEC    int orte_ns_base_select(void);
 ORTE_DECLSPEC    int orte_ns_base_close(void);
-ORTE_DECLSPEC    int orte_ns_base_init_print_args(void);
 
 /*
  * globals that might be needed

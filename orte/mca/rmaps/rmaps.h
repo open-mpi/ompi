@@ -67,7 +67,7 @@ typedef int (*orte_rmaps_base_module_get_job_map_fn_t)(orte_job_map_t **map, ort
  * Get the map for a job on a specific node from the registry. Providing a jobid of
  * ORTE_JOBID_WILDCARD will return the map of all processes on that node
  */
-typedef int (*orte_rmaps_base_module_get_node_map_fn_t)(orte_mapped_node_t **node,
+typedef int (*orte_rmaps_base_module_get_node_map_fn_t)(orte_mapped_node_t **node, orte_cellid_t cell,
                                                         char *nodename, orte_jobid_t job);
 
 /**

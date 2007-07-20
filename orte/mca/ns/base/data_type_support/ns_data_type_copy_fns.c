@@ -45,6 +45,25 @@ int orte_ns_base_copy_vpid(orte_vpid_t **dest, orte_vpid_t *src, orte_data_type_
 }
 
 /*
+ * CELLID
+ */
+int orte_ns_base_copy_cellid(orte_cellid_t **dest, orte_cellid_t *src, orte_data_type_t type)
+{
+    orte_cellid_t *val;
+
+    val = (orte_cellid_t*)malloc(sizeof(orte_cellid_t));
+    if (NULL == val) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    *val = *src;
+    *dest = val;
+
+    return ORTE_SUCCESS;
+}
+
+/*
  * NODEID
  */
 int orte_ns_base_copy_nodeid(orte_nodeid_t **dest, orte_nodeid_t *src, orte_data_type_t type)
@@ -95,6 +114,7 @@ int orte_ns_base_copy_name(orte_process_name_t **dest, orte_process_name_t *src,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
+    val->cellid = src->cellid;
     val->jobid = src->jobid;
     val->vpid = src->vpid;
 

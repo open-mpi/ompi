@@ -146,6 +146,7 @@ int global_coord_setup_job(orte_jobid_t jobid) {
         
         vpid_snapshot = OBJ_NEW(orte_snapc_base_snapshot_t);
 
+        vpid_snapshot->process_name.cellid = 0;
         vpid_snapshot->process_name.jobid  = jobid;
         vpid_snapshot->process_name.vpid   = i;
         vpid_snapshot->term = false;
@@ -398,7 +399,8 @@ static void vpid_ckpt_state_callback(orte_gpr_notify_data_t *data, void *cbdata)
     }
 
     opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
-                        "global) Process (%d,%d): Changed to state to:\n",
+                        "global) Process (%d,%d,%d): Changed to state to:\n",
+                         proc->cellid, 
                          proc->jobid, 
                          proc->vpid);
     opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
@@ -417,7 +419,8 @@ static void vpid_ckpt_state_callback(orte_gpr_notify_data_t *data, void *cbdata)
         orte_snapc_base_snapshot_t *vpid_snapshot;
         vpid_snapshot = (orte_snapc_base_snapshot_t*)item;
 
-        if(vpid_snapshot->process_name.jobid  == proc->jobid &&
+        if(vpid_snapshot->process_name.cellid == proc->cellid &&
+           vpid_snapshot->process_name.jobid  == proc->jobid &&
            vpid_snapshot->process_name.vpid   == proc->vpid) {
 
             vpid_snapshot->state               = ckpt_state;
@@ -562,6 +565,7 @@ static int snapc_full_reg_vpid_state_updates( orte_jobid_t jobid, orte_vpid_t *v
     }
     
     for ( vpid = *vpid_start; vpid < *vpid_start + *vpid_range; ++vpid) {
+        proc.cellid = 0;
         proc.jobid  = jobid;
         proc.vpid   = vpid;
 
@@ -897,6 +901,7 @@ static int snapc_full_global_gather_all_files(void) {
             /*
              * Construct the process information
              */
+            filem_request->proc_name[0].cellid = vpid_snapshot->process_name.cellid;
             filem_request->proc_name[0].jobid  = vpid_snapshot->process_name.jobid;
             filem_request->proc_name[0].vpid   = vpid_snapshot->process_name.vpid;
 

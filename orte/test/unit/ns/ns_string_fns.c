@@ -29,6 +29,7 @@
 int main(int argc, char **argv)
 {
     orte_process_name_t *test_name;
+    orte_cellid_t cell;
     orte_jobid_t job;
     orte_vpid_t vpid;
     int i, j, rc;
@@ -45,7 +46,7 @@ int main(int argc, char **argv)
                 ORTE_ERROR_NAME(rc));
 	   exit(1);
     } else {
-	   fprintf(stderr, "got process name: %s\n", ORTE_NAME_PRINT(test_name));
+	   fprintf(stderr, "got process name: %ld %ld %ld\n", ORTE_NAME_ARGS(test_name));
     }
     free(test_name);
     
@@ -56,11 +57,27 @@ int main(int argc, char **argv)
                 ORTE_ERROR_NAME(rc));
 	   exit(1);
     } else {
-        fprintf(stderr, "got process name: %s\n", ORTE_NAME_PRINT(test_name));
+        fprintf(stderr, "got process name: %ld  %ld  %ld\n", ORTE_NAME_ARGS(test_name));
     }
     free(tmp);
     free(test_name);
     
+    /* create a cellid */
+    if (ORTE_SUCCESS != (rc = orte_ns.create_cellid(&cell, "dummy-site", "dummy-resource"))) { /* got error */
+	   fprintf(stderr, "create cellid: error with error %s\n", ORTE_ERROR_NAME(rc));
+	   exit(1);
+    } else {
+        fprintf(stderr, "cellid created: %lu\n", (unsigned long) cell);
+    }
+
+    /* get cellid info */
+    if (ORTE_SUCCESS != (rc = orte_ns.get_cell_info(cell, &site, &resource))) { /* got error */
+       fprintf(stderr, "get_cell_info: error with error %s\n", ORTE_ERROR_NAME(rc));
+       exit(1);
+    } else {
+        fprintf(stderr, "get_cell_info: %lu %s %s\n", (unsigned long) cell, site, resource);
+    }
+
     for (i=0; i<10; i++) { /* loop through */
     	/* create jobid */
     	if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(&job, NULL))) { /* got error */
@@ -82,7 +99,7 @@ int main(int argc, char **argv)
     	    }
     
     	    /* create a name */
-    	    if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&test_name,
+    	    if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&test_name, (orte_cellid_t)i, 
     							     job, vpid))) {
                fprintf(stderr, "test_ns_replica: failed to create proc name after vpid range with error %s\n",
                 ORTE_ERROR_NAME(rc));
@@ -114,7 +131,15 @@ int main(int argc, char **argv)
                fprintf(stderr, "(%d) strings: jobid - %s\n", i, tmp);
             }
             free(tmp);
-     
+            if (ORTE_SUCCESS != (rc = orte_ns.get_cellid_string(&tmp, test_name))) {
+               fprintf(stderr, "test_ns_replica: failed to get cellid_string with error %s\n",
+                ORTE_ERROR_NAME(rc));
+               exit(1);
+            } else {
+               fprintf(stderr, "(%d) strings: cellid - %s\n", i, tmp);
+            }
+            free(tmp);
+    
     	}
     }
 

@@ -48,6 +48,7 @@ int orte_rmgr_base_xconnect(orte_jobid_t child, orte_jobid_t parent)
     int rc;
     
     /* init the name fields */
+    name.cellid = ORTE_PROC_MY_NAME->cellid;
     name.vpid = ORTE_VPID_WILDCARD;  /* we want data from everyone in the job */
     
     /* get the child's contact info */
