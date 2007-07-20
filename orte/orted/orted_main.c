@@ -391,8 +391,8 @@ int orte_daemon(int argc, char *argv[])
     }
     
     /* if we are not a seed, prep a return buffer to say we started okay */
+    buffer = OBJ_NEW(orte_buffer_t);
     if (!orte_process_info.seed) {
-        buffer = OBJ_NEW(orte_buffer_t);
         if (ORTE_SUCCESS != (ret = orte_dss.pack(buffer, &zero, 1, ORTE_INT))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(buffer);
@@ -459,6 +459,7 @@ int orte_daemon(int argc, char *argv[])
         if (ORTE_SUCCESS != (ret = orte_ns.get_jobid_string(&jobidstring,
                                         orte_process_info.my_name))) {
             ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(buffer);
             return ret;
         }
 
@@ -509,6 +510,7 @@ int orte_daemon(int argc, char *argv[])
                                   ORTE_RML_NON_PERSISTENT, orte_daemon_recv_gate, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
+        OBJ_RELEASE(buffer);
         return ret;
     }
 
@@ -547,8 +549,8 @@ int orte_daemon(int argc, char *argv[])
             OBJ_RELEASE(buffer);
             return ret;
         }
-        OBJ_RELEASE(buffer);  /* done with this */
     }
+    OBJ_RELEASE(buffer);  /* done with this */
 
     if (orte_debug_daemons_flag) {
         opal_output(0, "%s orted: up and running - waiting for commands!", ORTE_NAME_PRINT(orte_process_info.my_name));
