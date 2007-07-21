@@ -27,7 +27,7 @@ all: $(LIBNAME)
 	$(CC) $(CFLAGS) -c _$*.c
 	@rm -f _$*.c
 
-profile: $(MPIO_TMP_PFOBJECTS)
+profile: $(MPIO_REAL_PFOBJECTS)
 	$(AR) $(LIBNAME) $(MPIO_REAL_PFOBJECTS)
 	$(RANLIB) $(LIBNAME) 
 	@rm -f _*.o
@@ -37,4 +37,12 @@ $(LIBNAME): $(MPIO_FOBJECTS)
 	$(RANLIB) $(LIBNAME) 
 
 clean: 
-	@rm -f *.o
+	@rm -f *.o *.lo *.gcno *.gcda *.bb *.bbg
+	@rm -f ${srcdir}/*.gcno ${srcdir}/*.gcda 
+	@rm -f ${srcdir}/*.bb ${srcdir}/*.bbg
+
+# Rules for the profiling objects
+_subarrayf.o: subarrayf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/subarrayf.c -o _subarrayf.o
+_darrayf.o: darrayf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/darrayf.c -o _darrayf.o

@@ -10,6 +10,7 @@ quiet=0
 MAKE="@MAKE@"
 srcdir=@srcdir@
 check_canrun=0
+subset_only=0
 FILENAME=test
 # Using shifts should remove args from the list.
 for arg in "$@" ; do
@@ -38,6 +39,10 @@ for arg in "$@" ; do
 	shift
 	makeeach=1
 	;;
+	-subset)
+	shift
+	subset_only=1
+	;;
 	-fname=*)
 	FILENAME=`echo $arg|sed 's/-*fname=//'`
 	;;
@@ -55,6 +60,8 @@ for arg in "$@" ; do
 	echo "at the end of the test rather than also after each test."
 	echo "If -check is used, only a single simple test is run; this"
 	echo "is used to check that mpirun can run an MPI program."
+	echo "If -subset is used, we skip tests for atomicity and shared"
+	echo "file pointers which can fail on some distributed file systems" 
 	exit 1
 	;;
 	*)
@@ -174,18 +181,20 @@ $mpirun -np 4 ./async -fname $FILENAME
 CleanExe async
 #
 OutTime
-testfiles="$testfiles atomicity.out"
-\rm -f atomicity.out
-MakeExe atomicity
-\rm -f $FILENAME*
-echo '**** Testing atomicity.c ****'
-# Atomicity test recommends at least 8 processes (separate processors 
-# even better)
-$mpirun -np 4 ./atomicity -fname $FILENAME
-# CheckOutput atomicity
-CleanExe atomicity
-#
-OutTime
+if [ $subset_only -eq 0 ] ; then 
+	testfiles="$testfiles atomicity.out"
+	\rm -f atomicity.out
+	MakeExe atomicity
+	\rm -f $FILENAME*
+	echo '**** Testing atomicity.c ****'
+	# Atomicity test recommends at least 8 processes (separate processors 
+	# even better)
+	$mpirun -np 4 ./atomicity -fname $FILENAME
+	# CheckOutput atomicity
+	CleanExe atomicity
+	#
+	OutTime
+fi
 testfiles="$testfiles coll_test.out"
 \rm -f coll_test.out
 MakeExe coll_test
@@ -256,26 +265,30 @@ $mpirun -np 4 ./noncontig_coll2 -fname $FILENAME
 CleanExe noncontig_coll2
 #
 OutTime
-testfiles="$testfiles misc.out"
-\rm -f misc.out
-MakeExe misc
-\rm -f $FILENAME*
-echo '**** Testing misc.c ****'
-$mpirun -np 4 ./misc -fname $FILENAME
-# CheckOutput misc
-CleanExe misc
-#
-OutTime
-testfiles="$testfiles shared_fp.out"
-\rm -f shared_fp.out
-MakeExe shared_fp
-\rm -f $FILENAME*
-echo '**** Testing shared_fp.c ****'
-$mpirun -np 4 ./shared_fp -fname $FILENAME
-# CheckOutput shared_fp
-CleanExe shared_fp
-#
-OutTime
+if [ $subset_only -eq 0 ] ; then 
+	testfiles="$testfiles misc.out"
+	\rm -f misc.out
+	MakeExe misc
+	\rm -f $FILENAME*
+	echo '**** Testing misc.c ****'
+	$mpirun -np 4 ./misc -fname $FILENAME
+	# CheckOutput misc
+	CleanExe misc
+	#
+	OutTime
+fi
+if [ $subset_only -eq 0 ] ; then
+	testfiles="$testfiles shared_fp.out"
+	\rm -f shared_fp.out
+	MakeExe shared_fp
+	\rm -f $FILENAME*
+	echo '**** Testing shared_fp.c ****'
+	$mpirun -np 4 ./shared_fp -fname $FILENAME
+	# CheckOutput shared_fp
+	CleanExe shared_fp
+	#
+	OutTime
+fi
 testfiles="$testfiles split_coll.out"
 \rm -f split_coll.out
 MakeExe split_coll
@@ -320,16 +333,18 @@ if [ @NOF77@ = 0 ] ; then
     echo ""
     echo "FORTRAN TESTS"
     OutTime
-    testfiles="$testfiles fmisc.out"
-    \rm -f fmisc.out
-    MakeExe fmisc
-    \rm -f $FILENAME*
-    echo '**** Testing fmisc.f ****'
-    $mpirun -np 4 ./fmisc -fname $FILENAME
-    # CheckOutput fmisc
-    CleanExe fmisc
-#
-    OutTime
+    if [ $subset_only -eq 0 ] ; then
+	    testfiles="$testfiles fmisc.out"
+	    \rm -f fmisc.out
+	    MakeExe fmisc
+	    \rm -f $FILENAME*
+	    echo '**** Testing fmisc.f ****'
+	    $mpirun -np 4 ./fmisc -fname $FILENAME
+	    # CheckOutput fmisc
+	    CleanExe fmisc
+	    #
+	    OutTime
+    fi
     testfiles="$testfiles fcoll_test.out"
     \rm -f fcoll_test.out
     MakeExe fcoll_test

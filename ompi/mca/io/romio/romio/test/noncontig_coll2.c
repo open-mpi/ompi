@@ -476,13 +476,19 @@ int test_file(char *filename, int mynod, int nprocs, char * cb_hosts, char *msg,
     MPI_File_set_view(fh, 0, MPI_INT, newtype, "native", info);
 
     for (i=0; i<SIZE; i++) buf[i] = SEEDER(mynod,i,SIZE);
-    MPI_File_write_all(fh, buf, 1, newtype, &status);
+    errcode = MPI_File_write_all(fh, buf, 1, newtype, &status);
+    if (errcode != MPI_SUCCESS) {
+	    handle_error(errcode, "nc mem - nc file: MPI_File_write_all");
+    }
 
     MPI_Barrier(MPI_COMM_WORLD);
 
     for (i=0; i<SIZE; i++) buf[i] = -1;
 
-    MPI_File_read_at_all(fh, 0, buf, 1, newtype, &status);
+    errcode = MPI_File_read_at_all(fh, 0, buf, 1, newtype, &status);
+    if (errcode != MPI_SUCCESS) {
+	    handle_error(errcode, "nc mem - nc file: MPI_File_read_at_all");
+    }
 
     /* the verification for N compute nodes is tricky. Say we have 3
      * processors.  
@@ -527,13 +533,19 @@ int test_file(char *filename, int mynod, int nprocs, char * cb_hosts, char *msg,
                   info, &fh);
 
     for (i=0; i<SIZE; i++) buf[i] = SEEDER(mynod,i,SIZE);
-    MPI_File_write_at_all(fh, mynod*(SIZE/nprocs)*sizeof(int), buf, 1, newtype, &status);
+    errcode = MPI_File_write_at_all(fh, mynod*(SIZE/nprocs)*sizeof(int), 
+		    buf, 1, newtype, &status);
+    if (errcode != MPI_SUCCESS)
+	    handle_error(errcode, "nc mem - c file: MPI_File_write_at_all");
 
     MPI_Barrier(MPI_COMM_WORLD);
 
     for (i=0; i<SIZE; i++) buf[i] = -1;
 
-    MPI_File_read_at_all(fh, mynod*(SIZE/nprocs)*sizeof(int), buf, 1, newtype, &status);
+    errcode = MPI_File_read_at_all(fh, mynod*(SIZE/nprocs)*sizeof(int), 
+		    buf, 1, newtype, &status);
+    if (errcode != MPI_SUCCESS)
+	    handle_error(errcode, "nc mem - c file: MPI_File_read_at_all");
 
     /* just like as above */
     for (i=0; i<mynod; i++ ) {
@@ -571,13 +583,17 @@ int test_file(char *filename, int mynod, int nprocs, char * cb_hosts, char *msg,
     MPI_File_set_view(fh, 0, MPI_INT, newtype, "native", info);
 
     for (i=0; i<SIZE; i++) buf[i] = SEEDER(mynod, i, SIZE);
-    MPI_File_write_all(fh, buf, SIZE, MPI_INT, &status);
+    errcode = MPI_File_write_all(fh, buf, SIZE, MPI_INT, &status);
+    if (errcode != MPI_SUCCESS)
+	    handle_error(errcode, "c mem - nc file: MPI_File_write_all");
 
     MPI_Barrier(MPI_COMM_WORLD);
 
     for (i=0; i<SIZE; i++) buf[i] = -1;
 
-    MPI_File_read_at_all(fh, 0, buf, SIZE, MPI_INT, &status);
+    errcode = MPI_File_read_at_all(fh, 0, buf, SIZE, MPI_INT, &status);
+    if (errcode != MPI_SUCCESS)
+	    handle_error(errcode, "c mem - nc file: MPI_File_read_at_all");
 
     /* same crazy checking */
     for (i=0; i<SIZE; i++) {

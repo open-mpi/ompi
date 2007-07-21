@@ -47,4 +47,6 @@ $(SHLIBNAME).la: $(MPIO_LOOBJECTS)
 	$(AR) $(SHLIBNAME).la $(MPIO_LOOBJECTS)
 
 clean:
-	@rm -f *.o *.lo
+	@rm -f *.o *.lo *.gcno *.gcda *.bb *.bbg
+	@rm -f ${srcdir}/*.gcno ${srcdir}/*.gcda 
+	@rm -f ${srcdir}/*.bb ${srcdir}/*.bbg
