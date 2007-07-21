@@ -42,7 +42,7 @@ all: $(LIBNAME)
 .c.sp:
 	$(C_COMPILE_SHL) $(CFLAGS) -c $< -o _$*.lo
 
-profile: $(MPIO_TMP_POBJECTS)
+profile: $(MPIO_REAL_POBJECTS)
 	$(AR) $(LIBNAME) $(MPIO_REAL_POBJECTS)
 	$(RANLIB) $(LIBNAME) 
 	@if [ "@ENABLE_SHLIB@" != "none" ] ; then \
@@ -68,4 +68,13 @@ P$(SHLIBNAME).la: $(MPIO_TMP_LOPOBJECTS)
 # --------------------------------------------------------------------------
 
 clean:
-	@rm -f *.o *.lo
+	@rm -f *.o *.lo *.gcno *.gcda *.bb *.bbg
+	@rm -f ${srcdir}/*.gcno ${srcdir}/*.gcda 
+	@rm -f ${srcdir}/*.bb ${srcdir}/*.bbg
+
+# Rules for the profiling objects
+_subarray.o: subarray.c
+	$(CC) $(CFLAGS) -c $(srcdir)/subarray.c -o _subarray.o
+_darray.o: darray.c
+	$(CC) $(CFLAGS) -c $(srcdir)/darray.c -o _darray.o
+

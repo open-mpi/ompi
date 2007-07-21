@@ -17,6 +17,12 @@ void ADIOI_NTFS_ReadContig(ADIO_File fd, void *buf, int count,
     static char myname[] = "ADIOI_NTFS_ReadContig";
     OVERLAPPED *pOvl;
 
+    /* If file pointer is of type ADIO_INDIVIDUAL ignore the offset
+       and use the current location of file pointer */
+    if(file_ptr_type == ADIO_INDIVIDUAL){
+	offset = fd->fp_ind;
+    }
+
     MPI_Type_size(datatype, &datatype_size);
     len = datatype_size * count;
 

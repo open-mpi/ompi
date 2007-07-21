@@ -160,7 +160,7 @@ void ADIOI_PVFS2_WriteStrided(ADIO_File fd, void *buf, int count,
      * are actually contiguous and do not need the expensive workarond */
     if (!filetype_is_contig) {
 	flat_file = ADIOI_Flatlist;
-	while (flat_buf->type != fd->filetype) flat_file = flat_file->next;
+	while (flat_file->type != fd->filetype) flat_file = flat_file->next;
 	if (flat_file->count == 1)
 	    filetype_is_contig = 1;
     }
@@ -727,8 +727,6 @@ void ADIOI_PVFS2_WriteStrided(ADIO_File fd, void *buf, int count,
 	        max_mem_list = mem_list_count;
 	    if (max_file_list < file_list_count)
 	        max_file_list = file_list_count;
-	    if (max_mem_list == MAX_ARRAY_SIZE)
-	        break;
 	} /* while (size_wrote < bufsize) */
 
 	/* one last check before we actually carry out the operation:

@@ -48,12 +48,20 @@ void ADIOI_PVFS2_Init(int *error_code )
 {
     int ret;
     static char myname[] = "ADIOI_PVFS2_INIT";
+    char * ncache_timeout;
 
     /* do nothing if we've already fired up the pvfs2 interface */
     if (ADIOI_PVFS2_Initialized != MPI_KEYVAL_INVALID) {
 	*error_code = MPI_SUCCESS;
 	return;
     }
+
+    /* for consistency, we should disable the pvfs2 ncache.  If the
+     * environtment variable is already set, assume a  user knows it
+     * won't be a problem */
+    ncache_timeout = getenv("PVFS2_NCACHE_TIMEOUT");
+    if (ncache_timeout == NULL )
+	setenv("PVFS2_NCACHE_TIMEOUT", "0", 1);
 
     ret = PVFS_util_init_defaults();
     if (ret < 0 ) {

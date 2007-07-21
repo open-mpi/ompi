@@ -30,7 +30,7 @@ all: $(LIBNAME)
 	$(CC) $(CFLAGS) -c _$*.c
 	@rm -f _$*.c
 
-profile: $(MPIO_TMP_POBJECTS)
+profile: $(MPIO_REAL_POBJECTS)
 	$(AR) $(LIBNAME) $(MPIO_REAL_POBJECTS)
 	$(RANLIB) $(LIBNAME) 
 	@rm -f _*.o
@@ -40,4 +40,26 @@ $(LIBNAME): $(MPIO_OBJECTS)
 	$(RANLIB) $(LIBNAME) 
 
 clean:
-	@rm -f *.o
+	@rm -f *.o *.lo *.gcno *.gcda *.bb *.bbg
+	@rm -f ${srcdir}/*.gcno ${srcdir}/*.gcda 
+	@rm -f ${srcdir}/*.bb ${srcdir}/*.bbg
+
+# Rules for the profiling objects
+_info_createf.o: info_createf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/info_createf.c -o _info_createf.o
+_info_dupf.o: info_dupf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/info_dupf.c -o _info_dupf.o
+_info_getf.o: info_getf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/info_getf.c -o _info_getf.o
+_info_getnthf.o: info_getnthf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/info_getnthf.c -o _info_getnthf.o
+_info_setf.o: info_setf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/info_setf.c -o _info_setf.o
+_info_deletef.o: info_deletef.c
+	$(CC) $(CFLAGS) -c $(srcdir)/info_deletef.c -o _info_deletef.o
+_info_freef.o: info_freef.c
+	$(CC) $(CFLAGS) -c $(srcdir)/info_freef.c -o _info_freef.o
+_info_getnksf.o: info_getnksf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/info_getnksf.c -o _info_getnksf.o
+_info_getvlnf.o: info_getvlnf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/info_getvlnf.c -o _info_getvlnf.o

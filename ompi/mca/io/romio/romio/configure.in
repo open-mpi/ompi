@@ -162,6 +162,8 @@ AC_ARG_ENABLE(debug,
 [--enable-debug - Build a debugging version],,)
 AC_ARG_WITH(file-system,[
 --with-file-system=name - Build with support for the named file systems],,)
+AC_ARG_WITH(pvfs2,[
+--with-pvfs2=path - Path to installation of PVFS (version 2)],,)
 AC_ARG_WITH(mpi,[
 --with-mpi=name - Specify MPI implementation to build ROMIO for],,)
 dnl
@@ -776,6 +778,8 @@ fi
 ])
 if test "$pac_cv_int_hold_pointer" != yes ; then
     AC_DEFINE(INT_LT_POINTER,1,[Define if int smaller than pointer])
+    dnl Switch to a conforming name (start with HAVE or USE)
+    AC_DEFINE(HAVE_INT_LT_POINTER,1,[Define if int smaller than pointer])
 fi
 #
 dnl The original ROMIO configure used a set of complex tests here; this
@@ -1086,6 +1090,27 @@ fi
 file_system_testfs=1
 FILE_SYSTEM="testfs $FILE_SYSTEM"
 
+# An attempt to "do the right thing" with as little help from the end-user as
+# possible:
+# - if 'with-pvfs2' given, use that to find pvfs2-config.  complain if we
+#   cannot find it, as this is probably what the user would expect
+# - if we can find 'pvfs2-config' in our path, we can use it to set CFLAGS,
+#   LIBS, and LDFLAGS accordingly
+# - as a fallback, use CFLAGS, LIBS, and LDFLAGS passed in by the user
+
+AC_PATH_PROG(PVFS2_CONFIG, pvfs2-config, notfound, [$PATH:${with_pvfs2}/bin])
+if test $PVFS2_CONFIG != "notfound" ; then
+	CFLAGS="$CFLAGS $( $PVFS2_CONFIG --cflags)"
+	LIBS="$LIBS $( $PVFS2_CONFIG --libs)"
+	ROMIO_LIBLIST="$ROMIO_LIBLIST $LIBS"
+	FILE_SYSTEM="pvfs2 $FILE_SYSTEM"
+	file_system_pvfs2=1
+fi
+
+if test "$PVFS2_CONFIG" = "notfound" -a -n "$with_pvfs2" ; then
+	AC_MSG_ERROR([pvfs2-config not found in $with_pvfs2])
+fi
+
 #
 # Print list of configured file systems
 #
@@ -1200,6 +1225,8 @@ if test -n "$file_system_pvfs"; then
 	AC_MSG_WARN(missing or broken pvfs.h header file; disabling ROMIO PVFS support)
     fi
 fi
+
+
 
 #
 # Verify presence of pvfs2.h

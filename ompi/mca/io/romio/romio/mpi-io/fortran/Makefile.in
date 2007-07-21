@@ -105,4 +105,118 @@ P$(SHLIBNAME).la: $(MPIO_TMP_LOPFOBJECTS)
 # --------------------------------------------------------------------------
 
 clean: 
-	@rm -f *.o *.lo
+	@rm -f *.o *.lo *.gcno *.gcda *.bb *.bbg
+	@rm -f ${srcdir}/*.gcno ${srcdir}/*.gcda 
+	@rm -f ${srcdir}/*.bb ${srcdir}/*.bbg
+
+# Rules for the profiling objects
+_closef.o: closef.c
+	$(CC) $(CFLAGS) -c $(srcdir)/closef.c -o _closef.o
+_readf.o: readf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/readf.c -o _readf.o
+_openf.o: openf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/openf.c -o _openf.o
+_get_extentf.o: get_extentf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/get_extentf.c -o _get_extentf.o
+_writef.o: writef.c
+	$(CC) $(CFLAGS) -c $(srcdir)/writef.c -o _writef.o
+_set_viewf.o: set_viewf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/set_viewf.c -o _set_viewf.o
+_seekf.o: seekf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/seekf.c -o _seekf.o
+_read_atf.o: read_atf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/read_atf.c -o _read_atf.o
+_ireadf.o: ireadf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/ireadf.c -o _ireadf.o
+_iwritef.o: iwritef.c
+	$(CC) $(CFLAGS) -c $(srcdir)/iwritef.c -o _iwritef.o
+_iotestf.o: iotestf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/iotestf.c -o _iotestf.o
+_iowaitf.o: iowaitf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/iowaitf.c -o _iowaitf.o
+_get_posnf.o: get_posnf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/get_posnf.c -o _get_posnf.o
+_deletef.o: deletef.c
+	$(CC) $(CFLAGS) -c $(srcdir)/deletef.c -o _deletef.o
+_read_allf.o: read_allf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/read_allf.c -o _read_allf.o
+_read_atallf.o: read_atallf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/read_atallf.c -o _read_atallf.o
+_iread_atf.o: iread_atf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/iread_atf.c -o _iread_atf.o
+_iwrite_atf.o: iwrite_atf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/iwrite_atf.c -o _iwrite_atf.o
+_get_bytofff.o: get_bytofff.c
+	$(CC) $(CFLAGS) -c $(srcdir)/get_bytofff.c -o _get_bytofff.o
+_write_allf.o: write_allf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/write_allf.c -o _write_allf.o
+_write_atf.o: write_atf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/write_atf.c -o _write_atf.o
+_write_atallf.o: write_atallf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/write_atallf.c -o _write_atallf.o
+_get_viewf.o: get_viewf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/get_viewf.c -o _get_viewf.o
+_get_groupf.o: get_groupf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/get_groupf.c -o _get_groupf.o
+_get_amodef.o: get_amodef.c
+	$(CC) $(CFLAGS) -c $(srcdir)/get_amodef.c -o _get_amodef.o
+_fsyncf.o: fsyncf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/fsyncf.c -o _fsyncf.o
+_get_atomf.o: get_atomf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/get_atomf.c -o _get_atomf.o
+_set_atomf.o: set_atomf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/set_atomf.c -o _set_atomf.o
+_set_sizef.o: set_sizef.c
+	$(CC) $(CFLAGS) -c $(srcdir)/set_sizef.c -o _set_sizef.o
+_get_sizef.o: get_sizef.c
+	$(CC) $(CFLAGS) -c $(srcdir)/get_sizef.c -o _get_sizef.o
+_preallocf.o: preallocf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/preallocf.c -o _preallocf.o
+_set_infof.o: set_infof.c
+	$(CC) $(CFLAGS) -c $(srcdir)/set_infof.c -o _set_infof.o
+_get_infof.o: get_infof.c
+	$(CC) $(CFLAGS) -c $(srcdir)/get_infof.c -o _get_infof.o
+_rd_atallbf.o: rd_atallbf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/rd_atallbf.c -o _rd_atallbf.o
+_rd_atallef.o: rd_atallef.c
+	$(CC) $(CFLAGS) -c $(srcdir)/rd_atallef.c -o _rd_atallef.o
+_read_allbf.o: read_allbf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/read_allbf.c -o _read_allbf.o
+_read_allef.o: read_allef.c
+	$(CC) $(CFLAGS) -c $(srcdir)/read_allef.c -o _read_allef.o
+_wr_atallbf.o: wr_atallbf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/wr_atallbf.c -o _wr_atallbf.o
+_wr_atallef.o: wr_atallef.c
+	$(CC) $(CFLAGS) -c $(srcdir)/wr_atallef.c -o _wr_atallef.o
+_write_allbf.o: write_allbf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/write_allbf.c -o _write_allbf.o
+_write_allef.o: write_allef.c
+	$(CC) $(CFLAGS) -c $(srcdir)/write_allef.c -o _write_allef.o
+_get_posn_shf.o: get_posn_shf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/get_posn_shf.c -o _get_posn_shf.o
+_iread_shf.o: iread_shf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/iread_shf.c -o _iread_shf.o
+_read_shf.o: read_shf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/read_shf.c -o _read_shf.o
+_write_shf.o: write_shf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/write_shf.c -o _write_shf.o
+_iwrite_shf.o: iwrite_shf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/iwrite_shf.c -o _iwrite_shf.o
+_seek_shf.o: seek_shf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/seek_shf.c -o _seek_shf.o
+_read_ordf.o: read_ordf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/read_ordf.c -o _read_ordf.o
+_read_ordef.o: read_ordef.c
+	$(CC) $(CFLAGS) -c $(srcdir)/read_ordef.c -o _read_ordef.o
+_write_ordbf.o: write_ordbf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/write_ordbf.c -o _write_ordbf.o
+_read_ordbf.o: read_ordbf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/read_ordbf.c -o _read_ordbf.o
+_write_ordf.o: write_ordf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/write_ordf.c -o _write_ordf.o
+_write_ordef.o: write_ordef.c
+	$(CC) $(CFLAGS) -c $(srcdir)/write_ordef.c -o _write_ordef.o
+_set_errhf.o: set_errhf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/set_errhf.c -o _set_errhf.o
+_get_errhf.o: get_errhf.c
+	$(CC) $(CFLAGS) -c $(srcdir)/get_errhf.c -o _get_errhf.o

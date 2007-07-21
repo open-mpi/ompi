@@ -49,7 +49,7 @@ all: $(LIBNAME)
 .c.sp:
 	$(C_COMPILE_SHL) $(CFLAGS) -c $< -o _$*.lo
 
-profile: $(MPIO_TMP_POBJECTS)
+profile: $(MPIO_REAL_POBJECTS)
 	$(AR) $(LIBNAME) $(MPIO_REAL_POBJECTS)
 	$(RANLIB) $(LIBNAME) 
 	@if [ "@ENABLE_SHLIB@" != "none" ] ; then \
@@ -75,4 +75,31 @@ P$(SHLIBNAME).la: $(MPIO_TMP_LOPOBJECTS)
 # --------------------------------------------------------------------------
 
 clean:
-	@rm -f *.o *.lo
+	@rm -f *.o *.lo *.gcno *.gcda *.bb *.bbg
+	@rm -f ${srcdir}/*.gcno ${srcdir}/*.gcda 
+	@rm -f ${srcdir}/*.bb ${srcdir}/*.bbg
+
+
+# Rules for the profiling objects
+info_create.o: infocreate.c
+	$(CC) $(CFLAGS) -c $(srcdir)/infocreate.c -o _info_create.o
+info_dup.o: infodup.c
+	$(CC) $(CFLAGS) -c $(srcdir)/infodup.c -o _info_dup.o
+info_get.o: infoget.c
+	$(CC) $(CFLAGS) -c $(srcdir)/infoget.c -o _info_get.o
+info_getnth.o: infogetnth.c
+	$(CC) $(CFLAGS) -c $(srcdir)/infogetnth.c -o _info_getnth.o
+info_set.o: infoset.c
+	$(CC) $(CFLAGS) -c $(srcdir)/infoset.c -o _info_set.o
+info_delete.o: infodelete.c
+	$(CC) $(CFLAGS) -c $(srcdir)/infodelete.c -o _info_delete.o
+info_free.o: infofree.c
+	$(CC) $(CFLAGS) -c $(srcdir)/infofree.c -o _info_free.o
+info_getnks.o: infogetnks.c
+	$(CC) $(CFLAGS) -c $(srcdir)/infogetnks.c -o _info_getnks.o
+info_getvln.o: infogetvln.c
+	$(CC) $(CFLAGS) -c $(srcdir)/infogetvln.c -o _info_getvln.o
+info_c2f.o: infoc2f.c
+	$(CC) $(CFLAGS) -c $(srcdir)/infoc2f.c -o _info_c2f.o
+info_f2c.o: infof2c.c
+	$(CC) $(CFLAGS) -c $(srcdir)/infof2c.c -o _info_f2c.o

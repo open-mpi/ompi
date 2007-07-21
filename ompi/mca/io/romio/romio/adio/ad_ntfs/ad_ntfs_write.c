@@ -16,6 +16,12 @@ void ADIOI_NTFS_WriteContig(ADIO_File fd, void *buf, int count,
     DWORD dwNumWritten = 0;
     int err=-1, datatype_size, len;
     OVERLAPPED *pOvl;
+    
+    /* If file pointer type in ADIO_INDIVIDUAL then offset should be
+	ignored and the current location of file pointer should be used */
+    if(file_ptr_type == ADIO_INDIVIDUAL){
+	offset = fd->fp_ind;
+    }
 
     MPI_Type_size(datatype, &datatype_size);
     len = datatype_size * count;

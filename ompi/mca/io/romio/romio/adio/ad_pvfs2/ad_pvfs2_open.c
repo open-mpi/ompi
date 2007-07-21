@@ -23,7 +23,8 @@ typedef struct open_status_s open_status;
      *		in that case, create the file if we were passed MPI_MODE_CREATE 
      * . if the create fails, that means someone else created the file between
      *    our call to lookup and our call to create (like if N processors all
-     *    open the same file with MPI_COMM_SELF)
+     *    open the same file with MPI_COMM_SELF).  Then we can just look up the
+     *    file (which now exists).
      *
      * the good news is that only one processor does this and broadcasts the
      * handle to everyone else in the communicator
@@ -55,7 +56,7 @@ static void fake_an_open(PVFS_fs_id fs_id, char *pvfs_name, int access_mode,
 
     ret = PVFS_sys_lookup(fs_id, pvfs_name,
 	    &(pvfs2_fs->credentials), &resp_lookup, PVFS2_LOOKUP_LINK_FOLLOW);
-    if ( (ret < 0) ) { /* XXX: check what the error was */
+    if ( ret == (-PVFS_ENOENT)) {
 	if (access_mode & ADIO_CREATE)  {
 	    ret = PVFS_sys_getparent(fs_id, pvfs_name,
 		    &(pvfs2_fs->credentials), &resp_getparent); 
@@ -85,7 +86,12 @@ static void fake_an_open(PVFS_fs_id fs_id, char *pvfs_name, int access_mode,
 		    resp_getparent.parent_ref, attribs, 
 		    &(pvfs2_fs->credentials), dist, &resp_create); 
 
-	    if (ret < 0) { /* XXX: should only do this for EEXISTS */
+	    /* if many creates are happening in this directory, the earlier
+	     * sys_lookup may have returned ENOENT, but the sys_create could
+	     * return EEXISTS.  That means the file has been created anyway, so
+	     * less work for us and we can just open it up and return the
+	     * handle */
+	    if (ret == (-PVFS_EEXIST)) {
 		ret = PVFS_sys_lookup(fs_id, pvfs_name,
 			&(pvfs2_fs->credentials), &resp_lookup, 
 			PVFS2_LOOKUP_LINK_FOLLOW);
@@ -105,7 +111,7 @@ static void fake_an_open(PVFS_fs_id fs_id, char *pvfs_name, int access_mode,
 	}
     } else if (access_mode & ADIO_EXCL) {
 	/* lookup should not succeed if opened with EXCL */
-	o_status->error = -1; /* XXX: what should it be? */
+	o_status->error = -PVFS_EEXIST;
 	return;
     } else {
 	o_status->object_ref = resp_lookup.ref;
@@ -209,6 +215,7 @@ void ADIOI_PVFS2_Open(ADIO_File fd, int *error_code)
     if (o_status.error != 0)
     { 
 	ADIOI_Free(pvfs2_fs);
+	fd->fs_ptr = NULL;
 	*error_code = MPIO_Err_create_code(MPI_SUCCESS,
 					   MPIR_ERR_RECOVERABLE,
 					   myname, __LINE__,
