@@ -150,7 +150,7 @@ OPAL_DECLSPEC int opal_ifindextoflags(int if_index, uint32_t*);
  * @param hostname (IN)    Hostname (or stringified IP address)
  * @return                 true if \c hostname is local, false otherwise
  */
-OPAL_DECLSPEC bool opal_ifislocal(char *hostname);
+OPAL_DECLSPEC bool opal_ifislocal(const char *hostname);
 
 /**
  * Finalize the functions to release malloc'd data
