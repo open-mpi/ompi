@@ -81,7 +81,7 @@ OPAL_DECLSPEC uint32_t opal_net_prefix2netmask(uint32_t prefixlen);
  * @return                 true if \c addr is a localhost address,
  *                         false otherwise.
  */
-OPAL_DECLSPEC bool opal_net_islocalhost(struct sockaddr *addr);
+OPAL_DECLSPEC bool opal_net_islocalhost(const struct sockaddr *addr);
 
 
 /**
@@ -96,8 +96,8 @@ OPAL_DECLSPEC bool opal_net_islocalhost(struct sockaddr *addr);
  * @return                  true if \c addr1 and \c addr2 are on the
  *                          same net, false otherwise.
  */
-OPAL_DECLSPEC bool opal_net_samenetwork(struct sockaddr *addr1,
-                                        struct sockaddr *addr2,
+OPAL_DECLSPEC bool opal_net_samenetwork(const struct sockaddr *addr1,
+                                        const struct sockaddr *addr2,
                                         uint32_t prefixlen);
 
 
@@ -108,7 +108,7 @@ OPAL_DECLSPEC bool opal_net_samenetwork(struct sockaddr *addr1,
  * @param addr      address as struct sockaddr
  * @return          true, if \c addr is IPv4 public, false otherwise
  */
-OPAL_DECLSPEC bool opal_net_addr_isipv4public(struct sockaddr *addr);
+OPAL_DECLSPEC bool opal_net_addr_isipv4public(const struct sockaddr *addr);
 
 
 /**
@@ -121,10 +121,19 @@ OPAL_DECLSPEC bool opal_net_addr_isipv4public(struct sockaddr *addr);
  * @param addr              struct sockaddr of address
  * @return                  literal representation of \c addr
  */
-OPAL_DECLSPEC char* opal_net_get_hostname(struct sockaddr *addr);
+OPAL_DECLSPEC char* opal_net_get_hostname(const struct sockaddr *addr);
 
-OPAL_DECLSPEC int opal_net_get_port(struct sockaddr *addr);
 
+/**
+ * Get port number from struct sockaddr
+ *
+ * Return the port number (as an integr) from either a struct
+ * sockaddr_in or a struct sockaddr_in6.
+ *
+ * @param addr             struct sockaddr containing address
+ * @return                 port number from \addr
+ */
+OPAL_DECLSPEC int opal_net_get_port(const struct sockaddr *addr);
 
 END_C_DECLS
 

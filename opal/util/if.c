@@ -1173,7 +1173,7 @@ int opal_ifkindextoname(int if_kindex, char* if_name, int length)
 
 #define ADDRLEN 100
 bool
-opal_ifislocal(char *hostname)
+opal_ifislocal(const char *hostname)
 {
     int ret;
 #if OPAL_WANT_IPV6
@@ -1292,20 +1292,7 @@ opal_ifindextomask(int if_index, uint32_t* if_addr, int length)
 }
 
 bool
-opal_ifislocalhost(struct sockaddr *addr)
-{
-    return false;
-}
-
-bool
-opal_samenetwork(struct sockaddr *addr1,
-                 struct sockaddr *addr2, uint32_t prefixlen)
-{
-    return false;
-}
-
-bool
-opal_ifislocal(char *hostname)
+opal_ifislocal(const char *hostname)
 {
     return false;
 }
@@ -1316,16 +1303,5 @@ opal_iffinalize(void)
     return OPAL_SUCCESS;
 }
 
-char*
-opal_sockaddr2str(struct sockaddr *ss_addr)
-{
-    return NULL;
-}
-
-bool
-opal_addr_isipv4public (struct sockaddr *addr)
-{
-    return false;
-}
 #endif /* HAVE_STRUCT_SOCKADDR_IN */
 

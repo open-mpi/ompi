@@ -135,12 +135,12 @@ opal_net_prefix2netmask(uint32_t prefixlen)
 
 
 bool
-opal_net_islocalhost(struct sockaddr *addr)
+opal_net_islocalhost(const struct sockaddr *addr)
 {
     switch (addr->sa_family) {
     case AF_INET:
         {
-            struct sockaddr_in *inaddr = (struct sockaddr_in*) addr;
+            const struct sockaddr_in *inaddr = (struct sockaddr_in*) addr;
             /* if it's in the 127. domain, it shouldn't be routed
                (0x7f == 127) */
             if (0x7F000000 == (0x7F000000 & ntohl(inaddr->sin_addr.s_addr))) {
@@ -152,7 +152,7 @@ opal_net_islocalhost(struct sockaddr *addr)
 #if OPAL_WANT_IPV6
     case AF_INET6:
         {
-            struct sockaddr_in6 *inaddr = (struct sockaddr_in6*) addr;
+            const struct sockaddr_in6 *inaddr = (struct sockaddr_in6*) addr;
             if (IN6_IS_ADDR_LOOPBACK (&inaddr->sin6_addr)) {
                return true; /* Bug, FIXME: check for 127.0.0.1/8 */
             }
@@ -171,7 +171,8 @@ opal_net_islocalhost(struct sockaddr *addr)
 
 
 bool
-opal_net_samenetwork(struct sockaddr *addr1, struct sockaddr *addr2,
+opal_net_samenetwork(const struct sockaddr *addr1, 
+                     const struct sockaddr *addr2,
                      uint32_t prefixlen)
 {
     if(addr1->sa_family != addr2->sa_family) {
@@ -185,8 +186,8 @@ opal_net_samenetwork(struct sockaddr *addr1, struct sockaddr *addr2,
     switch (addr1->sa_family) {
     case AF_INET:
         {
-            struct sockaddr_in *inaddr1 = (struct sockaddr_in*) addr1;
-            struct sockaddr_in *inaddr2 = (struct sockaddr_in*) addr2;
+            const struct sockaddr_in *inaddr1 = (struct sockaddr_in*) addr1;
+            const struct sockaddr_in *inaddr2 = (struct sockaddr_in*) addr2;
             uint32_t netmask = opal_net_prefix2netmask (prefixlen);
 
             if((inaddr1->sin_addr.s_addr & netmask) ==
@@ -199,8 +200,8 @@ opal_net_samenetwork(struct sockaddr *addr1, struct sockaddr *addr2,
 #if OPAL_WANT_IPV6
     case AF_INET6:
         {
-            struct sockaddr_in6 *inaddr1 = (struct sockaddr_in6*) addr1;
-            struct sockaddr_in6 *inaddr2 = (struct sockaddr_in6*) addr2;
+            const struct sockaddr_in6 *inaddr1 = (struct sockaddr_in6*) addr1;
+            const struct sockaddr_in6 *inaddr2 = (struct sockaddr_in6*) addr2;
             struct in6_addr *a6_1 = (struct in6_addr*) &inaddr1->sin6_addr;
             struct in6_addr *a6_2 = (struct in6_addr*) &inaddr2->sin6_addr;
 
@@ -234,7 +235,7 @@ opal_net_samenetwork(struct sockaddr *addr1, struct sockaddr *addr2,
  * Returns true if the given address is a public IPv4 address.
  */
 bool
-opal_net_addr_isipv4public (struct sockaddr *addr)
+opal_net_addr_isipv4public(const struct sockaddr *addr)
 {
     switch (addr->sa_family) {
 #if OPAL_WANT_IPV6
@@ -243,7 +244,7 @@ opal_net_addr_isipv4public (struct sockaddr *addr)
 #endif
         case AF_INET:
         {
-            struct sockaddr_in *inaddr = (struct sockaddr_in*) addr;
+            const struct sockaddr_in *inaddr = (struct sockaddr_in*) addr;
             /* RFC1918 defines
             - 10.0.0./8
             - 172.16.0.0/12
@@ -271,7 +272,7 @@ opal_net_addr_isipv4public (struct sockaddr *addr)
 
 
 char*
-opal_net_get_hostname(struct sockaddr *addr)
+opal_net_get_hostname(const struct sockaddr *addr)
 {
 #if OPAL_WANT_IPV6
     char *name = get_hostname_buffer();
@@ -327,7 +328,7 @@ opal_net_get_hostname(struct sockaddr *addr)
 
 
 int
-opal_net_get_port(struct sockaddr *addr)
+opal_net_get_port(const struct sockaddr *addr)
 {
     switch (addr->sa_family) {
     case AF_INET:
@@ -368,14 +369,15 @@ opal_net_prefix2netmask(uint32_t prefixlen)
 
 
 bool
-opal_net_islocalhost(struct sockaddr *addr)
+opal_net_islocalhost(const struct sockaddr *addr)
 {
     return false;
 }
 
 
 bool
-opal_net_samenetwork(struct sockaddr *addr1, struct sockaddr *addr2,
+opal_net_samenetwork(const struct sockaddr *addr1, 
+                     const struct sockaddr *addr2,
                      uint32_t prefixlen)
 {
     return false;
@@ -383,21 +385,21 @@ opal_net_samenetwork(struct sockaddr *addr1, struct sockaddr *addr2,
 
 
 bool
-opal_net_addr_isipv4public (struct sockaddr *addr)
+opal_net_addr_isipv4public(const struct sockaddr *addr)
 {
     return false;
 }
 
 
 char*
-opal_net_get_hostname(struct sockaddr *addr)
+opal_net_get_hostname(const struct sockaddr *addr)
 {
     return NULL;
 }
 
 
 int
-opal_net_get_port(struct sockaddr *addr)
+opal_net_get_port(const struct sockaddr *addr)
 {
     return -1;
 }
