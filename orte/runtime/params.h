@@ -32,6 +32,8 @@
 #include <sys/time.h>
 #endif
 
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -46,6 +48,10 @@ ORTE_DECLSPEC extern bool orte_infrastructure, orted_spin_flag, orte_no_daemoniz
 ORTE_DECLSPEC extern struct timeval orte_abort_timeout;
 
 ORTE_DECLSPEC extern char **orte_launch_environ;
+ORTE_DECLSPEC extern opal_mutex_t orted_comm_mutex;
+ORTE_DECLSPEC extern opal_condition_t orted_comm_cond;
+ORTE_DECLSPEC extern bool orte_orterun;
+ORTE_DECLSPEC extern bool orted_comm_exit_cond;
 
 /**
  * Whether ORTE is initialized or not

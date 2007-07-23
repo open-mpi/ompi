@@ -349,6 +349,11 @@ int orterun(int argc, char *argv[])
     
     /* save the environment for launch purposes */
     orte_launch_environ = opal_argv_copy(environ);
+    
+    /* setup the daemon communication subsystem flags */
+    OBJ_CONSTRUCT(&orted_comm_mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&orted_comm_cond, opal_condition_t);
+    orte_orterun = true;
 
     /* Setup MCA params */
 
@@ -607,6 +612,10 @@ DONE:
     free(apps);
     OBJ_RELEASE(apps_pa);
     
+    /* cleanup the orted communication mutex and condition objects */
+    OBJ_DESTRUCT(&orted_comm_mutex);
+    OBJ_DESTRUCT(&orted_comm_cond);
+
     orte_finalize();
     free(orterun_basename);
     return rc;
