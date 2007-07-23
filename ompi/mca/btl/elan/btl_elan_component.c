@@ -159,12 +159,8 @@ mca_btl_base_module_t** mca_btl_elan_component_init( int *num_btl_modules,
 {
 
     mca_btl_base_module_t** btls;
-    size_t rails, i , count, vpid;
-    ELAN_BASE    * base;
-    ELAN_STATE   * state;
-    ELAN_QUEUE   * q= NULL;
-    ELAN_TPORT   * p= NULL;
-            
+    size_t i , count, vpid;
+
     *num_btl_modules = 0;
     if (enable_progress_threads) { 
         ompi_modex_send(&mca_btl_elan_component.super.btl_version, NULL, 0);
@@ -264,11 +260,8 @@ int mca_btl_elan_component_progress()
                     {
                         /* it's a put*/
                         /* call the completion callback */
-                        //opal_output(0, "I am a RDMA\n");            
                         elan_wait(desc->eve,ELAN_WAIT_EVENT);
-                        //opal_output(0, "I am a RDMA_done\n");
                         frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS );
-                        //opal_output(0, "I am a RDMA_cb_done\n");
                         free(desc);
                     }
                 else{
