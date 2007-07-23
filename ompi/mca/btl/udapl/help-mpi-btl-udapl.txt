@@ -95,3 +95,22 @@ This may be a real error or it may be an invalid entry in the uDAPL
 Registry which is contained in the dat.conf file. Contact your local
 System Administrator to confirm the availability of the interfaces in
 the dat.conf file.
+
+[specified include and exclude]
+ERROR: You have specified both the btl_udapl_if_include and
+btl_udapl_if_exclude MCA parameters.  These two parameters are
+mutually exclusive; you can only specify one or the other.
+
+For reference, the values that you specified are:
+
+    btl_udapl_if_include: %s
+    btl_udapl_if_exclude: %s
+
+[nonexistent entry]
+WARNING: One or more nonexistent interfaces were specified:
+
+    Host:                 %s
+    MCA parameter:        btl_udapl_if_%sclude
+    Nonexistent entities: %s
+
+These entities will be ignored.

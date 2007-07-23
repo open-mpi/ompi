@@ -28,6 +28,7 @@
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/runtime/params.h"
@@ -275,6 +276,89 @@ static void mca_btl_udapl_receive_control(struct mca_btl_base_module_t* btl,
 
 
 /*
+ * Modify the list of dat entry pointers to include only those entries
+ * which it is desired to attempt dat_ia_open on.
+ * 
+ * @param num_info_entries (IN/OUT) Number of entries in datinfo list
+ * @param datinfo (IN/OUT)          List of pointers to dat registry entries
+ */
+
+int mca_btl_udapl_modify_ia_list(DAT_COUNT *num_info_entries,
+                               DAT_PROVIDER_INFO* datinfo)
+{
+    int i,j,k,found;
+    DAT_PROVIDER_INFO* tmp_datinfo = NULL;
+    DAT_COUNT tmp_num_entries = 0;
+
+    
+    tmp_datinfo = malloc((*num_info_entries) * sizeof(DAT_PROVIDER_INFO));
+    if(NULL == tmp_datinfo) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    for (i = 0; i < *num_info_entries; i++) {
+        j = 0;
+        found = 0;
+
+        /* search for datinfo entry on the if_list list */
+        while (mca_btl_udapl_component.if_list[j]) {
+            if (0 == strcmp(datinfo[i].ia_name, 
+                mca_btl_udapl_component.if_list[j])) {
+
+                found = 1;
+                /* remove from if_list */
+                k = opal_argv_count(mca_btl_udapl_component.if_list);
+                opal_argv_delete(&k, &(mca_btl_udapl_component.if_list),
+                    j, 1);
+
+                break;
+            }
+            j++;
+        }
+
+        if (found) {
+            if (NULL != mca_btl_udapl_component.if_include_list) {
+                /* explicitly include */
+                tmp_datinfo[tmp_num_entries] = datinfo[i];
+                tmp_num_entries++;
+            }
+
+            /* if this is if_exclude case and match found do nothing */
+            
+        } else {
+            /* if this is if_include case and match not found do nothing */
+
+            if (NULL != mca_btl_udapl_component.if_exclude_list) {
+                /* not found for exclude case so actually include here */
+                tmp_datinfo[tmp_num_entries] = datinfo[i];
+                tmp_num_entries++;
+            }
+        }
+    }
+    
+    /* set new values */
+    *num_info_entries = tmp_num_entries;
+    for (j = 0; j < *num_info_entries; j++) {
+        datinfo[j] = tmp_datinfo[j];
+    }
+
+
+    /* if if_list not NULL, either not found or user error */
+    if (opal_argv_count(mca_btl_udapl_component.if_list)) {
+        char *str = opal_argv_join(mca_btl_udapl_component.if_list, ',');
+        opal_show_help("help-mpi-btl-udapl.txt", "nonexistent entry",
+                       true, orte_system_info.nodename,
+                       ((NULL != mca_btl_udapl_component.if_include) ? 
+                        "in" : "ex"), str);
+        free(str);
+    }    
+
+    free(tmp_datinfo);
+    return OMPI_SUCCESS;
+}
+
+
+/*
  * Initialize the uDAPL component,
  * check how many interfaces are available and create a btl module for each.
  */
@@ -291,6 +375,33 @@ mca_btl_udapl_component_init (int *num_btl_modules,
     DAT_COUNT num_ias;
     int32_t i;
 
+    /* parse the include and exclude lists, checking for errors */
+    mca_btl_udapl_component.if_include_list =
+        mca_btl_udapl_component.if_exclude_list = 
+        mca_btl_udapl_component.if_list = NULL;
+    if (NULL != mca_btl_udapl_component.if_include &&
+        NULL != mca_btl_udapl_component.if_exclude) {
+        opal_show_help("help-mpi-btl-udapl.txt",
+                       "specified include and exclude", true,
+                       mca_btl_udapl_component.if_include,
+                       mca_btl_udapl_component.if_exclude);
+
+        mca_btl_udapl_component.udapl_num_btls = 0;
+        mca_btl_udapl_modex_send();
+        return NULL;
+    } else if (NULL != mca_btl_udapl_component.if_include) {
+        mca_btl_udapl_component.if_include_list = 
+            opal_argv_split(mca_btl_udapl_component.if_include, ',');
+        mca_btl_udapl_component.if_list = 
+            opal_argv_copy(mca_btl_udapl_component.if_include_list);
+
+    } else if (NULL != mca_btl_udapl_component.if_exclude) {
+        mca_btl_udapl_component.if_exclude_list = 
+            opal_argv_split(mca_btl_udapl_component.if_exclude, ',');
+        mca_btl_udapl_component.if_list = 
+            opal_argv_copy(mca_btl_udapl_component.if_exclude_list);
+    }
+    
     /* enumerate uDAPL interfaces */
     /* Have to do weird pointer stuff to make uDAPL happy -
        just an array of DAT_PROVIDER_INFO isn't good enough. */
@@ -315,6 +426,11 @@ mca_btl_udapl_component_init (int *num_btl_modules,
     }
 
     free(datinfoptr);
+
+    /* modify list of IA's to be used when if_in[ex]clude set  */
+    if (NULL != mca_btl_udapl_component.if_list) {
+        mca_btl_udapl_modify_ia_list(&num_ias, datinfo); 
+    }
 
     /* allocate space for the each possible BTL */
     mca_btl_udapl_component.udapl_btls = (mca_btl_udapl_module_t **)
@@ -594,14 +710,14 @@ int mca_btl_udapl_component_progress()
                 dat_evd_dequeue(btl->udapl_evd_dto, &event)) {
             DAT_DTO_COMPLETION_EVENT_DATA* dto;
             mca_btl_udapl_frag_t* frag;
-        
+
             switch(event.event_number) {
             case DAT_DTO_COMPLETION_EVENT:
                 dto = &event.event_data.dto_completion_event_data;
 
                 frag = dto->user_cookie.as_ptr;
 
-		/* Was the DTO successful? */
+                /* Was the DTO successful? */
                 if(DAT_DTO_SUCCESS != dto->status) {
                     OPAL_OUTPUT((0,
                         "btl_udapl ***** DTO error %d %d %lu %p*****\n",
@@ -658,7 +774,7 @@ int mca_btl_udapl_component_progress()
                 {
                     mca_btl_base_recv_reg_t* reg;
                     int cntrl_msg = -1;
-		    
+
                     assert(frag->base.des_dst == &frag->segment);
                     assert(frag->base.des_dst_cnt == 1);
                     assert(frag->base.des_src == NULL);
@@ -821,7 +937,7 @@ int mca_btl_udapl_component_progress()
                        See dat_ep_connect documentation pdf pg 198 */
                     BTL_OUTPUT(("WARNING : Connection event not handled : %d\n",
                         event.event_number));
-		    break;
+                    break;
                 default:
                     BTL_ERROR(("ERROR: unknown connection event : %d",
                         event.event_number));
