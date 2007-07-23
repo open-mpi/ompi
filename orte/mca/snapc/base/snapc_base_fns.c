@@ -325,6 +325,19 @@ int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer, bool *
     bool ack = true;
 
     /*
+     * Do not send to self, as that is silly.
+     */
+    if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, peer, ORTE_PROC_MY_HNP) ||
+        0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, peer, ORTE_PROC_MY_NAME) ) {
+        opal_output_verbose(10, orte_snapc_base_output,
+                            "snapc:base: ckpt_init_cmd: Error: Do not send to self!\n");
+        return ORTE_SUCCESS;
+    }
+
+    opal_output_verbose(10, orte_snapc_base_output,
+                        "snapc:base: ckpt_init_cmd: Sending commands\n");
+
+    /*
      * Setup the buffer that we may send back
      */
     if( NULL == (loc_buffer = OBJ_NEW(orte_buffer_t) ) ) {
@@ -337,21 +350,33 @@ int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer, bool *
      ********************/
     my_pid = getpid();
     if (ORTE_SUCCESS != (ret = orte_dss.pack(loc_buffer, &my_pid, 1, ORTE_PID))) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_init_cmd: Error: DSS Pack (PID) failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ret;
         goto cleanup;
     }
     
     if (0 > (ret = orte_rml.send_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0))) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_init_cmd: Error: Send Buffer (PID) Failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ret;
         goto cleanup;
     }
     
     /* ACK */
     if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_recv_ack(peer, &ack)) ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_init_cmd: Error: ACK (PID) Failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
     if( !ack ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_init_cmd: Error: NACK (PID) (LINE = %d)\n",
+                    __LINE__);
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
@@ -366,12 +391,18 @@ int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer, bool *
     }
 
     if( 0 > (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0)) ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_init_cmd: Error: Recv (term) Failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ret;
         goto cleanup;
     }
     
     n = 1;
     if ( ORTE_SUCCESS != (ret = orte_dss.unpack(loc_buffer, term, &n, ORTE_BOOL)) ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_init_cmd: Error: DSS Unpack (term) Failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ret;
         goto cleanup;
     }
@@ -386,12 +417,18 @@ int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer, bool *
     }
 
     if( 0 > (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0)) ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_init_cmd: Error: Recv (jobid) Failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ret;
         goto cleanup;
     }
     
     n = 1;
     if ( ORTE_SUCCESS != (ret = orte_dss.unpack(loc_buffer, jobid, &n, ORTE_SIZE)) ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_init_cmd: Error: DSS Unpack (jobid) Failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ret;
         goto cleanup;
     }
@@ -413,11 +450,17 @@ int orte_snapc_base_global_coord_recv_ack(orte_process_name_t* peer, bool *ack)
     }
 
     if( 0 > (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0)) ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: recv_ack: Error: Recv Failed: %d\n",
+                    ret);
         exit_status = ret;
         goto cleanup;
     }
 
     if ( ORTE_SUCCESS != (ret = orte_dss.unpack(loc_buffer, ack, &n, ORTE_BOOL)) ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: recv_ack: Error: Unpack Failed: %d\n",
+                    ret);
         exit_status = ret;
         goto cleanup;
     }
@@ -439,11 +482,17 @@ int orte_snapc_base_global_coord_send_ack(orte_process_name_t* peer, bool ack)
     }
 
     if (ORTE_SUCCESS != (ret = orte_dss.pack(buffer, &ack, 1, ORTE_BOOL))) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: send_ack: Error: Pack Failed: %d\n",
+                    ret);
         exit_status = ret;
         goto cleanup;
     }
 
     if (0 > (ret = orte_rml.send_buffer(peer, buffer, ORTE_RML_TAG_CKPT, 0))) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: send_ack: Error: Send Failed: %d\n",
+                    ret);
         exit_status = ret;
         goto cleanup;
     }
@@ -461,6 +510,20 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char
     orte_buffer_t *loc_buffer = NULL;
     bool ack = true;
     size_t str_len = 0;
+
+    /*
+     * Do not send to self, as that is silly.
+     */
+    if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, peer, ORTE_PROC_MY_HNP) ||
+        0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, peer, ORTE_PROC_MY_NAME) ) {
+        opal_output_verbose(10, orte_snapc_base_output,
+                            "snapc:base: ckpt_update_cmd: Error: Do not send to self!\n");
+        return ORTE_SUCCESS;
+    }
+
+    opal_output_verbose(10, orte_snapc_base_output,
+                        "snapc:base: ckpt_update_cmd: Sending update command <%s> <%d> <%d>\n",
+                        global_snapshot_handle, seq_num, ckpt_status);
 
     /*
      * Setup the buffer that we may send back
@@ -483,20 +546,32 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char
     }
 
     if (ORTE_SUCCESS != (ret = orte_dss.pack(loc_buffer, &ckpt_status, 1, ORTE_INT))) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_update_cmd: Error: DSS Pack (ckpt_status) Failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ret;
         goto cleanup;
     }
     if (0 > (ret = orte_rml.send_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0))) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_update_cmd: Error: Send (ckpt_status) Failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ret;
         goto cleanup;
     }
 
     /* ACK */
     if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_recv_ack(peer, &ack)) ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_update_cmd: Error: ACK (ckpt_status) Failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
     if( !ack ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_update_cmd: Error: NACK (ckpt_status) (LINE = %d)\n",
+                    __LINE__);
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
@@ -520,20 +595,32 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char
 
     str_len = strlen(global_snapshot_handle);
     if (ORTE_SUCCESS != (ret = orte_dss.pack(loc_buffer, &str_len, 1, ORTE_SIZE))) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_update_cmd: Error: DSS Pack (snapshot ref length) Failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ret;
         goto cleanup;
     }
     if (0 > (ret = orte_rml.send_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0))) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_update_cmd: Error: Send (snapshot ref length) Failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ret;
         goto cleanup;
     }
 
     /* ACK */
     if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_recv_ack(peer, &ack)) ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_update_cmd: Error: Send (snapshot ref length) Failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
     if( !ack ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_update_cmd: Error: NACK (snapshot ref length) (LINE = %d)\n",
+                    __LINE__);
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
@@ -551,24 +638,39 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char
     }
 
     if (ORTE_SUCCESS != (ret = orte_dss.pack(loc_buffer, &global_snapshot_handle, 1, ORTE_STRING))) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_update_cmd: Error: DSS Pack (snapshot handle) Failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ret;
         goto cleanup;
     }
     if (ORTE_SUCCESS != (ret = orte_dss.pack(loc_buffer, &seq_num, 1, ORTE_INT))) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_update_cmd: Error: DSS Pack (seq number) Failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ret;
         goto cleanup;
     }
     if (0 > (ret = orte_rml.send_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0))) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_update_cmd: Error: Send (snapshot handle, seq number) Failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ret;
         goto cleanup;
     }
 
     /* ACK */
     if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_recv_ack(peer, &ack)) ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_update_cmd: Error: ACK (snapshot handle, seq number) Failure (ret = %d) (LINE = %d)\n",
+                    ret, __LINE__);
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
     if( !ack ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base: ckpt_update_cmd: Error: NACK (snapshot handle, seq number) (LINE = %d)\n",
+                    __LINE__);
         exit_status = ORTE_ERROR;
         goto cleanup;
     }

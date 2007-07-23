@@ -82,10 +82,11 @@ static bool snapc_full_global_is_done_yet(void);
 static opal_mutex_t global_coord_mutex;
 
 static orte_snapc_base_global_snapshot_t global_snapshot;
-static orte_process_name_t orte_checkpoint_sender;
+static orte_process_name_t orte_checkpoint_sender = {0,0};
 static bool updated_job_to_running;
 
 static size_t cur_job_ckpt_state = ORTE_SNAPC_CKPT_STATE_NONE;
+static orte_jobid_t cur_job_id = 0;
 
 /************************
  * Function Definitions
@@ -108,6 +109,42 @@ int global_coord_setup_job(orte_jobid_t jobid) {
     int ret, exit_status = ORTE_SUCCESS;
     orte_vpid_t vpid_start = 0, vpid_range = 0;
     orte_std_cntr_t i;
+
+    /*
+     * If we have already setup a jobid, warn
+     * JJH: Hard restriction of only one jobid able to be checkpointed. FIX
+     */
+    /*
+     * If we pass this way twice the first time will have been from:
+     *   rmgr_urm.c: As the global coordinator
+     * The second time will have been from:
+     *   odls_default_module.c: As the local coordinator.
+     * The later case means that we (as the HNP) are acting as both the global and
+     * local coordinators.
+     * JJH FIX NOTE:
+     *   This fix imposes the restriction that only one jobid can be checkpointed
+     *   at a time. In the future we will want to lift this restriction.
+     */
+    if( 0 >= cur_job_id ) {
+        /* Global Coordinator pass */
+        cur_job_id = jobid;
+    }
+    else if ( jobid == cur_job_id ) {
+        /* Local Coordinator pass -- Will always happen after Global Coordinator Pass */
+        opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
+                            "global [%d]) Setup job (%d) again as the local coordinator for (%d)\n",
+                            getpid(), jobid, cur_job_id);
+        return local_coord_setup_job(jobid);
+    }
+    else {
+        /* Already setup things for another job,
+         * We do not currently support the ability to checkpoint more than one 
+         * jobid
+         */
+        opal_output(mca_snapc_full_component.super.output_handle,
+                    "global [%d]) Setup job (%d) Failed. Already setup job (%d)\n", getpid(), jobid, cur_job_id);
+        return ORTE_ERROR;
+    }
 
     /*
      * Start out with a sequence number just below the first

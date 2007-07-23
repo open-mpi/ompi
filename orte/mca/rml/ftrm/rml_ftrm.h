@@ -38,6 +38,9 @@ extern "C" {
     ORTE_MODULE_DECLSPEC extern orte_rml_component_t mca_rml_ftrm_component;
     ORTE_MODULE_DECLSPEC extern orte_rml_module_t    orte_rml_ftrm_module;
 
+    ORTE_MODULE_DECLSPEC extern orte_rml_component_t mca_rml_ftrm_wrapped_component;
+    ORTE_MODULE_DECLSPEC extern orte_rml_module_t    orte_rml_ftrm_wrapped_module;
+
     /*
      * Init (Component)
      */
