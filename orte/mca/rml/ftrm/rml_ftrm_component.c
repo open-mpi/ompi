@@ -95,8 +95,30 @@ static int ftrm_priority = -1;
  */
 orte_rml_module_t* orte_rml_ftrm_component_init(int* priority)
 {
-    *priority = ftrm_priority;
-    return &orte_rml_ftrm_module;
+    /*
+     * Asked to return a priority
+     */
+    if( NULL != priority ) {
+        *priority = ftrm_priority;
+        return &orte_rml_ftrm_module;
+    }
+    /*
+     * Called a second time to swap module pointers
+     */
+    else {
+        /* Copy the wrapped versions */
+        orte_rml_ftrm_wrapped_module    = orte_rml;
+        mca_rml_ftrm_wrapped_component  = *orte_rml_component;
+        /* Replace with ourselves */
+        orte_rml           = orte_rml_ftrm_module;
+        orte_rml_component = &mca_rml_ftrm_component;
+
+        opal_output_verbose(20, rml_ftrm_output_handle,
+                            "orte_rml_ftrm: component_init(): Wrapped Component (%s)",
+                            mca_rml_ftrm_wrapped_component.rml_version.mca_component_name);
+
+        return NULL;
+    }
 }
 
 /*

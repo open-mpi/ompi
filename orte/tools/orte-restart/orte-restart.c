@@ -426,7 +426,7 @@ static int create_appfile(orte_snapc_base_global_snapshot_t *snapshot)
         vpid_snapshot = (orte_snapc_base_snapshot_t*)item;
         
         fprintf(appfile, "#\n");
-        fprintf(appfile, "# Old Process Name: %%u.%u\n", 
+        fprintf(appfile, "# Old Process Name: %u.%u\n", 
                 vpid_snapshot->process_name.jobid,
                 vpid_snapshot->process_name.vpid);
         fprintf(appfile, "#\n");
