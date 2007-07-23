@@ -46,7 +46,8 @@ orte_routed_component_t mca_routed_unity_component = {
 
       /* Next the MCA v1.0.0 component meta data */
       {
-          MCA_BASE_METADATA_PARAM_NONE
+          /* This component can be checkpointed */
+          MCA_BASE_METADATA_PARAM_CHECKPOINT
       },
       routed_unity_init
 };
