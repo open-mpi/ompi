@@ -31,48 +31,70 @@
 #include "orte/mca/ns/base/base.h"
 
 #define ORTE_PRINT_NAME_ARGS_MAX_SIZE   20
+#define ORTE_PRINT_NAME_ARG_NUM_BUFS    8
 
 static opal_tsd_key_t print_args_tsd_key;
 char* orte_print_args_null = "NULL";
+typedef struct {
+    char *buffers[ORTE_PRINT_NAME_ARG_NUM_BUFS];
+    int cntr;
+} orte_print_args_buffers_t;
 
 static void
 buffer_cleanup(void *value)
 {
-    if (NULL != value) free(value);
+    int i;
+    orte_print_args_buffers_t *ptr;
+    
+    if (NULL != value) {
+        ptr = (orte_print_args_buffers_t*)value;
+        for (i=0; i < ORTE_PRINT_NAME_ARG_NUM_BUFS; i++) {
+            free(ptr->buffers[i]);
+        }
+    }
 }
 
-static char*
+static orte_print_args_buffers_t*
 get_print_name_buffer(void)
 {
-    void *buffer;
-    int ret;
+    orte_print_args_buffers_t *ptr;
+    int ret, i;
     
-    ret = opal_tsd_getspecific(print_args_tsd_key, &buffer);
+    ret = opal_tsd_getspecific(print_args_tsd_key, (void**)&ptr);
     if (OPAL_SUCCESS != ret) return NULL;
     
-    if (NULL == buffer) {
-        buffer = (void*) malloc((ORTE_PRINT_NAME_ARGS_MAX_SIZE+1) * sizeof(char));
-        ret = opal_tsd_setspecific(print_args_tsd_key, buffer);
+    if (NULL == ptr) {
+        ptr = (orte_print_args_buffers_t*)malloc(sizeof(orte_print_args_buffers_t));
+        for (i=0; i < ORTE_PRINT_NAME_ARG_NUM_BUFS; i++) {
+            ptr->buffers[i] = (void*) malloc((ORTE_PRINT_NAME_ARGS_MAX_SIZE+1) * sizeof(char));
+        }
+        ptr->cntr = 0;
+        ret = opal_tsd_setspecific(print_args_tsd_key, (void*)ptr);
     }
     
-    return (char*) buffer;
+    return (orte_print_args_buffers_t*) ptr;
 }
 
 char* orte_ns_base_print_name_args(const orte_process_name_t *name)
 {
-    char *print_name_buf = get_print_name_buffer();
+    orte_print_args_buffers_t *ptr = get_print_name_buffer();
     
-    if (NULL == print_name_buf) {
+    if (NULL == ptr) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return orte_print_args_null;
     }
     
-    if (NULL == name) {
-        snprintf(print_name_buf, ORTE_PRINT_NAME_ARGS_MAX_SIZE, "[NO-NAME]");
-    } else {
-        snprintf(print_name_buf, ORTE_PRINT_NAME_ARGS_MAX_SIZE, "[%ld,%ld]", (long)name->jobid, (long)name->vpid);
+    /* cycle around the ring */
+    if (ORTE_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
+        ptr->cntr = 0;
     }
-    return print_name_buf;
+    
+    if (NULL == name) {
+        snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "[NO-NAME]");
+    } else {
+        snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "[%ld,%ld]", (long)name->jobid, (long)name->vpid);
+    }
+    return ptr->buffers[ptr->cntr-1];
 }
 
 int
