@@ -260,13 +260,10 @@ static int xcast_binomial_tree(orte_jobid_t job,
                                orte_rml_tag_t tag)
 {
     orte_daemon_cmd_flag_t command, mode;
-    orte_std_cntr_t i;
     int rc;
-    int peer, size, rank, hibit, mask;
     orte_process_name_t target;
     orte_buffer_t *buf;
     orte_vpid_t num_daemons;
-    int bitmap;
 
     opal_output(orte_grpcomm_basic.output, "oob_xcast_mode: binomial");
 
