@@ -11,6 +11,7 @@
   *                         All rights reserved.
   *
   * Copyright (c) 2006      Voltaire. All rights reserved.
+  * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
   *
   * $COPYRIGHT$
   * 
@@ -313,8 +314,7 @@ int mca_rcache_vma_tree_find_all(
 
         if(NULL == vma) {
             /* base is bigger than any registered memory */
-            base = bound + 1;
-            continue;
+            break;
         }
 
         if(base < (unsigned char*)vma->start) {

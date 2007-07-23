@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
+ * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -48,10 +49,7 @@ void mca_mpool_rdma_module_init(mca_mpool_rdma_module_t* mpool)
     mpool->super.mpool_find = mca_mpool_rdma_find;
     mpool->super.mpool_deregister = mca_mpool_rdma_deregister;
     mpool->super.mpool_release_memory = mca_mpool_rdma_release_memory;
-    if(mca_mpool_rdma_component.print_stats == true)
-        mpool->super.mpool_finalize = mca_mpool_rdma_finalize;
-    else
-        mpool->super.mpool_finalize = NULL;
+    mpool->super.mpool_finalize = mca_mpool_rdma_finalize;
     mpool->super.rcache =
         mca_rcache_base_module_create(mca_mpool_rdma_component.rcache_name);
     mpool->super.flags = MCA_MPOOL_FLAGS_MPI_ALLOC_MEM;
@@ -400,10 +398,49 @@ int mca_mpool_rdma_release_memory(struct mca_mpool_base_module_t *mpool,
 void mca_mpool_rdma_finalize(struct mca_mpool_base_module_t *mpool)
 {
     mca_mpool_rdma_module_t *mpool_rdma = (mca_mpool_rdma_module_t*)mpool;
-    opal_output(0, "%s rdma: stats "
-            "(hit/miss/found/not found/evicted): %d/%d/%d/%d/%d\n",
-            ORTE_NAME_PRINT(orte_process_info.my_name),
-            mpool_rdma->stat_cache_hit, mpool_rdma->stat_cache_miss,
-            mpool_rdma->stat_cache_found, mpool_rdma->stat_cache_notfound,
-            mpool_rdma->stat_evicted);
+    mca_mpool_base_registration_t *reg;
+    ompi_pointer_array_t regs;
+    int reg_cnt, i;
+
+    /* Statistic */
+    if(true == mca_mpool_rdma_component.print_stats) {
+        opal_output(0, "%s rdma: stats "
+                "(hit/miss/found/not found/evicted): %d/%d/%d/%d/%d\n",
+                ORTE_NAME_PRINT(orte_process_info.my_name),
+                mpool_rdma->stat_cache_hit, mpool_rdma->stat_cache_miss,
+                mpool_rdma->stat_cache_found, mpool_rdma->stat_cache_notfound,
+                mpool_rdma->stat_evicted);
+    }
+
+    OBJ_CONSTRUCT(&regs, ompi_pointer_array_t);
+
+    OPAL_THREAD_LOCK(&mpool->rcache->lock);
+    reg_cnt = mpool->rcache->rcache_find_all(mpool->rcache, 0, (size_t)-1, &regs);
+
+    for(i = 0; i < reg_cnt; i++) {
+        reg = (mca_mpool_base_registration_t*)
+            ompi_pointer_array_get_item(&regs, i);
+
+        if(reg->ref_count) {
+            reg->ref_count = 0; /* otherway dereg will fail on assert */
+            opal_output(0, "%s Warning ! Found not released memory\n",
+                    ORTE_NAME_PRINT(orte_process_info.my_name));
+        } else if (mca_mpool_rdma_component.leave_pinned) {
+            opal_list_remove_item(&mpool_rdma->mru_list,
+                    (opal_list_item_t*)reg);
+        }
+
+        if(dereg_mem(mpool, reg) != OMPI_SUCCESS) {
+            continue;
+        }
+
+        mpool->rcache->rcache_delete(mpool->rcache, reg);
+        OMPI_FREE_LIST_RETURN(&mpool_rdma->reg_list,
+                (ompi_free_list_item_t*)reg);
+    }
+
+    OBJ_DESTRUCT(&mpool_rdma->mru_list);
+    OBJ_DESTRUCT(&mpool_rdma->reg_list);
+    OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
+    ompi_pointer_array_remove_all(&regs);
 }
