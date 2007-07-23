@@ -339,62 +339,23 @@ static int xcast_binomial_tree(orte_jobid_t job,
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)buf->bytes_used);
     }
     
-    /* start setting up the target recipients */
+    /* all we need to do is send this to ourselves - our relay logic
+     * will ensure everyone else gets it!
+     */
     target.jobid = 0;
+    target.vpid = 0;
+    ++orte_grpcomm_basic.num_active;
     
-    /* compute the bitmap */
-    bitmap = opal_cube_dim((int)num_daemons);
-    rank = 0;
-    size = (int)num_daemons;
-    
-    hibit = opal_hibit(rank, bitmap);
-    --bitmap;
-
-    /* we have to account for all of the messages we are about to send
-     * because the non-blocking send can come back almost immediately - before
-     * we would get the chance to increment the num_active. This causes us
-     * to not correctly wakeup and reset the xcast_in_progress flag
-     */
-    OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
-    /* compute the number of sends we are going to do - it would be nice
-     * to have a simple algo to do this, but for now just brute force
-     * is fine
-     */
-    for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
-        peer = rank | mask;
-        if (peer < size) {            
-            ++orte_grpcomm_basic.num_active;
-        }
-    }
-    if (orte_grpcomm_basic.num_active == 0) {
+    opal_output(orte_grpcomm_basic.output, "%s xcast to %s",
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&target));
+    if (0 > (rc = orte_rml.send_buffer_nb(&target, buf, ORTE_RML_TAG_ORTED_ROUTED,
+                                          0, xcast_send_cb, NULL))) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        rc = ORTE_ERR_COMM_FAILURE;
+        OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
+        --orte_grpcomm_basic.num_active;
         OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
-        rc = ORTE_SUCCESS;
         goto CLEANUP;
-    }
-    OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
-
-    target.jobid = 0;
-    for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
-        peer = rank | mask;
-        if (peer < size) {
-            target.vpid = (orte_vpid_t)peer;
-            opal_output(orte_grpcomm_basic.output, "%s xcast to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&target));
-            if (0 > (rc = orte_rml.send_buffer_nb(&target, buf, ORTE_RML_TAG_ORTED_ROUTED,
-                                                  0, xcast_send_cb, NULL))) {
-                if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
-                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-                    rc = ORTE_ERR_COMM_FAILURE;
-                    OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
-                    orte_grpcomm_basic.num_active -= (num_daemons-i);
-                    OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
-                    goto CLEANUP;
-                }
-                /* decrement the number we are waiting to see */
-                OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
-                orte_grpcomm_basic.num_active--;
-                OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
-            }
-        }
     }
 
 CLEANUP:  
