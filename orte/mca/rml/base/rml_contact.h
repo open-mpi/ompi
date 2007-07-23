@@ -1,3 +1,4 @@
+#include "orte_config.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/gpr/gpr.h"
@@ -24,7 +25,7 @@ int orte_rml_base_register_contact_info(void);
 void orte_rml_base_contact_info_notify(orte_gpr_notify_data_t* data,
                                        void* cbdata);
 
-int orte_rml_base_parse_uris(const char* uri,
+ORTE_DECLSPEC int orte_rml_base_parse_uris(const char* uri,
                              orte_process_name_t* peer, 
                              char*** uris);
 
