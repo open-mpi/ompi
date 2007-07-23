@@ -47,7 +47,7 @@ static inline int mca_btl_udapl_reg_string(const char* param_name,
     mca_base_param_reg_string(&mca_btl_udapl_component.super.btl_version, 
         param_name, param_desc, false, false, default_value, &value);
 
-    if (NULL == value) {
+    if (NULL == value && !((flags & REGSTR_EMPTY_OK) == REGSTR_EMPTY_OK)) {
         BTL_ERROR(("ERROR: MCA Parameter %s : Value (NULL) out of range : "
             "Default value (%s)\n \t Parameter Description : %s",
             param_name, default_value, param_desc));
@@ -220,6 +220,21 @@ int mca_btl_udapl_register_mca_params(void)
         DAT_OPTIMAL_ALIGNMENT,
         &mca_btl_udapl_component.udapl_buffer_alignment,
         REGINT_GE_ONE), tmp_rc, rc);
+
+    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_string("if_include",
+        "Comma-delimited list of interfaces to be included "
+        "(e.g. \"ibd0,ibd1 or OpenIB-cma,OpenIB-cma-1\"; empty value means "
+        "to use all interfaces found). Mutually exclusive with "
+        "btl_udapl_if_exclude.",
+        NULL, &mca_btl_udapl_component.if_include,
+        REGSTR_EMPTY_OK), tmp_rc, rc);
+
+    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_string("if_exclude",
+        "Comma-delimited list of interfaces to be excluded from use "
+        "(e.g. \"ibd0,ibd1 or OpenIB-cma,OpenIB-cma-1\"; empty value means "
+        "not to exclude any). Mutually exclusive with btl_udapl_if_include.",
+        NULL, &mca_btl_udapl_component.if_exclude,
+        REGSTR_EMPTY_OK), tmp_rc, rc);
 
     /* register uDAPL module parameters */
     CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("async_evd_qlen",

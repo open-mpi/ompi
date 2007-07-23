@@ -85,6 +85,11 @@ struct mca_btl_udapl_component_t {
     opal_list_t udapl_procs;   /**< list of udapl proc structures */
     opal_mutex_t udapl_lock;   /**< lock for accessing module state */
     char* udapl_mpool_name;    /**< name of memory pool */ 
+    char *if_include;
+    char **if_include_list;
+    char *if_exclude;
+    char **if_exclude_list;
+    char **if_list;            /* used for checking entries not found */
 }; 
 typedef struct mca_btl_udapl_component_t mca_btl_udapl_component_t;
 
