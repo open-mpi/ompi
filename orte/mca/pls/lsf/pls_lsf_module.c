@@ -155,6 +155,11 @@ static int pls_lsf_launch_job(orte_jobid_t jobid)
         goto cleanup;
     }
     
+#if 0
+    /* RHC: I do not believe LSF has launch_id's - does it?
+       They certainly are not used anywhere below!
+    */
+    
     /* Iterate through each of the nodes and check to see if we have
      * a valid launch_id (must be > 0). If not, then error out as
      * we cannot do anything
@@ -171,7 +176,8 @@ static int pls_lsf_launch_job(orte_jobid_t jobid)
             goto cleanup;
         }
     }    
-        
+#endif
+    
     num_nodes = map->num_new_daemons;
     opal_output(0, "pls lsf num new daemons: %d!\n", num_nodes);
     if (num_nodes == 0) {
@@ -220,7 +226,7 @@ static int pls_lsf_launch_job(orte_jobid_t jobid)
     orte_pls_base_orted_append_basic_args(&argc, &argv,
                                           &proc_name_index,
                                           NULL,
-                                          num_nodes
+                                          map->num_nodes  /* need total #daemons here */
                                           );
 
     /* force orted to use the lsf sds */
