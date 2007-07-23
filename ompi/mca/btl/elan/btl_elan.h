@@ -116,9 +116,7 @@ struct mca_btl_elan_module_t {
     opal_mutex_t elan_lock;
     struct bufdesc_t *    tportFIFOHead;
     struct bufdesc_t *    tportFIFOTail;
-#if defined MCA_BTL_HAS_MPOOL
     struct mca_mpool_base_module_t* elan_mpool;
-#endif
 }; 
 typedef struct mca_btl_elan_module_t mca_btl_elan_module_t;
 extern mca_btl_elan_module_t mca_btl_elan_module;
@@ -349,7 +347,7 @@ extern bufdesc_t * elan_ipeek(mca_btl_elan_module_t* elan_btl);
 
 #define BTL_ELAN_ADD_TO_FIFO(BTL, DESC)                         \
     do {                                                        \
-        OPAL_THREAD_LOCK(&elan_btl->elan_lock);                 \
+        OPAL_THREAD_LOCK(&((BTL)->elan_lock));                 \
         if( (BTL)->tportFIFOTail ) {                            \
             (BTL)->tportFIFOTail->next = (DESC);                \
             (BTL)->tportFIFOTail = (DESC);                      \
@@ -357,7 +355,7 @@ extern bufdesc_t * elan_ipeek(mca_btl_elan_module_t* elan_btl);
             (BTL)->tportFIFOHead = (DESC);                      \
             (BTL)->tportFIFOTail = (DESC);                      \
         }                                                       \
-        OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);               \
+        OPAL_THREAD_UNLOCK(&((BTL)->elan_lock));               \
     } while(0)
 
 #endif

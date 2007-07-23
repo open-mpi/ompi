@@ -45,9 +45,7 @@ struct mca_btl_elan_frag_t {
     ompi_free_list_t* my_list;
     mca_btl_base_tag_t tag;
     size_t size; 
-#if defined MCA_BTL_HAS_MPOOL
     struct mca_mpool_base_registration_t* registration;
-#endif
 }; 
 typedef struct mca_btl_elan_frag_t mca_btl_elan_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_elan_frag_t); 

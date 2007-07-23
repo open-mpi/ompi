@@ -21,6 +21,7 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/runtime/ompi_module_exchange.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/mpool/base/base.h" 
 #include "btl_elan.h"
@@ -35,7 +36,7 @@
 
 #include "opal/util/os_path.h"
 #include "opal/util/opal_environ.h"
-
+#include "ompi/communicator/communicator.h" 
 mca_btl_elan_component_t mca_btl_elan_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
@@ -59,7 +60,6 @@ mca_btl_elan_component_t mca_btl_elan_component = {
             /* The component is not checkpoint ready */
             MCA_BASE_METADATA_PARAM_NONE
         },
-
         mca_btl_elan_component_init,  
         mca_btl_elan_component_progress,
     }
@@ -113,11 +113,12 @@ int mca_btl_elan_component_open(void)
     mca_btl_elan_module.super.btl_exclusivity = 0;
     mca_btl_elan_module.super.btl_eager_limit =  32*1024;
     mca_btl_elan_module.super.btl_min_send_size = 32*1024;
-    mca_btl_elan_module.super.btl_max_send_size = 32*1024; /*64*1024;*/
-    mca_btl_elan_module.super.btl_rdma_pipeline_send_length = 512 *1024;
-    mca_btl_elan_module.super.btl_rdma_pipeline_frag_size = 128 *1024;
-    mca_btl_elan_module.super.btl_min_rdma_pipeline_size = 128* 1024;
-    mca_btl_elan_module.super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE | /*MCA_BTL_FLAGS_PUT | */MCA_BTL_FLAGS_SEND;
+    mca_btl_elan_module.super.btl_max_send_size = 64*1024; /*64*1024;*/
+    mca_btl_elan_module.super.btl_rdma_pipeline_send_length = 512 * 1024;
+    mca_btl_elan_module.super.btl_rdma_pipeline_frag_size = 128 * 1024;
+    mca_btl_elan_module.super.btl_min_rdma_pipeline_size = 128 * 1024;
+    mca_btl_elan_module.super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE /*| MCA_BTL_FLAGS_GET */| MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND ;
+    /* mca_btl_elan_module.super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE|MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_SEND ;*/
     mca_btl_elan_module.super.btl_bandwidth = 2000;
     mca_btl_elan_module.super.btl_latency = 5;
     mca_btl_base_param_register(&mca_btl_elan_component.super.btl_version,
@@ -132,16 +133,16 @@ int mca_btl_elan_component_open(void)
 
 int mca_btl_elan_component_close(void)
 {
-    if( NULL != mca_btl_elan_component.elan_btls )
+    if( NULL != mca_btl_elan_component.elan_btls ) {
         free( mca_btl_elan_component.elan_btls );
-    /* release resources */
+        /* release resources */
 
-    OBJ_DESTRUCT(&mca_btl_elan_component.elan_procs);
-    OBJ_DESTRUCT(&mca_btl_elan_component.elan_frag_eager);
-    OBJ_DESTRUCT(&mca_btl_elan_component.elan_frag_user);
-    OBJ_DESTRUCT(&mca_btl_elan_component.elan_frag_max);
-    OBJ_DESTRUCT(&mca_btl_elan_component.elan_lock);
-    
+        OBJ_DESTRUCT(&mca_btl_elan_component.elan_procs);
+        OBJ_DESTRUCT(&mca_btl_elan_component.elan_frag_eager);
+        OBJ_DESTRUCT(&mca_btl_elan_component.elan_frag_user);
+        OBJ_DESTRUCT(&mca_btl_elan_component.elan_frag_max);
+        OBJ_DESTRUCT(&mca_btl_elan_component.elan_lock);
+    }
     return OMPI_SUCCESS;
 }
 
@@ -158,7 +159,7 @@ mca_btl_base_module_t** mca_btl_elan_component_init( int *num_btl_modules,
 {
 
     mca_btl_base_module_t** btls;
-    size_t rails, i , count;
+    size_t rails, i , count, vpid;
     ELAN_BASE    * base;
     ELAN_STATE   * state;
     ELAN_QUEUE   * q= NULL;
@@ -197,61 +198,30 @@ mca_btl_base_module_t** mca_btl_elan_component_init( int *num_btl_modules,
                          mca_btl_elan_component.elan_free_list_max,
                          mca_btl_elan_component.elan_free_list_inc,
                          NULL ); /* use default allocator */
+    
 
-    opal_setenv( "LIBELAN_MACHINES_FILE", "/home/tma/machinefile", false, &environ );
     opal_setenv( "MPIRUN_ELANIDMAP_FILE", "/etc/elanidmap", false, &environ );
-    base = elan_baseInit(0);
-    if (base == NULL)
-	return NULL;
-    state = base->state; 
-    if( NULL == state ) {
-	mca_btl_base_error_no_nics( "ELAN", "Quadrics" );
-	return NULL;
-    }
-    elan_gsync(base->allGroup);
-    ompi_modex_send( &mca_btl_elan_component.super.btl_version, &state->vp, sizeof(state->vp));
-    rails = elan_nRails(state);
-    mca_btl_elan_component.elan_num_btls = rails;
-    if ((q = elan_allocQueue(base->state)) == NULL) {
-        return NULL;
-    }
-    if (!(p = elan_tportInit(base->state, 
-		            (ELAN_QUEUE *)q,
-		             base->tport_nslots,
-		             base->tport_smallmsg, 
-                     base->tport_bigmsg,
-                     base->tport_stripemsg,
-		             ELAN_POLL_EVENT, 
-                     base->retryCount,
-		             &base->shm_key, 
-                     base->shm_fifodepth,
-		             base->shm_fragsize, 
-                     0))) {
-	    return NULL;
-    }
+    vpid = orte_process_info.my_name->vpid;
+   
+    ompi_modex_send( &mca_btl_elan_component.super.btl_version, &vpid, sizeof(vpid));
+    mca_btl_elan_component.elan_num_btls = 1;
     mca_btl_elan_component.elan_btls = malloc( (mca_btl_elan_component.elan_num_btls) * sizeof(mca_btl_base_module_t*) );
     for( i = count = 0; i < mca_btl_elan_component.elan_num_btls; i++ ) {
-    	mca_btl_elan_module_t* btl =  malloc (sizeof (mca_btl_elan_module_t));	
-	    if(NULL == btl)
-		    continue;
-	    memcpy( btl, &mca_btl_elan_module, sizeof(mca_btl_elan_module_t) );
-	    OBJ_CONSTRUCT (&btl->elan_lock, opal_mutex_t);
+        mca_btl_elan_module_t* btl =  malloc (sizeof (mca_btl_elan_module_t));	
+        if(NULL == btl)
+            continue;
+        memcpy( btl, &mca_btl_elan_module, sizeof(mca_btl_elan_module_t) );
+        OBJ_CONSTRUCT (&btl->elan_lock, opal_mutex_t);
     	btl->tportFIFOHead=NULL;
     	btl->tportFIFOTail=NULL;
-    	btl->base  = base;
-    	btl->state = state;
-    	btl->queue = q;
-    	btl->tport = p;
-	    btl->elan_vp = state->vp;
-	    btl->elan_nvp = state->nvp;
-	    mca_btl_elan_component.elan_btls[count++] = btl;
+        mca_btl_elan_component.elan_btls[count++] = btl;
     }
     mca_btl_elan_component.elan_num_btls = count ;
     btls = (mca_btl_base_module_t**)malloc( (mca_btl_elan_component.elan_num_btls) * sizeof(mca_btl_base_module_t*) );
     if( NULL == btls ) {
-	    free( mca_btl_elan_component.elan_btls );
-	    mca_btl_elan_component.elan_num_btls = 0;  /* no active BTL modules */
-	    return NULL;
+        free( mca_btl_elan_component.elan_btls );
+        mca_btl_elan_component.elan_num_btls = 0;  /* no active BTL modules */
+        return NULL;
     }
     memcpy( btls,  mca_btl_elan_component.elan_btls, mca_btl_elan_component.elan_num_btls *sizeof(mca_btl_elan_module_t*) );
     *num_btl_modules = mca_btl_elan_component.elan_num_btls;
@@ -293,9 +263,12 @@ int mca_btl_elan_component_progress()
                 else if(frag->type== MCA_BTL_ELAN_HDR_TYPE_PUT || frag->type== MCA_BTL_ELAN_HDR_TYPE_GET )
                     {
                         /* it's a put*/
-                        /* call the completion callback */				
+                        /* call the completion callback */
+                        //opal_output(0, "I am a RDMA\n");            
                         elan_wait(desc->eve,ELAN_WAIT_EVENT);
+                        //opal_output(0, "I am a RDMA_done\n");
                         frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS );
+                        //opal_output(0, "I am a RDMA_cb_done\n");
                         free(desc);
                     }
                 else{
@@ -315,7 +288,17 @@ int mca_btl_elan_component_progress()
 
                     desc->frag = frag;
                     desc->next  = NULL;
-                    BTL_ELAN_ADD_TO_FIFO( elan_btl, desc );
+                    OPAL_THREAD_LOCK(&elan_btl->elan_lock);
+                    if(elan_btl->tportFIFOTail)
+                        {
+                            elan_btl->tportFIFOTail->next = desc;
+                            elan_btl->tportFIFOTail=desc;
+                        }
+                    else{
+                        elan_btl->tportFIFOHead = desc;
+                        elan_btl->tportFIFOTail = desc;   
+                    }
+                    OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
                 }
             } else {
                 opal_output( 0, "Something bad happened the frag == NULL\n" );
@@ -326,5 +309,3 @@ int mca_btl_elan_component_progress()
 
     return num_progressed;
 }
-
-
