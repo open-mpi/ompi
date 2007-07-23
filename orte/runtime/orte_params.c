@@ -26,6 +26,8 @@
 #endif
 
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/params.h"
@@ -36,6 +38,10 @@ bool orte_debug_daemons_flag, orte_debug_daemons_file_flag;
 bool orted_spin_flag, orte_no_daemonize_flag;
 struct timeval orte_abort_timeout;
 char **orte_launch_environ;
+opal_mutex_t orted_comm_mutex;
+opal_condition_t orted_comm_cond;
+bool orte_orterun;
+bool orted_comm_exit_cond;
 
 /*
  * Whether we have completed orte_init or not

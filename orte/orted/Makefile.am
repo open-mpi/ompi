@@ -25,5 +25,6 @@ headers += \
 	orted/orted.h
 
 libopen_rte_la_SOURCES += \
-        orted/orted_main.c
+        orted/orted_main.c \
+        orted/orted_comm.c
 
