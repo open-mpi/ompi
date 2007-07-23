@@ -79,10 +79,11 @@ int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
     int i, rc;
     FILE* file;
     char* filename;
-    ELAN_BASE    * base;  
-    ELAN_STATE   * state;  
-    ELAN_QUEUE   * q= NULL;  
-    ELAN_TPORT   * p= NULL;  
+    ELAN_BASE    * base;
+    ELAN_STATE   * state;
+    ELAN_QUEUE   * q= NULL;
+    ELAN_TPORT   * p= NULL;
+
     filename = opal_os_path( false, orte_process_info.proc_session_dir, "ELAN_ID", NULL );
     file = fopen( filename, "w" );
     for( i = 0; i < (int)nprocs; i++ ) {
@@ -95,15 +96,15 @@ int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
     opal_setenv( "MPIRUN_ELANIDMAP_FILE", "/etc/elanidmap", false, &environ ); 
     base = elan_baseInit(0);  
     if (base == NULL)  
-        return NULL;  
+        return OMPI_ERR_OUT_OF_RESOURCE;
     state = base->state;   
     if( NULL == state ) {  
         mca_btl_base_error_no_nics( "ELAN", "Quadrics" ); 
-        return NULL;  
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     elan_gsync(base->allGroup);  
     if ((q = elan_allocQueue(base->state)) == NULL) {  
-        return NULL;  
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }  
     if (!(p = elan_tportInit(base->state,  
                              (ELAN_QUEUE *)q, 
@@ -117,7 +118,7 @@ int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
                              base->shm_fifodepth, 
                              base->shm_fragsize,  
                              0))) { 
-        return NULL; 
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     elan_btl->base  = base; 
     elan_btl->state = state; 
@@ -363,8 +364,8 @@ mca_btl_base_descriptor_t* mca_btl_elan_prepare_dst( struct mca_btl_base_module_
 {
 
     mca_btl_elan_frag_t* frag;
-    mca_mpool_base_module_t* mpool = btl->btl_mpool;
     int rc;
+
     if( OPAL_UNLIKELY((*size) > UINT32_MAX) ) {  
         *size = (size_t)UINT32_MAX;
     }
