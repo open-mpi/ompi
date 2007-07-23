@@ -478,42 +478,28 @@ static int xcast_linear(orte_jobid_t job,
      */
     OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
     orte_grpcomm_basic.num_active += range;
-    if (orte_process_info.daemon ||
-        orte_process_info.seed ||
-        orte_process_info.singleton) {
-        /* we never send to ourselves,
-         * so we need to adjust the number of sends
-         * we are expecting to complete
-         */
-        orte_grpcomm_basic.num_active--;
-        if (orte_grpcomm_basic.num_active <= 0) {
-            OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
-            rc = ORTE_SUCCESS;
-            goto CLEANUP;
-        }
-    }
     OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
     
     /* send the message to each daemon as fast as we can */
     dummy.jobid = 0;
     for (i=0; i < range; i++) {            
-        if (ORTE_PROC_MY_NAME->vpid != i) { /* don't send to myself */
-            dummy.vpid = i;
-            if (0 > (rc = orte_rml.send_buffer_nb(&dummy, buf, ORTE_RML_TAG_ORTED_ROUTED,
-                                                  0, xcast_send_cb, NULL))) {
-                if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
-                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-                    rc = ORTE_ERR_COMM_FAILURE;
-                    OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
-                    orte_grpcomm_basic.num_active -= (range-i);
-                    OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
-                    goto CLEANUP;
-                }
-                /* decrement the number we are waiting to see */
+        dummy.vpid = i;
+        opal_output(orte_grpcomm_basic.output, "%s xcast to %s",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&dummy));
+        if (0 > (rc = orte_rml.send_buffer_nb(&dummy, buf, ORTE_RML_TAG_ORTED_ROUTED,
+                                              0, xcast_send_cb, NULL))) {
+            if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
+                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                rc = ORTE_ERR_COMM_FAILURE;
                 OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
-                orte_grpcomm_basic.num_active--;
+                orte_grpcomm_basic.num_active -= (range-i);
                 OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
+                goto CLEANUP;
             }
+            /* decrement the number we are waiting to see */
+            OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
+            orte_grpcomm_basic.num_active--;
+            OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
         }
     }
     rc = ORTE_SUCCESS;

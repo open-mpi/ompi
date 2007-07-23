@@ -91,7 +91,7 @@ main(int argc, char *argv[]){
                               &msg,
                               1,
                               MY_TAG,
-                              MCA_OOB_ALLOC) ) {
+                              ORTE_RML_ALLOC) ) {
             printf("error A... %d\n", __LINE__);
         }
         

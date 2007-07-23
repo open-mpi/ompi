@@ -20,6 +20,7 @@
 #include "orte/mca/smr/smr.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 
 int main(int argc, char* argv[])
 {
@@ -93,7 +94,7 @@ int main(int argc, char* argv[])
     }
 
     /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
-    if (ORTE_SUCCESS != (rc = orte_rml.xcast_gate(orte_gpr.deliver_notify_msg))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast_gate(orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(rc);
         error = "failed to see all procs register\n";
         goto error;
