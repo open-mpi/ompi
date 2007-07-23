@@ -81,6 +81,8 @@
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/gpr/base/base.h"
+#include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/ns/ns.h"
@@ -99,6 +101,8 @@
 #include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/base.h"
+#include "orte/mca/routed/routed.h"
+#include "orte/mca/routed/base/base.h"
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/pls/base/base.h"
 #include "orte/mca/odls/odls.h"
@@ -238,6 +242,9 @@ void ompi_info::open_components()
   orte_gpr_base_open();
   component_map["gpr"] = &orte_gpr_base_components_available;
 
+  orte_grpcomm_base_open();
+  component_map["grpcomm"] = &mca_grpcomm_base_components_available;
+  
   orte_iof_base_open();
   component_map["iof"] = &orte_iof_base.iof_components_opened;
 
@@ -259,6 +266,9 @@ void ompi_info::open_components()
   orte_rml_base_open();
   component_map["rml"] = &orte_rml_base_components;
 
+  orte_routed_base_open();
+  component_map["routed"] = &orte_routed_base_components;
+  
   orte_pls_base_open();
   component_map["pls"] = &orte_pls_base.available_components;
 
@@ -376,8 +386,10 @@ void ompi_info::close_components()
         orte_ras_base_close();
         orte_ns_base_close();
         orte_gpr_base_close();
+        orte_grpcomm_base_close();
         orte_errmgr_base_close();
         orte_rml_base_close();
+        orte_routed_base_close();
         mca_oob_base_close();
         orte_odls_base_close();
         

@@ -208,6 +208,7 @@ int main(int argc, char *argv[])
 
   ompi_info::mca_types.push_back("errmgr");
   ompi_info::mca_types.push_back("gpr");
+  ompi_info::mca_types.push_back("grpcomm");
   ompi_info::mca_types.push_back("iof");
   ompi_info::mca_types.push_back("ns");
   ompi_info::mca_types.push_back("oob");
@@ -217,6 +218,7 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("rmaps");
   ompi_info::mca_types.push_back("rmgr");
   ompi_info::mca_types.push_back("rml");
+  ompi_info::mca_types.push_back("routed");
   ompi_info::mca_types.push_back("pls");
   ompi_info::mca_types.push_back("sds");
   ompi_info::mca_types.push_back("soh");
