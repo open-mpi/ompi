@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
     pid = getpid();
 
     /* wait for message from our parent */
-    if (0 > orte_rml.recv(ORTE_NAME_WILDCARD, &msg, 1, MY_TAG, MCA_OOB_ALLOC)) {
+    if (0 > orte_rml.recv(ORTE_NAME_WILDCARD, &msg, 1, MY_TAG, ORTE_RML_ALLOC)) {
         printf("error at line %d\n", __LINE__);
     }
     
