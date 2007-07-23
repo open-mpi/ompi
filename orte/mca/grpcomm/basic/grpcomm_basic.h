@@ -30,9 +30,7 @@
 
 #include "orte/mca/grpcomm/grpcomm.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * globals
@@ -73,10 +71,9 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                           orte_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata);
 
 
-ORTE_MODULE_DECLSPEC extern orte_grpcomm_base_component_t orte_grpcomm_basic_component;
+ORTE_MODULE_DECLSPEC extern orte_grpcomm_base_component_t mca_grpcomm_basic_component;
 extern orte_grpcomm_base_module_t orte_grpcomm_basic_module;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif
