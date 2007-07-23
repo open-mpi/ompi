@@ -222,6 +222,7 @@ int orte_daemon(int argc, char *argv[])
     int i;
     orte_buffer_t *buffer;
     int zero = 0;
+    char hostname[100];
 
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals));
@@ -271,6 +272,14 @@ int orte_daemon(int argc, char *argv[])
     /* register and process the orte params */
     if (ORTE_SUCCESS != (ret = orte_register_params(ORTE_INFRASTRUCTURE))) {
         return ret;
+    }
+    
+    /* if orte_daemon_debug is set, let someone know we are alive right
+     * away just in case we have a problem along the way
+     */
+    if (orte_debug_daemons_flag) {
+        gethostname(hostname, 100);
+        fprintf(stderr, "Daemon was launched on %s - beginning to initialize\n", hostname);
     }
     
     /* check for help request */

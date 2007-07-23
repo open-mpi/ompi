@@ -27,6 +27,7 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/odls/odls.h"
 
@@ -78,6 +79,9 @@ int orte_pls_base_daemon_callback(orte_std_cntr_t num_daemons)
     orte_process_name_t name;
     int src[4];
     int rc, idx;
+    orte_buffer_t *buf;
+    orte_gpr_notify_data_t *data=NULL;
+    orte_rml_cmd_flag_t command;
     
     for(i = 0; i < num_daemons; i++) {
         OBJ_CONSTRUCT(&ack, orte_buffer_t);
@@ -145,5 +149,38 @@ int orte_pls_base_daemon_callback(orte_std_cntr_t num_daemons)
         OBJ_DESTRUCT(&handoff);  /* done with this */
     }
 
-    return ORTE_SUCCESS;
+    /* all done launching - update everyone's contact info so all daemons
+     * can talk to each other
+     */
+    name.jobid = 0;
+    name.vpid = ORTE_VPID_WILDCARD;
+    orte_rml_base_get_contact_info(&name, &data);
+    if (NULL != data) {
+        buf = OBJ_NEW(orte_buffer_t);
+        /* pack the update-RML command */
+        command = ORTE_RML_UPDATE_CMD;
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(buf, &command, 1, ORTE_RML_CMD))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        /* pack the data for xmission */
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(buf, &data, 1, ORTE_GPR_NOTIFY_DATA))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+            OBJ_RELEASE(data);
+            return rc;
+        }
+        /* now send it */
+        if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(0, buf, ORTE_RML_TAG_RML_INFO_UPDATE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+            OBJ_RELEASE(data);
+            return rc;
+        }
+        /* done with the buffer */
+        OBJ_RELEASE(buf);
+        /* cleanup the data */
+        OBJ_RELEASE(data);
+    }
+
+return ORTE_SUCCESS;
 }
