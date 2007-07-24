@@ -145,7 +145,9 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
             case FPE_FLTDIV: si_code_str = "Floating point divide-by-zero"; break;
             case FPE_FLTOVF: si_code_str = "Floating point overflow"; break;
             case FPE_FLTUND: si_code_str = "Floating point underflow"; break;
+#ifdef FPE_FLTRES
             case FPE_FLTRES: si_code_str = "Floating point inexact result"; break;
+#endif
 #ifdef FBE_FLTINV
             case FPE_FLTINV: si_code_str = "Invalid floating point operation"; break;
 #endif
