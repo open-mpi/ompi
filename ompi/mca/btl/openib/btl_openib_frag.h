@@ -36,6 +36,7 @@ struct mca_btl_openib_header_t {
     uint8_t padding[1];
 #endif
     uint16_t credits;
+    uint16_t cm_seen;
 };
 typedef struct mca_btl_openib_header_t mca_btl_openib_header_t;
 #define BTL_OPENIB_RDMA_CREDITS_FLAG (1<<15)

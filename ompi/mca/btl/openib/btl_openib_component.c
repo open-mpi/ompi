@@ -228,15 +228,13 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
 	    /* if not sent via rdma */
         if(!MCA_BTL_OPENIB_RDMA_FRAG(frag) &&
                 ctl_hdr->type == MCA_BTL_OPENIB_CONTROL_CREDITS) {
-            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_credits, -1);
-            /* assert(endpoint->qps[qp].u.pp_qp.rd_credits >= -(mca_btl_openib_component.qp_infos[qp].rd_num - mca_btl_openib_component.qp_infos[qp].rd_low)); */
+            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_received, 1);
+            OPAL_THREAD_ADD32((int32_t*)&endpoint->qps[qp].u.pp_qp.rd_posted, 1);
         }
     } else if (ctl_hdr->type == MCA_BTL_OPENIB_CONTROL_CREDITS) {
-        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_credits, -1);
-        /* assert(endpoint->qps[qp].u.pp_qp.rd_credits >= -(mca_btl_openib_component.qp_infos[qp].rd_num - mca_btl_openib_component.qp_infos[qp].rd_low)); */
+        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_received, 1);
+        OPAL_THREAD_ADD32((int32_t*)&endpoint->qps[qp].u.pp_qp.rd_posted, 1);
     }
-    
-    
     
     switch (ctl_hdr->type) {
     case MCA_BTL_OPENIB_CONTROL_CREDITS:
@@ -1163,6 +1161,11 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
         }
     }
 
+    if(frag->hdr->cm_seen) {
+        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_sent,
+                -frag->hdr->cm_seen);
+    }
+
     /* We may receive credits here so try to progress only things that
      * may be pending because of credit shortage */
     if(MCA_BTL_OPENIB_PP_QP == endpoint->qps[qp].qp_type ||
@@ -1606,10 +1609,10 @@ error:
         }
         if(wc.status != IBV_WC_WR_FLUSH_ERR || !flush_err_printed[cq]++) {
             BTL_PEER_ERROR(remote_proc, ("error polling %s with status %s "
-                        "status number %d for wr_id %llu opcode %d",
+                        "status number %d for wr_id %llu opcode %d qp_idx %d",
                         cq_name[cq],
                         btl_openib_component_status_to_string(wc.status), 
-                        wc.status, wc.wr_id, wc.opcode)); 
+                        wc.status, wc.wr_id, wc.opcode, frag->qp_idx)); 
             abort();
         }
         if(wc.status == IBV_WC_RETRY_EXC_ERR) { 
