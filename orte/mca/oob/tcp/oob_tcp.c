@@ -512,10 +512,15 @@ static int mca_oob_tcp_create_listen(int *target_sd, uint16_t af_family)
     }
 #endif /* IPV6_V6ONLY */
 #else
-    inaddr.sin_family = af_family;
-    inaddr.sin_addr.s_addr = INADDR_ANY;
-    inaddr.sin_port = 0;
-    addrlen = sizeof(struct sockaddr_in);
+    if (AF_INET == af_family) {
+        struct sockaddr_in * in = (struct sockaddr_in*) &inaddr;
+        in->sin_family = af_family;
+        in->sin_addr.s_addr = INADDR_ANY;
+        in->sin_port = 0;
+        addrlen = sizeof(struct sockaddr_in);
+    } else {
+        return ORTE_ERROR;
+    }
 #endif
 
     if (bind(*target_sd, (struct sockaddr*)&inaddr, addrlen) < 0) {
@@ -1331,9 +1336,15 @@ mca_oob_tcp_parse_uri(const char* uri, struct sockaddr* inaddr)
     memcpy(inaddr, res->ai_addr, res->ai_addrlen);
     freeaddrinfo(res);
 #else
-    inaddr->sin_family = af_family;
-    inaddr->sin_addr.s_addr = inet_addr(host);
-    if (inaddr->sin_addr.s_addr == INADDR_ANY) {
+    if (AF_INET == af_family) {
+        struct sockaddr_in *in = (struct sockaddr_in*) inaddr;
+        in->sin_family = af_family;
+        in->sin_addr.s_addr = inet_addr(host);
+        if (in->sin_addr.s_addr == INADDR_ANY) {
+            ret = ORTE_ERR_BAD_PARAM;
+            goto cleanup;
+        }
+    } else {
         ret = ORTE_ERR_BAD_PARAM;
         goto cleanup;
     }
