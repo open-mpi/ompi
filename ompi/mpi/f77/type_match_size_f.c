@@ -90,9 +90,10 @@ void mpi_type_match_size_f(MPI_Fint *typeclass, MPI_Fint *size, MPI_Fint *type, 
         c_type = &ompi_mpi_datatype_null;
     }
     *type = MPI_Type_c2f( c_type );
-    if( c_type != &ompi_mpi_datatype_null )
+    if ( c_type != &ompi_mpi_datatype_null ) {
         *ierr = OMPI_INT_2_FINT( MPI_SUCCESS );
-    else 
+    } else {
         *ierr = OMPI_INT_2_FINT( MPI_ERR_ARG );
-    (void)OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+        (void)OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+    }
 }
