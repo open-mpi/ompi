@@ -265,7 +265,6 @@ int btl_openib_register_mca_params(void)
         mca_btl_openib_component.ib_mtu = (uint32_t) ival;
     }
 
-    /* JMS Is this really in seconds?  Is there a max? */
     CHECK(reg_int("ib_min_rnr_timer", "InfiniBand minimum "
                   "\"receiver not ready\" timer, in seconds "
                   "(must be >= 0 and <= 31)",
@@ -338,15 +337,24 @@ int btl_openib_register_mca_params(void)
                   4, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.ib_max_rdma_dst_ops = (uint32_t) ival;
 
-    /* JMS is there a max? */
     CHECK(reg_int("ib_service_level", "InfiniBand service level "
-                  "(must be >= 0)", 
-                  0, &ival, REGINT_GE_ZERO));
+                  "(must be >= 0 and <= 15)", 
+                  0, &ival, 0));
+    if (ival > 15) {
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                       true, "btl_openib_ib_service_level > 15",
+                       "btl_openib_ib_service_level reset to 15");
+        ival = 15;
+    } else if (ival < 0) {
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                   true, "btl_openib_ib_service_level < 0",
+                   "btl_openib_ib_service_level reset to 0");
+        ival = 0;
+    }
     mca_btl_openib_component.ib_service_level = (uint32_t) ival;
 
-    /* JMS what is this? */
     CHECK(reg_int("ib_static_rate", "InfiniBand static rate "
-                  "(must be >= 0; default: %d)",
+                  "(must be >= 0)",
                   0, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.ib_static_rate = (uint32_t) ival;
 
