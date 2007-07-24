@@ -156,40 +156,26 @@ opal_progress(void)
 #if (OMPI_ENABLE_PROGRESS_THREADS == 0) && OPAL_HAVE_WORKING_EVENTOPS
 #if OPAL_PROGRESS_USE_TIMERS
 #if OPAL_TIMER_USEC_NATIVE
-    opal_timer_t now = opal_timer_base_get_usec();
+        opal_timer_t now = opal_timer_base_get_usec();
 #else
-    opal_timer_t now = opal_timer_base_get_cycles();
+        opal_timer_t now = opal_timer_base_get_cycles();
 #endif  /* OPAL_TIMER_USEC_NATIVE */
     /* trip the event library if we've reached our tick rate and we are
        enabled */
         if (now - event_progress_last_time > event_progress_delta ) {
-#if OMPI_HAVE_THREAD_SUPPORT
-            if (opal_atomic_trylock(&progress_lock)) {
-#endif  /* OMPI_HAVE_THREAD_SUPPORT */
                 event_progress_last_time = (num_event_users > 0) ? 
                     now - event_progress_delta : now;
 
                 events += opal_event_loop(opal_progress_event_flag);
-#if OMPI_HAVE_THREAD_SUPPORT
-                opal_atomic_unlock(&progress_lock);
-            }
-#endif  /* OMPI_HAVE_THREAD_SUPPORT */
         }
 
 #else /* OPAL_PROGRESS_USE_TIMERS */
     /* trip the event library if we've reached our tick rate and we are
        enabled */
         if (OPAL_THREAD_ADD32(&event_progress_counter, -1) <= 0 ) {
-#if OMPI_HAVE_THREAD_SUPPORT
-            if (opal_atomic_trylock(&progress_lock)) {
-#endif  /* OMPI_HAVE_THREAD_SUPPORT */
                 event_progress_counter = 
                     (num_event_users > 0) ? 0 : event_progress_delta;
                 events += opal_event_loop(opal_progress_event_flag);
-#if OMPI_HAVE_THREAD_SUPPORT
-                opal_atomic_unlock(&progress_lock);
-            }
-#endif  /* OMPI_HAVE_THREAD_SUPPORT */
         }
 #endif /* OPAL_PROGRESS_USE_TIMERS */
 

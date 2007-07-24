@@ -528,7 +528,8 @@ opal_event_base_loop(struct event_base *base, int flags)
 		return(0);
 
 #if OPAL_HAVE_WORKING_EVENTOPS
-	OPAL_THREAD_LOCK(&opal_event_lock);
+	res = OPAL_THREAD_TRYLOCK(&opal_event_lock);
+        if (0 != res) return 0;
 
 	done = 0;
 	while (!done && opal_event_enabled) {
