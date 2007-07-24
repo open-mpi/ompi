@@ -243,7 +243,8 @@ These entities will be ignored.  You can disable this warning by
 setting the btl_openib_warn_nonexistent_if MCA parameter to 0.
 #
 [invalid mca param value]
-WARNING: the openib BTL detected an illegal MCA parameter value:
+WARNING: An invalid MCA parameter value was found for the OpenFabrics
+(openib) BTL.
 
-%s
-%s
+Problem:    %s
+Resolution: %s
