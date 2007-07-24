@@ -57,6 +57,8 @@ static inline int mca_btl_udapl_frag_progress_one(mca_btl_udapl_module_t* udapl_
 void mca_btl_udapl_frag_progress_pending(mca_btl_udapl_module_t* udapl_btl,
                                         mca_btl_base_endpoint_t* endpoint,
                                         const int connection);
+static int mca_btl_udapl_modify_ia_list(DAT_COUNT *num_info_entries,
+                                        DAT_PROVIDER_INFO* datinfo);
 
 
 mca_btl_udapl_component_t mca_btl_udapl_component = {
@@ -283,7 +285,7 @@ static void mca_btl_udapl_receive_control(struct mca_btl_base_module_t* btl,
  * @param datinfo (IN/OUT)          List of pointers to dat registry entries
  */
 
-int mca_btl_udapl_modify_ia_list(DAT_COUNT *num_info_entries,
+static int mca_btl_udapl_modify_ia_list(DAT_COUNT *num_info_entries,
                                DAT_PROVIDER_INFO* datinfo)
 {
     int i,j,k,found;
