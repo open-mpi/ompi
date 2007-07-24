@@ -97,6 +97,9 @@ struct mca_btl_openib_endpoint_pp_qp_t {
                           */
     int32_t  rd_posted;   /**< number of descriptors posted to the nic*/
     int32_t  rd_credits;  /**< number of credits to return to peer */
+    int32_t  cm_received; /**< Credit messages received */
+    int32_t  cm_return;   /**< how may credits to return */
+    int32_t  cm_sent;     /**< Outstanding number of credit messages */
 }; typedef struct mca_btl_openib_endpoint_pp_qp_t mca_btl_openib_endpoint_pp_qp_t;
 
 
@@ -211,26 +214,25 @@ static inline int mca_btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpo
                                                   const int qp)
 {
     mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
-    int rd_num = 
-        mca_btl_openib_component.qp_infos[qp].rd_num + 
-        mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
+    int rd_num = mca_btl_openib_component.qp_infos[qp].rd_num;
+    int rd_rsv = mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
+    int cm_received, rd_posted, rd_low;
     
     assert(MCA_BTL_OPENIB_PP_QP == endpoint->qps[qp].qp_type);
     OPAL_THREAD_LOCK(&openib_btl->ib_lock);
-    if((endpoint->qps[qp].u.pp_qp.rd_posted - mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv) <=
-       mca_btl_openib_component.qp_infos[qp].rd_low + additional &&
-       endpoint->qps[qp].u.pp_qp.rd_posted < 
-       rd_num) {
+    cm_received = endpoint->qps[qp].u.pp_qp.cm_received;
+    rd_posted = endpoint->qps[qp].u.pp_qp.rd_posted;
+    rd_low = mca_btl_openib_component.qp_infos[qp].rd_low;
+
+    if(cm_received >= (rd_rsv >> 2) || rd_posted <= rd_low) {
         int rc;
-        int32_t i, num_post = rd_num - endpoint->qps[qp].u.pp_qp.rd_posted;
+        int32_t i, num_post = rd_num - rd_posted;
         struct ibv_recv_wr* bad_wr;
         ompi_free_list_t *free_list;
         
-        assert(num_post >= 0);
-
         free_list = &openib_btl->qps[qp].recv_free;
 
-        for(i = 0; i < num_post; i++) {
+        for(i = 0; i < (num_post + cm_received); i++) {
            ompi_free_list_item_t* item;
            mca_btl_openib_frag_t* frag;
            OMPI_FREE_LIST_WAIT(free_list, item, rc);
@@ -246,8 +248,16 @@ static inline int mca_btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpo
                return OMPI_ERROR;
            }
         }
-        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_posted, num_post);
-        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_credits, num_post);
+        if(num_post > 0) {
+            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_posted, num_post);
+            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_credits, num_post);
+        }
+        if(cm_received > 0) {
+            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_return,
+                    cm_received);
+            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_received,
+                    -cm_received);
+        }
         assert(endpoint->qps[qp].u.pp_qp.rd_credits < rd_num);
         assert(endpoint->qps[qp].u.pp_qp.rd_credits >= 0);
     }

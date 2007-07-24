@@ -220,6 +220,14 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
     } else {
         frag->hdr->credits = 0;
     }
+
+    if(endpoint->qps[qp].u.pp_qp.cm_return) {
+        frag->hdr->cm_seen = endpoint->qps[qp].u.pp_qp.cm_return;
+        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_return,
+                -frag->hdr->cm_seen);
+    } else {
+        frag->hdr->cm_seen = 0;
+    }
     
     ib_rc = post_send(openib_btl, endpoint, frag, qp, do_rdma); 
     if(ib_rc) {
@@ -287,10 +295,14 @@ static void mca_btl_openib_endpoint_construct_qp(mca_btl_base_endpoint_t *endpoi
          * now has credits even if the receive buffers are not yet posted 
          */
         endpoint->qps[qp].u.pp_qp.rd_credits =
-            -(mca_btl_openib_component.qp_infos[qp].rd_num + 
-              mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv);
+            -mca_btl_openib_component.qp_infos[qp].rd_num;
         
         endpoint->qps[qp].u.pp_qp.rd_posted = 0;
+        endpoint->qps[qp].u.pp_qp.cm_sent = 0;
+        endpoint->qps[qp].u.pp_qp.cm_return = 
+            -mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
+        endpoint->qps[qp].u.pp_qp.cm_received =
+            mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
 
         /* initialize the local view of credits */
         endpoint->qps[qp].u.pp_qp.sd_credits = 
@@ -1302,6 +1314,16 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
         }
     }
 
+    if(0 == do_rdma) {
+        if(OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_sent, 1) >
+                (mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv - 1)) {
+            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_sent, -1);
+            OPAL_THREAD_ADD32(&endpoint->qps[qp].rd_pending_credit_chks,
+                    -endpoint->qps[qp].rd_pending_credit_chks);
+            return;
+        }
+     }
+
     frag->base.des_cbfunc = mca_btl_openib_endpoint_credits;
     frag->base.des_cbdata = NULL;
     frag->endpoint = endpoint;
@@ -1315,6 +1337,14 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     } else {
         frag->hdr->credits = 0;
     }
+    if(endpoint->qps[qp].u.pp_qp.cm_return) {
+        frag->hdr->cm_seen = endpoint->qps[qp].u.pp_qp.cm_return;
+        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_return,
+                -frag->hdr->cm_seen);
+    } else {
+        frag->hdr->cm_seen = 0;
+    }
+
     /* send eager RDMA credits only for high prio */
     if(BTL_OPENIB_EAGER_RDMA_QP(qp) && endpoint->eager_rdma_local.credits > 0) {
         credits_hdr->rdma_credits = endpoint->eager_rdma_local.credits;
@@ -1340,6 +1370,8 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
         OPAL_THREAD_ADD32(&endpoint->eager_rdma_local.credits, credits_hdr->rdma_credits);
         if(do_rdma)
             OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens, 1);
+        else
+            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_sent, -1);
         BTL_ERROR(("error posting send request errno %d says %s", ib_rc,
                     strerror(errno)));
     }
