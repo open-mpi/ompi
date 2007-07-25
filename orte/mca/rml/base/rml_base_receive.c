@@ -10,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +43,9 @@
 #include "orte/mca/rml/base/rml_contact.h"
 
 static bool recv_issued=false;
+static void orte_rml_base_recv(int status, orte_process_name_t* sender,
+                               orte_buffer_t* buffer, orte_rml_tag_t tag,
+                               void* cbdata);
 
 int orte_rml_base_comm_start(void)
 {
@@ -86,9 +91,10 @@ int orte_rml_base_comm_stop(void)
  * DO NOT RELEASE THIS BUFFER IN THIS CODE
  */
 
-void orte_rml_base_recv(int status, orte_process_name_t* sender,
-                        orte_buffer_t* buffer, orte_rml_tag_t tag,
-                        void* cbdata)
+static void
+orte_rml_base_recv(int status, orte_process_name_t* sender,
+                   orte_buffer_t* buffer, orte_rml_tag_t tag,
+                   void* cbdata)
 {
     orte_rml_cmd_flag_t command;
     orte_std_cntr_t count;
