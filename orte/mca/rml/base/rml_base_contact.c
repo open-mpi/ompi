@@ -12,7 +12,9 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
-#include "orte/mca/oob/tcp/oob_tcp.h" /* BWB - FIX ME */
+#include "orte/mca/oob/oob_types.h"
+
+#define ORTE_RML_BASE_CONTACT_KEY "rml-contact"
 
 extern opal_list_t       orte_rml_base_subscriptions;
 
@@ -29,7 +31,7 @@ static int get_contact_info(orte_jobid_t job, char **tokens, orte_gpr_notify_dat
 {
     char *segment;
     char *keys[] = {
-        ORTE_OOB_TCP_KEY,
+        ORTE_RML_BASE_CONTACT_KEY,
         ORTE_PROC_RML_IP_ADDRESS_KEY,
         NULL
     };
@@ -149,7 +151,7 @@ orte_rml_base_register_subscription(orte_jobid_t jobid, char *trigger)
                                          ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR | ORTE_GPR_STRIPPED,
                                          segment,
                                          NULL,  /* look at all containers on this segment */
-                                         ORTE_OOB_TCP_KEY,
+                                         ORTE_RML_BASE_CONTACT_KEY,
                                          orte_rml_base_contact_info_notify, NULL))) {
         ORTE_ERROR_LOG(rc);
         free(sub_name);
@@ -178,7 +180,7 @@ orte_rml_base_register_contact_info(void)
     orte_data_value_t *values[2];
     char *tmp, *tmp2, *tmp3;
     char *segment, **tokens;
-    char *keys[] = { ORTE_OOB_TCP_KEY, ORTE_PROC_RML_IP_ADDRESS_KEY};
+    char *keys[] = { ORTE_RML_BASE_CONTACT_KEY, ORTE_PROC_RML_IP_ADDRESS_KEY};
     int rc;
     
     /* setup to put our contact info on registry */
@@ -271,7 +273,7 @@ orte_rml_base_contact_info_notify(orte_gpr_notify_data_t* data,
 
                 /* check to make sure this is the requested key */
                 keyval = value->keyvals[j];
-                if(strcmp(keyval->key, ORTE_OOB_TCP_KEY) != 0)
+                if(strcmp(keyval->key, ORTE_RML_BASE_CONTACT_KEY) != 0)
                     continue;
                 orte_dss.get((void**)&(contact_info), keyval->value, ORTE_STRING);
                 orte_rml.set_contact_info(contact_info);
