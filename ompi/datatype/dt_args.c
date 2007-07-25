@@ -600,7 +600,7 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
 #if SIZEOF_PTRDIFF_T == 4
             array_of_disp[i] = opal_swap_bytes4(array_of_disp[i]);
 #elif SIZEOF_PTRDIFF_T == 8
-            array_of_disp[i] = opal_swap_bytes8(array_of_disp[i]);
+            array_of_disp[i] = (MPI_Aint)opal_swap_bytes8(array_of_disp[i]);
 #else
 #error "Unknown size of ptrdiff_t"
 #endif

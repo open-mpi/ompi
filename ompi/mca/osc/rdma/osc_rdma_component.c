@@ -1305,7 +1305,7 @@ setup_rdma(ompi_osc_rdma_module_t *module)
                                                      MPI_SUM,
                                                      module->m_comm);
     if (OMPI_SUCCESS != ret) goto cleanup;
-    module->m_setup_info->num_btls_expected = local;
+    module->m_setup_info->num_btls_expected = (int32_t)local;
     /* end fill in information about remote peers */
 
     /* send our contact info to everyone... */
