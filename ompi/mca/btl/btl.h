@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,7 +20,7 @@
 /**
  * @file
  *
- * Bit Mover Interface (BTL)
+ * Byte Transfer Layer (BTL)
  *
  *
  * BTL Initialization:
@@ -36,10 +38,8 @@
  * return either:
  *
  * (1) a NULL list of BTL modules if the transport is not available,
- * (2) a list containing a single BTL module, where the BTL provides
- *     a layer of abstraction over multiple physical devices (e.g. NICs),
- * (3) a list containing multiple BTL modules where each BTL module
- *     corresponds to a single physical device.
+ * (2) a list containing a one or more single BTL modules, where the BTL provides
+ *     a layer of abstraction over one or more physical devices (e.g. NICs),
  *
  * During module initialization, the module should post any addressing
  * information required by its peers. An example would be the TCP
@@ -72,9 +72,9 @@
  * TCP               0       Selected based on network reachability
  * TCP               0       Selected based on network reachability
  *
- * When a BTL module is selected, it may choose to optionally return a
- * pointer to an an mca_btl_base_endpoint_t data structure to the PML.
- * This pointer is treated as an opaque handle by the PML and is
+ * When mca_btl_base_add_proc_fn_t() is called on a  BTL module, the BTL 
+ * will populate an OUT variable with mca_btl_base_endpoint_t pointers. 
+ * Each pointer is treated as an opaque handle by the upper layer and is
  * returned to the BTL on subsequent data transfer calls to the
  * corresponding destination process.  The actual contents of the
  * data structure are defined on a per BTL basis, and may be used to
@@ -86,7 +86,7 @@
  * By default, the library provides for polling based progress of outstanding
  * requests. The BTL component exports an interface function (btl_progress)
  * that is called in a polling mode by the PML during calls into the MPI
- * library. Note that the btlm_progress() function is called on the BTL component
+ * library. Note that the btl_progress() function is called on the BTL component
  * rather than each BTL module. This implies that the BTL author is responsible
  * for iterating over the pending operations in each of the BTL modules associated
  * with the component.
@@ -153,7 +153,7 @@ typedef uint8_t mca_btl_base_tag_t;
 /* btl can send directly from user buffer w/out registration */
 #define MCA_BTL_FLAGS_SEND_INPLACE    0x0008
 
-/* btl transport is reliable */
+/* btl transport reliability flags - currently used only by the DR PML */
 #define MCA_BTL_FLAGS_NEED_ACK        0x0010
 #define MCA_BTL_FLAGS_NEED_CSUM       0x0020
 
@@ -174,12 +174,20 @@ typedef uint8_t mca_btl_base_tag_t;
 
 /**
  * Asynchronous callback function on completion of an operation.
+ * Completion Semantics: The descriptor can be reused or returned to the 
+ *  BTL via mca_btl_base_module_free_fn_t. The operation has been queued to
+ *  the network device or will otherwise make asynchronous progress without 
+ *  subsequent calls to btl_progress.
+ *
+ * @param[IN] module      the BTL module
+ * @param[IN] endpoint    the BTL endpoint
+ * @param[IN] descriptor  the BTL descriptor
+ *
  */
-
 typedef void (*mca_btl_base_completion_fn_t)(
-    struct mca_btl_base_module_t*,
-    struct mca_btl_base_endpoint_t*,
-    struct mca_btl_base_descriptor_t*,
+    struct mca_btl_base_module_t* module,
+    struct mca_btl_base_endpoint_t* endpoint,
+    struct mca_btl_base_descriptor_t* descriptor,
     int status);
 
 
@@ -189,16 +197,20 @@ typedef void (*mca_btl_base_completion_fn_t)(
  */
 
 struct mca_btl_base_segment_t {
-    ompi_ptr_t seg_addr;
-    uint32_t   seg_len;
+    /** Address of the memory */
+    ompi_ptr_t seg_addr;        
+     /** Length in bytes */
+    uint32_t   seg_len;           
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    uint8_t    seg_padding[4];
+    /** Heterogeneous padding */
+    uint8_t    seg_padding[4];     
 #endif
+    /** Memory segment key required by some RDMA networks */
     union {
         uint32_t key32[2];
         uint64_t key64;
         uint8_t  key8[8];
-    } seg_key;
+    } seg_key;     
 };
 typedef struct mca_btl_base_segment_t mca_btl_base_segment_t;
 
@@ -206,25 +218,39 @@ typedef struct mca_btl_base_segment_t mca_btl_base_segment_t;
  * A descriptor that holds the parameters to a send/put/get
  * operation along w/ a callback routine that is called on
  * completion of the request.
+ * Note: from the initiator of a PUT operation des_src is the local memory 
+ *       and des_dst is the remote memory 
+ *       from the initiator of a GET operations des_dst is the local memory 
+ *       and des_src is the remote memory 
+ *       from the initiator of a SEND operation des_src is the local memory
+ *       and des_dst is not used
  */
 
 struct mca_btl_base_descriptor_t {
     ompi_free_list_item_t super;  
-    mca_btl_base_segment_t *des_src;
-    size_t des_src_cnt;
-    mca_btl_base_segment_t *des_dst;
-    size_t des_dst_cnt;
-    mca_btl_base_completion_fn_t des_cbfunc;
-    void* des_cbdata;
-    void* des_context; 
-    int32_t des_flags;
-    uint8_t order;
+    mca_btl_base_segment_t *des_src;    /**< source segments */
+    size_t des_src_cnt;                 /**< number of source segments */
+    mca_btl_base_segment_t *des_dst;    /**< destination segments */
+    size_t des_dst_cnt;                 /**< number of destination segments */
+    mca_btl_base_completion_fn_t des_cbfunc;  /**< local callback function */ 
+    void* des_cbdata;                         /**< opaque callback data */
+    void* des_context;                        /**< more opaque callback data */
+    int32_t des_flags;                        /**< hints to BTL */
+    /** order value, this is only 
+        valid in the local completion callback 
+        and may be used in subsequent calls to 
+        btl_alloc, btl_prepare_src/dst to request 
+        a descriptor that will be ordered w.r.t. 
+        this descriptor
+    */
+    uint8_t order;                            
 };
 typedef struct mca_btl_base_descriptor_t mca_btl_base_descriptor_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
 
-                                                                                                               
+                         
+                                                                                      
 #define MCA_BTL_DES_FLAGS_DEREGISTER   0x0001
 #define MCA_BTL_DES_FLAGS_PRIORITY     0x0002
 
@@ -285,8 +311,9 @@ typedef struct mca_btl_base_module_t** (*mca_btl_base_component_init_fn_t)(
  * MCA->BTL Called to progress outstanding requests for
  * non-threaded polling environments.
  *
- * @param tstamp     Current time.
- * @return           OMPI_SUCCESS or error code on failure.
+ * @return           Count of "completions", a metric of 
+ *                   how many items where completed in the call 
+ *                   to progress.
  */
 
 typedef int (*mca_btl_base_component_progress_fn_t)(void);
@@ -306,8 +333,8 @@ struct mca_btl_base_component_1_0_1_t {
 typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_1_0_1_t;
 typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_t;
 
-/* add the 1_0_0_t typedef for source compatibility 
- *   we can do this safely because 1_0_0 components are the same as 
+/*  add the 1_0_0_t typedef for source compatibility 
+ *  we can do this safely because 1_0_0 components are the same as 
  *  1_0_1 components, the difference is in the btl module. 
  *  Fortunately the only difference in the module is an additional interface
  *  function added to 1_0_1. We can therefore safely treat an older module just
@@ -327,6 +354,7 @@ typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_1_0_0_t;
  * before the module is unloaded.
  *  
  * @param btl (IN)   BTL module.
+ * @return           OMPI_SUCCESS or error status on failure.
  *
  * Prior to unloading a BTL module, the MCA framework will call 
  * the BTL finalize method of the module. Any resources held by 
@@ -339,16 +367,16 @@ typedef int (*mca_btl_base_module_finalize_fn_t)(
 );
                                                                                                          
 /**
- * PML->BTL notification of change in the process list. 
+ * BML->BTL notification of change in the process list. 
  *
  * @param btl (IN)            BTL module
  * @param nprocs (IN)         Number of processes
- * @param procs (IN)          Set of processes
- * @param endpoint (OUT)      Set of (optional) mca_btl_base_endpoint_t structures by BTL.
+ * @param procs (IN)          Array of processes
+ * @param endpoint (OUT)      Array of mca_btl_base_endpoint_t structures by BTL.
  * @param reachable (OUT)     Bitmask indicating set of peer processes that are reachable by this BTL.
  * @return                    OMPI_SUCCESS or error status on failure.
  *
- * The mca_btl_base_module_add_procs_fn_t() is called by the PML to 
+ * The mca_btl_base_module_add_procs_fn_t() is called by the BML to 
  * determine the set of BTLs that should be used to reach each process.
  * Any addressing information exported by the peer via the ompi_modex_send()
  * function should be available during this call via the corresponding 
@@ -356,9 +384,9 @@ typedef int (*mca_btl_base_module_finalize_fn_t)(
  * determine reachability of each peer process. 
  *
  * For each process that is reachable by the BTL, the bit corresponding to the index 
- * into the proc array (nprocs) should be set in the reachable bitmask. The PML
- * provides the BTL the option to return a pointer to a data structure defined
- * by the BTL that is returned to the BTL on subsequent calls to the BTL data
+ * into the proc array (nprocs) should be set in the reachable bitmask. The BTL 
+ * will return an array of pointers to a data structure defined
+ * by the BTL that is then returned to the BTL on subsequent calls to the BTL data
  * transfer functions (e.g btl_send). This may be used by the BTL to cache any addressing 
  * or connection information (e.g. TCP socket, IB queue pair).
  */
@@ -379,7 +407,7 @@ typedef int (*mca_btl_base_module_add_procs_fn_t)(
  * @param peer (IN)    Set of peer addressing information.
  * @return             Status indicating if cleanup was successful
  *
- * When the process list changes, the PML notifies the BTL of the
+ * When the process list changes, the BML notifies the BTL of the
  * change, to provide the opportunity to cleanup or release any
  * resources associated with the peer.
  */
@@ -393,7 +421,15 @@ typedef int (*mca_btl_base_module_del_procs_fn_t)(
 /**
  * Callback function that is called asynchronously on receipt
  * of data by the transport layer. 
+ * Note that the the mca_btl_base_descriptor_t is only valid within the 
+ * completion function, this implies that all data payload in the 
+ * mca_btl_base_descriptor_t must be copied out within this callback or 
+ * forfeited back to the BTL.
  * 
+ * @param[IN] btl        BTL module
+ * @param[IN] tag        The active message receive callback tag value 
+ * @param[IN] descriptor The BTL descriptor (contains the receive payload) 
+ * @param[IN] cbdata     Opaque callback data
  */
 
 typedef void (*mca_btl_base_module_recv_cb_fn_t)(
@@ -408,12 +444,15 @@ typedef void (*mca_btl_base_module_recv_cb_fn_t)(
  * Register a callback function that is called on receipt
  * of a fragment.
  *
- * @param btl (IN)     BTL module
- * @return             Status indicating if cleanup was successful
+ * @param[IN] btl      BTL module
+ * @param[IN] tag      tag value of this callback 
+ *                     (specified on subsequent send operations)
+ * @param[IN] cbfunc   The callback function
+ * @param[IN] cbdata   Opaque callback data 
+ * 
+ * @return OMPI_SUCCESS The callback was registered successfully
+ * @return OMPI_ERROR   The callback was NOT registered successfully
  *
- * When the process list changes, the PML notifies the BTL of the
- * change, to provide the opportunity to cleanup or release any
- * resources associated with the peer.
  */
 typedef int (*mca_btl_base_module_register_fn_t)(
     struct mca_btl_base_module_t* btl, 
@@ -426,7 +465,9 @@ typedef int (*mca_btl_base_module_register_fn_t)(
 /**
  * Callback function that is called asynchronously on receipt
  * of an error from the transport layer 
- * 
+ *
+ * @param[IN] btl    BTL module
+ * @param[IN] flags  type of error 
  */
 
 typedef void (*mca_btl_base_module_error_cb_fn_t)(
@@ -439,8 +480,11 @@ typedef void (*mca_btl_base_module_error_cb_fn_t)(
  * Register a callback function that is called on receipt
  * of an error.
  *
- * @param btl (IN)     BTL module
- * @return             Status indicating if cleanup was successful
+ * @param[IN] btl       BTL module
+ * @param[IN] cbfunc    The callback function
+ *
+ * @return OMPI_SUCCESS The callback was registered successfully
+ * @return OMPI_ERROR   The callback was NOT registered successfully
  *
  */
 typedef int (*mca_btl_base_module_register_error_fn_t)(
@@ -452,7 +496,13 @@ typedef int (*mca_btl_base_module_register_error_fn_t)(
 /**
  * Allocate a descriptor with a segment of the requested size. 
  * Note that the BTL layer may choose to return a smaller size
- * if it cannot support the request.
+ * if it cannot support the request. The order tag value ensures that
+ * operations on the descriptor that is allocated will be 
+ * ordered w.r.t. a previous operation on a particular descriptor. 
+ * Ordering is only guaranteed if the previous descriptor had its 
+ * local completion callback function called and the order tag of 
+ * that descriptor is only valid upon the local completion callback function.
+ * 
  *
  * @param btl (IN)      BTL module
  * @param size (IN)     Request segment size.
@@ -467,7 +517,9 @@ typedef mca_btl_base_descriptor_t* (*mca_btl_base_module_alloc_fn_t)(
 
 /**
  * Return a descriptor allocated from this BTL via alloc/prepare.
- *
+ * A descriptor can only be deallocated after its local completion 
+ * callback function has called for all send/put/get operations.
+ * 
  * @param btl (IN)      BTL module
  * @param segment (IN)  Descriptor allocated from the BTL
  */
@@ -478,18 +530,34 @@ typedef int (*mca_btl_base_module_free_fn_t)(
 
 
 /**
- * Prepare a descriptor for send/rdma using the supplied
+ * Prepare a descriptor for send/put/get using the supplied
  * convertor. If the convertor references data that is contiguous,
  * the descriptor may simply point to the user buffer. Otherwise,
  * this routine is responsible for allocating buffer space and
  * packing if required.
  *
+ * The descriptor returned can be used in multiple concurrent operations 
+ * (send/put/get) unless the BTL has the MCA_BTL_FLAGS_RDMA_MATCHED flag set 
+ * in which case a corresponding prepare call must accompany the put/get call
+ * in addition, the address and length that is put/get must match the address 
+ * and length which is prepared.
+ *
+ * The order tag value ensures that operations on the 
+ * descriptor that is prepared will be ordered w.r.t. a previous
+ * operation on a particular descriptor. Ordering is only guaranteed if 
+ * the previous descriptor had its local completion callback function 
+ * called and the order tag of that descriptor is only valid upon the local 
+ * completion callback function.
+ *
  * @param btl (IN)          BTL module
  * @param endpoint (IN)     BTL peer addressing
  * @param registration (IN) Memory registration
  * @param convertor (IN)    Data type convertor
+ * @param order (IN)        The ordering tag (may be MCA_BTL_NO_ORDER)
  * @param reserve (IN)      Additional bytes requested by upper layer to precede user data
- * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT)
+ * @param size (IN/OUT)     Number of bytes to prepare (IN),
+ *                          number of bytes actually prepared (OUT)
+ *
  */
 typedef struct mca_btl_base_descriptor_t* (*mca_btl_base_module_prepare_fn_t)(
     struct mca_btl_base_module_t* btl,
@@ -503,11 +571,20 @@ typedef struct mca_btl_base_descriptor_t* (*mca_btl_base_module_prepare_fn_t)(
 
 /**
  * Initiate an asynchronous send.
+ * Completion Semantics: the descriptor has been queued for a send operation
+ *                       the BTL now controls the descriptor until local 
+ *                       completion callback is made on the descriptor
+ *                       
+ * All BTLs allow multiple concurrent asynchronous send operations on a descriptor
  *
  * @param btl (IN)         BTL module
  * @param endpoint (IN)    BTL addressing information
  * @param descriptor (IN)  Description of the data to be transfered
  * @param tag (IN)         The tag value used to notify the peer.
+ * 
+ * @retval OMPI_SUCCESS    The descriptor was successfully queued for a send 
+ * @retval OMPI_ERROR      The descriptor was NOT successfully queued for a send 
+ * @retval OMPI_ERR_UNREACH The endpoint is not reachable 
  */
 typedef int (*mca_btl_base_module_send_fn_t)(
     struct mca_btl_base_module_t* btl,
@@ -519,10 +596,22 @@ typedef int (*mca_btl_base_module_send_fn_t)(
 
 /**
  * Initiate an asynchronous put. 
+ * Completion Semantics: the descriptor has been queued for a put operation
+ *                       the BTL now controls the descriptor until local 
+ *                       completion callback is made on the descriptor
  *
+ * BTLs that do not have the MCA_BTL_FLAGS_RDMA_MATCHED flag set 
+ *  allow multiple concurrent put operations on the same descriptor. 
+ * BTLs that do have the MCA_BTL_FLAGS_RDMA_MATCHED  flag set require 
+ *  a corresponding prepare_src/dst call for each put operation and 
+ *  therefore prohibit multiple concurrent put operations.
+ * 
  * @param btl (IN)         BTL module
  * @param endpoint (IN)    BTL addressing information
  * @param descriptor (IN)  Description of the data to be transferred
+ * 
+ * @retval OMPI_SUCCESS    The descriptor was successfully queued for a put
+ * @retval OMPI_ERROR      The descriptor was NOT successfully queued for a put
  */
 
 typedef int (*mca_btl_base_module_put_fn_t)(
@@ -534,9 +623,22 @@ typedef int (*mca_btl_base_module_put_fn_t)(
 /**
  * Initiate an asynchronous get.
  *
+ * Completion Semantics: the descriptor has been queued for a get operation
+ *                       the BTL now controls the descriptor until local 
+ *                       completion callback is made on the descriptor
+ *
+ * BTLs that do not have the MCA_BTL_FLAGS_RDMA_MATCHED flag set 
+ *  allow multiple concurrent get operations on the same descriptor. 
+ * BTLs that do have the MCA_BTL_FLAGS_RDMA_MATCHED  flag set require 
+ *  a corresponding prepare_src/dst call for each get operation and 
+ *  therefore prohibit multiple concurrent get operations.
+ *
  * @param btl (IN)         BTL module
  * @param endpoint (IN)    BTL addressing information
  * @param descriptor (IN)  Description of the data to be transferred
+ * 
+ * @retval OMPI_SUCCESS    The descriptor was successfully queued for a get
+ * @retval OMPI_ERROR      The descriptor was NOT successfully queued for a get
  *
  */
 
@@ -551,6 +653,8 @@ typedef int (*mca_btl_base_module_get_fn_t)(
  * Diagnostic dump of btl state.
  *
  * @param btl (IN)         BTL module
+ * @param endpoint (IN)    BTL endpoint
+ * @param verbose (IN)     Verbosity level
  */
 
 typedef void (*mca_btl_base_module_dump_fn_t)(
@@ -597,13 +701,13 @@ struct mca_btl_base_module_t {
     mca_btl_base_module_send_fn_t        btl_send;
     mca_btl_base_module_put_fn_t         btl_put;
     mca_btl_base_module_get_fn_t         btl_get;
-    mca_btl_base_module_dump_fn_t        btl_dump; /* diagnostics */
+    mca_btl_base_module_dump_fn_t        btl_dump; 
    
-    /* the mpool associated with this btl (optional) */ 
+    /** the mpool associated with this btl (optional) */ 
     mca_mpool_base_module_t*             btl_mpool; 
-    /* register a default error handler */ 
+    /** register a default error handler */ 
     mca_btl_base_module_register_error_fn_t btl_register_error;
-    
+    /** fault tolerant even notification */
     mca_btl_base_module_ft_event_fn_t btl_ft_event;
 };
 typedef struct mca_btl_base_module_t mca_btl_base_module_t;

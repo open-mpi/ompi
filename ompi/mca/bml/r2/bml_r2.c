@@ -166,7 +166,7 @@ static int btl_bandwidth_compare(const void *v1, const void *v2)
 }
 
 /*
- *   For each proc setup a datastructure that indicates the PTLs
+ *   For each proc setup a datastructure that indicates the BTLs
  *   that can be used to reach the destination.
  *
  */
