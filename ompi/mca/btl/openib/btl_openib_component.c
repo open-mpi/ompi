@@ -1592,7 +1592,6 @@ static int btl_openib_module_progress(mca_btl_openib_module_t* openib_btl)
     return count;
 error:
     if(ne < 0){ 
-        abort();
         BTL_ERROR(("error polling %s with %d errno says %s\n",
                    cq_name[cq], ne, strerror(errno))); 
     } else {
@@ -1613,7 +1612,6 @@ error:
                         cq_name[cq],
                         btl_openib_component_status_to_string(wc.status), 
                         wc.status, wc.wr_id, wc.opcode, frag->qp_idx)); 
-            abort();
         }
         if(wc.status == IBV_WC_RETRY_EXC_ERR) { 
             opal_show_help("help-mpi-btl-openib.txt",

@@ -251,7 +251,6 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
         }
         BTL_ERROR(("error posting send request error %d: %s\n", 
                    ib_rc, strerror(ib_rc))); 
-        abort();
         return OMPI_ERROR; 
     }
 #if 0
@@ -1155,7 +1154,6 @@ int mca_btl_openib_endpoint_create_qp(
     
         if(NULL == my_qp) { 
             BTL_ERROR(("error creating qp errno says %s", strerror(errno))); 
-            abort();
             return OMPI_ERROR; 
         }
         (*qp) = my_qp; 

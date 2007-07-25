@@ -214,8 +214,9 @@ static inline int mca_btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpo
                                                   const int qp)
 {
     mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
-    int rd_num = mca_btl_openib_component.qp_infos[qp].rd_num;
     int rd_rsv = mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
+    int rd_num = mca_btl_openib_component.qp_infos[qp].rd_num;
+        
     int cm_received, rd_posted, rd_low;
     
     assert(MCA_BTL_OPENIB_PP_QP == endpoint->qps[qp].qp_type);
@@ -258,7 +259,7 @@ static inline int mca_btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpo
             OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_received,
                     -cm_received);
         }
-        assert(endpoint->qps[qp].u.pp_qp.rd_credits < rd_num);
+        assert(endpoint->qps[qp].u.pp_qp.rd_credits <= rd_num);
         assert(endpoint->qps[qp].u.pp_qp.rd_credits >= 0);
     }
     OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);

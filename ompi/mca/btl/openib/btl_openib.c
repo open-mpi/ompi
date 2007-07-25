@@ -582,7 +582,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
         
     MCA_BTL_IB_FRAG_ALLOC_RECV_USER(btl, frag, rc);
     if(NULL == frag) {
-        abort();
         return NULL;
     }
     
@@ -596,7 +595,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
                 frag->segment.seg_addr.pval, *size, 0, &registration);
         if(OMPI_SUCCESS != rc || NULL == registration) {
             MCA_BTL_IB_FRAG_RETURN(openib_btl, frag);
-            abort();
             return NULL;
         }
         /* keep track of the registration we did */
@@ -957,7 +955,6 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
             openib_btl->qps[qp].u.srq_qp.srq =
                 ibv_create_srq(openib_btl->hca->ib_pd, &attr); 
             if (NULL == openib_btl->qps[qp].u.srq_qp.srq) { 
-                abort();
                 show_init_error(__FILE__, __LINE__, "ibv_create_srq",
                                 ibv_get_device_name(openib_btl->hca->ib_dev));
                 return OMPI_ERROR; 
