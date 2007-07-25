@@ -44,8 +44,6 @@
 BEGIN_C_DECLS
 
 
-#define ORTE_OOB_TCP_KEY "oob-tcp"
-
 #define OOB_TCP_DEBUG_CONNECT_FAIL 1  /* debug connection establishment failures */
 #define OOB_TCP_DEBUG_CONNECT      2  /* other connection information */
 #define OOB_TCP_DEBUG_INFO         3  /* information about startup, connection establish, etc. */
