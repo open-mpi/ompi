@@ -25,7 +25,7 @@ extern "C" {
 # define V_OUTPUT_VERBOSE(V, ...) OPAL_OUTPUT_VERBOSE((V, mca_pml_v.output, __VA_ARGS__))
 #else 
 static inline void V_OUTPUT(char *format, ...) { OPAL_OUTPUT((mca_pml_v.output, "%s", format)); }
-static inline void V_OUTPUT_VERBOSE(V, char * format, ...) {OPAL_OUTPUT_VERBOSE((V, mca_pml_v.output, "%s", format)); }
+static inline void V_OUTPUT_VERBOSE(int V, char * format, ...) {OPAL_OUTPUT_VERBOSE((V, mca_pml_v.output, "%s", format)); }
 #endif 
 
 struct mca_pml_v_t {
