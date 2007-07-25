@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -201,7 +203,9 @@ typedef int (*mca_pml_base_module_enable_fn_t)(
  * For non-threaded case, provides MCA the opportunity to
  * progress outstanding requests on all btls.
  *
- * @return         OMPI_SUCCESS or failure status.
+ *  * @return        Count of "completions", a metric of 
+ *                   how many items where completed in the call 
+ *                   to progress.
 */
 typedef int (*mca_pml_base_module_progress_fn_t)(void);
 
