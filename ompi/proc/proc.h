@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,8 +19,17 @@
  * $HEADER$
  */
 
-#ifndef OMPI_PROC
-#define OMPI_PROC
+
+/** @file
+ * Process identification structure interface
+ *
+ * Process identification structure interface.  The ompi_proc_t
+ * structure contatins basic information about the remote (and local)
+ * processes.
+ */
+
+#ifndef OMPI_PROC_PROC_H
+#define OMPI_PROC_PROC_H
 
 #include "ompi/types.h"
 #include "opal/class/opal_list.h"
@@ -27,115 +38,214 @@
 
 #include "orte/mca/ns/ns_types.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-OMPI_DECLSPEC extern opal_class_t ompi_proc_t_class;
+BEGIN_C_DECLS
 
+/* ******************************************************************** */
+
+
+/**
+ * Remote Open MPI process structure
+ * 
+ * Remote Open MPI process structure.  Each process contains exactly
+ * one ompi_proc_t structure for each remote process it knows about.
+ */
 struct ompi_proc_t {
     /** allow proc to be placed on a list */
-    opal_list_item_t          super;
+    opal_list_item_t                super;
     /** this process' name */
-    orte_process_name_t       proc_name;
-    /** BML specific proc data */
-    struct mca_bml_base_endpoint_t* proc_bml;
+    orte_process_name_t             proc_name;
     /** PML specific proc data */
     struct mca_pml_base_endpoint_t* proc_pml;
+    /** BML specific proc data */
+    struct mca_bml_base_endpoint_t* proc_bml;
     /** MCA module exchange data */
-    opal_object_t*            proc_modex;
+    opal_object_t*                  proc_modex;
     /** architecture of this process */
-    uint32_t                  proc_arch;
-    /** process-wide convertor */
-    struct ompi_convertor_t*  proc_convertor;
-    /** process-wide lock */
-    opal_mutex_t              proc_lock;
+    uint32_t                        proc_arch;
+    /** Base convertor for the proc described by this process */
+    struct ompi_convertor_t*        proc_convertor;
+    /** Lock protecting data inside the given ompi_proc_t */
+    opal_mutex_t                    proc_lock;
     /** Keep the hostname around for debugging purposes */
-    char *proc_hostname;
+    char*                           proc_hostname;
     /** flags for this proc */
-    uint8_t                   proc_flags;
+    uint8_t                         proc_flags;
 };
-/**
- * Convenience typedef
- */
 typedef struct ompi_proc_t ompi_proc_t;
+OBJ_CLASS_DECLARATION(ompi_proc_t);
+
+
+/**
+ * @private
+ *
+ * Pointer to the ompi_proc_t structure for the local process
+ *
+ * Pointer to the ompi_proc_t structure for the local process.
+ *
+ * @note This pointer is declared here to allow inline functions
+ * within this header file to access the local process quickly.
+ * Please use ompi_proc_local() instead.
+ */
 OMPI_DECLSPEC extern ompi_proc_t* ompi_proc_local_proc;
 
-/* 
- * Flags 
- */
 
-/**
- * Flag to indicate that the proc is on the same node as the local proc
- */
+/* ******************************************************************** */
+
+
+/** Process is on the same node as the local process */
 #define OMPI_PROC_FLAG_LOCAL  0x01
 
 
+/* ******************************************************************** */
+
+
 /**
- * Query the run-time environment and build list of available proc instances.
+ * Initialize the OMPI process subsystem
+ *
+ * Initialize the Open MPI process subsystem.  This function will
+ * query the run-time environment and build a list of the proc
+ * instances in the current MPI_COMM_WORLD.  The local information not
+ * easily determined by the run-time ahead of time (architecture and
+ * hostname) will be published during this call.
+ *
+ * @note While an ompi_proc_t will exist with mostly valid information
+ * for each process in the MPI_COMM_WORLD at the conclusion of this
+ * call, some information will not be immediately available.  This
+ * includes the architecture and hostname, which will be available by
+ * the conclusion of the stage gate.
+ *
+ * @retval OMPI_SUCESS  System successfully initialized
+ * @retval OMPI_ERRROR  Initialization failed due to unspecified error
  */
 int ompi_proc_init(void);
 
+
 /**
- * Release the processes at the end of the application
+ * Finalize the OMPI Process subsystem
+ *
+ * Finalize the Open MPI process subsystem.  This function will
+ * release all memory created during the life of the application,
+ * including all ompi_proc_t structures.
+ *
+ * @retval OMPI_SUCCESS  System successfully finalized
  */
 int ompi_proc_finalize(void);
 
+
 /**
  * Returns the list of proc instances associated with this job.
+ *
+ * Returns the list of proc instances associated with this job.  Given
+ * the current association between a job and an MPI_COMM_WORLD, this
+ * function provides the process instances for the current
+ * MPI_COMM_WORLD.
+ *
+ * @note The reference count of each process in the array is
+ * incremented and the caller is responsible for releasing each
+ * process in the array, as well as freeing the array.
+ *
+ * @param[in] size     Number of processes in the ompi_proc_t array
+ *
+ * @return Array of pointers to proc instances in the current
+ * MPI_COMM_WORLD, or NULL if there is an internal failure.
  */
 OMPI_DECLSPEC ompi_proc_t** ompi_proc_world(size_t* size);
 
+
 /**
  * Returns the list of all known proc instances.
+ *
+ * Returns the list of all known proc instances, including those in
+ * other MPI_COMM_WORLDs.  It is possible that we may no longer be
+ * connected to some of the procs returned (in the MPI sense of the
+ * word connected).  In a strictly MPI-1 application, this function
+ * will return the same information as ompi_proc_world().
+ *
+ * @note The reference count of each process in the array is
+ * incremented and the caller is responsible for releasing each
+ * process in the array, as well as freeing the array.
+ *
+ * @param[in] size     Number of processes in the ompi_proc_t array
+ *
+ * @return Array of pointers to proc instances in the current
+ * known universe, or NULL if there is an internal failure.
  */
 OMPI_DECLSPEC ompi_proc_t** ompi_proc_all(size_t* size);
 
-/**
- * Returns a list (of one) proc instances.
- */
-ompi_proc_t** ompi_proc_self(size_t* size);
 
 /**
- * Returns the proc instance corresponding to the local proc.
+ * Returns a list of the local process
+ *
+ * Returns a list containing the local process (and only the local
+ * process).  Has calling semantics similar to ompi_proc_world() and
+ * ompi_proc_all().
+ *
+ * @note The reference count of each process in the array is
+ * incremented and the caller is responsible for releasing each
+ * process in the array, as well as freeing the array.
+ *
+ * @param[in] size     Number of processes in the ompi_proc_t array
+ *
+ * @return Array of pointers to proc instances in the current
+ * known universe, or NULL if there is an internal failure.
+ */
+OMPI_DECLSPEC ompi_proc_t** ompi_proc_self(size_t* size);
+
+
+/**
+ * Returns a pointer to the local process
+ *
+ * Returns a pointer to the local process.  Unlike ompi_proc_self(),
+ * the reference count on the local proc instance is not modified by
+ * this function.
+ *
+ * @return Pointer to the local process structure
  */
 static inline ompi_proc_t* ompi_proc_local(void) 
 {   
     return ompi_proc_local_proc;
 }
 
+
 /**
  * Returns the proc instance for a given name 
+ *
+ * Returns the proc instance for the specified process name.  The
+ * reference count for the proc instance is not incremented by this
+ * function.
+ *
+ * @param[in] name     The process name to look for
+ *
+ * @return Pointer to the process instance for \c name
 */
-ompi_proc_t * ompi_proc_find ( const orte_process_name_t* name );
-
+OMPI_DECLSPEC ompi_proc_t * ompi_proc_find ( const orte_process_name_t* name );
 
 
 /**
- * INPUT: ompi_proc_t **proclist : list of process pointers
- * INPUT: int proclistsize       : lenght of the proclist array
- * IN/OUT: orte_buffer_t *buf    : an orte_buffer containing the packed names
- * 
+ * Pack proc list into portable buffer
+ *
  * This function takes a list of ompi_proc_t pointers (e.g. as given
  * in groups) and returns a orte buffer containing all information
  * needed to add the proc to a remote list.  This includes the ORTE
  * process name, the architecture, and the hostname.  Ordering is
  * maintained.  The buffer is packed to be sent to a remote node with
  * different architecture (endian or word size).  The buffer can be
- * dss unloaded to be sent using MPI or send using rml_send_packed.
- *
- * Return values:
- *  OMPI_SUCCESS               on success
- *  OMPI_ERROR:                other errors
+ * dss unloaded to be sent using MPI or send using rml_send_packed().
+ * 
+ * @param[in] proclist     List of process pointers
+ * @param[in] proclistsize Length of the proclist array
+ * @param[in,out] buf      An orte_buffer containing the packed names.  
+ *                         The buffer must be constructed but empty when
+ *                         passed to this function
+ * @retval OMPI_SUCCESS    Success
+ * @retval OMPI_ERROR      Unspecified error
  */
 int ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
                    orte_buffer_t *buf);
 
 
-
 /**
- * INPUT: orte_buffer_t *buf       : orte_buffer containing the packed names
- * INPUT: int proclistsize         : number of expected proc-pointres
- * OUTPUT: ompi_proc_t ***proclist : list of process pointers
+ * Unpack a portable buffer of procs
  *
  * This function unpacks a packed list of ompi_proc_t structures and
  * returns the ordered list of proc structures.  If the given proc is
@@ -148,6 +258,10 @@ int ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
  * process.  PML_ADD_PROCS will be called on the list of new processes
  * discovered during this operation.
  *
+ * @param[in] buf          orte_buffer containing the packed names
+ * @param[in] proclistsize number of expected proc-pointres
+ * @param[out] proclist    list of process pointers
+ *
  * Return value:
  *   OMPI_SUCCESS               on success
  *   OMPI_ERROR                 else
@@ -155,8 +269,6 @@ int ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
 int ompi_proc_unpack(orte_buffer_t *buf, int proclistsize, ompi_proc_t ***proclist);
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-#endif /* OMPI_PROC */
+END_C_DECLS
 
+#endif /* OMPI_PROC_PROC_H */
