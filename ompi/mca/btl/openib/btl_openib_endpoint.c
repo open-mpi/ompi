@@ -206,7 +206,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
 
     if(btl_openib_acquire_send_resources(openib_btl, endpoint, frag, &qp,
                 &do_rdma) == OMPI_ERR_OUT_OF_RESOURCE)
-        return MPI_SUCCESS;
+        return OMPI_SUCCESS;
 
     if(BTL_OPENIB_EAGER_RDMA_QP(qp) && endpoint->eager_rdma_local.credits > 0) {
         frag->hdr->credits = endpoint->eager_rdma_local.credits;
