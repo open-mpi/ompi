@@ -22,9 +22,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#if defined(__WINDOWS__)
+#ifdef HAVE_SHLWAPI_H
 #include <shlwapi.h>
-#endif  /* defined(__WINDOWS__) */
+#endif
 
 #include "opal/util/path.h"
 #include "opal/util/os_path.h"
@@ -307,7 +307,9 @@ char* opal_find_absolute_path( char* app_name )
 #if !defined(__WINDOWS__)
         realpath( abs_app_name, resolved_path );
 #else
+#ifdef HAVE_SHLWAPI_H
 		PathCanonicalize(resolved_path, abs_app_name);
+#endif
 #endif  /* !defined(__WINDOWS__) */
         if( abs_app_name != app_name ) free(abs_app_name);
         return strdup(resolved_path);
