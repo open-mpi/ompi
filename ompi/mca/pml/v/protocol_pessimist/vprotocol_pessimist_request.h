@@ -1,3 +1,13 @@
+/*
+ * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
 #ifndef __INCLUDE_VPROTOCOL_PESSIMIST_REQUEST_H_
 #define __INCLUDE_VPROTOCOL_PESSIMIST_REQUEST_H_
 
