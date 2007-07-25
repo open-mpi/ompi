@@ -119,7 +119,7 @@
 static inline void vprotocol_pessimist_matching_replay(int *src)
 {                                                       
 #if OMPI_ENABLE_DEBUG
-  uint32_t max = 0;
+  vprotocol_pessimist_clock_t max = 0;
 #endif
   mca_vprotocol_pessimist_event_t *event;                                        
                                                                                
@@ -165,7 +165,7 @@ static inline void vprotocol_pessimist_matching_replay(int *src)
   if(req == NULL)                                                             \
   {                                                                           \
     V_OUTPUT_VERBOSE(70, "pessimist:\tlog\tdeliver\t%x\tnone", mca_vprotocol_pessimist.clock); \
-    event = opal_list_get_last(&mca_vprotocol_pessimist.pending_events);      \
+    event = (mca_vprotocol_pessimist_event_t*)opal_list_get_last(&mca_vprotocol_pessimist.pending_events);      \
     if(event->type == VPROTOCOL_PESSIMIST_EVENT_TYPE_DELIVERY &&              \
        event->u_event.e_delivery.reqid == 0)                                  \
     {                                                                         \
