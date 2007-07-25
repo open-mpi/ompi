@@ -94,10 +94,10 @@ BEGIN_C_DECLS
  * peer processes will be able to read it, regardless of pointer sizes
  * or endian bias.
  *
- * @param source_component A pointer to this module's component
+ * @param[in] source_component A pointer to this module's component
  *                         structure
- * @param buffer           A pointer to the beginning of the buffer to send
- * @param size             Number of bytes in the buffer
+ * @param[in] buffer       A pointer to the beginning of the buffer to send
+ * @param[in] size         Number of bytes in the buffer
  *
  * @retval OMPI_SUCCESS On success
  * @retval OMPI_ERROR   An unspecified error occurred
@@ -129,11 +129,11 @@ OMPI_DECLSPEC int ompi_modex_send(struct mca_base_component_t *source_component,
  * component, you should use ompi_modex_recv_nb() to receive updates
  * when the information becomes available.
  *
- * @param dest_component A pointer to this module's component struct
- * @param source_proc    Peer process to receive from
- * @param buffer         A pointer to a (void*) that will be filled
+ * @param[in] dest_component A pointer to this module's component struct
+ * @param[in] source_proc Peer process to receive from
+ * @param[out] buffer    A pointer to a (void*) that will be filled
  *                       with a pointer to the received buffer
- * @param size           Pointer to a size_t that will be filled with
+ * @param[out] size      Pointer to a size_t that will be filled with
  *                       the number of bytes in the buffer
  *
  * @retval OMPI_SUCCESS If a corresponding module buffer is found and
@@ -147,11 +147,25 @@ OMPI_DECLSPEC int ompi_modex_recv(struct mca_base_component_t *dest_component,
                                   struct ompi_proc_t *source_proc,
                                   void **buffer, size_t *size);
 
+
+/**
+ * Non-blocking modex receive callback
+ *
+ * Prototype for non-blocking modex receive callback.
+ *
+ * @param[in] component    Pointer to copy of the component struct
+ * @param[in] proc         Peer process infromation is from
+ * @param[in] buffer       Newly updated buffer
+ * @param[in] size         Size (in bytes) of buffer
+ * @param[in] cbdata       Callback data provided when non-blocking
+ *                         receive is posted
+ */
 typedef void (*ompi_modex_cb_fn_t)(struct mca_base_component_t *component,
                                    struct ompi_proc_t* proc,
                                    void* buffer,
                                    size_t size,
                                    void* cbdata);
+
 
 /**
  * Register to receive a callback on change to module specific data.
@@ -162,11 +176,11 @@ typedef void (*ompi_modex_cb_fn_t)(struct mca_base_component_t *component,
  * process but not the specified module.  In that case, no callback
  * will be fired until data is available.
  *
- * @param component      A pointer to this module's component struct
- * @param proc           Peer process to receive from
- * @param cbfunc         Callback function when data is available,
+ * @param[in] component  A pointer to this module's component struct
+ * @param[in] proc       Peer process to receive from
+ * @param[in] cbfunc     Callback function when data is available,
  *                       of type ompi_modex_cb_fn_t
- * @param cbdata         Opaque callback data to pass to cbfunc
+ * @param[in] cbdata     Opaque callback data to pass to cbfunc
  *
  * @retval OMPI_SUCCESS  Success
  * @retval OMPI_ERR_OUT_OF_RESOURCE No memory could be allocated
@@ -178,21 +192,26 @@ OMPI_DECLSPEC int ompi_modex_recv_nb(struct mca_base_component_t *component,
                                      void* cbdata);
 
 
- /**
-  * Subscribe to resource updates for a specific job
-  *
-  * Generally called during process initialization, after all the data
-  * has been loaded into the module exchange system, but before the
-  * data is actually used.
-  * 
-  * Intended to help the scalability of start-up by not subscribing to
-  * the job updates until all data is in the system (and not firing
-  * updates along the way) and launching the asynchronous request for
-  * the data before it is actually needed later in init.
-  *
-  * This function is probably not useful outside of application
-  * initialization code.
-  */
+/**
+ * Subscribe to resource updates for a specific job
+ *
+ * Generally called during process initialization, after all the data
+ * has been loaded into the module exchange system, but before the
+ * data is actually used.
+ * 
+ * Intended to help the scalability of start-up by not subscribing to
+ * the job updates until all data is in the system (and not firing
+ * updates along the way) and launching the asynchronous request for
+ * the data before it is actually needed later in init.
+ *
+ * @note This function is probably not useful outside of application
+ * initialization code.
+ *
+ * @param[in] jobid     Jobid for which information is needed
+ *
+ * @retval OMPI_SUCCESS Successfully subscribed to information
+ * @retval OMPI_ERROR   An unspecified error occurred
+ */
 OMPI_DECLSPEC int ompi_modex_subscribe_job(orte_jobid_t jobid);
 
 
@@ -202,6 +221,8 @@ OMPI_DECLSPEC int ompi_modex_subscribe_job(orte_jobid_t jobid);
  * Allocate memory for the local data cache and initialize the
  * module exchange system.  Does not cause communication nor any
  * subscriptions to be placed on the registry.
+ *
+ * @retval OMPI_SUCCESS   Successfully initialized modex subsystem
  */
 OMPI_DECLSPEC int ompi_modex_init(void);
 
@@ -212,6 +233,8 @@ OMPI_DECLSPEC int ompi_modex_init(void);
  * Release any memory associated with the modex system, remove all
  * subscriptions on the GPR and end all non-blocking update triggers
  * currently available on the system.
+ *
+ * @retval OMPI_SUCCESS    Successfully shut down modex subsystem
  */
 OMPI_DECLSPEC int ompi_modex_finalize(void);
 
