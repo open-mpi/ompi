@@ -62,7 +62,6 @@ int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
        back .*/
     if (0 == size) {
         *((void **) baseptr) = NULL;
-        printf("0 size mem_alloc\n");
         return MPI_SUCCESS;
     }
     
