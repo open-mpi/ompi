@@ -5,7 +5,9 @@
 #define __VPROTOCOL_PESSIMIST_SENDERBASED_H__
 
 #include "vprotocol_pessimist_request.h"
+#if defined(HAVE_SYS_MMAN_H)
 #include <sys/mman.h>
+#endif  /* defined(HAVE_SYS_MMAN_H) */
 
 typedef struct vprotocol_pessimist_sender_based_t 
 {
