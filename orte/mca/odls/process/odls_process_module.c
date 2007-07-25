@@ -46,6 +46,7 @@
 #include "orte/util/univ_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/runtime/params.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/iof/iof.h"
@@ -619,7 +620,7 @@ static int orte_odls_process_fork_local_proc(
     free(param);
 
     /* pass my contact info to the local proc so we can talk */
-    uri = orte_rml.get_uri();
+    uri = orte_rml.get_contact_info();
     param = mca_base_param_environ_variable("orte","local_daemon","uri");
     opal_setenv(param, uri, true, &environ_copy);
     free(param);
@@ -670,7 +671,7 @@ static int orte_odls_process_fork_local_proc(
     if(NULL != orte_process_info.ns_replica_uri) {
         uri = strdup(orte_process_info.ns_replica_uri);
     } else {
-        uri = orte_rml.get_uri();
+        uri = orte_rml.get_contact_info();
     }
     param = mca_base_param_environ_variable("ns","replica","uri");
     opal_setenv(param, uri, true, &environ_copy);
@@ -681,7 +682,7 @@ static int orte_odls_process_fork_local_proc(
     if(NULL != orte_process_info.gpr_replica_uri) {
         uri = strdup(orte_process_info.gpr_replica_uri);
     } else {
-        uri = orte_rml.get_uri();
+        uri = orte_rml.get_contact_info();
     }
     param = mca_base_param_environ_variable("gpr","replica","uri");
     opal_setenv(param, uri, true, &environ_copy);
@@ -991,7 +992,7 @@ static int orte_odls_process_launch_local_procs(orte_gpr_notify_data_t *data)
         ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
         return ORTE_ERR_FILE_OPEN_FAILURE;
     }
-    my_uri = orte_rml.get_uri();
+    my_uri = orte_rml.get_contact_info();
     fprintf(fp, "%s\n", my_uri);
     fclose(fp);
     free(uri_file);
