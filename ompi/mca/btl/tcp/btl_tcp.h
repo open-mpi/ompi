@@ -90,6 +90,9 @@ struct mca_btl_tcp_component_t {
     ompi_free_list_t tcp_frag_eager;
     ompi_free_list_t tcp_frag_max;
     ompi_free_list_t tcp_frag_user;
+
+    /* Do we want to use TCP_NODELAY? */
+    int    tcp_use_nodelay;
 }; 
 typedef struct mca_btl_tcp_component_t mca_btl_tcp_component_t;
 

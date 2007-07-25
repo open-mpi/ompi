@@ -104,23 +104,27 @@ mca_btl_tcp_component_t mca_btl_tcp_component = {
  */
 
 static inline char* mca_btl_tcp_param_register_string(
-                                                     const char* param_name, 
-                                                     const char* default_value)
+        const char* param_name, 
+        const char* help_string,
+        const char* default_value)
 {
-    char *param_value;
-    int id = mca_base_param_register_string("btl","tcp",param_name,NULL,default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
+    char *value;
+    mca_base_param_reg_string(&mca_btl_tcp_component.super.btl_version,
+                              param_name, help_string, false, false,
+                              default_value, &value);
+    return value;
 }
 
 static inline int mca_btl_tcp_param_register_int(
         const char* param_name, 
+        const char* help_string,
         int default_value)
 {
-    int id = mca_base_param_register_int("btl","tcp",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
+    int value;
+    mca_base_param_reg_int(&mca_btl_tcp_component.super.btl_version,
+                           param_name, help_string, false, false, 
+                           default_value, &value);
+    return value;
 }
 
 
@@ -197,23 +201,25 @@ int mca_btl_tcp_component_open(void)
 
     /* register TCP component parameters */
     mca_btl_tcp_component.tcp_num_links =
-        mca_btl_tcp_param_register_int("links", 1);
+        mca_btl_tcp_param_register_int("links", NULL, 1);
     mca_btl_tcp_component.tcp_if_include =
-        mca_btl_tcp_param_register_string("if_include", "");
+        mca_btl_tcp_param_register_string("if_include", NULL, "");
     mca_btl_tcp_component.tcp_if_exclude =
-        mca_btl_tcp_param_register_string("if_exclude", "lo");
+        mca_btl_tcp_param_register_string("if_exclude", NULL, "lo");
     mca_btl_tcp_component.tcp_free_list_num =
-        mca_btl_tcp_param_register_int ("free_list_num", 8);
+        mca_btl_tcp_param_register_int ("free_list_num", NULL, 8);
     mca_btl_tcp_component.tcp_free_list_max =
-        mca_btl_tcp_param_register_int ("free_list_max", -1);
+        mca_btl_tcp_param_register_int ("free_list_max", NULL, -1);
     mca_btl_tcp_component.tcp_free_list_inc =
-        mca_btl_tcp_param_register_int ("free_list_inc", 32);
+        mca_btl_tcp_param_register_int ("free_list_inc", NULL, 32);
     mca_btl_tcp_component.tcp_sndbuf =
-        mca_btl_tcp_param_register_int ("sndbuf", 128*1024);
+        mca_btl_tcp_param_register_int ("sndbuf", NULL, 128*1024);
     mca_btl_tcp_component.tcp_rcvbuf =
-        mca_btl_tcp_param_register_int ("rcvbuf", 128*1024);
+        mca_btl_tcp_param_register_int ("rcvbuf", NULL, 128*1024);
     mca_btl_tcp_component.tcp_endpoint_cache =
-        mca_btl_tcp_param_register_int ("endpoint_cache", 30*1024);
+        mca_btl_tcp_param_register_int ("endpoint_cache", NULL, 30*1024);
+    mca_btl_tcp_component.tcp_use_nodelay =
+        !mca_btl_tcp_param_register_int ("use_nagle", "Whether to use Nagle's algorithm or not (using Nagle's algorithm may increase short message latency)", 0);
 
     mca_btl_tcp_module.super.btl_exclusivity =  MCA_BTL_EXCLUSIVITY_LOW;
     mca_btl_tcp_module.super.btl_eager_limit = 64*1024;
@@ -232,7 +238,7 @@ int mca_btl_tcp_component_open(void)
             &mca_btl_tcp_module.super);
 
     mca_btl_tcp_component.tcp_disable_family =
-        mca_btl_tcp_param_register_int ("disable_family", 0);
+        mca_btl_tcp_param_register_int ("disable_family", NULL, 0);
     return OMPI_SUCCESS;
 }
 
@@ -320,11 +326,11 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
 
         /* allow user to specify interface bandwidth */
         sprintf(param, "bandwidth_%s", if_name);
-        btl->super.btl_bandwidth = mca_btl_tcp_param_register_int(param, btl->super.btl_bandwidth);
+        btl->super.btl_bandwidth = mca_btl_tcp_param_register_int(param, NULL, btl->super.btl_bandwidth);
 
         /* allow user to override/specify latency ranking */
         sprintf(param, "latency_%s", if_name);
-        btl->super.btl_latency = mca_btl_tcp_param_register_int(param, btl->super.btl_latency);
+        btl->super.btl_latency = mca_btl_tcp_param_register_int(param, NULL, btl->super.btl_latency);
         if( i > 0 ) {
             btl->super.btl_bandwidth >>= 1;
             btl->super.btl_latency   <<= 1;
@@ -332,11 +338,11 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
 
         /* allow user to specify interface bandwidth */
         sprintf(param, "bandwidth_%s:%d", if_name, i);
-        btl->super.btl_bandwidth = mca_btl_tcp_param_register_int(param, btl->super.btl_bandwidth);
+        btl->super.btl_bandwidth = mca_btl_tcp_param_register_int(param, NULL, btl->super.btl_bandwidth);
 
         /* allow user to override/specify latency ranking */
         sprintf(param, "latency_%s:%d", if_name, i);
-        btl->super.btl_latency = mca_btl_tcp_param_register_int(param, btl->super.btl_latency);
+        btl->super.btl_latency = mca_btl_tcp_param_register_int(param, NULL, btl->super.btl_latency);
 #if 0 && OMPI_ENABLE_DEBUG
         BTL_OUTPUT(("interface %s instance %i: bandwidth %d latency %d\n", if_name, i,
                     btl->super.btl_bandwidth, btl->super.btl_latency));
