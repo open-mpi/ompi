@@ -371,7 +371,6 @@ static int orte_pls_process_fill_exec_path( char ** exec_path )
 
 static void orte_pls_process_wait_daemon(pid_t pid, int status, void* cbdata)
 {
-    orte_pls_daemon_info_t *info = (orte_pls_daemon_info_t*) cbdata;
     int rc;
     unsigned long deltat;
     orte_buffer_t ack;

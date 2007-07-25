@@ -139,7 +139,8 @@ orte_gpr_replica_register_subscription(orte_gpr_replica_subscription_t **subptr,
         }
         key_mode = ORTE_GPR_REPLICA_KEYMODE((subscription->values[i])->addr_mode);
         if (0x00 == key_mode) {  /* default key address mode to OR */
-            key_mode = subscription->values[i]->addr_mode = subscription->values[i]->addr_mode | ORTE_GPR_KEYS_OR;
+            subscription->values[i]->addr_mode = subscription->values[i]->addr_mode | ORTE_GPR_KEYS_OR;
+            key_mode = (orte_gpr_replica_addr_mode_t)subscription->values[i]->addr_mode;
         }
         ival->addr_mode = ORTE_GPR_REPLICA_REMOVE_OVERWRITE(subscription->values[i]->addr_mode);
 

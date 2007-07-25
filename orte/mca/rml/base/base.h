@@ -61,8 +61,6 @@ ORTE_DECLSPEC int orte_rml_base_unpack_tag(orte_buffer_t *buffer,
                                            void *dest,
                                            orte_std_cntr_t *num_vals,
                                            orte_data_type_t type);
-
-
 /*
  * Internal functions
  */

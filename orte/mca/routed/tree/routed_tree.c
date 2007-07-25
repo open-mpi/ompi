@@ -24,21 +24,19 @@ int
 orte_routed_tree_update_route(orte_process_name_t *target,
                                orte_process_name_t *route)
 { 
-    if (target->cellid == ORTE_CELLID_INVALID ||
-        target->jobid == ORTE_JOBID_INVALID ||
+    if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID) {
         return ORTE_ERR_BAD_PARAM;
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                         "routed_tree_update: [%ld,%ld,%ld] --> [%ld,%ld,%ld]",
-                         ORTE_NAME_ARGS(target), 
-                         ORTE_NAME_ARGS(route)));
+                         "routed_tree_update: [%s] --> [%s]",
+                         ORTE_NAME_PRINT(target), 
+                         ORTE_NAME_PRINT(route)));
 
 
     /* exact match */
-    if (target->cellid != ORTE_CELLID_WILDCARD &&
-        target->jobid != ORTE_JOBID_WILDCARD &&
+    if (target->jobid != ORTE_JOBID_WILDCARD &&
         target->vpid != ORTE_VPID_WILDCARD) {
         opal_list_item_t *item;
         orte_routed_tree_entry_t *entry;
@@ -63,8 +61,7 @@ orte_routed_tree_update_route(orte_process_name_t *target,
     }
 
     /* vpid wildcard */
-    if (target->cellid != ORTE_CELLID_WILDCARD &&
-        target->jobid != ORTE_JOBID_WILDCARD &&
+    if (target->jobid != ORTE_JOBID_WILDCARD &&
         target->vpid == ORTE_VPID_WILDCARD) {
         opal_list_item_t *item;
         orte_routed_tree_entry_t *entry;
@@ -74,7 +71,7 @@ orte_routed_tree_update_route(orte_process_name_t *target,
              item = opal_list_get_next(item)) {
             entry = (orte_routed_tree_entry_t*) item;
 
-            if (0 == orte_ns.compare_fields(ORTE_NS_CMP_CELLID|ORTE_NS_CMP_JOBID, 
+            if (0 == orte_ns.compare_fields(ORTE_NS_CMP_JOBID, 
                                             target, &entry->target)) {
                 entry->route = *route;
                 return ORTE_SUCCESS;
@@ -88,35 +85,8 @@ orte_routed_tree_update_route(orte_process_name_t *target,
         return ORTE_SUCCESS;
     }
 
-    /* vpid & jobid wildcard */
-    if (target->cellid != ORTE_CELLID_WILDCARD &&
-        target->jobid == ORTE_JOBID_WILDCARD &&
-        target->vpid == ORTE_VPID_WILDCARD) {
-        opal_list_item_t *item;
-        orte_routed_tree_entry_t *entry;
-
-        for (item = opal_list_get_first(&orte_routed_tree_module.jobid_wildcard_list) ;
-             item != opal_list_get_end(&orte_routed_tree_module.jobid_wildcard_list) ;
-             item = opal_list_get_next(item)) {
-            entry = (orte_routed_tree_entry_t*) item;
-
-            if (0 == orte_ns.compare_fields(ORTE_NS_CMP_CELLID, 
-                                            target, &entry->target)) {
-                entry->route = *route;
-                return ORTE_SUCCESS;
-            }
-        }
-
-        entry = OBJ_NEW(orte_routed_tree_entry_t);
-        entry->target = *target;
-        entry->route = *route;
-        opal_list_append(&orte_routed_tree_module.jobid_wildcard_list, &entry->super);
-        return ORTE_SUCCESS;
-    }
-
     /* wildcard */
-    if (target->cellid == ORTE_CELLID_WILDCARD &&
-        target->jobid == ORTE_JOBID_WILDCARD &&
+    if (target->jobid == ORTE_JOBID_WILDCARD &&
         target->vpid == ORTE_VPID_WILDCARD) {
         orte_routed_tree_module.full_wildcard_entry.route = *route;
         return ORTE_SUCCESS;
@@ -146,42 +116,14 @@ orte_routed_tree_get_route(orte_process_name_t *target)
         }
     }
 
-    /* check vpid-wildcard matches */
-    for (item = opal_list_get_first(&orte_routed_tree_module.vpid_wildcard_list) ;
-         item != opal_list_get_end(&orte_routed_tree_module.vpid_wildcard_list) ;
-         item = opal_list_get_next(item)) {
-        orte_routed_tree_entry_t *entry = 
-            (orte_routed_tree_entry_t*) item;
-
-        if (0 == orte_ns.compare_fields(ORTE_NS_CMP_CELLID|ORTE_NS_CMP_JOBID, 
-                                        target, &entry->target)) {
-            ret = entry->route;
-            goto found;
-        }
-    }
-
-    /* check vpid & jobid-wildcard matches */
-    for (item = opal_list_get_first(&orte_routed_tree_module.jobid_wildcard_list) ;
-         item != opal_list_get_end(&orte_routed_tree_module.jobid_wildcard_list) ;
-         item = opal_list_get_next(item)) {
-        orte_routed_tree_entry_t *entry = 
-            (orte_routed_tree_entry_t*) item;
-
-        if (0 == orte_ns.compare_fields(ORTE_NS_CMP_CELLID,
-                                        target, &entry->target)) {
-            ret = entry->route;
-            goto found;
-        }
-    }
-
     ret = orte_routed_tree_module.full_wildcard_entry.route;
 
  found:
 
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                         "routed_tree_get([%ld,%ld,%ld]) --> [%ld,%ld,%ld]",
-                         ORTE_NAME_ARGS(target), 
-                         ORTE_NAME_ARGS(&ret)));
+                         "routed_tree_get([%s]) --> [%s]",
+                         ORTE_NAME_PRINT(target), 
+                         ORTE_NAME_PRINT(&ret)));
 
     return ret;
 }

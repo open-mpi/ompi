@@ -48,6 +48,7 @@ static int fork_hnp(void);
 
 static void set_handler_default(int sig)
 {
+#if !defined(__WINDOWS__)
     struct sigaction act;
     
     act.sa_handler = SIG_DFL;
@@ -55,6 +56,7 @@ static void set_handler_default(int sig)
     sigemptyset(&act.sa_mask);
     
     sigaction(sig, &act, (struct sigaction *)0);
+#endif /* !defined(__WINDOWS__) */
 }
 
 int

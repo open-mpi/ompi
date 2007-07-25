@@ -72,11 +72,9 @@ routed_tree_init(int* priority)
     OBJ_CONSTRUCT(&orte_routed_tree_module.vpid_wildcard_list, opal_list_t);
     OBJ_CONSTRUCT(&orte_routed_tree_module.jobid_wildcard_list, opal_list_t);
 
-    orte_routed_tree_module.full_wildcard_entry.target.cellid = ORTE_CELLID_WILDCARD;
     orte_routed_tree_module.full_wildcard_entry.target.jobid = ORTE_JOBID_WILDCARD;
     orte_routed_tree_module.full_wildcard_entry.target.vpid = ORTE_VPID_WILDCARD;
 
-    orte_routed_tree_module.full_wildcard_entry.route.cellid = ORTE_CELLID_INVALID;
     orte_routed_tree_module.full_wildcard_entry.route.jobid = ORTE_JOBID_INVALID;
     orte_routed_tree_module.full_wildcard_entry.route.vpid = ORTE_VPID_INVALID;
 

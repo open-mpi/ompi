@@ -180,7 +180,6 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
     OPAL_THREAD_LOCK(&msg->msg_lock);
     msg->msg_complete = true;
     if(NULL != msg->msg_cbfunc) {
-        opal_list_item_t* item;
         OPAL_THREAD_UNLOCK(&msg->msg_lock);
 
 #if defined(__WINDOWS__)
@@ -216,6 +215,8 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
 
         /* dispatch any completed events */ 
         if ((msg->msg_flags & ORTE_RML_FLAG_RECURSIVE_CALLBACK) == 0) {
+            opal_list_item_t* item;
+
             OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
             opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_completed, (opal_list_item_t*)msg);
             MCA_OOB_TCP_MSG_RETURN(msg);
