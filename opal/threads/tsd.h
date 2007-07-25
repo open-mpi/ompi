@@ -229,6 +229,7 @@ static inline int
 opal_tsd_getspecific(opal_tsd_key_t key, void **valuep)
 {
     *valuep = TlsGetValue(key);
+    return OPAL_SUCCESS;
 }
 
 #else
