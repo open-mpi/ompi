@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,15 +40,14 @@ int MPI_Free_mem(void *baseptr)
 {
     OPAL_CR_TEST_CHECKPOINT_READY();
 
-    if (MPI_PARAM_CHECK) {
-        if (NULL == baseptr) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                          FUNC_NAME);
-        }
-    }
+    /* Per these threads:
 
-    if(OMPI_SUCCESS != mca_mpool_base_free(baseptr))
-    {
+         http://www.open-mpi.org/community/lists/devel/2007/07/1977.php 
+         http://www.open-mpi.org/community/lists/devel/2007/07/1979.php         
+
+       If you call MPI_ALLOC_MEM with a size of 0, you get NULL
+       back.  So don't consider a NULL==baseptr an error. */
+    if (NULL != baseptr && OMPI_SUCCESS != mca_mpool_base_free(baseptr)) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM, FUNC_NAME);
     }
 
