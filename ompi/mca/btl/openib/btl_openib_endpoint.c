@@ -1219,7 +1219,8 @@ int mca_btl_openib_endpoint_qp_init_query(
     attr->ah_attr.sl = mca_btl_openib_component.ib_service_level; 
     attr->ah_attr.src_path_bits = openib_btl->src_path_bits;
     attr->ah_attr.port_num = port_num; 
-    attr->ah_attr.static_rate = mca_btl_openib_component.ib_static_rate;
+    /* JMS to be filled in later dynamically */
+    attr->ah_attr.static_rate = 0;
     
     if(ibv_modify_qp(qp, attr, 
                      IBV_QP_STATE              |
