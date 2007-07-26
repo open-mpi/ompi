@@ -77,24 +77,16 @@ static int allocate(orte_jobid_t jobid, opal_list_t *attributes)
     
     /* step through the list */
     for (count = i = 0; i < num_nodes; i++) {
-        opal_output(0, "lsf got node: %s", nodelist[i]);
         /* is this a repeat of the current node? */
         if (NULL != node && 0 == strcmp(nodelist[i], node->node_name)) {
             /* it is a repeat - just bump the slot count */
             ++node->node_slots;
-            opal_output(0, "lsf ras repeat -- slot count now %d",
-                        node->node_slots);
             continue;
         }
         
-        opal_output(0, "lsf ras new node");
         /* not a repeat - create a node entry for it */
         node = OBJ_NEW(orte_ras_node_t);
         node->node_name = strdup(nodelist[i]);
-        /* RHC: LSF does not use launch_id, so leave it invalid */
-#if 0
-        node->launch_id = count++;
-#endif
         node->node_slots_inuse = 0;
         node->node_slots_max = 0;
         node->node_slots = 1;

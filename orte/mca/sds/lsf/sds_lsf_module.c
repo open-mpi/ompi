@@ -49,15 +49,12 @@ orte_sds_base_module_t orte_sds_lsf_module = {
     orte_sds_lsf_finalize,
 };
 
-static char *get_lsf_nodename(int nodeid);
-
 
 int orte_sds_lsf_set_name(void)
 {
     int rc;
     int id;
     char* name_string = NULL;
-    int lsf_nodeid;
 
     /* start by getting our jobid, and vpid (which is the
        starting vpid for the list of daemons) */
@@ -76,17 +73,9 @@ int orte_sds_lsf_set_name(void)
     } else {
         orte_jobid_t jobid;
         orte_vpid_t vpid;
-        char* cellid_string;
         char* jobid_string;
         char* vpid_string;
       
-        id = mca_base_param_register_string("ns", "nds", "cellid", NULL, NULL);
-        mca_base_param_lookup_string(id, &cellid_string);
-        if (NULL == cellid_string) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-        }
-            
         id = mca_base_param_register_string("ns", "nds", "jobid", NULL, NULL);
         mca_base_param_lookup_string(id, &jobid_string);
         if (NULL == jobid_string) {
@@ -119,18 +108,6 @@ int orte_sds_lsf_set_name(void)
         }
     }
 
-    /* fix up the base name and make it the "real" name */
-    lsf_nodeid = atoi(getenv("LSF_PM_TASKID"));
-    orte_process_info.my_name->vpid += lsf_nodeid;
-
-#if 0
-    /* fix up the system info nodename to match exactly what lsf returned */
-    if (NULL != orte_system_info.nodename) {
-        free(orte_system_info.nodename);
-    }
-    orte_system_info.nodename = get_lsf_nodename(lsf_nodeid);
-#endif
-
     /* get the non-name common environmental variables */
     if (ORTE_SUCCESS != (rc = orte_sds_env_get())) {
         ORTE_ERROR_LOG(rc);
@@ -144,36 +121,4 @@ int orte_sds_lsf_set_name(void)
 int orte_sds_lsf_finalize(void)
 {
     return ORTE_SUCCESS;
-}
-
-
-static char *get_lsf_nodename(int nodeid)
-{
-    char **names = NULL;
-    char *lsf_nodelist;
-    char *ret;
-
-    lsf_nodelist = getenv("OMPI_MCA_orte_lsf_nodelist");
-    
-    if (NULL == lsf_nodelist) {
-        return NULL;
-    }
-    
-    /* split the node list into an argv array */
-    names = opal_argv_split(lsf_nodelist, ',');
-    if (NULL == names) {  /* got an error */
-        return NULL;
-    }
-
-    /* check to see if there are enough entries */
-    if (nodeid > opal_argv_count(names)) {
-        return NULL;
-    }
-
-    ret = strdup(names[nodeid]);
-
-    opal_argv_free(names);
-
-    /* All done */
-    return ret;
 }

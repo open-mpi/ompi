@@ -142,7 +142,7 @@ static orte_pls_base_module_t *pls_lsf_init(int *priority)
     }
     
     /* check if lsf is running here */
-    if (lsb_init("ORTE launcher") < 0) {
+    if (NULL == getenv("LSB_JOBID") || lsb_init("ORTE launcher") < 0) {
         /* nope, not here */
         opal_output_verbose(10, orte_pls_base.pls_output,
                             "pls:lsf: NOT available for selection");
