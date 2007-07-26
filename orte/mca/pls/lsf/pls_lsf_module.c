@@ -229,7 +229,7 @@ static int pls_lsf_launch_job(orte_jobid_t jobid)
 
     /* force orted to use the lsf sds */
     opal_argv_append(&argc, &argv, "--ns-nds");
-    opal_argv_append(&argc, &argv, "env");
+    opal_argv_append(&argc, &argv, "lsf");
 
     /* tell the new daemons the base of the name list so they can compute
      * their own name on the other end
