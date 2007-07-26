@@ -284,7 +284,7 @@ static inline int btl_openib_check_send_credits(
         mca_btl_openib_endpoint_t *endpoint, const int qp)
 {
     if(BTL_OPENIB_EAGER_RDMA_QP(qp)) { 
-        if(endpoint->eager_rdma_local.credits >= endpoint->eager_rdma_local.rd_win) {
+        if(endpoint->eager_rdma_local.credits > endpoint->eager_rdma_local.rd_win) {
             return OPAL_THREAD_ADD32(&endpoint->qps[qp].rd_pending_credit_chks, 1) == 1;
         }
     }
