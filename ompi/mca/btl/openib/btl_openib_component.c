@@ -1368,15 +1368,11 @@ void* mca_btl_openib_progress_thread(opal_object_t* arg)
             BTL_ERROR(("Couldn't request CQ notification with error %s",
                         strerror(errno)));
         }
-        openib_btl=(mca_btl_openib_module_t*)ev_ctx;
-#if 0
-        /* JMS: THIS CODE NEEDS TO BE UPDATED!  It was not updated
-           when all the BSRQ code came into the trunk. */
-        if (ev_cq == openib_btl->ib_cq[BTL_OPENIB_LP_QP])
-            ibv_ack_cq_events (openib_btl->ib_cq[BTL_OPENIB_LP_QP], 1);
+        openib_btl = (mca_btl_openib_module_t*)ev_ctx;
+        if (ev_cq == openib_btl->ib_cq[BTL_OPENIB_LP_CQ])
+            ibv_ack_cq_events (openib_btl->ib_cq[BTL_OPENIB_LP_CQ], 1);
         else
-            ibv_ack_cq_events (openib_btl->ib_cq[BTL_OPENIB_HP_QP], 1);
-#endif
+            ibv_ack_cq_events (openib_btl->ib_cq[BTL_OPENIB_HP_CQ], 1);
 
         while(btl_openib_module_progress(openib_btl));
     }
