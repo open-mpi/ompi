@@ -14,8 +14,6 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/oob/oob_types.h"
 
-#define ORTE_RML_BASE_CONTACT_KEY "rml-contact"
-
 extern opal_list_t       orte_rml_base_subscriptions;
 
 struct orte_rml_base_subscription_t {
@@ -31,8 +29,7 @@ static int get_contact_info(orte_jobid_t job, char **tokens, orte_gpr_notify_dat
 {
     char *segment;
     char *keys[] = {
-        ORTE_RML_BASE_CONTACT_KEY,
-        ORTE_PROC_RML_IP_ADDRESS_KEY,
+        ORTE_PROC_RML_CONTACT_KEY,
         NULL
     };
     orte_gpr_value_t **values;
@@ -151,7 +148,7 @@ orte_rml_base_register_subscription(orte_jobid_t jobid, char *trigger)
                                          ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR | ORTE_GPR_STRIPPED,
                                          segment,
                                          NULL,  /* look at all containers on this segment */
-                                         ORTE_RML_BASE_CONTACT_KEY,
+                                         ORTE_PROC_RML_CONTACT_KEY,
                                          orte_rml_base_contact_info_notify, NULL))) {
         ORTE_ERROR_LOG(rc);
         free(sub_name);
@@ -177,10 +174,10 @@ int
 orte_rml_base_register_contact_info(void)
 {
     orte_std_cntr_t i, num_tokens;
-    orte_data_value_t *values[2];
-    char *tmp, *tmp2, *tmp3;
+    orte_data_value_t *values[1];
+    char *tmp;
     char *segment, **tokens;
-    char *keys[] = { ORTE_RML_BASE_CONTACT_KEY, ORTE_PROC_RML_IP_ADDRESS_KEY};
+    char *keys[] = { ORTE_PROC_RML_CONTACT_KEY };
     int rc;
     
     /* setup to put our contact info on registry */
@@ -192,28 +189,6 @@ orte_rml_base_register_contact_info(void)
     }
     values[0]->type = ORTE_STRING;
     values[0]->data = strdup(tmp);
-    free(tmp);
-
-    /* setup the IP address for storage */
-    tmp = orte_rml.get_contact_info();
-    tmp2 = strrchr(tmp, '/') + 1;
-    tmp3 = strrchr(tmp, ':');
-    if(NULL == tmp2 || NULL == tmp3) {
-        opal_output(0, "%s orte_rml_base_init: invalid address \'%s\' "
-                    "returned for selected oob interfaces.\n",
-                    ORTE_NAME_PRINT(orte_process_info.my_name), tmp);
-        ORTE_ERROR_LOG(ORTE_ERROR);
-        free(tmp);
-        return ORTE_ERROR;
-    }
-    *tmp3 = '\0';
-    values[1] = OBJ_NEW(orte_data_value_t);
-    if (NULL == values[1]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    values[1]->type = ORTE_STRING;
-    values[1]->data = strdup(tmp2);
     free(tmp);
 
     /* define the segment */
@@ -236,7 +211,7 @@ orte_rml_base_register_contact_info(void)
 
     /* put our contact info in registry */
     if (ORTE_SUCCESS != (rc = orte_gpr.put_N(ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_XAND,
-                                        segment, tokens, 2, keys, values))) {
+                                        segment, tokens, 1, keys, values))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -247,7 +222,6 @@ orte_rml_base_register_contact_info(void)
     }
     if (NULL != tokens) free(tokens);
     OBJ_RELEASE(values[0]);
-    OBJ_RELEASE(values[1]);
 
     return rc;
 }
@@ -273,7 +247,7 @@ orte_rml_base_contact_info_notify(orte_gpr_notify_data_t* data,
 
                 /* check to make sure this is the requested key */
                 keyval = value->keyvals[j];
-                if(strcmp(keyval->key, ORTE_RML_BASE_CONTACT_KEY) != 0)
+                if(strcmp(keyval->key, ORTE_PROC_RML_CONTACT_KEY) != 0)
                     continue;
                 orte_dss.get((void**)&(contact_info), keyval->value, ORTE_STRING);
                 orte_rml.set_contact_info(contact_info);
