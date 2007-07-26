@@ -65,7 +65,7 @@ void mpi_pack_external_f(char *datarep, char *inbuf, MPI_Fint *incount,
 {
    MPI_Datatype type = MPI_Type_f2c(*datatype);
 
-   *ierr = OMPI_INT_2_FINT(MPI_Pack_external(datarep, OMPI_ADDR(inbuf),
+   *ierr = OMPI_INT_2_FINT(MPI_Pack_external(datarep, OMPI_F2C_BOTTOM(inbuf),
                                              OMPI_FINT_2_INT(*incount),
                                              type, outbuf,
                                              *outsize,

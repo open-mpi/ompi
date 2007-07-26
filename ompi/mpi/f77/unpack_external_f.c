@@ -69,7 +69,7 @@ void mpi_unpack_external_f (char *datarep, char *inbuf, MPI_Aint *insize,
    *ierr = OMPI_INT_2_FINT(MPI_Unpack_external(datarep, inbuf, 
                                                *insize, 
                                                position,
-                                               OMPI_ADDR(outbuf),
+                                               OMPI_F2C_BOTTOM(outbuf),
                                                OMPI_FINT_2_INT(*outcount),
                                                c_type));
 }

@@ -64,7 +64,7 @@ void mpi_file_read_ordered_begin_f(MPI_Fint *fh, char *buf, MPI_Fint *count,
    MPI_File c_fh = MPI_File_f2c(*fh);
    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
 
-   *ierr = OMPI_INT_2_FINT(MPI_File_read_ordered_begin(c_fh, OMPI_ADDR(buf), 
+   *ierr = OMPI_INT_2_FINT(MPI_File_read_ordered_begin(c_fh, OMPI_F2C_BOTTOM(buf), 
                                                        OMPI_FINT_2_INT(*count),
                                                        c_type));
 }

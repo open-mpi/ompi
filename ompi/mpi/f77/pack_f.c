@@ -70,7 +70,7 @@ void mpi_pack_f(char *inbuf, MPI_Fint *incount, MPI_Fint *datatype,
    c_type = MPI_Type_f2c(*datatype);
    OMPI_SINGLE_FINT_2_INT(position);
    
-   *ierr = OMPI_INT_2_FINT(MPI_Pack(OMPI_ADDR(inbuf), OMPI_FINT_2_INT(*incount),
+   *ierr = OMPI_INT_2_FINT(MPI_Pack(OMPI_F2C_BOTTOM(inbuf), OMPI_FINT_2_INT(*incount),
                                     c_type, outbuf,
                                     OMPI_FINT_2_INT(*outsize),
                                     OMPI_SINGLE_NAME_CONVERT(position),

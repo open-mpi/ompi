@@ -78,9 +78,9 @@ void mpi_scatterv_f(char *sendbuf, MPI_Fint *sendcounts,
     OMPI_ARRAY_FINT_2_INT(sendcounts, size);
     OMPI_ARRAY_FINT_2_INT(displs, size);
 
-    if (OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
-        sendbuf = MPI_IN_PLACE;
-    }
+    sendbuf = OMPI_F2C_IN_PLACE(sendbuf);
+    sendbuf = OMPI_F2C_BOTTOM(sendbuf);
+    recvbuf = OMPI_F2C_BOTTOM(recvbuf);
 
     *ierr = OMPI_INT_2_FINT(MPI_Scatterv(sendbuf, 
 					 OMPI_ARRAY_NAME_CONVERT(sendcounts),

@@ -77,9 +77,9 @@ void mpi_gatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
     OMPI_ARRAY_FINT_2_INT(recvcounts, size);
     OMPI_ARRAY_FINT_2_INT(displs, size);
 
-    if (OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
-        sendbuf = MPI_IN_PLACE;
-    }
+    sendbuf = OMPI_F2C_IN_PLACE(sendbuf);
+    sendbuf = OMPI_F2C_BOTTOM(sendbuf);
+    recvbuf = OMPI_F2C_BOTTOM(recvbuf);
 
     *ierr = OMPI_INT_2_FINT(MPI_Gatherv(sendbuf, OMPI_FINT_2_INT(*sendcount),
 					c_sendtype, recvbuf,

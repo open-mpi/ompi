@@ -70,9 +70,9 @@ void mpi_allreduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     c_type = MPI_Type_f2c(*datatype);
     c_op = MPI_Op_f2c(*op);
 
-    if (OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
-        sendbuf = MPI_IN_PLACE;
-    }
+    sendbuf = OMPI_F2C_IN_PLACE(sendbuf);
+    sendbuf = OMPI_F2C_BOTTOM(sendbuf);
+    recvbuf = OMPI_F2C_BOTTOM(recvbuf);
 
     *ierr = OMPI_INT_2_FINT(MPI_Allreduce(sendbuf, recvbuf,
 					  OMPI_FINT_2_INT(*count),

@@ -75,9 +75,9 @@ void mpi_reduce_scatter_f(char *sendbuf, char *recvbuf,
     MPI_Comm_size(c_comm, &size);
     OMPI_ARRAY_FINT_2_INT(recvcounts, size);
 
-    if (OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
-        sendbuf = MPI_IN_PLACE;
-    }
+    sendbuf = OMPI_F2C_IN_PLACE(sendbuf);
+    sendbuf = OMPI_F2C_BOTTOM(sendbuf);
+    recvbuf = OMPI_F2C_BOTTOM(recvbuf);
     
     *ierr = OMPI_INT_2_FINT(MPI_Reduce_scatter(sendbuf, recvbuf,
 				       OMPI_ARRAY_NAME_CONVERT(recvcounts),

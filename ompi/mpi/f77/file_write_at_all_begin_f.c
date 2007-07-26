@@ -67,7 +67,7 @@ void mpi_file_write_at_all_begin_f(MPI_Fint *fh, MPI_Offset *offset,
 
    *ierr = OMPI_FINT_2_INT(MPI_File_write_at_all_begin(c_fh, 
 						       (MPI_Offset) *offset,
-						       OMPI_ADDR(buf), 
+						       OMPI_F2C_BOTTOM(buf), 
 						       OMPI_FINT_2_INT(*count),
 						       c_type));
 }

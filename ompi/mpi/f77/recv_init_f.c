@@ -68,7 +68,7 @@ void mpi_recv_init_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
 
    c_comm = MPI_Comm_f2c (*comm);
 
-   *ierr = OMPI_INT_2_FINT(MPI_Recv_init(OMPI_ADDR(buf), OMPI_FINT_2_INT(*count),
+   *ierr = OMPI_INT_2_FINT(MPI_Recv_init(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
                                          c_type, OMPI_FINT_2_INT(*source),
                                          OMPI_INT_2_FINT(*tag), c_comm,
                                          &c_req));

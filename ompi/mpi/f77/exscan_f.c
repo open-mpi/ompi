@@ -19,6 +19,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/f77/bindings.h"
+#include "ompi/mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_EXSCAN = mpi_exscan_f
@@ -68,6 +69,10 @@ void mpi_exscan_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     c_comm = MPI_Comm_f2c(*comm);
     c_type = MPI_Type_f2c(*datatype);
     c_op = MPI_Op_f2c(*op);
+
+    /* MPI_IN_PLACE is not supported */
+    sendbuf = OMPI_F2C_BOTTOM (sendbuf);
+    recvbuf = OMPI_F2C_BOTTOM (recvbuf);
 
     *ierr = OMPI_INT_2_FINT(MPI_Exscan(sendbuf, recvbuf, 
 				       OMPI_FINT_2_INT(*count),
