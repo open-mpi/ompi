@@ -71,12 +71,6 @@ orte_sds_base_module_t *orte_sds_lsf_component_init(int *priority)
     int id;
     char *mode;
 
-    /* check if lsf is running here */
-    if (lsb_init("ORTE launcher") < 0) {
-        /* nope, not here */
-        return NULL;
-    }
-    
     id = mca_base_param_register_string("ns", "nds", NULL, NULL, NULL);
     mca_base_param_lookup_string(id, &mode);
 

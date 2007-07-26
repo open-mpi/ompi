@@ -97,7 +97,7 @@ static orte_ras_base_module_t *orte_ras_lsf_init(int* priority)
     }
     
     /* check if lsf is running here */
-    if (lsb_init("ORTE launcher") < 0) {
+    if (NULL == getenv("LSB_JOBID") || lsb_init("ORTE launcher") < 0) {
         /* nope, not here */
         return NULL;
     }
