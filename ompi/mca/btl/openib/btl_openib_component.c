@@ -231,10 +231,14 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
         if(!MCA_BTL_OPENIB_RDMA_FRAG(frag) &&
                 ctl_hdr->type == MCA_BTL_OPENIB_CONTROL_CREDITS) {
             OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_received, 1);
+            /* rd_posted don't account for rsv preposts for credit message but
+             * receive path decreased it for each message receive no matter if
+             * it is credit message or not. So fix rd_posted value here. */
             OPAL_THREAD_ADD32((int32_t*)&endpoint->qps[qp].u.pp_qp.rd_posted, 1);
         }
     } else if (ctl_hdr->type == MCA_BTL_OPENIB_CONTROL_CREDITS) {
         OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_received, 1);
+        /* see above */
         OPAL_THREAD_ADD32((int32_t*)&endpoint->qps[qp].u.pp_qp.rd_posted, 1);
     }
     
@@ -1550,6 +1554,14 @@ static int btl_openib_module_progress(mca_btl_openib_module_t* openib_btl)
                     frag->endpoint = endpoint;
                 }
 
+                /* Process a RECV */ 
+                ret = btl_openib_handle_incoming(openib_btl, endpoint, frag, wc.byte_len, qp);
+                if (ret != OMPI_SUCCESS) { 
+                    openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
+                    return 0;
+                }
+
+                OMPI_FREE_LIST_RETURN(frag->list, (ompi_free_list_item_t*) frag);
                 if(MCA_BTL_OPENIB_SRQ_QP == endpoint->qps[qp].qp_type) { 
                     OPAL_THREAD_ADD32((int32_t*)
                             &openib_btl->qps[qp].u.srq_qp.rd_posted, -1);
@@ -1559,16 +1571,8 @@ static int btl_openib_module_progress(mca_btl_openib_module_t* openib_btl)
                             &endpoint->qps[qp].u.pp_qp.rd_posted, -1);
                     mca_btl_openib_endpoint_post_rr(endpoint, 0, qp);
                 }
-
-                /* Process a RECV */ 
-                ret = btl_openib_handle_incoming(openib_btl, endpoint, frag, wc.byte_len, qp);
-                if (ret != OMPI_SUCCESS) { 
-                    openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
-                    return 0;
-                }
                 count++; 
 
-                OMPI_FREE_LIST_RETURN(frag->list, (ompi_free_list_item_t*) frag);
 
                 if(btl_openib_check_send_credits(endpoint, qp))
                     mca_btl_openib_endpoint_send_credits(endpoint, qp);
