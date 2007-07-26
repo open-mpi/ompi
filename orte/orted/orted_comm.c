@@ -433,7 +433,6 @@ static int process_commands(orte_process_name_t* sender,
                 /* if we are mpirun, do nothing - we will
                  * exit at our own sweet time
                  */
-                OPAL_THREAD_UNLOCK(&orted_comm_mutex);
                 return ORTE_SUCCESS;
             }
             /* eventually, we need to revise this so we only
@@ -450,7 +449,6 @@ static int process_commands(orte_process_name_t* sender,
             /* have to unlock here as we are waking up and will
              * do things inside the orted
              */
-            OPAL_THREAD_UNLOCK(&orted_comm_mutex);
             return ORTE_SUCCESS;
             break;
 
@@ -460,7 +458,6 @@ static int process_commands(orte_process_name_t* sender,
                 /* if we are mpirun, do nothing - we will
                 * exit at our own sweet time
                 */
-                OPAL_THREAD_UNLOCK(&orted_comm_mutex);
                 return ORTE_SUCCESS;
             }
             if (orte_debug_daemons_flag) {
@@ -481,7 +478,6 @@ static int process_commands(orte_process_name_t* sender,
             /* have to unlock here as we are waking up and will
             * do things inside the orted
             */
-            OPAL_THREAD_UNLOCK(&orted_comm_mutex);
             return ORTE_SUCCESS;
             break;
             
