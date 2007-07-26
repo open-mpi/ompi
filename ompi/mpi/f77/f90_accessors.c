@@ -34,15 +34,15 @@
    the function implementations are 1 line long, it just seemed
    simpler to provide 4 copies of each [1 line] function. */
 
-void MPI_WTIME_F90(double *w);
-void mpi_wtime_f90(double *w);
-void mpi_wtime_f90_(double *w);
-void mpi_wtime_f90__(double *w);
+OMPI_DECLSPEC void MPI_WTIME_F90(double *w);
+OMPI_DECLSPEC void mpi_wtime_f90(double *w);
+OMPI_DECLSPEC void mpi_wtime_f90_(double *w);
+OMPI_DECLSPEC void mpi_wtime_f90__(double *w);
 
-void MPI_WTICK_F90(double *w);
-void mpi_wtick_f90(double *w);
-void mpi_wtick_f90_(double *w);
-void mpi_wtick_f90__(double *w);
+OMPI_DECLSPEC void MPI_WTICK_F90(double *w);
+OMPI_DECLSPEC void mpi_wtick_f90(double *w);
+OMPI_DECLSPEC void mpi_wtick_f90_(double *w);
+OMPI_DECLSPEC void mpi_wtick_f90__(double *w);
 
 /**********************************************************************/
 
