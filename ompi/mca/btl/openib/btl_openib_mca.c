@@ -355,11 +355,6 @@ int btl_openib_register_mca_params(void)
     }
     mca_btl_openib_component.ib_service_level = (uint32_t) ival;
 
-    CHECK(reg_int("ib_static_rate", "InfiniBand static rate "
-                  "(must be >= 0)",
-                  0, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_component.ib_static_rate = (uint32_t) ival;
-
     CHECK(reg_int("use_eager_rdma", "Use RDMA for eager messages",
                   1, &ival, 0));
     mca_btl_openib_component.use_eager_rdma = (uint32_t) (ival != 0);
