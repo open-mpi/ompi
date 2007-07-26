@@ -40,7 +40,11 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/runtime/params.h"
 
-#include "grpcomm_basic.h"
+#include "grpcomm_cnos.h"
+
+#if OMPI_RML_CNOS_HAVE_BARRIER
+#include <catamount/cnos_mpi_os.h>
+#endif
 
 /* API functions */
 static int xcast_nb(orte_jobid_t job,
@@ -52,6 +56,8 @@ static int xcast(orte_jobid_t job,
                  orte_rml_tag_t tag);
 
 static int xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc);
+
+static int orte_grpcomm_cnos_barrier(void);
 
 orte_grpcomm_base_module_t orte_grpcomm_cnos_module = {
     xcast,
@@ -71,9 +77,7 @@ static int xcast_nb(orte_jobid_t job,
                     orte_buffer_t *buffer,
                     orte_rml_tag_t tag)
 {
-    int rc = ORTE_SUCCESS;
-    
-    return rc;
+    return ORTE_SUCCESS;
 }
 
 /* Blocking version */
@@ -81,13 +85,35 @@ static int xcast(orte_jobid_t job,
                  orte_buffer_t *buffer,
                  orte_rml_tag_t tag)
 {
-    int rc = ORTE_SUCCESS;
-    return rc;
+    return ORTE_SUCCESS;
 }
 
 static int xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc)
 {
-    int rc;
+    int rc = ORTE_SUCCESS;
+
+    orte_grpcomm_cnos_barrier();
+
+    if (NULL != cbfunc) {
+        orte_gpr_notify_message_t *msg;
+        msg = OBJ_NEW(orte_gpr_notify_message_t);
+        if (NULL == msg) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        cbfunc(msg);
+        OBJ_RELEASE(msg);
+    }
+
+    return rc;
+}
+
+static int
+orte_grpcomm_cnos_barrier(void)
+{
+#if OMPI_RML_CNOS_HAVE_BARRIER
+    cnos_barrier();
+#endif
 
     return ORTE_SUCCESS;
 }
