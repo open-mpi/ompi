@@ -64,11 +64,6 @@ int orte_register_params(bool infrastructure)
                                 false, false, (int)false, &value);
     orte_debug_flag = OPAL_INT_TO_BOOL(value);
     
-    mca_base_param_reg_int_name("orte", "debug_daemons_file",
-                                "Whether want stdout/stderr of daemons to go to a file or not",
-                                false, false, (int)false, &value);
-    orte_debug_daemons_file_flag = OPAL_INT_TO_BOOL(value);
-
     mca_base_param_reg_int_name("orte", "no_daemonize",
                                 "Whether to properly daemonize the ORTE daemons or not",
                                 false, false, (int)false, NULL);
@@ -78,6 +73,16 @@ int orte_register_params(bool infrastructure)
                                 "Whether to debug the ORTE daemons or not",
                                 false, false, (int)false, &value);
     orte_debug_daemons_flag = OPAL_INT_TO_BOOL(value);
+
+    mca_base_param_reg_int_name("orte", "debug_daemons_file",
+                                "Whether want stdout/stderr of daemons to go to a file or not",
+                                false, false, (int)false, &value);
+    orte_debug_daemons_file_flag = OPAL_INT_TO_BOOL(value);
+    /* If --debug-daemons-file was specified, that also implies
+       --debug-daemons */
+    if (orte_debug_daemons_file_flag) {
+        orte_debug_daemons_flag = true;
+    }
 
     mca_base_param_reg_int_name("orted", "spin",
                                 "Have any orteds spin until we can connect a debugger to them",
