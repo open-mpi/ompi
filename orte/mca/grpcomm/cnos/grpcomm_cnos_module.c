@@ -42,7 +42,7 @@
 
 #include "grpcomm_cnos.h"
 
-#if OMPI_RML_CNOS_HAVE_BARRIER
+#if OMPI_GRPCOMM_CNOS_HAVE_BARRIER
 #include <catamount/cnos_mpi_os.h>
 #endif
 
@@ -111,7 +111,7 @@ static int xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc)
 static int
 orte_grpcomm_cnos_barrier(void)
 {
-#if OMPI_RML_CNOS_HAVE_BARRIER
+#if OMPI_GRPCOMM_CNOS_HAVE_BARRIER
     cnos_barrier();
 #endif
 
