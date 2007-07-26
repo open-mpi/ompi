@@ -55,6 +55,7 @@ int orte_sds_lsf_set_name(void)
     int rc;
     int id;
     char* name_string = NULL;
+    int lsf_nodeid;
 
     /* start by getting our jobid, and vpid (which is the
        starting vpid for the list of daemons) */
@@ -107,6 +108,10 @@ int orte_sds_lsf_set_name(void)
             return rc;
         }
     }
+
+    /* fix up the base name and make it the "real" name */
+    lsf_nodeid = atoi(getenv("LSF_PM_TASKID"));
+    orte_process_info.my_name->vpid = lsf_nodeid;
 
     /* get the non-name common environmental variables */
     if (ORTE_SUCCESS != (rc = orte_sds_env_get())) {
