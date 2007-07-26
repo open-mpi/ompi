@@ -78,9 +78,6 @@ orte_grpcomm_base_component_t mca_grpcomm_cnos_component = {
 /* Open the component */
 int orte_grpcomm_cnos_open(void)
 {
-    int value;
-    char *mode;
-
     return ORTE_SUCCESS;
 }
 

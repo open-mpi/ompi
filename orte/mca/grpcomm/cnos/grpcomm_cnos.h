@@ -17,8 +17,8 @@
  * $HEADER$
  *
  */
-#ifndef GRPCOMM_BASIC_H
-#define GRPCOMM_BASIC_H
+#ifndef GRPCOMM_CNOS_H
+#define GRPCOMM_CNOS_H
 
 #include "orte_config.h"
 #include "orte/orte_types.h"
@@ -32,13 +32,6 @@
 
 BEGIN_C_DECLS
 
-/*
- * globals
- */
-/*
- * globals needed within component
- */
- 
 /*
  * Module open / close
  */
@@ -56,10 +49,6 @@ int orte_grpcomm_cnos_finalize(void);
 /*
  * xcast interfaces
  */
-
-void orte_ns_replica_recv(int status, orte_process_name_t* sender,
-                          orte_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata);
-
 
 ORTE_MODULE_DECLSPEC extern orte_grpcomm_base_component_t mca_grpcomm_cnos_component;
 extern orte_grpcomm_base_module_t orte_grpcomm_cnos_module;
