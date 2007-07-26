@@ -84,7 +84,7 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
     char* dkeys[] = {
         ORTE_PROC_NAME_KEY,
         ORTE_NODE_NAME_KEY,
-        ORTE_PROC_RML_IP_ADDRESS_KEY,
+        ORTE_PROC_RML_CONTACT_KEY,
         NULL
     };
     bool daemon_exists;
@@ -346,7 +346,7 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
                 }
                 continue;
             }
-            if (strcmp(keyval->key, ORTE_PROC_RML_IP_ADDRESS_KEY) == 0) {
+            if (strcmp(keyval->key, ORTE_PROC_RML_CONTACT_KEY) == 0) {
                 /* we don't care about the value here - the existence of the key is
                  * enough to indicate that this daemon must already exist, so flag it
                  */

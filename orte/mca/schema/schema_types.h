@@ -115,7 +115,7 @@
 #define ORTE_PROC_NUM_AT_STG3                   "orte-proc-num-stg3"
 #define ORTE_PROC_NUM_FINALIZED                 "orte-proc-num-finalized"
 #define ORTE_PROC_NUM_TERMINATED                "orte-proc-num-terminated"
-#define ORTE_PROC_RML_IP_ADDRESS_KEY            "orte-proc-rml-ip-addr"
+#define ORTE_PROC_RML_CONTACT_KEY               "orte-proc-rml-contact"
 #define ORTE_PROC_CPU_LIST_KEY                  "orte-proc-cpu-list"
 
 #define ORTE_JOB_CKPT_STATE_KEY                "orte-job-ckpt-state"

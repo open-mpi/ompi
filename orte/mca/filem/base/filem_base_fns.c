@@ -30,11 +30,13 @@
 #include "opal/mca/base/base.h"
 
 #include "opal/util/output.h"
+#include "opal/util/argv.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/os_dirpath.h"
 
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
 
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
@@ -157,7 +159,7 @@ int orte_filem_base_get_proc_node_name(orte_process_name_t *proc, char **machine
     /* if it is the root then we need a different key :/ */
     if(proc->jobid  == 0 &&
        proc->vpid   == 0) {
-        keys[0] = ORTE_PROC_RML_IP_ADDRESS_KEY;
+        keys[0] = ORTE_PROC_RML_CONTACT_KEY;
     }
     else {
         keys[0] = ORTE_NODE_NAME_KEY;
@@ -219,6 +221,33 @@ int orte_filem_base_get_proc_node_name(orte_process_name_t *proc, char **machine
                 continue;
             }
         }
+    }
+
+    if (proc->jobid == 0 && proc->vpid == 0) {
+        /* we have contact info -- need an IP address.  This assumes
+           that we're using the OOB RML, but that's probably a safe
+           enough assumption in here. */
+
+        char *contact_info = *machine_name;
+        orte_process_name_t peer;
+        char **uris;
+        char *ip, *port;
+
+        *machine_name = NULL;
+        ret = orte_rml_base_parse_uris(contact_info, &peer, &uris);
+        free(contact_info);
+        if (ORTE_SUCCESS == ret) {
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        ip = strrchr(uris[0], '/') + 1;
+        port = strrchr(uris[0], ':');
+        port[0] = '\0';
+
+        *machine_name = strdup(ip);
+
+        opal_argv_free(uris);
     }
     
     if (NULL == *machine_name ){
