@@ -1352,6 +1352,8 @@ void* mca_btl_openib_progress_thread(opal_object_t* arg)
     pthread_setcancelstate( PTHREAD_CANCEL_ENABLE, NULL );
     pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL );
 
+    opal_output(0, "WARNING: the openib btl progress thread code *does not yet work*.  Your run is likely to hang, crash, break the kitchen sink, and/or eat your cat.  You have been warned.");
+
     while (hca->progress) {
         while(opal_progress_threads()) {
             while(opal_progress_threads())
@@ -1367,11 +1369,14 @@ void* mca_btl_openib_progress_thread(opal_object_t* arg)
                         strerror(errno)));
         }
         openib_btl=(mca_btl_openib_module_t*)ev_ctx;
-
+#if 0
+        /* JMS: THIS CODE NEEDS TO BE UPDATED!  It was not updated
+           when all the BSRQ code came into the trunk. */
         if (ev_cq == openib_btl->ib_cq[BTL_OPENIB_LP_QP])
             ibv_ack_cq_events (openib_btl->ib_cq[BTL_OPENIB_LP_QP], 1);
         else
             ibv_ack_cq_events (openib_btl->ib_cq[BTL_OPENIB_HP_QP], 1);
+#endif
 
         while(btl_openib_module_progress(openib_btl));
     }
