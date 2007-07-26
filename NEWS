@@ -69,14 +69,9 @@ Trunk (not on release branches yet)
   --> Expected: 1.2.x
 - Fixed a segfault crash on large SMPs when doing collectives.
   --> Expected: 1.2.4
-- Fix a problem with MPI_BOTTOM in various places of the f77-interface.
-  Thanks to Daniel Spangberg for bringing this up.
-  --> Expected 1.2.x
 - Fix several problems with redirecting large files into mpirun's
   stdin.
   --> Expected 1.2.x
-- Fix problem with optional Fortran types to be correctly initialized.
-  --> Expected ?1.2.x?
 - Fixed issue with pthread detection when compilers are not all
   from the same vendor.  Thanks to Ake Sandgren for the bug
   report.
@@ -88,9 +83,14 @@ Trunk (not on release branches yet)
 1.2.4
 -----
 
+- Fixed a logic problem in the fortran binding for MPI_TYPE_MATCH_SIZE.
+  Thanks to Jeff Dusenberry for pointing out the problem and supplying the fix.
+- Fixed a problem with MPI_BOTTOM in various places of the f77-interface.
+  Thanks to Daniel Spangberg for bringing this up.
+- Fixed problem with optional Fortran types to be correctly initialized.
 - Fixed some problems with the IO forwarding (IOF) code.
 - Fixed overflow problems with the sm mpool MCA parameters on large SMPs.
-- Add support for the DDT parallel debugger via orterun's --debug
+- Added support for the DDT parallel debugger via orterun's --debug
   command line option.
 - Added some checks to the openib parameter parsing code.
 - Updated the udapl BTL to use RDMA capabilities.
