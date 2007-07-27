@@ -521,9 +521,9 @@ void orte_iof_base_endpoint_closed(orte_iof_base_endpoint_t* endpoint)
        the fd is no longer there -- we're just about to close the
        fd). */
     opal_output(orte_iof_base.iof_output,
-                "orte_iof_base_endpoint_closed: mode %s, origin [%ld,%ld,%ld], tag %d",
+                "orte_iof_base_endpoint_closed: mode %s, origin [%s], tag %d",
                 (ORTE_IOF_SOURCE == endpoint->ep_mode) ? "SOURCE" : "SINK",
-                ORTE_NAME_ARGS(&endpoint->ep_origin), endpoint->ep_tag);
+                ORTE_NAME_PRINT(&endpoint->ep_origin), endpoint->ep_tag);
     if (ORTE_IOF_SINK == endpoint->ep_mode) {
         while (NULL != opal_list_remove_first(&(endpoint->ep_sink_frags))){
             continue;
