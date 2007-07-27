@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2007 Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,6 +33,8 @@ struct mca_btl_openib_async_poll {
     struct pollfd *async_pollfd;
 }; 
 typedef struct mca_btl_openib_async_poll mca_btl_openib_async_poll;
+
+static int return_status = OMPI_ERROR;
 
 static int btl_openib_async_poll_init(struct mca_btl_openib_async_poll *hcas_poll);
 static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *hcas_poll);
@@ -170,7 +173,8 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *hcas_poll
         /* Got 0 - command to close the thread */
         BTL_VERBOSE(("Async event thread exit"));
         free(hcas_poll->async_pollfd);
-        pthread_exit(NULL);
+        return_status = OMPI_SUCCESS;
+        pthread_exit(&return_status);
     }
     return OMPI_SUCCESS;
 }
@@ -258,7 +262,7 @@ void* btl_openib_async_thread(void * async)
 
     if (OMPI_SUCCESS != btl_openib_async_poll_init(&hcas_poll)) {
         BTL_ERROR(("Fatal error, stoping asyn event thread"));
-        pthread_exit(NULL);
+        pthread_exit(&return_status);
     }
 
     while(1) {
@@ -266,7 +270,7 @@ void* btl_openib_async_thread(void * async)
         if (rc < 0) {
             if (errno != EINTR) {
                 BTL_ERROR(("Poll failed.Fatal error, stoping asyn event thread"));
-                pthread_exit(NULL);
+                pthread_exit(&return_status);
             } else {
                 /* EINTR - we got interupt */
                 continue;
@@ -285,7 +289,7 @@ void* btl_openib_async_thread(void * async)
                             free(hcas_poll.async_pollfd);
                             BTL_ERROR(("Failed to process async thread process." 
                                         "Fatal error, stoping asyn event thread"));
-                            pthread_exit(NULL);
+                            pthread_exit(&return_status);
                         }
                     } else {  
                         /* We get hca event */
@@ -293,7 +297,7 @@ void* btl_openib_async_thread(void * async)
                             free(hcas_poll.async_pollfd);
                             BTL_ERROR(("Failed to process async thread process." 
                                         "Fatal error, stoping asyn event thread"));
-                            pthread_exit(NULL);
+                            pthread_exit(&return_status);
                         }
                     }  
                     break;
@@ -304,7 +308,7 @@ void* btl_openib_async_thread(void * async)
                                 "Fatal error, stoping asyn event thread"
                                 ,hcas_poll.async_pollfd[i].revents));
                     free(hcas_poll.async_pollfd);
-                    pthread_exit(NULL);
+                    pthread_exit(&return_status);
             }
         }
     }
