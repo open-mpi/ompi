@@ -27,9 +27,11 @@ endif
 SUBDIRS = $(MCA_pml_v_PROTOCOLS)
 
 local_sources = \
-	pml_v.c \
-	pml_v.h \
-	pml_v_component.c \
+        pml_v.c \
+        pml_v.h \
+        pml_v_component.c \
+        pml_v_output.h \
+        pml_v_output.c \
         pml_v_protocol.h \
         pml_v_protocol_base.h \
         pml_v_protocol_base.c
@@ -38,12 +40,12 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_v_la_SOURCES = $(local_sources)
 mca_pml_v_la_LIBADD =
-mca_pml_v_la_CFLAGS = -Wno-variadic-macros 
+mca_pml_v_la_CFLAGS = 
 mca_pml_v_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pml_v_la_SOURCES = $(local_sources)
 libmca_pml_v_la_LIBADD = 
-libmca_pml_v_la_CFLAGS = -Wno-variadic-macros
+libmca_pml_v_la_CFLAGS =
 libmca_pml_v_la_LDFLAGS = -module -avoid-version
 

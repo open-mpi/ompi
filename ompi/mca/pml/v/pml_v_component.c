@@ -24,14 +24,11 @@
 #include "pml_v.h"
 #include "pml_v_protocol_base.h"
 
-#include "ompi/mca/pml/ob1/pml_ob1.h"
-
 static int mca_pml_v_component_open(void);
 static int mca_pml_v_component_close(void);
 static int mca_pml_v_component_parasite_close(void);
 
-
-static mca_pml_base_module_t *mca_pml_v_component_init(int* priority, bool, bool);
+static mca_pml_base_module_t *mca_pml_v_component_init(int* priority, bool enable_threads, bool enable_progress_threads);
 static int mca_pml_v_component_finalize(void);
 static int mca_pml_v_component_parasite_finalize(void);
 
@@ -64,60 +61,38 @@ mca_pml_base_component_1_0_0_t mca_pml_v_component =
 /******************************************************************************/
 /* MCA level functions */
 
-/* Gather some informations about the environment and selects the best protocol
- * considering environment and priority */
+/* Register MCA parameters and setup verbose output system
+ */
 static int mca_pml_v_component_open(void)
 {
-  char *output;
-  int verbose;
-  opal_output_stream_t lds;
-  char hostname[32] = "NA";
+    char *output;
+    int verbose;
   
-  output = mca_pml_v_param_register_string("output", "stderr");
-  verbose = mca_pml_v_param_register_int("verbose", 0);
+    output = mca_pml_v_param_register_string("output", "stderr");
+    verbose = mca_pml_v_param_register_int("verbose", 0);
 
-  OBJ_CONSTRUCT(&lds, opal_output_stream_t);
-  if(!output)
-  {
-    mca_pml_v.output = 0; 
-  }
-  else 
-  {
-    if(!strcmp(output, "stdout"))
-    {
-      lds.lds_want_stdout = true;
-    } 
-    else if(!strcmp(output, "stderr"))
-    {
-      lds.lds_want_stderr = true;
-    }
-    else 
-    {
-      lds.lds_want_file = true;
-      lds.lds_file_suffix = output;
-    }
-    lds.lds_is_debugging = true;
-    gethostname(hostname, 32);
-    asprintf(&lds.lds_prefix, "[%s:%05d] pml_v: ", hostname, getpid());
-    lds.lds_verbose_level = verbose;
-    mca_pml_v.output = opal_output_open(&lds);
-    free(lds.lds_prefix);
-  }
-  V_OUTPUT_VERBOSE(10, "pml_v.open: opening pml_v");
-  return mca_pml_v_protocol_base_load_all();
+    pml_v_output_init(output, verbose);
+
+    V_OUTPUT_VERBOSE(1, "loading pml_v");
+    return mca_pml_v_protocol_base_load_all();
 }
-
-/* 
- * As any parasit, I dont want to die, so I will grab the mca_pml interface and put mine instead.
- * Once this is done, I will do my stuff and call the real func and die only when my host pml 
+ 
+/* As any parasit, I dont want to die, so I will grab the mca_pml interface 
+ * and put those from the selected vprotocol instead. Once this is done, 
+ * I will do my stuff and call the real func and die only when my host pml 
  * will. 
  */
 static int mca_pml_v_component_close(void)
 {  
-  /* choose one protocol (ignoring errors as we will be discarded soon if some occured) */
+  /* choose one protocol (ignoring errors as we will be discarded soon if
+   some occured) */
   /* TODO: dirty trick until pml_base_select gets fixed - have to be moved back to finalize */
   /* TODO: check for bozo case: no selected PML */
   /*  mca_pml_v_protocol_base_select(enable_progress_threads, enable_mpi_threads); */
+
+
+    /* Gather some informations about the environment and selects the best protocol
+ * considering environment and priority */
   mca_pml_v_protocol_base_select(0, 0);
 
   if(!strcmp(mca_pml_v.protocol_component.pmlm_version.mca_type_name, "vprotocol"))
