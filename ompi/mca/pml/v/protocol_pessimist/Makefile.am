@@ -50,11 +50,11 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_vprotocol_pessimist_la_SOURCES = $(local_sources)
 mca_vprotocol_pessimist_la_LIBADD = 
-mca_vprotocol_pessimist_la_CFLAGS = -Wno-variadic-macros
+mca_vprotocol_pessimist_la_CFLAGS =
 mca_vprotocol_pessimist_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_vprotocol_pessimist_la_SOURCES = $(local_sources)
 libmca_vprotocol_pessimist_la_LIBADD = 
-libmca_vprotocol_pessimist_la_CFLAGS = -Wno-variadic-macros
+libmca_vprotocol_pessimist_la_CFLAGS =
 libmca_vprotocol_pessimist_la_LDFLAGS = -module -avoid-version
