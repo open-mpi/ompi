@@ -139,7 +139,7 @@ int MPI_Type_create_darray(int size,
 
     /* Build up array */
     for (i = start_loop ; i != end_loop; i += step) {
-        int nprocs, rank;
+        int nprocs, tmp_rank;
 
         switch(distrib_array[i]) {
         case MPI_DISTRIBUTE_BLOCK:
@@ -155,12 +155,12 @@ int MPI_Type_create_darray(int size,
         case MPI_DISTRIBUTE_NONE:
             /* treat it as a block distribution on 1 process */
             if (order == MPI_ORDER_C) {
-                nprocs = psize_array[i]; rank = coords[i];
+                nprocs = psize_array[i]; tmp_rank = coords[i];
             } else {
-                nprocs = 1; rank = 0;
+                nprocs = 1; tmp_rank = 0;
             }
 
-            rc = block(gsize_array, i, ndims, nprocs, rank,
+            rc = block(gsize_array, i, ndims, nprocs, tmp_rank,
                        MPI_DISTRIBUTE_DFLT_DARG, order, orig_extent, 
                        lastType, newtype, st_offsets+i); 
             break;
