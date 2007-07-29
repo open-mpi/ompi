@@ -20,6 +20,11 @@
 AC_DEFUN([MCA_crs_self_CONFIG],[
     # If we don't want FT, don't compile this component
     AS_IF([test "$ompi_want_ft" = "1"],
+        [crs_self_good="yes"],
+        [$2])
+
+    # We need to be able to dlopen the executable for this component to work.
+    AS_IF([test "$OMPI_ENABLE_DLOPEN_SUPPORT" = "1" -a "$crs_self_good" = "yes"],
         [$1],
         [$2])
 ])dnl
