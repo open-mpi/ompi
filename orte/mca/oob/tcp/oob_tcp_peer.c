@@ -938,9 +938,9 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
     opal_socklen_t optlen;
                                                                                                             
     getsockname(peer->peer_sd, (struct sockaddr*)&inaddr, &addrlen);
-    sprintf(src, "%s", opal_net_get_hostname((struct sockaddr*) &inaddr));
+    snprintf(src, sizeof(src), "%s", opal_net_get_hostname((struct sockaddr*) &inaddr));
     getpeername(peer->peer_sd, (struct sockaddr*)&inaddr, &addrlen);
-    sprintf(dst, "%s", opal_net_get_hostname((struct sockaddr*) &inaddr));
+    snprintf(dst, sizeof(dst), "%s", opal_net_get_hostname((struct sockaddr*) &inaddr));
                                                                                                             
     if((flags = fcntl(peer->peer_sd, F_GETFL, 0)) < 0) {
         opal_output(0, "mca_oob_tcp_peer_dump: fcntl(F_GETFL) failed: %s (%d)\n",
@@ -979,7 +979,7 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
     nodelay = 0;
 #endif
 
-    sprintf(buff, "%s-%s %s: %s - %s nodelay %d sndbuf %d rcvbuf %d flags %08x\n",
+    snprintf(buff, sizeof(buff), "%s-%s %s: %s - %s nodelay %d sndbuf %d rcvbuf %d flags %08x\n",
         ORTE_NAME_PRINT(orte_process_info.my_name),
         ORTE_NAME_PRINT(&(peer->peer_name)),
         msg, src, dst, nodelay, sndbuf, rcvbuf, flags);
