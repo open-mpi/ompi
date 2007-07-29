@@ -7,7 +7,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -44,16 +44,22 @@ int MPI_Waitany(int count, MPI_Request *requests, int *index, MPI_Status *status
     if ( MPI_PARAM_CHECK ) {
         int i, rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if( (NULL == requests) && (0 != count) ) {
+        if ((NULL == requests) && (0 != count)) {
             rc = MPI_ERR_REQUEST;
-        }
-        for (i = 0; i < count; i++) {
-            if (NULL == requests[i]) {
-                rc = MPI_ERR_REQUEST;
+        } else {
+            for (i = 0; i < count; i++) {
+                if (NULL == requests[i]) {
+                    rc = MPI_ERR_REQUEST;
+                    break;
+                }
             }
+        }
+        if ((NULL == index) || (0 > count)) {
+            rc = MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
+
     if (OMPI_SUCCESS == ompi_request_wait_any(count, requests, index, status)) {
         return MPI_SUCCESS;
     }

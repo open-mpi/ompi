@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -43,18 +43,18 @@ int MPI_Testsome(int incount, MPI_Request *requests,
     if ( MPI_PARAM_CHECK ) {
         int index, rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if( 0 != incount ) {
-            if( NULL == requests) {
-                rc = MPI_ERR_REQUEST;
-            } else if ((NULL == outcount) || (NULL == indices)) {
-                rc = MPI_ERR_ARG;
-            }
+        if ((NULL == requests) && (0 != incount)) {
+            rc = MPI_ERR_REQUEST;
+        } else {
             for (index = 0; index < incount; ++index) {
                 if (NULL == requests[index]) {
                     rc = MPI_ERR_REQUEST;
                     break;
                 }
             }
+        }
+        if ((NULL == outcount) || (NULL == indices) || (0 > incount)) {
+            rc = MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
