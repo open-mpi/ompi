@@ -52,6 +52,7 @@ struct mca_pml_ob1_recv_request_t {
     uint32_t req_rdma_idx;
     bool req_pending;
     bool req_ack_sent; /**< whether ack was sent to the sender */
+    opal_mutex_t lock;
     mca_pml_ob1_com_btl_t req_rdma[1];
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
@@ -286,6 +287,7 @@ do {                                                                            
         size_t n, offset = seg_offset;                                            \
         mca_btl_base_segment_t* segment = segments;                               \
                                                                                   \
+        OPAL_THREAD_LOCK(&request->lock);                                         \
         for( n = 0; n < num_segments; n++, segment++ ) {                          \
             if(offset >= segment->seg_len) {                                      \
                 offset -= segment->seg_len;                                       \
@@ -305,6 +307,7 @@ do {                                                                            
                                &iov_count,                                        \
                                &max_data );                                       \
         bytes_delivered = max_data;                                               \
+        OPAL_THREAD_UNLOCK(&request->lock);                                       \
     }                                                                             \
 } while (0)
 

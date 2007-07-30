@@ -120,6 +120,7 @@ static void mca_pml_ob1_recv_request_construct(mca_pml_ob1_recv_request_t* reque
     request->req_recv.req_base.req_ompi.req_free = mca_pml_ob1_recv_request_free;
     request->req_recv.req_base.req_ompi.req_cancel = mca_pml_ob1_recv_request_cancel;
     request->req_rdma_cnt = 0;
+    OBJ_CONSTRUCT(&request->lock, opal_mutex_t);
 }
 
 OBJ_CLASS_INSTANCE(
