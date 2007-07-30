@@ -790,7 +790,7 @@ int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actual_ptr, int len
 static int _dump_data_flags( unsigned short usflags, char* ptr, size_t length )
 {
     if( length < 21 ) return 0;
-    sprintf( ptr, "-----------[---][---]" );  /* set everything to - */
+    snprintf( ptr, 21, "-----------[---][---]" );  /* set everything to - */
     if( usflags & DT_FLAG_DESTROYED )                ptr[0]  = 'd';
     if( usflags & DT_FLAG_COMMITED )                 ptr[1]  = 'c';
     if( usflags & DT_FLAG_CONTIGUOUS )               ptr[2]  = 'C';
