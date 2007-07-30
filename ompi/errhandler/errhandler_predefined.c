@@ -56,6 +56,7 @@ void ompi_mpi_errors_are_fatal_comm_handler(struct ompi_communicator_t **comm,
       abort_comm = NULL;
   }
   backend_fatal("communicator", abort_comm, name, error_code, arglist);
+  va_end(arglist);
 }
 
 
@@ -76,6 +77,7 @@ void ompi_mpi_errors_are_fatal_file_handler(struct ompi_file_t **file,
       abort_comm = NULL;
   }
   backend_fatal("file", abort_comm, name, error_code, arglist);
+  va_end(arglist);
 }
 
 
@@ -94,6 +96,7 @@ void ompi_mpi_errors_are_fatal_win_handler(struct ompi_win_t **win,
       name = NULL;
   }
   backend_fatal("win", abort_comm, name, error_code, arglist);
+  va_end(arglist);
 }
 
 void ompi_mpi_errors_return_comm_handler(struct ompi_communicator_t **comm,
