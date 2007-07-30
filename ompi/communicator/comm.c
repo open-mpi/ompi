@@ -494,7 +494,7 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
 
         /* put group elements in a list */
         rprocs = (ompi_proc_t **) malloc ( sizeof(ompi_proc_t *) * my_rsize);
-        if ( NULL == procs ) {
+        if ( NULL == rprocs ) {
             rc = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit;
         }
