@@ -61,10 +61,6 @@ int MPI_Dims_create(int nnodes, int ndims, int *dims)
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, 
                                            MPI_ERR_DIMS, FUNC_NAME);
         }
-        if (0 == ndims && 0 >= nnodes) { 
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, 
-                                           MPI_ERR_ARG, FUNC_NAME);
-        }
     }
 
     /* Get # of free-to-be-assigned processes and # of free dimensions */

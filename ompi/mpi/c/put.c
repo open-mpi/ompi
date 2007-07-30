@@ -62,8 +62,6 @@ int MPI_Put(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
             rc = MPI_ERR_TYPE;
         } else if ( target_disp < 0 ) {
             rc = MPI_ERR_DISP;
-        } else if ( (origin_count < 0) || (target_count < 0) ) {
-            rc = MPI_ERR_COUNT;
         } else {
             OMPI_CHECK_DATATYPE_FOR_ONE_SIDED(rc, origin_datatype, origin_count);
             if (OMPI_SUCCESS == rc) {
