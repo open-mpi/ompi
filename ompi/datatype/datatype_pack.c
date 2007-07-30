@@ -249,7 +249,6 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
     dt_stack_t* pStack;       /* pointer to the position on the stack */
     uint32_t pos_desc;        /* actual position in the description of the derived datatype */
     uint32_t count_desc;      /* the number of items already done in the actual pos_desc */
-    uint16_t type;            /* type at current position */
     size_t total_packed = 0;  /* total amount packed this time */
     dt_elem_desc_t* description;
     dt_elem_desc_t* pElem;
@@ -295,7 +294,6 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
                     UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
                     continue;
                 }
-                type = pElem->elem.common.type;
                 goto complete_loop;
             }
             if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
