@@ -161,7 +161,8 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
             num_local_procs++;
         }
     }
-
+    free(procs);
+    
     /* parse the max, min and peer sizes, and validate them */
     /* absolutely necessary to reset errno each time */ 
     errno = 0;

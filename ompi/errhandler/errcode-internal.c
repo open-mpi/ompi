@@ -66,7 +66,7 @@ int ompi_errcode_intern_init (void)
     ompi_success_intern.code = OMPI_SUCCESS;
     ompi_success_intern.mpi_code = MPI_SUCCESS;
     ompi_success_intern.index = pos++;
-    strcpy(ompi_success_intern.errstring, "OMPI_SUCCESS");
+    strncpy(ompi_success_intern.errstring, "OMPI_SUCCESS", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_success_intern.index,  
                                 &ompi_success_intern);
 
@@ -74,7 +74,7 @@ int ompi_errcode_intern_init (void)
     ompi_error.code = OMPI_ERROR;
     ompi_error.mpi_code = MPI_ERR_OTHER;
     ompi_error.index = pos++;
-    strcpy(ompi_error.errstring, "OMPI_ERROR");
+    strncpy(ompi_error.errstring, "OMPI_ERROR", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_error.index, 
                                 &ompi_error);
 
@@ -82,7 +82,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_out_of_resource.code = OMPI_ERR_OUT_OF_RESOURCE;
     ompi_err_out_of_resource.mpi_code = MPI_ERR_INTERN;
     ompi_err_out_of_resource.index = pos++;
-    strcpy(ompi_err_out_of_resource.errstring, "OMPI_ERR_OUT_OF_RESOURCE");
+    strncpy(ompi_err_out_of_resource.errstring, "OMPI_ERR_OUT_OF_RESOURCE", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_out_of_resource.index, 
                                 &ompi_err_out_of_resource);
 
@@ -90,7 +90,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_temp_out_of_resource.code = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     ompi_err_temp_out_of_resource.mpi_code = MPI_ERR_INTERN;
     ompi_err_temp_out_of_resource.index = pos++;
-    strcpy(ompi_err_temp_out_of_resource.errstring, "MPI_ERR_TEMP_OUT_OF_RESOURCE");
+    strncpy(ompi_err_temp_out_of_resource.errstring, "MPI_ERR_TEMP_OUT_OF_RESOURCE", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_temp_out_of_resource.index, 
                                 &ompi_err_temp_out_of_resource);
 
@@ -98,7 +98,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_resource_busy.code = OMPI_ERR_RESOURCE_BUSY;
     ompi_err_resource_busy.mpi_code = MPI_ERR_INTERN;
     ompi_err_resource_busy.index = pos++;
-    strcpy(ompi_err_resource_busy.errstring, "OMPI_ERR_RESOURCE_BUSY");
+    strncpy(ompi_err_resource_busy.errstring, "OMPI_ERR_RESOURCE_BUSY", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_resource_busy.index, 
                                 &ompi_err_resource_busy);
 
@@ -106,7 +106,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_bad_param.code = OMPI_ERR_BAD_PARAM;
     ompi_err_bad_param.mpi_code = MPI_ERR_ARG;
     ompi_err_bad_param.index = pos++;
-    strcpy(ompi_err_bad_param.errstring, "OMPI_ERR_BAD_PARAM");
+    strncpy(ompi_err_bad_param.errstring, "OMPI_ERR_BAD_PARAM", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_bad_param.index, 
                                 &ompi_err_bad_param);
 
@@ -114,7 +114,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_recv_less_than_posted.code = OMPI_ERR_RECV_LESS_THAN_POSTED;
     ompi_err_recv_less_than_posted.mpi_code = MPI_SUCCESS;
     ompi_err_recv_less_than_posted.index = pos++;
-    strcpy(ompi_err_recv_less_than_posted.errstring, "OMPI_ERR_RECV_LESS_THAN_POSTED");
+    strncpy(ompi_err_recv_less_than_posted.errstring, "OMPI_ERR_RECV_LESS_THAN_POSTED", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_recv_less_than_posted.index, 
                                 &ompi_err_recv_less_than_posted);
 
@@ -122,7 +122,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_recv_more_than_posted.code = OMPI_ERR_RECV_MORE_THAN_POSTED;
     ompi_err_recv_more_than_posted.mpi_code = MPI_ERR_TRUNCATE;
     ompi_err_recv_more_than_posted.index = pos++;
-    strcpy(ompi_err_recv_more_than_posted.errstring, "OMPI_ERR_RECV_MORE_THAN_POSTED");
+    strncpy(ompi_err_recv_more_than_posted.errstring, "OMPI_ERR_RECV_MORE_THAN_POSTED", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_recv_more_than_posted.index, 
                                 &ompi_err_recv_more_than_posted);
 
@@ -130,7 +130,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_no_match_yet.code = OMPI_ERR_NO_MATCH_YET;
     ompi_err_no_match_yet.mpi_code = MPI_ERR_PENDING;
     ompi_err_no_match_yet.index = pos++;
-    strcpy(ompi_err_no_match_yet.errstring, "OMPI_ERR_NO_MATCH_YET");
+    strncpy(ompi_err_no_match_yet.errstring, "OMPI_ERR_NO_MATCH_YET", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_no_match_yet.index, 
                                 &ompi_err_no_match_yet);
 
@@ -138,7 +138,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_fatal.code = OMPI_ERR_FATAL;
     ompi_err_fatal.mpi_code = MPI_ERR_INTERN;
     ompi_err_fatal.index = pos++;
-    strcpy(ompi_err_fatal.errstring, "OMPI_ERR_FATAL");
+    strncpy(ompi_err_fatal.errstring, "OMPI_ERR_FATAL", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_fatal.index, 
                                 &ompi_err_fatal);
 
@@ -146,7 +146,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_not_implemented.code = OMPI_ERR_NOT_IMPLEMENTED;
     ompi_err_not_implemented.mpi_code = MPI_ERR_INTERN;
     ompi_err_not_implemented.index = pos++;
-    strcpy(ompi_err_not_implemented.errstring, "OMPI_ERR_NOT_IMPLEMENTED");
+    strncpy(ompi_err_not_implemented.errstring, "OMPI_ERR_NOT_IMPLEMENTED", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_not_implemented.index, 
                                 &ompi_err_not_implemented);
 
@@ -154,7 +154,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_not_supported.code = OMPI_ERR_NOT_SUPPORTED;
     ompi_err_not_supported.mpi_code = MPI_ERR_INTERN;
     ompi_err_not_supported.index = pos++;
-    strcpy(ompi_err_not_supported.errstring, "OMPI_ERR_NOT_SUPPORTED");
+    strncpy(ompi_err_not_supported.errstring, "OMPI_ERR_NOT_SUPPORTED", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_not_supported.index, 
                                 &ompi_err_not_supported);
 
@@ -162,7 +162,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_interupted.code = OMPI_ERR_INTERUPTED;
     ompi_err_interupted.mpi_code = MPI_ERR_INTERN;
     ompi_err_interupted.index = pos++;
-    strcpy(ompi_err_interupted.errstring, "OMPI_ERR_INTERUPTED");
+    strncpy(ompi_err_interupted.errstring, "OMPI_ERR_INTERUPTED", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_interupted.index, 
                                 &ompi_err_interupted);
 
@@ -170,7 +170,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_would_block.code = OMPI_ERR_WOULD_BLOCK;
     ompi_err_would_block.mpi_code = MPI_ERR_INTERN;
     ompi_err_would_block.index = pos++;
-    strcpy(ompi_err_would_block.errstring, "OMPI_ERR_WOULD_BLOCK");
+    strncpy(ompi_err_would_block.errstring, "OMPI_ERR_WOULD_BLOCK", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_would_block.index, 
                                 &ompi_err_would_block);
 
@@ -178,7 +178,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_in_errno.code = OMPI_ERR_IN_ERRNO;
     ompi_err_in_errno.mpi_code = MPI_ERR_INTERN;
     ompi_err_in_errno.index = pos++;
-    strcpy(ompi_err_in_errno.errstring, "OMPI_ERR_IN_ERRNO");
+    strncpy(ompi_err_in_errno.errstring, "OMPI_ERR_IN_ERRNO", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_in_errno.index, 
                                 &ompi_err_in_errno);
 
@@ -186,7 +186,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_unreach.code = OMPI_ERR_UNREACH;
     ompi_err_unreach.mpi_code = MPI_ERR_INTERN;
     ompi_err_unreach.index = pos++;
-    strcpy(ompi_err_unreach.errstring, "OMPI_ERR_UNREACH");
+    strncpy(ompi_err_unreach.errstring, "OMPI_ERR_UNREACH", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_unreach.index, 
                                 &ompi_err_unreach);
 
@@ -194,7 +194,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_not_found.code = OMPI_ERR_NOT_FOUND;
     ompi_err_not_found.mpi_code = MPI_ERR_INTERN;
     ompi_err_not_found.index = pos++;
-    strcpy(ompi_err_not_found.errstring, "OMPI_ERR_NOT_FOUND");
+    strncpy(ompi_err_not_found.errstring, "OMPI_ERR_NOT_FOUND", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_not_found.index, 
                                 &ompi_err_not_found);
 
@@ -202,7 +202,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_buffer.code = OMPI_ERR_BUFFER;
     ompi_err_buffer.mpi_code = MPI_ERR_BUFFER;
     ompi_err_buffer.index = pos++;
-    strcpy(ompi_err_buffer.errstring, "OMPI_ERR_BUFFER");
+    strncpy(ompi_err_buffer.errstring, "OMPI_ERR_BUFFER", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_buffer.index, 
                                 &ompi_err_buffer);
 
@@ -210,7 +210,7 @@ int ompi_errcode_intern_init (void)
     ompi_err_request.code = OMPI_ERR_REQUEST;
     ompi_err_request.mpi_code = MPI_ERR_REQUEST;
     ompi_err_request.index = pos++;
-    strcpy(ompi_err_request.errstring, "OMPI_ERR_REQUEST");
+    strncpy(ompi_err_request.errstring, "OMPI_ERR_REQUEST", OMPI_MAX_ERROR_STRING);
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_request.index, 
                                 &ompi_err_request);
 

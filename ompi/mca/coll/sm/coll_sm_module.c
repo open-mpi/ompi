@@ -215,12 +215,12 @@ sm_module_init(struct ompi_communicator_t *comm)
     int i, j, root;
     int rank = ompi_comm_rank(comm);
     int size = ompi_comm_size(comm);
-    mca_coll_base_comm_t *data;
+    mca_coll_base_comm_t *data = NULL;
     size_t control_size, frag_size;
     mca_coll_sm_component_t *c = &mca_coll_sm_component;
     opal_maffinity_base_segment_t *maffinity;
     int parent, min_child, max_child, num_children;
-    char *base;
+    char *base = NULL;
     const int num_barrier_buffers = 2;
 
     /* Once-per-component setup.  This may happen at any time --

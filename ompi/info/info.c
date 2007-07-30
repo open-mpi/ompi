@@ -145,7 +145,7 @@ int ompi_info_set (ompi_info_t *info, char *key, char *value)
             OPAL_THREAD_UNLOCK(info->i_lock);
             return MPI_ERR_NO_MEM;
          }
-        strcpy (new_info->ie_key, key);
+        strncpy (new_info->ie_key, key, MPI_MAX_INFO_KEY);
         new_info->ie_value = new_value;
         opal_list_append (&(info->super), (opal_list_item_t *) new_info);
     }
@@ -277,11 +277,11 @@ int ompi_info_get_nthkey (ompi_info_t *info, int n, char *key)
          }
     }
     /*
-     * iterator is of the type opal_list_item_t. We have to
+     y* iterator is of the type opal_list_item_t. We have to
      * cast it to ompi_info_entry_t before we can use it to
      * access the value
      */
-    strcpy(key, iterator->ie_key);
+    strncpy(key, iterator->ie_key, MPI_MAX_INFO_KEY);
     OPAL_THREAD_UNLOCK(info->i_lock);
     return MPI_SUCCESS;
 }
