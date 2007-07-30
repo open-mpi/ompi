@@ -100,7 +100,7 @@ void *mca_mpool_base_alloc(size_t size, ompi_info_t *info)
     opal_list_item_t * item;
     int num_modules = opal_list_get_size(&mca_mpool_base_modules);
     int reg_module_num = 0;
-    int i, num_keys;
+    int i;
     mca_mpool_base_selected_module_t * current;
     mca_mpool_base_selected_module_t * no_reg_function = NULL;
     mca_mpool_base_selected_module_t ** has_reg_function = NULL;
@@ -108,10 +108,9 @@ void *mca_mpool_base_alloc(size_t size, ompi_info_t *info)
     mca_mpool_base_tree_item_t* mpool_tree_item = NULL;
     mca_mpool_base_module_t *mpool;
     void * mem = NULL;
-    char * key = NULL;
-    char * value = NULL;
     int flag = 0;
-    bool match_found = false, mpool_requested = false;
+    bool match_found = false;
+    bool mpool_requested = false;
 
     if(num_modules > 0) {
         has_reg_function = (mca_mpool_base_selected_module_t **)
@@ -145,27 +144,24 @@ void *mca_mpool_base_alloc(size_t size, ompi_info_t *info)
     }
     else
     {
+        int num_keys;
+        char key[MPI_MAX_INFO_KEY + 1];
+        char value[MPI_MAX_INFO_VAL + 1];
+
         ompi_info_get_nkeys(info, &num_keys);
-        key = (char*)malloc(MPI_MAX_INFO_KEY + 1);
         for(i = 0; i < num_keys; i++)
         {
-            match_found = false;
             ompi_info_get_nthkey(info, i, key);
             if ( 0 != strcmp(key, "mpool") ) {
                 continue;
             }
             mpool_requested = true;
-            value = (char*)malloc(MPI_MAX_INFO_VAL+1);
-            if ( NULL == value ) {
-                break;
-            }
             ompi_info_get(info, key, MPI_MAX_INFO_VAL+1, value, &flag);
             if ( !flag ) {
-                free(value);
-                value = NULL;
                 continue;
             }
 
+            match_found = false;
             for(item = opal_list_get_first(&mca_mpool_base_modules);
                 item != opal_list_get_end(&mca_mpool_base_modules);
                 item = opal_list_get_next(item)) 
@@ -181,7 +177,6 @@ void *mca_mpool_base_alloc(size_t size, ompi_info_t *info)
                         {
                            /* there was more than one requested mpool that lacks 
                             * a registration function, so return failure */
-                            free(key);
                             goto out;
                         }
                         no_reg_function = current;
@@ -196,11 +191,9 @@ void *mca_mpool_base_alloc(size_t size, ompi_info_t *info)
             {
                 /* one of the keys given to us by the user did not match any
                  * mpools, so return an error */
-                free(key);
                 goto out;
             }
         }
-        free(key);
     }
     
     if(NULL == no_reg_function && 0 == reg_module_num)
