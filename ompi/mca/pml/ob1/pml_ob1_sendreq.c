@@ -136,12 +136,19 @@ static void mca_pml_ob1_send_request_construct(mca_pml_ob1_send_request_t* req)
     req->req_rdma_cnt = 0;
     req->req_throttle_sends = false;
     OBJ_CONSTRUCT(&req->req_send_ranges, opal_list_t);
+    OBJ_CONSTRUCT(&req->req_send_range_lock, opal_mutex_t);
+}
+
+static void mca_pml_ob1_send_request_destruct(mca_pml_ob1_send_request_t* req)
+{
+    OBJ_DESTRUCT(&req->req_send_ranges);
+    OBJ_DESTRUCT(&req->req_send_range_lock);
 }
 
 OBJ_CLASS_INSTANCE( mca_pml_ob1_send_request_t,
                     mca_pml_base_send_request_t,
                     mca_pml_ob1_send_request_construct,
-                    NULL );
+                    mca_pml_ob1_send_request_destruct );
 
 /**
  * Completion of a short message - nothing left to schedule. Note that this
