@@ -277,7 +277,7 @@ int ompi_info_get_nthkey (ompi_info_t *info, int n, char *key)
          }
     }
     /*
-     y* iterator is of the type opal_list_item_t. We have to
+     * iterator is of the type opal_list_item_t. We have to
      * cast it to ompi_info_entry_t before we can use it to
      * access the value
      */
