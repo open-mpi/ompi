@@ -190,7 +190,7 @@ static void find_dyn_components(const char *path, const char *type_name,
     component_file_item_t *file;
     opal_list_item_t *cur;
 
-    strcpy(params.type, type_name);
+    strncpy(params.type, type_name, MCA_BASE_MAX_TYPE_NAME_LEN);
 
     params.name[0] = '\0';
   
@@ -284,7 +284,7 @@ static int save_filename(const char *filename, lt_ptr data)
      named */
 
   len = sizeof(component_template) + strlen(params->type) + 32;
-  if (NULL != params->name) {
+  if ( 0 < strlen(params->name) ) {
     len += strlen(params->name);
   }
   prefix = (char*)malloc(len);
