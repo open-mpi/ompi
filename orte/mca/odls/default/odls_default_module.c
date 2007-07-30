@@ -523,7 +523,7 @@ int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state)
 {
     orte_odls_child_t *child;
     opal_list_item_t *item, *next;
-    int rc, exit_status;
+    int rc = 0, exit_status = 0;
     opal_list_t procs_killed;
     orte_namelist_t *proc;
 
