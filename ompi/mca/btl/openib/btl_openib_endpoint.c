@@ -150,10 +150,8 @@ static int btl_openib_acquire_send_resources(
         OPAL_THREAD_ADD32(&endpoint->qps[*qp].sd_wqe, 1);
         if(*do_rdma)
             OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens, 1);
-        OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
         opal_list_append(&endpoint->qps[*qp].pending_frags,
                 (opal_list_item_t *)frag);
-        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -164,10 +162,8 @@ static int btl_openib_acquire_send_resources(
         if(OPAL_THREAD_ADD32(&endpoint->qps[*qp].u.pp_qp.sd_credits, -1) < 0) {
             OPAL_THREAD_ADD32(&endpoint->qps[*qp].u.pp_qp.sd_credits, 1);
             OPAL_THREAD_ADD32(&endpoint->qps[*qp].sd_wqe, 1);
-            OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
             opal_list_append(&endpoint->qps[*qp].pending_frags,
                     (opal_list_item_t *)frag);
-            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
     } else {
