@@ -64,6 +64,8 @@ char *opal_os_path(bool relative, ...)
     	    strcpy(path, path_sep);
 #endif
     	}
+        va_end(ap);
+        va_end(ap1);
     	return(path);
     }
 
@@ -75,11 +77,15 @@ char *opal_os_path(bool relative, ...)
     }
         
     if (total_length > OMPI_PATH_MAX) {  /* path length is too long - reject it */
+        va_end(ap);
+        va_end(ap1);
     	return(NULL);
     }
 
     path = (char *)malloc(total_length);
     if (NULL == path) {
+        va_end(ap);
+        va_end(ap1);
         return(NULL);
     }
     path[0] = 0;
