@@ -83,6 +83,10 @@ Trunk (not on release branches yet)
 1.2.4
 -----
 
+- A variety of fixes for Cray XT3/4 class of machines.
+- Fixed which error handler is used when MPI_COMM_SELF is passed
+  to MPI_COMM_FREE.  Thanks to Lisandro Dalcini for the bug report.
+- Fixed compilation on platforms that don't have hton/ntoh.
 - Fixed a logic problem in the fortran binding for MPI_TYPE_MATCH_SIZE.
   Thanks to Jeff Dusenberry for pointing out the problem and supplying the fix.
 - Fixed a problem with MPI_BOTTOM in various places of the f77-interface.
