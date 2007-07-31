@@ -73,7 +73,7 @@ static int mca_pml_v_component_open(void)
 
     pml_v_output_init(output, verbose);
 
-    V_OUTPUT_VERBOSE(1, "open: loading pml_v");
+    V_OUTPUT_VERBOSE(500, "loaded");
     return mca_pml_v_protocol_base_load_all();
 }
  
@@ -98,9 +98,11 @@ static int mca_pml_v_component_close(void)
   if(!strcmp(mca_pml_v.protocol_component.pmlm_version.mca_type_name, "vprotocol"))
   {
     /* ok, we have loaded a fault tolerant protocol, lets go */
-    V_OUTPUT_VERBOSE(10, "close: I don't want to die, I will parasite %s host component %s", 
+    V_OUTPUT_VERBOSE(1, "I don't want to die: I will parasite %s host component %s with %s %s", 
                         mca_pml_base_selected_component.pmlm_version.mca_type_name,
-                        mca_pml_base_selected_component.pmlm_version.mca_component_name);
+                        mca_pml_base_selected_component.pmlm_version.mca_component_name,
+                        mca_pml_v.protocol_component.pmlm_version.mca_type_name,
+                        mca_pml_v.protocol_component.pmlm_version.mca_component_name);
       
     /* setting selected vprotocol mpi functions instead of host's one */
     mca_pml_v.host_pml = mca_pml; /* saving */
@@ -183,7 +185,7 @@ static int mca_pml_v_component_close(void)
         component->pmlm_finalize = mca_pml_v_component_parasite_finalize;
 #endif 
 
-    V_OUTPUT_VERBOSE(10, "close: I don't want to be unloaded. Referencing myself as using myself");
+    V_OUTPUT_VERBOSE(500, "close: I don't want to be unloaded. Referencing myself as using myself");
     if(OPAL_SUCCESS != mca_base_component_repository_retain_component("pml", "v"))
     {
       opal_output(0, "close: can't retain myself !");
@@ -191,14 +193,14 @@ static int mca_pml_v_component_close(void)
     }
     return OMPI_SUCCESS;
   }
-  V_OUTPUT_VERBOSE(10, "close: no fault tolerant protocol selected, ok, I let them kill me");
+  V_OUTPUT_VERBOSE(1, "No fault tolerant protocol selected, I let them kill me");
   return OMPI_SUCCESS;
 }
 
 /* MCA replacement close for host parasited pml component */
 static int mca_pml_v_component_parasite_close(void)
 {
-    V_OUTPUT_VERBOSE(10, "parasite_close: Ok, host component %s is closing, so I accept to die", 
+    V_OUTPUT_VERBOSE(1, "parasite_close: Ok, host component %s is closing, so I accept to die", 
                           mca_pml_v.host_pml_component.pmlm_version.mca_component_name);
     mca_pml = mca_pml_v.host_pml;
     mca_pml_base_selected_component = mca_pml_v.host_pml_component;
@@ -237,7 +239,7 @@ static int mca_pml_v_component_finalize(void)
 
 static int mca_pml_v_component_parasite_finalize(void)
 {
-  V_OUTPUT_VERBOSE(10, "parasite_finalize");
+  V_OUTPUT_VERBOSE(100, "parasite_finalize");
 
   /* finalize vprotocol component */
   mca_pml_v.protocol_component.pmlm_finalize();
