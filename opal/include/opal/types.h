@@ -116,6 +116,7 @@ typedef int opal_socklen_t;
  */
 static inline uint64_t hton64(uint64_t val)
 {
+#ifdef HAVE_HTONL
     union { uint64_t ll;
             uint32_t l[2];
     } w, r;
@@ -127,6 +128,9 @@ static inline uint64_t hton64(uint64_t val)
     r.l[0] = htonl(w.l[1]);
     r.l[1] = htonl(w.l[0]);
     return r.ll;
+#else
+    return val;
+#endif
 }
 
 /*
@@ -135,6 +139,7 @@ static inline uint64_t hton64(uint64_t val)
 
 static inline uint64_t ntoh64(uint64_t val)
 {
+#ifdef HAVE_NTOHL
     union { uint64_t ll;
             uint32_t l[2];
     } w, r;
@@ -146,6 +151,9 @@ static inline uint64_t ntoh64(uint64_t val)
     r.l[0] = ntohl(w.l[1]);
     r.l[1] = ntohl(w.l[0]);
     return r.ll;
+#else
+    return val;
+#endif
 }
 
 
@@ -167,7 +175,7 @@ static inline void* ompi_ptr_ltop( uint64_t value )
     return (void*)(uintptr_t) value;
 }
 
-#ifdef WORDS_BIGENDIAN
+#if defined(WORDS_BIGENDIAN) || !defined(HAVE_HTONS) || !defined(HAVE_HTONL)
 static inline uint16_t opal_swap_bytes2(uint16_t val) 
 {
     union { uint16_t bigval;
@@ -219,6 +227,6 @@ static inline uint64_t opal_swap_bytes8(uint64_t val)
 #define opal_swap_bytes2 htons
 #define opal_swap_bytes4 htonl
 #define opal_swap_bytes8 hton64
-#endif
+#endif /* WORDS_BIGENDIAN || !HAVE_HTONS || !HAVE_HTONL */
 
 #endif
