@@ -24,8 +24,8 @@ int mca_vprotocol_pessimist_isend(void *buf,
 {
     int ret;
   
-    V_OUTPUT_VERBOSE(50, "pessimist:\tisend\tposted\t%llx\tto %d\ttag %d\tsize %ld",
-                     (long long) mca_vprotocol_pessimist.clock, dst, tag, (long) count);
+    V_OUTPUT_VERBOSE(50, "pessimist:\tisend\tposted\t%"PRIpclock"\tto %d\ttag %d\tsize %lu",
+                     mca_vprotocol_pessimist.clock, dst, tag, (long) count);
 
     VPROTOCOL_PESSIMIST_EVENT_FLUSH();
     ret = mca_pml_v.host_pml.pml_isend(buf, count, datatype, dst, tag, sendmode, 
@@ -46,8 +46,8 @@ int mca_vprotocol_pessimist_send(void *buf,
     ompi_request_t *request = MPI_REQUEST_NULL;
     int rc;
 
-    V_OUTPUT_VERBOSE(110, "pessimist:\tsend\tposted\t%"PRIx64"\tto %d\ttag %d\tsize %z", 
-                     mca_vprotocol_pessimist.clock, dst, tag, count);
+    V_OUTPUT_VERBOSE(50, "pessimist:\tsend\tposted\t%"PRIpclock"\tto %d\ttag %d\tsize %lu", 
+                     mca_vprotocol_pessimist.clock, dst, tag, (long) count);
 
     VPROTOCOL_PESSIMIST_EVENT_FLUSH();
     mca_pml_v.host_pml.pml_isend(buf, count, datatype, dst, tag, sendmode, 

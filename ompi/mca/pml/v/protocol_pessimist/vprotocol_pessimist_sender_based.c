@@ -105,7 +105,7 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
     }
     sb.sb_cursor += (intptr_t) sb.sb_addr; /* absolute addr of sender_based buffer */
     sb.sb_vacant = sb.sb_length - sizeof(vprotocol_pessimist_sender_based_header_t);
-    V_OUTPUT_VERBOSE(1, "pessimist:\tsb\tgrow\toffset %lld\tlength %lld\tbase %p\tcursor %p", (long long) sb.sb_offset, (long long) sb.sb_length, sb.sb_addr, sb.sb_cursor);
+    V_OUTPUT_VERBOSE(30, "pessimist:\tsb\tgrow\toffset %llu\tlength %llu\tbase %p\tcursor %p", (long long) sb.sb_offset, (long long) sb.sb_length, sb.sb_addr, sb.sb_cursor);
 }   
 
 #undef sb

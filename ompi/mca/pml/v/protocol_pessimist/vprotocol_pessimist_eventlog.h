@@ -48,7 +48,7 @@
     mca_vprotocol_pessimist_event_t *event;                                   \
     vprotocol_pessimist_matching_event_t *mevent;                             \
                                                                               \
-    V_OUTPUT_VERBOSE(70, "pessimist:\tlog\tmatch\t%x\tsrc %d\tseq %llu", VPESSIMIST_REQ(REQ)->reqid, (REQ)->req_ompi.req_status.MPI_SOURCE, (long long) (REQ)->req_sequence); \
+    V_OUTPUT_VERBOSE(70, "pessimist:\tlog\tmatch\t%"PRIpclock"\tsrc %d\tseq %"PRIpclock, VPESSIMIST_REQ(REQ)->reqid, (REQ)->req_ompi.req_status.MPI_SOURCE, (REQ)->req_sequence); \
     event = VPESSIMIST_RECV_REQ(REQ)->event;                                  \
     mevent =  &(event->u_event.e_matching);                                   \
     mevent->reqid = VPESSIMIST_RECV_REQ(REQ)->reqid;                          \
@@ -91,14 +91,14 @@
         assert(event->type == VPROTOCOL_PESSIMIST_EVENT_TYPE_MATCHING);       \
         if(event->req->req_ompi.req_status.MPI_SOURCE == -1)                  \
         {                                                                     \
-          V_OUTPUT_VERBOSE(101, "pessimist:\tlog\tel\t%x\tfrom %d\tnot matched yet", event->u_event.e_matching.reqid, event->u_event.e_matching.src); \
+          V_OUTPUT_VERBOSE(101, "pessimist:\tlog\tel\t%"PRIpclock"\tnot matched yet (%d)", event->u_event.e_matching.reqid, event->u_event.e_matching.src); \
           continue;                                                           \
         }                                                                     \
         event->u_event.e_matching.src =                                       \
             event->req->req_ompi.req_status.MPI_SOURCE;                       \
       }                                                                       \
       /* Send this event to EL */                                             \
-      V_OUTPUT_VERBOSE(100, "pessimist:\tlog\tel\t%x\tfrom %d\tsent to EL", event->u_event.e_matching.reqid, event->u_event.e_matching.src); \
+      V_OUTPUT_VERBOSE(100, "pessimist:\tlog\tel\t%"PRIpclock"\tfrom %d\tsent to EL", event->u_event.e_matching.reqid, event->u_event.e_matching.src); \
       mca_vprotocol_pessimist.event_buffer[mca_vprotocol_pessimist.event_buffer_length++] = \
             event->u_event;                                                   \
       if(mca_vprotocol_pessimist.event_buffer_length ==                       \
@@ -140,7 +140,7 @@ void vprotocol_pessimist_matching_replay(int *src);
                                                                               \
   if(req == NULL)                                                             \
   {                                                                           \
-    V_OUTPUT_VERBOSE(70, "pessimist:\tlog\tdeliver\t%x\tnone", mca_vprotocol_pessimist.clock); \
+    V_OUTPUT_VERBOSE(70, "pessimist:\tlog\tdeliver\t%"PRIpclock"\tnone", mca_vprotocol_pessimist.clock); \
     event = (mca_vprotocol_pessimist_event_t*)opal_list_get_last(&mca_vprotocol_pessimist.pending_events);      \
     if(event->type == VPROTOCOL_PESSIMIST_EVENT_TYPE_DELIVERY &&              \
        event->u_event.e_delivery.reqid == 0)                                  \
@@ -160,7 +160,7 @@ void vprotocol_pessimist_matching_replay(int *src);
   }                                                                           \
   else                                                                        \
   {                                                                           \
-    V_OUTPUT_VERBOSE(70, "pessimist:\tlog\tdeliver\t%x\treq %x", mca_vprotocol_pessimist.clock, VPESSIMIST_REQ(req)->reqid); \
+    V_OUTPUT_VERBOSE(70, "pessimist:\tlog\tdeliver\t%"PRIpclock"\treq %"PRIpclock, mca_vprotocol_pessimist.clock, VPESSIMIST_REQ(req)->reqid); \
     VPESSIMIST_DELIVERY_EVENT_NEW(event);                                     \
     devent = &(event->u_event.e_delivery);                                    \
     devent->probeid = mca_vprotocol_pessimist.clock++;                        \

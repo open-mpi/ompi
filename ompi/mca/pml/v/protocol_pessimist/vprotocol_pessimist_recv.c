@@ -28,7 +28,7 @@ int mca_vprotocol_pessimist_irecv(void *addr,
 {
   int ret;
 
-  V_OUTPUT_VERBOSE(50, "pessimist:\tirecv\trequest\t%x\tfrom %d\ttag %d\tsize %ld",
+  V_OUTPUT_VERBOSE(50, "pessimist:\tirecv\trequest\t%"PRIpclock"\tfrom %d\ttag %d\tsize %lu",
                         mca_vprotocol_pessimist.clock, src, tag, (long) count);
 
   /* first, see if we have to enforce matching order */
@@ -55,7 +55,7 @@ int mca_vprotocol_pessimist_recv(void *addr,
   ompi_request_t *request = MPI_REQUEST_NULL;
   int ret;
 
-  V_OUTPUT_VERBOSE(50, "pessimist:\trecv\tposted\t%x\tfrom %d\ttag %d\tsize %ld",
+  V_OUTPUT_VERBOSE(50, "pessimist:\trecv\tposted\t%"PRIpclock"\tfrom %d\ttag %d\tsize %lu",
                        mca_vprotocol_pessimist.clock, src, tag, (long) count);
   /* first, see if we have to enforce matching order */
   VPROTOCOL_PESSIMIST_MATCHING_REPLAY(src);
