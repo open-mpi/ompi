@@ -33,34 +33,38 @@ void pml_v_output_finalize(void);
 #   define V_OUTPUT_VERBOSE(V, ARGS...) OPAL_OUTPUT_VERBOSE((V, mca_pml_v.output, ARGS))
 #elif OMPI_ENABLE_DEBUG
     /* No variadic macros available... So sad */
-static inline void V_OUTPUT(char* fmt, ... ) {
+static inline void V_OUTPUT(const char* fmt, ... ) {
     va_list list;
     char *str;
+    int ret;
     va_start(list, fmt);
-    vasprintf(&str, fmt, list);
+    ret = vasprintf(&str, fmt, list);
+    assert(-1 != ret);
     opal_output(mca_pml_v.output, str);
     free(str);
     va_end(list);
 }
-static inline void V_OUTPUT_VERBOSE(int V, char* fmt, ... ) {
+static inline void V_OUTPUT_VERBOSE(int V, const char* fmt, ... ) {
     va_list list;
     char *str;
+    int ret;
     va_start(list, fmt);
-    vasprintf(&str, fmt, list);
+    ret = vasprintf(&str, fmt, list);
+    assert(-1 != ret);
     opal_output_verbose(V, mca_pml_v.output, str);
     free(str);
     va_end(list);
 }
 #else /* !DEBUG */
    /* Some compilers complain if we have ... and no corresponding va_start() */
-static inline void V_OUTPUT(char* fmt, ... ) {
+static inline void V_OUTPUT(const char* fmt, ... ) {
 #if defined(__PGI)
     va_list list;
     va_start(list, fmt);
     va_end(list);
 #endif
 }
-static inline void V_OUTPUT_VERBOSE(int V, char* fmt, ... ) {
+static inline void V_OUTPUT_VERBOSE(int V, const char* fmt, ... ) {
 #if defined(__PGI)
     va_list list;
     va_start(list, fmt);
