@@ -57,6 +57,11 @@ int MPI_Dims_create(int nnodes, int ndims, int *dims)
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
+        if (NULL == dims) {
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD,
+                                           MPI_ERR_ARG, FUNC_NAME);
+        }
+        
         if (1 > ndims) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, 
                                            MPI_ERR_DIMS, FUNC_NAME);
