@@ -679,8 +679,8 @@ int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
         mca_bml_r2.num_btl_progress--; 
     }
     /* cleanup */
-CLEANUP:
     btl->btl_finalize(btl);
+CLEANUP:
     free(procs);
     return OMPI_SUCCESS;
 }
