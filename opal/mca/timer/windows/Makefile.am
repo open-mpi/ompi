@@ -22,6 +22,7 @@ noinst_LTLIBRARIES = libmca_timer_windows.la
 
 libmca_timer_windows_la_SOURCES = \
     timer_windows.h \
+    timer_windows_component.h \
     timer_windows_component.c
 
 EXTRA_DIST  = \
