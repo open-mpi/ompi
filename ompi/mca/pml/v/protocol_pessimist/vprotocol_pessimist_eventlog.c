@@ -28,7 +28,7 @@ void vprotocol_pessimist_matching_replay(int *src) {
         if(mevent->reqid == mca_vprotocol_pessimist.clock)
         {
             /* this is the event to replay */
-            V_OUTPUT_VERBOSE(70, "pessimist: replay\tmatch\t%x\trecv is forced from %d", mevent->reqid, mevent->src);
+            V_OUTPUT_VERBOSE(70, "pessimist: replay\tmatch\t%"PRIpclock"\trecv is forced from %d", mevent->reqid, mevent->src);
             (*src) = mevent->src;
             opal_list_remove_item(&mca_vprotocol_pessimist.replay_events, 
                                   (opal_list_item_t *) event);
@@ -61,7 +61,7 @@ void vprotocol_pessimist_delivery_replay(size_t n, ompi_request_t **reqs,
         if(devent->probeid < mca_vprotocol_pessimist.clock)
         {
             /* this particular test have to return no request completed yet */
-            V_OUTPUT_VERBOSE(70, "pessimist:\treplay\tdeliver\t%x\tnone", mca_vprotocol_pessimist.clock);
+            V_OUTPUT_VERBOSE(70, "pessimist:\treplay\tdeliver\t%"PRIpclock"\tnone", mca_vprotocol_pessimist.clock);
             *index = MPI_UNDEFINED;
             mca_vprotocol_pessimist.clock++;
             /* This request have to stay in the queue until probeid matches */
@@ -74,7 +74,7 @@ void vprotocol_pessimist_delivery_replay(size_t n, ompi_request_t **reqs,
             {
                 if(VPESSIMIST_REQ(reqs[i])->reqid == devent->reqid)
                 {
-                    V_OUTPUT_VERBOSE(70, "pessimist:\treplay\tdeliver\t%x\t%x", devent->probeid, devent->reqid);
+                    V_OUTPUT_VERBOSE(70, "pessimist:\treplay\tdeliver\t%"PRIpclock"\t%"PRIpclock, devent->probeid, devent->reqid);
                     opal_list_remove_item(&mca_vprotocol_pessimist.replay_events,
                                           (opal_list_item_t *) event);
                     VPESSIMIST_EVENT_RETURN(event);
@@ -84,7 +84,7 @@ void vprotocol_pessimist_delivery_replay(size_t n, ompi_request_t **reqs,
                     return;
                 }
             }
-            V_OUTPUT_VERBOSE(70, "pessimist:\treplay\tdeliver\t%x\tnone", mca_vprotocol_pessimist.clock);
+            V_OUTPUT_VERBOSE(70, "pessimist:\treplay\tdeliver\t%"PRIpclock"\tnone", mca_vprotocol_pessimist.clock);
             assert(devent->reqid == 0); /* make sure we don't missed a request */
             *index = MPI_UNDEFINED;
             mca_vprotocol_pessimist.clock++;
@@ -94,5 +94,5 @@ void vprotocol_pessimist_delivery_replay(size_t n, ompi_request_t **reqs,
             return;
         }
     }
-    V_OUTPUT_VERBOSE(50, "pessimist:\treplay\tdeliver\t%x\tnot forced", mca_vprotocol_pessimist.clock);
+    V_OUTPUT_VERBOSE(50, "pessimist:\treplay\tdeliver\t%"PRIpclock"\tnot forced", mca_vprotocol_pessimist.clock);
 }
