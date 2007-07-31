@@ -144,7 +144,7 @@ typedef int (*orte_errmgr_base_module_register_job_fn_t)(orte_jobid_t job);
  * itself, and then exits - it takes no other actions. The intent here is to provide
  * a last-ditch exit procedure that attempts to clean up a little.
  */
-typedef void (*orte_errmgr_base_module_abort_fn_t)(void);
+typedef void (*orte_errmgr_base_module_abort_fn_t)(void) __opal_attribute_noreturn__;
 
 /*
  * Request that the system abort processes other than myself

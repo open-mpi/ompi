@@ -67,7 +67,7 @@
  * to prevent the abort file from being created. This allows the
  * session directory tree to cleanly be eliminated.
  */
-int orte_abort(int status, bool report)
+void orte_abort(int status, bool report)
 {
     char *abort_file;
     int fd;

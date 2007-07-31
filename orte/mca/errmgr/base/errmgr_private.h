@@ -69,7 +69,7 @@ ORTE_DECLSPEC    void orte_errmgr_base_error_detected(int error_code, char *fmt,
 
 ORTE_DECLSPEC    int orte_errmgr_base_register_job_not_avail(orte_jobid_t job);
 
-ORTE_DECLSPEC    void orte_errmgr_base_abort(void);
+ORTE_DECLSPEC    void orte_errmgr_base_abort(void) __opal_attribute_noreturn__;
 
 ORTE_DECLSPEC   int orte_errmgr_base_abort_procs_request_not_avail(orte_process_name_t *procs, orte_std_cntr_t num_procs);
 

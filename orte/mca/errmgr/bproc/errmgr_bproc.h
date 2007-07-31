@@ -68,7 +68,7 @@ int orte_errmgr_bproc_incomplete_start(orte_gpr_notify_message_t *msg);
 
 void orte_errmgr_bproc_error_detected(int error_code, char *fmt, ...) __opal_attribute_format__(__printf__, 2, 3);
 
-void orte_errmgr_bproc_abort(void);
+void orte_errmgr_bproc_abort(void) __opal_attribute_noreturn__;
 
 int orte_errmgr_bproc_register_job(orte_jobid_t job);
 
