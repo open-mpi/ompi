@@ -622,7 +622,7 @@ int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
     
     if(opal_list_get_size(&mca_btl_base_modules_initialized) == 2){ 
         opal_output(0, "only one BTL left, can't failover");
-        return OMPI_SUCCESS;
+        goto CLEANUP; 
     }
     
     /* dont use this btl for any peers */
@@ -645,7 +645,7 @@ int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
     }
     if(!found) {
         /* doesn't even exist */
-        return OMPI_SUCCESS;
+        goto CLEANUP;
     }
     /* remove from bml list */
     modules = (mca_btl_base_module_t**)malloc(sizeof(mca_btl_base_module_t*) * mca_bml_r2.num_btl_modules-1);
@@ -679,6 +679,7 @@ int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
         mca_bml_r2.num_btl_progress--; 
     }
     /* cleanup */
+CLEANUP:
     btl->btl_finalize(btl);
     free(procs);
     return OMPI_SUCCESS;
