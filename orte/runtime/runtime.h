@@ -60,7 +60,7 @@ extern "C" {
      * function should create an appropriate file to alert the local
      * orted that termination was abnormal.
      */
-ORTE_DECLSPEC    int orte_abort(int status, bool report);
+ORTE_DECLSPEC    void orte_abort(int status, bool report) __opal_attribute_noreturn__;
 
 
     /**

@@ -68,7 +68,7 @@ int orte_errmgr_proxy_incomplete_start(orte_gpr_notify_message_t *msg);
 
 void orte_errmgr_proxy_error_detected(int error_code, char *fmt, ...) __opal_attribute_format__(__printf__, 2, 3);
 
-void orte_errmgr_proxy_abort(void);
+void orte_errmgr_proxy_abort(void) __opal_attribute_noreturn__;
 
 int orte_errmgr_proxy_register_job(orte_jobid_t job);
 
