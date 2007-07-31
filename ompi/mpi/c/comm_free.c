@@ -39,8 +39,11 @@ int MPI_Comm_free(MPI_Comm *comm)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         
         if ( NULL == *comm  || MPI_COMM_WORLD == *comm ||
-             MPI_COMM_SELF == *comm  || ompi_comm_invalid (*comm)) {
+             ompi_comm_invalid (*comm)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+                                          FUNC_NAME);
+        } else if (MPI_COMM_SELF == *comm) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_SELF, MPI_ERR_COMM, 
                                           FUNC_NAME);
         }
     }
