@@ -125,41 +125,7 @@
   if(mca_vprotocol_pessimist.replay && ((src) == MPI_ANY_SOURCE))             \
     vprotocol_pessimist_matching_replay(&(src));                              \
 } while(0)  
-
-static inline void vprotocol_pessimist_matching_replay(int *src)
-{                                                       
-#if OMPI_ENABLE_DEBUG
-  vprotocol_pessimist_clock_t max = 0;
-#endif
-  mca_vprotocol_pessimist_event_t *event;                                        
-                                                                               
-  /* searching this request in the event list */                             
-  for(event = (mca_vprotocol_pessimist_event_t *) opal_list_get_first(&mca_vprotocol_pessimist.replay_events); 
-      event != (mca_vprotocol_pessimist_event_t *) opal_list_get_end(&mca_vprotocol_pessimist.replay_events); 
-      event = (mca_vprotocol_pessimist_event_t *) opal_list_get_next(event))     
-  {                                                                          
-    vprotocol_pessimist_matching_event_t *mevent = &(event->u_event.e_matching);
-    if(mevent->reqid == mca_vprotocol_pessimist.clock)
-    {                                                                        
-      /* this is the event to replay */                                      
-      V_OUTPUT_VERBOSE(70, "pessimist: replay\tmatch\t%x\trecv is forced from %d", mevent->reqid, mevent->src); 
-      (*src) = mevent->src;                                                   
-      opal_list_remove_item(&mca_vprotocol_pessimist.replay_events, 
-                            (opal_list_item_t *) event);
-      VPESSIMIST_EVENT_RETURN(event);
-    }                                                                        
-#if OMPI_ENABLE_DEBUG
-    else if(mevent->reqid > max) 
-      max = mevent->reqid;                         
-  }                                                                          
-  /* not forcing a ANY SOURCE event whose recieve clock is lower than max     
-   * is a bug indicating we have missed an event during logging ! */         
-  assert(((*src) != MPI_ANY_SOURCE) ||                                        
-         (mca_vprotocol_pessimist.clock > max));       
-#else
-  }                                                                          
-#endif
-}
+void vprotocol_pessimist_matching_replay(int *src);
 
 /*******************************************************************************
   * WAIT/TEST-SOME/ANY & PROBES 
@@ -208,59 +174,14 @@ static inline void vprotocol_pessimist_matching_replay(int *src)
   * event clock
   * n (IN): the number of input requests
   * reqs (IN): the set of considered requests (pml_base_request_t *)
-  * i (IN/OUT): index of the delivered request
-  * c (IN/OUT): counter for number of delivered requests (currently only 0 or 1)
+  * i (IN/OUT): index(es) of the delivered request (currently always 1 at a time)
   * status (IN/OUT): status of the delivered request
   */
-#define VPROTOCOL_PESSIMIST_DELIVERY_REPLAY(n, reqs, i, c, status) do {       \
+#define VPROTOCOL_PESSIMIST_DELIVERY_REPLAY(n, reqs, i, status) do {          \
   if(mca_vprotocol_pessimist.replay)                                          \
-  {                                                                           \
-    mca_vprotocol_pessimist_event_t *event;                                   \
-                                                                              \
-    for(event = (mca_vprotocol_pessimist_event_t *) opal_list_get_first(&mca_vprotocol_pessimist.replay_events); \
-        event != (mca_vprotocol_pessimist_event_t *) opal_list_get_end(&mca_vprotocol_pessimist.replay_events); \
-        event = (mca_vprotocol_pessimist_event_t *) opal_list_get_next(event)) \
-    {                                                                         \
-      vprotocol_pessimist_delivery_event_t *devent = &(event->u_event.e_delivery); \
-                                                                              \
-      if(event->type == VPROTOCOL_PESSIMIST_EVENT_TYPE_MATCHING) continue;    \
-      if(devent->probeid < mca_vprotocol_pessimist.clock)                     \
-      {                                                                       \
-        /* this particular test have to return no request completed yet */    \
-        V_OUTPUT_VERBOSE(70, "pessimist:\treplay\tdeliver\t%x\tnone", mca_vprotocol_pessimist.clock); \
-        (i) = MPI_UNDEFINED;                                                  \
-        (c) = 0;                                                              \
-        mca_vprotocol_pessimist.clock++;                                      \
-        return OMPI_SUCCESS;                                                  \
-      }                                                                       \
-      else if(devent->probeid == mca_vprotocol_pessimist.clock)               \
-      {                                                                       \
-        V_OUTPUT_VERBOSE(70, "pessimist:\treplay\tdeliver\t%x\t%x", devent->probeid, devent->reqid); \
-        for((i) = 0; (i) < (n); (i)++)                                        \
-        {                                                                     \
-          if(VPESSIMIST_REQ(reqs[i])->reqid == devent->reqid)                 \
-          {                                                                   \
-            opal_list_remove_item(&mca_vprotocol_pessimist.replay_events,     \
-                                  (opal_list_item_t *) event);                \
-            VPESSIMIST_EVENT_RETURN(event);                                   \
-            (c) = 1;                                                          \
-            mca_vprotocol_pessimist.clock++;                                  \
-            return ompi_request_wait(&reqs[i], status);                       \
-          }                                                                   \
-        }                                                                     \
-        V_OUTPUT_VERBOSE(70, "pessimist:\treplay\tdeliver\t%x\tnone", mca_vprotocol_pessimist.clock); \
-        assert(devent->reqid == 0);                                           \
-        (i) = MPI_UNDEFINED;                                                  \
-        (c) = 0;                                                              \
-        mca_vprotocol_pessimist.clock++;                                      \
-        opal_list_remove_item(&mca_vprotocol_pessimist.replay_events,         \
-                              (opal_list_item_t *) event);                    \
-        VPESSIMIST_EVENT_RETURN(event);                                       \
-        return OMPI_SUCCESS;                                                  \
-      }                                                                       \
-    }                                                                         \
-    V_OUTPUT_VERBOSE(50, "pessimist:\treplay\tdeliver\t%x\tnot forced", mca_vprotocol_pessimist.clock); \
-  }                                                                           \
+    vprotocol_pessimist_delivery_replay(n, reqs, i, status);                  \
 } while(0)
+void vprotocol_pessimist_delivery_replay(size_t, ompi_request_t **,
+                                         int *, ompi_status_public_t *);
 
 #endif /* __VPROTOCOL_PESSIMIST_EVENTLOG_H__ */

@@ -24,10 +24,8 @@ int mca_vprotocol_pessimist_wait_any(size_t count, ompi_request_t ** requests, i
 {
   int ret;
   size_t i;
-  int c;
 
-
-  VPROTOCOL_PESSIMIST_DELIVERY_REPLAY(count, requests, *index, c, status);
+  VPROTOCOL_PESSIMIST_DELIVERY_REPLAY(count, requests, index, status);
     
 # define pml_req ((mca_pml_base_request_t *) requests[i])
   /* Avoid the request to be disposed by waitall */
