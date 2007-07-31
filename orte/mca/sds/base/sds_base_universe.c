@@ -223,6 +223,8 @@ orte_sds_base_seed_set_name(void)
 }
 
 
+#define ORTE_URI_MSG_LGTH   256
+
 static int fork_hnp(void)
 {
 #if !defined(__WINDOWS__)
@@ -233,7 +235,8 @@ static int fork_hnp(void)
     char *param;
     sigset_t sigs;
     pid_t pid;
-    char orted_uri[256];
+    int buffer_length, num_chars_read, chunk;
+    char *orted_uri;
     int rc;
     
     /* A pipe is used to communicate between the parent and child to
@@ -368,13 +371,27 @@ static int fork_hnp(void)
          */
         close(p[1]);  /* parent closes the write - orted will write its contact info to it*/
         close(death_pipe[0]);  /* parent closes the death_pipe's read */
+        
+        /* setup the buffer to read the uri */
+        buffer_length = ORTE_URI_MSG_LGTH;
+        chunk = ORTE_URI_MSG_LGTH-1;
+        num_chars_read = 0;
+        orted_uri = (char*)malloc(buffer_length);
 
         while (1) {
-            rc = read(p[0], orted_uri, 255);
+            
+            while (chunk == (rc = read(p[0], &orted_uri[num_chars_read], chunk))) {
+                /* we read an entire buffer - better get more */
+                num_chars_read += chunk;
+                buffer_length += ORTE_URI_MSG_LGTH;
+                orted_uri = realloc((void*)orted_uri, buffer_length);
+            }
+            num_chars_read += rc;
 
-            if (rc <= 0) {
+            if (num_chars_read <= 0) {
                 /* we didn't get anything back - this is bad */
                 ORTE_ERROR_LOG(ORTE_ERR_HNP_COULD_NOT_START);
+                free(orted_uri);
                 return ORTE_ERR_HNP_COULD_NOT_START;
             }
             /* we got something back - let's hope it was the uri.
@@ -383,6 +400,7 @@ static int fork_hnp(void)
              */
             if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orted_uri))) {
                 ORTE_ERROR_LOG(rc);
+                free(orted_uri);
                 return rc;
             }
             /* okay, the HNP is now setup. We actually don't need to
@@ -397,6 +415,7 @@ static int fork_hnp(void)
            /* indicate we are a singleton so orte_init knows what to do */
             orte_process_info.singleton = true;
             /* all done - report success */
+            free(orted_uri);
             return ORTE_SUCCESS;
         }
     }
