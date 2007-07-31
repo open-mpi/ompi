@@ -39,7 +39,7 @@ typedef struct vprotocol_pessimist_sender_based_header_t
     int dst; 
     int tag;
     uint32_t contextid;
-    uint64_t sequence;
+    vprotocol_pessimist_clock_t sequence;
 } vprotocol_pessimist_sender_based_header_t;
 
 int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size);
@@ -98,7 +98,7 @@ void vprotocol_pessimist_sender_based_alloc(size_t len);
     mca_vprotocol_pessimist.sender_based.sb_cursor += sbhdr->size;            \
     mca_vprotocol_pessimist.sender_based.sb_vacant -= (sbhdr->size +          \
             sizeof(vprotocol_pessimist_sender_based_header_t));               \
-    V_OUTPUT_VERBOSE(70, "pessimist:\tsb\twrite\t%x\tsize %ld", VPESSIMIST_REQ(&req->req_base)->reqid, sbhdr->size); \
+    V_OUTPUT_VERBOSE(70, "pessimist:\tsb\twrite\t%"PRIpclock"\tsize %ld", VPESSIMIST_REQ(&req->req_base)->reqid, sbhdr->size); \
 } while(0)
 
 /** Copy data associated to a pml_base_send_request_t to the sender based 
