@@ -83,6 +83,7 @@ static void orte_iof_base_frag_send_cb(
     void* cbdata)
 {
     orte_iof_base_frag_t* frag = (orte_iof_base_frag_t*)cbdata;
+    opal_output(orte_iof_base.iof_output, "iof_base_fragment: ACK send done");
     ORTE_IOF_BASE_FRAG_RETURN(frag);
 }
 
@@ -101,6 +102,7 @@ int _orte_iof_base_frag_ack(orte_iof_base_frag_t* frag, bool do_close,
         ORTE_IOF_BASE_HDR_MSG_HTON(frag->frag_hdr.hdr_msg);
 
         /* start non-blocking OOB call to forward header */
+        opal_output(orte_iof_base.iof_output, "iof_base_fragment: sending ACK");
         rc = orte_rml.send_nb(
             &frag->frag_src,
             frag->frag_iov,

@@ -154,7 +154,7 @@ static void orte_iof_svc_proxy_msg(
     unsigned char* data)
 {
     opal_list_item_t* item;
-    bool forward = false;
+    bool forwarded_at_all = false, forward = false;
     opal_output(orte_iof_base.iof_output,
                 "orte_iof_svc_proxy_msg: tag %d seq %d",
                 hdr->msg_tag,hdr->msg_seq);
@@ -173,8 +173,8 @@ static void orte_iof_svc_proxy_msg(
 
         /* if the subscription origin doesn't match the message's
            origin, skip this subscription */
-        if(orte_ns.compare_fields(sub->origin_mask,&sub->origin_name,&hdr->msg_origin) == 0) {
-            opal_output(orte_iof_base.iof_output, "sub origin %s, msg origin %s, msg proxy %s orte_iof_svc_proxy_msg: tag %d sequence %d, len %d\n",
+        if(0 == orte_ns.compare_fields(sub->origin_mask,&sub->origin_name,&hdr->msg_origin)) {
+            opal_output(orte_iof_base.iof_output, "sub MATCH: origin %s, msg origin %s, msg proxy %s orte_iof_svc_proxy_msg: tag %d sequence %d, len %d",
                         ORTE_NAME_PRINT(&sub->origin_name),
                         ORTE_NAME_PRINT(&hdr->msg_origin),
                         ORTE_NAME_PRINT(&hdr->msg_proxy),
@@ -183,16 +183,21 @@ static void orte_iof_svc_proxy_msg(
             OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
             orte_iof_svc_sub_forward(sub,peer,hdr,data,&forward);
             OPAL_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
+
+            if (forward) {
+                forwarded_at_all = true;
+            }
         }
     }
     OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
 
     /* If there was no one to forward to, then we effectively drop it.
        But ACK it so that the sender doesn't block. */
-    if(forward == false) {
+    if (!forwarded_at_all) {
         orte_iof_base_frag_t* frag;
         int rc;
 
+        opal_output(orte_iof_base.iof_output, "no sub match found -- dropped");
         ORTE_IOF_BASE_FRAG_ALLOC(frag,rc);
         if(NULL == frag) {
             ORTE_ERROR_LOG(rc);
