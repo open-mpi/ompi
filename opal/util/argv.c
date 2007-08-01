@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Voltaire. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -109,7 +111,8 @@ void opal_argv_free(char **argv)
 /*
  * Split a string into a NULL-terminated argv array.
  */
-char **opal_argv_split(const char *src_string, int delimiter)
+static char **opal_argv_split_inter(const char *src_string, int delimiter,
+        int include_empty)
 {
   char arg[ARGSIZE];
   char **argv = NULL;
@@ -130,7 +133,11 @@ char **opal_argv_split(const char *src_string, int delimiter)
     /* zero length argument, skip */
 
     if (src_string == p) {
-      ++p;
+      if (include_empty) {
+        arg[0] = '\0';
+        if (OPAL_ERROR == opal_argv_append(&argc, &argv, arg))
+          return NULL;
+      }
     }
 
     /* tail argument, add straight from the original string */
@@ -138,6 +145,8 @@ char **opal_argv_split(const char *src_string, int delimiter)
     else if ('\0' == *p) {
       if (OPAL_ERROR == opal_argv_append(&argc, &argv, src_string))
 	return NULL;
+      src_string = p;
+      continue;
     }
 
     /* long argument, malloc buffer, copy and add */
@@ -168,7 +177,7 @@ char **opal_argv_split(const char *src_string, int delimiter)
 	return NULL;
     }
 
-    src_string = p;
+    src_string = p + 1;
   }
 
   /* All done */
@@ -176,6 +185,15 @@ char **opal_argv_split(const char *src_string, int delimiter)
   return argv;
 }
 
+char **opal_argv_split(const char *src_string, int delimiter)
+{
+    return opal_argv_split_inter(src_string, delimiter, 0);
+}
+
+char **opal_argv_split_with_empty(const char *src_string, int delimiter)
+{
+    return opal_argv_split_inter(src_string, delimiter, 1);
+}
 
 /*
  * Return the length of a NULL-terminated argv array.
