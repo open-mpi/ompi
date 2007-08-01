@@ -666,7 +666,12 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
 #endif
     }
 #endif
-    return OMPI_SUCCESS;
+
+    /* If we made a BTL, we're done.  Otherwise, fall through and
+       destroy everything */
+    if (hca->btls > 0) {
+        return OMPI_SUCCESS;
+    }
 
 comp_channel:
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
