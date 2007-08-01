@@ -34,11 +34,8 @@ struct mca_btl_openib_reg_t;
 
 struct mca_btl_openib_header_t {
     mca_btl_base_tag_t tag;
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    uint8_t padding[1];
-#endif
+    uint8_t cm_seen;
     uint16_t credits;
-    uint16_t cm_seen;
 };
 typedef struct mca_btl_openib_header_t mca_btl_openib_header_t;
 #define BTL_OPENIB_RDMA_CREDITS_FLAG (1<<15)

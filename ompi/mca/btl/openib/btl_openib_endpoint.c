@@ -218,7 +218,11 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
     }
 
     if(endpoint->qps[qp].u.pp_qp.cm_return) {
-        frag->hdr->cm_seen = endpoint->qps[qp].u.pp_qp.cm_return;
+        /* cm_seen is only 8 bytes, but cm_return is 32 bytes */
+        if(endpoint->qps[qp].u.pp_qp.cm_return > 255)
+            frag->hdr->cm_seen = 255;
+        else
+            frag->hdr->cm_seen = endpoint->qps[qp].u.pp_qp.cm_return;
         OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_return,
                 -frag->hdr->cm_seen);
     } else {
