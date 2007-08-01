@@ -173,7 +173,7 @@ static void orte_iof_svc_proxy_msg(
 
         /* if the subscription origin doesn't match the message's
            origin, skip this subscription */
-        if(0 == orte_ns.compare_fields(sub->origin_mask,&sub->origin_name,&hdr->msg_origin)) {
+        if (ORTE_EQUAL == orte_ns.compare_fields(sub->origin_mask,&sub->origin_name,&hdr->msg_origin)) {
             opal_output(orte_iof_base.iof_output, "sub MATCH: origin %s, msg origin %s, msg proxy %s orte_iof_svc_proxy_msg: tag %d sequence %d, len %d",
                         ORTE_NAME_PRINT(&sub->origin_name),
                         ORTE_NAME_PRINT(&hdr->msg_origin),

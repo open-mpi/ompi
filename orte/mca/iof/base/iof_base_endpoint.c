@@ -348,8 +348,8 @@ static orte_iof_base_endpoint_t* orte_iof_base_endpoint_lookup(
         item != opal_list_get_end(&orte_iof_base.iof_endpoints);
         item =  opal_list_get_next(item)) {
         orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
-        if(orte_ns.compare_fields(ORTE_NS_CMP_ALL,proc,&endpoint->ep_origin) == 0 &&
-           endpoint->ep_tag == tag && endpoint->ep_mode == mode) {
+        if (ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL,proc,&endpoint->ep_origin) &&
+            endpoint->ep_tag == tag && endpoint->ep_mode == mode) {
             OBJ_RETAIN(endpoint);
             return endpoint;
         }
@@ -494,7 +494,7 @@ int orte_iof_base_endpoint_delete(
     while(item != opal_list_get_end(&orte_iof_base.iof_endpoints)) {
         opal_list_item_t* next =  opal_list_get_next(item);
         orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
-        if (orte_ns.compare_fields(mask,proc,&endpoint->ep_origin) == 0) {
+        if (ORTE_EQUAL == orte_ns.compare_fields(mask,proc,&endpoint->ep_origin)) {
             if (endpoint->ep_tag == tag || 
                 ORTE_IOF_ANY == endpoint->ep_tag || 
                 ORTE_IOF_ANY == tag) {
@@ -568,7 +568,7 @@ orte_iof_base_endpoint_t* orte_iof_base_endpoint_match(
         item != opal_list_get_end(&orte_iof_base.iof_endpoints);
         item =  opal_list_get_next(item)) {
         orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
-        if(orte_ns.compare_fields(target_mask,target_name,&endpoint->ep_origin) == 0) {
+        if(ORTE_EQUAL == orte_ns.compare_fields(target_mask,target_name,&endpoint->ep_origin)) {
             if(endpoint->ep_tag == target_tag || 
                endpoint->ep_tag == ORTE_IOF_ANY || 
                target_tag == ORTE_IOF_ANY) {
