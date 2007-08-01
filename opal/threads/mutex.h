@@ -12,6 +12,8 @@
  * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2007      Voltaire. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -375,6 +377,31 @@ opal_thread_debug_trylock(opal_mutex_t *mutex, char *file, int line)
     (opal_using_threads() ? opal_atomic_add_size_t(x,y) : (*x += y))
 #else
 #define OPAL_THREAD_ADD_SIZE_T(x,y) (*x += y)
+#endif
+
+#if OMPI_HAVE_THREAD_SUPPORT
+# if OPAL_HAVE_ATOMIC_CMPSET_32
+#  define OPAL_ATOMIC_CMPSET_32(x, y, z) \
+    (opal_using_threads() ? opal_atomic_cmpset_32(x, y, z) : ((*(x) = (z)), 1))
+# endif
+# if OPAL_HAVE_ATOMIC_CMPSET_64
+#  define OPAL_ATOMIC_CMPSET_64(x, y, z) \
+    (opal_using_threads() ? opal_atomic_cmpset_64(x, y, z) : ((*(x) = (z)), 1))
+# endif
+# if OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64
+#  define OPAL_ATOMIC_CMPSET(x, y, z) \
+    (opal_using_threads() ? opal_atomic_cmpset(x, y, z) : ((*(x) = (z)), 1))
+# endif
+#else
+# if OPAL_HAVE_ATOMIC_CMPSET_32
+#  define OPAL_ATOMIC_CMPSET_32(x, y, z) ((*(x) = (z)), 1)
+# endif
+# if OPAL_HAVE_ATOMIC_CMPSET_64
+#  define OPAL_ATOMIC_CMPSET_64(x, y, z) ((*(x) = (z)), 1)
+# endif
+# if OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64
+#  define OPAL_ATOMIC_CMPSET(x, y, z) ((*(x) = (z)), 1)
+# endif
 #endif
 
 END_C_DECLS
