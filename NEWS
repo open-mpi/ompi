@@ -64,11 +64,6 @@ Trunk (not on release branches yet)
   support a LAM/MPI-like protocol.
   --> Expected: 1.3
 
-- Fix 0 sized MPI_ALLOC_MEM requests.  Thanks to Lisandro Dalcin for
-  pointing out the problem.
-  --> Expected: 1.2.x
-- Fixed a segfault crash on large SMPs when doing collectives.
-  --> Expected: 1.2.4
 - Fix several problems with redirecting large files into mpirun's
   stdin.
   --> Expected 1.2.x
@@ -83,6 +78,9 @@ Trunk (not on release branches yet)
 1.2.4
 -----
 
+- Fix 0 sized MPI_ALLOC_MEM requests.  Thanks to Lisandro Dalcin for
+  pointing out the problem.
+- Fixed a segfault crash on large SMPs when doing collectives.
 - A variety of fixes for Cray XT3/4 class of machines.
 - Fixed which error handler is used when MPI_COMM_SELF is passed
   to MPI_COMM_FREE.  Thanks to Lisandro Dalcini for the bug report.
