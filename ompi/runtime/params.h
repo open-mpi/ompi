@@ -57,6 +57,16 @@ OMPI_DECLSPEC extern bool ompi_mpi_param_check;
 OMPI_DECLSPEC extern bool ompi_debug_show_handle_leaks;
 
 /**
+ * If > 0, show that many MPI_ALLOC_MEM leaks during MPI_FINALIZE.  If
+ * enabled, memory that was returned via MPI_ALLOC_MEM but was never
+ * freed via MPI_FREE_MEM will be displayed during MPI_FINALIZE.
+ *
+ * This is good debugging for user applications to find out if they
+ * are inadvertantly orphaning MPI "special" memory.
+ */
+OMPI_DECLSPEC extern int ompi_debug_show_mpi_alloc_mem_leaks;
+
+/**
  * Whether or not to actually free MPI handles when their
  * corresponding destructor is invoked.  If enabled, Open MPI will not
  * free handles, but will rather simply mark them as "freed".  Any

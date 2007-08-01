@@ -423,8 +423,6 @@ void mca_mpool_rdma_finalize(struct mca_mpool_base_module_t *mpool)
 
         if(reg->ref_count) {
             reg->ref_count = 0; /* otherway dereg will fail on assert */
-            opal_output(0, "%s Warning ! Found not released memory\n",
-                    ORTE_NAME_PRINT(orte_process_info.my_name));
         } else if (mca_mpool_rdma_component.leave_pinned) {
             opal_list_remove_item(&mpool_rdma->mru_list,
                     (opal_list_item_t*)reg);

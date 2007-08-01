@@ -44,6 +44,7 @@
  */
 bool ompi_mpi_param_check = true;
 bool ompi_debug_show_handle_leaks = false;
+int ompi_debug_show_mpi_alloc_mem_leaks = 0;
 bool ompi_debug_no_free_handles = false;
 bool ompi_mpi_show_mca_params = false;
 char *ompi_mpi_show_mca_params_file = NULL;
@@ -120,6 +121,14 @@ int ompi_mpi_register_params(void)
             opal_output(0, "WARNING: mpi_no_free_handles is therefore only partially effective!");
         }
     }
+
+    /* Whether or not to show MPI_ALLOC_MEM leaks */
+
+    mca_base_param_reg_int_name("mpi", "show_mpi_alloc_mem_leaks",
+                                "If >0, MPI_FINALIZE will show up to this many instances of memory allocated by MPI_ALLOC_MEM that was not freed by MPI_FREE_MEM",
+                                false, false, 
+                                ompi_debug_show_mpi_alloc_mem_leaks,
+                                &ompi_debug_show_mpi_alloc_mem_leaks);
 
     /* Whether or not to print all MCA parameters in MPI_INIT */
     mca_base_param_reg_int_name("mpi", "show_mca_params",

@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -28,3 +29,6 @@ libmca_mpool_la_SOURCES += \
         base/mpool_base_alloc.c \
         base/mpool_base_mem_cb.c \
 	base/mpool_base_tree.c
+
+dist_pkgdata_DATA += \
+        base/help-mpool-base.txt

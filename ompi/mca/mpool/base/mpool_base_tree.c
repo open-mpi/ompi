@@ -1,28 +1,42 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.5A
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
 /**
-  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
-  *                         University Research and Technology
-  *                         Corporation.  All rights reserved.
-  * Copyright (c) 2004-2006 The University of Tennessee and The University
-  *                         of Tennessee Research Foundation.  All rights
-  *                         reserved.
-  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
-  *                         University of Stuttgart.  All rights reserved.
-  * Copyright (c) 2004-2005 The Regents of the University of California.
-  *                         All rights reserved.5A
-  * $COPYRIGHT$
-  * 
-  * Additional copyrights may follow
-  * 
-  * $HEADER$
-  */
-/**
-  * @file
-  * Description of the Registration Cache framework
-  */
+ * @file
+ * Description of the Registration Cache framework
+ */
+
 #include "ompi_config.h"
+
 #include "opal/mca/mca.h"
+#include "opal/util/show_help.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/util/proc_info.h"
+#include "orte/util/sys_info.h"
+#include "ompi/runtime/params.h"
 #include "mpool_base_tree.h"
 
+
+static int num_leaks = 0;
+static char *leak_msg = NULL;
+
+static int condition(void *value);
+static void action(void *key, void *value);
 
 OBJ_CLASS_INSTANCE(mca_mpool_base_tree_item_t, ompi_free_list_item_t, NULL, NULL); 
 
@@ -114,4 +128,72 @@ mca_mpool_base_tree_item_t* mca_mpool_base_tree_item_get(void) {
 void mca_mpool_base_tree_item_put(mca_mpool_base_tree_item_t* item) { 
     OMPI_FREE_LIST_RETURN(&mca_mpool_base_tree_item_free_list,
                           &(item->super));
+}
+
+
+/*
+ * Print a show_help kind of message for an items still left in the
+ * tree
+ */
+void mca_mpool_base_tree_print(void)
+{
+    /* If they asked to show 0 leaks, then don't show anything.  */
+    if (0 == ompi_debug_show_mpi_alloc_mem_leaks) {
+        return;
+    }
+
+    num_leaks = 0;
+    ompi_rb_tree_traverse(&mca_mpool_base_tree, condition, action);
+
+    if (num_leaks <= ompi_debug_show_mpi_alloc_mem_leaks ||
+        ompi_debug_show_mpi_alloc_mem_leaks < 0) {
+        opal_show_help("help-mpool-base.txt", "all mem leaks",
+                       true, ORTE_NAME_PRINT(orte_process_info.my_name),
+                       orte_system_info.nodename,
+                       orte_process_info.pid, leak_msg);
+    } else {
+        int i = num_leaks - ompi_debug_show_mpi_alloc_mem_leaks;
+        opal_show_help("help-mpool-base.txt", "some mem leaks",
+                       true, ORTE_NAME_PRINT(orte_process_info.my_name),
+                       orte_system_info.nodename, 
+                       orte_process_info.pid, leak_msg, i,
+                       (i > 1) ? "s were" : " was",
+                       (i > 1) ? "are" : "is");
+    }
+    free(leak_msg);
+    leak_msg = NULL;
+}
+
+
+/* Condition function for rb traversal */
+static int condition(void *value)
+{
+    return 1;
+}
+
+
+/* Action function for rb traversal */
+static void action(void *key, void *value)
+{
+    char *tmp;
+    mca_mpool_base_tree_item_t *item = (mca_mpool_base_tree_item_t *) value;
+
+    if (++num_leaks <= ompi_debug_show_mpi_alloc_mem_leaks ||
+        ompi_debug_show_mpi_alloc_mem_leaks < 0) {
+
+        /* We know that we're supposed to make the first one; check on
+           successive items if we're supposed to catenate more
+           notices. */
+        if (NULL == leak_msg) {
+            asprintf(&leak_msg, "    %lu bytes at address 0x%lx",
+                     (unsigned long) item->num_bytes,
+                     (unsigned long) key);
+        } else {
+            asprintf(&tmp, "%s\n    %lu bytes at address 0x%lx",
+                     leak_msg, (unsigned long) item->num_bytes,
+                     (unsigned long) key);
+            free(leak_msg);
+            leak_msg = tmp;
+        }
+    }
 }

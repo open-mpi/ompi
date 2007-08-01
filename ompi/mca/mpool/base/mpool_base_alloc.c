@@ -124,6 +124,7 @@ void *mca_mpool_base_alloc(size_t size, ompi_info_t *info)
     if(!mpool_tree_item)
         goto out;
 
+    mpool_tree_item->num_bytes = size;
     mpool_tree_item->count = 0;
     
     if(&ompi_mpi_info_null == info)
