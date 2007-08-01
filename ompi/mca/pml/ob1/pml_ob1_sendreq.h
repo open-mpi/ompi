@@ -192,7 +192,9 @@ do {                                                                            
         sendreq->req_send.req_base.req_pml_complete = true;                             \
                                                                                         \
         if( sendreq->req_send.req_base.req_free_called ) {                              \
-            MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );                                 \
+            /* don't free request if other thread running schedule */                   \
+            if(OPAL_THREAD_ADD32(&sendreq->req_lock, 1) == 1)                           \
+                MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );                             \
         }                                                                               \
         OPAL_THREAD_UNLOCK(&ompi_request_lock);                                         \
     } while (0)
@@ -222,12 +224,12 @@ static inline void mca_pml_ob1_send_request_schedule(
  */
 
 #define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                        \
-    {                                                                   \
+    do {                                                                \
     /*  Let the base handle the reference counts */                     \
     MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));             \
     OMPI_FREE_LIST_RETURN( &mca_pml_base_send_requests,                 \
                            (ompi_free_list_item_t*)sendreq);            \
-    }
+    } while(0)
 
 /**
  *  Start the specified request
