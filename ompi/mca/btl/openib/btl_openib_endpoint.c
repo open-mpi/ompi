@@ -181,12 +181,18 @@ static int btl_openib_acquire_send_resources(
     return OMPI_SUCCESS;
 }
 
+#define GET_CREDITS(FROM, TO)                                        \
+            do {                                                     \
+                TO = FROM;                                           \
+            } while(0 == OPAL_ATOMIC_CMPSET_32(&FROM, TO, 0))
+
 /* this function os called with endpoint->endpoint_lock held */
 static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* openib_btl, 
                                                     mca_btl_openib_endpoint_t * endpoint, 
                                                     mca_btl_openib_frag_t * frag)
 { 
     int do_rdma = 0, qp, ib_rc;
+    int32_t cm_return;
     
     frag->sg_entry.addr = (unsigned long) frag->hdr;
    
@@ -204,31 +210,27 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
                 &do_rdma) == OMPI_ERR_OUT_OF_RESOURCE)
         return OMPI_SUCCESS;
 
-    if(BTL_OPENIB_EAGER_RDMA_QP(qp) && endpoint->eager_rdma_local.credits > 0) {
-        frag->hdr->credits = endpoint->eager_rdma_local.credits;
-        OPAL_THREAD_ADD32(&endpoint->eager_rdma_local.credits,
-                          -frag->hdr->credits);
-        frag->hdr->credits |= BTL_OPENIB_RDMA_CREDITS_FLAG;
-    } else if(MCA_BTL_OPENIB_PP_QP == endpoint->qps[qp].qp_type &&
-            endpoint->qps[qp].u.pp_qp.rd_credits > 0) {
-            frag->hdr->credits = endpoint->qps[qp].u.pp_qp.rd_credits;
-            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_credits, -frag->hdr->credits);
-    } else {
-        frag->hdr->credits = 0;
+    frag->hdr->credits = 0;
+    if(BTL_OPENIB_EAGER_RDMA_QP(qp)) {
+        GET_CREDITS(endpoint->eager_rdma_local.credits, frag->hdr->credits);
+        if(frag->hdr->credits)
+            frag->hdr->credits |= BTL_OPENIB_RDMA_CREDITS_FLAG;
+    } 
+    if(MCA_BTL_OPENIB_PP_QP == endpoint->qps[qp].qp_type &&
+            0 == frag->hdr->credits) {
+        GET_CREDITS(endpoint->qps[qp].u.pp_qp.rd_credits, frag->hdr->credits);
     }
 
-    if(endpoint->qps[qp].u.pp_qp.cm_return) {
-        /* cm_seen is only 8 bytes, but cm_return is 32 bytes */
-        if(endpoint->qps[qp].u.pp_qp.cm_return > 255)
-            frag->hdr->cm_seen = 255;
-        else
-            frag->hdr->cm_seen = endpoint->qps[qp].u.pp_qp.cm_return;
-        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_return,
-                -frag->hdr->cm_seen);
+    GET_CREDITS(endpoint->qps[qp].u.pp_qp.cm_return, cm_return);
+    /* cm_seen is only 8 bytes, but cm_return is 32 bytes */
+    if(cm_return > 255) {
+        frag->hdr->cm_seen = 255;
+        cm_return -= 255;
+        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_return, cm_return);
     } else {
-        frag->hdr->cm_seen = 0;
+        frag->hdr->cm_seen = cm_return;
     }
-    
+
     ib_rc = post_send(openib_btl, endpoint, frag, qp, do_rdma); 
     if(ib_rc) {
         if(endpoint->nbo) { 
@@ -1293,6 +1295,7 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     mca_btl_openib_frag_t* frag;
     mca_btl_openib_rdma_credits_header_t *credits_hdr;
     int do_rdma = 0, ib_rc;
+    int32_t cm_return;
 
     frag = endpoint->qps[qp].credit_frag;
 
@@ -1328,29 +1331,21 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     frag->endpoint = endpoint;
 
     frag->hdr->tag = MCA_BTL_TAG_BTL;
-    /* send credits for high/low prios */
-    if(endpoint->qps[qp].u.pp_qp.rd_credits > 0) {
-        frag->hdr->credits = endpoint->qps[qp].u.pp_qp.rd_credits;
-        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_credits, -frag->hdr->credits);
-        
+    GET_CREDITS(endpoint->qps[qp].u.pp_qp.rd_credits, frag->hdr->credits);
+
+    GET_CREDITS(endpoint->qps[qp].u.pp_qp.cm_return, cm_return);
+    if(cm_return > 255) {
+        frag->hdr->cm_seen = 255;
+        cm_return -= 255;
+        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_return, cm_return);
     } else {
-        frag->hdr->credits = 0;
-    }
-    if(endpoint->qps[qp].u.pp_qp.cm_return) {
-        frag->hdr->cm_seen = endpoint->qps[qp].u.pp_qp.cm_return;
-        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_return,
-                -frag->hdr->cm_seen);
-    } else {
-        frag->hdr->cm_seen = 0;
+        frag->hdr->cm_seen = cm_return;
     }
 
-    /* send eager RDMA credits only for high prio */
-    if(BTL_OPENIB_EAGER_RDMA_QP(qp) && endpoint->eager_rdma_local.credits > 0) {
-        credits_hdr->rdma_credits = endpoint->eager_rdma_local.credits;
-        OPAL_THREAD_ADD32(&endpoint->eager_rdma_local.credits,
-                -credits_hdr->rdma_credits);
-    } else {
-        credits_hdr->rdma_credits = 0;
+    /* send eager RDMA credits only for eager RDMA QP */
+    if(BTL_OPENIB_EAGER_RDMA_QP(qp)) {
+        GET_CREDITS(endpoint->eager_rdma_local.credits,
+                credits_hdr->rdma_credits);
     }
     credits_hdr->control.type = MCA_BTL_OPENIB_CONTROL_CREDITS;
 
