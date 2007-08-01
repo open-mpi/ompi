@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.
  *                         All rights reserved. 
+ * Copyright (c) 2007      Voltaire. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -100,7 +102,8 @@ OPAL_DECLSPEC  int opal_argv_append_nosize(char ***argv, const char *arg);
 OPAL_DECLSPEC  void opal_argv_free(char **argv);
   
   /**
-   * Split a string into a NULL-terminated argv array.
+   * Split a string into a NULL-terminated argv array. Do not include empty 
+   * strings in result array.
    *
    * @param src_string Input string.
    * @param delimiter Delimiter character.
@@ -114,6 +117,23 @@ OPAL_DECLSPEC  void opal_argv_free(char **argv);
    * without invalidating the output argv).
    */
 OPAL_DECLSPEC  char **opal_argv_split(const char *src_string, int delimiter) __opal_attribute_warn_unused_result__;
+
+  /**
+   * Split a string into a NULL-terminated argv array. Include empty 
+   * strings in result array.
+   *
+   * @param src_string Input string.
+   * @param delimiter Delimiter character.
+   *
+   * @retval argv pointer to new argv array on success
+   * @retval NULL on error
+   *
+   * All strings are insertted into the argv array by value; the
+   * newly-allocated array makes no references to the src_string
+   * argument (i.e., it can be freed after calling this function
+   * without invalidating the output argv).
+   */
+OPAL_DECLSPEC  char **opal_argv_split_with_empty(const char *src_string, int delimiter) __opal_attribute_warn_unused_result__;
 
   /**
    * Return the length of a NULL-terminated argv array.
