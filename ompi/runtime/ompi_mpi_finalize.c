@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006      University of Houston. All rights reserved.
@@ -78,6 +78,8 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/rcache/base/base.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
+#include "ompi/runtime/params.h"
+#include "ompi/mca/mpool/base/mpool_base_tree.h"
 
 #if OPAL_ENABLE_FT == 1
 #include "ompi/mca/crcp/crcp.h"
@@ -198,6 +200,12 @@ int ompi_mpi_finalize(void)
     /* free requests */
     if (OMPI_SUCCESS != (ret = ompi_request_finalize())) {
 	return ret;
+    }
+
+    /* If requested, print out a list of memory allocated by ALLOC_MEM
+       but not freed by FREE_MEM */
+    if (0 != ompi_debug_show_mpi_alloc_mem_leaks) {
+        mca_mpool_base_tree_print();
     }
 
     /* Now that all MPI objects dealing with communications are gone,
