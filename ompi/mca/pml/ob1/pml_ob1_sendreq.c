@@ -113,7 +113,9 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
                              &(sendreq->req_send.req_base), PERUSE_SEND );
 
     if( true == sendreq->req_send.req_base.req_pml_complete ) {
-        MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );
+        /* don't free request if other thread running schedule */
+        if(OPAL_THREAD_ADD32(&sendreq->req_lock, 1) == 1)
+            MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );
     }
 
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
@@ -948,10 +950,15 @@ int mca_pml_ob1_send_request_schedule_exclusive(
                 }
 
                 item = opal_list_get_first(&sendreq->req_send_ranges);
-                OPAL_THREAD_UNLOCK(&sendreq->req_send_range_lock);
 
-                if(opal_list_get_end(&sendreq->req_send_ranges) == item)
+                if(opal_list_get_end(&sendreq->req_send_ranges) == item) {
+                    /* nothing to schedule any more. Exit the outer loop ASAP */
+                    OPAL_ATOMIC_CMPSET_32(&sendreq->req_lock,
+                            sendreq->req_lock, 1);
+                    OPAL_THREAD_UNLOCK(&sendreq->req_send_range_lock);
                     break;
+                }
+                OPAL_THREAD_UNLOCK(&sendreq->req_send_range_lock);
 
                 range = (mca_pml_ob1_send_range_t*)item;
                 prev_bytes_remaining = 0;
@@ -1054,6 +1061,15 @@ int mca_pml_ob1_send_request_schedule_exclusive(
             }
             mca_bml.bml_progress();
         }
+        OPAL_THREAD_LOCK(&ompi_request_lock);
+        if(sendreq->req_send.req_base.req_free_called &&
+                sendreq->req_send.req_base.req_pml_complete) {
+            /* if request already completed and freed put it on a free list */
+            MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );
+            OPAL_THREAD_UNLOCK(&ompi_request_lock);
+            return MPI_SUCCESS;
+        }
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     } while (OPAL_THREAD_ADD32(&sendreq->req_lock,-1) > 0);
 
     return OMPI_SUCCESS;
