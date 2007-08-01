@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,6 +48,18 @@ int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
                                           FUNC_NAME);
         }
+    }
+    
+    /* Per these threads:
+
+         http://www.open-mpi.org/community/lists/devel/2007/07/1977.php 
+         http://www.open-mpi.org/community/lists/devel/2007/07/1979.php         
+
+       If you call MPI_ALLOC_MEM with a size of 0, you get NULL
+       back .*/
+    if (0 == size) {
+        *((void **) baseptr) = NULL;
+        return MPI_SUCCESS;
     }
     
     *((void **) baseptr) = mca_mpool_base_alloc((size_t) size, info);
