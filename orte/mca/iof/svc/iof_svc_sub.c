@@ -212,6 +212,32 @@ void orte_iof_svc_sub_ack(
                 last_ack_forwarded = sub->last_ack_forwarded;
             }
         }
+        opal_output(orte_iof_base.iof_output,
+                    "ack: has_beed_acked: %d, last forwarded %d",
+                    has_been_acked, last_ack_forwarded);
+
+        /* If the subscription has a local endpoint and the ACK is
+           coming from this process, then update the seq_min
+           calculation */
+        if (NULL != sub->sub_endpoint &&
+            0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL,
+                                        orte_process_info.my_name, peer)) {
+            if (do_close) {
+                /* JMS what to do here?  Need to set sub->sub_endpoint
+                   to NULL.  Have similar leak for do_close for
+                   streams.  See ticket #1048. */
+                sub->sub_endpoint = NULL;
+                opal_output(orte_iof_base.iof_output,
+                            "ack: CLOSED local ack to %u", value.uval);
+            } else {
+                value.uval = hdr->msg_seq + hdr->msg_len;
+                opal_output(orte_iof_base.iof_output,
+                            "ack: local ack to %u", value.uval);
+                if (value.uval < seq_min) {
+                    seq_min = value.uval;
+                }
+            }
+        }
 
         /* Find the minimum amount ack'ed by all the origins (or,
            technically speaking, ack'ed by their proxies on their
@@ -282,13 +308,20 @@ void orte_iof_svc_sub_ack(
 
     /* If everyone has ACK'ed, then push the ACK up to the original
        message's proxy */
-    if(seq_min == hdr->msg_seq+hdr->msg_len) {
+    if (seq_min == hdr->msg_seq+hdr->msg_len) {
         /* If the original message was initiated from this process,
            then the ACK delivery is local. */
-        if(orte_ns.compare_fields(ORTE_NS_CMP_ALL,orte_process_info.my_name,&hdr->msg_origin) == 0) {
+        if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL,
+                                        orte_process_info.my_name,
+                                        &hdr->msg_origin) ||
+            0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL,
+                                        orte_process_info.my_name,
+                                        &hdr->msg_proxy)) {
             orte_iof_base_endpoint_t* endpoint;
-            endpoint = orte_iof_base_endpoint_match(&hdr->msg_origin, ORTE_NS_CMP_ALL, hdr->msg_tag);
-            if(endpoint != NULL) {
+            endpoint = orte_iof_base_endpoint_match(&hdr->msg_origin, 
+                                                    ORTE_NS_CMP_ALL, 
+                                                    hdr->msg_tag);
+            if (NULL != endpoint) {
                 opal_output(orte_iof_base.iof_output,
                             "ack: forwarding ack locally: %u", seq_min);
                 orte_iof_base_endpoint_ack(endpoint, seq_min);
@@ -426,11 +459,13 @@ int orte_iof_svc_sub_forward(
         orte_iof_svc_pub_t* pub = fwd->fwd_pub;
         int rc;
 
-        if(pub->pub_endpoint != NULL) {
+        if (NULL != pub->pub_endpoint) {
+            opal_output(orte_iof_base.iof_output, "sub_forward: forwarding to pub local endpoint");
             rc = orte_iof_base_endpoint_forward(pub->pub_endpoint,src,hdr,data);
         } else {
             /* forward */
             orte_iof_base_frag_t* frag;
+            opal_output(orte_iof_base.iof_output, "sub_forward: forwarding to pub stream / remote endpoint");
             ORTE_IOF_BASE_FRAG_ALLOC(frag,rc);
             frag->frag_hdr.hdr_msg = *hdr;
             frag->frag_len = frag->frag_hdr.hdr_msg.msg_len;
@@ -449,12 +484,13 @@ int orte_iof_svc_sub_forward(
                 orte_iof_svc_sub_send_cb,
                 frag);
         }
-        if(rc != ORTE_SUCCESS) {
+        if (ORTE_SUCCESS != rc) {
             return rc;
         }
         *forward = true;
     }
-    if(sub->sub_endpoint != NULL) {
+    if (NULL != sub->sub_endpoint) {
+        opal_output(orte_iof_base.iof_output, "sub_forward: forwarding to sub local endpoint");
         *forward = true;
         return orte_iof_base_endpoint_forward(sub->sub_endpoint,src,hdr,data); 
     }
