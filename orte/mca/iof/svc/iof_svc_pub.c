@@ -36,8 +36,8 @@ int orte_iof_svc_pub_create(
         item != opal_list_get_end(&mca_iof_svc_component.svc_published);
         item =  opal_list_get_next(item)) {
         pub = (orte_iof_svc_pub_t*)item;
-        if(orte_ns.compare_fields(pub_mask,pub_name,&pub->pub_name) == 0 &&
-           orte_ns.compare_fields(ORTE_NS_CMP_ALL,pub_proxy,&pub->pub_proxy) == 0 &&
+        if(ORTE_EQUAL == orte_ns.compare_fields(pub_mask,pub_name,&pub->pub_name) &&
+           ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL,pub_proxy,&pub->pub_proxy) &&
            pub_tag == pub->pub_tag) {
            OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
            return ORTE_SUCCESS;
@@ -89,8 +89,8 @@ orte_iof_svc_pub_t* orte_iof_svc_pub_lookup(
         item != opal_list_get_end(&mca_iof_svc_component.svc_published);
         item =  opal_list_get_next(item)) {
         orte_iof_svc_pub_t* pub = (orte_iof_svc_pub_t*)item;
-        if (orte_ns.compare_fields(ORTE_NS_CMP_ALL, &pub->pub_name,pub_name) == 0 &&
-            orte_ns.compare_fields(ORTE_NS_CMP_ALL, &pub->pub_proxy,pub_proxy) == 0 &&
+        if (ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &pub->pub_name,pub_name) &&
+            ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &pub->pub_proxy,pub_proxy) &&
             pub->pub_mask == pub_mask &&
             pub->pub_tag == pub_tag) {
             return pub;
@@ -150,8 +150,8 @@ void orte_iof_svc_pub_delete_all(
         opal_list_item_t* p_next = opal_list_get_next(p_item);
         orte_iof_svc_pub_t* pub = (orte_iof_svc_pub_t*)p_item;
 
-        if (orte_ns.compare_fields(ORTE_NS_CMP_ALL, &pub->pub_name,name) == 0 ||
-            orte_ns.compare_fields(ORTE_NS_CMP_ALL, &pub->pub_proxy,name) == 0) {
+        if (ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &pub->pub_name,name) ||
+            ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &pub->pub_proxy,name)) {
 
             opal_list_item_t* s_item;
             for(s_item  = opal_list_get_first(&mca_iof_svc_component.svc_subscribed);
