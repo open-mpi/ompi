@@ -463,16 +463,19 @@ int btl_openib_register_mca_params(void)
     return ret;
 }
 
+static int32_t atoi_param(char *param, int32_t dflt)
+{
+    if(NULL == param || '\0' == param[0])
+        return dflt ? dflt : 1;
+
+    return atoi(param);
+}
 
 static int mca_btl_openib_mca_setup_qps(void) { 
     /* All the multi-qp stuff.. */
     char *str;
     char **queues, **params = NULL;
     int num_pp_qps = 0, num_srq_qps = 0, qp = 0, ret = OMPI_ERROR;
-    /* char *default_qps = "P,128,32,16,20;P,256,16,8,14;P,4096,8,6,4;P,65536,8,6,4"; */
-    /* char *default_qps = "P,128,8,4;P,1024,8,4;P,4096,8,4;P,65536,8,2"; */
-    /* char *default_qps = "P,4096,16,4;P,65536,16,2"; */
-    /*     char *default_qps = "P,128,16,4;S,1024,256,128,32;S,4096,256,128,32;S,65536,256,128,32"; */
     char *default_qps = "P,128,16,4;S,1024,256,128,32;S,4096,256,128,32;S,65536,256,128,32";
     uint32_t max_qp_size, max_size_needed;
     
@@ -509,27 +512,32 @@ static int mca_btl_openib_mca_setup_qps(void) {
                 mca_btl_openib_component.num_qps);
     
     qp = 0;
+#define P(N) (((N) > count)?NULL:params[(N)])
     while(queues[qp] != NULL) { 
-        int rd_win, i = 0;
-        params = opal_argv_split(queues[qp], ',');
+        uint32_t tmp;
+        int i = 0, count;
+        params = opal_argv_split_with_empty(queues[qp], ',');
+        count = opal_argv_count(params);
 
         if(params[0][0] == 'P') {
-            if(opal_argv_count(params) != 4) {
+            if(count < 2 || count > 6) {
                 opal_output(0, "Wrong QP specification (QP %d \"%s\"). "
-                        "Point-to-point QP get 3 parameters\n", qp, queues[qp]);
+                        "Point-to-point QP get 1-5 parameters\n", qp, queues[qp]);
                 goto error;
             }
-            mca_btl_openib_component.qp_infos[qp].size = atoi(params[1]);
-            mca_btl_openib_component.qp_infos[qp].rd_num = atoi(params[2]);
-            mca_btl_openib_component.qp_infos[qp].rd_low = atoi(params[3]);
-            /* mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win = atoi(params[4]); */
-            rd_win = (mca_btl_openib_component.qp_infos[qp].rd_low >> 1);
-            mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win = rd_win > 0  ? rd_win : 1;
-                        
-            mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv =
-                ((mca_btl_openib_component.qp_infos[qp].rd_num << 1) - 1)/
+            mca_btl_openib_component.qp_infos[qp].size = atoi_param(P(1), 0);
+            mca_btl_openib_component.qp_infos[qp].rd_num = atoi_param(P(2), 8);
+            tmp = mca_btl_openib_component.qp_infos[qp].rd_num >> 1;
+            mca_btl_openib_component.qp_infos[qp].rd_low =
+                atoi_param(P(3), tmp);
+            tmp = (mca_btl_openib_component.qp_infos[qp].rd_low >> 1);
+            mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win =
+                atoi_param(P(4), tmp);
+            tmp = ((mca_btl_openib_component.qp_infos[qp].rd_num << 1) - 1)/
                 mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win;
-            opal_output(mca_btl_base_output, "pp: rd_num is %d \t rd_low is %d \t rd_win %d \t rd_rsv %d \n", 
+            mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv =
+                atoi_param(P(5), tmp);
+            opal_output(mca_btl_base_output, "pp: rd_num is %d\trd_low is %d\trd_win %d\trd_rsv %d \n", 
                         mca_btl_openib_component.qp_infos[qp].rd_num, 
                         mca_btl_openib_component.qp_infos[qp].rd_low,
                         mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win, 
@@ -538,19 +546,32 @@ static int mca_btl_openib_mca_setup_qps(void) {
             
             mca_btl_openib_component.qp_infos[qp].type = MCA_BTL_OPENIB_PP_QP;
         } else if(params[0][0] =='S') { 
-            if(opal_argv_count(params) != 5) {
+            if(count < 2 || count > 5) {
                 opal_output(0, "Wrong QP specification (QP %d \"%s\"). "
-                        "Shared QP get 4 parameters\n", qp, queues[qp]);
+                        "Shared QP get 1-4 parameters\n", qp, queues[qp]);
                 goto error;
             }
-            mca_btl_openib_component.qp_infos[qp].size = atoi(params[1]);
-            mca_btl_openib_component.qp_infos[qp].rd_num = atoi(params[2]);
-            mca_btl_openib_component.qp_infos[qp].rd_low = atoi(params[3]);
-            mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max = atoi(params[4]);
-            opal_output(mca_btl_base_output, "srq: rd_num is %d \t rd_low is %d\n", 
+            mca_btl_openib_component.qp_infos[qp].size = atoi_param(P(1), 0);
+            mca_btl_openib_component.qp_infos[qp].rd_num = atoi_param(P(2), 16);
+            tmp = mca_btl_openib_component.qp_infos[qp].rd_num >> 1;
+            mca_btl_openib_component.qp_infos[qp].rd_low =
+                atoi_param(P(3), tmp);
+            tmp = mca_btl_openib_component.qp_infos[qp].rd_low >> 2;
+            mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max =
+                atoi_param(P(4), tmp);
+            opal_output(mca_btl_base_output, "srq: rd_num is %d\trd_low is %d\tsd_max is %d\n", 
                         mca_btl_openib_component.qp_infos[qp].rd_num, 
-                        mca_btl_openib_component.qp_infos[qp].rd_low);
+                        mca_btl_openib_component.qp_infos[qp].rd_low,
+                        mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max);
             mca_btl_openib_component.qp_infos[qp].type = MCA_BTL_OPENIB_SRQ_QP;
+        }
+
+        if(mca_btl_openib_component.qp_infos[qp].rd_num <=
+                mca_btl_openib_component.qp_infos[qp].rd_low) {
+            opal_output(0, "Wrong QP specification (QP %d \"%s\"). "
+                        "rd_num should be bigger than rd_low\n", qp,
+                        queues[qp]);
+            goto error;
         }
         while(params[i] != NULL)
             free(params[i++]);
