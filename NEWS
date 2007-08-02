@@ -71,13 +71,12 @@ Trunk (not on release branches yet)
   from the same vendor.  Thanks to Ake Sandgren for the bug
   report.
   --> Expected 1.2.x
-- Portals MTL
-  --> Expected 1.2.x
 
 
 1.2.4
 -----
 
+- Added a Portals MTL.
 - Fix 0 sized MPI_ALLOC_MEM requests.  Thanks to Lisandro Dalcin for
   pointing out the problem.
 - Fixed a segfault crash on large SMPs when doing collectives.
