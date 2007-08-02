@@ -29,6 +29,7 @@ version 1.0.
 1.2.4
 -----
 
+- Added a Portals MTL.
 - Fix 0 sized MPI_ALLOC_MEM requests.  Thanks to Lisandro Dalcin for
   pointing out the problem.
 - Fixed a segfault crash on large SMPs when doing collectives.
