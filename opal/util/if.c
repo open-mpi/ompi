@@ -933,8 +933,6 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
     error = getaddrinfo(if_addr, NULL, &hints, &res);
 
     if (error) {
-        opal_output (0, "opal_ifaddrtoname: unable to resolve %s [Error: %s]\n",
-                     if_addr, gai_strerror (error));
         freeaddrinfo (res);
         return OPAL_ERR_NOT_FOUND;
     }
@@ -971,7 +969,6 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
     if(INADDR_NONE == inaddr) {
         h = gethostbyname(if_addr);
         if(0 == h) {
-            opal_output(0,"opal_ifaddrtoname: unable to resolve %s\n", if_addr);
             return OPAL_ERR_NOT_FOUND;
         }
         memcpy(&inaddr, h->h_addr, sizeof(inaddr));
@@ -1179,35 +1176,13 @@ opal_ifislocal(const char *hostname)
 #if OPAL_WANT_IPV6
     char addrname[NI_MAXHOST]; /* should be larger than ADDRLEN, but I think
                                   they really mean IFNAMESIZE */
-    struct addrinfo hints, *res = NULL;
-    int error;
 #else
     char addrname[ADDRLEN + 1];
-    struct hostent *h;
 #endif
 
-    /* opal_ifaddrtoname will complain (rightly) if hostname is not
-       resolveable.  check to make sure it's resolveable.  If not,
-       definitely not local... */
-#if OPAL_WANT_IPV6
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = PF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    error = getaddrinfo(hostname, NULL, &hints, &res);
-    if (NULL != res) {
-       freeaddrinfo (res);
-    }
-    if (error) {
-        return false;
-    }
-#else
-    h = gethostbyname(hostname);
-    if (NULL == h) return false;
-#endif
     ret = opal_ifaddrtoname(hostname, addrname, ADDRLEN);
-    if (OPAL_SUCCESS == ret) return true;
 
-    return false;
+    return (OPAL_SUCCESS == ret) ? true : false;
 }
 
 
