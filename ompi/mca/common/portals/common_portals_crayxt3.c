@@ -61,20 +61,43 @@ ompi_common_portals_initialize(void)
 int
 ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle)
 {
+    ptl_interface_t ni_iface = PTL_IFACE_DEFAULT;
+    int max_interfaces;
+    int launcher;
     int ret;
+
+    launcher = cnos_launcher();
+
+    /*
+     * If we use the YOD launcher we can use the default interface
+     * otherwise we need to use the SeaStar Bridged interface (for CNL/APRUN)
+     */
+    if( launcher != CNOS_LAUNCHER_YOD ) {
+        ni_iface = IFACE_FROM_BRIDGE_AND_NALID(PTL_BRIDGE_UK,PTL_IFACE_SS);
+    }
+
+    /*
+     * Initialize Portals interface
+     */
+    ret = PtlInit(&max_interfaces);
+    if (PTL_OK != ret) {
+        opal_output(0, "%5d: PtlInit failed, returning %d\n", 
+                    cnos_get_rank(), ret);
+        return OMPI_ERR_NOT_AVAILABLE;
+    }
 
     /*
      * Initialize a network device
      */
-    ret = PtlNIInit(PTL_IFACE_DEFAULT, /* interface to initialize */
+    ret = PtlNIInit(ni_iface,          /* interface to initialize */
                     PTL_PID_ANY,       /* let library assign our pid */
                     NULL,              /* no desired limits */
                     NULL,              /* actual limits */
                     ni_handle          /* our interface handle */
                     );
     if (PTL_OK != ret && PTL_IFACE_DUP != ret) {
-        opal_output(0, "%5d: PtlNIInit failed, returning %d\n", 
-                    cnos_get_rank(), ret);
+        opal_output(0, "%5d: PtlNIInit failed, returning %d (%s : %d)\n", 
+                    cnos_get_rank(), ret, __FILE__, __LINE__);
         return OMPI_ERROR;
     }
 
