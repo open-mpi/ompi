@@ -43,18 +43,23 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
     struct stat buf;
     char **parts, *tmp;
     int i, len;
+    int ret;
 
     if (NULL == path) { /* protect ourselves from errors */
         return(OPAL_ERROR);
     }
 
-    if (0 == stat(path, &buf)) { /* already exists */
+    if (0 == (ret = stat(path, &buf))) { /* already exists */
         if (mode == (mode & buf.st_mode)) { /* has correct mode */
             return(OPAL_SUCCESS);
         }
-        if (0 == chmod(path, (buf.st_mode | mode))) { /* successfully change mode */
+        if (0 == (ret = chmod(path, (buf.st_mode | mode)))) { /* successfully change mode */
             return(OPAL_SUCCESS);
         }
+        opal_output(0,
+                    "opal_os_dirpath_create: "
+                    "Error: Unable to create directory (%s), unable to set the correct mode [%d]\n",
+                    path, ret);
         return(OPAL_ERROR); /* can't set correct mode */
     }
 
@@ -138,9 +143,12 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
 
         /* Now that we finally have the name to check, check it.
            Create it if it doesn't exist. */
-
-        if (0 != stat(tmp, &buf)) {
-            if (0 != mkdir(tmp, mode) && 0 != stat(tmp, &buf)) { 
+        if (0 != (ret = stat(tmp, &buf)) ) {
+            if (0 != (ret = mkdir(tmp, mode) && 0 != stat(tmp, &buf))) { 
+                opal_output(0,
+                            "opal_os_dirpath_create: "
+                            "Error: Unable to create the sub-directory (%s) of (%s), mkdir failed [%d]\n",
+                            tmp, path, ret);
                 opal_argv_free(parts);
                 free(tmp);
                 return OPAL_ERROR;
