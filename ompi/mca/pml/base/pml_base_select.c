@@ -224,14 +224,6 @@ int mca_pml_base_select(bool enable_progress_threads,
     }
 #endif
 
-    /* This base function closes, unloads, and removes from the
-       available list all unselected components.  The available list will
-       contain only the selected component. */
-
-    mca_base_components_close(mca_pml_base_output, 
-                              &mca_pml_base_components_available, 
-                              (mca_base_component_t *) best_component);
-    
     /* Save the winner */
 
     mca_pml_base_selected_component = *best_component;
@@ -240,6 +232,14 @@ int mca_pml_base_select(bool enable_progress_threads,
                          "select: component %s selected",
                          best_component->pmlm_version.mca_component_name );
 
+    /* This base function closes, unloads, and removes from the
+       available list all unselected components.  The available list will
+       contain only the selected component. */
+
+    mca_base_components_close(mca_pml_base_output, 
+                              &mca_pml_base_components_available, 
+                              (mca_base_component_t *) best_component);
+    
 #if OPAL_ENABLE_FT == 1
     /* If we have a wrapper then initalize it */
     if( NULL != wrapper_component ) {
