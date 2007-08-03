@@ -54,6 +54,8 @@ typedef enum {
  *  Base type for PML P2P requests 
  */
 struct mca_pml_base_request_t {
+
+/* START: These fields have to match the definition of the mca_pml_cm_request_t */
     ompi_request_t req_ompi;              /**< base request */
     volatile bool req_pml_complete;       /**< flag indicating if the pt-2-pt layer is done with this request */
     mca_pml_base_request_type_t req_type; /**< MPI request type - used for test */
@@ -61,6 +63,8 @@ struct mca_pml_base_request_t {
     struct ompi_datatype_t *req_datatype; /**< pointer to data type */
     volatile bool req_free_called;        /**< flag indicating if the user has freed this request */
     ompi_convertor_t req_convertor;       /**< always need the convertor */
+/* END: These field have to match the definition of the mca_pml_cm_request_t */
+
     void *req_addr;                       /**< pointer to application buffer */
     size_t req_count;                     /**< count of user datatype elements */
     int32_t req_peer;                     /**< peer process - rank w/in this communicator */
