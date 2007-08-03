@@ -18,6 +18,7 @@
 
 #ifdef HAVE_CNOS_PM_BARRIER
 #include <catamount/cnos_mpi_os.h>
+#include <portals/portals3.h>
 #endif
 
 #include "orte/orte_constants.h"
@@ -79,14 +80,88 @@ static int orte_rmgr_cnos_open(void)
 
 static orte_rmgr_base_module_t *orte_rmgr_cnos_init(int* priority)
 {
+    ptl_interface_t ni_iface = PTL_IFACE_DEFAULT;
+    ptl_handle_ni_t ni_handle;
+    int ret, max_interfaces;
+    ptl_process_id_t ptl_process_id;
+    int launcher;
+
     /* set a priority higher than the proxy component */
     *priority = 10;
 
+    launcher = cnos_launcher();
+
+    /*
+     * If we use the YOD launcher we can use the default interface
+     * otherwise we need to use the SeaStar Bridged interface (for CNL/APRUN)
+     */
+    if( launcher != CNOS_LAUNCHER_YOD ) {
+        ni_iface = IFACE_FROM_BRIDGE_AND_NALID(PTL_BRIDGE_UK,PTL_IFACE_SS);
+    }
+
+    /*
+     * Initialize Portals interface
+     */
+    ret = PtlInit(&max_interfaces);
+    if (PTL_OK != ret) {
+        opal_output(0, "%5d: PtlInit failed, returning %d\n", 
+                    cnos_get_rank(), ret);
+        return NULL;
+    }
+
+    /*
+     * Initialize a network device
+     */
+    ret = PtlNIInit(ni_iface,          /* interface to initialize */
+                    PTL_PID_ANY,       /* let library assign our pid */
+                    NULL,              /* no desired limits */
+                    NULL,              /* actual limits */
+                    &ni_handle         /* our interface handle */
+                    );
+    if (PTL_OK != ret && PTL_IFACE_DUP != ret) {
+        opal_output(0, "%5d: PtlNIInit failed, returning %d [%s : %d]\n", 
+                    cnos_get_rank(), ret, __FILE__, __LINE__);
+        return NULL;
+    }
+
+    /*
+     * Initialize the Barrier
+     * Note: No return value, assume success
+     */
+    cnos_barrier_init(ni_handle);
+
+    /*
+     * Register the ptl_process_id if *not* using yod.
+     * If you do *not* do this before calling the barrier it will hang forever.
+     */
+    if( launcher != CNOS_LAUNCHER_YOD ) {
+        ret = PtlGetId(ni_handle, &ptl_process_id);
+        if( PTL_OK != ret ) {
+            opal_output(0, "%5d: PtlGetId failed, returning %d\n",
+                        cnos_get_rank(), ret);
+            return NULL;
+        }
+
+        ret = cnos_register_ptlid(ptl_process_id);
+        if( PTL_OK != ret ) {
+            opal_output(0, "%5d: cnos_register_ptlid failed, returning %d\n",
+                        cnos_get_rank(), ret);
+            return NULL;
+        }
+    }
+
 #ifdef HAVE_CNOS_PM_BARRIER
-    /* register with the process manager so that everyone aborts if
-       any one process aborts.  This is a bit slower than it needs to
-       be, but useful. */
-    cnos_pm_barrier(0);
+    /*
+     * Do not use cnos_pm_barrier() as that serves as a indicator to 
+     * the launcher that the job is exiting. Instead always use the
+     * normal cnos_barrier().
+     * JJH Double check:
+     *   register with the process manager so that everyone aborts if
+     *   any one process aborts.  This is a bit slower than it needs to
+     *   be, but useful.
+     *   Replaced: cnos_pm_barrier(0);
+     */
+    cnos_barrier();
 #endif
 
     return &orte_rmgr_cnos_module;
