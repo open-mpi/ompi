@@ -603,7 +603,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         opal_set_using_threads(true);
     }
 
-    /* start PTL's */
+    /* start PML/BTL's */
     ret = MCA_PML_CALL(enable(true));
     if( OMPI_SUCCESS != ret ) {
         error = "PML control failed";
