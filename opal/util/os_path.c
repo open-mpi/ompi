@@ -35,12 +35,11 @@ static const char *path_sep = OPAL_PATH_SEP;
 
 char *opal_os_path(bool relative, ...)
 {
-    va_list ap, ap1;
+    va_list ap;
     char *element, *path;
     size_t num_elements, total_length;
 
     va_start(ap, relative);
-    va_start(ap1, relative);
 
     /* no way to protect ourselves from reading too far, so have to
        trust caller that they ended the list with the NULL */
@@ -52,6 +51,7 @@ char *opal_os_path(bool relative, ...)
         total_length = total_length + strlen(element);
         if( path_sep[0] != element[0] ) total_length++;
     }
+    va_end(ap);
 
     if (0 == num_elements) { /* must be looking for a simple answer */
     	path = (char *)malloc(3);
@@ -64,8 +64,6 @@ char *opal_os_path(bool relative, ...)
     	    strcpy(path, path_sep);
 #endif
     	}
-        va_end(ap);
-        va_end(ap1);
     	return(path);
     }
 
@@ -78,14 +76,11 @@ char *opal_os_path(bool relative, ...)
         
     if (total_length > OMPI_PATH_MAX) {  /* path length is too long - reject it */
         va_end(ap);
-        va_end(ap1);
     	return(NULL);
     }
 
     path = (char *)malloc(total_length);
     if (NULL == path) {
-        va_end(ap);
-        va_end(ap1);
         return(NULL);
     }
     path[0] = 0;
@@ -94,8 +89,9 @@ char *opal_os_path(bool relative, ...)
         strcpy(path, ".");
     }
 
+    va_start(ap, relative);
     /* Windows does not require to have the initial separator. */
-    if( NULL != (element = va_arg(ap1, char*)) ) {
+    if( NULL != (element = va_arg(ap, char*)) ) {
     	if (path_sep[0] != element[0]) {
 #ifdef __WINDOWS__
             if( relative )
@@ -104,7 +100,7 @@ char *opal_os_path(bool relative, ...)
         }
         strcat(path, element);
     }
-    while (NULL != (element=va_arg(ap1, char*))) {
+    while (NULL != (element=va_arg(ap, char*))) {
     	if (path_sep[0] != element[0]) {
             strcat(path, path_sep);
         }
@@ -112,6 +108,5 @@ char *opal_os_path(bool relative, ...)
     }
 
     va_end(ap);
-    va_end(ap1);
     return opal_make_filename_os_friendly(path);
 }
