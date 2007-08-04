@@ -176,10 +176,6 @@ opal_net_samenetwork(const struct sockaddr *addr1,
                      uint32_t prefixlen)
 {
     if(addr1->sa_family != addr2->sa_family) {
-#if 0
-        /* very annoying debug output */
-        opal_output(0, "opal_samenetwork: uncomparable");
-#endif
         return false; /* address families must be equal */
     }
     

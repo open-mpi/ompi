@@ -634,98 +634,95 @@ static void output(int output_id, const char *format, va_list arglist)
     /* Setup */
 
     if (!initialized) {
-	opal_output_init();
+        opal_output_init();
     }
 
     /* If it's valid, used, and enabled, output */
 
     if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS &&
-	info[output_id].ldi_used && info[output_id].ldi_enabled) {
-	ldi = &info[output_id];
+        info[output_id].ldi_used && info[output_id].ldi_enabled) {
+        ldi = &info[output_id];
 
-	/* Make the formatted string */
+        /* Make the formatted string */
 
-	OPAL_THREAD_LOCK(&mutex);
-	vasprintf(&str, format, arglist);
-	total_len = len = strlen(str);
-	if ('\n' != str[len - 1]) {
-	    want_newline = true;
-	    ++total_len;
-	}
-	if (NULL != ldi->ldi_prefix) {
-	    total_len += strlen(ldi->ldi_prefix);
-	}
-	if (temp_str_len < total_len + want_newline) {
-	    if (NULL != temp_str) {
-		free(temp_str);
-	    }
-	    temp_str = (char *) malloc(total_len * 2);
-	    temp_str_len = total_len * 2;
-	}
-	if (NULL != ldi->ldi_prefix) {
-	    if (want_newline) {
-		snprintf(temp_str, temp_str_len, "%s%s\n", ldi->ldi_prefix,
-			 str);
-	    } else {
-		snprintf(temp_str, temp_str_len, "%s%s", ldi->ldi_prefix,
-			 str);
-	    }
-	} else {
-	    if (want_newline) {
-		snprintf(temp_str, temp_str_len, "%s\n", str);
-	    } else {
-		snprintf(temp_str, temp_str_len, "%s", str);
-	    }
-	}
+        OPAL_THREAD_LOCK(&mutex);
+        vasprintf(&str, format, arglist);
+        total_len = len = strlen(str);
+        if ('\n' != str[len - 1]) {
+            want_newline = true;
+            ++total_len;
+        }
+        if (NULL != ldi->ldi_prefix) {
+            total_len += strlen(ldi->ldi_prefix);
+        }
+        if (temp_str_len < total_len + want_newline) {
+            if (NULL != temp_str) {
+                free(temp_str);
+            }
+            temp_str = (char *) malloc(total_len * 2);
+            temp_str_len = total_len * 2;
+        }
+        if (NULL != ldi->ldi_prefix) {
+            if (want_newline) {
+                snprintf(temp_str, temp_str_len, "%s%s\n", ldi->ldi_prefix,
+                         str);
+            } else {
+                snprintf(temp_str, temp_str_len, "%s%s", ldi->ldi_prefix,
+                         str);
+            }
+        } else {
+            if (want_newline) {
+                snprintf(temp_str, temp_str_len, "%s\n", str);
+            } else {
+                snprintf(temp_str, temp_str_len, "%s", str);
+            }
+        }
 
-	/* Syslog output */
-
-	if (ldi->ldi_syslog) {
+        /* Syslog output */
 
 #if defined(HAVE_SYSLOG)
-	    syslog(ldi->ldi_syslog_priority, "%s", str);
+        if (ldi->ldi_syslog) {
+	        syslog(ldi->ldi_syslog_priority, "%s", str);
+        }
 #endif
-	}
 
-	/* stdout output */
-
-	if (ldi->ldi_stdout) {
+        /* stdout output */
+        if (ldi->ldi_stdout) {
             write(fileno(stdout), temp_str, (int)strlen(temp_str)); 
             fflush(stdout);
-	}
+        }
 
-	/* stderr output */
-
-	if (ldi->ldi_stderr) {
+        /* stderr output */
+        if (ldi->ldi_stderr) {
             write(fileno(stderr),temp_str, (int)strlen(temp_str)); 
             fflush(stderr);
 	}
 
-	/* File output -- first check to see if the file opening was
-	 * delayed.  If so, try to open it.  If we failed to open it,
-	 * then just discard (there are big warnings in the
-	 * opal_output.h docs about this!). */
+        /* File output -- first check to see if the file opening was
+         * delayed.  If so, try to open it.  If we failed to open it,
+         * then just discard (there are big warnings in the
+         * opal_output.h docs about this!). */
 
-	if (ldi->ldi_file) {
-	    if (ldi->ldi_fd == -1) {
-		    if (OPAL_SUCCESS != open_file(output_id)) {
-	            ++ldi->ldi_file_num_lines_lost;
-		    } else if (ldi->ldi_file_num_lines_lost > 0) {
-		        char buffer[BUFSIZ];
-		        memset(buffer, 0, BUFSIZ);
-                        snprintf(buffer, BUFSIZ - 1,
-                                 "[WARNING: %d lines lost because the Open MPI process session directory did\n not exist when opal_output() was invoked]\n",
-                                 ldi->ldi_file_num_lines_lost);
-		        write(ldi->ldi_fd, buffer, (int)strlen(buffer));
-		        ldi->ldi_file_num_lines_lost = 0;
-		    }
-	    }
-	    if (ldi->ldi_fd != -1) {
+        if (ldi->ldi_file) {
+            if (ldi->ldi_fd == -1) {
+                if (OPAL_SUCCESS != open_file(output_id)) {
+                    ++ldi->ldi_file_num_lines_lost;
+                } else if (ldi->ldi_file_num_lines_lost > 0) {
+                    char buffer[BUFSIZ];
+                    memset(buffer, 0, BUFSIZ);
+                    snprintf(buffer, BUFSIZ - 1,
+                             "[WARNING: %d lines lost because the Open MPI process session directory did\n not exist when opal_output() was invoked]\n",
+                             ldi->ldi_file_num_lines_lost);
+                    write(ldi->ldi_fd, buffer, (int)strlen(buffer));
+                    ldi->ldi_file_num_lines_lost = 0;
+                }
+            }
+            if (ldi->ldi_fd != -1) {
                 write(ldi->ldi_fd, temp_str, (int)total_len);
-	    }
-	}
-	OPAL_THREAD_UNLOCK(&mutex);
+            }
+        }
+        OPAL_THREAD_UNLOCK(&mutex);
 
-	free(str);
+        free(str);
     }
 }
