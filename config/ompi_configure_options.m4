@@ -164,6 +164,24 @@ AC_ARG_ENABLE(debug-symbols,
         [Disable adding compiler flags to enable debugging symbols if --enable-debug is specified.  For non-debugging builds, this flag has no effect.]))
 
 #
+# Sparse Groups
+#
+
+AC_MSG_CHECKING([if want sparse process groups])
+AC_ARG_ENABLE(sparse-groups, 
+    AC_HELP_STRING([--enable-sparse-groups],
+                   [enable sparse process groups (default: not enabled)]))
+if test "$enable_sparse_groups" = "yes"; then
+    AC_MSG_RESULT([yes])
+    GROUP_SPARSE=1
+else
+    AC_MSG_RESULT([no])
+    GROUP_SPARSE=0
+fi
+AC_DEFINE_UNQUOTED([OMPI_GROUP_SPARSE],$GROUP_SPARSE,
+    [Wether we want sparse process groups])
+
+#
 # Fortran 77
 #
 

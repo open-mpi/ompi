@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -9,7 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      University of Houston. All rights reserved.
+ * Copyright (c) 2006-2007 University of Houston. All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,8 +21,9 @@
 #include "ompi_config.h"
 #include "ompi/group/group.h"
 #include "ompi/constants.h"
-#include "mpi.h"
 #include "ompi/proc/proc.h"
+#include "ompi/runtime/params.h"
+#include "mpi.h"
 
 int ompi_group_free ( ompi_group_t **group )
 {
@@ -42,7 +44,6 @@ int ompi_group_translate_ranks ( ompi_group_t *group1,
 {
     int rank, proc, proc2;
     struct ompi_proc_t *proc1_pointer, *proc2_pointer;
-    
 
     if ( MPI_GROUP_EMPTY == group1 || MPI_GROUP_EMPTY == group2 ) {
 	for (proc = 0; proc < n_ranks ; proc++) {
@@ -50,606 +51,468 @@ int ompi_group_translate_ranks ( ompi_group_t *group1,
 	}
 	return MPI_SUCCESS;
     }
-    /* loop over all ranks */
-    for (proc = 0; proc < n_ranks; proc++) {
-        rank=ranks1[proc];
-	if ( MPI_PROC_NULL == rank) {
-	    ranks2[proc] = MPI_PROC_NULL;
+
+    /* 
+     * If we are translating from a parent to a child that uses the sparse format
+     * or vice versa, we use the translate ranks function corresponding to the 
+     * format used. Generally, all these functions require less time than the 
+     * original method that loops over the processes of both groups till we 
+     * find a match.
+     */
+    if( group1->grp_parent_group_ptr == group2 ) { /* from child to parent */ 
+	if(OMPI_GROUP_IS_SPORADIC(group1)) { 
+	    return ompi_group_translate_ranks_sporadic_reverse 
+		(group1,n_ranks,ranks1,group2,ranks2); 
 	}
-	else {
-	    proc1_pointer=group1->grp_proc_pointers[rank];
-	    /* initialize to no "match" */
-	    ranks2[proc] = MPI_UNDEFINED;
-	    for (proc2 = 0; proc2 < group2->grp_proc_count; proc2++) 
-	    {
-		proc2_pointer=group2->grp_proc_pointers[proc2];
-		if ( proc1_pointer == proc2_pointer) {
-		    ranks2[proc] = proc2;
-		    break;
-		}
-	    }  /* end proc2 loop */
+	else if(OMPI_GROUP_IS_STRIDED(group1)) {
+	    return ompi_group_translate_ranks_strided_reverse 
+		(group1,n_ranks,ranks1,group2,ranks2); 
 	}
-    } /* end proc loop */
+	else if(OMPI_GROUP_IS_BITMAP(group1)) {
+	    return ompi_group_translate_ranks_bmap_reverse 
+		(group1,n_ranks,ranks1,group2,ranks2); 
+	}
+
+    }
+    else if( group2->grp_parent_group_ptr == group1 ) { /* from parent to child*/
+	if(OMPI_GROUP_IS_SPORADIC(group2)) { 
+	    return ompi_group_translate_ranks_sporadic 
+		(group1,n_ranks,ranks1,group2,ranks2); 
+	}
+	else if(OMPI_GROUP_IS_STRIDED(group2)) {
+	    return ompi_group_translate_ranks_strided 
+		(group1,n_ranks,ranks1,group2,ranks2); 
+	}
+	else if(OMPI_GROUP_IS_BITMAP(group2)) {
+	    return ompi_group_translate_ranks_bmap 
+		(group1,n_ranks,ranks1,group2,ranks2); 
+	}
+	
+    }
+    else {
+	/* loop over all ranks */
+	for (proc = 0; proc < n_ranks; proc++) {
+	    rank=ranks1[proc];
+	    if ( MPI_PROC_NULL == rank) {
+		ranks2[proc] = MPI_PROC_NULL;
+	    }
+	    else {
+		proc1_pointer = ompi_group_peer_lookup(group1 ,rank);
+		/* initialize to no "match" */
+		ranks2[proc] = MPI_UNDEFINED;
+		for (proc2 = 0; proc2 < group2->grp_proc_count; proc2++) 
+		{
+		    proc2_pointer= ompi_group_peer_lookup(group2 ,proc2);
+		    if ( proc1_pointer == proc2_pointer) {
+			ranks2[proc] = proc2;
+			break;
+		    }
+		}  /* end proc2 loop */
+	    } /* end proc loop */
+	}
+    }
 
     return MPI_SUCCESS;
 }
 
-int ompi_group_union (ompi_group_t* group1, ompi_group_t* group2, ompi_group_t **new_group) 
+int ompi_group_dump (ompi_group_t* group) 
 {
-    /* local variables */
-    int new_group_size, proc1, proc2, found_in_group;
-    int my_group_rank, cnt;
-    ompi_group_t *group1_pointer, *group2_pointer, *new_group_pointer;
-    ompi_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer = NULL;
+  int i;
+  int new_rank;
 
-    group1_pointer = (ompi_group_t *) group1;
-    group2_pointer = (ompi_group_t *) group2;
+  i=0;
+  printf("Group Proc Count: %d\n",group->grp_proc_count);
+  printf("Group My Rank: %d\n",group->grp_my_rank);
+  if (OMPI_GROUP_IS_SPORADIC(group)) {
+      ompi_group_translate_ranks( group,1,&group->grp_my_rank,
+				  group->grp_parent_group_ptr,
+                                  &new_rank);
+      printf("Rank in the parent group: %d\n",new_rank);
+      printf("The Sporadic List Length: %d\n",
+             group->sparse_data.grp_sporadic.grp_sporadic_list_len);
+      printf("Rank First       Length\n");
+      for(i=0 ; i<group->sparse_data.grp_sporadic.grp_sporadic_list_len ; i++) {
+	  printf("%d               %d\n",
+                 group->sparse_data.grp_sporadic.grp_sporadic_list[i].rank_first,
+		 group->sparse_data.grp_sporadic.grp_sporadic_list[i].length);
+      }
+  }
+  else if (OMPI_GROUP_IS_STRIDED(group)) {
+      ompi_group_translate_ranks( group,1,&group->grp_my_rank,
+				  group->grp_parent_group_ptr,
+                                  &new_rank);
+      printf("Rank in the parent group: %d\n",new_rank);
+      printf("The Offset is: %d\n",group->sparse_data.grp_strided.grp_strided_offset);
+      printf("The Stride is: %d\n",group->sparse_data.grp_strided.grp_strided_stride);
+      printf("The Last Element is: %d\n",
+             group->sparse_data.grp_strided.grp_strided_last_element);
+  }
+  else if (OMPI_GROUP_IS_BITMAP(group)) {
+      ompi_group_translate_ranks( group,1,&group->grp_my_rank,
+				  group->grp_parent_group_ptr,
+                                  &new_rank);
+      printf("Rank in the parent group: %d\n",new_rank);
+      printf("The length of the bitmap array is: %d\n",
+             group->sparse_data.grp_bitmap.grp_bitmap_array_len);
+      for (i=0 ; i<group->sparse_data.grp_bitmap.grp_bitmap_array_len ; i++) {
+          printf("%d\t",group->sparse_data.grp_bitmap.grp_bitmap_array[i]);
+      }
+  }
+  printf("*********************************************************\n");
+  return OMPI_SUCCESS;
+}
 
-    /*
-     * form union
-     */
+/* 
+ * This is the function that iterates through the sparse groups to the dense group
+ * to reach the process pointer
+ */
+ompi_proc_t* ompi_group_get_proc_ptr (ompi_group_t* group , int rank) 
+{ 
+    int ranks1,ranks2;
+    do 
+    {
+	if(OMPI_GROUP_IS_DENSE(group)) 
+        { 
+	    return group->grp_proc_pointers[rank];
+        }
+	ranks1 = rank;
+    	ompi_group_translate_ranks( group, 1, &ranks1,
+                                    group->grp_parent_group_ptr,&ranks2);
+	rank = ranks2;
+	group = group->grp_parent_group_ptr;
+    } while (1);
+}
 
-    /* get new group size */
-    new_group_size = group1_pointer->grp_proc_count;
-
-    /* check group2 elements to see if they need to be included in the list */
-    for (proc2 = 0; proc2 < group2_pointer->grp_proc_count; proc2++) {
-        proc2_pointer = group2_pointer->grp_proc_pointers[proc2];
-
-        /* check to see if this proc2 is alread in the group */
-        found_in_group = 0;
-        for (proc1 = 0; proc1 < group1_pointer->grp_proc_count; proc1++) {
-            proc1_pointer = group1_pointer->grp_proc_pointers[proc1];
-            if (proc1_pointer == proc2_pointer) {
-                /* proc2 is in group1 - don't double count */
-                found_in_group = 1;
-                break;
-            }
-        }                       /* end proc1 loop */
-
-        if (found_in_group)
-            continue;
-
-        new_group_size++;
-    }                           /* end proc loop */
-
-    if ( 0 == new_group_size ) {
-	*new_group = MPI_GROUP_EMPTY;
-	OBJ_RETAIN(MPI_GROUP_EMPTY);
-	return MPI_SUCCESS;
-    }
-
-    /* get new group struct */
-    new_group_pointer = ompi_group_allocate(new_group_size);
-    if (NULL == new_group_pointer) {
-        return MPI_ERR_GROUP;
-    }
-
-    /* fill in the new group list */
-
-    /* put group1 elements in the list */
-    for (proc1 = 0; proc1 < group1_pointer->grp_proc_count; proc1++) {
-        new_group_pointer->grp_proc_pointers[proc1] =
-            group1_pointer->grp_proc_pointers[proc1];
-    }
-    cnt = group1_pointer->grp_proc_count;
-
-    /* check group2 elements to see if they need to be included in the list */
-    for (proc2 = 0; proc2 < group2_pointer->grp_proc_count; proc2++) {
-        proc2_pointer = group2_pointer->grp_proc_pointers[proc2];
-
-        /* check to see if this proc2 is alread in the group */
-        found_in_group = 0;
-        for (proc1 = 0; proc1 < group1_pointer->grp_proc_count; proc1++) {
-            proc1_pointer = group1_pointer->grp_proc_pointers[proc1];
-            if (proc1_pointer == proc2_pointer) {
-                /* proc2 is in group1 - don't double count */
-                found_in_group = 1;
-                break;
-            }
-        }                       /* end proc1 loop */
-
-        if (found_in_group)
-            continue;
-
-        new_group_pointer->grp_proc_pointers[cnt] =
-            group2_pointer->grp_proc_pointers[proc2];
-        cnt++;
-    }                           /* end proc loop */
-
-    /* increment proc reference counters */
-    ompi_group_increment_proc_count(new_group_pointer);
-
-    /* find my rank */
-    my_group_rank = group1_pointer->grp_my_rank;
-    if (MPI_UNDEFINED == my_group_rank) {
-        my_group_rank = group2_pointer->grp_my_rank;
-	if ( MPI_UNDEFINED != my_group_rank) {
-	    my_proc_pointer = group2_pointer->grp_proc_pointers[my_group_rank];
+int ompi_group_minloc ( int list[] , int length ) 
+{ 
+    int i,index,min;
+    min = list[0];
+    index = 0;
+    
+    for (i=0 ; i<length ; i++) { 
+	if (min > list[i] && list[i] != -1) { 
+	    min = list[i];
+	    index = i;
 	}
-    } else {
-        my_proc_pointer = group1_pointer->grp_proc_pointers[my_group_rank];
     }
-
-    if ( MPI_UNDEFINED == my_group_rank ) {
-	new_group_pointer->grp_my_rank = MPI_UNDEFINED;
-    }
-    else {
-	ompi_set_group_rank(new_group_pointer, my_proc_pointer);
-    }
-
-    *new_group = (MPI_Group) new_group_pointer;
-
-
-    return OMPI_SUCCESS;
+    return index;
 }
 
 int ompi_group_incl(ompi_group_t* group, int n, int *ranks, ompi_group_t **new_group) 
 {
-    /* local variables */
-    int proc,my_group_rank;
-    ompi_group_t *group_pointer, *new_group_pointer;
-    ompi_proc_t *my_proc_pointer;
 
-    group_pointer = (ompi_group_t *)group;
+    int len [4];
+    int method,result;
 
-    /* get new group struct */
-    new_group_pointer=ompi_group_allocate(n);
-    if( NULL == new_group_pointer ) {
-      return MPI_ERR_GROUP;
+    method = 0;
+#if OMPI_GROUP_SPARSE
+    if (ompi_use_sparse_group_storage) 
+    {
+        len[0] = ompi_group_calc_plist    ( n ,ranks );
+        len[1] = ompi_group_calc_strided  ( n ,ranks );
+        len[2] = ompi_group_calc_sporadic ( n ,ranks );
+        len[3] = ompi_group_calc_bmap     ( n , group->grp_proc_count ,ranks );
+        
+        /* determin minimum length */
+        method = ompi_group_minloc ( len, 4 );
+    }
+#endif
+    
+    switch (method)
+    {
+    case 0:
+        result = ompi_group_incl_plist(group, n, ranks, new_group);
+        break;
+    case 1:
+        result = ompi_group_incl_strided(group, n, ranks, new_group);
+        break;
+    case 2:
+        result = ompi_group_incl_spor(group, n, ranks, new_group);
+        break;
+    default:
+        result = ompi_group_incl_bmap(group, n, ranks, new_group);
+        break;
     }
 
-    /* put group elements in the list */
-    for (proc = 0; proc < n; proc++) {
-        new_group_pointer->grp_proc_pointers[proc] =
-            group_pointer->grp_proc_pointers[ranks[proc]];
-	
-    }                           /* end proc loop */
-
-    /* increment proc reference counters */
-    ompi_group_increment_proc_count(new_group_pointer);
-
-    /* find my rank */
-    my_group_rank=group_pointer->grp_my_rank;
-    my_proc_pointer=group_pointer->grp_proc_pointers[my_group_rank];
-    ompi_set_group_rank(new_group_pointer,my_proc_pointer);
-
-    *new_group = (MPI_Group)new_group_pointer;
-
-    return OMPI_SUCCESS;
+    return result;
 }
 
-int ompi_group_excl(ompi_group_t* group, int n, int *ranks,
-                   ompi_group_t **new_group) 
+int ompi_group_excl(ompi_group_t* group, int n, int *ranks, ompi_group_t **new_group) 
 {
 
-    /* local variables */
-    int return_value,proc,i_excl,found,cnt,my_group_rank;
-    ompi_group_t *group_pointer, *new_group_pointer;
-    ompi_proc_t *my_proc_pointer;
+    int i, j, k, result;
+    int *ranks_included=NULL;
 
-    return_value = MPI_SUCCESS;
-    group_pointer = (ompi_group_t *)group;
-
-
-    /*
-     * pull out elements
-     */
-
-    /* get new group struct */
-    new_group_pointer=ompi_group_allocate(group_pointer->grp_proc_count-n);
-    if( NULL == new_group_pointer ) {
-	return MPI_ERR_GROUP;
+     /* determine the list of included processes for the excl-method */
+    k = 0;
+    if (0 != (group->grp_proc_count - n)) {
+        ranks_included = (int *)malloc( (group->grp_proc_count-n)*(sizeof(int)));
     }
+    for (i=0 ; i<group->grp_proc_count ; i++) { 
+        for(j=0 ; j<n ; j++) { 
+	    if(ranks[j] == i) break;
+	}
+	if (j==n) { 
+	  ranks_included[k] = i;
+	  k++;
+	}
+    }
+    
+    result = ompi_group_incl(group, k, ranks_included, new_group);
 
-    /* put group elements in the list */
-    cnt=0;
-    for (proc = 0; proc < group_pointer->grp_proc_count; proc++) {
-        found=0;
-        /* check to see if this proc is in the exclusion list */
-        for( i_excl=0 ; i_excl < n ; ++i_excl ) {
-            if ( ranks[i_excl] == proc ){
-                found=1;
-                break;
-            }
-	} /* end i_excl loop */
-        if( !found ) {
-            new_group_pointer->grp_proc_pointers[cnt] =
-                group_pointer->grp_proc_pointers[proc];
-            cnt++;
-        }
-
-    }   /* end proc loop */
-
-    /* increment proc reference counters */
-    ompi_group_increment_proc_count(new_group_pointer);
-
-    /* find my rank */
-    my_group_rank=group_pointer->grp_my_rank;
-    my_proc_pointer=group_pointer->grp_proc_pointers[my_group_rank];
-    ompi_set_group_rank(new_group_pointer,my_proc_pointer);
-
-    *new_group = (MPI_Group)new_group_pointer;
-
-    return OMPI_SUCCESS;
+    if (NULL != ranks_included)
+    {
+        free(ranks_included);
+    }
+    return result;
 }
-
 
 int ompi_group_range_incl(ompi_group_t* group, int n_triplets, int ranges[][3],
-                         ompi_group_t **new_group) 
-{
-    /* local variables */
-    int new_group_size, proc, first_rank, last_rank;
-    int stride, triplet, index, *elements_int_list, my_group_rank;
-    ompi_group_t *group_pointer, *new_group_pointer;
-    ompi_proc_t *my_proc_pointer;
+			  ompi_group_t **new_group) 
+{ 
+    int j,k;
+    int *ranks_included=NULL;
+    int index,first_rank,last_rank,stride;
+    int count,result;
 
-    group_pointer=(ompi_group_t *)group;
-
-    /*
-     * pull out elements
-     */
-    elements_int_list =
-        (int *) malloc(sizeof(int) * group_pointer->grp_proc_count);
-    if (NULL == elements_int_list) {
-      return MPI_ERR_OTHER;
-    }
-    for (proc = 0; proc < group_pointer->grp_proc_count; proc++) {
-        elements_int_list[proc] = -1;
-    }
-
-    /* loop over triplet */
-    new_group_size = 0;
-    for (triplet = 0; triplet < n_triplets; triplet++) 
-    {
-        first_rank = ranges[triplet][0];
-        last_rank = ranges[triplet][1];
-        stride = ranges[triplet][2];
-
-        if (first_rank < last_rank) {
+    count = 0;
+    /* determine the number of included processes for the range-incl-method */
+    k = 0;
+    for(j=0 ; j<n_triplets ; j++) { 
+	
+        first_rank = ranges[j][0];
+	last_rank = ranges[j][1];
+	stride = ranges[j][2];
+	
+	if (first_rank < last_rank) {
             /* positive stride */
             index = first_rank;
-            while (index <= last_rank) {
-                elements_int_list[index] = new_group_size;
-                index += stride;
-                new_group_size++;
-            }                   /* end while loop */	    
-        } 
+	    while (index <= last_rank) {
+	        count ++;
+	        k++;
+	        index += stride;
+	    }                   /* end while loop */	    
+	} 
 	else if (first_rank > last_rank) {
-            /* negative stride */
+	    /* negative stride */
+	    index = first_rank;
+	    while (index >= last_rank) {
+		count ++;
+	        k++;
+	        index += stride;
+	    }                   /* end while loop */
+
+	} else {                /* first_rank == last_rank */
+
             index = first_rank;
-            while (index >= last_rank) {
-                elements_int_list[index] = new_group_size;
-                index += stride;
-                new_group_size++;
-            }                   /* end while loop */
+	    count ++;
+	    k++;
+	}
+    }
+    if (0 != count) {
+        ranks_included = (int *)malloc( (count)*(sizeof(int)));
+    }
+    /* determine the list of included processes for the range-incl-method */
+    k = 0;
+    for(j=0 ; j<n_triplets ; j++) { 
 
-        } else {                /* first_rank == last_rank */
+        first_rank = ranges[j][0];
+	last_rank = ranges[j][1];
+	stride = ranges[j][2];
+
+	if (first_rank < last_rank) {
+            /* positive stride */
+            index = first_rank;
+	    while (index <= last_rank) {
+	        ranks_included[k] = index;
+	        k++;
+	        index += stride;
+	    }                   /* end while loop */	    
+	} 
+	else if (first_rank > last_rank) {
+	    /* negative stride */
+	    index = first_rank;
+	    while (index >= last_rank) {
+	        ranks_included[k] = index;
+	        k++;
+	        index += stride;
+	    }                   /* end while loop */
+
+	} else {                /* first_rank == last_rank */
 
             index = first_rank;
-            elements_int_list[index] = new_group_size;
-            new_group_size++;
-        }
+	    ranks_included[k] = index;
+	    k++;
+	}
     }
 
-    if ( 0 == new_group_size ) {
-        *new_group = MPI_GROUP_EMPTY;
-        OBJ_RETAIN(MPI_GROUP_EMPTY);
-        return MPI_SUCCESS;
+    result = ompi_group_incl(group, k, ranks_included, new_group);
+
+    if (NULL != ranks_included)
+    {
+        free(ranks_included);
     }
-
-
-    /* allocate a new ompi_group_t structure */
-    new_group_pointer=ompi_group_allocate(new_group_size);
-    if( NULL == new_group_pointer ) {
-        free(elements_int_list);
-	return MPI_ERR_GROUP;
-    }
-
-    /* fill in group list */
-    for (proc = 0; proc < group_pointer->grp_proc_count; proc++) {
-        /* if value >= 0, include in the list */
-        if (0 <= elements_int_list[proc] ) {
-            new_group_pointer->grp_proc_pointers[elements_int_list[proc]] =
-                group_pointer->grp_proc_pointers[proc];
-        }
-    } /* end of proc loop */
-
-    /* increment proc reference counters */
-    ompi_group_increment_proc_count(new_group_pointer);
-
-    free(elements_int_list);
-
-    /* find my rank */
-    my_group_rank=group_pointer->grp_my_rank;
-    my_proc_pointer=group_pointer->grp_proc_pointers[my_group_rank];
-    ompi_set_group_rank(new_group_pointer,my_proc_pointer);
-   
-    *new_group = (MPI_Group)new_group_pointer;
-
-    return OMPI_SUCCESS;
+    return result;
 }
-
 
 int ompi_group_range_excl(ompi_group_t* group, int n_triplets, int ranges[][3],
-                         ompi_group_t **new_group) 
+			  ompi_group_t **new_group) 
 {
-    /* local variables */
-    int new_group_size, proc, first_rank, last_rank;
-    int stride, triplet, index, *elements_int_list, my_group_rank;
-    ompi_group_t *group_pointer, *new_group_pointer;
-    ompi_proc_t *my_proc_pointer;
+    
+    int j,k,i;
+    int *ranks_included=NULL, *ranks_excluded=NULL;
+    int index,first_rank,last_rank,stride,count,result;
 
-    group_pointer=(ompi_group_t *)group;
+    count = 0;
 
-    /*
-     * pull out elements
-     */
-    elements_int_list = (int *) 
-        malloc(sizeof(int) * group_pointer->grp_proc_count);
-    if (NULL == elements_int_list) {
-      return MPI_ERR_OTHER;
-    }
-    for (proc = 0; proc < group_pointer->grp_proc_count; proc++) {
-        elements_int_list[proc] = -1;
-    }
+    /* determine the number of excluded processes for the range-excl-method */
+    k = 0;
+    for(j=0 ; j<n_triplets ; j++) { 
 
-    /* loop over triplet */
-    new_group_size = 0;
-    for (triplet = 0; triplet < n_triplets; triplet++) {
-        first_rank = ranges[triplet][0];
-        last_rank = ranges[triplet][1];
-        stride = ranges[triplet][2];
+        first_rank = ranges[j][0];
+	last_rank = ranges[j][1];
+	stride = ranges[j][2];
 
-        if (first_rank < last_rank) {
+	if (first_rank < last_rank) {
             /* positive stride */
-            for (index = first_rank; index <= last_rank; index += stride) {
-                elements_int_list[index] = new_group_size;
-                new_group_size++;
-            }
-
-        } else if (first_rank > last_rank) {
-            /* negative stride */
-            for (index = first_rank; index >= last_rank; index += stride) {
-                elements_int_list[index] = new_group_size;
-                new_group_size++;
-            }
-
-        } else {
-            /* first_rank == last_rank */
             index = first_rank;
-            elements_int_list[index] = new_group_size;
-            new_group_size++;
-        }
-    }  /* end triplet loop */
+	    while (index <= last_rank) {
+	        count ++;
+	        index += stride;
+	    }                   /* end while loop */	    
+	} 
+	else if (first_rank > last_rank) {
+	    /* negative stride */
+	    index = first_rank;
+	    while (index >= last_rank) {
+	        count ++;
+	        index += stride;
+	    }                   /* end while loop */
 
-    /* we have counted the procs to exclude from the list */
-    new_group_size=group_pointer->grp_proc_count-new_group_size;
+	} else {                /* first_rank == last_rank */
 
-    if ( 0 == new_group_size ) {
-        *new_group = MPI_GROUP_EMPTY;
-        OBJ_RETAIN(MPI_GROUP_EMPTY);
-        return MPI_SUCCESS;
+            index = first_rank;
+	    count ++;
+	}
+    }
+    if (0 != count) {
+        ranks_excluded = (int *)malloc( (count)*(sizeof(int)));
+    }
+    /* determine the list of included processes for the range-excl-method */
+    k = 0;
+    i = 0;
+    for(j=0 ; j<n_triplets ; j++) { 
+
+        first_rank = ranges[j][0];
+	last_rank = ranges[j][1];
+	stride = ranges[j][2];
+
+	if (first_rank < last_rank) {
+            /* positive stride */
+            index = first_rank;
+	    while (index <= last_rank) {
+	        ranks_excluded[i] = index;
+	        i++;
+	        index += stride;
+	    }                   /* end while loop */	    
+	} 
+	else if (first_rank > last_rank) {
+	    /* negative stride */
+	    index = first_rank;
+	    while (index >= last_rank) {
+	        ranks_excluded[i] = index;
+	        i++;
+	        index += stride;
+	    }                   /* end while loop */
+
+	} else {                /* first_rank == last_rank */
+
+            index = first_rank;
+	    ranks_excluded[i] = index;
+	    i++;
+	}
+    }
+    if (0 != (group->grp_proc_count - count)) {
+        ranks_included = (int *)malloc( (group->grp_proc_count - count)*(sizeof(int)));
+    }
+    for (j=0 ; j<group->grp_proc_count ; j++) { 
+        for(index=0 ; index<i ; index++) { 
+	    if(ranks_excluded[index] == j) break;
+	}
+	if (index == i) { 
+	  ranks_included[k] = j;
+	  k++;
+	}
+    }
+    if (NULL != ranks_excluded)
+    {
+        free(ranks_excluded);
     }
 
-    /* allocate a new ompi_group_t structure */
-    new_group_pointer=ompi_group_allocate(new_group_size);
-    if( NULL == new_group_pointer ) {
-        free(elements_int_list);
-	return MPI_ERR_GROUP;
+    result = ompi_group_incl(group, k, ranks_included, new_group);
+
+    if (NULL != ranks_included)
+    {
+        free(ranks_included);
     }
-
-    /* fill in group list */
-    index=0;
-    for (proc = 0; proc < group_pointer->grp_proc_count; proc++) {
-        /* if value == -1, include in the list */
-        if (0 > elements_int_list[proc] ) {
-            new_group_pointer->grp_proc_pointers[index] =
-                            group_pointer->grp_proc_pointers[proc];
-            index++;
-        }
-    } /* end of proc loop */
-
-    /* increment proc reference counters */
-    ompi_group_increment_proc_count(new_group_pointer);
-
-    free(elements_int_list);
-
-    /* find my rank */
-    my_group_rank=group_pointer->grp_my_rank;
-    my_proc_pointer=group_pointer->grp_proc_pointers[my_group_rank];
-    ompi_set_group_rank(new_group_pointer,my_proc_pointer);
-   
-    *new_group = (MPI_Group)new_group_pointer;
-
-    return OMPI_SUCCESS;
+    return result;
 }
 
-
 int ompi_group_intersection(ompi_group_t* group1,ompi_group_t* group2,
-        ompi_group_t **new_group) 
+			    ompi_group_t **new_group) 
 {
-    /* local variables */
-    int my_group_rank;
-    int group_size,proc1,proc2,cnt;
-    ompi_group_t *group1_pointer, *group2_pointer, *new_group_pointer;
-    ompi_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer = NULL;
+    int proc1,proc2,k, result;
+    int *ranks_included=NULL;
+    ompi_group_t *group1_pointer, *group2_pointer;
+    ompi_proc_t *proc1_pointer, *proc2_pointer;
 
     group1_pointer=(ompi_group_t *)group1;
     group2_pointer=(ompi_group_t *)group2;
 
-    /*
-     * form intersection
-     */
-
-    /* figure out how large the intersection is */
-    group_size = 0;
-    /* loop over group1 members */
+     /* determine the number of included processes for the incl-method */
+    k = 0;
     for (proc1 = 0; proc1 < group1_pointer->grp_proc_count; proc1++) {
-        proc1_pointer=group1_pointer->grp_proc_pointers[proc1];
+	proc1_pointer = ompi_group_peer_lookup (group1_pointer , proc1);
+        
+	/* check to see if this proc is in group2 */
+    
+        for (proc2 = 0; proc2 < group2_pointer->grp_proc_count; proc2++) {
+	    proc2_pointer = ompi_group_peer_lookup (group2_pointer , proc2);
+
+            if( proc1_pointer == proc2_pointer ) {
+		k++;
+                break;
+            }
+        }  /* end proc2 loop */
+    }  /* end proc1 loop */
+    
+    if (0 != k) {
+        ranks_included = (int *)malloc( k*(sizeof(int)));
+    }
+
+    /* determine the list of included processes for the incl-method */
+    k = 0;
+    for (proc1 = 0; proc1 < group1_pointer->grp_proc_count; proc1++) {
+	proc1_pointer = ompi_group_peer_lookup (group1_pointer , proc1);
+
         /* check to see if this proc is in group2 */
     
         for (proc2 = 0; proc2 < group2_pointer->grp_proc_count; proc2++) {
-            proc2_pointer=group2_pointer->grp_proc_pointers[proc2];
+	    proc2_pointer = ompi_group_peer_lookup (group2_pointer ,proc2);
+
             if( proc1_pointer == proc2_pointer ) {
-                group_size++;
+                ranks_included[k] = proc1;
+		k++;
                 break;
             }
         }  /* end proc2 loop */
     }  /* end proc1 loop */
 
-    if ( 0 == group_size ) {
-	*new_group = MPI_GROUP_EMPTY;
-	OBJ_RETAIN(MPI_GROUP_EMPTY);
-	return MPI_SUCCESS;
+    result = ompi_group_incl(group1, k, ranks_included, new_group);
+    
+    if (NULL != ranks_included)
+    {
+        free(ranks_included);
     }
-
-
-    /* fill in new group */
-    new_group_pointer=ompi_group_allocate(group_size);
-    if( NULL == new_group_pointer ) {
-      return MPI_ERR_GROUP;
-    }
-
-    cnt = 0;
-
-    /* loop over group1 members */
-    for (proc1 = 0; proc1 < group1_pointer->grp_proc_count; proc1++) {
-        proc1_pointer=group1_pointer->grp_proc_pointers[proc1];
-        /* check to see if this proc is in group2 */
-        for (proc2 = 0; proc2 < group2_pointer->grp_proc_count; proc2++) {
-            proc2_pointer=group2_pointer->grp_proc_pointers[proc2];
-            if( proc1_pointer == proc2_pointer ) {
-                new_group_pointer->grp_proc_pointers[cnt]=proc1_pointer;
-                cnt++;
-                break;
-            }
-        }  /* end proc2 loop */
-    }  /* end proc1 loop */
-
-    /* increment proc reference counters */
-    ompi_group_increment_proc_count(new_group_pointer);
-
-    /* find my rank */
-    my_group_rank=group1_pointer->grp_my_rank;
-    if ( MPI_UNDEFINED != my_group_rank ) {
-	my_proc_pointer=group1_pointer->grp_proc_pointers[my_group_rank];
-    }
-    else {
-	my_group_rank=group2_pointer->grp_my_rank;
-	if ( MPI_UNDEFINED != my_group_rank  ) {
-	    my_proc_pointer=group2_pointer->grp_proc_pointers[my_group_rank];
-	}
-    }
-
-    if ( MPI_UNDEFINED == my_group_rank ) {
-	new_group_pointer->grp_my_rank = MPI_UNDEFINED;
-    }
-    else {
-	ompi_set_group_rank(new_group_pointer,my_proc_pointer);
-    }
-
-    *new_group = (MPI_Group)new_group_pointer;
-
-    return OMPI_SUCCESS;
+    return result;
 }
-
-int ompi_group_difference(ompi_group_t* group1, ompi_group_t* group2,
-                         ompi_group_t **new_group) {
-
-    /* local varibles */
-    int new_group_size, proc1, proc2, found_in_group2, cnt;
-    int my_group_rank;
-    ompi_group_t *group1_pointer, *group2_pointer, *new_group_pointer;
-    ompi_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer = NULL;
-
-   
-    group1_pointer=(ompi_group_t *)group1;
-    group2_pointer=(ompi_group_t *)group2;
-
-    /*
-     * form union
-     */
-
-    /* get new group size */
-    new_group_size=0;
-
-    /* loop over group1 members */
-    for( proc1=0; proc1 < group1_pointer->grp_proc_count; proc1++ ) {
-        proc1_pointer=group1_pointer->grp_proc_pointers[proc1];
-        /* check to see if this proc is in group2 */
-        found_in_group2=0;
-        for( proc2=0 ; proc2 < group2_pointer->grp_proc_count ; proc2++ ) {
-            proc2_pointer=group2_pointer->grp_proc_pointers[proc2];
-            if( proc1_pointer == proc2_pointer ) {
-                found_in_group2=true;
-                break;
-            }
-        }  /* end proc1 loop */
-        if(found_in_group2)
-            continue;
-        new_group_size++;
-    }  /* end proc loop */
-
-    if ( 0 == new_group_size ) {
-	*new_group = MPI_GROUP_EMPTY;
-	OBJ_RETAIN(MPI_GROUP_EMPTY);
-	return MPI_SUCCESS;
-    }
-
-    /* allocate a new ompi_group_t structure */
-    new_group_pointer=ompi_group_allocate(new_group_size);
-    if( NULL == new_group_pointer ) {
-      return MPI_ERR_GROUP;
-    }
-
-    /* fill in group list */
-    cnt=0;
-    /* loop over group1 members */
-    for( proc1=0; proc1 < group1_pointer->grp_proc_count; proc1++ ) {
-        proc1_pointer=group1_pointer->grp_proc_pointers[proc1];
-        /* check to see if this proc is in group2 */
-        found_in_group2=0;
-        for( proc2=0 ; proc2 < group2_pointer->grp_proc_count ; proc2++ ) {
-            proc2_pointer=group2_pointer->grp_proc_pointers[proc2];
-            if( proc1_pointer == proc2_pointer ) {
-                found_in_group2=true;
-                break;
-            }
-        }  /* end proc1 loop */
-        if(found_in_group2)
-            continue;
-
-        new_group_pointer->grp_proc_pointers[cnt] =
-            group1_pointer->grp_proc_pointers[proc1];
-
-        cnt++;
-    }  /* end proc loop */
-
-    /* increment proc reference counters */
-    ompi_group_increment_proc_count(new_group_pointer);
-
-    /* find my rank */
-    my_group_rank=group1_pointer->grp_my_rank;
-    if ( MPI_UNDEFINED != my_group_rank ) {
-	my_proc_pointer=group1_pointer->grp_proc_pointers[my_group_rank];
-    }
-    else {
-	my_group_rank=group2_pointer->grp_my_rank;
-	if ( MPI_UNDEFINED != my_group_rank ) {
-	    my_proc_pointer=group2_pointer->grp_proc_pointers[my_group_rank];
-	}
-    }
-
-    if ( MPI_UNDEFINED == my_group_rank ) {
-	new_group_pointer->grp_my_rank = MPI_UNDEFINED;
-    }
-    else {
-	ompi_set_group_rank(new_group_pointer,my_proc_pointer);
-    }
-
-    *new_group = (MPI_Group)new_group_pointer;
-
-    return OMPI_SUCCESS;
-}
-

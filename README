@@ -489,6 +489,10 @@ for a full list); a summary of the more commonly used ones follows:
   --disable-shared; enabling static libraries and disabling shared
   libraries are two independent options.
 
+--enable-sparse-groups
+  Enable the usage of sparse groups. This would save memory significantly
+  especially if you are creating large communicators. (Disabled by default)
+
 There are many other options available -- see "./configure --help".
 
 Changing the compilers that Open MPI uses to build itself uses the

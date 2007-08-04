@@ -54,6 +54,8 @@ int ompi_mpi_abort_delay = 0;
 bool ompi_mpi_keep_peer_hostnames = true;
 bool ompi_mpi_leave_pinned = false;
 bool ompi_mpi_leave_pinned_pipeline = false;
+bool ompi_have_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
+bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 
 
 int ompi_mpi_register_params(void)
@@ -236,6 +238,28 @@ int ompi_mpi_register_params(void)
         opal_show_help("help-mpi-runtime.txt", 
                        "mpi-params:leave-pinned-and-pipeline-selected",
                        true);
+    }
+
+    /* Sparse group storage support */
+
+    mca_base_param_reg_int_name("mpi", "have_sparse_group_storage", 
+                                "Whether this Open MPI installation supports storing of data in MPI groups in \"sparse\" formats (good for extremely large process count MPI jobs that create many communicators/groups)",
+                                false, true, (int) OMPI_GROUP_SPARSE, NULL);
+    mca_base_param_reg_int_name("mpi", "use_sparse_group_storage", 
+                                "Whether to use \"sparse\" storage formats for MPI groups (only relevant if mpi_have_sparse_group_storage is 1)",
+                                false, false, OMPI_GROUP_SPARSE, &value);
+    ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(value);
+    if (ompi_use_sparse_group_storage) {
+        value = 0;
+        if (OMPI_GROUP_SPARSE) {
+            value = 1;
+        }
+        if (0 == value) {
+            opal_show_help("help-mpi-runtime.txt", 
+                           "sparse groups enabled but compiled out",
+                           true);
+            ompi_use_sparse_group_storage = false;
+        }
     }
 
     /* The ddt engine has a few parameters */

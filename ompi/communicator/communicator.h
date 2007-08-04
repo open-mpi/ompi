@@ -260,7 +260,8 @@ struct ompi_communicator_t {
             return (struct ompi_proc_t *) NULL;
         }
 #endif
-        return comm->c_remote_group->grp_proc_pointers[peer_id];
+        /*return comm->c_remote_group->grp_proc_pointers[peer_id];*/
+	return ompi_group_peer_lookup(comm->c_remote_group,peer_id);
     }
 
     static inline bool ompi_comm_peer_invalid(ompi_communicator_t* comm, int peer_id)
@@ -327,6 +328,13 @@ struct ompi_communicator_t {
     OMPI_DECLSPEC int ompi_comm_dup (ompi_communicator_t *comm, ompi_communicator_t **newcomm, 
                        int sync_flag);
 
+     /**
+     * compare two communicators.
+     *
+     * @param comm1,comm2: input communicators
+     *
+     */
+    int ompi_comm_compare(ompi_communicator_t *comm1, ompi_communicator_t *comm2, int *result);
 
     /**
      * free a communicator
@@ -382,15 +390,17 @@ struct ompi_communicator_t {
      * This is THE routine, where all the communicator stuff
      * is really set.
      */
-    int ompi_comm_set ( ompi_communicator_t* newcomm,
+    int ompi_comm_set ( ompi_communicator_t** newcomm,
                         ompi_communicator_t* oldcomm,
                         int local_size,
-                        struct ompi_proc_t **local_procs,
+                        int *local_ranks,
                         int remote_size,
-                        struct ompi_proc_t **remote_procs,
+                        int *remote_ranks,
                         opal_hash_table_t *attr,
                         ompi_errhandler_t *errh,
-                        mca_base_component_t *topocomponent );
+                        mca_base_component_t *topocomponent,
+			ompi_group_t *local_group,
+			ompi_group_t *remote_group   );
     /**
      * This is a short-hand routine used in intercomm_create.
      * The routine makes sure, that all processes have afterwards

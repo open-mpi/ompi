@@ -9,7 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      University of Houston. All rights reserved.
+ * Copyright (c) 2006-2007 University of Houston. All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -73,7 +74,8 @@ int ompi_comm_init(void)
     group = OBJ_NEW(ompi_group_t);
     group->grp_proc_pointers = ompi_proc_world(&size);
     group->grp_proc_count    = (int)size;
-    group->grp_flags        |= OMPI_GROUP_INTRINSIC;
+    OMPI_GROUP_SET_INTRINSIC (group);
+    OMPI_GROUP_SET_DENSE (group);
     ompi_set_group_rank(group, ompi_proc_local());
     ompi_group_increment_proc_count (group);
 
@@ -108,8 +110,9 @@ int ompi_comm_init(void)
     group->grp_proc_pointers = ompi_proc_self(&size);
     group->grp_my_rank       = 0;
     group->grp_proc_count    = (int)size;
-    group->grp_flags        |= OMPI_GROUP_INTRINSIC;
-
+    OMPI_GROUP_SET_INTRINSIC (group);
+    OMPI_GROUP_SET_DENSE (group);
+    
     ompi_mpi_comm_self.c_contextid    = 1;
     ompi_mpi_comm_self.c_f_to_c_index = 1;
     ompi_mpi_comm_self.c_id_start_index = 20;
