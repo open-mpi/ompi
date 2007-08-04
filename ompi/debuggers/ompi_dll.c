@@ -46,15 +46,6 @@
  * Oct 27 1997 JHC: Created by exploding db_message_state_mpich.cxx
  */
 
-/*
- * This file is an example of how to use the DLL interface to handle
- * message queue display from a debugger.  It provides all of the
- * functions required to display MPICH message queues.
- * It has been tested with TotalView.
- *
- * James Cownie <jcownie@dolphinics.com>
- */
-
 /**
  * Right now there is no MPI2 support
  */
@@ -369,17 +360,9 @@ OMPI_DECLSPEC int mqs_setup_image (mqs_image *image, const mqs_image_callbacks *
 
 
 /***********************************************************************
- * Check for all the information we require to access the MPICH message queues.
+ * Check for all the information we require to access the Open MPI message queues.
  * Stash it into our structure on the image if we're succesful.
  */
-
-/* A macro to save a lot of typing. */
-#define GETOFFSET(type, field)                                          \
-    do {                                                                \
-        i_info->concat(field,_offs) = mqs_field_offset(type, stringize(field)); \
-        if (i_info->concat(field,_offs) < 0)                            \
-            return concat (err_,field);                                 \
-    } while (0)
 
 OMPI_DECLSPEC int mqs_image_has_queues (mqs_image *image, char **message)
 {
@@ -391,7 +374,7 @@ OMPI_DECLSPEC int mqs_image_has_queues (mqs_image *image, char **message)
         "to extract the message queues are not as expected in\n"
         "the image '%s'\n"
         "No message queue display is possible.\n"
-        "This is probably an MPICH version or configuration problem.";
+        "This is probably an Open MPI version or configuration problem.";
 
     /* Force in the file containing our breakpoint function, to ensure that 
      * types have been read from there before we try to look them up.
@@ -399,7 +382,7 @@ OMPI_DECLSPEC int mqs_image_has_queues (mqs_image *image, char **message)
     mqs_find_function (image, "MPIR_Breakpoint", mqs_lang_c, NULL);
 
     /* Are we supposed to ignore this ? (e.g. it's really an HPF runtime using the
-     * MPICH process acquisition, but not wanting queue display) 
+     * Open MPI process acquisition, but not wanting queue display) 
      */
     if (mqs_find_symbol (image, "MPIR_Ignore_queues", NULL) == mqs_ok) {
         *message = NULL;				/* Fail silently */
@@ -521,7 +504,7 @@ OMPI_DECLSPEC int mqs_image_has_queues (mqs_image *image, char **message)
         i_info->mca_pml_base_recv_request_t.offset.req_bytes_packed = mqs_field_offset(qh_type, "req_bytes_packed");
     }
     /**
-     * Gather information about the receive fragments and theirs headers.
+     * Gather information about the received fragments and theirs headers.
      */
     {
         mqs_type* qh_type = mqs_find_type( image, "mca_pml_ob1_common_hdr_t", mqs_lang_c );
@@ -1316,10 +1299,12 @@ static int fetch_send (mqs_process *proc, mpi_process_info *p_info,
     communicator_t   *comm   = p_info->current_communicator;
     mqs_taddr_t base         = fetch_pointer (proc, p_info->next_msg, p_info);
 
-    /* Say what operation it is. We can only see non blocking send operations
-     * in MPICH. Other MPI systems may be able to show more here. 
+    /**
+     * Mark all send requests as non blocking. In Open MPI we are able to make
+     * a difference between blocking and non blocking by looking into the
+     * type field, but I'll keep this for later.
      */
-    strcpy ((char *)res->extra_text[0],"Non-blocking send");
+    strcpy( (char *)res->extra_text[0], "Non-blocking send" );
     res->extra_text[1][0] = 0;
 
     while (base != 0) { /* Well, there's a queue, at least ! */
@@ -1387,7 +1372,7 @@ OMPI_DECLSPEC int mqs_setup_operation_iterator (mqs_process *proc, int op)
 
 /***********************************************************************
  * Fetch the next valid operation. 
- * Since MPICH only maintains a single queue of each type of operation,
+ * Since Open MPI only maintains a single queue of each type of operation,
  * we have to run over it and filter out the operations which
  * match the active communicator.
  */
