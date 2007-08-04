@@ -116,7 +116,7 @@ A prefix was supplied to %s that only contained slashes.
 This is a fatal error; %s will now abort.  No processes were launched.
 #
 [debugger-mca-param-not-found]
-Internal error -- the orte_base_debugger MCA parameter was not able to
+Internal error -- the orte_base_user_debugger MCA parameter was not able to
 be found.  Please contact the Open RTE developers; this should not
 happen.
 #
