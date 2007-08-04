@@ -152,8 +152,9 @@ opal_init_util(void)
     opal_output_init();
 
     /* register handler for errnum -> string converstion */
-    if (OPAL_SUCCESS != (ret = opal_error_register("OPAL",
-            OPAL_ERR_BASE, OPAL_ERR_MAX, opal_err2str))) {
+    if (OPAL_SUCCESS != 
+        (ret = opal_error_register("OPAL",
+                                   OPAL_ERR_BASE, OPAL_ERR_MAX, opal_err2str))) {
         error = "opal_error_register";
         goto return_error;
     }
@@ -201,7 +202,7 @@ opal_init_util(void)
         error = "opal_util_init_sys_limits";
         goto return_error;
     }
-    
+
     return OPAL_SUCCESS;
 
  return_error:
