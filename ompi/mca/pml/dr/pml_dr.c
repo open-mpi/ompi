@@ -129,7 +129,7 @@ int mca_pml_dr_add_comm(ompi_communicator_t* comm)
     comm->c_pml_comm = pml_comm;
 
     for( i = 0; i < comm->c_remote_group->grp_proc_count; i++ ) {
-        pml_comm->procs[i].ompi_proc = comm->c_remote_group->grp_proc_pointers[i];
+        pml_comm->procs[i].ompi_proc = ompi_group_peer_lookup(comm->c_remote_group,i);
     }
     return OMPI_SUCCESS;
 }

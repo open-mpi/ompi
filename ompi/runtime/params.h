@@ -133,6 +133,16 @@ OMPI_DECLSPEC extern bool ompi_mpi_leave_pinned;
 OMPI_DECLSPEC extern bool ompi_mpi_leave_pinned_pipeline;
 
 /**
+ * Whether sparse MPI group storage formats are supported or not.
+ */
+OMPI_DECLSPEC extern bool ompi_have_sparse_group_storage;
+
+/**
+ * Whether sparse MPI group storage formats should be used or not.
+ */
+OMPI_DECLSPEC extern bool ompi_use_sparse_group_storage;
+
+/**
  * Register MCA parameters used by the MPI layer.
  *
  * @returns OMPI_SUCCESS

@@ -9,7 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 University of Houston.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,6 +45,9 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     ompi_communicator_t *newcomp=NULL;
     struct ompi_proc_t **rprocs=NULL;
     int rc=0, rsize=0;
+    ompi_proc_t **proc_list=NULL;
+    int i,j;
+    ompi_group_t *new_group_pointer;
 
     OPAL_CR_TEST_CHECKPOINT_READY();
 
@@ -124,20 +128,63 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     }
 
     if ( MPI_PARAM_CHECK ) {
-	rc = ompi_comm_overlapping_groups(local_comm->c_local_group->grp_proc_count,
-					  local_comm->c_local_group->grp_proc_pointers,
-					  rsize,
-					  rprocs);
+        if(OMPI_GROUP_IS_DENSE(local_comm->c_local_group)) {
+	    rc = ompi_comm_overlapping_groups(local_comm->c_local_group->grp_proc_count,
+					      local_comm->c_local_group->grp_proc_pointers,
+					      rsize,
+					      rprocs);
+	}
+	else {
+	    proc_list = (ompi_proc_t **) calloc (local_comm->c_local_group->grp_proc_count, 
+						 sizeof (ompi_proc_t *));
+	    for(j=0 ; j<local_comm->c_local_group->grp_proc_count ; j++) {
+	        proc_list[j] = ompi_group_peer_lookup(local_comm->c_local_group,j);
+            }
+	    rc = ompi_comm_overlapping_groups(local_comm->c_local_group->grp_proc_count,
+					      proc_list,
+					      rsize,
+					      rprocs);
+	}
 	if ( OMPI_SUCCESS != rc ) {
 	    goto err_exit;
 	}
     }
+    new_group_pointer=ompi_group_allocate(rsize);
+    if( NULL == new_group_pointer ) {
+      return MPI_ERR_GROUP;
+    }
 
-    newcomp = ompi_comm_allocate ( local_comm->c_local_group->grp_proc_count, rsize);
+    /* put group elements in the list */
+    for (j = 0; j < rsize; j++) {
+        new_group_pointer->grp_proc_pointers[j] = rprocs[j]; 
+    }
+
+    ompi_group_increment_proc_count(new_group_pointer);
+
+    rc = ompi_comm_set ( &newcomp,                                     /* new comm */
+                         local_comm,                                   /* old comm */
+                         local_comm->c_local_group->grp_proc_count,    /* local_size */
+                         NULL,                                         /* local_procs*/
+                         rsize,                                        /* remote_size */
+                         NULL,                                         /* remote_procs */
+                         NULL,                                         /* attrs */
+                         local_comm->error_handler,                    /* error handler*/
+                         NULL,                                         /* topo mpodule */
+			 local_comm->c_local_group,                    /* local group */
+			 new_group_pointer                             /* remote group */
+                         );
+
     if ( NULL == newcomp ) {
         rc = MPI_ERR_INTERN;
         goto err_exit;
     }
+    if ( MPI_SUCCESS != rc ) {
+        goto err_exit;
+    }
+    
+    ompi_group_decrement_proc_count (new_group_pointer);
+    OBJ_RELEASE(new_group_pointer);
+    new_group_pointer = MPI_GROUP_NULL;
 
     /* Determine context id. It is identical to f_2_c_handle */
     rc = ompi_comm_nextcid ( newcomp,                     /* new comm */ 
@@ -148,20 +195,6 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                              OMPI_COMM_CID_INTRA_BRIDGE,  /* mode */
                              -1 );                        /* send_first */
 
-    if ( MPI_SUCCESS != rc ) {
-        goto err_exit;
-    }
-
-    rc = ompi_comm_set ( newcomp,                                      /* new comm */
-                         local_comm,                                   /* old comm */
-                         local_comm->c_local_group->grp_proc_count,    /* local_size */
-                         local_comm->c_local_group->grp_proc_pointers, /* local_procs*/
-                         rsize,                                        /* remote_size */
-                         rprocs,                                       /* remote_procs */
-                         NULL,                                         /* attrs */
-                         local_comm->error_handler,                    /* error handler*/
-                         NULL                                          /* topo mpodule */
-                         );
     if ( MPI_SUCCESS != rc ) {
         goto err_exit;
     }
@@ -184,6 +217,9 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
  err_exit:
     if ( NULL != rprocs ) {
         free ( rprocs );
+    }
+    if ( NULL != proc_list ) {
+        free ( proc_list );
     }
     if ( OMPI_SUCCESS != rc ) {
         *newintercomm = MPI_COMM_NULL;

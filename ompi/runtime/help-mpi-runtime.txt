@@ -60,3 +60,8 @@ compiled with heterogeneous support.  A process running on host
 which will not work.  Please recompile Open MPI with the
 configure option --enable-heterogeneous or use a homogeneous
 environment.
+#
+[sparse groups enabled but compiled out]
+WARNING: The MCA parameter mpi_use_sparse_group_storage has been set
+to true, but sparse group support was not compiled into Open MPI.  The
+mpi_use_sparse_group_storage value has therefore been ignored.

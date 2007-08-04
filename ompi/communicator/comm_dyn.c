@@ -9,9 +9,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      University of Houston. All rights reserved.
+ * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2007      Cisco, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -85,6 +86,9 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     ompi_group_t *group=comm->c_local_group;
     orte_process_name_t *rport=NULL, tmp_port_name;
     orte_buffer_t *nbuf=NULL, *nrbuf=NULL;
+    ompi_proc_t **proc_list=NULL;
+    int i,j;
+    ompi_group_t *new_group_pointer;
 
     size = ompi_comm_size ( comm );
     rank = ompi_comm_rank ( comm );
@@ -98,12 +102,27 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
            information of the remote process. Therefore, we have to
            exchange that.
         */
+
+        if(!OMPI_GROUP_IS_DENSE(group)) { 
+            proc_list = (ompi_proc_t **) calloc (group->grp_proc_count, 
+                                                 sizeof (ompi_proc_t *));
+            for(i=0 ; i<group->grp_proc_count ; i++)
+                proc_list[i] = ompi_group_peer_lookup(group,i);
+        }
+
         if ( OMPI_COMM_JOIN_TAG != (int)tag ) {
-            rc = ompi_comm_get_rport(port,send_first,
-                                     group->grp_proc_pointers[rank], tag,
-                                     &tmp_port_name);
-            if (OMPI_SUCCESS != rc) return rc;
-            rport = &tmp_port_name;
+            if(OMPI_GROUP_IS_DENSE(group)){
+                rc = ompi_comm_get_rport(port,send_first,
+                                         group->grp_proc_pointers[rank], tag,
+                                         &tmp_port_name);
+            }
+            else {
+                rc = ompi_comm_get_rport(port,send_first,
+                                         proc_list[rank], tag,
+                                         &tmp_port_name);
+            }
+	    if (OMPI_SUCCESS != rc) return rc;
+	    rport = &tmp_port_name;
         } else {
             rport = port;
         }
@@ -119,8 +138,14 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
             ORTE_ERROR_LOG(rc);
             goto exit;
         }
-        ompi_proc_pack(group->grp_proc_pointers, size, nbuf);
 
+	if(OMPI_GROUP_IS_DENSE(group)) {
+	    ompi_proc_pack(group->grp_proc_pointers, size, nbuf);
+	}
+	else {	 
+	    ompi_proc_pack(proc_list, size, nbuf);
+	}
+	
         nrbuf = OBJ_NEW(orte_buffer_t);
         if (NULL == nrbuf ) {
             rc = OMPI_ERROR;
@@ -200,12 +225,40 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         OBJ_RELEASE(nbuf);
     }
 
-    /* allocate comm-structure */
-    newcomp = ompi_comm_allocate ( size, rsize );
+    new_group_pointer=ompi_group_allocate(rsize);
+    if( NULL == new_group_pointer ) {
+      return MPI_ERR_GROUP;
+    }
+
+    /* put group elements in the list */
+    for (j = 0; j < rsize; j++) {
+        new_group_pointer->grp_proc_pointers[j] = rprocs[j]; 
+    }                           /* end proc loop */
+
+    /* increment proc reference counters */
+    ompi_group_increment_proc_count(new_group_pointer);
+    
+    /* set up communicator structure */
+    rc = ompi_comm_set ( &newcomp,                 /* new comm */
+                         comm,                     /* old comm */
+                         group->grp_proc_count,    /* local_size */
+                         NULL,                     /* local_procs */
+                         rsize,                    /* remote_size */
+                         NULL  ,                   /* remote_procs */
+                         NULL,                     /* attrs */
+                         comm->error_handler,      /* error handler */
+                         NULL,                     /* topo component */
+			 group,                    /* local group */
+			 new_group_pointer         /* remote group */
+                         );
     if ( NULL == newcomp ) {
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit;
     }
+
+    ompi_group_decrement_proc_count (new_group_pointer);
+    OBJ_RELEASE(new_group_pointer);
+    new_group_pointer = MPI_GROUP_NULL;
 
     /* allocate comm_cid */
     rc = ompi_comm_nextcid ( newcomp,                 /* new communicator */
@@ -218,19 +271,6 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
-
-    /* set up communicator structure */
-    rc = ompi_comm_set ( newcomp,                  /* new comm */
-                         comm,                     /* old comm */
-                         group->grp_proc_count,    /* local_size */
-                         group->grp_proc_pointers, /* local_procs*/
-                         rsize,                    /* remote_size */
-                         rprocs,                   /* remote_procs */
-                         NULL,                     /* attrs */
-                         comm->error_handler,      /* error handler */
-                         NULL                      /* topo component */
-                         );
-
 
     /* activate comm and init coll-component */
     rc = ompi_comm_activate ( newcomp,                 /* new communicator */
@@ -259,6 +299,9 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
 
     if ( NULL != rprocs ) {
         free ( rprocs );
+    }
+    if ( NULL != proc_list ) {
+        free ( proc_list );
     }
     if ( OMPI_SUCCESS != rc ) {
         if ( MPI_COMM_NULL != newcomp ) {
@@ -897,6 +940,7 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
     int found;
     orte_jobid_t jobids[OMPI_COMM_MAXJOBIDS], thisjobid;
     ompi_group_t *grp=NULL;
+    ompi_proc_t *proc = NULL;
 
     /* special case for MPI_COMM_NULL */
     if ( comm == MPI_COMM_NULL ) {
@@ -910,7 +954,8 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
        of different jobids.  */
     grp = comm->c_local_group;
     for (i=0; i< size; i++) {
-        thisjobid = grp->grp_proc_pointers[i]->proc_name.jobid;
+	proc = ompi_group_peer_lookup(grp,i);
+	thisjobid = proc->proc_name.jobid;
         found = 0;
         for ( j=0; j<numjobids; j++) {
             if (thisjobid == jobids[j]) {
@@ -927,7 +972,8 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
        and count number of different jobids */
     grp = comm->c_remote_group;
     for (i=0; i< rsize; i++) {
-        thisjobid = grp->grp_proc_pointers[i]->proc_name.jobid;
+	proc = ompi_group_peer_lookup(grp,i);
+	thisjobid = proc->proc_name.jobid;
         found = 0;
         for ( j=0; j<numjobids; j++) {
             if ( thisjobid == jobids[j]) {

@@ -65,7 +65,7 @@ uint32_t mca_coll_sm_iov_size = 1;
 static const struct mca_coll_base_module_1_0_0_t *
     sm_module_init(struct ompi_communicator_t *comm);
 static int sm_module_finalize(struct ompi_communicator_t *comm);
-static bool have_local_peers(ompi_proc_t **procs, size_t size);
+static bool have_local_peers(ompi_group_t *group, size_t size);
 static int bootstrap_init(void);
 static int bootstrap_comm(ompi_communicator_t *comm);
 
@@ -172,8 +172,7 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority,
        are not on this node, then we don't want to run */
 
     if (OMPI_COMM_IS_INTER(comm) || 1 == ompi_comm_size(comm) ||
-        !have_local_peers(comm->c_local_group->grp_proc_pointers,
-                          ompi_comm_size(comm))) {
+        !have_local_peers(comm->c_local_group, ompi_comm_size(comm))) {
 	return NULL;
     }
 
@@ -509,13 +508,14 @@ static int sm_module_finalize(struct ompi_communicator_t *comm)
     return OMPI_SUCCESS;
 }
 
-
-static bool have_local_peers(ompi_proc_t **procs, size_t size)
+static bool have_local_peers(ompi_group_t *group, size_t size)
 {
     size_t i;
+    ompi_proc_t *proc;
 
     for (i = 0; i < size; ++i) {
-        if (0 == (procs[i]->proc_flags & OMPI_PROC_FLAG_LOCAL)) {
+        proc = ompi_group_peer_lookup(group,i);
+        if (0 == (proc->proc_flags & OMPI_PROC_FLAG_LOCAL)) {
             return false;
         }
     }
@@ -611,6 +611,7 @@ static int bootstrap_comm(ompi_communicator_t *comm)
     int frag_size = c->sm_fragment_size;
     int control_size = c->sm_control_size;
     orte_process_name_t *rank0;
+    ompi_proc_t * proc;
 
     /* Is our CID in the CIDs array?  If not, loop until we can find
        an open slot in the array to use in the bootstrap to setup our
@@ -620,7 +621,10 @@ static int bootstrap_comm(ompi_communicator_t *comm)
         c->sm_bootstrap_meta->map_seg;
     bscs = bshe->smbhe_segments;
     opal_atomic_lock(&bshe->super.seg_lock);
-    rank0 = &(comm->c_local_group->grp_proc_pointers[0]->proc_name);
+    proc = ompi_group_peer_lookup(comm->c_local_group,0);
+    rank0 = &(proc->proc_name);
+    free(proc);
+
     while (1) {
         opal_atomic_wmb();
         found = false;

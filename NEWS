@@ -28,6 +28,8 @@ version 1.0.
 
 Trunk (not on release branches yet)
 -----------------------------------
+- Added the Sparse Groups implementation.
+  --> Expected: 1.3
 
 - Added Cray Compute Node Linux (CNL) and ALPS Support.
   --> Expected: ???

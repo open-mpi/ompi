@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2006-2007 University of Houston. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -25,4 +26,8 @@ headers += \
 libmpi_la_SOURCES += \
         group/group.c \
         group/group_init.c \
-        group/group_set_rank.c
+        group/group_set_rank.c \
+        group/group_plist.c \
+	group/group_sporadic.c \
+	group/group_strided.c \
+ 	group/group_bitmap.c 

@@ -9,7 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 University of Houston.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,6 +48,9 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     int total_size;
     int rc=MPI_SUCCESS;
     int thigh = high;
+    ompi_proc_t **l_proc_list=NULL , **r_proc_list=NULL;
+    ompi_group_t *new_group_pointer;
+    
 
     OPAL_CR_TEST_CHECKPOINT_READY();
 
@@ -79,23 +83,35 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     }
 
     if ( first ) {
-        memcpy ( procs, intercomm->c_local_group->grp_proc_pointers, 
-                 local_size * sizeof(ompi_proc_t *));
-        memcpy ( &procs[local_size], intercomm->c_remote_group->grp_proc_pointers, 
-                 remote_size * sizeof(ompi_proc_t *));
+        ompi_group_union ( intercomm->c_local_group, intercomm->c_remote_group, &new_group_pointer );
     }
     else {
-        memcpy ( procs, intercomm->c_remote_group->grp_proc_pointers, 
-                 remote_size * sizeof(ompi_proc_t *));
-        memcpy ( &procs[remote_size], intercomm->c_local_group->grp_proc_pointers, 
-                 local_size * sizeof(ompi_proc_t *));
+        ompi_group_union ( intercomm->c_remote_group, intercomm->c_local_group, &new_group_pointer );
     }
-    
-    newcomp = ompi_comm_allocate ( total_size, 0 );
+
+    rc = ompi_comm_set ( &newcomp,                 /* new comm */
+                         intercomm,                /* old comm */
+                         total_size,               /* local_size */
+                         NULL,                     /* local_procs*/
+                         0,                        /* remote_size */
+                         NULL,                     /* remote_procs */
+                         NULL,                     /* attrs */
+                         intercomm->error_handler, /* error handler*/
+                         NULL,                     /* topo mpodule */
+			 new_group_pointer,        /* local group */
+			 NULL                      /* remote group */
+                         );
     if ( NULL == newcomp ) {
         rc = MPI_ERR_INTERN;
         goto exit;
     }
+    if ( MPI_SUCCESS != rc ) {
+        goto exit;
+    }
+
+    ompi_group_decrement_proc_count(new_group_pointer);
+    OBJ_RELEASE(new_group_pointer);
+    new_group_pointer = MPI_GROUP_NULL;
 
     /* Determine context id. It is identical to f_2_c_handle */
     rc = ompi_comm_nextcid ( newcomp,              /* new comm */ 
@@ -106,20 +122,6 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                              OMPI_COMM_CID_INTER,  /* mode */
                              -1 );                 /* send_first */
     if ( OMPI_SUCCESS != rc ) {
-        goto exit;
-    }
-
-    rc = ompi_comm_set ( newcomp,                  /* new comm */
-                         intercomm,                /* old comm */
-                         total_size,               /* local_size */
-                         procs,                    /* local_procs*/
-                         0,                        /* remote_size */
-                         NULL,                     /* remote_procs */
-                         NULL,                     /* attrs */
-                         intercomm->error_handler, /* error handler*/
-                         NULL                      /* topo mpodule */
-                         );
-    if ( MPI_SUCCESS != rc ) {
         goto exit;
     }
 
@@ -141,6 +143,12 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
  exit:
     if ( NULL != procs ) {
         free ( procs );
+    }
+    if ( NULL != l_proc_list ) {
+        free ( l_proc_list );
+    }
+    if ( NULL != r_proc_list ) {
+        free ( r_proc_list );
     }
     if ( MPI_SUCCESS != rc ) {
         if ( MPI_COMM_NULL != newcomp ) {

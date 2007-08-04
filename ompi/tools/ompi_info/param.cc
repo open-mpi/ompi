@@ -351,7 +351,8 @@ void ompi_info::do_config(bool want_all)
   const string want_libltdl(OMPI_WANT_LIBLTDL ? "yes" : "no");
   const string mpirun_prefix_by_default(ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ?
                                         "yes" : "no");
-  
+  const string sparse_groups(OMPI_GROUP_SPARSE ? "yes" : "no");
+
   if (OMPI_HAVE_SOLARIS_THREADS || OMPI_HAVE_POSIX_THREADS) {
       threads = OMPI_HAVE_SOLARIS_THREADS ? "solaris" :
           OMPI_HAVE_POSIX_THREADS ? "posix" : "type unknown";
@@ -549,6 +550,7 @@ void ompi_info::do_config(bool want_all)
 
   out("C++ exceptions", "option:cxx_exceptions", cxxexceptions);
   out("Thread support", "option:threads", threads);
+  out("Sparse Groups", "option:sparse:groups", sparse_groups);
 
   if (want_all) {
     

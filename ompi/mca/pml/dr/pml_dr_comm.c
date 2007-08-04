@@ -101,7 +101,7 @@ int mca_pml_dr_comm_init(mca_pml_dr_comm_t* dr_comm, ompi_communicator_t* ompi_c
         proc = dr_comm->procs+i;
         OBJ_CONSTRUCT(proc, mca_pml_dr_comm_proc_t);
         proc->comm_rank = i;
-        ompi_proc = ompi_comm->c_remote_group->grp_proc_pointers[i];
+        ompi_proc = ompi_group_peer_lookup(ompi_comm->c_remote_group,i);
         proc->ompi_proc = ompi_proc;
         pml_ep = (mca_pml_dr_endpoint_t*) ompi_proc->proc_pml;
         ompi_pointer_array_set_item(&dr_comm->sparse_procs, 
