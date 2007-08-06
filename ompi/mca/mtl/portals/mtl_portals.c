@@ -192,9 +192,11 @@ ompi_mtl_portals_finalize(struct mca_mtl_base_module_t *mtl)
 
     ompi_mtl_portals_recv_short_disable((mca_mtl_portals_module_t *) mtl);
 
-    opal_progress_unregister(ompi_mtl_portals_progress);
-
-    while (0 != ompi_mtl_portals_progress()) { }
+    /* Don't try to wait for things to finish if we've never initialized */
+    if (PTL_INVALID_HANDLE != ompi_mtl_portals.ptl_ni_h) {
+        opal_progress_unregister(ompi_mtl_portals_progress);
+        while (0 != ompi_mtl_portals_progress()) { }
+    }
 
     ompi_common_portals_ni_finalize();
     ompi_common_portals_finalize();
@@ -220,14 +222,14 @@ ompi_mtl_portals_progress(void)
                 ret = ptl_request->event_callback(&ev, ptl_request);
 
                 if (OMPI_SUCCESS != ret) {
-                    opal_output(stderr," Error returned from the even callback.  Error code - %d \n",ret);
+                    opal_output(0, " Error returned from the even callback.  Error code - %d \n",ret);
                     abort();
                 }
             }
         } else if (PTL_EQ_EMPTY == ret) {
             break;
         } else {
-            opal_output(stderr," Error returned from PtlEQGet.  Error code - %d \n",ret);
+            opal_output(0, " Error returned from PtlEQGet.  Error code - %d \n",ret);
             abort();
         }
     }
