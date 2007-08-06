@@ -33,9 +33,7 @@
 #include <string.h> 
 #include "ompi/mca/btl/base/btl_base_error.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct mca_btl_openib_frag_t;
 
@@ -204,10 +202,10 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_endpoint_t);
 
 int  mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t* endpoint,
                                   struct mca_btl_openib_frag_t* frag);
-int  mca_btl_openib_endpoint_connect(mca_btl_base_endpoint_t*);
-void mca_btl_openib_post_recv(void);
 void mca_btl_openib_endpoint_send_credits(mca_btl_base_endpoint_t*, const int);
 void mca_btl_openib_endpoint_connect_eager_rdma(mca_btl_openib_endpoint_t*);
+int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t *endpoint);
+void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint);
 
 
 
@@ -300,7 +298,6 @@ static inline int btl_openib_check_send_credits(
     return 0;
 }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif
