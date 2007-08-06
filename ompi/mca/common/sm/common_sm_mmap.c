@@ -74,7 +74,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     size_t tmp,mem_offset;
 
     bool i_create_shared_file=false;
-    ompi_proc_t **procs;
+    ompi_proc_t **procs = NULL;
     size_t n_local_procs=0, n_total_procs=0,n,p;
     ompi_proc_t *my_proc;
     int rc=0, sm_file_inited=0;
@@ -267,6 +267,8 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     
     } 
 
+    if ( NULL != procs ) free(procs);
+    
     /* enable access by other processes on this host */
     close(fd);
 
@@ -278,6 +280,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     }
 
     if( NULL != seg ) munmap((void*) seg,size);
+    if ( NULL != procs ) free(procs);
 
     return NULL;
 
