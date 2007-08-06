@@ -48,7 +48,14 @@ sources = \
     btl_openib_ini.c \
     btl_openib_ini.h \
     btl_openib_async.c \
-    btl_openib_async.h
+    btl_openib_async.h \
+    connect/base.h \
+    connect/btl_openib_connect_base.c \
+    connect/btl_openib_connect_oob.c \
+    connect/btl_openib_connect_oob.h \
+    connect/btl_openib_connect_rdma_cm.c \
+    connect/btl_openib_connect_rdma_cm.h \
+    connect/connect.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

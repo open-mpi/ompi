@@ -20,55 +20,31 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
+
 #include <sys/time.h>
 #include <time.h>
-#include "ompi/types.h"
-#include "ompi/mca/pml/base/pml_base_sendreq.h"
+#include <errno.h> 
+#include <string.h> 
+
 #include "orte/mca/ns/base/base.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/dss/dss.h"
+
+#include "ompi/types.h"
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
+#include "ompi/class/ompi_free_list.h" 
+
 #include "btl_openib.h"
 #include "btl_openib_endpoint.h" 
 #include "btl_openib_proc.h"
 #include "btl_openib_frag.h"
-#include "ompi/class/ompi_free_list.h" 
-#include <errno.h> 
-#include <string.h> 
-
-#define ENDPOINT_CONNECT_REQ 0
-#define ENDPOINT_CONNECT_RSP 1
-#define ENDPOINT_CONNECT_ACK 2
+#include "connect/base.h"
 
 static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint);
 static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint);
-
-int mca_btl_openib_endpoint_create_qp(
-                                      mca_btl_openib_module_t* openib_btl, 
-                                      struct ibv_pd* pd, 
-                                      struct ibv_cq* cq, 
-                                      struct ibv_srq* srq, 
-                                      struct ibv_qp_attr* qp_attr,                                      
-                                      struct ibv_qp** qp,
-                                      int qp_idx
-                                      ); 
-
-
-
-int mca_btl_openib_endpoint_qp_init_query(
-                                          mca_btl_openib_module_t* openib_btl, 
-                                          struct ibv_qp* qp, 
-                                          struct ibv_qp_attr* attr,
-                                          uint32_t lcl_psn, 
-                                          uint32_t rem_qp_num, 
-                                          uint32_t rem_psn,  
-                                          uint16_t rem_lid, 
-                                          uint32_t rem_mtu,
-                                          uint32_t port_num 
-                                          ); 
 
 static int post_send(mca_btl_openib_module_t *openib_btl,
         mca_btl_openib_endpoint_t *endpoint, mca_btl_openib_frag_t *frag,
@@ -255,10 +231,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
                    ib_rc, strerror(ib_rc))); 
         return OMPI_ERROR; 
     }
-#if 0
-    mca_btl_openib_post_srr_all(openib_btl, 1);
-    mca_btl_openib_endpoint_post_rr_all(endpoint, 1);
-#endif
+
     return OMPI_SUCCESS;
 }
 
@@ -428,283 +401,31 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     OBJ_DESTRUCT(&endpoint->pending_put_frags);
 }
 
-/*
- * Send connection information to remote endpoint using OOB
- *
- */
-
-static void mca_btl_openib_endpoint_send_cb(
-    int status,
-    orte_process_name_t* endpoint, 
-    orte_buffer_t* buffer,
-    orte_rml_tag_t tag, 
-    void* cbdata)
-{
-    OBJ_RELEASE(buffer);
-}
-
-static int mca_btl_openib_endpoint_send_connect_data(mca_btl_base_endpoint_t* endpoint, uint8_t message_type)
-{
-    orte_buffer_t* buffer = OBJ_NEW(orte_buffer_t);
-    int rc;
-    
-    if(NULL == buffer) {
-         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-         return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    /* pack the info in the send buffer */ 
-    opal_output(mca_btl_base_output, "packing %d of %d\n", 1, ORTE_UINT8);
-    rc = orte_dss.pack(buffer, &message_type, 1, ORTE_UINT8);
-    if(rc != ORTE_SUCCESS) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    opal_output(mca_btl_base_output, "packing %d of %d\n", 1, ORTE_UINT64);
-    rc = orte_dss.pack(buffer, &endpoint->subnet_id, 1, ORTE_UINT64);
-    if(rc != ORTE_SUCCESS) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    /*GMS left off here */
-    if(message_type != ENDPOINT_CONNECT_REQ) {
-        /* send the QP connect request info we respond to */
-        opal_output(mca_btl_base_output, "packing %d of %d\n", 1, ORTE_UINT32);
-        rc = orte_dss.pack(buffer,
-                           &endpoint->rem_info.rem_qps[0].rem_qp_num, 1,
-                           ORTE_UINT32);
-        if(rc != ORTE_SUCCESS) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        opal_output(mca_btl_base_output, "packing %d of %d\n", 1, ORTE_UINT16);
-        rc = orte_dss.pack(buffer, &endpoint->rem_info.rem_lid, 1, ORTE_UINT16);
-        if(rc != ORTE_SUCCESS) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    }
-
-    if(message_type != ENDPOINT_CONNECT_ACK) {
-        int qp;
-        /* stuff all the QP info into the buffer */
-        for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-            opal_output(mca_btl_base_output, "packing %d of %d\n", 1, ORTE_UINT32);
-            rc = orte_dss.pack(buffer, &endpoint->qps[qp].lcl_qp->qp_num,
-                               1, ORTE_UINT32);
-            if(rc != ORTE_SUCCESS) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            opal_output(mca_btl_base_output, "packing %d of %d\n", 1, ORTE_UINT32);
-            rc = orte_dss.pack(buffer, &endpoint->qps[qp].lcl_psn, 1,
-                               ORTE_UINT32); 
-            if(rc != ORTE_SUCCESS) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }
-        
-        opal_output(mca_btl_base_output, "packing %d of %d\n", 1, ORTE_UINT16);
-        rc = orte_dss.pack(buffer, &endpoint->endpoint_btl->lid, 1, ORTE_UINT16);
-        if(rc != ORTE_SUCCESS) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        opal_output(mca_btl_base_output, "packing %d of %d\n", 1, ORTE_UINT32);
-        rc = orte_dss.pack(buffer, &endpoint->endpoint_btl->hca->mtu, 1,
-                ORTE_UINT32);
-        if(rc != ORTE_SUCCESS) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        opal_output(mca_btl_base_output, "packing %d of %d\n", 1, ORTE_UINT32);
-        rc = orte_dss.pack(buffer, &endpoint->index, 1, ORTE_UINT32);
-        if(rc != ORTE_SUCCESS) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    }
-
-    /* send to endpoint */
-    rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, 
-                                 buffer, ORTE_RML_TAG_DYNAMIC-1, 0,
-                                 mca_btl_openib_endpoint_send_cb, NULL);
-    
-    
-    BTL_VERBOSE(("Sent QP Info, LID = %d, SUBNET = %016x\n",
-                 endpoint->endpoint_btl->lid, 
-                 endpoint->subnet_id));
-    
-    
-
-    if(rc < 0) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    return OMPI_SUCCESS;
-}
 
 /*
- * Set remote connection info
- *   (from OOB connection) 
- *
+ * call when the connect module has created all the qp's on an
+ * endpoint and needs to have some receive buffers posted
  */
-static int mca_btl_openib_endpoint_set_remote_info(mca_btl_base_endpoint_t* endpoint,
-                                                   mca_btl_openib_rem_info_t* rem_info)
+int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t *endpoint)
 {
-    
-    /* copy the rem_info stuff */
-    memcpy(&((mca_btl_openib_endpoint_t*) endpoint)->rem_info, 
-           rem_info, sizeof(mca_btl_openib_rem_info_t)); 
-    
-    /* copy over the rem qp info */
-    memcpy(endpoint->rem_info.rem_qps,
-           rem_info->rem_qps, sizeof(mca_btl_openib_rem_qp_info_t) * 
-           mca_btl_openib_component.num_qps);
-    
-    BTL_VERBOSE(("Setting QP info,  LID = %d", endpoint->rem_info.rem_lid));
+    int qp;
 
-    return ORTE_SUCCESS;
-
-}
-
-
-static int mca_btl_openib_endpoint_qp_create_one(
-         mca_btl_base_endpoint_t* endpoint, int prio, int qp)
-{
-    int rc;
-    mca_btl_openib_module_t *openib_btl =
-        (mca_btl_openib_module_t*)endpoint->endpoint_btl;
-    struct ibv_srq *srq = 
-        (MCA_BTL_OPENIB_PP_QP == openib_btl->qps[qp].type) ? NULL : 
-        openib_btl->qps[qp].u.srq_qp.srq;
-    
-    /* Create the  Queue Pair */
-    if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_create_qp(openib_btl,
-                    openib_btl->hca->ib_pd,
-                    openib_btl->ib_cq[prio],
-                    srq,
-                    endpoint->qps[qp].lcl_qp_attr,
-                    &endpoint->qps[qp].lcl_qp, 
-                    qp))) {
-        BTL_ERROR(("error creating queue pair, error code %d", rc)); 
-        return rc;
-    }
-    endpoint->qps[qp].lcl_psn = lrand48() & 0xffffff;
-    endpoint->qps[qp].credit_frag = NULL;
-    openib_btl->cq_users[prio]++;
-
-    if(MCA_BTL_OPENIB_SRQ_QP == endpoint->qps[qp].qp_type) { 
-        mca_btl_openib_post_srr(openib_btl, 1, qp);
-    } else { 
-        mca_btl_openib_endpoint_post_rr(endpoint, 1, qp);
-    }
-    
-    return OMPI_SUCCESS;
- }
-
-static int mca_btl_openib_endpoint_qp_create_all(
-        mca_btl_base_endpoint_t* endpoint)
-{
-    int qp, rc;
-
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-        if( mca_btl_openib_component.qp_infos[qp].size <=
-                mca_btl_openib_component.eager_limit) { 
-            rc = mca_btl_openib_endpoint_qp_create_one(endpoint,
-                    BTL_OPENIB_HP_CQ, qp);
-            if(rc != OMPI_SUCCESS)
-                return rc;
+    for (qp = 0; qp < mca_btl_openib_component.num_qps; ++qp) { 
+        if (MCA_BTL_OPENIB_SRQ_QP == endpoint->qps[qp].qp_type) { 
+            mca_btl_openib_post_srr(endpoint->endpoint_btl, 1, qp);
         } else { 
-            rc = mca_btl_openib_endpoint_qp_create_one(endpoint,
-                    BTL_OPENIB_LP_CQ, qp);
-            if(rc != OMPI_SUCCESS)
-                return rc;
+            mca_btl_openib_endpoint_post_rr(endpoint, 1, qp);
         }
     }
-
-    return OMPI_SUCCESS;
-}
-/*
- * Start to connect to the endpoint. We send our Queue Pair
- * information over the TCP OOB communication mechanism.
-
- * On completion of our send, a send completion handler 
- * is called
- *
- */
-
-static int mca_btl_openib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoint)
-{
-    int rc;
     
-    BTL_VERBOSE(("Initialized QP ,  LID = %d",
-                 ((mca_btl_openib_module_t*)endpoint->endpoint_btl)->lid)); 
-    
-    rc = mca_btl_openib_endpoint_qp_create_all(endpoint);
-
-    if(rc != OMPI_SUCCESS)
-        return rc;
-
-    /* Send connection info over to remote endpoint */
-    endpoint->endpoint_state = MCA_BTL_IB_CONNECTING;
-
-    if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_send_connect_data(endpoint,
-                                                                       ENDPOINT_CONNECT_REQ))) {
-        BTL_ERROR(("error sending connect request, error code %d", rc)); 
-        return rc;
-    }
     return OMPI_SUCCESS;
 }
 
-/*
- * Reply to a `start - connect' message
- *
- */
-static int mca_btl_openib_endpoint_reply_start_connect(
-        mca_btl_openib_endpoint_t *endpoint,
-        mca_btl_openib_rem_info_t *rem_info)
-{
-    int rc;
-
-    BTL_VERBOSE(("Initialized QPs, LID = %d",
-                 ((mca_btl_openib_module_t*)endpoint->endpoint_btl)->lid));
-
-    rc = mca_btl_openib_endpoint_qp_create_all(endpoint);
-
-    if(rc != OMPI_SUCCESS)
-        return rc;
-
-    /* Set the remote side info */
-    mca_btl_openib_endpoint_set_remote_info(endpoint, rem_info);
-    
-    /* Connect to endpoint */
-
-    rc = mca_btl_openib_endpoint_connect(endpoint);
-    if(rc != OMPI_SUCCESS) {
-        BTL_ERROR(("error in endpoint connect error code is %d", rc)); 
-        return rc;
-    }
-
-    /* Send connection info over to remote endpoint */
-    endpoint->endpoint_state = MCA_BTL_IB_CONNECT_ACK;
-    if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_send_connect_data(endpoint,
-                    ENDPOINT_CONNECT_RSP))) {
-        BTL_ERROR(("error in endpoint send connect request error code is %d",
-                    rc));
-        return rc;
-    }
-    return OMPI_SUCCESS;
-}
 
 /*
- * called when the openib has completed setup via the 
- *  OOB channel 
+ * called when the connect module has completed setup of an endpoint
  */
-
-static void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
+void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
 {
     opal_list_item_t *frag_item;
     mca_btl_openib_frag_t *frag;
@@ -713,15 +434,12 @@ static void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoin
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTED;
     endpoint->endpoint_btl->poll_cq = true; 
     
-    /**
-     * The connection is correctly setup. Now we can decrease the event trigger.
-     */
+    /* The connection is correctly setup. Now we can decrease the
+       event trigger. */
     opal_progress_event_users_decrement();
 
-    /* While there are frags in the list,
-     * process them */
-
-    while(!opal_list_is_empty(&(endpoint->pending_lazy_frags))) {
+    /* While there are frags in the list, process them */
+    while (!opal_list_is_empty(&(endpoint->pending_lazy_frags))) {
         frag_item = opal_list_remove_first(&(endpoint->pending_lazy_frags));
         frag = (mca_btl_openib_frag_t *) frag_item;
         openib_btl = endpoint->endpoint_btl;
@@ -732,269 +450,13 @@ static void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoin
     }
 }
 
-/*
- * Non blocking OOB recv callback.
- * Read incoming QP and other info, and if this endpoint
- * is trying to connect, reply with our QP info, 
- * otherwise try to modify QP's and establish
- * reliable connection
- *
- */
-
-static void mca_btl_openib_endpoint_recv(
-    int status,
-    orte_process_name_t* process_name, 
-    orte_buffer_t* buffer,
-    orte_rml_tag_t tag, 
-    void* cbdata)
-{
-    mca_btl_openib_proc_t *ib_proc;
-    mca_btl_openib_endpoint_t *ib_endpoint = NULL;
-    int endpoint_state;
-    int rc;
-    uint32_t i, lcl_qp = 0;
-    uint16_t lcl_lid = 0;
-    int32_t cnt = 1;
-    mca_btl_openib_rem_info_t rem_info;
-    uint8_t message_type;
-    bool master;
-    
-    /* start by unpacking data first so we know who is knocking at 
-       our door */ 
-    
-    opal_output(mca_btl_base_output, "unpacking %d of %d\n", cnt, ORTE_UINT8);
-    rc = orte_dss.unpack(buffer, &message_type, &cnt, ORTE_UINT8);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    
-    opal_output(mca_btl_base_output, "unpacking %d of %d\n", cnt, ORTE_UINT64);
-    rc = orte_dss.unpack(buffer, &rem_info.rem_subnet_id, &cnt, ORTE_UINT64);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    
-    
-
-    if(message_type != ENDPOINT_CONNECT_REQ) {
-        opal_output(mca_btl_base_output, "unpacking %d of %d\n", cnt, ORTE_UINT32);
-        rc = orte_dss.unpack(buffer, &lcl_qp, &cnt, ORTE_UINT32);
-        if(ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            return;
-        }
-        opal_output(mca_btl_base_output, "unpacking %d of %d\n", cnt, ORTE_UINT16);
-        rc = orte_dss.unpack(buffer, &lcl_lid, &cnt, ORTE_UINT16);
-        if(ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            return;
-        }
-    }
-    if(message_type != ENDPOINT_CONNECT_ACK) {
-        int qp; 
-        /* get ready for the data */
-        rem_info.rem_qps = 
-            (mca_btl_openib_rem_qp_info_t*) malloc(sizeof(mca_btl_openib_rem_qp_info_t) * 
-                                                   mca_btl_openib_component.num_qps);
-        
-        /* unpack all the qp info */
-        for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-            opal_output(mca_btl_base_output, "unpacking %d of %d\n", cnt, ORTE_UINT32);
-            rc = orte_dss.unpack(buffer, &rem_info.rem_qps[qp].rem_qp_num, &cnt,
-                                 ORTE_UINT32);
-            if(ORTE_SUCCESS != rc) {
-                ORTE_ERROR_LOG(rc);
-                return;
-            }
-            opal_output(mca_btl_base_output, "unpacking %d of %d\n", cnt, ORTE_UINT32);
-            rc = orte_dss.unpack(buffer, &rem_info.rem_qps[qp].rem_psn, &cnt,
-                                 ORTE_UINT32);
-            if(ORTE_SUCCESS != rc) {
-                ORTE_ERROR_LOG(rc);
-                return;
-            }
-        }
-        
-        opal_output(mca_btl_base_output, "unpacking %d of %d\n", cnt, ORTE_UINT16);
-        rc = orte_dss.unpack(buffer, &rem_info.rem_lid, &cnt, ORTE_UINT16);
-        if(ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            return;
-        }
-        opal_output(mca_btl_base_output, "unpacking %d of %d\n", cnt, ORTE_UINT32);
-        rc = orte_dss.unpack(buffer, &rem_info.rem_mtu, &cnt, ORTE_UINT32);
-        if(ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            return;
-        }
-        opal_output(mca_btl_base_output, "unpacking %d of %d\n", cnt, ORTE_UINT32);
-        rc = orte_dss.unpack(buffer, &rem_info.rem_index, &cnt, ORTE_UINT32);
-        if(ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            return;
-        }
-    }
-    
-    BTL_VERBOSE(("Received QP Info,  LID = %d, SUBNET = %016x\n",
-                 rem_info.rem_lid, 
-                 rem_info.rem_subnet_id));
-    
-    master = orte_ns.compare_fields(ORTE_NS_CMP_ALL, orte_process_info.my_name,
-                                    process_name) > 0 ? true : false;
-    
-    for(ib_proc = (mca_btl_openib_proc_t*)
-            opal_list_get_first(&mca_btl_openib_component.ib_procs);
-        ib_proc != (mca_btl_openib_proc_t*)
-            opal_list_get_end(&mca_btl_openib_component.ib_procs);
-        ib_proc  = (mca_btl_openib_proc_t*)opal_list_get_next(ib_proc)) {
-        bool found = false;
-        
-        if(orte_ns.compare_fields(ORTE_NS_CMP_ALL,
-                                  &ib_proc->proc_guid, process_name) != ORTE_EQUAL)
-            continue;
-        
-        if(message_type != ENDPOINT_CONNECT_REQ) {
-            /* This is a reply message. Try to get the endpoint instance the
-             * reply belongs to */
-            for(i = 0; i < ib_proc->proc_endpoint_count; i++) { 
-                ib_endpoint = ib_proc->proc_endpoints[i];
-                if(ib_endpoint->qps[0].lcl_qp != NULL &&
-                   lcl_lid == ib_endpoint->endpoint_btl->lid &&
-                   lcl_qp == ib_endpoint->qps[0].lcl_qp->qp_num &&
-                   rem_info.rem_subnet_id == ib_endpoint->subnet_id) {
-                    found = true;
-                    break;
-                }
-            }
-        } else {
-            /* This is new connection request. If this is master try to find
-             * endpoint in a connecting state. If this is slave try to find
-             * endpoint in closed state and initiate connection back */
-            mca_btl_openib_endpoint_t *ib_endpoint_found = NULL;
-            for(i = 0; i < ib_proc->proc_endpoint_count; i++) { 
-                ib_endpoint = ib_proc->proc_endpoints[i];
-                if(ib_endpoint->subnet_id != rem_info.rem_subnet_id ||
-                   (ib_endpoint->endpoint_state != MCA_BTL_IB_CONNECTING
-                    && ib_endpoint->endpoint_state != MCA_BTL_IB_CLOSED))
-                    continue;
-                found = true;
-                ib_endpoint_found = ib_endpoint;
-                if((master &&
-                    ib_endpoint->endpoint_state == MCA_BTL_IB_CONNECTING) ||
-                   (!master &&
-                    ib_endpoint->endpoint_state == MCA_BTL_IB_CLOSED))
-                    break; /* Found one. No point to continue */
-            }
-            ib_endpoint = ib_endpoint_found;
-            
-            /* if this is slave and there is no endpoints in closed state
-             * then all connection are already in progress so just ignore
-             * this connection request */
-            if(found && !master &&
-                    ib_endpoint->endpoint_state != MCA_BTL_IB_CLOSED) {
-                return;
-            }
-        }
-        
-        if(!found) {
-            BTL_ERROR(("can't find suitable endpoint for this peer\n")); 
-            return; 
-        }
-        
-        endpoint_state = ib_endpoint->endpoint_state;
-        
-        /* Update status */
-        switch(endpoint_state) {
-        case MCA_BTL_IB_CLOSED :
-            /* We had this connection closed before.
-             * The endpoint is trying to connect. Move the
-             * status of this connection to CONNECTING,
-             * and then reply with our QP information */
-            
-            if(master) {
-                rc = mca_btl_openib_endpoint_reply_start_connect(ib_endpoint, &rem_info);
-            } else {
-                rc = mca_btl_openib_endpoint_start_connect(ib_endpoint);
-            }
-            
-            if(OMPI_SUCCESS != rc) {
-                BTL_ERROR(("error in endpoint reply start connect"));
-                break;
-            }
-            
-            /** As long as we expect a message from the peer (in order to setup the connection)
-             * let the event engine pool the OOB events. Note: we increment it once peer active
-             * connection.
-             */
-            opal_progress_event_users_increment();
-            break;
-             
-        case MCA_BTL_IB_CONNECTING :
-            mca_btl_openib_endpoint_set_remote_info(ib_endpoint, &rem_info);
-            if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_connect(ib_endpoint))) {
-                BTL_ERROR(("endpoint connect error: %d", rc)); 
-                break;
-            }
-           
-            if(master) {
-                ib_endpoint->endpoint_state = MCA_BTL_IB_WAITING_ACK;
-
-                /* Send him an ack */
-                mca_btl_openib_endpoint_send_connect_data(ib_endpoint,
-                        ENDPOINT_CONNECT_RSP);
-            } else {
-                mca_btl_openib_endpoint_send_connect_data(ib_endpoint,
-                        ENDPOINT_CONNECT_ACK);
-                mca_btl_openib_endpoint_connected(ib_endpoint);
-             }
-            break;
-            
-        case MCA_BTL_IB_WAITING_ACK:
-            mca_btl_openib_endpoint_connected(ib_endpoint);
-            break;
-            
-         case MCA_BTL_IB_CONNECT_ACK:
-            mca_btl_openib_endpoint_send_connect_data(ib_endpoint,
-                                                      ENDPOINT_CONNECT_ACK);
-            mca_btl_openib_endpoint_connected(ib_endpoint);
-            break;
-
-       case MCA_BTL_IB_CONNECTED :
-            break;
-        default :
-            BTL_ERROR(("Invalid endpoint state %d", endpoint_state));
-        }
-        OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
-        break;
-    }
-}
-
-/* 
- *  Post the OOB recv (for receiving the peers information)
- */ 
-void mca_btl_openib_post_recv()
-{
-    
-    orte_rml.recv_buffer_nb(
-        ORTE_NAME_WILDCARD, 
-        ORTE_RML_TAG_DYNAMIC-1, 
-        ORTE_RML_PERSISTENT,
-        mca_btl_openib_endpoint_recv,
-        NULL);
-}
-
 
 /*
  * Attempt to send a fragment using a given endpoint. If the endpoint is not
  * connected, queue the fragment and start the connection as required.
  */
-
-int mca_btl_openib_endpoint_send(
-                             mca_btl_base_endpoint_t* endpoint,
-                             mca_btl_openib_frag_t* frag
-                             )
+int mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t* endpoint,
+                                 mca_btl_openib_frag_t* frag)
 {
     int rc;
     bool call_progress = false;
@@ -1027,10 +489,11 @@ int mca_btl_openib_endpoint_send(
             BTL_VERBOSE(("Connection to endpoint closed ... connecting ..."));
             opal_list_append(&endpoint->pending_lazy_frags,
                     (opal_list_item_t *)frag);
-            rc = mca_btl_openib_endpoint_start_connect(endpoint);
-            /**
-             * As long as we expect a message from the peer (in order to setup the connection)
-             * let the event engine pool the OOB events. Note: we increment it once peer active
+            rc = ompi_btl_openib_connect.bcf_start_connect(endpoint);
+            /*
+             * As long as we expect a message from the peer (in order
+             * to setup the connection) let the event engine pool the
+             * OOB events. Note: we increment it once peer active
              * connection.
              */
             opal_progress_event_users_increment();
@@ -1060,200 +523,6 @@ int mca_btl_openib_endpoint_send(
     if(call_progress) opal_progress();
     return rc;
 }
-
-/*
- * Complete connection to endpoint.
- */
-
-static int mca_btl_openib_endpoint_connect_qp(
-       mca_btl_openib_endpoint_t *endpoint, int prio, int qp)
-{
-    int rc;
-    mca_btl_openib_module_t* openib_btl =
-        (mca_btl_openib_module_t*)endpoint->endpoint_btl;
-
-    /* Connection establishment RC */
-    rc = mca_btl_openib_endpoint_qp_init_query(openib_btl,
-            endpoint->qps[qp].lcl_qp,
-            endpoint->qps[qp].lcl_qp_attr,
-            endpoint->qps[qp].lcl_psn,
-            endpoint->rem_info.rem_qps[qp].rem_qp_num,
-            endpoint->rem_info.rem_qps[qp].rem_psn,
-            endpoint->rem_info.rem_lid,
-            endpoint->rem_info.rem_mtu,
-            openib_btl->port_num);
-    
-    return rc;
-}
-
-int mca_btl_openib_endpoint_connect(
-    mca_btl_openib_endpoint_t *endpoint)
-{
-    int rc;
-    int qp;
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-        if( mca_btl_openib_component.qp_infos[qp].size <= mca_btl_openib_component.eager_limit) { 
-            rc = mca_btl_openib_endpoint_connect_qp(endpoint, 
-                                                    BTL_OPENIB_HP_CQ, 
-                                                    qp);
-        } else { 
-            rc = mca_btl_openib_endpoint_connect_qp(endpoint, 
-                                                    BTL_OPENIB_LP_CQ, 
-                                                    qp);
-        }
-        if(rc != OMPI_SUCCESS) {
-            return rc;
-        }
-    }
-    
-    return OMPI_SUCCESS;
-}
-
-/* 
- * Create the queue pair note that this is just the initial 
- *  queue pair creation and we need to get the remote queue pair 
- *  info from the peer before the qp is usable, 
- */ 
-
-int mca_btl_openib_endpoint_create_qp(
-                                      mca_btl_openib_module_t* openib_btl, 
-                                      struct ibv_pd* pd, 
-                                      struct ibv_cq* cq, 
-                                      struct ibv_srq* srq, 
-                                      struct ibv_qp_attr* qp_attr,
-                                      struct ibv_qp** qp,
-                                      int qp_idx
-                                      )
-{
-    {
-        struct ibv_qp* my_qp; 
-        struct ibv_qp_init_attr qp_init_attr; 
-
-        memset(&qp_init_attr, 0, sizeof(struct ibv_qp_init_attr)); 
-
-        qp_init_attr.send_cq = cq; 
-        qp_init_attr.recv_cq = cq; 
-        
-        if(MCA_BTL_OPENIB_PP_QP == mca_btl_openib_component.qp_infos[qp_idx].type) { 
-            qp_init_attr.cap.max_recv_wr =
-                mca_btl_openib_component.qp_infos[qp_idx].rd_num +
-                mca_btl_openib_component.qp_infos[qp_idx].u.pp_qp.rd_rsv;
-            qp_init_attr.cap.max_send_wr =
-                mca_btl_openib_component.qp_infos[qp_idx].rd_num + 1;
-        } else { 
-            qp_init_attr.cap.max_recv_wr =
-                mca_btl_openib_component.qp_infos[qp_idx].rd_num;
-            qp_init_attr.cap.max_send_wr =
-                mca_btl_openib_component.qp_infos[qp_idx].u.srq_qp.sd_max +
-                BTL_OPENIB_EAGER_RDMA_QP(qp_idx);
-        }
-        
-        qp_init_attr.cap.max_send_sge = mca_btl_openib_component.ib_sg_list_size;
-        qp_init_attr.cap.max_recv_sge = mca_btl_openib_component.ib_sg_list_size;
-        qp_init_attr.qp_type = IBV_QPT_RC; 
-        qp_init_attr.srq = srq; 
-        my_qp = ibv_create_qp(pd, &qp_init_attr); 
-    
-        if(NULL == my_qp) { 
-            BTL_ERROR(("error creating qp errno says %s", strerror(errno))); 
-            return OMPI_ERROR; 
-        }
-        (*qp) = my_qp; 
-        openib_btl->ib_inline_max = qp_init_attr.cap.max_inline_data; 
-    }
-    
-    {
-        qp_attr->qp_state = IBV_QPS_INIT; 
-        qp_attr->pkey_index = openib_btl->pkey_index; /*mca_btl_openib_component.ib_pkey_ix; */
-        qp_attr->port_num = openib_btl->port_num; 
-        qp_attr->qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ; 
-
-        if(ibv_modify_qp((*qp), qp_attr, 
-                         IBV_QP_STATE | 
-                         IBV_QP_PKEY_INDEX | 
-                         IBV_QP_PORT | 
-                         IBV_QP_ACCESS_FLAGS )) { 
-            BTL_ERROR(("error modifying qp to INIT errno says %s", strerror(errno))); 
-            return OMPI_ERROR; 
-        } 
-    } 
-
-    return OMPI_SUCCESS;
-}
-
-/* 
- * The queue pair has been created and we have received the remote 
- *  queue pair information from the peer so we init this queue pair 
- *  and are ready to roll. 
- */ 
-int mca_btl_openib_endpoint_qp_init_query(
-                                          mca_btl_openib_module_t* openib_btl, 
-                                          struct ibv_qp* qp, 
-                                          struct ibv_qp_attr* attr,
-                                          uint32_t lcl_psn, 
-                                          uint32_t rem_qp_num, 
-                                          uint32_t rem_psn,  
-                                          uint16_t rem_lid, 
-                                          uint32_t rem_mtu,
-                                          uint32_t port_num 
-                                          )
-     
-     
-{
-    attr->qp_state = IBV_QPS_RTR; 
-    attr->path_mtu = (openib_btl->hca->mtu < rem_mtu) ? 
-        openib_btl->hca->mtu : rem_mtu;
-    if (mca_btl_openib_component.verbose) {
-        BTL_OUTPUT(("Set MTU to IBV value %d (%s bytes)", attr->path_mtu,
-                    (attr->path_mtu == IBV_MTU_256) ? "256" :
-                    (attr->path_mtu == IBV_MTU_512) ? "512" :
-                    (attr->path_mtu == IBV_MTU_1024) ? "1024" :
-                    (attr->path_mtu == IBV_MTU_2048) ? "2048" :
-                    (attr->path_mtu == IBV_MTU_4096) ? "4096" :
-                    "unknown (!)"));
-    }
-    attr->dest_qp_num = rem_qp_num; 
-    attr->rq_psn = rem_psn; 
-    attr->max_dest_rd_atomic = mca_btl_openib_component.ib_max_rdma_dst_ops; 
-    attr->min_rnr_timer = mca_btl_openib_component.ib_min_rnr_timer; 
-    attr->ah_attr.is_global = 0; 
-    attr->ah_attr.dlid = rem_lid; 
-    attr->ah_attr.sl = mca_btl_openib_component.ib_service_level; 
-    attr->ah_attr.src_path_bits = openib_btl->src_path_bits;
-    attr->ah_attr.port_num = port_num; 
-    /* JMS to be filled in later dynamically */
-    attr->ah_attr.static_rate = 0;
-    
-    if(ibv_modify_qp(qp, attr, 
-                     IBV_QP_STATE              |
-                     IBV_QP_AV                 |
-                     IBV_QP_PATH_MTU           |
-                     IBV_QP_DEST_QPN           |
-                     IBV_QP_RQ_PSN             |
-                     IBV_QP_MAX_DEST_RD_ATOMIC |
-                     IBV_QP_MIN_RNR_TIMER)) {
-        BTL_ERROR(("error modifing QP to RTR errno says %s",  strerror(errno))); 
-        return OMPI_ERROR; 
-    }
-    attr->qp_state 	     = IBV_QPS_RTS;
-    attr->timeout 	     = mca_btl_openib_component.ib_timeout;
-    attr->retry_cnt 	 = mca_btl_openib_component.ib_retry_count;
-    attr->rnr_retry 	 = mca_btl_openib_component.ib_rnr_retry;
-    attr->sq_psn 	     = lcl_psn;
-    attr->max_rd_atomic  = mca_btl_openib_component.ib_max_rdma_dst_ops;
-    if (ibv_modify_qp(qp, attr,
-                      IBV_QP_STATE              |
-                      IBV_QP_TIMEOUT            |
-                      IBV_QP_RETRY_CNT          |
-                      IBV_QP_RNR_RETRY          |
-                      IBV_QP_SQ_PSN             |
-                      IBV_QP_MAX_QP_RD_ATOMIC)) {
-        BTL_ERROR(("error modifying QP to RTS errno says %s", strerror(errno))); 
-        return OMPI_ERROR;
-    }
-    return OMPI_SUCCESS;
-}
-
 
 /**
  * Return control fragment.

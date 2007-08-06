@@ -20,8 +20,12 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
+
+#include <infiniband/verbs.h> 
+#include <errno.h> 
+#include <string.h>   /* for strerror()*/ 
+
 #include "ompi/constants.h"
 #include "opal/event/event.h"
 #include "opal/include/opal/align.h"
@@ -29,19 +33,24 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-#include "ompi/proc/proc.h"
-#include "ompi/mca/pml/pml.h"
-#include "ompi/mca/btl/btl.h"
 #include "opal/sys/timer.h"
 #include "opal/sys/atomic.h"
 #include "opal/util/argv.h"
-
 #include "opal/mca/base/mca_base_param.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/sys_info.h"
+
+#include "ompi/proc/proc.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "ompi/mca/btl/base/base.h"
+#include "ompi/datatype/convertor.h" 
+#include "ompi/mca/mpool/mpool.h" 
+#include "ompi/runtime/ompi_module_exchange.h"
+
 #include "btl_openib.h"
 #include "btl_openib_frag.h"
 #include "btl_openib_endpoint.h" 
@@ -49,17 +58,11 @@
 #include "btl_openib_proc.h"
 #include "btl_openib_ini.h"
 #include "btl_openib_mca.h"
-
-#include "ompi/datatype/convertor.h" 
-#include "ompi/mca/mpool/mpool.h" 
 #if OMPI_HAVE_THREADS
 #include "btl_openib_async.h"
 #endif
-#include <infiniband/verbs.h> 
-#include <errno.h> 
-#include <string.h>   /* for strerror()*/ 
+#include "connect/base.h"
 
-#include "ompi/runtime/ompi_module_exchange.h"
 
 /*
  * Local functions
@@ -1097,8 +1100,10 @@ btl_openib_component_init(int *num_btl_modules,
         
     }
 
-    /* Post OOB receive to support dynamic connection setup */
-    mca_btl_openib_post_recv();
+    /* Setup connect module */
+    if (OMPI_SUCCESS != ompi_btl_openib_connect_base_select()) {
+        return NULL;
+    }
     btl_openib_modex_send();
 
     *num_btl_modules = mca_btl_openib_component.ib_num_btls;

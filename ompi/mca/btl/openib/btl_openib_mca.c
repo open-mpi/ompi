@@ -31,6 +31,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "btl_openib.h"
 #include "btl_openib_mca.h"
+#include "connect/base.h"
 
 /*
  * Local flags
@@ -600,6 +601,10 @@ static int mca_btl_openib_mca_setup_qps(void) {
     
     mca_btl_openib_component.rdma_qp = mca_btl_openib_component.num_qps - 1;
     mca_btl_openib_component.eager_rdma_qp = 0;
+
+    /* Register any MCA params for the connect pseudo-components */
+
+    ompi_btl_openib_connect_base_open();
 
     ret = MPI_SUCCESS;
 error:
