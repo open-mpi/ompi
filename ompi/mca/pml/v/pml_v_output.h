@@ -26,11 +26,17 @@ void pml_v_output_finalize(void);
 /* Tricky stuff to define V_OUTPUT and V_OUTPUT_VERBOSE with variadic arguments
  */
 #if   defined(ACCEPT_C99)
-#   define V_OUTPUT(ARGS...) OPAL_OUTPUT((mca_pml_v.output, __VA_ARGS__))
-#   define V_OUTPUT_VERBOSE(V, ARGS...) OPAL_OUTPUT_VERBOSE((V, mca_pml_v.output, __VA_ARGS__))
+#   define V_OUTPUT(ARGS...)                                                    \
+        OPAL_OUTPUT((mca_pml_v.output, __VA_ARGS__))
+#   define V_OUTPUT_VERBOSE(V, ARGS...)                                         \
+        OPAL_OUTPUT_VERBOSE((V, mca_pml_v.output, __VA_ARGS__))
+
 #elif defined(__GNUC__) && !defined(__STDC__)
-#   define V_OUTPUT(ARGS...) OPAL_OUTPUT((mca_pml_v.output, ARGS))
-#   define V_OUTPUT_VERBOSE(V, ARGS...) OPAL_OUTPUT_VERBOSE((V, mca_pml_v.output, ARGS))
+#   define V_OUTPUT(ARGS...)                                                    \
+        OPAL_OUTPUT((mca_pml_v.output, ARGS))
+#   define V_OUTPUT_VERBOSE(V, ARGS...)                                         \
+        OPAL_OUTPUT_VERBOSE((V, mca_pml_v.output, ARGS))
+            
 #elif OMPI_ENABLE_DEBUG
     /* No variadic macros available... So sad */
 static inline void V_OUTPUT(const char* fmt, ... ) {
@@ -55,6 +61,7 @@ static inline void V_OUTPUT_VERBOSE(int V, const char* fmt, ... ) {
     free(str);
     va_end(list);
 }
+
 #else /* !DEBUG */
    /* Some compilers complain if we have ... and no corresponding va_start() */
 static inline void V_OUTPUT(const char* fmt, ... ) {
