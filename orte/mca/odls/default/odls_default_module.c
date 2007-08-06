@@ -204,7 +204,7 @@ int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
             proc = (orte_mapped_proc_t*)item;
             
             /* must not have any tokens so that launch_procs can process it correctly */
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, 0, segment, 5, 0))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, 0, segment, 6, 0))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(ndat);
                 OBJ_RELEASE(value);
@@ -246,7 +246,7 @@ int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
                 OBJ_RELEASE(value);
                 return rc;
             }
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[3]),
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[4]),
                                                              ORTE_PROC_CPU_LIST_KEY,
                                                              ORTE_STRING, proc->slot_list))) {
                 ORTE_ERROR_LOG(rc);
@@ -255,7 +255,7 @@ int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
                 return rc;
             }
 
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[4]),
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[5]),
                                                              ORTE_NODE_NUM_PROCS_KEY,
                                                              ORTE_STD_CNTR, &node->num_procs))) {
                 ORTE_ERROR_LOG(rc);
