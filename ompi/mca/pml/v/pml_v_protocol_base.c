@@ -65,19 +65,19 @@ int mca_pml_v_protocol_base_select(bool enable_progress_threads, bool enable_mpi
     cli = (mca_base_component_list_item_t *) item;
     component = (mca_pml_v_protocol_base_component_t *) cli->cli_component;
 
-    V_OUTPUT_VERBOSE(15, "vprotocol select: initializing %s component %s", component->pmlm_version.mca_type_name, component->pmlm_version.mca_component_name);
+    V_OUTPUT_VERBOSE(500, "vprotocol select: initializing %s component %s", component->pmlm_version.mca_type_name, component->pmlm_version.mca_component_name);
     if (NULL == component->pmlm_init) {
-      V_OUTPUT_VERBOSE(1, "vprotocol select: no init function; ignoring component %s", component->pmlm_version.mca_component_name);
+      V_OUTPUT_VERBOSE(2, "vprotocol select: no init function; ignoring component %s", component->pmlm_version.mca_component_name);
     } 
     else 
     {
       module = component->pmlm_init(&priority, enable_progress_threads, enable_mpi_threads);
       if (NULL == module) {
-        V_OUTPUT_VERBOSE(1, "vprotocol select: init returned failure for component %s", component->pmlm_version.mca_component_name);
+        V_OUTPUT_VERBOSE(2, "vprotocol select: init returned failure for component %s", component->pmlm_version.mca_component_name);
       } 
       else 
       {
-        V_OUTPUT_VERBOSE(15, "vprotocol select: component %s init returned priority %d", component->pmlm_version.mca_component_name, priority);
+        V_OUTPUT_VERBOSE(500, "vprotocol select: component %s init returned priority %d", component->pmlm_version.mca_component_name, priority);
         if (priority > best_priority) 
         {
           best_priority = priority;
@@ -96,7 +96,7 @@ int mca_pml_v_protocol_base_select(bool enable_progress_threads, bool enable_mpi
 
   /* Finished querying all components.  Check for the bozo case. */
   if (NULL == best_component) {
-    V_OUTPUT_VERBOSE(1, "vprotocol select: no protocol has returned a positive priority, user don't want fault tolerance");
+    V_OUTPUT_VERBOSE(2, "vprotocol select: no protocol has returned a positive priority, user don't want fault tolerance");
   } 
   else 
   {
@@ -112,7 +112,7 @@ int mca_pml_v_protocol_base_select(bool enable_progress_threads, bool enable_mpi
     om = (opened_component_t *) item;
     if (om->om_component != best_component) {
       /* Finalize */
-      V_OUTPUT_VERBOSE(15, "vprotocol select: component %s not selected / finalized", om->om_component->pmlm_version.mca_component_name);
+      V_OUTPUT_VERBOSE(500, "vprotocol select: component %s not selected / finalized", om->om_component->pmlm_version.mca_component_name);
       if (NULL != om->om_component->pmlm_finalize) {
         /* Blatently ignore the return code (what would we do to
            recover, anyway?  This component is going away, so errors
@@ -135,7 +135,7 @@ int mca_pml_v_protocol_base_select(bool enable_progress_threads, bool enable_mpi
   /* All done */
   if(best_component != NULL) 
   {
-    V_OUTPUT_VERBOSE(10, "vprotocol select: component %s selected", mca_pml_v.protocol_component.pmlm_version.mca_component_name);
+    V_OUTPUT_VERBOSE(500, "vprotocol select: component %s selected", mca_pml_v.protocol_component.pmlm_version.mca_component_name);
     return OMPI_SUCCESS;
   }
   else 
