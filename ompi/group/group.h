@@ -82,7 +82,7 @@ struct ompi_group_t {
                             /**< list of pointers to ompi_proc_t structures
                                  for each process in the group */
     uint32_t grp_flags;     /**< flags, e.g. freed, cannot be freed etc.*/
-    /** pointer to the original group when using sporadic storage */
+    /** pointer to the original group when using sparse storage */
     struct ompi_group_t *grp_parent_group_ptr;
     union
     {
