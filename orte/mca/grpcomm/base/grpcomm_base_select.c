@@ -70,8 +70,8 @@ int orte_grpcomm_base_select(void)
         best_module = module;
         best_component = component;
 
-	/* update the best priority */
-	best_priority = priority;
+        /* update the best priority */
+        best_priority = priority;
       } 
 
       /* If it's not the best one, finalize it */
