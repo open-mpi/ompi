@@ -113,18 +113,6 @@ ompi_common_portals_initialize(void)
            information */
         int max_interfaces;
         unsigned int nptl_procs, rank;
-        ptl_interface_t ni_iface = PTL_IFACE_DEFAULT;
-        int launcher;
-
-        launcher = cnos_launcher();
-
-        /*
-         * If we use the YOD launcher we can use the default interface
-         * otherwise we need to use the SeaStar Bridged interface (for CNL/APRUN)
-         */
-        if( launcher != CNOS_LAUNCHER_YOD ) {
-            ni_iface = IFACE_FROM_BRIDGE_AND_NALID(PTL_BRIDGE_UK,PTL_IFACE_SS);
-        }
 
         ret = PtlInit(&max_interfaces);
         if (PTL_OK != ret) {
@@ -138,15 +126,15 @@ ompi_common_portals_initialize(void)
         PtlSetRank(PTL_INVALID_HANDLE, -1, -1);
 
         /* Initialize a network device */
-        ret = PtlNIInit(ni_iface,          /* interface to initialize */
+        ret = PtlNIInit(PTL_IFACE_DEFAULT, /* interface to initialize */
                         PTL_PID_ANY,       /* let library assign our pid */
                         NULL,              /* no desired limits */
                         NULL,              /* no need to have limits around */
                         &active_ni_h       /* our interface handle */
                         );
         if (PTL_OK != ret) {
-            opal_output(0, "%5d: PtlNIInit failed, returning %d (%s : %d)\n", 
-                        getpid(), ret, __FILE__, __LINE__);
+            opal_output(0, "%5d: PtlNIInit failed, returning %d\n", 
+                        getpid(), ret);
             return OMPI_ERR_FATAL;
         }
 
@@ -197,18 +185,6 @@ ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle)
         char *tmp;
         ompi_proc_t* proc_self = ompi_proc_local();
         int max_interfaces;
-        ptl_interface_t ni_iface = PTL_IFACE_DEFAULT;
-        int launcher;
-
-        launcher = cnos_launcher();
-
-        /*
-         * If we use the YOD launcher we can use the default interface
-         * otherwise we need to use the SeaStar Bridged interface (for CNL/APRUN)
-         */
-        if( launcher != CNOS_LAUNCHER_YOD ) {
-            ni_iface = IFACE_FROM_BRIDGE_AND_NALID(PTL_BRIDGE_UK,PTL_IFACE_SS);
-        }
 
         /* get our world */
         procs = ompi_proc_world(&nprocs);
@@ -280,15 +256,15 @@ ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle)
         PtlSetRank(PTL_INVALID_HANDLE, -1, -1);
 
         /* Initialize a network device */
-        ret = PtlNIInit(ni_iface,          /* interface to initialize */
+        ret = PtlNIInit(PTL_IFACE_DEFAULT, /* interface to initialize */
                         PTL_PID_ANY,       /* let library assign our pid */
                         NULL,              /* no desired limits */
                         NULL,              /* no need to have limits around */
                         &active_ni_h       /* our interface handle */
                         );
         if (PTL_OK != ret) {
-            opal_output(0, "%5d: PtlNIInit failed, returning %d (%s : %d)\n", 
-                        getpid(), ret, __FILE__, __LINE__);
+            opal_output(0, "%5d: PtlNIInit failed, returning %d\n", 
+                        getpid(), ret);
             return OMPI_ERR_FATAL;
         }
 
