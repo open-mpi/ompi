@@ -708,8 +708,25 @@ int ompi_coll_tuned_scatter_intra_dec_fixed(void *sbuf, int scount,
 					    struct ompi_datatype_t *rdtype, 
 					    int root, struct ompi_communicator_t *comm)
 {
+    const size_t small_block_size = 300;
+    const size_t small_comm_size = 10;
+    int communicator_size;
+    size_t rdsize, block_size;
+
     OPAL_OUTPUT((ompi_coll_tuned_stream, 
 		 "ompi_coll_tuned_scatter_intra_dec_fixed"));
+
+    communicator_size = ompi_comm_size(comm);
+    /* Determine block size */
+    ompi_ddt_type_size(rdtype, &rdsize);
+    block_size = rdsize * rcount;
+    
+    if ((communicator_size > small_comm_size) &&
+        (block_size < small_block_size)) {
+        return ompi_coll_tuned_scatter_intra_binomial (sbuf, scount, sdtype, 
+                                                       rbuf, rcount, rdtype, 
+                                                       root, comm);
+    }
     return ompi_coll_tuned_scatter_intra_basic_linear (sbuf, scount, sdtype, 
 						       rbuf, rcount, rdtype, 
 						       root, comm);
