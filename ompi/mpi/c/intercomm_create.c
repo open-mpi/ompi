@@ -46,7 +46,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     struct ompi_proc_t **rprocs=NULL;
     int rc=0, rsize=0;
     ompi_proc_t **proc_list=NULL;
-    int i,j;
+    int j;
     ompi_group_t *new_group_pointer;
 
     OPAL_CR_TEST_CHECKPOINT_READY();
