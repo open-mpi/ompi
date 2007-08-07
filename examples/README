@@ -2,6 +2,7 @@ Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
                         University Research and Technology
                         Corporation.  All rights reserved.
 Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 
 The files in this directory are sample MPI applications provided both
 as a trivial primer to MPI as well as simple tests to ensure that your
@@ -25,6 +26,9 @@ There are 2 MPI examples in this directory, each in four languages:
   C++: ring_cxx.cc
   F77: ring_f77.f
   F90: ring_f90.f90
+
+- Test the connectivity between all processes
+  C:   connectivity_c.c
 
 The Makefile in this directory will build as many of the examples as
 you have language support (e.g., if you do not have F90 bindings

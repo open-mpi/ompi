@@ -62,7 +62,7 @@ PATH=/usr/bin:/usr/sbin:${PATH}
 #
 ARCH=`uname -p`
 DATE=`date +'%Y.%m.%d'`
-PKGNAMES="SUNWompi SUNWompimn SUNWomsc"
+PKGNAMES="OMPIompi OMPIompimn OMPIomsc"
 PLATFORM=`uname -s`
 PROTO=
 SED_PKGINFO_PROTO=sed_pkginfo_proto
@@ -120,21 +120,20 @@ function build_prototype
 i pkginfo=pkginfo.${1}
 i copyright
 
-d none SUNWhpc 0755 root bin
 _EOF
 
-    if [ "$1" = "SUNWompimn" ] ; then
-        echo "d none SUNWhpc/\$SUNW_PRODVERS 0755 root bin" >> ${f_proto_name}.tmp 2>&1
-        pkgproto ${PROTO}/man=SUNWhpc/\$SUNW_PRODVERS/man >> ${f_proto_name}.tmp 2>&1
+    if [ "$1" = "OMPIompimn" ] ; then
+        echo "d none \$SUNW_PRODVERS 0755 root bin" >> ${f_proto_name}.tmp 2>&1
+        pkgproto ${PROTO}/man=\$SUNW_PRODVERS/man >> ${f_proto_name}.tmp 2>&1
     fi
 
-    if [ "$1" = "SUNWomsc" ] ; then
-        echo "d none SUNWhpc/\$SUNW_PRODVERS 0755 root bin" >> ${f_proto_name}.tmp 2>&1
-        pkgproto ${PROTO}/examples=SUNWhpc/\$SUNW_PRODVERS/examples >> ${f_proto_name}.tmp 2>&1
+    if [ "$1" = "OMPIomsc" ] ; then
+        echo "d none \$SUNW_PRODVERS 0755 root bin" >> ${f_proto_name}.tmp 2>&1
+        pkgproto ${PROTO}/examples=\$SUNW_PRODVERS/examples >> ${f_proto_name}.tmp 2>&1
     fi
 
-    if [ "$1" = "SUNWompi" ] ; then
-        pkgproto ${PROTO}=SUNWhpc/\$SUNW_PRODVERS | egrep -v "man|examples|\.la" >> ${f_proto_name}.tmp 2>&1
+    if [ "$1" = "OMPIompi" ] ; then
+        pkgproto ${PROTO}=\$SUNW_PRODVERS | egrep -v "man|examples|\.la" >> ${f_proto_name}.tmp 2>&1
     fi
 
 	sed -f ${SED_PKGINFO_PROTO} ${f_proto_name}.tmp > ${f_proto_name}
