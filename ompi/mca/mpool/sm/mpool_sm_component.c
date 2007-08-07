@@ -96,8 +96,9 @@ static int mca_mpool_sm_open(void)
                               "bucket",
                               &mca_mpool_sm_component.sm_allocator_name);
 
-    /* register values as string instead of int, to allow max_size and sm_size
-     * to be set greater than 2GB for 32 bit, and even more for 64 bit */
+    /* register values as string instead of int. A string-converted
+     * signed long int allows the max_size or the sm_size
+     * to be set up to 2GB-1 for 32 bit and much greater for 64 bit. */
     asprintf(&size_str, "%ld", default_max);
     mca_base_param_reg_string(&mca_mpool_sm_component.super.mpool_version,
                                "max_size",
