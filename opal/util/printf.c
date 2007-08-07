@@ -221,6 +221,7 @@ int opal_vasprintf(char **ptr, const char *fmt, va_list ap)
     *ptr = (char *) malloc((size_t) length + 1);
     if (NULL == *ptr) {
         errno = ENOMEM;
+        va_end(ap2);
         return -1;
     }
 
