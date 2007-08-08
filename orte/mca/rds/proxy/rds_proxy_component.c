@@ -38,7 +38,7 @@
 /*
  * Struct of function pointers that need to be initialized
  */
-ORTE_MODULE_DECLSPEC orte_rds_base_component_t mca_rds_proxy_component = {
+orte_rds_base_component_t mca_rds_proxy_component = {
   {
     ORTE_RDS_BASE_VERSION_1_3_0,
 

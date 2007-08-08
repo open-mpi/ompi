@@ -47,7 +47,7 @@
 /*
  * Struct of function pointers that need to be initialized
  */
-ORTE_MODULE_DECLSPEC mca_errmgr_base_component_t mca_errmgr_proxy_component = {
+mca_errmgr_base_component_t mca_errmgr_proxy_component = {
     {
     ORTE_ERRMGR_BASE_VERSION_1_3_0,
 

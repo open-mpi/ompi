@@ -72,6 +72,8 @@ int orte_errmgr_hnp_register_job(orte_jobid_t job);
 
 int orte_errmgr_hnp_abort_procs_request(orte_process_name_t *procs, orte_std_cntr_t nprocs);
 
+ORTE_MODULE_DECLSPEC extern mca_errmgr_base_component_t mca_errmgr_hnp_component;
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
