@@ -709,7 +709,7 @@ int ompi_coll_tuned_scatter_intra_dec_fixed(void *sbuf, int scount,
 					    int root, struct ompi_communicator_t *comm)
 {
     const size_t small_block_size = 300;
-    const size_t small_comm_size = 10;
+    const int small_comm_size = 10;
     int communicator_size;
     size_t rdsize, block_size;
 
