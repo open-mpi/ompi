@@ -96,7 +96,7 @@ extern "C" {
     char * opal_crs_base_unique_snapshot_name(pid_t pid);
     OPAL_DECLSPEC char * opal_crs_base_extract_expected_component(char *snapshot_loc, int *prev_pid);
     int    opal_crs_base_init_snapshot_directory(opal_crs_base_snapshot_t *snapshot);
-    char * opal_crs_base_get_snapshot_directory(char *uniq_snapshot_name);
+    OAPL_DECLSPEC char * opal_crs_base_get_snapshot_directory(char *uniq_snapshot_name);
 
     /* Opens the metadata file and places all the base information in the file.
      * Options:
