@@ -58,6 +58,7 @@ int orte_pls_proxy_terminate_proc(const orte_process_name_t* name);
 int orte_pls_proxy_signal_job(orte_jobid_t job, int32_t signal, opal_list_t *attrs);
 int orte_pls_proxy_signal_proc(const orte_process_name_t* name, int32_t signal);
 
+ORTE_MODULE_DECLSPEC extern orte_pls_base_component_t mca_pls_proxy_component;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

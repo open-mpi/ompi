@@ -49,7 +49,7 @@ int orte_rds_proxy_finalize(void);
  */
 int orte_rds_proxy_query(orte_jobid_t job);
 
-ORTE_DECLSPEC extern orte_rds_base_component_t mca_rds_proxy_component;
+ORTE_MODULE_DECLSPEC extern orte_rds_base_component_t mca_rds_proxy_component;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

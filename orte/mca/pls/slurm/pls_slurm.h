@@ -42,7 +42,7 @@ extern "C" {
      * Globally exported variable
      */
     
-    ORTE_DECLSPEC extern orte_pls_slurm_component_t 
+    ORTE_MODULE_DECLSPEC extern orte_pls_slurm_component_t 
         mca_pls_slurm_component;
     ORTE_DECLSPEC extern orte_pls_base_module_t
         orte_pls_slurm_module;

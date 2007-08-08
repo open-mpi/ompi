@@ -38,7 +38,7 @@
 /*
  * Struct of function pointers that need to be initialized
  */
-ORTE_MODULE_DECLSPEC orte_pls_base_component_t mca_pls_proxy_component = {
+orte_pls_base_component_t mca_pls_proxy_component = {
   {
     ORTE_PLS_BASE_VERSION_1_3_0,
 

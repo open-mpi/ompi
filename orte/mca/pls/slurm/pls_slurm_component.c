@@ -57,7 +57,7 @@ static orte_pls_base_module_t *pls_slurm_init(int *priority);
  * and pointers to our public functions in it
  */
 
-ORTE_MODULE_DECLSPEC orte_pls_slurm_component_t mca_pls_slurm_component = {
+orte_pls_slurm_component_t mca_pls_slurm_component = {
 
     {
         /* First, the mca_component_t struct containing meta
