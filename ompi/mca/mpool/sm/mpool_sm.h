@@ -36,7 +36,7 @@ struct mca_mpool_sm_component_t {
   mca_mpool_base_component_t super;
   /*      mca_allocator_base_module_t* sm_allocator; */
   char*  sm_allocator_name;
-  size_t sm_size;
+  long   sm_size;
   int    verbose;
   /*      struct mca_mpool_sm_mmap_t *sm_mmap; */
 };
