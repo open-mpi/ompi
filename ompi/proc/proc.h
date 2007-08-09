@@ -121,6 +121,18 @@ int ompi_proc_init(void);
 
 
 /**
+ * Get data exchange information from remote processes
+ *
+ * Get data exchanged from remote processes and populate the ompi proc
+ * structures for the associated processes.
+ *
+ * @retval OMPI_SUCCESS Information successfully received
+ * @retval OMPI_ERROR   Information update failure
+ */
+int ompi_proc_get_info(void);
+
+
+/**
  * Finalize the OMPI Process subsystem
  *
  * Finalize the Open MPI process subsystem.  This function will

@@ -107,6 +107,28 @@ OMPI_DECLSPEC int ompi_modex_send(struct mca_base_component_t *source_component,
 
 
 /**
+ * Send a buffer to all other corresponding peer process
+ *
+ * Similar to ompi_modex_send(), but uses a char* key instead of a
+ * component name for indexing.  All other semantics apply.
+ *
+ * @note Buffer contents is transparent to the modex -- it \em must
+ * already either be in network order or be in some format that peer
+ * processes will be able to read it, regardless of pointer sizes or
+ * endian bias.
+ *
+ * @param[in] key          A unique key for data storage / lookup
+ * @param[in] buffer       A pointer to the beginning of the buffer to send
+ * @param[in] size         Number of bytes in the buffer
+ *
+ * @retval OMPI_SUCCESS On success
+ * @retval OMPI_ERROR   An unspecified error occurred
+ */
+OMPI_DECLSPEC int ompi_modex_send_string(const char* key,
+                                         const void *buffer, size_t size);
+
+
+/**
  * Receive a module-specific buffer from a corresponding MCA module
  * in a specific peer process
  *
@@ -190,6 +212,39 @@ OMPI_DECLSPEC int ompi_modex_recv_nb(struct mca_base_component_t *component,
                                      struct ompi_proc_t* proc,
                                      ompi_modex_cb_fn_t cbfunc,
                                      void* cbdata);
+
+
+/**
+ * Receive a buffer from a given peer
+ *
+ * Similar to ompi_modex_recv(), but uses a char* key instead of a
+ * component name for indexing.  All other semantics apply.
+ *
+ * @note If the modex system has received information from a given
+ * process, but has not yet received information for the given
+ * component, ompi_modex_recv_string() will return no data.  This can
+ * not happen to a process that has gone through the normal startup
+ * proceedure, but if you believe this can happen with your component,
+ * you should use ompi_modex_recv_string_nb() to receive updates when
+ * the information becomes available.
+ *
+ * @param[in] key        A unique key for data storage / lookup
+ * @param[in] source_proc Peer process to receive from
+ * @param[out] buffer    A pointer to a (void*) that will be filled
+ *                       with a pointer to the received buffer
+ * @param[out] size      Pointer to a size_t that will be filled with
+ *                       the number of bytes in the buffer
+ *
+ * @retval OMPI_SUCCESS If a corresponding module buffer is found and
+ *                      successfully returned to the caller.
+ * @retval OMPI_ERR_NOT_IMPLEMENTED Modex support is not available in
+ *                      this build of Open MPI (systems like the Cray XT)
+ * @retval OMPI_ERR_OUT_OF_RESOURCE No memory could be allocated for the
+ *                       buffer.
+ */
+OMPI_DECLSPEC int ompi_modex_recv_string(const char* key,
+                                         struct ompi_proc_t *source_proc,
+                                         void **buffer, size_t *size);
 
 
 /**
