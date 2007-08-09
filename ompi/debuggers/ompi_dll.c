@@ -103,7 +103,7 @@
 static const mqs_basic_callbacks *mqs_basic_entrypoints;
 static int host_is_big_endian;
 
-OMPI_DECLSPEC void mqs_setup_basic_callbacks (const mqs_basic_callbacks * cb)
+void mqs_setup_basic_callbacks (const mqs_basic_callbacks * cb)
 {
   int t = 1;
 
@@ -142,19 +142,19 @@ OMPI_DECLSPEC void mqs_setup_basic_callbacks (const mqs_basic_callbacks * cb)
 /* Version handling functions.
  * This one should never be changed.
  */
-OMPI_DECLSPEC int mqs_version_compatibility (void)
+int mqs_version_compatibility (void)
 {
     return MQS_INTERFACE_COMPATIBILITY;
 } /* mqs_version_compatibility */
 
 /* This one can say what you like */
-OMPI_DECLSPEC char *mqs_version_string (void)
+char *mqs_version_string (void)
 {
     return "Open MPI message queue support for parallel debuggers compiled on " __DATE__;
 } /* mqs_version_string */
 
 /* So the debugger can tell what interface width the library was compiled with */
-OMPI_DECLSPEC int mqs_dll_taddr_width (void)
+int mqs_dll_taddr_width (void)
 {
     return sizeof (mqs_taddr_t);
 } /* mqs_dll_taddr_width */
@@ -343,7 +343,7 @@ static void group_decref (group_t * group)
  * Perform basic setup for the image, we just allocate and clear
  * our info.
  */
-OMPI_DECLSPEC int mqs_setup_image (mqs_image *image, const mqs_image_callbacks *icb)
+int mqs_setup_image (mqs_image *image, const mqs_image_callbacks *icb)
 {
     mpi_image_info *i_info = (mpi_image_info *)mqs_malloc (sizeof (mpi_image_info));
 
@@ -364,7 +364,7 @@ OMPI_DECLSPEC int mqs_setup_image (mqs_image *image, const mqs_image_callbacks *
  * Stash it into our structure on the image if we're succesful.
  */
 
-OMPI_DECLSPEC int mqs_image_has_queues (mqs_image *image, char **message)
+int mqs_image_has_queues (mqs_image *image, char **message)
 {
     mpi_image_info * i_info = (mpi_image_info *)mqs_get_image_info (image);
     char* missing_in_action;
@@ -610,7 +610,7 @@ OMPI_DECLSPEC int mqs_image_has_queues (mqs_image *image, char **message)
  * if nothing is attached to it, then TV will believe that this process
  * has no message queue information.
  */
-OMPI_DECLSPEC int mqs_setup_process (mqs_process *process, const mqs_process_callbacks *pcb)
+int mqs_setup_process (mqs_process *process, const mqs_process_callbacks *pcb)
 { 
     /* Extract the addresses of the global variables we need and save them away */
     mpi_process_info *p_info = (mpi_process_info *)mqs_malloc (sizeof (mpi_process_info));
@@ -834,7 +834,7 @@ static int rebuild_communicator_list (mqs_process *proc)
 /***********************************************************************
  * Update the list of communicators in the process if it has changed.
  */
-OMPI_DECLSPEC int mqs_update_communicator_list (mqs_process *proc)
+int mqs_update_communicator_list (mqs_process *proc)
 {
     if (communicators_changed (proc))
         return rebuild_communicator_list (proc);
@@ -847,7 +847,7 @@ OMPI_DECLSPEC int mqs_update_communicator_list (mqs_process *proc)
  * This is where we check whether our internal communicator list needs
  * updating and if so do it.
  */
-OMPI_DECLSPEC int mqs_setup_communicator_iterator (mqs_process *proc)
+int mqs_setup_communicator_iterator (mqs_process *proc)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
 
@@ -864,7 +864,7 @@ OMPI_DECLSPEC int mqs_setup_communicator_iterator (mqs_process *proc)
 /***********************************************************************
  * Fetch information about the current communicator.
  */
-OMPI_DECLSPEC int mqs_get_communicator (mqs_process *proc, mqs_communicator *comm)
+int mqs_get_communicator (mqs_process *proc, mqs_communicator *comm)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
 
@@ -879,7 +879,7 @@ OMPI_DECLSPEC int mqs_get_communicator (mqs_process *proc, mqs_communicator *com
 /***********************************************************************
  * Get the group information about the current communicator.
  */
-OMPI_DECLSPEC int mqs_get_comm_group (mqs_process *proc, int *group_members)
+int mqs_get_comm_group (mqs_process *proc, int *group_members)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
     communicator_t     *comm   = p_info->current_communicator;
@@ -899,7 +899,7 @@ OMPI_DECLSPEC int mqs_get_comm_group (mqs_process *proc, int *group_members)
 /***********************************************************************
  * Step to the next communicator.
  */
-OMPI_DECLSPEC int mqs_next_communicator (mqs_process *proc)
+int mqs_next_communicator (mqs_process *proc)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
 
@@ -1347,7 +1347,7 @@ static int fetch_send (mqs_process *proc, mpi_process_info *p_info,
 /***********************************************************************
  * Setup to iterate over pending operations 
  */
-OMPI_DECLSPEC int mqs_setup_operation_iterator (mqs_process *proc, int op)
+int mqs_setup_operation_iterator (mqs_process *proc, int op)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
 
@@ -1376,7 +1376,7 @@ OMPI_DECLSPEC int mqs_setup_operation_iterator (mqs_process *proc, int op)
  * we have to run over it and filter out the operations which
  * match the active communicator.
  */
-OMPI_DECLSPEC int mqs_next_operation (mqs_process *proc, mqs_pending_operation *op)
+int mqs_next_operation (mqs_process *proc, mqs_pending_operation *op)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
 
@@ -1395,7 +1395,7 @@ OMPI_DECLSPEC int mqs_next_operation (mqs_process *proc, mqs_pending_operation *
 /***********************************************************************
  * Destroy the info.
  */
-OMPI_DECLSPEC void mqs_destroy_process_info (mqs_process_info *mp_info)
+void mqs_destroy_process_info (mqs_process_info *mp_info)
 {
     mpi_process_info *p_info = (mpi_process_info *)mp_info;
     /* Need to handle the communicators and groups too */
@@ -1417,7 +1417,7 @@ OMPI_DECLSPEC void mqs_destroy_process_info (mqs_process_info *mp_info)
  * Free off the data we associated with an image. Since we malloced it
  * we just free it.
  */
-OMPI_DECLSPEC void mqs_destroy_image_info (mqs_image_info *info)
+void mqs_destroy_image_info (mqs_image_info *info)
 {
     mqs_free (info);
 } /* mqs_destroy_image_info */
@@ -1467,7 +1467,7 @@ static mqs_tword_t fetch_bool(mqs_process * proc, mqs_taddr_t addr, mpi_process_
 
 /***********************************************************************/
 /* Convert an error code into a printable string */
-OMPI_DECLSPEC char * mqs_dll_error_string (int errcode)
+char * mqs_dll_error_string (int errcode)
 {
     switch (errcode) {
     case err_silent_failure:
