@@ -36,6 +36,7 @@
 #include "ompi/datatype/convertor.h"
 #include "ompi/runtime/params.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 
 static opal_list_t  ompi_proc_list;
 static opal_mutex_t ompi_proc_lock;
@@ -43,8 +44,6 @@ ompi_proc_t* ompi_proc_local_proc = NULL;
 
 static void ompi_proc_construct(ompi_proc_t* proc);
 static void ompi_proc_destruct(ompi_proc_t* proc);
-static int setup_registry_callback(void);
-static void callback(orte_gpr_notify_data_t *data, void *cbdata);
 
 OBJ_CLASS_INSTANCE(
     ompi_proc_t,
@@ -78,7 +77,6 @@ void ompi_proc_construct(ompi_proc_t* proc)
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     opal_list_append(&ompi_proc_list, (opal_list_item_t*)proc);
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
-    
 }
 
 
@@ -106,23 +104,20 @@ void ompi_proc_destruct(ompi_proc_t* proc)
 int ompi_proc_init(void)
 {
     orte_process_name_t *peers;
-    orte_std_cntr_t i, npeers, num_tokens;
-    orte_jobid_t jobid;
-    char *segment, **tokens;
-    orte_data_value_t value = ORTE_DATA_VALUE_EMPTY;
+    orte_std_cntr_t i, npeers, datalen;
+    void *data;
+    orte_buffer_t* buf;    
     uint32_t ui32;
     int rc;
 
     OBJ_CONSTRUCT(&ompi_proc_list, opal_list_t);
     OBJ_CONSTRUCT(&ompi_proc_lock, opal_mutex_t);
 
-    /* get all peers in this job */
+    /* create a shell of a proc structure for every proc in MPI_COMM_WORLD */
     if(ORTE_SUCCESS != (rc = orte_ns.get_peers(&peers, &npeers, NULL))) {
         opal_output(0, "ompi_proc_init: get_peers failed with errno=%d", rc);
         return rc;
     }
-
-    /* find self */
     for( i = 0; i < npeers; i++ ) {
         ompi_proc_t *proc = OBJ_NEW(ompi_proc_t);
         proc->proc_name = peers[i];
@@ -133,55 +128,111 @@ int ompi_proc_init(void)
     }
     free(peers);
 
-    /* setup registry callback to find everyone on my local node.
-       Can't do a GPR get because we're in the middle of MPI_INIT,
-       and we're setup for the GPR compound command -- so create a
-       subscription which will be serviced later, at the end of the
-       compound command. */
-    if (ORTE_SUCCESS != (rc = setup_registry_callback())) {
-        return rc;
-    }
+    /* Fill in our local information */
+    rc = ompi_arch_compute_local_id(&ui32);
+    if (OMPI_SUCCESS != rc) return rc;
 
-    /* Here we have to add to the GPR the information about the current architecture.
-     */
-    if (OMPI_SUCCESS != (rc = ompi_arch_compute_local_id(&ui32))) {
-        return rc;
-    }
-    if (ORTE_SUCCESS != (rc = orte_dss.set(&value, &ui32, ORTE_UINT32))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    ompi_proc_local_proc->proc_arch = ui32;
+    ompi_proc_local_proc->proc_hostname = strdup(orte_system_info.nodename);
 
-    jobid = ORTE_PROC_MY_NAME->jobid;
+    /* pack our local data for others to use */
+    buf = OBJ_NEW(orte_buffer_t);
+    rc = ompi_proc_pack(&ompi_proc_local_proc, 1, buf);
+    if (OMPI_SUCCESS != rc) return rc;
 
-    /* find the job segment on the registry */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
-        return rc;
-    }
+    /* send our data into the ether */
+    rc = orte_dss.unload(buf, &data, &datalen);
+    if (OMPI_SUCCESS != rc) return rc;
+    OBJ_RELEASE(buf);
 
-    /* get the registry tokens for this node */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&tokens, &num_tokens,
-                                orte_process_info.my_name))) {
-        ORTE_ERROR_LOG(rc);
-        free(segment);
-        return rc;
-    }
+    rc = ompi_modex_send_string("ompi-proc-info", data, datalen);
 
-    /* put the arch info on the registry */
-    if (ORTE_SUCCESS != (rc = orte_gpr.put_1(ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
-                                             segment, tokens,
-                                             OMPI_PROC_ARCH, &value))) {
-        ORTE_ERROR_LOG(rc);
+    free(data);
+
+    return rc;
+}
+
+
+int
+ompi_proc_get_info(void)
+{
+    opal_list_item_t *item;
+
+    OPAL_THREAD_LOCK(&ompi_proc_lock);
+
+    for (item = opal_list_get_first(&ompi_proc_list) ;
+         item != opal_list_get_end(&ompi_proc_list) ;
+         item = opal_list_get_next(item)) {
+        ompi_proc_t *proc = (ompi_proc_t*) item;
+        orte_process_name_t name;
+        uint32_t arch;
+        char *hostname;
+        orte_std_cntr_t count=1;
+        void *data;
+        size_t datalen;
+        int ret;
+        orte_buffer_t *buf;
+
+        if (ORTE_EQUAL != orte_ns.compare_fields(ORTE_NS_CMP_JOBID,
+                                                 &ompi_proc_local_proc->proc_name,
+                                                 &proc->proc_name)) {
+            /* not in our jobid -- this shouldn't happen */
+            OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+            return OMPI_ERR_FATAL;
+        }
+
+        ret = ompi_modex_recv_string("ompi-proc-info", proc, &data, &datalen);
+        if (OMPI_SUCCESS != ret) return ret;
+
+        buf = OBJ_NEW(orte_buffer_t);
+        ret = orte_dss.load(buf, data, datalen);
+        if (OMPI_SUCCESS != ret) return ret;
+
+        /* This isn't needed here, but packed just so that you could,
+           in theory, use the unpack code on this proc.  We
+           don't,because we aren't adding procs, but need to update
+           them */
+        ret = orte_dss.unpack(buf, &name, &count, ORTE_NAME);
+        if (ret != ORTE_SUCCESS) return ret;
+
+        ret = orte_dss.unpack(buf, &arch, &count, ORTE_UINT32);
+        if (ret != ORTE_SUCCESS) return ret;
+        ret = orte_dss.unpack(buf, &hostname, &count, ORTE_STRING);
+        if (ret != ORTE_SUCCESS) return ret;
+
+        proc->proc_arch = arch;
+
+        /* if arch is different than mine, create a new convertor for this proc */
+        if (proc->proc_arch != ompi_proc_local_proc->proc_arch) {
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            OBJ_RELEASE(proc->proc_convertor);
+            proc->proc_convertor = ompi_convertor_create(proc->proc_arch, 0);
+#else
+            opal_show_help("help-mpi-runtime",
+                           "heterogeneous-support-unavailable",
+                           true, orte_system_info.nodename, 
+                           hostname == NULL ? "<hostname unavailable>" :
+                           hostname);
+            return OMPI_ERR_NOT_SUPPORTED;
+#endif
+        } else if (0 == strcmp(hostname, orte_system_info.nodename)) {
+            proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
+        }
+
+        /* Save the hostname */
+        if (ompi_mpi_keep_peer_hostnames) {
+            /* the dss code will have strdup'ed this for us -- no need
+               to do so again */
+            proc->proc_hostname = hostname;
+        }
+
+        /* Free the buffer for the next proc */
+        OBJ_RELEASE(buf);
     }
-    free(segment);
-    for (i=0; i < num_tokens; i++) {
-        free(tokens[i]);
-        tokens[i] = NULL;
-    }
-    if (NULL != tokens) free(tokens);
 
     return OMPI_SUCCESS;
 }
+
 
 int ompi_proc_finalize (void)
 {
@@ -444,196 +495,3 @@ ompi_proc_unpack(orte_buffer_t* buf, int proclistsize, ompi_proc_t ***proclist)
     *proclist = plist;
     return OMPI_SUCCESS;
 }
-
-
-/*
- * As described above, we cannot do a simple GPR get because we're in
- * the middle of the GPR compound command in MPI_INIT.  So setup a
- * subscription that will be fullfilled later in MPI_INIT.
- */
-static int setup_registry_callback(void)
-{
-    int rc;
-    char *segment, *sub_name, *trig_name, *keys[3];
-    ompi_proc_t *local = ompi_proc_local();
-    orte_gpr_subscription_id_t id;
-    orte_jobid_t jobid;
-
-    jobid = local->proc_name.jobid;
-
-    /* find the job segment on the registry */
-    if (ORTE_SUCCESS !=
-        (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /* indicate that this is a standard subscription. This indicates
-       that the subscription will be common to all processes. Thus,
-       the resulting data can be consolidated into a
-       process-independent message and broadcast to all processes */
-    if (ORTE_SUCCESS !=
-        (rc = orte_schema.get_std_subscription_name(&sub_name,
-                                                    OMPI_PROC_SUBSCRIPTION, jobid))) {
-        ORTE_ERROR_LOG(rc);
-        free(segment);
-        return rc;
-    }
-
-    /* define the keys to be returned */
-    keys[0] = strdup(ORTE_PROC_NAME_KEY);
-    keys[1] = strdup(ORTE_NODE_NAME_KEY);
-    keys[2] = strdup(OMPI_PROC_ARCH);
-
-    /* Here we have to add another key to the registry to be able to get the information
-     * about the remote architectures.
-     * TODO: George.
-     */
-
-    /* attach ourselves to the standard stage-1 trigger */
-    if (ORTE_SUCCESS !=
-        (rc = orte_schema.get_std_trigger_name(&trig_name,
-                                               ORTE_STG1_TRIGGER, jobid))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
-
-    if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_N(&id, trig_name, sub_name,
-                                ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG,
-                                ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR | ORTE_GPR_STRIPPED,
-                                segment,
-                                NULL,  /* wildcard - look at all containers */
-                                3, keys,
-                                callback, NULL))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    free(trig_name);
-
-CLEANUP:
-    free(segment);
-    free(sub_name);
-    free(keys[0]);
-    free(keys[1]);
-    free(keys[2]);
-
-    return rc;
-}
-
-
-/*
- * This callback is invoked by a subscription during MPI_INIT to let
- * us know what procs are on what hosts.  We look at the results and
- * figure out which procs are on the same host as the local proc.  For
- * each proc that is on the same host as the local proc, we set that
- * proc's OMPI_PROC_FLAG_LOCAL flag.
- */
-static void callback(orte_gpr_notify_data_t *data, void *cbdata)
-{
-    orte_std_cntr_t i, j, k;
-    char *str = NULL;
-    uint32_t arch = 0, *ui32;
-    bool found_name, found_arch;
-    orte_ns_cmp_bitmask_t mask;
-    orte_process_name_t name, *nptr;
-    orte_gpr_value_t **value;
-    orte_gpr_keyval_t **keyval;
-    ompi_proc_t *proc;
-    int rc;
-
-    /* check bozo case */
-    if (0 == data->cnt) {
-        return;
-    }
-
-    /* locks are probably not necessary here, but just be safe anyway */
-    OPAL_THREAD_LOCK(&ompi_proc_lock);
-
-    /* loop over the data returned in the subscription */
-    mask = ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
-    value = (orte_gpr_value_t**)(data->values)->addr;
-    for (i = 0, k=0; k < data->cnt &&
-                     i < (data->values)->size; ++i) {
-        if (NULL != value[i]) {
-            k++;
-            str = NULL;
-            found_name = false;
-            found_arch = false;
-            keyval = value[i]->keyvals;
-
-            /* find the 2 keys that we're looking for */
-            for (j = 0; j < value[i]->cnt; ++j) {
-                if (strcmp(keyval[j]->key, ORTE_PROC_NAME_KEY) == 0) {
-                    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&nptr, keyval[j]->value, ORTE_NAME))) {
-                        ORTE_ERROR_LOG(rc);
-                        return;
-                    }
-                    orte_ns.get_proc_name_string(&str, nptr);
-                    name = *nptr;
-                    found_name = true;
-                } else if (strcmp(keyval[j]->key, ORTE_NODE_NAME_KEY) == 0) {
-                    if (NULL != str) {
-                        free(str);
-                    }
-                    str = strdup((const char*)keyval[j]->value->data);
-                } else if (strcmp(keyval[j]->key, OMPI_PROC_ARCH) == 0) {
-                    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&ui32, keyval[j]->value, ORTE_UINT32))) {
-                        ORTE_ERROR_LOG(rc);
-                        return;
-                    }
-                    arch = *ui32;
-                    found_arch = true;
-                }
-            }
-
-            /* if we found all keys and the proc is on my local host,
-               find it in the master proc list and set the "local" flag */
-            if (NULL != str && found_name && found_arch) {
-                for (proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
-                     proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
-                     proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
-
-                    /* find the associated proc entry and update its
-                       arch flag.  If the nodename of this info is
-                       my local host, also set the LOCAL flag. */
-                    if (ORTE_EQUAL == orte_ns.compare_fields(mask, &name, &proc->proc_name)) {
-                        proc->proc_arch = arch;
-                        if (0 == strcmp(str, orte_system_info.nodename)) {
-                            proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
-                        }
-
-                        /* if arch is different than mine, create a
-                           new convertor for this proc in
-                           heterogeneous mode or abort in
-                           non-heterogeneous mode. */
-                        if (proc->proc_arch != ompi_mpi_local_arch) {
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-                            OBJ_RELEASE(proc->proc_convertor);
-                            proc->proc_convertor = ompi_convertor_create(proc->proc_arch, 0);
-#else
-                            opal_show_help("help-mpi-runtime",
-                                           "proc:heterogeneous-support-unavailable",
-                                           true, orte_system_info.nodename, str);
-                            /* we can't return an error, so abort. */
-                            ompi_mpi_abort(MPI_COMM_WORLD, OMPI_ERR_NOT_SUPPORTED, false);
-#endif
-                        }
-
-                        /* Save the hostname */
-                        if (ompi_mpi_keep_peer_hostnames && NULL == proc->proc_hostname) {
-                            proc->proc_hostname = str;
-                            str = NULL;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (NULL != str) {
-        free(str);
-    }
-
-    /* unlock */
-    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
-}
-

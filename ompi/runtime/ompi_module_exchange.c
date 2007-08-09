@@ -276,6 +276,7 @@ static opal_hash_table_t ompi_modex_data;
  */
 static opal_mutex_t ompi_modex_lock;
 
+static opal_mutex_t ompi_modex_string_lock;
 
 int
 ompi_modex_init(void)
@@ -283,6 +284,7 @@ ompi_modex_init(void)
     OBJ_CONSTRUCT(&ompi_modex_data, opal_hash_table_t);
     OBJ_CONSTRUCT(&ompi_modex_subscriptions, opal_list_t);
     OBJ_CONSTRUCT(&ompi_modex_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&ompi_modex_string_lock, opal_mutex_t);
 
     opal_hash_table_init(&ompi_modex_data, 256);
 
@@ -302,6 +304,7 @@ ompi_modex_finalize(void)
 	OBJ_RELEASE(item);
     OBJ_DESTRUCT(&ompi_modex_subscriptions);
 
+    OBJ_DESTRUCT(&ompi_modex_string_lock);
     OBJ_DESTRUCT(&ompi_modex_lock);
 
     return OMPI_SUCCESS;
@@ -835,4 +838,48 @@ ompi_modex_recv_nb(mca_base_component_t *component,
     OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
 
     return OMPI_SUCCESS;
+}
+
+
+static mca_base_component_t modex_component = {
+    MCA_BASE_VERSION_1_0_0,
+    "modex",
+    MCA_BASE_VERSION_1_0_0,
+    "",
+    MCA_BASE_VERSION_1_0_0,
+    NULL,
+    NULL
+};
+
+
+int
+ompi_modex_send_string(const char* key,
+                       const void *buffer, size_t size)
+{
+    int ret;
+
+    OPAL_THREAD_LOCK(&ompi_modex_string_lock);
+    strncpy(modex_component.mca_component_name, key,
+            MCA_BASE_MAX_COMPONENT_NAME_LEN);
+    ret = ompi_modex_send(&modex_component, buffer, size);
+    OPAL_THREAD_UNLOCK(&ompi_modex_string_lock);
+
+    return ret;
+}
+
+
+int
+ompi_modex_recv_string(const char* key,
+                       struct ompi_proc_t *source_proc,
+                       void **buffer, size_t *size)
+{
+    int ret;
+
+    OPAL_THREAD_LOCK(&ompi_modex_string_lock);
+    strncpy(modex_component.mca_component_name, key,
+            MCA_BASE_MAX_COMPONENT_NAME_LEN);
+    ret = ompi_modex_recv(&modex_component, source_proc, buffer, size);
+    OPAL_THREAD_UNLOCK(&ompi_modex_string_lock);
+
+    return ret;
 }
