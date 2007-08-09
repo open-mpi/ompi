@@ -542,7 +542,7 @@ OMPI_DECLSPEC extern void mqs_destroy_process_info (mqs_process_info *);
  * delve inside the process to look at variables before deciding if
  * the process really can support message queue extraction.
  */  
-extern int mqs_process_has_queues (mqs_process *, char **);
+OMPI_DECLSPEC extern int mqs_process_has_queues (mqs_process *, char **);
 
 /***********************************************************************
  * The functions which actually extract the information we need !

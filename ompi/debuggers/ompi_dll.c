@@ -641,7 +641,7 @@ int mqs_setup_process (mqs_process *process, const mqs_process_callbacks *pcb)
 /***********************************************************************
  * Check the process for message queues.
  */
-OMPI_DECLSPEC int mqs_process_has_queues (mqs_process *proc, char **msg)
+int mqs_process_has_queues (mqs_process *proc, char **msg)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
     mqs_image * image          = mqs_get_image (proc);
