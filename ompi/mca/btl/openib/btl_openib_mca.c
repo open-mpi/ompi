@@ -477,7 +477,7 @@ static int mca_btl_openib_mca_setup_qps(void) {
     char *str;
     char **queues, **params = NULL;
     int num_pp_qps = 0, num_srq_qps = 0, qp = 0, ret = OMPI_ERROR;
-    char *default_qps = "P,128,16,4;S,1024,256,128,32;S,4096,256,128,32;S,65536,256,128,32";
+    char *default_qps = "P,128,256,128,16:S,1024,256,128,32:S,4096,256,128,32:S,65536,256,128,32";
     uint32_t max_qp_size, max_size_needed;
     
     reg_string("receive_queues",
