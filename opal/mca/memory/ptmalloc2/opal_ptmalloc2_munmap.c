@@ -70,9 +70,9 @@ opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc)
 
 #if defined(HAVE___MUNMAP)
     return __munmap(start, length);
-#elif defined(HAVE_SYSCALL)
+#elif defined(HAVE_SYSCALL) && defined(__NR_munmap)
     return syscall(__NR_munmap, start, length);
-#elif defined(HAVE_DLSYM) && defined(__NR_munmap)
+#elif defined(HAVE_DLSYM)
     if (NULL == realmunmap) {
         union { 
             int (*munmap_fp)(void*, size_t);
