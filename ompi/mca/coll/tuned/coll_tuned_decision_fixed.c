@@ -655,17 +655,23 @@ int ompi_coll_tuned_gather_intra_dec_fixed(void *sbuf, int scount,
     const int large_communicator_size = 60;
     const int small_communicator_size = 10;
 
-    int communicator_size;
-    size_t sdsize, block_size;
+    int communicator_size, rank;
+    size_t dsize, block_size;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, 
 		 "ompi_coll_tuned_gather_intra_dec_fixed"));
 
     communicator_size = ompi_comm_size(comm);
-   
+    rank = ompi_comm_rank(comm);
+
     /* Determine block size */
-    ompi_ddt_type_size(sdtype, &sdsize);
-    block_size = sdsize * scount;
+    if (rank == root) {
+        ompi_ddt_type_size(rdtype, &dsize);
+        block_size = dsize * rcount;
+    } else {
+        ompi_ddt_type_size(sdtype, &dsize);
+        block_size = dsize * scount;
+    }
 
     if (block_size > large_block_size) {
         return ompi_coll_tuned_gather_intra_linear_sync (sbuf, scount, sdtype, 
@@ -710,17 +716,23 @@ int ompi_coll_tuned_scatter_intra_dec_fixed(void *sbuf, int scount,
 {
     const size_t small_block_size = 300;
     const int small_comm_size = 10;
-    int communicator_size;
-    size_t rdsize, block_size;
+    int communicator_size, rank;
+    size_t dsize, block_size;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, 
 		 "ompi_coll_tuned_scatter_intra_dec_fixed"));
 
     communicator_size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
     /* Determine block size */
-    ompi_ddt_type_size(rdtype, &rdsize);
-    block_size = rdsize * rcount;
-    
+    if (root == rank) {
+        ompi_ddt_type_size(sdtype, &dsize);
+        block_size = dsize * scount;
+    } else {
+        ompi_ddt_type_size(rdtype, &dsize);
+        block_size = dsize * rcount;
+    } 
+
     if ((communicator_size > small_comm_size) &&
         (block_size < small_block_size)) {
         return ompi_coll_tuned_scatter_intra_binomial (sbuf, scount, sdtype, 
