@@ -629,6 +629,12 @@ mca_pml_base_modex_recv(mca_base_component_t * component,
     mca_pml_base_modex_t *modex;
     mca_pml_base_modex_module_t *modex_module;
 
+    /* make sure we could possibly have modex data */
+    if (0 == strcmp(orte_gpr_base_selected_component.gpr_version.mca_component_name,
+                    "null")) {
+        return OMPI_ERR_NOT_IMPLEMENTED;
+    }
+
     /* check the proc for cached data */
     if (NULL == (modex = (mca_pml_base_modex_t *) proc->proc_modex)) {
         /* see if we already have data for this proc... */
