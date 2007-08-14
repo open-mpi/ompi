@@ -360,7 +360,7 @@ int mca_btl_sm_component_progress(void)
             ; proc++ ) 
     {
         peer_smp_rank= mca_btl_sm_component.list_smp_procs_same_base_addr[proc];
-        fifo=&(mca_btl_sm_component.fifo[peer_smp_rank][my_smp_rank]);
+        fifo=&(mca_btl_sm_component.fifo[my_smp_rank][peer_smp_rank]);
 
         /* if fifo is not yet setup - continue - not data has been sent*/
         if(OMPI_CB_FREE == fifo->tail){
@@ -369,7 +369,7 @@ int mca_btl_sm_component_progress(void)
 
         /* aquire thread lock */
         if( opal_using_threads() ) {
-            opal_atomic_lock( &(fifo->tail_lock) );
+            opal_atomic_lock(fifo->tail_lock);
         }
 
         /* get pointer - pass in offset to change queue pointer
@@ -377,12 +377,11 @@ int mca_btl_sm_component_progress(void)
          * that we have the same base address as the sender, so no
          * translation is necessary when accessing the fifo.  Hence,
          * we use the _same_base_addr varient. */
-        frag = (mca_btl_sm_frag_t *)
-          ompi_fifo_read_from_tail_same_base_addr( fifo );
+        frag = (mca_btl_sm_frag_t *)ompi_fifo_read_from_tail(fifo);
 
         /* release thread lock */
         if( opal_using_threads() ) {
-            opal_atomic_unlock(&(fifo->tail_lock));
+            opal_atomic_unlock(fifo->tail_lock);
         }
 
         if( OMPI_CB_FREE == frag ) {
@@ -432,7 +431,7 @@ int mca_btl_sm_component_progress(void)
             ; proc++ ) 
     {
         peer_smp_rank= mca_btl_sm_component.list_smp_procs_different_base_addr[proc];
-        fifo=&(mca_btl_sm_component.fifo[peer_smp_rank][my_smp_rank]);
+        fifo=&(mca_btl_sm_component.fifo[my_smp_rank][peer_smp_rank]);
 
         /* if fifo is not yet setup - continue - not data has been sent*/
         if(OMPI_CB_FREE == fifo->tail){
@@ -441,7 +440,7 @@ int mca_btl_sm_component_progress(void)
 
         /* aquire thread lock */
         if( opal_using_threads() ) {
-            opal_atomic_lock(&(fifo->tail_lock));
+            opal_atomic_lock(fifo->tail_lock);
         }
 
         /* get pointer - pass in offset to change queue pointer
@@ -450,19 +449,19 @@ int mca_btl_sm_component_progress(void)
          * translate every access into the fifo to be relevant to our
          * memory space.  Hence, we do *not* use the _same_base_addr
          * variant. */
-        frag=(mca_btl_sm_frag_t *)ompi_fifo_read_from_tail( fifo,
-                mca_btl_sm_component.sm_offset[peer_smp_rank]);
+        frag = (mca_btl_sm_frag_t *)ompi_fifo_read_from_tail( fifo );
+        
         if( OMPI_CB_FREE == frag ) {
             /* release thread lock */
             if( opal_using_threads() ) {
-                opal_atomic_unlock(&(fifo->tail_lock));
+                opal_atomic_unlock(fifo->tail_lock);
             }
             continue;
         }
 
         /* release thread lock */
         if( opal_using_threads() ) {
-            opal_atomic_unlock(&(fifo->tail_lock));
+            opal_atomic_unlock(fifo->tail_lock);
         }
 
         /* change the address from address relative to the shared
