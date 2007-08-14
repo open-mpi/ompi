@@ -1040,6 +1040,7 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
     char cwd_save[OMPI_PATH_MAX + 1];
     orte_ras_node_t *ras_node;
     char **daemon_env;
+    opal_list_t nodelist;
 
     OPAL_TRACE(1);
     
@@ -1100,14 +1101,40 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
      * Since Bproc also requires that the slots allocated on each node
      * be the same, we really only need to lookup a single node. So grab
      * the data for the first node on the map
+     *
+     * RHC: Unfortunately, the user may have passed these nodes to us
+     * via a hostfile or -host argument. In that case, we cannot trust
+     * that the slots allocated on each node are the same - and we get
+     * erratic behavior if they don't. Until we can verify that Bproc
+     * now supports clusters with differing numbers of slots on each node,
+     * we have to protect the system by erroring out. So - even though this
+     * will slow down the launch on large clusters - we have to get the
+     * allocation and check to ensure that all the slots match
      */
-    map_node = (orte_mapped_node_t*)opal_list_get_first(&map->nodes);
-    if (NULL == (ras_node = orte_ras.node_lookup(map_node->cell, map_node->nodename))) {
+    OBJ_CONSTRUCT(&nodelist, opal_list_t);
+    if (ORTE_SUCCESS != (rc = orte_ras.node_query(&nodelist))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    if (NULL == (ras_node = (orte_ras_node_t*)opal_list_remove_first(&nodelist))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
     num_slots = ras_node->node_slots;
     OBJ_RELEASE(ras_node);
+    while (NULL != (ras_node = (orte_ras_node_t*)opal_list_remove_first(&nodelist))) {
+        if (num_slots != ras_node->node_slots) {
+            /* mismatch - error out */
+            opal_show_help("help-pls-bproc.txt", "mismatched-slots", true);
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
+            rc = ORTE_ERR_NOT_SUPPORTED;
+            goto cleanup;
+        }
+        OBJ_RELEASE(ras_node);
+    }
+    OBJ_DESTRUCT(&nodelist);
+    
     
     if(0 < mca_pls_bproc_component.debug) {
         opal_output(0, "pls_bproc: --- starting to launch procs ---");

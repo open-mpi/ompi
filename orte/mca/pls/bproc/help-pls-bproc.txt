@@ -87,3 +87,21 @@ nodes and therefore cannot continue.
 On node %d the process pid was %d and errno was set to %d.
 
 For reference, we tried to launch %s
+
+[mismatched-slots]
+The current bproc support requires that the number of available
+slots on each node be the same. Note that this does -not- mean
+that the number of processes you want to launch must be the same.
+It only requires that you have access to the same number of process
+slots on each node.
+
+This is not something inherent to Open MPI, but rather a reported
+characteristic of Bproc. We are in the process of confirming that
+this requirement remains in effect. If we find that it has been
+removed, then we will revise the system to support varying
+numbers of slots on the allocated nodes.
+
+Meantime, please revise your hostfile or other allocation so they
+report the same number of process slots on each node. If you want
+to force a particular mapping of numbers of processes to each node,
+please use any of the other Open MPI mechanisms for doing so.
