@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     if (NULL != umask_str) {
         char *endptr;
         long mask = strtol(umask_str, &endptr, 8);
-        if ((! (0 == mask && (EINVAL == errno || ERANGE))) &&
+        if ((! (0 == mask && (EINVAL == errno || ERANGE == errno))) &&
             (*endptr == '\0')) {
             umask(mask);
         }
