@@ -68,6 +68,8 @@ Trunk (not on release branches yet)
   support a LAM/MPI-like protocol.
   --> Expected: 1.3
 
+- Fixed an issue with umask not being propagated when using the TM launcher.
+  --> Expected 1.2.x
 - Fix several problems with redirecting large files into mpirun's
   stdin.
   --> Expected 1.2.x
