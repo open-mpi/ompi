@@ -246,6 +246,7 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     umask(current_umask);
     asprintf(&var, "0%o", current_umask);
     opal_setenv("ORTE_DAEMON_UMASK_VALUE", var, true, &env);
+    free(var);
     
     /* If we have a prefix, then modify the PATH and
         LD_LIBRARY_PATH environment variables. We only allow
