@@ -386,6 +386,7 @@ opal_event_priority_init(int npriorities)
 int
 opal_event_base_priority_init(struct event_base *base, int npriorities)
 {
+#if OPAL_HAVE_WORKING_EVENTOPS
 	int i;
 
 	if (base->event_count_active)
@@ -411,7 +412,7 @@ opal_event_base_priority_init(struct event_base *base, int npriorities)
 			event_err(1, "%s: malloc", __func__);
 		TAILQ_INIT(base->activequeues[i]);
 	}
-
+#endif
 	return (0);
 }
 
@@ -486,8 +487,10 @@ opal_event_base_dispatch(struct event_base *event_base)
 static void
 event_loopexit_cb(int fd, short what, void *arg)
 {
+#if OPAL_HAVE_WORKING_EVENTOPS
 	struct event_base *base = (struct event_base*)arg;
 	base->event_gotterm = 1;
+#endif /* OPAL_HAVE_WORKING_EVENTOPS */
 }
 
 /* not thread safe */
@@ -517,9 +520,9 @@ opal_event_loop(int flags)
 int
 opal_event_base_loop(struct event_base *base, int flags)
 {
+#if OPAL_HAVE_WORKING_EVENTOPS
 	const struct opal_eventop *evsel = base->evsel;
 	void *evbase = base->evbase;
-#if OPAL_HAVE_WORKING_EVENTOPS
 	struct timeval tv;
 	int res, done;
 #endif  /* OPAL_HAVE_WORKING_EVENTOPS */
@@ -690,7 +693,11 @@ opal_event_set(struct opal_event *ev, int fd, short events,
 	ev->ev_pncalls = NULL;
 
 	/* by default, we put new events into the middle priority */
+#if OPAL_HAVE_WORKING_EVENTOPS
 	ev->ev_pri = current_base->nactivequeues/2;
+#else
+        ev->ev_pri = 0;
+#endif
 }
 
 int
@@ -701,7 +708,11 @@ opal_event_base_set(struct event_base *base, struct opal_event *ev)
 		return (-1);
 
 	ev->ev_base = base;
+#if OPAL_HAVE_WORKING_EVENTOPS
 	ev->ev_pri = base->nactivequeues/2;
+#else
+        ev->ev_pri = 0;
+#endif
 
 	return (0);
 }
@@ -716,8 +727,10 @@ opal_event_priority_set(struct opal_event *ev, int pri)
 {
 	if (ev->ev_flags & OPAL_EVLIST_ACTIVE)
 		return (-1);
+#if OPAL_HAVE_WORKING_EVENTOPS
 	if (pri < 0 || pri >= ev->ev_base->nactivequeues)
 		return (-1);
+#endif
 
 	ev->ev_pri = pri;
 
@@ -757,12 +770,12 @@ event_pending(struct event *ev, short event, struct timeval *tv)
 int
 opal_event_add_i(struct opal_event *ev, struct timeval *tv)
 {
+	int rc = OPAL_SUCCESS;
+#if OPAL_HAVE_WORKING_EVENTOPS
 	struct event_base *base = ev->ev_base;
 	const struct opal_eventop *evsel = base->evsel;
 	void *evbase = base->evbase;
-	int rc = OPAL_SUCCESS;
 
-#if OPAL_HAVE_WORKING_EVENTOPS
         event_debug((
                  "event_add: event: %p, %s%s%scall %p",
                  ev,
