@@ -10,7 +10,7 @@
 
 #include "pml_v_output.h"
 
-int pml_v_output_init(char *output, int verbosity) {
+int pml_v_output_open(char *output, int verbosity) {
     opal_output_stream_t lds;
     char hostname[32] = "NA";
   
@@ -40,6 +40,6 @@ int pml_v_output_init(char *output, int verbosity) {
     return mca_pml_v.output;
 }
 
-void pml_v_output_finalize(void) {
+void pml_v_output_close(void) {
     opal_output_close(mca_pml_v.output);
 }

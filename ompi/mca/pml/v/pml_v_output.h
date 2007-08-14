@@ -20,8 +20,22 @@
 extern "C" {
 #endif
 
-int pml_v_output_init(char *output, int verbosity);
-void pml_v_output_finalize(void);
+int pml_v_output_open(char *output, int verbosity);
+void pml_v_output_close(void);
+
+static inline void V_OUTPUT_ERR(const char *fmt, ... ) __opal_attribute_format__(__printf__, 1, 2);
+static inline void V_OUTPUT_ERR(const char *fmt, ... )
+{
+    va_list list;
+    char *str;
+    int ret;
+    va_start(list, fmt);
+    ret = vasprintf(&str, fmt, list);
+    assert(-1 != ret);
+    opal_output(0, str);
+    free(str);
+    va_end(list);    
+}
 
 /* Tricky stuff to define V_OUTPUT and V_OUTPUT_VERBOSE with variadic arguments
  */
@@ -39,7 +53,9 @@ void pml_v_output_finalize(void);
             
 #elif OMPI_ENABLE_DEBUG
     /* No variadic macros available... So sad */
-static inline void V_OUTPUT(const char* fmt, ... ) {
+static inline void V_OUTPUT(const char* fmt, ... ) __opal_attribute_format__(__printf__, 1, 2);
+static inline void V_OUTPUT(const char* fmt, ... )
+{
     va_list list;
     char *str;
     int ret;
@@ -50,6 +66,7 @@ static inline void V_OUTPUT(const char* fmt, ... ) {
     free(str);
     va_end(list);
 }
+static inline void V_OUTPUT_VERBOSE(int V, const char* fmt, ... ) __opal_attribute_format__(__printf__, 2, 3);
 static inline void V_OUTPUT_VERBOSE(int V, const char* fmt, ... ) {
     va_list list;
     char *str;
