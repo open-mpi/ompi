@@ -472,7 +472,8 @@ static int32_t atoi_param(char *param, int32_t dflt)
     return atoi(param);
 }
 
-static int mca_btl_openib_mca_setup_qps(void) { 
+static int mca_btl_openib_mca_setup_qps(void) 
+{ 
     /* All the multi-qp stuff.. */
     char *str;
     char **queues, **params = NULL;
@@ -481,25 +482,26 @@ static int mca_btl_openib_mca_setup_qps(void) {
     uint32_t max_qp_size, max_size_needed;
     
     reg_string("receive_queues",
-               "Colon-delimited, coma delimited list of receive queues: P,4096,8,6,4;P,32768,8,6,4",
+               "Colon-delimited, coma delimited list of receive queues: P,4096,8,6,4:P,32768,8,6,4",
                default_qps, &str, 0);
-    queues = opal_argv_split(str, ';');
+    queues = opal_argv_split(str, ':');
 
-    if(opal_argv_count(queues) == 0) {
-        opal_output(0, "At least one QP has to be specified in"
-                " btl_openib_receive_queues\n");
+    if (0 == opal_argv_count(queues)) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                       "no qps in receive_queues", true,
+                       orte_system_info.nodename, str);
         return OMPI_ERROR;
     }
 
-    while(queues[qp] != NULL) {
-        if(strncmp("P,", queues[qp], 2) == 0) { 
+    while (queues[qp] != NULL) {
+        if (0 == strncmp("P,", queues[qp], 2)) { 
             num_pp_qps++;   
-        } else if(strncmp("S,", queues[qp], 2) == 0) { 
+        } else if (0 == strncmp("S,", queues[qp], 2)) { 
             num_srq_qps++;
         } else {
-            opal_output(0, "Unknown QP type \"%s\" is specified in "
-                    "btl_openib_receive_queues. Only 'S' - shared or "
-                    "'P' - point-to-point are supported\n", queues[qp]);
+            opal_show_help("help-mpi-btl-openib.txt",
+                           "invalid qp type in receive_queues", true, 
+                           orte_system_info.nodename, str, queues[qp]);
             goto error;
         }
         qp++;
@@ -520,10 +522,11 @@ static int mca_btl_openib_mca_setup_qps(void) {
         params = opal_argv_split_with_empty(queues[qp], ',');
         count = opal_argv_count(params);
 
-        if(params[0][0] == 'P') {
-            if(count < 2 || count > 6) {
-                opal_output(0, "Wrong QP specification (QP %d \"%s\"). "
-                        "Point-to-point QP get 1-5 parameters\n", qp, queues[qp]);
+        if ('P' == params[0][0]) {
+            if (count < 3 || count > 6) {
+                opal_show_help("help-mpi-btl-openib.txt",
+                               "invalid pp qp specification", true,
+                               orte_system_info.nodename, queues[qp]);
                 goto error;
             }
             mca_btl_openib_component.qp_infos[qp].size = atoi_param(P(1), 0);
@@ -547,9 +550,10 @@ static int mca_btl_openib_mca_setup_qps(void) {
             
             mca_btl_openib_component.qp_infos[qp].type = MCA_BTL_OPENIB_PP_QP;
         } else if(params[0][0] =='S') { 
-            if(count < 2 || count > 5) {
-                opal_output(0, "Wrong QP specification (QP %d \"%s\"). "
-                        "Shared QP get 1-4 parameters\n", qp, queues[qp]);
+            if(count < 3 || count > 5) {
+                opal_show_help("help-mpi-btl-openib.txt",
+                               "invalid srq specification", true,
+                               orte_system_info.nodename, queues[qp]);
                 goto error;
             }
             mca_btl_openib_component.qp_infos[qp].size = atoi_param(P(1), 0);
@@ -567,15 +571,16 @@ static int mca_btl_openib_mca_setup_qps(void) {
             mca_btl_openib_component.qp_infos[qp].type = MCA_BTL_OPENIB_SRQ_QP;
         }
 
-        if(mca_btl_openib_component.qp_infos[qp].rd_num <=
-                mca_btl_openib_component.qp_infos[qp].rd_low) {
-            opal_output(0, "Wrong QP specification (QP %d \"%s\"). "
-                        "rd_num should be bigger than rd_low\n", qp,
-                        queues[qp]);
+        if (mca_btl_openib_component.qp_infos[qp].rd_num <=
+            mca_btl_openib_component.qp_infos[qp].rd_low) {
+            opal_show_help("help-mpi-btl-openib.txt",
+                           "rd_num must be > rd_low", true,
+                           orte_system_info.nodename, queues[qp]);
             goto error;
         }
-        while(params[i] != NULL)
+        while (NULL != params[i]) {
             free(params[i++]);
+        }
         free(params);
         qp++;
     }
@@ -584,17 +589,22 @@ static int mca_btl_openib_mca_setup_qps(void) {
     max_qp_size = mca_btl_openib_component.qp_infos[mca_btl_openib_component.num_qps - 1].size;
 
     max_size_needed = (mca_btl_openib_module.super.btl_eager_limit >
-            mca_btl_openib_module.super.btl_max_send_size) ?
+                       mca_btl_openib_module.super.btl_max_send_size) ?
         mca_btl_openib_module.super.btl_eager_limit :
         mca_btl_openib_module.super.btl_max_send_size;
 
-    if(max_qp_size < max_size_needed) {
-        opal_output(0, "The biggest QP is not big enough. "
-                "%d bytes configured, but maximum send size may be %d\n",
-                max_qp_size, max_size_needed);
+    if (max_qp_size < max_size_needed) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                       "biggest qp size is too small", true,
+                       orte_system_info.nodename, max_qp_size, 
+                       max_size_needed);
         ret = OMPI_ERROR;
         goto error;
-    } else if(max_qp_size > max_size_needed) {
+    } else if (max_qp_size > max_size_needed) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                       "biggest qp size is too big", true,
+                       orte_system_info.nodename, max_qp_size, 
+                       max_size_needed);
         opal_output(0, "The biggest QP size is bigger than maximum send size. "
                 "This is not optimal configuration as memory will be waisted.\n");
     }
