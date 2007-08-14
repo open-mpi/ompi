@@ -74,12 +74,12 @@ void vprotocol_pessimist_sender_based_alloc(size_t len);
             mca_vprotocol_pessimist.sender_based.sb_cursor,                   \
             req->req_bytes_packed, MPI_PACKED, 0, 0,                          \
             mca_vprotocol_pessimist.sender_based.sb_comm,                     \
-            & VPESSIMIST_REQ(req)->sb_reqs[0]);                               \
+            &VPESSIMIST_SEND_REQ(req)->sb_reqs[0]);                           \
     mca_pml_v.host_pml.pml_isend(req->req_base.req_addr,                      \
             req->req_base.req_count, req->req_base.req_datatype, 0, 0,        \
             MCA_PML_BASE_SEND_READY,                                          \
             mca_vprotocol_pessimist.sender_based.sb_comm,                     \
-            & VPESSIMIST_REQ(req)->sb_reqs[1]);                               \
+            &VPESSIMIST_SEND_REQ(req)->sb_reqs[1]);                           \
 } while(0);
 
 #define __SENDER_BASED_PACK(req) do {                                         \
@@ -94,7 +94,7 @@ void vprotocol_pessimist_sender_based_alloc(size_t len);
     mca_vprotocol_pessimist.sender_based.sb_cursor +=                         \
             sizeof(vprotocol_pessimist_sender_based_header_t);                \
                                                                               \
-    __SENDER_BASED_IOV_PACK(req);                                             \
+    __SENDER_BASED_SENDRECV_PACK(req);                                        \
     mca_vprotocol_pessimist.sender_based.sb_cursor += sbhdr->size;            \
     mca_vprotocol_pessimist.sender_based.sb_vacant -= (sbhdr->size +          \
             sizeof(vprotocol_pessimist_sender_based_header_t));               \
@@ -117,9 +117,8 @@ void vprotocol_pessimist_sender_based_alloc(size_t len);
 
 /** Ensure sender based is finished before allowing user to touch send buffer
   */ 
-#define VPROTOCOL_PESSIMIST_SENDER_BASED_FLUSH(REQ)
-#define DUMMYCOMMENT do {                      \
-    if(VPESSIMIST_REQ(REQ)->sb_reqs[0])                                       \
+#define VPROTOCOL_PESSIMIST_SENDER_BASED_FLUSH(REQ) do {                      \
+    if(NULL != VPESSIMIST_REQ(REQ)->sb_reqs[0])                               \
     {                                                                         \
         ompi_request_wait_all(2, VPESSIMIST_REQ(REQ)->sb_reqs,                \
                               MPI_STATUSES_IGNORE);                           \
