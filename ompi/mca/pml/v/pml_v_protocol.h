@@ -49,16 +49,27 @@ typedef int (*mca_pml_v_protocol_base_component_finalize_fn_t)(void);
  *
  * @param request (IN) the address of an ompi_request
  * @return address of the mca_vprotocol_base_request_t associated with the request
- */ 
-#define VPROTOCOL_REQ(req) \
+ */
+#define VPROTOCOL_RECV_REQ(req) \
+    (((char *) req) + mca_pml_v.host_pml_req_recv_size)
+#define VPROTOCOL_SEND_REQ(req) \
+    (((char *) req) + mca_pml_v.host_pml_req_send_size)
+#if OMPI_ENABLE_DEBUG
+#define VPROTOCOL_REQ(req) (                                                    \
+    (MCA_PML_REQUEST_SEND == ((mca_pml_base_request_t *)req)->req_type)         \
+        ? VPROTOCOL_SEND_REQ(req)                                               \
+        : (                                                                     \
+            (MCA_PML_REQUEST_RECV == ((mca_pml_base_request_t *)req)->req_type) \
+            ? VPROTOCOL_RECV_REQ(req)                                           \
+            : (V_OUTPUT("VPROTOCOL_REQ: error, request type is %d (expected %d or %d)", ((mca_pml_base_request_t *)req)->req_type, MCA_PML_REQUEST_SEND, MCA_PML_REQUEST_RECV),NULL) \
+        )                                                                       \
+)   
+#else
+#define VPROTOCOL_REQ(req)  \
   ((((mca_pml_base_request_t *) req)->req_type == MCA_PML_REQUEST_SEND) \
   ? VPROTOCOL_SEND_REQ(req) \
   : VPROTOCOL_RECV_REQ(req))
-#define VPROTOCOL_RECV_REQ(req) \
-  (((char *) req) + mca_pml_v.host_pml_req_recv_size)
-#define VPROTOCOL_SEND_REQ(req) \
-  (((char *) req) + mca_pml_v.host_pml_req_send_size)
-  
+#endif
 
 /**
  * PML_V_PROTOCOL component version and interface functions.
