@@ -72,9 +72,9 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
         munmap(sb.sb_addr, sb.sb_length);
 
     /* Take care of alignement of sb_offset                             */
-    sb.sb_offset += (intptr_t) sb.sb_cursor - (intptr_t) sb.sb_addr;
-    sb.sb_cursor = (char *) ((intptr_t) (sb.sb_offset % sb.sb_pagesize));
-    sb.sb_offset -= (intptr_t) sb.sb_cursor; 
+    sb.sb_offset += (uintptr_t) sb.sb_cursor - (uintptr_t) sb.sb_addr;
+    sb.sb_cursor = (char *) ((uintptr_t) (sb.sb_offset % sb.sb_pagesize));
+    sb.sb_offset -= (uintptr_t) sb.sb_cursor; 
 
     /* Adjusting sb_length for the largest application message to fit   */
     if(sb.sb_length < len)
