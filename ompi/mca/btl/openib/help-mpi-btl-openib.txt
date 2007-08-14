@@ -248,3 +248,107 @@ WARNING: An invalid MCA parameter value was found for the OpenFabrics
 
 Problem:    %s
 Resolution: %s
+#
+[no qps in receive_queues]
+WARNING: No queue pairs were defined in the btl_openib_receive_queues
+MCA parameter.  At least one queue pair must be defined.  The openib
+BTL will therefore be deactivated for this run.
+
+Host: %s
+#
+[invalid qp type in receive_queues]
+WARNING: An invalid queue pair type was specified in the
+btl_openib_receive_queues MCA parameter.  The openib BTL will be
+deactivated for this run.
+
+Valid queue pair types are "P" for per-peer and "S" for shared receive
+queue.
+
+Host: %s
+btl_openib_receive_queues: %s
+Bad specification: %s
+#
+[invalid pp qp specification]
+WARNING: An invalid per-peer receive queue specification was detected
+as part of the btl_openib_receive_queues MCA parameter.  The openib
+BTL will therefore be deactivated for this run.
+
+Per-peer receive queues require between 1 and 5 parameters:
+
+  1. Buffer size in bytes (mandatory)
+  2. Number of buffers (optional; defaults to 8)
+  3. Low buffer count watermark (optional; defaults to (num_buffers / 2))
+  4. Credit window size (optional; defaults to (low_watermark / 2))
+  5. Number of buffers reserved for credit messages (optional;
+     defaults to (num_buffers*2-1)/credit_window)
+
+  Example: P,128,256,128,16
+  - 128 byte buffers
+  - 256 buffers to receive incoming MPI messages
+  - When the number of available buffers reaches 128, re-post 128 more
+    buffers to reach a total of 256
+  - If the number of available credits reaches 16, send an explicit
+    credit message to the sender
+  - Defaulting to ((256 * 2) - 1) / 16 = 31; this many buffers are
+    reserved for explicit credit messages
+
+Host: %s
+Bad queue specification: %s
+#
+[invalid srq specification]
+WARNING: An invalid shared receive queue specification was detected as
+part of the btl_openib_receive_queues MCA parameter.  The openib BTL
+will therefore be deactivated for this run.
+
+Shared receive queues can take between 2 and 4 parameters:
+
+  1. Buffer size in bytes (mandatory)
+  2. Number of buffers (optional; defaults to 16)
+  3. Low buffer count watermark (optional; defaults to (num_buffers / 2))
+  4. Maximum number of outstanding sends a sender can have (optional;
+     defaults to (low_watermark / 4)
+
+  Example: S,1024,256,128,32
+  - 1024 byte buffers
+  - 256 buffers to receive incoming MPI messages
+  - When the number of available buffers reaches 128, re-post 128 more
+    buffers to reach a total of 256
+  - A sender will not send to a peer unless it has less than 32
+    outstanding sends to that peer.
+
+Host: %s
+Bad queue specification: %s
+#
+[rd_num must be > rd_low]
+WARNING: The number of buffers for a queue pair specified via the
+btl_openib_receive_queues MCA parameter must be greater than the low
+buffer count watermark.  The openib BTL will therefore be deactivated
+for this run.
+
+Host: %s
+Bad queue specification: %s
+#
+[biggest qp size is too small]
+WARNING: The largest queue pair buffer size specified in the
+btl_openib_receive_queues MCA parameter is smaller than the maximum
+send size (i.e., the btl_openib_max_send_size MCA parameter), meaning
+that no queue is large enough to receive the largest possible incoming
+message fragment.  The openib BTL will therefore be deactivated for
+this run.
+
+Host: %s
+Largest buffer size: %d
+Maximum send fragment size: %d
+#
+[biggest qp size is too big]
+WARNING: The largest queue pair buffer size specified in the
+btl_openib_receive_queues MCA parameter is larger than the maximum
+send size (i.e., the btl_openib_max_send_size MCA parameter).  This
+means that memory will be wasted because the largest possible incoming
+message fragment will not fill a buffer allocated for incoming
+fragments.
+
+Host: %s
+Largest buffer size: %d
+Maximum send fragment size: %d
+#
