@@ -29,6 +29,7 @@ version 1.0.
 1.2.4
 -----
 
+- Fixed an issue with umask not being propagated when using the TM launcher.
 - Fixed behavior if number of slots is not the same on all bproc nodes.
 - Fixed a hang on systems without GPR support (ex. Cray XT3/4).
 - Prevent users of 32-bit MPI apps from requesting >= 2GB of shared memory.
