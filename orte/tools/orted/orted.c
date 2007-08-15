@@ -35,6 +35,16 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
+#include <stdlib.h>
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 
 #include "orte/orte_constants.h"
 
@@ -204,6 +214,28 @@ int main(int argc, char *argv[])
     char *segment;
     int i;
     orte_buffer_t answer;
+    char *umask_str;
+
+    /* Allow the PLS starters to pass us a umask to use, if required.
+       Most starters by default can do something sane with the umask,
+       but some (like TM) do not pass on the umask but instead inherit
+       it form the root level process starter.  This has to happen
+       before opal_init and everything else so that the couple of
+       places that stash a umask end up with the correct value.  Only
+       do it here (and not in orte_daemon) mainly to make it clear
+       that this should only happen when starting an orted for the
+       first time.  All startes I'm aware of that don't require an
+       orted are smart enough to pass on a reasonable umask, so they
+       wouldn't need this functionality anyway. */
+    umask_str = getenv("ORTE_DAEMON_UMASK_VALUE");
+    if (NULL != umask_str) {
+        char *endptr;
+        long mask = strtol(umask_str, &endptr, 8);
+        if ((! (0 == mask && (EINVAL == errno || ERANGE == errno))) &&
+            (*endptr == '\0')) {
+            umask(mask);
+        }
+    }
 
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals_t));
