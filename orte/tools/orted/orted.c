@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 #endif
 #include <stdio.h>
+#include <errno.h>
 
 #include "orte/orted/orted.h"
 
