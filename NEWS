@@ -82,6 +82,9 @@ Trunk (not on release branches yet)
 1.2.4
 -----
 
+- Fixed behavior if number of slots is not the same on all bproc nodes.
+- Fixed a hang on systems without GPR support (ex. Cray XT3/4).
+- Prevent users of 32-bit MPI apps from requesting >= 2GB of shared memory.
 - Added a Portals MTL.
 - Fix 0 sized MPI_ALLOC_MEM requests.  Thanks to Lisandro Dalcin for
   pointing out the problem.
