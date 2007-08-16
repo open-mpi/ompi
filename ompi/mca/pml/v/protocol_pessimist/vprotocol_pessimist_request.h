@@ -14,6 +14,7 @@
 #include "ompi_config.h"
 #include "vprotocol_pessimist_event.h"
 #include "ompi/request/request.h"
+#include "../base/vprotocol_base_request.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

@@ -8,18 +8,18 @@
  * $HEADER$
  */
 
+#include "vprotocol_pessimist_sender_based.h"
+
 #ifndef __INCLUDE_VPROTOCOL_PESSIMIST_H__
 #define __INCLUDE_VPROTOCOL_PESSIMIST_H__
 
 #include "ompi_config.h"
-#include "../pml_v.h"
-#include "../pml_v_protocol.h"
+#include "../vprotocol.h"
 #include "ompi/communicator/communicator.h"
 #include "vprotocol_pessimist_event.h"
-#include "vprotocol_pessimist_sender_based.h"
 
 typedef struct mca_vprotocol_pessimist_module_t {
-  mca_pml_v_protocol_base_module_t super;
+  mca_vprotocol_base_module_t super;
 
     /* event tagging clock */
   vprotocol_pessimist_clock_t clock;

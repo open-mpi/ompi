@@ -12,13 +12,14 @@
 #define PML_V_OUTPUT_H_HAS_BEEN_INCLUDED
 
 #include "ompi_config.h"
-#include "pml_v.h"
-
-#include <inttypes.h>
+#include "opal/util/output.h"
+#include <stdio.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+extern int pml_v_output;    
 
 int pml_v_output_open(char *output, int verbosity);
 void pml_v_output_close(void);
@@ -40,16 +41,16 @@ static inline void V_OUTPUT_ERR(const char *fmt, ... )
 /* Tricky stuff to define V_OUTPUT and V_OUTPUT_VERBOSE with variadic arguments
  */
 #if   defined(ACCEPT_C99)
-#   define V_OUTPUT(ARGS...)                                                    \
-        OPAL_OUTPUT((mca_pml_v.output, __VA_ARGS__))
-#   define V_OUTPUT_VERBOSE(V, ARGS...)                                         \
-        OPAL_OUTPUT_VERBOSE((V, mca_pml_v.output, __VA_ARGS__))
+#   define V_OUTPUT(ARGS...)                                                   \
+        OPAL_OUTPUT((pml_v_output, __VA_ARGS__))
+#   define V_OUTPUT_VERBOSE(V, ARGS...)                                        \
+        OPAL_OUTPUT_VERBOSE((V, pml_v_output, __VA_ARGS__))
 
 #elif defined(__GNUC__) && !defined(__STDC__)
-#   define V_OUTPUT(ARGS...)                                                    \
-        OPAL_OUTPUT((mca_pml_v.output, ARGS))
-#   define V_OUTPUT_VERBOSE(V, ARGS...)                                         \
-        OPAL_OUTPUT_VERBOSE((V, mca_pml_v.output, ARGS))
+#   define V_OUTPUT(ARGS...)                                                   \
+        OPAL_OUTPUT((pml_v_output, ARGS))
+#   define V_OUTPUT_VERBOSE(V, ARGS...)                                        \
+        OPAL_OUTPUT_VERBOSE((V, pml_v_output, ARGS))
             
 #elif OMPI_ENABLE_DEBUG
     /* No variadic macros available... So sad */
@@ -62,7 +63,7 @@ static inline void V_OUTPUT(const char* fmt, ... )
     va_start(list, fmt);
     ret = vasprintf(&str, fmt, list);
     assert(-1 != ret);
-    opal_output(mca_pml_v.output, str);
+    opal_output(pml_v_output, str);
     free(str);
     va_end(list);
 }
@@ -74,7 +75,7 @@ static inline void V_OUTPUT_VERBOSE(int V, const char* fmt, ... ) {
     va_start(list, fmt);
     ret = vasprintf(&str, fmt, list);
     assert(-1 != ret);
-    opal_output_verbose(V, mca_pml_v.output, str);
+    opal_output_verbose(V, pml_v_output, str);
     free(str);
     va_end(list);
 }
