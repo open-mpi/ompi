@@ -279,10 +279,8 @@ static int progress()
         romio_rq = ((mca_io_romio_request_t *) item)->romio_rq;
         ret = ROMIO_PREFIX(MPIO_Test)(&romio_rq, &flag, 
                                       &(((ompi_request_t *) item)->req_status));
-        if (ret < 0) {
-            OPAL_THREAD_UNLOCK (&mca_io_romio_mutex);
-            return ret;
-        } else if (1 == flag) {
+        if ((0 != ret) || (0 != flag)) {
+            ioreq->super.req_status.MPI_ERROR = ret;
             ++count;
             /* we're done, so remove us from the pending list */
             opal_list_remove_item(&mca_io_romio_pending_requests, item);
@@ -297,7 +295,7 @@ static int progress()
                 ret = ompi_request_free((ompi_request_t**) &ioreq);
                 if (OMPI_SUCCESS != ret) {
                     OPAL_THREAD_UNLOCK(&mca_io_romio_mutex);
-                    return ret;
+                    return count;
                 }
             }
         }

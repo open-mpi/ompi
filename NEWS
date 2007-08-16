@@ -26,6 +26,13 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
+1.2.3lanl1
+----------
+
+- Fixed an issue with umask not being propagated when using the TM launcher.
+- Fixed a ROMIO problem where non-blocking I/O errors were not properly
+  reported to the user.
+
 1.2.3
 -----
 

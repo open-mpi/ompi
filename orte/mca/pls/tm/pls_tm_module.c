@@ -35,6 +35,9 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
@@ -140,6 +143,7 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     struct timeval jobstart, jobstop;
     int maxtime=0, mintime=99999999, maxiter = 0, miniter = 0, deltat;
     float avgtime=0.0;
+    mode_t current_umask;
     
     /* check for timing request - get start time if so */
     if (mca_pls_tm_component.timing) {
@@ -302,6 +306,13 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
      * won't work on remote nodes
      */
     orte_pls_base_purge_mca_params(&env);
+
+    /* add our umask -- see big note in orted.c */
+    current_umask = umask(0);
+    umask(current_umask);
+    asprintf(&var, "0%o", current_umask);
+    opal_setenv("ORTE_DAEMON_UMASK_VALUE", var, true, &env);
+    free(var);
     
     /* If we have a prefix, then modify the PATH and
         LD_LIBRARY_PATH environment variables. We only allow
