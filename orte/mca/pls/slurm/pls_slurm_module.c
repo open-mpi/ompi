@@ -584,10 +584,14 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
             free(newenv);
         }
 
+        fd = open("/dev/null", O_CREAT|O_WRONLY|O_TRUNC, 0666);
+        if(fd > 0) {
+            dup2(fd, 0);
+        }
+
         /* When not in debug mode and --debug-daemons was not passed,
          * tie stdout/stderr to dev null so we don't see messages from orted */
         if (0 == mca_pls_slurm_component.debug && !orte_debug_daemons_flag) {
-            fd = open("/dev/null", O_CREAT|O_WRONLY|O_TRUNC, 0666);
             if (fd >= 0) {
                 if (fd != 1) {
                     dup2(fd,1);
@@ -595,10 +599,11 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
                 if (fd != 2) {
                     dup2(fd,2);
                 }
-                if (fd > 2) {
-                    close(fd);
-                }
             }
+        }
+
+        if (fd > 2) {
+            close(fd);
         }
 
         /* get the srun process out of orterun's process group so that
