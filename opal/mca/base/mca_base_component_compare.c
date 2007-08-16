@@ -56,8 +56,15 @@ mca_base_component_compare_priority(mca_base_component_priority_list_item_t *a,
 int mca_base_component_compare(const mca_base_component_t* aa, 
                                const mca_base_component_t* bb)
 {
-    /* The priorities were equal, so compare the names */
-    int val = strncmp(aa->mca_component_name, bb->mca_component_name,
+    int val;
+
+    val = strncmp(aa->mca_type_name, bb->mca_type_name,
+                  MCA_BASE_MAX_TYPE_NAME_LEN);
+    if (val != 0) {
+      return -val;
+    }
+
+    val = strncmp(aa->mca_component_name, bb->mca_component_name,
                       MCA_BASE_MAX_COMPONENT_NAME_LEN);
     if (val != 0) {
       return -val;
@@ -88,18 +95,25 @@ int mca_base_component_compare(const mca_base_component_t* aa,
     return 0;
 }
 
+
 /**
  * compare but exclude the release version - declare compatible 
  * if the major/minor version are the same.
  */
-
 int mca_base_component_compatible(
     const mca_base_component_t* aa, 
     const mca_base_component_t* bb)
 {
-    /* The priorities were equal, so compare the names */
-    int val = strncmp(aa->mca_component_name, bb->mca_component_name,
-                      MCA_BASE_MAX_COMPONENT_NAME_LEN);
+    int val;
+
+    val = strncmp(aa->mca_type_name, bb->mca_type_name,
+                  MCA_BASE_MAX_TYPE_NAME_LEN);
+    if (val != 0) {
+      return -val;
+    }
+
+    val = strncmp(aa->mca_component_name, bb->mca_component_name,
+                  MCA_BASE_MAX_COMPONENT_NAME_LEN);
     if (val != 0) {
       return -val;
     }
