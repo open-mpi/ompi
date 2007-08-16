@@ -26,7 +26,7 @@ typedef struct vprotocol_pessimist_sender_based_t
     uintptr_t sb_addr;      /* base address of mmaped segment */
     size_t sb_length;       /* length of mmaped segment */
     uintptr_t sb_cursor;    /* current pointer to writeable memory */
-    size_t sb_vacant;       /* available space before end of segment */
+    size_t sb_available;    /* available space before end of segment */
 } vprotocol_pessimist_sender_based_t;
 
 #include "vprotocol_pessimist.h"
@@ -48,7 +48,6 @@ void vprotocol_pessimist_sender_based_finalize(void);
   * asynchronously copied to disk.
   */
 void vprotocol_pessimist_sender_based_alloc(size_t len);
-
 
 #define __SENDER_BASED_CNVTOR_PACK(req) do {                                  \
     if( 0 != req->req_bytes_packed ) {                                        \
@@ -95,7 +94,7 @@ void vprotocol_pessimist_sender_based_alloc(size_t len);
                                                                               \
     __SENDER_BASED_CNVTOR_PACK(req);                                          \
     mca_vprotocol_pessimist.sender_based.sb_cursor += sbhdr->size;            \
-    mca_vprotocol_pessimist.sender_based.sb_vacant -= (sbhdr->size +          \
+    mca_vprotocol_pessimist.sender_based.sb_available -= (sbhdr->size +       \
             sizeof(vprotocol_pessimist_sender_based_header_t));               \
     V_OUTPUT_VERBOSE(70, "pessimist:\tsb\twrite\t%"PRIpclock"\tsize %lu", VPESSIMIST_REQ(&req->req_base)->reqid, sbhdr->size + sizeof(vprotocol_pessimist_sender_based_header_t); \
 } while(0)
@@ -115,7 +114,7 @@ static inline void __SENDER_BASED_PACK(mca_pml_base_send_request_t *req) {
  
     __SENDER_BASED_CNVTOR_PACK(req); 
     mca_vprotocol_pessimist.sender_based.sb_cursor += sbhdr->size;
-    mca_vprotocol_pessimist.sender_based.sb_vacant -= (sbhdr->size + 
+    mca_vprotocol_pessimist.sender_based.sb_available -= (sbhdr->size + 
             sizeof(vprotocol_pessimist_sender_based_header_t));
     V_OUTPUT_VERBOSE(70, "pessimist:\tsb\twrite\t%"PRIpclock"\tsize %lu", VPESSIMIST_REQ(&req->req_base)->reqid, sbhdr->size + sizeof(vprotocol_pessimist_sender_based_header_t)); 
 }
@@ -126,8 +125,9 @@ static inline void __SENDER_BASED_PACK(mca_pml_base_send_request_t *req) {
   */
 #define VPROTOCOL_PESSIMIST_SENDER_BASED_COPY(REQ) do {                       \
     mca_pml_base_send_request_t *req = (mca_pml_base_send_request_t *) (REQ); \
-    if(req->req_bytes_packed >=                                               \
-            mca_vprotocol_pessimist.sender_based.sb_vacant)                   \
+    if(req->req_bytes_packed +                                                \
+       sizeof(vprotocol_pessimist_sender_based_header_t) >=                   \
+       mca_vprotocol_pessimist.sender_based.sb_available)                     \
     {                                                                         \
         vprotocol_pessimist_sender_based_alloc(req->req_bytes_packed);        \
     }                                                                         \

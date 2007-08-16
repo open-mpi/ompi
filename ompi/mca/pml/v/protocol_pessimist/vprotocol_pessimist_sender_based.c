@@ -27,7 +27,7 @@ int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
     sb.sb_length = size;
     sb.sb_pagesize = getpagesize();
     sb.sb_cursor = sb.sb_addr = (uintptr_t) NULL;
-    sb.sb_vacant = 0;
+    sb.sb_available = 0;
     sb.sb_comm = MPI_COMM_NULL;
     
     sprintf(path, "%s"OPAL_PATH_SEP"%s", orte_process_info.proc_session_dir, 
@@ -81,8 +81,11 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
     sb.sb_offset -= sb.sb_cursor; 
 
     /* Adjusting sb_length for the largest application message to fit   */
+    len += sb.sb_cursor + sizeof(vprotocol_pessimist_sender_based_header_t);
     if(sb.sb_length < len)
-        sb.sb_length = len + sb.sb_cursor;
+        sb.sb_length = len;
+    /* How much space left for application data */
+    sb.sb_available = sb.sb_length - sb.sb_cursor;
 
     if(-1 == lseek(sb.sb_fd, sb.sb_offset + sb.sb_length, SEEK_SET))
     {
@@ -108,8 +111,6 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
         close(sb.sb_fd);
         ompi_mpi_abort(MPI_COMM_NULL, MPI_ERR_NO_SPACE, false);
     }
-    sb.sb_vacant = sb.sb_length - sb.sb_cursor - /* make room for the header */
-                        sizeof(vprotocol_pessimist_sender_based_header_t);
     sb.sb_cursor += sb.sb_addr; /* set absolute addr of sender_based buffer */
     V_OUTPUT_VERBOSE(30, "pessimist:\tsb\tgrow\toffset %llu\tlength %llu\tbase %p\tcursor %p", (unsigned long long) sb.sb_offset, (unsigned long long) sb.sb_length, (void *) sb.sb_addr, (void *) sb.sb_cursor);
 }   
