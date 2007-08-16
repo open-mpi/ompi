@@ -108,7 +108,7 @@ FILE* ompidll_out = stdout;
 
 #define VERBOSE 0
 #if VERBOSE
-#define DEBUG(LEVEL,WHAT) if( (LEVEL) > VERBOSE ) { fprintf( ompidll_out, WHAT ); }
+#define DEBUG(LEVEL, WHAT) if( (LEVEL) > VERBOSE ) { printf WHAT; }
 #else
 #define DEBUG(LEVEL,WHAT)
 #endif  /* VERBOSE */
@@ -490,6 +490,7 @@ int mqs_image_has_queues (mqs_image *image, char **message)
         i_info->mca_pml_base_request_t.offset.req_proc = mqs_field_offset(qh_type, "req_proc");
         i_info->mca_pml_base_request_t.offset.req_sequence = mqs_field_offset(qh_type, "req_sequence");
         i_info->mca_pml_base_request_t.offset.req_type = mqs_field_offset(qh_type, "req_type");
+        i_info->mca_pml_base_request_t.offset.req_pml_complete = mqs_field_offset(qh_type, "req_pml_complete");
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "mca_pml_base_send_request_t", mqs_lang_c );
@@ -1141,7 +1142,7 @@ static int ompi_free_list_t_next_item( mqs_process *proc, mpi_process_info *p_in
 
 static void dump_request( mqs_taddr_t current_item, mqs_pending_operation *res )
 {
-	if( VERBOSE < 100 ) return;
+    if( VERBOSE < 100 ) return;
     fprintf( ompidll_out, "\n+===============================================+\n"
                           "|Request 0x%llx contain \n"
                           "|    res->status              = %d\n"
@@ -1157,7 +1158,7 @@ static void dump_request( mqs_taddr_t current_item, mqs_pending_operation *res )
         (TRUE == res->system_buffer ? "TRUE" : "FALSE"), (long long)res->buffer,
         (long)res->desired_length );
 
-    if( res->status != mqs_st_pending ) {
+    if( res->status > mqs_st_pending ) {
         fprintf( ompidll_out, "|    res->actual_length       = %ld\n"
                               "|    res->actual_tag          = %ld\n"
                               "|    res->actual_local_rank   = %ld\n"
@@ -1165,6 +1166,16 @@ static void dump_request( mqs_taddr_t current_item, mqs_pending_operation *res )
                  (long)res->actual_length, (long)res->actual_tag,
                  (long)res->actual_local_rank, (long)res->actual_global_rank );
     }
+    if( '\0' != res->extra_text[0][0] )
+        fprintf( ompidll_out, "|    extra[0] = %s\n", res->extra_text[0] );
+    if( '\0' != res->extra_text[1][0] )
+        fprintf( ompidll_out, "|    extra[1] = %s\n", res->extra_text[1] );
+    if( '\0' != res->extra_text[2][0] )
+        fprintf( ompidll_out, "|    extra[2] = %s\n", res->extra_text[2] );
+    if( '\0' != res->extra_text[3][0] )
+        fprintf( ompidll_out, "|    extra[3] = %s\n", res->extra_text[3] );
+    if( '\0' != res->extra_text[4][0] )
+        fprintf( ompidll_out, "|    extra[4] = %s\n", res->extra_text[4] );
     fprintf( ompidll_out, "+===============================================+\n\n" );
 }
 
@@ -1182,7 +1193,7 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
     mqs_image * image        = mqs_get_image (proc);
     mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
     mqs_taddr_t current_item;
-    mqs_tword_t req_complete, req_valid, req_type;
+    mqs_tword_t req_complete, req_pml_complete, req_valid, req_type;
     mqs_taddr_t req_buffer, req_comm;
 
     while( 1 ) {
@@ -1208,8 +1219,15 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
         req_type =
             fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_type,
                        p_info);
-        req_complete = fetch_bool( proc, current_item + i_info->ompi_request_t.offset.req_complete, p_info );
-        res->status = (req_complete == 0 ? mqs_st_pending : mqs_st_complete);
+        req_complete =
+            fetch_bool( proc,
+                        current_item + i_info->ompi_request_t.offset.req_complete,
+                        p_info );
+        req_pml_complete =
+            fetch_bool( proc,
+                        current_item + i_info->mca_pml_base_request_t.offset.req_pml_complete,
+                        p_info );
+        res->status = (0 == req_complete ? mqs_st_pending : mqs_st_complete);
 
         res->desired_local_rank  =
             fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_peer, p_info );
@@ -1219,7 +1237,8 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
         res->tag_wild            = (MPI_ANY_TAG == res->desired_tag ? TRUE : FALSE);
         
         res->buffer = fetch_pointer( proc, current_item + i_info->mca_pml_base_request_t.offset.req_addr,
-                                    p_info );
+                                     p_info );
+        /* Set this to true if it's a buffered request */
         res->system_buffer = FALSE;
         if( MCA_PML_REQUEST_SEND == req_type ) {
             snprintf( (char *)res->extra_text[0], 64, "Non-blocking send 0x%llx", (long long)current_item );
@@ -1230,15 +1249,38 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
             res->desired_length      =
                 fetch_int( proc,
                            current_item + i_info->mca_pml_base_send_request_t.offset.req_bytes_packed, p_info );
+            res->actual_length     = res->desired_length;
+            res->actual_tag        = res->desired_tag;
+            res->actual_local_rank = res->desired_local_rank;
+            res->actual_global_rank  = res->actual_local_rank;
         } else if( MCA_PML_REQUEST_RECV == req_type ) {
             snprintf( (char *)res->extra_text[0], 64, "Non-blocking recv 0x%llx", (long long)current_item );
+            res->desired_length      =
+                fetch_int( proc,
+                           current_item + i_info->mca_pml_base_recv_request_t.offset.req_bytes_packed, p_info );
+            /**
+             * There is a trick with the MPI_TAG. All receive requests set it to MPI_ANY_TAG
+             * when the request get initialized, and to the real tag once the request
+             * is matched.
+             */
+            res->actual_tag          =
+                fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
+                           i_info->ompi_status_public_t.offset.MPI_TAG, p_info );
+            if( (MPI_ANY_TAG == res->actual_tag) && (mqs_st_pending < res->status) ) {
+                res->status = mqs_st_matched;
+            }
         } else {
             snprintf( (char *)res->extra_text[0], 64, "Unknown type of request 0x%llx", (long long)current_item );
         }
-        res->desired_length      =
-            fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_count, p_info );
+        if( 0 != req_pml_complete ) {
+			snprintf( (char *)res->extra_text[1], 64, "Data transfer completed" );
+        }
+
+        /* If the length we're looking for is the count ... */
+        /*res->desired_length      =
+            fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_count, p_info );*/
         
-        if( mqs_st_pending != res->status ) {  /* The real data from the status */
+        if( mqs_st_pending < res->status ) {  /* The real data from the status */
             res->actual_length       =
                 fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
                            i_info->ompi_status_public_t.offset._count, p_info );
