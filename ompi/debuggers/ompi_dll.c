@@ -100,11 +100,11 @@
  * The internal debugging interface.
  */
 #define VERBOSE_GENERAL 1
-#define VERBOSE_COMM    5
+#define VERBOSE_COMM    50
 #define VERBOSE_LISTS   10
 #define VERBOSE_REQ     20
 
-#define VERBOSE 0
+#define VERBOSE 49
 #if VERBOSE
 #define DEBUG(LEVEL, WHAT) if( (LEVEL) > VERBOSE ) { printf WHAT; }
 #else
@@ -687,10 +687,12 @@ int mqs_setup_process (mqs_process *process, const mqs_process_callbacks *pcb)
         image  = mqs_get_image (process);
         i_info = (mpi_image_info *)mqs_get_image_info (image);
 
-        /* Library starts at zero, so this ensures we go look to start with */
-        p_info->communicator_sequence = -1;
         /* We have no communicators yet */
-        p_info->communicator_list     = NULL;
+        p_info->communicator_list = NULL;
+        /* Enforce the generation of the communicators list */
+        p_info->comm_lowest_free  = 0;
+        p_info->comm_number_free  = 0;
+
         mqs_get_type_sizes (process, &p_info->sizes);
         /**
          * Before going any further make sure we know exactly how the Open MPI
@@ -729,12 +731,13 @@ int mqs_setup_process (mqs_process *process, const mqs_process_callbacks *pcb)
                p_info->sizes.size_t_size = fetch_int( process, /* sizeof (size_t) */
                                                      typedefs_sizeof,
                                                      p_info );
-               printf( "sizes short = %d int = %d long = %d long long = %d "
+               DEBUG( VERBOSE_GENERAL, 
+                      ("sizes short = %d int = %d long = %d long long = %d "
                        "void* = %d bool = %d size_t = %d\n",
                        p_info->sizes.short_size, p_info->sizes.int_size,
                        p_info->sizes.long_size, p_info->sizes.long_long_size,
                        p_info->sizes.pointer_size, p_info->sizes.bool_size,
-                       p_info->sizes.size_t_size );
+                       p_info->sizes.size_t_size) );
         }
 
         mqs_put_process_info (process, (mqs_process_info *)p_info);
@@ -770,26 +773,32 @@ int mqs_process_has_queues (mqs_process *proc, char **msg)
 
 /***********************************************************************
  * Check if the communicators have changed by looking at the 
- * sequence number.
+ * pointer array values for lowest_free and number_free.
  */
 static int communicators_changed (mqs_process *proc)
 {
-#if 0  /* TODO: how do we figure out which communicators have changed ? */
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
     mqs_image * image          = mqs_get_image (proc);
     mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
-    mqs_tword_t new_seq = fetch_int (proc, 
-                                     p_info->commlist_base+i_info->sequence_number_offs,
-                                     p_info);
-    int  res = (new_seq != p_info->communicator_sequence);
-      
-    /* Save the sequence number for next time */
-    p_info->communicator_sequence = new_seq;
+    mqs_tword_t number_free;         /* the number of available positions in
+                                      * the communicator array. */
+    mqs_tword_t lowest_free;         /* the lowest free communicator */
 
-    return res;
-#endif
-    DEBUG(VERBOSE_COMM,("communicators_changed called (return 1)\n"));
-    return 1;
+    lowest_free = fetch_int( proc,
+                             p_info->commlist_base + i_info->ompi_pointer_array_t.offset.lowest_free,
+                             p_info );
+    number_free = fetch_int( proc,
+                             p_info->commlist_base + i_info->ompi_pointer_array_t.offset.number_free,
+                             p_info );
+    if( (lowest_free != p_info->comm_lowest_free) ||
+        (number_free != p_info->comm_number_free) ) {
+        p_info->comm_lowest_free = lowest_free;
+        p_info->comm_number_free = number_free;
+        DEBUG(VERBOSE_COMM, ("Recreate the communicator list\n") );
+        return 1;
+    }
+    DEBUG(VERBOSE_COMM, ("Communicator list not modified\n") );
+    return 0;
 } /* mqs_communicators_changed */
 
 /***********************************************************************
@@ -798,8 +807,8 @@ static int communicators_changed (mqs_process *proc)
  * being re-allocated from a free list, in which case the same
  * address will be re-used a lot, which could confuse us.
  */
-static communicator_t * find_communicator (mpi_process_info *p_info,
-					   int recv_ctx)
+static communicator_t * find_communicator( mpi_process_info *p_info,
+                                           int recv_ctx )
 {
     communicator_t * comm = p_info->communicator_list;
 
@@ -866,7 +875,7 @@ static int rebuild_communicator_list (mqs_process *proc)
                            comm_addr_base + i * p_info->sizes.pointer_size,
                            p_info );
         if( 0 == comm_ptr ) continue;
-		commcount++;
+        commcount++;
         /* Now let's grab the data we want from inside */
         remote_comm.unique_id = fetch_int( proc,
                                            comm_ptr + i_info->ompi_communicator_t.offset.c_contextid,
@@ -956,7 +965,6 @@ static int rebuild_communicator_list (mqs_process *proc)
  */
 int mqs_update_communicator_list (mqs_process *proc)
 {
-    DEBUG(VERBOSE_COMM,("mqs_update_communicator_list called\n"));
     if (communicators_changed (proc))
         return rebuild_communicator_list (proc);
     return mqs_ok;
