@@ -230,7 +230,7 @@ int mca_pml_base_select(bool enable_progress_threads,
     mca_pml = *best_module;
     opal_output_verbose( 10, mca_pml_base_output, 
                          "select: component %s selected",
-                         best_component->pmlm_version.mca_component_name );
+                         mca_pml_base_selected_component.pmlm_version.mca_component_name );
 
     /* This base function closes, unloads, and removes from the
        available list all unselected components.  The available list will
