@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -30,6 +31,31 @@ AC_DEFUN([OMPI_CHECK_UDAPL],[
     AC_ARG_WITH([udapl-libdir],
        [AC_HELP_STRING([--with-udapl-libdir=DIR],
              [Search for uDAPL libraries in DIR])])
+
+    # Special case for OFED/Linux: the default /etc/dat.conf that
+    # ships with OFED is broken in that it includes DAT providers that
+    # are not guarnateed to work (e.g., it includes providers for ib0,
+    # ib1, ib2, ib3, and bond0).  Usually, a sysadmin will need to
+    # edit this file to configure it for the specific environment in
+    # which it will be used.  Hence, if you run the udapl BTL on
+    # Linux/OFED, you'll get a bunch of warning messages about the
+    # providers that don't work.  However, on Linux/OFED, you don't
+    # really want to use udapl anyway; you likely really want to use
+    # the openib BTL (i.e., native verbs, not udapl).  
+
+    # So after exploring many different scenarios, the least evil
+    # solution seemed to be to disable building the udapl BTL on
+    # Linux/OFED *unless the user specifically asks for it.* To be
+    # specific: on Linux/OFED, if you do not specify
+    # --with-udapl(=DIR), the udapl BTL will not be built.
+    AS_IF([test -z "$with_udapl"],
+          [case $host in
+              *linux*) 
+                  AC_MSG_WARN([On Linux and --with-udapl was not specified])
+                  AC_MSG_WARN([Not building the udapl BTL])
+                  with_udapl=no
+                  ;;
+           esac])
 
     AS_IF([test ! -z "$with_udapl" -a "$with_udapl" != "yes"],
           [ompi_check_udapl_dir="$with_udapl"])
