@@ -652,6 +652,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
             return; 
         }
         
+        OPAL_THREAD_LOCK(&ib_endpoint->endpoint_lock);
         endpoint_state = ib_endpoint->endpoint_state;
         
         /* Update status */
