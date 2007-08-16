@@ -239,12 +239,66 @@ enum {
     err_group_corrupt
 };
 
-/**********************************************************************/
-/* Forward declarations 
- */
-static mqs_taddr_t fetch_pointer (mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info);
-static mqs_tword_t fetch_int (mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info);
-static mqs_tword_t fetch_bool(mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info);
+/***********************************************************************
+ * Functions to access the image memory. They are specialized based    *
+ * on the type we want to access and the debugged process architecture *
+ ***********************************************************************/
+static mqs_taddr_t fetch_pointer (mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info)
+{
+    int isize = p_info->sizes.pointer_size;
+    char buffer[8];                  /* ASSUME the type fits in 8 bytes */
+    mqs_taddr_t res = 0;
+
+    if (mqs_ok == mqs_fetch_data (proc, addr, isize, buffer))
+        mqs_target_to_host (proc, buffer, 
+                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_taddr_t)-isize : 0), 
+                            isize);
+
+    return res;
+} /* fetch_pointer */
+
+/***********************************************************************/
+static mqs_tword_t fetch_int (mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info)
+{
+    int isize = p_info->sizes.int_size;
+    char buffer[8];                  /* ASSUME the type fits in 8 bytes */
+    mqs_tword_t res = 0;
+
+    if (mqs_ok == mqs_fetch_data (proc, addr, isize, buffer)) {
+        mqs_target_to_host (proc, buffer, 
+                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_tword_t)-isize : 0), 
+                            isize);
+    }
+    return res;
+} /* fetch_int */
+
+/***********************************************************************/
+static mqs_tword_t fetch_bool(mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info)
+{
+    int isize = p_info->sizes.bool_size;
+    char buffer[8];                  /* ASSUME the type fits in 8 bytes */
+    mqs_tword_t res = 0;
+
+    if (mqs_ok == mqs_fetch_data (proc, addr, isize, &buffer))
+        res = (mqs_tword_t)buffer;
+  
+    return res;
+} /* fetch_bool */
+
+/***********************************************************************/
+static mqs_tword_t fetch_size_t(mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info)
+{
+    int isize = p_info->sizes.size_t_size;
+    char buffer[8];                  /* ASSUME the type fits in 8 bytes */
+    mqs_tword_t res = 0;
+
+    if (mqs_ok == mqs_fetch_data (proc, addr, isize, &buffer))
+        mqs_target_to_host (proc, buffer, 
+                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_taddr_t)-isize : 0), 
+                            isize);
+  
+    return res;
+} /* fetch_bool */
 
 #if defined(CODE_NOT_USED)
 /**********************************************************************/
@@ -638,6 +692,50 @@ int mqs_setup_process (mqs_process *process, const mqs_process_callbacks *pcb)
         /* We have no communicators yet */
         p_info->communicator_list     = NULL;
         mqs_get_type_sizes (process, &p_info->sizes);
+        /**
+         * Before going any further make sure we know exactly how the Open MPI
+         * library was compiled. This means we know the size of each of the basic
+         * types as stored in the MPIR_debug_typedefs_sizeof array.
+         */
+        {
+            mqs_taddr_t typedefs_sizeof;
+
+            if(mqs_find_symbol (image, "MPIR_debug_typedefs_sizeof", &typedefs_sizeof) != mqs_ok)
+               return err_no_store;
+               p_info->sizes.short_size = fetch_int( process, /* sizeof (short) */
+                                                     typedefs_sizeof,
+                                                     p_info );
+               typedefs_sizeof += p_info->sizes.int_size;
+               p_info->sizes.int_size = fetch_int( process, /* sizeof (int) */
+                                                     typedefs_sizeof,
+                                                     p_info );
+               typedefs_sizeof += p_info->sizes.int_size;
+               p_info->sizes.long_size = fetch_int( process, /* sizeof (long) */
+                                                     typedefs_sizeof,
+                                                     p_info );
+               typedefs_sizeof += p_info->sizes.int_size;
+               p_info->sizes.long_long_size = fetch_int( process, /* sizeof (long long) */
+                                                     typedefs_sizeof,
+                                                     p_info );
+               typedefs_sizeof += p_info->sizes.int_size;
+               p_info->sizes.pointer_size = fetch_int( process, /* sizeof (void *) */
+                                                     typedefs_sizeof,
+                                                     p_info );
+               typedefs_sizeof += p_info->sizes.int_size;
+               p_info->sizes.bool_size = fetch_int( process, /* sizeof (bool) */
+                                                     typedefs_sizeof,
+                                                     p_info );
+               typedefs_sizeof += p_info->sizes.int_size;
+               p_info->sizes.size_t_size = fetch_int( process, /* sizeof (size_t) */
+                                                     typedefs_sizeof,
+                                                     p_info );
+               printf( "sizes short = %d int = %d long = %d long long = %d "
+                       "void* = %d bool = %d size_t = %d\n",
+                       p_info->sizes.short_size, p_info->sizes.int_size,
+                       p_info->sizes.long_size, p_info->sizes.long_long_size,
+                       p_info->sizes.pointer_size, p_info->sizes.bool_size,
+                       p_info->sizes.size_t_size );
+        }
 
         mqs_put_process_info (process, (mqs_process_info *)p_info);
       
@@ -1010,23 +1108,23 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
     position->free_list = free_list;
 
     position->fl_elem_size =
-        fetch_int( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_elem_size,
-                   p_info );
+        fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_elem_size,
+                      p_info );
     position->fl_alignment =
-        fetch_int( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_alignment,
-                   p_info );
+        fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_alignment,
+                      p_info );
     position->fl_elem_class =
-        fetch_int( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_elem_class,
-                   p_info );
+        fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_elem_class,
+                      p_info );
     position->fl_mpool =
         fetch_pointer( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_mpool,
                        p_info );
     position->fl_num_per_alloc =
-        fetch_int( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_num_per_alloc,
-                   p_info );
+        fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_num_per_alloc,
+                      p_info );
     position->fl_num_allocated =
-        fetch_int( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_num_allocated,
-                   p_info );
+        fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_num_allocated,
+                      p_info );
 
     if( 0 == position->fl_mpool ) {
         position->header_space = position->fl_elem_size;
@@ -1245,8 +1343,8 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
                                p_info );
             res->system_buffer = ( req_buffer == res->buffer ? FALSE : TRUE );
             res->desired_length      =
-                fetch_int( proc,
-                           current_item + i_info->mca_pml_base_send_request_t.offset.req_bytes_packed, p_info );
+                fetch_size_t( proc,
+                              current_item + i_info->mca_pml_base_send_request_t.offset.req_bytes_packed, p_info );
             res->actual_length     = res->desired_length;
             res->actual_tag        = res->desired_tag;
             res->actual_local_rank = res->desired_local_rank;
@@ -1254,8 +1352,8 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
         } else if( MCA_PML_REQUEST_RECV == req_type ) {
             snprintf( (char *)res->extra_text[0], 64, "Non-blocking recv 0x%llx", (long long)current_item );
             res->desired_length      =
-                fetch_int( proc,
-                           current_item + i_info->mca_pml_base_recv_request_t.offset.req_bytes_packed, p_info );
+                fetch_size_t( proc,
+                              current_item + i_info->mca_pml_base_recv_request_t.offset.req_bytes_packed, p_info );
             /**
              * There is a trick with the MPI_TAG. All receive requests set it to MPI_ANY_TAG
              * when the request get initialized, and to the real tag once the request
@@ -1376,49 +1474,6 @@ void mqs_destroy_image_info (mqs_image_info *info)
 {
     mqs_free (info);
 } /* mqs_destroy_image_info */
-
-/***********************************************************************/
-static mqs_taddr_t fetch_pointer (mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info)
-{
-    int asize = p_info->sizes.pointer_size;
-    char data [8];				/* ASSUME a pointer fits in 8 bytes */
-    mqs_taddr_t res = 0;
-
-    if (mqs_ok == mqs_fetch_data (proc, addr, asize, data))
-        mqs_target_to_host (proc, data, 
-                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_taddr_t)-asize : 0), 
-                            asize);
-
-    return res;
-} /* fetch_pointer */
-
-/***********************************************************************/
-static mqs_tword_t fetch_int (mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info)
-{
-    int isize = p_info->sizes.int_size;
-    char buffer[8];     /* ASSUME an integer fits in 8 bytes */
-    mqs_tword_t res = 0;
-
-    if (mqs_ok == mqs_fetch_data (proc, addr, isize, buffer)) {
-        mqs_target_to_host (proc, buffer, 
-                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_tword_t)-isize : 0), 
-                            isize);
-    }
-    return res;
-} /* fetch_int */
-
-/***********************************************************************/
-static mqs_tword_t fetch_bool(mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info)
-{
-    int isize = 1;
-    char buffer;				/* ASSUME an integer fits in 8 bytes */
-    mqs_tword_t res = 0;
-
-    if (mqs_ok == mqs_fetch_data (proc, addr, isize, &buffer))
-        res = (mqs_tword_t)buffer;
-  
-    return res;
-} /* fetch_bool */
 
 /***********************************************************************/
 /* Convert an error code into a printable string */
