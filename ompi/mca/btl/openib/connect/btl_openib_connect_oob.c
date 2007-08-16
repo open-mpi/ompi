@@ -39,8 +39,6 @@ typedef enum {
     ENDPOINT_CONNECT_ACK
 } connect_message_type_t;
 
-#define OOB_TAG (ORTE_RML_TAG_DYNAMIC - 1)
-
 static int oob_init(void);
 static int oob_start_connect(mca_btl_base_endpoint_t *e);
 static int oob_finalize(void);
@@ -87,7 +85,7 @@ static int oob_init(void)
     int rc;
 
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, 
-                                 OOB_TAG,
+                                 ORTE_RML_TAG_OPENIB,
                                  ORTE_RML_PERSISTENT,
                                  rml_recv_cb,
                                  NULL);
@@ -124,7 +122,7 @@ static int oob_start_connect(mca_btl_base_endpoint_t *endpoint)
  */
 static int oob_finalize(void)
 {
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, OOB_TAG);
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_OPENIB);
     return OMPI_SUCCESS;
 }
 
@@ -465,7 +463,7 @@ static int send_connect_data(mca_btl_base_endpoint_t* endpoint,
 
     /* send to remote endpoint */
     rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, 
-                                 buffer, OOB_TAG, 0,
+                                 buffer, ORTE_RML_TAG_OPENIB, 0,
                                  rml_send_cb, NULL);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);

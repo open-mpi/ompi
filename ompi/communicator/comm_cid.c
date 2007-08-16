@@ -758,12 +758,12 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
         }
 
         if ( send_first ) {
-            rc = orte_rml.send_buffer(remote_leader, sbuf, 0, 0);
-            rc = orte_rml.recv_buffer(remote_leader, rbuf, 0, 0);
+            rc = orte_rml.send_buffer(remote_leader, sbuf, ORTE_RML_TAG_COMM_CID_INTRA, 0);
+            rc = orte_rml.recv_buffer(remote_leader, rbuf, ORTE_RML_TAG_COMM_CID_INTRA, 0);
         }
         else {
-            rc = orte_rml.recv_buffer(remote_leader, rbuf, 0, 0);
-            rc = orte_rml.send_buffer(remote_leader, sbuf, 0, 0);
+            rc = orte_rml.recv_buffer(remote_leader, rbuf, ORTE_RML_TAG_COMM_CID_INTRA, 0);
+            rc = orte_rml.send_buffer(remote_leader, sbuf, ORTE_RML_TAG_COMM_CID_INTRA, 0);
         }
 
         if (ORTE_SUCCESS != (rc = orte_dss.unpack(rbuf, outbuf, &size_count, ORTE_INT))) {

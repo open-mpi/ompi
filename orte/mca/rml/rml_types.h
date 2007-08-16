@@ -80,6 +80,12 @@ BEGIN_C_DECLS
 
 #define ORTE_RML_TAG_RML_ROUTE              24
 
+#define ORTE_RML_TAG_UDAPL                  25
+#define ORTE_RML_TAG_OPENIB                 26
+#define ORTE_RML_TAG_MVAPI                  27
+
+#define ORTE_RML_TAG_COMM_CID_INTRA         28
+
 /* For CRCP Coord Component */
 #define OMPI_CRCP_COORD_BOOKMARK_TAG      4242
 
