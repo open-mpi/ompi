@@ -88,6 +88,7 @@ typedef struct
             int req_proc;
             int req_sequence;
             int req_type;
+            int req_pml_complete;
         } offset;
     } mca_pml_base_request_t;
     struct {
