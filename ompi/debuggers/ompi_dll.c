@@ -99,7 +99,7 @@
 /**
  * The internal debugging interface.
  */
-FILE* ompidll_out = stdout;
+#define ompidll_out stdout
 
 #define VERBOSE_GENERAL 1
 #define VERBOSE_COMM    5
