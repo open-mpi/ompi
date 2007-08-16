@@ -96,6 +96,23 @@
 #define stringize(a) #a
 #endif
 
+/**
+ * The internal debugging interface.
+ */
+FILE* ompidll_out = stdout;
+
+#define VERBOSE_GENERAL 1
+#define VERBOSE_COMM    5
+#define VERBOSE_LISTS   10
+#define VERBOSE_REQ     20
+
+#define VERBOSE 0
+#if VERBOSE
+#define DEBUG(LEVEL,WHAT) if( (LEVEL) > VERBOSE ) { fprintf( ompidll_out, WHAT ); }
+#else
+#define DEBUG(LEVEL,WHAT)
+#endif  /* VERBOSE */
+
 /**********************************************************************/
 /* Set up the basic callbacks into the debugger, also work out 
  * one crucial piece of info about the machine we're running on.
@@ -150,7 +167,8 @@ int mqs_version_compatibility (void)
 /* This one can say what you like */
 char *mqs_version_string (void)
 {
-    return "Open MPI message queue support for parallel debuggers compiled on " __DATE__;
+    return "Open MPI message queue support for parallel"
+           " debuggers compiled on " __DATE__;
 } /* mqs_version_string */
 
 /* So the debugger can tell what interface width the library was compiled with */
@@ -230,17 +248,6 @@ static mqs_taddr_t fetch_pointer (mqs_process * proc, mqs_taddr_t addr, mpi_proc
 static mqs_tword_t fetch_int (mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info);
 static mqs_tword_t fetch_bool(mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info);
 
-/* Internal structure we hold for each communicator */
-typedef struct communicator_t
-{
-    struct communicator_t * next;
-    group_t *               group;		/* Translations */
-    int                     recv_context;	/* Unique ID for the communicator */
-    mqs_taddr_t             comm_ptr;
-    int                     present;
-    mqs_communicator        comm_info;		/* Info needed at the higher level */
-} communicator_t;
-
 #if defined(CODE_NOT_USED)
 /**********************************************************************/
 /* Functions to handle translation groups.
@@ -292,7 +299,7 @@ static group_t * find_or_create_group (mqs_process *proc,
                     table + i_info->ompi_group_t.offset.grp_proc_count,
                     p_info );
     if( np < 0 ) {
-        printf( "Get a size for the communicator = %d\n", np );
+        DEBUG(VERBOSE_COMM, ("Get a size for the communicator = %d\n", np));
         return NULL;  /* Makes no sense ! */
     }
     /* Iterate over each communicator seeing if we can find this group */
@@ -443,8 +450,9 @@ int mqs_image_has_queues (mqs_image *image, char **message)
             goto type_missing;
         }
         i_info->ompi_free_list_t.size = mqs_sizeof(qh_type);
+        i_info->ompi_free_list_t.offset.fl_elem_class = mqs_field_offset(qh_type, "fl_elem_class");
+        i_info->ompi_free_list_t.offset.fl_mpool = mqs_field_offset(qh_type, "fl_mpool");
         i_info->ompi_free_list_t.offset.fl_elem_size = mqs_field_offset(qh_type, "fl_elem_size");
-        i_info->ompi_free_list_t.offset.fl_header_space = mqs_field_offset(qh_type, "fl_header_space");
         i_info->ompi_free_list_t.offset.fl_alignment = mqs_field_offset(qh_type, "fl_alignment");
         i_info->ompi_free_list_t.offset.fl_allocations = mqs_field_offset(qh_type, "fl_allocations");
         i_info->ompi_free_list_t.offset.fl_max_to_alloc = mqs_field_offset(qh_type, "fl_max_to_alloc");
@@ -551,6 +559,7 @@ int mqs_image_has_queues (mqs_image *image, char **message)
         }
         i_info->ompi_pointer_array_t.size = mqs_sizeof(qh_type);
         i_info->ompi_pointer_array_t.offset.lowest_free = mqs_field_offset(qh_type, "lowest_free");
+        i_info->ompi_pointer_array_t.offset.number_free = mqs_field_offset(qh_type, "number_free");
         i_info->ompi_pointer_array_t.offset.size = mqs_field_offset(qh_type, "size");
         i_info->ompi_pointer_array_t.offset.addr = mqs_field_offset(qh_type, "addr");
     }
@@ -649,7 +658,7 @@ int mqs_process_has_queues (mqs_process *proc, char **msg)
 
     /* Don't bother with a pop up here, it's unlikely to be helpful */
     *msg = 0;
-
+    DEBUG(VERBOSE_GENERAL,("checking the status of the OMPI dll\n"));
     if (mqs_find_symbol (image, "ompi_mpi_communicators", &p_info->commlist_base) != mqs_ok)
         return err_all_communicators;
   
@@ -658,7 +667,7 @@ int mqs_process_has_queues (mqs_process *proc, char **msg)
   
     if (mqs_find_symbol (image, "mca_pml_base_recv_requests", &p_info->recv_queue_base) != mqs_ok)
         return err_mpid_recvs;
-  
+    DEBUG(VERBOSE_GENERAL,("process_has_queues returned success\n"));
     return mqs_ok;
 } /* mqs_setup_process_info */
 
@@ -682,6 +691,7 @@ static int communicators_changed (mqs_process *proc)
 
     return res;
 #endif
+    DEBUG(VERBOSE_COMM,("communicators_changed called (return 1)\n"));
     return 1;
 } /* mqs_communicators_changed */
 
@@ -724,13 +734,17 @@ static int rebuild_communicator_list (mqs_process *proc)
     mqs_image * image          = mqs_get_image (proc);
     mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
     communicator_t **commp, *old;
-    int commcount = 0;
-    int i;
-    mqs_tword_t comm_size;
+    int i, commcount = 0;
+    mqs_tword_t comm_size, lowest_free, number_free;
     mqs_taddr_t comm_addr_base = p_info->commlist_base + i_info->ompi_pointer_array_t.offset.addr;
     mqs_taddr_t comm_ptr;
     mqs_communicator remote_comm;
 
+    DEBUG(VERBOSE_COMM,("rebuild_communicator_list called "
+                        "(commlist_base %lx, array offset %ld array size %d)\n",
+                        p_info->commlist_base,
+                        (long)i_info->ompi_pointer_array_t.offset.addr,
+                        i_info->ompi_pointer_array_t.offset.size));
     /**
      * Start by getting the number of registered communicators in the
      * global communicator array.
@@ -738,17 +752,24 @@ static int rebuild_communicator_list (mqs_process *proc)
     comm_size = fetch_int( proc,
                            p_info->commlist_base + i_info->ompi_pointer_array_t.offset.size,
                            p_info );
+    lowest_free = fetch_int( proc,
+                             p_info->commlist_base + i_info->ompi_pointer_array_t.offset.lowest_free,
+                             p_info );
+    number_free = fetch_int( proc,
+                             p_info->commlist_base + i_info->ompi_pointer_array_t.offset.number_free,
+                             p_info );
+    DEBUG(VERBOSE_COMM,("Number of coms %d lowest_free %d number_free %d\n",
+                        (int)comm_size, (int)lowest_free, (int)number_free));
     /* Now get the pointer to the first communicator pointer */
     comm_addr_base = fetch_pointer( proc, comm_addr_base, p_info );
-
-    for( i = 0; i < comm_size; i++ ) {
+    for( i = 0; (commcount < (comm_size - number_free)) && (i < comm_size); i++ ) {
         /* Get the communicator pointer */
         comm_ptr = 
             fetch_pointer( proc,
                            comm_addr_base + i * p_info->sizes.pointer_size,
                            p_info );
         if( 0 == comm_ptr ) continue;
-
+		commcount++;
         /* Now let's grab the data we want from inside */
         remote_comm.unique_id = fetch_int( proc,
                                            comm_ptr + i_info->ompi_communicator_t.offset.c_contextid,
@@ -776,7 +797,6 @@ static int rebuild_communicator_list (mqs_process *proc)
                 fetch_pointer( proc, comm_ptr + i_info->ompi_communicator_t.offset.c_local_group,
                                p_info );
             old->group = find_or_create_group( proc, group_base );
-            
         }
         strncpy(old->comm_info.name, remote_comm.name, 64);
         old->comm_info.unique_id = remote_comm.unique_id;
@@ -785,13 +805,16 @@ static int rebuild_communicator_list (mqs_process *proc)
             old->comm_info.size = old->group->entries;
         }
         old->present = TRUE;
+        DEBUG(VERBOSE_COMM,("Communicator %d local_rank %d name %s\n",
+                            (int)old->comm_info.unique_id, (int)old->comm_info.local_rank,
+                            old->comm_info.name));
     }
 
     /* Now iterate over the list tidying up any communicators which
      * no longer exist, and cleaning the flags on any which do.
      */
     commp = &p_info->communicator_list;
-
+    commcount = 0;
     for (; *commp; commp = &(*commp)->next) {
         communicator_t *comm = *commp;
         if (comm->present) {
@@ -836,10 +859,10 @@ static int rebuild_communicator_list (mqs_process *proc)
  */
 int mqs_update_communicator_list (mqs_process *proc)
 {
+    DEBUG(VERBOSE_COMM,("mqs_update_communicator_list called\n"));
     if (communicators_changed (proc))
         return rebuild_communicator_list (proc);
-    else
-        return mqs_ok;
+    return mqs_ok;
 } /* mqs_update_communicator_list */
 
 /***********************************************************************
@@ -858,6 +881,7 @@ int mqs_setup_communicator_iterator (mqs_process *proc)
     p_info->next_msg.current_item         = 0;
     p_info->next_msg.opal_list_t_pos.list = 0;
 
+    DEBUG(VERBOSE_COMM,("mqs_setup_communicator_iterator called\n"));
     return p_info->current_communicator == NULL ? mqs_end_of_list : mqs_ok;
 } /* mqs_setup_communicator_iterator */
 
@@ -870,9 +894,12 @@ int mqs_get_communicator (mqs_process *proc, mqs_communicator *comm)
 
     if (p_info->current_communicator) {
         *comm = p_info->current_communicator->comm_info;
-  
+        DEBUG(VERBOSE_COMM,("mqs_get_communicator %d local_rank %d name %s\n",
+                            (int)comm->unique_id, (int)comm->local_rank,
+                            comm->name));
         return mqs_ok;
     }
+    DEBUG(VERBOSE_COMM,("No more communicators for this iteration\n"));
     return err_no_current_communicator;
 } /* mqs_get_communicator */
 
@@ -904,7 +931,6 @@ int mqs_next_communicator (mqs_process *proc)
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
 
     p_info->current_communicator = p_info->current_communicator->next;
-  
     return (p_info->current_communicator != NULL) ? mqs_ok : mqs_end_of_list;
 } /* mqs_next_communicator */
 
@@ -924,6 +950,8 @@ static int opal_list_t_init_parser( mqs_process *proc, mpi_process_info *p_info,
                        p_info );
     if( position->current_item == position->sentinel )
         position->current_item = 0;
+    DEBUG(VERBOSE_LISTS,("opal_list_t_init_parser list = 0x%lx, sentinel = 0x%lx, current_item = 0x%lx\n",
+                         position->list, position->sentinel, position->current_item));
     return mqs_ok;
 }
 
@@ -956,20 +984,22 @@ static int next_item_opal_list_t( mqs_process *proc, mpi_process_info *p_info,
  */
 static void ompi_free_list_t_dump_position( mqs_ompi_free_list_t_pos* position )
 {
-    printf( "position->opal_list_t_pos.current_item = 0x%llx\n", (long long)position->opal_list_t_pos.current_item );
-    printf( "position->opal_list_t_pos.list         = 0x%llx\n", (long long)position->opal_list_t_pos.list );
-    printf( "position->opal_list_t_pos.sentinel     = 0x%llx\n", (long long)position->opal_list_t_pos.sentinel );
-    printf( "position->current_item                 = 0x%llx\n", (long long)position->current_item );
-    printf( "position->upper_bound                  = 0x%llx\n", (long long)position->upper_bound );
-    printf( "position->free_list                    = 0x%llx\n", (long long)position->free_list );
-    printf( "position->fl_elem_size                 = %ld\n", (long)position->fl_elem_size );
-    printf( "position->fl_header_space              = %ld\n", (long)position->fl_header_space );
-    printf( "position->fl_alignment                 = %ld\n", (long)position->fl_alignment );
-    printf( "position->fl_num_per_alloc             = %ld\n", (long)position->fl_num_per_alloc );
-    printf( "position->fl_num_allocated             = %ld\n", (long)position->fl_num_allocated );
-    printf( "position->fl_num_initial_alloc         = %ld\n", (long)position->fl_num_initial_alloc );
+    fprintf( ompidll_out, "position->opal_list_t_pos.current_item = 0x%llx\n", (long long)position->opal_list_t_pos.current_item );
+    fprintf( ompidll_out, "position->opal_list_t_pos.list         = 0x%llx\n", (long long)position->opal_list_t_pos.list );
+    fprintf( ompidll_out, "position->opal_list_t_pos.sentinel     = 0x%llx\n", (long long)position->opal_list_t_pos.sentinel );
+    fprintf( ompidll_out, "position->current_item                 = 0x%llx\n", (long long)position->current_item );
+    fprintf( ompidll_out, "position->upper_bound                  = 0x%llx\n", (long long)position->upper_bound );
+    fprintf( ompidll_out, "position->free_list                    = 0x%llx\n", (long long)position->free_list );
+    fprintf( ompidll_out, "position->fl_elem_size                 = %ld\n", (long)position->fl_elem_size );
+    fprintf( ompidll_out, "position->fl_header_space              = %ld\n", (long)position->fl_header_space );
+    fprintf( ompidll_out, "position->fl_alignment                 = %ld\n", (long)position->fl_alignment );
+    fprintf( ompidll_out, "position->fl_num_per_alloc             = %ld\n", (long)position->fl_num_per_alloc );
+    fprintf( ompidll_out, "position->fl_num_allocated             = %ld\n", (long)position->fl_num_allocated );
+    fprintf( ompidll_out, "position->fl_num_initial_alloc         = %ld\n", (long)position->fl_num_initial_alloc );
 }
 #endif  /* CODE_NOT_USED */
+
+#define OPAL_ALIGN(x,a,t) (((x)+((t)(a)-1)) & ~(((t)(a)-1)))
 
 static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_info,
                                          mqs_ompi_free_list_t_pos* position, mqs_taddr_t free_list )
@@ -983,18 +1013,31 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
     position->fl_elem_size =
         fetch_int( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_elem_size,
                    p_info );
-    position->fl_header_space =
-        fetch_int( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_header_space,
-                   p_info );
     position->fl_alignment =
         fetch_int( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_alignment,
                    p_info );
+    position->fl_elem_class =
+        fetch_int( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_elem_class,
+                   p_info );
+    position->fl_mpool =
+        fetch_pointer( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_mpool,
+                       p_info );
     position->fl_num_per_alloc =
         fetch_int( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_num_per_alloc,
                    p_info );
     position->fl_num_allocated =
         fetch_int( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_num_allocated,
                    p_info );
+
+    if( 0 == position->fl_mpool ) {
+        position->header_space = position->fl_elem_size;
+    } else {
+        DEBUG(VERBOSE_GENERAL, ("BLAH !!! (CORRECT ME)\n"));
+        position->header_space = position->fl_elem_size;
+    }
+    position->header_space = OPAL_ALIGN( position->header_space,
+                                         position->fl_alignment, size_t );
+
     /**
      * Work around the strange ompi_free_list_t way to allocate elements. The first chunk is
      * not required to have the same size as the others.
@@ -1008,6 +1051,14 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
         if( 0 == position->fl_num_initial_alloc )
             position->fl_num_initial_alloc = position->fl_num_per_alloc;
     }
+    DEBUG(VERBOSE_LISTS,("ompi_free_list_t fl_elem_size = %ld fl_header_space = %ld\n"
+                         "                 fl_alignment = %ld fl_num_per_alloc = %ld\n"
+                         "                 fl_num_allocated = %ld fl_num_initial_alloc = %ld\n"
+                         "                 header_space = %ld\n",
+                         position->fl_elem_size, position->header_space,
+                         position->fl_alignment, position->fl_num_per_alloc,
+                         position->fl_num_allocated, position->fl_num_initial_alloc,
+                         position->header_space));
 
     /**
      * Initialize the pointer to the opal_list_t.
@@ -1015,7 +1066,8 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
     opal_list_t_init_parser( proc, p_info, &position->opal_list_t_pos,
                              position->free_list + i_info->ompi_free_list_t.offset.fl_allocations );
     next_item_opal_list_t( proc, p_info, &position->opal_list_t_pos, &active_allocation );
-
+    DEBUG(VERBOSE_LISTS,("active_allocation %lx header_space %d\n",
+                         active_allocation, (int)position->header_space));
     if( 0 == active_allocation ) {  /* the end of the list */
         position->upper_bound = 0;
     } else {
@@ -1023,19 +1075,16 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
          * Handle alignment issues...
          */
         active_allocation += i_info->ompi_free_list_memory_t.size;
-        if( 0 != position->fl_alignment ) {
-            mqs_tword_t modulo;
-            
-            active_allocation += position->fl_header_space;
-            modulo = active_allocation % position->fl_alignment;
-            active_allocation += (position->fl_alignment - modulo);
-            active_allocation -= position->fl_header_space;
-        }
+        active_allocation = OPAL_ALIGN( active_allocation,
+                                        position->fl_alignment, uintptr_t );
         /**
          * Now let's try to compute the upper bound ...
          */
         position->upper_bound =
-            position->fl_num_initial_alloc * position->fl_elem_size + active_allocation;
+            position->fl_num_initial_alloc * position->header_space + active_allocation;
+        DEBUG(VERBOSE_LISTS,("there are some elements in the list "
+                             "active_allocation = %lx upper_bound = %lx\n",
+                             active_allocation, position->upper_bound));
     }
     position->current_item = active_allocation;
     
@@ -1057,9 +1106,10 @@ static int ompi_free_list_t_next_item( mqs_process *proc, mpi_process_info *p_in
     if( 0 == position->current_item )  /* the end ... */
         return mqs_ok;
 
-    position->current_item += position->fl_elem_size;
+    position->current_item += position->header_space;
     if( position->current_item >= position->upper_bound ) {
-        /*printf( "Reach the end of one of the ompi_free_list_t allocations. Go to the next one\n" );*/
+        DEBUG(VERBOSE_LISTS,("Reach the end of one of the ompi_free_list_t "
+                             "allocations. Go to the next one\n"));
         /* we should go to the next allocation */
         next_item_opal_list_t( proc, p_info,
                                &position->opal_list_t_pos, &active_allocation );
@@ -1071,49 +1121,52 @@ static int ompi_free_list_t_next_item( mqs_process *proc, mpi_process_info *p_in
          * Handle alignment issues...
          */
         active_allocation += i_info->ompi_free_list_memory_t.size;
-        if( 0 != position->fl_alignment ) {
-            mqs_tword_t modulo;
-
-            active_allocation += position->fl_header_space;
-            modulo = active_allocation % position->fl_alignment;
-            active_allocation += (position->fl_alignment - modulo);
-            active_allocation -= position->fl_header_space;
-        }
+        active_allocation = OPAL_ALIGN( active_allocation,
+                                        position->fl_alignment, uintptr_t );
         /**
          * Now let's try to compute the upper bound ...
          */
         position->upper_bound =
-            position->fl_num_per_alloc * position->fl_elem_size + active_allocation;
+            position->fl_num_per_alloc * position->header_space + active_allocation;
         position->current_item = active_allocation;
+        DEBUG(VERBOSE_LISTS,("there are more elements in the list "
+                             "active_allocation = %lx upper_bound = %lx\n",
+                             active_allocation, position->upper_bound));
         /*ompi_free_list_t_dump_position( position );*/
     }
-    /*printf( "Free list actual position %p next element at %p\n", (void*)*active_item,
-      (void*)position->current_item );*/
+    DEBUG(VERBOSE_LISTS,("Free list actual position %p next element at %p\n",
+                         (void*)*active_item, (void*)position->current_item));
     return mqs_ok;
 }
 
-#if defined(CODE_NOT_USED)
 static void dump_request( mqs_taddr_t current_item, mqs_pending_operation *res )
 {
-    printf( "\n+===============================================+\n" );
-    printf(   "|Request 0x%llx contain \n", (long long)current_item );
-    printf(   "|    res->status              = %d\n", res->status );
-    printf(   "|    res->desired_local_rank  = %ld\n", (long)res->desired_local_rank );
-    printf(   "|    res->desired_global_rank = %ld\n", (long)res->desired_global_rank );
-    printf(   "|    res->tag_wild            = %ld\n", (long)res->tag_wild );
-    printf(   "|    res->desired_tag         = %ld\n", (long)res->desired_tag );
-    printf(   "|    res->system_buffer       = %s\n", (TRUE == res->system_buffer ? "TRUE" : "FALSE") );
-    printf(   "|    res->buffer              = 0x%llx\n", (long long)res->buffer );
-    printf(   "|    res->desired_length      = %ld\n", (long)res->desired_length );
+	if( VERBOSE < 100 ) return;
+    fprintf( ompidll_out, "\n+===============================================+\n"
+                          "|Request 0x%llx contain \n"
+                          "|    res->status              = %d\n"
+                          "|    res->desired_local_rank  = %ld\n"
+                          "|    res->desired_global_rank = %ld\n"
+                          "|    res->tag_wild            = %ld\n"
+                          "|    res->desired_tag         = %ld\n"
+                          "|    res->system_buffer       = %s\n"
+                          "|    res->buffer              = 0x%llx\n"
+                          "|    res->desired_length      = %ld\n",
+        (long long)current_item, res->status, (long)res->desired_local_rank,
+        (long)res->desired_global_rank, (long)res->tag_wild, (long)res->desired_tag,
+        (TRUE == res->system_buffer ? "TRUE" : "FALSE"), (long long)res->buffer,
+        (long)res->desired_length );
+
     if( res->status != mqs_st_pending ) {
-        printf(   "|    res->actual_length       = %ld\n", (long)res->actual_length );
-        printf(   "|    res->actual_tag          = %ld\n", (long)res->actual_tag );
-        printf(   "|    res->actual_local_rank   = %ld\n", (long)res->actual_local_rank );
-        printf(   "|    res->actual_global_rank  = %ld\n", (long)res->actual_global_rank );
+        fprintf( ompidll_out, "|    res->actual_length       = %ld\n"
+                              "|    res->actual_tag          = %ld\n"
+                              "|    res->actual_local_rank   = %ld\n"
+                              "|    res->actual_global_rank  = %ld\n",
+                 (long)res->actual_length, (long)res->actual_tag,
+                 (long)res->actual_local_rank, (long)res->actual_global_rank );
     }
-    printf(   "+===============================================+\n\n" );
+    fprintf( ompidll_out, "+===============================================+\n\n" );
 }
-#endif  /* CODE_NOT_USED */
 
 /**
  * TODO: ompi_request_completed can be used to detect any changes in the request handles.
@@ -1124,7 +1177,7 @@ static void dump_request( mqs_taddr_t current_item, mqs_pending_operation *res )
  * is a whole different story ...
  */
 static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
-			  mqs_pending_operation *res, int look_for_user_buffer )
+                          mqs_pending_operation *res, int look_for_user_buffer )
 {
     mqs_image * image        = mqs_get_image (proc);
     mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
@@ -1135,12 +1188,16 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
     while( 1 ) {
         ompi_free_list_t_next_item( proc, p_info,
                                     &p_info->next_msg, &current_item );
-        if( 0 == current_item )
+        if( 0 == current_item ) {
+            DEBUG(VERBOSE_REQ,("no more items in the request queue\n"));
             return mqs_end_of_list;
+        }
         req_valid = fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_state, p_info );
         if( OMPI_REQUEST_INVALID == req_valid ) continue;
         req_comm = fetch_pointer( proc, current_item + i_info->mca_pml_base_request_t.offset.req_comm, p_info );
         if( p_info->current_communicator->comm_ptr == req_comm ) break;
+        DEBUG(VERBOSE_REQ,("unmatch request (0x%lx) req_comm = %lx current_com = %lx\n",
+                           current_item, req_comm, p_info->current_communicator->comm_ptr));
     }
 
     res->extra_text[0][0] = 0; res->extra_text[1][0] = 0; res->extra_text[2][0] = 0;
@@ -1193,7 +1250,7 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
                            i_info->ompi_status_public_t.offset.MPI_SOURCE, p_info );
             res->actual_global_rank  = res->actual_local_rank;  /* TODO: what's the global rank ? */
         }
-        /*dump_request( current_item, res );*/
+        dump_request( current_item, res );
     }
     return mqs_ok;
 }
@@ -1355,10 +1412,12 @@ int mqs_setup_operation_iterator (mqs_process *proc, int op)
 
     switch (op) {
     case mqs_pending_sends:
+        DEBUG(VERBOSE_REQ,("setup the send queue iterator\n"));
         ompi_free_list_t_init_parser( proc, p_info, &p_info->next_msg, p_info->send_queue_base );
         return mqs_ok;
 
     case mqs_pending_receives:
+        DEBUG(VERBOSE_REQ,("setup the receive queue iterator\n"));
         ompi_free_list_t_init_parser( proc, p_info, &p_info->next_msg, p_info->recv_queue_base );
         return mqs_ok;
 
@@ -1382,11 +1441,13 @@ int mqs_next_operation (mqs_process *proc, mqs_pending_operation *op)
 
     switch (p_info->what) {
     case mqs_pending_receives:
+        DEBUG(VERBOSE_REQ,("digging for the receive queue\n"));
         return fetch_request( proc, p_info, op, TRUE );
     case mqs_unexpected_messages:
         /* TODO: not handled yet */
         return err_bad_request;
     case mqs_pending_sends:
+        DEBUG(VERBOSE_REQ,("digging for the send queue\n"));
         return fetch_request( proc, p_info, op, FALSE );
     default: return err_bad_request;
     }
@@ -1441,14 +1502,14 @@ static mqs_taddr_t fetch_pointer (mqs_process * proc, mqs_taddr_t addr, mpi_proc
 static mqs_tword_t fetch_int (mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info)
 {
     int isize = p_info->sizes.int_size;
-    char buffer[8];				/* ASSUME an integer fits in 8 bytes */
+    char buffer[8];     /* ASSUME an integer fits in 8 bytes */
     mqs_tword_t res = 0;
 
-    if (mqs_ok == mqs_fetch_data (proc, addr, isize, buffer))
+    if (mqs_ok == mqs_fetch_data (proc, addr, isize, buffer)) {
         mqs_target_to_host (proc, buffer, 
                             ((char *)&res) + (host_is_big_endian ? sizeof(mqs_tword_t)-isize : 0), 
                             isize);
-  
+    }
     return res;
 } /* fetch_int */
 

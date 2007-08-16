@@ -45,11 +45,12 @@ OMPI_DECLSPEC char MPIR_dll_name[] = OMPI_TV_DLL;
  * the debugged program.
  */
 OMPI_DECLSPEC int MPIR_debug_typedefs_sizeof[] = {
-    sizeof(bool),
     sizeof(short),
     sizeof(int),
     sizeof(long),
     sizeof(long long),
+    sizeof(void*),
+    sizeof(bool),
     sizeof(size_t)
 };
     

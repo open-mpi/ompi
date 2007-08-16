@@ -56,13 +56,14 @@ typedef struct
     struct {
         int size;
         struct {
-            int fl_elem_size;
-            int fl_header_space;
-            int fl_alignment;
-            int fl_allocations;
-            int fl_max_to_alloc;
-            int fl_num_per_alloc;
-            int fl_num_allocated;
+            int fl_elem_class;    /* opal_class_t* */
+            int fl_mpool;         /* struct mca_mpool_base_module_t* */
+            int fl_elem_size;     /* size_t */
+            int fl_alignment;     /* size_t */
+            int fl_allocations;   /* opal_list_t */
+            int fl_max_to_alloc;  /* size_t */
+            int fl_num_per_alloc; /* size_t */
+            int fl_num_allocated; /* size_t */
         } offset;
     } ompi_free_list_t;
     /* requests structures */
@@ -133,6 +134,7 @@ typedef struct
         int size;
         struct {
             int lowest_free;
+            int number_free;
             int size;
             int addr;
         } offset;
@@ -220,11 +222,22 @@ typedef struct
 
 typedef struct group_t
 {
-  mqs_taddr_t table_base;			/* Where was it in the process  */
-  int     ref_count;				/* How many references to us */
-  int     entries;				/* How many entries */
-  int     *local_to_global;			/* The translation table */
+    mqs_taddr_t table_base;           /* Where was it in the process  */
+    int     ref_count;                /* How many references to us */
+    int     entries;                  /* How many entries */
+    int     *local_to_global;         /* The translation table */
 } group_t;
+
+/* Internal structure we hold for each communicator */
+typedef struct communicator_t
+{
+    struct communicator_t * next;
+    group_t *               group;		/* Translations */
+    int                     recv_context;	/* Unique ID for the communicator */
+    mqs_taddr_t             comm_ptr;
+    int                     present;
+    mqs_communicator        comm_info;		/* Info needed at the higher level */
+} communicator_t;
 
 typedef struct mqs_ompi_opal_list_t_pos {
     mqs_taddr_t current_item;
@@ -236,13 +249,15 @@ typedef struct {
     mqs_opal_list_t_pos opal_list_t_pos;
     mqs_taddr_t current_item;
     mqs_taddr_t upper_bound;
+    mqs_tword_t header_space;
     mqs_taddr_t free_list;
-    mqs_tword_t fl_elem_size;
-    mqs_tword_t fl_header_space;
-    mqs_tword_t fl_alignment;
-    mqs_tword_t fl_num_per_alloc;
-    mqs_tword_t fl_num_allocated;
-    mqs_tword_t fl_num_initial_alloc;
+    mqs_tword_t fl_elem_class;         /* opal_class_t* */
+    mqs_tword_t fl_mpool;              /* struct mca_mpool_base_module_t* */
+    mqs_tword_t fl_elem_size;          /* size_t */
+    mqs_tword_t fl_alignment;          /* size_t */
+    mqs_tword_t fl_num_per_alloc;      /* size_t */
+    mqs_tword_t fl_num_allocated;      /* size_t */
+    mqs_tword_t fl_num_initial_alloc;  /* size_t */
 } mqs_ompi_free_list_t_pos;
 
 
