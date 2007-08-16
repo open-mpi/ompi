@@ -99,8 +99,6 @@
 /**
  * The internal debugging interface.
  */
-#define ompidll_out stdout
-
 #define VERBOSE_GENERAL 1
 #define VERBOSE_COMM    5
 #define VERBOSE_LISTS   10
@@ -985,18 +983,18 @@ static int next_item_opal_list_t( mqs_process *proc, mpi_process_info *p_info,
  */
 static void ompi_free_list_t_dump_position( mqs_ompi_free_list_t_pos* position )
 {
-    fprintf( ompidll_out, "position->opal_list_t_pos.current_item = 0x%llx\n", (long long)position->opal_list_t_pos.current_item );
-    fprintf( ompidll_out, "position->opal_list_t_pos.list         = 0x%llx\n", (long long)position->opal_list_t_pos.list );
-    fprintf( ompidll_out, "position->opal_list_t_pos.sentinel     = 0x%llx\n", (long long)position->opal_list_t_pos.sentinel );
-    fprintf( ompidll_out, "position->current_item                 = 0x%llx\n", (long long)position->current_item );
-    fprintf( ompidll_out, "position->upper_bound                  = 0x%llx\n", (long long)position->upper_bound );
-    fprintf( ompidll_out, "position->free_list                    = 0x%llx\n", (long long)position->free_list );
-    fprintf( ompidll_out, "position->fl_elem_size                 = %ld\n", (long)position->fl_elem_size );
-    fprintf( ompidll_out, "position->fl_header_space              = %ld\n", (long)position->fl_header_space );
-    fprintf( ompidll_out, "position->fl_alignment                 = %ld\n", (long)position->fl_alignment );
-    fprintf( ompidll_out, "position->fl_num_per_alloc             = %ld\n", (long)position->fl_num_per_alloc );
-    fprintf( ompidll_out, "position->fl_num_allocated             = %ld\n", (long)position->fl_num_allocated );
-    fprintf( ompidll_out, "position->fl_num_initial_alloc         = %ld\n", (long)position->fl_num_initial_alloc );
+    printf( "position->opal_list_t_pos.current_item = 0x%llx\n", (long long)position->opal_list_t_pos.current_item );
+    printf( "position->opal_list_t_pos.list         = 0x%llx\n", (long long)position->opal_list_t_pos.list );
+    printf( "position->opal_list_t_pos.sentinel     = 0x%llx\n", (long long)position->opal_list_t_pos.sentinel );
+    printf( "position->current_item                 = 0x%llx\n", (long long)position->current_item );
+    printf( "position->upper_bound                  = 0x%llx\n", (long long)position->upper_bound );
+    printf( "position->free_list                    = 0x%llx\n", (long long)position->free_list );
+    printf( "position->fl_elem_size                 = %ld\n", (long)position->fl_elem_size );
+    printf( "position->fl_header_space              = %ld\n", (long)position->fl_header_space );
+    printf( "position->fl_alignment                 = %ld\n", (long)position->fl_alignment );
+    printf( "position->fl_num_per_alloc             = %ld\n", (long)position->fl_num_per_alloc );
+    printf( "position->fl_num_allocated             = %ld\n", (long)position->fl_num_allocated );
+    printf( "position->fl_num_initial_alloc         = %ld\n", (long)position->fl_num_initial_alloc );
 }
 #endif  /* CODE_NOT_USED */
 
@@ -1143,40 +1141,40 @@ static int ompi_free_list_t_next_item( mqs_process *proc, mpi_process_info *p_in
 static void dump_request( mqs_taddr_t current_item, mqs_pending_operation *res )
 {
     if( VERBOSE < 100 ) return;
-    fprintf( ompidll_out, "\n+===============================================+\n"
-                          "|Request 0x%llx contain \n"
-                          "|    res->status              = %d\n"
-                          "|    res->desired_local_rank  = %ld\n"
-                          "|    res->desired_global_rank = %ld\n"
-                          "|    res->tag_wild            = %ld\n"
-                          "|    res->desired_tag         = %ld\n"
-                          "|    res->system_buffer       = %s\n"
-                          "|    res->buffer              = 0x%llx\n"
-                          "|    res->desired_length      = %ld\n",
+    printf( "\n+===============================================+\n"
+            "|Request 0x%llx contain \n"
+            "|    res->status              = %d\n"
+            "|    res->desired_local_rank  = %ld\n"
+            "|    res->desired_global_rank = %ld\n"
+            "|    res->tag_wild            = %ld\n"
+            "|    res->desired_tag         = %ld\n"
+            "|    res->system_buffer       = %s\n"
+            "|    res->buffer              = 0x%llx\n"
+            "|    res->desired_length      = %ld\n",
         (long long)current_item, res->status, (long)res->desired_local_rank,
         (long)res->desired_global_rank, (long)res->tag_wild, (long)res->desired_tag,
         (TRUE == res->system_buffer ? "TRUE" : "FALSE"), (long long)res->buffer,
         (long)res->desired_length );
 
     if( res->status > mqs_st_pending ) {
-        fprintf( ompidll_out, "|    res->actual_length       = %ld\n"
-                              "|    res->actual_tag          = %ld\n"
-                              "|    res->actual_local_rank   = %ld\n"
-                              "|    res->actual_global_rank  = %ld\n",
-                 (long)res->actual_length, (long)res->actual_tag,
-                 (long)res->actual_local_rank, (long)res->actual_global_rank );
+        printf( "|    res->actual_length       = %ld\n"
+                "|    res->actual_tag          = %ld\n"
+                "|    res->actual_local_rank   = %ld\n"
+                "|    res->actual_global_rank  = %ld\n",
+                (long)res->actual_length, (long)res->actual_tag,
+                (long)res->actual_local_rank, (long)res->actual_global_rank );
     }
     if( '\0' != res->extra_text[0][0] )
-        fprintf( ompidll_out, "|    extra[0] = %s\n", res->extra_text[0] );
+        printf( "|    extra[0] = %s\n", res->extra_text[0] );
     if( '\0' != res->extra_text[1][0] )
-        fprintf( ompidll_out, "|    extra[1] = %s\n", res->extra_text[1] );
+        printf( "|    extra[1] = %s\n", res->extra_text[1] );
     if( '\0' != res->extra_text[2][0] )
-        fprintf( ompidll_out, "|    extra[2] = %s\n", res->extra_text[2] );
+        printf( "|    extra[2] = %s\n", res->extra_text[2] );
     if( '\0' != res->extra_text[3][0] )
-        fprintf( ompidll_out, "|    extra[3] = %s\n", res->extra_text[3] );
+        printf( "|    extra[3] = %s\n", res->extra_text[3] );
     if( '\0' != res->extra_text[4][0] )
-        fprintf( ompidll_out, "|    extra[4] = %s\n", res->extra_text[4] );
-    fprintf( ompidll_out, "+===============================================+\n\n" );
+        printf( "|    extra[4] = %s\n", res->extra_text[4] );
+    printf( "+===============================================+\n\n" );
 }
 
 /**
