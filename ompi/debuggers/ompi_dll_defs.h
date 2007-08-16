@@ -277,9 +277,10 @@ typedef struct
   mqs_taddr_t recv_queue_base;			/* Where to find the recv message queues */
   mqs_taddr_t sendq_base;			/* Where to find the send queue */
   mqs_taddr_t commlist_base;			/* Where to find the list of communicators */
-
   /* Other info we need to remember about it */
-  mqs_tword_t communicator_sequence;		
+  mqs_tword_t comm_number_free;         /* the number of available positions in
+                                         * the communicator array. */
+  mqs_tword_t comm_lowest_free;         /* the lowest free communicator */
 
   /* State for the iterators */
   struct communicator_t *current_communicator;	/* Easy, we're walking a simple list */
