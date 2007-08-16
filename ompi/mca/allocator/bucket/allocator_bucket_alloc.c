@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      IBM Corp.,  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -313,13 +314,13 @@ int mca_allocator_bucket_cleanup(mca_allocator_base_module_t * mem)
             continue;
         }
         /* first we suppose the execution is correct and all chunks
-         * have ben correctly released. Therefore, if we make sure
+         * have been correctly released. Therefore, if we make sure
          * all segments only contain free items then we can release
          * everything in one go.
          */
         empty = true;
         segment = mem_options->buckets[i].segment_head;
-        while( (true != empty) || (NULL != segment) ) {
+        while( (true == empty) && (NULL != segment) ) {
             first_chunk = segment->first_chunk; 
             chunk = first_chunk;
             /* determine if the segment is free */
