@@ -64,8 +64,13 @@ int ompi_group_incl_plist(ompi_group_t* group, int n, int *ranks,
 
     /* find my rank */
     my_group_rank=group_pointer->grp_my_rank;
-    my_proc_pointer=ompi_group_peer_lookup (group_pointer,my_group_rank);
-    ompi_set_group_rank(new_group_pointer,my_proc_pointer);
+    if (MPI_UNDEFINED != my_group_rank) {
+        my_proc_pointer=ompi_group_peer_lookup (group_pointer,my_group_rank);
+        ompi_set_group_rank(new_group_pointer,my_proc_pointer);
+    }
+    else {
+        new_group_pointer->grp_my_rank = MPI_UNDEFINED;
+    }
 
     *new_group = (MPI_Group)new_group_pointer;
 
