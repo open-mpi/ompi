@@ -54,95 +54,76 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
                                           FUNC_NAME);
         }
         if ( OMPI_COMM_IS_INTER(comm)) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM, FUNC_NAME);
         }
         if ( (0 > root) || (ompi_comm_size(comm) <= root) ) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
         if ( NULL == intercomm ) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
         if (NULL == array_of_info) {
-          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
                                         FUNC_NAME);
         }
         for (i = 0; i < count; ++i) {
-          if (NULL == array_of_info[i] || 
-              ompi_info_is_freed(array_of_info[i])) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
-                                          FUNC_NAME);
-          }
-        }
-
-        /* Do not allow MPI_COMM_SPAWN from a singleton.  This check
-           will be removed when the ORTE 2.0 stuff comes over and
-           Makes This All Better(tm) */
-        if (orte_process_info.singleton) {
-            if (ompi_comm_rank(comm) == root) {
-                opal_show_help("help-mpi-api.txt", "spawn-from-singleton", 
-                               true, FUNC_NAME);
+            if (NULL == array_of_info[i] || 
+                ompi_info_is_freed(array_of_info[i])) {
+                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+                                              FUNC_NAME);
             }
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
     }
    
-   rank = ompi_comm_rank ( comm );
-   if ( MPI_PARAM_CHECK ) {
-       if ( rank == root ) {
-         if ( 0 > count ) {
-               return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
-                                             FUNC_NAME);
-         }
-         if ( NULL == array_of_commands ) {
-               return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                             FUNC_NAME);
-         }
-         if ( NULL ==  array_of_maxprocs ) {
-               return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                             FUNC_NAME);
-         }
-         if ( NULL == array_of_info ) {
-               return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                             FUNC_NAME);
-         }
-         for ( i=0; i<count; i++ ) {
-           if ( NULL == array_of_commands[i] ) {
-                   return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                                 FUNC_NAME);
-           }
-           if ( 0 > array_of_maxprocs[i] ) {
-                   return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                                 FUNC_NAME);
-           }
-         }
-       }
-   }
+    rank = ompi_comm_rank ( comm );
+    if ( MPI_PARAM_CHECK ) {
+        if ( rank == root ) {
+            if ( 0 > count ) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+            }
+            if ( NULL == array_of_commands ) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+            }
+            if ( NULL ==  array_of_maxprocs ) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+            }
+            if ( NULL == array_of_info ) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+            }
+            for ( i=0; i<count; i++ ) {
+                if ( NULL == array_of_commands[i] ) {
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+                }
+                if ( 0 > array_of_maxprocs[i] ) {
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+                }
+            }  
+        }
+    }
 
-   if ( rank == root ) {
-       /* Open a port. The port_name is passed as an environment variable
-	  to the children. */
-       ompi_open_port (port_name);
-       ompi_comm_start_processes(count, array_of_commands,
-                                 array_of_argv, array_of_maxprocs,
-                                 array_of_info, port_name);
-       tmp_port = ompi_parse_port (port_name, &tag);
-       free(tmp_port);
-   }
+    if ( rank == root ) {
+        /* Open a port. The port_name is passed as an environment variable
+         * to the children. */
+        ompi_open_port (port_name);
+        ompi_comm_start_processes(count, array_of_commands,
+                                  array_of_argv, array_of_maxprocs,
+                                  array_of_info, port_name);
+        tmp_port = ompi_parse_port (port_name, &tag);
+        free(tmp_port);
+    }
 
-   rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
+    rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
 
-   /* close the port again. Nothing has to be done for that at the moment.*/
+    /* close the port again. Nothing has to be done for that at the moment.*/
 
-   /* set array of errorcodes */
-   if (MPI_ERRCODES_IGNORE != array_of_errcodes) {
-       for ( i=0; i < newcomp->c_remote_group->grp_proc_count; i++ ) {
-           array_of_errcodes[i]=rc;
-       }
-   }
+    /* set array of errorcodes */
+    if (MPI_ERRCODES_IGNORE != array_of_errcodes) {
+        for ( i=0; i < newcomp->c_remote_group->grp_proc_count; i++ ) {
+            array_of_errcodes[i]=rc;
+        }
+    }
 
-   *intercomm = newcomp;
-   OMPI_ERRHANDLER_RETURN (rc, comm, rc, FUNC_NAME);
+    *intercomm = newcomp;
+    OMPI_ERRHANDLER_RETURN (rc, comm, rc, FUNC_NAME);
 }
+

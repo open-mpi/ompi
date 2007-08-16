@@ -1,17 +1,14 @@
 #!/bin/bash
 
-# Copyright (c) 2001-2004 The Trustees of Indiana University.  
+# Copyright (c) 2001-2006 The Trustees of Indiana University.  
 #                         All rights reserved.
-# Copyright (c) 1998-2001 University of Notre Dame. 
-#                         All rights reserved.
-# Copyright (c) 1994-1998 The Ohio State University.  
-#                         All rights reserved.
+# Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+#                         reserved. 
 # 
 # This file is part of the Open MPI software package.  For license
 # information, see the LICENSE file in the top level directory of the
 # Open MPI source distribution.
 #
-# $Id: buildpackage.sh,v 1.3 2003/06/30 07:16:26 brbarret Exp $
 #
 
 #
@@ -31,15 +28,14 @@
 #
 # User-configurable stuff
 #
-OMPI_PREFIX="/usr/local/"
-OMPI_OPTIONS="--disable-mpi-f77 --without-cs-fs -enable-mca-no-build=ras-slurm,pls-slurm,gpr-null,sds-pipe,sds-slurm"
 OMPI_PACKAGE="openmpi"
-OMPI_VER_PACKAGE="openmpi"
+OMPI_PREFIX="/usr/local/"
+OMPI_OPTIONS="--disable-mpi-f77 --without-cs-fs --enable-mca-no-build=ras-slurm,pls-slurm,gpr-null,sds-pipe,sds-slurm,pml-cm NM=\"nm -p\""
 OMPI_OSX_README="ReadMe.rtf"
 # note - if want XGrid support, make sure that a cocoa-supported 
 # architecture appears first on the list.  Otherwise, we won't
 # lipo that component and it will be dropped
-OMPI_ARCH_LIST="ppc ppc64 i386"
+OMPI_ARCH_LIST="ppc ppc64 i386 x86_64"
 OMPI_SDK="/Developer/SDKs/MacOSX10.4u.sdk"
 
 #
@@ -56,6 +52,9 @@ echo "--> Configuration options:"
 echo "    Package Name:   $OMPI_PACKAGE"
 echo "    Prefix:         $OMPI_PREFIX"
 echo "    Config Options: $OMPI_OPTIONS"
+echo "    Architectures:  $OMPI_ARCH_LIST"
+echo "    Target SDK:     $OMPI_SDK"
+echo ""
 
 ########################################################################
 #
@@ -86,7 +85,7 @@ version="`echo $first | sed -e 's/\.tar\.gz//'`"
 unset first
 echo "--> Found OMPI version: $version"
 
-OMPI_VER_PACKAGE="${OMPI_VER_PACKAGE}-${version}"
+OMPI_VER_PACKAGE="${OMPI_PACKAGE}-${version}"
 
 #
 # Sanity check that we can continue
@@ -277,6 +276,9 @@ print_arch_if() {
     esac
 } 
 
+# Set arch to the first arch in the list.  Go through the for loop,
+# although we'll break out at the end of the first time through.  Look
+# at the other arches that were built by using ls.
 for arch in $OMPI_ARCH_LIST ; do
     cd $BUILD_TMP
     other_archs=`ls -d dist-*`
@@ -286,14 +288,16 @@ for arch in $OMPI_ARCH_LIST ; do
     for other_arch in $other_archs ; do
         cd "$fulldistdir"
 
-        # <prefix>/bin
-        files=`find ./${OMPI_PREFIX}/bin -type f -print`
-        for file in $files ; do
-            other_file="$BUILD_TMP/${other_arch}/$file"
-            if test -r $other_file ; then
-                lipo -create $file $other_file -output $file
-            fi
-        done
+        # <prefix>/bin - don't copy in 64 bit binaries
+        if echo $other_arch | grep -v 64 > /dev/null ; then
+            files=`find ./${OMPI_PREFIX}/bin -type f -print`
+            for file in $files ; do
+                other_file="$BUILD_TMP/${other_arch}/$file"
+                if test -r $other_file ; then
+                    lipo -create $file $other_file -output $file
+                fi
+            done
+        fi
 
         # <prefix>/lib - ignore .la files
         files=`find ./${OMPI_PREFIX}/lib -type f -print | grep -v '\.la$'`
@@ -353,6 +357,11 @@ for arch in $OMPI_ARCH_LIST ; do
     rm mpih*
     break
 done
+
+# set component load errors to false, as we're almost always going to
+# fail to load the XGrid components on 64 bit systems, and users don't
+# need to see that.
+echo "mca_component_show_load_errors = 0" >> $BUILD_TMP/dist/${OMPI_PREFIX}/etc/openmpi-mca-params.conf
 
 ########################################################################
 #

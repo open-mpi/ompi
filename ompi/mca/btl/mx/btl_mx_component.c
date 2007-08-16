@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -207,6 +209,7 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
                                NULL, 0, &mx_btl->mx_endpoint);
     if(status != MX_SUCCESS) {
         opal_output(0, "mca_btl_mx_init: mx_open_endpoint() failed with status=%d\n", status);
+        mx_btl->mx_endpoint = NULL;
         mca_btl_mx_finalize( &mx_btl->super );
         return NULL;
     }

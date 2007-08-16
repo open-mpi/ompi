@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -24,17 +24,17 @@
 
 #include "ompi_config.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/communicator/communicator.h"
 #include "opal/threads/mutex.h"
 
-MPI::Comm::mpi_comm_map_t MPI::Comm::mpi_comm_map;
 MPI::Comm::mpi_comm_err_map_t MPI::Comm::mpi_comm_err_map;
-MPI::Comm::mpi_comm_key_fn_map_t MPI::Comm::mpi_comm_key_fn_map;
+MPI::Comm::mpi_comm_keyval_fn_map_t MPI::Comm::mpi_comm_keyval_fn_map;
 
 MPI::Win::mpi_win_map_t MPI::Win::mpi_win_map;
-MPI::Win::mpi_win_key_fn_map_t MPI::Win::mpi_win_key_fn_map;
+MPI::Win::mpi_win_keyval_fn_map_t MPI::Win::mpi_win_keyval_fn_map;
 
 MPI::Datatype::mpi_type_map_t MPI::Datatype::mpi_type_map;
-MPI::Datatype::mpi_type_key_fn_map_t MPI::Datatype::mpi_type_key_fn_map;
+MPI::Datatype::mpi_type_keyval_fn_map_t MPI::Datatype::mpi_type_keyval_fn_map;
 
 MPI::File::mpi_file_map_t MPI::File::mpi_file_map;
 
@@ -279,55 +279,49 @@ ompi_mpi_cxx_op_intercept(void *invec, void *outvec, int *len,
 // Attribute copy functions -- comm, type, and win
 //
 extern "C" int
-ompi_mpi_cxx_comm_copy_attr_intercept(MPI_Comm oldcomm, int keyval, 
+ompi_mpi_cxx_comm_copy_attr_intercept(MPI_Comm comm, int keyval, 
                                       void *extra_state, void *attribute_val_in, 
-                                      void *attribute_val_out, int *flag)
+                                      void *attribute_val_out, int *flag,
+                                      MPI_Comm newcomm)
 {
   int ret = 0;
-  MPI::Comm::key_pair_t* copy_and_delete; 
+  MPI::Comm::keyval_pair_t* copy_and_delete; 
   MPI::Comm::Copy_attr_function* copy_fn;
-  MPI::Comm::comm_pair_t *comm_type;
 
   OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
-  copy_and_delete = MPI::Comm::mpi_comm_key_fn_map[keyval];
+  copy_and_delete = MPI::Comm::mpi_comm_keyval_fn_map[keyval];
   copy_fn = copy_and_delete->first;
-  comm_type = MPI::Comm::mpi_comm_map[oldcomm];
   OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
   
-  // Just in case...
-
-  if (comm_type == 0)
-    return MPI::ERR_OTHER;
-
   MPI::Intracomm intracomm;
   MPI::Intercomm intercomm;
   MPI::Graphcomm graphcomm;
   MPI::Cartcomm cartcomm;
   
-  int thetype = (int)comm_type->second;
   bool bflag = OPAL_INT_TO_BOOL(*flag); 
 
-  switch (thetype) {
-  case eIntracomm:
-    intracomm = MPI::Intracomm(*comm_type->first);
-    ret = copy_fn(intracomm, keyval, extra_state,
-		  attribute_val_in, attribute_val_out, bflag);
-    break;
-  case eIntercomm:
-    intercomm = MPI::Intercomm(*comm_type->first);
-    ret = copy_fn(intercomm, keyval, extra_state,
-		  attribute_val_in, attribute_val_out, bflag);
-    break;
-  case eGraphcomm:
-    graphcomm = MPI::Graphcomm(*comm_type->first);
-    ret = copy_fn(graphcomm, keyval, extra_state,
-		  attribute_val_in, attribute_val_out, bflag);
-    break;
-  case eCartcomm:
-    cartcomm = MPI::Cartcomm(*comm_type->first);
-    ret = copy_fn(cartcomm, keyval, extra_state,
-		  attribute_val_in, attribute_val_out, bflag);
-    break;
+  if (NULL != copy_fn) {
+      if (OMPI_COMM_IS_GRAPH(comm)) {
+          graphcomm = MPI::Graphcomm(comm);
+          ret = copy_fn(graphcomm, keyval, extra_state,
+                        attribute_val_in, attribute_val_out, bflag);
+      } else if (OMPI_COMM_IS_CART(comm)) {
+          cartcomm = MPI::Cartcomm(comm);
+          ret = copy_fn(cartcomm, keyval, extra_state,
+                        attribute_val_in, attribute_val_out, bflag);
+      } else if (OMPI_COMM_IS_INTRA(comm)) {
+          intracomm = MPI::Intracomm(comm);
+          ret = copy_fn(intracomm, keyval, extra_state,
+                        attribute_val_in, attribute_val_out, bflag);
+      } else if (OMPI_COMM_IS_INTER(comm)) {
+          intercomm = MPI::Intercomm(comm);
+          ret = copy_fn(intercomm, keyval, extra_state,
+                        attribute_val_in, attribute_val_out, bflag);
+      } else {
+          ret = MPI::ERR_COMM;
+      }
+  } else {
+      ret = MPI::ERR_OTHER;
   }
 
   *flag = (int)bflag;
@@ -339,50 +333,39 @@ ompi_mpi_cxx_comm_delete_attr_intercept(MPI_Comm comm, int keyval,
                                         void *attribute_val, void *extra_state)
 {
   int ret = 0;
-
-  MPI::Comm::key_pair_t * copy_and_delete;
+  MPI::Comm::keyval_pair_t * copy_and_delete;
   MPI::Comm::Delete_attr_function* delete_fn;  
-  MPI::Comm::comm_pair_t *comm_type;
 
   OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
-  copy_and_delete = MPI::Comm::mpi_comm_key_fn_map[keyval];
+  copy_and_delete = MPI::Comm::mpi_comm_keyval_fn_map[keyval];
   delete_fn = copy_and_delete->second;
-  comm_type = MPI::Comm::mpi_comm_map[comm];
   OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
-
-  // Just in case...
-
-  if (comm_type == 0)
-    return MPI::ERR_OTHER;
 
   MPI::Intracomm intracomm;
   MPI::Intercomm intercomm;
   MPI::Graphcomm graphcomm;
   MPI::Cartcomm cartcomm;
   
-  int thetype = (long)(comm_type->second);
+  if (NULL != delete_fn) {
+      if (OMPI_COMM_IS_GRAPH(comm)) {
+          graphcomm = MPI::Graphcomm(comm);
+          ret = delete_fn(graphcomm, keyval, attribute_val, extra_state);
+      } else if (OMPI_COMM_IS_CART(comm)) {
+          cartcomm = MPI::Cartcomm(comm);
+          ret = delete_fn(cartcomm, keyval, attribute_val, extra_state);
+      } else if (OMPI_COMM_IS_INTRA(comm)) {
+          intracomm = MPI::Intracomm(comm);
+          ret = delete_fn(intracomm, keyval, attribute_val, extra_state);
+      } else if (OMPI_COMM_IS_INTER(comm)) {
+          intercomm = MPI::Intercomm(comm);
+          ret = delete_fn(intercomm, keyval, attribute_val, extra_state);
+      } else {
+          ret = MPI::ERR_COMM;
+      }
+  } else {
+      ret = MPI::ERR_OTHER;
+  }
 
-  if (delete_fn > (MPI::Comm::Delete_attr_function*) 100) {
-    switch (thetype) {
-    case eIntracomm:
-      intracomm = MPI::Intracomm(*comm_type->first);
-      ret = delete_fn(intracomm, keyval, attribute_val, extra_state);
-      break;
-    case eIntercomm:
-      intercomm = MPI::Intercomm(*comm_type->first);
-      ret = delete_fn(intercomm, keyval, attribute_val, extra_state);
-      break;
-    case eGraphcomm:
-      graphcomm = MPI::Graphcomm(*comm_type->first);
-      ret = delete_fn(graphcomm, keyval, attribute_val, extra_state);
-      break;
-    case eCartcomm:
-      cartcomm = MPI::Cartcomm(*comm_type->first);
-      ret = delete_fn(cartcomm, keyval, attribute_val, extra_state);
-      break;
-    }
-  } else 
-    ret = MPI::ERR_OTHER;
   return ret; 
 }
 
@@ -394,13 +377,13 @@ ompi_mpi_cxx_type_copy_attr_intercept(MPI_Datatype oldtype, int keyval,
 {
   int ret = 0;
 
-  MPI::Datatype::key_pair_t* copy_and_delete;
+  MPI::Datatype::keyval_pair_t* copy_and_delete;
   MPI::Datatype::Copy_attr_function* copy_fn;
   MPI::Datatype *cxx_oldtype;
 
   OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
   cxx_oldtype = MPI::Datatype::mpi_type_map[oldtype];
-  copy_and_delete = MPI::Datatype::mpi_type_key_fn_map[keyval];
+  copy_and_delete = MPI::Datatype::mpi_type_keyval_fn_map[keyval];
   copy_fn = copy_and_delete->first;
   OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
 
@@ -419,13 +402,13 @@ ompi_mpi_cxx_type_delete_attr_intercept(MPI_Datatype type, int keyval,
 {
   int ret = 0;
 
-  MPI::Datatype::key_pair_t* copy_and_delete;
+  MPI::Datatype::keyval_pair_t* copy_and_delete;
   MPI::Datatype::Delete_attr_function* delete_fn;
   MPI::Datatype *cxx_type;
 
   OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
   cxx_type = MPI::Datatype::mpi_type_map[type];
-  copy_and_delete = MPI::Datatype::mpi_type_key_fn_map[keyval];
+  copy_and_delete = MPI::Datatype::mpi_type_keyval_fn_map[keyval];
   delete_fn = copy_and_delete->second;
   OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
 
@@ -440,13 +423,13 @@ ompi_mpi_cxx_win_copy_attr_intercept(MPI_Win oldwin, int keyval,
 {
   int ret = 0;
 
-  MPI::Win::key_pair_t* copy_and_delete;
+  MPI::Win::keyval_pair_t* copy_and_delete;
   MPI::Win::Copy_attr_function* copy_fn;
   MPI::Win *cxx_oldwin;
 
   OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
   cxx_oldwin = MPI::Win::mpi_win_map[oldwin];
-  copy_and_delete = MPI::Win::mpi_win_key_fn_map[keyval];
+  copy_and_delete = MPI::Win::mpi_win_keyval_fn_map[keyval];
   copy_fn = copy_and_delete->first;
   OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
 
@@ -465,13 +448,13 @@ ompi_mpi_cxx_win_delete_attr_intercept(MPI_Win win, int keyval,
 {
   int ret = 0;
 
-  MPI::Win::key_pair_t* copy_and_delete;
+  MPI::Win::keyval_pair_t* copy_and_delete;
   MPI::Win::Delete_attr_function* delete_fn;
   MPI::Win *cxx_win;
 
   OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
   cxx_win = MPI::Win::mpi_win_map[win];
-  copy_and_delete = MPI::Win::mpi_win_key_fn_map[keyval];
+  copy_and_delete = MPI::Win::mpi_win_keyval_fn_map[keyval];
   delete_fn = copy_and_delete->second;
   OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
 

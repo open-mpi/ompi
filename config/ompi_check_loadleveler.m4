@@ -27,7 +27,7 @@ AC_DEFUN([OMPI_CHECK_LOADLEVELER],[
                                 [Directory where the loadleveler software is installed])])
 
     AS_IF([test "$with_loadleveler" = "no"],
-          [ompi_check_loadleveler_hapy="no"],
+          [ompi_check_loadleveler_happy="no"],
           [ompi_check_loadleveler_happy="yes"
            AS_IF([test ! -z "$with_loadleveler" -a "$with_loadleveler" != "yes"],
                  [ompi_check_loadleveler_dir="$with_loadleveler"],

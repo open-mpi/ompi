@@ -63,6 +63,7 @@ OBJ_CLASS_INSTANCE(orte_mapped_proc_t,
 static void orte_rmaps_mapped_node_construct(orte_mapped_node_t* node)
 {
     node->nodename = NULL;
+    node->launch_id = -1;
     node->username = NULL;
     node->daemon = NULL;
     node->oversubscribed = false;
@@ -120,10 +121,12 @@ static void orte_rmaps_job_map_destruct(orte_job_map_t* map)
     
     if (NULL != map->mapping_mode) free(map->mapping_mode);
     
-    for(i=0; i < map->num_apps; i++) {
-        if (NULL != map->apps[i]) OBJ_RELEASE(map->apps[i]);
-    }
     if (NULL != map->apps) {
+        for(i=0; i < map->num_apps; i++) {
+            if (NULL != map->apps[i]) {
+                OBJ_RELEASE(map->apps[i]);
+            }
+        }
         free(map->apps);
     }
     

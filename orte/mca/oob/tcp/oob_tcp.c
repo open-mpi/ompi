@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC. 
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -175,7 +177,7 @@ static inline char* mca_oob_tcp_param_register_str(
  */
 int mca_oob_tcp_component_open(void)
 {
-    char *listen_type;
+    char *listen_type, *str;
     int tmp;
 
 #ifdef __WINDOWS__
@@ -204,6 +206,8 @@ int mca_oob_tcp_component_open(void)
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_pending_connections, opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_copy_out_connections, opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_copy_in_connections, opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_connections_return, opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_connections_return_copy, opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_pending_connections_lock, opal_mutex_t);
 
     /* register oob module parameters */
@@ -213,29 +217,48 @@ int mca_oob_tcp_component_open(void)
         mca_oob_tcp_param_register_int("peer_retries", 60);
     mca_oob_tcp_component.tcp_debug =
         mca_oob_tcp_param_register_int("debug", 0);
-    mca_oob_tcp_component.tcp_include =
-        mca_oob_tcp_param_register_str("include", NULL);
-    mca_oob_tcp_component.tcp_exclude =
-        mca_oob_tcp_param_register_str("exclude", NULL);
     mca_oob_tcp_component.tcp_sndbuf =
         mca_oob_tcp_param_register_int("sndbuf", 128*1024);
     mca_oob_tcp_component.tcp_rcvbuf =
         mca_oob_tcp_param_register_int("rcvbuf", 128*1024);
 
-    /* AWF - may need to increase this for large-scale jobs -
-       see AWF comment in oob_tcp_peer.c */
-    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "connect_timeout",
-                           "connect() timeout in seconds, before trying next interface",
-                           false,
-                           false,
-                           600,
-                           &mca_oob_tcp_component.tcp_timeout);
+    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
+                              "if_include",
+                              "Comma-delimited list of TCP interfaces to use",
+                              false, false, NULL, 
+                              &mca_oob_tcp_component.tcp_include);
+    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
+                              "include",
+                              "Obsolete synonym for oob_tcp_if_include",
+                              true, false, NULL, &str);
+    if (NULL != str) {
+        if (NULL == mca_oob_tcp_component.tcp_include) {
+            mca_oob_tcp_component.tcp_include = str;
+        } else {
+            free(str);
+        }
+    }
 
-    
+    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
+                              "if_exclude",
+                              "Comma-delimited list of TCP interfaces to exclude",
+                              false, false, NULL, 
+                              &mca_oob_tcp_component.tcp_exclude);
+    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
+                              "exclude",
+                              "Obsolete synonym for oob_tcp_if_exclude",
+                              true, false, NULL, &str);
+    if (NULL != str) {
+        if (NULL == mca_oob_tcp_component.tcp_exclude) {
+            mca_oob_tcp_component.tcp_exclude = str;
+        } else {
+            free(str);
+        }
+    }
+
     mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
                            "connect_sleep",
-                           "Enable (1) /Disable (0)  random sleep for connection wireup",
+                           "Enable (1) / disable (0) random sleep for connection wireup",
                            false,
                            false,
                            1,
@@ -310,19 +333,27 @@ int mca_oob_tcp_component_close(void)
 #endif
 
     /* cleanup resources */
-    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_list);
-    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peers);
-    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_names);
-    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_free);
-    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_events);
-    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_subscriptions);
-    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msgs);
-    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_lock);
-    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msg_post);
-    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msg_recv);
-    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msg_completed);
-    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_match_lock);
+
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_pending_connections_lock);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_connections_return_copy);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_connections_return);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_copy_out_connections);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_pending_connections);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_pending_connections_fl);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_listen_thread);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_match_cond);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_match_lock);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msg_completed);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msg_recv);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msg_post);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_events);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_lock);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msgs);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_free);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_names);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peers);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_subscriptions);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_list);
     return ORTE_SUCCESS;
 }
 
@@ -355,11 +386,11 @@ static void mca_oob_tcp_accept(void)
         mca_oob_tcp_set_socket_options(sd);
 
         /* log the accept */
-        if(mca_oob_tcp_component.tcp_debug) {
+        if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
             opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_accept: %s:%d\n",
-                ORTE_NAME_ARGS(orte_process_info.my_name),
-                inet_ntoa(addr.sin_addr),
-                addr.sin_port);
+                        ORTE_NAME_ARGS(orte_process_info.my_name),
+                        inet_ntoa(addr.sin_addr),
+                        addr.sin_port);
         }
 
         /* wait for receipt of peers process identifier to complete this connection */
@@ -481,7 +512,6 @@ static void* mca_oob_tcp_listen_thread(opal_object_t *obj)
             if(item->fd < 0) {
                 OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_pending_connections_fl, 
                                       fl_item);
-
                 if (mca_oob_tcp_component.tcp_shutdown) return NULL;
 
                 if(opal_socket_errno != EAGAIN || opal_socket_errno != EWOULDBLOCK) {
@@ -495,7 +525,7 @@ static void* mca_oob_tcp_listen_thread(opal_object_t *obj)
                 continue;
             }
 
-            if(mca_oob_tcp_component.tcp_debug) {
+            if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
                 opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_listen_thread: (%d, %d) %s:%d\n",
                             ORTE_NAME_ARGS(orte_process_info.my_name),
                             item->fd, opal_socket_errno,
@@ -512,6 +542,9 @@ static void* mca_oob_tcp_listen_thread(opal_object_t *obj)
             opal_list_join(&mca_oob_tcp_component.tcp_pending_connections,
                            opal_list_get_end(&mca_oob_tcp_component.tcp_pending_connections),
                            &mca_oob_tcp_component.tcp_copy_in_connections);
+            while (NULL != (fl_item = (opal_free_list_item_t*) opal_list_remove_first(&mca_oob_tcp_component.tcp_connections_return_copy))) {
+                OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_pending_connections_fl, fl_item);
+            }
             opal_mutex_unlock(&mca_oob_tcp_component.tcp_pending_connections_lock);
         }
     }
@@ -542,12 +575,16 @@ static int mca_oob_tcp_listen_progress(void)
 
         /* copy the pending connections from the list the accept
            thread is inserting into into a temporary list for us to
-           process from.  This is an O(1) operation, so we minimize
-           the lock time */
+           process from.  Then copy the returned free list items into
+           that thread's return list, so it can free them soonish.
+           This is an O(1) operation, so we minimize the lock time. */
         opal_mutex_lock(&mca_oob_tcp_component.tcp_pending_connections_lock);
         opal_list_join(&mca_oob_tcp_component.tcp_copy_out_connections,
                        opal_list_get_end(&mca_oob_tcp_component.tcp_copy_out_connections),
                        &mca_oob_tcp_component.tcp_pending_connections);
+        opal_list_join(&mca_oob_tcp_component.tcp_connections_return_copy,
+                       opal_list_get_end(&mca_oob_tcp_component.tcp_connections_return_copy),
+                       &mca_oob_tcp_component.tcp_connections_return);
         opal_mutex_unlock(&mca_oob_tcp_component.tcp_pending_connections_lock);
 
         /* process al the connections */
@@ -559,7 +596,7 @@ static int mca_oob_tcp_listen_progress(void)
             mca_oob_tcp_set_socket_options(item->fd);
 
             /* log the accept */
-            if(mca_oob_tcp_component.tcp_debug) {
+            if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
                 opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_listen_progress: %s:%d\n",
                             ORTE_NAME_ARGS(orte_process_info.my_name),
                             inet_ntoa(item->addr.sin_addr),
@@ -571,9 +608,9 @@ static int mca_oob_tcp_listen_progress(void)
             event = OBJ_NEW(mca_oob_tcp_event_t);
             opal_event_set(&event->event, item->fd, OPAL_EV_READ, mca_oob_tcp_recv_handler, event);
             opal_event_add(&event->event, 0);
-            OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_pending_connections_fl, 
-                                (opal_free_list_item_t *) item);
-
+            /* put on the needs returning list */
+            opal_list_append(&mca_oob_tcp_component.tcp_connections_return, 
+                             (opal_list_item_t*) item);
             count++;
         }
 
@@ -728,7 +765,7 @@ static void mca_oob_tcp_recv_connect(int sd, mca_oob_tcp_hdr_t* hdr)
     }
     /* is the peer instance willing to accept this connection */
     if(mca_oob_tcp_peer_accept(peer, sd) == false) {
-        if(mca_oob_tcp_component.tcp_debug > 0) {
+        if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT_FAIL) {
             opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_recv_handler: "
                     "rejected connection from [%lu,%lu,%lu] connection state %d",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
@@ -766,7 +803,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     /* recv the process identifier */
     while((rc = recv(sd, (char *)&hdr, sizeof(hdr), 0)) != sizeof(hdr)) {
         if(rc >= 0) {
-            if(mca_oob_tcp_component.tcp_debug > 1) {
+            if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT_FAIL) {
                 opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: peer closed connection",
                     ORTE_NAME_ARGS(orte_process_info.my_name));
             }
@@ -855,7 +892,7 @@ void mca_oob_tcp_registry_callback(
     mca_oob_tcp_addr_t* addr, *existing;
     mca_oob_tcp_peer_t* peer;
 
-    if(mca_oob_tcp_component.tcp_debug > 1) {
+    if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_INFO) {
         opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback\n",
             ORTE_NAME_ARGS(orte_process_info.my_name));
     }
@@ -897,7 +934,7 @@ void mca_oob_tcp_registry_callback(
                     continue;
                 }
 
-                if(mca_oob_tcp_component.tcp_debug > 1) {
+                if(mca_oob_tcp_component.tcp_debug > OOB_TCP_DEBUG_INFO) {
                     opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback: received peer [%lu,%lu,%lu]\n",
                         ORTE_NAME_ARGS(orte_process_info.my_name),
                         ORTE_NAME_ARGS(&(addr->addr_name)));
@@ -1064,12 +1101,8 @@ int mca_oob_tcp_init(void)
     jobid = ORTE_PROC_MY_NAME->jobid;
     
     /* create a listen socket */
-    if (OOB_TCP_EVENT == mca_oob_tcp_component.tcp_listen_type) {
-        if(mca_oob_tcp_create_listen() != ORTE_SUCCESS) {
-            opal_output(0, "mca_oob_tcp_init: unable to create listen socket");
-            return ORTE_ERROR;
-        }
-    } else if ((OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) && orte_process_info.seed) {
+    if ((OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) && 
+        orte_process_info.seed) {  
         if (mca_oob_tcp_create_listen_thread() != ORTE_SUCCESS) {
             opal_output(0, "mca_oob_tcp_init: unable to create listen thread");
             return ORTE_ERROR;
@@ -1081,6 +1114,23 @@ int mca_oob_tcp_init(void)
                             -1,  /* maximum number */
                             16);  /* increment to grow by */
         opal_progress_register(mca_oob_tcp_listen_progress);
+        if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_INFO) {
+            opal_output(0, "[%lu,%lu,%lu] accepting connections via listen thread",
+                        ORTE_NAME_ARGS(orte_process_info.my_name));
+        }
+    } else {
+        /* fix up the listen_type, since we might have been in thread,
+           but can't do that since we weren't the HNP. */
+        mca_oob_tcp_component.tcp_listen_type = OOB_TCP_EVENT;
+
+        if(mca_oob_tcp_create_listen() != ORTE_SUCCESS) {
+            opal_output(0, "mca_oob_tcp_init: unable to create listen socket");
+            return ORTE_ERROR;
+        }
+        if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_INFO) {
+            opal_output(0, "[%lu,%lu,%lu] accepting connections via event library",
+                        ORTE_NAME_ARGS(orte_process_info.my_name));
+        }
     }
 
     /* iterate through the open connections and send an ident message to all peers -
@@ -1102,7 +1152,7 @@ int mca_oob_tcp_init(void)
     opal_list_append(&mca_oob_tcp_component.tcp_subscriptions, &subscription->item);
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 
-    if(mca_oob_tcp_component.tcp_debug > 2) {
+    if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_ALL) {
         opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_init: calling orte_gpr.subscribe\n",
             ORTE_NAME_ARGS(orte_process_info.my_name));
     }

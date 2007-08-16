@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -84,7 +84,8 @@ enum CommType { eIntracomm, eIntercomm, eCartcomm, eGraphcomm};
 extern "C" int
 ompi_mpi_cxx_comm_copy_attr_intercept(MPI_Comm oldcomm, int keyval, 
                                       void *extra_state, void *attribute_val_in, 
-                                      void *attribute_val_out, int *flag);
+                                      void *attribute_val_out, int *flag,
+                                      MPI_Comm newcomm);
 extern "C" int
 ompi_mpi_cxx_comm_delete_attr_intercept(MPI_Comm comm, int keyval, 
                                         void *attribute_val, void *extra_state);
@@ -158,13 +159,23 @@ namespace MPI {
   typedef MPI_Aint Aint;
   typedef MPI_Offset Offset;
 
+#ifdef OMPI_BUILDING_CXX_BINDINGS_LIBRARY
 #include "ompi/mpi/cxx/constants.h"
 #include "ompi/mpi/cxx/functions.h"
 #include "ompi/mpi/cxx/datatype.h"
+#else
+#include "openmpi/ompi/mpi/cxx/constants.h"
+#include "openmpi/ompi/mpi/cxx/functions.h"
+#include "openmpi/ompi/mpi/cxx/datatype.h"
+#endif
 
   typedef void User_function(const void* invec, void* inoutvec, int len,
 			     const Datatype& datatype);
 
+    /* Prevent needing a -I${prefix}/include/openmpi, as it seems to
+       really annoy peope that don't use the wrapper compilers and is
+       no longer worth the fight of getting right... */
+#ifdef OMPI_BUILDING_CXX_BINDINGS_LIBRARY
 #include "ompi/mpi/cxx/exception.h"
 #include "ompi/mpi/cxx/op.h"
 #include "ompi/mpi/cxx/status.h"
@@ -178,6 +189,21 @@ namespace MPI {
 #include "ompi/mpi/cxx/topology.h"  //includes Cartcomm and Graphcomm
 #include "ompi/mpi/cxx/intercomm.h"
 #include "ompi/mpi/cxx/info.h"
+#else
+#include "openmpi/ompi/mpi/cxx/exception.h"
+#include "openmpi/ompi/mpi/cxx/op.h"
+#include "openmpi/ompi/mpi/cxx/status.h"
+#include "openmpi/ompi/mpi/cxx/request.h"   //includes class Prequest
+#include "openmpi/ompi/mpi/cxx/group.h" 
+#include "openmpi/ompi/mpi/cxx/comm.h"
+#include "openmpi/ompi/mpi/cxx/win.h"
+#include "openmpi/ompi/mpi/cxx/file.h"
+#include "openmpi/ompi/mpi/cxx/errhandler.h"
+#include "openmpi/ompi/mpi/cxx/intracomm.h"
+#include "openmpi/ompi/mpi/cxx/topology.h"  //includes Cartcomm and Graphcomm
+#include "openmpi/ompi/mpi/cxx/intercomm.h"
+#include "openmpi/ompi/mpi/cxx/info.h"
+#endif
 
     extern opal_mutex_t *mpi_map_mutex;
 }
@@ -198,6 +224,8 @@ namespace MPI {
 // PMPI functions, and this top layer is in the XXX.cc files.
 //
 
+/* see note above... */
+#ifdef OMPI_BUILDING_CXX_BINDINGS_LIBRARY
 #include "ompi/mpi/cxx/datatype_inln.h"
 #include "ompi/mpi/cxx/functions_inln.h"
 #include "ompi/mpi/cxx/request_inln.h"
@@ -212,6 +240,22 @@ namespace MPI {
 #include "ompi/mpi/cxx/info_inln.h"
 #include "ompi/mpi/cxx/win_inln.h"
 #include "ompi/mpi/cxx/file_inln.h"
+#else
+#include "openmpi/ompi/mpi/cxx/datatype_inln.h"
+#include "openmpi/ompi/mpi/cxx/functions_inln.h"
+#include "openmpi/ompi/mpi/cxx/request_inln.h"
+#include "openmpi/ompi/mpi/cxx/comm_inln.h"
+#include "openmpi/ompi/mpi/cxx/intracomm_inln.h"
+#include "openmpi/ompi/mpi/cxx/topology_inln.h"
+#include "openmpi/ompi/mpi/cxx/intercomm_inln.h"
+#include "openmpi/ompi/mpi/cxx/group_inln.h"
+#include "openmpi/ompi/mpi/cxx/op_inln.h"
+#include "openmpi/ompi/mpi/cxx/errhandler_inln.h"
+#include "openmpi/ompi/mpi/cxx/status_inln.h"
+#include "openmpi/ompi/mpi/cxx/info_inln.h"
+#include "openmpi/ompi/mpi/cxx/win_inln.h"
+#include "openmpi/ompi/mpi/cxx/file_inln.h"
+#endif
 
 #endif // #if defined(__cplusplus) || defined(c_plusplus) 
 #endif // #ifndef MPIPP_H_

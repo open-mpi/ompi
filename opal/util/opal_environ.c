@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,10 +28,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/constants.h"
-
-#if !defined(__WINDOWS__)
-extern char** environ;
-#endif  /* !defined(__WINDOWS__) */
 
 /*
  * Merge two environ-like char arrays, ensuring that there are no
@@ -114,6 +112,7 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
     } else if (NULL == *env) {
         i = 0;
         opal_argv_append(&i, env, newvalue);
+        free(newvalue);
         return OPAL_SUCCESS;
     }
 

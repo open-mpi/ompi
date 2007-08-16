@@ -36,6 +36,7 @@ void mca_mpool_sm_module_init(mca_mpool_sm_module_t* mpool)
   mpool->super.mpool_find = NULL; 
   mpool->super.mpool_register = NULL; 
   mpool->super.mpool_deregister = NULL; 
+  mpool->super.mpool_release_memory = NULL;
   mpool->super.mpool_finalize = NULL; 
   mpool->super.flags = 0;
 }

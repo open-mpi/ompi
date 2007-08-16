@@ -26,9 +26,15 @@
 #define MCA_RML_TYPES_H_
 
 #include "orte_config.h"
+
+#include <limits.h>
+#ifdef HAVE_SYS_UIO_H
+/* for struct iovec */
+#include <sys/uio.h>
+#endif
+
 #include "orte/orte_constants.h"
 #include "orte/util/proc_info.h"
-#include <limits.h>
 
 /**
  * Constant tag values for well-known services

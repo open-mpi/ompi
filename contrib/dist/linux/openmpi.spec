@@ -32,6 +32,18 @@
 #
 # Configuration Options
 #
+# Options that can be passed in via rpmbuild's --define option.  Note
+# that --define takes *1* argument: a multi-token string where the first
+# token is the name of the variable to define, and all remaining tokens
+# are the value.  For example:
+#
+# shell$ rpmbuild ... --define 'ofed 1' ...
+#
+# Or (a multi-token example):
+#
+# shell$ rpmbuild ... \
+#    --define 'configure_options CFLAGS=-g --with-openib=/usr/local/ofed' ...
+#
 #############################################################################
 
 # Help for OSCAR RPMs
@@ -48,12 +60,15 @@
 %{!?install_in_opt: %define install_in_opt 0}
 
 # Define this if you want this RPM to install environment setup
-# scripts in /etc/profile.d.  Only used if install_in_opt is true.
+# shell scripts.
 # type: bool (0/1)
-%{!?install_profile_d_scripts: %define install_profile_d_scripts 0}
+%{!?install_shell_scripts: %define install_shell_scripts 0}
+# type: string (root path to install shell scripts)
+%{!?shell_scripts_path: %define shell_scripts_path %{_bindir}}
+# type: string (base name of the shell scripts)
+%{!?shell_scripts_basename: %define shell_scripts_basename mpivars-%{version}}
 
-# Define this to 1 if you want this RPM to install a modulefile.  Only
-# used if install_in_opt is true.
+# Define this to 1 if you want this RPM to install a modulefile.
 # type: bool (0/1)
 %{!?install_modulefile: %define install_modulefile 0}
 # type: string (root path to install modulefiles)
@@ -66,6 +81,17 @@
 # The name of the modules RPM.  Can vary from system to system.
 # type: string (name of modules RPM)
 %{!?modules_rpm_name: %define modules_rpm_name modules}
+
+# Should we use the mpi-selector functionality?
+# type: bool (0/1)
+%{!?use_mpi_selector: %define use_mpi_selector 0}
+# The name of the mpi-selector RPM.  Can vary from system to system.
+# type: string (name of mpi-selector RPM)
+%{!?mpi_selector_rpm_name: %define mpi_selector_rpm_name mpi-selector}
+# The location of the mpi-selector executable (can be a relative path
+# name if "mpi-selector" can be found in the path)
+# type: string (path to mpi-selector exectuable)
+%{!?mpi_selector: %define mpi_selector mpi-selector}
 
 # Should we build a debuginfo RPM or not?
 # type: bool (0/1)
@@ -83,8 +109,28 @@
 # unpackaged files)?  It is discouraged to disable this, but some
 # installers need it (e.g., OFED, because it installs lots of other
 # stuff in the BUILD_ROOT before Open MPI).
+# type: bool (0/1)
 %{!?use_check_files: %define use_check_files 1}
 
+# Should we use the traditional % build and % install sections?  Or
+# should we combine them both into % install?  This is entirely
+# motivated by the OFED installer where, on SLES, the % build macro
+# will completely remove the BUILD_ROOT before building (which breaks
+# some assumptions in the OFED installer).  Ick!
+# type: bool (0/1)
+%{!?munge_build_into_install: %define munge_build_into_install 0}
+
+# By default, RPM supplies a bunch of optimization flags, some of
+# which may not work with non-gcc compilers.  We attempt to weed some
+# of these out (below), but sometimes it's better to just ignore them
+# altogether (e.g., PGI 6.2 will warn about unknown compiler flags,
+# but PGI 7.0 will error -- and RPM_OPT_FLAGS contains a lot of flags
+# that PGI 7.0 does not understand).  The default is to use the flags,
+# but you can set this variable to 0, indicating that RPM_OPT_FLAGS
+# should be erased (in which case you probabl want to supply your own
+# optimization flags!).
+# type: bool (0/1)
+%{!?use_default_rpm_opt_flags: %define use_default_rpm_opt_flags 1}
 
 #############################################################################
 #
@@ -106,11 +152,18 @@
 #
 # OFED-specific defaults
 #
+# Tailored for the peculiar requirements of the OFED installer; not
+# necessary for when building this SRPM outside of the OFED installer.
+#
 #############################################################################
 
 %if %{ofed}
 %define leave_build_root 1
 %define use_check_files 0
+%define install_shell_scripts 1
+%define shell_scripts_basename mpivars
+%define munge_build_into_install 1
+%define use_mpi_selector 1
 %endif
 
 
@@ -139,12 +192,17 @@
 %global _sysconfdir %{_prefix}/etc
 %endif
 
+%{!?_pkgdatadir: %define _pkgdatadir %{_datadir}/%{name}}
+
 %if !%{use_check_files}
 %define __check_files %{nil}
 %endif
 
 %{!?configure_options: %define configure_options %{nil}}
 
+%if !%{use_default_rpm_opt_flags}
+%define optflags ""
+%endif
 
 #############################################################################
 #
@@ -167,6 +225,9 @@ Provides: mpi
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-root
 %if %{install_modulefile}
 Requires: %{modules_rpm_name}
+%endif
+%if %{use_mpi_selector}
+Requires: %{mpi_selector_rpm_name}
 %endif
 
 %description
@@ -254,7 +315,7 @@ This subpackage provides the documentation for Open MPI.
 # do not want to delete the prior RPM_BUILD_ROOT because there may be
 # other stuff in there that we need (e.g., the OFED installer installs
 # everything into RPM_BUILD_ROOT that OMPI needs to compile, like the
-# OpenIB drivers).
+# OpenFabrics drivers).
 %if !%{leave_build_root}
 rm -rf $RPM_BUILD_ROOT
 %endif
@@ -267,44 +328,82 @@ rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 
+# See note above about %{munge_build_into_install}
+%if %{munge_build_into_install}
+%install
+%else
 %build
+%endif
 
-# Non-gcc compilers cannot use FORTIFY_SOURCE (at least, not as of 6
-# Oct 2006).  So if we're not GCC, strip out any -DFORTIFY_SOURCE
-# arguments in the RPM_OPT_FLAGS before potentially propagating them
-# everywhere.  We can really only examine the basename of the
-# compiler, so search for it in a few places.
+# rpmbuild processes seem to be geared towards the GNU compilers --
+# they pass in some flags that will only work with gcc.  So if we're
+# trying to build with some other compiler, the process will choke.
+# This is *not* something the user can override with a well-placed
+# --define on the rpmbuild command line, unless they find and override
+# all "global" CFLAGS kinds of RPM macros (every distro names them
+# differently).  For example, non-gcc compilers cannot use
+# FORTIFY_SOURCE (at least, not as of 6 Oct 2006).  We can really only
+# examine the basename of the compiler, so search for it in a few
+# places.
 
-fortify_source=1
+using_gcc=1
 if test "$CC" != ""; then
-    if test "`basename $CC`" != "gcc"; then
-        fortify_source=0
+    # Do horrible things to get the basename of just the compiler,
+    # particularly in the case of multword values for $CC
+    eval "set $CC"
+    if test "`basename $1`" != "gcc"; then
+        using_gcc=0
     fi
 fi
 
-if test "$fortify_source" = "1"; then
-    compiler="`echo %{configure_options} | sed -e 's@.* CC=\([^ ]*\).*@\1@'`"
-    # If that didn't find it, try for CC at the beginning of the line
-    if test "$compiler" = "%{configure_options}"; then
-        compiler="`echo %{configure_options} | sed -e 's@^CC=\([^ ]*\).*@\1@'`"
-    fi
+if test "$using_gcc" = "1"; then
+    # Do wretched things to find a CC=* token
+    eval "set -- %{configure_options}"
+    compiler=
+    while test "$1" != "" -a "$compiler" = ""; do
+         case "$1" in
+         CC=*)
+                 compiler=`echo $1 | cut -d= -f2-`
+                 ;;
+         esac
+         shift
+    done
 
     # Now that we *might* have the compiler name, do a best-faith
     # effort to see if it's gcc.  Blah!
     if test "$compiler" != ""; then
         if test "`basename $compiler`" != "gcc"; then
-            fortify_source=0
+            using_gcc=0
         fi
     fi
 fi
 
-if test "$fortify_source" = 0; then
+# If we're not using the default RPM_OPT_FLAGS, then wipe them clean
+# (the "optflags" macro has already been wiped clean, above).
+
+%if !%{use_default_rpm_opt_flags}
+RPM_OPT_FLAGS=
+export RPM_OPT_FLAGS
+%endif
+
+# If we're not GCC, strip out any GCC-specific arguments in the
+# RPM_OPT_FLAGS before potentially propagating them everywhere.
+
+if test "$using_gcc" = 0; then
+
+    # Non-gcc compilers cannot handle FORTIFY_SOURCE (at least, not as
+    # of Oct 2006)
     RPM_OPT_FLAGS="`echo $RPM_OPT_FLAGS | sed -e 's@-D_FORTIFY_SOURCE[=0-9]*@@'`"
+
+    # Non-gcc compilers will generate warnings for several flags
+    # placed in RPM_OPT_FLAGS by RHEL5, but -mtune=generic will cause
+    # an error for icc 9.1.
+    RPM_OPT_FLAGS="`echo $RPM_OPT_FLAGS | sed -e 's@-mtune=generic@@'`"
 fi
 
 CFLAGS="%{?cflags:%{cflags}}%{!?cflags:$RPM_OPT_FLAGS}"
 CXXFLAGS="%{?cxxflags:%{cxxflags}}%{!?cxxflags:$RPM_OPT_FLAGS}"
-F77FLAGS="%{?f77flags:%{f77flags}}%{!?f7flags:$RPM_OPT_FLAGS}"
+FFLAGS="%{?f77flags:%{f77flags}}%{!?f7flags:$RPM_OPT_FLAGS}"
 FCFLAGS="%{?fcflags:%{fcflags}}%{!?fcflags:$RPM_OPT_FLAGS}"
 export CFLAGS CXXFLAGS F77FLAGS FCFLAGS
 
@@ -317,12 +416,12 @@ export CFLAGS CXXFLAGS F77FLAGS FCFLAGS
 # Install Section
 #
 #############################################################################
+
+# See note above about %{munge_build_into_install}
+%if !%{munge_build_into_install}
 %install
+%endif
 %{__make} install DESTDIR=$RPM_BUILD_ROOT %{?mflags_install}
-
-# An attempt to make enviornment happier when installed into non /usr path
-
-%if %{install_in_opt}
 
 # First, the [optional] modulefile
 
@@ -341,69 +440,70 @@ proc ModulesHelp { } {
 
 module-whatis   "Sets up Open MPI v%{version}  in your enviornment"
 
-append-path PATH "%{_prefix}/bin/"
-append-path LD_LIBRARY_PATH %{_libdir}
-append-path MANPATH %{_mandir}
-%if %{lanl}
-setenv MPI_ROOT %{_prefix}
-setenv MPIHOME %{_prefix}
-# These flags are now obsolete -- use mpicc (etc.)
-setenv MPI_LD_FLAGS ""
-setenv MPI_COMPILE_FLAGS ""
-%endif
+prepend-path PATH "%{_prefix}/bin/"
+prepend-path LD_LIBRARY_PATH %{_libdir}
+prepend-path MANPATH %{_mandir}
 EOF
 %endif
 # End of modulefile if
 
-# Next, the [optional] profile.d scripts
+# Next, the [optional] shell scripts
 
-%if %{install_profile_d_scripts}
-%{__mkdir_p} $RPM_BUILD_ROOT/etc/profile.d/
-cat <<EOF > $RPM_BUILD_ROOT/etc/profile.d/%{name}-%{version}.sh
+%if %{install_shell_scripts}
+%{__mkdir_p} $RPM_BUILD_ROOT/%{shell_scripts_path}
+cat <<EOF > $RPM_BUILD_ROOT/%{shell_scripts_path}/%{shell_scripts_basename}.sh
 # NOTE: This is an automatically-generated file!  (generated by the
-# Open MPI RPM).  Any changes made here will be lost a) if the RPM is
-# uninstalled, or b) if the RPM is upgraded or uninstalled.
+# Open MPI RPM).  Any changes made here will be lost if the RPM is
+# uninstalled or upgraded.
 
-CHANGED=0
-if test -z "`echo $PATH | grep %{_prefix}/bin`"; then
-    PATH=\${PATH}:%{_prefix}/bin/
-    CHANGED=1
+# PATH
+if test -z "\`echo \$PATH | grep %{_bindir}\`"; then
+    PATH=%{_bindir}:\${PATH}
+    export PATH
 fi
-if test -z "`echo $LD_LIBRARY_PATH | grep %{_libdir}`"; then
-    LD_LIBRARY_PATH=\${LD_LIBRARY_PATH}:%{_libdir}
-    CHANGED=1
+
+# LD_LIBRARY_PATH
+if test -z "\`echo \$LD_LIBRARY_PATH | grep %{_libdir}\`"; then
+    LD_LIBRARY_PATH=%{_libdir}:\${LD_LIBRARY_PATH}
+    export LD_LIBRARY_PATH
 fi
-if test -z "`echo $MANPATH | grep %{_mandir}`"; then
-    MANPATH=\${MANPATH}:%{_mandir}
-    CHANGED=1
-fi
-if test "$CHANGED" = "1"; then
-    export PATH LD_LIBRARY_PATH MANPATH
+
+# MANPATH
+if test -z "\`echo \$MANPATH | grep %{_mandir}\`"; then
+    MANPATH=%{_mandir}:\${MANPATH}
+    export MANPATH
 fi
 EOF
-cat <<EOF > $RPM_BUILD_ROOT/etc/profile.d/%{name}-%{version}.csh
+cat <<EOF > $RPM_BUILD_ROOT/%{shell_scripts_path}/%{shell_scripts_basename}.csh
 # NOTE: This is an automatically-generated file!  (generated by the
-# Open MPI RPM).  Any changes made here will be lost a) if the RPM is
-# uninstalled, or b) if the RPM is upgraded or uninstalled.
+# Open MPI RPM).  Any changes made here will be lost if the RPM is
+# uninstalled or upgraded.
 
-if ("`echo $PATH | grep %{_prefix}/bin`") then
-    setenv PATH \${PATH}:%{_prefix}/bin/
+# path
+if ("" == "\`echo \$path | grep %{_bindir}\`") then
+    set path=(%{_bindir} \$path)
 endif
-if ("$?LD_LIBRARY_PATH") then
-    if ("`echo $LD_LIBRARY_PATH | grep %{_libdir}`") then
-        setenv LD_LIBRARY_PATH \${LD_LIBRARY_PATH}:%{_libdir}
+
+# LD_LIBRARY_PATH
+if ("1" == "\$?LD_LIBRARY_PATH") then
+    if ("\$LD_LIBRARY_PATH" !~ *%{_libdir}*) then
+        setenv LD_LIBRARY_PATH %{_libdir}:\${LD_LIBRARY_PATH}
     endif
+else
+    setenv LD_LIBRARY_PATH %{_libdir}
 endif
-if ("$?MANPATH") then
-    if ("`echo $MANPATH | grep %{_mandir}`") then
-        setenv MANPATH \${MANPATH}:%{_mandir}
+
+# MANPATH
+if ("1" == "\$?MANPATH") then
+    if ("\$MANPATH" !~ *%{_mandir}*) then
+        setenv MANPATH %{_mandir}:\${MANPATH}
     endif
+else
+    setenv MANPATH %{_mandir}:
 endif
 EOF
 %endif
-# End of profile.d if
-%endif
-# End of install_in_opt if
+# End of shell_scripts if
 
 %if !%{build_all_in_one_rpm}
 
@@ -435,8 +535,12 @@ find $RPM_BUILD_ROOT -type f -o -type l | \
 #
 #############################################################################
 %clean
+# We may be in the directory that we're about to remove, so cd out of
+# there before we remove it
+cd /tmp
+
 # Remove installed driver after rpm build finished
-rm -rf $RPM_BUILD_DIR/%{_name}-%{_version} 
+rm -rf $RPM_BUILD_DIR/%{name}-%{version} 
 
 # Leave $RPM_BUILD_ROOT in order to build dependent packages, if desired
 %if !%{leave_build_root}
@@ -445,14 +549,27 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 
 #############################################################################
 #
-# Post (Un)Install Section
+# Post Install Section
 #
 #############################################################################
+%if %{use_mpi_selector}
 %post
-# Stub
+%{mpi_selector} \
+	--register %{name}-%{version} \
+	--source-dir %{shell_scripts_path} \
+        --yes
+%endif
 
-%postun
-# Stub
+#############################################################################
+#
+# Pre Uninstall Section
+#
+#############################################################################
+%if %{use_mpi_selector}
+%preun
+%{mpi_selector} --unregister %{name}-%{version} --yes || \
+      /bin/true > /dev/null 2> /dev/null
+%endif
 
 #############################################################################
 #
@@ -485,10 +602,10 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %if %{install_modulefile}
 %{modulefile_path}
 %endif
-# If we're installing the profile.d scripts, get those, too
-%if %{install_profile_d_scripts}
-/etc/profile.d/%{name}-%{version}.sh
-/etc/profile.d/%{name}-%{version}.csh
+# If we're installing the shell scripts, get those, too
+%if %{install_shell_scripts}
+%{shell_scripts_path}/%{shell_scripts_basename}.sh
+%{shell_scripts_path}/%{shell_scripts_basename}.csh
 %endif
 %doc README INSTALL LICENSE
 
@@ -520,10 +637,10 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %if %{install_modulefile}
 %{modulefile_path}
 %endif
-# If we're installing the profile.d scripts, get those, too
-%if %{install_profile_d_scripts}
-/etc/profile.d/%{name}-%{version}.sh
-/etc/profile.d/%{name}-%{version}.csh
+# If we're installing the shell scripts, get those, too
+%if %{install_shell_scripts}
+%{shell_scripts_path}/%{shell_scripts_basename}.sh
+%{shell_scripts_path}/%{shell_scripts_basename}.csh
 %endif
 %dir %{_bindir}
 %dir %{_libdir}
@@ -565,7 +682,30 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
-* Fri Oct  6 2006 Jeff Squyes <jsquyres@cisco.com>
+* Thu May  3 2007 Jeff Squyres <jsquyres@cisco.com>
+- Ensure to move out of $RPM_BUILD_ROOT before deleting it in % clean.
+- Remove a debugging "echo" that somehow got left in there
+
+* Thu Apr 12 2007 Jeff Squyres <jsquyres@cisco.com>
+- Ensure that _pkglibdir is always defined, suggested by Greg Kurtzer.
+
+* Wed Apr  4 2007 Jeff Squyres <jsquyres@cisco.com>
+- Fix several mistakes in the generated profile.d scripts
+- Fix several bugs with identifying non-GNU compilers, stripping of
+  FORTIFY_SOURCE, -mtune, etc.
+
+* Fri Feb  9 2007 Jeff Squyres <jsquyres@cisco.com>
+- Revamp to make profile.d scripts more general: default to making the
+  shell script files be %{_bindir}/mpivars.{sh|csh}
+- Add %{munge_build_into_install} option for OFED 1.2 installer on SLES
+- Change shell script files and modulefile to *pre*pend all the OMPI paths
+- Make shell script and modulefile installation indepdendent of
+  %{install_in_opt} (they're really separate issues)
+- Add more "ofed" shortcut qualifiers
+- Slightly better test for basename CC in the fortify source section
+- Fix some problems in the csh shell script
+
+* Fri Oct  6 2006 Jeff Squyres <jsquyres@cisco.com>
 - Remove LANL section; they don't want it
 - Add some help for OFED building
 - Remove some outdated "rm -f" lines for executables that we no longer ship

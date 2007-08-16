@@ -12,6 +12,8 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  *                         Use is subject to license terms.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -60,7 +62,7 @@
 #include <pwd.h>
 #endif
 
-#include "opal/install_dirs.h"
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/if.h"
 #include "opal/util/os_path.h"
@@ -89,10 +91,6 @@
 #include "orte/mca/pls/base/pls_private.h"
 #include "orte/mca/pls/gridengine/pls_gridengine.h"
 
-#if !defined(__WINDOWS__)
-extern char **environ;
-#endif  /* !defined(__WINDOWS__) */
-
 orte_pls_base_module_t orte_pls_gridengine_module = {
     orte_pls_gridengine_launch_job,
     orte_pls_gridengine_terminate_job,
@@ -116,14 +114,14 @@ static int orte_pls_gridengine_fill_orted_path(char** orted_path)
 {
     struct stat buf;
    
-    asprintf(orted_path, "%s/orted", OPAL_BINDIR);
+    asprintf(orted_path, "%s/orted", opal_install_dirs.bindir);
     if (0 != stat(*orted_path, &buf)) {
         char *path = getenv("PATH");
         if (NULL == path) {
             path = ("PATH is empty!");
         }
         opal_show_help("help-pls-gridengine.txt", "no-local-orted",
-            true, path, OPAL_BINDIR);
+            true, path, opal_install_dirs.bindir);
         return ORTE_ERR_NOT_FOUND;
     }
 
@@ -376,8 +374,8 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
        the rationale for how / why we're doing this.
      */
 
-    lib_base = opal_basename(OPAL_LIBDIR);
-    bin_base = opal_basename(OPAL_BINDIR);
+    lib_base = opal_basename(opal_install_dirs.libdir);
+    bin_base = opal_basename(opal_install_dirs.bindir);
 
     /* See the note about prefix_dir in the orte/mca/pls/slurm/pls_slurm.c
      * module. Fo here, just note that we must have at least one app_context,

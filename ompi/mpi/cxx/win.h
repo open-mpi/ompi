@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
@@ -143,6 +143,9 @@ public:
   //
   virtual void Call_errhandler(int errorcode) const;
   
+  // Need 4 overloaded versions of this function because per the
+  // MPI-2 spec, you can mix-n-match the C predefined functions with
+  // C++ functions.
   static int Create_keyval(Copy_attr_function* win_copy_attr_fn, 
 			   Delete_attr_function* win_delete_attr_fn, 
 			   void* extra_state);
@@ -156,6 +159,14 @@ public:
 			   Delete_attr_function* win_delete_attr_fn, 
 			   void* extra_state);
   
+protected:
+  static int do_create_keyval(MPI_Win_copy_attr_function* c_copy_fn,
+                              MPI_Win_delete_attr_function* c_delete_fn,
+                              Copy_attr_function* cxx_copy_fn,
+                              Delete_attr_function* cxx_delete_fn,
+                              void* extra_state);
+
+public:
   virtual void Delete_attr(int win_keyval);
   
   static void Free_keyval(int& win_keyval); 
@@ -178,9 +189,9 @@ public:
   typedef ::std::map<MPI_Win, Win*> mpi_win_map_t;
   static mpi_win_map_t mpi_win_map;
   
-  typedef ::std::pair<Win::Copy_attr_function*, Win::Delete_attr_function*> key_pair_t;
-  typedef ::std::map<int, key_pair_t*> mpi_win_key_fn_map_t;
-  static mpi_win_key_fn_map_t mpi_win_key_fn_map;
+  typedef ::std::pair<Win::Copy_attr_function*, Win::Delete_attr_function*> keyval_pair_t;
+  typedef ::std::map<int, keyval_pair_t*> mpi_win_keyval_fn_map_t;
+  static mpi_win_keyval_fn_map_t mpi_win_keyval_fn_map;
   
 protected:
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */

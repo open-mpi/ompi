@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -46,13 +47,15 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ( NULL == comm1 || NULL == comm2 )
+        if (ompi_comm_invalid(comm1) || ompi_comm_invalid(comm2)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                           FUNC_NAME);
+        }
 
-        if ( NULL == result )
+        if ( NULL == result ) {
             return OMPI_ERRHANDLER_INVOKE(comm1, MPI_ERR_ARG, 
                                           FUNC_NAME);
+        }
     }
     
     comp1 = (ompi_communicator_t *) comm1;

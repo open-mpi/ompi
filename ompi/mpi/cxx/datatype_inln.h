@@ -197,13 +197,69 @@ MPI::Datatype::Dup() const
 }
 
 
+// 1) original Create_keyval that takes the first 2 arguments as C++
+//    functions
+inline int
+MPI::Datatype::Create_keyval(MPI::Datatype::Copy_attr_function* type_copy_attr_fn,
+                             MPI::Datatype::Delete_attr_function* type_delete_attr_fn, 
+                             void* extra_state)
+{
+    // Back-end function does the heavy lifting
+    return do_create_keyval(NULL, NULL, 
+                            type_copy_attr_fn, type_delete_attr_fn,
+                            extra_state);
+}
+
+// 2) overload Create_keyval to take the first 2 arguments as C
+//    functions
+inline int
+MPI::Datatype::Create_keyval(MPI_Type_copy_attr_function* type_copy_attr_fn,
+                             MPI_Type_delete_attr_function* type_delete_attr_fn, 
+                             void* extra_state)
+{
+    // Back-end function does the heavy lifting
+    return do_create_keyval(type_copy_attr_fn, type_delete_attr_fn,
+                            NULL, NULL,
+                            extra_state);
+}
+
+// 3) overload Create_keyval to take the first 2 arguments as C++ & C
+//    functions
+inline int
+MPI::Datatype::Create_keyval(MPI::Datatype::Copy_attr_function* type_copy_attr_fn,
+                             MPI_Type_delete_attr_function* type_delete_attr_fn,
+                             void* extra_state)
+{
+    // Back-end function does the heavy lifting
+    return do_create_keyval(NULL, type_delete_attr_fn,
+                            type_copy_attr_fn, NULL,
+                            extra_state);
+}
+
+// 4) overload Create_keyval to take the first 2 arguments as C & C++
+//    functions
+inline int
+MPI::Datatype::Create_keyval(MPI_Type_copy_attr_function* type_copy_attr_fn,
+                             MPI::Datatype::Delete_attr_function* type_delete_attr_fn,
+                             void* extra_state)
+{
+    // Back-end function does the heavy lifting
+    return do_create_keyval(type_copy_attr_fn, NULL,
+                            NULL, type_delete_attr_fn,
+                            extra_state);
+}
+
 inline void
 MPI::Datatype::Delete_attr(int type_keyval)
 {
   (void) MPI_Type_delete_attr(mpi_datatype, type_keyval);
 }
 
-
+inline void
+MPI::Datatype::Free_keyval(int& type_keyval)
+{
+    (void) MPI_Type_free_keyval(&type_keyval);
+}
 
 inline bool
 MPI::Datatype::Get_attr(int type_keyval,
@@ -251,7 +307,11 @@ MPI::Datatype::Get_name(char* type_name, int& resultlen) const
   (void) MPI_Type_get_name(mpi_datatype, type_name, &resultlen);
 }
 
-
+inline void
+MPI::Datatype::Set_attr(int type_keyval, const void* attribute_val)
+{
+  (void) MPI_Type_set_attr(mpi_datatype, type_keyval, const_cast<void *>(attribute_val));
+}
 
 inline void
 MPI::Datatype::Set_name(const char* type_name)

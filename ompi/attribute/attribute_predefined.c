@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -346,7 +347,7 @@ static int create_comm(int target_keyval, bool want_inherit)
         (want_inherit ? MPI_COMM_DUP_FN : MPI_COMM_NULL_COPY_FN);
     del.attr_communicator_delete_fn = MPI_COMM_NULL_DELETE_FN;
     err = ompi_attr_create_keyval(COMM_ATTR, copy, del,
-                                  &keyval, NULL, OMPI_KEYVAL_PREDEFINED);
+                                  &keyval, NULL, OMPI_KEYVAL_PREDEFINED, NULL);
     if (MPI_SUCCESS != err) {
         return err;
     }
@@ -375,7 +376,7 @@ static int create_win(int target_keyval)
     copy.attr_win_copy_fn = (MPI_Win_internal_copy_attr_function*)MPI_WIN_NULL_COPY_FN;
     del.attr_win_delete_fn = MPI_WIN_NULL_DELETE_FN;
     err = ompi_attr_create_keyval(WIN_ATTR, copy, del,
-                                  &keyval, NULL, OMPI_KEYVAL_PREDEFINED);
+                                  &keyval, NULL, OMPI_KEYVAL_PREDEFINED, NULL);
     if (MPI_SUCCESS != err) {
         return err;
     }

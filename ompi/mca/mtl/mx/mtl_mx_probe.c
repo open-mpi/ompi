@@ -9,7 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * $COPYRIGHT$
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  *
  * Additional copyrights may follow
  *
@@ -58,11 +59,11 @@ ompi_mtl_mx_iprobe(struct mca_mtl_base_module_t* mtl,
     }
 
     if (result) {
-        status->MPI_ERROR = OMPI_SUCCESS;
-        MX_GET_SRC(mx_status.match_info, status->MPI_SOURCE);
-        MX_GET_TAG(mx_status.match_info, status->MPI_TAG); 
-        status->_count = mx_status.msg_length;
-
+        if(MPI_STATUS_IGNORE != status) { 
+            MX_GET_SRC(mx_status.match_info, status->MPI_SOURCE);
+            MX_GET_TAG(mx_status.match_info, status->MPI_TAG); 
+            status->_count = mx_status.msg_length;
+        }
         *flag = 1;
     } else {
         *flag = 0;

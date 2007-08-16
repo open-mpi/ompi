@@ -109,6 +109,7 @@ struct mca_btl_openib_component_t {
     uint32_t ib_cq_size;   /**< Max outstanding CQE on the CQ */  
     uint32_t ib_sg_list_size; /**< Max scatter/gather descriptor entries on the WQ*/ 
     uint32_t ib_pkey_ix; 
+    uint32_t ib_pkey_val;
     uint32_t ib_psn; 
     uint32_t ib_qp_ous_rd_atom; 
     uint32_t ib_mtu; 
@@ -139,6 +140,10 @@ struct mca_btl_openib_component_t {
     /** Whether we want a warning if non default GID prefix is not configured
         on multiport setup */
     bool warn_default_gid_prefix;
+#ifdef HAVE_IBV_FORK_INIT
+    /** Whether we want fork support or not */
+    int want_fork_support;
+#endif
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;
@@ -188,6 +193,7 @@ struct mca_btl_openib_module_t {
     mca_btl_openib_port_info_t port_info;  /* contains only the subnet id right now */ 
     mca_btl_openib_hca_t *hca;
     uint8_t port_num;           /**< ID of the PORT */ 
+    uint16_t pkey_index;
     struct ibv_cq *ib_cq[2];
     struct ibv_port_attr ib_port_attr; 
     uint16_t lid;                      /**< lid that is actually used (for LMC) */
@@ -199,6 +205,7 @@ struct mca_btl_openib_module_t {
     
     ompi_free_list_t recv_free_eager;  /**< High priority free list of buffer descriptors */
     ompi_free_list_t recv_free_max;    /**< Low priority free list of buffer descriptors */ 
+    ompi_free_list_t recv_free_frag;   /**< free list of frags only... used for pining memory */ 
 
     ompi_free_list_t send_free_control; /**< frags for control massages */ 
     opal_mutex_t ib_lock;          /**< module level lock */ 
@@ -227,8 +234,14 @@ struct mca_btl_openib_module_t {
    
     orte_pointer_array_t *endpoints;
 }; typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
-    
+
 extern mca_btl_openib_module_t mca_btl_openib_module;
+
+struct mca_btl_openib_reg_t {
+    mca_mpool_base_registration_t base;
+    struct ibv_mr *mr;
+};
+typedef struct mca_btl_openib_reg_t mca_btl_openib_reg_t;
 
 /**
  * Register a callback function that is called on receipt
@@ -421,10 +434,8 @@ extern mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
  * @param frag (IN)  IB send fragment
  *
  */
-extern void mca_btl_openib_send_frag_return(
-                                            struct mca_btl_base_module_t* btl,
-                                            struct mca_btl_openib_frag_t*
-                                            );
+extern void mca_btl_openib_send_frag_return(mca_btl_base_module_t* btl,
+        mca_btl_openib_frag_t*);
 
 
 int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t* openib_btl); 
@@ -457,6 +468,7 @@ static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
                         &bad_wr)) {
                 BTL_ERROR(("error posting receive descriptors to shared "
                             "receive queue: %s", strerror(errno)));
+                OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
                 return OMPI_ERROR;
             }
         }

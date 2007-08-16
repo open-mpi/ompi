@@ -22,7 +22,9 @@ Failed to change to the working directory:
 Host:      %s
 Directory: %s
 
-The error returned was "%s".  Execution will now abort.
+The error returned was "%s".  Execution will now abort. You may want to
+use the --wdir command line option to specify a working directory for
+this application.
 [argv0-not-found]
 Failed to find the following executable:
 

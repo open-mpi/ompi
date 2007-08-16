@@ -11,7 +11,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
-// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -161,7 +161,10 @@ public:
   //
 
   virtual Datatype Dup() const;
-  
+
+  // Need 4 overloaded versions of this function because per the
+  // MPI-2 spec, you can mix-n-match the C predefined functions with
+  // C++ functions.
   static int Create_keyval(Copy_attr_function* type_copy_attr_fn,
                            Delete_attr_function* type_delete_attr_fn,
                            void* extra_state);
@@ -174,6 +177,17 @@ public:
   static int Create_keyval(MPI_Type_copy_attr_function* type_copy_attr_fn,
                            Delete_attr_function* type_delete_attr_fn,
                            void* extra_state);
+
+protected:
+  // Back-end function to do the heavy lifting for creating the
+  // keyval
+  static int do_create_keyval(MPI_Type_copy_attr_function* c_copy_fn,
+                              MPI_Type_delete_attr_function* c_delete_fn,
+                              Copy_attr_function* cxx_copy_fn,
+                              Delete_attr_function* cxx_delete_fn,
+                              void* extra_state);
+
+public:
 
   virtual void Delete_attr(int type_keyval);
 
@@ -209,9 +223,9 @@ public:
   typedef ::std::map<MPI_Datatype, Datatype*> mpi_type_map_t;
   static mpi_type_map_t mpi_type_map;
 
-  typedef ::std::pair<Datatype::Copy_attr_function*, Datatype::Delete_attr_function*> key_pair_t;
-  typedef ::std::map<int, key_pair_t*> mpi_type_key_fn_map_t;
-  static mpi_type_key_fn_map_t mpi_type_key_fn_map;
+  typedef ::std::pair<Datatype::Copy_attr_function*, Datatype::Delete_attr_function*> keyval_pair_t;
+  typedef ::std::map<int, keyval_pair_t*> mpi_type_keyval_fn_map_t;
+  static mpi_type_keyval_fn_map_t mpi_type_keyval_fn_map;
 };
 
 

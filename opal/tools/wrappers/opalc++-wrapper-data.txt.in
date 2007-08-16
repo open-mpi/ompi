@@ -18,5 +18,5 @@ compiler_flags=@OPAL_WRAPPER_EXTRA_CXXFLAGS@
 linker_flags=@OPAL_WRAPPER_EXTRA_LDFLAGS@
 libs=-lopen-pal @OPAL_WRAPPER_EXTRA_LIBS@
 required_file=
-includedir=@OPAL_INCLUDEDIR@
-libdir=@OPAL_LIBDIR@
+includedir=${includedir}
+libdir=${libdir}

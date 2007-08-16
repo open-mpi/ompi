@@ -10,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,7 +46,8 @@
 #include <sys/time.h>
 #endif
 
-#include "opal/install_dirs.h"
+#include "opal/mca/installdirs/installdirs.h"
+#include "opal/class/opal_list.h"
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -76,11 +79,6 @@
 
 #include "orte/mca/pls/base/pls_private.h"
 #include "pls_bproc.h"
-
-/**
- * Our current evironment
- */
-extern char **environ;
 
 static bool daemons_launched;
 static bool bynode;
@@ -574,7 +572,7 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
     } else {
         orted_path = opal_path_findv(mca_pls_bproc_component.orted, 0, environ, NULL);
         if(NULL == orted_path) {
-            orted_path = opal_os_path( false, OPAL_BINDIR, mca_pls_bproc_component.orted, NULL );
+            orted_path = opal_os_path( false, opal_install_dirs.bindir, mca_pls_bproc_component.orted, NULL );
             if( (NULL != orted_path) || (0 != stat(orted_path, &buf)) ) {
                 char *path = getenv("PATH");
                 if (NULL == path) {
@@ -582,7 +580,7 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
                 }
                 opal_show_help("help-pls-bproc.txt", "no-orted", true,
                                mca_pls_bproc_component.orted,
-                               mca_pls_bproc_component.orted, path, OPAL_BINDIR);
+                               mca_pls_bproc_component.orted, path, opal_install_dirs.bindir);
                 rc = ORTE_ERROR;
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;

@@ -22,7 +22,7 @@
 #include <string.h>
 #include <locale.h>
 
-#include "opal/install_dirs.h"
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/show_help.h"
 #include "opal/util/show_help_lex.h"
 #include "opal/util/printf.h"
@@ -104,11 +104,11 @@ static int open_file(const char *base, const char *topic)
     /* Try to open the file.  If we can't find it, try it with a .txt
        extension. */
 
-    filename = opal_os_path( false, OPAL_PKGDATADIR, base, NULL );
+    filename = opal_os_path( false, opal_install_dirs.pkgdatadir, base, NULL );
     opal_show_help_yyin = fopen(filename, "r");
     free(filename);
     if (NULL == opal_show_help_yyin) {
-        asprintf(&filename, "%s/%s.txt", OPAL_PKGDATADIR, base);
+        asprintf(&filename, "%s/%s.txt", opal_install_dirs.pkgdatadir, base);
         opal_show_help_yyin = fopen(filename, "r");
         free(filename);
     }
@@ -123,11 +123,11 @@ static int open_file(const char *base, const char *topic)
     /* Do we have a file matching that locale?  If not, open the
        default language (because we know that we have that one) */
 
-    asprintf(&filename, "%s/%s.%s", OPAL_PKGDATADIR, base, lang);
+    asprintf(&filename, "%s/%s.%s", opal_install_dirs.pkgdatadir, base, lang);
     opal_show_help_yyin = fopen(filename, "r");
     free(filename);
     if (NULL == opal_show_help_yyin) {
-        asprintf(&filename, "%s/%s.%s", OPAL_PKGDATADIR, 
+        asprintf(&filename, "%s/%s.%s", opal_install_dirs.pkgdatadir, 
                  base, default_language);
         opal_show_help_yyin = fopen(filename, "r");
         free(filename);
@@ -136,7 +136,7 @@ static int open_file(const char *base, const char *topic)
     /* If we still couldn't find it, try with no extension */
 
     if (NULL == opal_show_help_yyin) {
-        filename = opal_os_path( false, OPAL_PKGDATADIR, base, NULL );
+        filename = opal_os_path( false, opal_install_dirs.pkgdatadir, base, NULL );
         opal_show_help_yyin = fopen(filename, "r");
         free(filename);
     }

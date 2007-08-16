@@ -299,15 +299,18 @@ int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
              item = opal_list_get_next(item)) {
             proc = (orte_mapped_proc_t*)item;
             
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, 0, segment, 3, 1))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, 0, segment, 3, 0))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(ndat);
                 OBJ_RELEASE(value);
                 return rc;
             }
             
-            value->tokens[0] = strdup("bogus"); /* must have at least one token */
-                                      
+            /* be sure NOT to insert tokens into the value as the launch_local_procs
+             * function uses that as an indicator that this is data for a process
+             * as opposed to from the global container
+             */
+            
             if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]),
                                                             ORTE_PROC_NAME_KEY,
                                                             ORTE_NAME, &proc->name))) {

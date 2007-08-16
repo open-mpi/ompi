@@ -30,7 +30,13 @@
 extern "C" {
 #endif
 
-    ORTE_DECLSPEC extern orte_ras_base_component_t mca_ras_tm_component;
+    struct orte_ras_tm_component_t {
+        orte_ras_base_component_t super;
+        char *nodefile_dir;
+    };
+    typedef struct orte_ras_tm_component_t orte_ras_tm_component_t;
+    
+    ORTE_DECLSPEC extern orte_ras_tm_component_t mca_ras_tm_component;
     ORTE_DECLSPEC extern orte_ras_base_module_t orte_ras_tm_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)

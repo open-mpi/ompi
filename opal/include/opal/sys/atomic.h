@@ -238,7 +238,7 @@ enum {
 #if OPAL_HAVE_ATOMIC_SPINLOCKS == 0
 static inline 
 #endif
-void opal_atomic_init(opal_atomic_lock_t* lock, int value);
+void opal_atomic_init(opal_atomic_lock_t* lock, int32_t value);
 
 
 /**

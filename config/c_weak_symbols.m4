@@ -23,16 +23,20 @@ AC_DEFUN([_OMPI_C_WEAK_SYMBOLS],[
     # need two files because icc will incorrectly not create the
     # symbols if they are not used in the object file in which they
     # are defined.  Blah!
+    # To get to compile with icc, have them in a separate header.
+    cat > conftest_weak.h <<EOF
+int real(int i);
+int fake(int i);
+EOF
+
     cat > conftest_weak.c <<EOF
-extern int real(int i);
-extern int fake(int i);
+#include "conftest_weak.h"
 #pragma weak fake = real
 int real(int i) { return i; }
 EOF
 
     cat > conftest.c <<EOF
-extern int fake(int i);
-extern int real(int i);
+#include "conftest_weak.h"
 int main() { return fake(3); }
 EOF
 
@@ -48,7 +52,7 @@ OMPI_LOG_COMMAND(
     AS_IF([test "$ompi_c_weak_symbols_happy" = "1"], [$1], [$2])
 
     unset ompi_c_weak_symbols_happy
-    /bin/rm -f conftest*
+    /bin/rm -f conftest_weak.h conftest_weak.c conftest.c conftest
 ])
 
 

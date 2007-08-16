@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -758,6 +758,8 @@ cleanup:
     OBJ_DESTRUCT(&max_used_nodes);
     OBJ_DESTRUCT(&fully_used_nodes);
     OBJ_DESTRUCT(&mapped_node_list);
+    OBJ_RELEASE(map);
+
 
     free(save_bookmark);
     

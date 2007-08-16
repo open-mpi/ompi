@@ -9,6 +9,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -41,6 +42,8 @@
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/timer/timer.h"
 #include "opal/mca/timer/base/base.h"
+#include "opal/mca/installdirs/installdirs.h"
+#include "opal/mca/installdirs/base/base.h"
 #include "opal/runtime/opal.h"
 
 #include "ompi/mca/allocator/allocator.h"
@@ -122,10 +125,13 @@ void ompi_info::open_components()
 {
   ompi_info::type_vector_t::size_type i;
   string env;
-  char *target;
+  char *target, *save;
+  vector<std::string> env_save;
+  vector<std::string>::iterator esi;
 
-  if (opened_components)
-    return;
+  if (opened_components) {
+      return;
+  }
 
   // Clear out the environment.  Use strdup() to orphan the resulting
   // strings because items are placed in the environment by reference,
@@ -133,8 +139,9 @@ void ompi_info::open_components()
 
   for (i = 0; i < mca_types.size(); ++i) {
     env = "OMPI_MCA_" + mca_types[i];
-    if (NULL != getenv(env.c_str())) {
+    if (NULL != (save = getenv(env.c_str()))) {
       env += "=";
+      env_save.push_back(env + save);
       target = strdup(env.c_str());
       putenv(target);
     }
@@ -187,6 +194,10 @@ void ompi_info::open_components()
 
   opal_timer_base_open();
   component_map["timer"] = &opal_timer_base_components_opened;
+
+  // OPAL's installdirs base open has already been called as part of
+  // opal_init_util() back in main().
+  component_map["installdirs"] = &opal_installdirs_components;
 
   // ORTE frameworks
 
@@ -265,6 +276,17 @@ void ompi_info::open_components()
   mca_topo_base_open();
   component_map["topo"] = &mca_topo_base_components_opened;
 
+  // Restore the environment to what it was before we started so that
+  // if users setenv OMPI_MCA_<framework name> to some value, they'll
+  // see that value when it is shown via --param output.
+
+  if (!env_save.empty()) {
+      for (esi = env_save.begin(); esi != env_save.end(); ++esi) {
+          target = strdup(esi->c_str());
+          putenv(target);
+      }
+  }
+
   // All done
 
   opened_components = true;
@@ -311,6 +333,8 @@ void ompi_info::close_components()
         opal_paffinity_base_close();
         opal_maffinity_base_close();
         opal_timer_base_close();
+        // Do not call OPAL's installdirs close; it will be handled in
+        // opal_finalize_util().
 
         component_map.clear();
     }

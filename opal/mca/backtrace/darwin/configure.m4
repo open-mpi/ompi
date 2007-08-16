@@ -32,6 +32,13 @@ AC_DEFUN([MCA_backtrace_darwin_CONFIG],[
                    [backtrace_darwin_happy="yes"],
                    [backtrace_darwin_happy="no"])
 
+    case "${host}" in
+    i?86-*|x86_64*)
+        if test "$ac_cv_sizeof_long" = "8" ; then
+            backtrace_darwin_happy="no"
+        fi
+    esac
+
     if test "$backtrace_darwin_happy" = "yes" ; then 
        if test "$OMPI_C_GCC_INLINE_ASSEMBLY" = "0" ; then
            backtrace_darwin_happy="no"

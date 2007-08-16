@@ -23,6 +23,7 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 #include "opal/event/event.h"
+#include "opal/include/opal/align.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -37,6 +38,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/sys_info.h"
 #include "ompi/mca/mpool/base/base.h" 
+#include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "ompi/mca/btl/base/base.h"
 #include "btl_openib.h"
 #include "btl_openib_frag.h"
@@ -48,7 +50,6 @@
 
 #include "ompi/datatype/convertor.h" 
 #include "ompi/mca/mpool/mpool.h" 
-#include <sysfs/libsysfs.h>  
 #include <infiniband/verbs.h> 
 #include <errno.h> 
 #include <string.h>   /* for strerror()*/ 
@@ -66,7 +67,8 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
                                mca_btl_base_descriptor_t* descriptor,
                                void* cbdata);
 static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
-                         uint8_t port_num, struct ibv_port_attr *ib_port_attr);
+                         uint8_t port_num, uint16_t pkey_index,
+                         struct ibv_port_attr *ib_port_attr);
 static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev);
 static mca_btl_base_module_t **btl_openib_component_init(
     int *num_btl_modules, bool enable_progress_threads,
@@ -82,6 +84,9 @@ static int btl_openib_component_progress(void);
 static void btl_openib_frag_progress_pending(
          mca_btl_openib_module_t* openib_btl, mca_btl_base_endpoint_t *endpoint,
          const int prio);
+static int openib_reg_mr(void *reg_data, void *base, size_t size,
+        mca_mpool_base_registration_t *reg);
+static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg);
 
 
 mca_btl_openib_component_t mca_btl_openib_component = {
@@ -266,15 +271,46 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
     }
 }
 
+static int openib_reg_mr(void *reg_data, void *base, size_t size,
+        mca_mpool_base_registration_t *reg)
+{
+    mca_btl_openib_hca_t *hca = (mca_btl_openib_hca_t*)reg_data;
+    mca_btl_openib_reg_t *openib_reg = (mca_btl_openib_reg_t*)reg;
+
+    openib_reg->mr = ibv_reg_mr(hca->ib_pd, base, size, IBV_ACCESS_LOCAL_WRITE |
+            IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ);
+
+    if(NULL == openib_reg->mr)
+        return OMPI_ERR_OUT_OF_RESOURCE;
+
+    return OMPI_SUCCESS;
+}
+
+static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg)
+{
+    mca_btl_openib_reg_t *openib_reg = (mca_btl_openib_reg_t*)reg;
+
+    if(openib_reg->mr != NULL) {
+        if(ibv_dereg_mr(openib_reg->mr)) {
+            opal_output(0, "%s: error unpinning openib memory errno says %s\n",
+                    __func__, strerror(errno));
+            return OMPI_ERROR;
+        }
+    }
+    openib_reg->mr = NULL;
+    return OMPI_SUCCESS;
+}
+
 static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
-                         uint8_t port_num, struct ibv_port_attr *ib_port_attr)
+                         uint8_t port_num, uint16_t pkey_index,
+                         struct ibv_port_attr *ib_port_attr)
 {
     uint16_t lid, i, lmc;
     mca_btl_openib_module_t *openib_btl;
     mca_btl_base_selected_module_t *ib_selected;
     union ibv_gid gid;
     uint64_t subnet_id;
-    
+
     ibv_query_gid(hca->ib_dev_context, port_num, 0, &gid);
     subnet_id = ntoh64(gid.global.subnet_prefix);
     BTL_VERBOSE(("my subnet_id is %016x\n", subnet_id));
@@ -309,6 +345,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             ib_selected->btl_module = (mca_btl_base_module_t*) openib_btl;
             openib_btl->hca = hca;
             openib_btl->port_num = (uint8_t) port_num;
+            openib_btl->pkey_index = pkey_index;
             openib_btl->lid = lid;
             openib_btl->src_path_bits = lid - ib_port_attr->lid;
             /* store the subnet for multi-nic support */
@@ -316,6 +353,54 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             openib_btl->port_info.mtu = hca->mtu;
             openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbfunc = btl_openib_control;
             openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbdata = NULL;
+
+            /* Auto-detect the port bandwidth */
+            if (0 == openib_btl->super.btl_bandwidth) {
+                /* To calculate the bandwidth available on this port,
+                   we have to look up the values corresponding to
+                   port->active_speed and port->active_width.  These
+                   are enums corresponding to the IB spec.  Overall
+                   forumula is 80% of the reported speed (to get the
+                   true link speed) times the number of links. */
+                switch (ib_port_attr->active_speed) {
+                case 1: 
+                    /* 2.5Gbps * 0.8, in megabits */
+                    openib_btl->super.btl_bandwidth = 2000;
+                    break;
+                case 2: 
+                    /* 5.0Gbps * 0.8, in megabits */
+                    openib_btl->super.btl_bandwidth = 4000;
+                    break;
+                case 4: 
+                    /* 10.0Gbps * 0.8, in megabits */
+                    openib_btl->super.btl_bandwidth = 8000;
+                    break;
+                default: 
+                    /* Who knows? */
+                    return OMPI_ERR_VALUE_OUT_OF_BOUNDS;
+                }
+                switch (ib_port_attr->active_width) {
+                case 1:
+                    /* 1x */
+                    /* unity */
+                    break;
+                case 2:
+                    /* 4x */
+                    openib_btl->super.btl_bandwidth *= 4;
+                    break;
+                case 4:
+                    /* 8x */
+                    openib_btl->super.btl_bandwidth *= 8;
+                    break;
+                case 8:
+                    /* 12x */
+                    openib_btl->super.btl_bandwidth *= 12;
+                    break;
+                default:
+                    /* Who knows? */
+                    return OMPI_ERR_VALUE_OUT_OF_BOUNDS;
+                }
+            }
             opal_list_append(btl_list, (opal_list_item_t*) ib_selected);
             hca->btls++;
             ++mca_btl_openib_component.ib_num_btls;
@@ -430,7 +515,10 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         goto close_hca;
     }
 
-    mpool_resources.ib_pd = hca->ib_pd;
+    mpool_resources.reg_data = (void*)hca;
+    mpool_resources.sizeof_reg = sizeof(mca_btl_openib_reg_t);
+    mpool_resources.register_mem = openib_reg_mr;
+    mpool_resources.deregister_mem = openib_dereg_mr;
     hca->mpool =
         mca_mpool_base_module_create(mca_btl_openib_component.ib_mpool_name,
                 hca, &mpool_resources);
@@ -453,8 +541,22 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         }
 
         if(IBV_PORT_ACTIVE == ib_port_attr.state){
-            ret = init_one_port(btl_list, hca, i, &ib_port_attr);
 
+            if (0 == mca_btl_openib_component.ib_pkey_val) {
+                ret = init_one_port(btl_list, hca, i, mca_btl_openib_component.ib_pkey_ix,
+                                    &ib_port_attr);
+            }
+            else {
+                uint16_t pkey,j;
+                for (j=0; j < hca->ib_dev_attr.max_pkeys; j++) {
+                    ibv_query_pkey(hca->ib_dev_context, i, j, &pkey);
+                    pkey=ntohs(pkey);
+                    if(pkey == mca_btl_openib_component.ib_pkey_val){
+                        ret = init_one_port(btl_list, hca, i, j, &ib_port_attr);
+                        break;
+                    }
+                }
+            }
             if (OMPI_SUCCESS != ret) {
                 /* Out of bounds error indicates that we hit max btl number 
                  * don't propagate the error to the caller */
@@ -477,6 +579,7 @@ free_hca:
     free(hca);
     return ret;
 }
+
 /*
  *  IB component initialization:
  *  (1) read interface list from kernel and compare against component parameters
@@ -525,6 +628,26 @@ btl_openib_component_init(int *num_btl_modules,
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_ini_init())) {
         return NULL;
     }
+
+    /* If we want fork support, try to enable it */
+#ifdef HAVE_IBV_FORK_INIT
+    if (0 != mca_btl_openib_component.want_fork_support) {
+        if (0 != ibv_fork_init()) {
+            /* If the want_fork_support MCA parameter is >0, then the
+               user was specifically asking for fork support and we
+               couldn't provide it.  So print an error and deactivate
+               this BTL. */
+            if (mca_btl_openib_component.want_fork_support > 0) {
+                opal_show_help("help-mpi-btl-openib.txt",
+                               "ibv_fork_init fail", true,
+                               orte_system_info.nodename);
+                mca_btl_openib_component.ib_num_btls = 0;
+                btl_openib_modex_send();
+                return NULL;
+            } 
+        }
+    }
+#endif
 
 #if OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST
     ib_devs = ibv_get_device_list(&num_devs);
@@ -639,6 +762,7 @@ btl_openib_component_init(int *num_btl_modules,
         
         OBJ_CONSTRUCT(&openib_btl->recv_free_eager, ompi_free_list_t);
         OBJ_CONSTRUCT(&openib_btl->recv_free_max, ompi_free_list_t);
+        OBJ_CONSTRUCT(&openib_btl->recv_free_frag, ompi_free_list_t);
 
         /* initialize the memory pool using the hca */ 
         openib_btl->super.btl_mpool = openib_btl->hca->mpool;
@@ -648,8 +772,9 @@ btl_openib_component_init(int *num_btl_modules,
             sizeof(mca_btl_openib_header_t) + 
             sizeof(mca_btl_openib_footer_t) + 
             openib_btl->super.btl_eager_limit;
-	
-        openib_btl->eager_rdma_frag_size = (length + mca_btl_openib_component.buffer_alignment) & ~(mca_btl_openib_component.buffer_alignment-1);
+
+        openib_btl->eager_rdma_frag_size = OPAL_ALIGN(length,
+                mca_btl_openib_component.buffer_alignment, int);
  
         ompi_free_list_init_ex(&openib_btl->send_free_eager,
                             length,
@@ -716,6 +841,14 @@ btl_openib_component_init(int *num_btl_modules,
         ompi_free_list_init(&openib_btl->send_free_frag,
                             length, 
                             OBJ_CLASS(mca_btl_openib_send_frag_frag_t),
+                            mca_btl_openib_component.ib_free_list_num,
+                            mca_btl_openib_component.ib_free_list_max,
+                            mca_btl_openib_component.ib_free_list_inc,
+                            NULL);
+
+        ompi_free_list_init(&openib_btl->recv_free_frag,
+                            length, 
+                            OBJ_CLASS(mca_btl_openib_recv_frag_frag_t),
                             mca_btl_openib_component.ib_free_list_num,
                             mca_btl_openib_component.ib_free_list_max,
                             mca_btl_openib_component.ib_free_list_inc,

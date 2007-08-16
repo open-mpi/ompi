@@ -8,7 +8,7 @@
 
 major=1
 minor=2
-release=0
+release=3
 
 # greek is used for alpha or beta release tags.  If it is non-empty,
 # it will be appended to the version number.  It does not have to be
@@ -17,14 +17,14 @@ release=0
 # only requirement is that it must be entirely printable ASCII 
 # characters and have no white space.
 
-greek=lanl1
+greek=rc2
 
 # If want_svn=1, then the SVN r number will be included in the overall
 # Open MPI version number in some form.
 
-want_svn=0
+want_svn=1
 
-# If svn_r=-1, then the SVN r numbere will be obtained dynamically at
+# If svn_r=-1, then the SVN r number will be obtained dynamically at
 # run time, either 1) via the "svnversion" command (if this is a
 # Subversion checkout) in the form "r<svn_r>", or b) with the date (if
 # this is not a Subversion checkout, and the svnversion command cannot
@@ -34,4 +34,4 @@ want_svn=0
 # distribution tarball is being made from an SVN checkout, the value
 # of svn_r in this file is replaced with the output of "svnversion".
 
-svn_r=r14060
+svn_r=-1

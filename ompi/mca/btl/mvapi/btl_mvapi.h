@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -192,7 +193,13 @@ struct mca_btl_mvapi_module_t {
     uint32_t eager_rdma_buffers_count; /**< number of RDMA buffers */
 }; typedef struct mca_btl_mvapi_module_t mca_btl_mvapi_module_t;
     
-
+struct mca_btl_mvapi_reg_t {
+    mca_mpool_base_registration_t base;
+    VAPI_mr_hndl_t hndl; /* Memory region handle */
+    VAPI_lkey_t l_key;   /* Local key to registered memory */
+    VAPI_rkey_t r_key;   /* Remote key to registered memory */
+};
+typedef struct mca_btl_mvapi_reg_t mca_btl_mvapi_reg_t;
 
 #define MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, \
                                     additional) \
@@ -254,7 +261,7 @@ struct mca_btl_mvapi_module_t {
         frag->sg_entry.len = frag->size + \
             ((unsigned char*) frag->segment.seg_addr.pval-  \
              (unsigned char*) frag->hdr);  \
-       desc_post[i] = frag->rr_desc; \
+       desc_post[i] = frag->desc.rr_desc; \
     }\
     ret = VAPI_post_srq( nic, \
                          srq_hndl, \

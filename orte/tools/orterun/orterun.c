@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,7 +47,7 @@
 #endif
 
 #include "opal/event/event.h"
-#include "opal/install_dirs.h"
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/base.h"
 #include "opal/threads/condition.h"
 #include "opal/util/argv.h"
@@ -56,6 +58,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/trace.h"
 #include "opal/version.h"
+#include "opal/runtime/opal.h"
 
 #include "orte/orte_constants.h"
 
@@ -214,6 +217,9 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', "wdir", "wdir", 1,
       &orterun_globals.wdir, OPAL_CMD_LINE_TYPE_STRING,
       "Set the working directory of the started processes" },
+    { NULL, NULL, NULL, '\0', "wd", "wd", 1,
+      &orterun_globals.wdir, OPAL_CMD_LINE_TYPE_STRING,
+      "Synonym for --wdir" },
     { NULL, NULL, NULL, '\0', "path", "path", 1,
       &orterun_globals.path, OPAL_CMD_LINE_TYPE_STRING,
       "PATH to be used to look for executables to start processes" },
@@ -229,7 +235,7 @@ opal_cmd_line_init_t cmd_line_init[] = {
       "List of hosts to invoke processes on" },
 
     /* OSC mpiexec-like arguments */
-    { NULL, NULL, NULL, '\0', "nolocal", "nolocal", 0,
+    { "rmaps", "base", "no_schedule_local", '\0', "nolocal", "nolocal", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Do not run any MPI applications on the local node" },
 
@@ -289,9 +295,6 @@ opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
 
-#if !defined(__WINDOWS__)
-extern char** environ;
-#endif   /* !defined(__WINDOWS__) */
 /*
  * Local functions
  */
@@ -317,6 +320,10 @@ int orterun(int argc, char *argv[])
     opal_list_t attributes;
     opal_list_item_t *item;
     uint8_t flow;
+
+    /* Need to initialize OPAL so that install_dirs are filled in */
+
+    opal_init_util();
 
     /* Setup MCA params */
 
@@ -1426,7 +1433,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         }
         /* --enable-orterun-prefix-default was given to orterun */
         else {
-            param = strdup(OPAL_PREFIX);
+            param = strdup(opal_install_dirs.prefix);
         }
 
         if (NULL != param) {

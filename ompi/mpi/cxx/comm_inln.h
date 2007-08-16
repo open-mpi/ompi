@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -283,7 +284,12 @@ MPI::Comm::Compare(const MPI::Comm & comm1,
   return result;
 }
 
-  
+inline void
+MPI::Comm::Free(void) 
+{
+    (void)MPI_Comm_free(&mpi_comm);
+}
+
 inline bool
 MPI::Comm::Is_inter() const
 {
@@ -544,6 +550,70 @@ MPI::Comm::Create_errhandler(MPI::Comm::_MPI2CPP_ERRHANDLERFN_* function)
   MPI::Errhandler temp(errhandler);
   temp.comm_handler_fn = (void(*)(MPI::Comm&, int*, ...))function;
   return temp;
+}
+
+// 1) original Create_keyval that takes the first 2 arguments as C++
+//    functions
+inline int
+MPI::Comm::Create_keyval(MPI::Comm::Copy_attr_function* comm_copy_attr_fn,
+                         MPI::Comm::Delete_attr_function* comm_delete_attr_fn, 
+                         void* extra_state)
+{
+    // Back-end function does the heavy lifting
+    return do_create_keyval(NULL, NULL, 
+                            comm_copy_attr_fn, comm_delete_attr_fn,
+                            extra_state);
+}
+
+// 2) overload Create_keyval to take the first 2 arguments as C
+//    functions
+inline int
+MPI::Comm::Create_keyval(MPI_Comm_copy_attr_function* comm_copy_attr_fn,
+                         MPI_Comm_delete_attr_function* comm_delete_attr_fn, 
+                         void* extra_state)
+{
+    // Back-end function does the heavy lifting
+    return do_create_keyval(comm_copy_attr_fn, comm_delete_attr_fn,
+                            NULL, NULL,
+                            extra_state);
+}
+
+// 3) overload Create_keyval to take the first 2 arguments as C++ & C
+//    functions
+inline int
+MPI::Comm::Create_keyval(MPI::Comm::Copy_attr_function* comm_copy_attr_fn,
+                         MPI_Comm_delete_attr_function* comm_delete_attr_fn,
+                         void* extra_state)
+{
+    // Back-end function does the heavy lifting
+    return do_create_keyval(NULL, comm_delete_attr_fn,
+                            comm_copy_attr_fn, NULL,
+                            extra_state);
+}
+
+// 4) overload Create_keyval to take the first 2 arguments as C & C++
+//    functions
+inline int
+MPI::Comm::Create_keyval(MPI_Comm_copy_attr_function* comm_copy_attr_fn,
+                         MPI::Comm::Delete_attr_function* comm_delete_attr_fn,
+                         void* extra_state)
+{
+    // Back-end function does the heavy lifting
+    return do_create_keyval(comm_copy_attr_fn, NULL,
+                            NULL, comm_delete_attr_fn,
+                            extra_state);
+}
+
+inline void
+MPI::Comm::Free_keyval(int& comm_keyval)
+{
+    (void) MPI_Keyval_free(&comm_keyval);
+}
+
+inline void
+MPI::Comm::Set_attr(int comm_keyval, const void* attribute_val) const
+{
+    (void)MPI_Attr_put(mpi_comm, comm_keyval, (void*) attribute_val);
 }
 
 inline bool

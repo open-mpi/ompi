@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,25 +19,22 @@
 
 
 #include "btl_mvapi_frag.h" 
-#include "ompi/mca/mpool/mvapi/mpool_mvapi.h" 
-
-
 
 static void mca_btl_mvapi_frag_common_constructor( mca_btl_mvapi_frag_t* frag) 
 {
-    mca_mpool_mvapi_registration_t* mem_hndl = (mca_mpool_mvapi_registration_t*) frag->base.super.user_data; 
+    mca_btl_mvapi_reg_t* mem_hndl =
+        (mca_btl_mvapi_reg_t*)frag->base.super.user_data;
     frag->hdr = (mca_btl_mvapi_header_t*) (frag+1);  /* initialize btl header to start at end of frag */ 
     frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + sizeof(mca_btl_mvapi_header_t);  
     /* init the segment address to start after the btl header */ 
     
     frag->segment.seg_len = frag->size;
-    frag->segment.seg_key.key32[0] = (uint32_t) mem_hndl->l_key; 
-    frag->sg_entry.lkey = mem_hndl->l_key; 
+    frag->sg_entry.lkey = mem_hndl->l_key;
+    frag->segment.seg_key.key32[0] = frag->sg_entry.lkey;
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
     frag->base.des_flags = 0; 
 }
 
- 
 static void mca_btl_mvapi_send_frag_common_constructor(mca_btl_mvapi_frag_t* frag) 
 { 
     
@@ -46,12 +44,12 @@ static void mca_btl_mvapi_send_frag_common_constructor(mca_btl_mvapi_frag_t* fra
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     
-    frag->sr_desc.comp_type = VAPI_SIGNALED; 
-    frag->sr_desc.opcode = VAPI_SEND; 
-    frag->sr_desc.remote_qkey = 0; 
-    frag->sr_desc.sg_lst_len = 1; 
-    frag->sr_desc.sg_lst_p = &frag->sg_entry; 
-    frag->sr_desc.id = (VAPI_virt_addr_t) (MT_virt_addr_t) frag; 
+    frag->desc.sr_desc.comp_type = VAPI_SIGNALED; 
+    frag->desc.sr_desc.opcode = VAPI_SEND; 
+    frag->desc.sr_desc.remote_qkey = 0; 
+    frag->desc.sr_desc.sg_lst_len = 1; 
+    frag->desc.sr_desc.sg_lst_p = &frag->sg_entry; 
+    frag->desc.sr_desc.id = (VAPI_virt_addr_t) (MT_virt_addr_t) frag; 
     
 }
 
@@ -64,11 +62,11 @@ static void mca_btl_mvapi_recv_frag_common_constructor(mca_btl_mvapi_frag_t* fra
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
     
-    frag->rr_desc.comp_type = VAPI_SIGNALED; 
-    frag->rr_desc.opcode = VAPI_RECEIVE; 
-    frag->rr_desc.sg_lst_len = 1; 
-    frag->rr_desc.sg_lst_p = &frag->sg_entry; 
-    frag->rr_desc.id = (VAPI_virt_addr_t) (MT_virt_addr_t) frag; 
+    frag->desc.rr_desc.comp_type = VAPI_SIGNALED; 
+    frag->desc.rr_desc.opcode = VAPI_RECEIVE; 
+    frag->desc.rr_desc.sg_lst_len = 1; 
+    frag->desc.rr_desc.sg_lst_p = &frag->sg_entry; 
+    frag->desc.rr_desc.id = (VAPI_virt_addr_t) (MT_virt_addr_t) frag; 
     
    
 }
@@ -116,6 +114,7 @@ static void mca_btl_mvapi_send_frag_frag_constructor(mca_btl_mvapi_frag_t* frag)
     
     frag->size = 0; 
     frag->type = MCA_BTL_MVAPI_FRAG_FRAG;
+    frag->registration = NULL;
     mca_btl_mvapi_send_frag_common_constructor(frag); 
 }
 

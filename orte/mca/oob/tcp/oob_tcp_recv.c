@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC. 
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,7 +45,7 @@ int mca_oob_tcp_recv(
     mca_oob_tcp_msg_t *msg;
     int i, rc = 0, size = 0;
 
-    if(mca_oob_tcp_component.tcp_debug > 3) {
+    if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_ALL) {
         opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_recv: tag %d\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(peer),

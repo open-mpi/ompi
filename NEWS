@@ -4,7 +4,7 @@ Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 Copyright (c) 2004-2006 The University of Tennessee and The University
                         of Tennessee Research Foundation.  All rights
                         reserved.
-Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
@@ -26,19 +26,88 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
-1.2lanl
--------
+1.2.3
+-----
 
-This release was created specifically for use on Los Alamos National
-Laboratory production machines.  It is the Open MPI 1.2 community
-release with a few features that were required on LANL platforms
-but were too late to make the community v1.2 release.  This release
-is not supported outside of the LANL production environment.
+- Fix a regression in comm_spawn functionality that inadvertently
+  caused the mapping of child processes to always start at the same
+  place.  Thanks to Prakash Velayutham for helping discover the
+  problem.
+- Fix segfault when a user's home directory is unavailable on a remote
+  node.  Thanks to Guillaume Thomas-Collignon for bringing the issue
+  to our attention.
+- Fix MPI_IPROBE to properly handle MPI_STATUS_IGNORE on mx and psm
+  MTLs. Thanks to Sophia Corwell for finding this and supplying a
+  reproducer.
+- Fix some error messages in the tcp BTL.
+- Use _NSGetEnviron instead of environ on Mac OS X so that there
+  are no undefined symbols in the shared libraries.
+- On OS X, when MACOSX_DEPLOYMENT_TARGET is 10.3 or higher, support
+  building the Fortran 90 bindings as a shared library.  Thanks to
+  Jack Howarth for his advice on making this work.
+- No longer require extra include flag for the C++ bindings.
+- Fix detection of weak symbols support with Intel compilers.
+- Fix issue found by Josh England: ompi_info would not show framework
+  MCA parameters set in the environment properly.
+- Rename the oob_tcp_include/exclude MCA params to oob_tcp_if_include/exclude
+  so that they match the naming convention of the btl_tcp_if_include/exclude
+  params.  The old names are depreciated, but will still work.
+- Add -wd as a synonymn for the -wdir orterun/mpirun option.
+- Fix the mvapi BTL to compile properly with compilers that do not support
+  anonymous unions.  Thanks to Luis Kornblueh for reporting the bug.
 
-- Implement MPI_TYPE_CREATE_DARRAY function.
 
-This functionality will be merged into future community Open MPI
-releases.
+1.2.2
+-----
+
+- Fix regression in 1.2.1 regarding the handling of $CC with both
+  absolute and relative path names.
+- Fix F90 array of status dimensions.  Thanks to Randy Bramley for
+  noticing the problem.
+- Add btl_openib_ib_pkey_value MCA parameter for controlling IB port selection.
+- Fixed a variety of threading/locking bugs.
+- Fixed some compiler warnings associated with ROMIO, OS X, and gridengine.
+- If pbs-config can be found, use it to look for TM support.  Thanks
+  to Bas van der Vlies for the inspiration and preliminary work.
+- Fixed a deadlock in orterun when the rsh PLS encounters some errors.
+
+
+1.2.1
+-----
+
+- Fixed a number of connection establishment errors in the TCP out-
+  of-band messaging system.
+- Fixed a memory leak when using mpi_comm calls.
+  Thanks to Bas van der Vlies for reporting the problem.
+- Fixed various memory leaks in OPAL and ORTE.
+- Improved launch times when using TM (PBS Pro, Torque, Open PBS).
+- Fixed mpi_leave_pinned to work for all datatypes.
+- Fix functionality allowing users to disable sbrk() (the
+  mpool_base_disable_sbrk MCA parameter) on platforms that support it.
+- Fixed a pair of problems with the TCP "listen_thread" mode for the
+  oob_tcp_listen_mode MCA parameter that would cause failures when
+  attempting to launch applications.
+- Fixed a segfault if there was a failure opening a BTL MX endpoint.
+- Fixed a problem with mpirun's --nolocal option introduced in 1.2.
+- Re-enabled MPI_COMM_SPAWN_MULTIPLE from singletons.
+- LoadLeveler and TM configure fixes, Thanks to Martin Audet for the
+  bug report.
+- Various C++ MPI attributes fixes.
+- Fixed issues with backtrace code on 64 bit Intel & PPC OS X builds.
+- Fixed issues with multi-word CC variables and libtool.
+  Thanks to Bert Wesarg for the bug reports.
+- Fix issue with non-uniform node naming schemes in SLURM.
+- Fix file descriptor leak in the Grid Engine/N1GE support.
+- Fix compile error on OS X 10.3.x introduced with Open MPI 1.1.5.
+- Implement MPI_TYPE_CREATE_DARRAY function (was in 1.1.5 but not 1.2).
+- Recognize zsh shell when using rsh/ssh for launching MPI jobs.
+- Ability to set the OPAL_DESTDIR or OPAL_PREFIX environment
+  variables to "re-root" an existing Open MPI installation.
+- Always include -I for Fortran compiles, even if the prefix is
+  /usr/local.
+- Support for "fork()" in MPI applications that use the
+  OpenFabrics stack (OFED v1.2 or later).
+- Support for setting specific limits on registered memory.
 
 
 1.2
@@ -117,6 +186,9 @@ releases.
 1.1.5
 -----
 
+- Implement MPI_TYPE_CREATE_DARRAY function.
+- Fix race condition in shared memory BTL startup that could cause MPI
+  applications to hang in MPI_INIT.
 - Fix syntax error in a corner case of the event library.  Thanks to
   Bert Wesarg for pointing this out.
 - Add new MCA parameter (mpi_preconnect_oob) for pre-connecting the

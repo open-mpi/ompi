@@ -629,15 +629,9 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
                 btl_endpoint->endpoint_recv_frag = frag;
             } else {
                 btl_endpoint->endpoint_recv_frag = NULL;
-                switch(frag->hdr.type) {
-                case MCA_BTL_TCP_HDR_TYPE_SEND:
-                    {
-                        mca_btl_base_recv_reg_t* reg = frag->btl->tcp_reg + frag->hdr.base.tag;
-                        reg->cbfunc(&frag->btl->super, frag->hdr.base.tag, &frag->base, reg->cbdata);
-                        break;
-                    }
-                default:
-                    break;
+		if( MCA_BTL_TCP_HDR_TYPE_SEND == frag->hdr.type ) {
+		  mca_btl_base_recv_reg_t* reg = frag->btl->tcp_reg + frag->hdr.base.tag;
+		  reg->cbfunc(&frag->btl->super, frag->hdr.base.tag, &frag->base, reg->cbdata);
                 }
 #if MCA_BTL_TCP_ENDPOINT_CACHE
                 if( 0 != btl_endpoint->endpoint_cache_length ) {

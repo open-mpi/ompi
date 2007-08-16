@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC. 
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,6 +42,12 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+#define OOB_TCP_DEBUG_CONNECT_FAIL 1  /* debug connection establishment failures */
+#define OOB_TCP_DEBUG_CONNECT      2  /* other connection information */
+#define OOB_TCP_DEBUG_INFO         3  /* information about startup, connection establish, etc. */
+#define OOB_TCP_DEBUG_ALL          4  /* everything else */
+
 
 /*
  * standard component functions
@@ -243,7 +251,6 @@ struct mca_oob_tcp_component_t {
     int                tcp_peer_retries;     /**< max number of retries before declaring peer gone */
     int                tcp_sndbuf;           /**< socket send buffer size */
     int                tcp_rcvbuf;           /**< socket recv buffer size */
-    int                tcp_timeout;          /**< socket connect timeout in seconds */
     opal_free_list_t   tcp_msgs;             /**< free list of messages */
     opal_event_t       tcp_send_event;       /**< event structure for sends */
     opal_event_t       tcp_recv_event;       /**< event structure for recvs */
@@ -259,12 +266,16 @@ struct mca_oob_tcp_component_t {
 
     bool               tcp_shutdown;
     mca_oob_tcp_listen_type_t tcp_listen_type;
+
     opal_thread_t tcp_listen_thread;
     opal_free_list_t tcp_pending_connections_fl;
     opal_list_t tcp_pending_connections;
     opal_list_t tcp_copy_out_connections;
     opal_list_t tcp_copy_in_connections;
+    opal_list_t tcp_connections_return;
+    opal_list_t tcp_connections_return_copy;
     opal_mutex_t tcp_pending_connections_lock;
+
     opal_timer_t tcp_last_copy_time;
     opal_timer_t tcp_copy_delta;
     int tcp_copy_max_size;

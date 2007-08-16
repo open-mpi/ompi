@@ -78,7 +78,8 @@ void mpi_win_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* win_copy_attr
        to the old MPI-1 INTEGER-parameter functions). */ 
 
    ret = ompi_attr_create_keyval(WIN_ATTR, copy_fn, del_fn,
-				  win_keyval, extra_state, OMPI_KEYVAL_F77);
+                                 win_keyval, extra_state, OMPI_KEYVAL_F77,
+                                 NULL);
 
     if (MPI_SUCCESS != ret) {
         c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER,
