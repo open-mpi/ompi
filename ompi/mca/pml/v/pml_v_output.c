@@ -10,13 +10,19 @@
 
 #include "pml_v_output.h"
 
+#if defined(HAVE_UNISTD_H)
+#include <unistd.h>
+#endif
+
+int pml_v_output = -1;
+
 int pml_v_output_open(char *output, int verbosity) {
     opal_output_stream_t lds;
     char hostname[32] = "NA";
   
     OBJ_CONSTRUCT(&lds, opal_output_stream_t);
     if(!output) {
-      mca_pml_v.output = 0; 
+      pml_v_output = 0; 
     } 
     else {
         if(!strcmp(output, "stdout")) {
@@ -34,12 +40,12 @@ int pml_v_output_open(char *output, int verbosity) {
         gethostname(hostname, 32);
         asprintf(&lds.lds_prefix, "[%s:%05d] pml_v: ", hostname, getpid());
         lds.lds_verbose_level = verbosity;
-        mca_pml_v.output = opal_output_open(&lds);
+        pml_v_output = opal_output_open(&lds);
         free(lds.lds_prefix);
     }
-    return mca_pml_v.output;
+    return pml_v_output;
 }
 
 void pml_v_output_close(void) {
-    opal_output_close(mca_pml_v.output);
+    opal_output_close(pml_v_output);
 }

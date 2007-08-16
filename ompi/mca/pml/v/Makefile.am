@@ -32,9 +32,13 @@ local_sources = \
         pml_v_component.c \
         pml_v_output.h \
         pml_v_output.c \
-        pml_v_protocol.h \
-        pml_v_protocol_base.h \
-        pml_v_protocol_base.c
+        vprotocol.h \
+        base/base.h \
+        base/vprotocol_base.c \
+        base/vprotocol_base_select.c \
+        base/vprotocol_base_parasite.c \
+        base/vprotocol_base_request.h \
+        base/vprotocol_base_request.c
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)

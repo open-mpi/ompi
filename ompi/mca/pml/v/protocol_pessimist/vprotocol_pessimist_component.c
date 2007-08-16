@@ -12,10 +12,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "../pml_v.h"
-#include "../pml_v_protocol_base.h"
 #include "vprotocol_pessimist.h"
-
 
 static inline int mca_param_register_int( const char* param_name, int default_value);
 static inline char *mca_param_register_string(const char* param_name, char *default_value);
@@ -23,7 +20,7 @@ static inline char *mca_param_register_string(const char* param_name, char *defa
 static int mca_vprotocol_pessimist_component_open(void);
 static int mca_vprotocol_pessimist_component_close(void);
 
-static mca_pml_v_protocol_base_module_t *mca_vprotocol_pessimist_component_init( int* priority, bool, bool);
+static mca_vprotocol_base_module_t *mca_vprotocol_pessimist_component_init( int* priority, bool, bool);
 static int mca_vprotocol_pessimist_component_finalize(void);
 
 static int _priority;
@@ -34,12 +31,12 @@ static int _sender_based_size;
 static int _event_buffer_size;
 static char *_mmap_file_name;
 
-mca_pml_v_protocol_base_component_1_0_0_t mca_vprotocol_pessimist_component = 
+mca_vprotocol_base_component_1_0_0_t mca_vprotocol_pessimist_component = 
 {
     /* First, the mca_base_component_t struct containing meta
      * information about the component itself */
     {
-      /* Indicate that we are a pml v1.0.0 component (which also implies
+      /* Indicate that we are a vprotocol v1.0.0 component (which also implies
          a specific MCA version) */
       MCA_VPROTOCOL_BASE_VERSION_1_0_0,
       "pessimist", /* MCA component name */
@@ -71,19 +68,19 @@ static int mca_vprotocol_pessimist_component_open(void)
     _sender_based_size = mca_param_register_int("sender_based_chunk", 100 * 1024 * 1024);
     _event_buffer_size = mca_param_register_int("event_buffer_size", 1024);
     _mmap_file_name = mca_param_register_string("sender_based_file", "vprotocol_pessimist-senderbased");
-    V_OUTPUT_VERBOSE(500, "vprotocol_pessimist: open: read priority %d", _priority);
+    V_OUTPUT_VERBOSE(500, "vprotocol_pessimist: component_open: read priority %d", _priority);
   return OMPI_SUCCESS;
 }
 
 static int mca_vprotocol_pessimist_component_close(void)
 {
-    V_OUTPUT_VERBOSE(500, "vprotocol_pessimist: close");
+    V_OUTPUT_VERBOSE(500, "vprotocol_pessimist: component_close");
     return OMPI_SUCCESS;
 }
 
 /** VPROTOCOL level functions (same as PML one)
   */
-static mca_pml_v_protocol_base_module_t *mca_vprotocol_pessimist_component_init( int* priority,
+static mca_vprotocol_base_module_t *mca_vprotocol_pessimist_component_init( int* priority,
                                                                           bool enable_progress_threads,
                                                                           bool enable_mpi_threads)
 {  

@@ -1,0 +1,93 @@
+/*
+ * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+#ifndef __INCLUDE_VPROTOCOL_H_
+#define __INCLUDE_VPROTOCOL_H_
+
+#include "ompi_config.h"
+#include "opal/mca/mca.h" 
+#include "ompi/mca/pml/pml.h"
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+    
+/* PML_V->PROTOCOL Called by MCA_PML_V framework to initialize the component.
+ * 
+ * @param priority (OUT) Relative priority or ranking used by MCA to
+ * select a component.
+ *
+ * @param enable_progress_threads (IN) Whether this component is
+ * allowed to run a hidden/progress thread or not.
+ *
+ * @param enable_mpi_threads (IN) Whether support for multiple MPI
+ * threads is enabled or not (i.e., MPI_THREAD_MULTIPLE), which
+ * indicates whether multiple threads may invoke this component
+ * simultaneously or not.
+ */
+typedef struct mca_vprotocol_base_module_1_0_0_t * 
+    (*mca_vprotocol_base_component_init_fn_t)(int *priority, 
+                                              bool enable_progress_threads,
+                                              bool enable_mpi_threads);
+
+/* Release any resource allocated in init
+ */
+typedef int (*mca_vprotocol_base_component_finalize_fn_t)(void);
+
+
+/* The MCA type for class instance
+ */
+typedef struct mca_vprotocol_base_component_1_0_0_t {
+    mca_base_component_t pmlm_version;
+    mca_base_component_data_1_0_0_t pmlm_data;
+    mca_vprotocol_base_component_init_fn_t pmlm_init;
+    mca_vprotocol_base_component_finalize_fn_t pmlm_finalize;
+} mca_vprotocol_base_component_1_0_0_t;
+typedef mca_vprotocol_base_component_1_0_0_t mca_vprotocol_base_component_t;
+
+/* The base module of the component
+ */
+typedef struct mca_vprotocol_base_module_1_0_0_t
+{
+    /* PML module stuff */ 
+    mca_pml_base_module_add_procs_fn_t        add_procs;
+    mca_pml_base_module_del_procs_fn_t        del_procs;
+    mca_pml_base_module_enable_fn_t           enable;
+    mca_pml_base_module_progress_fn_t         progress;
+    mca_pml_base_module_add_comm_fn_t         add_comm;
+    mca_pml_base_module_del_comm_fn_t         del_comm;
+    mca_pml_base_module_irecv_init_fn_t       irecv_init;
+    mca_pml_base_module_irecv_fn_t            irecv;
+    mca_pml_base_module_recv_fn_t             recv;
+    mca_pml_base_module_isend_init_fn_t       isend_init;
+    mca_pml_base_module_isend_fn_t            isend;
+    mca_pml_base_module_send_fn_t             send;
+    mca_pml_base_module_iprobe_fn_t           iprobe;
+    mca_pml_base_module_probe_fn_t            probe;
+    mca_pml_base_module_start_fn_t            start;
+    mca_pml_base_module_dump_fn_t             dump;
+    
+    /* Custom requests classes to add extra data at end of pml requests */
+    opal_class_t *                            req_recv_class;
+    opal_class_t *                            req_send_class;
+} mca_vprotocol_base_module_1_0_0_t;
+typedef mca_vprotocol_base_module_1_0_0_t mca_vprotocol_base_module_t;
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
+
+/* silently include the pml_v.h as every file including vprotocol.h will also
+ * need it
+ */
+#include "pml_v.h"
+#include "base/base.h"
+
+#endif /* __INCLUDE_VPROTOCOL_H_ */
