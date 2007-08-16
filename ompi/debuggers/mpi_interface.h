@@ -193,6 +193,8 @@ typedef struct
     int long_size;	/* sizeof (long)  */
     int long_long_size;	/* sizeof (long long) */
     int pointer_size;	/* sizeof (void *) */
+    int bool_size;      /* sizeof(bool) */
+    int size_t_size;    /* sizeof(size_t) */
 } mqs_target_type_sizes;
   
 /* Result codes. 
