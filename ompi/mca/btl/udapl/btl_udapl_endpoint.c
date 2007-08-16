@@ -491,7 +491,7 @@ static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint)
 
     /* Send the buffer */
     rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, buf,
-            ORTE_RML_TAG_DYNAMIC - 1, 0, mca_btl_udapl_endpoint_send_cb, NULL);
+            ORTE_RML_TAG_UDAPL, 0, mca_btl_udapl_endpoint_send_cb, NULL);
     if(0 > rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -558,7 +558,7 @@ void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint,
 
 void mca_btl_udapl_endpoint_post_oob_recv(void)
 {
-    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DYNAMIC-1,
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_UDAPL,
             ORTE_RML_PERSISTENT, mca_btl_udapl_endpoint_recv, NULL);
 }
 

@@ -322,7 +322,7 @@ static int mca_btl_mvapi_endpoint_send_connect_data(mca_btl_base_endpoint_t* end
     }
 
     /* send to endpoint */
-    rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, buffer, ORTE_RML_TAG_DYNAMIC-1, 0,
+    rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, buffer, ORTE_RML_TAG_MVAPI, 0,
          mca_btl_mvapi_endpoint_send_cb, NULL);
     
     
@@ -694,7 +694,7 @@ void mca_btl_mvapi_post_recv()
 {
     orte_rml.recv_buffer_nb(
         ORTE_NAME_WILDCARD, 
-        ORTE_RML_TAG_DYNAMIC-1, 
+        ORTE_RML_TAG_MVAPI, 
         ORTE_RML_PERSISTENT,
         mca_btl_mvapi_endpoint_recv,
         NULL);
