@@ -281,7 +281,7 @@ typedef struct
   mqs_tword_t comm_number_free;         /* the number of available positions in
                                          * the communicator array. */
   mqs_tword_t comm_lowest_free;         /* the lowest free communicator */
-
+  mqs_tword_t show_internal_requests;   /* show or not the Open MPI internal requests */
   /* State for the iterators */
   struct communicator_t *current_communicator;	/* Easy, we're walking a simple list */
     

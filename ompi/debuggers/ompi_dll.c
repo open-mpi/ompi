@@ -698,6 +698,8 @@ int mqs_setup_process (mqs_process *process, const mqs_process_callbacks *pcb)
         /* Enforce the generation of the communicators list */
         p_info->comm_lowest_free  = 0;
         p_info->comm_number_free  = 0;
+        /* By default we don't show our internal requests*/
+        p_info->show_internal_requests = 0;
 
         mqs_get_type_sizes (process, &p_info->sizes);
         /**
@@ -1310,6 +1312,8 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
     mqs_tword_t req_complete, req_pml_complete, req_valid, req_type;
     mqs_taddr_t req_buffer, req_comm;
 
+    /* If we get a PML request with an internal tag we will jump back here */
+  rescan_requests:
     while( 1 ) {
         ompi_free_list_t_next_item( proc, p_info,
                                     &p_info->next_msg, &current_item );
@@ -1348,7 +1352,14 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
         res->desired_global_rank = res->desired_local_rank;
         res->desired_tag         =
             fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_tag, p_info );
-        res->tag_wild            = (MPI_ANY_TAG == res->desired_tag ? TRUE : FALSE);
+        if( MPI_ANY_TAG == res->desired_tag ) {
+            res->tag_wild = TRUE;
+        } else {
+            /* Don't allow negative tags to show up */
+            if( (res->desired_tag < 0) && (0 == p_info->show_internal_requests) )
+                goto rescan_requests;
+            res->tag_wild = FALSE;
+        }
         
         res->buffer = fetch_pointer( proc, current_item + i_info->mca_pml_base_request_t.offset.req_addr,
                                      p_info );
