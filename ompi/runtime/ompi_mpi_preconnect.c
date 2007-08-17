@@ -129,6 +129,9 @@ ompi_init_preconnect_oob(void)
        This limits any "flooding" effect that can occur with other
        connection algorithms, which can overwhelm the out-of-band
        connection system, leading to poor performance and hangs. */
+    if (world_size < simultaneous) {
+        simultaneous = world_size;
+    }
     for (i = 1 ; i <= world_size / 2 ; i += simultaneous) {
         for (j = 0 ; j < (size_t) simultaneous ; ++j) {
             next = (world_rank + (i + j )) % world_size;
