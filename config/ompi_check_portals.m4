@@ -105,18 +105,24 @@ AC_DEFUN([OMPI_CHECK_PORTALS],[
     fi
 
     # check for portals
-    LIBS="$LIBS $btl_portals_LIBS"
+    LIBS="$LIBS $check_portals_LIBS"
     AC_CHECK_HEADERS([${check_portals_header_prefix}portals3.h],
         [AC_MSG_CHECKING([if possible to link Portals application])
          AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <${check_portals_header_prefix}portals3.h>], 
                                          [int i; PtlInit(&i);])],
               [AC_MSG_RESULT([yes])
-               $1_WRAPPER_EXTRA_LDFLAGS="$btl_portals_LDFLAGS"
-               $1_WRAPPER_EXTRA_LIBS="$btl_portals_LIBS"
                ompi_check_portals_happy="yes"],
               [AC_MSG_RESULT([no])
-               ompi_check_portals_happy="yes"])],
+               ompi_check_portals_happy="no"])],
         [ompi_check_portals_happy="no"])
+
+    # Deal with static-only Portals UTCP libs.  See note in
+    # ompi/mca/common/portals/configure.m4.  Then possibly cry.
+    if test "$with_portals_config" = "utcp" ; then
+        if test "$1" != "common_portals" ; then
+            check_portals_LIBS=
+        fi
+    fi
 
     # reset the flags for the next test
     CPPFLAGS="$check_portals_save_CPPFLAGS"
