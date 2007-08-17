@@ -100,12 +100,12 @@
  * The internal debugging interface.
  */
 #define VERBOSE_GENERAL 1
-#define VERBOSE_GROUP   50
+#define VERBOSE_GROUP   10
 #define VERBOSE_COMM    10
 #define VERBOSE_LISTS   10
-#define VERBOSE_REQ     20
+#define VERBOSE_REQ     50
 
-#define VERBOSE 49
+#define VERBOSE 100
 #if VERBOSE
 #define DEBUG(LEVEL, WHAT) if( (LEVEL) > VERBOSE ) { printf WHAT; }
 #else
@@ -1394,7 +1394,7 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
         /*res->desired_length      =
             fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_count, p_info );*/
         
-        if( mqs_st_pending < res->status ) {  /* The real data from the status */
+        if( (mqs_st_pending < res->status) && (MCA_PML_REQUEST_SEND != req_type) ) {  /* The real data from the status */
             res->actual_length       =
                 fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
                            i_info->ompi_status_public_t.offset._count, p_info );
