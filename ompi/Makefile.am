@@ -71,8 +71,19 @@ libmpi_la_LIBADD = \
 	$(c_pmpi_lib) \
         $(f77_base_lib) \
 	$(MCA_ompi_FRAMEWORK_LIBS) \
+	$(OMPI_LIBMPI_EXTRA_LIBS) \
 	$(top_ompi_builddir)/orte/libopen-rte.la
-libmpi_la_DEPENDENCIES = $(libmpi_la_LIBADD)
+libmpi_la_DEPENDENCIES = \
+	datatype/libdatatype.la \
+        debuggers/libdebuggers.la \
+        mpi/c/libmpi_c.la \
+	$(c_mpi_lib) \
+	$(c_pmpi_lib) \
+        $(f77_base_lib) \
+	$(MCA_ompi_FRAMEWORK_LIBS) \
+	$(top_ompi_builddir)/orte/libopen-rte.la
+libmpi_la_LDFLAGS = \
+	$(OMPI_LIBMPI_EXTRA_LDFLAGS)
 
 # included subdirectory Makefile.am's and appended-to variables
 headers =
