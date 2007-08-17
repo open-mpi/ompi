@@ -75,6 +75,10 @@ struct ltfn_data_holder_t {
   char name[MCA_BASE_MAX_COMPONENT_NAME_LEN];
 };
 typedef struct ltfn_data_holder_t ltfn_data_holder_t;
+
+#if OPAL_HAVE_LTDL_ADVISE
+extern lt_dladvise opal_mca_dladvise;
+#endif
 #endif /* OMPI_WANT_LIBLTDL */
 
 
@@ -387,7 +391,11 @@ static int open_component(component_file_item_t *target_file,
 
   /* Now try to load the component */
 
+#if OPAL_HAVE_LTDL_ADVISE
+  component_handle = lt_dlopenadvise(target_file->filename, opal_mca_dladvise);
+#else
   component_handle = lt_dlopenext(target_file->filename);
+#endif
   if (NULL == component_handle) {
     err = strdup(lt_dlerror());
     if (0 != show_errors) {
