@@ -80,6 +80,8 @@ Trunk (not on release branches yet)
 1.2.4
 -----
 
+- The UDPL BTL is only built in Linux when explicitly specified via
+  the --with-udapl configure command line switch.
 - Fixed an issue with umask not being propagated when using the TM launcher.
 - Fixed behavior if number of slots is not the same on all bproc nodes.
 - Fixed a hang on systems without GPR support (ex. Cray XT3/4).
