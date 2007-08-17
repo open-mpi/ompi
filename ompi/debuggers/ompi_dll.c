@@ -105,7 +105,7 @@
 #define VERBOSE_LISTS   10
 #define VERBOSE_REQ     50
 
-#define VERBOSE 100
+#define VERBOSE 0
 #if VERBOSE
 #define DEBUG(LEVEL, WHAT) if( (LEVEL) > VERBOSE ) { printf WHAT; }
 #else
