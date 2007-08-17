@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      University of Houston. All rights reserved.
+ * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -106,6 +106,7 @@ OBJ_CLASS_INSTANCE (ompi_comm_reg_t,
 
 static opal_mutex_t ompi_cid_lock;
 static opal_list_t ompi_registered_comms;
+
 
 int ompi_comm_nextcid ( ompi_communicator_t* newcomm, 
                         ompi_communicator_t* comm, 
@@ -227,6 +228,13 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         newcomm->c_f_to_c_index = newcomm->c_contextid;
         ompi_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
         
+	/* for synchronization purposes, avoids receiving fragments for 
+	   a communicator id, which might not yet been known. For single-threaded
+	   scenarios, this call is in ompi_comm_activate, for multi-threaded
+	   scenarios, it has to be already here ( before releasing another
+	   thread into the cid-allocation loop ) */
+	(allredfnct)(&response, &glresponse, 1, MPI_MIN, comm, bridgecomm,
+		     local_leader, remote_leader, send_first );
         OPAL_THREAD_LOCK(&ompi_cid_lock);
         ompi_comm_unregister_cid (comm->c_contextid);
         OPAL_THREAD_UNLOCK(&ompi_cid_lock);
@@ -426,8 +434,14 @@ int ompi_comm_activate ( ompi_communicator_t* newcomm,
                 break;
         }
         
-        (allredfnct)(&ok, &gok, 1, MPI_MIN, comm, bridgecomm,
-                     local_leader, remote_leader, send_first );
+	if (MPI_THREAD_MULTIPLE != ompi_mpi_thread_provided) {
+	    /* Only execute the synchronization for single-threaded scenarios.
+	       For multi-threaded cases, the synchronization has already 
+	       been executed in the cid-allocation loop */
+	    (allredfnct)(&ok, &gok, 1, MPI_MIN, comm, bridgecomm,
+			 local_leader, remote_leader, send_first );
+	    
+	}
     }
     /* Check to see if this process is in the new communicator.
 
