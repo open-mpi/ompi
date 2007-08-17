@@ -85,6 +85,10 @@ static opal_list_t repository;
 static repository_item_t *find_component(const char *type, const char *name);
 static int link_items(repository_item_t *src, repository_item_t *depend);
 
+#if OPAL_HAVE_LTDL_ADVISE
+lt_dladvise opal_mca_dladvise;
+#endif
+
 #endif /* OMPI_WANT_LIBLTDL */
 
 
@@ -102,6 +106,20 @@ int mca_base_component_repository_init(void)
     if (lt_dlinit() != 0) {
       return OPAL_ERR_OUT_OF_RESOURCE;
     }
+
+#if OPAL_HAVE_LTDL_ADVISE
+    if (lt_dladvise_init(&opal_mca_dladvise)) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (lt_dladvise_ext(&opal_mca_dladvise)) {
+        return OPAL_ERROR;
+    }
+
+    if (lt_dladvise_global(&opal_mca_dladvise)) {
+        return OPAL_ERROR;
+    }
+#endif
 
     OBJ_CONSTRUCT(&repository, opal_list_t);
 #endif
@@ -254,6 +272,12 @@ void mca_base_component_repository_finalize(void)
         OBJ_RELEASE(ri);
       }
     } while (opal_list_get_size(&repository) > 0);
+
+#if OPAL_HAVE_LTDL_ADVISE
+    if (lt_dladvise_destroy(&opal_mca_dladvise)) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+#endif
 
     /* Close down libltdl */
 

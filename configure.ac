@@ -995,10 +995,15 @@ CFLAGS="$CFLAGS_save"
 
 ompi_show_subtitle "Libtool configuration"
 
+m4_if(m4_version_compare(m4_defn([LT_PACKAGE_VERSION]), 2.0), -1, [
 AC_LIBLTDL_CONVENIENCE(opal/libltdl)
 AC_LIBTOOL_DLOPEN
 AC_PROG_LIBTOOL
-
+], [
+LT_CONFIG_LTDL_DIR([opal/libltdl], [subproject])
+LTDL_CONVENIENCE
+LT_INIT([dlopen win32-dll])
+])
 ompi_show_subtitle "GNU libltdl setup" 
 
 # AC_CONFIG_SUBDIRS appears to be broken for non-gcc compilers (i.e.,
@@ -1038,6 +1043,13 @@ if test "$OMPI_ENABLE_DLOPEN_SUPPORT" = "1" ; then
     if test "$HAPPY" = "1"; then
         LIBLTDL_SUBDIR=libltdl
 
+        CPPFLAGS_save="$CPPFLAGS"
+        CPPFLAGS="-I."
+        AC_EGREP_HEADER([lt_dladvise_init], [opal/libltdl/ltdl.h],
+                        [OPAL_HAVE_LTDL_ADVISE=1],
+                        [OPAL_HAVE_LTDL_ADVISE=0])
+        CPPFLAGS="$CPPFLAGS"
+
         # Arrgh.  This is gross.  But I can't think of any other way to do
         # it.  :-(
 
@@ -1057,7 +1069,7 @@ else
     AC_MSG_WARN([libltdl support disabled (by --disable-dlopen)])
 
     LIBLTDL_SUBDIR=
-    LIBLTDL=
+    OPAL_HAVE_LTDL_ADVISE=0
 
     # append instead of prepend, since LIBS are going to be system
     # type things needed by everyone.  Normally, libltdl will push
@@ -1073,6 +1085,8 @@ AC_SUBST(LIBLTDL_SUBDIR)
 AC_DEFINE_UNQUOTED(OMPI_WANT_LIBLTDL, $OMPI_ENABLE_DLOPEN_SUPPORT,
     [Whether to include support for libltdl or not])
 
+AC_DEFINE_UNQUOTED(OPAL_HAVE_LTDL_ADVISE, $OPAL_HAVE_LTDL_ADVISE,
+    [Whether libltdl appears to have the lt_dladvise interface])
 
 ##################################
 # visibility
