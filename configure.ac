@@ -995,6 +995,9 @@ CFLAGS="$CFLAGS_save"
 
 ompi_show_subtitle "Libtool configuration"
 
+dnl Not all versions of LT set the PACKAGE_VERSION
+m4_ifdef([LT_PACKAGE_VERSION], [], [m4_define([LT_PACKAGE_VERSION], [1.5.22])])
+
 m4_if(m4_version_compare(m4_defn([LT_PACKAGE_VERSION]), 2.0), -1, [
 AC_LIBLTDL_CONVENIENCE(opal/libltdl)
 AC_LIBTOOL_DLOPEN
@@ -1004,6 +1007,7 @@ LT_CONFIG_LTDL_DIR([opal/libltdl], [subproject])
 LTDL_CONVENIENCE
 LT_INIT([dlopen win32-dll])
 ])
+
 ompi_show_subtitle "GNU libltdl setup" 
 
 # AC_CONFIG_SUBDIRS appears to be broken for non-gcc compilers (i.e.,
