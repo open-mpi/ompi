@@ -100,7 +100,8 @@
  * The internal debugging interface.
  */
 #define VERBOSE_GENERAL 1
-#define VERBOSE_COMM    50
+#define VERBOSE_GROUP   50
+#define VERBOSE_COMM    10
 #define VERBOSE_LISTS   10
 #define VERBOSE_REQ     20
 
@@ -333,8 +334,8 @@ static int reverse_translate (group_t * this, int index)
 /**********************************************************************/
 /* Search the group list for this group, if not found create it.
  */
-static group_t * find_or_create_group (mqs_process *proc,
-				       mqs_taddr_t table)
+static group_t * find_or_create_group( mqs_process *proc,
+                                       mqs_taddr_t table )
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
     mqs_image * image          = mqs_get_image (proc);
@@ -359,6 +360,8 @@ static group_t * find_or_create_group (mqs_process *proc,
         g = comm->group;
         if (g && g->table_base == table) {
             g->ref_count++;			/* Someone else is interested */
+            DEBUG(VERBOSE_GROUP, ("Increase refcount for group 0x%p to %d\n",
+                                  (void*)g, g->ref_count) );
             return g;
         }
     }
@@ -368,6 +371,9 @@ static group_t * find_or_create_group (mqs_process *proc,
     tr = (int *)mqs_malloc (np*sizeof(int));
     trbuffer = (char *)mqs_malloc (np*intsize);
     g->local_to_global = tr;
+    g->table_base = table;
+    DEBUG(VERBOSE_GROUP, ("Create a new group 0x%p with %d members\n",
+                          (void*)g, np) );
 
     if (mqs_ok != mqs_fetch_data (proc, table, np*intsize, trbuffer) ) {
         mqs_free (g);
@@ -794,7 +800,11 @@ static int communicators_changed (mqs_process *proc)
         (number_free != p_info->comm_number_free) ) {
         p_info->comm_lowest_free = lowest_free;
         p_info->comm_number_free = number_free;
-        DEBUG(VERBOSE_COMM, ("Recreate the communicator list\n") );
+        DEBUG(VERBOSE_COMM, ("Recreate the communicator list\n"
+                             "    lowest_free [current] %d != [stored] %d\n"
+                             "    number_free [current] %d != [stored] %d\n",
+                             (int)lowest_free, (int)p_info->comm_lowest_free,
+                             (int)number_free, (int)p_info->comm_number_free) );
         return 1;
     }
     DEBUG(VERBOSE_COMM, ("Communicator list not modified\n") );
