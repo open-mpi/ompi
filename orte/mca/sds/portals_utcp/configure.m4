@@ -74,6 +74,12 @@ PtlGetRank(PTL_INVALID_HANDLE, &rank, &nprocs);])],
                    [AC_MSG_RESULT([no])
                     $2])
 
+    # we don't actually need the Portals code for this component,
+    # so don't link against them...
+    sds_portals_utcp_CPPFLAGS=
+    sds_portals_utcp_LDFLAGS=
+    sds_portals_utcp_LIBS=
+
     # substitute in the things needed to build Portals
     AC_SUBST([sds_portals_utcp_CPPFLAGS])
     AC_SUBST([sds_portals_utcp_LDFLAGS])
