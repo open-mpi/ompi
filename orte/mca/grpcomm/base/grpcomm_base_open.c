@@ -56,7 +56,7 @@ int orte_grpcomm_base_open(void)
     int value;
 
     /* Debugging / verbose output */
-    mca_base_param_reg_int_name("grpcomm_base", "verbose",
+    mca_base_param_reg_int_name("grpcomm", "base_verbose",
                                 "Verbosity level for the grpcomm framework",
                                 false, false, 0, &value);
     if (value != 0) {

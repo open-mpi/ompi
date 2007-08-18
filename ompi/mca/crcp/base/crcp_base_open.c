@@ -48,8 +48,8 @@ int ompi_crcp_base_open(void)
     char *str_value = NULL;
 
     /* Debugging/Verbose output */
-    mca_base_param_reg_int_name("crcp_base",
-                                "verbose",
+    mca_base_param_reg_int_name("crcp",
+                                "base_verbose",
                                 "Verbosity level of the CRCP framework",
                                 false, false,
                                 0, &value);
