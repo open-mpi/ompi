@@ -139,7 +139,7 @@ int ompi_file_close(ompi_file_t **file)
     mca_io_base_component_del(&((*file)->f_io_selected_component));
     mca_io_base_request_return(*file);
     OBJ_RELEASE(*file);
-    *file = MPI_FILE_NULL;
+    *file = &ompi_mpi_file_null;
 
     return OMPI_SUCCESS;
 }

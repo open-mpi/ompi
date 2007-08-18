@@ -29,7 +29,7 @@ AC_DEFUN([MCA_memory_CONFIG],[
         memory_base_found=0
 
         # first, compile all the components
-        MCA_CONFIGURE_FRAMEWORK($1, $2)
+        MCA_CONFIGURE_FRAMEWORK($1, $2, 1)
 
         AC_DEFINE_UNQUOTED([OMPI_MEMORY_HAVE_COMPONENT], [$memory_base_found],
             [Whether any opal memory mca components were found])

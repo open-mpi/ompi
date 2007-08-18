@@ -25,7 +25,9 @@ class Status {
 #endif
   friend class MPI::Comm; //so I can access pmpi_status data member in comm.cc
   friend class MPI::Request; //and also from request.cc
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
   friend class MPI::File;
+#endif
 
 public:
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */

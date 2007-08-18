@@ -223,7 +223,9 @@ OMPI_DECLSPEC extern const Datatype     DATATYPE_NULL;
 OMPI_DECLSPEC extern Request            REQUEST_NULL;
 OMPI_DECLSPEC extern const Op           OP_NULL;
 OMPI_DECLSPEC extern const Errhandler   ERRHANDLER_NULL;  
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 OMPI_DECLSPEC extern const File         FILE_NULL;
+#endif
 
 // constants specifying empty or ignored input
 OMPI_DECLSPEC extern const char**       ARGV_NULL;
@@ -249,7 +251,7 @@ OMPI_DECLSPEC extern const int MODE_SEQUENTIAL;
 
 OMPI_DECLSPEC extern const int DISPLACEMENT_CURRENT;
 
-#if !defined(OMPI_IGNORE_CXX_SEEK) && OMPI_WANT_MPI_CXX_SEEK
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE && !defined(OMPI_IGNORE_CXX_SEEK) && OMPI_WANT_MPI_CXX_SEEK
 OMPI_DECLSPEC extern const int SEEK_SET;
 OMPI_DECLSPEC extern const int SEEK_CUR;
 OMPI_DECLSPEC extern const int SEEK_END;

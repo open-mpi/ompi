@@ -37,7 +37,7 @@
 
 #include <stdarg.h>
 
-#if !defined(OMPI_IGNORE_CXX_SEEK) & OMPI_WANT_MPI_CXX_SEEK
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE && !defined(OMPI_IGNORE_CXX_SEEK) & OMPI_WANT_MPI_CXX_SEEK
 // We need to include the header files that define SEEK_* or use them
 // in ways that require them to be #defines so that if the user
 // includes them later, the double inclusion logic in the headers will
@@ -74,9 +74,10 @@ extern "C" void
 ompi_mpi_cxx_comm_errhandler_intercept(MPI_Comm * mpi_comm, int * err, ...);
 extern "C" void
 ompi_mpi_cxx_win_errhandler_intercept(MPI_Win * mpi_comm, int * err, ...);
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 extern "C" void
 ompi_mpi_cxx_file_errhandler_intercept(MPI_File * mpi_comm, int * err, ...);
-
+#endif
 
 //used for attr intercept functions
 enum CommType { eIntracomm, eIntercomm, eCartcomm, eGraphcomm};
@@ -154,7 +155,9 @@ namespace MPI {
   class Status;
   class Info;
   class Win;
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
   class File;
+#endif
 
   typedef MPI_Aint Aint;
   typedef MPI_Offset Offset;
@@ -183,7 +186,9 @@ namespace MPI {
 #include "ompi/mpi/cxx/group.h" 
 #include "ompi/mpi/cxx/comm.h"
 #include "ompi/mpi/cxx/win.h"
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 #include "ompi/mpi/cxx/file.h"
+#endif
 #include "ompi/mpi/cxx/errhandler.h"
 #include "ompi/mpi/cxx/intracomm.h"
 #include "ompi/mpi/cxx/topology.h"  //includes Cartcomm and Graphcomm
@@ -197,7 +202,9 @@ namespace MPI {
 #include "openmpi/ompi/mpi/cxx/group.h" 
 #include "openmpi/ompi/mpi/cxx/comm.h"
 #include "openmpi/ompi/mpi/cxx/win.h"
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 #include "openmpi/ompi/mpi/cxx/file.h"
+#endif
 #include "openmpi/ompi/mpi/cxx/errhandler.h"
 #include "openmpi/ompi/mpi/cxx/intracomm.h"
 #include "openmpi/ompi/mpi/cxx/topology.h"  //includes Cartcomm and Graphcomm
@@ -239,7 +246,9 @@ namespace MPI {
 #include "ompi/mpi/cxx/status_inln.h"
 #include "ompi/mpi/cxx/info_inln.h"
 #include "ompi/mpi/cxx/win_inln.h"
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 #include "ompi/mpi/cxx/file_inln.h"
+#endif
 #else
 #include "openmpi/ompi/mpi/cxx/datatype_inln.h"
 #include "openmpi/ompi/mpi/cxx/functions_inln.h"
@@ -254,7 +263,9 @@ namespace MPI {
 #include "openmpi/ompi/mpi/cxx/status_inln.h"
 #include "openmpi/ompi/mpi/cxx/info_inln.h"
 #include "openmpi/ompi/mpi/cxx/win_inln.h"
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 #include "openmpi/ompi/mpi/cxx/file_inln.h"
+#endif
 #endif
 
 #endif // #if defined(__cplusplus) || defined(c_plusplus) 

@@ -19,7 +19,7 @@ AC_DEFUN([MCA_memcpy_CONFIG],[
         memcpy_base_include=
 
         # first, compile all the components
-        MCA_CONFIGURE_FRAMEWORK($1, $2)
+        MCA_CONFIGURE_FRAMEWORK($1, $2, 1)
 
         # someone should have set this...
         if test "$memcpy_base_include" = "" ; then
