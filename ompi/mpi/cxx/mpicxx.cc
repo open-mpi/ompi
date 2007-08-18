@@ -30,7 +30,7 @@ static const int ompi_stdio_seek_end = SEEK_END;
 
 #include "ompi/errhandler/errhandler.h"
 
-#if OMPI_WANT_MPI_CXX_SEEK
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE && OMPI_WANT_MPI_CXX_SEEK
 
 const int SEEK_SET = ompi_stdio_seek_set;
 const int SEEK_CUR = ompi_stdio_seek_cur;
@@ -248,7 +248,9 @@ const Datatype     DATATYPE_NULL = MPI_DATATYPE_NULL;
 Request      REQUEST_NULL = MPI_REQUEST_NULL;
 const Op           OP_NULL = MPI_OP_NULL;
 const Errhandler   ERRHANDLER_NULL;  
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 const File FILE_NULL = MPI_FILE_NULL;
+#endif
 
 // constants specifying empty or ignored input
 const char**       ARGV_NULL = (const char**) MPI_ARGV_NULL;
@@ -262,6 +264,7 @@ const int GRAPH = MPI_GRAPH;
 const int CART = MPI_CART;
 
 // MPI-2 IO
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 const int MODE_CREATE = MPI_MODE_CREATE;
 const int MODE_RDONLY = MPI_MODE_RDONLY;
 const int MODE_WRONLY = MPI_MODE_WRONLY;
@@ -281,6 +284,7 @@ const int SEEK_END = MPI_SEEK_END;
 #endif
 
 const int MAX_DATAREP_STRING = MPI_MAX_DATAREP_STRING;
+#endif
 
 // one-sided constants
 const int MODE_NOCHECK = MPI_MODE_NOCHECK;

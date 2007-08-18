@@ -36,7 +36,9 @@ MPI::Win::mpi_win_keyval_fn_map_t MPI::Win::mpi_win_keyval_fn_map;
 MPI::Datatype::mpi_type_map_t MPI::Datatype::mpi_type_map;
 MPI::Datatype::mpi_type_keyval_fn_map_t MPI::Datatype::mpi_type_keyval_fn_map;
 
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 MPI::File::mpi_file_map_t MPI::File::mpi_file_map;
+#endif
 
 opal_mutex_t *MPI::mpi_map_mutex;
 
@@ -66,6 +68,7 @@ void ompi_mpi_cxx_comm_throw_excptn_fctn(MPI_Comm *, int *errcode, ...)
     va_end(ap);
 }
 
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 extern "C" 
 void ompi_mpi_cxx_file_throw_excptn_fctn(MPI_File *, int *errcode, ...)
 {
@@ -74,6 +77,7 @@ void ompi_mpi_cxx_file_throw_excptn_fctn(MPI_File *, int *errcode, ...)
     ompi_mpi_cxx_throw_exception(errcode);
     va_end(ap);
 }
+#endif
 
 extern "C" 
 void ompi_mpi_cxx_win_throw_excptn_fctn(MPI_Win *, int *errcode, ...)
@@ -90,8 +94,10 @@ MPI::InitializeIntercepts()
 {
     ompi_mpi_errors_throw_exceptions.eh_comm_fn = 
         ompi_mpi_cxx_comm_throw_excptn_fctn;
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
     ompi_mpi_errors_throw_exceptions.eh_file_fn = 
         ompi_mpi_cxx_file_throw_excptn_fctn;
+#endif
     ompi_mpi_errors_throw_exceptions.eh_win_fn = 
         ompi_mpi_cxx_win_throw_excptn_fctn;
 
@@ -122,6 +128,7 @@ void ompi_mpi_cxx_comm_errhandler_intercept(MPI_Comm *mpi_comm, int *err, ...)
   }
 }
 
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 extern "C"
 void ompi_mpi_cxx_file_errhandler_intercept(MPI_File *mpi_file, int *err, ...)
 {
@@ -138,6 +145,7 @@ void ompi_mpi_cxx_file_errhandler_intercept(MPI_File *mpi_file, int *err, ...)
     va_end(ap);
   }
 }
+#endif
 
 extern "C"
 void ompi_mpi_cxx_win_errhandler_intercept(MPI_Win *mpi_win, int *err, ...)

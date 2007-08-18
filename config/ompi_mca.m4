@@ -86,8 +86,8 @@ AC_DEFUN([OMPI_MCA],[
         IFS="${IFS}$PATH_SEPARATOR,"
         msg=
         for item in $enable_mca_no_build; do
-            type="`echo $item | cut -f1 -d-`"
-            comp="`echo $item | cut -f2- -d-`"
+            type="`echo $item | cut -s -f1 -d-`"
+            comp="`echo $item | cut -s -f2- -d-`"
             if test -z $type -o -z $comp ; then
                 AC_MSG_ERROR([*** The enable-no-build flag requires a
 *** list of type-component pairs.  Invalid input detected.])
@@ -293,7 +293,7 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
                           MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [\$(MCA_]mca_framework[_STATIC_LTLIBS)]"
                           m4_ifdef([MCA_]mca_framework[_CONFIG],
                                    [MCA_]mca_framework[_CONFIG]($1, mca_framework),
-                                   [MCA_CONFIGURE_FRAMEWORK($1, mca_framework)])])])
+                                   [MCA_CONFIGURE_FRAMEWORK($1, mca_framework, 1)])])])
 
     AC_SUBST(MCA_$1_FRAMEWORKS)
     AC_SUBST(MCA_$1_FRAMEWORKS_SUBDIRS)
@@ -316,7 +316,7 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
 # AND has a configure script.
 #
 # USAGE:
-#   MCA_CONFIGURE_PROJECT(project_name, framework_name)
+#   MCA_CONFIGURE_PROJECT(project_name, framework_name, allow_succeed)
 #
 ######################################################################
 AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
@@ -369,7 +369,7 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
                                                      [static_components],
                                                      [dso_components],
                                                      [static_ltlibs],
-                                                     [1])])])
+                                                     [$3])])])
 
     # configure components that use built-in configuration scripts see
     # comment in CONFIGURE_PROJECT about the m4_ifval in the
@@ -377,7 +377,7 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     m4_ifdef([mca_$2_m4_config_component_list], [], 
              [m4_fatal([Could not find mca_$2_m4_config_component_list - rerun autogen.sh without -l])])
     best_mca_component_priority=0
-    components_looking_for_succeed=1
+    components_looking_for_succeed=$3
     components_last_result=0
     m4_foreach(mca_component, [mca_$2_m4_config_component_list],
                [m4_ifval(mca_component,
@@ -404,9 +404,11 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     # It would be really hard to run these for "find first that
     # works", so we don't :)
     m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST], [],
-          [MCA_CONFIGURE_ALL_CONFIG_COMPONENTS($1, $2, [all_components],
+          [m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST], [],
+                 [AS_IF([test "$3" != "0"],
+                        [MCA_CONFIGURE_ALL_CONFIG_COMPONENTS($1, $2, [all_components],
                                                [static_components], [dso_components],
-                                               [static_ltlibs])])
+                                               [static_ltlibs])])])])
 
     MCA_$2_ALL_COMPONENTS="$all_components"
     MCA_$2_STATIC_COMPONENTS="$static_components"

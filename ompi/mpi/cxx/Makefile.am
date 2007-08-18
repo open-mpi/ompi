@@ -35,8 +35,12 @@ libmpi_cxx_la_SOURCES = \
 	intercepts.cc \
 	comm.cc \
 	datatype.cc \
-	file.cc \
 	win.cc
+
+if OMPI_PROVIDE_MPI_FILE_INTERFACE
+libmpi_cxx_la_SOURCES += \
+	file.cc
+endif
 
 headers = \
 	mpicxx.h \

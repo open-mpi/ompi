@@ -24,7 +24,7 @@ AC_DEFUN([MCA_timer_CONFIG],[
         timer_base_include=
 
         # first, compile all the components
-        MCA_CONFIGURE_FRAMEWORK($1, $2)
+        MCA_CONFIGURE_FRAMEWORK($1, $2, 1)
 
         # someone should have set this...
         if test "$timer_base_include" = "" ; then

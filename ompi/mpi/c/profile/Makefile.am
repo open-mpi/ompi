@@ -112,63 +112,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         perror_class.c \
         perror_string.c \
         pexscan.c \
-        pfile_c2f.c \
-        pfile_call_errhandler.c \
-        pfile_close.c \
-        pfile_create_errhandler.c \
-        pfile_delete.c \
-        pfile_f2c.c \
-        pfile_get_amode.c \
-        pfile_get_atomicity.c \
-        pfile_get_byte_offset.c \
-        pfile_get_errhandler.c \
-        pfile_get_group.c \
-        pfile_get_info.c \
-        pfile_get_position.c \
-        pfile_get_position_shared.c \
-        pfile_get_size.c \
-        pfile_get_type_extent.c \
-        pfile_get_view.c \
-        pfile_iread_at.c \
-        pfile_iread.c \
-        pfile_iread_shared.c \
-        pfile_iwrite_at.c \
-        pfile_iwrite.c \
-        pfile_iwrite_shared.c \
-        pfile_open.c \
-        pfile_preallocate.c \
-        pfile_read_all_begin.c \
-        pfile_read_all.c \
-        pfile_read_all_end.c \
-        pfile_read_at_all_begin.c \
-        pfile_read_at_all.c \
-        pfile_read_at_all_end.c \
-        pfile_read_at.c \
-        pfile_read.c \
-        pfile_read_ordered_begin.c \
-        pfile_read_ordered.c \
-        pfile_read_ordered_end.c \
-        pfile_read_shared.c \
-        pfile_seek.c \
-        pfile_seek_shared.c \
-        pfile_set_atomicity.c \
-        pfile_set_errhandler.c \
-        pfile_set_info.c \
-        pfile_set_size.c \
-        pfile_set_view.c \
-        pfile_sync.c \
-        pfile_write_all_begin.c \
-        pfile_write_all.c \
-        pfile_write_all_end.c \
-        pfile_write_at_all_begin.c \
-        pfile_write_at_all.c \
-        pfile_write_at_all_end.c \
-        pfile_write_at.c \
-        pfile_write.c \
-        pfile_write_ordered_begin.c \
-        pfile_write_ordered.c \
-        pfile_write_ordered_end.c \
-        pfile_write_shared.c \
         pfinalize.c \
         pfinalized.c \
         pfree_mem.c \
@@ -244,7 +187,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         precv.c \
         preduce.c \
         preduce_scatter.c \
-        pregister_datarep.c \
         prequest_c2f.c \
         prequest_f2c.c \
         prequest_free.c \
@@ -345,6 +287,68 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pwin_test.c \
         pwin_unlock.c \
         pwin_wait.c
+
+if OMPI_PROVIDE_MPI_FILE_INTERFACE
+nodist_libmpi_c_pmpi_la_SOURCES += \
+        pfile_c2f.c \
+        pfile_call_errhandler.c \
+        pfile_close.c \
+        pfile_create_errhandler.c \
+        pfile_delete.c \
+        pfile_f2c.c \
+        pfile_get_amode.c \
+        pfile_get_atomicity.c \
+        pfile_get_byte_offset.c \
+        pfile_get_errhandler.c \
+        pfile_get_group.c \
+        pfile_get_info.c \
+        pfile_get_position.c \
+        pfile_get_position_shared.c \
+        pfile_get_size.c \
+        pfile_get_type_extent.c \
+        pfile_get_view.c \
+        pfile_iread_at.c \
+        pfile_iread.c \
+        pfile_iread_shared.c \
+        pfile_iwrite_at.c \
+        pfile_iwrite.c \
+        pfile_iwrite_shared.c \
+        pfile_open.c \
+        pfile_preallocate.c \
+        pfile_read_all_begin.c \
+        pfile_read_all.c \
+        pfile_read_all_end.c \
+        pfile_read_at_all_begin.c \
+        pfile_read_at_all.c \
+        pfile_read_at_all_end.c \
+        pfile_read_at.c \
+        pfile_read.c \
+        pfile_read_ordered_begin.c \
+        pfile_read_ordered.c \
+        pfile_read_ordered_end.c \
+        pfile_read_shared.c \
+        pfile_seek.c \
+        pfile_seek_shared.c \
+        pfile_set_atomicity.c \
+        pfile_set_errhandler.c \
+        pfile_set_info.c \
+        pfile_set_size.c \
+        pfile_set_view.c \
+        pfile_sync.c \
+        pfile_write_all_begin.c \
+        pfile_write_all.c \
+        pfile_write_all_end.c \
+        pfile_write_at_all_begin.c \
+        pfile_write_at_all.c \
+        pfile_write_at_all_end.c \
+        pfile_write_at.c \
+        pfile_write.c \
+        pfile_write_ordered_begin.c \
+        pfile_write_ordered.c \
+        pfile_write_ordered_end.c \
+        pfile_write_shared.c \
+        pregister_datarep.c
+endif
 
 #
 # Sym link in the sources from the real MPI directory

@@ -81,7 +81,7 @@
 !
       integer MPI_ANY_SOURCE, MPI_ANY_TAG
       integer MPI_PROC_NULL, MPI_MAX_PROCESSOR_NAME
-      integer MPI_ROOT, MPI_MAX_DATAREP_STRING
+      integer MPI_ROOT
       integer MPI_MAX_ERROR_STRING, MPI_UNDEFINED
       integer MPI_CART, MPI_GRAPH, MPI_KEYVAL_INVALID
       integer MPI_SOURCE, MPI_TAG, MPI_ERROR
@@ -97,12 +97,6 @@
       integer MPI_DISTRIBUTE_NONE, MPI_DISTRIBUTE_DFLT_DARG
       integer MPI_TYPECLASS_INTEGER, MPI_TYPECLASS_REAL
       integer MPI_TYPECLASS_COMPLEX
-      integer MPI_SEEK_SET, MPI_SEEK_CUR, MPI_SEEK_END 
-      integer MPI_MODE_CREATE
-      integer MPI_MODE_RDONLY, MPI_MODE_WRONLY, MPI_MODE_RDWR
-      integer MPI_MODE_DELETE_ON_CLOSE, MPI_MODE_UNIQUE_OPEN
-      integer MPI_MODE_EXCL, MPI_MODE_APPEND, MPI_MODE_SEQUENTIAL
-      integer MPI_DISPLACEMENT_CURRENT
       integer MPI_MODE_NOCHECK, MPI_MODE_NOPRECEDE, MPI_MODE_NOPUT
       integer MPI_MODE_NOSTORE, MPI_MODE_NOSUCCEED
       integer MPI_LOCK_EXCLUSIVE, MPI_LOCK_SHARED
@@ -114,7 +108,6 @@
       parameter (MPI_ROOT=-4)
       parameter (MPI_MAX_PROCESSOR_NAME=255)
       parameter (MPI_MAX_ERROR_STRING=255)
-      parameter (MPI_MAX_DATAREP_STRING=127)
       parameter (MPI_UNDEFINED=-32766)
       parameter (MPI_CART=1)
       parameter (MPI_GRAPH=2)
@@ -151,19 +144,6 @@
       parameter (MPI_TYPECLASS_INTEGER=1)
       parameter (MPI_TYPECLASS_REAL=2)
       parameter (MPI_TYPECLASS_COMPLEX=3)
-      parameter (MPI_SEEK_SET=600)
-      parameter (MPI_SEEK_CUR=602)
-      parameter (MPI_SEEK_END=604)
-      parameter (MPI_MODE_CREATE=1)
-      parameter (MPI_MODE_RDONLY=2)
-      parameter (MPI_MODE_WRONLY=4)
-      parameter (MPI_MODE_RDWR=8)
-      parameter (MPI_MODE_DELETE_ON_CLOSE=16)
-      parameter (MPI_MODE_UNIQUE_OPEN=32)
-      parameter (MPI_MODE_EXCL=64)
-      parameter (MPI_MODE_APPEND=128)
-      parameter (MPI_MODE_SEQUENTIAL=256)
-      parameter (MPI_DISPLACEMENT_CURRENT=-54278278)
       parameter (MPI_MODE_NOCHECK=1)
       parameter (MPI_MODE_NOPRECEDE=2)
       parameter (MPI_MODE_NOPUT=4)

@@ -352,6 +352,7 @@ void ompi_info::do_config(bool want_all)
   const string mpirun_prefix_by_default(ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ?
                                         "yes" : "no");
   const string sparse_groups(OMPI_GROUP_SPARSE ? "yes" : "no");
+  const string have_mpi_io(OMPI_PROVIDE_MPI_FILE_INTERFACE ? "yes" : "no");
 
   if (OMPI_HAVE_SOLARIS_THREADS || OMPI_HAVE_POSIX_THREADS) {
       threads = OMPI_HAVE_SOLARIS_THREADS ? "solaris" :
@@ -587,4 +588,5 @@ void ompi_info::do_config(bool want_all)
   out("Heterogeneous support", "options:heterogeneous", heterogeneous);
   out("mpirun default --prefix", "mpirun:prefix_by_default", 
       mpirun_prefix_by_default);
+  out("MPI I/O support", "options:mpi-io", have_mpi_io);
 }

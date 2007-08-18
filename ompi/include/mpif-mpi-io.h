@@ -61,31 +61,27 @@
 !     necessary to compile the F90 module (e.g., MPI_STATUS_SIZE).
 !
 
-!     Include the MPI I/O stuff, if needed
-      @OMPI_MPIF_MPI_IO_INCLUDE@
+      integer MPI_FILE_NULL
+      integer MPI_SEEK_SET, MPI_SEEK_CUR, MPI_SEEK_END 
+      integer MPI_MODE_CREATE
+      integer MPI_MODE_RDONLY, MPI_MODE_WRONLY, MPI_MODE_RDWR
+      integer MPI_MODE_DELETE_ON_CLOSE, MPI_MODE_UNIQUE_OPEN
+      integer MPI_MODE_EXCL, MPI_MODE_APPEND, MPI_MODE_SEQUENTIAL
+      integer MPI_DISPLACEMENT_CURRENT
+      integer MPI_MAX_DATAREP_STRING
 
-!
-!     OMPI version
-!     This file is generated from configure; do not edit it manually.
-!
-      integer OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION
-      integer OMPI_RELEASE_VERSION
-      character*32 OMPI_GREEK_VERSION
-      character*32 OMPI_SVN_VERSION
-      parameter (OMPI_MAJOR_VERSION=@OMPI_MAJOR_VERSION@)
-      parameter (OMPI_MINOR_VERSION=@OMPI_MINOR_VERSION@)
-      parameter (OMPI_RELEASE_VERSION=@OMPI_RELEASE_VERSION@)
-      parameter (OMPI_GREEK_VERSION="@OMPI_GREEK_VERSION@")
-      parameter (OMPI_SVN_VERSION="@OMPI_SVN_R@")
-!
-!     Kind parameters
-!     
-      integer MPI_OFFSET_KIND, MPI_ADDRESS_KIND, MPI_INTEGER_KIND
-      parameter (MPI_INTEGER_KIND=@OMPI_MPI_INTEGER_KIND@)
-      parameter (MPI_ADDRESS_KIND=@OMPI_MPI_ADDRESS_KIND@)
-      parameter (MPI_OFFSET_KIND=@OMPI_MPI_OFFSET_KIND@)
-!     
-!     Miscellaneous constants
-!     
-      integer MPI_STATUS_SIZE
-      parameter (MPI_STATUS_SIZE=5)
+      parameter (MPI_FILE_NULL=0)
+      parameter (MPI_SEEK_SET=600)
+      parameter (MPI_SEEK_CUR=602)
+      parameter (MPI_SEEK_END=604)
+      parameter (MPI_MODE_CREATE=1)
+      parameter (MPI_MODE_RDONLY=2)
+      parameter (MPI_MODE_WRONLY=4)
+      parameter (MPI_MODE_RDWR=8)
+      parameter (MPI_MODE_DELETE_ON_CLOSE=16)
+      parameter (MPI_MODE_UNIQUE_OPEN=32)
+      parameter (MPI_MODE_EXCL=64)
+      parameter (MPI_MODE_APPEND=128)
+      parameter (MPI_MODE_SEQUENTIAL=256)
+      parameter (MPI_DISPLACEMENT_CURRENT=-54278278)
+      parameter (MPI_MAX_DATAREP_STRING=127)

@@ -31,7 +31,8 @@ include_HEADERS =
 
 if OMPI_WANT_F77_BINDINGS
 include_HEADERS += \
-	mpif-common.h
+	mpif-common.h \
+	mpif-mpi-io.h
 endif
 
 # these three are always installed in $(includedir), but shouldn't be

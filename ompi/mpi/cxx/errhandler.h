@@ -32,7 +32,9 @@ public:
  // copy / assignment
   inline Errhandler(const Errhandler& e)
     : comm_handler_fn(e.comm_handler_fn), 
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
       file_handler_fn(e.file_handler_fn), 
+#endif
       win_handler_fn(e.win_handler_fn), 
       mpi_errhandler(e.mpi_errhandler) { }
 
@@ -40,7 +42,9 @@ public:
   {
     mpi_errhandler = e.mpi_errhandler;
     comm_handler_fn = e.comm_handler_fn;
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
     file_handler_fn = e.file_handler_fn;
+#endif
     win_handler_fn = e.win_handler_fn;
     return *this;
   }
@@ -67,7 +71,9 @@ public:
   virtual void Free();
 
   Comm::Errhandler_fn* comm_handler_fn;
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
   File::Errhandler_fn* file_handler_fn;
+#endif
   Win::Errhandler_fn* win_handler_fn;
 
   MPI_Errhandler mpi_errhandler;

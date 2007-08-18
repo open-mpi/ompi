@@ -131,63 +131,6 @@ libmpi_c_mpi_la_SOURCES = \
         error_class.c \
         error_string.c \
         exscan.c \
-        file_c2f.c \
-        file_call_errhandler.c \
-        file_close.c \
-        file_create_errhandler.c \
-        file_delete.c \
-        file_f2c.c \
-        file_get_amode.c \
-        file_get_atomicity.c \
-        file_get_byte_offset.c \
-        file_get_errhandler.c \
-        file_get_group.c \
-        file_get_info.c \
-        file_get_position.c \
-        file_get_position_shared.c \
-        file_get_size.c \
-        file_get_type_extent.c \
-        file_get_view.c \
-        file_iread_at.c \
-        file_iread.c \
-        file_iread_shared.c \
-        file_iwrite_at.c \
-        file_iwrite.c \
-        file_iwrite_shared.c \
-        file_open.c \
-        file_preallocate.c \
-        file_read_all_begin.c \
-        file_read_all.c \
-        file_read_all_end.c \
-        file_read_at_all_begin.c \
-        file_read_at_all.c \
-        file_read_at_all_end.c \
-        file_read_at.c \
-        file_read.c \
-        file_read_ordered_begin.c \
-        file_read_ordered.c \
-        file_read_ordered_end.c \
-        file_read_shared.c \
-        file_seek.c \
-        file_seek_shared.c \
-        file_set_atomicity.c \
-        file_set_errhandler.c \
-        file_set_info.c \
-        file_set_size.c \
-        file_set_view.c \
-        file_sync.c \
-        file_write_all_begin.c \
-        file_write_all.c \
-        file_write_all_end.c \
-        file_write_at_all_begin.c \
-        file_write_at_all.c \
-        file_write_at_all_end.c \
-        file_write_at.c \
-        file_write.c \
-        file_write_ordered_begin.c \
-        file_write_ordered.c \
-        file_write_ordered_end.c \
-        file_write_shared.c \
         finalize.c \
         finalized.c \
         free_mem.c \
@@ -263,7 +206,6 @@ libmpi_c_mpi_la_SOURCES = \
         recv.c \
         reduce.c \
         reduce_scatter.c \
-        register_datarep.c \
         request_c2f.c \
         request_f2c.c \
         request_free.c \
@@ -364,6 +306,68 @@ libmpi_c_mpi_la_SOURCES = \
         win_test.c \
         win_unlock.c \
         win_wait.c
+
+if OMPI_PROVIDE_MPI_FILE_INTERFACE
+libmpi_c_mpi_la_SOURCES += \
+        file_c2f.c \
+        file_call_errhandler.c \
+        file_close.c \
+        file_create_errhandler.c \
+        file_delete.c \
+        file_f2c.c \
+        file_get_amode.c \
+        file_get_atomicity.c \
+        file_get_byte_offset.c \
+        file_get_errhandler.c \
+        file_get_group.c \
+        file_get_info.c \
+        file_get_position.c \
+        file_get_position_shared.c \
+        file_get_size.c \
+        file_get_type_extent.c \
+        file_get_view.c \
+        file_iread_at.c \
+        file_iread.c \
+        file_iread_shared.c \
+        file_iwrite_at.c \
+        file_iwrite.c \
+        file_iwrite_shared.c \
+        file_open.c \
+        file_preallocate.c \
+        file_read_all_begin.c \
+        file_read_all.c \
+        file_read_all_end.c \
+        file_read_at_all_begin.c \
+        file_read_at_all.c \
+        file_read_at_all_end.c \
+        file_read_at.c \
+        file_read.c \
+        file_read_ordered_begin.c \
+        file_read_ordered.c \
+        file_read_ordered_end.c \
+        file_read_shared.c \
+        file_seek.c \
+        file_seek_shared.c \
+        file_set_atomicity.c \
+        file_set_errhandler.c \
+        file_set_info.c \
+        file_set_size.c \
+        file_set_view.c \
+        file_sync.c \
+        file_write_all_begin.c \
+        file_write_all.c \
+        file_write_all_end.c \
+        file_write_at_all_begin.c \
+        file_write_at_all.c \
+        file_write_at_all_end.c \
+        file_write_at.c \
+        file_write.c \
+        file_write_ordered_begin.c \
+        file_write_ordered.c \
+        file_write_ordered_end.c \
+        file_write_shared.c \
+        register_datarep.c
+endif
 
 # Conditionally install the header files
 
