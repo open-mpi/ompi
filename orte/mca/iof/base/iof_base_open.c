@@ -76,7 +76,7 @@ int orte_iof_base_open(void)
 
     /* Debugging / verbose output */
 
-    id = mca_base_param_reg_int_name("iof_base", "verbose", 
+    id = mca_base_param_reg_int_name("iof", "base_verbose", 
                                      "Verbosity level for the iof framework",
                                      false, false, 0, &int_value);
     if (int_value != 0) {

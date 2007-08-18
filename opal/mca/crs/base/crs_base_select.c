@@ -103,8 +103,8 @@ int opal_crs_base_select(void)
      *       know which one until later. It will set the MCA parameter 'crs' 
      *       before calling this function.
      */
-    mca_base_param_reg_int_name("crs_base", 
-                                "do_not_select",
+    mca_base_param_reg_int_name("crs", 
+                                "base_do_not_select",
                                 "Do not do the selection of the CRS component",
                                 true, false,
                                 false, 

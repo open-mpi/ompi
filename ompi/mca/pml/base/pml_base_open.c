@@ -93,8 +93,8 @@ int mca_pml_base_open(void)
      * Register some MCA parameters
      */
      /* Debugging/Verbose output */
-     mca_base_param_reg_int_name("pml_base",
-                                 "verbose",
+     mca_base_param_reg_int_name("pml",
+                                 "base_verbose",
                                  "Verbosity level of the PML framework",
                                  false, false,
                                  0, &value);

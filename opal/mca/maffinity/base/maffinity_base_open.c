@@ -54,7 +54,7 @@ int opal_maffinity_base_open(void)
 
     /* Debugging / verbose output */
 
-    mca_base_param_reg_int_name("maffinity_base", "verbose", 
+    mca_base_param_reg_int_name("maffinity", "base_verbose", 
                                 "Verbosity level of the maffinity framework",
                                 false, false,
                                 0, &value);

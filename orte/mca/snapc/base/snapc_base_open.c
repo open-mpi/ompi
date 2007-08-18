@@ -56,8 +56,8 @@ int orte_snapc_base_open(void)
     char * str_value = NULL;
 
     /* Debugging/Verbose output */
-    mca_base_param_reg_int_name("snapc_base",
-                                "verbose",
+    mca_base_param_reg_int_name("snapc",
+                                "base_verbose",
                                 "Verbosity level of the SNAPC framework",
                                 false, false,
                                 0, &value);
@@ -69,8 +69,8 @@ int orte_snapc_base_open(void)
     opal_output_set_verbosity(orte_snapc_base_output, value);
 
     /* Global Snapshot directory */
-    mca_base_param_reg_string_name("snapc_base",
-                                   "global_snapshot_dir",
+    mca_base_param_reg_string_name("snapc",
+                                   "base_global_snapshot_dir",
                                    "The base directory to use when storing global snapshots",
                                    false, false,
                                    strdup("/tmp"),
@@ -82,8 +82,8 @@ int orte_snapc_base_open(void)
      * system that all nodes can access uniformly.
      * Default = enabled
      */
-    mca_base_param_reg_int_name("snapc_base",
-                                "store_in_place",
+    mca_base_param_reg_int_name("snapc",
+                                "base_store_in_place",
                                 "If global_snapshot_dir is on a shared file system all nodes can access, "
                                 "then the checkpoint files can be stored in place instead of incurring a "
                                 "remote copy. [Default = enabled]",

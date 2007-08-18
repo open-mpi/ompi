@@ -51,8 +51,8 @@ int opal_crs_base_open(void)
     char *str_value = NULL;
 
     /* Debugging/Verbose output */
-    mca_base_param_reg_int_name("crs_base",
-                                "verbose",
+    mca_base_param_reg_int_name("crs",
+                                "base_verbose",
                                 "Verbosity level of the CRS framework",
                                 false, false,
                                 0, &value);
@@ -64,8 +64,8 @@ int opal_crs_base_open(void)
     opal_output_set_verbosity(opal_crs_base_output, value);
 
     /* Base snapshot directory */
-    mca_base_param_reg_string_name("crs_base",
-                                   "snapshot_dir",
+    mca_base_param_reg_string_name("crs",
+                                   "base_snapshot_dir",
                                    "The base directory to use when storing snapshots",
                                    true, false,
                                    strdup("/tmp"),
