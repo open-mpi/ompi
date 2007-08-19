@@ -83,7 +83,8 @@ int ompi_coll_tuned_allgather_intra_bruck(void *sbuf, int scount,
                                           struct ompi_datatype_t *sdtype,
                                           void* rbuf, int rcount,
                                           struct ompi_datatype_t *rdtype,
-                                          struct ompi_communicator_t *comm)
+                                          struct ompi_communicator_t *comm,
+					  struct mca_coll_base_module_1_1_0_t *module)
 {
    int line = -1;
    int rank, size;
@@ -258,7 +259,8 @@ ompi_coll_tuned_allgather_intra_recursivedoubling(void *sbuf, int scount,
                                                   struct ompi_datatype_t *sdtype,
                                                   void* rbuf, int rcount,
                                                   struct ompi_datatype_t *rdtype,
-                                                  struct ompi_communicator_t *comm)
+                                                  struct ompi_communicator_t *comm,
+						  struct mca_coll_base_module_1_1_0_t *module)
 {
    int line = -1;
    int rank, size, pow2size;
@@ -283,7 +285,8 @@ ompi_coll_tuned_allgather_intra_recursivedoubling(void *sbuf, int scount,
                    size));
 
       return ompi_coll_tuned_allgather_intra_bruck(sbuf, scount, sdtype, 
-                                                   rbuf, rcount, rdtype, comm);
+                                                   rbuf, rcount, rdtype,
+						   comm, module);
    }
 
    OPAL_OUTPUT((ompi_coll_tuned_stream,
@@ -365,7 +368,8 @@ int ompi_coll_tuned_allgather_intra_ring(void *sbuf, int scount,
                                          struct ompi_datatype_t *sdtype,
                                          void* rbuf, int rcount,
                                          struct ompi_datatype_t *rdtype,
-                                         struct ompi_communicator_t *comm)
+                                         struct ompi_communicator_t *comm,
+					 struct mca_coll_base_module_1_1_0_t *module)
 {
    int line = -1;
    int rank, size;
@@ -495,7 +499,8 @@ ompi_coll_tuned_allgather_intra_neighborexchange(void *sbuf, int scount,
                                                  struct ompi_datatype_t *sdtype,
                                                  void* rbuf, int rcount,
                                                  struct ompi_datatype_t *rdtype,
-                                                 struct ompi_communicator_t *comm)
+                                                 struct ompi_communicator_t *comm,
+						 struct mca_coll_base_module_1_1_0_t *module)
 {
    int line = -1;
    int rank, size;
@@ -514,7 +519,7 @@ ompi_coll_tuned_allgather_intra_neighborexchange(void *sbuf, int scount,
                    size));
       return ompi_coll_tuned_allgather_intra_ring(sbuf, scount, sdtype,
                                                   rbuf, rcount, rdtype,
-                                                  comm);
+                                                  comm, module);
    }
 
    OPAL_OUTPUT((ompi_coll_tuned_stream,
@@ -613,7 +618,8 @@ int ompi_coll_tuned_allgather_intra_two_procs(void *sbuf, int scount,
                                               struct ompi_datatype_t *sdtype,
                                               void* rbuf, int rcount,
                                               struct ompi_datatype_t *rdtype,
-                                              struct ompi_communicator_t *comm)
+                                              struct ompi_communicator_t *comm,
+					      struct mca_coll_base_module_1_1_0_t *module)
 {
    int line = -1, err = 0;
    int rank;
@@ -696,7 +702,8 @@ ompi_coll_tuned_allgather_intra_basic_linear(void *sbuf, int scount,
                                              void *rbuf,
                                              int rcount, 
                                              struct ompi_datatype_t *rdtype,
-                                             struct ompi_communicator_t *comm)
+                                             struct ompi_communicator_t *comm,
+					     struct mca_coll_base_module_1_1_0_t *module)
 {
     int err;
     ptrdiff_t lb, extent;
@@ -715,11 +722,12 @@ ompi_coll_tuned_allgather_intra_basic_linear(void *sbuf, int scount,
 
     /* Gather and broadcast. */
 
-    err = comm->c_coll.coll_gather(sbuf, scount, sdtype, rbuf, rcount,
-                                   rdtype, 0, comm);
+    err = comm->c_coll.coll_gather(sbuf, scount, sdtype,
+				   rbuf, rcount, rdtype,
+				   0, comm, module);
     if (MPI_SUCCESS == err) {
-        err = comm->c_coll.coll_bcast(rbuf, rcount * ompi_comm_size(comm), 
-                                      rdtype, 0, comm);
+        err = comm->c_coll.coll_bcast(rbuf, rcount * ompi_comm_size(comm), rdtype,
+				      0, comm, module);
     }
 
     /* All done */
@@ -796,60 +804,63 @@ int ompi_coll_tuned_allgather_intra_do_forced(void *sbuf, int scount,
                                               struct ompi_datatype_t *sdtype,
                                               void* rbuf, int rcount,
                                               struct ompi_datatype_t *rdtype,
-                                              struct ompi_communicator_t *comm)
+                                              struct ompi_communicator_t *comm,
+					      struct mca_coll_base_module_1_1_0_t *module)
 {
-   OPAL_OUTPUT((ompi_coll_tuned_stream,
-                "coll:tuned:allgather_intra_do_forced selected algorithm %d",
-                comm->c_coll_selected_data->user_forced[ALLGATHER].algorithm));
-   
-   switch (comm->c_coll_selected_data->user_forced[ALLGATHER].algorithm) {
-   case (0):   
-      return ompi_coll_tuned_allgather_intra_dec_fixed (sbuf, scount, sdtype, 
-                                                        rbuf, rcount, rdtype, 
-                                                        comm);
-   case (1):   
-      return ompi_coll_tuned_allgather_intra_basic_linear (sbuf, scount, sdtype,
-                                                           rbuf, rcount, rdtype,
-                                                           comm);
-   case (2):   
-      return ompi_coll_tuned_allgather_intra_bruck (sbuf, scount, sdtype, 
-                                                    rbuf, rcount, rdtype, comm);
-   case (3):   
-      return ompi_coll_tuned_allgather_intra_recursivedoubling (sbuf, scount, 
-                                                                sdtype, 
-                                                                rbuf, rcount, 
-                                                                rdtype, 
-                                                                comm);
-   case (4):
-      return ompi_coll_tuned_allgather_intra_ring (sbuf, scount, sdtype, 
-                                                   rbuf, rcount, rdtype, comm);
-   case (5):
-      return ompi_coll_tuned_allgather_intra_neighborexchange (sbuf, scount, 
-                                                               sdtype, 
-                                                               rbuf, rcount, 
-                                                               rdtype, 
-                                                               comm);
-   case (6):
-      return ompi_coll_tuned_allgather_intra_two_procs (sbuf, scount, sdtype, 
-                                                        rbuf, rcount, rdtype, 
-                                                        comm);
-   default:
-      OPAL_OUTPUT((ompi_coll_tuned_stream,
-                   "coll:tuned:allgather_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?", 
-                   comm->c_coll_selected_data->user_forced[ALLGATHER].algorithm,
-                   ompi_coll_tuned_forced_max_algorithms[ALLGATHER]));
-      return (MPI_ERR_ARG);
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream,
+		 "coll:tuned:allgather_intra_do_forced selected algorithm %d",
+		 data->user_forced[ALLGATHER].algorithm));
+
+    switch (data->user_forced[ALLGATHER].algorithm) {
+    case (0):   
+	return ompi_coll_tuned_allgather_intra_dec_fixed (sbuf, scount, sdtype, 
+							  rbuf, rcount, rdtype, 
+							  comm, module);
+    case (1):   
+	return ompi_coll_tuned_allgather_intra_basic_linear (sbuf, scount, sdtype,
+							     rbuf, rcount, rdtype,
+							     comm, module);
+    case (2):   
+	return ompi_coll_tuned_allgather_intra_bruck (sbuf, scount, sdtype, 
+						      rbuf, rcount, rdtype,
+						      comm, module);
+    case (3):   
+	return ompi_coll_tuned_allgather_intra_recursivedoubling (sbuf, scount, sdtype, 
+								  rbuf, rcount, rdtype, 
+								  comm, module);
+    case (4):
+	return ompi_coll_tuned_allgather_intra_ring (sbuf, scount, sdtype, 
+						     rbuf, rcount, rdtype,
+						     comm, module);
+    case (5):
+	return ompi_coll_tuned_allgather_intra_neighborexchange (sbuf, scount, sdtype, 
+								 rbuf, rcount, rdtype, 
+								 comm, module);
+    case (6):
+	return ompi_coll_tuned_allgather_intra_two_procs (sbuf, scount, sdtype, 
+							  rbuf, rcount, rdtype, 
+							  comm, module);
+    default:
+	OPAL_OUTPUT((ompi_coll_tuned_stream,
+		     "coll:tuned:allgather_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?", 
+		     data->user_forced[ALLGATHER].algorithm,
+		     ompi_coll_tuned_forced_max_algorithms[ALLGATHER]));
+	return (MPI_ERR_ARG);
     } /* switch */
 
 }
 
 
 int ompi_coll_tuned_allgather_intra_do_this(void *sbuf, int scount,
-                                           struct ompi_datatype_t *sdtype,
-                                           void* rbuf, int rcount,
-                                           struct ompi_datatype_t *rdtype,
-                                           struct ompi_communicator_t *comm,
-                                           int algorithm, int faninout, int segsize)
+					    struct ompi_datatype_t *sdtype,
+					    void* rbuf, int rcount,
+					    struct ompi_datatype_t *rdtype,
+					    struct ompi_communicator_t *comm,
+					    struct mca_coll_base_module_1_1_0_t *module,
+					    int algorithm, int faninout, int segsize)
 {
    OPAL_OUTPUT((ompi_coll_tuned_stream,
                "coll:tuned:allgather_intra_do_this selected algorithm %d topo faninout %d segsize %d", 
@@ -859,33 +870,31 @@ int ompi_coll_tuned_allgather_intra_do_this(void *sbuf, int scount,
    case (0):   
       return ompi_coll_tuned_allgather_intra_dec_fixed(sbuf, scount, sdtype, 
                                                        rbuf, rcount, rdtype, 
-                                                       comm);
+                                                       comm, module);
    case (1):   
       return ompi_coll_tuned_allgather_intra_basic_linear(sbuf, scount, sdtype,
                                                           rbuf, rcount, rdtype,
-                                                          comm);
+                                                          comm, module);
    case (2): 
       return ompi_coll_tuned_allgather_intra_bruck(sbuf, scount, sdtype, 
-                                                   rbuf, rcount, rdtype, comm);
+                                                   rbuf, rcount, rdtype,
+						   comm, module);
    case (3): 
-      return ompi_coll_tuned_allgather_intra_recursivedoubling(sbuf, scount, 
-                                                               sdtype, 
-                                                               rbuf, rcount, 
-                                                               rdtype, 
-                                                               comm);
+      return ompi_coll_tuned_allgather_intra_recursivedoubling(sbuf, scount, sdtype, 
+                                                               rbuf, rcount, rdtype, 
+                                                               comm, module);
    case (4): 
       return ompi_coll_tuned_allgather_intra_ring(sbuf, scount, sdtype, 
-                                                  rbuf, rcount, rdtype, comm);
+                                                  rbuf, rcount, rdtype,
+						  comm, module);
    case (5): 
-      return ompi_coll_tuned_allgather_intra_neighborexchange(sbuf, scount, 
-                                                              sdtype, 
-                                                              rbuf, rcount,
-                                                              rdtype, 
-                                                              comm);
+      return ompi_coll_tuned_allgather_intra_neighborexchange(sbuf, scount, sdtype, 
+                                                              rbuf, rcount, rdtype, 
+                                                              comm, module);
    case (6):
       return ompi_coll_tuned_allgather_intra_two_procs (sbuf, scount, sdtype, 
                                                         rbuf, rcount, rdtype, 
-                                                        comm);
+                                                        comm, module);
    default:
       OPAL_OUTPUT((ompi_coll_tuned_stream,
                    "coll:tuned:allgather_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 

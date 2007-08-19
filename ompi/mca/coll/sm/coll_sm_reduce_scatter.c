@@ -32,7 +32,8 @@
 int mca_coll_sm_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
                                      struct ompi_datatype_t *dtype,
                                      struct ompi_op_t *op,
-                                     struct ompi_communicator_t *comm)
+                                     struct ompi_communicator_t *comm,
+                                     struct mca_coll_base_module_1_1_0_t *module);
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

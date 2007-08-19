@@ -32,206 +32,8 @@
 #include "coll_tuned_dynamic_file.h"
 #include "coll_tuned_forced.h"
 
-/*
- * Which set are we using?
- */
-static const mca_coll_base_module_1_0_0_t *to_use = NULL;
-
-/*
- * Intra communicator decision functions
- * 
- * Two prototypes, one for fixed rules and one for dynamic rules
- *
- */
-static const mca_coll_base_module_1_0_0_t intra_fixed = {
-
-    /* Initialization / finalization functions */
-
-    ompi_coll_tuned_module_init,
-    ompi_coll_tuned_module_finalize,
-
-    /* Collective function pointers */
-
-    ompi_coll_tuned_allgather_intra_dec_fixed,
-    /*     NULL, */
-    ompi_coll_tuned_allgatherv_intra_dec_fixed, 
-    /*     NULL, */
-    ompi_coll_tuned_allreduce_intra_dec_fixed,
-    /*     NULL, */
-    ompi_coll_tuned_alltoall_intra_dec_fixed,
-    /*     NULL, */
-    /*   ompi_coll_tuned_alltoallv_intra_dec_fixed, */
-    NULL,
-    /*   ompi_coll_tuned_alltoallw_intra_dec_fixed, */
-    NULL,
-    ompi_coll_tuned_barrier_intra_dec_fixed,
-    /*     NULL, */
-    ompi_coll_tuned_bcast_intra_dec_fixed,
-    /* NULL, */
-    /*   ompi_coll_tuned_exscan_intra_dec_fixed, */
-    NULL,
-    /* ompi_coll_tuned_gather_intra_dec_fixed, */
-    NULL,
-    /*   ompi_coll_tuned_gatherv_intra_dec_fixed, */
-    NULL,
-    ompi_coll_tuned_reduce_intra_dec_fixed,
-    /*     NULL, */
-    ompi_coll_tuned_reduce_scatter_intra_dec_fixed,
-    /*     NULL, */
-    /*   ompi_coll_tuned_scan_intra_dec_fixed, */
-    NULL,
-    ompi_coll_tuned_scatter_intra_dec_fixed,
-    /* NULL, */
-    /*   ompi_coll_tuned_scatterv_intra_dec_fixed */
-  NULL,
-  mca_coll_tuned_ft_event
-};
-
-static const mca_coll_base_module_1_0_0_t intra_dynamic = {
-
-    /* Initialization / finalization functions */
-
-    ompi_coll_tuned_module_init,
-    ompi_coll_tuned_module_finalize,
-
-    /* Collective function pointers */
-
-    ompi_coll_tuned_allgather_intra_dec_dynamic,
-    /*     NULL, */
-    ompi_coll_tuned_allgatherv_intra_dec_dynamic,
-    /*     NULL, */
-    ompi_coll_tuned_allreduce_intra_dec_dynamic,
-    /*     NULL, */
-    ompi_coll_tuned_alltoall_intra_dec_dynamic,
-    /*     NULL, */
-    /*   ompi_coll_tuned_alltoallv_intra_dec_dynamic, */
-    NULL,
-    /*   ompi_coll_tuned_alltoallw_intra_dec_dynamic, */
-    NULL,
-    ompi_coll_tuned_barrier_intra_dec_dynamic,
-    /*     NULL, */
-    ompi_coll_tuned_bcast_intra_dec_dynamic,
-    /*     NULL, */
-    /*   ompi_coll_tuned_exscan_intra_dec_dynamic, */
-    NULL,
-    ompi_coll_tuned_gather_intra_dec_dynamic,
-    /*     NULL, */
-    /*   ompi_coll_tuned_gatherv_intra_dec_dynamic, */
-    NULL,
-    ompi_coll_tuned_reduce_intra_dec_dynamic,
-    /*     NULL, */
-    ompi_coll_tuned_reduce_scatter_intra_dec_dynamic,
-    /*     NULL, */
-    /*   ompi_coll_tuned_scan_intra_dec_dynamic, */
-    NULL,
-    ompi_coll_tuned_scatter_intra_dec_dynamic,
-    /* NULL, */
-    /*   ompi_coll_tuned_scatterv_intra_dec_dynamic */
-  NULL,
-  mca_coll_tuned_ft_event
-};
-
-/*
- * collective decision functions for intercommunicators
- * 
- * Two prototypes, one for fixed rules and one for dynamic rules
- *
- */
-static const mca_coll_base_module_1_0_0_t inter_fixed = {
-
-    /* Initialization / finalization functions */
-
-    ompi_coll_tuned_module_init,
-    ompi_coll_tuned_module_finalize,
-
-    /* Collective function pointers */
-
-    /*     ompi_coll_tuned_allgather_inter_dec_fixed, */
-    NULL,
-    /*   ompi_coll_tuned_allgatherv_inter_dec_fixed, */
-    NULL,
-    /*   ompi_coll_tuned_allreduce_inter_dec_fixed, */
-    NULL,
-    /*   ompi_coll_tuned_alltoall_inter_dec_fixed, */
-    NULL,
-    /*   ompi_coll_tuned_alltoallv_inter_dec_fixed, */
-    NULL,
-    /*   ompi_coll_tuned_alltoallw_inter_dec_fixed, */
-    NULL,
-    /*   ompi_coll_tuned_barrier_inter_dec_fixed, */
-    NULL,
-    /*   ompi_coll_tuned_bcast_inter_dec_fixed, */
-    NULL,
-    /* ompi_coll_tuned_exscan_inter_dec_fixed, */
-    NULL,
-    /*   ompi_coll_tuned_gather_inter_dec_fixed, */
-    NULL,
-    /*   ompi_coll_tuned_gatherv_inter_dec_fixed, */
-    NULL,
-    /*   ompi_coll_tuned_reduce_inter_dec_fixed, */
-    NULL,
-    /*   ompi_coll_tuned_reduce_scatter_inter_dec_fixed, */
-    NULL,
-    /* ompi_coll_tuned_scan_inter_dec_fixed, */
-    NULL,
-    /*   ompi_coll_tuned_scatter_inter_dec_fixed, */
-    NULL,
-    /*   ompi_coll_tuned_scatterv_inter_dec_fixed */
-  NULL,
-  NULL
-};
-
-static const mca_coll_base_module_1_0_0_t inter_dynamic = {
-
-    /* Initialization / finalization functions */
-
-    ompi_coll_tuned_module_init,
-    ompi_coll_tuned_module_finalize,
-
-    /* Collective function pointers */
-
-    /*   ompi_coll_tuned_allgather_inter_dec_dynamic, */
-    NULL,
-    /*   ompi_coll_tuned_allgatherv_inter_dec_dynamic, */
-    NULL,
-    /*   ompi_coll_tuned_allreduce_inter_dec_dynamic, */
-    NULL,
-    /*   ompi_coll_tuned_alltoall_inter_dec_dynamic, */
-    NULL,
-    /*   ompi_coll_tuned_alltoallv_inter_dec_dynamic, */
-    NULL,
-    /*   ompi_coll_tuned_alltoallw_inter_dec_dynamic, */
-    NULL,
-    /*   ompi_coll_tuned_barrier_inter_dec_dynamic, */
-    NULL,
-    /*   ompi_coll_tuned_bcast_inter_dec_dynamic, */
-    NULL,
-    /* ompi_coll_tuned_exscan_inter_dec_dynamic, */
-    NULL,
-    /*   ompi_coll_tuned_gather_inter_dec_dynamic, */
-    NULL,
-    /*   ompi_coll_tuned_gatherv_inter_dec_dynamic, */
-    NULL,
-    /*   ompi_coll_tuned_reduce_inter_dec_dynamic, */
-    NULL,
-    /*   ompi_coll_tuned_reduce_scatter_inter_dec_dynamic, */
-    NULL,
-    /* ompi_coll_tuned_scan_inter_dec_dynamic, */
-    NULL,
-    /*   ompi_coll_tuned_scatter_inter_dec_dynamic, */
-    NULL,
-    /*   ompi_coll_tuned_scatterv_inter_dec_dynamic */
-  NULL,
-  NULL
-
-};
-
-/* 
- * Note I keep the names here as place markers until all the functions
- * are implemented
- */
-
-
+static int tuned_module_enable(struct mca_coll_base_module_1_1_0_t *module,
+			       struct ompi_communicator_t *comm);
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
  * this component to disqualify itself if it doesn't support the
@@ -251,11 +53,38 @@ int ompi_coll_tuned_init_query(bool enable_progress_threads,
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-const mca_coll_base_module_1_0_0_t *
-ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
-                           struct mca_coll_base_comm_t **data)
+mca_coll_base_module_1_1_0_t *
+ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
+    mca_coll_tuned_module_t *tuned_module;
+
     OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:module_tuned query called"));
+
+    /**
+     * If it is inter-communicator and size is less than 2 we have specialized modules
+     * to handle the intra collective communications.
+     */
+    if (OMPI_COMM_IS_INTRA(comm) && ompi_comm_size(comm) < 2) {
+	*priority = 0;
+	return NULL;
+    }
+
+    if (OMPI_COMM_IS_INTER(comm)) {
+#if 0
+        if (ompi_coll_tuned_use_dynamic_rules) {
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using inter_dynamic"));
+        } else {
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using inter_fixed"));
+ 
+        }
+#endif
+	/* tuned does not support inter-communicator yet */
+	*priority = 0;
+	return NULL;
+    }
+
+    tuned_module = OBJ_NEW(mca_coll_tuned_module_t);
+    if (NULL == tuned_module) return NULL;
 
     *priority = ompi_coll_tuned_priority;
 
@@ -265,44 +94,65 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
      * Right now you cannot mix them, maybe later on it can be changed
      * but this would probably add an extra if and funct call to the path
      */
+    tuned_module->super.coll_module_enable = tuned_module_enable;
+    tuned_module->super.ft_event = mca_coll_tuned_ft_event;
 
-    if (OMPI_COMM_IS_INTER(comm)) {
-        if (ompi_coll_tuned_use_dynamic_rules) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using inter_dynamic"));
-            to_use = &inter_dynamic;
-        } else {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using inter_fixed"));
-            to_use = &inter_fixed;
-        }
-    } else { /* is an intra comm */
-        /**
-         * If the communicator size is less than 2 we have specialized modules
-         * to handle the intra collective communications.
-         */
-        if( ompi_comm_size(comm) < 2) {
-            *priority = 0;
-            return NULL;
-        }
-        if (ompi_coll_tuned_use_dynamic_rules) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using intra_dynamic"));
-            to_use = &intra_dynamic;
-        } else {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using intra_fixed"));
-            to_use = &intra_fixed;
-        }
+    if (ompi_coll_tuned_use_dynamic_rules) {
+	OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using intra_dynamic"));
+
+	tuned_module->super.coll_allgather  = ompi_coll_tuned_allgather_intra_dec_dynamic;
+	tuned_module->super.coll_allgatherv = ompi_coll_tuned_allgatherv_intra_dec_dynamic;
+	tuned_module->super.coll_allreduce  = ompi_coll_tuned_allreduce_intra_dec_dynamic;
+	tuned_module->super.coll_alltoall   = ompi_coll_tuned_alltoall_intra_dec_dynamic;
+	tuned_module->super.coll_alltoallv  = NULL;
+	tuned_module->super.coll_alltoallw  = NULL;
+	tuned_module->super.coll_barrier    = ompi_coll_tuned_barrier_intra_dec_dynamic;
+	tuned_module->super.coll_bcast      = ompi_coll_tuned_bcast_intra_dec_dynamic;
+	tuned_module->super.coll_exscan     = NULL;
+	tuned_module->super.coll_gather     = ompi_coll_tuned_gather_intra_dec_dynamic;
+	tuned_module->super.coll_gatherv    = NULL;
+	tuned_module->super.coll_reduce     = ompi_coll_tuned_reduce_intra_dec_dynamic;
+	tuned_module->super.coll_reduce_scatter = ompi_coll_tuned_reduce_scatter_intra_dec_dynamic;
+	tuned_module->super.coll_scan       = NULL;
+	tuned_module->super.coll_scatter    = ompi_coll_tuned_scatter_intra_dec_dynamic;
+	tuned_module->super.coll_scatterv   = NULL;
+
+    } else {
+	OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using intra_fixed"));
+
+	tuned_module->super.coll_allgather  = ompi_coll_tuned_allgather_intra_dec_fixed;
+	tuned_module->super.coll_allgatherv = ompi_coll_tuned_allgatherv_intra_dec_fixed;
+	tuned_module->super.coll_allreduce  = ompi_coll_tuned_allreduce_intra_dec_fixed;
+	tuned_module->super.coll_alltoall   = ompi_coll_tuned_alltoall_intra_dec_fixed;
+	tuned_module->super.coll_alltoallv  = NULL;
+	tuned_module->super.coll_alltoallw  = NULL;
+	tuned_module->super.coll_barrier    = ompi_coll_tuned_barrier_intra_dec_fixed;
+	tuned_module->super.coll_bcast      = ompi_coll_tuned_bcast_intra_dec_fixed;
+	tuned_module->super.coll_exscan     = NULL;
+	tuned_module->super.coll_gather     = ompi_coll_tuned_gather_intra_dec_fixed;
+	tuned_module->super.coll_gatherv    = NULL;
+	tuned_module->super.coll_reduce     = ompi_coll_tuned_reduce_intra_dec_fixed;
+	tuned_module->super.coll_reduce_scatter = ompi_coll_tuned_reduce_scatter_intra_dec_fixed;
+	tuned_module->super.coll_scan       = NULL;
+	tuned_module->super.coll_scatter    = ompi_coll_tuned_scatter_intra_dec_fixed;
+	tuned_module->super.coll_scatterv   = NULL;
+
     }
-    return to_use;
+
+    return &(tuned_module->super);
 }
 
 
 /*
  * Init module on the communicator
  */
-const struct mca_coll_base_module_1_0_0_t *
-ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
+static int
+tuned_module_enable(struct mca_coll_base_module_1_1_0_t *module,
+		    struct ompi_communicator_t *comm)
 {
     int size, rank;
-    struct mca_coll_base_comm_t *data;
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t *) module;
+    mca_coll_tuned_comm_t *data = NULL;
     /* fanout parameters */
     int rc=0;
     int i;
@@ -347,20 +197,19 @@ ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
 
 
     if (size<=ompi_coll_tuned_preallocate_memory_comm_size_limit) {
-        data = (mca_coll_base_comm_t*)malloc(sizeof(struct mca_coll_base_comm_t) +
-                                             (sizeof(ompi_request_t *) * size * 2));
+        data = (mca_coll_tuned_comm_t*)malloc(sizeof(struct mca_coll_tuned_comm_t) +
+					      (sizeof(ompi_request_t *) * size * 2));
   
         if (NULL == data) {
-            return NULL;
+            return OMPI_ERROR;
         }
         data->mcct_reqs = (ompi_request_t **) (data + 1);
         data->mcct_num_reqs = size * 2;
-    }
-    else {
-        data = (mca_coll_base_comm_t*)malloc(sizeof(struct mca_coll_base_comm_t)); 
+    } else {
+        data = (mca_coll_tuned_comm_t*)malloc(sizeof(struct mca_coll_tuned_comm_t)); 
   
         if (NULL == data) {
-            return NULL;
+            return OMPI_ERROR;
         }
         data->mcct_reqs = (ompi_request_t **) NULL;
         data->mcct_num_reqs = 0;
@@ -413,11 +262,8 @@ ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
 
 
     if (&ompi_mpi_comm_world==comm) {
-
         if (ompi_coll_tuned_use_dynamic_rules) {
-
             OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init MCW & Dynamic"));
-
             if (ompi_coll_tuned_dynamic_rules_filename) {
                 OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init Opening [%s]", 
                              ompi_coll_tuned_dynamic_rules_filename));
@@ -434,16 +280,14 @@ ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
                 else { /* failed to read config file, thus make sure its a NULL... */
                     data->all_base_rules = (ompi_coll_alg_rule_t*) NULL;
                 }
-
-
             } /* end if a config filename exists */
-
         } /* end if dynamic_rules */
-
     } /* end if MCW */
   
     /* ok, if using dynamic rules, not MCW and we are just any rank and a base set of rules exist.. ref them */
     /* order of eval is important here, if we are MCW ompi_mpi_comm_world.c_coll_selected_data is NULL still.. */
+
+#if 0 /* FIXME: don't know how to deal with this */
     if ((ompi_coll_tuned_use_dynamic_rules)&&(!(&ompi_mpi_comm_world==comm))&&
         ((ompi_mpi_comm_world.c_coll_selected_data)->all_base_rules)) {
 
@@ -458,6 +302,7 @@ ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
             data->com_rules[i] = ompi_coll_tuned_get_com_rule_ptr (data->all_base_rules, i, size);
         }
     }
+#endif
 
     /* 
      * now for the cached topo functions 
@@ -465,7 +310,8 @@ ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
      */
 
     /* general n fan out tree */
-    data->cached_ntree = ompi_coll_tuned_topo_build_tree (ompi_coll_tuned_init_tree_fanout, comm, 0); 
+    data->cached_ntree = ompi_coll_tuned_topo_build_tree (ompi_coll_tuned_init_tree_fanout,
+							  comm, 0); 
     data->cached_ntree_root = 0;
     data->cached_ntree_fanout = ompi_coll_tuned_init_tree_fanout;
 
@@ -488,7 +334,8 @@ ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
      * will probably change how we cache this later, for now a midsize
      * GEF
      */
-    data->cached_chain = ompi_coll_tuned_topo_build_chain (ompi_coll_tuned_init_chain_fanout, comm, 0);
+    data->cached_chain = ompi_coll_tuned_topo_build_chain (ompi_coll_tuned_init_chain_fanout,
+							   comm, 0);
     data->cached_chain_root = 0;
     data->cached_chain_fanout = ompi_coll_tuned_init_chain_fanout;
 
@@ -501,66 +348,9 @@ ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
 
     /* All done */
 
-    comm->c_coll_selected_data = data;
+    tuned_module->tuned_data = data;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init Tuned is in use"));
-    return to_use;
-}
-
-
-/*
- * Finalize module on the communicator
- */
-int ompi_coll_tuned_module_finalize(struct ompi_communicator_t *comm)
-{
-    if (NULL == comm->c_coll_selected_module) {
-        return OMPI_SUCCESS;
-    }
-
-#if OMPI_ENABLE_DEBUG
-    /* Reset the reqs to NULL/0 -- they'll be freed as part of freeing
-       the generel c_coll_selected_data */
-
-    comm->c_coll_selected_data->mcct_reqs = NULL;
-    comm->c_coll_selected_data->mcct_num_reqs = 0;
-#endif
-
-    /* free any cached information that has been allocated */
-    if (comm->c_coll_selected_data->cached_ntree) { /* destroy general tree if defined */
-        ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_ntree);
-    }
-    if (comm->c_coll_selected_data->cached_bintree) { /* destroy bintree if defined */
-        ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_bintree);
-    }
-    if (comm->c_coll_selected_data->cached_bmtree) { /* destroy bmtree if defined */
-        ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_bmtree);
-    }
-    if (comm->c_coll_selected_data->cached_in_order_bmtree) { /* destroy bmtree if defined */
-        ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_in_order_bmtree);
-    }
-    if (comm->c_coll_selected_data->cached_chain) { /* destroy general chain if defined */
-        ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_chain);
-    }
-    if (comm->c_coll_selected_data->cached_pipeline) { /* destroy pipeline if defined */
-        ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_pipeline);
-    }
-    if (comm->c_coll_selected_data->cached_in_order_bintree) { /* destroy in order bintree if defined */
-        ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_in_order_bintree);
-    }
-
-    /* if any algorithm rules are cached on the communicator, only free them if its MCW */
-    /* as this is the only place they are allocated by reading the decision configure file */
-    if ((ompi_coll_tuned_use_dynamic_rules)&&(&ompi_mpi_comm_world==comm)) {
-        if (comm->c_coll_selected_data->all_base_rules) {
-            ompi_coll_tuned_free_all_rules (comm->c_coll_selected_data->all_base_rules, COLLCOUNT);
-        }
-    }
-
-    /* if allocated memory free it */
-    if (comm->c_coll_selected_data) {
-        free(comm->c_coll_selected_data);
-        comm->c_coll_selected_data = NULL;
-    }
     return OMPI_SUCCESS;
 }
 

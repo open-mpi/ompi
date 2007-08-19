@@ -90,7 +90,8 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
                                            void *rbuf, int *rcounts,
                                            int *rdispls, 
                                            struct ompi_datatype_t *rdtype,
-                                           struct ompi_communicator_t *comm)
+                                           struct ompi_communicator_t *comm,
+					   struct mca_coll_base_module_1_1_0_t *module)
 {
    int line = -1, err = 0;
    int rank, size;
@@ -223,7 +224,8 @@ int ompi_coll_tuned_allgatherv_intra_ring(void *sbuf, int scount,
                                           struct ompi_datatype_t *sdtype,
                                           void* rbuf, int *rcounts, int *rdisps,
                                           struct ompi_datatype_t *rdtype,
-                                          struct ompi_communicator_t *comm)
+                                          struct ompi_communicator_t *comm,
+					  struct mca_coll_base_module_1_1_0_t *module)
 {
     int line = -1;
     int rank, size;
@@ -355,7 +357,8 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
                                                   struct ompi_datatype_t *sdtype,
                                                   void* rbuf, int *rcounts, int *rdispls,
                                                   struct ompi_datatype_t *rdtype,
-                                                  struct ompi_communicator_t *comm)
+                                                  struct ompi_communicator_t *comm,
+						  struct mca_coll_base_module_1_1_0_t *module)
 {
     int line = -1;
     int rank, size;
@@ -377,7 +380,7 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
         return ompi_coll_tuned_allgatherv_intra_ring(sbuf, scount, sdtype,
                                                      rbuf, rcounts, 
                                                      rdispls, rdtype,
-                                                     comm);
+                                                     comm, module);
     }
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,
@@ -505,7 +508,8 @@ int ompi_coll_tuned_allgatherv_intra_two_procs(void *sbuf, int scount,
                                                void* rbuf, int *rcounts,
                                                int *rdispls,
                                                struct ompi_datatype_t *rdtype,
-                                               struct ompi_communicator_t *comm)
+                                               struct ompi_communicator_t *comm,
+					       struct mca_coll_base_module_1_1_0_t *module)
 {
     int line = -1, err = 0;
     int rank;
@@ -590,7 +594,8 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
                                                void *rbuf, int *rcounts,
                                                int *disps,
                                                struct ompi_datatype_t *rdtype,
-                                               struct ompi_communicator_t *comm)
+                                               struct ompi_communicator_t *comm,
+					       struct mca_coll_base_module_1_1_0_t *module)
 {
     int i, size, rank ;
     int err;
@@ -625,7 +630,7 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
     err = comm->c_coll.coll_gatherv(send_buf,
                                     rcounts[rank], send_type,rbuf,
                                     rcounts, disps, rdtype, 0,
-                                    comm);
+                                    comm, module);
     
     if (MPI_SUCCESS != err) {
         return err;
@@ -653,7 +658,7 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
         return err;
     }
 
-    comm->c_coll.coll_bcast( rbuf, 1 ,newtype,0,comm);
+    comm->c_coll.coll_bcast(rbuf, 1, newtype, 0, comm, module);
 
     ompi_ddt_destroy (&newtype);
 
@@ -730,50 +735,45 @@ int ompi_coll_tuned_allgatherv_intra_do_forced(void *sbuf, int scount,
                                                void *rbuf, int *rcounts, 
                                                int *rdispls,
                                                struct ompi_datatype_t *rdtype,
-                                               struct ompi_communicator_t *comm)
+                                               struct ompi_communicator_t *comm,
+					       struct mca_coll_base_module_1_1_0_t *module)
 {
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
+
     OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:allgatherv_intra_do_forced selected algorithm %d",
-                 comm->c_coll_selected_data->user_forced[ALLGATHERV].algorithm));
-   
-    switch (comm->c_coll_selected_data->user_forced[ALLGATHERV].algorithm) {
+		 data->user_forced[ALLGATHERV].algorithm));
+
+    switch (data->user_forced[ALLGATHERV].algorithm) {
     case (0):   
         return ompi_coll_tuned_allgatherv_intra_dec_fixed (sbuf, scount, sdtype, 
-                                                           rbuf, rcounts, 
-                                                           rdispls, rdtype, 
-                                                           comm);
+                                                           rbuf, rcounts, rdispls, rdtype, 
+                                                           comm, module);
     case (1):   
-        return ompi_coll_tuned_allgatherv_intra_basic_default (sbuf, scount, 
-                                                               sdtype,
-                                                               rbuf, rcounts, 
-                                                               rdispls, rdtype,
-                                                               comm);
+        return ompi_coll_tuned_allgatherv_intra_basic_default (sbuf, scount, sdtype,
+                                                               rbuf, rcounts, rdispls, rdtype,
+                                                               comm, module);
     case (2):   
-        return ompi_coll_tuned_allgatherv_intra_bruck (sbuf, scount, sdtype, 
-                                                       rbuf, rcounts, 
-                                                       rdispls, rdtype, 
-                                                       comm);
+        return ompi_coll_tuned_allgatherv_intra_bruck (sbuf, scount, sdtype,
+						       rbuf, rcounts, rdispls, rdtype, 
+                                                       comm, module);
     case (3):   
         return ompi_coll_tuned_allgatherv_intra_ring (sbuf, scount, sdtype, 
-                                                      rbuf, rcounts, 
-                                                      rdispls, rdtype, 
-                                                      comm);
+                                                      rbuf, rcounts, rdispls, rdtype, 
+                                                      comm, module);
     case (4):
-        return ompi_coll_tuned_allgatherv_intra_neighborexchange (sbuf, scount, 
-                                                                  sdtype, 
-                                                                  rbuf, rcounts, 
-                                                                  rdispls, 
-                                                                  rdtype,
-                                                                  comm);
+        return ompi_coll_tuned_allgatherv_intra_neighborexchange (sbuf, scount, sdtype, 
+                                                                  rbuf, rcounts, rdispls, rdtype,
+                                                                  comm, module);
     case (5):
         return ompi_coll_tuned_allgatherv_intra_two_procs (sbuf, scount, sdtype, 
-                                                           rbuf, rcounts, 
-                                                           rdispls, rdtype, 
-                                                           comm);
+                                                           rbuf, rcounts, rdispls, rdtype, 
+                                                           comm, module);
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,
                      "coll:tuned:allgatherv_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?", 
-                     comm->c_coll_selected_data->user_forced[ALLGATHERV].algorithm,
+		     data->user_forced[ALLGATHERV].algorithm,
                      ompi_coll_tuned_forced_max_algorithms[ALLGATHERV]));
         return (MPI_ERR_ARG);
     } /* switch */
@@ -787,6 +787,7 @@ int ompi_coll_tuned_allgatherv_intra_do_this(void *sbuf, int scount,
                                              int *rdispls, 
                                              struct ompi_datatype_t *rdtype,
                                              struct ompi_communicator_t *comm,
+					     struct mca_coll_base_module_1_1_0_t *module,
                                              int algorithm, int faninout, 
                                              int segsize)
 {
@@ -797,35 +798,28 @@ int ompi_coll_tuned_allgatherv_intra_do_this(void *sbuf, int scount,
     switch (algorithm) {
     case (0):   
         return ompi_coll_tuned_allgatherv_intra_dec_fixed(sbuf, scount, sdtype, 
-                                                          rbuf, rcounts, 
-                                                          rdispls, rdtype, 
-                                                          comm);
+                                                          rbuf, rcounts, rdispls, rdtype, 
+                                                          comm, module);
     case (1):   
-        return ompi_coll_tuned_allgatherv_intra_basic_default(sbuf, scount, 
-                                                              sdtype,
-                                                              rbuf, rcounts, 
-                                                              rdispls, rdtype,
-                                                              comm);
+        return ompi_coll_tuned_allgatherv_intra_basic_default(sbuf, scount, sdtype,
+                                                              rbuf, rcounts, rdispls, rdtype,
+                                                              comm, module);
     case (2): 
         return ompi_coll_tuned_allgatherv_intra_bruck(sbuf, scount, sdtype, 
-                                                      rbuf, rcounts, rdispls, 
-                                                      rdtype, comm);
+                                                      rbuf, rcounts, rdispls, rdtype,
+						      comm, module);
     case (3): 
         return ompi_coll_tuned_allgatherv_intra_ring(sbuf, scount, sdtype, 
-                                                     rbuf, rcounts, rdispls, 
-                                                     rdtype, comm);
+                                                     rbuf, rcounts, rdispls, rdtype,
+						     comm, module);
     case (4): 
-        return ompi_coll_tuned_allgatherv_intra_neighborexchange(sbuf, scount, 
-                                                                 sdtype, 
-                                                                 rbuf, rcounts,
-                                                                 rdispls, 
-                                                                 rdtype,
-                                                                 comm);
+        return ompi_coll_tuned_allgatherv_intra_neighborexchange(sbuf, scount, sdtype, 
+                                                                 rbuf, rcounts, rdispls, rdtype,
+                                                                 comm, module);
     case (5):
         return ompi_coll_tuned_allgatherv_intra_two_procs (sbuf, scount, sdtype,
-                                                           rbuf, rcounts, 
-                                                           rdispls, rdtype, 
-                                                           comm);
+                                                           rbuf, rcounts, rdispls, rdtype, 
+                                                           comm, module);
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,
                      "coll:tuned:allgatherv_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 

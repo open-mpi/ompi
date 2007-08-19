@@ -175,7 +175,8 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     rnamebuflen_int = (int)rnamebuflen;
 
     /* bcast the buffer-length to all processes in the local comm */
-    rc = comm->c_coll.coll_bcast (&rnamebuflen_int, 1, MPI_INT, root, comm );
+    rc = comm->c_coll.coll_bcast (&rnamebuflen_int, 1, MPI_INT, root, comm,
+                                  comm->c_coll.coll_bcast_module);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -195,7 +196,8 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
        adds processes, which were not known yet to our
        process pool.
     */
-    rc = comm->c_coll.coll_bcast (rnamebuf, rnamebuflen_int, MPI_BYTE, root, comm );
+    rc = comm->c_coll.coll_bcast (rnamebuf, rnamebuflen_int, MPI_BYTE, root, comm,
+                                  comm->c_coll.coll_bcast_module);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -280,8 +282,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
                               rport,                   /* remote leader */
                               OMPI_COMM_CID_INTRA_OOB, /* mode */
                               send_first,              /* send or recv first */
-                              0,                       /* sync_flag */
-                              NULL );                  /* coll component */
+                              0);                      /* sync_flag */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }

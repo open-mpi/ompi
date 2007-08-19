@@ -38,8 +38,9 @@
  */
 int
 mca_coll_inter_bcast_inter(void *buff, int count,
-                               struct ompi_datatype_t *datatype, int root,
-                               struct ompi_communicator_t *comm)
+                           struct ompi_datatype_t *datatype, int root,
+                           struct ompi_communicator_t *comm,
+                           struct mca_coll_base_module_1_1_0_t *module)
 {
     int rsize;
     int rank;
@@ -62,7 +63,8 @@ mca_coll_inter_bcast_inter(void *buff, int count,
             }
 	}
 	err = comm->c_local_comm->c_coll.coll_bcast(buff, count, datatype, 0, 
-					      comm->c_local_comm);
+                                                    comm->c_local_comm,
+                                                    comm->c_local_comm->c_coll.coll_bcast_module);
     } else {
         /* root section, send to the first process of the remote group */
 	err = MCA_PML_CALL(send(buff, count, datatype, 0,

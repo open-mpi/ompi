@@ -87,7 +87,8 @@ ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
                                        module->p2p_fence_coll_counts,
                                        MPI_UNSIGNED,
                                        MPI_SUM,
-                                       module->p2p_comm);
+                                       module->p2p_comm,
+                                       module->p2p_comm->c_coll.coll_reduce_scatter_module);
 
         if (OMPI_SUCCESS != ret) {
             /* put the stupid data back for the user.  This is not

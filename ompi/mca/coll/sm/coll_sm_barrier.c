@@ -49,17 +49,19 @@
  * parent, and the leaves that have no children.  But that's the
  * general idea.
  */
-int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm)
+int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
+                              struct mca_coll_base_module_1_1_0_t *module)
 {
     int rank, buffer_set;
-    mca_coll_base_comm_t *data;
+    mca_coll_sm_comm_t *data;
     uint32_t i, num_children;
     volatile uint32_t *me_in, *me_out, *parent, *children = NULL;
     int uint_control_size;
+    mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
 
     uint_control_size = 
         mca_coll_sm_component.sm_control_size / sizeof(uint32_t);
-    data = comm->c_coll_selected_data;
+    data = sm_module->sm_data;
     rank = ompi_comm_rank(comm);
     num_children = data->mcb_tree[rank].mcstn_num_children;
     buffer_set = ((data->mcb_barrier_count++) % 2) * 2;

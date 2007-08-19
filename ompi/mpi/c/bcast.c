@@ -82,6 +82,7 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
 
     /* Invoke the coll component to perform the back-end operation */
 
-    err = comm->c_coll.coll_bcast(buffer, count, datatype, root, comm);
+    err = comm->c_coll.coll_bcast(buffer, count, datatype, root, comm,
+                                  comm->c_coll.coll_barrier_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

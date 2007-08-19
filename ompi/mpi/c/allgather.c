@@ -76,7 +76,8 @@ int MPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     /* Invoke the coll component to perform the back-end operation */
 
     err = comm->c_coll.coll_allgather(sendbuf, sendcount, sendtype, 
-                                      recvbuf, recvcount, recvtype, comm);
+                                      recvbuf, recvcount, recvtype, comm,
+                                      comm->c_coll.coll_allgather_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 

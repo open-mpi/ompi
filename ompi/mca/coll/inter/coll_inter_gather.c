@@ -40,7 +40,8 @@ mca_coll_inter_gather_inter(void *sbuf, int scount,
                             struct ompi_datatype_t *sdtype,
                             void *rbuf, int rcount,
                             struct ompi_datatype_t *rdtype,
-                            int root, struct ompi_communicator_t *comm)
+                            int root, struct ompi_communicator_t *comm,
+                            struct mca_coll_base_module_1_1_0_t *module)
 {
     int err;
     int rank;
@@ -72,7 +73,8 @@ mca_coll_inter_gather_inter(void *sbuf, int scount,
 	
 	err = comm->c_local_comm->c_coll.coll_gather(sbuf, scount, sdtype, 
 						     ptmp, scount, sdtype, 
-						     0, comm->c_local_comm);
+						     0, comm->c_local_comm,
+                                                     comm->c_local_comm->c_coll.coll_gather_module);
 	if (0 == rank) { 
 	    /* First process sends data to the root */
 	    err = MCA_PML_CALL(send(ptmp, scount*size_local, sdtype, root,

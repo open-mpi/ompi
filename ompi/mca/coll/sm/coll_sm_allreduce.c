@@ -32,11 +32,12 @@
 int mca_coll_sm_allreduce_intra(void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype, 
                                 struct ompi_op_t *op,
-                                struct ompi_communicator_t *comm)
+                                struct ompi_communicator_t *comm,
+                                struct mca_coll_base_module_1_1_0_t *module)
 {
     int ret;
 
-    ret = mca_coll_sm_reduce_intra(sbuf, rbuf, count, dtype, op, 0, comm);
+    ret = mca_coll_sm_reduce_intra(sbuf, rbuf, count, dtype, op, 0, comm, module);
     return (ret == OMPI_SUCCESS) ?
-        mca_coll_sm_bcast_intra(rbuf, count, dtype, 0, comm) : ret;
+        mca_coll_sm_bcast_intra(rbuf, count, dtype, 0, comm, module) : ret;
 }

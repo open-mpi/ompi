@@ -32,10 +32,11 @@
  */
 int
 mca_coll_self_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
-                               struct ompi_datatype_t *sdtype,
-                               void *rbuf, int *rcounts, int *rdisps,
-                               struct ompi_datatype_t *rdtype, 
-                               struct ompi_communicator_t *comm)
+                              struct ompi_datatype_t *sdtype,
+                              void *rbuf, int *rcounts, int *rdisps,
+                              struct ompi_datatype_t *rdtype, 
+                              struct ompi_communicator_t *comm,
+                              struct mca_coll_base_module_1_1_0_t *module)
 {
     return ompi_ddt_sndrcv(((char *) sbuf) + sdisps[0], scounts[0], sdtype,
                            ((char *) rbuf) + rdisps[0], rcounts[0], rdtype);

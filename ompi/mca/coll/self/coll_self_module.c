@@ -30,38 +30,6 @@
 
 
 /*
- * Module
- */
-static const mca_coll_base_module_1_0_0_t module = {
-
-  /* Initialization / finalization functions */
-
-  mca_coll_self_module_init,
-  mca_coll_self_module_finalize,
-
-  /* Collective function pointers */
-
-  mca_coll_self_allgather_intra,
-  mca_coll_self_allgatherv_intra,
-  mca_coll_self_allreduce_intra,
-  mca_coll_self_alltoall_intra,
-  mca_coll_self_alltoallv_intra,
-  mca_coll_self_alltoallw_intra,
-  mca_coll_self_barrier_intra,
-  mca_coll_self_bcast_intra,
-  mca_coll_self_exscan_intra,
-  mca_coll_self_gather_intra,
-  mca_coll_self_gatherv_intra,
-  mca_coll_self_reduce_intra,
-  mca_coll_self_reduce_scatter_intra,
-  mca_coll_self_scan_intra,
-  mca_coll_self_scatter_intra,
-  mca_coll_self_scatterv_intra,
-  mca_coll_self_ft_event
-};
-
-
-/*
  * Initial query function that is invoked during MPI_INIT, allowing
  * this module to indicate what level of thread support it provides.
  */
@@ -79,10 +47,12 @@ int mca_coll_self_init_query(bool enable_progress_threads,
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-const mca_coll_base_module_1_0_0_t *
-mca_coll_self_comm_query(struct ompi_communicator_t *comm, int *priority,
-                         struct mca_coll_base_comm_t **data)
+mca_coll_base_module_1_1_0_t *
+mca_coll_self_comm_query(struct ompi_communicator_t *comm, 
+                         int *priority)
 {
+    mca_coll_self_module_t *module;
+
     /* We only work on intracommunicators of size 1 */
 
     if (!OMPI_COMM_IS_INTER(comm) && 1 == ompi_comm_size(comm)) {
@@ -92,7 +62,29 @@ mca_coll_self_comm_query(struct ompi_communicator_t *comm, int *priority,
             return NULL;
         }
 
-        return &module;
+        module = OBJ_NEW(mca_coll_self_module_t);
+        if (NULL == module) return NULL;
+
+        module->super.coll_module_enable = mca_coll_self_module_enable;
+        module->super.ft_event        = mca_coll_self_ft_event;
+        module->super.coll_allgather  = mca_coll_self_allgather_intra;
+        module->super.coll_allgatherv = mca_coll_self_allgatherv_intra;
+        module->super.coll_allreduce  = mca_coll_self_allreduce_intra;
+        module->super.coll_alltoall   = mca_coll_self_alltoall_intra;
+        module->super.coll_alltoallv  = mca_coll_self_alltoallv_intra;
+        module->super.coll_alltoallw  = mca_coll_self_alltoallw_intra;
+        module->super.coll_barrier    = mca_coll_self_barrier_intra;
+        module->super.coll_bcast      = mca_coll_self_bcast_intra;
+        module->super.coll_exscan     = mca_coll_self_exscan_intra;
+        module->super.coll_gather     = mca_coll_self_gather_intra;
+        module->super.coll_gatherv    = mca_coll_self_gatherv_intra;
+        module->super.coll_reduce     = mca_coll_self_reduce_intra;
+        module->super.coll_reduce_scatter = mca_coll_self_reduce_scatter_intra;
+        module->super.coll_scan       = mca_coll_self_scan_intra;
+        module->super.coll_scatter    = mca_coll_self_scatter_intra;
+        module->super.coll_scatterv   = mca_coll_self_scatterv_intra;
+
+        return &(module->super);
     }
 
     return NULL;
@@ -102,22 +94,13 @@ mca_coll_self_comm_query(struct ompi_communicator_t *comm, int *priority,
 /*
  * Init module on the communicator
  */
-const struct mca_coll_base_module_1_0_0_t *
-mca_coll_self_module_init(struct ompi_communicator_t *comm)
-{
-    /* Don't really need to do anything */
-
-    return &module;
-}
-
-
-/*
- * Finalize module on the communicator
- */
-int mca_coll_self_module_finalize(struct ompi_communicator_t *comm)
+int
+mca_coll_self_module_enable(struct mca_coll_base_module_1_1_0_t *module,
+                            struct ompi_communicator_t *comm)
 {
     return OMPI_SUCCESS;
 }
+
 
 int mca_coll_self_ft_event(int state) {
     if(OPAL_CRS_CHECKPOINT == state) {

@@ -45,7 +45,8 @@ int
 ompi_coll_tuned_allreduce_intra_nonoverlapping(void *sbuf, void *rbuf, int count,
                                                struct ompi_datatype_t *dtype,
                                                struct ompi_op_t *op,
-                                               struct ompi_communicator_t *comm)
+                                               struct ompi_communicator_t *comm,
+					       struct mca_coll_base_module_1_1_0_t *module)
 {
     int err;
     int rank;
@@ -59,19 +60,19 @@ ompi_coll_tuned_allreduce_intra_nonoverlapping(void *sbuf, void *rbuf, int count
     if (MPI_IN_PLACE == sbuf) {
         if (0 == ompi_comm_rank(comm)) {
             err = comm->c_coll.coll_reduce (MPI_IN_PLACE, rbuf, count, dtype, 
-                                            op, 0, comm);
+                                            op, 0, comm, module);
         } else {
             err = comm->c_coll.coll_reduce (rbuf, NULL, count, dtype, op, 0, 
-                                            comm);
+                                            comm, module);
         }
     } else {
-        err = comm->c_coll.coll_reduce (sbuf, rbuf, count, dtype, op, 0, comm);
+        err = comm->c_coll.coll_reduce (sbuf, rbuf, count, dtype, op, 0, comm, module);
     }
     if (MPI_SUCCESS != err) {
         return err;
     }
 
-    return comm->c_coll.coll_bcast (rbuf, count, dtype, 0, comm);
+    return comm->c_coll.coll_bcast (rbuf, count, dtype, 0, comm, module);
 }
 
 /*
@@ -120,7 +121,8 @@ ompi_coll_tuned_allreduce_intra_recursivedoubling(void *sbuf, void *rbuf,
                                                   int count,
                                                   struct ompi_datatype_t *dtype,
                                                   struct ompi_op_t *op,
-                                                  struct ompi_communicator_t *comm) 
+                                                  struct ompi_communicator_t *comm,
+						  struct mca_coll_base_module_1_1_0_t *module) 
 {
    int ret, line;
    int rank, size, adjsize, remote, distance;
@@ -335,7 +337,8 @@ int
 ompi_coll_tuned_allreduce_intra_ring(void *sbuf, void *rbuf, int count,
                                      struct ompi_datatype_t *dtype,
                                      struct ompi_op_t *op,
-                                     struct ompi_communicator_t *comm) 
+                                     struct ompi_communicator_t *comm,
+				     struct mca_coll_base_module_1_1_0_t *module) 
 {
    int ret, line;
    int rank, size, k, recv_from, send_to;
@@ -369,7 +372,7 @@ ompi_coll_tuned_allreduce_intra_ring(void *sbuf, void *rbuf, int count,
       return (ompi_coll_tuned_allreduce_intra_recursivedoubling(sbuf, rbuf, 
                                                                 count,
                                                                 dtype, op, 
-                                                                comm));
+                                                                comm, module));
    }
 
    /* Allocate and initialize temporary buffers */
@@ -613,6 +616,7 @@ ompi_coll_tuned_allreduce_intra_ring_segmented(void *sbuf, void *rbuf, int count
                                                struct ompi_datatype_t *dtype,
                                                struct ompi_op_t *op,
                                                struct ompi_communicator_t *comm,
+					       struct mca_coll_base_module_1_1_0_t *module,
                                                uint32_t segsize) 
 {
    int ret, line;
@@ -657,7 +661,7 @@ ompi_coll_tuned_allreduce_intra_ring_segmented(void *sbuf, void *rbuf, int count
    if (count < size * segcount) {
       OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:allreduce_ring_segmented rank %d/%d, count %d, switching to regular ring", rank, size, count));
       return (ompi_coll_tuned_allreduce_intra_ring(sbuf, rbuf, count, dtype, op, 
-                                                   comm));
+                                                   comm, module));
    }
 
    /* Determine the number of phases of the algorithm */
@@ -877,7 +881,8 @@ int
 ompi_coll_tuned_allreduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
                                              struct ompi_datatype_t *dtype,
                                              struct ompi_op_t *op,
-                                             struct ompi_communicator_t *comm)
+                                             struct ompi_communicator_t *comm,
+					     struct mca_coll_base_module_1_1_0_t *module)
 {
     int err;
     int rank;
@@ -890,18 +895,21 @@ ompi_coll_tuned_allreduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
 
     if (MPI_IN_PLACE == sbuf) {
         if (0 == ompi_comm_rank(comm)) {
-            err = ompi_coll_tuned_reduce_intra_basic_linear (MPI_IN_PLACE, rbuf, count, dtype, op, 0, comm);
+            err = ompi_coll_tuned_reduce_intra_basic_linear (MPI_IN_PLACE, rbuf, count, dtype,
+							     op, 0, comm, module);
         } else {
-            err = ompi_coll_tuned_reduce_intra_basic_linear(rbuf, NULL, count, dtype, op, 0, comm);
+            err = ompi_coll_tuned_reduce_intra_basic_linear(rbuf, NULL, count, dtype,
+							    op, 0, comm, module);
         }
     } else {
-        err = ompi_coll_tuned_reduce_intra_basic_linear(sbuf, rbuf, count, dtype, op, 0, comm);
+        err = ompi_coll_tuned_reduce_intra_basic_linear(sbuf, rbuf, count, dtype,
+							op, 0, comm, module);
     }
     if (MPI_SUCCESS != err) {
         return err;
     }
 
-    return ompi_coll_tuned_bcast_intra_basic_linear(rbuf, count, dtype, 0, comm);
+    return ompi_coll_tuned_bcast_intra_basic_linear(rbuf, count, dtype, 0, comm, module);
 }
 
 
@@ -969,22 +977,26 @@ int ompi_coll_tuned_allreduce_intra_check_forced_init (coll_tuned_force_algorith
 int ompi_coll_tuned_allreduce_intra_do_forced(void *sbuf, void *rbuf, int count,
                                               struct ompi_datatype_t *dtype,
                                               struct ompi_op_t *op,
-                                              struct ompi_communicator_t *comm)
+                                              struct ompi_communicator_t *comm,
+					      struct mca_coll_base_module_1_1_0_t *module)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_forced selected algorithm %d, segment size %d", 
-                 comm->c_coll_selected_data->user_forced[ALLREDUCE].algorithm,
-                 comm->c_coll_selected_data->user_forced[ALLREDUCE].segsize));
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    switch (comm->c_coll_selected_data->user_forced[ALLREDUCE].algorithm) {
-    case (0):  return ompi_coll_tuned_allreduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, comm);
-    case (1):  return ompi_coll_tuned_allreduce_intra_basic_linear (sbuf, rbuf, count, dtype, op, comm);
-    case (2):  return ompi_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, dtype, op, comm);
-    case (3):  return ompi_coll_tuned_allreduce_intra_recursivedoubling (sbuf, rbuf, count, dtype, op, comm);
-    case (4):  return ompi_coll_tuned_allreduce_intra_ring (sbuf, rbuf, count, dtype, op, comm);
-    case (5):  return ompi_coll_tuned_allreduce_intra_ring_segmented (sbuf, rbuf, count, dtype, op, comm, comm->c_coll_selected_data->user_forced[ALLREDUCE].segsize);
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_forced selected algorithm %d, segment size %d", 
+                 data->user_forced[ALLREDUCE].algorithm,
+                 data->user_forced[ALLREDUCE].segsize));
+
+    switch (data->user_forced[ALLREDUCE].algorithm) {
+    case (0):  return ompi_coll_tuned_allreduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, comm, module);
+    case (1):  return ompi_coll_tuned_allreduce_intra_basic_linear (sbuf, rbuf, count, dtype, op, comm, module);
+    case (2):  return ompi_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, dtype, op, comm, module);
+    case (3):  return ompi_coll_tuned_allreduce_intra_recursivedoubling (sbuf, rbuf, count, dtype, op, comm, module);
+    case (4):  return ompi_coll_tuned_allreduce_intra_ring (sbuf, rbuf, count, dtype, op, comm, module);
+    case (5):  return ompi_coll_tuned_allreduce_intra_ring_segmented (sbuf, rbuf, count, dtype, op, comm, module, data->user_forced[ALLREDUCE].segsize);
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
-                     comm->c_coll_selected_data->user_forced[ALLREDUCE].algorithm, 
+                     data->user_forced[ALLREDUCE].algorithm, 
                      ompi_coll_tuned_forced_max_algorithms[ALLREDUCE]));
         return (MPI_ERR_ARG);
     } /* switch */
@@ -996,18 +1008,19 @@ int ompi_coll_tuned_allreduce_intra_do_this(void *sbuf, void *rbuf, int count,
                                             struct ompi_datatype_t *dtype,
                                             struct ompi_op_t *op,
                                             struct ompi_communicator_t *comm,
+					    struct mca_coll_base_module_1_1_0_t *module,
                                             int algorithm, int faninout, int segsize)
 {
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_this algorithm %d topo fan in/out %d segsize %d", 
                  algorithm, faninout, segsize));
 
     switch (algorithm) {
-    case (0):   return ompi_coll_tuned_allreduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, comm);
-    case (1):   return ompi_coll_tuned_allreduce_intra_basic_linear (sbuf, rbuf, count, dtype, op, comm);
-    case (2):   return ompi_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, dtype, op, comm);
-    case (3):   return ompi_coll_tuned_allreduce_intra_recursivedoubling (sbuf, rbuf, count, dtype, op, comm);
-    case (4):   return ompi_coll_tuned_allreduce_intra_ring (sbuf, rbuf, count, dtype, op, comm);
-    case (5):   return ompi_coll_tuned_allreduce_intra_ring_segmented (sbuf, rbuf, count, dtype, op, comm, segsize);
+    case (0):   return ompi_coll_tuned_allreduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, comm, module);
+    case (1):   return ompi_coll_tuned_allreduce_intra_basic_linear (sbuf, rbuf, count, dtype, op, comm, module);
+    case (2):   return ompi_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, dtype, op, comm, module);
+    case (3):   return ompi_coll_tuned_allreduce_intra_recursivedoubling (sbuf, rbuf, count, dtype, op, comm, module);
+    case (4):   return ompi_coll_tuned_allreduce_intra_ring (sbuf, rbuf, count, dtype, op, comm, module);
+    case (5):   return ompi_coll_tuned_allreduce_intra_ring_segmented (sbuf, rbuf, count, dtype, op, comm, module, segsize);
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
                      algorithm, ompi_coll_tuned_forced_max_algorithms[ALLREDUCE]));

@@ -39,7 +39,8 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
                                struct ompi_datatype_t *sdtype,
                                void *rbuf, int *rcounts, int *rdisps,
                                struct ompi_datatype_t *rdtype,
-                               struct ompi_communicator_t *comm)
+                               struct ompi_communicator_t *comm,
+                               struct mca_coll_base_module_1_1_0_t *module)
 {
     int i;
     int size;
@@ -51,6 +52,8 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
     MPI_Aint sndextent;
     MPI_Aint rcvextent;
     MPI_Request *preq;
+
+    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
 
     /* Initialize. */
 
@@ -82,7 +85,7 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
     /* Initiate all send/recv to/from others. */
 
     nreqs = 0;
-    preq = comm->c_coll_basic_data->mccb_reqs;
+    preq = basic_module->mccb_reqs;
 
     /* Post all receives first -- a simple optimization */
 
@@ -97,8 +100,7 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
                                       preq++));
         ++nreqs;
         if (MPI_SUCCESS != err) {
-            mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs,
-                                     nreqs);
+            mca_coll_basic_free_reqs(basic_module->mccb_reqs, nreqs);
             return err;
         }
     }
@@ -117,15 +119,14 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
                                       preq++));
         ++nreqs;
         if (MPI_SUCCESS != err) {
-            mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs,
-                                     nreqs);
+            mca_coll_basic_free_reqs(basic_module->mccb_reqs, nreqs);
             return err;
         }
     }
 
     /* Start your engines.  This will never return an error. */
 
-    MCA_PML_CALL(start(nreqs, comm->c_coll_basic_data->mccb_reqs));
+    MCA_PML_CALL(start(nreqs, basic_module->mccb_reqs));
 
     /* Wait for them all.  If there's an error, note that we don't care
      * what the error was -- just that there *was* an error.  The PML
@@ -134,12 +135,12 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
      * So free them anyway -- even if there was an error, and return the
      * error after we free everything. */
 
-    err = ompi_request_wait_all(nreqs, comm->c_coll_basic_data->mccb_reqs,
+    err = ompi_request_wait_all(nreqs, basic_module->mccb_reqs,
                                 MPI_STATUSES_IGNORE);
 
     /* Free the requests. */
 
-    mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs, nreqs);
+    mca_coll_basic_free_reqs(basic_module->mccb_reqs, nreqs);
 
     /* All done */
 
@@ -159,7 +160,8 @@ mca_coll_basic_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
                                struct ompi_datatype_t *sdtype, void *rbuf,
                                int *rcounts, int *rdisps,
                                struct ompi_datatype_t *rdtype,
-                               struct ompi_communicator_t *comm)
+                               struct ompi_communicator_t *comm,
+                               struct mca_coll_base_module_1_1_0_t *module)
 {
     int i;
     int rsize;
@@ -170,8 +172,9 @@ mca_coll_basic_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
     size_t nreqs;
     MPI_Aint sndextent;
     MPI_Aint rcvextent;
-    ompi_request_t **preq = comm->c_coll_basic_data->mccb_reqs;
 
+    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
+    ompi_request_t **preq = basic_module->mccb_reqs;
 
     /* Initialize. */
 

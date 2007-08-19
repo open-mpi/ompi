@@ -449,7 +449,8 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     } else {
         /* barrier to prevent arrival of lock requests before we're
            fully created */
-        ret = module->m_comm->c_coll.coll_barrier(module->m_comm);
+        ret = module->m_comm->c_coll.coll_barrier(module->m_comm,
+                                                  module->m_comm->c_coll.coll_barrier_module);
     }
     if (OMPI_SUCCESS != ret) goto cleanup;
 
@@ -1279,7 +1280,8 @@ setup_rdma(ompi_osc_rdma_module_t *module)
     local = ompi_ptr_ptol(module->m_win->w_baseptr);
     ret = module->m_comm->c_coll.coll_allgather(&local, 1, ui64_type,
                                                 remote, 1, ui64_type,
-                                                module->m_comm);
+                                                module->m_comm,
+                                                module->m_comm->c_coll.coll_allgather_module);
     if (OMPI_SUCCESS != ret) goto cleanup;
     for (i = 0 ; i < ompi_comm_size(module->m_comm) ; ++i) {
         module->m_peer_info[i].peer_base = remote[i];
@@ -1288,7 +1290,8 @@ setup_rdma(ompi_osc_rdma_module_t *module)
     local = module->m_win->w_size;
     ret = module->m_comm->c_coll.coll_allgather(&local, 1, ui64_type,
                                                 remote, 1, ui64_type,
-                                                module->m_comm);
+                                                module->m_comm,
+                                                module->m_comm->c_coll.coll_allgather_module);
     if (OMPI_SUCCESS != ret) goto cleanup;
     for (i = 0 ; i < ompi_comm_size(module->m_comm) ; ++i) {
         module->m_peer_info[i].peer_len = remote[i];
@@ -1303,7 +1306,8 @@ setup_rdma(ompi_osc_rdma_module_t *module)
                                                      module->m_fence_coll_counts,
                                                      ui64_type,
                                                      MPI_SUM,
-                                                     module->m_comm);
+                                                     module->m_comm,
+                                                     module->m_comm->c_coll.coll_reduce_scatter_module);
     if (OMPI_SUCCESS != ret) goto cleanup;
     module->m_setup_info->num_btls_expected = (int32_t)local;
     /* end fill in information about remote peers */

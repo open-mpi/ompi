@@ -40,7 +40,8 @@ int
 ompi_coll_tuned_allreduce_intra_dec_fixed (void *sbuf, void *rbuf, int count,
                                            struct ompi_datatype_t *dtype,
                                            struct ompi_op_t *op,
-                                           struct ompi_communicator_t *comm)
+                                           struct ompi_communicator_t *comm,
+					   struct mca_coll_base_module_1_1_0_t *module)
 {
     size_t dsize, block_dsize;
     int comm_size = ompi_comm_size(comm);
@@ -60,24 +61,24 @@ ompi_coll_tuned_allreduce_intra_dec_fixed (void *sbuf, void *rbuf, int count,
     if (block_dsize < intermediate_message) {
        return (ompi_coll_tuned_allreduce_intra_recursivedoubling (sbuf, rbuf, 
                                                                   count, dtype,
-                                                                  op, comm));
+                                                                  op, comm, module));
     } 
 
     if( ompi_op_is_commute(op) && (count > comm_size) ) {
        const size_t segment_size = 1 << 20; /* 1 MB */
        if ((comm_size * segment_size >= block_dsize)) {
           return (ompi_coll_tuned_allreduce_intra_ring (sbuf, rbuf, count, dtype, 
-                                                        op, comm));
+                                                        op, comm, module));
        } else {
           return (ompi_coll_tuned_allreduce_intra_ring_segmented (sbuf, rbuf, 
                                                                   count, dtype, 
-                                                                  op, comm,
+                                                                  op, comm, module,
                                                                   segment_size));
        }
     }
 
     return (ompi_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, 
-                                                            dtype, op, comm));
+                                                            dtype, op, comm, module));
 }
 
 /*
@@ -92,7 +93,8 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
                                              struct ompi_datatype_t *sdtype,
                                              void* rbuf, int rcount, 
                                              struct ompi_datatype_t *rdtype, 
-                                             struct ompi_communicator_t *comm)
+                                             struct ompi_communicator_t *comm,
+					     struct mca_coll_base_module_1_1_0_t *module)
 {
     int communicator_size, rank;
     size_t dsize, block_dsize;
@@ -107,7 +109,7 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
     if (communicator_size==2) {
         return ompi_coll_tuned_alltoall_intra_two_procs(sbuf, scount, sdtype, 
                                                          rbuf, rcount, rdtype, 
-                                                         comm);
+							comm, module);
     }
 
     /* Decision function based on measurement on Grig cluster at 
@@ -119,16 +121,18 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
 
     if ((block_dsize < 200) && (communicator_size > 12)) {
        return ompi_coll_tuned_alltoall_intra_bruck(sbuf, scount, sdtype, 
-                                                   rbuf, rcount, rdtype, comm);
+                                                   rbuf, rcount, rdtype,
+						   comm, module);
 
     } else if (block_dsize < 3000) {
        return ompi_coll_tuned_alltoall_intra_basic_linear(sbuf, scount, sdtype, 
                                                           rbuf, rcount, rdtype, 
-                                                          comm);
+                                                          comm, module);
     }
 
     return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, 
-                                                    rbuf, rcount, rdtype, comm);
+                                                    rbuf, rcount, rdtype,
+						    comm, module);
 
 #if 0
     /* previous decision */
@@ -141,12 +145,12 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
                  rank, communicator_size, total_dsize));
 
     if (communicator_size >= 12 && total_dsize <= 768) {
-        return ompi_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+        return ompi_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
     }
     if (total_dsize <= 131072) {
-        return ompi_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+        return ompi_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
     }
-    return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
 #endif
 }
 
@@ -158,7 +162,8 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
  *	Accepts:	- same arguments as MPI_Barrier()
  *	Returns:	- MPI_SUCCESS or error code (passed from the barrier implementation)
  */
-int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm)
+int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm,
+					    struct mca_coll_base_module_1_1_0_t *module)
 {
     int communicator_size = ompi_comm_size(comm);
 
@@ -166,7 +171,7 @@ int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm)
                  communicator_size));
 
     if( 2 == communicator_size )
-        return ompi_coll_tuned_barrier_intra_two_procs(comm);
+        return ompi_coll_tuned_barrier_intra_two_procs(comm, module);
     /**
      * Basic optimisation. If we have a power of 2 number of nodes
      * the use the recursive doubling algorithm, otherwise
@@ -177,12 +182,12 @@ int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm)
         for( ; communicator_size > 0; communicator_size >>= 1 ) {
             if( communicator_size & 0x1 ) {
                 if( has_one )
-                    return ompi_coll_tuned_barrier_intra_bruck(comm);
+                    return ompi_coll_tuned_barrier_intra_bruck(comm, module);
                 has_one = true;
             }
         }
     }
-    return ompi_coll_tuned_barrier_intra_recursivedoubling(comm);
+    return ompi_coll_tuned_barrier_intra_recursivedoubling(comm, module);
     /*     return ompi_coll_tuned_barrier_intra_linear(comm); */
     /*         return ompi_coll_tuned_barrier_intra_doublering(comm); */
 }
@@ -197,7 +202,8 @@ int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm)
  */
 int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
                                           struct ompi_datatype_t *datatype, int root,
-                                          struct ompi_communicator_t *comm)
+                                          struct ompi_communicator_t *comm,
+					  struct mca_coll_base_module_1_1_0_t *module)
 {
     /* Decision function based on MX results for 
     messages up to 36MB and communicator sizes up to 64 nodes */
@@ -231,13 +237,15 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
        /* Binomial without segmentation */
        segsize = 0;
        return  ompi_coll_tuned_bcast_intra_binomial (buff, count, datatype, 
-						     root, comm, segsize);
+						     root, comm, module,
+						     segsize);
 
     } else if (message_size < intermediate_message_size) {
        /* SplittedBinary with 1KB segments */
        segsize = 1024;
        return ompi_coll_tuned_bcast_intra_split_bintree(buff, count, datatype, 
-							root, comm, segsize);
+							root, comm, module,
+							segsize);
 
     } 
     /* Handle large message sizes */
@@ -245,58 +253,63 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
        /* Pipeline with 128KB segments */
        segsize = 1024  << 7;
        return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, 
-						    root, comm, segsize);
+						    root, comm, module,
+						    segsize);
 
     } else if (communicator_size < 13) {
        /* Split Binary with 8KB segments */
        segsize = 1024 << 3;
        return ompi_coll_tuned_bcast_intra_split_bintree(buff, count, datatype, 
-							root, comm, segsize);
+							root, comm, module,
+							segsize);
        
     } else if (communicator_size < (a_p64 * message_size + b_p64)) {
        /* Pipeline with 64KB segments */
        segsize = 1024 << 6;
        return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, 
-						    root, comm, segsize);
+						    root, comm, module,
+						    segsize);
 
     } else if (communicator_size < (a_p16 * message_size + b_p16)) {
        /* Pipeline with 16KB segments */
        segsize = 1024 << 4;
        return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, 
-						    root, comm, segsize);
+						    root, comm, module,
+						    segsize);
 
     }
 
     /* Pipeline with 8KB segments */
     segsize = 1024 << 3;
     return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, 
-						 root, comm, segsize);
+						 root, comm, module, 
+						 segsize);
 #if 0
     /* this is based on gige measurements */
 
     if (communicator_size  < 4) {
-        return ompi_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
+        return ompi_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm, module);
     }
     if (communicator_size == 4) {
         if (message_size < 524288) segsize = 0;
         else segsize = 16384;
-        return ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
+        return ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, module, segsize);
     }
     if (communicator_size <= 8 && message_size < 4096) {
-        return ompi_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
+        return ompi_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm, module);
     }
     if (communicator_size > 8 && message_size >= 32768 && message_size < 524288) {
         segsize = 16384;
-        return  ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
+        return  ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, module, segsize);
     }
     if (message_size >= 524288) {
         segsize = 16384;
-        return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, root, comm, segsize);
+        return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, root, comm, module, segsize);
     }
     segsize = 0;
     /* once tested can swap this back in */
     /* return ompi_coll_tuned_bcast_intra_bmtree (buff, count, datatype, root, comm, segsize); */
-    return ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
+    return ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, module, segsize);
 #endif  /* 0 */
 }
 
@@ -311,7 +324,8 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
 int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
                                             int count, struct ompi_datatype_t* datatype,
                                             struct ompi_op_t* op, int root,
-                                            struct ompi_communicator_t* comm)
+                                            struct ompi_communicator_t* comm,
+					    struct mca_coll_base_module_1_1_0_t *module)
 {
     int communicator_size, rank, segsize = 0;
     size_t message_size, dsize;
@@ -339,9 +353,10 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
      */
     if( !ompi_op_is_commute(op) ) {
         if ((communicator_size < 12) && (message_size < 2048)) {
-            return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm); 
+            return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm, module); 
         } 
-        return ompi_coll_tuned_reduce_intra_in_order_binary (sendbuf, recvbuf, count, datatype, op, root, comm, 0, max_requests); 
+        return ompi_coll_tuned_reduce_intra_in_order_binary (sendbuf, recvbuf, count, datatype, op, root, comm, module,
+							     0, max_requests); 
     }
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_dec_fixed"
@@ -350,24 +365,28 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
 
     if ((communicator_size < 8) && (message_size < 512)){
         /* Linear_0K */
-        return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm); 
+        return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm, module); 
     } else if (((communicator_size < 8) && (message_size < 20480)) ||
                (message_size < 2048) || (count <= 1)) {
         /* Binomial_0K */
         segsize = 0;
-        return ompi_coll_tuned_reduce_intra_binomial(sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
+        return ompi_coll_tuned_reduce_intra_binomial(sendbuf, recvbuf, count, datatype, op, root, comm, module,
+						     segsize, max_requests);
     } else if (communicator_size > (a1 * message_size + b1)) {
         /* Binomial_1K */
         segsize = 1024;
-        return ompi_coll_tuned_reduce_intra_binomial(sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
+        return ompi_coll_tuned_reduce_intra_binomial(sendbuf, recvbuf, count, datatype, op, root, comm, module,
+						     segsize, max_requests);
     } else if (communicator_size > (a2 * message_size + b2)) {
         /* Pipeline_1K */
         segsize = 1024;
-        return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
+        return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, module, 
+						      segsize, max_requests);
     } else if (communicator_size > (a3 * message_size + b3)) {
         /* Binary_32K */
         segsize = 32*1024;
-        return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
+        return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, module,
+						      segsize, max_requests);
     }
     if (communicator_size > (a4 * message_size + b4)) {
         /* Pipeline_32K */
@@ -376,7 +395,8 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
         /* Pipeline_64K */
         segsize = 64*1024;
     }
-    return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
+    return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, module, 
+						  segsize, max_requests);
 
 #if 0
     /* for small messages use linear algorithm */
@@ -385,7 +405,7 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
         fanout = communicator_size - 1;
         /* when linear implemented or taken from basic put here, right now using chain as a linear system */
         /* it is implemented and I shouldn't be calling a chain with a fanout bigger than MAXTREEFANOUT from topo.h! */
-        return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm); 
+        return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm, module); 
         /*        return ompi_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout); */
     }
     if (message_size < 524288) {
@@ -398,10 +418,12 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
         }
         /* later swap this for a binary tree */
         /*         fanout = 2; */
-        return ompi_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout, max_requests);
+        return ompi_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, module,
+						   segsize, fanout, max_requests);
     }
     segsize = 1024;
-    return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, max_requests);
+    return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, module,
+						  segsize, max_requests);
 #endif  /* 0 */
 }
 
@@ -418,7 +440,8 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( void *sbuf, void *rbuf,
                                                     int *rcounts,
                                                     struct ompi_datatype_t *dtype,
                                                     struct ompi_op_t *op,
-                                                    struct ompi_communicator_t *comm)
+                                                    struct ompi_communicator_t *comm,
+						    struct mca_coll_base_module_1_1_0_t *module)
 {
    int comm_size, i, pow2;
    size_t total_message_size, dsize;
@@ -430,12 +453,9 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( void *sbuf, void *rbuf,
    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_scatter_intra_dec_fixed"));
 
    if( !ompi_op_is_commute(op) ) {
-      return ompi_coll_tuned_reduce_scatter_intra_nonoverlapping (sbuf, 
-                                                                  rbuf, 
-                                                                  rcounts, 
-                                                                  dtype, 
-                                                                  op, 
-                                                                  comm); 
+      return ompi_coll_tuned_reduce_scatter_intra_nonoverlapping (sbuf, rbuf, rcounts, 
+                                                                  dtype, op, 
+                                                                  comm, module); 
    }
    
    comm_size = ompi_comm_size(comm);
@@ -452,15 +472,13 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( void *sbuf, void *rbuf,
        ((total_message_size <= large_message_size) && (pow2 == comm_size)) ||
        (comm_size >= a * total_message_size + b)) {
       return 
-         ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(sbuf, 
-                                                                     rbuf,
-                                                                     rcounts,
-                                                                     dtype,
-                                                                     op,
-                                                                     comm);
+         ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(sbuf, rbuf, rcounts,
+                                                                     dtype, op,
+                                                                     comm, module);
    } 
    return ompi_coll_tuned_reduce_scatter_intra_ring(sbuf, rbuf, rcounts,
-                                                    dtype, op, comm);
+                                                    dtype, op,
+						    comm, module);
 }
 
 /*
@@ -476,7 +494,8 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
                                               struct ompi_datatype_t *sdtype,
                                               void* rbuf, int rcount, 
                                               struct ompi_datatype_t *rdtype, 
-                                              struct ompi_communicator_t *comm)
+                                              struct ompi_communicator_t *comm,
+					      struct mca_coll_base_module_1_1_0_t *module)
 {
    int communicator_size, rank, pow2_size;
    size_t dsize, total_dsize;
@@ -488,7 +507,7 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
    if (communicator_size == 2) {
       return ompi_coll_tuned_allgather_intra_two_procs (sbuf, scount, sdtype, 
                                                         rbuf, rcount, rdtype, 
-                                                        comm);
+                                                        comm, module);
     }
 
    /* Determine complete data size */
@@ -512,25 +531,23 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
    */
    if (total_dsize < 50000) {
       if (pow2_size == communicator_size) {
-         return ompi_coll_tuned_allgather_intra_recursivedoubling(sbuf, scount, 
-                                                                  sdtype, 
-                                                                  rbuf, rcount, 
-                                                                  rdtype, comm);
+         return ompi_coll_tuned_allgather_intra_recursivedoubling(sbuf, scount, sdtype, 
+                                                                  rbuf, rcount, rdtype,
+								  comm, module);
       } else {
          return ompi_coll_tuned_allgather_intra_bruck(sbuf, scount, sdtype, 
                                                       rbuf, rcount, rdtype, 
-                                                      comm);
+                                                      comm, module);
       }
    } else {
       if (communicator_size % 2) {
          return ompi_coll_tuned_allgather_intra_ring(sbuf, scount, sdtype, 
                                                      rbuf, rcount, rdtype, 
-                                                     comm);
+                                                     comm, module);
       } else {
-         return  ompi_coll_tuned_allgather_intra_neighborexchange(sbuf, scount, 
-                                                                  sdtype,
-                                                                  rbuf, rcount,
-                                                                  rdtype, comm);
+         return  ompi_coll_tuned_allgather_intra_neighborexchange(sbuf, scount, sdtype,
+                                                                  rbuf, rcount, rdtype,
+								  comm, module);
       }
    }
    
@@ -545,17 +562,17 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
       - for everything else use ring.
     */
    if ((pow2_size == communicator_size) && (total_dsize < 524288)) {
-      return ompi_coll_tuned_allgather_intra_recursivedoubling(sbuf, scount, 
-                                                               sdtype, 
-                                                               rbuf, rcount, 
-                                                               rdtype, 
-                                                               comm);
+      return ompi_coll_tuned_allgather_intra_recursivedoubling(sbuf, scount, sdtype, 
+                                                               rbuf, rcount, rdtype, 
+                                                               comm, module);
    } else if (total_dsize <= 81920) { 
       return ompi_coll_tuned_allgather_intra_bruck(sbuf, scount, sdtype, 
-                                                   rbuf, rcount, rdtype, comm);
+                                                   rbuf, rcount, rdtype,
+						   comm, module);
    } 
    return ompi_coll_tuned_allgather_intra_ring(sbuf, scount, sdtype, 
-                                               rbuf, rcount, rdtype, comm);
+                                               rbuf, rcount, rdtype,
+					       comm, module);
 #endif  /* defined(USE_MPICH2_DECISION) */
 }
 
@@ -573,7 +590,8 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(void *sbuf, int scount,
                                                void* rbuf, int *rcounts, 
                                                int *rdispls,
                                                struct ompi_datatype_t *rdtype, 
-                                               struct ompi_communicator_t *comm)
+                                               struct ompi_communicator_t *comm,
+					       struct mca_coll_base_module_1_1_0_t *module)
 {
     int i;
     int communicator_size, rank, pow2_size;
@@ -585,9 +603,8 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(void *sbuf, int scount,
     /* Special case for 2 processes */
     if (communicator_size == 2) {
         return ompi_coll_tuned_allgatherv_intra_two_procs (sbuf, scount, sdtype,
-                                                           rbuf, rcounts, 
-                                                           rdispls, rdtype, 
-                                                           comm);
+                                                           rbuf, rcounts, rdispls, rdtype, 
+                                                           comm, module);
     }
     
     /* Determine complete data size */
@@ -608,23 +625,17 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(void *sbuf, int scount,
    /* Decision based on allgather decision.   */
    if (total_dsize < 50000) {
        return ompi_coll_tuned_allgatherv_intra_bruck(sbuf, scount, sdtype, 
-                                                     rbuf, rcounts, 
-                                                     rdispls, rdtype, 
-                                                     comm);
+                                                     rbuf, rcounts, rdispls, rdtype, 
+                                                     comm, module);
    } else {
        if (communicator_size % 2) {
            return ompi_coll_tuned_allgatherv_intra_ring(sbuf, scount, sdtype, 
-                                                        rbuf, rcounts, 
-                                                        rdispls, rdtype, 
-                                                        comm);
+                                                        rbuf, rcounts, rdispls, rdtype, 
+                                                        comm, module);
       } else {
-         return  ompi_coll_tuned_allgatherv_intra_neighborexchange(sbuf, scount,
-                                                                   sdtype,
-                                                                   rbuf, 
-                                                                   rcounts,
-                                                                   rdispls, 
-                                                                   rdtype, 
-                                                                   comm);
+         return  ompi_coll_tuned_allgatherv_intra_neighborexchange(sbuf, scount, sdtype,
+                                                                   rbuf, rcounts, rdispls, rdtype, 
+                                                                   comm, module);
       }
    }
 }
@@ -643,7 +654,8 @@ int ompi_coll_tuned_gather_intra_dec_fixed(void *sbuf, int scount,
 					   void* rbuf, int rcount, 
 					   struct ompi_datatype_t *rdtype, 
 					   int root,
-                                           struct ompi_communicator_t *comm)
+                                           struct ompi_communicator_t *comm,
+					   struct mca_coll_base_module_1_1_0_t *module)
 {
     const int large_segment_size = 32768;
     const int small_segment_size = 1024;
@@ -676,13 +688,13 @@ int ompi_coll_tuned_gather_intra_dec_fixed(void *sbuf, int scount,
     if (block_size > large_block_size) {
         return ompi_coll_tuned_gather_intra_linear_sync (sbuf, scount, sdtype, 
                                                          rbuf, rcount, rdtype, 
-                                                         root, comm,
+                                                         root, comm, module,
                                                          large_segment_size);
 
     } else if (block_size > intermediate_block_size) {
         return ompi_coll_tuned_gather_intra_linear_sync (sbuf, scount, sdtype, 
                                                          rbuf, rcount, rdtype, 
-                                                         root, comm,
+                                                         root, comm, module,
                                                          small_segment_size);
 
     } else if ((communicator_size > large_communicator_size) ||
@@ -690,13 +702,13 @@ int ompi_coll_tuned_gather_intra_dec_fixed(void *sbuf, int scount,
                 (block_size < small_block_size))) {
         return ompi_coll_tuned_gather_intra_binomial (sbuf, scount, sdtype, 
                                                       rbuf, rcount, rdtype, 
-                                                      root, comm);
+                                                      root, comm, module);
 
     }
     /* Otherwise, use basic linear */
     return ompi_coll_tuned_gather_intra_basic_linear (sbuf, scount, sdtype, 
-                                                          rbuf, rcount, rdtype, 
-                                                          root, comm);
+						      rbuf, rcount, rdtype, 
+						      root, comm, module);
 }
 
 /*
@@ -712,7 +724,8 @@ int ompi_coll_tuned_scatter_intra_dec_fixed(void *sbuf, int scount,
 					    struct ompi_datatype_t *sdtype,
 					    void* rbuf, int rcount, 
 					    struct ompi_datatype_t *rdtype, 
-					    int root, struct ompi_communicator_t *comm)
+					    int root, struct ompi_communicator_t *comm,
+					    struct mca_coll_base_module_1_1_0_t *module)
 {
     const size_t small_block_size = 300;
     const int small_comm_size = 10;
@@ -737,9 +750,9 @@ int ompi_coll_tuned_scatter_intra_dec_fixed(void *sbuf, int scount,
         (block_size < small_block_size)) {
         return ompi_coll_tuned_scatter_intra_binomial (sbuf, scount, sdtype, 
                                                        rbuf, rcount, rdtype, 
-                                                       root, comm);
+                                                       root, comm, module);
     }
     return ompi_coll_tuned_scatter_intra_basic_linear (sbuf, scount, sdtype, 
 						       rbuf, rcount, rdtype, 
-						       root, comm);
+						       root, comm, module);
 }

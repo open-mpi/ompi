@@ -36,11 +36,14 @@
 int mca_coll_demo_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
                                        struct ompi_datatype_t *dtype,
                                        struct ompi_op_t *op,
-                                       struct ompi_communicator_t *comm)
+                                       struct ompi_communicator_t *comm,
+                                       struct mca_coll_base_module_1_1_0_t *module)
 {
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo scatter_intra");
-    return comm->c_coll_basic_module->coll_reduce_scatter(sbuf, rbuf, rcounts,
-                                                          dtype, op, comm);
+    return demo_module->underlying.coll_reduce_scatter(sbuf, rbuf, rcounts,
+                                                       dtype, op, comm,
+                                                       demo_module->underlying.coll_reduce_scatter_module);
 }
 
 
@@ -54,9 +57,12 @@ int mca_coll_demo_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
 int mca_coll_demo_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
                                        struct ompi_datatype_t *dtype,
                                        struct ompi_op_t *op,
-                                       struct ompi_communicator_t *comm)
+                                       struct ompi_communicator_t *comm,
+                                       struct mca_coll_base_module_1_1_0_t *module)
 {
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo scatter_inter");
-    return comm->c_coll_basic_module->coll_reduce_scatter(sbuf, rbuf, rcounts,
-                                                          dtype, op, comm);
+    return demo_module->underlying.coll_reduce_scatter(sbuf, rbuf, rcounts,
+                                                       dtype, op, comm,
+                                                       demo_module->underlying.coll_reduce_scatter_module);
 }

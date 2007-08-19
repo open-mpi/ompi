@@ -62,7 +62,6 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_demo_la_SOURCES = $(sources)
-mca_coll_demo_la_LIBADD = $(LIBMPI_LA)
 mca_coll_demo_la_LDFLAGS = -module -avoid-version
 mca_coll_demo_la_LIBADD = \
         $(top_ompi_builddir)/ompi/libmpi.la \

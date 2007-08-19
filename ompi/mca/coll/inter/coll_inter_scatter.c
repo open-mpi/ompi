@@ -39,7 +39,8 @@ mca_coll_inter_scatter_inter(void *sbuf, int scount,
                              struct ompi_datatype_t *sdtype,
                              void *rbuf, int rcount,
                              struct ompi_datatype_t *rdtype,
-                             int root, struct ompi_communicator_t *comm)
+                             int root, struct ompi_communicator_t *comm,
+                             struct mca_coll_base_module_1_1_0_t *module)
 {
     int rank, size, size_local, err;
     char *ptmp = NULL;
@@ -78,7 +79,8 @@ mca_coll_inter_scatter_inter(void *sbuf, int scount,
 	/* Perform the scatter locally with the first process as root */
 	err = comm->c_local_comm->c_coll.coll_scatter(ptmp, rcount, rdtype, 
 						      rbuf, rcount, rdtype, 
-						      0, comm->c_local_comm);
+						      0, comm->c_local_comm,
+                                                      comm->c_local_comm->c_coll.coll_scatter_module);
 	if (NULL != ptmp) {
 	    free(ptmp);
 	}

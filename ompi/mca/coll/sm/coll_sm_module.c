@@ -62,12 +62,12 @@ uint32_t mca_coll_sm_iov_size = 1;
 /*
  * Local functions
  */
-static const struct mca_coll_base_module_1_0_0_t *
-    sm_module_init(struct ompi_communicator_t *comm);
-static int sm_module_finalize(struct ompi_communicator_t *comm);
+static int sm_module_enable(struct mca_coll_base_module_1_1_0_t *module,
+                          struct ompi_communicator_t *comm);
 static bool have_local_peers(ompi_group_t *group, size_t size);
 static int bootstrap_init(void);
-static int bootstrap_comm(ompi_communicator_t *comm);
+static int bootstrap_comm(ompi_communicator_t *comm,
+                          mca_coll_sm_module_t *module);
 
 
 /*
@@ -75,37 +75,6 @@ static int bootstrap_comm(ompi_communicator_t *comm);
  */
 static bool bootstrap_inited = false;
 
-
-/*
- * Linear set of collective algorithms
- */
-static const mca_coll_base_module_1_0_0_t module = {
-
-    /* Initialization / finalization functions */
-
-    sm_module_init,
-    sm_module_finalize,
-
-    /* Collective function pointers */
-
-    NULL,
-    NULL,
-    mca_coll_sm_allreduce_intra,
-    NULL,
-    NULL,
-    NULL,
-    mca_coll_sm_barrier_intra,
-    mca_coll_sm_bcast_intra,
-    NULL,
-    NULL,
-    NULL,
-    mca_coll_sm_reduce_intra,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    mca_coll_sm_ft_event
-};
 
 
 /*
@@ -156,10 +125,11 @@ int mca_coll_sm_init_query(bool enable_progress_threads,
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-const mca_coll_base_module_1_0_0_t *
-mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority,
-                       struct mca_coll_base_comm_t **data)
+mca_coll_base_module_1_1_0_t *
+mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
+    mca_coll_sm_module_t *sm_module;
+
     /* See if someone has previously lazily initialized and failed */
 
     if (mca_coll_sm_component.sm_component_setup &&
@@ -190,37 +160,54 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority,
     *priority = mca_coll_sm_component.sm_priority;
     
     /* All is good -- return a module */
+    sm_module = OBJ_NEW(mca_coll_sm_module_t);
 
-    return &module;
-}
+    sm_module->super.coll_module_enable = sm_module_enable;
+    sm_module->super.ft_event        = mca_coll_sm_ft_event;
+    sm_module->super.coll_allgather  = NULL;
+    sm_module->super.coll_allgatherv = NULL;
+    sm_module->super.coll_allreduce  = mca_coll_sm_allreduce_intra;
+    sm_module->super.coll_alltoall   = NULL;
+    sm_module->super.coll_alltoallv  = NULL;
+    sm_module->super.coll_alltoallw  = NULL;
+    sm_module->super.coll_barrier    = mca_coll_sm_barrier_intra;
+    sm_module->super.coll_bcast      = mca_coll_sm_bcast_intra;
+    sm_module->super.coll_exscan     = NULL;
+    sm_module->super.coll_gather     = NULL;
+    sm_module->super.coll_gatherv    = NULL;
+    sm_module->super.coll_reduce     = mca_coll_sm_reduce_intra;
+    sm_module->super.coll_reduce_scatter = NULL;
+    sm_module->super.coll_scan       = NULL;
+    sm_module->super.coll_scatter    = NULL;
+    sm_module->super.coll_scatterv   = NULL;
 
-
-/* 
- * Unquery the coll on comm
- */
-int mca_coll_sm_comm_unquery(struct ompi_communicator_t *comm,
-                             struct mca_coll_base_comm_t *data)
-{
-    return OMPI_SUCCESS;
+    return &(sm_module->super);
 }
 
 
 /*
  * Init module on the communicator
  */
-static const struct mca_coll_base_module_1_0_0_t *
-sm_module_init(struct ompi_communicator_t *comm)
+static int
+sm_module_enable(struct mca_coll_base_module_1_1_0_t *module,
+                 struct ompi_communicator_t *comm)
 {
-    int i, j, root;
+    int i, j, root, ret;
     int rank = ompi_comm_rank(comm);
     int size = ompi_comm_size(comm);
-    mca_coll_base_comm_t *data = NULL;
+    mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
+    mca_coll_sm_comm_t *data = NULL;
     size_t control_size, frag_size;
     mca_coll_sm_component_t *c = &mca_coll_sm_component;
     opal_maffinity_base_segment_t *maffinity;
     int parent, min_child, max_child, num_children;
     char *base = NULL;
     const int num_barrier_buffers = 2;
+
+    if (NULL == sm_module->previous_reduce ||
+        NULL == sm_module->previous_reduce_module) {
+        return OMPI_ERROR;
+    }
 
     /* Once-per-component setup.  This may happen at any time --
        during MPI_INIT or later.  So we must protect this with locks
@@ -231,10 +218,10 @@ sm_module_init(struct ompi_communicator_t *comm)
     if (!mca_coll_sm_component.sm_component_setup) {
         mca_coll_sm_component.sm_component_setup = true;
 
-        if (OMPI_SUCCESS != bootstrap_init()) {
+        if (OMPI_SUCCESS != (ret = bootstrap_init())) {
             mca_coll_sm_component.sm_component_setup_success = false;
             opal_atomic_unlock(&mca_coll_sm_component.sm_component_setup_lock);
-            return NULL;
+            return ret;
         }
 
         /* Can we get an mpool allocation?  See if there was one created
@@ -250,7 +237,7 @@ sm_module_init(struct ompi_communicator_t *comm)
                 mca_coll_sm_bootstrap_finalize();
                 mca_coll_sm_component.sm_component_setup_success = false;
                 opal_atomic_unlock(&mca_coll_sm_component.sm_component_setup_lock);
-                return NULL;
+                return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
             }
             mca_coll_sm_component.sm_data_mpool_created = true;
         } else {
@@ -264,7 +251,7 @@ sm_module_init(struct ompi_communicator_t *comm)
        we got in here */
 
     if (!mca_coll_sm_component.sm_component_setup_success) {
-        return NULL;
+        return OMPI_ERROR;
     }
 
     /* Get some space to setup memory affinity (just easier to try to
@@ -273,7 +260,7 @@ sm_module_init(struct ompi_communicator_t *comm)
     maffinity = (opal_maffinity_base_segment_t*)malloc(sizeof(opal_maffinity_base_segment_t) * 
                                                        c->sm_comm_num_segments * 3);
     if (NULL == maffinity) {
-        return NULL;
+        return OMPI_ERROR;
     }
 
     /* Allocate data to hang off the communicator.  The memory we
@@ -289,8 +276,8 @@ sm_module_init(struct ompi_communicator_t *comm)
           mca_coll_sm_tree_node_t
     */
 
-    comm->c_coll_selected_data = data = (mca_coll_base_comm_t*)
-        malloc(sizeof(mca_coll_base_comm_t) + 
+    sm_module->sm_data = data = (mca_coll_sm_comm_t*)
+        malloc(sizeof(mca_coll_sm_comm_t) + 
                (c->sm_comm_num_segments * 
                 sizeof(mca_coll_base_mpool_index_t)) +
                (size * 
@@ -298,7 +285,7 @@ sm_module_init(struct ompi_communicator_t *comm)
                  (sizeof(mca_coll_sm_tree_node_t*) * c->sm_tree_degree))));
 
     if (NULL == data) {
-        return NULL;
+        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
     data->mcb_data_mpool_malloc_addr = NULL;
 
@@ -360,10 +347,10 @@ sm_module_init(struct ompi_communicator_t *comm)
        mpool that has been allocated among my peers for this
        communicator. */
 
-    if (OMPI_SUCCESS != bootstrap_comm(comm)) {
+    if (OMPI_SUCCESS != (ret = bootstrap_comm(comm, sm_module))) {
         free(data);
-        comm->c_coll_selected_data = NULL;
-        return NULL;
+        sm_module->sm_data = NULL;
+        return ret;
     }
 
     /* Once the communicator is bootstrapped, setup the pointers into
@@ -474,39 +461,16 @@ sm_module_init(struct ompi_communicator_t *comm)
                c->sm_control_size);
     }
 
+    /* Save previous component's reduce informaation */
+    sm_module->previous_reduce = comm->c_coll.coll_reduce;
+    sm_module->previous_reduce_module = comm->c_coll.coll_reduce_module;
+    OBJ_RETAIN(sm_module->previous_reduce_module);
+
     /* All done */
-
-    return &module;
-}
-
-
-/*
- * Finalize module on the communicator
- */
-static int sm_module_finalize(struct ompi_communicator_t *comm)
-{
-    mca_coll_base_comm_t *data;
-
-    /* Free the space in the data mpool and the data hanging off the
-       communicator */
-
-    data = comm->c_coll_selected_data;
-    if (NULL != data) {
-        /* If this was the process that allocated the space in the
-           data mpool, then this is the process that frees it */
-
-        if (NULL != data->mcb_data_mpool_malloc_addr) {
-            mca_coll_sm_component.sm_data_mpool->mpool_free(mca_coll_sm_component.sm_data_mpool,
-                                                       data->mcb_data_mpool_malloc_addr, NULL);
-        }
-
-        /* Now free the data hanging off the communicator */
-
-        free(data);
-    }
 
     return OMPI_SUCCESS;
 }
+
 
 static bool have_local_peers(ompi_group_t *group, size_t size)
 {
@@ -597,14 +561,15 @@ static int bootstrap_init(void)
 }
 
 
-static int bootstrap_comm(ompi_communicator_t *comm)
+static int bootstrap_comm(ompi_communicator_t *comm,
+                          mca_coll_sm_module_t *module)
 {
     int i, empty_index, err;
     bool found;
     mca_coll_sm_component_t *c = &mca_coll_sm_component;
     mca_coll_sm_bootstrap_header_extension_t *bshe;
     mca_coll_sm_bootstrap_comm_setup_t *bscs;
-    mca_coll_base_comm_t *data = comm->c_coll_selected_data;
+    mca_coll_sm_comm_t *data = module->sm_data;
     int comm_size = ompi_comm_size(comm);
     int num_segments = c->sm_comm_num_segments;
     int num_in_use = c->sm_comm_num_in_use_flags;
@@ -766,7 +731,6 @@ static int bootstrap_comm(ompi_communicator_t *comm)
     opal_atomic_unlock(&bshe->super.seg_lock);
     return err;
 }
-
 
 /*
  * This function is not static and has a prefix-rule-enabled name

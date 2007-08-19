@@ -76,7 +76,8 @@ int MPI_Exscan(void *sendbuf, void *recvbuf, int count,
 
     OBJ_RETAIN(op);
     err = comm->c_coll.coll_exscan(sendbuf, recvbuf, count,
-                                   datatype, op, comm);
+                                   datatype, op, comm,
+                                   comm->c_coll.coll_exscan_module);
     OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

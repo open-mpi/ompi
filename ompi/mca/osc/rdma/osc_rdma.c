@@ -43,7 +43,8 @@ ompi_osc_rdma_module_free(ompi_win_t *win)
 
     /* finish with a barrier */
     if (ompi_group_size(win->w_group) > 1) {
-        ret = module->m_comm->c_coll.coll_barrier(module->m_comm);
+        ret = module->m_comm->c_coll.coll_barrier(module->m_comm,
+                                                  module->m_comm->c_coll.coll_barrier_module);
     }
 
     /* remove from component information */

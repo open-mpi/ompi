@@ -40,7 +40,8 @@ int
 mca_coll_basic_allreduce_intra(void *sbuf, void *rbuf, int count,
                                struct ompi_datatype_t *dtype,
                                struct ompi_op_t *op,
-                               struct ompi_communicator_t *comm)
+                               struct ompi_communicator_t *comm,
+                               struct mca_coll_base_module_1_1_0_t *module)
 {
     int err;
 
@@ -48,18 +49,18 @@ mca_coll_basic_allreduce_intra(void *sbuf, void *rbuf, int count,
 
     if (MPI_IN_PLACE == sbuf) {
         if (0 == ompi_comm_rank(comm)) {
-            err = comm->c_coll.coll_reduce(MPI_IN_PLACE, rbuf, count, dtype, op, 0, comm);
+            err = comm->c_coll.coll_reduce(MPI_IN_PLACE, rbuf, count, dtype, op, 0, comm, module);
         } else {
-            err = comm->c_coll.coll_reduce(rbuf, NULL, count, dtype, op, 0, comm);
+            err = comm->c_coll.coll_reduce(rbuf, NULL, count, dtype, op, 0, comm, module);
         }
     } else {
-        err = comm->c_coll.coll_reduce(sbuf, rbuf, count, dtype, op, 0, comm);
+        err = comm->c_coll.coll_reduce(sbuf, rbuf, count, dtype, op, 0, comm, module);
     }
     if (MPI_SUCCESS != err) {
         return err;
     }
 
-    return comm->c_coll.coll_bcast(rbuf, count, dtype, 0, comm);
+    return comm->c_coll.coll_bcast(rbuf, count, dtype, 0, comm, module);
 }
 
 
@@ -74,13 +75,15 @@ int
 mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
                                struct ompi_datatype_t *dtype,
                                struct ompi_op_t *op,
-                               struct ompi_communicator_t *comm)
+                               struct ompi_communicator_t *comm,
+                               struct mca_coll_base_module_1_1_0_t *module)
 {
     int err, i, rank, root = 0, rsize;
     ptrdiff_t lb, extent;
     char *tmpbuf = NULL, *pml_buffer = NULL;
     ompi_request_t *req[2];
-    ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;
+    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
+    ompi_request_t **reqs = basic_module->mccb_reqs;
 
     rank = ompi_comm_rank(comm);
     rsize = ompi_comm_remote_size(comm);

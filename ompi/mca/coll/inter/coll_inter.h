@@ -29,94 +29,95 @@
 #include "ompi/request/request.h"
 #include "ompi/communicator/communicator.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * Globally exported variable
  */
 
-OMPI_MODULE_DECLSPEC extern const mca_coll_base_component_1_0_0_t mca_coll_inter_component;
+OMPI_MODULE_DECLSPEC extern const mca_coll_base_component_1_1_0_t mca_coll_inter_component;
 extern int mca_coll_inter_priority_param;
 extern int mca_coll_inter_verbose_param;
-
-
-/*
- * Data structure for attaching data to the communicator 
- */
-
-/* Clarifying some terminology:
- *  comm:    the input communicator, consisting of several lower level communicators.
-*/
-
-    struct mca_coll_base_comm_t {
-	struct ompi_communicator_t        *inter_comm; /* link back to the attached comm */ 
-    };
 
 
 /*
  * coll API functions
  */
 int mca_coll_inter_init_query(bool allow_inter_user_threads,
-				 bool have_hidden_threads);
-const struct mca_coll_base_module_1_0_0_t *
-mca_coll_inter_comm_query(struct ompi_communicator_t *comm, 
-			     int *priority, struct mca_coll_base_comm_t **data);
-int mca_coll_inter_comm_unquery(struct ompi_communicator_t *comm, 
-				   struct mca_coll_base_comm_t *data);
+                              bool have_hidden_threads);
+struct mca_coll_base_module_1_1_0_t *
+mca_coll_inter_comm_query(struct ompi_communicator_t *comm, int *priority);
 
-const struct mca_coll_base_module_1_0_0_t *
-mca_coll_inter_module_init(struct ompi_communicator_t *comm);
-
-int mca_coll_inter_module_finalize(struct ompi_communicator_t *comm);
+int mca_coll_inter_module_enable(struct mca_coll_base_module_1_1_0_t *module,
+                                 struct ompi_communicator_t *comm);
 
 int mca_coll_inter_allgather_inter(void *sbuf, int scount, 
 				   struct ompi_datatype_t *sdtype, 
 				   void *rbuf, int rcount, 
 				   struct ompi_datatype_t *rdtype, 
-				   struct ompi_communicator_t *comm);
+				   struct ompi_communicator_t *comm,
+                                   struct mca_coll_base_module_1_1_0_t *module);
 int mca_coll_inter_allgatherv_inter(void *sbuf, int scount,
 				    struct ompi_datatype_t *sdtype,
 				    void *rbuf, int *rcounts, int *disps,
 				    struct ompi_datatype_t *rdtype,
-				    struct ompi_communicator_t *comm);
+				    struct ompi_communicator_t *comm,
+                                    struct mca_coll_base_module_1_1_0_t *module);
 int mca_coll_inter_allreduce_inter(void *sbuf, void *rbuf, int count, 
 				   struct ompi_datatype_t *dtype, 
 				   struct ompi_op_t *op, 
-				   struct ompi_communicator_t *comm);
+				   struct ompi_communicator_t *comm,
+                                   struct mca_coll_base_module_1_1_0_t *module);
 int mca_coll_inter_bcast_inter(void *buff, int count, 
 			       struct ompi_datatype_t *datatype,
 			       int root, 
-			       struct ompi_communicator_t *comm);
+			       struct ompi_communicator_t *comm,
+                               struct mca_coll_base_module_1_1_0_t *module);
 int mca_coll_inter_gather_inter(void *sbuf, int scount, 
 				struct ompi_datatype_t *sdtype, 
 				void *rbuf, int rcount, 
 				struct ompi_datatype_t *rdtype, 
 				int root, 
-				struct ompi_communicator_t *comm);
+				struct ompi_communicator_t *comm,
+                                struct mca_coll_base_module_1_1_0_t *module);
 int mca_coll_inter_gatherv_inter(void *sbuf, int scount, 
 				 struct ompi_datatype_t *sdtype, 
 				 void *rbuf, int *rcounts, int *disps, 
 				 struct ompi_datatype_t *rdtype, 
 				 int root, 
-				 struct ompi_communicator_t *comm);
+				 struct ompi_communicator_t *comm,
+                                 struct mca_coll_base_module_1_1_0_t *module);
 int mca_coll_inter_reduce_inter(void *sbuf, void* rbuf, int count, 
 				struct ompi_datatype_t *dtype, 
 				struct ompi_op_t *op, 
 				int root,
-				struct ompi_communicator_t *comm);
+				struct ompi_communicator_t *comm,
+                                struct mca_coll_base_module_1_1_0_t *module);
 int mca_coll_inter_scatter_inter(void *sbuf, int scount, 
 				 struct ompi_datatype_t *sdtype, void *rbuf, 
 				 int rcount, struct ompi_datatype_t *rdtype, 
-				 int root, struct ompi_communicator_t *comm);
+				 int root, struct ompi_communicator_t *comm,
+                                 struct mca_coll_base_module_1_1_0_t *module);
 int mca_coll_inter_scatterv_inter(void *sbuf, int *scounts, int *disps, 
 				  struct ompi_datatype_t *sdtype, 
 				  void* rbuf, int rcount, 
 				  struct ompi_datatype_t *rdtype, int root, 
-				  struct ompi_communicator_t *comm);
+				  struct ompi_communicator_t *comm,
+                                  struct mca_coll_base_module_1_1_0_t *module);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+
+struct mca_coll_inter_module_t {
+    mca_coll_base_module_1_1_0_t super;
+
+    /* Clarifying some terminology:
+     *  comm:    the input communicator, consisting of several lower level communicators.
+     */
+    struct ompi_communicator_t        *inter_comm; /* link back to the attached comm */ 
+};
+typedef struct mca_coll_inter_module_t mca_coll_inter_module_t;
+OBJ_CLASS_DECLARATION(mca_coll_inter_module_t);
+
+
+END_C_DECLS
+
 #endif /* MCA_COLL_INTER_EXPORT_H */

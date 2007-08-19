@@ -37,12 +37,15 @@ int mca_coll_demo_gatherv_intra(void *sbuf, int scount,
                                 struct ompi_datatype_t *sdtype,
                                 void *rbuf, int *rcounts, int *disps,
                                 struct ompi_datatype_t *rdtype, int root,
-                                struct ompi_communicator_t *comm)
+                                struct ompi_communicator_t *comm,
+                                struct mca_coll_base_module_1_1_0_t *module)
 {
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo gatherv_intra");
-    return comm->c_coll_basic_module->coll_gatherv(sbuf, scount, sdtype,
-                                                   rbuf, rcounts, disps,
-                                                   rdtype, root, comm);
+    return demo_module->underlying.coll_gatherv(sbuf, scount, sdtype,
+                                                rbuf, rcounts, disps,
+                                                rdtype, root, comm,
+                                                demo_module->underlying.coll_gatherv_module);
 }
 
 
@@ -57,10 +60,13 @@ int mca_coll_demo_gatherv_inter(void *sbuf, int scount,
                                 struct ompi_datatype_t *sdtype,
                                 void *rbuf, int *rcounts, int *disps,
                                 struct ompi_datatype_t *rdtype, int root,
-                                struct ompi_communicator_t *comm)
+                                struct ompi_communicator_t *comm,
+                                struct mca_coll_base_module_1_1_0_t *module)
 {
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo gatherv_inter");
-    return comm->c_coll_basic_module->coll_gatherv(sbuf, scount, sdtype,
-                                                   rbuf, rcounts, disps,
-                                                   rdtype, root, comm);
+    return demo_module->underlying.coll_gatherv(sbuf, scount, sdtype,
+                                                rbuf, rcounts, disps,
+                                                rdtype, root, comm,
+                                                demo_module->underlying.coll_gatherv_module);
 }

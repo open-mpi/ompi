@@ -58,7 +58,8 @@ int
 mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
                                     struct ompi_datatype_t *dtype,
                                     struct ompi_op_t *op,
-                                    struct ompi_communicator_t *comm)
+                                    struct ompi_communicator_t *comm,
+                                    struct mca_coll_base_module_1_1_0_t *module)
 {
     int i, rank, size, count, err = OMPI_SUCCESS;
     ptrdiff_t true_lb, true_extent, lb, extent, buf_size;
@@ -324,13 +325,13 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
         /* reduction */
         err =
             comm->c_coll.coll_reduce(sbuf, recv_buf, count, dtype, op, 0,
-                                     comm);
+                                     comm, module);
 
         /* scatter */
         if (MPI_SUCCESS == err) {
             err = comm->c_coll.coll_scatterv(recv_buf, rcounts, disps, dtype,
                                              rbuf, rcounts[rank], dtype, 0,
-                                             comm);
+                                             comm, module);
         }
     }
 
@@ -354,14 +355,16 @@ int
 mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
                                     struct ompi_datatype_t *dtype,
                                     struct ompi_op_t *op,
-                                    struct ompi_communicator_t *comm)
+                                    struct ompi_communicator_t *comm,
+                                    struct mca_coll_base_module_1_1_0_t *module)
 {
     int err, i, rank, root = 0, rsize;
     int totalcounts, tcount;
     ptrdiff_t lb, extent;
     char *tmpbuf = NULL, *tmpbuf2 = NULL, *tbuf = NULL;
     ompi_request_t *req;
-    ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;
+    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
+    ompi_request_t **reqs = basic_module->mccb_reqs;
 
     rank = ompi_comm_rank(comm);
     rsize = ompi_comm_remote_size(comm);
@@ -493,7 +496,7 @@ mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
 
         err =
             ompi_request_wait_all(rsize,
-                                  comm->c_coll_basic_data->mccb_reqs,
+                                  basic_module->mccb_reqs,
                                   MPI_STATUSES_IGNORE);
         if (OMPI_SUCCESS != err) {
             goto exit;

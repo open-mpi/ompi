@@ -34,7 +34,8 @@ int ompi_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount,
                                             struct ompi_datatype_t *sdtype,
                                             void* rbuf, int rcount,
                                             struct ompi_datatype_t *rdtype,
-                                            struct ompi_communicator_t *comm)
+                                            struct ompi_communicator_t *comm,
+					    struct mca_coll_base_module_1_1_0_t *module)
 {
     int line = -1, err = 0;
     int rank, size, step;
@@ -88,7 +89,8 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
                                          struct ompi_datatype_t *sdtype,
                                          void* rbuf, int rcount,
                                          struct ompi_datatype_t *rdtype,
-                                         struct ompi_communicator_t *comm)
+                                         struct ompi_communicator_t *comm,
+					 struct mca_coll_base_module_1_1_0_t *module)
 {
     int i, k, line = -1;
     int rank, size;
@@ -98,6 +100,10 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
     int err = 0;
     int weallocated = 0;
     struct ompi_datatype_t *new_ddt;
+#ifdef blahblah
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
+#endif
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -118,9 +124,9 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
 #ifdef blahblah
     /* try and SAVE memory by using the data segment hung off 
        the communicator if possible */
-    if (comm->c_coll_selected_data->mcct_num_reqs >= size) { 
+    if (data->mcct_num_reqs >= size) { 
         /* we have enought preallocated for displments and lengths */
-        displs = (int*) comm->c_coll_basic_data->mcct_reqs;
+        displs = (int*) data->mcct_reqs;
         blen = (int *) (displs + size);
         weallocated = 0;
     } 
@@ -248,6 +254,7 @@ int ompi_coll_tuned_alltoall_intra_linear_sync(void *sbuf, int scount,
                                                void* rbuf, int rcount,
                                                struct ompi_datatype_t *rdtype,
                                                struct ompi_communicator_t *comm,
+					       struct mca_coll_base_module_1_1_0_t *module,
                                                int max_outstanding_reqs)
 {
     int line, error;
@@ -395,7 +402,8 @@ int ompi_coll_tuned_alltoall_intra_two_procs(void *sbuf, int scount,
                                              struct ompi_datatype_t *sdtype,
                                              void* rbuf, int rcount,
                                              struct ompi_datatype_t *rdtype,
-                                             struct ompi_communicator_t *comm)
+                                             struct ompi_communicator_t *comm,
+					     struct mca_coll_base_module_1_1_0_t *module)
 {
     int line = -1, err = 0;
     int rank;
@@ -465,7 +473,8 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
                                                 struct ompi_datatype_t *sdtype,
                                                 void* rbuf, int rcount,
                                                 struct ompi_datatype_t *rdtype,
-                                                struct ompi_communicator_t *comm)
+                                                struct ompi_communicator_t *comm,
+						struct mca_coll_base_module_1_1_0_t *module)
 {
     int i;
     int rank;
@@ -481,6 +490,9 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
     ompi_request_t **req;
     ompi_request_t **sreq;
     ompi_request_t **rreq;
+
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
     /* Initialize. */
 
@@ -521,7 +533,7 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
 
     /* Initiate all send/recv to/from others. */
 
-    req = rreq = comm->c_coll_basic_data->mcct_reqs;
+    req = rreq = data->mcct_reqs;
     sreq = rreq + size - 1;
 
     prcv = (char *) rbuf;
@@ -665,21 +677,25 @@ int ompi_coll_tuned_alltoall_intra_do_forced(void *sbuf, int scount,
                                              struct ompi_datatype_t *sdtype,
                                              void* rbuf, int rcount,
                                              struct ompi_datatype_t *rdtype,
-                                             struct ompi_communicator_t *comm)
+                                             struct ompi_communicator_t *comm,
+					     struct mca_coll_base_module_1_1_0_t *module)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_forced selected algorithm %d",
-                 comm->c_coll_selected_data->user_forced[ALLTOALL].algorithm));
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    switch (comm->c_coll_selected_data->user_forced[ALLTOALL].algorithm) {
-    case (0):   return ompi_coll_tuned_alltoall_intra_dec_fixed (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
-    case (1):   return ompi_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
-    case (2):   return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
-    case (3):   return ompi_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
-    case (4):   return ompi_coll_tuned_alltoall_intra_linear_sync (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, comm->c_coll_selected_data->user_forced[ALLTOALL].max_requests);
-    case (5):   return ompi_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_forced selected algorithm %d",
+                 data->user_forced[ALLTOALL].algorithm));
+
+    switch (data->user_forced[ALLTOALL].algorithm) {
+    case (0):   return ompi_coll_tuned_alltoall_intra_dec_fixed (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
+    case (1):   return ompi_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
+    case (2):   return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
+    case (3):   return ompi_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
+    case (4):   return ompi_coll_tuned_alltoall_intra_linear_sync (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module, data->user_forced[ALLTOALL].max_requests);
+    case (5):   return ompi_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?", 
-                     comm->c_coll_selected_data->user_forced[ALLTOALL].algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALL]));
+                     data->user_forced[ALLTOALL].algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALL]));
         return (MPI_ERR_ARG);
     } /* switch */
 
@@ -691,6 +707,7 @@ int ompi_coll_tuned_alltoall_intra_do_this(void *sbuf, int scount,
                                            void* rbuf, int rcount,
                                            struct ompi_datatype_t *rdtype,
                                            struct ompi_communicator_t *comm,
+					   struct mca_coll_base_module_1_1_0_t *module,
                                            int algorithm, int faninout, int segsize, 
                                            int max_requests)
 {
@@ -698,12 +715,12 @@ int ompi_coll_tuned_alltoall_intra_do_this(void *sbuf, int scount,
                  algorithm, faninout, segsize));
 
     switch (algorithm) {
-    case (0):   return ompi_coll_tuned_alltoall_intra_dec_fixed (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
-    case (1):   return ompi_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
-    case (2):   return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
-    case (3):   return ompi_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
-    case (4):   return ompi_coll_tuned_alltoall_intra_linear_sync (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, max_requests);
-    case (5):   return ompi_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    case (0):   return ompi_coll_tuned_alltoall_intra_dec_fixed (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
+    case (1):   return ompi_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
+    case (2):   return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
+    case (3):   return ompi_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
+    case (4):   return ompi_coll_tuned_alltoall_intra_linear_sync (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module, max_requests);
+    case (5):   return ompi_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 
                      algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALL]));

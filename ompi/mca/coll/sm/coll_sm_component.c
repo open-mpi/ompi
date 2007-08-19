@@ -53,17 +53,17 @@ static int sm_close(void);
 
 mca_coll_sm_component_t mca_coll_sm_component = {
 
-    /* First, fill in the super (mca_coll_base_component_1_0_0_t) */
+    /* First, fill in the super (mca_coll_base_component_1_1_0_t) */
 
     {
         /* First, the mca_component_t struct containing meta
            information about the component itself */
         
         {
-            /* Indicate that we are a coll v1.0.0 component (which
+            /* Indicate that we are a coll v1.1.0 component (which
                also implies a specific MCA version) */
 
-            MCA_COLL_BASE_VERSION_1_0_0,
+            MCA_COLL_BASE_VERSION_1_1_0,
 
             /* Component name and version */
 
@@ -78,7 +78,7 @@ mca_coll_sm_component_t mca_coll_sm_component = {
             sm_close,
         },
         
-        /* Next the MCA v1.0.0 component meta data */
+        /* Next the MCA v1.1.0 component meta data */
 
         {
             /* The component is not checkpoint ready */
@@ -89,7 +89,6 @@ mca_coll_sm_component_t mca_coll_sm_component = {
         
         mca_coll_sm_init_query,
         mca_coll_sm_comm_query,
-        mca_coll_sm_comm_unquery,
     },
 
     /* sm-component specifc information */
@@ -284,3 +283,45 @@ static int sm_close(void)
 
     return OMPI_SUCCESS;
 }
+
+
+static void
+mca_coll_sm_module_construct(mca_coll_sm_module_t *module)
+{
+    module->sm_data = NULL;
+    module->previous_reduce_module = NULL;
+}
+
+static void
+mca_coll_sm_module_destruct(mca_coll_sm_module_t *module)
+{
+    mca_coll_sm_comm_t *data;
+
+    /* Free the space in the data mpool and the data hanging off the
+       communicator */
+
+    data = module->sm_data;
+    if (NULL != data) {
+        /* If this was the process that allocated the space in the
+           data mpool, then this is the process that frees it */
+
+        if (NULL != data->mcb_data_mpool_malloc_addr) {
+            mca_coll_sm_component.sm_data_mpool->mpool_free(mca_coll_sm_component.sm_data_mpool,
+                                                       data->mcb_data_mpool_malloc_addr, NULL);
+        }
+
+        /* Now free the data hanging off the communicator */
+
+        free(data);
+    }
+
+    if (NULL != module->previous_reduce_module) {
+        OBJ_RELEASE(module->previous_reduce_module);
+    }
+}
+
+
+OBJ_CLASS_INSTANCE(mca_coll_sm_module_t,
+                   mca_coll_base_module_1_1_0_t,
+                   mca_coll_sm_module_construct,
+                   mca_coll_sm_module_destruct);

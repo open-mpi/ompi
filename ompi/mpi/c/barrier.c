@@ -51,7 +51,7 @@ int MPI_Barrier(MPI_Comm comm)
 
   if (OMPI_COMM_IS_INTRA(comm)) {
     if (ompi_comm_size(comm) > 1) {
-      err = comm->c_coll.coll_barrier(comm);
+      err = comm->c_coll.coll_barrier(comm, comm->c_coll.coll_barrier_module);
     }
   } 
 
@@ -59,7 +59,7 @@ int MPI_Barrier(MPI_Comm comm)
      there's always at least 2 processes in an intercommunicator. */
 
   else {
-    err = comm->c_coll.coll_barrier(comm);
+      err = comm->c_coll.coll_barrier(comm, comm->c_coll.coll_barrier_module);
   }
 
   /* All done */

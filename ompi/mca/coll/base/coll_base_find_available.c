@@ -39,7 +39,6 @@
  */
 bool mca_coll_base_components_available_valid = false;
 opal_list_t mca_coll_base_components_available;
-const mca_coll_base_component_1_0_0_t *mca_coll_base_basic_component = NULL;
 
 
 /*
@@ -49,7 +48,7 @@ static int init_query(const mca_base_component_t *ls,
                       mca_base_component_priority_list_item_t *entry,
                       bool enable_progress_threads,
                       bool enable_mpi_threads);
-static int init_query_1_0_0(const mca_base_component_t *ls, 
+static int init_query_1_1_0(const mca_base_component_t *ls, 
                             mca_base_component_priority_list_item_t *entry,
                             bool enable_progress_threads,
                             bool enable_mpi_threads);
@@ -98,32 +97,9 @@ int mca_coll_base_find_available(bool enable_progress_threads,
     if (OMPI_SUCCESS == init_query(component, entry, 
                                    enable_progress_threads,
                                    enable_mpi_threads)) {
-      
-      /* Is this the basic component?  If so, save it, because it's
-         special.  Keep it off the available list -- we'll use it
-         specially in the selection process. */
-
-      if (0 == strcmp(component->mca_component_name, "basic")) {
-        mca_coll_base_basic_component = 
-          (mca_coll_base_component_1_0_0_t *) component;
-        OBJ_RELEASE(entry);
-      }
-
-      /* Otherwise, save the results in the list.  The priority isn't
-         relevant, because selection is decided at
-         communicator-constructor time.  But we save the thread
-         arguments (set in the init_query() function) so that the
-         initial selection algorithm can negotiate the overall thread
-         level for this process. */
-      
-      else {
         opal_list_append(&mca_coll_base_components_available, 
                          (opal_list_item_t *) entry);
-      }
-
-      /* Either way, we found something :-) */
-
-      found = true;
+        found = true;
     } else {
       
       /* If the component doesn't want to run, then close it.  It's
@@ -185,7 +161,7 @@ static int init_query(const mca_base_component_t *m,
   if (1 == m->mca_type_major_version &&
       0 == m->mca_type_minor_version &&
       0 == m->mca_type_release_version) {
-    ret = init_query_1_0_0(m, entry, enable_progress_threads,
+    ret = init_query_1_1_0(m, entry, enable_progress_threads,
                            enable_mpi_threads);
   } else {
     /* Unrecognized coll API version */
@@ -222,13 +198,13 @@ static int init_query(const mca_base_component_t *m,
 /*
  * Query a specific component, coll v1.0.0
  */
-static int init_query_1_0_0(const mca_base_component_t *component, 
+static int init_query_1_1_0(const mca_base_component_t *component, 
                             mca_base_component_priority_list_item_t *entry,
                             bool enable_progress_threads,
                             bool enable_mpi_threads)
 {
-    mca_coll_base_component_1_0_0_t *coll = 
-	(mca_coll_base_component_1_0_0_t *) component;
+    mca_coll_base_component_1_1_0_t *coll = 
+	(mca_coll_base_component_1_1_0_t *) component;
 
     return coll->collm_init_query(enable_progress_threads,
                                   enable_mpi_threads);

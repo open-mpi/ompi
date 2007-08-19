@@ -82,7 +82,7 @@ int MPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls,
 
     err = comm->c_coll.coll_alltoallv(sendbuf, sendcounts, sdispls, sendtype, 
                                       recvbuf, recvcounts, rdispls, recvtype,
-                                      comm);
+                                      comm, comm->c_coll.coll_alltoallv_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 

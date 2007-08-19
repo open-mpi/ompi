@@ -41,7 +41,8 @@ int
 mca_coll_basic_allgather_intra(void *sbuf, int scount,
                                struct ompi_datatype_t *sdtype, void *rbuf,
                                int rcount, struct ompi_datatype_t *rdtype,
-                               struct ompi_communicator_t *comm)
+                               struct ompi_communicator_t *comm,
+                               struct mca_coll_base_module_1_1_0_t *module)
 {
     int err;
     ptrdiff_t lb, extent;
@@ -61,10 +62,10 @@ mca_coll_basic_allgather_intra(void *sbuf, int scount,
     /* Gather and broadcast. */
 
     err = comm->c_coll.coll_gather(sbuf, scount, sdtype, rbuf, rcount,
-                                   rdtype, 0, comm);
+                                   rdtype, 0, comm, module);
     if (MPI_SUCCESS == err) {
         err = comm->c_coll.coll_bcast(rbuf, rcount * ompi_comm_size(comm), 
-                                      rdtype, 0, comm);
+                                      rdtype, 0, comm, module);
     }
 
     /* All done */
@@ -85,13 +86,15 @@ mca_coll_basic_allgather_inter(void *sbuf, int scount,
                                struct ompi_datatype_t *sdtype,
                                void *rbuf, int rcount,
                                struct ompi_datatype_t *rdtype,
-                               struct ompi_communicator_t *comm)
+                               struct ompi_communicator_t *comm,
+                               struct mca_coll_base_module_1_1_0_t *module)
 {
     int rank, root = 0, size, rsize, err, i;
     char *tmpbuf = NULL, *ptmp;
     ptrdiff_t rlb, slb, rextent, sextent, incr;
     ompi_request_t *req;
-    ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;
+    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
+    ompi_request_t **reqs = basic_module->mccb_reqs;
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
