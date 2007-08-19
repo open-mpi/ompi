@@ -118,6 +118,8 @@
  */
 static const mqs_basic_callbacks *mqs_basic_entrypoints;
 static int host_is_big_endian;
+static int world_proc_array_entries = 0;
+static mqs_taddr_t* world_proc_array = NULL;
 
 void mqs_setup_basic_callbacks (const mqs_basic_callbacks * cb)
 {
@@ -295,13 +297,12 @@ static mqs_tword_t fetch_size_t(mqs_process * proc, mqs_taddr_t addr, mpi_proces
 
     if (mqs_ok == mqs_fetch_data (proc, addr, isize, &buffer))
         mqs_target_to_host (proc, buffer, 
-                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_taddr_t)-isize : 0), 
+                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_tword_t)-isize : 0), 
                             isize);
   
     return res;
 } /* fetch_bool */
 
-#if defined(CODE_NOT_USED)
 /**********************************************************************/
 /* Functions to handle translation groups.
  * We have a list of these on the process info, so that we can
@@ -314,22 +315,8 @@ static int translate (group_t *this, int index)
     if (index == MQS_INVALID_PROCESS ||
         ((unsigned int)index) >= ((unsigned int) this->entries))
         return MQS_INVALID_PROCESS;
-    else
-        return this->local_to_global[index]; 
+    return this->local_to_global[index]; 
 } /* translate */
-
-/**********************************************************************/
-/* Reverse translate a process number i.e. global to local*/
-static int reverse_translate (group_t * this, int index) 
-{ 	
-    int i;
-    for ( i = 0; i < this->entries; i++ )
-        if( this->local_to_global[i] == index )
-            return i;
-
-    return MQS_INVALID_PROCESS;
-} /* reverse_translate */
-#endif  /* CODE_NOT_USED */
 
 /**********************************************************************/
 /* Search the group list for this group, if not found create it.
@@ -340,13 +327,13 @@ static group_t * find_or_create_group( mqs_process *proc,
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
     mqs_image * image          = mqs_get_image (proc);
     mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
-    int intsize = p_info->sizes.int_size;
     communicator_t *comm  = p_info->communicator_list;
     int *tr;
     char *trbuffer;
     int i;
-    group_t *g;
+    group_t *group;
     int np;
+    mqs_taddr_t value;
 
     np = fetch_int( proc,
                     table + i_info->ompi_group_t.offset.grp_proc_count,
@@ -357,42 +344,68 @@ static group_t * find_or_create_group( mqs_process *proc,
     }
     /* Iterate over each communicator seeing if we can find this group */
     for (;comm; comm = comm->next) {
-        g = comm->group;
-        if (g && g->table_base == table) {
-            g->ref_count++;			/* Someone else is interested */
+        group = comm->group;
+        if (group && group->table_base == table) {
+            group->ref_count++;			/* Someone else is interested */
             DEBUG(VERBOSE_GROUP, ("Increase refcount for group 0x%p to %d\n",
-                                  (void*)g, g->ref_count) );
-            return g;
+                                  (void*)group, group->ref_count) );
+            return group;
         }
     }
 
     /* Hmm, couldn't find one, so fetch it */	
-    g = (group_t *)mqs_malloc (sizeof (group_t));
+    group = (group_t *)mqs_malloc (sizeof (group_t));
     tr = (int *)mqs_malloc (np*sizeof(int));
-    trbuffer = (char *)mqs_malloc (np*intsize);
-    g->local_to_global = tr;
-    g->table_base = table;
+    trbuffer = (char *)mqs_malloc (np*sizeof(mqs_taddr_t));
+    group->local_to_global = tr;
+    group->table_base = table;
     DEBUG(VERBOSE_GROUP, ("Create a new group 0x%p with %d members\n",
-                          (void*)g, np) );
+                          (void*)group, np) );
 
-    if (mqs_ok != mqs_fetch_data (proc, table, np*intsize, trbuffer) ) {
-        mqs_free (g);
+    if (mqs_ok != mqs_fetch_data (proc, table, np * p_info->sizes.pointer_size,
+                                  trbuffer) ) {
+        mqs_free (group);
         mqs_free (tr);
         mqs_free (trbuffer);
         return NULL;
     }
 
-    /* This code is assuming that sizeof(int) is the same on target and host...
-     * that's a bit flaky, but probably actually OK.
+    /**
+     * Now convert the process representation into the local representation.
+     * We will endup with an array of Open MPI internal pointers to proc
+     * structure. By comparing this pointers to the MPI_COMM_WORLD group
+     * we can figure out the global rank in the MPI_COMM_WORLD of the process.
      */
-    for( i = 0; i < np; i++ )
-        mqs_target_to_host( proc, trbuffer+intsize*i, &tr[i], intsize );
+     if( NULL == world_proc_array ) {
+         world_proc_array = mqs_malloc( np * sizeof(mqs_taddr_t) );
+         for( i = 0; i < np; i++ ) {
+             mqs_target_to_host( proc, trbuffer + p_info->sizes.pointer_size*i,
+                                 &value, p_info->sizes.pointer_size );
+             world_proc_array[i] = value;
+             group->local_to_global[i] = i;
+         }
+         world_proc_array_entries = np;
+     } else {
+         int j;
+
+         for( i = 0; i < np; i++ ) {
+             mqs_target_to_host( proc, trbuffer + p_info->sizes.pointer_size*i,
+                                 &value, p_info->sizes.pointer_size );
+             /* get the global rank this MPI process */
+             for( j = 0; j < world_proc_array_entries; j++ ) {
+                 if( value == world_proc_array[j] ) {
+                     group->local_to_global[i] = j;
+                     break;
+                 }
+             }
+         }
+     }
 
     mqs_free(trbuffer);
 
-    g->entries = np;
-    g->ref_count = 1;
-    return g;
+    group->entries = np;
+    group->ref_count = 1;
+    return group;
 } /* find_or_create_group */
 
 /***********************************************************************/
@@ -878,6 +891,17 @@ static int rebuild_communicator_list (mqs_process *proc)
                              p_info );
     DEBUG(VERBOSE_COMM,("Number of coms %d lowest_free %d number_free %d\n",
                         (int)comm_size, (int)lowest_free, (int)number_free));
+    /* In Open MPI the MPI_COMM_WORLD is always at index 0. By default, the
+     * MPI_COMM_WORLD will never get modified. Except, when the fault tolerance
+     * features are enabled in Open MPI. Therefore, we will regenerate the
+     * list of proc pointers every time we rescan the communicators list.
+     * We can use the fact that MPI_COMM_WORLD is at index 0 to force the
+     * creation of the world_proc_array.
+     */
+    world_proc_array_entries = 0;
+    mqs_free( world_proc_array );
+    world_proc_array = NULL;
+
     /* Now get the pointer to the first communicator pointer */
     comm_addr_base = fetch_pointer( proc, comm_addr_base, p_info );
     for( i = 0; (commcount < (comm_size - number_free)) && (i < comm_size); i++ ) {
@@ -1334,6 +1358,21 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
 
     req_type = fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_type, p_info );
     if( OMPI_REQUEST_PML == req_type ) {
+        /**
+         * First retrieve the tag. If the tag is negative and the user didn't
+         * request the internal requests information then move along.
+         */
+        res->desired_tag =
+            fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_tag, p_info );
+        if( MPI_ANY_TAG == res->desired_tag ) {
+            res->tag_wild = TRUE;
+        } else {
+            /* Don't allow negative tags to show up */
+            if( (res->desired_tag < 0) && (0 == p_info->show_internal_requests) )
+                goto rescan_requests;
+            res->tag_wild = FALSE;
+        }
+
         req_type =
             fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_type,
                        p_info);
@@ -1345,21 +1384,13 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
             fetch_bool( proc,
                         current_item + i_info->mca_pml_base_request_t.offset.req_pml_complete,
                         p_info );
+        printf( "req_complete = %d, req_pml_complete = %d\n",
+                (int)req_complete, (int)req_pml_complete );
         res->status = (0 == req_complete ? mqs_st_pending : mqs_st_complete);
 
-        res->desired_local_rank  =
-            fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_peer, p_info );
-        res->desired_global_rank = res->desired_local_rank;
-        res->desired_tag         =
-            fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_tag, p_info );
-        if( MPI_ANY_TAG == res->desired_tag ) {
-            res->tag_wild = TRUE;
-        } else {
-            /* Don't allow negative tags to show up */
-            if( (res->desired_tag < 0) && (0 == p_info->show_internal_requests) )
-                goto rescan_requests;
-            res->tag_wild = FALSE;
-        }
+        res->desired_local_rank  = fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_peer, p_info );
+        res->desired_global_rank = translate( p_info->current_communicator->group,
+                                              res->desired_local_rank );
         
         res->buffer = fetch_pointer( proc, current_item + i_info->mca_pml_base_request_t.offset.req_addr,
                                      p_info );
@@ -1415,7 +1446,8 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
             res->actual_local_rank   =
                 fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
                            i_info->ompi_status_public_t.offset.MPI_SOURCE, p_info );
-            res->actual_global_rank  = res->actual_local_rank;  /* TODO: what's the global rank ? */
+            res->actual_global_rank  = translate( p_info->current_communicator->group,
+                                                  res->actual_local_rank );
         }
         dump_request( current_item, res );
     }
