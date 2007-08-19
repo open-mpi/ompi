@@ -13,6 +13,9 @@
 #if defined(HAVE_UNISTD_H)
 #include <unistd.h>
 #endif
+#if defined(HAVE_STRING_H)
+#include <string.h>
+#endif
 
 int pml_v_output = -1;
 
