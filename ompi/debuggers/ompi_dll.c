@@ -279,13 +279,10 @@ static mqs_tword_t fetch_int (mqs_process * proc, mqs_taddr_t addr, mpi_process_
 static mqs_tword_t fetch_bool(mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info)
 {
     int isize = p_info->sizes.bool_size;
-    char buffer[8];                  /* ASSUME the type fits in 8 bytes */
     mqs_tword_t res = 0;
 
-    if (mqs_ok == mqs_fetch_data (proc, addr, isize, &buffer))
-        res = (mqs_tword_t)buffer;
-  
-    return res;
+    mqs_fetch_data (proc, addr, isize, &res);
+    return (0 == res ? 0 : 1);
 } /* fetch_bool */
 
 /***********************************************************************/
@@ -1384,8 +1381,6 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
             fetch_bool( proc,
                         current_item + i_info->mca_pml_base_request_t.offset.req_pml_complete,
                         p_info );
-        printf( "req_complete = %d, req_pml_complete = %d\n",
-                (int)req_complete, (int)req_pml_complete );
         res->status = (0 == req_complete ? mqs_st_pending : mqs_st_complete);
 
         res->desired_local_rank  = fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_peer, p_info );
@@ -1422,7 +1417,7 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
             res->actual_tag          =
                 fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
                            i_info->ompi_status_public_t.offset.MPI_TAG, p_info );
-            if( (MPI_ANY_TAG == res->actual_tag) && (mqs_st_pending < res->status) ) {
+            if( MPI_ANY_TAG != res->actual_tag ) {
                 res->status = mqs_st_matched;
             }
         } else {
