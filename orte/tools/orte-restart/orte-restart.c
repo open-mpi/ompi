@@ -475,6 +475,10 @@ static int spawn_children(orte_snapc_base_global_snapshot_t *snapshot, pid_t *ch
         exit_status = ret;
         goto cleanup;
     }
+    if( ORTE_SUCCESS != (ret = opal_argv_append(&argc, &argv, "-am ft-enable-cr")) ) {
+        exit_status = ret;
+        goto cleanup;
+    }
     if( NULL != orte_restart_globals.hostfile ) {
         if( ORTE_SUCCESS != (ret = opal_argv_append(&argc, &argv, "--hostfile")) ) {
             exit_status = ret;
