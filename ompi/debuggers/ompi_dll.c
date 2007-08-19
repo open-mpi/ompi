@@ -1397,18 +1397,15 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
                 fetch_pointer( proc, current_item + i_info->mca_pml_base_send_request_t.offset.req_addr,
                                p_info );
             res->system_buffer = ( req_buffer == res->buffer ? FALSE : TRUE );
-            res->desired_length      =
+            res->desired_length =
                 fetch_size_t( proc,
                               current_item + i_info->mca_pml_base_send_request_t.offset.req_bytes_packed, p_info );
-            res->actual_length     = res->desired_length;
-            res->actual_tag        = res->desired_tag;
-            res->actual_local_rank = res->desired_local_rank;
-            res->actual_global_rank  = res->actual_local_rank;
+            res->actual_length      = res->desired_length;
+            res->actual_tag         = res->desired_tag;
+            res->actual_local_rank  = res->desired_local_rank;
+            res->actual_global_rank = res->actual_local_rank;
         } else if( MCA_PML_REQUEST_RECV == req_type ) {
             snprintf( (char *)res->extra_text[0], 64, "Non-blocking recv 0x%llx", (long long)current_item );
-            res->desired_length      =
-                fetch_size_t( proc,
-                              current_item + i_info->mca_pml_base_recv_request_t.offset.req_bytes_packed, p_info );
             /**
              * There is a trick with the MPI_TAG. All receive requests set it to MPI_ANY_TAG
              * when the request get initialized, and to the real tag once the request
@@ -1419,6 +1416,23 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
                            i_info->ompi_status_public_t.offset.MPI_TAG, p_info );
             if( MPI_ANY_TAG != res->actual_tag ) {
                 res->status = mqs_st_matched;
+                res->desired_length =
+                    fetch_size_t( proc,
+                                  current_item + i_info->mca_pml_base_recv_request_t.offset.req_bytes_packed,
+                                  p_info );
+                res->actual_local_rank =
+                    fetch_size_t( proc,
+                                  i_info->ompi_status_public_t.offset.MPI_SOURCE, p_info );
+                res->actual_global_rank  = translate( p_info->current_communicator->group,
+                                                      res->actual_local_rank );
+            } else {
+                /* We are unable to know exactly how many bytes will be transfered.
+                 * Until we match the request report the count from the user call.
+                 */
+                res->desired_length =
+                    fetch_size_t( proc,
+                                  current_item + i_info->mca_pml_base_request_t.offset.req_count,
+                                  p_info );
             }
         } else {
             snprintf( (char *)res->extra_text[0], 64, "Unknown type of request 0x%llx", (long long)current_item );
