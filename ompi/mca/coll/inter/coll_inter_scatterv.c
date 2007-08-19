@@ -40,7 +40,8 @@ mca_coll_inter_scatterv_inter(void *sbuf, int *scounts,
                               int *disps, struct ompi_datatype_t *sdtype,
                               void *rbuf, int rcount,
                               struct ompi_datatype_t *rdtype, int root,
-                              struct ompi_communicator_t *comm)
+                              struct ompi_communicator_t *comm,
+                              struct mca_coll_base_module_1_1_0_t *module)
 {
     int i, rank, size, err, total, size_local;
     int *counts=NULL,*displace=NULL;
@@ -102,7 +103,8 @@ mca_coll_inter_scatterv_inter(void *sbuf, int *scounts,
 	/* perform the scatterv locally */
 	err = comm->c_local_comm->c_coll.coll_scatterv(ptmp, counts, displace, 
 						       rdtype, rbuf, rcount, 
-						       rdtype, 0, comm->c_local_comm);
+						       rdtype, 0, comm->c_local_comm,
+                                                       comm->c_local_comm->c_coll.coll_scatterv_module);
 	if (OMPI_SUCCESS != err) {
 	    return err;
 	}

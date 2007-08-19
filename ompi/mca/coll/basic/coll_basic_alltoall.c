@@ -39,7 +39,8 @@ mca_coll_basic_alltoall_intra(void *sbuf, int scount,
                               struct ompi_datatype_t *sdtype,
                               void *rbuf, int rcount,
                               struct ompi_datatype_t *rdtype,
-                              struct ompi_communicator_t *comm)
+                              struct ompi_communicator_t *comm,
+                              struct mca_coll_base_module_1_1_0_t *module)
 {
     int i;
     int rank;
@@ -55,6 +56,7 @@ mca_coll_basic_alltoall_intra(void *sbuf, int scount,
     ompi_request_t **req;
     ompi_request_t **sreq;
     ompi_request_t **rreq;
+    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
 
     /* Initialize. */
 
@@ -91,7 +93,7 @@ mca_coll_basic_alltoall_intra(void *sbuf, int scount,
 
     /* Initiate all send/recv to/from others. */
 
-    req = rreq = comm->c_coll_basic_data->mccb_reqs;
+    req = rreq = basic_module->mccb_reqs;
     sreq = rreq + size - 1;
 
     prcv = (char *) rbuf;
@@ -160,7 +162,8 @@ mca_coll_basic_alltoall_inter(void *sbuf, int scount,
                               struct ompi_datatype_t *sdtype,
                               void *rbuf, int rcount,
                               struct ompi_datatype_t *rdtype,
-                              struct ompi_communicator_t *comm)
+                              struct ompi_communicator_t *comm,
+                              struct mca_coll_base_module_1_1_0_t *module)
 {
     int i;
     int rank;
@@ -176,6 +179,8 @@ mca_coll_basic_alltoall_inter(void *sbuf, int scount,
     ompi_request_t **req;
     ompi_request_t **sreq;
     ompi_request_t **rreq;
+
+    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
 
     /* Initialize. */
 
@@ -196,7 +201,7 @@ mca_coll_basic_alltoall_inter(void *sbuf, int scount,
 
     /* Initiate all send/recv to/from others. */
     nreqs = size * 2;
-    req = rreq = comm->c_coll_basic_data->mccb_reqs;
+    req = rreq = basic_module->mccb_reqs;
     sreq = rreq + size;
 
     prcv = (char *) rbuf;

@@ -43,6 +43,7 @@
 int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_count,
                                     ompi_datatype_t* datatype, ompi_op_t* op,
                                     int root, ompi_communicator_t* comm,
+				    struct mca_coll_base_module_1_1_0_t *module,
                                     ompi_coll_tree_t* tree, int count_by_segment,
                                     int max_outstanding_reqs )
 {
@@ -344,16 +345,19 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
 int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
                                         ompi_datatype_t* datatype, 
                                         ompi_op_t* op, int root, 
-                                        ompi_communicator_t* comm, 
+                                        ompi_communicator_t* comm,
+					struct mca_coll_base_module_1_1_0_t *module,
                                         uint32_t segsize, int fanout,
                                         int max_outstanding_reqs )
 {
     int segcount = count;
     size_t typelng;
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_chain rank %d fo %d ss %5d", ompi_comm_rank(comm), fanout, segsize));
 
-    COLL_TUNED_UPDATE_CHAIN( comm, root, fanout );
+    COLL_TUNED_UPDATE_CHAIN( comm, tuned_module, root, fanout );
     /**
      * Determine number of segments and number of elements
      * sent per operation
@@ -362,8 +366,8 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
     return ompi_coll_tuned_reduce_generic( sendbuf, recvbuf, count, datatype, 
-                                           op, root, comm,
-                                           comm->c_coll_selected_data->cached_chain, 
+                                           op, root, comm, module,
+                                           data->cached_chain, 
                                            segcount, max_outstanding_reqs );
 }
 
@@ -371,17 +375,20 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
 int ompi_coll_tuned_reduce_intra_pipeline( void *sendbuf, void *recvbuf,
                                            int count, ompi_datatype_t* datatype,
                                            ompi_op_t* op, int root,
-                                           ompi_communicator_t* comm, 
+                                           ompi_communicator_t* comm,
+					   struct mca_coll_base_module_1_1_0_t *module,
                                            uint32_t segsize,
                                            int max_outstanding_reqs  )
 {
     int segcount = count;
     size_t typelng;
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_pipeline rank %d ss %5d",
                  ompi_comm_rank(comm), segsize));
 
-    COLL_TUNED_UPDATE_PIPELINE( comm, root );
+    COLL_TUNED_UPDATE_PIPELINE( comm, tuned_module, root );
 
     /**
      * Determine number of segments and number of elements
@@ -391,8 +398,8 @@ int ompi_coll_tuned_reduce_intra_pipeline( void *sendbuf, void *recvbuf,
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
     return ompi_coll_tuned_reduce_generic( sendbuf, recvbuf, count, datatype, 
-                                           op, root, comm,
-                                           comm->c_coll_selected_data->cached_pipeline, 
+                                           op, root, comm, module,
+                                           data->cached_pipeline, 
                                            segcount, max_outstanding_reqs );
 }
 
@@ -400,16 +407,19 @@ int ompi_coll_tuned_reduce_intra_binary( void *sendbuf, void *recvbuf,
                                          int count, ompi_datatype_t* datatype,
                                          ompi_op_t* op, int root,
                                          ompi_communicator_t* comm, 
+					 struct mca_coll_base_module_1_1_0_t *module,
                                          uint32_t segsize, 
                                          int max_outstanding_reqs  )
 {
     int segcount = count;
     size_t typelng;
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_binary rank %d ss %5d",
                  ompi_comm_rank(comm), segsize));
 
-    COLL_TUNED_UPDATE_BINTREE( comm, root );
+    COLL_TUNED_UPDATE_BINTREE( comm, tuned_module, root );
 
     /**
      * Determine number of segments and number of elements
@@ -419,8 +429,8 @@ int ompi_coll_tuned_reduce_intra_binary( void *sendbuf, void *recvbuf,
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
     return ompi_coll_tuned_reduce_generic( sendbuf, recvbuf, count, datatype, 
-                                           op, root, comm,
-                                           comm->c_coll_selected_data->cached_bintree, 
+                                           op, root, comm, module,
+                                           data->cached_bintree, 
                                            segcount, max_outstanding_reqs );
 }
 
@@ -428,16 +438,19 @@ int ompi_coll_tuned_reduce_intra_binomial( void *sendbuf, void *recvbuf,
                                            int count, ompi_datatype_t* datatype,
                                            ompi_op_t* op, int root,
                                            ompi_communicator_t* comm, 
+					   struct mca_coll_base_module_1_1_0_t *module,
                                            uint32_t segsize,
                                            int max_outstanding_reqs  )
 {
     int segcount = count;
     size_t typelng;
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_binomial rank %d ss %5d",
                  ompi_comm_rank(comm), segsize));
 
-    COLL_TUNED_UPDATE_IN_ORDER_BMTREE( comm, root );
+    COLL_TUNED_UPDATE_IN_ORDER_BMTREE( comm, tuned_module, root );
 
     /**
      * Determine number of segments and number of elements
@@ -447,8 +460,8 @@ int ompi_coll_tuned_reduce_intra_binomial( void *sendbuf, void *recvbuf,
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
     return ompi_coll_tuned_reduce_generic( sendbuf, recvbuf, count, datatype, 
-                                           op, root, comm,
-                                           comm->c_coll_selected_data->cached_in_order_bmtree, 
+                                           op, root, comm, module,
+                                           data->cached_in_order_bmtree, 
                                            segcount, max_outstanding_reqs );
 }
 
@@ -464,6 +477,7 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
                                                   ompi_datatype_t* datatype,
                                                   ompi_op_t* op, int root,
                                                   ompi_communicator_t* comm, 
+						  struct mca_coll_base_module_1_1_0_t *module,
                                                   uint32_t segsize,
                                                   int max_outstanding_reqs  )
 {
@@ -472,13 +486,15 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
     int segcount = count;
     void *use_this_sendbuf = NULL, *use_this_recvbuf = NULL;
     size_t typelng;
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_in_order_binary rank %d ss %5d",
                  rank, segsize));
 
-    COLL_TUNED_UPDATE_IN_ORDER_BINTREE( comm );
+    COLL_TUNED_UPDATE_IN_ORDER_BINTREE( comm, tuned_module );
 
     /**
      * Determine number of segments and number of elements
@@ -523,9 +539,9 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
     }
 
     /* Use generic reduce with in-order binary tree topology and io_root */
-    ret = ompi_coll_tuned_reduce_generic( use_this_sendbuf, use_this_recvbuf, 
-                                          count, datatype, op, io_root, comm, 
-                                          comm->c_coll_selected_data->cached_in_order_bintree, 
+    ret = ompi_coll_tuned_reduce_generic( use_this_sendbuf, use_this_recvbuf, count, datatype,
+					  op, io_root, comm, module, 
+                                          data->cached_in_order_bintree, 
                                           segcount, max_outstanding_reqs );
     if (MPI_SUCCESS != ret) { return ret; }
 
@@ -579,7 +595,9 @@ int
 ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
                                           struct ompi_datatype_t *dtype,
                                           struct ompi_op_t *op,
-                                          int root, struct ompi_communicator_t *comm)
+                                          int root,
+					  struct ompi_communicator_t *comm,
+					  struct mca_coll_base_module_1_1_0_t *module)
 {
     int i, rank, err, size;
     ptrdiff_t true_lb, true_extent, lb, extent;
@@ -764,53 +782,43 @@ int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_m
 int ompi_coll_tuned_reduce_intra_do_forced(void *sbuf, void* rbuf, int count,
                                            struct ompi_datatype_t *dtype,
                                            struct ompi_op_t *op, int root,
-                                           struct ompi_communicator_t *comm)
+                                           struct ompi_communicator_t *comm,
+					   struct mca_coll_base_module_1_1_0_t *module)
 {
-    const int segsize = 
-        comm->c_coll_selected_data->user_forced[REDUCE].segsize;
-    const int chain_fanout = 
-        comm->c_coll_selected_data->user_forced[REDUCE].chain_fanout;
-    const int max_requests = 
-        comm->c_coll_selected_data->user_forced[REDUCE].max_requests;
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
+
+    const int segsize      = data->user_forced[REDUCE].segsize;
+    const int chain_fanout = data->user_forced[REDUCE].chain_fanout;
+    const int max_requests = data->user_forced[REDUCE].max_requests;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_forced selected algorithm %d", 
-                 comm->c_coll_selected_data->user_forced[REDUCE].algorithm));
+                 data->user_forced[REDUCE].algorithm));
 
 
-    switch (comm->c_coll_selected_data->user_forced[REDUCE].algorithm) {
-    case (0):  return ompi_coll_tuned_reduce_intra_dec_fixed (sbuf, rbuf, 
-                                                              count, dtype, 
-                                                              op, root, comm);
-    case (1):  return ompi_coll_tuned_reduce_intra_basic_linear (sbuf, rbuf, 
-                                                                 count, dtype,
-                                                                 op, root, 
-                                                                 comm);
-    case (2):  return ompi_coll_tuned_reduce_intra_chain (sbuf, rbuf, count, 
-                                                          dtype, op, root, 
-                                                          comm, segsize,
-                                                          chain_fanout,
-                                                          max_requests);
-    case (3):  return ompi_coll_tuned_reduce_intra_pipeline (sbuf, rbuf, count,
-                                                             dtype, op, root, 
-                                                             comm, segsize,
-                                                             max_requests);
-    case (4):  return ompi_coll_tuned_reduce_intra_binary (sbuf, rbuf, count, 
-                                                           dtype, op, root, 
-                                                           comm, segsize,
-                                                           max_requests);
-    case (5):  return ompi_coll_tuned_reduce_intra_binomial (sbuf, rbuf, count,
-                                                             dtype, op, root, 
-                                                             comm, segsize,
-                                                             max_requests);
-    case (6):  return ompi_coll_tuned_reduce_intra_in_order_binary(sbuf, rbuf, 
-                                                                   count, 
-                                                                   dtype, op, 
-                                                                   root, comm,
-                                                                   segsize,
-                                                                   max_requests);
+    switch (data->user_forced[REDUCE].algorithm) {
+    case (0):  return ompi_coll_tuned_reduce_intra_dec_fixed (sbuf, rbuf, count, dtype, 
+                                                              op, root, comm, module);
+    case (1):  return ompi_coll_tuned_reduce_intra_basic_linear (sbuf, rbuf, count, dtype,
+                                                                 op, root, comm, module);
+    case (2):  return ompi_coll_tuned_reduce_intra_chain (sbuf, rbuf, count, dtype,
+							  op, root, comm, module,
+							  segsize, chain_fanout, max_requests);
+    case (3):  return ompi_coll_tuned_reduce_intra_pipeline (sbuf, rbuf, count, dtype,
+							     op, root, comm, module,
+							     segsize, max_requests);
+    case (4):  return ompi_coll_tuned_reduce_intra_binary (sbuf, rbuf, count, dtype,
+							   op, root, comm, module,
+							   segsize, max_requests);
+    case (5):  return ompi_coll_tuned_reduce_intra_binomial (sbuf, rbuf, count, dtype,
+							     op, root, comm, module,
+							     segsize, max_requests);
+    case (6):  return ompi_coll_tuned_reduce_intra_in_order_binary(sbuf, rbuf, count, dtype,
+								   op, root, comm, module,
+                                                                   segsize, max_requests);
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
-                     comm->c_coll_selected_data->user_forced[REDUCE].algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCE]));
+                     data->user_forced[REDUCE].algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCE]));
         return (MPI_ERR_ARG);
     } /* switch */
 }
@@ -820,6 +828,7 @@ int ompi_coll_tuned_reduce_intra_do_this(void *sbuf, void* rbuf, int count,
                                          struct ompi_datatype_t *dtype,
                                          struct ompi_op_t *op, int root,
                                          struct ompi_communicator_t *comm,
+					 struct mca_coll_base_module_1_1_0_t *module,
                                          int algorithm, int faninout, 
                                          int segsize, int max_requests )
 {
@@ -827,36 +836,25 @@ int ompi_coll_tuned_reduce_intra_do_this(void *sbuf, void* rbuf, int count,
                  algorithm, faninout, segsize));
 
     switch (algorithm) {
-    case (0):  return ompi_coll_tuned_reduce_intra_dec_fixed (sbuf, rbuf, 
-                                                              count, dtype, op,
-                                                              root, comm);
-    case (1):  return ompi_coll_tuned_reduce_intra_basic_linear (sbuf, rbuf, 
-                                                                 count, dtype, 
-                                                                 op, root, 
-                                                                 comm);
-    case (2):  return ompi_coll_tuned_reduce_intra_chain (sbuf, rbuf, count, 
-                                                          dtype, op, root, 
-                                                          comm, 
-                                                          segsize, faninout,
-                                                          max_requests);
-    case (3):  return ompi_coll_tuned_reduce_intra_pipeline (sbuf, rbuf, count,
-                                                             dtype, op, root, 
-                                                             comm, segsize,
-                                                             max_requests);
-    case (4):  return ompi_coll_tuned_reduce_intra_binary (sbuf, rbuf, count, 
-                                                           dtype, op, root, 
-                                                           comm, segsize,
-                                                           max_requests); 
-    case (5):  return ompi_coll_tuned_reduce_intra_binomial (sbuf, rbuf, count,
-                                                             dtype, op, root, 
-                                                             comm, segsize,
-                                                             max_requests); 
-    case (6):  return ompi_coll_tuned_reduce_intra_in_order_binary(sbuf, rbuf, 
-                                                                   count, 
-                                                                   dtype, op, 
-                                                                   root, comm,
-                                                                   segsize,
-                                                                   max_requests);
+    case (0):  return ompi_coll_tuned_reduce_intra_dec_fixed (sbuf, rbuf, count, dtype,
+							      op, root, comm, module);
+    case (1):  return ompi_coll_tuned_reduce_intra_basic_linear (sbuf, rbuf, count, dtype, 
+                                                                 op, root, comm, module);
+    case (2):  return ompi_coll_tuned_reduce_intra_chain (sbuf, rbuf, count, dtype,
+							  op, root, comm, module,
+                                                          segsize, faninout, max_requests);
+    case (3):  return ompi_coll_tuned_reduce_intra_pipeline (sbuf, rbuf, count, dtype,
+							     op, root, comm, module,
+							     segsize, max_requests);
+    case (4):  return ompi_coll_tuned_reduce_intra_binary (sbuf, rbuf, count, dtype,
+							   op, root, comm, module,
+							   segsize, max_requests); 
+    case (5):  return ompi_coll_tuned_reduce_intra_binomial (sbuf, rbuf, count, dtype,
+							     op, root, comm, module,
+							     segsize, max_requests); 
+    case (6):  return ompi_coll_tuned_reduce_intra_in_order_binary(sbuf, rbuf, count, dtype,
+								   op, root, comm, module,
+                                                                   segsize, max_requests);
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
                      algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCE]));

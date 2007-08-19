@@ -91,7 +91,8 @@ int MPI_Allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
     err = comm->c_coll.coll_allgatherv(sendbuf, sendcount, sendtype, 
                                        recvbuf, recvcounts, 
-                                       displs, recvtype, comm);
+                                       displs, recvtype, comm,
+                                       comm->c_coll.coll_allgatherv_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 

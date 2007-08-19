@@ -51,7 +51,7 @@ static int self_open(void);
  * and pointers to our public functions in it
  */
 
-const mca_coll_base_component_1_0_0_t mca_coll_self_component = {
+const mca_coll_base_component_1_1_0_t mca_coll_self_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
@@ -60,7 +60,7 @@ const mca_coll_base_component_1_0_0_t mca_coll_self_component = {
         /* Indicate that we are a coll v1.0.0 component (which also
            implies a specific MCA version) */
 
-        MCA_COLL_BASE_VERSION_1_0_0,
+        MCA_COLL_BASE_VERSION_1_1_0,
 
         /* Component name and version */
 
@@ -85,8 +85,7 @@ const mca_coll_base_component_1_0_0_t mca_coll_self_component = {
     /* Initialization / querying functions */
 
     mca_coll_self_init_query,
-    mca_coll_self_comm_query,
-    NULL,
+    mca_coll_self_comm_query
 };
 
 
@@ -101,3 +100,7 @@ static int self_open(void)
     return OMPI_SUCCESS;
 }
 
+
+OBJ_CLASS_INSTANCE(mca_coll_self_module_t,
+                   mca_coll_base_module_1_1_0_t,
+                   NULL, NULL);

@@ -32,7 +32,8 @@
  */
 int mca_coll_self_bcast_intra(void *buff, int count,
                               struct ompi_datatype_t *datatype, int root,
-                              struct ompi_communicator_t *comm)
+                              struct ompi_communicator_t *comm,
+                              struct mca_coll_base_module_1_1_0_t *module)
 {
     /* Since there's only one process, there's nothing to do */
 

@@ -135,6 +135,7 @@ int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	
     err = comm->c_coll.coll_gatherv(sendbuf, sendcount, sendtype, recvbuf,
                                     recvcounts, displs,
-                                    recvtype, root, comm);
+                                    recvtype, root, comm,
+                                    comm->c_coll.coll_gatherv_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

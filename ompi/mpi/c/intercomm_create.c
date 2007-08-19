@@ -116,7 +116,8 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     
     /* bcast size and list of remote processes to all processes in local_comm */
     rc = local_comm->c_coll.coll_bcast ( &rsize, 1, MPI_INT, lleader, 
-                                         local_comm );
+                                         local_comm,
+                                         local_comm->c_coll.coll_bcast_module);
     if ( rc != MPI_SUCCESS ) {
         goto err_exit;
     }
@@ -207,8 +208,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                               &rleader,                    /* remote_leader */
                               OMPI_COMM_CID_INTRA_BRIDGE,  /* mode */
                               -1,                          /* send_first */
-			      0,                           /* sync_flag */
-                              NULL );                      /* coll component */
+			      0);                           /* sync_flag */
 
     if ( MPI_SUCCESS != rc ) {
         goto err_exit;

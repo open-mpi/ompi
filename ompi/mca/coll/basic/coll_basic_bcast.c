@@ -39,14 +39,16 @@
 int
 mca_coll_basic_bcast_lin_intra(void *buff, int count,
                                struct ompi_datatype_t *datatype, int root,
-                               struct ompi_communicator_t *comm)
+                               struct ompi_communicator_t *comm,
+                               struct mca_coll_base_module_1_1_0_t *module)
 {
     int i;
     int size;
     int rank;
     int err;
     ompi_request_t **preq;
-    ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;
+    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
+    ompi_request_t **reqs = basic_module->mccb_reqs;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -109,7 +111,8 @@ mca_coll_basic_bcast_lin_intra(void *buff, int count,
 int
 mca_coll_basic_bcast_log_intra(void *buff, int count,
                                struct ompi_datatype_t *datatype, int root,
-                               struct ompi_communicator_t *comm)
+                               struct ompi_communicator_t *comm,
+                               struct mca_coll_base_module_1_1_0_t *module)
 {
     int i;
     int size;
@@ -122,7 +125,8 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
     int err;
     int nreqs;
     ompi_request_t **preq;
-    ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;
+    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
+    ompi_request_t **reqs = basic_module->mccb_reqs;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -205,13 +209,15 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
 int
 mca_coll_basic_bcast_lin_inter(void *buff, int count,
                                struct ompi_datatype_t *datatype, int root,
-                               struct ompi_communicator_t *comm)
+                               struct ompi_communicator_t *comm,
+                               struct mca_coll_base_module_1_1_0_t *module)
 {
     int i;
     int rsize;
     int rank;
     int err;
-    ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;
+    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
+    ompi_request_t **reqs = basic_module->mccb_reqs;
 
     rsize = ompi_comm_remote_size(comm);
     rank = ompi_comm_rank(comm);
@@ -254,7 +260,8 @@ mca_coll_basic_bcast_lin_inter(void *buff, int count,
 int
 mca_coll_basic_bcast_log_inter(void *buff, int count,
                                struct ompi_datatype_t *datatype, int root,
-                               struct ompi_communicator_t *comm)
+                               struct ompi_communicator_t *comm,
+                               struct mca_coll_base_module_1_1_0_t *module)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

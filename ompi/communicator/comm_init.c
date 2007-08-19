@@ -304,20 +304,16 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
        this communiucator */
     comm->c_keyhash = NULL;
 
-#if OMPI_ENABLE_DEBUG
-    memset (&(comm->c_coll), 0, sizeof(mca_coll_base_module_1_0_0_t));
-#endif
-
-    comm->c_coll_selected_component = NULL;
-    comm->c_coll_selected_module    = NULL;
-    comm->c_coll_selected_data      = NULL;
-    comm->c_coll_basic_module       = NULL;
-    comm->c_coll_basic_data         = NULL;
-
     comm->errhandler_type           = OMPI_ERRHANDLER_TYPE_COMM;
 #ifdef OMPI_WANT_PERUSE
     comm->c_peruse_handles          = NULL;
 #endif
+
+    /* Need to zero out the collectives module because we sometimes
+       call coll_unselect without a matching call to coll_select, and
+       we need an easy way for the coll base code to realize we've
+       done this. */
+    memset(&comm->c_coll, 0, sizeof(mca_coll_base_comm_coll_t));
 
     return;
 }

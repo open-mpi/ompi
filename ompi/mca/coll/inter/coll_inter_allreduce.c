@@ -39,7 +39,8 @@ int
 mca_coll_inter_allreduce_inter(void *sbuf, void *rbuf, int count,
                                struct ompi_datatype_t *dtype,
                                struct ompi_op_t *op,
-                               struct ompi_communicator_t *comm)
+                               struct ompi_communicator_t *comm,
+                               struct mca_coll_base_module_1_1_0_t *module)
 {
     int err, rank, root = 0, rsize;
     ptrdiff_t lb, extent;
@@ -48,7 +49,6 @@ mca_coll_inter_allreduce_inter(void *sbuf, void *rbuf, int count,
 
     rank = ompi_comm_rank(comm);
     rsize = ompi_comm_remote_size(comm);
-
     
     /* Perform the reduction locally */
     err = ompi_ddt_get_extent(dtype, &lb, &extent);
@@ -64,7 +64,8 @@ mca_coll_inter_allreduce_inter(void *sbuf, void *rbuf, int count,
    
     err = comm->c_local_comm->c_coll.coll_reduce(sbuf, pml_buffer, count,
 						 dtype, op, root, 
-						 comm->c_local_comm);
+						 comm->c_local_comm,
+                                                 comm->c_local_comm->c_coll.coll_reduce_module);
     if (OMPI_SUCCESS != err) {
 	goto exit;
     }
@@ -94,7 +95,8 @@ mca_coll_inter_allreduce_inter(void *sbuf, void *rbuf, int count,
 
     /* bcast the message to all the local processes */
     err = comm->c_local_comm->c_coll.coll_bcast(rbuf, count, dtype, 
-						root, comm->c_local_comm);
+						root, comm->c_local_comm,
+                                                comm->c_local_comm->c_coll.coll_bcast_module);
     if (OMPI_SUCCESS != err) {
             goto exit;
     }

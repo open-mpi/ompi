@@ -36,7 +36,9 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
 				       struct ompi_datatype_t *sdtype,
 				       void *rbuf, int rcount,
 				       struct ompi_datatype_t *rdtype,
-				       int root, struct ompi_communicator_t *comm)
+				       int root,
+				       struct ompi_communicator_t *comm,
+				       struct mca_coll_base_module_1_1_0_t *module)
 {
     int line = -1;
     int i;
@@ -51,6 +53,8 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
     MPI_Status status;
     MPI_Aint sextent, slb, strue_lb, strue_extent; 
     MPI_Aint rextent, rlb, rtrue_lb, rtrue_extent;
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -59,8 +63,8 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
                  "ompi_coll_tuned_scatter_intra_binomial rank %d", rank));
 
     /* create the binomial tree */
-    COLL_TUNED_UPDATE_IN_ORDER_BMTREE( comm, root );
-    bmtree = comm->c_coll_selected_data->cached_in_order_bmtree;
+    COLL_TUNED_UPDATE_IN_ORDER_BMTREE( comm, tuned_module, root );
+    bmtree = data->cached_in_order_bmtree;
 
     ompi_ddt_get_extent(sdtype, &slb, &sextent);
     ompi_ddt_get_true_extent(sdtype, &strue_lb, &strue_extent);
@@ -200,7 +204,9 @@ ompi_coll_tuned_scatter_intra_basic_linear(void *sbuf, int scount,
 					   struct ompi_datatype_t *sdtype,
 					   void *rbuf, int rcount,
 					   struct ompi_datatype_t *rdtype,
-					   int root, struct ompi_communicator_t *comm)
+					   int root,
+					   struct ompi_communicator_t *comm,
+					   struct mca_coll_base_module_1_1_0_t *module)
 {
     int i, rank, size, err;
     char *ptmp;
@@ -324,29 +330,34 @@ ompi_coll_tuned_scatter_intra_do_forced(void *sbuf, int scount,
 					struct ompi_datatype_t *sdtype,
 					void* rbuf, int rcount,
 					struct ompi_datatype_t *rdtype,
-					int root, struct ompi_communicator_t *comm)
+					int root,
+					struct ompi_communicator_t *comm,
+					struct mca_coll_base_module_1_1_0_t *module)
 {
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
+
     OPAL_OUTPUT((ompi_coll_tuned_stream,
 		 "coll:tuned:scatter_intra_do_forced selected algorithm %d",
-		 comm->c_coll_selected_data->user_forced[SCATTER].algorithm));
+		 data->user_forced[SCATTER].algorithm));
 
-    switch (comm->c_coll_selected_data->user_forced[SCATTER].algorithm) {
+    switch (data->user_forced[SCATTER].algorithm) {
     case (0):
 	return ompi_coll_tuned_scatter_intra_dec_fixed (sbuf, scount, sdtype, 
 							rbuf, rcount, rdtype, 
-							root, comm);
+							root, comm, module);
     case (1):
 	return ompi_coll_tuned_scatter_intra_basic_linear (sbuf, scount, sdtype,
 							   rbuf, rcount, rdtype,
-							   root, comm);
+							   root, comm, module);
    case (2):
        return ompi_coll_tuned_scatter_intra_binomial(sbuf, scount, sdtype,
 						     rbuf, rcount, rdtype,
-						     root, comm);
+						     root, comm, module);
    default:
        OPAL_OUTPUT((ompi_coll_tuned_stream,
 		    "coll:tuned:scatter_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?", 
-		    comm->c_coll_selected_data->user_forced[SCATTER].algorithm,
+		    data->user_forced[SCATTER].algorithm,
 		    ompi_coll_tuned_forced_max_algorithms[SCATTER]));
        return (MPI_ERR_ARG);
     } /* switch */
@@ -357,7 +368,9 @@ ompi_coll_tuned_scatter_intra_do_this(void *sbuf, int scount,
 				      struct ompi_datatype_t *sdtype,
 				      void* rbuf, int rcount,
 				      struct ompi_datatype_t *rdtype,
-				      int root, struct ompi_communicator_t *comm,
+				      int root,
+				      struct ompi_communicator_t *comm,
+				      struct mca_coll_base_module_1_1_0_t *module,
 				      int algorithm, int faninout, int segsize)
 {
     OPAL_OUTPUT((ompi_coll_tuned_stream,
@@ -368,15 +381,15 @@ ompi_coll_tuned_scatter_intra_do_this(void *sbuf, int scount,
     case (0):
 	return ompi_coll_tuned_scatter_intra_dec_fixed (sbuf, scount, sdtype, 
 							rbuf, rcount, rdtype, 
-							root, comm);
+							root, comm, module);
     case (1):
        return ompi_coll_tuned_scatter_intra_basic_linear (sbuf, scount, sdtype,
 							  rbuf, rcount, rdtype,
-							  root, comm);
+							  root, comm, module);
     case (2):  
 	return ompi_coll_tuned_scatter_intra_binomial(sbuf, scount, sdtype,
 						      rbuf, rcount, rdtype,
-						      root, comm);
+						      root, comm, module);
    default:
        OPAL_OUTPUT((ompi_coll_tuned_stream,
 		    "coll:tuned:scatter_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 

@@ -77,6 +77,64 @@ static opal_cr_coord_callback_fn_t  prev_coord_callback = NULL;
 
 int ompi_cr_output = -1;
 
+#define NUM_COLLECTIVES 16
+
+#define SIGNAL(comm, modules, highest_module, msg, ret, func)   \
+    do {                                                        \
+        bool found = false;                                     \
+        int k;                                                  \
+        mca_coll_base_module_1_1_0_t *my_module =               \
+            comm->c_coll.coll_ ## func ## _module;              \
+        if (NULL != my_module) {                                \
+            for (k = 0 ; k < highest_module ; ++k) {            \
+                if (my_module == modules[k]) found = true;      \
+            }                                                   \
+            if (!found) {                                       \
+                modules[highest_module++] = my_module;          \
+                if (NULL != my_module->ft_event) {              \
+                    ret = my_module->ft_event(msg);             \
+                }                                               \
+            }                                                   \
+        }                                                       \
+    } while (0)
+
+
+static int
+notify_collectives(int msg)
+{
+    mca_coll_base_module_1_1_0_t *modules[NUM_COLLECTIVES];
+    int i, max, ret, highest_module = 0;
+
+    memset(&modules, 0, sizeof(mca_coll_base_module_1_1_0_t*) * NUM_COLLECTIVES);
+
+    max = ompi_pointer_array_get_size(&ompi_mpi_communicators);
+    for (i = 0 ; i < max ; ++i) {
+        ompi_communicator_t *comm =
+            (ompi_communicator_t *)ompi_pointer_array_get_item(&ompi_mpi_communicators, i);
+        if (NULL == comm) continue;
+
+        SIGNAL(comm, modules, highest_module, msg, ret, allgather); 
+        SIGNAL(comm, modules, highest_module, msg, ret, allgatherv); 
+        SIGNAL(comm, modules, highest_module, msg, ret, allreduce); 
+        SIGNAL(comm, modules, highest_module, msg, ret, alltoall); 
+        SIGNAL(comm, modules, highest_module, msg, ret, alltoallv); 
+        SIGNAL(comm, modules, highest_module, msg, ret, alltoallw); 
+        SIGNAL(comm, modules, highest_module, msg, ret, barrier); 
+        SIGNAL(comm, modules, highest_module, msg, ret, bcast); 
+        SIGNAL(comm, modules, highest_module, msg, ret, exscan); 
+        SIGNAL(comm, modules, highest_module, msg, ret, gather); 
+        SIGNAL(comm, modules, highest_module, msg, ret, gatherv); 
+        SIGNAL(comm, modules, highest_module, msg, ret, reduce); 
+        SIGNAL(comm, modules, highest_module, msg, ret, reduce_scatter); 
+        SIGNAL(comm, modules, highest_module, msg, ret, scan); 
+        SIGNAL(comm, modules, highest_module, msg, ret, scatter); 
+        SIGNAL(comm, modules, highest_module, msg, ret, scatterv); 
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
 /*
  * CR Init
  */
@@ -204,7 +262,6 @@ int ompi_cr_coord(int state)
  *************/
 static int ompi_cr_coord_pre_ckpt(void) {
     int ret, exit_status = OMPI_SUCCESS;
-    int i, max;
 
     /*
      * All the checkpoint heavey lifting in here...
@@ -217,16 +274,8 @@ static int ompi_cr_coord_pre_ckpt(void) {
      * - Need to do this on a per communicator basis
      *   Traverse all communicators...
      */
-    max = ompi_pointer_array_get_size(&ompi_mpi_communicators);
-    for ( i = 0; i < max; ++i) {
-        ompi_communicator_t *comm = NULL;
-        comm = (ompi_communicator_t *)ompi_pointer_array_get_item(&ompi_mpi_communicators, i);
-        if( NULL != comm && NULL != comm->c_coll.ft_event) {
-            if( ORTE_SUCCESS != (ret = comm->c_coll.ft_event(OPAL_CRS_CHECKPOINT))) {
-                exit_status = ret;
-                goto cleanup;
-            }
-        }
+    if (OMPI_SUCCESS != (ret = notify_collectives(OPAL_CR_CHECKPOINT))) {
+        goto cleanup;
     }
     
     /*
@@ -281,7 +330,6 @@ static int ompi_cr_coord_post_ckpt(void) {
 
 static int ompi_cr_coord_post_restart(void) {
     int ret, exit_status = OMPI_SUCCESS;
-    int i, max;
 
     opal_output_verbose(10, ompi_cr_output,
                         "ompi_cr: coord_post_restart: ompi_cr_coord_post_restart()");
@@ -300,18 +348,9 @@ static int ompi_cr_coord_post_restart(void) {
      * - Need to do this on a per communicator basis
      *   Traverse all communicators...
      */
-    max = ompi_pointer_array_get_size(&ompi_mpi_communicators);
-    for ( i = 0; i < max; ++i) {
-        ompi_communicator_t *comm = NULL;
-        comm = (ompi_communicator_t *)ompi_pointer_array_get_item(&ompi_mpi_communicators, i);
-        if( NULL != comm && NULL != comm->c_coll.ft_event) {
-            if( ORTE_SUCCESS != (ret = comm->c_coll.ft_event(OPAL_CRS_RESTART))) {
-                exit_status = ret;
-                goto cleanup;
-            }
-        }
+    if (OMPI_SUCCESS != (ret = notify_collectives(OPAL_CRS_RESTART))) {
+        goto cleanup;
     }
-
     
  cleanup:
 
@@ -320,7 +359,6 @@ static int ompi_cr_coord_post_restart(void) {
 
 static int ompi_cr_coord_post_continue(void) {
     int ret, exit_status = OMPI_SUCCESS;
-    int i, max;
 
     opal_output_verbose(10, ompi_cr_output,
                         "ompi_cr: coord_post_continue: ompi_cr_coord_post_continue()");
@@ -339,16 +377,8 @@ static int ompi_cr_coord_post_continue(void) {
      * - Need to do this on a per communicator basis
      *   Traverse all communicators...
      */
-    max = ompi_pointer_array_get_size(&ompi_mpi_communicators);
-    for ( i = 0; i < max; ++i) {
-        ompi_communicator_t *comm = NULL;
-        comm = (ompi_communicator_t *)ompi_pointer_array_get_item(&ompi_mpi_communicators, i);
-        if( NULL != comm && NULL != comm->c_coll.ft_event) {
-            if( ORTE_SUCCESS != (ret = comm->c_coll.ft_event(OPAL_CRS_CONTINUE))) {
-                exit_status = ret;
-                goto cleanup;
-            }
-        }
+    if (OMPI_SUCCESS != (ret = notify_collectives(OPAL_CRS_CONTINUE))) {
+        goto cleanup;
     }
 
  cleanup:

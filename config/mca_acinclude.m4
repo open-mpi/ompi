@@ -31,6 +31,7 @@ dnl
 
 sinclude(@M4DIR@/ompi_setup_cc.m4)
 sinclude(@M4DIR@/ompi_check_optflags.m4)
+sinclude(@M4DIR@/ompi_check_vendor.m4)
 
 dnl
 dnl C++ compiler tests

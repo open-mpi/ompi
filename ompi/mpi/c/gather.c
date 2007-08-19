@@ -128,6 +128,7 @@ int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     /* Invoke the coll component to perform the back-end operation */
 	
     err = comm->c_coll.coll_gather(sendbuf, sendcount, sendtype, recvbuf,
-                                   recvcount, recvtype, root, comm);
+                                   recvcount, recvtype, root, comm,
+                                   comm->c_coll.coll_gather_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

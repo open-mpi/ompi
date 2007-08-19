@@ -117,32 +117,6 @@ int mca_coll_base_find_available(bool enable_progress_threads,
  * almost everything else is functional on the communicator (e.g.,
  * point-to-point communication).  
  *
- * This function invokes the selection process for coll components,
- * which works as follows:
- *
- * - If the \em preferred argument is NULL, the selection set is
- *   defined to be all the components found during
- *   mca_coll_base_find_available().  
- * - If \em preferred is not NULL, then the selection set is just
- *   that component.  (However, in this mode, we may make 2 passes
- *   through the selection process -- more on this below).
- * - All components in the selection set are queried to see if they
- *   want to run with that communicator.  All components that want to
- *   run are ranked by their priority and the highest priority
- *   component is selected.  All non-selected components have their
- *   "unquery" function invoked to let them know that they were not
- *   selected.
- * - The selected component will have its "init" function invoked to
- *   let it know that it was selected.
- * - If we fall through this entire process and no component is
- *   selected \em and the \em preferred argument is not NULL, then
- *   run the entire process again as if the \em preferred argument
- *   was NULL (i.e., use the entire available set of components).
- *
- * At the end of this process, we'll either have a single component
- * that is selected and initialized for the communicator, or no
- * component was selected and an error is returned up the stack.
- *
  * Note that new communicators may be created as a result of
  * invoking this function.  Specifically: this function is called in
  * the depths of communicator creation, but during the execution of
@@ -150,8 +124,7 @@ int mca_coll_base_find_available(bool enable_progress_threads,
  * communicator creation functions may be re-entered (albiet with
  * different arguments).
  */
-int mca_coll_base_comm_select(struct ompi_communicator_t *comm,
-                              struct mca_base_component_t *preferred);
+int mca_coll_base_comm_select(struct ompi_communicator_t *comm);
 
 /**
  * Finalize a coll component on a specific communicator.
@@ -175,15 +148,6 @@ int mca_coll_base_comm_select(struct ompi_communicator_t *comm,
  * communicators may also be destroyed.
  */
 int mca_coll_base_comm_unselect(struct ompi_communicator_t *comm);
-
-/**
- * Finalize the coll usage on a communicator.
- *
- * @param comm The communicator that is being destroyed.
- *
- * @retval OMPI_SUCCESS Always.
- */
-int mca_coll_base_comm_finalize(struct ompi_communicator_t *comm);
 
 /**
  * Shut down the coll MCA framework.
@@ -239,14 +203,6 @@ extern bool mca_coll_base_components_available_valid;
  * process.
  */
 extern opal_list_t mca_coll_base_components_available;
-
-/**
- * Pointer to the "basic" component so that it can be found easily
- * (since the "basic" component is fairly special -- it's the lowest
- * common denominator between all coll components and may be used
- * interchangably).
- */
-OMPI_DECLSPEC extern const mca_coll_base_component_1_0_0_t *mca_coll_base_basic_component;
 
 END_C_DECLS
 

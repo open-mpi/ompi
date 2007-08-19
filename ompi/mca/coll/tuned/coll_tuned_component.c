@@ -35,7 +35,7 @@
  * Public string showing the coll ompi_tuned component version number
  */
 const char *ompi_coll_tuned_component_version_string =
-  "Open MPI tuned collective MCA component version " OMPI_VERSION;
+    "Open MPI tuned collective MCA component version " OMPI_VERSION;
 
 /*
  * Global variable
@@ -80,7 +80,7 @@ mca_coll_tuned_component_t mca_coll_tuned_component = {
             /* Indicate that we are a coll v1.0.0 component (which also implies a
                specific MCA version) */
 
-            MCA_COLL_BASE_VERSION_1_0_0,
+            MCA_COLL_BASE_VERSION_1_1_0,
 
             /* Component name and version */
 
@@ -105,7 +105,6 @@ mca_coll_tuned_component_t mca_coll_tuned_component = {
 
         ompi_coll_tuned_init_query,
         ompi_coll_tuned_comm_query,
-        NULL
     },
 
     /* priority of the module */
@@ -214,3 +213,68 @@ static int tuned_close(void)
     return OMPI_SUCCESS;
 }
 
+static void
+mca_coll_tuned_module_construct(mca_coll_tuned_module_t *module)
+{
+    module->tuned_data = NULL;
+}
+
+
+static void
+mca_coll_tuned_module_destruct(mca_coll_tuned_module_t *module)
+{
+    mca_coll_tuned_comm_t *data;
+
+    /* Free the space in the data mpool and the data hanging off the
+       communicator */
+
+    data = module->tuned_data;
+    if (NULL != data) {
+#if OMPI_ENABLE_DEBUG
+	/* Reset the reqs to NULL/0 -- they'll be freed as part of freeing
+	   the generel c_coll_selected_data */
+	data->mcct_reqs = NULL;
+	data->mcct_num_reqs = 0;
+#endif
+
+	/* free any cached information that has been allocated */
+	if (data->cached_ntree) { /* destroy general tree if defined */
+	    ompi_coll_tuned_topo_destroy_tree (&data->cached_ntree);
+	}
+	if (data->cached_bintree) { /* destroy bintree if defined */
+	    ompi_coll_tuned_topo_destroy_tree (&data->cached_bintree);
+	}
+	if (data->cached_bmtree) { /* destroy bmtree if defined */
+	    ompi_coll_tuned_topo_destroy_tree (&data->cached_bmtree);
+	}
+	if (data->cached_in_order_bmtree) { /* destroy bmtree if defined */
+	    ompi_coll_tuned_topo_destroy_tree (&data->cached_in_order_bmtree);
+	}
+	if (data->cached_chain) { /* destroy general chain if defined */
+	    ompi_coll_tuned_topo_destroy_tree (&data->cached_chain);
+	}
+	if (data->cached_pipeline) { /* destroy pipeline if defined */
+	    ompi_coll_tuned_topo_destroy_tree (&data->cached_pipeline);
+	}
+	if (data->cached_in_order_bintree) { /* destroy in order bintree if defined */
+	    ompi_coll_tuned_topo_destroy_tree (&data->cached_in_order_bintree);
+	}
+
+#if 0 /* FIXME: */
+	/* if any algorithm rules are cached on the communicator, only free them if its MCW */
+	/* as this is the only place they are allocated by reading the decision configure file */
+	if ((ompi_coll_tuned_use_dynamic_rules)&&(&ompi_mpi_comm_world==comm)) {
+	    if (comm->data->all_base_rules) {
+		ompi_coll_tuned_free_all_rules (comm->data->all_base_rules, COLLCOUNT);
+	    }
+	}
+#endif 
+	free(data);
+    }
+}
+
+
+OBJ_CLASS_INSTANCE(mca_coll_tuned_module_t,
+                   mca_coll_base_module_1_1_0_t,
+                   mca_coll_tuned_module_construct,
+                   mca_coll_tuned_module_destruct);

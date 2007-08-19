@@ -52,10 +52,12 @@
  */
 int mca_coll_sm_bcast_intra(void *buff, int count, 
                             struct ompi_datatype_t *datatype, int root, 
-                            struct ompi_communicator_t *comm)
+                            struct ompi_communicator_t *comm,
+                            struct mca_coll_base_module_1_1_0_t *module)
 {
     struct iovec iov;
-    mca_coll_base_comm_t *data = comm->c_coll_selected_data;
+    mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
+    mca_coll_sm_comm_t *data = sm_module->sm_data;
     int i, ret, rank, size, num_children, src_rank;
     int flag_num, segment_num, max_segment_num;
     int parent_rank;

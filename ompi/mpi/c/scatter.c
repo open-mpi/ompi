@@ -123,6 +123,7 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     /* Invoke the coll component to perform the back-end operation */
 	
     err = comm->c_coll.coll_scatter(sendbuf, sendcount, sendtype, recvbuf,
-                                    recvcount, recvtype, root, comm);
+                                    recvcount, recvtype, root, comm,
+                                    comm->c_coll.coll_scatter_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

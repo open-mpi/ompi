@@ -39,7 +39,8 @@ mca_coll_inter_gatherv_inter(void *sbuf, int scount,
                              struct ompi_datatype_t *sdtype,
                              void *rbuf, int *rcounts, int *disps,
                              struct ompi_datatype_t *rdtype, int root,
-                             struct ompi_communicator_t *comm)
+                             struct ompi_communicator_t *comm,
+                             struct mca_coll_base_module_1_1_0_t *module)
 {
     
     int i, rank, size, size_local, total=0, err;
@@ -71,7 +72,8 @@ mca_coll_inter_gatherv_inter(void *sbuf, int scount,
 
 	err = comm->c_local_comm->c_coll.coll_gather(&scount, 1, MPI_INT, 
 						     count, 1, MPI_INT, 
-						     0, comm->c_local_comm);
+						     0, comm->c_local_comm,
+                                                     comm->c_local_comm->c_coll.coll_gather_module);
 	if (OMPI_SUCCESS != err) {
 	    return err;
 	}
@@ -96,7 +98,8 @@ mca_coll_inter_gatherv_inter(void *sbuf, int scount,
 	}
 	err = comm->c_local_comm->c_coll.coll_gatherv(sbuf, scount, sdtype, 
 						     ptmp, count, displace, 
-						     sdtype,0, comm->c_local_comm);
+                                                      sdtype,0, comm->c_local_comm,
+                                                      comm->c_local_comm->c_coll.coll_gatherv_module);
 	if (OMPI_SUCCESS != err) {
 	    return err;
 	}

@@ -133,8 +133,7 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                               NULL,                 /* remote_leader */
                               OMPI_COMM_CID_INTER,  /* mode */
                               -1,                   /* send_first */
-			      0,                    /* sync_flag */
-                              NULL );               /* coll module */
+			      0);                    /* sync_flag */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }

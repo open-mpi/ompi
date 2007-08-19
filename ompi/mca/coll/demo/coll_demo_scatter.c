@@ -38,12 +38,15 @@ int mca_coll_demo_scatter_intra(void *sbuf, int scount,
                                 void *rbuf, int rcount, 
                                 struct ompi_datatype_t *rdtype,
                                 int root, 
-                                struct ompi_communicator_t *comm)
+                                struct ompi_communicator_t *comm,
+                                struct mca_coll_base_module_1_1_0_t *module)
 {
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo scatter_intra");
-    return comm->c_coll_basic_module->coll_scatter(sbuf, scount, sdtype,
-                                                   rbuf, rcount, rdtype,
-                                                   root, comm);
+    return demo_module->underlying.coll_scatter(sbuf, scount, sdtype,
+                                                rbuf, rcount, rdtype,
+                                                root, comm,
+                                                demo_module->underlying.coll_scatter_module);
 }
 
 
@@ -59,10 +62,13 @@ int mca_coll_demo_scatter_inter(void *sbuf, int scount,
                                 void *rbuf, int rcount, 
                                 struct ompi_datatype_t *rdtype,
                                 int root, 
-                                struct ompi_communicator_t *comm)
+                                struct ompi_communicator_t *comm,
+                                struct mca_coll_base_module_1_1_0_t *module)
 {
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo scatter_inter");
-    return comm->c_coll_basic_module->coll_scatter(sbuf, scount, sdtype,
-                                                   rbuf, rcount, rdtype,
-                                                   root, comm);
+    return demo_module->underlying.coll_scatter(sbuf, scount, sdtype,
+                                                rbuf, rcount, rdtype,
+                                                root, comm,
+                                                demo_module->underlying.coll_scatter_module);
 }

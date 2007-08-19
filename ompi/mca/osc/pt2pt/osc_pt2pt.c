@@ -42,7 +42,8 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
 
     /* finish with a barrier */
     if (ompi_group_size(win->w_group) > 1) {
-        ret = module->p2p_comm->c_coll.coll_barrier(module->p2p_comm);
+        ret = module->p2p_comm->c_coll.coll_barrier(module->p2p_comm,
+                                                    module->p2p_comm->c_coll.coll_barrier_module);
     }
 
     /* remove from component information */

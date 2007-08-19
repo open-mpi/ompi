@@ -38,7 +38,8 @@ mca_coll_basic_gatherv_intra(void *sbuf, int scount,
                              struct ompi_datatype_t *sdtype,
                              void *rbuf, int *rcounts, int *disps,
                              struct ompi_datatype_t *rdtype, int root,
-                             struct ompi_communicator_t *comm)
+                             struct ompi_communicator_t *comm,
+                            struct mca_coll_base_module_1_1_0_t *module)
 {
     int i, rank, size, err;
     char *ptmp;
@@ -110,12 +111,14 @@ mca_coll_basic_gatherv_inter(void *sbuf, int scount,
                              struct ompi_datatype_t *sdtype,
                              void *rbuf, int *rcounts, int *disps,
                              struct ompi_datatype_t *rdtype, int root,
-                             struct ompi_communicator_t *comm)
+                             struct ompi_communicator_t *comm,
+                             struct mca_coll_base_module_1_1_0_t *module)
 {
     int i, rank, size, err;
     char *ptmp;
     ptrdiff_t lb, extent;
-    ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;
+    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
+    ompi_request_t **reqs = basic_module->mccb_reqs;
 
     size = ompi_comm_remote_size(comm);
     rank = ompi_comm_rank(comm);

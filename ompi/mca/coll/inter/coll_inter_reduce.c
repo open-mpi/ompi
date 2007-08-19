@@ -38,9 +38,10 @@
  */
 int
 mca_coll_inter_reduce_inter(void *sbuf, void *rbuf, int count,
-                                struct ompi_datatype_t *dtype,
-                                struct ompi_op_t *op,
-                                int root, struct ompi_communicator_t *comm)
+                            struct ompi_datatype_t *dtype,
+                            struct ompi_op_t *op,
+                            int root, struct ompi_communicator_t *comm,
+                            struct mca_coll_base_module_1_1_0_t *module)
 {
     int rank, err, size;
     ptrdiff_t true_lb, true_extent, lb, extent;
@@ -66,7 +67,8 @@ mca_coll_inter_reduce_inter(void *sbuf, void *rbuf, int count,
 	pml_buffer = free_buffer - lb;
 
 	err = comm->c_local_comm->c_coll.coll_reduce(sbuf, pml_buffer, count,
-						     dtype, op, 0, comm->c_local_comm);
+						     dtype, op, 0, comm->c_local_comm,
+                                                     comm->c_local_comm->c_coll.coll_reduce_module);
 	if (0 == rank) {
 	    /* First process sends the result to the root */
 	    err = MCA_PML_CALL(send(pml_buffer, count, dtype, root,

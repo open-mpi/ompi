@@ -31,9 +31,7 @@
 #include "orte/mca/rml/rml_types.h"
 #include "ompi/proc/proc.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 
@@ -154,24 +152,8 @@ struct ompi_communicator_t {
     /* Hooks for PML to hang things */
     struct mca_pml_comm_t  *c_pml_comm;
 
-    mca_coll_base_module_1_0_0_t c_coll;
-    /**< Selected collective module, saved by value for speed (instead
-         of by reference) */
-
-    const mca_coll_base_component_1_0_0_t *c_coll_selected_component;
-    /**< Selected coll component */
-    const mca_coll_base_module_1_0_0_t *c_coll_selected_module;
-    /**< The selected module, but only when the selected module
-         is not* the basic module.  Used during comm_unselect(). */
-    struct mca_coll_base_comm_t *c_coll_selected_data;
-    /**< Allow the selected module to cache data on the communicator */
-
-    const mca_coll_base_module_1_0_0_t *c_coll_basic_module;
-    /**< Save the basic module; only necessary when the selected
-         module is *not* the basic module, but was supplemented
-         with methods from the basic module. */
-    struct mca_coll_base_comm_t *c_coll_basic_data;
-    /**< Allow the basic module to cache data on the communicator */
+    /* Collectives module interface and data */
+    mca_coll_base_comm_coll_t c_coll;
 };
     typedef struct ompi_communicator_t ompi_communicator_t;
     OMPI_DECLSPEC extern ompi_communicator_t *ompi_mpi_comm_parent;
@@ -436,8 +418,7 @@ struct ompi_communicator_t {
                              void* remote_leader,
                              int mode,
                              int send_first,
-                             int sync_flag,
-                             mca_base_component_t *collcomponent );
+                             int sync_flag );
 
 
     /**
@@ -536,8 +517,6 @@ struct ompi_communicator_t {
     ompi_comm_disconnect_obj *ompi_comm_disconnect_init (ompi_communicator_t *comm);
     void ompi_comm_disconnect_waitall (int count, ompi_comm_disconnect_obj **objs );
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OMPI_COMMUNICATOR_H */

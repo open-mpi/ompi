@@ -40,7 +40,8 @@ mca_coll_inter_allgatherv_inter(void *sbuf, int scount,
                                 struct ompi_datatype_t *sdtype,
                                 void *rbuf, int *rcounts, int *disps,
                                 struct ompi_datatype_t *rdtype,
-                                struct ompi_communicator_t *comm)
+                                struct ompi_communicator_t *comm,
+                               struct mca_coll_base_module_1_1_0_t *module)
 {
     int i, rank, size, size_local, total=0, err;
     int *count=NULL,*displace=NULL;
@@ -68,7 +69,8 @@ mca_coll_inter_allgatherv_inter(void *sbuf, int scount,
     /* Local gather to get the scount of each process */
     err = comm->c_local_comm->c_coll.coll_gather(&scount, 1, MPI_INT, 
 						 count, 1, MPI_INT, 
-						 0, comm->c_local_comm);
+						 0, comm->c_local_comm,
+                                                 comm->c_local_comm->c_coll.coll_gather_module);
     if (OMPI_SUCCESS != err) {
 	return err;
     }
@@ -93,7 +95,8 @@ mca_coll_inter_allgatherv_inter(void *sbuf, int scount,
     }
     err = comm->c_local_comm->c_coll.coll_gatherv(sbuf, scount, sdtype, 
 						  ptmp, count, displace, 
-						  sdtype,0, comm->c_local_comm);
+						  sdtype,0, comm->c_local_comm,
+                                                  comm->c_local_comm->c_coll.coll_gatherv_module);
     if (OMPI_SUCCESS != err) {
 	return err;
     }
@@ -129,7 +132,8 @@ mca_coll_inter_allgatherv_inter(void *sbuf, int scount,
     
     /* bcast the message to all the local processes */
     err = comm->c_local_comm->c_coll.coll_bcast(rbuf, 1, ndtype, 
-						0, comm->c_local_comm);
+						0, comm->c_local_comm,
+                                                comm->c_local_comm->c_coll.coll_bcast_module);
     if (OMPI_SUCCESS != err) {
             return err;
     }

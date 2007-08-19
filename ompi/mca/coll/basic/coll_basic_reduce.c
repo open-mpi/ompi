@@ -38,7 +38,8 @@ int
 mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype,
                                 struct ompi_op_t *op,
-                                int root, struct ompi_communicator_t *comm)
+                                int root, struct ompi_communicator_t *comm,
+                                struct mca_coll_base_module_1_1_0_t *module)
 {
     int i, rank, err, size;
     ptrdiff_t true_lb, true_extent, lb, extent;
@@ -316,7 +317,8 @@ int
 mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype,
                                 struct ompi_op_t *op,
-                                int root, struct ompi_communicator_t *comm)
+                                int root, struct ompi_communicator_t *comm,
+                                struct mca_coll_base_module_1_1_0_t *module)
 {
     int i, size, rank, vrank;
     int err, peer, dim, mask;
@@ -335,7 +337,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
 
     if (!ompi_op_is_commute(op)) {
         return mca_coll_basic_reduce_lin_intra(sbuf, rbuf, count, dtype,
-                                               op, root, comm);
+                                               op, root, comm, module);
     }
 
     /* Some variables */
@@ -524,7 +526,8 @@ int
 mca_coll_basic_reduce_lin_inter(void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype,
                                 struct ompi_op_t *op,
-                                int root, struct ompi_communicator_t *comm)
+                                int root, struct ompi_communicator_t *comm,
+                                struct mca_coll_base_module_1_1_0_t *module)
 {
     int i, rank, err, size;
     ptrdiff_t true_lb, true_extent, lb, extent;
@@ -603,7 +606,8 @@ int
 mca_coll_basic_reduce_log_inter(void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype,
                                 struct ompi_op_t *op,
-                                int root, struct ompi_communicator_t *comm)
+                                int root, struct ompi_communicator_t *comm,
+                                struct mca_coll_base_module_1_1_0_t *module)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

@@ -33,13 +33,15 @@
 static int reduce_inorder(void *sbuf, void* rbuf, int count, 
                           struct ompi_datatype_t *dtype, 
                           struct ompi_op_t *op, 
-                          int root, struct ompi_communicator_t *comm);
+                          int root, struct ompi_communicator_t *comm,
+                          struct mca_coll_base_module_1_1_0_t *module);
 #define WANT_REDUCE_NO_ORDER 0
 #if WANT_REDUCE_NO_ORDER
 static int reduce_no_order(void *sbuf, void* rbuf, int count, 
                            struct ompi_datatype_t *dtype, 
                            struct ompi_op_t *op, 
-                           int root, struct ompi_communicator_t *comm);
+                           int root, struct ompi_communicator_t *comm,
+                           struct mca_coll_base_module_1_1_0_t *module);
 #endif
 
 /*
@@ -60,9 +62,11 @@ static inline int min(int a, int b)
 int mca_coll_sm_reduce_intra(void *sbuf, void* rbuf, int count, 
                              struct ompi_datatype_t *dtype, 
                              struct ompi_op_t *op, 
-                             int root, struct ompi_communicator_t *comm)
+                             int root, struct ompi_communicator_t *comm,
+                             struct mca_coll_base_module_1_1_0_t *module)
 {
     size_t size;
+    mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
 
     /* There are several possibilities:
      *
@@ -78,20 +82,21 @@ int mca_coll_sm_reduce_intra(void *sbuf, void* rbuf, int count,
 
     ompi_ddt_type_size(dtype, &size);
     if ((int)size > mca_coll_sm_component.sm_control_size) {
-        return comm->c_coll_basic_module->coll_reduce(sbuf, rbuf, count,
-                                                      dtype, op, root, comm);
+        return sm_module->previous_reduce(sbuf, rbuf, count,
+                                          dtype, op, root, comm,
+                                          sm_module->previous_reduce_module);
     } 
 #if WANT_REDUCE_NO_ORDER
     else if (!ompi_op_is_intrinsic(op) ||
         (ompi_op_is_intrinsic(op) && !ompi_op_is_float_assoc(op) &&
          0 != (dtype->flags & DT_FLAG_DATA_FLOAT))) {
-        return reduce_inorder(sbuf, rbuf, count, dtype, op, root, comm);
+        return reduce_inorder(sbuf, rbuf, count, dtype, op, root, comm, module);
     } else {
-        return reduce_no_order(sbuf, rbuf, count, dtype, op, root, comm);
+        return reduce_no_order(sbuf, rbuf, count, dtype, op, root, comm, module);
     }
 #else
     else {
-        return reduce_inorder(sbuf, rbuf, count, dtype, op, root, comm);
+        return reduce_inorder(sbuf, rbuf, count, dtype, op, root, comm, module);
     }
 #endif
 }
@@ -140,10 +145,12 @@ int mca_coll_sm_reduce_intra(void *sbuf, void* rbuf, int count,
 static int reduce_inorder(void *sbuf, void* rbuf, int count, 
                           struct ompi_datatype_t *dtype, 
                           struct ompi_op_t *op, 
-                          int root, struct ompi_communicator_t *comm)
+                          int root, struct ompi_communicator_t *comm,
+                          struct mca_coll_base_module_1_1_0_t *module)
 {
     struct iovec iov;
-    mca_coll_base_comm_t *data = comm->c_coll_selected_data;
+    mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
+    mca_coll_sm_comm_t *data = sm_module->sm_data;
     int ret, rank, size;
     int flag_num, segment_num, max_segment_num;
     size_t total_size, max_data, bytes;
@@ -494,7 +501,8 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
 static int reduce_no_order(void *sbuf, void* rbuf, int count, 
                            struct ompi_datatype_t *dtype, 
                            struct ompi_op_t *op, 
-                           int root, struct ompi_communicator_t *comm)
+                           int root, struct ompi_communicator_t *comm,
+                           struct mca_coll_base_module_1_1_0_t *module)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

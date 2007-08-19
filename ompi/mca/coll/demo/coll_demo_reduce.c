@@ -36,11 +36,14 @@
 int mca_coll_demo_reduce_intra(void *sbuf, void *rbuf, int count,
                                struct ompi_datatype_t *dtype, 
                                struct ompi_op_t *op,
-                               int root, struct ompi_communicator_t *comm)
+                               int root, struct ompi_communicator_t *comm,
+                               struct mca_coll_base_module_1_1_0_t *module)
 {
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo reduce_intra");
-    return comm->c_coll_basic_module->coll_reduce(sbuf, rbuf, count, dtype,
-                                                  op, root, comm);
+    return demo_module->underlying.coll_reduce(sbuf, rbuf, count, dtype,
+                                               op, root, comm,
+                                               demo_module->underlying.coll_reduce_module);
 }
 
 
@@ -54,9 +57,12 @@ int mca_coll_demo_reduce_intra(void *sbuf, void *rbuf, int count,
 int mca_coll_demo_reduce_inter(void *sbuf, void *rbuf, int count,
                                struct ompi_datatype_t *dtype, 
                                struct ompi_op_t *op,
-                               int root, struct ompi_communicator_t *comm)
+                               int root, struct ompi_communicator_t *comm,
+                               struct mca_coll_base_module_1_1_0_t *module)
 {
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo reduce_inter");
-    return comm->c_coll_basic_module->coll_reduce(sbuf, rbuf, count, dtype,
-                                                  op, root, comm);
+    return demo_module->underlying.coll_reduce(sbuf, rbuf, count, dtype,
+                                               op, root, comm,
+                                               demo_module->underlying.coll_reduce_module);
 }

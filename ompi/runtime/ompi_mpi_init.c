@@ -635,13 +635,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Init coll for the comms */
 
     if (OMPI_SUCCESS !=
-        (ret = mca_coll_base_comm_select(MPI_COMM_WORLD, NULL))) {
+        (ret = mca_coll_base_comm_select(MPI_COMM_WORLD))) {
         error = "mca_coll_base_comm_select(MPI_COMM_WORLD) failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
-        (ret = mca_coll_base_comm_select(MPI_COMM_SELF, NULL))) {
+        (ret = mca_coll_base_comm_select(MPI_COMM_SELF))) {
         error = "mca_coll_base_comm_select(MPI_COMM_SELF) failed";
         goto error;
     }

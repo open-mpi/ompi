@@ -60,12 +60,14 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
 */
 typedef int ompi_comm_allgatherfct (void* inbuf, int incount, MPI_Datatype intype,
                                     void* outbuf, int outcount, MPI_Datatype outtype,
-                                    ompi_communicator_t *comm);
+                                    ompi_communicator_t *comm,
+                                    struct mca_coll_base_module_1_1_0_t *data);
 
 static int ompi_comm_allgather_emulate_intra (void* inbuf, int incount, MPI_Datatype intype,
                                               void* outbuf, int outcount, 
                                               MPI_Datatype outtype, 
-                                              ompi_communicator_t *comm);
+                                              ompi_communicator_t *comm,
+                                              struct mca_coll_base_module_1_1_0_t *data);
 
 static int ompi_comm_copy_topo (ompi_communicator_t *oldcomm, 
                                 ompi_communicator_t *newcomm);
@@ -269,7 +271,8 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
         
         rc = comm->c_coll.coll_allgather ( &(group->grp_my_rank), 
                                            1, MPI_INT, allranks, 
-                                           1, MPI_INT, comm );
+                                           1, MPI_INT, comm,
+                                           comm->c_coll.coll_allgather_module);
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
@@ -355,8 +358,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
                               NULL,     /* remote_leader */
                               mode,     /* mode */
                               -1,       /* send first */
-                              0,        /* sync_flag */
-                              NULL );   /* coll component */
+                              0);        /* sync_flag */
                              
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
@@ -430,7 +432,7 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    rc = allgatherfct( myinfo, 2, MPI_INT, results, 2, MPI_INT, comm );
+    rc = allgatherfct( myinfo, 2, MPI_INT, results, 2, MPI_INT, comm, comm->c_coll.coll_allgather_module );
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -485,7 +487,8 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
 
         /* this is an allgather on an inter-communicator */
         rc = comm->c_coll.coll_allgather( myinfo, 2, MPI_INT, rresults, 2, 
-                                          MPI_INT, comm );
+                                          MPI_INT, comm,
+                                          comm->c_coll.coll_allgather_module);
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
@@ -586,8 +589,7 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
                   NULL,     /* remote_leader */
                   mode,     /* mode */
                   -1,       /* send first */
-                  0,        /* sync_flag */
-                  NULL );   /* coll component */
+                  0);        /* sync_flag */
                              
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
@@ -691,8 +693,7 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm,
                                  NULL,     /* remote_leader */
                                  mode,     /* mode */
                                  -1,       /* send_first */
-                                 0,        /* sync_flag */
-                                 (mca_base_component_t *) comp->c_coll_selected_component /* coll component */
+                                 0         /* sync_flag */
                                  );
         if ( MPI_SUCCESS != rc ) {
             return rc;
@@ -706,8 +707,7 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm,
                                  NULL,     /* remote_leader */
                                  mode,     /* mode */
                                  -1,       /* send_first */
-                                 1,        /* sync_flag */
-                                 (mca_base_component_t *) comp->c_coll_selected_component /* coll component */
+                                 1        /* sync_flag */
                                  );
         if ( MPI_SUCCESS != rc ) {
             return rc;
@@ -883,7 +883,8 @@ int ompi_comm_set_name (ompi_communicator_t *comm, char *name )
 static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount, 
                                               MPI_Datatype intype, void* outbuf,
                                               int outcount, MPI_Datatype outtype,
-                                              ompi_communicator_t *comm)
+                                              ompi_communicator_t *comm,
+                                              struct mca_coll_base_module_1_1_0_t *data)
 {
     int rank, size, rsize, i, rc;
     int *tmpbuf=NULL;
@@ -1090,7 +1091,8 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     
     /* broadcast buffer length to all processes in local_comm */
     rc = local_comm->c_coll.coll_bcast( &rlen, 1, MPI_INT, 
-                                        local_leader, local_comm );
+                                        local_leader, local_comm,
+                                        local_comm->c_coll.coll_bcast_module );
     if ( OMPI_SUCCESS != rc ) {
         goto err_exit;
     }
@@ -1123,7 +1125,8 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
 
     /* broadcast name list to all proceses in local_comm */
     rc = local_comm->c_coll.coll_bcast( recvbuf, rlen, MPI_BYTE, 
-                                        local_leader, local_comm );
+                                        local_leader, local_comm,
+                                        local_comm->c_coll.coll_bcast_module);
     if ( OMPI_SUCCESS != rc ) {
         goto err_exit;
     }
@@ -1220,7 +1223,8 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
     
     rc = intercomm->c_coll.coll_allgatherv(&high, scount, MPI_INT,
                                            &rhigh, rcounts, rdisps,
-                                           MPI_INT, intercomm);
+                                           MPI_INT, intercomm,
+                                           intercomm->c_coll.coll_allgatherv_module);
     if ( rc != OMPI_SUCCESS ) {
         flag = MPI_UNDEFINED;
     }
@@ -1542,8 +1546,7 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
                                NULL,     /* remote_leader */
                                OMPI_COMM_CID_INTRA,   /* mode */
                                -1,       /* send first, doesn't matter */
-                               0,        /* sync_flag */
-                               NULL );   /* coll component */
+                               0);        /* sync_flag */
 
     if (OMPI_SUCCESS != ret) {
         /* something wrong happened during setting the communicator */

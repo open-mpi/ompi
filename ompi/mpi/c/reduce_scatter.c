@@ -96,7 +96,8 @@ int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
 
     OBJ_RETAIN(op);
     err = comm->c_coll.coll_reduce_scatter(sendbuf, recvbuf, recvcounts,
-                                           datatype, op, comm);
+                                           datatype, op, comm,
+                                           comm->c_coll.coll_reduce_scatter_module);
     OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

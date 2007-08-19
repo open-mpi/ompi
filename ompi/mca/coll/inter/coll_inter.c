@@ -39,11 +39,9 @@
 #include "ompi/mca/btl/btl.h"
 
 
+#if 0
 static void mca_coll_inter_dump_struct ( struct mca_coll_base_comm_t *c);
 
-/*
- * Linear set of collective algorithms
- */
 static const mca_coll_base_module_1_0_0_t inter = {
 
   /* Initialization / finalization functions */
@@ -71,36 +69,7 @@ static const mca_coll_base_module_1_0_0_t inter = {
   mca_coll_inter_scatter_inter,  
   mca_coll_inter_scatterv_inter
 };
-
-
-static const mca_coll_base_module_1_0_0_t null_inter = {
-
-  /* Initialization / finalization functions */
-
-  mca_coll_inter_module_init,
-  mca_coll_inter_module_finalize,
-
-  /* Collective function pointers */
-  /* function pointers marked with NULL are not yet implemented
-     and will use the functions provided in the basic module */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, 
-  NULL, 
-  NULL, 
-  NULL,
-  NULL, 
-  NULL,
-  NULL, 
-  NULL
-};
-
+#endif
 
 
 /*
@@ -110,7 +79,6 @@ static const mca_coll_base_module_1_0_0_t null_inter = {
 int mca_coll_inter_init_query(bool allow_inter_user_threads,
                              bool have_hidden_user_threads)
 {
-
     /* Don't ask. All done */
     return OMPI_SUCCESS;
 }
@@ -121,17 +89,19 @@ int mca_coll_inter_init_query(bool allow_inter_user_threads,
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-const mca_coll_base_module_1_0_0_t *
-mca_coll_inter_comm_query(struct ompi_communicator_t *comm, int *priority,
-                             struct mca_coll_base_comm_t **data)
+mca_coll_base_module_1_1_0_t *
+mca_coll_inter_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     int size, rsize;
+    mca_coll_inter_module_t *inter_module;
+
+    inter_module = OBJ_NEW(mca_coll_inter_module_t);
 
     /* This module only works for inter-communicators */
     if ( !OMPI_COMM_IS_INTER(comm) ) {
         return NULL;
     }
-
+ 
     /* Get the priority level */
     *priority = mca_coll_inter_priority_param;
     if ( 0 >= mca_coll_inter_priority_param ) {
@@ -144,61 +114,57 @@ mca_coll_inter_comm_query(struct ompi_communicator_t *comm, int *priority,
     if ( size < mca_coll_inter_crossover && rsize < mca_coll_inter_crossover) {
 	return NULL;
     }
+
+    inter_module->super.coll_module_enable = mca_coll_inter_module_enable;
+    inter_module->super.ft_event = NULL;
+
+    inter_module->super.coll_allgather  = mca_coll_inter_allgather_inter;
+    inter_module->super.coll_allgatherv = mca_coll_inter_allgatherv_inter;
+    inter_module->super.coll_allreduce  = mca_coll_inter_allreduce_inter;
+    inter_module->super.coll_alltoall   = NULL;
+    inter_module->super.coll_alltoallv  = NULL;
+    inter_module->super.coll_alltoallw  = NULL;
+    inter_module->super.coll_barrier    = NULL;
+    inter_module->super.coll_bcast      = mca_coll_inter_bcast_inter;
+    inter_module->super.coll_exscan     = NULL;
+    inter_module->super.coll_gather     = mca_coll_inter_gather_inter;
+    inter_module->super.coll_gatherv    = mca_coll_inter_gatherv_inter;
+    inter_module->super.coll_reduce     = mca_coll_inter_reduce_inter;
+    inter_module->super.coll_reduce_scatter = NULL;
+    inter_module->super.coll_scan       = NULL;
+    inter_module->super.coll_scatter    = mca_coll_inter_scatter_inter;
+    inter_module->super.coll_scatterv   = mca_coll_inter_scatterv_inter;
  
-    return &inter;
+    return &(inter_module->super);
 }
     
 
 /*
  * Init module on the communicator
  */
-const struct mca_coll_base_module_1_0_0_t *
-mca_coll_inter_module_init(struct ompi_communicator_t *comm)
+int
+mca_coll_inter_module_enable(struct mca_coll_base_module_1_1_0_t *module,
+                             struct ompi_communicator_t *comm)
 {
     int size, rank;
-    struct mca_coll_base_comm_t *data=NULL;
+    mca_coll_inter_module_t *inter_module = (mca_coll_inter_module_t*) module;
     
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
     
-    data = (struct mca_coll_base_comm_t *) malloc ( sizeof(struct mca_coll_base_comm_t));
-    if ( NULL == data ) {
-	return NULL;
-    }
-    data->inter_comm     = comm;
-
-    comm->c_coll_selected_data=data;
+    inter_module->inter_comm = comm;
     
+#if 0
     if ( mca_coll_inter_verbose_param ) {
       mca_coll_inter_dump_struct (data);
     }
+#endif
   
-    return &inter;
-}
-
-
-/*
- * Finalize module on the communicator
- */
-int mca_coll_inter_module_finalize(struct ompi_communicator_t *comm)
-{
-    struct mca_coll_base_comm_t *data=NULL;
-
-    data   = comm->c_coll_selected_data;
-    free ( data );
-    comm->c_coll_selected_data = NULL;
-
-    return OMPI_SUCCESS;
-}
-
-int mca_coll_inter_comm_unquery ( struct ompi_communicator_t *comm,
-				     struct mca_coll_base_comm_t *data )
-{
     return OMPI_SUCCESS;
 }
 
 
-
+#if 0
 static void mca_coll_inter_dump_struct ( struct mca_coll_base_comm_t *c)
 {
     int rank;
@@ -211,3 +177,4 @@ static void mca_coll_inter_dump_struct ( struct mca_coll_base_comm_t *c)
     
     return;
 }
+#endif

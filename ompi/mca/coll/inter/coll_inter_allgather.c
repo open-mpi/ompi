@@ -41,7 +41,8 @@ mca_coll_inter_allgather_inter(void *sbuf, int scount,
                                struct ompi_datatype_t *sdtype,
                                void *rbuf, int rcount,
                                struct ompi_datatype_t *rdtype,
-                               struct ompi_communicator_t *comm)
+                               struct ompi_communicator_t *comm,
+                               struct mca_coll_base_module_1_1_0_t *module)
 {
     int rank, root = 0, size, rsize, err;
     char *ptmp = NULL;
@@ -66,7 +67,8 @@ mca_coll_inter_allgather_inter(void *sbuf, int scount,
 
     err = comm->c_local_comm->c_coll.coll_gather(sbuf, scount, sdtype, 
 						 ptmp, scount, sdtype, 
-						 0, comm->c_local_comm);
+						 0, comm->c_local_comm,
+                                                 comm->c_local_comm->c_coll.coll_gather_module);
     if (OMPI_SUCCESS != err) {
 	goto exit;
     }
@@ -95,7 +97,8 @@ mca_coll_inter_allgather_inter(void *sbuf, int scount,
     }
     /* bcast the message to all the local processes */
     err = comm->c_local_comm->c_coll.coll_bcast(rbuf, rcount*rsize, rdtype, 
-						root, comm->c_local_comm);
+						root, comm->c_local_comm,
+                                                comm->c_local_comm->c_coll.coll_bcast_module);
     if (OMPI_SUCCESS != err) {
             goto exit;
     }

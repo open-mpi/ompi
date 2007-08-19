@@ -142,6 +142,7 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
     /* Invoke the coll component to perform the back-end operation */
 	
     err = comm->c_coll.coll_scatterv(sendbuf, sendcounts, displs, sendtype, 
-                                     recvbuf, recvcount, recvtype, root, comm);
+                                     recvbuf, recvcount, recvtype, root, comm,
+                                    comm->c_coll.coll_scatterv_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

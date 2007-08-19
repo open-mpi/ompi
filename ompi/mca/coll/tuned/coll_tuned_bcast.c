@@ -34,7 +34,8 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
                                      int original_count, 
                                      struct ompi_datatype_t* datatype, 
                                      int root,
-                                     struct ompi_communicator_t* comm, 
+                                     struct ompi_communicator_t* comm,
+				     struct mca_coll_base_module_1_1_0_t *module,
                                      uint32_t count_by_segment,
                                      ompi_coll_tree_t* tree )
 {
@@ -257,13 +258,16 @@ ompi_coll_tuned_bcast_intra_bintree ( void* buffer,
                                       int count, 
                                       struct ompi_datatype_t* datatype, 
                                       int root,
-                                      struct ompi_communicator_t* comm, 
+                                      struct ompi_communicator_t* comm,
+				      struct mca_coll_base_module_1_1_0_t *module,
                                       uint32_t segsize )
 {
     int segcount = count;
     size_t typelng;
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    COLL_TUNED_UPDATE_BINTREE( comm, root );
+    COLL_TUNED_UPDATE_BINTREE( comm, tuned_module, root );
 
     /**
      * Determine number of elements sent per operation.
@@ -274,8 +278,8 @@ ompi_coll_tuned_bcast_intra_bintree ( void* buffer,
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_binary rank %d ss %5d typelng %lu segcount %d",
                  ompi_comm_rank(comm), segsize, (unsigned long)typelng, segcount));
 
-    return ompi_coll_tuned_bcast_intra_generic( buffer, count, datatype, root, comm,
-                                                segcount, comm->c_coll_selected_data->cached_bintree );
+    return ompi_coll_tuned_bcast_intra_generic( buffer, count, datatype, root, comm, module,
+                                                segcount, data->cached_bintree );
 }
 
 int
@@ -283,13 +287,16 @@ ompi_coll_tuned_bcast_intra_pipeline( void* buffer,
                                       int count, 
                                       struct ompi_datatype_t* datatype, 
                                       int root,
-                                      struct ompi_communicator_t* comm, 
+                                      struct ompi_communicator_t* comm,
+				      struct mca_coll_base_module_1_1_0_t *module,
                                       uint32_t segsize )
 {
     int segcount = count;
     size_t typelng;
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    COLL_TUNED_UPDATE_PIPELINE( comm, root );
+    COLL_TUNED_UPDATE_PIPELINE( comm, tuned_module, root );
 
     /**
      * Determine number of elements sent per operation.
@@ -300,8 +307,8 @@ ompi_coll_tuned_bcast_intra_pipeline( void* buffer,
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_pipeline rank %d ss %5d typelng %lu segcount %d",
                  ompi_comm_rank(comm), segsize, (unsigned long)typelng, segcount));
 
-    return ompi_coll_tuned_bcast_intra_generic( buffer, count, datatype, root, comm,
-                                                segcount, comm->c_coll_selected_data->cached_pipeline );
+    return ompi_coll_tuned_bcast_intra_generic( buffer, count, datatype, root, comm, module,
+                                                segcount, data->cached_pipeline );
 }
 
 int
@@ -309,13 +316,16 @@ ompi_coll_tuned_bcast_intra_chain( void* buffer,
                                    int count, 
                                    struct ompi_datatype_t* datatype, 
                                    int root,
-                                   struct ompi_communicator_t* comm, 
+                                   struct ompi_communicator_t* comm,
+				   struct mca_coll_base_module_1_1_0_t *module,
                                    uint32_t segsize, int32_t chains )
 {
     int segcount = count;
     size_t typelng;
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    COLL_TUNED_UPDATE_CHAIN( comm, root, chains );
+    COLL_TUNED_UPDATE_CHAIN( comm, tuned_module, root, chains );
 
     /**
      * Determine number of elements sent per operation.
@@ -326,8 +336,8 @@ ompi_coll_tuned_bcast_intra_chain( void* buffer,
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_chain rank %d fo %d ss %5d typelng %lu segcount %d",
                  ompi_comm_rank(comm), chains, segsize, (unsigned long)typelng, segcount));
 
-    return ompi_coll_tuned_bcast_intra_generic( buffer, count, datatype, root, comm,
-                                                segcount, comm->c_coll_selected_data->cached_chain );
+    return ompi_coll_tuned_bcast_intra_generic( buffer, count, datatype, root, comm, module,
+                                                segcount, data->cached_chain );
 }
 
 int
@@ -335,13 +345,16 @@ ompi_coll_tuned_bcast_intra_binomial( void* buffer,
                                       int count, 
                                       struct ompi_datatype_t* datatype, 
                                       int root,
-                                      struct ompi_communicator_t* comm, 
+                                      struct ompi_communicator_t* comm,
+				      struct mca_coll_base_module_1_1_0_t *module,
                                       uint32_t segsize )
 {
     int segcount = count;
     size_t typelng;
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    COLL_TUNED_UPDATE_BMTREE( comm, root );
+    COLL_TUNED_UPDATE_BMTREE( comm, tuned_module, root );
 
     /**
      * Determine number of elements sent per operation.
@@ -352,8 +365,8 @@ ompi_coll_tuned_bcast_intra_binomial( void* buffer,
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_binomial rank %d ss %5d typelng %lu segcount %d",
                  ompi_comm_rank(comm), segsize, (unsigned long)typelng, segcount));
 
-    return ompi_coll_tuned_bcast_intra_generic( buffer, count, datatype, root, comm,
-                                                segcount, comm->c_coll_selected_data->cached_bmtree );
+    return ompi_coll_tuned_bcast_intra_generic( buffer, count, datatype, root, comm, module,
+                                                segcount, data->cached_bmtree );
 }
 
 int
@@ -361,7 +374,8 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
                                             int count, 
                                             struct ompi_datatype_t* datatype, 
                                             int root,
-                                            struct ompi_communicator_t* comm, 
+                                            struct ompi_communicator_t* comm,
+					    struct mca_coll_base_module_1_1_0_t *module,
                                             uint32_t segsize )
 {
     int err=0, line;
@@ -377,6 +391,8 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
     ptrdiff_t type_extent, lb;
     ompi_request_t *base_req, *new_req;
     ompi_coll_tree_t *tree;
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -388,8 +404,8 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
     }
 
     /* setup the binary tree topology. */
-    COLL_TUNED_UPDATE_BINTREE( comm, root );
-    tree = comm->c_coll_selected_data->cached_bintree;
+    COLL_TUNED_UPDATE_BINTREE( comm, tuned_module, root );
+    tree = data->cached_bintree;
 
     err = ompi_ddt_type_size( datatype, &type_size );
 
@@ -421,7 +437,8 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
         (segsize > counts[1] * type_size) ) {
         /* call linear version here ! */
         return (ompi_coll_tuned_bcast_intra_chain ( buffer, count, datatype, 
-                                                    root, comm, segsize, 1 ));
+                                                    root, comm, module,
+						    segsize, 1 ));
     }
 
     err = ompi_ddt_get_extent (datatype, &lb, &type_extent);
@@ -625,14 +642,18 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
 int
 ompi_coll_tuned_bcast_intra_basic_linear (void *buff, int count,
                                           struct ompi_datatype_t *datatype, int root,
-                                          struct ompi_communicator_t *comm)
+                                          struct ompi_communicator_t *comm,
+					  struct mca_coll_base_module_1_1_0_t *module)
 {
     int i;
     int size;
     int rank;
     int err;
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
     ompi_request_t **preq;
-    ompi_request_t **reqs = comm->c_coll_selected_data->mcct_reqs;
+    ompi_request_t **reqs = data->mcct_reqs;
+
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -753,28 +774,32 @@ int ompi_coll_tuned_bcast_intra_check_forced_init (coll_tuned_force_algorithm_mc
 int ompi_coll_tuned_bcast_intra_do_forced(void *buf, int count,
                                           struct ompi_datatype_t *dtype,
                                           int root,
-                                          struct ompi_communicator_t *comm)
+                                          struct ompi_communicator_t *comm,
+					  struct mca_coll_base_module_1_1_0_t *module)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_do_forced algorithm %d", 
-                 comm->c_coll_selected_data->user_forced[BCAST].algorithm));
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    switch (comm->c_coll_selected_data->user_forced[BCAST].algorithm) {
-    case (0):   return ompi_coll_tuned_bcast_intra_dec_fixed( buf, count, dtype, root, comm );
-    case (1):   return ompi_coll_tuned_bcast_intra_basic_linear( buf, count, dtype, root, comm );
-    case (2):   return ompi_coll_tuned_bcast_intra_chain( buf, count, dtype, root, comm,
-                                                          comm->c_coll_selected_data->user_forced[BCAST].segsize,
-                                                          comm->c_coll_selected_data->user_forced[BCAST].chain_fanout );
-    case (3):   return ompi_coll_tuned_bcast_intra_pipeline( buf, count, dtype, root, comm, 
-                                                             comm->c_coll_selected_data->user_forced[BCAST].segsize );
-    case (4):   return ompi_coll_tuned_bcast_intra_split_bintree( buf, count, dtype, root, comm, 
-                                                                  comm->c_coll_selected_data->user_forced[BCAST].segsize );
-    case (5):   return ompi_coll_tuned_bcast_intra_bintree( buf, count, dtype, root, comm, 
-                                                            comm->c_coll_selected_data->user_forced[BCAST].segsize );
-    case (6):   return ompi_coll_tuned_bcast_intra_binomial( buf, count, dtype, root, comm,
-                                                             comm->c_coll_selected_data->user_forced[BCAST].segsize );
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_do_forced algorithm %d", 
+                 data->user_forced[BCAST].algorithm));
+
+    switch (data->user_forced[BCAST].algorithm) {
+    case (0):   return ompi_coll_tuned_bcast_intra_dec_fixed( buf, count, dtype, root, comm, module );
+    case (1):   return ompi_coll_tuned_bcast_intra_basic_linear( buf, count, dtype, root, comm, module );
+    case (2):   return ompi_coll_tuned_bcast_intra_chain( buf, count, dtype, root, comm, module,
+                                                          data->user_forced[BCAST].segsize,
+                                                          data->user_forced[BCAST].chain_fanout );
+    case (3):   return ompi_coll_tuned_bcast_intra_pipeline( buf, count, dtype, root, comm, module,
+                                                             data->user_forced[BCAST].segsize );
+    case (4):   return ompi_coll_tuned_bcast_intra_split_bintree( buf, count, dtype, root, comm, module,
+                                                                  data->user_forced[BCAST].segsize );
+    case (5):   return ompi_coll_tuned_bcast_intra_bintree( buf, count, dtype, root, comm, module,
+                                                            data->user_forced[BCAST].segsize );
+    case (6):   return ompi_coll_tuned_bcast_intra_binomial( buf, count, dtype, root, comm, module,
+                                                             data->user_forced[BCAST].segsize );
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
-                     comm->c_coll_selected_data->user_forced[BCAST].algorithm, ompi_coll_tuned_forced_max_algorithms[BCAST]));
+                     data->user_forced[BCAST].algorithm, ompi_coll_tuned_forced_max_algorithms[BCAST]));
     } /* switch */
     return (MPI_ERR_ARG);
 }
@@ -784,6 +809,7 @@ int ompi_coll_tuned_bcast_intra_do_this(void *buf, int count,
                                         struct ompi_datatype_t *dtype,
                                         int root,
                                         struct ompi_communicator_t *comm,
+					struct mca_coll_base_module_1_1_0_t *module,
                                         int algorithm, int faninout, int segsize)
 
 {
@@ -791,13 +817,13 @@ int ompi_coll_tuned_bcast_intra_do_this(void *buf, int count,
                  algorithm, faninout, segsize));
 
     switch (algorithm) {
-    case (0):   return ompi_coll_tuned_bcast_intra_dec_fixed( buf, count, dtype, root, comm );
-    case (1):   return ompi_coll_tuned_bcast_intra_basic_linear( buf, count, dtype, root, comm );
-    case (2):   return ompi_coll_tuned_bcast_intra_chain( buf, count, dtype, root, comm, segsize, faninout );
-    case (3):   return ompi_coll_tuned_bcast_intra_pipeline( buf, count, dtype, root, comm, segsize );
-    case (4):   return ompi_coll_tuned_bcast_intra_split_bintree( buf, count, dtype, root, comm, segsize );
-    case (5):   return ompi_coll_tuned_bcast_intra_bintree( buf, count, dtype, root, comm, segsize );
-    case (6):   return ompi_coll_tuned_bcast_intra_binomial( buf, count, dtype, root, comm, segsize );
+    case (0):   return ompi_coll_tuned_bcast_intra_dec_fixed( buf, count, dtype, root, comm, module );
+    case (1):   return ompi_coll_tuned_bcast_intra_basic_linear( buf, count, dtype, root, comm, module );
+    case (2):   return ompi_coll_tuned_bcast_intra_chain( buf, count, dtype, root, comm, module, segsize, faninout );
+    case (3):   return ompi_coll_tuned_bcast_intra_pipeline( buf, count, dtype, root, comm, module, segsize );
+    case (4):   return ompi_coll_tuned_bcast_intra_split_bintree( buf, count, dtype, root, comm, module, segsize );
+    case (5):   return ompi_coll_tuned_bcast_intra_bintree( buf, count, dtype, root, comm, module, segsize );
+    case (6):   return ompi_coll_tuned_bcast_intra_binomial( buf, count, dtype, root, comm, module, segsize );
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
                      algorithm, ompi_coll_tuned_forced_max_algorithms[BCAST]));

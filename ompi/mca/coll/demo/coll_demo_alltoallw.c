@@ -37,12 +37,15 @@ int mca_coll_demo_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
                                   struct ompi_datatype_t **sdtypes, 
                                   void *rbuf, int *rcounts, int *rdisps,
                                   struct ompi_datatype_t **rdtypes, 
-                                  struct ompi_communicator_t *comm)
+                                  struct ompi_communicator_t *comm,
+                                  struct mca_coll_base_module_1_1_0_t *module)
 {
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo alltoallw_intra");
-    return comm->c_coll_basic_module->coll_alltoallw(sbuf, scounts, sdisps,
-                                                     sdtypes, rbuf, rcounts,
-                                                     rdisps, rdtypes, comm);
+    return demo_module->underlying.coll_alltoallw(sbuf, scounts, sdisps,
+                                                  sdtypes, rbuf, rcounts,
+                                                  rdisps, rdtypes, comm,
+                                                  demo_module->underlying.coll_alltoallw_module);
 }
 
 
@@ -57,10 +60,13 @@ int mca_coll_demo_alltoallw_inter(void *sbuf, int *scounts, int *sdisps,
                                   struct ompi_datatype_t **sdtypes,
                                   void *rbuf, int *rcounts, int *rdisps,
                                   struct ompi_datatype_t **rdtypes,
-                                  struct ompi_communicator_t *comm)
+                                  struct ompi_communicator_t *comm,
+                                  struct mca_coll_base_module_1_1_0_t *module)
 {
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo alltoallw_inter");
-    return comm->c_coll_basic_module->coll_alltoallw(sbuf, scounts, sdisps,
-                                                     sdtypes, rbuf, rcounts,
-                                                     rdisps, rdtypes, comm);
+    return demo_module->underlying.coll_alltoallw(sbuf, scounts, sdisps,
+                                                  sdtypes, rbuf, rcounts,
+                                                  rdisps, rdtypes, comm,
+                                                  demo_module->underlying.coll_alltoallw_module);
 }

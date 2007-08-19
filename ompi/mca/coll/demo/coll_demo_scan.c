@@ -36,14 +36,17 @@
 int mca_coll_demo_scan_intra(void *sbuf, void *rbuf, int count,
                              struct ompi_datatype_t *dtype, 
                              struct ompi_op_t *op, 
-                             struct ompi_communicator_t *comm)
+                             struct ompi_communicator_t *comm,
+                             struct mca_coll_base_module_1_1_0_t *module)
 {
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo scan_intra");
-    return comm->c_coll_basic_module->coll_scan(sbuf, rbuf, count,
-                                                dtype, op, comm);
+    return demo_module->underlying.coll_scan(sbuf, rbuf, count,
+                                             dtype, op, comm,
+                                             demo_module->underlying.coll_scan_module);
 }
 
 
 /*
- * NOTE: There is no exscan defined for intercommunicators (see MPI-2).
+ * NOTE: There is no scan defined for intercommunicators (see MPI-2).
  */

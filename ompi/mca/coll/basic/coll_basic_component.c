@@ -51,7 +51,7 @@ static int basic_open(void);
  * and pointers to our public functions in it
  */
 
-const mca_coll_base_component_1_0_0_t mca_coll_basic_component = {
+const mca_coll_base_component_1_1_0_t mca_coll_basic_component = {
 
     /* First, the mca_component_t struct containing meta information
      * about the component itself */
@@ -60,7 +60,7 @@ const mca_coll_base_component_1_0_0_t mca_coll_basic_component = {
      /* Indicate that we are a coll v1.0.0 component (which also implies a
       * specific MCA version) */
 
-     MCA_COLL_BASE_VERSION_1_0_0,
+     MCA_COLL_BASE_VERSION_1_1_0,
 
      /* Component name and version */
 
@@ -85,8 +85,7 @@ const mca_coll_base_component_1_0_0_t mca_coll_basic_component = {
     /* Initialization / querying functions */
 
     mca_coll_basic_init_query,
-    mca_coll_basic_comm_query,
-    NULL
+    mca_coll_basic_comm_query
 };
 
 
@@ -108,3 +107,23 @@ basic_open(void)
 
     return OMPI_SUCCESS;
 }
+
+
+static void
+mca_coll_basic_module_construct(mca_coll_basic_module_t *module)
+{
+    module->mccb_reqs = NULL;
+    module->mccb_num_reqs = 0;
+}
+
+static void
+mca_coll_basic_module_destruct(mca_coll_basic_module_t *module)
+{
+    if (NULL != module->mccb_reqs) free(module->mccb_reqs);
+}
+
+
+OBJ_CLASS_INSTANCE(mca_coll_basic_module_t,
+                   mca_coll_base_module_1_1_0_t,
+                   mca_coll_basic_module_construct,
+                   mca_coll_basic_module_destruct);

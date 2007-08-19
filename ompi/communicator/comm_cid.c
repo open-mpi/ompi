@@ -405,8 +405,7 @@ int ompi_comm_activate ( ompi_communicator_t* newcomm,
                          void* remote_leader,
                          int mode, 
                          int send_first, 
-                         int sync_flag,
-                         mca_base_component_t *collcomponent )
+                         int sync_flag)
 {
     int ok=0, gok=0;
     ompi_comm_cid_allredfct* allredfnct;
@@ -475,7 +474,7 @@ int ompi_comm_activate ( ompi_communicator_t* newcomm,
         /* Let the collectives components fight over who will do
            collective on this new comm.  */
         if (OMPI_SUCCESS != 
-            (ok = mca_coll_base_comm_select(newcomm, collcomponent))) {
+            (ok = mca_coll_base_comm_select(newcomm))) {
             return ok;
         }
     }
@@ -501,7 +500,8 @@ static int ompi_comm_allreduce_intra ( int *inbuf, int *outbuf,
                                        int send_first )
 {
     return comm->c_coll.coll_allreduce ( inbuf, outbuf, count, MPI_INT, 
-                                         op,comm );
+                                         op,comm,
+                                         comm->c_coll.coll_allreduce_module );
 }
 
 /* Arguments not used in this implementation:
@@ -548,7 +548,8 @@ static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf,
     /* Execute the inter-allreduce: the result of our group will
        be in the buffer of the remote group */
     rc = intercomm->c_coll.coll_allreduce ( inbuf, tmpbuf, count, MPI_INT,
-                                            op, intercomm );
+                                            op, intercomm,
+                                            intercomm->c_coll.coll_allreduce_module);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -610,7 +611,8 @@ static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf,
     sbuf       = outbuf;
     rc = intercomm->c_coll.coll_allgatherv (sbuf, scount, MPI_INT, outbuf,
                                             rcounts, rdisps, MPI_INT, 
-                                            intercomm);
+                                            intercomm,
+                                            intercomm->c_coll.coll_allgatherv_module);
     
  exit:
     if ( NULL != tmpbuf ) {
@@ -658,7 +660,7 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
 
     /* Intercomm_create */
     rc = comm->c_coll.coll_allreduce ( inbuf, tmpbuf, count, MPI_INT,
-                                       op, comm );
+                                       op, comm, comm->c_coll.coll_allreduce_module );
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -707,7 +709,7 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
     }
     
     rc = comm->c_coll.coll_bcast ( outbuf, count, MPI_INT, local_leader, 
-                                   comm);
+                                   comm, comm->c_coll.coll_bcast_module );
 
  exit:
     if (NULL != tmpbuf ) {
@@ -755,7 +757,8 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
     }
 
     /* comm is an intra-communicator */
-    rc = comm->c_coll.coll_allreduce(inbuf,tmpbuf,count,MPI_INT,op, comm );
+    rc = comm->c_coll.coll_allreduce(inbuf,tmpbuf,count,MPI_INT,op, comm,
+                                     comm->c_coll.coll_allreduce_module);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -811,7 +814,8 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
     }
     
     rc = comm->c_coll.coll_bcast (outbuf, count, MPI_INT, 
-                                  local_leader, comm);
+                                  local_leader, comm,
+                                  comm->c_coll.coll_bcast_module);
 
  exit:
     if (NULL != tmpbuf ) {

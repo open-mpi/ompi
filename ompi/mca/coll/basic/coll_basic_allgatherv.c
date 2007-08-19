@@ -39,7 +39,8 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
                                 struct ompi_datatype_t *sdtype,
                                 void *rbuf, int *rcounts, int *disps,
                                 struct ompi_datatype_t *rdtype,
-                                struct ompi_communicator_t *comm)
+                                struct ompi_communicator_t *comm,
+                                struct mca_coll_base_module_1_1_0_t *module)
 {
     int i, size, rank ;
     int err;
@@ -70,7 +71,7 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
     err = comm->c_coll.coll_gatherv(send_buf,
                                     rcounts[rank], send_type,rbuf,
                                     rcounts, disps, rdtype, 0,
-                                    comm);
+                                    comm, module);
     
     if (MPI_SUCCESS != err) {
         return err;
@@ -98,7 +99,7 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
        return err;
     }
 
-    comm->c_coll.coll_bcast( rbuf, 1 ,newtype,0,comm);
+    comm->c_coll.coll_bcast( rbuf, 1 ,newtype,0,comm, module);
 
     ompi_ddt_destroy (&newtype);
 
@@ -118,7 +119,8 @@ mca_coll_basic_allgatherv_inter(void *sbuf, int scount,
                                 struct ompi_datatype_t *sdtype,
                                 void *rbuf, int *rcounts, int *disps,
                                 struct ompi_datatype_t *rdtype,
-                                struct ompi_communicator_t *comm)
+                                struct ompi_communicator_t *comm,
+                                struct mca_coll_base_module_1_1_0_t *module)
 {
     int size, rsize;
     int err, i;
@@ -139,7 +141,7 @@ mca_coll_basic_allgatherv_inter(void *sbuf, int scount,
     }
 
     err = comm->c_coll.coll_alltoallv(sbuf, scounts, sdisps, sdtype,
-                                      rbuf, rcounts, disps, rdtype, comm);
+                                      rbuf, rcounts, disps, rdtype, comm, module);
 
     if (NULL != sdisps) {
         free(sdisps);
