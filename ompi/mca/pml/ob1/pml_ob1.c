@@ -132,7 +132,9 @@ int mca_pml_ob1_enable(bool enable)
      * initialize them with the size of our own requests.
      */
     ompi_free_list_init( &mca_pml_base_send_requests,
-                         sizeof(mca_pml_ob1_send_request_t),
+                         sizeof(mca_pml_ob1_send_request_t) +
+                         (mca_pml_ob1.max_rdma_per_request - 1) *
+                         sizeof(mca_pml_ob1_com_btl_t),
                          OBJ_CLASS(mca_pml_ob1_send_request_t),
                          mca_pml_ob1.free_list_num,
                          mca_pml_ob1.free_list_max,
@@ -140,7 +142,9 @@ int mca_pml_ob1_enable(bool enable)
                          NULL );
 
     ompi_free_list_init( &mca_pml_base_recv_requests,
-                         sizeof(mca_pml_ob1_recv_request_t),
+                         sizeof(mca_pml_ob1_recv_request_t) +
+                         (mca_pml_ob1.max_rdma_per_request - 1) *
+                         sizeof(mca_pml_ob1_com_btl_t),
                          OBJ_CLASS(mca_pml_ob1_recv_request_t),
                          mca_pml_ob1.free_list_num,
                          mca_pml_ob1.free_list_max,
