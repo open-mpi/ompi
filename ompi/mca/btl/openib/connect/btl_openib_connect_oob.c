@@ -317,7 +317,7 @@ static int create_qp(
         memset(&qp_init_attr, 0, sizeof(struct ibv_qp_init_attr)); 
 
         qp_init_attr.send_cq = 
-            qp_init_attr.recv_cq = openib_btl->ib_cq[prio];
+            qp_init_attr.recv_cq = openib_btl->hca->ib_cq[prio];
         
         if (MCA_BTL_OPENIB_PP_QP == mca_btl_openib_component.qp_infos[qp].type) { 
             qp_init_attr.cap.max_recv_wr =
@@ -367,7 +367,7 @@ static int create_qp(
     /* Setup meta data on the endpoint */
     endpoint->qps[qp].lcl_psn = lrand48() & 0xffffff;
     endpoint->qps[qp].credit_frag = NULL;
-    openib_btl->cq_users[prio]++;
+    openib_btl->hca->cq_users[prio]++;
 
     return OMPI_SUCCESS;
 }
