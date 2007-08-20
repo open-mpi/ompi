@@ -156,6 +156,7 @@ int ompi_proc_init(void)
 int
 ompi_proc_get_info(void)
 {
+    int ret = OMPI_SUCCESS;
     opal_list_item_t *item;
 
     OPAL_THREAD_LOCK(&ompi_proc_lock);
@@ -170,35 +171,39 @@ ompi_proc_get_info(void)
         orte_std_cntr_t count=1;
         void *data;
         size_t datalen;
-        int ret;
         orte_buffer_t *buf;
 
         if (ORTE_EQUAL != orte_ns.compare_fields(ORTE_NS_CMP_JOBID,
                                                  &ompi_proc_local_proc->proc_name,
                                                  &proc->proc_name)) {
             /* not in our jobid -- this shouldn't happen */
-            OPAL_THREAD_UNLOCK(&ompi_proc_lock);
-            return OMPI_ERR_FATAL;
+            ret = OMPI_ERR_FATAL;
+            goto out;
         }
 
         ret = ompi_modex_recv_string("ompi-proc-info", proc, &data, &datalen);
-        if (OMPI_SUCCESS != ret) return ret;
+        if (OMPI_SUCCESS != ret)
+            goto out;
 
         buf = OBJ_NEW(orte_buffer_t);
         ret = orte_dss.load(buf, data, datalen);
-        if (OMPI_SUCCESS != ret) return ret;
+        if (OMPI_SUCCESS != ret)
+            goto out;
 
         /* This isn't needed here, but packed just so that you could,
            in theory, use the unpack code on this proc.  We
            don't,because we aren't adding procs, but need to update
            them */
         ret = orte_dss.unpack(buf, &name, &count, ORTE_NAME);
-        if (ret != ORTE_SUCCESS) return ret;
+        if (ret != ORTE_SUCCESS)
+            goto out;
 
         ret = orte_dss.unpack(buf, &arch, &count, ORTE_UINT32);
-        if (ret != ORTE_SUCCESS) return ret;
+        if (ret != ORTE_SUCCESS)
+            goto out;
         ret = orte_dss.unpack(buf, &hostname, &count, ORTE_STRING);
-        if (ret != ORTE_SUCCESS) return ret;
+        if (ret != ORTE_SUCCESS)
+            goto out;
 
         proc->proc_arch = arch;
 
@@ -213,7 +218,8 @@ ompi_proc_get_info(void)
                            true, orte_system_info.nodename, 
                            hostname == NULL ? "<hostname unavailable>" :
                            hostname);
-            return OMPI_ERR_NOT_SUPPORTED;
+            ret = OMPI_ERR_NOT_SUPPORTED;
+            goto out;
 #endif
         } else if (0 == strcmp(hostname, orte_system_info.nodename)) {
             proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
@@ -230,7 +236,9 @@ ompi_proc_get_info(void)
         OBJ_RELEASE(buf);
     }
 
-    return OMPI_SUCCESS;
+out:
+    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+    return ret;
 }
 
 
