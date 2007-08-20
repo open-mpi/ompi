@@ -275,7 +275,7 @@ void mca_base_component_repository_finalize(void)
 
 #if OPAL_HAVE_LTDL_ADVISE
     if (lt_dladvise_destroy(&opal_mca_dladvise)) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
+        return;
     }
 #endif
 
