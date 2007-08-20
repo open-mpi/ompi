@@ -87,9 +87,9 @@ ompi_init_preconnect_mpi(void)
 int
 ompi_init_preconnect_oob(void)
 {
-    size_t world_size, next, prev, i, j, world_rank;
+    size_t world_size, next, prev, i, j, world_rank, simultaneous;
     ompi_proc_t **procs;
-    int ret, simultaneous, param, value = 0;
+    int ret, param, value = 0;
     struct iovec inmsg[1], outmsg[1];
 
     param = mca_base_param_find("mpi", NULL, "preconnect_oob");
@@ -133,7 +133,7 @@ ompi_init_preconnect_oob(void)
         simultaneous = world_size;
     }
     for (i = 1 ; i <= world_size / 2 ; i += simultaneous) {
-        for (j = 0 ; j < (size_t) simultaneous ; ++j) {
+        for (j = 0 ; j < simultaneous ; ++j) {
             next = (world_rank + (i + j )) % world_size;
                     
             /* sends do not wait for a match */
@@ -144,7 +144,7 @@ ompi_init_preconnect_oob(void)
                                 0);
             if (ret < 0) return ret;
         }
-        for (j = 0 ; j < (size_t) simultaneous ; ++j) {
+        for (j = 0 ; j < simultaneous ; ++j) {
             prev = (world_rank - (i + j) + world_size) % world_size;
                     
             ret = orte_rml.recv(&procs[prev]->proc_name,
