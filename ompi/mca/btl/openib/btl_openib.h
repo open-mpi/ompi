@@ -94,6 +94,7 @@ struct mca_btl_openib_component_t {
     struct mca_btl_openib_module_t             **openib_btls;
     /**< array of available BTLs */
 
+    ompi_pointer_array_t hcas; /**< array of available hcas */
     int ib_free_list_num;
     /**< initial size of free lists */
 
@@ -225,12 +226,16 @@ struct mca_btl_openib_hca_t {
     struct ibv_context *ib_dev_context;
     struct ibv_device_attr ib_dev_attr;
     struct ibv_pd *ib_pd;
+    struct ibv_cq *ib_cq[2];
+    uint32_t cq_users[2];
+    uint32_t cq_size[2];
     mca_mpool_base_module_t *mpool;
     /* MTU for this HCA */
     uint32_t mtu;
     /* Whether this HCA supports eager RDMA */
     uint8_t use_eager_rdma;
     uint8_t btls;              /** < number of btls using this HCA */
+    orte_pointer_array_t *endpoints;
 #if OMPI_HAVE_THREADS
     volatile bool got_fatal_event;
 #endif
@@ -272,8 +277,6 @@ struct mca_btl_openib_module_t {
     mca_btl_openib_hca_t *hca;
     uint8_t port_num;                  /**< ID of the PORT */ 
     uint16_t pkey_index;
-    struct ibv_cq *ib_cq[2];
-    uint32_t cq_users[2];
     struct ibv_port_attr ib_port_attr; 
     uint16_t lid;                      /**< lid that is actually used (for LMC) */
     uint8_t src_path_bits;             /**< offset from base lid (for LMC) */
@@ -291,8 +294,6 @@ struct mca_btl_openib_module_t {
     opal_mutex_t ib_lock;              /**< module level lock */ 
     
     size_t ib_inline_max; /**< max size of inline send*/ 
-    bool poll_cq; 
-    
     
     size_t eager_rdma_frag_size;                /**< length of eager frag */
     orte_pointer_array_t *eager_rdma_buffers;   /**< RDMA buffers to poll */
@@ -301,9 +302,6 @@ struct mca_btl_openib_module_t {
     mca_btl_base_module_error_cb_fn_t error_cb; /**< error handler */
    
     mca_btl_openib_module_qp_t * qps;
-        
-    orte_pointer_array_t *endpoints;
-            
 };
 typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
 
@@ -555,6 +553,7 @@ static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
             OMPI_FREE_LIST_WAIT(free_list, item, rc);
             frag = (mca_btl_openib_frag_t*)item;
             frag->base.order = qp;
+            frag->endpoint = NULL;
             if(ibv_post_srq_recv(openib_btl->qps[qp].u.srq_qp.srq, 
                                  &frag->wr_desc.rd_desc,
                                  &bad_wr)) {

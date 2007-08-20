@@ -432,7 +432,6 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
     mca_btl_openib_module_t* openib_btl; 
    
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTED;
-    endpoint->endpoint_btl->poll_cq = true; 
     
     /* The connection is correctly setup. Now we can decrease the
        event trigger. */
