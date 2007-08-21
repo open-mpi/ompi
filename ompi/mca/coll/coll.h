@@ -302,7 +302,7 @@ struct mca_coll_base_module_1_1_0_t {
     mca_coll_base_module_ft_event_fn_t ft_event;
 };
 typedef struct mca_coll_base_module_1_1_0_t mca_coll_base_module_1_1_0_t;
-OBJ_CLASS_DECLARATION(mca_coll_base_module_1_1_0_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_base_module_1_1_0_t);
 
 
 /**
