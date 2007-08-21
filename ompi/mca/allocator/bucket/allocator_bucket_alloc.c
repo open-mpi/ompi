@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      IBM Corp.,  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -308,44 +309,81 @@ int mca_allocator_bucket_cleanup(mca_allocator_base_module_t * mem)
     for(i = 0; i < mem_options->num_buckets; i++) {
         OPAL_THREAD_LOCK(&(mem_options->buckets[i].lock));
         segment_header = &(mem_options->buckets[i].segment_head);
-        /* traverse the list of segment headers until we hit NULL */
-        while(NULL != *segment_header) {
-            first_chunk = (*segment_header)->first_chunk; 
+        if( NULL == (*segment_header) ) {
+            OPAL_THREAD_UNLOCK(&(mem_options->buckets[i].lock));
+            continue;
+        }
+        /* first we suppose the execution is correct and all chunks
+         * have been correctly released. Therefore, if we make sure
+         * all segments only contain free items then we can release
+         * everything in one go.
+         */
+        empty = true;
+        segment = mem_options->buckets[i].segment_head;
+        while( (true == empty) && (NULL != segment) ) {
+            first_chunk = segment->first_chunk; 
             chunk = first_chunk;
             /* determine if the segment is free */
-            do
-            {
+            do {
                 if(chunk->u.bucket == i) {
                     empty = false;
+                    break;
                 }
                 chunk = chunk->next_in_segment;
-            } while(empty && (chunk != first_chunk));
-            if(empty) {
-                chunk = first_chunk;
-                /* remove the chunks from the free list */
-                do
-                {
-                    if(mem_options->buckets[i].free_chunk == chunk) {
-                        mem_options->buckets[i].free_chunk = chunk->u.next_free;
-                    } else {
-                        next_chunk = mem_options->buckets[i].free_chunk;
-                        while(next_chunk->u.next_free != chunk) {
-                            next_chunk = next_chunk->u.next_free;
-                        }
-                        next_chunk->u.next_free = chunk->u.next_free; 
-                    }
-                } while((chunk = chunk->next_in_segment) != first_chunk);
-                /* set the segment list to point to the next segment */
-                segment = *segment_header;
-                *segment_header = segment->next_segment;
+            } while(chunk != first_chunk);
+            /* go to next segment */
+            segment = segment->next_segment;
+        }
+        if( true == empty ) {  /* all segments ready for release */
+            mca_allocator_bucket_segment_head_t* next_segment;
+            segment = mem_options->buckets[i].segment_head;
+            while( NULL != segment ) {
+                next_segment = segment->next_segment;
                 /* free the memory */
                 if(mem_options->free_mem_fn)
                     mem_options->free_mem_fn(mem->alc_mpool, segment);
-            } else {
-                /* go to next segment */
-                segment_header = &((*segment_header)->next_segment);
+                segment = next_segment;
             }
-            empty = true; 
+            mem_options->buckets[i].free_chunk = NULL;
+            mem_options->buckets[i].segment_head = NULL;
+        } else {
+            /* traverse the list of segment headers until we hit NULL */
+            while(NULL != *segment_header) {
+                first_chunk = (*segment_header)->first_chunk; 
+                chunk = first_chunk;
+                empty = true;
+                /* determine if the segment is free */
+                do {
+                    if(chunk->u.bucket == i) {
+                        empty = false;
+                    }
+                    chunk = chunk->next_in_segment;
+                } while(empty && (chunk != first_chunk));
+                if(empty) {
+                    chunk = first_chunk;
+                    /* remove the chunks from the free list */
+                    do {
+                        if(mem_options->buckets[i].free_chunk == chunk) {
+                            mem_options->buckets[i].free_chunk = chunk->u.next_free;
+                        } else {
+                            next_chunk = mem_options->buckets[i].free_chunk;
+                            while(next_chunk->u.next_free != chunk) {
+                                next_chunk = next_chunk->u.next_free;
+                            }
+                            next_chunk->u.next_free = chunk->u.next_free; 
+                        }
+                    } while((chunk = chunk->next_in_segment) != first_chunk);
+                    /* set the segment list to point to the next segment */
+                    segment = *segment_header;
+                    *segment_header = segment->next_segment;
+                    /* free the memory */
+                    if(mem_options->free_mem_fn)
+                        mem_options->free_mem_fn(mem->alc_mpool, segment);
+                } else {
+                    /* go to next segment */
+                    segment_header = &((*segment_header)->next_segment);
+                }
+            }
         }
         /* relese the lock on the bucket */
         OPAL_THREAD_UNLOCK(&(mem_options->buckets[i].lock));
