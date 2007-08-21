@@ -34,7 +34,7 @@ int mca_coll_sm_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
                                 void *rbuf, int *rcounts, int *rdisps,
                                 struct ompi_datatype_t *rdtype, 
                                 struct ompi_communicator_t *comm,
-                                struct mca_coll_base_module_1_1_0_t *module);
+                                struct mca_coll_base_module_1_1_0_t *module)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
