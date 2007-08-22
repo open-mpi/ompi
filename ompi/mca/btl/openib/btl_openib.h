@@ -95,6 +95,8 @@ struct mca_btl_openib_component_t {
     /**< array of available BTLs */
 
     ompi_pointer_array_t hcas; /**< array of available hcas */
+    int hcas_count;
+
     int ib_free_list_num;
     /**< initial size of free lists */
 
