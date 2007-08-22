@@ -152,6 +152,7 @@ int btl_openib_component_open(void)
     mca_btl_openib_component.ib_num_btls = 0;
     mca_btl_openib_component.openib_btls = NULL;
     OBJ_CONSTRUCT(&mca_btl_openib_component.hcas, ompi_pointer_array_t);
+    mca_btl_openib_component.hcas_count = 0;
 
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_procs, opal_list_t);
@@ -679,6 +680,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
 #endif
         orte_pointer_array_init(&hca->endpoints, 10, INT_MAX, 10);
         ompi_pointer_array_add(&mca_btl_openib_component.hcas, hca);
+        mca_btl_openib_component.hcas_count++;
         return OMPI_SUCCESS;
     }
 
@@ -1489,9 +1491,7 @@ static int btl_openib_component_progress(void)
     }
     if(count) return count;
 
-    for(i = 0;
-            i < ompi_pointer_array_get_size(&mca_btl_openib_component.hcas);
-            i++) {
+    for(i = 0; i < mca_btl_openib_component.hcas_count; i++) {
         mca_btl_openib_hca_t *hca =
             ompi_pointer_array_get_item(&mca_btl_openib_component.hcas, i);
         count += btl_openib_module_progress(hca);
