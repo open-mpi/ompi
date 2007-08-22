@@ -1421,10 +1421,10 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
                                   current_item + i_info->mca_pml_base_recv_request_t.offset.req_bytes_packed,
                                   p_info );
                 res->actual_local_rank =
-                    fetch_size_t( proc,
-                                  i_info->ompi_status_public_t.offset.MPI_SOURCE, p_info );
-                res->actual_global_rank  = translate( p_info->current_communicator->group,
-                                                      res->actual_local_rank );
+                    fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
+                               i_info->ompi_status_public_t.offset.MPI_SOURCE, p_info );
+                res->actual_global_rank = translate( p_info->current_communicator->group,
+                                                  res->actual_local_rank );
             } else {
                 /* We are unable to know exactly how many bytes will be transfered.
                  * Until we match the request report the count from the user call.
