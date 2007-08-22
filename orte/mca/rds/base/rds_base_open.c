@@ -113,7 +113,7 @@ int orte_rds_base_open(void)
 
     /* Debugging / verbose output */
 
-    param = mca_base_param_reg_int_name("rds_base", "verbose", 
+    param = mca_base_param_reg_int_name("rds", "base_verbose", 
                                         "Verbosity level for the rds framework",
                                         false, false, 0, &value);
     if (value != 0) {

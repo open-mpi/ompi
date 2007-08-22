@@ -311,7 +311,7 @@ int orte_gpr_base_open(void)
     kill_prefix.lds_want_stderr = true;
     kill_prefix.lds_prefix = NULL;
     
-    param = mca_base_param_reg_int_name("gpr_base", "verbose",
+    param = mca_base_param_reg_int_name("gpr", "base_verbose",
                                         "Verbosity level for the gpr framework",
                                         false, false, 0, &value);
     if (value != 0) {

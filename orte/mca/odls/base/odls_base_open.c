@@ -85,7 +85,7 @@ int orte_odls_base_open(void)
     
     /* Debugging / verbose output */
     
-    param = mca_base_param_reg_int_name("odls_base", "verbose",
+    param = mca_base_param_reg_int_name("odls", "base_verbose",
                                         "Verbosity level for the odls framework",
                                         false, false, 0, &value);
     if (value != 0) {
@@ -94,7 +94,7 @@ int orte_odls_base_open(void)
         orte_odls_globals.output = -1;
     }
 
-    mca_base_param_reg_int_name("odls_base", "sigkill_timeout",
+    mca_base_param_reg_int_name("odls", "base_sigkill_timeout",
                                 "Time to wait for a process to die after issuing a kill signal to it",
                                 false, false, 1, &orte_odls_globals.timeout_before_sigkill);
     

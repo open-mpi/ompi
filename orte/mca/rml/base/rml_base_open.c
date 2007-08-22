@@ -58,7 +58,7 @@ int orte_rml_base_open(void)
     OBJ_CONSTRUCT(&orte_rml_base.rml_components, opal_list_t);
     
     /* lookup common parameters */
-    id = mca_base_param_reg_int_name("rml_base", "debug",
+    id = mca_base_param_reg_int_name("rml", "base_debug",
                                      "Verbosity level for the rml famework",
                                      false, false, 0, &int_value);
     orte_rml_base.rml_debug = int_value;

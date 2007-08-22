@@ -73,7 +73,7 @@ int orte_schema_base_open(void)
     if (!orte_schema_initialized) {
         /* Debugging / verbose output */
         
-        param = mca_base_param_reg_int_name("schema_base", "verbose",
+        param = mca_base_param_reg_int_name("schema", "base_verbose",
                                             "Verbosity level for the schema framework",
                                             false, false, 0, &value);
         if (value != 0) {

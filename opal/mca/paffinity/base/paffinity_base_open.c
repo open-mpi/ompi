@@ -54,7 +54,7 @@ int opal_paffinity_base_open(void)
 
     /* Debugging / verbose output */
 
-    mca_base_param_reg_int_name("paffinity_base", "verbose", 
+    mca_base_param_reg_int_name("paffinity", "base_verbose", 
                                 "Verbosity level of the paffinity framework",
                                 false, false,
                                 0, &value);

@@ -192,7 +192,7 @@ int orte_rmgr_base_open(void)
     /* Debugging / verbose output */
 
     orte_rmgr_base.rmgr_output = opal_output_open(NULL);
-    param = mca_base_param_reg_int_name("rmgr_base", "verbose",
+    param = mca_base_param_reg_int_name("rmgr", "base_verbose",
                                         "Verbosity level for the rmgr framework",
                                         false, false, 0, &value);
     if (value != 0) {

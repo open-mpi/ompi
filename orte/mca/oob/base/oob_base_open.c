@@ -82,10 +82,10 @@ int mca_oob_base_open(void)
   }
 
   /* register parameters */
-  mca_base_param_reg_string_name("oob_base", "include",
+  mca_base_param_reg_string_name("oob", "base_include",
                                  "Components to include for oob framework selection",
                                  false, false, NULL, &mca_oob_base_include);
-  mca_base_param_reg_string_name("oob_base", "exclude",
+  mca_base_param_reg_string_name("oob", "base_exclude",
                                  "Components to exclude for oob framework selection",
                                  false, false, NULL, &mca_oob_base_exclude);
 

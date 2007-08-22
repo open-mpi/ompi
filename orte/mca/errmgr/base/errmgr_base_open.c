@@ -81,7 +81,7 @@ int orte_errmgr_base_open(void)
       
         /* Debugging / verbose output */
         
-        param = mca_base_param_reg_int_name("errmgr_base", "verbose",
+        param = mca_base_param_reg_int_name("errmgr", "base_verbose",
                                             "Verbosity level for the errmgr framework",
                                             false, false, 0, &value);
         if (value != 0) {

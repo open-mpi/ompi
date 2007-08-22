@@ -102,7 +102,7 @@ int orte_smr_base_open(void)
   /* setup output for debug messages */
 
     orte_smr_base.smr_output = opal_output_open(NULL);
-    param = mca_base_param_reg_int_name("smr_base", "verbose",
+    param = mca_base_param_reg_int_name("smr", "base_verbose",
                                         "Verbosity level for the smr framework",
                                         false, false, 0, &value);
     if (value != 0) {

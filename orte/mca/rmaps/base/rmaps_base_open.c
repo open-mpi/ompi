@@ -142,7 +142,7 @@ int orte_rmaps_base_open(void)
     }
     
     /* should we display the map after determining it? */
-    mca_base_param_reg_int_name("rmaps_base", "display_map",
+    mca_base_param_reg_int_name("rmaps", "base_display_map",
                                 "Whether to display the process map after it is computed",
                                 false, false, (int)false, &value);
     if ((int)false == value) {

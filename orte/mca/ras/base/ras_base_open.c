@@ -81,7 +81,7 @@ int orte_ras_base_open(void)
     /* Debugging / verbose output */
 
     orte_ras_base.ras_output = opal_output_open(NULL);
-    mca_base_param_reg_int_name("ras_base", "verbose", 
+    mca_base_param_reg_int_name("ras", "base_verbose", 
                                 "Enable debugging for the RAS framework (nonzero = enabled)",
                                 false, false, 0, &value);
     if (value != 0) {
