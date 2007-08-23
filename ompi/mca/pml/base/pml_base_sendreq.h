@@ -107,9 +107,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
          ompi_convertor_get_packed_size( &(request)->req_base.req_convertor, \
                                          &((request)->req_bytes_packed) );\
       }                                                                   \
-      PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,                  \
-                               &(request)->req_base,                      \
-                               PERUSE_SEND);                              \
    }
 
 /**

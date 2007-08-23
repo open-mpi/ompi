@@ -81,10 +81,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
     /* What about req_type ? */                                          \
     (request)->req_base.req_pml_complete = OPAL_INT_TO_BOOL(persistent); \
     (request)->req_base.req_free_called = false;                         \
-                                                                         \
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,                   \
-                             &((request)->req_base),                     \
-                             PERUSE_RECV);                               \
 }
 /**
  *

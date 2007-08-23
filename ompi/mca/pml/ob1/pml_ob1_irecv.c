@@ -41,6 +41,10 @@ int mca_pml_ob1_irecv_init(void *addr,
                                    addr,
                                    count, datatype, src, tag, comm, true);
 
+    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
+                             &((recvreq)->req_recv.req_base),
+                             PERUSE_RECV);                              
+
     *request = (ompi_request_t *) recvreq;
     return OMPI_SUCCESS;
 }
@@ -63,6 +67,10 @@ int mca_pml_ob1_irecv(void *addr,
     MCA_PML_OB1_RECV_REQUEST_INIT(recvreq,
                                    addr,
                                    count, datatype, src, tag, comm, false);
+
+    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
+                             &((recvreq)->req_recv.req_base),
+                             PERUSE_RECV);
 
     MCA_PML_OB1_RECV_REQUEST_START(recvreq);
     *request = (ompi_request_t *) recvreq;
@@ -87,6 +95,10 @@ int mca_pml_ob1_recv(void *addr,
     MCA_PML_OB1_RECV_REQUEST_INIT(recvreq,
                                    addr,
                                    count, datatype, src, tag, comm, false);
+
+    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
+                             &((recvreq)->req_recv.req_base),
+                             PERUSE_RECV);
 
     MCA_PML_OB1_RECV_REQUEST_START(recvreq);
     if (recvreq->req_recv.req_base.req_ompi.req_complete == false) {
