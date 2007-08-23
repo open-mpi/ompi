@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,24 +35,24 @@
  *	Accepts:	- same as MPI_Barrier()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_hierarch_barrier_intra(struct ompi_communicator_t *comm)
+int mca_coll_hierarch_barrier_intra(struct ompi_communicator_t *comm, 
+				    struct mca_coll_base_module_1_1_0_t *module)
 {
-    struct mca_coll_base_comm_t *data=NULL;
     struct ompi_communicator_t *llcomm=NULL;
     struct ompi_communicator_t *lcomm=NULL;
+    mca_coll_hierarch_module_t *hierarch_module = (mca_coll_hierarch_module_t *) module;
     int root=0;
     int lroot, llroot;
     int rank, ret=OMPI_SUCCESS;
     
     rank   = ompi_comm_rank ( comm );
-    data   = comm->c_coll_selected_data;
-    lcomm  = data->hier_lcomm;
+    lcomm  = hierarch_module->hier_lcomm;
 
     if ( mca_coll_hierarch_verbose_param ) { 
       printf("%s:%d: executing hierarchical barrier\n", comm->c_name, rank );
     } 
 
-    llcomm = mca_coll_hierarch_get_llcomm ( root, data, &llroot, &lroot);
+    llcomm = mca_coll_hierarch_get_llcomm ( root, hierarch_module, &llroot, &lroot);
 
     /* 
      * Barrier consists of three steps:
@@ -61,18 +62,18 @@ int mca_coll_hierarch_barrier_intra(struct ompi_communicator_t *comm)
      *   necessary to avoid that any non local leaders exit too early.
      */
     if ( MPI_COMM_NULL != lcomm ) {
-	ret = lcomm->c_coll.coll_barrier ( lcomm );
+	ret = lcomm->c_coll.coll_barrier ( lcomm, lcomm->c_coll.coll_barrier_module );
         if ( OMPI_SUCCESS != ret ) {
            return ret;
 	}
     }
 
     if ( MPI_UNDEFINED != llroot ) {
-	ret = llcomm->c_coll.coll_barrier ( llcomm );
+	ret = llcomm->c_coll.coll_barrier ( llcomm, llcomm->c_coll.coll_barrier_module );
     }
 
     if ( MPI_COMM_NULL != lcomm ) {
-	ret = lcomm->c_coll.coll_barrier ( lcomm );
+	ret = lcomm->c_coll.coll_barrier ( lcomm, lcomm->c_coll.coll_barrier_module );
     }
 
     return  ret;
