@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -244,9 +244,6 @@ do {                                                                            
 do {                                                                               \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = (hdr)->hdr_src;  \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;     \
-                                                                                   \
-    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_MSG_MATCH_POSTED_REQ,                     \
-                             &((request)->req_recv.req_base), PERUSE_RECV );       \
                                                                                    \
     if((request)->req_recv.req_bytes_packed > 0) {                                 \
         if( MPI_ANY_SOURCE == (request)->req_recv.req_base.req_peer ) {            \

@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -244,6 +244,9 @@ void mca_pml_ob1_recv_frag_callback( mca_btl_base_module_t* btl,
             /* remove descriptor from posted specific ireceive list */             \
             opal_list_remove_item(generic_receives,                                \
                                   (opal_list_item_t *)generic_recv);               \
+            PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,         \
+                                     &(generic_recv->req_recv.req_base),           \
+                                     PERUSE_RECV);                                 \
                                                                                    \
         }                                                                          \
     } while(0)
@@ -556,7 +559,13 @@ rematch:
                 /* attempt to match actual request */
                 match = NULL;
                 goto rematch;
+            } else {
+                if( (match->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE) ) {
+                    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_MSG_MATCH_POSTED_REQ,
+                                              &(match->req_recv.req_base), PERUSE_RECV);
+                }
             }
+
         } else {
 
             /* if no match found, place on unexpected queue */
