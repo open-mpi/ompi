@@ -99,13 +99,13 @@
 /**
  * The internal debugging interface.
  */
-#define VERBOSE_GENERAL 1
+#define VERBOSE_GENERAL 2
 #define VERBOSE_GROUP   10
 #define VERBOSE_COMM    10
 #define VERBOSE_LISTS   10
 #define VERBOSE_REQ     50
 
-#define VERBOSE 0
+#define VERBOSE 1
 #if VERBOSE
 #define DEBUG(LEVEL, WHAT) if( (LEVEL) > VERBOSE ) { printf WHAT; }
 #else
@@ -118,8 +118,6 @@
  */
 static const mqs_basic_callbacks *mqs_basic_entrypoints;
 static int host_is_big_endian;
-static int world_proc_array_entries = 0;
-static mqs_taddr_t* world_proc_array = NULL;
 
 void mqs_setup_basic_callbacks (const mqs_basic_callbacks * cb)
 {
@@ -286,15 +284,15 @@ static mqs_tword_t fetch_bool(mqs_process * proc, mqs_taddr_t addr, mpi_process_
 } /* fetch_bool */
 
 /***********************************************************************/
-static mqs_tword_t fetch_size_t(mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info)
+static mqs_taddr_t fetch_size_t(mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info)
 {
     int isize = p_info->sizes.size_t_size;
     char buffer[8];                  /* ASSUME the type fits in 8 bytes */
-    mqs_tword_t res = 0;
+    mqs_taddr_t res = 0;
 
     if (mqs_ok == mqs_fetch_data (proc, addr, isize, &buffer))
         mqs_target_to_host (proc, buffer, 
-                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_tword_t)-isize : 0), 
+                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_taddr_t)-isize : 0), 
                             isize);
   
     return res;
@@ -322,14 +320,13 @@ static group_t * find_or_create_group( mqs_process *proc,
                                        mqs_taddr_t table )
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
-    mqs_image * image          = mqs_get_image (proc);
+    mqs_image * image        = mqs_get_image (proc);
     mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
-    communicator_t *comm  = p_info->communicator_list;
+    communicator_t *comm     = p_info->communicator_list;
     int *tr;
     char *trbuffer;
-    int i;
+    int i, np;
     group_t *group;
-    int np;
     mqs_taddr_t value;
 
     np = fetch_int( proc,
@@ -342,7 +339,7 @@ static group_t * find_or_create_group( mqs_process *proc,
     /* Iterate over each communicator seeing if we can find this group */
     for (;comm; comm = comm->next) {
         group = comm->group;
-        if (group && group->table_base == table) {
+        if( group && (group->group_base == table) ) {
             group->ref_count++;			/* Someone else is interested */
             DEBUG(VERBOSE_GROUP, ("Increase refcount for group 0x%p to %d\n",
                                   (void*)group, group->ref_count) );
@@ -355,7 +352,7 @@ static group_t * find_or_create_group( mqs_process *proc,
     tr = (int *)mqs_malloc (np*sizeof(int));
     trbuffer = (char *)mqs_malloc (np*sizeof(mqs_taddr_t));
     group->local_to_global = tr;
-    group->table_base = table;
+    group->group_base = table;
     DEBUG(VERBOSE_GROUP, ("Create a new group 0x%p with %d members\n",
                           (void*)group, np) );
 
@@ -373,15 +370,15 @@ static group_t * find_or_create_group( mqs_process *proc,
      * structure. By comparing this pointers to the MPI_COMM_WORLD group
      * we can figure out the global rank in the MPI_COMM_WORLD of the process.
      */
-     if( NULL == world_proc_array ) {
-         world_proc_array = mqs_malloc( np * sizeof(mqs_taddr_t) );
+     if( NULL == p_info->world_proc_array ) {
+         p_info->world_proc_array = mqs_malloc( np * sizeof(mqs_taddr_t) );
          for( i = 0; i < np; i++ ) {
              mqs_target_to_host( proc, trbuffer + p_info->sizes.pointer_size*i,
                                  &value, p_info->sizes.pointer_size );
-             world_proc_array[i] = value;
+             p_info->world_proc_array[i] = value;
              group->local_to_global[i] = i;
          }
-         world_proc_array_entries = np;
+         p_info->world_proc_array_entries = np;
      } else {
          int j;
 
@@ -389,8 +386,8 @@ static group_t * find_or_create_group( mqs_process *proc,
              mqs_target_to_host( proc, trbuffer + p_info->sizes.pointer_size*i,
                                  &value, p_info->sizes.pointer_size );
              /* get the global rank this MPI process */
-             for( j = 0; j < world_proc_array_entries; j++ ) {
-                 if( value == world_proc_array[j] ) {
+             for( j = 0; j < p_info->world_proc_array_entries; j++ ) {
+                 if( value == p_info->world_proc_array[j] ) {
                      group->local_to_global[i] = j;
                      break;
                  }
@@ -465,7 +462,7 @@ int mqs_image_has_queues (mqs_image *image, char **message)
     }
 
     /**
-     * Open MPI use a bunch of lists in order to kep track of the internal
+     * Open MPI use a bunch of lists in order to keep track of the internal
      * objects. We have to make sure we're able to find all of them in the image
      * and compute their ofset in order to be able to parse them later.
      * We need to find the opal_list_item_t, the opal_list_t, the ompi_free_list_item_t,
@@ -643,6 +640,10 @@ int mqs_image_has_queues (mqs_image *image, char **message)
         i_info->ompi_communicator_t.offset.c_contextid = mqs_field_offset(qh_type, "c_contextid");
         i_info->ompi_communicator_t.offset.c_my_rank = mqs_field_offset(qh_type, "c_my_rank" );
         i_info->ompi_communicator_t.offset.c_local_group = mqs_field_offset(qh_type, "c_local_group" );
+        printf( "Communicator structure size %d, offset c_contextid %d offset c_my_rank %d\n",
+                i_info->ompi_communicator_t.size,
+                i_info->ompi_communicator_t.offset.c_contextid,
+                i_info->ompi_communicator_t.offset.c_my_rank );
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "ompi_group_t", mqs_lang_c );
@@ -695,13 +696,13 @@ int mqs_setup_process (mqs_process *process, const mqs_process_callbacks *pcb)
 
     if (p_info) {
         mqs_image        *image;
-        mpi_image_info *i_info;
+        mpi_image_info   *i_info;
 
         p_info->process_callbacks = pcb;
 
         /* Now we can get the rest of the info ! */
         image  = mqs_get_image (process);
-        i_info = (mpi_image_info *)mqs_get_image_info (image);
+        i_info   = (mpi_image_info *)mqs_get_image_info (image);
 
         /* We have no communicators yet */
         p_info->communicator_list = NULL;
@@ -710,6 +711,9 @@ int mqs_setup_process (mqs_process *process, const mqs_process_callbacks *pcb)
         p_info->comm_number_free  = 0;
         /* By default we don't show our internal requests*/
         p_info->show_internal_requests = 0;
+
+        p_info->world_proc_array_entries = 0;
+        p_info->world_proc_array = NULL;
 
         mqs_get_type_sizes (process, &p_info->sizes);
         /**
@@ -771,8 +775,8 @@ int mqs_setup_process (mqs_process *process, const mqs_process_callbacks *pcb)
 int mqs_process_has_queues (mqs_process *proc, char **msg)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
-    mqs_image * image          = mqs_get_image (proc);
-    mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
+    mqs_image * image        = mqs_get_image (proc);
+    mpi_image_info   *i_info = (mpi_image_info *)mqs_get_image_info (image);
 
     /* Don't bother with a pop up here, it's unlikely to be helpful */
     *msg = 0;
@@ -810,13 +814,13 @@ static int communicators_changed (mqs_process *proc)
                              p_info );
     if( (lowest_free != p_info->comm_lowest_free) ||
         (number_free != p_info->comm_number_free) ) {
-        p_info->comm_lowest_free = lowest_free;
-        p_info->comm_number_free = number_free;
         DEBUG(VERBOSE_COMM, ("Recreate the communicator list\n"
                              "    lowest_free [current] %d != [stored] %d\n"
                              "    number_free [current] %d != [stored] %d\n",
                              (int)lowest_free, (int)p_info->comm_lowest_free,
                              (int)number_free, (int)p_info->comm_number_free) );
+        p_info->comm_lowest_free = lowest_free;
+        p_info->comm_number_free = number_free;
         return 1;
     }
     DEBUG(VERBOSE_COMM, ("Communicator list not modified\n") );
@@ -859,20 +863,19 @@ static int compare_comms (const void *a, const void *b)
 static int rebuild_communicator_list (mqs_process *proc)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
-    mqs_image * image          = mqs_get_image (proc);
+    mqs_image * image        = mqs_get_image (proc);
     mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
     communicator_t **commp, *old;
-    int i, commcount = 0;
+    int i, commcount = 0, context_id, local_rank;
     mqs_tword_t comm_size, lowest_free, number_free;
-    mqs_taddr_t comm_addr_base = p_info->commlist_base + i_info->ompi_pointer_array_t.offset.addr;
+    mqs_taddr_t comm_addr_base;
     mqs_taddr_t comm_ptr;
-    mqs_communicator remote_comm;
 
     DEBUG(VERBOSE_COMM,("rebuild_communicator_list called "
                         "(commlist_base %lx, array offset %ld array size %d)\n",
                         p_info->commlist_base,
                         (long)i_info->ompi_pointer_array_t.offset.addr,
-                        i_info->ompi_pointer_array_t.offset.size));
+                        i_info->ompi_pointer_array_t.size));
     /**
      * Start by getting the number of registered communicators in the
      * global communicator array.
@@ -895,58 +898,69 @@ static int rebuild_communicator_list (mqs_process *proc)
      * We can use the fact that MPI_COMM_WORLD is at index 0 to force the
      * creation of the world_proc_array.
      */
-    world_proc_array_entries = 0;
-    mqs_free( world_proc_array );
-    world_proc_array = NULL;
+    p_info->world_proc_array_entries = 0;
+    mqs_free( p_info->world_proc_array );
+    p_info->world_proc_array = NULL;
 
-    /* Now get the pointer to the first communicator pointer */
-    comm_addr_base = fetch_pointer( proc, comm_addr_base, p_info );
+    /* Now get the pointer to the array of pointers to communicators */
+    comm_addr_base =
+        fetch_pointer( proc,
+                       p_info->commlist_base + i_info->ompi_pointer_array_t.offset.addr,
+                       p_info );
+    DEBUG(VERBOSE_COMM,("Array of communicators starting at 0x%llx (sizeof(void*) = %d)\n",
+                        (long long)comm_addr_base, (int)sizeof(mqs_taddr_t)));
     for( i = 0; (commcount < (comm_size - number_free)) && (i < comm_size); i++ ) {
         /* Get the communicator pointer */
         comm_ptr = 
             fetch_pointer( proc,
                            comm_addr_base + i * p_info->sizes.pointer_size,
                            p_info );
+        DEBUG(VERBOSE_GENERAL,("Fetch communicator pointer 0x%llx\n", (long long)comm_ptr));
         if( 0 == comm_ptr ) continue;
         commcount++;
         /* Now let's grab the data we want from inside */
-        remote_comm.unique_id = fetch_int( proc,
-                                           comm_ptr + i_info->ompi_communicator_t.offset.c_contextid,
-                                           p_info );
-        remote_comm.local_rank = fetch_int( proc,
-                                            comm_ptr + i_info->ompi_communicator_t.offset.c_my_rank,
-                                            p_info );
-        mqs_fetch_data( proc, comm_ptr + i_info->ompi_communicator_t.offset.c_name,
-                        64, remote_comm.name );
+        DEBUG(VERBOSE_GENERAL, ("Retrieve context_id from 0x%llx and local_rank from 0x%llx\n",
+                                comm_ptr + i_info->ompi_communicator_t.offset.c_contextid,
+                                comm_ptr + i_info->ompi_communicator_t.offset.c_my_rank));
+        context_id = fetch_int( proc,
+                                comm_ptr + i_info->ompi_communicator_t.offset.c_contextid,
+                                p_info );
+        local_rank = fetch_int( proc,
+                                comm_ptr + i_info->ompi_communicator_t.offset.c_my_rank,
+                                p_info );
 
         /* Do we already have this communicator ? */
-        old = find_communicator(p_info, remote_comm.unique_id);
+        old = find_communicator(p_info, context_id);
         if( NULL == old ) {
             mqs_taddr_t group_base;
 
             old = (communicator_t *)mqs_malloc (sizeof (communicator_t));
             /* Save the results */
-            old->next = p_info->communicator_list;
+            old->next                 = p_info->communicator_list;
             p_info->communicator_list = old;
-            old->comm_ptr  = comm_ptr;
-            old->recv_context = remote_comm.unique_id;
+            old->comm_ptr             = comm_ptr;
+            old->recv_context         = context_id;
+            old->comm_info.local_rank = local_rank;
 
+            DEBUG(VERBOSE_COMM,("Create new communicator 0x%llX with context_id %d and local_rank %d\n",
+                                (long long)old, context_id, local_rank));
             /* Now get the information about the group */
             group_base =
                 fetch_pointer( proc, comm_ptr + i_info->ompi_communicator_t.offset.c_local_group,
                                p_info );
             old->group = find_or_create_group( proc, group_base );
         }
-        strncpy(old->comm_info.name, remote_comm.name, 64);
-        old->comm_info.unique_id = remote_comm.unique_id;
-        old->comm_info.local_rank = remote_comm.local_rank;
+        mqs_fetch_data( proc, comm_ptr + i_info->ompi_communicator_t.offset.c_name,
+                        64, old->comm_info.name );
+        assert( old->comm_info.unique_id == remote_comm.unique_id);
+        assert( old->comm_info.local_rank == remote_comm.local_rank);
         if( NULL != old->group ) {
             old->comm_info.size = old->group->entries;
         }
         old->present = TRUE;
-        DEBUG(VERBOSE_COMM,("Communicator %d local_rank %d name %s\n",
-                            (int)old->comm_info.unique_id, (int)old->comm_info.local_rank,
-                            old->comm_info.name));
+        DEBUG(VERBOSE_COMM,("Communicator 0x%llx %d local_rank %d name %s\n",
+                            (long long)old->comm_ptr, (int)old->comm_info.unique_id,
+                            (int)old->comm_info.local_rank, old->comm_info.name));
     }
 
     /* Now iterate over the list tidying up any communicators which

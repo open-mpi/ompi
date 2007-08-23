@@ -167,54 +167,6 @@ typedef struct
             int _cancelled;
         } offset;
     } ompi_status_public_t;
-    /* Fields in MPID_QHDR */
-    int unexpected_offs;
-
-    /* Fields in MPID_QUEUE */
-    int first_offs;
-
-    /* Fields in MPID_QEL */
-    int context_id_offs;	
-    int tag_offs;
-    int tagmask_offs;
-    int lsrc_offs;
-    int srcmask_offs;
-    int next_offs;
-    int ptr_offs;
-
-    /* Fields in MPIR_SQEL */
-    int db_shandle_offs;
-    int db_comm_offs;
-    int db_target_offs;
-    int db_tag_offs;
-    int db_data_offs;
-    int db_byte_length_offs;
-    int db_next_offs;
-
-    /* Fields in MPIR_RHANDLE */
-    int is_complete_offs;
-    int buf_offs;
-    int len_offs;
-    int datatype_offs;
-    int comm_offs;
-    int start_offs;
-
-    /* in the embedded MPI_Status object */
-    int count_offs;
-    int MPI_SOURCE_offs;
-    int MPI_TAG_offs;
-
-    /* Fields in MPIR_Comm_list */
-    int sequence_number_offs;
-    int comm_first_offs;
-
-    /* Fields in MPIR_COMMUNICATOR */
-    int np_offs;
-    int lrank_to_grank_offs;
-    int send_context_offs;
-    int recv_context_offs;
-    int comm_next_offs;
-    int comm_name_offs;
 } mpi_image_info; 
 
 /***********************************************************************
@@ -223,10 +175,10 @@ typedef struct
 
 typedef struct group_t
 {
-    mqs_taddr_t table_base;           /* Where was it in the process  */
-    int     ref_count;                /* How many references to us */
-    int     entries;                  /* How many entries */
-    int     *local_to_global;         /* The translation table */
+    mqs_taddr_t group_base;          /* Where was it in the process  */
+    int         ref_count;           /* How many references to us */
+    int         entries;             /* How many entries */
+    int*        local_to_global;     /* The translation table */
 } group_t;
 
 /* Internal structure we hold for each communicator */
@@ -284,6 +236,9 @@ typedef struct
   mqs_tword_t show_internal_requests;   /* show or not the Open MPI internal requests */
   /* State for the iterators */
   struct communicator_t *current_communicator;	/* Easy, we're walking a simple list */
+
+  int world_proc_array_entries;
+  mqs_taddr_t* world_proc_array;
     
   mqs_ompi_free_list_t_pos next_msg;            /* And state for the message iterator */
   mqs_op_class  what;				/* What queue are we looking on */
