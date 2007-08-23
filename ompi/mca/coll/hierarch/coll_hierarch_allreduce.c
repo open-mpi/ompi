@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,11 +40,12 @@
 int mca_coll_hierarch_allreduce_intra(void *sbuf, void *rbuf, int count,
 				      struct ompi_datatype_t *dtype, 
 				      struct ompi_op_t *op,
-				      struct ompi_communicator_t *comm)
+				      struct ompi_communicator_t *comm,
+				      struct mca_coll_base_module_1_1_0_t *module)
 {
-    struct mca_coll_base_comm_t *data=NULL;
     struct ompi_communicator_t *llcomm=NULL;
     struct ompi_communicator_t *lcomm=NULL;
+    mca_coll_hierarch_module_t *hierarch_module = (mca_coll_hierarch_module_t *) module;
     int rank;
     int lroot, llroot;
     ptrdiff_t extent, true_extent, lb, true_lb;
@@ -52,15 +54,14 @@ int mca_coll_hierarch_allreduce_intra(void *sbuf, void *rbuf, int count,
     int root=0;
 
     rank   = ompi_comm_rank ( comm );
-    data   = comm->c_coll_selected_data;
-    lcomm  = data->hier_lcomm;
+    lcomm  = hierarch_module->hier_lcomm;
 
     if ( mca_coll_hierarch_verbose_param ) {
       printf("%s:%d: executing hierarchical allreduce with cnt=%d \n",
 	     comm->c_name, rank, count );
     }
 
-    llcomm = mca_coll_hierarch_get_llcomm ( root, data, &llroot, &lroot);
+    llcomm = mca_coll_hierarch_get_llcomm ( root, hierarch_module, &llroot, &lroot);
 
     if ( MPI_COMM_NULL != lcomm ) {
       ompi_ddt_get_extent(dtype, &lb, &extent);
@@ -74,11 +75,13 @@ int mca_coll_hierarch_allreduce_intra(void *sbuf, void *rbuf, int count,
       
       if ( MPI_IN_PLACE != sbuf ) {
 	ret = lcomm->c_coll.coll_reduce (sbuf, tmpbuf, count, dtype, 
-					 op, lroot, lcomm);
+					 op, lroot, lcomm, 
+					 lcomm->c_coll.coll_reduce_module);
       }
       else {
 	ret = lcomm->c_coll.coll_reduce (rbuf, tmpbuf, count, dtype, 
-					 op, lroot, lcomm);
+					 op, lroot, lcomm, 
+					 lcomm->c_coll.coll_reduce_module);
       }
       if ( OMPI_SUCCESS != ret ) {
 	goto exit;
@@ -88,16 +91,19 @@ int mca_coll_hierarch_allreduce_intra(void *sbuf, void *rbuf, int count,
     if ( MPI_UNDEFINED != llroot ) {
       if ( MPI_COMM_NULL != lcomm ) {
 	ret = llcomm->c_coll.coll_allreduce (tmpbuf, rbuf, count, dtype,
-					     op, llcomm);
+					     op, llcomm, 
+					     llcomm->c_coll.coll_allreduce_module);
       }
       else {
 	ret = llcomm->c_coll.coll_allreduce (sbuf, rbuf, count, dtype,
-					     op, llcomm);
+					     op, llcomm, 
+					     llcomm->c_coll.coll_allreduce_module);
       }
     }	
 
     if ( MPI_COMM_NULL != lcomm ) {
-	ret = lcomm->c_coll.coll_bcast(rbuf, count, dtype, lroot, lcomm );
+	ret = lcomm->c_coll.coll_bcast(rbuf, count, dtype, lroot, lcomm, 
+				       lcomm->c_coll.coll_bcast_module );
     }
 
 

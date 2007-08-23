@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,6 +27,7 @@
 #include "coll_hierarch.h"
 
 #include "mpi.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 
 /*
@@ -54,16 +56,16 @@ static int hierarch_open(void);
  * and pointers to our public functions in it
  */
 
-const mca_coll_base_component_1_0_0_t mca_coll_hierarch_component = {
+const mca_coll_base_component_1_1_0_t mca_coll_hierarch_component = {
 
   /* First, the mca_component_t struct containing meta information
      about the component itself */
 
   {
-    /* Indicate that we are a coll v1.0.0 component (which also implies a
+    /* Indicate that we are a coll v1.1.0 component (which also implies a
        specific MCA version) */
 
-    MCA_COLL_BASE_VERSION_1_0_0,
+    MCA_COLL_BASE_VERSION_1_1_0,
 
     /* Component name and version */
 
@@ -88,7 +90,6 @@ const mca_coll_base_component_1_0_0_t mca_coll_hierarch_component = {
   /* Initialization / querying functions */
   mca_coll_hierarch_init_query,
   mca_coll_hierarch_comm_query,
-  mca_coll_hierarch_comm_unquery
 };
 
 
@@ -133,3 +134,59 @@ static int hierarch_open(void)
 
     return OMPI_SUCCESS;
 }
+
+static void
+mca_coll_hierarch_module_construct(mca_coll_hierarch_module_t *module)
+{
+    module->hier_lcomm    = MPI_COMM_NULL;
+    module->hier_reqs     = NULL;
+/*    module->hier_llead    = (ompi_pointer_array_t ) NULL; */
+    module->hier_colorarr = NULL;
+    module->hier_llr      = NULL;
+
+    return;
+}
+
+static void
+mca_coll_hierarch_module_destruct(mca_coll_hierarch_module_t *hierarch_module)
+{
+    int i, size;
+    struct mca_coll_hierarch_llead_t *current=NULL;
+
+    if ( MPI_COMM_NULL != hierarch_module->hier_lcomm ) {
+	ompi_comm_free (&(hierarch_module->hier_lcomm) );
+    }
+    if ( NULL != hierarch_module->hier_reqs ) {
+	free ( hierarch_module->hier_reqs );
+    }
+
+/*    if ( NULL != hierarch_module->hier_llead ) { */
+	size = ompi_pointer_array_get_size ( &(hierarch_module->hier_llead));
+	for ( i=0; i<size; i++) {
+	    current = (struct mca_coll_hierarch_llead_t *)ompi_pointer_array_get_item ( 
+		&(hierarch_module->hier_llead), i ) ;
+	    if ( current->lleaders != NULL ) {
+		ompi_comm_free ( &(current->llcomm));
+		free ( current->lleaders );
+	    }
+	    free ( current );
+	}
+	ompi_pointer_array_remove_all ( &(hierarch_module->hier_llead));
+	OBJ_DESTRUCT (&(hierarch_module->hier_llead));
+/*    } */
+
+    if ( NULL != hierarch_module->hier_colorarr ) {
+	free ( hierarch_module->hier_colorarr );
+    }
+    if ( NULL != hierarch_module->hier_llr ) {
+	free ( hierarch_module->hier_llr);
+    }
+
+    return;
+}
+
+
+OBJ_CLASS_INSTANCE(mca_coll_hierarch_module_t,
+                   mca_coll_base_module_1_1_0_t,
+                   mca_coll_hierarch_module_construct,
+                   mca_coll_hierarch_module_destruct);
