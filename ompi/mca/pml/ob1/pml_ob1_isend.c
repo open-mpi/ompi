@@ -48,6 +48,10 @@ int mca_pml_ob1_isend_init(void *buf,
                                   dst, tag,
                                   comm, sendmode, true);
 
+    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
+                             &(sendreq)->req_send.req_base,
+                             PERUSE_SEND);
+
     *request = (ompi_request_t *) sendreq;
     return OMPI_SUCCESS;
 }
@@ -75,6 +79,10 @@ int mca_pml_ob1_isend(void *buf,
                                   dst, tag,
                                   comm, sendmode, false);
 
+    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
+                             &(sendreq)->req_send.req_base,
+                             PERUSE_SEND);
+
     MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc);
     *request = (ompi_request_t *) sendreq;
     return rc;
@@ -101,6 +109,10 @@ int mca_pml_ob1_send(void *buf,
                                   datatype,
                                   dst, tag,
                                   comm, sendmode, false);
+
+    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
+                             &(sendreq)->req_send.req_base,
+                             PERUSE_SEND);
     
     MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc);
     if (rc != OMPI_SUCCESS) {
