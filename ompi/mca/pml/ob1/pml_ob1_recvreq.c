@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -932,14 +932,17 @@ static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
     request->req_recv.req_base.req_proc = proc->ompi_proc;
     if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
           (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
+
+        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_MATCH_UNEX,
+                                &(request->req_recv.req_base), PERUSE_RECV );
+
         PERUSE_TRACE_MSG_EVENT( PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q,
                                 request->req_recv.req_base.req_comm,
                                 hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV );
         opal_list_remove_item(unexpected_frags, (opal_list_item_t*)frag);
         frag->request = request;
-    } 
-    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_MATCH_UNEX,
-                             &(request->req_recv.req_base), PERUSE_RECV );
+    }
+
     return frag;
 }
 
