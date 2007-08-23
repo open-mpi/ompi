@@ -27,8 +27,8 @@
 static void mca_pml_ob1_comm_proc_construct(mca_pml_ob1_comm_proc_t* proc)
 {
     proc->expected_sequence = 1;
-    proc->send_sequence = 0;
     proc->ompi_proc = NULL;
+    proc->send_sequence = 0;
     OBJ_CONSTRUCT(&proc->frags_cant_match, opal_list_t);
     OBJ_CONSTRUCT(&proc->specific_receives, opal_list_t);
     OBJ_CONSTRUCT(&proc->unexpected_frags, opal_list_t);
