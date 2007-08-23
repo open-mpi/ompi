@@ -81,7 +81,7 @@ static int ompi_comm_copy_topo (ompi_communicator_t *oldcomm,
  */   
 
 int ompi_comm_set ( ompi_communicator_t **ncomm, 
-                    ompi_communicator_t* oldcomm,
+                    ompi_communicator_t *oldcomm,
                     int local_size, 
                     int *local_ranks,
                     int remote_size,
@@ -212,12 +212,12 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
     }
       
     /* Initialize the PML stuff in the newcomm  */
-    if ( OMPI_ERROR == MCA_PML_CALL(add_comm(newcomm)) ) {
+    if ( OMPI_SUCCESS != (ret = MCA_PML_CALL(add_comm(newcomm))) ) {
         OBJ_RELEASE(newcomm);
-        return OMPI_ERROR;
+        return ret;
     }
+
     OMPI_COMM_SET_PML_ADDED(newcomm);
-    
     *ncomm = newcomm;
     return (OMPI_SUCCESS);
 }
@@ -250,7 +250,7 @@ int ompi_comm_group ( ompi_communicator_t* comm, ompi_group_t **group )
 int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group, 
                       ompi_communicator_t **newcomm )
 {
-    ompi_communicator_t *newcomp;
+    ompi_communicator_t *newcomp = NULL;
     int rsize , lsize;
     int mode,i,j;
     int *allranks=NULL;
@@ -634,7 +634,7 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm,
 {
     ompi_communicator_t *comp=NULL;
     ompi_communicator_t *newcomp=NULL;
-    int rsize, mode, rc=MPI_SUCCESS;
+    int rsize, mode, rc=OMPI_SUCCESS;
 
     comp = (ompi_communicator_t *) comm;
     if ( OMPI_COMM_IS_INTER ( comp ) ){
@@ -676,7 +676,7 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm,
                              NULL,     /* remote_leader */
                              mode,     /* mode */
                              -1 );     /* send_first */
-    if ( MPI_SUCCESS != rc ) {
+    if ( OMPI_SUCCESS != rc ) {
         return rc;
     }
 
@@ -695,7 +695,7 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm,
                                  -1,       /* send_first */
                                  0         /* sync_flag */
                                  );
-        if ( MPI_SUCCESS != rc ) {
+        if ( OMPI_SUCCESS != rc ) {
             return rc;
         }
     } else { 
@@ -709,7 +709,7 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm,
                                  -1,       /* send_first */
                                  1        /* sync_flag */
                                  );
-        if ( MPI_SUCCESS != rc ) {
+        if ( OMPI_SUCCESS != rc ) {
             return rc;
         }
     }
@@ -849,7 +849,7 @@ int ompi_comm_compare(ompi_communicator_t *comm1, ompi_communicator_t *comm2, in
     else if ( MPI_UNEQUAL == rresult ) 
         *result = MPI_UNEQUAL;
 
-    return MPI_SUCCESS;
+    return OMPI_SUCCESS;
 }
 /**********************************************************************/
 /**********************************************************************/
@@ -1284,7 +1284,7 @@ int ompi_comm_dump ( ompi_communicator_t *comm )
     if (OMPI_COMM_IS_INTER(comm)) {
         opal_output(0,"  Remote group size:%d\n", comm->c_remote_group->grp_proc_count);
     }
-    return MPI_SUCCESS;
+    return OMPI_SUCCESS;
 }
 /********************************************************************************/
 /********************************************************************************/

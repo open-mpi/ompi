@@ -170,7 +170,7 @@ int ompi_comm_init(void)
 
 ompi_communicator_t *ompi_comm_allocate ( int local_size, int remote_size )
 {
-    ompi_communicator_t *new_comm=NULL;
+    ompi_communicator_t *new_comm;
 
     /* create new communicator element */
     new_comm = OBJ_NEW(ompi_communicator_t);
@@ -178,8 +178,7 @@ ompi_communicator_t *ompi_comm_allocate ( int local_size, int remote_size )
     if ( 0 < remote_size ) {
         new_comm->c_remote_group = ompi_group_allocate (remote_size);
         new_comm->c_flags |= OMPI_COMM_INTER;
-    }
-    else {
+    } else {
         /* 
          * simplifies some operations (e.g. p2p), if 
          * we can always use the remote group 
