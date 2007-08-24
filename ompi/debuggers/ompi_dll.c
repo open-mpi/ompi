@@ -105,7 +105,7 @@
 #define VERBOSE_LISTS   10
 #define VERBOSE_REQ     50
 
-#define VERBOSE 1
+#define VERBOSE 0
 #if VERBOSE
 #define DEBUG(LEVEL, WHAT) if( (LEVEL) > VERBOSE ) { printf WHAT; }
 #else
@@ -628,10 +628,6 @@ int mqs_image_has_queues (mqs_image *image, char **message)
         i_info->ompi_pointer_array_t.offset.number_free = mqs_field_offset(qh_type, "number_free");
         i_info->ompi_pointer_array_t.offset.size = mqs_field_offset(qh_type, "size");
         i_info->ompi_pointer_array_t.offset.addr = mqs_field_offset(qh_type, "addr");
-        printf( "ompi_pointer_array_t size %d, offset size %d offset addr %d\n",
-                i_info->ompi_pointer_array_t.size,
-                i_info->ompi_pointer_array_t.offset.size,
-                i_info->ompi_pointer_array_t.offset.addr );
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "ompi_communicator_t", mqs_lang_c );
@@ -639,18 +635,11 @@ int mqs_image_has_queues (mqs_image *image, char **message)
             missing_in_action = "ompi_communicator_t";
             goto type_missing;
         }
-        printf( "ompi_communicator_t type %p\n", (void*)qh_type );
         i_info->ompi_communicator_t.size = mqs_sizeof(qh_type);
         i_info->ompi_communicator_t.offset.c_name = mqs_field_offset(qh_type, "c_name");
         i_info->ompi_communicator_t.offset.c_contextid = mqs_field_offset(qh_type, "c_contextid");
         i_info->ompi_communicator_t.offset.c_my_rank = mqs_field_offset(qh_type, "c_my_rank" );
         i_info->ompi_communicator_t.offset.c_local_group = mqs_field_offset(qh_type, "c_local_group" );
-        printf( "Communicator structure size %d, offset c_contextid %d \n"
-                "             offset c_my_rank %d offset local_group %d\n",
-                i_info->ompi_communicator_t.size,
-                i_info->ompi_communicator_t.offset.c_contextid,
-                i_info->ompi_communicator_t.offset.c_my_rank,
-                i_info->ompi_communicator_t.offset.c_local_group );
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "ompi_group_t", mqs_lang_c );
