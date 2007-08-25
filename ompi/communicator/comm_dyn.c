@@ -305,7 +305,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         free ( proc_list );
     }
     if ( OMPI_SUCCESS != rc ) {
-        if ( MPI_COMM_NULL != newcomp ) {
+        if ( MPI_COMM_NULL != newcomp && NULL != newcomp ) {
             OBJ_RETAIN(newcomp);
             newcomp = MPI_COMM_NULL;
         }
