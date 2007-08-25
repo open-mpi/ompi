@@ -150,7 +150,7 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
         free ( r_proc_list );
     }
     if ( MPI_SUCCESS != rc ) {
-        if ( MPI_COMM_NULL != newcomp ) {
+        if ( MPI_COMM_NULL != newcomp && NULL != newcomp ) {
             OBJ_RELEASE(newcomp);
         }
         *newcomm = MPI_COMM_NULL;
