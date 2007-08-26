@@ -552,6 +552,7 @@ int mqs_image_has_queues (mqs_image *image, char **message)
         i_info->mca_pml_base_request_t.offset.req_peer = mqs_field_offset(qh_type, "req_peer");
         i_info->mca_pml_base_request_t.offset.req_tag = mqs_field_offset(qh_type, "req_tag");
         i_info->mca_pml_base_request_t.offset.req_comm = mqs_field_offset(qh_type, "req_comm");
+        i_info->mca_pml_base_request_t.offset.req_datatype = mqs_field_offset(qh_type, "req_datatype");
         i_info->mca_pml_base_request_t.offset.req_proc = mqs_field_offset(qh_type, "req_proc");
         i_info->mca_pml_base_request_t.offset.req_sequence = mqs_field_offset(qh_type, "req_sequence");
         i_info->mca_pml_base_request_t.offset.req_type = mqs_field_offset(qh_type, "req_type");
@@ -664,6 +665,16 @@ int mqs_image_has_queues (mqs_image *image, char **message)
         i_info->ompi_status_public_t.offset.MPI_ERROR = mqs_field_offset(qh_type, "MPI_ERROR" );
         i_info->ompi_status_public_t.offset._count = mqs_field_offset(qh_type, "_count" );
         i_info->ompi_status_public_t.offset._cancelled = mqs_field_offset(qh_type, "_cancelled" );
+    }
+    {
+        mqs_type* qh_type = mqs_find_type( image, "ompi_datatype_t", mqs_lang_c );
+        if( !qh_type ) {
+            missing_in_action = "ompi_datatype_t";
+            goto type_missing;
+        }
+        i_info->ompi_datatype_t.size = mqs_sizeof(qh_type);
+        i_info->ompi_datatype_t.offset.size = mqs_field_offset(qh_type, "size");
+        i_info->ompi_datatype_t.offset.name = mqs_field_offset(qh_type, "name");
     }
 
     /* All the types are here. Let's succesfully return. */
@@ -948,8 +959,7 @@ static int rebuild_communicator_list (mqs_process *proc)
         }
         mqs_fetch_data( proc, comm_ptr + i_info->ompi_communicator_t.offset.c_name,
                         64, old->comm_info.name );
-        assert( old->comm_info.unique_id == context_id );
-        assert( old->comm_info.local_rank == local_rank );
+
         if( NULL != old->group ) {
             old->comm_info.size = old->group->entries;
         }
@@ -1365,6 +1375,9 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
 
     req_type = fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_type, p_info );
     if( OMPI_REQUEST_PML == req_type ) {
+        mqs_taddr_t ompi_datatype;
+        char data_name[64];
+
         /**
          * First retrieve the tag. If the tag is negative and the user didn't
          * request the internal requests information then move along.
@@ -1401,16 +1414,39 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
                                      p_info );
         /* Set this to true if it's a buffered request */
         res->system_buffer = FALSE;
+            
+        /* The pointer to the request datatype */
+        ompi_datatype =
+            fetch_pointer( proc,
+                           current_item + i_info->mca_pml_base_request_t.offset.req_datatype, p_info );
+        /* Retrieve the count as specified by the user */
+        res->desired_length =
+            fetch_size_t( proc,
+                          ompi_datatype + i_info->ompi_datatype_t.offset.size,
+                          p_info );
+        /* Be user friendly, show the datatype name */
+        mqs_fetch_data( proc, ompi_datatype + i_info->ompi_datatype_t.offset.name,
+                        64, data_name );
+        if( '\0' != data_name[0] ) {
+            snprintf( (char*)res->extra_text[1], 64, "Data: %d * %s",
+                      (int)res->desired_length, data_name );
+        }
+        /* And now compute the real length as specified by the user */
+        res->desired_length *=
+            fetch_size_t( proc,
+                          current_item + i_info->mca_pml_base_request_t.offset.req_count,
+                          p_info );
+
         if( MCA_PML_REQUEST_SEND == req_type ) {
             snprintf( (char *)res->extra_text[0], 64, "Non-blocking send 0x%llx", (long long)current_item );
             req_buffer =
-                fetch_pointer( proc, current_item + i_info->mca_pml_base_send_request_t.offset.req_addr,
+                fetch_pointer( proc,
+                               current_item + i_info->mca_pml_base_send_request_t.offset.req_addr,
                                p_info );
             res->system_buffer = ( req_buffer == res->buffer ? FALSE : TRUE );
-            res->desired_length =
+            res->actual_length =
                 fetch_size_t( proc,
                               current_item + i_info->mca_pml_base_send_request_t.offset.req_bytes_packed, p_info );
-            res->actual_length      = res->desired_length;
             res->actual_tag         = res->desired_tag;
             res->actual_local_rank  = res->desired_local_rank;
             res->actual_global_rank = res->actual_local_rank;
@@ -1421,7 +1457,7 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
              * when the request get initialized, and to the real tag once the request
              * is matched.
              */
-            res->actual_tag          =
+            res->actual_tag =
                 fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
                            i_info->ompi_status_public_t.offset.MPI_TAG, p_info );
             if( MPI_ANY_TAG != res->actual_tag ) {
@@ -1435,14 +1471,6 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
                                i_info->ompi_status_public_t.offset.MPI_SOURCE, p_info );
                 res->actual_global_rank = translate( p_info->current_communicator->group,
                                                   res->actual_local_rank );
-            } else {
-                /* We are unable to know exactly how many bytes will be transfered.
-                 * Until we match the request report the count from the user call.
-                 */
-                res->desired_length =
-                    fetch_size_t( proc,
-                                  current_item + i_info->mca_pml_base_request_t.offset.req_count,
-                                  p_info );
             }
         } else {
             snprintf( (char *)res->extra_text[0], 64, "Unknown type of request 0x%llx", (long long)current_item );
