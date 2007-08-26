@@ -85,6 +85,7 @@ typedef struct
             int req_peer;
             int req_tag;
             int req_comm;
+            int req_datatype;
             int req_proc;
             int req_sequence;
             int req_type;
@@ -167,6 +168,13 @@ typedef struct
             int _cancelled;
         } offset;
     } ompi_status_public_t;
+    struct {
+        int size;
+        struct {
+            int size;
+            int name;
+        } offset;
+    } ompi_datatype_t;
 } mpi_image_info; 
 
 /***********************************************************************
