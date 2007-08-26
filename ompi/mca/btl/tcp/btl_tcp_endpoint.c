@@ -723,7 +723,7 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
         break;
     case MCA_BTL_TCP_CONNECTED:
         /* complete the current send */
-        do {
+        while (NULL != btl_endpoint->endpoint_send_frag) {
             mca_btl_tcp_frag_t* frag = btl_endpoint->endpoint_send_frag;
             if(mca_btl_tcp_frag_send(frag, btl_endpoint->endpoint_sd) == false) {
                 break;
@@ -737,7 +737,7 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
             frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
             OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
 
-        } while (NULL != btl_endpoint->endpoint_send_frag);
+        }
 
         /* if nothing else to do unregister for send event notifications */
         if(NULL == btl_endpoint->endpoint_send_frag) {
