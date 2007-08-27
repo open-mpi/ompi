@@ -642,9 +642,6 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
                 prev_bytes_remaining = bytes_remaining;
             }
 
-            ompi_convertor_set_position(&recvreq->req_recv.req_base.req_convertor,
-                                        &recvreq->req_rdma_offset);
-
             do {
                 rdma_idx = recvreq->req_rdma_idx;
                 bml_btl = recvreq->req_rdma[rdma_idx].bml_btl;
@@ -662,10 +659,19 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
                 size = bml_btl->btl_rdma_pipeline_frag_size;
             }
 
+            /* take lock to protect converter against concurrent access
+             * from unpack */
+            OPAL_THREAD_LOCK(&recvreq->lock);
+            ompi_convertor_set_position(
+                    &recvreq->req_recv.req_base.req_convertor,
+                    &recvreq->req_rdma_offset);
+
             /* prepare a descriptor for RDMA */
             mca_bml_base_prepare_dst(bml_btl, reg, 
                                      &recvreq->req_recv.req_base.req_convertor,
                                      MCA_BTL_NO_ORDER, 0, &size, &dst);
+            OPAL_THREAD_UNLOCK(&recvreq->lock);
+
             if( OPAL_UNLIKELY(dst == NULL) ) {
                 continue;
             }
