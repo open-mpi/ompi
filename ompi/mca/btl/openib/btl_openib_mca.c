@@ -383,7 +383,7 @@ int btl_openib_register_mca_params(void)
                   "for small messages"
                   "(must be >= 1)",
                   16, &ival, REGINT_GE_ONE));
-    mca_btl_openib_component.eager_rdma_num = (uint32_t) (ival + 1);
+    mca_btl_openib_component.eager_rdma_num = (int32_t) (ival + 1);
 
     CHECK(reg_int("btls_per_lid", "Number of BTLs to create for each "
                   "InfiniBand LID "

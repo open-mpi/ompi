@@ -68,6 +68,7 @@ static int post_send(mca_btl_openib_module_t *openib_btl,
         BTL_OPENIB_HEADER_HTON((*(frag->hdr)));
 
     if(do_rdma) {
+        int32_t head;
         mca_btl_openib_footer_t* ftr =
             (mca_btl_openib_footer_t*)(((char*)frag->segment.seg_addr.pval) +
                                        frag->segment.seg_len);
@@ -83,15 +84,14 @@ static int post_send(mca_btl_openib_module_t *openib_btl,
             BTL_OPENIB_FOOTER_HTON((*ftr));
 
         frag->wr_desc.sr_desc.wr.rdma.rkey = endpoint->eager_rdma_remote.rkey;
+        MCA_BTL_OPENIB_RDMA_MOVE_INDEX(endpoint->eager_rdma_remote.head, head);
         frag->wr_desc.sr_desc.wr.rdma.remote_addr =
             endpoint->eager_rdma_remote.base.lval +
-            endpoint->eager_rdma_remote.head *
-            openib_btl->eager_rdma_frag_size +
+            head * openib_btl->eager_rdma_frag_size +
             sizeof(mca_btl_openib_header_t) +
             mca_btl_openib_component.eager_limit +
             sizeof(mca_btl_openib_footer_t);
         frag->wr_desc.sr_desc.wr.rdma.remote_addr -= frag->sg_entry.length;
-        MCA_BTL_OPENIB_RDMA_NEXT_INDEX(endpoint->eager_rdma_remote.head);
     } else {
         if(MCA_BTL_OPENIB_SRQ_QP == endpoint->qps[qp].qp_type) { 
             frag->wr_desc.sr_desc.opcode = IBV_WR_SEND_WITH_IMM;
@@ -708,7 +708,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     mca_btl_openib_module_t* openib_btl = endpoint->endpoint_btl;
     char *buf;
     mca_btl_openib_recv_frag_t *headers_buf;
-    unsigned int i;
+    int i;
     orte_std_cntr_t index;
 
     /* Set local rdma pointer to 1 temporarily so other threads will not try

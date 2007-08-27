@@ -149,7 +149,7 @@ struct mca_btl_openib_component_t {
     uint32_t ib_service_level; 
     uint32_t use_eager_rdma;
     int32_t eager_rdma_threshold; /**< After this number of msg, use RDMA for short messages, always */
-    uint32_t eager_rdma_num;
+    int32_t eager_rdma_num;
     int32_t max_eager_rdma;
     uint32_t btls_per_lid;
     uint32_t max_lmc;
