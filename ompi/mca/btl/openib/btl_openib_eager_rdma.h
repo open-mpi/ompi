@@ -36,7 +36,7 @@ typedef struct mca_btl_openib_eager_rdma_local_t mca_btl_openib_eager_rdma_local
 struct mca_btl_openib_eager_rdma_remote_t {
 	ompi_ptr_t base; /**< address of remote buffer */
 	uint32_t rkey; /**< RKey for accessing remote buffer */
-	uint16_t head; /**< RDMA buffer to post to */
+	int32_t head; /**< RDMA buffer to post to */
 	int32_t tokens; /**< number of rdam tokens */
 #if OMPI_ENABLE_DEBUG
     uint32_t seq;
@@ -83,6 +83,18 @@ typedef struct mca_btl_openib_eager_rdma_remote_t mca_btl_openib_eager_rdma_remo
                                    mca_btl_openib_component.eager_rdma_num) \
                                 (I) = 0;                                    \
                         } while (0)
+#define MCA_BTL_OPENIB_RDMA_MOVE_INDEX(HEAD, OLD_HEAD)                      \
+    do {                                                                    \
+        int32_t new_head;                                                   \
+        do {                                                                \
+            OLD_HEAD = HEAD;                                                \
+            new_head = OLD_HEAD + 1;                                        \
+            if(new_head == mca_btl_openib_component.eager_rdma_num)         \
+                new_head = 0;                                               \
+        } while(!OPAL_ATOMIC_CMPSET_32(&HEAD, OLD_HEAD, new_head));         \
+    } while(0)
+
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
