@@ -52,6 +52,7 @@ struct mca_btl_sm_frag_t {
     mca_btl_base_segment_t segment;
     struct mca_btl_base_endpoint_t *endpoint;
     size_t size;
+    /* pointer written to the FIFO, this is the base of the shared memory region */
     mca_btl_sm_hdr_t *hdr;
     ompi_free_list_t* my_list;
 };

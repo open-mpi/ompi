@@ -327,6 +327,7 @@ int mca_btl_sm_component_progress(void)
     /* local variables */
     unsigned int peer_smp_rank ;
     mca_btl_sm_frag_t *frag;
+    mca_btl_sm_frag_t Frag;
     ompi_fifo_t *fifo = NULL;
     mca_btl_sm_hdr_t *hdr;
     int my_smp_rank=mca_btl_sm_component.my_smp_rank;
@@ -387,6 +388,7 @@ int mca_btl_sm_component_progress(void)
                         mca_btl_sm_component.sm_offset[peer_smp_rank]);
                 /* recv upcall */
                 reg = mca_btl_sm.sm_reg + hdr->tag;
+		/*
                 MCA_BTL_SM_FRAG_ALLOC(frag, rc);
                 frag->segment.seg_addr.pval = ((char*)hdr) +
                     sizeof(mca_btl_sm_hdr_t);
@@ -394,6 +396,14 @@ int mca_btl_sm_component_progress(void)
                 reg->cbfunc(&mca_btl_sm.super, hdr->tag, &frag->base,
                         reg->cbdata);
                 MCA_BTL_SM_FRAG_RETURN(frag);
+		*/
+                Frag.segment.seg_addr.pval = ((char*)hdr) +
+                    sizeof(mca_btl_sm_hdr_t);
+                Frag.segment.seg_len = hdr->len;
+		Frag.base.des_dst_cnt = 1;
+		Frag.base.des_dst = &(Frag.segment);
+                reg->cbfunc(&mca_btl_sm.super, hdr->tag, &(Frag.base),
+                        reg->cbdata);
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
                         my_smp_rank, peer_smp_rank, hdr->frag, rc);
