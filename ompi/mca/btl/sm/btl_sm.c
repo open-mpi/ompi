@@ -801,7 +801,9 @@ int mca_btl_sm_send(
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)descriptor;
     int rc;
 
+    /* availble header space */
     frag->hdr->len = frag->segment.seg_len;
+    /* type of message, pt-2-pt, one-sided, etc */
     frag->hdr->tag = tag;
 
     /* 
