@@ -77,6 +77,15 @@
 #include "mpi_interface.h"
 #include "ompi_dll_defs.h"
 
+/* Temporary workaround for making Totalview to load these symbols in the library
+ * when this is compiled with the Sun Studio C compiler */
+#if defined(__SUNPRO_C)
+bool opal_uses_threads;
+bool opal_mutex_check_locks;
+volatile int32_t opal_progress_thread_count;
+int opal_progress_spin_count;
+#endif
+
 /* Essential macros for C */
 #ifndef NULL
 #define NULL ((void *)0)
