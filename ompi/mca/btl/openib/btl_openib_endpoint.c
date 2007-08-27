@@ -255,7 +255,7 @@ static void mca_btl_openib_endpoint_construct_qp(mca_btl_base_endpoint_t *endpoi
     memset(endpoint->qps[qp].lcl_qp_attr, 0, sizeof(struct ibv_qp_attr));
     endpoint->qps[qp].qp_type = mca_btl_openib_component.qp_infos[qp].type;
     endpoint->qps[qp].lcl_qp = NULL;
-    endpoint->qps[qp].rd_pending_credit_chks = 0;
+    endpoint->qps[qp].rd_credit_send_lock = 0;
     /* setup rem_info */
     endpoint->rem_info.rem_qps[qp].rem_qp_num = 0; 
     endpoint->rem_info.rem_qps[qp].rem_psn = 0;
@@ -534,21 +534,21 @@ static void mca_btl_openib_endpoint_credits(
     int status)
 {
     
-    int32_t checks, qp;
+    int qp;
     
-    mca_btl_openib_frag_t *frag = (mca_btl_openib_frag_t*) descriptor;
+    mca_btl_openib_frag_t *frag = (mca_btl_openib_frag_t*)descriptor;
     
     qp = frag->qp_idx;
    
     /* we don't acquire a wqe or token for credit message - so decrement */
     OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe, -1);
 
-    /* check to see if there are additional credits to return */
-    if((checks = OPAL_THREAD_ADD32(&endpoint->qps[qp].rd_pending_credit_chks,-1)) > 0) {
-        OPAL_THREAD_ADD32(&endpoint->qps[qp].rd_pending_credit_chks, -checks);
-        if(btl_openib_check_send_credits(endpoint, qp)) {
-            mca_btl_openib_endpoint_send_credits(endpoint, qp);
-        }
+    if(check_send_credits(endpoint, qp))
+        mca_btl_openib_endpoint_send_credits(endpoint, qp);
+    else {
+        BTL_OPENIB_CREDITS_SEND_UNLOCK(endpoint, qp);
+        /* check one more time if credits are available after unlock */
+        send_credits(endpoint, qp);
     }
 }
 
@@ -588,8 +588,7 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
         if(OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_sent, 1) >
                 (mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv - 1)) {
             OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_sent, -1);
-            OPAL_THREAD_ADD32(&endpoint->qps[qp].rd_pending_credit_chks,
-                    -endpoint->qps[qp].rd_pending_credit_chks);
+            BTL_OPENIB_CREDITS_SEND_UNLOCK(endpoint, qp);
             return;
         }
      }
@@ -627,7 +626,7 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
             BTL_OPENIB_HEADER_NTOH((*frag->hdr));
             BTL_OPENIB_RDMA_CREDITS_HEADER_NTOH((*credits_hdr));
         }
-        OPAL_THREAD_ADD32(&endpoint->qps[qp].rd_pending_credit_chks, -1);
+        BTL_OPENIB_CREDITS_SEND_UNLOCK(endpoint, qp);
         OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_credits, frag->hdr->credits);
         OPAL_THREAD_ADD32(&endpoint->eager_rdma_local.credits, credits_hdr->rdma_credits);
         if(do_rdma)

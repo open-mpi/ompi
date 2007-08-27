@@ -122,7 +122,7 @@ struct mca_btl_openib_endpoint_qp_t {
                                                     is no wqe available or, in
                                                     case of PP QP, if there is
                                                     no credit available */
-    int32_t  rd_pending_credit_chks;  /**< number of outstanding return credit requests */
+    int32_t  rd_credit_send_lock;  /**< Lock credit send fragment */
     struct mca_btl_openib_frag_t *credit_frag;
     union {
         mca_btl_openib_endpoint_srq_qp_t srq_qp;
@@ -278,24 +278,36 @@ static inline int mca_btl_openib_endpoint_post_rr_all(mca_btl_base_endpoint_t *e
     return OMPI_SUCCESS;
 }
 
-static inline int btl_openib_check_send_credits(
-        mca_btl_openib_endpoint_t *endpoint, const int qp)
+#define BTL_OPENIB_CREDITS_SEND_TRYLOCK(E, Q) \
+    OPAL_ATOMIC_CMPSET_32(&(E)->qps[(Q)].rd_credit_send_lock, 0, 1)
+#define BTL_OPENIB_CREDITS_SEND_UNLOCK(E, Q) \
+    OPAL_ATOMIC_CMPSET_32(&(E)->qps[(Q)].rd_credit_send_lock, 1, 0)
+
+static inline bool check_send_credits(mca_btl_openib_endpoint_t *endpoint,
+        const int qp)
 {
     if(BTL_OPENIB_EAGER_RDMA_QP(qp)) { 
         if(endpoint->eager_rdma_local.credits > endpoint->eager_rdma_local.rd_win) {
-            return OPAL_THREAD_ADD32(&endpoint->qps[qp].rd_pending_credit_chks, 1) == 1;
+            return true;
         }
     }
 
-    if(MCA_BTL_OPENIB_PP_QP != mca_btl_openib_component.qp_infos[qp].type)
-        return 0;
-
-    if(endpoint->qps[qp].u.pp_qp.rd_credits >= 
-       mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win) { 
-        return OPAL_THREAD_ADD32(&endpoint->qps[qp].rd_pending_credit_chks, 1) == 1;
-    } 
+    if(MCA_BTL_OPENIB_PP_QP == mca_btl_openib_component.qp_infos[qp].type) {
+        if(endpoint->qps[qp].u.pp_qp.rd_credits >=
+            mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win) {
+            return true;
+        }
+    }
    
-    return 0;
+    return false;
+}
+
+static inline void send_credits(mca_btl_openib_endpoint_t *endpoint,
+        const int qp)
+{
+    if(check_send_credits(endpoint, qp) &&
+            BTL_OPENIB_CREDITS_SEND_TRYLOCK(endpoint, qp))
+        mca_btl_openib_endpoint_send_credits(endpoint, qp);
 }
 
 END_C_DECLS
