@@ -1481,9 +1481,7 @@ static int btl_openib_component_progress(void)
                 OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
 
                 qp = mca_btl_openib_component.eager_rdma_qp;
-                if(btl_openib_check_send_credits(endpoint, qp))
-                    mca_btl_openib_endpoint_send_credits(endpoint, qp);
-  
+                send_credits(endpoint, qp);
                 count++;
             } else
                 OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
@@ -1593,9 +1591,7 @@ static int btl_openib_module_progress(mca_btl_openib_hca_t* hca)
                 }
                 count++; 
 
-
-                if(btl_openib_check_send_credits(endpoint, qp))
-                    mca_btl_openib_endpoint_send_credits(endpoint, qp);
+                send_credits(endpoint, qp);
  
                 /* decide if it is time to setup an eager rdma channel */
                 if (!endpoint->eager_rdma_local.base.pval &&
