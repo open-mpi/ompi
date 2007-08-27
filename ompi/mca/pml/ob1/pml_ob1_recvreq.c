@@ -66,7 +66,9 @@ static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
                              &(recvreq->req_recv.req_base), PERUSE_RECV );
 
     if( true == recvreq->req_recv.req_base.req_pml_complete ) {
-        MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );
+        if(OPAL_THREAD_ADD32(&recvreq->req_lock, 1) == 1) {
+            MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );
+        }
     }
 
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
@@ -598,11 +600,6 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
     size_t bytes_remaining = recvreq->req_send_offset -
                              recvreq->req_rdma_offset;
 
-    if( OPAL_UNLIKELY(0 == bytes_remaining)) {
-        OPAL_THREAD_ADD32(&recvreq->req_lock, -recvreq->req_lock);
-        return OMPI_SUCCESS;
-    }
-
     /* if starting bml_btl is provided schedule next fragment on it first */
     if(start_bml_btl != NULL) {
         for(i = 0; i < recvreq->req_rdma_cnt; i++) {
@@ -746,6 +743,14 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
             mca_bml.bml_progress();
         }
         bytes_remaining = recvreq->req_send_offset - recvreq->req_rdma_offset;
+        OPAL_THREAD_LOCK(&ompi_request_lock);
+        if(recvreq->req_recv.req_base.req_pml_complete &&
+                recvreq->req_recv.req_base.req_free_called) {
+            MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );
+            OPAL_THREAD_UNLOCK(&ompi_request_lock);
+            return MPI_SUCCESS;
+        }
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     } while(OPAL_THREAD_ADD32(&recvreq->req_lock,-1) > 0);
 
     return OMPI_SUCCESS;

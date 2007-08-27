@@ -137,7 +137,7 @@ do {                                                                            
     for( r = 0; r < recvreq->req_rdma_cnt; r++ ) {                              \
         mca_mpool_base_registration_t* btl_reg = recvreq->req_rdma[r].btl_reg;  \
         if( NULL != btl_reg  && btl_reg->mpool != NULL) {                       \
-            btl_reg->mpool->mpool_deregister( btl_reg->mpool, btl_reg );           \
+            btl_reg->mpool->mpool_deregister( btl_reg->mpool, btl_reg );        \
         }                                                                       \
     }                                                                           \
     recvreq->req_rdma_cnt = 0;                                                  \
@@ -145,7 +145,9 @@ do {                                                                            
     OPAL_THREAD_LOCK(&ompi_request_lock);                                       \
                                                                                 \
     if( true == recvreq->req_recv.req_base.req_free_called ) {                  \
-        MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );                             \
+        if(OPAL_THREAD_ADD32(&recvreq->req_lock, 1) == 1) {                     \
+            MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );                         \
+        }                                                                       \
     } else {                                                                    \
         /* initialize request status */                                         \
         recvreq->req_recv.req_base.req_pml_complete = true;                     \
