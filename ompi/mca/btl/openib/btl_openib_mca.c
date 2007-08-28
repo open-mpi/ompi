@@ -437,7 +437,7 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_module.super.btl_rdma_pipeline_frag_size = 1024 * 1024;    
     mca_btl_openib_module.super.btl_min_rdma_pipeline_size = 256 * 1024;
     mca_btl_openib_module.super.btl_flags = MCA_BTL_FLAGS_RDMA |
-        MCA_BTL_FLAGS_NEED_ACK | MCA_BTL_FLAGS_NEED_CSUM;
+        MCA_BTL_FLAGS_NEED_ACK | MCA_BTL_FLAGS_NEED_CSUM | MCA_BTL_FLAGS_HETEROGENEOUS_RDMA;
     mca_btl_openib_module.super.btl_bandwidth = 800;
     mca_btl_openib_module.super.btl_latency = 10;
     ret = mca_btl_base_param_register(

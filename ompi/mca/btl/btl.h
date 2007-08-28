@@ -164,6 +164,9 @@ typedef uint8_t mca_btl_base_tag_t;
 /* btl needs local rdma completion */
 #define MCA_BTL_FLAGS_RDMA_COMPLETION 0x0080
 
+ /* btl can do heterogeneous rdma operations on byte buffers */
+#define MCA_BTL_FLAGS_HETEROGENEOUS_RDMA 0x0100
+
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     (64*1024) /* internal loopback */
 #define MCA_BTL_EXCLUSIVITY_DEFAULT  1024      /* GM/IB/etc. */

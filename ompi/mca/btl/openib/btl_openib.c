@@ -35,6 +35,7 @@
 #include "btl_openib_endpoint.h"
 #include "ompi/datatype/convertor.h" 
 #include "ompi/datatype/datatype.h" 
+#include "ompi/datatype/dt_arch.h"
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/mpool/mpool.h" 
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
@@ -938,8 +939,17 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
         int ib_rc;
         
         frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
-        frag->wr_desc.sr_desc.wr.rdma.remote_addr = frag->base.des_dst->seg_addr.lval; 
-        frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_dst->seg_key.key32[0]; 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        if ((endpoint->endpoint_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN) !=
+            (ompi_proc_local()->proc_arch & OMPI_ARCH_ISBIGENDIAN)) {
+            frag->wr_desc.sr_desc.wr.rdma.remote_addr = opal_swap_bytes8(frag->base.des_dst->seg_addr.lval);
+            frag->wr_desc.sr_desc.wr.rdma.rkey = opal_swap_bytes4(frag->base.des_dst->seg_key.key32[0]);
+        } else 
+#endif
+        {
+            frag->wr_desc.sr_desc.wr.rdma.remote_addr = frag->base.des_dst->seg_addr.lval;
+            frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_dst->seg_key.key32[0];
+        }
         frag->sg_entry.addr = (unsigned long) frag->base.des_src->seg_addr.pval; 
         frag->sg_entry.length  = frag->base.des_src->seg_len; 
        
@@ -997,8 +1007,17 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
     } else { 
     
         frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
-        frag->wr_desc.sr_desc.wr.rdma.remote_addr = frag->base.des_src->seg_addr.lval; 
-        frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_src->seg_key.key32[0]; 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        if ((endpoint->endpoint_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN) !=
+            (ompi_proc_local()->proc_arch & OMPI_ARCH_ISBIGENDIAN)) {
+            frag->wr_desc.sr_desc.wr.rdma.remote_addr = opal_swap_bytes8(frag->base.des_src->seg_addr.lval); 
+            frag->wr_desc.sr_desc.wr.rdma.rkey = opal_swap_bytes4(frag->base.des_src->seg_key.key32[0]); 
+        } else 
+#endif
+        {
+            frag->wr_desc.sr_desc.wr.rdma.remote_addr = frag->base.des_src->seg_addr.lval; 
+            frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_src->seg_key.key32[0]; 
+        }
         frag->sg_entry.addr = (unsigned long) frag->base.des_dst->seg_addr.pval; 
         frag->sg_entry.length  = frag->base.des_dst->seg_len; 
         
