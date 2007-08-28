@@ -254,16 +254,16 @@ static int mca_pml_ob1_recv_request_ack(
            rdma_num != 0) {
             unsigned char *base;
             ompi_convertor_get_current_pointer( &recvreq->req_recv.req_base.req_convertor, (void**)&(base) );
-            
-            recvreq->req_rdma_cnt = mca_pml_ob1_rdma_btls( bml_endpoint,
-                                                           base,
-                                                           recvreq->req_recv.req_bytes_packed,
-                                                           recvreq->req_rdma );
+           
+            if(hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_PIN)
+                recvreq->req_rdma_cnt = mca_pml_ob1_rdma_btls(bml_endpoint,
+                        base, recvreq->req_recv.req_bytes_packed,
+                        recvreq->req_rdma );
+            else
+                recvreq->req_rdma_cnt = 0;
 
             /* memory is already registered on both sides */
-            if (hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_PIN &&
-                recvreq->req_rdma_cnt != 0) {
-
+            if (recvreq->req_rdma_cnt != 0) {
                 recvreq->req_send_offset = hdr->hdr_msg_length;
                 /* are rdma devices available for long rdma protocol */
             } else if(bml_endpoint->btl_send_limit < hdr->hdr_msg_length) {
