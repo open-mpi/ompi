@@ -55,6 +55,21 @@ struct orte_rml_oob_msg_header_t {
 };
 typedef struct orte_rml_oob_msg_header_t orte_rml_oob_msg_header_t;
 
+#define ORTE_RML_OOB_MSG_HEADER_HTON(hdr)               \
+    do {                                                \
+        ORTE_PROCESS_NAME_HTON((hdr).origin);           \
+        ORTE_PROCESS_NAME_HTON((hdr).destination);      \
+        (hdr).tag = htonl((hdr).tag);                   \
+    } while (0)
+
+
+#define ORTE_RML_OOB_MSG_HEADER_NTOH(hdr)               \
+    do {                                                \
+        ORTE_PROCESS_NAME_NTOH((hdr).origin);           \
+        ORTE_PROCESS_NAME_NTOH((hdr).destination);      \
+        (hdr).tag = ntohl((hdr).tag);                   \
+    } while (0)
+
 
 struct orte_rml_oob_msg_t {
     opal_object_t             super;
