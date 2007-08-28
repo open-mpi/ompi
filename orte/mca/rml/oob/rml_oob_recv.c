@@ -38,6 +38,7 @@ orte_rml_recv_msg_callback(int status,
             status -= sizeof(orte_rml_oob_msg_header_t);
         }
 
+        ORTE_RML_OOB_MSG_HEADER_NTOH(*hdr);
         msg->msg_cbfunc.iov(status, &hdr->origin, iov + 1, count - 1, 
                             hdr->tag, msg->msg_cbdata);
         if (!msg->msg_persistent) OBJ_RELEASE(msg);
@@ -47,6 +48,8 @@ orte_rml_recv_msg_callback(int status,
         status = orte_dss.load(&msg->msg_recv_buffer, 
                                iov[1].iov_base, 
                                iov[1].iov_len);
+
+        ORTE_RML_OOB_MSG_HEADER_NTOH(*hdr);
         msg->msg_cbfunc.buffer(status, &hdr->origin, &msg->msg_recv_buffer, 
                                hdr->tag, msg->msg_cbdata);
 

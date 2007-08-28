@@ -43,6 +43,7 @@ orte_rml_send_msg_callback(int status,
         if (status > 0) {
             status -= sizeof(orte_rml_oob_msg_header_t);
         }
+        ORTE_RML_OOB_MSG_HEADER_NTOH(*hdr);
         msg->msg_cbfunc.iov(status, peer, iov + 1, count - 1, 
                             hdr->tag, msg->msg_cbdata);
         OBJ_RELEASE(msg);
@@ -51,6 +52,7 @@ orte_rml_send_msg_callback(int status,
         if (status > 0) {
             status -= sizeof(orte_rml_oob_msg_header_t);
         }
+        ORTE_RML_OOB_MSG_HEADER_NTOH(*hdr);
         msg->msg_cbfunc.buffer(status, peer, msg->user_buffer, 
                                hdr->tag, msg->msg_cbdata);
         OBJ_RELEASE(msg->user_buffer);
@@ -96,6 +98,7 @@ orte_rml_oob_send(orte_process_name_t* peer,
     msg->msg_header.origin = *ORTE_PROC_MY_NAME;
     msg->msg_header.destination = *peer;
     msg->msg_header.tag = tag;
+    ORTE_RML_OOB_MSG_HEADER_HTON(msg->msg_header);
 
     if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &next, peer)) {
         real_tag = tag;
@@ -166,6 +169,7 @@ orte_rml_oob_send_nb(orte_process_name_t* peer,
     msg->msg_header.origin = *ORTE_PROC_MY_NAME;
     msg->msg_header.destination = *peer;
     msg->msg_header.tag = tag;
+    ORTE_RML_OOB_MSG_HEADER_HTON(msg->msg_header);
 
     if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &next, peer)) {
         real_tag = tag;
@@ -258,6 +262,7 @@ orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
     msg->msg_header.origin = *ORTE_PROC_MY_NAME;
     msg->msg_header.destination = *peer;
     msg->msg_header.tag = tag;
+    ORTE_RML_OOB_MSG_HEADER_HTON(msg->msg_header);
 
     if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &next, peer)) {
         real_tag = tag;
