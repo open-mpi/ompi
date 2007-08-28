@@ -80,6 +80,8 @@ Trunk (not on release branches yet)
 1.2.4
 -----
 
+- Added missing MPI_FILE_NULL constant in Fortran.  Thanks to
+  Bernd Schubert for bringing this to our attention.
 - The UDPL BTL is only built in Linux when explicitly specified via
   the --with-udapl configure command line switch.
 - Fixed an issue with umask not being propagated when using the TM launcher.
