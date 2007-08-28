@@ -397,7 +397,7 @@ int mca_btl_sm_add_procs(
                         segment_header.base_shared_mem_segment,
                         mca_btl_sm_component.sm_mpool_base);
 
-	        mca_btl_sm_component.sm_ctl_header->segment_header.
+            mca_btl_sm_component.sm_ctl_header->segment_header.
                 base_shared_mem_flags = (volatile int *)
                 ADDR2OFFSET(mca_btl_sm_component.sm_ctl_header->segment_header.
                         base_shared_mem_flags,
@@ -435,11 +435,11 @@ int mca_btl_sm_add_procs(
          *  flags are set */
         opal_atomic_wmb();
 
-		/* Set my flag to 1 (convert from relative address first) */
+        /* Set my flag to 1 (convert from relative address first) */
         tmp_int_ptr=(volatile int *)
             OFFSET2ADDR(mca_btl_sm_component.sm_ctl_header->segment_header.
                     base_shared_mem_flags, mca_btl_sm_component.sm_mpool_base);
-		tmp_int_ptr[mca_btl_sm_component.my_smp_rank]=1;
+        tmp_int_ptr[mca_btl_sm_component.my_smp_rank]=1;
         opal_atomic_wmb();
 
         /*
@@ -470,11 +470,11 @@ int mca_btl_sm_add_procs(
                     return_code = OMPI_ERR_OUT_OF_RESOURCE;
                     goto CLEANUP;
                 }
-            	my_fifos[j].head_lock = (opal_atomic_lock_t*)buf;
-            	my_fifos[j].tail_lock = (opal_atomic_lock_t*)(buf +
-				CACHE_LINE_SIZE);
-            	opal_atomic_init(my_fifos[j].head_lock, OPAL_ATOMIC_UNLOCKED);
-            	opal_atomic_init(my_fifos[j].tail_lock, OPAL_ATOMIC_UNLOCKED);
+                my_fifos[j].head_lock = (opal_atomic_lock_t*)buf;
+                my_fifos[j].tail_lock = (opal_atomic_lock_t*)(buf +
+                CACHE_LINE_SIZE);
+                opal_atomic_init(my_fifos[j].head_lock, OPAL_ATOMIC_UNLOCKED);
+                opal_atomic_init(my_fifos[j].tail_lock, OPAL_ATOMIC_UNLOCKED);
             } else {
                 my_fifos[j].head_lock = NULL;
                 my_fifos[j].tail_lock = NULL;
