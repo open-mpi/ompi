@@ -425,7 +425,15 @@ static void mca_pml_ob1_recv_request_rget(
     /* allocate/initialize a fragment */
     for(i = 0; i < hdr->hdr_seg_cnt; i++) {
         frag->rdma_segs[i] = hdr->hdr_segs[i];
-        size += frag->rdma_segs[i].seg_len;
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        if ((recvreq->req_recv.req_base.req_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) !=
+            (ompi_proc_local()->proc_arch & OMPI_ARCH_ISBIGENDIAN)) {
+            size += opal_swap_bytes4(hdr->hdr_segs[i].seg_len);
+        } else 
+#endif
+        {
+            size += hdr->hdr_segs[i].seg_len;
+        }
     }
     frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
     if( OPAL_UNLIKELY(NULL == frag->rdma_bml) ) {
@@ -719,11 +727,10 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
             /* if we are little endian and the remote side is big endian,
                we're responsible for making sure the data is in network byte
                order */
-            /* RDMA is currently disabled by bml if arch doesn't
-               match, so this shouldn't be needed.  here to make sure
-               we remember if we ever change the bml. */
-            assert(0 == (recvreq->req_recv.req_base.req_proc->proc_arch & 
-                         OMPI_ARCH_ISBIGENDIAN));
+            if (recvreq->req_recv.req_base.req_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+                hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
+                MCA_PML_OB1_RDMA_HDR_HTON(*hdr);
+            }
 #endif
 #endif
 

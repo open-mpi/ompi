@@ -437,8 +437,9 @@ int mca_bml_r2_add_procs(
                bml_endpoint->btl_max_send_size = btl->btl_max_send_size;
 
             /* check flags - is rdma prefered */
-            if(btl->btl_flags & (MCA_BTL_FLAGS_PUT|MCA_BTL_FLAGS_GET) &&
-               proc->proc_arch == ompi_proc_local_proc->proc_arch) {
+            if ((btl->btl_flags & (MCA_BTL_FLAGS_PUT|MCA_BTL_FLAGS_GET)) &&
+                !((proc->proc_arch != ompi_proc_local_proc->proc_arch) &&
+                  (0 == (btl->btl_flags & MCA_BTL_FLAGS_HETEROGENEOUS_RDMA)))) {
                 mca_bml_base_btl_t* bml_btl_rdma = mca_bml_base_btl_array_insert(&bml_endpoint->btl_rdma);
                 *bml_btl_rdma = *bml_btl;
                 if(bml_endpoint->btl_pipeline_send_length <

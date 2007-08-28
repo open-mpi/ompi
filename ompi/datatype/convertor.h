@@ -163,6 +163,7 @@ static inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
 static inline int32_t
 ompi_convertor_need_buffers( const ompi_convertor_t* pConvertor )
 {
+    if (OPAL_UNLIKELY(0 != (pConvertor->flags & CONVERTOR_HOMOGENEOUS))) return 1;
     if( pConvertor->flags & DT_FLAG_NO_GAPS ) return 0;
     if( (pConvertor->count == 1) && (pConvertor->flags & DT_FLAG_CONTIGUOUS) ) return 0;
     return 1;

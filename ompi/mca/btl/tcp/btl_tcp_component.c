@@ -231,7 +231,8 @@ int mca_btl_tcp_component_open(void)
     mca_btl_tcp_module.super.btl_flags = MCA_BTL_FLAGS_PUT |
                                        MCA_BTL_FLAGS_SEND_INPLACE |
                                        MCA_BTL_FLAGS_NEED_CSUM |
-                                       MCA_BTL_FLAGS_NEED_ACK;
+                                       MCA_BTL_FLAGS_NEED_ACK |
+                                       MCA_BTL_FLAGS_HETEROGENEOUS_RDMA;
     mca_btl_tcp_module.super.btl_bandwidth = 100;
     mca_btl_tcp_module.super.btl_latency = 100;
     mca_btl_base_param_register(&mca_btl_tcp_component.super.btl_version,

@@ -134,6 +134,19 @@ struct mca_pml_ob1_rget_hdr_t {
 };
 typedef struct mca_pml_ob1_rget_hdr_t mca_pml_ob1_rget_hdr_t;
 
+#define MCA_PML_OB1_RGET_HDR_NTOH(h) \
+    do { \
+    MCA_PML_OB1_RNDV_HDR_NTOH((h).hdr_rndv); \
+    (h).hdr_seg_cnt = ntohl((h).hdr_seg_cnt); \
+    } while (0)
+
+#define MCA_PML_OB1_RGET_HDR_HTON(h) \
+    do { \
+    MCA_PML_OB1_RNDV_HDR_HTON((h).hdr_rndv); \
+    (h).hdr_seg_cnt = htonl((h).hdr_seg_cnt); \
+    } while (0) 
+
+
 /**
  *  Header for subsequent fragments.
  */
@@ -208,6 +221,20 @@ struct mca_pml_ob1_rdma_hdr_t {
     mca_btl_base_segment_t hdr_segs[1];       /**< list of segments for rdma */
 };
 typedef struct mca_pml_ob1_rdma_hdr_t mca_pml_ob1_rdma_hdr_t;
+
+#define MCA_PML_OB1_RDMA_HDR_NTOH(h) \
+    do { \
+    MCA_PML_OB1_COMMON_HDR_NTOH(h.hdr_common); \
+    (h).hdr_seg_cnt = ntohl((h).hdr_seg_cnt); \
+    (h).hdr_rdma_offset = ntoh64((h).hdr_rdma_offset); \
+    } while (0)
+
+#define MCA_PML_OB1_RDMA_HDR_HTON(h) \
+    do { \
+    MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
+    (h).hdr_seg_cnt = htonl((h).hdr_seg_cnt); \
+    (h).hdr_rdma_offset = hton64((h).hdr_rdma_offset); \
+    } while (0) 
 
 /**
  *  Header used to complete an RDMA operation.

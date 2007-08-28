@@ -240,7 +240,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
 
     /* read header */
     if(frag->iov_cnt == 0) {
-        if (btl_endpoint->endpoint_nbo) MCA_BTL_TCP_HDR_NTOH(frag->hdr);
+        if (btl_endpoint->endpoint_nbo && frag->iov_idx == 1) MCA_BTL_TCP_HDR_NTOH(frag->hdr);
         switch(frag->hdr.type) {
         case MCA_BTL_TCP_HDR_TYPE_SEND:
             if(frag->iov_idx == 1 && frag->hdr.size) {
