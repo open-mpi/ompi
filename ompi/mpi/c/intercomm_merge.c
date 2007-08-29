@@ -48,7 +48,7 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     int total_size;
     int rc=MPI_SUCCESS;
     int thigh = high;
-    ompi_proc_t **l_proc_list=NULL , **r_proc_list=NULL;
+    ompi_proc_t **r_proc_list=NULL;
     ompi_group_t *new_group_pointer;
     
 
@@ -142,9 +142,6 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
  exit:
     if ( NULL != procs ) {
         free ( procs );
-    }
-    if ( NULL != l_proc_list ) {
-        free ( l_proc_list );
     }
     if ( NULL != r_proc_list ) {
         free ( r_proc_list );
