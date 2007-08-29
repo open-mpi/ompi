@@ -230,7 +230,6 @@ int mca_coll_hierarch_module_enable (mca_coll_base_module_1_1_0_t *module,
 {
     int color;
     int size, rank, ret=OMPI_SUCCESS;
-    int *llr=NULL;
     
     struct ompi_communicator_t *lcomm=NULL;
     struct ompi_communicator_t *llcomm=NULL;
@@ -293,9 +292,6 @@ int mca_coll_hierarch_module_enable (mca_coll_base_module_1_1_0_t *module,
     }
     
  exit:
-    if ( NULL != llr ) {
-	free ( llr );
-    }
     if ( OMPI_SUCCESS != ret ) {
         ompi_comm_free ( &lcomm );
 	return OMPI_ERROR;
