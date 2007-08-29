@@ -86,7 +86,7 @@ orte_rml_oob_recv(orte_process_name_t* peer,
                                                       count + 1, tag, flags,
                                                       orte_rml_recv_msg_callback,
                                                       msg);
-    if (0 < ret) goto cleanup;
+    if (ret < 0) goto cleanup;
 
     OPAL_THREAD_LOCK(&msg->msg_lock);
     while (!msg->msg_complete) {
@@ -135,7 +135,7 @@ orte_rml_oob_recv_nb(orte_process_name_t* peer,
                                                       count + 1, tag, flags,
                                                       orte_rml_recv_msg_callback,
                                                       msg);
-    if (0 < ret) OBJ_RELEASE(msg);
+    if (ret < 0) OBJ_RELEASE(msg);
 
     return ret;
 }
@@ -165,7 +165,7 @@ orte_rml_oob_recv_buffer(orte_process_name_t* peer,
                                                       2, tag, flags,
                                                       orte_rml_recv_msg_callback,
                                                       msg);
-    if (0 < ret) goto cleanup;
+    if (ret < 0) goto cleanup;
 
     OPAL_THREAD_LOCK(&msg->msg_lock);
     while (!msg->msg_complete) {
@@ -218,7 +218,7 @@ orte_rml_oob_recv_buffer_nb(orte_process_name_t* peer,
                                                       tag, flags,
                                                       orte_rml_recv_msg_callback,
                                                       msg);
-    if (0 < ret) OBJ_RELEASE(msg);
+    if (ret < 0) OBJ_RELEASE(msg);
 
     return ret;
 }
