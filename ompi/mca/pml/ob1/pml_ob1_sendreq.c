@@ -1233,7 +1233,7 @@ void mca_pml_ob1_send_request_put( mca_pml_ob1_send_request_t* sendreq,
         } else 
 #endif
         {
-            size == frag->rdma_segs[i].seg_len;
+            size += frag->rdma_segs[i].seg_len;
         }
     }
 
