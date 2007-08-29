@@ -375,7 +375,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     int node_name_index2;
     int proc_name_index;
     int local_exec_index, local_exec_index_end;
-    char *jobid_string = NULL;
     char *param;
     char **argv = NULL;
     char *prefix_dir;
@@ -953,9 +952,6 @@ launch_apps:
         free(bin_base);
     }
 
-    if (NULL != jobid_string) {
-        free(jobid_string);  /* done with this variable */
-    }
     if (NULL != argv) {
         opal_argv_free(argv);
     }
