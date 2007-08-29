@@ -1052,7 +1052,7 @@ if test "$OMPI_ENABLE_DLOPEN_SUPPORT" = "1" ; then
         AC_EGREP_HEADER([lt_dladvise_init], [opal/libltdl/ltdl.h],
                         [OPAL_HAVE_LTDL_ADVISE=1],
                         [OPAL_HAVE_LTDL_ADVISE=0])
-        CPPFLAGS="$CPPFLAGS"
+        CPPFLAGS="$CPPFLAGS_save"
 
         # Arrgh.  This is gross.  But I can't think of any other way to do
         # it.  :-(
@@ -1072,6 +1072,7 @@ dynamic shared object loading) by configuring with --disable-dlopen.])
 else
     AC_MSG_WARN([libltdl support disabled (by --disable-dlopen)])
 
+    LIBLTDL=
     LIBLTDL_SUBDIR=
     OPAL_HAVE_LTDL_ADVISE=0
 
