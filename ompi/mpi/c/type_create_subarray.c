@@ -85,8 +85,6 @@ int MPI_Type_create_subarray(int ndims,
         start_loop = i = ndims - 1;
         step = -1;
         end_loop = -1;
-        if( end_loop > (start_loop + 2 * step) )
-            end_loop = start_loop + 2 * step;
     } else {
         start_loop = i = 0;
         step = 1;
@@ -95,9 +93,9 @@ int MPI_Type_create_subarray(int ndims,
             end_loop = start_loop + 2 * step;
     }
 
-    /* As we know that the ndims is at least 1 we can start by creating the first dimension data
-     * outside the loop, such that we dont have to create a duplicate of the oldtype just to be able
-     * to free it.
+    /* As we know that the ndims is at least 1 we can start by creating the
+     * first dimension data outside the loop, such that we dont have to create
+     * a duplicate of the oldtype just to be able to free it.
      */
     ompi_ddt_create_vector( subsize_array[i+step], subsize_array[i], size_array[i],
                             oldtype, newtype );
