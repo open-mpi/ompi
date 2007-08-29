@@ -240,7 +240,6 @@ int orte_cr_coord(int state)
  *************/
 static int orte_cr_coord_pre_ckpt(void) {
     int ret, exit_status = ORTE_SUCCESS;
-    char *tmp_char = NULL;
 
     /*
      * All the checkpoint heavey lifting in here...
@@ -281,9 +280,6 @@ static int orte_cr_coord_pre_ckpt(void) {
     }
 
  cleanup:
-    if( NULL != tmp_char) {
-        free(tmp_char);
-    }
 
     return exit_status;
 }
