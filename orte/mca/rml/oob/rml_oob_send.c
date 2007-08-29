@@ -113,7 +113,7 @@ orte_rml_oob_send(orte_process_name_t* peer,
                                                       flags,
                                                       orte_rml_send_msg_callback,
                                                       msg);
-    if (0 < ret) goto cleanup;
+    if (ret < 0) goto cleanup;
 
     OPAL_THREAD_LOCK(&msg->msg_lock);
     while (!msg->msg_complete) {
