@@ -932,8 +932,8 @@ ompi_osc_rdma_component_progress(void)
     OPAL_THREAD_LOCK(&mca_osc_rdma_component.c_lock);
 #else
     ret = OPAL_THREAD_TRYLOCK(&mca_osc_rdma_component.c_lock);
-#endif
     if (ret != 0) return 0;
+#endif
 
     for (item = opal_list_get_first(&mca_osc_rdma_component.c_pending_requests) ;
          item != opal_list_get_end(&mca_osc_rdma_component.c_pending_requests) ;
