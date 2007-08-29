@@ -691,14 +691,14 @@ int
 ompi_osc_pt2pt_component_progress(void)
 {
     opal_list_item_t *item;
-    int ret = 0, done = 0;
+    int ret, done = 0;
 
 #if OMPI_ENABLE_PROGRESS_THREADS
     OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
 #else
     ret = OPAL_THREAD_TRYLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
-#endif
     if (ret != 0) return 0;
+#endif
 
     for (item = opal_list_get_first(&mca_osc_pt2pt_component.p2p_c_pending_requests) ;
          item != opal_list_get_end(&mca_osc_pt2pt_component.p2p_c_pending_requests) ;
