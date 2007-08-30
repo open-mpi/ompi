@@ -68,6 +68,49 @@ struct mca_pml_ob1_send_range_t {
 typedef struct mca_pml_ob1_send_range_t mca_pml_ob1_send_range_t;
 OBJ_CLASS_DECLARATION(mca_pml_ob1_send_range_t);
 
+static inline bool lock_send_request(mca_pml_ob1_send_request_t *sendreq)
+{
+    return OPAL_THREAD_ADD32(&sendreq->req_lock,  1) == 1;
+}
+
+static inline bool unlock_send_request(mca_pml_ob1_send_request_t *sendreq)
+{
+    return OPAL_THREAD_ADD32(&sendreq->req_lock, -1) == 0;
+}
+
+static inline void
+add_request_to_send_pending(mca_pml_ob1_send_request_t* sendreq,
+        const mca_pml_ob1_send_pending_t type, const bool append)
+{
+    opal_list_item_t *item = (opal_list_item_t*)sendreq;
+
+    OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+    sendreq->req_pending = type;
+    if(append)
+        opal_list_append(&mca_pml_ob1.send_pending, item);
+    else
+        opal_list_prepend(&mca_pml_ob1.send_pending, item);
+
+    OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+}
+
+static inline mca_pml_ob1_send_request_t*
+get_request_from_send_pending(mca_pml_ob1_send_pending_t *type)
+{
+    mca_pml_ob1_send_request_t *sendreq;
+
+    OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+    sendreq = (mca_pml_ob1_send_request_t*)
+        opal_list_remove_first(&mca_pml_ob1.send_pending);
+    if(sendreq) {
+        *type = sendreq->req_pending;
+        sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_NONE;
+    }
+    OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+
+    return sendreq;
+}
+
 #define MCA_PML_OB1_SEND_REQUEST_ALLOC( comm,                           \
                                         dst,                            \
                                         sendreq,                        \
@@ -217,7 +260,7 @@ send_request_pml_complete_check(mca_pml_ob1_send_request_t *sendreq)
      * another request or if the request is persistent it can be restarted */
     if(sendreq->req_state == 0 &&
             sendreq->req_bytes_delivered >= sendreq->req_send.req_bytes_packed
-            && OPAL_THREAD_ADD32(&sendreq->req_lock, 1) == 1) {
+            && lock_send_request(sendreq)) {
         send_request_pml_complete(sendreq);
         return true;
     }
@@ -225,15 +268,14 @@ send_request_pml_complete_check(mca_pml_ob1_send_request_t *sendreq)
     return false;
 }
 
-
 /**
  *  Schedule additional fragments 
  */
-int mca_pml_ob1_send_request_schedule_exclusive(
-    mca_pml_ob1_send_request_t* sendreq);
+int
+mca_pml_ob1_send_request_schedule_exclusive(mca_pml_ob1_send_request_t*);
 
-static inline void mca_pml_ob1_send_request_schedule(
-        mca_pml_ob1_send_request_t* sendreq)
+static inline void
+mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
 {
     /*
      * Only allow one thread in this routine for a given request.
@@ -242,8 +284,16 @@ static inline void mca_pml_ob1_send_request_schedule(
      * the scheduling logic once for every call.
      */
 
-    if(OPAL_THREAD_ADD32(&sendreq->req_lock, 1) == 1)
-        mca_pml_ob1_send_request_schedule_exclusive(sendreq);
+    if(!lock_send_request(sendreq))
+        return;
+
+    do {
+        int rc;
+        rc = mca_pml_ob1_send_request_schedule_exclusive(sendreq);
+        if(rc == OMPI_ERR_OUT_OF_RESOURCE)
+            return;
+     } while(!unlock_send_request(sendreq));
+     send_request_pml_complete_check(sendreq);
 }
 
 /**
@@ -371,10 +421,7 @@ mca_pml_ob1_send_request_start( mca_pml_ob1_send_request_t* sendreq )
         if( OPAL_LIKELY(OMPI_ERR_OUT_OF_RESOURCE != rc) )
             return rc;
     }
-    OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
-    sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_START;
-    opal_list_append(&mca_pml_ob1.send_pending, (opal_list_item_t*)sendreq);
-    OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+    add_request_to_send_pending(sendreq, MCA_PML_OB1_SEND_PENDING_START, true);
 
     return OMPI_SUCCESS;
 }
