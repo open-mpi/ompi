@@ -799,7 +799,6 @@ int mca_btl_sm_send(
     mca_btl_base_tag_t tag)
 {
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)descriptor;
-    int rc;
 
     /* availble header space */
     frag->hdr->len = frag->segment.seg_len;
@@ -810,8 +809,8 @@ int mca_btl_sm_send(
      * post the descriptor in the queue - post with the relative
      * address 
      */
-    MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank, endpoint->peer_smp_rank, frag->hdr, rc);
-    return rc;
+    MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank, endpoint->peer_smp_rank, frag->hdr);
+    return OMPI_SUCCESS;
 }
 
 int mca_btl_sm_ft_event(int state) {
