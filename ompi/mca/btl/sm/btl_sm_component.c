@@ -397,9 +397,7 @@ int mca_btl_sm_component_progress(void)
                         reg->cbdata);
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
-                        my_smp_rank, peer_smp_rank, hdr->frag, rc);
-                if(OMPI_SUCCESS != rc)
-                    goto err;
+                        my_smp_rank, peer_smp_rank, hdr->frag);
                 break;
             }
             default:
@@ -408,16 +406,10 @@ int mca_btl_sm_component_progress(void)
                         MCA_BTL_SM_FRAG_STATUS_MASK);
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
-                        my_smp_rank, peer_smp_rank, hdr, rc);
-                if(OMPI_SUCCESS != rc)
-                    goto err;
+                        my_smp_rank, peer_smp_rank, hdr);
                 break;
         }
         rc++;
     }
-    return rc;
-err:
-    BTL_ERROR(("SM faild to send message due to shortage of shared memory.\n"));
-    mca_btl_sm.error_cb(&mca_btl_sm.super, MCA_BTL_ERROR_FLAGS_FATAL);
     return rc;
 }
