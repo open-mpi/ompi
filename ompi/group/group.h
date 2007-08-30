@@ -215,7 +215,7 @@ void ompi_set_group_rank(ompi_group_t *group, struct ompi_proc_t *proc_pointer);
 /**
  * Abstracting MPI_Group_translate_ranks to an ompi function for internal use
  */
-int ompi_group_translate_ranks ( ompi_group_t *group1, 
+OMPI_DECLSPEC int ompi_group_translate_ranks ( ompi_group_t *group1, 
                                  int n_ranks, int *ranks1,
                                  ompi_group_t *group2, 
                                  int *ranks2);

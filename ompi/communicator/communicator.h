@@ -264,7 +264,7 @@ struct ompi_communicator_t {
     /**
      * extract the local group from a communicator
      */
-    int ompi_comm_group (ompi_communicator_t *comm, ompi_group_t **group);
+    OMPI_DECLSPEC int ompi_comm_group (ompi_communicator_t *comm, ompi_group_t **group);
 
     /**
      * create a communicator based on a group
@@ -294,7 +294,7 @@ struct ompi_communicator_t {
      *
      * @
      */
-    int ompi_comm_split (ompi_communicator_t *comm, int color, int key,
+    OMPI_DECLSPEC int ompi_comm_split (ompi_communicator_t *comm, int color, int key,
                          ompi_communicator_t** newcomm, bool pass_on_topo);
 
     /**
