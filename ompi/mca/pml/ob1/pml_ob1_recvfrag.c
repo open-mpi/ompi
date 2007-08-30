@@ -134,13 +134,11 @@ void mca_pml_ob1_recv_frag_callback( mca_btl_base_module_t* btl,
                     hdr->hdr_ack.hdr_send_offset,
                     sendreq->req_send.req_bytes_packed -
                     hdr->hdr_ack.hdr_send_offset);
-            if(OPAL_THREAD_ADD32(&sendreq->req_state, 1) == 2 &&
-                    sendreq->req_bytes_delivered >=
-                    sendreq->req_send.req_bytes_packed) {
-                MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
-            } else {
+
+            OPAL_THREAD_ADD32(&sendreq->req_state, -1);
+
+            if(send_request_pml_complete_check(sendreq) == false)
                 mca_pml_ob1_send_request_schedule(sendreq);
-            }
                 
             break;
         }
