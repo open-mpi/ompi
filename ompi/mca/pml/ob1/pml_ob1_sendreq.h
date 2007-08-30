@@ -42,13 +42,8 @@ struct mca_pml_ob1_send_request_t {
     mca_pml_base_send_request_t req_send;
     mca_bml_base_endpoint_t* req_endpoint;
     ompi_ptr_t req_recv;
-#if OMPI_HAVE_THREAD_SUPPORT
-    volatile int32_t req_state;
-    volatile int32_t req_lock;
-#else
     int32_t req_state;
     int32_t req_lock;
-#endif
     bool req_throttle_sends;
     size_t req_pipeline_depth;
     size_t req_bytes_delivered;
@@ -159,45 +154,77 @@ do {                                                                            
 } while(0)
 
 /*
- * The PML has completed a send request. Note that this request
- * may have been orphaned by the user or have already completed
- * at the MPI level. 
- * This macro will never be called directly from the upper level, as it should
- * only be an internal call to the PML.
+ * Release resources associated with a request
  */
 
-#define MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq)                                  \
-    do {                                                                                \
-        assert( false == sendreq->req_send.req_base.req_pml_complete );                 \
-                                                                                        \
-        if( sendreq->req_send.req_bytes_packed > 0 ) {                                  \
-            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,                          \
-                                     &(sendreq->req_send.req_base),                     \
-                                     PERUSE_SEND );                                     \
-        }                                                                               \
-                                                                                        \
-        /* return mpool resources */                                                    \
-        mca_pml_ob1_free_rdma_resources(sendreq);                                       \
-                                                                                        \
-        if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&            \
-            sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {        \
-            mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);                  \
-        }                                                                               \
-                                                                                        \
-        OPAL_THREAD_LOCK(&ompi_request_lock);                                           \
-        if( false == sendreq->req_send.req_base.req_ompi.req_complete ) {               \
-            /* Should only be called for long messages (maybe synchronous) */           \
-            MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq);                             \
-        }                                                                               \
-        sendreq->req_send.req_base.req_pml_complete = true;                             \
-                                                                                        \
-        if( sendreq->req_send.req_base.req_free_called ) {                              \
-            /* don't free request if other thread running schedule */                   \
-            if(OPAL_THREAD_ADD32(&sendreq->req_lock, 1) == 1)                           \
-                MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );                             \
-        }                                                                               \
-        OPAL_THREAD_UNLOCK(&ompi_request_lock);                                         \
-    } while (0)
+#define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                        \
+    do {                                                                \
+    /*  Let the base handle the reference counts */                     \
+    MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));             \
+    OMPI_FREE_LIST_RETURN( &mca_pml_base_send_requests,                 \
+                           (ompi_free_list_item_t*)sendreq);            \
+    } while(0)
+
+
+/*
+ * The PML has completed a send request. Note that this request
+ * may have been orphaned by the user or have already completed
+ * at the MPI level.
+ * This function will never be called directly from the upper level, as it
+ * should only be an internal call to the PML.
+ *
+ */
+void static inline
+send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
+{
+    assert(false == sendreq->req_send.req_base.req_pml_complete);
+
+    if(sendreq->req_send.req_bytes_packed > 0) {
+        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
+                &(sendreq->req_send.req_base), PERUSE_SEND);
+    }
+
+    /* return mpool resources */
+    mca_pml_ob1_free_rdma_resources(sendreq);
+
+    if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&
+            sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {
+            mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
+    }
+
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+    if(false == sendreq->req_send.req_base.req_ompi.req_complete) {
+        /* Should only be called for long messages (maybe synchronous) */
+        MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq);
+    }
+    sendreq->req_send.req_base.req_pml_complete = true;
+
+    if(sendreq->req_send.req_base.req_free_called) {
+            MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
+    }
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+}
+
+/* returns true if request was completed on PML level */
+bool static inline
+send_request_pml_complete_check(mca_pml_ob1_send_request_t *sendreq)
+{
+    opal_atomic_rmb();
+    /* if no more events are expected for the request and the whole message is
+     * already sent and send fragment scheduling isn't running in another
+     * thread then complete the request on PML level. From now on, if user
+     * called free on this request, the request structure can be reused for
+     * another request or if the request is persistent it can be restarted */
+    if(sendreq->req_state == 0 &&
+            sendreq->req_bytes_delivered >= sendreq->req_send.req_bytes_packed
+            && OPAL_THREAD_ADD32(&sendreq->req_lock, 1) == 1) {
+        send_request_pml_complete(sendreq);
+        return true;
+    }
+
+    return false;
+}
+
 
 /**
  *  Schedule additional fragments 
@@ -218,18 +245,6 @@ static inline void mca_pml_ob1_send_request_schedule(
     if(OPAL_THREAD_ADD32(&sendreq->req_lock, 1) == 1)
         mca_pml_ob1_send_request_schedule_exclusive(sendreq);
 }
-
-/*
- * Release resources associated with a request
- */
-
-#define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                        \
-    do {                                                                \
-    /*  Let the base handle the reference counts */                     \
-    MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));             \
-    OMPI_FREE_LIST_RETURN( &mca_pml_base_send_requests,                 \
-                           (ompi_free_list_item_t*)sendreq);            \
-    } while(0)
 
 /**
  *  Start the specified request
@@ -337,7 +352,7 @@ mca_pml_ob1_send_request_start( mca_pml_ob1_send_request_t* sendreq )
 
     sendreq->req_endpoint = endpoint;
     sendreq->req_state = 0;
-    sendreq->req_lock=0 ;
+    sendreq->req_lock = 0;
     sendreq->req_pipeline_depth = 0;
     sendreq->req_bytes_delivered = 0;
     sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_NONE;
