@@ -281,8 +281,9 @@ void* mca_mpool_rdma_realloc(mca_mpool_base_module_t *mpool, void *addr,
 void mca_mpool_rdma_free(mca_mpool_base_module_t *mpool, void *addr,
                          mca_mpool_base_registration_t *registration)
 {
+    void *alloc_base = registration->alloc_base;
     mca_mpool_rdma_deregister(mpool, registration);
-    free(registration->alloc_base);
+    free(alloc_base);
 }
 
 int mca_mpool_rdma_find(struct mca_mpool_base_module_t *mpool, void *addr,
