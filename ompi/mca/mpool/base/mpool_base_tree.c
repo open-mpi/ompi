@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.5A
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Voltaire. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,6 +46,7 @@ OBJ_CLASS_INSTANCE(mca_mpool_base_tree_item_t, ompi_free_list_item_t, NULL, NULL
  */
 ompi_rb_tree_t mca_mpool_base_tree; 
 ompi_free_list_t mca_mpool_base_tree_item_free_list;
+static opal_mutex_t tree_lock;
 
 /*
  *  simple minded compare function... 
@@ -72,6 +74,7 @@ int mca_mpool_base_tree_init(void) {
     int rc;
     OBJ_CONSTRUCT(&mca_mpool_base_tree, ompi_rb_tree_t); 
     OBJ_CONSTRUCT(&mca_mpool_base_tree_item_free_list, ompi_free_list_t); 
+    OBJ_CONSTRUCT(&tree_lock, opal_mutex_t);
     rc = ompi_free_list_init(&mca_mpool_base_tree_item_free_list, sizeof(mca_mpool_base_tree_item_t), 
                              OBJ_CLASS(mca_mpool_base_tree_item_t), 0, -1 , 4, NULL);
     if(OMPI_SUCCESS == rc) { 
@@ -84,15 +87,25 @@ int mca_mpool_base_tree_init(void) {
  * insert an item in the rb tree 
  */ 
 int mca_mpool_base_tree_insert(mca_mpool_base_tree_item_t* item) { 
-    return ompi_rb_tree_insert(&mca_mpool_base_tree, item->key, item); 
+    int rc;
+
+    OPAL_THREAD_LOCK(&tree_lock);
+    rc = ompi_rb_tree_insert(&mca_mpool_base_tree, item->key, item);
+    OPAL_THREAD_UNLOCK(&tree_lock);
+
+    return rc;
 }
 
 /* 
  * remove an item from the rb tree 
  */
 int mca_mpool_base_tree_delete(mca_mpool_base_tree_item_t* item) { 
-    int rc; 
-    rc = ompi_rb_tree_delete(&mca_mpool_base_tree, item->key); 
+    int rc;
+
+    OPAL_THREAD_LOCK(&tree_lock);
+    rc = ompi_rb_tree_delete(&mca_mpool_base_tree, item->key);
+    OPAL_THREAD_UNLOCK(&tree_lock);
+
     if(OMPI_SUCCESS == rc) { 
         mca_mpool_base_tree_item_put(item); 
     }
@@ -102,8 +115,15 @@ int mca_mpool_base_tree_delete(mca_mpool_base_tree_item_t* item) {
 /**
  *  find the item in the rb tree  
  */
-mca_mpool_base_tree_item_t* mca_mpool_base_tree_find(void* base) { 
-    return (mca_mpool_base_tree_item_t*)ompi_rb_tree_find(&mca_mpool_base_tree, base);
+mca_mpool_base_tree_item_t* mca_mpool_base_tree_find(void* base) {
+    mca_mpool_base_tree_item_t* item;
+
+    OPAL_THREAD_LOCK(&tree_lock);
+    item = (mca_mpool_base_tree_item_t*)ompi_rb_tree_find(&mca_mpool_base_tree,
+            base);
+    OPAL_THREAD_UNLOCK(&tree_lock);
+
+    return item;
 }
     
 /* 
