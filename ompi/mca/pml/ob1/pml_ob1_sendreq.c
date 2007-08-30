@@ -960,10 +960,6 @@ mca_pml_ob1_send_request_schedule_exclusive(mca_pml_ob1_send_request_t* sendreq)
         mca_bml_base_btl_t* bml_btl;
 
         assert(range->range_send_length != 0);
-        if(range->range_send_length <= 0) {
-            opal_output(0, "range->range_send_length <= 0!\n");
-            while(1);
-        }
 
         if(prev_bytes_remaining == range->range_send_length)
             num_fail++;
