@@ -21,10 +21,6 @@
 
 BEGIN_C_DECLS
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
 struct ompi_osc_pt2pt_buffer_t {
     ompi_osc_pt2pt_mpireq_t mpireq;
     void *payload;
