@@ -305,7 +305,7 @@ static mqs_taddr_t fetch_size_t(mqs_process * proc, mqs_taddr_t addr, mpi_proces
                             isize);
   
     return res;
-} /* fetch_bool */
+} /* fetch_size_t */
 
 /**********************************************************************/
 /* Functions to handle translation groups.
@@ -442,7 +442,7 @@ int mqs_setup_image (mqs_image *image, const mqs_image_callbacks *icb)
 
 /***********************************************************************
  * Check for all the information we require to access the Open MPI message queues.
- * Stash it into our structure on the image if we're succesful.
+ * Stash it into our structure on the image if we're successful.
  */
 
 int mqs_image_has_queues (mqs_image *image, char **message)
@@ -807,7 +807,7 @@ int mqs_process_has_queues (mqs_process *proc, char **msg)
         return err_mpid_recvs;
     DEBUG(VERBOSE_GENERAL,("process_has_queues returned success\n"));
     return mqs_ok;
-} /* mqs_setup_process_info */
+} /* mqs_process_has_queues */
 
 /***********************************************************************
  * Check if the communicators have changed by looking at the 
@@ -958,7 +958,7 @@ static int rebuild_communicator_list (mqs_process *proc)
             old->recv_context         = context_id;
             old->comm_info.local_rank = local_rank;
 
-            DEBUG(VERBOSE_COMM,("Create new communicator 0x%llX with context_id %d and local_rank %d\n",
+            DEBUG(VERBOSE_COMM,("Create new communicator 0x%llx with context_id %d and local_rank %d\n",
                                 (long long)old, context_id, local_rank));
             /* Now get the information about the group */
             group_base =
@@ -1393,11 +1393,11 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
          */
         res->desired_tag =
             fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_tag, p_info );
-        if( MPI_ANY_TAG == res->desired_tag ) {
+        if( MPI_ANY_TAG == (int)res->desired_tag ) {
             res->tag_wild = TRUE;
         } else {
             /* Don't allow negative tags to show up */
-            if( (res->desired_tag < 0) && (0 == p_info->show_internal_requests) )
+            if( ((int)res->desired_tag < 0) && (0 == p_info->show_internal_requests) )
                 goto rescan_requests;
             res->tag_wild = FALSE;
         }
@@ -1469,7 +1469,7 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
             res->actual_tag =
                 fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
                            i_info->ompi_status_public_t.offset.MPI_TAG, p_info );
-            if( MPI_ANY_TAG != res->actual_tag ) {
+            if( MPI_ANY_TAG != (int)res->actual_tag ) {
                 res->status = mqs_st_matched;
                 res->desired_length =
                     fetch_size_t( proc,
