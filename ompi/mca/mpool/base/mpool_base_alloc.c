@@ -290,8 +290,9 @@ int mca_mpool_base_free(void *base)
         return OMPI_SUCCESS;
     }
 
-    unregister_tree_item(mpool_tree_item);
     rc = mca_mpool_base_tree_delete(mpool_tree_item);
+    if(OMPI_SUCCESS == rc)
+        unregister_tree_item(mpool_tree_item);
     
     return rc;
 }
