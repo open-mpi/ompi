@@ -69,22 +69,13 @@
 #endif  /* defined(HAVE_STDLIB_H) */
 
 #include "ompi/mca/pml/base/pml_base_request.h"
+#include "mpi_interface.h"
+#include "ompi_dll_defs.h"
 
 /* 
    End of inclusion
  */
 
-#include "mpi_interface.h"
-#include "ompi_dll_defs.h"
-
-/* Temporary workaround for making Totalview to load these symbols in the library
- * when this is compiled with the Sun Studio C compiler */
-#if defined(__SUNPRO_C)
-bool opal_uses_threads;
-bool opal_mutex_check_locks;
-volatile int32_t opal_progress_thread_count;
-int opal_progress_spin_count;
-#endif
 
 /* Essential macros for C */
 #ifndef NULL
@@ -105,18 +96,21 @@ int opal_progress_spin_count;
 #define stringize(a) #a
 #endif
 
+#define OPAL_ALIGN(x,a,t) (((x)+((t)(a)-1)) & ~(((t)(a)-1)))
+
 /**
  * The internal debugging interface.
  */
-#define VERBOSE_GENERAL 2
-#define VERBOSE_GROUP   10
-#define VERBOSE_COMM    10
-#define VERBOSE_LISTS   10
-#define VERBOSE_REQ     50
+#define VERBOSE_GENERAL  0x00000001
+#define VERBOSE_GROUP    0x00000002
+#define VERBOSE_COMM     0x00000004
+#define VERBOSE_LISTS    0x00000008
+#define VERBOSE_REQ      0x00000010
+#define VERBOSE_REQ_DUMP 0x00000020
 
-#define VERBOSE 0
+#define VERBOSE 0x00000000
 #if VERBOSE
-#define DEBUG(LEVEL, WHAT) if( (LEVEL) > VERBOSE ) { printf WHAT; }
+#define DEBUG(LEVEL, WHAT) if(LEVEL & VERBOSE) { printf WHAT; }
 #else
 #define DEBUG(LEVEL,WHAT)
 #endif  /* VERBOSE */
@@ -127,6 +121,14 @@ int opal_progress_spin_count;
  */
 static const mqs_basic_callbacks *mqs_basic_entrypoints;
 static int host_is_big_endian;
+/* Temporary workaround for making Totalview to load these symbols in the library
+ * when this is compiled with the Sun Studio C compiler */
+#if defined(__SUNPRO_C)
+bool opal_uses_threads;
+bool opal_mutex_check_locks;
+volatile int32_t opal_progress_thread_count;
+int opal_progress_spin_count;
+#endif
 
 void mqs_setup_basic_callbacks (const mqs_basic_callbacks * cb)
 {
@@ -888,8 +890,8 @@ static int rebuild_communicator_list (mqs_process *proc)
     mqs_taddr_t comm_ptr;
 
     DEBUG(VERBOSE_COMM,("rebuild_communicator_list called "
-                        "(commlist_base %lx, array offset %ld array size %d)\n",
-                        p_info->commlist_base,
+                        "(commlist_base %llx, array offset %ld array size %d)\n",
+                        (long long)p_info->commlist_base,
                         (long)i_info->ompi_pointer_array_t.offset.addr,
                         i_info->ompi_pointer_array_t.size));
     /**
@@ -923,7 +925,7 @@ static int rebuild_communicator_list (mqs_process *proc)
         fetch_pointer( proc,
                        p_info->commlist_base + i_info->ompi_pointer_array_t.offset.addr,
                        p_info );
-    DEBUG(VERBOSE_COMM,("Array of communicators starting at 0x%llx (sizeof(void*) = %d)\n",
+    DEBUG(VERBOSE_COMM,("Array of communicators starting at 0x%llx (sizeof(mqs_taddr_t*) = %d)\n",
                         (long long)comm_addr_base, (int)sizeof(mqs_taddr_t)));
     for( i = 0; (commcount < (comm_size - number_free)) && (i < comm_size); i++ ) {
         /* Get the communicator pointer */
@@ -1117,8 +1119,9 @@ static int opal_list_t_init_parser( mqs_process *proc, mpi_process_info *p_info,
                        p_info );
     if( position->current_item == position->sentinel )
         position->current_item = 0;
-    DEBUG(VERBOSE_LISTS,("opal_list_t_init_parser list = 0x%lx, sentinel = 0x%lx, current_item = 0x%lx\n",
-                         position->list, position->sentinel, position->current_item));
+    DEBUG(VERBOSE_LISTS,("opal_list_t_init_parser list = 0x%llx, sentinel = 0x%llx,
+                         current_item = 0x%llx\n", (long long)position->list,
+                         (long long)position->sentinel, (long long)position->current_item));
     return mqs_ok;
 }
 
@@ -1144,10 +1147,6 @@ static int next_item_opal_list_t( mqs_process *proc, mpi_process_info *p_info,
 #if defined(CODE_NOT_USED)
 /**
  * Parsing the ompi_free_list lists.
- *
- *
- *
- *
  */
 static void ompi_free_list_t_dump_position( mqs_ompi_free_list_t_pos* position )
 {
@@ -1156,17 +1155,17 @@ static void ompi_free_list_t_dump_position( mqs_ompi_free_list_t_pos* position )
     printf( "position->opal_list_t_pos.sentinel     = 0x%llx\n", (long long)position->opal_list_t_pos.sentinel );
     printf( "position->current_item                 = 0x%llx\n", (long long)position->current_item );
     printf( "position->upper_bound                  = 0x%llx\n", (long long)position->upper_bound );
+    printf( "position->header_space                 = %llx\n", (long long)position->header_space );
     printf( "position->free_list                    = 0x%llx\n", (long long)position->free_list );
-    printf( "position->fl_elem_size                 = %ld\n", (long)position->fl_elem_size );
-    printf( "position->fl_header_space              = %ld\n", (long)position->fl_header_space );
-    printf( "position->fl_alignment                 = %ld\n", (long)position->fl_alignment );
-    printf( "position->fl_num_per_alloc             = %ld\n", (long)position->fl_num_per_alloc );
-    printf( "position->fl_num_allocated             = %ld\n", (long)position->fl_num_allocated );
-    printf( "position->fl_num_initial_alloc         = %ld\n", (long)position->fl_num_initial_alloc );
+    printf( "position->fl_elem_class                = 0x%llx\n", (long long)position->fl_elem_class );
+    printf( "position->fl_mpool                     = 0x%llx\n", (long long)position->fl_mpool );
+    printf( "position->fl_elem_size                 = %llx\n", (long long)position->fl_elem_size );
+    printf( "position->fl_alignment                 = %llx\n", (long long)position->fl_alignment );
+    printf( "position->fl_num_per_alloc             = %llx\n", (long long)position->fl_num_per_alloc );
+    printf( "position->fl_num_allocated             = %llx\n", (long long)position->fl_num_allocated );
+    printf( "position->fl_num_initial_alloc         = %llx\n", (long long)position->fl_num_initial_alloc );
 }
 #endif  /* CODE_NOT_USED */
-
-#define OPAL_ALIGN(x,a,t) (((x)+((t)(a)-1)) & ~(((t)(a)-1)))
 
 static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_info,
                                          mqs_ompi_free_list_t_pos* position, mqs_taddr_t free_list )
@@ -1184,7 +1183,7 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
         fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_alignment,
                       p_info );
     position->fl_elem_class =
-        fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_elem_class,
+        fetch_pointer( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_elem_class,
                       p_info );
     position->fl_mpool =
         fetch_pointer( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_mpool,
@@ -1218,14 +1217,14 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
         if( 0 == position->fl_num_initial_alloc )
             position->fl_num_initial_alloc = position->fl_num_per_alloc;
     }
-    DEBUG(VERBOSE_LISTS,("ompi_free_list_t fl_elem_size = %ld fl_header_space = %ld\n"
-                         "                 fl_alignment = %ld fl_num_per_alloc = %ld\n"
-                         "                 fl_num_allocated = %ld fl_num_initial_alloc = %ld\n"
-                         "                 header_space = %ld\n",
-                         position->fl_elem_size, position->header_space,
-                         position->fl_alignment, position->fl_num_per_alloc,
-                         position->fl_num_allocated, position->fl_num_initial_alloc,
-                         position->header_space));
+    DEBUG(VERBOSE_LISTS,("ompi_free_list_t fl_elem_size = %lld fl_header_space = %lld\n"
+                         "                 fl_alignment = %lld fl_num_per_alloc = %lld\n"
+                         "                 fl_num_allocated = %lld fl_num_initial_alloc = %lld\n"
+                         "                 header_space = %lld\n",
+                         (long long)position->fl_elem_size, (long long)position->header_space,
+                         (long long)position->fl_alignment, (long long)position->fl_num_per_alloc,
+                         (long long)position->fl_num_allocated, (long long)position->fl_num_initial_alloc,
+                         (long long)position->header_space));
 
     /**
      * Initialize the pointer to the opal_list_t.
@@ -1233,8 +1232,8 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
     opal_list_t_init_parser( proc, p_info, &position->opal_list_t_pos,
                              position->free_list + i_info->ompi_free_list_t.offset.fl_allocations );
     next_item_opal_list_t( proc, p_info, &position->opal_list_t_pos, &active_allocation );
-    DEBUG(VERBOSE_LISTS,("active_allocation %lx header_space %d\n",
-                         active_allocation, (int)position->header_space));
+    DEBUG(VERBOSE_LISTS,("active_allocation 0x%llx header_space %d\n",
+                         (long long)active_allocation, (int)position->header_space));
     if( 0 == active_allocation ) {  /* the end of the list */
         position->upper_bound = 0;
     } else {
@@ -1250,8 +1249,8 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
         position->upper_bound =
             position->fl_num_initial_alloc * position->header_space + active_allocation;
         DEBUG(VERBOSE_LISTS,("there are some elements in the list "
-                             "active_allocation = %lx upper_bound = %lx\n",
-                             active_allocation, position->upper_bound));
+                             "active_allocation = %llx upper_bound = %llx\n",
+                             (long long)active_allocation, (long long)position->upper_bound));
     }
     position->current_item = active_allocation;
     
@@ -1297,18 +1296,18 @@ static int ompi_free_list_t_next_item( mqs_process *proc, mpi_process_info *p_in
             position->fl_num_per_alloc * position->header_space + active_allocation;
         position->current_item = active_allocation;
         DEBUG(VERBOSE_LISTS,("there are more elements in the list "
-                             "active_allocation = %lx upper_bound = %lx\n",
-                             active_allocation, position->upper_bound));
+                             "active_allocation = %llx upper_bound = %llx\n",
+                             (long long)active_allocation, (long long)position->upper_bound));
         /*ompi_free_list_t_dump_position( position );*/
     }
-    DEBUG(VERBOSE_LISTS,("Free list actual position %p next element at %p\n",
-                         (void*)*active_item, (void*)position->current_item));
+    DEBUG(VERBOSE_LISTS,("Free list actual position 0x%llx next element at 0x%llx\n",
+                         (long long)*active_item, (long long)position->current_item));
     return mqs_ok;
 }
 
 static void dump_request( mqs_taddr_t current_item, mqs_pending_operation *res )
 {
-    if( VERBOSE < 100 ) return;
+    if(!(VERBOSE_REQ_DUMP & VERBOSE)) return;
     printf( "\n+===============================================+\n"
             "|Request 0x%llx contain \n"
             "|    res->status              = %d\n"
@@ -1368,15 +1367,17 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
         ompi_free_list_t_next_item( proc, p_info,
                                     &p_info->next_msg, &current_item );
         if( 0 == current_item ) {
-            DEBUG(VERBOSE_REQ,("no more items in the request queue\n"));
+            DEBUG(VERBOSE_REQ,("no more items in the %s request queue\n",
+                               look_for_user_buffer ? "receive" : "send" ));
             return mqs_end_of_list;
         }
         req_valid = fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_state, p_info );
         if( OMPI_REQUEST_INVALID == req_valid ) continue;
         req_comm = fetch_pointer( proc, current_item + i_info->mca_pml_base_request_t.offset.req_comm, p_info );
         if( p_info->current_communicator->comm_ptr == req_comm ) break;
-        DEBUG(VERBOSE_REQ,("unmatch request (0x%lx) req_comm = %lx current_com = %lx\n",
-                           current_item, req_comm, p_info->current_communicator->comm_ptr));
+        DEBUG(VERBOSE_REQ,("unmatched request (0x%llx) req_comm = %llx current_com = %llx\n",
+                           (long long)current_item, (long long)req_comm,
+                           (long long)p_info->current_communicator->comm_ptr));
     }
 
     res->extra_text[0][0] = 0; res->extra_text[1][0] = 0; res->extra_text[2][0] = 0;
