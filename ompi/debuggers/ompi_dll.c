@@ -1202,7 +1202,7 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
         position->header_space = position->fl_elem_size;
     }
     position->header_space = OPAL_ALIGN( position->header_space,
-                                         position->fl_alignment, size_t );
+                                         position->fl_alignment, mqs_taddr_t );
 
     /**
      * Work around the strange ompi_free_list_t way to allocate elements. The first chunk is
@@ -1242,7 +1242,7 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
          */
         active_allocation += i_info->ompi_free_list_memory_t.size;
         active_allocation = OPAL_ALIGN( active_allocation,
-                                        position->fl_alignment, uintptr_t );
+                                        position->fl_alignment, mqs_taddr_t );
         /**
          * Now let's try to compute the upper bound ...
          */
@@ -1288,7 +1288,7 @@ static int ompi_free_list_t_next_item( mqs_process *proc, mpi_process_info *p_in
          */
         active_allocation += i_info->ompi_free_list_memory_t.size;
         active_allocation = OPAL_ALIGN( active_allocation,
-                                        position->fl_alignment, uintptr_t );
+                                        position->fl_alignment, mqs_taddr_t );
         /**
          * Now let's try to compute the upper bound ...
          */
