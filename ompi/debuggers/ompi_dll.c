@@ -301,7 +301,7 @@ static mqs_taddr_t fetch_size_t(mqs_process * proc, mqs_taddr_t addr, mpi_proces
     char buffer[8];                  /* ASSUME the type fits in 8 bytes */
     mqs_taddr_t res = 0;
 
-    if (mqs_ok == mqs_fetch_data (proc, addr, isize, &buffer))
+    if (mqs_ok == mqs_fetch_data (proc, addr, isize, buffer))
         mqs_target_to_host (proc, buffer, 
                             ((char *)&res) + (host_is_big_endian ? sizeof(mqs_taddr_t)-isize : 0), 
                             isize);
@@ -1448,7 +1448,7 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
                           p_info );
 
         if( MCA_PML_REQUEST_SEND == req_type ) {
-            snprintf( (char *)res->extra_text[0], 64, "Non-blocking send 0x%llx", (long long)current_item );
+            snprintf( (char *)res->extra_text[0], 64, "Send: 0x%llx", (long long)current_item );
             req_buffer =
                 fetch_pointer( proc,
                                current_item + i_info->mca_pml_base_send_request_t.offset.req_addr,
@@ -1461,7 +1461,7 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
             res->actual_local_rank  = res->desired_local_rank;
             res->actual_global_rank = res->actual_local_rank;
         } else if( MCA_PML_REQUEST_RECV == req_type ) {
-            snprintf( (char *)res->extra_text[0], 64, "Non-blocking recv 0x%llx", (long long)current_item );
+            snprintf( (char *)res->extra_text[0], 64, "Receive: 0x%llx", (long long)current_item );
             /**
              * There is a trick with the MPI_TAG. All receive requests set it to MPI_ANY_TAG
              * when the request get initialized, and to the real tag once the request
