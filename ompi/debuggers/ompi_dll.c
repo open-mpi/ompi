@@ -1119,8 +1119,8 @@ static int opal_list_t_init_parser( mqs_process *proc, mpi_process_info *p_info,
                        p_info );
     if( position->current_item == position->sentinel )
         position->current_item = 0;
-    DEBUG(VERBOSE_LISTS,("opal_list_t_init_parser list = 0x%llx, sentinel = 0x%llx,
-                         current_item = 0x%llx\n", (long long)position->list,
+    DEBUG(VERBOSE_LISTS,("opal_list_t_init_parser list = 0x%llx, sentinel = 0x%llx, "
+                         "current_item = 0x%llx\n", (long long)position->list,
                          (long long)position->sentinel, (long long)position->current_item));
     return mqs_ok;
 }
