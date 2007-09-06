@@ -441,7 +441,7 @@ typedef struct mqs_process_callbacks
 {
   mqs_get_global_rank_ft       mqs_get_global_rank_fp;
   mqs_get_image_ft             mqs_get_image_fp;
-  mqs_fetch_data_ft	           mqs_fetch_data_fp;
+  mqs_fetch_data_ft            mqs_fetch_data_fp;
   mqs_target_to_host_ft        mqs_target_to_host_fp;
 #if (FOR_MPI2)
   mqs_get_process_job_ft       mqs_get_process_job_fp;
