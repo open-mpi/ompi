@@ -379,28 +379,30 @@ opal_thread_debug_trylock(opal_mutex_t *mutex, char *file, int line)
 #define OPAL_THREAD_ADD_SIZE_T(x,y) (*x += y)
 #endif
 
+#define OPAL_CMPSET(x, y, z) ((*(x) == (y)) ? ((*(x) = (z)), 1) : 0)
+
 #if OMPI_HAVE_THREAD_SUPPORT
 # if OPAL_HAVE_ATOMIC_CMPSET_32
 #  define OPAL_ATOMIC_CMPSET_32(x, y, z) \
-    (opal_using_threads() ? opal_atomic_cmpset_32(x, y, z) : ((*(x) = (z)), 1))
+    (opal_using_threads() ? opal_atomic_cmpset_32(x, y, z) : OPAL_CMPSET(x, y, z))
 # endif
 # if OPAL_HAVE_ATOMIC_CMPSET_64
 #  define OPAL_ATOMIC_CMPSET_64(x, y, z) \
-    (opal_using_threads() ? opal_atomic_cmpset_64(x, y, z) : ((*(x) = (z)), 1))
+    (opal_using_threads() ? opal_atomic_cmpset_64(x, y, z) : OPAL_CMPSET(x, y, z))
 # endif
 # if OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64
 #  define OPAL_ATOMIC_CMPSET(x, y, z) \
-    (opal_using_threads() ? opal_atomic_cmpset(x, y, z) : ((*(x) = (z)), 1))
+    (opal_using_threads() ? opal_atomic_cmpset(x, y, z) : OPAL_CMPSET(x, y, z))
 # endif
 #else
 # if OPAL_HAVE_ATOMIC_CMPSET_32
-#  define OPAL_ATOMIC_CMPSET_32(x, y, z) ((*(x) = (z)), 1)
+#  define OPAL_ATOMIC_CMPSET_32(x, y, z) OPAL_CMPSET(x, y, z)
 # endif
 # if OPAL_HAVE_ATOMIC_CMPSET_64
-#  define OPAL_ATOMIC_CMPSET_64(x, y, z) ((*(x) = (z)), 1)
+#  define OPAL_ATOMIC_CMPSET_64(x, y, z) OPAL_CMPSET(x, y, z)
 # endif
 # if OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64
-#  define OPAL_ATOMIC_CMPSET(x, y, z) ((*(x) = (z)), 1)
+#  define OPAL_ATOMIC_CMPSET(x, y, z) OPAL_CMPSET(x, y, z)
 # endif
 #endif
 
