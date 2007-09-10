@@ -87,33 +87,33 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
      */
     if( extent == -1 ) extent = (pdtAdd->ub - pdtAdd->lb);
 
-    if( pdtAdd->flags & DT_FLAG_PREDEFINED ) { /* add a basic datatype */
-        /* handle special cases for DT_LB and DT_UB */
-        if( DT_LB == pdtAdd->id ) {
-            pdtBase->bdt_used |= (((uint64_t)1) << DT_LB);
-            if( pdtBase->flags & DT_FLAG_USER_LB ) {
-                pdtBase->lb = LMIN( pdtBase->lb, disp );
-            } else {
-                pdtBase->lb = disp;
-                pdtBase->flags |= DT_FLAG_USER_LB;
-            }
-            if( (pdtBase->ub - pdtBase->lb) != (ptrdiff_t)pdtBase->size ) {
-                pdtBase->flags &= ~DT_FLAG_NO_GAPS;
-            }
-            return OMPI_SUCCESS;
-        } else if( DT_UB == pdtAdd->id ) {
-            pdtBase->bdt_used |= (((uint64_t)1) << DT_UB);
-            if( pdtBase->flags & DT_FLAG_USER_UB ) {
-                pdtBase->ub = LMAX( pdtBase->ub, disp );
-            } else {
-                pdtBase->ub = disp;
-                pdtBase->flags |= DT_FLAG_USER_UB;
-            }
-            if( (pdtBase->ub - pdtBase->lb) != (ptrdiff_t)pdtBase->size ) {
-                pdtBase->flags &= ~DT_FLAG_NO_GAPS;
-            }
-            return OMPI_SUCCESS;
+    /* handle special cases for DT_LB and DT_UB and their duplicate */
+    if( DT_LB == pdtAdd->id ) {
+        pdtBase->bdt_used |= (((uint64_t)1) << DT_LB);
+        if( pdtBase->flags & DT_FLAG_USER_LB ) {
+            pdtBase->lb = LMIN( pdtBase->lb, disp );
+        } else {
+            pdtBase->lb = disp;
+            pdtBase->flags |= DT_FLAG_USER_LB;
         }
+        if( (pdtBase->ub - pdtBase->lb) != (ptrdiff_t)pdtBase->size ) {
+            pdtBase->flags &= ~DT_FLAG_NO_GAPS;
+        }
+        return OMPI_SUCCESS;
+    } else if( DT_UB == pdtAdd->id ) {
+        pdtBase->bdt_used |= (((uint64_t)1) << DT_UB);
+        if( pdtBase->flags & DT_FLAG_USER_UB ) {
+            pdtBase->ub = LMAX( pdtBase->ub, disp );
+        } else {
+            pdtBase->ub = disp;
+            pdtBase->flags |= DT_FLAG_USER_UB;
+        }
+        if( (pdtBase->ub - pdtBase->lb) != (ptrdiff_t)pdtBase->size ) {
+            pdtBase->flags &= ~DT_FLAG_NO_GAPS;
+        }
+        return OMPI_SUCCESS;
+    }
+    if( pdtAdd->flags & DT_FLAG_PREDEFINED ) { /* add a basic datatype */
         place_needed = (extent == (ptrdiff_t)pdtAdd->size ? 1 : 3);
     } else {
         place_needed = pdtAdd->desc.used;
