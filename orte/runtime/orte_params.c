@@ -66,7 +66,7 @@ int orte_register_params(bool infrastructure)
     
     mca_base_param_reg_int_name("orte", "no_daemonize",
                                 "Whether to properly daemonize the ORTE daemons or not",
-                                false, false, (int)false, NULL);
+                                false, false, (int)false, &value);
     orte_no_daemonize_flag = OPAL_INT_TO_BOOL(value);
 
     mca_base_param_reg_int_name("orte", "debug_daemons",
