@@ -89,7 +89,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
 
     if( pdtAdd->flags & DT_FLAG_PREDEFINED ) { /* add a basic datatype */
         /* handle special cases for DT_LB and DT_UB */
-        if( pdtAdd == ompi_ddt_basicDatatypes[DT_LB] ) {
+        if( DT_LB == pdtAdd->id ) {
             pdtBase->bdt_used |= (((uint64_t)1) << DT_LB);
             if( pdtBase->flags & DT_FLAG_USER_LB ) {
                 pdtBase->lb = LMIN( pdtBase->lb, disp );
@@ -101,7 +101,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
                 pdtBase->flags &= ~DT_FLAG_NO_GAPS;
             }
             return OMPI_SUCCESS;
-        } else if( pdtAdd == ompi_ddt_basicDatatypes[DT_UB] ) {
+        } else if( DT_UB == pdtAdd->id ) {
             pdtBase->bdt_used |= (((uint64_t)1) << DT_UB);
             if( pdtBase->flags & DT_FLAG_USER_UB ) {
                 pdtBase->ub = LMAX( pdtBase->ub, disp );
@@ -199,6 +199,8 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
             pdtBase->ub += (pdtBase->align - epsilon);
         }
     }
+    /* now we know it contain some data */
+    pdtBase->flags |= DT_FLAG_DATA;
 
     /*
      * the count == 0 is LEGAL only for MPI_UB and MPI_LB. Therefore we support it
