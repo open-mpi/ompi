@@ -47,15 +47,6 @@ int MPI_Type_dup (MPI_Datatype type,
       }
    }
 
-   /* Don't allow for UB and LB duplication. Instead return the same
-    * pointer and increase the reference count by one.
-    */
-   if( (MPI_UB == type) || (MPI_LB == type) ) {
-       OBJ_RETAIN( type );
-       *newtype = type;
-       return OMPI_SUCCESS;
-   }
-
    if (OMPI_SUCCESS != ompi_ddt_duplicate( type, newtype)) {
        ompi_ddt_destroy( newtype );
        OMPI_ERRHANDLER_RETURN (MPI_ERR_INTERN, MPI_COMM_WORLD,
