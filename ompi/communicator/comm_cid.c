@@ -375,10 +375,10 @@ static int ompi_comm_unregister_cid (uint32_t cid)
         regcom = (ompi_comm_reg_t *)item;
         if(regcom->cid == cid) {
             opal_list_remove_item(&ompi_registered_comms, item);
+            OBJ_RELEASE(regcom);
             break;
         }
     }
-    OBJ_RELEASE(regcom);
     return OMPI_SUCCESS;
 }
 
