@@ -279,7 +279,7 @@ mca_oob_tcp_peer_create_socket(mca_oob_tcp_peer_t* peer,
     } else if (peer->peer_sd > 0) {
         int state = peer->peer_state;
         mca_oob_tcp_peer_shutdown(peer);
-        peer->peer_state = state;
+        peer->peer_state = (mca_oob_tcp_state_t) state;
     }
 
     peer->peer_sd = socket(af_family, SOCK_STREAM, 0);

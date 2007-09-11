@@ -1233,7 +1233,7 @@ int mca_oob_tcp_process_name_compare(const orte_process_name_t* n1, const orte_p
 
 char* mca_oob_tcp_get_addr(void)
 {
-    char *contact_info = malloc(opal_list_get_size(&mca_oob_tcp_component.tcp_available_devices) * 128);
+    char *contact_info = (char *) malloc(opal_list_get_size(&mca_oob_tcp_component.tcp_available_devices) * 128);
     char *ptr = contact_info;
     opal_list_item_t *item;
     *ptr = 0;

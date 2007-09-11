@@ -85,7 +85,7 @@ orte_rml_oob_send(orte_process_name_t* peer,
         ORTE_ERROR_LOG(ORTE_ERR_ADDRESSEE_UNKNOWN);
         return ORTE_ERR_ADDRESSEE_UNKNOWN;
     }
-    msg->msg_data = malloc(sizeof(struct iovec) * (count + 1));
+    msg->msg_data = (struct iovec *) malloc(sizeof(struct iovec) * (count + 1));
     msg->msg_data[0].iov_base = (ompi_iov_base_ptr_t)&msg->msg_header;
     msg->msg_data[0].iov_len = sizeof(orte_rml_oob_msg_header_t);
     bytes += msg->msg_data[0].iov_len;
@@ -155,7 +155,7 @@ orte_rml_oob_send_nb(orte_process_name_t* peer,
         return ORTE_ERR_ADDRESSEE_UNKNOWN;
     }
 
-    msg->msg_data = malloc(sizeof(struct iovec) * (count + 1));
+    msg->msg_data = (struct iovec *) malloc(sizeof(struct iovec) * (count + 1));
 
     msg->msg_data[0].iov_base = (ompi_iov_base_ptr_t)&msg->msg_header;
     msg->msg_data[0].iov_len = sizeof(orte_rml_oob_msg_header_t);
@@ -242,7 +242,7 @@ orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
     msg->msg_cbdata = cbdata;
     msg->user_buffer = buffer;
 
-    msg->msg_data = malloc(sizeof(struct iovec) * 2);
+    msg->msg_data = (struct iovec *) malloc(sizeof(struct iovec) * 2);
 
     next = orte_routed.get_route(peer);
     if (next.vpid == ORTE_VPID_INVALID) {
