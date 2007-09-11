@@ -66,7 +66,7 @@ get_print_name_buffer(void)
     if (NULL == ptr) {
         ptr = (orte_print_args_buffers_t*)malloc(sizeof(orte_print_args_buffers_t));
         for (i=0; i < ORTE_PRINT_NAME_ARG_NUM_BUFS; i++) {
-            ptr->buffers[i] = (void*) malloc((ORTE_PRINT_NAME_ARGS_MAX_SIZE+1) * sizeof(char));
+            ptr->buffers[i] = (char *) malloc((ORTE_PRINT_NAME_ARGS_MAX_SIZE+1) * sizeof(char));
         }
         ptr->cntr = 0;
         ret = opal_tsd_setspecific(print_args_tsd_key, (void*)ptr);

@@ -1046,7 +1046,7 @@ static int orte_odls_process_launch_local_procs(orte_gpr_notify_data_t *data)
      * processor affinity be used - the paffinity subsystem will make that final determination. All
      * we do here is indicate that we should do the definitions just in case paffinity is active
      */
-    if (OPAL_SUCCESS != opal_get_num_processors(&num_processors)) {
+    if (OPAL_SUCCESS != opal_get_num_processors( (int *) &num_processors)) {
         /* if we cannot find the number of local processors, then default to conservative
          * settings
          */
