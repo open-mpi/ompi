@@ -102,7 +102,7 @@ static int default_data_idx = -1;
 static void
 options_data_init(struct options_data_t *data)
 {
-    data->compiler_args = malloc(sizeof(char*));
+    data->compiler_args = (char **) malloc(sizeof(char*));
     data->compiler_args[0] = NULL;
     data->language = NULL;
     data->compiler = NULL;
@@ -112,13 +112,13 @@ options_data_init(struct options_data_t *data)
     data->compiler_env = NULL;
     data->compiler_flags_env = NULL;
     data->module_option = NULL;
-    data->preproc_flags = malloc(sizeof(char*));
+    data->preproc_flags = (char **) malloc(sizeof(char*));
     data->preproc_flags[0] = NULL;
-    data->comp_flags = malloc(sizeof(char*));
+    data->comp_flags = (char **) malloc(sizeof(char*));
     data->comp_flags[0] = NULL;
-    data->link_flags = malloc(sizeof(char*));
+    data->link_flags = (char **) malloc(sizeof(char*));
     data->link_flags[0] = NULL;
-    data->libs = malloc(sizeof(char*));
+    data->libs = (char **) malloc(sizeof(char*));
     data->libs[0] = NULL;
     data->req_file = NULL;
     data->path_includedir = NULL;
@@ -155,7 +155,7 @@ options_data_expand(const char *value)
 {
     /* make space for the new set of args */
     parse_options_idx++;
-    options_data = realloc(options_data, sizeof(struct options_data_t) * (parse_options_idx + 1));
+    options_data = (struct options_data_t *) realloc(options_data, sizeof(struct options_data_t) * (parse_options_idx + 1));
     options_data_init(&(options_data[parse_options_idx]));
 
     /* if there are values, this is not the default case.
@@ -707,7 +707,7 @@ main(int argc, char *argv[])
         exec_argv = opal_argv_split(options_data[user_data_idx].compiler, ' ');
         exec_argc = opal_argv_count(exec_argv);
     } else {
-        exec_argv = malloc(sizeof(char*));
+        exec_argv = (char **) malloc(sizeof(char*));
         exec_argv[0] = NULL;
         exec_argc = 0;
     }
