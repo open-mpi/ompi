@@ -42,7 +42,7 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
 
     /* advance pending requests */
     for(i = 0; i < s; i++) {
-        mca_pml_ob1_send_pending_t pending_type;
+        mca_pml_ob1_send_pending_t pending_type = MCA_PML_OB1_SEND_PENDING_NONE;
         mca_pml_ob1_send_request_t* sendreq;
         mca_bml_base_btl_t *send_dst;
 
