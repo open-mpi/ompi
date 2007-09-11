@@ -171,6 +171,15 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
              * This is the real algorithm described in the doc 
              */
             
+            OPAL_THREAD_LOCK(&ompi_cid_lock);
+            if (comm->c_contextid != ompi_comm_lowest_cid() ) {
+                /* if not lowest cid, we do not continue, but sleep and try again */
+                OPAL_THREAD_UNLOCK(&ompi_cid_lock);
+                continue;
+            }
+            OPAL_THREAD_UNLOCK(&ompi_cid_lock);
+            
+            
             for (i=start; i < mca_pml.pml_max_contextid ; i++) {
                 flag=ompi_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
                                                           i, comm);
