@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Voltaire All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -102,6 +103,7 @@ struct opal_list_item_t
     /**< Pointer to next list item */
     volatile struct opal_list_item_t *opal_list_prev;
     /**< Pointer to previous list item */
+    int32_t item_free;
 
 #if OMPI_ENABLE_DEBUG
     /** Atomic reference count for debugging */
