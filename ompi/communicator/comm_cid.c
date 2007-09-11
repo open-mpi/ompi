@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007      Voltaire All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -169,15 +170,6 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
             /**
              * This is the real algorithm described in the doc 
              */
-            
-            OPAL_THREAD_LOCK(&ompi_cid_lock);
-            if (comm->c_contextid != ompi_comm_lowest_cid() ) {
-                /* if not lowest cid, we do not continue, but sleep and try again */
-                OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-                continue;
-            }
-            OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-            
             
             for (i=start; i < mca_pml.pml_max_contextid ; i++) {
                 flag=ompi_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
@@ -365,10 +357,18 @@ static int ompi_comm_register_cid (uint32_t cid )
 
 static int ompi_comm_unregister_cid (uint32_t cid)
 {
-    ompi_comm_reg_t *regcom=NULL;
-    opal_list_item_t *item=opal_list_remove_first(&ompi_registered_comms);
+    ompi_comm_reg_t *regcom;
+    opal_list_item_t *item;
 
-    regcom = (ompi_comm_reg_t *) item;
+    for (item = opal_list_get_first(&ompi_registered_comms);
+         item != opal_list_get_end(&ompi_registered_comms);
+         item = opal_list_get_next(item)) {
+        regcom = (ompi_comm_reg_t *)item;
+        if(regcom->cid == cid) {
+            opal_list_remove_item(&ompi_registered_comms, item);
+            break;
+        }
+    }
     OBJ_RELEASE(regcom);
     return OMPI_SUCCESS;
 }
