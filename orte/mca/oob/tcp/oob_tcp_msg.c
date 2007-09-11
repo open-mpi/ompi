@@ -550,11 +550,11 @@ int mca_oob_tcp_msg_copy(mca_oob_tcp_msg_t* msg, struct iovec* iov, int count)
     for (i = 0 ; i < count ; i++) {
         if ((msg->msg_flags & ORTE_RML_ALLOC) && (i == count - 1)) {
             if (i == 0) {
-                iov[i].iov_base = (char *) src_ptr;
+                iov[i].iov_base = (IOVBASE_TYPE *) src_ptr;
                 iov[i].iov_len = src_len;
                 msg->msg_rwbuf = NULL;
             } else {
-                iov[i].iov_base = (char *) malloc(src_len);
+                iov[i].iov_base = (IOVBASE_TYPE *) malloc(src_len);
                 iov[i].iov_len = src_len;
                 memcpy(iov[i].iov_base, src_ptr, src_len);
             }
