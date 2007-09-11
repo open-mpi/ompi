@@ -55,7 +55,7 @@ opal_installdirs_base_component_t mca_installdirs_windows_component = {
             cbData = 1024;                                                                       \
             valueLength = 1024;                                                                  \
             if( ERROR_SUCCESS == RegEnumValue( (KEY), i, valueName, &valueLength,                \
-                                               NULL, &keyType, vData, &cbData ) ) {              \
+                                               NULL, &keyType, (LPBYTE) vData, &cbData ) ) {              \
                 if( ((REG_EXPAND_SZ == keyType) || (REG_SZ == keyType)) &&                       \
                     (0 == strncasecmp( valueName, (ENVNAME), strlen((ENVNAME)) )) ) {            \
                     mca_installdirs_windows_component.install_dirs_data.FIELD = strdup(vData);   \

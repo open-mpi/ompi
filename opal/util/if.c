@@ -769,7 +769,7 @@ static int opal_ifinit(void)
             }
 
             /* copy all this into a persistent form and store it in the list */
-            intf_ptr = malloc(sizeof(opal_if_t));
+            intf_ptr = (opal_if_t *) malloc(sizeof(opal_if_t));
             if (NULL == intf_ptr) {
                 opal_output (0,"opal_ifinit: Unable to malloc %d bytes",sizeof(opal_list_t));
                 return OPAL_ERR_OUT_OF_RESOURCE;
