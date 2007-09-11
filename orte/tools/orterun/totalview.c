@@ -82,14 +82,14 @@ struct MPIR_PROCDESC {
     int pid;                /* process pid */
 };
 
-ORTE_DECLSPEC struct MPIR_PROCDESC *MPIR_proctable = NULL;
-ORTE_DECLSPEC int MPIR_proctable_size = 0;
-ORTE_DECLSPEC int MPIR_being_debugged = 0;
-ORTE_DECLSPEC int MPIR_force_to_main = 0;
-ORTE_DECLSPEC volatile int MPIR_debug_state = 0;
-ORTE_DECLSPEC volatile int MPIR_i_am_starter = 0;
-ORTE_DECLSPEC volatile int MPIR_debug_gate = 0;
-ORTE_DECLSPEC volatile int MPIR_acquired_pre_main = 0;
+struct MPIR_PROCDESC *MPIR_proctable = NULL;
+int MPIR_proctable_size = 0;
+int MPIR_being_debugged = 0;
+int MPIR_force_to_main = 0;
+volatile int MPIR_debug_state = 0;
+volatile int MPIR_i_am_starter = 0;
+volatile int MPIR_debug_gate = 0;
+volatile int MPIR_acquired_pre_main = 0;
 
 /* --- end MPICH/TotalView interface definitions */
 
