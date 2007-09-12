@@ -837,8 +837,6 @@ static int communicators_changed (mqs_process *proc)
                              "    number_free [current] %d != [stored] %d\n",
                              (int)lowest_free, (int)p_info->comm_lowest_free,
                              (int)number_free, (int)p_info->comm_number_free) );
-        p_info->comm_lowest_free = lowest_free;
-        p_info->comm_number_free = number_free;
         return 1;
     }
     DEBUG(VERBOSE_COMM, ("Communicator list not modified\n") );
@@ -907,6 +905,9 @@ static int rebuild_communicator_list (mqs_process *proc)
     number_free = fetch_int( proc,
                              p_info->commlist_base + i_info->ompi_pointer_array_t.offset.number_free,
                              p_info );
+    p_info->comm_lowest_free = lowest_free;
+    p_info->comm_number_free = number_free;
+
     DEBUG(VERBOSE_COMM,("Number of coms %d lowest_free %d number_free %d\n",
                         (int)comm_size, (int)lowest_free, (int)number_free));
     /* In Open MPI the MPI_COMM_WORLD is always at index 0. By default, the
