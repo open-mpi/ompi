@@ -1613,6 +1613,11 @@ static int send_signal(pid_t pid, int signal)
 {
     int rc = ORTE_SUCCESS;
     
+    OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
+                         "%s sending signal %d to pid %ld",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         signal, (long)pid));
+    
     if (kill(pid, signal) != 0) {
         switch(errno) {
             case EINVAL:
@@ -1641,6 +1646,11 @@ int orte_odls_default_signal_local_procs(const orte_process_name_t *proc, int32_
     opal_list_item_t *item;
     orte_odls_child_t *child;
     
+    OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
+                         "%s signaling proc %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == proc) ? "NULL" : ORTE_NAME_PRINT(proc)));
+
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_default.mutex);
 
