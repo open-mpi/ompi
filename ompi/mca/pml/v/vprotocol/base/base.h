@@ -20,12 +20,13 @@
 extern "C" {
 #endif
     
-OMPI_DECLSPEC int mca_vprotocol_base_open(void);
+OMPI_DECLSPEC int mca_vprotocol_base_open(char *vprotocol_include_list);
 OMPI_DECLSPEC int mca_vprotocol_base_select(bool enable_progress_threads, 
-                                                bool enable_mpi_threads);
+                                            bool enable_mpi_threads);
 OMPI_DECLSPEC int mca_vprotocol_base_parasite(void);
 OMPI_DECLSPEC int mca_vprotocol_base_close(void);
     
+OMPI_DECLSPEC extern char *mca_vprotocol_base_include_list;
 OMPI_DECLSPEC extern opal_list_t mca_vprotocol_base_components_available;
 OMPI_DECLSPEC extern mca_vprotocol_base_component_t mca_vprotocol_component;
 OMPI_DECLSPEC extern mca_vprotocol_base_module_t mca_vprotocol;

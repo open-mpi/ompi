@@ -16,7 +16,7 @@
 #include "ompi/mca/pml/base/pml_base_request.h"
 
 typedef uint64_t vprotocol_pessimist_clock_t;
-#define PRIpclock "ullx"
+#define PRIpclock "llx"
 
 typedef enum {
   VPROTOCOL_PESSIMIST_EVENT_TYPE_MATCHING,

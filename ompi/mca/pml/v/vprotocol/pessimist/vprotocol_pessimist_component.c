@@ -61,11 +61,11 @@ mca_vprotocol_base_component_1_0_0_t mca_vprotocol_pessimist_component =
   */
 static int mca_vprotocol_pessimist_component_open(void)
 {
-    _priority = mca_param_register_int("priority", -1);
+    _priority = mca_param_register_int("priority", 30);
     _free_list_num = mca_param_register_int("free_list_num", 16);
     _free_list_max = mca_param_register_int("free_list_max", -1);
     _free_list_inc = mca_param_register_int("free_list_inc", 64);
-    _sender_based_size = mca_param_register_int("sender_based_chunk", 100 * 1024 * 1024);
+    _sender_based_size = mca_param_register_int("sender_based_chunk", 256 * 1024 * 1024);
     _event_buffer_size = mca_param_register_int("event_buffer_size", 1024);
     _mmap_file_name = mca_param_register_string("sender_based_file", "vprotocol_pessimist-senderbased");
     V_OUTPUT_VERBOSE(500, "vprotocol_pessimist: component_open: read priority %d", _priority);
