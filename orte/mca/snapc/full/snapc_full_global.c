@@ -978,6 +978,11 @@ static int snapc_full_global_gather_all_files(void) {
                 exit_status = ret;
                 /* Keep getting all the other files, eventually return an error */
             }
+
+            tmp_argc = 0;
+            opal_argv_delete(&tmp_argc, &filem_request->remote_targets, 0, 1);
+            tmp_argc = 0;
+            opal_argv_delete(&tmp_argc, &filem_request->local_targets, 0, 1);
         }
     skip:
         /* Do a bit of cleanup */

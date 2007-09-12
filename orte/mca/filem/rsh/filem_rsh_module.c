@@ -386,7 +386,7 @@ int orte_filem_base_rsh_rm(orte_filem_base_request_t *request)
 static int orte_filem_rsh_query_remote_path(char **remote_ref, orte_process_name_t *peer, int *flag) {
     int ret;
 
-#if 0 /* Some debugging */
+#if 1 /* JJH: Some debugging */
     /* If it is an absolute path */
     if( *remote_ref[0] == '/' ) {
         *flag = ORTE_FILEM_TYPE_DIR;
