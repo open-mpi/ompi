@@ -469,8 +469,19 @@ static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
     int rc;
 
     /* communicator pointer */
-    comm_ptr=ompi_comm_lookup(hdr->hdr_ctx);
-    comm=(mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
+    comm_ptr = ompi_comm_lookup(hdr->hdr_ctx);
+    if( OPAL_UNLIKELY(NULL == comm_ptr) ) {
+        /* This is a special case. A message for a not yet exiting communicator can
+         * happens, but right now we segfault. Instead, and until we find a better
+         * solution, just drop the message. However, in the near future we should
+         * store this fragment in a global list, and deliver it to the right
+         * communicator once it get created.
+         */
+        opal_output( 0, "Dropped message for the non-existing communicator %d\n",
+                     (int)hdr->hdr_ctx );
+        return OMPI_SUCCESS;
+    }
+    comm = (mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
 
     /* source sequence number */
     frag_msg_seq = hdr->hdr_seq;
