@@ -12,9 +12,4 @@
 # Specific to this module
 
 PARAM_INIT_FILE=vprotocol_pessimist.c
-PARAM_CONFIG_HEADER_FILE="vprotocol_pessimist_config.h"
 PARAM_CONFIG_FILES="Makefile"
-
-
-# Mandatory for all vprotocol
-echo `basename \`pwd\`` >> ../autogen.vprotocols

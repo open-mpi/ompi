@@ -87,6 +87,7 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
     /* How much space left for application data */
     sb.sb_available = sb.sb_length - sb.sb_cursor;
 
+#if 0
     if(-1 == lseek(sb.sb_fd, sb.sb_offset + sb.sb_length, SEEK_SET))
     {
         V_OUTPUT_ERR("pml_v: vprotocol_pessimist: sender_based_alloc: lseek: %s", 
@@ -104,6 +105,8 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
     sb.sb_addr = (uintptr_t) mmap((void *) sb.sb_addr, sb.sb_length, 
                                   PROT_WRITE | PROT_READ, MAP_SHARED, sb.sb_fd, 
                                   sb.sb_offset);
+#endif 
+    sb.sb_addr = (uintptr_t) malloc(sb.sb_length);
     if(((uintptr_t) -1) == sb.sb_addr)
     {
         V_OUTPUT_ERR("pml_v: vprotocol_pessimist: sender_based_alloc: mmap: %s", 
