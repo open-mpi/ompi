@@ -272,7 +272,23 @@ send_request_pml_complete_check(mca_pml_ob1_send_request_t *sendreq)
  *  Schedule additional fragments 
  */
 int
-mca_pml_ob1_send_request_schedule_exclusive(mca_pml_ob1_send_request_t*);
+mca_pml_ob1_send_request_schedule_once(mca_pml_ob1_send_request_t*);
+
+static inline int 
+mca_pml_ob1_send_request_schedule_exclusive(mca_pml_ob1_send_request_t* sendreq)
+{
+    int rc;
+    do {
+        rc = mca_pml_ob1_send_request_schedule_once(sendreq);
+        if(rc == OMPI_ERR_OUT_OF_RESOURCE)
+            break;
+    } while(!unlock_send_request(sendreq));
+
+    if(OMPI_SUCCESS == rc)
+        send_request_pml_complete_check(sendreq);
+
+    return rc;
+}
 
 static inline void
 mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
@@ -287,13 +303,7 @@ mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
     if(!lock_send_request(sendreq))
         return;
 
-    do {
-        int rc;
-        rc = mca_pml_ob1_send_request_schedule_exclusive(sendreq);
-        if(rc == OMPI_ERR_OUT_OF_RESOURCE)
-            return;
-     } while(!unlock_send_request(sendreq));
-     send_request_pml_complete_check(sendreq);
+    mca_pml_ob1_send_request_schedule_exclusive(sendreq);
 }
 
 /**

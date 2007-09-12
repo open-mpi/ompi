@@ -938,7 +938,7 @@ get_next_send_range(mca_pml_ob1_send_request_t* sendreq,
  */
 
 int
-mca_pml_ob1_send_request_schedule_exclusive(mca_pml_ob1_send_request_t* sendreq)
+mca_pml_ob1_send_request_schedule_once(mca_pml_ob1_send_request_t* sendreq)
 { 
     size_t prev_bytes_remaining = 0;
     mca_pml_ob1_send_range_t *range;
