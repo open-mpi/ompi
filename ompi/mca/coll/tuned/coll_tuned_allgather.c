@@ -751,14 +751,14 @@ ompi_coll_tuned_allgather_intra_basic_linear(void *sbuf, int scount,
 int 
 ompi_coll_tuned_allgather_intra_check_forced_init(coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices)
 {
-   int rc, max_alg = 6, requested_alg;
+   int max_alg = 6, requested_alg;
    
    ompi_coll_tuned_forced_max_algorithms[ALLGATHER] = max_alg;
    
-   rc = mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
-                                "allgather_algorithm_count",
-                                "Number of allgather algorithms available",
-                                false, true, max_alg, NULL);
+   mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
+                           "allgather_algorithm_count",
+                           "Number of allgather algorithms available",
+                           false, true, max_alg, NULL);
    
     mca_param_indices->algorithm_param_index
        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,

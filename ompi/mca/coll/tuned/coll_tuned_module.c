@@ -150,7 +150,7 @@ static int
 tuned_module_enable(struct mca_coll_base_module_1_1_0_t *module,
 		    struct ompi_communicator_t *comm)
 {
-    int size, rank;
+    int size;
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t *) module;
     mca_coll_tuned_comm_t *data = NULL;
     /* fanout parameters */
@@ -228,7 +228,6 @@ tuned_module_enable(struct mca_coll_base_module_1_1_0_t *module,
     /* (B) so we can get our very own customised ompi_coll_com_rule_t ptr */
     /* which only has rules in it for our com size */
 
-    rank = ompi_comm_rank(comm);    /* find rank as only MCW:0 opens any tuned conf files */
     /* actually if they are below a threadhold, they all open it */
     /* have to build a collective in here.. but just for MCW.. */
     /* but we have to make sure we have the same rules everywhere :( */
