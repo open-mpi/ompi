@@ -89,8 +89,6 @@ int MPI_Type_create_subarray(int ndims,
         start_loop = i = 0;
         step = 1;
         end_loop = ndims;
-        if( end_loop < (start_loop + 2 * step) )
-            end_loop = start_loop + 2 * step;
     }
 
     /* As we know that the ndims is at least 1 we can start by creating the
