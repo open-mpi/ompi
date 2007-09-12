@@ -926,14 +926,14 @@ ompi_coll_tuned_allreduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
 
 int ompi_coll_tuned_allreduce_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices)
 {
-    int rc, max_alg = 5, requested_alg;
+    int max_alg = 5, requested_alg;
 
     ompi_coll_tuned_forced_max_algorithms[ALLREDUCE] = max_alg;
 
-    rc = mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
-                                 "allreduce_algorithm_count",
-                                 "Number of allreduce algorithms available",
-                                 false, true, max_alg, NULL);
+    mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
+                            "allreduce_algorithm_count",
+                            "Number of allreduce algorithms available",
+                            false, true, max_alg, NULL);
 
     mca_param_indices->algorithm_param_index
         = mca_base_param_reg_int( &mca_coll_tuned_component.super.collm_version,

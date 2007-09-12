@@ -96,14 +96,13 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
                                              struct ompi_communicator_t *comm,
 					     struct mca_coll_base_module_1_1_0_t *module)
 {
-    int communicator_size, rank;
+    int communicator_size;
     size_t dsize, block_dsize;
 #if 0
     size_t total_dsize;
 #endif
 
     communicator_size = ompi_comm_size(comm);
-    rank = ompi_comm_rank(comm);
 
     /* special case */
     if (communicator_size==2) {
@@ -142,7 +141,7 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
     total_dsize = dsize * scount * communicator_size;   /* needed for decision */
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoall_intra_dec_fixed rank %d com_size %d msg_length %ld",
-                 rank, communicator_size, total_dsize));
+                 ompi_comm_rank(comm), communicator_size, total_dsize));
 
     if (communicator_size >= 12 && total_dsize <= 768) {
         return ompi_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
@@ -216,12 +215,11 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     const double a_p128 = 1.6134e-6; /* [1 / byte] */
     const double b_p128 = 2.1102;
 
-    int communicator_size, rank;
+    int communicator_size;
     int segsize = 0;
     size_t message_size, dsize;
 
     communicator_size = ompi_comm_size(comm);
-    rank = ompi_comm_rank(comm);
 
     /* else we need data size for decision function */
     ompi_ddt_type_size(datatype, &dsize);
@@ -229,7 +227,7 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_bcast_intra_dec_fixed"
                  " root %d rank %d com_size %d msg_length %lu",
-                 root, rank, communicator_size, (unsigned long)message_size));
+                 root, ompi_comm_rank(comm), communicator_size, (unsigned long)message_size));
 
     /* Handle messages of small and intermediate size, and 
        single-element broadcasts */
@@ -327,7 +325,7 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
                                             struct ompi_communicator_t* comm,
 					    struct mca_coll_base_module_1_1_0_t *module)
 {
-    int communicator_size, rank, segsize = 0;
+    int communicator_size, segsize = 0;
     size_t message_size, dsize;
     const double a1 =  0.6016 / 1024.0; /* [1/B] */
     const double b1 =  1.3496;
@@ -341,7 +339,6 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     const int max_requests = 0; /* no limit on # of outstanding requests */
 
     communicator_size = ompi_comm_size(comm);
-    rank = ompi_comm_rank(comm);
 
     /* need data size for decision function */
     ompi_ddt_type_size(datatype, &dsize);
@@ -361,7 +358,7 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_dec_fixed"
                  "root %d rank %d com_size %d msg_length %lu",
-                 root, rank, communicator_size, (unsigned long)message_size));
+                 root, ompi_comm_rank(comm), communicator_size, (unsigned long)message_size));
 
     if ((communicator_size < 8) && (message_size < 512)){
         /* Linear_0K */
@@ -495,13 +492,12 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
                                               void* rbuf, int rcount, 
                                               struct ompi_datatype_t *rdtype, 
                                               struct ompi_communicator_t *comm,
-					      struct mca_coll_base_module_1_1_0_t *module)
+                                              struct mca_coll_base_module_1_1_0_t *module)
 {
-   int communicator_size, rank, pow2_size;
+   int communicator_size, pow2_size;
    size_t dsize, total_dsize;
 
    communicator_size = ompi_comm_size(comm);
-   rank = ompi_comm_rank(comm);
 
    /* Special case for 2 processes */
    if (communicator_size == 2) {
@@ -516,7 +512,7 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
    
    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allgather_intra_dec_fixed"
                 " rank %d com_size %d msg_length %lu",
-                rank, communicator_size, (unsigned long)total_dsize));
+                ompi_comm_rank(comm), communicator_size, (unsigned long)total_dsize));
 
    for (pow2_size  = 1; pow2_size <= communicator_size; pow2_size <<=1); 
    pow2_size >>=1;
@@ -594,11 +590,10 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(void *sbuf, int scount,
 					       struct mca_coll_base_module_1_1_0_t *module)
 {
     int i;
-    int communicator_size, rank, pow2_size;
+    int communicator_size, pow2_size;
     size_t dsize, total_dsize;
     
     communicator_size = ompi_comm_size(comm);
-    rank = ompi_comm_rank(comm);
     
     /* Special case for 2 processes */
     if (communicator_size == 2) {
@@ -617,7 +612,7 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_tuned_stream, 
                  "ompi_coll_tuned_allgatherv_intra_dec_fixed"
                  " rank %d com_size %d msg_length %lu",
-                 rank, communicator_size, (unsigned long)total_dsize));
+                 ompi_comm_rank(comm), communicator_size, (unsigned long)total_dsize));
     
     for (pow2_size  = 1; pow2_size <= communicator_size; pow2_size <<=1); 
     pow2_size >>=1;

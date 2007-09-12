@@ -96,7 +96,8 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
    int line = -1, err = 0;
    int rank, size;
    int sendto, recvfrom, distance, blockcount, i;
-   int *new_rcounts, *new_rdispls, *new_scounts, *new_sdispls;
+   int *new_rcounts = NULL, *new_rdispls = NULL;
+   int *new_scounts = NULL, *new_sdispls = NULL;
    ptrdiff_t slb, rlb, sext, rext;
    char *tmpsend = NULL, *tmprecv = NULL;
    struct ompi_datatype_t *new_rdtype, *new_sdtype;
@@ -199,6 +200,11 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
    return OMPI_SUCCESS;
 
  err_hndl:
+   if( NULL != new_rcounts ) free(new_rcounts);
+   if( NULL != new_rdispls ) free(new_rdispls);
+   if( NULL != new_scounts ) free(new_scounts);
+   if( NULL != new_sdispls ) free(new_sdispls);
+
    OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
                 __FILE__, line, err, rank));
    return err;
@@ -681,14 +687,14 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
 int 
 ompi_coll_tuned_allgatherv_intra_check_forced_init(coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices)
 {
-    int rc, max_alg = 5, requested_alg;
+    int max_alg = 5, requested_alg;
     
     ompi_coll_tuned_forced_max_algorithms[ALLGATHERV] = max_alg;
     
-    rc = mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
-                                 "allgatherv_algorithm_count",
-                                 "Number of allgather algorithms available",
-                                 false, true, max_alg, NULL);
+    mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
+                            "allgatherv_algorithm_count",
+                            "Number of allgather algorithms available",
+                            false, true, max_alg, NULL);
     
     mca_param_indices->algorithm_param_index
         = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,

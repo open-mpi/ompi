@@ -606,14 +606,14 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
 
 int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices)
 {
-    int rc, max_alg = 5, requested_alg, max_requests;
+    int max_alg = 5, requested_alg, max_requests;
 
     ompi_coll_tuned_forced_max_algorithms[ALLTOALL] = max_alg;
 
-    rc = mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
-                                 "alltoall_algorithm_count",
-                                 "Number of alltoall algorithms available",
-                                 false, true, max_alg, NULL);
+    mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
+                            "alltoall_algorithm_count",
+                            "Number of alltoall algorithms available",
+                            false, true, max_alg, NULL);
 
     mca_param_indices->algorithm_param_index
         = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
