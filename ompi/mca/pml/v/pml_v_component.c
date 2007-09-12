@@ -67,7 +67,6 @@ static int mca_pml_v_component_open(void)
     int verbose;
     int priority;
     char *vprotocol_include_list;
-    int ret;
     
     priority = mca_pml_v_param_register_int("priority", -1);
     output = mca_pml_v_param_register_string("output", "stderr");
