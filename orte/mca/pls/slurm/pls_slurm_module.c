@@ -108,6 +108,7 @@ orte_pls_base_module_1_3_0_t orte_pls_slurm_module = {
  */
 static pid_t srun_pid = 0;
 static orte_jobid_t active_job = ORTE_JOBID_INVALID;
+static bool failed_launch;
 
 
 /* When working in this function, ALWAYS jump to "cleanup" if
@@ -137,7 +138,6 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     char *cur_prefix;
     struct timeval joblaunchstart, launchstart, launchstop;
     int proc_name_index = 0;
-    bool failed_launch = true;
 
     if (mca_pls_slurm_component.timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
@@ -147,6 +147,9 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     
     /* save the active jobid */
     active_job = jobid;
+    
+    /* indicate the state of the launch */
+    failed_launch = true;
     
     /* Query the map for this job.
      * We need the entire mapping for a couple of reasons:
@@ -504,21 +507,33 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
     int rc;
     
     if (0 != status) {
-        /* we have a problem */
-        opal_output(0, "ERROR: srun failed to start the required daemons.");
-        opal_output(0, "ERROR: This could be due to an inability to find the orted binary");
-        opal_output(0, "ERROR: on one or more remote nodes, lack of authority to execute");
-        opal_output(0, "ERROR: on one or more specified nodes, or other factors.");
-        
-        /* set the job state so we know it failed to start */
-        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(active_job, ORTE_JOB_STATE_FAILED_TO_START))) {
-            ORTE_ERROR_LOG(rc);
+        if (failed_launch) {
+            /* we have a problem during launch */
+            opal_output(0, "ERROR: srun failed to start the required daemons.");
+            opal_output(0, "ERROR: This could be due to an inability to find the orted binary");
+            opal_output(0, "ERROR: on one or more remote nodes, lack of authority to execute");
+            opal_output(0, "ERROR: on one or more specified nodes, or other factors.");
+            
+            /* set the job state so we know it failed to start */
+            if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(active_job, ORTE_JOB_STATE_FAILED_TO_START))) {
+                ORTE_ERROR_LOG(rc);
+            }
+            
+        } else {
+            /* an orted must have died unexpectedly after launch */
+            opal_output(0, "ERROR: srun has detected that a required daemon terminated");
+            opal_output(0, "ERROR: during execution of the application with a non-zero");
+            opal_output(0, "ERROR: status of %ld. This is a fatal error.", (long)status);
+            
+            /* set the job state so we know it aborted */
+            if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(active_job, ORTE_JOB_STATE_ABORTED))) {
+                ORTE_ERROR_LOG(rc);
+            }
         }
-        
         /* force termination of the job */
         if (ORTE_SUCCESS != (rc = orte_wakeup(active_job))) {
             ORTE_ERROR_LOG(rc);
-        }
+        }        
     }
     
 }
