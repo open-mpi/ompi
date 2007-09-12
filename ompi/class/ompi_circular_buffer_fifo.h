@@ -154,7 +154,7 @@ static inline int ompi_cb_fifo_init(int size_of_fifo,
     fifo->mask = (size - 1);
 
     /* allocate fifo array */
-    buf = memory_allocator->mpool_alloc(memory_allocator,
+    buf = (char *) memory_allocator->mpool_alloc(memory_allocator,
             sizeof(void *) * size + 2*CACHE_LINE_SIZE, CACHE_LINE_SIZE, 0,
             NULL);
     if (NULL == buf) {

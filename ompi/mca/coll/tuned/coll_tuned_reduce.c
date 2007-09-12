@@ -521,7 +521,7 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
        ompi_ddt_get_true_extent(datatype, &tlb, &text);
 
        if ((root == rank) && (MPI_IN_PLACE == sendbuf)) {
-          tmpbuf = malloc(text + (count - 1) * ext);
+          tmpbuf = (char *) malloc(text + (count - 1) * ext);
           if (NULL == tmpbuf) {
              return MPI_ERR_INTERN;
           }
@@ -530,7 +530,7 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
                                          (char*)recvbuf);
           use_this_sendbuf = tmpbuf;
        } else if (io_root == rank) {
-          tmpbuf = malloc(text + (count - 1) * ext);
+          tmpbuf = (char *) malloc(text + (count - 1) * ext);
           if (NULL == tmpbuf) {
              return MPI_ERR_INTERN;
           }

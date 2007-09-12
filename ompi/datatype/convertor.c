@@ -246,7 +246,7 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
                 goto complete_contiguous_data_pack;
             }
             if( OPAL_LIKELY(NULL == iov[i].iov_base) )
-                iov[i].iov_base = base_pointer;
+                iov[i].iov_base = (IOVBASE_TYPE *) base_pointer;
             else
                 MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
             pending_length -= iov[i].iov_len;
@@ -258,7 +258,7 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
     complete_contiguous_data_pack:
         iov[i].iov_len = pending_length;
         if( OPAL_LIKELY(NULL == iov[i].iov_base) )
-            iov[i].iov_base = base_pointer;
+            iov[i].iov_base = (IOVBASE_TYPE *) base_pointer;
         else
             MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
         pConv->bConverted = pConv->local_size;

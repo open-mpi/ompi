@@ -374,7 +374,7 @@ static int mca_btl_tcp_component_create_instances(void)
         return OMPI_ERROR;
     }
 
-    kindexes = malloc(sizeof(int) * if_count);
+    kindexes = (int *) malloc(sizeof(int) * if_count);
     if (NULL == kindexes) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }

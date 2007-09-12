@@ -76,7 +76,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
     if (rank == root) {
 	if (0 == root) {
 	    /* root on 0, just use the send buffer */
-	    ptmp = sbuf;
+	    ptmp = (char *) sbuf;
 	    if (rbuf != MPI_IN_PLACE) {
 		/* local copy to rbuf */
 		err = ompi_ddt_sndrcv(sbuf, scount, sdtype,
@@ -85,7 +85,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
 	    }
 	} else {
 	    /* root is not on 0, allocate temp buffer for send */
-	    tempbuf = malloc(strue_extent + (scount*size - 1) * sextent);
+	    tempbuf = (char *) malloc(strue_extent + (scount*size - 1) * sextent);
 	    if (NULL == tempbuf) {
 		err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
 	    }
@@ -99,7 +99,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
 
 
 	    err = ompi_ddt_copy_content_same_ddt(sdtype, scount*root,
-						 ptmp + sextent*scount*(size - root), sbuf);
+						 ptmp + sextent*scount*(size - root), (char *) sbuf);
 	    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
 	    if (rbuf != MPI_IN_PLACE) {
@@ -113,7 +113,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
     } else if (!(vrank % 2)) {
 	/* non-root, non-leaf nodes, allocte temp buffer for recv
 	 * the most we need is rcount*size/2 */
-	tempbuf = malloc(rtrue_extent + (rcount*size - 1) * rextent);
+	tempbuf = (char *) malloc(rtrue_extent + (rcount*size - 1) * rextent);
 	if (NULL == tempbuf) {
 	    err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
 	}
@@ -126,7 +126,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
 	total_send = scount;
     } else {
 	/* leaf nodes, just use rbuf */
-	ptmp = rbuf;
+	ptmp = (char *) rbuf;
     }
 
     if (!(vrank % 2)) {

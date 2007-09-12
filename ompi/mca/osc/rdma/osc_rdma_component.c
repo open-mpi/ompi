@@ -365,7 +365,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
 
     /* buffer setup */
     module->m_use_buffers = check_config_value_bool("use_buffers", info);
-    module->m_pending_buffers = malloc(sizeof(ompi_osc_rdma_buffer_t) *
+    module->m_pending_buffers = (ompi_osc_rdma_buffer_t *) malloc(sizeof(ompi_osc_rdma_buffer_t) *
                                        ompi_comm_size(module->m_comm));
     memset(module->m_pending_buffers, 0, 
            sizeof(ompi_osc_rdma_buffer_t) * ompi_comm_size(module->m_comm));
@@ -1125,7 +1125,7 @@ setup_rdma(ompi_osc_rdma_module_t *module)
 #endif
 
     /* create a setup info structure */
-    module->m_setup_info = malloc(sizeof(ompi_osc_rdma_setup_info_t));
+    module->m_setup_info = (ompi_osc_rdma_setup_info_t *) malloc(sizeof(ompi_osc_rdma_setup_info_t));
     if (NULL == module->m_setup_info) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         goto cleanup;
@@ -1134,7 +1134,7 @@ setup_rdma(ompi_osc_rdma_module_t *module)
     module->m_setup_info->num_btls_expected = -1;
     module->m_setup_info->num_btls_outgoing = 0;
     module->m_setup_info->outstanding_btl_requests = 
-        malloc(sizeof(opal_list_t) * ompi_comm_size(module->m_comm));
+        (opal_list_t *) malloc(sizeof(opal_list_t) * ompi_comm_size(module->m_comm));
     if (NULL == module->m_setup_info->outstanding_btl_requests) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         goto cleanup;
@@ -1271,7 +1271,7 @@ setup_rdma(ompi_osc_rdma_module_t *module)
     }
 
     /* fill in information about remote peers */
-    remote = malloc(sizeof(uint64_t) * ompi_comm_size(module->m_comm));
+    remote = (uint64_t *) malloc(sizeof(uint64_t) * ompi_comm_size(module->m_comm));
     if (NULL == remote) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         goto cleanup;
