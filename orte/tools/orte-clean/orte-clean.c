@@ -146,6 +146,7 @@ main(int argc, char *argv[])
 
     orte_finalize();
     opal_finalize();
+
  cleanup:
     return exit_status;
 }
@@ -154,9 +155,8 @@ main(int argc, char *argv[])
  * line utility functions.
  */
 static int parse_args(int argc, char *argv[]) {
-    int i, ret, len;
+    int ret;
     opal_cmd_line_t cmd_line;
-    char **app_env = NULL, **global_env = NULL;
     orte_clean_globals_t tmp = { false, false };
 
     /* Parse the command line options */
@@ -165,29 +165,12 @@ static int parse_args(int argc, char *argv[]) {
        compiler to choke when copying structs containing bool members
        by value.  So do a memcpy here instead. */
     memcpy(&orte_clean_globals, &tmp, sizeof(tmp));
-    
+
     /*
      * Initialize list of available command line options.
      */
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
-    
-    mca_base_open();
     ret = opal_cmd_line_parse(&cmd_line, true, argc, argv);
-    
-    /** 
-     * Put all of the MCA arguments in the environment 
-     */
-    mca_base_cmd_line_process_args(&cmd_line, &app_env, &global_env);
-    
-    len = opal_argv_count(app_env);
-    for(i = 0; i < len; ++i) {
-        putenv(app_env[i]);
-    }
-
-    len = opal_argv_count(global_env);
-    for(i = 0; i < len; ++i) {
-        putenv(global_env[i]);
-    }
 
     opal_setenv(mca_base_param_env_var("opal_cr_is_tool"),
                 "1", true, NULL);
@@ -245,31 +228,6 @@ static int orte_clean_init(void) {
         exit_status = ret;
         goto cleanup;
     }
-#if 0
-    /***************************
-     * And ORTE, but need to do a bit of a dance first
-     ***************************/
-    /* register handler for errnum -> string converstion */
-    opal_error_register("ORTE", ORTE_ERR_BASE, ORTE_ERR_MAX, orte_err2str);
-
-    /* Register all MCA Params */
-    if (ORTE_SUCCESS != (ret = orte_register_params(true))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /* Ensure the system_info structure is instantiated and initialized */
-    if (ORTE_SUCCESS != (ret = orte_sys_info())) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /* Ensure the process info structure is instantiated and initialized */
-    if (ORTE_SUCCESS != (ret = orte_proc_info())) {
-        exit_status = ret;
-        goto cleanup;
-    }
-#endif
 
  cleanup:
     return exit_status;
