@@ -90,6 +90,8 @@ struct mca_btl_elan_component_t {
     char* elan_mpool_name; 
     /**< name of memory pool */ 
 
+    char* elanidmap_file;  /**< name of the ELANIDMAP file */
+
     bool leave_pinned;
     /**< pin memory on first use and leave pinned */
 	
