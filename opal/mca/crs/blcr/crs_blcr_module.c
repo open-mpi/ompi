@@ -85,13 +85,13 @@ OBJ_CLASS_INSTANCE(opal_crs_blcr_snapshot_t,
 /******************
  * Local Functions
  ******************/
-static int blcr_move(char *src, char *dest);
-static int blcr_checkpoint_peer(pid_t pid, char ** fname);
+static int blcr_chmod(char *dest);
+static int blcr_checkpoint_peer(pid_t pid, char * local_dir, char ** fname);
 static int blcr_get_checkpoint_filename(char **fname, pid_t pid);
 static int opal_crs_blcr_thread_callback(void *arg);
 static int opal_crs_blcr_signal_callback(void *arg);
 
-static int opal_crs_blcr_checkpoint_cmd(pid_t pid, char **fname, char **cmd);
+static int opal_crs_blcr_checkpoint_cmd(pid_t pid, char * local_dir, char **fname, char **cmd);
 static int opal_crs_blcr_restart_cmd(char *fname, char **cmd);
 
 static int blcr_update_snapshot_metadata(opal_crs_blcr_snapshot_t *snapshot);
@@ -293,7 +293,7 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
      * Checkpointing another process
      */
     {
-        ret = blcr_checkpoint_peer(pid, &(snapshot->context_filename));
+        ret = blcr_checkpoint_peer(pid, snapshot->super.local_location, &(snapshot->context_filename));
 
         if(OPAL_SUCCESS != ret) {
             *state = OPAL_CRS_ERROR;
@@ -312,10 +312,10 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
          * Update the snapshot structure
          */
         asprintf(&tmp_str, "%s/%s", snapshot->super.local_location, snapshot->context_filename);
-        if (0 != (ret = blcr_move(snapshot->context_filename, tmp_str))) { 
+        if (0 != (ret = blcr_chmod(tmp_str))) { 
             *state = OPAL_CRS_ERROR;
             opal_output(mca_crs_blcr_component.super.output_handle,
-                        "crs:blcr: checkpoint(): Error: Unable to move the checkpoint file (%s to the approprate directory (%s) :[%d].",
+                        "crs:blcr: checkpoint(): Error: Unable to chmod the checkpoint file (%s in the directory (%s) :[%d].",
                         snapshot->context_filename, tmp_str, ret);
             perror("crs:blcr: checkpoint");
             free(tmp_str);
@@ -484,7 +484,7 @@ int opal_crs_blcr_enable_checkpoint(void)
 /*****************************
  * Local Function Definitions
  *****************************/
-static int blcr_checkpoint_peer(pid_t pid, char ** fname) 
+static int blcr_checkpoint_peer(pid_t pid, char * local_dir, char ** fname) 
 {
     char **cr_argv = NULL;
     char *cr_cmd = NULL;
@@ -499,7 +499,7 @@ static int blcr_checkpoint_peer(pid_t pid, char ** fname)
     /*
      * Get the checkpoint command
      */
-    if ( OPAL_SUCCESS != (ret = opal_crs_blcr_checkpoint_cmd(pid, fname, &cr_cmd)) ) {
+    if ( OPAL_SUCCESS != (ret = opal_crs_blcr_checkpoint_cmd(pid, local_dir, fname, &cr_cmd)) ) {
         opal_output(mca_crs_blcr_component.super.output_handle,
                     "crs:blcr: checkpoint_peer: Failed to generate checkpoint command :(%d):", ret);
         exit_status = ret;
@@ -620,17 +620,20 @@ static int opal_crs_blcr_signal_callback(void *arg) {
     return 0;
 }
 
-static int opal_crs_blcr_checkpoint_cmd(pid_t pid, char **fname, char **cmd)
+static int opal_crs_blcr_checkpoint_cmd(pid_t pid, char * local_dir, char **fname, char **cmd)
 {
     char **cr_argv = NULL;
     int argc = 0, ret;
     char * pid_str;
     int exit_status = OPAL_SUCCESS;
+    char * loc_fname = NULL;
 
     blcr_get_checkpoint_filename(fname, pid);
 
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: checkpoint_cmd(%d)", pid);
+
+    asprintf(&loc_fname, "%s/%s", local_dir, *fname);
 
     /*
      * Build the command
@@ -656,7 +659,7 @@ static int opal_crs_blcr_checkpoint_cmd(pid_t pid, char **fname, char **cmd)
         goto cleanup;
     }
 
-    if (OPAL_SUCCESS != (ret = opal_argv_append(&argc, &cr_argv, strdup(*fname)))) {
+    if (OPAL_SUCCESS != (ret = opal_argv_append(&argc, &cr_argv, strdup(loc_fname)))) {
         exit_status = ret;
         goto cleanup;
     }
@@ -671,6 +674,8 @@ static int opal_crs_blcr_checkpoint_cmd(pid_t pid, char **fname, char **cmd)
         free(pid_str);
     if( NULL != cr_argv)
         opal_argv_free(cr_argv);
+    if(NULL != loc_fname) 
+        free(loc_fname);
 
     return exit_status;
 }
@@ -806,26 +811,12 @@ static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
 }
 
 /*
- * As it turns out 'rename' doesn't work across filesystems :(
- * So just do the system call to mv for the moment,
+ * Change permissions on the file so we can read it
  */
-static int blcr_move(char *src, char *dest) {
+static int blcr_chmod(char *dest) {
     char * command = NULL;
     int ret = OPAL_SUCCESS;
 
-    /* JJH: Assume 'mv' is in the path */
-    asprintf(&command, "mv %s %s", src, dest);
-
-    if (0 != (ret = system(command) )) {
-        opal_output(mca_crs_blcr_component.super.output_handle,
-                    "crs:blcr: move(): Error: Unable to move the file (%s) to (%s) :[%d].",
-                    src, dest, ret);
-        perror("crs:blcr move");
-        goto error;
-    }
-
-    free(command);
-    
     /* JJH: Assume 'chmod' is in the path */
     asprintf(&command, "chmod u+rwX  %s", dest);
 
@@ -838,6 +829,8 @@ static int blcr_move(char *src, char *dest) {
     }
     
  error:
-    free(command);
+    if( NULL != command ) {
+        free(command);
+    }
     return ret;
 }
