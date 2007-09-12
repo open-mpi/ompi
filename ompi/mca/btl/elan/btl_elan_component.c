@@ -98,8 +98,8 @@ static inline int mca_btl_elan_param_register_int(
 int mca_btl_elan_component_open(void)
 {
     /* initialize state */
-    mca_btl_elan_component.elan_num_btls=0;
-    mca_btl_elan_component.elan_btls=NULL;
+    mca_btl_elan_component.elan_num_btls = 0;
+    mca_btl_elan_component.elan_btls = NULL;
 
     /* register Elan4 component parameters */
     mca_btl_elan_component.elan_free_list_num =
@@ -123,6 +123,9 @@ int mca_btl_elan_component_open(void)
     mca_btl_elan_module.super.btl_latency = 5;
     mca_btl_base_param_register(&mca_btl_elan_component.super.btl_version,
                                 &mca_btl_elan_module.super);
+
+    mca_btl_elan_component.elanidmap_file =
+        mca_btl_elan_param_register_string( "elanidmap", "/etc/elanidmap" );
  
     return OMPI_SUCCESS;
 }
@@ -135,8 +138,10 @@ int mca_btl_elan_component_close(void)
 {
     if( NULL != mca_btl_elan_component.elan_btls ) {
         free( mca_btl_elan_component.elan_btls );
-        /* release resources */
+        mca_btl_elan_component.elan_btls = NULL;
+        mca_btl_elan_component.elan_num_btls = 0;
 
+        /* release resources */        
         OBJ_DESTRUCT(&mca_btl_elan_component.elan_procs);
         OBJ_DESTRUCT(&mca_btl_elan_component.elan_frag_eager);
         OBJ_DESTRUCT(&mca_btl_elan_component.elan_frag_user);
@@ -196,20 +201,21 @@ mca_btl_base_module_t** mca_btl_elan_component_init( int *num_btl_modules,
                          NULL ); /* use default allocator */
     
 
-    opal_setenv( "MPIRUN_ELANIDMAP_FILE", "/etc/elanidmap", false, &environ );
     vpid = orte_process_info.my_name->vpid;
    
-    ompi_modex_send( &mca_btl_elan_component.super.btl_version, &vpid, sizeof(vpid));
+    ompi_modex_send( &mca_btl_elan_component.super.btl_version, &vpid,
+                     sizeof(vpid));
+
     mca_btl_elan_component.elan_num_btls = 1;
-    mca_btl_elan_component.elan_btls = malloc( (mca_btl_elan_component.elan_num_btls) * sizeof(mca_btl_base_module_t*) );
+    mca_btl_elan_component.elan_btls = malloc( mca_btl_elan_component.elan_num_btls * sizeof(mca_btl_base_module_t*) );
     for( i = count = 0; i < mca_btl_elan_component.elan_num_btls; i++ ) {
         mca_btl_elan_module_t* btl =  malloc (sizeof (mca_btl_elan_module_t));	
         if(NULL == btl)
             continue;
         memcpy( btl, &mca_btl_elan_module, sizeof(mca_btl_elan_module_t) );
         OBJ_CONSTRUCT (&btl->elan_lock, opal_mutex_t);
-    	btl->tportFIFOHead=NULL;
-    	btl->tportFIFOTail=NULL;
+    	btl->tportFIFOHead = NULL;
+    	btl->tportFIFOTail = NULL;
         mca_btl_elan_component.elan_btls[count++] = btl;
     }
     mca_btl_elan_component.elan_num_btls = count ;
@@ -219,7 +225,8 @@ mca_btl_base_module_t** mca_btl_elan_component_init( int *num_btl_modules,
         mca_btl_elan_component.elan_num_btls = 0;  /* no active BTL modules */
         return NULL;
     }
-    memcpy( btls,  mca_btl_elan_component.elan_btls, mca_btl_elan_component.elan_num_btls *sizeof(mca_btl_elan_module_t*) );
+    memcpy( btls,  mca_btl_elan_component.elan_btls,
+            mca_btl_elan_component.elan_num_btls *sizeof(mca_btl_elan_module_t*) );
     *num_btl_modules = mca_btl_elan_component.elan_num_btls;
     return btls;
 }
@@ -227,11 +234,7 @@ mca_btl_base_module_t** mca_btl_elan_component_init( int *num_btl_modules,
 /*
  *  Elan4 component progress.
  */
-
-
-
-
-int mca_btl_elan_component_progress()
+int mca_btl_elan_component_progress( void )
 {
     size_t num_progressed = 0, i, no_btls, size;
     mca_btl_elan_frag_t*    frag;
@@ -245,59 +248,51 @@ int mca_btl_elan_component_progress()
         if(desc ==NULL)
             continue;
         frag = (mca_btl_elan_frag_t*) desc->frag;
-        if(frag!=NULL)
-            {
-                if(frag->type== MCA_BTL_ELAN_HDR_TYPE_SEND )
-                    {
-                        /* it's a send */
-                        /* call the completion callback */
-                        elan_tportTxWait(desc->eve);
-                        frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS );
-                        free(desc);
-                
-                    }
-                else if(frag->type== MCA_BTL_ELAN_HDR_TYPE_PUT || frag->type== MCA_BTL_ELAN_HDR_TYPE_GET )
-                    {
-                        /* it's a put*/
-                        /* call the completion callback */
-                        elan_wait(desc->eve,ELAN_WAIT_EVENT);
-                        frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS );
-                        free(desc);
-                    }
-                else{
-                    /* and this one is a receive */
-                    mca_btl_base_recv_reg_t* reg;
-                    reg = &(elan_btl->elan_reg[frag->tag]);
-                    elan_tportRxWait(desc->eve, NULL, NULL, &size);
-                    frag->base.des_dst->seg_len = size;
-                    reg->cbfunc( &(elan_btl->super), frag->tag, &(frag->base),reg->cbdata );
-                    /**
-                     * The upper level extract the data from the fragment.
-                     * Now we can register the fragment
-                     * again with the elan BTL.
-                     */
-                    desc->eve = elan_tportRxStart (elan_btl->tport, 0 ,  0,  0, 0xffffffff, frag->tag, frag->base.des_dst->seg_addr.pval, mca_btl_elan_module.super.btl_eager_limit) ;
-                    /*desc->eve = elan_tportRxStart (elan_btl->tport, ELAN_TPORT_RXANY , 0,  0, 0, 0, frag->base.des_dst->seg_addr.pval, mca_btl_elan_module.super.btl_eager_limit) ;*/
-
-                    desc->frag = frag;
-                    desc->next  = NULL;
-                    OPAL_THREAD_LOCK(&elan_btl->elan_lock);
-                    if(elan_btl->tportFIFOTail)
-                        {
-                            elan_btl->tportFIFOTail->next = desc;
-                            elan_btl->tportFIFOTail=desc;
-                        }
-                    else{
-                        elan_btl->tportFIFOHead = desc;
-                        elan_btl->tportFIFOTail = desc;   
-                    }
-                    OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
-                }
+        if( NULL != frag ) {
+            if(frag->type== MCA_BTL_ELAN_HDR_TYPE_SEND ) {
+                /* it's a send */
+                /* call the completion callback */
+                elan_tportTxWait(desc->eve);
+                frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS );
+                free(desc);
+            } else if( (frag->type == MCA_BTL_ELAN_HDR_TYPE_PUT) || 
+                       (frag->type== MCA_BTL_ELAN_HDR_TYPE_GET) ) {
+                /* it's a put*/
+                /* call the completion callback */
+                elan_wait(desc->eve,ELAN_WAIT_EVENT);
+                frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS );
+                free(desc);
             } else {
-                opal_output( 0, "Something bad happened the frag == NULL\n" );
+                /* and this one is a receive */
+                mca_btl_base_recv_reg_t* reg;
+                reg = &(elan_btl->elan_reg[frag->tag]);
+                elan_tportRxWait(desc->eve, NULL, NULL, &size);
+                frag->base.des_dst->seg_len = size;
+                reg->cbfunc( &(elan_btl->super), frag->tag, &(frag->base),reg->cbdata );
+                /**
+                 * The upper level extract the data from the fragment.
+                 * Now we can register the fragment
+                 * again with the elan BTL.
+                 */
+                desc->eve = elan_tportRxStart (elan_btl->tport, 0 ,  0,  0, 0xffffffff, frag->tag, frag->base.des_dst->seg_addr.pval, mca_btl_elan_module.super.btl_eager_limit) ;
+                /*desc->eve = elan_tportRxStart (elan_btl->tport, ELAN_TPORT_RXANY , 0,  0, 0, 0, frag->base.des_dst->seg_addr.pval, mca_btl_elan_module.super.btl_eager_limit) ;*/
+                    
+                desc->frag = frag;
+                desc->next  = NULL;
+                OPAL_THREAD_LOCK(&elan_btl->elan_lock);
+                if( elan_btl->tportFIFOTail ) {
+                    elan_btl->tportFIFOTail->next = desc;
+                    elan_btl->tportFIFOTail=desc;
+                } else {
+                    elan_btl->tportFIFOHead = desc;
+                    elan_btl->tportFIFOTail = desc;   
+                }
+                OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
             }
+        } else {
+            opal_output( 0, "Something bad happened the frag == NULL\n" );
+        }
         num_progressed++;
-       
     }
 
     return num_progressed;
