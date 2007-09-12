@@ -190,7 +190,7 @@ static int oob_tcp_windows_progress_callback( void )
 int mca_oob_tcp_component_open(void)
 {
     int value = 0;
-    char *listen_type, *str;
+    char *listen_type, *str = NULL;
     int tmp;
 
 #ifdef __WINDOWS__
@@ -277,6 +277,7 @@ int mca_oob_tcp_component_open(void)
             mca_oob_tcp_component.tcp_include = str;
         } else {
             free(str);
+            str = NULL;  /* reset to NULL so we can use it again later */
         }
     }
 
@@ -294,6 +295,7 @@ int mca_oob_tcp_component_open(void)
             mca_oob_tcp_component.tcp_exclude = str;
         } else {
             free(str);
+            str = NULL;  /* reset to NULL so we can use it again later */
         }
     }
 
@@ -1453,7 +1455,6 @@ mca_oob_tcp_get_new_name(orte_process_name_t* name)
 {
     mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(ORTE_PROC_MY_HNP);
     mca_oob_tcp_msg_t* msg;
-    int size;
     int rc;
 
     if(NULL == peer)
@@ -1463,9 +1464,6 @@ mca_oob_tcp_get_new_name(orte_process_name_t* name)
     if(NULL == msg) {
         return rc;
     }
-
-    /* calculate the size of the message */
-    size = 0;
 
     if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_ALL) {
         opal_output(0, "%s-%s mca_oob_tcp_get_new_name: starting\n",
