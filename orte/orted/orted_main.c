@@ -91,6 +91,10 @@
 static struct opal_event term_handler;
 static struct opal_event int_handler;
 static struct opal_event pipe_handler;
+#ifndef __WINDOWS__
+static struct opal_event sigusr1_handler;
+static struct opal_event sigusr2_handler;
+#endif  /* __WINDOWS__ */
 
 static void shutdown_callback(int fd, short flags, void *arg);
 
@@ -199,6 +203,8 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
+
+static void signal_callback(int fd, short event, void *arg);
 
 int orte_daemon(int argc, char *argv[])
 {
@@ -446,6 +452,16 @@ int orte_daemon(int argc, char *argv[])
                    shutdown_callback, NULL);
     opal_event_add(&int_handler, NULL);
 
+#ifndef __WINDOWS__
+    /** setup callbacks for signals we should ignore */
+    opal_signal_set(&sigusr1_handler, SIGUSR1,
+                    signal_callback, &sigusr1_handler);
+    opal_signal_add(&sigusr1_handler, NULL);
+    opal_signal_set(&sigusr2_handler, SIGUSR2,
+                    signal_callback, &sigusr2_handler);
+    opal_signal_add(&sigusr2_handler, NULL);
+#endif  /* __WINDOWS__ */
+
     /* if requested, report my uri to the indicated pipe */
     if (orted_globals.uri_pipe > 0) {
         write(orted_globals.uri_pipe, orte_universe_info.seed_uri,
@@ -601,3 +617,7 @@ static void shutdown_callback(int fd, short flags, void *arg)
     opal_condition_signal(&orted_comm_cond);
 }
 
+static void signal_callback(int fd, short event, void *arg)
+{
+    /* just ignore these signals */
+}
