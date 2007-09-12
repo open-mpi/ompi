@@ -490,7 +490,7 @@ GOTNAME:
                         ORTE_ERROR_LOG(rc);
                         continue;
                     }
-                    strcpy(component.mca_type_name, ptr);
+                    strncpy(component.mca_type_name, ptr, MCA_BASE_MAX_COMPONENT_NAME_LEN);
                     free(ptr);
 
                     cnt = 1;
@@ -498,7 +498,7 @@ GOTNAME:
                         ORTE_ERROR_LOG(rc);
                         continue;
                     }
-                    strcpy(component.mca_component_name, ptr);
+                    strncpy(component.mca_component_name, ptr, MCA_BASE_MAX_COMPONENT_NAME_LEN);
                     free(ptr);
 
                     cnt = 1;
