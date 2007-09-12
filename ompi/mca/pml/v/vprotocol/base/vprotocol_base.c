@@ -13,13 +13,19 @@
 #include "ompi/mca/pml/v/vprotocol/base/static-components.h"
 
 opal_list_t mca_vprotocol_base_components_available;
+char *mca_vprotocol_base_include_list;
 
 /* Load any vprotocol MCA component and call open function of all those 
  * components.
+ * 
+ * Also fill the mca_vprotocol_base_include_list with components that exists
  */
-int mca_vprotocol_base_open(void)
+int mca_vprotocol_base_open(char *vprotocol_include_list)
 {
+    int ret;
+    
     OBJ_CONSTRUCT(&mca_vprotocol_base_components_available, opal_list_t);
+    mca_vprotocol_base_include_list = vprotocol_include_list;
     return mca_base_components_open("vprotocol", 0, 
                                     mca_vprotocol_base_static_components, 
                                     &mca_vprotocol_base_components_available, 

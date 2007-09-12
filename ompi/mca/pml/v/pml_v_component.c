@@ -58,8 +58,6 @@ mca_pml_base_component_1_0_0_t mca_pml_v_component =
 static bool pml_v_enable_progress_treads = OMPI_ENABLE_PROGRESS_THREADS;
 static bool pml_v_enable_mpi_threads = OMPI_ENABLE_MPI_THREADS;
 
-
-
 /*******************************************************************************
  * MCA level functions - parasite setup
  */
@@ -68,30 +66,40 @@ static int mca_pml_v_component_open(void)
     char *output;
     int verbose;
     int priority;
+    char *vprotocol_include_list;
+    int ret;
     
     priority = mca_pml_v_param_register_int("priority", -1);
     output = mca_pml_v_param_register_string("output", "stderr");
     verbose = mca_pml_v_param_register_int("verbose", 0);
 
+    mca_base_param_reg_string_name("vprotocol", NULL, 
+                                   "Specify a specific vprotocol to use", 
+                                   false, false, "", &vprotocol_include_list);
+   
     pml_v_output_open(output, verbose);
 
     if(-1 != priority)
         V_OUTPUT_ERR("pml_v: Overriding priority setting (%d) with -1. The PML V should NEVER be the selected component; even when enabling fault tolerance.", priority);
             
     V_OUTPUT_VERBOSE(500, "loaded");
-    return mca_vprotocol_base_open();
+
+    return mca_vprotocol_base_open(vprotocol_include_list);
 }
  
 static int mca_pml_v_component_close(void)
 {
     int ret;
-   	
-    V_OUTPUT_VERBOSE(500, "component_close: I don't want to be unloaded now.");
-
+    
     /* Save original PML before making any changes  */
     mca_pml_v.host_pml_component = mca_pml_base_selected_component;
     mca_pml_v.host_pml = mca_pml;
-
+    
+    /* Do not load anything if no FT protocol is selected */
+    if(! mca_vprotocol_base_include_list[0])
+        return mca_pml_v_component_parasite_close();
+        
+    V_OUTPUT_VERBOSE(500, "component_close: I don't want to be unloaded now.");
     ret = mca_base_component_repository_retain_component("pml", "v");
     if(OPAL_SUCCESS != ret)
     {
@@ -144,7 +152,7 @@ static int mca_pml_v_component_parasite_finalize(void)
 
 static int mca_pml_v_component_parasite_close(void)
 {
-    V_OUTPUT_VERBOSE(500, "parasite_close: Ok, host component %s is closing, so I accept to die", 
+    V_OUTPUT_VERBOSE(500, "parasite_close: Ok, I accept to die and let %s component finish", 
                           mca_pml_v.host_pml_component.pmlm_version.mca_component_name);
     mca_pml_base_selected_component = mca_pml_v.host_pml_component;
 
