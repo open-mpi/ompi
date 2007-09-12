@@ -49,37 +49,20 @@ void vprotocol_pessimist_sender_based_finalize(void);
   */
 void vprotocol_pessimist_sender_based_alloc(size_t len);
 
-#define __SENDER_BASED_CNVTOR_PACK(req) do {                                  \
-    if( 0 != req->req_bytes_packed ) {                                        \
-        ompi_convertor_t conv;                                                \
-        size_t max_data;                                                      \
-        size_t zero = 0;                                                      \
-        unsigned int iov_count = 1;                                           \
-        struct iovec iov;                                                     \
-                                                                              \
-        iov.iov_len = req->req_bytes_packed;                                  \
-        iov.iov_base =                                                        \
-            (IOVBASE_TYPE *) mca_vprotocol_pessimist.sender_based.sb_cursor;  \
-        ompi_convertor_clone_with_position( &req->req_base.req_convertor,     \
-                                            &conv, 0, &zero );                \
-        ompi_convertor_pack(&conv, &iov, &iov_count, &max_data);              \
+/** Copy data associated to a pml_base_send_request_t to the sender based 
+  * message payload buffer
+  */
+#define VPROTOCOL_PESSIMIST_SENDER_BASED_COPY(REQ) do {                       \
+    mca_pml_base_send_request_t *req = (mca_pml_base_send_request_t *) (REQ); \
+    if(req->req_bytes_packed +                                                \
+       sizeof(vprotocol_pessimist_sender_based_header_t) >=                   \
+       mca_vprotocol_pessimist.sender_based.sb_available)                     \
+    {                                                                         \
+        vprotocol_pessimist_sender_based_alloc(req->req_bytes_packed);        \
     }                                                                         \
+    __SENDER_BASED_PACK(req);                                                 \
 } while(0)
 
-#define __SENDER_BASED_SNDRCV_PACK(req) do {                                  \
-    mca_pml_v.host_pml.pml_irecv(                                             \
-            mca_vprotocol_pessimist.sender_based.sb_cursor,                   \
-            req->req_bytes_packed, MPI_PACKED, 0, 0,                          \
-            mca_vprotocol_pessimist.sender_based.sb_comm,                     \
-            &VPESSIMIST_SEND_REQ(req)->sb_reqs[0]);                           \
-    mca_pml_v.host_pml.pml_isend(req->req_base.req_addr,                      \
-            req->req_base.req_count, req->req_base.req_datatype, 0, 0,        \
-            MCA_PML_BASE_SEND_READY,                                          \
-            mca_vprotocol_pessimist.sender_based.sb_comm,                     \
-            &VPESSIMIST_SEND_REQ(req)->sb_reqs[1]);                           \
-} while(0);
-
-#if 0
 #define __SENDER_BASED_PACK(req) do {                                         \
     vprotocol_pessimist_sender_based_header_t *sbhdr =                        \
         (vprotocol_pessimist_sender_based_header_t *)                         \
@@ -96,50 +79,50 @@ void vprotocol_pessimist_sender_based_alloc(size_t len);
     mca_vprotocol_pessimist.sender_based.sb_cursor += sbhdr->size;            \
     mca_vprotocol_pessimist.sender_based.sb_available -= (sbhdr->size +       \
             sizeof(vprotocol_pessimist_sender_based_header_t));               \
-    V_OUTPUT_VERBOSE(70, "pessimist:\tsb\twrite\t%"PRIpclock"\tsize %lu", VPESSIMIST_REQ(&req->req_base)->reqid, sbhdr->size + sizeof(vprotocol_pessimist_sender_based_header_t); \
+    V_OUTPUT_VERBOSE(70, "pessimist:\tsb\twrite\t%"PRIpclock"\tsize %lu", VPESSIMIST_REQ(&req->req_base)->reqid, sbhdr->size + sizeof(vprotocol_pessimist_sender_based_header_t)); \
 } while(0)
-#endif
-
-static inline void __SENDER_BASED_PACK(mca_pml_base_send_request_t *req) {
-    vprotocol_pessimist_sender_based_header_t *sbhdr =
-            (vprotocol_pessimist_sender_based_header_t *)
-                mca_vprotocol_pessimist.sender_based.sb_cursor;
-    sbhdr->size = req->req_bytes_packed;
-    sbhdr->dst = req->req_base.req_peer;
-    sbhdr->tag = req->req_base.req_tag;
-    sbhdr->contextid = req->req_base.req_comm->c_contextid;
-    sbhdr->sequence = req->req_base.req_sequence;
-    mca_vprotocol_pessimist.sender_based.sb_cursor +=
-            sizeof(vprotocol_pessimist_sender_based_header_t);
- 
-    __SENDER_BASED_CNVTOR_PACK(req); 
-    mca_vprotocol_pessimist.sender_based.sb_cursor += sbhdr->size;
-    mca_vprotocol_pessimist.sender_based.sb_available -= (sbhdr->size + 
-            sizeof(vprotocol_pessimist_sender_based_header_t));
-    V_OUTPUT_VERBOSE(70, "pessimist:\tsb\twrite\t%"PRIpclock"\tsize %lu", VPESSIMIST_REQ(&req->req_base)->reqid, sbhdr->size + sizeof(vprotocol_pessimist_sender_based_header_t)); 
-}
-
-
-/** Copy data associated to a pml_base_send_request_t to the sender based 
-  * message payload buffer
-  */
-#define VPROTOCOL_PESSIMIST_SENDER_BASED_COPY(REQ) do {                       \
-    mca_pml_base_send_request_t *req = (mca_pml_base_send_request_t *) (REQ); \
-    if(req->req_bytes_packed +                                                \
-       sizeof(vprotocol_pessimist_sender_based_header_t) >=                   \
-       mca_vprotocol_pessimist.sender_based.sb_available)                     \
-    {                                                                         \
-        vprotocol_pessimist_sender_based_alloc(req->req_bytes_packed);        \
-    }                                                                         \
-    __SENDER_BASED_PACK(req);                                                 \
-} while(0)
-
 
 /** Ensure sender based is finished before allowing user to touch send buffer
-  */ 
+*/ 
 #define VPROTOCOL_PESSIMIST_SENDER_BASED_FLUSH(REQ) __SENDER_BASED_CNVTOR_FLUSH(REQ)
 
+
+/* There is 2 different ways of packing the data to the sender-based buffer
+ * just pick one 
+ */
+#define __SENDER_BASED_CNVTOR_PACK(req) do {                                  \
+    if(0 != req->req_bytes_packed) {                                          \
+        ompi_convertor_t conv;                                                \
+        size_t max_data;                                                      \
+        size_t zero = 0;                                                      \
+        unsigned int iov_count = 1;                                           \
+        struct iovec iov;                                                     \
+                                                                              \
+        iov.iov_len = req->req_bytes_packed;                                  \
+        iov.iov_base =                                                        \
+            (IOVBASE_TYPE *) mca_vprotocol_pessimist.sender_based.sb_cursor;  \
+        ompi_convertor_clone_with_position( &req->req_base.req_convertor,     \
+                                            &conv, 0, &zero );                \
+        ompi_convertor_pack(&conv, &iov, &iov_count, &max_data);              \
+    }                                                                         \
+} while(0)
+
 #define __SENDER_BASED_CNVTOR_FLUSH(REQ)
+
+
+
+#define __SENDER_BASED_SNDRCV_PACK(req) do {                                  \
+    mca_pml_v.host_pml.pml_irecv(                                             \
+            mca_vprotocol_pessimist.sender_based.sb_cursor,                   \
+            req->req_bytes_packed, MPI_PACKED, 0, 0,                          \
+            mca_vprotocol_pessimist.sender_based.sb_comm,                     \
+            &VPESSIMIST_SEND_REQ(req)->sb_reqs[0]);                           \
+    mca_pml_v.host_pml.pml_isend(req->req_base.req_addr,                      \
+            req->req_base.req_count, req->req_base.req_datatype, 0, 0,        \
+            MCA_PML_BASE_SEND_READY,                                          \
+            mca_vprotocol_pessimist.sender_based.sb_comm,                     \
+            &VPESSIMIST_SEND_REQ(req)->sb_reqs[1]);                           \
+} while(0);
 
 #define __SENDER_BASED_SNDRCV_FLUSH(REQ) do {                                 \
     if(NULL != VPESSIMIST_REQ(REQ)->sb_reqs[0])                               \

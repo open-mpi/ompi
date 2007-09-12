@@ -12,14 +12,16 @@
 # Specific to this module
 
 PARAM_INIT_FILE=pml_v.c
-PARAM_CONFIG_HEADER_FILE="v_config.h"
 PARAM_CONFIG_FILES="Makefile"
 
->autogen.vprotocols 
 
-for protocol in protocol_*; do 
-  ( cd $pd_ompi_topdir
-    process_dir "$pd_dir/$protocol" $pd_ompi_topdir
-  )
-done
-
+# Operate on the vprotocol framework directory to detect and configure all 
+# the vprotocols. 
+(
+    cd $pd_ompi_topdir
+    mv "$mca_no_config_env_file" "$mca_no_config_env_file.bak"
+    mv "$mca_m4_config_env_file" "$mca_m4_config_env_file.bak" 
+    process_framework $pd_dir/vprotocol $rg_cwd vprotocol vprotocol
+    mv "$mca_no_config_env_file.bak" "$mca_no_config_env_file"
+    mv "$mca_m4_config_env_file.bak" "$mca_m4_config_env_file" 
+)

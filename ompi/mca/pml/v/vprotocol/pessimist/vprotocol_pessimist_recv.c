@@ -11,7 +11,6 @@
 #include "ompi_config.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/base/pml_base_recvreq.h"
-#include "../pml_v.h"
 #include "vprotocol_pessimist.h"
 
 

@@ -11,7 +11,7 @@
 #include "ompi_config.h"
 #include "vprotocol_pessimist_request.h"
 #include "vprotocol_pessimist_eventlog.h"
-#include "../../base/pml_base_request.h"
+#include "ompi/mca/pml/base/pml_base_request.h"
 
 static void vprotocol_pessimist_request_construct(mca_pml_base_request_t *req);
 

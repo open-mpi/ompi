@@ -9,7 +9,6 @@
  */
 
 #include "ompi_config.h"
-#include "../pml_v.h"
 #include "vprotocol_pessimist.h"
 
 int mca_vprotocol_pessimist_add_procs(struct ompi_proc_t **procs, size_t nprocs)

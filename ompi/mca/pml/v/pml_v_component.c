@@ -16,8 +16,8 @@
 #include "ompi/constants.h"
 #include "ompi/mca/pml/base/base.h"
 #include "pml_v.h"
-#include "vprotocol.h"
-#include "base/base.h"
+#include "vprotocol/vprotocol.h"
+#include "vprotocol/base/base.h"
 
 static int mca_pml_v_component_open(void);
 static int mca_pml_v_component_close(void);

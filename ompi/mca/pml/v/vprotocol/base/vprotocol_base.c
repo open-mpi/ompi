@@ -10,7 +10,7 @@
 #include "base.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "static-components.h"
+#include "ompi/mca/pml/v/vprotocol/base/static-components.h"
 
 opal_list_t mca_vprotocol_base_components_available;
 

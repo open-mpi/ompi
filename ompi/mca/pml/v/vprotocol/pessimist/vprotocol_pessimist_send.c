@@ -9,7 +9,6 @@
  */
 
 #include "ompi_config.h"
-#include "../pml_v.h"
 #include "vprotocol_pessimist.h"
 #include "vprotocol_pessimist_sender_based.h"
 

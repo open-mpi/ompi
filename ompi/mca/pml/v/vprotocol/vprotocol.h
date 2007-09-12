@@ -87,7 +87,7 @@ typedef mca_vprotocol_base_module_1_0_0_t mca_vprotocol_base_module_t;
 /* silently include the pml_v.h as every file including vprotocol.h will also
  * need it
  */
-#include "pml_v.h"
+#include "../pml_v.h"
 #include "base/base.h"
 
 #endif /* __INCLUDE_VPROTOCOL_H_ */

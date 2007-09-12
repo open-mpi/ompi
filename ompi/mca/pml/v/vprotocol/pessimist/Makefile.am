@@ -16,7 +16,7 @@ include $(top_ompi_srcdir)/config/Makefile.options
 # protocol_<name>.la (for DSO builds) or libprotocol_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_pml_v_DSO
+if OMPI_BUILD_vprotocol_pessimist_DSO
 component_noinst = 
 component_install = mca_vprotocol_pessimist.la
 else
