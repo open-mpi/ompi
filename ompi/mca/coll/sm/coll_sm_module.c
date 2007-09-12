@@ -285,6 +285,7 @@ sm_module_enable(struct mca_coll_base_module_1_1_0_t *module,
                  (sizeof(mca_coll_sm_tree_node_t*) * c->sm_tree_degree))));
 
     if (NULL == data) {
+        free(maffinity);
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
     data->mcb_data_mpool_malloc_addr = NULL;
@@ -349,6 +350,7 @@ sm_module_enable(struct mca_coll_base_module_1_1_0_t *module,
 
     if (OMPI_SUCCESS != (ret = bootstrap_comm(comm, sm_module))) {
         free(data);
+        free(maffinity);
         sm_module->sm_data = NULL;
         return ret;
     }
