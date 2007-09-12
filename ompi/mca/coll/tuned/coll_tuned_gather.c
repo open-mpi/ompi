@@ -78,7 +78,7 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
     if (rank == root) {
 	if (0 == root){
 	    /* root on 0, just use the recv buffer */
-	    ptmp = rbuf;
+	    ptmp = (char *) rbuf;
 	    if (sbuf != MPI_IN_PLACE) {
 		err = ompi_ddt_sndrcv(sbuf, scount, sdtype,
 				      ptmp, rcount, rdtype);
@@ -87,7 +87,7 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
 	} else {
 	    /* root is not on 0, allocate temp buffer for recv,
 	     * rotate data at the end */
-	    tempbuf = malloc(rtrue_extent + (rcount*size - 1) * rextent);
+	    tempbuf = (char *) malloc(rtrue_extent + (rcount*size - 1) * rextent);
 	    if (NULL == tempbuf) {
 		err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
 	    }
@@ -110,7 +110,7 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
 	/* other non-leaf nodes, allocate temp buffer for data received from
 	 * children, the most we need is half of the total data elements due
 	 * to the property of binimoal tree */
-	tempbuf = malloc(strue_extent + (scount*size - 1) * sextent);
+	tempbuf = (char *) malloc(strue_extent + (scount*size - 1) * sextent);
 	if (NULL == tempbuf) {
 	    err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
 	}
@@ -130,7 +130,7 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
     } else {
 	/* leaf nodes, no temp buffer needed, use sdtype,scount as
 	 * rdtype,rdcount since they are ignored on non-root procs */
-	ptmp = sbuf;
+	ptmp = (char *) sbuf;
 	total_recv = scount;
     }
 
@@ -180,7 +180,7 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
 
 
 	    err = ompi_ddt_copy_content_same_ddt(rdtype, rcount*root,
-						 rbuf, ptmp + rextent*rcount*(size-root));
+						 (char *) rbuf, ptmp + rextent*rcount*(size-root));
 	    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
 	    free(tempbuf);

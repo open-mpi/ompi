@@ -603,7 +603,7 @@ ompi_coll_tuned_reduce_scatter_intra_ring(void *sbuf, void *rbuf, int *rcounts,
     ompi_op_reduce(op, inbuf[inbi], tmprecv, rcounts[rank], dtype);
    
     /* Copy result from tmprecv to rbuf */
-    ret = ompi_ddt_copy_content_same_ddt(dtype, rcounts[rank], rbuf, tmprecv);
+    ret = ompi_ddt_copy_content_same_ddt(dtype, rcounts[rank], (char *) rbuf, tmprecv);
     if (ret < 0) { line = __LINE__; goto error_hndl; }
 
     if (NULL != displs) free(displs);

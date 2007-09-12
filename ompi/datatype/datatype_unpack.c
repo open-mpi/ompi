@@ -385,7 +385,7 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
 
-        packed_buffer = iov[iov_count].iov_base;
+        packed_buffer = (unsigned char *) iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
         if( 0 != pConvertor->partial_length ) {
             size_t element_length = ompi_ddt_basicDatatypes[pElem->elem.common.type]->size;

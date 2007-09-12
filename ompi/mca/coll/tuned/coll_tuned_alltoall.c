@@ -195,7 +195,7 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
         if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
 
         /* Copy back new data from recvbuf to tmpbuf */
-        err = ompi_ddt_copy_content_same_ddt(new_ddt, 1,tmpbuf, rbuf);
+        err = ompi_ddt_copy_content_same_ddt(new_ddt, 1,tmpbuf, (char *) rbuf);
         if (err < 0) { line = __LINE__; err = -1; goto err_hndl;  }
 
         /* free ddt */

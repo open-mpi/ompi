@@ -596,7 +596,8 @@ int mca_pml_ob1_ft_event( int state )
 
 int mca_pml_ob1_com_btl_comp(const void *v1, const void *v2)
 {
-    const mca_pml_ob1_com_btl_t *b1 = v1, *b2 = v2;
+    const mca_pml_ob1_com_btl_t *b1 = (const mca_pml_ob1_com_btl_t *) v1;
+    const mca_pml_ob1_com_btl_t *b2 = (const mca_pml_ob1_com_btl_t *) v2;
 
     if(b1->bml_btl->btl_weight < b2->bml_btl->btl_weight)
         return 1;

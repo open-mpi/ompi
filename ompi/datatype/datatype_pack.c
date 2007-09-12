@@ -71,7 +71,7 @@ ompi_pack_homogeneous_contig_function( ompi_convertor_t* pConv,
         if( (size_t)iov[iov_count].iov_len > length )
             iov[iov_count].iov_len = length;
         if( iov[iov_count].iov_base == NULL ) {
-            iov[iov_count].iov_base = source_base;
+            iov[iov_count].iov_base = (IOVBASE_TYPE *) source_base;
             COMPUTE_CSUM( iov[iov_count].iov_base, iov[iov_count].iov_len, pConv );
         } else {
             /* contiguous data just memcpy the smallest data in the user buffer */
@@ -133,7 +133,7 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
             if( (uint32_t)pStack->count < ((*out_size) - iov_count) ) {
                 pStack[1].count = pData->size - (pConv->bConverted % pData->size);
                 for( index = iov_count; i < pConv->count; i++, index++ ) {
-                    iov[index].iov_base = user_memory;
+                    iov[index].iov_base = (IOVBASE_TYPE *) user_memory;
                     iov[index].iov_len = pStack[1].count;
                     pStack[0].disp += extent;
                     total_bytes_converted += pStack[1].count;
@@ -156,13 +156,13 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
                 for( index = iov_count; (i < pConv->count) && (index < (*out_size));
                      i++, index++ ) {
                     if( max_allowed < pData->size ) {
-                        iov[index].iov_base = user_memory;
+                        iov[index].iov_base = (IOVBASE_TYPE *) user_memory;
                         iov[index].iov_len = max_allowed;
                         max_allowed = 0;
                         COMPUTE_CSUM( iov[index].iov_base, iov[index].iov_len, pConv );
                         break;
                     } else {
-                        iov[index].iov_base = user_memory;
+                        iov[index].iov_base = (IOVBASE_TYPE *) user_memory;
                         iov[index].iov_len = pData->size;
                         user_memory += extent;
                         COMPUTE_CSUM( iov[index].iov_base, (size_t)iov[index].iov_len, pConv );
@@ -185,7 +185,7 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
             uint32_t counter;
             size_t done;
 
-            packed_buffer = iov[iov_count].iov_base;
+            packed_buffer = (unsigned char *) iov[iov_count].iov_base;
             done = pConv->bConverted - i * pData->size;  /* partial data from last pack */
             if( done != 0 ) {  /* still some data to copy from the last time */
                 done = pData->size - done;
@@ -281,7 +281,7 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
                            pConvertor->stack_pos, pStack->index, (int)pStack->count, (long)pStack->disp ); );
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
-        destination = iov[iov_count].iov_base;
+        destination = (unsigned char *) iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
         while( 1 ) {
             while( pElem->elem.common.flags & DT_FLAG_DATA ) {
