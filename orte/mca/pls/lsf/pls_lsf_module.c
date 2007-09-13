@@ -419,7 +419,13 @@ static int pls_lsf_terminate_proc(const orte_process_name_t *name)
  */
 static int pls_lsf_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs)
 {
-    return ORTE_SUCCESS;
+    int rc;
+    
+    /* order the orteds to pass this signal to their local procs */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_signal_local_procs(jobid, signal, attrs))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    return rc;
 }
 
 
