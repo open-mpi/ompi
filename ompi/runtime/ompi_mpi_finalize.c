@@ -181,25 +181,25 @@ int ompi_mpi_finalize(void)
 
     /* free file resources */
     if (OMPI_SUCCESS != (ret = ompi_file_finalize())) {
-	return ret;
+        return ret;
     }
 
     /* free window resources */
     if (OMPI_SUCCESS != (ret = ompi_win_finalize())) {
-	return ret;
+        return ret;
     }
     if (OMPI_SUCCESS != (ret = ompi_osc_base_finalize())) {
-	return ret;
+        return ret;
     }
 
     /* free communicator resources */
     if (OMPI_SUCCESS != (ret = ompi_comm_finalize())) {
-	return ret;
+        return ret;
     }
 
     /* free requests */
     if (OMPI_SUCCESS != (ret = ompi_request_finalize())) {
-	return ret;
+        return ret;
     }
 
     /* If requested, print out a list of memory allocated by ALLOC_MEM
@@ -211,7 +211,7 @@ int ompi_mpi_finalize(void)
     /* Now that all MPI objects dealing with communications are gone,
        shut down MCA types having to do with communications */
     if (OMPI_SUCCESS != (ret = mca_pml_base_close())) {
-	return ret;
+        return ret;
     }
 
     /* shut down buffered send code */
@@ -231,54 +231,54 @@ int ompi_mpi_finalize(void)
 
     /* free attr resources */
     if (OMPI_SUCCESS != (ret = ompi_attr_finalize())) {
-	return ret;
+        return ret;
     }
 
     /* free group resources */
     if (OMPI_SUCCESS != (ret = ompi_group_finalize())) {
-	return ret;
+        return ret;
     }
 
     /* free proc resources */
     if ( OMPI_SUCCESS != (ret = ompi_proc_finalize())) {
-    	return ret;
+        return ret;
     }
 
     /* free internal error resources */
     if (OMPI_SUCCESS != (ret = ompi_errcode_intern_finalize())) {
-	return ret;
+        return ret;
     }
      
     /* free error code resources */
     if (OMPI_SUCCESS != (ret = ompi_mpi_errcode_finalize())) {
-	return ret;
+        return ret;
     }
 
     /* free errhandler resources */
     if (OMPI_SUCCESS != (ret = ompi_errhandler_finalize())) {
-	return ret;
+        return ret;
     }
 
     /* Free all other resources */
 
     /* free op resources */
     if (OMPI_SUCCESS != (ret = ompi_op_finalize())) {
-	return ret;
+        return ret;
     }
 
     /* free ddt resources */
     if (OMPI_SUCCESS != (ret = ompi_ddt_finalize())) {
-	return ret;
+        return ret;
     }
 
     /* free info resources */
     if (OMPI_SUCCESS != (ret = ompi_info_finalize())) {
-	return ret;
+        return ret;
     }
 
     /* free module exchange resources */
     if (OMPI_SUCCESS != (ret = ompi_modex_finalize())) {
-	return ret;
+        return ret;
     }
 
     /* Close down MCA modules */
@@ -293,16 +293,16 @@ int ompi_mpi_finalize(void)
         }
     }
     if (OMPI_SUCCESS != (ret = mca_topo_base_close())) {
-	return ret;
+        return ret;
     }
     if (OMPI_SUCCESS != (ret = ompi_osc_base_close())) {
-	return ret;
+        return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_coll_base_close())) {
-	return ret;
+        return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_mpool_base_close())) {
-	return ret;
+        return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_rcache_base_close())) { 
         return ret;
@@ -328,7 +328,7 @@ int ompi_mpi_finalize(void)
     /* Leave the RTE */
 
     if (OMPI_SUCCESS != (ret = orte_finalize())) {
-	return ret;
+        return ret;
     }
 
     /* All done */

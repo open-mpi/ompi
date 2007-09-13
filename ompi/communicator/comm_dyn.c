@@ -121,8 +121,10 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
                                          proc_list[rank], tag,
                                          &tmp_port_name);
             }
-	    if (OMPI_SUCCESS != rc) return rc;
-	    rport = &tmp_port_name;
+            if (OMPI_SUCCESS != rc) {
+                return rc;
+            }
+            rport = &tmp_port_name;
         } else {
             rport = port;
         }
@@ -139,13 +141,13 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
             goto exit;
         }
 
-	if(OMPI_GROUP_IS_DENSE(group)) {
-	    ompi_proc_pack(group->grp_proc_pointers, size, nbuf);
-	}
-	else {	 
-	    ompi_proc_pack(proc_list, size, nbuf);
-	}
-	
+        if(OMPI_GROUP_IS_DENSE(group)) {
+            ompi_proc_pack(group->grp_proc_pointers, size, nbuf);
+        }
+        else {
+            ompi_proc_pack(proc_list, size, nbuf);
+        }
+        
         nrbuf = OBJ_NEW(orte_buffer_t);
         if (NULL == nrbuf ) {
             rc = OMPI_ERROR;
@@ -250,8 +252,8 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
                          NULL,                     /* attrs */
                          comm->error_handler,      /* error handler */
                          NULL,                     /* topo component */
-			 group,                    /* local group */
-			 new_group_pointer         /* remote group */
+                         group,                    /* local group */
+                         new_group_pointer         /* remote group */
                          );
     if ( NULL == newcomp ) {
         rc = OMPI_ERR_OUT_OF_RESOURCE;
@@ -955,8 +957,8 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
        of different jobids.  */
     grp = comm->c_local_group;
     for (i=0; i< size; i++) {
-	proc = ompi_group_peer_lookup(grp,i);
-	thisjobid = proc->proc_name.jobid;
+        proc = ompi_group_peer_lookup(grp,i);
+        thisjobid = proc->proc_name.jobid;
         found = 0;
         for ( j=0; j<numjobids; j++) {
             if (thisjobid == jobids[j]) {
@@ -973,8 +975,8 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
        and count number of different jobids */
     grp = comm->c_remote_group;
     for (i=0; i< rsize; i++) {
-	proc = ompi_group_peer_lookup(grp,i);
-	thisjobid = proc->proc_name.jobid;
+        proc = ompi_group_peer_lookup(grp,i);
+        thisjobid = proc->proc_name.jobid;
         found = 0;
         for ( j=0; j<numjobids; j++) {
             if ( thisjobid == jobids[j]) {

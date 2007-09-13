@@ -41,9 +41,9 @@ int MPI_Comm_get_attr(MPI_Comm comm, int comm_keyval,
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-	if ((NULL == attribute_val) || (NULL == flag)) {
-	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-	}
+        if ((NULL == attribute_val) || (NULL == flag)) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+        }
     }
 
     /* This stuff is very confusing.  Be sure to see

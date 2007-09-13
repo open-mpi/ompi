@@ -35,32 +35,32 @@ int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
 {
     OPAL_CR_TEST_CHECKPOINT_READY();
 
-  /* Error checking */
+    /* Error checking */
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (ompi_comm_invalid(comm)) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
-                                    FUNC_NAME);
-    } else if (NULL == errhandler ||
-               MPI_ERRHANDLER_NULL == errhandler ||
-               ( OMPI_ERRHANDLER_TYPE_COMM != errhandler->eh_mpi_object_type &&
-		 OMPI_ERRHANDLER_TYPE_PREDEFINED != errhandler->eh_mpi_object_type) ) {
-      return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                    FUNC_NAME);
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (ompi_comm_invalid(comm)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
+                                          FUNC_NAME);
+        } else if (NULL == errhandler ||
+                   MPI_ERRHANDLER_NULL == errhandler ||
+                   ( OMPI_ERRHANDLER_TYPE_COMM != errhandler->eh_mpi_object_type &&
+                     OMPI_ERRHANDLER_TYPE_PREDEFINED != errhandler->eh_mpi_object_type) ) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
+                                          FUNC_NAME);
+        }
     }
-  }
 
-  /* Ditch the old errhandler, and decrement its refcount */
+    /* Ditch the old errhandler, and decrement its refcount */
 
-  OBJ_RELEASE(comm->error_handler);
+    OBJ_RELEASE(comm->error_handler);
 
-  /* We have a valid comm and errhandler, so increment its refcount */
+    /* We have a valid comm and errhandler, so increment its refcount */
 
-  comm->error_handler = errhandler;
-  OBJ_RETAIN(comm->error_handler);
+    comm->error_handler = errhandler;
+    OBJ_RETAIN(comm->error_handler);
 
-  /* All done */
+    /* All done */
   
-  return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }

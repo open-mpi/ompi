@@ -243,7 +243,7 @@ struct ompi_communicator_t {
         }
 #endif
         /*return comm->c_remote_group->grp_proc_pointers[peer_id];*/
-	return ompi_group_peer_lookup(comm->c_remote_group,peer_id);
+        return ompi_group_peer_lookup(comm->c_remote_group,peer_id);
     }
 
     static inline bool ompi_comm_peer_invalid(ompi_communicator_t* comm, int peer_id)
@@ -381,8 +381,8 @@ struct ompi_communicator_t {
                         opal_hash_table_t *attr,
                         ompi_errhandler_t *errh,
                         mca_base_component_t *topocomponent,
-			ompi_group_t *local_group,
-			ompi_group_t *remote_group   );
+                        ompi_group_t *local_group,
+                        ompi_group_t *remote_group   );
     /**
      * This is a short-hand routine used in intercomm_create.
      * The routine makes sure, that all processes have afterwards

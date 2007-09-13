@@ -98,8 +98,8 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                          NULL,                     /* attrs */
                          intercomm->error_handler, /* error handler*/
                          NULL,                     /* topo mpodule */
-			 new_group_pointer,        /* local group */
-			 NULL                      /* remote group */
+                         new_group_pointer,        /* local group */
+                         NULL                      /* remote group */
                          );
     if ( NULL == newcomp ) {
         rc = MPI_ERR_INTERN;
@@ -133,7 +133,7 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                               NULL,                 /* remote_leader */
                               OMPI_COMM_CID_INTER,  /* mode */
                               -1,                   /* send_first */
-			      0);                    /* sync_flag */
+                              0);                    /* sync_flag */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
