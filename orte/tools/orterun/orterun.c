@@ -402,6 +402,7 @@ int orterun(int argc, char *argv[])
      */
     if (ORTE_SUCCESS != (rc = orte_init(ORTE_INFRASTRUCTURE, ORTE_NON_BARRIER))) {
         ORTE_ERROR_LOG(rc);
+        free(apps);
         return rc;
     }    
     
