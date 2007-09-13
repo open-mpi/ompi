@@ -92,15 +92,15 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
      * structure. 
      */ 
     if ( rank == root ) { 
-	tmp_port = ompi_parse_port (port_name, &tag);
-    if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(&port_proc_name, tmp_port))) {
-        return rc;
-    }
-	if ( NULL == port_proc_name ) {
-	    *newcomm = MPI_COMM_NULL;
-	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_PORT, FUNC_NAME);
-	}
-	free (tmp_port);
+        tmp_port = ompi_parse_port (port_name, &tag);
+        if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(&port_proc_name, tmp_port))) {
+            return rc;
+        }
+        if ( NULL == port_proc_name ) {
+            *newcomm = MPI_COMM_NULL;
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_PORT, FUNC_NAME);
+        }
+        free (tmp_port);
     }
 
     rc = ompi_comm_connect_accept (comm, root, port_proc_name, send_first,

@@ -45,18 +45,18 @@ int MPI_Comm_disconnect(MPI_Comm *comm)
     }
     
     if (MPI_COMM_WORLD == *comm || MPI_COMM_SELF == *comm ) {
-	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
     }
 
 
     if ( OMPI_COMM_IS_DYNAMIC(*comm)) {
-	ompi_comm_disconnect_obj *dobj;
-	
-	dobj = ompi_comm_disconnect_init (*comm);
-	ompi_comm_disconnect_waitall(1, &dobj);
+        ompi_comm_disconnect_obj *dobj;
+        
+        dobj = ompi_comm_disconnect_init (*comm);
+        ompi_comm_disconnect_waitall(1, &dobj);
     }
     else {
-	(*comm)->c_coll.coll_barrier(*comm, (*comm)->c_coll.coll_barrier_module);
+        (*comm)->c_coll.coll_barrier(*comm, (*comm)->c_coll.coll_barrier_module);
     }
 
     ompi_comm_free(comm);

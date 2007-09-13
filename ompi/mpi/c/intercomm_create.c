@@ -130,25 +130,25 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
 
     if ( MPI_PARAM_CHECK ) {
         if(OMPI_GROUP_IS_DENSE(local_comm->c_local_group)) {
-	    rc = ompi_comm_overlapping_groups(local_comm->c_local_group->grp_proc_count,
-					      local_comm->c_local_group->grp_proc_pointers,
-					      rsize,
-					      rprocs);
-	}
-	else {
-	    proc_list = (ompi_proc_t **) calloc (local_comm->c_local_group->grp_proc_count, 
-						 sizeof (ompi_proc_t *));
-	    for(j=0 ; j<local_comm->c_local_group->grp_proc_count ; j++) {
-	        proc_list[j] = ompi_group_peer_lookup(local_comm->c_local_group,j);
+            rc = ompi_comm_overlapping_groups(local_comm->c_local_group->grp_proc_count,
+                                              local_comm->c_local_group->grp_proc_pointers,
+                                              rsize,
+                                              rprocs);
+        }
+        else {
+            proc_list = (ompi_proc_t **) calloc (local_comm->c_local_group->grp_proc_count, 
+                                                 sizeof (ompi_proc_t *));
+            for(j=0 ; j<local_comm->c_local_group->grp_proc_count ; j++) {
+                proc_list[j] = ompi_group_peer_lookup(local_comm->c_local_group,j);
             }
-	    rc = ompi_comm_overlapping_groups(local_comm->c_local_group->grp_proc_count,
-					      proc_list,
-					      rsize,
-					      rprocs);
-	}
-	if ( OMPI_SUCCESS != rc ) {
-	    goto err_exit;
-	}
+            rc = ompi_comm_overlapping_groups(local_comm->c_local_group->grp_proc_count,
+                                              proc_list,
+                                              rsize,
+                                              rprocs);
+        }
+        if ( OMPI_SUCCESS != rc ) {
+            goto err_exit;
+        }
     }
     new_group_pointer=ompi_group_allocate(rsize);
     if( NULL == new_group_pointer ) {
@@ -171,8 +171,8 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                          NULL,                                         /* attrs */
                          local_comm->error_handler,                    /* error handler*/
                          NULL,                                         /* topo mpodule */
-			 local_comm->c_local_group,                    /* local group */
-			 new_group_pointer                             /* remote group */
+                         local_comm->c_local_group,                    /* local group */
+                         new_group_pointer                             /* remote group */
                          );
 
     if ( NULL == newcomp ) {
@@ -208,7 +208,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                               &rleader,                    /* remote_leader */
                               OMPI_COMM_CID_INTRA_BRIDGE,  /* mode */
                               -1,                          /* send_first */
-			      0);                           /* sync_flag */
+                              0);                           /* sync_flag */
 
     if ( MPI_SUCCESS != rc ) {
         goto err_exit;

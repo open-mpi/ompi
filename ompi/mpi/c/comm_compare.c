@@ -53,7 +53,7 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
     }
     
     rc = ompi_comm_compare ( (ompi_communicator_t*)comm1, 
-			     (ompi_communicator_t*)comm2,
-			     result);
+                             (ompi_communicator_t*)comm2,
+                             result);
     OMPI_ERRHANDLER_RETURN ( rc, comm1, rc, FUNC_NAME);
 }

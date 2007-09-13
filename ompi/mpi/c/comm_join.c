@@ -127,13 +127,13 @@ static int ompi_socket_send (int fd, char *buf, int len )
     c_ptr = buf;
 
     do {
-	    s_num = (size_t) num;
+        s_num = (size_t) num;
         a = write ( fd, c_ptr, s_num ); 
         if ( a == -1 ) {
             if ( errno == EINTR ) {
                 /* Catch EINTR on, mainly on IBM RS6000 */
                 continue;
-	    }
+            }
 #ifdef __SR8000
             else if ( errno == EWOULDBLOCK ) {
                 /*Catch EWOULDBLOCK on Hitachi SR8000 */
@@ -149,19 +149,19 @@ static int ompi_socket_send (int fd, char *buf, int len )
                 fprintf (stderr,"ompi_socket_send: error while writing to socket" 
                          " error:%s", strerror (errno) );
                 return MPI_ERR_OTHER;
-	    }
-	}
+            }
+        }
         num      -= a;
         c_ptr    += a;
     }   while ( num > 0 );
     
 
-  if ( num < 0 )  {
-      fprintf (stderr, "ompi_socket_send: more data written then available");
-      ret = MPI_ERR_INTERN;
-  }
-    
-  return ret;
+    if ( num < 0 )  {
+        fprintf (stderr, "ompi_socket_send: more data written then available");
+        ret = MPI_ERR_INTERN;
+    }
+
+    return ret;
 }
 
 static int ompi_socket_recv (int fd, char *buf, int len )
@@ -176,13 +176,13 @@ static int ompi_socket_recv (int fd, char *buf, int len )
     c_ptr      = buf;
 
     do {
-	s_num = (size_t ) num;
+        s_num = (size_t ) num;
         a = read ( fd, c_ptr, s_num ); 
         if ( a == -1 ) {
             if ( errno == EINTR ) {
                 /* Catch EINTR on, mainly on IBM RS6000 */
                 continue;
-	    }
+            }
 #ifdef __SR8000
             else if ( errno == EWOULDBLOCK ) {
                 /*Catch EWOULDBLOCK on Hitachi SR8000 */
@@ -198,16 +198,16 @@ static int ompi_socket_recv (int fd, char *buf, int len )
                 fprintf (stderr,"ompi_socket_recv: error while reading from socket" 
                          " error:%s", strerror (errno) );
                 return MPI_ERR_OTHER;
-	    }
-	}
+            }
+        }
         num    -= a;
         c_ptr  += a;
     }   while ( num > 0 );
 
-  if ( num < 0 )  {
-      fprintf (stderr, "ompi_socket_recv: more data read then available");
-      ret = MPI_ERR_INTERN;
-  }
+    if ( num < 0 )  {
+        fprintf (stderr, "ompi_socket_recv: more data read then available");
+        ret = MPI_ERR_INTERN;
+    }
 
-  return ret;
+    return ret;
 }

@@ -104,7 +104,7 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
     if (NULL == local_group) {
         /* determine how the list of local_rank can be stored most
            efficiently */
-	ret = ompi_group_incl(oldcomm->c_local_group, local_size, 
+        ret = ompi_group_incl(oldcomm->c_local_group, local_size, 
                               local_ranks, &newcomm->c_local_group);
     }
     else {

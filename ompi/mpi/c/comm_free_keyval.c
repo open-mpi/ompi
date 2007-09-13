@@ -42,10 +42,10 @@ int MPI_Comm_free_keyval(int *comm_keyval)
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-	if (NULL == comm_keyval) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
-					 FUNC_NAME);
-	}
+        if (NULL == comm_keyval) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+                                          FUNC_NAME);
+        }
     }
       
     ret = ompi_attr_free_keyval(COMM_ATTR, comm_keyval, 0);

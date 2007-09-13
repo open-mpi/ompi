@@ -72,40 +72,39 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
         }
     }
    
-   rank = ompi_comm_rank ( comm );
-   if ( MPI_PARAM_CHECK ) {
-       if ( rank == root ) {
-         if ( NULL == command ) {
-               return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                             FUNC_NAME);
-         }
-         if ( 0 > maxprocs ) {
-               return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                             FUNC_NAME);
-         }
-       }
-   }
+    rank = ompi_comm_rank ( comm );
+    if ( MPI_PARAM_CHECK ) {
+        if ( rank == root ) {
+            if ( NULL == command ) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
+                                              FUNC_NAME);
+            }
+            if ( 0 > maxprocs ) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
+                                              FUNC_NAME);
+            }
+        }
+    }
 
 
-   if ( rank == root ) {
-       /* Open a port. The port_name is passed as an environment variable
-	  to the children. */
-       ompi_open_port (port_name);
-       if (OMPI_SUCCESS != (rc = ompi_comm_start_processes (1, &command, &argv, &maxprocs, 
-                                                            &info, port_name))) {
-           goto error;
-       }
-       tmp_port = ompi_parse_port (port_name, &tag);
-       free(tmp_port);
-   }
+    if ( rank == root ) {
+        /* Open a port. The port_name is passed as an environment variable
+           to the children. */
+        ompi_open_port (port_name);
+        if (OMPI_SUCCESS != (rc = ompi_comm_start_processes (1, &command, &argv, &maxprocs, 
+                                                             &info, port_name))) {
+            goto error;
+        }
+        tmp_port = ompi_parse_port (port_name, &tag);
+        free(tmp_port);
+    }
    
-   
-   rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
+    rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
 
 error:
     /* close the port again. Nothing has to be done for that at the moment.*/
 
-   /* set error codes */
+    /* set error codes */
     if (MPI_ERRCODES_IGNORE != array_of_errcodes) {
         for ( i=0; i < maxprocs; i++ ) {
             array_of_errcodes[i]=rc;
