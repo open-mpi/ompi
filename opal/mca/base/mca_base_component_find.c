@@ -294,8 +294,8 @@ static int save_filename(const char *filename, lt_ptr data)
   prefix = (char*)malloc(len);
   snprintf(prefix, len, component_template, params->type);
   prefix_len = strlen(prefix);
-  if (NULL != params->name) {
-    strcat(prefix, params->name);
+  if (0 < strlen(params->name)) {
+    strncat(prefix, params->name, len - prefix_len);
   }
   total_len = strlen(prefix);
 
@@ -315,12 +315,14 @@ static int save_filename(const char *filename, lt_ptr data)
 
   component_file = OBJ_NEW(component_file_item_t);
   if (NULL == component_file) {
+    free(prefix);
     return OPAL_ERR_OUT_OF_RESOURCE;
   }
-  strcpy(component_file->type, params->type);
-  strcpy(component_file->name, basename + prefix_len);
-  strcpy(component_file->basename, basename);
-  strcpy(component_file->filename, filename);
+  strncpy(component_file->type, params->type, MCA_BASE_MAX_TYPE_NAME_LEN);
+  strncpy(component_file->name, basename + prefix_len,
+          MCA_BASE_MAX_COMPONENT_NAME_LEN);
+  strncpy(component_file->basename, basename, OMPI_PATH_MAX);
+  strncpy(component_file->filename, filename, OMPI_PATH_MAX);
   component_file->status = UNVISITED;
   opal_list_append(&found_files, (opal_list_item_t *) component_file);
 
@@ -586,6 +588,7 @@ static int check_dependency(char *line, component_file_item_t *target_file,
   bool happiness;
   char buffer[BUFSIZ];
   char *type, *name;
+  int len;
   component_file_item_t *mitem;
   dependency_item_t *ditem;
   opal_list_item_t *cur;
@@ -607,7 +610,8 @@ static int check_dependency(char *line, component_file_item_t *target_file,
     return OPAL_ERR_OUT_OF_RESOURCE;
   }
   snprintf(buffer, BUFSIZ, component_template, type);
-  strcat(buffer, name);
+  len = strlen(buffer);
+  strncat(buffer, name, BUFSIZ - len);
 
   /* Traverse down the list of files that we have, and see if we can
      find it */
