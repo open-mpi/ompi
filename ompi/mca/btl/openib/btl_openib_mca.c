@@ -443,13 +443,14 @@ int btl_openib_register_mca_params(void)
     ret = mca_btl_base_param_register(
             &mca_btl_openib_component.super.btl_version,
             &mca_btl_openib_module.super);
-
-    if(ret != OMPI_SUCCESS)
+    if (OMPI_SUCCESS != ret) {
         return ret;
+    }
 
     /* setup all the qp stuff */
-    if((ret = mca_btl_openib_mca_setup_qps()) != MPI_SUCCESS)
+    if (OMPI_SUCCESS != (ret = mca_btl_openib_mca_setup_qps())) {
         return ret;
+    }
 
      CHECK(reg_string("if_include",
                      "Comma-delimited list of HCAs/ports to be used (e.g. \"mthca0,mthca1:2\"; empty value means to use all ports found).  Mutually exclusive with btl_openib_if_exclude.",
@@ -479,7 +480,7 @@ static int mca_btl_openib_mca_setup_qps(void)
     char **queues, **params = NULL;
     int num_pp_qps = 0, num_srq_qps = 0, qp = 0, ret = OMPI_ERROR;
     char *default_qps = "P,128,256,128,16:S,1024,256,128,32:S,4096,256,128,32:S,65536,256,128,32";
-    uint32_t max_qp_size, max_size_needed;
+    uint32_t max_qp_size, max_size_needed, min_freelist_size = 0;
     
     reg_string("receive_queues",
                "Colon-delimited, coma delimited list of receive queues: P,4096,8,6,4:P,32768,8,6,4",
@@ -549,6 +550,15 @@ static int mca_btl_openib_mca_setup_qps(void)
                         );
             
             mca_btl_openib_component.qp_infos[qp].type = MCA_BTL_OPENIB_PP_QP;
+
+            /* Calculate the smallest freelist size that can be allowed */
+            if (mca_btl_openib_component.qp_infos[qp].rd_num +
+                mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv >
+                min_freelist_size) {
+                min_freelist_size = 
+                    mca_btl_openib_component.qp_infos[qp].rd_num +
+                    mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
+            }
         } else if(params[0][0] =='S') { 
             if(count < 3 || count > 5) {
                 opal_show_help("help-mpi-btl-openib.txt",
@@ -569,6 +579,13 @@ static int mca_btl_openib_mca_setup_qps(void)
                         mca_btl_openib_component.qp_infos[qp].rd_low,
                         mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max);
             mca_btl_openib_component.qp_infos[qp].type = MCA_BTL_OPENIB_SRQ_QP;
+
+            /* Calculate the smallest freelist size that can be allowed */
+            if (mca_btl_openib_component.qp_infos[qp].rd_num >
+                min_freelist_size) {
+                min_freelist_size = 
+                    mca_btl_openib_component.qp_infos[qp].rd_num;
+            }
         }
 
         if (mca_btl_openib_component.qp_infos[qp].rd_num <=
@@ -586,13 +603,13 @@ static int mca_btl_openib_mca_setup_qps(void)
     }
     params = NULL;
    
-    max_qp_size = mca_btl_openib_component.qp_infos[mca_btl_openib_component.num_qps - 1].size;
+    /* Sanity check some sizes */
 
+    max_qp_size = mca_btl_openib_component.qp_infos[mca_btl_openib_component.num_qps - 1].size;
     max_size_needed = (mca_btl_openib_module.super.btl_eager_limit >
                        mca_btl_openib_module.super.btl_max_send_size) ?
         mca_btl_openib_module.super.btl_eager_limit :
         mca_btl_openib_module.super.btl_max_send_size;
-
     if (max_qp_size < max_size_needed) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "biggest qp size is too small", true,
@@ -607,6 +624,14 @@ static int mca_btl_openib_mca_setup_qps(void)
                        max_size_needed);
         opal_output(0, "The biggest QP size is bigger than maximum send size. "
                 "This is not optimal configuration as memory will be waisted.\n");
+    }
+
+    if (min_freelist_size > mca_btl_openib_component.ib_free_list_max) {
+        opal_show_help("help-mpi-btl-openib.txt", "freelist too small", true,
+                       orte_system_info.nodename, 
+                       mca_btl_openib_component.ib_free_list_max,
+                       min_freelist_size);
+        goto error;
     }
     
     mca_btl_openib_component.rdma_qp = mca_btl_openib_component.num_qps - 1;
