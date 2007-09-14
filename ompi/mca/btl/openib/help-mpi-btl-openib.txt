@@ -352,3 +352,15 @@ Host: %s
 Largest buffer size: %d
 Maximum send fragment size: %d
 #
+[freelist too small]
+
+WARNING: The maximum freelist size that was specified was too small
+for the requested receive queue sizes.  The maximum freelist size must
+be at least equal to the sum of the largest number of buffers posted
+to a single queue plus the corresponding number of reserved/credit
+buffers for that queue.  It is suggested that the maximum be quite a
+bit larger than this for performance reasons.
+
+Host: %s
+Specified freelist size: %d
+Minimum required freelist size: %d
