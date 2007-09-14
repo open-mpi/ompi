@@ -83,7 +83,7 @@ struct ompi_errhandler_t {
 
     /* Function pointers */
     MPI_Comm_errhandler_fn *eh_comm_fn;
-    ompi_file_errhandler_fn *eh_file_fn;
+    MPI_File_errhandler_fn *eh_file_fn;
     MPI_Win_errhandler_fn *eh_win_fn;
     ompi_errhandler_fortran_handler_fn_t *eh_fort_fn;
 
