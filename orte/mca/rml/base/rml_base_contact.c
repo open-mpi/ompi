@@ -195,7 +195,6 @@ orte_rml_base_register_contact_info(void)
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, ORTE_PROC_MY_NAME->jobid))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(values[0]);
-        OBJ_RELEASE(values[1]);
         return rc;
     }
         
@@ -205,7 +204,6 @@ orte_rml_base_register_contact_info(void)
         ORTE_ERROR_LOG(rc);
         free(segment);
         OBJ_RELEASE(values[0]);
-        OBJ_RELEASE(values[1]);
         return rc;
     }
 
