@@ -58,13 +58,13 @@ find_info(FILE* fp, char *str, char *buf, size_t buflen)
     char *tmp;
 
     rewind(fp);
-    while (NULL != fgets(buf, 1024, fp)) {
+    while (NULL != fgets(buf, buflen, fp)) {
         if (strncmp(buf, str, strlen(str)) == 0) {
             /* we found the line.  Now eat everything up to,
                including, and one past the : */
             for (tmp = buf ; (*tmp != '\0') && (*tmp != ':') ; ++tmp) ;
             for ( ++tmp ; *tmp == ' ' ; ++tmp);
-            if (NULL != tmp && '\0' != *tmp) {
+            if ('\0' != *tmp) {
                 return tmp;
             }
         }
