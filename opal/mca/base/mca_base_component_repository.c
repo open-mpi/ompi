@@ -153,7 +153,7 @@ int mca_base_component_repository_retain(char *type,
 
   /* Initialize the repository item */
 
-  strcpy(ri->ri_type, type);
+  strncpy(ri->ri_type, type, MCA_BASE_MAX_TYPE_NAME_LEN);
   ri->ri_dlhandle = component_handle;
   ri->ri_component_struct = component_struct;
 
@@ -371,7 +371,6 @@ static void ri_destructor(opal_object_t *obj)
   opal_list_item_t *item;
 
   /* Close the component (and potentially unload it from memory */
-
   lt_dlclose(ri->ri_dlhandle);
 
   /* It should be obvious, but I'll state it anyway because it bit me
