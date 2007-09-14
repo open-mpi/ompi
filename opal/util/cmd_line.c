@@ -142,7 +142,7 @@ static int qsort_callback(const void *a, const void *b);
 int opal_cmd_line_create(opal_cmd_line_t *cmd,
                          opal_cmd_line_init_t *table)
 {
-    int i, ret;
+    int i, ret = OPAL_SUCCESS;
 
     /* Check bozo case */
 
@@ -174,7 +174,7 @@ int opal_cmd_line_create(opal_cmd_line_t *cmd,
         ret = make_opt(cmd, &table[i]);
     }
 
-    return OPAL_SUCCESS;
+    return ret;
 }
 
 /*
@@ -614,6 +614,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
 
             desc = strdup(option->clo_description);
             if (NULL == desc) {
+                free(sorted);
                 return strdup("");
             }
             start = desc;
@@ -694,13 +695,12 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
     } else {
         ret = strdup("");
     }
+    free(sorted);
 
     /* Thread serialization */
-
     opal_mutex_unlock(&cmd->lcl_mutex);
 
     /* All done */
- 
     return ret;
 }
 
