@@ -535,43 +535,43 @@ static int open_file(int i)
     /* Setup the filename and open flags */
 
     if (NULL != output_dir) {
-	filename = (char *) malloc(OMPI_PATH_MAX);
-	if (NULL == filename) {
-	    return OPAL_ERR_OUT_OF_RESOURCE;
-	}
-	strcpy(filename, output_dir);
-	strcat(filename, "/");
+        filename = (char *) malloc(OMPI_PATH_MAX);
+        if (NULL == filename) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        strncpy(filename, output_dir, OMPI_PATH_MAX);
+        strcat(filename, "/");
         if (NULL != output_prefix) {
             strcat(filename, output_prefix);
         }
-	if (info[i].ldi_file_suffix != NULL) {
-	    strcat(filename, info[i].ldi_file_suffix);
-	} else {
-	    info[i].ldi_file_suffix = NULL;
-	    strcat(filename, "output.txt");
-	}
-	flags = O_CREAT | O_RDWR;
-	if (!info[i].ldi_file_want_append) {
-	    flags |= O_TRUNC;
-	}
+        if (info[i].ldi_file_suffix != NULL) {
+            strcat(filename, info[i].ldi_file_suffix);
+        } else {
+            info[i].ldi_file_suffix = NULL;
+            strcat(filename, "output.txt");
+        }
+        flags = O_CREAT | O_RDWR;
+        if (!info[i].ldi_file_want_append) {
+            flags |= O_TRUNC;
+        }
 
-	/* Actually open the file */
+        /* Actually open the file */
+        info[i].ldi_fd = open(filename, flags, 0644);
+        if (-1 == info[i].ldi_fd) {
+            info[i].ldi_used = false;
+            free(filename);
+            return OPAL_ERR_IN_ERRNO;
+        }
 
-	info[i].ldi_fd = open(filename, flags, 0644);
-	if (-1 == info[i].ldi_fd) {
-	    info[i].ldi_used = false;
-	    return OPAL_ERR_IN_ERRNO;
-	}
-
-	/* Make the file be close-on-exec to prevent child inheritance
-	 * problems */
+        /* Make the file be close-on-exec to prevent child inheritance
+         * problems */
 
 #ifndef __WINDOWS__
-	/* TODO: Need to find out the equivalent in windows */
-	fcntl(info[i].ldi_fd, F_SETFD, 1);
+        /* TODO: Need to find out the equivalent in windows */
+        fcntl(info[i].ldi_fd, F_SETFD, 1);
 #endif
 
-	free(filename);
+        free(filename);
     }
 
     /* Return successfully even if the session dir did not exist yet;
