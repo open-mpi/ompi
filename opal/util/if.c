@@ -216,6 +216,7 @@ static int opal_ifinit(void)
                 opal_output(0, "opal_ifinit: ioctl(SIOCGIFCONF) \
                             failed with errno=%d", 
                             errno);
+                free(ifconf.ifc_req);
                 close(sd);
                 return OPAL_ERROR;
             }
@@ -239,7 +240,6 @@ static int opal_ifinit(void)
         opal_output(0, "opal_ifinit: unable to find network interfaces.");
         return OPAL_ERR_FATAL;
     }
-
 
     /* 
      * Setup indexes 
@@ -345,6 +345,8 @@ static int opal_ifinit(void)
         OMPI_DEBUG_ZERO(*intf_ptr);
         if(intf_ptr == 0) {
             opal_output(0, "opal_ifinit: unable to allocated %lu bytes\n", (unsigned long)sizeof(opal_if_t));
+            free(ifconf.ifc_req);
+            close(sd);
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
         memcpy(intf_ptr, &intf, sizeof(intf));
@@ -374,17 +376,16 @@ static int opal_ifinit(void)
                 opal_if_t intf;
                 opal_if_t *intf_ptr;
 
+                /* we don't want any other scope than global */
+                if (scope != 0) {
+                   continue;
+                }
 
                 OMPI_DEBUG_ZERO(intf);
                 OBJ_CONSTRUCT(&intf, opal_list_item_t);
         
                 for (iter = 0; iter < 16; iter++) {
                     a6.s6_addr[iter] = addrbyte[iter];
-                }
-
-                /* we don't want any other scope than global */
-                if (scope != 0) {
-                   continue;
                 }
 
                 /* now construct the opal_if_t */
@@ -409,11 +410,14 @@ static int opal_ifinit(void)
                 if(NULL == intf_ptr) {
                     opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
                                     (unsigned long)sizeof(opal_if_t));
+                    OBJ_DESTRUCT(&intf);
+                    fclose(f);
                     return OPAL_ERR_OUT_OF_RESOURCE;
                 }
                 memcpy(intf_ptr, &intf, sizeof(intf));
                 opal_list_append(&opal_if_list, (opal_list_item_t*)intf_ptr);
             } /* of while */
+            fclose(f);
         }
     }
 #endif
@@ -491,7 +495,6 @@ static int opal_ifinit(void)
 
             sin_addr = (struct sockaddr_in6 *) cur_ifaddrs->ifa_addr;
 
-
             /* 
              * skip IPv6 address starting with fe80:, as this is supposed to be
              * link-local scope. sockaddr_in6->sin6_scope_id doesn't always work
@@ -551,11 +554,13 @@ static int opal_ifinit(void)
             OMPI_DEBUG_ZERO(*intf_ptr);
             if(NULL == intf_ptr) {
                 opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
-                        sizeof(opal_if_t));
+                            sizeof(opal_if_t));
+                OBJ_DESTRUCT(&intf);
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
             memcpy(intf_ptr, &intf, sizeof(intf));
             opal_list_append(&opal_if_list, (opal_list_item_t*) intf_ptr);
+            OBJ_DESTRUCT(&intf);
         }   /*  of for loop over ifaddrs list */
 
     }
@@ -665,12 +670,14 @@ static int opal_ifinit(void)
                     OMPI_DEBUG_ZERO (*intf_ptr);
                     if (NULL == intf_ptr) {
                         opal_output (0,
-                            "opal_ifinit: unable to allocate %d bytes\n",
-                             sizeof (opal_if_t));
+                                     "opal_ifinit: unable to allocate %d bytes\n",
+                                     sizeof (opal_if_t));
+                        OBJ_DESTRUCT(&intf);
                         return OPAL_ERR_OUT_OF_RESOURCE;
                     }
                     memcpy (intf_ptr, &intf, sizeof (intf));
                     opal_list_append (&opal_if_list, (opal_list_item_t*) intf_ptr);
+                    OBJ_DESTRUCT(&intf);
                 }
             }
         } /* for */
@@ -684,102 +691,103 @@ static int opal_ifinit(void)
 #endif /* OPAL_WANT_IPV6 */
 
 #else /* __WINDOWS__ implementation begins */
+    {
+        /* 
+           1. check if the interface info list is already populated. If so, return
+           2. get the interface information which is required using WSAIoctl
+           3. construct opal_if_list and populate it with the list of interfaces we have
+           CAVEAT: Does not support the following options which are supported in SIOCGIFCONF
+                - kernel table index
+                - interface name
+         */
 
-    /* 
-       1. check if the interface info list is already populated. If so, return
-       2. get the interface information which is required using WSAIoctl
-       3. construct opal_if_list and populate it with the list of interfaces we have
-       CAVEAT: Does not support the following options which are supported in SIOCGIFCONF
-            - kernel table index
-            - interface name
-     */
+        #define MAX_INTERFACES 10 /* Anju: for now assume there are no more than this */
+        SOCKET sd; 
+        INTERFACE_INFO if_list[MAX_INTERFACES];
+        int num_interfaces;
+        unsigned long num_bytes_returned;
+        int i;
+        unsigned int interface_counter = 0;
+        opal_if_t intf;
+        opal_if_t *intf_ptr;
 
-    #define MAX_INTERFACES 10 /* Anju: for now assume there are no more than this */
-    SOCKET sd; 
-    INTERFACE_INFO if_list[MAX_INTERFACES];
-    int num_interfaces;
-    unsigned long num_bytes_returned;
-    int i;
-    unsigned int interface_counter = 0;
-    opal_if_t intf;
-    opal_if_t *intf_ptr;
-
-    /* return if this has been done before */
-    if (already_done) {
-        return OPAL_SUCCESS;
-    }
-    already_done = true;
+        /* return if this has been done before */
+        if (already_done) {
+            return OPAL_SUCCESS;
+        }
+        already_done = true;
   
-    /* create a socket */
-    sd = WSASocket (AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, 0, 0);
-    if (sd == SOCKET_ERROR) {
-        opal_output(0, "opal_ifinit: WSASocket failed with errno=%d\n",WSAGetLastError());
-        return OPAL_ERROR;
-    }
+        /* create a socket */
+        sd = WSASocket (AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, 0, 0);
+        if (sd == SOCKET_ERROR) {
+            opal_output(0, "opal_ifinit: WSASocket failed with errno=%d\n",WSAGetLastError());
+            return OPAL_ERROR;
+        }
 
-    /* get the information about the interfaces */
-    if (SOCKET_ERROR == WSAIoctl (sd, 
-                                  SIO_GET_INTERFACE_LIST, 
-                                  NULL, 
-                                  0, 
-                                  &if_list,
-                                  sizeof (if_list), 
-                                  &num_bytes_returned, 
-                                  0,
-                                  0)) {
-        opal_output(0, "opal_ifinit: WSAIoctl failed with errno=%d\n",WSAGetLastError());
-        return OPAL_ERROR;
-    }
+        /* get the information about the interfaces */
+        if (SOCKET_ERROR == WSAIoctl (sd, 
+                                      SIO_GET_INTERFACE_LIST, 
+                                      NULL, 
+                                      0, 
+                                      &if_list,
+                                      sizeof (if_list), 
+                                      &num_bytes_returned, 
+                                      0,
+                                    0)) {
+            opal_output(0, "opal_ifinit: WSAIoctl failed with errno=%d\n",WSAGetLastError());
+            return OPAL_ERROR;
+        }
 
-    /* create and populate opal_if_list */
-    OBJ_CONSTRUCT (&opal_if_list, opal_list_t);
+        /* create and populate opal_if_list */
+        OBJ_CONSTRUCT (&opal_if_list, opal_list_t);
 
+        /* loop through all the interfaces and create the list */
+        num_interfaces = num_bytes_returned / sizeof (INTERFACE_INFO);
+        for (i = 0; i < num_interfaces; ++i) {
+            /* do all this only if the interface is up */
+            if (if_list[i].iiFlags & IFF_UP) {
 
-    /* loop through all the interfaces and create the list */
-    num_interfaces = num_bytes_returned / sizeof (INTERFACE_INFO);
-    for (i = 0; i < num_interfaces; ++i) {
-        /* do all this only if the interface is up */
-        if (if_list[i].iiFlags & IFF_UP) {
-
-            OBJ_CONSTRUCT (&intf, opal_list_item_t);
+                OBJ_CONSTRUCT (&intf, opal_list_item_t);
         
-            /* fill in the interface address */ 
-            memcpy (&intf.if_addr, &(if_list[i].iiAddress), sizeof(intf.if_addr));
+                /* fill in the interface address */ 
+                memcpy (&intf.if_addr, &(if_list[i].iiAddress), sizeof(intf.if_addr));
 
-            /* fill in the netmask information */
-            memcpy (&intf.if_mask, &(if_list[i].iiNetmask), sizeof(intf.if_mask));
+                /* fill in the netmask information */
+                memcpy (&intf.if_mask, &(if_list[i].iiNetmask), sizeof(intf.if_mask));
 
-            /* fill in the bcast address */
-            memcpy (&intf.if_bcast, &(if_list[i].iiBroadcastAddress), sizeof(intf.if_bcast));
+                /* fill in the bcast address */
+                memcpy (&intf.if_bcast, &(if_list[i].iiBroadcastAddress), sizeof(intf.if_bcast));
 
-            /* fill in the flags */
-            intf.if_flags = if_list[i].iiFlags;
+                /* fill in the flags */
+                intf.if_flags = if_list[i].iiFlags;
 
-            /* fill in the index in the table */
-            intf.if_index = opal_list_get_size(&opal_if_list)+1;
+                /* fill in the index in the table */
+                intf.if_index = opal_list_get_size(&opal_if_list)+1;
 
-            /* generate the interface name on your own ....
-               loopback: lo
-               Rest:    eth0, eth1, ..... */
+                /* generate the interface name on your own ....
+                   loopback: lo
+                   Rest:    eth0, eth1, ..... */
 
-            if (if_list[i].iiFlags & IFF_LOOPBACK) {
-                sprintf (intf.if_name, "lo");
-            } else {
-                sprintf (intf.if_name, "eth%u", interface_counter++);
+                if (if_list[i].iiFlags & IFF_LOOPBACK) {
+                    sprintf (intf.if_name, "lo");
+                } else {
+                    sprintf (intf.if_name, "eth%u", interface_counter++);
+                }
+
+                /* copy all this into a persistent form and store it in the list */
+                intf_ptr = (opal_if_t *) malloc(sizeof(opal_if_t));
+                if (NULL == intf_ptr) {
+                    opal_output (0,"opal_ifinit: Unable to malloc %d bytes",sizeof(opal_list_t));
+                    OBJ_DESTRUCT(&intf);
+                    return OPAL_ERR_OUT_OF_RESOURCE;
+                }
+
+                memcpy (intf_ptr, &intf, sizeof(intf));
+                opal_list_append(&opal_if_list, (opal_list_item_t *)intf_ptr);
+                OBJ_DESTRUCT(&intf);
             }
-
-            /* copy all this into a persistent form and store it in the list */
-            intf_ptr = (opal_if_t *) malloc(sizeof(opal_if_t));
-            if (NULL == intf_ptr) {
-                opal_output (0,"opal_ifinit: Unable to malloc %d bytes",sizeof(opal_list_t));
-                return OPAL_ERR_OUT_OF_RESOURCE;
-            }
-
-            memcpy (intf_ptr, &intf, sizeof(intf));
-            opal_list_append(&opal_if_list, (opal_list_item_t *)intf_ptr);
         }
     }
-    
 #endif
     return OPAL_SUCCESS;
 }
