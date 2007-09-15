@@ -203,7 +203,7 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
 	      new_errhandler->eh_comm_fn = (MPI_Comm_errhandler_fn *)func;
 	      break;
 	  case (OMPI_ERRHANDLER_TYPE_FILE):
-	      new_errhandler->eh_file_fn = (MPI_File_errhandler_fn *)func;
+	      new_errhandler->eh_file_fn = (ompi_file_errhandler_fn *)func;
 	      break;
 	  case (OMPI_ERRHANDLER_TYPE_WIN):
 	      new_errhandler->eh_win_fn = (MPI_Win_errhandler_fn *)func;
