@@ -33,6 +33,7 @@
 #include "opal/runtime/opal_cr.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
+#include MCA_timer_IMPLEMENTATION_HEADER
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -47,6 +48,11 @@ extern "C" {
     };
     typedef struct ompi_crcp_coord_component_t ompi_crcp_coord_component_t;
     extern ompi_crcp_coord_component_t mca_crcp_coord_component;
+
+    /*
+     * Local variables
+     */
+    extern bool timing_enabled;
 
     /*
      * Module functions
