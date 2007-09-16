@@ -26,6 +26,8 @@
 const char *ompi_crcp_coord_component_version_string = 
 "OMPI CRCP coord MCA component version " OMPI_VERSION;
 
+bool timing_enabled = false;
+
 /*
  * Local functionality
  */
@@ -74,6 +76,8 @@ ompi_crcp_coord_component_t mca_crcp_coord_component = {
 
 static int crcp_coord_open(void) 
 {
+    int val;
+
     /*
      * This should be the last componet to ever get used since
      * it doesn't do anything.
@@ -101,7 +105,20 @@ static int crcp_coord_open(void)
     } else {
         mca_crcp_coord_component.super.output_handle = ompi_crcp_base_output;
     }
-    
+
+    mca_base_param_reg_int(&mca_crcp_coord_component.super.crcp_version,
+                           "timing",
+                           "Enable Performance timing",
+                           false, false,
+                           0,
+                           &val);
+    if( 0 != val ) {
+        timing_enabled = true;
+    }
+    else {
+        timing_enabled = false;
+    }
+
     /*
      * Debug Output
      */
