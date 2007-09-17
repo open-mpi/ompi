@@ -871,8 +871,7 @@ static int orte_odls_process_launch_local_procs(orte_gpr_notify_data_t *data)
                     }
                     if (strcmp(kval->key, ORTE_JOB_TOTAL_SLOTS_ALLOC_KEY) == 0) {
                         /* this can only occur once, so just store it */
-                        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, kval->value, ORTE_STD_CNTR))
-) {
+                        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, kval->value, ORTE_STD_CNTR))) {
                             ORTE_ERROR_LOG(rc);
                             return rc;
                         }
