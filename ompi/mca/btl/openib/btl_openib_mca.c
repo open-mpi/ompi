@@ -627,7 +627,8 @@ static int mca_btl_openib_mca_setup_qps(void)
                 "This is not optimal configuration as memory will be waisted.\n");
     }
 
-    if (min_freelist_size > mca_btl_openib_component.ib_free_list_max) {
+    if (mca_btl_openib_component.ib_free_list_max > 0 &&
+        min_freelist_size > mca_btl_openib_component.ib_free_list_max) {
         opal_show_help("help-mpi-btl-openib.txt", "freelist too small", true,
                        orte_system_info.nodename, 
                        mca_btl_openib_component.ib_free_list_max,
