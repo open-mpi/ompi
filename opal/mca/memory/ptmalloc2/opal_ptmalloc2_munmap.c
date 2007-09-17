@@ -26,7 +26,8 @@
 #elif defined(HAVE_SYSCALL)
 #include <syscall.h>
 #include <unistd.h>
-#elif defined(HAVE_DLSYM)
+#endif
+#if defined(HAVE_DLSYM)
 #ifndef __USE_GNU
 #define __USE_GNU
 #endif
@@ -59,7 +60,7 @@ munmap(void* addr, size_t len)
 int
 opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc)
 {
-#if !defined(HAVE___MUNMAP) && !defined(HAVE_SYSCALL) && defined(HAVE_DLSYM)
+#if !defined(HAVE___MUNMAP) && !(defined(HAVE_SYSCALL) && defined(__NR_munmap)) && defined(HAVE_DLSYM)
     static int (*realmunmap)(void*, size_t);
 #endif
 
@@ -67,7 +68,7 @@ opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc)
 
 #if defined(HAVE___MUNMAP)
     return __munmap(start, length);
-#elif defined(HAVE_SYSCALL)
+#elif defined(HAVE_SYSCALL) && defined(__NR_munmap)
     return syscall(__NR_munmap, start, length);
 #elif defined(HAVE_DLSYM)
     if (NULL == realmunmap) {
