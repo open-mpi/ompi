@@ -80,6 +80,7 @@ Trunk (not on release branches yet)
 1.2.4
 -----
 
+- Fixed a build issue with GNU/kFreeBSD. Thanks to Petr Salinger for the patch.
 - Added missing MPI_FILE_NULL constant in Fortran.  Thanks to
   Bernd Schubert for bringing this to our attention.
 - The UDPL BTL is only built in Linux when explicitly specified via
