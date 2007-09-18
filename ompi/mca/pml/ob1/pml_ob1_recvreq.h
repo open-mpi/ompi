@@ -38,11 +38,7 @@ extern "C" {
 struct mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
     ompi_ptr_t req_send;
-#if OMPI_HAVE_THREAD_SUPPORT
-    volatile int32_t req_lock;
-#else
     int32_t req_lock;
-#endif
     size_t  req_pipeline_depth;
     size_t  req_bytes_received;
     size_t  req_bytes_delivered;
@@ -52,6 +48,7 @@ struct mca_pml_ob1_recv_request_t {
     uint32_t req_rdma_idx;
     bool req_pending;
     bool req_ack_sent; /**< whether ack was sent to the sender */
+    bool req_match_received; /**< Prevent request to be completed prematurely */
     opal_mutex_t lock;
     mca_pml_ob1_com_btl_t req_rdma[1];
 };
@@ -59,6 +56,15 @@ typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
 
 OBJ_CLASS_DECLARATION(mca_pml_ob1_recv_request_t);
 
+static inline bool lock_recv_request(mca_pml_ob1_recv_request_t *recvreq)
+{
+        return OPAL_THREAD_ADD32(&recvreq->req_lock,  1) == 1;
+}
+
+static inline bool unlock_recv_request(mca_pml_ob1_recv_request_t *recvreq)
+{
+        return OPAL_THREAD_ADD32(&recvreq->req_lock, -1) == 0;
+}
 
 /**
  *  Allocate a recv request from the modules free list.
@@ -118,52 +124,6 @@ do {                                                                \
         MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_recv.req_base.req_ompi) );  \
     } while (0)
 
-/**
- *  Return a recv request to the modules free list.
- *
- *  @param recvreq (IN)  Receive request.
- */
-#define MCA_PML_OB1_RECV_REQUEST_PML_COMPLETE(recvreq)                          \
-do {                                                                            \
-    size_t r;                                                                   \
-                                                                                \
-    assert( false == recvreq->req_recv.req_base.req_pml_complete );             \
-                                                                                \
-    if((recvreq)->req_recv.req_bytes_packed > 0) {                              \
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,                      \
-                                 &(recvreq->req_recv.req_base), PERUSE_RECV );  \
-    }                                                                           \
-                                                                                \
-    for( r = 0; r < recvreq->req_rdma_cnt; r++ ) {                              \
-        mca_mpool_base_registration_t* btl_reg = recvreq->req_rdma[r].btl_reg;  \
-        if( NULL != btl_reg  && btl_reg->mpool != NULL) {                       \
-            btl_reg->mpool->mpool_deregister( btl_reg->mpool, btl_reg );        \
-        }                                                                       \
-    }                                                                           \
-    recvreq->req_rdma_cnt = 0;                                                  \
-                                                                                \
-    OPAL_THREAD_LOCK(&ompi_request_lock);                                       \
-                                                                                \
-    if( true == recvreq->req_recv.req_base.req_free_called ) {                  \
-        if(OPAL_THREAD_ADD32(&recvreq->req_lock, 1) == 1) {                     \
-            MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );                         \
-        }                                                                       \
-    } else {                                                                    \
-        /* initialize request status */                                         \
-        recvreq->req_recv.req_base.req_pml_complete = true;                     \
-        recvreq->req_recv.req_base.req_ompi.req_status._count =                 \
-            (int)recvreq->req_bytes_received;                                   \
-        if (recvreq->req_bytes_received > recvreq->req_bytes_delivered) {       \
-            recvreq->req_recv.req_base.req_ompi.req_status._count =             \
-                (int)recvreq->req_bytes_delivered;                              \
-            recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =          \
-                MPI_ERR_TRUNCATE;                                               \
-        }                                                                       \
-        MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE( recvreq );                       \
-    }                                                                           \
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);                                     \
-} while(0)
-
 /*
  *  Free the PML receive request
  */
@@ -173,6 +133,66 @@ do {                                                                            
         OMPI_FREE_LIST_RETURN( &mca_pml_base_recv_requests,             \
                                (ompi_free_list_item_t*)(recvreq));      \
     }
+
+/**
+ * Complete receive request. Request structure cannot be accessed after calling
+ * this function any more.
+ *
+ *  @param recvreq (IN)  Receive request.
+ */
+void static inline
+recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
+{
+    size_t i;
+
+    assert(false == recvreq->req_recv.req_base.req_pml_complete);
+
+    if(recvreq->req_recv.req_bytes_packed > 0) {
+        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
+                &recvreq->req_recv.req_base, PERUSE_RECV );
+    }
+
+    for(i = 0; i < recvreq->req_rdma_cnt; i++) {
+        mca_mpool_base_registration_t* btl_reg = recvreq->req_rdma[i].btl_reg;
+        if( NULL != btl_reg  && btl_reg->mpool != NULL) {
+            btl_reg->mpool->mpool_deregister( btl_reg->mpool, btl_reg );
+        }
+    }
+    recvreq->req_rdma_cnt = 0;
+
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+    if(true == recvreq->req_recv.req_base.req_free_called) {
+        MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq);
+    } else {
+        /* initialize request status */
+        recvreq->req_recv.req_base.req_pml_complete = true;
+        recvreq->req_recv.req_base.req_ompi.req_status._count =
+            (int)recvreq->req_bytes_received;
+        if (recvreq->req_bytes_received > recvreq->req_bytes_delivered) {
+            recvreq->req_recv.req_base.req_ompi.req_status._count =
+                (int)recvreq->req_bytes_delivered;
+            recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =
+                MPI_ERR_TRUNCATE;
+        }
+        MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE(recvreq);
+    }
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+}
+
+bool static inline
+recv_request_pml_complete_check(mca_pml_ob1_recv_request_t *recvreq)
+{
+    opal_atomic_rmb();
+
+    if(recvreq->req_match_received &&
+            recvreq->req_bytes_received >= recvreq->req_recv.req_bytes_packed &&
+            lock_recv_request(recvreq)) {
+        recv_request_pml_complete(recvreq);
+        return true;
+    }
+
+    return false;
+}
 
 /**
  * Attempt to match the request against the unexpected fragment list
@@ -211,6 +231,7 @@ do {                                                                            
     (request)->req_rdma_idx = 0;                                                  \
     (request)->req_pending = false;                                               \
     (request)->req_ack_sent = false;                                              \
+    (request)->req_match_received = false;                                         \
                                                                                   \
     MCA_PML_BASE_RECV_START( &(request)->req_recv.req_base );                     \
                                                                                   \
@@ -334,15 +355,35 @@ void mca_pml_ob1_recv_request_matched_probe(
  *
  */
 
-int mca_pml_ob1_recv_request_schedule_exclusive(
+int mca_pml_ob1_recv_request_schedule_once(
     mca_pml_ob1_recv_request_t* req, mca_bml_base_btl_t* start_bml_btl);
+
+static inline int mca_pml_ob1_recv_request_schedule_exclusive(
+        mca_pml_ob1_recv_request_t* req,
+        mca_bml_base_btl_t* start_bml_btl)
+{
+    int rc;
+
+    do {
+        rc = mca_pml_ob1_recv_request_schedule_once(req, start_bml_btl);
+        if(rc == OMPI_ERR_OUT_OF_RESOURCE)
+            break;
+    } while(!unlock_recv_request(req));
+
+    if(OMPI_SUCCESS == rc)
+        recv_request_pml_complete_check(req);
+
+    return rc;
+}
 
 static inline void mca_pml_ob1_recv_request_schedule(
         mca_pml_ob1_recv_request_t* req,
         mca_bml_base_btl_t* start_bml_btl)
 {
-    if(OPAL_THREAD_ADD32(&req->req_lock,1) == 1)
-        mca_pml_ob1_recv_request_schedule_exclusive(req, start_bml_btl);
+    if(!lock_recv_request(req))
+        return;
+
+    (void)mca_pml_ob1_recv_request_schedule_exclusive(req, start_bml_btl);
 }
 
 #define MCA_PML_OB1_ADD_ACK_TO_PENDING(P, S, D, O)                      \
