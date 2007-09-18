@@ -611,6 +611,85 @@ EOF
 
 ##############################################################################
 #
+# make_template_version_header -- make a templated version header
+# file, but only if we have a PARAM_VERSION_FILE that exists
+#
+# INPUT:
+#    - filename base
+#    - component type name
+#    - component name
+#
+# OUTPUT:
+#    none
+#
+# SIDE EFFECTS:
+#
+##############################################################################
+make_version_header_template() {
+    mvht_filename="$1"
+    mvht_component_type="$2"
+    mvht_component_name="$3"
+
+    # See if we have a VERSION file
+
+    PARAM_CONFIG_FILES_save="$PARAM_CONFIG_FILES"
+    . ./configure.params
+    if test -z "$PARAM_VERSION_FILE"; then
+        if test -f "VERSION"; then
+            PARAM_VERSION_FILE="VERSION"
+        fi
+    else
+        if test ! -f "$PARAM_VERSION_FILE"; then
+            PARAM_VERSION_FILE=
+        fi
+    fi
+
+    if test -n "$PARAM_VERSION_FILE" -a -f "$PARAM_VERSION_FILE" -a \
+        "$pd_component_type" != "common"; then
+        rm -f "$mvht_filename.template.in"
+        cat > "$mvht_filename.template.in" <<EOF
+/*
+ * This file is automatically created by autogen.sh; it should not
+ * be edited by hand!!
+ *
+ * List of version number for this component
+ */
+
+#ifndef MCA_${mvht_component_type}_${mvht_component_name}_VERSION_H
+#define MCA_${mvht_component_type}_${mvht_component_name}_VERSION_H
+
+#define MCA_${mvht_component_type}_${mvht_component_name}_MAJOR_VERSION @MCA_${mvht_component_type}_${mvht_component_name}_MAJOR_VERSION@
+#define MCA_${mvht_component_type}_${mvht_component_name}_MINOR_VERSION @MCA_${mvht_component_type}_${mvht_component_name}_MINOR_VERSION@
+#define MCA_${mvht_component_type}_${mvht_component_name}_RELEASE_VERSION @MCA_${mvht_component_type}_${mvht_component_name}_RELEASE_VERSION@
+#define MCA_${mvht_component_type}_${mvht_component_name}_GREEK_VERSION "@MCA_${mvht_component_type}_${mvht_component_name}_GREEK_VERSION@"
+#define MCA_${mvht_component_type}_${mvht_component_name}_SVN_VERSION "@MCA_${mvht_component_type}_${mvht_component_name}_SVN_VERSION@"
+#define MCA_${mvht_component_type}_${mvht_component_name}_VERSION "@MCA_${mvht_component_type}_${mvht_component_name}_VERSION@"
+
+#endif /* MCA_${mvht_component_type}_${mvht_component_name}_VERSION_H */
+EOF
+    fi
+    PARAM_CONFIG_FILES="$PARAM_CONFIG_FILES_save"
+    unset PARAM_VERSION_FILE PARAM_CONFIG_FILES_save
+}
+
+component_list_sort() {
+    cls_filename="$1"
+
+    # why, oh, why can't non-gnu sort support the -s (stable) option?
+    # Solaris sort supports -r -n and -u, so we'll assume that works everywhere
+
+    # get the list of priorities
+    component_list=
+    cls_priority_list=`sort -r -n -u "$cls_filename" | cut -f1 -d' ' | xargs`
+    for cls_priority in $cls_priority_list ; do
+        component_list="$component_list "`grep "^$cls_priority " "$cls_filename" | cut -f2 -d' ' | xargs`
+    done
+}
+
+
+
+##############################################################################
+#
 # process_dir - look at the files present in a given directory, and do
 # one of the following:
 #    - skip/ignore it
@@ -821,82 +900,105 @@ EOF
     unset pd_dir pd_ompi_topdir pd_cur_dir pd_component_type
 }
 
+process_framework() {
+    framework_path="$1"
+    rg_cwd="$2"
+    project="$3"
+    framework="$4"
 
-##############################################################################
-#
-# make_template_version_header -- make a templated version header
-# file, but only if we have a PARAM_VERSION_FILE that exists
-#
-# INPUT:
-#    - filename base
-#    - component type name
-#    - component name
-#
-# OUTPUT:
-#    none
-#
-# SIDE EFFECTS:
-#
-##############################################################################
-make_version_header_template() {
-    mvht_filename="$1"
-    mvht_component_type="$2"
-    mvht_component_name="$3"
+    if test "$framework" != "base" -a \
+            -d "$framework_path" ; then
+        if test "$framework" = "common" -o \
+                -r "${framework_path}/${framework}.h" ; then
+            framework_list="$framework_list $framework"
 
-    # See if we have a VERSION file
+            # Add the framework's configure file into configure,
+            # if there is one
+            if test -r "${framework_path}/configure.m4" ; then
+                echo "m4_include(${framework_path}/configure.m4)" >> "$mca_m4_include_file"
+            fi
+            echo "AC_CONFIG_FILES(${framework_path}/Makefile)" >> "$mca_no_config_list_file"
 
-    PARAM_CONFIG_FILES_save="$PARAM_CONFIG_FILES"
-    . ./configure.params
-    if test -z "$PARAM_VERSION_FILE"; then
-        if test -f "VERSION"; then
-            PARAM_VERSION_FILE="VERSION"
-        fi
-    else
-        if test ! -f "$PARAM_VERSION_FILE"; then
-            PARAM_VERSION_FILE=
+            rm -f "$mca_no_config_env_file" "$mca_m4_config_env_file"
+            touch "$mca_no_config_env_file" "$mca_m4_config_env_file"
+
+            for component_path in "$framework_path"/*; do
+                if test -d "$component_path"; then
+                    if test -f "$component_path/configure.in" -o \
+                            -f "$component_path/configure.params" -o \
+                            -f "$component_path/configure.ac"; then
+
+                        component=`basename "$component_path"`
+
+                        process_dir "$component_path" "$rg_cwd" \
+                            "$project" "$framework" "$component"
+                    fi
+                fi
+            done
+
+            # make list of components that are "no configure".
+            # Sort the list by priority (stable, so things stay in
+            # alphabetical order at the same priority), then munge
+            # it into form we like
+            component_list=
+            component_list_sort $mca_no_config_env_file
+            component_list_define="m4_define(mca_${framework}_no_config_component_list, ["
+            component_list_define_first="1"
+            for component in $component_list ; do
+                if test "$component_list_define_first" = "1"; then
+                    component_list_define="${component_list_define}${component}"
+                    component_list_define_first="0"
+                else
+                    component_list_define="${component_list_define}, ${component}"
+                fi
+            done
+            component_list_define="${component_list_define}])"
+            echo "$component_list_define" >> "$mca_no_configure_components_file"
+
+            # make list of components that are "m4 configure"
+            component_list=
+            component_list_sort $mca_m4_config_env_file
+            component_list_define="m4_define(mca_${framework}_m4_config_component_list, ["
+            component_list_define_first="1"
+            for component in $component_list ; do
+                if test "$component_list_define_first" = "1"; then
+                    component_list_define="${component_list_define}${component}"
+                    component_list_define_first="0"
+                else
+                    component_list_define="${component_list_define}, ${component}"
+                fi
+            done
+            component_list_define="${component_list_define}])"
+            echo "$component_list_define" >> "$mca_no_configure_components_file"
         fi
     fi
-
-    if test -n "$PARAM_VERSION_FILE" -a -f "$PARAM_VERSION_FILE" -a \
-        "$pd_component_type" != "common"; then
-        rm -f "$mvht_filename.template.in"
-        cat > "$mvht_filename.template.in" <<EOF
-/*
- * This file is automatically created by autogen.sh; it should not
- * be edited by hand!!
- *
- * List of version number for this component
- */
-
-#ifndef MCA_${mvht_component_type}_${mvht_component_name}_VERSION_H
-#define MCA_${mvht_component_type}_${mvht_component_name}_VERSION_H
-
-#define MCA_${mvht_component_type}_${mvht_component_name}_MAJOR_VERSION @MCA_${mvht_component_type}_${mvht_component_name}_MAJOR_VERSION@
-#define MCA_${mvht_component_type}_${mvht_component_name}_MINOR_VERSION @MCA_${mvht_component_type}_${mvht_component_name}_MINOR_VERSION@
-#define MCA_${mvht_component_type}_${mvht_component_name}_RELEASE_VERSION @MCA_${mvht_component_type}_${mvht_component_name}_RELEASE_VERSION@
-#define MCA_${mvht_component_type}_${mvht_component_name}_GREEK_VERSION "@MCA_${mvht_component_type}_${mvht_component_name}_GREEK_VERSION@"
-#define MCA_${mvht_component_type}_${mvht_component_name}_SVN_VERSION "@MCA_${mvht_component_type}_${mvht_component_name}_SVN_VERSION@"
-#define MCA_${mvht_component_type}_${mvht_component_name}_VERSION "@MCA_${mvht_component_type}_${mvht_component_name}_VERSION@"
-
-#endif /* MCA_${mvht_component_type}_${mvht_component_name}_VERSION_H */
-EOF
-    fi
-    PARAM_CONFIG_FILES="$PARAM_CONFIG_FILES_save"
-    unset PARAM_VERSION_FILE PARAM_CONFIG_FILES_save
 }
 
-component_list_sort() {
-    cls_filename="$1"
-
-    # why, oh, why can't non-gnu sort support the -s (stable) option?
-    # Solaris sort supports -r -n and -u, so we'll assume that works everywhere
-
-    # get the list of priorities
-    component_list=
-    cls_priority_list=`sort -r -n -u "$cls_filename" | cut -f1 -d' ' | xargs`
-    for cls_priority in $cls_priority_list ; do
-        component_list="$component_list "`grep "^$cls_priority " "$cls_filename" | cut -f2 -d' ' | xargs`
+process_project() {
+    project_path="$1"
+    rg_cwd="$2"
+    project="$3"
+    
+    project_list="$project_list $project"
+    framework_list=""
+    for framework_path in $project_path/mca/*; do
+        framework=`basename "$framework_path"`
+        process_framework $framework_path $rg_cwd $project $framework
     done
+
+    # make list of frameworks for this project
+    framework_list_define="m4_define(mca_${project}_framework_list, ["
+    framework_list_define_first="1"
+    for framework in $framework_list ; do
+        if test "$framework_list_define_first" = "1"; then
+            framework_list_define="${framework_list_define}${framework}"
+            framework_list_define_first="0"
+        else
+            framework_list_define="${framework_list_define}, ${framework}"
+        fi
+    done
+    framework_list_define="${framework_list_define}])"
+    echo "$framework_list_define" >> "$mca_no_configure_components_file"
 }
 
 
@@ -960,93 +1062,7 @@ EOF
     project_list=""
     for project_path in $config_project_list; do 
         project=`basename "$project_path"`
-        project_list="$project_list $project"
-
-        framework_list=""
-        for framework_path in $project_path/mca/*; do
-            framework=`basename "$framework_path"`
-
-	    if test "$framework" != "base" -a \
-                -d "$framework_path" ; then
-                if test "$framework" = "common" -o \
-                    -r "${framework_path}/${framework}.h" ; then
-                    framework_list="$framework_list $framework"
-
-                    # Add the framework's configure file into configure,
-                    # if there is one
-                    if test -r "${framework_path}/configure.m4" ; then
-                        echo "m4_include(${framework_path}/configure.m4)" >> "$mca_m4_include_file"
-                    fi
-
-                    rm -f "$mca_no_config_env_file" "$mca_m4_config_env_file"
-                    touch "$mca_no_config_env_file" "$mca_m4_config_env_file"
-
-                    for component_path in "$framework_path"/*; do
-                        if test -d "$component_path"; then
-                            if test -f "$component_path/configure.in" -o \
-                                -f "$component_path/configure.params" -o \
-                                -f "$component_path/configure.ac"; then
-
-                                component=`basename "$component_path"`
-
-                                process_dir "$component_path" "$rg_cwd" \
-                                    "$project" "$framework" "$component"
-                            fi
-                        fi
-                    done
-                fi
-
-                # make list of components that are "no configure".
-                # Sort the list by priority (stable, so things stay in
-                # alphabetical order at the same priority), then munge
-                # it into form we like
-                component_list=
-                component_list_sort $mca_no_config_env_file
-                component_list_define="m4_define(mca_${framework}_no_config_component_list, ["
-                component_list_define_first="1"
-                for component in $component_list ; do
-                    if test "$component_list_define_first" = "1"; then
-                        component_list_define="${component_list_define}${component}"
-                        component_list_define_first="0"
-                    else
-                        component_list_define="${component_list_define}, ${component}"
-                    fi
-                done
-                component_list_define="${component_list_define}])"
-                echo "$component_list_define" >> "$mca_no_configure_components_file"
-
-                # make list of components that are "m4 configure"
-                component_list=
-                component_list_sort $mca_m4_config_env_file
-                component_list_define="m4_define(mca_${framework}_m4_config_component_list, ["
-                component_list_define_first="1"
-                for component in $component_list ; do
-                    if test "$component_list_define_first" = "1"; then
-                        component_list_define="${component_list_define}${component}"
-                        component_list_define_first="0"
-                    else
-                        component_list_define="${component_list_define}, ${component}"
-                    fi
-                done
-                component_list_define="${component_list_define}])"
-                echo "$component_list_define" >> "$mca_no_configure_components_file"
-	    fi
-        done
-
-        # make list of frameworks for this project
-        framework_list_define="m4_define(mca_${project}_framework_list, ["
-        framework_list_define_first="1"
-        for framework in $framework_list ; do
-            if test "$framework_list_define_first" = "1"; then
-                framework_list_define="${framework_list_define}${framework}"
-                framework_list_define_first="0"
-            else
-                framework_list_define="${framework_list_define}, ${framework}"
-            fi
-        done
-        framework_list_define="${framework_list_define}])"
-        echo "$framework_list_define" >> "$mca_no_configure_components_file"
-
+        process_project $project_path $rg_cwd $project 
     done
 
     # create the m4 defines for the list of projects.  The list of

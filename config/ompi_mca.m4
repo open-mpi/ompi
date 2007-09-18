@@ -424,10 +424,6 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     OMPI_MCA_MAKE_DIR_LIST(MCA_$2_STATIC_SUBDIRS, $2, [$static_components])
     OMPI_MCA_MAKE_DIR_LIST(MCA_$2_DSO_SUBDIRS, $2, [$dso_components])
 
-    # add all the makefiles for the framework to the CONFIG_FILES.
-    # Don't add common/base, since it doesn't exist
-    AC_CONFIG_FILES([$1/mca/$2/Makefile])
-
     # Create the final .h file that will be included in the type's
     # top-level glue.  This lists all the static components.  We don't
     # need to do this for "common".
