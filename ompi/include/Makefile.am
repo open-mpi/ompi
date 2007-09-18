@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-# mpif.h and mpif-common.h are not generated, but mpif-config.h is.
+# mpif-common.h is not generated, but mpif.h and mpif-config.h are.
 # See big comments in these files for an explanation.
 
 # note - headers and nodist_headers will go in ${includedir}/openmpi,
