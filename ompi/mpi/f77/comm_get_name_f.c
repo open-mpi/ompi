@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/f77/bindings.h"
-#include "ompi/mpi/f77/strings.h"
+#include "ompi/mpi/f77/f77_strings.h"
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 
