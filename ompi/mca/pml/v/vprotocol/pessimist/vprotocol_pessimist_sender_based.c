@@ -28,7 +28,9 @@ int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
     sb.sb_pagesize = getpagesize();
     sb.sb_cursor = sb.sb_addr = (uintptr_t) NULL;
     sb.sb_available = 0;
+#ifdef SB_USE_SELFCOMM_METHOD
     sb.sb_comm = MPI_COMM_NULL;
+#endif
     
     sprintf(path, "%s"OPAL_PATH_SEP"%s", orte_process_info.proc_session_dir, 
                 mmapfile);
@@ -46,13 +48,8 @@ void vprotocol_pessimist_sender_based_finalize(void)
 {
     int ret;
     
-    if(sb.sb_comm != MPI_COMM_NULL)
+    if(((uintptr_t) NULL) != sb.sb_addr)
     {
-/* TODO: check this has already been freed by MPI_Finalize 
- *         ret = ompi_comm_free(&sb.sb_comm);
- *         if(MPI_SUCCESS != ret) 
- *             opal_output(0, "pml_v: protocol_pessimist: sender_based_finalize: ompi_comm_free failed (%d)", ret);
- */
         ret = munmap((void *) sb.sb_addr, sb.sb_length);
         if(-1 == ret)
             V_OUTPUT_ERR("pml_v: protocol_pessimsit: sender_based_finalize: munmap (%p): %s", 
@@ -70,11 +67,13 @@ void vprotocol_pessimist_sender_based_finalize(void)
   */
 void vprotocol_pessimist_sender_based_alloc(size_t len)
 {
-    if(sb.sb_comm == MPI_COMM_NULL)
-        ompi_comm_dup(MPI_COMM_SELF, &sb.sb_comm, 1);
-    else
+    if(((uintptr_t) NULL) != sb.sb_addr)
         munmap((void *) sb.sb_addr, sb.sb_length);
-
+#if SB_USE_SELFCOMM_METHOD
+    else
+        ompi_comm_dup(MPI_COMM_SELF, &sb.sb_comm, 1);
+#endif
+    
     /* Take care of alignement of sb_offset                             */
     sb.sb_offset += sb.sb_cursor - sb.sb_addr;
     sb.sb_cursor = sb.sb_offset % sb.sb_pagesize;
@@ -91,7 +90,7 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
     if(-1 == lseek(sb.sb_fd, sb.sb_offset + sb.sb_length, SEEK_SET))
     {
         V_OUTPUT_ERR("pml_v: vprotocol_pessimist: sender_based_alloc: lseek: %s", 
-                     strerror(errno));
+      §               strerror(errno));
         close(sb.sb_fd);
         ompi_mpi_abort(MPI_COMM_NULL, MPI_ERR_NO_SPACE, false);
     }
@@ -105,8 +104,9 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
     sb.sb_addr = (uintptr_t) mmap((void *) sb.sb_addr, sb.sb_length, 
                                   PROT_WRITE | PROT_READ, MAP_SHARED, sb.sb_fd, 
                                   sb.sb_offset);
-#endif 
+#else 
     sb.sb_addr = (uintptr_t) malloc(sb.sb_length);
+#endif
     if(((uintptr_t) -1) == sb.sb_addr)
     {
         V_OUTPUT_ERR("pml_v: vprotocol_pessimist: sender_based_alloc: mmap: %s", 
@@ -117,5 +117,22 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
     sb.sb_cursor += sb.sb_addr; /* set absolute addr of sender_based buffer */
     V_OUTPUT_VERBOSE(30, "pessimist:\tsb\tgrow\toffset %llu\tlength %llu\tbase %p\tcursor %p", (unsigned long long) sb.sb_offset, (unsigned long long) sb.sb_length, (void *) sb.sb_addr, (void *) sb.sb_cursor);
 }   
+
+#ifdef SB_USE_CONVERTOR_METHOD
+uint32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t* pConvertor,
+                                                            struct iovec* iov,
+                                                            uint32_t* out_size,
+                                                            size_t* max_data) {
+    int ret;
+    vprotocol_pessimist_send_request_t * preq;
+    
+    preq = VPESSIMIST_SEND_REQ(pConvertor);
+    pConvertor->flags = preq->conv_flags;
+    pConvertor->f_advance = preq->conv_advance;
+    ret = pConvertor->f_advance(pConvertor, iov, out_size, max_data);
+    
+    return ret;
+}
+#endif
 
 #undef sb
