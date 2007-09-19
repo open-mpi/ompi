@@ -22,6 +22,9 @@
 #ifdef HAVE_UTIL_H
 #include <util.h>
 #endif
+#ifdef HAVE_LIBUTIL_H
+#include <libutil.h>
+#endif
 #ifdef HAVE_TERMIOS_H
 # include <termios.h>
 #else
