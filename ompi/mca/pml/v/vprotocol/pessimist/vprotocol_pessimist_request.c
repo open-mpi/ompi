@@ -27,7 +27,7 @@ static void vprotocol_pessimist_request_construct(mca_pml_base_request_t *req)
   req->req_ompi.req_status.MPI_SOURCE = -1; /* no matching made flag */
   VPESSIMIST_REQ(req)->pml_req_free = req->req_ompi.req_free;
   VPESSIMIST_REQ(req)->event = NULL;
-  VPESSIMIST_REQ(req)->sb_reqs[0] = NULL;
+/*  VPESSIMIST_REQ(req)->sb_reqs[0] = NULL;*/
   assert(VPESSIMIST_REQ(req)->pml_req_free == req->req_ompi.req_free); /* detection of aligment issues on different arch */
   req->req_ompi.req_free = mca_vprotocol_pessimist_request_free;
 }

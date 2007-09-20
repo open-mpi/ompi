@@ -15,7 +15,7 @@ mca_vprotocol_pessimist_module_t mca_vprotocol_pessimist =
   { 
     /* mca_pml_base_module_add_procs_fn_t     */ NULL,
     /* mca_pml_base_module_del_procs_fn_t     */ NULL,
-    /* mca_pml_base_module_enable_fn_f        */ NULL,
+    /* mca_pml_base_module_enable_fn_f        */ mca_vprotocol_pessimist_enable,
     /* mca_pml_base_module_progress_fn_t      */ NULL, /*mca_vprotocol_pessimist_progress,*/
 
     /* mca_pml_base_module_add_comm_fn_t      */ NULL,

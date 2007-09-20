@@ -23,6 +23,13 @@
 int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size) 
 {
     char path[PATH_MAX];
+#ifdef SB_USE_CONVERTOR_METHOD
+    mca_pml_base_send_request_t pml_req;
+    sb.sb_conv_to_pessimist_offset = VPROTOCOL_SEND_REQ(NULL) - 
+            ((uintptr_t) & pml_req.req_base.req_convertor - 
+             (uintptr_t) & pml_req);
+    V_OUTPUT_VERBOSE(1, "conv_to_pessimist_offset: %p", sb.sb_conv_to_pessimist_offset);
+#endif
     sb.sb_offset = 0;
     sb.sb_length = size;
     sb.sb_pagesize = getpagesize();
@@ -39,9 +46,9 @@ int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
     {
         V_OUTPUT_ERR("pml_v: vprotocol_pessimist: sender_based_init: open (%s): %s", 
                      path, strerror(errno));
-        return -1;
+        return OPAL_ERR_FILE_OPEN_FAILURE;
     }
-    return sb.sb_fd;
+    return OMPI_SUCCESS;
 }
 
 void vprotocol_pessimist_sender_based_finalize(void)
@@ -69,7 +76,7 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
 {
     if(((uintptr_t) NULL) != sb.sb_addr)
         munmap((void *) sb.sb_addr, sb.sb_length);
-#if SB_USE_SELFCOMM_METHOD
+#ifdef SB_USE_SELFCOMM_METHOD
     else
         ompi_comm_dup(MPI_COMM_SELF, &sb.sb_comm, 1);
 #endif
@@ -124,13 +131,17 @@ uint32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t* pC
                                                             uint32_t* out_size,
                                                             size_t* max_data) {
     int ret;
-    vprotocol_pessimist_send_request_t * preq;
+    mca_vprotocol_pessimist_send_request_t *preq;
     
-    preq = VPESSIMIST_SEND_REQ(pConvertor);
+    preq = VPESSIMIST_CONV_REQ(pConvertor);
+    V_OUTPUT_VERBOSE(1, "pessimist:\tsb\tadvce\t %p (+%p) %p\tfadvce %p\tout %u\tmax %lu", pConvertor, mca_vprotocol_pessimist.sender_based.sb_conv_to_pessimist_offset, preq, preq->conv_advance, *out_size, *max_data);
     pConvertor->flags = preq->conv_flags;
-    pConvertor->f_advance = preq->conv_advance;
-    ret = pConvertor->f_advance(pConvertor, iov, out_size, max_data);
-    
+    pConvertor->fAdvance = preq->conv_advance;
+    ret = ompi_convertor_pack(pConvertor, iov, out_size, max_data);
+    V_OUTPUT_VERBOSE(1, "pessimist:\tsb\tadvce\t%p\tout %u\tmax %lu", preq, *out_size, *max_data);
+
+    pConvertor->flags &= ~CONVERTOR_NO_OP;
+    pConvertor->fAdvance = vprotocol_pessimist_sender_based_convertor_advance;
     return ret;
 }
 #endif
