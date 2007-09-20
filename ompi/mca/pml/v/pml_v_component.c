@@ -201,22 +201,18 @@ static int mca_pml_v_enable(bool enable)
     int ret;
     
     /* Enable the real PML (no threading issues there as threads are started 
-     * later
+     * later)
      */ 
     ret = mca_pml_v.host_pml.pml_enable(enable);
     if(OMPI_SUCCESS != ret) return ret;
     
     if(enable) {
-        if(mca_vprotocol_base_selected()) {
-            if(mca_vprotocol.enable)
-                return mca_vprotocol.enable(enable);
-            else 
-                return OMPI_SUCCESS;
-        }
+        /* Check if a protocol have been selected during init */
+        if(! mca_vprotocol_base_selected())
+            mca_vprotocol_base_select(pml_v_enable_progress_treads, 
+                                      pml_v_enable_mpi_threads);
 
-        mca_vprotocol_base_select(pml_v_enable_progress_treads, 
-                                  pml_v_enable_mpi_threads);
-        
+        /* Check if we succeeded selecting a protocol */
         if(mca_vprotocol_base_selected()) {
             V_OUTPUT_VERBOSE(1, "I don't want to die: I will parasite %s host component %s with %s %s", 
                              mca_pml_base_selected_component.pmlm_version.mca_type_name,

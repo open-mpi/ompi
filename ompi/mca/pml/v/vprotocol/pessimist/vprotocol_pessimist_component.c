@@ -112,10 +112,6 @@ static mca_vprotocol_base_module_t *mca_vprotocol_pessimist_component_init( int*
     mca_vprotocol_pessimist.event_buffer = 
                 (vprotocol_pessimist_mem_event_t *) malloc(_event_buffer_size);
 
-    if(vprotocol_pessimist_sender_based_init(_mmap_file_name, 
-                                             _sender_based_size) == -1) 
-        return NULL;
-
     return &mca_vprotocol_pessimist.super;
 }
                                                                           
@@ -123,11 +119,24 @@ static int mca_vprotocol_pessimist_component_finalize(void)
 {
     V_OUTPUT_VERBOSE(500, "vprotocol_pessimist_finalize");
     free(mca_vprotocol_pessimist.event_buffer);
-    vprotocol_pessimist_sender_based_finalize();
-    /** TODO: fix memleak... */  
+    OBJ_DESTRUCT(&mca_vprotocol_pessimist.replay_events);
+    OBJ_DESTRUCT(&mca_vprotocol_pessimist.pending_events);
+    OBJ_DESTRUCT(&mca_vprotocol_pessimist.events_pool);
     return OMPI_SUCCESS;
 }
 
+int mca_vprotocol_pessimist_enable(bool enable) {
+    if(enable) {
+        int ret; 
+        if((ret = vprotocol_pessimist_sender_based_init(_mmap_file_name, 
+                                                 _sender_based_size)) < OPAL_SUCCESS)
+            return ret;
+    }
+    else {
+        vprotocol_pessimist_sender_based_finalize();
+    }
+    
+}
 
 
 static inline int mca_param_register_int( const char* param_name,

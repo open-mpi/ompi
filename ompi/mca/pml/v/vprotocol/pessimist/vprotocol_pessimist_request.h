@@ -23,8 +23,10 @@ extern "C" {
 typedef struct mca_vprotocol_pessimist_request_t {
   ompi_request_free_fn_t pml_req_free;
   vprotocol_pessimist_clock_t reqid;
-  ompi_request_t *sb_reqs[2];
+  /* ompi_request_t *sb_reqs[2]; */
   mca_vprotocol_pessimist_event_t *event;
+  convertor_advance_fct_t conv_advance;
+  uint32_t conv_flags;
 } mca_vprotocol_pessimist_request_t;
 typedef mca_vprotocol_pessimist_request_t mca_vprotocol_pessimist_recv_request_t;
 typedef mca_vprotocol_pessimist_request_t mca_vprotocol_pessimist_send_request_t;
