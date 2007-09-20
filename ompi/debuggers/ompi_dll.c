@@ -986,16 +986,17 @@ static int rebuild_communicator_list (mqs_process *proc)
      */
     commp = &p_info->communicator_list;
     commcount = 0;
-    for (; *commp; commp = &(*commp)->next) {
+    while (*commp) {
         communicator_t *comm = *commp;
         if (comm->present) {
             comm->present = FALSE;
             commcount++;
+            commp = &(*commp)->next;
         } else { /* It needs to be deleted */
-            *commp = comm->next;			/* Remove from the list */
-            group_decref (comm->group);		/* Group is no longer referenced from here */
+            *commp = comm->next;            /* Remove from the list */
+            if (NULL != comm->group)        /* comm group can be NULL for MPI_COMM_NULL */
+                group_decref (comm->group); /* Group is no longer referenced from here */
             mqs_free (comm);
-            if( *commp == NULL ) break;
         }
     }
 
