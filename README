@@ -4,20 +4,20 @@ Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 Copyright (c) 2004-2007 The University of Tennessee and The University
                         of Tennessee Research Foundation.  All rights
                         reserved.
-Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
                         University of Stuttgart.  All rights reserved.
-Copyright (c) 2004-2006 The Regents of the University of California.
+Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
 Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
-Copyright (c) 2006      Voltaire, Inc. All rights reserved.
-Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+Copyright (c) 2006-2007 Voltaire, Inc. All rights reserved.
+Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
 
 $HEADER$
-
+ 
 ===========================================================================
 
 The best way to report bugs, send comments, or ask questions is to
@@ -48,7 +48,7 @@ Much, much more information is also available in the Open MPI FAQ:
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (1 March 2007):
+base as of this writing (19 September 2007):
 
 - Open MPI includes support for a wide variety of supplemental
   hardware and software package.  When configuring Open MPI, you may
@@ -286,6 +286,7 @@ base as of this writing (1 March 2007):
     performance:
     - Myrinet MX (not GM)
     - InfiniPath PSM
+    - Portals
 
   Open MPI will, by default, choose to use "cm" if it finds a
   cm-supported network at run-time.  Users can force the use of ob1 if
@@ -393,6 +394,18 @@ for a full list); a summary of the more commonly used ones follows:
   Look in directory for the PSM libraries.  By default, Open MPI will
   look in <psm directory>/lib and <psm directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
+
+--with-udapl=<directory>
+  Specify the directory where the UDAPL libraries and header files are
+  located.  This enables UDAPL support in Open MPI.  Note that UDAPL
+  support is disabled by default on Linux; the --with-udapl flag must
+  be specified in order to enable it.
+
+--with-udapl-libdir=<directory>
+  Look in directory for the UDAPL libraries.  By default, Open MPI
+  will look in <udapl directory>/lib and <udapl directory>/lib64,
+  which covers most cases.  This option is only needed for special
+  configurations.
 
 --with-tm=<directory>
   Specify the directory where the TM libraries and header files are
