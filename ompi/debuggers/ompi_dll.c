@@ -367,8 +367,11 @@ static group_t * find_or_create_group( mqs_process *proc,
     DEBUG(VERBOSE_GROUP, ("Create a new group 0x%p with %d members\n",
                           (void*)group, np) );
 
-    if (mqs_ok != mqs_fetch_data (proc, table, np * p_info->sizes.pointer_size,
-                                  trbuffer) ) {
+    if( (0 != np) &&
+        (mqs_ok != mqs_fetch_data(proc, table, np * p_info->sizes.pointer_size,
+                                  trbuffer)) ) {
+        DEBUG(VERBOSE_GROUP,("Failed to read the proc data. Destroy group %p\n",
+                             (void*)group));
         mqs_free (group);
         mqs_free (tr);
         mqs_free (trbuffer);
@@ -416,8 +419,11 @@ static group_t * find_or_create_group( mqs_process *proc,
 /***********************************************************************/
 static void group_decref (group_t * group)
 {
+    DEBUG(VERBOSE_GROUP, ("Decrement reference count for group %p to %d\n", (void*)group,
+                          (group->ref_count - 1)));
     if (--(group->ref_count) == 0) {
         mqs_free (group->local_to_global);
+        DEBUG(VERBOSE_GROUP, ("Destroy group %p\n", (void*)group));
         mqs_free (group);
     }
 } /* group_decref */
@@ -961,8 +967,8 @@ static int rebuild_communicator_list (mqs_process *proc)
             old->recv_context         = context_id;
             old->comm_info.local_rank = local_rank;
 
-            DEBUG(VERBOSE_COMM,("Create new communicator 0x%llx with context_id %d and local_rank %d\n",
-                                (long long)old, context_id, local_rank));
+            DEBUG(VERBOSE_COMM,("Create new communicator 0x%lx with context_id %d and local_rank %d\n",
+                                (long)old, context_id, local_rank));
             /* Now get the information about the group */
             group_base =
                 fetch_pointer( proc, comm_ptr + i_info->ompi_communicator_t.offset.c_local_group,
@@ -976,9 +982,10 @@ static int rebuild_communicator_list (mqs_process *proc)
             old->comm_info.size = old->group->entries;
         }
         old->present = TRUE;
-        DEBUG(VERBOSE_COMM,("Communicator 0x%llx %d local_rank %d name %s\n",
-                            (long long)old->comm_ptr, (int)old->comm_info.unique_id,
-                            (int)old->comm_info.local_rank, old->comm_info.name));
+        DEBUG(VERBOSE_COMM,("Communicator 0x%llx %d local_rank %d name %s group %p\n",
+                            (long long)old->comm_ptr, (int)old->recv_context,
+                            (int)old->comm_info.local_rank, old->comm_info.name,
+                            (void*)old->group));
     }
 
     /* Now iterate over the list tidying up any communicators which
@@ -986,16 +993,20 @@ static int rebuild_communicator_list (mqs_process *proc)
      */
     commp = &p_info->communicator_list;
     commcount = 0;
-    while (*commp) {
+    for (; *commp; ) {
         communicator_t *comm = *commp;
         if (comm->present) {
             comm->present = FALSE;
             commcount++;
-            commp = &(*commp)->next;
+            DEBUG(VERBOSE_COMM, ("Keep communicator 0x%llx name %s\n",
+                                 (long long)comm->comm_ptr, comm->comm_info.name));
+            commp = &(*commp)->next;        /* go to the next communicator */
         } else { /* It needs to be deleted */
-            *commp = comm->next;            /* Remove from the list */
-            if (NULL != comm->group)        /* comm group can be NULL for MPI_COMM_NULL */
-                group_decref (comm->group); /* Group is no longer referenced from here */
+            *commp = comm->next;			/* Remove from the list, *commp now points to the next */
+            DEBUG(VERBOSE_COMM, ("Remove communicator 0x%llx name %s (group %p)\n",
+                                 (long long)comm->comm_ptr, comm->comm_info.name,
+                                 (void*)comm->group));
+            group_decref (comm->group);		/* Group is no longer referenced from here */
             mqs_free (comm);
         }
     }
@@ -1066,7 +1077,7 @@ int mqs_get_communicator (mqs_process *proc, mqs_communicator *comm)
     if (p_info->current_communicator) {
         *comm = p_info->current_communicator->comm_info;
         DEBUG(VERBOSE_COMM,("mqs_get_communicator %d local_rank %d name %s\n",
-                            (int)comm->unique_id, (int)comm->local_rank,
+                            p_info->current_communicator->recv_context, (int)comm->local_rank,
                             comm->name));
         return mqs_ok;
     }
