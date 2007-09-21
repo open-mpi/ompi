@@ -86,13 +86,13 @@ void vprotocol_pessimist_sender_based_alloc(size_t len);
     sbhdr->tag = req->req_base.req_tag;                                       \
     sbhdr->contextid = req->req_base.req_comm->c_contextid;                   \
     sbhdr->sequence = req->req_base.req_sequence;                             \
-    mca_vprotocol_pessimist.sender_based.sb_cursor +=                         \
-            sizeof(vprotocol_pessimist_sender_based_header_t);                \
+/*    mca_vprotocol_pessimist.sender_based.sb_cursor +=                         */\
+/*            sizeof(vprotocol_pessimist_sender_based_header_t);                */\
                                                                               \
     __SENDER_BASED_METHOD_COPY(req);                                          \
-    mca_vprotocol_pessimist.sender_based.sb_cursor += sbhdr->size;            \
-    mca_vprotocol_pessimist.sender_based.sb_available -= (sbhdr->size +       \
-            sizeof(vprotocol_pessimist_sender_based_header_t));               \
+/*    mca_vprotocol_pessimist.sender_based.sb_cursor += sbhdr->size;            */\
+/*    mca_vprotocol_pessimist.sender_based.sb_available -= (sbhdr->size +       */\
+/*            sizeof(vprotocol_pessimist_sender_based_header_t));               */\
     V_OUTPUT_VERBOSE(70, "pessimist:\tsb\twrite\t%"PRIpclock"\tsize %lu", VPESSIMIST_REQ(&req->req_base)->reqid, sbhdr->size + sizeof(vprotocol_pessimist_sender_based_header_t)); \
 } while(0)
 
