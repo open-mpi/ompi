@@ -100,8 +100,12 @@ void vprotocol_pessimist_sender_based_alloc(size_t len);
   */ 
 #define VPROTOCOL_PESSIMIST_SENDER_BASED_FLUSH(REQ) __SENDER_BASED_METHOD_FLUSH(REQ)
 
+
+
+/*******************************************************************************
+ * Convertor pack (blocking) method (good latency, bad bandwidth)
+ */
 #if defined(SB_USE_PACK_METHOD)
-    /* Convertor pack (blocking) method */
 #define __SENDER_BASED_METHOD_COPY(req) do {                                  \
     if(0 != req->req_bytes_packed) {                                          \
         ompi_convertor_t conv;                                                \
@@ -121,8 +125,41 @@ void vprotocol_pessimist_sender_based_alloc(size_t len);
 
 #define __SENDER_BASED_METHOD_FLUSH(REQ)
 
+
+/*******************************************************************************
+ * Convertor replacement (non blocking) method (under testing)
+ */
+#elif defined(SB_USE_CONVERTOR_METHOD)
+uint32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t*,
+                                                            struct iovec*,
+                                                            uint32_t*,
+                                                            size_t*);
+
+#define __SENDER_BASED_METHOD_COPY(REQ) do {                                  \
+    ompi_convertor_t *pConv;                                                  \
+    mca_vprotocol_pessimist_send_request_t *preq;                             \
+                                                                              \
+    pConv = & (REQ)->req_base.req_convertor;                                  \
+    preq = VPESSIMIST_SEND_REQ(REQ);                                          \
+    preq->sb_cursor = mca_vprotocol_pessimist.sender_based.sb_cursor;         \
+    preq->sb_conv_flags = pConv->flags;                                       \
+    preq->sb_conv_advance = pConv->fAdvance;                                  \
+                                                                              \
+    pConv->flags &= ~CONVERTOR_NO_OP;                                         \
+    pConv->fAdvance = vprotocol_pessimist_sender_based_convertor_advance;     \
+} while(0)
+
+#define __SENDER_BASED_METHOD_FLUSH(REQ)
+
+#define VPESSIMIST_CONV_REQ(CONV) ((mca_vprotocol_pessimist_send_request_t *) \
+    (mca_vprotocol_pessimist.sender_based.sb_conv_to_pessimist_offset +       \
+     (uintptr_t) (CONV)))
+
+
+/*******************************************************************************
+ * iRecv/Send on SELF pack method (bad latency, no improvement on bandwidth)
+ */
 #elif defined(SB_USE_SELFCOMM_METHOD)
-/* iRecv/Send on SELF pack method */
 #define __SENDER_BASED_METHOD_COPY(req) do {                                  \
     mca_pml_v.host_pml.pml_irecv(                                             \
             mca_vprotocol_pessimist.sender_based.sb_cursor,                   \
@@ -144,32 +181,6 @@ void vprotocol_pessimist_sender_based_alloc(size_t len);
         VPESSIMIST_REQ(REQ)->sb_reqs[0] = NULL;                               \
     }                                                                         \
 } while(0)
-
-#elif defined(SB_USE_CONVERTOR_METHOD)
-/* Convertor replacement (non blocking) method */
-uint32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t*,
-                                                            struct iovec*,
-                                                            uint32_t*,
-                                                            size_t*);
-
-#define __SENDER_BASED_METHOD_COPY(REQ) do {                                  \
-    ompi_convertor_t *pConv;                                                  \
-    mca_vprotocol_pessimist_send_request_t *pReq;                             \
-                                                                              \
-    pConv = & (REQ)->req_base.req_convertor;                                  \
-    pReq = VPESSIMIST_SEND_REQ(REQ);                                          \
-    pReq->conv_flags = pConv->flags;                                          \
-    pReq->conv_advance = pConv->fAdvance;                                     \
-V_OUTPUT_VERBOSE(1, "req %p preq %p conv %p advance %p", (REQ), pReq, pConv, pConv->fAdvance);                                                                              \
-    pConv->flags &= ~CONVERTOR_NO_OP;                                         \
-    pConv->fAdvance = vprotocol_pessimist_sender_based_convertor_advance;     \
-} while(0)
-
-#define __SENDER_BASED_METHOD_FLUSH(REQ)
-
-#define VPESSIMIST_CONV_REQ(CONV) ((mca_vprotocol_pessimist_send_request_t *) \
-    (mca_vprotocol_pessimist.sender_based.sb_conv_to_pessimist_offset +       \
-     (uintptr_t) (CONV)))
 
 #endif /* SB_USE_*_METHOD */
 

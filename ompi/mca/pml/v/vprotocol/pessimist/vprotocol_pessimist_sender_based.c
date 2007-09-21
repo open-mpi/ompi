@@ -16,6 +16,7 @@
 #if defined(HAVE_UNISTD_H)
 #include <unistd.h>
 #endif
+#include "ompi/datatype/datatype_memcpy.h"
 #include <fcntl.h>
 
 #define sb mca_vprotocol_pessimist.sender_based
@@ -28,7 +29,7 @@ int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
     sb.sb_conv_to_pessimist_offset = VPROTOCOL_SEND_REQ(NULL) - 
             ((uintptr_t) & pml_req.req_base.req_convertor - 
              (uintptr_t) & pml_req);
-    V_OUTPUT_VERBOSE(1, "conv_to_pessimist_offset: %p", sb.sb_conv_to_pessimist_offset);
+    V_OUTPUT_VERBOSE(500, "pessimist: conv_to_pessimist_offset: %p", sb.sb_conv_to_pessimist_offset);
 #endif
     sb.sb_offset = 0;
     sb.sb_length = size;
@@ -97,7 +98,7 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
     if(-1 == lseek(sb.sb_fd, sb.sb_offset + sb.sb_length, SEEK_SET))
     {
         V_OUTPUT_ERR("pml_v: vprotocol_pessimist: sender_based_alloc: lseek: %s", 
-      §               strerror(errno));
+                     strerror(errno));
         close(sb.sb_fd);
         ompi_mpi_abort(MPI_COMM_NULL, MPI_ERR_NO_SPACE, false);
     }
@@ -131,15 +132,24 @@ uint32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t* pC
                                                             uint32_t* out_size,
                                                             size_t* max_data) {
     int ret;
+    int i;
+    size_t pending_length;
     mca_vprotocol_pessimist_send_request_t *preq;
     
     preq = VPESSIMIST_CONV_REQ(pConvertor);
-    V_OUTPUT_VERBOSE(1, "pessimist:\tsb\tadvce\t %p (+%p) %p\tfadvce %p\tout %u\tmax %lu", pConvertor, mca_vprotocol_pessimist.sender_based.sb_conv_to_pessimist_offset, preq, preq->conv_advance, *out_size, *max_data);
-    pConvertor->flags = preq->conv_flags;
-    pConvertor->fAdvance = preq->conv_advance;
+    pConvertor->flags = preq->sb_conv_flags;
+    pConvertor->fAdvance = preq->sb_conv_advance;
     ret = ompi_convertor_pack(pConvertor, iov, out_size, max_data);
-    V_OUTPUT_VERBOSE(1, "pessimist:\tsb\tadvce\t%p\tout %u\tmax %lu", preq, *out_size, *max_data);
+    V_OUTPUT_VERBOSE(39, "pessimist:\tsb\tpack\t%lu", *max_data);
 
+    for(i = 0, pending_length = *max_data; pending_length > 0; i++) {
+        assert(i < *out_size);
+        MEMCPY(preq->sb_cursor, iov[i].iov_base, iov[i].iov_len);
+        pending_length -= iov[i].iov_len;
+        preq->sb_cursor += iov[i].iov_len;
+    }
+    assert(pending_length == 0);
+    
     pConvertor->flags &= ~CONVERTOR_NO_OP;
     pConvertor->fAdvance = vprotocol_pessimist_sender_based_convertor_advance;
     return ret;
