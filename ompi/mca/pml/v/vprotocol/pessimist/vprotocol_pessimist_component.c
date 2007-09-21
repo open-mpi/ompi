@@ -135,7 +135,7 @@ int mca_vprotocol_pessimist_enable(bool enable) {
     else {
         vprotocol_pessimist_sender_based_finalize();
     }
-    
+    return OMPI_SUCCESS;
 }
 
 
