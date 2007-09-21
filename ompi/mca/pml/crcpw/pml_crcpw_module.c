@@ -278,6 +278,10 @@ int mca_pml_crcpw_iprobe(int dst, int tag, struct ompi_communicator_t* comm, int
         return ret;
     }
 
+    if( OMPI_CRCP_PML_DONE == pml_state->state) {
+        goto CLEANUP;
+    }
+
     if( OMPI_CRCP_PML_SKIP != pml_state->state) {
         if( OMPI_SUCCESS != (ret = mca_pml_crcpw_module.wrapped_pml_module.pml_iprobe(dst, tag, comm, matched, status) ) ) {
             PML_CRCP_STATE_RETURN(pml_state);
@@ -293,6 +297,7 @@ int mca_pml_crcpw_iprobe(int dst, int tag, struct ompi_communicator_t* comm, int
         return ret;
     }
 
+ CLEANUP:
     PML_CRCP_STATE_RETURN(pml_state);
 
     return OMPI_SUCCESS;
@@ -316,6 +321,10 @@ int mca_pml_crcpw_probe( int dst, int tag, struct ompi_communicator_t* comm, omp
         return ret;
     }
 
+    if( OMPI_CRCP_PML_DONE == pml_state->state) {
+        goto CLEANUP;
+    }
+
     if( OMPI_CRCP_PML_SKIP != pml_state->state) {
         if( OMPI_SUCCESS != (ret = mca_pml_crcpw_module.wrapped_pml_module.pml_probe(dst, tag, comm, status) ) ) {
             PML_CRCP_STATE_RETURN(pml_state);
@@ -331,6 +340,7 @@ int mca_pml_crcpw_probe( int dst, int tag, struct ompi_communicator_t* comm, omp
         return ret;
     }
 
+ CLEANUP:
     PML_CRCP_STATE_RETURN(pml_state);
 
     return OMPI_SUCCESS;
