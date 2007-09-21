@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -35,7 +35,6 @@ extern "C" {
  */
 struct mca_pml_base_recv_request_t {
    mca_pml_base_request_t req_base;  /**< base request */
-   ompi_convertor_t req_convertor;   /**< convertor that describes this datatype */
    size_t req_bytes_packed;          /**< size of message being received */
 };
 typedef struct mca_pml_base_recv_request_t mca_pml_base_recv_request_t;
@@ -111,12 +110,12 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
  *
  *  @param request (IN)     Receive request.
  */
-#define MCA_PML_BASE_RECV_REQUEST_FINI( request )              \
-    do {                                                       \
-        OMPI_REQUEST_FINI(&(request)->req_base.req_ompi);      \
-        OBJ_RELEASE( (request)->req_base.req_comm);            \
-        OBJ_RELEASE( (request)->req_base.req_datatype );       \
-        ompi_convertor_cleanup( &((request)->req_convertor) ); \
+#define MCA_PML_BASE_RECV_REQUEST_FINI( request )                       \
+    do {                                                                \
+        OMPI_REQUEST_FINI(&(request)->req_base.req_ompi);               \
+        OBJ_RELEASE( (request)->req_base.req_comm);                     \
+        OBJ_RELEASE( (request)->req_base.req_datatype );                \
+        ompi_convertor_cleanup( &((request)->req_base.req_convertor) ); \
     } while (0)
 
 #if defined(c_plusplus) || defined(__cplusplus)

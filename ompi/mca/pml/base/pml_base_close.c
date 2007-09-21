@@ -25,30 +25,41 @@
 #include "opal/mca/base/base.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
+#include "ompi/mca/pml/base/pml_base_request.h"
 #include "opal/runtime/opal_progress.h"
 
 int mca_pml_base_close(void)
 {
-  /* turn off the progress code for the pml */
-  opal_progress_unregister(mca_pml.pml_progress);
+    /* turn off the progress code for the pml */
+    opal_progress_unregister(mca_pml.pml_progress);
 
-  /* Blatently ignore the return code (what would we do to recover,
-     anyway?  This module is going away, so errors don't matter
-     anymore) */
+     /* Blatently ignore the return code (what would we do to recover,
+        anyway?  This module is going away, so errors don't matter
+        anymore) */
 
-  mca_pml.pml_progress = mca_pml_base_progress;
-  if (NULL != mca_pml_base_selected_component.pmlm_finalize) {
-    mca_pml_base_selected_component.pmlm_finalize();
-  }
+    /**
+     * Destruct the send and receive queues. The ompi_free_list_t destructor
+     * will return the memory to the mpool, so this has to be done before the
+     * mpool get released by the PML close function.
+     */
+    OBJ_DESTRUCT(&mca_pml_base_send_requests);
+    OBJ_DESTRUCT(&mca_pml_base_recv_requests);
 
-  /* Close all remaining available modules (may be one if this is a
-     OMPI RTE program, or [possibly] multiple if this is ompi_info) */
+    mca_pml.pml_progress = mca_pml_base_progress;
+    if (NULL != mca_pml_base_selected_component.pmlm_finalize) {
+        mca_pml_base_selected_component.pmlm_finalize();
+    }
 
-  mca_base_components_close(mca_pml_base_output, 
-                            &mca_pml_base_components_available, NULL);
+    OBJ_DESTRUCT(&mca_pml_base_pml);
 
-  /* All done */
+    /* Close all remaining available modules (may be one if this is a
+       OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 
-  return OMPI_SUCCESS;
+    mca_base_components_close(mca_pml_base_output, 
+                              &mca_pml_base_components_available, NULL);
+
+    /* All done */
+
+    return OMPI_SUCCESS;
 }
 

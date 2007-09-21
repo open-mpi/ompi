@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -68,7 +68,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_recv_request_t);
 do {                                                               \
    ompi_free_list_item_t* item;                                    \
    rc = OMPI_SUCCESS;                                              \
-   OMPI_FREE_LIST_GET(&mca_pml_ob1.recv_requests, item, rc);       \
+   OMPI_FREE_LIST_GET(&mca_pml_base_recv_requests, item, rc);      \
    recvreq = (mca_pml_ob1_recv_request_t*)item;                    \
 } while(0)
 
@@ -113,8 +113,8 @@ do {                                                                \
                 (request)->req_recv.req_base.req_count,             \
                 (request)->req_recv.req_base.req_addr,              \
                 0,                                                  \
-                &(request)->req_recv.req_convertor );               \
-            ompi_convertor_get_unpacked_size( &(request)->req_recv.req_convertor, \
+                &(request)->req_recv.req_base.req_convertor );      \
+            ompi_convertor_get_unpacked_size( &(request)->req_recv.req_base.req_convertor, \
                                               &(request)->req_bytes_delivered );  \
         }                                                           \
     }                                                               \
@@ -179,12 +179,12 @@ do {                                                                            
 /*
  *  Free the PML receive request
  */
-#define MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq) \
-{ \
-    MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);  \
-    OMPI_FREE_LIST_RETURN( &mca_pml_ob1.recv_requests,     \
-                      (ompi_free_list_item_t*)(recvreq));  \
-}
+#define MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq)                        \
+    {                                                                   \
+        MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);           \
+        OMPI_FREE_LIST_RETURN( &mca_pml_base_recv_requests,             \
+                               (ompi_free_list_item_t*)(recvreq));      \
+    }
 
 /**
  * Attempt to match the request against the unexpected fragment list
@@ -255,8 +255,8 @@ do {                                                                            
                          (request)->req_recv.req_base.req_count,                   \
                          (request)->req_recv.req_base.req_addr,                    \
                          0,                                                        \
-                         &(request)->req_recv.req_convertor );                     \
-            ompi_convertor_get_unpacked_size( &(request)->req_recv.req_convertor,  \
+                         &(request)->req_recv.req_base.req_convertor );            \
+            ompi_convertor_get_unpacked_size( &(request)->req_recv.req_base.req_convertor,  \
                                               &(request)->req_bytes_delivered );   \
         }                                                                          \
         PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_XFER_BEGIN,                       \
@@ -298,9 +298,9 @@ do {                                                                            
         PERUSE_TRACE_COMM_OMPI_EVENT (PERUSE_COMM_REQ_XFER_CONTINUE,              \
                                       &(recvreq->req_recv.req_base), max_data,    \
                                       PERUSE_RECV);                               \
-        ompi_convertor_set_position( &(request->req_recv.req_convertor),          \
+        ompi_convertor_set_position( &(request->req_recv.req_base.req_convertor), \
                                      &data_offset );                              \
-        ompi_convertor_unpack( &(request)->req_recv.req_convertor,                \
+        ompi_convertor_unpack( &(request)->req_recv.req_base.req_convertor,       \
                                iov,                                               \
                                &iov_count,                                        \
                                &max_data );                                       \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -35,10 +35,6 @@ struct mca_pml_example_t {
 
     opal_list_t  example_procs;
     opal_mutex_t example_lock;
-
-    /* free list of requests */
-    ompi_free_list_t example_send_requests;
-    ompi_free_list_t example_recv_requests;
 
     /* list of pending send requests */
     opal_list_t example_send_pending;

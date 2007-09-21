@@ -56,13 +56,14 @@ typedef struct
     struct {
         int size;
         struct {
-            int fl_elem_size;
-            int fl_header_space;
-            int fl_alignment;
-            int fl_allocations;
-            int fl_max_to_alloc;
-            int fl_num_per_alloc;
-            int fl_num_allocated;
+            int fl_elem_class;    /* opal_class_t* */
+            int fl_mpool;         /* struct mca_mpool_base_module_t* */
+            int fl_elem_size;     /* size_t */
+            int fl_alignment;     /* size_t */
+            int fl_allocations;   /* opal_list_t */
+            int fl_max_to_alloc;  /* size_t */
+            int fl_num_per_alloc; /* size_t */
+            int fl_num_allocated; /* size_t */
         } offset;
     } ompi_free_list_t;
     /* requests structures */
@@ -84,9 +85,11 @@ typedef struct
             int req_peer;
             int req_tag;
             int req_comm;
+            int req_datatype;
             int req_proc;
             int req_sequence;
             int req_type;
+            int req_pml_complete;
         } offset;
     } mca_pml_base_request_t;
     struct {
@@ -133,6 +136,7 @@ typedef struct
         int size;
         struct {
             int lowest_free;
+            int number_free;
             int size;
             int addr;
         } offset;
@@ -164,54 +168,13 @@ typedef struct
             int _cancelled;
         } offset;
     } ompi_status_public_t;
-    /* Fields in MPID_QHDR */
-    int unexpected_offs;
-
-    /* Fields in MPID_QUEUE */
-    int first_offs;
-
-    /* Fields in MPID_QEL */
-    int context_id_offs;	
-    int tag_offs;
-    int tagmask_offs;
-    int lsrc_offs;
-    int srcmask_offs;
-    int next_offs;
-    int ptr_offs;
-
-    /* Fields in MPIR_SQEL */
-    int db_shandle_offs;
-    int db_comm_offs;
-    int db_target_offs;
-    int db_tag_offs;
-    int db_data_offs;
-    int db_byte_length_offs;
-    int db_next_offs;
-
-    /* Fields in MPIR_RHANDLE */
-    int is_complete_offs;
-    int buf_offs;
-    int len_offs;
-    int datatype_offs;
-    int comm_offs;
-    int start_offs;
-
-    /* in the embedded MPI_Status object */
-    int count_offs;
-    int MPI_SOURCE_offs;
-    int MPI_TAG_offs;
-
-    /* Fields in MPIR_Comm_list */
-    int sequence_number_offs;
-    int comm_first_offs;
-
-    /* Fields in MPIR_COMMUNICATOR */
-    int np_offs;
-    int lrank_to_grank_offs;
-    int send_context_offs;
-    int recv_context_offs;
-    int comm_next_offs;
-    int comm_name_offs;
+    struct {
+        int size;
+        struct {
+            int size;
+            int name;
+        } offset;
+    } ompi_datatype_t;
 } mpi_image_info; 
 
 /***********************************************************************
@@ -220,11 +183,22 @@ typedef struct
 
 typedef struct group_t
 {
-  mqs_taddr_t table_base;			/* Where was it in the process  */
-  int     ref_count;				/* How many references to us */
-  int     entries;				/* How many entries */
-  int     *local_to_global;			/* The translation table */
+    mqs_taddr_t group_base;          /* Where was it in the process  */
+    int         ref_count;           /* How many references to us */
+    int         entries;             /* How many entries */
+    int*        local_to_global;     /* The translation table */
 } group_t;
+
+/* Internal structure we hold for each communicator */
+typedef struct communicator_t
+{
+    struct communicator_t * next;
+    group_t *               group;		/* Translations */
+    int                     recv_context;	/* Unique ID for the communicator */
+    mqs_taddr_t             comm_ptr;
+    int                     present;
+    mqs_communicator        comm_info;		/* Info needed at the higher level */
+} communicator_t;
 
 typedef struct mqs_ompi_opal_list_t_pos {
     mqs_taddr_t current_item;
@@ -236,13 +210,15 @@ typedef struct {
     mqs_opal_list_t_pos opal_list_t_pos;
     mqs_taddr_t current_item;
     mqs_taddr_t upper_bound;
+    mqs_tword_t header_space;
     mqs_taddr_t free_list;
-    mqs_tword_t fl_elem_size;
-    mqs_tword_t fl_header_space;
-    mqs_tword_t fl_alignment;
-    mqs_tword_t fl_num_per_alloc;
-    mqs_tword_t fl_num_allocated;
-    mqs_tword_t fl_num_initial_alloc;
+    mqs_tword_t fl_elem_class;         /* opal_class_t* */
+    mqs_tword_t fl_mpool;              /* struct mca_mpool_base_module_t* */
+    mqs_tword_t fl_elem_size;          /* size_t */
+    mqs_tword_t fl_alignment;          /* size_t */
+    mqs_tword_t fl_num_per_alloc;      /* size_t */
+    mqs_tword_t fl_num_allocated;      /* size_t */
+    mqs_tword_t fl_num_initial_alloc;  /* size_t */
 } mqs_ompi_free_list_t_pos;
 
 
@@ -261,12 +237,16 @@ typedef struct
   mqs_taddr_t recv_queue_base;			/* Where to find the recv message queues */
   mqs_taddr_t sendq_base;			/* Where to find the send queue */
   mqs_taddr_t commlist_base;			/* Where to find the list of communicators */
-
   /* Other info we need to remember about it */
-  mqs_tword_t communicator_sequence;		
-
+  mqs_tword_t comm_number_free;         /* the number of available positions in
+                                         * the communicator array. */
+  mqs_tword_t comm_lowest_free;         /* the lowest free communicator */
+  mqs_tword_t show_internal_requests;   /* show or not the Open MPI internal requests */
   /* State for the iterators */
   struct communicator_t *current_communicator;	/* Easy, we're walking a simple list */
+
+  int world_proc_array_entries;
+  mqs_taddr_t* world_proc_array;
     
   mqs_ompi_free_list_t_pos next_msg;            /* And state for the message iterator */
   mqs_op_class  what;				/* What queue are we looking on */

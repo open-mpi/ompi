@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,6 +52,22 @@ mca_pml_cm_enable(bool enable)
 {
     /* BWB - FIX ME - need to have this actually do something,
        maybe? */
+    ompi_free_list_init(&mca_pml_base_send_requests,
+                        sizeof(mca_pml_cm_hvy_send_request_t) + ompi_mtl->mtl_request_size,
+                        OBJ_CLASS(mca_pml_cm_hvy_send_request_t),
+                        ompi_pml_cm.free_list_num,
+                        ompi_pml_cm.free_list_max,
+                        ompi_pml_cm.free_list_inc,
+                        NULL);
+
+    ompi_free_list_init(&mca_pml_base_recv_requests,
+                        sizeof(mca_pml_cm_hvy_recv_request_t) + ompi_mtl->mtl_request_size,
+                        OBJ_CLASS(mca_pml_cm_hvy_recv_request_t),
+                        ompi_pml_cm.free_list_num,
+                        ompi_pml_cm.free_list_max,
+                        ompi_pml_cm.free_list_inc,
+                        NULL);
+
     return OMPI_SUCCESS;
 }
 
@@ -150,38 +169,3 @@ mca_pml_cm_dump(struct ompi_communicator_t* comm, int verbose)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
-
-
-void
-mca_pml_cm_thin_send_request_completion(struct mca_mtl_request_t *mtl_request)
-{
-    mca_pml_cm_send_request_t *base_request = 
-        (mca_pml_cm_send_request_t*) mtl_request->ompi_req;
-    MCA_PML_CM_THIN_SEND_REQUEST_PML_COMPLETE(((mca_pml_cm_thin_send_request_t*) base_request));
-}
-void
-mca_pml_cm_hvy_send_request_completion(struct mca_mtl_request_t *mtl_request)
-{
-    mca_pml_cm_send_request_t *base_request = 
-        (mca_pml_cm_send_request_t*) mtl_request->ompi_req;
-    MCA_PML_CM_HVY_SEND_REQUEST_PML_COMPLETE(((mca_pml_cm_hvy_send_request_t*) base_request));
-}
-
-
-
-void
-mca_pml_cm_thin_recv_request_completion(struct mca_mtl_request_t *mtl_request)
-{
-    mca_pml_cm_request_t *base_request = 
-        (mca_pml_cm_request_t*) mtl_request->ompi_req;
-    MCA_PML_CM_THIN_RECV_REQUEST_PML_COMPLETE(((mca_pml_cm_thin_recv_request_t*) base_request));
-}
-
-void
-mca_pml_cm_hvy_recv_request_completion(struct mca_mtl_request_t *mtl_request)
-{
-    mca_pml_cm_request_t *base_request = 
-        (mca_pml_cm_request_t*) mtl_request->ompi_req;
-    MCA_PML_CM_HVY_RECV_REQUEST_PML_COMPLETE(((mca_pml_cm_hvy_recv_request_t*) base_request));
-}
-

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -74,7 +74,7 @@ int mca_btl_base_warn_component_unused = 1;
 opal_list_t mca_btl_base_components_opened;
 opal_list_t mca_btl_base_modules_initialized;
 
-static bool already_opened = false;
+int already_opened = 0;
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -82,8 +82,7 @@ static bool already_opened = false;
  */
 int mca_btl_base_open(void)
 {
-    if (already_opened) return OMPI_SUCCESS;
-    already_opened = true;
+    if( ++already_opened > 1 ) return OMPI_SUCCESS;
 
     mca_base_param_reg_int_name(
                                 "btl", 

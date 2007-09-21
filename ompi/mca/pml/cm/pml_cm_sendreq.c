@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -22,51 +22,6 @@
 #include "pml_cm_sendreq.h"
 
 
-static int
-mca_pml_cm_thin_send_request_free(struct ompi_request_t** request);
-static int 
-mca_pml_cm_hvy_send_request_free(struct ompi_request_t** request);
-
-static void mca_pml_cm_thin_send_request_construct(mca_pml_cm_thin_send_request_t* req);
-static void mca_pml_cm_hvy_send_request_construct(mca_pml_cm_hvy_send_request_t* sendreq);
-
-OBJ_CLASS_INSTANCE(mca_pml_cm_send_request_t, 
-                   mca_pml_cm_request_t, 
-                   NULL,
-                   NULL);
-
-OBJ_CLASS_INSTANCE(mca_pml_cm_thin_send_request_t, 
-                   mca_pml_cm_send_request_t, 
-                   mca_pml_cm_thin_send_request_construct, 
-                   NULL);
-
-OBJ_CLASS_INSTANCE(mca_pml_cm_hvy_send_request_t, 
-                   mca_pml_cm_send_request_t,
-                   mca_pml_cm_hvy_send_request_construct,
-                   NULL);
-
-static void mca_pml_cm_thin_send_request_construct(mca_pml_cm_thin_send_request_t* sendreq)
-{
-    /* no need to reinit for every send -- never changes */
-    sendreq->req_mtl.ompi_req = (ompi_request_t*) sendreq;
-    sendreq->req_mtl.completion_callback = mca_pml_cm_thin_send_request_completion;
-    sendreq->req_send.req_base.req_ompi.req_free = mca_pml_cm_thin_send_request_free;
-    sendreq->req_send.req_base.req_ompi.req_cancel = mca_pml_cm_cancel;
-    sendreq->req_send.req_base.req_pml_type = MCA_PML_CM_REQUEST_SEND_THIN;
-}
-
-
-static void mca_pml_cm_hvy_send_request_construct(mca_pml_cm_hvy_send_request_t* sendreq)
-{
-    /* no need to reinit for every send -- never changes */
-    sendreq->req_mtl.ompi_req = (ompi_request_t*) sendreq;
-    sendreq->req_mtl.completion_callback = mca_pml_cm_hvy_send_request_completion;
-    sendreq->req_send.req_base.req_ompi.req_free = mca_pml_cm_hvy_send_request_free;
-    sendreq->req_send.req_base.req_ompi.req_cancel = mca_pml_cm_cancel;
-    sendreq->req_send.req_base.req_pml_type = MCA_PML_CM_REQUEST_SEND_HEAVY;
-}
-
-
 /*
  * The free call mark the final stage in a request
  * life-cycle. Starting from this point the request is completed at
@@ -75,7 +30,7 @@ static void mca_pml_cm_hvy_send_request_construct(mca_pml_cm_hvy_send_request_t*
  * added to the free request list.
  */
 static int
-mca_pml_cm_thin_send_request_free(struct ompi_request_t** request)
+mca_pml_cm_send_request_free(struct ompi_request_t** request)
 {
     mca_pml_cm_send_request_t* sendreq = *(mca_pml_cm_send_request_t**)request;
     assert( false == sendreq->req_base.req_free_called );
@@ -83,7 +38,11 @@ mca_pml_cm_thin_send_request_free(struct ompi_request_t** request)
     OPAL_THREAD_LOCK(&ompi_request_lock);
     sendreq->req_base.req_free_called = true;
     if( true == sendreq->req_base.req_pml_complete ) {
-        MCA_PML_CM_THIN_SEND_REQUEST_RETURN( ((mca_pml_cm_thin_send_request_t*)  sendreq) );
+        if( MCA_PML_CM_REQUEST_SEND_THIN == sendreq->req_base.req_pml_type ) {
+            MCA_PML_CM_THIN_SEND_REQUEST_RETURN( ((mca_pml_cm_thin_send_request_t*)  sendreq) );
+        } else {
+            MCA_PML_CM_HVY_SEND_REQUEST_RETURN( ((mca_pml_cm_hvy_send_request_t*)  sendreq) );
+        }
     }
         
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
@@ -92,20 +51,37 @@ mca_pml_cm_thin_send_request_free(struct ompi_request_t** request)
     return OMPI_SUCCESS;
 }
 
-static int
-mca_pml_cm_hvy_send_request_free(struct ompi_request_t** request)
+void
+mca_pml_cm_send_request_completion(struct mca_mtl_request_t *mtl_request)
 {
-    mca_pml_cm_send_request_t* sendreq = *(mca_pml_cm_send_request_t**)request;
-    assert( false == sendreq->req_base.req_free_called );
-        
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    sendreq->req_base.req_free_called = true;
-    if( true == sendreq->req_base.req_pml_complete ) {
-        MCA_PML_CM_HVY_SEND_REQUEST_RETURN( ((mca_pml_cm_hvy_send_request_t*)  sendreq) );
+    mca_pml_cm_send_request_t *base_request = 
+        (mca_pml_cm_send_request_t*) mtl_request->ompi_req;
+    if( MCA_PML_CM_REQUEST_SEND_THIN == base_request->req_base.req_pml_type ) {
+        MCA_PML_CM_THIN_SEND_REQUEST_PML_COMPLETE(((mca_pml_cm_thin_send_request_t*) base_request));
+    } else {
+        MCA_PML_CM_HVY_SEND_REQUEST_PML_COMPLETE(((mca_pml_cm_hvy_send_request_t*) base_request));
     }
-        
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
-    
-    *request = MPI_REQUEST_NULL;
-    return OMPI_SUCCESS;
 }
+
+static void mca_pml_cm_send_request_construct(mca_pml_cm_hvy_send_request_t* sendreq)
+{
+    /* no need to reinit for every send -- never changes */
+    sendreq->req_send.req_base.req_ompi.req_free = mca_pml_cm_send_request_free;
+    sendreq->req_send.req_base.req_ompi.req_cancel = mca_pml_cm_cancel;
+}
+
+OBJ_CLASS_INSTANCE(mca_pml_cm_send_request_t, 
+                   mca_pml_cm_request_t, 
+                   NULL,
+                   NULL);
+
+OBJ_CLASS_INSTANCE(mca_pml_cm_thin_send_request_t, 
+                   mca_pml_cm_send_request_t, 
+                   mca_pml_cm_send_request_construct, 
+                   NULL);
+
+OBJ_CLASS_INSTANCE(mca_pml_cm_hvy_send_request_t, 
+                   mca_pml_cm_send_request_t,
+                   mca_pml_cm_send_request_construct,
+                   NULL);
+

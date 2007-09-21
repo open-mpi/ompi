@@ -79,11 +79,11 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
                 rc = mca_pml_cm_isend_init(
                                            sendreq->req_addr,
                                            sendreq->req_count,
-                                           sendreq->req_send.req_datatype,
+                                           sendreq->req_send.req_base.req_datatype,
                                            sendreq->req_peer,
                                            sendreq->req_tag,
                                            sendreq->req_send.req_send_mode,
-                                           sendreq->req_send.req_comm,
+                                           sendreq->req_send.req_base.req_comm,
                                            &request);
                 break;
             }
@@ -92,10 +92,10 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
                 rc = mca_pml_cm_irecv_init(
                                            recvreq->req_addr,
                                            recvreq->req_count,
-                                           recvreq->req_datatype,
+                                           recvreq->req_base.req_datatype,
                                            recvreq->req_peer,
                                            recvreq->req_tag,
-                                           recvreq->req_comm,
+                                           recvreq->req_base.req_comm,
                                            &request);
                 break;
             }

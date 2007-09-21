@@ -25,6 +25,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
+#include "ompi/mca/pml/base/pml_base_request.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -107,7 +108,6 @@ int mca_pml_base_open(void)
     ompi_pointer_array_add(&mca_pml_base_pml, 
                            stringify(MCA_pml_DIRECT_CALL_COMPONENT));
 #else
-    
 
     mca_base_param_reg_string_name("pml", NULL, 
                                    "Specify a specific PML to use", 
@@ -120,6 +120,16 @@ int mca_pml_base_open(void)
         ompi_pointer_array_add(&mca_pml_base_pml, strdup(default_pml));
     }
 #endif
+
+    /**
+     * Construct the send and receive request queues. There are 2 reasons to do it
+     * here. First, as they are globals it's better to construct them in one common
+     * place. Second, in order to be able to allow the external debuggers to show
+     * their content, they should get constructed as soon as possible once the MPI
+     * process is started.
+     */
+    OBJ_CONSTRUCT(&mca_pml_base_send_requests, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_pml_base_recv_requests, ompi_free_list_t);
 
     return OMPI_SUCCESS;
 

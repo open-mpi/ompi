@@ -193,6 +193,8 @@ typedef struct
     int long_size;	/* sizeof (long)  */
     int long_long_size;	/* sizeof (long long) */
     int pointer_size;	/* sizeof (void *) */
+    int bool_size;      /* sizeof(bool) */
+    int size_t_size;    /* sizeof(size_t) */
 } mqs_target_type_sizes;
   
 /* Result codes. 
@@ -439,7 +441,7 @@ typedef struct mqs_process_callbacks
 {
   mqs_get_global_rank_ft       mqs_get_global_rank_fp;
   mqs_get_image_ft             mqs_get_image_fp;
-  mqs_fetch_data_ft	       mqs_fetch_data_fp;
+  mqs_fetch_data_ft            mqs_fetch_data_fp;
   mqs_target_to_host_ft        mqs_target_to_host_fp;
 #if (FOR_MPI2)
   mqs_get_process_job_ft       mqs_get_process_job_fp;
@@ -458,19 +460,19 @@ typedef struct mqs_process_callbacks
  * not be messed with, or deallocated by the DLL). This applies to
  * all of the callback tables.
  */
-extern void mqs_setup_basic_callbacks (const mqs_basic_callbacks *);
+OMPI_DECLSPEC extern void mqs_setup_basic_callbacks (const mqs_basic_callbacks *);
 
 /* Version handling */
-extern char *mqs_version_string (void);
-extern int   mqs_version_compatibility(void);
+OMPI_DECLSPEC extern char *mqs_version_string (void);
+OMPI_DECLSPEC extern int   mqs_version_compatibility(void);
 /* This gives the width which has been compiled into the DLL, it is
  * _not_ the width of a specific process, which could be smaller than
  * this.
  */
-extern int   mqs_dll_taddr_width(void);
+OMPI_DECLSPEC extern int   mqs_dll_taddr_width(void);
 
 /* Provide a text string for an error value */
-extern char * mqs_dll_error_string (int);
+OMPI_DECLSPEC extern char * mqs_dll_error_string (int);
 
 /***********************************************************************
  * Calls related to an executable image.
@@ -489,7 +491,7 @@ extern char * mqs_dll_error_string (int);
  * This will be called once for each executable image in the parallel
  * program.
  */
-extern int mqs_setup_image (mqs_image *, const mqs_image_callbacks *);
+OMPI_DECLSPEC extern int mqs_setup_image (mqs_image *, const mqs_image_callbacks *);
 
 /* Does this image have the necessary symbols to allow access to the message
  * queues ?
@@ -505,12 +507,12 @@ extern int mqs_setup_image (mqs_image *, const mqs_image_callbacks *);
  * disable things, or loudly enable them).
  */
 
-extern int mqs_image_has_queues (mqs_image *, char **);
+OMPI_DECLSPEC extern int mqs_image_has_queues (mqs_image *, char **);
 
 /* This will be called by the debugger to let you tidy up whatever is
  * required when the mqs_image_info is no longer needed.
  */
-extern void mqs_destroy_image_info (mqs_image_info *);
+OMPI_DECLSPEC extern void mqs_destroy_image_info (mqs_image_info *);
 
 #if (FOR_MPI2)
 /***********************************************************************
@@ -534,15 +536,15 @@ extern int mqs_destroy_job_info (mqs_job_info *);
  * rather than in the image information if anything is a dynamic library
  * which could end up mapped differently in different processes.
  */
-extern int mqs_setup_process (mqs_process *, const mqs_process_callbacks *);
-extern void mqs_destroy_process_info (mqs_process_info *);
+OMPI_DECLSPEC extern int mqs_setup_process (mqs_process *, const mqs_process_callbacks *);
+OMPI_DECLSPEC extern void mqs_destroy_process_info (mqs_process_info *);
 
 /* Like the mqs_has_message_queues function, but will only be called
  * if the image claims to have message queues. This lets you actually
  * delve inside the process to look at variables before deciding if
  * the process really can support message queue extraction.
  */  
-extern int mqs_process_has_queues (mqs_process *, char **);
+OMPI_DECLSPEC extern int mqs_process_has_queues (mqs_process *, char **);
 
 /***********************************************************************
  * The functions which actually extract the information we need !
@@ -568,13 +570,13 @@ extern int mqs_process_has_queues (mqs_process *, char **);
 /* Check that the DLL's model of the communicators in the process is
  * up to date, ideally by checking the sequence number.
  */
-extern int mqs_update_communicator_list (mqs_process *);
+OMPI_DECLSPEC extern int mqs_update_communicator_list (mqs_process *);
 
 /* Prepare to iterate over all of the communicators in the process. */
-extern int mqs_setup_communicator_iterator (mqs_process *);
+OMPI_DECLSPEC extern int mqs_setup_communicator_iterator (mqs_process *);
 
 /* Extract information about the current communicator */
-extern int mqs_get_communicator (mqs_process *, mqs_communicator *);
+OMPI_DECLSPEC extern int mqs_get_communicator (mqs_process *, mqs_communicator *);
 
 /* Extract the group from the current communicator.
  * The debugger already knows comm_size, so can allocate a
@@ -582,22 +584,22 @@ extern int mqs_get_communicator (mqs_process *, mqs_communicator *);
  * rank in COMM_WORLD of the index'th element in the current
  * communicator.
  */
-extern int mqs_get_comm_group (mqs_process *, int *);
+OMPI_DECLSPEC extern int mqs_get_comm_group (mqs_process *, int *);
 
 /* Move on to the next communicator in this process. */
-extern int mqs_next_communicator (mqs_process *);
+OMPI_DECLSPEC extern int mqs_next_communicator (mqs_process *);
 
 /* Prepare to iterate over the pending operations in the currently
  * active communicator in this process.
  *
  * The int is *really* mqs_op_class
  */
-extern int mqs_setup_operation_iterator (mqs_process *, int);
+OMPI_DECLSPEC extern int mqs_setup_operation_iterator (mqs_process *, int);
 
 /* Return information about the next appropriate pending operation in
  * the current communicator, mqs_false when we've seen them all.
  */
-extern int mqs_next_operation (mqs_process *, mqs_pending_operation *);
+OMPI_DECLSPEC extern int mqs_next_operation (mqs_process *, mqs_pending_operation *);
 
 #if (FOR_MPI2)
 /* Information about newly created (or connected to) processes.

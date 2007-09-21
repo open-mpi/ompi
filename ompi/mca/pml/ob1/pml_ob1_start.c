@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -118,7 +118,7 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
                      * (freshly allocated request) the convertor_set_position is optimized,
                      * it will not do anything is it's not required.
                      */
-                    ompi_convertor_set_position( &sendreq->req_send.req_convertor,
+                    ompi_convertor_set_position( &sendreq->req_send.req_base.req_convertor,
                                                  &offset );
                 }
                 MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc);

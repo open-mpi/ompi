@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -28,14 +28,22 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 
+extern int already_opened;
 
 int mca_btl_base_close(void)
 {
   opal_list_item_t *item;
   mca_btl_base_selected_module_t *sm;
 
-  /* disable event processing while cleaning up btls */
-  opal_event_disable();
+   if( already_opened <= 0 ) {
+       return OMPI_ERROR;
+   } else {
+       if( --already_opened > 0 ) {
+           return OMPI_SUCCESS;
+       }
+   }
+   /* disable event processing while cleaning up btls */
+   opal_event_disable();
 
   /* Finalize all the btl components and free their list items */
 

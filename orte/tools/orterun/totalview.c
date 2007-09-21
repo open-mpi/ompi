@@ -13,6 +13,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,14 +80,14 @@ struct MPIR_PROCDESC {
     int pid;                /* process pid */
 };
 
-struct MPIR_PROCDESC *MPIR_proctable = NULL;
-int MPIR_proctable_size = 0;
-int MPIR_being_debugged = 0;
-int MPIR_force_to_main = 0;
-volatile int MPIR_debug_state = 0;
-volatile int MPIR_i_am_starter = 0;
-volatile int MPIR_debug_gate = 0;
-volatile int MPIR_acquired_pre_main = 0;
+ORTE_DECLSPEC struct MPIR_PROCDESC *MPIR_proctable = NULL;
+ORTE_DECLSPEC int MPIR_proctable_size = 0;
+ORTE_DECLSPEC int MPIR_being_debugged = 0;
+ORTE_DECLSPEC int MPIR_force_to_main = 0;
+ORTE_DECLSPEC volatile int MPIR_debug_state = 0;
+ORTE_DECLSPEC volatile int MPIR_i_am_starter = 0;
+ORTE_DECLSPEC volatile int MPIR_debug_gate = 0;
+ORTE_DECLSPEC volatile int MPIR_acquired_pre_main = 0;
 
 /* --- end MPICH/TotalView interface definitions */
 
@@ -490,8 +491,13 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
                 appctx = map->apps[proc->app_idx];
                 
                 MPIR_proctable[i].host_name = strdup(node->nodename);
-                MPIR_proctable[i].executable_name =
-                    opal_os_path( false, appctx->cwd, appctx->app, NULL );
+                if ( 0 == strncmp(appctx->app, OPAL_PATH_SEP, 1 )) {
+                   MPIR_proctable[i].executable_name =
+                     opal_os_path( false, appctx->app, NULL );
+                } else {
+                   MPIR_proctable[i].executable_name =
+                     opal_os_path( false, appctx->cwd, appctx->app, NULL );
+                }
                 MPIR_proctable[i].pid = proc->pid;
                 i++;
             }
