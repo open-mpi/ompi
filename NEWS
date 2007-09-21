@@ -29,6 +29,8 @@ version 1.0.
 1.2.4
 -----
 
+- Really added support for TotalView/DDT parallel debugger message queue
+  debugging (it was mistakenly listed as "added" in the 1.2 release).
 - Fixed a build issue with GNU/kFreeBSD. Thanks to Petr Salinger for
   the patch.
 - Added missing MPI_FILE_NULL constant in Fortran.  Thanks to
