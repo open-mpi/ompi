@@ -259,7 +259,8 @@ enum mqs_status
 /* A structure to represent a communicator */
 typedef struct
 {
-  mqs_tword_t local_rank;		/* The rank of this process Comm_rank */
+  mqs_taddr_t unique_id;			/* A unique tag for the communicator */ 
+  mqs_tword_t local_rank;			/* The rank of this process Comm_rank */
   mqs_tword_t size;				/* Comm_size  */
   char    name[64];				/* the name if it has one */
 } mqs_communicator;
