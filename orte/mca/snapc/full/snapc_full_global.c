@@ -950,33 +950,35 @@ static int snapc_full_global_gather_all_files(void) {
             local_dir = strdup(vpid_snapshot->crs_snapshot_super.local_location);
             opal_argv_append(&tmp_argc, &filem_request->local_targets, opal_dirname(local_dir));
 
-            /*
-             * Do the transfer
-             */
-            if(ORTE_SUCCESS != (ret = orte_filem.get(filem_request) ) ) {
-                exit_status = ret;
-                /* Keep getting all the other files, eventually return an error */
-                goto skip;
-            }
-            else {
+            if( !orte_snapc_full_skip_filem ) {
                 /*
-                 * Update the metadata file
+                 * Do the transfer
                  */
-                if(ORTE_SUCCESS != (ret = orte_snapc_base_add_vpid_metadata(&vpid_snapshot->process_name,
-                                                                            global_snapshot.reference_name,
-                                                                            vpid_snapshot->crs_snapshot_super.reference_name,
-                                                                            vpid_snapshot->crs_snapshot_super.local_location))) {
+                if(ORTE_SUCCESS != (ret = orte_filem.get(filem_request) ) ) {
                     exit_status = ret;
-                    goto cleanup;
+                    /* Keep getting all the other files, eventually return an error */
+                    goto skip;
                 }
-            }
+                else {
+                    /*
+                     * Update the metadata file
+                     */
+                    if(ORTE_SUCCESS != (ret = orte_snapc_base_add_vpid_metadata(&vpid_snapshot->process_name,
+                                                                                global_snapshot.reference_name,
+                                                                                vpid_snapshot->crs_snapshot_super.reference_name,
+                                                                                vpid_snapshot->crs_snapshot_super.local_location))) {
+                        exit_status = ret;
+                        goto cleanup;
+                    }
+                }
 
-            /*
-             * Once we have brought it locally, then remove the remote copy
-             */
-            if(ORTE_SUCCESS != (ret = orte_filem.rm(filem_request)) ) {
-                exit_status = ret;
-                /* Keep getting all the other files, eventually return an error */
+                /*
+                 * Once we have brought it locally, then remove the remote copy
+                 */
+                if(ORTE_SUCCESS != (ret = orte_filem.rm(filem_request)) ) {
+                    exit_status = ret;
+                    /* Keep getting all the other files, eventually return an error */
+                }
             }
 
             tmp_argc = 0;

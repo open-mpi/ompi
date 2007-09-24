@@ -33,6 +33,8 @@ const char *orte_snapc_full_component_version_string =
 static int snapc_full_open(void);
 static int snapc_full_close(void);
 
+bool orte_snapc_full_skip_filem = false;
+
 /*
  * Instantiate the public struct with all of our public information
  * and pointer to our public functions in it
@@ -77,6 +79,8 @@ orte_snapc_full_component_t mca_snapc_full_component = {
 
 static int snapc_full_open(void) 
 {
+    int value;
+
     /*
      * This should be the last componet to ever get used since
      * it doesn't do anything.
@@ -104,6 +108,19 @@ static int snapc_full_open(void)
     } else {
         mca_snapc_full_component.super.output_handle = orte_snapc_base_output;
     }
+
+    mca_base_param_reg_int(&mca_snapc_full_component.super.snapc_version,
+                           "skip_filem",
+                           "Not for general use! For debugging only! Pretend to move files. [Default = disabled]",
+                           false, false,
+                           0,
+                           &value);
+    if( 0 != value ) { /* Enabled */
+        orte_snapc_full_skip_filem = true;
+    }
+    else { /* Disabled */
+        orte_snapc_full_skip_filem = false;
+    }
     
     /*
      * Debug Output
@@ -111,11 +128,14 @@ static int snapc_full_open(void)
     opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
                         "snapc:full: open()");
     opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
-                        "snapc:full: open: priority   = %d", 
+                        "snapc:full: open: priority    = %d", 
                         mca_snapc_full_component.super.priority);
     opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
-                        "snapc:full: open: verbosity  = %d", 
+                        "snapc:full: open: verbosity   = %d", 
                         mca_snapc_full_component.super.verbose);
+    opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
+                        "snapc:full: open: skip_filem  = %s", 
+                        (orte_snapc_full_skip_filem == true ? "True" : "False"));
 
     return ORTE_SUCCESS;
 }

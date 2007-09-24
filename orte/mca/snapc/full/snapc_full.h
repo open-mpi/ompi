@@ -52,6 +52,8 @@ extern "C" {
 
     OBJ_CLASS_DECLARATION(orte_snapc_full_global_snapshot_t);
 
+    extern bool orte_snapc_full_skip_filem;
+
     /*
      * Module functions
      */
