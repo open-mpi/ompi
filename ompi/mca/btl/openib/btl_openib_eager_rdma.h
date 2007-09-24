@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Voltaire All rights reserved.
+ * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
