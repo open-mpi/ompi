@@ -130,7 +130,7 @@ void vprotocol_pessimist_sender_based_alloc(size_t len);
  * Convertor replacement (non blocking) method (under testing)
  */
 #elif defined(SB_USE_CONVERTOR_METHOD)
-uint32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t*,
+int32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t*,
                                                             struct iovec*,
                                                             uint32_t*,
                                                             size_t*);
