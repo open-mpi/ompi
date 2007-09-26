@@ -29,7 +29,7 @@ int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
     sb.sb_conv_to_pessimist_offset = VPROTOCOL_SEND_REQ(NULL) - 
             ((uintptr_t) & pml_req.req_base.req_convertor - 
              (uintptr_t) & pml_req);
-    V_OUTPUT_VERBOSE(500, "pessimist: conv_to_pessimist_offset: %p", sb.sb_conv_to_pessimist_offset);
+    V_OUTPUT_VERBOSE(500, "pessimist: conv_to_pessimist_offset: %p", (void *) sb.sb_conv_to_pessimist_offset);
 #endif
     sb.sb_offset = 0;
     sb.sb_length = size;
@@ -132,7 +132,7 @@ uint32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t* pC
                                                             uint32_t* out_size,
                                                             size_t* max_data) {
     int ret;
-    int i;
+    unsigned int i;
     size_t pending_length;
     mca_vprotocol_pessimist_send_request_t *preq;
     
@@ -144,7 +144,7 @@ uint32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t* pC
 
     for(i = 0, pending_length = *max_data; pending_length > 0; i++) {
         assert(i < *out_size);
-        MEMCPY(preq->sb_cursor, iov[i].iov_base, iov[i].iov_len);
+        MEMCPY((void *) preq->sb_cursor, iov[i].iov_base, iov[i].iov_len);
         pending_length -= iov[i].iov_len;
         preq->sb_cursor += iov[i].iov_len;
     }
