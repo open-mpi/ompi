@@ -127,7 +127,7 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
 }   
 
 #ifdef SB_USE_CONVERTOR_METHOD
-uint32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t* pConvertor,
+int32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t* pConvertor,
                                                             struct iovec* iov,
                                                             uint32_t* out_size,
                                                             size_t* max_data) {
@@ -151,7 +151,7 @@ uint32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t* pC
     assert(pending_length == 0);
     
     pConvertor->flags &= ~CONVERTOR_NO_OP;
-    pConvertor->fAdvance = vprotocol_pessimist_sender_based_convertor_advance;
+    pConvertor->fAdvance = &vprotocol_pessimist_sender_based_convertor_advance;
     return ret;
 }
 #endif
