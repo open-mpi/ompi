@@ -23,9 +23,16 @@
 AM_CPPFLAGS = $(mpool_rdma_CPPFLAGS)
 
 sources = \
-	mpool_rdma.h \
 	mpool_rdma_module.c \
 	mpool_rdma_component.c
+
+if WANT_INSTALL_HEADERS
+ompidir = $(includedir)/openmpi/ompi/mca/mpool/rdma
+ompi_HEADERS = mpool_rdma.h
+else
+ompidir = $(includedir)
+ompi_HEADERS =
+endif
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
