@@ -483,6 +483,7 @@ if test "$ompi_pthread_cxx_success" = "0"; then
       AC_MSG_RESULT([yes])
     else
       CXXCPPFLAGS="$orig_CXXCPPFLAGS"
+      LIBS="$orig_LIBS"
       AC_MSG_RESULT([no])
       AC_MSG_ERROR([Can not find working threads configuration.  aborting])
     fi
@@ -538,6 +539,7 @@ if test "$ompi_pthread_f77_success" = "0" -a "$OMPI_WANT_F77_BINDINGS" = "1"; th
     if test "$ompi_pthread_f77_success" = "1"; then
       AC_MSG_RESULT([yes])
     else
+      LIBS="$orig_LIBS"
       AC_MSG_RESULT([no])
       AC_MSG_ERROR([Can not find working threads configuration.  aborting])
     fi
