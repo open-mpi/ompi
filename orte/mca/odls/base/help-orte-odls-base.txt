@@ -1,0 +1,41 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English general help file for Open RTE's ODLS Framework
+#
+[orte-odls-base:could-not-preload-binary]
+WARNING: Could not preload the binary file.
+
+Binary: %s
+
+Will continue attempting to launch the process.
+[orte-odls-base:could-not-preload-files]
+WARNING: Could not preload the files specified.
+
+Fileset: %s
+
+Will continue attempting to launch the process.
+[orte-odls-base:could-not-preload]
+WARNING: Could not preload the requested files and directories.
+
+Fileset: %s
+Fileset: %s
+
+Will continue attempting to launch the process.
+
+[orte-odls-base:preload-file-exists]
+WARNING: Could not preload specified file: File already exists.
+
+Fileset: %s
+Host: %s
+
+Will continue attempting to launch the process.
+

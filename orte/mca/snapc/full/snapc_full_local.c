@@ -859,7 +859,7 @@ static int snapc_full_local_start_checkpoint(orte_snapc_base_snapshot_t *vpid_sn
         local_dir = strdup(vpid_snapshot->crs_snapshot_super.local_location);
         local_dir = opal_dirname(local_dir);
 
-        asprintf(&command, "opal-checkpoint --where %s --name %s %s %d ", 
+        asprintf(&command, "opal-checkpoint -q --where %s --name %s %s %d ", 
                  local_dir,
                  vpid_snapshot->crs_snapshot_super.reference_name,
                  term_str, /* If we are to checkpoint then terminate */

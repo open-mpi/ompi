@@ -36,6 +36,12 @@ extern "C" {
     /**
      * FileM request object maintenance functions
      */
+    ORTE_DECLSPEC void orte_filem_base_process_set_construct(orte_filem_base_process_set_t *obj);
+    ORTE_DECLSPEC void orte_filem_base_process_set_destruct( orte_filem_base_process_set_t *obj);
+
+    ORTE_DECLSPEC void orte_filem_base_file_set_construct(orte_filem_base_file_set_t *obj);
+    ORTE_DECLSPEC void orte_filem_base_file_set_destruct( orte_filem_base_file_set_t *obj);
+
     ORTE_DECLSPEC void orte_filem_base_construct(orte_filem_base_request_t *obj);
     ORTE_DECLSPEC void orte_filem_base_destruct( orte_filem_base_request_t *obj);
 
@@ -89,8 +95,13 @@ extern "C" {
     int orte_filem_base_module_finalize(void);
 
     int orte_filem_base_none_put(orte_filem_base_request_t *request);
+    int orte_filem_base_none_put_nb(orte_filem_base_request_t *request);
     int orte_filem_base_none_get(orte_filem_base_request_t *request);
+    int orte_filem_base_none_get_nb(orte_filem_base_request_t *request);
     int orte_filem_base_none_rm( orte_filem_base_request_t *request);
+    int orte_filem_base_none_rm_nb( orte_filem_base_request_t *request);
+    int orte_filem_base_none_wait( orte_filem_base_request_t *request);
+    int orte_filem_base_none_wait_all( opal_list_t *request_list);
 
     /**
      * Some utility functions
@@ -108,6 +119,11 @@ extern "C" {
                                                       orte_buffer_t *buffer,
                                                       orte_rml_tag_t tag,
                                                       void* cbdata);
+
+    /**
+     * Setup request structure
+     */
+    ORTE_DECLSPEC int orte_filem_base_prepare_request(orte_filem_base_request_t *request, int move_type);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

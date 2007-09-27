@@ -38,33 +38,6 @@ Errno: %d
 
 This process may still be running and/or consuming resources.
 
-[orte-pls-fork:could-not-preload-binary]
-WARNING: Could not preload the binary file.
-
-Binary: %s
-
-Will continue attempting to launch the process.
-[orte-pls-fork:could-not-preload-files]
-WARNING: Could not preload the files specified.
-
-Fileset: %s
-
-Will continue attempting to launch the process.
-[orte-pls-fork:could-not-preload]
-WARNING: Could not preload the requested files and directories.
-
-Fileset: %s
-
-Will continue attempting to launch the process.
-
-[orte-pls-fork:preload-file-exists]
-WARNING: Could not preload specified file: File already exists.
-
-Fileset: %s
-Host: %s
-
-Will continue attempting to launch the process.
-
 [orte-odls-default:execv-error]
 Could not execute the executable "%s": %s
 

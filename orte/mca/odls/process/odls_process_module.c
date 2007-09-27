@@ -58,18 +58,11 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/smr/smr.h"
-#include "orte/mca/filem/filem.h"
-#include "orte/mca/filem/base/base.h"
 
 #include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/odls/process/odls_process.h"
 
 static void set_handler_default(int sig);
-static bool is_preload_local_dup(char *local_ref, orte_filem_base_request_t *filem_request);
-static int orte_pls_fork_preload_append_files(orte_app_context_t* context, 
-                                              orte_filem_base_request_t *filem_request);
-static int orte_pls_fork_preload_append_binary(orte_app_context_t* context, 
-                                               orte_filem_base_request_t *filem_request);
 
 static int orte_odls_process_get_add_procs_data(orte_gpr_notify_data_t **data,
                                                 orte_job_map_t *map)
@@ -775,7 +768,6 @@ static int orte_odls_process_launch_local_procs(orte_gpr_notify_data_t *data)
     opal_list_item_t *item, *item2;
     bool quit_flag;
     bool node_included;
-    orte_filem_base_request_t *filem_request;
     char *job_str, *uri_file, *my_uri, *session_dir=NULL;
     FILE *fp;
 
@@ -1003,40 +995,11 @@ static int orte_odls_process_launch_local_procs(orte_gpr_notify_data_t *data)
          item != opal_list_get_end(&app_context_list);
          item = opal_list_get_next(item)) {
         app_item = (odls_process_app_context_t*)item;
-        if(app_item->app_context->preload_binary || NULL != app_item->app_context->preload_files) {
-            filem_request = OBJ_NEW(orte_filem_base_request_t);
-            filem_request->num_procs = 1;
-            filem_request->proc_name = (orte_process_name_t*)malloc(sizeof(orte_process_name_t) * filem_request->num_procs);
-            filem_request->proc_name[0].jobid  = orte_process_info.gpr_replica->jobid;
-            filem_request->proc_name[0].vpid   = orte_process_info.gpr_replica->vpid;
-            if(app_item->app_context->preload_binary) {
-                if( ORTE_SUCCESS != (rc = orte_pls_fork_preload_append_binary(app_item->app_context, 
-                                                                              filem_request) ) ){
-                    opal_show_help("help-orte-odls-default.txt",
-                                   "orte-odls-default:could-not-preload-binary",
-                                   true, app_item->app_context->app);
-                    ORTE_ERROR_LOG(rc);
-                    /* Keep accumulating files anyway */
-                }
-            }
-            if( NULL != app_item->app_context->preload_files) {
-                if( ORTE_SUCCESS != (rc = orte_pls_fork_preload_append_files(app_item->app_context, 
-                                                                             filem_request) ) ){
-                    opal_show_help("help-orte-odls-default.txt",
-                                   "orte-odls-default:could-not-preload-files",
-                                   true, app_item->app_context->preload_files);
-                    ORTE_ERROR_LOG(rc);
-                    /* Keep accumulating files anyway */
-                }
-            }
-            /* Actually bring over the files */
-            if( ORTE_SUCCESS != (rc = orte_filem.get(filem_request)) ) {
-                opal_show_help("help-orte-odls-default.txt",
-                               "orte-odls-default:could-not-preload",
-                               true, opal_argv_join(filem_request->local_targets, ' '));
+        if(app_item->app_context->preload_binary ||
+           NULL != app_item->app_context->preload_files) {
+            if( ORTE_SUCCESS != (rc = orte_odls_base_preload_files_app_context(app_item->app_context)) ) {
                 ORTE_ERROR_LOG(rc);
             }
-            OBJ_DESTRUCT(filem_request);
         }
     }
 
@@ -1293,144 +1256,3 @@ orte_odls_base_module_1_3_0_t orte_odls_process_module = {
     orte_odls_process_kill_local_procs,
     orte_odls_process_signal_local_proc
 };
-/*
- * The difference between preloading a file, and a binary file is that 
- * we may need to update the app_context to reflect the placement of the binary file
- * on the local machine.
- */
-static int orte_pls_fork_preload_append_binary(orte_app_context_t* context, 
-                                               orte_filem_base_request_t *filem_request) {
-    char * local_bin = NULL;
-    int tmp_argc = 0;
-    /*
-     * Append the local placement
-     */
-    asprintf(&local_bin, "%s/%s", orte_process_info.job_session_dir, opal_basename(context->app));
-    if(is_preload_local_dup(local_bin, filem_request) ) {
-        goto cleanup;
-    }
-    opal_argv_append(&filem_request->num_targets, &(filem_request->local_targets), local_bin);
-
-    /*
-     * Append the remote file
-     */
-    tmp_argc = 0;
-    opal_argv_append(&tmp_argc, &filem_request->remote_targets, context->app);
-
-    /*
-     * Append the flag
-     */
-    filem_request->target_flags = (int *)realloc(filem_request->target_flags, 
-                                               sizeof(int) * (filem_request->num_targets + 1));
-    filem_request->target_flags[filem_request->num_targets-1] = ORTE_FILEM_TYPE_FILE;
-
- cleanup:
-    /*
-     * Adjust the process name
-     */
-    if(NULL != context->app)
-        free(context->app);
-    context->app = local_bin;
-    
-    return ORTE_SUCCESS;
-}
-
-static int orte_pls_fork_preload_append_files(orte_app_context_t* context, 
-                                              orte_filem_base_request_t *filem_request) {
-    char * local_ref = NULL;
-    int i, tmp_argc = 0, remote_argc = 0;
-    char **remote_targets = NULL;
-    char * temp = NULL;
-
-    remote_targets = opal_argv_split(context->preload_files, ',');
-    remote_argc  = opal_argv_count(remote_targets);
-
-    for(i = 0; i < remote_argc; ++i) {
-        if(NULL != context->preload_files_dest_dir) {
-            if(context->preload_files_dest_dir[0] == '.') {
-                asprintf(&local_ref, "%s/%s/%s", context->cwd, context->preload_files_dest_dir, opal_basename(remote_targets[i]) );
-            }
-            else {
-                asprintf(&local_ref, "%s/%s", context->preload_files_dest_dir, opal_basename(remote_targets[i]) );
-            }
-        }
-        else {
-            /* 
-             * If the preload_files_dest_dir is not specified
-             * If this is an absolute path, copy it to that path. Otherwise copy it to the cwd.
-             */
-            if('/' == remote_targets[i][0]) {
-                asprintf(&local_ref, "%s", remote_targets[i]);
-            } else {
-                asprintf(&local_ref, "%s/%s", context->cwd, opal_basename(remote_targets[i]) );
-            }
-        }
-
-        asprintf(&temp, "test -e %s", local_ref);
-        if(0 == system(temp)) {
-            char hostname[MAXHOSTNAMELEN];
-            gethostname(hostname, sizeof(hostname));
-            opal_show_help("help-orte-pls-fork.txt",
-                           "orte-pls-fork:preload-file-exists",
-                           true, local_ref, hostname);
-            free(temp);
-            temp = NULL;
-            free(local_ref);
-            local_ref = NULL;
-            continue;
-        }
-        free(temp);
-        temp = NULL;
-        
-        /*
-         * Is this a duplicate
-         */
-        if(is_preload_local_dup(local_ref, filem_request) ) {
-            free(local_ref);
-            local_ref = NULL;
-            continue;
-        }
-
-        /*
-         * Append the local files we want
-         */
-        opal_argv_append(&filem_request->num_targets, &filem_request->local_targets, local_ref);
-
-        /*
-         * Append the remote files we want
-         */
-        tmp_argc = filem_request->num_targets - 1;
-        opal_argv_append(&tmp_argc, &filem_request->remote_targets, remote_targets[i]);
-        
-        /*
-         * Set the flags
-         */
-        filem_request->target_flags = (int *)realloc(filem_request->target_flags, sizeof(int) * 1);
-        filem_request->target_flags[filem_request->num_targets-1] = ORTE_FILEM_TYPE_UNKNOWN;
-
-        free(local_ref);
-        local_ref = NULL;
-    }
-
-    if(NULL != local_ref)
-        free(local_ref);
-    if(NULL != remote_targets)
-        opal_argv_free(remote_targets);
-
-    return ORTE_SUCCESS;
-}
-
-/*
- * Keeps us from transfering the same file more than once.
- */
-static bool is_preload_local_dup(char *local_ref, orte_filem_base_request_t *filem_request) {
-    int i;
-
-    for(i = 0; i < filem_request->num_targets; ++i) {
-        if(0 == strncmp(local_ref, filem_request->local_targets[i], strlen(local_ref)+1) ) {
-            return true;
-        }
-    }
-
-    return false;
-}

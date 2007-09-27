@@ -33,6 +33,10 @@
 extern "C" {
 #endif
 
+#define ORTE_FILEM_RSH_ASK   0
+#define ORTE_FILEM_RSH_ALLOW 1
+#define ORTE_FILEM_RSH_DONE  2
+
     /*
      * Local Component structures
      */
@@ -49,6 +53,9 @@ extern "C" {
     typedef struct orte_filem_rsh_component_t orte_filem_rsh_component_t;
     ORTE_MODULE_DECLSPEC extern orte_filem_rsh_component_t mca_filem_rsh_component;
 
+    extern int orte_filem_rsh_max_incomming;
+    extern int orte_filem_rsh_max_outgoing;
+
     /*
      * Module functions
      */
@@ -57,9 +64,17 @@ extern "C" {
     int orte_filem_rsh_module_init(void);
     int orte_filem_rsh_module_finalize(void);
 
-    int orte_filem_base_rsh_put(orte_filem_base_request_t *request);
-    int orte_filem_base_rsh_get(orte_filem_base_request_t *request);
-    int orte_filem_base_rsh_rm( orte_filem_base_request_t *request);
+    int orte_filem_rsh_put(orte_filem_base_request_t *request);
+    int orte_filem_rsh_put_nb(orte_filem_base_request_t *request);
+
+    int orte_filem_rsh_get(orte_filem_base_request_t *request);
+    int orte_filem_rsh_get_nb(orte_filem_base_request_t *request);
+
+    int orte_filem_rsh_rm( orte_filem_base_request_t *request);
+    int orte_filem_rsh_rm_nb( orte_filem_base_request_t *request);
+
+    int orte_filem_rsh_wait( orte_filem_base_request_t *request);
+    int orte_filem_rsh_wait_all( opal_list_t *request_list);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

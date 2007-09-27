@@ -48,39 +48,115 @@ extern "C" {
 #define ORTE_FILEM_TYPE_UNKNOWN   2
 
 /**
+ * Type of moment
+ */
+#define ORTE_FILEM_MOVE_TYPE_PUT       0
+#define ORTE_FILEM_MOVE_TYPE_GET       1
+#define ORTE_FILEM_MOVE_TYPE_RM        2
+#define ORTE_FILEM_MOVE_TYPE_UNKNOWN   3
+
+/**
+ * Define a Process Set
+ *
+ * Source: A single source of the operation.
+ * Sink: Desitination of the operation.
+ */
+struct orte_filem_base_process_set_1_0_0_t {
+    /** This is an object, so must have a super */
+    opal_list_item_t super;
+
+    /** Source Process */
+    orte_process_name_t source;
+
+    /** Sink Process */
+    orte_process_name_t sink;
+};
+typedef struct orte_filem_base_process_set_1_0_0_t orte_filem_base_process_set_1_0_0_t;
+typedef struct orte_filem_base_process_set_1_0_0_t orte_filem_base_process_set_t;
+
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_filem_base_process_set_t);
+
+/**
+ * Define a File Pair
+ *
+ * Local: Local file reference
+ * Remove: Remote file reference
+ *
+ * Note: If multiple process sinks are used it is assumed that the 
+ * file reference is the same for each of the sinks. If this is not
+ * true then more than one filem request needs to be created.
+ */
+struct orte_filem_base_file_set_1_0_0_t {
+    /** This is an object, so must have a super */
+    opal_list_item_t super;
+
+    /* Local file reference */
+    char * local_target;
+
+    /* Remove file reference */
+    char * remote_target;
+
+    /* Type of file to move */
+    int target_flag;
+};
+typedef struct orte_filem_base_file_set_1_0_0_t orte_filem_base_file_set_1_0_0_t;
+typedef struct orte_filem_base_file_set_1_0_0_t orte_filem_base_file_set_t;
+
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_filem_base_file_set_t);
+
+/**
  * Definition of a file movement request
  * This will allow:
  *  - The movement of one or more files
  *  - to/from one or more processes
  * in a single call of the API function. Allowing the implementation
  * to optimize the sending/receiving of data.
+ * Used for the following:
+ * 
  */
 struct orte_filem_base_request_1_0_0_t {
     /** This is an object, so must have a super */
     opal_list_item_t super;
-    
-    /** Number of targets in the:
-     * - local_targets
-     * - remote_targets
-     * - target_flags
-     * arrays. One variable since they
-     * are required to be all the same length
+
+    /*
+     * A list of process sets
      */
-    int num_targets;
+    opal_list_t process_sets;
 
-    /** Local mapping of targets */
-    char **local_targets;
-    
-    /** Remote mapping of targets */
-    char **remote_targets;
+    /*
+     * A list of file pairings
+     */
+    opal_list_t file_sets;
 
-    /** For each target, a flag regarding its type */
-    int *target_flags;
+    /*
+     * Internal use:
+     * Number of movements
+     */
+    int num_mv;
 
-    /** List of processes to send/receive from */
-    orte_process_name_t *proc_name;
-    /** Number of processes in that array */
-    int num_procs;
+    /*
+     * Internal use:
+     * Boolean to indianate if transfer is complete
+     */
+    bool *is_done;
+
+    /*
+     * Internal use:
+     * Boolean to indianate if transfer is active
+     */
+    bool *is_active;
+
+    /*
+     * Internal use:
+     * Exit status of the copy command
+     */
+    int32_t *exit_status;
+
+    /*
+     * Internal use:
+     * Movement type
+     */
+    int movement_type;
 };
 typedef struct orte_filem_base_request_1_0_0_t orte_filem_base_request_1_0_0_t;
 typedef struct orte_filem_base_request_1_0_0_t orte_filem_base_request_t;
@@ -126,6 +202,22 @@ typedef int (*orte_filem_base_put_fn_t)
      (orte_filem_base_request_t *request);
 
 /**
+ * Put a file or directory on the remote machine (Async)
+ *
+ * Note: By using a relative path for the remote file/directory, the filem
+ *       component will negotiate the correct absolute path for that file/directory
+ *       for the remote machine.
+ *
+ * @param request FileM request describing the files/directories to send, 
+ *        the remote files/directories to use, and the processes to see the change.
+ * 
+ * @return ORTE_SUCCESS on successful file transer
+ * @return ORTE_ERROR on failed file transfer
+ */
+typedef int (*orte_filem_base_put_nb_fn_t)
+     (orte_filem_base_request_t *request);
+
+/**
  * Get a file from the remote machine
  *
  * Note: By using a relative path for the remote file/directory, the filem
@@ -139,6 +231,22 @@ typedef int (*orte_filem_base_put_fn_t)
  * @return ORTE_ERROR on failed file transfer
  */
 typedef int (*orte_filem_base_get_fn_t)
+     (orte_filem_base_request_t *request);
+
+/**
+ * Get a file from the remote machine (Async)
+ *
+ * Note: By using a relative path for the remote file/directory, the filem
+ *       component will negotiate the correct absolute path for that file/directory
+ *       for the remote machine.
+ *
+ * @param request FileM request describing the files/directories to receive, 
+ *        the remote files/directories to use, and the processes to see the change.
+ * 
+ * @return ORTE_SUCCESS on successful file transer
+ * @return ORTE_ERROR on failed file transfer
+ */
+typedef int (*orte_filem_base_get_nb_fn_t)
      (orte_filem_base_request_t *request);
 
 /**
@@ -156,6 +264,50 @@ typedef int (*orte_filem_base_get_fn_t)
  */
 typedef int (*orte_filem_base_rm_fn_t)
      (orte_filem_base_request_t *request);
+
+/**
+ * Remove a file from the remote machine (Async)
+ * 
+ * Note: By using a relative path for the remote file/directory, the filem
+ *       component will negotiate the correct absolute path for that file/directory
+ *       for the remote machine.
+ *
+ * @param request FileM request describing the remote files/directories to remove, 
+ *        the processes to see the change.
+ *
+ * @return ORTE_SUCCESS on success
+ * @return ORTE_ERROR on fail
+ */
+typedef int (*orte_filem_base_rm_nb_fn_t)
+     (orte_filem_base_request_t *request);
+
+/**
+ * Wait for a single file movement request to finish
+ *
+ * @param request FileM request describing the remote files/directories.
+ *
+ * The request must have been passed through one of the non-blocking functions
+ * before calling wait or wait_all otherwise ORTE_ERROR will be returned.
+ *
+ * @return ORTE_SUCCESS on success
+ * @return ORTE_ERROR on fail
+ */
+typedef int (*orte_filem_base_wait_fn_t)
+     (orte_filem_base_request_t *request);
+
+/**
+ * Wait for a multiple file movement requests to finish
+ *
+ * @param request_list opal_list_t of FileM requests describing the remote files/directories.
+ *
+ * The request must have been passed through one of the non-blocking functions
+ * before calling wait or wait_all otherwise ORTE_ERROR will be returned.
+ *
+ * @return ORTE_SUCCESS on success
+ * @return ORTE_ERROR on fail
+ */
+typedef int (*orte_filem_base_wait_all_fn_t)
+     (opal_list_t *request_list);
 
 /**
  * Structure for FILEM v1.0.0 components.
@@ -190,11 +342,19 @@ struct orte_filem_base_module_1_0_0_t {
 
     /** Put a file on the remote machine */
     orte_filem_base_put_fn_t                   put;
+    orte_filem_base_put_nb_fn_t                put_nb;
     /** Get a file from the remote machine */
     orte_filem_base_get_fn_t                   get;
+    orte_filem_base_get_nb_fn_t                get_nb;
 
     /** Remove a file on the remote machine */
     orte_filem_base_rm_fn_t                    rm;
+    orte_filem_base_rm_nb_fn_t                 rm_nb;
+
+    /** Test functions for the non-blocking versions */
+    orte_filem_base_wait_fn_t                  wait;
+    orte_filem_base_wait_all_fn_t              wait_all;
+
 };
 typedef struct orte_filem_base_module_1_0_0_t orte_filem_base_module_1_0_0_t;
 typedef struct orte_filem_base_module_1_0_0_t orte_filem_base_module_t;

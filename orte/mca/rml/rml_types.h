@@ -86,6 +86,8 @@ BEGIN_C_DECLS
 
 #define ORTE_RML_TAG_COMM_CID_INTRA         28
 
+/* For FileM RSH Component */
+#define ORTE_RML_TAG_FILEM_RSH              29
 /* For CRCP Coord Component */
 #define OMPI_CRCP_COORD_BOOKMARK_TAG      4242
 
