@@ -96,6 +96,11 @@ int orte_odls_size_daemon_cmd(size_t *size, orte_daemon_cmd_flag_t *src, orte_da
 int orte_odls_unpack_daemon_cmd(orte_buffer_t *buffer, void *dest,
                                 orte_std_cntr_t *num_vals, orte_data_type_t type);
 
+/*
+ * Preload binary/files functions
+ */
+ORTE_DECLSPEC int orte_odls_base_preload_files_app_context(orte_app_context_t* context);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

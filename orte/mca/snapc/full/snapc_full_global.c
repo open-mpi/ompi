@@ -854,8 +854,12 @@ static int snapc_full_global_gather_all_files(void) {
     int ret, exit_status = ORTE_SUCCESS;
     opal_list_item_t* item = NULL;
     char * local_dir = NULL;
-    orte_filem_base_request_t *filem_request = OBJ_NEW(orte_filem_base_request_t);
-    int tmp_argc = 0;
+    orte_filem_base_request_t *filem_request = NULL;
+    orte_filem_base_process_set_t *p_set = NULL;
+    orte_filem_base_file_set_t * f_set = NULL;
+    opal_list_t all_filem_requests;
+
+    OBJ_CONSTRUCT(&all_filem_requests, opal_list_t);
 
     /*
      * If it is stored in place, then we do not need to transfer anything
@@ -894,22 +898,20 @@ static int snapc_full_global_gather_all_files(void) {
         }
     }
     /*
+     * If we just want to pretend to do the filem
+     */
+    else if(orte_snapc_full_skip_filem) {
+        exit_status = ORTE_SUCCESS;
+        goto cleanup;
+    }
+    /*
      * If *not* stored in place then use FileM to transfer the files and cleanup
      */
     else {
+
         /*
-         * Allocate the FileM request
-         */
-        filem_request->num_procs = 1;
-        filem_request->proc_name = (orte_process_name_t*)malloc(sizeof(orte_process_name_t) * filem_request->num_procs);
-        
-        filem_request->num_targets = 1;
-        
-        filem_request->target_flags    = (int*)malloc(sizeof(int) * filem_request->num_targets);
-        filem_request->target_flags[0] = ORTE_FILEM_TYPE_DIR;
-        
-        /*
-         * Gather each file
+         * Construct a request for each file/directory to transfer
+         *  - start the non-blocking transfer
          */
         for(item  = opal_list_get_first(&global_snapshot.snapshots);
             item != opal_list_get_end(&global_snapshot.snapshots);
@@ -931,67 +933,100 @@ static int snapc_full_global_gather_all_files(void) {
                 goto cleanup;
             }
 
-            /*
-             * Construct the process information
-             */
-            filem_request->proc_name[0].jobid  = vpid_snapshot->process_name.jobid;
-            filem_request->proc_name[0].vpid   = vpid_snapshot->process_name.vpid;
+            filem_request = OBJ_NEW(orte_filem_base_request_t);
 
             /*
-             * Construct the remote file name
+             * Construct the process set
              */
-            tmp_argc = 0;
-            opal_argv_append(&tmp_argc, &filem_request->remote_targets, vpid_snapshot->crs_snapshot_super.remote_location);
+            p_set = OBJ_NEW(orte_filem_base_process_set_t);
+            p_set->source.jobid = vpid_snapshot->process_name.jobid;
+            p_set->source.vpid  = vpid_snapshot->process_name.vpid;
+            p_set->sink.jobid   = orte_process_info.my_name->jobid;
+            p_set->sink.vpid    = orte_process_info.my_name->vpid;
+
+            opal_list_append(&(filem_request->process_sets), &(p_set->super) );
 
             /*
-             * Construct the local file name
+             * Construct the file set
              */
-            tmp_argc = 0;
+            f_set = OBJ_NEW(orte_filem_base_file_set_t);
+
             local_dir = strdup(vpid_snapshot->crs_snapshot_super.local_location);
-            opal_argv_append(&tmp_argc, &filem_request->local_targets, opal_dirname(local_dir));
+            f_set->local_target  = opal_dirname(local_dir);
+            f_set->remote_target = strdup(vpid_snapshot->crs_snapshot_super.remote_location);
+            f_set->target_flag   = ORTE_FILEM_TYPE_DIR;
 
-            if( !orte_snapc_full_skip_filem ) {
-                /*
-                 * Do the transfer
-                 */
-                if(ORTE_SUCCESS != (ret = orte_filem.get(filem_request) ) ) {
-                    exit_status = ret;
-                    /* Keep getting all the other files, eventually return an error */
-                    goto skip;
-                }
-                else {
-                    /*
-                     * Update the metadata file
-                     */
-                    if(ORTE_SUCCESS != (ret = orte_snapc_base_add_vpid_metadata(&vpid_snapshot->process_name,
-                                                                                global_snapshot.reference_name,
-                                                                                vpid_snapshot->crs_snapshot_super.reference_name,
-                                                                                vpid_snapshot->crs_snapshot_super.local_location))) {
-                        exit_status = ret;
-                        goto cleanup;
-                    }
-                }
+            opal_list_append(&(filem_request->file_sets), &(f_set->super) );
 
-                /*
-                 * Once we have brought it locally, then remove the remote copy
-                 */
-                if(ORTE_SUCCESS != (ret = orte_filem.rm(filem_request)) ) {
-                    exit_status = ret;
-                    /* Keep getting all the other files, eventually return an error */
-                }
+            /*
+             * Start the transfer
+             */
+            opal_list_append(&all_filem_requests, &(filem_request->super));
+            if(ORTE_SUCCESS != (ret = orte_filem.get_nb(filem_request) ) ) {
+                opal_list_remove_item(&all_filem_requests, &(filem_request->super));
+                OBJ_RELEASE(filem_request);
+                filem_request = NULL;
+
+                exit_status = ret;
+                /* Keep getting all the other files, eventually return an error */
+                continue;
             }
-
-            tmp_argc = 0;
-            opal_argv_delete(&tmp_argc, &filem_request->remote_targets, 0, 1);
-            tmp_argc = 0;
-            opal_argv_delete(&tmp_argc, &filem_request->local_targets, 0, 1);
         }
-    skip:
-        /* Do a bit of cleanup */
-        opal_argv_free(filem_request->remote_targets);
-        filem_request->remote_targets = NULL;
-        opal_argv_free(filem_request->local_targets);
-        filem_request->local_targets = NULL;
+
+        /*
+         * Wait for all the transfers to complete
+         */
+        opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
+                            "global) Getting remote directory: Waiting...\n");
+        if(ORTE_SUCCESS != (ret = orte_filem.wait_all(&all_filem_requests) ) ) {
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        /*
+         * Update all of the metadata
+         */
+        opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
+                            "global) Getting remote directory: Updating Metadata...\n");
+        for(item  = opal_list_get_first(&global_snapshot.snapshots);
+            item != opal_list_get_end(&global_snapshot.snapshots);
+            item  = opal_list_get_next(item) ) {
+            orte_snapc_base_snapshot_t *vpid_snapshot;
+            vpid_snapshot = (orte_snapc_base_snapshot_t*)item;
+
+            if(ORTE_SUCCESS != (ret = orte_snapc_base_add_vpid_metadata(&vpid_snapshot->process_name,
+                                                                        global_snapshot.reference_name,
+                                                                        vpid_snapshot->crs_snapshot_super.reference_name,
+                                                                        vpid_snapshot->crs_snapshot_super.local_location))) {
+                exit_status = ret;
+                goto cleanup;
+            }
+        }
+
+        /*
+         * Now that the files have been brought local, remove the remote copy
+         */
+        for(item  = opal_list_get_first( &all_filem_requests);
+            item != opal_list_get_end(   &all_filem_requests);
+            item  = opal_list_get_next(   item) ) {
+            filem_request = (orte_filem_base_request_t *) item;
+            if(ORTE_SUCCESS != (ret = orte_filem.rm_nb(filem_request)) ) {
+                exit_status = ret;
+                /* Keep removing, eventually return an error */
+                continue;
+            }
+        }
+
+        /*
+         * Wait for all the removes to complete
+         */
+        opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
+                            "global) Waiting for removes to complete...\n");
+        if(ORTE_SUCCESS != (ret = orte_filem.wait_all(&all_filem_requests) ) ) {
+            exit_status = ret;
+            goto cleanup;
+        }
+
     }
 
     /*
@@ -1002,6 +1037,11 @@ static int snapc_full_global_gather_all_files(void) {
  cleanup:
     if(NULL != local_dir)
         free(local_dir);
+
+    while (NULL != (item = opal_list_remove_first(&all_filem_requests) ) ) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&all_filem_requests);
 
     return exit_status;
 }

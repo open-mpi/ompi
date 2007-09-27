@@ -92,6 +92,7 @@ typedef struct {
     int pid;
     bool term;
     bool verbose;
+    bool quiet;
     char *snapshot_name;
     char *snapshot_loc;
     int output;
@@ -111,6 +112,12 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       0,
       &opal_checkpoint_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be Verbose" },
+
+    { NULL, NULL, NULL, 
+      'q', NULL, "quiet", 
+      0,
+      &opal_checkpoint_globals.quiet, OPAL_CMD_LINE_TYPE_BOOL,
+      "Be Super Quiet" },
 
     { NULL, NULL, NULL, 
       '\0', NULL, "term", 
@@ -175,10 +182,12 @@ main(int argc, char *argv[])
         exit_status = ret;
         goto cleanup;
     }
-    
-    opal_output(opal_checkpoint_globals.output,
-                "Local Snapshot Reference = %s\n",
-                fname);
+
+    if( !opal_checkpoint_globals.quiet ) {
+        opal_output(opal_checkpoint_globals.output,
+                    "Local Snapshot Reference = %s\n",
+                    fname);
+    }
 
  cleanup:
     /***************
@@ -215,6 +224,7 @@ static int initialize(int argc, char *argv[]) {
      * Setup OPAL Output handle from the verbose argument
      */
     if( opal_checkpoint_globals.verbose ) {
+        opal_checkpoint_globals.quiet = false; /* Automaticly turn off quiet if it is set */
         opal_checkpoint_globals.output = opal_output_open(NULL);
         opal_output_set_verbosity(opal_checkpoint_globals.output, 10);
     } else {
@@ -364,15 +374,21 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
          */
         if( 0 > (ret = access(prog_named_pipe_r, F_OK) )) {
             /* File doesn't exist yet, keep waiting */
-            opal_output(0, "opal-checkpoint: File does not exit yet: <%s> rtn = %d (waited %d/%d sec)\n",
-                        prog_named_pipe_r, ret, s, max_wait_time);
+            if( !opal_checkpoint_globals.quiet &&
+                s >= max_wait_time - 5 ) {
+                opal_output(0, "opal-checkpoint: File does not exist yet: <%s> rtn = %d (waited %d/%d sec)\n",
+                            prog_named_pipe_r, ret, s, max_wait_time);
+            }
             sleep(1);
             continue;
         }
         else if( 0 > (ret = access(prog_named_pipe_w, F_OK) )) {
             /* File doesn't exist yet, keep waiting */
-            opal_output(0, "opal-checkpoint: File does not exit yet: <%s> rtn = %d (waited %d/%d sec)\n",
-                        prog_named_pipe_w, ret, s, max_wait_time);
+            if( !opal_checkpoint_globals.quiet &&
+                s >= max_wait_time - 5 ) {
+                opal_output(0, "opal-checkpoint: File does not exist yet: <%s> rtn = %d (waited %d/%d sec)\n",
+                            prog_named_pipe_w, ret, s, max_wait_time);
+            }
             sleep(1);
             continue;
         }

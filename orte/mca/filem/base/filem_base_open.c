@@ -61,7 +61,7 @@ int orte_filem_base_open(void)
     if(0 != value) {
         orte_filem_base_output = opal_output_open(NULL);
     } else {
-        orte_filem_base_output = -1;
+        orte_filem_base_output = 0;
     }
 
     /* 

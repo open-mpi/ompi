@@ -34,6 +34,9 @@ const char *orte_filem_rsh_component_version_string =
 static int filem_rsh_open(void);
 static int filem_rsh_close(void);
 
+int orte_filem_rsh_max_incomming = 10;
+int orte_filem_rsh_max_outgoing = 10;
+
 /*
  * Instantiate the public struct with all of our public information
  * and pointer to our public functions in it
@@ -118,6 +121,28 @@ static int filem_rsh_open(void)
                               false, false,
                               "rsh",
                               &mca_filem_rsh_component.remote_sh_command);
+
+    mca_base_param_reg_int(&mca_filem_rsh_component.super.filem_version,
+                           "max_incomming",
+                           "Maximum number of incomming connections",
+                           false, false,
+                           orte_filem_rsh_max_incomming,
+                           &orte_filem_rsh_max_incomming);
+
+    if( orte_filem_rsh_max_incomming <= 0 ) {
+        orte_filem_rsh_max_incomming = 1;
+    }
+
+    mca_base_param_reg_int(&mca_filem_rsh_component.super.filem_version,
+                           "max_outgoing",
+                           "Maximum number of out going connections (Currently not used)",
+                           false, false,
+                           orte_filem_rsh_max_outgoing,
+                           &orte_filem_rsh_max_outgoing);
+
+    if( orte_filem_rsh_max_outgoing <= 0 ) {
+        orte_filem_rsh_max_outgoing = 1;
+    }
 
     /*
      * Debug Output
