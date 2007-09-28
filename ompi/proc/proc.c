@@ -165,13 +165,10 @@ ompi_proc_get_info(void)
          item != opal_list_get_end(&ompi_proc_list) ;
          item = opal_list_get_next(item)) {
         ompi_proc_t *proc = (ompi_proc_t*) item;
-        orte_process_name_t name;
         uint32_t arch;
         char *hostname;
-        orte_std_cntr_t count=1;
         void *data;
         size_t datalen;
-        orte_buffer_t *buf;
 
         if (ORTE_EQUAL != orte_ns.compare_fields(ORTE_NS_CMP_JOBID,
                                                  &ompi_proc_local_proc->proc_name,
@@ -182,31 +179,41 @@ ompi_proc_get_info(void)
         }
 
         ret = ompi_modex_recv_string("ompi-proc-info", proc, &data, &datalen);
-        if (OMPI_SUCCESS != ret)
-            goto out;
+        if (OMPI_SUCCESS == ret) {
+            orte_buffer_t *buf;
+            orte_std_cntr_t count=1;
+            orte_process_name_t name;
 
-        buf = OBJ_NEW(orte_buffer_t);
-        ret = orte_dss.load(buf, data, datalen);
-        if (OMPI_SUCCESS != ret)
-            goto out;
+            buf = OBJ_NEW(orte_buffer_t);
+            ret = orte_dss.load(buf, data, datalen);
+            if (OMPI_SUCCESS != ret)
+                goto out;
 
-        /* This isn't needed here, but packed just so that you could,
-           in theory, use the unpack code on this proc.  We
-           don't,because we aren't adding procs, but need to update
-           them */
-        ret = orte_dss.unpack(buf, &name, &count, ORTE_NAME);
-        if (ret != ORTE_SUCCESS)
-            goto out;
+            /* This isn't needed here, but packed just so that you
+               could, in theory, use the unpack code on this proc.  We
+               don't,because we aren't adding procs, but need to
+               update them */
+            ret = orte_dss.unpack(buf, &name, &count, ORTE_NAME);
+            if (ret != ORTE_SUCCESS)
+                goto out;
 
-        ret = orte_dss.unpack(buf, &arch, &count, ORTE_UINT32);
-        if (ret != ORTE_SUCCESS)
+            ret = orte_dss.unpack(buf, &arch, &count, ORTE_UINT32);
+            if (ret != ORTE_SUCCESS)
+                goto out;
+            ret = orte_dss.unpack(buf, &hostname, &count, ORTE_STRING);
+            if (ret != ORTE_SUCCESS)
+                goto out;
+
+            /* Free the buffer for the next proc */
+            OBJ_RELEASE(buf);
+        } else if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
+            arch = ompi_proc_local_proc->proc_arch;
+            hostname = strdup("");
+        } else {
             goto out;
-        ret = orte_dss.unpack(buf, &hostname, &count, ORTE_STRING);
-        if (ret != ORTE_SUCCESS)
-            goto out;
+        }
 
         proc->proc_arch = arch;
-
         /* if arch is different than mine, create a new convertor for this proc */
         if (proc->proc_arch != ompi_proc_local_proc->proc_arch) {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -231,9 +238,6 @@ ompi_proc_get_info(void)
                to do so again */
             proc->proc_hostname = hostname;
         }
-
-        /* Free the buffer for the next proc */
-        OBJ_RELEASE(buf);
     }
 
 out:
