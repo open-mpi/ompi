@@ -251,9 +251,6 @@ static void mca_btl_openib_endpoint_construct_qp(mca_btl_base_endpoint_t *endpoi
  
     bool pp = (MCA_BTL_OPENIB_PP_QP == 
                mca_btl_openib_component.qp_infos[qp].type);
-    endpoint->qps[qp].lcl_qp_attr =
-        (struct ibv_qp_attr *)malloc(sizeof(struct ibv_qp_attr));
-    memset(endpoint->qps[qp].lcl_qp_attr, 0, sizeof(struct ibv_qp_attr));
     endpoint->qps[qp].qp_type = mca_btl_openib_component.qp_infos[qp].type;
     endpoint->qps[qp].lcl_qp = NULL;
     endpoint->qps[qp].rd_credit_send_lock = 0;
@@ -382,7 +379,6 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
             if(ibv_destroy_qp(endpoint->qps[qp].lcl_qp)) {
                 BTL_ERROR(("Failed to destroy QP:%d\n", qp));
             }
-            free(endpoint->qps[qp].lcl_qp_attr);
         }
         /* free the qps */
         free(endpoint->qps);

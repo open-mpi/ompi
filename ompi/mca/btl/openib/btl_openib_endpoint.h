@@ -114,8 +114,6 @@ struct mca_btl_openib_endpoint_srq_qp_t {
 
 struct mca_btl_openib_endpoint_qp_t { 
     struct ibv_qp*              lcl_qp; /* Local QP (Low and High) */
-    struct ibv_qp_attr*         lcl_qp_attr; 
-    /* Local QP attrnibutes (Low and High) */
     uint32_t lcl_psn; 
     int32_t  sd_wqe;      /**< number of available send wqe entries */
     int qp_type;

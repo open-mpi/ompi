@@ -49,7 +49,8 @@ static int set_remote_info(mca_btl_base_endpoint_t* endpoint,
                            mca_btl_openib_rem_info_t* rem_info);
 static int qp_connect_all(mca_btl_base_endpoint_t* endpoint);
 static int qp_create_all(mca_btl_base_endpoint_t* endpoint);
-static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int prio, int qp);
+static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int prio, int qp,
+        struct ibv_srq *srq, uint32_t max_recv_wr, uint32_t max_send_wr);
 static int send_connect_data(mca_btl_base_endpoint_t* endpoint, 
                              uint8_t message_type);
 
@@ -188,39 +189,41 @@ static int set_remote_info(mca_btl_base_endpoint_t* endpoint,
 static int qp_connect_all(mca_btl_openib_endpoint_t *endpoint)
 {
     int i;
-    struct ibv_qp* qp;
-    struct ibv_qp_attr* attr;
     mca_btl_openib_module_t* openib_btl =
         (mca_btl_openib_module_t*)endpoint->endpoint_btl;
 
-    for (i = 0; i < mca_btl_openib_component.num_qps; i++) { 
-        qp = endpoint->qps[i].lcl_qp;
-        attr = endpoint->qps[i].lcl_qp_attr;
-        attr->qp_state = IBV_QPS_RTR; 
-        attr->path_mtu = (openib_btl->hca->mtu < endpoint->rem_info.rem_mtu) ? 
+    for (i = 0; i < mca_btl_openib_component.num_qps; i++) {
+        struct ibv_qp_attr attr;
+        struct ibv_qp* qp = endpoint->qps[i].lcl_qp;
+        enum ibv_mtu mtu = (openib_btl->hca->mtu < endpoint->rem_info.rem_mtu) ?
             openib_btl->hca->mtu : endpoint->rem_info.rem_mtu;
+
+        memset(&attr, 0, sizeof(attr));
+        attr.qp_state           = IBV_QPS_RTR;
+        attr.path_mtu           = mtu;
+        attr.dest_qp_num        = endpoint->rem_info.rem_qps[i].rem_qp_num;
+        attr.rq_psn             = endpoint->rem_info.rem_qps[i].rem_psn;
+        attr.max_dest_rd_atomic = mca_btl_openib_component.ib_max_rdma_dst_ops;
+        attr.min_rnr_timer  = mca_btl_openib_component.ib_min_rnr_timer;
+        attr.ah_attr.is_global     = 0;
+        attr.ah_attr.dlid          = endpoint->rem_info.rem_lid;
+        attr.ah_attr.sl            = mca_btl_openib_component.ib_service_level;
+        attr.ah_attr.src_path_bits = openib_btl->src_path_bits;
+        attr.ah_attr.port_num      = openib_btl->port_num;
+        /* JMS to be filled in later dynamically */
+        attr.ah_attr.static_rate   = 0;
+
         if (mca_btl_openib_component.verbose) {
-            BTL_OUTPUT(("Set MTU to IBV value %d (%s bytes)", attr->path_mtu,
-                        (attr->path_mtu == IBV_MTU_256) ? "256" :
-                        (attr->path_mtu == IBV_MTU_512) ? "512" :
-                        (attr->path_mtu == IBV_MTU_1024) ? "1024" :
-                        (attr->path_mtu == IBV_MTU_2048) ? "2048" :
-                        (attr->path_mtu == IBV_MTU_4096) ? "4096" :
+            BTL_OUTPUT(("Set MTU to IBV value %d (%s bytes)", mtu,
+                        (mtu == IBV_MTU_256) ? "256" :
+                        (mtu == IBV_MTU_512) ? "512" :
+                        (mtu == IBV_MTU_1024) ? "1024" :
+                        (mtu == IBV_MTU_2048) ? "2048" :
+                        (mtu == IBV_MTU_4096) ? "4096" :
                         "unknown (!)"));
         }
-        attr->dest_qp_num = endpoint->rem_info.rem_qps[i].rem_qp_num,
-        attr->rq_psn = endpoint->rem_info.rem_qps[i].rem_psn,
-        attr->max_dest_rd_atomic = mca_btl_openib_component.ib_max_rdma_dst_ops; 
-        attr->min_rnr_timer = mca_btl_openib_component.ib_min_rnr_timer; 
-        attr->ah_attr.is_global = 0; 
-        attr->ah_attr.dlid = endpoint->rem_info.rem_lid,
-        attr->ah_attr.sl = mca_btl_openib_component.ib_service_level; 
-        attr->ah_attr.src_path_bits = openib_btl->src_path_bits;
-        attr->ah_attr.port_num = openib_btl->port_num; 
-        /* JMS to be filled in later dynamically */
-        attr->ah_attr.static_rate = 0;
-        
-        if (ibv_modify_qp(qp, attr, 
+
+        if (ibv_modify_qp(qp, &attr,
                           IBV_QP_STATE              |
                           IBV_QP_AV                 |
                           IBV_QP_PATH_MTU           |
@@ -228,25 +231,25 @@ static int qp_connect_all(mca_btl_openib_endpoint_t *endpoint)
                           IBV_QP_RQ_PSN             |
                           IBV_QP_MAX_DEST_RD_ATOMIC |
                           IBV_QP_MIN_RNR_TIMER)) {
-            BTL_ERROR(("error modifing QP to RTR errno says %s",  
-                       strerror(errno))); 
+            BTL_ERROR(("error modifing QP to RTR errno says %s",
+                       strerror(errno)));
             return OMPI_ERROR; 
         }
-        attr->qp_state 	     = IBV_QPS_RTS;
-        attr->timeout        = mca_btl_openib_component.ib_timeout;
-        attr->retry_cnt      = mca_btl_openib_component.ib_retry_count;
-        attr->rnr_retry      = mca_btl_openib_component.ib_rnr_retry;
-        attr->sq_psn         = endpoint->qps[i].lcl_psn;
-        attr->max_rd_atomic  = mca_btl_openib_component.ib_max_rdma_dst_ops;
-        if (ibv_modify_qp(qp, attr,
+        attr.qp_state       = IBV_QPS_RTS;
+        attr.timeout        = mca_btl_openib_component.ib_timeout;
+        attr.retry_cnt      = mca_btl_openib_component.ib_retry_count;
+        attr.rnr_retry      = mca_btl_openib_component.ib_rnr_retry;
+        attr.sq_psn         = endpoint->qps[i].lcl_psn;
+        attr.max_rd_atomic  = mca_btl_openib_component.ib_max_rdma_dst_ops;
+        if (ibv_modify_qp(qp, &attr,
                           IBV_QP_STATE              |
                           IBV_QP_TIMEOUT            |
                           IBV_QP_RETRY_CNT          |
                           IBV_QP_RNR_RETRY          |
                           IBV_QP_SQ_PSN             |
                           IBV_QP_MAX_QP_RD_ATOMIC)) {
-            BTL_ERROR(("error modifying QP to RTS errno says %s", 
-                       strerror(errno))); 
+            BTL_ERROR(("error modifying QP to RTS errno says %s",
+                       strerror(errno)));
             return OMPI_ERROR;
         }
     }
@@ -264,12 +267,25 @@ static int qp_create_all(mca_btl_base_endpoint_t* endpoint)
     int qp, rc, prio;
 
     for (qp = 0; qp < mca_btl_openib_component.num_qps; ++qp) { 
+        struct ibv_srq *srq = NULL;
+        uint32_t max_recv_wr, max_send_wr;
         /* If the size for this qp is <= the eager limit, make it a
            high priority QP.  Otherwise, make it a low priority QP. */
         prio = (mca_btl_openib_component.qp_infos[qp].size <=
                 mca_btl_openib_component.eager_limit) ? 
             BTL_OPENIB_HP_CQ : BTL_OPENIB_LP_CQ;
-        rc = qp_create_one(endpoint, prio, qp);
+        if(MCA_BTL_OPENIB_PP_QP == mca_btl_openib_component.qp_infos[qp].type) {
+            max_recv_wr = mca_btl_openib_component.qp_infos[qp].rd_num +
+                mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
+            max_send_wr = mca_btl_openib_component.qp_infos[qp].rd_num + 1;
+        } else {
+            srq = endpoint->endpoint_btl->qps[qp].u.srq_qp.srq;
+            max_recv_wr = mca_btl_openib_component.qp_infos[qp].rd_num;
+            max_send_wr = mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max
+                + BTL_OPENIB_EAGER_RDMA_QP(qp);
+        }
+
+        rc = qp_create_one(endpoint, prio, qp, srq, max_recv_wr, max_send_wr);
         if (OMPI_SUCCESS != rc) {
             return rc;
         }
@@ -285,83 +301,48 @@ static int qp_create_all(mca_btl_base_endpoint_t* endpoint)
  * Create the local side of one qp.  The remote side will be connected
  * later.
  */
-static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int prio, int qp)
+static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int prio, int qp, 
+        struct ibv_srq *srq, uint32_t max_recv_wr, uint32_t max_send_wr)
 {
-    mca_btl_openib_module_t *openib_btl =
-        (mca_btl_openib_module_t*)endpoint->endpoint_btl;
-    struct ibv_srq *srq = 
-        (MCA_BTL_OPENIB_PP_QP == openib_btl->qps[qp].type) ? NULL : 
-        openib_btl->qps[qp].u.srq_qp.srq;
+    mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
+    struct ibv_qp *my_qp;
+    struct ibv_qp_init_attr init_attr;
+    struct ibv_qp_attr attr;
+
+    memset(&init_attr, 0, sizeof(init_attr));
+    memset(&attr, 0, sizeof(attr));
+
+    init_attr.qp_type = IBV_QPT_RC;
+    init_attr.send_cq = openib_btl->hca->ib_cq[prio];
+    init_attr.recv_cq = openib_btl->hca->ib_cq[prio];
+    init_attr.srq     = srq;
+    init_attr.cap.max_send_sge = mca_btl_openib_component.ib_sg_list_size;
+    init_attr.cap.max_recv_sge = mca_btl_openib_component.ib_sg_list_size;
+    init_attr.cap.max_recv_wr  = max_recv_wr;
+    init_attr.cap.max_send_wr  = max_send_wr;
+
+    my_qp = ibv_create_qp(openib_btl->hca->ib_pd, &init_attr); 
     
-    /* Create the Queue Pair */
-#if 0
-    if (OMPI_SUCCESS != (rc = create_qp(openib_btl,
-                                        openib_btl->hca->ib_pd,
-                                        openib_btl->ib_cq[prio],
-                                        srq,
-                                        endpoint->qps[qp].lcl_qp_attr,
-                                        &endpoint->qps[qp].lcl_qp, 
-                                        qp))) {
-static int create_qp(
-                     struct ibv_qp** qp,
-                     int qp_idx);
-        BTL_ERROR(("error creating queue pair, error code %d", rc)); 
-        return rc;
+    if (NULL == my_qp) { 
+        BTL_ERROR(("error creating qp errno says %s", strerror(errno))); 
+        return OMPI_ERROR; 
     }
-#endif
-
-    {
-        struct ibv_qp* my_qp; 
-        struct ibv_qp_init_attr qp_init_attr; 
-
-        memset(&qp_init_attr, 0, sizeof(struct ibv_qp_init_attr)); 
-
-        qp_init_attr.send_cq = 
-            qp_init_attr.recv_cq = openib_btl->hca->ib_cq[prio];
-        
-        if (MCA_BTL_OPENIB_PP_QP == mca_btl_openib_component.qp_infos[qp].type) { 
-            qp_init_attr.cap.max_recv_wr =
-                mca_btl_openib_component.qp_infos[qp].rd_num +
-                mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
-            qp_init_attr.cap.max_send_wr =
-                mca_btl_openib_component.qp_infos[qp].rd_num + 1;
-        } else { 
-            qp_init_attr.cap.max_recv_wr =
-                mca_btl_openib_component.qp_infos[qp].rd_num;
-            qp_init_attr.cap.max_send_wr =
-                mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max +
-                BTL_OPENIB_EAGER_RDMA_QP(qp);
-        }
-        
-        qp_init_attr.cap.max_send_sge = mca_btl_openib_component.ib_sg_list_size;
-        qp_init_attr.cap.max_recv_sge = mca_btl_openib_component.ib_sg_list_size;
-        qp_init_attr.qp_type = IBV_QPT_RC; 
-        qp_init_attr.srq = srq; 
-        my_qp = ibv_create_qp(openib_btl->hca->ib_pd, &qp_init_attr); 
+    endpoint->qps[qp].lcl_qp = my_qp;
+    openib_btl->ib_inline_max = qp_init_attr.cap.max_inline_data; 
     
-        if (NULL == my_qp) { 
-            BTL_ERROR(("error creating qp errno says %s", strerror(errno))); 
-            return OMPI_ERROR; 
-        }
-        endpoint->qps[qp].lcl_qp = my_qp;
-        openib_btl->ib_inline_max = qp_init_attr.cap.max_inline_data; 
-    }
-    
-    {
-        endpoint->qps[qp].lcl_qp_attr->qp_state = IBV_QPS_INIT; 
-        endpoint->qps[qp].lcl_qp_attr->pkey_index = openib_btl->pkey_index;
-        endpoint->qps[qp].lcl_qp_attr->port_num = openib_btl->port_num; 
-        endpoint->qps[qp].lcl_qp_attr->qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ; 
+    attr.qp_state        = IBV_QPS_INIT;
+    attr.pkey_index      = openib_btl->pkey_index;
+    attr.port_num        = openib_btl->port_num;
+    attr.qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ;
 
-        if (ibv_modify_qp(endpoint->qps[qp].lcl_qp, 
-                          endpoint->qps[qp].lcl_qp_attr, 
-                          IBV_QP_STATE | 
-                          IBV_QP_PKEY_INDEX | 
-                          IBV_QP_PORT | 
-                          IBV_QP_ACCESS_FLAGS )) { 
-            BTL_ERROR(("error modifying qp to INIT errno says %s", strerror(errno))); 
-            return OMPI_ERROR; 
-        } 
+    if (ibv_modify_qp(endpoint->qps[qp].lcl_qp, 
+                      &attr, 
+                      IBV_QP_STATE | 
+                      IBV_QP_PKEY_INDEX | 
+                      IBV_QP_PORT | 
+                      IBV_QP_ACCESS_FLAGS )) { 
+        BTL_ERROR(("error modifying qp to INIT errno says %s", strerror(errno))); 
+        return OMPI_ERROR; 
     } 
 
     /* Setup meta data on the endpoint */
