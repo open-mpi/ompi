@@ -250,7 +250,7 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
     /* create the SRQ's */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
         struct ibv_srq_init_attr attr; 
-        if(MCA_BTL_OPENIB_SRQ_QP == openib_btl->qps[qp].type) { 
+        if(BTL_OPENIB_QP_TYPE_SRQ(qp)) { 
             attr.attr.max_wr = mca_btl_openib_component.qp_infos[qp].rd_num + 
                 mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
             attr.attr.max_sge = mca_btl_openib_component.ib_sg_list_size;
@@ -328,7 +328,7 @@ static int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_bt
 
     /* figure out reasonable sizes for completion queues */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-        if(MCA_BTL_OPENIB_SRQ_QP == mca_btl_openib_component.qp_infos[qp].type) {
+        if(BTL_OPENIB_QP_TYPE_SRQ(qp)) {
             cq_size = mca_btl_openib_component.qp_infos[qp].rd_num +
                 mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
             if(mca_btl_openib_component.qp_infos[qp].size <=
@@ -825,7 +825,7 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
     }
     /* Release SRQ resources */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-        if(MCA_BTL_OPENIB_SRQ_QP == mca_btl_openib_component.qp_infos[qp].type){ 
+        if(BTL_OPENIB_QP_TYPE_SRQ(qp)){ 
             
             MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(openib_btl,
                         &openib_btl->qps[qp].u.srq_qp.pending_frags);
