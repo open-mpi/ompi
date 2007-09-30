@@ -328,7 +328,7 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int prio, int qp,
         return OMPI_ERROR; 
     }
     endpoint->qps[qp].lcl_qp = my_qp;
-    openib_btl->ib_inline_max = qp_init_attr.cap.max_inline_data; 
+    openib_btl->ib_inline_max = init_attr.cap.max_inline_data; 
     
     attr.qp_state        = IBV_QPS_INIT;
     attr.pkey_index      = openib_btl->pkey_index;
