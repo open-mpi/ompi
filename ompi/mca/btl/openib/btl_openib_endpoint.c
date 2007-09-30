@@ -94,7 +94,7 @@ static int post_send(mca_btl_openib_module_t *openib_btl,
             sizeof(mca_btl_openib_footer_t);
         frag->wr_desc.sr_desc.wr.rdma.remote_addr -= frag->sg_entry.length;
     } else {
-        if(MCA_BTL_OPENIB_SRQ_QP == endpoint->qps[qp].qp_type) { 
+        if(BTL_OPENIB_QP_TYPE_SRQ(qp)) { 
             frag->wr_desc.sr_desc.opcode = IBV_WR_SEND_WITH_IMM;
             frag->wr_desc.sr_desc.imm_data = endpoint->rem_info.rem_index;
         } else {
@@ -135,7 +135,7 @@ static int btl_openib_acquire_send_resources(
     if(*do_rdma)
         return OMPI_SUCCESS;
 
-    if(MCA_BTL_OPENIB_PP_QP == endpoint->qps[*qp].qp_type) { 
+    if(BTL_OPENIB_QP_TYPE_PP(*qp)) { 
         if(OPAL_THREAD_ADD32(&endpoint->qps[*qp].u.pp_qp.sd_credits, -1) < 0) {
             OPAL_THREAD_ADD32(&endpoint->qps[*qp].u.pp_qp.sd_credits, 1);
             OPAL_THREAD_ADD32(&endpoint->qps[*qp].sd_wqe, 1);
@@ -193,7 +193,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
         if(frag->hdr->credits)
             frag->hdr->credits |= BTL_OPENIB_RDMA_CREDITS_FLAG;
     } 
-    if(MCA_BTL_OPENIB_PP_QP == endpoint->qps[qp].qp_type &&
+    if(BTL_OPENIB_QP_TYPE_PP(qp) &&
             0 == frag->hdr->credits) {
         GET_CREDITS(endpoint->qps[qp].u.pp_qp.rd_credits, frag->hdr->credits);
     }
@@ -221,7 +221,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
         if(do_rdma) {
             OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens, 1);
         } else {
-            if(MCA_BTL_OPENIB_PP_QP == endpoint->qps[qp].qp_type) {
+            if(BTL_OPENIB_QP_TYPE_PP(qp)) {
                 OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_credits, frag->hdr->credits);
                 OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits, 1);
             } else {
@@ -249,9 +249,6 @@ OBJ_CLASS_INSTANCE(mca_btl_openib_endpoint_t,
 static void mca_btl_openib_endpoint_construct_qp(mca_btl_base_endpoint_t *endpoint, int qp)
 {
  
-    bool pp = (MCA_BTL_OPENIB_PP_QP == 
-               mca_btl_openib_component.qp_infos[qp].type);
-    endpoint->qps[qp].qp_type = mca_btl_openib_component.qp_infos[qp].type;
     endpoint->qps[qp].lcl_qp = NULL;
     endpoint->qps[qp].rd_credit_send_lock = 0;
     /* setup rem_info */
@@ -259,7 +256,7 @@ static void mca_btl_openib_endpoint_construct_qp(mca_btl_base_endpoint_t *endpoi
     endpoint->rem_info.rem_qps[qp].rem_psn = 0;
 
     OBJ_CONSTRUCT(&endpoint->qps[qp].pending_frags, opal_list_t);
-    if(pp) { 
+    if(BTL_OPENIB_QP_TYPE_PP(qp)) { 
         /* local credits are set here such that on initial posting
          * of the receive buffers we end up with zero credits to return
          * to our peer. The peer initializes his sd_credits to reflect this 
@@ -408,7 +405,7 @@ int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t *endpoint)
     int qp;
 
     for (qp = 0; qp < mca_btl_openib_component.num_qps; ++qp) { 
-        if (MCA_BTL_OPENIB_SRQ_QP == endpoint->qps[qp].qp_type) { 
+        if (BTL_OPENIB_QP_TYPE_SRQ(qp)) { 
             mca_btl_openib_post_srr(endpoint->endpoint_btl, 1, qp);
         } else { 
             mca_btl_openib_endpoint_post_rr(endpoint, 1, qp);

@@ -72,16 +72,21 @@ struct mca_btl_openib_srq_qp_info_t {
 }; typedef struct mca_btl_openib_srq_qp_info_t mca_btl_openib_srq_qp_info_t;
 
 struct mca_btl_openib_qp_info_t {
+    mca_btl_openib_qp_type_t type;
     size_t size;
     int32_t rd_num;
     int32_t rd_low;
-    mca_btl_openib_qp_type_t type;
     union { 
         mca_btl_openib_pp_qp_info_t pp_qp;
         mca_btl_openib_srq_qp_info_t srq_qp;
     } u; 
 }; typedef struct mca_btl_openib_qp_info_t mca_btl_openib_qp_info_t;
 
+#define BTL_OPENIB_QP_TYPE(Q) (mca_btl_openib_component.qp_infos[(Q)].type)
+#define BTL_OPENIB_QP_TYPE_PP(Q) \
+    (BTL_OPENIB_QP_TYPE(Q) == MCA_BTL_OPENIB_PP_QP)
+#define BTL_OPENIB_QP_TYPE_SRQ(Q) \
+    (BTL_OPENIB_QP_TYPE(Q) == MCA_BTL_OPENIB_SRQ_QP)
 
 struct mca_btl_openib_component_t {
     mca_btl_base_component_1_0_1_t          super;  /**< base BTL component */ 
@@ -262,7 +267,6 @@ struct mca_btl_openib_module_srq_qp_t {
 struct mca_btl_openib_module_qp_t {
     ompi_free_list_t send_free;     /**< free lists of send buffer descriptors */
     ompi_free_list_t recv_free;     /**< free lists of receive buffer descriptors */
-    mca_btl_openib_qp_type_t type;
     union {
         mca_btl_openib_module_pp_qp_t pp_qp;
         mca_btl_openib_module_srq_qp_t srq_qp;
@@ -536,7 +540,7 @@ static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
                                           const int additional,
                                           const int qp)
 {
-    assert(MCA_BTL_OPENIB_SRQ_QP == openib_btl->qps[qp].type);
+    assert(BTL_OPENIB_QP_TYPE_SRQ(qp));
     OPAL_THREAD_LOCK(&openib_btl->ib_lock);
     if(openib_btl->qps[qp].u.srq_qp.rd_posted <= 
        mca_btl_openib_component.qp_infos[qp].rd_low + additional &&
@@ -579,7 +583,7 @@ static inline int mca_btl_openib_post_srr_all(mca_btl_openib_module_t *openib_bt
 {
     int qp;
     for(qp = 0; qp < mca_btl_openib_component.num_srq_qps; qp++){ 
-        if(MCA_BTL_OPENIB_SRQ_QP == openib_btl->qps[qp].type) {
+        if(BTL_OPENIB_QP_TYPE_SRQ(qp)) {
             mca_btl_openib_post_srr(openib_btl, additional, qp);
         }
     }

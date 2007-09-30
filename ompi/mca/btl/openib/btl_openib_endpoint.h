@@ -116,7 +116,6 @@ struct mca_btl_openib_endpoint_qp_t {
     struct ibv_qp*              lcl_qp; /* Local QP (Low and High) */
     uint32_t lcl_psn; 
     int32_t  sd_wqe;      /**< number of available send wqe entries */
-    int qp_type;
     opal_list_t                 pending_frags; /**< put fragments here if there
                                                     is no wqe available or, in
                                                     case of PP QP, if there is
@@ -218,7 +217,7 @@ static inline int mca_btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpo
         
     int cm_received, rd_posted, rd_low;
     
-    assert(MCA_BTL_OPENIB_PP_QP == endpoint->qps[qp].qp_type);
+    assert(BTL_OPENIB_QP_TYPE_PP(qp));
     OPAL_THREAD_LOCK(&openib_btl->ib_lock);
     cm_received = endpoint->qps[qp].u.pp_qp.cm_received;
     rd_posted = endpoint->qps[qp].u.pp_qp.rd_posted;
@@ -270,7 +269,7 @@ static inline int mca_btl_openib_endpoint_post_rr_all(mca_btl_base_endpoint_t *e
 {
     int qp;
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++){ 
-        if(MCA_BTL_OPENIB_PP_QP == mca_btl_openib_component.qp_infos[qp].type) { 
+        if(BTL_OPENIB_QP_TYPE_PP(qp)) { 
             mca_btl_openib_endpoint_post_rr(endpoint, additional, qp);
         }
     }
@@ -291,7 +290,7 @@ static inline bool check_send_credits(mca_btl_openib_endpoint_t *endpoint,
         }
     }
 
-    if(MCA_BTL_OPENIB_PP_QP == mca_btl_openib_component.qp_infos[qp].type) {
+    if(BTL_OPENIB_QP_TYPE_PP(qp)) {
         if(endpoint->qps[qp].u.pp_qp.rd_credits >=
             mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win) {
             return true;

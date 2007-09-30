@@ -1042,10 +1042,8 @@ btl_openib_component_init(int *num_btl_modules,
             
             OBJ_CONSTRUCT(&openib_btl->qps[qp].send_free, ompi_free_list_t);
             OBJ_CONSTRUCT(&openib_btl->qps[qp].recv_free, ompi_free_list_t);
-            openib_btl->qps[qp].type = mca_btl_openib_component.qp_infos[qp].type;
-            
                 
-            if(MCA_BTL_OPENIB_SRQ_QP == openib_btl->qps[qp].type) { 
+            if(BTL_OPENIB_QP_TYPE_SRQ(qp)) { 
                 OBJ_CONSTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags, opal_list_t);
                 openib_btl->qps[qp].u.srq_qp.sd_credits = 
                     mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
@@ -1178,8 +1176,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
         OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens,
                           BTL_OPENIB_CREDITS(frag->hdr->credits));
     } else {
-        if(MCA_BTL_OPENIB_PP_QP == endpoint->qps[qp].qp_type &&
-                frag->hdr->credits > 0) {
+        if(BTL_OPENIB_QP_TYPE_PP(qp) && frag->hdr->credits > 0) {
             OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits, 
                               frag->hdr->credits);
         }
@@ -1192,8 +1189,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
 
     /* We may receive credits here so try to progress only things that
      * may be pending because of credit shortage */
-    if(MCA_BTL_OPENIB_PP_QP == endpoint->qps[qp].qp_type ||
-            BTL_OPENIB_EAGER_RDMA_QP(qp)) {
+    if(BTL_OPENIB_QP_TYPE_PP(qp) || BTL_OPENIB_EAGER_RDMA_QP(qp)) {
         btl_openib_frag_progress_pending_pp(endpoint, qp);
    }
     
@@ -1276,8 +1272,7 @@ static char* btl_openib_component_status_to_string(enum ibv_wc_status status)
 }
 
 #define BTL_OPENIB_TOKENS(E, P) \
-    (((E)->qps[qp].qp_type == MCA_BTL_OPENIB_SRQ_QP) ? 1 : \
-     ((E)->qps[(P)].u.pp_qp.sd_credits +     \
+    (BTL_OPENIB_QP_TYPE_SRQ(P) ? 1 : ((E)->qps[(P)].u.pp_qp.sd_credits + \
       ((BTL_OPENIB_EAGER_RDMA_QP(P))?(E)->eager_rdma_remote.tokens:0)))
 static void btl_openib_frag_progress_pending_pp(
         mca_btl_base_endpoint_t *endpoint, const int qp)
@@ -1344,7 +1339,7 @@ static void btl_openib_frag_progress_pending_srq(
     mca_btl_openib_frag_t* frag;
     size_t i, len;
     
-    assert(MCA_BTL_OPENIB_SRQ_QP == endpoint->qps[qp].qp_type);
+    assert(BTL_OPENIB_QP_TYPE_SRQ(qp));
     
     len = opal_list_get_size(&openib_btl->qps[qp].u.srq_qp.pending_frags);
     for(i = 0; i < len && openib_btl->qps[qp].u.srq_qp.sd_credits > 0; i++) {
@@ -1553,8 +1548,7 @@ static int btl_openib_module_progress(mca_btl_openib_hca_t* hca)
                 /* return send wqe */
                 OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe, 1);
 
-                if(IBV_WC_SEND == wc.opcode &&
-                        MCA_BTL_OPENIB_SRQ_QP == endpoint->qps[qp].qp_type) {
+                if(IBV_WC_SEND == wc.opcode && BTL_OPENIB_QP_TYPE_SRQ(qp)) {
                     OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1);
                     /* new SRQ credit available. Try to progress pending frags*/
                     btl_openib_frag_progress_pending_srq(openib_btl, endpoint, qp);
@@ -1581,7 +1575,7 @@ static int btl_openib_module_progress(mca_btl_openib_hca_t* hca)
                 }
 
                 OMPI_FREE_LIST_RETURN(frag->list, (ompi_free_list_item_t*) frag);
-                if(MCA_BTL_OPENIB_SRQ_QP == endpoint->qps[qp].qp_type) { 
+                if(BTL_OPENIB_QP_TYPE_SRQ(qp)) { 
                     OPAL_THREAD_ADD32((int32_t*)
                             &openib_btl->qps[qp].u.srq_qp.rd_posted, -1);
                     mca_btl_openib_post_srr(openib_btl, 0, qp);
