@@ -21,19 +21,6 @@
 AM_CPPFLAGS = -I$(top_ompi_builddir)/include
 AM_OBJCFLAGS = $(ras_xgrid_OBJCFLAGS)
 
-# Automake and Libtool don't completely speak Objective C.  Since the
-# only Objective C we'll be using is GCC on Mac OS X, we can pretend
-# to be C instead of ObjC for libtool and it works well enough.  If CC
-# and OBJC aren't the same, Libtool doesn't automatically infer that
-# we're using C and Automake doesn't add the --tag, so we need to
-# explicitly list these two rules so that the --tag=CC line is passed
-# to libtool.
-LTOBJCCOMPILE = $(LIBTOOL) --mode=compile  --tag=CC $(OBJC) $(DEFS) \
-	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-	$(AM_OBJCFLAGS) $(OBJCFLAGS)
-OBJCLINK = $(LIBTOOL) --mode=link --tag=CC $(OBJCLD) $(AM_OBJCFLAGS) \
-	$(OBJCFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-
 xgrid_sources = \
 	src/ras_xgrid.h \
         src/ras_xgrid_component.c \
