@@ -32,8 +32,6 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rml/rml_types.h"
 
-static opal_mutex_t ompi_port_lock;
-
 #define OMPI_COMM_PORT_KEY  "ompi-port-name"
 
 
@@ -56,12 +54,9 @@ int ompi_open_port(char *port_name)
         return rc;
     }
 
-    OPAL_THREAD_LOCK(&ompi_port_lock);
     if (ORTE_SUCCESS != (rc = orte_ns.assign_rml_tag(&lport_id, NULL))) {
-            OPAL_THREAD_UNLOCK(&ompi_port_lock);
         return rc;
     }
-    OPAL_THREAD_UNLOCK(&ompi_port_lock);
 
     sprintf (port_name, "%s:%d", name, lport_id);
     free ( myproc );
