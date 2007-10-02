@@ -261,12 +261,12 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int* num_btl_modules,
        If not, then short out right away. */
     mca_base_param_lookup_string(
             mca_base_param_find("btl", NULL, NULL), &btl_str);
-    if(NULL == btl_str) {
-        /* Can't specify UD with out any string at all.. bail out */
+    if(NULL == btl_str || '^' == btl_str[0]) {
+        /* No string at all, or an exclusion string, bail out */
         return NULL;
     }
 
-    /* Try to find a 'ud' token */
+    /* Try to find a 'ofud' token */
     tok = strtok(btl_str, ",");
     while(tok) {
         if(!strcasecmp("ofud", tok)) {
@@ -275,7 +275,7 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int* num_btl_modules,
     }
 
     if(NULL == tok) {
-        /* No valid 'ud' token found; bail out */
+        /* No valid 'ofud' token found; bail out */
         return NULL;
     }
 
