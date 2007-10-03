@@ -209,6 +209,7 @@ ompi_proc_get_info(void)
         } else if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
             arch = ompi_proc_local_proc->proc_arch;
             hostname = strdup("");
+	    ret = ORTE_SUCCESS;
         } else {
             goto out;
         }
