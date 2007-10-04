@@ -325,13 +325,13 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
         /* reduction */
         err =
             comm->c_coll.coll_reduce(sbuf, recv_buf, count, dtype, op, 0,
-                                     comm, module);
+                                     comm, comm->c_coll.coll_reduce_module);
 
         /* scatter */
         if (MPI_SUCCESS == err) {
             err = comm->c_coll.coll_scatterv(recv_buf, rcounts, disps, dtype,
                                              rbuf, rcounts[rank], dtype, 0,
-                                             comm, module);
+                                             comm, comm->c_coll.coll_scatterv_module);
         }
     }
 

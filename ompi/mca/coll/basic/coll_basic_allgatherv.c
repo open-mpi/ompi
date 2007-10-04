@@ -71,8 +71,8 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
     err = comm->c_coll.coll_gatherv(send_buf,
                                     rcounts[rank], send_type,rbuf,
                                     rcounts, disps, rdtype, 0,
-                                    comm, module);
-    
+                                    comm, comm->c_coll.coll_gatherv_module);
+
     if (MPI_SUCCESS != err) {
         return err;
     }
@@ -99,7 +99,8 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
        return err;
     }
 
-    comm->c_coll.coll_bcast( rbuf, 1 ,newtype,0,comm, module);
+    comm->c_coll.coll_bcast( rbuf, 1 ,newtype,0,comm,
+            comm->c_coll.coll_bcast_module);
 
     ompi_ddt_destroy (&newtype);
 
@@ -141,7 +142,8 @@ mca_coll_basic_allgatherv_inter(void *sbuf, int scount,
     }
 
     err = comm->c_coll.coll_alltoallv(sbuf, scounts, sdisps, sdtype,
-                                      rbuf, rcounts, disps, rdtype, comm, module);
+                                      rbuf, rcounts, disps, rdtype, comm,
+                                      comm->c_coll.coll_alltoallv_module);
 
     if (NULL != sdisps) {
         free(sdisps);
