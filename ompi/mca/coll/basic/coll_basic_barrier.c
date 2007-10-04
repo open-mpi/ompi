@@ -189,5 +189,5 @@ mca_coll_basic_barrier_inter_lin(struct ompi_communicator_t *comm,
 
     rank = ompi_comm_rank(comm);
     return comm->c_coll.coll_allreduce(&rank, &result, 1, MPI_INT, MPI_MAX,
-                                       comm, module);
+                                       comm, comm->c_coll.coll_allreduce_module);
 }

@@ -62,10 +62,10 @@ mca_coll_basic_allgather_intra(void *sbuf, int scount,
     /* Gather and broadcast. */
 
     err = comm->c_coll.coll_gather(sbuf, scount, sdtype, rbuf, rcount,
-                                   rdtype, 0, comm, module);
+                                   rdtype, 0, comm, comm->c_coll.coll_gather_module);
     if (MPI_SUCCESS == err) {
         err = comm->c_coll.coll_bcast(rbuf, rcount * ompi_comm_size(comm), 
-                                      rdtype, 0, comm, module);
+                                      rdtype, 0, comm, comm->c_coll.coll_bcast_module);
     }
 
     /* All done */
