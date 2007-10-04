@@ -177,7 +177,9 @@ int btl_openib_component_open(void)
 static int btl_openib_component_close(void)
 {
     /* Close down the connect pseudo component */
-    ompi_btl_openib_connect.bcf_finalize();
+    if (NULL != ompi_btl_openib_connect.bcf_finalize) {
+        ompi_btl_openib_connect.bcf_finalize();
+    }
 
     ompi_btl_openib_ini_finalize();
     return OMPI_SUCCESS;
