@@ -25,6 +25,9 @@ int orte_routed_unity_update_route(orte_process_name_t *target,
 
 orte_process_name_t orte_routed_unity_get_route(orte_process_name_t *target);
 
+int orte_routed_unity_init_routes(orte_jobid_t job, orte_gpr_notify_data_t *ndat);
+
+int orte_routed_unity_warmup_routes(void);
 
 END_C_DECLS
 

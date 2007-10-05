@@ -60,6 +60,7 @@ static void orte_odls_child_constructor(orte_odls_child_t *ptr)
     ptr->state = ORTE_PROC_STATE_UNDEF;
     ptr->exit_code = 0;
     ptr->cpu_set = 0xffffffff;
+    ptr->sync_required = false;
 
 }
 static void orte_odls_child_destructor(orte_odls_child_t *ptr)

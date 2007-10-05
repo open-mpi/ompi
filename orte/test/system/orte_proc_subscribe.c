@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     OBJ_CONSTRUCT(&cond, opal_condition_t);
     waitexit = false;
 
-    if (0 > (rc = orte_init(ORTE_NON_INFRASTRUCTURE, ORTE_USE_BARRIER))) {
+    if (0 > (rc = orte_init(ORTE_NON_INFRASTRUCTURE))) {
         fprintf(stderr, "couldn't init orte - error code %d\n", rc);
         return rc;
     }

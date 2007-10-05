@@ -34,16 +34,12 @@
 #include "orte/mca/gpr/gpr_types.h"
 #include "opal/util/cmd_line.h"
 
-#include "orte/runtime/runtime_types.h"
 #include "orte/util/univ_info.h"
 #include "orte/mca/ns/ns.h"
 
 /* some convenience definitions for code clarity */
 #define ORTE_INFRASTRUCTURE         true
 #define ORTE_NON_INFRASTRUCTURE     false
-
-#define ORTE_USE_BARRIER        true
-#define ORTE_NON_BARRIER        false
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -75,10 +71,7 @@ ORTE_DECLSPEC    void orte_abort(int status, bool report) __opal_attribute_noret
      * @param infrastructure Whether we are ORTE infrastructure or an ORTE 
      * application
      */
-ORTE_DECLSPEC    int orte_init(bool infrastructure, bool barrier);
-ORTE_DECLSPEC    int orte_system_init(bool infrastructure, bool barrier);
-ORTE_DECLSPEC    int orte_init_stage1(bool infrastructure);
-ORTE_DECLSPEC    int orte_init_stage2(char *trigger);
+ORTE_DECLSPEC    int orte_init(bool infrastructure);
 
     /**
      * Initialize parameters for ORTE.
@@ -101,7 +94,6 @@ ORTE_DECLSPEC    int orte_restart(orte_process_name_t* name, const char* uri);
      *
      */
 ORTE_DECLSPEC    int orte_finalize(void);
-ORTE_DECLSPEC    int orte_system_finalize(void);
 
 /*
  * Change state as processes complete registration/unregistration

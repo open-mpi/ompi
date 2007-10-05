@@ -25,6 +25,7 @@
 
 #include "opal/threads/mutex.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "opal/util/trace.h"
 
 #include "orte/dss/dss.h"
@@ -50,6 +51,14 @@ int orte_ns_replica_create_jobid(orte_jobid_t *jobid, opal_list_t *attrs)
 
     *jobid = ORTE_JOBID_INVALID;
     
+    /* is a jobid available, or are we at the max? */
+    if (ORTE_JOBID_MAX == orte_ns_replica.num_jobids) {
+        /* at max - alert user to situation */
+        opal_show_help("help-ns-replica.txt", "out-of-jobids", true);
+        OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
     /* check for attributes */
     if (NULL != (attr = orte_rmgr.find_attribute(attrs, ORTE_NS_USE_PARENT))) {
         /* declares the specified jobid to be the parent of the new one */
@@ -249,6 +258,7 @@ int orte_ns_replica_get_parent_job(orte_jobid_t *parent_job, orte_jobid_t job)
          item != opal_list_get_end(&orte_ns_replica.jobs);
          item = opal_list_get_next(item)) {
         root = (orte_ns_replica_jobitem_t*)item;
+        parent = root;
         if (NULL != (ptr = down_search(root, &parent, job))) {
             goto REPORT;
         }
@@ -335,8 +345,9 @@ int orte_ns_replica_reserve_range(orte_jobid_t job, orte_vpid_t range,
         return rc;
     }
     
-    /* get here if the range isn't available */
-    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+    /* get here if the range isn't available  - alert user */
+    opal_show_help("help-ns-replica.txt", "out-of-vpids", true);
+    
     OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
     return ORTE_ERR_OUT_OF_RESOURCE;
 }

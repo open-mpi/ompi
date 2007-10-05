@@ -46,6 +46,7 @@ BEGIN_C_DECLS
  */
 struct orte_proc_info_t {
     orte_process_name_t *my_name;       /**< My official process name */
+    orte_process_name_t my_daemon;      /**< Name of my local daemon */
     orte_std_cntr_t app_num;            /**< our index into the app_context array */
     orte_std_cntr_t universe_size;      /**< the size of the universe we are in */
     bool singleton;                     /**< I am a singleton */

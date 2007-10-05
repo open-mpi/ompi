@@ -87,3 +87,11 @@ nodes and therefore cannot continue.
 On node %d the process pid was %d and errno was set to %d.
 
 For reference, we tried to launch %s
+
+[proc-io-setup-failed]
+The daemons failed to setup the I/O forwarding subsystem to support
+the application. This is a fatal error so we are aborting. For
+reference, the internal error code was:
+
+error: %s
+

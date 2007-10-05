@@ -59,6 +59,7 @@ typedef struct orte_odls_child_t {
     orte_proc_state_t state;     /* the state of the process */
     int exit_code;               /* process exit code */
     unsigned long cpu_set;
+    bool sync_required;          /* require sync before termination */
 } orte_odls_child_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
     

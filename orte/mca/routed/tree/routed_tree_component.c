@@ -54,9 +54,10 @@ orte_routed_component_t mca_routed_tree_component = {
 orte_routed_tree_module_t orte_routed_tree_module = {
     {
         orte_routed_tree_finalize,
-
         orte_routed_tree_update_route,
-        orte_routed_tree_get_route
+        orte_routed_tree_get_route,
+        orte_routed_tree_init_routes,
+        orte_routed_tree_warmup_routes
     }
 };
 
@@ -66,7 +67,7 @@ OBJ_CLASS_INSTANCE(orte_routed_tree_entry_t, opal_list_item_t, NULL, NULL);
 static orte_routed_module_t*
 routed_tree_init(int* priority)
 {
-    *priority = 0;
+    *priority = 5;
 
     OBJ_CONSTRUCT(&orte_routed_tree_module.peer_list, opal_list_t);
     OBJ_CONSTRUCT(&orte_routed_tree_module.vpid_wildcard_list, opal_list_t);

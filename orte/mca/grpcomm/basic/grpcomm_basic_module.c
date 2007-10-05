@@ -40,24 +40,8 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/runtime/params.h"
 
+#include "orte/mca/grpcomm/base/base.h"
 #include "grpcomm_basic.h"
-
-/* API functions */
-static int xcast_nb(orte_jobid_t job,
-                    orte_buffer_t *buffer,
-                    orte_rml_tag_t tag);
-
-static int xcast(orte_jobid_t job,
-                 orte_buffer_t *buffer,
-                 orte_rml_tag_t tag);
-
-static int xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc);
-
-orte_grpcomm_base_module_t orte_grpcomm_basic_module = {
-    xcast,
-    xcast_nb,
-    xcast_gate
-};
 
 /* Local functions */
 static int xcast_binomial_tree(orte_jobid_t job,
@@ -108,7 +92,10 @@ static int xcast_nb(orte_jobid_t job,
     struct timeval start, stop;
     orte_vpid_t num_daemons;
     
-    opal_output(orte_grpcomm_basic.output, "oob_xcast_nb: sent to job %ld tag %ld", (long)job, (long)tag);
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s xcast_nb sent to job %ld tag %ld",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)job, (long)tag));
     
     /* if there is no message to send, then just return ok */
     if (NULL == buffer) {
@@ -127,9 +114,11 @@ static int xcast_nb(orte_jobid_t job,
         return rc;
     }
     
-    opal_output(orte_grpcomm_basic.output, "oob_xcast_nb: num_daemons %ld linear xover: %ld binomial xover: %ld",
-                (long)num_daemons, (long)orte_grpcomm_basic.xcast_linear_xover,
-                (long)orte_grpcomm_basic.xcast_binomial_xover);
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s xcast_nb: num_daemons %ld linear xover: %ld binomial xover: %ld",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)num_daemons, (long)orte_grpcomm_basic.xcast_linear_xover,
+                         (long)orte_grpcomm_basic.xcast_binomial_xover));
     
     if (num_daemons < 2) {
         /* if there is only one daemon in the system, then we must
@@ -183,7 +172,10 @@ static int xcast(orte_jobid_t job,
     struct timeval start, stop;
     orte_vpid_t num_daemons;
     
-    opal_output(orte_grpcomm_basic.output, "oob_xcast: sent to job %ld tag %ld", (long)job, (long)tag);
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s xcast sent to job %ld tag %ld",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)job, (long)tag));
     
     /* if there is no message to send, then just return ok */
     if (NULL == buffer) {
@@ -202,9 +194,11 @@ static int xcast(orte_jobid_t job,
         return rc;
     }
     
-    opal_output(orte_grpcomm_basic.output, "oob_xcast: num_daemons %ld linear xover: %ld binomial xover: %ld",
-                (long)num_daemons, (long)orte_grpcomm_basic.xcast_linear_xover,
-                (long)orte_grpcomm_basic.xcast_binomial_xover);
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s xcast: num_daemons %ld linear xover: %ld binomial xover: %ld",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)num_daemons, (long)orte_grpcomm_basic.xcast_linear_xover,
+                         (long)orte_grpcomm_basic.xcast_binomial_xover));
 
     if (num_daemons < 2) {
         /* if there is only one daemon in the system, then we must
@@ -263,10 +257,13 @@ static int xcast_binomial_tree(orte_jobid_t job,
     int rc;
     orte_process_name_t target;
     orte_buffer_t *buf;
-    orte_vpid_t num_daemons;
+    orte_vpid_t nd;
+    orte_std_cntr_t num_daemons;
 
-    opal_output(orte_grpcomm_basic.output, "oob_xcast_mode: binomial");
-
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s xcast_binomial",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     /* this is the HNP end, so it starts the procedure. Since the HNP is always the
      * vpid=0 at this time, we take advantage of that fact to figure out who we
      * should send this to on the first step
@@ -288,10 +285,11 @@ static int xcast_binomial_tree(orte_jobid_t job,
     /* get the number of daemons currently in the system and tell the daemon so
      * it can properly route
      */
-    if (ORTE_SUCCESS != (rc = orte_ns.get_vpid_range(0, &num_daemons))) {
+    if (ORTE_SUCCESS != (rc = orte_ns.get_vpid_range(0, &nd))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
+    num_daemons = (orte_std_cntr_t)nd;
     if (ORTE_SUCCESS != (rc = orte_dss.pack(buf, &num_daemons, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
@@ -331,10 +329,10 @@ static int xcast_binomial_tree(orte_jobid_t job,
         goto CLEANUP;
     }
         
-    if (orte_timing) {
-        opal_output(0, "xcast %s: mode binomial buffer size %ld",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)buf->bytes_used);
-    }
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s xcast_binomial: buffer size %ld",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)buf->bytes_used));
     
     /* all we need to do is send this to ourselves - our relay logic
      * will ensure everyone else gets it!
@@ -343,8 +341,12 @@ static int xcast_binomial_tree(orte_jobid_t job,
     target.vpid = 0;
     ++orte_grpcomm_basic.num_active;
     
-    opal_output(orte_grpcomm_basic.output, "%s xcast to %s",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&target));
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "xcast_binomial: num_active now %ld sending %s => %s",
+                         (long)orte_grpcomm_basic.num_active,
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&target)));
+    
     if (0 > (rc = orte_rml.send_buffer_nb(&target, buf, ORTE_RML_TAG_ORTED_ROUTED,
                                           0, xcast_send_cb, NULL))) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
@@ -371,8 +373,10 @@ static int xcast_linear(orte_jobid_t job,
     orte_vpid_t i, range;
     orte_process_name_t dummy;
     
-    opal_output(orte_grpcomm_basic.output, "oob_xcast_mode: linear");
-
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s xcast_linear",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     /* since we have to pack some additional info into the buffer to be
      * sent to the daemons, we create a new buffer into which we will
      * put the intermediate payload - i.e., the info that goes to the
@@ -421,10 +425,10 @@ static int xcast_linear(orte_jobid_t job,
         goto CLEANUP;
     }
     
-    if (orte_timing) {
-        opal_output(0, "xcast %s: mode linear buffer size %ld",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)buf->bytes_used);
-    }
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s xcast_linear: buffer size %ld",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)buf->bytes_used));
     
     /* get the number of daemons out there */
     orte_ns.get_vpid_range(0, &range);
@@ -438,12 +442,19 @@ static int xcast_linear(orte_jobid_t job,
     orte_grpcomm_basic.num_active += range;
     OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
     
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s xcast_linear: num_active now %ld",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)orte_grpcomm_basic.num_active));
+    
     /* send the message to each daemon as fast as we can */
     dummy.jobid = 0;
     for (i=0; i < range; i++) {            
         dummy.vpid = i;
-        opal_output(orte_grpcomm_basic.output, "%s xcast to %s",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&dummy));
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                             "xcast_linear: %s => %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&dummy)));
         if (0 > (rc = orte_rml.send_buffer_nb(&dummy, buf, ORTE_RML_TAG_ORTED_ROUTED,
                                               0, xcast_send_cb, NULL))) {
             if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
@@ -479,8 +490,10 @@ static int xcast_direct(orte_jobid_t job,
     opal_list_t attrs;
     opal_list_item_t *item;
     
-    opal_output(orte_grpcomm_basic.output, "oob_xcast_mode: direct");
-
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s xcast_direct",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     /* need to get the job peers so we know who to send the message to */
     OBJ_CONSTRUCT(&attrs, opal_list_t);
     orte_rmgr.add_attribute(&attrs, ORTE_NS_USE_JOBID, ORTE_JOBID, &job, ORTE_RMGR_ATTR_OVERRIDE);
@@ -493,10 +506,10 @@ static int xcast_direct(orte_jobid_t job,
     OBJ_RELEASE(item);
     OBJ_DESTRUCT(&attrs);
     
-    if (orte_timing) {
-        opal_output(0, "xcast %s: mode direct buffer size %ld",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)buffer->bytes_used);
-    }
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s xcast_direct: buffer size %ld",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)buffer->bytes_used));
     
     /* we have to account for all of the messages we are about to send
      * because the non-blocking send can come back almost immediately - before
@@ -507,9 +520,16 @@ static int xcast_direct(orte_jobid_t job,
     orte_grpcomm_basic.num_active += n;
     OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
 
-    opal_output(orte_grpcomm_basic.output, "oob_xcast_direct: num_active now %ld", (long)orte_grpcomm_basic.num_active);
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s xcast_direct: num_active now %ld",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)orte_grpcomm_basic.num_active));
     
     for(i=0; i<n; i++) {
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                             "xcast_direct: %s => %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(peers+i)));
         if (0 > (rc = orte_rml.send_buffer_nb(peers+i, buffer, tag, 0, xcast_send_cb, NULL))) {
             if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
@@ -533,35 +553,264 @@ CLEANUP:
     return rc;
 }
 
-static int xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc)
+static int allgather(orte_buffer_t *sbuf, orte_buffer_t *rbuf)
 {
+    orte_process_name_t name;
     int rc;
     orte_std_cntr_t i;
-    orte_buffer_t rbuf;
-    orte_gpr_notify_message_t *mesg;
+    orte_buffer_t tmpbuf;
     
-    OBJ_CONSTRUCT(&rbuf, orte_buffer_t);
-    rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &rbuf, ORTE_RML_TAG_XCAST_BARRIER, 0);
-    if(rc < 0) {
-        OBJ_DESTRUCT(&rbuf);
+    /* everything happens within my jobid */
+    name.jobid = ORTE_PROC_MY_NAME->jobid;
+    
+    if (0 != ORTE_PROC_MY_NAME->vpid) {
+        /* everyone but rank=0 sends data */
+        name.vpid = 0;
+        if (0 > orte_rml.send_buffer(&name, sbuf, ORTE_RML_TAG_ALLGATHER, 0)) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+            return ORTE_ERR_COMM_FAILURE;
+        }
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                             "%s allgather buffer sent",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        /* now receive the final result from rank=0 */
+        if (0 > orte_rml.recv_buffer(ORTE_NAME_WILDCARD, rbuf, ORTE_RML_TAG_ALLGATHER, 0)) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+            return ORTE_ERR_COMM_FAILURE;
+        }
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                             "%s allgather buffer received",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        return ORTE_SUCCESS;
+    }
+    
+    /* seed the outgoing buffer with the num_procs so it can be unpacked */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(rbuf, &orte_process_info.num_procs, 1, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if (cbfunc != NULL) {
-        mesg = OBJ_NEW(orte_gpr_notify_message_t);
-        if (NULL == mesg) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
+    
+    /* put my own information into the outgoing buffer */
+    if (ORTE_SUCCESS != (rc = orte_dss.copy_payload(rbuf, sbuf))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s allgather collecting buffers",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* rank=0 receives everyone else's data */
+    for (i=1; i < orte_process_info.num_procs; i++) {
+        name.vpid = (orte_vpid_t)i;
+        OBJ_CONSTRUCT(&tmpbuf, orte_buffer_t);
+        if (0 > orte_rml.recv_buffer(&name, &tmpbuf, ORTE_RML_TAG_ALLGATHER, 0)) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+            return ORTE_ERR_COMM_FAILURE;
         }
-        i=1;
-        if (ORTE_SUCCESS != (rc = orte_dss.unpack(&rbuf, &mesg, &i, ORTE_GPR_NOTIFY_MSG))) {
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                             "%s allgather buffer %ld received",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)i));
+        /* append this data to the rbuf */
+        if (ORTE_SUCCESS != (rc = orte_dss.copy_payload(rbuf, &tmpbuf))) {
             ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(mesg);
             return rc;
         }
-        cbfunc(mesg);
-        OBJ_RELEASE(mesg);
+        /* clear out the tmpbuf */
+        OBJ_DESTRUCT(&tmpbuf);
     }
-    OBJ_DESTRUCT(&rbuf);
-
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s allgather xcasting collected data",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* xcast the results */
+    orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, rbuf, ORTE_RML_TAG_ALLGATHER);
+    
+    /* xcast automatically ensures that the sender -always- gets a copy
+     * of the message. This is required to ensure proper operation of the
+     * launch system as the HNP -must- get a copy itself. So we have to
+     * post our own receive here so that we don't leave a message rattling
+     * around in our RML
+     */
+    OBJ_CONSTRUCT(&tmpbuf, orte_buffer_t);
+    if (0 > (rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &tmpbuf, ORTE_RML_TAG_ALLGATHER, 0))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s allgather buffer received",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    /* don't need the received buffer - we already have what we need */
+    OBJ_DESTRUCT(&tmpbuf);
+    
     return ORTE_SUCCESS;
 }
+
+static int allgather_list(opal_list_t *names, orte_buffer_t *sbuf, orte_buffer_t *rbuf)
+{
+    opal_list_item_t *item;
+    orte_namelist_t *peer, *root;
+    orte_std_cntr_t i, num_peers;
+    orte_buffer_t tmpbuf;
+    int rc;
+    
+    /* the first entry on the list is the "root" that collects
+     * all the data - everyone else just sends and gets back
+     * the results
+     */
+    root = (orte_namelist_t*)opal_list_get_first(names);
+    
+    if (ORTE_EQUAL != orte_dss.compare(root->name, ORTE_PROC_MY_NAME, ORTE_NAME)) {
+        /* everyone but root sends data */
+        if (0 > orte_rml.send_buffer(root->name, sbuf, ORTE_RML_TAG_ALLGATHER_LIST, 0)) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+            return ORTE_ERR_COMM_FAILURE;
+        }
+        /* now receive the final result */
+        if (0 > orte_rml.recv_buffer(root->name, rbuf, ORTE_RML_TAG_ALLGATHER_LIST, 0)) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+            return ORTE_ERR_COMM_FAILURE;
+        }
+        return ORTE_SUCCESS;
+    }
+    
+    /* count how many peers are participating, including myself */
+    num_peers = (orte_std_cntr_t)opal_list_get_size(names);
+
+    /* seed the outgoing buffer with the num_procs so it can be unpacked */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(rbuf, &num_peers, 1, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* put my own information into the outgoing buffer */
+    if (ORTE_SUCCESS != (rc = orte_dss.copy_payload(rbuf, sbuf))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* root receives everyone else's data */
+    for (i=1; i < num_peers; i++) {
+        /* receive the buffer from this process */
+        OBJ_CONSTRUCT(&tmpbuf, orte_buffer_t);
+        if (0 > orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &tmpbuf, ORTE_RML_TAG_ALLGATHER_LIST, 0)) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+            return ORTE_ERR_COMM_FAILURE;
+        }
+        /* append this data to the rbuf */
+        if (ORTE_SUCCESS != (rc = orte_dss.copy_payload(rbuf, &tmpbuf))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* clear out the tmpbuf */
+        OBJ_DESTRUCT(&tmpbuf);
+    }
+    
+    /* broadcast the results */
+    for (item = opal_list_get_first(names);
+         item != opal_list_get_end(names);
+         item = opal_list_get_next(item)) {
+        peer = (orte_namelist_t*)item;
+        
+        /* skip myself */
+        if (ORTE_EQUAL == orte_dss.compare(root->name, peer->name, ORTE_NAME)) {
+            continue;
+        }
+        
+        /* transmit the buffer to this process */
+        if (0 > orte_rml.send_buffer(peer->name, rbuf, ORTE_RML_TAG_ALLGATHER_LIST, 0)) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+            return ORTE_ERR_COMM_FAILURE;
+        }
+    }
+    
+    return ORTE_SUCCESS;
+}
+
+
+static int barrier(void)
+{
+    orte_process_name_t name;
+    orte_std_cntr_t i;
+    orte_buffer_t buf;
+    int rc;
+    
+    /* everything happens within the same jobid */
+    name.jobid = ORTE_PROC_MY_NAME->jobid;
+    
+    /* All non-root send & receive zero-length message. */
+    if (0 != ORTE_PROC_MY_NAME->vpid) {
+        name.vpid = 0;
+        OBJ_CONSTRUCT(&buf, orte_buffer_t);
+        i=0;
+        orte_dss.pack(&buf, &i, 1, ORTE_STD_CNTR); /* put something meaningless here */
+        
+        rc = orte_rml.send_buffer(&name,&buf,ORTE_RML_TAG_BARRIER,0);
+        if (rc < 0) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        OBJ_DESTRUCT(&buf);
+        
+        /* get the release from rank=0 */
+        OBJ_CONSTRUCT(&buf, orte_buffer_t);
+        rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD,&buf,ORTE_RML_TAG_BARRIER,0);
+        if (rc < 0) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        OBJ_DESTRUCT(&buf);
+        return ORTE_SUCCESS;
+    }
+    
+    for (i = 1; i < orte_process_info.num_procs; i++) {
+        name.vpid = (orte_vpid_t)i;
+        OBJ_CONSTRUCT(&buf, orte_buffer_t);
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                             "%s barrier %ld received",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)i));
+        rc = orte_rml.recv_buffer(&name,&buf,ORTE_RML_TAG_BARRIER,0);
+        if (rc < 0) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        OBJ_DESTRUCT(&buf);
+    }
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s barrier xcasting release",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    /* xcast the release */
+    OBJ_CONSTRUCT(&buf, orte_buffer_t);
+    orte_dss.pack(&buf, &i, 1, ORTE_STD_CNTR); /* put something meaningless here */
+    orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, &buf, ORTE_RML_TAG_BARRIER);
+    OBJ_DESTRUCT(&buf);
+
+    /* xcast automatically ensures that the sender -always- gets a copy
+     * of the message. This is required to ensure proper operation of the
+     * launch system as the HNP -must- get a copy itself. So we have to
+     * post our own receive here so that we don't leave a message rattling
+     * around in our RML
+     */
+    OBJ_CONSTRUCT(&buf, orte_buffer_t);
+    if (0 > (rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &buf, ORTE_RML_TAG_BARRIER, 0))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s barrier release received",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    OBJ_DESTRUCT(&buf);
+    
+    return ORTE_SUCCESS;
+}
+
+orte_grpcomm_base_module_t orte_grpcomm_basic_module = {
+    xcast,
+    xcast_nb,
+    allgather,
+    allgather_list,
+    barrier
+};
+

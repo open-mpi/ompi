@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
     double pi;
     pid_t pid;
 
-    if (0 > (rc = orte_init(ORTE_NON_INFRASTRUCTURE, ORTE_NON_BARRIER))) {
+    if (0 > (rc = orte_init(ORTE_NON_INFRASTRUCTURE))) {
         fprintf(stderr, "spin: couldn't init orte - error code %d\n", rc);
         return rc;
     }

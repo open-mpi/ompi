@@ -48,7 +48,6 @@
 #include "orte/util/session_dir.h"
 
 #include "orte/runtime/runtime.h"
-#include "runtime/runtime_internal.h"
 #include "orte/runtime/orte_wait.h"
 
 

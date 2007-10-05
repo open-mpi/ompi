@@ -119,6 +119,7 @@ int mca_oob_tcp_recv_nb(
     }
 
     /* fill in the header */
+    msg->msg_hdr.msg_origin = *peer;
     if (NULL == orte_process_info.my_name) {
         msg->msg_hdr.msg_src = *ORTE_NAME_INVALID;
     } else {

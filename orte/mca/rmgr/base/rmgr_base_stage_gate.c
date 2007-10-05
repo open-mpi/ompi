@@ -39,6 +39,7 @@
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/routed/routed.h"
 #include "orte/mca/smr/smr.h"
 #include "orte/runtime/runtime.h"
 
@@ -62,7 +63,6 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
 {
     int rc;
     orte_jobid_t job;
-    orte_buffer_t *buffer;
 
     OPAL_TRACE(1);
 
@@ -102,21 +102,6 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
-    } else if (orte_schema.check_std_trigger_name(msg->target, ORTE_STG2_TRIGGER)) {
-        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_STATE_AT_STG2))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-    } else if (orte_schema.check_std_trigger_name(msg->target, ORTE_STG3_TRIGGER)) {
-        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_STATE_AT_STG3))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-    } else if (orte_schema.check_std_trigger_name(msg->target, ORTE_ALL_FINALIZED_TRIGGER)) {
-        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_STATE_FINALIZED))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
     } else if (orte_schema.check_std_trigger_name(msg->target, ORTE_ALL_TERMINATED_TRIGGER)) {
         if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_STATE_TERMINATED))) {
             ORTE_ERROR_LOG(rc);
@@ -134,14 +119,12 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
         }
     }
 
+#if 0
     /* check to see if this came from a trigger that does not require we send
      * out a message
      */
     if (!orte_schema.check_std_trigger_name(msg->target, ORTE_STARTUP_TRIGGER) &&
-        !orte_schema.check_std_trigger_name(msg->target, ORTE_STG1_TRIGGER) &&
-        !orte_schema.check_std_trigger_name(msg->target, ORTE_STG2_TRIGGER) &&
-        !orte_schema.check_std_trigger_name(msg->target, ORTE_STG3_TRIGGER) &&
-        !orte_schema.check_std_trigger_name(msg->target, ORTE_ALL_FINALIZED_TRIGGER)) {
+        !orte_schema.check_std_trigger_name(msg->target, ORTE_STG1_TRIGGER)) {
         return ORTE_SUCCESS;
     }
     
@@ -169,7 +152,18 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
         ORTE_ERROR_LOG(rc);
     }
     OBJ_RELEASE(buffer);
-
+#endif
+    
+    if (orte_schema.check_std_trigger_name(msg->target, ORTE_STG1_TRIGGER)) {
+        if (ORTE_SUCCESS != (rc = orte_routed.init_routes(job, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    } else {
+        opal_output(0, "rmgr_stage_gate: got trigger %s", msg->target);
+        rc = ORTE_SUCCESS;
+    }
+    
 CLEANUP:
     
     return rc;

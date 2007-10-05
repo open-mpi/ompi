@@ -216,15 +216,20 @@ static int orte_clean_init(void) {
                 true, &environ);
 #endif
 
+#if 0
+    
     /***************************
      * We need all of OPAL
+     * RHC: this is included in orte_init,
+     * so I don't think this is needed right now.
      ***************************/
     if (ORTE_SUCCESS != (ret = opal_init())) {
         exit_status = ret;
         goto cleanup;
     }
-
-    if (ORTE_SUCCESS != (ret = orte_system_init(ORTE_INFRASTRUCTURE, ORTE_NON_BARRIER))) {
+#endif
+    
+    if (ORTE_SUCCESS != (ret = orte_init(ORTE_INFRASTRUCTURE))) {
         exit_status = ret;
         goto cleanup;
     }

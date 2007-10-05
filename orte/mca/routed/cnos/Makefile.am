@@ -16,39 +16,31 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-ns-replica.txt
-
 sources = \
-        ns_replica.h \
-	ns_replica_class_instances.h \
-	ns_replica_cell_fns.c \
-	ns_replica_diag_fns.c \
-	ns_replica_general_fns.c \
-	ns_replica_job_fns.c \
-	ns_replica_recv.c \
-	ns_replica_support_fns.c \
-        ns_replica_component.c
+        routed_cnos.h \
+	routed_cnos_module.c \
+        routed_cnos_component.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_ns_replica_DSO
+if OMPI_BUILD_routed_cnos_DSO
 component_noinst =
-component_install = mca_ns_replica.la
+component_install = mca_routed_cnos.la
 else
-component_noinst = libmca_ns_replica.la
+component_noinst = libmca_routed_cnos.la
 component_install =
 endif
 
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_ns_replica_la_SOURCES = $(sources)
-mca_ns_replica_la_LDFLAGS = -module -avoid-version
-mca_ns_replica_la_LIBADD = \
+mca_routed_cnos_la_SOURCES = $(sources)
+mca_routed_cnos_la_LDFLAGS = -module -avoid-version
+mca_routed_cnos_la_LIBADD = \
     $(top_ompi_builddir)/orte/libopen-rte.la \
     $(top_ompi_builddir)/opal/libopen-pal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_ns_replica_la_SOURCES =$(sources)
-libmca_ns_replica_la_LDFLAGS = -module -avoid-version
+libmca_routed_cnos_la_SOURCES =$(sources)
+libmca_routed_cnos_la_LDFLAGS = -module -avoid-version

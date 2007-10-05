@@ -35,6 +35,7 @@
 
 ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_name =              */   NULL,
+    /*  .my_daemon =            */  {ORTE_JOBID_INVALID, ORTE_VPID_INVALID},
     /*  ,app_num =              */   -1,
     /*  ,universe_size =        */   -1,
     /*  .singleton =            */   false,

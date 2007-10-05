@@ -274,10 +274,7 @@ static int orte_pls_rsh_fill_exec_path ( char ** exec_path)
 
 static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 {
-    int rc;
     unsigned long deltat;
-    orte_buffer_t ack;
-    int src[3] = {-1, -1};
     
     if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
         /* tell the user something went wrong */
@@ -302,36 +299,10 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
         } else {
             opal_output(0, "No extra status information is available: %d.", status);
         }
-        /* need to fake a message to the daemon callback system so it can break out
-         * of its receive loop
+        /* report that the daemon has failed so we break out of the daemon
+         * callback receive and can exit
          */
-        src[2] = pid;
-        if(WIFSIGNALED(status)) {
-            src[1] = WTERMSIG(status);
-        }
-        OBJ_CONSTRUCT(&ack, orte_buffer_t);
-        if (ORTE_SUCCESS != (rc = orte_dss.pack(&ack, &src, 3, ORTE_INT))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        rc = orte_rml.send_buffer(ORTE_PROC_MY_NAME, &ack, ORTE_RML_TAG_ORTED_CALLBACK, 0);
-        if (0 > rc) {
-            ORTE_ERROR_LOG(rc);
-        }
-        OBJ_DESTRUCT(&ack);
-        
-        /*  The usual reasons for ssh to exit abnormally all are a pretty good
-            indication that the child processes aren't going to start up properly.
-            Set the job state to indicate we failed to launch so orterun's exit status
-            will be non-zero and forcibly terminate the job so orterun can exit
-        */
-        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(active_job, ORTE_JOB_STATE_FAILED_TO_START))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        
-        if (ORTE_SUCCESS != (rc = orte_wakeup(active_job))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        
+        orte_pls_base_daemon_failed(active_job, true, pid, status, ORTE_JOB_STATE_FAILED_TO_START);
     } /* if abnormal exit */
 
     /* release any waiting threads */
@@ -555,8 +526,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
      */
     orte_pls_base_orted_append_basic_args(&argc, &argv,
                                           &proc_name_index,
-                                          &node_name_index2,
-                                          map->num_nodes);
+                                          &node_name_index2);
     
     local_exec_index_end = argc;
     if (mca_pls_rsh_component.debug) {
@@ -958,13 +928,7 @@ launch_apps:
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(jobid, ORTE_JOB_STATE_FAILED_TO_START))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        
-        if (ORTE_SUCCESS != (rc = orte_wakeup(jobid))) {
-            ORTE_ERROR_LOG(rc);
-        }        
+        orte_pls_base_daemon_failed(jobid, false, -1, 0, ORTE_JOB_STATE_FAILED_TO_START);
     }
 
     return rc;

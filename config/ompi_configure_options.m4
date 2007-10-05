@@ -518,6 +518,25 @@ AC_DEFINE_UNQUOTED([OPAL_ENABLE_TRACE], [$opal_want_trace],
 
 
 #
+# Jumbo application support
+#
+
+AC_MSG_CHECKING([if want jumbo app support])
+AC_ARG_ENABLE([jumbo-apps],
+    [AC_HELP_STRING([--enable-jumbo-apps],
+                    [Enable support for applications in excess of 32K processes and/or 32K jobs, or running on clusters in excess of 32k nodes (default: disabled)])])
+if test "$enable_jumbo_apps" = "yes"; then
+    AC_MSG_RESULT([yes])
+    orte_want_jumbo_apps=1
+else
+    AC_MSG_RESULT([no])
+    orte_want_jumbo_apps=0
+fi
+AC_DEFINE_UNQUOTED([ORTE_ENABLE_JUMBO_APPS], [$orte_want_jumbo_apps],
+                   [Enable support for applications in excess of 32K processes and/or 32K jobs, or running on clusters in excess of 32k nodes])
+
+
+#
 # Cross-compile data
 #
 AC_ARG_WITH([cross],

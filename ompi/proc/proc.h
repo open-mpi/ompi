@@ -54,6 +54,8 @@ struct ompi_proc_t {
     opal_list_item_t                super;
     /** this process' name */
     orte_process_name_t             proc_name;
+    /** "nodeid" on which the proc resides */
+    orte_nodeid_t                   proc_nodeid;
     /** PML specific proc data */
     struct mca_pml_base_endpoint_t* proc_pml;
     /** BML specific proc data */
@@ -119,6 +121,23 @@ OMPI_DECLSPEC extern ompi_proc_t* ompi_proc_local_proc;
  */
 int ompi_proc_init(void);
 
+/**
+ * Publish local process information
+ *
+ * Used by ompi_proc_init() and elsewhere in the code to refresh any 
+ * local information not easily determined by the run-time ahead of time 
+ * (architecture and hostname).
+ *
+ * @note While an ompi_proc_t will exist with mostly valid information
+ * for each process in the MPI_COMM_WORLD at the conclusion of this
+ * call, some information will not be immediately available.  This
+ * includes the architecture and hostname, which will be available by
+ * the conclusion of the stage gate.
+ *
+ * @retval OMPI_SUCESS  Information available in the modex
+ * @retval OMPI_ERRROR  Failure due to unspecified error
+ */
+int ompi_proc_publish_info(void);
 
 /**
  * Get data exchange information from remote processes
@@ -267,18 +286,37 @@ int ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
  * provided in the buffer.  The lookup actions are always entirely
  * local.  The proclist returned is a list of pointers to all procs in
  * the buffer, whether they were previously known or are new to this
- * process.  PML_ADD_PROCS will be called on the list of new processes
- * discovered during this operation.
+ * process.
+ *
+ * @note In previous versions of this function, The PML's add_procs()
+ * function was called for any new processes discovered as a result of
+ * this operation.  That is no longer the case -- the caller must use
+ * the newproclist information to call add_procs() if necessary.
+ *
+ * @note The reference count for procs created as a result of this
+ * operation will be set to 1.  Existing procs will not have their
+ * reference count changed.  The reference count of a proc at the
+ * return of this function is the same regardless of whether NULL is
+ * provided for newproclist.  The user is responsible for freeing the
+ * newproclist array.
  *
  * @param[in] buf          orte_buffer containing the packed names
  * @param[in] proclistsize number of expected proc-pointres
  * @param[out] proclist    list of process pointers
+ * @param[out] newproclistsize Number of new procs added as a result
+ *                         of the unpack operation.  NULL may be
+ *                         provided if information is not needed.
+ * @param[out] newproclist List of new procs added as a result of
+ *                         the unpack operation.  NULL may be
+ *                         provided if informationis not needed.
  *
  * Return value:
  *   OMPI_SUCCESS               on success
  *   OMPI_ERROR                 else
  */
-int ompi_proc_unpack(orte_buffer_t *buf, int proclistsize, ompi_proc_t ***proclist);
+int ompi_proc_unpack(orte_buffer_t *buf, 
+                     int proclistsize, ompi_proc_t ***proclist,
+                     int *newproclistsize, ompi_proc_t ***newproclist);
 
 
 END_C_DECLS

@@ -332,9 +332,10 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
              msg->msg_rwnum = 0;
         }
         if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_INFO) {
-            opal_output(0, "%s-%s mca_oob_tcp_msg_recv_handler: size %lu\n",
+            opal_output(0, "%s-%s (origin: %s) mca_oob_tcp_msg_recv_handler: size %lu\n",
                         ORTE_NAME_PRINT(orte_process_info.my_name),
                         ORTE_NAME_PRINT(&(peer->peer_name)),
+                        ORTE_NAME_PRINT(&(msg->msg_hdr.msg_origin)),
                         (unsigned long)(msg->msg_hdr.msg_size) );
         }
     }
@@ -483,7 +484,7 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
 
     /* match msg against posted receives */
-    post = mca_oob_tcp_msg_match_post(&peer->peer_name, msg->msg_hdr.msg_tag);
+    post = mca_oob_tcp_msg_match_post(&msg->msg_hdr.msg_origin, msg->msg_hdr.msg_tag);
     if(NULL != post) {
 
         if(NULL == post->msg_uiov || 0 == post->msg_ucnt) {
@@ -519,7 +520,7 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                 post->msg_hdr.msg_tag, 
                 post->msg_cbdata);
         } else {
-            mca_oob_tcp_msg_complete(post, &peer->peer_name);
+            mca_oob_tcp_msg_complete(post, &msg->msg_hdr.msg_origin);
         }
 
         OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
@@ -593,7 +594,7 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(orte_process_name_t* name, int tag
         msg != (mca_oob_tcp_msg_t*) opal_list_get_end(&mca_oob_tcp_component.tcp_msg_recv);
         msg =  (mca_oob_tcp_msg_t*) opal_list_get_next(msg)) {
 
-        if(ORTE_EQUAL == orte_dss.compare(name, &msg->msg_peer, ORTE_NAME)) {
+        if(ORTE_EQUAL == orte_dss.compare(name, &msg->msg_hdr.msg_origin, ORTE_NAME)) {
             if (tag == msg->msg_hdr.msg_tag) {
                 return msg;
             }

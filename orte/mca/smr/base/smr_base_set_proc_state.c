@@ -25,11 +25,12 @@
 
 #include <string.h>
 
+#include "orte/util/proc_info.h"
 #include "orte/mca/schema/schema.h"
-
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/ns/ns.h"
+#include "orte/mca/odls/odls_types.h"
 
 #include "orte/mca/smr/base/smr_private.h"
 
@@ -147,27 +148,6 @@ int orte_smr_base_set_proc_state(orte_process_name_t *proc,
                 }
                 break;
                 
-            case ORTE_PROC_STATE_AT_STG2:
-                if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_AT_STG2, ORTE_UNDEF, NULL))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
-                break;
-    
-            case ORTE_PROC_STATE_AT_STG3:
-                if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_AT_STG3, ORTE_UNDEF, NULL))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
-                break;
-    
-            case ORTE_PROC_STATE_FINALIZED:
-                if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_FINALIZED, ORTE_UNDEF, NULL))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
-                break;
-    
             case ORTE_PROC_STATE_TERMINATED:
                 if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_TERMINATED, ORTE_UNDEF, NULL))) {
                     ORTE_ERROR_LOG(rc);
@@ -212,4 +192,48 @@ cleanup:
     free(segment);
 
     return rc;
+}
+
+
+int orte_smr_base_register_sync(void)
+{
+    orte_buffer_t buffer, ack;
+    int rc;
+    orte_daemon_cmd_flag_t command=ORTE_DAEMON_SYNC_BY_PROC;
+    
+    /* we need to send a very small message to get the oob to establish
+     * the connection - the oob will leave the connection "alive"
+     * thereafter so we can communicate readily
+     */
+    
+    OBJ_CONSTRUCT(&buffer, orte_buffer_t);
+
+    /* tell the daemon to sync */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &command, 1, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buffer);
+        return rc;
+    }
+
+    /* send the sync command to our daemon */
+    if (0 > (rc = orte_rml.send_buffer(&orte_process_info.my_daemon, &buffer, ORTE_RML_TAG_DAEMON, 0))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buffer);
+        return ORTE_SUCCESS;
+    }
+    OBJ_DESTRUCT(&buffer);
+
+    /* get the ack - need this to ensure that the sync communication
+     * gets serviced by the event library on the orted prior to the
+     * process exiting
+     */
+    OBJ_CONSTRUCT(&ack, orte_buffer_t);
+    if (0 > orte_rml.recv_buffer(&orte_process_info.my_daemon, &ack, ORTE_RML_TAG_SYNC, 0)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_DESTRUCT(&ack);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    OBJ_DESTRUCT(&ack);
+
+    return ORTE_SUCCESS;
 }

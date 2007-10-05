@@ -39,6 +39,8 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
+#include "orte/mca/routed/routed.h"
 #include "orte/runtime/params.h"
 #include "orte/runtime/runtime.h"
 
@@ -366,58 +368,88 @@ static int fork_hnp(void)
         exit(1);
         
     } else {
-        /* I am the parent - wait to hear something back and
+       /* I am the parent - wait to hear something back and
          * report results
          */
         close(p[1]);  /* parent closes the write - orted will write its contact info to it*/
         close(death_pipe[0]);  /* parent closes the death_pipe's read */
         
-        /* setup the buffer to read the uri */
+        /* setup the buffer to read the name + uri */
         buffer_length = ORTE_URI_MSG_LGTH;
         chunk = ORTE_URI_MSG_LGTH-1;
         num_chars_read = 0;
         orted_uri = (char*)malloc(buffer_length);
 
-        while (1) {
-            
-            while (chunk == (rc = read(p[0], &orted_uri[num_chars_read], chunk))) {
-                /* we read an entire buffer - better get more */
-                num_chars_read += chunk;
-                buffer_length += ORTE_URI_MSG_LGTH;
-                orted_uri = realloc((void*)orted_uri, buffer_length);
-            }
-            num_chars_read += rc;
-
-            if (num_chars_read <= 0) {
-                /* we didn't get anything back - this is bad */
-                ORTE_ERROR_LOG(ORTE_ERR_HNP_COULD_NOT_START);
-                free(orted_uri);
-                return ORTE_ERR_HNP_COULD_NOT_START;
-            }
-            /* we got something back - let's hope it was the uri.
-             * Set the contact info into our RML - it will bark
-             * if the returned info isn't a uri
-             */
-            if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orted_uri))) {
-                ORTE_ERROR_LOG(rc);
-                free(orted_uri);
-                return rc;
-            }
-            /* okay, the HNP is now setup. We actually don't need to
-             * restart ourselves as we haven't really done anything yet.
-             * So set our name to be [0,1,0] since we know that's what
-             * it should be, set the HNP info in our globals, and tell
-             * orte_init that those things are done
-             */
-            orte_universe_info.seed_uri = strdup(orted_uri);
-            orte_process_info.ns_replica_uri = strdup(orted_uri);
-            orte_process_info.gpr_replica_uri = strdup(orted_uri);
-           /* indicate we are a singleton so orte_init knows what to do */
-            orte_process_info.singleton = true;
-            /* all done - report success */
-            free(orted_uri);
-            return ORTE_SUCCESS;
+        while (chunk == (rc = read(p[0], &orted_uri[num_chars_read], chunk))) {
+            /* we read an entire buffer - better get more */
+            num_chars_read += chunk;
+            buffer_length += ORTE_URI_MSG_LGTH;
+            orted_uri = realloc((void*)orted_uri, buffer_length);
         }
+        num_chars_read += rc;
+
+        if (num_chars_read <= 0) {
+            /* we didn't get anything back - this is bad */
+            ORTE_ERROR_LOG(ORTE_ERR_HNP_COULD_NOT_START);
+            free(orted_uri);
+            return ORTE_ERR_HNP_COULD_NOT_START;
+        }
+        
+        /* parse the name from the returned info */
+        if (']' != orted_uri[strlen(orted_uri)-1]) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+            free(orted_uri);
+            return ORTE_ERR_COMM_FAILURE;
+        }
+        orted_uri[strlen(orted_uri)-1] = '\0';
+        if (NULL == (param = strrchr(orted_uri, '['))) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+            free(orted_uri);
+            return ORTE_ERR_COMM_FAILURE;
+        }
+        *param = '\0';  /* terminate the string */
+        param++;
+        if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(&orte_process_info.my_name, param))) {
+            ORTE_ERROR_LOG(rc);
+            free(orted_uri);
+            return rc;
+        }
+        /* we got something back - let's hope it was the uri.
+         * Set the contact info into our RML - it will bark
+         * if the returned info isn't a uri
+         */
+        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orted_uri))) {
+            ORTE_ERROR_LOG(rc);
+            free(orted_uri);
+            return rc;
+        }
+        /* extract the name, noting that the HNP is also my local daemon,
+         * and define the route as direct
+         */
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orted_uri, &orte_process_info.my_daemon, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            free(orted_uri);
+            return rc;
+        }
+        if (ORTE_SUCCESS != (rc = orte_routed.update_route(&orte_process_info.my_daemon,
+                                                           &orte_process_info.my_daemon))) {
+            ORTE_ERROR_LOG(rc);
+            free(orted_uri);
+            return rc;
+        }
+        /* okay, the HNP is now setup. We actually don't need to
+         * restart ourselves as we haven't really done anything yet.
+         * So set the HNP info in our globals, and tell
+         * orte_init that those things are done
+         */
+        orte_universe_info.seed_uri = strdup(orted_uri);
+        orte_process_info.ns_replica_uri = strdup(orted_uri);
+        orte_process_info.gpr_replica_uri = strdup(orted_uri);
+       /* indicate we are a singleton so orte_init knows what to do */
+        orte_process_info.singleton = true;
+        /* all done - report success */
+        free(orted_uri);
+        return ORTE_SUCCESS;
     }
 #else
     /* someone will have to devise a Windows equivalent */

@@ -89,7 +89,8 @@ static int mca_oob_tcp_send_self(
  *
  */
 int mca_oob_tcp_send_nb(
-    orte_process_name_t* name, 
+    orte_process_name_t* target, 
+    orte_process_name_t* origin, 
     struct iovec* iov, 
     int count,
     int tag,
@@ -97,7 +98,7 @@ int mca_oob_tcp_send_nb(
     orte_rml_callback_fn_t cbfunc, 
     void* cbdata)
 {
-    mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(name);
+    mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(target);
     mca_oob_tcp_msg_t* msg;
     int size;
     int rc;
@@ -127,12 +128,13 @@ int mca_oob_tcp_send_nb(
     msg->msg_hdr.msg_type = MCA_OOB_TCP_DATA;
     msg->msg_hdr.msg_size = size;
     msg->msg_hdr.msg_tag = tag;
+    msg->msg_hdr.msg_origin = *origin;
     if (NULL == orte_process_info.my_name) {
         msg->msg_hdr.msg_src = *ORTE_NAME_INVALID;
     } else {
         msg->msg_hdr.msg_src = *orte_process_info.my_name;
     }
-    msg->msg_hdr.msg_dst = *name;
+    msg->msg_hdr.msg_dst = *target;
 
     /* create one additional iovect that will hold the size of the message */
     msg->msg_type = MCA_OOB_TCP_POSTED;
@@ -152,7 +154,7 @@ int mca_oob_tcp_send_nb(
     msg->msg_complete = false;
     msg->msg_peer = peer->peer_name;
     
-    if (ORTE_EQUAL == mca_oob_tcp_process_name_compare(name, orte_process_info.my_name)) {  /* local delivery */
+    if (ORTE_EQUAL == mca_oob_tcp_process_name_compare(target, orte_process_info.my_name)) {  /* local delivery */
         rc = mca_oob_tcp_send_self(peer,msg,iov,count);
         if (rc < 0 ) {
             return rc;

@@ -25,20 +25,10 @@
 #include <sys/time.h>
 #endif  /* HAVE_SYS_TIME_H */
 
-#include "opal/threads/condition.h"
-#include "opal/util/output.h"
-#include "opal/util/bit_ops.h"
-
-#include "orte/util/proc_info.h"
 #include "orte/dss/dss.h"
-#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/ns/ns_types.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ns/ns.h"
-#include "orte/mca/rmgr/rmgr.h"
-#include "orte/mca/smr/smr.h"
-#include "orte/mca/odls/odls_types.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/runtime/params.h"
+#include "orte/mca/rml/rml_types.h"
 
 #include "grpcomm_cnos.h"
 
@@ -55,14 +45,18 @@ static int xcast(orte_jobid_t job,
                  orte_buffer_t *buffer,
                  orte_rml_tag_t tag);
 
-static int xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc);
-
 static int orte_grpcomm_cnos_barrier(void);
+
+static int allgather(orte_buffer_t *sbuf, orte_buffer_t *rbuf);
+
+static int allgather_list(opal_list_t *names, orte_buffer_t *sbuf, orte_buffer_t *rbuf);
 
 orte_grpcomm_base_module_t orte_grpcomm_cnos_module = {
     xcast,
     xcast_nb,
-    xcast_gate
+    allgather,
+    allgather_list,
+    orte_grpcomm_cnos_barrier
 };
 
 
@@ -88,26 +82,6 @@ static int xcast(orte_jobid_t job,
     return ORTE_SUCCESS;
 }
 
-static int xcast_gate(orte_gpr_trigger_cb_fn_t cbfunc)
-{
-    int rc = ORTE_SUCCESS;
-
-    orte_grpcomm_cnos_barrier();
-
-    if (NULL != cbfunc) {
-        orte_gpr_notify_message_t *msg;
-        msg = OBJ_NEW(orte_gpr_notify_message_t);
-        if (NULL == msg) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        cbfunc(msg);
-        OBJ_RELEASE(msg);
-    }
-
-    return rc;
-}
-
 static int
 orte_grpcomm_cnos_barrier(void)
 {
@@ -116,4 +90,30 @@ orte_grpcomm_cnos_barrier(void)
 #endif
 
     return ORTE_SUCCESS;
+}
+
+static int allgather(orte_buffer_t *sbuf, orte_buffer_t *rbuf)
+{
+    int rc;
+    orte_std_cntr_t zero=0;
+    
+    /* seed the outgoing buffer with num_procs=0 so it won't be unpacked */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(rbuf, &zero, 1, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    return rc;
+}
+
+static int allgather_list(opal_list_t *names, orte_buffer_t *sbuf, orte_buffer_t *rbuf)
+{
+    int rc;
+    orte_std_cntr_t zero=0;
+    
+    /* seed the outgoing buffer with num_procs=0 so it won't be unpacked */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(rbuf, &zero, 1, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    return rc;
 }

@@ -12,6 +12,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
+#include "orte/mca/routed/routed.h"
 #include "orte/mca/oob/oob_types.h"
 
 extern opal_list_t       orte_rml_base_subscriptions;
@@ -233,6 +234,7 @@ orte_rml_base_contact_info_notify(orte_gpr_notify_data_t* data,
     orte_gpr_value_t **values, *value;
     orte_gpr_keyval_t *keyval;
     char *contact_info;
+    orte_process_name_t name;
 
     /* process the callback */
     values = (orte_gpr_value_t**)(data->values)->addr;
@@ -249,6 +251,9 @@ orte_rml_base_contact_info_notify(orte_gpr_notify_data_t* data,
                     continue;
                 orte_dss.get((void**)&(contact_info), keyval->value, ORTE_STRING);
                 orte_rml.set_contact_info(contact_info);
+                /* also have to set the route, so extract the process name */
+                orte_rml_base_parse_uris(contact_info, &name, NULL);
+                orte_routed.update_route(&name, &name);
             }
         }
     }

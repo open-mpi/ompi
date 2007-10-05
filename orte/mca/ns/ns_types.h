@@ -55,11 +55,6 @@ extern "C" {
 #define ORTE_NS_INCLUDE_DESCENDANTS     "orte-ns-include-desc"
 #define ORTE_NS_INCLUDE_CHILDREN        "orte-ns-include-child"
 #define ORTE_NS_USE_JOB_FAMILY          "orte-ns-use-job-family"
-    
-
-#define ORTE_NAME_ARGS(n) \
-    (long) ((NULL == n) ? (long)-1 : (long)(n)->jobid), \
-    (long) ((NULL == n) ? (long)-1 : (long)(n)->vpid)
 
 
 /*
@@ -71,7 +66,11 @@ extern "C" {
 #define ORTE_NS_CMP_VPID       0x04
 #define ORTE_NS_CMP_ALL        0Xff
 
-/*
+#define ORTE_NAME_ARGS(n) \
+    (long) ((NULL == n) ? (long)-1 : (long)(n)->jobid), \
+    (long) ((NULL == n) ? (long)-1 : (long)(n)->vpid)
+    
+    /*
  * general typedefs & structures
  */
 /** Set the allowed range for ids in each space
@@ -81,11 +80,61 @@ extern "C" {
  * HTON and NTOH macros below must be updated, as well as the MIN /
  * MAX macros below and the datatype packing representations in
  * ns_private.h
+ *
+ * NOTE: Be sure to keep the jobid and vpid types the same size! Due
+ * to padding rules, it won't save anything to have one larger than
+ * the other, and it will cause problems in the communication subsystems
  */
-typedef orte_std_cntr_t orte_jobid_t;
-typedef orte_std_cntr_t orte_nodeid_t;
-typedef orte_std_cntr_t orte_vpid_t;
+    
+#if ORTE_ENABLE_JUMBO_APPS
+    typedef orte_std_cntr_t orte_jobid_t;
+    #define ORTE_JOBID_MAX      ORTE_STD_CNTR_MAX
+    #define ORTE_JOBID_MIN      ORTE_STD_CNTR_MIN
+    typedef orte_std_cntr_t orte_vpid_t;
+    #define ORTE_VPID_MAX       ORTE_STD_CNTR_MAX
+    #define ORTE_VPID_MIN       ORTE_STD_CNTR_MIN
+    typedef orte_std_cntr_t orte_nodeid_t;
+    #define ORTE_NODEID_MAX      ORTE_STD_CNTR_MAX
+    #define ORTE_NODEID_MIN      ORTE_STD_CNTR_MIN
 
+    #define ORTE_PROCESS_NAME_HTON(n)       \
+    do {                                    \
+        n.jobid = htonl(n.jobid);           \
+        n.vpid = htonl(n.vpid);             \
+    } while (0)
+
+    #define ORTE_PROCESS_NAME_NTOH(n)       \
+    do {                                    \
+        n.jobid = ntohl(n.jobid);           \
+        n.vpid = ntohl(n.vpid);             \
+    } while (0)
+        
+#else
+    typedef int16_t orte_jobid_t;
+    #define ORTE_JOBID_MAX      INT16_MAX
+    #define ORTE_JOBID_MIN      INT16_MIN
+    typedef int16_t orte_vpid_t;
+    #define ORTE_VPID_MAX       INT16_MAX
+    #define ORTE_VPID_MIN       INT16_MIN
+    typedef int16_t orte_nodeid_t;
+    #define ORTE_NODEID_MAX     INT16_MAX
+    #define ORTE_NODEID_MIN     INT16_MIN
+    
+    #define ORTE_PROCESS_NAME_HTON(n)       \
+    do {                                    \
+        n.jobid = htons(n.jobid);           \
+        n.vpid = htons(n.vpid);             \
+    } while (0)
+
+    #define ORTE_PROCESS_NAME_NTOH(n)       \
+    do {                                    \
+        n.jobid = ntohs(n.jobid);           \
+        n.vpid = ntohs(n.vpid);             \
+    } while (0)
+    
+#endif
+
+    
 typedef uint8_t  orte_ns_cmp_bitmask_t;  /**< Bit mask for comparing process names */
 
 struct orte_process_name_t {
@@ -99,20 +148,6 @@ typedef struct orte_process_name_t orte_process_name_t;
 ORTE_DECLSPEC extern char* orte_ns_base_print_name_args(const orte_process_name_t *name);
 #define ORTE_NAME_PRINT(n) \
     orte_ns_base_print_name_args(n)
-
-/*
- * define maximum value for id's in any field
- */
-#define ORTE_JOBID_MAX      ORTE_STD_CNTR_MAX
-#define ORTE_VPID_MAX       ORTE_STD_CNTR_MAX
-#define ORTE_NODEID_MAX     ORTE_STD_CNTR_MAX
-
-/*
- * define minimum value for id's in any field
- */
-#define ORTE_JOBID_MIN      ORTE_STD_CNTR_MIN
-#define ORTE_VPID_MIN       ORTE_STD_CNTR_MIN
-#define ORTE_NODEID_MIN     ORTE_STD_CNTR_MIN
 
 /*
  * define invalid values
@@ -142,25 +177,6 @@ ORTE_DECLSPEC extern orte_process_name_t orte_ns_name_invalid;  /** instantiated
 
 #define ORTE_PROC_MY_HNP     &orte_ns_name_my_hnp
 ORTE_DECLSPEC extern orte_process_name_t orte_ns_name_my_hnp;  /** instantiated in orte/mca/ns/base/ns_base_open.c */
-
-/**
- * Convert process name from host to network byte order.
- *
- * @param name
- */
-#define ORTE_PROCESS_NAME_HTON(n) \
-    n.jobid = htonl(n.jobid);     \
-    n.vpid = htonl(n.vpid);  
-
-/**
- * Convert process name from network to host byte order.
- *
- * @param name
- */
-#define ORTE_PROCESS_NAME_NTOH(n)              \
-    n.jobid = ntohl(n.jobid);                  \
-    n.vpid = ntohl(n.vpid);  
-
 
 /** List of names for general use
  */

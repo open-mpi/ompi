@@ -53,7 +53,6 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
     cnt = 1;
     if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &num_values, &cnt, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
-        free(values);
         ret = rc;
         goto RETURN_ERROR;
     }

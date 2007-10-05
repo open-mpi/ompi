@@ -47,11 +47,6 @@ ORTE_DECLSPEC void orte_daemon_recv_routed(int status, orte_process_name_t* send
                              orte_buffer_t *buffer, orte_rml_tag_t tag,
                              void* cbdata);
 
-ORTE_DECLSPEC void orte_daemon_recv_gate(int status, orte_process_name_t* sender,
-                           orte_buffer_t *buffer, orte_rml_tag_t tag,
-                           void* cbdata);
-
-    
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

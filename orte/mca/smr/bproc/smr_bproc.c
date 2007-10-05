@@ -405,7 +405,6 @@ int orte_smr_bproc_begin_monitoring(orte_job_map_t *map, orte_gpr_trigger_cb_fn_
         node = (orte_mapped_node_t*)item;
         
         newnode = OBJ_NEW(orte_smr_node_state_tracker_t);
-        newnode->cell = node->cell;
         newnode->nodename = strdup(node->nodename);
         opal_list_append(&active_node_list, &newnode->super);
     }

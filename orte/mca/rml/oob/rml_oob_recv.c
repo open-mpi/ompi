@@ -10,8 +10,10 @@
 
 #include "rml_oob.h"
 
+#include "opal/util/output.h"
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/oob/base/base.h"
+#include "orte/mca/rml/base/base.h"
 #include "orte/dss/dss.h"
 
 
@@ -26,6 +28,14 @@ orte_rml_recv_msg_callback(int status,
     orte_rml_oob_msg_t *msg = (orte_rml_oob_msg_t*) cbdata;
     orte_rml_oob_msg_header_t *hdr =
         (orte_rml_oob_msg_header_t*) iov[0].iov_base;
+    ORTE_RML_OOB_MSG_HEADER_NTOH(*hdr);
+
+    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
+                         "%s recv from %s for %s (tag %d)",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&hdr->origin),
+                         ORTE_NAME_PRINT(&hdr->destination),
+                         hdr->tag));
 
     if (msg->msg_type == ORTE_RML_BLOCKING_RECV) {
         /* blocking send */
@@ -38,7 +48,6 @@ orte_rml_recv_msg_callback(int status,
             status -= sizeof(orte_rml_oob_msg_header_t);
         }
 
-        ORTE_RML_OOB_MSG_HEADER_NTOH(*hdr);
         msg->msg_cbfunc.iov(status, &hdr->origin, iov + 1, count - 1, 
                             hdr->tag, msg->msg_cbdata);
         if (!msg->msg_persistent) OBJ_RELEASE(msg);
@@ -49,7 +58,6 @@ orte_rml_recv_msg_callback(int status,
                                iov[1].iov_base, 
                                iov[1].iov_len);
 
-        ORTE_RML_OOB_MSG_HEADER_NTOH(*hdr);
         msg->msg_cbfunc.buffer(status, &hdr->origin, &msg->msg_recv_buffer, 
                                hdr->tag, msg->msg_cbdata);
 

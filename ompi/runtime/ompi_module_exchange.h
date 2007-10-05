@@ -51,6 +51,7 @@
 #include <sys/types.h>
 #endif
 
+#include "orte/dss/dss_types.h"
 #include "orte/mca/ns/ns_types.h"
 
 struct mca_base_component_t;
@@ -248,26 +249,40 @@ OMPI_DECLSPEC int ompi_modex_recv_string(const char* key,
 
 
 /**
- * Subscribe to resource updates for a specific job
+ * Retrieve a copy of the modex buffer
  *
- * Generally called during process initialization, after all the data
- * has been loaded into the module exchange system, but before the
- * data is actually used.
- * 
- * Intended to help the scalability of start-up by not subscribing to
- * the job updates until all data is in the system (and not firing
- * updates along the way) and launching the asynchronous request for
- * the data before it is actually needed later in init.
+ * Each component will "send" its data on its own. The modex
+ * collects that data into a local static buffer. At some point,
+ * we need to provide a copy of the collected info so someone
+ * (usually mpi_init) can send it to everyone else. This function
+ * xfers the payload in the local static buffer into the provided
+ * buffer, thus resetting the local buffer for future use.
  *
  * @note This function is probably not useful outside of application
  * initialization code.
  *
- * @param[in] jobid     Jobid for which information is needed
+ * @param[in] *buf      Pointer to the target buffer
  *
- * @retval OMPI_SUCCESS Successfully subscribed to information
+ * @retval OMPI_SUCCESS Successfully exchanged information
  * @retval OMPI_ERROR   An unspecified error occurred
  */
-OMPI_DECLSPEC int ompi_modex_subscribe_job(orte_jobid_t jobid);
+OMPI_DECLSPEC int ompi_modex_get_my_buffer(orte_buffer_t *buf);
+
+/**
+ * Process the data in a modex buffer
+ *
+ * Given a buffer containing a set of modex entries, this
+ * function will destructively read the buffer, adding the
+ * modex info to each proc. An error will be returned if
+ * modex info is found for a proc that is not yet in the
+ * ompi_proc table
+ *
+ * @param[in] *buf      Pointer to a buffer containing the data
+ *
+ * @retval OMPI_SUCCESS Successfully exchanged information
+ * @retval OMPI_ERROR   An unspecified error occurred
+ */
+OMPI_DECLSPEC int ompi_modex_process_data(orte_buffer_t *buf);
 
 
 /**

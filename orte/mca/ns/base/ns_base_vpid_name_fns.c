@@ -106,6 +106,7 @@ int orte_ns_base_convert_string_to_process_name(orte_process_name_t **name,
     
     /* check for error */
     if (NULL == token) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
     
@@ -134,6 +135,7 @@ int orte_ns_base_convert_string_to_process_name(orte_process_name_t **name,
     
     /* check for error */
     if (NULL == token) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
     

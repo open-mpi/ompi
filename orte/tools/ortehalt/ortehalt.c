@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
      * up incorrect infrastructure that only a singleton would
      * require
      */
-    if (ORTE_SUCCESS != (rc = orte_init(ORTE_INFRASTRUCTURE, ORTE_NON_BARRIER))) {
+    if (ORTE_SUCCESS != (rc = orte_init(ORTE_INFRASTRUCTURE))) {
         opal_show_help("help-ortehalt.txt", "ortehalt:init-failure", true,
                        "orte_init()", rc);
         return rc;

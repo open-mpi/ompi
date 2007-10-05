@@ -115,28 +115,14 @@ int mca_oob_tcp_ping(const orte_process_name_t*, const char* uri, const struct t
  * Non-blocking versions of send/recv.
  */
 
-/**
- * Non-blocking version of mca_oob_send().
- *
- * @param peer (IN)    Opaque name of peer process.
- * @param msg (IN)     Array of iovecs describing user buffers and lengths.
- * @param count (IN)   Number of elements in iovec array.
- * @param tag (IN)     User defined tag for matching send/recv.
- * @param flags (IN)   Currently unused.
- * @param cbfunc (IN)  Callback function on send completion.
- * @param cbdata (IN)  User data that is passed to callback function.
- * @return             OMPI error code (<0) on error number of bytes actually sent.
- *
- */
-
-int mca_oob_tcp_send_nb(
-    orte_process_name_t* peer, 
-    struct iovec* msg, 
-    int count,
-    int tag,
-    int flags, 
-    orte_rml_callback_fn_t cbfunc, 
-    void* cbdata);
+int mca_oob_tcp_send_nb(orte_process_name_t* target, 
+                        orte_process_name_t* origin, 
+                        struct iovec* msg, 
+                        int count,
+                        int tag,
+                        int flags, 
+                        orte_rml_callback_fn_t cbfunc, 
+                        void* cbdata);
 
 /**
  * Non-blocking version of mca_oob_recv().

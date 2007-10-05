@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     pid_t pid;
     char hostname[500];
 
-    if (0 > (rc = orte_init(ORTE_NON_INFRASTRUCTURE, ORTE_USE_BARRIER))) {
+    if (0 > (rc = orte_init(ORTE_NON_INFRASTRUCTURE))) {
         fprintf(stderr, "orte_abort: couldn't init orte - error code %d\n", rc);
         return rc;
     }

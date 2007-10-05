@@ -104,11 +104,9 @@ void ompi_proc_destruct(ompi_proc_t* proc)
 int ompi_proc_init(void)
 {
     orte_process_name_t *peers;
-    orte_std_cntr_t i, npeers, datalen;
-    void *data;
-    orte_buffer_t* buf;    
-    uint32_t ui32;
+    orte_std_cntr_t i, npeers;
     int rc;
+    uint32_t ui32;
 
     OBJ_CONSTRUCT(&ompi_proc_list, opal_list_t);
     OBJ_CONSTRUCT(&ompi_proc_lock, opal_mutex_t);
@@ -132,13 +130,43 @@ int ompi_proc_init(void)
     rc = ompi_arch_compute_local_id(&ui32);
     if (OMPI_SUCCESS != rc) return rc;
 
+    ompi_proc_local_proc->proc_nodeid = orte_system_info.nodeid;
     ompi_proc_local_proc->proc_arch = ui32;
-    ompi_proc_local_proc->proc_hostname = strdup(orte_system_info.nodename);
+    if (ompi_mpi_keep_peer_hostnames) {
+        if (ompi_mpi_keep_fqdn_hostnames) {
+            /* use the entire FQDN name */
+            ompi_proc_local_proc->proc_hostname = strdup(orte_system_info.nodename);
+        } else {
+            /* use the unqualified name */
+            char *tmp, *ptr;
+            tmp = strdup(orte_system_info.nodename);
+            if (NULL != (ptr = strchr(tmp, '.'))) {
+                *ptr = '\0';
+            }
+            ompi_proc_local_proc->proc_hostname = strdup(tmp);
+            free(tmp);
+        }
+    }
+
+    rc = ompi_proc_publish_info();
+
+    return rc;
+}
+
+int ompi_proc_publish_info(void)
+{
+    orte_std_cntr_t datalen;
+    void *data;
+    orte_buffer_t* buf;    
+    int rc;
 
     /* pack our local data for others to use */
     buf = OBJ_NEW(orte_buffer_t);
     rc = ompi_proc_pack(&ompi_proc_local_proc, 1, buf);
-    if (OMPI_SUCCESS != rc) return rc;
+    if (OMPI_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
 
     /* send our data into the ether */
     rc = orte_dss.unload(buf, &data, &datalen);
@@ -169,6 +197,7 @@ ompi_proc_get_info(void)
         char *hostname;
         void *data;
         size_t datalen;
+        orte_nodeid_t nodeid;
 
         if (ORTE_EQUAL != orte_ns.compare_fields(ORTE_NS_CMP_JOBID,
                                                  &ompi_proc_local_proc->proc_name,
@@ -189,7 +218,7 @@ ompi_proc_get_info(void)
             if (OMPI_SUCCESS != ret)
                 goto out;
 
-            /* This isn't needed here, but packed just so that you
+           /* This isn't needed here, but packed just so that you
                could, in theory, use the unpack code on this proc.  We
                don't,because we aren't adding procs, but need to
                update them */
@@ -197,23 +226,34 @@ ompi_proc_get_info(void)
             if (ret != ORTE_SUCCESS)
                 goto out;
 
-            ret = orte_dss.unpack(buf, &arch, &count, ORTE_UINT32);
-            if (ret != ORTE_SUCCESS)
+            ret = orte_dss.unpack(buf, &nodeid, &count, ORTE_NODEID);
+            if (ret != ORTE_SUCCESS) {
+                ORTE_ERROR_LOG(ret);
                 goto out;
-            ret = orte_dss.unpack(buf, &hostname, &count, ORTE_STRING);
-            if (ret != ORTE_SUCCESS)
-                goto out;
+            }
 
+            ret = orte_dss.unpack(buf, &arch, &count, ORTE_UINT32);
+            if (ret != ORTE_SUCCESS) {
+                ORTE_ERROR_LOG(ret);
+                goto out;
+            }
+                
+            ret = orte_dss.unpack(buf, &hostname, &count, ORTE_STRING);
+            if (ret != ORTE_SUCCESS) {
+                ORTE_ERROR_LOG(ret);
+                goto out;
+            }
             /* Free the buffer for the next proc */
             OBJ_RELEASE(buf);
         } else if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
             arch = ompi_proc_local_proc->proc_arch;
             hostname = strdup("");
-	    ret = ORTE_SUCCESS;
+            ret = ORTE_SUCCESS;
         } else {
             goto out;
         }
-
+        
+        proc->proc_nodeid = nodeid;
         proc->proc_arch = arch;
         /* if arch is different than mine, create a new convertor for this proc */
         if (proc->proc_arch != ompi_proc_local_proc->proc_arch) {
@@ -229,16 +269,14 @@ ompi_proc_get_info(void)
             ret = OMPI_ERR_NOT_SUPPORTED;
             goto out;
 #endif
-        } else if (0 == strcmp(hostname, orte_system_info.nodename)) {
+        } 
+        if (ompi_proc_local_proc->proc_nodeid == proc->proc_nodeid) {
             proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
         }
 
-        /* Save the hostname */
-        if (ompi_mpi_keep_peer_hostnames) {
-            /* the dss code will have strdup'ed this for us -- no need
-               to do so again */
-            proc->proc_hostname = hostname;
-        }
+        /* Save the hostname.  The dss code will have strdup'ed this
+           for us -- no need to do so again */
+        proc->proc_hostname = hostname;
     }
 
 out:
@@ -415,16 +453,25 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize, orte_buffer_t* buf)
     for (i=0; i<proclistsize; i++) {
         rc = orte_dss.pack(buf, &(proclist[i]->proc_name), 1, ORTE_NAME);
         if(rc != ORTE_SUCCESS) {
+            ORTE_ERROR_LOG(rc);
+            OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+            return rc;
+        }
+        rc = orte_dss.pack(buf, &(proclist[i]->proc_nodeid), 1, ORTE_NODEID);
+        if(rc != ORTE_SUCCESS) {
+            ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
             return rc;
         }
         rc = orte_dss.pack(buf, &(proclist[i]->proc_arch), 1, ORTE_UINT32);
         if(rc != ORTE_SUCCESS) {
+            ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
             return rc;
         }
         rc = orte_dss.pack(buf, &(proclist[i]->proc_hostname), 1, ORTE_STRING);
         if(rc != ORTE_SUCCESS) {
+            ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
             return rc;
         }
@@ -435,7 +482,9 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize, orte_buffer_t* buf)
 
 
 int
-ompi_proc_unpack(orte_buffer_t* buf, int proclistsize, ompi_proc_t ***proclist)
+ompi_proc_unpack(orte_buffer_t* buf, 
+                 int proclistsize, ompi_proc_t ***proclist,
+                 int *newproclistsize, ompi_proc_t ***newproclist)
 {
     int i;
     size_t newprocs_len = 0;
@@ -460,17 +509,26 @@ ompi_proc_unpack(orte_buffer_t* buf, int proclistsize, ompi_proc_t ***proclist)
         char *new_hostname;
         bool isnew = false;
         int rc;
+        orte_nodeid_t new_nodeid;
 
         rc = orte_dss.unpack(buf, &new_name, &count, ORTE_NAME);
         if (rc != ORTE_SUCCESS) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        rc = orte_dss.unpack(buf, &new_nodeid, &count, ORTE_NODEID);
+        if (rc != ORTE_SUCCESS) {
+            ORTE_ERROR_LOG(rc);
             return rc;
         }
         rc = orte_dss.unpack(buf, &new_arch, &count, ORTE_UINT32);
         if (rc != ORTE_SUCCESS) {
+            ORTE_ERROR_LOG(rc);
             return rc;
         }
         rc = orte_dss.unpack(buf, &new_hostname, &count, ORTE_STRING);
         if (rc != ORTE_SUCCESS) {
+            ORTE_ERROR_LOG(rc);
             return rc;
         }
 
@@ -478,6 +536,7 @@ ompi_proc_unpack(orte_buffer_t* buf, int proclistsize, ompi_proc_t ***proclist)
         if (isnew) {
             newprocs[newprocs_len++] = plist[i];
 
+            plist[i]->proc_nodeid = new_nodeid;
             plist[i]->proc_arch = new_arch;
 
             /* if arch is different than mine, create a new convertor for this proc */
@@ -494,16 +553,21 @@ ompi_proc_unpack(orte_buffer_t* buf, int proclistsize, ompi_proc_t ***proclist)
                 return OMPI_ERR_NOT_SUPPORTED;
 #endif
             }
+            if (ompi_proc_local_proc->proc_nodeid == plist[i]->proc_nodeid) {
+                plist[i]->proc_flags |= OMPI_PROC_FLAG_LOCAL;
+            }
 
             /* Save the hostname */
-            if (ompi_mpi_keep_peer_hostnames) {
-                plist[i]->proc_hostname = new_hostname;
-            }
+            plist[i]->proc_hostname = new_hostname;
         }
     }
 
-    if (newprocs_len > 0) MCA_PML_CALL(add_procs(newprocs, newprocs_len));
-    if (newprocs != NULL) free(newprocs);
+    if (NULL != newproclistsize) *newproclistsize = newprocs_len;
+    if (NULL != newproclist) {
+        *newproclist = newprocs;
+    } else if (newprocs != NULL) {
+        free(newprocs);
+    }
 
     *proclist = plist;
     return OMPI_SUCCESS;

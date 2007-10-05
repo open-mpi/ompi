@@ -47,8 +47,13 @@
 
 #include "grpcomm_basic.h"
 
-#define XCAST_LINEAR_XOVER_DEFAULT     10
-#define XCAST_BINOMIAL_XOVER_DEFAULT   INT_MAX
+/* set the default xovers to always force linear
+ * this is a tmp workaround for a problem in the
+ * rml that prevents the daemons from sending
+ * messages to their local procs
+ */
+#define XCAST_LINEAR_XOVER_DEFAULT     2
+#define XCAST_BINOMIAL_XOVER_DEFAULT   16
 
 
 /*
@@ -81,7 +86,6 @@ orte_grpcomm_basic_globals_t orte_grpcomm_basic;
 /* Open the component */
 int orte_grpcomm_basic_open(void)
 {
-    int value;
     char *mode;
     mca_base_component_t *c = &mca_grpcomm_basic_component.grpcomm_version;
     
@@ -89,16 +93,6 @@ int orte_grpcomm_basic_open(void)
     OBJ_CONSTRUCT(&orte_grpcomm_basic.mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&orte_grpcomm_basic.cond, opal_condition_t);
     orte_grpcomm_basic.num_active = 0;
-    
-    /* register parameters */
-    mca_base_param_reg_int(c, "verbose",
-                           "Verbosity level for the grpcomm basic component",
-                           false, false, 0, &value);
-    if (value != 0) {
-        orte_grpcomm_basic.output = opal_output_open(NULL);
-    } else {
-        orte_grpcomm_basic.output = -1;
-    }
     
     mca_base_param_reg_int(c, "xcast_linear_xover",
                            "Number of daemons where use of linear xcast mode is to begin",

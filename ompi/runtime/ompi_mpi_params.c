@@ -52,6 +52,7 @@ bool ompi_mpi_paffinity_alone = false;
 bool ompi_mpi_abort_print_stack = false;
 int ompi_mpi_abort_delay = 0;
 bool ompi_mpi_keep_peer_hostnames = true;
+bool ompi_mpi_keep_fqdn_hostnames = false;
 bool ompi_mpi_leave_pinned = false;
 bool ompi_mpi_leave_pinned_pipeline = false;
 bool ompi_have_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
@@ -165,6 +166,11 @@ int ompi_mpi_register_params(void)
                                 false, false, 1, &value);
     ompi_mpi_keep_peer_hostnames = OPAL_INT_TO_BOOL(value);
 
+    mca_base_param_reg_int_name("mpi", "keep_fqdn_hostnames",
+                                "If nonzero, use the FQDN host name when saving hostnames.  This can add quite a bit of memory usage to each MPI process.",
+                                false, false, 1, &value);
+    ompi_mpi_keep_fqdn_hostnames = OPAL_INT_TO_BOOL(value);
+    
     /* MPI_ABORT controls */
 
     mca_base_param_reg_int_name("mpi", "abort_delay",

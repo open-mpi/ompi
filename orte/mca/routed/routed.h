@@ -27,6 +27,7 @@
 
 #include "opal/mca/mca.h"
 #include "orte/mca/rml/rml_types.h"
+#include "orte/mca/gpr/gpr_types.h"
 
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
@@ -126,6 +127,9 @@ typedef int (*orte_routed_module_update_route_fn_t)(orte_process_name_t *target,
 
 typedef orte_process_name_t (*orte_routed_module_get_route_fn_t)(orte_process_name_t *target);
 
+typedef int (*orte_routed_module_init_routes_fn_t)(orte_jobid_t job, orte_gpr_notify_data_t *ndat);
+
+typedef int (*orte_routed_module_warmup_routes_fn_t)(void);
 
 /* ******************************************************************** */
 
@@ -143,6 +147,8 @@ struct orte_routed_module_t {
 
     orte_routed_module_update_route_fn_t            update_route;
     orte_routed_module_get_route_fn_t               get_route;
+    orte_routed_module_init_routes_fn_t             init_routes;
+    orte_routed_module_warmup_routes_fn_t           warmup_routes;
 };
 /** Convienence typedef */
 typedef struct orte_routed_module_t orte_routed_module_t;

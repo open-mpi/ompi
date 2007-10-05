@@ -49,7 +49,8 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_ROUTE_BINOMIAL          (orte_daemon_cmd_flag_t) 12
 #define ORTE_DAEMON_WARMUP_LOCAL_CONN       (orte_daemon_cmd_flag_t) 13
 #define ORTE_DAEMON_NULL_CMD                (orte_daemon_cmd_flag_t) 14
-    
+#define ORTE_DAEMON_SYNC_BY_PROC            (orte_daemon_cmd_flag_t) 15
+
 /* define some useful attributes for dealing with orteds */
 #define ORTE_DAEMON_SOFT_KILL       "orted-soft-kill"
 #define ORTE_DAEMON_HARD_KILL       "orted-hard-kill"

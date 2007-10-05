@@ -526,8 +526,7 @@ int orte_pls_submit_launch(orte_jobid_t jobid)
      */
     orte_pls_base_orted_append_basic_args(&argc, &argv,
                                           &proc_name_index,
-                                          &node_name_index2,
-                                          map->num_nodes);
+                                          &node_name_index2);
     
     local_exec_index_end = argc;
     if (mca_pls_submit_component.debug) {

@@ -1141,8 +1141,10 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         goto err_exit;
     }
     
-    /* decode the names into a proc-list */
-    rc = ompi_proc_unpack(rbuf, rsize, &rprocs );
+    /* decode the names into a proc-list -- will never add a new proc
+       as the result of this operation, so no need to get the newprocs
+       list or call PML add_procs(). */
+    rc = ompi_proc_unpack(rbuf, rsize, &rprocs, NULL, NULL);
     OBJ_RELEASE(rbuf);
     
  err_exit:

@@ -51,6 +51,7 @@
 #include "ompi/info/info.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/dss/dss.h"
@@ -63,6 +64,7 @@
 #include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/smr/smr_types.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 
 #include "orte/runtime/runtime.h"
 
@@ -86,8 +88,8 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     ompi_group_t *group=comm->c_local_group;
     orte_process_name_t *rport=NULL, tmp_port_name;
     orte_buffer_t *nbuf=NULL, *nrbuf=NULL;
-    ompi_proc_t **proc_list=NULL;
-    int i,j;
+    ompi_proc_t **proc_list=NULL, **new_proc_list;
+    int i,j, new_proc_len;
     ompi_group_t *new_group_pointer;
 
     size = ompi_comm_size ( comm );
@@ -219,9 +221,75 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         goto exit;
     }
 
-    rc = ompi_proc_unpack(nrbuf, rsize, &rprocs);
+    rc = ompi_proc_unpack(nrbuf, rsize, &rprocs, &new_proc_len, &new_proc_list);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
+    }
+
+    /* If we added new procs, we need to do the modex and then call
+       PML add_procs */
+    if (new_proc_len > 0) {
+        opal_list_t all_procs;
+        orte_namelist_t *name;
+        orte_buffer_t mdx_buf, rbuf;
+
+        OBJ_CONSTRUCT(&all_procs, opal_list_t);
+
+        if (send_first) {
+            for (i = 0 ; i < group->grp_proc_count ; ++i) {
+                name = OBJ_NEW(orte_namelist_t);
+                name->name = &(ompi_group_peer_lookup(group, i)->proc_name);
+                opal_list_append(&all_procs, &name->item);
+            }
+
+            for (i = 0 ; i < rsize ; ++i) {
+                name = OBJ_NEW(orte_namelist_t);
+                name->name = &(rprocs[i]->proc_name);
+                opal_list_append(&all_procs, &name->item);
+            }
+        } else {
+            for (i = 0 ; i < rsize ; ++i) {
+                name = OBJ_NEW(orte_namelist_t);
+                name->name = &(rprocs[i]->proc_name);
+                opal_list_append(&all_procs, &name->item);
+            }
+
+            for (i = 0 ; i < group->grp_proc_count ; ++i) {
+                name = OBJ_NEW(orte_namelist_t);
+                name->name = &(ompi_group_peer_lookup(group, i)->proc_name);
+                opal_list_append(&all_procs, &name->item);
+            }
+        }
+
+        OBJ_CONSTRUCT(&mdx_buf, orte_buffer_t);
+        if (OMPI_SUCCESS != (rc = ompi_modex_get_my_buffer(&mdx_buf))) {
+            ORTE_ERROR_LOG(rc);
+            goto exit;
+        }
+    
+        OBJ_CONSTRUCT(&rbuf, orte_buffer_t);
+        if (OMPI_SUCCESS != (rc = orte_grpcomm.allgather_list(&all_procs, 
+                                                              &mdx_buf, 
+                                                              &rbuf))) {
+            ORTE_ERROR_LOG(rc);
+            goto exit;
+        }
+        OBJ_DESTRUCT(&mdx_buf);
+
+        if (OMPI_SUCCESS != (rc = ompi_modex_process_data(&rbuf))) {
+            ORTE_ERROR_LOG(rc);
+            goto exit;
+        }
+        OBJ_DESTRUCT(&rbuf);
+
+        /*
+        while (NULL != (item = opal_list_remove_first(&all_procs))) {
+            OBJ_RELEASE(item);
+        }
+        OBJ_DESTRUCT(&all_procs);
+        */
+
+        MCA_PML_CALL(add_procs(new_proc_list, new_proc_len));
     }
 
     OBJ_RELEASE(nrbuf);
@@ -407,7 +475,6 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     orte_std_cntr_t num_apps, ai;
     orte_jobid_t new_jobid=ORTE_JOBID_INVALID;
     orte_app_context_t **apps=NULL;
-    orte_proc_state_t state;
     
     opal_list_t attributes;
     opal_list_item_t *item;
@@ -651,6 +718,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
         return MPI_ERR_SPAWN;
     }
 
+#if 0
     /* tell the RTE that we want to be cross-connected to the children so we receive
      * their ORTE-level information - e.g., OOB contact info - when they
      * reach the STG1 stage gate
@@ -664,6 +732,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
         opal_progress_event_users_decrement();
         return MPI_ERR_SPAWN;
     }
+#endif
 
     /* check for timing request - get stop time and report elapsed time if so */
     if (timing) {

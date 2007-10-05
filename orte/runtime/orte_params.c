@@ -38,6 +38,7 @@ bool orte_debug_daemons_flag, orte_debug_daemons_file_flag;
 bool orted_spin_flag, orte_no_daemonize_flag;
 struct timeval orte_abort_timeout;
 char **orte_launch_environ;
+char **orted_cmd_line=NULL;
 opal_mutex_t orted_comm_mutex;
 opal_condition_t orted_comm_cond;
 bool orte_orterun;

@@ -64,10 +64,7 @@ int orte_smr_base_init_job_stage_gates(orte_jobid_t job,
         ORTE_PROC_NUM_TERMINATED,
         /* the following stage gates need data routed through them */
         ORTE_PROC_NUM_AT_ORTE_STARTUP,
-        ORTE_PROC_NUM_AT_STG1,
-        ORTE_PROC_NUM_AT_STG2,
-        ORTE_PROC_NUM_AT_STG3,
-        ORTE_PROC_NUM_FINALIZED
+        ORTE_PROC_NUM_AT_STG1
     };
     char* trig_names[] = {
         /* this ordering needs to be identical to that in the array above! */
@@ -78,9 +75,6 @@ int orte_smr_base_init_job_stage_gates(orte_jobid_t job,
         /* the following triggers need data routed through them */
         ORTE_STARTUP_TRIGGER,
         ORTE_STG1_TRIGGER,
-        ORTE_STG2_TRIGGER,
-        ORTE_STG3_TRIGGER,
-        ORTE_ALL_FINALIZED_TRIGGER
     };
     
     
@@ -293,9 +287,6 @@ int orte_smr_base_job_stage_gate_subscribe(orte_jobid_t job,
         ORTE_PROC_STATE_LAUNCHED,
         ORTE_PROC_STATE_RUNNING,
         ORTE_PROC_STATE_AT_STG1,
-        ORTE_PROC_STATE_AT_STG2,
-        ORTE_PROC_STATE_AT_STG3,
-        ORTE_PROC_STATE_FINALIZED,
         ORTE_PROC_STATE_TERMINATED
     };
     char* keys[] = {
@@ -304,9 +295,6 @@ int orte_smr_base_job_stage_gate_subscribe(orte_jobid_t job,
         ORTE_PROC_NUM_LAUNCHED,
         ORTE_PROC_NUM_RUNNING,
         ORTE_PROC_NUM_AT_STG1,
-        ORTE_PROC_NUM_AT_STG2,
-        ORTE_PROC_NUM_AT_STG3,
-        ORTE_PROC_NUM_FINALIZED,
         ORTE_PROC_NUM_TERMINATED
     };
     char* trig_names[] = {
@@ -315,9 +303,6 @@ int orte_smr_base_job_stage_gate_subscribe(orte_jobid_t job,
         ORTE_ALL_LAUNCHED_TRIGGER,
         ORTE_ALL_RUNNING_TRIGGER,
         ORTE_STG1_TRIGGER,
-        ORTE_STG2_TRIGGER,
-        ORTE_STG3_TRIGGER,
-        ORTE_ALL_FINALIZED_TRIGGER,
         ORTE_ALL_TERMINATED_TRIGGER
     };
     char* tokens[] = {

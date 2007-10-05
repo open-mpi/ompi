@@ -31,10 +31,6 @@ void exit_handler(int signum)
 {
     int rc;
 
-    if (ORTE_SUCCESS != (rc = orte_finalize())) {
-        fprintf(stderr, "couldn't complete finalize - error code %d\n", rc);
-        exit(1);
-    }
     exit(0);
 }
 
@@ -71,11 +67,6 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    if (ORTE_SUCCESS != (rc = orte_init(ORTE_NON_INFRASTRUCTURE, ORTE_NON_BARRIER))) { 
-        fprintf(stderr, "couldn't complete init - error code %d\n", rc);
-        exit(1);
-    }
-    
     i = 0;
     while (1) {
         i++;

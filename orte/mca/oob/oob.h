@@ -82,21 +82,29 @@ typedef int (*mca_oob_base_module_ping_fn_t)(const orte_process_name_t*,
 
 
 /**
-*  Implementation of mca_oob_send_nb().
-*
-*  @param peer (IN)    Opaque name of peer process.
-*  @param msg (IN)     Array of iovecs describing user buffers and lengths.
-*  @param count (IN)   Number of elements in iovec array.
-*  @param tag (IN)     User defined tag for matching send/recv.
-*  @param flags (IN)   Currently unused.
-*  @param cbfunc (IN)  Callback function on send completion.
-*  @param cbdata (IN)  User data that is passed to callback function.
-*  @return             OMPI error code (<0) on error number of bytes actually sent.
-*
-*/
-
+ * Send an oob message
+ * 
+ * Send an oob message.  All oob sends are non-blocking, and cbfunc
+ * will be called when the message has been sent.  When cbfunc is
+ * called, message has been injected into the network but no guarantee
+ * is made about whether the target has received the message.
+ *
+ * @param[in] target   Destination process name
+ * @param[in] origin   Origin process for the message, for the purposes
+ *                     of message matching.  This can be different from
+ *                     the process calling send().
+ * @param[in] msg      Array of iovecs describing user buffers and lengths.
+ * @param[in] count    Number of elements in iovec array.
+ * @param[in] tag      User defined tag for matching send/recv.
+ * @param[in] flags    Currently unused.
+ * @param[in] cbfunc   Callback function on send completion.
+ * @param[in] cbdata   User data that is passed to callback function.
+ *
+ * @return             OMPI error code (<0) on error number of bytes actually sent.
+ */
 typedef int (*mca_oob_base_module_send_nb_fn_t)(
-    orte_process_name_t* peer,
+    orte_process_name_t* target,
+    orte_process_name_t* origin,
     struct iovec* msg,
     int count,
     int tag,

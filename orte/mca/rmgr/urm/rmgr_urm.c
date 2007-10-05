@@ -288,24 +288,6 @@ static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
                     (*cbfunc)(jobid,ORTE_PROC_STATE_AT_STG1);
                     continue;
                 }
-                if(strcmp(keyval->key, ORTE_PROC_NUM_AT_STG2) == 0) {
-                    (*cbfunc)(jobid,ORTE_PROC_STATE_AT_STG2);
-                    continue;
-                }
-                if(strcmp(keyval->key, ORTE_PROC_NUM_AT_STG3) == 0) {
-                    (*cbfunc)(jobid,ORTE_PROC_STATE_AT_STG3);
-                    continue;
-                }
-                if(strcmp(keyval->key, ORTE_PROC_NUM_FINALIZED) == 0) {
-#if OPAL_ENABLE_FT == 1
-                    /* Stop tracking this job */
-                    if(ORTE_SUCCESS != (rc = orte_snapc.release_job(jobid))) {
-                        ORTE_ERROR_LOG(rc);
-                    }
-#endif
-                    (*cbfunc)(jobid,ORTE_PROC_STATE_FINALIZED);
-                    continue;
-                }
                 if(strcmp(keyval->key, ORTE_PROC_NUM_TERMINATED) == 0) {
 #if OPAL_ENABLE_FT == 1
                     /* Stop tracking this job */

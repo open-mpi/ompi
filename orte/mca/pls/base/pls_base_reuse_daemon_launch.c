@@ -30,6 +30,8 @@
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/odls/odls.h"
+#include "orte/mca/smr/smr.h"
+#include "orte/runtime/orte_wakeup.h"
 
 #include "orte/mca/pls/base/pls_private.h"
 
@@ -72,6 +74,47 @@ int orte_pls_base_launch_apps(orte_job_map_t *map)
     return rc;
 }
 
+void orte_pls_base_daemon_failed(orte_jobid_t job, bool callback_active, pid_t pid,
+                                 int status, orte_job_state_t state)
+{
+    int src[3] = {-1, -1, -1};
+    orte_buffer_t ack;
+    int rc;
+    
+    if (callback_active) {
+        /* if we failed while launching daemons, we need to fake a message to
+         * the daemon callback system so it can break out of its receive loop
+         */
+        src[2] = pid;
+        if(WIFSIGNALED(status)) {
+            src[1] = WTERMSIG(status);
+        }
+        OBJ_CONSTRUCT(&ack, orte_buffer_t);
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(&ack, &src, 3, ORTE_INT))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        rc = orte_rml.send_buffer(ORTE_PROC_MY_NAME, &ack, ORTE_RML_TAG_ORTED_CALLBACK, 0);
+        if (0 > rc) {
+            ORTE_ERROR_LOG(rc);
+        }
+        OBJ_DESTRUCT(&ack);
+    }
+    
+    /*  The usual reasons for a daemon to exit abnormally all are a pretty good
+        indication that things in general are going to fall apart.
+        Set the job state as indicated so orterun's exit status
+        will be non-zero
+     */
+    if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, state))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    /* forcibly terminate the job so orterun can exit */
+    if (ORTE_SUCCESS != (rc = orte_wakeup(job))) {
+        ORTE_ERROR_LOG(rc);
+    }
+}
+
 int orte_pls_base_daemon_callback(orte_std_cntr_t num_daemons)
 {
     orte_std_cntr_t i;
@@ -82,6 +125,7 @@ int orte_pls_base_daemon_callback(orte_std_cntr_t num_daemons)
     orte_buffer_t *buf;
     orte_gpr_notify_data_t *data=NULL;
     orte_rml_cmd_flag_t command;
+    orte_vpid_t total_num_daemons;
     
     for(i = 0; i < num_daemons; i++) {
         OBJ_CONSTRUCT(&ack, orte_buffer_t);
@@ -99,6 +143,7 @@ int orte_pls_base_daemon_callback(orte_std_cntr_t num_daemons)
          * actual number of packed entries up to the number we specify here
          */
         idx = 4;
+        src[0]=src[1]=src[2]=src[3]=0;
         rc = orte_dss.unpack(&ack, &src, &idx, ORTE_INT);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
@@ -149,7 +194,14 @@ int orte_pls_base_daemon_callback(orte_std_cntr_t num_daemons)
         OBJ_DESTRUCT(&handoff);  /* done with this */
     }
 
-    /* all done launching - update everyone's contact info so all daemons
+    /* all done launching - update the num_procs in my local structure */
+    if (ORTE_SUCCESS != (rc = orte_ns.get_vpid_range(0, &total_num_daemons))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    orte_process_info.num_procs = total_num_daemons;
+
+    /* update everyone's contact info so all daemons
      * can talk to each other
      */
     name.jobid = 0;

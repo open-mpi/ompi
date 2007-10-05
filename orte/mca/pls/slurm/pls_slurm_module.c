@@ -249,8 +249,7 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     /* Add basic orted command line options, including debug flags */
     orte_pls_base_orted_append_basic_args(&argc, &argv,
                                           &proc_name_index,
-                                          NULL,
-                                          num_nodes);
+                                          NULL);
 
     /* force orted to use the slurm sds */
     opal_argv_append(&argc, &argv, "--ns-nds");
@@ -392,13 +391,7 @@ cleanup:
     
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(jobid, ORTE_JOB_STATE_FAILED_TO_START))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        
-        if (ORTE_SUCCESS != (rc = orte_wakeup(jobid))) {
-            ORTE_ERROR_LOG(rc);
-        }        
+        orte_pls_base_daemon_failed(jobid, false, -1, 0, ORTE_JOB_STATE_FAILED_TO_START);
     }
     
     return rc;
@@ -504,8 +497,6 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
        wakes up - otherwise, do nothing!
     */
     
-    int rc;
-    
     if (0 != status) {
         if (failed_launch) {
             /* we have a problem during launch */
@@ -514,10 +505,10 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
             opal_output(0, "ERROR: on one or more remote nodes, lack of authority to execute");
             opal_output(0, "ERROR: on one or more specified nodes, or other factors.");
             
-            /* set the job state so we know it failed to start */
-            if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(active_job, ORTE_JOB_STATE_FAILED_TO_START))) {
-                ORTE_ERROR_LOG(rc);
-            }
+            /* report that the daemon has failed so we break out of the daemon
+             * callback receive and exit
+             */
+            orte_pls_base_daemon_failed(active_job, true, pid, status, ORTE_JOB_STATE_FAILED_TO_START);
             
         } else {
             /* an orted must have died unexpectedly after launch */
@@ -525,15 +516,9 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
             opal_output(0, "ERROR: during execution of the application with a non-zero");
             opal_output(0, "ERROR: status of %ld. This is a fatal error.", (long)status);
             
-            /* set the job state so we know it aborted */
-            if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(active_job, ORTE_JOB_STATE_ABORTED))) {
-                ORTE_ERROR_LOG(rc);
-            }
+            /* report that the daemon has failed so we exit */
+            orte_pls_base_daemon_failed(active_job, false, pid, status, ORTE_JOB_STATE_ABORTED);
         }
-        /* force termination of the job */
-        if (ORTE_SUCCESS != (rc = orte_wakeup(active_job))) {
-            ORTE_ERROR_LOG(rc);
-        }        
     }
     
 }

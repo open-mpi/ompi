@@ -58,6 +58,7 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/routed/routed.h"
 
 #include "oob_tcp.h"
 #include "oob_tcp_peer.h"
@@ -513,6 +514,11 @@ static void mca_oob_tcp_peer_connected(mca_oob_tcp_peer_t* peer, int sd)
     opal_event_del(&peer->peer_timer_event);
     peer->peer_state = MCA_OOB_TCP_CONNECTED;
     peer->peer_retries = 0;
+
+    /* Since we have a direct connection established to this peer, use
+       the connection as a direct route between peers */
+    orte_routed.update_route(&peer->peer_name, &peer->peer_name);
+
     if(opal_list_get_size(&peer->peer_send_queue) > 0) {
         if(NULL == peer->peer_send_msg) {
             peer->peer_send_msg = (mca_oob_tcp_msg_t*)
