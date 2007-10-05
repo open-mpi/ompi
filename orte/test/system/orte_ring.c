@@ -29,7 +29,7 @@ main(int argc, char *argv[]){
     /*
      * Init
      */
-    orte_init(ORTE_NON_INFRASTRUCTURE, ORTE_USE_BARRIER);
+    orte_init(ORTE_NON_INFRASTRUCTURE);
 
     num_peers = orte_process_info.num_procs;
 

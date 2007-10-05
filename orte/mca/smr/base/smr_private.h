@@ -94,6 +94,7 @@ int orte_smr_base_begin_monitoring_not_available(orte_job_map_t *map,
                                                  orte_gpr_trigger_cb_fn_t cbfunc,
                                                  void *user_tag);
 
+int orte_smr_base_register_sync(void);
 
 int orte_smr_base_module_finalize_not_available (void);
 

@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
     pid_t pid;
     struct iovec msg;
     
-    if (0 > (rc = orte_init(ORTE_NON_INFRASTRUCTURE, ORTE_USE_BARRIER))) {
+    if (0 > (rc = orte_init(ORTE_NON_INFRASTRUCTURE))) {
         fprintf(stderr, "orte_nodename: couldn't init orte - error code %d\n", rc);
         return rc;
     }

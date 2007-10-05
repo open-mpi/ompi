@@ -68,6 +68,8 @@
 #include "orte/mca/schema/base/base.h"
 #include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/routed/base/base.h"
+#include "orte/mca/routed/routed.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/iof/iof.h"
@@ -491,6 +493,14 @@ static int orte_cr_coord_post_restart(void) {
     }
 
     /*
+     * Re-enable communication through the RML
+     */
+    if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    /*
      * Notify NS
      */
     if( ORTE_SUCCESS != (ret = orte_ns.ft_event(OPAL_CRS_RESTART))) {
@@ -510,6 +520,14 @@ static int orte_cr_coord_post_restart(void) {
      * Notify IOF
      */
     if( ORTE_SUCCESS != (ret = orte_iof.ft_event(OPAL_CRS_RESTART))) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    /*
+     * Re-exchange the routes
+     */
+    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
         exit_status = ret;
         goto cleanup;
     }

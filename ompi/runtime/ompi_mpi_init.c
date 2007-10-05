@@ -217,8 +217,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_proc_t** procs;
     size_t nprocs;
     char *error = NULL;
-    bool compound_cmd = false;
-    orte_buffer_t *cmd_buffer = NULL;
+    orte_buffer_t mdx_buf, rbuf;
     bool timing = false;
     int param, value;
     struct timeval ompistart, ompistop;
@@ -246,39 +245,17 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     
     /* Setup ORTE stage 1, note that we are not infrastructre  */
     
-    if (ORTE_SUCCESS != (ret = orte_init_stage1(false))) {
-        error = "ompi_mpi_init: orte_init_stage1 failed";
+    if (ORTE_SUCCESS != (ret = orte_init(ORTE_NON_INFRASTRUCTURE))) {
+        error = "ompi_mpi_init: orte_init failed";
         goto error;
     }
-
-    /* If we are not the seed nor a singleton, AND we have not set the
-       orte_debug flag, then start recording the compound command that
-       starts us up.  if we are the seed or a singleton, then don't do
-       this - the registry is local, so we'll just drive it
-       directly */
-
-    if (orte_process_info.seed ||
-        NULL == orte_process_info.ns_replica ||
-        orte_debug_flag) {
-        compound_cmd = false;
-    } else {
-        cmd_buffer = OBJ_NEW(orte_buffer_t);
-        if (ORTE_SUCCESS != (ret = orte_gpr.begin_compound_cmd(cmd_buffer))) {
-            ORTE_ERROR_LOG(ret);
-            error = "ompi_mpi_init: orte_gpr.begin_compound_cmd failed";
-            goto error;
-        }
-        compound_cmd = true;
-    }
-
-    /* Now do the things that hit the registry */
-
-    if (ORTE_SUCCESS != (ret = orte_init_stage2(ORTE_STG1_TRIGGER))) {
-        ORTE_ERROR_LOG(ret);
-        error = "ompi_mpi_init: orte_init_stage2 failed";
+    
+    /* register myself to require that I finalize before exiting */
+    if (ORTE_SUCCESS != (ret = orte_smr.register_sync())) {
+        error = "ompi_mpi_init: register sync failed";
         goto error;
     }
-
+    
     /* check for timing request - get stop time and report elapsed time if so */
     if (timing) {
         gettimeofday(&ompistop, NULL);
@@ -343,6 +320,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /* Initialize module exchange - this MUST happen before proc_init
+     * as proc_init needs to send modex info!
+     */
+    if (OMPI_SUCCESS != (ret = ompi_modex_init())) {
+        error = "ompi_modex_init() failed";
+        goto error;
+    }
+    
     /* Initialize OMPI procs */
     if (OMPI_SUCCESS != (ret = ompi_proc_init())) {
         error = "mca_proc_init() failed";
@@ -399,13 +384,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        topo frameworks are initialized lazily, at the first use of
        relevant functions (e.g., MPI_FILE_*, MPI_CART_*, MPI_GRAPH_*),
        so they are not opened here. */
-
-    /* Initialize module exchange */
-
-    if (OMPI_SUCCESS != (ret = ompi_modex_init())) {
-        error = "ompi_modex_init() failed";
-        goto error;
-    }
 
     /* Select which MPI components to use */
 
@@ -514,68 +492,50 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_attr_init() failed";
         goto error;
     }
-    /* do module exchange */
-    if (OMPI_SUCCESS != (ret = ompi_modex_subscribe_job(ORTE_PROC_MY_NAME->jobid))) {
-        error = "ompi_modex_subscribe_job() failed";
-        goto error;
-    }
-
-    /* Let system know we are at STG1 Barrier */
-    if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
-                                ORTE_PROC_STATE_AT_STG1, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "set process state failed";
-        goto error;
-    }
 
     /* check for timing request - get stop time and report elapsed time if so */
     if (timing) {
         gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init[%ld]: time from completion of orte_init to exec_compound_cmd %ld usec",
+        opal_output(0, "ompi_mpi_init[%ld]: time from completion of orte_init to modex %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
         gettimeofday(&ompistart, NULL);
     }
     
-    /* if the compound command is operative, execute it */
-
-    if (compound_cmd) {
-        if (OMPI_SUCCESS != (ret = orte_gpr.exec_compound_cmd(cmd_buffer))) {
-            ORTE_ERROR_LOG(ret);
-            error = "ompi_rte_init: orte_gpr.exec_compound_cmd failed";
-            goto error;
-        }
-        OBJ_RELEASE(cmd_buffer);
+    /* get the modex buffer so we can exchange it */
+    OBJ_CONSTRUCT(&mdx_buf, orte_buffer_t);
+    if (OMPI_SUCCESS != (ret = ompi_modex_get_my_buffer(&mdx_buf))) {
+        error = "ompi_modex_execute() failed";
+        goto error;
     }
+    
+    /* execute the exchange - this function also acts as a barrier
+     * as it will not return until the exchange is complete
+     */
+    OBJ_CONSTRUCT(&rbuf, orte_buffer_t);
+    if (OMPI_SUCCESS != (ret = orte_grpcomm.allgather(&mdx_buf, &rbuf))) {
+        error = "orte_gprcomm_allgather failed";
+        goto error;
+    }
+    OBJ_DESTRUCT(&mdx_buf);
 
-    /* check for timing request - get stop time and report elapsed time if so */
+    /* process the modex data into the proc structures */
+    if (OMPI_SUCCESS != (ret = ompi_modex_process_data(&rbuf))) {
+        error = "ompi_modex_process_data failed";
+        goto error;
+    }
+    OBJ_DESTRUCT(&rbuf);
+    
     if (timing) {
         gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init[%ld]: time to execute compound command %ld usec",
+        opal_output(0, "ompi_mpi_init[%ld]: time to execute modex %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
         gettimeofday(&ompistart, NULL);
     }
     
-    /* FIRST BARRIER - WAIT FOR XCAST STG1 MESSAGE TO ARRIVE */
-    if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast_gate(orte_gpr.deliver_notify_msg))) {
-        ORTE_ERROR_LOG(ret);
-        error = "ompi_mpi_init: failed to see all procs register\n";
-        goto error;
-    }
-
-    /* check for timing request - get start time */
-    if (timing) {
-        gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init[%ld]: time to execute xcast %ld usec",
-                    (long)ORTE_PROC_MY_NAME->vpid,
-                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
-                               (ompistop.tv_usec - ompistart.tv_usec)));
-        gettimeofday(&ompistart, NULL);
-    }
-
     /* Fill in remote proc information */
     if (OMPI_SUCCESS != (ret = ompi_proc_get_info())) {
         ORTE_ERROR_LOG(ret);
@@ -655,37 +615,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                                 orte_system_info.nodename);
     }
 
-    /* Let system know we are at STG2 Barrier */
-
-    if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
-                                ORTE_PROC_STATE_AT_STG2, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "set process state failed";
+    /* wait for everyone to reach this point */
+    if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier())) {
+        error = "orte_grpcomm_barrier failed";
         goto error;
-    }
-
-    /* check for timing request - get stop time and report elapsed time if so */
-    if (timing) {
-        gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init[%ld]: time from stage1 to stage2 %ld usec",
-                        (long)ORTE_PROC_MY_NAME->vpid,
-                        (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
-                                   (ompistop.tv_usec - ompistart.tv_usec)));
     }
     
-    /* Second barrier -- wait for XCAST STG2 MESSAGE to arrive */
-
-    if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast_gate(orte_gpr.deliver_notify_msg))) {
-        ORTE_ERROR_LOG(ret);
-        error = "ompi_mpi_init: failed to see all procs register\n";
-        goto error;
-    }
-
-    /* check for timing request - get start time */
-    if (timing) {
-        gettimeofday(&ompistart, NULL);
-    }
-
     /* wire up the oob interface, if requested.  Do this here because
        it will go much faster before the event library is switched
        into non-blocking mode */

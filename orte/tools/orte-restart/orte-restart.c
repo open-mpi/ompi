@@ -263,7 +263,7 @@ static int initialize(int argc, char *argv[]) {
                 true, &environ);
     opal_cr_set_enabled(false);
 
-    if (OPAL_SUCCESS != (ret = orte_init(ORTE_INFRASTRUCTURE, ORTE_NON_BARRIER))) {
+    if (OPAL_SUCCESS != (ret = orte_init(ORTE_INFRASTRUCTURE))) {
         exit_status = ret;
         goto cleanup;
     }
@@ -532,9 +532,7 @@ static int spawn_children(orte_snapc_base_global_snapshot_t *snapshot, pid_t *ch
     /* ... or not to fork off a child */
     else {
         /* Make sure to finalize so we don't leave our session directory */
-        orte_system_finalize();
-        /* reopen the crs components */
-        opal_crs_base_open();
+        orte_finalize();
 
         status = execvp(strdup(argv[0]), argv);
         if( 0 > status) {

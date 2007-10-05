@@ -57,9 +57,19 @@ typedef uint8_t orte_ns_cmd_flag_t;
  * typedefs above and in ns_types.h
  */
 #define ORTE_NS_CMD      ORTE_INT8
-#define ORTE_NODEID_T    ORTE_INT32
+
+
+#if ORTE_ENABLE_JUMBO_APPS
 #define ORTE_JOBID_T     ORTE_INT32
 #define ORTE_VPID_T      ORTE_INT32
+#define ORTE_NODEID_T    ORTE_INT32
+
+#else
+#define ORTE_JOBID_T     ORTE_INT16
+#define ORTE_VPID_T      ORTE_INT16
+#define ORTE_NODEID_T    ORTE_INT16
+#endif
+
 
 /*
  * define flag values for remote commands - only used internally

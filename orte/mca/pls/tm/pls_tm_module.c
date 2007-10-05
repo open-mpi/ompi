@@ -207,8 +207,7 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     /* Add basic orted command line options */
     orte_pls_base_orted_append_basic_args(&argc, &argv,
                                           &proc_name_index,
-                                          &node_name_index,
-                                          map->num_nodes);
+                                          &node_name_index);
 
     if (mca_pls_tm_component.debug) {
         param = opal_argv_join(argv, ' ');
@@ -233,8 +232,6 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
 
     /* setup environment */
     env = opal_argv_copy(environ);
-    var = mca_base_param_environ_variable("seed",NULL,NULL);
-    opal_setenv(var, "0", true, &env);
 
     /* clean out any MCA component selection directives that
      * won't work on remote nodes
@@ -452,13 +449,7 @@ launch_apps:
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(jobid, ORTE_JOB_STATE_FAILED_TO_START))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        
-        if (ORTE_SUCCESS != (rc = orte_wakeup(jobid))) {
-            ORTE_ERROR_LOG(rc);
-        }        
+        orte_pls_base_daemon_failed(jobid, false, -1, 0, ORTE_JOB_STATE_FAILED_TO_START);
     }
         
     /* check for timing request - get stop time and process if so */

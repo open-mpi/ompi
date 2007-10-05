@@ -37,7 +37,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ras/ras.h"
 #include "orte/mca/ras/base/ras_private.h"
-#include "orte/runtime/runtime_types.h"
 
 #include "orte/mca/rds/rds.h"
 #include "orte/mca/rds/base/rds_private.h"

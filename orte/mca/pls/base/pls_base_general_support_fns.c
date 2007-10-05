@@ -31,6 +31,8 @@
 #include "orte/util/univ_info.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/runtime/params.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/pls/base/pls_private.h"
 
@@ -64,14 +66,25 @@ void orte_pls_base_purge_mca_params(char ***env)
 
 int orte_pls_base_orted_append_basic_args(int *argc, char ***argv,
                                           int *proc_name_index,
-                                          int *node_name_index,
-                                          orte_std_cntr_t num_procs)
+                                          int *node_name_index)
 {
     char *param = NULL, *contact_info = NULL;
     int loc_id;
     char * amca_param_path = NULL;
     char * amca_param_prefix = NULL;
     char * tmp_force = NULL;
+    char *purge[] = {
+        "seed",
+        "rds",
+        "ras",
+        "rmaps",
+        "pls",
+        "rmgr",
+        NULL
+    };
+    int i, j, cnt, rc;
+    bool pass;
+    orte_vpid_t total_num_daemons;
 
     /* check for debug flags */
     if (orte_debug_flag) {
@@ -97,9 +110,15 @@ int orte_pls_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "<template>");
     }
 
-    /* tell the daemon how many procs are in the daemon's job */
+    /* get the total number of daemons that will be in the system */
+    if (ORTE_SUCCESS != (rc = orte_ns.get_vpid_range(0, &total_num_daemons))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* pass that number along */
     opal_argv_append(argc, argv, "--num_procs");
-    asprintf(&param, "%lu", (unsigned long)(num_procs));
+    asprintf(&param, "%lu", (unsigned long)(total_num_daemons));
     opal_argv_append(argc, argv, param);
     free(param);
 
@@ -145,6 +164,31 @@ int orte_pls_base_orted_append_basic_args(int *argc, char ***argv,
     free(contact_info);
     free(param);
 
+    /* pass along any cmd line MCA params provided to mpirun,
+     * being sure to "purge" any that would cause problems
+     * on backend nodes
+     */
+    cnt = opal_argv_count(orted_cmd_line);    
+    for (i=0; i < cnt; i+=3) {
+        /* check to see if this is on the purge list */
+        pass = true;
+        for (j=0; NULL != purge[j]; j++) {
+            /* the ith position holds -mca, so need to check
+             * against the i+1st position to find the param
+             */
+            if (0 == strcmp(orted_cmd_line[i+1],purge[j])) {
+                /* on purge list - skip it */
+                pass = false;
+                break;
+            }
+        }
+        if (pass) {
+            opal_argv_append(argc, argv, orted_cmd_line[i]);
+            opal_argv_append(argc, argv, orted_cmd_line[i+1]);
+            opal_argv_append(argc, argv, orted_cmd_line[i+2]);
+        }
+    }
+    
     /* 
      * Pass along the Aggregate MCA Parameter Sets
      */

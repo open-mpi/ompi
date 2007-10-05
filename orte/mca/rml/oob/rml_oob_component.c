@@ -136,6 +136,8 @@ rml_oob_init(int* priority)
     
     OBJ_CONSTRUCT(&orte_rml_oob_module.exceptions, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_oob_module.exceptions_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&orte_rml_oob_module.queued_routing_messages, opal_list_t);
+    OBJ_CONSTRUCT(&orte_rml_oob_module.queued_lock, opal_mutex_t);
 
     orte_rml_oob_module.active_oob = &mca_oob;
     orte_rml_oob_module.active_oob->oob_exception_callback = 
@@ -144,20 +146,20 @@ rml_oob_init(int* priority)
     return &orte_rml_oob_module.super;
 }
 
+static struct iovec route_recv_iov[1];
 
 int
 orte_rml_oob_init(void)
 {
     int ret;
-    struct iovec iov[1];
 
     ret = orte_rml_oob_module.active_oob->oob_init();
 
-    iov[0].iov_base = NULL;
-    iov[0].iov_len = 0;
+    route_recv_iov[0].iov_base = NULL;
+    route_recv_iov[0].iov_len = 0;
 
     ret = orte_rml_oob_module.active_oob->oob_recv_nb(ORTE_NAME_WILDCARD,
-                                                      iov, 1,
+                                                      route_recv_iov, 1,
                                                       ORTE_RML_TAG_RML_ROUTE,
                                                       ORTE_RML_ALLOC|ORTE_RML_PERSISTENT,
                                                       rml_oob_recv_route_callback,
@@ -178,6 +180,8 @@ orte_rml_oob_fini(void)
     }
     OBJ_DESTRUCT(&orte_rml_oob_module.exceptions);
     OBJ_DESTRUCT(&orte_rml_oob_module.exceptions_lock);
+    OBJ_DESTRUCT(&orte_rml_oob_module.queued_routing_messages);
+    OBJ_DESTRUCT(&orte_rml_oob_module.queued_lock);
     orte_rml_oob_module.active_oob->oob_exception_callback = NULL;
 
     return ORTE_SUCCESS;
@@ -283,6 +287,125 @@ OBJ_CLASS_INSTANCE(orte_rml_oob_msg_t, opal_object_t,
                    msg_construct, msg_destruct);
 
 static void
+queued_msg_construct(orte_rml_oob_queued_msg_t *msg)
+{
+    msg->payload[0].iov_base = NULL;
+    msg->payload[0].iov_len = 0;
+}
+
+static void
+queued_msg_destruct(orte_rml_oob_queued_msg_t *msg)
+{
+    if (NULL != msg->payload[0].iov_base) free(msg->payload[0].iov_base);
+}
+
+OBJ_CLASS_INSTANCE(orte_rml_oob_queued_msg_t, opal_list_item_t,
+                   queued_msg_construct, queued_msg_destruct);
+
+static void
+rml_oob_recv_route_queued_send_callback(int status,
+                                        struct orte_process_name_t* peer,
+                                        struct iovec* iov,
+                                        int count,
+                                        orte_rml_tag_t tag,
+                                        void* cbdata)
+{
+    orte_rml_oob_queued_msg_t *qmsg = (orte_rml_oob_queued_msg_t*) cbdata;
+    OBJ_RELEASE(qmsg);
+}
+
+
+static int
+rml_oob_queued_progress(void)
+{
+    orte_rml_oob_queued_msg_t *qmsg;
+    orte_rml_oob_msg_header_t *hdr;
+    int real_tag;
+    int ret;
+    orte_process_name_t next, origin;
+    int count = 0;
+
+    while (true) {
+        OPAL_THREAD_LOCK(&orte_rml_oob_module.queued_lock);
+        qmsg = (orte_rml_oob_queued_msg_t*) opal_list_remove_first(&orte_rml_oob_module.queued_routing_messages);
+        if (0 == opal_list_get_size(&orte_rml_oob_module.queued_routing_messages)) {
+            opal_progress_unregister(rml_oob_queued_progress);
+        }
+        OPAL_THREAD_UNLOCK(&orte_rml_oob_module.queued_lock);
+        if (NULL == qmsg) break;
+
+        hdr = (orte_rml_oob_msg_header_t*) qmsg->payload;
+        origin = hdr->origin;
+
+        next = orte_routed.get_route(&hdr->destination);
+        if (next.vpid == ORTE_VPID_INVALID) {
+            opal_output(0,
+                        "%s tried routing message to %s, can't find route",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&hdr->destination));
+            abort();
+        }
+
+        if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &next, ORTE_PROC_MY_NAME)) {
+            opal_output(0, "%s trying to get message to %s, routing loop",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&hdr->destination));
+            abort();
+        }
+
+        if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &next, &hdr->destination)) {
+            real_tag = hdr->tag;
+        } else {
+            real_tag = ORTE_RML_TAG_RML_ROUTE;
+        }
+
+        OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
+                             "%s routing message from %s for %s to %s (tag: %d)",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&hdr->origin),
+                             ORTE_NAME_PRINT(&hdr->destination),
+                             ORTE_NAME_PRINT(&next),
+                             hdr->tag));
+
+        ORTE_RML_OOB_MSG_HEADER_HTON(*hdr);
+
+        ret = orte_rml_oob_module.active_oob->oob_send_nb(&next,
+                                                          &origin,
+                                                          qmsg->payload,
+                                                          1,
+                                                          real_tag,
+                                                          0,
+                                                          rml_oob_recv_route_queued_send_callback,
+                                                          qmsg);
+
+        if (ORTE_SUCCESS != ret) {
+            if (ORTE_ERR_ADDRESSEE_UNKNOWN == ret) {
+                /* still no route -- try again */
+                OPAL_THREAD_LOCK(&orte_rml_oob_module.queued_lock);
+                opal_list_append(&orte_rml_oob_module.queued_routing_messages,
+                                 &qmsg->super);
+                if (1 == opal_list_get_size(&orte_rml_oob_module.queued_routing_messages)) {
+                    opal_progress_register(rml_oob_queued_progress);
+                }
+                OPAL_THREAD_UNLOCK(&orte_rml_oob_module.queued_lock);
+            } else {
+                opal_output(0,
+                            "%s failed to send message to %s: %s (rc = %d)",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&next),
+                            opal_strerror(ret),
+                            ret);
+                abort();
+            }
+        }
+
+        count++;
+    }
+
+    return count;
+}
+
+static void
 rml_oob_recv_route_send_callback(int status,
                                  struct orte_process_name_t* peer,
                                  struct iovec* iov,
@@ -290,10 +413,7 @@ rml_oob_recv_route_send_callback(int status,
                                  orte_rml_tag_t tag,
                                  void* cbdata)
 {
-    /* BWB -- propogate errors here... */
-    if (NULL != iov[0].iov_base) free(iov[0].iov_base);
 }
-
 
 
 static void
@@ -308,29 +428,84 @@ rml_oob_recv_route_callback(int status,
         (orte_rml_oob_msg_header_t*) iov[0].iov_base;
     int real_tag;
     int ret;
-    orte_process_name_t next;
+    orte_process_name_t next, origin;
 
     /* BWB -- propogate errors here... */
     assert(status >= 0);
 
+    ORTE_RML_OOB_MSG_HEADER_NTOH(*hdr);
+
+    origin = hdr->origin;
+
     next = orte_routed.get_route(&hdr->destination);
     if (next.vpid == ORTE_VPID_INVALID) {
-        ORTE_ERROR_LOG(ORTE_ERR_ADDRESSEE_UNKNOWN);
+        opal_output(0,
+                    "%s tried routing message to %s, can't find route",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_NAME_PRINT(&hdr->destination));
         abort();
     }
 
-    if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &next, peer)) {
+    if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &next, ORTE_PROC_MY_NAME)) {
+        opal_output(0, "%s trying to get message to %s, routing loop",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_NAME_PRINT(&hdr->destination));
+        abort();
+    }
+
+    if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &next, &hdr->destination)) {
         real_tag = hdr->tag;
     } else {
         real_tag = ORTE_RML_TAG_RML_ROUTE;
     }
 
+    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
+                         "%s routing message from %s for %s to %s (tag: %d)",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&hdr->origin),
+                         ORTE_NAME_PRINT(&hdr->destination),
+                         ORTE_NAME_PRINT(&next),
+                         hdr->tag));
+
+    ORTE_RML_OOB_MSG_HEADER_HTON(*hdr);
+
     ret = orte_rml_oob_module.active_oob->oob_send_nb(&next,
+                                                      &origin,
                                                       iov,
                                                       count,
                                                       real_tag,
                                                       0,
                                                       rml_oob_recv_route_send_callback,
                                                       NULL);
-    assert(ret == ORTE_SUCCESS);
+
+    if (ORTE_SUCCESS != ret) {
+        if (ORTE_ERR_ADDRESSEE_UNKNOWN == ret) {
+            /* no route -- queue and hope we find a route */
+            orte_rml_oob_queued_msg_t *qmsg = OBJ_NEW(orte_rml_oob_queued_msg_t);
+            OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
+                                 "%s: no OOB information for %s.  Queuing for later.",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&next)));
+            ORTE_RML_OOB_MSG_HEADER_NTOH(*hdr);
+            qmsg->payload[0].iov_base = malloc(iov[0].iov_len);
+            if (NULL == qmsg->payload[0].iov_base) abort();
+            qmsg->payload[0].iov_len = iov[0].iov_len;
+            memcpy(qmsg->payload[0].iov_base, iov[0].iov_base, iov[0].iov_len);
+            OPAL_THREAD_LOCK(&orte_rml_oob_module.queued_lock);
+            opal_list_append(&orte_rml_oob_module.queued_routing_messages,
+                             &qmsg->super);
+            if (1 == opal_list_get_size(&orte_rml_oob_module.queued_routing_messages)) {
+                opal_progress_register(rml_oob_queued_progress);
+            }
+            OPAL_THREAD_UNLOCK(&orte_rml_oob_module.queued_lock);
+        } else {
+            opal_output(0,
+                        "%s failed to send message to %s: %s (rc = %d)",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&next),
+                        opal_strerror(ret),
+                        ret);
+            abort();
+        }
+    }
 }

@@ -38,6 +38,7 @@
 #include "orte/orte_types.h"
 
 #include "opal/mca/mca.h"
+#include "opal/class/opal_list.h"
 
 #include "orte/dss/dss_types.h"
 #include "orte/mca/gpr/gpr_types.h"
@@ -63,16 +64,24 @@ typedef int (*orte_grpcomm_base_module_xcast_nb_fn_t)(orte_jobid_t job,
                                                       orte_buffer_t *buffer,
                                                       orte_rml_tag_t tag);
 
-/* Wait for receipt of an xcast message */
-typedef int (*orte_grpcomm_base_module_xcast_gate_fn_t)(orte_gpr_trigger_cb_fn_t cbfunc);
+/* allgather - gather data from all procs */
+typedef int (*orte_grpcomm_base_module_allgather_fn_t)(orte_buffer_t *sbuf, orte_buffer_t *rbuf);
+
+typedef int (*orte_grpcomm_base_module_allgather_list_fn_t)(opal_list_t *names,
+                                                            orte_buffer_t *sbuf, orte_buffer_t *rbuf);
+
+/* barrier function */
+typedef int (*orte_grpcomm_base_module_barrier_fn_t)(void);
 
 /*
  * Ver 2.0
  */
 struct orte_grpcomm_base_module_2_0_0_t {
-    orte_grpcomm_base_module_xcast_fn_t         xcast;
-    orte_grpcomm_base_module_xcast_nb_fn_t      xcast_nb;
-    orte_grpcomm_base_module_xcast_gate_fn_t    xcast_gate;
+    orte_grpcomm_base_module_xcast_fn_t             xcast;
+    orte_grpcomm_base_module_xcast_nb_fn_t          xcast_nb;
+    orte_grpcomm_base_module_allgather_fn_t         allgather;
+    orte_grpcomm_base_module_allgather_list_fn_t    allgather_list;
+    orte_grpcomm_base_module_barrier_fn_t           barrier;
 };
 
 typedef struct orte_grpcomm_base_module_2_0_0_t orte_grpcomm_base_module_2_0_0_t;

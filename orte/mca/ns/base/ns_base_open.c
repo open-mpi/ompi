@@ -199,6 +199,20 @@ int orte_ns_base_open(void)
             return rc;
         }
 
+    tmp = ORTE_NODEID;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_ns_base_pack_nodeid,
+                                        orte_ns_base_unpack_nodeid,
+                                        (orte_dss_copy_fn_t)orte_ns_base_copy_nodeid,
+                                        (orte_dss_compare_fn_t)orte_ns_base_compare_nodeid,
+                                        (orte_dss_size_fn_t)orte_ns_base_std_size,
+                                        (orte_dss_print_fn_t)orte_ns_base_std_print,
+                                        (orte_dss_release_fn_t)orte_ns_base_std_release,
+                                        ORTE_DSS_UNSTRUCTURED,
+                                        "ORTE_NODEID", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     /* Open up all available components */
 
     if (ORTE_SUCCESS !=

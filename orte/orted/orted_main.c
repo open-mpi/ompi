@@ -377,7 +377,7 @@ int orte_daemon(int argc, char *argv[])
      * up incorrect infrastructure that only a singleton would
      * require.
      */
-    if (ORTE_SUCCESS != (ret = orte_init_stage1(ORTE_INFRASTRUCTURE))) {
+    if (ORTE_SUCCESS != (ret = orte_init(ORTE_INFRASTRUCTURE))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -413,33 +413,6 @@ int orte_daemon(int argc, char *argv[])
             OBJ_RELEASE(buffer);
             return ret;
         }
-        
-        /* Begin recording registry actions */
-        if (ORTE_SUCCESS != (ret = orte_gpr.begin_compound_cmd(buffer))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_RELEASE(buffer);
-            return ret;
-        }
-    }
-    
-    /* tell orte_init that we don't want any subscriptions registered by passing
-     * a NULL trigger name
-     */
-    if (ORTE_SUCCESS != (ret = orte_init_stage2(NULL))) {
-        ORTE_ERROR_LOG(ret);
-        OBJ_RELEASE(buffer);
-        return ret;
-    }
-
-    /* if we aren't a seed, then we need to stop the compound_cmd mode here so
-     * that other subsystems can use it
-     */
-    if (!orte_process_info.seed) {
-        if (ORTE_SUCCESS != (ret = orte_gpr.stop_compound_cmd())) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_RELEASE(buffer);
-            return ret;
-        }
     }
     
     /* Set signal handlers to catch kill signals so we can properly clean up
@@ -461,13 +434,6 @@ int orte_daemon(int argc, char *argv[])
                     signal_callback, &sigusr2_handler);
     opal_signal_add(&sigusr2_handler, NULL);
 #endif  /* __WINDOWS__ */
-
-    /* if requested, report my uri to the indicated pipe */
-    if (orted_globals.uri_pipe > 0) {
-        write(orted_globals.uri_pipe, orte_universe_info.seed_uri,
-                    strlen(orte_universe_info.seed_uri)+1); /* need to add 1 to get the NULL */
-        close(orted_globals.uri_pipe);
-    }
 
     /* setup stdout/stderr */
     if (orte_debug_daemons_file_flag) {
@@ -519,21 +485,40 @@ int orte_daemon(int argc, char *argv[])
     /* a daemon should *always* yield the processor when idle */
     opal_progress_set_yield_when_idle(true);
 
-    /* setup to listen for xcast stage gate commands. We need to do this because updates to the
-     * contact info for dynamically spawned daemons will come to the gate RML-tag
-     */
-    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_XCAST_BARRIER,
-                                  ORTE_RML_NON_PERSISTENT, orte_daemon_recv_gate, NULL);
-    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(ret);
-        OBJ_RELEASE(buffer);
-        return ret;
-    }
-
-    /* if requested, report my uri to the indicated pipe */
+    /* if requested, obtain and report a new process name and my uri to the indicated pipe */
     if (orted_globals.uri_pipe > 0) {
-        write(orted_globals.uri_pipe, orte_universe_info.seed_uri,
-              strlen(orte_universe_info.seed_uri)+1); /* need to add 1 to get the NULL */
+        orte_process_name_t name;
+        char *tmp, *nptr;
+        orte_app_context_t *app;
+        
+        /* setup the singleton's job */
+        orte_ns.create_jobid(&name.jobid, NULL);
+        orte_ns.reserve_range(name.jobid, 1, &name.vpid);
+        
+        app = OBJ_NEW(orte_app_context_t);
+        app->app = strdup("singleton");
+        app->num_procs = 1;
+        
+        if (ORTE_SUCCESS !=
+            (ret = orte_rmgr_base_put_app_context(name.jobid, &app, 1))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        OBJ_RELEASE(app);
+        
+        /* setup stage gates for singleton */
+        orte_rmgr_base_proc_stage_gate_init(name.jobid);
+
+        /* create a string that contains our uri + the singleton's name */
+        orte_ns.get_proc_name_string(&nptr, &name);
+        asprintf(&tmp, "%s[%s]", orte_universe_info.seed_uri, nptr);
+        free(nptr);
+
+        /* pass that info to the singleton */
+        write(orted_globals.uri_pipe, tmp, strlen(tmp)+1); /* need to add 1 to get the NULL */
+
+        /* cleanup */
+        free(tmp);
     }
 
     /* if we were given a pipe to monitor for singleton termination, set that up */

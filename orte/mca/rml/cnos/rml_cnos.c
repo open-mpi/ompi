@@ -147,7 +147,7 @@ int
 orte_rml_cnos_send(orte_process_name_t * peer,
 		     struct iovec *msg, int count, int tag, int flags)
 {
-    return ORTE_ERR_NOT_SUPPORTED;
+    return ORTE_SUCCESS;
 }
 
 int
@@ -155,7 +155,7 @@ orte_rml_cnos_send_buffer(orte_process_name_t * peer,
 			    orte_buffer_t * buffer,
 			    orte_rml_tag_t tag, int flags)
 {
-    return ORTE_ERR_NOT_SUPPORTED;
+    return ORTE_SUCCESS;
 }
 
 int
@@ -163,14 +163,14 @@ orte_rml_cnos_recv(orte_process_name_t * peer,
 		     struct iovec *msg,
 		     int count, orte_rml_tag_t tag, int flags)
 {
-    return ORTE_ERR_NOT_SUPPORTED;
+    return ORTE_SUCCESS;
 }
 
 int
 orte_rml_cnos_recv_buffer(orte_process_name_t * peer,
                           orte_buffer_t * buf, orte_rml_tag_t tag, int flags)
 {
-    return ORTE_ERR_NOT_SUPPORTED;
+    return ORTE_SUCCESS;
 }
 
 int
@@ -217,7 +217,7 @@ orte_rml_cnos_recv_buffer_nb(orte_process_name_t * peer,
 int
 orte_rml_cnos_recv_cancel(orte_process_name_t * peer, orte_rml_tag_t tag)
 {
-    return ORTE_ERR_NOT_SUPPORTED;
+    return ORTE_SUCCESS;
 }
 
 int orte_rml_cnos_add_exception_handler(orte_rml_exception_callback_t cbfunc)

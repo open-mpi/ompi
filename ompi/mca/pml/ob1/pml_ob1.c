@@ -459,6 +459,7 @@ int mca_pml_ob1_ft_event( int state )
     ompi_proc_t** procs = NULL;
     size_t num_procs;
     int ret, p;
+    orte_buffer_t mdx_buf, rbuf;
 
     if(OPAL_CRS_CHECKPOINT == state) {
         ;
@@ -469,6 +470,10 @@ int mca_pml_ob1_ft_event( int state )
     else if(OPAL_CRS_RESTART == state) {
         /*
          * Get a list of processes
+         * NOTE: Do *not* call ompi_proc_finalize as there are many places in
+         *       the code that point to indv. procs in this strucutre. For our
+         *       needs here we only need to fix up the modex, bml and pml 
+         *       references.
          */
         procs = ompi_proc_all(&num_procs);
         if(NULL == procs) {
@@ -487,6 +492,9 @@ int mca_pml_ob1_ft_event( int state )
             return ret;
         }
 
+        /*
+         * Make sure the modex is NULL so it can be re-initalized
+         */
         for(p = 0; p < (int)num_procs; ++p) {
             if( NULL != procs[p]->proc_modex ) {
                 OBJ_RELEASE(procs[p]->proc_modex);
@@ -494,9 +502,22 @@ int mca_pml_ob1_ft_event( int state )
             }
         }
 
+        /*
+         * Init the modex structures
+         */
         if (OMPI_SUCCESS != (ret = ompi_modex_init())) {
             opal_output(0,
                         "pml:ob1: ft_event(Restart): modex_init Failed %d",
+                        ret);
+            return ret;
+        }
+
+        /*
+         * Load back up the hostname/arch information into the modex
+         */
+        if (OMPI_SUCCESS != (ret = ompi_proc_publish_info())) {
+            opal_output(0,
+                        "pml:ob1: ft_event(Restart): proc_init Failed %d",
                         ret);
             return ret;
         }
@@ -527,52 +548,61 @@ int mca_pml_ob1_ft_event( int state )
     }
     else if(OPAL_CRS_RESTART == state) {
         /*
-         * Re-subscribe to the modex information
+         * Exchange the modex information once again
          */
-        if (OMPI_SUCCESS != (ret = ompi_modex_subscribe_job(ORTE_PROC_MY_NAME->jobid))) {
+        OBJ_CONSTRUCT(&mdx_buf, orte_buffer_t);
+        if (OMPI_SUCCESS != (ret = ompi_modex_get_my_buffer(&mdx_buf))) {
             opal_output(0,
-                        "pml:ob1: ft_event(Restart): Failed to subscribe to the modex information %d",
+                        "pml:ob1: ft_event(Restart): Failed ompi_modex_get_my_buffer() = %d",
                         ret);
-            return ret;
-        }
-
-        opal_output_verbose(10, ompi_cr_output,
-                            "pml:ob1: ft_event(Restart): Enter Stage Gate 1");
-        if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
-                                                           ORTE_PROC_STATE_AT_STG1, 0))) {
-            opal_output(0,
-                        "pml:ob1: ft_event(Restart): Stage Gate 1 Failed %d",
-                        ret);
-            return ret;
-        }
-
-        if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast_gate(orte_gpr.deliver_notify_msg))) {
-            opal_output(0,
-                        "pml:ob1: ft_event(Restart): Stage Gate 1 Failed %d",
-                        ret);
-            return ret;
-        }
-
-        if( OMPI_SUCCESS != (ret = mca_pml_ob1_add_procs(procs, num_procs) ) ) {
-            opal_output(0, "pml:ob1: readd_procs: Failed in add_procs (%d)", ret);
             return ret;
         }
 
         /*
-         * Set the STAGE 2 State
+         * Do the allgather exchange of information
          */
-        opal_output_verbose(10, ompi_cr_output,
-                            "pml:ob1: ft_event(Restart): Enter Stage Gate 2");
-        if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
-                                                           ORTE_PROC_STATE_AT_STG2, 0))) {
-            opal_output(0,"pml:ob1: ft_event(Restart): Stage Gate 1 Failed %d",
+        OBJ_CONSTRUCT(&rbuf, orte_buffer_t);
+        if (OMPI_SUCCESS != (ret = orte_grpcomm.allgather(&mdx_buf, &rbuf))) {
+            opal_output(0,
+                        "pml:ob1: ft_event(Restart): Failed orte_grpcomm.allgather() = %d",
+                        ret);
+            return ret;
+        }
+        OBJ_DESTRUCT(&mdx_buf);
+
+        /*
+         * Process the modex data into the proc structures
+         */
+        if (OMPI_SUCCESS != (ret = ompi_modex_process_data(&rbuf))) {
+            opal_output(0,
+                        "pml:ob1: ft_event(Restart): Failed ompi_modex_process_data() = %d",
+                        ret);
+            return ret;
+        }
+        OBJ_DESTRUCT(&rbuf);
+
+        /*
+         * Fill in remote proc information
+         */
+        if (OMPI_SUCCESS != (ret = ompi_proc_get_info())) {
+            opal_output(0,
+                        "pml:ob1: ft_event(Restart): Failed ompi_proc_get_info() = %d",
                         ret);
             return ret;
         }
 
-        if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast_gate(orte_gpr.deliver_notify_msg))) {
-            opal_output(0,"pml:ob1: ft_event(Restart): Stage Gate 1 Failed %d",
-                        ret);
+        /*
+         * Startup the PML stack now that the modex is running again
+         * Add the new procs
+         */
+        if( OMPI_SUCCESS != (ret = mca_pml_ob1_add_procs(procs, num_procs) ) ) {
+            opal_output(0, "pml:ob1: fr_event(Restart): Failed in add_procs (%d)", ret);
+            return ret;
+        }
+
+        /* Is this barrier necessary ? JJH */
+        if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier())) {
+            opal_output(0, "pml:ob1: fr_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
             return ret;
         }
 

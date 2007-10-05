@@ -152,7 +152,7 @@ ompi_modex_destruct(ompi_modex_proc_data_t * modex)
 }
 
 OBJ_CLASS_INSTANCE(ompi_modex_proc_data_t, opal_object_t,
-		   ompi_modex_construct, ompi_modex_destruct);
+                   ompi_modex_construct, ompi_modex_destruct);
 
 
 
@@ -196,15 +196,15 @@ ompi_modex_module_destruct(ompi_modex_module_data_t * module)
 {
     opal_list_item_t *item;
     while (NULL != (item = opal_list_remove_first(&module->module_cbs))) {
-	OBJ_RELEASE(item);
+        OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&module->module_cbs);
 }
 
 OBJ_CLASS_INSTANCE(ompi_modex_module_data_t,
-		   opal_list_item_t,
-		   ompi_modex_module_construct,
-		   ompi_modex_module_destruct);
+                   opal_list_item_t,
+                   ompi_modex_module_construct,
+                   ompi_modex_module_destruct);
 
 /**
  * Callback data for modex updates
@@ -220,41 +220,10 @@ struct ompi_modex_cb_t {
 typedef struct ompi_modex_cb_t ompi_modex_cb_t;
 
 OBJ_CLASS_INSTANCE(ompi_modex_cb_t,
-		   opal_list_item_t,
-		   NULL,
-		   NULL);
+                   opal_list_item_t,
+                   NULL,
+                   NULL);
 
-
-
-/**
- * Container for segment subscription data
- *
- * Track segments we have subscribed to.  Any jobid segment we are
- * subscribed to for updates will have one of these containers,
- * hopefully put on the ompi_modex_subscriptions list.
- */
-struct ompi_modex_subscription_t {
-    opal_list_item_t item;
-    orte_jobid_t jobid;
-};
-typedef struct ompi_modex_subscription_t ompi_modex_subscription_t;
-
-OBJ_CLASS_INSTANCE(ompi_modex_subscription_t,
-		   opal_list_item_t,
-		   NULL,
-		   NULL);
-
-
-/**
- * Global modex list for tracking subscriptions
- *
- * A list of ompi_modex_subscription_t structures, each representing a
- * jobid to which we have subscribed for modex updates.
- *
- * \note The ompi_modex_lock mutex should be held whenever this list
- * is being updated or searched.
- */
-static opal_list_t ompi_modex_subscriptions;
 
 
 /**
@@ -278,14 +247,24 @@ static opal_mutex_t ompi_modex_lock;
 
 static opal_mutex_t ompi_modex_string_lock;
 
+/*
+ * Global buffer we use to collect modex info for later
+ * transmission
+ */
+static orte_buffer_t ompi_modex_buffer;
+static orte_std_cntr_t ompi_modex_num_entries;
+
+
 int
 ompi_modex_init(void)
 {
     OBJ_CONSTRUCT(&ompi_modex_data, opal_hash_table_t);
-    OBJ_CONSTRUCT(&ompi_modex_subscriptions, opal_list_t);
     OBJ_CONSTRUCT(&ompi_modex_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&ompi_modex_string_lock, opal_mutex_t);
-
+    
+    OBJ_CONSTRUCT(&ompi_modex_buffer, orte_buffer_t);
+    ompi_modex_num_entries = 0;
+    
     opal_hash_table_init(&ompi_modex_data, 256);
 
     return OMPI_SUCCESS;
@@ -295,17 +274,12 @@ ompi_modex_init(void)
 int
 ompi_modex_finalize(void)
 {
-    opal_list_item_t *item;
-
     opal_hash_table_remove_all(&ompi_modex_data);
     OBJ_DESTRUCT(&ompi_modex_data);
 
-    while (NULL != (item = opal_list_remove_first(&ompi_modex_subscriptions)))
-	OBJ_RELEASE(item);
-    OBJ_DESTRUCT(&ompi_modex_subscriptions);
-
     OBJ_DESTRUCT(&ompi_modex_string_lock);
     OBJ_DESTRUCT(&ompi_modex_lock);
+    OBJ_DESTRUCT(&ompi_modex_buffer);
 
     return OMPI_SUCCESS;
 }
@@ -326,11 +300,11 @@ ompi_modex_lookup_module(ompi_modex_proc_data_t *proc_data,
 {
     ompi_modex_module_data_t *module_data = NULL;
     for (module_data = (ompi_modex_module_data_t *) opal_list_get_first(&proc_data->modex_module_data);
-	 module_data != (ompi_modex_module_data_t *) opal_list_get_end(&proc_data->modex_module_data);
-	 module_data = (ompi_modex_module_data_t *) opal_list_get_next(module_data)) {
-	if (mca_base_component_compatible(&module_data->component, component) == 0) {
-	    return module_data;
-	}
+         module_data != (ompi_modex_module_data_t *) opal_list_get_end(&proc_data->modex_module_data);
+         module_data = (ompi_modex_module_data_t *) opal_list_get_next(module_data)) {
+        if (mca_base_component_compatible(&module_data->component, component) == 0) {
+            return module_data;
+        }
     }
 
     if (create_if_not_found) {
@@ -365,7 +339,7 @@ ompi_modex_lookup_orte_proc(orte_process_name_t *orte_proc)
         orte_hash_table_get_proc(&ompi_modex_data, orte_proc);
     if (NULL == proc_data) {
         /* The proc clearly exists, so create a modex structure
-           for it and try to subscribe */
+           for it */
         proc_data = OBJ_NEW(ompi_modex_proc_data_t);
         if (NULL == proc_data) {
             opal_output(0, "ompi_modex_lookup_orte_proc: unable to allocate ompi_modex_proc_data_t\n");
@@ -403,8 +377,6 @@ ompi_modex_lookup_proc(ompi_proc_t *proc)
             OBJ_RETAIN(proc_data);
             proc->proc_modex = &proc_data->super.super;
             OPAL_THREAD_UNLOCK(&ompi_modex_lock);
-            /* verify that we have subscribed to this segment */
-            ompi_modex_subscribe_job(proc->proc_name.jobid);
         } else {
             OPAL_THREAD_UNLOCK(&ompi_modex_lock);
         }
@@ -415,345 +387,233 @@ ompi_modex_lookup_proc(ompi_proc_t *proc)
 
 
 /**
- *  Callback for registry notifications.
+ * Get the local buffer's data
  */
-static void
-ompi_modex_registry_callback(orte_gpr_notify_data_t * data,
-                             void *cbdata)
+int
+ompi_modex_get_my_buffer(orte_buffer_t *buf)
 {
-    orte_std_cntr_t i, j, k;
-    orte_gpr_value_t **values, *value;
-    orte_gpr_keyval_t **keyval;
-    orte_process_name_t *proc_name;
+    int rc;
+    
+    OPAL_THREAD_LOCK(&ompi_modex_lock);
+    /* put our process name in the buffer so it can be unpacked later */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+        ORTE_ERROR_LOG(rc);
+        OPAL_THREAD_UNLOCK(&ompi_modex_lock);
+        return rc;
+    }
+
+    /* put the number of entries into the buffer */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(buf, &ompi_modex_num_entries, 1, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        OPAL_THREAD_UNLOCK(&ompi_modex_lock);
+        return rc;
+    }
+    
+    /* if there are entries, copy the data across */
+    if (0 < ompi_modex_num_entries) {
+        if (ORTE_SUCCESS != (orte_dss.copy_payload(buf, &ompi_modex_buffer))) {
+            ORTE_ERROR_LOG(rc);
+            OPAL_THREAD_UNLOCK(&ompi_modex_lock);
+            return rc;
+        }
+    }
+    
+    OPAL_THREAD_UNLOCK(&ompi_modex_lock);
+    return ORTE_SUCCESS;
+}
+
+/**
+ *  Process modex data
+ */
+int
+ompi_modex_process_data(orte_buffer_t *buf)
+{
+    orte_std_cntr_t i, j, num_procs, num_entries;
+    opal_list_item_t *item;
+    void *bytes = NULL;
+    orte_std_cntr_t cnt;
+    orte_process_name_t proc_name;
     ompi_modex_proc_data_t *proc_data;
     ompi_modex_module_data_t *module_data;
     mca_base_component_t component;
     int rc;
 
-    /* process the callback */
-    values = (orte_gpr_value_t **) (data->values)->addr;
-    for (i = 0, k = 0; k < data->cnt &&
-                       i < (data->values)->size; i++) {
-        if (NULL != values[i]) {
-            k++;
-            value = values[i];
-            if (0 < value->cnt) {      /* needs to be at least one keyval */
-                /* Find the process name in the keyvals */
-                keyval = value->keyvals;
-                for (j = 0; j < value->cnt; j++) {
-                    if (0 != strcmp(keyval[j]->key, ORTE_PROC_NAME_KEY)) continue;
-                    /* this is the process name - extract it */
-                    if (ORTE_SUCCESS != orte_dss.get((void**)&proc_name, keyval[j]->value, ORTE_NAME)) {
-                        opal_output(0, "ompi_modex_registry_callback: unable to extract process name\n");
-                        return;  /* nothing we can do */
-                    }
-                    goto GOTNAME;
+    /* extract the number of entries in the buffer */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(buf, &num_procs, &cnt, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* process the buffer */
+    for (i=0; i < num_procs; i++) {
+        /* unpack the process name */
+        cnt=1;
+        if (ORTE_SUCCESS != (rc = orte_dss.unpack(buf, &proc_name, &cnt, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* look up the modex data structure */
+        proc_data = ompi_modex_lookup_orte_proc(&proc_name);
+        if (proc_data == NULL) {
+            /* report the error */
+            opal_output(0, "ompi_modex_process_data: received modex info for unknown proc %s\n",
+                        ORTE_NAME_PRINT(&proc_name));
+            return OMPI_ERR_NOT_FOUND;
+        }
+
+        /* unpack the number of entries for this proc */
+        cnt=1;
+        if (ORTE_SUCCESS != (rc = orte_dss.unpack(buf, &num_entries, &cnt, ORTE_STD_CNTR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        OPAL_THREAD_LOCK(&proc_data->modex_lock);
+
+        /*
+         * Extract the component name and version - since there is one for each
+         * component type/name/version - process them all
+         */
+        for (j = 0; j < num_entries; j++) {
+            size_t num_bytes;
+            char *ptr;
+                        
+            cnt = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buf, &ptr, &cnt, ORTE_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            strcpy(component.mca_type_name, ptr);
+            free(ptr);
+            
+            cnt = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buf, &ptr, &cnt, ORTE_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            strcpy(component.mca_component_name, ptr);
+            free(ptr);
+            
+            cnt = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buf,
+                                                      &component.mca_component_major_version, &cnt, ORTE_INT32))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            cnt = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buf,
+                                                      &component.mca_component_minor_version, &cnt, ORTE_INT32))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            cnt = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buf, &num_bytes, &cnt, ORTE_SIZE))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            if (num_bytes != 0) {
+                if (NULL == (bytes = malloc(num_bytes))) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    return ORTE_ERR_OUT_OF_RESOURCE;
                 }
-                opal_output(0, "ompi_modex_registry_callback: unable to find process name in notify message\n");
-                return;  /* if the name wasn't here, there is nothing we can do */
-GOTNAME:
-                /* look up the modex data structure */
-                proc_data = ompi_modex_lookup_orte_proc(proc_name);
-                if (proc_data == NULL) continue;
-
-                OPAL_THREAD_LOCK(&proc_data->modex_lock);
-
-                /*
-                 * Extract the component name and version from the keyval object's key
-                 * Could be multiple keyvals returned since there is one for each
-                 * component type/name/version - process them all
-                 */
-                keyval = value->keyvals;
-                for (j = 0; j < value->cnt; j++) {
-                    orte_buffer_t buffer;
-                    opal_list_item_t *item;
-                    char *ptr;
-                    void *bytes = NULL;
-                    orte_std_cntr_t cnt;
-                    size_t num_bytes;
-                    orte_byte_object_t *bo;
-
-                    if (strcmp(keyval[j]->key, OMPI_MODEX_KEY) != 0)
-                        continue;
-
-                    OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-                    if (ORTE_SUCCESS != (rc = orte_dss.get((void **) &bo, keyval[j]->value, ORTE_BYTE_OBJECT))) {
-                        ORTE_ERROR_LOG(rc);
-                        continue;
-                    }
-                    if (ORTE_SUCCESS != (rc = orte_dss.load(&buffer, bo->bytes, bo->size))) {
-                        ORTE_ERROR_LOG(rc);
-                        continue;
-                    }
-                    cnt = 1;
-                    if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer, &ptr, &cnt, ORTE_STRING))) {
-                        ORTE_ERROR_LOG(rc);
-                        continue;
-                    }
-                    strncpy(component.mca_type_name, ptr, MCA_BASE_MAX_COMPONENT_NAME_LEN);
-                    free(ptr);
-
-                    cnt = 1;
-                    if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer, &ptr, &cnt, ORTE_STRING))) {
-                        ORTE_ERROR_LOG(rc);
-                        continue;
-                    }
-                    strncpy(component.mca_component_name, ptr, MCA_BASE_MAX_COMPONENT_NAME_LEN);
-                    free(ptr);
-
-                    cnt = 1;
-                    if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer,
-                                      &component.mca_component_major_version, &cnt, ORTE_INT32))) {
-                        ORTE_ERROR_LOG(rc);
-                        continue;
-                    }
-                    cnt = 1;
-                    if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer,
-                                      &component.mca_component_minor_version, &cnt, ORTE_INT32))) {
-                        ORTE_ERROR_LOG(rc);
-                        continue;
-                    }
-                    cnt = 1;
-                    if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer, &num_bytes, &cnt, ORTE_SIZE))) {
-                        ORTE_ERROR_LOG(rc);
-                        continue;
-                    }
-                    if (num_bytes != 0) {
-                        if (NULL == (bytes = malloc(num_bytes))) {
-                            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                            continue;
-                        }
-                        cnt = (orte_std_cntr_t) num_bytes;
-                        if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer, bytes, &cnt, ORTE_BYTE))) {
-                            ORTE_ERROR_LOG(rc);
-                            continue;
-                        }
-                        num_bytes = cnt;
-                    } else {
-                        bytes = NULL;
-                    }
-
-                    /*
-                     * Lookup the corresponding modex structure
-                     */
-                    if (NULL == (module_data = ompi_modex_lookup_module(proc_data, 
-                                                                        &component, 
-                                                                        true))) {
-                        opal_output(0, "ompi_modex_registry_callback: ompi_modex_lookup_module failed\n");
-                        OBJ_RELEASE(data);
-                        OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
-                        return;
-                    }
-                    module_data->module_data = bytes;
-                    module_data->module_data_size = num_bytes;
-                    proc_data->modex_received_data = true;
-                    opal_condition_signal(&proc_data->modex_cond);
-
-                    if (opal_list_get_size(&module_data->module_cbs)) {
-                        ompi_proc_t *proc = ompi_proc_find(proc_name);
-
-                        if (NULL != proc) {
-                            OPAL_THREAD_LOCK(&proc->proc_lock);
-                            /* call any registered callbacks */
-                            for (item = opal_list_get_first(&module_data->module_cbs);
-                                 item != opal_list_get_end(&module_data->module_cbs);
-                                 item = opal_list_get_next(item)) {
-                                ompi_modex_cb_t *cb = (ompi_modex_cb_t *) item;
-                                cb->cbfunc(&module_data->component, 
-                                           proc, bytes, num_bytes, cb->cbdata);
-                            }
-                            OPAL_THREAD_UNLOCK(&proc->proc_lock);
-                        }
-                    }
+                cnt = (orte_std_cntr_t) num_bytes;
+                if (ORTE_SUCCESS != (rc = orte_dss.unpack(buf, bytes, &cnt, ORTE_BYTE))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
                 }
+                num_bytes = cnt;
+            } else {
+                bytes = NULL;
+            }
+            
+            /*
+             * Lookup the corresponding modex structure
+             */
+            if (NULL == (module_data = ompi_modex_lookup_module(proc_data, 
+                                                                &component, 
+                                                                true))) {
+                opal_output(0, "ompi_modex_process_data: ompi_modex_lookup_module failed\n");
                 OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
-            } /* if value[i]->cnt > 0 */
-        }  /* if value[i] != NULL */
-    }
-}
-
-
-int
-ompi_modex_subscribe_job(orte_jobid_t jobid)
-{
-    char *segment, *sub_name, *trig_name;
-    orte_gpr_subscription_id_t sub_id;
-    opal_list_item_t *item;
-    ompi_modex_subscription_t *subscription;
-    int rc;
-    char *keys[] = {
-        ORTE_PROC_NAME_KEY,
-        OMPI_MODEX_KEY,
-        NULL
-    };
-
-    /* check for an existing subscription */
-    OPAL_THREAD_LOCK(&ompi_modex_lock);
-    for (item = opal_list_get_first(&ompi_modex_subscriptions) ;
-         item != opal_list_get_end(&ompi_modex_subscriptions) ;
-         item = opal_list_get_next(item)) {
-        subscription = (ompi_modex_subscription_t *) item;
-        if (subscription->jobid == jobid) {
-            OPAL_THREAD_UNLOCK(&ompi_modex_lock);
-            return OMPI_SUCCESS;
-	}
-    }
-    OPAL_THREAD_UNLOCK(&ompi_modex_lock);
-
-    /* otherwise - subscribe to get this jobid's contact info */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&sub_name,
-				      OMPI_MODEX_SUBSCRIPTION, jobid))) {
-	ORTE_ERROR_LOG(rc);
-	return rc;
-    }
-    /* attach to the stage-1 standard trigger */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&trig_name,
-					    ORTE_STG1_TRIGGER, jobid))) {
-	ORTE_ERROR_LOG(rc);
-	free(sub_name);
-	return rc;
-    }
-    /* define the segment */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
-	ORTE_ERROR_LOG(rc);
-	free(sub_name);
-	free(trig_name);
-	return rc;
-    }
-    if (jobid != orte_process_info.my_name->jobid) {
-        if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_N(&sub_id, NULL, NULL,
-                              ORTE_GPR_NOTIFY_ADD_ENTRY |
-                              ORTE_GPR_NOTIFY_VALUE_CHG |
-                              ORTE_GPR_NOTIFY_PRE_EXISTING,
-                              ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR | ORTE_GPR_STRIPPED,
-                              segment,
-                              NULL,	/* look at all
-                                     * containers on this
-                                     * segment */
-                              2, keys,
-                              ompi_modex_registry_callback, NULL))) {
-            ORTE_ERROR_LOG(rc);
-            free(sub_name);
-            free(trig_name);
-            free(segment);
-            return rc;
+                return OMPI_ERR_NOT_FOUND;
+            }
+            module_data->module_data = bytes;
+            module_data->module_data_size = num_bytes;
+            proc_data->modex_received_data = true;
+            opal_condition_signal(&proc_data->modex_cond);
+            
+            if (opal_list_get_size(&module_data->module_cbs)) {
+                ompi_proc_t *proc = ompi_proc_find(&proc_name);
+                
+                if (NULL != proc) {
+                    OPAL_THREAD_LOCK(&proc->proc_lock);
+                    /* call any registered callbacks */
+                    for (item = opal_list_get_first(&module_data->module_cbs);
+                         item != opal_list_get_end(&module_data->module_cbs);
+                         item = opal_list_get_next(item)) {
+                        ompi_modex_cb_t *cb = (ompi_modex_cb_t *) item;
+                        cb->cbfunc(&module_data->component, 
+                                   proc, bytes, num_bytes, cb->cbdata);
+                    }
+                    OPAL_THREAD_UNLOCK(&proc->proc_lock);
+                }
+            }
         }
-    } else {
-        if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_N(&sub_id, trig_name, sub_name,
-                              ORTE_GPR_NOTIFY_ADD_ENTRY |
-                              ORTE_GPR_NOTIFY_VALUE_CHG |
-                              ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG,
-                              ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR | ORTE_GPR_STRIPPED,
-                              segment,
-                              NULL,	/* look at all
-                                     * containers on this
-                                     * segment */
-                              2, keys,
-                              ompi_modex_registry_callback, NULL))) {
-            ORTE_ERROR_LOG(rc);
-            free(sub_name);
-            free(trig_name);
-            free(segment);
-            return rc;
-        }
+        OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
     }
-    free(sub_name);
-    free(trig_name);
-    free(segment);
-
-    /* add this jobid to our list of subscriptions */
-    OPAL_THREAD_LOCK(&ompi_modex_lock);
-    subscription = OBJ_NEW(ompi_modex_subscription_t);
-    subscription->jobid = jobid;
-    opal_list_append(&ompi_modex_subscriptions, &subscription->item);
-    OPAL_THREAD_UNLOCK(&ompi_modex_lock);
+    
     return OMPI_SUCCESS;
 }
 
 
 int
 ompi_modex_send(mca_base_component_t * source_component,
-			const void *data,
-			size_t size)
+                const void *data,
+                size_t size)
 {
-    orte_jobid_t jobid;
     int rc;
-    orte_buffer_t buffer;
-    orte_std_cntr_t i, num_tokens;
-    char *ptr, *segment, **tokens;
-    orte_byte_object_t bo;
-    orte_data_value_t value = ORTE_DATA_VALUE_EMPTY;
+    char *ptr;
 
-    /* get location in GPR for the data */
-    jobid = ORTE_PROC_MY_NAME->jobid;
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
-	ORTE_ERROR_LOG(rc);
-	return rc;
-    }
-    if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&tokens,
-			      &num_tokens, orte_process_info.my_name))) {
-	ORTE_ERROR_LOG(rc);
-	free(segment);
-	return rc;
-    }
-
-    OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-
-    /* Pack the component name information into the buffer */
+    OPAL_THREAD_LOCK(&ompi_modex_lock);
+    
+    /* Pack the component name information into the local buffer */
     ptr = source_component->mca_type_name;
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &ptr, 1, ORTE_STRING))) {
-	ORTE_ERROR_LOG(rc);
-	goto cleanup;
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&ompi_modex_buffer, &ptr, 1, ORTE_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
     ptr = source_component->mca_component_name;
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &ptr, 1, ORTE_STRING))) {
-	ORTE_ERROR_LOG(rc);
-	goto cleanup;
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&ompi_modex_buffer, &ptr, 1, ORTE_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &source_component->mca_component_major_version, 1, ORTE_INT32))) {
-	ORTE_ERROR_LOG(rc);
-	goto cleanup;
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&ompi_modex_buffer, &source_component->mca_component_major_version, 1, ORTE_INT32))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &source_component->mca_component_minor_version, 1, ORTE_INT32))) {
-	ORTE_ERROR_LOG(rc);
-	goto cleanup;
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&ompi_modex_buffer, &source_component->mca_component_minor_version, 1, ORTE_INT32))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &size, 1, ORTE_SIZE))) {
-	ORTE_ERROR_LOG(rc);
-	goto cleanup;
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&ompi_modex_buffer, &size, 1, ORTE_SIZE))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
 
     /* Pack the actual data into the buffer */
     if (0 != size) {
-	if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, (void *) data, size, ORTE_BYTE))) {
-	    ORTE_ERROR_LOG(rc);
-	    goto cleanup;
-	}
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(&ompi_modex_buffer, (void *) data, size, ORTE_BYTE))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
     }
-    if (ORTE_SUCCESS != (rc = orte_dss.unload(&buffer, (void **) &(bo.bytes), &(bo.size)))) {
-	ORTE_ERROR_LOG(rc);
-	goto cleanup;
-    }
-    OBJ_DESTRUCT(&buffer);
+    
+    /* track the number of entries */
+    ++ompi_modex_num_entries;
 
-    /* setup the data_value structure to hold the byte object */
-    if (ORTE_SUCCESS != (rc = orte_dss.set(&value, (void *) &bo, ORTE_BYTE_OBJECT))) {
-	ORTE_ERROR_LOG(rc);
-	goto cleanup;
-    }
-
-    /* Put data in registry */
-    rc = orte_gpr.put_1(ORTE_GPR_TOKENS_AND | ORTE_GPR_KEYS_OR,
-			segment, tokens, OMPI_MODEX_KEY, &value);
-
-cleanup:
-    free(segment);
-    for (i = 0; i < num_tokens; i++) {
-	free(tokens[i]);
-	tokens[i] = NULL;
-    }
-    if (NULL != tokens)
-	free(tokens);
+ cleanup:
+    OPAL_THREAD_UNLOCK(&ompi_modex_lock);
 
     return rc;
 }
@@ -773,7 +633,7 @@ ompi_modex_recv(mca_base_component_t * component,
                     "null")) {
         return OMPI_ERR_NOT_IMPLEMENTED;
     }
-
+    
     proc_data = ompi_modex_lookup_proc(proc);
     if (NULL == proc_data) return OMPI_ERR_NOT_FOUND;
 
@@ -781,7 +641,7 @@ ompi_modex_recv(mca_base_component_t * component,
 
     /* wait until data is available */
     while (proc_data->modex_received_data == false) {
-	opal_condition_wait(&proc_data->modex_cond, &proc_data->modex_lock);
+        opal_condition_wait(&proc_data->modex_cond, &proc_data->modex_lock);
     }
 
     /* look up module */
@@ -790,17 +650,19 @@ ompi_modex_recv(mca_base_component_t * component,
     /* copy the data out to the user */
     if ((NULL == module_data) ||
         (module_data->module_data_size == 0)) {
-	*buffer = NULL;
-	*size = 0;
+        opal_output(0, "modex recv: no module avail or zero byte size");
+        *buffer = NULL;
+        *size = 0;
     } else {
-	void *copy = malloc(module_data->module_data_size);
-	if (copy == NULL) {
+        void *copy = malloc(module_data->module_data_size);
+            
+        if (copy == NULL) {
             OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
-	memcpy(copy, module_data->module_data, module_data->module_data_size);
-	*buffer = copy;
-	*size = module_data->module_data_size;
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        memcpy(copy, module_data->module_data, module_data->module_data_size);
+        *buffer = copy;
+        *size = module_data->module_data_size;
     }
     OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
 
@@ -826,8 +688,8 @@ ompi_modex_recv_nb(mca_base_component_t *component,
     /* lookup / create module */
     module_data = ompi_modex_lookup_module(proc_data, component, true);
     if (NULL == module_data) {
-	OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* register the callback */

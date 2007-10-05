@@ -37,6 +37,7 @@ orte_rml_base_open(void)
 {
     int ret;
     orte_data_type_t tmp;
+    int param, value;
 
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_rml_base_components, opal_list_t);
@@ -66,6 +67,17 @@ orte_rml_base_open(void)
                                    "Use a Wrapper component around the selected RML component",
                                    false, false,
                                    NULL, NULL);
+    
+    /* register parameters */
+    param = mca_base_param_reg_int_name("rml", "base_verbose",
+                                        "Verbosity level for the rml framework",
+                                        false, false, 0, &value);
+    if (value != 0) {
+        orte_rml_base_output = opal_output_open(NULL);
+    } else {
+        orte_rml_base_output = -1;
+    }
+
     
     /* Open up all available components */
     ret = mca_base_components_open("rml",

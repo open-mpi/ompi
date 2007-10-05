@@ -34,6 +34,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/orte_constants.h"
 
+#include "orte/mca/ns/ns_types.h"
 
 #include "orte/util/sys_info.h"
 
@@ -41,6 +42,7 @@ orte_sys_info_t orte_system_info = {
                  /* .init =        */            false,
                  /* .sysname =     */            NULL,
 	             /* .nodename =    */            NULL,
+                 /* .nodeid =      */            ORTE_NODEID_INVALID,
                  /* .release =     */            NULL,
                  /* .version =     */            NULL,
                  /* .machine =     */            NULL,
@@ -50,6 +52,7 @@ orte_sys_info_t orte_system_info = {
 int orte_sys_info(void)
 {
     struct utsname sys_info;
+    int nval;
 
 #ifndef __WINDOWS__
     int uid;
@@ -121,6 +124,16 @@ int orte_sys_info(void)
         orte_system_info.user = strdup(info_buf);
     }
 #endif
+
+    /* get the nodeid */
+    mca_base_param_reg_int_name("orte", "nodeid",
+                                "ORTE ID for this node",
+                                false, false, ORTE_NODEID_INVALID, &nval);
+    if (ORTE_NODEID_MIN <= nval && nval <= ORTE_NODEID_MAX) {
+        orte_system_info.nodeid = (orte_nodeid_t)nval;
+    } else {
+        return ORTE_ERROR;
+    }
 
     /* set the init flag */
     orte_system_info.init = true;  /* only indicates that we have been through here once - still have to test for NULL values */

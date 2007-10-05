@@ -59,7 +59,8 @@ orte_odls_base_module_t orte_odls_bproc_module = {
     orte_odls_bproc_launch_local_procs,
     orte_odls_bproc_kill_local_procs,
     orte_odls_bproc_signal_local_procs,
-    orte_odls_bproc_deliver_message
+    orte_odls_bproc_deliver_message,
+    orte_odls_bproc_get_local_proc_names
 };
 
 static int odls_bproc_make_dir(char *directory);
@@ -68,7 +69,7 @@ static char * odls_bproc_get_base_dir_name(int proc_rank, orte_jobid_t jobid,
 static void odls_bproc_delete_dir_tree(char * path);
 static int odls_bproc_remove_dir(void);
 static void odls_bproc_send_cb(int status, orte_process_name_t * peer,
-                                    orte_buffer_t* buffer, int tag, void* cbdata);
+                                    orte_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata);
 static int odls_bproc_setup_stdio(orte_process_name_t *proc_name, 
                                        int proc_rank, orte_jobid_t jobid,
                                        orte_std_cntr_t app_context, bool connect_stdin);
@@ -338,7 +339,8 @@ odls_bproc_remove_dir()
  */
 static void
 odls_bproc_send_cb(int status, orte_process_name_t * peer,
-                                    orte_buffer_t* buffer, int tag, void* cbdata)
+                   orte_buffer_t* buffer,
+                   orte_rml_tag_t tag, void* cbdata)
 {
     OBJ_RELEASE(buffer);
 }
@@ -539,7 +541,7 @@ cleanup:
  * @retval error
  */
 int
-orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data,)
+orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data)
 {
     odls_bproc_child_t *child;
     opal_list_item_t* item;
@@ -573,7 +575,7 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data,)
      * from the parent/front-end process, as bproc4 does not currently allow the
      * process to intercept the signal
     */
-    setpgid(0,0);
+    setpgid(0,0); 
 
     /* set the flag indicating this node is not included in the launch data */
     node_included = false;
@@ -668,7 +670,7 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data,)
 
     /* setup some values we'll need to drop my uri for each child */
     orte_ns.convert_jobid_to_string(&job_str, jobid);
-    my_uri = orte_rml.get_uri();
+    my_uri = orte_rml.get_contact_info();
 
     /* set up the io files for our children */
     for(item =  opal_list_get_first(&mca_odls_bproc_component.children);
@@ -748,7 +750,7 @@ CALLHOME:
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
     }
-    rc = mca_oob_send_packed_nb(ORTE_PROC_MY_HNP, ack, ORTE_RML_TAG_BPROC, 0,
+    rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, ack, ORTE_RML_TAG_BPROC, 0,
         odls_bproc_send_cb, NULL);
     if (0 > rc) {
         ORTE_ERROR_LOG(rc);
@@ -820,6 +822,40 @@ int orte_odls_bproc_deliver_message(orte_jobid_t job, orte_buffer_t *buffer, ort
     OPAL_THREAD_UNLOCK(&mca_odls_bproc_component.lock);
     return ORTE_SUCCESS;
 }
+
+
+int orte_odls_bproc_get_local_proc_names(opal_list_t *names, orte_jobid_t job)
+{
+    opal_list_item_t *item;
+    orte_odls_child_t *child;
+    orte_namelist_t *nitem;
+    
+    /* protect operations involving the global list of children */
+    OPAL_THREAD_LOCK(&mca_odls_bproc_component.lock);
+    
+    for (item = opal_list_get_first(&mca_odls_bproc_component.children);
+         item != opal_list_get_end(&mca_odls_bproc_component.children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        
+        /* do we have a child from the specified job. Because the
+         *  job could be given as a WILDCARD value, we must use
+         *  the dss.compare function to check for equality.
+         */
+        if (ORTE_EQUAL != orte_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
+            continue;
+        }
+        
+        /* add this name to the list */
+        nitem = OBJ_NEW(orte_namelist_t);
+        orte_dss.copy((void**)&nitem->name, child->name, ORTE_NAME);
+        opal_list_append(names, &nitem->item);
+    }
+    opal_condition_signal(&mca_odls_bproc_component.cond);
+    OPAL_THREAD_UNLOCK(&mca_odls_bproc_component.lock);
+    return ORTE_SUCCESS;
+}
+
 
 /**
  * Finalizes the bproc module. Cleanup tmp directory/files

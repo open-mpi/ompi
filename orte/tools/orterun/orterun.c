@@ -400,7 +400,7 @@ int orterun(int argc, char *argv[])
      * up incorrect infrastructure that only a singleton would
      * require
      */
-    if (ORTE_SUCCESS != (rc = orte_init(ORTE_INFRASTRUCTURE, ORTE_NON_BARRIER))) {
+    if (ORTE_SUCCESS != (rc = orte_init(ORTE_INFRASTRUCTURE))) {
         ORTE_ERROR_LOG(rc);
         free(apps);
         return rc;
@@ -484,15 +484,6 @@ int orterun(int argc, char *argv[])
      * to receive it too
      */
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON, ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
-    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    /* setup to listen for xcast stage gate commands. We need to do this because updates to the
-     * contact info for dynamically spawned daemons will come to the gate RML-tag
-     */
-    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_XCAST_BARRIER,
-                                  ORTE_RML_NON_PERSISTENT, orte_daemon_recv_gate, NULL);
     if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -672,7 +663,8 @@ static void dump_aborted_procs(orte_jobid_t jobid, orte_app_context_t **apps, or
         orte_gpr_value_t* value = values[i];
         orte_process_name_t name, *nptr;
         pid_t pid = 0, *pidptr;
-        orte_std_cntr_t rank = 0, *sptr, app_idx=0;
+        orte_std_cntr_t *sptr, app_idx=0;
+        orte_vpid_t rank=0, *vptr;
         bool rank_found=false;
         char* node_name = NULL;
         orte_exit_code_t *ecptr;
@@ -699,12 +691,12 @@ static void dump_aborted_procs(orte_jobid_t jobid, orte_app_context_t **apps, or
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
-                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_VPID))) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&vptr, keyval->value, ORTE_VPID))) {
                     ORTE_ERROR_LOG(rc);
                     continue;
                 }
                 rank_found = true;
-                rank = *sptr;
+                rank = *vptr;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_EXIT_CODE_KEY) == 0) {
@@ -814,7 +806,7 @@ static void dump_aborted_procs(orte_jobid_t jobid, orte_app_context_t **apps, or
             can return it when exiting.  Specifically, keep the first
             non-zero entry.  If they all return zero, we'll return
             zero.  We already have the globals.lock (from
-                                                     job_state_callback), so don't try to get it again. */
+            job_state_callback), so don't try to get it again. */
         
         if (ORTE_JOB_STATE_FAILED_TO_START == state) {
             /* if the job failed to start, then there cannot be
@@ -1453,6 +1445,16 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
             save_arg = false;
         }
 
+        /* save any mca command line args so they can be passed
+         * separately to the daemons
+         */
+        else if (0 == strcmp("-mca", argv[i]) ||
+                (0 == strcmp("--mca", argv[i]))) {
+            opal_argv_append_nosize(&orted_cmd_line, argv[i]);
+            opal_argv_append_nosize(&orted_cmd_line, argv[i+1]);
+            opal_argv_append_nosize(&orted_cmd_line, argv[i+2]);
+        }
+        
         /* If this token was C/N map data, save it */
 
         if (map_data) {

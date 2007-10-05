@@ -10,9 +10,10 @@
 
 int main(int argc, char* argv[])
 {
-    int rank, size, univ_size;
+    int rank, size;
     char hostname[512];
     void *appnum;
+    void *univ_size;
     int flag;
 
     MPI_Init(&argc, &argv);

@@ -1253,9 +1253,111 @@ int orte_odls_process_deliver_message(orte_jobid_t job, orte_buffer_t *buffer, o
     return ORTE_SUCCESS;
 }
 
+static int orte_odls_process_extract_proc_map_info(orte_process_name_t *daemon,
+                                                   orte_process_name_t *proc,
+                                                   orte_gpr_value_t *value)
+{
+    int rc;
+    orte_vpid_t *vptr;
+    
+#if 0
+    /*** NOTE: YOU WILL NEED TO REVISE THIS TO REFLECT HOW YOU STORED
+         THE DATA IN YOUR GET_ADD_PROCS_DATA ROUTINE. YOU MAY WISH
+         TO REVISE THAT ROUTINE, AND YOUR LAUNCH ROUTINE WHERE YOU PARSE
+         THAT DATA, TO REFLECT CHANGES IN THE DEFAULT COMPONENT AS SOME
+         EFFICIENCIES AND FEATURES HAVE BEEN ADDED
+    ****/
+    
+    /* vpid of daemon that will host these procs is in first position */
+    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&vptr, value->keyvals[0]->value, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    daemon->vpid = *vptr;
+    
+    /* vpid of proc is in second position */
+    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&vptr, value->keyvals[1]->value, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    proc->vpid = *vptr;
+    
+    return ORTE_SUCCESS;
+#endif
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
+static int orte_odls_process_require_sync(orte_process_name_t *proc)
+{
+    orte_buffer_t buffer;
+    opal_list_item_t *item;
+    orte_odls_child_t *child;
+    int8_t dummy;
+    int rc;
+    bool found=false;
+    
+    
+    /* protect operations involving the global list of children */
+    OPAL_THREAD_LOCK(&orte_odls_process.mutex);
+    
+    for (item = opal_list_get_first(&orte_odls_process.children);
+         item != opal_list_get_end(&orte_odls_process.children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        
+        /* find this child */
+        if (ORTE_EQUAL == orte_dss.compare(proc, child->name, ORTE_NAME)) {
+            opal_output(orte_odls_globals.output, "odls: registering sync on child %s",
+                        ORTE_NAME_PRINT(child->name));
+            
+            child->sync_required = !child->sync_required;
+            found = true;
+            break;
+        }
+    }
+    
+    /* if it wasn't found on the list, then we need to add it - must have
+     * come from a singleton
+     */
+    if (!found) {
+        child = OBJ_NEW(orte_odls_child_t);
+        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&child->name, proc, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        opal_list_append(&orte_odls_process.children, &child->super);
+        /* we don't know any other info about the child, so just indicate it's
+         * alive and set the sync
+         */
+        child->alive = true;
+        child->sync_required = !child->sync_required;
+    }
+    
+    /* ack the call */
+    OBJ_CONSTRUCT(&buffer, orte_buffer_t);
+    orte_dss.pack(&buffer, &dummy, 1, ORTE_INT8);  /* put anything in */
+    opal_output(orte_odls_globals.output, "odls: sending sync ack to child %s",
+                ORTE_NAME_PRINT(proc));
+    if (0 > (rc = orte_rml.send_buffer(proc, &buffer, ORTE_RML_TAG_SYNC, 0))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buffer);
+        return rc;
+    }            
+    OBJ_DESTRUCT(&buffer);
+    
+    opal_condition_signal(&orte_odls_process.cond);
+    OPAL_THREAD_UNLOCK(&orte_odls_process.mutex);
+    return ORTE_SUCCESS;
+}
+
+
+
 orte_odls_base_module_1_3_0_t orte_odls_process_module = {
     orte_odls_process_get_add_procs_data,    
     orte_odls_process_launch_local_procs,
     orte_odls_process_kill_local_procs,
-    orte_odls_process_signal_local_proc
+    orte_odls_process_signal_local_proc,
+    orte_odls_process_deliver_message,
+    orte_odls_process_extract_proc_map_info,
+    orte_odls_process_require_sync
 };

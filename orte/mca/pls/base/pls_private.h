@@ -71,6 +71,8 @@ typedef uint8_t orte_pls_cmd_flag_t;
     ORTE_DECLSPEC int orte_pls_base_orted_signal_local_procs(orte_jobid_t job, int32_t signal, opal_list_t *attrs);
 
     ORTE_DECLSPEC int orte_pls_base_launch_apps(orte_job_map_t *map);
+    ORTE_DECLSPEC void orte_pls_base_daemon_failed(orte_jobid_t job, bool callback_active,
+                                                   pid_t pid, int status, orte_job_state_t state);
     
     ORTE_DECLSPEC int orte_pls_base_daemon_callback(orte_std_cntr_t num_daemons);
 
@@ -95,8 +97,7 @@ typedef uint8_t orte_pls_cmd_flag_t;
                                                  int *argc, 
                                                  char ***argv,
                                                  int *proc_name_index,
-                                                 int *node_name_index,
-                                                 orte_std_cntr_t num_procs);
+                                                 int *node_name_index);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -135,32 +135,23 @@ int ompi_mpi_finalize(void)
        MPI lifetime, to get better latency when not using TCP */
     opal_progress_event_users_increment();
 
+    /* mark that I called finalize before exiting */
+    if (ORTE_SUCCESS != (ret = orte_smr.register_sync())) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    
     /* If maffinity was setup, tear it down */
     if (ompi_mpi_maffinity_setup) {
         opal_maffinity_base_close();
     }
 
-    /* begin recording compound command */
-/*    if (OMPI_SUCCESS != (ret = orte_gpr.begin_compound_cmd())) {
-        return ret;
-    }
-*/
-    /* Set process status to "at stg3" */
-    if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
-                                ORTE_PROC_STATE_AT_STG3, 0))) {
-        ORTE_ERROR_LOG(ret);
-    }
-
-    /* execute the compound command - no return data requested
-     */
-/*    if (OMPI_SUCCESS != (ret = orte_gpr.exec_compound_cmd())) {
-        return ret;
-    }
-*/
-    /*
-     * Wait for everyone to get here
-     */
-    if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast_gate(orte_gpr.deliver_notify_msg))) {
+    /* wait for everyone to reach this point
+       This is a grpcomm barrier instead of an MPI barrier because an
+       MPI barrier doesn't ensure that all messages have been transmitted
+       before exiting, so the possibility of a stranded message exists.
+    */
+    if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -305,23 +296,6 @@ int ompi_mpi_finalize(void)
         return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_rcache_base_close())) { 
-        return ret;
-    }
-    
-    /* Set process status to "finalized" */
-    if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
-                                ORTE_PROC_STATE_FINALIZED, 0))) {
-        ORTE_ERROR_LOG(ret);
-    }
-
-    /*
-     * Wait for everyone to get here. This is necessary to allow the smr
-     * to update the job state for singletons. Otherwise, we finalize
-     * the RTE while the smr is trying to do the update - which causes
-     * an ugly race condition
-     */
-    if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast_gate(orte_gpr.deliver_notify_msg))) {
-        ORTE_ERROR_LOG(ret);
         return ret;
     }
     

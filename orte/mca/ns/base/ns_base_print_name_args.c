@@ -92,8 +92,10 @@ char* orte_ns_base_print_name_args(const orte_process_name_t *name)
     if (NULL == name) {
         snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "[NO-NAME]");
     } else {
-        snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "[%ld,%ld]", (long)name->jobid, (long)name->vpid);
-    }
+        snprintf(ptr->buffers[ptr->cntr++], 
+                 ORTE_PRINT_NAME_ARGS_MAX_SIZE, 
+                 "[%ld,%ld]", ORTE_NAME_ARGS(name));
+   }
     return ptr->buffers[ptr->cntr-1];
 }
 

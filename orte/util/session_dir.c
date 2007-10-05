@@ -415,7 +415,12 @@ int orte_session_dir(bool create,
                 goto try_again;
             }
             else {
-                ORTE_ERROR_LOG(return_code);
+                /* it is okay for the path not to be found - don't error
+                 * log that case, but do error log others
+                 */
+                if (ORTE_ERR_NOT_FOUND != return_code) {
+                    ORTE_ERROR_LOG(return_code);
+                }
                 goto cleanup;
             }
         }

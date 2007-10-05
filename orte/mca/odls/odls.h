@@ -81,6 +81,17 @@ typedef int (*orte_odls_base_module_deliver_message_fn_t)(orte_jobid_t job, orte
                                                           orte_rml_tag_t tag);
 
 /**
+ * Extract the mapping of daemon-proc pair
+ */
+typedef int (*orte_odls_base_module_extract_proc_map_info_fn_t)(orte_process_name_t *daemon,
+                                                                orte_process_name_t *proc,
+                                                                orte_gpr_value_t *value);
+/**
+ * Register to require sync before termination
+ */
+typedef int (*orte_odls_base_module_require_sync_fn_t)(orte_process_name_t *proc);
+
+/**
  * pls module version 1.3.0
  */
 struct orte_odls_base_module_1_3_0_t {
@@ -89,6 +100,8 @@ struct orte_odls_base_module_1_3_0_t {
     orte_odls_base_module_kill_local_processes_fn_t         kill_local_procs;
     orte_odls_base_module_signal_local_process_fn_t   		signal_local_procs;
     orte_odls_base_module_deliver_message_fn_t              deliver_message;
+    orte_odls_base_module_extract_proc_map_info_fn_t        extract_proc_map_info;
+    orte_odls_base_module_require_sync_fn_t                 require_sync;
 };
 
 /** shorten orte_odls_base_module_1_3_0_t declaration */

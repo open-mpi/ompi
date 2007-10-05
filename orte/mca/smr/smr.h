@@ -85,6 +85,11 @@ typedef int (*orte_smr_base_module_set_job_state_fn_t)(orte_jobid_t jobid,
                                                      orte_job_state_t state);
 
 /*
+ * Register a sync request
+ */
+typedef int (*orte_smr_base_module_register_sync_fn_t)(void);
+
+/*
  * Define the job-specific standard stage gates
  * This function creates all of the ORTE-standard stage gates. 
  */
@@ -176,6 +181,9 @@ struct orte_smr_base_module_1_3_0_t {
     orte_smr_base_module_job_stage_gate_init_fn_t       init_job_stage_gates;
     orte_smr_base_module_define_alert_monitor_fn_t      define_alert_monitor;
     orte_smr_base_module_job_stage_gate_subscribe_fn_t  job_stage_gate_subscribe;
+    /* REGISTER FUNCTION */
+    orte_smr_base_module_register_sync_fn_t             register_sync;
+    /* FINALIZE */
     orte_smr_base_module_finalize_fn_t                  finalize;
 };
 

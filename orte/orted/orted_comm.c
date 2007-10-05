@@ -77,6 +77,7 @@
 #include "orte/mca/rmgr/base/rmgr_private.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/pls/pls.h"
+#include "orte/mca/routed/routed.h"
 
 
 #include "orte/runtime/runtime.h"
@@ -87,6 +88,7 @@
 /*
  * Globals
  */
+static bool warmup_routes;
 
 static int binomial_route_msg(orte_process_name_t *sender,
                               orte_buffer_t *buf,
@@ -115,6 +117,9 @@ void orte_daemon_recv_routed(int status, orte_process_name_t* sender,
                    ORTE_NAME_PRINT(sender));
     }
 
+    /* init the warmup routes flag */
+    warmup_routes = false;
+    
     /* unpack the routing algorithm */
     n = 1;
     if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &routing_mode, &n, ORTE_DAEMON_CMD))) {
@@ -136,6 +141,13 @@ void orte_daemon_recv_routed(int status, orte_process_name_t* sender,
     }
 
 CLEANUP:
+    /* see if we need to warmup any daemon-to-daemon routes */
+    if (warmup_routes) {
+        if (ORTE_SUCCESS != (ret = orte_routed.warmup_routes())) {
+            ORTE_ERROR_LOG(ret);
+        }
+    }
+    
     OPAL_THREAD_UNLOCK(&orted_comm_mutex);
 
     /* reissue the non-blocking receive */
@@ -162,9 +174,19 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                     ORTE_NAME_PRINT(sender));
     }
     
+    /* init the warmup routes flag */
+    warmup_routes = false;
+
     /* process the command */
     if (ORTE_SUCCESS != (ret = process_commands(sender, buffer, tag))) {
         ORTE_ERROR_LOG(ret);
+    }
+    
+    /* see if we need to warmup any daemon-to-daemon routes */
+    if (warmup_routes) {
+        if (ORTE_SUCCESS != (ret = orte_routed.warmup_routes())) {
+            ORTE_ERROR_LOG(ret);
+        }
     }
     
     OPAL_THREAD_UNLOCK(&orted_comm_mutex);
@@ -176,40 +198,6 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         ORTE_ERROR_LOG(ret);
     }
 }    
-
-void orte_daemon_recv_gate(int status, orte_process_name_t* sender,
-                           orte_buffer_t *buffer, orte_rml_tag_t tag,
-                           void* cbdata)
-{
-    int rc;
-    orte_std_cntr_t i;
-    orte_gpr_notify_message_t *mesg;
-
-    mesg = OBJ_NEW(orte_gpr_notify_message_t);
-    if (NULL == mesg) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return;
-    }
-    i=1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &mesg, &i, ORTE_GPR_NOTIFY_MSG))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(mesg);
-        return;
-    }
-    
-    if (ORTE_SUCCESS != (rc = orte_gpr.deliver_notify_msg(mesg))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    OBJ_RELEASE(mesg);
-    
-    /* reissue the non-blocking receive */
-    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_XCAST_BARRIER,
-                                 ORTE_RML_NON_PERSISTENT, orte_daemon_recv_gate, NULL);
-    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(rc);
-    }
-}
-
 
 static int process_commands(orte_process_name_t* sender,
                             orte_buffer_t *buffer,
@@ -229,8 +217,6 @@ static int process_commands(orte_process_name_t* sender,
     char *contact_info;
     orte_buffer_t *answer;
     orte_rml_cmd_flag_t rml_cmd;
-    orte_gpr_notify_message_t *mesg;
-    char *unpack_ptr;
 
     /* unpack the command */
     n = 1;
@@ -365,41 +351,15 @@ static int process_commands(orte_process_name_t* sender,
                  * of the current recv.
                  *
                  * The problem here is that, for messages where we need to relay
-                 * them along the orted chain, the xcast_barrier and rml_update
-                 * messages contain contact info we may well need in order to do
+                 * them along the orted chain, the rml_update
+                 * message contains contact info we may well need in order to do
                  * the relay! So we need to process those messages immediately.
                  * The only way to accomplish that is to (a) detect that the
                  * buffer is intended for those tags, and then (b) process
                  * those buffers here.
                  *
-                 * NOTE: in the case of xcast_barrier, we *also* must send the
-                 * message along anyway so that it will release us from the
-                 * barrier! So we will process that info twice - can't be helped
-                 * and won't harm anything
                  */
-                if (ORTE_RML_TAG_XCAST_BARRIER == target_tag) {
-                    /* need to preserve the relay buffer's pointers so it can be
-                     * unpacked again at the barrier
-                     */
-                    unpack_ptr = relay->unpack_ptr;
-                    mesg = OBJ_NEW(orte_gpr_notify_message_t);
-                    n = 1;
-                    if (ORTE_SUCCESS != (ret = orte_dss.unpack(relay, &mesg, &n, ORTE_GPR_NOTIFY_MSG))) {
-                        ORTE_ERROR_LOG(ret);
-                        OBJ_RELEASE(mesg);
-                        goto CLEANUP;
-                    }
-                    orte_gpr.deliver_notify_msg(mesg);
-                    OBJ_RELEASE(mesg);
-                    /* restore the unpack ptr in the buffer */
-                    relay->unpack_ptr = unpack_ptr;
-                    /* make sure we queue this up for later delivery to release us from the barrier */
-                    if ((ret = orte_rml.send_buffer(ORTE_PROC_MY_NAME, relay, target_tag, 0)) < 0) {
-                        ORTE_ERROR_LOG(ret);
-                    } else {
-                        ret = ORTE_SUCCESS;
-                    }
-                } else if (ORTE_RML_TAG_RML_INFO_UPDATE == target_tag) {
+                if (ORTE_RML_TAG_RML_INFO_UPDATE == target_tag) {
                     n = 1;
                     if (ORTE_SUCCESS != (ret = orte_dss.unpack(relay, &rml_cmd, &n, ORTE_RML_CMD))) {
                         ORTE_ERROR_LOG(ret);
@@ -409,7 +369,17 @@ static int process_commands(orte_process_name_t* sender,
                         ORTE_ERROR_LOG(ret);
                         goto CLEANUP;
                     }
-                    orte_rml_base_contact_info_notify(ndat, NULL);                    
+                    /* initialize the routes to my peers */
+                    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(0, ndat))) {
+                        ORTE_ERROR_LOG(ret);
+                        goto CLEANUP;
+                    }
+                    /* set the warmup flag so we can warmup the routes between all
+                     * daemons, as required by the routed framework. We have to set
+                     * the flag here, but do the actual warmup later, to avoid blocking
+                     * any relayed xcast (e.g., binomial)
+                     */
+                    warmup_routes = true;
                 } else {
                     /* just deliver it to ourselves */
                     if ((ret = orte_rml.send_buffer(ORTE_PROC_MY_NAME, relay, target_tag, 0)) < 0) {
@@ -537,6 +507,19 @@ static int process_commands(orte_process_name_t* sender,
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
             ret = ORTE_SUCCESS;
+            break;
+            
+            /****    SYNC FROM LOCAL PROC    ****/
+        case ORTE_DAEMON_SYNC_BY_PROC:
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_recv: received sync from local proc %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(sender));
+            }
+            if (ORTE_SUCCESS != (ret = orte_odls.require_sync(sender))) {
+                ORTE_ERROR_LOG(ret);
+                goto CLEANUP;
+            }
             break;
             
         default:

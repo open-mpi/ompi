@@ -1,0 +1,33 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2006 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+[out-of-jobids]
+The system has exhausted its available jobids - the application is attempting
+to spawn too many jobs and will be aborted.
+
+This may be resolved by increasing the number of available jobids by
+re-configuring Open MPI with the --enable-jumbo-dynamics option, and then
+re-running the application
+#
+[out-of-vpids]
+The system has exhausted its available ranks - the application is attempting
+to spawn too many processes and will be aborted.
+
+This may be resolved by increasing the number of available ranks by
+re-configuring Open MPI with the --enable-jumbo-apps option, and then
+re-running the application

@@ -32,6 +32,8 @@ struct orte_rml_oob_module_t {
     mca_oob_t               *active_oob;
     opal_list_t              exceptions;
     opal_mutex_t             exceptions_lock;
+    opal_list_t              queued_routing_messages;
+    opal_mutex_t             queued_lock;
 };
 typedef struct orte_rml_oob_module_t orte_rml_oob_module_t;
 
@@ -100,6 +102,12 @@ struct orte_rml_oob_msg_t {
 typedef struct orte_rml_oob_msg_t orte_rml_oob_msg_t;
 OBJ_CLASS_DECLARATION(orte_rml_oob_msg_t);
 
+struct orte_rml_oob_queued_msg_t {
+    opal_list_item_t super;
+    struct iovec payload[1];
+};
+typedef struct orte_rml_oob_queued_msg_t orte_rml_oob_queued_msg_t;
+OBJ_CLASS_DECLARATION(orte_rml_oob_queued_msg_t);
 
 int orte_rml_oob_init(void);
 int orte_rml_oob_fini(void);

@@ -48,6 +48,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
+#include "orte/mca/smr/smr.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
@@ -333,6 +334,12 @@ static int ompi_cr_coord_post_restart(void) {
 
     opal_output_verbose(10, ompi_cr_output,
                         "ompi_cr: coord_post_restart: ompi_cr_coord_post_restart()");
+
+    /* register myself to require that I finalize before exiting */
+    if (ORTE_SUCCESS != (ret = orte_smr.register_sync())) {
+        exit_status = ret;
+        goto cleanup;
+    }
 
     /*
      * Notify PML

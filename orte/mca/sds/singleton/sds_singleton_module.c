@@ -42,9 +42,14 @@ orte_sds_singleton_set_name(void)
 {
     int rc;
 
-    if (ORTE_SUCCESS != (rc = orte_ns.create_my_name())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    /*
+     * If we do not have a name at this point, then ask for one.
+     */
+    if( NULL == ORTE_PROC_MY_NAME ) {
+        if (ORTE_SUCCESS != (rc = orte_ns.create_my_name())) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
 
     orte_process_info.num_procs = 1;

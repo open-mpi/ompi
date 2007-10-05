@@ -1029,7 +1029,7 @@ static int connect_to_universe(orte_universe_t universe_info) {
      * Disconnect from the current universe
      */
     if(orte_ps_globals.attached) {
-        if (OPAL_SUCCESS != (ret = orte_system_finalize())) {
+        if (OPAL_SUCCESS != (ret = orte_finalize())) {
             return ret;
         }
     }
@@ -1044,7 +1044,7 @@ static int connect_to_universe(orte_universe_t universe_info) {
      * Restart ORTE in the requested universe
      */
     if(!orte_ps_globals.attached) {
-        if (ORTE_SUCCESS != (ret = orte_system_init(ORTE_INFRASTRUCTURE, ORTE_NON_BARRIER)) ) {
+        if (ORTE_SUCCESS != (ret = orte_init(ORTE_INFRASTRUCTURE)) ) {
             exit_status = ret;
             goto cleanup;
         }
@@ -1622,17 +1622,8 @@ static char *pretty_job_state(orte_job_state_t state) {
     case ORTE_JOB_STATE_AT_STG1:
         return strdup("Stage 1");
         break;
-    case ORTE_JOB_STATE_AT_STG2:
-        return strdup("Stage 2");
-        break;
     case ORTE_JOB_STATE_RUNNING:
         return strdup("Running");
-        break;
-    case ORTE_JOB_STATE_AT_STG3:
-        return strdup("Stage 3");
-        break;
-    case ORTE_JOB_STATE_FINALIZED:
-        return strdup("Finalized");
         break;
     case ORTE_JOB_STATE_TERMINATED:
         return strdup("Terminated");
@@ -1658,17 +1649,8 @@ static char *pretty_vpid_state(orte_proc_state_t state) {
     case ORTE_PROC_STATE_AT_STG1:
         return strdup("Stage 1");
         break;
-    case ORTE_PROC_STATE_AT_STG2:
-        return strdup("Stage 2");
-        break;
     case ORTE_PROC_STATE_RUNNING:
         return strdup("Running");
-        break;
-    case ORTE_PROC_STATE_AT_STG3:
-        return strdup("Stage 3");
-        break;
-    case ORTE_PROC_STATE_FINALIZED:
-        return strdup("Finalized");
         break;
     case ORTE_PROC_STATE_TERMINATED:
         return strdup("Terminated");

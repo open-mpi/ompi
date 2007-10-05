@@ -558,8 +558,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
     /* Add basic orted command line options */
     orte_pls_base_orted_append_basic_args(&argc, &argv,
                                           &proc_name_index,
-                                          &node_name_index2,
-                                          map->num_nodes);
+                                          &node_name_index2);
 
     if (mca_pls_process_component.debug) {
         param = opal_argv_join(argv, ' ');

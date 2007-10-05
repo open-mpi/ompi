@@ -39,9 +39,7 @@ int orte_sds_env_get(void)
     int num_procs;
     int local_rank;
     int num_local_procs;
-    int rc;
     int id;
-    char *local_daemon_uri = NULL;
 
     id = mca_base_param_register_int("ns", "nds", "vpid_start", NULL, -1);
     mca_base_param_lookup_int(id, &vpid_start);
@@ -74,18 +72,6 @@ int orte_sds_env_get(void)
     id = mca_base_param_register_int("ns", "nds", "num_local_procs", NULL, 0);
     mca_base_param_lookup_int(id, &num_local_procs);
     orte_process_info.num_local_procs = (orte_std_cntr_t)num_local_procs;
-    
-    id = mca_base_param_register_string("orte", "local_daemon", "uri", NULL, NULL);
-    mca_base_param_lookup_string(id, &local_daemon_uri);
-    if (NULL != local_daemon_uri) {
-        /* if we are a daemon, then we won't have this param set, so allow
-         * it not to be found
-         */
-        if (ORTE_SUCCESS != (rc = orte_sds_base_contact_orted(local_daemon_uri))) {
-            ORTE_ERROR_LOG(rc);
-            return(rc);
-        }
-    }
-    
+        
     return ORTE_SUCCESS;
 }

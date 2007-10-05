@@ -594,7 +594,7 @@ static int ckpt_init(int argc, char *argv[]) {
      * JJH XXX This is a bandaid until we do it right.
      * JJH XXX
      */
-    if (ORTE_SUCCESS != (ret = orte_system_init(ORTE_INFRASTRUCTURE, ORTE_NON_BARRIER)) ) {
+    if (ORTE_SUCCESS != (ret = orte_init(ORTE_INFRASTRUCTURE)) ) {
         exit_status = ret;
         goto cleanup;
     }

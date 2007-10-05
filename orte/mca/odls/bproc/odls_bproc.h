@@ -33,6 +33,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/threads/condition.h"
+#include "opal/class/opal_list.h"
 
 #include "orte/mca/gpr/gpr_types.h"
 #include "orte/mca/rmaps/rmaps_types.h"
@@ -64,6 +65,7 @@ int orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data);
 int orte_odls_bproc_kill_local_procs(orte_jobid_t job, bool set_state);
 int orte_odls_bproc_signal_local_procs(const orte_process_name_t* proc_name, int32_t signal);
 int orte_odls_bproc_deliver_message(orte_jobid_t job, orte_buffer_t *buffer, orte_rml_tag_t tag);
+int orte_odls_bproc_get_local_proc_names(opal_list_t *names, orte_jobid_t job);
 
 /**
  * ODLS bproc_orted component

@@ -65,6 +65,7 @@ orte_smr_base_module_t orte_smr = {
     orte_smr_base_init_job_stage_gates,
     orte_smr_base_define_alert_monitor,
     orte_smr_base_job_stage_gate_subscribe,
+    orte_smr_base_register_sync,
     orte_smr_base_module_finalize_not_available
 };
 
