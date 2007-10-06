@@ -142,7 +142,6 @@ int ompi_attr_create_predefined(void)
         OMPI_SUCCESS != (ret = set_f(MPI_WTIME_IS_GLOBAL, 0)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_LASTUSEDCODE,
                                      ompi_mpi_errcode_lastused)) ||
-        OMPI_SUCCESS != (ret = set_f(MPI_APPNUM, orte_process_info.app_num)) ||
 #if 0
         /* JMS For when we implement IMPI */
         OMPI_SUCCESS != (ret = set(IMPI_CLIENT_SIZE,
@@ -164,6 +163,14 @@ int ompi_attr_create_predefined(void)
         ret = set_f(MPI_UNIVERSE_SIZE, orte_process_info.universe_size);
     } else {
         ret = set_f(MPI_UNIVERSE_SIZE, ompi_comm_size(MPI_COMM_WORLD));
+    }
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+    
+    /* check the app_num - if it was set, then define it - otherwise, don't */
+    if (orte_process_info.app_num >= 0) {
+        ret = set_f(MPI_APPNUM, orte_process_info.app_num);
     }
     
     return ret;
