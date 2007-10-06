@@ -217,7 +217,7 @@ fi
 AC_MSG_CHECKING([desired Fortran 90 bindings "size"])
 AC_ARG_WITH(mpi-f90-size,
     AC_HELP_STRING([--with-mpi-f90-size=SIZE],
-                   [specify the types of functions in the Fortran 90 MPI module, where size is one of: trivial (MPI-2 F90-specific functions only), small (trivial + all MPI functions without choice buffers), medium (small + all MPI functions with one choice buffer), large (medium + all MPI functions with 2 choice buffers, but only when both buffers are the same type)]))
+                   [specify the types of functions in the Fortran 90 MPI module, where SIZE is one of: trivial (MPI-2 F90-specific functions only), small (trivial + all MPI functions without choice buffers), medium (small + all MPI functions with one choice buffer), large (medium + all MPI functions with 2 choice buffers, but only when both buffers are the same type).  Default SIZE is "small".]))
 
 if test "$OMPI_WANT_F90_BINDINGS" = "0"; then
     AC_MSG_RESULT([disabled (Fortran 90 bindings disabled)])
