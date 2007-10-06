@@ -131,7 +131,8 @@ struct opal_output_stream_t {
      *
      * When this field is non-NULL, it is prefixed to all lines of
      * output on the stream.  When this field is NULL, no prefix is
-     * added to each line of output in the stream.
+     * added to each line of output in the stream. The prefix is copied
+     * to an internal structure in the call to opal_output_open()!
      */
     char *lds_prefix;
     
