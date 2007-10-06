@@ -482,8 +482,25 @@ int orte_daemon(int argc, char *argv[])
                 orte_system_info.nodename);
     }
 
-    /* a daemon should *always* yield the processor when idle */
-    opal_progress_set_yield_when_idle(true);
+    /* We actually do *not* want the orted to voluntarily yield() the
+       processor more than necessary.  The orted already blocks when
+       it is doing nothing, so it doesn't use any more CPU cycles than
+       it should; but when it *is* doing something, we do not want it
+       to be unnecessarily delayed because it voluntarily yielded the
+       processor in the middle of its work.
+
+       For example: when a message arrives at the orted, we want the
+       OS to wake up the orted in a timely fashion (which most OS's
+       seem good about doing) and then we want the orted to process
+       the message as fast as possible.  If the orted yields and lets
+       aggressive MPI applications get the processor back, it may be a
+       long time before the OS schedules the orted to run again
+       (particularly if there is no IO event to wake it up).  Hence,
+       routed OOB messages (for example) may be significantly delayed
+       before being delivered to MPI processes, which can be
+       problematic in some scenarios (e.g., COMM_SPAWN, BTL's that
+       require OOB messages for wireup, etc.). */
+    opal_progress_set_yield_when_idle(false);
 
     /* if requested, obtain and report a new process name and my uri to the indicated pipe */
     if (orted_globals.uri_pipe > 0) {
