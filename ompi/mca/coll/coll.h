@@ -355,13 +355,13 @@ typedef struct mca_coll_base_comm_coll_t mca_coll_base_comm_coll_t;
 
 
 /*
- * Macro for use in components that are of type coll v1.0.0
+ * Macro for use in components that are of type coll v1.1.0
  */
 #define MCA_COLL_BASE_VERSION_1_1_0 \
-  /* coll v1.0 is chained to MCA v1.0 */ \
+  /* coll v1.1 is chained to MCA v1.0 */ \
   MCA_BASE_VERSION_1_0_0, \
-  /* coll v1.0 */ \
-  "coll", 1, 0, 0
+  /* coll v1.1 */ \
+  "coll", 1, 1, 0
 
 
 /* ******************************************************************** */
