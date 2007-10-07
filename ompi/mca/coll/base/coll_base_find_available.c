@@ -159,7 +159,7 @@ static int init_query(const mca_base_component_t *m,
      it. */
 
   if (1 == m->mca_type_major_version &&
-      0 == m->mca_type_minor_version &&
+      1 == m->mca_type_minor_version &&
       0 == m->mca_type_release_version) {
     ret = init_query_1_1_0(m, entry, enable_progress_threads,
                            enable_mpi_threads);

@@ -359,12 +359,12 @@ static int query(const mca_base_component_t *component,
                  ompi_communicator_t *comm, 
                  int *priority, mca_coll_base_module_1_1_0_t **module)
 {
-  /* coll v1.0.0 */
+  /* coll v1.1.0 */
 
   *module = NULL;
-  if (1 == component->mca_major_version &&
-      0 == component->mca_minor_version &&
-      0 == component->mca_release_version) {
+  if (1 == component->mca_type_major_version &&
+      1 == component->mca_type_minor_version &&
+      0 == component->mca_type_release_version) {
     const mca_coll_base_component_1_1_0_t *coll100 = 
       (mca_coll_base_component_1_1_0_t *) component;
 
