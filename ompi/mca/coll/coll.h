@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -165,59 +166,59 @@ typedef int
 typedef int (*mca_coll_base_module_allgather_fn_t)
   (void *sbuf, int scount, struct ompi_datatype_t *sdtype, 
    void *rbuf, int rcount, struct ompi_datatype_t *rdtype, 
-   struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *data);
+   struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *module);
 typedef int (*mca_coll_base_module_allgatherv_fn_t)
   (void *sbuf, int scount, struct ompi_datatype_t *sdtype, 
    void * rbuf, int *rcounts, int *disps,  struct ompi_datatype_t *rdtype, 
-   struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *data);
+   struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *module);
 typedef int (*mca_coll_base_module_allreduce_fn_t)
   (void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype, 
-   struct ompi_op_t *op, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *data);
+   struct ompi_op_t *op, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *module);
 typedef int (*mca_coll_base_module_alltoall_fn_t)
   (void *sbuf, int scount, struct ompi_datatype_t *sdtype, 
    void* rbuf, int rcount, struct ompi_datatype_t *rdtype, 
-   struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *data);
+   struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *module);
 typedef int (*mca_coll_base_module_alltoallv_fn_t)
   (void *sbuf, int *scounts, int *sdisps, struct ompi_datatype_t *sdtype, 
    void *rbuf, int *rcounts, int *rdisps, struct ompi_datatype_t *rdtype, 
-   struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *data);
+   struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *module);
 typedef int (*mca_coll_base_module_alltoallw_fn_t)
   (void *sbuf, int *scounts, int *sdisps, struct ompi_datatype_t **sdtypes, 
    void *rbuf, int *rcounts, int *rdisps, struct ompi_datatype_t **rdtypes, 
-   struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *data);
+   struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *module);
 typedef int (*mca_coll_base_module_barrier_fn_t)
-  (struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *data);
+  (struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *module);
 typedef int (*mca_coll_base_module_bcast_fn_t)
   (void *buff, int count, struct ompi_datatype_t *datatype, int root,
-   struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *data);
+   struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *module);
 typedef int (*mca_coll_base_module_exscan_fn_t)
   (void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype, 
-   struct ompi_op_t *op, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *data);
+   struct ompi_op_t *op, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *module);
 typedef int (*mca_coll_base_module_gather_fn_t)
   (void *sbuf, int scount, struct ompi_datatype_t *sdtype, 
    void *rbuf, int rcount, struct ompi_datatype_t *rdtype, 
-   int root, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *data);
+   int root, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *module);
 typedef int (*mca_coll_base_module_gatherv_fn_t)
   (void *sbuf, int scount, struct ompi_datatype_t *sdtype, 
    void *rbuf, int *rcounts, int *disps, struct ompi_datatype_t *rdtype, 
-   int root, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *data);
+   int root, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *module);
 typedef int (*mca_coll_base_module_reduce_fn_t)
   (void *sbuf, void* rbuf, int count, struct ompi_datatype_t *dtype, 
-   struct ompi_op_t *op, int root, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *data);
+   struct ompi_op_t *op, int root, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *module);
 typedef int (*mca_coll_base_module_reduce_scatter_fn_t)
   (void *sbuf, void *rbuf, int *rcounts, struct ompi_datatype_t *dtype,
-   struct ompi_op_t *op, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *data);
+   struct ompi_op_t *op, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *module);
 typedef int (*mca_coll_base_module_scan_fn_t)
   (void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype, 
-   struct ompi_op_t *op, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *data);
+   struct ompi_op_t *op, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *module);
 typedef int (*mca_coll_base_module_scatter_fn_t)
   (void *sbuf, int scount, struct ompi_datatype_t *sdtype, 
    void *rbuf, int rcount, struct ompi_datatype_t *rdtype, 
-   int root, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *data);
+   int root, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *module);
 typedef int (*mca_coll_base_module_scatterv_fn_t)
   (void *sbuf, int *scounts, int *disps, struct ompi_datatype_t *sdtype, 
    void* rbuf, int rcount, struct ompi_datatype_t *rdtype,
-   int root, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *data);
+   int root, struct ompi_communicator_t *comm, struct mca_coll_base_module_1_1_0_t *module);
 
 
 /**
