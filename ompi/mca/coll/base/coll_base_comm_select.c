@@ -274,32 +274,19 @@ static opal_list_t *check_components(opal_list_t *components,
         /* Put this item on the list in priority order (lowest
            priority first).  Should it go first? */
 
-        if (opal_list_is_empty(selectable)) {
-            opal_list_prepend(selectable, (opal_list_item_t *) avail);
-        } else {
-            item2 = opal_list_get_first(selectable); 
-            avail2 = (avail_coll_t *) item2;
-            if (avail->ac_priority < avail2->ac_priority) {
-                opal_list_prepend(selectable, (opal_list_item_t *) avail);
-            } else {
-                for (i = 1; item2 != opal_list_get_end(selectable); 
-                     item2 = opal_list_get_next(item2), ++i) {
-                    avail2 = (avail_coll_t *) item2;
-                    if (avail->ac_priority < avail2->ac_priority) {
-                        opal_list_insert(selectable, 
-                                         (opal_list_item_t *) avail, i);
-                        break;
-                    }
-                }
-                
-                /* If we didn't find a place to put it in the list, then
-                   append it (because it has the lowest priority found so
-                   far) */
-
-                if (opal_list_get_end(selectable) == item2) {
-                    opal_list_append(selectable, (opal_list_item_t *) avail);
-                }
+        for(item2 = opal_list_get_first(selectable);
+                item2 != opal_list_get_end(selectable);
+                item2 = opal_list_get_next(item2)) {
+            avail2 = (avail_coll_t*)item2;
+            if(avail->ac_priority < avail2->ac_priority) {
+                opal_list_insert_pos(selectable,
+                        item2, (opal_list_item_t*)avail);
+                break;
             }
+        }
+
+        if(opal_list_get_end(selectable) == item2) {
+            opal_list_append(selectable, (opal_list_item_t*)avail);
         }
       }
     }
