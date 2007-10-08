@@ -132,7 +132,13 @@ int orte_cr_init(void)
 
     opal_output_verbose(10, orte_cr_output,
                         "orte_cr: init: orte_cr_init()\n");
-    
+
+    /* Init ORTE Entry Point Function */
+    if( ORTE_SUCCESS != (ret = orte_cr_entry_point_init()) ) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
     /* Register the ORTE interlevel coordination callback */
     opal_cr_reg_coord_callback(orte_cr_coord, &prev_coord_callback);
     
@@ -148,7 +154,9 @@ int orte_cr_finalize(void)
 {
     opal_output_verbose(10, orte_cr_output,
                         "orte_cr: finalize: orte_cr_finalize()");
-    
+
+    orte_cr_entry_point_finalize();
+
     /*
      * OPAL Frameworks...
      */
@@ -385,6 +393,11 @@ static int orte_cr_coord_post_restart(void) {
         orte_process_info.sock_stderr = NULL;
     }
 
+    if( NULL != orte_system_info.nodename ) {
+        free(orte_system_info.nodename);
+        orte_system_info.nodename = NULL;
+    }
+
     /* We want these to be read out of the HNP contact info file ? */
     id = mca_base_param_find("gpr", "replica", "uri");
     mca_base_param_unset(id);
@@ -600,4 +613,25 @@ static int orte_cr_coord_post_continue(void) {
  cleanup:
 
     return exit_status;
+}
+
+/*************************************************
+ * ORTE Entry Point functionality
+ *************************************************/
+int orte_cr_entry_point_init(void)
+{
+#if 0
+    /* JJH XXX
+     * Make sure to finalize the OPAL Entry Point function if it is active.
+     */
+    opal_cr_entry_point_finalize();
+#endif
+
+    return ORTE_SUCCESS;
+}
+
+int orte_cr_entry_point_finalize(void)
+{
+    /* Nothing to do here... */
+    return ORTE_SUCCESS;
 }

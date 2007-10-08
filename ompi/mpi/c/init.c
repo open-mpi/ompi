@@ -42,8 +42,6 @@ int MPI_Init(int *argc, char ***argv)
   char *env;
   int required = MPI_THREAD_SINGLE;
 
-  OPAL_CR_TEST_CHECKPOINT_READY();
-
   /* Ensure that we were not already initialized or finalized */
 
   if (ompi_mpi_finalized) {
@@ -92,5 +90,8 @@ int MPI_Init(int *argc, char ***argv)
                                     err < 0 ? ompi_errcode_get_mpi_code(err) : 
                                     err, FUNC_NAME);
   }
+
+  OPAL_CR_TEST_CHECKPOINT_READY();
+
   return MPI_SUCCESS;
 }

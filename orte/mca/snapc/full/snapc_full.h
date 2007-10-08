@@ -28,6 +28,7 @@
 #include "orte_config.h"
 
 #include "opal/mca/mca.h"
+#include "opal/event/event.h"
 #include "orte/mca/snapc/snapc.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -51,6 +52,27 @@ extern "C" {
     typedef struct orte_snapc_full_global_snapshot_t orte_snapc_full_global_snapshot_t;
 
     OBJ_CLASS_DECLARATION(orte_snapc_full_global_snapshot_t);
+
+    struct orte_snapc_full_local_snapshot_t {
+        /** Base SNAPC Global snapshot type */
+        orte_snapc_base_snapshot_t super;
+
+        /** Named Pipe Read and Write */
+        char * comm_pipe_r;
+        char * comm_pipe_w;
+        int    comm_pipe_r_fd;
+        int    comm_pipe_w_fd;
+
+        /* An opal event handle for the read pipe */
+        struct opal_event comm_pipe_r_eh;
+        bool is_eh_active;
+
+        /** State of the process wrt checkpointing */
+        int ckpt_state;
+    };
+    typedef struct orte_snapc_full_local_snapshot_t orte_snapc_full_local_snapshot_t;
+
+    OBJ_CLASS_DECLARATION(orte_snapc_full_local_snapshot_t);
 
     extern bool orte_snapc_full_skip_filem;
 

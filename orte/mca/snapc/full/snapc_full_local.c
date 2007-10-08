@@ -20,8 +20,24 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif  /* HAVE_FCNTL_H */
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif  /* HAVE_SYS_TYPES_H */
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>  /* for mkfifo */
+#endif  /* HAVE_SYS_STAT_H */
+#ifdef HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
 
 #include "opal/runtime/opal_progress.h"
+#include "opal/runtime/opal_cr.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"
@@ -50,10 +66,8 @@
 /************************************
  * Locally Global vars & functions :)
  ************************************/
-static int snapc_full_local_reg_vpid_state_updates(void);
 static int snapc_full_local_reg_job_state_updates( void);
 
-static void snapc_full_local_vpid_state_callback(orte_gpr_notify_data_t *data, void *cbdata);
 static void snapc_full_local_job_state_callback( orte_gpr_notify_data_t *data, void *cbdata);
 
 static int snapc_full_local_get_vpids(void);
@@ -61,11 +75,12 @@ static int snapc_full_local_get_updated_vpids(void);
 
 static int snapc_full_local_setup_snapshot_dir(char * snapshot_ref, char * sugg_dir, char **actual_dir);
 
-static int snapc_full_local_start_checkpoint(orte_snapc_base_snapshot_t *vpid_snapshot, bool term);
-
-static bool local_checkpoint_finished(void);
-
-static void snapc_full_local_wait_ckpt_cb(pid_t pid, int status, void* cbdata);
+static int snapc_full_local_start_checkpoint_all(size_t ckpt_state);
+static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_local_snapshot_t *vpid_snapshot);
+static int snapc_full_local_start_ckpt_handshake_term(orte_snapc_full_local_snapshot_t *vpid_snapshot, bool term);
+static int snapc_full_local_start_ckpt_handshake(orte_snapc_full_local_snapshot_t *vpid_snapshot);
+static int snapc_full_local_end_ckpt_handshake(orte_snapc_full_local_snapshot_t *vpid_snapshot);
+static void snapc_full_local_comm_read_event(int fd, short flags, void *arg);
 
 static opal_list_t snapc_local_vpids;
 static orte_jobid_t snapc_local_jobid;
@@ -122,16 +137,6 @@ int local_coord_setup_job(orte_jobid_t jobid)
         goto cleanup;
     }
 
-    /*
-     * Setup GPR Callbacks triggered by the Application Snapshot Coordiantor
-     * This indicates the completion of a checkpoint, and it's availablity
-     * to be reaped by the Local Snapshot Coordinator
-     */
-    if( ORTE_SUCCESS != (ret = snapc_full_local_reg_vpid_state_updates( ) ) ) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
     ret = exit_status;
 
  cleanup:
@@ -154,12 +159,12 @@ int local_coord_release_job(orte_jobid_t jobid)
         for(item  = opal_list_get_first(&snapc_local_vpids);
             item != opal_list_get_end(&snapc_local_vpids);
             item  = opal_list_get_next(item) ) {
-            orte_snapc_base_snapshot_t *vpid_snapshot;
-            vpid_snapshot = (orte_snapc_base_snapshot_t*)item;
+            orte_snapc_full_local_snapshot_t *vpid_snapshot;
+            vpid_snapshot = (orte_snapc_full_local_snapshot_t*)item;
             
-            if(ORTE_SNAPC_CKPT_STATE_NONE     != vpid_snapshot->state &&
-               ORTE_SNAPC_CKPT_STATE_ERROR    != vpid_snapshot->state &&
-               ORTE_SNAPC_CKPT_STATE_FINISHED != vpid_snapshot->state ) {
+            if(ORTE_SNAPC_CKPT_STATE_NONE     != vpid_snapshot->super.state &&
+               ORTE_SNAPC_CKPT_STATE_ERROR    != vpid_snapshot->super.state &&
+               ORTE_SNAPC_CKPT_STATE_FINISHED != vpid_snapshot->super.state ) {
                 is_done = false;
                 break;
             }
@@ -182,90 +187,6 @@ int local_coord_release_job(orte_jobid_t jobid)
 /******************
  * Local functions
  ******************/
-static int snapc_full_local_reg_vpid_state_updates(void)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    char *segment = NULL, *trig_name = NULL;
-    orte_gpr_subscription_id_t id;
-    char* keys[] = {
-        ORTE_PROC_CKPT_STATE_KEY,
-        ORTE_PROC_CKPT_SNAPSHOT_REF_KEY,
-        ORTE_PROC_CKPT_SNAPSHOT_LOC_KEY,
-        NULL
-    };
-    char* trig_names[] = {
-        ORTE_PROC_CKPT_STATE_TRIGGER,
-        NULL
-    };
-    opal_list_item_t* item = NULL;
-
-    /*
-     * Identify the segment for this job
-     */
-    if( ORTE_SUCCESS != (ret = orte_schema.get_job_segment_name(&segment, snapc_local_jobid))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * Attach to the standard trigger
-     */
-    if( ORTE_SUCCESS != (ret = orte_schema.get_std_trigger_name(&trig_name, trig_names[0], snapc_local_jobid))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    /*
-     * For each process that we are tasked with:
-     */
-    for(item  = opal_list_get_first(&snapc_local_vpids);
-        item != opal_list_get_end(&snapc_local_vpids);
-        item  = opal_list_get_next(item) ) {
-        orte_snapc_base_snapshot_t *vpid_snapshot;
-        char **tokens;
-        orte_std_cntr_t num_tokens;
-
-        vpid_snapshot = (orte_snapc_base_snapshot_t*)item;
-
-        /*
-         * Setup the tokens
-         */
-        if (ORTE_SUCCESS != (ret = orte_schema.get_proc_tokens(&tokens,
-                                                               &num_tokens,
-                                                               &vpid_snapshot->process_name) )) {
-            exit_status = ret;
-            goto cleanup;
-        }
-        
-        /*
-         * Subscribe to the GPR
-         */
-        if( ORTE_SUCCESS != (ret = orte_gpr.subscribe_N(&id,
-                                                        trig_name,
-                                                        NULL,
-                                                        ORTE_GPR_NOTIFY_VALUE_CHG,
-                                                        ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
-                                                        segment,
-                                                        tokens,
-                                                        3,
-                                                        keys,
-                                                        snapc_full_local_vpid_state_callback,
-                                                        NULL))) {
-            exit_status = ret;
-            goto cleanup;
-        }
-    }
-
- cleanup:
-    if(NULL != segment)
-        free(segment);
-
-    if(NULL != trig_name)
-        free(trig_name);
-
-    return exit_status;
-}
-
 static int snapc_full_local_reg_job_state_updates( void )
 {
     int ret, exit_status = ORTE_SUCCESS;
@@ -339,142 +260,10 @@ static int snapc_full_local_reg_job_state_updates( void )
     return exit_status;
 }
 
-static void snapc_full_local_vpid_state_callback(orte_gpr_notify_data_t *data, void *cbdata)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    orte_process_name_t *proc;
-    size_t ckpt_state;
-    char *ckpt_ref, *ckpt_loc;
-    char * actual_local_dir = NULL;
-    opal_list_item_t* item = NULL;
-    orte_snapc_base_snapshot_t *vpid_snapshot = NULL;
-    char * loc_vpid_name = NULL;
-    bool ckpt_n_term = false;
-
-    /*
-     * Get the checkpoint information
-     */
-    if( ORTE_SUCCESS != (ret = orte_snapc_base_extract_gpr_vpid_ckpt_info(data, 
-                                                                          &proc,
-                                                                          &ckpt_state,
-                                                                          &ckpt_ref,
-                                                                          &ckpt_loc) ) ) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    orte_ns.get_proc_name_string(&loc_vpid_name, proc);
-
-    opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
-                        "local) Process (%s): Changed to state to:\n", loc_vpid_name);
-    opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
-                        "local) State:            %d\n",  (int)ckpt_state);
-    opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
-                        "local) Snapshot Ref:    (%s)\n", ckpt_ref);
-    opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
-                        "local) Remote Location: (%s)\n", ckpt_loc);
-
-    /*
-     * Find the process in the list
-     */
-    for(item  = opal_list_get_first(&snapc_local_vpids);
-        item != opal_list_get_end(&snapc_local_vpids);
-        item  = opal_list_get_next(item) ) {
-        vpid_snapshot = (orte_snapc_base_snapshot_t*)item;
-
-        if(0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, proc, &vpid_snapshot->process_name ) ) {
-            /*
-             * Update it's local information
-             */
-            vpid_snapshot->state = ckpt_state;
-
-            if( NULL != vpid_snapshot->crs_snapshot_super.reference_name ) 
-                free(vpid_snapshot->crs_snapshot_super.reference_name);
-            vpid_snapshot->crs_snapshot_super.reference_name = strdup(ckpt_ref);
-            
-            if( NULL != vpid_snapshot->crs_snapshot_super.local_location )
-                free(vpid_snapshot->crs_snapshot_super.local_location);
-            vpid_snapshot->crs_snapshot_super.local_location = strdup(ckpt_loc);
-            
-            if( NULL != vpid_snapshot->crs_snapshot_super.remote_location )
-                free(vpid_snapshot->crs_snapshot_super.remote_location);
-            vpid_snapshot->crs_snapshot_super.remote_location = strdup(ckpt_loc);
-
-            break;
-        }
-    }
-    
-    /*
-     * This process has finished their checkpoint, see if we are done yet
-     */
-    if( ORTE_SNAPC_CKPT_STATE_FINISHED == ckpt_state ||
-        ORTE_SNAPC_CKPT_STATE_ERROR    == ckpt_state ) {
-        if(local_checkpoint_finished()) {
-            /*
-             * Currently we don't need to do anything when done
-             */
-        }
-    }
-    /*
-     * If we have been asked to checkpoint this process do so
-     */
-    else if( ORTE_SNAPC_CKPT_STATE_PENDING      == ckpt_state ||
-             ORTE_SNAPC_CKPT_STATE_PENDING_TERM == ckpt_state) {
-        
-        if(ORTE_SNAPC_CKPT_STATE_PENDING_TERM == ckpt_state ) {
-            ckpt_n_term = true;
-        }
-
-        /*
-         * Set up the snapshot directory per suggestion from 
-         * the Global Snapshot Coordinator
-         * If we can't create the suggested local directory, do what we can and update
-         * local directory reference in the GPR
-         */
-        if( ORTE_SUCCESS != (ret = snapc_full_local_setup_snapshot_dir(vpid_snapshot->crs_snapshot_super.reference_name,
-                                                                       vpid_snapshot->crs_snapshot_super.local_location,
-                                                                       &actual_local_dir) ) ) {
-            exit_status = ret;
-            goto cleanup;
-        }
-        
-        if( NULL != vpid_snapshot->crs_snapshot_super.local_location )
-            free(vpid_snapshot->crs_snapshot_super.local_location);
-        vpid_snapshot->crs_snapshot_super.local_location = strdup(ckpt_loc);
-        
-        opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
-                            "local) Using directory (%s)\n",vpid_snapshot->crs_snapshot_super.local_location);
-        
-        /*
-         * Update so that folks know that we are working on it
-         */
-        if( ORTE_SUCCESS != (ret = orte_snapc_base_set_vpid_ckpt_info( vpid_snapshot->process_name,
-                                                                       ORTE_SNAPC_CKPT_STATE_RUNNING,
-                                                                       vpid_snapshot->crs_snapshot_super.reference_name,
-                                                                       vpid_snapshot->crs_snapshot_super.local_location ) ) ) {
-            exit_status = ret;
-            goto cleanup;
-        }
-        
-        if( ORTE_SUCCESS != (ret = snapc_full_local_start_checkpoint(vpid_snapshot, ckpt_n_term) ) ) {
-            exit_status = ret;
-            goto cleanup;
-        }
-        
-    }
-    
- cleanup:
-    if( NULL != actual_local_dir)
-        free(actual_local_dir);
-    if( NULL != loc_vpid_name)
-        free(loc_vpid_name);
-
-    return;
-}
-
 static void snapc_full_local_job_state_callback( orte_gpr_notify_data_t *data, void *cbdata )
 {
     int ret, exit_status = ORTE_SUCCESS;
+    orte_snapc_full_local_snapshot_t *vpid_snapshot;
     size_t ckpt_state;
     char *ckpt_ref = NULL;
     opal_list_item_t* item = NULL;
@@ -492,7 +281,7 @@ static void snapc_full_local_job_state_callback( orte_gpr_notify_data_t *data, v
     }
 
     opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
-                        "local) State:            %d\n",  (int)ckpt_state);
+                        "local) Job State:        %d\n",  (int)ckpt_state);
     opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
                         "local) Snapshot Ref:    (%s)\n", ckpt_ref);
     opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
@@ -519,63 +308,91 @@ static void snapc_full_local_job_state_callback( orte_gpr_notify_data_t *data, v
         for(item  = opal_list_get_first(&snapc_local_vpids);
             item != opal_list_get_end(&snapc_local_vpids);
             item  = opal_list_get_next(item) ) {
-            orte_snapc_base_snapshot_t *vpid_snapshot;
-            vpid_snapshot = (orte_snapc_base_snapshot_t*)item;
+            vpid_snapshot = (orte_snapc_full_local_snapshot_t*)item;
 
             if( ORTE_SNAPC_CKPT_STATE_PENDING_TERM == ckpt_state ) {
-                vpid_snapshot->term = true;
+                vpid_snapshot->super.term = true;
             }
             else {
-                vpid_snapshot->term = false;
+                vpid_snapshot->super.term = false;
             }
 
             /*
              * Update it's local information
              */
-            if( NULL != vpid_snapshot->crs_snapshot_super.reference_name ) 
-                free(vpid_snapshot->crs_snapshot_super.reference_name);
-            vpid_snapshot->crs_snapshot_super.reference_name = opal_crs_base_unique_snapshot_name(vpid_snapshot->process_name.vpid);
+            if( NULL != vpid_snapshot->super.crs_snapshot_super.reference_name ) 
+                free(vpid_snapshot->super.crs_snapshot_super.reference_name);
+            vpid_snapshot->super.crs_snapshot_super.reference_name = opal_crs_base_unique_snapshot_name(vpid_snapshot->super.process_name.vpid);
             
             /* global_directory/local_snapshot_vpid/... */
-            if( NULL != vpid_snapshot->crs_snapshot_super.local_location )
-                free(vpid_snapshot->crs_snapshot_super.local_location);
+            if( NULL != vpid_snapshot->super.crs_snapshot_super.local_location )
+                free(vpid_snapshot->super.crs_snapshot_super.local_location);
             if( orte_snapc_base_store_in_place ) {
-                asprintf(&(vpid_snapshot->crs_snapshot_super.local_location), 
+                asprintf(&(vpid_snapshot->super.crs_snapshot_super.local_location), 
                          "%s/%s", 
                          global_ckpt_dir,
-                         vpid_snapshot->crs_snapshot_super.reference_name);
+                         vpid_snapshot->super.crs_snapshot_super.reference_name);
             }
             else {
                 /* Use the OPAL CRS base snapshot dir
                  * JJH: Do we want to do something more interesting?
                  */
-                asprintf(&(vpid_snapshot->crs_snapshot_super.local_location), 
+                asprintf(&(vpid_snapshot->super.crs_snapshot_super.local_location), 
                          "%s/%s",
                          opal_crs_base_snapshot_dir,
-                         vpid_snapshot->crs_snapshot_super.reference_name);
+                         vpid_snapshot->super.crs_snapshot_super.reference_name);
             }
             
-            if( NULL != vpid_snapshot->crs_snapshot_super.remote_location )
-                free(vpid_snapshot->crs_snapshot_super.remote_location);
+            if( NULL != vpid_snapshot->super.crs_snapshot_super.remote_location )
+                free(vpid_snapshot->super.crs_snapshot_super.remote_location);
 
-            asprintf(&(vpid_snapshot->crs_snapshot_super.remote_location), 
+            asprintf(&(vpid_snapshot->super.crs_snapshot_super.remote_location), 
                      "%s/%s", 
                      global_ckpt_dir,
-                     vpid_snapshot->crs_snapshot_super.reference_name);
+                     vpid_snapshot->super.crs_snapshot_super.reference_name);
 
             /*
              * Update the information in the GPR, then we will pop out in the vpid callback
              */
-            if( ORTE_SUCCESS != (ret = orte_snapc_base_set_vpid_ckpt_info( vpid_snapshot->process_name,
+            if( ORTE_SUCCESS != (ret = orte_snapc_base_set_vpid_ckpt_info( vpid_snapshot->super.process_name,
                                                                            ckpt_state,
-                                                                           vpid_snapshot->crs_snapshot_super.reference_name,
-                                                                           vpid_snapshot->crs_snapshot_super.local_location ) ) ) {
+                                                                           vpid_snapshot->super.crs_snapshot_super.reference_name,
+                                                                           vpid_snapshot->super.crs_snapshot_super.local_location ) ) ) {
                 exit_status = ret;
                 goto cleanup;
             }
         }
+
+        /*
+         * Start checkpointing all local processes
+         */
+        if( ORTE_SUCCESS != (ret = snapc_full_local_start_checkpoint_all(ckpt_state) ) ) {
+            exit_status = ret;
+            goto cleanup;
+        }
     }
     else if( ORTE_SNAPC_CKPT_STATE_FINISHED == ckpt_state ) {
+        /*
+         * Release all checkpointed processes now that the checkpoint is complete
+         */
+        for(item  = opal_list_get_first(&snapc_local_vpids);
+            item != opal_list_get_end(&snapc_local_vpids);
+            item  = opal_list_get_next(item) ) {
+            vpid_snapshot = (orte_snapc_full_local_snapshot_t*)item;
+
+            opal_output_verbose(15, mca_snapc_full_component.super.output_handle,
+                                "local) Job Ckpt finished tell process %s\n",
+                                ORTE_NAME_PRINT(&vpid_snapshot->super.process_name));
+
+            if( ORTE_SUCCESS != (ret = snapc_full_local_end_ckpt_handshake(vpid_snapshot) ) ) {
+                opal_output(mca_snapc_full_component.super.output_handle,
+                            "local) Error: Unable to finish the handshake with peer %s. %d\n", 
+                            ORTE_NAME_PRINT(&vpid_snapshot->super.process_name), ret);
+                exit_status = OPAL_ERROR;
+                goto cleanup;
+            }
+        }
+
         /* 
          * If the PLS was able to actually allow for local calls to 
          * orte_pls.terminate_proc then we could terminate the processes
@@ -654,7 +471,7 @@ static int snapc_full_local_get_vpids(void)
     for(i = 0; i < num_values; ++i) {
         orte_gpr_value_t* value = values[i];
         orte_process_name_t *proc_name, *name_ptr;
-        orte_snapc_base_snapshot_t *vpid_snapshot;
+        orte_snapc_full_local_snapshot_t *vpid_snapshot;
 
         for(k = 0; k < value->cnt; ++k) {
             orte_gpr_keyval_t* keyval = value->keyvals[k];
@@ -677,15 +494,15 @@ static int snapc_full_local_get_vpids(void)
             }
         }
 
-        vpid_snapshot = OBJ_NEW(orte_snapc_base_snapshot_t);
+        vpid_snapshot = OBJ_NEW(orte_snapc_full_local_snapshot_t);
 
         /* The pid is not known at this time, we will update it later */
-        vpid_snapshot->process_pid = 0;
-        vpid_snapshot->process_name.jobid  = proc_name->jobid;
-        vpid_snapshot->process_name.vpid   = proc_name->vpid;
+        vpid_snapshot->super.process_pid = 0;
+        vpid_snapshot->super.process_name.jobid  = proc_name->jobid;
+        vpid_snapshot->super.process_name.vpid   = proc_name->vpid;
 
         
-        opal_list_append(&snapc_local_vpids, &(vpid_snapshot->crs_snapshot_super.super));
+        opal_list_append(&snapc_local_vpids, &(vpid_snapshot->super.crs_snapshot_super.super));
         
     get_next_value:
         ;/* */
@@ -706,7 +523,7 @@ static int snapc_full_local_get_updated_vpids(void)
     orte_gpr_value_t** values = NULL;
     orte_std_cntr_t i, k, num_values = 0;
     opal_list_item_t* item = NULL;
-    orte_snapc_base_snapshot_t *vpid_snapshot;
+    orte_snapc_full_local_snapshot_t *vpid_snapshot;
 
     /*
      * Do we have to update?
@@ -719,8 +536,8 @@ static int snapc_full_local_get_updated_vpids(void)
         goto cleanup;
     }
     /* Check the first element, if it has a pid, then keep going */
-    vpid_snapshot = (orte_snapc_base_snapshot_t*)item;
-    if( 0 < vpid_snapshot->process_pid ) {
+    vpid_snapshot = (orte_snapc_full_local_snapshot_t*)item;
+    if( 0 < vpid_snapshot->super.process_pid ) {
         exit_status = ORTE_SUCCESS;
         goto cleanup;
     }
@@ -792,10 +609,10 @@ static int snapc_full_local_get_updated_vpids(void)
         for(item  = opal_list_get_first(&snapc_local_vpids);
             item != opal_list_get_end(&snapc_local_vpids);
             item  = opal_list_get_next(item) ) {
-            vpid_snapshot = (orte_snapc_base_snapshot_t*)item;
+            vpid_snapshot = (orte_snapc_full_local_snapshot_t*)item;
 
-            if(0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, proc_name, &vpid_snapshot->process_name) ) { 
-                vpid_snapshot->process_pid = pid;
+            if(0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, proc_name, &vpid_snapshot->super.process_name) ) { 
+                vpid_snapshot->super.process_pid = pid;
                 break;
             }
         }
@@ -811,22 +628,18 @@ static int snapc_full_local_get_updated_vpids(void)
     return exit_status;
 }
 
-static int snapc_full_local_start_checkpoint(orte_snapc_base_snapshot_t *vpid_snapshot, bool term)
+/************************
+ * Start the checkpoint
+ ************************/
+static int snapc_full_local_start_checkpoint_all(size_t ckpt_state)
 {
     int ret, exit_status = ORTE_SUCCESS;
-    char * command   = NULL;
-    char * local_dir = NULL;
-    pid_t child_pid;
-    
-    if( vpid_snapshot->process_pid == 0 ) {
-        ret = snapc_full_local_get_updated_vpids();
-        if( ORTE_SUCCESS != ret || vpid_snapshot->process_pid == 0 ) {
-            opal_output( mca_snapc_full_component.super.output_handle,
-                         "local) Cannot checkpoint an invalid pid (%d)\n", 
-                         vpid_snapshot->process_pid);
-            return ORTE_ERROR;
-        }        
-    }
+    orte_snapc_full_local_snapshot_t *vpid_snapshot;
+    opal_list_item_t* item = NULL;
+    char * actual_local_dir = NULL;
+    bool ckpt_n_term = false;
+    char *tmp_pid = NULL;
+
     /*
      * Cannot let opal-checkpoint be passed the --term flag
      * since the HNP needs to talk to the app to get
@@ -838,124 +651,456 @@ static int snapc_full_local_start_checkpoint(orte_snapc_base_snapshot_t *vpid_sn
      *      from this command.
      */
     if ( !orte_snapc_base_store_in_place ) {
-        term = false;
+        ckpt_n_term = false;
     }
-    
-    child_pid = fork();
-    if(0 > child_pid) {
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-    /* Child */
-    else if(0 == child_pid) {
-        char **argv = NULL;
-        char * term_str = NULL;
-
-        if( term )
-            term_str = strdup(" --term ");
-        else 
-            term_str = strdup("");
-
-        local_dir = strdup(vpid_snapshot->crs_snapshot_super.local_location);
-        local_dir = opal_dirname(local_dir);
-
-        asprintf(&command, "opal-checkpoint -q --where %s --name %s %s %d ", 
-                 local_dir,
-                 vpid_snapshot->crs_snapshot_super.reference_name,
-                 term_str, /* If we are to checkpoint then terminate */
-                 vpid_snapshot->process_pid);
-        
-        if( NULL == (argv = opal_argv_split(command, ' ')) ){
-            exit_status = ORTE_ERROR;
-            exit(exit_status);
-        }
-        
-        ret = execvp(argv[0], argv);
-
-        exit_status = ret;
-
-        free(term_str);
-        exit(exit_status);
-    }
-    /* Parent */
-    else {
-        orte_wait_cb(child_pid, snapc_full_local_wait_ckpt_cb, &vpid_snapshot->process_name);
-    }
-
- cleanup:
-    if( NULL != command)
-        free(command);
-    if( NULL != local_dir)
-        free(local_dir);
-    
-    return exit_status;
-}
-
-static bool local_checkpoint_finished(void)
-{
-    opal_list_item_t* item = NULL;
-    bool is_done = true;
-
-    for(item  = opal_list_get_first(&snapc_local_vpids);
-        item != opal_list_get_end(&snapc_local_vpids);
-        item  = opal_list_get_next(item) ) {
-        orte_snapc_base_snapshot_t *vpid_snapshot;
-
-        vpid_snapshot = (orte_snapc_base_snapshot_t*)item;
-        
-        /* Searching for any vpid's that have not completed */
-        if(ORTE_SNAPC_CKPT_STATE_FINISHED != vpid_snapshot->state &&
-           ORTE_SNAPC_CKPT_STATE_ERROR    != vpid_snapshot->state ) {
-            is_done = false;
-            break;
-        }
-    }
-    
-    return is_done;
-}
-
-static void snapc_full_local_wait_ckpt_cb(pid_t pid, int status, void* cbdata)
-{
-    orte_process_name_t *proc_name = (orte_process_name_t *)cbdata;
-    opal_list_item_t* item = NULL;
-    orte_snapc_base_snapshot_t *vpid_snapshot = NULL;
-    int ret, exit_status = ORTE_SUCCESS;
-    size_t loc_state = ORTE_SNAPC_CKPT_STATE_FINISHED;
-
-    if( status == OPAL_SUCCESS ) {
-        loc_state = ORTE_SNAPC_CKPT_STATE_FINISHED;
+    else if( ORTE_SNAPC_CKPT_STATE_PENDING_TERM == ckpt_state ) {
+        ckpt_n_term = true;
     }
     else {
-        loc_state = ORTE_SNAPC_CKPT_STATE_ERROR;
+        ckpt_n_term = false;
     }
 
     /*
-     * Find the process in the list
+     * Pass 1: Setup snapshot directory
      */
     for(item  = opal_list_get_first(&snapc_local_vpids);
         item != opal_list_get_end(&snapc_local_vpids);
         item  = opal_list_get_next(item) ) {
-        vpid_snapshot = (orte_snapc_base_snapshot_t*)item;
+        vpid_snapshot = (orte_snapc_full_local_snapshot_t*)item;
 
-        if( 0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, proc_name, &vpid_snapshot->process_name) ) {
-            /* Update it's state */
-            vpid_snapshot->state = loc_state;
+        /*
+         * Set up the snapshot directory per suggestion from 
+         * the Global Snapshot Coordinator
+         * If we can't create the suggested local directory, do what we can and update
+         * local directory reference in the GPR
+         */
+        if( ORTE_SUCCESS != (ret = snapc_full_local_setup_snapshot_dir(vpid_snapshot->super.crs_snapshot_super.reference_name,
+                                                                       vpid_snapshot->super.crs_snapshot_super.local_location,
+                                                                       &actual_local_dir) ) ) {
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
+                            "local) Using directory (%s)\n",vpid_snapshot->super.crs_snapshot_super.local_location);
+
+        /* Dummy check */
+        if( vpid_snapshot->super.process_pid == 0 ) {
+            ret = snapc_full_local_get_updated_vpids();
+            if( ORTE_SUCCESS != ret || vpid_snapshot->super.process_pid == 0 ) {
+                opal_output( mca_snapc_full_component.super.output_handle,
+                             "local) Cannot checkpoint an invalid pid (%d)\n", 
+                             vpid_snapshot->super.process_pid);
+                exit_status = ORTE_ERROR;
+                goto cleanup;
+            }
+        }
+    }
+
+    /*
+     * Pass 2: Start process of opening communication channels
+     */
+    for(item  = opal_list_get_first(&snapc_local_vpids);
+        item != opal_list_get_end(&snapc_local_vpids);
+        item  = opal_list_get_next(item) ) {
+        vpid_snapshot = (orte_snapc_full_local_snapshot_t*)item;
+
+        /*
+         * Create named pipe references for this process
+         */
+        if( NULL == vpid_snapshot->comm_pipe_w ||
+            NULL == vpid_snapshot->comm_pipe_r ) {
+            if( NULL != tmp_pid ) {
+                free(tmp_pid);
+                tmp_pid = NULL;
+            }
+            asprintf(&tmp_pid, "%d", vpid_snapshot->super.process_pid);
+            asprintf(&(vpid_snapshot->comm_pipe_w), "%s/%s.%s", opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_R, tmp_pid);
+            asprintf(&(vpid_snapshot->comm_pipe_r), "%s/%s.%s", opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_W, tmp_pid);
+        }
+
+        /*
+         * Signal the application
+         */
+        if( 0 != (ret = kill(vpid_snapshot->super.process_pid, opal_cr_entry_point_signal) ) ) {
+            exit_status = ret;
+            goto cleanup;
+        }
+    }
+
+    /*
+     * Pass 3: Wait for channels to open up
+     */
+    for(item  = opal_list_get_first(&snapc_local_vpids);
+        item != opal_list_get_end(&snapc_local_vpids);
+        item  = opal_list_get_next(item) ) {
+        vpid_snapshot = (orte_snapc_full_local_snapshot_t*)item;
+
+        if( ORTE_SUCCESS != (ret = snapc_full_local_start_ckpt_open_comm(vpid_snapshot) ) ) {
+            opal_output(mca_snapc_full_component.super.output_handle,
+                        "local) Error: Unable to initiate the handshake with peer %s. %d\n", 
+                        ORTE_NAME_PRINT(&vpid_snapshot->super.process_name), ret);
+            exit_status = OPAL_ERROR;
+            goto cleanup;
+        }
+
+        /*
+         * Update so that folks know that we are working on it
+         */
+        if( ORTE_SUCCESS != (ret = orte_snapc_base_set_vpid_ckpt_info( vpid_snapshot->super.process_name,
+                                                                       ORTE_SNAPC_CKPT_STATE_RUNNING,
+                                                                       vpid_snapshot->super.crs_snapshot_super.reference_name,
+                                                                       vpid_snapshot->super.crs_snapshot_super.local_location ) ) ) {
+            exit_status = ret;
+            goto cleanup;
+        }
+    }
+
+    /*
+     * Pass 3: Start Handshake, send term argument
+     */
+    for(item  = opal_list_get_first(&snapc_local_vpids);
+        item != opal_list_get_end(&snapc_local_vpids);
+        item  = opal_list_get_next(item) ) {
+        vpid_snapshot = (orte_snapc_full_local_snapshot_t*)item;
+
+        if( ORTE_SUCCESS != (ret = snapc_full_local_start_ckpt_handshake_term(vpid_snapshot, ckpt_n_term) ) ) {
+            opal_output(mca_snapc_full_component.super.output_handle,
+                        "local) Error: Unable to initiate the handshake with peer %s. %d\n", 
+                        ORTE_NAME_PRINT(&vpid_snapshot->super.process_name), ret);
+            exit_status = OPAL_ERROR;
+            goto cleanup;
+        }
+    }
+
+    /*
+     * Pass 4: Start Handshake, send snapshot reference/location arguments
+     */
+    for(item  = opal_list_get_first(&snapc_local_vpids);
+        item != opal_list_get_end(&snapc_local_vpids);
+        item  = opal_list_get_next(item) ) {
+        vpid_snapshot = (orte_snapc_full_local_snapshot_t*)item;
+
+        if( ORTE_SUCCESS != (ret = snapc_full_local_start_ckpt_handshake(vpid_snapshot) ) ) {
+            opal_output(mca_snapc_full_component.super.output_handle,
+                        "local) Error: Unable to initiate the handshake with peer %s. %d\n", 
+                        ORTE_NAME_PRINT(&vpid_snapshot->super.process_name), ret);
+            exit_status = OPAL_ERROR;
+            goto cleanup;
+        }
+    }
+
+ cleanup:
+    if( NULL != tmp_pid ) {
+        free(tmp_pid);
+        tmp_pid = NULL;
+    }
+
+    if( ORTE_SUCCESS != exit_status ) {
+        ckpt_state = ORTE_SNAPC_CKPT_STATE_ERROR;
+    }
+
+    return exit_status;
+}
+
+static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_local_snapshot_t *vpid_snapshot)
+{
+    int ret, exit_status = ORTE_SUCCESS;
+    int s_time, max_wait_time = 20; /* wait time before giving up on the checkpoint */
+
+    /*
+     * Wait for the named pipes to be created
+     */
+    opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
+                        "local) Waiting for process %s's pipes (%s) (%s)\n",
+                        ORTE_NAME_PRINT(&vpid_snapshot->super.process_name),
+                        vpid_snapshot->comm_pipe_w,
+                        vpid_snapshot->comm_pipe_r);
+    for( s_time = 0; s_time < max_wait_time; ++s_time) {
+        /*
+         * See if the named pipe exists yet for the PID in question
+         */
+        if( 0 > (ret = access(vpid_snapshot->comm_pipe_r, F_OK) )) {
+            /* File doesn't exist yet, keep waiting */
+            if( s_time >= max_wait_time - 5 ) {
+                opal_output_verbose(15, mca_snapc_full_component.super.output_handle,
+                                    "local) File does not exist yet: <%s> rtn = %d (waited %d/%d sec)\n",
+                                    vpid_snapshot->comm_pipe_r, ret, s_time, max_wait_time);
+            }
+            sleep(1);
+            continue;
+        }
+        else if( 0 > (ret = access(vpid_snapshot->comm_pipe_w, F_OK) )) {
+            /* File doesn't exist yet, keep waiting */
+            if( s_time >= max_wait_time - 5 ) {
+                opal_output_verbose(15, mca_snapc_full_component.super.output_handle,
+                                    "local) File does not exist yet: <%s> rtn = %d (waited %d/%d sec)\n",
+                                    vpid_snapshot->comm_pipe_w, ret, s_time, max_wait_time);
+            }
+            sleep(1);
+            continue;
+        }
+        else {
             break;
         }
+    }
+    if( s_time == max_wait_time ) { 
+        /* The file doesn't exist, 
+         * This means that the process didn't open up a named pipe for us
+         * to access their checkpoint notification routine. Therefore,
+         * the application either:
+         *  - Doesn't exist
+         *  - Isn't checkpointable
+         * In either case there is nothing we can do.
+         */
+        opal_show_help("help-opal-checkpoint.txt", "pid_does_not_exist", true,
+                       vpid_snapshot->super.process_pid,
+                       vpid_snapshot->comm_pipe_r,
+                       vpid_snapshot->comm_pipe_w);
+
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+    /*
+     * Open Pipes...
+     *  - prog_named_write_pipe:
+     *    prog makes this file and opens Read Only
+     *    this app. opens it Write Only
+     *  - prog_named_read_pipe:
+     *    prog makes this file and opens Write Only
+     *    this app. opens it Read Only
+     */
+    vpid_snapshot->comm_pipe_w_fd = open(vpid_snapshot->comm_pipe_w, O_WRONLY);
+    if(vpid_snapshot->comm_pipe_w_fd < 0) {
+        opal_output(mca_snapc_full_component.super.output_handle,
+                    "local) Error: Unable to open name pipe (%s). %d\n", 
+                    vpid_snapshot->comm_pipe_w, vpid_snapshot->comm_pipe_w_fd);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+    vpid_snapshot->comm_pipe_r_fd = open(vpid_snapshot->comm_pipe_r, O_RDWR);
+    if(vpid_snapshot->comm_pipe_r_fd < 0) {
+        opal_output(mca_snapc_full_component.super.output_handle,
+                    "local) Error: Unable to open name pipe (%s). %d\n", 
+                    vpid_snapshot->comm_pipe_r, vpid_snapshot->comm_pipe_r_fd);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+ cleanup:
+    return exit_status;
+}
+
+static int snapc_full_local_start_ckpt_handshake_term(orte_snapc_full_local_snapshot_t *vpid_snapshot, bool term)
+{
+    int ret, exit_status = ORTE_SUCCESS;
+    int term_rep;
+
+    /*
+     * Start the handshake: Send term argument
+     */
+    term_rep = (int)term;
+
+    if( term ) {
+        opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
+                            "local) Tell app to TERMINATE after completion of checkpoint. [%s (%d)]\n",
+                            (term ? "True" : "False"), term_rep);
+    }
+
+    if( sizeof(int) != (ret = write(vpid_snapshot->comm_pipe_w_fd, &term_rep, sizeof(int))) ) {
+        opal_output(mca_snapc_full_component.super.output_handle,
+                    "local) Error: Unable to write term (%d) to named pipe (%s), %d\n", 
+                    term, vpid_snapshot->comm_pipe_w, ret);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+ cleanup:
+    return exit_status;
+}
+
+static int snapc_full_local_start_ckpt_handshake(orte_snapc_full_local_snapshot_t *vpid_snapshot)
+{
+    int ret, exit_status = ORTE_SUCCESS;
+    char *local_dir = NULL;
+    int len, value;
+    ssize_t tmp_size = 0;
+
+    /*
+     * Wait for the appliation to respond
+     */
+    if( sizeof(int) != (ret = read(vpid_snapshot->comm_pipe_r_fd, &value, sizeof(int))) ) {
+        opal_output(mca_snapc_full_component.super.output_handle,
+                    "local) Error: Unable to read length from named pipe (%s). %d\n", 
+                    vpid_snapshot->comm_pipe_r, ret);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+    /* Check the response to make sure we can checkpoint this process */
+    if( OPAL_CHECKPOINT_CMD_IN_PROGRESS == value ) {
+        opal_show_help("help-opal-checkpoint.txt",
+                       "ckpt:in_progress", 
+                       true,
+                       vpid_snapshot->super.process_pid);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+    else if( OPAL_CHECKPOINT_CMD_NULL == value ) {
+        opal_show_help("help-opal-checkpoint.txt",
+                       "ckpt:req_null", 
+                       true,
+                       vpid_snapshot->super.process_pid);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+    else if ( OPAL_CHECKPOINT_CMD_ERROR == value ) {
+        opal_show_help("help-opal-checkpoint.txt",
+                       "ckpt:req_error", 
+                       true,
+                       vpid_snapshot->super.process_pid);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+    opal_event_set(&(vpid_snapshot->comm_pipe_r_eh),
+                   vpid_snapshot->comm_pipe_r_fd,
+                   OPAL_EV_READ|OPAL_EV_PERSIST,
+                   snapc_full_local_comm_read_event,
+                   vpid_snapshot);
+    vpid_snapshot->is_eh_active = true;
+    opal_event_add(&(vpid_snapshot->comm_pipe_r_eh), NULL);
+
+    /*
+     * Send: Snapshot Name
+     */
+    len = strlen(vpid_snapshot->super.crs_snapshot_super.reference_name) + 1;
+    if( sizeof(int) != (ret = write(vpid_snapshot->comm_pipe_w_fd, &len, sizeof(int))) ) {
+        opal_output(mca_snapc_full_component.super.output_handle,
+                    "local) Error: Unable to write snapshot name len (%d) to named pipe (%s). %d\n", 
+                    len, vpid_snapshot->comm_pipe_w, ret);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+    tmp_size = sizeof(char) * len;
+    if( tmp_size != (ret = write(vpid_snapshot->comm_pipe_w_fd, (vpid_snapshot->super.crs_snapshot_super.reference_name), (sizeof(char) * len))) ) {
+        opal_output(mca_snapc_full_component.super.output_handle,
+                    "local) Error: Unable to write snapshot name (%s) to named pipe (%s). %d\n", 
+                    vpid_snapshot->super.crs_snapshot_super.reference_name, vpid_snapshot->comm_pipe_w, ret);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+    /*
+     * Send: Snapshot Location
+     */
+    local_dir = strdup(vpid_snapshot->super.crs_snapshot_super.local_location);
+    local_dir = opal_dirname(local_dir);
+    len = strlen(local_dir) + 1;
+    if( sizeof(int) != (ret = write(vpid_snapshot->comm_pipe_w_fd, &len, sizeof(int))) ) {
+        opal_output(mca_snapc_full_component.super.output_handle,
+                    "local) Error: Unable to write snapshot location len (%d) to named pipe (%s). %d\n", 
+                    len, vpid_snapshot->comm_pipe_w, ret);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+    tmp_size = sizeof(char) * len;
+    if( tmp_size != (ret = write(vpid_snapshot->comm_pipe_w_fd, (local_dir), (sizeof(char) * len))) ) {
+        opal_output(mca_snapc_full_component.super.output_handle,
+                    "local) Error: Unable to write snapshot location (%s) to named pipe (%s). %d\n", 
+                    local_dir, vpid_snapshot->comm_pipe_w, ret);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+ cleanup:
+    if( NULL != local_dir ) {
+        free(local_dir);
+        local_dir = NULL;
+    }
+
+    return exit_status;
+}
+
+static int snapc_full_local_end_ckpt_handshake(orte_snapc_full_local_snapshot_t *vpid_snapshot)
+{
+    int ret, exit_status = ORTE_SUCCESS;
+    int last_cmd = 0;
+
+    /*
+     * Finish the handshake.
+     */
+    if( sizeof(int) != (ret = write(vpid_snapshot->comm_pipe_w_fd, &last_cmd, sizeof(int))) ) {
+        opal_output(mca_snapc_full_component.super.output_handle,
+                    "local) Error: Unable to release process %s (%d)\n", 
+                    ORTE_NAME_PRINT(&vpid_snapshot->super.process_name), ret);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+ cleanup:
+    /*
+     * Close all pipes
+     */
+    close(vpid_snapshot->comm_pipe_w_fd);
+    close(vpid_snapshot->comm_pipe_r_fd);
+    vpid_snapshot->comm_pipe_w_fd = -1;
+    vpid_snapshot->comm_pipe_r_fd = -1;
+
+    return exit_status;
+}
+
+static void snapc_full_local_comm_read_event(int fd, short flags, void *arg)
+{
+    int ret, exit_status = ORTE_SUCCESS;
+    orte_snapc_full_local_snapshot_t *vpid_snapshot = NULL;
+    size_t loc_state = ORTE_SNAPC_CKPT_STATE_FINISHED;
+    int ckpt_state;
+
+    vpid_snapshot = (orte_snapc_full_local_snapshot_t *)arg;
+
+    opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
+                        "local) Read Event: Process %s done...\n",
+                        ORTE_NAME_PRINT(&vpid_snapshot->super.process_name));
+
+    /*
+     * Get the final state of the checkpoint from the checkpointing process
+     */
+    if( sizeof(int) != (ret = read(vpid_snapshot->comm_pipe_r_fd, &ckpt_state, sizeof(int))) ) {
+        opal_output(mca_snapc_full_component.super.output_handle,
+                    "local) Error: Unable to read state from named pipe (%s). %d\n",
+                    vpid_snapshot->comm_pipe_r, ret);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+    if( ckpt_state == OPAL_CRS_ERROR ) {
+        loc_state = ORTE_SNAPC_CKPT_STATE_ERROR;
     }
 
     /*
      * Now that the checkpoint is finished
      * Update our status information
      */
-    if( ORTE_SUCCESS != (ret = orte_snapc_base_set_vpid_ckpt_info( vpid_snapshot->process_name,
+    vpid_snapshot->super.state = loc_state;
+    if( ORTE_SUCCESS != (ret = orte_snapc_base_set_vpid_ckpt_info( vpid_snapshot->super.process_name,
                                                                    loc_state,
-                                                                   vpid_snapshot->crs_snapshot_super.reference_name,
-                                                                   vpid_snapshot->crs_snapshot_super.local_location ) ) ) {
+                                                                   vpid_snapshot->super.crs_snapshot_super.reference_name,
+                                                                   vpid_snapshot->super.crs_snapshot_super.local_location ) ) ) {
         exit_status = ret;
         goto cleanup;
     }
-    
+
  cleanup:
+    /*
+     * Disable events
+     */
+    opal_event_del(&(vpid_snapshot->comm_pipe_r_eh));
+    vpid_snapshot->is_eh_active = false;
+
     return;
 }

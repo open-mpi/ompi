@@ -53,13 +53,24 @@ static orte_snapc_base_module_t loc_module = {
 /*
  * Global Snapshot structure
  */
-void orte_snapc_full_construct(orte_snapc_full_global_snapshot_t *obj);
-void orte_snapc_full_destruct( orte_snapc_full_global_snapshot_t *obj);
+void orte_snapc_full_global_construct(orte_snapc_full_global_snapshot_t *obj);
+void orte_snapc_full_global_destruct( orte_snapc_full_global_snapshot_t *obj);
 
 OBJ_CLASS_INSTANCE(orte_snapc_full_global_snapshot_t,
                    orte_snapc_base_global_snapshot_t,
-                   orte_snapc_full_construct,
-                   orte_snapc_full_destruct);
+                   orte_snapc_full_global_construct,
+                   orte_snapc_full_global_destruct);
+
+/*
+ * Local Snapshot structure
+ */
+void orte_snapc_full_local_construct(orte_snapc_full_local_snapshot_t *obj);
+void orte_snapc_full_local_destruct( orte_snapc_full_local_snapshot_t *obj);
+
+OBJ_CLASS_INSTANCE(orte_snapc_full_local_snapshot_t,
+                   orte_snapc_base_snapshot_t,
+                   orte_snapc_full_local_construct,
+                   orte_snapc_full_local_destruct);
 
 /************************************
  * Locally Global vars & functions :)
@@ -69,12 +80,43 @@ OBJ_CLASS_INSTANCE(orte_snapc_full_global_snapshot_t,
 /************************
  * Function Definitions
  ************************/
-void orte_snapc_full_construct(orte_snapc_full_global_snapshot_t *snapshot) {
+void orte_snapc_full_global_construct(orte_snapc_full_global_snapshot_t *snapshot) {
     ;
 }
 
-void orte_snapc_full_destruct( orte_snapc_full_global_snapshot_t *snapshot) {
+void orte_snapc_full_global_destruct( orte_snapc_full_global_snapshot_t *snapshot) {
     ;
+}
+
+void orte_snapc_full_local_construct(orte_snapc_full_local_snapshot_t *obj) {
+    obj->comm_pipe_r = NULL;
+    obj->comm_pipe_w = NULL;
+
+    obj->comm_pipe_r_fd = -1;
+    obj->comm_pipe_w_fd = -1;
+
+    obj->ckpt_state = ORTE_SNAPC_CKPT_STATE_NONE;
+
+    obj->is_eh_active = false;
+}
+
+void orte_snapc_full_local_destruct( orte_snapc_full_local_snapshot_t *obj) {
+    if( NULL != obj->comm_pipe_r ) {
+        free(obj->comm_pipe_r);
+        obj->comm_pipe_r = NULL;
+    }
+
+    if( NULL != obj->comm_pipe_w ) {
+        free(obj->comm_pipe_w);
+        obj->comm_pipe_w = NULL;
+    }
+
+    obj->comm_pipe_r_fd = -1;
+    obj->comm_pipe_w_fd = -1;
+
+    obj->ckpt_state = ORTE_SNAPC_CKPT_STATE_NONE;
+
+    obj->is_eh_active = false;
 }
 
 /*

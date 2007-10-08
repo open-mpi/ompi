@@ -23,6 +23,7 @@
 #include "orte_config.h"
 
 #include "opal/threads/condition.h"
+#include "opal/util/cmd_line.h"
 
 BEGIN_C_DECLS
 

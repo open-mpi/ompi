@@ -260,25 +260,28 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
      * If we can checkpointing ourselves do so
      * Note:
      *   If threading based checkpoint is enabled we cannot use the cr_request()
-     *   functionto checkpoint ourselves. If we are a thread, then it is likely 
+     *   function to checkpoint ourselves. If we are a thread, then it is likely 
      *   that we have not properly initalized this module.
      * Additionally there is a bug with use cr_request and moving the context file from
      * the location where it was created (As if v0.4.2). So this funciton cannot be used
      * with this version of BLCR.
+     * JJH RETURN HERE...
      */
-#if 0
     if(pid == getpid() ) {
+        char *loc_fname = NULL;
+
         blcr_get_checkpoint_filename(&(snapshot->context_filename), pid);
+        asprintf(&loc_fname, "%s/%s", snapshot->super.local_location, snapshot->context_filename);
 
         opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                             "crs:blcr: checkpoint SELF <%s>",
-                            snapshot->context_filename);
+                            loc_fname);
 
         /* Request a checkpoint be taken of the current process.
          * Since we are not guaranteed to finish the checkpoint before this
          * returns, we also need to wait for it.
          */
-        cr_request_file(snapshot->context_filename);
+        cr_request_file(loc_fname);
         
         /* Wait for checkpoint to finish */
         do {
@@ -286,9 +289,9 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
         } while(CR_STATE_IDLE != cr_status());
 
         *state = blcr_current_state;
+        free(loc_fname);
     }
     else
-#endif
     /*
      * Checkpointing another process
      */
