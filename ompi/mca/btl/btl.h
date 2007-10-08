@@ -112,6 +112,7 @@
 #define MCA_BTL_H
 
 #include "ompi/types.h"
+#include "opal/prefetch.h" /* For OPAL_LIKELY */
 #include "ompi/mca/mpool/mpool.h"
 
 #include "opal/mca/crs/crs.h"

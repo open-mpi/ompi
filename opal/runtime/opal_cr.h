@@ -26,6 +26,8 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
+#include "opal/event/event.h"
+#include "opal/runtime/opal_progress.h"
 #include "opal/util/output.h"
 #include "opal/prefetch.h"
 
@@ -54,7 +56,12 @@ enum opal_cr_ckpt_cmd_state_t {
     OPAL_CHECKPOINT_CMD_START,       /* Checkpoint is starting on this request */
     OPAL_CHECKPOINT_CMD_IN_PROGRESS, /* Checkpoint is currently running */
     OPAL_CHECKPOINT_CMD_NULL,        /* Checkpoint cannot be started because it is not supported */
-    OPAL_CHECKPOINT_CMD_ERROR        /* An error occurred such that the checkpoint cannot be completed */
+    OPAL_CHECKPOINT_CMD_ERROR,       /* An error occurred such that the checkpoint cannot be completed */
+    /* State of the checkpoint operation */
+    OPAL_CR_STATUS_NONE,       /* No checkpoint in progress */
+    OPAL_CR_STATUS_REQUESTED,  /* Checkpoint has been requested */
+    OPAL_CR_STATUS_RUNNING,    /* Checkpoint is currently running */
+    OPAL_CR_STATUS_TERM        /* Checkpoint is running and will terminate process upon completion */
 };
 typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
 
@@ -63,7 +70,7 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
     OPAL_DECLSPEC extern char * opal_cr_pipe_dir;
     /* Signal that opal-checkpoint uses to contact the 
      * application process */
-    OPAL_DECLSPEC extern int    opal_cr_signal;
+    OPAL_DECLSPEC extern int    opal_cr_entry_point_signal;
     /* If Checkpointing is enabled in this application */
     OPAL_DECLSPEC extern bool   opal_cr_is_enabled;
     /* If the application running is a tool
@@ -72,6 +79,10 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
     /* An output handle to be used by the cr runtime 
      * functionality as an argument to opal_output() */
     OPAL_DECLSPEC extern int    opal_cr_output;
+    /* If a checkpoint has been requested */
+    OPAL_DECLSPEC extern int opal_cr_checkpoint_request;
+    /* The current state of a checkpoint operation */
+    OPAL_DECLSPEC extern int opal_cr_checkpointing;
 
     /*
      * If this is an application that doesn't want to have
@@ -116,6 +127,7 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
      * wait for another sevice to complete before 
      * continuing with the checkpoint */
     OPAL_DECLSPEC extern bool opal_cr_stall_check;
+    OPAL_DECLSPEC extern bool opal_cr_currently_stalled;
 
     /* If not using FT or using the thead, disable the process checks */
 #if OPAL_ENABLE_FT == 1 && OPAL_ENABLE_FT_THREAD == 0
@@ -143,15 +155,39 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
     /*******************************
      * Notification Routines
      *******************************/
-    /**
-     * Checkpoint Notification Routine
-     * We assume that the notify routine that we call will
-     * execute opal_coord() and opal_crs.checkpoint() in the
-     * proper order.
+    /*******************************
+     * Notification Routines
+     *******************************/
+    /*
+     * Init OPAL entry point functionality
      */
-    OPAL_DECLSPEC int opal_cr_entry_point(pid_t pid, 
-                                          opal_crs_base_snapshot_t *snapshot, 
-                                          bool term, int *state);
+    OPAL_DECLSPEC int opal_cr_entry_point_init(void);
+
+    /*
+     * Finalize OPAL entry point functionality
+     */
+    OPAL_DECLSPEC int opal_cr_entry_point_finalize(void);
+
+    /**
+     * A function to respond to the async checkpoint request
+     * this is useful when figuring out who should respond
+     * when stalling.
+     */
+    typedef int (*opal_cr_notify_callback_fn_t) (opal_cr_ckpt_cmd_state_t);
+
+    OPAL_DECLSPEC int opal_cr_reg_notify_callback
+    (opal_cr_notify_callback_fn_t new_func,
+     opal_cr_notify_callback_fn_t *prev_func);
+
+    /**
+     * Function to go through the INC
+     * - Call Registered INC_Coord(CHECKPOINT)
+     * - Call the CRS.checkpoint()
+     * - Call Registered INC_Coord(state)
+     */
+    OPAL_DECLSPEC int opal_cr_inc_core(pid_t pid, 
+                                       opal_crs_base_snapshot_t *snapshot, 
+                                       bool term, int *state);
     
     /*******************************
      * Coordination Routines
@@ -174,13 +210,6 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
      */
     OPAL_DECLSPEC int opal_cr_coord(int state);
     
-    /**********************************
-     * Critical Section locking
-     **********************************/
-#if OPAL_ENABLE_FT_THREAD == 1
-    OPAL_DECLSPEC extern opal_thread_t    opal_cr_notify_thread;
-#endif
-
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

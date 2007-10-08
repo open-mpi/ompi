@@ -359,7 +359,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
     /*
      * Signal the application telling it that we wish to checkpoint
      */
-    if( 0 != (ret = kill(pid, opal_cr_signal) ) ) {
+    if( 0 != (ret = kill(pid, opal_cr_entry_point_signal) ) ) {
         exit_status = ret;
         goto cleanup;
     }
@@ -520,7 +520,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
         goto cleanup;
     }
 
-    /* Send the snashot_name argument */
+    /* Send the snapshot_name argument */
     len = strlen(opal_checkpoint_globals.snapshot_name) + 1;
     if( sizeof(int) != (ret = write(prog_named_write_pipe_fd, &len, sizeof(int))) ) {
         opal_output(opal_checkpoint_globals.output,

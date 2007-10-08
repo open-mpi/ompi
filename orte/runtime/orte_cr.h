@@ -44,6 +44,12 @@ extern "C" {
      */
     ORTE_DECLSPEC int orte_cr_coord(int state);
 
+    /*
+     * Init/Finalize functions for ORTE Entry Point
+     */
+    ORTE_DECLSPEC int orte_cr_entry_point_init(void);
+    ORTE_DECLSPEC int orte_cr_entry_point_finalize(void);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

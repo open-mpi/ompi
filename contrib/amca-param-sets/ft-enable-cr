@@ -8,10 +8,12 @@
 
 #
 # OPAL Parameters
+# - Turn off OPAL only checkpointing
 # - Select only checkpoint ready components
 # - Enable Additional FT infrastructure
 # - Auto-select OPAL CRS component
 #
+opal_cr_allow_opal_only=0
 mca_base_component_distill_checkpoint_ready=1
 ft_cr_enabled=1
 crs=
