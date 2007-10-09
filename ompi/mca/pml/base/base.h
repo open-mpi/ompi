@@ -51,6 +51,8 @@ OMPI_DECLSPEC int mca_pml_base_pml_check_selected(const char *my_pml,
                                                   struct ompi_proc_t **procs,
                                                   size_t nprocs);
 
+OMPI_DECLSPEC int mca_pml_base_finalize(void);
+
 OMPI_DECLSPEC int mca_pml_base_close(void);
 
 OMPI_DECLSPEC int mca_pml_base_ft_event(int state);
