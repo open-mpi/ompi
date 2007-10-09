@@ -690,10 +690,10 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
                 MCA_BTL_TCP_FRAG_RETURN(frag);
             }
-            OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
 #if MCA_BTL_TCP_ENDPOINT_CACHE
             assert( 0 == btl_endpoint->endpoint_cache_length );
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
+            OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
             break;
         }
     case MCA_BTL_TCP_SHUTDOWN:
