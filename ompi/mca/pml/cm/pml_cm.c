@@ -31,7 +31,7 @@ ompi_pml_cm_t ompi_pml_cm = {
         mca_pml_cm_add_procs,
         mca_pml_cm_del_procs,
         mca_pml_cm_enable,
-        mca_pml_cm_progress,
+        NULL, /* No progress function. The MTL register their own */
         mca_pml_cm_add_comm,
         mca_pml_cm_del_comm,
         mca_pml_cm_irecv_init,
