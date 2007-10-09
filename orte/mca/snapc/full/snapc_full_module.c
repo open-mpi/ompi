@@ -57,7 +57,7 @@ void orte_snapc_full_global_construct(orte_snapc_full_global_snapshot_t *obj);
 void orte_snapc_full_global_destruct( orte_snapc_full_global_snapshot_t *obj);
 
 OBJ_CLASS_INSTANCE(orte_snapc_full_global_snapshot_t,
-                   orte_snapc_base_global_snapshot_t,
+                   orte_snapc_base_snapshot_t,
                    orte_snapc_full_global_construct,
                    orte_snapc_full_global_destruct);
 
@@ -81,11 +81,13 @@ OBJ_CLASS_INSTANCE(orte_snapc_full_local_snapshot_t,
  * Function Definitions
  ************************/
 void orte_snapc_full_global_construct(orte_snapc_full_global_snapshot_t *snapshot) {
-    ;
+    snapshot->local_coord.vpid  = 0;
+    snapshot->local_coord.jobid = 0;
 }
 
 void orte_snapc_full_global_destruct( orte_snapc_full_global_snapshot_t *snapshot) {
-    ;
+    snapshot->local_coord.vpid  = 0;
+    snapshot->local_coord.jobid = 0;
 }
 
 void orte_snapc_full_local_construct(orte_snapc_full_local_snapshot_t *obj) {
