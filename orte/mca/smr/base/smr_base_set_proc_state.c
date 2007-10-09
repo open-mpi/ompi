@@ -217,15 +217,9 @@ int orte_smr_base_register_sync(void)
 
     /* send the sync command to our daemon */
     if (0 > (rc = orte_rml.send_buffer(&orte_process_info.my_daemon, &buffer, ORTE_RML_TAG_DAEMON, 0))) {
-        if(ORTE_ERR_NOT_SUPPORTED == rc) { 
-	  /* handle cray arch */
-	  OBJ_DESTRUCT(&buffer); 
-	  return ORTE_SUCCESS;
-	} else { 
-	  ORTE_ERROR_LOG(rc);
-	  OBJ_DESTRUCT(&buffer);
-	  return rc;
-	}
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buffer);
+        return rc;
     }
     OBJ_DESTRUCT(&buffer);
 
