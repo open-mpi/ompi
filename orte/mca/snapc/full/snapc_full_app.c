@@ -16,6 +16,7 @@
 
 #include "orte_config.h"
 
+#include <errno.h>
 #include <sys/types.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
