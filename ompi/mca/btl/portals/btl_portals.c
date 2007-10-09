@@ -248,9 +248,7 @@ mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base,
     if (size <= mca_btl_portals_module.super.btl_eager_limit) { 
         OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(&mca_btl_portals_module, frag, rc); 
         if (OMPI_SUCCESS != rc) return NULL;
-        frag->segments[0].seg_len = 
-            size <= mca_btl_portals_module.super.btl_eager_limit ? 
-            size : mca_btl_portals_module.super.btl_eager_limit ; 
+        frag->segments[0].seg_len = size;
     } else { 
         OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(&mca_btl_portals_module, frag, rc); 
         if (OMPI_SUCCESS != rc) return NULL;
@@ -518,6 +516,7 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
 
     /* finalize all communication */
     while (mca_btl_portals_module.portals_outstanding_ops > 0) {
+      opal_output(0, "GOT %d outstanding ops!\n", mca_btl_portals_module.portals_outstanding_ops);
         mca_btl_portals_component_progress();
     }
 
