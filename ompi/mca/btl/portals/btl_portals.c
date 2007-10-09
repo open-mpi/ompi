@@ -516,8 +516,7 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
 
     /* finalize all communication */
     while (mca_btl_portals_module.portals_outstanding_ops > 0) {
-      opal_output(0, "GOT %d outstanding ops!\n", mca_btl_portals_module.portals_outstanding_ops);
-        mca_btl_portals_component_progress();
+      mca_btl_portals_component_progress();
     }
 
     if (mca_btl_portals_module.portals_num_procs != 0) {
