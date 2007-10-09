@@ -183,6 +183,10 @@ int ompi_mpi_finalize(void)
         return ret;
     }
 
+    /* free pml resource */ 
+    if(OMPI_SUCCESS != (ret = mca_pml_base_finalize())) { 
+      return ret;
+    }
     /* free communicator resources */
     if (OMPI_SUCCESS != (ret = ompi_comm_finalize())) {
         return ret;

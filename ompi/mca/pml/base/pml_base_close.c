@@ -28,6 +28,15 @@
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "opal/runtime/opal_progress.h"
 
+
+int mca_pml_base_finalize(void) {
+  if (NULL != mca_pml_base_selected_component.pmlm_finalize) {
+    return mca_pml_base_selected_component.pmlm_finalize();
+  }
+  return OMPI_SUCCESS;
+}
+
+     
 int mca_pml_base_close(void)
 {
     /* turn off the progress code for the pml */
@@ -46,10 +55,7 @@ int mca_pml_base_close(void)
     OBJ_DESTRUCT(&mca_pml_base_recv_requests);
 
     mca_pml.pml_progress = mca_pml_base_progress;
-    if (NULL != mca_pml_base_selected_component.pmlm_finalize) {
-        mca_pml_base_selected_component.pmlm_finalize();
-    }
-
+    
     OBJ_DESTRUCT(&mca_pml_base_pml);
 
     /* Close all remaining available modules (may be one if this is a
