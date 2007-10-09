@@ -47,7 +47,10 @@ extern "C" {
 
     struct orte_snapc_full_global_snapshot_t {
         /** Base SNAPC Global snapshot type */
-        orte_snapc_base_global_snapshot_t super;
+        orte_snapc_base_snapshot_t super;
+
+        /** Local coordinator associated with this vpid */
+        orte_process_name_t local_coord;
     };
     typedef struct orte_snapc_full_global_snapshot_t orte_snapc_full_global_snapshot_t;
 

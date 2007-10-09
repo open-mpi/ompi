@@ -97,6 +97,9 @@ BEGIN_C_DECLS
 /* For FileM RSH Component */
 #define ORTE_RML_TAG_FILEM_RSH              34
 
+/* For SnapC Full Component */
+#define ORTE_RML_TAG_SNAPC_FULL             35
+
 /* For CRCP Coord Component */
 #define OMPI_CRCP_COORD_BOOKMARK_TAG      4242
 

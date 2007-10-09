@@ -844,6 +844,9 @@ static int  orte_filem_rsh_start_command(orte_filem_base_process_set_t *proc_set
     orte_filem_rsh_work_pool_item_t *wp_item = NULL;
     int ret;
 
+    proc_set->source.vpid  = 1;
+    proc_set->source.jobid = 0;
+
     /* Construct a work pool item */
     wp_item = OBJ_NEW(orte_filem_rsh_work_pool_item_t);
     /* Copy the Process Set */
@@ -1047,6 +1050,9 @@ static int orte_filem_rsh_permission_listener_init(orte_rml_buffer_callback_fn_t
                                                        ORTE_RML_PERSISTENT,
                                                        rml_cbfunc,
                                                        NULL)) ) {
+        opal_output(mca_filem_rsh_component.super.output_handle,
+                    "filem:rsh: listener_init: Failed to register the receive callback (%d)",
+                    ret);
         return ret;
     }
 
@@ -1058,6 +1064,9 @@ static int orte_filem_rsh_permission_listener_cancel(void)
     int ret;
 
     if( ORTE_SUCCESS != (ret = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_FILEM_RSH) ) ) {
+        opal_output(mca_filem_rsh_component.super.output_handle,
+                    "filem:rsh: listener_cancel: Failed to deregister the receive callback (%d)",
+                    ret);
         return ret;
     }
 

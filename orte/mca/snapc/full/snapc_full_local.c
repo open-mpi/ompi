@@ -72,6 +72,7 @@ static void snapc_full_local_job_state_callback( orte_gpr_notify_data_t *data, v
 
 static int snapc_full_local_get_vpids(void);
 static int snapc_full_local_get_updated_vpids(void);
+static int snapc_full_local_send_vpids(void);
 
 static int snapc_full_local_setup_snapshot_dir(char * snapshot_ref, char * sugg_dir, char **actual_dir);
 
@@ -433,6 +434,51 @@ static int snapc_full_local_setup_snapshot_dir(char * snapshot_ref, char * sugg_
     return exit_status;
 }
 
+static int snapc_full_local_send_vpids(void)
+{
+    int ret, exit_status = ORTE_SUCCESS;
+    orte_process_name_t hnp_name;
+    opal_list_item_t* item = NULL;
+    orte_buffer_t loc_buffer;
+    size_t num_vpids = 0;
+
+    hnp_name.vpid  = 0;
+    hnp_name.jobid = 0;
+
+    num_vpids = opal_list_get_size(&snapc_local_vpids);
+    if( num_vpids <= 0 ) {
+        return ORTE_SUCCESS;
+    }
+
+    OBJ_CONSTRUCT(&loc_buffer, orte_buffer_t);
+
+    if (ORTE_SUCCESS != (ret = orte_dss.pack(&loc_buffer, &num_vpids, 1, ORTE_SIZE))) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    for(item  = opal_list_get_first(&snapc_local_vpids);
+        item != opal_list_get_end(&snapc_local_vpids);
+        item  = opal_list_get_next(item) ) {
+        orte_snapc_full_local_snapshot_t *vpid_snapshot;
+        vpid_snapshot = (orte_snapc_full_local_snapshot_t*)item;
+
+        if (ORTE_SUCCESS != (ret = orte_dss.pack(&loc_buffer, &(vpid_snapshot->super.process_name), 1, ORTE_NAME))) {
+            exit_status = ret;
+            goto cleanup;
+        }
+    }
+
+    if (0 > (ret = orte_rml.send_buffer(&hnp_name, &loc_buffer, ORTE_RML_TAG_SNAPC_FULL, 0))) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
+ cleanup:
+    OBJ_DESTRUCT(&loc_buffer);
+
+    return exit_status;
+}
 static int snapc_full_local_get_vpids(void)
 {
     int ret, exit_status = ORTE_SUCCESS;
@@ -501,11 +547,18 @@ static int snapc_full_local_get_vpids(void)
         vpid_snapshot->super.process_name.jobid  = proc_name->jobid;
         vpid_snapshot->super.process_name.vpid   = proc_name->vpid;
 
-        
         opal_list_append(&snapc_local_vpids, &(vpid_snapshot->super.crs_snapshot_super.super));
         
     get_next_value:
         ;/* */
+    }
+
+    /*
+     * Send list to global coordinator
+     */
+    if( ORTE_SUCCESS != (ret = snapc_full_local_send_vpids() ) ) {
+        exit_status = ret;
+        goto cleanup;
     }
 
  cleanup:
@@ -619,6 +672,14 @@ static int snapc_full_local_get_updated_vpids(void)
         
     get_next_value:
         ;/* */
+    }
+
+    /*
+     * Send list to global coordinator
+     */
+    if( ORTE_SUCCESS != (ret = snapc_full_local_send_vpids() ) ) {
+        exit_status = ret;
+        goto cleanup;
     }
 
  cleanup:
