@@ -111,6 +111,7 @@ static char *blcr_checkpoint_cmd = NULL;
 static opal_condition_t blcr_cond;
 static opal_mutex_t     blcr_lock;
 
+static bool have_working_cr_request = false;
 
 void opal_crs_blcr_construct(opal_crs_blcr_snapshot_t *snapshot) {
     snapshot->context_filename = NULL;
@@ -153,6 +154,29 @@ int opal_crs_blcr_module_init(void)
             opal_output(mca_crs_blcr_component.super.output_handle,
                         "Error: crs:blcr: module_init: cr_init failed (%d)\n", client_id);
             return OPAL_ERROR;
+        }
+
+        /*
+         * Check for a working cr_request, version 0.6.0 and later
+         * In earlier version there was a bug with moving the context file from 
+         * one location to another if cr_request was used. This was fixed in the
+         * 0.6.0 series.
+         */
+        have_working_cr_request = true;
+        if( CR_RELEASE_MAJOR <= 0 &&
+            CR_RELEASE_MINOR <  6 ) {
+            have_working_cr_request = false;
+        }
+        if( !have_working_cr_request ) {
+            opal_output_verbose(1, mca_crs_blcr_component.super.output_handle,
+                                "crs:blcr: WARNING: The BLCR version installed (%s) does not support cr_request(). "
+                                "Using an alternative technique.\n",
+                                CR_RELEASE_VERSION);
+        }
+        else {
+            opal_output_verbose(15, mca_crs_blcr_component.super.output_handle,
+                                "crs:blcr: The BLCR version installed (%s) supports cr_request(). Yay!",
+                                CR_RELEASE_VERSION);
         }
     }
 
@@ -262,12 +286,8 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
      *   If threading based checkpoint is enabled we cannot use the cr_request()
      *   function to checkpoint ourselves. If we are a thread, then it is likely 
      *   that we have not properly initalized this module.
-     * Additionally there is a bug with use cr_request and moving the context file from
-     * the location where it was created (As if v0.4.2). So this funciton cannot be used
-     * with this version of BLCR.
-     * JJH RETURN HERE...
      */
-    if(pid == getpid() ) {
+    if( have_working_cr_request && pid == getpid() ) {
         char *loc_fname = NULL;
 
         blcr_get_checkpoint_filename(&(snapshot->context_filename), pid);
@@ -291,11 +311,10 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
         *state = blcr_current_state;
         free(loc_fname);
     }
-    else
     /*
      * Checkpointing another process
      */
-    {
+    else {
         ret = blcr_checkpoint_peer(pid, snapshot->super.local_location, &(snapshot->context_filename));
 
         if(OPAL_SUCCESS != ret) {
