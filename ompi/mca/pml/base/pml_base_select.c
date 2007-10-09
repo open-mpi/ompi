@@ -267,8 +267,9 @@ int mca_pml_base_select(bool enable_progress_threads,
 #endif
 
     /* register the winner's callback */
-    opal_progress_register(mca_pml.pml_progress);
-
+    if( NULL != mca_pml.pml_progress ) {
+        opal_progress_register(mca_pml.pml_progress);
+    }
 
     /* register winner in the modex */
     mca_pml_base_pml_selected(best_component->pmlm_version.mca_component_name);

@@ -37,7 +37,6 @@ local_sources = \
 	pml_cm_send.c \
 	pml_cm_sendreq.h \
 	pml_cm_sendreq.c \
-	pml_cm_progress.c \
 	pml_cm_start.c
 
 mcacomponentdir = $(pkglibdir)
