@@ -50,6 +50,10 @@
 #include "orte/runtime/params.h"
 #include "orte/runtime/orte_wait.h"
 
+#if OPAL_ENABLE_FT == 1
+#include "orte/mca/snapc/snapc.h"
+#endif
+
 #include "orte/mca/odls/base/odls_private.h"
 
 /**

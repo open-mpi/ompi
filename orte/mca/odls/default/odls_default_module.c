@@ -92,10 +92,6 @@
 #include "orte/mca/smr/smr.h"
 #include "orte/mca/routed/routed.h"
 
-#if OPAL_ENABLE_FT == 1
-#include "orte/mca/snapc/snapc.h"
-#endif
-
 #include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/odls/default/odls_default.h"
 
