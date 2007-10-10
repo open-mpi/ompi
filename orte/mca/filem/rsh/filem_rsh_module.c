@@ -1064,9 +1064,11 @@ static int orte_filem_rsh_permission_listener_cancel(void)
     int ret;
 
     if( ORTE_SUCCESS != (ret = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_FILEM_RSH) ) ) {
+#if 0
         opal_output(mca_filem_rsh_component.super.output_handle,
                     "filem:rsh: listener_cancel: Failed to deregister the receive callback (%d)",
                     ret);
+#endif
         return ret;
     }
 
