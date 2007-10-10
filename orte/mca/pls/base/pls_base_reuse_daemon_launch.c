@@ -17,6 +17,10 @@
  *
  */
 
+#ifdef HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
+
 #include "orte_config.h"
 #include "orte/orte_constants.h"
 
