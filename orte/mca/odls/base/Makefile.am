@@ -24,6 +24,7 @@ headers += \
 
 libmca_odls_la_SOURCES += \
         base/odls_base_close.c \
+        base/odls_base_default_fns.c \
         base/odls_base_open.c \
         base/odls_base_select.c \
         base/odls_base_state.c \
