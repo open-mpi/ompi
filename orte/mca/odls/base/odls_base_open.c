@@ -48,6 +48,12 @@
  */
 orte_odls_base_module_t orte_odls;
 
+/* instance the app_context list object */
+OBJ_CLASS_INSTANCE(orte_odls_app_context_t,
+                   opal_list_item_t,
+                   NULL, NULL);
+
+
 /* instance the child list object */
 static void orte_odls_child_constructor(orte_odls_child_t *ptr)
 {
@@ -118,6 +124,11 @@ int orte_odls_base_open(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+    
+    /* initialize globals */
+    OBJ_CONSTRUCT(&orte_odls_globals.mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&orte_odls_globals.cond, opal_condition_t);
+    OBJ_CONSTRUCT(&orte_odls_globals.children, opal_list_t);
     
     /* Open up all available components */
 

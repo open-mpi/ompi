@@ -24,8 +24,6 @@
 
 #include "orte_config.h"
 
-#include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
 #include "opal/mca/mca.h"
 
 #include "orte/mca/ns/ns_types.h"
@@ -49,28 +47,6 @@ orte_odls_base_module_t* orte_odls_default_component_init(int *priority);
  * Startup / Shutdown
  */
 int orte_odls_default_finalize(void);
-
-/**
- * ODLS Default globals
- */
-typedef struct orte_odls_default_globals_t {
-    opal_mutex_t mutex;
-    opal_condition_t cond;
-    opal_list_t children;
-} orte_odls_default_globals_t;
-
-extern orte_odls_default_globals_t orte_odls_default;
-
-/*
- * List object to locally store app_contexts returned by the
- * registry subscription. Since we don't know how many app_contexts will
- * be returned, we need to store them on a list.
- */
-typedef struct odls_default_app_context_t {
-    opal_list_item_t super;      /* required to place this on a list */
-    orte_app_context_t *app_context;
-} odls_default_app_context_t;
-OBJ_CLASS_DECLARATION(odls_default_app_context_t);
 
 /*
  * ODLS Default module

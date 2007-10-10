@@ -41,19 +41,8 @@
 #include "orte/mca/rml/rml.h"
 
 #include "orte/mca/odls/odls.h"
-#include "orte/mca/pls/base/pls_private.h"
-
+#include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/odls/default/odls_default.h"
-
-/* Instantiate the component globals */
-orte_odls_default_globals_t orte_odls_default;
-
-
-/* instance the app_context list object */
-OBJ_CLASS_INSTANCE(odls_default_app_context_t,
-                   opal_list_item_t,
-                   NULL, NULL);
-
 
 /*
  * Instantiate the public struct with all of our public information
@@ -98,11 +87,7 @@ orte_odls_base_component_t mca_odls_default_component = {
 
 int orte_odls_default_component_open(void)
 {
-    /* initialize globals */
-    OBJ_CONSTRUCT(&orte_odls_default.mutex, opal_mutex_t);
-    OBJ_CONSTRUCT(&orte_odls_default.cond, opal_condition_t);
-    OBJ_CONSTRUCT(&orte_odls_default.children, opal_list_t);
-
+    /* nothing to do */
     return ORTE_SUCCESS;
 }
 
@@ -126,9 +111,6 @@ orte_odls_base_module_t *orte_odls_default_component_init(int *priority)
 
 int orte_odls_default_component_close(void)
 {
-    OBJ_DESTRUCT(&orte_odls_default.mutex);
-    OBJ_DESTRUCT(&orte_odls_default.cond);
-    OBJ_DESTRUCT(&orte_odls_default.children);
     return ORTE_SUCCESS;
 }
 
@@ -137,7 +119,7 @@ int orte_odls_default_finalize(void)
     opal_list_item_t *item;
     
     /* cleanup state */
-    while (NULL != (item = opal_list_remove_first(&orte_odls_default.children))) {
+    while (NULL != (item = opal_list_remove_first(&orte_odls_globals.children))) {
         OBJ_RELEASE(item);
     }
     

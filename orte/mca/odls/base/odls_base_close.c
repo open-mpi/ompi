@@ -34,6 +34,11 @@ int orte_odls_base_close(void)
 {
     OPAL_TRACE(5);
     
+    /* cleanup globals */
+    OBJ_DESTRUCT(&orte_odls_globals.mutex);
+    OBJ_DESTRUCT(&orte_odls_globals.cond);
+    OBJ_DESTRUCT(&orte_odls_globals.children);
+
     /* if no components are available, then punt */
     if (!orte_odls_base.components_available) {
         return ORTE_SUCCESS;
