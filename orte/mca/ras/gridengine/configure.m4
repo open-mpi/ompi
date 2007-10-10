@@ -22,5 +22,5 @@
 # MCA_ras_sge_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_ras_gridengine_CONFIG],[
-    AC_CHECK_FUNC([fork], [$1], [$2])
+    OMPI_CHECK_GRIDENGINE([ras_gridengine], [$1], [$2])
 ])dnl
