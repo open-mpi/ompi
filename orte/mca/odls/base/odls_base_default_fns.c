@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,14 +19,17 @@
 
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
 
+#ifdef HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
 #include <errno.h>
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif  /* HAVE_SYS_STAT_H */
 #include <signal.h>
 
+#include "orte/orte_constants.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/argv.h"
 #include "opal/util/os_path.h"
