@@ -57,7 +57,6 @@ typedef struct orte_odls_child_t {
     opal_list_item_t super;      /* required to place this on a list */
     orte_process_name_t *name;   /* the OpenRTE name of the proc */
     orte_vpid_t local_rank;      /* local rank of the proc on this node */
-    orte_std_cntr_t num_procs;   /* number of procs from this job on this node */
     pid_t pid;                   /* local pid of the proc */
     orte_std_cntr_t app_idx;     /* index of the app_context for this proc */
     bool alive;                  /* is this proc alive? */
@@ -76,6 +75,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
 typedef struct orted_odls_app_context_t {
     opal_list_item_t super;      /* required to place this on a list */
     orte_app_context_t *app_context;
+    char **environ_copy;        /* the environment for this app_context */
 } orte_odls_app_context_t;
 OBJ_CLASS_DECLARATION(orte_odls_app_context_t);
 
@@ -111,7 +111,7 @@ orte_odls_base_default_get_add_procs_data(orte_gpr_notify_data_t **data,
 ORTE_DECLSPEC int
 orte_odls_base_default_construct_child_list(orte_gpr_notify_data_t *data,
                                             orte_jobid_t *job,
-                                            orte_vpid_t *vpid_start,
+                                            orte_std_cntr_t *num_local_procs,
                                             orte_vpid_t *vpid_range,
                                             orte_std_cntr_t *total_slots_allocated,
                                             bool *node_included,
@@ -126,7 +126,8 @@ typedef int (*orte_odls_base_fork_local_proc_fn_t)(orte_app_context_t *context,
 
 ORTE_DECLSPEC int
 orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_context_list,
-                                    orte_vpid_t vpid_start, orte_vpid_t vpid_range,
+                                    orte_std_cntr_t num_local_procs,
+                                    orte_vpid_t vpid_range,
                                     orte_std_cntr_t total_slots_allocated,
                                     bool oversubscribed,
                                     bool override_oversubscribed,
@@ -134,7 +135,7 @@ orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_context_l
 
 ORTE_DECLSPEC int
 orte_odls_base_default_extract_proc_map_info(orte_process_name_t *daemon,
-                                             orte_process_name_t *proc,
+                                             opal_list_t *proc_list,
                                              orte_gpr_value_t *value);
 
 ORTE_DECLSPEC int

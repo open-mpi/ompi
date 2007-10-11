@@ -73,7 +73,7 @@ int orte_ns_proxy_get_peers(orte_process_name_t **procs,
         
         for (i=0; i < orte_process_info.num_procs; i++) {
             (*procs)[i].jobid = ORTE_PROC_MY_NAME->jobid;
-            (*procs)[i].vpid = orte_process_info.vpid_start + i;
+            (*procs)[i].vpid = i;
         }
         
         *num_procs = orte_process_info.num_procs;

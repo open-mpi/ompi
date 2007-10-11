@@ -71,7 +71,6 @@ typedef int (*orte_sds_base_contact_universe_fn_t)(void);
  * includes:
  *
  *   - orte_process_info.my_name
- *   - orte_process_info.vpid_start
  *   - orte_process_info.num_procs
  *
  * From this, the ns is able to develop a map of all processes started

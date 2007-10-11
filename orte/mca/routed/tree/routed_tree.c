@@ -159,9 +159,12 @@ int orte_routed_tree_init_routes(orte_jobid_t job, orte_gpr_notify_data_t *ndat)
      * point at the daemon for each proc
      */
     if (orte_process_info.daemon || orte_process_info.seed) {
-        orte_std_cntr_t i, j;
+        orte_std_cntr_t j;
         orte_process_name_t daemon, proc;
         orte_gpr_value_t **values, *value;
+        opal_list_t proc_list;
+        opal_list_item_t *item;
+        orte_namelist_t *nitem;
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_tree: init routes for daemon/seed job %ld",
@@ -212,26 +215,24 @@ int orte_routed_tree_init_routes(orte_jobid_t job, orte_gpr_notify_data_t *ndat)
         
         values = (orte_gpr_value_t**)(ndat->values)->addr;
         daemon.jobid = 0;
-        proc.jobid = job;
-        for (j=0, i=0; i < ndat->cnt && j < (ndat->values)->size; j++) {  /* loop through all returned values */
-            if (NULL != values[j]) {
-                i++;
-                value = values[j];
-                
-                if (NULL != value->tokens) {
-                    /* this came from the globals container, so ignore it */
-                    continue;
-                }
-                
-                /* this must have come from one of the process containers, so it must
-                 * contain data for a proc structure - extract what we need
-                 */
-                if (ORTE_SUCCESS != (rc = orte_odls.extract_proc_map_info(&daemon, &proc, value))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
+        /* loop through all returned values - the first position contains only
+         * job-global data, so we can skip it
+         */
+        for (j=1; j < ndat->cnt; j++) {
+            value = values[j];
+            
+            /* extract the relevant data for this node */
+            OBJ_CONSTRUCT(&proc_list, opal_list_t);
+            if (ORTE_SUCCESS != (rc = orte_odls.extract_proc_map_info(&daemon, &proc_list, value))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
 
-                if (0 != orte_ns.compare_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME, &daemon)) {
+            while (NULL != (item = opal_list_remove_first(&proc_list))) {
+                nitem = (orte_namelist_t*)item;
+                proc.jobid = job;
+                proc.vpid = nitem->name->vpid;
+                if (ORTE_PROC_MY_NAME->vpid != daemon.vpid) {
                     /* Setup the route to the remote proc via its daemon */
                     if (ORTE_SUCCESS != (rc = orte_routed_tree_update_route(&proc, &daemon))) {
                         ORTE_ERROR_LOG(rc);
@@ -247,7 +248,9 @@ int orte_routed_tree_init_routes(orte_jobid_t job, orte_gpr_notify_data_t *ndat)
                         return rc;
                     }
                 }
+                OBJ_RELEASE(nitem);
             }
+            OBJ_DESTRUCT(&proc_list);
         }
         
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
@@ -268,8 +271,8 @@ int orte_routed_tree_init_routes(orte_jobid_t job, orte_gpr_notify_data_t *ndat)
             mca_base_param_lookup_string(id, &rml_uri);
             if (NULL == rml_uri) {
                 /* in this module, we absolutely MUST have this information - if
-                * we didn't get it, then error out
-                */
+                 * we didn't get it, then error out
+                 */
                 opal_output(0, "%s ERROR: Failed to identify the local daemon's URI",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
                 opal_output(0, "%s ERROR: This is a fatal condition when the tree router",
