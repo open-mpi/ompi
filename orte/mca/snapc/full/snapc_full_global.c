@@ -1050,6 +1050,20 @@ static int snapc_full_global_gather_all_files(void) {
         }
 
         /*
+         * Now that the files have been brought local, remove the remote copy
+         */
+        for(item  = opal_list_get_first( &all_filem_requests);
+            item != opal_list_get_end(   &all_filem_requests);
+            item  = opal_list_get_next(   item) ) {
+            filem_request = (orte_filem_base_request_t *) item;
+            if(ORTE_SUCCESS != (ret = orte_filem.rm_nb(filem_request)) ) {
+                exit_status = ret;
+                /* Keep removing, eventually return an error */
+                continue;
+            }
+        }
+
+        /*
          * Update all of the metadata
          */
         opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
@@ -1066,20 +1080,6 @@ static int snapc_full_global_gather_all_files(void) {
                                                                         vpid_snapshot->super.crs_snapshot_super.local_location))) {
                 exit_status = ret;
                 goto cleanup;
-            }
-        }
-
-        /*
-         * Now that the files have been brought local, remove the remote copy
-         */
-        for(item  = opal_list_get_first( &all_filem_requests);
-            item != opal_list_get_end(   &all_filem_requests);
-            item  = opal_list_get_next(   item) ) {
-            filem_request = (orte_filem_base_request_t *) item;
-            if(ORTE_SUCCESS != (ret = orte_filem.rm_nb(filem_request)) ) {
-                exit_status = ret;
-                /* Keep removing, eventually return an error */
-                continue;
             }
         }
 
