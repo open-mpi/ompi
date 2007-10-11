@@ -31,8 +31,6 @@ dist_pkgdata_DATA = help-mca-base.txt help-mca-param.txt
 headers = \
         base.h \
         mca_base_component_repository.h \
-        mca_base_msgbuf.h \
-        mca_base_msgbuf_internal.h \
         mca_base_param.h \
         mca_base_param_internal.h
 
@@ -48,7 +46,6 @@ libmca_base_la_SOURCES = \
         mca_base_components_open.c \
         mca_base_components_close.c \
         mca_base_list.c \
-        mca_base_msgbuf.c \
         mca_base_open.c \
         mca_base_param.c \
         mca_base_parse_paramfile.c
