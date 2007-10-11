@@ -844,9 +844,6 @@ static int  orte_filem_rsh_start_command(orte_filem_base_process_set_t *proc_set
     orte_filem_rsh_work_pool_item_t *wp_item = NULL;
     int ret;
 
-    proc_set->source.vpid  = 1;
-    proc_set->source.jobid = 0;
-
     /* Construct a work pool item */
     wp_item = OBJ_NEW(orte_filem_rsh_work_pool_item_t);
     /* Copy the Process Set */
