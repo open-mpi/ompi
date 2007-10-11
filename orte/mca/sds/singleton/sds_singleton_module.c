@@ -53,7 +53,6 @@ orte_sds_singleton_set_name(void)
     }
 
     orte_process_info.num_procs = 1;
-    orte_process_info.vpid_start = ORTE_PROC_MY_NAME->vpid;
     /* since we are a singleton, then we must have a local_rank of 0
      * and only 1 local process
      */

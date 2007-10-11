@@ -35,20 +35,11 @@
 
 int orte_sds_env_get(void)
 {
-    int vpid_start;
     int num_procs;
     int local_rank;
     int num_local_procs;
     int id;
 
-    id = mca_base_param_register_int("ns", "nds", "vpid_start", NULL, -1);
-    mca_base_param_lookup_int(id, &vpid_start);
-    if (vpid_start < 0) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_ERR_NOT_FOUND;
-    }
-    orte_process_info.vpid_start = (orte_vpid_t)vpid_start;
-    
     id = mca_base_param_register_int("ns", "nds", "num_procs", NULL, -1);
     mca_base_param_lookup_int(id, &num_procs);
     if (num_procs < 0) {

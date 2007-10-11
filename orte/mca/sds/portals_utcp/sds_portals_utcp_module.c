@@ -108,7 +108,6 @@ orte_sds_portals_utcp_set_name(void)
         if (nidmap_string[i] == ':') num_procs++;
     }
     
-    orte_process_info.vpid_start = (orte_vpid_t) 0;
     orte_process_info.num_procs = (size_t) num_procs;
 
     return ORTE_SUCCESS;

@@ -50,7 +50,6 @@ struct orte_proc_info_t {
     orte_std_cntr_t app_num;            /**< our index into the app_context array */
     orte_std_cntr_t universe_size;      /**< the size of the universe we are in */
     bool singleton;                     /**< I am a singleton */
-    orte_vpid_t vpid_start;             /**< starting vpid for this job */
     orte_std_cntr_t num_procs;          /**< number of processes in this job */
     orte_vpid_t local_rank;             /**< local rank on this node */
     orte_std_cntr_t num_local_procs;    /**< total number of procs on this node */

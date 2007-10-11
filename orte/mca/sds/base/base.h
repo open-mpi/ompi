@@ -71,14 +71,10 @@ extern "C" {
     /*
      * Put functions
      */
-    ORTE_DECLSPEC int orte_ns_nds_env_put(const orte_process_name_t* proc, 
-                                          orte_vpid_t vpid_start,
-                                          orte_std_cntr_t num_procs,
-                                          orte_vpid_t local_rank,
+    ORTE_DECLSPEC int orte_ns_nds_env_put(orte_std_cntr_t num_procs,
                                           orte_std_cntr_t num_local_procs,
                                           char ***env);
     ORTE_DECLSPEC int orte_ns_nds_pipe_put(const orte_process_name_t* proc, 
-                                           orte_vpid_t vpid_start, 
                                            orte_std_cntr_t num_procs, 
                                            orte_vpid_t local_rank,
                                            orte_std_cntr_t num_local_procs,

@@ -39,7 +39,6 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  ,app_num =              */   -1,
     /*  ,universe_size =        */   -1,
     /*  .singleton =            */   false,
-    /*  .vpid_start =           */   0,
     /*  .num_procs =            */   1,
     /*  .local_rank =           */   ORTE_VPID_INVALID,
     /*  .num_local_procs =      */   0,

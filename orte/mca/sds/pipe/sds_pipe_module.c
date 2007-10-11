@@ -65,13 +65,6 @@ orte_sds_pipe_set_name(void)
         return rc;
     }
 
-    rc = read(fd,&orte_process_info.vpid_start, sizeof(orte_process_info.vpid_start));
-    if(rc != sizeof(orte_process_info.vpid_start)) {
-        opal_output(0, "orte_ns_nds_pipe_get: read returned %d, errno=%d\n", rc, errno);
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_ERR_NOT_FOUND;
-    }
-
     rc = read(fd,&orte_process_info.num_procs, sizeof(orte_process_info.num_procs));
     if(rc != sizeof(orte_process_info.num_procs)) {
         opal_output(0, "orte_ns_nds_pipe_get: read returned %d, errno=%d\n", rc, errno);

@@ -25,6 +25,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
+#include "opal/util/argv.h"
 
 #include "orte/dss/dss.h"
 #include "orte/util/proc_info.h"
@@ -49,9 +50,20 @@
 orte_odls_base_module_t orte_odls;
 
 /* instance the app_context list object */
+static void orte_odls_app_context_constructor(orte_odls_app_context_t *ptr)
+{
+    ptr->environ_copy = NULL;
+}
+static void orte_odls_app_context_destructor(orte_odls_app_context_t *ptr)
+{
+    if (NULL != ptr->environ_copy) {
+        opal_argv_free(ptr->environ_copy);
+    }
+}
 OBJ_CLASS_INSTANCE(orte_odls_app_context_t,
                    opal_list_item_t,
-                   NULL, NULL);
+                   orte_odls_app_context_constructor,
+                   orte_odls_app_context_destructor);
 
 
 /* instance the child list object */
@@ -59,7 +71,6 @@ static void orte_odls_child_constructor(orte_odls_child_t *ptr)
 {
     ptr->name = NULL;
     ptr->local_rank = ORTE_VPID_INVALID;
-    ptr->num_procs = 0;
     ptr->pid = 0;
     ptr->app_idx = -1;
     ptr->alive = false;

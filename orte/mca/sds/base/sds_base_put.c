@@ -33,26 +33,12 @@
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/base/base.h"
 
-int orte_ns_nds_env_put(const orte_process_name_t* name, 
-                        orte_vpid_t vpid_start, orte_std_cntr_t num_procs,
-                        orte_vpid_t local_rank,
+int orte_ns_nds_env_put(orte_std_cntr_t num_procs,
                         orte_std_cntr_t num_local_procs,
                         char ***env)
 {
     char* param;
-    char* jobid;
-    char* vpid;
     char* value;
-    int rc;
-
-    if(ORTE_SUCCESS != (rc = orte_ns.get_jobid_string(&jobid, name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if(ORTE_SUCCESS != (rc = orte_ns.get_vpid_string(&vpid, name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
 
     /* set the mode to env */
     if(NULL == (param = mca_base_param_environ_variable("ns","nds",NULL))) {
@@ -80,32 +66,6 @@ int orte_ns_nds_env_put(const orte_process_name_t* name,
     opal_unsetenv(param, env);
     free(param);
 
-    /* setup the name */
-    if(NULL == (param = mca_base_param_environ_variable("ns","nds","jobid"))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_setenv(param, jobid, true, env);
-    free(param);
-    free(jobid);
-
-    if(NULL == (param = mca_base_param_environ_variable("ns","nds","vpid"))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_setenv(param, vpid, true, env);
-    free(param);
-    free(vpid);
-
-    asprintf(&value, "%lu", (unsigned long) vpid_start);
-    if(NULL == (param = mca_base_param_environ_variable("ns","nds","vpid_start"))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_setenv(param, value, true, env);
-    free(param);
-    free(value);
-
     asprintf(&value, "%lu", (unsigned long) num_procs);
     if(NULL == (param = mca_base_param_environ_variable("ns","nds","num_procs"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -115,15 +75,6 @@ int orte_ns_nds_env_put(const orte_process_name_t* name,
     free(param);
     free(value);
 
-    asprintf(&value, "%lu", (unsigned long) local_rank);
-    if(NULL == (param = mca_base_param_environ_variable("ns","nds","local_rank"))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_setenv(param, value, true, env);
-    free(param);
-    free(value);
-    
     asprintf(&value, "%lu", (unsigned long) num_local_procs);
     if(NULL == (param = mca_base_param_environ_variable("ns","nds","num_local_procs"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -358,7 +309,6 @@ int orte_ns_nds_xcpu_put(orte_jobid_t job,
 }
 
 int orte_ns_nds_pipe_put(const orte_process_name_t* name,
-                         orte_vpid_t vpid_start,
                          orte_std_cntr_t num_procs,
                          orte_vpid_t local_rank,
                          orte_std_cntr_t num_local_procs,
@@ -368,12 +318,6 @@ int orte_ns_nds_pipe_put(const orte_process_name_t* name,
 
     rc = write(fd,name,sizeof(orte_process_name_t));
     if(rc != sizeof(orte_process_name_t)) {
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_NOT_FOUND;
-    }
-
-    rc = write(fd,&vpid_start, sizeof(vpid_start));
-    if(rc != sizeof(vpid_start)) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_NOT_FOUND;
     }

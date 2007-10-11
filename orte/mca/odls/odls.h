@@ -84,7 +84,7 @@ typedef int (*orte_odls_base_module_deliver_message_fn_t)(orte_jobid_t job, orte
  * Extract the mapping of daemon-proc pair
  */
 typedef int (*orte_odls_base_module_extract_proc_map_info_fn_t)(orte_process_name_t *daemon,
-                                                                orte_process_name_t *proc,
+                                                                opal_list_t *proc_list,
                                                                 orte_gpr_value_t *value);
 /**
  * Register to require sync before termination

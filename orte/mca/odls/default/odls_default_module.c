@@ -352,9 +352,9 @@ static int odls_default_fork_local_proc(
 int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data)
 {
     int rc;
-    orte_std_cntr_t total_slots_alloc;
+    orte_std_cntr_t total_slots_alloc, num_local_procs;
     orte_jobid_t job;
-    orte_vpid_t start, range;
+    orte_vpid_t range;
     opal_list_item_t *item;
     bool node_included;
     bool override_oversubscribed;
@@ -371,7 +371,8 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data)
     
     /* construct the list of children we are to launch */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_construct_child_list(data, &job,
-                                                                          &start, &range,
+                                                                          &num_local_procs,
+                                                                          &range,
                                                                           &total_slots_alloc,
                                                                           &node_included,
                                                                           &oversubscribed,
@@ -389,7 +390,8 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data)
 
     /* launch the local procs */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_launch_local(job, &app_context_list,
-                                                                  start, range, total_slots_alloc,
+                                                                  num_local_procs,
+                                                                  range, total_slots_alloc,
                                                                   oversubscribed,
                                                                   override_oversubscribed,
                                                                   odls_default_fork_local_proc))) {
