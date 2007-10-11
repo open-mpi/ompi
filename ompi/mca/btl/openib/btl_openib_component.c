@@ -690,10 +690,12 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         return OMPI_SUCCESS;
     }
 
+#if OMPI_HAVE_THREADS
 comp_channel:
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     ibv_destroy_comp_channel(hca->ib_channel);
 mpool_destroy:
+#endif
 #endif
     mca_mpool_base_module_destroy(hca->mpool);
 dealloc_pd:
