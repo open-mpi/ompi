@@ -28,7 +28,6 @@
  */
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/mca/base/mca_base_msgbuf.h"
 
 BEGIN_C_DECLS
 
