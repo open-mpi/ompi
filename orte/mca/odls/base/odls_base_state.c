@@ -161,8 +161,14 @@ int orte_odls_base_preload_files_app_context(orte_app_context_t* app_context)
 
     /* Define the process set */
     p_set = OBJ_NEW(orte_filem_base_process_set_t);
-    p_set->source.jobid = orte_process_info.gpr_replica->jobid;
-    p_set->source.vpid  = orte_process_info.gpr_replica->vpid;
+    if( NULL == orte_process_info.gpr_replica ) {
+        p_set->source.jobid = orte_process_info.my_name->jobid;
+        p_set->source.vpid  = orte_process_info.my_name->vpid;
+    }
+    else {
+        p_set->source.jobid = orte_process_info.gpr_replica->jobid;
+        p_set->source.vpid  = orte_process_info.gpr_replica->vpid;
+    }
     p_set->sink.jobid   = orte_process_info.my_name->jobid;
     p_set->sink.vpid    = orte_process_info.my_name->vpid;
 
