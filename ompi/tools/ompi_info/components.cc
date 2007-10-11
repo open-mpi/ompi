@@ -391,7 +391,6 @@ void ompi_info::close_components()
         orte_rml_base_close();
         orte_routed_base_close();
         mca_oob_base_close();
-        orte_odls_base_close();
         
         opal_backtrace_base_close();
         opal_memory_base_close();
