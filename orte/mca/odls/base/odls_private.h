@@ -104,44 +104,50 @@ ORTE_DECLSPEC void orte_odls_base_purge_mca_params(char ***env);
  * be overridden by specific environments if they need something
  * different (e.g., bproc)
  */
-int orte_odls_base_default_get_add_procs_data(orte_gpr_notify_data_t **data,
-                                              orte_job_map_t *map);
+ORTE_DECLSPEC int
+orte_odls_base_default_get_add_procs_data(orte_gpr_notify_data_t **data,
+                                          orte_job_map_t *map);
 
-int orte_odls_base_default_construct_child_list(orte_gpr_notify_data_t *data,
-                                                orte_jobid_t *job,
-                                                orte_vpid_t *vpid_start,
-                                                orte_vpid_t *vpid_range,
-                                                orte_std_cntr_t *total_slots_allocated,
-                                                bool *node_included,
-                                                bool *oversubscribed,
-                                                bool *override_oversubscribed,
-                                                opal_list_t *app_context_list);
+ORTE_DECLSPEC int
+orte_odls_base_default_construct_child_list(orte_gpr_notify_data_t *data,
+                                            orte_jobid_t *job,
+                                            orte_vpid_t *vpid_start,
+                                            orte_vpid_t *vpid_range,
+                                            orte_std_cntr_t *total_slots_allocated,
+                                            bool *node_included,
+                                            bool *oversubscribed,
+                                            bool *override_oversubscribed,
+                                            opal_list_t *app_context_list);
 
 /* define a function that will fork a local proc */
 typedef int (*orte_odls_base_fork_local_proc_fn_t)(orte_app_context_t *context,
                                                    orte_odls_child_t *child,
                                                    char **environ_copy);
 
-int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_context_list,
-                                        orte_vpid_t vpid_start, orte_vpid_t vpid_range,
-                                        orte_std_cntr_t total_slots_allocated,
-                                        bool oversubscribed,
-                                        bool override_oversubscribed,
-                                        orte_odls_base_fork_local_proc_fn_t fork_local);
+ORTE_DECLSPEC int
+orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_context_list,
+                                    orte_vpid_t vpid_start, orte_vpid_t vpid_range,
+                                    orte_std_cntr_t total_slots_allocated,
+                                    bool oversubscribed,
+                                    bool override_oversubscribed,
+                                    orte_odls_base_fork_local_proc_fn_t fork_local);
 
-int orte_odls_base_default_extract_proc_map_info(orte_process_name_t *daemon,
-                                                 orte_process_name_t *proc,
-                                                 orte_gpr_value_t *value);
+ORTE_DECLSPEC int
+orte_odls_base_default_extract_proc_map_info(orte_process_name_t *daemon,
+                                             orte_process_name_t *proc,
+                                             orte_gpr_value_t *value);
 
-int orte_odls_base_default_deliver_message(orte_jobid_t job, orte_buffer_t *buffer, orte_rml_tag_t tag);
+ORTE_DECLSPEC int
+orte_odls_base_default_deliver_message(orte_jobid_t job, orte_buffer_t *buffer, orte_rml_tag_t tag);
 
-void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata);
+ORTE_DECLSPEC void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata);
 
 /* define a function type to signal a local proc */
 typedef int (*orte_odls_base_signal_local_fn_t)(pid_t pid, int signum);
 
-int orte_odls_base_default_signal_local_procs(const orte_process_name_t *proc, int32_t signal,
-                                              orte_odls_base_signal_local_fn_t signal_local);
+ORTE_DECLSPEC int
+orte_odls_base_default_signal_local_procs(const orte_process_name_t *proc, int32_t signal,
+                                          orte_odls_base_signal_local_fn_t signal_local);
 
 /* define a function type for killing a local proc */
 typedef int (*orte_odls_base_kill_local_fn_t)(pid_t pid, int signum);
@@ -149,31 +155,38 @@ typedef int (*orte_odls_base_kill_local_fn_t)(pid_t pid, int signum);
 /* define a function type to detect that a child died */
 typedef bool (*orte_odls_base_child_died_fn_t)(pid_t pid, unsigned int timeout, int *exit_status);
 
-int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
-                                            orte_odls_base_kill_local_fn_t kill_local,
-                                            orte_odls_base_child_died_fn_t child_died);
+ORTE_DECLSPEC int
+orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
+                                        orte_odls_base_kill_local_fn_t kill_local,
+                                        orte_odls_base_child_died_fn_t child_died);
 
-int orte_odls_base_default_require_sync(orte_process_name_t *proc);
+ORTE_DECLSPEC int orte_odls_base_default_require_sync(orte_process_name_t *proc);
 
 /*
  * data type functions
  */
 
-int orte_odls_compare_daemon_cmd(orte_daemon_cmd_flag_t *value1, orte_daemon_cmd_flag_t *value2, orte_data_type_t type);
+ORTE_DECLSPEC int
+orte_odls_compare_daemon_cmd(orte_daemon_cmd_flag_t *value1, orte_daemon_cmd_flag_t *value2, orte_data_type_t type);
 
-int orte_odls_copy_daemon_cmd(orte_daemon_cmd_flag_t **dest, orte_daemon_cmd_flag_t *src, orte_data_type_t type);
+ORTE_DECLSPEC int
+orte_odls_copy_daemon_cmd(orte_daemon_cmd_flag_t **dest, orte_daemon_cmd_flag_t *src, orte_data_type_t type);
 
-int orte_odls_pack_daemon_cmd(orte_buffer_t *buffer, const void *src,
-                              orte_std_cntr_t num_vals, orte_data_type_t type);
+ORTE_DECLSPEC int
+orte_odls_pack_daemon_cmd(orte_buffer_t *buffer, const void *src,
+                          orte_std_cntr_t num_vals, orte_data_type_t type);
 
-int orte_odls_print_daemon_cmd(char **output, char *prefix, orte_daemon_cmd_flag_t *src, orte_data_type_t type);
+ORTE_DECLSPEC int
+orte_odls_print_daemon_cmd(char **output, char *prefix, orte_daemon_cmd_flag_t *src, orte_data_type_t type);
 
-void orte_odls_std_release(orte_data_value_t *value);
+ORTE_DECLSPEC void orte_odls_std_release(orte_data_value_t *value);
 
-int orte_odls_size_daemon_cmd(size_t *size, orte_daemon_cmd_flag_t *src, orte_data_type_t type);
+ORTE_DECLSPEC int
+orte_odls_size_daemon_cmd(size_t *size, orte_daemon_cmd_flag_t *src, orte_data_type_t type);
 
-int orte_odls_unpack_daemon_cmd(orte_buffer_t *buffer, void *dest,
-                                orte_std_cntr_t *num_vals, orte_data_type_t type);
+ORTE_DECLSPEC int
+orte_odls_unpack_daemon_cmd(orte_buffer_t *buffer, void *dest,
+                            orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 /*
  * Preload binary/files functions
