@@ -1444,17 +1444,25 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
             opal_argv_append(&new_argc, &new_argv, str);
             save_arg = false;
         }
-
         /* save any mca command line args so they can be passed
-         * separately to the daemons
+         * separately to the daemons.
+         * Only do so here if we are going to parse an appfile later.
+         * Use Case:
+         *  $ cat launch.appfile
+         *  -np 1 -mca aaa bbb ./my-app -mca ccc ddd
+         *  -np 1 -mca aaa bbb ./my-app -mca eee fff
+         *  $ mpirun -np 2 -mca foo bar --app launch.appfile
+         * Only pick up '-mca foo bar' on this pass.
          */
-        else if (0 == strcmp("-mca", argv[i]) ||
-                (0 == strcmp("--mca", argv[i]))) {
-            opal_argv_append_nosize(&orted_cmd_line, argv[i]);
-            opal_argv_append_nosize(&orted_cmd_line, argv[i+1]);
-            opal_argv_append_nosize(&orted_cmd_line, argv[i+2]);
+        if (NULL != orterun_globals.appfile) {
+            if (0 == strcmp("-mca",  argv[i]) ||
+                0 == strcmp("--mca", argv[i]) ) {
+                opal_argv_append_nosize(&orted_cmd_line, argv[i]);
+                opal_argv_append_nosize(&orted_cmd_line, argv[i+1]);
+                opal_argv_append_nosize(&orted_cmd_line, argv[i+2]);
+            }
         }
-        
+
         /* If this token was C/N map data, save it */
 
         if (map_data) {
@@ -1506,6 +1514,26 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                        true, orterun_basename, orterun_basename);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
+    }
+
+    /*
+     * Determine the application name, and location in the argv so we do not
+     * accidentally pick of the application's arguments while trying to get
+     * our own. Example:
+     *   mpirun -np 2 -mca foo bar ./my-app -mca bip bop
+     * We want to pick up '-mca foo bar' but not '-mca bip bop'
+     */
+    for (i = 0; i < (argc - count); ++i) {
+        /* save any mca command line args so they can be passed
+         * separately to the daemons
+         */
+        if (0 == strcmp("-mca",  argv[i]) ||
+            0 == strcmp("--mca", argv[i]) ) {
+            opal_argv_append_nosize(&orted_cmd_line, argv[i]);
+            opal_argv_append_nosize(&orted_cmd_line, argv[i+1]);
+            opal_argv_append_nosize(&orted_cmd_line, argv[i+2]);
+            i += 2;
+        }
     }
 
     /* Grab all OMPI_* environment variables */
@@ -1740,6 +1768,15 @@ static int parse_appfile(char *filename, char ***env)
     bool blank, made_app;
     char bogus[] = "bogus ";
     char **tmp_env;
+
+    /*
+     * Make sure to clear out this variable so we don't do anything odd in
+     * app_create()
+     */
+    if( NULL != orterun_globals.appfile ) {
+        free( orterun_globals.appfile );
+        orterun_globals.appfile =     NULL;
+    }
 
     /* Try to open the file */
 
