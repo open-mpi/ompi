@@ -33,7 +33,7 @@ AC_DEFUN([OMPI_CHECK_VISIBILITY],[
         CFLAGS="$CFLAGS_orig -fvisibility=hidden"
         add=
         AC_CACHE_CHECK([if $CC supports -fvisibility],
-            [ompi_vc_cc_fvisibility],
+            [ompi_cv_cc_fvisibility],
             [AC_TRY_LINK([
                     #include <stdio.h>
                     __attribute__((visibility("default"))) int foo;
@@ -42,17 +42,17 @@ AC_DEFUN([OMPI_CHECK_VISIBILITY],[
                     [if test -s conftest.err ; then
                         $GREP -iq "visibility" conftest.err
                         if test "$?" = "0" ; then
-                            ompi_vc_cc_fvisibility="no"
+                            ompi_cv_cc_fvisibility="no"
                         else
-                            ompi_vc_cc_fvisibility="yes"
+                            ompi_cv_cc_fvisibility="yes"
                         fi
                      else
-                        ompi_vc_cc_fvisibility="yes"
+                        ompi_cv_cc_fvisibility="yes"
                      fi],
-                    [ompi_vc_cc_fvisibility="no"])
+                    [ompi_cv_cc_fvisibility="no"])
                 ])
 
-        if test "$ompi_vc_cc_fvisibility" = "yes" ; then
+        if test "$ompi_cv_cc_fvisibility" = "yes" ; then
             add=" -fvisibility=hidden"
             have_visibility=1
             AC_MSG_WARN([$add has been added to CFLAGS])
