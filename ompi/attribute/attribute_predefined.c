@@ -325,11 +325,14 @@ void ompi_attr_create_predefined_callback(
     set_f(MPI_UNIVERSE_SIZE, universe_size);
         
         
-    /* the app_context index for this app was passed in via the ODLS framework
-     * and stored in the orte_process_info structure when that struct was initialized - set
-     * the corresponding attribute here
+    /* the app_context index for this app was passed in via the ODLS
+     * framework and stored in the orte_process_info structure when
+     * that struct was initialized - set the corresponding attribute
+     * here
      */
-    set_f(MPI_APPNUM, (MPI_Fint) orte_process_info.app_num);
+    if (orte_process_info.app_num >= 0) {
+        set_f(MPI_APPNUM, (MPI_Fint) orte_process_info.app_num);
+    }
 
     return;
 }
