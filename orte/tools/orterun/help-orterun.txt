@@ -145,9 +145,6 @@ Things to check:
 [orterun:daemon-die]
 %s was unable to cleanly terminate the daemons for this job. Returned value %s instead of ORTE_SUCCESS.
 #
-[orterun:daemon-die]
-%s was unable to cleanly terminate the daemons for this job. Returned value %s instead of ORTE_SUCCESS.
-#
 [orterun:sys-limit-pipe]
 %s was unable to launch the specified application as it encountered an error:
 
@@ -261,3 +258,10 @@ MPMD-style launch (with multiple applications separated via ':') is
 not permitted.
 
 Skipping the %s debugger for now.
+#
+[orterun:daemon-died-during-execution]
+%s has detected that a required daemon terminated during execution
+of the application with a non-zero status. This is a fatal error.
+A best-effort attempt has been made to cleanup. However, it is
+-strongly- recommended that you execute the orte-clean utility
+to ensure full cleanup is accomplished.

@@ -419,10 +419,10 @@ static int pls_slurm_terminate_orteds(struct timeval *timeout, opal_list_t *attr
     int rc;
     
     /* deregister the waitpid callback to ensure we don't make it look like
-    * srun failed when it didn't. Since the srun may have already completed,
-    * do NOT ERROR_LOG any return code to avoid confusing, duplicate error
-    * messages
-    */
+     * srun failed when it didn't. Since the srun may have already completed,
+     * do NOT ERROR_LOG any return code to avoid confusing, duplicate error
+     * messages
+     */
     orte_wait_cb_cancel(srun_pid);
     
     /* tell them to die! */
@@ -511,12 +511,9 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
             orte_pls_base_daemon_failed(active_job, true, pid, status, ORTE_JOB_STATE_FAILED_TO_START);
             
         } else {
-            /* an orted must have died unexpectedly after launch */
-            opal_output(0, "ERROR: srun has detected that a required daemon terminated");
-            opal_output(0, "ERROR: during execution of the application with a non-zero");
-            opal_output(0, "ERROR: status of %ld. This is a fatal error.", (long)status);
-            
-            /* report that the daemon has failed so we exit */
+            /* an orted must have died unexpectedly after launch - report
+             * that the daemon has failed so we exit
+             */
             orte_pls_base_daemon_failed(active_job, false, pid, status, ORTE_JOB_STATE_ABORTED);
         }
     }

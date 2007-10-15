@@ -38,6 +38,7 @@
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/smr/smr.h"
 #include "orte/runtime/orte_wakeup.h"
+#include "orte/runtime/params.h"
 
 #include "orte/mca/pls/base/pls_private.h"
 
@@ -106,6 +107,11 @@ void orte_pls_base_daemon_failed(orte_jobid_t job, bool callback_active, pid_t p
         OBJ_DESTRUCT(&ack);
     }
     
+    /* set the flag indicating that a daemon failed so we use the proper
+     * methods for attempting to shutdown the rest of the system
+     */
+    orte_daemon_died = true;
+    
     /*  The usual reasons for a daemon to exit abnormally all are a pretty good
         indication that things in general are going to fall apart.
         Set the job state as indicated so orterun's exit status
@@ -166,10 +172,8 @@ int orte_pls_base_daemon_callback(orte_std_cntr_t num_daemons)
                 opal_show_help("help-pls-base.txt", "daemon-died-signal", true,
                                src[2], src[1]);
             }
-            rc = ORTE_ERR_FAILED_TO_START;
-            ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&ack);
-            return rc;
+            return ORTE_ERR_SILENT; /* we already output the error */
         }
         
         /* okay, so the daemon says it started up okay - get the daemon's name */

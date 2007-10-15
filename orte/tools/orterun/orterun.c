@@ -297,6 +297,7 @@ opal_cmd_line_init_t cmd_line_init[] = {
  * Local functions
  */
 static void exit_callback(int fd, short event, void *arg);
+static void sleep_release(int fd, short event, void *arg);
 static void abort_signal_callback(int fd, short event, void *arg);
 static void signal_forward_callback(int fd, short event, void *arg);
 static int create_app(int argc, char* argv[], orte_app_context_t **app,
@@ -586,6 +587,41 @@ int orterun(int argc, char *argv[])
         if (ORTE_SUCCESS != (ret = orte_pls.terminate_orteds(&orte_abort_timeout, NULL))) {
             opal_show_help("help-orterun.txt", "orterun:daemon-die", true,
                            orterun_basename, ORTE_ERROR_NAME(ret));
+        }
+        /* if a daemon died, then we wait a little while so the communication
+         * can complete. In this scenario, the terminate_orteds function cannot
+         * determine which daemon might be dead, and thus cannot "hold" until
+         * communication to all daemons is completed.
+         */
+        if (orte_daemon_died) {
+            /* need to setup an event here so we can continue to progress
+             * our messages out while we wait - if we go to sleep, then the
+             * pending messages never get sent
+             */
+            opal_event_t *event;
+            struct timeval now;
+            orte_vpid_t num_daemons;
+            
+            orte_ns.get_vpid_range(0, &num_daemons); /* get the number of daemons */
+            orterun_globals.sleep = true;
+            if (NULL != (event = (opal_event_t*)
+                         malloc(sizeof(opal_event_t)))) {
+                opal_evtimer_set(event, sleep_release, NULL);
+                now.tv_sec = 1;
+                now.tv_usec = 50.0*(float)num_daemons;
+                if (now.tv_usec > 100000.0) {
+                    now.tv_usec = 100000.0;
+                }
+                opal_evtimer_add(event, &now);
+            }
+            /* now wait for the "sleep" to release */
+            while (orterun_globals.sleep) {
+                opal_condition_wait(&orterun_globals.cond,
+                                    &orterun_globals.lock);
+            }
+            /* tell the user what happened */
+            opal_show_help("help-orterun.txt", "orterun:daemon-died-during-execution", true,
+                           orterun_basename);
         }
     }
     OPAL_THREAD_UNLOCK(&orterun_globals.lock);
@@ -882,6 +918,12 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
     OPAL_THREAD_UNLOCK(&orterun_globals.lock);
 }
 
+static void sleep_release(int fd, short event, void *arg)
+{
+    orterun_globals.sleep = false;
+    opal_condition_signal(&orterun_globals.cond);
+}
+
 /*
  * Fail-safe in the event the job hangs and doesn't
  * cleanup correctly.
@@ -1076,6 +1118,7 @@ static int init_globals(void)
     orterun_globals.do_not_launch              = false;
     orterun_globals.num_procs                  =  0;
     orterun_globals.exit_status                =  0;
+    orterun_globals.sleep                      = false;
     if( NULL != orterun_globals.hostfile )
         free( orterun_globals.hostfile );
     orterun_globals.hostfile =    NULL;

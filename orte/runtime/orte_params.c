@@ -36,6 +36,7 @@
 bool orte_debug_flag, orte_timing, orte_infrastructure;
 bool orte_debug_daemons_flag, orte_debug_daemons_file_flag;
 bool orted_spin_flag, orte_no_daemonize_flag;
+bool orte_daemon_died = false;
 struct timeval orte_abort_timeout;
 char **orte_launch_environ;
 char **orted_cmd_line=NULL;
