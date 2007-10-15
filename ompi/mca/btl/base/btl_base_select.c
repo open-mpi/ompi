@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -104,7 +105,8 @@ int mca_btl_base_select(bool enable_progress_threads,
                             component->btl_version.mca_component_name);
         if (NULL == component->btl_init) {
             opal_output_verbose(10, mca_btl_base_output,
-                                "select: no init function; ignoring component");
+                                "select: no init function; ignoring component %s",
+                                component->btl_version.mca_component_name);
         } else {
             modules = component->btl_init(&num_btls, enable_progress_threads,
                                           enable_mpi_threads);
@@ -114,7 +116,8 @@ int mca_btl_base_select(bool enable_progress_threads,
 
             if (NULL == modules) {
                 opal_output_verbose(10, mca_btl_base_output,
-                                    "select: init returned failure");
+                                    "select: init of component %s returned failure",
+                                    component->btl_version.mca_component_name);
                 opal_output_verbose(10, mca_btl_base_output,
                                     "select: module %s unloaded",
                                     component->btl_version.mca_component_name);
@@ -127,7 +130,8 @@ int mca_btl_base_select(bool enable_progress_threads,
 
             else {
                 opal_output_verbose(10, mca_btl_base_output,
-                                    "select: init returned success");
+                                    "select: init of component %s returned success",
+                                    component->btl_version.mca_component_name);
 
                 for (i = 0; i < num_btls; ++i) {
                     sm = OBJ_NEW(mca_btl_base_selected_module_t);

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,7 +28,7 @@
 #include "orte/util/sys_info.h"
 #include "orte/mca/ns/ns_types.h"
 
-int mca_btl_base_debug;
+int mca_btl_base_verbose;
 
 int mca_btl_base_err(const char* fmt, ...)
 {

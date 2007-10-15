@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,7 +30,7 @@
 #include "orte/util/sys_info.h"
 #include "orte/mca/ns/ns_types.h"
 
-OMPI_DECLSPEC extern int mca_btl_base_debug;
+OMPI_DECLSPEC extern int mca_btl_base_verbose;
 
 OMPI_DECLSPEC extern int mca_btl_base_err(const char*, ...);
 extern int mca_btl_base_out(const char*, ...);
@@ -70,30 +71,18 @@ do {                                                             \
 
 
 #if OMPI_ENABLE_DEBUG
-#define BTL_DEBUG(args)                                      \
-do {                                                         \
-   if(mca_btl_base_debug) {                                  \
-        mca_btl_base_err("[%s]%s[%s:%d:%s] ",     \
-                orte_system_info.nodename,                   \
-                ORTE_NAME_PRINT(orte_process_info.my_name),   \
-                __FILE__, __LINE__, __func__);               \
-        mca_btl_base_err args;                               \
-        mca_btl_base_err("\n");                              \
-   }                                                         \
-} while(0); 
 #define BTL_VERBOSE(args)                                    \
 do {                                                         \
-   if(mca_btl_base_debug > 1) {                              \
-        mca_btl_base_err("[%s]%s[%s:%d:%s] ",     \
+   if(mca_btl_base_verbose > 0) {                            \
+        mca_btl_base_err("[%s]%s[%s:%d:%s] ",                \
                 orte_system_info.nodename,                   \
-                ORTE_NAME_PRINT(orte_process_info.my_name),   \
+                ORTE_NAME_PRINT(orte_process_info.my_name),  \
                 __FILE__, __LINE__, __func__);               \
         mca_btl_base_err args;                               \
         mca_btl_base_err("\n");                              \
    }                                                         \
 } while(0); 
 #else
-#define BTL_DEBUG(args) 
 #define BTL_VERBOSE(args) 
 #endif
 

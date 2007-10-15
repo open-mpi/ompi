@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -84,24 +84,21 @@ int mca_btl_base_open(void)
 {
     if( ++already_opened > 1 ) return OMPI_SUCCESS;
 
-    mca_base_param_reg_int_name( "btl", 
-                                 "base_debug", 
-                                 "If btl_base_debug is 1 standard debug is output, if > 1 verbose debug is output", 
-                                 false, false, 
-                                 0, 
-                                 &mca_btl_base_debug );
+    /* Verbose output */
+    mca_base_param_reg_int_name("btl", 
+                                "base_verbose", 
+                                "Verbosity level of the BTL framework", 
+                                false, false, 
+                                0, 
+                                &mca_btl_base_verbose);
 
-    if( mca_btl_base_debug > 0 ) {
-        mca_btl_base_output = opal_output_open(NULL);
-        opal_output_set_verbosity(mca_btl_base_output, mca_btl_base_debug);
-    } else {
-        mca_btl_base_output = -1;
-    }
+    mca_btl_base_output = opal_output_open(NULL);
+    opal_output_set_verbosity(mca_btl_base_output, mca_btl_base_verbose);
 
   /* Open up all available components */
     
   if (OMPI_SUCCESS != 
-      mca_base_components_open("btl", 0, mca_btl_base_static_components, 
+      mca_base_components_open("btl", mca_btl_base_output, mca_btl_base_static_components,
                                &mca_btl_base_components_opened, true)) {
     return OMPI_ERROR;
   }
