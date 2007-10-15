@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,7 +41,7 @@ static void rml_oob_recv_route_callback(int status,
                                         int count,
                                         orte_rml_tag_t tag,
                                         void *cbdata);
-
+static void rml_oob_queued_progress(int fd, short event, void *arg);
 
 /**
  * component definition
@@ -138,6 +139,15 @@ rml_oob_init(int* priority)
     OBJ_CONSTRUCT(&orte_rml_oob_module.exceptions_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&orte_rml_oob_module.queued_routing_messages, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_oob_module.queued_lock, opal_mutex_t);
+    /* Set default timeout for queued messages to be 1/2 second */
+    orte_rml_oob_module.timeout.tv_sec = 0;
+    orte_rml_oob_module.timeout.tv_usec = 500000;
+    orte_rml_oob_module.timer_event = malloc(sizeof(opal_event_t));
+    if (NULL == orte_rml_oob_module.timer_event) {
+        return NULL;
+    }
+    opal_evtimer_set(orte_rml_oob_module.timer_event, rml_oob_queued_progress,
+                     NULL);
 
     orte_rml_oob_module.active_oob = &mca_oob;
     orte_rml_oob_module.active_oob->oob_exception_callback = 
@@ -315,22 +325,18 @@ rml_oob_recv_route_queued_send_callback(int status,
 }
 
 
-static int
-rml_oob_queued_progress(void)
+static void 
+rml_oob_queued_progress(int fd, short event, void *arg)
 {
     orte_rml_oob_queued_msg_t *qmsg;
     orte_rml_oob_msg_header_t *hdr;
     int real_tag;
     int ret;
     orte_process_name_t next, origin;
-    int count = 0;
 
     while (true) {
         OPAL_THREAD_LOCK(&orte_rml_oob_module.queued_lock);
         qmsg = (orte_rml_oob_queued_msg_t*) opal_list_remove_first(&orte_rml_oob_module.queued_routing_messages);
-        if (0 == opal_list_get_size(&orte_rml_oob_module.queued_routing_messages)) {
-            opal_progress_unregister(rml_oob_queued_progress);
-        }
         OPAL_THREAD_UNLOCK(&orte_rml_oob_module.queued_lock);
         if (NULL == qmsg) break;
 
@@ -385,7 +391,8 @@ rml_oob_queued_progress(void)
                 opal_list_append(&orte_rml_oob_module.queued_routing_messages,
                                  &qmsg->super);
                 if (1 == opal_list_get_size(&orte_rml_oob_module.queued_routing_messages)) {
-                    opal_progress_register(rml_oob_queued_progress);
+                    opal_evtimer_add(orte_rml_oob_module.timer_event,
+                                     &orte_rml_oob_module.timeout);
                 }
                 OPAL_THREAD_UNLOCK(&orte_rml_oob_module.queued_lock);
             } else {
@@ -398,11 +405,7 @@ rml_oob_queued_progress(void)
                 abort();
             }
         }
-
-        count++;
     }
-
-    return count;
 }
 
 static void
@@ -495,7 +498,8 @@ rml_oob_recv_route_callback(int status,
             opal_list_append(&orte_rml_oob_module.queued_routing_messages,
                              &qmsg->super);
             if (1 == opal_list_get_size(&orte_rml_oob_module.queued_routing_messages)) {
-                opal_progress_register(rml_oob_queued_progress);
+                opal_evtimer_add(orte_rml_oob_module.timer_event,
+                                 &orte_rml_oob_module.timeout);
             }
             OPAL_THREAD_UNLOCK(&orte_rml_oob_module.queued_lock);
         } else {
