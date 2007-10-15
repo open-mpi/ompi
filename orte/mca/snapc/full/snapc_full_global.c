@@ -927,9 +927,16 @@ static int snapc_full_global_gather_all_files(void) {
     OBJ_CONSTRUCT(&all_filem_requests, opal_list_t);
 
     /*
+     * If we just want to pretend to do the filem
+     */
+    if(orte_snapc_full_skip_filem) {
+        exit_status = ORTE_SUCCESS;
+        goto cleanup;
+    }
+    /*
      * If it is stored in place, then we do not need to transfer anything
      */
-    if( orte_snapc_base_store_in_place ) {
+    else if( orte_snapc_base_store_in_place ) {
         for(item  = opal_list_get_first(&global_snapshot.snapshots);
             item != opal_list_get_end(&global_snapshot.snapshots);
             item  = opal_list_get_next(item) ) {
@@ -961,13 +968,6 @@ static int snapc_full_global_gather_all_files(void) {
                 goto cleanup;
             }
         }
-    }
-    /*
-     * If we just want to pretend to do the filem
-     */
-    else if(orte_snapc_full_skip_filem) {
-        exit_status = ORTE_SUCCESS;
-        goto cleanup;
     }
     /*
      * If *not* stored in place then use FileM to transfer the files and cleanup
