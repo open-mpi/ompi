@@ -54,6 +54,7 @@ int orte_snapc_base_open(void)
 {
     int value;
     char * str_value = NULL;
+    char * home = NULL;
 
     /* Debugging/Verbose output */
     mca_base_param_reg_int_name("snapc",
@@ -68,14 +69,20 @@ int orte_snapc_base_open(void)
     }
     opal_output_set_verbosity(orte_snapc_base_output, value);
 
+    /* We may need this later */
+#if !defined(__WINDOWS__)
+    home = getenv("HOME");
+#else
+    home = getenv("USERPROFILE");
+#endif  /* !defined(__WINDOWS__) */
+
     /* Global Snapshot directory */
     mca_base_param_reg_string_name("snapc",
                                    "base_global_snapshot_dir",
                                    "The base directory to use when storing global snapshots",
                                    false, false,
-                                   strdup("/tmp"),
+                                   home,
                                    &orte_snapc_base_global_snapshot_dir);
-
     /*
      * Store the checkpoint files in their final location.
      * This assumes that the storage place is on a shared file 
