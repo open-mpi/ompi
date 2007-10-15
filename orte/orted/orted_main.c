@@ -502,6 +502,16 @@ int orte_daemon(int argc, char *argv[])
        require OOB messages for wireup, etc.). */
     opal_progress_set_yield_when_idle(false);
 
+    /* Change the default behavior of libevent such that we want to
+       continually block rather than blocking for the default timeout
+       and then looping around the progress engine again.  There
+       should be nothing in the orted that cannot block in libevent
+       until "something" happens (i.e., there's no need to keep
+       cycling through progress because the only things that should
+       happen will happen in libevent).  This is a minor optimization,
+       but what the heck... :-) */
+    opal_progress_set_event_flag(OPAL_EVLOOP_ONCE);
+
     /* if requested, obtain and report a new process name and my uri to the indicated pipe */
     if (orted_globals.uri_pipe > 0) {
         orte_process_name_t name;

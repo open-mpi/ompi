@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,6 +22,7 @@
 
 #include "opal/threads/condition.h"
 #include "opal/threads/mutex.h"
+#include "opal/event/event.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/oob/oob.h"
 #include "orte/dss/dss_types.h"
@@ -34,6 +36,8 @@ struct orte_rml_oob_module_t {
     opal_mutex_t             exceptions_lock;
     opal_list_t              queued_routing_messages;
     opal_mutex_t             queued_lock;
+    opal_event_t            *timer_event;
+    struct timeval           timeout;
 };
 typedef struct orte_rml_oob_module_t orte_rml_oob_module_t;
 
