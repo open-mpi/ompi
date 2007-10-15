@@ -544,12 +544,12 @@ static int mca_btl_openib_mca_setup_qps(void)
                 mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win;
             mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv =
                 atoi_param(P(5), tmp);
-            opal_output(mca_btl_base_output, "pp: rd_num is %d\trd_low is %d\trd_win %d\trd_rsv %d \n", 
-                        mca_btl_openib_component.qp_infos[qp].rd_num, 
-                        mca_btl_openib_component.qp_infos[qp].rd_low,
-                        mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win, 
-                        mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv
-                        );
+            BTL_VERBOSE(("pp: rd_num is %d\trd_low is %d\trd_win %d\trd_rsv %d \n", 
+                         mca_btl_openib_component.qp_infos[qp].rd_num, 
+                         mca_btl_openib_component.qp_infos[qp].rd_low,
+                         mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win, 
+                         mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv
+                         ));
             
             mca_btl_openib_component.qp_infos[qp].type = MCA_BTL_OPENIB_PP_QP;
 
@@ -576,10 +576,10 @@ static int mca_btl_openib_mca_setup_qps(void)
             tmp = mca_btl_openib_component.qp_infos[qp].rd_low >> 2;
             mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max =
                 atoi_param(P(4), tmp);
-            opal_output(mca_btl_base_output, "srq: rd_num is %d\trd_low is %d\tsd_max is %d\n", 
-                        mca_btl_openib_component.qp_infos[qp].rd_num, 
-                        mca_btl_openib_component.qp_infos[qp].rd_low,
-                        mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max);
+            BTL_VERBOSE(("srq: rd_num is %d\trd_low is %d\tsd_max is %d\n", 
+                         mca_btl_openib_component.qp_infos[qp].rd_num, 
+                         mca_btl_openib_component.qp_infos[qp].rd_low,
+                         mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max));
             mca_btl_openib_component.qp_infos[qp].type = MCA_BTL_OPENIB_SRQ_QP;
 
             /* Calculate the smallest freelist size that can be allowed */
