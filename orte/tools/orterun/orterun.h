@@ -58,6 +58,7 @@ struct globals_t {
     char *preload_files_dest_dir;
     opal_mutex_t lock;
     opal_condition_t cond;
+    bool sleep;
 };
 
 /**

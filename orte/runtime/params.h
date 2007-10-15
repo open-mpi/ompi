@@ -45,6 +45,8 @@ ORTE_DECLSPEC extern bool orte_debug_flag, orte_reuse_daemons, orte_timing;
 ORTE_DECLSPEC extern bool orte_debug_daemons_flag, orte_debug_daemons_file_flag;
 ORTE_DECLSPEC extern bool orte_infrastructure, orted_spin_flag, orte_no_daemonize_flag;
 
+ORTE_DECLSPEC extern bool orte_daemon_died;
+
 ORTE_DECLSPEC extern struct timeval orte_abort_timeout;
 
 ORTE_DECLSPEC extern char **orte_launch_environ;

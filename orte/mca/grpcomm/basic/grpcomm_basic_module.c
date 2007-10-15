@@ -120,7 +120,7 @@ static int xcast_nb(orte_jobid_t job,
                          (long)num_daemons, (long)orte_grpcomm_basic.xcast_linear_xover,
                          (long)orte_grpcomm_basic.xcast_binomial_xover));
     
-    if (num_daemons < 2) {
+    if (num_daemons < 2 || orte_daemon_died) {
         /* if there is only one daemon in the system, then we must
          * use the direct mode - there is no other option. Note that
          * since the HNP is the one that typically does xcast sends,
@@ -133,6 +133,10 @@ static int xcast_nb(orte_jobid_t job,
          * for selecting specific xcast modes, this required
          * use-case behavior MUST always be retained or else
          * singletons and HNP startup will fail!
+         *
+         * We also insist that the direct xcast mode be used when
+         * an orted has failed as we cannot rely on alternative
+         * methods to reach all orteds and/or procs
          */
         rc = xcast_direct(job, buffer, tag);
         goto DONE;
@@ -200,7 +204,7 @@ static int xcast(orte_jobid_t job,
                          (long)num_daemons, (long)orte_grpcomm_basic.xcast_linear_xover,
                          (long)orte_grpcomm_basic.xcast_binomial_xover));
 
-    if (num_daemons < 2) {
+    if (num_daemons < 2 || orte_daemon_died) {
         /* if there is only one daemon in the system, then we must
          * use the direct mode - there is no other option. Note that
          * since the HNP is the one that typically does xcast sends,
@@ -213,6 +217,10 @@ static int xcast(orte_jobid_t job,
          * for selecting specific xcast modes, this required
          * use-case behavior MUST always be retained or else
          * singletons and HNP startup will fail!
+         *
+         * We also insist that the direct xcast mode be used when
+         * an orted has failed as we cannot rely on alternative
+         * methods to reach all orteds and/or procs
          */
         rc = xcast_direct(job, buffer, tag);
         goto DONE;
@@ -233,6 +241,13 @@ static int xcast(orte_jobid_t job,
     }
     
 DONE:
+    /* if a daemon has failed AND this message was going to
+     * the daemons, then we don't want to wait - just return
+     */
+    if (0 == job && orte_daemon_died) {
+        return rc;
+    }
+    
     /* now go to sleep until woken up */
     OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
     if (orte_grpcomm_basic.num_active > 0) {
