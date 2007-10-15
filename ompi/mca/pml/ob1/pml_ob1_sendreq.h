@@ -341,12 +341,8 @@ mca_pml_ob1_send_request_start_btl( mca_pml_ob1_send_request_t* sendreq,
                                     mca_bml_base_btl_t* bml_btl )
 {
     size_t size = sendreq->req_send.req_bytes_packed;
-    size_t eager_limit = bml_btl->btl_eager_limit;
+    size_t eager_limit = bml_btl->btl_eager_limit - sizeof(mca_pml_ob1_hdr_t);
     int rc;
-
-    if( eager_limit > mca_pml_ob1.eager_limit )
-        eager_limit = mca_pml_ob1.eager_limit;
-    eager_limit -= sizeof(mca_pml_ob1_hdr_t);
 
     if( OPAL_LIKELY(size <= eager_limit) ) {
         switch(sendreq->req_send.req_send_mode) {

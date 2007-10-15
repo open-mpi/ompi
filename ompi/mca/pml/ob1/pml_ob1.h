@@ -50,7 +50,6 @@ struct mca_pml_ob1_t {
     int free_list_num;      /* initial size of free list */
     int free_list_max;      /* maximum size of free list */
     int free_list_inc;      /* number of elements to grow free list */
-    size_t eager_limit;     /* maximum eager limit size - overrides btl setting */
     size_t send_pipeline_depth;
     size_t recv_pipeline_depth;
     size_t rdma_put_retries_limit;
