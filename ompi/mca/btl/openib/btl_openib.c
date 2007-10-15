@@ -393,7 +393,6 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl;
     mca_btl_openib_endpoint_t* endpoint;
         
-    /* opal_output(0, "del_procs called!\n"); */
     for (i=0 ; i < (int) nprocs ; i++) {
         mca_btl_base_endpoint_t* del_endpoint = peers[i];
         for(ep_index=0;
@@ -406,8 +405,8 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
                 continue;
             }
             if (endpoint == del_endpoint) {
-                opal_output(mca_btl_base_output,"in del_procs %d, setting another endpoint to null\n", 
-                            ep_index); 
+                BTL_VERBOSE(("in del_procs %d, setting another endpoint to null\n", 
+                             ep_index));
                 orte_pointer_array_set_item(openib_btl->hca->endpoints,
                         ep_index, NULL);
                 assert(((opal_object_t*)endpoint)->obj_reference_count == 1);

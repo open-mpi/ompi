@@ -321,8 +321,8 @@ static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg)
 
     if(openib_reg->mr != NULL) {
         if(ibv_dereg_mr(openib_reg->mr)) {
-            opal_output(mca_btl_base_output, "%s: error unpinning openib memory errno says %s\n",
-                    __func__, strerror(errno));
+            BTL_ERROR(("%s: error unpinning openib memory errno says %s\n",
+                       __func__, strerror(errno)));
             return OMPI_ERROR;
         }
     }
