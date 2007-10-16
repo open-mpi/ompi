@@ -29,7 +29,7 @@
 #include "routed_unity.h"
 
 static orte_routed_module_t* routed_unity_init(int* priority);
-
+static bool recv_issued=false;
 
 /**
  * component definition
@@ -61,6 +61,7 @@ orte_routed_component_t mca_routed_unity_component = {
 };
 
 orte_routed_module_t orte_routed_unity_module = {
+    orte_routed_unity_module_init,
     orte_routed_unity_finalize,
     orte_routed_unity_update_route,
     orte_routed_unity_get_route,
@@ -76,10 +77,53 @@ routed_unity_init(int* priority)
     return &orte_routed_unity_module;
 }
 
+static void orte_routed_unity_recv(int status, orte_process_name_t* sender,
+                                   orte_buffer_t* buffer, orte_rml_tag_t tag,
+                                   void* cbdata)
+{
+    orte_std_cntr_t cnt;
+    orte_gpr_notify_data_t *ndat;
+    int rc;
+    
+    ndat = OBJ_NEW(orte_gpr_notify_data_t);
+    cnt = 1;
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &ndat, &cnt, ORTE_GPR_NOTIFY_DATA))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    orte_rml_base_contact_info_notify(ndat, NULL);
+    OBJ_RELEASE(ndat);
+}
+
+int orte_routed_unity_module_init(void)
+{
+    int rc;
+    
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                                      ORTE_RML_TAG_UPDATE_ROUTES,
+                                                      ORTE_RML_PERSISTENT,
+                                                      orte_routed_unity_recv,
+                                                      NULL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    recv_issued = true;
+    return ORTE_SUCCESS;
+}
 
 int
 orte_routed_unity_finalize(void)
 {
+    int rc;
+    
+    if (recv_issued) {
+        if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_UPDATE_ROUTES))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        recv_issued = false;
+    }
+    
     return ORTE_SUCCESS;
 }
 
@@ -122,7 +166,9 @@ int orte_routed_unity_init_routes(orte_jobid_t job, orte_gpr_notify_data_t *ndat
     orte_std_cntr_t cnt;
     char *rml_uri;
     orte_gpr_notify_data_t *ndat;
-
+    orte_process_name_t name;
+    orte_jobid_t parent;
+        
     /* if I am a daemon... */
     if (orte_process_info.daemon) {
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
@@ -211,8 +257,6 @@ int orte_routed_unity_init_routes(orte_jobid_t job, orte_gpr_notify_data_t *ndat
         }
 #endif
         {
-            orte_process_name_t name;
-            
             /* if ndata != NULL, then we can ignore it - some routing algos
              * need to call init_routes during launch, but we don't
              */
@@ -231,14 +275,16 @@ int orte_routed_unity_init_routes(orte_jobid_t job, orte_gpr_notify_data_t *ndat
                 return rc;
             }
             /* does this job have a parent? */
-            if (ORTE_SUCCESS != (rc = orte_ns.get_parent_job(&name.jobid, job))) {
+            if (ORTE_SUCCESS != (rc = orte_ns.get_parent_job(&parent, job))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            if (name.jobid != job) {
+            if (parent != job) {
                 /* yes it does - so get that contact info and send it along as well.
                  * get_contact_info will simply add to the ndat structure
                  */
+                name.jobid = parent;
+                name.vpid = ORTE_VPID_WILDCARD;
                 if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(&name, &ndat))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
@@ -273,6 +319,16 @@ int orte_routed_unity_init_routes(orte_jobid_t job, orte_gpr_notify_data_t *ndat
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&buf);
             return rc;
+        }
+        /* if this job has a parent, send it to them too - must send to their update
+         * tag as they won't be listening to the init_routes one
+         */
+        if (parent != job) {
+            if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(parent, &buf, ORTE_RML_TAG_UPDATE_ROUTES))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_DESTRUCT(&buf);
+                return rc;
+            }
         }
         
         OBJ_DESTRUCT(&buf);

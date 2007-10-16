@@ -86,6 +86,15 @@ typedef struct orte_routed_component_1_0_0_t orte_routed_component_t;
 
 
 /* ******************************************************************** */
+/**
+ * Initialize the routed module
+ *
+ * Do whatever needs to be done to initialize the selected module
+ *
+ * @retval ORTE_SUCCESS Success
+ * @retval ORTE_ERROR  Error code from whatever was encountered
+ */
+typedef int (*orte_routed_module_init_fn_t)(void);
 
 /**
  * Finalize the routed module
@@ -142,9 +151,10 @@ typedef int (*orte_routed_module_warmup_routes_fn_t)(void);
  * active routed interface.
  */
 struct orte_routed_module_t {
-    /** Shutdown the communication system and clean up resources */
+    /** Startup/shutdown the communication system and clean up resources */
+    orte_routed_module_init_fn_t                    initialize;
     orte_routed_module_finalize_fn_t                finalize;
-
+    /* API functions */
     orte_routed_module_update_route_fn_t            update_route;
     orte_routed_module_get_route_fn_t               get_route;
     orte_routed_module_init_routes_fn_t             init_routes;

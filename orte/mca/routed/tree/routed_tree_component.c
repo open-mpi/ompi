@@ -21,7 +21,7 @@
 #include "orte/mca/ns/ns.h"
 
 static orte_routed_module_t* routed_tree_init(int* priority);
-
+static bool selected=false;
 
 /**
  * component definition
@@ -53,6 +53,7 @@ orte_routed_component_t mca_routed_tree_component = {
 
 orte_routed_tree_module_t orte_routed_tree_module = {
     {
+        orte_routed_tree_module_init,
         orte_routed_tree_finalize,
         orte_routed_tree_update_route,
         orte_routed_tree_get_route,
@@ -69,39 +70,47 @@ routed_tree_init(int* priority)
 {
     *priority = 5;
 
-    OBJ_CONSTRUCT(&orte_routed_tree_module.peer_list, opal_list_t);
-    OBJ_CONSTRUCT(&orte_routed_tree_module.vpid_wildcard_list, opal_list_t);
-    OBJ_CONSTRUCT(&orte_routed_tree_module.jobid_wildcard_list, opal_list_t);
-
-    orte_routed_tree_module.full_wildcard_entry.target.jobid = ORTE_JOBID_WILDCARD;
-    orte_routed_tree_module.full_wildcard_entry.target.vpid = ORTE_VPID_WILDCARD;
-
-    orte_routed_tree_module.full_wildcard_entry.route.jobid = ORTE_JOBID_INVALID;
-    orte_routed_tree_module.full_wildcard_entry.route.vpid = ORTE_VPID_INVALID;
-
     return &orte_routed_tree_module.super;
 }
 
+int
+orte_routed_tree_module_init(void)
+{
+    OBJ_CONSTRUCT(&orte_routed_tree_module.peer_list, opal_list_t);
+    OBJ_CONSTRUCT(&orte_routed_tree_module.vpid_wildcard_list, opal_list_t);
+    OBJ_CONSTRUCT(&orte_routed_tree_module.jobid_wildcard_list, opal_list_t);
+    
+    orte_routed_tree_module.full_wildcard_entry.target.jobid = ORTE_JOBID_WILDCARD;
+    orte_routed_tree_module.full_wildcard_entry.target.vpid = ORTE_VPID_WILDCARD;
+    
+    orte_routed_tree_module.full_wildcard_entry.route.jobid = ORTE_JOBID_INVALID;
+    orte_routed_tree_module.full_wildcard_entry.route.vpid = ORTE_VPID_INVALID;
+    
+    selected = true;
+    return ORTE_SUCCESS;
+}
 
 int
 orte_routed_tree_finalize(void)
 {
     opal_list_item_t *item;
 
-    while (NULL != (item = opal_list_remove_first(&orte_routed_tree_module.peer_list))) {
-        OBJ_RELEASE(item);
+    if (selected) {
+        while (NULL != (item = opal_list_remove_first(&orte_routed_tree_module.peer_list))) {
+            OBJ_RELEASE(item);
+        }
+        OBJ_DESTRUCT(&orte_routed_tree_module.peer_list);
+        
+        while (NULL != (item = opal_list_remove_first(&orte_routed_tree_module.vpid_wildcard_list))) {
+            OBJ_RELEASE(item);
+        }
+        OBJ_DESTRUCT(&orte_routed_tree_module.vpid_wildcard_list);
+        
+        while (NULL != (item = opal_list_remove_first(&orte_routed_tree_module.jobid_wildcard_list))) {
+            OBJ_RELEASE(item);
+        }
+        OBJ_DESTRUCT(&orte_routed_tree_module.jobid_wildcard_list);
     }
-    OBJ_DESTRUCT(&orte_routed_tree_module.peer_list);
-
-    while (NULL != (item = opal_list_remove_first(&orte_routed_tree_module.vpid_wildcard_list))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&orte_routed_tree_module.vpid_wildcard_list);
-
-    while (NULL != (item = opal_list_remove_first(&orte_routed_tree_module.jobid_wildcard_list))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&orte_routed_tree_module.jobid_wildcard_list);
 
     return ORTE_SUCCESS;
 }
