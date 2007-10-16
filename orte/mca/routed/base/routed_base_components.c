@@ -118,6 +118,11 @@ orte_routed_base_select(void)
 
     if (NULL == selected_component) return ORTE_ERROR;
     
+    /* initialize the selected component */
+    if (ORTE_SUCCESS != orte_routed.initialize()) {
+        return ORTE_ERROR;
+    }
+    
     return ORTE_SUCCESS;
 }
 

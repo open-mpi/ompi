@@ -91,14 +91,14 @@ BEGIN_C_DECLS
 #define ORTE_RML_TAG_BARRIER                31
 
 #define ORTE_RML_TAG_INIT_ROUTES            32
-
-#define ORTE_RML_TAG_SYNC                   33
+#define ORTE_RML_TAG_UPDATE_ROUTES          33
+#define ORTE_RML_TAG_SYNC                   34
 
 /* For FileM RSH Component */
-#define ORTE_RML_TAG_FILEM_RSH              34
+#define ORTE_RML_TAG_FILEM_RSH              35
 
 /* For SnapC Full Component */
-#define ORTE_RML_TAG_SNAPC_FULL             35
+#define ORTE_RML_TAG_SNAPC_FULL             36
 
 /* For CRCP Coord Component */
 #define OMPI_CRCP_COORD_BOOKMARK_TAG      4242

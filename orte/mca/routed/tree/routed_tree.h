@@ -40,6 +40,8 @@ ORTE_MODULE_DECLSPEC extern orte_routed_component_t mca_routed_tree_component;
 
 extern orte_routed_tree_module_t orte_routed_tree_module;
 
+int orte_routed_tree_module_init(void);
+
 int orte_routed_tree_finalize(void);
 
 int orte_routed_tree_update_route(orte_process_name_t *target,

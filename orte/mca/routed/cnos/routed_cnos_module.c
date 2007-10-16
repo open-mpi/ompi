@@ -31,6 +31,8 @@
 #endif
 
 /* API functions */
+static int orte_routed_cnos_module_init(void);
+
 static int orte_routed_cnos_finalize(void);
 
 static int orte_routed_cnos_update_route(orte_process_name_t *target,
@@ -43,12 +45,19 @@ static int orte_routed_cnos_init_routes(orte_jobid_t job, orte_gpr_notify_data_t
 static int orte_routed_cnos_warmup_routes(void);
 
 orte_routed_module_t orte_routed_cnos_module = {
+    orte_routed_cnos_module_init,
     orte_routed_cnos_finalize,
     orte_routed_cnos_update_route,
     orte_routed_cnos_get_route,
     orte_routed_cnos_init_routes,
     orte_routed_cnos_warmup_routes
 };
+
+static int
+orte_routed_cnos_module_init(void)
+{
+    return ORTE_SUCCESS;
+}
 
 static int
 orte_routed_cnos_finalize(void)

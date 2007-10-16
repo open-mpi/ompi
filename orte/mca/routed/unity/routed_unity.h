@@ -18,6 +18,8 @@ BEGIN_C_DECLS
 
 ORTE_MODULE_DECLSPEC extern orte_routed_component_t mca_routed_unity_component;
 
+int orte_routed_unity_module_init(void);
+
 int orte_routed_unity_finalize(void);
 
 int orte_routed_unity_update_route(orte_process_name_t *target,
