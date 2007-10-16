@@ -28,15 +28,20 @@ version 1.0.
 
 Trunk (not on release branches yet)
 -----------------------------------
-- Added the Sparse Groups implementation.
-  --> Expected: 1.3
 
 - Added Cray Compute Node Linux (CNL) and ALPS Support.
   --> Expected: ???
 - Added Microsoft Windows support.  See README.WINDOWS file for
   details.
   --> Expected: ???
+- Addition of "dr" (data reliability) PML.
+  --> Expected: ???
+- Added threaded progress for the openib BTL (waiting on other
+  threading support)
+  --> Expected: ???
 
+- Added the Sparse Groups implementation.
+  --> Expected: 1.3
 - Added support for Platform/LSF job launchers.  Must be Platform LSF
   v7.0.2 or later.
   --> Expected 1.3
@@ -60,25 +65,19 @@ Trunk (not on release branches yet)
 - Addition of a finer symbols export control via the visibiliy feature
   offered by some compilers.
   --> Expected: 1.3
-- Addition of "dr" (data reliability) PML.
-  --> Expected: 1.3
-- Added threaded progress for the openib BTL.
-  --> Expected: 1.3
 - Added checkpoint/restart process fault tolerance support. Initially
   support a LAM/MPI-like protocol.
   --> Expected: 1.3
 
-- Fix several problems with redirecting large files into mpirun's
-  stdin.
-  --> Expected 1.2.x
 - Fixed issue with pthread detection when compilers are not all
   from the same vendor.  Thanks to Ake Sandgren for the bug
   report.
-  --> Expected 1.2.x
+  --> Expected 1.2.5
 
 
 1.2.5 (not released yet)
 -----
+
 - Nothing new yet.
 
 
