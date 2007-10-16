@@ -294,9 +294,9 @@ ompi_unpack_partial_datatype( ompi_convertor_t* pConvertor, dt_elem_desc_t* pEle
     uint32_t i, length, count_desc = 1;
     size_t data_length = ompi_ddt_basicDatatypes[pElem->elem.common.type]->size;
 
-    DO_DEBUG( opal_output( 0, "unpack partial data start %d end %d data_length %lu user %p\n"
+    DO_DEBUG( opal_output( 0, "unpack partial data start %lu end %lu data_length %lu user %p\n"
                            "\tbConverted %lu total_length %lu count %d\n",
-                           start_position, end_position, (unsigned long)data_length, *user_buffer,
+                           (unsigned long)start_position, (unsigned long)end_position, (unsigned long)data_length, *user_buffer,
                            (unsigned long)pConvertor->bConverted, (unsigned long)pConvertor->local_size, pConvertor->count ); );
 
     /* Find a byte that is not used in the partial buffer */
@@ -440,7 +440,7 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
             if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
                 DO_DEBUG( opal_output( 0, "unpack end_loop count %d stack_pos %d pos_desc %d disp %ld space %lu\n",
                                        (int)pStack->count, pConvertor->stack_pos, pos_desc,
-                                      (long)pStack->disp, (unsigned long)iov_len_local ); );
+                                       (long)pStack->disp, (unsigned long)iov_len_local ); );
                 if( --(pStack->count) == 0 ) { /* end of loop */
                     if( pConvertor->stack_pos == 0 ) {
                         /* Force the conversion to stop by lowering the number of iovecs. */

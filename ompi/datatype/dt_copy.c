@@ -60,8 +60,8 @@ static inline void copy_predefined_data( const dt_elem_desc_t* ELEM,
         OMPI_DDT_SAFEGUARD_POINTER( _source, _copy_blength, (SOURCE_BASE),
                                     (DATATYPE), (TOTAL_COUNT) );
         /* the extent and the size of the basic datatype are equals */
-        DO_DEBUG( opal_output( 0, "copy 1. memcpy( %p, %p, %ld ) => space %lu\n",
-                               _destination, _source, _copy_blength, (unsigned long)(*(SPACE)) ); );
+        DO_DEBUG( opal_output( 0, "copy 1. memcpy( %p, %p, %lu ) => space %lu\n",
+                               _destination, _source, (unsigned long)_copy_blength, (unsigned long)(*(SPACE)) ); );
         MEMCPY( _destination, _source, _copy_blength );
         _source      += _copy_blength;
         _destination += _copy_blength;
@@ -70,8 +70,8 @@ static inline void copy_predefined_data( const dt_elem_desc_t* ELEM,
         for( _i = 0; _i < _copy_count; _i++ ) {
             OMPI_DDT_SAFEGUARD_POINTER( _source, _copy_blength, (SOURCE_BASE),
                                         (DATATYPE), (TOTAL_COUNT) );
-            DO_DEBUG( opal_output( 0, "copy 2. memcpy( %p, %p, %ld ) => space %lu\n",
-                                   _destination, _source, _copy_blength, (unsigned long)(*(SPACE) - (_i * _copy_blength)) ); );
+            DO_DEBUG( opal_output( 0, "copy 2. memcpy( %p, %p, %lu ) => space %lu\n",
+                                   _destination, _source, (unsigned long)_copy_blength, (unsigned long)(*(SPACE) - (_i * _copy_blength)) ); );
             MEMCPY( _destination, _source, _copy_blength );
             _source      += _elem->extent;
             _destination += _elem->extent;
@@ -106,8 +106,8 @@ static inline void copy_contiguous_loop( const dt_elem_desc_t* ELEM,
         for( _i = 0; _i < _copy_loops; _i++ ) {
             OMPI_DDT_SAFEGUARD_POINTER( _source, _end_loop->size, (SOURCE_BASE),
                                         (DATATYPE), (TOTAL_COUNT) );
-            DO_DEBUG( opal_output( 0, "copy 3. memcpy( %p, %p, %ld ) => space %ld\n",
-                                   _destination, _source, _end_loop->size, *(SPACE) - _i * _end_loop->size ); );
+            DO_DEBUG( opal_output( 0, "copy 3. memcpy( %p, %p, %lu ) => space %lu\n",
+                                   _destination, _source, (unsigned long)_end_loop->size, (unsigned long)(*(SPACE) - _i * _end_loop->size) ); );
             MEMCPY( _destination, _source, _end_loop->size );
             _source      += _loop->extent;
             _destination += _loop->extent;

@@ -53,7 +53,7 @@ static inline void position_predefined_data( ompi_convertor_t* CONVERTOR,
                                              size_t* SPACE )
 {
     uint32_t _copy_count = *(COUNT);
-	size_t _copy_blength;
+    size_t _copy_blength;
     ddt_elem_desc_t* _elem = &((ELEM)->elem);
     
     _copy_blength =  ompi_ddt_basicDatatypes[_elem->common.type]->size;
@@ -109,7 +109,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
     size_t iov_len_local;
     ptrdiff_t extent = pConvertor->pDesc->ub - pConvertor->pDesc->lb;
 
-    DUMP( "ompi_convertor_generic_simple_pack( %p, &%ld )\n", (void*)pConvertor, (long)*position );
+    DUMP( "ompi_convertor_generic_simple_position( %p, &%ld )\n", (void*)pConvertor, (long)*position );
 
     /* We dont want to have to parse the datatype multiple times. What we are interested in
      * here is to compute the number of completed datatypes that we can move forward, update

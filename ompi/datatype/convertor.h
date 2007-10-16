@@ -63,7 +63,7 @@ typedef void*(*memalloc_fct_t)( size_t* pLength, void* userdata );
 struct ompi_convertor_master_t;
 
 typedef struct dt_stack {
-    int16_t   index;    /**< index in the element description */
+    int32_t   index;    /**< index in the element description */
     int16_t   type;     /**< the type used for the last pack/unpack (original or DT_BYTE) */
     size_t    count;    /**< number of times we still have to do it */
     ptrdiff_t disp;     /**< actual displacement depending on the count field */
@@ -204,6 +204,7 @@ ompi_convertor_copy_and_prepare_for_send( const ompi_convertor_t* pSrcConv,
     convertor->remoteArch = pSrcConv->remoteArch;
     convertor->flags      = (pSrcConv->flags | flags);
     convertor->master     = pSrcConv->master;
+
     return ompi_convertor_prepare_for_send( convertor, datatype, count, pUserBuf );
 }
 
@@ -261,8 +262,7 @@ ompi_convertor_set_position( ompi_convertor_t* convertor,
 
     if( !(convertor->flags & CONVERTOR_WITH_CHECKSUM) &&
         (convertor->flags & DT_FLAG_NO_GAPS) &&
-        ((convertor->flags & CONVERTOR_SEND) ||
-         (convertor->flags & CONVERTOR_HOMOGENEOUS)) ) {
+        (convertor->flags & (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS)) ) {
         /* Contiguous and no checkpoint and no homogeneous unpack */
         convertor->bConverted = *position;
         return OMPI_SUCCESS;

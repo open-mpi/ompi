@@ -89,9 +89,16 @@ extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
 
 typedef union dt_elem_desc dt_elem_desc_t;
 
+/**
+ * The number of supported entries in the data-type definition and the
+ * associated type.
+ */
+#define MAX_DT_COMPONENT_COUNT UINT_MAX
+typedef uint32_t opal_ddt_count_t;
+
 typedef struct dt_type_desc {
-    uint32_t          length;  /* the maximum number of elements in the description array */
-    uint32_t          used;    /* the number of used elements in the description array */
+    opal_ddt_count_t  length;  /* the maximum number of elements in the description array */
+    opal_ddt_count_t  used;    /* the number of used elements in the description array */
     dt_elem_desc_t*   desc;
 } dt_type_desc_t;
 
@@ -129,11 +136,11 @@ typedef struct ompi_datatype_t {
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION( ompi_datatype_t );
 
 int ompi_ddt_register_params(void);
-int32_t ompi_ddt_init( void );
-int32_t ompi_ddt_finalize( void );
+OMPI_DECLSPEC int32_t ompi_ddt_init( void );
+OMPI_DECLSPEC int32_t ompi_ddt_finalize( void );
 ompi_datatype_t* ompi_ddt_create( int32_t expectedSize );
-int32_t ompi_ddt_commit( ompi_datatype_t** );
-int32_t ompi_ddt_destroy( ompi_datatype_t** );
+OMPI_DECLSPEC int32_t ompi_ddt_commit( ompi_datatype_t** );
+OMPI_DECLSPEC int32_t ompi_ddt_destroy( ompi_datatype_t** );
 static inline int32_t ompi_ddt_is_committed( const ompi_datatype_t* type )
 { return ((type->flags & DT_FLAG_COMMITED) == DT_FLAG_COMMITED); }
 static inline int32_t ompi_ddt_is_overlapped( const ompi_datatype_t* type )

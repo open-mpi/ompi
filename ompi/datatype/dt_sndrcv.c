@@ -47,14 +47,10 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
    uint32_t iov_count;
    size_t max_data;
 
-   /* First check if we really have something to do */
-   if (0 == rcount) {
-       if (0 == scount) {
-           return MPI_SUCCESS;
-       } else {
-           return MPI_ERR_TRUNCATE;
-       }
-   }
+    /* First check if we really have something to do */
+    if (0 == rcount) {
+        return ((0 == scount) ? MPI_SUCCESS : MPI_ERR_TRUNCATE);
+    }
 
    /* If same datatypes used, just copy. */
    if (sdtype == rdtype) {

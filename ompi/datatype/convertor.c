@@ -499,7 +499,7 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
 {
     /* Here I should check that the data is not overlapping */
 
-    convertor->flags      |= CONVERTOR_RECV;
+    convertor->flags |= CONVERTOR_RECV;
 
     OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
 
@@ -535,7 +535,7 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
                                  int32_t count,
                                  const void* pUserBuf )
 {
-    convertor->flags            |= CONVERTOR_SEND;
+    convertor->flags |= CONVERTOR_SEND;
 
     OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
 

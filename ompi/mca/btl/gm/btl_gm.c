@@ -716,7 +716,7 @@ static int mca_btl_gm_put_nl(
     /* post the put descriptor */
     gm_put(gm_btl->port,
         des->des_src->seg_addr.pval,
-        des->des_dst->seg_addr.lval,
+        des->des_dst->seg_addr.pval,
         des->des_src->seg_len,
         GM_LOW_PRIORITY,
         endpoint->endpoint_addr.node_id,
@@ -758,7 +758,7 @@ int mca_btl_gm_put(
     /* post the put descriptor */
     gm_put(gm_btl->port,
         des->des_src->seg_addr.pval,
-        des->des_dst->seg_addr.lval,
+        des->des_dst->seg_addr.pval,
         des->des_src->seg_len,
         GM_LOW_PRIORITY,
         endpoint->endpoint_addr.node_id,
@@ -861,7 +861,7 @@ static int mca_btl_gm_get_nl(
 
     /* post get put descriptor */
     gm_get(gm_btl->port,
-        des->des_dst->seg_addr.lval,
+        des->des_dst->seg_addr.pval,
         des->des_src->seg_addr.pval,
         des->des_src->seg_len,
         GM_LOW_PRIORITY,
@@ -904,7 +904,7 @@ int mca_btl_gm_get(
 
     /* post get put descriptor */
     gm_get(gm_btl->port,
-        des->des_dst->seg_addr.lval,
+        des->des_dst->seg_addr.pval,
         des->des_src->seg_addr.pval,
         des->des_src->seg_len,
         GM_LOW_PRIORITY,

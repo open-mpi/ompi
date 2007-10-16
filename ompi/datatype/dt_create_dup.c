@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -60,7 +60,8 @@ int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** ne
             memcpy( pdt->opt_desc.desc, oldType->opt_desc.desc, desc_length * sizeof(dt_elem_desc_t) );
         }
     }
-    pdt->id  = 0;
+    pdt->id  = oldType->id;  /* preserve the default id. This allow us to
+                              * copy predefined types. */
     pdt->args = NULL;
     *newType = pdt;
     return OMPI_SUCCESS;

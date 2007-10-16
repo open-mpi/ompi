@@ -87,37 +87,48 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
      */
     if( extent == -1 ) extent = (pdtAdd->ub - pdtAdd->lb);
 
-    if( pdtAdd->flags & DT_FLAG_PREDEFINED ) { /* add a basic datatype */
-        /* handle special cases for DT_LB and DT_UB */
-        if( pdtAdd == ompi_ddt_basicDatatypes[DT_LB] ) {
-            pdtBase->bdt_used |= (((uint64_t)1) << DT_LB);
-            if( pdtBase->flags & DT_FLAG_USER_LB ) {
-                pdtBase->lb = LMIN( pdtBase->lb, disp );
-            } else {
-                pdtBase->lb = disp;
-                pdtBase->flags |= DT_FLAG_USER_LB;
-            }
-            if( (pdtBase->ub - pdtBase->lb) != (ptrdiff_t)pdtBase->size ) {
-                pdtBase->flags &= ~DT_FLAG_NO_GAPS;
-            }
-            return OMPI_SUCCESS;
-        } else if( pdtAdd == ompi_ddt_basicDatatypes[DT_UB] ) {
-            pdtBase->bdt_used |= (((uint64_t)1) << DT_UB);
-            if( pdtBase->flags & DT_FLAG_USER_UB ) {
-                pdtBase->ub = LMAX( pdtBase->ub, disp );
-            } else {
-                pdtBase->ub = disp;
-                pdtBase->flags |= DT_FLAG_USER_UB;
-            }
-            if( (pdtBase->ub - pdtBase->lb) != (ptrdiff_t)pdtBase->size ) {
-                pdtBase->flags &= ~DT_FLAG_NO_GAPS;
-            }
-            return OMPI_SUCCESS;
+    /* handle special cases for DT_LB and DT_UB and their duplicate */
+    if( DT_LB == pdtAdd->id ) {
+        pdtBase->bdt_used |= (((uint64_t)1) << DT_LB);
+        if( pdtBase->flags & DT_FLAG_USER_LB ) {
+            pdtBase->lb = LMIN( pdtBase->lb, disp );
+        } else {
+            pdtBase->lb = disp;
+            pdtBase->flags |= DT_FLAG_USER_LB;
         }
+        if( (pdtBase->ub - pdtBase->lb) != (ptrdiff_t)pdtBase->size ) {
+            pdtBase->flags &= ~DT_FLAG_NO_GAPS;
+        }
+        return OMPI_SUCCESS;
+    } else if( DT_UB == pdtAdd->id ) {
+        pdtBase->bdt_used |= (((uint64_t)1) << DT_UB);
+        if( pdtBase->flags & DT_FLAG_USER_UB ) {
+            pdtBase->ub = LMAX( pdtBase->ub, disp );
+        } else {
+            pdtBase->ub = disp;
+            pdtBase->flags |= DT_FLAG_USER_UB;
+        }
+        if( (pdtBase->ub - pdtBase->lb) != (ptrdiff_t)pdtBase->size ) {
+            pdtBase->flags &= ~DT_FLAG_NO_GAPS;
+        }
+        return OMPI_SUCCESS;
+    }
+    if( pdtAdd->flags & DT_FLAG_PREDEFINED ) { /* add a basic datatype */
         place_needed = (extent == (ptrdiff_t)pdtAdd->size ? 1 : 3);
     } else {
         place_needed = pdtAdd->desc.used;
-        if( count != 1 ) place_needed += 2;  /* for the loop markers */
+        if( count != 1 ) {
+            if( place_needed < (MAX_DT_COMPONENT_COUNT - 2) ) {
+                place_needed += 2;  /* for the loop markers */
+            } else {
+                /* The data-type contain too many elements. We will be unable
+                 * to handle it, so let's just complain by now.
+                 */
+                opal_output( 0, "Too many elements in the datatype. The limit is %ud\n",
+                             MAX_DT_COMPONENT_COUNT );
+                return OMPI_ERROR;
+            }
+        }
     }
 
     /*
@@ -167,26 +178,20 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
         ub = LMAX( pdtBase->ub, ub );
     }
     /* While the true_lb and true_ub have to be ordered to have the true_lb lower
-     * than the true_ub, the ub and lb does not have to be ordered. They should be
+     * than the true_ub, the ub and lb do not have to be ordered. They should be
      * as the user define them.
      */
     pdtBase->lb = lb;
     pdtBase->ub = ub;
 
-    if( 0 == pdtBase->nbElems ) old_true_ub = disp;
-    else                        old_true_ub = pdtBase->true_ub;
-    pdtBase->true_lb = LMIN( true_lb, pdtBase->true_lb );
-    pdtBase->true_ub = LMAX( true_ub, pdtBase->true_ub );
-
     /* compute the new memory alignement */
     pdtBase->align = IMAX( pdtBase->align, pdtAdd->align );
-    pdtBase->size += count * pdtAdd->size;
 
     /* Now that we have the new ub and the alignment we should update the ub to match
-     * the new alignement. We have to add an epsilon that is the least nonnegative increment
-     * needed to roung the extent to the next multiple of the alignment. This rule
-     * apply only if there is user specified upper bound as stated in the MPI
-     * standard MPI 1.2 page 71.
+     * the new alignement. We have to add an epsilon that is the least nonnegative
+     * increment needed to roung the extent to the next multiple of the alignment.
+     * This rule apply only if there is user specified upper bound as stated in the
+     * MPI standard MPI 1.2 page 71.
      */
     if( !(pdtBase->flags & DT_FLAG_USER_UB) ) {
         epsilon = (pdtBase->ub - pdtBase->lb) % pdtBase->align;
@@ -194,17 +199,31 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
             pdtBase->ub += (pdtBase->align - epsilon);
         }
     }
+    /* now we know it contain some data */
+    pdtBase->flags |= DT_FLAG_DATA;
 
     /*
-     * the count == 0 is LEGAL only for MPI_UB and MPI_LB. I accept it just as a nice way to set
-     * the soft UB for a data (without using a real UB marker). This approach can be used to
-     * create the subarray and darray datatype. However from the MPI level this function
-     * should never be called directly with a count set to 0.
-     * Adding a data-type with a size zero is legal but does not have to go through all the
-     * stuff below.
+     * the count == 0 is LEGAL only for MPI_UB and MPI_LB. Therefore we support it
+     * here in the upper part of this function. As an extension, the count set to
+     * zero can be used to reset the alignment of the data, but not for changing
+     * the true_lb and true_ub.
      */
     if( (0 == count) || (0 == pdtAdd->size) ) {
         return OMPI_SUCCESS;
+    }
+
+    /* Now, once we know everything is fine and there are some bytes in
+     * the data-type we can update the size, true_lb and true_ub.
+     */
+    pdtBase->size += count * pdtAdd->size;
+    if( 0 == pdtBase->nbElems ) old_true_ub = disp;
+    else                        old_true_ub = pdtBase->true_ub;
+    if( 0 != pdtBase->size ) {
+        pdtBase->true_lb = LMIN( true_lb, pdtBase->true_lb );
+        pdtBase->true_ub = LMAX( true_ub, pdtBase->true_ub );
+    } else {
+        pdtBase->true_lb = true_lb;
+        pdtBase->true_ub = true_ub;
     }
 
     pdtBase->bdt_used |= pdtAdd->bdt_used;

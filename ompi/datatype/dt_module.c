@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -127,7 +127,7 @@ OMPI_DECLSPEC ompi_datatype_t ompi_mpi_packed = INIT_BASIC_DATA( char, OMPI_ALIG
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_wchar = INIT_BASIC_DATA( wchar_t, OMPI_ALIGNMENT_WCHAR, WCHAR, DT_FLAG_DATA_C );
 #else
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_wchar = INIT_UNAVAILABLE_DATA( WCHAR );
-#endif  /* FTMPI_HAVE_WCHAR_T */
+#endif  /* OMPI_ALIGNMENT_WCHAR */
 
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_cxx_bool = INIT_BASIC_DATA( bool, OMPI_ALIGNMENT_CXX_BOOL, CXX_BOOL, DT_FLAG_DATA_CPP );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_logic = INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, LOGIC, OMPI_SIZEOF_FORTRAN_LOGICAL, OMPI_ALIGNMENT_FORTRAN_LOGICAL, 0 );
@@ -411,7 +411,7 @@ int32_t ompi_ddt_init( void )
 
         datatype->desc.length       = 1;
         datatype->desc.used         = 1;
-        /* By default the optimized descritption is the same as the default
+        /* By default the optimized description is the same as the default
          * description for predefined datatypes.
          */
         datatype->opt_desc          = datatype->desc;
@@ -639,6 +639,10 @@ int32_t ompi_ddt_init( void )
             ompi_ddt_number_of_predefined_data = (ompi_mpi_##name).d_f_to_c_index; \
     }
 
+    /*
+     * This MUST match the order of ompi/include/mpif-common.h
+     * Any change will break binary compatability of Fortran programs.
+     */
     MOOG(datatype_null);
     MOOG(byte);
     MOOG(packed);
@@ -769,7 +773,7 @@ int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actual_ptr, int len
 static int _dump_data_flags( unsigned short usflags, char* ptr, size_t length )
 {
     if( length < 21 ) return 0;
-    sprintf( ptr, "-----------[---][---]" );  /* set everything to - */
+    snprintf( ptr, 21, "-----------[---][---]" );  /* set everything to - */
     if( usflags & DT_FLAG_DESTROYED )                ptr[0]  = 'd';
     if( usflags & DT_FLAG_COMMITED )                 ptr[1]  = 'c';
     if( usflags & DT_FLAG_CONTIGUOUS )               ptr[2]  = 'C';
@@ -811,13 +815,13 @@ static int _dump_data_flags( unsigned short usflags, char* ptr, size_t length )
 static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr, size_t length )
 {
     int i;
-    size_t index = 0;
+    int32_t index = 0;
 
     for( i = 0; i < nbElems; i++ ) {
         index += _dump_data_flags( pDesc->elem.common.flags, ptr + index, length );
-        if( length <= index ) break;
+        if( length <= (size_t)index ) break;
         index += snprintf( ptr + index, length - index, "%15s ", ompi_ddt_basicDatatypes[pDesc->elem.common.type]->name );
-        if( length <= index ) break;
+        if( length <= (size_t)index ) break;
         if( DT_LOOP == pDesc->elem.common.type )
             index += snprintf( ptr + index, length - index, "%d times the next %d elements extent %d\n",
                                (int)pDesc->loop.loops, (int)pDesc->loop.items,
@@ -832,7 +836,7 @@ static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr, size
                                (int)pDesc->elem.extent, (long)(pDesc->elem.count * ompi_ddt_basicDatatypes[pDesc->elem.common.type]->size) );
         pDesc++;
 
-        if( length <= index ) break;
+        if( length <= (size_t)index ) break;
     }
     return index;
 }
@@ -840,7 +844,7 @@ static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr, size
 static inline int __dt_contain_basic_datatypes( const ompi_datatype_t* pData, char* ptr, size_t length )
 {
     int i;
-    size_t index = 0;
+    int32_t index = 0;
     uint64_t mask = 1;
 
     if( pData->flags & DT_FLAG_USER_LB ) index += snprintf( ptr, length - index, "lb " );
@@ -849,7 +853,7 @@ static inline int __dt_contain_basic_datatypes( const ompi_datatype_t* pData, ch
         if( pData->bdt_used & mask )
             index += snprintf( ptr + index, length - index, "%s ", ompi_ddt_basicDatatypes[i]->name );
         mask <<= 1;
-        if( length <= index ) break;
+        if( length <= (size_t)index ) break;
     }
     return index;
 }
