@@ -677,14 +677,14 @@ static int allgather_list(opal_list_t *names, orte_buffer_t *sbuf, orte_buffer_t
     
     if (ORTE_EQUAL != orte_dss.compare(root->name, ORTE_PROC_MY_NAME, ORTE_NAME)) {
         /* everyone but root sends data */
-        if (0 > orte_rml.send_buffer(root->name, sbuf, ORTE_RML_TAG_ALLGATHER_LIST, 0)) {
-            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-            return ORTE_ERR_COMM_FAILURE;
+        if (0 > (rc = orte_rml.send_buffer(root->name, sbuf, ORTE_RML_TAG_ALLGATHER_LIST, 0))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
         /* now receive the final result */
-        if (0 > orte_rml.recv_buffer(root->name, rbuf, ORTE_RML_TAG_ALLGATHER_LIST, 0)) {
-            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-            return ORTE_ERR_COMM_FAILURE;
+        if (0 > (rc = orte_rml.recv_buffer(root->name, rbuf, ORTE_RML_TAG_ALLGATHER_LIST, 0))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
         return ORTE_SUCCESS;
     }
