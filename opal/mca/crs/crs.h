@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -183,7 +185,27 @@ typedef int (*opal_crs_base_module_disable_checkpoint_fn_t)
 typedef int (*opal_crs_base_module_enable_checkpoint_fn_t)
      (void);
 
-
+/**
+ * Prepare the CRS component for process launch.
+ * Some CRS components need to take action before the
+ * process is ever launched to do such things as:
+ * - seed the process environment
+ * - LD_PRELOAD
+ * - Analyze the binary before launch
+ *
+ * @param rank Rank of the process to be started
+ * @param app  Absolute pathname of argv[0]
+ * @param argv Standard argv-style array, including a final NULL pointer
+ * @param env  Standard environ-style array, including a final NULL pointer
+ */
+typedef int (*opal_crs_base_module_prelaunch_fn_t)
+         (int32_t rank,
+          char *base_snapshot_dir,
+          char **app, 
+          char **cwd, 
+          char ***argv,
+          char ***env);
+ 
 /**
  * Structure for CRS v1.0.0 components.
  */
@@ -225,6 +247,9 @@ struct opal_crs_base_module_1_0_0_t {
     opal_crs_base_module_disable_checkpoint_fn_t crs_disable_checkpoint;
     /** Enable checkpoints */
     opal_crs_base_module_enable_checkpoint_fn_t  crs_enable_checkpoint;
+
+    /** Pre Launch */
+    opal_crs_base_module_prelaunch_fn_t      crs_prelaunch;
 };
 typedef struct opal_crs_base_module_1_0_0_t opal_crs_base_module_1_0_0_t;
 typedef struct opal_crs_base_module_1_0_0_t opal_crs_base_module_t;

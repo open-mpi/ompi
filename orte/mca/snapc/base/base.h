@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -103,7 +105,11 @@ extern "C" {
 #define orte_snapc_base_metadata_filename (strdup("global_snapshot_meta.data"))
 
     ORTE_DECLSPEC extern char * orte_snapc_base_global_snapshot_dir;
+    ORTE_DECLSPEC extern char * orte_snapc_base_global_snapshot_ref;
+    ORTE_DECLSPEC extern char * orte_snapc_base_global_snapshot_loc;
     ORTE_DECLSPEC extern bool   orte_snapc_base_store_in_place;
+    ORTE_DECLSPEC extern bool   orte_snapc_base_store_only_one_seq;
+    ORTE_DECLSPEC extern bool   orte_snapc_base_establish_gloabl_snapshot_dir;
     ORTE_DECLSPEC extern size_t orte_snapc_base_snapshot_seq_number;
 
 
@@ -115,7 +121,8 @@ extern "C" {
     ORTE_DECLSPEC char * orte_snapc_base_unique_global_snapshot_name(pid_t pid);
     ORTE_DECLSPEC char * orte_snapc_base_get_global_snapshot_metadata_file(char *uniq_snapshot_name);
     ORTE_DECLSPEC char * orte_snapc_base_get_global_snapshot_directory(char *uniq_global_snapshot_name);
-    ORTE_DECLSPEC int    orte_snapc_base_init_global_snapshot_directory(char *uniq_global_snapshot_name);
+    ORTE_DECLSPEC int    orte_snapc_base_init_global_snapshot_directory(char *uniq_global_snapshot_name,
+                                                                        bool empty_metadata);
     ORTE_DECLSPEC int    orte_snapc_base_get_job_ckpt_info( orte_jobid_t jobid,
                                                             size_t *ckpt_state,
                                                             char **ckpt_snapshot_ref,

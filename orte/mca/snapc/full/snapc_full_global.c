@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,6 +53,16 @@
 /************************************
  * Locally Global vars & functions :)
  ************************************/
+#define INC_SEQ_NUM()                         \
+ {                                            \
+   if(orte_snapc_base_store_only_one_seq) {   \
+     orte_snapc_base_snapshot_seq_number = 0; \
+   } else {                                   \
+     orte_snapc_base_snapshot_seq_number++;   \
+   }                                          \
+ }
+
+
 /* RML Callback */
 static void snapc_full_global_recv(int status, 
                                    orte_process_name_t* sender,
@@ -207,6 +219,51 @@ int global_coord_setup_job(orte_jobid_t jobid) {
         goto cleanup;
     }
 
+    /*
+     * If requested pre-establish the global snapshot directory
+     */
+    if(orte_snapc_base_establish_gloabl_snapshot_dir) {
+        char *global_snapshot_handle = NULL;
+        char *global_dir = NULL;
+        
+        INC_SEQ_NUM();
+        global_snapshot_handle = strdup( orte_snapc_base_unique_global_snapshot_name( getpid() ) );
+        global_dir = orte_snapc_base_get_global_snapshot_directory(global_snapshot_handle);
+        orte_snapc_base_global_snapshot_loc = strdup(global_dir);
+
+        global_snapshot.seq_num = orte_snapc_base_snapshot_seq_number;
+        global_snapshot.reference_name = strdup(global_snapshot_handle);
+        global_snapshot.local_location = opal_dirname(orte_snapc_base_get_global_snapshot_directory(global_snapshot.reference_name));
+
+        opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
+                            "global) Pre-establish the global snapshot directory\n");
+
+        /* Creates the directory (with metadata files):
+         *   /tmp/ompi_global_snapshot_PID.ckpt/seq_num
+         */
+        if( ORTE_SUCCESS != (ret = orte_snapc_base_init_global_snapshot_directory(global_snapshot_handle, true))) {
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        /*
+         * Push this value to the GPR so the orted can pick it up
+         */
+        if( ORTE_SUCCESS != (ret = orte_snapc_base_set_job_ckpt_info(jobid,
+                                                                     ORTE_SNAPC_CKPT_STATE_NONE,
+                                                                     global_snapshot_handle,
+                                                                     global_dir) ) ) {
+            exit_status = ret;
+            goto cleanup;
+        }
+        
+        free(global_snapshot_handle);
+        global_snapshot_handle = NULL;
+        
+        free(global_dir);
+        global_dir = NULL;
+    }
+
     opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
                         "global [%d]) Setup job (%d) with vpid [%d, %d]\n", getpid(), jobid, vpid_start, vpid_range);
 
@@ -360,7 +417,7 @@ snapc_full_global_checkpoint(orte_jobid_t jobid, bool term, char **global_snapsh
     /*********************
      * Generate the global snapshot directory, and unique global snapshot handle
      *********************/
-    ++orte_snapc_base_snapshot_seq_number;
+    INC_SEQ_NUM();
     *global_snapshot_handle = strdup( orte_snapc_base_unique_global_snapshot_name( getpid() ) );
 
     global_snapshot.seq_num = orte_snapc_base_snapshot_seq_number;
@@ -370,7 +427,7 @@ snapc_full_global_checkpoint(orte_jobid_t jobid, bool term, char **global_snapsh
     /* Creates the directory (with metadata files):
      *   /tmp/ompi_global_snapshot_PID.ckpt/seq_num
      */
-    if( ORTE_SUCCESS != (ret = orte_snapc_base_init_global_snapshot_directory(*global_snapshot_handle))) {
+    if( ORTE_SUCCESS != (ret = orte_snapc_base_init_global_snapshot_directory(*global_snapshot_handle, false))) {
         exit_status = ret;
         goto cleanup;
     }
@@ -537,6 +594,8 @@ static void vpid_ckpt_state_callback(orte_gpr_notify_data_t *data, void *cbdata)
     if( !updated_job_to_running) {
         char * global_dir = NULL;
         global_dir = orte_snapc_base_get_global_snapshot_directory(global_snapshot.reference_name);
+
+        orte_snapc_base_global_snapshot_loc = strdup(global_dir);
 
         if( ORTE_SUCCESS != (ret = orte_snapc_base_set_job_ckpt_info(proc->jobid,
                                                                      ORTE_SNAPC_CKPT_STATE_RUNNING,
@@ -779,6 +838,7 @@ static int snapc_full_global_notify_checkpoint( char * global_snapshot_handle,
     /*
      * Update the job global segment
      */
+    orte_snapc_base_global_snapshot_loc = strdup(global_dir);
     if( ORTE_SUCCESS != (ret = orte_snapc_base_set_job_ckpt_info(jobid,
                                                                  ckpt_state,
                                                                  global_snapshot_handle,
@@ -821,6 +881,7 @@ static int snapc_full_global_check_for_done(orte_jobid_t jobid) {
      * Update the job checkpoint state
      **********************************/
     global_dir = orte_snapc_base_get_global_snapshot_directory(global_snapshot.reference_name);
+    orte_snapc_base_global_snapshot_loc = strdup(global_dir);
 
     if( ORTE_SUCCESS != (ret = orte_snapc_base_set_job_ckpt_info(jobid,
                                                                  cur_job_ckpt_state,

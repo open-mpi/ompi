@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -153,12 +155,24 @@ int opal_crs_base_none_enable_checkpoint(void)
     return OPAL_SUCCESS;
 }
 
+int opal_crs_base_none_prelaunch(int32_t rank,
+                                 char *base_snapshot_dir,
+                                 char **app,
+                                 char **cwd,
+                                 char ***argv,
+                                 char ***env)
+{
+    opal_setenv(mca_base_param_env_var("opal_cr_is_tool"),
+                "0", true, env);
+    return OPAL_SUCCESS;
+}
+
 /*
  * Utility functions
  */
 char * opal_crs_base_unique_snapshot_name(pid_t pid)
 {
-    char * loc_str;
+    char * loc_str = NULL;
     
     asprintf(&loc_str, "opal_snapshot_%d.ckpt", pid);
     

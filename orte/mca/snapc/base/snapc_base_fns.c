@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -687,8 +689,13 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char
 char * orte_snapc_base_unique_global_snapshot_name(pid_t pid)
 {
     char * uniq_name;
-    
-    asprintf(&uniq_name, "ompi_global_snapshot_%d.ckpt", pid);
+
+    if( NULL == orte_snapc_base_global_snapshot_ref ) {
+        asprintf(&uniq_name, "ompi_global_snapshot_%d.ckpt", pid);
+    }
+    else {
+        uniq_name = strdup(orte_snapc_base_global_snapshot_ref);
+    }
     
     return uniq_name;
 }
@@ -717,7 +724,7 @@ char * orte_snapc_base_get_global_snapshot_directory(char *uniq_snapshot_name)
     return dir_name;
 }
 
-int orte_snapc_base_init_global_snapshot_directory(char *uniq_global_snapshot_name)
+int orte_snapc_base_init_global_snapshot_directory(char *uniq_global_snapshot_name, bool empty_metadata)
 {
     char * dir_name = NULL, *meta_data_fname = NULL;
     mode_t my_mode = S_IRWXU;
@@ -750,14 +757,21 @@ int orte_snapc_base_init_global_snapshot_directory(char *uniq_global_snapshot_na
     /*
      * Put in the checkpoint sequence number
      */
-    fprintf(meta_data, "#\n%s%d\n", SNAPC_METADATA_SEQ, (int)orte_snapc_base_snapshot_seq_number);
+    if( empty_metadata ) {
+        fprintf(meta_data, "#\n");
+    }
+    else {
+        /*
+         * Put in the checkpoint sequence number
+         */
+        fprintf(meta_data, "#\n%s%d\n", SNAPC_METADATA_SEQ, (int)orte_snapc_base_snapshot_seq_number);
 
-    fclose(meta_data);
-    meta_data = NULL;
+        fclose(meta_data);
+        meta_data = NULL;
 
-    /* Add timestamp */
-    orte_snapc_base_add_timestamp(uniq_global_snapshot_name);
-
+        /* Add timestamp */
+        orte_snapc_base_add_timestamp(uniq_global_snapshot_name);
+    }
 
  cleanup:
     if(NULL != meta_data)

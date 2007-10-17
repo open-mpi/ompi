@@ -57,6 +57,9 @@
 
 #if OPAL_ENABLE_FT == 1
 #include "orte/mca/snapc/snapc.h"
+#include "orte/mca/snapc/base/base.h"
+#include "opal/mca/crs/crs.h"
+#include "opal/mca/crs/base/base.h"
 #endif
 
 #include "orte/mca/odls/base/odls_private.h"
@@ -1130,7 +1133,31 @@ DOFORK:
          */
         opal_condition_signal(&orte_odls_globals.cond);
         OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
-        
+
+#if OPAL_ENABLE_FT    == 1
+#if OPAL_ENABLE_FT_CR == 1
+        /*
+         * OPAL CRS components need the opportunity to take action before a process
+         * is forked.
+         * Needs access to:
+         *   - Environment
+         *   - Rank/ORTE Name
+         *   - Binary to exec
+         */
+        if( NULL != opal_crs.crs_prelaunch ) {
+            if( OPAL_SUCCESS != (rc = opal_crs.crs_prelaunch(child->name->vpid,
+                                                             orte_snapc_base_global_snapshot_loc,
+                                                             &(app->app),
+                                                             &(app->cwd),
+                                                             &(app->argv),
+                                                             &(app_item->environ_copy) ) ) ) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
+        }
+#endif
+#endif
+
         if (ORTE_SUCCESS != (rc = fork_local(app, child, app_item->environ_copy))) {
             /* do NOT ERROR_LOG this error - it generates
              * a message/node as most errors will be common
