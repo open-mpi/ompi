@@ -393,6 +393,9 @@ int orterun(int argc, char *argv[])
 #if OPAL_ENABLE_FT == 1
     /* Disable OPAL CR notifications for this tool */
     opal_cr_set_enabled(false);
+    opal_setenv(mca_base_param_env_var("opal_cr_is_tool"),
+                "1",
+                true, &environ);
 #endif
 
     /* Intialize our Open RTE environment */

@@ -8,7 +8,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
+ * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -58,7 +60,10 @@ static opal_crs_base_module_t loc_module = {
     /** Disable checkpoints */
     opal_crs_self_disable_checkpoint,
     /** Enable checkpoints */
-    opal_crs_self_enable_checkpoint
+    opal_crs_self_enable_checkpoint,
+
+    /** Prelaunch */
+    opal_crs_base_none_prelaunch
 };
 
 /*

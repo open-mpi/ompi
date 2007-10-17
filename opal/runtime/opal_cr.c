@@ -181,15 +181,18 @@ int opal_cr_init(void )
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: OPAL CR Allow OPAL Only: %d",
                         val);
+
     mca_base_param_reg_int_name("opal_cr", "is_tool",
                                 "Is this a tool program, meaning does it require a fully operational OPAL or just enough to exec.",
                                 false, false,
-                                false,
+                                0,
                                 &val);
-    if(!val) 
-        opal_cr_is_tool = false;
-    else
+    if(0 != val) {
         opal_cr_is_tool = true;
+    }
+    else {
+        opal_cr_is_tool = false;
+    }
 
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: Is a tool program: %d",

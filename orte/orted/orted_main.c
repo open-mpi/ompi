@@ -360,7 +360,14 @@ int orte_daemon(int argc, char *argv[])
         opal_daemon_init(NULL);
     }
 
-    /* Intialize OPAL */
+#if OPAL_ENABLE_FT == 1
+    /* Mark as a tool program */
+    opal_setenv(mca_base_param_env_var("opal_cr_is_tool"),
+                "1",
+                true, &environ);
+#endif
+
+    /* Initialize OPAL */
     if (ORTE_SUCCESS != (ret = opal_init())) {
         ORTE_ERROR_LOG(ret);
         return ret;

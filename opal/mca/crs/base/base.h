@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,6 +22,7 @@
 
 #include "opal_config.h"
 #include "opal/mca/crs/crs.h"
+#include "opal/util/opal_environ.h"
 
 /*
  * Global functions for MCA overall CRS
@@ -87,6 +90,13 @@ extern "C" {
 
     int opal_crs_base_none_disable_checkpoint(void);
     int opal_crs_base_none_enable_checkpoint(void);
+
+    int opal_crs_base_none_prelaunch(int32_t rank,
+                                     char *base_snapshot_dir,
+                                     char **app,
+                                     char **cwd,
+                                     char ***argv,
+                                     char ***env);
 
     /**
      * Some utility functions

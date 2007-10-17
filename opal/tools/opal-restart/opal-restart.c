@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -197,6 +199,13 @@ main(int argc, char *argv[])
      * restart on this node because it doesn't have the proper checkpointer
      * available. 
      */
+    if( OPAL_SUCCESS != (ret = opal_crs_base_open()) ) {
+        opal_show_help("help-opal-restart.txt", "comp_select_failure", true,
+                       "crs", ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
     if( OPAL_SUCCESS != (ret = opal_crs_base_select()) ) {
         opal_show_help("help-opal-restart.txt", "comp_select_failure", true,
                        expected_crs_comp, ret);
@@ -233,9 +242,8 @@ main(int argc, char *argv[])
                             "\t Exec in self");
     }
 
-    /* We are launching a program that is not going to be a tool :) */
-    opal_unsetenv(mca_base_param_env_var("opal_cr_is_tool"),
-                  &environ);
+    /* JJH: Do not unsetenv(opal_cr_is_tool) here, as it will impact the
+     * JJH: application improperly. */
 
     snapshot = OBJ_NEW(opal_crs_base_snapshot_t);
     snapshot->cold_start      = true;
@@ -381,10 +389,10 @@ static int parse_args(int argc, char *argv[])
     for(i = 0; i < len; ++i) {
         putenv(global_env[i]);
     }
-    
-    opal_setenv(mca_base_param_env_var("opal_cr_is_tool"),
-                "1",
-                true, &environ);
+
+    /* JJH: Do not setenv(opal_cr_is_tool, 1) here, as it will impact the
+     * JJH: application improperly. */
+
     /**
      * Now start parsing our specific arguments
      */

@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,7 +46,11 @@ opal_list_t orte_snapc_base_components_available;
 orte_snapc_base_component_t orte_snapc_base_selected_component;
 
 char * orte_snapc_base_global_snapshot_dir = NULL;
+char * orte_snapc_base_global_snapshot_loc = NULL;
+char * orte_snapc_base_global_snapshot_ref = NULL;
 bool orte_snapc_base_store_in_place = true;
+bool orte_snapc_base_store_only_one_seq = false;
+bool orte_snapc_base_establish_gloabl_snapshot_dir = false;
 
 /**
  * Function for finding and opening either all MCA components,
@@ -104,8 +110,64 @@ int orte_snapc_base_open(void)
         orte_snapc_base_store_in_place = false;
     }
 
+    /*
+     * Reuse sequence numbers
+     * This will create a directory and always use seq 0 for all checkpoints
+     * This *should* also enforce a 2-phase commit protocol
+     */
+    mca_base_param_reg_int_name("snapc_base",
+                                "only_one_seq",
+                                "Only store the most recent checkpoint sequence. [Default = disabled]",
+                                false, false,
+                                0,
+                                &value);
+    if( 0 != value ) { /* Enabled */
+        orte_snapc_base_store_only_one_seq = true;
+    }
+    else { /* Disabled */
+        orte_snapc_base_store_only_one_seq = false;
+    }
+    
+    /*
+     * Pre-establish the global snapshot directory upon job registration
+     */
+    mca_base_param_reg_int_name("snapc_base",
+                                "establish_global_snapshot_dir",
+                                "Establish the global snapshot directory on job startup. [Default = disabled]",
+                                false, false,
+                                0,
+                                &value);
+    if( 0 != value ) { /* Enabled */
+        orte_snapc_base_establish_gloabl_snapshot_dir = true;
+    }
+    else { /* Disabled */
+        orte_snapc_base_establish_gloabl_snapshot_dir = false;
+    }
+
+    /*
+     * User defined global snapshot directory name for this job
+     */
+    mca_base_param_reg_string_name("snapc_base",
+                                   "global_snapshot_ref",
+                                   "The global snapshot reference to be used for this job. "
+                                   " [Default = ompi_global_snapshot_MPIRUNPID.ckpt]",
+                                   false, false,
+                                   NULL,
+                                   &orte_snapc_base_global_snapshot_ref);
+
+
     /* Init the sequence (interval) number */
     orte_snapc_base_snapshot_seq_number = 0;
+
+    if( NULL == orte_snapc_base_global_snapshot_loc ) {
+        char *t1 = NULL;
+        char *t2 = NULL;
+        t1 = strdup( orte_snapc_base_unique_global_snapshot_name( getpid() ) );
+        t2 = orte_snapc_base_get_global_snapshot_directory( t1 );
+        orte_snapc_base_global_snapshot_loc = strdup(t2);
+        free(t1);
+        free(t2);
+    }
 
 
     /* 

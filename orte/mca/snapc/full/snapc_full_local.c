@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -138,7 +140,37 @@ int local_coord_setup_job(orte_jobid_t jobid)
         goto cleanup;
     }
 
-    ret = exit_status;
+    if(orte_snapc_base_establish_gloabl_snapshot_dir) {
+        size_t ckpt_state = ORTE_SNAPC_CKPT_STATE_NONE;
+        char * ckpt_snapshot_ref = NULL;
+        char * ckpt_snapshot_loc = NULL;
+
+        if( ORTE_SUCCESS != (ret = orte_snapc_base_get_job_ckpt_info(jobid,
+                                                                     &ckpt_state,
+                                                                     &ckpt_snapshot_ref,
+                                                                     &ckpt_snapshot_loc) ) ) {
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        if( NULL != ckpt_snapshot_loc &&
+            (0 != strncmp(ckpt_snapshot_loc, "", strlen(""))) ) {
+            orte_snapc_base_global_snapshot_loc = strdup(ckpt_snapshot_loc);
+        }
+
+        opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
+                            "local) The global snapshot directory has been established at [%s]\n",
+                            orte_snapc_base_global_snapshot_loc);
+
+        if( NULL != ckpt_snapshot_ref ) {
+            free(ckpt_snapshot_ref);
+            ckpt_snapshot_ref = NULL;
+        }
+        if( NULL != ckpt_snapshot_loc ) {
+            free(ckpt_snapshot_loc);
+            ckpt_snapshot_loc = NULL;
+        }
+    }
 
  cleanup:
     return exit_status;
