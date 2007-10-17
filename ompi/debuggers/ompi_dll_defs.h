@@ -194,10 +194,9 @@ typedef struct communicator_t
 {
     struct communicator_t * next;
     group_t *               group;		/* Translations */
-    int                     recv_context;	/* Unique ID for the communicator */
-    mqs_taddr_t             comm_ptr;
-    int                     present;
-    mqs_communicator        comm_info;		/* Info needed at the higher level */
+    mqs_taddr_t             comm_ptr;   /* pointer to the communicator in the process memory */
+    int                     present;    /* validation marker */
+    mqs_communicator        comm_info;  /* Info needed at the higher level */
 } communicator_t;
 
 typedef struct mqs_ompi_opal_list_t_pos {
