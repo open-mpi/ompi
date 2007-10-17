@@ -367,16 +367,6 @@ for a full list); a summary of the more commonly used ones follows:
   look in <mx directory>/lib and <mx directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
 
---with-mvapi=<directory>
-  Specify the directory where the mVAPI libraries and header files are
-  located.  This enables mVAPI support in Open MPI (although it is
-  deprecated).
-
---with-mvapi-libdir=<directory>
-  Look in directory for the MVAPI libraries.  By default, Open MPI will
-  look in <mvapi directory>/lib and <mvapi directory>/lib64, which covers
-  most cases.  This option is only needed for special configurations.
-
 --with-openib=<directory>
   Specify the directory where the OpenFabrics (previously known as
   OpenIB) libraries and header files are located.  This enables
