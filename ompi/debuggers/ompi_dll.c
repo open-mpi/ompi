@@ -704,6 +704,7 @@ int mqs_image_has_queues (mqs_image *image, char **message)
      * we're at our limit. Give up!
      */
     *message = missing_in_action;
+    printf( "The following type is missing %s\n", missing_in_action );
     return err_missing_type;
 } /* mqs_image_has_queues */
 
@@ -860,8 +861,8 @@ static communicator_t * find_communicator( mpi_process_info *p_info,
 {
     communicator_t * comm = p_info->communicator_list;
 
-    for (; comm; comm=comm->next) {
-        if (comm->recv_context == recv_ctx)
+    for( ; comm; comm = comm->next ) {
+        if( comm->comm_info.unique_id == (mqs_taddr_t)recv_ctx )
             return comm;
     }
 
@@ -876,7 +877,7 @@ static int compare_comms (const void *a, const void *b)
     communicator_t * ca = *(communicator_t **)a;
     communicator_t * cb = *(communicator_t **)b;
 
-    return cb->recv_context - ca->recv_context;
+    return cb->comm_info.unique_id - ca->comm_info.unique_id;
 } /* compare_comms */
 
 /***********************************************************************
@@ -964,7 +965,7 @@ static int rebuild_communicator_list (mqs_process *proc)
             old->next                 = p_info->communicator_list;
             p_info->communicator_list = old;
             old->comm_ptr             = comm_ptr;
-            old->recv_context         = context_id;
+            old->comm_info.unique_id  = context_id;
             old->comm_info.local_rank = local_rank;
 
             DEBUG(VERBOSE_COMM,("Create new communicator 0x%lx with context_id %d and local_rank %d\n",
@@ -983,7 +984,7 @@ static int rebuild_communicator_list (mqs_process *proc)
         }
         old->present = TRUE;
         DEBUG(VERBOSE_COMM,("Communicator 0x%llx %d local_rank %d name %s group %p\n",
-                            (long long)old->comm_ptr, (int)old->recv_context,
+                            (long long)old->comm_ptr, (int)old->comm_info.unique_id,
                             (int)old->comm_info.local_rank, old->comm_info.name,
                             (void*)old->group));
     }
@@ -1077,7 +1078,7 @@ int mqs_get_communicator (mqs_process *proc, mqs_communicator *comm)
     if (p_info->current_communicator) {
         *comm = p_info->current_communicator->comm_info;
         DEBUG(VERBOSE_COMM,("mqs_get_communicator %d local_rank %d name %s\n",
-                            p_info->current_communicator->recv_context, (int)comm->local_rank,
+                            comm->unique_id, (int)comm->local_rank,
                             comm->name));
         return mqs_ok;
     }
