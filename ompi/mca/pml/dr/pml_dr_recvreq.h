@@ -136,7 +136,7 @@ do {                                                                            
         recvreq->req_recv.req_base.req_ompi.req_status._count =         \
             recvreq->req_bytes_received;                                \
     }                                                                   \
-    MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_recv.req_base.req_ompi) );       \
+    ompi_request_complete( &(recvreq->req_recv.req_base.req_ompi) );       \
                                                                                        \
     if( true == recvreq->req_recv.req_base.req_free_called ) {                         \
         MCA_PML_DR_RECV_REQUEST_RETURN( recvreq );                                     \

@@ -121,7 +121,7 @@ do {                                                                \
     do {                                                                              \
        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                             \
                                 &(recvreq->req_recv.req_base), PERUSE_RECV );         \
-        MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_recv.req_base.req_ompi) );  \
+        ompi_request_complete( &(recvreq->req_recv.req_base.req_ompi) );  \
     } while (0)
 
 /*
