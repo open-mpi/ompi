@@ -157,16 +157,3 @@ int ompi_request_finalize(void)
     OBJ_DESTRUCT( &ompi_request_f_to_c_table );
     return OMPI_SUCCESS;
 }
-
-
-int ompi_request_complete(ompi_request_t* request)
-{
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    ompi_request_completed++;
-    request->req_complete = true;
-    if(ompi_request_waiting)
-        opal_condition_signal(&ompi_request_cond);
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
-    return OMPI_SUCCESS;
-}
-
