@@ -212,13 +212,6 @@ static inline int ompi_request_cancel(ompi_request_t* request)
 
 
 /**
- *  Signal a request as complete. Note this will
- *  wake any thread pending on the request.
- */
-
-OMPI_DECLSPEC int ompi_request_complete(ompi_request_t* request);
-
-/**
  * Free a request.
  *
  * @param request (INOUT)   Pointer to request.
@@ -390,6 +383,21 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
         ompi_request_waiting--;
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
+}
+
+/**
+ *  Signal a request as complete. Note this will
+ *  wake any thread pending on the request.
+ *  ompi_request_lock should be held while calling this function
+ */
+
+static inline int ompi_request_complete(ompi_request_t* request)
+{
+    ompi_request_completed++;
+    request->req_complete = true;
+    if(ompi_request_waiting)
+        opal_condition_signal(&ompi_request_cond);
+    return OMPI_SUCCESS;
 }
 
 END_C_DECLS

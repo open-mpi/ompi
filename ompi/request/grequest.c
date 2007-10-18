@@ -179,7 +179,9 @@ int ompi_grequest_complete(ompi_request_t *req)
 {
     int rc;
 
+    OPAL_THREAD_LOCK(&ompi_request_lock);
     rc = ompi_request_complete(req);
+    OPAL_THREAD_LOCK(&ompi_request_lock);
     OBJ_RELEASE(req);
     return rc;
 }
