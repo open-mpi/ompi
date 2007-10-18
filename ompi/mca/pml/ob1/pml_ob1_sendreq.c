@@ -956,7 +956,7 @@ mca_pml_ob1_send_request_schedule_once(mca_pml_ob1_send_request_t* sendreq)
         mca_pml_ob1_frag_hdr_t* hdr;
         mca_btl_base_descriptor_t* des;
         int rc, btl_idx;
-        size_t size, offset;
+        size_t size, offset, data_remaining = 0;
         mca_bml_base_btl_t* bml_btl;
 
         assert(range->range_send_length != 0);
@@ -978,13 +978,18 @@ mca_pml_ob1_send_request_schedule_once(mca_pml_ob1_send_request_t* sendreq)
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
+cannot_pack:
         do {
             btl_idx = range->range_btl_idx;
-            bml_btl = range->range_btls[btl_idx].bml_btl;
-            size = range->range_btls[btl_idx].length;
             if(++range->range_btl_idx == range->range_btl_cnt)
                 range->range_btl_idx = 0;
-        } while(!size);
+        } while(!range->range_btls[btl_idx].length);
+
+        bml_btl = range->range_btls[btl_idx].bml_btl;
+        /* If there is a remaining data from another BTL that was too small
+         * for converter to pack then send it through another BTL */
+        range->range_btls[btl_idx].length += data_remaining;
+        size = range->range_btls[btl_idx].length;
 
         /* makes sure that we don't exceed BTL max send size */
         if(bml_btl->btl_max_send_size != 0)
@@ -1003,13 +1008,23 @@ mca_pml_ob1_send_request_schedule_once(mca_pml_ob1_send_request_t* sendreq)
                                     &offset);
         range->range_send_offset = (uint64_t)offset;
 
+        data_remaining = size;
         mca_bml_base_prepare_src(bml_btl, NULL,
                                  &sendreq->req_send.req_base.req_convertor,
                                  MCA_BTL_NO_ORDER,
                                  sizeof(mca_pml_ob1_frag_hdr_t), &size, &des);
-        if( OPAL_UNLIKELY(des == NULL) ) {
+
+        if( OPAL_UNLIKELY(des == NULL || size == 0) ) {
+            if(des) {
+                /* Converter can't pack this chunk. Append to another chunk
+                 * from other BTL */
+                mca_bml_base_free(bml_btl, des);
+                range->range_btls[btl_idx].length -= data_remaining;
+                goto cannot_pack;
+            }   
             continue;
         }
+
         des->des_cbfunc = mca_pml_ob1_frag_completion;
         des->des_cbdata = sendreq;
 
