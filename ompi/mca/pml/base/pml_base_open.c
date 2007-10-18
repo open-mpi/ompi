@@ -83,7 +83,6 @@ ompi_pointer_array_t mca_pml_base_pml;
  */
 int mca_pml_base_open(void)
 {
-    char* default_pml = NULL;
     int value;
 #if OPAL_ENABLE_FT == 1
     char* wrapper_pml = NULL;
@@ -130,18 +129,20 @@ int mca_pml_base_open(void)
     ompi_pointer_array_add(&mca_pml_base_pml, 
                            stringify(MCA_pml_DIRECT_CALL_COMPONENT));
 #else
+    {
+        char* default_pml = NULL;
 
-    mca_base_param_reg_string_name("pml", NULL, 
-                                   "Specify a specific PML to use", 
-                                   false, false, "", &default_pml);
-    
-    if(0 == strlen(default_pml)){ 
-        ompi_pointer_array_add(&mca_pml_base_pml, strdup("ob1")); 
-        ompi_pointer_array_add(&mca_pml_base_pml, strdup("cm"));
-    } else { 
-        ompi_pointer_array_add(&mca_pml_base_pml, strdup(default_pml));
+        mca_base_param_reg_string_name("pml", NULL, 
+                                       "Specify a specific PML to use", 
+                                       false, false, "", &default_pml);
+        
+        if(0 == strlen(default_pml)){ 
+            ompi_pointer_array_add(&mca_pml_base_pml, strdup("ob1")); 
+            ompi_pointer_array_add(&mca_pml_base_pml, strdup("cm"));
+        } else { 
+            ompi_pointer_array_add(&mca_pml_base_pml, strdup(default_pml));
+        }
     }
-
 #if OPAL_ENABLE_FT == 1
     /* 
      * Which PML Wrapper component to use, if any
