@@ -260,7 +260,7 @@ do {                                                                     \
         if(OMPI_SUCCESS == ret &&                                        \
            sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
             sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = 0; \
-            MCA_PML_BASE_REQUEST_MPI_COMPLETE(&(sendreq)->req_send.req_base.req_ompi); \
+            ompi_request_complete(&(sendreq)->req_send.req_base.req_ompi); \
         }                                                                \
     }                                                                    \
  } while (0)
@@ -284,7 +284,7 @@ do {                                                                    \
     OPAL_THREAD_LOCK(&ompi_request_lock);                               \
     if( false == sendreq->req_send.req_base.req_ompi.req_complete ) {   \
         /* Should only be called for long messages (maybe synchronous) */ \
-        MCA_PML_BASE_REQUEST_MPI_COMPLETE(&(sendreq->req_send.req_base.req_ompi)); \
+        ompi_request_complete(&(sendreq->req_send.req_base.req_ompi)); \
     }                                                                   \
     sendreq->req_send.req_base.req_pml_complete = true;                 \
                                                                         \
@@ -330,7 +330,7 @@ do {                                                                    \
     OPAL_THREAD_LOCK(&ompi_request_lock);                               \
     if( false == sendreq->req_send.req_base.req_ompi.req_complete ) {   \
         /* Should only be called for long messages (maybe synchronous) */ \
-        MCA_PML_BASE_REQUEST_MPI_COMPLETE(&(sendreq->req_send.req_base.req_ompi)); \
+        ompi_request_complete(&(sendreq->req_send.req_base.req_ompi)); \
     }                                                                   \
     sendreq->req_send.req_base.req_pml_complete = true;                 \
                                                                         \

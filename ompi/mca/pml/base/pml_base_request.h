@@ -76,11 +76,6 @@ typedef struct mca_pml_base_request_t mca_pml_base_request_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_request_t);
 
-/*
- * Mark the MPI request as completed and trigger the condition if required.
- */
-#define MCA_PML_BASE_REQUEST_MPI_COMPLETE(req)  ompi_request_complete(req)
-
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

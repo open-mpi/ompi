@@ -189,9 +189,8 @@ do {                                                                            
    (sendreq)->req_send.req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;     \
    (sendreq)->req_send.req_base.req_ompi.req_status._count =                      \
         (int)(sendreq)->req_send.req_bytes_packed;                                \
-   MCA_PML_BASE_REQUEST_MPI_COMPLETE( &((sendreq)->req_send.req_base.req_ompi) ); \
+   ompi_request_complete( &((sendreq)->req_send.req_base.req_ompi) ); \
                                                                                   \
-   /* Could be moved to MCA_PML_BASE_REQUEST_MPI_COMPLETE, but before broadcast */ \
    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                             \
                             &(sendreq->req_send.req_base), PERUSE_SEND);          \
 } while(0)
