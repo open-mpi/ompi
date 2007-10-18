@@ -120,38 +120,9 @@ int mca_pml_ob1_send(void *buf,
         return rc;
     }
 
-    if (sendreq->req_send.req_base.req_ompi.req_complete == false) {
-#if OMPI_ENABLE_PROGRESS_THREADS
-        if(opal_progress_spin(&sendreq->req_send.req_base.req_ompi.req_complete)) {
-            ompi_request_free( (ompi_request_t**)&sendreq );
-            return OMPI_SUCCESS;
-        }
-#endif
-
-        /* give up and sleep until completion */
-        if (opal_using_threads()) {
-            opal_mutex_lock(&ompi_request_lock);
-            ompi_request_waiting++;
-            while (sendreq->req_send.req_base.req_ompi.req_complete == false)
-                opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-            ompi_request_waiting--;
-            opal_mutex_unlock(&ompi_request_lock);
-        } else {
-#if OMPI_ENABLE_DEBUG && !OMPI_HAVE_THREAD_SUPPORT
-            OPAL_THREAD_LOCK(&ompi_request_lock);
-#endif 
-            ompi_request_waiting++;
-            while (sendreq->req_send.req_base.req_ompi.req_complete == false)
-                opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-            ompi_request_waiting--;
-#if OMPI_ENABLE_DEBUG && !OMPI_HAVE_THREAD_SUPPORT
-            OPAL_THREAD_UNLOCK(&ompi_request_lock);
-#endif 
-        }
-    }
+    ompi_request_wait_completion(&sendreq->req_send.req_base.req_ompi);
 
     rc = sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR;
     ompi_request_free( (ompi_request_t**)&sendreq );
     return rc;
 }
-

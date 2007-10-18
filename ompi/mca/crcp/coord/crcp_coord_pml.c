@@ -3857,13 +3857,7 @@ static int coord_request_wait_all( size_t count,
 static int coord_request_wait( ompi_request_t * req,
                                ompi_status_public_t * status)
 {
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    ompi_request_waiting++;
-    while (req->req_complete == false) {
-        opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-    }
-    ompi_request_waiting--;
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+    ompi_request_wait_completion(req);
 
     if( MPI_STATUS_IGNORE != status ) {
         status->MPI_TAG    = req->req_status.MPI_TAG;

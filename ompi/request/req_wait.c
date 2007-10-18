@@ -31,27 +31,7 @@ int ompi_request_wait(
 {
     ompi_request_t *req = *req_ptr;
 
-    if(req->req_complete == false) {
-
-#if OMPI_ENABLE_PROGRESS_THREADS
-        /* poll for completion */
-        if(opal_progress_spin(&req->req_complete))
-            goto finished;
-#endif
-
-        /* give up and sleep until completion */
-        OPAL_THREAD_LOCK(&ompi_request_lock);
-        ompi_request_waiting++;
-        while (req->req_complete == false) {
-            opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-        }
-        ompi_request_waiting--;
-        OPAL_THREAD_UNLOCK(&ompi_request_lock);
-    }
-
-#if OMPI_ENABLE_PROGRESS_THREADS
-finished:
-#endif
+    ompi_request_wait_completion(req);
 
 #if OPAL_ENABLE_FT == 1
     OMPI_CRCP_REQUEST_COMPLETE(req);
