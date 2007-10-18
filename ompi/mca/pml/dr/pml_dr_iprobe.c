@@ -64,22 +64,7 @@ int mca_pml_dr_probe(int src,
     MCA_PML_DR_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char, src, tag, comm, true);
     MCA_PML_DR_RECV_REQUEST_START(&recvreq);
 
-    if (recvreq.req_recv.req_base.req_ompi.req_complete == false) {
-        /* give up and sleep until completion */
-        if (opal_using_threads()) {
-            opal_mutex_lock(&ompi_request_lock);
-            ompi_request_waiting++;
-            while (recvreq.req_recv.req_base.req_ompi.req_complete == false)
-                opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-            ompi_request_waiting--;
-            opal_mutex_unlock(&ompi_request_lock);
-        } else {
-            ompi_request_waiting++;
-            while (recvreq.req_recv.req_base.req_ompi.req_complete == false)
-                opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-            ompi_request_waiting--;
-        }
-    }
+    ompi_request_wait_completion(&recvreq.req_recv.req_base.req_ompi);
 
     if (NULL != status) {
         *status = recvreq.req_recv.req_base.req_ompi.req_status;
@@ -87,4 +72,3 @@ int mca_pml_dr_probe(int src,
     MCA_PML_BASE_RECV_REQUEST_FINI( &recvreq.req_recv );
     return OMPI_SUCCESS;
 }
-

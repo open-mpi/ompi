@@ -101,37 +101,7 @@ int mca_pml_ob1_recv(void *addr,
                              PERUSE_RECV);
 
     MCA_PML_OB1_RECV_REQUEST_START(recvreq);
-    if (recvreq->req_recv.req_base.req_ompi.req_complete == false) {
-#if OMPI_ENABLE_PROGRESS_THREADS
-        if(opal_progress_spin(&recvreq->req_recv.req_base.req_ompi.req_complete)) {
-            goto finished;
-        }
-#endif
-        /* give up and sleep until completion */
-        if (opal_using_threads()) {
-            opal_mutex_lock(&ompi_request_lock);
-            ompi_request_waiting++;
-            while (recvreq->req_recv.req_base.req_ompi.req_complete == false)
-                opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-            ompi_request_waiting--;
-            opal_mutex_unlock(&ompi_request_lock);
-        } else {
-#if OMPI_ENABLE_DEBUG && !OMPI_HAVE_THREAD_SUPPORT
-            OPAL_THREAD_LOCK(&ompi_request_lock);
-#endif 
-            ompi_request_waiting++;
-            while (recvreq->req_recv.req_base.req_ompi.req_complete == false)
-                opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-            ompi_request_waiting--;
-#if OMPI_ENABLE_DEBUG && !OMPI_HAVE_THREAD_SUPPORT
-            OPAL_THREAD_UNLOCK(&ompi_request_lock);
-#endif 
-        }
-    }
-
-#if OMPI_ENABLE_PROGRESS_THREADS
-finished:
-#endif
+    ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
 
     if (NULL != status) {  /* return status */
         *status = recvreq->req_recv.req_base.req_ompi.req_status;

@@ -374,7 +374,24 @@ OMPI_DECLSPEC int ompi_request_wait_some(
     int * indices,
     ompi_status_public_t * statuses);
 
+static inline void ompi_request_wait_completion(ompi_request_t *req)
+{
+    if(false == req->req_complete) {
+#if OMPI_ENABLE_PROGRESS_THREADS
+        if(opal_progress_spin(&req->req_complete)) {
+            return;
+        }
+#endif
+        OPAL_THREAD_LOCK(&ompi_request_lock);
+        ompi_request_waiting++;
+        while(false == req->req_complete) {
+            opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
+        }
+        ompi_request_waiting--;
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
+    }
+}
+
 END_C_DECLS
 
 #endif
-

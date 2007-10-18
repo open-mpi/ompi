@@ -112,22 +112,7 @@ mca_pml_cm_recv(void *addr,
         return ret;
     }
 
-    if (recvreq->req_base.req_ompi.req_complete == false) {
-        /* give up and sleep until completion */
-        if (opal_using_threads()) {
-            opal_mutex_lock(&ompi_request_lock);
-            ompi_request_waiting++;
-            while (recvreq->req_base.req_ompi.req_complete == false)
-                opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-            ompi_request_waiting--;
-            opal_mutex_unlock(&ompi_request_lock);
-        } else {
-            ompi_request_waiting++;
-            while (recvreq->req_base.req_ompi.req_complete == false)
-                opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-            ompi_request_waiting--;
-        }
-    }
+    ompi_request_wait_completion(&recvreq->req_base.req_ompi);
 
     if (NULL != status) {  /* return status */
         *status = recvreq->req_base.req_ompi.req_status;

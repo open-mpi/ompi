@@ -175,23 +175,8 @@ mca_pml_cm_send(void *buf,
                 MCA_PML_CM_THIN_SEND_REQUEST_RETURN(sendreq);
                 return ret;
             }
-            
-            if (sendreq->req_send.req_base.req_ompi.req_complete == false) {
-                /* give up and sleep until completion */
-                if (opal_using_threads()) {
-                    opal_mutex_lock(&ompi_request_lock);
-                    ompi_request_waiting++;
-                    while (sendreq->req_send.req_base.req_ompi.req_complete == false)
-                        opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-                    ompi_request_waiting--;
-                    opal_mutex_unlock(&ompi_request_lock);
-                } else {
-                    ompi_request_waiting++;
-                    while (sendreq->req_send.req_base.req_ompi.req_complete == false)
-                        opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-                    ompi_request_waiting--;
-                }
-            }
+           
+            ompi_request_wait_completion(&sendreq->req_send.req_base.req_ompi);
         
             ompi_request_free( (ompi_request_t**)&sendreq );
         } else {
