@@ -39,7 +39,13 @@ int mca_coll_self_scatterv_intra(void *sbuf, int *scounts,
     if (MPI_IN_PLACE == rbuf) {
         return MPI_SUCCESS;
     } else {
-        return ompi_ddt_sndrcv(((char *) sbuf) + disps[0], scounts[0], sdtype,
-                               rbuf, rcount, rdtype);
+        int err;        
+        ptrdiff_t lb, extent;
+        err = ompi_ddt_get_extent(sdtype, &lb, &extent);
+        if (OMPI_SUCCESS != err) {
+            return OMPI_ERROR;
+        }
+        return ompi_ddt_sndrcv(((char *) sbuf) + disps[0]*extent, scounts[0], 
+                               sdtype, rbuf, rcount, rdtype);
     }
 }

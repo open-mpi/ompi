@@ -38,8 +38,15 @@ int mca_coll_self_gatherv_intra(void *sbuf, int scount,
 {
     if (MPI_IN_PLACE == sbuf) {
         return MPI_SUCCESS;
-    } else {
+    } else { 
+        int err;        
+        ptrdiff_t lb, extent;
+        err = ompi_ddt_get_extent(rdtype, &lb, &extent);
+        if (OMPI_SUCCESS != err) {
+            return OMPI_ERROR;
+        }
         return ompi_ddt_sndrcv(sbuf, scount, sdtype,
-                               ((char *) rbuf) + disps[0], rcounts[0], rdtype);
+                               ((char *) rbuf) + disps[0]*extent, 
+                               rcounts[0], rdtype);
     }
 }

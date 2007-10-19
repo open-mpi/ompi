@@ -36,6 +36,19 @@ int mca_coll_self_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
                                   struct ompi_datatype_t **rdtypes, 
                                   struct ompi_communicator_t *comm)
 {
-    return ompi_ddt_sndrcv(((char *) sbuf) + sdisps[0], scounts[0], sdtypes[0],
-                           ((char *) rbuf) + rdisps[0], rcounts[0], rdtypes[0]);
+    int err;        
+    ptrdiff_t lb, rextent, sextent;
+    err = ompi_ddt_get_extent(sdtypes[0], &lb, &sextent);
+    if (OMPI_SUCCESS != err) {
+        return OMPI_ERROR;
+    }
+    err = ompi_ddt_get_extent(rdtypes[0], &lb, &rextent);
+    if (OMPI_SUCCESS != err) {
+        return OMPI_ERROR;
+    }
+
+    return ompi_ddt_sndrcv(((char *) sbuf) + sdisps[0] * sextent, 
+                           scounts[0], sdtypes[0],
+                           ((char *) rbuf) + rdisps[0] * rextent, 
+                           rcounts[0], rdtypes[0]);
 }
