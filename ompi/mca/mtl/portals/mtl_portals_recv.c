@@ -466,7 +466,10 @@ restart_search:
 
     /* associate a memory descriptor with the Match list Entry */
     md.threshold = 0;
+/*
     md.options = PTL_MD_OP_PUT | PTL_MD_TRUNCATE | PTL_MD_EVENT_START_DISABLE;
+*/
+    md.options = PTL_MD_OP_PUT | PTL_MD_TRUNCATE;
     md.user_ptr = ptl_request;
     md.eq_handle = ompi_mtl_portals.ptl_eq_h;
     ret=PtlMDAttach(me_h, md, PTL_UNLINK, &md_h);
