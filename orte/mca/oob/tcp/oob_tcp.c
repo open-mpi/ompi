@@ -1057,12 +1057,11 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     addr = (mca_oob_tcp_addr_t *)orte_hash_table_get_proc(&mca_oob_tcp_component.tcp_peer_names,
          &peer->peer_name);
+    OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
     if(NULL != addr) {
-         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
          mca_oob_tcp_peer_resolved(peer, addr);
          return ORTE_SUCCESS;
     }
-    OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 
     /* if we don't know it, then report unknown - don't try to go get it */
     return ORTE_ERR_ADDRESSEE_UNKNOWN;
