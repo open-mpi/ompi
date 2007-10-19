@@ -68,6 +68,9 @@ static void xcast_send_cb(int status,
 {
     OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
     
+    /* release the buffer */
+    OBJ_RELEASE(buffer);
+    
     orte_grpcomm_basic.num_active--;
     if (orte_grpcomm_basic.num_active <= 0) {
         orte_grpcomm_basic.num_active = 0; /* just to be safe */
@@ -250,7 +253,7 @@ DONE:
     
     /* now go to sleep until woken up */
     OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
-    if (orte_grpcomm_basic.num_active > 0) {
+    while (orte_grpcomm_basic.num_active > 0) {
         opal_condition_wait(&orte_grpcomm_basic.cond, &orte_grpcomm_basic.mutex);
     }
     OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
@@ -373,8 +376,7 @@ static int xcast_binomial_tree(orte_jobid_t job,
     }
 
 CLEANUP:  
-    OBJ_RELEASE(buf);
-    
+    /* the buffer will be released by the cb function */
     return rc;
 }
 
@@ -470,6 +472,10 @@ static int xcast_linear(orte_jobid_t job,
                              "xcast_linear: %s => %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&dummy)));
+        /* we have to retain the buffer here since we are going to
+         * use it multiple times
+         */
+        OBJ_RETAIN(buf);
         if (0 > (rc = orte_rml.send_buffer_nb(&dummy, buf, ORTE_RML_TAG_ORTED_ROUTED,
                                               0, xcast_send_cb, NULL))) {
             if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
@@ -490,6 +496,9 @@ static int xcast_linear(orte_jobid_t job,
     
     /* cleanup */
 CLEANUP:
+    /* need to release the buffer so that the reference count will be correct
+     * when the cb function releases it
+     */
     OBJ_RELEASE(buf);
     return rc;    
 }
@@ -504,10 +513,25 @@ static int xcast_direct(orte_jobid_t job,
     orte_std_cntr_t n;
     opal_list_t attrs;
     opal_list_item_t *item;
+    orte_buffer_t *buf;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s xcast_direct",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* it seems unnecessary, but we need to protect the data because the cb function
+     * is going to release the buffer - so create a local buffer and copy the
+     * payload across
+     */
+    buf = OBJ_NEW(orte_buffer_t);
+    /* copy the payload into the new buffer - this is non-destructive, so our
+     * caller is still responsible for releasing any memory in the buffer they
+     * gave to us
+     */
+    if (ORTE_SUCCESS != (rc = orte_dss.copy_payload(buf, buffer))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
     
     /* need to get the job peers so we know who to send the message to */
     OBJ_CONSTRUCT(&attrs, opal_list_t);
@@ -515,6 +539,7 @@ static int xcast_direct(orte_jobid_t job,
     if (ORTE_SUCCESS != (rc = orte_ns.get_peers(&peers, &n, &attrs))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&attrs);
+        OBJ_RELEASE(buf);
         return rc;
     }
     item = opal_list_remove_first(&attrs);
@@ -545,7 +570,11 @@ static int xcast_direct(orte_jobid_t job,
                              "xcast_direct: %s => %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(peers+i)));
-        if (0 > (rc = orte_rml.send_buffer_nb(peers+i, buffer, tag, 0, xcast_send_cb, NULL))) {
+        /* we have to retain the buffer here since we are going to
+         * use it multiple times
+         */
+        OBJ_RETAIN(buf);
+        if (0 > (rc = orte_rml.send_buffer_nb(peers+i, buf, tag, 0, xcast_send_cb, NULL))) {
             if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                 rc = ORTE_ERR_COMM_FAILURE;
@@ -563,6 +592,10 @@ static int xcast_direct(orte_jobid_t job,
     rc = ORTE_SUCCESS;
 
 CLEANUP:
+    /* need to release the buffer so that the reference count will be correct
+     * when the cb function releases it
+     */
+    OBJ_RELEASE(buf);
     free(peers);
 
     return rc;
