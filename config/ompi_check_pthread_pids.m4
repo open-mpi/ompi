@@ -33,6 +33,8 @@ AH_TEMPLATE([OMPI_THREADS_HAVE_DIFFERENT_PIDS],
     [Do threads have different pids (pthreads on linux)])
 
 AC_MSG_CHECKING([if threads have different pids (pthreads on linux)])
+CFLAGS_save="$CFLAGS"
+CFLAGS="$CFLAGS $THREAD_CFLAGS"
 CPPFLAGS_save="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS $THREAD_CPPFLAGS"
 LDFLAGS_save="$LDFLAGS"
@@ -46,20 +48,20 @@ AC_TRY_RUN([#include <pthread.h>
 void *checkpid(void *arg);
 int main() {
   pthread_t thr;
-  int pid, retval;
+  int pid, *retval;
   pid = getpid();
   pthread_create(&thr, NULL, checkpid, &pid);
   pthread_join(thr, (void **) &retval);
-  exit(retval);
+  exit(*retval);
 }
+static int ret;
 void *checkpid(void *arg) {
-   int ret;
    int ppid = *((int *) arg);
    if (ppid == getpid())
      ret = 0;
    else
      ret = 1;
-     pthread_exit((void *) ret);
+   pthread_exit((void *) &ret);
 }], 
 [MSG=no OMPI_THREADS_HAVE_DIFFERENT_PIDS=0], 
 [MSG=yes OMPI_THREADS_HAVE_DIFFERENT_PIDS=1],
@@ -75,6 +77,7 @@ void *checkpid(void *arg) {
  esac
 ])
 
+CFLAGS="$CFLAGS_save"
 CPPFLAGS="$CPPFLAGS_save"
 LDFLAGS="$LDFLAGS_save"
 LIBS="$LIBS_save"
