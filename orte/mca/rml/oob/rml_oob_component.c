@@ -340,7 +340,7 @@ rml_oob_queued_progress(int fd, short event, void *arg)
         OPAL_THREAD_UNLOCK(&orte_rml_oob_module.queued_lock);
         if (NULL == qmsg) break;
 
-        hdr = (orte_rml_oob_msg_header_t*) qmsg->payload;
+        hdr = (orte_rml_oob_msg_header_t*) qmsg->payload[0].iov_base;
         origin = hdr->origin;
 
         next = orte_routed.get_route(&hdr->destination);
