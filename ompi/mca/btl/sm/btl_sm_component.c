@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -178,6 +179,7 @@ int mca_btl_sm_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags1, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags2, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_sm_component.pending_send_fl, opal_free_list_t);
     return OMPI_SUCCESS;
 }
 
@@ -322,6 +324,48 @@ void mca_btl_sm_component_event_thread(opal_object_t* thread)
 }
 #endif
 
+void
+btl_sm_add_pending(struct mca_btl_base_endpoint_t *ep, void *data, bool resend)
+{
+    int rc;
+    btl_sm_pending_send_item_t *si;
+    opal_free_list_item_t *i;
+    OPAL_FREE_LIST_GET(&mca_btl_sm_component.pending_send_fl, i, rc);
+
+    /* don't handle error for now */
+    assert(i != NULL && rc == OMPI_SUCCESS);
+
+    si = (btl_sm_pending_send_item_t*)i;
+    si->data = data;
+
+    /* if data was on pending send list then prepend it to the list to
+     * minimize reordering */
+    if(resend)
+        opal_list_prepend(&ep->pending_sends, (opal_list_item_t*)si);
+    else
+        opal_list_append(&ep->pending_sends, (opal_list_item_t*)si);
+}
+
+static int process_pending_send(struct mca_btl_base_endpoint_t *ep)
+{
+    btl_sm_pending_send_item_t *si;
+    void *data;
+    opal_list_item_t *i = opal_list_remove_first(&ep->pending_sends);
+    int rc;
+
+    if(NULL == i) return OMPI_ERROR;
+
+    si = (btl_sm_pending_send_item_t*)i;
+
+    data = si->data;
+    OPAL_FREE_LIST_RETURN(&mca_btl_sm_component.pending_send_fl, i);
+
+    MCA_BTL_SM_FIFO_WRITE(ep, ep->my_smp_rank, ep->peer_smp_rank, data,
+            true, rc);
+
+    return rc;
+}
+
 int mca_btl_sm_component_progress(void)
 {
     /* local variables */
@@ -330,15 +374,9 @@ int mca_btl_sm_component_progress(void)
     mca_btl_sm_frag_t Frag;
     ompi_fifo_t *fifo = NULL;
     mca_btl_sm_hdr_t *hdr;
-    int my_smp_rank=mca_btl_sm_component.my_smp_rank;
+    int my_smp_rank = mca_btl_sm_component.my_smp_rank;
     int proc;
     int rc = 0;
-
-    /* send progress is made by the PML */
-
-    /* 
-     * receive progress 
-     */
 
     /* poll each fifo */
     for(proc = 0; proc < mca_btl_sm_component.num_smp_procs - 1; proc++) {
@@ -377,13 +415,15 @@ int mca_btl_sm_component_progress(void)
                 /* completion callback */
                 frag->base.des_cbfunc(&mca_btl_sm.super, frag->endpoint,
                         &frag->base, status?OMPI_ERROR:OMPI_SUCCESS);
+                if(opal_list_get_size(&frag->endpoint->pending_sends))
+                    process_pending_send(frag->endpoint);
                 break;
             }
             case MCA_BTL_SM_FRAG_SEND:
             {
                 mca_btl_sm_recv_reg_t* reg;
                 /* change the address from address relative to the shared
-                * memory address, to a true virtual address */
+                 * memory address, to a true virtual address */
                 hdr = (mca_btl_sm_hdr_t *)((char *)hdr +
                         mca_btl_sm_component.sm_offset[peer_smp_rank]);
                 /* recv upcall */
@@ -397,7 +437,7 @@ int mca_btl_sm_component_progress(void)
                         reg->cbdata);
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
-                        my_smp_rank, peer_smp_rank, hdr->frag);
+                        my_smp_rank, peer_smp_rank, hdr->frag, false, rc);
                 break;
             }
             default:
@@ -406,7 +446,7 @@ int mca_btl_sm_component_progress(void)
                         MCA_BTL_SM_FRAG_STATUS_MASK);
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
-                        my_smp_rank, peer_smp_rank, hdr);
+                        my_smp_rank, peer_smp_rank, hdr, false, rc);
                 break;
         }
         rc++;

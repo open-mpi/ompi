@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,6 +36,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
+#include "opal/class/opal_free_list.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_bitmap.h"
 #include "ompi/class/ompi_fifo.h"
@@ -124,6 +126,8 @@ struct mca_btl_sm_component_t {
                                                     awaiting resources */
     struct mca_btl_base_endpoint_t **sm_peers;
 
+    opal_free_list_t pending_send_fl;
+
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     char sm_fifo_path[PATH_MAX];   /**< path to fifo used to signal this process */
     int  sm_fifo_fd;               /**< file descriptor corresponding to opened fifo */
@@ -132,6 +136,13 @@ struct mca_btl_sm_component_t {
 };
 typedef struct mca_btl_sm_component_t mca_btl_sm_component_t;
 OMPI_MODULE_DECLSPEC extern mca_btl_sm_component_t mca_btl_sm_component;
+
+struct btl_sm_pending_send_item_t
+{
+    opal_free_list_item_t super;
+    void *data;
+};
+typedef struct btl_sm_pending_send_item_t btl_sm_pending_send_item_t;
 
 /**
  * Register shared memory module parameters with the MCA framework
