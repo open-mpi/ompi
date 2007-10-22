@@ -1044,7 +1044,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
     
     
     /* okay, now let's launch our local procs using the provided fork_local fn */
-    i = 0;
     quit_flag = false;
     for (item = opal_list_get_first(&orte_odls_globals.children);
          !quit_flag && item != opal_list_get_end(&orte_odls_globals.children);
@@ -1169,7 +1168,6 @@ DOFORK:
         }
         /* reaquire lock so we don't double unlock... */
         OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
-        i++;
     }
     launch_failed = false;
 
