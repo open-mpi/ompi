@@ -58,7 +58,7 @@ struct mca_mtl_mx_component_t{
 };
 typedef struct mca_mtl_mx_component_t mca_mtl_mx_component_t;
 
-OMPI_DECLSPEC mca_mtl_mx_component_t mca_mtl_mx_component;
+OMPI_MODULE_DECLSPEC extern mca_mtl_mx_component_t mca_mtl_mx_component;
     
 
 /* match/ignore bit manipulation
