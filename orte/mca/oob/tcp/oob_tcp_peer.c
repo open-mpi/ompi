@@ -163,12 +163,25 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
         /*
          * queue the message and attempt to resolve the peer address
          */
-        opal_list_append(&peer->peer_send_queue, (opal_list_item_t*)msg);
         if(peer->peer_state == MCA_OOB_TCP_CLOSED) {
             peer->peer_state = MCA_OOB_TCP_RESOLVE;
+
+            /* Only queue up the message if we known who the peer is.
+               If we don't, return the error and let the upper layer
+               figure out what to do.  Cannot hold the peer_lock when
+               we call resolve(), but we do need to hold it when/if we
+               append to the peer_send_queue. */
             OPAL_THREAD_UNLOCK(&peer->peer_lock);
-            return mca_oob_tcp_resolve(peer);
+            rc = mca_oob_tcp_resolve(peer);
+            if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
+                OPAL_THREAD_LOCK(&peer->peer_lock);
+                opal_list_append(&peer->peer_send_queue,
+                                 (opal_list_item_t*)msg);
+                OPAL_THREAD_UNLOCK(&peer->peer_lock);
+            }
+            return rc;
         }
+        opal_list_append(&peer->peer_send_queue, (opal_list_item_t*)msg);
         break;
     case MCA_OOB_TCP_FAILED:
         rc = ORTE_ERR_UNREACH;
