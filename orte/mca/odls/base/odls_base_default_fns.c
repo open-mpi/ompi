@@ -890,7 +890,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
     orte_app_context_t *app;
     orte_odls_app_context_t *app_item;
     orte_odls_child_t *child;
-    int i, num_processors;
+    int proc_rank, num_processors;
     bool want_processor, oversubscribed, quit_flag;
     int rc;
     bool launch_failed=true;
@@ -1013,7 +1013,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
                 oversubscribed ? "true" : "false", want_processor ? "true" : "false");
     
     /* setup the environment for each context */
-    for (item2 = opal_list_get_first(app_context_list);
+    for (proc_rank = 0, item2 = opal_list_get_first(app_context_list);
          item2 != opal_list_get_end(app_context_list);
          item2 = opal_list_get_next(item2)) {
         app_item = (orte_odls_app_context_t*)item2;
@@ -1021,7 +1021,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
                                                                num_local_procs,
                                                                vpid_range,
                                                                total_slots_alloc,
-                                                               want_processor, i,
+                                                               want_processor, proc_rank,
                                                                oversubscribed,
                                                                &app_item->environ_copy))) {
             /* do not ERROR_LOG this failure - it will be reported
@@ -1029,7 +1029,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
              * in this job and mark it as failed-to-start
              */
             for (item = opal_list_get_first(&orte_odls_globals.children);
-                 !quit_flag && item != opal_list_get_end(&orte_odls_globals.children);
+                 item != opal_list_get_end(&orte_odls_globals.children);
                  item = opal_list_get_next(item)) {
                 child = (orte_odls_child_t*)item;
                 if (ORTE_EQUAL == orte_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
@@ -1039,6 +1039,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
                 }
             }
         }
+        proc_rank++;  /* by default go to the next proc */
     }
     
     
