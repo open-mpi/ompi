@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -86,22 +86,23 @@ int ompi_request_init(void)
     OBJ_CONSTRUCT(&ompi_request_f_to_c_table, ompi_pointer_array_t);
     OBJ_CONSTRUCT(&ompi_request_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&ompi_request_cond, opal_condition_t);
-    OBJ_CONSTRUCT(&ompi_request_null, ompi_request_t);
-    OBJ_CONSTRUCT(&ompi_request_empty, ompi_request_t);
 
+    OBJ_CONSTRUCT(&ompi_request_null, ompi_request_t);
+    ompi_request_null.req_type = OMPI_REQUEST_NULL;
     ompi_request_null.req_status.MPI_SOURCE = MPI_PROC_NULL;
     ompi_request_null.req_status.MPI_TAG = MPI_ANY_TAG;
     ompi_request_null.req_status.MPI_ERROR = MPI_SUCCESS;
     ompi_request_null.req_status._count = 0;
     ompi_request_null.req_status._cancelled = 0;
 
-    ompi_request_null.req_state = OMPI_REQUEST_INACTIVE;
     ompi_request_null.req_complete = true;
-    ompi_request_null.req_type = OMPI_REQUEST_NULL;
+    ompi_request_null.req_state = OMPI_REQUEST_INACTIVE;
+    ompi_request_null.req_persistent = false;
+    ompi_request_null.req_f_to_c_index =
+        ompi_pointer_array_add(&ompi_request_f_to_c_table, &ompi_request_null);
     ompi_request_null.req_free = ompi_request_null_free;
     ompi_request_null.req_cancel = ompi_request_null_cancel;
-    ompi_request_null.req_f_to_c_index = 
-        ompi_pointer_array_add(&ompi_request_f_to_c_table, &ompi_request_null);
+    ompi_request_null.req_mpi_object.comm = &ompi_mpi_comm_world;
 
     if (0 != ompi_request_null.req_f_to_c_index) {
         return OMPI_ERR_REQUEST;
@@ -118,19 +119,22 @@ int ompi_request_init(void)
      * request to MPI_REQUEST_NULL.
      * The req_cancel function need not be changed.
      */
+    OBJ_CONSTRUCT(&ompi_request_empty, ompi_request_t);
+    ompi_request_empty.req_type = OMPI_REQUEST_NULL;
     ompi_request_empty.req_status.MPI_SOURCE = MPI_PROC_NULL;
     ompi_request_empty.req_status.MPI_TAG = MPI_ANY_TAG;
     ompi_request_empty.req_status.MPI_ERROR = MPI_SUCCESS;
     ompi_request_empty.req_status._count = 0;
     ompi_request_empty.req_status._cancelled = 0;
 
-    ompi_request_empty.req_state = OMPI_REQUEST_ACTIVE;
     ompi_request_empty.req_complete = true;
-    ompi_request_empty.req_type = OMPI_REQUEST_NULL;
-    ompi_request_empty.req_free = ompi_request_empty_free;
-    ompi_request_empty.req_cancel = ompi_request_null_cancel;
+    ompi_request_empty.req_state = OMPI_REQUEST_ACTIVE;
+    ompi_request_empty.req_persistent = false;
     ompi_request_empty.req_f_to_c_index =
         ompi_pointer_array_add(&ompi_request_f_to_c_table, &ompi_request_empty);
+    ompi_request_empty.req_free = ompi_request_empty_free;
+    ompi_request_empty.req_cancel = ompi_request_null_cancel;
+    ompi_request_empty.req_mpi_object.comm = &ompi_mpi_comm_world;
 
     if (1 != ompi_request_empty.req_f_to_c_index) {
         return OMPI_ERR_REQUEST;
