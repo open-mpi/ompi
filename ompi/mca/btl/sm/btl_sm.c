@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -201,7 +202,8 @@ int mca_btl_sm_add_procs(
         }
         peer->peer_smp_rank = n_local_procs +
             mca_btl_sm_component.num_smp_procs;
-        
+
+        OBJ_CONSTRUCT(&peer->pending_sends, opal_list_t);
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
         sprintf(path, "%s"OPAL_PATH_SEP"sm_fifo.%lu", orte_process_info.job_session_dir, 
                 (unsigned long)procs[proc]->proc_name.vpid);
@@ -575,6 +577,11 @@ int mca_btl_sm_add_procs(
                 mca_btl_sm_component.sm_free_list_inc,
                 NULL);
 
+        opal_free_list_init(&mca_btl_sm_component.pending_send_fl,
+                sizeof(btl_sm_pending_send_item_t),
+                OBJ_CLASS(opal_free_list_item_t),
+                16, -1, 32);
+
         /* set up mca_btl_sm_component.list_smp_procs */
         mca_btl_sm_component.list_smp_procs=(int *)
             malloc(mca_btl_sm_component.sm_max_procs*sizeof(int));
@@ -799,17 +806,21 @@ int mca_btl_sm_send(
     mca_btl_base_tag_t tag)
 {
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)descriptor;
+    int rc;
 
-    /* availble header space */
+    /* available header space */
     frag->hdr->len = frag->segment.seg_len;
     /* type of message, pt-2-pt, one-sided, etc */
     frag->hdr->tag = tag;
+
+    frag->endpoint = endpoint;
 
     /* 
      * post the descriptor in the queue - post with the relative
      * address 
      */
-    MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank, endpoint->peer_smp_rank, frag->hdr);
+    MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
+            endpoint->peer_smp_rank, frag->hdr, false, rc);
     return OMPI_SUCCESS;
 }
 

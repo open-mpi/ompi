@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,7 +40,9 @@ struct mca_btl_base_endpoint_t {
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     int fifo_fd;        /**< pipe/fifo used to signal endpoint that data is queued */
 #endif
+    opal_list_t pending_sends; /**< pending data to send */
 };
 
+void 
+btl_sm_add_pending(struct mca_btl_base_endpoint_t *ep, void *data, bool resend);
 #endif
-
