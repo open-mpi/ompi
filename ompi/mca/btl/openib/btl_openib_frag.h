@@ -205,12 +205,11 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_control_t);
  */
 
 #define MCA_BTL_IB_FRAG_ALLOC_CREDIT_WAIT(btl, frag, rc)               \
-{                                                                      \
-                                                                       \
-    ompi_free_list_item_t *item;                                       \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_openib_module_t*)btl)->send_free_control, item, rc);       \
-    frag = (mca_btl_openib_frag_t*) item;                              \
-}
+    do {                                                               \
+        ompi_free_list_item_t *item;                                   \
+        OMPI_FREE_LIST_WAIT(&(btl)->send_free_control, item, rc);      \
+        frag = (mca_btl_openib_frag_t*)item;                           \
+    } while(0)
 
 #define MCA_BTL_IB_FRAG_ALLOC_BY_SIZE(btl, frag, _size, rc)             \
     do {                                                                \
@@ -218,38 +217,33 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_control_t);
         ompi_free_list_item_t* item = NULL;                             \
         for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {      \
             if(mca_btl_openib_component.qp_infos[qp].size >= _size) {   \
-                OMPI_FREE_LIST_GET(                                     \
-                  &((mca_btl_openib_module_t*) btl)->qps[qp].send_free, \
-                    item, rc);                                          \
+                OMPI_FREE_LIST_GET(&(btl)->qps[qp].send_free, item, rc);\
                 if(item)                                                \
                     break;                                              \
             }                                                           \
         }                                                               \
-        frag = (mca_btl_openib_frag_t*) item;                           \
+        frag = (mca_btl_openib_frag_t*)item;                            \
     } while(0);
         
 #define MCA_BTL_IB_FRAG_ALLOC_SEND_USER(btl, frag, rc)                 \
-    {                                                                  \
-                                                                       \
-        ompi_free_list_item_t *item;                                    \
-        OMPI_FREE_LIST_GET(&((mca_btl_openib_module_t*)btl)->send_user_free, item, rc); \
-        frag = (mca_btl_openib_frag_t*) item;                           \
-    }
+    do {                                                               \
+        ompi_free_list_item_t *item;                                   \
+        OMPI_FREE_LIST_GET(&(btl)->send_user_free, item, rc);          \
+        frag = (mca_btl_openib_frag_t*)item;                           \
+    } while(0)
 
 #define MCA_BTL_IB_FRAG_ALLOC_RECV_USER(btl, frag, rc)                  \
-    {                                                                   \
-                                                                        \
+    do {                                                                \
         ompi_free_list_item_t *item;                                    \
-        OMPI_FREE_LIST_GET(&((mca_btl_openib_module_t*)btl)->recv_user_free, item, rc); \
+        OMPI_FREE_LIST_GET(&(btl)->recv_user_free, item, rc);           \
         frag = (mca_btl_openib_frag_t*) item;                           \
-    }
+    } while(0)
 
-#define MCA_BTL_IB_FRAG_RETURN(btl, frag)                                  \
-{ do {                                                              \
+#define MCA_BTL_IB_FRAG_RETURN(btl, frag)                               \
+    do {                                                                \
         OMPI_FREE_LIST_RETURN(frag->list,                               \
-                              (ompi_free_list_item_t*)(frag));          \
-    } while(0);                                                         \
-}
+                (ompi_free_list_item_t*)(frag));                        \
+    } while(0);
 
 #define MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(btl,list)                      \
     while(!opal_list_is_empty(list)){                                     \

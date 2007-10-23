@@ -470,7 +470,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     mca_btl_openib_module_t* openib_btl; 
     int rc;
     openib_btl = (mca_btl_openib_module_t*) btl; 
-    MCA_BTL_IB_FRAG_ALLOC_BY_SIZE(btl, frag, size, rc);
+    MCA_BTL_IB_FRAG_ALLOC_BY_SIZE(openib_btl, frag, size, rc);
     
     if(NULL == frag)
         return NULL;
@@ -558,7 +558,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     if(ompi_convertor_need_buffers(convertor) == false && 0 == reserve) {
         /* GMS  bloody HACK! */
         if(registration != NULL || max_data > btl->btl_max_send_size) {
-            MCA_BTL_IB_FRAG_ALLOC_SEND_USER(btl, frag, rc);
+            MCA_BTL_IB_FRAG_ALLOC_SEND_USER(openib_btl, frag, rc);
             if(NULL == frag) {
                 return NULL;
             }
@@ -615,7 +615,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         max_data = btl->btl_max_send_size - reserve;
     }
     
-    MCA_BTL_IB_FRAG_ALLOC_BY_SIZE(btl, frag, max_data + reserve, rc);
+    MCA_BTL_IB_FRAG_ALLOC_BY_SIZE(openib_btl, frag, max_data + reserve, rc);
    
     if(NULL == frag)
         return NULL;
@@ -667,7 +667,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
 
     openib_btl = (mca_btl_openib_module_t*)btl;
         
-    MCA_BTL_IB_FRAG_ALLOC_RECV_USER(btl, frag, rc);
+    MCA_BTL_IB_FRAG_ALLOC_RECV_USER(openib_btl, frag, rc);
     if(NULL == frag) {
         return NULL;
     }
