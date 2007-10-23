@@ -212,15 +212,6 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_control_t);
     frag = (mca_btl_openib_frag_t*) item;                              \
 }
 
-#define MCA_BTL_IB_FRAG_ALLOC(btl, frag, rc, prio)                     \
-    do {                                                               \
-        ompi_free_list_item_t *item;                                   \
-         OMPI_FREE_LIST_GET(                                           \
-                 &((mca_btl_openib_module_t*)btl)->send_free[prio],    \
-                 item, rc);                                            \
-        frag = (mca_btl_openib_frag_t*)item;                           \
-    } while (0)
-    
 #define MCA_BTL_IB_FRAG_ALLOC_BY_SIZE(btl, frag, _size, rc)             \
     do {                                                                \
         int qp;                                                         \
