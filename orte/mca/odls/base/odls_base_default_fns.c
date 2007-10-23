@@ -691,7 +691,6 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
                                         orte_std_cntr_t num_local_procs,
                                         orte_vpid_t vpid_range,
                                         orte_std_cntr_t total_slots_alloc,
-                                        bool want_processor, size_t processor,
                                         bool oversubscribed, char ***environ_copy)
 {
     int rc;
@@ -799,20 +798,6 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
         opal_setenv(param, "0", false, environ_copy);
     }
     free(param);
-    
-    if (want_processor) {
-        param = mca_base_param_environ_variable("mpi", NULL,
-                                                "paffinity_processor");
-        asprintf(&param2, "%lu", (unsigned long) processor);
-        opal_setenv(param, param2, false, environ_copy);
-        free(param);
-        free(param2);
-    } else {
-        param = mca_base_param_environ_variable("mpi", NULL,
-                                                "paffinity_processor");
-        opal_unsetenv(param, environ_copy);
-        free(param);
-    }
     
     /* setup universe info */
     if (NULL != orte_universe_info.name) {
@@ -1013,7 +998,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
                 oversubscribed ? "true" : "false", want_processor ? "true" : "false");
     
     /* setup the environment for each context */
-    for (proc_rank = 0, item2 = opal_list_get_first(app_context_list);
+    for (item2 = opal_list_get_first(app_context_list);
          item2 != opal_list_get_end(app_context_list);
          item2 = opal_list_get_next(item2)) {
         app_item = (orte_odls_app_context_t*)item2;
@@ -1021,7 +1006,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
                                                                num_local_procs,
                                                                vpid_range,
                                                                total_slots_alloc,
-                                                               want_processor, proc_rank,
                                                                oversubscribed,
                                                                &app_item->environ_copy))) {
             /* do not ERROR_LOG this failure - it will be reported
@@ -1039,13 +1023,12 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
                 }
             }
         }
-        proc_rank++;  /* by default go to the next proc */
     }
     
     
     /* okay, now let's launch our local procs using the provided fork_local fn */
     quit_flag = false;
-    for (item = opal_list_get_first(&orte_odls_globals.children);
+    for (proc_rank = 0, item = opal_list_get_first(&orte_odls_globals.children);
          !quit_flag && item != opal_list_get_end(&orte_odls_globals.children);
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
@@ -1128,6 +1111,20 @@ DOFORK:
         free(param);
         free(value);
         
+        if (want_processor) {
+            param = mca_base_param_environ_variable("mpi", NULL,
+                                                    "paffinity_processor");
+            asprintf(&value, "%lu", (unsigned long) proc_rank);
+            opal_setenv(param, value, true, &app_item->environ_copy);
+            free(param);
+            free(value);
+        } else {
+            param = mca_base_param_environ_variable("mpi", NULL,
+                                                    "paffinity_processor");
+            opal_unsetenv(param, &app_item->environ_copy);
+            free(param);
+        }
+        
         /* must unlock prior to fork to keep things clean in the
          * event library
          */
@@ -1168,6 +1165,8 @@ DOFORK:
         }
         /* reaquire lock so we don't double unlock... */
         OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+        /* move to next processor */
+        proc_rank++;
     }
     launch_failed = false;
 
