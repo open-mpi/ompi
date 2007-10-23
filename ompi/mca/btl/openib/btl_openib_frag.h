@@ -167,7 +167,6 @@ struct mca_btl_openib_frag_t {
     mca_btl_openib_header_t *hdr;
     mca_btl_base_segment_t segment; 
     size_t size; 
-    int rc;
     mca_btl_openib_frag_type_t type; 
     union{ 
         struct ibv_recv_wr rd_desc; 
