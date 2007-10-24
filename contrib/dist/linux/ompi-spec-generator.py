@@ -306,7 +306,9 @@ Requires: %(requires)s
 rm -f %(name)s.files
 rm -f %(name)s.files.tmp
 for i in %(installed_files)s; do
-echo $i >> %(name)s.files.tmp
+for file in $RPM_BUILD_ROOT/$i ; do
+echo $file | sed "s#$RPM_BUILD_ROOT/##g" >> %(name)s.files.tmp
+done
 done
 sort -u %(name)s.files.tmp > %(name)s.files
 rm -f %(name)s.files.tmp
