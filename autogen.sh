@@ -1103,6 +1103,32 @@ EOF
     unset project project_path framework framework_path component component_path
 }
 
+##############################################################################
+#
+# check_for_svk_checkout - determine whether this is an SVK checkout
+#
+# INPUT:
+#    none
+#
+# OUTPUT:
+#    none
+#
+# SIDE EFFECTS:
+#
+##############################################################################
+check_for_svk_checkout() {
+    is_svk_checkout=0
+
+    svk_path=`which svk 2>/dev/null`
+    if test -x "$svk_path"; then
+        top_level_dir="`dirname $0`"
+        svk info $top_level_dir >/dev/null 2>&1
+        if test "$?" = 0 ; then
+            is_svk_checkout=1
+        fi
+    fi
+
+}
 
 ##############################################################################
 #
@@ -1135,7 +1161,8 @@ done
 echo "[Checking] prerequisites"
 
 # sanity check to make sure user isn't being stupid
-if test ! -d .svn ; then
+check_for_svk_checkout
+if test ! -d .svn -a ! $is_svk_checkout ; then
     cat <<EOF
 
 This doesn't look like a developer copy of Open MPI.  You probably do not
