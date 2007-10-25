@@ -94,6 +94,7 @@ opal_timer_altix_open(void)
     mmdev_map = mmap(0, getpagesize(), PROT_READ, MAP_SHARED, fd, 0);
     if (NULL == mmdev_map) return OPAL_ERR_NOT_SUPPORTED;
     opal_timer_altix_mmdev_timer_addr = mmdev_map + offset;
+    close(fd);
 
     return OPAL_SUCCESS;
 }
