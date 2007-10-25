@@ -516,7 +516,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
             /* check for 'wdir' */ 
             ompi_info_get (array_of_info[i], "wdir", valuelen, cwd, &flag);
             if ( flag ) {
-                apps[i]->cwd = cwd;
+                apps[i]->cwd = strdup(cwd);
                 have_wdir = 1;
             }
 
