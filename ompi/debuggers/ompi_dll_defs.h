@@ -52,9 +52,6 @@ typedef struct
     } ompi_free_list_item_t;
     struct {
         int size;
-    } ompi_free_list_memory_t;
-    struct {
-        int size;
         struct {
             int fl_elem_class;    /* opal_class_t* */
             int fl_mpool;         /* struct mca_mpool_base_module_t* */
@@ -106,6 +103,7 @@ typedef struct
             int req_bytes_packed;
         } offset;
     } mca_pml_base_recv_request_t;
+#if 0
     /* fragments for unexpected messages (as well as theirs headers) */
     struct {
         int size;
@@ -131,6 +129,7 @@ typedef struct
             int hdr_seq;
         } offset;
     } mca_pml_ob1_match_hdr_t;
+#endif
     /* communicator structures */
     struct {
         int size;

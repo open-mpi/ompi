@@ -31,15 +31,7 @@ static void ompi_free_list_destruct(ompi_free_list_t* fl);
 OBJ_CLASS_INSTANCE(ompi_free_list_t, opal_atomic_lifo_t,
         ompi_free_list_construct, ompi_free_list_destruct);
 
-struct ompi_free_list_memory_t {
-    opal_list_item_t super;
-    mca_mpool_base_registration_t *registration;
-    void *base_ptr;
-};
-typedef struct ompi_free_list_memory_t ompi_free_list_memory_t;
-static OBJ_CLASS_INSTANCE(ompi_free_list_memory_t,
-                          opal_list_item_t,
-                          NULL, NULL);
+typedef struct ompi_free_list_item_t ompi_free_list_memory_t;
 
 OBJ_CLASS_INSTANCE(ompi_free_list_item_t, 
                    opal_list_item_t,
@@ -76,7 +68,7 @@ static void ompi_free_list_destruct(ompi_free_list_t* fl)
     while(NULL != (item = opal_list_remove_first(&(fl->fl_allocations)))) {
         fl_mem = (ompi_free_list_memory_t*)item;
         if(fl->fl_mpool != NULL) {
-            fl->fl_mpool->mpool_free(fl->fl_mpool, fl_mem->base_ptr,
+            fl->fl_mpool->mpool_free(fl->fl_mpool, fl_mem->ptr,
                     fl_mem->registration);
         }
        /* destruct the item (we constructed it), then free the memory chunk */
@@ -169,11 +161,11 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
 
     /* make the alloc_ptr a list item, save the chunk in the allocations list,
      * and have ptr point to memory right after the list item structure */
-    OBJ_CONSTRUCT(alloc_ptr, ompi_free_list_memory_t);
+    OBJ_CONSTRUCT(alloc_ptr, ompi_free_list_item_t);
     opal_list_append(&(flist->fl_allocations), (opal_list_item_t*)alloc_ptr);
 
     alloc_ptr->registration = reg;
-    alloc_ptr->base_ptr = mpool_alloc_ptr;
+    alloc_ptr->ptr = mpool_alloc_ptr;
 
     ptr = (unsigned char*)alloc_ptr + sizeof(ompi_free_list_memory_t);
     ptr = OPAL_ALIGN_PTR(ptr, flist->fl_alignment, unsigned char*);
