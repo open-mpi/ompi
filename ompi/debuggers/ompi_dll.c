@@ -517,15 +517,6 @@ int mqs_image_has_queues (mqs_image *image, char **message)
         i_info->ompi_free_list_item_t.size = mqs_sizeof(qh_type);
     }
     {
-        mqs_type* qh_type = mqs_find_type( image, "ompi_free_list_memory_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "ompi_free_list_memory_t";
-            goto type_missing;
-        }
-        /* This is just an overloaded opal_list_item_t */
-        i_info->ompi_free_list_memory_t.size = mqs_sizeof(qh_type);
-    }
-    {
         mqs_type* qh_type = mqs_find_type( image, "ompi_free_list_t", mqs_lang_c );
         if( !qh_type ) {
             missing_in_action = "ompi_free_list_t";
@@ -598,6 +589,7 @@ int mqs_image_has_queues (mqs_image *image, char **message)
     /**
      * Gather information about the received fragments and theirs headers.
      */
+#if 0  /* Disabled until I find a better way */
     {
         mqs_type* qh_type = mqs_find_type( image, "mca_pml_ob1_common_hdr_t", mqs_lang_c );
         if( !qh_type ) {
@@ -631,7 +623,7 @@ int mqs_image_has_queues (mqs_image *image, char **message)
         i_info->mca_pml_ob1_recv_frag_t.offset.hdr = mqs_field_offset(qh_type, "hdr");
         i_info->mca_pml_ob1_recv_frag_t.offset.request = mqs_field_offset(qh_type, "request");
     }
-
+#endif
     /**
      * And now let's look at the communicator and group structures.
      */
@@ -1254,7 +1246,7 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
         /**
          * Handle alignment issues...
          */
-        active_allocation += i_info->ompi_free_list_memory_t.size;
+        active_allocation += i_info->ompi_free_list_item_t.size;
         active_allocation = OPAL_ALIGN( active_allocation,
                                         position->fl_alignment, mqs_taddr_t );
         /**
@@ -1300,7 +1292,7 @@ static int ompi_free_list_t_next_item( mqs_process *proc, mpi_process_info *p_in
         /**
          * Handle alignment issues...
          */
-        active_allocation += i_info->ompi_free_list_memory_t.size;
+        active_allocation += i_info->ompi_free_list_item_t.size;
         active_allocation = OPAL_ALIGN( active_allocation,
                                         position->fl_alignment, mqs_taddr_t );
         /**

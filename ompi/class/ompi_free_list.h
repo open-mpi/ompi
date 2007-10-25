@@ -65,9 +65,7 @@ struct ompi_free_list_item_t
     void *ptr;
 }; 
 typedef struct ompi_free_list_item_t ompi_free_list_item_t; 
-
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_free_list_item_t);
-
 
 /**
  * Initialize a free list.
