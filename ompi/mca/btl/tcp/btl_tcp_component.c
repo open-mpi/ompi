@@ -574,10 +574,8 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
     {
         int index, range, port;
         
-        if( AF_INET == af_family ) {
-            range = mca_btl_tcp_component.tcp_port_range;
-            port = mca_btl_tcp_component.tcp_port_min;
-        }
+        range = mca_btl_tcp_component.tcp_port_range;
+        port = mca_btl_tcp_component.tcp_port_min;
 #if OPAL_WANT_IPV6
         if (AF_INET6 == af_family) {
             range = mca_btl_tcp_component.tcp6_port_range;

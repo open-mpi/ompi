@@ -564,10 +564,8 @@ static int mca_oob_tcp_create_listen(int *target_sd, uint16_t af_family)
     {
         int index, range, port;
 
-        if( AF_INET == af_family ) {
-            range = mca_oob_tcp_component.tcp_port_range;
-            port = mca_oob_tcp_component.tcp_port_min;
-        }
+        range = mca_oob_tcp_component.tcp_port_range;
+        port = mca_oob_tcp_component.tcp_port_min;
 #if OPAL_WANT_IPV6
         if (AF_INET6 == af_family) {
             range = mca_oob_tcp_component.tcp6_port_range;
