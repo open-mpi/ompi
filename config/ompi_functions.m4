@@ -264,3 +264,63 @@ eval $ompi_eval
 
 unset ompi_name ompi_i ompi_done ompi_newval ompi_eval ompi_count])dnl
 
+dnl #######################################################################
+dnl #######################################################################
+dnl #######################################################################
+
+# Declare some variables; use OMPI_VAR_SCOPE_END to ensure that they
+# are cleaned up / undefined.
+AC_DEFUN([OMPI_VAR_SCOPE_PUSH],[
+
+    # Is the private index set?  If not, set it.
+    if test "x$ompi_scope_index" = "x"; then
+        ompi_scope_index=1
+    fi
+
+    # First, check to see if any of these variables are already set.
+    # This is a simple sanity check to ensure we're not already
+    # overwriting pre-existing variables (that have a non-empty
+    # value).  It's not a perfect check, but at least it's something.
+    for ompi_var in $1; do
+        ompi_str="ompi_str=\"\$$ompi_var\""
+        eval $ompi_str
+
+        if test "x$ompi_str" != "x"; then
+            AC_MSG_WARN([Found configure shell variable clash!])
+            AC_MSG_WARN([[OMPI_VAR_SCOPE_PUSH] called on "$ompi_var",])
+            AC_MSG_WARN([but it is already defined with value "$ompi_str"])
+            AC_MSG_WARN([This usually indicates an error in configure.])
+            AC_MSG_ERROR([Cannot continue])
+        fi
+    done
+
+    # Ok, we passed the simple sanity check.  Save all these names so
+    # that we can unset them at the end of the scope.
+    ompi_str="ompi_scope_$ompi_scope_index=\"$1\""
+    eval $ompi_str
+    unset ompi_str
+
+    env | grep ompi_scope
+    ompi_scope_index=`expr $ompi_scope_index + 1`
+])dnl
+
+# Unset a bunch of variables that were previously set
+AC_DEFUN([OMPI_VAR_SCOPE_POP],[
+    # Unwind the index
+    ompi_scope_index=`expr $ompi_scope_index - 1`
+    ompi_scope_test=`expr $ompi_scope_index \> 0`
+    if test "$ompi_scope_test" = "0"; then
+        AC_MSG_WARN([[OMPI_VAR_SCOPE_POP] popped too many OMPI configure scopes.])
+        AC_MSG_WARN([This usually indicates an error in configure.])
+        AC_MSG_ERROR([Cannot continue])
+    fi
+
+    # Get the variable names from that index
+    ompi_str="ompi_str=\"\$ompi_scope_$ompi_scope_index\""
+    eval $ompi_str
+
+    # Iterate over all the variables and unset them all
+    for ompi_var in $ompi_str; do
+        unset $ompi_var
+    done
+])dnl
