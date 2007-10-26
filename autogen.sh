@@ -1120,7 +1120,7 @@ check_for_svk_checkout() {
     is_svk_checkout=0
 
     svk_path=`which svk 2>/dev/null`
-    if test -x "$svk_path"; then
+    if test -x "$svk_path" -a -d "$HOME/.svk"; then
         top_level_dir="`dirname $0`"
         svk info $top_level_dir >/dev/null 2>&1
         if test "$?" = 0 ; then
