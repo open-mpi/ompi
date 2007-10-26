@@ -211,8 +211,9 @@ base as of this writing (19 September 2007):
   Mellanox InfiniBand plugin driver is created.  The problem is fixed
   OFED v1.1 (and later).
 
-- The use of the mvapi BTL is deprecated.  All new InfiniBand work is
-  being done in the openib BTL (i.e., the OpenFabrics driver stack).
+- Older mVAPI-based InfiniBand drivers (Mellanox VAPI) are no longer
+  supported.  Please use an older version of Open MPI (1.2 series or
+  earlier) if you need mVAPI support.
 
 - The use of fork() with the openib BTL is only partially supported,
   and only on Linux kernels >= v2.6.15 with libibverbs v1.1 or later
@@ -273,7 +274,7 @@ base as of this writing (19 September 2007):
     combination with each other (per OS constraints; e.g., there are
     reports that the GM and OpenFabrics kernel drivers do not operate
     well together):
-    - InfiniBand: mVAPI and the OpenFabrics stack
+    - InfiniBand: OpenFabrics
     - Loopback (send-to-self)
     - Myrinet: GM and MX
     - Portals
