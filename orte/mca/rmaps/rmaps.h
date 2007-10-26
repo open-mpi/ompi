@@ -49,9 +49,7 @@
 
 #include "orte/mca/rmaps/rmaps_types.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * rmaps module functions
@@ -139,8 +137,6 @@ typedef orte_rmaps_base_component_1_3_0_t orte_rmaps_base_component_t;
 /* global structure for accessing RMAPS modules */
 ORTE_DECLSPEC extern orte_rmaps_base_module_t orte_rmaps;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif
