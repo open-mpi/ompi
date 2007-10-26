@@ -196,10 +196,6 @@ struct mca_oob_tcp_component_t {
     mca_oob_base_component_1_0_0_t super;  /**< base OOB component */
     char*              tcp_include;          /**< list of ip interfaces to include */
     char*              tcp_exclude;          /**< list of ip interfaces to exclude */
-    int                tcp_listen_sd;        /**< listen socket for incoming IPv4 connection requests */
-    unsigned short     tcp_listen_port;      /**< IPv4 listen port */
-    int                tcp6_listen_sd;       /**< listen socket for incoming IPv6 connection requests */
-    unsigned short     tcp6_listen_port;     /**< IPv6 listen port */
     opal_list_t        tcp_peer_list;        /**< list of peers sorted in mru order */
     opal_hash_table_t  tcp_peers;            /**< peers sorted by name */
     opal_hash_table_t  tcp_peer_names;       /**< cache of peer contact info sorted by name */
@@ -210,7 +206,17 @@ struct mca_oob_tcp_component_t {
     int                tcp_rcvbuf;           /**< socket recv buffer size */
     opal_free_list_t   tcp_msgs;             /**< free list of messages */
     opal_event_t       tcp_recv_event;       /**< event structure for IPv4 recvs */
+    int                tcp_listen_sd;        /**< listen socket for incoming IPv4 connection requests */
+    unsigned short     tcp_listen_port;      /**< IPv4 listen port */
+    int                tcp_port_min;         /**< Minimum allowed port for the OOB listen socket */
+    int                tcp_port_range;       /**< Range of allowed TCP ports */
+#if OPAL_WANT_IPV6
     opal_event_t       tcp6_recv_event;      /**< event structure for IPv6 recvs */
+    int                tcp6_listen_sd;       /**< listen socket for incoming IPv6 connection requests */
+    unsigned short     tcp6_listen_port;     /**< IPv6 listen port */
+    int                tcp6_port_min;        /**< Minimum allowed port for the OOB listen socket */
+    int                tcp6_port_range;      /**< Range of allowed TCP ports */
+#endif  /* OPAL_WANT_IPV6 */
     opal_mutex_t       tcp_lock;             /**< lock for accessing module state */
     opal_list_t        tcp_events;           /**< list of pending events (accepts) */
     opal_list_t        tcp_msg_post;         /**< list of recieves user has posted */

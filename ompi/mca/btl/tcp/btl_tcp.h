@@ -70,16 +70,21 @@ struct mca_btl_tcp_component_t {
     opal_hash_table_t tcp_procs;            /**< hash table of tcp proc structures */
     opal_list_t tcp_events;                 /**< list of pending tcp events */
     opal_mutex_t tcp_lock;                  /**< lock for accessing module state */
+
     opal_event_t tcp_recv_event;            /**< recv event for IPv4 listen socket */
-#if OPAL_WANT_IPV6
-    opal_event_t tcp6_recv_event;           /**< recv event for IPv6 listen socket */
-#endif
     int tcp_listen_sd;                      /**< IPv4 listen socket for incoming connection requests */
     unsigned short tcp_listen_port;         /**< IPv4 listen port */
+    int32_t tcp_port_min;                   /**< IPv4 minimum port */
+    int32_t tcp_port_range;                 /**< IPv4 port range */
 #if OPAL_WANT_IPV6
+    opal_event_t tcp6_recv_event;           /**< recv event for IPv6 listen socket */
     int tcp6_listen_sd;                     /**< IPv6 listen socket for incoming connection requests */
     unsigned short tcp6_listen_port;        /**< IPv6 listen port */
+    int32_t tcp6_port_min;                  /**< IPv4 minimum port */
+    int32_t tcp6_port_range;                /**< IPv4 port range */
 #endif
+        /* Port range restriction */
+
     char*  tcp_if_include;                  /**< comma seperated list of interface to include */
     char*  tcp_if_exclude;                  /**< comma seperated list of interface to exclude */
     int    tcp_sndbuf;                      /**< socket sndbuf size */
