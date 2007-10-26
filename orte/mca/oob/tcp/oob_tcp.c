@@ -552,7 +552,7 @@ static int mca_oob_tcp_create_listen(int *target_sd, uint16_t af_family)
 
     {  /* Don't reuse ports */
         int flg = 0;
-        if (setsockopt (*target_sd, SOL_SOCKET, SO_REUSEPORT, &flg, sizeof (flg)) < 0) {
+        if (setsockopt (*target_sd, SOL_SOCKET, SO_REUSEADDR, &flg, sizeof (flg)) < 0) {
             opal_output(0, "mca_oob_tcp_create_listen: unable to unset the "
                         "SO_REUSEADDR option (%s:%d)\n",
                         strerror(opal_socket_errno), opal_socket_errno);
