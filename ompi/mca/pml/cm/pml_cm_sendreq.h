@@ -225,8 +225,6 @@ do {                                                                    \
         sendreq->req_buff =                                             \
             mca_pml_base_bsend_request_alloc_buf(sendreq->req_count);   \
         if (NULL == sendreq->req_buff) {                                \
-            /* progress to complete outstanding sends and free resources */ \
-            opal_progress();                                            \
             ret = MPI_ERR_BUFFER;                                       \
         } else {                                                        \
             iov.iov_base = (IOVBASE_TYPE*)sendreq->req_buff;            \

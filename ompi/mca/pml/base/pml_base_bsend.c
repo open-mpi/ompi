@@ -292,6 +292,9 @@ int mca_pml_base_bsend_request_alloc(ompi_request_t* request)
         /* release resources when request is freed */
         sendreq->req_base.req_pml_complete = true;
         OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        /* progress communications, with the hope that more resources
+         *   will be freed */
+        opal_progress();
         return OMPI_ERR_BUFFER;
     }
 
@@ -322,6 +325,9 @@ void*  mca_pml_base_bsend_request_alloc_buf( size_t length )
     if(NULL == buf) {
         /* release resources when request is freed */
         OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        /* progress communications, with the hope that more resources
+         *   will be freed */
+        opal_progress();
         return NULL;
     }
 
