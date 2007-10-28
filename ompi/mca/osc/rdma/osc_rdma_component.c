@@ -1044,9 +1044,8 @@ rdma_send_info_send(ompi_osc_rdma_module_t *module,
     ompi_osc_rdma_rdma_info_header_t *header = NULL;
         
     bml_btl = peer_send_info->bml_btl;
-    descriptor = bml_btl->btl_alloc(bml_btl->btl,
-                                    MCA_BTL_NO_ORDER,
-                                    sizeof(ompi_osc_rdma_rdma_info_header_t));
+    mca_bml_base_alloc(bml_btl, &descriptor, MCA_BTL_NO_ORDER,
+            sizeof(ompi_osc_rdma_rdma_info_header_t));
     if (NULL == descriptor) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         goto cleanup;
