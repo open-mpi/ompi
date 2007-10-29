@@ -138,11 +138,8 @@ int mca_btl_ud_component_open(void)
 
     mca_btl_ud_param_reg_int("sd_num", "maximum send descriptors to post",
                              128, (int*)&mca_btl_ofud_component.sd_num);
-    mca_btl_ud_param_reg_int("sd_num_peer",
-                             "maximum send descriptors to post to one peer",
-                             8, (int*)&mca_btl_ofud_component.sd_num_peer);
 
-    mca_btl_ud_param_reg_int("rd_num_init", "number of receive buffers",
+    mca_btl_ud_param_reg_int("rd_num", "number of receive buffers",
                              6000, (int*)&mca_btl_ofud_component.rd_num);
 #if 0
     mca_btl_ud_param_reg_int("rd_num_init", "initial receive buffers",

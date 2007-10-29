@@ -69,7 +69,6 @@ struct mca_btl_ud_component_t {
     char* ud_mpool_name;    /**< name of memory pool */
 
     int32_t sd_num;         /**< max send descriptors to post per BTL */
-    int32_t sd_num_peer;    /**< max send descriptors to post per endpoint */
 
     int32_t rd_num;         /**< number of receive descriptors per BTL */
 #if 0
