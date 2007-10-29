@@ -59,14 +59,6 @@ struct mca_btl_base_endpoint_t {
     struct ibv_ah*              rmt_ah;
     /**< Remote address handle */
     /* No lock needed, verbs are thread-safe */
-    
-    opal_list_t pending_frags;
-    opal_mutex_t pending_frags_lock;
-    /**< list of pending frags and lock */
-
-    int32_t sd_wqe;
-    /**< number of available send wqe entries */
-    /* No lock needed, OPAL_THREAD_ADD32 is used */
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;

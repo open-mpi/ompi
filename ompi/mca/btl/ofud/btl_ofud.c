@@ -652,8 +652,8 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
                         length,
                         OBJ_CLASS(mca_btl_ud_send_frag_t),
                         mca_btl_ofud_component.sd_num >> 1,
+                        -1,
                         mca_btl_ofud_component.sd_num << 2,
-                        mca_btl_ofud_component.sd_num >> 3,
                         ud_btl->super.btl_mpool);
 
     /* Initialize pool of user fragments */
@@ -664,8 +664,8 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
                         length,
                         OBJ_CLASS(mca_btl_ud_user_frag_t),
                         mca_btl_ofud_component.sd_num >> 1,
+                        -1,
                         mca_btl_ofud_component.sd_num << 2,
-                        mca_btl_ofud_component.sd_num >> 3,
                         ud_btl->super.btl_mpool);
 
     return OMPI_SUCCESS;
