@@ -74,8 +74,6 @@ int mca_btl_ud_endpoint_post_send(mca_btl_ud_module_t* ud_btl,
     frag->sg_entry.length = frag->segment.seg_len + sizeof(mca_btl_ud_header_t);
     wr->send_flags = IBV_SEND_SIGNALED;
 
-    CHECK_FRAG_QUEUES(endpoint->sd_wqe,
-            endpoint->pending_frags_lock, endpoint->pending_frags, frag);
     CHECK_FRAG_QUEUES(ud_btl->sd_wqe,
             ud_btl->ud_lock, ud_btl->pending_frags, frag);
 
@@ -98,9 +96,11 @@ int mca_btl_ud_endpoint_post_send(mca_btl_ud_module_t* ud_btl,
 
     MCA_BTL_UD_START_TIME(ibv_post_send);
     if(OPAL_UNLIKELY((ret = ibv_post_send(ib_qp, wr, &bad_wr)))) {
+#if 0
         opal_output(0, "ep->sd_wqe %d btl->sd_wqe %d len %d ib_qp_next %d",
                 endpoint->sd_wqe, ud_btl->sd_wqe,
                 frag->sg_entry.length, ud_btl->ib_qp_next);
+#endif
         BTL_ERROR(("error posting send request: %d %s\n", ret, strerror(ret)));
 
     }
@@ -123,17 +123,9 @@ static void mca_btl_ud_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 #if OMPI_ENABLE_DEBUG
     memset(&endpoint->rem_addr, 0, sizeof(struct mca_btl_ud_addr_t));
 #endif
-
-    OBJ_CONSTRUCT(&endpoint->pending_frags, opal_list_t);
-    OBJ_CONSTRUCT(&endpoint->pending_frags_lock, opal_mutex_t);
-
-    endpoint->sd_wqe = mca_btl_ofud_component.sd_num_peer;
 }
 
 static void mca_btl_ud_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 {
-    /* TODO - what about any pending frags? */
-    OBJ_DESTRUCT(&endpoint->pending_frags);
-    OBJ_DESTRUCT(&endpoint->pending_frags_lock);
 }
 

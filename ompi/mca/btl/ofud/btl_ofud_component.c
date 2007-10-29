@@ -467,19 +467,6 @@ int mca_btl_ud_component_progress(void)
                         frag->endpoint, &frag->base, OMPI_SUCCESS);
 
                 /* Increment send counter, post if any sends are queued */
-                OPAL_THREAD_ADD32(&endpoint->sd_wqe, 1);
-                if(OPAL_UNLIKELY(
-                            !opal_list_is_empty(&endpoint->pending_frags))) {
-                    OPAL_THREAD_LOCK(&endpoint->pending_frags_lock);
-                    frag = (mca_btl_ud_frag_t*)
-                        opal_list_remove_first(&endpoint->pending_frags);
-                    OPAL_THREAD_UNLOCK(&endpoint->pending_frags_lock);
-                    
-                    if(OPAL_LIKELY(NULL != frag)) {
-                        mca_btl_ud_endpoint_post_send(ud_btl, frag);
-                    }
-                }
-
                 OPAL_THREAD_ADD32(&ud_btl->sd_wqe, 1);
                 if(OPAL_UNLIKELY(
                             !opal_list_is_empty(&ud_btl->pending_frags))) {
