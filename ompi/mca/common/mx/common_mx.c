@@ -21,7 +21,7 @@
 #include "ompi/constants.h"
 #include "common_mx.h"
 
-int ompi_common_mx_initialize_ref_cnt = 0;
+static int ompi_common_mx_initialize_ref_cnt = 0;
 int
 ompi_common_mx_initialize(void)
 {
@@ -39,7 +39,7 @@ ompi_common_mx_initialize(void)
         /* initialize the mx library */
         mx_return = mx_init(); 
         
-        if(MX_SUCCESS != mx_return){
+        if(MX_SUCCESS != mx_return) {
             opal_output(0,
                         "Error in mx_init (error %s)\n",
                         mx_strerror(mx_return));
@@ -56,13 +56,12 @@ ompi_common_mx_finalize(void)
 {
     mx_return_t mx_return;
     ompi_common_mx_initialize_ref_cnt--;
-    if(ompi_common_mx_initialize == 0) { 
+    if( 0 == ompi_common_mx_initialize_ref_cnt ) { 
         mx_return = mx_finalize(); 
         if(mx_return != MX_SUCCESS){ 
             opal_output(0, "Error in mx_finalize (error %s)\n", mx_strerror(mx_return));
             return OMPI_ERROR;
         } 
-    } else {
-        return OMPI_SUCCESS;
     }
+    return OMPI_SUCCESS;
 }
