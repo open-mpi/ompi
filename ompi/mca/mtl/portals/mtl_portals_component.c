@@ -140,9 +140,11 @@ ompi_mtl_portals_component_init(bool enable_progress_threads,
     }
 
     OBJ_CONSTRUCT(&ompi_mtl_portals.event_fl, ompi_free_list_t);
-    ompi_free_list_init(&ompi_mtl_portals.event_fl,
+    ompi_free_list_init_new(&ompi_mtl_portals.event_fl,
                         sizeof(ompi_mtl_portals_event_t),
+                        CACHE_LINE_SIZE,
                         OBJ_CLASS(ompi_mtl_portals_event_t),
+                        0,CACHE_LINE_SIZE,
                         1, -1, 1, NULL);
 
     OBJ_CONSTRUCT(&ompi_mtl_portals.ptl_recv_short_blocks, opal_list_t);

@@ -784,27 +784,33 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
     *num_btl_modules = 0;
 
     /* initialize free lists */
-    ompi_free_list_init( &mca_btl_tcp_component.tcp_frag_eager,
+    ompi_free_list_init_new( &mca_btl_tcp_component.tcp_frag_eager,
                          sizeof (mca_btl_tcp_frag_eager_t) + 
                          mca_btl_tcp_module.super.btl_eager_limit,
+                         CACHE_LINE_SIZE,
                          OBJ_CLASS (mca_btl_tcp_frag_eager_t),
+                         0,CACHE_LINE_SIZE,
                          mca_btl_tcp_component.tcp_free_list_num,
                          mca_btl_tcp_component.tcp_free_list_max,
                          mca_btl_tcp_component.tcp_free_list_inc,
                          NULL );
                                                                                                                                   
-    ompi_free_list_init( &mca_btl_tcp_component.tcp_frag_max,
+    ompi_free_list_init_new( &mca_btl_tcp_component.tcp_frag_max,
                          sizeof (mca_btl_tcp_frag_max_t) + 
                          mca_btl_tcp_module.super.btl_max_send_size,
+                         CACHE_LINE_SIZE,
                          OBJ_CLASS (mca_btl_tcp_frag_max_t),
+                         0,CACHE_LINE_SIZE,
                          mca_btl_tcp_component.tcp_free_list_num,
                          mca_btl_tcp_component.tcp_free_list_max,
                          mca_btl_tcp_component.tcp_free_list_inc,
                          NULL );
                                                                                                                                   
-    ompi_free_list_init( &mca_btl_tcp_component.tcp_frag_user,
+    ompi_free_list_init_new( &mca_btl_tcp_component.tcp_frag_user,
                          sizeof (mca_btl_tcp_frag_user_t),
+                         CACHE_LINE_SIZE,
                          OBJ_CLASS (mca_btl_tcp_frag_user_t),
+                         0,CACHE_LINE_SIZE,
                          mca_btl_tcp_component.tcp_free_list_num,
                          mca_btl_tcp_component.tcp_free_list_max,
                          mca_btl_tcp_component.tcp_free_list_inc,

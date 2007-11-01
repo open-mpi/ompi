@@ -103,9 +103,11 @@ int mca_io_base_request_create_freelist(void)
     i = mca_base_param_find("io", NULL, "base_freelist_increment");
     mca_base_param_lookup_int(i, &incr);
 
-    ompi_free_list_init(&mca_io_base_requests,
+    ompi_free_list_init_new(&mca_io_base_requests,
                         sizeof(mca_io_base_request_t) + size,
+                        CACHE_LINE_SIZE,
                         OBJ_CLASS(mca_io_base_request_t),
+                        0,CACHE_LINE_SIZE,
                         init, -1, incr,
                         NULL);
 

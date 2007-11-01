@@ -462,17 +462,21 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     OBJ_CONSTRUCT(&mca_btl_mx_component.mx_procs, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_mx_component.mx_lock, opal_mutex_t);
 
-    ompi_free_list_init( &mca_btl_mx_component.mx_send_eager_frags,
+    ompi_free_list_init_new( &mca_btl_mx_component.mx_send_eager_frags,
                          sizeof(mca_btl_mx_frag_t) + mca_btl_mx_module.super.btl_eager_limit,
+                         CACHE_LINE_SIZE,
                          OBJ_CLASS(mca_btl_mx_frag_t),
+                         0,CACHE_LINE_SIZE,
                          mca_btl_mx_component.mx_free_list_num,
                          mca_btl_mx_component.mx_free_list_max,
                          mca_btl_mx_component.mx_free_list_inc,
                          NULL ); /* use default allocator */
 
-    ompi_free_list_init( &mca_btl_mx_component.mx_send_user_frags,
+    ompi_free_list_init_init( &mca_btl_mx_component.mx_send_user_frags,
                          sizeof(mca_btl_mx_frag_t),
+                         CACHE_LINE_SIZE,
                          OBJ_CLASS(mca_btl_mx_frag_t),
+                         0,CACHE_LINE_SIZE,
                          mca_btl_mx_component.mx_free_list_num,
                          mca_btl_mx_component.mx_free_list_max,
                          mca_btl_mx_component.mx_free_list_inc,
