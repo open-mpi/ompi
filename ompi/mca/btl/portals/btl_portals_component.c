@@ -245,29 +245,35 @@ mca_btl_portals_component_init(int *num_btls,
     OBJ_CONSTRUCT(&(mca_btl_portals_module.portals_frag_user), ompi_free_list_t);
 
     /* eager frags */
-    ompi_free_list_init(&(mca_btl_portals_module.portals_frag_eager),
+    ompi_free_list_init_new(&(mca_btl_portals_module.portals_frag_eager),
                         sizeof(mca_btl_portals_frag_eager_t) + 
                         mca_btl_portals_module.super.btl_eager_limit,
+                        CACHE_LINE_SIZE,
                         OBJ_CLASS(mca_btl_portals_frag_eager_t),
+                        0,CACHE_LINE_SIZE,
                         mca_btl_portals_component.portals_free_list_init_num,
                         mca_btl_portals_component.portals_free_list_eager_max_num,
                         mca_btl_portals_component.portals_free_list_inc_num,
                         NULL);
 
     /* send frags */
-    ompi_free_list_init(&(mca_btl_portals_module.portals_frag_max),
+    ompi_free_list_init_new(&(mca_btl_portals_module.portals_frag_max),
                         sizeof(mca_btl_portals_frag_max_t) + 
                         mca_btl_portals_module.super.btl_max_send_size,
+                        CACHE_LINE_SIZE,
                         OBJ_CLASS(mca_btl_portals_frag_max_t),
+                        0,CACHE_LINE_SIZE,
                         mca_btl_portals_component.portals_free_list_init_num,
                         mca_btl_portals_component.portals_free_list_max_num,
                         mca_btl_portals_component.portals_free_list_inc_num,
                         NULL);
 
     /* user frags */
-    ompi_free_list_init(&(mca_btl_portals_module.portals_frag_user),
+    ompi_free_list_init_new(&(mca_btl_portals_module.portals_frag_user),
                         sizeof(mca_btl_portals_frag_user_t),
+                        CACHE_LINE_SIZE,
                         OBJ_CLASS(mca_btl_portals_frag_user_t),
+                        0,CACHE_LINE_SIZE,
                         mca_btl_portals_component.portals_free_list_init_num,
                         mca_btl_portals_component.portals_free_list_max_num,
                         mca_btl_portals_component.portals_free_list_inc_num,

@@ -75,8 +75,12 @@ int mca_mpool_base_tree_init(void) {
     OBJ_CONSTRUCT(&mca_mpool_base_tree, ompi_rb_tree_t); 
     OBJ_CONSTRUCT(&mca_mpool_base_tree_item_free_list, ompi_free_list_t); 
     OBJ_CONSTRUCT(&tree_lock, opal_mutex_t);
-    rc = ompi_free_list_init(&mca_mpool_base_tree_item_free_list, sizeof(mca_mpool_base_tree_item_t), 
-                             OBJ_CLASS(mca_mpool_base_tree_item_t), 0, -1 , 4, NULL);
+    rc = ompi_free_list_init_new(&mca_mpool_base_tree_item_free_list, 
+            sizeof(mca_mpool_base_tree_item_t), 
+            CACHE_LINE_SIZE,
+            OBJ_CLASS(mca_mpool_base_tree_item_t), 
+            0,CACHE_LINE_SIZE,
+            0, -1 , 4, NULL);
     if(OMPI_SUCCESS == rc) { 
         rc = ompi_rb_tree_init(&mca_mpool_base_tree, mca_mpool_base_tree_node_compare);
     }

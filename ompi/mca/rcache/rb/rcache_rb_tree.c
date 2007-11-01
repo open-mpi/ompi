@@ -34,8 +34,12 @@ int mca_rcache_rb_tree_node_compare(void * key1, void * key2);
 int mca_rcache_rb_tree_init(mca_rcache_rb_module_t* rcache) { 
     OBJ_CONSTRUCT(&rcache->rb_tree, ompi_rb_tree_t);
     OBJ_CONSTRUCT(&rcache->rb_tree_item_list, ompi_free_list_t);
-    ompi_free_list_init(&rcache->rb_tree_item_list, sizeof(mca_rcache_rb_tree_item_t), 
-                        OBJ_CLASS(mca_rcache_rb_tree_item_t), 0, -1, 32, NULL); 
+    ompi_free_list_init_new(&rcache->rb_tree_item_list, 
+            sizeof(mca_rcache_rb_tree_item_t), 
+            CACHE_LINE_SIZE,
+            OBJ_CLASS(mca_rcache_rb_tree_item_t), 
+            0,CACHE_LINE_SIZE,
+            0, -1, 32, NULL); 
     
     return ompi_rb_tree_init(&rcache->rb_tree, 
                              mca_rcache_rb_tree_node_compare);

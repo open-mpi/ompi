@@ -281,29 +281,37 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
     }
  
     /* initialize free lists */
-    ompi_free_list_init( &btl->gm_frag_eager,
-                         sizeof (mca_btl_gm_frag_eager_t) + (1 << mca_btl_gm_component.gm_eager_frag_size) + sizeof (uintptr_t),
-                         OBJ_CLASS (mca_btl_gm_frag_eager_t),
-                         btl->gm_max_send_tokens,  
-                         mca_btl_gm_component.gm_free_list_max, 
-                         mca_btl_gm_component.gm_free_list_inc,
-                         btl->super.btl_mpool ); 
+    ompi_free_list_init_new( &btl->gm_frag_eager,
+            sizeof (mca_btl_gm_frag_eager_t),
+            CACHE_LINE_SIZE,
+            OBJ_CLASS (mca_btl_gm_frag_eager_t),
+            1 << mca_btl_gm_component.gm_eager_frag_size) + sizeof (uintptr_t),
+            CACHE_LINE_SIZE, 
+            btl->gm_max_send_tokens,  
+            mca_btl_gm_component.gm_free_list_max, 
+            mca_btl_gm_component.gm_free_list_inc,
+            btl->super.btl_mpool ); 
 
-    ompi_free_list_init( &btl->gm_frag_max,
-                         sizeof (mca_btl_gm_frag_max_t) + (1 << mca_btl_gm_component.gm_max_frag_size) + sizeof (uintptr_t),
-                         OBJ_CLASS (mca_btl_gm_frag_max_t),
-                         btl->gm_max_recv_tokens,
-                         mca_btl_gm_component.gm_free_list_max, 
-                         mca_btl_gm_component.gm_free_list_inc,
-                         btl->super.btl_mpool ); 
+    ompi_free_list_init_new( &btl->gm_frag_max,
+            sizeof (mca_btl_gm_frag_max_t),
+            CACHE_LINE_SIZE,
+            OBJ_CLASS (mca_btl_gm_frag_max_t),
+            1 << mca_btl_gm_component.gm_max_frag_size) + sizeof (uintptr_t),
+            CACHE_LINE_SIZE,
+            btl->gm_max_recv_tokens,
+            mca_btl_gm_component.gm_free_list_max, 
+            mca_btl_gm_component.gm_free_list_inc,
+            btl->super.btl_mpool ); 
 
-    ompi_free_list_init( &btl->gm_frag_user,
-                         sizeof (mca_btl_gm_frag_user_t),
-                         OBJ_CLASS (mca_btl_gm_frag_user_t),
-                         mca_btl_gm_component.gm_free_list_num,  
-                         mca_btl_gm_component.gm_free_list_max, 
-                         mca_btl_gm_component.gm_free_list_inc,
-                         NULL );
+    ompi_free_list_init_new( &btl->gm_frag_user,
+            sizeof (mca_btl_gm_frag_user_t),
+            CACHE_LINE_SIZE,
+            OBJ_CLASS (mca_btl_gm_frag_user_t),
+            0,CACHE_LINE_SIZE,
+            mca_btl_gm_component.gm_free_list_num,  
+            mca_btl_gm_component.gm_free_list_max, 
+            mca_btl_gm_component.gm_free_list_inc,
+            NULL );
 
 
     /* post receive buffers */

@@ -70,17 +70,21 @@ int mca_pml_dr_enable(bool enable)
     if( false == enable ) return OMPI_SUCCESS;
 
     /* requests */
-    ompi_free_list_init( &mca_pml_base_send_requests,
+    ompi_free_list_init_new( &mca_pml_base_send_requests,
                          sizeof(mca_pml_dr_send_request_t),
+                         CACHE_LINE_SIZE,
                          OBJ_CLASS(mca_pml_dr_send_request_t),
+                         0,CACHE_LINE_SIZE,
                          mca_pml_dr.free_list_num,
                          mca_pml_dr.free_list_max,
                          mca_pml_dr.free_list_inc,
                          NULL );
                                                                                                             
-    ompi_free_list_init( &mca_pml_base_recv_requests,
+    ompi_free_list_init_new( &mca_pml_base_recv_requests,
                          sizeof(mca_pml_dr_recv_request_t),
+                         CACHE_LINE_SIZE,
                          OBJ_CLASS(mca_pml_dr_recv_request_t),
+                         0,CACHE_LINE_SIZE,
                          mca_pml_dr.free_list_num,
                          mca_pml_dr.free_list_max,
                          mca_pml_dr.free_list_inc,
@@ -88,18 +92,22 @@ int mca_pml_dr_enable(bool enable)
                                                                                                             
     /* fragments */
     OBJ_CONSTRUCT(&mca_pml_dr.recv_frags, ompi_free_list_t);
-    ompi_free_list_init( &mca_pml_dr.recv_frags,
+    ompi_free_list_init_new( &mca_pml_dr.recv_frags,
                          sizeof(mca_pml_dr_recv_frag_t),
+                         CACHE_LINE_SIZE,
                          OBJ_CLASS(mca_pml_dr_recv_frag_t),
+                         0,CACHE_LINE_SIZE,
                          mca_pml_dr.free_list_num,
                          mca_pml_dr.free_list_max,
                          mca_pml_dr.free_list_inc,
                          NULL );
 
     OBJ_CONSTRUCT(&mca_pml_dr.vfrags, ompi_free_list_t);
-    ompi_free_list_init( &mca_pml_dr.vfrags,
+    ompi_free_list_init_new( &mca_pml_dr.vfrags,
                          sizeof(mca_pml_dr_vfrag_t),
+                         CACHE_LINE_SIZE,
                          OBJ_CLASS(mca_pml_dr_vfrag_t),
+                         0,CACHE_LINE_SIZE,
                          mca_pml_dr.free_list_num,
                          mca_pml_dr.free_list_max,
                          mca_pml_dr.free_list_inc,
@@ -207,10 +215,12 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         return rc;
  
-    ompi_free_list_init(
+    ompi_free_list_init_new(
                         &mca_pml_dr.buffers,
                         sizeof(mca_pml_dr_buffer_t) + mca_pml_dr.eager_limit,
+                        CACHE_LINE_SIZE,
                         OBJ_CLASS(mca_pml_dr_buffer_t),
+                        0,CACHE_LINE_SIZE,
                         0,
                         mca_pml_dr.free_list_max,
                         mca_pml_dr.free_list_inc,

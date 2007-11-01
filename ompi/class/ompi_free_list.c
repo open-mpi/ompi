@@ -188,8 +188,8 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
 
     /* allocate the rest from the mpool */
     if(flist->fl_mpool != NULL) {
-        elem_size = OPAL_ALIGN(flist->fl_frag_size -
-                flist->fl_frag_class->cls_sizeof, flist->fl_frag_alignment, size_t);
+        elem_size = OPAL_ALIGN(flist->fl_payload_buffer_size, 
+                flist->fl_payload_buffer_alignment, size_t);
         if(elem_size != 0) {
             mpool_alloc_ptr = (unsigned char *) flist->fl_mpool->mpool_alloc(flist->fl_mpool,
                    num_elements * elem_size, flist->fl_frag_alignment,

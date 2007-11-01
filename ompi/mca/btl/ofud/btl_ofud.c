@@ -546,7 +546,7 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
     struct ibv_recv_wr* bad_wr;
     mca_btl_ud_frag_t* frag;
     ompi_free_list_item_t* item;
-    uint32_t length;
+    uint32_t length,length_payload;
     int32_t rc, i;
 
     ud_btl->sd_wqe = mca_btl_ofud_component.sd_num;
@@ -605,17 +605,25 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
     length = sizeof(mca_btl_ud_frag_t) + sizeof(mca_btl_ud_header_t) +
             ud_btl->super.btl_eager_limit + 2 * MCA_BTL_IB_FRAG_ALIGN;
 
-    ompi_free_list_init(&ud_btl->recv_frags,
+    length_payload=sizeof(mca_btl_ud_frag_t) + sizeof(mca_btl_ud_header_t) +
+        ud_btl->super.btl_eager_limit + 2 * MCA_BTL_IB_FRAG_ALIGN -
+        sizeof(mca_btl_ud_recv_frag_t);
+
+    ompi_free_list_init_new(&ud_btl->recv_frags,
                         length + sizeof(mca_btl_ud_ib_header_t),
+                        CACHE_LINE_SIZE,
                         OBJ_CLASS(mca_btl_ud_recv_frag_t),
+                        length_payload,CACHE_LINE_SIZE,
                         mca_btl_ofud_component.rd_num,
                         mca_btl_ofud_component.rd_num,
                         mca_btl_ofud_component.rd_num,
                         ud_btl->super.btl_mpool);
 #if 0
-    ompi_free_list_init(&ud_btl->recv_frags,
+    ompi_free_list_init_new(&ud_btl->recv_frags,
                         length + sizeof(mca_btl_ud_ib_header_t),
+                        CACHE_LINE_SIZE,
                         OBJ_CLASS(mca_btl_ud_recv_frag_t),
+                        length_payload,CACHE_LINE_SIZE,
                          mca_btl_ofud_component.rd_num_init,
                          mca_btl_ofud_component.rd_num_max,
                          mca_btl_ofud_component.rd_num_inc,
@@ -648,9 +656,11 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
     OBJ_CONSTRUCT(&ud_btl->send_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&ud_btl->user_frags, ompi_free_list_t);
 
-    ompi_free_list_init(&ud_btl->send_frags,
+    ompi_free_list_init_new(&ud_btl->send_frags,
                         length,
+                        CACHE_LINE_SIZE,
                         OBJ_CLASS(mca_btl_ud_send_frag_t),
+                        length_payload,CACHE_LINE_SIZE,
                         mca_btl_ofud_component.sd_num >> 1,
                         -1,
                         mca_btl_ofud_component.sd_num << 2,
@@ -660,9 +670,15 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
     length = sizeof(mca_btl_ud_frag_t) +
             sizeof(mca_btl_ud_header_t) + 2 * MCA_BTL_IB_FRAG_ALIGN;
 
-    ompi_free_list_init(&ud_btl->user_frags,
+    length_paylod = sizeof(mca_btl_ud_frag_t) +
+        sizeof(mca_btl_ud_header_t) + 2 * MCA_BTL_IB_FRAG_ALIGN-
+        sizeof(mca_btl_ud_user_frag_t);
+
+    ompi_free_list_init_new(&ud_btl->user_frags,
                         length,
+                        CACHE_LINE_SIZE,
                         OBJ_CLASS(mca_btl_ud_user_frag_t),
+                        length_payload,CACHE_LINE_SIZE,
                         mca_btl_ofud_component.sd_num >> 1,
                         -1,
                         mca_btl_ofud_component.sd_num << 2,

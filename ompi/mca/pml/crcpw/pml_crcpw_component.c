@@ -143,9 +143,11 @@ mca_pml_base_module_t* mca_pml_crcpw_component_init(int* priority,
                              "pml:crcpw: component_init: Initalize Wrapper");
         
         OBJ_CONSTRUCT(&pml_state_list, ompi_free_list_t);
-        ompi_free_list_init( &pml_state_list,
+        ompi_free_list_init_new( &pml_state_list,
                              sizeof(ompi_crcp_base_pml_state_t),
+                             CACHE_LINE_SIZE,
                              OBJ_CLASS(ompi_crcp_base_pml_state_t),
+                             0,CACHE_LINE_SIZE,
                              5,  /* Initial number */
                              -1, /* Max = Unlimited */
                              64, /* Increment by */

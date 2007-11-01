@@ -176,25 +176,31 @@ mca_btl_base_module_t** mca_btl_elan_component_init( int *num_btl_modules,
     OBJ_CONSTRUCT (&mca_btl_elan_component.elan_frag_max, ompi_free_list_t);
     OBJ_CONSTRUCT (&mca_btl_elan_component.elan_frag_user, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_elan_component.elan_procs, opal_list_t);
-    ompi_free_list_init( &mca_btl_elan_component.elan_frag_eager,
-                         sizeof(mca_btl_elan_frag_t) + mca_btl_elan_module.super.btl_eager_limit,
-                         OBJ_CLASS(mca_btl_elan_frag_t),
-                         mca_btl_elan_component.elan_free_list_num,
-                         mca_btl_elan_component.elan_free_list_max,
-                         mca_btl_elan_component.elan_free_list_inc,
-                         NULL ); /* use default allocator */
+    ompi_free_list_init_new( &mca_btl_elan_component.elan_frag_eager,
+            sizeof(mca_btl_elan_frag_t) + mca_btl_elan_module.super.btl_eager_limit,
+            CACHE_LINE_SIZE,
+            OBJ_CLASS(mca_btl_elan_frag_t),
+            0,CACHE_LINE_SIZE,
+            mca_btl_elan_component.elan_free_list_num,
+            mca_btl_elan_component.elan_free_list_max,
+            mca_btl_elan_component.elan_free_list_inc,
+            NULL ); /* use default allocator */
 
-    ompi_free_list_init( &mca_btl_elan_component.elan_frag_user,
+    ompi_free_list_init_new( &mca_btl_elan_component.elan_frag_user,
                          sizeof(mca_btl_elan_frag_t),
+                         CACHE_LINE_SIZE,
                          OBJ_CLASS(mca_btl_elan_frag_t),
+                         0,CACHE_LINE_SIZE,
                          mca_btl_elan_component.elan_free_list_num,
                          mca_btl_elan_component.elan_free_list_max,
                          mca_btl_elan_component.elan_free_list_inc,
                          NULL ); /* use default allocator */
 
-    ompi_free_list_init( &mca_btl_elan_component.elan_frag_max,
+    ompi_free_list_init_new( &mca_btl_elan_component.elan_frag_max,
                          sizeof(mca_btl_elan_frag_t)+mca_btl_elan_module.super.btl_max_send_size,
+                         CACHE_LINE_SIZE,
                          OBJ_CLASS(mca_btl_elan_frag_t),
+                         0,CACHE_LINE_SIZE,
                          mca_btl_elan_component.elan_free_list_num,
                          mca_btl_elan_component.elan_free_list_max,
                          mca_btl_elan_component.elan_free_list_inc,

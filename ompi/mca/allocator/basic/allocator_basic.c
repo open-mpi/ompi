@@ -100,9 +100,11 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
     OBJ_CONSTRUCT(&module->seg_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->seg_descriptors, ompi_free_list_t);
  
-    ompi_free_list_init(&module->seg_descriptors,
+    ompi_free_list_init_new(&module->seg_descriptors,
         sizeof(mca_allocator_basic_segment_t),
+        CACHE_LINE_SIZE,
         OBJ_CLASS(mca_allocator_basic_segment_t),
+        0,CACHE_LINE_SIZE,
         0,  /* initial size */
         -1, /* maximum size */
         16, /* increment to grow by */

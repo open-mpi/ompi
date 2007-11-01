@@ -136,7 +136,7 @@ int mca_btl_sm_add_procs(
     ompi_bitmap_t* reachability)
 {
     int return_code = OMPI_SUCCESS, cnt, len;
-    size_t size, length;
+    size_t size, length, length_payload;
     int32_t n_local_procs, proc, j, n_to_allocate, i;
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     mca_btl_sm_t *btl_sm;
@@ -551,27 +551,35 @@ int mca_btl_sm_add_procs(
         /* initialize fragment descriptor free lists */
 
         /* allocation will be for the fragment descriptor and payload buffer */
-        length = sizeof(mca_btl_sm_frag1_t) + sizeof(mca_btl_sm_hdr_t) +
+        length = sizeof(mca_btl_sm_frag1_t);
+        length_payload = sizeof(mca_btl_sm_hdr_t) +
             mca_btl_sm_component.eager_limit;
-        ompi_free_list_init(&mca_btl_sm_component.sm_frags1, length,
+        ompi_free_list_init_new(&mca_btl_sm_component.sm_frags1, length,
+                CACHE_LINE_SIZE,
                 OBJ_CLASS(mca_btl_sm_frag1_t),
+                length_payload,CACHE_LINE_SIZE,
                 mca_btl_sm_component.sm_free_list_num,
                 mca_btl_sm_component.sm_free_list_max,
                 mca_btl_sm_component.sm_free_list_inc,
                 mca_btl_sm_component.sm_mpool); /* use shared-memory pool */
 
-        length = sizeof(mca_btl_sm_frag2_t) + sizeof(mca_btl_sm_hdr_t) +
+        length = sizeof(mca_btl_sm_frag2_t);
+        length_payload = sizeof(mca_btl_sm_hdr_t) +
             mca_btl_sm_component.max_frag_size;
-        ompi_free_list_init(&mca_btl_sm_component.sm_frags2, length,
+        ompi_free_list_init_new(&mca_btl_sm_component.sm_frags2, length,
+                CACHE_LINE_SIZE,
                 OBJ_CLASS(mca_btl_sm_frag2_t),
+                length_payload,CACHE_LINE_SIZE,
                 mca_btl_sm_component.sm_free_list_num,
                 mca_btl_sm_component.sm_free_list_max,
                 mca_btl_sm_component.sm_free_list_inc,
                 mca_btl_sm_component.sm_mpool); /* use shared-memory pool */
 
-        ompi_free_list_init(&mca_btl_sm_component.sm_frags,
+        ompi_free_list_init_new(&mca_btl_sm_component.sm_frags,
                 sizeof(mca_btl_sm_frag_t),
+                CACHE_LINE_SIZE,
                 OBJ_CLASS(mca_btl_sm_frag_t),
+                0,CACHE_LINE_SIZE,
                 mca_btl_sm_component.sm_free_list_num,
                 -1,
                 mca_btl_sm_component.sm_free_list_inc,
