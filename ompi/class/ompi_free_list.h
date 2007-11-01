@@ -44,8 +44,10 @@ struct ompi_free_list_t
     size_t fl_num_allocated;
     size_t fl_num_per_alloc;
     size_t fl_num_waiting;
-    size_t fl_elem_size;
-    size_t fl_alignment;
+    size_t fl_frag_size;                /* size of the fragment descriptor */
+    size_t fl_frag_alignment;           /* fragment descriptor alignment */
+    size_t fl_payload_buffer_size;      /* size of payload buffer */
+    size_t fl_payload_buffer_alignment; /* payload buffer alignment */
     opal_class_t* fl_elem_class;
     struct mca_mpool_base_module_t* fl_mpool;
     opal_mutex_t fl_lock;
