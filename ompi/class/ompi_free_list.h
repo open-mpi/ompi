@@ -34,8 +34,7 @@ struct mca_mem_pool_t;
 struct ompi_free_list_item_t;
     
 typedef void (*ompi_free_list_item_init_fn_t) (
-                                               struct ompi_free_list_item_t*, 
-                                               void* ctx);
+        struct ompi_free_list_item_t*, void* ctx);
 
 struct ompi_free_list_t
 {
@@ -48,7 +47,7 @@ struct ompi_free_list_t
     size_t fl_frag_alignment;           /* fragment descriptor alignment */
     size_t fl_payload_buffer_size;      /* size of payload buffer */
     size_t fl_payload_buffer_alignment; /* payload buffer alignment */
-    opal_class_t* fl_elem_class;
+    opal_class_t* fl_frag_class;
     struct mca_mpool_base_module_t* fl_mpool;
     opal_mutex_t fl_lock;
     opal_condition_t fl_condition; 
@@ -108,6 +107,70 @@ static inline int ompi_free_list_init(
                                   num_elements_per_alloc, mpool, NULL, NULL);
 }
 
+/**
+ * Initialize a free list.  - this will replace ompi_free_list_init_ex
+ *
+ * @param free_list                (IN)  Free list.
+ * @param frag_size                (IN)  Size of each element - allocated by malloc.
+ * @param frag_alignment           (IN)  Fragment alignment.
+ * @param frag_class               (IN)  opal_class_t of element - used to initialize allocated elements.
+ * @param payload_buffer_size      (IN)  Size of payload buffer - allocated from mpool.
+ * @param payload_buffer_alignment (IN)  Payload buffer alignment.
+ * @param num_elements_to_alloc    (IN)  Initial number of elements to allocate.
+ * @param max_elements_to_alloc    (IN)  Maximum number of elements to allocate.
+ * @param num_elements_per_alloc   (IN)  Number of elements to grow by per allocation.
+ * @param mpool                    (IN)  Optional memory pool for allocation.s
+ * @param item_init                (IN)
+ * @param ctx                      (IN)
+ */
+ 
+OMPI_DECLSPEC int ompi_free_list_init_ex_new(
+    ompi_free_list_t *free_list, 
+    size_t frag_size,
+    size_t frag_alignment,
+    opal_class_t* frag_class,
+    size_t payload_buffer_size,
+    size_t payload_buffer_alignment,
+    int num_elements_to_alloc,
+    int max_elements_to_alloc,
+    int num_elements_per_alloc,
+    struct mca_mpool_base_module_t*,
+    ompi_free_list_item_init_fn_t item_init,
+    void *ctx
+    );
+
+/**
+ * Initialize a free list. - this will replace ompi_free_list_init
+ *
+ * @param free_list                (IN)  Free list.
+ * @param frag_size                (IN)  Size of each element - allocated by malloc.
+ * @param frag_alignment           (IN)  Fragment alignment.
+ * @param frag_class               (IN)  opal_class_t of element - used to initialize allocated elements.
+ * @param payload_buffer_size      (IN)  Size of payload buffer - allocated from mpool.
+ * @param payload_buffer_alignment (IN)  Payload buffer alignment.
+ * @param num_elements_to_alloc    (IN)  Initial number of elements to allocate.
+ * @param max_elements_to_alloc    (IN)  Maximum number of elements to allocate.
+ * @param num_elements_per_alloc   (IN)  Number of elements to grow by per allocation.
+ * @param mpool                    (IN)  Optional memory pool for allocation.s
+ */
+static inline int ompi_free_list_init_new(
+    ompi_free_list_t *free_list, 
+    size_t frag_size,
+    size_t frag_alignment,
+    opal_class_t* frag_class,
+    size_t payload_buffer_size,
+    size_t payload_buffer_alignment,
+    int num_elements_to_alloc,
+    int max_elements_to_alloc,
+    int num_elements_per_alloc,
+    struct mca_mpool_base_module_t* mpool)
+{
+    return ompi_free_list_init_ex_new(free_list,
+            frag_size, frag_alignment, frag_class,
+            payload_buffer_size, payload_buffer_alignment,
+            num_elements_to_alloc, max_elements_to_alloc,
+            num_elements_per_alloc, mpool, NULL, NULL);
+}
 
 OMPI_DECLSPEC int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements);
 
