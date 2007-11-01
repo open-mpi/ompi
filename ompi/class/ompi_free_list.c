@@ -49,7 +49,7 @@ static void ompi_free_list_construct(ompi_free_list_t* fl)
     fl->fl_frag_alignment = 0;
     fl->fl_payload_buffer_size=0;
     fl->fl_payload_buffer_alignment=0;
-    fl->fl_elem_class = OBJ_CLASS(ompi_free_list_item_t);
+    fl->fl_frag_class = OBJ_CLASS(ompi_free_list_item_t);
     fl->fl_mpool = 0;
     OBJ_CONSTRUCT(&(fl->fl_allocations), opal_list_t);
 }
@@ -106,7 +106,7 @@ int ompi_free_list_init_ex(
     if(elem_size > flist->fl_frag_size)
         flist->fl_frag_size = elem_size;
     if(elem_class)
-        flist->fl_elem_class = elem_class;
+        flist->fl_frag_class = elem_class;
     flist->fl_max_to_alloc = max_elements_to_alloc;
     flist->fl_num_allocated = 0;
     flist->fl_num_per_alloc = num_elements_per_alloc;
@@ -119,6 +119,46 @@ int ompi_free_list_init_ex(
     return OMPI_SUCCESS;
 }
 
+/* this will replace ompi_free_list_init_ex */
+int ompi_free_list_init_ex_new(
+    ompi_free_list_t *flist,
+    size_t frag_size,
+    size_t frag_alignment,
+    opal_class_t* frag_class,
+    size_t payload_buffer_size,
+    size_t payload_buffer_alignment,
+    int num_elements_to_alloc,
+    int max_elements_to_alloc,
+    int num_elements_per_alloc,
+    mca_mpool_base_module_t* mpool,
+    ompi_free_list_item_init_fn_t item_init,
+    void* ctx)
+{
+    /* alignment must be more than zero and power of two */
+    if (frag_alignment <= 1 || (frag_alignment & (frag_alignment - 1)))
+        return OMPI_ERROR;
+    if (0 < payload_buffer_size) {
+        if (payload_buffer_alignment <= 1 || (payload_buffer_alignment & (payload_buffer_alignment - 1)))
+            return OMPI_ERROR;
+    }
+
+    if (frag_size > flist->fl_frag_size)
+        flist->fl_frag_size = frag_size;
+    if (frag_class)
+        flist->fl_frag_class = frag_class;
+    flist->fl_payload_buffer_size=payload_buffer_size;
+    flist->fl_max_to_alloc = max_elements_to_alloc;
+    flist->fl_num_allocated = 0;
+    flist->fl_num_per_alloc = num_elements_per_alloc;
+    flist->fl_mpool = mpool;
+    flist->fl_frag_alignment = frag_alignment;
+    flist->fl_payload_buffer_alignment = frag_alignment;
+    flist->item_init = item_init;
+    flist->ctx = ctx;
+    if (num_elements_to_alloc)
+        return ompi_free_list_grow(flist, num_elements_to_alloc);
+    return OMPI_SUCCESS;
+}
 int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
 {
     unsigned char *ptr, *mpool_alloc_ptr = NULL;
@@ -134,7 +174,7 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     head_size = (NULL == flist->fl_mpool) ? flist->fl_frag_size:
-        flist->fl_elem_class->cls_sizeof;
+        flist->fl_frag_class->cls_sizeof;
     head_size = OPAL_ALIGN(head_size, flist->fl_frag_alignment, size_t);
 
     /* calculate head allocation size */
@@ -149,7 +189,7 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
     /* allocate the rest from the mpool */
     if(flist->fl_mpool != NULL) {
         elem_size = OPAL_ALIGN(flist->fl_frag_size -
-                flist->fl_elem_class->cls_sizeof, flist->fl_frag_alignment, size_t);
+                flist->fl_frag_class->cls_sizeof, flist->fl_frag_alignment, size_t);
         if(elem_size != 0) {
             mpool_alloc_ptr = (unsigned char *) flist->fl_mpool->mpool_alloc(flist->fl_mpool,
                    num_elements * elem_size, flist->fl_frag_alignment,
@@ -177,7 +217,7 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
         item->registration = reg;
         item->ptr = mpool_alloc_ptr;
 
-        OBJ_CONSTRUCT_INTERNAL(item, flist->fl_elem_class);
+        OBJ_CONSTRUCT_INTERNAL(item, flist->fl_frag_class);
         
         /* run the initialize function if present */
         if(flist->item_init) { 
