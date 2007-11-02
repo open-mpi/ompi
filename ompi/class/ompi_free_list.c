@@ -105,13 +105,16 @@ int ompi_free_list_init_ex(
 
     if(elem_size > flist->fl_frag_size)
         flist->fl_frag_size = elem_size;
+    flist->fl_frag_alignment = alignment;
     if(elem_class)
         flist->fl_frag_class = elem_class;
+    flist->fl_payload_buffer_size=flist->fl_frag_size-
+        flist->fl_frag_class->cls_sizeof;
+    flist->fl_payload_buffer_alignment=alignment;
     flist->fl_max_to_alloc = max_elements_to_alloc;
     flist->fl_num_allocated = 0;
     flist->fl_num_per_alloc = num_elements_per_alloc;
     flist->fl_mpool = mpool;
-    flist->fl_frag_alignment = alignment;
     flist->item_init = item_init;
     flist->ctx = ctx;
     if(num_elements_to_alloc)
