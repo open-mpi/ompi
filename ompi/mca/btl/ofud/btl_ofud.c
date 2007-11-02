@@ -670,7 +670,7 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
     length = sizeof(mca_btl_ud_frag_t) +
             sizeof(mca_btl_ud_header_t) + 2 * MCA_BTL_IB_FRAG_ALIGN;
 
-    length_paylod = sizeof(mca_btl_ud_frag_t) +
+    length_payload = sizeof(mca_btl_ud_frag_t) +
         sizeof(mca_btl_ud_header_t) + 2 * MCA_BTL_IB_FRAG_ALIGN-
         sizeof(mca_btl_ud_user_frag_t);
 
