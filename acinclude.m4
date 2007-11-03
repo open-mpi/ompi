@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006      Cisco Systems, Inc.
+dnl Copyright (c) 2006-2007 Cisco Systems, Inc.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
@@ -58,6 +58,7 @@ m4_include(config/ompi_config_asm.m4)
 m4_include(config/ompi_case_sensitive_fs_setup.m4)
 m4_include(config/ompi_check_broken_qsort.m4)
 m4_include(config/ompi_check_compiler_works.m4)
+m4_include(config/ompi_check_ident.m4)
 m4_include(config/ompi_check_func_lib.m4)
 m4_include(config/ompi_check_optflags.m4)
 m4_include(config/ompi_check_attributes.m4)
