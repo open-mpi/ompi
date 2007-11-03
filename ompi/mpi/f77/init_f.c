@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,6 +19,14 @@
  */
 
 #include "ompi_config.h"
+
+#if OMPI_CC_USE_PRAGMA_IDENT
+#pragma ident OMPI_IDENT_STRING
+#elif OMPI_CC_USE_IDENT
+#ident OMPI_IDENT_STRING
+#else
+static const char ident[] = OMPI_IDENT_STRING;
+#endif
 
 #include "ompi/mpi/f77/bindings.h"
 

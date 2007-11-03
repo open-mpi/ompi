@@ -9,6 +9,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -125,6 +126,7 @@ void ompi_info::do_version(bool want_all, opal_cmd_line_t *cmd_line)
 //
 void ompi_info::show_ompi_version(const string& scope)
 {
+  out("Package", "package", OPAL_PACKAGE_STRING);
   out("Open MPI", type_ompi + ":version:full",
       make_version_str(scope, 
                        OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, 
@@ -151,6 +153,7 @@ void ompi_info::show_ompi_version(const string& scope)
                        OPAL_WANT_SVN, OPAL_SVN_R));
   out("OPAL SVN revision", type_opal + ":version:svn",
       OPAL_SVN_R);
+  out("Ident string", "ident", OPAL_IDENT_STRING);
 }
 
 

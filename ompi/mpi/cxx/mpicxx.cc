@@ -10,13 +10,13 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
 // 
 // $HEADER$
-
-//
 
 #include <stdio.h>
 static const int ompi_stdio_seek_set = SEEK_SET;
@@ -27,6 +27,14 @@ static const int ompi_stdio_seek_end = SEEK_END;
 
 /* Need to include ompi_config.h after mpicxx.h... */
 #include "ompi_config.h"
+
+#if OMPI_CXX_USE_PRAGMA_IDENT
+#pragma ident OMPI_IDENT_STRING
+#elif OMPI_CXX_USE_IDENT
+#ident OMPI_IDENT_STRING
+#else
+static const char ident[] = OMPI_IDENT_STRING;
+#endif
 
 #include "ompi/errhandler/errhandler.h"
 

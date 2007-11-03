@@ -12,6 +12,7 @@
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -84,6 +85,14 @@
 #include "orte/runtime/params.h"
 
 #include "orte/runtime/orte_cr.h"
+
+#if OMPI_CC_USE_PRAGMA_IDENT
+#pragma ident ORTE_IDENT_STRING
+#elif OMPI_CC_USE_IDENT
+#ident ORTE_IDENT_STRING
+#else
+static const char ident[] = ORTE_IDENT_STRING;
+#endif
 
 int orte_init(bool infrastructure)
 {

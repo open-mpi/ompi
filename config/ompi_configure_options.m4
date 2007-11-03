@@ -10,7 +10,8 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -704,4 +705,34 @@ fi
 AC_DEFINE_UNQUOTED([ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT],
                    [$orte_want_orterun_prefix_by_default],
                    [Whether we want orterun to effect "--prefix $prefix" by default])
+
+#
+# Package/brand string
+#
+AC_MSG_CHECKING([for package/brand string])
+AC_ARG_WITH([package-string],
+     [AC_HELP_STRING([--with-package-string=STRING],
+                     [Use a branding string throughout Open MPI])])
+if test "$with_package_string" = "" -o "$with_package_string" = "no"; then
+    with_package_string="Open MPI $OMPI_CONFIGURE_USER@$OMPI_CONFIGURE_HOST Distribution"
+fi
+AC_DEFINE_UNQUOTED([OPAL_PACKAGE_STRING], ["$with_package_string"],
+     [package/branding string for Open MPI])
+AC_MSG_RESULT([$with_package_string])
+
+#
+# Ident string
+#
+AC_MSG_CHECKING([for ident string])
+AC_ARG_WITH([ident-string],
+     [AC_HELP_STRING([--with-ident-string=STRING],
+                     [Embed an ident string into Open MPI object files])])
+if test "$with_ident_string" = "" -o "$with_ident_string" = "no"; then
+    with_ident_string="%VERSION%"
+fi
+with_ident_string="`echo $with_ident_string | sed -e 's/%VERSION%/'$OMPI_VERSION/`"
+AC_DEFINE_UNQUOTED([OPAL_IDENT_STRING], ["$with_ident_string"],
+     [ident string for Open MPI])
+AC_MSG_RESULT([$with_ident_string])
+
 ])

@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
@@ -187,6 +187,10 @@ OMPI_SETUP_CC
 AM_CONDITIONAL(OMPI_NEED_WINDOWS_REPLACEMENTS,
                test "$ompi_cv_c_compiler_vendor" = "microsoft" )
 
+# Does the compiler support "ident"-like constructs?
+
+OMPI_CHECK_IDENT([CC], [CFLAGS], [c], [C])
+
 #
 # Check for some types
 #
@@ -359,6 +363,10 @@ AC_DEFINE_UNQUOTED(OMPI_HAVE_WEAK_SYMBOLS, $OMPI_C_HAVE_WEAK_SYMBOLS,
 
 OMPI_SETUP_CXX
 
+# Does the compiler support "ident"-like constructs?
+
+OMPI_CHECK_IDENT([CXX], [CXXFLAGS], [cc], [C++])
+
 # check for type sizes
 
 AC_LANG_PUSH(C++)
@@ -369,13 +377,12 @@ AC_CHECK_SIZEOF(bool)
 OMPI_C_GET_ALIGNMENT(bool, OMPI_ALIGNMENT_CXX_BOOL)
 AC_LANG_POP(C++)
 
-# check if we want C++ support                                                  
+# check if we want C++ support
 
 AM_CONDITIONAL(WANT_MPI_CXX_BINDINGS,
     test "$WANT_MPI_CXX_SUPPORT" = 1)
 AC_DEFINE_UNQUOTED(OMPI_WANT_CXX_BINDINGS, $WANT_MPI_CXX_SUPPORT,
     [Whether we want MPI cxx support or not])
-
 
 
 ##################################
