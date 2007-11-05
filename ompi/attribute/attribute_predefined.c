@@ -96,7 +96,6 @@
 static int create_comm(int target_keyval, bool want_inherit);
 static int free_comm(int keyval);
 
-/* JMS for when we implement windows */
 static int create_win(int target_keyval);
 static int free_win(int keyval);
 
