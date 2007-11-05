@@ -42,7 +42,7 @@ struct opal_mutex_t {
 
 #if !OMPI_HAVE_THREAD_SUPPORT && OMPI_ENABLE_DEBUG
     int m_lock_debug;
-    char *m_lock_file;
+    const char *m_lock_file;
     int m_lock_line;
 #endif
 };
