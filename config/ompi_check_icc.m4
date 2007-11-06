@@ -56,4 +56,4 @@ fi
 
 AC_MSG_RESULT([yes])
 
-/bin/rm -f conftest*])dnl
+/bin/rm -rf conftest*])dnl
