@@ -241,7 +241,7 @@ static inline bool opal_set_using_threads(bool have)
 #define OPAL_THREAD_TRYLOCK(mutex) (opal_using_threads() ? opal_mutex_trylock(mutex) : 0)
 #elif OMPI_ENABLE_DEBUG
 static inline int
-opal_thread_debug_trylock(opal_mutex_t *mutex, char *file, int line)
+opal_thread_debug_trylock(opal_mutex_t *mutex, const char *file, int line)
 {
     int ret = -1;
 
