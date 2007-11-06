@@ -803,6 +803,27 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
     AC_REQUIRE([OMPI_SETUP_CXX])
     AC_REQUIRE([AM_PROG_AS])
 
+    # OS X Leopard ld bus errors if you have "-g" in the link line
+    # with our assembly (!).  So remove it from CCASFLAGS if it's
+    # there (and we're on Leopard).
+    OMPI_VAR_SCOPE_PUSH([ompi_config_asm_flags_new ompi_config_asm_flag])
+    AC_MSG_CHECKING([if need to remove -g from CCASFLAGS])
+    case "$host" in
+        *-apple-darwin9.0*)
+            for ompi_config_asm_flag in $CCASFLAGS; do
+                if test "$ompi_config_asm_flag" != "-g"; then
+                    ompi_config_asm_flags_new="$ompi_config_asm_flags_new $ompi_config_asm_flag"
+                fi
+            done
+            CCASFLAGS="$ompi_config_asm_flags_new"
+            AC_MSG_RESULT([OS X Leopard - yes ($CCASFLAGS)])
+            ;;
+        *)
+            AC_MSG_RESULT([no])
+            ;;
+    esac
+    OMPI_VAR_SCOPE_POP
+
     AC_MSG_CHECKING([whether to enable smp locks])
     AC_ARG_ENABLE([smp-locks], 
         [AC_HELP_STRING([--enable-smp-locks],
