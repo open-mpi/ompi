@@ -110,5 +110,5 @@ EOF
         [Fortran value for LOGICAL .TRUE. value])
 
     unset happy ompi_print_logical_fn
-    /bin/rm -rf conftest*
+    rm -rf conftest*
 ])dnl
