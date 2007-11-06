@@ -219,7 +219,7 @@ else
 fi
 
 unset HAPPY ompi_conftest_h
-/bin/rm -rf conftest*
+rm -rf conftest*
 
 AC_LANG_POP(Fortran)
 ])dnl

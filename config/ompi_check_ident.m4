@@ -84,5 +84,5 @@ EOF
                       $6])
 
     unset ompi_compiler ompi_flags ompi_output ompi_status
-    /bin/rm -rf conftest.* conftest
+    rm -rf conftest.* conftest
 ])dnl
