@@ -97,5 +97,5 @@ EOF
     fi
 
     unset happy ompi_check_logical_fn
-    /bin/rm -f conftest*
+    /bin/rm -rf conftest*
 ])dnl

@@ -46,6 +46,6 @@ else
   cat conftest.s >&AC_FD_CC
   ifelse([$3],,:,[$3])
 fi
-rm -f conftest*
+rm -rf conftest*
 unset ompi_assemble
 ])dnl

@@ -114,7 +114,7 @@ else
 fi
 
 unset HAPPY ompi_conftest_h
-/bin/rm -f conftest*
+/bin/rm -rf conftest*
 # END: OMPI_INTL_PTHREAD_TRY_LINK_F77
 ])dnl
 

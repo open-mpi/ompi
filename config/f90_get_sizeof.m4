@@ -78,7 +78,7 @@ EOF
                  [AC_MSG_ERROR([Could not determine size of $1])])])
 
         unset happy ompi_conftest_h
-        rm -f conftest*])
+        rm -rf conftest*])
 
     $2=AS_VAR_GET(type_var)
     AS_VAR_POPDEF([type_var])dnl
