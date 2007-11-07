@@ -435,6 +435,7 @@ EOF
                 pushd opal/libltdl > /dev/null 2>&1
                 run_and_check $ompi_aclocal
                 run_and_check $ompi_automake
+                chmod u+w configure # Need this for FreeBSD.
                 run_and_check $ompi_autoconf
                 popd > /dev/null 2>&1
                 unset indent
