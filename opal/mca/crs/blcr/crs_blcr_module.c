@@ -117,6 +117,9 @@ static opal_condition_t blcr_cond;
 static opal_mutex_t     blcr_lock;
 
 static bool have_working_cr_request = false;
+static bool have_checkpoint_info_requester = false;
+
+static pid_t my_pid = -1;
 
 void opal_crs_blcr_construct(opal_crs_blcr_snapshot_t *snapshot) {
     snapshot->context_filename = NULL;
@@ -150,6 +153,8 @@ int opal_crs_blcr_module_init(void)
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: module_init()");
 
+    my_pid = getpid();
+
     if( !opal_cr_is_tool ) {
         /*
          * Initialize BLCR
@@ -168,9 +173,11 @@ int opal_crs_blcr_module_init(void)
          * 0.6.0 series.
          */
         have_working_cr_request = true;
+        have_checkpoint_info_requester = true;
         if( CR_RELEASE_MAJOR <= 0 &&
             CR_RELEASE_MINOR <  6 ) {
             have_working_cr_request = false;
+            have_checkpoint_info_requester = false;
         }
         if( !have_working_cr_request ) {
             opal_output_verbose(1, mca_crs_blcr_component.super.output_handle,
@@ -181,6 +188,17 @@ int opal_crs_blcr_module_init(void)
         else {
             opal_output_verbose(15, mca_crs_blcr_component.super.output_handle,
                                 "crs:blcr: The BLCR version installed (%s) supports cr_request(). Yay!",
+                                CR_RELEASE_VERSION);
+        }
+        if( !have_checkpoint_info_requester ) {
+            opal_output_verbose(1, mca_crs_blcr_component.super.output_handle,
+                                "crs:blcr: WARNING: The BLCR version installed (%s) does not contain the requester type in the "
+                                "cr_checkpoint_info struct. Care should be taken when interacting with the BLCR command line tools.\n",
+                                CR_RELEASE_VERSION);
+        }
+        else {
+            opal_output_verbose(15, mca_crs_blcr_component.super.output_handle,
+                                "crs:blcr: The BLCR version installed (%s) supports the required cr_checkpoint_info struct. Yay!",
                                 CR_RELEASE_VERSION);
         }
     }
@@ -292,7 +310,7 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
      *   function to checkpoint ourselves. If we are a thread, then it is likely 
      *   that we have not properly initalized this module.
      */
-    if( have_working_cr_request && pid == getpid() ) {
+    if( have_working_cr_request && pid == my_pid ) {
         char *loc_fname = NULL;
 
         blcr_get_checkpoint_filename(&(snapshot->context_filename), pid);
@@ -600,6 +618,7 @@ cleanup:
 }
 
 static int opal_crs_blcr_thread_callback(void *arg) {
+    const struct cr_checkpoint_info *ckpt_info = cr_get_checkpoint_info();
     int ret;
     
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
@@ -609,9 +628,25 @@ static int opal_crs_blcr_thread_callback(void *arg) {
     blcr_current_state = OPAL_CRS_CHECKPOINT;
 
     /*
-     * Allow the checkpoint to be taken
+     * Allow the checkpoint to be taken, if we requested it
      */
-    ret = cr_checkpoint(0);
+    if(have_checkpoint_info_requester) {
+        if( ckpt_info->requester != my_pid ) {
+            ret = cr_checkpoint(CR_CHECKPOINT_OMIT);
+            blcr_current_state = OPAL_CRS_RUNNING;
+            opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                                "crs:blcr: thread_callback(); WARNING: An external agent attempted to checkpoint this process "
+                                "when it did not expect to be checkpointed. Skipping this checkpoint request."
+                                " [%d != %d].", ckpt_info->requester, my_pid);
+            return 0;
+        }
+        else {
+            ret = cr_checkpoint(0);
+        }
+    }
+    else {
+        ret = cr_checkpoint(0);
+    }
     
     /*
      * Restarting
@@ -637,12 +672,24 @@ static int opal_crs_blcr_thread_callback(void *arg) {
 }
 
 static int opal_crs_blcr_signal_callback(void *arg) {
+    const struct cr_checkpoint_info *ckpt_info = cr_get_checkpoint_info();
     int ret;
 
     /*
-     * Allow the checkpoint to be taken
+     * Allow the checkpoint to be taken, if we requested it
      */
-    ret = cr_checkpoint(0);
+    if(have_checkpoint_info_requester) {
+        if( ckpt_info->requester != my_pid ) {
+            ret = cr_checkpoint(CR_CHECKPOINT_OMIT);
+            return 0;
+        }
+        else {
+            ret = cr_checkpoint(0);
+        }
+    }
+    else {
+        ret = cr_checkpoint(0);
+    }
 
     return 0;
 }
