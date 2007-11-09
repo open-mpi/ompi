@@ -79,7 +79,45 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
            crs_blcr_WRAPPER_EXTRA_CPPFLAGS="$crs_blcr_CPPFLAGS"
            $1],
           [$2])
-          
+
+    #
+    # Check for version >= 0.6.0 which has:
+    # - working cr_request_file
+    # - 'requester' parameter to checkpoint_info
+    #
+    prev_CPPFLAGS="$CPPFLAGS"
+    prev_LDFLAGS="$LDFLAGS"
+    CPPFLAGS="$CPPFLAGS -I$with_blcr/include"
+    LDFLAGS="$LDFLAGS -L$with_blcr/lib"
+    crs_blcr_have_working_cr_request=0
+    AC_MSG_CHECKING(for BLCR working cr_request)
+    AC_TRY_COMPILE([#include <libcr.h>],
+        [#if CR_RELEASE_MAJOR <= 0 && CR_RELEASE_MINOR < 6
+         #error Version earlier than 0.6.0
+         #endif
+        ],
+        [crs_blcr_have_working_cr_request=1
+        AC_MSG_RESULT([yes])],
+        [crs_blcr_have_working_cr_request=0
+        AC_MSG_RESULT([no])
+        AC_MSG_WARN([This BLCR version does not contain a known working version of cr_request])])
+    AC_DEFINE_UNQUOTED([CRS_BLCR_HAVE_CR_REQUEST], [$crs_blcr_have_working_cr_request],
+        [BLCR cr_request check])
+
+    crs_blcr_have_info_requester=0
+    AS_IF([test "$crs_blcr_good" = "yes"],
+          [AC_CHECK_MEMBER([struct cr_checkpoint_info.requester],
+              [crs_blcr_have_info_requester=1],
+              [AC_MSG_WARN([This BLCR version does not contain a 'requester' member of the 'cr_checkpoint_info' struct])],
+              [#include <libcr.h>])
+           $1],
+          [$2])
+    AC_DEFINE_UNQUOTED([CRS_BLCR_HAVE_INFO_REQUESTER], [$crs_blcr_have_info_requester],
+        [BLCRs cr_checkpoint_info.requester member availability])
+
+    CPPFLAGS="$prev_CPPFLAGS"
+    LDFLAGS="$prev_LDFLAGS"
+
     #
     AC_SUBST([crs_blcr_crs_blcr_WRAPPER_EXTRA_LDFLAGS])
     AC_SUBST([crs_blcr_crs_blcr_WRAPPER_EXTRA_LIBS])

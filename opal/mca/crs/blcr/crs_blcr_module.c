@@ -116,9 +116,6 @@ static char *blcr_checkpoint_cmd = NULL;
 static opal_condition_t blcr_cond;
 static opal_mutex_t     blcr_lock;
 
-static bool have_working_cr_request = false;
-static bool have_checkpoint_info_requester = false;
-
 static pid_t my_pid = -1;
 
 void opal_crs_blcr_construct(opal_crs_blcr_snapshot_t *snapshot) {
@@ -164,42 +161,6 @@ int opal_crs_blcr_module_init(void)
             opal_output(mca_crs_blcr_component.super.output_handle,
                         "Error: crs:blcr: module_init: cr_init failed (%d)\n", client_id);
             return OPAL_ERROR;
-        }
-
-        /*
-         * Check for a working cr_request, version 0.6.0 and later
-         * In earlier version there was a bug with moving the context file from 
-         * one location to another if cr_request was used. This was fixed in the
-         * 0.6.0 series.
-         */
-        have_working_cr_request = true;
-        have_checkpoint_info_requester = true;
-        if( CR_RELEASE_MAJOR <= 0 &&
-            CR_RELEASE_MINOR <  6 ) {
-            have_working_cr_request = false;
-            have_checkpoint_info_requester = false;
-        }
-        if( !have_working_cr_request ) {
-            opal_output_verbose(1, mca_crs_blcr_component.super.output_handle,
-                                "crs:blcr: WARNING: The BLCR version installed (%s) does not support cr_request(). "
-                                "Using an alternative technique.\n",
-                                CR_RELEASE_VERSION);
-        }
-        else {
-            opal_output_verbose(15, mca_crs_blcr_component.super.output_handle,
-                                "crs:blcr: The BLCR version installed (%s) supports cr_request(). Yay!",
-                                CR_RELEASE_VERSION);
-        }
-        if( !have_checkpoint_info_requester ) {
-            opal_output_verbose(1, mca_crs_blcr_component.super.output_handle,
-                                "crs:blcr: WARNING: The BLCR version installed (%s) does not contain the requester type in the "
-                                "cr_checkpoint_info struct. Care should be taken when interacting with the BLCR command line tools.\n",
-                                CR_RELEASE_VERSION);
-        }
-        else {
-            opal_output_verbose(15, mca_crs_blcr_component.super.output_handle,
-                                "crs:blcr: The BLCR version installed (%s) supports the required cr_checkpoint_info struct. Yay!",
-                                CR_RELEASE_VERSION);
         }
     }
 
@@ -310,7 +271,8 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
      *   function to checkpoint ourselves. If we are a thread, then it is likely 
      *   that we have not properly initalized this module.
      */
-    if( have_working_cr_request && pid == my_pid ) {
+#if CRS_BLCR_HAVE_CR_REQUEST == 1
+    if( pid == my_pid ) {
         char *loc_fname = NULL;
 
         blcr_get_checkpoint_filename(&(snapshot->context_filename), pid);
@@ -337,7 +299,9 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
     /*
      * Checkpointing another process
      */
-    else {
+    else 
+#endif
+    {
         ret = blcr_checkpoint_peer(pid, snapshot->super.local_location, &(snapshot->context_filename));
 
         if(OPAL_SUCCESS != ret) {
@@ -630,21 +594,19 @@ static int opal_crs_blcr_thread_callback(void *arg) {
     /*
      * Allow the checkpoint to be taken, if we requested it
      */
-    if(have_checkpoint_info_requester) {
-        if( ckpt_info->requester != my_pid ) {
-            ret = cr_checkpoint(CR_CHECKPOINT_OMIT);
-            blcr_current_state = OPAL_CRS_RUNNING;
-            opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
-                                "crs:blcr: thread_callback(); WARNING: An external agent attempted to checkpoint this process "
-                                "when it did not expect to be checkpointed. Skipping this checkpoint request."
-                                " [%d != %d].", ckpt_info->requester, my_pid);
-            return 0;
-        }
-        else {
-            ret = cr_checkpoint(0);
-        }
+#if CRS_BLCR_HAVE_INFO_REQUESTER == 1
+    if( ckpt_info->requester != my_pid ) {
+        ret = cr_checkpoint(CR_CHECKPOINT_OMIT);
+        blcr_current_state = OPAL_CRS_RUNNING;
+        opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                            "crs:blcr: thread_callback(); WARNING: An external agent attempted to checkpoint this process "
+                            "when it did not expect to be checkpointed. Skipping this checkpoint request."
+                            " [%d != %d].", ckpt_info->requester, my_pid);
+        return 0;
     }
-    else {
+    else
+#endif
+    {
         ret = cr_checkpoint(0);
     }
     
@@ -678,16 +640,14 @@ static int opal_crs_blcr_signal_callback(void *arg) {
     /*
      * Allow the checkpoint to be taken, if we requested it
      */
-    if(have_checkpoint_info_requester) {
-        if( ckpt_info->requester != my_pid ) {
-            ret = cr_checkpoint(CR_CHECKPOINT_OMIT);
-            return 0;
-        }
-        else {
-            ret = cr_checkpoint(0);
-        }
+#if CRS_BLCR_HAVE_INFO_REQUESTER == 1
+    if( ckpt_info->requester != my_pid ) {
+        ret = cr_checkpoint(CR_CHECKPOINT_OMIT);
+        return 0;
     }
-    else {
+    else
+#endif
+    {
         ret = cr_checkpoint(0);
     }
 
