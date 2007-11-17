@@ -935,9 +935,13 @@ static int mca_btl_sctp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endp
         mca_btl_sctp_endpoint_event_init(btl_endpoint, btl_endpoint->endpoint_sd);
        
         /* start the connect - will likely fail with EINPROGRESS */
+	memset(&endpoint_addr, 0, sizeof(endpoint_addr));
         endpoint_addr.sin_family = AF_INET;
         endpoint_addr.sin_addr = btl_endpoint->endpoint_addr->addr_inet;
         endpoint_addr.sin_port = btl_endpoint->endpoint_addr->addr_port;
+#ifdef FREEBSD
+        endpoint_addr.sin_len = sizeof(struct sockaddr);
+#endif
         if(connect(btl_endpoint->endpoint_sd, (struct sockaddr*)&endpoint_addr,
                    sizeof(endpoint_addr)) < 0)
         {

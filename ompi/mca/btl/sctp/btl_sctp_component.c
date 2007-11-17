@@ -101,6 +101,11 @@ mca_btl_sctp_component_t mca_btl_sctp_component = {
     }
 };
 
+#if MCA_BTL_SCTP_DONT_USE_HASH
+struct mca_btl_sctp_proc_table_node *recvr_proc_table;
+struct mca_btl_sctp_proc_table_node *sender_proc_table;
+#endif
+
 /*
  * utility routines for parameter registration
  */

@@ -32,7 +32,7 @@ AC_DEFUN([OMPI_CHECK_SCTP],[
 		[Search for SCTP libraries in DIR])])
     
     btl_sctp_CFLAGS="`echo $CFLAGS`"
-#only try to build this on Linux or some BSD variant    
+#only try to build this on Linux, Mac OS X, or some BSD variant    
     ompi_sctp_try_to_build="no"
     case "$host" in
     *linux*)
@@ -45,9 +45,16 @@ AC_DEFUN([OMPI_CHECK_SCTP],[
 	ompi_sctp_try_to_build="yes"
 	AC_MSG_WARN([Adding -DFREEBSD to set extra sin_len field in sockaddr.])
 	;;
-#TODO add Mac OS X support for SCTP NKE. Adjustments should look like *bsd*...
+# Mac OS X support for SCTP NKE. Adjustments should look like *bsd*...
+    *darwin*)
+        # only add -DFREEBSD once to get extra sin_len field
+        btl_sctp_CFLAGS="`echo $btl_sctp_CFLAGS | sed 's/-DFREEBSD//g'`"
+        btl_sctp_CFLAGS="$btl_sctp_CFLAGS -DFREEBSD"
+	ompi_sctp_try_to_build="yes"
+	AC_MSG_WARN([Adding -DFREEBSD to set extra sin_len field in sockaddr.])
+	;;
     *)
-	AC_MSG_WARN([Only build sctp BTL on Linux and BSD variants])
+	AC_MSG_WARN([Only build sctp BTL on Linux, Mac OS X, and BSD variants])
 	;;
     esac
 

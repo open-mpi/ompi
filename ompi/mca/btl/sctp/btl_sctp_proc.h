@@ -99,8 +99,8 @@ struct mca_btl_sctp_proc_table_node {
 };
 typedef struct mca_btl_sctp_proc_table_node mca_btl_sctp_proc_table_node;
 
-struct mca_btl_sctp_proc_table_node *recvr_proc_table;
-struct mca_btl_sctp_proc_table_node *sender_proc_table;
+extern struct mca_btl_sctp_proc_table_node *recvr_proc_table;
+extern struct mca_btl_sctp_proc_table_node *sender_proc_table;
 
 int mca_btl_sctp_proc_check(uint32_t id, struct mca_btl_sctp_proc_table_node *table);
 void mca_btl_sctp_proc_add(uint32_t id, struct mca_btl_sctp_proc_t *proc, struct mca_btl_sctp_proc_table_node *table);
