@@ -45,18 +45,13 @@ static void ompi_free_list_destruct(ompi_free_list_t* fl);
 OBJ_CLASS_INSTANCE(ompi_free_list_t, opal_atomic_lifo_t,
         ompi_free_list_construct, ompi_free_list_destruct);
 
-struct ompi_free_list_memory_t {
-    opal_list_item_t super;
-    mca_mpool_base_registration_t *registration;
-};
-typedef struct ompi_free_list_memory_t ompi_free_list_memory_t;
-static OBJ_CLASS_INSTANCE(ompi_free_list_memory_t,
-                          opal_list_item_t,
-                          NULL, NULL);
-
 OBJ_CLASS_INSTANCE(ompi_free_list_item_t, 
                    opal_list_item_t,
                    NULL, NULL); 
+
+OBJ_CLASS_INSTANCE(ompi_free_list_memory_t, 
+                   opal_list_item_t,
+                   NULL, NULL);
 
 static void ompi_free_list_construct(ompi_free_list_t* fl)
 {

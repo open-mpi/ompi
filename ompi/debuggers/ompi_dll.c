@@ -592,6 +592,7 @@ int mqs_image_has_queues (mqs_image *image, char **message)
     /**
      * Gather information about the received fragments and theirs headers.
      */
+#if 0  /* Disabled until I find a better way */
     {
         mqs_type* qh_type = mqs_find_type( image, "mca_pml_ob1_common_hdr_t", mqs_lang_c );
         if( !qh_type ) {
@@ -625,7 +626,7 @@ int mqs_image_has_queues (mqs_image *image, char **message)
         i_info->mca_pml_ob1_recv_frag_t.offset.hdr = mqs_field_offset(qh_type, "hdr");
         i_info->mca_pml_ob1_recv_frag_t.offset.request = mqs_field_offset(qh_type, "request");
     }
-
+#endif
     /**
      * And now let's look at the communicator and group structures.
      */

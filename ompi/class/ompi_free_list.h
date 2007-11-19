@@ -60,6 +60,13 @@ typedef struct ompi_free_list_item_t ompi_free_list_item_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_free_list_item_t);
 
+struct ompi_free_list_memory_t {
+    opal_list_item_t super;
+    struct mca_mpool_base_registration_t *registration;
+};
+typedef struct ompi_free_list_memory_t ompi_free_list_memory_t;
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_free_list_memory_t);
+
 /**
  * Initialize a free list.
  *

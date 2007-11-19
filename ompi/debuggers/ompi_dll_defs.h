@@ -106,6 +106,7 @@ typedef struct
             int req_bytes_packed;
         } offset;
     } mca_pml_base_recv_request_t;
+#if 0
     /* fragments for unexpected messages (as well as theirs headers) */
     struct {
         int size;
@@ -131,6 +132,7 @@ typedef struct
             int hdr_seq;
         } offset;
     } mca_pml_ob1_match_hdr_t;
+#endif
     /* communicator structures */
     struct {
         int size;
