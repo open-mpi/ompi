@@ -52,7 +52,7 @@ EOF
                     [AC_MSG_ERROR([Could not determine kind of selected_int_kind($1)])])])
 
         unset happy ompi_conftest_h
-        rm -f conftest*])
+        rm -rf conftest*])
 
         $3=AS_VAR_GET(type_var)
     else

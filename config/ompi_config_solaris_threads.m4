@@ -102,7 +102,7 @@ else
 fi
 
 unset HAPPY ompi_conftest_h
-/bin/rm -f conftest*
+rm -rf conftest*
 # END: OMPI_INTL_SOLARIS_TRY_LINK_F77
 ])dnl
 

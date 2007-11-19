@@ -52,7 +52,7 @@ OMPI_LOG_COMMAND(
     AS_IF([test "$ompi_c_weak_symbols_happy" = "1"], [$1], [$2])
 
     unset ompi_c_weak_symbols_happy
-    /bin/rm -f conftest_weak.h conftest_weak.c conftest.c conftest
+    rm -f conftest_weak.h conftest_weak.c conftest.c conftest
 ])
 
 

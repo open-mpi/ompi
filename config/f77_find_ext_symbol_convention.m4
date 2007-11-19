@@ -90,7 +90,7 @@ EOF
         [$ompi_fortran_plain],
         [Whether fortran symbols have no trailing underscore or not])
 
-    rm -f conftest.*
+    rm -rf conftest.*
 ])dnl
 
 

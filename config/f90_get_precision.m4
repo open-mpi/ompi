@@ -53,7 +53,7 @@ EOF
                 [AC_MSG_ERROR([Could not determine precision of $1])])])
 
         unset happy
-        /bin/rm -f conftest*])
+        rm -rf conftest*])
 
     $2=AS_VAR_GET([type_var])
     AS_VAR_POPDEF([type_var])dnl

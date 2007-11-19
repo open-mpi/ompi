@@ -60,4 +60,4 @@ typedef struct { char x; $1 y; } ompi__type_alignof_;
 AC_DEFINE_UNQUOTED([$2], [$AS_TR_SH([ompi_cv_c_align_$1])], [Alignment of type $1])
 eval "$2=$AS_TR_SH([ompi_cv_c_align_$1])"
 
-/bin/rm -f conftest* ]) dnl
+rm -rf conftest* ]) dnl
