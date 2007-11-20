@@ -457,7 +457,6 @@ int mca_btl_ud_component_progress(void)
             case MCA_BTL_UD_FRAG_SEND:
             case MCA_BTL_UD_FRAG_USER:
             {
-                mca_btl_ud_endpoint_t* endpoint = frag->endpoint;
                 assert(cwc->opcode == IBV_WC_SEND);
 
                 frag->base.des_cbfunc(&ud_btl->super,
