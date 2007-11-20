@@ -930,6 +930,8 @@ static void mca_btl_sctp_component_recv_handler(int sd, short flags, void* user)
         CLOSE_THE_SOCKET(sd); 
         return; 
     }
+    SCTP_BTL_ERROR(("mca_btl_sctp_component_recv_handler() sd=%d, got %d byte guid.\n", sd, retval));
+
     ORTE_PROCESS_NAME_NTOH(guid);
    
     /* lookup the corresponding process */
