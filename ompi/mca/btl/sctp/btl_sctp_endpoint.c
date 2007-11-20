@@ -780,10 +780,10 @@ static int mca_btl_sctp_endpoint_recv_blocking(mca_btl_base_endpoint_t* btl_endp
              */
             retval = sctp_recvmsg(btl_endpoint->endpoint_sd, (char *)ptr+cnt, size-cnt, 
                                   0, 0, &sri, &msg_flags);
-            if(retval >= 0) { SCTP_BTL_ERROR(("mca_btl_sctp_endpoint_recv_blocking() sd=%d, got %d bytes.\n", btl_endpoint->endpoint_sd, retval)); }
 
             /* remote closed connection */
-            if(retval == -1 && (opal_socket_errno == ECONNRESET || opal_socket_errno == EBADF)) {
+            if((retval == -1 && (opal_socket_errno == ECONNRESET || opal_socket_errno == EBADF))
+               || retval == 0) {
                 mca_btl_sctp_endpoint_close(btl_endpoint);
                 return -1;
             }
@@ -797,6 +797,8 @@ static int mca_btl_sctp_endpoint_recv_blocking(mca_btl_base_endpoint_t* btl_endp
                 }
                 continue;
             }
+            SCTP_BTL_ERROR(("mca_btl_sctp_endpoint_recv_blocking() sd=%d, got %d bytes.\n", btl_endpoint->endpoint_sd, retval));
+            
             cnt += retval;
         }
         return cnt;
