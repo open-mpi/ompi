@@ -883,12 +883,12 @@ int mca_btl_sctp_set_socket_options(int sd)
 #endif
 
     /* set socket up to be non-blocking  */
-    if((flags = fcntl(mca_btl_sctp_component.sctp_listen_sd, F_GETFL, 0)) < 0) {
+    if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
         BTL_ERROR(("fcntl(F_GETFL) failed with errno=%d", opal_socket_errno));
         return OMPI_ERROR;
     } else {
         flags |= O_NONBLOCK;
-        if(fcntl(mca_btl_sctp_component.sctp_listen_sd, F_SETFL, flags) < 0) {
+        if(fcntl(sd, F_SETFL, flags) < 0) {
             BTL_ERROR(("fcntl(F_SETFL) failed with errno=%d", opal_socket_errno));
             return OMPI_ERROR;
         }

@@ -35,12 +35,10 @@ sources = \
     btl_sctp_hdr.h \
     btl_sctp_proc.c \
     btl_sctp_proc.h \
-	sctp_writev.c \
-	sctp_writev.h \
-	btl_sctp_recv_handler.c \
-	btl_sctp_recv_handler.h \
-	btl_sctp_utils.c \
-	btl_sctp_utils.h
+    btl_sctp_recv_handler.c \
+    btl_sctp_recv_handler.h \
+    btl_sctp_utils.c \
+    btl_sctp_utils.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

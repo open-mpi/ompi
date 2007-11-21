@@ -39,10 +39,6 @@
 #include "btl_sctp_endpoint.h"
 #include "orte/util/proc_info.h"
 
-/* Needed to use sctp_writev() which is a slightly modified sctp_sendmsg()
- * call.
- */
-#include "sctp_writev.h"
 #include "btl_sctp.h"
 #include "btl_sctp_addr.h"
 #include "btl_sctp_utils.h"
@@ -128,10 +124,7 @@ int mca_btl_sctp_frag_get_msg_size(mca_btl_sctp_frag_t *frag) {
 /**
  * mca_btl_sctp_frag_large_send(mca_btl_sctp_frag_t* frag, int sd)
  * ---------------------------------------------------------------
- *  Hopefully will fragment the message and send it on the wire. One approach is
- *  to fragment the message, then call mca_btl_sctp_frag_send() with each
- *  smaller fragment from a while loop until the entire message is sent. This is
- *  approach 1.
+ *  Send a frag that is too large to send in one call to a vector write.
  */
 
 bool mca_btl_sctp_frag_large_send(mca_btl_sctp_frag_t* frag, int sd, int iov_fragment, int *amt_sent) {
@@ -168,9 +161,8 @@ bool mca_btl_sctp_frag_large_send(mca_btl_sctp_frag_t* frag, int sd, int iov_fra
         if(mca_btl_sctp_component.sctp_if_11) {
             cnt = sctp_sendmsg(sd, frag->iov_ptr->iov_base, to_send, 0, 0, 0, 0, 0, 0, 0 );
         } else {
-            cnt = sctp_sendmsg(sd, frag->iov_ptr->iov_base, to_send,
-                               (struct sockaddr *)&btl_sockaddr, sizeof(btl_sockaddr), 0, 0,
-                               0, 0, 0 );
+            cnt = sctp_sendmsg(sd, frag->iov_ptr->iov_base, to_send, (struct sockaddr *)&btl_sockaddr, 
+                    sizeof(btl_sockaddr), 0, 0, 0, 0, 0 );
         }
                                    
                     
@@ -185,12 +177,12 @@ bool mca_btl_sctp_frag_large_send(mca_btl_sctp_frag_t* frag, int sd, int iov_fra
                 cnt=0;
                 break;
             case EFAULT:
-                BTL_ERROR(("writev error (%p, %d)\n\t%s(%d)\n",
+                BTL_ERROR(("sctp_sendmsg error (%p, %d)\n\t%s(%d)\n",
                            frag->iov_ptr[0].iov_base, frag->iov_ptr[0].iov_len,
                            strerror(opal_socket_errno), frag->iov_cnt));
             default:
                 {
-                    BTL_ERROR(("writev failed with errno=%d", opal_socket_errno));
+                    BTL_ERROR(("sctp_sendmsg failed with errno=%d", opal_socket_errno));
                     mca_btl_sctp_endpoint_close(frag->endpoint);
                     return false;
                 }
@@ -295,10 +287,9 @@ bool mca_btl_sctp_frag_send(mca_btl_sctp_frag_t* frag, int sd)
 
         while(cnt < 0) {
             if(mca_btl_sctp_component.sctp_if_11) {
-                cnt = sctp_writev(sd, frag->iov_ptr, frag->iov_cnt, 0, 0, 0, 0, 0, 0, 0);
+                cnt = mca_btl_sctp_utils_writev(sd, frag->iov_ptr, frag->iov_cnt, 0, 0, 0);
             } else {
-                cnt = sctp_writev(sd, frag->iov_ptr, frag->iov_cnt, (struct sockaddr *)&btl_sockaddr, len, 0,
-                                  0, 0, 0, 0);
+                cnt = mca_btl_sctp_utils_writev(sd, frag->iov_ptr, frag->iov_cnt, (struct sockaddr *)&btl_sockaddr, len, 0);
             }
                     
             if(cnt >= 0) {
@@ -310,12 +301,12 @@ bool mca_btl_sctp_frag_send(mca_btl_sctp_frag_t* frag, int sd)
                 case EWOULDBLOCK:
                     return false;
                 case EFAULT:
-                    BTL_ERROR(("writev error (%p, %d)\n\t%s(%d)\n",
+                    BTL_ERROR(("mca_btl_sctp_utils_writev error (%p, %d)\n\t%s(%d)\n",
                                frag->iov_ptr[0].iov_base, frag->iov_ptr[0].iov_len,
                                strerror(opal_socket_errno), frag->iov_cnt));
                 default:
                     {
-                        BTL_ERROR(("writev failed with errno=%d", opal_socket_errno));
+                        BTL_ERROR(("mca_btl_sctp_utils_writev failed with errno=%d", opal_socket_errno));
                         mca_btl_sctp_endpoint_close(frag->endpoint);
                         return false;
                     }
@@ -407,11 +398,11 @@ repeat11:
                     case EWOULDBLOCK:
                         return false;
                     case EFAULT:
-                        opal_output( 0, "mca_btl_sctp_frag_send: writev error (%p, %d)\n\t%s(%d)\n",
+                        opal_output( 0, "mca_btl_sctp_frag_recv: readv error (%p, %d)\n\t%s(%d)\n",
                                 frag->iov_ptr[0].iov_base, (int) frag->iov_ptr[0].iov_len,
                                 strerror(opal_socket_errno), (int) frag->iov_cnt );
                     default:
-                        opal_output(0, "mca_btl_sctp_frag_send: writev failed with errno=%d",
+                        opal_output(0, "mca_btl_sctp_frag_recv: readv failed with errno=%d",
                                 opal_socket_errno);
                         mca_btl_sctp_endpoint_close(btl_endpoint);
                         return false;
@@ -551,11 +542,11 @@ repeat:
                     case EWOULDBLOCK:
                         return false;
                     case EFAULT:
-                        opal_output( 0, "mca_btl_sctp_frag_send: writev error (%p, %d)\n\t%s(%d)\n",
+                        opal_output( 0, "mca_btl_sctp_frag_recv: error (%p, %d)\n\t%s(%d)\n",
                                 frag->iov_ptr[0].iov_base, (int) frag->iov_ptr[0].iov_len,
                                 strerror(opal_socket_errno), (int) frag->iov_cnt );
                     default:
-                        opal_output(0, "mca_btl_sctp_frag_send: writev failed with errno=%d",
+                        opal_output(0, "mca_btl_sctp_frag_recv: failed with errno=%d",
                                 opal_socket_errno);
                         mca_btl_sctp_endpoint_close(btl_endpoint);
                         return false;
