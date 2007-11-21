@@ -44,12 +44,23 @@ struct mca_mtl_portals_module_t {
     size_t eager_limit;
 
     ptl_handle_eq_t ptl_eq_h;
-    ptl_handle_eq_t ptl_unexpected_recv_eq_h;
 
-    /* insert all posted receives before this handle */
-    ptl_handle_me_t ptl_match_ins_me_h;
-    /* last handle in the SEND table entry */
-    ptl_handle_me_t ptl_unexpected_me_h;
+    ptl_handle_eq_t ptl_unex_eq_h;
+
+    /* long unex msgs - insert posted recvs before this */
+    ptl_handle_me_t ptl_unex_long_me_h;
+
+    /* send catchall - insert short unex buffers before this */
+    ptl_handle_me_t ptl_send_catchall_me_h;
+
+    /* catchall for ack portal */
+    ptl_handle_me_t ptl_ack_catchall_me_h;
+
+    /* catchall for read portal */
+    ptl_handle_me_t ptl_read_catchall_me_h;
+
+    /* for zero-length sends and acks */
+    ptl_handle_md_t ptl_zero_md_h;
 
     ompi_free_list_t event_fl;
 
@@ -61,6 +72,23 @@ struct mca_mtl_portals_module_t {
 
     int ptl_expected_queue_size;
     int ptl_unexpected_queue_size;
+
+    /* for send-side copy blocks */
+    ptl_md_t ptl_short_md;
+    ptl_handle_md_t ptl_short_md_h;
+
+    int ptl_num_copy_blocks;
+    int ptl_copy_block_len;
+
+    int *ptl_copy_block_free_list;
+    int ptl_copy_block_first_free;
+
+    /* empty event queue for PtlMEMDPost() */
+    ptl_handle_eq_t ptl_empty_eq_h;
+
+    /* turn off aggressive polling of the unex msg event queue */
+    bool ptl_aggressive_polling;
+
 };
 typedef struct mca_mtl_portals_module_t mca_mtl_portals_module_t;
 

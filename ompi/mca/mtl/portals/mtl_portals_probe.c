@@ -17,9 +17,11 @@
  */
 
 #include "ompi_config.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/request/request.h"
 #include "mtl_portals.h"
-
+#include "mtl_portals_request.h"
+#include "mtl_portals_recv.h"
 
 int
 ompi_mtl_portals_iprobe(struct mca_mtl_base_module_t* mtl,
@@ -29,5 +31,29 @@ ompi_mtl_portals_iprobe(struct mca_mtl_base_module_t* mtl,
                         int *flag,
                         struct ompi_status_public_t *status)
 {
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    ptl_match_bits_t match_bits;
+    ptl_match_bits_t ignore_bits;
+    ompi_mtl_portals_event_t *recv_event = NULL;
+
+    PTL_SET_RECV_BITS(match_bits, ignore_bits, comm->c_contextid, src, tag);
+
+    /* first, check the queue of processed unexpected messages */
+    recv_event = ompi_mtl_portals_search_unex_q(match_bits, ignore_bits, true);
+    if (NULL == recv_event) {
+        /* check for new events */
+        recv_event = ompi_mtl_portals_search_unex_events(match_bits, ignore_bits, true);
+    }
+
+    if ( NULL != recv_event ) {
+        /* found it */
+        *flag              = 1;
+        status->MPI_SOURCE = PTL_GET_SOURCE(recv_event->ev.match_bits);
+        status->MPI_TAG    = PTL_GET_TAG(recv_event->ev.match_bits);
+        status->_count     = recv_event->ev.rlength;
+        status->MPI_ERROR  = OMPI_SUCCESS;
+    } else {
+        *flag = 0;
+    }
+
+    return OMPI_SUCCESS;
 }

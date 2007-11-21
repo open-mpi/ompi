@@ -35,9 +35,11 @@ struct ompi_mtl_portals_recv_short_block_t {
 typedef struct ompi_mtl_portals_recv_short_block_t ompi_mtl_portals_recv_short_block_t;
 OBJ_CLASS_DECLARATION(ompi_mtl_portals_recv_short_block_t);
 
-int ompi_mtl_portals_recv_short_enable(mca_mtl_portals_module_t *mtl);
+extern int
+ompi_mtl_portals_recv_short_enable(mca_mtl_portals_module_t *mtl);
 
-int ompi_mtl_portals_recv_short_disable(mca_mtl_portals_module_t *mtl);
+extern int
+ompi_mtl_portals_recv_short_disable(mca_mtl_portals_module_t *mtl);
 
 /**
  * Create a block of memory for receiving send messages.  Must call
@@ -46,7 +48,7 @@ int ompi_mtl_portals_recv_short_disable(mca_mtl_portals_module_t *mtl);
  *
  * Module lock must be held before calling this function
  */
-ompi_mtl_portals_recv_short_block_t* 
+extern ompi_mtl_portals_recv_short_block_t* 
 ompi_mtl_portals_recv_short_block_init(mca_mtl_portals_module_t *mtl);
 
 
@@ -57,8 +59,8 @@ ompi_mtl_portals_recv_short_block_init(mca_mtl_portals_module_t *mtl);
  *
  * Module lock must be held before calling this function
  */
-int ompi_mtl_portals_recv_short_block_free(ompi_mtl_portals_recv_short_block_t *block);
-
+extern int
+ompi_mtl_portals_recv_short_block_free(ompi_mtl_portals_recv_short_block_t *block);
 
 /**
  * activate a block.  Blocks that are full (have gone inactive) can be
@@ -80,40 +82,33 @@ ompi_mtl_portals_activate_block(ompi_mtl_portals_recv_short_block_t *block)
 
     if (NULL == block->start) return OMPI_ERROR;
 
-    /* create match entry */
-    ret = PtlMEInsert(block->mtl->ptl_unexpected_me_h,
-                      any_proc,
-                      match_bits,
-                      ignore_bits,
-                      PTL_UNLINK,
-                      PTL_INS_BEFORE,
-                      &(block->me_h));
-    if (PTL_OK != ret) return OMPI_ERROR;
-
-    /* and the memory descriptor */
     md.start = block->start;
     md.length = block->length;
-    /* try to throttle incoming sends so that we don't overrun the incoming
-       queue size */
     md.threshold = PTL_MD_THRESH_INF;
     md.max_size = block->mtl->eager_limit;
     md.options = PTL_MD_OP_PUT | PTL_MD_MAX_SIZE | PTL_MD_ACK_DISABLE;
     md.user_ptr = block;
-    md.eq_handle = block->mtl->ptl_unexpected_recv_eq_h;
+    md.eq_handle = block->mtl->ptl_unex_eq_h;
 
     block->pending = 0;
     block->full = false;
+
     /* make sure that everyone sees the update on full value */
     opal_atomic_mb();
 
-    ret = PtlMDAttach(block->me_h,
-                      md,
-                      PTL_UNLINK,
-                      &(block->md_h));
-    if (PTL_OK != ret) {
-        PtlMEUnlink(block->me_h);
-        return OMPI_ERROR;
-    }
+    ret = PtlMEMDPost(ompi_mtl_portals.ptl_ni_h,
+		      ompi_mtl_portals.ptl_send_catchall_me_h,
+		      any_proc,
+		      match_bits,
+		      ignore_bits,
+		      PTL_UNLINK,
+		      PTL_INS_BEFORE,
+		      md,
+		      PTL_UNLINK,
+		      &(block->me_h),
+		      &(block->md_h),
+		      ompi_mtl_portals.ptl_empty_eq_h);
+    if (PTL_OK != ret) return OMPI_ERROR;
 
     return OMPI_SUCCESS;
 }
