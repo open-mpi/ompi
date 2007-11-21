@@ -77,7 +77,7 @@ ompi_mtl_portals_component_open(void)
                            "Cross-over point from eager to rendezvous sends",
                            false,
                            false,
-                           1024,
+                           128 * 1024,
                            &tmp);
 
     ompi_mtl_portals.eager_limit = tmp;
@@ -115,6 +115,32 @@ ompi_mtl_portals_component_open(void)
                            false,
                            1024,
                            &ompi_mtl_portals.ptl_unexpected_queue_size);
+
+    mca_base_param_reg_int(&mca_mtl_portals_component.mtl_version,
+                           "num_copy_blocks",
+                           "Number of short message copy blocks",
+                           false,
+                           false,
+                           256,
+                           &ompi_mtl_portals.ptl_num_copy_blocks);
+
+    mca_base_param_reg_int(&mca_mtl_portals_component.mtl_version,
+                           "copy_block_len",
+                           "Length (in bytes) of each short message copy block",
+                           false,
+                           false,
+                           8192,
+                           &ompi_mtl_portals.ptl_copy_block_len);
+
+    mca_base_param_reg_int(&mca_mtl_portals_component.mtl_version,
+                           "aggressive_polling",
+                           "Turn off aggressive polling of unexpected messages",
+                           false,
+                           false,
+                           0,
+                           &tmp);
+    ompi_mtl_portals.ptl_aggressive_polling = (tmp == 0) ? true : false;
+    
 
     return OMPI_SUCCESS;
 }

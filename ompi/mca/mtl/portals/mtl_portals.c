@@ -25,8 +25,16 @@
 #include "mtl_portals.h"
 #include "mtl_portals_endpoint.h"
 #include "mtl_portals_request.h"
+#include "mtl_portals_recv.h"
 #include "mtl_portals_recv_short.h"
+#include "mtl_portals_send_short.h"
 
+static ptl_handle_md_t send_catchall_md_h;
+static ptl_handle_md_t ack_catchall_md_h;
+static ptl_handle_md_t read_catchall_md_h;
+static ptl_handle_md_t unex_long_md_h;
+
+static ompi_mtl_portals_request_t catchall_request;
 
 mca_mtl_portals_module_t ompi_mtl_portals = {
     {
@@ -39,7 +47,7 @@ mca_mtl_portals_module_t ompi_mtl_portals = {
         ompi_mtl_portals_del_procs,
         ompi_mtl_portals_finalize,
 
-        NULL,
+        ompi_mtl_portals_send,
         ompi_mtl_portals_isend,
         ompi_mtl_portals_irecv,
         ompi_mtl_portals_iprobe,
@@ -54,6 +62,19 @@ OBJ_CLASS_INSTANCE(ompi_mtl_portals_event_t, opal_list_item_t,
                    NULL, NULL);
 
 
+/* catchall callback */
+static int
+ompi_mtl_portals_catchall_callback(ptl_event_t *ev, ompi_mtl_portals_request_t *ptl_request)
+{
+
+    opal_output(fileno(stderr),"ERROR - received catchall event\n"); 
+
+    abort();
+
+    return OMPI_ERROR;
+
+} 
+
 
 int
 ompi_mtl_portals_add_procs(struct mca_mtl_base_module_t *mtl,
@@ -63,7 +84,9 @@ ompi_mtl_portals_add_procs(struct mca_mtl_base_module_t *mtl,
 {
     int ret = OMPI_SUCCESS;
     ptl_process_id_t *portals_procs = NULL;
+    ptl_md_t md;
     size_t i;
+    bool accel;
 
     assert(mtl == &ompi_mtl_portals.base);
 
@@ -73,72 +96,139 @@ ompi_mtl_portals_add_procs(struct mca_mtl_base_module_t *mtl,
        implementation, we can't do it until modex information can be
        received. */
     if (PTL_INVALID_HANDLE == ompi_mtl_portals.ptl_ni_h) {
-        ptl_md_t md;
-        ptl_handle_md_t md_h;
-        ptl_process_id_t ptlproc;
-        uint64_t match_bits = 0;
+        ptl_match_bits_t match_bits;
+        ptl_match_bits_t ignore_bits;
+	ptl_process_id_t anyid = { PTL_NID_ANY, PTL_PID_ANY };
 
-        ret = ompi_common_portals_ni_initialize(&(ompi_mtl_portals.ptl_ni_h));
+        ret = ompi_common_portals_ni_initialize(&(ompi_mtl_portals.ptl_ni_h), &accel);
         if (OMPI_SUCCESS != ret) goto cleanup;
 
-        /* initialize the event queues */
+        /* event queue for expected events */
         ret = PtlEQAlloc(ompi_mtl_portals.ptl_ni_h,
                          ompi_mtl_portals.ptl_expected_queue_size,
                          PTL_EQ_HANDLER_NONE,
                          &(ompi_mtl_portals.ptl_eq_h));
         assert(ret == PTL_OK);
 
+	/* event queue for unexpected receives */
         ret = PtlEQAlloc(ompi_mtl_portals.ptl_ni_h,
                          ompi_mtl_portals.ptl_unexpected_queue_size,
                          PTL_EQ_HANDLER_NONE,
-                         &(ompi_mtl_portals.ptl_unexpected_recv_eq_h));
+                         &(ompi_mtl_portals.ptl_unex_eq_h));
         assert(ret == PTL_OK);
 
-        /* create insertion point for matched receives */
-        ptlproc.nid = 0;
-        ptlproc.pid = 0;
+        /* empty event queue for PtlMEMDPost() */
+        ret = PtlEQAlloc(ompi_mtl_portals.ptl_ni_h,
+                         1,
+                         PTL_EQ_HANDLER_NONE,
+                         &(ompi_mtl_portals.ptl_empty_eq_h));
+        assert(ret == PTL_OK);
+
+	/* attach the long unex msg buffer */
+	match_bits  = PTL_LONG_MSG;
+	ignore_bits = ~(PTL_LONG_MSG);
 
         ret = PtlMEAttach(ompi_mtl_portals.ptl_ni_h,
                           OMPI_MTL_PORTALS_SEND_TABLE_ID,
-                          ptlproc,
-                          ~match_bits,
+                          anyid,
                           match_bits,
+                          ignore_bits,
                           PTL_RETAIN,
                           PTL_INS_AFTER,
-                          &(ompi_mtl_portals.ptl_match_ins_me_h));
+                          &(ompi_mtl_portals.ptl_unex_long_me_h));
         assert(ret == PTL_OK);
 
-        /* create unexpected message match entry */
-        ptlproc.nid = PTL_NID_ANY;
-        ptlproc.pid = PTL_PID_ANY;
-
-        /* unexpected message match entry should receive from anyone,
-           so ignore bits are all 1 */
-        ret = PtlMEInsert(ompi_mtl_portals.ptl_match_ins_me_h,
-                          ptlproc,
-                          match_bits,
-                          ~match_bits, 
-                          PTL_RETAIN,
-                          PTL_INS_AFTER,
-                          &(ompi_mtl_portals.ptl_unexpected_me_h));
-        assert(ret == PTL_OK);
-
-        md.start = NULL;
-        md.length = 0;
+        md.start     = NULL;
+        md.length    = 0;
         md.threshold = PTL_MD_THRESH_INF;
-        md.max_size = 0;
-        md.options = (PTL_MD_OP_PUT | PTL_MD_TRUNCATE | PTL_MD_ACK_DISABLE);
-        md.eq_handle = ompi_mtl_portals.ptl_unexpected_recv_eq_h;
+        md.max_size  = 0;
+        md.options   = PTL_MD_OP_PUT | PTL_MD_TRUNCATE | PTL_MD_ACK_DISABLE;
+        md.eq_handle = ompi_mtl_portals.ptl_unex_eq_h;
+        md.user_ptr  = NULL;
 
-        ret = PtlMDAttach(ompi_mtl_portals.ptl_unexpected_me_h,
-                          md, 
-                          PTL_RETAIN, 
-                          &md_h);
+        ret = PtlMDAttach(ompi_mtl_portals.ptl_unex_long_me_h,
+                          md,
+                          PTL_RETAIN,
+                          &unex_long_md_h);
         assert(ret == PTL_OK);
 
+	/* attach catchalls to the send, ack, and read portals */
+        catchall_request.event_callback = ompi_mtl_portals_catchall_callback;
+        md.eq_handle = ompi_mtl_portals.ptl_eq_h;
+        md.user_ptr = &catchall_request;
+
+	/* catchall for the send portal */
+        ret = PtlMEMDPost(ompi_mtl_portals.ptl_ni_h,
+                          ompi_mtl_portals.ptl_unex_long_me_h,
+                          anyid,
+                          0,
+                          ~0,
+                          PTL_RETAIN,
+                          PTL_INS_AFTER,
+                          md,
+                          PTL_UNLINK,
+                          &(ompi_mtl_portals.ptl_send_catchall_me_h),
+                          &send_catchall_md_h,
+                          ompi_mtl_portals.ptl_empty_eq_h);
+        assert(ret == PTL_OK);
+
+        /* catchall for ack portal */
+        ret = PtlMEAttach(ompi_mtl_portals.ptl_ni_h,
+                          OMPI_MTL_PORTALS_ACK_TABLE_ID,
+                          anyid,
+                          0,
+                          ~0,
+                          PTL_RETAIN,
+                          PTL_INS_AFTER,
+                          &(ompi_mtl_portals.ptl_ack_catchall_me_h));
+        assert(ret == PTL_OK);
+
+        ret = PtlMDAttach(ompi_mtl_portals.ptl_ack_catchall_me_h,
+                          md,
+                          PTL_UNLINK,
+                          &ack_catchall_md_h);
+        assert(ret == PTL_OK);
+
+        /* catchall for read portal */
+        ret = PtlMEAttach(ompi_mtl_portals.ptl_ni_h,
+                          OMPI_MTL_PORTALS_READ_TABLE_ID,
+                          anyid,
+                          0,
+                          ~0,
+                          PTL_RETAIN,
+                          PTL_INS_AFTER,
+                          &(ompi_mtl_portals.ptl_read_catchall_me_h));
+        assert(ret == PTL_OK);
+
+        ret = PtlMDAttach(ompi_mtl_portals.ptl_read_catchall_me_h,
+                          md,
+                          PTL_RETAIN,
+                          &read_catchall_md_h);
+        assert(ret == PTL_OK);
+
+	/* attach short unex recv blocks */
         ret = ompi_mtl_portals_recv_short_enable((mca_mtl_portals_module_t*) mtl);
 
         opal_progress_register(ompi_mtl_portals_progress);
+
+        /* bind zero-length md for sending zero-length msgs and acks */
+        md.start     = NULL;
+        md.length    = 0;
+        md.threshold = PTL_MD_THRESH_INF;
+        md.max_size  = 0;
+        md.options   = PTL_MD_EVENT_START_DISABLE | PTL_MD_EVENT_END_DISABLE;
+        md.user_ptr  = NULL;
+        md.eq_handle = PTL_EQ_NONE;
+
+        ret = PtlMDBind(ompi_mtl_portals.ptl_ni_h,
+                        md,
+                        PTL_RETAIN,
+                        &ompi_mtl_portals.ptl_zero_md_h ); 
+        assert(ret == PTL_OK);
+
+	/* set up the short copy blocks */
+        ompi_mtl_portals_short_setup();
+
     }
 
     /* get the list of ptl_process_id_t structures for the given proc
@@ -198,6 +288,26 @@ ompi_mtl_portals_finalize(struct mca_mtl_base_module_t *mtl)
         while (0 != ompi_mtl_portals_progress()) { }
     }
 
+    (void)PtlMDUnlink(ompi_mtl_portals.ptl_zero_md_h);
+
+    (void)PtlMDUnlink(send_catchall_md_h);
+
+    (void)PtlMDUnlink(ack_catchall_md_h);
+
+    (void)PtlMDUnlink(read_catchall_md_h);
+
+    (void)PtlMDUnlink(unex_long_md_h);
+
+    (void)PtlMEUnlink(ompi_mtl_portals.ptl_unex_long_me_h);
+	
+    (void)PtlMEUnlink(ompi_mtl_portals.ptl_send_catchall_me_h);
+
+    (void)PtlMEUnlink(ompi_mtl_portals.ptl_ack_catchall_me_h);
+
+    (void)PtlMEUnlink(ompi_mtl_portals.ptl_read_catchall_me_h);
+
+    ompi_mtl_portals_short_cleanup();
+
     ompi_common_portals_ni_finalize();
     ompi_common_portals_finalize();
 
@@ -211,9 +321,13 @@ ompi_mtl_portals_progress(void)
     int count = 0, ret;
     ptl_event_t ev;
     ompi_mtl_portals_request_t *ptl_request;
+    int which;
+    ompi_mtl_portals_event_t *unex_recv;
 
     while (true) {
-        ret = PtlEQGet(ompi_mtl_portals.ptl_eq_h, &ev);
+
+	ret = PtlEQGet(ompi_mtl_portals.ptl_eq_h, &ev);
+
         if (PTL_OK == ret) {
             if (ev.type == PTL_EVENT_UNLINK) continue;
 
@@ -232,6 +346,11 @@ ompi_mtl_portals_progress(void)
             opal_output(0, " Error returned from PtlEQGet.  Error code - %d \n",ret);
             abort();
         }
+    }
+
+    /* clean out the unexpected event queue too */
+    if (ompi_mtl_portals.ptl_aggressive_polling == true) {
+	while ( NULL != ompi_mtl_portals_search_unex_events(0, ~0, true) );
     }
 
     return count;

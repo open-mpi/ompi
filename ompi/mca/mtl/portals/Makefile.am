@@ -39,6 +39,8 @@ local_sources = \
 	mtl_portals_recv_short.h \
 	mtl_portals_recv_short.c \
 	mtl_portals_request.h \
+	mtl_portals_send_short.h \
+	mtl_portals_send_short.c \
 	mtl_portals_send.c \
 	mtl_portals_probe.c
 

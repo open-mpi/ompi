@@ -23,6 +23,8 @@ struct ompi_mtl_portals_request_t {
     struct mca_mtl_request_t super;
     bool free_after;
     struct ompi_convertor_t *convertor;
+    volatile bool is_complete;
+    int event_count;
 
     int (*event_callback)(ptl_event_t *ev, struct ompi_mtl_portals_request_t*);
 };
