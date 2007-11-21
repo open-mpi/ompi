@@ -164,9 +164,11 @@ ompi_common_portals_initialize(void)
 
 
 int
-ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle)
+ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle, bool *accel)
 {
     int ret;
+
+    *accel = false;
 
     OPAL_THREAD_ADD32(&ni_usage_count, 1);
     if (PTL_INVALID_HANDLE != active_ni_h) {
