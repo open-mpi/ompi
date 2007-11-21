@@ -228,7 +228,7 @@ orte_sds_base_seed_set_name(void)
 
 static int fork_hnp(void)
 {
-#if !defined(__WINDOWS__)
+#if !defined(__WINDOWS__) && !defined(__LIBCATAMOUNT__)
     int p[2], death_pipe[2];
     char *cmd;
     char **argv = NULL;
