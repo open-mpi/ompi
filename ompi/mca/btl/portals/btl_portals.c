@@ -86,6 +86,7 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
     size_t i;
     unsigned long distance;
     bool need_activate = false;
+    bool accel;
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
     opal_output_verbose(50, mca_btl_portals_component.portals_output,
@@ -94,7 +95,7 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
 
     /* if we havne't already, get our network handle */
     if (mca_btl_portals_module.portals_ni_h == PTL_INVALID_HANDLE) {
-        ret = ompi_common_portals_ni_initialize(&mca_btl_portals_module.portals_ni_h);
+        ret = ompi_common_portals_ni_initialize(&mca_btl_portals_module.portals_ni_h, &accel);
         if (OMPI_SUCCESS != ret) return ret;
     }
 
@@ -119,15 +120,18 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
         if (NULL == peers[i]) return OMPI_ERROR;
         *((mca_btl_base_endpoint_t*) peers[i]) = portals_procs[i];
 
-        /* make sure we can reach the process - this is supposed to be
-           a cheap-ish operation */
-        ret = PtlNIDist(mca_btl_portals_module.portals_ni_h,
-                        portals_procs[i],
-                        &distance);
-        if (ret != PTL_OK) {
-            opal_output_verbose(10, mca_btl_portals_component.portals_output,
-                                "Could not find distance to process %d", i);
-            continue;
+        /* accelerated doesn't support PtlNIDist() */
+        if (accel == false) {
+            /* make sure we can reach the process - this is supposed to be
+               a cheap-ish operation */
+            ret = PtlNIDist(mca_btl_portals_module.portals_ni_h,
+                            portals_procs[i],
+                            &distance);
+            if (ret != PTL_OK) {
+                opal_output_verbose(10, mca_btl_portals_component.portals_output,
+                                    "Could not find distance to process %d", i);
+                continue;
+            }
         }
 
         OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_num_procs, 1);
@@ -516,7 +520,7 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
 
     /* finalize all communication */
     while (mca_btl_portals_module.portals_outstanding_ops > 0) {
-      mca_btl_portals_component_progress();
+        mca_btl_portals_component_progress();
     }
 
     if (mca_btl_portals_module.portals_num_procs != 0) {

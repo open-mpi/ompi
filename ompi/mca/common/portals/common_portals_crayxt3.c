@@ -22,6 +22,7 @@
 #include "ompi/constants.h"
 #include "ompi/proc/proc.h"
 
+static bool use_accelerated;
 
 char *
 ompi_common_portals_nodeid(void)
@@ -59,12 +60,25 @@ ompi_common_portals_initialize(void)
 
 
 int
-ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle)
+ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle, bool *accel)
 {
     ptl_interface_t ni_iface = PTL_IFACE_DEFAULT;
     int max_interfaces;
     int launcher;
     int ret;
+    int tmp = 0;
+
+#if defined(CRAY_ACCEL)
+    mca_base_param_reg_int_name("mca",
+                                "use_accelerated_portals",
+                                "Use Accelerated Portals",
+                                false,
+                                false,
+                                0,
+                                &tmp);
+#endif
+
+    *accel = use_accelerated = (tmp == 0) ? false : true;
 
     launcher = cnos_launcher();
 
@@ -75,6 +89,11 @@ ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle)
     if( launcher != CNOS_LAUNCHER_YOD ) {
         ni_iface = IFACE_FROM_BRIDGE_AND_NALID(PTL_BRIDGE_UK,PTL_IFACE_SS);
     }
+#if defined(CRAY_ACCEL)
+    else if (use_accelerated == true) {
+        ni_iface = CRAY_ACCEL;
+    }
+#endif
 
     /*
      * Initialize Portals interface
@@ -112,6 +131,7 @@ ompi_common_portals_get_procs(size_t nprocs,
 {
     int nptl_procs = 0;
     cnos_nidpid_map_t *map;
+    int pid_space_offset = 0;
     int i;
 
     /*
@@ -126,12 +146,16 @@ ompi_common_portals_get_procs(size_t nprocs,
         return OMPI_ERR_FATAL;
     }
 
+#if defined(CRAY_ACCEL)
+    pid_space_offset = (use_accelerated == true) ? ACCEL_PTLS_PID_SPACE_OFFSET : 0;
+#endif
+
     for (i = 0 ; i < nprocs ; ++i) {
         size_t idx = (size_t) procs[i]->proc_name.vpid;
         if (idx >= nptl_procs) return OMPI_ERR_NOT_FOUND;
 
 	portals_procs[i].nid = map[idx].nid;
-	portals_procs[i].pid = map[idx].pid;
+	portals_procs[i].pid = map[idx].pid + pid_space_offset;
     }
 
     return OMPI_SUCCESS;

@@ -107,11 +107,13 @@ int ompi_common_portals_initialize(void);
  * called after the modex data is available.
  *
  * @param ni_handle (OUT) network interface handle
+ * @param bool (OUT) true if using accelerated Portals, false otherwise
  *
  * @retval OMPI_SUCCESS Portals network interface successfully initialized
  * @retval OMPI_ERROR Something bad happened
  */
-int ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle);
+int ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle,
+                                      bool *accel);
 
 
 /**
