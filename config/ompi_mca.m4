@@ -35,6 +35,9 @@ AC_DEFUN([OMPI_EVAL_ARG], [$1])
 #
 ######################################################################
 AC_DEFUN([OMPI_MCA],[
+    dnl for OMPI_CONFIGURE_USER env variable
+    AC_REQUIRE([OMPI_CONFIGURE_SETUP])
+ 
     # Find which components should be built as run-time loadable components
     # Acceptable combinations:
     #
@@ -846,7 +849,7 @@ AC_DEFUN([MCA_COMPONENT_BUILD_CHECK],[
             # If userid is in the file, unignore the ignore file.
             if test ! -s $component_path/.ompi_unignore ; then
                 want_component=1
-            elif test ! -z "`grep $USER $component_path/.ompi_unignore`" ; then
+            elif test ! -z "`grep $OMPI_CONFIGURE_USER $component_path/.ompi_unignore`" ; then
                 want_component=1
             fi
         fi
