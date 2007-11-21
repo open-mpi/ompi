@@ -803,7 +803,7 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
     # there (and we're on Leopard).
     AC_MSG_CHECKING([if need to remove -g from CCASFLAGS])
     case "$host" in
-        *-apple-darwin9.0*)
+        *-apple-darwin9.*)
             for ompi_config_asm_flag in $CCASFLAGS; do
                 if test "$ompi_config_asm_flag" != "-g"; then
                     ompi_config_asm_flags_new="$ompi_config_asm_flags_new $ompi_config_asm_flag"
