@@ -169,7 +169,7 @@ opal_init_util(void)
     }
 
     /* register params for opal */
-    if (OPAL_SUCCESS !=  opal_register_params()) {
+    if (OPAL_SUCCESS != (ret = opal_register_params())) {
         error = "opal_register_params";
         goto return_error;
     }
