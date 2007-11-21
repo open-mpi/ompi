@@ -53,3 +53,48 @@ struct sockaddr_in mca_btl_sctp_utils_sockaddr_from_endpoint(struct mca_btl_base
 
     return btl_sockaddr;
 }
+
+/**
+ * int mca_btl_sctp_utils_writev(int sd, struct iovec *vec, size_t len, 
+ *         struct sockaddr *to_addr, socklen_t to_len, uint16_t stream_no)
+ * -----------------------------------------------------------------------
+ *  Vector write.
+ */
+int mca_btl_sctp_utils_writev(int sd, struct iovec *vec, size_t len, 
+        struct sockaddr *to_addr, socklen_t to_len, uint16_t stream_no) {
+
+    char outcmesg[CMSG_SPACE(sizeof(struct sctp_sndrcvinfo))];
+    struct cmsghdr *cmesg;
+    struct msghdr outmesg;
+    struct sctp_sndrcvinfo *srinfo;
+
+    /* Default these to 0. */
+    uint32_t ppid = 0;
+    uint32_t flags = 0;
+    uint32_t ttl = 0;
+    uint32_t cxt = 0;
+
+    outmesg.msg_name = to_addr;
+    outmesg.msg_namelen = to_len;
+    outmesg.msg_iov = vec;
+    outmesg.msg_iovlen = 1;
+    outmesg.msg_flags = 0;
+    outmesg.msg_control = outcmesg;
+    outmesg.msg_controllen = sizeof(outcmesg);
+
+    cmesg = CMSG_FIRSTHDR(&outmesg);
+    cmesg->cmsg_len = CMSG_LEN(sizeof(struct sctp_sndrcvinfo));
+    outmesg.msg_controllen = cmesg->cmsg_len;
+    cmesg->cmsg_level = IPPROTO_SCTP;
+    cmesg->cmsg_type = SCTP_SNDRCV;
+
+    srinfo = (struct sctp_sndrcvinfo *)CMSG_DATA(cmesg);
+    memset(srinfo, 0, sizeof(struct sctp_sndrcvinfo));
+    srinfo->sinfo_ppid = ppid;
+    srinfo->sinfo_flags = flags;
+    srinfo->sinfo_stream = stream_no;
+    srinfo->sinfo_timetolive = ttl;
+    srinfo->sinfo_context = cxt;
+
+    return sendmsg(sd, &outmesg, 0);
+}

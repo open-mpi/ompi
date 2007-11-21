@@ -23,8 +23,13 @@
 #include "btl_sctp_frag.h"
 #include "btl_sctp_endpoint.h"
 #include "btl_sctp_addr.h"
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/sctp.h>
 
 struct sockaddr_in mca_btl_sctp_utils_sockaddr_from_frag(struct mca_btl_sctp_frag_t *frag);
 struct sockaddr_in mca_btl_sctp_utils_sockaddr_from_endpoint(struct mca_btl_base_endpoint_t *ep);
+int mca_btl_sctp_utils_writev(int sd, struct iovec *vec, size_t len, 
+        struct sockaddr *to_addr, socklen_t to_len, uint16_t stream_no);
 
 #endif
