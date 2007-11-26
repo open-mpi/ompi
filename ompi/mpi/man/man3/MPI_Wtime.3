@@ -19,7 +19,7 @@ DOUBLE PRECISION MPI_WTIME()
 .SH C++ Syntax
 .nf
 #include <mpi.h>
-double Wtime()
+double MPI::Wtime()
 
 .SH RETURN VALUE
 .ft R
@@ -48,7 +48,17 @@ The times returned are local to the node that called them. There is no requireme
 The boolean variable MPI_WTIME_IS_GLOBAL, a predefined attribute key that indicates whether clocks are synchronized, does not have a valid value in Open MPI, as the clocks are not guaranteed to be synchronized.
 
 .PP
-This is intended to be a high-resolution, elapsed (or wall) clock. See MPI_Wtick to determine the resolution of MPI_Wtime. 
+This function is intended to be a high-resolution, elapsed (or wall) clock. See MPI_Wtick to determine the resolution of MPI_Wtime. 
+.PP
+On POSIX platforms, this function may utilize a timer that is cheaper
+to invoke than the gettimeofday() system call, but will fall back to
+gettimeofday() if a cheap high-resolution timer is not available.  The
+ompi_info command can be consulted to see if Open MPI supports a
+native high-resolution timer on your platform; see the value for "MPI_WTIME 
+support" (or "options:mpi-wtime" when viewing the parsable
+output).  If this value is "native", a method that is likely to be
+cheaper than gettimeofday() will be used to obtain the time when
+MPI_Wtime is invoked.
 .PP
 This function does not return an error value. Consequently, the result of calling it before MPI_Init or after MPI_Finalize is undefined.
 
