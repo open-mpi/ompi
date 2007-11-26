@@ -33,6 +33,7 @@
 #include <netdb.h>
 #endif
 
+#include MCA_timer_IMPLEMENTATION_HEADER
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/util/printf.h"
@@ -353,6 +354,7 @@ void ompi_info::do_config(bool want_all)
                                         "yes" : "no");
   const string sparse_groups(OMPI_GROUP_SPARSE ? "yes" : "no");
   const string have_mpi_io(OMPI_PROVIDE_MPI_FILE_INTERFACE ? "yes" : "no");
+  const string wtime_support(OPAL_TIMER_USEC_NATIVE ? "native" : "gettimeofday");
 
   if (OMPI_HAVE_SOLARIS_THREADS || OMPI_HAVE_POSIX_THREADS) {
       threads = OMPI_HAVE_SOLARIS_THREADS ? "solaris" :
@@ -589,4 +591,5 @@ void ompi_info::do_config(bool want_all)
   out("mpirun default --prefix", "mpirun:prefix_by_default", 
       mpirun_prefix_by_default);
   out("MPI I/O support", "options:mpi-io", have_mpi_io);
+  out("MPI_WTIME support", "options:mpi-wtime", wtime_support);
 }
