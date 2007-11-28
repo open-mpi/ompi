@@ -419,14 +419,6 @@ manager by setting btl_openib_connect to "xoob".  The OpenFabrics BTL
 will therefore be deactivated for this run.
 
 Host: %s
-<<<PASHA>>>: it's probably worthwhile to show the values of the
-receive_queues and connect MCA params here, not the number of X
-queues. 
-<<<JEFF>>>>: A: This check we do in "connect" module and we don't have
-the receive_queues params string there.
-<<PASHA>>: But MCA parameters are globals...  From the user
-perspective, a help message should show exactly what is wrong.  The
-number of wrong things is not helpful.
 num_xrc_qps: %d
 #
 [SRQ or PP with XOOB]
@@ -437,10 +429,5 @@ queues only; you must use one of the other connection managers for
 per-peer/SRQ queues (such as "oob").
 
 Host: %s
-<<<PASHA>>> Same comment as above.
-<<<JEFF>>>>: A: This check we do in "connect" module and we don't have
-the receive_queues
-<<<PASHA>>>: Same somment as above.  :-)
-params string there.
 num_srq_qps: %d
 num_pp_qps: %d
