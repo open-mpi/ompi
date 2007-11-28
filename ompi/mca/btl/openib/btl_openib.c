@@ -957,10 +957,6 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
         ib_rc = ibv_post_send(endpoint->qps[qp].lcl_qp, &frag->wr_desc.sr_desc, &bad_wr); 
         if(ib_rc)
             rc = OMPI_ERROR;
-    
-        /* mca_btl_openib_post_srr_all(openib_btl, 1); */
-/*         mca_btl_openib_endpoint_post_rr_all(endpoint, 1); */
-        
     }
     return rc; 
 }
@@ -1029,10 +1025,6 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
         }  else {
             rc = ORTE_SUCCESS;
         }
-#if 0 
-        mca_btl_openib_post_srr_all(openib_btl, 1);
-        mca_btl_openib_endpoint_post_rr_all(endpoint, 1);
-#endif 
     }
     
     
