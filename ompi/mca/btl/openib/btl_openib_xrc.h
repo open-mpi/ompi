@@ -31,8 +31,10 @@ struct ib_address_t {
     void *key;                             /* the key with size 80bit - [subnet(64) LID(16bit)] */
     uint64_t subnet_id;                    /* caching subnet_id  */
     uint16_t lid;                          /* caching lid */
-    opal_list_t pending_ep;                 /* list of endpoints that use this ib_address */
-    mca_btl_openib_endpoint_t *ep_xrc_master; /* pointer to endpoint that keeps the xrc connection */
+    opal_list_t pending_ep;                /* list of endpoints that use this ib_address */
+    mca_btl_openib_qp_t *qp;               /* pointer to qp that will be used
+                                              for communication with the
+                                              destination */ 
     opal_mutex_t addr_lock;             /* protection */
     mca_btl_openib_ib_addr_state_t status; /* ib port status */
 };

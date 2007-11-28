@@ -88,7 +88,7 @@ static void ib_address_constructor(ib_address_t *ib_addr)
     ib_addr->subnet_id = 0;
     ib_addr->lid = 0;
     ib_addr->status = MCA_BTL_IB_ADDR_CLOSED;
-    ib_addr->ep_xrc_master = NULL;
+    ib_addr->qp = NULL;
     OBJ_CONSTRUCT(&ib_addr->addr_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&ib_addr->pending_ep, opal_list_t);
 }

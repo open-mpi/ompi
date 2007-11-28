@@ -324,16 +324,8 @@ static void
 endpoint_init_qp_xrc(mca_btl_openib_endpoint_qp_t *ep_qp, const int qp,
         mca_btl_openib_qp_t *xrc_qp)
 {
-    /* In XRC mode the we the qps used as send qp only. We need only one send
-     * qp, and other qps points to the first one */
-    if (0 == qp) {
-        ep_qp->qp = endpoint_alloc_qp();
-        /* number of available send WQEs */
-        ep_qp->qp->sd_wqe =
-            mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
-    } else {
-        ep_qp->qp = xrc_qp;
-    }
+    ep_qp->qp = xrc_qp;
+    ep_qp->qp->sd_wqe += mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
     ep_qp->qp->users++;
 }
 
@@ -354,7 +346,9 @@ static void endpoint_init_qp(mca_btl_base_endpoint_t *ep, const int qp)
             endpoint_init_qp_srq(ep_qp, qp);
             break;
         case MCA_BTL_OPENIB_XRC_QP:
-            endpoint_init_qp_xrc(ep_qp, qp, ep->qps[0].qp);
+            if(NULL == ep->ib_addr->qp)
+                ep->ib_addr->qp = endpoint_alloc_qp();
+            endpoint_init_qp_xrc(ep_qp, qp, ep->ib_addr->qp);
             break;
         default:
             BTL_ERROR(("Wrong QP type"));
@@ -362,11 +356,22 @@ static void endpoint_init_qp(mca_btl_base_endpoint_t *ep, const int qp)
     }
 }
 
+void mca_btl_openib_endpoint_init(mca_btl_openib_module_t *btl,
+        mca_btl_base_endpoint_t *ep)
+{
+    int qp;
+
+    ep->endpoint_btl = btl;
+    ep->use_eager_rdma = btl->hca->use_eager_rdma &
+        mca_btl_openib_component.use_eager_rdma;
+    ep->subnet_id = btl->port_info.subnet_id;
+
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++)
+        endpoint_init_qp(ep, qp);
+}
+
 static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 {
-
-    int qp;
-    
     /* setup qp structures */
     endpoint->qps = (mca_btl_openib_endpoint_qp_t*)
         calloc(mca_btl_openib_component.num_qps,
@@ -413,9 +418,6 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->use_eager_rdma = false;
     endpoint->eager_rdma_remote.tokens = 0;
     endpoint->eager_rdma_local.credits = 0;
-    
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++)
-        endpoint_init_qp(endpoint, qp);
 }
 
 /*
@@ -450,12 +452,6 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 
     /* Close opened QPs if we have them*/
    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-        if (BTL_OPENIB_QP_TYPE_XRC(qp) &&
-                endpoint != endpoint->ib_addr->ep_xrc_master) {
-            /* in XRC case we need to release only first one on master
-             * endpoint */
-            goto clean_endpoint;
-        }
         MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(&endpoint->qps[qp].pending_frags[0]);
         MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(&endpoint->qps[qp].pending_frags[1]);
         OBJ_DESTRUCT(&endpoint->qps[qp].pending_frags[0]);
@@ -481,7 +477,6 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     /* free the qps */
     free(endpoint->qps);
 
-clean_endpoint:
     /* destroy recv qp */
     if (NULL != endpoint->xrc_recv_qp) {
         if(ibv_destroy_qp(endpoint->xrc_recv_qp)) {
@@ -537,12 +532,10 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
         if (MCA_BTL_IB_ADDR_CONNECTED == endpoint->ib_addr->status) {
             /* We are not xrc master */
             /* set our qp pointer to master qp */
-            endpoint->qps = endpoint->ib_addr->ep_xrc_master->qps;
             master = false;
         } else {
             /* I'm master of XRC */
             endpoint->ib_addr->status = MCA_BTL_IB_ADDR_CONNECTED;
-            endpoint->ib_addr->ep_xrc_master = endpoint;
             master = true;
         }
     }

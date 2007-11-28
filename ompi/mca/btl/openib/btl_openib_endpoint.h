@@ -235,6 +235,8 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_base_endpoint_t*, const int);
 void mca_btl_openib_endpoint_connect_eager_rdma(mca_btl_openib_endpoint_t*);
 int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t*);
 void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t*);
+void mca_btl_openib_endpoint_init(mca_btl_openib_module_t*,
+        mca_btl_base_endpoint_t*);
 
 static inline int post_recvs(mca_btl_base_endpoint_t *ep, const int qp,
         const int num_post)
