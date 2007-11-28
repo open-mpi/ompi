@@ -121,7 +121,7 @@ struct mca_btl_openib_endpoint_qp_t {
                                                     case of PP QP, if there is
                                                     no credit available */
     int32_t  rd_credit_send_lock;  /**< Lock credit send fragment */
-    struct mca_btl_openib_frag_t *credit_frag;
+    mca_btl_openib_send_control_frag_t *credit_frag;
     union {
         mca_btl_openib_endpoint_srq_qp_t srq_qp;
         mca_btl_openib_endpoint_pp_qp_t pp_qp;
@@ -199,7 +199,7 @@ typedef mca_btl_base_endpoint_t  mca_btl_openib_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_endpoint_t);
 
 int  mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t* endpoint,
-                                  struct mca_btl_openib_frag_t* frag);
+                                  struct mca_btl_openib_send_frag_t* frag);
 void mca_btl_openib_endpoint_send_credits(mca_btl_base_endpoint_t*, const int);
 void mca_btl_openib_endpoint_connect_eager_rdma(mca_btl_openib_endpoint_t*);
 int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t *endpoint);
@@ -233,13 +233,11 @@ static inline int mca_btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpo
 
         for(i = 0; i < (num_post + cm_received); i++) {
            ompi_free_list_item_t* item;
-           mca_btl_openib_frag_t* frag;
            OMPI_FREE_LIST_WAIT(free_list, item, rc);
-           frag = (mca_btl_openib_frag_t*)item;
-           frag->endpoint = endpoint;
-           frag->base.order = qp;
+           to_base_frag(item)->base.order = qp;
+           to_com_frag(item)->endpoint = endpoint;
            if(ibv_post_recv(endpoint->qps[qp].lcl_qp, 
-                            &frag->wr_desc.rd_desc,
+                            &to_recv_frag(item)->rd_desc,
                             &bad_wr)) {
                BTL_ERROR(("error posting receive errno says %s\n",
                           strerror(errno)));

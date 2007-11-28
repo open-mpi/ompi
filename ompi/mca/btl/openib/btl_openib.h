@@ -546,13 +546,11 @@ static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
 
         for(i = 0; i < num_post; i++) {
             ompi_free_list_item_t* item;
-            mca_btl_openib_frag_t* frag;
             OMPI_FREE_LIST_WAIT(free_list, item, rc);
-            frag = (mca_btl_openib_frag_t*)item;
-            frag->base.order = qp;
-            frag->endpoint = NULL;
+            to_base_frag(item)->base.order = qp;
+            to_com_frag(item)->endpoint = NULL;
             if(ibv_post_srq_recv(openib_btl->qps[qp].u.srq_qp.srq, 
-                                 &frag->wr_desc.rd_desc,
+                                 &to_recv_frag(item)->rd_desc,
                                  &bad_wr)) {
                 BTL_ERROR(("error posting receive descriptors to shared "
                            "receive queue: %s", strerror(errno)));

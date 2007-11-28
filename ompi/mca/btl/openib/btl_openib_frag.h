@@ -43,14 +43,14 @@ typedef struct mca_btl_openib_header_t mca_btl_openib_header_t;
 #define BTL_OPENIB_IS_RDMA_CREDITS(I) ((I)&BTL_OPENIB_RDMA_CREDITS_FLAG)
 #define BTL_OPENIB_CREDITS(I) ((I)&~BTL_OPENIB_RDMA_CREDITS_FLAG)
 
-#define BTL_OPENIB_HEADER_HTON(h) \
-do {                              \
-    h.credits = htons(h.credits); \
+#define BTL_OPENIB_HEADER_HTON(h)     \
+do {                                  \
+    (h).credits = htons((h).credits); \
 } while (0)
 
-#define BTL_OPENIB_HEADER_NTOH(h) \
-do {                              \
-    h.credits = ntohs(h.credits); \
+#define BTL_OPENIB_HEADER_NTOH(h)     \
+do {                                  \
+    (h).credits = ntohs((h).credits); \
 } while (0)
 
 
@@ -79,13 +79,13 @@ typedef struct mca_btl_openib_footer_t mca_btl_openib_footer_t;
 #if OMPI_ENABLE_DEBUG
 #define BTL_OPENIB_FOOTER_HTON(h)               \
     do {                                        \
-        h.seq = htonl(h.seq);                   \
+        (h).seq = htonl((h).seq);               \
         MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
     } while (0)
     
 #define BTL_OPENIB_FOOTER_NTOH(h)               \
     do {                                        \
-        h.seq = ntohl(h.seq);                   \
+        (h).seq = ntohl((h).seq);               \
         MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
     } while (0)
 #else
@@ -144,7 +144,7 @@ do {                                               \
 
 #define BTL_OPENIB_RDMA_CREDITS_HEADER_NTOH(h)     \
 do {                                               \
-    h.rdma_credits = ntohs(h.rdma_credits);        \
+    (h).rdma_credits = ntohs((h).rdma_credits);    \
 } while (0)
 
 enum mca_btl_openib_frag_type_t {
@@ -157,48 +157,84 @@ enum mca_btl_openib_frag_type_t {
 };
 typedef enum mca_btl_openib_frag_type_t mca_btl_openib_frag_type_t;
 
+#define openib_frag_type(f) (to_base_frag(f)->type)
 /**
- * IB send fragment derived type.
+ * IB fragment derived type.
  */
-struct mca_btl_openib_frag_t {
+
+/* base openib frag */
+typedef struct mca_btl_openib_frag_t {
     mca_btl_base_descriptor_t base; 
-    struct mca_btl_base_endpoint_t *endpoint; 
-    mca_btl_openib_footer_t *ftr;
-    mca_btl_openib_header_t *hdr;
     mca_btl_base_segment_t segment; 
-    size_t size; 
     mca_btl_openib_frag_type_t type; 
-    union{ 
-        struct ibv_recv_wr rd_desc; 
-        struct ibv_send_wr sr_desc; 
-    } wr_desc;  
-    struct ibv_sge sg_entry;  
-    struct mca_btl_openib_reg_t *registration;
     ompi_free_list_t* list;
-    uint8_t qp_idx;
-}; 
-typedef struct mca_btl_openib_frag_t mca_btl_openib_frag_t; 
+} mca_btl_openib_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_frag_t);
 
-typedef struct mca_btl_openib_frag_t mca_btl_openib_send_frag_t; 
+#define to_base_frag(f) ((mca_btl_openib_frag_t*)(f))
+
+/* frag used for communication */
+typedef struct mca_btl_openib_com_frag_t {
+    mca_btl_openib_frag_t super;
+    struct ibv_sge sg_entry;
+    struct mca_btl_openib_reg_t *registration;
+    struct mca_btl_base_endpoint_t *endpoint; 
+} mca_btl_openib_com_frag_t;
+OBJ_CLASS_DECLARATION(mca_btl_openib_com_frag_t);
+
+#define to_com_frag(f) ((mca_btl_openib_com_frag_t*)(f))
+
+typedef struct mca_btl_openib_out_frag_t {
+    mca_btl_openib_com_frag_t super;
+    struct ibv_send_wr sr_desc; 
+} mca_btl_openib_out_frag_t;
+OBJ_CLASS_DECLARATION(mca_btl_openib_out_frag_t);
+
+#define to_out_frag(f) ((mca_btl_openib_out_frag_t*)(f))
+
+typedef struct mca_btl_openib_com_frag_t mca_btl_openib_in_frag_t;
+OBJ_CLASS_DECLARATION(mca_btl_openib_in_frag_t);
+
+#define to_in_frag(f) ((mca_btl_openib_in_frag_t*)(f))
+
+typedef struct mca_btl_openib_send_frag_t {
+    mca_btl_openib_out_frag_t super;
+    mca_btl_openib_header_t *hdr;
+    mca_btl_openib_footer_t *ftr;
+    uint8_t qp_idx;
+} mca_btl_openib_send_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_t);
 
-typedef struct mca_btl_openib_frag_t mca_btl_openib_send_user_frag_t; 
-    
-OBJ_CLASS_DECLARATION(mca_btl_openib_send_user_frag_t); 
+#define to_send_frag(f) ((mca_btl_openib_send_frag_t*)(f))
 
-typedef struct mca_btl_openib_frag_t mca_btl_openib_recv_user_frag_t; 
-    
-OBJ_CLASS_DECLARATION(mca_btl_openib_recv_user_frag_t); 
+typedef struct mca_btl_openib_recv_frag_t {
+    mca_btl_openib_in_frag_t super;
+    mca_btl_openib_header_t *hdr;
+    mca_btl_openib_footer_t *ftr;
+    struct ibv_recv_wr rd_desc;
+    uint8_t qp_idx;
+} mca_btl_openib_recv_frag_t;
+OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_t);
 
-typedef struct mca_btl_openib_frag_t mca_btl_openib_recv_frag_t; 
-    
-OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_t); 
+#define to_recv_frag(f) ((mca_btl_openib_recv_frag_t*)(f))
 
-typedef struct mca_btl_openib_frag_t mca_btl_openib_send_frag_control_t; 
-    
-OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_control_t); 
+typedef struct mca_btl_openib_out_frag_t mca_btl_openib_put_frag_t; 
+OBJ_CLASS_DECLARATION(mca_btl_openib_put_frag_t);
 
+#define to_put_frag(f) ((mca_btl_openib_put_frag_t*)(f))
+
+typedef struct mca_btl_openib_get_frag_t {
+    mca_btl_openib_in_frag_t super;
+    struct ibv_send_wr sr_desc; 
+} mca_btl_openib_get_frag_t;
+OBJ_CLASS_DECLARATION(mca_btl_openib_get_frag_t); 
+
+#define to_get_frag(f) ((mca_btl_openib_get_frag_t*)(f))
+
+typedef struct mca_btl_openib_send_frag_t mca_btl_openib_send_control_frag_t; 
+OBJ_CLASS_DECLARATION(mca_btl_openib_send_control_frag_t); 
+
+#define to_send_control_frag(f) ((mca_btl_openib_send_control_frag_t*)(f))
 /*
  * Allocate an IB send descriptor
  *
@@ -208,7 +244,7 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_control_t);
     do {                                                               \
         ompi_free_list_item_t *item;                                   \
         OMPI_FREE_LIST_WAIT(&(btl)->send_free_control, item, rc);      \
-        frag = (mca_btl_openib_frag_t*)item;                           \
+        frag = to_send_control_frag(item);                             \
     } while(0)
 
 #define MCA_BTL_IB_FRAG_ALLOC_BY_SIZE(btl, frag, _size, rc)             \
@@ -222,42 +258,40 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_control_t);
                     break;                                              \
             }                                                           \
         }                                                               \
-        frag = (mca_btl_openib_frag_t*)item;                            \
+        frag = to_com_frag(item);                                       \
     } while(0);
         
 #define MCA_BTL_IB_FRAG_ALLOC_SEND_USER(btl, frag, rc)                 \
     do {                                                               \
         ompi_free_list_item_t *item;                                   \
         OMPI_FREE_LIST_GET(&(btl)->send_user_free, item, rc);          \
-        frag = (mca_btl_openib_frag_t*)item;                           \
+        frag = to_com_frag(item);                                      \
     } while(0)
 
 #define MCA_BTL_IB_FRAG_ALLOC_RECV_USER(btl, frag, rc)                  \
     do {                                                                \
         ompi_free_list_item_t *item;                                    \
         OMPI_FREE_LIST_GET(&(btl)->recv_user_free, item, rc);           \
-        frag = (mca_btl_openib_frag_t*) item;                           \
+        frag = to_com_frag(item);                                       \
     } while(0)
 
-#define MCA_BTL_IB_FRAG_RETURN(btl, frag)                               \
+#define MCA_BTL_IB_FRAG_RETURN(frag)                                    \
     do {                                                                \
-        OMPI_FREE_LIST_RETURN(frag->list,                               \
+        OMPI_FREE_LIST_RETURN(to_base_frag(frag)->list,                 \
                 (ompi_free_list_item_t*)(frag));                        \
     } while(0);
 
-#define MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(btl,list)                      \
-    while(!opal_list_is_empty(list)){                                     \
-        opal_list_item_t *frag_item;                                      \
-        frag_item = opal_list_remove_first(list);                         \
-        MCA_BTL_IB_FRAG_RETURN(btl, ((mca_btl_openib_frag_t*)frag_item)); \
-    }                                                                     \
+#define MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(list)                         \
+    while(!opal_list_is_empty(list)){                                    \
+        opal_list_item_t *frag_item;                                     \
+        frag_item = opal_list_remove_first(list);                        \
+        MCA_BTL_IB_FRAG_RETURN(frag_item);                               \
+    }                                                                    \
 
 struct mca_btl_openib_module_t;
 
 struct mca_btl_openib_frag_init_data_t {
     uint8_t order;
-    size_t length;
-    mca_btl_openib_frag_type_t type;
     ompi_free_list_t* list;
 };
 typedef struct mca_btl_openib_frag_init_data_t mca_btl_openib_frag_init_data_t;

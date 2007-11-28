@@ -466,7 +466,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     uint8_t order,
     size_t size)
 {
-    mca_btl_openib_frag_t* frag = NULL;
+    mca_btl_openib_com_frag_t* frag = NULL;
     mca_btl_openib_module_t* openib_btl; 
     int rc;
     openib_btl = (mca_btl_openib_module_t*) btl; 
@@ -475,13 +475,12 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     if(NULL == frag)
         return NULL;
     
-    /* GMS is this necessary anymore ? */
-    frag->segment.seg_len = size;
-    frag->base.order = order;
-    frag->base.des_flags = 0;
+    /* not all upper layer users set this */
+    to_base_frag(frag)->segment.seg_len = size;
+    to_base_frag(frag)->base.order = order;
    
-    assert(frag->qp_idx <= order);
-    return (mca_btl_base_descriptor_t*)frag;
+    assert(to_send_frag(frag)->qp_idx <= order);
+    return &to_base_frag(frag)->base;
 }
 
 /** 
@@ -494,19 +493,32 @@ int mca_btl_openib_free(
                     struct mca_btl_base_module_t* btl, 
                     mca_btl_base_descriptor_t* des) 
 {
-    mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*)des; 
-    
     /* is this fragment pointing at user memory? */
-    if(((MCA_BTL_OPENIB_FRAG_SEND_USER == frag->type) ||
-        (MCA_BTL_OPENIB_FRAG_RECV_USER == frag->type)) 
-       && frag->registration != NULL) {
-        btl->btl_mpool->mpool_deregister(btl->btl_mpool,
-                                         (mca_mpool_base_registration_t*)
-                                         frag->registration);
-        frag->registration = NULL;
+    if(MCA_BTL_OPENIB_FRAG_SEND_USER == openib_frag_type(des) ||
+            MCA_BTL_OPENIB_FRAG_RECV_USER == openib_frag_type(des)) {
+        mca_btl_openib_com_frag_t* frag = to_com_frag(des);
+
+        if(frag->registration != NULL) {
+            btl->btl_mpool->mpool_deregister(btl->btl_mpool,
+                    (mca_mpool_base_registration_t*)frag->registration);
+            frag->registration = NULL;
+        }
     }
-    
-    MCA_BTL_IB_FRAG_RETURN(((mca_btl_openib_module_t*) btl), frag);
+  
+    /* reset those field on free so we will not have to do it on alloc */
+    to_base_frag(des)->base.des_flags = 0;
+    if(MCA_BTL_OPENIB_FRAG_RECV == openib_frag_type(des) ||
+            MCA_BTL_OPENIB_FRAG_RECV_USER == openib_frag_type(des)) {
+        to_base_frag(des)->base.des_src = NULL;
+        to_base_frag(des)->base.des_src_cnt = 0;
+    } else if(MCA_BTL_OPENIB_FRAG_SEND == openib_frag_type(des) ||
+            MCA_BTL_OPENIB_FRAG_SEND_USER == openib_frag_type(des)) {
+        to_base_frag(des)->base.des_dst = NULL;
+        to_base_frag(des)->base.des_dst_cnt = 0;
+        if(MCA_BTL_OPENIB_FRAG_SEND == openib_frag_type(des))
+            to_com_frag(des)->sg_entry.addr = (uint64_t)to_send_frag(des)->hdr;
+    }
+    MCA_BTL_IB_FRAG_RETURN(des);
         
     return OMPI_SUCCESS; 
 }
@@ -546,8 +558,8 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 )
 {
     mca_btl_openib_module_t *openib_btl;
-    mca_btl_openib_frag_t *frag = NULL;
     mca_btl_openib_reg_t *openib_reg;
+    mca_btl_openib_com_frag_t *frag = NULL;
     struct iovec iov;
     uint32_t iov_count = 1;
     size_t max_data = *size;
@@ -574,38 +586,35 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
                 rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
                         iov.iov_base, max_data, 0, &registration);
                 if(OMPI_SUCCESS != rc || NULL == registration) {
-                    MCA_BTL_IB_FRAG_RETURN(openib_btl, frag);
+                    MCA_BTL_IB_FRAG_RETURN(frag);
                     return NULL;
                 }
                 /* keep track of the registration we did */
-                frag->registration = (mca_btl_openib_reg_t*)registration;
+                to_com_frag(frag)->registration =
+                    (mca_btl_openib_reg_t*)registration;
             }
             openib_reg = (mca_btl_openib_reg_t*)registration;
 
-            frag->base.order = order;
-            frag->base.des_flags = 0;
-            frag->base.des_src = &frag->segment;
-            frag->base.des_src_cnt = 1;
-            frag->base.des_dst = NULL;
-            frag->base.des_dst_cnt = 0;
-            frag->base.des_flags = 0;
 
             frag->sg_entry.length = max_data;
             frag->sg_entry.lkey = openib_reg->mr->lkey;
-            frag->sg_entry.addr = (unsigned long)iov.iov_base;
+            frag->sg_entry.addr = (uint64_t)iov.iov_base;
 
-            frag->segment.seg_len = max_data;
-            frag->segment.seg_addr.pval = iov.iov_base;
-            frag->segment.seg_key.key32[0] = (uint32_t)frag->sg_entry.lkey;
+            to_base_frag(frag)->base.order = order;
+            to_base_frag(frag)->segment.seg_len = max_data;
+            to_base_frag(frag)->segment.seg_addr.pval = iov.iov_base;
+            to_base_frag(frag)->segment.seg_key.key32[0] =
+                (uint32_t)frag->sg_entry.lkey;
             
             assert(MCA_BTL_NO_ORDER == order);
             
             BTL_VERBOSE(("frag->sg_entry.lkey = %lu .addr = %llu "
                         "frag->segment.seg_key.key32[0] = %lu",
                         frag->sg_entry.lkey, frag->sg_entry.addr,
-                        frag->segment.seg_key.key32[0]));
+                        frag->sg_entry.lkey));
 
-            return &frag->base;
+
+            return &to_base_frag(frag)->base;
         }
     }
     
@@ -621,20 +630,15 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         return NULL;
 
     iov.iov_len = max_data;
-    iov.iov_base = (unsigned char*)frag->segment.seg_addr.pval + reserve;
+    iov.iov_base = (unsigned char*)
+        to_base_frag(frag)->segment.seg_addr.pval + reserve;
     rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
     
-    *size  = max_data;
-    frag->segment.seg_len = max_data + reserve;
-    frag->segment.seg_key.key32[0] = (uint32_t)frag->sg_entry.lkey;
-    /* frag->base.order = order; */
-    frag->base.des_src = &frag->segment;
-    frag->base.des_src_cnt = 1;
-    frag->base.des_dst = NULL;
-    frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = 0;
-    frag->base.order = order;
-    return &frag->base;
+    *size = max_data;
+    to_base_frag(frag)->segment.seg_len = max_data + reserve;
+    to_base_frag(frag)->base.order = order;
+
+    return &to_base_frag(frag)->base;
 }
 
 /**
@@ -661,9 +665,10 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     size_t* size)
 {
     mca_btl_openib_module_t *openib_btl;
-    mca_btl_openib_frag_t *frag;
+    mca_btl_openib_com_frag_t *frag;
     mca_btl_openib_reg_t *openib_reg;
     int rc;
+    void *buffer;
 
     openib_btl = (mca_btl_openib_module_t*)btl;
         
@@ -672,16 +677,16 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
         return NULL;
     }
     
-    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
+    ompi_convertor_get_current_pointer(convertor, &buffer);
 
     if(NULL == registration){
         /* we didn't get a memory registration passed in, so we have to
          * register the region ourselves
          */ 
-        rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
-                frag->segment.seg_addr.pval, *size, 0, &registration);
+        rc = btl->btl_mpool->mpool_register(btl->btl_mpool, buffer, *size, 0,
+                &registration);
         if(OMPI_SUCCESS != rc || NULL == registration) {
-            MCA_BTL_IB_FRAG_RETURN(openib_btl, frag);
+            MCA_BTL_IB_FRAG_RETURN(frag);
             return NULL;
         }
         /* keep track of the registration we did */
@@ -691,24 +696,19 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
 
     frag->sg_entry.length = *size;
     frag->sg_entry.lkey = openib_reg->mr->lkey;
-    frag->sg_entry.addr = (unsigned long) frag->segment.seg_addr.pval;
+    frag->sg_entry.addr = (uint64_t)buffer;
 
-    frag->segment.seg_len = *size;
-    frag->segment.seg_key.key32[0] = openib_reg->mr->rkey;
-
-    frag->base.order = order;
-    frag->base.des_dst = &frag->segment;
-    frag->base.des_dst_cnt = 1;
-    frag->base.des_src = NULL;
-    frag->base.des_src_cnt = 0;
-    frag->base.des_flags = 0;
+    to_base_frag(frag)->segment.seg_addr.pval = buffer;
+    to_base_frag(frag)->segment.seg_len = *size;
+    to_base_frag(frag)->segment.seg_key.key32[0] = openib_reg->mr->rkey;
+    to_base_frag(frag)->base.order = order;
 
     BTL_VERBOSE(("frag->sg_entry.lkey = %lu .addr = %llu "
                 "frag->segment.seg_key.key32[0] = %lu",
                 frag->sg_entry.lkey, frag->sg_entry.addr,
-                frag->segment.seg_key.key32[0]));
+                openib_reg->mr->rkey));
 
-    return &frag->base;
+    return &to_base_frag(frag)->base;
 }
 
 static int mca_btl_finalize_hca(struct mca_btl_openib_hca_t *hca)
@@ -826,7 +826,7 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
         if(BTL_OPENIB_QP_TYPE_SRQ(qp)){ 
             
-            MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(openib_btl,
+            MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
                         &openib_btl->qps[qp].u.srq_qp.pending_frags);
             
             if (ibv_destroy_srq(openib_btl->qps[qp].u.srq_qp.srq)){
@@ -895,13 +895,13 @@ int mca_btl_openib_send(
     mca_btl_base_tag_t tag)
    
 {
-    
-    mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*)descriptor; 
-    assert(frag->type == MCA_BTL_OPENIB_FRAG_SEND);
+    mca_btl_openib_send_frag_t* frag = to_send_frag(descriptor); 
+
+    assert(openib_frag_type(frag) == MCA_BTL_OPENIB_FRAG_SEND);
   
-    frag->endpoint = endpoint; 
+    to_com_frag(frag)->endpoint = endpoint; 
     frag->hdr->tag = tag;
-    frag->wr_desc.sr_desc.opcode = IBV_WR_SEND;
+
     return mca_btl_openib_endpoint_send(endpoint, frag);
 }
 
@@ -913,52 +913,50 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
                     mca_btl_base_endpoint_t* endpoint,
                     mca_btl_base_descriptor_t* descriptor)
 {
-    int rc = OMPI_SUCCESS;
     struct ibv_send_wr* bad_wr; 
-    mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*) descriptor; 
-/*    mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl; */
-    int qp = frag->base.order;
+    mca_btl_openib_out_frag_t* frag = to_out_frag(descriptor); 
+    int qp = descriptor->order;
+    uint64_t rem_addr = descriptor->des_dst->seg_addr.lval;
+    uint32_t rkey = descriptor->des_dst->seg_key.key32[0];
+
+    assert(openib_frag_type(frag) == MCA_BTL_OPENIB_FRAG_SEND_USER ||
+            openib_frag_type(frag) == MCA_BTL_OPENIB_FRAG_SEND);
 
     if(MCA_BTL_NO_ORDER == qp)
         qp = mca_btl_openib_component.rdma_qp;
 
-    /* setup for queued requests */
-    frag->endpoint = endpoint;
-    frag->wr_desc.sr_desc.opcode = IBV_WR_RDMA_WRITE; 
-    
     /* check for a send wqe */
     if (OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe,-1) < 0) {
         OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe,1);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-        opal_list_append(&endpoint->pending_put_frags, (opal_list_item_t *)frag);
+        opal_list_append(&endpoint->pending_put_frags, (opal_list_item_t*)frag);
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
-        return rc;
-
-    /* post descriptor */
-    } else {
-        int ib_rc;
-        
-        frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        if ((endpoint->endpoint_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN) !=
-            (ompi_proc_local()->proc_arch & OMPI_ARCH_ISBIGENDIAN)) {
-            frag->wr_desc.sr_desc.wr.rdma.remote_addr = opal_swap_bytes8(frag->base.des_dst->seg_addr.lval);
-            frag->wr_desc.sr_desc.wr.rdma.rkey = opal_swap_bytes4(frag->base.des_dst->seg_key.key32[0]);
-        } else 
-#endif
-        {
-            frag->wr_desc.sr_desc.wr.rdma.remote_addr = frag->base.des_dst->seg_addr.lval;
-            frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_dst->seg_key.key32[0];
-        }
-        frag->sg_entry.addr = (unsigned long) frag->base.des_src->seg_addr.pval; 
-        frag->sg_entry.length  = frag->base.des_src->seg_len; 
-       
-        frag->base.order = qp;
-        ib_rc = ibv_post_send(endpoint->qps[qp].lcl_qp, &frag->wr_desc.sr_desc, &bad_wr); 
-        if(ib_rc)
-            rc = OMPI_ERROR;
+        return OMPI_SUCCESS;
     }
-    return rc; 
+    /* post descriptor */
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    if((endpoint->endpoint_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN)
+            != (ompi_proc_local()->proc_arch & OMPI_ARCH_ISBIGENDIAN)) {
+        rem_addr = opal_swap_bytes8(rem_addr);
+        rkey = opal_swap_bytes4(rkey);
+    }
+#endif
+    frag->sr_desc.wr.rdma.remote_addr = rem_addr;
+    frag->sr_desc.wr.rdma.rkey = rkey;
+
+    to_com_frag(frag)->sg_entry.addr =
+        (uint64_t)descriptor->des_src->seg_addr.pval; 
+    to_com_frag(frag)->sg_entry.length = descriptor->des_src->seg_len; 
+    to_com_frag(frag)->endpoint = endpoint;
+   
+    descriptor->order = qp;
+    /* Setting opcode on a frag constructor isn't enough since prepare_src
+     * may return send_frag instead of put_frag */ 
+    frag->sr_desc.opcode = IBV_WR_RDMA_WRITE;
+    if(ibv_post_send(endpoint->qps[qp].lcl_qp, &frag->sr_desc, &bad_wr))
+        return OMPI_ERROR;
+
+    return OMPI_SUCCESS; 
 }
 
 
@@ -970,68 +968,57 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
                     mca_btl_base_endpoint_t* endpoint,
                     mca_btl_base_descriptor_t* descriptor)
 {
-    int rc;
     struct ibv_send_wr* bad_wr; 
-    mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*) descriptor; 
-/*    mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl; */
-    int qp = frag->base.order;
-    frag->endpoint = endpoint;
-    frag->wr_desc.sr_desc.opcode = IBV_WR_RDMA_READ; 
+    mca_btl_openib_get_frag_t* frag = to_get_frag(descriptor); 
+    int qp = descriptor->order;
+    uint64_t rem_addr = descriptor->des_src->seg_addr.lval;
+    uint32_t rkey = descriptor->des_src->seg_key.key32[0];
+
+    assert(openib_frag_type(frag) == MCA_BTL_OPENIB_FRAG_RECV_USER);
 
     if(MCA_BTL_NO_ORDER == qp)
         qp = mca_btl_openib_component.rdma_qp;
 
     /* check for a send wqe */
     if (OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe,-1) < 0) {
-
         OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe,1);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
         opal_list_append(&endpoint->pending_get_frags, (opal_list_item_t*)frag);
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
         return OMPI_SUCCESS;
+    }
 
     /* check for a get token */
-    } else if(OPAL_THREAD_ADD32(&endpoint->get_tokens,-1) < 0) {
-
+    if(OPAL_THREAD_ADD32(&endpoint->get_tokens,-1) < 0) {
         OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe,1);
         OPAL_THREAD_ADD32(&endpoint->get_tokens,1);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
         opal_list_append(&endpoint->pending_get_frags, (opal_list_item_t*)frag);
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
         return OMPI_SUCCESS;
-
-    } else { 
-    
-        frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        if ((endpoint->endpoint_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN) !=
-            (ompi_proc_local()->proc_arch & OMPI_ARCH_ISBIGENDIAN)) {
-            frag->wr_desc.sr_desc.wr.rdma.remote_addr = opal_swap_bytes8(frag->base.des_src->seg_addr.lval); 
-            frag->wr_desc.sr_desc.wr.rdma.rkey = opal_swap_bytes4(frag->base.des_src->seg_key.key32[0]); 
-        } else 
-#endif
-        {
-            frag->wr_desc.sr_desc.wr.rdma.remote_addr = frag->base.des_src->seg_addr.lval; 
-            frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_src->seg_key.key32[0]; 
-        }
-        frag->sg_entry.addr = (unsigned long) frag->base.des_dst->seg_addr.pval; 
-        frag->sg_entry.length  = frag->base.des_dst->seg_len; 
-        
-        frag->base.order = qp;
-        if(ibv_post_send(endpoint->qps[qp].lcl_qp, &frag->wr_desc.sr_desc, &bad_wr)){ 
-            BTL_ERROR(("error posting send request errno (%d) says %s", 
-                       errno, strerror(errno))); 
-            rc = ORTE_ERROR;
-        }  else {
-            rc = ORTE_SUCCESS;
-        }
     }
     
-    
-    return rc; 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    if((endpoint->endpoint_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN)
+            != (ompi_proc_local()->proc_arch & OMPI_ARCH_ISBIGENDIAN)) {
+        rem_addr = opal_swap_bytes8(rem_addr); 
+        rkey = opal_swap_bytes4(rkey); 
+    }
+#endif
+    frag->sr_desc.wr.rdma.remote_addr = rem_addr; 
+    frag->sr_desc.wr.rdma.rkey = rkey;
+
+    to_com_frag(frag)->sg_entry.addr =
+        (uint64_t)descriptor->des_dst->seg_addr.pval; 
+    to_com_frag(frag)->sg_entry.length  = descriptor->des_dst->seg_len; 
+    to_com_frag(frag)->endpoint = endpoint;
+        
+    descriptor->order = qp;
+    if(ibv_post_send(endpoint->qps[qp].lcl_qp, &frag->sr_desc, &bad_wr))
+        return OMPI_ERROR;
+
+    return OMPI_SUCCESS; 
 }
-
-
 
 int mca_btl_openib_ft_event(int state) {
     if(OPAL_CRS_CHECKPOINT == state) {
