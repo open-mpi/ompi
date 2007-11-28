@@ -33,6 +33,7 @@
 #include <errno.h> 
 #include <string.h> 
 #include "ompi/mca/btl/base/btl_base_error.h"
+#include "connect/base.h"
 
 BEGIN_C_DECLS
 
@@ -323,6 +324,38 @@ static inline void send_credits(mca_btl_openib_endpoint_t *ep, int qp)
 try_send:
     if(BTL_OPENIB_CREDITS_SEND_TRYLOCK(ep, qp))
         mca_btl_openib_endpoint_send_credits(ep, qp);
+}
+
+static inline int check_endpoint_state(mca_btl_openib_endpoint_t *ep,
+        mca_btl_base_descriptor_t *des, opal_list_t *pending_list)
+{
+    int rc = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+
+    switch(ep->endpoint_state) {
+        case MCA_BTL_IB_CLOSED:
+            rc = ompi_btl_openib_connect.bcf_start_connect(ep);
+            if(rc == OMPI_SUCCESS)
+                rc = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+            /*
+             * As long as we expect a message from the peer (in order
+             * to setup the connection) let the event engine pool the
+             * OOB events. Note: we increment it once peer active
+             * connection.
+             */
+            opal_progress_event_users_increment();
+            /* fall through */
+        default:
+            opal_list_append(pending_list, (opal_list_item_t *)des);
+            break;
+        case MCA_BTL_IB_FAILED:
+            rc = OMPI_ERR_UNREACH;
+            break;
+        case MCA_BTL_IB_CONNECTED:
+            rc = OMPI_SUCCESS;
+            break;
+    }
+
+    return rc;
 }
 
 END_C_DECLS

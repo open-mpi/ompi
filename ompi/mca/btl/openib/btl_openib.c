@@ -913,7 +913,7 @@ int mca_btl_openib_send(
  */
 
 int mca_btl_openib_put( mca_btl_base_module_t* btl,
-                    mca_btl_base_endpoint_t* endpoint,
+                    mca_btl_base_endpoint_t* ep,
                     mca_btl_base_descriptor_t* descriptor)
 {
     struct ibv_send_wr* bad_wr; 
@@ -925,20 +925,31 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     assert(openib_frag_type(frag) == MCA_BTL_OPENIB_FRAG_SEND_USER ||
             openib_frag_type(frag) == MCA_BTL_OPENIB_FRAG_SEND);
 
+    if(ep->endpoint_state != MCA_BTL_IB_CONNECTED) {
+        int rc;
+        OPAL_THREAD_LOCK(&ep->endpoint_lock);
+        rc = check_endpoint_state(ep, descriptor, &ep->pending_put_frags);
+        OPAL_THREAD_UNLOCK(&ep->ep_lock);
+        if(OMPI_ERR_TEMP_OUT_OF_RESOURCE == rc)
+            return OMPI_SUCCESS;
+        if(OMPI_SUCCESS != rc)
+            return rc;
+    }
+
     if(MCA_BTL_NO_ORDER == qp)
         qp = mca_btl_openib_component.rdma_qp;
 
     /* check for a send wqe */
-    if (qp_get_wqe(endpoint, qp) < 0) {
-        qp_put_wqe(endpoint, qp);
-        OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-        opal_list_append(&endpoint->pending_put_frags, (opal_list_item_t*)frag);
-        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+    if (qp_get_wqe(ep, qp) < 0) {
+        qp_put_wqe(ep, qp);
+        OPAL_THREAD_LOCK(&ep->endpoint_lock);
+        opal_list_append(&ep->pending_put_frags, (opal_list_item_t*)frag);
+        OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
         return OMPI_SUCCESS;
     }
     /* post descriptor */
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    if((endpoint->endpoint_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN)
+    if((ep->endpoint_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN)
             != (ompi_proc_local()->proc_arch & OMPI_ARCH_ISBIGENDIAN)) {
         rem_addr = opal_swap_bytes8(rem_addr);
         rkey = opal_swap_bytes4(rkey);
@@ -950,13 +961,13 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     to_com_frag(frag)->sg_entry.addr =
         (uint64_t)descriptor->des_src->seg_addr.pval; 
     to_com_frag(frag)->sg_entry.length = descriptor->des_src->seg_len; 
-    to_com_frag(frag)->endpoint = endpoint;
+    to_com_frag(frag)->endpoint = ep;
    
     descriptor->order = qp;
     /* Setting opcode on a frag constructor isn't enough since prepare_src
      * may return send_frag instead of put_frag */ 
     frag->sr_desc.opcode = IBV_WR_RDMA_WRITE;
-    if(ibv_post_send(endpoint->qps[qp].qp->lcl_qp, &frag->sr_desc, &bad_wr))
+    if(ibv_post_send(ep->qps[qp].qp->lcl_qp, &frag->sr_desc, &bad_wr))
         return OMPI_ERROR;
 
     return OMPI_SUCCESS; 
@@ -967,8 +978,8 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
  * RDMA READ remote buffer to local buffer address.
  */
 
-int mca_btl_openib_get( mca_btl_base_module_t* btl,
-                    mca_btl_base_endpoint_t* endpoint,
+int mca_btl_openib_get(mca_btl_base_module_t* btl,
+                    mca_btl_base_endpoint_t* ep,
                     mca_btl_base_descriptor_t* descriptor)
 {
     struct ibv_send_wr* bad_wr; 
@@ -979,30 +990,41 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
 
     assert(openib_frag_type(frag) == MCA_BTL_OPENIB_FRAG_RECV_USER);
 
+    if(ep->endpoint_state != MCA_BTL_IB_CONNECTED) {
+        int rc;
+        OPAL_THREAD_LOCK(&ep->endpoint_lock);
+        rc = check_endpoint_state(ep, descriptor, &ep->pending_get_frags);
+        OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
+        if(OMPI_ERR_TEMP_OUT_OF_RESOURCE == rc)
+            return OMPI_SUCCESS;
+        if(OMPI_SUCCESS != rc)
+            return rc;
+    }
+
     if(MCA_BTL_NO_ORDER == qp)
         qp = mca_btl_openib_component.rdma_qp;
 
     /* check for a send wqe */
-    if (qp_get_wqe(endpoint, qp) < 0) {
-        qp_put_wqe(endpoint, qp);
-        OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-        opal_list_append(&endpoint->pending_get_frags, (opal_list_item_t*)frag);
-        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+    if (qp_get_wqe(ep, qp) < 0) {
+        qp_put_wqe(ep, qp);
+        OPAL_THREAD_LOCK(&ep->endpoint_lock);
+        opal_list_append(&ep->pending_get_frags, (opal_list_item_t*)frag);
+        OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
         return OMPI_SUCCESS;
     }
 
     /* check for a get token */
-    if(OPAL_THREAD_ADD32(&endpoint->get_tokens,-1) < 0) {
-        qp_put_wqe(endpoint, qp);
-        OPAL_THREAD_ADD32(&endpoint->get_tokens,1);
-        OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-        opal_list_append(&endpoint->pending_get_frags, (opal_list_item_t*)frag);
-        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+    if(OPAL_THREAD_ADD32(&ep->get_tokens,-1) < 0) {
+        qp_put_wqe(ep, qp);
+        OPAL_THREAD_ADD32(&ep->get_tokens,1);
+        OPAL_THREAD_LOCK(&ep->endpoint_lock);
+        opal_list_append(&ep->pending_get_frags, (opal_list_item_t*)frag);
+        OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
         return OMPI_SUCCESS;
     }
     
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    if((endpoint->endpoint_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN)
+    if((ep->endpoint_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN)
             != (ompi_proc_local()->proc_arch & OMPI_ARCH_ISBIGENDIAN)) {
         rem_addr = opal_swap_bytes8(rem_addr); 
         rkey = opal_swap_bytes4(rkey); 
@@ -1014,10 +1036,10 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
     to_com_frag(frag)->sg_entry.addr =
         (uint64_t)descriptor->des_dst->seg_addr.pval; 
     to_com_frag(frag)->sg_entry.length  = descriptor->des_dst->seg_len; 
-    to_com_frag(frag)->endpoint = endpoint;
+    to_com_frag(frag)->endpoint = ep;
         
     descriptor->order = qp;
-    if(ibv_post_send(endpoint->qps[qp].qp->lcl_qp, &frag->sr_desc, &bad_wr))
+    if(ibv_post_send(ep->qps[qp].qp->lcl_qp, &frag->sr_desc, &bad_wr))
         return OMPI_ERROR;
 
     return OMPI_SUCCESS; 

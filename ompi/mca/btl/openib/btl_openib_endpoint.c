@@ -42,7 +42,6 @@
 #include "btl_openib_endpoint.h" 
 #include "btl_openib_proc.h"
 #include "btl_openib_frag.h"
-#include "connect/base.h"
 
 static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint);
 static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint);
@@ -498,75 +497,35 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
         if(OMPI_ERROR == mca_btl_openib_endpoint_post_send(endpoint, frag))
             BTL_ERROR(("Error posting send")); 
     }
+
+    /* if upper layer called put or get before connection moved to connected
+     * state then we restart them here */
+    mca_btl_openib_frag_progress_pending_put_get(endpoint,
+            mca_btl_openib_component.rdma_qp);
 }
 
 /*
  * Attempt to send a fragment using a given endpoint. If the endpoint is not
  * connected, queue the fragment and start the connection as required.
  */
-int mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t* endpoint,
+int mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t* ep,
                                  mca_btl_openib_send_frag_t* frag)
 {
     int rc;
-    bool call_progress = false;
-    
-    OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-    switch(endpoint->endpoint_state) {
-        case MCA_BTL_IB_CONNECTING:
 
-            BTL_VERBOSE(("Queing because state is connecting"));
-            
-            opal_list_append(&endpoint->pending_lazy_frags,
-                    (opal_list_item_t *)frag);
-            call_progress = true;
+    OPAL_THREAD_LOCK(&ep->endpoint_lock);
+    rc = check_endpoint_state(ep, &to_base_frag(frag)->base,
+            &ep->pending_lazy_frags);
+
+    if(OPAL_LIKELY(rc == OMPI_SUCCESS)) {
+        rc = mca_btl_openib_endpoint_post_send(ep, frag);
+        if(OMPI_ERR_OUT_OF_RESOURCE == rc)
             rc = OMPI_SUCCESS;
-            break;
-
-        case MCA_BTL_IB_CONNECT_ACK:
-        case MCA_BTL_IB_WAITING_ACK:
-            BTL_VERBOSE(("Queuing because waiting for ack"));
-
-            opal_list_append(&endpoint->pending_lazy_frags,
-                    (opal_list_item_t *)frag);
-            call_progress = true;
-            rc = OMPI_SUCCESS;
-            break;
-
-        case MCA_BTL_IB_CLOSED:
-
-            BTL_VERBOSE(("Connection to endpoint closed ... connecting ..."));
-            opal_list_append(&endpoint->pending_lazy_frags,
-                    (opal_list_item_t *)frag);
-            rc = ompi_btl_openib_connect.bcf_start_connect(endpoint);
-            /*
-             * As long as we expect a message from the peer (in order
-             * to setup the connection) let the event engine pool the
-             * OOB events. Note: we increment it once peer active
-             * connection.
-             */
-            opal_progress_event_users_increment();
-            call_progress = true;
-            break;
-
-        case MCA_BTL_IB_FAILED:
-
-            rc = OMPI_ERR_UNREACH;
-            break;
-
-        case MCA_BTL_IB_CONNECTED:
-            BTL_VERBOSE(("Send to : %d, len : %lu, frag : %p",
-                        endpoint->endpoint_proc->proc_guid.vpid,
-                        frag->sg_entry.length, frag));
-            rc = mca_btl_openib_endpoint_post_send(endpoint, frag);
-            if(rc == OMPI_ERR_OUT_OF_RESOURCE )
-                rc = OMPI_SUCCESS;
-            break; 
-        default:
-            rc = OMPI_ERR_UNREACH;
-            break;
+    } else if(OMPI_ERR_TEMP_OUT_OF_RESOURCE == rc) {
+        rc = OMPI_SUCCESS;
     }
-    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
-    if(call_progress) opal_progress();
+    OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
+
     return rc;
 }
 
