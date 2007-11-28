@@ -975,7 +975,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
         int rc;
         OPAL_THREAD_LOCK(&ep->endpoint_lock);
         rc = check_endpoint_state(ep, descriptor, &ep->pending_put_frags);
-        OPAL_THREAD_UNLOCK(&ep->ep_lock);
+        OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
         if(OMPI_ERR_TEMP_OUT_OF_RESOURCE == rc)
             return OMPI_SUCCESS;
         if(OMPI_SUCCESS != rc)

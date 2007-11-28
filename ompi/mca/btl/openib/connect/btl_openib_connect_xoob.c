@@ -593,7 +593,7 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
         }
         /* on response we add all SRQ numbers */
         for (srq = 0; srq < mca_btl_openib_component.num_xrc_qps; srq++) { 
-            BTL_VERBOSE(("XOOB Send pack srq[%d] num  = %d", srq, endpoint->endpoint_btl->qps[srq].u.src_qp.xrc->xrc_srq_num));
+            BTL_VERBOSE(("XOOB Send pack srq[%d] num  = %d", srq, endpoint->endpoint_btl->qps[srq].u.srq_qp.srq->xrc_srq_num));
             BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
             rc = orte_dss.pack(buffer, &endpoint->endpoint_btl->qps[srq].u.srq_qp.srq->xrc_srq_num,
                     1, ORTE_UINT32);
