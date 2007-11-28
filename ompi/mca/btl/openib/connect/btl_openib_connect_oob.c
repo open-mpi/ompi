@@ -282,7 +282,7 @@ static int qp_create_all(mca_btl_base_endpoint_t* endpoint)
             srq = endpoint->endpoint_btl->qps[qp].u.srq_qp.srq;
             max_recv_wr = mca_btl_openib_component.qp_infos[qp].rd_num;
             max_send_wr = mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max
-                + BTL_OPENIB_EAGER_RDMA_QP(qp);
+                + 1;
         }
 
         rc = qp_create_one(endpoint, prio, qp, srq, max_recv_wr, max_send_wr);

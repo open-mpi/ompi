@@ -195,8 +195,6 @@ struct mca_btl_openib_component_t {
     int want_fork_support;
 #endif
     int rdma_qp;
-    int eager_rdma_qp;
-    
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;
@@ -259,9 +257,7 @@ struct mca_btl_openib_module_srq_qp_t {
     int32_t rd_posted; 
     int32_t sd_credits;  /* the max number of outstanding sends on a QP when using SRQ */ 
                          /*  i.e. the number of frags that  can be outstanding (down counter) */ 
-    opal_list_t pending_frags;               /**< list of pending frags */ 
-    
-
+    opal_list_t pending_frags[2];    /**< list of high/low prio frags */
 }; typedef struct mca_btl_openib_module_srq_qp_t mca_btl_openib_module_srq_qp_t;
 
 struct mca_btl_openib_module_qp_t {
@@ -564,9 +560,6 @@ static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
 
     return OMPI_SUCCESS;
 }
-
-#define BTL_OPENIB_EAGER_RDMA_QP(QP) \
-    ((QP) == mca_btl_openib_component.eager_rdma_qp)
 
 #define BTL_OPENIB_RDMA_QP(QP) \
     ((QP) == mca_btl_openib_component.rdma_qp)

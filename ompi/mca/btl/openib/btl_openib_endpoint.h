@@ -116,10 +116,9 @@ struct mca_btl_openib_endpoint_qp_t {
     struct ibv_qp*              lcl_qp; /* Local QP (Low and High) */
     uint32_t lcl_psn; 
     int32_t  sd_wqe;      /**< number of available send wqe entries */
-    opal_list_t                 pending_frags; /**< put fragments here if there
-                                                    is no wqe available or, in
-                                                    case of PP QP, if there is
-                                                    no credit available */
+    opal_list_t pending_frags[2]; /**< put fragments here if there is no wqe
+                                    available or, in case of PP QP, if there is
+                                    no credit available */
     int32_t  rd_credit_send_lock;  /**< Lock credit send fragment */
     mca_btl_openib_send_control_frag_t *credit_frag;
     union {
@@ -198,12 +197,14 @@ typedef mca_btl_base_endpoint_t  mca_btl_openib_endpoint_t;
 
 OBJ_CLASS_DECLARATION(mca_btl_openib_endpoint_t);
 
-int  mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t* endpoint,
-                                  struct mca_btl_openib_send_frag_t* frag);
+int mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t*,
+        mca_btl_openib_send_frag_t*);
+int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t*,
+        mca_btl_openib_send_frag_t*);
 void mca_btl_openib_endpoint_send_credits(mca_btl_base_endpoint_t*, const int);
 void mca_btl_openib_endpoint_connect_eager_rdma(mca_btl_openib_endpoint_t*);
-int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t *endpoint);
-void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint);
+int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t*);
+void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t*);
 
 
 
@@ -282,11 +283,8 @@ static inline int mca_btl_openib_endpoint_post_rr_all(mca_btl_base_endpoint_t *e
 static inline bool check_send_credits(mca_btl_openib_endpoint_t *endpoint,
         const int qp)
 {
-    if(BTL_OPENIB_EAGER_RDMA_QP(qp)) { 
-        if(endpoint->eager_rdma_local.credits > endpoint->eager_rdma_local.rd_win) {
-            return true;
-        }
-    }
+    if(endpoint->eager_rdma_local.credits > endpoint->eager_rdma_local.rd_win)
+        return true;
 
     if(BTL_OPENIB_QP_TYPE_PP(qp)) {
         if(endpoint->qps[qp].u.pp_qp.rd_credits >=
