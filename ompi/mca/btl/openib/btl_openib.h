@@ -195,6 +195,7 @@ struct mca_btl_openib_component_t {
     int want_fork_support;
 #endif
     int rdma_qp;
+    int credits_qp; /* qp used for software flow control */
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;

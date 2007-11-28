@@ -426,7 +426,7 @@ int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t *endpoint)
         if (BTL_OPENIB_QP_TYPE_SRQ(qp)) { 
             mca_btl_openib_post_srr(endpoint->endpoint_btl, 1, qp);
         } else { 
-            mca_btl_openib_endpoint_post_rr(endpoint, 1, qp);
+            mca_btl_openib_endpoint_post_rr(endpoint, qp);
         }
     }
     
@@ -535,26 +535,27 @@ int mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t* endpoint,
 
 static void mca_btl_openib_endpoint_credits(
     mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_btl_base_descriptor_t* descriptor,
+    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_descriptor_t* des,
     int status)
 {
     
     int qp;
     
-    mca_btl_openib_send_control_frag_t *frag = to_send_control_frag(descriptor);
+    mca_btl_openib_send_control_frag_t *frag = to_send_control_frag(des);
     
     qp = frag->qp_idx;
    
-    /* we don't acquire a wqe or token for credit message - so decrement */
-    OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe, -1);
+    /* we don't acquire a WQE for credit message - so decrement.
+     * Note: doing it for QP used for credit management */
+    OPAL_THREAD_ADD32(&ep->qps[des->order].sd_wqe, -1);
 
-    if(check_send_credits(endpoint, qp))
-        mca_btl_openib_endpoint_send_credits(endpoint, qp);
+    if(check_send_credits(ep, qp) || check_eager_rdma_credits(ep))
+        mca_btl_openib_endpoint_send_credits(ep, qp);
     else {
-        BTL_OPENIB_CREDITS_SEND_UNLOCK(endpoint, qp);
+        BTL_OPENIB_CREDITS_SEND_UNLOCK(ep, qp);
         /* check one more time if credits are available after unlock */
-        send_credits(endpoint, qp);
+        send_credits(ep, qp);
     }
 }
 
@@ -579,7 +580,7 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
         frag->qp_idx = qp;
         endpoint->qps[qp].credit_frag = frag;
         /* set those once and forever */
-        to_base_frag(frag)->base.order = qp;
+        to_base_frag(frag)->base.order = mca_btl_openib_component.credits_qp;
         to_base_frag(frag)->base.des_cbfunc = mca_btl_openib_endpoint_credits;
         to_base_frag(frag)->base.des_cbdata = NULL;
         to_com_frag(frag)->endpoint = endpoint;
@@ -589,8 +590,7 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     }
 
     assert(frag->qp_idx == qp);
-    credits_hdr =
-        (mca_btl_openib_rdma_credits_header_t*)
+    credits_hdr = (mca_btl_openib_rdma_credits_header_t*)
         to_base_frag(frag)->segment.seg_addr.pval;
     if(acquire_eager_rdma_send_credit(endpoint) == MPI_SUCCESS) {
         do_rdma = true;
@@ -606,15 +606,13 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     GET_CREDITS(endpoint->qps[qp].u.pp_qp.rd_credits, frag->hdr->credits);
 
     frag->hdr->cm_seen = 0;
-    if(!do_rdma) {
-        GET_CREDITS(endpoint->qps[qp].u.pp_qp.cm_return, cm_return);
-        if(cm_return > 255) {
-            frag->hdr->cm_seen = 255;
-            cm_return -= 255;
-            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_return, cm_return);
-        } else {
-            frag->hdr->cm_seen = cm_return;
-        }
+    GET_CREDITS(endpoint->qps[qp].u.pp_qp.cm_return, cm_return);
+    if(cm_return > 255) {
+        frag->hdr->cm_seen = 255;
+        cm_return -= 255;
+        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_return, cm_return);
+    } else {
+        frag->hdr->cm_seen = cm_return;
     }
 
     GET_CREDITS(endpoint->eager_rdma_local.credits, credits_hdr->rdma_credits);
@@ -675,7 +673,7 @@ static int mca_btl_openib_endpoint_send_eager_rdma(
         mca_btl_openib_endpoint_eager_rdma_connect_cb;
     to_base_frag(frag)->base.des_cbdata = NULL;
     to_base_frag(frag)->base.des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
-    to_send_frag(frag)->qp_idx = 0;
+    to_base_frag(frag)->base.order = mca_btl_openib_component.credits_qp;
     to_base_frag(frag)->segment.seg_len =
         sizeof(mca_btl_openib_eager_rdma_header_t);
     to_com_frag(frag)->endpoint = endpoint;

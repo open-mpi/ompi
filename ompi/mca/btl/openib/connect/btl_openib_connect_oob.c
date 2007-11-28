@@ -238,7 +238,10 @@ static int qp_connect_all(mca_btl_openib_endpoint_t *endpoint)
         attr.qp_state       = IBV_QPS_RTS;
         attr.timeout        = mca_btl_openib_component.ib_timeout;
         attr.retry_cnt      = mca_btl_openib_component.ib_retry_count;
-        attr.rnr_retry      = mca_btl_openib_component.ib_rnr_retry;
+        /* On PP QPs we have SW flow control, no need for rnr retries. Setting
+         * it to zero helps to catch bugs */
+        attr.rnr_retry      = BTL_OPENIB_QP_TYPE_PP(i) ? 0 :
+            mca_btl_openib_component.ib_rnr_retry;
         attr.sq_psn         = endpoint->qps[i].lcl_psn;
         attr.max_rd_atomic  = mca_btl_openib_component.ib_max_rdma_dst_ops;
         if (ibv_modify_qp(qp, &attr,
@@ -264,25 +267,51 @@ static int qp_connect_all(mca_btl_openib_endpoint_t *endpoint)
  */
 static int qp_create_all(mca_btl_base_endpoint_t* endpoint)
 {
-    int qp, rc, prio;
+    int qp, rc, prio, pp_qp_num = 0;
+    int32_t rd_rsv_total = 0;
+
+    for (qp = 0; qp < mca_btl_openib_component.num_qps; ++qp)
+        if(BTL_OPENIB_QP_TYPE_PP(qp)) {
+            rd_rsv_total +=
+                mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
+            pp_qp_num++;
+        }
+
+    /* if there is no pp QPs we still need reserved WQE for eager rdma flow
+     * control */
+    if(0 == pp_qp_num && true == endpoint->use_eager_rdma)
+        pp_qp_num = 1;
 
     for (qp = 0; qp < mca_btl_openib_component.num_qps; ++qp) { 
         struct ibv_srq *srq = NULL;
         uint32_t max_recv_wr, max_send_wr;
+        int32_t rd_rsv, rd_num_credits;
         /* If the size for this qp is <= the eager limit, make it a
            high priority QP.  Otherwise, make it a low priority QP. */
         prio = (mca_btl_openib_component.qp_infos[qp].size <=
                 mca_btl_openib_component.eager_limit) ? 
             BTL_OPENIB_HP_CQ : BTL_OPENIB_LP_CQ;
-        if(MCA_BTL_OPENIB_PP_QP == mca_btl_openib_component.qp_infos[qp].type) {
-            max_recv_wr = mca_btl_openib_component.qp_infos[qp].rd_num +
-                mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
-            max_send_wr = mca_btl_openib_component.qp_infos[qp].rd_num + 1;
+
+        if(qp == 0)
+            prio = BTL_OPENIB_HP_CQ; /* smallest qp is always HP */
+
+        /* QP used for SW flow control need some additional recourses */
+        if(qp == mca_btl_openib_component.credits_qp) {
+            rd_rsv = rd_rsv_total;
+            rd_num_credits = pp_qp_num;
+        } else {
+            rd_rsv = rd_num_credits = 0;
+        }
+
+        if(BTL_OPENIB_QP_TYPE_PP(qp)) {
+            max_recv_wr = mca_btl_openib_component.qp_infos[qp].rd_num + rd_rsv;
+            max_send_wr = mca_btl_openib_component.qp_infos[qp].rd_num +
+                rd_num_credits;
         } else {
             srq = endpoint->endpoint_btl->qps[qp].u.srq_qp.srq;
             max_recv_wr = mca_btl_openib_component.qp_infos[qp].rd_num;
             max_send_wr = mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max
-                + 1;
+                + rd_num_credits;
         }
 
         rc = qp_create_one(endpoint, prio, qp, srq, max_recv_wr, max_send_wr);

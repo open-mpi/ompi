@@ -483,7 +483,8 @@ static int mca_btl_openib_mca_setup_qps(void)
     char *default_qps = "P,128,256,128,16:S,1024,256,128,32:S,4096,256,128,32:S,65536,256,128,32";
     uint32_t max_qp_size, max_size_needed;
     int32_t min_freelist_size = 0;
-    
+    int smallest_pp_qp = 0;
+
     reg_string("receive_queues",
                "Colon-delimited, coma delimited list of receive queues: P,4096,8,6,4:P,32768,8,6,4",
                default_qps, &str, 0);
@@ -498,7 +499,9 @@ static int mca_btl_openib_mca_setup_qps(void)
 
     while (queues[qp] != NULL) {
         if (0 == strncmp("P,", queues[qp], 2)) { 
-            num_pp_qps++;   
+            num_pp_qps++;
+            if(smallest_pp_qp > qp)
+                smallest_pp_qp = qp;
         } else if (0 == strncmp("S,", queues[qp], 2)) { 
             num_srq_qps++;
         } else {
@@ -638,6 +641,7 @@ static int mca_btl_openib_mca_setup_qps(void)
     }
     
     mca_btl_openib_component.rdma_qp = mca_btl_openib_component.num_qps - 1;
+    mca_btl_openib_component.credits_qp = smallest_pp_qp;
 
     /* Register any MCA params for the connect pseudo-components */
 

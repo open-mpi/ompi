@@ -206,72 +206,69 @@ void mca_btl_openib_endpoint_connect_eager_rdma(mca_btl_openib_endpoint_t*);
 int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t*);
 void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t*);
 
-
-
-static inline int mca_btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpoint,
-                                                  const int additional,
-                                                  const int qp)
+static inline int post_recvs(mca_btl_base_endpoint_t *ep, const int qp,
+        const int num_post)
 {
-    mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
+    int i;
+    struct ibv_recv_wr* bad_wr;
+    ompi_free_list_t *free_list;
+    mca_btl_openib_module_t *openib_btl = ep->endpoint_btl;
+    
+    free_list = &openib_btl->qps[qp].recv_free;
+
+    for(i = 0; i < num_post; i++) {
+       int rc;
+       ompi_free_list_item_t* item;
+       OMPI_FREE_LIST_WAIT(free_list, item, rc);
+       to_base_frag(item)->base.order = qp;
+       to_com_frag(item)->endpoint = ep;
+       if((rc = ibv_post_recv(ep->qps[qp].lcl_qp, &to_recv_frag(item)->rd_desc,
+                   &bad_wr))) {
+           BTL_ERROR(("error posting receive on qp %d (%d from %d)\n",
+                       qp, i, num_post));
+           return OMPI_ERROR;
+       }
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static inline int mca_btl_openib_endpoint_post_rr(
+        mca_btl_base_endpoint_t *endpoint, const int qp)
+{
     int rd_rsv = mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
     int rd_num = mca_btl_openib_component.qp_infos[qp].rd_num;
-        
+    int cqp = mca_btl_openib_component.credits_qp, rc;
     int cm_received, rd_posted, rd_low;
     
     assert(BTL_OPENIB_QP_TYPE_PP(qp));
-    OPAL_THREAD_LOCK(&openib_btl->ib_lock);
+
     cm_received = endpoint->qps[qp].u.pp_qp.cm_received;
     rd_posted = endpoint->qps[qp].u.pp_qp.rd_posted;
     rd_low = mca_btl_openib_component.qp_infos[qp].rd_low;
 
-    if(cm_received >= (rd_rsv >> 2) || rd_posted <= rd_low) {
-        int rc;
-        int32_t i, num_post = rd_num - rd_posted;
-        struct ibv_recv_wr* bad_wr;
-        ompi_free_list_t *free_list;
-        
-        free_list = &openib_btl->qps[qp].recv_free;
-
-        for(i = 0; i < (num_post + cm_received); i++) {
-           ompi_free_list_item_t* item;
-           OMPI_FREE_LIST_WAIT(free_list, item, rc);
-           to_base_frag(item)->base.order = qp;
-           to_com_frag(item)->endpoint = endpoint;
-           if(ibv_post_recv(endpoint->qps[qp].lcl_qp, 
-                            &to_recv_frag(item)->rd_desc,
-                            &bad_wr)) {
-               BTL_ERROR(("error posting receive errno says %s\n",
-                          strerror(errno)));
-               OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
-               return OMPI_ERROR;
-           }
-        }
-        if(num_post > 0) {
-            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_posted, num_post);
-            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_credits, num_post);
-        }
-        if(cm_received > 0) {
-            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_return,
-                    cm_received);
-            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_received,
-                    -cm_received);
-        }
-        assert(endpoint->qps[qp].u.pp_qp.rd_credits <= rd_num);
-        assert(endpoint->qps[qp].u.pp_qp.rd_credits >= 0);
+    /* post receive buffers */
+    if(rd_posted <= rd_low) {
+        int num_post = rd_num - rd_posted;
+        if((rc = post_recvs(endpoint, qp, num_post)) != OMPI_SUCCESS)
+            return rc;
+        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_posted, num_post);
+        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_credits, num_post);
     }
-    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
-    return OMPI_SUCCESS;
-}
 
-static inline int mca_btl_openib_endpoint_post_rr_all(mca_btl_base_endpoint_t *endpoint,
-                                                      const int additional) 
-{
-    int qp;
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++){ 
-        if(BTL_OPENIB_QP_TYPE_PP(qp)) { 
-            mca_btl_openib_endpoint_post_rr(endpoint, additional, qp);
-        }
+    /* post buffers for credit management on credit management qp */
+    if(cm_received >= (rd_rsv >> 2)) {
+        if((rc = post_recvs(endpoint, cqp, cm_received)) != OMPI_SUCCESS)
+            return rc;
+        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_return, cm_received);
+        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_received, -cm_received);
     }
+
+    assert(endpoint->qps[qp].u.pp_qp.rd_credits <= rd_num);
+    assert(endpoint->qps[qp].u.pp_qp.rd_credits >= 0);
+    assert(endpoint->qps[qp].u.pp_qp.rd_credits <= rd_num);
+    assert(endpoint->qps[qp].u.pp_qp.rd_credits >= 0);
+
     return OMPI_SUCCESS;
 }
 
@@ -280,28 +277,38 @@ static inline int mca_btl_openib_endpoint_post_rr_all(mca_btl_base_endpoint_t *e
 #define BTL_OPENIB_CREDITS_SEND_UNLOCK(E, Q) \
     OPAL_ATOMIC_CMPSET_32(&(E)->qps[(Q)].rd_credit_send_lock, 1, 0)
 
-static inline bool check_send_credits(mca_btl_openib_endpoint_t *endpoint,
-        const int qp)
+static inline bool check_eager_rdma_credits(const mca_btl_openib_endpoint_t *ep)
 {
-    if(endpoint->eager_rdma_local.credits > endpoint->eager_rdma_local.rd_win)
-        return true;
-
-    if(BTL_OPENIB_QP_TYPE_PP(qp)) {
-        if(endpoint->qps[qp].u.pp_qp.rd_credits >=
-            mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win) {
-            return true;
-        }
-    }
-   
-    return false;
+    return (ep->eager_rdma_local.credits > ep->eager_rdma_local.rd_win) ? true :
+        false;
 }
 
-static inline void send_credits(mca_btl_openib_endpoint_t *endpoint,
-        const int qp)
+static inline bool
+check_send_credits(const mca_btl_openib_endpoint_t *ep, const int qp)
 {
-    if(check_send_credits(endpoint, qp) &&
-            BTL_OPENIB_CREDITS_SEND_TRYLOCK(endpoint, qp))
-        mca_btl_openib_endpoint_send_credits(endpoint, qp);
+
+    if(!BTL_OPENIB_QP_TYPE_PP(qp))
+        return false;
+
+    return (ep->qps[qp].u.pp_qp.rd_credits >=
+            mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win) ? true : false;
+}
+
+static inline void send_credits(mca_btl_openib_endpoint_t *ep, int qp)
+{
+    if(BTL_OPENIB_QP_TYPE_PP(qp)) {
+        if(check_send_credits(ep, qp))
+            goto try_send;
+    } else {
+        qp = mca_btl_openib_component.credits_qp;
+    }
+
+    if(!check_eager_rdma_credits(ep))
+        return;
+    
+try_send:
+    if(BTL_OPENIB_CREDITS_SEND_TRYLOCK(ep, qp))
+        mca_btl_openib_endpoint_send_credits(ep, qp);
 }
 
 END_C_DECLS
