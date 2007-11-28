@@ -309,7 +309,8 @@ static int qp_create_all(mca_btl_base_endpoint_t* endpoint)
                 rd_num_credits;
         } else {
             srq = endpoint->endpoint_btl->qps[qp].u.srq_qp.srq;
-            max_recv_wr = mca_btl_openib_component.qp_infos[qp].rd_num;
+            /* no receives are posted to SRQ qp */
+            max_recv_wr = 0;
             max_send_wr = mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max
                 + rd_num_credits;
         }
