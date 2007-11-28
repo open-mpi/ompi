@@ -729,10 +729,10 @@ static int mca_btl_finalize_hca(struct mca_btl_openib_hca_t *hca)
     }
 #endif
     /* signaling to async_tread to stop poll for this hca */
-    if (mca_btl_openib_component.use_async_event_thread) {
-        hca_to_remove=-(hca->ib_dev_context->async_fd);
-        if (write(mca_btl_openib_component.async_pipe[1],
-                    &hca_to_remove,sizeof(int))<0){
+    if(mca_btl_openib_component.use_async_event_thread) {
+        hca_to_remove = -(hca->ib_dev_context->async_fd);
+        if (write(mca_btl_openib_component.async_pipe[1], &hca_to_remove,
+                    sizeof(int)) < 0){
             BTL_ERROR(("Failed to write to pipe"));
             return OMPI_ERROR;
         }
@@ -780,9 +780,7 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
     mca_btl_openib_module_t* openib_btl; 
     mca_btl_openib_endpoint_t* endpoint;
     int ep_index, rdma_index, i;
-    int qp;
-    
-    /* return OMPI_SUCCESS; */
+    int qp, rc = OMPI_SUCCESS;
     
     openib_btl = (mca_btl_openib_module_t*) btl; 
 
@@ -796,6 +794,7 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
             }
         }
     }
+
     mca_btl_openib_component.ib_num_btls--;
 
     /* Release eager RDMAs */
@@ -824,7 +823,7 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
     }
     /* Release SRQ resources */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-        if(BTL_OPENIB_QP_TYPE_SRQ(qp)){ 
+        if(BTL_OPENIB_QP_TYPE_SRQ(qp)){
             MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
                         &openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
             MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
@@ -832,26 +831,22 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
             
             if (ibv_destroy_srq(openib_btl->qps[qp].u.srq_qp.srq)){
                 BTL_VERBOSE(("Failed to close SRQ %d", qp));
-                return OMPI_ERROR;
+                rc = OMPI_ERROR;
             }
             
             /* Destroy free lists */
             OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
             OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
-            OBJ_DESTRUCT(&openib_btl->qps[qp].send_free);
-            OBJ_DESTRUCT(&openib_btl->qps[qp].recv_free);
-        } else { 
-            /* Destroy free lists */
-            OBJ_DESTRUCT(&openib_btl->qps[qp].send_free);
-            OBJ_DESTRUCT(&openib_btl->qps[qp].recv_free);
         }
+        /* Destroy free lists */
+        OBJ_DESTRUCT(&openib_btl->qps[qp].send_free);
+        OBJ_DESTRUCT(&openib_btl->qps[qp].recv_free);
     }
 
     OBJ_DESTRUCT(&openib_btl->send_free_control);
     OBJ_DESTRUCT(&openib_btl->send_user_free);
     OBJ_DESTRUCT(&openib_btl->recv_user_free);
 
-   
     /* Release pending lists */
     if (!(--openib_btl->hca->btls)) {
         /* All btls for the HCA were closed
@@ -859,31 +854,37 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
          */     
         if (OMPI_SUCCESS != mca_btl_finalize_hca(openib_btl->hca)) {
             BTL_VERBOSE(("Failed to close HCA"));
-            return OMPI_ERROR;
+            rc = OMPI_ERROR;
         }
     }
+
 #if OMPI_HAVE_THREADS
     if (mca_btl_openib_component.use_async_event_thread &&
-            ! mca_btl_openib_component.ib_num_btls) {
+            0 == mca_btl_openib_component.ib_num_btls &&
+            mca_btl_openib_component.async_thread != 0) {
         /* signaling to async_tread to stop */
         int async_command=0;
-        if (write(mca_btl_openib_component.async_pipe[1],
-                    &async_command,sizeof(int))<0){
-            BTL_ERROR(("Failed to write to pipe"));
-            return OMPI_ERROR;
+        if(write(mca_btl_openib_component.async_pipe[1], &async_command,
+                    sizeof(int)) < 0) {
+            BTL_ERROR(("Failed to communicate with async event thread"));
+            rc = OMPI_ERROR;
+        } else {
+            if(pthread_join(mca_btl_openib_component.async_thread, NULL)) {
+                BTL_ERROR(("Failed to stop OpenIB async event thread"));
+                rc = OMPI_ERROR;
+            }
         }
-        if (pthread_join(mca_btl_openib_component.async_thread, NULL)) {
-            BTL_ERROR(("Failed to stop OpenIB async event thread"));
-            return OMPI_ERROR;
-        }
+        close(mca_btl_openib_component.async_pipe[0]);
+        close(mca_btl_openib_component.async_pipe[1]);
     }
 #endif
+
     OBJ_DESTRUCT(&openib_btl->ib_lock); 
     free(openib_btl);
 
     BTL_VERBOSE(("Success in closing BTL resources"));
 
-    return OMPI_SUCCESS;
+    return rc;
 }
 
 /*
