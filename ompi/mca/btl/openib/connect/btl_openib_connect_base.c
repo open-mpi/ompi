@@ -62,29 +62,32 @@ int ompi_btl_openib_connect_base_open(void)
              "Method used to make OpenFabrics connections (valid values: %s)",
              a);
 
-    mca_base_param_reg_string(&mca_btl_openib_component.super.btl_version,
-                              "btl_openib_connect",
-                              b, false, false,
-                              "oob", &param);
-
     /* For XRC qps we must to use XOOB connection manager */
-    if (mca_btl_openib_component.num_xrc_qps > 0 && 0 == strcmp("oob", param)) {
-        opal_show_help("help-mpi-btl-openib.txt",
-                "XRC with OOB", true,
-                orte_system_info.nodename, 
-                mca_btl_openib_component.num_xrc_qps);
-        return OMPI_ERROR;
-    }
-
-    /* XOOB connection manager may be used only with XRC qps */
-    if ((mca_btl_openib_component.num_srq_qps > 0 || mca_btl_openib_component.num_pp_qps > 0) 
-            && 0 == strcmp("xoob", param)) {
-        opal_show_help("help-mpi-btl-openib.txt",
-                "SRQ or PP with XOOB", true,
-                orte_system_info.nodename, 
-                mca_btl_openib_component.num_srq_qps,
-                mca_btl_openib_component.num_pp_qps);
-        return OMPI_ERROR;
+    if (mca_btl_openib_component.num_xrc_qps > 0) {
+        mca_base_param_reg_string(&mca_btl_openib_component.super.btl_version,
+                "btl_openib_connect",
+                b, false, false,
+                "xoob", &param);
+        if (0 != strcmp("xoob", param)) {
+            opal_show_help("help-mpi-btl-openib.txt",
+                    "XRC with wrong OOB", true,
+                    orte_system_info.nodename,
+                    mca_btl_openib_component.num_xrc_qps);
+            return OMPI_ERROR;
+        }
+    } else { /* For all others we should use OOB */
+        mca_base_param_reg_string(&mca_btl_openib_component.super.btl_version,
+                "btl_openib_connect",
+                b, false, false,
+                "oob", &param);
+        if (0 != strcmp("oob", param)) {
+            opal_show_help("help-mpi-btl-openib.txt",
+                    "SRQ or PP with wrong OOB", true,
+                    orte_system_info.nodename,
+                    mca_btl_openib_component.num_srq_qps,
+                    mca_btl_openib_component.num_pp_qps);
+            return OMPI_ERROR;
+        }
     }
 
     /* Call the open function on all the connect modules */
