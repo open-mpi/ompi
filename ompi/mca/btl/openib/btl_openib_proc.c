@@ -121,6 +121,8 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
     /* Initialize number of peer */
     module_proc->proc_endpoint_count = 0;
     module_proc->proc_ompi = ompi_proc;
+    /* Initialize nex port to use, used only for xrc */
+    module_proc->port_touse = 0;
 
     /* build a unique identifier (of arbitrary
      * size) to represent the proc */

@@ -49,6 +49,8 @@
 
 BEGIN_C_DECLS
 
+#define HAVE_XRC (defined(HAVE_IBV_OPEN_XRC_DOMAIN) && (1 == OMPI_ENABLE_CONNECTX_XRC_SUPPORT))
+
 #define MCA_BTL_IB_LEAVE_PINNED 1
 #define IB_DEFAULT_GID_PREFIX 0xfe80000000000000ll
 
@@ -59,7 +61,8 @@ BEGIN_C_DECLS
 
 typedef enum { 
     MCA_BTL_OPENIB_PP_QP,
-    MCA_BTL_OPENIB_SRQ_QP
+    MCA_BTL_OPENIB_SRQ_QP,
+    MCA_BTL_OPENIB_XRC_QP
 } mca_btl_openib_qp_type_t;
 
 struct mca_btl_openib_pp_qp_info_t {
@@ -71,6 +74,10 @@ struct mca_btl_openib_srq_qp_info_t {
     int32_t sd_max;
 }; typedef struct mca_btl_openib_srq_qp_info_t mca_btl_openib_srq_qp_info_t;
 
+struct mca_btl_openib_xrc_qp_info_t {
+    int32_t sd_max;
+}; typedef struct mca_btl_openib_xrc_qp_info_t mca_btl_openib_xrc_qp_info_t;
+
 struct mca_btl_openib_qp_info_t {
     mca_btl_openib_qp_type_t type;
     size_t size;
@@ -79,6 +86,7 @@ struct mca_btl_openib_qp_info_t {
     union { 
         mca_btl_openib_pp_qp_info_t pp_qp;
         mca_btl_openib_srq_qp_info_t srq_qp;
+        mca_btl_openib_xrc_qp_info_t xrc_qp;
     } u; 
 }; typedef struct mca_btl_openib_qp_info_t mca_btl_openib_qp_info_t;
 
@@ -87,6 +95,8 @@ struct mca_btl_openib_qp_info_t {
     (BTL_OPENIB_QP_TYPE(Q) == MCA_BTL_OPENIB_PP_QP)
 #define BTL_OPENIB_QP_TYPE_SRQ(Q) \
     (BTL_OPENIB_QP_TYPE(Q) == MCA_BTL_OPENIB_SRQ_QP)
+#define BTL_OPENIB_QP_TYPE_XRC(Q) \
+    (BTL_OPENIB_QP_TYPE(Q) == MCA_BTL_OPENIB_XRC_QP)
 
 struct mca_btl_openib_component_t {
     mca_btl_base_component_1_0_1_t          super;  /**< base BTL component */ 
@@ -129,8 +139,11 @@ struct mca_btl_openib_component_t {
 
     uint8_t num_pp_qps;          /**< number of pp qp's */
     uint8_t num_srq_qps;         /**< number of srq qp's */
+    uint8_t num_xrc_qps;         /**< number of xrc qp's */
     uint8_t num_qps;             /**< total number of qp's */
-    
+   
+    opal_hash_table_t ib_addr_table; /**< used only for xrc.hash-table that
+                                       keeps table of all lids/subnets */
     mca_btl_openib_qp_info_t* qp_infos;
         
     size_t eager_limit;      /**< Eager send limit of first fragment, in Bytes */
@@ -208,18 +221,31 @@ struct mca_btl_openib_port_info_t {
     uint8_t padding[4]; 
 #endif
     uint64_t subnet_id;
+#if HAVE_XRC
+    uint16_t lid; /* used only in xrc */
+#endif
 };
 typedef struct mca_btl_openib_port_info_t mca_btl_openib_port_info_t;
+
+#if HAVE_XRC
+#define MCA_BTL_OPENIB_LID_NTOH(hdr) (hdr).lid = ntohs((hdr).lid)
+#define MCA_BTL_OPENIB_LID_HTON(hdr) (hdr).lid = htons((hdr).lid)
+#else
+#define MCA_BTL_OPENIB_LID_NTOH(hdr)
+#define MCA_BTL_OPENIB_LID_HTON(hdr)
+#endif
 
 #define MCA_BTL_OPENIB_PORT_INFO_NTOH(hdr)     \
     do {                              \
         (hdr).mtu = ntohl((hdr).mtu); \
         (hdr).subnet_id = ntoh64((hdr).subnet_id); \
+        MCA_BTL_OPENIB_LID_NTOH(hdr); \
     } while (0)
 #define MCA_BTL_OPENIB_PORT_INFO_HTON(hdr)     \
     do {                              \
         (hdr).mtu = htonl((hdr).mtu); \
         (hdr).subnet_id = hton64((hdr).subnet_id); \
+        MCA_BTL_OPENIB_LID_HTON(hdr); \
     } while (0)
 
 struct mca_btl_openib_hca_t {
@@ -246,6 +272,10 @@ struct mca_btl_openib_hca_t {
 #if OMPI_HAVE_THREADS
     volatile bool got_fatal_event;
 #endif
+#if HAVE_XRC
+    struct ibv_xrc_domain *xrc_domain;
+    int xrc_fd;
+#endif
 };
 typedef struct mca_btl_openib_hca_t mca_btl_openib_hca_t;
 
@@ -261,12 +291,20 @@ struct mca_btl_openib_module_srq_qp_t {
     opal_list_t pending_frags[2];    /**< list of high/low prio frags */
 }; typedef struct mca_btl_openib_module_srq_qp_t mca_btl_openib_module_srq_qp_t;
 
+struct mca_btl_openib_module_xrc_qp_t {
+    struct ibv_srq *xrc;
+    int32_t rd_posted;
+    int32_t sd_credits;
+    opal_list_t pending_frags[2];
+}; typedef struct mca_btl_openib_module_xrc_qp_t mca_btl_openib_module_xrc_qp_t;
+
 struct mca_btl_openib_module_qp_t {
     ompi_free_list_t send_free;     /**< free lists of send buffer descriptors */
     ompi_free_list_t recv_free;     /**< free lists of receive buffer descriptors */
     union {
         mca_btl_openib_module_pp_qp_t pp_qp;
         mca_btl_openib_module_srq_qp_t srq_qp;
+        mca_btl_openib_module_xrc_qp_t xrc_qp;
     } u;
 }; typedef struct mca_btl_openib_module_qp_t mca_btl_openib_module_qp_t;
 
@@ -559,6 +597,55 @@ static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
             }
         }
         OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.rd_posted, num_post);
+    }
+    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+
+    return OMPI_SUCCESS;
+}
+
+
+/**
+ * Post to XRC with certain priority 
+ *
+ * @param openib_btl (IN) BTL module
+ * @param additional (IN) Additional Bytes to reserve
+ * @param prio (IN)       Priority (either BTL_OPENIB_HP_QP or BTL_OPENIB_LP_QP)
+ * @return OMPI_SUCCESS or failure status
+ */
+
+static inline int mca_btl_openib_post_xrr(mca_btl_openib_module_t* openib_btl,
+                                          const int additional,
+                                          const int qp)
+{
+    assert(BTL_OPENIB_QP_TYPE_XRC(qp));
+
+    OPAL_THREAD_LOCK(&openib_btl->ib_lock);
+    if(openib_btl->qps[qp].u.xrc_qp.rd_posted <=
+       mca_btl_openib_component.qp_infos[qp].rd_low + additional &&
+       openib_btl->qps[qp].u.xrc_qp.rd_posted <
+       mca_btl_openib_component.qp_infos[qp].rd_num) {
+        int rc;
+        int32_t i, num_post = mca_btl_openib_component.qp_infos[qp].rd_num -
+            openib_btl->qps[qp].u.xrc_qp.rd_posted;
+        struct ibv_recv_wr *bad_wr;
+        ompi_free_list_t *free_list;
+
+        free_list = &openib_btl->qps[qp].recv_free;
+
+        for(i = 0; i < num_post; i++) {
+            ompi_free_list_item_t* item;
+            OMPI_FREE_LIST_WAIT(free_list, item, rc);
+            to_base_frag(item)->base.order = qp;
+            to_com_frag(item)->endpoint = NULL;
+            if(ibv_post_srq_recv(openib_btl->qps[qp].u.xrc_qp.xrc,
+                        &to_recv_frag(item)->rd_desc, &bad_wr)) {
+                BTL_ERROR(("error posting receive descriptors to shared "
+                           "receive queue: %s", strerror(errno)));
+                OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+                return OMPI_ERROR;
+            }
+        }
+        OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.xrc_qp.rd_posted, num_post);
     }
     OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
 

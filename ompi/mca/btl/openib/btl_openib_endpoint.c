@@ -13,6 +13,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
+ * Copyright (c) 2006-2007 Mellanox Technologies, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -42,6 +43,7 @@
 #include "btl_openib_endpoint.h" 
 #include "btl_openib_proc.h"
 #include "btl_openib_frag.h"
+#include "btl_openib_xrc.h"
 
 static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint);
 static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint);
@@ -93,14 +95,18 @@ static int post_send(mca_btl_openib_endpoint_t *ep,
             sizeof(mca_btl_openib_footer_t);
         sr_desc->wr.rdma.remote_addr -= sg->length;
     } else {
-        if(BTL_OPENIB_QP_TYPE_SRQ(qp)) {
+        if(BTL_OPENIB_QP_TYPE_PP(qp)) {
+            sr_desc->opcode = IBV_WR_SEND;
+        } else {
             sr_desc->opcode = IBV_WR_SEND_WITH_IMM;
             sr_desc->imm_data = ep->rem_info.rem_index;
-        } else {
-            sr_desc->opcode = IBV_WR_SEND;
         }
     }
 
+#if HAVE_XRC
+    if(BTL_OPENIB_QP_TYPE_XRC(qp))
+        sr_desc->xrc_remote_srq_num = ep->rem_info.rem_srqs[qp].rem_srq_num;
+#endif
     assert(sg->addr == (uint64_t)frag->hdr);
 
     return ibv_post_send(ep->qps[qp].qp->lcl_qp, sr_desc, &bad_wr);
@@ -149,14 +155,25 @@ static int acquire_send_credit(mca_btl_openib_endpoint_t *endpoint,
                     (opal_list_item_t *)frag);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-    } else {
-        if(OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, -1) < 0) {
+    } else if(BTL_OPENIB_QP_TYPE_SRQ(qp)) {
+        if(OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, -1) < 0)
+        {
             OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1);
             OPAL_THREAD_LOCK(&openib_btl->ib_lock);
             opal_list_append(&openib_btl->qps[qp].u.srq_qp.pending_frags[prio],
                              (opal_list_item_t *)frag);
             OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+    } else { /* XRC QP */
+        if(OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.xrc_qp.sd_credits, -1) < 0)
+        {
+             OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.xrc_qp.sd_credits, 1);
+             OPAL_THREAD_LOCK(&openib_btl->ib_lock);
+             opal_list_append(&openib_btl->qps[qp].u.xrc_qp.pending_frags[prio],
+                     (opal_list_item_t *)frag);
+             OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+             return OMPI_ERR_OUT_OF_RESOURCE;
         }
     }
 
@@ -241,9 +258,12 @@ int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t *endpoint,
             OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_credits,
                     hdr->credits);
             OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits, 1);
-        } else {
+        } else if BTL_OPENIB_QP_TYPE_SRQ(qp){
             mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
             OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1);
+        } else { /* XRC QP */
+            mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
+            OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.xrc_qp.sd_credits, 1);
         }
     }
     BTL_ERROR(("error posting send request error %d: %s\n", 
@@ -313,8 +333,27 @@ endpoint_init_qp_srq(mca_btl_openib_endpoint_qp_t *ep_qp, const int qp)
     ep_qp->qp->sd_wqe = mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
 }
 
-static void endpoint_init_qp(mca_btl_openib_endpoint_qp_t *ep_qp, const int qp)
+static void
+endpoint_init_qp_xrc(mca_btl_openib_endpoint_qp_t *ep_qp, const int qp,
+        mca_btl_openib_qp_t *xrc_qp)
 {
+    /* In XRC mode the we the qps used as send qp only. We need only one send
+     * qp, and other qps points to the first one */
+    if (0 == qp) {
+        ep_qp->qp = endpoint_alloc_qp();
+        /* number of available send WQEs */
+        ep_qp->qp->sd_wqe =
+            mca_btl_openib_component.qp_infos[qp].u.xrc_qp.sd_max;
+    } else {
+        ep_qp->qp = xrc_qp;
+    }
+    ep_qp->qp->users++;
+}
+
+static void endpoint_init_qp(mca_btl_base_endpoint_t *ep, const int qp)
+{
+    mca_btl_openib_endpoint_qp_t *ep_qp = &ep->qps[qp];
+
     ep_qp->rd_credit_send_lock = 0;
     ep_qp->credit_frag = NULL;
 
@@ -326,6 +365,9 @@ static void endpoint_init_qp(mca_btl_openib_endpoint_qp_t *ep_qp, const int qp)
             break;
         case MCA_BTL_OPENIB_SRQ_QP:
             endpoint_init_qp_srq(ep_qp, qp);
+            break;
+        case MCA_BTL_OPENIB_XRC_QP:
+            endpoint_init_qp_xrc(ep_qp, qp, ep->qps[0].qp);
             break;
         default:
             BTL_ERROR(("Wrong QP type"));
@@ -339,15 +381,24 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     int qp;
     
     /* setup qp structures */
-    if( mca_btl_openib_component.num_qps > 0 ) {
-        endpoint->qps = (mca_btl_openib_endpoint_qp_t*)
-            calloc(mca_btl_openib_component.num_qps,
-                    sizeof(mca_btl_openib_endpoint_qp_t));
+    endpoint->qps = (mca_btl_openib_endpoint_qp_t*)
+        calloc(mca_btl_openib_component.num_qps,
+                sizeof(mca_btl_openib_endpoint_qp_t));
+    if (MCA_BTL_XRC_ENABLED) {
+        endpoint->rem_info.rem_qps = (mca_btl_openib_rem_qp_info_t*)
+            calloc(1, sizeof(mca_btl_openib_rem_qp_info_t));
+        endpoint->rem_info.rem_srqs = (mca_btl_openib_rem_srq_info_t*)
+            calloc(mca_btl_openib_component.num_xrc_qps,
+                    sizeof(mca_btl_openib_rem_srq_info_t));
+    } else {
         endpoint->rem_info.rem_qps = (mca_btl_openib_rem_qp_info_t*)
             calloc(mca_btl_openib_component.num_qps,
                     sizeof(mca_btl_openib_rem_qp_info_t));
+        endpoint->rem_info.rem_srqs = NULL;
     }
 
+    endpoint->ib_addr = NULL;
+    endpoint->xrc_recv_qp = NULL;
     endpoint->endpoint_btl = 0;
     endpoint->endpoint_proc = 0;
     endpoint->endpoint_tstamp = 0.0;
@@ -376,12 +427,8 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->eager_rdma_remote.tokens = 0;
     endpoint->eager_rdma_local.credits = 0;
     
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-        endpoint_init_qp(&endpoint->qps[qp], qp);
-        /* setup rem_info */
-        endpoint->rem_info.rem_qps[qp].rem_qp_num = 0; 
-        endpoint->rem_info.rem_qps[qp].rem_psn = 0;
-    }
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++)
+        endpoint_init_qp(endpoint, qp);
 }
 
 /*
@@ -416,6 +463,12 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 
     /* Close opened QPs if we have them*/
    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
+        if (BTL_OPENIB_QP_TYPE_XRC(qp) &&
+                endpoint != endpoint->ib_addr->ep_xrc_master) {
+            /* in XRC case we need to release only first one on master
+             * endpoint */
+            goto clean_endpoint;
+        }
         MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(&endpoint->qps[qp].pending_frags[0]);
         MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(&endpoint->qps[qp].pending_frags[1]);
         OBJ_DESTRUCT(&endpoint->qps[qp].pending_frags[0]);
@@ -441,6 +494,16 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     /* free the qps */
     free(endpoint->qps);
 
+clean_endpoint:
+    /* destroy recv qp */
+    if (NULL != endpoint->xrc_recv_qp && NULL != endpoint->xrc_recv_qp->qp) {
+        if(ibv_destroy_qp(endpoint->xrc_recv_qp->qp->lcl_qp)) {
+            BTL_ERROR(("Failed to destroy XRC recv QP:%d\n", qp));
+        }
+        free(endpoint->xrc_recv_qp->qp);
+        free(endpoint->xrc_recv_qp);
+    }
+
     OBJ_DESTRUCT(&endpoint->endpoint_lock);
     /* Clean pending lists */
     MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(&endpoint->pending_lazy_frags);
@@ -465,7 +528,9 @@ int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t *endpoint)
     for (qp = 0; qp < mca_btl_openib_component.num_qps; ++qp) { 
         if (BTL_OPENIB_QP_TYPE_SRQ(qp)) { 
             mca_btl_openib_post_srr(endpoint->endpoint_btl, 1, qp);
-        } else { 
+        } else if(BTL_OPENIB_QP_TYPE_XRC(qp)) { 
+            mca_btl_openib_post_xrr(endpoint->endpoint_btl, 1, qp);
+        } else { /* PP QP */
             mca_btl_openib_endpoint_post_rr(endpoint, qp);
         }
     }
@@ -479,8 +544,25 @@ int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t *endpoint)
  */
 void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
 {
-    opal_list_item_t *frag_item;
+    opal_list_item_t *frag_item, *ep_item;
     mca_btl_openib_send_frag_t *frag;
+    mca_btl_openib_endpoint_t *ep;
+    bool master = false;
+
+    if (MCA_BTL_XRC_ENABLED) {
+        OPAL_THREAD_LOCK(&endpoint->ib_addr->addr_lock);
+        if (MCA_BTL_IB_ADDR_CONNECTED == endpoint->ib_addr->status) {
+            /* We are not xrc master */
+            /* set our qp pointer to master qp */
+            endpoint->qps = endpoint->ib_addr->ep_xrc_master->qps;
+            master = false;
+        } else {
+            /* I'm master of XRC */
+            endpoint->ib_addr->status = MCA_BTL_IB_ADDR_CONNECTED;
+            endpoint->ib_addr->ep_xrc_master = endpoint;
+            master = true;
+        }
+    }
    
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTED;
     
@@ -502,6 +584,17 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
      * state then we restart them here */
     mca_btl_openib_frag_progress_pending_put_get(endpoint,
             mca_btl_openib_component.rdma_qp);
+
+    if(MCA_BTL_XRC_ENABLED) {
+        while(master && !opal_list_is_empty(&endpoint->ib_addr->pending_ep)) {
+            ep_item = opal_list_remove_first(&endpoint->ib_addr->pending_ep);
+            ep = (mca_btl_openib_endpoint_t *)ep_item;
+            if (OMPI_SUCCESS != ompi_btl_openib_connect.bcf_start_connect(ep)) {
+                BTL_ERROR(("Failed to connect pending endpoint\n"));
+            }
+        }
+        OPAL_THREAD_UNLOCK(&endpoint->ib_addr->addr_lock);
+    }
 }
 
 /*

@@ -34,6 +34,7 @@
 #include "btl_openib_frag.h" 
 #include "btl_openib_proc.h"
 #include "btl_openib_endpoint.h"
+#include "btl_openib_xrc.h"
 #include "ompi/datatype/convertor.h" 
 #include "ompi/datatype/datatype.h" 
 #include "ompi/datatype/dt_arch.h"
@@ -155,6 +156,17 @@ int mca_btl_openib_add_procs(
         }
     }
 
+#if HAVE_XRC
+    if(MCA_BTL_XRC_ENABLED &&
+            NULL == mca_btl_openib_component.ib_addr_table.ht_table) {
+        if(OPAL_SUCCESS != opal_hash_table_init(
+                    &mca_btl_openib_component.ib_addr_table, nprocs)) {
+            BTL_ERROR(("XRC internal error. Failed to allocate ib_table\n"));
+            return OMPI_ERROR;
+        }
+    }
+#endif
+
     for(i = 0; i < (int) nprocs; i++) {
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
         mca_btl_openib_proc_t* ib_proc;
@@ -210,6 +222,21 @@ int mca_btl_openib_add_procs(
         endpoint->use_eager_rdma = openib_btl->hca->use_eager_rdma &
             mca_btl_openib_component.use_eager_rdma;
         endpoint->subnet_id = openib_btl->port_info.subnet_id; 
+#if HAVE_XRC
+        if (MCA_BTL_XRC_ENABLED) {
+            /* Pasha: now we need to push the subnet and lid to some global table in the component */
+            rc = mca_btl_openib_ib_address_add_new(
+                    ib_proc->proc_ports[ib_proc->port_touse].subnet_id,
+                    ib_proc->proc_ports[ib_proc->port_touse].lid, endpoint);
+            if (OMPI_SUCCESS != rc ) {
+                OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+                return OMPI_ERROR;
+            }
+            /* we caching REMOTE_LID to the endpoint */
+            endpoint->lid = ib_proc->proc_ports[ib_proc->port_touse].lid;
+            ib_proc->port_touse++;
+        }
+#endif
         rc = mca_btl_openib_proc_insert(ib_proc, endpoint);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(endpoint);
@@ -263,6 +290,26 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
                 return OMPI_ERROR; 
             }
         }
+#if HAVE_XRC
+        if(BTL_OPENIB_QP_TYPE_XRC(qp)) {
+            int prio = (mca_btl_openib_component.qp_infos[qp].size <=
+                    mca_btl_openib_component.eager_limit) ?
+                BTL_OPENIB_HP_CQ : BTL_OPENIB_LP_CQ;
+            attr.attr.max_wr = mca_btl_openib_component.qp_infos[qp].rd_num +
+                mca_btl_openib_component.qp_infos[qp].u.xrc_qp.sd_max;
+            attr.attr.max_sge = mca_btl_openib_component.ib_sg_list_size;
+            openib_btl->qps[qp].u.xrc_qp.rd_posted = 0;
+            openib_btl->qps[qp].u.xrc_qp.xrc =
+                ibv_create_xrc_srq(openib_btl->hca->ib_pd,
+                        openib_btl->hca->xrc_domain,
+                        openib_btl->hca->ib_cq[prio],&attr);
+            if (NULL == openib_btl->qps[qp].u.xrc_qp.xrc) {
+                show_init_error(__FILE__, __LINE__, "ibv_create_srq",
+                        ibv_get_device_name(openib_btl->hca->ib_dev));
+                return OMPI_ERROR;
+            }
+        }
+#endif
     }
        
     return OMPI_SUCCESS;
@@ -757,6 +804,16 @@ static int mca_btl_finalize_hca(struct mca_btl_openib_hca_t *hca)
         BTL_VERBOSE(("Failed to release mpool"));
         return OMPI_ERROR;
     }
+
+#if HAVE_XRC
+    if (MCA_BTL_XRC_ENABLED) {
+        if (OMPI_SUCCESS != mca_btl_openib_close_xrc_domain(hca)) {
+            BTL_ERROR(("XRC Internal error. Failed to close xrc domain"));
+            return OMPI_ERROR;
+        }
+    }
+#endif
+
     if (ibv_dealloc_pd(hca->ib_pd)) {
         BTL_VERBOSE(("Warning! Failed to release PD"));
         return OMPI_ERROR;
@@ -823,20 +880,37 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
     }
     /* Release SRQ resources */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-        if(BTL_OPENIB_QP_TYPE_SRQ(qp)){
-            MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
+        switch (BTL_OPENIB_QP_TYPE(qp)) {
+            case MCA_BTL_OPENIB_SRQ_QP:
+                MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
                         &openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
-            MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
+                MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
                         &openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
-            
-            if (ibv_destroy_srq(openib_btl->qps[qp].u.srq_qp.srq)){
-                BTL_VERBOSE(("Failed to close SRQ %d", qp));
-                rc = OMPI_ERROR;
-            }
-            
-            /* Destroy free lists */
-            OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
-            OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
+                if (ibv_destroy_srq(openib_btl->qps[qp].u.srq_qp.srq)){
+                    BTL_VERBOSE(("Failed to close SRQ %d", qp));
+                    return OMPI_ERROR;
+                }
+                OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
+                OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
+                break;
+            case MCA_BTL_OPENIB_XRC_QP:
+                MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
+                        &openib_btl->qps[qp].u.xrc_qp.pending_frags[0]);
+                MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
+                        &openib_btl->qps[qp].u.xrc_qp.pending_frags[1]);
+                if (ibv_destroy_srq(openib_btl->qps[qp].u.xrc_qp.xrc)) {
+                    BTL_VERBOSE(("Failed to close SRQ %d", qp));
+                    return OMPI_ERROR;
+                }
+                OBJ_DESTRUCT(&openib_btl->qps[qp].u.xrc_qp.pending_frags[0]);
+                OBJ_DESTRUCT(&openib_btl->qps[qp].u.xrc_qp.pending_frags[1]);
+                break;
+            case MCA_BTL_OPENIB_PP_QP:
+                /* Nothing to do */
+                break;
+            default:
+                BTL_VERBOSE(("Unknow qp type %d", qp));
+                break;
         }
         /* Destroy free lists */
         OBJ_DESTRUCT(&openib_btl->qps[qp].send_free);
@@ -962,6 +1036,10 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
         (uint64_t)descriptor->des_src->seg_addr.pval; 
     to_com_frag(frag)->sg_entry.length = descriptor->des_src->seg_len; 
     to_com_frag(frag)->endpoint = ep;
+#if HAVE_XRC
+    if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp))
+        frag->sr_desc.xrc_remote_srq_num=ep->rem_info.rem_srqs[qp].rem_srq_num;
+#endif
    
     descriptor->order = qp;
     /* Setting opcode on a frag constructor isn't enough since prepare_src
@@ -1037,7 +1115,11 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
         (uint64_t)descriptor->des_dst->seg_addr.pval; 
     to_com_frag(frag)->sg_entry.length  = descriptor->des_dst->seg_len; 
     to_com_frag(frag)->endpoint = ep;
-        
+       
+#if HAVE_XRC
+    if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp))
+        frag->sr_desc.xrc_remote_srq_num=ep->rem_info.rem_srqs[qp].rem_srq_num;
+#endif
     descriptor->order = qp;
     if(ibv_post_send(ep->qps[qp].qp->lcl_qp, &frag->sr_desc, &bad_wr))
         return OMPI_ERROR;
