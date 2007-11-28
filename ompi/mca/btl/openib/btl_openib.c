@@ -218,10 +218,6 @@ int mca_btl_openib_add_procs(
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
             
-        endpoint->endpoint_btl = openib_btl;
-        endpoint->use_eager_rdma = openib_btl->hca->use_eager_rdma &
-            mca_btl_openib_component.use_eager_rdma;
-        endpoint->subnet_id = openib_btl->port_info.subnet_id; 
 #if HAVE_XRC
         if (MCA_BTL_XRC_ENABLED) {
             /* Pasha: now we need to push the subnet and lid to some global table in the component */
@@ -237,6 +233,7 @@ int mca_btl_openib_add_procs(
             ib_proc->port_touse++;
         }
 #endif
+        mca_btl_openib_endpoint_init(openib_btl, endpoint);
         rc = mca_btl_openib_proc_insert(ib_proc, endpoint);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(endpoint);

@@ -247,8 +247,7 @@ static int xoob_qp_create(mca_btl_base_endpoint_t* endpoint, xoob_qp_type type)
     qp_init_attr.cap.max_recv_wr =
         mca_btl_openib_component.qp_infos->rd_num;
     /* reserve additional wr for eager rdma credit management */
-    qp_init_attr.cap.max_send_wr =
-        mca_btl_openib_component.qp_infos->u.srq_qp.sd_max +
+    qp_init_attr.cap.max_send_wr = endpoint->ib_addr->qp->sd_wqe +
         (mca_btl_openib_component.use_eager_rdma ?
          mca_btl_openib_component.max_eager_rdma : 0);
 
