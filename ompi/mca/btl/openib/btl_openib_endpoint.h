@@ -111,23 +111,27 @@ struct mca_btl_openib_endpoint_srq_qp_t {
     int32_t dummy;
 }; typedef struct mca_btl_openib_endpoint_srq_qp_t mca_btl_openib_endpoint_srq_qp_t;
 
-
-struct mca_btl_openib_endpoint_qp_t { 
-    struct ibv_qp*              lcl_qp; /* Local QP (Low and High) */
-    uint32_t lcl_psn; 
+typedef struct mca_btl_openib_qp_t {
+    struct ibv_qp *lcl_qp;
+    uint32_t lcl_psn;
     int32_t  sd_wqe;      /**< number of available send wqe entries */
     opal_list_t pending_frags[2]; /**< put fragments here if there is no wqe
-                                    available or, in case of PP QP, if there is
-                                    no credit available */
+                                    available  */
+    int users;
+    opal_mutex_t lock;
+} mca_btl_openib_qp_t;
+
+typedef struct mca_btl_openib_endpoint_qp_t {
+    mca_btl_openib_qp_t *qp;
+    opal_list_t pending_frags[2]; /**< put fragment here if there is no credits
+                                     available */
     int32_t  rd_credit_send_lock;  /**< Lock credit send fragment */
     mca_btl_openib_send_control_frag_t *credit_frag;
     union {
         mca_btl_openib_endpoint_srq_qp_t srq_qp;
         mca_btl_openib_endpoint_pp_qp_t pp_qp;
     } u;
-    
-}; typedef struct mca_btl_openib_endpoint_qp_t mca_btl_openib_endpoint_qp_t;
-
+} mca_btl_openib_endpoint_qp_t;
 
 /**
  * An abstraction that represents a connection to a endpoint process.
@@ -162,7 +166,7 @@ struct mca_btl_base_endpoint_t {
      *   for this endpotint 
      */
     
-    mca_btl_openib_endpoint_qp_t * qps;
+    mca_btl_openib_endpoint_qp_t *qps;
        
     opal_list_t                 pending_get_frags; /**< list of pending rget ops */
     opal_list_t                 pending_put_frags; /**< list of pending rput ops */
@@ -197,6 +201,16 @@ typedef mca_btl_base_endpoint_t  mca_btl_openib_endpoint_t;
 
 OBJ_CLASS_DECLARATION(mca_btl_openib_endpoint_t);
 
+static inline int32_t qp_get_wqe(mca_btl_openib_endpoint_t *ep, const int qp)
+{
+    return OPAL_THREAD_ADD32(&ep->qps[qp].qp->sd_wqe, -1);
+}
+
+static inline int32_t qp_put_wqe(mca_btl_openib_endpoint_t *ep, const int qp)
+{
+    return OPAL_THREAD_ADD32(&ep->qps[qp].qp->sd_wqe, 1);
+}
+
 int mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t*,
         mca_btl_openib_send_frag_t*);
 int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t*,
@@ -222,8 +236,8 @@ static inline int post_recvs(mca_btl_base_endpoint_t *ep, const int qp,
        OMPI_FREE_LIST_WAIT(free_list, item, rc);
        to_base_frag(item)->base.order = qp;
        to_com_frag(item)->endpoint = ep;
-       if((rc = ibv_post_recv(ep->qps[qp].lcl_qp, &to_recv_frag(item)->rd_desc,
-                   &bad_wr))) {
+       if((rc = ibv_post_recv(ep->qps[qp].qp->lcl_qp,
+                       &to_recv_frag(item)->rd_desc, &bad_wr))) {
            BTL_ERROR(("error posting receive on qp %d (%d from %d)\n",
                        qp, i, num_post));
            return OMPI_ERROR;

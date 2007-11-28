@@ -1259,7 +1259,7 @@ static void progress_pending_eager_rdma(mca_btl_base_endpoint_t *ep)
      * channel */
     OPAL_THREAD_LOCK(&ep->endpoint_lock);
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
-       while(ep->qps[qp].sd_wqe > 0 && ep->eager_rdma_remote.tokens > 0) {
+       while(ep->qps[qp].qp->sd_wqe > 0 && ep->eager_rdma_remote.tokens > 0) {
             frag = opal_list_remove_first(&ep->qps[qp].pending_frags[0]);
             if(NULL == frag)
                 break;
@@ -1271,6 +1271,25 @@ static void progress_pending_eager_rdma(mca_btl_base_endpoint_t *ep)
     OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
 }
 
+static void progress_pending_frags_wqe(mca_btl_openib_qp_t *qp)
+{
+    int i;
+    opal_list_item_t *frag;
+    
+    OPAL_THREAD_LOCK(&qp->lock);
+    for(i = 0; i < 2; i++) {
+       while(qp->sd_wqe > 0) {
+            mca_btl_base_endpoint_t *ep;
+            frag = opal_list_remove_first(&qp->pending_frags[i]);
+            if(NULL == frag)
+                break;
+            ep = to_com_frag(frag)->endpoint;
+            mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag));
+       }
+    }
+    OPAL_THREAD_UNLOCK(&qp->lock);
+}
+
 static inline int
 get_enpoint_credits(mca_btl_base_endpoint_t *ep, const int qp)
 {
@@ -1279,20 +1298,17 @@ get_enpoint_credits(mca_btl_base_endpoint_t *ep, const int qp)
 
 static void progress_pending_frags_pp(mca_btl_base_endpoint_t *ep, const int qp)
 {
-    int i, rc;
+    int i;
     opal_list_item_t *frag;
     
     OPAL_THREAD_LOCK(&ep->endpoint_lock);
     for(i = 0; i < 2; i++) {
-       while(ep->qps[qp].sd_wqe > 0 && (get_enpoint_credits(ep, qp) +
-                   (1 - i) * ep->eager_rdma_remote.tokens) > 0)
-       {
+       while((get_enpoint_credits(ep, qp) +
+                   (1 - i) * ep->eager_rdma_remote.tokens) > 0) {
             frag = opal_list_remove_first(&ep->qps[qp].pending_frags[i]);
             if(NULL == frag)
                 break;
-            rc = mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag));
-            if(rc != OMPI_SUCCESS)
-                break;
+            mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag));
        }
     }
     OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
@@ -1304,7 +1320,7 @@ static void btl_openib_frag_progress_pending_put_get(
     opal_list_item_t *frag;
     size_t i, len = opal_list_get_size(&endpoint->pending_get_frags);
 
-    for(i = 0; i < len && endpoint->qps[qp].sd_wqe > 0 &&
+    for(i = 0; i < len && endpoint->qps[qp].qp->sd_wqe > 0 &&
             endpoint->get_tokens > 0; i++) {
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
         frag = opal_list_remove_first(&(endpoint->pending_get_frags));
@@ -1317,7 +1333,7 @@ static void btl_openib_frag_progress_pending_put_get(
     }
     
     len = opal_list_get_size(&endpoint->pending_put_frags);
-    for(i = 0; i < len && endpoint->qps[qp].sd_wqe > 0; i++) {
+    for(i = 0; i < len && endpoint->qps[qp].qp->sd_wqe > 0; i++) {
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
         frag = opal_list_remove_first(&(endpoint->pending_put_frags));
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
@@ -1535,7 +1551,7 @@ static int btl_openib_module_progress(mca_btl_openib_hca_t* hca)
                 des->des_cbfunc(&openib_btl->super, endpoint, des, OMPI_SUCCESS); 
 
                 /* return send wqe */
-                OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe, 1);
+                qp_put_wqe(endpoint, qp);
 
                 if(IBV_WC_SEND == wc.opcode && BTL_OPENIB_QP_TYPE_SRQ(qp)) {
                     OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits,
@@ -1544,7 +1560,7 @@ static int btl_openib_module_progress(mca_btl_openib_hca_t* hca)
                     progress_pending_frags_srq(openib_btl, qp);
                 }
                 /* new wqe or/and get token available. Try to progress pending frags */
-                progress_pending_frags_pp(endpoint, qp);
+                progress_pending_frags_wqe(endpoint->qps[qp].qp);
                 btl_openib_frag_progress_pending_put_get(openib_btl, endpoint, qp);
 
                 count++;

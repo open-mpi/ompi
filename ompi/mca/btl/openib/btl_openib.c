@@ -929,8 +929,8 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
         qp = mca_btl_openib_component.rdma_qp;
 
     /* check for a send wqe */
-    if (OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe,-1) < 0) {
-        OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe,1);
+    if (qp_get_wqe(endpoint, qp) < 0) {
+        qp_put_wqe(endpoint, qp);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
         opal_list_append(&endpoint->pending_put_frags, (opal_list_item_t*)frag);
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
@@ -956,7 +956,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     /* Setting opcode on a frag constructor isn't enough since prepare_src
      * may return send_frag instead of put_frag */ 
     frag->sr_desc.opcode = IBV_WR_RDMA_WRITE;
-    if(ibv_post_send(endpoint->qps[qp].lcl_qp, &frag->sr_desc, &bad_wr))
+    if(ibv_post_send(endpoint->qps[qp].qp->lcl_qp, &frag->sr_desc, &bad_wr))
         return OMPI_ERROR;
 
     return OMPI_SUCCESS; 
@@ -983,8 +983,8 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
         qp = mca_btl_openib_component.rdma_qp;
 
     /* check for a send wqe */
-    if (OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe,-1) < 0) {
-        OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe,1);
+    if (qp_get_wqe(endpoint, qp) < 0) {
+        qp_put_wqe(endpoint, qp);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
         opal_list_append(&endpoint->pending_get_frags, (opal_list_item_t*)frag);
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
@@ -993,7 +993,7 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
 
     /* check for a get token */
     if(OPAL_THREAD_ADD32(&endpoint->get_tokens,-1) < 0) {
-        OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe,1);
+        qp_put_wqe(endpoint, qp);
         OPAL_THREAD_ADD32(&endpoint->get_tokens,1);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
         opal_list_append(&endpoint->pending_get_frags, (opal_list_item_t*)frag);
@@ -1017,7 +1017,7 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
     to_com_frag(frag)->endpoint = endpoint;
         
     descriptor->order = qp;
-    if(ibv_post_send(endpoint->qps[qp].lcl_qp, &frag->sr_desc, &bad_wr))
+    if(ibv_post_send(endpoint->qps[qp].qp->lcl_qp, &frag->sr_desc, &bad_wr))
         return OMPI_ERROR;
 
     return OMPI_SUCCESS; 
