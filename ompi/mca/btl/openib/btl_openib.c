@@ -220,17 +220,24 @@ int mca_btl_openib_add_procs(
             
 #if HAVE_XRC
         if (MCA_BTL_XRC_ENABLED) {
-            /* Pasha: now we need to push the subnet and lid to some global table in the component */
+            int rem_port_cnt = 0;
+            for(j = 0; j < (int) ib_proc->proc_port_count && rem_port_cnt < btl_rank; j++) {
+                if(ib_proc->proc_ports[j].subnet_id ==
+                        openib_btl->port_info.subnet_id) {
+                    rem_port_cnt ++;
+                }
+            }
+            assert(rem_port_cnt == btl_rank);
+            /* Push the subnet and lid to in the component */
             rc = mca_btl_openib_ib_address_add_new(
-                    ib_proc->proc_ports[ib_proc->port_touse].subnet_id,
-                    ib_proc->proc_ports[ib_proc->port_touse].lid, endpoint);
+                    ib_proc->proc_ports[j].subnet_id,
+                    ib_proc->proc_ports[j].lid, endpoint);
             if (OMPI_SUCCESS != rc ) {
                 OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
                 return OMPI_ERROR;
             }
             /* we caching REMOTE_LID to the endpoint */
-            endpoint->lid = ib_proc->proc_ports[ib_proc->port_touse].lid;
-            ib_proc->port_touse++;
+            endpoint->lid = ib_proc->proc_ports[j].lid;
         }
 #endif
         mca_btl_openib_endpoint_init(openib_btl, endpoint);
