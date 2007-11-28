@@ -104,19 +104,21 @@ static int post_send(mca_btl_openib_endpoint_t *ep,
 
     assert(sg->addr == (uint64_t)frag->hdr);
 
-    return ibv_post_send(ep->qps[qp].lcl_qp, sr_desc, &bad_wr);
+    return ibv_post_send(ep->qps[qp].qp->lcl_qp, sr_desc, &bad_wr);
  }
 
-static inline int acruire_wqe(mca_btl_openib_endpoint_t *endpoint,
+static inline int acruire_wqe(mca_btl_openib_endpoint_t *ep,
         mca_btl_openib_send_frag_t *frag)
 {
     int qp = to_base_frag(frag)->base.order;
     int prio = !(to_base_frag(frag)->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY);
 
-    if(OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe, -1) < 0) {
-        OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe, 1);
-        opal_list_append(&endpoint->qps[qp].pending_frags[prio],
+    if(qp_get_wqe(ep, qp) < 0) {
+        qp_put_wqe(ep, qp);
+        OPAL_THREAD_LOCK(&ep->qps[qp].qp->lock); 
+        opal_list_append(&ep->qps[qp].qp->pending_frags[prio],
                 (opal_list_item_t *)frag);
+        OPAL_THREAD_UNLOCK(&ep->qps[qp].qp->lock); 
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -193,7 +195,7 @@ int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t *endpoint,
     }
 
     if(!do_rdma && acquire_send_credit(endpoint, frag) != OMPI_SUCCESS) {
-        OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe, 1);
+        qp_put_wqe(endpoint, qp);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -231,7 +233,7 @@ int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t *endpoint,
                 BTL_OPENIB_CREDITS(hdr->credits));
     }
 
-    OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe, 1);
+    qp_put_wqe(endpoint, qp);
 
     if(do_rdma) {
         OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens, 1);
@@ -260,46 +262,76 @@ OBJ_CLASS_INSTANCE(mca_btl_openib_endpoint_t,
  * Initialize state of the endpoint instance.
  *
  */
-static void mca_btl_openib_endpoint_construct_qp(mca_btl_base_endpoint_t *endpoint, int qp)
+static mca_btl_openib_qp_t *endpoint_alloc_qp(void)
 {
- 
-    endpoint->qps[qp].lcl_qp = NULL;
-    endpoint->qps[qp].rd_credit_send_lock = 0;
-    /* setup rem_info */
-    endpoint->rem_info.rem_qps[qp].rem_qp_num = 0; 
-    endpoint->rem_info.rem_qps[qp].rem_psn = 0;
+    mca_btl_openib_qp_t *qp = calloc(1, sizeof(mca_btl_openib_qp_t));
+    if(!qp) {
+        BTL_ERROR(("Failed to allocate memory for qp"));
+        return NULL;
+    }
 
-    OBJ_CONSTRUCT(&endpoint->qps[qp].pending_frags[0], opal_list_t);
-    OBJ_CONSTRUCT(&endpoint->qps[qp].pending_frags[1], opal_list_t);
-    if(BTL_OPENIB_QP_TYPE_PP(qp)) { 
-        /* local credits are set here such that on initial posting
-         * of the receive buffers we end up with zero credits to return
-         * to our peer. The peer initializes his sd_credits to reflect this 
-         * below. Note that this may be a problem for iWARP as the sender 
-         * now has credits even if the receive buffers are not yet posted 
-         */
-        endpoint->qps[qp].u.pp_qp.rd_credits =
-            -mca_btl_openib_component.qp_infos[qp].rd_num;
-        
-        endpoint->qps[qp].u.pp_qp.rd_posted = 0;
-        endpoint->qps[qp].u.pp_qp.cm_sent = 0;
-        endpoint->qps[qp].u.pp_qp.cm_return = 
-            -mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
-        endpoint->qps[qp].u.pp_qp.cm_received =
-            mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
+    OBJ_CONSTRUCT(&qp->pending_frags[0], opal_list_t);
+    OBJ_CONSTRUCT(&qp->pending_frags[1], opal_list_t);
+    OBJ_CONSTRUCT(&qp->lock, opal_mutex_t);
 
-        /* initialize the local view of credits */
-        endpoint->qps[qp].u.pp_qp.sd_credits = 
-            mca_btl_openib_component.qp_infos[qp].rd_num;
-        
-        /* number of available send wqes */
-        endpoint->qps[qp].sd_wqe = mca_btl_openib_component.qp_infos[qp].rd_num;
-    
-    } else { 
-        /* number of available send wqes */
-        endpoint->qps[qp].sd_wqe = mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
-    } 
-    
+    return qp;
+}
+
+static void
+endpoint_init_qp_pp(mca_btl_openib_endpoint_qp_t *ep_qp, const int qp)
+{
+    mca_btl_openib_qp_info_t *qp_info = &mca_btl_openib_component.qp_infos[qp];
+    ep_qp->qp = endpoint_alloc_qp();
+    ep_qp->qp->users++;
+
+    /* local credits are set here such that on initial posting
+     * of the receive buffers we end up with zero credits to return
+     * to our peer. The peer initializes his sd_credits to reflect this 
+     * below. Note that this may be a problem for iWARP as the sender 
+     * now has credits even if the receive buffers are not yet posted 
+     */
+    ep_qp->u.pp_qp.rd_credits = -qp_info->rd_num;
+
+    ep_qp->u.pp_qp.rd_posted = 0;
+    ep_qp->u.pp_qp.cm_sent = 0;
+    ep_qp->u.pp_qp.cm_return = -qp_info->u.pp_qp.rd_rsv;
+    ep_qp->u.pp_qp.cm_received = qp_info->u.pp_qp.rd_rsv;
+
+    /* initialize the local view of credits */
+    ep_qp->u.pp_qp.sd_credits = qp_info->rd_num;
+
+    /* number of available send WQEs */
+    ep_qp->qp->sd_wqe = qp_info->rd_num;
+}
+
+static void
+endpoint_init_qp_srq(mca_btl_openib_endpoint_qp_t *ep_qp, const int qp)
+{
+    ep_qp->qp = endpoint_alloc_qp();
+    ep_qp->qp->users++;
+
+    /* number of available send WQEs */
+    ep_qp->qp->sd_wqe = mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
+}
+
+static void endpoint_init_qp(mca_btl_openib_endpoint_qp_t *ep_qp, const int qp)
+{
+    ep_qp->rd_credit_send_lock = 0;
+    ep_qp->credit_frag = NULL;
+
+    OBJ_CONSTRUCT(&ep_qp->pending_frags[0], opal_list_t);
+    OBJ_CONSTRUCT(&ep_qp->pending_frags[1], opal_list_t);
+    switch(BTL_OPENIB_QP_TYPE(qp)) {
+        case MCA_BTL_OPENIB_PP_QP:
+            endpoint_init_qp_pp(ep_qp, qp);
+            break;
+        case MCA_BTL_OPENIB_SRQ_QP:
+            endpoint_init_qp_srq(ep_qp, qp);
+            break;
+        default:
+            BTL_ERROR(("Wrong QP type"));
+            break;
+    }
 }
 
 static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
@@ -308,20 +340,13 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     int qp;
     
     /* setup qp structures */
-    if( mca_btl_openib_component.num_qps > 0 ) { 
-        endpoint->qps = 
-            (mca_btl_openib_endpoint_qp_t*) 
-            malloc(sizeof(mca_btl_openib_endpoint_qp_t) * 
-                   mca_btl_openib_component.num_qps);
-        memset(endpoint->qps, 0, sizeof(mca_btl_openib_endpoint_qp_t) *
-                mca_btl_openib_component.num_qps);
-        endpoint->rem_info.rem_qps = 
-            (mca_btl_openib_rem_qp_info_t*)
-            malloc(sizeof(mca_btl_openib_rem_qp_info_t) *
-                   mca_btl_openib_component.num_qps);
-        memset(endpoint->rem_info.rem_qps, 0,
-                sizeof(mca_btl_openib_rem_qp_info_t) *
-                mca_btl_openib_component.num_qps);
+    if( mca_btl_openib_component.num_qps > 0 ) {
+        endpoint->qps = (mca_btl_openib_endpoint_qp_t*)
+            calloc(mca_btl_openib_component.num_qps,
+                    sizeof(mca_btl_openib_endpoint_qp_t));
+        endpoint->rem_info.rem_qps = (mca_btl_openib_rem_qp_info_t*)
+            calloc(mca_btl_openib_component.num_qps,
+                    sizeof(mca_btl_openib_rem_qp_info_t));
     }
 
     endpoint->endpoint_btl = 0;
@@ -353,7 +378,10 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->eager_rdma_local.credits = 0;
     
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-        mca_btl_openib_endpoint_construct_qp(endpoint, qp);
+        endpoint_init_qp(&endpoint->qps[qp], qp);
+        /* setup rem_info */
+        endpoint->rem_info.rem_qps[qp].rem_qp_num = 0; 
+        endpoint->rem_info.rem_qps[qp].rem_psn = 0;
     }
 }
 
@@ -394,9 +422,13 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
             MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(&endpoint->qps[qp].pending_frags[1]);
             OBJ_DESTRUCT(&endpoint->qps[qp].pending_frags[0]);
             OBJ_DESTRUCT(&endpoint->qps[qp].pending_frags[1]);
-            if(ibv_destroy_qp(endpoint->qps[qp].lcl_qp)) {
+            OBJ_DESTRUCT(&endpoint->qps[qp].qp->pending_frags[0]);
+            OBJ_DESTRUCT(&endpoint->qps[qp].qp->pending_frags[1]);
+            if(ibv_destroy_qp(endpoint->qps[qp].qp->lcl_qp)) {
                 BTL_ERROR(("Failed to destroy QP:%d\n", qp));
             }
+            if(--endpoint->qps[qp].qp->users == 0)
+                free(endpoint->qps[qp].qp);
         }
         /* free the qps */
         free(endpoint->qps);
@@ -548,7 +580,7 @@ static void mca_btl_openib_endpoint_credits(
    
     /* we don't acquire a WQE for credit message - so decrement.
      * Note: doing it for QP used for credit management */
-    OPAL_THREAD_ADD32(&ep->qps[des->order].sd_wqe, -1);
+    qp_get_wqe(ep, des->order);
 
     if(check_send_credits(ep, qp) || check_eager_rdma_credits(ep))
         mca_btl_openib_endpoint_send_credits(ep, qp);

@@ -194,7 +194,7 @@ static int qp_connect_all(mca_btl_openib_endpoint_t *endpoint)
 
     for (i = 0; i < mca_btl_openib_component.num_qps; i++) {
         struct ibv_qp_attr attr;
-        struct ibv_qp* qp = endpoint->qps[i].lcl_qp;
+        struct ibv_qp* qp = endpoint->qps[i].qp->lcl_qp;
         enum ibv_mtu mtu = (openib_btl->hca->mtu < endpoint->rem_info.rem_mtu) ?
             openib_btl->hca->mtu : endpoint->rem_info.rem_mtu;
 
@@ -242,7 +242,7 @@ static int qp_connect_all(mca_btl_openib_endpoint_t *endpoint)
          * it to zero helps to catch bugs */
         attr.rnr_retry      = BTL_OPENIB_QP_TYPE_PP(i) ? 0 :
             mca_btl_openib_component.ib_rnr_retry;
-        attr.sq_psn         = endpoint->qps[i].lcl_psn;
+        attr.sq_psn         = endpoint->qps[i].qp->lcl_psn;
         attr.max_rd_atomic  = mca_btl_openib_component.ib_max_rdma_dst_ops;
         if (ibv_modify_qp(qp, &attr,
                           IBV_QP_STATE              |
@@ -356,7 +356,7 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int prio, int qp,
         BTL_ERROR(("error creating qp errno says %s", strerror(errno))); 
         return OMPI_ERROR; 
     }
-    endpoint->qps[qp].lcl_qp = my_qp;
+    endpoint->qps[qp].qp->lcl_qp = my_qp;
     openib_btl->ib_inline_max = init_attr.cap.max_inline_data; 
     
     attr.qp_state        = IBV_QPS_INIT;
@@ -364,7 +364,7 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int prio, int qp,
     attr.port_num        = openib_btl->port_num;
     attr.qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ;
 
-    if (ibv_modify_qp(endpoint->qps[qp].lcl_qp, 
+    if (ibv_modify_qp(endpoint->qps[qp].qp->lcl_qp, 
                       &attr, 
                       IBV_QP_STATE | 
                       IBV_QP_PKEY_INDEX | 
@@ -375,7 +375,7 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int prio, int qp,
     } 
 
     /* Setup meta data on the endpoint */
-    endpoint->qps[qp].lcl_psn = lrand48() & 0xffffff;
+    endpoint->qps[qp].qp->lcl_psn = lrand48() & 0xffffff;
     endpoint->qps[qp].credit_frag = NULL;
     openib_btl->hca->cq_users[prio]++;
 
@@ -435,14 +435,14 @@ static int send_connect_data(mca_btl_base_endpoint_t* endpoint,
         /* stuff all the QP info into the buffer */
         for (qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
             BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
-            rc = orte_dss.pack(buffer, &endpoint->qps[qp].lcl_qp->qp_num,
+            rc = orte_dss.pack(buffer, &endpoint->qps[qp].qp->lcl_qp->qp_num,
                                1, ORTE_UINT32);
             if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
             BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
-            rc = orte_dss.pack(buffer, &endpoint->qps[qp].lcl_psn, 1,
+            rc = orte_dss.pack(buffer, &endpoint->qps[qp].qp->lcl_psn, 1,
                                ORTE_UINT32); 
             if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
@@ -618,9 +618,9 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
                instance the reply belongs to */
             for (i = 0; i < ib_proc->proc_endpoint_count; i++) { 
                 ib_endpoint = ib_proc->proc_endpoints[i];
-                if (ib_endpoint->qps[0].lcl_qp != NULL &&
+                if (ib_endpoint->qps[0].qp->lcl_qp != NULL &&
                     lcl_lid == ib_endpoint->endpoint_btl->lid &&
-                    lcl_qp == ib_endpoint->qps[0].lcl_qp->qp_num &&
+                    lcl_qp == ib_endpoint->qps[0].qp->lcl_qp->qp_num &&
                     rem_info.rem_subnet_id == ib_endpoint->subnet_id) {
                     found = true;
                     break;
