@@ -74,10 +74,6 @@ struct mca_btl_openib_srq_qp_info_t {
     int32_t sd_max;
 }; typedef struct mca_btl_openib_srq_qp_info_t mca_btl_openib_srq_qp_info_t;
 
-struct mca_btl_openib_xrc_qp_info_t {
-    int32_t sd_max;
-}; typedef struct mca_btl_openib_xrc_qp_info_t mca_btl_openib_xrc_qp_info_t;
-
 struct mca_btl_openib_qp_info_t {
     mca_btl_openib_qp_type_t type;
     size_t size;
@@ -86,7 +82,6 @@ struct mca_btl_openib_qp_info_t {
     union { 
         mca_btl_openib_pp_qp_info_t pp_qp;
         mca_btl_openib_srq_qp_info_t srq_qp;
-        mca_btl_openib_xrc_qp_info_t xrc_qp;
     } u; 
 }; typedef struct mca_btl_openib_qp_info_t mca_btl_openib_qp_info_t;
 
@@ -291,20 +286,12 @@ struct mca_btl_openib_module_srq_qp_t {
     opal_list_t pending_frags[2];    /**< list of high/low prio frags */
 }; typedef struct mca_btl_openib_module_srq_qp_t mca_btl_openib_module_srq_qp_t;
 
-struct mca_btl_openib_module_xrc_qp_t {
-    struct ibv_srq *xrc;
-    int32_t rd_posted;
-    int32_t sd_credits;
-    opal_list_t pending_frags[2];
-}; typedef struct mca_btl_openib_module_xrc_qp_t mca_btl_openib_module_xrc_qp_t;
-
 struct mca_btl_openib_module_qp_t {
     ompi_free_list_t send_free;     /**< free lists of send buffer descriptors */
     ompi_free_list_t recv_free;     /**< free lists of receive buffer descriptors */
     union {
         mca_btl_openib_module_pp_qp_t pp_qp;
         mca_btl_openib_module_srq_qp_t srq_qp;
-        mca_btl_openib_module_xrc_qp_t xrc_qp;
     } u;
 }; typedef struct mca_btl_openib_module_qp_t mca_btl_openib_module_qp_t;
 
@@ -568,7 +555,8 @@ static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
                                           const int additional,
                                           const int qp)
 {
-    assert(BTL_OPENIB_QP_TYPE_SRQ(qp));
+    assert(!BTL_OPENIB_QP_TYPE_PP(qp));
+
     OPAL_THREAD_LOCK(&openib_btl->ib_lock);
     if(openib_btl->qps[qp].u.srq_qp.rd_posted <= 
        mca_btl_openib_component.qp_infos[qp].rd_low + additional &&
@@ -603,53 +591,16 @@ static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
     return OMPI_SUCCESS;
 }
 
-
-/**
- * Post to XRC with certain priority 
- *
- * @param openib_btl (IN) BTL module
- * @param additional (IN) Additional Bytes to reserve
- * @param prio (IN)       Priority (either BTL_OPENIB_HP_QP or BTL_OPENIB_LP_QP)
- * @return OMPI_SUCCESS or failure status
- */
-
-static inline int mca_btl_openib_post_xrr(mca_btl_openib_module_t* openib_btl,
-                                          const int additional,
-                                          const int qp)
+static inline int qp_cq_prio(const int qp)
 {
-    assert(BTL_OPENIB_QP_TYPE_XRC(qp));
+    if(0 == qp)
+        return BTL_OPENIB_HP_CQ; /* smallest qp is always HP */
 
-    OPAL_THREAD_LOCK(&openib_btl->ib_lock);
-    if(openib_btl->qps[qp].u.xrc_qp.rd_posted <=
-       mca_btl_openib_component.qp_infos[qp].rd_low + additional &&
-       openib_btl->qps[qp].u.xrc_qp.rd_posted <
-       mca_btl_openib_component.qp_infos[qp].rd_num) {
-        int rc;
-        int32_t i, num_post = mca_btl_openib_component.qp_infos[qp].rd_num -
-            openib_btl->qps[qp].u.xrc_qp.rd_posted;
-        struct ibv_recv_wr *bad_wr;
-        ompi_free_list_t *free_list;
-
-        free_list = &openib_btl->qps[qp].recv_free;
-
-        for(i = 0; i < num_post; i++) {
-            ompi_free_list_item_t* item;
-            OMPI_FREE_LIST_WAIT(free_list, item, rc);
-            to_base_frag(item)->base.order = qp;
-            to_com_frag(item)->endpoint = NULL;
-            if(ibv_post_srq_recv(openib_btl->qps[qp].u.xrc_qp.xrc,
-                        &to_recv_frag(item)->rd_desc, &bad_wr)) {
-                BTL_ERROR(("error posting receive descriptors to shared "
-                           "receive queue: %s", strerror(errno)));
-                OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
-                return OMPI_ERROR;
-            }
-        }
-        OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.xrc_qp.rd_posted, num_post);
-    }
-    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
-
-    return OMPI_SUCCESS;
+    /* If the size for this qp is <= the eager limit, make it a
+       high priority QP.  Otherwise, make it a low priority QP. */
+    return (mca_btl_openib_component.qp_infos[qp].size <=
+            mca_btl_openib_component.eager_limit) ?
+        BTL_OPENIB_HP_CQ : BTL_OPENIB_LP_CQ;
 }
 
 #define BTL_OPENIB_RDMA_QP(QP) \

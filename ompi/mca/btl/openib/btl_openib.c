@@ -277,39 +277,32 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
     /* create the SRQ's */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
         struct ibv_srq_init_attr attr; 
-        if(BTL_OPENIB_QP_TYPE_SRQ(qp)) { 
+
+        if(!BTL_OPENIB_QP_TYPE_PP(qp)) { 
             attr.attr.max_wr = mca_btl_openib_component.qp_infos[qp].rd_num + 
                 mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
             attr.attr.max_sge = mca_btl_openib_component.ib_sg_list_size;
-            openib_btl->qps[qp].u.srq_qp.rd_posted = 0; 
-            openib_btl->qps[qp].u.srq_qp.srq =
-                ibv_create_srq(openib_btl->hca->ib_pd, &attr); 
+            openib_btl->qps[qp].u.srq_qp.rd_posted = 0;
+#if HAVE_XRC
+            if(BTL_OPENIB_QP_TYPE_XRC(qp)) {
+                int prio = qp_cq_prio(qp);
+                openib_btl->qps[qp].u.srq_qp.srq =
+                    ibv_create_xrc_srq(openib_btl->hca->ib_pd,
+                            openib_btl->hca->xrc_domain,
+                            openib_btl->hca->ib_cq[prio], &attr);
+            } else
+#endif
+            {
+
+               openib_btl->qps[qp].u.srq_qp.srq =
+                   ibv_create_srq(openib_btl->hca->ib_pd, &attr);
+            }
             if (NULL == openib_btl->qps[qp].u.srq_qp.srq) { 
                 show_init_error(__FILE__, __LINE__, "ibv_create_srq",
                                 ibv_get_device_name(openib_btl->hca->ib_dev));
                 return OMPI_ERROR; 
             }
         }
-#if HAVE_XRC
-        if(BTL_OPENIB_QP_TYPE_XRC(qp)) {
-            int prio = (mca_btl_openib_component.qp_infos[qp].size <=
-                    mca_btl_openib_component.eager_limit) ?
-                BTL_OPENIB_HP_CQ : BTL_OPENIB_LP_CQ;
-            attr.attr.max_wr = mca_btl_openib_component.qp_infos[qp].rd_num +
-                mca_btl_openib_component.qp_infos[qp].u.xrc_qp.sd_max;
-            attr.attr.max_sge = mca_btl_openib_component.ib_sg_list_size;
-            openib_btl->qps[qp].u.xrc_qp.rd_posted = 0;
-            openib_btl->qps[qp].u.xrc_qp.xrc =
-                ibv_create_xrc_srq(openib_btl->hca->ib_pd,
-                        openib_btl->hca->xrc_domain,
-                        openib_btl->hca->ib_cq[prio],&attr);
-            if (NULL == openib_btl->qps[qp].u.xrc_qp.xrc) {
-                show_init_error(__FILE__, __LINE__, "ibv_create_srq",
-                        ibv_get_device_name(openib_btl->hca->ib_dev));
-                return OMPI_ERROR;
-            }
-        }
-#endif
     }
        
     return OMPI_SUCCESS;
@@ -880,8 +873,7 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
     }
     /* Release SRQ resources */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-        switch (BTL_OPENIB_QP_TYPE(qp)) {
-            case MCA_BTL_OPENIB_SRQ_QP:
+        if(!BTL_OPENIB_QP_TYPE_PP(qp)) {
                 MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
                         &openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
                 MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
@@ -892,24 +884,6 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
                 }
                 OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
                 OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
-                break;
-            case MCA_BTL_OPENIB_XRC_QP:
-                MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
-                        &openib_btl->qps[qp].u.xrc_qp.pending_frags[0]);
-                MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
-                        &openib_btl->qps[qp].u.xrc_qp.pending_frags[1]);
-                if (ibv_destroy_srq(openib_btl->qps[qp].u.xrc_qp.xrc)) {
-                    BTL_VERBOSE(("Failed to close SRQ %d", qp));
-                    return OMPI_ERROR;
-                }
-                OBJ_DESTRUCT(&openib_btl->qps[qp].u.xrc_qp.pending_frags[0]);
-                OBJ_DESTRUCT(&openib_btl->qps[qp].u.xrc_qp.pending_frags[1]);
-                break;
-            case MCA_BTL_OPENIB_PP_QP:
-                /* Nothing to do */
-                break;
-            default:
-                BTL_VERBOSE(("Unknow qp type %d", qp));
                 break;
         }
         /* Destroy free lists */

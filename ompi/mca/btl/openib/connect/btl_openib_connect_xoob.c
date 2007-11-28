@@ -248,7 +248,7 @@ static int xoob_qp_create(mca_btl_base_endpoint_t* endpoint, xoob_qp_type type)
         mca_btl_openib_component.qp_infos->rd_num;
     /* reserve additional wr for eager rdma credit management */
     qp_init_attr.cap.max_send_wr =
-        mca_btl_openib_component.qp_infos->u.xrc_qp.sd_max +
+        mca_btl_openib_component.qp_infos->u.srq_qp.sd_max +
         (mca_btl_openib_component.use_eager_rdma ?
          mca_btl_openib_component.max_eager_rdma : 0);
 
@@ -474,7 +474,7 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
         uint8_t message_type)
 {
     orte_buffer_t* buffer = OBJ_NEW(orte_buffer_t);
-    int rc, srq, prio;
+    int rc, srq;
 
     if (NULL == buffer) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -590,18 +590,15 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
         }
         /* on response we add all SRQ numbers */
         for (srq = 0; srq < mca_btl_openib_component.num_xrc_qps; srq++) { 
-            BTL_VERBOSE(("XOOB Send pack srq[%d] num  = %d", srq, endpoint->endpoint_btl->qps[srq].u.xrc_qp.xrc->xrc_srq_num));
+            BTL_VERBOSE(("XOOB Send pack srq[%d] num  = %d", srq, endpoint->endpoint_btl->qps[srq].u.src_qp.xrc->xrc_srq_num));
             BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
-            rc = orte_dss.pack(buffer, &endpoint->endpoint_btl->qps[srq].u.xrc_qp.xrc->xrc_srq_num,
+            rc = orte_dss.pack(buffer, &endpoint->endpoint_btl->qps[srq].u.srq_qp.srq->xrc_srq_num,
                     1, ORTE_UINT32);
             if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            prio = (mca_btl_openib_component.qp_infos[srq].size <=
-                    mca_btl_openib_component.eager_limit) ? 
-                BTL_OPENIB_HP_CQ : BTL_OPENIB_LP_CQ;
-            endpoint->endpoint_btl->hca->cq_users[prio]++;
+            endpoint->endpoint_btl->hca->cq_users[qp_cq_prio(srq)]++;
         }
     }
 

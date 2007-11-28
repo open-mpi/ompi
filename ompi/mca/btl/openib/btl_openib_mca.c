@@ -625,12 +625,12 @@ static int mca_btl_openib_mca_setup_qps(void)
             tmp = mca_btl_openib_component.qp_infos[qp].rd_num >> 1;
             mca_btl_openib_component.qp_infos[qp].rd_low = atoi_param(P(3), tmp);
             tmp = mca_btl_openib_component.qp_infos[qp].rd_low >> 2;
-            mca_btl_openib_component.qp_infos[qp].u.xrc_qp.sd_max =
+            mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max =
                 atoi_param(P(4), tmp);
             BTL_VERBOSE(("xrc: rd_num is %d\trd_low is %d\tsd_max is %d\n",
                         mca_btl_openib_component.qp_infos[qp].rd_num,
                         mca_btl_openib_component.qp_infos[qp].rd_low,
-                        mca_btl_openib_component.qp_infos[qp].u.xrc_qp.sd_max));
+                        mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max));
             mca_btl_openib_component.qp_infos[qp].type = MCA_BTL_OPENIB_XRC_QP;
         }
 
