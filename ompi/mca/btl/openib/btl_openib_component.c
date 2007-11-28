@@ -1787,37 +1787,45 @@ done:
 
 int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl, const int qp)
 {
+    int rd_low = mca_btl_openib_component.qp_infos[qp].rd_low;
+    int rd_num = mca_btl_openib_component.qp_infos[qp].rd_num;
+    int num_post, i, rc;
+    struct ibv_recv_wr *bad_wr, *wr_list = NULL, *wr = NULL;
+
     assert(!BTL_OPENIB_QP_TYPE_PP(qp));
 
     OPAL_THREAD_LOCK(&openib_btl->ib_lock);
-    if(openib_btl->qps[qp].u.srq_qp.rd_posted <=
-            mca_btl_openib_component.qp_infos[qp].rd_low &&
-            openib_btl->qps[qp].u.srq_qp.rd_posted <
-            mca_btl_openib_component.qp_infos[qp].rd_num) {
-        int rc;
-        int32_t i, num_post = mca_btl_openib_component.qp_infos[qp].rd_num -
-            openib_btl->qps[qp].u.srq_qp.rd_posted;
-        struct ibv_recv_wr *bad_wr;
-        ompi_free_list_t *free_list;
-
-        free_list = &openib_btl->qps[qp].recv_free;
-
-        for(i = 0; i < num_post; i++) {
-            ompi_free_list_item_t* item;
-            OMPI_FREE_LIST_WAIT(free_list, item, rc);
-            to_base_frag(item)->base.order = qp;
-            to_com_frag(item)->endpoint = NULL;
-            if(ibv_post_srq_recv(openib_btl->qps[qp].u.srq_qp.srq,
-                        &to_recv_frag(item)->rd_desc, &bad_wr)) {
-                BTL_ERROR(("error posting receive descriptors to shared "
-                            "receive queue: %s", strerror(errno)));
-                OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
-                return OMPI_ERROR;
-            }
-        }
-        OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.rd_posted, num_post);
+    if(openib_btl->qps[qp].u.srq_qp.rd_posted > rd_low) {
+        OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+        return OMPI_SUCCESS;
     }
-    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+    num_post = rd_num - openib_btl->qps[qp].u.srq_qp.rd_posted;
 
-    return OMPI_SUCCESS;
+    for(i = 0; i < num_post; i++) {
+        ompi_free_list_item_t* item;
+        OMPI_FREE_LIST_WAIT(&openib_btl->qps[qp].recv_free, item, rc);
+        to_base_frag(item)->base.order = qp;
+        to_com_frag(item)->endpoint = NULL;
+        if(NULL == wr)
+            wr = wr_list = &to_recv_frag(item)->rd_desc;
+        else
+            wr = wr->next = &to_recv_frag(item)->rd_desc;
+    }
+
+    wr->next = NULL;
+
+    rc = ibv_post_srq_recv(openib_btl->qps[qp].u.srq_qp.srq, wr_list, &bad_wr);
+    if(OPAL_LIKELY(0 == rc)) {
+        OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.rd_posted, num_post);
+        OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+        return OMPI_SUCCESS;
+    }
+
+    for(i = 0; wr_list && wr_list != bad_wr; i++, wr_list = wr_list->next);
+
+    BTL_ERROR(("error posting receive descriptors to shared receive "
+                "queue %d (%d from %d)", qp, i, num_post));
+
+    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+    return OMPI_ERROR;
 }
