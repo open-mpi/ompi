@@ -501,6 +501,9 @@ extern mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
                                                              size_t reserve,
                                                              size_t* size); 
 
+extern void mca_btl_openib_frag_progress_pending_put_get(
+        struct mca_btl_base_endpoint_t*, const int);
+
 /**
  * Fault Tolerance Event Notification Function
  *

@@ -66,8 +66,6 @@
 #ifndef BTL_OPENIB_CONNECT_H
 #define BTL_OPENIB_CONNECT_H
 
-#include "btl_openib_endpoint.h"
-
 BEGIN_C_DECLS
 
 /**
@@ -85,7 +83,7 @@ typedef int (*ompi_btl_openib_connect_base_func_init_t)(void);
  * Function to initiate a connection to a remote process
  */
 typedef int (*ompi_btl_openib_connect_base_func_start_connect_t)
-    (mca_btl_base_endpoint_t *e);
+    (struct mca_btl_base_endpoint_t *e);
 
 /**
  * Function to finalize the connection functions
