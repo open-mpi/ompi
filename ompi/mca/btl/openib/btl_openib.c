@@ -350,7 +350,9 @@ static int adjust_cq(mca_btl_openib_hca_t *hca, const int cq_size, const int cq)
     else {
         int rc;
         rc = ibv_resize_cq(hca->ib_cq[cq], cq_size);
-        if(rc) {
+        /* For ConnectX the resize CQ is not implemented and verbs returns -ENOSYS 
+         * but should return ENOSYS. So it is reason for abs */
+        if(rc && ENOSYS != abs(rc)) {
             BTL_ERROR(("cannot resize completion queue, error: %d", rc));
             return OMPI_ERROR;
         }
