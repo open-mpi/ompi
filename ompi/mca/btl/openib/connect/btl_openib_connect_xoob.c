@@ -218,7 +218,8 @@ static int xoob_reply_first_connect(mca_btl_openib_endpoint_t *endpoint,
  */
 static int xoob_qp_create(mca_btl_base_endpoint_t* endpoint, xoob_qp_type type)
 {
-    int prio = BTL_OPENIB_LP_CQ; /* pasha - on witch CP do we want to put send complition ?! */ 
+    int prio = BTL_OPENIB_LP_CQ; /* all send completions go to low prio CQ */
+    uint32_t send_wr;
     struct ibv_qp **ib_qp;
     uint32_t *psn;
     struct ibv_qp_init_attr qp_init_attr;
@@ -232,24 +233,28 @@ static int xoob_qp_create(mca_btl_base_endpoint_t* endpoint, xoob_qp_type type)
         BTL_VERBOSE(("XOOB. Creating Send QP\n"));
         ib_qp = &endpoint->qps[0].qp->lcl_qp;
         psn = &endpoint->qps[0].qp->lcl_psn;
+        /* reserve additional wr for eager rdma credit management */
+        send_wr = endpoint->ib_addr->qp->sd_wqe +
+            (mca_btl_openib_component.use_eager_rdma ?
+             mca_btl_openib_component.max_eager_rdma : 0);
     } else {
         BTL_VERBOSE(("XOOB. Creating Recv QP\n"));
         assert(NULL == endpoint->xrc_recv_qp);
         ib_qp = &endpoint->xrc_recv_qp;
         psn = &endpoint->xrc_recv_psn;
+        /* this QP is not used for send so no need for send queue */
+        send_wr = 0;
     }
     memset(&qp_init_attr, 0, sizeof(struct ibv_qp_init_attr)); 
     memset(&attr, 0, sizeof(struct ibv_qp_attr)); 
 
-    qp_init_attr.send_cq = 
-        qp_init_attr.recv_cq = openib_btl->hca->ib_cq[prio];
+    qp_init_attr.send_cq = qp_init_attr.recv_cq = openib_btl->hca->ib_cq[prio];
 
-    qp_init_attr.cap.max_recv_wr =
-        mca_btl_openib_component.qp_infos->rd_num;
-    /* reserve additional wr for eager rdma credit management */
-    qp_init_attr.cap.max_send_wr = endpoint->ib_addr->qp->sd_wqe +
-        (mca_btl_openib_component.use_eager_rdma ?
-         mca_btl_openib_component.max_eager_rdma : 0);
+    openib_btl->hca->cq_users[prio]++;
+
+    /* no need recv queue; receives are posted to srq */
+    qp_init_attr.cap.max_recv_wr = 0;
+    qp_init_attr.cap.max_send_wr = send_wr;
 
     qp_init_attr.cap.max_send_sge = mca_btl_openib_component.ib_sg_list_size;
     /* this one is ignored by driver */
@@ -281,7 +286,6 @@ static int xoob_qp_create(mca_btl_base_endpoint_t* endpoint, xoob_qp_type type)
 
     /* Setup meta data on the endpoint */
     *psn = lrand48() & 0xffffff;
-    openib_btl->hca->cq_users[prio]++;
 
     /* Now that all the qp's are created locally, post some receive
        buffers, setup credits, etc. */
@@ -597,7 +601,6 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            endpoint->endpoint_btl->hca->cq_users[qp_cq_prio(srq)]++;
         }
     }
 
