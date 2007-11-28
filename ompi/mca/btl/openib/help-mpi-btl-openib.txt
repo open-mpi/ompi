@@ -410,7 +410,7 @@ for this run.
 Host: %s
 btl_openib_receive_queues: %s
 #
-[XRC with OOB]
+[XRC with wrong OOB]
 WARNING: You must use the "xoob" OpenFabrics (openib) connection
 manager when XRC ("X") queues are specified in the
 btl_openib_receive_queues MCA parameter.  Either remove the X queues
@@ -421,12 +421,13 @@ will therefore be deactivated for this run.
 Host: %s
 num_xrc_qps: %d
 #
-[SRQ or PP with XOOB]
-WARNINGS: You cannot specify to use per-peer ("P") or SRQ ("S") queues
-in the btl_openib_receive_queues MCA parameter and also use the "xoob"
-connection manager.  The "xoob" connection manager is for XRC ("X)
-queues only; you must use one of the other connection managers for
-per-peer/SRQ queues (such as "oob").
+[SRQ or PP with wrong OOB]
+WARNING: You must use the "oob" OpenFabrics (openib) connection
+manager when PP("P") or SRQ ("S") queues are specified in the
+btl_openib_receive_queues MCA parameter.  Either remove the P or S queues
+from btl_openib_receive_queues or ensure to use the "oob" connection
+manager by setting btl_openib_connect to "oob".  The OpenFabrics BTL
+will therefore be deactivated for this run.
 
 Host: %s
 num_srq_qps: %d
