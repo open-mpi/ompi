@@ -496,12 +496,10 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 
 clean_endpoint:
     /* destroy recv qp */
-    if (NULL != endpoint->xrc_recv_qp && NULL != endpoint->xrc_recv_qp->qp) {
-        if(ibv_destroy_qp(endpoint->xrc_recv_qp->qp->lcl_qp)) {
+    if (NULL != endpoint->xrc_recv_qp) {
+        if(ibv_destroy_qp(endpoint->xrc_recv_qp)) {
             BTL_ERROR(("Failed to destroy XRC recv QP:%d\n", qp));
         }
-        free(endpoint->xrc_recv_qp->qp);
-        free(endpoint->xrc_recv_qp);
     }
 
     OBJ_DESTRUCT(&endpoint->endpoint_lock);
