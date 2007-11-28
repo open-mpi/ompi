@@ -179,7 +179,9 @@ struct mca_btl_base_endpoint_t {
      */
     
     mca_btl_openib_endpoint_qp_t *qps;
-    mca_btl_openib_endpoint_qp_t *xrc_recv_qp; /* in xrc we will use it as recv qp */
+    struct ibv_qp *xrc_recv_qp; /* in xrc we will use it as recv qp */
+    uint32_t xrc_recv_psn; 
+
        
     opal_list_t                 pending_get_frags; /**< list of pending rget ops */
     opal_list_t                 pending_put_frags; /**< list of pending rput ops */

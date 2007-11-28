@@ -219,7 +219,10 @@ static int xoob_reply_first_connect(mca_btl_openib_endpoint_t *endpoint,
 static int xoob_qp_create(mca_btl_base_endpoint_t* endpoint, xoob_qp_type type)
 {
     int prio = BTL_OPENIB_LP_CQ; /* pasha - on witch CP do we want to put send complition ?! */ 
-    mca_btl_openib_endpoint_qp_t * ep_qp;
+    struct ibv_qp **ib_qp;
+    uint32_t *psn;
+    struct ibv_qp_init_attr qp_init_attr;
+    struct ibv_qp_attr attr;
 
     mca_btl_openib_module_t *openib_btl =
         (mca_btl_openib_module_t*)endpoint->endpoint_btl;
@@ -227,78 +230,58 @@ static int xoob_qp_create(mca_btl_base_endpoint_t* endpoint, xoob_qp_type type)
     /* Prepare QP structs */
     if (SEND == type) {
         BTL_VERBOSE(("XOOB. Creating Send QP\n"));
-        ep_qp = endpoint->qps;
+        ib_qp = &endpoint->qps[0].qp->lcl_qp;
+        psn = &endpoint->qps[0].qp->lcl_psn;
     } else {
         BTL_VERBOSE(("XOOB. Creating Recv QP\n"));
         assert(NULL == endpoint->xrc_recv_qp);
-        endpoint->xrc_recv_qp = 
-            (mca_btl_openib_endpoint_qp_t*)
-            malloc(sizeof(mca_btl_openib_endpoint_qp_t));
-        if (NULL == endpoint->xrc_recv_qp) {
-            BTL_ERROR(("XOOB. Failed to allocate memory for QP\n"));
-            return OMPI_ERROR;
-        }
-        endpoint->xrc_recv_qp->qp = (struct mca_btl_openib_qp_t*)
-            calloc(1, sizeof(struct mca_btl_openib_qp_t));
-        if (NULL == endpoint->xrc_recv_qp->qp) {
-            BTL_ERROR(("XOOB. Failed to allocate memory for QP data\n"));
-            return OMPI_ERROR;
-        }
-        ep_qp = endpoint->xrc_recv_qp;
+        ib_qp = &endpoint->xrc_recv_qp;
+        psn = &endpoint->xrc_recv_psn;
     }
-    /* Create the Queue Pair */
-    {
-        struct ibv_qp* my_qp; 
-        struct ibv_qp_init_attr qp_init_attr; 
-        struct ibv_qp_attr attr;
+    memset(&qp_init_attr, 0, sizeof(struct ibv_qp_init_attr)); 
+    memset(&attr, 0, sizeof(struct ibv_qp_attr)); 
 
-        memset(&qp_init_attr, 0, sizeof(struct ibv_qp_init_attr)); 
-        memset(&attr, 0, sizeof(struct ibv_qp_attr)); 
+    qp_init_attr.send_cq = 
+        qp_init_attr.recv_cq = openib_btl->hca->ib_cq[prio];
 
-        qp_init_attr.send_cq = 
-            qp_init_attr.recv_cq = openib_btl->hca->ib_cq[prio];
+    qp_init_attr.cap.max_recv_wr =
+        mca_btl_openib_component.qp_infos->rd_num;
+    /* reserve additional wr for eager rdma credit management */
+    qp_init_attr.cap.max_send_wr =
+        mca_btl_openib_component.qp_infos->u.xrc_qp.sd_max +
+        (mca_btl_openib_component.use_eager_rdma ?
+         mca_btl_openib_component.max_eager_rdma : 0);
 
-        qp_init_attr.cap.max_recv_wr =
-            mca_btl_openib_component.qp_infos->rd_num;
-        /* reserve additional wr for eager rdma credit management */
-        qp_init_attr.cap.max_send_wr =
-            mca_btl_openib_component.qp_infos->u.xrc_qp.sd_max +
-            (mca_btl_openib_component.use_eager_rdma ?
-             mca_btl_openib_component.max_eager_rdma : 0);
+    qp_init_attr.cap.max_send_sge = mca_btl_openib_component.ib_sg_list_size;
+    /* this one is ignored by driver */
+    qp_init_attr.cap.max_recv_sge = mca_btl_openib_component.ib_sg_list_size;
+    qp_init_attr.qp_type = IBV_QPT_XRC;
+    qp_init_attr.xrc_domain = openib_btl->hca->xrc_domain;
+    *ib_qp = ibv_create_qp(openib_btl->hca->ib_pd, &qp_init_attr); 
 
-        qp_init_attr.cap.max_send_sge = mca_btl_openib_component.ib_sg_list_size;
-        /* this one is ignored by driver */
-        qp_init_attr.cap.max_recv_sge = mca_btl_openib_component.ib_sg_list_size;
-        qp_init_attr.qp_type = IBV_QPT_XRC;
-        qp_init_attr.xrc_domain = openib_btl->hca->xrc_domain;
-        my_qp = ibv_create_qp(openib_btl->hca->ib_pd, &qp_init_attr); 
+    if (NULL == *ib_qp) { 
+        BTL_ERROR(("error creating qp errno says %s", strerror(errno))); 
+        return OMPI_ERROR; 
+    }
+    openib_btl->ib_inline_max = qp_init_attr.cap.max_inline_data; 
 
-        if (NULL == my_qp) { 
-            BTL_ERROR(("error creating qp errno says %s", strerror(errno))); 
-            return OMPI_ERROR; 
-        }
-        ep_qp->qp->lcl_qp = my_qp;
-        openib_btl->ib_inline_max = qp_init_attr.cap.max_inline_data; 
+    attr.qp_state = IBV_QPS_INIT; 
+    attr.pkey_index = openib_btl->pkey_index;
+    attr.port_num = openib_btl->port_num; 
+    attr.qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ; 
 
-        attr.qp_state = IBV_QPS_INIT; 
-        attr.pkey_index = openib_btl->pkey_index;
-        attr.port_num = openib_btl->port_num; 
-        attr.qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ; 
-
-        if (ibv_modify_qp(ep_qp->qp->lcl_qp, 
-                          &attr, 
-                          IBV_QP_STATE | 
-                          IBV_QP_PKEY_INDEX | 
-                          IBV_QP_PORT | 
-                          IBV_QP_ACCESS_FLAGS )) { 
-            BTL_ERROR(("error modifying qp to INIT errno says %s", strerror(errno))); 
-            return OMPI_ERROR; 
-        } 
+    if (ibv_modify_qp(*ib_qp, &attr,
+                      IBV_QP_STATE |
+                      IBV_QP_PKEY_INDEX |
+                      IBV_QP_PORT |
+                      IBV_QP_ACCESS_FLAGS )) {
+        BTL_ERROR(("error modifying qp to INIT errno says %s",
+                    strerror(errno))); 
+        return OMPI_ERROR; 
     } 
 
     /* Setup meta data on the endpoint */
-    ep_qp->qp->lcl_psn = lrand48() & 0xffffff;
-    ep_qp->credit_frag = NULL;
+    *psn = lrand48() & 0xffffff;
     openib_btl->hca->cq_users[prio]++;
 
     /* Now that all the qp's are created locally, post some receive
@@ -313,21 +296,21 @@ static int xoob_qp_connect(mca_btl_openib_endpoint_t *endpoint, xoob_qp_type typ
 {
     struct ibv_qp* qp;
     struct ibv_qp_attr attr;
-    mca_btl_openib_endpoint_qp_t * ep_qp; /* endpoint qp */
+    uint32_t psn;
     mca_btl_openib_module_t* openib_btl =
         (mca_btl_openib_module_t*)endpoint->endpoint_btl;
 
     if (SEND == type) {
         BTL_VERBOSE(("XOOB. Connecting Send QP\n"));
         assert(NULL != endpoint->qps);
-        ep_qp = endpoint->qps;
+        qp = endpoint->qps[0].qp->lcl_qp;
+        psn = endpoint->qps[0].qp->lcl_psn;
     } else {
         BTL_VERBOSE(("XOOB. Connecting Recv QP\n"));
         assert(NULL != endpoint->xrc_recv_qp);
-        ep_qp = endpoint->xrc_recv_qp;
+        qp = endpoint->xrc_recv_qp;
+        psn = endpoint->xrc_recv_psn;
     }
-
-    qp = ep_qp->qp->lcl_qp;
 
     memset(&attr, 0, sizeof(attr));
     attr.qp_state           = IBV_QPS_RTR;
@@ -370,7 +353,7 @@ static int xoob_qp_connect(mca_btl_openib_endpoint_t *endpoint, xoob_qp_type typ
     attr.timeout        = mca_btl_openib_component.ib_timeout;
     attr.retry_cnt      = mca_btl_openib_component.ib_retry_count;
     attr.rnr_retry      = mca_btl_openib_component.ib_rnr_retry;
-    attr.sq_psn         = ep_qp->qp->lcl_psn;
+    attr.sq_psn         = psn;
     attr.max_rd_atomic  = mca_btl_openib_component.ib_max_rdma_dst_ops;
     if (ibv_modify_qp(qp, &attr,
                 IBV_QP_STATE              |
@@ -536,27 +519,28 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
      */
     if (ENDPOINT_XOOB_CONNECT_REQUEST == message_type ||
             ENDPOINT_XOOB_CONNECT_RESPONSE == message_type) {
-        struct mca_btl_openib_qp_t *qp;
+        struct ibv_qp *qp;
+        uint32_t psn;
 
         if (ENDPOINT_XOOB_CONNECT_REQUEST == message_type) {
-            qp = endpoint->qps->qp;
+            qp = endpoint->qps[0].qp->lcl_qp;
+            psn = endpoint->qps[0].qp->lcl_psn;
         } else {
-            qp = endpoint->xrc_recv_qp->qp;
+            qp = endpoint->xrc_recv_qp;
+            psn = endpoint->xrc_recv_psn;
         }
         /* stuff all the QP info into the buffer */
         /* we need to send only one QP */
-        BTL_VERBOSE(("XOOB Send pack qp num = %d", qp->lcl_qp->qp_num));
+        BTL_VERBOSE(("XOOB Send pack qp num = %d", qp->qp_num));
         BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
-        rc = orte_dss.pack(buffer, &qp->lcl_qp->qp_num,
-                1, ORTE_UINT32);
+        rc = orte_dss.pack(buffer, &qp->qp_num, 1, ORTE_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        BTL_VERBOSE(("XOOB Send pack lpsn = %d", qp->lcl_psn));
+        BTL_VERBOSE(("XOOB Send pack lpsn = %d", psn));
         BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
-        rc = orte_dss.pack(buffer, &qp->lcl_psn, 1,
-                ORTE_UINT32); 
+        rc = orte_dss.pack(buffer, &psn, 1, ORTE_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
