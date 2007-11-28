@@ -806,7 +806,7 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
         OBJ_CONSTRUCT(&openib_btl->qps[qp].send_free, ompi_free_list_t);
         OBJ_CONSTRUCT(&openib_btl->qps[qp].recv_free, ompi_free_list_t);
             
-        if(BTL_OPENIB_QP_TYPE_SRQ(qp)) { 
+        if(!BTL_OPENIB_QP_TYPE_PP(qp)) { 
             OBJ_CONSTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[0],
                     opal_list_t);
             OBJ_CONSTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1],
@@ -815,15 +815,6 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
                 mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
         }
 
-        if(BTL_OPENIB_QP_TYPE_XRC(qp)) {
-            OBJ_CONSTRUCT(&openib_btl->qps[qp].u.xrc_qp.pending_frags[0],
-                    opal_list_t);
-            OBJ_CONSTRUCT(&openib_btl->qps[qp].u.xrc_qp.pending_frags[1],
-                    opal_list_t);
-            openib_btl->qps[qp].u.xrc_qp.sd_credits =
-                mca_btl_openib_component.qp_infos[qp].u.xrc_qp.sd_max;
-        }
-        
         init_data = malloc(sizeof(mca_btl_openib_frag_init_data_t));
         /* Initialize pool of send fragments */ 
         length = sizeof(mca_btl_openib_send_frag_t) +
@@ -1192,20 +1183,16 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
         OPAL_THREAD_UNLOCK(&erl->lock);
     } else {
         MCA_BTL_IB_FRAG_RETURN(frag);
-        if(BTL_OPENIB_QP_TYPE_SRQ(rqp)) {
-            mca_btl_openib_module_t *btl = ep->endpoint_btl;
-            OPAL_THREAD_ADD32(&btl->qps[rqp].u.srq_qp.rd_posted, -1);
-            mca_btl_openib_post_srr(btl, 0, rqp);
-        } else if(BTL_OPENIB_QP_TYPE_XRC(rqp)) {
-            mca_btl_openib_module_t *btl = ep->endpoint_btl;
-            OPAL_THREAD_ADD32(&btl->qps[rqp].u.xrc_qp.rd_posted, -1);
-            mca_btl_openib_post_xrr(openib_btl, 0, rqp);
-        } else { /* PP QP */
+        if(BTL_OPENIB_QP_TYPE_PP(rqp)) {
             if(OPAL_UNLIKELY(is_credit_msg))
                 OPAL_THREAD_ADD32(&ep->qps[cqp].u.pp_qp.cm_received, 1);
             else
                 OPAL_THREAD_ADD32(&ep->qps[rqp].u.pp_qp.rd_posted, -1);
             mca_btl_openib_endpoint_post_rr(ep, cqp);
+        } else {
+            mca_btl_openib_module_t *btl = ep->endpoint_btl;
+            OPAL_THREAD_ADD32(&btl->qps[rqp].u.srq_qp.rd_posted, -1);
+            mca_btl_openib_post_srr(btl, 0, rqp);
         }
     }
 
@@ -1409,19 +1396,10 @@ static void progress_pending_frags_srq(mca_btl_openib_module_t* openib_btl,
     assert(BTL_OPENIB_QP_TYPE_SRQ(qp) || BTL_OPENIB_QP_TYPE_XRC(qp));
     
     for(i = 0; i < 2; i++) {
-        opal_list_t *pending;
-        int32_t *sd_credits;
-
-        if (BTL_OPENIB_QP_TYPE_SRQ(qp)) {
-            pending = &openib_btl->qps[qp].u.srq_qp.pending_frags[i];
-            sd_credits = &openib_btl->qps[qp].u.srq_qp.sd_credits;
-        } else {
-            pending = &openib_btl->qps[qp].u.xrc_qp.pending_frags[i];
-            sd_credits = &openib_btl->qps[qp].u.xrc_qp.sd_credits;
-        }
-        while(*sd_credits > 0) {
+        while(openib_btl->qps[qp].u.srq_qp.sd_credits > 0) {
             OPAL_THREAD_LOCK(&openib_btl->ib_lock);
-            frag = opal_list_remove_first(pending);
+            frag = opal_list_remove_first(
+                    &openib_btl->qps[qp].u.srq_qp.pending_frags[i]);
             OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
 
             if(NULL == frag)
@@ -1618,10 +1596,7 @@ static int btl_openib_module_progress(mca_btl_openib_hca_t* hca)
                 qp_put_wqe(endpoint, qp);
 
                 if(IBV_WC_SEND == wc.opcode && !BTL_OPENIB_QP_TYPE_PP(qp)) {
-                    int32_t *sd_credits = BTL_OPENIB_QP_TYPE_SRQ(qp) ?
-                        &openib_btl->qps[qp].u.srq_qp.sd_credits :
-                        &openib_btl->qps[qp].u.xrc_qp.sd_credits;
-                    OPAL_THREAD_ADD32(sd_credits, 1);
+                    OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1);
 
                     /* new SRQ credit available. Try to progress pending frags*/
                     progress_pending_frags_srq(openib_btl, qp);

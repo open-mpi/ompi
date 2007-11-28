@@ -49,7 +49,7 @@ static int set_remote_info(mca_btl_base_endpoint_t* endpoint,
                            mca_btl_openib_rem_info_t* rem_info);
 static int qp_connect_all(mca_btl_base_endpoint_t* endpoint);
 static int qp_create_all(mca_btl_base_endpoint_t* endpoint);
-static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int prio, int qp,
+static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
         struct ibv_srq *srq, uint32_t max_recv_wr, uint32_t max_send_wr);
 static int send_connect_data(mca_btl_base_endpoint_t* endpoint, 
                              uint8_t message_type);
@@ -267,7 +267,7 @@ static int qp_connect_all(mca_btl_openib_endpoint_t *endpoint)
  */
 static int qp_create_all(mca_btl_base_endpoint_t* endpoint)
 {
-    int qp, rc, prio, pp_qp_num = 0;
+    int qp, rc, pp_qp_num = 0;
     int32_t rd_rsv_total = 0;
 
     for (qp = 0; qp < mca_btl_openib_component.num_qps; ++qp)
@@ -286,14 +286,6 @@ static int qp_create_all(mca_btl_base_endpoint_t* endpoint)
         struct ibv_srq *srq = NULL;
         uint32_t max_recv_wr, max_send_wr;
         int32_t rd_rsv, rd_num_credits;
-        /* If the size for this qp is <= the eager limit, make it a
-           high priority QP.  Otherwise, make it a low priority QP. */
-        prio = (mca_btl_openib_component.qp_infos[qp].size <=
-                mca_btl_openib_component.eager_limit) ? 
-            BTL_OPENIB_HP_CQ : BTL_OPENIB_LP_CQ;
-
-        if(qp == 0)
-            prio = BTL_OPENIB_HP_CQ; /* smallest qp is always HP */
 
         /* QP used for SW flow control need some additional recourses */
         if(qp == mca_btl_openib_component.credits_qp) {
@@ -315,7 +307,7 @@ static int qp_create_all(mca_btl_base_endpoint_t* endpoint)
                 + rd_num_credits;
         }
 
-        rc = qp_create_one(endpoint, prio, qp, srq, max_recv_wr, max_send_wr);
+        rc = qp_create_one(endpoint, qp, srq, max_recv_wr, max_send_wr);
         if (OMPI_SUCCESS != rc) {
             return rc;
         }
@@ -331,13 +323,14 @@ static int qp_create_all(mca_btl_base_endpoint_t* endpoint)
  * Create the local side of one qp.  The remote side will be connected
  * later.
  */
-static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int prio, int qp, 
+static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp, 
         struct ibv_srq *srq, uint32_t max_recv_wr, uint32_t max_send_wr)
 {
     mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
     struct ibv_qp *my_qp;
     struct ibv_qp_init_attr init_attr;
     struct ibv_qp_attr attr;
+    int prio = qp_cq_prio(qp);
 
     memset(&init_attr, 0, sizeof(init_attr));
     memset(&attr, 0, sizeof(attr));

@@ -155,7 +155,7 @@ static int acquire_send_credit(mca_btl_openib_endpoint_t *endpoint,
                     (opal_list_item_t *)frag);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-    } else if(BTL_OPENIB_QP_TYPE_SRQ(qp)) {
+    } else {
         if(OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, -1) < 0)
         {
             OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1);
@@ -164,16 +164,6 @@ static int acquire_send_credit(mca_btl_openib_endpoint_t *endpoint,
                              (opal_list_item_t *)frag);
             OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-    } else { /* XRC QP */
-        if(OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.xrc_qp.sd_credits, -1) < 0)
-        {
-             OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.xrc_qp.sd_credits, 1);
-             OPAL_THREAD_LOCK(&openib_btl->ib_lock);
-             opal_list_append(&openib_btl->qps[qp].u.xrc_qp.pending_frags[prio],
-                     (opal_list_item_t *)frag);
-             OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
-             return OMPI_ERR_OUT_OF_RESOURCE;
         }
     }
 
@@ -261,9 +251,6 @@ int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t *endpoint,
         } else if BTL_OPENIB_QP_TYPE_SRQ(qp){
             mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
             OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1);
-        } else { /* XRC QP */
-            mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
-            OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.xrc_qp.sd_credits, 1);
         }
     }
     BTL_ERROR(("error posting send request error %d: %s\n", 
@@ -343,7 +330,7 @@ endpoint_init_qp_xrc(mca_btl_openib_endpoint_qp_t *ep_qp, const int qp,
         ep_qp->qp = endpoint_alloc_qp();
         /* number of available send WQEs */
         ep_qp->qp->sd_wqe =
-            mca_btl_openib_component.qp_infos[qp].u.xrc_qp.sd_max;
+            mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
     } else {
         ep_qp->qp = xrc_qp;
     }
@@ -524,12 +511,10 @@ int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t *endpoint)
     int qp;
 
     for (qp = 0; qp < mca_btl_openib_component.num_qps; ++qp) { 
-        if (BTL_OPENIB_QP_TYPE_SRQ(qp)) { 
-            mca_btl_openib_post_srr(endpoint->endpoint_btl, 1, qp);
-        } else if(BTL_OPENIB_QP_TYPE_XRC(qp)) { 
-            mca_btl_openib_post_xrr(endpoint->endpoint_btl, 1, qp);
-        } else { /* PP QP */
+        if (BTL_OPENIB_QP_TYPE_PP(qp)) { 
             mca_btl_openib_endpoint_post_rr(endpoint, qp);
+        } else {
+            mca_btl_openib_post_srr(endpoint->endpoint_btl, 1, qp);
         }
     }
     

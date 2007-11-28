@@ -120,8 +120,6 @@ struct mca_btl_openib_endpoint_srq_qp_t {
     int32_t dummy;
 }; typedef struct mca_btl_openib_endpoint_srq_qp_t mca_btl_openib_endpoint_srq_qp_t;
 
-typedef struct mca_btl_openib_endpoint_srq_qp_t mca_btl_openib_endpoint_xrc_qp_t;
-
 typedef struct mca_btl_openib_qp_t {
     struct ibv_qp *lcl_qp;
     uint32_t lcl_psn;
@@ -140,7 +138,6 @@ typedef struct mca_btl_openib_endpoint_qp_t {
     mca_btl_openib_send_control_frag_t *credit_frag;
     union {
         mca_btl_openib_endpoint_srq_qp_t srq_qp;
-        mca_btl_openib_endpoint_xrc_qp_t xrc_qp;
         mca_btl_openib_endpoint_pp_qp_t pp_qp;
     } u;
 } mca_btl_openib_endpoint_qp_t;
