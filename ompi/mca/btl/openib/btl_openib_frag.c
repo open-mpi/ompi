@@ -22,136 +22,172 @@
 #include "btl_openib_frag.h" 
 #include "btl_openib_eager_rdma.h"
 
-void mca_btl_openib_frag_init(ompi_free_list_item_t* item, void* ctx) { 
-    
-    mca_btl_openib_frag_init_data_t* init_data =
-        (mca_btl_openib_frag_init_data_t*) ctx;
-    mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*) item;
-    mca_btl_openib_reg_t* registration =
-        (mca_btl_openib_reg_t*)frag->base.super.registration;
-    
-    frag->size = init_data->length;
-    assert(init_data->order != 255);
-    frag->base.order = MCA_BTL_NO_ORDER;
-    frag->type = init_data->type;
-    frag->list = init_data->list;
-    frag->qp_idx = init_data->order;
-    
-    frag->hdr = (mca_btl_openib_header_t*)frag->base.super.ptr;
-    frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);  
-    
-    if(registration) {    
-        frag->registration = registration;
-        frag->sg_entry.lkey = registration->mr->lkey;
-        frag->segment.seg_key.key32[0] = frag->sg_entry.lkey;
+void mca_btl_openib_frag_init(ompi_free_list_item_t* item, void* ctx)
+{
+    mca_btl_openib_frag_init_data_t* init_data = ctx;
+    mca_btl_openib_frag_t *frag = to_base_frag(item);
+
+    if(MCA_BTL_OPENIB_FRAG_RECV == frag->type) {
+        to_recv_frag(frag)->qp_idx = init_data->order;
+        to_com_frag(frag)->sg_entry.length =
+            mca_btl_openib_component.qp_infos[init_data->order].size +
+            sizeof(mca_btl_openib_header_t);
     }
-    
-    /* init the segment address to start after the btl header */ 
-    frag->segment.seg_len = frag->size;
-    frag->sg_entry.addr = (unsigned long) frag->hdr; 
-    frag->sg_entry.length = frag->size + sizeof(mca_btl_openib_header_t);
-    frag->base.des_flags = 0; 
 
-    return;
+    if(MCA_BTL_OPENIB_FRAG_SEND == frag->type)
+        to_send_frag(frag)->qp_idx = init_data->order;
+
+    frag->list = init_data->list;
 }
 
-
- 
-static void mca_btl_openib_send_frag_common_constructor(mca_btl_openib_frag_t* frag) 
-{ 
-    frag->base.des_src = &frag->segment;
-    frag->base.des_src_cnt = 1;
-    frag->base.des_dst = NULL;
-    frag->base.des_dst_cnt = 0;
-    
-
-    frag->wr_desc.sr_desc.wr_id = (unsigned long) frag; 
-    frag->wr_desc.sr_desc.sg_list = &frag->sg_entry; 
-    frag->wr_desc.sr_desc.num_sge = 1; 
-    frag->wr_desc.sr_desc.opcode = IBV_WR_SEND; 
-    frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
-    frag->wr_desc.sr_desc.next = NULL; 
+static void base_constructor(mca_btl_openib_frag_t *frag)
+{
+    frag->base.order = MCA_BTL_NO_ORDER;
 }
 
-static void mca_btl_openib_recv_frag_common_constructor(mca_btl_openib_frag_t* frag) 
-{ 
-    frag->base.des_dst = &frag->segment;
-    frag->base.des_dst_cnt = 1;
-    frag->base.des_src = NULL;
-    frag->base.des_src_cnt = 0;
-   
-    frag->wr_desc.rd_desc.wr_id = (unsigned long) frag; 
-    frag->wr_desc.rd_desc.sg_list = &frag->sg_entry; 
-    frag->wr_desc.rd_desc.num_sge = 1; 
-    frag->wr_desc.rd_desc.next = NULL; 
+static void com_constructor(mca_btl_openib_com_frag_t *frag)
+{
+    mca_btl_openib_frag_t *base_frag = to_base_frag(frag);
+    mca_btl_openib_reg_t* reg =
+        (mca_btl_openib_reg_t*)base_frag->base.super.registration;
+
+    frag->registration = reg;
+
+    if(reg) {
+        frag->sg_entry.lkey = reg->mr->lkey;
+        base_frag->segment.seg_key.key32[0] = reg->mr->lkey;
+    }
 }
 
+static void out_constructor(mca_btl_openib_out_frag_t *frag)
+{
+    mca_btl_openib_frag_t *base_frag = to_base_frag(frag);
 
-static void mca_btl_openib_recv_user_frag_constructor(mca_btl_openib_frag_t* frag) 
-{ 
-    frag->registration = NULL;
-    frag->hdr = (mca_btl_openib_header_t*)frag->base.super.ptr;
-    frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);  
-    
-    /* init the segment address to start after the btl header */ 
-    frag->segment.seg_len = frag->size;
-    frag->sg_entry.addr = (unsigned long) frag->hdr; 
-    frag->sg_entry.length = frag->size + sizeof(mca_btl_openib_header_t);
-    frag->base.des_flags = 0; 
+    base_frag->base.des_src = &base_frag->segment;
+    base_frag->base.des_src_cnt = 1;
+    base_frag->base.des_dst = NULL;
+    base_frag->base.des_dst_cnt = 0;
 
-    mca_btl_openib_recv_frag_common_constructor(frag); 
+    frag->sr_desc.wr_id = (uint64_t)frag;
+    frag->sr_desc.sg_list = &to_com_frag(frag)->sg_entry;
+    frag->sr_desc.num_sge = 1;
+    frag->sr_desc.opcode = IBV_WR_SEND;
+    frag->sr_desc.send_flags = IBV_SEND_SIGNALED;
+    frag->sr_desc.next = NULL;
 }
 
+static void in_constructor(mca_btl_openib_in_frag_t *frag)
+{
+    mca_btl_openib_frag_t *base_frag = to_base_frag(frag);
 
-static void mca_btl_openib_send_user_frag_constructor(mca_btl_openib_frag_t* frag) 
-{ 
-    frag->registration = NULL;
-    frag->hdr = (mca_btl_openib_header_t*)frag->base.super.ptr;
-    frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);  
-    
-    /* init the segment address to start after the btl header */ 
-    frag->segment.seg_len = frag->size;
-    frag->sg_entry.addr = (unsigned long) frag->hdr; 
-    frag->sg_entry.length = frag->size + sizeof(mca_btl_openib_header_t);
-    frag->base.des_flags = 0; 
+    base_frag->base.des_dst = &base_frag->segment;
+    base_frag->base.des_dst_cnt = 1;
+    base_frag->base.des_src = NULL;
+    base_frag->base.des_src_cnt = 0;
+}
 
-    mca_btl_openib_send_frag_common_constructor(frag); 
+static void send_constructor(mca_btl_openib_send_frag_t *frag)
+{
+    mca_btl_openib_frag_t *base_frag = to_base_frag(frag);
+
+    base_frag->type = MCA_BTL_OPENIB_FRAG_SEND;
+
+    frag->hdr = (mca_btl_openib_header_t*)base_frag->base.super.ptr;
+    base_frag->segment.seg_addr.pval =
+        ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);
+    to_com_frag(frag)->sg_entry.addr = (uint64_t)frag->hdr;
+}
+
+static void recv_constructor(mca_btl_openib_recv_frag_t *frag)
+{
+    mca_btl_openib_frag_t *base_frag = to_base_frag(frag);
+
+    base_frag->type = MCA_BTL_OPENIB_FRAG_RECV;
+
+    frag->hdr = (mca_btl_openib_header_t*)base_frag->base.super.ptr;
+    base_frag->segment.seg_addr.pval =
+        ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);
+    to_com_frag(frag)->sg_entry.addr = (uint64_t)frag->hdr;
+
+    frag->rd_desc.wr_id = (uint64_t)frag;
+    frag->rd_desc.sg_list = &to_com_frag(frag)->sg_entry;
+    frag->rd_desc.num_sge = 1;
+    frag->rd_desc.next = NULL;
+}
+
+static void send_control_constructor(mca_btl_openib_send_control_frag_t *frag)
+{
+    to_base_frag(frag)->type = MCA_BTL_OPENIB_FRAG_CONTROL;
+}
+
+static void put_constructor(mca_btl_openib_put_frag_t *frag)
+{
+    to_base_frag(frag)->type = MCA_BTL_OPENIB_FRAG_SEND_USER;
+    to_out_frag(frag)->sr_desc.opcode = IBV_WR_RDMA_WRITE;
+}
+
+static void get_constructor(mca_btl_openib_get_frag_t *frag)
+{
+    to_base_frag(frag)->type = MCA_BTL_OPENIB_FRAG_RECV_USER;
+
+    frag->sr_desc.wr_id = (uint64_t)frag;
+    frag->sr_desc.sg_list = &to_com_frag(frag)->sg_entry;
+    frag->sr_desc.num_sge = 1;
+    frag->sr_desc.opcode = IBV_WR_RDMA_READ;
+    frag->sr_desc.send_flags = IBV_SEND_SIGNALED;
+    frag->sr_desc.next = NULL;
 }
 
 OBJ_CLASS_INSTANCE(
                    mca_btl_openib_frag_t, 
                    mca_btl_base_descriptor_t, 
-                   NULL, 
+                   base_constructor, 
                    NULL); 
 
 OBJ_CLASS_INSTANCE(
-                   mca_btl_openib_send_frag_t, 
-                   mca_btl_base_descriptor_t, 
-                   mca_btl_openib_send_frag_common_constructor, 
-                   NULL); 
-
-
-OBJ_CLASS_INSTANCE(
-                   mca_btl_openib_send_frag_control_t, 
-                   mca_btl_base_descriptor_t, 
-                   mca_btl_openib_send_frag_common_constructor, 
-                   NULL); 
+                   mca_btl_openib_com_frag_t,
+                   mca_btl_openib_frag_t,
+                   com_constructor,
+                   NULL);
 
 OBJ_CLASS_INSTANCE(
-                   mca_btl_openib_send_user_frag_t, 
-                   mca_btl_base_descriptor_t, 
-                   mca_btl_openib_send_user_frag_constructor, 
+                   mca_btl_openib_out_frag_t,
+                   mca_btl_openib_com_frag_t,
+                   out_constructor,
+                   NULL);
+
+OBJ_CLASS_INSTANCE(
+                   mca_btl_openib_in_frag_t,
+                   mca_btl_openib_com_frag_t,
+                   in_constructor,
+                   NULL);
+
+OBJ_CLASS_INSTANCE(
+                   mca_btl_openib_send_frag_t,
+                   mca_btl_openib_out_frag_t,
+                   send_constructor,
+                   NULL);
+
+OBJ_CLASS_INSTANCE(
+                   mca_btl_openib_recv_frag_t,
+                   mca_btl_openib_in_frag_t,
+                   recv_constructor,
+                   NULL);
+
+OBJ_CLASS_INSTANCE(
+                   mca_btl_openib_send_control_frag_t,
+                   mca_btl_openib_send_frag_t,
+                   send_control_constructor,
+                   NULL);
+
+OBJ_CLASS_INSTANCE(
+                   mca_btl_openib_put_frag_t, 
+                   mca_btl_openib_out_frag_t,
+                   put_constructor, 
                    NULL); 
 
 OBJ_CLASS_INSTANCE(
-                   mca_btl_openib_recv_user_frag_t, 
-                   mca_btl_base_descriptor_t, 
-                   mca_btl_openib_recv_user_frag_constructor, 
+                   mca_btl_openib_get_frag_t, 
+                   mca_btl_openib_in_frag_t,
+                   get_constructor, 
                    NULL); 
-
-OBJ_CLASS_INSTANCE(
-                   mca_btl_openib_recv_frag_t, 
-                   mca_btl_base_descriptor_t, 
-                   mca_btl_openib_recv_frag_common_constructor, 
-                   NULL); 
-
