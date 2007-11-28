@@ -287,6 +287,7 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
                     ibv_create_xrc_srq(openib_btl->hca->ib_pd,
                             openib_btl->hca->xrc_domain,
                             openib_btl->hca->ib_cq[prio], &attr);
+                openib_btl->hca->cq_users[prio]++;
             } else
 #endif
             {
