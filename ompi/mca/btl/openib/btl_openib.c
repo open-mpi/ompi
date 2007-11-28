@@ -825,9 +825,10 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
     /* Release SRQ resources */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
         if(BTL_OPENIB_QP_TYPE_SRQ(qp)){ 
-            
             MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
-                        &openib_btl->qps[qp].u.srq_qp.pending_frags);
+                        &openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
+            MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
+                        &openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
             
             if (ibv_destroy_srq(openib_btl->qps[qp].u.srq_qp.srq)){
                 BTL_VERBOSE(("Failed to close SRQ %d", qp));
@@ -835,7 +836,8 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
             }
             
             /* Destroy free lists */
-            OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags);
+            OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
+            OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
             OBJ_DESTRUCT(&openib_btl->qps[qp].send_free);
             OBJ_DESTRUCT(&openib_btl->qps[qp].recv_free);
         } else { 

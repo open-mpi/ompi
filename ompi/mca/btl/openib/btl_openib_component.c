@@ -87,15 +87,13 @@ static void merge_values(ompi_btl_openib_ini_values_t *target,
 static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
                                          mca_btl_openib_endpoint_t *endpoint,
                                          mca_btl_openib_recv_frag_t *frag, 
-                                         size_t byte_len, const int prio);
+                                         size_t byte_len);
 static char* btl_openib_component_status_to_string(enum ibv_wc_status status);
 static int btl_openib_component_progress(void);
 static int btl_openib_module_progress(mca_btl_openib_hca_t *hca);
-static void btl_openib_frag_progress_pending_pp(
-         mca_btl_base_endpoint_t *endpoint,
-         const int qp);
-static void btl_openib_frag_progress_pending_srq(
-         mca_btl_openib_module_t* openib_btl, const int qp);
+static void progress_pending_frags_pp(mca_btl_base_endpoint_t *, const int);
+static void progress_pending_frags_srq( mca_btl_openib_module_t* , const int);
+static void progress_pending_eager_rdma(mca_btl_base_endpoint_t*);
 static void btl_openib_frag_progress_pending_put_get(
         mca_btl_openib_module_t* openib_btl, mca_btl_base_endpoint_t *endpoint,
         const int qp);
@@ -233,33 +231,39 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
         to_base_frag(des)->segment.seg_addr.pval;
     mca_btl_openib_eager_rdma_header_t *rdma_hdr;
     mca_btl_openib_rdma_credits_header_t *credits_hdr;
-    int qp = to_recv_frag(des)->qp_idx;
-    
-    if(BTL_OPENIB_EAGER_RDMA_QP(qp)) {
-	    /* if not sent via rdma */
-        if(!MCA_BTL_OPENIB_RDMA_FRAG(des) &&
-                ctl_hdr->type == MCA_BTL_OPENIB_CONTROL_CREDITS) {
-            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_received, 1);
-            /* rd_posted don't account for rsv preposts for credit message but
-             * receive path decreased it for each message receive no matter if
-             * it is credit message or not. So fix rd_posted value here. */
-            OPAL_THREAD_ADD32((int32_t*)&endpoint->qps[qp].u.pp_qp.rd_posted, 1);
-        }
-    } else if (ctl_hdr->type == MCA_BTL_OPENIB_CONTROL_CREDITS) {
-        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_received, 1);
-        /* see above */
-        OPAL_THREAD_ADD32((int32_t*)&endpoint->qps[qp].u.pp_qp.rd_posted, 1);
-    }
+    int qp;
     
     switch (ctl_hdr->type) {
     case MCA_BTL_OPENIB_CONTROL_CREDITS:
         credits_hdr = (mca_btl_openib_rdma_credits_header_t*)ctl_hdr;
+
         if(endpoint->nbo) {
-            BTL_OPENIB_RDMA_CREDITS_HEADER_NTOH((*credits_hdr));
+            BTL_OPENIB_RDMA_CREDITS_HEADER_NTOH(*credits_hdr);
         }
-        if(credits_hdr->rdma_credits)
+        qp = credits_hdr->qpn;
+
+        /* if not sent via rdma */
+        if(!MCA_BTL_OPENIB_RDMA_FRAG(des)) {
+            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_received, 1);
+            /* rd_posted don't account for rsv preposts for credit message but
+             * receive path decreased it for each message received no matter if
+             * it is credit message or not. So fix rd_posted value here. */
+            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_posted, 1);
+        } else {
+            mca_btl_openib_header_t *hdr = to_recv_frag(des)->hdr;
+            /* if received via rdma the update credits here since they will not
+             * be update in handle_incomming() function because qp num is not
+             * known there */
+            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits,
+                    hdr->credits);
+            progress_pending_frags_pp(endpoint, qp);
+        }
+
+        if(credits_hdr->rdma_credits) {
             OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens,
                     credits_hdr->rdma_credits);
+            progress_pending_eager_rdma(endpoint);
+        }
         break;
     case MCA_BTL_OPENIB_CONTROL_RDMA:
        rdma_hdr = (mca_btl_openib_eager_rdma_header_t*)ctl_hdr;
@@ -272,22 +276,19 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
                   ));
        
        if(endpoint->nbo) {
-           BTL_OPENIB_EAGER_RDMA_CONTROL_HEADER_NTOH((*rdma_hdr));
+           BTL_OPENIB_EAGER_RDMA_CONTROL_HEADER_NTOH(*rdma_hdr);
+       }
            
-           BTL_VERBOSE(("received  rkey %lu, rdma_start.lval %llu, pval %p, ival %u\n", 
-                      rdma_hdr->rkey, 
-                      (unsigned long) rdma_hdr->rdma_start.lval,
-                      rdma_hdr->rdma_start.pval,
-                      rdma_hdr->rdma_start.ival
-                      ));
-           
-       } 
+       BTL_VERBOSE(("received  rkey %lu, rdma_start.lval %llu, pval %p,"
+                   " ival %u\n", rdma_hdr->rkey,
+                   (unsigned long) rdma_hdr->rdma_start.lval,
+                  rdma_hdr->rdma_start.pval, rdma_hdr->rdma_start.ival));
        
        if (endpoint->eager_rdma_remote.base.pval) {
 	       BTL_ERROR(("Got RDMA connect twice!"));
 	       return;
        }
-       endpoint->eager_rdma_remote.rkey =  rdma_hdr->rkey;
+       endpoint->eager_rdma_remote.rkey = rdma_hdr->rkey;
        endpoint->eager_rdma_remote.base.lval = rdma_hdr->rdma_start.lval;
        endpoint->eager_rdma_remote.tokens =
            mca_btl_openib_component.eager_rdma_num - 1;
@@ -766,7 +767,7 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
         sizeof(mca_btl_openib_footer_t) + 
         sizeof(mca_btl_openib_eager_rdma_header_t);
         
-    init_data->order = mca_btl_openib_component.eager_rdma_qp;
+    init_data->order = MCA_BTL_NO_ORDER;
     init_data->list = &openib_btl->send_free_control;
         
     if(OMPI_SUCCESS != ompi_free_list_init_ex(&openib_btl->send_free_control,
@@ -785,7 +786,10 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
         OBJ_CONSTRUCT(&openib_btl->qps[qp].recv_free, ompi_free_list_t);
             
         if(BTL_OPENIB_QP_TYPE_SRQ(qp)) { 
-            OBJ_CONSTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags, opal_list_t);
+            OBJ_CONSTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[0],
+                    opal_list_t);
+            OBJ_CONSTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1],
+                    opal_list_t);
             openib_btl->qps[qp].u.srq_qp.sd_credits = 
                 mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
         }
@@ -1124,7 +1128,7 @@ static void merge_values(ompi_btl_openib_ini_values_t *target,
 static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
                                          mca_btl_openib_endpoint_t *endpoint,
                                          mca_btl_openib_recv_frag_t *frag, 
-                                         size_t byte_len, const int qp)
+                                         size_t byte_len)
 {
     mca_btl_base_descriptor_t *des = &to_base_frag(frag)->base;
     mca_btl_openib_header_t *hdr = frag->hdr;
@@ -1141,27 +1145,24 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
     openib_btl->ib_reg[hdr->tag].cbfunc(&openib_btl->super, hdr->tag, des, 
             openib_btl->ib_reg[hdr->tag].cbdata);
 
-    if(BTL_OPENIB_IS_RDMA_CREDITS(hdr->credits) &&
-       BTL_OPENIB_CREDITS(hdr->credits) > 0) {
-        OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens,
-                          BTL_OPENIB_CREDITS(hdr->credits));
+    if(BTL_OPENIB_IS_RDMA_CREDITS(hdr->credits)) {
+        if(BTL_OPENIB_CREDITS(hdr->credits) > 0) {
+            OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens,
+                    BTL_OPENIB_CREDITS(hdr->credits));
+            progress_pending_eager_rdma(endpoint);
+        }
     } else {
+        int qp = to_base_frag(frag)->base.order;
+
         if(BTL_OPENIB_QP_TYPE_PP(qp) && hdr->credits > 0) {
             OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits,
                     hdr->credits);
+            progress_pending_frags_pp(endpoint, qp);
         }
+        if(hdr->cm_seen)
+            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_sent,-hdr->cm_seen);
     }
 
-    if(hdr->cm_seen) {
-        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_sent, -hdr->cm_seen);
-    }
-
-    /* We may receive credits here so try to progress only things that
-     * may be pending because of credit shortage */
-    if(BTL_OPENIB_QP_TYPE_PP(qp) || BTL_OPENIB_EAGER_RDMA_QP(qp)) {
-        btl_openib_frag_progress_pending_pp(endpoint, qp);
-   }
-    
     return OMPI_SUCCESS;
 }
 
@@ -1240,28 +1241,52 @@ static char* btl_openib_component_status_to_string(enum ibv_wc_status status)
     }
 }
 
-#define BTL_OPENIB_TOKENS(E, P) \
-    (BTL_OPENIB_QP_TYPE_SRQ(P) ? 1 : ((E)->qps[(P)].u.pp_qp.sd_credits + \
-      ((BTL_OPENIB_EAGER_RDMA_QP(P))?(E)->eager_rdma_remote.tokens:0)))
-static void btl_openib_frag_progress_pending_pp(
-        mca_btl_base_endpoint_t *endpoint, const int qp)
+static void progress_pending_eager_rdma(mca_btl_base_endpoint_t *ep)
 {
-    
+    int qp;
     opal_list_item_t *frag;
-    size_t i, len = opal_list_get_size(&endpoint->qps[qp].pending_frags);
-    
-    /* check to see if we need to progress any pending descriptors */
-    for(i = 0; i < len && endpoint->qps[qp].sd_wqe > 0 &&
-            BTL_OPENIB_TOKENS(endpoint, qp) > 0; i++) {
-        OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-        frag = opal_list_remove_first(&(endpoint->qps[qp].pending_frags));
-        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
-        if(NULL == frag)
-            break;
-        if(mca_btl_openib_endpoint_send(endpoint, to_send_frag(frag)) ==
-                OMPI_ERR_OUT_OF_RESOURCE)
-            break;
+
+    /* Go over all QPs and try to send high prio packets over eager rdma
+     * channel */
+    OPAL_THREAD_LOCK(&ep->endpoint_lock);
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
+       while(ep->qps[qp].sd_wqe > 0 && ep->eager_rdma_remote.tokens > 0) {
+            frag = opal_list_remove_first(&ep->qps[qp].pending_frags[0]);
+            if(NULL == frag)
+                break;
+            mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag));
+       }
+       if(ep->eager_rdma_remote.tokens == 0)
+           break;
     }
+    OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
+}
+
+static inline int
+get_enpoint_credits(mca_btl_base_endpoint_t *ep, const int qp)
+{
+    return BTL_OPENIB_QP_TYPE_PP(qp) ? ep->qps[qp].u.pp_qp.sd_credits : 1;
+}
+
+static void progress_pending_frags_pp(mca_btl_base_endpoint_t *ep, const int qp)
+{
+    int i, rc;
+    opal_list_item_t *frag;
+    
+    OPAL_THREAD_LOCK(&ep->endpoint_lock);
+    for(i = 0; i < 2; i++) {
+       while(ep->qps[qp].sd_wqe > 0 && (get_enpoint_credits(ep, qp) +
+                   (1 - i) * ep->eager_rdma_remote.tokens) > 0)
+       {
+            frag = opal_list_remove_first(&ep->qps[qp].pending_frags[i]);
+            if(NULL == frag)
+                break;
+            rc = mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag));
+            if(rc != OMPI_SUCCESS)
+                break;
+       }
+    }
+    OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
 }
 
 static void btl_openib_frag_progress_pending_put_get(
@@ -1295,27 +1320,27 @@ static void btl_openib_frag_progress_pending_put_get(
     }
 }
 
-static void btl_openib_frag_progress_pending_srq(
-        mca_btl_openib_module_t* openib_btl, const int qp)
+static void progress_pending_frags_srq(mca_btl_openib_module_t* openib_btl,
+        const int qp)
 {
-    
     opal_list_item_t *frag;
-    size_t i, len;
+    int i;
     
     assert(BTL_OPENIB_QP_TYPE_SRQ(qp));
     
-    len = opal_list_get_size(&openib_btl->qps[qp].u.srq_qp.pending_frags);
-    for(i = 0; i < len && openib_btl->qps[qp].u.srq_qp.sd_credits > 0; i++) {
-        /* dequeue resources due to global flow control */
-        OPAL_THREAD_LOCK(&openib_btl->ib_lock);
-        frag =
-            opal_list_remove_first(&openib_btl->qps[qp].u.srq_qp.pending_frags);
-        OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
-        if(NULL == frag)
-            break;
-        if(mca_btl_openib_endpoint_send(to_com_frag(frag)->endpoint,
-                    to_send_frag(frag)) == OMPI_ERR_OUT_OF_RESOURCE)
-            break;
+    for(i = 0; i < 2; i++) {
+        while(openib_btl->qps[qp].u.srq_qp.sd_credits > 0) {
+            OPAL_THREAD_LOCK(&openib_btl->ib_lock);
+            frag = opal_list_remove_first(
+                    &openib_btl->qps[qp].u.srq_qp.pending_frags[i]);
+            OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+
+            if(NULL == frag)
+                break;
+
+            mca_btl_openib_endpoint_send(to_com_frag(frag)->endpoint,
+                    to_send_frag(frag));
+        }
     }
 }
 
@@ -1394,7 +1419,6 @@ static int btl_openib_component_progress(void)
 
             if(MCA_BTL_OPENIB_RDMA_FRAG_LOCAL(frag)) {
                 uint32_t size;
-                int qp;
                 opal_atomic_rmb();
                 if(endpoint->nbo) {
                     BTL_OPENIB_FOOTER_NTOH(*frag->ftr);
@@ -1418,8 +1442,7 @@ static int btl_openib_component_progress(void)
 
                 ret = btl_openib_handle_incoming(openib_btl,
                         to_com_frag(frag)->endpoint, frag, 
-                        size - sizeof(mca_btl_openib_footer_t),
-                                                 frag->qp_idx);
+                        size - sizeof(mca_btl_openib_footer_t));
                 if (ret != MPI_SUCCESS) { 
                     openib_btl->error_cb(&openib_btl->super, 
                                          MCA_BTL_ERROR_FLAGS_FATAL);
@@ -1440,8 +1463,9 @@ static int btl_openib_component_progress(void)
                 }
                 OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
 
-                qp = mca_btl_openib_component.eager_rdma_qp;
-                send_credits(endpoint, qp);
+                /* send credits over qp 0 since it should always be present
+                 * anyway */
+                send_credits(endpoint, 0);
                 count++;
             } else
                 OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
@@ -1522,12 +1546,13 @@ static int btl_openib_module_progress(mca_btl_openib_hca_t* hca)
                 OPAL_THREAD_ADD32(&endpoint->qps[qp].sd_wqe, 1);
 
                 if(IBV_WC_SEND == wc.opcode && BTL_OPENIB_QP_TYPE_SRQ(qp)) {
-                    OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1);
+                    OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits,
+                            1);
                     /* new SRQ credit available. Try to progress pending frags*/
-                    btl_openib_frag_progress_pending_srq(openib_btl, qp);
+                    progress_pending_frags_srq(openib_btl, qp);
                 }
                 /* new wqe or/and get token available. Try to progress pending frags */
-                btl_openib_frag_progress_pending_pp(endpoint, qp);
+                progress_pending_frags_pp(endpoint, qp);
                 btl_openib_frag_progress_pending_put_get(openib_btl, endpoint, qp);
 
                 count++;
@@ -1542,7 +1567,7 @@ static int btl_openib_module_progress(mca_btl_openib_hca_t* hca)
 
                 /* Process a RECV */ 
                 if(btl_openib_handle_incoming(openib_btl, endpoint,
-                        to_recv_frag(frag), wc.byte_len, qp) != OMPI_SUCCESS) {
+                        to_recv_frag(frag), wc.byte_len) != OMPI_SUCCESS) {
                     openib_btl->error_cb(&openib_btl->super,
                             MCA_BTL_ERROR_FLAGS_FATAL);
                     return 0;

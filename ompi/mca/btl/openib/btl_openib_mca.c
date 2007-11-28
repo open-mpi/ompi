@@ -638,7 +638,6 @@ static int mca_btl_openib_mca_setup_qps(void)
     }
     
     mca_btl_openib_component.rdma_qp = mca_btl_openib_component.num_qps - 1;
-    mca_btl_openib_component.eager_rdma_qp = 0;
 
     /* Register any MCA params for the connect pseudo-components */
 
