@@ -297,6 +297,30 @@ static inline int param_register_int(const char* param_name, int default_value)
     return param_value;
 }
 
+#if OMPI_HAVE_THREADS
+static int start_async_event_thread(void)
+{
+    /* Set the fatal counter to zero */
+    mca_btl_openib_component.fatal_counter = 0;
+
+    /* Create pipe for communication with async event thread */
+    if(pipe(mca_btl_openib_component.async_pipe)) {
+        BTL_ERROR(("Failed to create pipe for communication with "
+                    "async event thread"));
+        return OMPI_ERROR;
+    }
+
+    /* Starting async event thread for the component */
+    if(pthread_create(&mca_btl_openib_component.async_thread, NULL,
+                (void*(*)(void*))btl_openib_async_thread, NULL)) {
+        BTL_ERROR(("Failed to create async event thread"));
+        return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
+}
+#endif
+
 static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
                          uint8_t port_num, uint16_t pkey_index,
                          struct ibv_port_attr *ib_port_attr)
@@ -627,10 +651,14 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     if (hca->btls > 0) {
 #if OMPI_HAVE_THREADS
         if (mca_btl_openib_component.use_async_event_thread) {
+            if(0 == mca_btl_openib_component.async_thread) {
+                /* async thread is not yet started, so start it here */
+                if(start_async_event_thread() != OMPI_SUCCESS)
+                    goto comp_channel;
+            }
             hca->got_fatal_event = false;
             if (write(mca_btl_openib_component.async_pipe[1],
-                        &hca->ib_dev_context->async_fd,
-                        sizeof(int))<0){
+                        &hca->ib_dev_context->async_fd, sizeof(int))<0){
                 BTL_ERROR(("Failed to write to pipe [%d]",errno));
                 goto comp_channel;
             } 
@@ -850,17 +878,6 @@ btl_openib_component_init(int *num_btl_modules,
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_ini_init())) {
         goto no_btls;
     }
-#if OMPI_HAVE_THREADS
-    /* Set the fatal counter to zero */
-    mca_btl_openib_component.fatal_counter = 0;
-    /* Create pipe for comunication with async event thread */
-    if (mca_btl_openib_component.use_async_event_thread) {
-        if (pipe (mca_btl_openib_component.async_pipe)) {
-            BTL_ERROR(("Failed to create pipe for comunication with async event thread"));
-            return NULL;
-        }
-    }
-#endif
 
     /* If we want fork support, try to enable it */
 #ifdef HAVE_IBV_FORK_INIT
@@ -948,24 +965,14 @@ btl_openib_component_init(int *num_btl_modules,
 
     OBJ_CONSTRUCT(&btl_list, opal_list_t); 
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_lock, opal_mutex_t);
-    for (i = 0; i < num_devs &&
-            (-1 == mca_btl_openib_component.ib_max_btls ||
-             mca_btl_openib_component.ib_num_btls <
-             mca_btl_openib_component.ib_max_btls); i++){
 #if OMPI_HAVE_THREADS
-        if (mca_btl_openib_component.use_async_event_thread && 
-                0 == i) {
-            /* Starting async event thread for the component */
-            if (pthread_create(&mca_btl_openib_component.async_thread,NULL,
-                        (void*(*)(void*))btl_openib_async_thread,NULL)) {
-                BTL_ERROR(("Failed to create async event thread for openib"));
-                return NULL;
-            }
-        }
+    mca_btl_openib_component.async_thread = 0;
 #endif
-        if (OMPI_SUCCESS != (ret = init_one_hca(&btl_list, ib_devs[i]))) {
+    for(i = 0; i < num_devs && (-1 == mca_btl_openib_component.ib_max_btls ||
+                mca_btl_openib_component.ib_num_btls <
+                mca_btl_openib_component.ib_max_btls); i++) {
+        if(OMPI_SUCCESS != (ret = init_one_hca(&btl_list, ib_devs[i])))
             break;
-        }
     }
 
     if(ret != OMPI_SUCCESS) {
@@ -989,21 +996,6 @@ btl_openib_component_init(int *num_btl_modules,
     }
        
     if(0 == mca_btl_openib_component.ib_num_btls) {
-#if OMPI_HAVE_THREADS
-        if (mca_btl_openib_component.use_async_event_thread) {
-            int async_command = 0;
-            /* signaling to async_tread to stop poll for this hca*/
-            if (write(mca_btl_openib_component.async_pipe[1],
-                        &async_command,sizeof(int))<0){
-                BTL_ERROR(("Failed to write to pipe"));
-                return NULL;
-            }
-            if (pthread_join(mca_btl_openib_component.async_thread, NULL)) {
-                BTL_ERROR(("Failed to stop OpenIB async event thread"));
-                return NULL;
-            }
-        }
-#endif
         opal_show_help("help-mpi-btl-openib.txt",
                 "no active ports found", true, orte_system_info.nodename);
         return NULL;
