@@ -22,17 +22,17 @@
 # (the openib BTL).
 #
 [ini file:file not found]
-The Open MPI OpenIB BTL component was unable to find or read an INI
-file that was requested via the btl_openib_hca_param_files MCA
-parameter.  Please check this file and/or modify the
+The Open MPI OpenFabrics (openib) BTL component was unable to find or
+read an INI file that was requested via the btl_openib_hca_param_files
+MCA parameter.  Please check this file and/or modify the
 btl_openib_hca_param_files MCA parameter:
 
     %s
 #
 [ini file:not in a section]
-In parsing OpenIB BTL parameter file, values were found that were not
-in a valid INI section.  These values will be ignored.  Please
-re-check this file:
+In parsing the OpenFabrics (openib) BTL parameter file, values were
+found that were not in a valid INI section.  These values will be
+ignored.  Please re-check this file:
 
     %s
 
@@ -41,9 +41,9 @@ At line %d, near the following text:
     %s
 #
 [ini file:unexpected token]
-In parsing OpenIB BTL parameter file, unexpected tokens were found
-(this may cause significant portions of the INI file to be ignored).
-Please re-check this file:
+In parsing the OpenFabrics (openib) BTL parameter file, unexpected
+tokens were found (this may cause significant portions of the INI file
+to be ignored).  Please re-check this file:
 
     %s
 
@@ -52,10 +52,10 @@ At line %d, near the following text:
     %s
 #
 [ini file:expected equals]
-In parsing OpenIB BTL parameter file, unexpected tokens were found
-(this may cause significant portions of the INI file to be ignored).
-An equals sign ("=") was expected but was not found.  Please re-check
-this file:
+In parsing the OpenFabrics (openib) BTL parameter file, unexpected
+tokens were found (this may cause significant portions of the INI file
+to be ignored).  An equals sign ("=") was expected but was not found.
+Please re-check this file:
 
     %s
 
@@ -64,9 +64,10 @@ At line %d, near the following text:
     %s
 #
 [ini file:expected newline]
-In parsing OpenIB BTL parameter file, unexpected tokens were found
-(this may cause significant portions of the INI file to be ignored).
-A newline was expected but was not found.  Please re-check this file:
+In parsing the OpenFabrics (openib) BTL parameter file, unexpected
+tokens were found (this may cause significant portions of the INI file
+to be ignored).  A newline was expected but was not found.  Please
+re-check this file:
 
     %s
 
@@ -75,8 +76,8 @@ At line %d, near the following text:
     %s
 #
 [ini file:unknown field]
-In parsing OpenIB BTL parameter file, an unrecognized field name was
-found.  Please re-check this file:
+In parsing the OpenFabrics (openib) BTL parameter file, an
+unrecognized field name was found.  Please re-check this file:
 
     %s
 
@@ -102,10 +103,11 @@ NOTE: You can turn off this warning by setting the MCA parameter
       btl_openib_warn_no_hca_params_found to 0.
 #
 [init-fail-no-mem]
-The OpenIB BTL failed to initialize while trying to allocate some
-locked memory.  This typically can indicate that the memlock limits
-are set too low.  For most HPC installations, the memlock limits
-should be set to "unlimited".  The failure occured here:
+The OpenFabrics (openib) BTL failed to initialize while trying to
+allocate some locked memory.  This typically can indicate that the
+memlock limits are set too low.  For most HPC installations, the
+memlock limits should be set to "unlimited".  The failure occured
+here:
 
     Host:          %s
     OMPI source:   %s:%d
@@ -120,9 +122,10 @@ helpful:
     http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
 #
 [init-fail-create-q]
-The OpenIB BTL failed to initialize while trying to create an internal
-queue.  This typically indicates a failed OpenFabrics installation or
-faulty hardware.  The failure occured here:
+The OpenFabrics (openib) BTL failed to initialize while trying to
+create an internal queue.  This typically indicates a failed
+OpenFabrics installation or faulty hardware.  The failure occured
+here:
 
     Host:        %s
     OMPI source: %s:%d
@@ -185,13 +188,14 @@ NOTE: You can turn off this warning by setting the MCA parameter
       btl_openib_warn_default_gid_prefix to 0.
 #
 [ibv_fork requested but not supported]
-WARNING: fork() support was requested for the openib BTL, but it is
-not supported on the host %s.  Deactivating the openib BTL.
+WARNING: fork() support was requested for the OpenFabrics (openib)
+BTL, but it is not supported on the host %s.  Deactivating the
+OpenFabrics BTL.
 #
 [ibv_fork_init fail]
-WARNING: fork() support was requested for the openib BTL, but the
-library call ibv_fork_init() failed on the host %s.
-Deactivating the openib BTL.
+WARNING: fork() support was requested for the OpenFabrics (openib)
+BTL, but the library call ibv_fork_init() failed on the host %s.
+Deactivating the OpenFabrics BTL.
 #
 [wrong buffer alignment]
 Wrong buffer alignment %d configured on host '%s'. Should be bigger
@@ -251,15 +255,15 @@ Resolution: %s
 #
 [no qps in receive_queues]
 WARNING: No queue pairs were defined in the btl_openib_receive_queues
-MCA parameter.  At least one queue pair must be defined.  The openib
-BTL will therefore be deactivated for this run.
+MCA parameter.  At least one queue pair must be defined.  The
+OpenFabrics (openib) BTL will therefore be deactivated for this run.
 
 Host: %s
 #
 [invalid qp type in receive_queues]
 WARNING: An invalid queue pair type was specified in the
-btl_openib_receive_queues MCA parameter.  The openib BTL will be
-deactivated for this run.
+btl_openib_receive_queues MCA parameter.  The OpenFabrics (openib) BTL
+will be deactivated for this run.
 
 Valid queue pair types are "P" for per-peer and "S" for shared receive
 queue.
@@ -270,8 +274,8 @@ Bad specification: %s
 #
 [invalid pp qp specification]
 WARNING: An invalid per-peer receive queue specification was detected
-as part of the btl_openib_receive_queues MCA parameter.  The openib
-BTL will therefore be deactivated for this run.
+as part of the btl_openib_receive_queues MCA parameter.  The
+OpenFabrics (openib) BTL will therefore be deactivated for this run.
 
 Per-peer receive queues require between 1 and 5 parameters:
 
@@ -297,8 +301,8 @@ Bad queue specification: %s
 #
 [invalid srq specification]
 WARNING: An invalid shared receive queue specification was detected as
-part of the btl_openib_receive_queues MCA parameter.  The openib BTL
-will therefore be deactivated for this run.
+part of the btl_openib_receive_queues MCA parameter.  The OpenFabrics
+(openib) BTL will therefore be deactivated for this run.
 
 Shared receive queues can take between 2 and 4 parameters:
 
@@ -322,8 +326,8 @@ Bad queue specification: %s
 [rd_num must be > rd_low]
 WARNING: The number of buffers for a queue pair specified via the
 btl_openib_receive_queues MCA parameter must be greater than the low
-buffer count watermark.  The openib BTL will therefore be deactivated
-for this run.
+buffer count watermark.  The OpenFabrics (openib) BTL will therefore
+be deactivated for this run.
 
 Host: %s
 Bad queue specification: %s
@@ -333,8 +337,8 @@ WARNING: The largest queue pair buffer size specified in the
 btl_openib_receive_queues MCA parameter is smaller than the maximum
 send size (i.e., the btl_openib_max_send_size MCA parameter), meaning
 that no queue is large enough to receive the largest possible incoming
-message fragment.  The openib BTL will therefore be deactivated for
-this run.
+message fragment.  The OpenFabrics (openib) BTL will therefore be
+deactivated for this run.
 
 Host: %s
 Largest buffer size: %d
@@ -364,3 +368,79 @@ bit larger than this for performance reasons.
 Host: %s
 Specified freelist size: %d
 Minimum required freelist size: %d
+#
+[XRC with PP or SRQ]
+WARNING: An invalid queue pair type was specified in the
+btl_openib_receive_queues MCA parameter.  The OpenFabrics (openib) BTL
+will be deactivated for this run.
+
+Note that XRC ("X") queue pairs cannot be used with per-peer ("P") and
+SRQ ("S") queue pairs.  This restriction may be removed in future
+versions of Open MPI.
+
+Host: %s
+btl_openib_receive_queues: %s
+#
+[XRC with BTLs per LID]
+WARNING: An invalid queue pair type was specified in the
+btl_openib_receive_queues MCA parameter.  The OpenFabrics (openib) BTL
+will be deactivated for this run.
+
+XRC ("X") queue pairs can not be used when (btls_per_lid > 1).  This
+restriction may be removed in future versions of Open MPI.
+
+Host: %s
+btl_openib_receive_queues: %s
+btls_per_lid: %d
+#
+[XRC on device without XRC support]
+WARNING: You configured the OpenFabrics (openib) BTL to run with %d
+XRC queues.  The device %s does not have XRC capabilities; the
+OpenFabrics btl will ignore this device.  If no devices are found with
+XRC capabilities, the OpenFabrics BTL will be disabled.
+
+Host: %s
+#
+[No XRC support]
+WARNING: The Open MPI build was compiled without XRC support, but XRC
+("X") queues were specified in the btl_openib_receive_queues MCA
+parameter.  The OpenFabrics (openib) BTL will therefore be deactivated
+for this run.
+
+Host: %s
+btl_openib_receive_queues: %s
+#
+[XRC with OOB]
+WARNING: You must use the "xoob" OpenFabrics (openib) connection
+manager when XRC ("X") queues are specified in the
+btl_openib_receive_queues MCA parameter.  Either remove the X queues
+from btl_openib_receive_queues or ensure to use the "xoob" connection
+manager by setting btl_openib_connect to "xoob".  The OpenFabrics BTL
+will therefore be deactivated for this run.
+
+Host: %s
+<<<PASHA>>>: it's probably worthwhile to show the values of the
+receive_queues and connect MCA params here, not the number of X
+queues. 
+<<<JEFF>>>>: A: This check we do in "connect" module and we don't have
+the receive_queues params string there.
+<<PASHA>>: But MCA parameters are globals...  From the user
+perspective, a help message should show exactly what is wrong.  The
+number of wrong things is not helpful.
+num_xrc_qps: %d
+#
+[SRQ or PP with XOOB]
+WARNINGS: You cannot specify to use per-peer ("P") or SRQ ("S") queues
+in the btl_openib_receive_queues MCA parameter and also use the "xoob"
+connection manager.  The "xoob" connection manager is for XRC ("X)
+queues only; you must use one of the other connection managers for
+per-peer/SRQ queues (such as "oob").
+
+Host: %s
+<<<PASHA>>> Same comment as above.
+<<<JEFF>>>>: A: This check we do in "connect" module and we don't have
+the receive_queues
+<<<PASHA>>>: Same somment as above.  :-)
+params string there.
+num_srq_qps: %d
+num_pp_qps: %d

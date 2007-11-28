@@ -479,11 +479,11 @@ static int mca_btl_openib_mca_setup_qps(void)
     /* All the multi-qp stuff.. */
     char *str;
     char **queues, **params = NULL;
-    int num_pp_qps = 0, num_srq_qps = 0, qp = 0, ret = OMPI_ERROR;
+    int num_xrc_qps = 0, num_pp_qps = 0, num_srq_qps = 0, qp = 0;
     char *default_qps = "P,128,256,128,16:S,1024,256,128,32:S,4096,256,128,32:S,65536,256,128,32";
     uint32_t max_qp_size, max_size_needed;
     int32_t min_freelist_size = 0;
-    int smallest_pp_qp = 0;
+    int smallest_pp_qp = 0, ret = OMPI_ERROR;
 
     reg_string("receive_queues",
                "Colon-delimited, coma delimited list of receive queues: P,4096,8,6,4:P,32768,8,6,4",
@@ -504,6 +504,14 @@ static int mca_btl_openib_mca_setup_qps(void)
                 smallest_pp_qp = qp;
         } else if (0 == strncmp("S,", queues[qp], 2)) { 
             num_srq_qps++;
+        } else if (0 == strncmp("X,", queues[qp], 2)) {
+#if HAVE_XRC
+            num_xrc_qps++;
+#else
+            opal_show_help("help-mpi-btl-openib.txt", "No XRC support", true,
+                    orte_system_info.nodename, str);
+            goto error;
+#endif
         } else {
             opal_show_help("help-mpi-btl-openib.txt",
                            "invalid qp type in receive_queues", true, 
@@ -512,9 +520,23 @@ static int mca_btl_openib_mca_setup_qps(void)
         }
         qp++;
     }
+    /* Current XRC implementation can't used with other QP types - PP and SRQ */
+    if (num_xrc_qps > 0 && (num_pp_qps > 0 || num_srq_qps > 0)) {
+        opal_show_help("help-mpi-btl-openib.txt", "XRC with PP or SRQ", true,
+                orte_system_info.nodename, str);
+        goto error;
+    }
+
+    /* Current XRC implementation can't used with btls_per_lid > 1 */
+    if (num_xrc_qps > 0 && mca_btl_openib_component.btls_per_lid > 1) {
+        opal_show_help("help-mpi-btl-openib.txt", "XRC with BTLs per LID", true,
+                orte_system_info.nodename, str, num_xrc_qps);
+        goto error;
+    }
     mca_btl_openib_component.num_pp_qps = num_pp_qps;
     mca_btl_openib_component.num_srq_qps = num_srq_qps;
-    mca_btl_openib_component.num_qps = num_pp_qps + num_srq_qps;
+    mca_btl_openib_component.num_xrc_qps = num_xrc_qps;
+    mca_btl_openib_component.num_qps = num_pp_qps + num_srq_qps + num_xrc_qps;
 
     mca_btl_openib_component.qp_infos = (mca_btl_openib_qp_info_t*)
         malloc(sizeof(mca_btl_openib_qp_info_t) *
@@ -591,6 +613,25 @@ static int mca_btl_openib_mca_setup_qps(void)
                 min_freelist_size = 
                     mca_btl_openib_component.qp_infos[qp].rd_num;
             }
+        } else if(params[0][0] =='X') {
+            if(count < 3 || count > 5) {
+                opal_show_help("help-mpi-btl-openib.txt",
+                        "invalid xrc specification", true,
+                        orte_system_info.nodename, queues[qp]);
+                goto error;
+            }
+            mca_btl_openib_component.qp_infos[qp].size = atoi_param(P(1), 0);
+            mca_btl_openib_component.qp_infos[qp].rd_num = atoi_param(P(2), 16);
+            tmp = mca_btl_openib_component.qp_infos[qp].rd_num >> 1;
+            mca_btl_openib_component.qp_infos[qp].rd_low = atoi_param(P(3), tmp);
+            tmp = mca_btl_openib_component.qp_infos[qp].rd_low >> 2;
+            mca_btl_openib_component.qp_infos[qp].u.xrc_qp.sd_max =
+                atoi_param(P(4), tmp);
+            BTL_VERBOSE(("xrc: rd_num is %d\trd_low is %d\tsd_max is %d\n",
+                        mca_btl_openib_component.qp_infos[qp].rd_num,
+                        mca_btl_openib_component.qp_infos[qp].rd_low,
+                        mca_btl_openib_component.qp_infos[qp].u.xrc_qp.sd_max));
+            mca_btl_openib_component.qp_infos[qp].type = MCA_BTL_OPENIB_XRC_QP;
         }
 
         if (mca_btl_openib_component.qp_infos[qp].rd_num <=
@@ -647,7 +688,10 @@ static int mca_btl_openib_mca_setup_qps(void)
 
     ompi_btl_openib_connect_base_open();
 
-    ret = MPI_SUCCESS;
+    if ( OMPI_SUCCESS != ompi_btl_openib_connect_base_open())
+        goto error;
+
+    ret = OMPI_SUCCESS;
 error:
     if(params) {
         qp = 0;

@@ -102,7 +102,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
           [AC_CHECK_DECLS([IBV_EVENT_CLIENT_REREGISTER], [], [], 
                           [#include <infiniband/verbs.h>])
-           AC_CHECK_FUNCS([ibv_get_device_list ibv_resize_cq])])
+           AC_CHECK_FUNCS([ibv_get_device_list ibv_resize_cq ibv_open_xrc_domain])])
 
     CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
     LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"

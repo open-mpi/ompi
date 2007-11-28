@@ -735,4 +735,22 @@ AC_DEFINE_UNQUOTED([OPAL_IDENT_STRING], ["$with_ident_string"],
      [ident string for Open MPI])
 AC_MSG_RESULT([$with_ident_string])
 
+#
+# ConnectX  XRC support
+#
+AC_MSG_CHECKING([if ConnectX XRC support should be enabled])
+AC_ARG_ENABLE([connectx-xrc],
+    [AC_HELP_STRING([--enable-connectx-xrc],
+                    [Enable features required for ConnectX XRC support. If you don't have Infiniband ConnectX adapters you may disable the ConnectX XRC support. If you don't know which Infiniband adapter is installed on you cluster - leave it enabled (default: enabled)])])
+if test "$enable_connectx_xrc" = "no" ; then
+     AC_MSG_RESULT([no])
+     ompi_want_connectx_xrc=0
+else
+     AC_MSG_RESULT([yes])
+     ompi_want_connectx_xrc=1
+fi
+AC_DEFINE_UNQUOTED([OMPI_ENABLE_CONNECTX_XRC_SUPPORT], 
+                   [$ompi_want_connectx_xrc], 
+                   [Enable features required for ConnectX XRC support])
+
 ])

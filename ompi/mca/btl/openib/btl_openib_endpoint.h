@@ -13,6 +13,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
+ * Copyright (c) 2007      Mellanox Technologies.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -74,6 +75,11 @@ struct mca_btl_openib_rem_qp_info_t {
     /* Remote processes port sequence number */ 
 }; typedef struct mca_btl_openib_rem_qp_info_t mca_btl_openib_rem_qp_info_t; 
 
+struct mca_btl_openib_rem_srq_info_t {
+    /* Remote SRQ number */
+    uint32_t                    rem_srq_num;
+}; typedef struct mca_btl_openib_rem_srq_info_t mca_btl_openib_rem_srq_info_t;
+
 struct mca_btl_openib_rem_info_t { 
     uint16_t                    rem_lid;
     /* Local identifier of the remote process */
@@ -84,6 +90,8 @@ struct mca_btl_openib_rem_info_t {
     uint32_t                    rem_index;
     /* index of remote endpoint in endpoint array */
     mca_btl_openib_rem_qp_info_t *rem_qps;
+    /* remote xrc_srq info , used only with xrc connections */
+    mca_btl_openib_rem_srq_info_t *rem_srqs;
 }; typedef struct mca_btl_openib_rem_info_t mca_btl_openib_rem_info_t; 
 
 
@@ -112,6 +120,8 @@ struct mca_btl_openib_endpoint_srq_qp_t {
     int32_t dummy;
 }; typedef struct mca_btl_openib_endpoint_srq_qp_t mca_btl_openib_endpoint_srq_qp_t;
 
+typedef struct mca_btl_openib_endpoint_srq_qp_t mca_btl_openib_endpoint_xrc_qp_t;
+
 typedef struct mca_btl_openib_qp_t {
     struct ibv_qp *lcl_qp;
     uint32_t lcl_psn;
@@ -130,6 +140,7 @@ typedef struct mca_btl_openib_endpoint_qp_t {
     mca_btl_openib_send_control_frag_t *credit_frag;
     union {
         mca_btl_openib_endpoint_srq_qp_t srq_qp;
+        mca_btl_openib_endpoint_xrc_qp_t xrc_qp;
         mca_btl_openib_endpoint_pp_qp_t pp_qp;
     } u;
 } mca_btl_openib_endpoint_qp_t;
@@ -168,6 +179,7 @@ struct mca_btl_base_endpoint_t {
      */
     
     mca_btl_openib_endpoint_qp_t *qps;
+    mca_btl_openib_endpoint_qp_t *xrc_recv_qp; /* in xrc we will use it as recv qp */
        
     opal_list_t                 pending_get_frags; /**< list of pending rget ops */
     opal_list_t                 pending_put_frags; /**< list of pending rput ops */
@@ -182,6 +194,10 @@ struct mca_btl_base_endpoint_t {
 
 
     uint64_t subnet_id; /**< subnet id of this endpoint*/
+    uint16_t lid; /**< used only for xrc. caching remote lid number.
+                    Pasha: do we need to cache it here ?!!! */
+    struct ib_address_t *ib_addr; /**< used only for xrc; pointer to struct
+                                    that keeps remote port info */
 
     int32_t eager_recv_count; /**< number of eager received */
     mca_btl_openib_eager_rdma_remote_t eager_rdma_remote;

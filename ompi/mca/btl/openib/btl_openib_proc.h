@@ -50,6 +50,10 @@ struct mca_btl_openib_proc_t {
     size_t proc_port_count;                  
     /**< number of ports published by endpoint */
 
+    size_t port_touse;
+    /**< the index of port that will be used for new endpoint; used only for
+     * xrc qp */
+
     struct mca_btl_base_endpoint_t **proc_endpoints; 
     /**< array of endpoints that have been created to access this proc */    
 

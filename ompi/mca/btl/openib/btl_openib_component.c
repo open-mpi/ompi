@@ -59,6 +59,7 @@
 #include "btl_openib_proc.h"
 #include "btl_openib_ini.h"
 #include "btl_openib_mca.h"
+#include "btl_openib_xrc.h"
 #if OMPI_HAVE_THREADS
 #include "btl_openib_async.h"
 #endif
@@ -369,6 +370,13 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             /* store the subnet for multi-nic support */
             openib_btl->port_info.subnet_id = subnet_id;
             openib_btl->port_info.mtu = hca->mtu;
+#if HAVE_XRC
+            /* This code is protected with ifdef because we don't want to send
+             * extra bytes during OOB */
+            if(MCA_BTL_XRC_ENABLED) {
+                openib_btl->port_info.lid = lid;
+            }
+#endif
             openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbfunc = btl_openib_control;
             openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbdata = NULL;
 
@@ -510,6 +518,21 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         ret = OMPI_SUCCESS;
         goto close_hca;
     }
+#if HAVE_XRC
+    /* if user configured to run with XRC qp and the device don't support it -
+     * we should ignore this hca. Maybe we have other one that have XRC support
+     */
+    if (!(hca->ib_dev_attr.device_cap_flags & IBV_DEVICE_XRC) &&
+            mca_btl_openib_component.num_xrc_qps > 0) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                "XRC on device without XRC support", true,
+                mca_btl_openib_component.num_xrc_qps,
+                ibv_get_device_name(ib_dev),
+                orte_system_info.nodename);
+        ret = OMPI_SUCCESS;
+        goto close_hca;
+    }
+#endif
     /* Load in vendor/part-specific HCA parameters.  Note that even if
        we don't find values for this vendor/part, "values" will be set
        indicating that it does not have good values */
@@ -581,6 +604,13 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         goto close_hca;
     }
 
+    if (MCA_BTL_XRC_ENABLED) {
+        if (OMPI_SUCCESS != mca_btl_openib_open_xrc_domain(hca)) {
+            BTL_ERROR(("XRC Internal error. Failed to open xrc domain"));
+            goto dealloc_pd;
+        }
+    }
+
     mpool_resources.reg_data = (void*)hca;
     mpool_resources.sizeof_reg = sizeof(mca_btl_openib_reg_t);
     mpool_resources.register_mem = openib_reg_mr;
@@ -591,7 +621,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     if(NULL == hca->mpool){
          BTL_ERROR(("error creating IB memory pool for %s errno says %s\n",
                      ibv_get_device_name(ib_dev), strerror(errno)));
-         goto dealloc_pd;
+         goto close_xrc_domain;
     }
    
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
@@ -682,6 +712,12 @@ mpool_destroy:
 #endif
 #endif
     mca_mpool_base_module_destroy(hca->mpool);
+close_xrc_domain:
+    if (MCA_BTL_XRC_ENABLED) {
+        if (OMPI_SUCCESS != mca_btl_openib_close_xrc_domain(hca)) {
+            BTL_ERROR(("XRC Internal error. Failed to close xrc domain"));
+        }
+    }
 dealloc_pd:
     ibv_dealloc_pd(hca->ib_pd);
 close_hca:
@@ -777,6 +813,15 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
                     opal_list_t);
             openib_btl->qps[qp].u.srq_qp.sd_credits = 
                 mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
+        }
+
+        if(BTL_OPENIB_QP_TYPE_XRC(qp)) {
+            OBJ_CONSTRUCT(&openib_btl->qps[qp].u.xrc_qp.pending_frags[0],
+                    opal_list_t);
+            OBJ_CONSTRUCT(&openib_btl->qps[qp].u.xrc_qp.pending_frags[1],
+                    opal_list_t);
+            openib_btl->qps[qp].u.xrc_qp.sd_credits =
+                mca_btl_openib_component.qp_infos[qp].u.xrc_qp.sd_max;
         }
         
         init_data = malloc(sizeof(mca_btl_openib_frag_init_data_t));
@@ -874,6 +919,11 @@ btl_openib_component_init(int *num_btl_modules,
     /* Read in INI files with HCA-specific parameters */
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_ini_init())) {
         goto no_btls;
+    }
+
+    if(MCA_BTL_XRC_ENABLED) {
+        OBJ_CONSTRUCT(&mca_btl_openib_component.ib_addr_table,
+                opal_hash_table_t);
     }
 
     /* If we want fork support, try to enable it */
@@ -1053,6 +1103,9 @@ btl_openib_component_init(int *num_btl_modules,
     /* If we fail early enough in the setup, we just modex around that
        there are no openib BTL's in this process and return NULL. */
 
+    if (MCA_BTL_XRC_ENABLED)
+        OBJ_DESTRUCT(&mca_btl_openib_component.ib_addr_table);
+
     mca_btl_openib_component.ib_num_btls = 0;
     btl_openib_modex_send();
     return NULL;
@@ -1143,7 +1196,11 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
             mca_btl_openib_module_t *btl = ep->endpoint_btl;
             OPAL_THREAD_ADD32(&btl->qps[rqp].u.srq_qp.rd_posted, -1);
             mca_btl_openib_post_srr(btl, 0, rqp);
-        } else {
+        } else if(BTL_OPENIB_QP_TYPE_XRC(rqp)) {
+            mca_btl_openib_module_t *btl = ep->endpoint_btl;
+            OPAL_THREAD_ADD32(&btl->qps[rqp].u.xrc_qp.rd_posted, -1);
+            mca_btl_openib_post_xrr(openib_btl, 0, rqp);
+        } else { /* PP QP */
             if(OPAL_UNLIKELY(is_credit_msg))
                 OPAL_THREAD_ADD32(&ep->qps[cqp].u.pp_qp.cm_received, 1);
             else
@@ -1349,13 +1406,22 @@ static void progress_pending_frags_srq(mca_btl_openib_module_t* openib_btl,
     opal_list_item_t *frag;
     int i;
     
-    assert(BTL_OPENIB_QP_TYPE_SRQ(qp));
+    assert(BTL_OPENIB_QP_TYPE_SRQ(qp) || BTL_OPENIB_QP_TYPE_XRC(qp));
     
     for(i = 0; i < 2; i++) {
-        while(openib_btl->qps[qp].u.srq_qp.sd_credits > 0) {
+        opal_list_t *pending;
+        int32_t *sd_credits;
+
+        if (BTL_OPENIB_QP_TYPE_SRQ(qp)) {
+            pending = &openib_btl->qps[qp].u.srq_qp.pending_frags[i];
+            sd_credits = &openib_btl->qps[qp].u.srq_qp.sd_credits;
+        } else {
+            pending = &openib_btl->qps[qp].u.xrc_qp.pending_frags[i];
+            sd_credits = &openib_btl->qps[qp].u.xrc_qp.sd_credits;
+        }
+        while(*sd_credits > 0) {
             OPAL_THREAD_LOCK(&openib_btl->ib_lock);
-            frag = opal_list_remove_first(
-                    &openib_btl->qps[qp].u.srq_qp.pending_frags[i]);
+            frag = opal_list_remove_first(pending);
             OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
 
             if(NULL == frag)
@@ -1551,9 +1617,12 @@ static int btl_openib_module_progress(mca_btl_openib_hca_t* hca)
                 /* return send wqe */
                 qp_put_wqe(endpoint, qp);
 
-                if(IBV_WC_SEND == wc.opcode && BTL_OPENIB_QP_TYPE_SRQ(qp)) {
-                    OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits,
-                            1);
+                if(IBV_WC_SEND == wc.opcode && !BTL_OPENIB_QP_TYPE_PP(qp)) {
+                    int32_t *sd_credits = BTL_OPENIB_QP_TYPE_SRQ(qp) ?
+                        &openib_btl->qps[qp].u.srq_qp.sd_credits :
+                        &openib_btl->qps[qp].u.xrc_qp.sd_credits;
+                    OPAL_THREAD_ADD32(sd_credits, 1);
+
                     /* new SRQ credit available. Try to progress pending frags*/
                     progress_pending_frags_srq(openib_btl, qp);
                 }

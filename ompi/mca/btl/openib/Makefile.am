@@ -49,10 +49,14 @@ sources = \
     btl_openib_ini.h \
     btl_openib_async.c \
     btl_openib_async.h \
+    btl_openib_xrc.c \
+    btl_openib_xrc.h \
     connect/base.h \
     connect/btl_openib_connect_base.c \
     connect/btl_openib_connect_oob.c \
     connect/btl_openib_connect_oob.h \
+	connect/btl_openib_connect_xoob.c \
+	connect/btl_openib_connect_xoob.h \
     connect/btl_openib_connect_rdma_cm.c \
     connect/btl_openib_connect_rdma_cm.h \
     connect/connect.h
