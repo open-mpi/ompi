@@ -503,16 +503,6 @@ extern mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
                                                              uint8_t order,
                                                              size_t reserve,
                                                              size_t* size); 
-/**
- * Return a send fragment to the modules free list.
- *
- * @param btl (IN)   BTL module
- * @param frag (IN)  IB send fragment
- *
- */
-extern void mca_btl_openib_send_frag_return(mca_btl_base_module_t* btl,
-                                            mca_btl_openib_frag_t* frag);
-
 
 /**
  * Fault Tolerance Event Notification Function
@@ -574,19 +564,6 @@ static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
     }
     OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
 
-    return OMPI_SUCCESS;
-}
-
-
-static inline int mca_btl_openib_post_srr_all(mca_btl_openib_module_t *openib_btl,
-                                                   const int additional) 
-{
-    int qp;
-    for(qp = 0; qp < mca_btl_openib_component.num_srq_qps; qp++){ 
-        if(BTL_OPENIB_QP_TYPE_SRQ(qp)) {
-            mca_btl_openib_post_srr(openib_btl, additional, qp);
-        }
-    }
     return OMPI_SUCCESS;
 }
 
