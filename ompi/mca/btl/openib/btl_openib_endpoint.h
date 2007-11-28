@@ -193,8 +193,6 @@ struct mca_btl_base_endpoint_t {
 
 
     uint64_t subnet_id; /**< subnet id of this endpoint*/
-    uint16_t lid; /**< used only for xrc. caching remote lid number.
-                    Pasha: do we need to cache it here ?!!! */
     struct ib_address_t *ib_addr; /**< used only for xrc; pointer to struct
                                     that keeps remote port info */
 

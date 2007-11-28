@@ -236,8 +236,6 @@ int mca_btl_openib_add_procs(
                 OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
                 return OMPI_ERROR;
             }
-            /* we caching REMOTE_LID to the endpoint */
-            endpoint->lid = ib_proc->proc_ports[j].lid;
         }
 #endif
         mca_btl_openib_endpoint_init(openib_btl, endpoint);
