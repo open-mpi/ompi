@@ -394,6 +394,7 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 {
     bool pval_clean = false;
     int qp;
+
     /* Release memory resources */
     do {
         /* Make sure that mca_btl_openib_endpoint_connect_eager_rdma ()
@@ -415,24 +416,32 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     } while (!pval_clean);
 
     /* Close opened QPs if we have them*/
-    if(MCA_BTL_IB_CLOSED != endpoint->endpoint_state) {
-        
-        for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-            MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(&endpoint->qps[qp].pending_frags[0]);
-            MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(&endpoint->qps[qp].pending_frags[1]);
-            OBJ_DESTRUCT(&endpoint->qps[qp].pending_frags[0]);
-            OBJ_DESTRUCT(&endpoint->qps[qp].pending_frags[1]);
-            OBJ_DESTRUCT(&endpoint->qps[qp].qp->pending_frags[0]);
-            OBJ_DESTRUCT(&endpoint->qps[qp].qp->pending_frags[1]);
-            if(ibv_destroy_qp(endpoint->qps[qp].qp->lcl_qp)) {
+   for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
+        MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(&endpoint->qps[qp].pending_frags[0]);
+        MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(&endpoint->qps[qp].pending_frags[1]);
+        OBJ_DESTRUCT(&endpoint->qps[qp].pending_frags[0]);
+        OBJ_DESTRUCT(&endpoint->qps[qp].pending_frags[1]);
+
+        if(--endpoint->qps[qp].qp->users != 0)
+            continue;
+
+        MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
+                &endpoint->qps[qp].qp->pending_frags[0]);
+        MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
+                &endpoint->qps[qp].qp->pending_frags[1]);
+        OBJ_DESTRUCT(&endpoint->qps[qp].qp->pending_frags[0]);
+        OBJ_DESTRUCT(&endpoint->qps[qp].qp->pending_frags[1]);
+
+        if(endpoint->qps[qp].qp->lcl_qp != NULL)
+            if(ibv_destroy_qp(endpoint->qps[qp].qp->lcl_qp))
                 BTL_ERROR(("Failed to destroy QP:%d\n", qp));
-            }
-            if(--endpoint->qps[qp].qp->users == 0)
-                free(endpoint->qps[qp].qp);
-        }
-        /* free the qps */
-        free(endpoint->qps);
+
+        free(endpoint->qps[qp].qp);
     }
+
+    /* free the qps */
+    free(endpoint->qps);
+
     OBJ_DESTRUCT(&endpoint->endpoint_lock);
     /* Clean pending lists */
     MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(&endpoint->pending_lazy_frags);
