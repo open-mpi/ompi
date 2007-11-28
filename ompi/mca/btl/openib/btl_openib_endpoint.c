@@ -509,7 +509,7 @@ int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t *endpoint)
         if (BTL_OPENIB_QP_TYPE_PP(qp)) { 
             mca_btl_openib_endpoint_post_rr(endpoint, qp);
         } else {
-            mca_btl_openib_post_srr(endpoint->endpoint_btl, 1, qp);
+            mca_btl_openib_post_srr(endpoint->endpoint_btl, qp);
         }
     }
     

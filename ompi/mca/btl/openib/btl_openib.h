@@ -45,8 +45,6 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h" 
 
-#include "btl_openib_frag.h"
-
 BEGIN_C_DECLS
 
 #define HAVE_XRC (defined(HAVE_IBV_OPEN_XRC_DOMAIN) && (1 == OMPI_ENABLE_CONNECTX_XRC_SUPPORT))
@@ -551,45 +549,7 @@ extern int mca_btl_openib_ft_event(int state);
  * @return OMPI_SUCCESS or failure status
  */
 
-static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
-                                          const int additional,
-                                          const int qp)
-{
-    assert(!BTL_OPENIB_QP_TYPE_PP(qp));
-
-    OPAL_THREAD_LOCK(&openib_btl->ib_lock);
-    if(openib_btl->qps[qp].u.srq_qp.rd_posted <= 
-       mca_btl_openib_component.qp_infos[qp].rd_low + additional &&
-       openib_btl->qps[qp].u.srq_qp.rd_posted <
-       mca_btl_openib_component.qp_infos[qp].rd_num) {
-        int rc;
-        int32_t i, num_post = mca_btl_openib_component.qp_infos[qp].rd_num - 
-            openib_btl->qps[qp].u.srq_qp.rd_posted;
-        struct ibv_recv_wr *bad_wr;
-        ompi_free_list_t *free_list;
-
-        free_list = &openib_btl->qps[qp].recv_free;
-
-        for(i = 0; i < num_post; i++) {
-            ompi_free_list_item_t* item;
-            OMPI_FREE_LIST_WAIT(free_list, item, rc);
-            to_base_frag(item)->base.order = qp;
-            to_com_frag(item)->endpoint = NULL;
-            if(ibv_post_srq_recv(openib_btl->qps[qp].u.srq_qp.srq, 
-                                 &to_recv_frag(item)->rd_desc,
-                                 &bad_wr)) {
-                BTL_ERROR(("error posting receive descriptors to shared "
-                           "receive queue: %s", strerror(errno)));
-                OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
-                return OMPI_ERROR;
-            }
-        }
-        OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.rd_posted, num_post);
-    }
-    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
-
-    return OMPI_SUCCESS;
-}
+int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl, const int qp);
 
 static inline int qp_cq_prio(const int qp)
 {
