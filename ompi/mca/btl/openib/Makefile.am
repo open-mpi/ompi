@@ -55,10 +55,12 @@ sources = \
     connect/btl_openib_connect_base.c \
     connect/btl_openib_connect_oob.c \
     connect/btl_openib_connect_oob.h \
-	connect/btl_openib_connect_xoob.c \
-	connect/btl_openib_connect_xoob.h \
+    connect/btl_openib_connect_xoob.c \
+    connect/btl_openib_connect_xoob.h \
     connect/btl_openib_connect_rdma_cm.c \
     connect/btl_openib_connect_rdma_cm.h \
+    connect/btl_openib_connect_ibcm.c \
+    connect/btl_openib_connect_ibcm.h \
     connect/connect.h
 
 # Make the output library in this directory, and name it either
