@@ -271,22 +271,9 @@ ompi_mtl_portals_del_procs(struct mca_mtl_base_module_t *mtl,
         }
     }
 
-    return OMPI_SUCCESS;
-}
-
-
-int
-ompi_mtl_portals_finalize(struct mca_mtl_base_module_t *mtl)
-{
-    assert(mtl == &ompi_mtl_portals.base);
-
     ompi_mtl_portals_recv_short_disable((mca_mtl_portals_module_t *) mtl);
 
-    /* Don't try to wait for things to finish if we've never initialized */
-    if (PTL_INVALID_HANDLE != ompi_mtl_portals.ptl_ni_h) {
-        opal_progress_unregister(ompi_mtl_portals_progress);
-        while (0 != ompi_mtl_portals_progress()) { }
-    }
+    ompi_mtl_portals_short_cleanup();
 
     (void)PtlMDUnlink(ompi_mtl_portals.ptl_zero_md_h);
 
@@ -306,7 +293,20 @@ ompi_mtl_portals_finalize(struct mca_mtl_base_module_t *mtl)
 
     (void)PtlMEUnlink(ompi_mtl_portals.ptl_read_catchall_me_h);
 
-    ompi_mtl_portals_short_cleanup();
+    return OMPI_SUCCESS;
+}
+
+
+int
+ompi_mtl_portals_finalize(struct mca_mtl_base_module_t *mtl)
+{
+    assert(mtl == &ompi_mtl_portals.base);
+
+    /* Don't try to wait for things to finish if we've never initialized */
+    if (PTL_INVALID_HANDLE != ompi_mtl_portals.ptl_ni_h) {
+        opal_progress_unregister(ompi_mtl_portals_progress);
+        while (0 != ompi_mtl_portals_progress()) { }
+    }
 
     ompi_common_portals_ni_finalize();
     ompi_common_portals_finalize();
