@@ -16,6 +16,7 @@
 #include "connect/btl_openib_connect_oob.h"
 #include "connect/btl_openib_connect_xoob.h"
 #include "connect/btl_openib_connect_rdma_cm.h"
+#include "connect/btl_openib_connect_ibcm.h"
 
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
@@ -35,6 +36,7 @@ static ompi_btl_openib_connect_base_funcs_t *all[] = {
     &ompi_btl_openib_connect_oob,
     &ompi_btl_openib_connect_xoob,
     &ompi_btl_openib_connect_rdma_cm,
+    &ompi_btl_openib_connect_ibcm,
     NULL
 };
 
