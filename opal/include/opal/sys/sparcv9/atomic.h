@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserverd.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -91,7 +92,7 @@ static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
 
    int32_t ret = newval;
 
-   __asm__ __volatile("casa [%1] " ASI_P ", %2, %0"
+   __asm__ __volatile__("casa [%1] " ASI_P ", %2, %0"
                       : "+r" (ret)
                       : "r" (addr), "r" (oldval));
    return (ret == oldval);
@@ -132,7 +133,7 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
      */
    int64_t ret = newval;
 
-   __asm__ __volatile("casxa [%1] " ASI_P ", %2, %0"
+   __asm__ __volatile__("casxa [%1] " ASI_P ", %2, %0"
                       : "+r" (ret)
                       : "r" (addr), "r" (oldval));
    return (ret == oldval);
@@ -153,7 +154,7 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
      */
     long long ret = newval;
 
-    __asm__ __volatile(
+    __asm__ __volatile__(
                        "ldx %0, %%g1               \n\t" /* g1 = ret */
                        "ldx %2, %%g2               \n\t" /* g2 = oldval */
                        "casxa [%1] " ASI_P ", %%g2, %%g1 \n\t"

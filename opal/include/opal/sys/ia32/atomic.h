@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserverd.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -87,7 +88,7 @@ static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
                                         int32_t newval)
 {
    unsigned char ret;
-   __asm__ __volatile (
+   __asm__ __volatile__ (
                        SMPLOCK "cmpxchgl %1,%2   \n\t"
                                "sete     %0      \n\t"
                        : "=qm" (ret)
