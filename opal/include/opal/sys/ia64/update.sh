@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -34,4 +35,4 @@ cat > $CFILE<<EOF
 #include "timer.h"
 EOF
 
-gcc -O1 -I. -S $CFILE -o asms.s
+gcc -O1 -I. -S $CFILE -o asm.s

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserverd.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -179,7 +180,7 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
  * generally grinding the memory controller's performance.  Use only
  * if you need *both* read and write barriers.
  */
-void opal_atomic_mb(void);
+static inline void opal_atomic_mb(void);
 
 /**
  * Read memory barrier
@@ -190,7 +191,7 @@ void opal_atomic_mb(void);
  * next read.  Nothing is said about the ordering of writes when using
  * \c opal_atomic_rmb().
  */
-void opal_atomic_rmb(void);
+static inline void opal_atomic_rmb(void);
 
 /**
  * Write memory barrier.
@@ -201,7 +202,7 @@ void opal_atomic_rmb(void);
  * next write.  Nothing is said about the ordering of reads when using
  * \c opal_atomic_wmb().
  */
-void opal_atomic_wmb(void);
+static inline void opal_atomic_wmb(void);
 
 #endif /* defined(DOXYGEN) || OPAL_HAVE_ATOMIC_MEM_BARRIER */
 
@@ -293,11 +294,11 @@ void opal_atomic_unlock(opal_atomic_lock_t *lock);
 #define OPAL_HAVE_ATOMIC_CMPSET_32 0
 #endif
 #if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_CMPSET_32
-int opal_atomic_cmpset_32(volatile int32_t *addr, int32_t oldval, 
+static inline int opal_atomic_cmpset_32(volatile int32_t *addr, int32_t oldval, 
                           int32_t newval);
-int opal_atomic_cmpset_acq_32(volatile int32_t *addr, int32_t oldval, 
+static inline int opal_atomic_cmpset_acq_32(volatile int32_t *addr, int32_t oldval, 
                               int32_t newval);
-int opal_atomic_cmpset_rel_32(volatile int32_t *addr, int32_t oldval, 
+static inline int opal_atomic_cmpset_rel_32(volatile int32_t *addr, int32_t oldval, 
                               int32_t newval);
 #endif
 
@@ -306,11 +307,11 @@ int opal_atomic_cmpset_rel_32(volatile int32_t *addr, int32_t oldval,
 #define OPAL_HAVE_ATOMIC_CMPSET_64 0
 #endif
 #if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_CMPSET_64
-int opal_atomic_cmpset_64(volatile int64_t *addr, int64_t oldval, 
+static inline int opal_atomic_cmpset_64(volatile int64_t *addr, int64_t oldval, 
                           int64_t newval);
-int opal_atomic_cmpset_acq_64(volatile int64_t *addr, int64_t oldval, 
+static inline int opal_atomic_cmpset_acq_64(volatile int64_t *addr, int64_t oldval, 
                               int64_t newval);
-int opal_atomic_cmpset_rel_64(volatile int64_t *addr, int64_t oldval, 
+static inline int opal_atomic_cmpset_rel_64(volatile int64_t *addr, int64_t oldval, 
                               int64_t newval);
 #endif
 
