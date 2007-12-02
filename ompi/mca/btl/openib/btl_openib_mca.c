@@ -480,11 +480,29 @@ static int mca_btl_openib_mca_setup_qps(void)
     char *str;
     char **queues, **params = NULL;
     int num_xrc_qps = 0, num_pp_qps = 0, num_srq_qps = 0, qp = 0;
-    char *default_qps = "P,128,256,128,16:S,1024,256,128,32:S,4096,256,128,32:S,65536,256,128,32";
+    char default_qps[100];
     uint32_t max_qp_size, max_size_needed;
     int32_t min_freelist_size = 0;
-    int smallest_pp_qp = 0, ret = OMPI_ERROR;
+    int smallest_pp_qp = 0, ret = OMPI_ERROR, i;
+    uint32_t mid_qp_size;
 
+    mid_qp_size = mca_btl_openib_module.super.btl_eager_limit / 4;
+    /* round mid_qp_size to smallest power of two */
+    for(i = 31; i > 0; i--) {
+        if(!(mid_qp_size & (1<<i)))
+            continue;
+        mid_qp_size = (1<<i);
+        break;
+    }
+
+    if(mid_qp_size <= 128)
+        mid_qp_size = 1024;
+
+    snprintf(default_qps, 100,
+            "P,128,256,192,128:S,%u,256,128,32:S,%u,256,128,32:S,%u,256,128,32",
+            mid_qp_size,
+            (uint32_t)mca_btl_openib_module.super.btl_eager_limit,
+            (uint32_t)mca_btl_openib_module.super.btl_max_send_size);
     reg_string("receive_queues",
                "Colon-delimited, coma delimited list of receive queues: P,4096,8,6,4:P,32768,8,6,4",
                default_qps, &str, 0);
@@ -545,102 +563,71 @@ static int mca_btl_openib_mca_setup_qps(void)
     qp = 0;
 #define P(N) (((N) > count)?NULL:params[(N)])
     while(queues[qp] != NULL) { 
-        uint32_t tmp;
         int i = 0, count;
+        int32_t rd_low, rd_num;
         params = opal_argv_split_with_empty(queues[qp], ',');
         count = opal_argv_count(params);
 
         if ('P' == params[0][0]) {
+            int32_t rd_win, rd_rsv;
             if (count < 3 || count > 6) {
                 opal_show_help("help-mpi-btl-openib.txt",
                                "invalid pp qp specification", true,
                                orte_system_info.nodename, queues[qp]);
                 goto error;
             }
-            mca_btl_openib_component.qp_infos[qp].size = atoi_param(P(1), 0);
-            mca_btl_openib_component.qp_infos[qp].rd_num = atoi_param(P(2), 8);
-            tmp = mca_btl_openib_component.qp_infos[qp].rd_num >> 1;
-            mca_btl_openib_component.qp_infos[qp].rd_low =
-                atoi_param(P(3), tmp);
-            tmp = (mca_btl_openib_component.qp_infos[qp].rd_low >> 1);
-            mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win =
-                atoi_param(P(4), tmp);
-            tmp = ((mca_btl_openib_component.qp_infos[qp].rd_num << 1) - 1)/
-                mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win;
-            mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv =
-                atoi_param(P(5), tmp);
-            BTL_VERBOSE(("pp: rd_num is %d\trd_low is %d\trd_win %d\trd_rsv %d \n", 
-                         mca_btl_openib_component.qp_infos[qp].rd_num, 
-                         mca_btl_openib_component.qp_infos[qp].rd_low,
-                         mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win, 
-                         mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv
-                         ));
-            
             mca_btl_openib_component.qp_infos[qp].type = MCA_BTL_OPENIB_PP_QP;
+            mca_btl_openib_component.qp_infos[qp].size = atoi_param(P(1), 0);
+            rd_num = atoi_param(P(2), 256);
+            /* by default set rd_low to be 3/4 of rd_num */
+            rd_low = atoi_param(P(3), rd_num - (rd_num / 4));
+            rd_win = atoi_param(P(4), (rd_num - rd_low) * 2);
+            rd_rsv = atoi_param(P(5), (rd_num * 2) / rd_win);
 
+            BTL_VERBOSE(("pp: rd_num is %d rd_low is %d rd_win %d rd_rsv %d\n", 
+                         rd_num, rd_low, rd_win, rd_rsv));
+            
             /* Calculate the smallest freelist size that can be allowed */
-            if (mca_btl_openib_component.qp_infos[qp].rd_num +
-                mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv >
-                min_freelist_size) {
-                min_freelist_size = 
-                    mca_btl_openib_component.qp_infos[qp].rd_num +
-                    mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
-            }
-        } else if(params[0][0] =='S') { 
+            if (rd_num + rd_rsv > min_freelist_size)
+                min_freelist_size = rd_num + rd_rsv;
+
+            mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win = rd_win;
+            mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv = rd_rsv;
+            if((rd_num - rd_low) > rd_win)
+                opal_show_help("help-mpi-btl-openib.txt", "non optimal rd_win",
+                        true, rd_win, rd_num - rd_low);
+        } else {
+            int32_t sd_max;
             if(count < 3 || count > 5) {
                 opal_show_help("help-mpi-btl-openib.txt",
                                "invalid srq specification", true,
                                orte_system_info.nodename, queues[qp]);
                 goto error;
             }
+            mca_btl_openib_component.qp_infos[qp].type = (params[0][0] =='X') ?
+                MCA_BTL_OPENIB_XRC_QP : MCA_BTL_OPENIB_SRQ_QP;
             mca_btl_openib_component.qp_infos[qp].size = atoi_param(P(1), 0);
-            mca_btl_openib_component.qp_infos[qp].rd_num = atoi_param(P(2), 16);
-            tmp = mca_btl_openib_component.qp_infos[qp].rd_num >> 1;
-            mca_btl_openib_component.qp_infos[qp].rd_low =
-                atoi_param(P(3), tmp);
-            tmp = mca_btl_openib_component.qp_infos[qp].rd_low >> 2;
-            mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max =
-                atoi_param(P(4), tmp);
-            BTL_VERBOSE(("srq: rd_num is %d\trd_low is %d\tsd_max is %d\n", 
-                         mca_btl_openib_component.qp_infos[qp].rd_num, 
-                         mca_btl_openib_component.qp_infos[qp].rd_low,
-                         mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max));
-            mca_btl_openib_component.qp_infos[qp].type = MCA_BTL_OPENIB_SRQ_QP;
+            rd_num = atoi_param(P(2), 256);
+            /* by default set rd_low to be 3/4 of rd_num */
+            rd_low = atoi_param(P(3), rd_num - (rd_num / 4));
+            sd_max = atoi_param(P(4), rd_low / 4);
+            BTL_VERBOSE(("srq: rd_num is %d rd_low is %d sd_max is %d\n", 
+                         rd_num, rd_low, sd_max));
 
             /* Calculate the smallest freelist size that can be allowed */
-            if (mca_btl_openib_component.qp_infos[qp].rd_num >
-                min_freelist_size) {
-                min_freelist_size = 
-                    mca_btl_openib_component.qp_infos[qp].rd_num;
-            }
-        } else if(params[0][0] =='X') {
-            if(count < 3 || count > 5) {
-                opal_show_help("help-mpi-btl-openib.txt",
-                        "invalid xrc specification", true,
-                        orte_system_info.nodename, queues[qp]);
-                goto error;
-            }
-            mca_btl_openib_component.qp_infos[qp].size = atoi_param(P(1), 0);
-            mca_btl_openib_component.qp_infos[qp].rd_num = atoi_param(P(2), 16);
-            tmp = mca_btl_openib_component.qp_infos[qp].rd_num >> 1;
-            mca_btl_openib_component.qp_infos[qp].rd_low = atoi_param(P(3), tmp);
-            tmp = mca_btl_openib_component.qp_infos[qp].rd_low >> 2;
-            mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max =
-                atoi_param(P(4), tmp);
-            BTL_VERBOSE(("xrc: rd_num is %d\trd_low is %d\tsd_max is %d\n",
-                        mca_btl_openib_component.qp_infos[qp].rd_num,
-                        mca_btl_openib_component.qp_infos[qp].rd_low,
-                        mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max));
-            mca_btl_openib_component.qp_infos[qp].type = MCA_BTL_OPENIB_XRC_QP;
+            if (rd_num > min_freelist_size)
+                min_freelist_size = rd_num;
+
+            mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max = sd_max;
         }
 
-        if (mca_btl_openib_component.qp_infos[qp].rd_num <=
-            mca_btl_openib_component.qp_infos[qp].rd_low) {
-            opal_show_help("help-mpi-btl-openib.txt",
-                           "rd_num must be > rd_low", true,
-                           orte_system_info.nodename, queues[qp]);
+        if (rd_num <= rd_low) {
+            opal_show_help("help-mpi-btl-openib.txt", "rd_num must be > rd_low",
+                    true, orte_system_info.nodename, queues[qp]);
             goto error;
         }
+        mca_btl_openib_component.qp_infos[qp].rd_num = rd_num;
+        mca_btl_openib_component.qp_infos[qp].rd_low = rd_low;
         while (NULL != params[i]) {
             free(params[i++]);
         }
