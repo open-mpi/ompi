@@ -214,8 +214,8 @@ int btl_openib_register_mca_params(void)
                   "queue (will automatically be set to a minimum of "
                   "(2 * number_of_peers * btl_openib_rd_num))",
                   1000, &ival, REGINT_GE_ONE));
-    mca_btl_openib_component.ib_lp_cq_size =
-        mca_btl_openib_component.ib_hp_cq_size = (uint32_t) ival;
+    mca_btl_openib_component.ib_cq_size[BTL_OPENIB_LP_CQ] =
+        mca_btl_openib_component.ib_cq_size[BTL_OPENIB_HP_CQ] = (uint32_t) ival;
     
     CHECK(reg_int("ib_sg_list_size", "Size of IB segment list "
                   "(must be >= 1)", 
