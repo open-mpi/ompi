@@ -495,8 +495,6 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     hca->btls = 0;
     hca->ib_cq[BTL_OPENIB_HP_CQ] = NULL;
     hca->ib_cq[BTL_OPENIB_LP_CQ] = NULL;
-    hca->cq_users[BTL_OPENIB_HP_CQ] = 0;
-    hca->cq_users[BTL_OPENIB_LP_CQ] = 0;
     hca->cq_size[BTL_OPENIB_HP_CQ] = 0;
     hca->cq_size[BTL_OPENIB_LP_CQ] = 0;
     OBJ_CONSTRUCT(&hca->hca_lock, opal_mutex_t); 
@@ -1550,21 +1548,26 @@ static int btl_openib_module_progress(mca_btl_openib_hca_t* hca)
 {
     static char *cq_name[] = {"HP CQ", "LP CQ"};
     int cq, qp;
-    int count = 0,ne = 0;
+    int count = 0, ne = 0;
     mca_btl_openib_com_frag_t* frag;
     mca_btl_base_descriptor_t *des;
     mca_btl_openib_endpoint_t* endpoint; 
     mca_btl_openib_module_t *openib_btl = NULL;
     struct ibv_wc wc; 
 
-    for(cq = 0; cq < 2; cq++) {
-        if(0 == hca->cq_users[cq])
-            continue;
+    for(cq = 0; cq < 2;) {
         ne = ibv_poll_cq(hca->ib_cq[cq], 1, &wc);
-        if(0 == ne) 
+        if(0 == ne) {
+            /* don't check low prio cq if there was something in high prio cq */
+            if(count)
+                break;
+            cq++;
             continue;
+        }
         if(ne < 0)
             goto error;
+
+        count++;
        
         des = (mca_btl_base_descriptor_t*)(uintptr_t)wc.wr_id;
         frag = to_com_frag(des);
@@ -1604,8 +1607,6 @@ static int btl_openib_module_progress(mca_btl_openib_hca_t* hca)
                 /* new wqe or/and get token available. Try to progress pending frags */
                 progress_pending_frags_wqe(endpoint->qps[qp].qp);
                 mca_btl_openib_frag_progress_pending_put_get(endpoint, qp);
-
-                count++;
                 break;
             case IBV_WC_RECV:
                 if(wc.wc_flags & IBV_WC_WITH_IMM) {
@@ -1623,8 +1624,6 @@ static int btl_openib_module_progress(mca_btl_openib_hca_t* hca)
                     return 0;
                 }
 
-                count++; 
-
                 /* decide if it is time to setup an eager rdma channel */
                 if (!endpoint->eager_rdma_local.base.pval &&
                         endpoint->use_eager_rdma &&
@@ -1640,7 +1639,8 @@ static int btl_openib_module_progress(mca_btl_openib_hca_t* hca)
                 BTL_ERROR(("Unhandled work completion opcode is %d",
                             wc.opcode));
                 if(openib_btl)
-                    openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
+                    openib_btl->error_cb(&openib_btl->super,
+                            MCA_BTL_ERROR_FLAGS_FATAL);
                 break;
         }
     }

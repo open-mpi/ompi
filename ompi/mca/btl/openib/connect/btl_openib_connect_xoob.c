@@ -250,8 +250,6 @@ static int xoob_qp_create(mca_btl_base_endpoint_t* endpoint, xoob_qp_type type)
 
     qp_init_attr.send_cq = qp_init_attr.recv_cq = openib_btl->hca->ib_cq[prio];
 
-    openib_btl->hca->cq_users[prio]++;
-
     /* no need recv queue; receives are posted to srq */
     qp_init_attr.cap.max_recv_wr = 0;
     qp_init_attr.cap.max_send_wr = send_wr;

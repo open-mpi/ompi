@@ -287,12 +287,10 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
             openib_btl->qps[qp].u.srq_qp.rd_posted = 0;
 #if HAVE_XRC
             if(BTL_OPENIB_QP_TYPE_XRC(qp)) {
-                int prio = qp_cq_prio(qp);
                 openib_btl->qps[qp].u.srq_qp.srq =
                     ibv_create_xrc_srq(openib_btl->hca->ib_pd,
                             openib_btl->hca->xrc_domain,
-                            openib_btl->hca->ib_cq[prio], &attr);
-                openib_btl->hca->cq_users[prio]++;
+                            openib_btl->hca->ib_cq[qp_cq_prio(qp)], &attr);
             } else
 #endif
             {
@@ -310,8 +308,20 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
        
     return OMPI_SUCCESS;
 }
-static int adjust_cq(mca_btl_openib_hca_t *hca, const int cq_size, const int cq)
+
+static int adjust_cq(mca_btl_openib_hca_t *hca, const int cq)
 {
+    uint32_t cq_size = hca->cq_size[cq];
+
+    /* make sure we don't exceed the maximum CQ size and that we 
+     * don't size the queue smaller than otherwise requested 
+     */
+     if(cq_size < mca_btl_openib_component.ib_cq_size[cq])
+        cq_size = mca_btl_openib_component.ib_cq_size[cq];
+
+    if(cq_size > (uint32_t)hca->ib_dev_attr.max_cq)
+        cq_size = hca->ib_dev_attr.max_cq;
+
     if(NULL == hca->ib_cq[cq]) {
         hca->ib_cq[cq] = ibv_create_cq_compat(hca->ib_dev_context, cq_size,
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
@@ -347,7 +357,7 @@ static int adjust_cq(mca_btl_openib_hca_t *hca, const int cq_size, const int cq)
 #endif
     }
 #ifdef HAVE_IBV_RESIZE_CQ
-    else {
+    else if (cq_size > mca_btl_openib_component.ib_cq_size[cq]){
         int rc;
         rc = ibv_resize_cq(hca->ib_cq[cq], cq_size);
         /* For ConnectX the resize CQ is not implemented and verbs returns -ENOSYS 
@@ -358,66 +368,37 @@ static int adjust_cq(mca_btl_openib_hca_t *hca, const int cq_size, const int cq)
         }
     }
 #endif
-    hca->cq_size[cq] = cq_size;
 
     return OMPI_SUCCESS;
 }
 
-static int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size_t nprocs) 
+static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl, size_t nprocs) 
 {
-    uint32_t min_hp_cq_size = openib_btl->hca->cq_size[BTL_OPENIB_HP_CQ],
-             min_lp_cq_size = openib_btl->hca->cq_size[BTL_OPENIB_HP_CQ],
-             cq_size;
+    uint32_t send_cqes, recv_cqes;
     int rc = OMPI_SUCCESS, qp;
     mca_btl_openib_hca_t *hca = openib_btl->hca;
 
     /* figure out reasonable sizes for completion queues */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
         if(BTL_OPENIB_QP_TYPE_SRQ(qp)) {
-            cq_size = mca_btl_openib_component.qp_infos[qp].rd_num +
-                mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
-            if(mca_btl_openib_component.qp_infos[qp].size <=
-                    mca_btl_openib_component.eager_limit) {
-                min_hp_cq_size += cq_size;
-            } else {
-                min_lp_cq_size += cq_size;
-            }
+            send_cqes = mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
+            recv_cqes = mca_btl_openib_component.qp_infos[qp].rd_num;
         } else {
-            cq_size = (mca_btl_openib_component.qp_infos[qp].rd_num +
-                    mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv) *
-                2 * nprocs;
-            if(mca_btl_openib_component.qp_infos[qp].size <=
-                    mca_btl_openib_component.eager_limit) {
-                min_hp_cq_size += cq_size;
-            } else {
-                min_lp_cq_size += cq_size;
-            }
+            send_cqes = (mca_btl_openib_component.qp_infos[qp].rd_num +
+                mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv) * nprocs;
+            recv_cqes = send_cqes;
         }
+        openib_btl->hca->cq_size[qp_cq_prio(qp)] += recv_cqes;
+        openib_btl->hca->cq_size[BTL_OPENIB_LP_CQ] += send_cqes;
     }
    
-    /* make sure we don't exceed the maximum CQ size and that we 
-     * don't size the queue smaller than otherwise requested 
-     */
-     if(min_lp_cq_size < mca_btl_openib_component.ib_lp_cq_size)
-        min_lp_cq_size =  mca_btl_openib_component.ib_lp_cq_size;
-    if(min_lp_cq_size > (uint32_t)openib_btl->hca->ib_dev_attr.max_cq)
-        min_lp_cq_size = openib_btl->hca->ib_dev_attr.max_cq;
+    rc = adjust_cq(hca, BTL_OPENIB_HP_CQ);
+    if(rc != OMPI_SUCCESS)
+        goto out;
 
-    if(min_hp_cq_size < mca_btl_openib_component.ib_hp_cq_size)
-        min_hp_cq_size =  mca_btl_openib_component.ib_hp_cq_size;
-    if(min_hp_cq_size > (uint32_t)openib_btl->hca->ib_dev_attr.max_cq)
-        min_hp_cq_size = openib_btl->hca->ib_dev_attr.max_cq;
-
-    if(min_hp_cq_size != hca->cq_size[BTL_OPENIB_HP_CQ]) {
-        rc = adjust_cq(hca, min_hp_cq_size, BTL_OPENIB_HP_CQ);
-        if(rc != OMPI_SUCCESS)
-            goto out;
-    }
-    if(min_lp_cq_size != hca->cq_size[BTL_OPENIB_LP_CQ]) {
-        rc = adjust_cq(hca, min_lp_cq_size, BTL_OPENIB_LP_CQ);
-        if(rc != OMPI_SUCCESS)
-            goto out;
-    }
+    rc = adjust_cq(hca, BTL_OPENIB_LP_CQ);
+    if(rc != OMPI_SUCCESS)
+        goto out;
 
     if(0 == openib_btl->num_peers)
        rc = create_srq(openib_btl); 

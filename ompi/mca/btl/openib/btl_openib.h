@@ -144,8 +144,7 @@ struct mca_btl_openib_component_t {
     uint32_t reg_mru_len;    /**< Length of the registration cache most recently used list */
     uint32_t use_srq;        /**< Use the Shared Receive Queue (SRQ mode) */ 
     
-    uint32_t ib_lp_cq_size;     /**< Max outstanding CQE on the CQ */  
-    uint32_t ib_hp_cq_size;     /**< Max outstanding CQE on the CQ */  
+    uint32_t ib_cq_size[2];  /**< Max outstanding CQE on the CQ */  
     
     uint32_t ib_sg_list_size; /**< Max scatter/gather descriptor entries on the WQ */ 
     uint32_t ib_pkey_ix;     /**< InfiniBand pkey index */
@@ -253,7 +252,6 @@ struct mca_btl_openib_hca_t {
     struct ibv_device_attr ib_dev_attr;
     struct ibv_pd *ib_pd;
     struct ibv_cq *ib_cq[2];
-    uint32_t cq_users[2];
     uint32_t cq_size[2];
     mca_mpool_base_module_t *mpool;
     /* MTU for this HCA */

@@ -330,14 +330,13 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
     struct ibv_qp *my_qp;
     struct ibv_qp_init_attr init_attr;
     struct ibv_qp_attr attr;
-    int prio = qp_cq_prio(qp);
 
     memset(&init_attr, 0, sizeof(init_attr));
     memset(&attr, 0, sizeof(attr));
 
     init_attr.qp_type = IBV_QPT_RC;
-    init_attr.send_cq = openib_btl->hca->ib_cq[prio];
-    init_attr.recv_cq = openib_btl->hca->ib_cq[prio];
+    init_attr.send_cq = openib_btl->hca->ib_cq[BTL_OPENIB_LP_CQ];
+    init_attr.recv_cq = openib_btl->hca->ib_cq[qp_cq_prio(qp)];
     init_attr.srq     = srq;
     init_attr.cap.max_send_sge = mca_btl_openib_component.ib_sg_list_size;
     init_attr.cap.max_recv_sge = mca_btl_openib_component.ib_sg_list_size;
@@ -371,7 +370,6 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
     /* Setup meta data on the endpoint */
     endpoint->qps[qp].qp->lcl_psn = lrand48() & 0xffffff;
     endpoint->qps[qp].credit_frag = NULL;
-    openib_btl->hca->cq_users[prio]++;
 
     return OMPI_SUCCESS;
 }
