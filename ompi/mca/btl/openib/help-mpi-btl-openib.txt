@@ -432,3 +432,8 @@ will therefore be deactivated for this run.
 Host: %s
 num_srq_qps: %d
 num_pp_qps: %d
+#
+[non optimal rd_win]
+WARNING: rd_win specification is non optimal. For maximum performance it is
+advisable to configure rd_win smaller then (rd_num - rd_low), but currently
+rd_win = %d and (rd_num - rd_low) = %d.
