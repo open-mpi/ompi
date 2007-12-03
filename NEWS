@@ -72,26 +72,42 @@ Trunk (not on release branches yet)
   driver stacks.
   --> Expected: 1.3
 
-- Better handling of ECONNABORTED from connect on Linux.  Thanks to
-  Bob Soliday for noticing the problem; thanks to Brian Barrett for
-  submitting a patch.
-  --> Expected 1.2.5
-- Reduce extraneous output from OOB when TCP connections must
-  be retried.  Thanks to Brian Barrett for submitting a patch.
-  --> Expected 1.2.5
-- Fixed minor file descriptor leak in the Altix timer code.  Thanks to
-  Paul Hargrove for noticing the problem and supplying the fix.
-  --> Expected 1.2.5
-- Fixed issue with pthread detection when compilers are not all
-  from the same vendor.  Thanks to Ake Sandgren for the bug
-  report.
-  --> Expected 1.2.5
-
 
 1.2.5 (not released yet)
 -----
 
-- Nothing new yet.
+- Better handling of ECONNABORTED from connect on Linux.  Thanks to
+  Bob Soliday for noticing the problem; thanks to Brian Barrett for
+  submitting a patch.
+- Reduce extraneous output from OOB when TCP connections must
+  be retried.  Thanks to Brian Barrett for submitting a patch.
+- Fix for connectX devices and OFED 1.3.  See ticket #1190.
+- Fixed a configure problem for Fortran 90 on Cray systems.  Ticket #1189.
+- Fix an uninitialized variable in the error case in opal_init.c
+  Thanks to Ake Sandgren for pointing out the mistake.
+- Fixed a hang in configure if $USER was not defined. See ticket #900.
+- Added support for parallel debuggers even when we have an optimized build.
+  See ticket #1178.
+- Worked around a bus error in the Mac OS X 10.5.X (Leopard) linker when
+  compiling Open MPI with -g. See ticket #1179.
+- Removed some warnings about 'rm' from Mac OS X 10.5 (Leopard) builds.
+- Fix the handling of mx_finalize().  See ticket #1177.
+  Thanks to Ake Sandgren for bringing this issue to our attention.
+- Fixed minor file descriptor leak in the Altix timer code.  Thanks to
+  Paul Hargrove for noticing the problem and supplying the fix.
+- Fix a problem when using a different compiler for C and Objective C.
+  See ticket #1153.
+- Fix segfault in comm_spawn when the user specified a working directory.
+  Thanks to Murat Knecht for reporting this and suggesting a fix.
+- A few manpage fixes from the Debian maintainers.
+  Thanks to Tilman Koschnick, Sylvestre Ledru, and Dirk Eddelbuettel.
+- Fixed issue with pthread detection when compilers are not all
+  from the same vendor.  Thanks to Ake Sandgren for the bug
+  report.  See ticket #1150.
+- Fixed vector collectives in the self module. See ticket #1166.
+- Fixed some data-type engine bugs: an indexing bug, and an alignment bug.
+  See ticket #1165.
+- Only set the MPI_APPNUM attribute if it is defined. See ticket #1164.
 
 
 1.2.4
