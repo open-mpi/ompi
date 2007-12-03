@@ -290,7 +290,7 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
         
         /* Wait for checkpoint to finish */
         do {
-            sleep(1); /* JJH Do we really want to sleep? */
+            usleep(1000); /* JJH Do we really want to sleep? */
         } while(CR_STATE_IDLE != cr_status());
 
         *state = blcr_current_state;
