@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
   opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "internal", 0, 
                           "Show internal MCA parameters (not meant to be modified by users)");
   opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "path", 1, 
-                          "Show paths that Open MPI was configured with.  Accepts the following parameters: prefix, bindir, libdir, incdir, pkglibdir, sysconfdir");
+                          "Show paths that Open MPI was configured with.  Accepts the following parameters: prefix, bindir, libdir, incdir, mandir, pkglibdir, sysconfdir");
   opal_cmd_line_make_opt3(cmd_line, '\0', NULL, "arch", 0, 
                           "Show architecture Open MPI was compiled on");
   opal_cmd_line_make_opt3(cmd_line, 'c', NULL, "config", 0, 
