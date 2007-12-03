@@ -899,7 +899,10 @@ static int snapc_full_local_start_checkpoint_all(size_t ckpt_state)
 static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_local_snapshot_t *vpid_snapshot)
 {
     int ret, exit_status = ORTE_SUCCESS;
-    int s_time, max_wait_time = 20; /* wait time before giving up on the checkpoint */
+    int usleep_time = 1000;
+    int s_time = 0, max_wait_time;
+
+    max_wait_time = 20 * (1000000/usleep_time); /* wait time before giving up on the checkpoint */
 
     /*
      * Wait for the named pipes to be created
@@ -917,20 +920,20 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_local_snapshot_
             /* File doesn't exist yet, keep waiting */
             if( s_time >= max_wait_time - 5 ) {
                 opal_output_verbose(15, mca_snapc_full_component.super.output_handle,
-                                    "local) File does not exist yet: <%s> rtn = %d (waited %d/%d sec)\n",
+                                    "local) File does not exist yet: <%s> rtn = %d (waited %d/%d usec)\n",
                                     vpid_snapshot->comm_pipe_r, ret, s_time, max_wait_time);
             }
-            sleep(1);
+            usleep(usleep_time);
             continue;
         }
         else if( 0 > (ret = access(vpid_snapshot->comm_pipe_w, F_OK) )) {
             /* File doesn't exist yet, keep waiting */
             if( s_time >= max_wait_time - 5 ) {
                 opal_output_verbose(15, mca_snapc_full_component.super.output_handle,
-                                    "local) File does not exist yet: <%s> rtn = %d (waited %d/%d sec)\n",
+                                    "local) File does not exist yet: <%s> rtn = %d (waited %d/%d usec)\n",
                                     vpid_snapshot->comm_pipe_w, ret, s_time, max_wait_time);
             }
-            sleep(1);
+            usleep(usleep_time);
             continue;
         }
         else {
