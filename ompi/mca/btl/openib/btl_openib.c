@@ -221,12 +221,16 @@ int mca_btl_openib_add_procs(
 #if HAVE_XRC
         if (MCA_BTL_XRC_ENABLED) {
             int rem_port_cnt = 0;
-            for(j = 0; j < (int) ib_proc->proc_port_count && rem_port_cnt < btl_rank; j++) {
+            for(j = 0; j < (int) ib_proc->proc_port_count; j++) {
                 if(ib_proc->proc_ports[j].subnet_id ==
                         openib_btl->port_info.subnet_id) {
-                    rem_port_cnt ++;
+                    if (rem_port_cnt == btl_rank)
+                        break;
+                    else
+                        rem_port_cnt ++;
                 }
             }
+
             assert(rem_port_cnt == btl_rank);
             /* Push the subnet and lid to in the component */
             rc = mca_btl_openib_ib_address_add_new(
