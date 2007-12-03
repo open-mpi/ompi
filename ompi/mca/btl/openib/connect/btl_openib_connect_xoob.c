@@ -660,7 +660,8 @@ static mca_btl_openib_endpoint_t* xoob_find_endpoint(orte_process_name_t* proces
             ib_endpoint = ib_proc->proc_endpoints[i];
             /* we need to check different 
              * lid for different message type */
-            if (ENDPOINT_XOOB_CONNECT_RESPONSE || ENDPOINT_XOOB_CONNECT_XRC_RESPONSE) {
+            if (ENDPOINT_XOOB_CONNECT_RESPONSE == message_type || 
+                    ENDPOINT_XOOB_CONNECT_XRC_RESPONSE == message_type) {
                 /* response message */
                 if (ib_endpoint->subnet_id == subnet_id &&
                         ib_endpoint->ib_addr->lid == lid) {
@@ -680,7 +681,6 @@ static mca_btl_openib_endpoint_t* xoob_find_endpoint(orte_process_name_t* proces
     } else {
             BTL_ERROR(("can't find suitable endpoint for this peer\n")); 
     }
-
     return ib_endpoint;
 }
 
@@ -712,9 +712,10 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
     /* Processing message */
     switch (message_type) {
         case ENDPOINT_XOOB_CONNECT_REQUEST:
-            BTL_VERBOSE(("Received ENDPOINT_XOOB_CONNECT_REQUEST: lid %d, sid %d\n",
-                        rem_info.rem_lid, 
-                        rem_info.rem_subnet_id));
+            BTL_VERBOSE(("Received ENDPOINT_XOOB_CONNECT_REQUEST: lid %d, sid %d, rlid %d\n",
+                        rem_info.rem_lid,
+                        rem_info.rem_subnet_id,
+                        requested_lid));
             ib_endpoint = xoob_find_endpoint(process_name,rem_info.rem_subnet_id,
                     requested_lid, message_type);
             if ( NULL == ib_endpoint) {
