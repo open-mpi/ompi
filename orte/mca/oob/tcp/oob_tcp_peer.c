@@ -262,7 +262,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
 static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
 {
     struct sockaddr_in inaddr;
-    int rc;
+    int rc, retry_count;
 
     do {
         /* pick an address in round-robin fashion from the list exported by the peer */
@@ -287,6 +287,8 @@ static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
         }
         
         /* start the connect - will likely fail with EINPROGRESS */
+        retry_count = 0;
+    retry_connect:
         if(connect(peer->peer_sd,
                 (struct sockaddr*)&inaddr, sizeof(struct sockaddr_in)) < 0) {
             /* non-blocking so wait for completion */
@@ -296,17 +298,30 @@ static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
                 return ORTE_SUCCESS;
             }
 
-            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_try_connect: "
-                        "connect to %s:%d failed: %s (%d)",
-                        ORTE_NAME_ARGS(orte_process_info.my_name),
-                        ORTE_NAME_ARGS(&(peer->peer_name)),
-                        inet_ntoa(inaddr.sin_addr),
-                        ntohs(inaddr.sin_port),
-                        strerror(opal_socket_errno),
-                        opal_socket_errno);
+            /* Some kernels (Linux 2.6) will automatically software
+               abort a connection that was ECONNREFUSED on the last
+               attempt, without even trying to establish the
+               connection.  Handle that case in a semi-rational
+               way. */
+            if (ECONNABORTED == opal_socket_errno && ++retry_count < 2) {
+                goto retry_connect;
+            }
+
+            if ((mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) ||
+                (ECONNABORTED != opal_socket_errno &&
+                 ECONNREFUSED != opal_socket_errno)) {
+                opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_try_connect: "
+                            "connect to %s:%d failed: %s (%d)",
+                            ORTE_NAME_ARGS(orte_process_info.my_name),
+                            ORTE_NAME_ARGS(&(peer->peer_name)),
+                            inet_ntoa(inaddr.sin_addr),
+                            ntohs(inaddr.sin_port),
+                            strerror(opal_socket_errno),
+                            opal_socket_errno);
+            }
             continue;
-        }
-        
+        }        
+
         /* send our globally unique process identifier to the peer */
         if((rc = mca_oob_tcp_peer_send_connect_ack(peer)) == ORTE_SUCCESS) {
             peer->peer_state = MCA_OOB_TCP_CONNECT_ACK;
@@ -324,14 +339,14 @@ static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
         }
     } while(peer->peer_addr->addr_next != 0);
 
-    /* None of the interfaces worked.. */
-    opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_try_connect: "
-                "connect to %s:%d failed, connecting over all interfaces failed!",
-                ORTE_NAME_ARGS(orte_process_info.my_name),
-                ORTE_NAME_ARGS(&(peer->peer_name)),
-                inet_ntoa(inaddr.sin_addr),
-                ntohs(inaddr.sin_port));
-    mca_oob_tcp_peer_close(peer);
+    /* None of the interfaces worked... We'll try again for a number of
+       times, so we're not done yet, hence the debug output */
+    if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_try_connect: "
+                    "Connection across all interfaces failed.  Likely will retry",
+                    ORTE_NAME_ARGS(orte_process_info.my_name),
+                    ORTE_NAME_ARGS(&(peer->peer_name)));
+    }
     return ORTE_ERR_UNREACH;
 }
 
@@ -425,12 +440,14 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
         return;
     } else if (so_error == ECONNREFUSED || so_error == ETIMEDOUT) {
         struct timeval tv = { 1,0 };
-        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_complete_connect: "
-                    "connection failed: %s (%d) - retrying\n", 
-                    ORTE_NAME_ARGS(orte_process_info.my_name),
-                    ORTE_NAME_ARGS(&(peer->peer_name)),
-                    strerror(so_error),
-                    so_error);
+        if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
+            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_complete_connect: "
+                        "connection failed: %s (%d) - retrying\n", 
+                        ORTE_NAME_ARGS(orte_process_info.my_name),
+                        ORTE_NAME_ARGS(&(peer->peer_name)),
+                        strerror(so_error),
+                        so_error);
+        }
         mca_oob_tcp_peer_shutdown(peer);
         opal_evtimer_add(&peer->peer_timer_event, &tv);
         return;
