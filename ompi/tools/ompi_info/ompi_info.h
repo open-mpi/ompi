@@ -76,6 +76,7 @@ namespace ompi_info {
   extern std::string path_bindir;
   extern std::string path_libdir;
   extern std::string path_incdir;
+  extern std::string path_mandir;
   extern std::string path_pkglibdir;
   extern std::string path_sysconfdir;
 

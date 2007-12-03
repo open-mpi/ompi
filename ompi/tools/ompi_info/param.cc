@@ -57,6 +57,7 @@ string ompi_info::path_prefix = "prefix";
 string ompi_info::path_bindir = "bindir";
 string ompi_info::path_libdir = "libdir";
 string ompi_info::path_incdir = "incdir";
+string ompi_info::path_mandir = "mandir";
 string ompi_info::path_pkglibdir = "pkglibdir";
 string ompi_info::path_sysconfdir = "sysconfdir";
 
@@ -260,6 +261,7 @@ void ompi_info::do_path(bool want_all, opal_cmd_line_t *cmd_line)
     show_path(path_bindir, opal_install_dirs.bindir);
     show_path(path_libdir, opal_install_dirs.libdir);
     show_path(path_incdir, opal_install_dirs.includedir);
+    show_path(path_mandir, opal_install_dirs.mandir);
     show_path(path_pkglibdir, opal_install_dirs.pkglibdir);
     show_path(path_sysconfdir, opal_install_dirs.sysconfdir);
   } else {
@@ -275,6 +277,8 @@ void ompi_info::do_path(bool want_all, opal_cmd_line_t *cmd_line)
         show_path(path_libdir, opal_install_dirs.libdir);
       else if (path_incdir == scope)
         show_path(path_incdir, opal_install_dirs.includedir);
+      else if (path_mandir == scope)
+        show_path(path_mandir, opal_install_dirs.mandir);
       else if (path_pkglibdir == scope)
         show_path(path_pkglibdir, opal_install_dirs.pkglibdir);
       else if (path_sysconfdir == scope)
