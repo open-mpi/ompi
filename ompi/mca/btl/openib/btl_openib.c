@@ -262,13 +262,15 @@ int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size
 #if OMPI_MCA_BTL_OPENIB_HAVE_RESIZE_CQ
         if(!first_time) { 
             rc = ibv_resize_cq(openib_btl->ib_cq[BTL_OPENIB_LP_QP], mca_btl_openib_component.ib_cq_size);
-            if(rc) {
+            /* For ConnectX the resize CQ is not implemented and verbs returns -ENOSYS
+             * but should return ENOSYS. So it is reason for abs */
+            if(rc && ENOSYS != abs(rc)) {
                 BTL_ERROR(("cannot resize low priority completion queue, error: %d", rc));
                 return OMPI_ERROR;
             }
             rc = ibv_resize_cq(openib_btl->ib_cq[BTL_OPENIB_HP_QP],
                     mca_btl_openib_component.ib_cq_size);
-            if(rc) {
+            if(rc && ENOSYS != abs(rc)) {
                 BTL_ERROR(("cannot resize high priority completion queue, error: %d", rc));
                 return OMPI_ERROR;
             }
