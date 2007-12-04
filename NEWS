@@ -71,6 +71,9 @@ Trunk (not on release branches yet)
 - Removed "mvapi" BTL; all InfiniBand support now uses the OpenFabrics
   driver stacks.
   --> Expected: 1.3
+- Added more stringent MPI API parameter checking to help user-level
+  debugging.
+  --> Expected: 1.3
 
 
 1.2.5 (not released yet)
@@ -116,8 +119,6 @@ Trunk (not on release branches yet)
 1.2.4
 -----
 
-- Added more stringent MPI API parameter checking to help user-level
-  debugging.
 - Really added support for TotalView/DDT parallel debugger message queue
   debugging (it was mistakenly listed as "added" in the 1.2 release).
 - Fixed a build issue with GNU/kFreeBSD. Thanks to Petr Salinger for
