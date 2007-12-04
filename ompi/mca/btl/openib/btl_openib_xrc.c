@@ -165,48 +165,4 @@ int mca_btl_openib_ib_address_add_new (uint64_t s_id, uint16_t lid, mca_btl_open
 
     return ret;
 }
-
-/* this one not really used, but i need it for debug */
-int mca_btl_openib_ib_address_status(uint64_t s_id, uint16_t lid)
-{
-    void *key,*tmp;
-    int status;
-    struct ib_address_t *ib_addr;
-
-    /* build the key */
-    key = malloc(SIZE_OF2(s_id,lid));
-    if (NULL == key) {
-        BTL_ERROR(("Failed to allocate memory for temporary key\n"));
-        return OMPI_ERROR;
-    }
-    memcpy(ib_addr->key, &lid, sizeof(lid));
-    memcpy((void*)((char*)ib_addr->key + sizeof(lid)), &s_id, sizeof(s_id));
-
-    /* lets get the status*/
-    OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
-    status = opal_hash_table_get_value_ptr(&mca_btl_openib_component.ib_addr_table,
-            ib_addr->key, 
-            SIZE_OF2(s_id,lid), &tmp);
-    if (OPAL_SUCCESS == status) {
-        /* check what is the status of these key */
-        ib_addr = (struct ib_address_t*)tmp;
-        /* debug stuff */
-        if (ib_addr->subnet_id != s_id || ib_addr->lid != lid) {
-            BTL_ERROR(("XRC Internal error. Was searching for %d, %d but found %d, %d",
-                        s_id, lid, ib_addr->subnet_id, ib_addr->lid));
-        }
-        status = ib_addr->status;
-        OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
-        free(key);
-        return status;
-    } 
-
-    /* all lids and subnets should be in the list. 
-     * If we is here - we have some problem */
-    OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
-    BTL_ERROR(("XRC Internal error. Failed to locate element with subnet %d and lid %d\n",
-                s_id, lid));
-    free(key);
-    return OMPI_ERROR;
-}
 #endif
