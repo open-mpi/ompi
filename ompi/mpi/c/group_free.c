@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,7 +45,9 @@ int MPI_Group_free(MPI_Group *group)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ((NULL == group) ||
-            (MPI_GROUP_NULL == *group) || (NULL == *group) ) {
+            (MPI_GROUP_NULL == *group) || 
+            (MPI_GROUP_EMPTY == *group) || 
+            (NULL == *group) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
                                           FUNC_NAME);
         }
