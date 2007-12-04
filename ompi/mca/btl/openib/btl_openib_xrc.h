@@ -43,6 +43,5 @@ typedef struct ib_address_t ib_address_t;
 int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_hca_t *hca);
 int mca_btl_openib_close_xrc_domain(struct mca_btl_openib_hca_t *hca);
 int mca_btl_openib_ib_address_add_new (uint64_t s_id, uint16_t lid, mca_btl_openib_endpoint_t *ep);
-int mca_btl_openib_ib_address_status(uint64_t s_id, uint16_t lid);
 
 #endif
