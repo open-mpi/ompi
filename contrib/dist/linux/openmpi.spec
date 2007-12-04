@@ -132,6 +132,15 @@
 # type: bool (0/1)
 %{!?use_default_rpm_opt_flags: %define use_default_rpm_opt_flags 1}
 
+# Some compilers can be installed via tarball or RPM (e.g., Intel,
+# PGI).  If they're installed via RPM, then rpmbuild's auto-dependency
+# generation stuff will work fine.  But if they're installed via
+# tarball, then rpmbuild's auto-dependency generation stuff will
+# break; complaining that it can't find a bunch of compiler .so files.
+# So provide an option to turn this stuff off.
+# type: bool (0/1)
+%{!?disable_auto_provides: %define disable_auto_provides 0}
+
 #############################################################################
 #
 # OSCAR-specific defaults
@@ -180,6 +189,11 @@
 %define _includedir /opt/%{name}/%{version}/include
 %define _mandir /opt/%{name}/%{version}/man
 %define _pkgdatadir /opt/%{name}/%{version}/share/%{name}
+# Per advice from Doug Ledford at Red Hat, docdir is supposed to be in
+# a fixed location.  But if you're installing a package in /opt, all
+# bets are off.  So feel free to install it anywhere in your tree.  He
+# suggests $prefix/doc.
+%define _defaultdocdir /opt/%{name}/%{version}/doc
 %endif
 
 %if !%{build_debuginfo_rpm}
@@ -223,6 +237,9 @@ Distribution: %{?_distribution:%{_distribution}}%{!?_distribution:%{_vendor}}
 Prefix: %{_prefix}
 Provides: mpi
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-root
+%if %{disable_auto_provides}
+AutoReqProv: no
+%endif
 %if %{install_modulefile}
 Requires: %{modules_rpm_name}
 %endif
@@ -250,6 +267,9 @@ Open MPI jobs.
 Summary: Tools and plugin modules for running Open MPI jobs
 Group: Development/Libraries
 Provides: mpi
+%if %{disable_auto_provides}
+AutoReqProv: no
+%endif
 %if %{install_modulefile}
 Requires: %{modules_rpm_name}
 %endif
@@ -274,6 +294,9 @@ running Open MPI jobs.
 %package devel
 Summary: Development tools and header files for Open MPI
 Group: Development/Libraries
+%if %{disable_auto_provides}
+AutoReqProv: no
+%endif
 Requires: openmpi-runtime
 
 %description devel
@@ -293,6 +316,9 @@ wrapper compilers and header files for MPI development.
 %package docs
 Summary: Documentation for Open MPI
 Group: Development/Documentation
+%if %{disable_auto_provides}
+AutoReqProv: no
+%endif
 Requires: openmpi-runtime
 
 %description docs
@@ -682,6 +708,17 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Tue Dec  4 2008 Jeff Squyres <jsquyres@cisco.com>
+- Added define option for disabling the use of rpmbuild's
+  auto-dependency generation stuff.  This is necessary for some
+  compilers that allow themselves to be installed via tarball (not
+  RPM), such as the Portland Group compiler.
+
+* Thu Jul 12 2007 Jeff Squyres <jsquyres@cisco.com>
+- Change default doc location when using install_in_opt.  Thanks to
+  Alex Tumanov for pointing this out and to Doug Ledford for
+  suggestions where to put docdir in this case.
+
 * Thu May  3 2007 Jeff Squyres <jsquyres@cisco.com>
 - Ensure to move out of $RPM_BUILD_ROOT before deleting it in % clean.
 - Remove a debugging "echo" that somehow got left in there
