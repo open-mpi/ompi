@@ -132,6 +132,15 @@
 # type: bool (0/1)
 %{!?use_default_rpm_opt_flags: %define use_default_rpm_opt_flags 1}
 
+# Some compilers can be installed via tarball or RPM (e.g., Intel,
+# PGI).  If they're installed via RPM, then rpmbuild's auto-dependency
+# generation stuff will work fine.  But if they're installed via
+# tarball, then rpmbuild's auto-dependency generation stuff will
+# break; complaining that it can't find a bunch of compiler .so files.
+# So provide an option to turn this stuff off.
+# type: bool (0/1)
+%{!?disable_auto_provides: %define disable_auto_provides 0}
+
 #############################################################################
 #
 # OSCAR-specific defaults
@@ -228,6 +237,9 @@ Distribution: %{?_distribution:%{_distribution}}%{!?_distribution:%{_vendor}}
 Prefix: %{_prefix}
 Provides: mpi
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-root
+%if %{disable_auto_provides}
+AutoReqProv: no
+%endif
 %if %{install_modulefile}
 Requires: %{modules_rpm_name}
 %endif
@@ -687,6 +699,12 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Tue Dec  4 2008 Jeff Squyres <jsquyres@cisco.com>
+- Added define option for disabling the use of rpmbuild's
+  auto-dependency generation stuff.  This is necessary for some
+  compilers that allow themselves to be installed via tarball (not
+  RPM), such as the Portland Group compiler.
+
 * Thu Jul 12 2007 Jeff Squyres <jsquyres@cisco.com>
 - Change default doc location when using install_in_opt.  Thanks to
   Alex Tumanov for pointing this out and to Doug Ledford for
