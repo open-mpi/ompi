@@ -267,6 +267,9 @@ Open MPI jobs.
 Summary: Tools and plugin modules for running Open MPI jobs
 Group: Development/Libraries
 Provides: mpi
+%if %{disable_auto_provides}
+AutoReqProv: no
+%endif
 %if %{install_modulefile}
 Requires: %{modules_rpm_name}
 %endif
@@ -291,6 +294,9 @@ running Open MPI jobs.
 %package devel
 Summary: Development tools and header files for Open MPI
 Group: Development/Libraries
+%if %{disable_auto_provides}
+AutoReqProv: no
+%endif
 Requires: openmpi-runtime
 
 %description devel
@@ -310,6 +316,9 @@ wrapper compilers and header files for MPI development.
 %package docs
 Summary: Documentation for Open MPI
 Group: Development/Documentation
+%if %{disable_auto_provides}
+AutoReqProv: no
+%endif
 Requires: openmpi-runtime
 
 %description docs
