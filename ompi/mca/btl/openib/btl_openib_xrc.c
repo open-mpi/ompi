@@ -38,9 +38,12 @@ int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_hca_t *hca)
 {
     int len;
     char *xrc_file_name;
+    const char *dev_name;
 
-    len = asprintf(&xrc_file_name, "%s"OPAL_PATH_SEP"openib_xrc_domain",
-                    orte_process_info.job_session_dir);
+    dev_name = ibv_get_device_name(hca->ib_dev);
+    len = asprintf(&xrc_file_name,
+            "%s"OPAL_PATH_SEP"openib_xrc_domain_%s",
+            orte_process_info.job_session_dir, dev_name);
     if (0 > len) {
         BTL_ERROR(("Failed to allocate memomry for XRC file name\n",
                 strerror(errno)));
@@ -52,6 +55,7 @@ int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_hca_t *hca)
         BTL_ERROR(("Failed to open XRC domain file %s, errno says %s\n",
                 xrc_file_name,strerror(errno)));
         free(xrc_file_name);
+        return OMPI_ERROR;
     }
    
     hca->xrc_domain = ibv_open_xrc_domain(hca->ib_dev_context, hca->xrc_fd, O_CREAT);
