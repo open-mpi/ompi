@@ -216,8 +216,6 @@ OMPI_DECLSPEC extern const Op REPLACE;
 OMPI_DECLSPEC extern const Group        GROUP_NULL;
 OMPI_DECLSPEC extern const Win          WIN_NULL;
 OMPI_DECLSPEC extern const Info         INFO_NULL;
-//OMPI_DECLSPEC extern const Comm         COMM_NULL;
-//OMPI_DECLSPEC extern const MPI_Comm     COMM_NULL;
 OMPI_DECLSPEC extern Comm_Null          COMM_NULL;
 OMPI_DECLSPEC extern const Datatype     DATATYPE_NULL;
 OMPI_DECLSPEC extern Request            REQUEST_NULL;
