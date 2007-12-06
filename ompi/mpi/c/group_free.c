@@ -10,7 +10,6 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,14 +39,25 @@ int MPI_Group_free(MPI_Group *group)
 
     OPAL_CR_TEST_CHECKPOINT_READY();
 
-    /* check to make sure we don't free GROUP_EMPTY or GROUP_NULL */
+    /* check to make sure we don't free GROUP_NULL.  Note that we *do*
+       allow freeing GROUP_EMPTY after much debate in the OMPI core
+       group.  The final thread about this, and the decision to
+       support freeing GROUP_EMPTY can be found here:
+
+       http://www.open-mpi.org/community/lists/devel/2007/12/2750.php
+
+       The short version: other MPI's allow it (LAM/MPI, CT6, MPICH2)
+       probably mainly because the Intel MPI test suite expects it to
+       happen and there's now several years worth of expected behavior
+       to allow this behavior.  Rather than have to explain every time
+       why OMPI is the only one who completely adheres to the standard
+       / fails the intel tests, it seemed easier to just let this one
+       slide.  It's not really that important, after all! */
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ((NULL == group) ||
-            (MPI_GROUP_NULL == *group) || 
-            (MPI_GROUP_EMPTY == *group) || 
-            (NULL == *group) ) {
+            (MPI_GROUP_NULL == *group) || (NULL == *group) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
                                           FUNC_NAME);
         }
