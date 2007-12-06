@@ -139,7 +139,7 @@
 # break; complaining that it can't find a bunch of compiler .so files.
 # So provide an option to turn this stuff off.
 # type: bool (0/1)
-%{!?disable_auto_provides: %define disable_auto_provides 0}
+%{!?disable_auto_requires: %define disable_auto_requires 0}
 
 #############################################################################
 #
@@ -237,8 +237,8 @@ Distribution: %{?_distribution:%{_distribution}}%{!?_distribution:%{_vendor}}
 Prefix: %{_prefix}
 Provides: mpi
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-root
-%if %{disable_auto_provides}
-AutoReqProv: no
+%if %{disable_auto_requires}
+AutoReq: no
 %endif
 %if %{install_modulefile}
 Requires: %{modules_rpm_name}
@@ -267,8 +267,8 @@ Open MPI jobs.
 Summary: Tools and plugin modules for running Open MPI jobs
 Group: Development/Libraries
 Provides: mpi
-%if %{disable_auto_provides}
-AutoReqProv: no
+%if %{disable_auto_requires}
+AutoReq: no
 %endif
 %if %{install_modulefile}
 Requires: %{modules_rpm_name}
@@ -294,8 +294,8 @@ running Open MPI jobs.
 %package devel
 Summary: Development tools and header files for Open MPI
 Group: Development/Libraries
-%if %{disable_auto_provides}
-AutoReqProv: no
+%if %{disable_auto_requires}
+AutoReq: no
 %endif
 Requires: openmpi-runtime
 
@@ -316,8 +316,8 @@ wrapper compilers and header files for MPI development.
 %package docs
 Summary: Documentation for Open MPI
 Group: Development/Documentation
-%if %{disable_auto_provides}
-AutoReqProv: no
+%if %{disable_auto_requires}
+AutoReq: no
 %endif
 Requires: openmpi-runtime
 
