@@ -672,10 +672,7 @@ static int mca_btl_openib_mca_setup_qps(void)
     mca_btl_openib_component.credits_qp = smallest_pp_qp;
 
     /* Register any MCA params for the connect pseudo-components */
-
-    ompi_btl_openib_connect_base_open();
-
-    if ( OMPI_SUCCESS != ompi_btl_openib_connect_base_open())
+    if (OMPI_SUCCESS != ompi_btl_openib_connect_base_open())
         goto error;
 
     ret = OMPI_SUCCESS;
