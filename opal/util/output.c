@@ -499,7 +499,7 @@ static int do_open(int output_id, opal_output_stream_t * lds)
         info[i].ldi_syslog_priority = lds->lds_syslog_priority;
     }
 #else
-    info[i].ldi_want_syslog = false;
+    info[i].ldi_syslog = false;
 #endif
 
     if (NULL != lds->lds_prefix) {
