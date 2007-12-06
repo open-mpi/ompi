@@ -304,6 +304,8 @@ AC_DEFUN([_OMPI_PROG_CC],[
     BASECC="`basename $CC`"
     CFLAGS="$ompi_cflags_save"
     AC_DEFINE_UNQUOTED(OMPI_CC, "$CC", [OMPI underlying C compiler])
-    OMPI_CC_ABSOLUTE="`which $CC`"
+    set dummy $CC
+    ompi_cc_argv0=[$]2
+    OMPI_CC_ABSOLUTE="`which $ompi_cc_argv0`"
     AC_SUBST(OMPI_CC_ABSOLUTE)
 ])
