@@ -253,7 +253,9 @@ AC_DEFUN([_OMPI_PROG_CXX],[
     BASECXX="`basename $CXX`"
     CXXFLAGS="$ompi_cxxflags_save"
     AC_DEFINE_UNQUOTED(OMPI_CXX, "$CXX", [OMPI underlying C++ compiler])
-    OMPI_CXX_ABSOLUTE="`which $CXX`"
+    set dummy $CXX
+    ompi_cxx_argv0=[$]2
+    OMPI_CXX_ABSOLUTE="`which $ompi_cxx_argv0`"
     AC_SUBST(OMPI_CXX_ABSOLUTE)
 
     OMPI_CXX_COMPILER_VENDOR([ompi_cxx_vendor])
