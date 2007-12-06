@@ -20,11 +20,12 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 #include "ompi/request/request.h"
+#include "ompi/request/request_default.h"
 #include "ompi/request/grequest.h"
 
 #include "ompi/mca/crcp/crcp.h"
 
-int ompi_request_test( ompi_request_t ** rptr,
+int ompi_request_default_test( ompi_request_t ** rptr,
                        int *completed,
                        ompi_status_public_t * status )
 {
@@ -91,7 +92,7 @@ int ompi_request_test( ompi_request_t ** rptr,
     return OMPI_SUCCESS;
 }
 
-int ompi_request_test_any(
+int ompi_request_default_test_any(
     size_t count,
     ompi_request_t ** requests,
     int *index,
@@ -168,7 +169,7 @@ int ompi_request_test_any(
 }
 
 
-int ompi_request_test_all(
+int ompi_request_default_test_all(
     size_t count,
     ompi_request_t ** requests,
     int *completed,
@@ -263,7 +264,7 @@ int ompi_request_test_all(
 }
 
 
-int ompi_request_test_some(
+int ompi_request_default_test_some(
     size_t count,
     ompi_request_t ** requests,
     int * outcount,

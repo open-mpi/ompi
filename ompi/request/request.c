@@ -21,6 +21,7 @@
 
 #include "opal/class/opal_object.h"
 #include "ompi/request/request.h"
+#include "ompi/request/request_default.h"
 #include "ompi/constants.h"
 
 ompi_pointer_array_t             ompi_request_f_to_c_table;
@@ -31,7 +32,16 @@ opal_condition_t                 ompi_request_cond;
 ompi_request_t                   ompi_request_null;
 ompi_request_t                   ompi_request_empty;
 ompi_status_public_t             ompi_status_empty;
-
+ompi_request_fns_t               ompi_request_functions = {
+    ompi_request_default_test,
+    ompi_request_default_test_any,
+    ompi_request_default_test_all,
+    ompi_request_default_test_some,
+    ompi_request_default_wait,
+    ompi_request_default_wait_any,
+    ompi_request_default_wait_all,
+    ompi_request_default_wait_some
+};
 
 static void ompi_request_construct(ompi_request_t* req)
 {

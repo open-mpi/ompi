@@ -20,12 +20,14 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 #include "ompi/request/request.h"
+#include "ompi/request/request_default.h"
 #include "ompi/request/grequest.h"
 
 #include "opal/runtime/opal_cr.h"
 #include "ompi/mca/crcp/crcp.h"
 
-int ompi_request_wait(
+
+int ompi_request_default_wait(
     ompi_request_t ** req_ptr,
     ompi_status_public_t * status)
 {
@@ -71,7 +73,7 @@ int ompi_request_wait(
 }
 
 
-int ompi_request_wait_any(
+int ompi_request_default_wait_any(
     size_t count,
     ompi_request_t ** requests,
     int *index,
@@ -204,7 +206,7 @@ finished:
 }
 
 
-int ompi_request_wait_all( size_t count,
+int ompi_request_default_wait_all( size_t count,
                            ompi_request_t ** requests,
                            ompi_status_public_t * statuses )
 {
@@ -351,7 +353,7 @@ int ompi_request_wait_all( size_t count,
 }
 
 
-int ompi_request_wait_some(
+int ompi_request_default_wait_some(
     size_t count,
     ompi_request_t ** requests,
     int * outcount,

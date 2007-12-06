@@ -65,7 +65,6 @@ typedef enum {
     OMPI_REQUEST_CANCELLED
 } ompi_request_state_t;
 
-
 struct ompi_request_t;
 
 /*
@@ -77,7 +76,6 @@ typedef int (*ompi_request_free_fn_t)(struct ompi_request_t** rptr);
  * Optional function to cancel a pending request.
  */
 typedef int (*ompi_request_cancel_fn_t)(struct ompi_request_t* request, int flag); 
-
 
 /**
  * Forward declaration
@@ -107,7 +105,7 @@ typedef union ompi_mpi_object_t {
  * Main top-level request struct definition 
  */
 struct ompi_request_t {
-    ompi_free_list_item_t super;                    /**< Base type */
+    ompi_free_list_item_t super;               /**< Base type */
     ompi_request_type_t req_type;              /**< Enum indicating the type of the request */
     ompi_status_public_t req_status;           /**< Completion status */
     volatile bool req_complete;                /**< Flag indicating wether request has completed */
@@ -164,65 +162,6 @@ do {                                                                    \
 } while (0); 
 
 /**
- * Globals used for tracking requests and request completion.
- */
-OMPI_DECLSPEC extern ompi_pointer_array_t  ompi_request_f_to_c_table;
-OMPI_DECLSPEC extern size_t                ompi_request_waiting;
-OMPI_DECLSPEC extern size_t                ompi_request_completed;
-OMPI_DECLSPEC extern int32_t               ompi_request_poll;
-OMPI_DECLSPEC extern opal_mutex_t          ompi_request_lock;
-OMPI_DECLSPEC extern opal_condition_t      ompi_request_cond;
-OMPI_DECLSPEC extern ompi_request_t        ompi_request_null;
-OMPI_DECLSPEC extern ompi_request_t        ompi_request_empty;
-OMPI_DECLSPEC extern ompi_status_public_t  ompi_status_empty;
-
-
-/**
- * Initialize the MPI_Request subsystem; invoked during MPI_INIT.
- */
-
-int ompi_request_init(void);
-
-/**
- * Free a persistent request to a MPI_PROC_NULL peer (there's no
- * freelist to put it back to, so we have to actually OBJ_RELEASE it).
- */
-
-OMPI_DECLSPEC int ompi_request_persistent_proc_null_free(ompi_request_t **request);
-
-
-/**
- * Shut down the MPI_Request subsystem; invoked during MPI_FINALIZE.
- */
-
-int ompi_request_finalize(void);
-
-
-/**
- * Cancel a pending request.
- */
-
-static inline int ompi_request_cancel(ompi_request_t* request)
-{
-    if (request->req_cancel != NULL) {
-        return request->req_cancel(request, true);
-    }
-    return OMPI_SUCCESS;
-}
-
-
-/**
- * Free a request.
- *
- * @param request (INOUT)   Pointer to request.
- */
-
-static inline int ompi_request_free(ompi_request_t** request)
-{
-    return (*request)->req_free(request);
-}
-
-/**
  * Non-blocking test for request completion.
  *
  * @param request (IN)   Array of requests
@@ -233,11 +172,9 @@ static inline int ompi_request_free(ompi_request_t** request)
  * Note that upon completion, the request is freed, and the
  * request handle at index set to NULL.
  */
-
-OMPI_DECLSPEC int ompi_request_test( ompi_request_t ** rptr,
-                                     int *completed,
-                                     ompi_status_public_t * status );
-
+typedef int (*ompi_request_test_fn_t)(ompi_request_t ** rptr,
+                                      int *completed,
+                                      ompi_status_public_t * status );
 /**
  * Non-blocking test for request completion.
  *
@@ -251,14 +188,11 @@ OMPI_DECLSPEC int ompi_request_test( ompi_request_t ** rptr,
  * Note that upon completion, the request is freed, and the
  * request handle at index set to NULL.
  */
-
-OMPI_DECLSPEC int ompi_request_test_any(
-    size_t count,
-    ompi_request_t ** requests,
-    int *index,
-    int *completed,
-    ompi_status_public_t * status);
-
+typedef int (*ompi_request_test_any_fn_t)(size_t count,
+                                          ompi_request_t ** requests,
+                                          int *index,
+                                          int *completed,
+                                          ompi_status_public_t * status);
 /**
  * Non-blocking test for request completion.
  *
@@ -273,15 +207,10 @@ OMPI_DECLSPEC int ompi_request_test_any(
  * the requests array is not modified (no requests freed), unless all requests
  * have completed.
  */
-
-OMPI_DECLSPEC int ompi_request_test_all(
-    size_t count,
-    ompi_request_t ** requests,
-    int *completed,
-    ompi_status_public_t * statuses);
-
-
-
+typedef int (*ompi_request_test_all_fn_t)(size_t count,
+                                          ompi_request_t ** requests,
+                                          int *completed,
+                                          ompi_status_public_t * statuses);
 /**
  * Non-blocking test for some of N requests to complete.
  *
@@ -293,15 +222,11 @@ OMPI_DECLSPEC int ompi_request_test_all(
  * @return                  OMPI_SUCCESS, OMPI_ERR_IN_STATUS or failure status.
  *
  */
-
-OMPI_DECLSPEC int ompi_request_test_some(
-    size_t count,
-    ompi_request_t ** requests,
-    int * outcount,
-    int * indices,
-    ompi_status_public_t * statuses);
-
-
+typedef int (*ompi_request_test_some_fn_t)(size_t count,
+                                           ompi_request_t ** requests,
+                                           int * outcount,
+                                           int * indices,
+                                           ompi_status_public_t * statuses);
 /**
  * Wait (blocking-mode) for one requests to complete.
  *
@@ -310,11 +235,8 @@ OMPI_DECLSPEC int ompi_request_test_some(
  * @return                OMPI_SUCCESS or failure status.
  *
  */
-
-OMPI_DECLSPEC int ompi_request_wait(
-    ompi_request_t ** req_ptr,
-    ompi_status_public_t * status);
-
+typedef int (*ompi_request_wait_fn_t)(ompi_request_t ** req_ptr,
+                                      ompi_status_public_t * status);
 /**
  * Wait (blocking-mode) for one of N requests to complete.
  *
@@ -325,13 +247,10 @@ OMPI_DECLSPEC int ompi_request_wait(
  * @return                OMPI_SUCCESS or failure status.
  *
  */
-
-OMPI_DECLSPEC int ompi_request_wait_any(
-    size_t count,
-    ompi_request_t ** requests,
-    int *index,
-    ompi_status_public_t * status);
-
+typedef int (*ompi_request_wait_any_fn_t)(size_t count,
+                                          ompi_request_t ** requests,
+                                          int *index,
+                                          ompi_status_public_t * status);
 /**
  * Wait (blocking-mode) for all of N requests to complete.
  *
@@ -341,13 +260,9 @@ OMPI_DECLSPEC int ompi_request_wait_any(
  * @return                OMPI_SUCCESS or failure status.
  *
  */
-
-OMPI_DECLSPEC int ompi_request_wait_all(
-    size_t count,
-    ompi_request_t ** requests,
-    ompi_status_public_t * statuses);
-
-
+typedef int (*ompi_request_wait_all_fn_t)(size_t count,
+                                          ompi_request_t ** requests,
+                                          ompi_status_public_t * statuses);
 /**
  * Wait (blocking-mode) for some of N requests to complete.
  *
@@ -359,14 +274,90 @@ OMPI_DECLSPEC int ompi_request_wait_all(
  * @return                  OMPI_SUCCESS, OMPI_ERR_IN_STATUS or failure status.
  *
  */
+typedef int (*ompi_request_wait_some_fn_t)(size_t count,
+                                           ompi_request_t ** requests,
+                                           int * outcount,
+                                           int * indices,
+                                           ompi_status_public_t * statuses);
 
-OMPI_DECLSPEC int ompi_request_wait_some(
-    size_t count,
-    ompi_request_t ** requests,
-    int * outcount,
-    int * indices,
-    ompi_status_public_t * statuses);
+/**
+ * Replaceable request functions
+ */
+typedef struct ompi_request_fns_t {
+    ompi_request_test_fn_t      req_test;
+    ompi_request_test_any_fn_t  req_test_any;
+    ompi_request_test_all_fn_t  req_test_all;
+    ompi_request_test_some_fn_t req_test_some;
+    ompi_request_wait_fn_t      req_wait;
+    ompi_request_wait_any_fn_t  req_wait_any;
+    ompi_request_wait_all_fn_t  req_wait_all;
+    ompi_request_wait_some_fn_t req_wait_some;
+} ompi_request_fns_t;
 
+/**
+ * Globals used for tracking requests and request completion.
+ */
+OMPI_DECLSPEC extern ompi_pointer_array_t  ompi_request_f_to_c_table;
+OMPI_DECLSPEC extern size_t                ompi_request_waiting;
+OMPI_DECLSPEC extern size_t                ompi_request_completed;
+OMPI_DECLSPEC extern int32_t               ompi_request_poll;
+OMPI_DECLSPEC extern opal_mutex_t          ompi_request_lock;
+OMPI_DECLSPEC extern opal_condition_t      ompi_request_cond;
+OMPI_DECLSPEC extern ompi_request_t        ompi_request_null;
+OMPI_DECLSPEC extern ompi_request_t        ompi_request_empty;
+OMPI_DECLSPEC extern ompi_status_public_t  ompi_status_empty;
+OMPI_DECLSPEC extern ompi_request_fns_t    ompi_request_functions;
+
+/**
+ * Initialize the MPI_Request subsystem; invoked during MPI_INIT.
+ */
+int ompi_request_init(void);
+
+/**
+ * Free a persistent request to a MPI_PROC_NULL peer (there's no
+ * freelist to put it back to, so we have to actually OBJ_RELEASE it).
+ */
+OMPI_DECLSPEC int ompi_request_persistent_proc_null_free(ompi_request_t **request);
+
+/**
+ * Shut down the MPI_Request subsystem; invoked during MPI_FINALIZE.
+ */
+int ompi_request_finalize(void);
+
+/**
+ * Cancel a pending request.
+ */
+static inline int ompi_request_cancel(ompi_request_t* request)
+{
+    if (request->req_cancel != NULL) {
+        return request->req_cancel(request, true);
+    }
+    return OMPI_SUCCESS;
+}
+
+/**
+ * Free a request.
+ *
+ * @param request (INOUT)   Pointer to request.
+ */
+static inline int ompi_request_free(ompi_request_t** request)
+{
+    return (*request)->req_free(request);
+}
+
+#define ompi_request_test       (ompi_request_functions.req_test)
+#define ompi_request_test_any   (ompi_request_functions.req_test_any)
+#define ompi_request_test_all   (ompi_request_functions.req_test_all)
+#define ompi_request_test_some  (ompi_request_functions.req_test_some)
+#define ompi_request_wait       (ompi_request_functions.req_wait)
+#define ompi_request_wait_any   (ompi_request_functions.req_wait_any)
+#define ompi_request_wait_all   (ompi_request_functions.req_wait_all)
+#define ompi_request_wait_some  (ompi_request_functions.req_wait_some)
+
+
+/**
+ * Wait a particular request for completion
+ */
 static inline void ompi_request_wait_completion(ompi_request_t *req)
 {
     if(false == req->req_complete) {
