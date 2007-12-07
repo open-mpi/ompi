@@ -47,7 +47,8 @@ void vprotocol_pessimist_matching_replay(int *src) {
 }
 
 void vprotocol_pessimist_delivery_replay(size_t n, ompi_request_t **reqs,
-                                         int *index, ompi_status_public_t *status) {
+                                         int *outcount, int *index, 
+                                         ompi_status_public_t *status) {
     mca_vprotocol_pessimist_event_t *event;
 
     for(event = (mca_vprotocol_pessimist_event_t *) opal_list_get_first(&mca_vprotocol_pessimist.replay_events);
@@ -63,6 +64,7 @@ void vprotocol_pessimist_delivery_replay(size_t n, ompi_request_t **reqs,
             /* this particular test have to return no request completed yet */
             V_OUTPUT_VERBOSE(70, "pessimist:\treplay\tdeliver\t%"PRIpclock"\tnone", mca_vprotocol_pessimist.clock);
             *index = MPI_UNDEFINED;
+            *outcount = 0;
             mca_vprotocol_pessimist.clock++;
             /* This request have to stay in the queue until probeid matches */
             return;
@@ -79,6 +81,7 @@ void vprotocol_pessimist_delivery_replay(size_t n, ompi_request_t **reqs,
                                           (opal_list_item_t *) event);
                     VPESSIMIST_EVENT_RETURN(event);
                     *index = i;
+                    *outcount = 1;
                     mca_vprotocol_pessimist.clock++;
                     ompi_request_wait(&reqs[i], status);
                     return;
@@ -87,6 +90,7 @@ void vprotocol_pessimist_delivery_replay(size_t n, ompi_request_t **reqs,
             V_OUTPUT_VERBOSE(70, "pessimist:\treplay\tdeliver\t%"PRIpclock"\tnone", mca_vprotocol_pessimist.clock);
             assert(devent->reqid == 0); /* make sure we don't missed a request */
             *index = MPI_UNDEFINED;
+            *outcount = 0;
             mca_vprotocol_pessimist.clock++;
             opal_list_remove_item(&mca_vprotocol_pessimist.replay_events,
                                   (opal_list_item_t *) event);

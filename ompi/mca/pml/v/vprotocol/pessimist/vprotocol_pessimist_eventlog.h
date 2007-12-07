@@ -61,7 +61,7 @@
 #define VPROTOCOL_PESSIMIST_SEND_BUFFER() do {                                \
   if(mca_vprotocol_pessimist.event_buffer_length)                             \
   {                                                                           \
-/*    write(2, mca_vprotocol_pessimist.event_buffer,                          \
+/*  pml_v.host_pml.send(mca_vprotocol_pessimist.event_buffer,  MPI_BYTE,        \
              mca_vprotocol_pessimist.event_buffer_length *                    \
                 sizeof(vprotocol_pessimist_mem_event_t));                    */ \
     mca_vprotocol_pessimist.event_buffer_length = 0;                          \
@@ -139,17 +139,16 @@ void vprotocol_pessimist_matching_replay(int *src);
   vprotocol_pessimist_delivery_event_t *devent;                               \
                                                                               \
   if(req == NULL)                                                             \
-  {                                                                           \
+  { /* No request delivered to this probe, we need to count howmany times*/   \
     V_OUTPUT_VERBOSE(70, "pessimist:\tlog\tdeliver\t%"PRIpclock"\tnone", mca_vprotocol_pessimist.clock); \
     event = (mca_vprotocol_pessimist_event_t*)opal_list_get_last(&mca_vprotocol_pessimist.pending_events);      \
     if(event->type == VPROTOCOL_PESSIMIST_EVENT_TYPE_DELIVERY &&              \
        event->u_event.e_delivery.reqid == 0)                                  \
-    {                                                                         \
-      /* consecutive probes not delivering anything are merged */             \
+    { /* consecutive probes not delivering anything are merged */             \
       event->u_event.e_delivery.probeid = mca_vprotocol_pessimist.clock++;    \
     }                                                                         \
     else                                                                      \
-    {                                                                         \
+    { /* Last event is not a failed probe, lets create a new event then */    \
       VPESSIMIST_DELIVERY_EVENT_NEW(event);                                   \
       devent = &(event->u_event.e_delivery);                                  \
       devent->probeid = mca_vprotocol_pessimist.clock++;                      \
@@ -159,7 +158,7 @@ void vprotocol_pessimist_matching_replay(int *src);
     }                                                                         \
   }                                                                           \
   else                                                                        \
-  {                                                                           \
+  { /* A request have been delivered, log which one it is */                  \
     V_OUTPUT_VERBOSE(70, "pessimist:\tlog\tdeliver\t%"PRIpclock"\treq %"PRIpclock, mca_vprotocol_pessimist.clock, VPESSIMIST_REQ(req)->reqid); \
     VPESSIMIST_DELIVERY_EVENT_NEW(event);                                     \
     devent = &(event->u_event.e_delivery);                                    \
@@ -174,14 +173,15 @@ void vprotocol_pessimist_matching_replay(int *src);
   * event clock
   * n (IN): the number of input requests
   * reqs (IN): the set of considered requests (pml_base_request_t *)
-  * i (IN/OUT): index(es) of the delivered request (currently always 1 at a time)
-  * status (IN/OUT): status of the delivered request
+  * outcount (OUT): number of delivered requests
+  * i (OUT): index(es) of the delivered request 
+  * status (OUT): status of the delivered request
   */
-#define VPROTOCOL_PESSIMIST_DELIVERY_REPLAY(n, reqs, i, status) do {          \
+#define VPROTOCOL_PESSIMIST_DELIVERY_REPLAY(n, reqs, outcount, i, status) do {\
   if(mca_vprotocol_pessimist.replay)                                          \
-    vprotocol_pessimist_delivery_replay(n, reqs, i, status);                  \
+    vprotocol_pessimist_delivery_replay(n, reqs, outcount, i, status);        \
 } while(0)
 void vprotocol_pessimist_delivery_replay(size_t, ompi_request_t **,
-                                         int *, ompi_status_public_t *);
+                                         int *, int *, ompi_status_public_t *);
 
 #endif /* __VPROTOCOL_PESSIMIST_EVENTLOG_H__ */
