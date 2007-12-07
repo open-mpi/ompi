@@ -87,11 +87,11 @@
 #endif
 #include "ompi/runtime/ompi_cr.h"
 
-
 int ompi_mpi_finalize(void)
 {
     int ret;
     static int32_t finalize_has_already_started = 0;
+    opal_list_item_t *item;
 
     /* Be a bit social if an erroneous program calls MPI_FINALIZE in
        two different threads, otherwise we may deadlock in
@@ -163,8 +163,15 @@ int ompi_mpi_finalize(void)
         ORTE_ERROR_LOG(ret);
     }
 
-    /* Shut down any bindings-specific issues: C++, F77, F90 (may or
-       may not be necessary...?) */
+    /* Shut down any bindings-specific issues: C++, F77, F90 */
+
+    /* Remove all memory associated by MPI_REGISTER_DATAREP (per
+       MPI-2:9.5.3, there is no way for an MPI application to
+       *un*register datareps, but we don't want the OMPI layer causing
+       memory leaks). */
+    while (NULL != (item = opal_list_remove_first(&ompi_registered_datareps))) {
+        OBJ_RELEASE(item);
+    }
 
     /* Free communication objects */
 

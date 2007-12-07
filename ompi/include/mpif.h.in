@@ -10,7 +10,7 @@
 !                         University of Stuttgart.  All rights reserved.
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
-! Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 ! $COPYRIGHT$
 ! 
 ! Additional copyrights may follow
@@ -70,6 +70,12 @@
       external MPI_WIN_NULL_COPY_FN
       external MPI_WIN_NULL_DELETE_FN
       external MPI_WIN_DUP_FN
+!     Note that MPI_CONVERSION_FN_NULL is a "constant" (it is only ever
+!     checked for comparison; it is never invoked), but it is passed as
+!     a function pointer (to MPI_REGISTER_DATAREP) and therefore must be
+!     the same size/type.  It is therefore external'ed here, and not
+!     defined with an integer value in mpif-common.h.
+      external MPI_CONVERSION_FN_NULL
       
 !     
 !     double precision functions

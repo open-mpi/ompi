@@ -306,7 +306,6 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 #define MPI_SEEK_END            604
 
 #define MPI_MAX_DATAREP_STRING  128
-
 #endif /* #if OMPI_PROVIDE_MPI_FILE_INTERFACE */
 
 /*
@@ -511,6 +510,15 @@ enum {
 #define MPI_WIN_NULL_DELETE_FN OMPI_C_MPI_WIN_NULL_DELETE_FN
 #define MPI_WIN_NULL_COPY_FN OMPI_C_MPI_WIN_NULL_COPY_FN
 #define MPI_WIN_DUP_FN OMPI_C_MPI_WIN_DUP_FN
+
+/* MPI_CONVERSION_FN_NULL is a sentinel value, but it has to be large
+   enough to be the same size as a valid function pointer.  It
+   therefore shares many characteristics between Fortran constants and
+   Fortran sentinel functions.  For example, it shares the problem of
+   having Fortran compilers have all-caps versions of the symbols that
+   must be able to be present, and therefore has to be in this
+   conditional block in mpi.h. */
+#define MPI_CONVERSION_FN_NULL ((MPI_Datarep_conversion_function*) 0)
 #endif
 
 OMPI_DECLSPEC int OMPI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datatype datatype, 

@@ -42,6 +42,8 @@
 #ifndef OMPI_F77_PROTOTYPES_MPI_H
 #define OMPI_F77_PROTOTYPES_MPI_H
 
+#include "ompi/mpi/f77/datarep.h"
+
 /* These are the prototypes for the "real" back-end fortran functions. */
 #define PN(ret, lower_name, upper_name, args) \
   OMPI_DECLSPEC ret lower_name##_f args;    \
@@ -250,7 +252,7 @@ PN(void, mpi_recv_init, MPI_RECV_INIT, (char *buf, MPI_Fint *count, MPI_Fint *da
 PN(void, mpi_recv, MPI_RECV, (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr));
 PN(void, mpi_reduce, MPI_REDUCE, (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr));
 PN(void, mpi_reduce_scatter, MPI_REDUCE_SCATTER, (char *sendbuf, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr));
-PN(void, mpi_register_datarep, MPI_REGISTER_DATAREP, (char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len));
+PN(void, mpi_register_datarep, MPI_REGISTER_DATAREP, (char *datarep, ompi_mpi2_fortran_datarep_conversion_fn_t *read_conversion_fn, ompi_mpi2_fortran_datarep_conversion_fn_t *write_conversion_fn, ompi_mpi2_fortran_datarep_extent_fn_t *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len));
 PN(void, mpi_request_free, MPI_REQUEST_FREE, (MPI_Fint *request, MPI_Fint *ierr));
 PN(void, mpi_request_get_status, MPI_REQUEST_GET_STATUS, (MPI_Fint *request, MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr));
 PN(void, mpi_rsend, MPI_RSEND, (char *ibuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr));

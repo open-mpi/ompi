@@ -80,6 +80,7 @@ endif
 headers = \
     bindings.h \
     constants.h \
+    datarep.h \
     fint_2_int.h \
     prototypes_mpi.h \
     f77_strings.h
@@ -90,6 +91,7 @@ headers = \
 #
 libmpi_f77_base_la_SOURCES   = \
         attr_fn_f.c \
+        conversion_fn_null_f.c \
         f90_accessors.c \
         strings.c \
         test_constants_f.c

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -29,6 +29,8 @@
 #define OMPI_MPI_MPIRUNTIME_H
 
 #include "ompi_config.h"
+
+#include "opal/class/opal_list.h"
 
 BEGIN_C_DECLS
 
@@ -56,6 +58,11 @@ OMPI_DECLSPEC extern struct opal_thread_t *ompi_mpi_main_thread;
 /** Did we setup maffinity in MPI_INIT (and therefore need to shut
     it down during MPI_FINALIZE)? */
 OMPI_DECLSPEC extern bool ompi_mpi_maffinity_setup;
+
+/** In ompi_mpi_init: a list of all memory associated with calling
+    MPI_REGISTER_DATAREP so that we can free it during
+    MPI_FINALIZE. */
+OMPI_DECLSPEC extern opal_list_t ompi_registered_datareps;
 
 
 /**
