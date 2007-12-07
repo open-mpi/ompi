@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006      University of Houston. All rights reserved.
@@ -28,6 +28,7 @@
 #endif  /* HAVE_SYS_TIME_H */
 
 #include "mpi.h"
+#include "opal/class/opal_list.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/maffinity/base/base.h"
@@ -209,6 +210,15 @@ INST(int *, MPI_FORTRAN_STATUS_IGNORE, mpi_fortran_status_ignore,
      mpi_fortran_status_ignore_, mpi_fortran_status_ignore__);
 INST (double, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
       mpi_fortran_statuses_ignore_, mpi_fortran_statuses_ignore__);
+
+/*
+ * Per MPI-2:9.5.3, MPI_REGISTER_DATAREP is a memory leak.  There is
+ * no way to *de*register datareps once they've been registered.  So
+ * we have to track all registrations here so that they can be
+ * de-registered during MPI_FINALIZE so that memory-tracking debuggers
+ * don't show Open MPI as leaking memory.
+ */
+opal_list_t ompi_registered_datareps;
 
 
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
@@ -741,6 +751,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                        "MPI_INIT", "MPI_INIT", error, err_msg, ret);
         return ret;
     }
+
+    /* Initialize the registered datarep list to be empty */
+
+    OBJ_CONSTRUCT(&ompi_registered_datareps, opal_list_t);
 
     /* All done.  Wasn't that simple? */
 

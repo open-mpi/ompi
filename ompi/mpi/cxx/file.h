@@ -10,13 +10,48 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
 // 
 // $HEADER$
 //
+
+// Typedefs for C++ callbacks registered via MPI::Register_datarep
+typedef void Datarep_extent_function(const Datatype& datatype, 
+                                     Aint& file_extent, void* extra_state);
+typedef void Datarep_conversion_function(void* userbuf, Datatype& datatype, 
+                                         int count, void* filebuf, 
+                                         Offset position, void* extra_state);
+
+// Both callback functions in C++
+void Register_datarep(const char* datarep, 
+                      Datarep_conversion_function* read_conversion_fn, 
+                      Datarep_conversion_function* write_conversion_fn, 
+                      Datarep_extent_function* dtype_file_extent_fn, 
+                      void* extra_state);
+
+// Overload for C read callback function (MPI_CONVERSION_FN_NULL)
+void Register_datarep(const char* datarep, 
+                      MPI_Datarep_conversion_function* read_conversion_fn, 
+                      Datarep_conversion_function* write_conversion_fn, 
+                      Datarep_extent_function* dtype_file_extent_fn, 
+                      void* extra_state);
+
+// Overload for C write callback function (MPI_CONVERSION_FN_NULL)
+void Register_datarep(const char* datarep, 
+                      Datarep_conversion_function* read_conversion_fn, 
+                      MPI_Datarep_conversion_function* write_conversion_fn, 
+                      Datarep_extent_function* dtype_file_extent_fn, 
+                      void* extra_state);
+
+// Overload for C read and write callback functions (MPI_CONVERSION_FN_NULL)
+void Register_datarep(const char* datarep, 
+                      MPI_Datarep_conversion_function* read_conversion_fn, 
+                      MPI_Datarep_conversion_function* write_conversion_fn, 
+                      Datarep_extent_function* dtype_file_extent_fn, 
+                      void* extra_state);
 
 class File {
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */

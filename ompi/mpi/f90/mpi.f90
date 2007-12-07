@@ -27,6 +27,10 @@ module mpi
 
   include "attr_fn-f90-interfaces.h"
 
+! Similarly, we need the MPI_CONVERSION_FN_NULL function
+
+  include "conversion_fn_null-f90-interface.h"
+
 ! This file is generated, and is *huge*.  Its size is directly related
 ! to the --with-f90-max-array-dim configure parameter.
 
