@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,9 +21,6 @@
 #define OPAL_MEMORY_MEMORY_INTERNAL_H
 
 #include "opal_config.h"
-#ifdef HAVE_STDBOOL_H
-# include <stdbool.h>
-#endif
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
 #endif
