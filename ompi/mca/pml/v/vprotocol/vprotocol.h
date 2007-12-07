@@ -14,6 +14,7 @@
 #include "ompi_config.h"
 #include "opal/mca/mca.h" 
 #include "ompi/mca/pml/pml.h"
+#include "ompi/request/request.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -57,22 +58,31 @@ typedef mca_vprotocol_base_component_1_0_0_t mca_vprotocol_base_component_t;
 typedef struct mca_vprotocol_base_module_1_0_0_t
 {
     /* PML module stuff */ 
-    mca_pml_base_module_add_procs_fn_t        add_procs;
-    mca_pml_base_module_del_procs_fn_t        del_procs;
-    mca_pml_base_module_enable_fn_t           enable;
-    mca_pml_base_module_progress_fn_t         progress;
-    mca_pml_base_module_add_comm_fn_t         add_comm;
-    mca_pml_base_module_del_comm_fn_t         del_comm;
-    mca_pml_base_module_irecv_init_fn_t       irecv_init;
-    mca_pml_base_module_irecv_fn_t            irecv;
-    mca_pml_base_module_recv_fn_t             recv;
-    mca_pml_base_module_isend_init_fn_t       isend_init;
-    mca_pml_base_module_isend_fn_t            isend;
-    mca_pml_base_module_send_fn_t             send;
-    mca_pml_base_module_iprobe_fn_t           iprobe;
-    mca_pml_base_module_probe_fn_t            probe;
-    mca_pml_base_module_start_fn_t            start;
-    mca_pml_base_module_dump_fn_t             dump;
+    mca_pml_base_module_add_procs_fn_t      add_procs;
+    mca_pml_base_module_del_procs_fn_t      del_procs;
+    mca_pml_base_module_enable_fn_t         enable;
+    mca_pml_base_module_progress_fn_t       progress;
+    mca_pml_base_module_add_comm_fn_t       add_comm;
+    mca_pml_base_module_del_comm_fn_t       del_comm;
+    mca_pml_base_module_irecv_init_fn_t     irecv_init;
+    mca_pml_base_module_irecv_fn_t          irecv;
+    mca_pml_base_module_recv_fn_t           recv;
+    mca_pml_base_module_isend_init_fn_t     isend_init;
+    mca_pml_base_module_isend_fn_t          isend;
+    mca_pml_base_module_send_fn_t           send;
+    mca_pml_base_module_iprobe_fn_t         iprobe;
+    mca_pml_base_module_probe_fn_t          probe;
+    mca_pml_base_module_start_fn_t          start;
+    mca_pml_base_module_dump_fn_t           dump;
+    /* Request wait/test stuff */
+    ompi_request_test_fn_t                  test;
+    ompi_request_test_any_fn_t              test_any;
+    ompi_request_test_all_fn_t              test_all;
+    ompi_request_test_some_fn_t             test_some;
+    ompi_request_wait_fn_t                  wait;
+    ompi_request_wait_any_fn_t              wait_any;
+    ompi_request_wait_all_fn_t              wait_all;
+    ompi_request_wait_some_fn_t             wait_some;
     
     /* Custom requests classes to add extra data at end of pml requests */
     opal_class_t *                            req_recv_class;

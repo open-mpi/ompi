@@ -93,6 +93,7 @@ static int mca_pml_v_component_close(void)
     /* Save original PML before making any changes  */
     mca_pml_v.host_pml_component = mca_pml_base_selected_component;
     mca_pml_v.host_pml = mca_pml;
+    mca_pml_v.host_request_fns = ompi_request_functions;
     
     /* Do not load anything if no FT protocol is selected */
     if(! mca_vprotocol_base_include_list[0])
@@ -232,6 +233,8 @@ static int mca_pml_v_enable(bool enable)
     /* Disable */
     mca_pml = mca_pml_v.host_pml;
     mca_pml.pml_enable = mca_pml_v_enable;
+    /* /!\ This is incorrect if another component also changed the requests */
+    ompi_request_functions = mca_pml_v.host_request_fns;
     return OMPI_SUCCESS;
 }
 

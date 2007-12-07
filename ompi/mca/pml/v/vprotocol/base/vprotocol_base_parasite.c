@@ -42,6 +42,21 @@ int mca_vprotocol_base_parasite(void) {
         mca_pml.pml_start = mca_vprotocol.start;
     if(mca_vprotocol.dump) 
         mca_pml.pml_dump = mca_vprotocol.dump;
-
+    if(mca_vprotocol.wait)
+        ompi_request_functions.req_wait = mca_vprotocol.wait;
+    if(mca_vprotocol.wait_all)
+        ompi_request_functions.req_wait_all = mca_vprotocol.wait_all;
+    if(mca_vprotocol.wait_any)
+        ompi_request_functions.req_wait_any = mca_vprotocol.wait_any;
+    if(mca_vprotocol.wait_some)
+        ompi_request_functions.req_wait_some = mca_vprotocol.wait_some;
+    if(mca_vprotocol.test)
+        ompi_request_functions.req_test = mca_vprotocol.test;
+    if(mca_vprotocol.test_all)
+        ompi_request_functions.req_test_all = mca_vprotocol.test_all;
+    if(mca_vprotocol.test_any)
+        ompi_request_functions.req_test_any = mca_vprotocol.test_any;
+    if(mca_vprotocol.test_some)
+        ompi_request_functions.req_test_some = mca_vprotocol.test_some;
     return mca_vprotocol_base_request_parasite();
 }
