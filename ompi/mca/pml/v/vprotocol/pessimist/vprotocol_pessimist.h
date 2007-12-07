@@ -92,9 +92,9 @@ int mca_vprotocol_pessimist_probe(int src, int tag,
                                   struct ompi_communicator_t *comm,
                                   ompi_status_public_t * status );
 
+#include "vprotocol_pessimist_wait.h"
 #include "vprotocol_pessimist_request.h"
 #include "vprotocol_pessimist_start.h"
-#include "vprotocol_pessimist_wait.h"
 #include "vprotocol_pessimist_eventlog.h"
 
 #endif /* __INCLUDE_VPROTOCOL_PESSIMIST_H__ */

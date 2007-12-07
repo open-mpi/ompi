@@ -17,7 +17,6 @@ mca_vprotocol_pessimist_module_t mca_vprotocol_pessimist =
     /* mca_pml_base_module_del_procs_fn_t     */ NULL,
     /* mca_pml_base_module_enable_fn_f        */ mca_vprotocol_pessimist_enable,
     /* mca_pml_base_module_progress_fn_t      */ NULL, /*mca_vprotocol_pessimist_progress,*/
-
     /* mca_pml_base_module_add_comm_fn_t      */ NULL,
     /* mca_pml_base_module_del_comm_fn_t      */ NULL,
     /* mca_pml_base_module_irecv_init_fn_t    */ NULL,
@@ -29,9 +28,17 @@ mca_vprotocol_pessimist_module_t mca_vprotocol_pessimist =
     /* mca_pml_base_module_iprobe_fn_t        */ mca_vprotocol_pessimist_iprobe,
     /* mca_pml_base_module_probe_fn_t         */ mca_vprotocol_pessimist_probe,
     /* mca_pml_base_module_start_fn_t         */ mca_vprotocol_pessimist_start, 
-
     /* mca_pml_base_module_dump_fn_t          */ mca_vprotocol_pessimist_dump,
 
+    /* ompi_request_test_fn_t                 */ mca_vprotocol_pessimist_test,
+    /* ompi_request_testany_fn_t              */ mca_vprotocol_pessimist_test_any,
+    /* ompi_request_testall_fn_t              */ mca_vprotocol_pessimist_test_all,
+    /* ompi_request_testsome_fn_t             */ mca_vprotocol_pessimist_test_some,
+    /* ompi_request_wait_fn_t                 */ NULL,
+    /* ompi_request_waitany_fn_t              */ mca_vprotocol_pessimist_wait_any,
+    /* ompi_request_waitall_fn_t              */ NULL,
+    /* ompi_request_waitsome_fn_t             */ mca_vprotocol_pessimist_wait_some,
+      
     /* opal_class_t *                         */ OBJ_CLASS(mca_vprotocol_pessimist_recv_request_t),
     /* opal_class_t *                         */ OBJ_CLASS(mca_vprotocol_pessimist_send_request_t),
   },
