@@ -28,6 +28,7 @@ sources = \
     btl_sctp.h \
     btl_sctp_addr.h \
     btl_sctp_component.c \
+    btl_sctp_component.h \
     btl_sctp_endpoint.c \
     btl_sctp_endpoint.h \
     btl_sctp_frag.c \
