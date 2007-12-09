@@ -481,6 +481,30 @@ int mca_btl_openib_register_error_cb(
     return OMPI_SUCCESS;
 }
 
+static inline mca_btl_base_descriptor_t *
+ib_frag_alloc(mca_btl_openib_module_t *btl, size_t size, uint8_t order)
+{
+    int qp, rc;
+    ompi_free_list_item_t* item = NULL;
+
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
+         if(mca_btl_openib_component.qp_infos[qp].size >= size) {
+             OMPI_FREE_LIST_GET(&btl->qps[qp].send_free, item, rc);
+             if(item)
+                 break;
+         }
+    }
+    if(NULL == item)
+        return NULL;
+
+    /* not all upper layer users set this */
+    to_base_frag(item)->segment.seg_len = size;
+    to_base_frag(item)->base.order = order;
+
+    assert(to_send_frag(item)->qp_idx <= order);
+    return &to_base_frag(item)->base;
+}
+
 /**
  * Allocate a segment.
  *
@@ -497,21 +521,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     uint8_t order,
     size_t size)
 {
-    mca_btl_openib_com_frag_t* frag = NULL;
-    mca_btl_openib_module_t* openib_btl; 
-    int rc;
-    openib_btl = (mca_btl_openib_module_t*) btl; 
-    MCA_BTL_IB_FRAG_ALLOC_BY_SIZE(openib_btl, frag, size, rc);
-    
-    if(NULL == frag)
-        return NULL;
-    
-    /* not all upper layer users set this */
-    to_base_frag(frag)->segment.seg_len = size;
-    to_base_frag(frag)->base.order = order;
-   
-    assert(to_send_frag(frag)->qp_idx <= order);
-    return &to_base_frag(frag)->base;
+    return ib_frag_alloc((mca_btl_openib_module_t*)btl, size, order);
 }
 
 /** 
@@ -654,20 +664,19 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     if(max_data + reserve > btl->btl_max_send_size) {
         max_data = btl->btl_max_send_size - reserve;
     }
-    
-    MCA_BTL_IB_FRAG_ALLOC_BY_SIZE(openib_btl, frag, max_data + reserve, rc);
    
+    frag = (mca_btl_openib_com_frag_t*)
+        ib_frag_alloc(openib_btl, max_data + reserve, order);
+
     if(NULL == frag)
         return NULL;
 
     iov.iov_len = max_data;
-    iov.iov_base = (unsigned char*)
-        to_base_frag(frag)->segment.seg_addr.pval + reserve;
+    iov.iov_base = (unsigned char*)to_base_frag(frag)->segment.seg_addr.pval +
+        reserve;
     rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
     
     *size = max_data;
-    to_base_frag(frag)->segment.seg_len = max_data + reserve;
-    to_base_frag(frag)->base.order = order;
 
     return &to_base_frag(frag)->base;
 }

@@ -247,20 +247,6 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_send_control_frag_t);
         frag = to_send_control_frag(item);                             \
     } while(0)
 
-#define MCA_BTL_IB_FRAG_ALLOC_BY_SIZE(btl, frag, _size, rc)             \
-    do {                                                                \
-        int qp;                                                         \
-        ompi_free_list_item_t* item = NULL;                             \
-        for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {      \
-            if(mca_btl_openib_component.qp_infos[qp].size >= _size) {   \
-                OMPI_FREE_LIST_GET(&(btl)->qps[qp].send_free, item, rc);\
-                if(item)                                                \
-                    break;                                              \
-            }                                                           \
-        }                                                               \
-        frag = to_com_frag(item);                                       \
-    } while(0);
-        
 #define MCA_BTL_IB_FRAG_ALLOC_SEND_USER(btl, frag, rc)                 \
     do {                                                               \
         ompi_free_list_item_t *item;                                   \
