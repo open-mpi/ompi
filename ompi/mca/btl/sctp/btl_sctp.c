@@ -184,6 +184,7 @@ int mca_btl_sctp_register(
 
 mca_btl_base_descriptor_t* mca_btl_sctp_alloc(
     struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* endpoint,
     uint8_t order,
     size_t size)
 {

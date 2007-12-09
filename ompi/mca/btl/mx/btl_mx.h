@@ -253,7 +253,8 @@ extern int mca_btl_mx_register(
  * @param size (IN)     Request segment size.
  */
 
-mca_btl_base_descriptor_t* mca_btl_mx_alloc( struct mca_btl_base_module_t* btl, 
+mca_btl_base_descriptor_t* mca_btl_mx_alloc( struct mca_btl_base_module_t* btl,
+                                             struct mca_btl_base_endpoint_t* endpoint,
                                              uint8_t order,
                                              size_t size );
 

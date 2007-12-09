@@ -719,6 +719,7 @@ int mca_btl_sm_register_error_cb(
  */
 extern mca_btl_base_descriptor_t* mca_btl_sm_alloc(
     struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* endpoint,
     uint8_t order,
     size_t size)
 {
