@@ -174,7 +174,8 @@ mca_btl_base_descriptor_t*
 mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base, 
                       struct mca_btl_base_endpoint_t* endpoint,
                       uint8_t order,
-                      size_t size); 
+                      size_t size,
+                      uint32_t flags); 
 
 int mca_btl_portals_free(struct mca_btl_base_module_t* btl_base, 
                          mca_btl_base_descriptor_t* des); 
@@ -186,7 +187,8 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
                             struct ompi_convertor_t* convertor,
                             uint8_t order,
                             size_t reserve,
-                            size_t* size);
+                            size_t* size,
+                            uint32_t flags);
 
 mca_btl_base_descriptor_t* 
 mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base, 
@@ -195,7 +197,8 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
                             struct ompi_convertor_t* convertor,
                             uint8_t order,
                             size_t reserve,
-                            size_t* size); 
+                            size_t* size,
+                            uint32_t flags); 
 
 int mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
                          struct mca_btl_base_endpoint_t* btl_peer,

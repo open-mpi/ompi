@@ -556,7 +556,8 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* ep,
     uint8_t order,
-    size_t size)
+    size_t size,
+    uint32_t flags)
 {
     mca_btl_openib_module_t *obtl = (mca_btl_openib_module_t*)btl;
     int qp = frag_size_to_order(obtl, size);
@@ -707,8 +708,8 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     struct ompi_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
-    size_t* size
-)
+    size_t* size,
+    uint32_t flags)
 {
     mca_btl_openib_module_t *openib_btl;
     mca_btl_openib_reg_t *openib_reg;
@@ -779,7 +780,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
   
     frag = (mca_btl_openib_com_frag_t*)(reserve ?
             ib_frag_alloc(openib_btl, max_data + reserve, order) :
-            mca_btl_openib_alloc(btl, endpoint, order, max_data));
+            mca_btl_openib_alloc(btl, endpoint, order, max_data, flags));
 
     if(NULL == frag)
         return NULL;
@@ -815,7 +816,8 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     struct ompi_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
-    size_t* size)
+    size_t* size,
+    uint32_t flags)
 {
     mca_btl_openib_module_t *openib_btl;
     mca_btl_openib_com_frag_t *frag;

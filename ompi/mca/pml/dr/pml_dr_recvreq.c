@@ -184,7 +184,7 @@ void mca_pml_dr_recv_request_ack(
     do_csum = mca_pml_dr.enable_csum && 
         (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);
     mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER,
-            sizeof(mca_pml_dr_ack_hdr_t));
+            sizeof(mca_pml_dr_ack_hdr_t), MCA_BTL_DES_FLAGS_PRIORITY);
     if(NULL == des) {
         return;
     }

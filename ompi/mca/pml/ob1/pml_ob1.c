@@ -330,7 +330,8 @@ int mca_pml_ob1_send_fin( ompi_proc_t* proc,
     mca_pml_ob1_fin_hdr_t* hdr;
     int rc;
 
-    mca_bml_base_alloc(bml_btl, &fin, order, sizeof(mca_pml_ob1_fin_hdr_t));
+    mca_bml_base_alloc(bml_btl, &fin, order, sizeof(mca_pml_ob1_fin_hdr_t),
+            MCA_BTL_DES_FLAGS_PRIORITY);
 
     if(NULL == fin) {
         MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_des, bml_btl, order, status);

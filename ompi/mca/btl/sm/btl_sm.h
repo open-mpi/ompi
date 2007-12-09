@@ -280,7 +280,8 @@ extern mca_btl_base_descriptor_t* mca_btl_sm_alloc(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     uint8_t order,
-    size_t size
+    size_t size,
+    uint32_t flags
 );
 
 /**
@@ -308,7 +309,8 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     struct ompi_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
-    size_t* size
+    size_t* size,
+    uint32_t flags
 );
 
 

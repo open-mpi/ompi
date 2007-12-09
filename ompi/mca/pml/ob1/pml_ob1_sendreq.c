@@ -328,7 +328,9 @@ int mca_pml_ob1_send_request_start_buffered(
 
     /* allocate descriptor */
     mca_bml_base_alloc(bml_btl, &descriptor, 
-                       MCA_BTL_NO_ORDER, sizeof(mca_pml_ob1_rendezvous_hdr_t) + size);
+                       MCA_BTL_NO_ORDER,
+                       sizeof(mca_pml_ob1_rendezvous_hdr_t) + size,
+                       MCA_BTL_DES_FLAGS_PRIORITY);
     if( OPAL_UNLIKELY(NULL == descriptor) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
@@ -442,7 +444,8 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
     /* allocate descriptor */
     mca_bml_base_alloc( bml_btl, &descriptor,
                         MCA_BTL_NO_ORDER,
-                        sizeof(mca_pml_ob1_match_hdr_t) + size );
+                        sizeof(mca_pml_ob1_match_hdr_t) + size,
+                        MCA_BTL_DES_FLAGS_PRIORITY);
     if( OPAL_UNLIKELY(NULL == descriptor) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -522,7 +525,8 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
                               MCA_BTL_NO_ORDER,
                               sizeof(mca_pml_ob1_match_hdr_t),
                               &size,
-                              &descriptor);
+                              MCA_BTL_DES_FLAGS_PRIORITY,
+                              &descriptor );
     if( OPAL_UNLIKELY(NULL == descriptor) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -604,6 +608,7 @@ int mca_pml_ob1_send_request_start_rdma(
                                   MCA_BTL_NO_ORDER,
                                   0,
                                   &size,
+                                  0,
                                   &src );
         if( OPAL_UNLIKELY(NULL == src) ) {
             ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
@@ -615,10 +620,13 @@ int mca_pml_ob1_send_request_start_rdma(
 
         /* allocate space for get hdr + segment list */
         mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER,
-                           sizeof(mca_pml_ob1_rget_hdr_t) + (sizeof(mca_btl_base_segment_t)*(src->des_src_cnt-1)));
+                sizeof(mca_pml_ob1_rget_hdr_t) +
+                (sizeof(mca_btl_base_segment_t) * (src->des_src_cnt-1)),
+                MCA_BTL_DES_FLAGS_PRIORITY);
         if( OPAL_UNLIKELY(NULL == des) ) {
-            ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
-                                        &old_position);
+            ompi_convertor_set_position(
+                    &sendreq->req_send.req_base.req_convertor,
+                    &old_position);
             mca_bml_base_free(bml_btl, src);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -676,7 +684,9 @@ int mca_pml_ob1_send_request_start_rdma(
          */
 
         mca_bml_base_alloc(bml_btl, &des, 
-                           MCA_BTL_NO_ORDER, sizeof(mca_pml_ob1_rendezvous_hdr_t));
+                           MCA_BTL_NO_ORDER,
+                           sizeof(mca_pml_ob1_rendezvous_hdr_t),
+                           MCA_BTL_DES_FLAGS_PRIORITY);
         if( OPAL_UNLIKELY(NULL == des)) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -749,7 +759,8 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
         mca_bml_base_alloc( bml_btl, 
                             &des, 
                             MCA_BTL_NO_ORDER,
-                            sizeof(mca_pml_ob1_rendezvous_hdr_t) ); 
+                            sizeof(mca_pml_ob1_rendezvous_hdr_t),
+                            MCA_BTL_DES_FLAGS_PRIORITY ); 
     } else {
         mca_bml_base_prepare_src( bml_btl, 
                                   NULL,
@@ -757,6 +768,7 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
                                   MCA_BTL_NO_ORDER,
                                   sizeof(mca_pml_ob1_rendezvous_hdr_t),
                                   &size,
+                                  MCA_BTL_DES_FLAGS_PRIORITY,
                                   &des );
     }
 
@@ -964,7 +976,8 @@ cannot_pack:
         mca_bml_base_prepare_src(bml_btl, NULL,
                                  &sendreq->req_send.req_base.req_convertor,
                                  MCA_BTL_NO_ORDER,
-                                 sizeof(mca_pml_ob1_frag_hdr_t), &size, &des);
+                                 sizeof(mca_pml_ob1_frag_hdr_t),
+                                 &size, 0, &des);
 
         if( OPAL_UNLIKELY(des == NULL || size == 0) ) {
             if(des) {
@@ -1091,7 +1104,8 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
                               &frag->convertor, 
                               MCA_BTL_NO_ORDER,
                               0,
-                              &frag->rdma_length, 
+                              &frag->rdma_length,
+                              0,
                               &des );
     
     if( OPAL_UNLIKELY(NULL == des) ) {
