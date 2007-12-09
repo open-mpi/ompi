@@ -190,7 +190,7 @@ int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t *endpoint,
     qp = des->order;
 
     if(acruire_wqe(endpoint, frag) != OMPI_SUCCESS)
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_RESOURCE_BUSY;
 
     eager_limit = mca_btl_openib_component.eager_limit +
         sizeof(mca_btl_openib_header_coalesced_t) +
@@ -204,7 +204,7 @@ int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t *endpoint,
 
     if(!do_rdma && acquire_send_credit(endpoint, frag) != OMPI_SUCCESS) {
         qp_put_wqe(endpoint, qp);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_RESOURCE_BUSY;
     }
 
     GET_CREDITS(endpoint->eager_rdma_local.credits, hdr->credits);
@@ -589,13 +589,8 @@ int mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t* ep,
     rc = check_endpoint_state(ep, &to_base_frag(frag)->base,
             &ep->pending_lazy_frags);
 
-    if(OPAL_LIKELY(rc == OMPI_SUCCESS)) {
+    if(OPAL_LIKELY(rc == OMPI_SUCCESS))
         rc = mca_btl_openib_endpoint_post_send(ep, frag);
-        if(OMPI_ERR_OUT_OF_RESOURCE == rc)
-            rc = OMPI_SUCCESS;
-    } else if(OMPI_ERR_TEMP_OUT_OF_RESOURCE == rc) {
-        rc = OMPI_SUCCESS;
-    }
     OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
 
     return rc;
@@ -774,12 +769,13 @@ static int mca_btl_openib_endpoint_send_eager_rdma(
                    rdma_hdr->rdma_start.ival
                    ));
     }
-    if (mca_btl_openib_endpoint_send(endpoint, frag) != OMPI_SUCCESS) {
-        MCA_BTL_IB_FRAG_RETURN(frag);
-        BTL_ERROR(("Error sending RDMA buffer", strerror(errno)));
-        return -1;
-    }
-    return 0;
+    rc = mca_btl_openib_endpoint_send(endpoint, frag); 
+    if (OMPI_SUCCESS == rc ||OMPI_ERR_RESOURCE_BUSY == rc)
+        return OMPI_SUCCESS;
+    
+    MCA_BTL_IB_FRAG_RETURN(frag);
+    BTL_ERROR(("Error sending RDMA buffer", strerror(errno)));
+    return rc;
 }
 
 /* Setup eager RDMA buffers and notify the remote endpoint*/
@@ -854,7 +850,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, (void*)1,
             buf);
 
-    if(mca_btl_openib_endpoint_send_eager_rdma(endpoint) == 0) {
+    if(mca_btl_openib_endpoint_send_eager_rdma(endpoint) == OMPI_SUCCESS) {
         /* This can never fail because max number of entries allocated
          * at init time */
         OBJ_RETAIN(endpoint);
