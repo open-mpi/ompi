@@ -281,19 +281,29 @@ int mca_bml_base_send(
 #else
 
 static inline int mca_bml_base_send(
-    mca_bml_base_btl_t* bml_btl, 
-    mca_btl_base_descriptor_t* des, 
-    mca_btl_base_tag_t tag) 
-{ 
-    des->des_context = (void*) bml_btl; 
-    return bml_btl->btl_send(
-                             bml_btl->btl,
-                             bml_btl->btl_endpoint, 
-                             des,
-                             tag);
+    mca_bml_base_btl_t* bml_btl,
+    mca_btl_base_descriptor_t* des,
+    mca_btl_base_tag_t tag)
+{
+    int rc;
+    des->des_context = (void*) bml_btl;
+    rc = bml_btl->btl_send(bml_btl->btl, bml_btl->btl_endpoint, des, tag);
+    if(rc == OMPI_ERR_RESOURCE_BUSY)
+        rc = OMPI_SUCCESS;
+
+    return rc;
 }
 
 #endif
+
+static inline int mca_bml_base_send_status(
+    mca_bml_base_btl_t* bml_btl,
+    mca_btl_base_descriptor_t* des,
+    mca_btl_base_tag_t tag)
+{
+    des->des_context = (void*) bml_btl;
+    return bml_btl->btl_send(bml_btl->btl, bml_btl->btl_endpoint, des, tag);
+}
 
 static inline int mca_bml_base_put(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t* des) { 
     des->des_context = (void*) bml_btl; 
