@@ -352,13 +352,13 @@ try_send:
 static inline int check_endpoint_state(mca_btl_openib_endpoint_t *ep,
         mca_btl_base_descriptor_t *des, opal_list_t *pending_list)
 {
-    int rc = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    int rc = ORTE_ERR_RESOURCE_BUSY;
 
     switch(ep->endpoint_state) {
         case MCA_BTL_IB_CLOSED:
             rc = ompi_btl_openib_connect.bcf_start_connect(ep);
             if(rc == OMPI_SUCCESS)
-                rc = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+                rc = ORTE_ERR_RESOURCE_BUSY;
             /*
              * As long as we expect a message from the peer (in order
              * to setup the connection) let the event engine pool the
