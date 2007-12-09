@@ -290,7 +290,8 @@ extern int mca_btl_elan_register(
  */
 
 extern mca_btl_base_descriptor_t* mca_btl_elan_alloc(
-    struct mca_btl_base_module_t* btl, 
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* peer,
     uint8_t order,
     size_t size); 
 

@@ -241,8 +241,9 @@ mca_btl_portals_register(struct mca_btl_base_module_t* btl_base,
 
 mca_btl_base_descriptor_t*
 mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base,
+                      struct mca_btl_base_endpoint_t* endpoint,
                       uint8_t order,
-                       size_t size)
+                      size_t size)
 {
     int rc;
     mca_btl_portals_frag_t* frag;
