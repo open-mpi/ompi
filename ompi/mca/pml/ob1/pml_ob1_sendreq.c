@@ -492,15 +492,24 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
     descriptor->des_cbdata = sendreq;
     descriptor->des_cbfunc = mca_pml_ob1_match_completion_free;
 
-    /* signal request completion */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq);
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     /* send */
-    rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML);
-    if(OPAL_UNLIKELY(OMPI_SUCCESS != rc))
+    rc = mca_bml_base_send_status(bml_btl, descriptor, MCA_BTL_TAG_PML);
+    switch(rc) {
+        case OMPI_SUCCESS:
+            /* packet is on wire; signal request completion */
+            OPAL_THREAD_LOCK(&ompi_request_lock);
+            MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq);
+            OPAL_THREAD_UNLOCK(&ompi_request_lock);
+            break;
+        case OMPI_ERR_RESOURCE_BUSY:
+            /* don't signal request completion; will be completed in wait() */
+            rc = OMPI_SUCCESS;
+            break;
+        default:
             mca_bml_base_free(bml_btl, descriptor);
+            break;
+    }
     return rc;
 }
 
