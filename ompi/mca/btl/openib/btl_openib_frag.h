@@ -59,6 +59,18 @@ typedef struct mca_btl_openib_header_coalesced_t {
     uint32_t alloc_size;
 } mca_btl_openib_header_coalesced_t;
 
+#define BTL_OPENIB_HEADER_COALESCED_NTOH(h)     \
+    do {                                        \
+        (h).size = ntohl((h).size);             \
+        (h).alloc_size = ntohl((h).alloc_size); \
+     } while(0)
+
+#define BTL_OPENIB_HEADER_COALESCED_HTON(h)     \
+    do {                                        \
+        (h).size = htonl((h).size);             \
+        (h).alloc_size = htonl((h).alloc_size); \
+     } while(0)
+
 struct mca_btl_openib_footer_t {
 #if OMPI_ENABLE_DEBUG
     uint32_t seq;
@@ -82,29 +94,24 @@ typedef struct mca_btl_openib_footer_t mca_btl_openib_footer_t;
 #endif
 
 #if OMPI_ENABLE_DEBUG
-#define BTL_OPENIB_FOOTER_HTON(h)               \
-    do {                                        \
-        (h).seq = htonl((h).seq);               \
-        MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
-    } while (0)
-    
-#define BTL_OPENIB_FOOTER_NTOH(h)               \
-    do {                                        \
-        (h).seq = ntohl((h).seq);               \
-        MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
-    } while (0)
+#define BTL_OPENIB_FOOTER_SEQ_HTON(h)  ((h).seq = htonl((h).seq))
+#define BTL_OPENIB_FOOTER_SEQ_NTOH(h)  ((h).seq = ntohl((h).seq))
 #else
-#define BTL_OPENIB_FOOTER_HTON(h)               \
-    do {                                        \
-        MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
-    } while (0)
-    
-#define BTL_OPENIB_FOOTER_NTOH(h)               \
-    do {                                        \
-        MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
-    } while (0)
+#define BTL_OPENIB_FOOTER_SEQ_HTON(h)
+#define BTL_OPENIB_FOOTER_SEQ_NTOH(h)
 #endif
 
+#define BTL_OPENIB_FOOTER_HTON(h)               \
+    do {                                        \
+        BTL_OPENIB_FOOTER_SEQ_HTON(h);          \
+        MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
+    } while (0)
+    
+#define BTL_OPENIB_FOOTER_NTOH(h)               \
+    do {                                        \
+        BTL_OPENIB_FOOTER_SEQ_NTOH(h);          \
+        MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
+    } while (0)
 
 #define MCA_BTL_OPENIB_CONTROL_CREDITS      0
 #define MCA_BTL_OPENIB_CONTROL_RDMA         1

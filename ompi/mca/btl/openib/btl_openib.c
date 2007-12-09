@@ -607,6 +607,8 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
         clsc_hdr->tag = org_tag;
         clsc_hdr->size = to_base_frag(sfrag)->segment.seg_len;
         clsc_hdr->alloc_size = to_base_frag(sfrag)->segment.seg_len;
+        if(ep->nbo)
+            BTL_OPENIB_HEADER_COALESCED_HTON(*clsc_hdr);
         sfrag->coalesced_length = sizeof(mca_btl_openib_control_header_t) +
             sizeof(mca_btl_openib_header_coalesced_t);
         to_com_frag(sfrag)->sg_entry.addr = (uint64_t)sfrag->hdr; 
@@ -1073,6 +1075,8 @@ int mca_btl_openib_send(
     if(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_COALESCED) {
         to_coalesced_frag(des)->hdr->tag = tag;
         to_coalesced_frag(des)->hdr->size = des->des_src->seg_len;
+        if(ep->nbo)
+            BTL_OPENIB_HEADER_COALESCED_HTON(*to_coalesced_frag(des)->hdr);
         frag = to_coalesced_frag(des)->send_frag;
     } else {
         frag = to_send_frag(des);

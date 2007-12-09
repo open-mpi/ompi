@@ -257,11 +257,16 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
        break;
     case MCA_BTL_OPENIB_CONTROL_COALESCED:
         while(len > 0) {
-            size_t skip = (sizeof(*clsc_hdr) + clsc_hdr->alloc_size);
+            size_t skip;
             mca_btl_base_descriptor_t tmp_des;
             mca_btl_base_segment_t tmp_seg;
 
             assert(len >= sizeof(*clsc_hdr));
+
+            if(ep->nbo)
+                BTL_OPENIB_HEADER_COALESCED_NTOH(*clsc_hdr);
+
+            skip = (sizeof(*clsc_hdr) + clsc_hdr->alloc_size);
 
             tmp_des.des_dst = &tmp_seg;
             tmp_des.des_dst_cnt = 1;
