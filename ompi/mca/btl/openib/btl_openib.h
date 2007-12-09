@@ -195,6 +195,7 @@ struct mca_btl_openib_component_t {
         if_[in|ex]clude list that we use for error checking (to ensure
         that they all exist) */
     char **if_list;
+    bool use_message_coalescing;
 #ifdef HAVE_IBV_FORK_INIT
     /** Whether we want fork support or not */
     int want_fork_support;
@@ -315,6 +316,8 @@ struct mca_btl_openib_module_t {
                                        *   used for pining user memory */ 
 
     ompi_free_list_t send_free_control; /**< frags for control massages */ 
+
+    ompi_free_list_t send_free_coalesced; /**< frags for coalesced massages */
 
     opal_mutex_t ib_lock;              /**< module level lock */ 
     

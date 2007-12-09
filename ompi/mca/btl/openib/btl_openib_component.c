@@ -215,10 +215,14 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
         void* cbdata)
 {
     /* don't return credits used for control messages */
+    mca_btl_openib_module_t *obtl = (mca_btl_openib_module_t*)btl;
     mca_btl_openib_endpoint_t* ep = to_com_frag(des)->endpoint;
     mca_btl_openib_control_header_t *ctl_hdr =
         to_base_frag(des)->segment.seg_addr.pval;
     mca_btl_openib_eager_rdma_header_t *rdma_hdr;
+    mca_btl_openib_header_coalesced_t *clsc_hdr =
+        (mca_btl_openib_header_coalesced_t*)(ctl_hdr + 1);
+    size_t len = des->des_dst->seg_len - sizeof(*ctl_hdr);
     
     switch (ctl_hdr->type) {
     case MCA_BTL_OPENIB_CONTROL_CREDITS:
@@ -250,6 +254,27 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
        ep->eager_rdma_remote.rkey = rdma_hdr->rkey;
        ep->eager_rdma_remote.base.lval = rdma_hdr->rdma_start.lval;
        ep->eager_rdma_remote.tokens=mca_btl_openib_component.eager_rdma_num - 1;
+       break;
+    case MCA_BTL_OPENIB_CONTROL_COALESCED:
+        while(len > 0) {
+            size_t skip = (sizeof(*clsc_hdr) + clsc_hdr->alloc_size);
+            mca_btl_base_descriptor_t tmp_des;
+            mca_btl_base_segment_t tmp_seg;
+
+            assert(len >= sizeof(*clsc_hdr));
+
+            tmp_des.des_dst = &tmp_seg;
+            tmp_des.des_dst_cnt = 1;
+            tmp_seg.seg_addr.pval = clsc_hdr + 1;
+            tmp_seg.seg_len = clsc_hdr->size;
+
+            /* call registered callback */
+            obtl->ib_reg[clsc_hdr->tag].cbfunc(&obtl->super, clsc_hdr->tag,
+                    &tmp_des, obtl->ib_reg[clsc_hdr->tag].cbdata);
+            len -= skip;
+            clsc_hdr = (mca_btl_openib_header_coalesced_t*)
+                (((unsigned char*)clsc_hdr) + skip);
+        }
        break;
     default:
         BTL_ERROR(("Unknown message type received by BTL"));
@@ -739,6 +764,7 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
     OBJ_CONSTRUCT(&openib_btl->ib_lock, opal_mutex_t);
         
     OBJ_CONSTRUCT(&openib_btl->send_free_control, ompi_free_list_t);
+    OBJ_CONSTRUCT(&openib_btl->send_free_coalesced, ompi_free_list_t);
     OBJ_CONSTRUCT(&openib_btl->send_user_free, ompi_free_list_t);
     OBJ_CONSTRUCT(&openib_btl->recv_user_free, ompi_free_list_t);
 
@@ -771,7 +797,7 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
     init_data->order = mca_btl_openib_component.rdma_qp;
     init_data->list = &openib_btl->recv_user_free;
         
-    if(OMPI_SUCCESS  != ompi_free_list_init_ex_new(&openib_btl->recv_user_free,
+    if(OMPI_SUCCESS != ompi_free_list_init_ex_new(&openib_btl->recv_user_free,
                 sizeof(mca_btl_openib_get_frag_t), 2,
                 OBJ_CLASS(mca_btl_openib_get_frag_t),
                 0, 0,
@@ -802,7 +828,21 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
                 init_data)) { 
         return OMPI_ERROR;
     }
-           
+
+    init_data = malloc(sizeof(mca_btl_openib_frag_init_data_t));
+    length = sizeof(mca_btl_openib_coalesced_frag_t);
+
+    init_data->list = &openib_btl->send_free_coalesced;
+
+    if(OMPI_SUCCESS != ompi_free_list_init_ex(&openib_btl->send_free_coalesced,
+                length, 2, OBJ_CLASS(mca_btl_openib_coalesced_frag_t),
+                mca_btl_openib_component.ib_free_list_num,
+                mca_btl_openib_component.ib_free_list_max,
+                mca_btl_openib_component.ib_free_list_inc,
+                NULL, mca_btl_openib_frag_init, init_data)) {
+        return OMPI_ERROR;
+    }
+
     /* setup all the qps */ 
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
         OBJ_CONSTRUCT(&openib_btl->qps[qp].send_free, ompi_free_list_t);
@@ -819,9 +859,11 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
 
         init_data = malloc(sizeof(mca_btl_openib_frag_init_data_t));
         /* Initialize pool of send fragments */ 
-        length = sizeof(mca_btl_openib_header_t) + 
-            sizeof(mca_btl_openib_footer_t) + 
-            mca_btl_openib_component.qp_infos[qp].size;              
+        length = sizeof(mca_btl_openib_header_t) +
+            sizeof(mca_btl_openib_header_coalesced_t) +
+            sizeof(mca_btl_openib_control_header_t) +
+            sizeof(mca_btl_openib_footer_t) +
+            mca_btl_openib_component.qp_infos[qp].size;
         
         init_data->order = qp;
         init_data->list = &openib_btl->qps[qp].send_free;
@@ -840,6 +882,8 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
            
         init_data = malloc(sizeof(mca_btl_openib_frag_init_data_t));
         length = sizeof(mca_btl_openib_header_t) +
+            sizeof(mca_btl_openib_header_coalesced_t) +
+            sizeof(mca_btl_openib_control_header_t) +
             sizeof(mca_btl_openib_footer_t) +
             mca_btl_openib_component.qp_infos[qp].size;
         
@@ -867,6 +911,8 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
 
     openib_btl->eager_rdma_frag_size = OPAL_ALIGN(
             sizeof(mca_btl_openib_header_t) +
+            sizeof(mca_btl_openib_header_coalesced_t) +
+            sizeof(mca_btl_openib_control_header_t) +
             sizeof(mca_btl_openib_footer_t) +
             openib_btl->super.btl_eager_limit,
             mca_btl_openib_component.buffer_alignment, size_t);
@@ -1598,8 +1644,16 @@ static int btl_openib_module_progress(mca_btl_openib_hca_t* hca)
         
             case IBV_WC_RDMA_WRITE:
             case IBV_WC_SEND:
+                if(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_SEND) {
+                    opal_list_item_t *i;
+                    while((i = opal_list_remove_first(
+                                &to_send_frag(des)->coalesced_frags))) {
+                        to_base_frag(i)->base.des_cbfunc(&openib_btl->super,
+                                endpoint, &to_base_frag(i)->base, OMPI_SUCCESS);
+                    }
+                }
                 /* Process a completed send/put/get */
-                des->des_cbfunc(&openib_btl->super, endpoint, des, OMPI_SUCCESS); 
+                des->des_cbfunc(&openib_btl->super, endpoint, des,OMPI_SUCCESS); 
 
                 /* return send wqe */
                 qp_put_wqe(endpoint, qp);

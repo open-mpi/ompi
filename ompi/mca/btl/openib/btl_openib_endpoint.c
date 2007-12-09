@@ -39,10 +39,8 @@
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/class/ompi_free_list.h" 
 
-#include "btl_openib.h"
 #include "btl_openib_endpoint.h" 
 #include "btl_openib_proc.h"
-#include "btl_openib_frag.h"
 #include "btl_openib_xrc.h"
 
 static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint);
@@ -59,7 +57,7 @@ static int post_send(mca_btl_openib_endpoint_t *ep,
     int qp = to_base_frag(frag)->base.order;
 
     sg->length = seg->seg_len + sizeof(mca_btl_openib_header_t) +
-        (rdma ? sizeof(mca_btl_openib_footer_t) : 0);
+        (rdma ? sizeof(mca_btl_openib_footer_t) : 0) + frag->coalesced_length;
 
     if(sg->length <= openib_btl->ib_inline_max) {
         sr_desc->send_flags = IBV_SEND_SIGNALED | IBV_SEND_INLINE;
@@ -73,8 +71,8 @@ static int post_send(mca_btl_openib_endpoint_t *ep,
     if(rdma) {
         int32_t head;
         mca_btl_openib_footer_t* ftr =
-            (mca_btl_openib_footer_t*)(((char*)seg->seg_addr.pval) +
-                    seg->seg_len);
+            (mca_btl_openib_footer_t*)(((char*)frag->hdr) + sg->length -
+                    sizeof(mca_btl_openib_footer_t));
         sr_desc->opcode = IBV_WR_RDMA_WRITE;
         MCA_BTL_OPENIB_RDMA_FRAG_SET_SIZE(ftr, sg->length);
         MCA_BTL_OPENIB_RDMA_MAKE_LOCAL(ftr);
@@ -184,6 +182,7 @@ int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t *endpoint,
     int qp, ib_rc;
     int32_t cm_return;
     bool do_rdma = false;
+    size_t eager_limit;
 
     if(OPAL_LIKELY(des->order == MCA_BTL_NO_ORDER))
         des->order = frag->qp_idx;
@@ -193,7 +192,10 @@ int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t *endpoint,
     if(acruire_wqe(endpoint, frag) != OMPI_SUCCESS)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
-    if(des->des_src->seg_len <= mca_btl_openib_component.eager_limit &&
+    eager_limit = mca_btl_openib_component.eager_limit +
+        sizeof(mca_btl_openib_header_coalesced_t) +
+        sizeof(mca_btl_openib_control_header_t);
+    if(des->des_src->seg_len + frag->coalesced_length <= eager_limit &&
             (des->des_flags & MCA_BTL_DES_FLAGS_PRIORITY)) {
         /* High priority frag. Try to send over eager RDMA */
         if(acquire_eager_rdma_send_credit(endpoint) == OMPI_SUCCESS)

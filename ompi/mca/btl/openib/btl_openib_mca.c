@@ -416,6 +416,10 @@ int btl_openib_register_mca_params(void)
         mca_btl_openib_component.buffer_alignment = (uint32_t) ival;
     }
     
+    CHECK(reg_int("use_message_coalescing", 
+                  "Use message coalescing", 1, &ival, 0));
+    mca_btl_openib_component.use_message_coalescing = (0 != ival);
+
     /* Info only */
 
     mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version, 
