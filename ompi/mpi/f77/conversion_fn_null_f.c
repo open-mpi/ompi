@@ -38,22 +38,23 @@
 
 #include "ompi/mpi/f77/datarep.h"
 #include "ompi/mpi/f77/fint_2_int.h"
-
+#include "ompi/mpi/f77/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_CONVERSION_FN_NULL   = mpi_conversion_fn_null_f
 #pragma weak mpi_conversion_fn_null   = mpi_conversion_fn_null_f
 #pragma weak mpi_conversion_fn_null_  = mpi_conversion_fn_null_f
 #pragma weak mpi_conversion_fn_null__ = mpi_conversion_fn_null_f
+#endif
 
-#else
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS(MPI_CONVERSION_FN_NULL,
                            mpi_conversion_fn_null,
                            mpi_conversion_fn_null_,
                            mpi_conversion_fn_null__,
                            mpi_conversion_fn_null_f,
                            (char *userbuf, MPI_Fint *datatype, MPI_Fint *count, char *filebuf, MPI_Offset *position, MPI_Aint *extra_state, MPI_Fint *ierr),
-                           (userbuf, datatype, count, filebuf, position, extra_state, ierr)
+                           (userbuf, datatype, count, filebuf, position, extra_state, ierr) )
 #endif
 
 
