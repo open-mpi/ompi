@@ -155,7 +155,7 @@ static void mca_pml_dr_ctl_completion(
     int status)
 {
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
-    MCA_BML_BASE_BTL_DES_RETURN(bml_btl, des);
+    mca_bml_base_free(bml_btl, des);
 }
 
 /*
@@ -183,7 +183,8 @@ void mca_pml_dr_recv_request_ack(
     /* allocate descriptor */
     do_csum = mca_pml_dr.enable_csum && 
         (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);
-    MCA_PML_DR_DES_ALLOC(bml_btl, des, sizeof(mca_pml_dr_ack_hdr_t));
+    mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER,
+            sizeof(mca_pml_dr_ack_hdr_t));
     if(NULL == des) {
         return;
     }

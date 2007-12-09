@@ -179,10 +179,6 @@ extern int mca_pml_ob1_ft_event( int state );
 
 END_C_DECLS
 
-#define MCA_PML_OB1_DES_ALLOC(bml_btl, des, order, size) \
-    MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, order,                     \
-   sizeof(mca_pml_ob1_hdr_t) + (sizeof(mca_btl_base_segment_t) << 4), size)
-
 struct mca_pml_ob1_pckt_pending_t {
     ompi_free_list_item_t super;
     ompi_proc_t* proc;
