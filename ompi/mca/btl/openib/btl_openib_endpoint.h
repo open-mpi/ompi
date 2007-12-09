@@ -28,8 +28,8 @@
 #include "opal/event/event.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
-#include "btl_openib_frag.h"
 #include "btl_openib.h"
+#include "btl_openib_frag.h"
 #include "btl_openib_eager_rdma.h"
 #include <errno.h> 
 #include <string.h> 

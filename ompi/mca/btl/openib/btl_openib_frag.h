@@ -53,6 +53,11 @@ do {                                  \
     (h).credits = ntohs((h).credits); \
 } while (0)
 
+typedef struct mca_btl_openib_header_coalesced_t {
+    mca_btl_base_tag_t tag;
+    uint32_t size;
+    uint32_t alloc_size;
+} mca_btl_openib_header_coalesced_t;
 
 struct mca_btl_openib_footer_t {
 #if OMPI_ENABLE_DEBUG
@@ -101,8 +106,9 @@ typedef struct mca_btl_openib_footer_t mca_btl_openib_footer_t;
 #endif
 
 
-#define MCA_BTL_OPENIB_CONTROL_CREDITS 0
-#define MCA_BTL_OPENIB_CONTROL_RDMA    1
+#define MCA_BTL_OPENIB_CONTROL_CREDITS      0
+#define MCA_BTL_OPENIB_CONTROL_RDMA         1
+#define MCA_BTL_OPENIB_CONTROL_COALESCED    2
 
 struct mca_btl_openib_control_header_t {
     uint8_t type;
@@ -153,7 +159,8 @@ enum mca_btl_openib_frag_type_t {
     MCA_BTL_OPENIB_FRAG_SEND,
     MCA_BTL_OPENIB_FRAG_SEND_USER,
     MCA_BTL_OPENIB_FRAG_EAGER_RDMA,
-    MCA_BTL_OPENIB_FRAG_CONTROL
+    MCA_BTL_OPENIB_FRAG_CONTROL,
+    MCA_BTL_OPENIB_FRAG_COALESCED
 };
 typedef enum mca_btl_openib_frag_type_t mca_btl_openib_frag_type_t;
 
@@ -199,9 +206,11 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_in_frag_t);
 
 typedef struct mca_btl_openib_send_frag_t {
     mca_btl_openib_out_frag_t super;
-    mca_btl_openib_header_t *hdr;
+    mca_btl_openib_header_t *hdr, *chdr;
     mca_btl_openib_footer_t *ftr;
     uint8_t qp_idx;
+    uint32_t coalesced_length;
+    opal_list_t coalesced_frags;
 } mca_btl_openib_send_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_t);
 
@@ -235,6 +244,16 @@ typedef struct mca_btl_openib_send_frag_t mca_btl_openib_send_control_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_send_control_frag_t); 
 
 #define to_send_control_frag(f) ((mca_btl_openib_send_control_frag_t*)(f))
+
+typedef struct mca_btl_openib_coalesced_frag_t {
+    mca_btl_openib_frag_t super;
+    mca_btl_openib_send_frag_t *send_frag;
+    mca_btl_openib_header_coalesced_t *hdr;
+} mca_btl_openib_coalesced_frag_t;
+OBJ_CLASS_DECLARATION(mca_btl_openib_coalesced_frag_t);
+
+#define to_coalesced_frag(f) ((mca_btl_openib_coalesced_frag_t*)(f))
+
 /*
  * Allocate an IB send descriptor
  *
@@ -246,6 +265,17 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_send_control_frag_t);
         OMPI_FREE_LIST_WAIT(&(btl)->send_free_control, item, rc);      \
         frag = to_send_control_frag(item);                             \
     } while(0)
+
+static inline uint8_t frag_size_to_order(mca_btl_openib_module_t* btl,
+        size_t size)
+{
+    int qp;
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++)
+        if(mca_btl_openib_component.qp_infos[qp].size >= size)
+            return qp;
+
+    return MCA_BTL_NO_ORDER;
+}
 
 #define MCA_BTL_IB_FRAG_ALLOC_SEND_USER(btl, frag, rc)                 \
     do {                                                               \
@@ -259,6 +289,14 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_send_control_frag_t);
         ompi_free_list_item_t *item;                                    \
         OMPI_FREE_LIST_GET(&(btl)->recv_user_free, item, rc);           \
         frag = to_com_frag(item);                                       \
+    } while(0)
+
+#define MCA_BTL_IB_FRAG_ALLOC_COALESCED(btl, frag)                      \
+    do {                                                                \
+        int ign_rc;                                                     \
+        ompi_free_list_item_t *item;                                    \
+        OMPI_FREE_LIST_GET(&(btl)->send_free_coalesced, item, ign_rc)   \
+        frag = to_coalesced_frag(item);                                 \
     } while(0)
 
 #define MCA_BTL_IB_FRAG_RETURN(frag)                                    \

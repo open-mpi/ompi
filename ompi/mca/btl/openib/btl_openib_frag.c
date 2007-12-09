@@ -19,6 +19,7 @@
  * $HEADER$
  */
 
+#include "btl_openib.h"
 #include "btl_openib_frag.h" 
 #include "btl_openib_eager_rdma.h"
 
@@ -31,7 +32,9 @@ void mca_btl_openib_frag_init(ompi_free_list_item_t* item, void* ctx)
         to_recv_frag(frag)->qp_idx = init_data->order;
         to_com_frag(frag)->sg_entry.length =
             mca_btl_openib_component.qp_infos[init_data->order].size +
-            sizeof(mca_btl_openib_header_t);
+            sizeof(mca_btl_openib_header_t) +
+            sizeof(mca_btl_openib_header_coalesced_t) +
+            sizeof(mca_btl_openib_control_header_t);
     }
 
     if(MCA_BTL_OPENIB_FRAG_SEND == frag->type)
@@ -92,10 +95,15 @@ static void send_constructor(mca_btl_openib_send_frag_t *frag)
 
     base_frag->type = MCA_BTL_OPENIB_FRAG_SEND;
 
-    frag->hdr = (mca_btl_openib_header_t*)base_frag->base.super.ptr;
-    base_frag->segment.seg_addr.pval =
-        ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);
+    frag->chdr = (mca_btl_openib_header_t*)base_frag->base.super.ptr;
+    frag->hdr = (mca_btl_openib_header_t*)
+        (((unsigned char*)base_frag->base.super.ptr) +
+        sizeof(mca_btl_openib_header_coalesced_t) +
+        sizeof(mca_btl_openib_control_header_t));
+    base_frag->segment.seg_addr.pval = frag->hdr + 1;
     to_com_frag(frag)->sg_entry.addr = (uint64_t)frag->hdr;
+    frag->coalesced_length = 0;
+    OBJ_CONSTRUCT(&frag->coalesced_frags, opal_list_t);
 }
 
 static void recv_constructor(mca_btl_openib_recv_frag_t *frag)
@@ -136,6 +144,18 @@ static void get_constructor(mca_btl_openib_get_frag_t *frag)
     frag->sr_desc.opcode = IBV_WR_RDMA_READ;
     frag->sr_desc.send_flags = IBV_SEND_SIGNALED;
     frag->sr_desc.next = NULL;
+}
+
+static void coalesced_constructor(mca_btl_openib_coalesced_frag_t *frag)
+{
+    mca_btl_openib_frag_t *base_frag = to_base_frag(frag);
+
+    base_frag->type = MCA_BTL_OPENIB_FRAG_COALESCED;
+
+    base_frag->base.des_src = &base_frag->segment;
+    base_frag->base.des_src_cnt = 1;
+    base_frag->base.des_dst = NULL;
+    base_frag->base.des_dst_cnt = 0;
 }
 
 OBJ_CLASS_INSTANCE(
@@ -190,4 +210,10 @@ OBJ_CLASS_INSTANCE(
                    mca_btl_openib_get_frag_t, 
                    mca_btl_openib_in_frag_t,
                    get_constructor, 
+                   NULL); 
+
+OBJ_CLASS_INSTANCE(
+                   mca_btl_openib_coalesced_frag_t, 
+                   mca_btl_openib_frag_t,
+                   coalesced_constructor, 
                    NULL); 

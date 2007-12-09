@@ -505,23 +505,124 @@ ib_frag_alloc(mca_btl_openib_module_t *btl, size_t size, uint8_t order)
     return &to_base_frag(item)->base;
 }
 
+/* check if pending fragment has enough space for coalescing */
+static mca_btl_openib_send_frag_t *check_coalescing(opal_list_t *frag_list,
+        opal_mutex_t *lock, mca_btl_base_endpoint_t *ep, size_t size)
+{
+    mca_btl_openib_send_frag_t *frag = NULL;
+
+    if(opal_list_is_empty(frag_list))
+        return NULL;
+
+    OPAL_THREAD_LOCK(lock);
+    if(!opal_list_is_empty(frag_list)) {
+        int qp;
+        size_t total_length;
+        opal_list_item_t *i = opal_list_get_first(frag_list);
+        frag = to_send_frag(i);
+        if(to_com_frag(frag)->endpoint != ep ||
+                MCA_BTL_OPENIB_FRAG_CONTROL == openib_frag_type(frag)) {
+            OPAL_THREAD_UNLOCK(lock);
+            return NULL;
+        }
+
+        total_length = size + frag->coalesced_length +
+            to_base_frag(frag)->segment.seg_len +
+            sizeof(mca_btl_openib_header_coalesced_t);
+
+        qp = to_base_frag(frag)->base.order;
+
+        if(total_length <= mca_btl_openib_component.qp_infos[qp].size)
+            opal_list_remove_first(frag_list);
+        else
+            frag = NULL;
+    }
+    OPAL_THREAD_UNLOCK(lock);
+
+    return frag;
+}
+
 /**
  * Allocate a segment.
  *
  * @param btl (IN)      BTL module
  * @param size (IN)     Request segment size.
-  * @param size (IN) Size of segment to allocate    
+ * @param size (IN) Size of segment to allocate    
  * 
  * When allocating a segment we pull a pre-alllocated segment 
  * from one of two free lists, an eager list and a max list
  */
 mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
+    struct mca_btl_base_endpoint_t* ep,
     uint8_t order,
     size_t size)
 {
-    return ib_frag_alloc((mca_btl_openib_module_t*)btl, size, order);
+    mca_btl_openib_module_t *obtl = (mca_btl_openib_module_t*)btl;
+    int qp = frag_size_to_order(obtl, size);
+    mca_btl_openib_send_frag_t *sfrag = NULL;
+    mca_btl_openib_coalesced_frag_t *cfrag;
+
+    assert(qp != MCA_BTL_NO_ORDER);
+
+    if(mca_btl_openib_component.use_message_coalescing) {
+        sfrag = check_coalescing(&ep->qps[qp].qp->pending_frags[0],
+                &ep->qps[qp].qp->lock, ep, size);
+
+        if(NULL == sfrag) {
+            if(BTL_OPENIB_QP_TYPE_PP(qp)) {
+                sfrag = check_coalescing(&ep->qps[qp].pending_frags[0],
+                        &ep->endpoint_lock, ep, size);
+            } else {
+                sfrag = check_coalescing(
+                        &obtl->qps[qp].u.srq_qp.pending_frags[0],
+                        &obtl->ib_lock, ep, size);
+            }
+        }
+    }
+
+    if(NULL == sfrag)
+        return ib_frag_alloc((mca_btl_openib_module_t*)btl, size, order);
+
+    /* begin coalescing message */
+    MCA_BTL_IB_FRAG_ALLOC_COALESCED(obtl, cfrag);
+    cfrag->send_frag = sfrag;
+
+    /* fix up new coalescing header if this is the first coalesced frag */
+    if(sfrag->hdr != sfrag->chdr) {
+        mca_btl_openib_control_header_t *ctrl_hdr;
+        mca_btl_openib_header_coalesced_t *clsc_hdr;
+        uint8_t org_tag;
+
+        org_tag = sfrag->hdr->tag;
+        sfrag->hdr = sfrag->chdr;
+        ctrl_hdr = (mca_btl_openib_control_header_t*)(sfrag->hdr + 1);
+        clsc_hdr = (mca_btl_openib_header_coalesced_t*)(ctrl_hdr + 1);
+        sfrag->hdr->tag = MCA_BTL_TAG_BTL;
+        ctrl_hdr->type = MCA_BTL_OPENIB_CONTROL_COALESCED;
+        clsc_hdr->tag = org_tag;
+        clsc_hdr->size = to_base_frag(sfrag)->segment.seg_len;
+        clsc_hdr->alloc_size = to_base_frag(sfrag)->segment.seg_len;
+        sfrag->coalesced_length = sizeof(mca_btl_openib_control_header_t) +
+            sizeof(mca_btl_openib_header_coalesced_t);
+        to_com_frag(sfrag)->sg_entry.addr = (uint64_t)sfrag->hdr; 
+    }
+
+    cfrag->hdr = (mca_btl_openib_header_coalesced_t*)
+        (((unsigned char*)(sfrag->hdr + 1)) + sfrag->coalesced_length +
+        to_base_frag(sfrag)->segment.seg_len);
+    cfrag->hdr->alloc_size = size;
+
+    /* point coalesced frag pointer into a data buffer */
+    to_base_frag(cfrag)->segment.seg_addr.pval = cfrag->hdr + 1;
+    to_base_frag(cfrag)->segment.seg_len = size;
+
+    /* save coalesced fragment on a main fragment; we will need it after send
+     * completion to free it and to call upper layer callback */
+    opal_list_append(&sfrag->coalesced_frags, (opal_list_item_t*)cfrag);
+    sfrag->coalesced_length += (size+sizeof(mca_btl_openib_header_coalesced_t));
+
+    return &to_base_frag(cfrag)->base;
 }
 
 /** 
@@ -548,16 +649,27 @@ int mca_btl_openib_free(
   
     /* reset those field on free so we will not have to do it on alloc */
     to_base_frag(des)->base.des_flags = 0;
-    if(MCA_BTL_OPENIB_FRAG_RECV == openib_frag_type(des) ||
-            MCA_BTL_OPENIB_FRAG_RECV_USER == openib_frag_type(des)) {
-        to_base_frag(des)->base.des_src = NULL;
-        to_base_frag(des)->base.des_src_cnt = 0;
-    } else if(MCA_BTL_OPENIB_FRAG_SEND == openib_frag_type(des) ||
-            MCA_BTL_OPENIB_FRAG_SEND_USER == openib_frag_type(des)) {
-        to_base_frag(des)->base.des_dst = NULL;
-        to_base_frag(des)->base.des_dst_cnt = 0;
-        if(MCA_BTL_OPENIB_FRAG_SEND == openib_frag_type(des))
+    switch(openib_frag_type(des)) {
+        case MCA_BTL_OPENIB_FRAG_RECV:
+        case MCA_BTL_OPENIB_FRAG_RECV_USER:
+            to_base_frag(des)->base.des_src = NULL;
+            to_base_frag(des)->base.des_src_cnt = 0;
+            break;
+        case MCA_BTL_OPENIB_FRAG_SEND:
+            to_send_frag(des)->hdr = (mca_btl_openib_header_t*)
+                (((unsigned char*)to_send_frag(des)->chdr) +
+                sizeof(mca_btl_openib_header_coalesced_t) +
+                sizeof(mca_btl_openib_control_header_t));
             to_com_frag(des)->sg_entry.addr = (uint64_t)to_send_frag(des)->hdr;
+            to_send_frag(des)->coalesced_length = 0;
+            assert(!opal_list_get_size(&to_send_frag(des)->coalesced_frags));
+            /* fall throug */
+        case MCA_BTL_OPENIB_FRAG_SEND_USER:
+            to_base_frag(des)->base.des_dst = NULL;
+            to_base_frag(des)->base.des_dst_cnt = 0;
+            break;
+        default:
+            break;
     }
     MCA_BTL_IB_FRAG_RETURN(des);
         
@@ -664,9 +776,10 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     if(max_data + reserve > btl->btl_max_send_size) {
         max_data = btl->btl_max_send_size - reserve;
     }
-   
-    frag = (mca_btl_openib_com_frag_t*)
-        ib_frag_alloc(openib_btl, max_data + reserve, order);
+  
+    frag = (mca_btl_openib_com_frag_t*)(reserve ?
+            ib_frag_alloc(openib_btl, max_data + reserve, order) :
+            mca_btl_openib_alloc(btl, endpoint, order, max_data));
 
     if(NULL == frag)
         return NULL;
@@ -941,19 +1054,27 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
 
 int mca_btl_openib_send( 
     struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_btl_base_descriptor_t* descriptor, 
+    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_descriptor_t* des,
     mca_btl_base_tag_t tag)
    
 {
-    mca_btl_openib_send_frag_t* frag = to_send_frag(descriptor); 
+    mca_btl_openib_send_frag_t *frag;
 
-    assert(openib_frag_type(frag) == MCA_BTL_OPENIB_FRAG_SEND);
-  
-    to_com_frag(frag)->endpoint = endpoint; 
-    frag->hdr->tag = tag;
+    assert(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_SEND ||
+            openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_COALESCED);
+ 
+    if(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_COALESCED) {
+        to_coalesced_frag(des)->hdr->tag = tag;
+        to_coalesced_frag(des)->hdr->size = des->des_src->seg_len;
+        frag = to_coalesced_frag(des)->send_frag;
+    } else {
+        frag = to_send_frag(des);
+        to_com_frag(des)->endpoint = ep; 
+        frag->hdr->tag = tag;
+    }
 
-    return mca_btl_openib_endpoint_send(endpoint, frag);
+    return mca_btl_openib_endpoint_send(ep, frag);
 }
 
 /*
