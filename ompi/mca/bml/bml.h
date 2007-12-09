@@ -64,7 +64,6 @@ struct mca_bml_base_btl_t {
     size_t btl_min_rdma_pipeline_size;            /**< BTL min rdma size */
     struct mca_btl_base_module_t *btl;            /**< BTL module */
     struct mca_btl_base_endpoint_t* btl_endpoint; /**< BTL addressing info */
-    struct mca_btl_base_descriptor_t* btl_cache;
         
     /* BTL function table */
     mca_btl_base_module_alloc_fn_t   btl_alloc;
@@ -354,66 +353,6 @@ static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl,
         (*des)->des_context = (void*) bml_btl;  
     }
 }
-
-#if OMPI_HAVE_THREAD_SUPPORT
-#define MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, arg_order,             \
-                                   alloc_size, seg_size)                \
-    do {                                                                \
-        if( MCA_BTL_NO_ORDER == arg_order &&                            \
-            NULL != (des = bml_btl->btl_cache) ) {                      \
-            /* atomically acquire the cached descriptor */              \
-            if(opal_atomic_cmpset_ptr(&bml_btl->btl_cache,              \
-                                      des, NULL) == 0) {                \
-                des = bml_btl->btl_alloc(bml_btl->btl, arg_order,       \
-                                         alloc_size);                   \
-            }                                                           \
-        } else {                                                        \
-            des = bml_btl->btl_alloc(bml_btl->btl, arg_order, alloc_size); \
-        }                                                               \
-        if( OPAL_LIKELY(des != NULL) ) {                                \
-            des->des_src->seg_len = seg_size;                           \
-            des->des_context = (void*) bml_btl;                         \
-        }                                                               \
-    } while(0)
-#else
-#define MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, arg_order,             \
-                                   alloc_size, seg_size)                \
-    do {                                                                \
-        if( MCA_BTL_NO_ORDER == arg_order &&                            \
-            NULL != (des = bml_btl->btl_cache) ) {                      \
-            bml_btl->btl_cache = NULL;                                  \
-            des->order = MCA_BTL_NO_ORDER;                              \
-        } else {                                                        \
-            des = bml_btl->btl_alloc(bml_btl->btl, arg_order, alloc_size); \
-        }                                                               \
-        if( OPAL_LIKELY(des != NULL) ) {                                \
-            des->des_src->seg_len = seg_size;                           \
-            des->des_context = (void*) bml_btl;                         \
-        }                                                               \
-    } while(0)
-#endif  /* OMPI_HAVE_THREAD_SUPPORT */
-
-/**
- * Return a descriptor
- */
-#if OMPI_HAVE_THREAD_SUPPORT
-#define MCA_BML_BASE_BTL_DES_RETURN( bml_btl, descriptor )              \
-    do {                                                                \
-        if( opal_atomic_cmpset_ptr(&bml_btl->btl_cache,                 \
-                                   NULL,descriptor) == 0 ) {            \
-            bml_btl->btl_free( bml_btl->btl, descriptor );              \
-        }                                                               \
-    } while (0)
-#else
-#define MCA_BML_BASE_BTL_DES_RETURN( bml_btl, descriptor ) \
-    do {                                                   \
-        if( NULL == bml_btl->btl_cache ) {                 \
-            bml_btl->btl_cache = descriptor;               \
-        } else {                                           \
-            bml_btl->btl_free( bml_btl->btl, descriptor ); \
-        }                                                  \
-    } while(0)
-#endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 /*
  *  BML component interface functions and datatype.

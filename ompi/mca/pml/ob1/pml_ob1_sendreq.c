@@ -138,42 +138,6 @@ OBJ_CLASS_INSTANCE( mca_pml_ob1_send_request_t,
                     mca_pml_ob1_send_request_destruct );
 
 /**
- * Completion of a short message - nothing left to schedule. Note that this
- * function is only called for 0 sized messages.
- */
-
-static void
-mca_pml_ob1_match_completion_cache( struct mca_btl_base_module_t* btl,  
-                                    struct mca_btl_base_endpoint_t* ep,
-                                    struct mca_btl_base_descriptor_t* descriptor,
-                                    int status )
-{
-    mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
-    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context; 
-
-    if( sendreq->req_send.req_bytes_packed > 0 ) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
-                                 &(sendreq->req_send.req_base), PERUSE_SEND );
-    }
-
-    /* check completion status */
-    if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
-        /* TSW - FIX */
-        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        orte_errmgr.abort();
-    }
-
-    /* attempt to cache the descriptor */
-    MCA_BML_BASE_BTL_DES_RETURN( bml_btl, descriptor ); 
-
-    /* signal request completion */
-    send_request_pml_complete(sendreq);
-
-    /* check for pending requests */
-    MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
-}
-
-/**
  * Completion of a short message - nothing left to schedule.
  */
 
@@ -476,31 +440,22 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
     int rc;
 
     /* allocate descriptor */
-    if( 0 == size ) {
-        MCA_PML_OB1_DES_ALLOC( bml_btl, descriptor,
-                               MCA_BTL_NO_ORDER,
-                               sizeof(mca_pml_ob1_match_hdr_t) );
-        if( OPAL_UNLIKELY(NULL == descriptor) ) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        segment = descriptor->des_src;
-        descriptor->des_cbfunc = mca_pml_ob1_match_completion_cache;
-    } else {
-        mca_bml_base_alloc( bml_btl, &descriptor,
-                            MCA_BTL_NO_ORDER,
-                            sizeof(mca_pml_ob1_match_hdr_t) + size );
-        if( OPAL_UNLIKELY(NULL == descriptor) ) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        segment = descriptor->des_src;
+    mca_bml_base_alloc( bml_btl, &descriptor,
+                        MCA_BTL_NO_ORDER,
+                        sizeof(mca_pml_ob1_match_hdr_t) + size );
+    if( OPAL_UNLIKELY(NULL == descriptor) ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    segment = descriptor->des_src;
 
+    if(size > 0) {
         /* pack the data into the supplied buffer */
-        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + sizeof(mca_pml_ob1_match_hdr_t));
+        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval +
+                sizeof(mca_pml_ob1_match_hdr_t));
         iov.iov_len = size;
         iov_count = 1;
         (void)ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor,
-                                   &iov, &iov_count, &max_data );
-        descriptor->des_cbfunc = mca_pml_ob1_match_completion_free;
+                &iov, &iov_count, &max_data );
     }
     
     /* build match header */
@@ -532,6 +487,7 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
     /* short message */
     descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     descriptor->des_cbdata = sendreq;
+    descriptor->des_cbfunc = mca_pml_ob1_match_completion_free;
 
     /* signal request completion */
     OPAL_THREAD_LOCK(&ompi_request_lock);
@@ -540,12 +496,8 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
 
     /* send */
     rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML);
-    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
-        if( 0 == size )
-            MCA_BML_BASE_BTL_DES_RETURN(bml_btl, descriptor);
-        else
-            mca_bml_base_free(bml_btl, descriptor );
-    } 
+    if(OPAL_UNLIKELY(OMPI_SUCCESS != rc))
+            mca_bml_base_free(bml_btl, descriptor);
     return rc;
 }
 

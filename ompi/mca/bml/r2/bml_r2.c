@@ -309,7 +309,6 @@ int mca_bml_r2_add_procs(
                     btl->btl_rdma_pipeline_frag_size;
                 bml_btl->btl_min_rdma_pipeline_size =
                     btl->btl_min_rdma_pipeline_size;
-                bml_btl->btl_cache = NULL;
                 bml_btl->btl_endpoint = btl_endpoints[p];
                 bml_btl->btl_weight = 0;
                 bml_btl->btl_alloc = btl->btl_alloc;

@@ -216,10 +216,6 @@ extern int mca_pml_dr_ft_event(int state);
 #endif
 
 
-#define MCA_PML_DR_DES_ALLOC(bml_btl, des, size)        \
-    MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, MCA_BTL_NO_ORDER,          \
- sizeof(mca_pml_dr_hdr_t) + (sizeof(mca_btl_base_segment_t) << 4),size)
-
 #endif
 
 

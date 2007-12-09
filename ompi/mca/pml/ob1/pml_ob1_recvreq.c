@@ -140,7 +140,8 @@ static void mca_pml_ob1_recv_ctl_completion( mca_btl_base_module_t* btl,
                                              int status )
 {
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
-    MCA_BML_BASE_BTL_DES_RETURN(bml_btl, des);
+
+    mca_bml_base_free(bml_btl, des);
 
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
@@ -188,7 +189,8 @@ int mca_pml_ob1_recv_request_ack_send_btl(
     int rc;
 
     /* allocate descriptor */
-    MCA_PML_OB1_DES_ALLOC(bml_btl, des, MCA_BTL_NO_ORDER, sizeof(mca_pml_ob1_ack_hdr_t));
+    mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER,
+                sizeof(mca_pml_ob1_ack_hdr_t));
     if( OPAL_UNLIKELY(NULL == des) ) {
         return OMPI_ERR_OUT_OF_RESOURCE; 
     }
@@ -673,7 +675,8 @@ int mca_pml_ob1_recv_request_schedule_once(
                     (dst->des_dst_cnt-1));
         }
 
-        MCA_PML_OB1_DES_ALLOC(bml_btl, ctl, MCA_BTL_NO_ORDER, hdr_size);
+        mca_bml_base_alloc(bml_btl, &ctl, MCA_BTL_NO_ORDER, hdr_size);
+
         if( OPAL_UNLIKELY(NULL == ctl) ) {
             mca_bml_base_free(bml_btl,dst);
             continue;
