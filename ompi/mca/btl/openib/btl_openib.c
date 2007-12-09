@@ -611,7 +611,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
             BTL_OPENIB_HEADER_COALESCED_HTON(*clsc_hdr);
         sfrag->coalesced_length = sizeof(mca_btl_openib_control_header_t) +
             sizeof(mca_btl_openib_header_coalesced_t);
-        to_com_frag(sfrag)->sg_entry.addr = (uint64_t)sfrag->hdr; 
+        to_com_frag(sfrag)->sg_entry.addr = (uint64_t)(uintptr_t)sfrag->hdr; 
     }
 
     cfrag->hdr = (mca_btl_openib_header_coalesced_t*)
@@ -666,7 +666,8 @@ int mca_btl_openib_free(
                 (((unsigned char*)to_send_frag(des)->chdr) +
                 sizeof(mca_btl_openib_header_coalesced_t) +
                 sizeof(mca_btl_openib_control_header_t));
-            to_com_frag(des)->sg_entry.addr = (uint64_t)to_send_frag(des)->hdr;
+            to_com_frag(des)->sg_entry.addr =
+                (uint64_t)(uintptr_t)to_send_frag(des)->hdr;
             to_send_frag(des)->coalesced_length = 0;
             assert(!opal_list_get_size(&to_send_frag(des)->coalesced_frags));
             /* fall throug */
@@ -757,7 +758,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 
             frag->sg_entry.length = max_data;
             frag->sg_entry.lkey = openib_reg->mr->lkey;
-            frag->sg_entry.addr = (uint64_t)iov.iov_base;
+            frag->sg_entry.addr = (uint64_t)(uintptr_t)iov.iov_base;
 
             to_base_frag(frag)->base.order = order;
             to_base_frag(frag)->segment.seg_len = max_data;
@@ -856,7 +857,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
 
     frag->sg_entry.length = *size;
     frag->sg_entry.lkey = openib_reg->mr->lkey;
-    frag->sg_entry.addr = (uint64_t)buffer;
+    frag->sg_entry.addr = (uint64_t)(uintptr_t)buffer;
 
     to_base_frag(frag)->segment.seg_addr.pval = buffer;
     to_base_frag(frag)->segment.seg_len = *size;
@@ -1138,7 +1139,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     frag->sr_desc.wr.rdma.rkey = rkey;
 
     to_com_frag(frag)->sg_entry.addr =
-        (uint64_t)descriptor->des_src->seg_addr.pval; 
+        (uint64_t)(uintptr_t)descriptor->des_src->seg_addr.pval; 
     to_com_frag(frag)->sg_entry.length = descriptor->des_src->seg_len; 
     to_com_frag(frag)->endpoint = ep;
 #if HAVE_XRC
@@ -1217,7 +1218,7 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
     frag->sr_desc.wr.rdma.rkey = rkey;
 
     to_com_frag(frag)->sg_entry.addr =
-        (uint64_t)descriptor->des_dst->seg_addr.pval; 
+        (uint64_t)(uintptr_t)descriptor->des_dst->seg_addr.pval; 
     to_com_frag(frag)->sg_entry.length  = descriptor->des_dst->seg_len; 
     to_com_frag(frag)->endpoint = ep;
        
