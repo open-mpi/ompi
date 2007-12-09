@@ -1150,7 +1150,12 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
         /* call registered callback */
         openib_btl->ib_reg[hdr->tag].cbfunc(&openib_btl->super, hdr->tag, des,
             openib_btl->ib_reg[hdr->tag].cbdata);
-        cqp = rqp;
+        if(MCA_BTL_OPENIB_RDMA_FRAG(frag)) {
+            cqp = (hdr->credits >> 11) & 0x0f;
+            hdr->credits &= 0x87ff;
+        } else {
+            cqp = rqp;
+        }
         if(BTL_OPENIB_IS_RDMA_CREDITS(hdr->credits)) {
             rcredits = BTL_OPENIB_CREDITS(hdr->credits);
             hdr->credits = 0;
@@ -1210,10 +1215,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
         progress_pending_frags_pp(ep, cqp);
     }
 
-
-
-    send_credits(ep, (cqp != MCA_BTL_NO_ORDER) ? cqp :
-            mca_btl_openib_component.credits_qp);
+    send_credits(ep, cqp);
 
     return OMPI_SUCCESS;
 }

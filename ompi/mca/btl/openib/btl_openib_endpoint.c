@@ -209,21 +209,22 @@ int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t *endpoint,
     if(hdr->credits)
         hdr->credits |= BTL_OPENIB_RDMA_CREDITS_FLAG;
 
-    hdr->cm_seen = 0;
     if(!do_rdma) {
         if(BTL_OPENIB_QP_TYPE_PP(qp) && 0 == hdr->credits) {
             GET_CREDITS(endpoint->qps[qp].u.pp_qp.rd_credits, hdr->credits);
         }
+    } else {
+        hdr->credits |= (qp << 11);
+    }
 
-        GET_CREDITS(endpoint->qps[qp].u.pp_qp.cm_return, cm_return);
-        /* cm_seen is only 8 bytes, but cm_return is 32 bytes */
-        if(cm_return > 255) {
-            hdr->cm_seen = 255;
-            cm_return -= 255;
-            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_return, cm_return);
-        } else {
-            hdr->cm_seen = cm_return;
-        }
+    GET_CREDITS(endpoint->qps[qp].u.pp_qp.cm_return, cm_return);
+    /* cm_seen is only 8 bytes, but cm_return is 32 bytes */
+    if(cm_return > 255) {
+        hdr->cm_seen = 255;
+        cm_return -= 255;
+        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_return, cm_return);
+    } else {
+        hdr->cm_seen = cm_return;
     }
 
     ib_rc = post_send(endpoint, frag, do_rdma); 
