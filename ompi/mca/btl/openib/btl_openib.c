@@ -482,7 +482,8 @@ int mca_btl_openib_register_error_cb(
 }
 
 static inline mca_btl_base_descriptor_t *
-ib_frag_alloc(mca_btl_openib_module_t *btl, size_t size, uint8_t order)
+ib_frag_alloc(mca_btl_openib_module_t *btl, size_t size, uint8_t order,
+        uint32_t flags)
 {
     int qp, rc;
     ompi_free_list_item_t* item = NULL;
@@ -500,6 +501,7 @@ ib_frag_alloc(mca_btl_openib_module_t *btl, size_t size, uint8_t order)
     /* not all upper layer users set this */
     to_base_frag(item)->segment.seg_len = size;
     to_base_frag(item)->base.order = order;
+    to_base_frag(item)->base.des_flags = flags;
 
     assert(to_send_frag(item)->qp_idx <= order);
     return &to_base_frag(item)->base;
@@ -567,23 +569,24 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     assert(qp != MCA_BTL_NO_ORDER);
 
     if(mca_btl_openib_component.use_message_coalescing) {
-        sfrag = check_coalescing(&ep->qps[qp].qp->pending_frags[0],
+        int prio = !(flags & MCA_BTL_DES_FLAGS_PRIORITY);
+        sfrag = check_coalescing(&ep->qps[qp].qp->pending_frags[prio],
                 &ep->qps[qp].qp->lock, ep, size);
 
         if(NULL == sfrag) {
             if(BTL_OPENIB_QP_TYPE_PP(qp)) {
-                sfrag = check_coalescing(&ep->qps[qp].pending_frags[0],
+                sfrag = check_coalescing(&ep->qps[qp].pending_frags[prio],
                         &ep->endpoint_lock, ep, size);
             } else {
                 sfrag = check_coalescing(
-                        &obtl->qps[qp].u.srq_qp.pending_frags[0],
+                        &obtl->qps[qp].u.srq_qp.pending_frags[prio],
                         &obtl->ib_lock, ep, size);
             }
         }
     }
 
     if(NULL == sfrag)
-        return ib_frag_alloc((mca_btl_openib_module_t*)btl, size, order);
+        return ib_frag_alloc((mca_btl_openib_module_t*)btl, size, order, flags);
 
     /* begin coalescing message */
     MCA_BTL_IB_FRAG_ALLOC_COALESCED(obtl, cfrag);
@@ -779,7 +782,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     }
   
     frag = (mca_btl_openib_com_frag_t*)(reserve ?
-            ib_frag_alloc(openib_btl, max_data + reserve, order) :
+            ib_frag_alloc(openib_btl, max_data + reserve, order, flags) :
             mca_btl_openib_alloc(btl, endpoint, order, max_data, flags));
 
     if(NULL == frag)
@@ -857,6 +860,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     to_base_frag(frag)->segment.seg_len = *size;
     to_base_frag(frag)->segment.seg_key.key32[0] = openib_reg->mr->rkey;
     to_base_frag(frag)->base.order = order;
+    to_base_frag(frag)->base.des_flags = flags;
 
     BTL_VERBOSE(("frag->sg_entry.lkey = %lu .addr = %llu "
                 "frag->segment.seg_key.key32[0] = %lu",
