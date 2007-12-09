@@ -384,7 +384,8 @@ int mca_pml_dr_send_request_start_buffered(
     
     /* allocate descriptor */
     mca_bml_base_alloc(bml_btl, &descriptor, MCA_BTL_NO_ORDER,
-                       sizeof(mca_pml_dr_rendezvous_hdr_t) + size);
+                       sizeof(mca_pml_dr_rendezvous_hdr_t) + size,
+                       MCA_BTL_DES_FLAGS_PRIORITY);
     if(NULL == descriptor) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
@@ -498,7 +499,8 @@ int mca_pml_dr_send_request_start_copy(
     /* allocate descriptor */
     mca_bml_base_alloc(bml_btl, &descriptor, 
                        MCA_BTL_NO_ORDER,
-                       sizeof(mca_pml_dr_match_hdr_t) + size);
+                       sizeof(mca_pml_dr_match_hdr_t) + size,
+                       MCA_BTL_DES_FLAGS_PRIORITY);
     if(NULL == descriptor) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -587,7 +589,8 @@ int mca_pml_dr_send_request_start_prepare(
                               MCA_BTL_NO_ORDER,
                               sizeof(mca_pml_dr_match_hdr_t),
                               &size,
-                              &descriptor);
+                              MCA_BTL_DES_FLAGS_PRIORITY,
+                              &descriptor );
     if(NULL == descriptor) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
@@ -656,7 +659,8 @@ int mca_pml_dr_send_request_start_rndv(
         mca_bml_base_alloc( bml_btl, 
                             &des, 
                             MCA_BTL_NO_ORDER,
-                            sizeof(mca_pml_dr_rendezvous_hdr_t) ); 
+                            sizeof(mca_pml_dr_rendezvous_hdr_t),
+                            MCA_BTL_DES_FLAGS_PRIORITY ); 
     } else {
         mca_bml_base_prepare_src( bml_btl, 
                                   NULL,
@@ -664,7 +668,8 @@ int mca_pml_dr_send_request_start_rndv(
                                   MCA_BTL_NO_ORDER,
                                   sizeof(mca_pml_dr_rendezvous_hdr_t),
                                   &size,
-                                  &des);
+                                  MCA_BTL_DES_FLAGS_PRIORITY,
+                                  &des );
     }
 
     if(NULL == des) {
@@ -775,6 +780,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                                                  MCA_BTL_NO_ORDER,
                                                  sizeof(mca_pml_dr_frag_hdr_t),
                                                  &size,
+                                                 0,
                                                  &des );
                         if(des == NULL) {
                             OPAL_THREAD_LOCK(&ompi_request_lock);
@@ -898,6 +904,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                                           MCA_BTL_NO_ORDER,
                                           sizeof(mca_pml_dr_frag_hdr_t),
                                           &size,
+                                          0,
                                           &des );
                 if(des == NULL) {
                     OPAL_THREAD_LOCK(&mca_pml_dr.lock);

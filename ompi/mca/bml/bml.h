@@ -259,8 +259,8 @@ typedef struct mca_bml_base_endpoint_t mca_bml_base_endpoint_t;
     
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_bml_base_endpoint_t);
 
-static inline void mca_bml_base_alloc(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t** des, uint8_t order, size_t size) { 
-    *des = bml_btl->btl_alloc(bml_btl->btl, bml_btl->btl_endpoint, order, size);
+static inline void mca_bml_base_alloc(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t** des, uint8_t order, size_t size, uint32_t flags) { 
+    *des = bml_btl->btl_alloc(bml_btl->btl, bml_btl->btl_endpoint, order, size, flags);
 }
 
 static inline void mca_bml_base_free(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t* des) { 
@@ -318,6 +318,7 @@ static inline void mca_bml_base_prepare_src(mca_bml_base_btl_t* bml_btl,
                                             uint8_t order,
                                             size_t reserve, 
                                             size_t *size,
+                                            uint32_t flags,
                                             mca_btl_base_descriptor_t** des) { 
     *des = bml_btl->btl_prepare_src(
                                    bml_btl->btl, 
@@ -326,7 +327,8 @@ static inline void mca_bml_base_prepare_src(mca_bml_base_btl_t* bml_btl,
                                    conv,
                                    order,
                                    reserve,
-                                   size
+                                   size,
+                                   flags
                                    );
     if( OPAL_LIKELY((*des) != NULL) ) { 
         (*des)->des_context = (void*) bml_btl;
@@ -338,7 +340,8 @@ static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl,
                                             struct ompi_convertor_t* conv, 
                                             uint8_t order,
                                             size_t reserve, 
-                                            size_t *size, 
+                                            size_t *size,
+                                            uint32_t flags,
                                             mca_btl_base_descriptor_t** des) { 
     *des = bml_btl->btl_prepare_dst(
                                    bml_btl->btl, 
@@ -347,7 +350,8 @@ static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl,
                                    conv,
                                    order,
                                    reserve,
-                                   size
+                                   size,
+                                   flags
                                    );
     if( OPAL_LIKELY((*des) != NULL) ) { 
         (*des)->des_context = (void*) bml_btl;  

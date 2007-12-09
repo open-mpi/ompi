@@ -239,7 +239,7 @@ struct mca_btl_base_descriptor_t {
     mca_btl_base_completion_fn_t des_cbfunc;  /**< local callback function */ 
     void* des_cbdata;                         /**< opaque callback data */
     void* des_context;                        /**< more opaque callback data */
-    int32_t des_flags;                        /**< hints to BTL */
+    uint32_t des_flags;                       /**< hints to BTL */
     /** order value, this is only 
         valid in the local completion callback 
         and may be used in subsequent calls to 
@@ -517,7 +517,8 @@ typedef mca_btl_base_descriptor_t* (*mca_btl_base_module_alloc_fn_t)(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     uint8_t order,
-    size_t size
+    size_t size,
+    uint32_t flags
 );
 
 /**
@@ -571,7 +572,8 @@ typedef struct mca_btl_base_descriptor_t* (*mca_btl_base_module_prepare_fn_t)(
     struct ompi_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
-    size_t* size
+    size_t* size,
+    uint32_t flags
 );
 
 /**

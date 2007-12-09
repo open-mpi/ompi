@@ -1045,7 +1045,8 @@ rdma_send_info_send(ompi_osc_rdma_module_t *module,
         
     bml_btl = peer_send_info->bml_btl;
     mca_bml_base_alloc(bml_btl, &descriptor, MCA_BTL_NO_ORDER,
-            sizeof(ompi_osc_rdma_rdma_info_header_t));
+            sizeof(ompi_osc_rdma_rdma_info_header_t),
+            MCA_BTL_DES_FLAGS_PRIORITY);
     if (NULL == descriptor) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         goto cleanup;
@@ -1241,14 +1242,11 @@ setup_rdma(ompi_osc_rdma_module_t *module)
                                                      0,
                                                      &convertor);
 
-            peer_info->local_descriptors[index] = 
-                bml_btl->btl_prepare_dst(bml_btl->btl,
-                                         bml_btl->btl_endpoint,
-                                         peer_info->local_registrations[index],
-                                         &convertor,
-                                         MCA_BTL_NO_ORDER,
-                                         0,
-                                         &size);
+            mca_bml_base_prepare_dst(bml_btl,
+                    peer_info->local_registrations[index],
+                    &convertor, MCA_BTL_NO_ORDER, 0, &size, 0,
+                    &peer_info->local_descriptors[index]);
+
             if (NULL == peer_info->local_descriptors[index]) {
                 if (NULL != peer_info->local_registrations[index]) {
                     btl_mpool->mpool_deregister(btl_mpool,

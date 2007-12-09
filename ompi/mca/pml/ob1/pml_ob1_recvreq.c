@@ -190,7 +190,7 @@ int mca_pml_ob1_recv_request_ack_send_btl(
 
     /* allocate descriptor */
     mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER,
-                sizeof(mca_pml_ob1_ack_hdr_t));
+                sizeof(mca_pml_ob1_ack_hdr_t), MCA_BTL_DES_FLAGS_PRIORITY);
     if( OPAL_UNLIKELY(NULL == des) ) {
         return OMPI_ERR_OUT_OF_RESOURCE; 
     }
@@ -352,7 +352,8 @@ int mca_pml_ob1_recv_request_get_frag( mca_pml_ob1_rdma_frag_t* frag )
                               &recvreq->req_recv.req_base.req_convertor,
                               MCA_BTL_NO_ORDER,
                               0,
-                              &frag->rdma_length, 
+                              &frag->rdma_length,
+                              0,
                               &descriptor );
     if( OPAL_UNLIKELY(NULL == descriptor) ) {
         frag->rdma_length = save_size;
@@ -658,7 +659,7 @@ int mca_pml_ob1_recv_request_schedule_once(
         /* prepare a descriptor for RDMA */
         mca_bml_base_prepare_dst(bml_btl, reg, 
                                  &recvreq->req_recv.req_base.req_convertor,
-                                 MCA_BTL_NO_ORDER, 0, &size, &dst);
+                                 MCA_BTL_NO_ORDER, 0, &size, 0, &dst);
         OPAL_THREAD_UNLOCK(&recvreq->lock);
 
         if(OPAL_UNLIKELY(dst == NULL)) {
@@ -675,7 +676,8 @@ int mca_pml_ob1_recv_request_schedule_once(
                     (dst->des_dst_cnt-1));
         }
 
-        mca_bml_base_alloc(bml_btl, &ctl, MCA_BTL_NO_ORDER, hdr_size);
+        mca_bml_base_alloc(bml_btl, &ctl, MCA_BTL_NO_ORDER, hdr_size,
+                MCA_BTL_DES_FLAGS_PRIORITY);
 
         if( OPAL_UNLIKELY(NULL == ctl) ) {
             mca_bml_base_free(bml_btl,dst);
