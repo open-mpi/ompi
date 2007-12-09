@@ -101,7 +101,7 @@ static void send_constructor(mca_btl_openib_send_frag_t *frag)
         sizeof(mca_btl_openib_header_coalesced_t) +
         sizeof(mca_btl_openib_control_header_t));
     base_frag->segment.seg_addr.pval = frag->hdr + 1;
-    to_com_frag(frag)->sg_entry.addr = (uint64_t)frag->hdr;
+    to_com_frag(frag)->sg_entry.addr = (uint64_t)(uintptr_t)frag->hdr;
     frag->coalesced_length = 0;
     OBJ_CONSTRUCT(&frag->coalesced_frags, opal_list_t);
 }
@@ -115,7 +115,7 @@ static void recv_constructor(mca_btl_openib_recv_frag_t *frag)
     frag->hdr = (mca_btl_openib_header_t*)base_frag->base.super.ptr;
     base_frag->segment.seg_addr.pval =
         ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);
-    to_com_frag(frag)->sg_entry.addr = (uint64_t)frag->hdr;
+    to_com_frag(frag)->sg_entry.addr = (uint64_t)(uintptr_t)frag->hdr;
 
     frag->rd_desc.wr_id = (uint64_t)frag;
     frag->rd_desc.sg_list = &to_com_frag(frag)->sg_entry;

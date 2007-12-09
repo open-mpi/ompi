@@ -105,7 +105,7 @@ static int post_send(mca_btl_openib_endpoint_t *ep,
     if(BTL_OPENIB_QP_TYPE_XRC(qp))
         sr_desc->xrc_remote_srq_num = ep->rem_info.rem_srqs[qp].rem_srq_num;
 #endif
-    assert(sg->addr == (uint64_t)frag->hdr);
+    assert(sg->addr == (uint64_t)(uintptr_t)frag->hdr);
 
     return ibv_post_send(ep->qps[qp].qp->lcl_qp, sr_desc, &bad_wr);
  }
