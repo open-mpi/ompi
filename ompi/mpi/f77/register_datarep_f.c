@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REGISTER_DATAREP,
                            pmpi_register_datarep_,
                            pmpi_register_datarep__,
                            pmpi_register_datarep_f,
-                           (char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len),
+                           (char *datarep, ompi_mpi2_fortran_datarep_conversion_fn_t *read_conversion_fn, ompi_mpi2_fortran_datarep_conversion_fn_t *write_conversion_fn, ompi_mpi2_fortran_datarep_extent_fn_t *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len),
                            (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr, datarep_len) )
 #endif
 
@@ -57,7 +57,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REGISTER_DATAREP,
                            mpi_register_datarep_,
                            mpi_register_datarep__,
                            mpi_register_datarep_f,
-                           (char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len),
+                           (char *datarep, ompi_mpi2_fortran_datarep_conversion_fn_t *read_conversion_fn, ompi_mpi2_fortran_datarep_conversion_fn_t *write_conversion_fn, ompi_mpi2_fortran_datarep_extent_fn_t *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len),
                            (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr, datarep_len) )
 #endif
 
@@ -99,10 +99,12 @@ static void intercept_extra_state_constructor(intercept_extra_state_t *obj)
 }
 
 OBJ_CLASS_DECLARATION(intercept_extra_state_t);
+
+#if !OMPI_PROFILE_LAYER
 OBJ_CLASS_INSTANCE(intercept_extra_state_t,
                    opal_list_item_t,
                    intercept_extra_state_constructor, NULL);
-
+#endif  /* !OMPI_PROFILE_LAYER */
 
 /*
  * This function works by calling the C version of
@@ -120,10 +122,10 @@ OBJ_CLASS_INSTANCE(intercept_extra_state_t,
  */
 void mpi_register_datarep_f(char *datarep, 
                             ompi_mpi2_fortran_datarep_conversion_fn_t *read_fn_f77,
-			    ompi_mpi2_fortran_datarep_conversion_fn_t *write_fn_f77,
-			    ompi_mpi2_fortran_datarep_extent_fn_t *extent_fn_f77, 
+                            ompi_mpi2_fortran_datarep_conversion_fn_t *write_fn_f77,
+                            ompi_mpi2_fortran_datarep_extent_fn_t *extent_fn_f77, 
                             MPI_Aint *extra_state_f77,
-			    MPI_Fint *ierr, int datarep_len)
+                            MPI_Fint *ierr, int datarep_len)
 {
     char *c_datarep;
     int c_err, ret;
