@@ -90,6 +90,9 @@ typedef struct intercept_extra_state {
     MPI_Aint *extra_state_f77;
 } intercept_extra_state_t;
 
+OBJ_CLASS_DECLARATION(intercept_extra_state_t);
+
+#if !OMPI_PROFILE_LAYER
 static void intercept_extra_state_constructor(intercept_extra_state_t *obj)
 {
     obj->read_fn_f77 = NULL;
@@ -98,9 +101,6 @@ static void intercept_extra_state_constructor(intercept_extra_state_t *obj)
     obj->extra_state_f77 = NULL;
 }
 
-OBJ_CLASS_DECLARATION(intercept_extra_state_t);
-
-#if !OMPI_PROFILE_LAYER
 OBJ_CLASS_INSTANCE(intercept_extra_state_t,
                    opal_list_item_t,
                    intercept_extra_state_constructor, NULL);
