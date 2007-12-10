@@ -540,17 +540,25 @@ static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl,
 static inline int mca_btl_udapl_sendrecv(mca_btl_udapl_module_t* btl,
         DAT_EP_HANDLE* endpoint)
 {
+    int rc;
     mca_btl_udapl_frag_t* frag;
     DAT_DTO_COOKIE cookie;
     static int32_t connection_seq = 1;
-    int rc;
-
+    uint32_t flags = 0;
+    mca_btl_base_endpoint_t* btl_endpoint = NULL; /* endpoint required by
+                                                   * mca_btl_udapl_alloc has not
+                                                   * been created at this point
+                                                   */
+    
     /* Post a receive to get the peer's address data */
     frag = (mca_btl_udapl_frag_t*)
         mca_btl_udapl_alloc(
-                            (mca_btl_base_module_t*)btl, MCA_BTL_NO_ORDER, 
+                            (mca_btl_base_module_t*)btl,
+                            btl_endpoint, 
+                            MCA_BTL_NO_ORDER,
                             sizeof(mca_btl_udapl_addr_t) +
-                            sizeof(int32_t));
+                            sizeof(int32_t),
+                            flags);
     cookie.as_ptr = frag;
 
     frag->type = MCA_BTL_UDAPL_CONN_RECV;
@@ -573,9 +581,11 @@ static inline int mca_btl_udapl_sendrecv(mca_btl_udapl_module_t* btl,
     frag = (mca_btl_udapl_frag_t*)
         mca_btl_udapl_alloc(
                             (mca_btl_base_module_t*)btl, 
+                            btl_endpoint, 
                             MCA_BTL_NO_ORDER,
                             sizeof(mca_btl_udapl_addr_t) +
-                            sizeof(int32_t));
+                            sizeof(int32_t),
+                            flags);
     cookie.as_ptr = frag;
 
     memcpy(frag->segment.seg_addr.pval,
