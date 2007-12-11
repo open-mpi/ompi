@@ -21,6 +21,7 @@
 #include "opal/util/output.h"
 #include "ompi/constants.h"
 #include "ompi/proc/proc.h"
+#include "opal/mca/base/base.h"
 
 static bool use_accelerated;
 
