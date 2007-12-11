@@ -75,17 +75,15 @@ Trunk (not on release branches yet)
   debugging.
   --> Expected: 1.3
 
-- Fixed compile issue with open() on Fedora 8 (and newer) platforms.
-  Thanks to Sebastian Schmitzdorff for noticing the problem.
-  --> Expected: 1.2.5
-- Added run-time warnings during MPI_INIT when MPI_THREAD_MULTIPLE
-  and/or progression threads are used (the OMPI v1.2 series does not
-  support these well at all).  --> Expected: 1.2.5
-
 
 1.2.5 (not released yet)
 -----
 
+- Fixed compile issue with open() on Fedora 8 (and newer) platforms.
+  Thanks to Sebastian Schmitzdorff for noticing the problem.
+- Added run-time warnings during MPI_INIT when MPI_THREAD_MULTIPLE
+  and/or progression threads are used (the OMPI v1.2 series does not
+  support these well at all).
 - Better handling of ECONNABORTED from connect on Linux.  Thanks to
   Bob Soliday for noticing the problem; thanks to Brian Barrett for
   submitting a patch.
