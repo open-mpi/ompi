@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2007      Los Alamos National Security, LLC.
  *                         All rights reserved. 
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,12 +25,12 @@
 #include "orte/mca/routed/base/static-components.h"
 
 
-int               orte_routed_base_output = -1;
+int orte_routed_base_output = -1;
 orte_routed_module_t orte_routed;
-opal_list_t       orte_routed_base_components;
+opal_list_t orte_routed_base_components;
 
 static orte_routed_component_t *active_component = NULL;
-static bool                  component_open_called = false;
+static bool component_open_called = false;
 
 int
 orte_routed_base_open(void)
@@ -106,7 +107,7 @@ orte_routed_base_select(void)
     /* 
      * Unload all components that were not selected
      */
-    mca_base_components_close(-1,
+    mca_base_components_close(orte_routed_base_output,
                               &orte_routed_base_components,
                               &selected_component->routed_version);
 
