@@ -55,6 +55,8 @@ bool ompi_mpi_preconnect_all = false;
 bool ompi_mpi_preconnect_oob = false;
 bool ompi_mpi_leave_pinned = false;
 bool ompi_mpi_leave_pinned_pipeline = false;
+bool ompi_mpi_warn_if_thread_multiple = true;
+bool ompi_mpi_warn_if_progress_threads = true;
 
 
 int ompi_mpi_register_params(void)
@@ -221,6 +223,24 @@ int ompi_mpi_register_params(void)
                        true);
     }
 
+    /* Whether to show a warning for THREAD_MULTIPLE or not */
+
+    mca_base_param_reg_int_name("mpi", "warn_if_thread_multiple",
+                                "Whether to show a warning when MPI_THREAD_MULTIPLE is used or not.",
+                                false, false, 
+                                (int) ompi_mpi_warn_if_thread_multiple,
+                                &value);
+    ompi_mpi_warn_if_thread_multiple = OPAL_INT_TO_BOOL(value);
+    
+    /* Whether to show a warning for progress threads or not */
+
+    mca_base_param_reg_int_name("mpi", "warn_if_progress_threads",
+                                "Whether to show a warning when progress threads are used or not.",
+                                false, false, 
+                                (int) ompi_mpi_warn_if_progress_threads,
+                                &value);
+    ompi_mpi_warn_if_progress_threads = OPAL_INT_TO_BOOL(value);
+    
     /* The ddt engine has a few parameters */
 
     return ompi_ddt_register_params();

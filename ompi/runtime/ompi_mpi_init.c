@@ -210,6 +210,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     char *error = NULL;
     bool compound_cmd = false;
     bool timing = false;
+    bool using_progress_threads = false;
     int param, value;
     struct timeval ompistart, ompistop, stg2start, stg3start;
 
@@ -594,6 +595,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if ((OMPI_ENABLE_PROGRESS_THREADS == 1) ||
         (*provided != MPI_THREAD_SINGLE)) {
         opal_set_using_threads(true);
+        using_progress_threads = true;
     }
 
     /* Init coll for the comms */
@@ -734,6 +736,33 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
               loop) */
            goto error;
        }
+    }
+
+    /* Hard-coded warnings for v1.2 series -- THREAD_MULTIPLE and
+       progress thread support are sketchy at best.  Stay tuned for
+       later releases to support them better. */
+    if ((ompi_mpi_thread_multiple && ompi_mpi_warn_if_thread_multiple) &&
+        (using_progress_threads && ompi_mpi_warn_if_progress_threads)) {
+        if (0 == ompi_mpi_comm_world.c_my_rank) {
+            opal_show_help("help-mpi-runtime",
+                           "THREAD_MULTIPLE and progress threads poorly supported", true);
+            sleep(5);
+        }
+        ompi_mpi_comm_world.c_coll.coll_barrier(&ompi_mpi_comm_world);
+    } else if (ompi_mpi_thread_multiple && ompi_mpi_warn_if_thread_multiple) {
+        if (0 == ompi_mpi_comm_world.c_my_rank) {
+            opal_show_help("help-mpi-runtime",
+                           "THREAD_MULTIPLE poorly supported", true);
+            sleep(5);
+        }
+        ompi_mpi_comm_world.c_coll.coll_barrier(&ompi_mpi_comm_world);
+    } else if (using_progress_threads && ompi_mpi_warn_if_progress_threads) {
+        if (0 == ompi_mpi_comm_world.c_my_rank) {
+            opal_show_help("help-mpi-runtime",
+                           "progress threads poorly supported", true);
+            sleep(5);
+        }
+        ompi_mpi_comm_world.c_coll.coll_barrier(&ompi_mpi_comm_world);
     }
 
     /* All done.  Wasn't that simple? */

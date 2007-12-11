@@ -135,6 +135,16 @@ OMPI_DECLSPEC extern bool ompi_mpi_paffinity_alone;
      */
     OMPI_DECLSPEC extern bool ompi_mpi_leave_pinned_pipeline;
 
+    /** 
+     * Do we want a warning if MPI_THREAD_MULTIPLE is used? 
+     */
+    OMPI_DECLSPEC extern bool ompi_mpi_warn_if_thread_multiple;
+
+    /** 
+     * Do we want a warning if progress threads are used?
+     */
+    OMPI_DECLSPEC extern bool ompi_mpi_warn_if_progress_threads;
+
    /**
      * Register MCA parameters used by the MPI layer.
      *

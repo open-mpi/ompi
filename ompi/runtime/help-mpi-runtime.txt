@@ -60,3 +60,61 @@ compiled with heterogeneous support.  A process running on host
 which will not work.  Please recompile Open MPI with the
 configure option --enable-heterogeneous or use a homogeneous
 environment.
+[THREAD_MULTIPLE and progress threads poorly supported]
+**************************** OPEN MPI WARNING ****************************
+Open MPI was configured and built with support for progress threads.
+Additionally, the application has initialized MPI with
+MPI_THREAD_MULTIPLE, indicating that it wants to have full
+multi-threaded support in MPI.
+
+Note that the Open MPI v1.2 series has poor/untested support for both
+of these features, and only with TCP MPI message passing.  This
+functionality is *not* considered to be production quality.
+
+*************************************************************************
+*** It is likely that your application will fail (crash, hang, etc.). ***
+*** Open MPI will now sleep for 5 seconds to give you the opportunity ***
+*** to quit your application.                                         ***
+*************************************************************************
+
+You can disable this warning (and the sleep) by setting the following
+two MCA parameters to 0:
+
+    mpi_warn_if_thread_multiple
+    mpi_warn_if_progress_threads
+**************************** OPEN MPI WARNING ****************************
+[THREAD_MULTIPLE poorly supported]
+**************************** OPEN MPI WARNING ****************************
+The application has initialized MPI with MPI_THREAD_MULTIPLE,
+indicating that it wants to have full multi-threaded support in MPI.
+
+Note that the Open MPI v1.2 series has poor/untested support for
+THREAD_MULTIPLE, and only with TCP MPI message passing.  This
+functionality is *not* considered to be production quality.
+
+*************************************************************************
+*** It is likely that your application will fail (crash, hang, etc.). ***
+*** Open MPI will now sleep for 5 seconds to give you the opportunity ***
+*** to quit your application.                                         ***
+*************************************************************************
+
+You can disable this warning (and the sleep) by setting the MCA
+parameter "mpi_warn_if_thread_multiple" to 0.
+**************************** OPEN MPI WARNING ****************************
+[progress threads poorly supported]
+**************************** OPEN MPI WARNING ****************************
+Open MPI was configured and built with support for progress threads.
+
+Note that the Open MPI v1.2 series has poor/untested support for
+progress threads, and only with TCP MPI message passing.  This
+functionality is *not* considered to be production quality.
+
+*************************************************************************
+*** It is likely that your application will fail (crash, hang, etc.). ***
+*** Open MPI will now sleep for 5 seconds to give you the opportunity ***
+*** to quit your application.                                         ***
+*************************************************************************
+
+You can disable this warning (and the sleep) by setting the MPI
+parameter "mpi_warn_if_progress_threads" to 0.
+**************************** OPEN MPI WARNING ****************************
