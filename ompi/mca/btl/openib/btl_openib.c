@@ -785,8 +785,9 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     }
   
     frag = (mca_btl_openib_com_frag_t*)(reserve ?
-            ib_frag_alloc(openib_btl, max_data + reserve, order, flags) :
-            mca_btl_openib_alloc(btl, endpoint, order, max_data, flags));
+            mca_btl_openib_alloc(btl, endpoint, order, max_data + reserve,
+                flags) :
+            ib_frag_alloc(openib_btl, max_data, order, flags));
 
     if(NULL == frag)
         return NULL;
@@ -797,6 +798,9 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
     
     *size = max_data;
+
+    /* not all upper layer users set this */
+    to_base_frag(frag)->segment.seg_len = max_data + reserve;
 
     return &to_base_frag(frag)->base;
 }
