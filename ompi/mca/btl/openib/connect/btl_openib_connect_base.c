@@ -67,7 +67,7 @@ int ompi_btl_openib_connect_base_open(void)
     /* For XRC qps we must to use XOOB connection manager */
     if (mca_btl_openib_component.num_xrc_qps > 0) {
         mca_base_param_reg_string(&mca_btl_openib_component.super.btl_version,
-                "btl_openib_connect",
+                "connect",
                 b, false, false,
                 "xoob", &param);
         if (0 != strcmp("xoob", param)) {
@@ -79,7 +79,7 @@ int ompi_btl_openib_connect_base_open(void)
         }
     } else { /* For all others we should use OOB */
         mca_base_param_reg_string(&mca_btl_openib_component.super.btl_version,
-                "btl_openib_connect",
+                "connect",
                 b, false, false,
                 "oob", &param);
         if (0 != strcmp("oob", param)) {
