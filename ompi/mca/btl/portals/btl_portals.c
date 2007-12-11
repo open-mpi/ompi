@@ -325,7 +325,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
 
     if (0 != reserve || 0 != ompi_convertor_need_buffers(convertor)) {
         frag = (mca_btl_portals_frag_t*) 
-            mca_btl_portals_alloc(btl_base, MCA_BTL_NO_ORDER, max_data + reserve);
+            mca_btl_portals_alloc(btl_base, peer, MCA_BTL_NO_ORDER, max_data + reserve, flags);
         if (NULL == frag)  {
             return NULL;
         }
