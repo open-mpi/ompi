@@ -88,7 +88,7 @@ int orte_abort(int status, bool report)
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             goto CLEANUP;
         }
-        fd = open(abort_file, O_CREAT);
+        fd = open(abort_file, O_CREAT, 0600);
         if (0 < fd) close(fd);        
     }
     
