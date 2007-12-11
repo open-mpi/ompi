@@ -182,7 +182,7 @@ extern "C" {
      * valid values are.  This message is used in help messages, such
      * as the output from the ompi_info executable.
      *
-     * If {internal} is set to true, this parameter is now shown by
+     * If {internal} is set to true, this parameter is not shown by
      * default in the output of ompi_info.  That is, this parameter is
      * considered internal to the Open MPI implementation and is not
      * supposed to be viewed / changed by the user.
