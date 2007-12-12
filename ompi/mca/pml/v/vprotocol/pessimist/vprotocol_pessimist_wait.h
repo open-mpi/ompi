@@ -15,6 +15,8 @@
 #include "vprotocol_pessimist.h"
 #include "ompi/request/request.h"
 
+BEGIN_C_DECLS
+
 #define VPROTOCOL_PESSIMIST_WAIT(req, status, rc) \
   ((rc) = ompi_request_wait(req, status))
 
@@ -39,6 +41,8 @@ int mca_vprotocol_pessimist_wait_any(size_t count, ompi_request_t ** requests,
 int mca_vprotocol_pessimist_wait_some(size_t count, ompi_request_t ** requests, 
                                       int *outcount, int *indexes, 
                                       ompi_status_public_t * statuses);
+
+END_C_DECLS
 
 #endif /* __VPROTOCOL_PESSIMIST_WAIT_H__ */
 

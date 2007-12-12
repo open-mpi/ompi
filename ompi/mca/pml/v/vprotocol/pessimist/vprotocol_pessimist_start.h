@@ -14,6 +14,11 @@
 #include "ompi_config.h"
 #include "vprotocol_pessimist.h"
 
-#endif /* __VPROTOCOL_PESSIMIST_START_H__ */
+BEGIN_C_DECLS
 
 OMPI_DECLSPEC int mca_vprotocol_pessimist_start(size_t count, ompi_request_t **requests);
+
+END_C_DECLS
+
+#endif /* __VPROTOCOL_PESSIMIST_START_H__ */
+

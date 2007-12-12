@@ -15,6 +15,8 @@
 #include "vprotocol_pessimist.h"
 #include "vprotocol_pessimist_request.h"
 
+BEGIN_C_DECLS
+
 /*******************************************************************************
   * ANY_SOURCE MATCHING
   */
@@ -183,5 +185,7 @@ void vprotocol_pessimist_matching_replay(int *src);
 } while(0)
 void vprotocol_pessimist_delivery_replay(size_t, ompi_request_t **,
                                          int *, int *, ompi_status_public_t *);
+
+END_C_DECLS
 
 #endif /* __VPROTOCOL_PESSIMIST_EVENTLOG_H__ */
