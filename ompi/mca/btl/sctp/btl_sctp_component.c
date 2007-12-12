@@ -242,7 +242,7 @@ int mca_btl_sctp_component_open(void)
         mca_btl_sctp_param_register_int ("if_11", 0);
 
     /* have lower exclusivity than tcp */
-    mca_btl_sctp_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_LOW - 1;
+    mca_btl_sctp_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_LOW;
     mca_btl_sctp_module.super.btl_eager_limit = 64*1024;
     mca_btl_sctp_module.super.btl_min_send_size = 64*1024;
     mca_btl_sctp_module.super.btl_max_send_size = 128*1024;
