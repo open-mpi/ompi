@@ -244,7 +244,7 @@ int mca_btl_tcp_component_open(void)
             " where Open MPI will open sockets.",
             64*1024 - mca_btl_tcp_component.tcp6_port_min - 1);
 #endif
-    mca_btl_tcp_module.super.btl_exclusivity =  MCA_BTL_EXCLUSIVITY_LOW;
+    mca_btl_tcp_module.super.btl_exclusivity =  MCA_BTL_EXCLUSIVITY_LOW + 100;
     mca_btl_tcp_module.super.btl_eager_limit = 64*1024;
     mca_btl_tcp_module.super.btl_min_send_size = 64*1024;
     mca_btl_tcp_module.super.btl_max_send_size = 128*1024;
