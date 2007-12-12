@@ -15,9 +15,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct mca_pml_v_t {
     mca_pml_base_component_t            host_pml_component;
@@ -29,10 +27,9 @@ struct mca_pml_v_t {
 typedef struct mca_pml_v_t mca_pml_v_t;
 
 OMPI_DECLSPEC extern mca_pml_v_t mca_pml_v;
+OMPI_DECLSPEC extern mca_pml_base_component_1_0_0_t mca_pml_v_component;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #include "pml_v_output.h"
 

@@ -18,6 +18,8 @@
 #include "ompi/communicator/communicator.h"
 #include "vprotocol_pessimist_event.h"
 
+BEGIN_C_DECLS
+
 typedef struct mca_vprotocol_pessimist_module_t {
   mca_vprotocol_base_module_t super;
 
@@ -43,7 +45,8 @@ typedef struct mca_vprotocol_pessimist_module_t {
   opal_list_t replay_events;
 } mca_vprotocol_pessimist_module_t;
 
-extern mca_vprotocol_pessimist_module_t mca_vprotocol_pessimist;
+OMPI_DECLSPEC extern mca_vprotocol_pessimist_module_t mca_vprotocol_pessimist;
+OMPI_DECLSPEC extern mca_vprotocol_base_component_1_0_0_t mca_vprotocol_pessimist_component;
 
 int mca_vprotocol_pessimist_enable(bool enable);
 int mca_vprotocol_pessimist_dump(struct ompi_communicator_t* comm, int verbose);
@@ -91,6 +94,8 @@ int mca_vprotocol_pessimist_iprobe(int src, int tag,
 int mca_vprotocol_pessimist_probe(int src, int tag,
                                   struct ompi_communicator_t *comm,
                                   ompi_status_public_t * status );
+
+END_C_DECLS
 
 #include "vprotocol_pessimist_wait.h"
 #include "vprotocol_pessimist_request.h"

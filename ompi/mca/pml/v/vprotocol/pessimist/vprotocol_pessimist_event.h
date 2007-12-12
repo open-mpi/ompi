@@ -15,6 +15,8 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 
+BEGIN_C_DECLS
+
 typedef uint64_t vprotocol_pessimist_clock_t;
 #define PRIpclock "llx"
 
@@ -68,5 +70,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_vprotocol_pessimist_event_t);
 #define VPESSIMIST_EVENT_RETURN(event)                                        \
   OMPI_FREE_LIST_RETURN(&mca_vprotocol_pessimist.events_pool,                 \
   (ompi_free_list_item_t *) event)
+
+END_C_DECLS
 
 #endif /* INCLUDE_VPROTOCOL_PESSIMIST_EVENT_H__ */
