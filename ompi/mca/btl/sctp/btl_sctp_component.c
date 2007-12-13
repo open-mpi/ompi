@@ -560,7 +560,12 @@ static int mca_btl_sctp_component_create_listen(void)
         /* create a listen socket for incoming connections */
         mca_btl_sctp_component.sctp_listen_sd = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP);
         if(mca_btl_sctp_component.sctp_listen_sd < 0) {
-            BTL_ERROR(("socket() failed with errno=%d", opal_socket_errno));
+            if(opal_socket_errno != ESOCKTNOSUPPORT) {
+                /* may have SCTP API but SCTP itself unable to auto-load into 
+                 *  the kernel (like RHEL4U4), so avoid noisy error output
+                 */                
+                BTL_ERROR(("socket() failed with errno=%d", opal_socket_errno));
+            }
             return OMPI_ERROR;
         }
         if((rc = mca_btl_sctp_set_socket_options(mca_btl_sctp_component.sctp_listen_sd)) != OMPI_SUCCESS) {
@@ -612,7 +617,12 @@ static int mca_btl_sctp_component_create_listen(void)
         /* create a one to many listen socket for incoming connections and ALL sent/received messages */
         mca_btl_sctp_component.sctp_listen_sd = socket(AF_INET, SOCK_SEQPACKET, IPPROTO_SCTP);
         if(mca_btl_sctp_component.sctp_listen_sd < 0) {
-            BTL_ERROR(("socket() failed with errno=%d", opal_socket_errno));
+            if(opal_socket_errno != ESOCKTNOSUPPORT) {
+                /* may have SCTP API but SCTP itself unable to auto-load into 
+                 *  the kernel (like RHEL4U4), so avoid noisy error output
+                 */                
+                BTL_ERROR(("socket() failed with errno=%d", opal_socket_errno));
+            }
             return OMPI_ERROR;
         }
 
