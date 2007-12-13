@@ -872,7 +872,9 @@ static int snapc_full_global_check_for_done(orte_jobid_t jobid) {
     global_dir = orte_snapc_base_get_global_snapshot_directory(global_snapshot.reference_name);
     orte_snapc_base_global_snapshot_loc = strdup(global_dir);
 
-    cur_job_ckpt_state = ORTE_SNAPC_CKPT_STATE_FILE_XFER;
+    if( ORTE_SNAPC_CKPT_STATE_ERROR != cur_job_ckpt_state ) {
+        cur_job_ckpt_state = ORTE_SNAPC_CKPT_STATE_FILE_XFER;
+    }
 
     if( ORTE_SUCCESS != (ret = orte_snapc_base_set_job_ckpt_info(jobid,
                                                                  cur_job_ckpt_state,
@@ -906,7 +908,9 @@ static int snapc_full_global_check_for_done(orte_jobid_t jobid) {
     /**********************************
      * Update the job checkpoint state
      **********************************/
-    cur_job_ckpt_state = ORTE_SNAPC_CKPT_STATE_FINISHED;
+    if( ORTE_SNAPC_CKPT_STATE_ERROR != cur_job_ckpt_state ) {
+        cur_job_ckpt_state = ORTE_SNAPC_CKPT_STATE_FINISHED;
+    }
 
     if( ORTE_SUCCESS != (ret = orte_snapc_base_set_job_ckpt_info(jobid,
                                                                  cur_job_ckpt_state,
