@@ -519,8 +519,9 @@ static void job_ckpt_request_callback(orte_gpr_notify_data_t *data, void *cbdata
             goto cleanup;
         }
     }
-    else if( ORTE_SNAPC_CKPT_STATE_FINISHED != job_ckpt_state &&
-             ORTE_SNAPC_CKPT_STATE_ERROR    != job_ckpt_state ) {
+    else if( ORTE_SNAPC_CKPT_STATE_FINISHED  != job_ckpt_state &&
+             ORTE_SNAPC_CKPT_STATE_FILE_XFER != job_ckpt_state &&
+             ORTE_SNAPC_CKPT_STATE_ERROR     != job_ckpt_state ) {
         /*
          * Update the orte-checkpoint cmd
          */
@@ -865,8 +866,33 @@ static int snapc_full_global_check_for_done(orte_jobid_t jobid) {
         return exit_status;
     }
 
-    cur_job_ckpt_state = ORTE_SNAPC_CKPT_STATE_FINISHED;
-    
+    /**********************************
+     * Update the job checkpoint state
+     **********************************/
+    global_dir = orte_snapc_base_get_global_snapshot_directory(global_snapshot.reference_name);
+    orte_snapc_base_global_snapshot_loc = strdup(global_dir);
+
+    cur_job_ckpt_state = ORTE_SNAPC_CKPT_STATE_FILE_XFER;
+
+    if( ORTE_SUCCESS != (ret = orte_snapc_base_set_job_ckpt_info(jobid,
+                                                                 cur_job_ckpt_state,
+                                                                 global_snapshot.reference_name,
+                                                                 global_dir) ) ) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    /************************
+     * Update the orte_checkpoint command (File Transfer)
+     ************************/
+    if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(&orte_checkpoint_sender, 
+                                                                            global_snapshot.reference_name,
+                                                                            global_snapshot.seq_num,
+                                                                            cur_job_ckpt_state)) ) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
     /**********************
      * Gather all of the files locally
      * Note: We don't need to worry about the return code in as much since the
@@ -876,12 +902,11 @@ static int snapc_full_global_check_for_done(orte_jobid_t jobid) {
         exit_status = ret;
         cur_job_ckpt_state = ORTE_SNAPC_CKPT_STATE_ERROR;
     }
-    
+
     /**********************************
      * Update the job checkpoint state
      **********************************/
-    global_dir = orte_snapc_base_get_global_snapshot_directory(global_snapshot.reference_name);
-    orte_snapc_base_global_snapshot_loc = strdup(global_dir);
+    cur_job_ckpt_state = ORTE_SNAPC_CKPT_STATE_FINISHED;
 
     if( ORTE_SUCCESS != (ret = orte_snapc_base_set_job_ckpt_info(jobid,
                                                                  cur_job_ckpt_state,
@@ -914,7 +939,6 @@ static int snapc_full_global_check_for_done(orte_jobid_t jobid) {
             goto cleanup;
         }
     }
-    
 
     /************************
      * Do the final handshake with the orte_checkpoint command
@@ -940,6 +964,8 @@ static int snapc_full_global_check_for_done(orte_jobid_t jobid) {
 
     /********************************
      * Terminate the job if requested
+     * At this point the application should have already exited, but do this
+     * just to make doubly sure that the job is terminated.
      *********************************/
     if( term_job ) {
         orte_pls.terminate_job(jobid, &orte_abort_timeout, NULL);

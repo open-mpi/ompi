@@ -115,13 +115,8 @@ static int snapc_full_open(void)
                            false, false,
                            0,
                            &value);
-    if( 0 != value ) { /* Enabled */
-        orte_snapc_full_skip_filem = true;
-    }
-    else { /* Disabled */
-        orte_snapc_full_skip_filem = false;
-    }
-    
+    orte_snapc_full_skip_filem = OPAL_INT_TO_BOOL(value);
+
     /*
      * Debug Output
      */

@@ -103,12 +103,7 @@ int orte_snapc_base_open(void)
                                 false, false,
                                 1,
                                 &value);
-    if( 0 != value ) { /* Enabled */
-        orte_snapc_base_store_in_place = true;
-    }
-    else { /* Disabled */
-        orte_snapc_base_store_in_place = false;
-    }
+    orte_snapc_base_store_in_place = OPAL_INT_TO_BOOL(value);
 
     /*
      * Reuse sequence numbers
@@ -121,12 +116,7 @@ int orte_snapc_base_open(void)
                                 false, false,
                                 0,
                                 &value);
-    if( 0 != value ) { /* Enabled */
-        orte_snapc_base_store_only_one_seq = true;
-    }
-    else { /* Disabled */
-        orte_snapc_base_store_only_one_seq = false;
-    }
+    orte_snapc_base_store_only_one_seq = OPAL_INT_TO_BOOL(value);
     
     /*
      * Pre-establish the global snapshot directory upon job registration
@@ -137,12 +127,7 @@ int orte_snapc_base_open(void)
                                 false, false,
                                 0,
                                 &value);
-    if( 0 != value ) { /* Enabled */
-        orte_snapc_base_establish_gloabl_snapshot_dir = true;
-    }
-    else { /* Disabled */
-        orte_snapc_base_establish_gloabl_snapshot_dir = false;
-    }
+    orte_snapc_base_establish_gloabl_snapshot_dir = OPAL_INT_TO_BOOL(value);
 
     /*
      * User defined global snapshot directory name for this job

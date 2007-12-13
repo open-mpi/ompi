@@ -404,9 +404,12 @@ static void snapc_full_local_job_state_callback( orte_gpr_notify_data_t *data, v
             goto cleanup;
         }
     }
-    else if( ORTE_SNAPC_CKPT_STATE_FINISHED == ckpt_state ) {
+    else if( ORTE_SNAPC_CKPT_STATE_FILE_XFER == ckpt_state ||
+             ORTE_SNAPC_CKPT_STATE_FINISHED  == ckpt_state ) {
         /*
          * Release all checkpointed processes now that the checkpoint is complete
+         * If the request was to checkpoint then terminate this command will tell
+         * the application to do so upon release.
          */
         for(item  = opal_list_get_first(&snapc_local_vpids);
             item != opal_list_get_end(&snapc_local_vpids);
@@ -425,13 +428,6 @@ static void snapc_full_local_job_state_callback( orte_gpr_notify_data_t *data, v
                 goto cleanup;
             }
         }
-
-        /* 
-         * If the PLS was able to actually allow for local calls to 
-         * orte_pls.terminate_proc then we could terminate the processes
-         * from there, but since it is not implemented we need to do 
-         * it from the HNP. :/
-         */
     }
     
  cleanup:
@@ -1126,6 +1122,19 @@ static int snapc_full_local_end_ckpt_handshake(orte_snapc_full_local_snapshot_t 
 {
     int ret, exit_status = ORTE_SUCCESS;
     int last_cmd = 0;
+
+    /*
+     * Make sure the pipe is open, so we do not try to do this twice
+     */
+    if( 0 > vpid_snapshot->comm_pipe_w_fd ) {
+        return exit_status;
+    }
+
+    if( vpid_snapshot->super.term ) {
+        last_cmd = 999;
+    } else {
+        last_cmd = 0;
+    }
 
     /*
      * Finish the handshake.

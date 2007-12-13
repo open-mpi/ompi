@@ -1836,6 +1836,9 @@ char * orte_snapc_ckpt_state_str(size_t state)
     case ORTE_SNAPC_CKPT_STATE_RUNNING:
         return strdup("Running");
         break;
+    case ORTE_SNAPC_CKPT_STATE_FILE_XFER:
+        return strdup("File Transfer");
+        break;
     case ORTE_SNAPC_CKPT_STATE_FINISHED:
         return strdup("Finished");
         break;
