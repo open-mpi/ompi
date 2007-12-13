@@ -100,8 +100,8 @@ static int udapl_reg_mr(void *reg_data, void *base, size_t size,
             &dat_size, &dat_addr);
 
     if(rc != DAT_SUCCESS) {
-        opal_show_help("help-mpi-btl-udapl.txt",
-            "dat_lmr_create DAT_INSUFFICIENT_RESOURCES", true);
+        BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP, ("help-mpi-btl-udapl.txt",
+            "dat_lmr_create DAT_INSUFFICIENT_RESOURCES", true));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -152,8 +152,8 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
         dat_strerror(rc, (const char**)&major,
             (const char**)&minor);
 
-        opal_show_help("help-mpi-btl-udapl.txt",
-            "dat_ia_open fail", true, ia_name, major, minor);
+        BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP, ("help-mpi-btl-udapl.txt",
+            "dat_ia_open fail", true, ia_name, major, minor));
 
         return OMPI_ERROR;
     }
@@ -190,21 +190,21 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
 
     /* check evd qlen against adapter max */
     if (btl->udapl_dto_evd_qlen > (btl->udapl_ia_attr).max_evd_qlen) {
-        opal_show_help("help-mpi-btl-udapl.txt",
+        BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP, ("help-mpi-btl-udapl.txt",
             "evd_qlen adapter max", 
             true,
             "btl_udapl_dto_evd_qlen",
             btl->udapl_dto_evd_qlen,
-            (btl->udapl_ia_attr).max_evd_qlen);        
+            (btl->udapl_ia_attr).max_evd_qlen));        
         btl->udapl_dto_evd_qlen = btl->udapl_ia_attr.max_evd_qlen;
     }
     if (btl->udapl_conn_evd_qlen > (btl->udapl_ia_attr).max_evd_qlen) {
-        opal_show_help("help-mpi-btl-udapl.txt",
+        BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP, ("help-mpi-btl-udapl.txt",
             "evd_qlen adapter max", 
             true,
             "btl_udapl_conn_evd_qlen",
             btl->udapl_conn_evd_qlen,
-            (btl->udapl_ia_attr).max_evd_qlen);        
+            (btl->udapl_ia_attr).max_evd_qlen));        
         btl->udapl_conn_evd_qlen = btl->udapl_ia_attr.max_evd_qlen;
     }
 
@@ -257,9 +257,9 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
         /* by not erroring out here we can try to continue with
          * the default endpoint parameter values
          */
-        opal_show_help("help-mpi-btl-udapl.txt",
+        BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP, ("help-mpi-btl-udapl.txt",
             "use default endpoint params", 
-            true);
+            true));
     }
 
     /* Save the port with the address information */
@@ -292,12 +292,12 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     if (mca_btl_udapl_component.udapl_buffer_alignment !=
         DAT_OPTIMAL_ALIGNMENT) {
 
-        opal_show_help("help-mpi-btl-udapl.txt",
+        BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP, ("help-mpi-btl-udapl.txt",
             "optimal buffer alignment mismatch", 
             true,
             DAT_OPTIMAL_ALIGNMENT,
             mca_btl_udapl_component.udapl_buffer_alignment,
-            DAT_OPTIMAL_ALIGNMENT);
+            DAT_OPTIMAL_ALIGNMENT));
     }
 
     /* initialize free lists */
@@ -470,13 +470,14 @@ static int mca_btl_udapl_set_peer_parameters(
                     udapl_btl->udapl_dto_evd_qlen) {
 
                     /* user modified so warn */
-                    opal_show_help("help-mpi-btl-udapl.txt",
+                    BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
+                        ("help-mpi-btl-udapl.txt",
                         "evd_qlen too low", 
                         true,
                         "btl_udapl_dto_evd_qlen",
                         udapl_btl->udapl_dto_evd_qlen,
                         "btl_udapl_dto_evd_qlen",                        
-                        potential_dto_evd_qlen);
+                        potential_dto_evd_qlen));
                 } else {
                     udapl_btl->udapl_dto_evd_qlen = potential_dto_evd_qlen;
                 }
@@ -540,13 +541,14 @@ static int mca_btl_udapl_set_peer_parameters(
                     udapl_btl->udapl_conn_evd_qlen) {
 
                     /* user modified so warn */
-                    opal_show_help("help-mpi-btl-udapl.txt",
+                    BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
+                        ("help-mpi-btl-udapl.txt",
                         "evd_qlen too low", 
                         true,
                         "btl_udapl_conn_evd_qlen",
                         udapl_btl->udapl_conn_evd_qlen,
                         "btl_udapl_conn_evd_qlen",
-                        potential_conn_evd_qlen);
+                        potential_conn_evd_qlen));
                 } else {
                     udapl_btl->udapl_conn_evd_qlen = potential_conn_evd_qlen;
                 }
@@ -609,13 +611,14 @@ static int mca_btl_udapl_set_peer_parameters(
             mca_btl_udapl_component.udapl_timeout) {
 
             /* user modified so warn */
-            opal_show_help("help-mpi-btl-udapl.txt",
+            BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
+                ("help-mpi-btl-udapl.txt",
                 "connection timeout low", 
                 true,
                 "btl_udapl_timeout",
                 mca_btl_udapl_component.udapl_timeout,
                 "btl_udapl_timeout",                
-                potential_udapl_timeout);         
+                potential_udapl_timeout));         
         } else {
             mca_btl_udapl_component.udapl_timeout =
                 potential_udapl_timeout;
@@ -804,7 +807,8 @@ int mca_btl_udapl_free(
     } else if(frag->size == mca_btl_udapl_component.udapl_max_frag_size) {
         MCA_BTL_UDAPL_FRAG_RETURN_MAX(btl, frag); 
     } else {
-        OPAL_OUTPUT((0, "[%s:%d] mca_btl_udapl_free: invalid descriptor\n", __FILE__,__LINE__));
+        BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_DIAGNOSE,
+            ("mca_btl_udapl_free: invalid descriptor\n"));
         return OMPI_ERR_BAD_PARAM;
     }
     return OMPI_SUCCESS; 
@@ -1108,7 +1112,7 @@ int mca_btl_udapl_get(
     mca_btl_base_endpoint_t* endpoint,
     mca_btl_base_descriptor_t* des)
 {
-    OPAL_OUTPUT((0, "udapl_get\n"));
+    BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_DEVELOPER, ("udapl_get\n"));
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
 

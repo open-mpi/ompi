@@ -54,6 +54,8 @@ extern "C" {
 struct mca_btl_udapl_component_t {
     mca_btl_base_component_1_0_1_t super;  /**< base BTL component */ 
     
+    int32_t udapl_verbosity; /**< report out level, see
+                                "Report Out from uDAPL BTL" below for details. */
     size_t  udapl_num_btls; /**< number of hcas available to the uDAPL component */
     size_t  udapl_max_btls; /**< maximum number of supported hcas */
     struct  mca_btl_udapl_module_t **udapl_btls; /**< array of available BTL modules */
@@ -161,8 +163,85 @@ struct mca_btl_udapl_reg_t {
 typedef struct mca_btl_udapl_reg_t mca_btl_udapl_reg_t;
 
 /**
-  * Report a uDAPL error - for debugging
+  * Report Out from uDAPL BTL
+  *
+  * - BTL_ERROR() : Use to report out errors from uDAPL BTL. These are
+  * critical errors which will most likely cause the program to fail so
+  * this message should always be reported to the user. Defined in
+  * btl/base/btl_base_error.h.
+  *   Example:
+  *       dat_strerror(rc, (const char**)&major, (const char**)&minor);
+  *       BTL_ERROR(("ERROR: %s %s %s\n", "dat_cr_accept", major, minor));
+  * 
+  * - BTL_UDAPL_VERBOSE_OUTPUT() : Use to output different levels
+  *   of verbosity to the user. See Note below.
+  *   Example:
+  *       BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_DIAGNOSE,
+  *           ("WARNING: don't %s", "jump"));
+  *
+  * - BTL_UDAPL_VERBOSE_HELP() : Use output information as defined in
+  *   uDAPL BTL help file (help-mpi-btl-udapl.txt). See Note below.
+  *   Example:
+  *       BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
+  *           ("help-mpi-btl-udapl.txt",
+  *           "invalid num rdma segments", true, 22));
+  *
+  * Note : - Verbose levels are defined below. These levels are
+  *        controlled by the mca parameter "btl_udapl_verbose".
+  *        The verbose level is set to 10 by default so that critical
+  *        error and useful help information will appear. Which ever value
+  *        this param is set to, those messages as well as any lower level
+  *        verbose messages will be reported.
+  *        - Setting "btl_udapl_verbose" to "-1" will turn off all
+  *        messages reported by the use of BTL_UDAPL_VERBOSE_*().
+  *        - These macros should not be used in a critical path as they
+  *        are always included in the compiled code.
+  *        - These macros rely on the use of paranthesis around the "args"
+  *        value.
+  *
+  * Values used with BTL_UDAPL_VERBOSE_*():
+  *
+  *  -   0: critical user information; should always be reported;
+  *         on by default
+  *  -  10: useful help messages that would be reported from
+  *         "help-mpi-btl-udapl.txt"; accessed from
+  *         BTL_UDAPL_VERBOSE_HELP(); on by default
+  *  -  20: general execution diagnostic information;
+  *         may be useful to user or btl developer
+  *  -  30: basic debugging/diagnostic information
+  *  -  90: useful only to developers
+  *  - 100: other components do not appear to go beyond 100 for verbose
+  *         levels so noting here as the max for future reference
   */
+#define VERBOSE_CRITICAL 0    
+#define VERBOSE_SHOW_HELP 10
+#define VERBOSE_INFORM 20
+#define VERBOSE_DIAGNOSE 30
+#define VERBOSE_DEVELOPER 90
+
+#define BTL_UDAPL_VERBOSE_OUTPUT(verbose_level, args)               \
+do {                                                                \
+    if (verbose_level <= mca_btl_udapl_component.udapl_verbosity) { \
+        mca_btl_base_out("[%s]%s[%s:%d:%s] ",                       \
+            orte_system_info.nodename,                              \
+            ORTE_NAME_PRINT(orte_process_info.my_name),             \
+            __FILE__, __LINE__, __func__);                          \
+        mca_btl_base_out args;                                      \
+        mca_btl_base_out("\n");                                     \
+    }                                                               \
+} while(0);
+
+#define BTL_UDAPL_VERBOSE_HELP(verbose_level, args)                 \
+do {                                                                \
+    if (verbose_level <= mca_btl_udapl_component.udapl_verbosity) { \
+        opal_show_help args;                                        \
+    }                                                               \
+} while(0);
+
+    
+/*
+ * Report a uDAPL error - for debugging
+ */
 
 #if OMPI_ENABLE_DEBUG
 extern void mca_btl_udapl_error(DAT_RETURN ret, char* str);
