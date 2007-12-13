@@ -112,12 +112,7 @@ static int crcp_coord_open(void)
                            false, false,
                            0,
                            &val);
-    if( 0 != val ) {
-        timing_enabled = true;
-    }
-    else {
-        timing_enabled = false;
-    }
+    timing_enabled = OPAL_INT_TO_BOOL(val);
 
     /*
      * Debug Output

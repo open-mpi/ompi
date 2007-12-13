@@ -512,6 +512,14 @@ static int snapc_full_app_ckpt_handshake_end(int cr_state)
         goto cleanup;
     }
 
+    /*
+     * If the last command is non-zero then we need to terminate instead of
+     * returning to computation.
+     */
+    if( 0 != last_cmd ) {
+        exit(0);
+    }
+
  cleanup:
     return exit_status;
 }

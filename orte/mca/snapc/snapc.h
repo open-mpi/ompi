@@ -115,11 +115,13 @@ extern "C" {
 /* Running the checkpoint */
 #define ORTE_SNAPC_CKPT_STATE_RUNNING       4
 /* Finished the checkpoint */
-#define ORTE_SNAPC_CKPT_STATE_FINISHED      5
+#define ORTE_SNAPC_CKPT_STATE_FILE_XFER     5
+/* Finished the checkpoint */
+#define ORTE_SNAPC_CKPT_STATE_FINISHED      6
 /* Unable to checkpoint this job */
-#define ORTE_SNAPC_CKPT_STATE_NO_CKPT       6
+#define ORTE_SNAPC_CKPT_STATE_NO_CKPT       7
 /* Reached an error */
-#define ORTE_SNAPC_CKPT_STATE_ERROR         7
+#define ORTE_SNAPC_CKPT_STATE_ERROR         8
 
 /**
  * Definition of a orte local snapshot.
