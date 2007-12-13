@@ -59,6 +59,8 @@ void mca_btl_udapl_frag_progress_pending(mca_btl_udapl_module_t* udapl_btl,
                                         const int connection);
 static int mca_btl_udapl_modify_ia_list(DAT_COUNT *num_info_entries,
                                         DAT_PROVIDER_INFO* datinfo);
+static const char*
+mca_btl_udapl_dat_event_to_string(DAT_EVENT_NUMBER event_number);
 
 
 mca_btl_udapl_component_t mca_btl_udapl_component = {
@@ -89,6 +91,77 @@ mca_btl_udapl_component_t mca_btl_udapl_component = {
         mca_btl_udapl_component_progress,
     }
 };
+
+
+/*
+ * Predefined and fixed size structure containing DAT_EVENT values
+ * and associated string as defined in: "uDAPL:User Direct Access
+ * Programming Library v1.2 Sept 15, 2004", DAT Collaborative Organization.
+ */
+static struct mca_btl_udapl_dat_events {
+        DAT_EVENT_NUMBER value;
+        const char* name;
+} mca_btl_udapl_dat_events[] = {
+        { DAT_DTO_COMPLETION_EVENT,
+            "DAT_DTO_COMPLETION_EVENT" },
+        { DAT_RMR_BIND_COMPLETION_EVENT,
+            "DAT_RMR_BIND_COMPLETION_EVENT" },
+        { DAT_CONNECTION_REQUEST_EVENT,
+            "DAT_CONNECTION_REQUEST_EVENT" },
+        { DAT_CONNECTION_EVENT_ESTABLISHED,
+            "DAT_CONNECTION_EVENT_ESTABLISHED" },
+        { DAT_CONNECTION_EVENT_PEER_REJECTED,
+            "DAT_CONNECTION_EVENT_PEER_REJECTED" },
+        { DAT_CONNECTION_EVENT_NON_PEER_REJECTED,
+            "DAT_CONNECTION_EVENT_NON_PEER_REJECTED" },
+        { DAT_CONNECTION_EVENT_ACCEPT_COMPLETION_ERROR,
+            "DAT_CONNECTION_EVENT_ACCEPT_COMPLETION_ERROR" },
+        { DAT_CONNECTION_EVENT_DISCONNECTED,
+            "DAT_CONNECTION_EVENT_DISCONNECTED" },
+        { DAT_CONNECTION_EVENT_BROKEN,
+            "DAT_CONNECTION_EVENT_BROKEN" },
+        { DAT_CONNECTION_EVENT_TIMED_OUT,
+            "DAT_CONNECTION_EVENT_TIMED_OUT" },
+        { DAT_CONNECTION_EVENT_UNREACHABLE,
+            "DAT_CONNECTION_EVENT_UNREACHABLE" },
+        { DAT_ASYNC_ERROR_EVD_OVERFLOW,
+            "DAT_ASYNC_ERROR_EVD_OVERFLOW" },
+        { DAT_ASYNC_ERROR_IA_CATASTROPHIC,
+            "DAT_ASYNC_ERROR_IA_CATASTROPHIC" },
+        { DAT_ASYNC_ERROR_EP_BROKEN,
+            "DAT_ASYNC_ERROR_EP_BROKEN" },
+        { DAT_ASYNC_ERROR_TIMED_OUT,
+            "DAT_ASYNC_ERROR_TIMED_OUT" },
+        { DAT_ASYNC_ERROR_PROVIDER_INTERNAL_ERROR,
+            "DAT_ASYNC_ERROR_PROVIDER_INTERNAL_ERROR" },
+        { DAT_SOFTWARE_EVENT,
+            "DAT_SOFTWARE_EVENT" }
+};
+
+
+/*
+ * Function to convert DAT_EVENT_NUMBER into a readable string.
+ *
+ * @param event_number (IN)   DAT_EVENT_NUMBER value 
+ *
+ * @return                    event string or a string indicating
+ *                            event number is invalid
+ */
+static const char *
+mca_btl_udapl_dat_event_to_string(DAT_EVENT_NUMBER event_number)
+{
+    int i;
+    int num_events = (sizeof(mca_btl_udapl_dat_events) /
+       sizeof(mca_btl_udapl_dat_events[0]));
+
+   for (i = 0; i < num_events; i++) {
+       if (mca_btl_udapl_dat_events[i].value == event_number) {
+           return (mca_btl_udapl_dat_events[i].name);
+       }
+   }
+   
+   return ("Unknown DAT Event Number");
+}
 
 
 /**
@@ -348,10 +421,11 @@ static int mca_btl_udapl_modify_ia_list(DAT_COUNT *num_info_entries,
     /* if if_list not NULL, either not found or user error */
     if (opal_argv_count(mca_btl_udapl_component.if_list)) {
         char *str = opal_argv_join(mca_btl_udapl_component.if_list, ',');
-        opal_show_help("help-mpi-btl-udapl.txt", "nonexistent entry",
-                       true, orte_system_info.nodename,
-                       ((NULL != mca_btl_udapl_component.if_include) ? 
-                        "in" : "ex"), str);
+        BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
+            ("help-mpi-btl-udapl.txt", "nonexistent entry",
+            true, orte_system_info.nodename,
+            ((NULL != mca_btl_udapl_component.if_include) ? 
+            "in" : "ex"), str));
         free(str);
     }    
 
@@ -383,11 +457,10 @@ mca_btl_udapl_component_init (int *num_btl_modules,
         mca_btl_udapl_component.if_list = NULL;
     if (NULL != mca_btl_udapl_component.if_include &&
         NULL != mca_btl_udapl_component.if_exclude) {
-        opal_show_help("help-mpi-btl-udapl.txt",
-                       "specified include and exclude", true,
-                       mca_btl_udapl_component.if_include,
-                       mca_btl_udapl_component.if_exclude);
-
+        BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP, ("help-mpi-btl-udapl.txt",
+            "specified include and exclude", true,
+            mca_btl_udapl_component.if_include,
+            mca_btl_udapl_component.if_exclude));
         mca_btl_udapl_component.udapl_num_btls = 0;
         mca_btl_udapl_modex_send();
         return NULL;
@@ -898,14 +971,17 @@ int mca_btl_udapl_component_progress()
                             (mca_btl_base_descriptor_t*)frag);
                     break;
                 default:
-                    OPAL_OUTPUT((0, "WARNING unknown frag type: %d\n",
-                                frag->type));
+                    BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_DIAGNOSE,
+                        ("WARNING: unknown frag type: %d\n",
+                        frag->type));
                 }
                 count++;
                 break;
             default:
-                OPAL_OUTPUT((0, "WARNING unknown dto event: %d\n",
-                        event.event_number));
+                BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_DIAGNOSE,
+                    ("WARNING: DTO event: %s (%d)\n",
+                    mca_btl_udapl_dat_event_to_string(event.event_number),
+                    event.event_number));
             }
         }
 
@@ -947,11 +1023,14 @@ int mca_btl_udapl_component_progress()
                 case DAT_CONNECTION_EVENT_UNREACHABLE:
                     /* Need to set the BTL endpoint to MCA_BTL_UDAPL_FAILED
                        See dat_ep_connect documentation pdf pg 198 */
-                    BTL_OUTPUT(("WARNING : Connection event not handled : %d\n",
+                    BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_CRITICAL,
+                        ("WARNING: connection event not handled : %s (%d)\n",
+                        mca_btl_udapl_dat_event_to_string(event.event_number),
                         event.event_number));
                     break;
                 default:
-                    BTL_ERROR(("ERROR: unknown connection event : %d",
+                    BTL_ERROR(("ERROR: connection event : %s (%d)",
+                        mca_btl_udapl_dat_event_to_string(event.event_number),
                         event.event_number));
             }
         }
@@ -969,11 +1048,15 @@ int mca_btl_udapl_component_progress()
                 case DAT_ASYNC_ERROR_EP_BROKEN:
                 case DAT_ASYNC_ERROR_TIMED_OUT:
                 case DAT_ASYNC_ERROR_PROVIDER_INTERNAL_ERROR:
-                    BTL_OUTPUT(("WARNING: async event ignored : %d",
+                    BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_CRITICAL,
+                        ("WARNING: async event ignored : %s (%d)",
+                        mca_btl_udapl_dat_event_to_string(event.event_number),
                         event.event_number));
                     break;
                 default:
-                    BTL_OUTPUT(("WARNING unknown async event: %d\n",
+                    BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_CRITICAL,
+                        ("WARNING: %s (%d)\n",
+                        mca_btl_udapl_dat_event_to_string(event.event_number),
                         event.event_number));
                 }
             }

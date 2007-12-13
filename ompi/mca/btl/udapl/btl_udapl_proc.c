@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -129,15 +130,17 @@ mca_btl_udapl_proc_t* mca_btl_udapl_proc_create(ompi_proc_t* ompi_proc)
                  (void*)&udapl_proc->proc_addrs,
                  &size); 
     if(OMPI_SUCCESS != rc) {
-        opal_output(0, "[%s:%d] ompi_modex_recv failed for peer %s",
-            __FILE__,__LINE__,ORTE_NAME_PRINT(&ompi_proc->proc_name));
+        BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_CRITICAL,
+            ("ompi_modex_recv failed for peer %s",
+            ORTE_NAME_PRINT(&ompi_proc->proc_name)));
         OBJ_RELEASE(udapl_proc);
         return NULL;
     }
 
     if((size % sizeof(mca_btl_udapl_addr_t)) != 0) {
-        opal_output(0, "[%s:%d] invalid udapl address for peer %s",
-            __FILE__,__LINE__,ORTE_NAME_PRINT(&ompi_proc->proc_name));
+        BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_CRITICAL,
+            ("invalid udapl address for peer %s",
+            ORTE_NAME_PRINT(&ompi_proc->proc_name)));
         OBJ_RELEASE(udapl_proc);
         return NULL;
     }

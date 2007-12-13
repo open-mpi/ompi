@@ -236,6 +236,12 @@ int mca_btl_udapl_register_mca_params(void)
         NULL, &mca_btl_udapl_component.if_exclude,
         REGSTR_EMPTY_OK), tmp_rc, rc);
 
+    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("verbose",
+        "Verbosity level of the uDAPL BTL (-1 thru 100)",
+        VERBOSE_SHOW_HELP,
+        &(mca_btl_udapl_component.udapl_verbosity),
+        REGINT_NEG_ONE_OK), tmp_rc, rc);
+
     /* register uDAPL module parameters */
     CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("async_evd_qlen",
         "The asynchronous event dispatcher queue length.",

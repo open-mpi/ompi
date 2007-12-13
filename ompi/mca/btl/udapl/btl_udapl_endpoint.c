@@ -82,9 +82,9 @@ int mca_btl_udapl_endpoint_write_eager(mca_btl_base_endpoint_t* endpoint,
     int pad = 0;
     uint8_t head = endpoint->endpoint_eager_rdma_remote.head;
     size_t size_plus_align = OPAL_ALIGN(
-	mca_btl_udapl_component.udapl_eager_frag_size, 
-	DAT_OPTIMAL_ALIGNMENT,
-	size_t);
+        mca_btl_udapl_component.udapl_eager_frag_size, 
+        DAT_OPTIMAL_ALIGNMENT,
+        size_t);
 
    /* now that we have the head update it */
     MCA_BTL_UDAPL_RDMA_NEXT_INDEX(endpoint->endpoint_eager_rdma_remote.head);
@@ -117,7 +117,7 @@ int mca_btl_udapl_endpoint_write_eager(mca_btl_base_endpoint_t* endpoint,
      * and then working way back
      */
     remote_buf = (char *)(endpoint->endpoint_eager_rdma_remote.base.pval) +
-	(head * size_plus_align) +
+        (head * size_plus_align) +
         frag->size -
         frag->triplet.segment_length;
 
@@ -169,7 +169,7 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
         /* just send it already.. */
         if(frag->size ==
             mca_btl_udapl_component.udapl_eager_frag_size) {
-	    
+            
             if(OPAL_THREAD_ADD32(&endpoint->endpoint_eager_rdma_remote.tokens, -1) < 0) {
                 /* no rdma segment available so either send or queue */
                 OPAL_THREAD_ADD32(&endpoint->endpoint_eager_rdma_remote.tokens, 1);
@@ -348,11 +348,11 @@ int mca_btl_udapl_endpoint_get_params(mca_btl_udapl_module_t* btl,
             btl->udapl_max_recv_dtos) {        
 
             /* user modified, this will fail and is not acceptable */
-            opal_show_help("help-mpi-btl-udapl.txt",
+            BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP, ("help-mpi-btl-udapl.txt",
                 "max_recv_dtos too low", 
                 true,
                 btl->udapl_max_recv_dtos,
-                mca_btl_udapl_component.udapl_num_recvs);
+                mca_btl_udapl_component.udapl_num_recvs));
 
             btl->udapl_max_recv_dtos = 
                 mca_btl_udapl_component.udapl_num_recvs;
@@ -392,10 +392,11 @@ int mca_btl_udapl_endpoint_get_params(mca_btl_udapl_module_t* btl,
             mca_btl_udapl_module.udapl_max_request_dtos) {
 
             /* user has modified */
-            opal_show_help("help-mpi-btl-udapl.txt",
+            BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
+                ("help-mpi-btl-udapl.txt",
                 "max_request_dtos too low", 
                 true,
-                btl->udapl_max_request_dtos, request_dtos);
+                btl->udapl_max_request_dtos, request_dtos));
         } else {
             btl->udapl_max_request_dtos = request_dtos;
         }         
@@ -403,11 +404,11 @@ int mca_btl_udapl_endpoint_get_params(mca_btl_udapl_module_t* btl,
 
     if (btl->udapl_max_request_dtos > btl->udapl_ia_attr.max_dto_per_ep) {
         /* do not go beyond what is allowed by the system */
-        opal_show_help("help-mpi-btl-udapl.txt",
+        BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP, ("help-mpi-btl-udapl.txt",
             "max_request_dtos system max", 
             true,
             btl->udapl_max_request_dtos,
-            btl->udapl_ia_attr.max_dto_per_ep);
+            btl->udapl_ia_attr.max_dto_per_ep));
         btl->udapl_max_request_dtos = btl->udapl_ia_attr.max_dto_per_ep;
     }
 
@@ -675,8 +676,9 @@ int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
 
                     rc = mca_btl_udapl_endpoint_finish_max(ep);
                 } else {
-                    OPAL_OUTPUT((0, "btl_udapl ERROR invalid EP state %d\n",
-                            ep->endpoint_state));
+                    BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_DIAGNOSE,
+                        ("ERROR: invalid EP state %d\n",
+                        ep->endpoint_state));
                     return OMPI_ERROR;
                 }
                 return rc;
@@ -685,7 +687,8 @@ int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
     }
 
     /* If this point is reached, no matching endpoint was found */
-    OPAL_OUTPUT((0, "btl_udapl ERROR could not match endpoint\n"));
+    BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_DIAGNOSE,
+        ("btl_udapl ERROR could not match endpoint\n"));
     return OMPI_ERROR;
 }
 
@@ -773,7 +776,7 @@ static int mca_btl_udapl_endpoint_finish_max(mca_btl_udapl_endpoint_t* endpoint)
                 frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t));
         assert(frag->size ==
                 mca_btl_udapl_component.udapl_eager_frag_size);
-	
+        
         rc = dat_ep_post_send(endpoint->endpoint_eager, 1,
             &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
         if(DAT_SUCCESS != rc) {
@@ -1058,7 +1061,7 @@ static int mca_btl_udapl_endpoint_send_eager_rdma(
     rdma_connect->rkey =
         endpoint->endpoint_eager_rdma_local.reg->rmr_context;
     rdma_connect->rdma_start.pval =
-	(unsigned char*)frag->base.super.ptr;
+        (unsigned char*)frag->base.super.ptr;
 
     /* send fragment */
     rc = mca_btl_udapl_send((mca_btl_base_module_t *)udapl_btl, endpoint,
@@ -1102,16 +1105,16 @@ void mca_btl_udapl_endpoint_connect_eager_rdma(
         /* NOTE: Need to find a more generic way to check ranges
          * for all mca parameters.
          */
-        opal_show_help("help-mpi-btl-udapl.txt",
+        BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP, ("help-mpi-btl-udapl.txt",
             "invalid num rdma segments", 
             true,
-            mca_btl_udapl_component.udapl_eager_rdma_num);
+            mca_btl_udapl_component.udapl_eager_rdma_num));
         goto unlock_rdma_local;
     } 
 
     /* create space for fragment structures */
     alloc_ptr = (char*)malloc(mca_btl_udapl_component.udapl_eager_rdma_num *
-	sizeof(mca_btl_udapl_frag_eager_rdma_t));
+        sizeof(mca_btl_udapl_frag_eager_rdma_t));
 
     if(NULL == alloc_ptr) {
         goto unlock_rdma_local;
@@ -1119,13 +1122,13 @@ void mca_btl_udapl_endpoint_connect_eager_rdma(
     
     /* get size of one fragment's data region */
     size_plus_align = OPAL_ALIGN(
-	mca_btl_udapl_component.udapl_eager_frag_size, 
-	DAT_OPTIMAL_ALIGNMENT, size_t);
+        mca_btl_udapl_component.udapl_eager_frag_size, 
+        DAT_OPTIMAL_ALIGNMENT, size_t);
 
     /* create and register memory for all rdma segments */
     buf = udapl_btl->super.btl_mpool->mpool_alloc(udapl_btl->super.btl_mpool,
         (size_plus_align * mca_btl_udapl_component.udapl_eager_rdma_num),
-	0, 0,
+        0, 0,
         (mca_mpool_base_registration_t**)&endpoint->endpoint_eager_rdma_local.reg);
 
     if(!buf)
