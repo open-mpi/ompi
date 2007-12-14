@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -108,6 +109,21 @@ struct opal_atomic_lock_t {
 };
 typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 
+/**********************************************************************
+ *
+ * Zero these macros in the architecture-specific atomic.h files if we
+ * need to define their corresponding functions as non-inline (e.g.,
+ * in an opal/asm/base/<arch>.asm file). These macros allow us to make
+ * the signatures of the prototype and definition identical.
+ * 
+ *********************************************************************/
+#define OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER 1
+#define OPAL_HAVE_INLINE_ATOMIC_CMPSET_32 1
+#define OPAL_HAVE_INLINE_ATOMIC_CMPSET_64 1
+#define OPAL_HAVE_INLINE_ATOMIC_ADD_32 1
+#define OPAL_HAVE_INLINE_ATOMIC_SUB_32 1
+#define OPAL_HAVE_INLINE_ATOMIC_ADD_64 1
+#define OPAL_HAVE_INLINE_ATOMIC_SUB_64 1
 
 /**********************************************************************
  *
@@ -179,6 +195,10 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
  * generally grinding the memory controller's performance.  Use only
  * if you need *both* read and write barriers.
  */
+
+#if OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER
+static inline 
+#endif
 void opal_atomic_mb(void);
 
 /**
@@ -190,6 +210,10 @@ void opal_atomic_mb(void);
  * next read.  Nothing is said about the ordering of writes when using
  * \c opal_atomic_rmb().
  */
+
+#if OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER
+static inline 
+#endif
 void opal_atomic_rmb(void);
 
 /**
@@ -201,6 +225,10 @@ void opal_atomic_rmb(void);
  * next write.  Nothing is said about the ordering of reads when using
  * \c opal_atomic_wmb().
  */
+
+#if OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER
+static inline 
+#endif
 void opal_atomic_wmb(void);
 
 #endif /* defined(DOXYGEN) || OPAL_HAVE_ATOMIC_MEM_BARRIER */
@@ -293,11 +321,23 @@ void opal_atomic_unlock(opal_atomic_lock_t *lock);
 #define OPAL_HAVE_ATOMIC_CMPSET_32 0
 #endif
 #if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_CMPSET_32
-int opal_atomic_cmpset_32(volatile int32_t *addr, int32_t oldval, 
+
+#if OPAL_HAVE_INLINE_ATOMIC_CMPSET_32
+static inline 
+#endif
+int opal_atomic_cmpset_32(volatile int32_t *addr, int32_t oldval,
                           int32_t newval);
-int opal_atomic_cmpset_acq_32(volatile int32_t *addr, int32_t oldval, 
+
+#if OPAL_HAVE_INLINE_ATOMIC_CMPSET_32
+static inline 
+#endif
+int opal_atomic_cmpset_acq_32(volatile int32_t *addr, int32_t oldval,
                               int32_t newval);
-int opal_atomic_cmpset_rel_32(volatile int32_t *addr, int32_t oldval, 
+
+#if OPAL_HAVE_INLINE_ATOMIC_CMPSET_32
+static inline 
+#endif
+int opal_atomic_cmpset_rel_32(volatile int32_t *addr, int32_t oldval,
                               int32_t newval);
 #endif
 
@@ -306,28 +346,46 @@ int opal_atomic_cmpset_rel_32(volatile int32_t *addr, int32_t oldval,
 #define OPAL_HAVE_ATOMIC_CMPSET_64 0
 #endif
 #if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_CMPSET_64
-int opal_atomic_cmpset_64(volatile int64_t *addr, int64_t oldval, 
+
+#if OPAL_HAVE_INLINE_ATOMIC_CMPSET_64
+static inline 
+#endif
+int opal_atomic_cmpset_64(volatile int64_t *addr, int64_t oldval,
                           int64_t newval);
-int opal_atomic_cmpset_acq_64(volatile int64_t *addr, int64_t oldval, 
+
+#if OPAL_HAVE_INLINE_ATOMIC_CMPSET_64
+static inline 
+#endif
+int opal_atomic_cmpset_acq_64(volatile int64_t *addr, int64_t oldval,
                               int64_t newval);
-int opal_atomic_cmpset_rel_64(volatile int64_t *addr, int64_t oldval, 
+
+#if OPAL_HAVE_INLINE_ATOMIC_CMPSET_64
+static inline 
+#endif
+int opal_atomic_cmpset_rel_64(volatile int64_t *addr, int64_t oldval,
                               int64_t newval);
+
 #endif
 
 #if !defined(OPAL_HAVE_ATOMIC_MATH_32) && !defined(DOXYGEN)
   /* define to 0 for these tests.  WIll fix up later. */
   #define OPAL_HAVE_ATOMIC_MATH_32 0
 #endif
+
 #if defined(DOXYGEN) ||  OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_CMPSET_32
-#if ! OPAL_HAVE_ATOMIC_MATH_32
+
+#if OPAL_HAVE_INLINE_ATOMIC_ADD_32
 static inline
 #endif
 int32_t opal_atomic_add_32(volatile int32_t *addr, int delta);
-#if ! OPAL_HAVE_ATOMIC_MATH_32
+
+#if OPAL_HAVE_INLINE_ATOMIC_SUB_32
 static inline
 #endif
 int32_t opal_atomic_sub_32(volatile int32_t *addr, int delta);
+
 #endif /* OPAL_HAVE_ATOMIC_MATH_32 */
+
 #if ! OPAL_HAVE_ATOMIC_MATH_32
 /* fix up the value of ompi_have_atomic_math_32 to allow for C versions */
 #undef OPAL_HAVE_ATOMIC_MATH_32
@@ -338,16 +396,21 @@ int32_t opal_atomic_sub_32(volatile int32_t *addr, int delta);
 /* define to 0 for these tests.  WIll fix up later. */
 #define OPAL_HAVE_ATOMIC_MATH_64 0
 #endif
+
 #if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_MATH_64 || OPAL_HAVE_ATOMIC_CMPSET_64
-#if OPAL_HAVE_ATOMIC_CMPSET_64
+
+#if OPAL_HAVE_INLINE_ATOMIC_ADD_64
 static inline
 #endif
 int64_t opal_atomic_add_64(volatile int64_t *addr, int64_t delta);
-#if OPAL_HAVE_ATOMIC_CMPSET_64
-static inline 
+
+#if OPAL_HAVE_INLINE_ATOMIC_SUB_64
+static inline
 #endif
 int64_t opal_atomic_sub_64(volatile int64_t *addr, int64_t delta);
+
 #endif /* OPAL_HAVE_ATOMIC_MATH_32 */
+
 #if ! OPAL_HAVE_ATOMIC_MATH_64
 /* fix up the value of ompi_have_atomic_math_64 to allow for C versions */
 #undef OPAL_HAVE_ATOMIC_MATH_64
@@ -525,12 +588,8 @@ static inline int64_t opal_atomic_sub_ptr( volatile void* addr, void* delta );
  *********************************************************************/
 #include "opal/sys/atomic_impl.h"
 
-
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-
-
-
 
 #endif /* OPAL_SYS_ATOMIC_H */
