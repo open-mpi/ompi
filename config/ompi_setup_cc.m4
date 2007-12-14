@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -306,6 +307,6 @@ AC_DEFUN([_OMPI_PROG_CC],[
     AC_DEFINE_UNQUOTED(OMPI_CC, "$CC", [OMPI underlying C compiler])
     set dummy $CC
     ompi_cc_argv0=[$]2
-    OMPI_CC_ABSOLUTE="`which $ompi_cc_argv0`"
+    OMPI_WHICH([$ompi_cc_argv0], [OMPI_CC_ABSOLUTE])
     AC_SUBST(OMPI_CC_ABSOLUTE)
 ])

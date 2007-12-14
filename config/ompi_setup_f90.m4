@@ -12,6 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
+dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -93,7 +94,7 @@ else
         set dummy $OMPI_F90
         OMPI_F90_ARGV0=[$]2
         BASEF90="`basename $OMPI_F90_ARGV0`"
-        OMPI_F90_ABSOLUTE="`which $OMPI_F90_ARGV0`"
+        OMPI_WHICH([$OMPI_F90_ARGV0], [OMPI_F90_ABSOLUTE])
     fi
 fi
 # make sure the compiler actually works, if not cross-compiling

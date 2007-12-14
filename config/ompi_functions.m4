@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -263,6 +264,37 @@ eval $ompi_eval
 # Clean up
 
 unset ompi_name ompi_i ompi_done ompi_newval ompi_eval ompi_count])dnl
+
+dnl #######################################################################
+dnl #######################################################################
+dnl #######################################################################
+
+# Macro that serves as an alternative to using `which <prog>`. It is
+# preferable to simply using `which <prog>` because backticks (`) (aka
+# backquotes) invoke a sub-shell which may source a "noisy"
+# ~/.whatever file (and we do not want the error messages to be part
+# of the assignment in foo=`which <prog>`). This macro ensures that we
+# get a sane executable value.
+AC_DEFUN([OMPI_WHICH],[
+# 1 is the variable name to do "which" on
+# 2 is the variable name to assign the return value to
+
+OMPI_VAR_SCOPE_PUSH([ompi_prog ompi_file ompi_dir ompi_sentinel])
+
+ompi_prog=$1
+
+IFS_SAVE=$IFS
+IFS="$PATH_SEPARATOR"
+for ompi_dir in $PATH; do
+    if test -x "$ompi_dir/$ompi_prog"; then
+        $2="$ompi_dir/$ompi_prog"
+        break
+    fi
+done
+IFS=$IFS_SAVE
+
+OMPI_VAR_SCOPE_POP
+])dnl
 
 dnl #######################################################################
 dnl #######################################################################

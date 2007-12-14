@@ -12,6 +12,7 @@ dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
+dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -255,7 +256,7 @@ AC_DEFUN([_OMPI_PROG_CXX],[
     AC_DEFINE_UNQUOTED(OMPI_CXX, "$CXX", [OMPI underlying C++ compiler])
     set dummy $CXX
     ompi_cxx_argv0=[$]2
-    OMPI_CXX_ABSOLUTE="`which $ompi_cxx_argv0`"
+    OMPI_WHICH([$ompi_cxx_argv0], [OMPI_CXX_ABSOLUTE])
     AC_SUBST(OMPI_CXX_ABSOLUTE)
 
     OMPI_CXX_COMPILER_VENDOR([ompi_cxx_vendor])
