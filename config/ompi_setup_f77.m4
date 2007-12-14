@@ -12,6 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
+dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -63,7 +64,7 @@ else
     set dummy $OMPI_F77
     OMPI_F77_ARGV0=[$]2
     BASEF77="`basename $OMPI_F77_ARGV0`"
-    OMPI_F77_ABSOLUTE="`which $OMPI_F77_ARGV0`"
+    OMPI_WHICH([$OMPI_F77_ARGV0], [OMPI_F77_ABSOLUTE])
     
     if test "$OMPI_WANT_F77_BINDINGS" = "0" ; then
         AC_MSG_WARN([*** Fortran 77 bindings disabled by user])
