@@ -96,23 +96,14 @@ void opal_atomic_wmb(void)
  * containing the right hex for the instructions).
  */
 
-void opal_atomic_mb(void);
 #pragma mc_func opal_atomic_mb { "7c0004ac" }          /* sync  */
 #pragma reg_killed_by opal_atomic_mb                   /* none */
 
-void opal_atomic_rmb(void);
 #pragma mc_func opal_atomic_rmb { "7c2004ac" }         /* lwsync  */
 #pragma reg_killed_by opal_atomic_rmb                  /* none */
 
-void opal_atomic_wmb(void);
 #pragma mc_func opal_atomic_wmb { "7c0006ac" }         /* eieio */
 #pragma reg_killed_by opal_atomic_wmb                  /* none */
-
-#else /* end OMPI_XLC_INLINE_ASSEMBLY */
-
-void opal_atomic_mb(void);
-void opal_atomic_rmb(void);
-void opal_atomic_wmb(void);
 
 #endif
 
@@ -166,13 +157,6 @@ static inline int opal_atomic_cmpset_rel_32(volatile int32_t *addr,
     return opal_atomic_cmpset_32(addr, oldval, newval);
 }
 
-#else
-int opal_atomic_cmpset_32(volatile int32_t *addr,
-                          int32_t oldval, int32_t newval);
-int opal_atomic_cmpset_acq_32(volatile int32_t *addr,
-                              int32_t oldval, int32_t newval);
-int opal_atomic_cmpset_rel_32(volatile int32_t *addr,
-                              int32_t oldval, int32_t newval);
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
 
@@ -221,15 +205,6 @@ static inline int opal_atomic_cmpset_rel_64(volatile int64_t *addr,
     opal_atomic_wmb();
     return opal_atomic_cmpset_64(addr, oldval, newval);
 }
-
-#else /* OMPI_GCC_INLINE_ASSEMBLY */
-
-int opal_atomic_cmpset_64(volatile int64_t *addr,
-                          int64_t oldval, int64_t newval);
-int opal_atomic_cmpset_acq_64(volatile int64_t *addr,
-                              int64_t oldval, int64_t newval);
-int opal_atomic_cmpset_rel_64(volatile int64_t *addr,
-                              int64_t oldval, int64_t newval);
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
@@ -301,15 +276,6 @@ static inline int opal_atomic_cmpset_rel_64(volatile int64_t *addr,
     opal_atomic_wmb();
     return opal_atomic_cmpset_64(addr, oldval, newval);
 }
-
-#else /* OMPI_GCC_INLINE_ASSEMBLY */
-
-int opal_atomic_cmpset_64(volatile int64_t *addr,
-                          int64_t oldval, int64_t newval);
-int opal_atomic_cmpset_acq_64(volatile int64_t *addr,
-                              int64_t oldval, int64_t newval);
-int opal_atomic_cmpset_rel_64(volatile int64_t *addr,
-                              int64_t oldval, int64_t newval);
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
