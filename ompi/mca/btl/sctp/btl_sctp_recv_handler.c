@@ -141,7 +141,7 @@ void mca_btl_sctp_recv_handler(int sd, short flags, void *user) {
 
     /* Check if sender is known to us. */
     
-    if((mca_btl_sctp_proc_check(((uint32_t)(sri.sinfo_assoc_id)), recvr_proc_table)) == VALID_ENTRY) {
+    if((mca_btl_sctp_proc_check(sri.sinfo_assoc_id, recvr_proc_table)) == VALID_ENTRY) {
 
         mca_btl_base_endpoint_t *btl_endpoint;
         mca_btl_sctp_frag_t* frag;
@@ -233,7 +233,7 @@ data_still_pending_on_endpoint:
             CLOSE_THE_SOCKET(sd);
             return;
         }
-        mca_btl_sctp_proc_add((uint32_t)sri.sinfo_assoc_id, btl_proc, recvr_proc_table);
+        mca_btl_sctp_proc_add(sri.sinfo_assoc_id, btl_proc, recvr_proc_table);
 
 
         /* are there any existing peer instances will to accept this connection */

@@ -25,6 +25,7 @@
 #include "btl_sctp.h"
 #include "btl_sctp_addr.h"
 #include "btl_sctp_endpoint.h"
+#include <netinet/sctp.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -94,7 +95,7 @@ enum {
 #define MCA_BTL_SCTP_PROC_TABLE_SIZE 256
 struct mca_btl_sctp_proc_table_node {
     int valid;
-    uint32_t sctp_assoc_id;
+    sctp_assoc_t sctp_assoc_id;
     struct mca_btl_sctp_proc_t *proc;
 };
 typedef struct mca_btl_sctp_proc_table_node mca_btl_sctp_proc_table_node;
@@ -102,9 +103,9 @@ typedef struct mca_btl_sctp_proc_table_node mca_btl_sctp_proc_table_node;
 extern struct mca_btl_sctp_proc_table_node *recvr_proc_table;
 extern struct mca_btl_sctp_proc_table_node *sender_proc_table;
 
-int mca_btl_sctp_proc_check(uint32_t id, struct mca_btl_sctp_proc_table_node *table);
-void mca_btl_sctp_proc_add(uint32_t id, struct mca_btl_sctp_proc_t *proc, struct mca_btl_sctp_proc_table_node *table);
-mca_btl_sctp_proc_t *mca_btl_sctp_proc_get(uint32_t id, struct mca_btl_sctp_proc_table_node *table);
+int mca_btl_sctp_proc_check(sctp_assoc_t id, struct mca_btl_sctp_proc_table_node *table);
+void mca_btl_sctp_proc_add(sctp_assoc_t id, struct mca_btl_sctp_proc_t *proc, struct mca_btl_sctp_proc_table_node *table);
+mca_btl_sctp_proc_t *mca_btl_sctp_proc_get(sctp_assoc_t id, struct mca_btl_sctp_proc_table_node *table);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

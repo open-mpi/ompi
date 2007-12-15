@@ -362,7 +362,7 @@ bool mca_btl_sctp_proc_accept(mca_btl_sctp_proc_t* btl_proc, struct sockaddr_in*
  *
  *  TODO - change this to use a hash for constant time performance
  */
-int mca_btl_sctp_proc_check(uint32_t id, struct mca_btl_sctp_proc_table_node *table) {
+int mca_btl_sctp_proc_check(sctp_assoc_t id, struct mca_btl_sctp_proc_table_node *table) {
 #if MCA_BTL_SCTP_DONT_USE_HASH
     int i;
     for(i = 0; i < MCA_BTL_SCTP_PROC_TABLE_SIZE; i++) {
@@ -376,6 +376,7 @@ int mca_btl_sctp_proc_check(uint32_t id, struct mca_btl_sctp_proc_table_node *ta
     return INVALID_ENTRY;
 #else
     mca_btl_sctp_proc_t *val;
+    /* TODO fix if sctp_assoc_t is 64 bit (once we change to hash) */
     int rc = opal_hash_table_get_value_uint32(&mca_btl_sctp_component.sctp_assocID_hash, id, &val);
     if(OPAL_SUCCESS == rc) {
         return VALID_ENTRY;
@@ -394,7 +395,7 @@ int mca_btl_sctp_proc_check(uint32_t id, struct mca_btl_sctp_proc_table_node *ta
  *  TODO change this to a hash table that can expand to eliminate
  *    MCA_BTL_SCTP_PROC_TABLE_SIZE limitation
  */
-void mca_btl_sctp_proc_add(uint32_t id, struct mca_btl_sctp_proc_t *proc, struct mca_btl_sctp_proc_table_node *table) {
+void mca_btl_sctp_proc_add(sctp_assoc_t id, struct mca_btl_sctp_proc_t *proc, struct mca_btl_sctp_proc_table_node *table) {
 #if MCA_BTL_SCTP_DONT_USE_HASH
     int i;
     for(i = 0; i < MCA_BTL_SCTP_PROC_TABLE_SIZE; i++) {
@@ -406,6 +407,7 @@ void mca_btl_sctp_proc_add(uint32_t id, struct mca_btl_sctp_proc_t *proc, struct
         }
     }
 #else
+    /* TODO fix if sctp_assoc_t is 64 bit (once we change to hash) */
     int rc = opal_hash_table_set_value_uint32(&mca_btl_sctp_component.sctp_assocID_hash, id, proc);
     /* TODO handle return code */
 #endif    
@@ -417,7 +419,7 @@ void mca_btl_sctp_proc_add(uint32_t id, struct mca_btl_sctp_proc_t *proc, struct
  * ------------------------------------------
  *  Returns pointer to a proc that is indexed by the association id.
  */
-mca_btl_sctp_proc_t *mca_btl_sctp_proc_get(uint32_t id, struct mca_btl_sctp_proc_table_node *table) {
+mca_btl_sctp_proc_t *mca_btl_sctp_proc_get(sctp_assoc_t id, struct mca_btl_sctp_proc_table_node *table) {
 #if MCA_BTL_SCTP_DONT_USE_HASH
     int i;
     for(i = 0; i < MCA_BTL_SCTP_PROC_TABLE_SIZE; i++){
@@ -428,6 +430,7 @@ mca_btl_sctp_proc_t *mca_btl_sctp_proc_get(uint32_t id, struct mca_btl_sctp_proc
     return NULL;
 #else
     mca_btl_sctp_proc_t *val;
+    /* TODO fix if sctp_assoc_t is 64 bit (once we change to hash) */
     int rc = opal_hash_table_get_value_uint32(&mca_btl_sctp_component.sctp_assocID_hash, id, &val);
     if(OPAL_SUCCESS == rc) {
         return val;
