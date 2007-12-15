@@ -16,10 +16,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-include $(top_ompi_srcdir)/config/Makefile.options
-
 sources = \
     rcache_rb.c \
     rcache_rb.h \
@@ -49,11 +45,7 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_rcache_rb_la_SOURCES = $(component_sources)
 mca_rcache_rb_la_LDFLAGS = -module -avoid-version $(rcache_rb_LDFLAGS)
-mca_rcache_rb_la_LIBADD = \
-    $(rcache_rb_LIBS) \
-    $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
+mca_rcache_rb_la_LIBADD = $(rcache_rb_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_rcache_rb_la_SOURCES = $(lib_sources)

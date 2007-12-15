@@ -39,10 +39,7 @@ sources = \
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_odls_bproc_la_SOURCES = $(sources)
-mca_odls_bproc_la_LIBADD = \
-    $(odls_bproc_LIBS) \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
+mca_odls_bproc_la_LIBADD = $(odls_bproc_LIBS)
 mca_odls_bproc_la_LDFLAGS = -module -avoid-version $(odls_bproc_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

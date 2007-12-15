@@ -16,14 +16,6 @@
 # $HEADER$
 #
 
-# Need to use our own AUTOMAKE_OPTIONS -- cannot include
-# Makefile.options from main ompi tree because Automake now defers
-# "include" statements until "make" time.  Hence, if we're building
-# this component outside the ompi tree, the include statement will
-# fail.
-
-AUTOMAKE_OPTIONS	= foreign dist-bzip2
-
 # Source files
 
 sources = \
@@ -63,10 +55,6 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_demo_la_SOURCES = $(sources)
 mca_coll_demo_la_LDFLAGS = -module -avoid-version
-mca_coll_demo_la_LIBADD = \
-        $(top_ompi_builddir)/ompi/libmpi.la \
-        $(top_ompi_builddir)/orte/libopen-rte.la \
-        $(top_ompi_builddir)/opal/libopen-pal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_coll_demo_la_SOURCES = $(sources)

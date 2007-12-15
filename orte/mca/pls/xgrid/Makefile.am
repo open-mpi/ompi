@@ -16,8 +16,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
 AM_CPPFLAGS = -I$(top_ompi_builddir)/include 
 AM_OBJCFLAGS = $(pls_xgrid_OBJCFLAGS)
 
@@ -51,12 +49,8 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pls_xgrid_la_SOURCES = $(xgrid_sources)
-mca_pls_xgrid_la_LIBADD = \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
 mca_pls_xgrid_la_LDFLAGS = -module -avoid-version $(pls_xgrid_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pls_xgrid_la_SOURCES = $(xgrid_sources)
-libmca_pls_xgrid_la_LIBADD = 
 libmca_pls_xgrid_la_LDFLAGS = -module -avoid-version $(pls_xgrid_LDFLAGS)

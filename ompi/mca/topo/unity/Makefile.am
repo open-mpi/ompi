@@ -16,10 +16,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 sources = \
     topo_unity.h \
     topo_unity_cart_map.c \
@@ -46,12 +42,6 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_topo_unity_la_SOURCES = $(component_sources)
-mca_topo_unity_la_LIBADD = \
-    $(LIBMPI_LA) \
-    $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
-
 mca_topo_unity_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(lib)

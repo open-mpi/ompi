@@ -16,11 +16,8 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
 amca_paramdir = $(AMCA_PARAM_SETS_DIR)
 dist_amca_param_DATA = netpipe-btl-template.txt
-
 
 sources = \
     btl_template.c \
@@ -54,10 +51,6 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_template_la_SOURCES = $(component_sources)
 mca_btl_template_la_LDFLAGS = -module -avoid-version
-mca_btl_template_la_LIBADD = \
-    $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_template_la_SOURCES = $(lib_sources)

@@ -16,10 +16,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 libmca_btl_self_la_sources = \
     btl_self.c \
     btl_self.h \
@@ -43,12 +39,7 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_self_la_SOURCES = $(libmca_btl_self_la_sources)
 mca_btl_self_la_LDFLAGS = -module -avoid-version
-mca_btl_self_la_LIBADD = \
-    $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
-        
+
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_btl_self_la_SOURCES = $(libmca_btl_self_la_sources)
 libmca_btl_self_la_LDFLAGS = -module -avoid-version
-libmca_btl_self_la_LIBADD = 

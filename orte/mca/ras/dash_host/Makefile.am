@@ -36,12 +36,8 @@ dash_host_SOURCES = \
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ras_dash_host_la_SOURCES = $(dash_host_SOURCES)
-mca_ras_dash_host_la_LIBADD = \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
 mca_ras_dash_host_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_ras_dash_host_la_SOURCES = $(dash_host_SOURCES)
-libmca_ras_dash_host_la_LIBADD =
 libmca_ras_dash_host_la_LDFLAGS = -module -avoid-version

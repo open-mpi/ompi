@@ -50,10 +50,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_mtl_mx_la_SOURCES = $(mtl_mx_sources)
 mca_mtl_mx_la_LIBADD = \
     $(mtl_mx_LIBS) \
-    $(top_ompi_builddir)/ompi/mca/common/mx/libmca_common_mx.la \
-    $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
+    $(top_ompi_builddir)/ompi/mca/common/mx/libmca_common_mx.la
 mca_mtl_mx_la_LDFLAGS = -module -avoid-version $(mtl_mx_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

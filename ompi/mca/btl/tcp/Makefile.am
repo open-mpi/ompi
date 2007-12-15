@@ -16,10 +16,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 sources = \
     btl_tcp.c \
     btl_tcp.h \
@@ -55,10 +51,6 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_tcp_la_SOURCES = $(component_sources)
 mca_btl_tcp_la_LDFLAGS = -module -avoid-version
-mca_btl_tcp_la_LIBADD = \
-    $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_tcp_la_SOURCES = $(lib_sources)

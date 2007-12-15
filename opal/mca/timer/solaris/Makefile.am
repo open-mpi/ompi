@@ -16,8 +16,6 @@
 # $HEADER$
 #
 
-
-
 noinst_LTLIBRARIES = libmca_timer_solaris.la
 
 libmca_timer_solaris_la_SOURCES = \

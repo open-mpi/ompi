@@ -16,8 +16,6 @@
 # $HEADER$
 #
 
-
-
 noinst_LTLIBRARIES = libmca_timer_windows.la
 
 libmca_timer_windows_la_SOURCES = \

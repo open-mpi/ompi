@@ -16,10 +16,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 sources =
 include src/Makefile.extra
 
@@ -50,11 +46,7 @@ libs = romio/libromio_dist.la
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_io_romio_la_SOURCES = $(component_sources)
-mca_io_romio_la_LIBADD = \
-    $(libs) \
-    $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
+mca_io_romio_la_LIBADD = $(libs)
 mca_io_romio_la_DEPENDENCIES = $(libs)
 mca_io_romio_la_LDFLAGS = -module -avoid-version
 

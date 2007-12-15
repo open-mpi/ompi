@@ -16,10 +16,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 AM_CPPFLAGS = $(mpool_rdma_CPPFLAGS)
 
 sources = \
@@ -50,11 +46,7 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_rdma_la_SOURCES = $(sources)
 mca_mpool_rdma_la_LDFLAGS = -module -avoid-version
-mca_mpool_rdma_la_LIBADD = \
-    $(mpool_rdma_LIBS) \
-    $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
+mca_mpool_rdma_la_LIBADD = $(mpool_rdma_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_mpool_rdma_la_SOURCES = $(sources)

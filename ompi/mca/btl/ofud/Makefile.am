@@ -18,10 +18,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 AM_CPPFLAGS=$(btl_ofud_CPPFLAGS) 
 
 sources = \
@@ -55,14 +51,9 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_ofud_la_SOURCES = $(component_sources)
 mca_btl_ofud_la_LDFLAGS = -module -avoid-version $(btl_ofud_LDFLAGS) 
-mca_btl_ofud_la_LIBADD = \
-    $(btl_ofud_LIBS) \
-    $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
-    
+mca_btl_ofud_la_LIBADD = $(btl_ofud_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_ofud_la_SOURCES = $(lib_sources)
 libmca_btl_ofud_la_LDFLAGS= -module -avoid-version $(btl_ofud_LDFLAGS) 
-libmca_btl_ofud_la_LIBADD=$(btl_ofud_LIBS)
+libmca_btl_ofud_la_LIBADD = $(btl_ofud_LIBS)

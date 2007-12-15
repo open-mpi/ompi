@@ -8,10 +8,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-include $(top_ompi_srcdir)/config/Makefile.options
-
 # Make the output library in this directory, and name it either
 # protocol_<name>.la (for DSO builds) or libprotocol_<name>.la
 # (for static builds).

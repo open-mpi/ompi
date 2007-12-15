@@ -16,10 +16,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 sources = \
     oob_tcp.c \
     oob_tcp.h \
@@ -49,10 +45,6 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_oob_tcp_la_SOURCES = $(sources)
-mca_oob_tcp_la_LIBADD = \
-    $(LIBOMPI_LA) \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
 mca_oob_tcp_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)

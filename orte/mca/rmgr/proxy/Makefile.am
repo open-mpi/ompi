@@ -14,10 +14,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
@@ -38,12 +34,8 @@ proxy_SOURCES = \
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_rmgr_proxy_la_SOURCES = $(proxy_SOURCES)
-mca_rmgr_proxy_la_LIBADD = \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
 mca_rmgr_proxy_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_rmgr_proxy_la_SOURCES = $(proxy_SOURCES)
-libmca_rmgr_proxy_la_LIBADD =
 libmca_rmgr_proxy_la_LDFLAGS = -module -avoid-version

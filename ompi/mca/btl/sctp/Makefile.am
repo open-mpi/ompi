@@ -9,16 +9,13 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
 # $HEADER$
 #
-
-# Use the top-level Makefile.options
-
-
 
 CFLAGS = $(btl_sctp_CFLAGS)
 AM_CPPFLAGS = $(btl_sctp_CPPFLAGS)
@@ -62,14 +59,8 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_sctp_la_SOURCES = $(component_sources)
 mca_btl_sctp_la_LDFLAGS = -module -avoid-version $(btl_sctp_LDFLAGS)
-mca_btl_sctp_la_LIBADD = \
-    $(btl_sctp_LIBS) \
-    $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
-#mca_btl_sctp_la_CPPFLAGS = $(btl_sctp_CPPFLAGS)
+mca_btl_sctp_la_LIBADD = $(btl_sctp_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_sctp_la_SOURCES = $(lib_sources)
 libmca_btl_sctp_la_LDFLAGS = -module -avoid-version $(btl_sctp_LDFLAGS)
-#libmca_btl_sctp_la_CPPFLAGS = $(btl_sctp_CPPFLAGS)

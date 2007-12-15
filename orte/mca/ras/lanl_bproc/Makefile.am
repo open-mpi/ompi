@@ -16,11 +16,7 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
 dist_pkgdata_DATA = help-ras-lanl-bproc.txt
-
-
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
@@ -44,10 +40,7 @@ proxy_SOURCES = \
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ras_lanl_bproc_la_SOURCES = $(proxy_SOURCES)
-mca_ras_lanl_bproc_la_LIBADD = \
-    $(ras_lanl_bproc_LIBS) \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
+mca_ras_lanl_bproc_la_LIBADD = $(ras_lanl_bproc_LIBS)
 mca_ras_lanl_bproc_la_LDFLAGS = -module -avoid-version $(ras_lanl_bproc_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

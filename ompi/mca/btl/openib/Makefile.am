@@ -17,8 +17,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
 AM_CPPFLAGS = $(btl_openib_CPPFLAGS) -DPKGDATADIR=\"$(pkgdatadir)\"
 AM_LFLAGS = -Pbtl_openib_ini_yy
 LEX_OUTPUT_ROOT = lex.btl_openib_ini_yy
@@ -83,11 +81,9 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_openib_la_SOURCES = $(component_sources)
 mca_btl_openib_la_LDFLAGS = -module -avoid-version $(btl_openib_LDFLAGS) 
-mca_btl_openib_la_LIBADD = \
-    $(btl_openib_LIBS) \
-    $(top_ompi_builddir)/ompi/libmpi.la
+mca_btl_openib_la_LIBADD = $(btl_openib_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_openib_la_SOURCES = $(lib_sources)
 libmca_btl_openib_la_LDFLAGS= -module -avoid-version $(btl_openib_LDFLAGS) 
-libmca_btl_openib_la_LIBADD=$(btl_openib_LIBS)
+libmca_btl_openib_la_LIBADD = $(btl_openib_LIBS)

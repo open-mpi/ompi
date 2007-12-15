@@ -39,9 +39,7 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_maffinity_libnuma_la_SOURCES = $(sources)
 mca_maffinity_libnuma_la_LDFLAGS = -module -avoid-version $(maffinity_libnuma_LDFLAGS)
-mca_maffinity_libnuma_la_LIBADD = \
-    $(maffinity_libnuma_LIBS) \
-    $(top_ompi_builddir)/opal/libopen-pal.la
+mca_maffinity_libnuma_la_LIBADD = $(maffinity_libnuma_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_maffinity_libnuma_la_SOURCES =$(sources)

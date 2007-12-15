@@ -39,10 +39,7 @@ sources = \
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pls_xcpu_la_SOURCES = $(sources)
-mca_pls_xcpu_la_LIBADD = \
-    $(pls_xcpu_LIBS) \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
+mca_pls_xcpu_la_LIBADD = $(pls_xcpu_LIBS)
 mca_pls_xcpu_la_LDFLAGS = -module -avoid-version $(pls_xcpu_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

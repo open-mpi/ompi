@@ -18,10 +18,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 CFLAGS = $(btl_udapl_CFLAGS)
 AM_CPPFLAGS = $(btl_udapl_CPPFLAGS) -DPKGDATADIR=\"$(pkgdatadir)\"
 
@@ -57,12 +53,7 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_udapl_la_SOURCES = $(udapl_sources)
-mca_btl_udapl_la_LIBADD = \
-    $(btl_udapl_LIBS) \
-    $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
-        
+mca_btl_udapl_la_LIBADD = $(btl_udapl_LIBS)
 mca_btl_udapl_la_LDFLAGS = -module -avoid-version $(btl_udapl_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
