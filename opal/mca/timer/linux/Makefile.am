@@ -16,8 +16,6 @@
 # $HEADER$
 #
 
-
-
 noinst_LTLIBRARIES = libmca_timer_linux.la
 
 libmca_timer_linux_la_SOURCES = \

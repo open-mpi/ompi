@@ -17,10 +17,7 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
 dist_pkgdata_DATA = help-ras-lsf.txt
-
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
@@ -44,10 +41,7 @@ proxy_SOURCES = \
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ras_lsf_la_SOURCES = $(proxy_SOURCES)
-mca_ras_lsf_la_LIBADD = \
-    $(ras_lsf_LIBS) \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
+mca_ras_lsf_la_LIBADD = $(ras_lsf_LIBS)
 mca_ras_lsf_la_LDFLAGS = -module -avoid-version $(ras_lsf_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

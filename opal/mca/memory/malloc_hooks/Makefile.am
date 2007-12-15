@@ -16,8 +16,6 @@
 # $HEADER$
 #
 
-
-
 noinst_LTLIBRARIES = libmca_memory_malloc_hooks.la
 
 # Source code files

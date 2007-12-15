@@ -27,10 +27,6 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_routed_unity_la_SOURCES = $(sources)
-mca_routed_unity_la_LIBADD = \
-    $(LIBOMPI_LA) \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
 mca_routed_unity_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)

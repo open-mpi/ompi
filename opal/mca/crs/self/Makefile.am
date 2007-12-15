@@ -40,8 +40,6 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_crs_self_la_SOURCES = $(sources)
 mca_crs_self_la_LDFLAGS = -module -avoid-version
-mca_crs_self_la_LIBADD = \
-        $(top_ompi_builddir)/opal/libopen-pal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_crs_self_la_SOURCES = $(sources)

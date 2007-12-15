@@ -16,10 +16,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 sources = \
         maffinity_first_use.h \
         maffinity_first_use_component.c \
@@ -41,8 +37,6 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_maffinity_first_use_la_SOURCES = $(sources)
 mca_maffinity_first_use_la_LDFLAGS = -module -avoid-version
-mca_maffinity_first_use_la_LIBADD = \
-    $(top_ompi_builddir)/opal/libopen-pal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_maffinity_first_use_la_SOURCES =$(sources)

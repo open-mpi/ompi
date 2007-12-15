@@ -54,13 +54,8 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_ob1_la_SOURCES = $(ob1_sources)
-mca_pml_ob1_la_LIBADD = \
-    $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
 mca_pml_ob1_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pml_ob1_la_SOURCES = $(ob1_sources)
-libmca_pml_ob1_la_LIBADD =
 libmca_pml_ob1_la_LDFLAGS = -module -avoid-version

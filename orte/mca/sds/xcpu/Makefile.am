@@ -16,10 +16,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 AM_CPPFLAGS = $(sds_xcpu_CPPFLAGS)
 
 sources = \
@@ -43,10 +39,7 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sds_xcpu_la_SOURCES = $(sources)
 mca_sds_xcpu_la_LDFLAGS = -module -avoid-version $(sds_xcpu_LDFLAGS)
-mca_sds_xcpu_la_LIBADD = \
-    $(sds_xcpu_LIBS) \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
+mca_sds_xcpu_la_LIBADD = $(sds_xcpu_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_sds_xcpu_la_SOURCES =$(sources)

@@ -38,10 +38,6 @@
 # Note that building this common component statically and linking
 # against other dynamic components is *not* supported!
 
-# Use the top-level Makefile.options
-
-
-
 # Header files
 
 headers = \

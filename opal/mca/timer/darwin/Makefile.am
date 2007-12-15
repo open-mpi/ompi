@@ -16,8 +16,6 @@
 # $HEADER$
 #
 
-
-
 noinst_LTLIBRARIES = libmca_timer_darwin.la
 
 libmca_timer_darwin_la_SOURCES = \

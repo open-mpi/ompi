@@ -16,10 +16,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 sources = \
         pls_poe.h \
         pls_poe_component.c \
@@ -41,9 +37,6 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pls_poe_la_SOURCES = $(sources)
 mca_pls_poe_la_LDFLAGS = -module -avoid-version
-mca_pls_poe_la_LIBADD = \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pls_poe_la_SOURCES =$(sources)

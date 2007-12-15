@@ -14,10 +14,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-include $(top_ompi_srcdir)/config/Makefile.options
-
 pt2pt_sources = \
 	osc_rdma.h \
 	osc_rdma.c \
@@ -50,10 +46,8 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_osc_rdma_la_SOURCES = $(pt2pt_sources)
-mca_osc_rdma_la_LIBADD = 
 mca_osc_rdma_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_osc_rdma_la_SOURCES = $(pt2pt_sources)
-libmca_osc_rdma_la_LIBADD = 
 libmca_osc_rdma_la_LDFLAGS = -module -avoid-version

@@ -40,9 +40,7 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_crs_blcr_la_SOURCES  = $(sources)
 mca_crs_blcr_la_LDFLAGS  = -module -avoid-version $(crs_blcr_LDFLAGS)
-mca_crs_blcr_la_LIBADD = \
-        $(crs_blcr_LIBS) \
-        $(top_ompi_builddir)/opal/libopen-pal.la
+mca_crs_blcr_la_LIBADD = $(crs_blcr_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_crs_blcr_la_SOURCES = $(sources)

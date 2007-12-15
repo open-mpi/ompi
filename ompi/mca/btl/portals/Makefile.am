@@ -16,10 +16,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
@@ -53,10 +49,7 @@ mca_btl_portals_la_SOURCES = $(portals_SOURCES)
 nodist_mca_btl_portals_la_SOURCES = $(portals_nodist_SOURCES)
 mca_btl_portals_la_LIBADD = \
     $(btl_portals_LIBS) \
-    $(top_ompi_builddir)/ompi/mca/common/portals/libmca_common_portals.la \
-    $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
+    $(top_ompi_builddir)/ompi/mca/common/portals/libmca_common_portals.la
 mca_btl_portals_la_LDFLAGS = -module -avoid-version $(btl_portals_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

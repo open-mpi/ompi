@@ -16,10 +16,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 sources = \
 	mpool_sm.h \
 	mpool_sm_module.c \
@@ -45,11 +41,8 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_sm_la_SOURCES = $(sources)
 mca_mpool_sm_la_LDFLAGS = -module -avoid-version
 mca_mpool_sm_la_LIBADD = \
-    $(top_ompi_builddir)/ompi/mca/common/sm/libmca_common_sm.la \
-    $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
-        
+    $(top_ompi_builddir)/ompi/mca/common/sm/libmca_common_sm.la
+
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_mpool_sm_la_SOURCES = $(sources)
 libmca_mpool_sm_la_LDFLAGS = -module -avoid-version

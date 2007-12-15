@@ -9,10 +9,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 AM_CPPFLAGS = $(btl_elan_CPPFLAGS)
 
 btl_elan_sources = btl_elan.c btl_elan.h btl_elan_component.c btl_elan_endpoint.c \
@@ -33,11 +29,7 @@ endif
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_elan_la_SOURCES = $(btl_elan_sources)
-mca_btl_elan_la_LIBADD = \
-    $(btl_elan_LIBS) \
-    $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
+mca_btl_elan_la_LIBADD = $(btl_elan_LIBS)
 mca_btl_elan_la_LDFLAGS = -module -avoid-version $(btl_elan_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

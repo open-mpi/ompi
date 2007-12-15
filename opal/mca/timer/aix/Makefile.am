@@ -16,8 +16,6 @@
 # $HEADER$
 #
 
-
-
 noinst_LTLIBRARIES = libmca_timer_aix.la
 
 libmca_timer_aix_la_SOURCES = \

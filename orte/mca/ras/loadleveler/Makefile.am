@@ -16,10 +16,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 AM_CPPFLAGS = $(ras_loadleveler_CPPFLAGS)
 
 sources = \
@@ -48,10 +44,7 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_ras_loadleveler_la_SOURCES = $(component_sources)
 mca_ras_loadleveler_la_LDFLAGS = -module -avoid-version $(ras_loadleveler_LDFLAGS)
-mca_ras_loadleveler_la_LIBADD = \
-    $(ras_loadleveler_LIBS) \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
+mca_ras_loadleveler_la_LIBADD = $(ras_loadleveler_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_ras_loadleveler_la_SOURCES = $(lib_sources)
