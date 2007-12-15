@@ -237,9 +237,11 @@ int mca_btl_sctp_component_open(void)
         !mca_btl_sctp_param_register_int ("use_nagle", 0);
     /* port_min */
     /* port_range */
-    /* use a single one-to-many socket by default */
+    /* use a single one-to-many socket by default except in Solaris (see
+     *  the configure.m4 file)
+     */
     mca_btl_sctp_component.sctp_if_11 =
-        mca_btl_sctp_param_register_int ("if_11", 0);
+        mca_btl_sctp_param_register_int ("if_11", OMPI_MCA_BTL_SCTP_USE_ONE_TO_ONE_SOCKET);
 
     /* have lower exclusivity than tcp */
     mca_btl_sctp_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_LOW;

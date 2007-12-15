@@ -37,12 +37,20 @@ AC_DEFUN([OMPI_CHECK_SCTP],[
     case "$host" in
     *linux*)
 	ompi_sctp_try_to_build="yes"
+        AC_DEFINE(OMPI_MCA_BTL_SCTP_USE_ONE_TO_ONE_SOCKET, 0,
+               [Default value for socket style to use with SCTP BTL])
+        AC_DEFINE(OMPI_MCA_BTL_SCTP_CONCATENATES_IOVS, 0,
+               [False if you can use iovec's directly with SCTP BTL])
 	;;
     *bsd*)
         # only add -DFREEBSD once to get extra sin_len field
         btl_sctp_CFLAGS="`echo $btl_sctp_CFLAGS | sed 's/-DFREEBSD//g'`"
         btl_sctp_CFLAGS="$btl_sctp_CFLAGS -DFREEBSD"
 	ompi_sctp_try_to_build="yes"
+        AC_DEFINE(OMPI_MCA_BTL_SCTP_USE_ONE_TO_ONE_SOCKET, 0,
+               [Default value for socket style to use with SCTP BTL])
+        AC_DEFINE(OMPI_MCA_BTL_SCTP_CONCATENATES_IOVS, 0,
+               [False if you can use iovec's directly with SCTP BTL])
 	AC_MSG_WARN([Adding -DFREEBSD to set extra sin_len field in sockaddr.])
 	;;
 # Mac OS X support for SCTP NKE. Adjustments should look like *bsd*...
@@ -51,10 +59,23 @@ AC_DEFUN([OMPI_CHECK_SCTP],[
         btl_sctp_CFLAGS="`echo $btl_sctp_CFLAGS | sed 's/-DFREEBSD//g'`"
         btl_sctp_CFLAGS="$btl_sctp_CFLAGS -DFREEBSD"
 	ompi_sctp_try_to_build="yes"
+        AC_DEFINE(OMPI_MCA_BTL_SCTP_USE_ONE_TO_ONE_SOCKET, 0,
+               [Default value for socket style to use with SCTP BTL])
+        AC_DEFINE(OMPI_MCA_BTL_SCTP_CONCATENATES_IOVS, 0,
+               [False if you can use iovec's directly with SCTP BTL])
 	AC_MSG_WARN([Adding -DFREEBSD to set extra sin_len field in sockaddr.])
 	;;
+    *solaris*)
+        # Solaris SCTP stack makes different assumptions about one-to-many
+        #   sockets so change the default to use one-to-one sockets
+	ompi_sctp_try_to_build="yes"
+        AC_DEFINE(OMPI_MCA_BTL_SCTP_USE_ONE_TO_ONE_SOCKET, 1,
+               [Default value for socket style to use with SCTP BTL])
+        AC_DEFINE(OMPI_MCA_BTL_SCTP_CONCATENATES_IOVS, 1,
+               [False if you can use iovec's directly with SCTP BTL])
+	;;
     *)
-	AC_MSG_WARN([Only build sctp BTL on Linux, Mac OS X, and BSD variants])
+	AC_MSG_WARN([Only build sctp BTL on Solaris, Linux, Mac OS X, and BSD variants])
 	;;
     esac
 

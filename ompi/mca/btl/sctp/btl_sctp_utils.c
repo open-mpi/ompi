@@ -63,6 +63,39 @@ struct sockaddr_in mca_btl_sctp_utils_sockaddr_from_endpoint(struct mca_btl_base
 int mca_btl_sctp_utils_writev(int sd, struct iovec *vec, size_t len, 
         struct sockaddr *to_addr, socklen_t to_len, uint16_t stream_no) {
 
+#if OMPI_MCA_BTL_SCTP_CONCATENATES_IOVS
+    /* required for Solaris since struct msghdr has no msg_control field */
+
+    int current_cnt=0, total_offset=0, total=0, byte_sent;
+    char *send_buf;
+
+    /* count the total and allocate space to copy to */
+    while(current_cnt < len) {
+        total += vec[current_cnt].iov_len;
+        current_cnt++;
+    }
+    if(NULL == (send_buf = (char *) malloc(total))) {
+        BTL_ERROR(("Ran out of memory."));
+        return 0;
+    }
+
+    /* combine all iovcnt's into one message.  write all or nothing */
+    current_cnt=0;
+    while(current_cnt < len) {
+        memcpy(send_buf+total_offset, vec[current_cnt].iov_base, vec[current_cnt].iov_len);
+        total_offset += vec[current_cnt].iov_len;
+        current_cnt++;
+    }
+
+    byte_sent = sctp_sendmsg(sd, send_buf, total, (struct sockaddr *) to_addr, 
+                    sizeof(*to_addr), 0, 0, stream_no, 0, 0);
+    free(send_buf);
+
+    return byte_sent;
+
+#else
+    /* uses iovec directly */
+
     char outcmesg[CMSG_SPACE(sizeof(struct sctp_sndrcvinfo))];
     struct cmsghdr *cmesg;
     struct msghdr outmesg;
@@ -97,4 +130,5 @@ int mca_btl_sctp_utils_writev(int sd, struct iovec *vec, size_t len,
     srinfo->sinfo_context = cxt;
 
     return sendmsg(sd, &outmesg, 0);
+#endif
 }
