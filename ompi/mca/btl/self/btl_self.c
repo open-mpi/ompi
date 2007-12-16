@@ -46,7 +46,7 @@
 mca_btl_base_module_t mca_btl_self = {
     &mca_btl_self_component.super,
     0, /* btl_eager_limit */
-    0, /* btl_min_send_size */
+    0, /* btl_rndv_eager_limit */
     0, /* btl_max_send_size */
     0, /* btl_rdma_pipeline_send_length */
     0, /* btl_rdma_pipeline_frag_size */

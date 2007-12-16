@@ -283,7 +283,7 @@ int mca_btl_udapl_register_mca_params(void)
     mca_btl_udapl_module.super.btl_exclusivity =
         MCA_BTL_EXCLUSIVITY_DEFAULT - 10;
     mca_btl_udapl_module.super.btl_eager_limit = 8*1024;
-    mca_btl_udapl_module.super.btl_min_send_size = 16*1024;
+    mca_btl_udapl_module.super.btl_rndv_eager_limit = 8*1024;
     mca_btl_udapl_module.super.btl_max_send_size = 64*1024;
     mca_btl_udapl_module.super.btl_rdma_pipeline_send_length = 512*1024;
     mca_btl_udapl_module.super.btl_rdma_pipeline_frag_size = 128 * 1024;

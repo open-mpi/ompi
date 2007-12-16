@@ -363,7 +363,10 @@ mca_pml_ob1_send_request_start_btl( mca_pml_ob1_send_request_t* sendreq,
             break;
         }
     } else {
-        size = eager_limit;
+        if(bml_btl->btl_rndv_eager_limit < eager_limit)
+            size = bml_btl->btl_rndv_eager_limit;
+        else
+            size = eager_limit;
         if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {
             rc = mca_pml_ob1_send_request_start_buffered(sendreq, bml_btl, size);
         } else if

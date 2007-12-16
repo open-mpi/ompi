@@ -144,7 +144,7 @@ int mca_btl_mx_component_open(void)
 
     mca_btl_mx_module.super.btl_exclusivity = 50;
     mca_btl_mx_module.super.btl_eager_limit = 4096;
-    mca_btl_mx_module.super.btl_min_send_size = 4096;
+    mca_btl_mx_module.super.btl_rndv_eager_limit = 4096;
     mca_btl_mx_module.super.btl_max_send_size = 64*1024;
     mca_btl_mx_module.super.btl_rdma_pipeline_send_length = 256*1024;
     mca_btl_mx_module.super.btl_rdma_pipeline_frag_size = 8*1024*1024;

@@ -301,7 +301,7 @@ int mca_bml_r2_add_procs(
                 bml_btl = mca_bml_base_btl_array_insert(&bml_endpoint->btl_send);
                 bml_btl->btl = btl;
                 bml_btl->btl_eager_limit = btl->btl_eager_limit;
-                bml_btl->btl_min_send_size = btl->btl_min_send_size;
+                bml_btl->btl_rndv_eager_limit = btl->btl_rndv_eager_limit;
                 bml_btl->btl_max_send_size = btl->btl_max_send_size;
                 bml_btl->btl_rdma_pipeline_send_length =
                     btl->btl_rdma_pipeline_send_length;

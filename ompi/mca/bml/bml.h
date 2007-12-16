@@ -57,8 +57,8 @@ struct mca_bml_base_btl_t {
     int    btl_flags;                             /**< support for put/get? */
     double btl_weight;                            /**< BTL weight for scheduling */
     size_t btl_eager_limit;                       /**< BTL eager limit */
-    size_t btl_min_send_size;                     /**< BTL min send size */
-    size_t btl_max_send_size;                     /**< BTL max send size */
+    size_t btl_rndv_eager_limit;                  /**< BTL rndv eager limit */
+    size_t btl_max_send_size;                     /**< BTL min send size */
     size_t btl_rdma_pipeline_send_length;         /**< BTL send length */
     size_t btl_rdma_pipeline_frag_size;           /**< BTL rdma frag size */
     size_t btl_min_rdma_pipeline_size;            /**< BTL min rdma size */
@@ -592,7 +592,7 @@ struct mca_bml_base_module_t {
     /* BML common attributes */
     mca_bml_base_component_t* bml_component; /**< pointer back to the BML component structure */
     size_t      bml_eager_limit;      /**< maximum size of first fragment -- eager send */
-    size_t      bml_min_send_size;    /**< threshold below which the BML should not fragment */
+    size_t      bml_rndv_eager_limit;    /**< size of a first fragment of rndv protocol */
     size_t      bml_max_send_size;    /**< maximum send fragment size supported by the BML */
     size_t      bml_min_rdma_size;    /**< threshold below which the BML should not fragment */
     size_t      bml_max_rdma_size;    /**< maximum rdma fragment size supported by the BML */
