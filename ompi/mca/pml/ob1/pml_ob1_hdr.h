@@ -30,6 +30,7 @@
 #endif
 
 #include "opal/types.h"
+#include "ompi/datatype/dt_arch.h"
 
 #define MCA_PML_OB1_HDR_TYPE_MATCH     1
 #define MCA_PML_OB1_HDR_TYPE_RNDV      2
@@ -275,5 +276,88 @@ union mca_pml_ob1_hdr_t {
 };
 typedef union mca_pml_ob1_hdr_t mca_pml_ob1_hdr_t;
 
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+static inline __opal_attribute_always_inline__ void
+ob1_hdr_ntoh(mca_pml_ob1_hdr_t *hdr, const uint8_t hdr_type)
+{
+    if(!(hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NBO))
+        return;
 
+    switch(hdr_type) {
+        case MCA_PML_OB1_HDR_TYPE_MATCH:
+            MCA_PML_OB1_MATCH_HDR_NTOH(hdr->hdr_match);
+            break;
+        case MCA_PML_OB1_HDR_TYPE_RNDV:
+            MCA_PML_OB1_RNDV_HDR_NTOH(hdr->hdr_rndv);
+            break;
+        case MCA_PML_OB1_HDR_TYPE_RGET:
+            MCA_PML_OB1_RGET_HDR_NTOH(hdr->hdr_rget);
+            break;
+        case MCA_PML_OB1_HDR_TYPE_ACK:
+            MCA_PML_OB1_ACK_HDR_NTOH(hdr->hdr_ack);
+            break;
+        case MCA_PML_OB1_HDR_TYPE_FRAG:
+            MCA_PML_OB1_FRAG_HDR_NTOH(hdr->hdr_frag);
+            break;
+        case MCA_PML_OB1_HDR_TYPE_PUT:
+            MCA_PML_OB1_RDMA_HDR_NTOH(hdr->hdr_rdma);
+            break;
+        case MCA_PML_OB1_HDR_TYPE_FIN:
+            MCA_PML_OB1_FIN_HDR_NTOH(hdr->hdr_fin);
+            break;
+        default:
+            assert(0);
+            break;
+    }
+}
+#else
+#define ob1_hdr_ntoh(h, t) do{}while(0)
+#endif
+
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#define ob1_hdr_hton(h, t, p) \
+    ob1_hdr_hton_intr((mca_pml_ob1_hdr_t*)h, t, p)
+static inline __opal_attribute_always_inline__ void
+ob1_hdr_hton_intr(mca_pml_ob1_hdr_t *hdr, const uint8_t hdr_type,
+        const ompi_proc_t *proc)
+{
+#ifdef WORDS_BIGENDIAN
+    hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
+#else
+
+    if(!(proc->proc_arch & OMPI_ARCH_ISBIGENDIAN))
+        return;
+
+    hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
+    switch(hdr_type) {
+        case MCA_PML_OB1_HDR_TYPE_MATCH:
+            MCA_PML_OB1_MATCH_HDR_HTON(hdr->hdr_match);
+            break;
+        case MCA_PML_OB1_HDR_TYPE_RNDV:
+            MCA_PML_OB1_RNDV_HDR_HTON(hdr->hdr_rndv);
+            break;
+        case MCA_PML_OB1_HDR_TYPE_RGET:
+            MCA_PML_OB1_RGET_HDR_HTON(hdr->hdr_rget);
+            break;
+        case MCA_PML_OB1_HDR_TYPE_ACK:
+            MCA_PML_OB1_ACK_HDR_HTON(hdr->hdr_ack);
+            break;
+        case MCA_PML_OB1_HDR_TYPE_FRAG:
+            MCA_PML_OB1_FRAG_HDR_HTON(hdr->hdr_frag);
+            break;
+        case MCA_PML_OB1_HDR_TYPE_PUT:
+            MCA_PML_OB1_RDMA_HDR_HTON(hdr->hdr_rdma);
+            break;
+        case MCA_PML_OB1_HDR_TYPE_FIN:
+            MCA_PML_OB1_FIN_HDR_HTON(hdr->hdr_fin);
+            break;
+        default:
+            assert(0);
+            break;
+    }
+#endif
+}
+#else
+#define ob1_hdr_hton(h, t, p) do{}while(0)
+#endif
 #endif
