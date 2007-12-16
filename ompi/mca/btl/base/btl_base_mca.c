@@ -57,10 +57,10 @@ int mca_btl_base_param_register(mca_base_component_t *version,
             0, uint32_t);
     free(msg);
 
-    REG_INT("min_send_size", "Minimum message size (in bytes) that will be striped across multiple network devices when using send/receive semantics.  Messages shorter than this size will be sent across a single network (must be >= 1)",
-            module->btl_min_send_size, 1, size_t);
+    REG_INT("rndv_eager_limit", "Size (in bytes) of \"phase 1\" fragment sent for all large messages (must be >= 0 and <= eager_limit)",
+            module->btl_rndv_eager_limit, 0, size_t);
 
-    REG_INT("eager_limit", "Size (in bytes) of the first fragment sent of any message.  It is the maximum size of \"short\" messages and the maximum size of the \"phase 1\" fragment sent for all large messages (must be >= 1).",
+    REG_INT("eager_limit", "Maximum size (in bytes) of \"short\" messages (must be >= 1).",
             module->btl_eager_limit, 1, size_t);
 
     REG_INT("max_send_size", "Maximum size (in bytes) of a single \"phase 2\" fragment of a long message when using the pipeline protocol (must be >= 1)",

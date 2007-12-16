@@ -246,7 +246,7 @@ int mca_btl_tcp_component_open(void)
 #endif
     mca_btl_tcp_module.super.btl_exclusivity =  MCA_BTL_EXCLUSIVITY_LOW + 100;
     mca_btl_tcp_module.super.btl_eager_limit = 64*1024;
-    mca_btl_tcp_module.super.btl_min_send_size = 64*1024;
+    mca_btl_tcp_module.super.btl_rndv_eager_limit = 64*1024;
     mca_btl_tcp_module.super.btl_max_send_size = 128*1024;
     mca_btl_tcp_module.super.btl_rdma_pipeline_send_length = 128*1024;
     mca_btl_tcp_module.super.btl_rdma_pipeline_frag_size = INT_MAX;

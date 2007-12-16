@@ -120,7 +120,7 @@ int mca_btl_template_component_open(void)
         mca_btl_template_param_register_int ("exclusivity", 0);
     mca_btl_template_module.super.btl_eager_limit = 
         mca_btl_template_param_register_int ("first_frag_size", 64*1024) - sizeof(mca_btl_base_header_t);
-    mca_btl_template_module.super.btl_min_send_size =
+    mca_btl_template_module.super.btl_rndv_eager_limit =
         mca_btl_template_param_register_int ("min_send_size", 64*1024) - sizeof(mca_btl_base_header_t);
     mca_btl_template_module.super.btl_max_send_size =
         mca_btl_template_param_register_int ("max_send_size", 128*1024) - sizeof(mca_btl_base_header_t);

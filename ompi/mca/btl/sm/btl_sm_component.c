@@ -160,7 +160,7 @@ int mca_btl_sm_component_open(void)
 
     mca_btl_sm.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH-1;
     mca_btl_sm.super.btl_eager_limit = 4*1024;
-    mca_btl_sm.super.btl_min_send_size = 32*1024;
+    mca_btl_sm.super.btl_rndv_eager_limit = 4*1024;
     mca_btl_sm.super.btl_max_send_size = 32*1024;
     mca_btl_sm.super.btl_rdma_pipeline_send_length = 32*1024;
     mca_btl_sm.super.btl_rdma_pipeline_frag_size = 32*1024;

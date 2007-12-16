@@ -112,7 +112,7 @@ int mca_btl_elan_component_open(void)
         mca_btl_elan_param_register_string("mpool", "elan"); 
     mca_btl_elan_module.super.btl_exclusivity = 0;
     mca_btl_elan_module.super.btl_eager_limit =  32*1024;
-    mca_btl_elan_module.super.btl_min_send_size = 32*1024;
+    mca_btl_elan_module.super.btl_rndv_eager_limit = 32*1024;
     mca_btl_elan_module.super.btl_max_send_size = 64*1024; /*64*1024;*/
     mca_btl_elan_module.super.btl_rdma_pipeline_send_length = 512 * 1024;
     mca_btl_elan_module.super.btl_rdma_pipeline_frag_size = 128 * 1024;

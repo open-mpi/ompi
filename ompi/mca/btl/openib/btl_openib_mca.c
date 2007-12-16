@@ -436,7 +436,7 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT;
     
     mca_btl_openib_module.super.btl_eager_limit = 12 * 1024;
-    mca_btl_openib_module.super.btl_min_send_size = 32 * 1024;
+    mca_btl_openib_module.super.btl_rndv_eager_limit = 12 * 1024;
     mca_btl_openib_module.super.btl_max_send_size = 64 * 1024;
     mca_btl_openib_module.super.btl_rdma_pipeline_send_length = 1024 * 1024;
     mca_btl_openib_module.super.btl_rdma_pipeline_frag_size = 1024 * 1024;    

@@ -156,7 +156,7 @@ int mca_btl_ud_component_open(void)
                              2048, &val); */
     mca_btl_ud_param_reg_int("min_send_size", "minimum send size",
                              2048, &val);
-    mca_btl_ofud_module.super.btl_min_send_size = val;
+    mca_btl_ofud_module.super.btl_rndv_eager_limit = val;
     mca_btl_ud_param_reg_int("max_send_size", "maximum send size",
                              2048, &val);
     mca_btl_ofud_module.super.btl_eager_limit = val;

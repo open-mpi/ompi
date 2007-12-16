@@ -246,7 +246,7 @@ int mca_btl_sctp_component_open(void)
     /* have lower exclusivity than tcp */
     mca_btl_sctp_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_LOW;
     mca_btl_sctp_module.super.btl_eager_limit = 64*1024;
-    mca_btl_sctp_module.super.btl_min_send_size = 64*1024;
+    mca_btl_sctp_module.super.btl_rndv_eager_limit = 64*1024;
     mca_btl_sctp_module.super.btl_max_send_size = 128*1024;
     mca_btl_sctp_module.super.btl_rdma_pipeline_send_length = 128*1024;
     mca_btl_sctp_module.super.btl_rdma_pipeline_frag_size = INT_MAX;

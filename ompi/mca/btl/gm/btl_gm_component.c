@@ -153,7 +153,7 @@ int mca_btl_gm_component_open(void)
     /* register gm module parameters */
     mca_btl_gm_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT;
     mca_btl_gm_module.super.btl_eager_limit = 32*1024;
-    mca_btl_gm_module.super.btl_min_send_size = 32*1024;
+    mca_btl_gm_module.super.btl_rndv_eager_limit = 32*1024;
     mca_btl_gm_module.super.btl_max_send_size = 64*1024;
     mca_btl_gm_module.super.btl_rdma_pipeline_send_length = 512*1024;
     mca_btl_gm_module.super.btl_rdma_pipeline_frag_size = 128*1024;
