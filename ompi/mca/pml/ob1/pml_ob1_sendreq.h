@@ -27,7 +27,6 @@
 #include "pml_ob1_rdma.h"
 #include "pml_ob1_rdmafrag.h"
 #include "ompi/datatype/convertor.h"
-#include "ompi/datatype/dt_arch.h"
 #include "ompi/mca/bml/bml.h" 
 
 BEGIN_C_DECLS

@@ -348,19 +348,7 @@ int mca_pml_ob1_send_fin( ompi_proc_t* proc,
     hdr->hdr_des.pval = hdr_des;
     hdr->hdr_fail = status;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-#ifdef WORDS_BIGENDIAN
-    hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
-#else
-    /* if we are little endian and the remote side is big endian,
-       we're responsible for making sure the data is in network byte
-       order */
-    if (proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
-        hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
-        MCA_PML_OB1_FIN_HDR_HTON(*hdr);
-    }
-#endif
-#endif
+    ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_FIN, proc);
 
     /* queue request */
     rc = mca_bml_base_send(
