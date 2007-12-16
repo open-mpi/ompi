@@ -69,6 +69,8 @@ static inline int reg_string(const char* param_name, const char* param_desc,
                               default_value, &value);
 
     if (0 != (flags & REGSTR_EMPTY_OK) && 0 == strlen(value)) {
+        opal_output(0, "Bad parameter value for parameter \"%s\"\n",
+                param_name);
         return OMPI_ERR_BAD_PARAM;
     }
     *out_value = value;
@@ -94,6 +96,8 @@ static inline int reg_int(const char* param_name, const char* param_desc,
     if ((0 != (flags & REGINT_GE_ZERO) && value < 0) ||
         (0 != (flags & REGINT_GE_ONE) && value < 1) ||
         (0 != (flags & REGINT_NONZERO) && 0 == value)) {
+        opal_output(0, "Bad parameter value for parameter \"%s\"\n",
+                param_name);
         return OMPI_ERR_BAD_PARAM;
     }
     *out_value = value;
@@ -110,9 +114,10 @@ int btl_openib_register_mca_params(void)
     int ival, ival2, ret, tmp;
 
     ret = OMPI_SUCCESS;
-#define CHECK(expr) \
+#define CHECK(expr) do {\
         tmp = (expr); \
-        if (OMPI_SUCCESS != tmp) ret = tmp;
+        if (OMPI_SUCCESS != tmp) ret = tmp; \
+     } while (0)
 
     /* register IB component parameters */
     CHECK(reg_int("verbose", 
@@ -445,19 +450,14 @@ int btl_openib_register_mca_params(void)
         MCA_BTL_FLAGS_NEED_ACK | MCA_BTL_FLAGS_NEED_CSUM | MCA_BTL_FLAGS_HETEROGENEOUS_RDMA;
     mca_btl_openib_module.super.btl_bandwidth = 800;
     mca_btl_openib_module.super.btl_latency = 10;
-    ret = mca_btl_base_param_register(
+    CHECK(mca_btl_base_param_register(
             &mca_btl_openib_component.super.btl_version,
-            &mca_btl_openib_module.super);
-    if (OMPI_SUCCESS != ret) {
-        return ret;
-    }
+            &mca_btl_openib_module.super));
 
     /* setup all the qp stuff */
-    if (OMPI_SUCCESS != (ret = mca_btl_openib_mca_setup_qps())) {
-        return ret;
-    }
+    CHECK(mca_btl_openib_mca_setup_qps());
 
-     CHECK(reg_string("if_include",
+    CHECK(reg_string("if_include",
                      "Comma-delimited list of HCAs/ports to be used (e.g. \"mthca0,mthca1:2\"; empty value means to use all ports found).  Mutually exclusive with btl_openib_if_exclude.",
                      NULL, &mca_btl_openib_component.if_include,
                      0));    
