@@ -77,8 +77,7 @@ static int post_send(mca_btl_openib_endpoint_t *ep,
         MCA_BTL_OPENIB_RDMA_FRAG_SET_SIZE(ftr, sg->length);
         MCA_BTL_OPENIB_RDMA_MAKE_LOCAL(ftr);
 #if OMPI_ENABLE_DEBUG
-        ((mca_btl_openib_footer_t*)(((char*)seg->seg_addr.pval) +
-            seg->seg_len))->seq = ep->eager_rdma_remote.seq++;
+        ftr->seq = ep->eager_rdma_remote.seq++;
 #endif
         if(ep->nbo)
             BTL_OPENIB_FOOTER_HTON(*ftr);
