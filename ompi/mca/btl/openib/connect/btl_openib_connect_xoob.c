@@ -265,8 +265,9 @@ static int xoob_qp_create(mca_btl_base_endpoint_t* endpoint, xoob_qp_type type)
         BTL_ERROR(("error creating qp errno says %s", strerror(errno))); 
         return OMPI_ERROR; 
     }
-    openib_btl->ib_inline_max = qp_init_attr.cap.max_inline_data; 
-
+    if (SEND == type) {
+        openib_btl->ib_inline_max = qp_init_attr.cap.max_inline_data; 
+    }
     attr.qp_state = IBV_QPS_INIT; 
     attr.pkey_index = openib_btl->pkey_index;
     attr.port_num = openib_btl->port_num; 
