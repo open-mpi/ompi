@@ -194,96 +194,42 @@ recv_request_pml_complete_check(mca_pml_ob1_recv_request_t *recvreq)
     return false;
 }
 
-/**
- * Attempt to match the request against the unexpected fragment list
- * for all source ranks w/in the communicator.
- *
- * @param request (IN)   Request to match.
- */
-void mca_pml_ob1_recv_request_match_wild(mca_pml_ob1_recv_request_t* request);
+extern void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req);
+#define MCA_PML_OB1_RECV_REQUEST_START(r) mca_pml_ob1_recv_req_start(r)
 
-/**
- * Attempt to match the request against the unexpected fragment list
- * for a specific source rank.
- *
- * @param request (IN)   Request to match.
- */
-void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request);
+static inline void prepare_recv_req_converter(mca_pml_ob1_recv_request_t *req)
+{
+    ompi_convertor_copy_and_prepare_for_recv(
+            req->req_recv.req_base.req_proc->proc_convertor,
+            req->req_recv.req_base.req_datatype,
+            req->req_recv.req_base.req_count,
+            req->req_recv.req_base.req_addr,
+            0,
+            &req->req_recv.req_base.req_convertor);
+    ompi_convertor_get_unpacked_size(&req->req_recv.req_base.req_convertor,
+            &req->req_bytes_delivered);
+ }
 
-/**
- *  Initialize diagnostic code for tracing rdma protocol timing
- */
+#define MCA_PML_OB1_RECV_REQUEST_MATCHED(request, hdr) \
+    recv_req_matched(request, hdr)
 
-/**
- * Start an initialized request.
- *
- * @param request  Receive request.
- * @return         OMPI_SUCESS or error status on failure.
- */
-#define MCA_PML_OB1_RECV_REQUEST_START(request)                                   \
-do {                                                                              \
-    /* init/re-init the request */                                                \
-    (request)->req_lock = 0;                                                      \
-    (request)->req_pipeline_depth  = 0;                                           \
-    (request)->req_bytes_received  = 0;                                           \
-    (request)->req_bytes_delivered = 0;                                           \
-    /* What about req_rdma_cnt ? */                                               \
-    (request)->req_rdma_idx = 0;                                                  \
-    (request)->req_pending = false;                                               \
-    (request)->req_ack_sent = false;                                              \
-    (request)->req_match_received = false;                                         \
-                                                                                  \
-    MCA_PML_BASE_RECV_START( &(request)->req_recv.req_base );                     \
-                                                                                  \
-    /* attempt to match posted recv */                                            \
-    if((request)->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {                \
-        mca_pml_ob1_recv_request_match_wild(request);                             \
-    } else {                                                                      \
-        (request)->req_recv.req_base.req_proc =                                   \
-            (request)->req_recv.req_base.req_comm->c_pml_comm->procs              \
-                [(request)->req_recv.req_base.req_peer].ompi_proc;                \
-        if( (0 != (request)->req_recv.req_base.req_datatype->size) &&             \
-            (0 != (request)->req_recv.req_base.req_count) ) {                     \
-            ompi_convertor_copy_and_prepare_for_recv(                             \
-                (request)->req_recv.req_base.req_proc->proc_convertor,            \
-                (request)->req_recv.req_base.req_datatype,                        \
-                (request)->req_recv.req_base.req_count,                           \
-                (request)->req_recv.req_base.req_addr,                            \
-                0,                                                                \
-                &(request)->req_recv.req_base.req_convertor );                    \
-            ompi_convertor_get_unpacked_size( &(request)->req_recv.req_base.req_convertor, \
-                                              &(request)->req_bytes_delivered );  \
-        }                                                                         \
-        mca_pml_ob1_recv_request_match_specific(request);                         \
-    }                                                                             \
-} while (0)
+static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
+        mca_pml_ob1_match_hdr_t *hdr)
+{
+    req->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_src;
+    req->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_tag;
+    req->req_match_received = true;
+    opal_atomic_wmb();
 
-
-/**
- *
- */
-
-#define MCA_PML_OB1_RECV_REQUEST_MATCHED( request, hdr )                           \
-do {                                                                               \
-    (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = (hdr)->hdr_src;  \
-    (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;     \
-                                                                                   \
-    if((request)->req_recv.req_bytes_packed > 0) {                                 \
-        if( MPI_ANY_SOURCE == (request)->req_recv.req_base.req_peer ) {            \
-            ompi_convertor_copy_and_prepare_for_recv(                              \
-                         (request)->req_recv.req_base.req_proc->proc_convertor,    \
-                         (request)->req_recv.req_base.req_datatype,                \
-                         (request)->req_recv.req_base.req_count,                   \
-                         (request)->req_recv.req_base.req_addr,                    \
-                         0,                                                        \
-                         &(request)->req_recv.req_base.req_convertor );            \
-            ompi_convertor_get_unpacked_size( &(request)->req_recv.req_base.req_convertor,  \
-                                              &(request)->req_bytes_delivered );   \
-        }                                                                          \
-        PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_XFER_BEGIN,                       \
-                                 &((request)->req_recv.req_base), PERUSE_RECV);    \
-    }                                                                              \
-} while (0)
+    if(req->req_recv.req_bytes_packed > 0) {
+        if(MPI_ANY_SOURCE == req->req_recv.req_base.req_peer) {
+            /* non wildcard prepared during post recv */
+            prepare_recv_req_converter(req);
+        }
+        PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_XFER_BEGIN,
+                &req->req_recv.req_base, PERUSE_RECV);
+    }
+}
 
 
 /**

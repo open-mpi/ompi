@@ -31,9 +31,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/datatype/dt_arch.h"
 
-static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
-    mca_pml_ob1_recv_request_t* request, mca_pml_ob1_comm_proc_t* proc);
-
 void mca_pml_ob1_recv_request_process_pending(void)
 {
     mca_pml_ob1_recv_request_t* recvreq;
@@ -467,8 +464,6 @@ void mca_pml_ob1_recv_request_progress( mca_pml_ob1_recv_request_t* recvreq,
                                              data_offset,
                                              bytes_received,
                                              bytes_delivered);
-            recvreq->req_match_received = true;
-            opal_atomic_wmb();
             break;
 
         case MCA_PML_OB1_HDR_TYPE_RNDV:
@@ -493,8 +488,6 @@ void mca_pml_ob1_recv_request_progress( mca_pml_ob1_recv_request_t* recvreq,
                                                  bytes_received,
                                                  bytes_delivered );
             }
-            recvreq->req_match_received = true;
-            opal_atomic_wmb();
             break;
 
         case MCA_PML_OB1_HDR_TYPE_RGET:
@@ -502,7 +495,6 @@ void mca_pml_ob1_recv_request_progress( mca_pml_ob1_recv_request_t* recvreq,
             recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
             MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq,&hdr->hdr_match);
             mca_pml_ob1_recv_request_rget(recvreq, btl, &hdr->hdr_rget);
-            recvreq->req_match_received = true;
             return;
 
         case MCA_PML_OB1_HDR_TYPE_FRAG:
@@ -720,71 +712,72 @@ int mca_pml_ob1_recv_request_schedule_once(
     return OMPI_SUCCESS;
 }
 
-/*
- * This routine is used to match a posted receive when the source process 
- * is specified.
-*/
+#define IS_PROB_REQ(R) \
+    ((MCA_PML_REQUEST_IPROBE == (R)->req_recv.req_base.req_type) || \
+     (MCA_PML_REQUEST_PROBE == (R)->req_recv.req_base.req_type))
 
-void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request)
+inline void append_recv_req_to_queue(opal_list_t*, mca_pml_ob1_recv_request_t*);
+mca_pml_ob1_recv_frag_t *recv_req_match_specific_proc(
+        const mca_pml_ob1_recv_request_t*, mca_pml_ob1_comm_proc_t*);
+
+inline void append_recv_req_to_queue(opal_list_t *queue,
+        mca_pml_ob1_recv_request_t *req)
 {
-    mca_pml_ob1_comm_t* comm = request->req_recv.req_base.req_comm->c_pml_comm;
-    mca_pml_ob1_comm_proc_t* proc = comm->procs + request->req_recv.req_base.req_peer;
-    mca_pml_ob1_recv_frag_t* frag;
-   
-    /* check for a specific match */
-    OPAL_THREAD_LOCK(&comm->matching_lock);
+    if(OPAL_UNLIKELY(req->req_recv.req_base.req_type == MCA_PML_REQUEST_IPROBE))
+        return;
+
+    opal_list_append(queue, (opal_list_item_t*)req);
+
     /**
-     * The laps of time between the ACTIVATE event and the SEARCH_UNEX one include
-     * the cost of the request lock.
+     * We don't want to generate this kind of event for MPI_Probe. Hopefully,
+     * the compiler will optimize out the empty if loop in the case where PERUSE
+     * support is not required by the user.
      */
-    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_SEARCH_UNEX_Q_BEGIN,
-                             &(request->req_recv.req_base), PERUSE_RECV );
-
-    /* assign sequence number */
-    request->req_recv.req_base.req_sequence = comm->recv_sequence++;
-
-    if (opal_list_get_size(&proc->unexpected_frags) > 0 &&
-        (frag = mca_pml_ob1_recv_request_match_specific_proc(request, proc)) != NULL) {
-        OPAL_THREAD_UNLOCK(&comm->matching_lock);
-
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_SEARCH_UNEX_Q_END,
-                                 &(request->req_recv.req_base), PERUSE_RECV );
-
-        if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
-              (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
-            mca_pml_ob1_recv_request_progress(request,frag->btl,frag->segments,frag->num_segments);
-            MCA_PML_OB1_RECV_FRAG_RETURN(frag);
-        } else {
-            mca_pml_ob1_recv_request_matched_probe(request,frag->btl,frag->segments,frag->num_segments);
-        }
-        return; /* match found */
+    if(req->req_recv.req_base.req_type != MCA_PML_REQUEST_PROBE) {
+        PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_INSERT_IN_POSTED_Q,
+                                 &(req->req_recv.req_base), PERUSE_RECV);
     }
-
-    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_SEARCH_UNEX_Q_END,
-                             &(request->req_recv.req_base), PERUSE_RECV );
-
-    /* We didn't find any matches.  Record this irecv so we can match 
-     * it when the message comes in.
-     */
-    if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE) { 
-        opal_list_append(&proc->specific_receives, (opal_list_item_t*)request);
-        if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_PROBE) {
-            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_INSERT_IN_POSTED_Q,
-                                     &(request->req_recv.req_base), PERUSE_RECV );
-        }
-    }
-    OPAL_THREAD_UNLOCK(&comm->matching_lock);
 }
 
+/*
+ *  this routine tries to match a posted receive.  If a match is found,
+ *  it places the request in the appropriate matched receive list. This
+ *  function has to be called with the communicator matching lock held.
+*/
+mca_pml_ob1_recv_frag_t *recv_req_match_specific_proc(
+        const mca_pml_ob1_recv_request_t *req,
+        mca_pml_ob1_comm_proc_t *proc)
+{
+    opal_list_t* unexpected_frags = &proc->unexpected_frags;
+    opal_list_item_t *i;
+    mca_pml_ob1_recv_frag_t* frag;
+    int tag = req->req_recv.req_base.req_tag;
+
+    if(opal_list_get_size(unexpected_frags) == 0)
+        return NULL;
+
+    for (i =  opal_list_get_first(unexpected_frags);
+         i != opal_list_get_end(unexpected_frags);
+         i =  opal_list_get_next(i)) {
+        frag = (mca_pml_ob1_recv_frag_t*)i;
+
+        if(frag->hdr.hdr_match.hdr_tag == tag ||
+                (OMPI_ANY_TAG == tag && frag->hdr.hdr_match.hdr_tag >= 0))
+            return frag;
+    }
+
+    return NULL;
+}
 
 /*
  * this routine is used to try and match a wild posted receive - where
  * wild is determined by the value assigned to the source process
 */
 
-void mca_pml_ob1_recv_request_match_wild(mca_pml_ob1_recv_request_t* request)
+static mca_pml_ob1_recv_frag_t *recv_req_match_wild(
+        mca_pml_ob1_recv_request_t* req, mca_pml_ob1_comm_proc_t **p)
 {
-    mca_pml_ob1_comm_t* comm = request->req_recv.req_base.req_comm->c_pml_comm;
+    mca_pml_ob1_comm_t* comm = req->req_recv.req_base.req_comm->c_pml_comm;
     mca_pml_ob1_comm_proc_t* proc = comm->procs;
     size_t proc_count = comm->num_procs;
     size_t i;
@@ -795,123 +788,101 @@ void mca_pml_ob1_recv_request_match_wild(mca_pml_ob1_recv_request_t* request)
      * process, then an inner loop over the messages from the
      * process.
     */
+    for (i = 0; i < proc_count; i++) {
+        mca_pml_ob1_recv_frag_t* frag;
+
+        /* loop over messages from the current proc */
+        if((frag = recv_req_match_specific_proc(req, &proc[i]))) {
+            *p = &proc[i];
+            return frag; /* match found */
+        }
+    }
+
+    *p = NULL;
+    return NULL;
+}
+
+
+void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
+{
+    mca_pml_ob1_comm_t* comm = req->req_recv.req_base.req_comm->c_pml_comm;
+    mca_pml_ob1_comm_proc_t* proc;
+    mca_pml_ob1_recv_frag_t* frag;
+    opal_list_t *queue;
+
+    /* init/re-init the request */
+    req->req_lock = 0;
+    req->req_pipeline_depth  = 0;
+    req->req_bytes_received  = 0;
+    req->req_bytes_delivered = 0;
+    /* What about req_rdma_cnt ? */
+    req->req_rdma_idx = 0;
+    req->req_pending = false;
+    req->req_ack_sent = false;
+    req->req_match_received = false;
+
+    MCA_PML_BASE_RECV_START(&req->req_recv.req_base);
+
     OPAL_THREAD_LOCK(&comm->matching_lock);
     /**
      * The laps of time between the ACTIVATE event and the SEARCH_UNEX one include
      * the cost of the request lock.
      */
-    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_SEARCH_UNEX_Q_BEGIN,
-                             &(request->req_recv.req_base), PERUSE_RECV );
+    PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_BEGIN,
+                             &(req->req_recv.req_base), PERUSE_RECV);
 
     /* assign sequence number */
-    request->req_recv.req_base.req_sequence = comm->recv_sequence++;
+    req->req_recv.req_base.req_sequence = comm->recv_sequence++;
 
-    for (i = 0; i < proc_count; i++) {
-        mca_pml_ob1_recv_frag_t* frag;
 
-        /* continue if no frags to match */
-        if (opal_list_get_size(&proc->unexpected_frags) == 0) {
-            proc++;
-            continue;
+    /* attempt to match posted recv */
+    if(req->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {
+        frag = recv_req_match_wild(req, &proc);
+        queue = &comm->wild_receives;
+        if(proc)
+            req->req_recv.req_base.req_proc = proc->ompi_proc;
+    } else {
+        proc = &comm->procs[req->req_recv.req_base.req_peer];
+        req->req_recv.req_base.req_proc = proc->ompi_proc;
+        frag = recv_req_match_specific_proc(req, proc);
+        queue = &proc->specific_receives;
+        /* wild cardrecv will be prepared on match */ 
+        if((0 != req->req_recv.req_base.req_datatype->size) &&
+                (0 != req->req_recv.req_base.req_count)) {
+            prepare_recv_req_converter(req);
         }
+    }
 
-        /* loop over messages from the current proc */
-        if ((frag = mca_pml_ob1_recv_request_match_specific_proc(request, proc)) != NULL) {
+    if(OPAL_UNLIKELY(NULL == frag)) {
+        PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
+                &(req->req_recv.req_base), PERUSE_RECV);
+        /* We didn't find any matches.  Record this irecv so we can match
+           it when the message comes in. */
+        append_recv_req_to_queue(queue, req);
+        OPAL_THREAD_UNLOCK(&comm->matching_lock);
+    } else {
+        if(OPAL_LIKELY(!IS_PROB_REQ(req))) {
+            PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_MATCH_UNEX,
+                    &(req->req_recv.req_base), PERUSE_RECV);
+
+            PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q,
+                    req->req_recv.req_base.req_comm, hdr->hdr_src, hdr->hdr_tag,
+                    PERUSE_RECV);
+
+            PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
+                    &(req->req_recv.req_base), PERUSE_RECV);
+
+            opal_list_remove_item(&proc->unexpected_frags,
+                    (opal_list_item_t*)frag);
             OPAL_THREAD_UNLOCK(&comm->matching_lock);
 
-            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_SEARCH_UNEX_Q_END,
-                                     &(request->req_recv.req_base), PERUSE_RECV );
-
-            if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
-                  (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
-                mca_pml_ob1_recv_request_progress(request,frag->btl,frag->segments,frag->num_segments);
-                MCA_PML_OB1_RECV_FRAG_RETURN(frag);
-            } else {
-                mca_pml_ob1_recv_request_matched_probe(request,frag->btl,frag->segments,frag->num_segments);
-            }
-            return; /* match found */
-        }
-        proc++;
-    } 
-
-    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_SEARCH_UNEX_Q_END,
-                             &(request->req_recv.req_base), PERUSE_RECV );
-
-    /* We didn't find any matches.  Record this irecv so we can match to
-     * it when the message comes in.
-    */
- 
-    if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE) {
-        opal_list_append(&comm->wild_receives, (opal_list_item_t*)request);
-        /**
-         * We don't want to generate this kind of event for MPI_Probe. Hopefully,
-         * the compiler will optimize out the empty if loop in the case where PERUSE
-         * support is not required by the user.
-         */
-        if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_PROBE) {
-            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_INSERT_IN_POSTED_Q,
-                                     &(request->req_recv.req_base), PERUSE_RECV );
+            mca_pml_ob1_recv_request_progress(req, frag->btl, frag->segments,
+                    frag->num_segments);
+            MCA_PML_OB1_RECV_FRAG_RETURN(frag);
+        } else {
+            OPAL_THREAD_UNLOCK(&comm->matching_lock);
+            mca_pml_ob1_recv_request_matched_probe(req, frag->btl,
+                    frag->segments, frag->num_segments);
         }
     }
-    OPAL_THREAD_UNLOCK(&comm->matching_lock);
 }
-
-
-/*
- *  this routine tries to match a posted receive.  If a match is found,
- *  it places the request in the appropriate matched receive list. This
- *  function has to be called with the communicator matching lock held.
-*/
-
-static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
-    mca_pml_ob1_recv_request_t* request, 
-    mca_pml_ob1_comm_proc_t* proc)
-{
-    opal_list_t* unexpected_frags = &proc->unexpected_frags;
-    mca_pml_ob1_recv_frag_t* frag;
-    mca_pml_ob1_match_hdr_t* hdr;
-    int tag = request->req_recv.req_base.req_tag;
-
-    if( OMPI_ANY_TAG == tag ) {
-        for (frag =  (mca_pml_ob1_recv_frag_t*)opal_list_get_first(unexpected_frags);
-             frag != (mca_pml_ob1_recv_frag_t*)opal_list_get_end(unexpected_frags);
-             frag =  (mca_pml_ob1_recv_frag_t*)opal_list_get_next(frag)) {
-            hdr = &(frag->hdr.hdr_match);
-            
-            /* check first frag - we assume that process matching has been done already */
-            if( hdr->hdr_tag >= 0 ) {
-                goto find_fragment;
-            } 
-        }
-    } else {
-        for (frag =  (mca_pml_ob1_recv_frag_t*)opal_list_get_first(unexpected_frags);
-             frag != (mca_pml_ob1_recv_frag_t*)opal_list_get_end(unexpected_frags);
-             frag =  (mca_pml_ob1_recv_frag_t*)opal_list_get_next(frag)) {
-            hdr = &(frag->hdr.hdr_match);
-            
-            /* check first frag - we assume that process matching has been done already */
-            if ( tag == hdr->hdr_tag ) {
-                /* we assume that the tag is correct from MPI point of view (ie. >= 0 ) */
-                goto find_fragment;
-            } 
-        }
-    }
-    return NULL;
- find_fragment:
-    request->req_recv.req_base.req_proc = proc->ompi_proc;
-    if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
-          (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
-
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_MATCH_UNEX,
-                                &(request->req_recv.req_base), PERUSE_RECV );
-
-        PERUSE_TRACE_MSG_EVENT( PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q,
-                                request->req_recv.req_base.req_comm,
-                                hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV );
-        opal_list_remove_item(unexpected_frags, (opal_list_item_t*)frag);
-        frag->request = request;
-    }
-
-    return frag;
-}
-
