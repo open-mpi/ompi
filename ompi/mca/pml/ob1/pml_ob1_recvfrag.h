@@ -40,7 +40,6 @@ typedef struct mca_pml_ob1_buffer_t mca_pml_ob1_buffer_t;
 struct mca_pml_ob1_recv_frag_t {
     ompi_free_list_item_t super;
     mca_pml_ob1_hdr_t hdr;
-    struct mca_pml_ob1_recv_request_t* request;
     size_t num_segments;
     mca_btl_base_module_t* btl;
     mca_btl_base_segment_t segments[MCA_BTL_DES_MAX_SEGMENTS];
