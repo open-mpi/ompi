@@ -142,7 +142,7 @@ int mca_btl_mx_component_open(void)
 			       "Myrinet card to avoid (last 6 digits from the mapper MAC)",
 			       false, false, NULL, &mca_btl_mx_component.mx_if_exclude );
 
-    mca_btl_mx_module.super.btl_exclusivity = 50;
+    mca_btl_mx_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT;
     mca_btl_mx_module.super.btl_eager_limit = 4096;
     mca_btl_mx_module.super.btl_rndv_eager_limit = 4096;
     mca_btl_mx_module.super.btl_max_send_size = 64*1024;
