@@ -111,12 +111,19 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 
 /**********************************************************************
  *
- * Zero these macros in the architecture-specific atomic.h files if we
- * need to define their corresponding functions as non-inline (e.g.,
- * in an opal/asm/base/<arch>.asm file). These macros allow us to make
- * the signatures of the prototype and definition identical.
+ * Set or unset these macros in the architecture-specific atomic.h
+ * files if we need to specify them as inline or non-inline 
  * 
  *********************************************************************/
+#if !OMPI_GCC_INLINE_ASSEMBLY
+#define OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER 0
+#define OPAL_HAVE_INLINE_ATOMIC_CMPSET_32 0
+#define OPAL_HAVE_INLINE_ATOMIC_CMPSET_64 0
+#define OPAL_HAVE_INLINE_ATOMIC_ADD_32 0
+#define OPAL_HAVE_INLINE_ATOMIC_SUB_32 0
+#define OPAL_HAVE_INLINE_ATOMIC_ADD_64 0
+#define OPAL_HAVE_INLINE_ATOMIC_SUB_64 0
+#else
 #define OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER 1
 #define OPAL_HAVE_INLINE_ATOMIC_CMPSET_32 1
 #define OPAL_HAVE_INLINE_ATOMIC_CMPSET_64 1
@@ -124,6 +131,7 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #define OPAL_HAVE_INLINE_ATOMIC_SUB_32 1
 #define OPAL_HAVE_INLINE_ATOMIC_ADD_64 1
 #define OPAL_HAVE_INLINE_ATOMIC_SUB_64 1
+#endif
 
 /**********************************************************************
  *
@@ -374,12 +382,22 @@ int opal_atomic_cmpset_rel_64(volatile int64_t *addr, int64_t oldval,
 
 #if defined(DOXYGEN) ||  OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_CMPSET_32
 
-#if OPAL_HAVE_INLINE_ATOMIC_ADD_32
+/* OPAL_HAVE_INLINE_ATOMIC_*_32 will be 1 if <arch>/atomic.h provides
+   a static inline version of it (in assembly).  If it's 0 but
+   OPAL_HAVE_ATOMIC_CMPSET_32 is 1, then atomic_impl.h (below) will
+   define a static inline version of it (in C, using
+   atomic_cmpset_32()).  */
+#if OPAL_HAVE_INLINE_ATOMIC_ADD_32 || OPAL_HAVE_ATOMIC_CMPSET_32
 static inline
 #endif
 int32_t opal_atomic_add_32(volatile int32_t *addr, int delta);
 
-#if OPAL_HAVE_INLINE_ATOMIC_SUB_32
+/* OPAL_HAVE_INLINE_ATOMIC_*_32 will be 1 if <arch>/atomic.h provides
+   a static inline version of it (in assembly).  If it's 0 but
+   OPAL_HAVE_ATOMIC_CMPSET_32 is 1, then atomic_impl.h (below) will
+   define a static inline version of it (in C, using
+   atomic_cmpset_32()).  */
+#if OPAL_HAVE_INLINE_ATOMIC_SUB_32 || OPAL_HAVE_ATOMIC_CMPSET_32
 static inline
 #endif
 int32_t opal_atomic_sub_32(volatile int32_t *addr, int delta);
@@ -399,12 +417,22 @@ int32_t opal_atomic_sub_32(volatile int32_t *addr, int delta);
 
 #if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_MATH_64 || OPAL_HAVE_ATOMIC_CMPSET_64
 
-#if OPAL_HAVE_INLINE_ATOMIC_ADD_64
+/* OPAL_HAVE_INLINE_ATOMIC_*_64 will be 1 if <arch>/atomic.h provides
+   a static inline version of it (in assembly).  If it's 0 but
+   OPAL_HAVE_ATOMIC_CMPSET_64 is 1, then atomic_impl.h (below) will
+   define a static inline version of it (in C, using
+   atomic_cmpset_64()).  */
+#if OPAL_HAVE_INLINE_ATOMIC_ADD_64 || OPAL_HAVE_ATOMIC_CMPSET_64
 static inline
 #endif
 int64_t opal_atomic_add_64(volatile int64_t *addr, int64_t delta);
 
-#if OPAL_HAVE_INLINE_ATOMIC_SUB_64
+/* OPAL_HAVE_INLINE_ATOMIC_*_64 will be 1 if <arch>/atomic.h provides
+   a static inline version of it (in assembly).  If it's 0 but
+   OPAL_HAVE_ATOMIC_CMPSET_64 is 1, then atomic_impl.h (below) will
+   define a static inline version of it (in C, using
+   atomic_cmpset_64()).  */
+#if OPAL_HAVE_INLINE_ATOMIC_SUB_64 || OPAL_HAVE_ATOMIC_CMPSET_64
 static inline
 #endif
 int64_t opal_atomic_sub_64(volatile int64_t *addr, int64_t delta);
