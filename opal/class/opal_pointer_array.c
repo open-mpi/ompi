@@ -188,7 +188,7 @@ int opal_pointer_array_set_item(opal_pointer_array_t *table, int index,
             int i;
             
             table->lowest_free = table->size;
-            for ( i=index; i<table->size; i++) {
+            for ( i=index + 1; i<table->size; i++) {
                 if ( NULL == table->addr[i] ){
                     table->lowest_free = i;
                     break;
