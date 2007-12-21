@@ -635,42 +635,8 @@ MPI::Comm::NULL_COPY_FN(const MPI::Comm& oldcomm, int comm_keyval,
 			       void* extra_state, void* attribute_val_in,
 			       void* attribute_val_out, bool& flag)
 {
-#if SIZEOF_BOOL != SIZEOF_INT
-  int f = (int)flag;
-  int ret;
-  if (MPI_NULL_COPY_FN != 0) {
-
-    // Portland pgCC 5.0-2 has a bug that we have to workaround here.
-    // MPI_NULL_COPY_FN is actually a #define for ((MPI_Copy_function
-    // *) 0).  If we try to invoke it, such as:
-    //   ret = MPI_NULL_COPY_FN(...);
-    // the preprocessor will resolve this to:
-    //   ret = ((MPI_Copy_function *) 0)(...);
-    // which should be fine.  But unfortunately, pgCC 5.0-2 makes this
-    // into a real symbol that will refuse to link.  The workaround is
-    // to assign this into a temp variable and then invoke through the
-    // function pointer.  This shouldn't be necessary.  :-(
-
-    MPI_Copy_function *stupid_compiler = MPI_NULL_COPY_FN;
-    ret = stupid_compiler(oldcomm, comm_keyval, extra_state, attribute_val_in,
-                          attribute_val_out, &f);
-    flag = OPAL_INT_TO_BOOL(f);
-  } else {
-    ret = MPI_SUCCESS;
-    flag = true;
-  }
-  return ret;
-#else
-  if (MPI_NULL_COPY_FN != 0) {
-
-    // See note above.
-
-    MPI_Copy_function *stupid_compiler = MPI_NULL_COPY_FN;
-    return stupid_compiler(oldcomm, comm_keyval, extra_state, 
-                           attribute_val_in, attribute_val_out, (int*)&flag);
-  } else
+    flag = false;
     return MPI_SUCCESS;
-#endif
 }
 
 inline int
@@ -695,13 +661,6 @@ inline int
 MPI::Comm::NULL_DELETE_FN(MPI::Comm& comm, int comm_keyval, void* attribute_val,
 				 void* extra_state)
 {
-  if (MPI_NULL_DELETE_FN != 0) {
-
-    // See note in MPI_NULL_COPY_FN.
-
-    MPI_Delete_function *stupid_compiler = MPI_NULL_DELETE_FN;
-    return stupid_compiler(comm, comm_keyval, attribute_val, extra_state);
-  } else
     return MPI_SUCCESS;
 }
 
