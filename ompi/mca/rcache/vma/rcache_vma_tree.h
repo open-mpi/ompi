@@ -1,9 +1,9 @@
-
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /**
   * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
   *                         University Research and Technology
   *                         Corporation.  All rights reserved.
-  * Copyright (c) 2004-2005 The University of Tennessee and The University
+  * Copyright (c) 2004-2007 The University of Tennessee and The University
   *                         of Tennessee Research Foundation.  All rights
   *                         reserved.
   * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -76,7 +76,7 @@ mca_mpool_base_registration_t* mca_rcache_vma_tree_find(
  */
 int mca_rcache_vma_tree_find_all(
         mca_rcache_vma_module_t *vma_rcache, unsigned char *base,
-        unsigned char *bound, ompi_pointer_array_t *regs);
+        unsigned char *bound, opal_pointer_array_t *regs);
 
 /* 
  * insert an item in the vma tree 

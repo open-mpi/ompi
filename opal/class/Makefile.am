@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2007 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -26,6 +26,7 @@ headers += \
         class/opal_list.h \
         class/opal_object.h \
         class/opal_atomic_lifo.h \
+        class/opal_pointer_array.h \
         class/opal_value_array.h
 
 libopen_pal_la_SOURCES += \
@@ -34,4 +35,5 @@ libopen_pal_la_SOURCES += \
         class/opal_list.c \
         class/opal_object.c \
         class/opal_atomic_lifo.c \
+        class/opal_pointer_array.c \
         class/opal_value_array.c

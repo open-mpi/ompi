@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -41,7 +42,7 @@
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/mca/pml/base/pml_base_recvreq.h"
-#include "ompi/class/ompi_pointer_array.h"
+#include "opal/class/opal_pointer_array.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/group/group.h"
 #include "ompi/datatype/datatype.h"
@@ -88,7 +89,7 @@ OMPI_DECLSPEC ompi_request_t* ompi_request_t_type_inclusion = NULL;
 OMPI_DECLSPEC mca_pml_base_request_t* mca_pml_base_request_t_type_inclusion = NULL;
 OMPI_DECLSPEC mca_pml_base_send_request_t* mca_pml_base_send_request_t_type_inclusion = NULL;
 OMPI_DECLSPEC mca_pml_base_recv_request_t* mca_pml_base_recv_request_t_type_inclusion = NULL;
-OMPI_DECLSPEC ompi_pointer_array_t* ompi_pointer_array_t_type_inclusion = NULL;
+OMPI_DECLSPEC opal_pointer_array_t* opal_pointer_array_t_type_inclusion = NULL;
 OMPI_DECLSPEC ompi_communicator_t* ompi_communicator_t_type_inclusion = NULL;
 OMPI_DECLSPEC ompi_group_t* ompi_group_t_type_inclusion = NULL;
 OMPI_DECLSPEC ompi_status_public_t* ompi_status_public_t_type_inclusion = NULL;

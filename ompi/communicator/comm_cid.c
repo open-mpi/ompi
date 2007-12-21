@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -27,7 +28,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 #include "ompi/constants.h"
-#include "ompi/class/ompi_pointer_array.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_list.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/base/base.h"
@@ -181,7 +182,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
             
             
             for (i=start; i < mca_pml.pml_max_contextid ; i++) {
-                flag=ompi_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
+                flag=opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
                                                           i, comm);
                 if (true == flag) {
                     nextlocal_cid = i;
@@ -195,10 +196,10 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
                 response = 1; /* fine with me */
             }
             else {
-                ompi_pointer_array_set_item(&ompi_mpi_communicators, 
+                opal_pointer_array_set_item(&ompi_mpi_communicators, 
                                             nextlocal_cid, NULL);
                 
-                flag = ompi_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
+                flag = opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
                                                             nextcid, comm );
                 if (true == flag) {
                     response = 1; /* works as well */
@@ -217,7 +218,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
             else if ( 0 == glresponse ) {
                 if ( 1 == response ) {
                     /* we could use that, but other don't agree */
-                    ompi_pointer_array_set_item(&ompi_mpi_communicators, 
+                    opal_pointer_array_set_item(&ompi_mpi_communicators, 
                                                 nextcid, NULL);
                 }
                 start = nextcid+1; /* that's where we can start the next round */
@@ -227,7 +228,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         /* set the according values to the newcomm */
         newcomm->c_contextid = nextcid;
         newcomm->c_f_to_c_index = newcomm->c_contextid;
-        ompi_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
+        opal_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
         
         /* for synchronization purposes, avoids receiving fragments for 
            a communicator id, which might not yet been known. For single-threaded
@@ -273,7 +274,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
                MPI_UNDEFINED != comm->c_id_start_index &&  
                block > comm->c_id_available - comm->c_id_start_index) {
                 nextcid = comm->c_id_available;
-                flag=ompi_pointer_array_test_and_set_item (&ompi_mpi_communicators,
+                flag=opal_pointer_array_test_and_set_item (&ompi_mpi_communicators,
                                                            nextcid, comm);
             }
             /**
@@ -295,7 +296,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
     /* set the according values to the newcomm */
     newcomm->c_contextid = nextcid;
     newcomm->c_f_to_c_index = newcomm->c_contextid;
-    ompi_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
+    opal_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
 
     return (MPI_SUCCESS);
 

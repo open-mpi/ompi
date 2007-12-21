@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -63,7 +64,7 @@ struct mca_pml_comm_t {
 #endif
     opal_mutex_t matching_lock;   /**< matching lock */
     opal_list_t wild_receives;    /**< queue of unmatched wild (source process not specified) receives */
-    ompi_pointer_array_t sparse_procs;   /**< sparse array, allows lookup of comm_proc using a global rank */  
+    opal_pointer_array_t sparse_procs;   /**< sparse array, allows lookup of comm_proc using a global rank */  
     mca_pml_dr_comm_proc_t* procs;
     size_t num_procs;
 };

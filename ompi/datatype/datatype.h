@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -42,12 +42,12 @@
 #include "ompi/constants.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_hash_table.h"
-#include "ompi/class/ompi_pointer_array.h"
+#include "opal/class/opal_pointer_array.h"
 #include "mpi.h"
 
 BEGIN_C_DECLS
 
-extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
+extern struct opal_pointer_array_t ompi_datatype_f_to_c_table;
 
 /* if there are more basic datatypes than the number of bytes in the int type
  * the bdt_used field of the data description struct should be changed to long.

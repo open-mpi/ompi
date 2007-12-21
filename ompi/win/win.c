@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -33,7 +34,7 @@
  * Table for Fortran <-> C communicator handle conversion.  Note that
  * these are not necessarily global.
  */
-ompi_pointer_array_t ompi_mpi_windows; 
+opal_pointer_array_t ompi_mpi_windows; 
 
 ompi_win_t ompi_mpi_win_null;
 
@@ -47,7 +48,11 @@ int
 ompi_win_init(void)
 {
     /* setup window Fortran array */
-    OBJ_CONSTRUCT(&ompi_mpi_windows, ompi_pointer_array_t);
+    OBJ_CONSTRUCT(&ompi_mpi_windows, opal_pointer_array_t);
+    if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_mpi_windows, 0,
+                                                OMPI_FORTRAN_HANDLE_MAX, 64) ) {
+        return OMPI_ERROR;
+    }
 
     /* Setup MPI_WIN_NULL */
     OBJ_CONSTRUCT(&ompi_mpi_win_null, ompi_win_t);
@@ -55,7 +60,7 @@ ompi_win_init(void)
     ompi_mpi_win_null.w_group = &ompi_mpi_group_null;
     OBJ_RETAIN(&ompi_mpi_group_null);
     ompi_win_set_name(&ompi_mpi_win_null, "MPI_WIN_NULL");
-    ompi_pointer_array_set_item(&ompi_mpi_windows, 0, &ompi_mpi_win_null);
+    opal_pointer_array_set_item(&ompi_mpi_windows, 0, &ompi_mpi_win_null);
 
     return OMPI_SUCCESS;
 }
@@ -126,7 +131,7 @@ ompi_win_create(void *base, size_t size,
     }
 
     /* fill in Fortran index */
-    win->w_f_to_c_index = ompi_pointer_array_add(&ompi_mpi_windows, win);
+    win->w_f_to_c_index = opal_pointer_array_add(&ompi_mpi_windows, win);
     if (-1 == win->w_f_to_c_index) {
         ompi_win_free(win);
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -144,7 +149,7 @@ ompi_win_free(ompi_win_t *win)
     int ret = win->w_osc_module->osc_free(win);
 
     if (-1 != win->w_f_to_c_index) {
-        ompi_pointer_array_set_item(&ompi_mpi_windows,
+        opal_pointer_array_set_item(&ompi_mpi_windows,
                                     win->w_f_to_c_index,
                                     NULL);
     }

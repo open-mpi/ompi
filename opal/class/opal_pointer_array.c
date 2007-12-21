@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -16,42 +17,44 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
 
-#include "ompi/constants.h"
-#include "ompi/class/ompi_pointer_array.h"
+#include "opal/constants.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/util/output.h"
 
 enum { TABLE_INIT = 1, TABLE_GROW = 2 };
 
-static void ompi_pointer_array_construct(ompi_pointer_array_t *);
-static void ompi_pointer_array_destruct(ompi_pointer_array_t *);
-static bool grow_table(ompi_pointer_array_t *table, size_t soft, size_t hard);
+static void opal_pointer_array_construct(opal_pointer_array_t *);
+static void opal_pointer_array_destruct(opal_pointer_array_t *);
+static bool grow_table(opal_pointer_array_t *table, size_t soft, size_t hard);
 
-OBJ_CLASS_INSTANCE(ompi_pointer_array_t, opal_object_t,
-                   ompi_pointer_array_construct,
-                   ompi_pointer_array_destruct);
+OBJ_CLASS_INSTANCE(opal_pointer_array_t, opal_object_t,
+                   opal_pointer_array_construct,
+                   opal_pointer_array_destruct);
 
 /*
- * ompi_pointer_array constructor
+ * opal_pointer_array constructor
  */
-static void ompi_pointer_array_construct(ompi_pointer_array_t *array)
+static void opal_pointer_array_construct(opal_pointer_array_t *array)
 {
     OBJ_CONSTRUCT(&array->lock, opal_mutex_t);
     array->lowest_free = 0;
     array->number_free = 0;
     array->size = 0;
+    array->max_size = INT_MAX;
+    array->block_size = 0;
     array->addr = 0;
 }
 
 /*
- * ompi_pointer_array destructor
+ * opal_pointer_array destructor
  */
-static void ompi_pointer_array_destruct(ompi_pointer_array_t *array)
+static void opal_pointer_array_destruct(opal_pointer_array_t *array)
 {
     /* free table */
     if( NULL != array->addr) {
@@ -62,17 +65,47 @@ static void ompi_pointer_array_destruct(ompi_pointer_array_t *array)
 }
 
 /**
+ * initialize an array object
+ */
+int opal_pointer_array_init(opal_pointer_array_t* array,
+                            int initial_allocation,
+                            int max_size, int block_size)
+{
+    size_t num_bytes;
+    
+    /* check for errors */
+    if (NULL == array || max_size < block_size) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+    
+    array->max_size = max_size;
+    array->block_size = block_size;
+   
+    num_bytes = (0 < initial_allocation ? initial_allocation : block_size);
+    array->number_free = num_bytes;
+    array->size = num_bytes;
+    num_bytes *= sizeof(void*);
+
+    /* Allocate and set the array to NULL */   
+    array->addr = (void **)calloc(num_bytes, 1);
+    if (NULL == array->addr) { /* out of memory */
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    return OPAL_SUCCESS;
+}
+
+/**
  * add a pointer to dynamic pointer table
  *
- * @param table Pointer to ompi_pointer_array_t object (IN)
+ * @param table Pointer to opal_pointer_array_t object (IN)
  * @param ptr Pointer to be added to table    (IN)
  *
- * @return Array index where ptr is inserted or OMPI_ERROR if it fails
+ * @return Array index where ptr is inserted or OPAL_ERROR if it fails
  */
-int ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
+int opal_pointer_array_add(opal_pointer_array_t *table, void *ptr)
 {
-    int i;
-    int index;
+    int i, index;
 
     OPAL_THREAD_LOCK(&(table->lock));
 
@@ -82,7 +115,7 @@ int ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
                         (NULL == table->addr ? TABLE_INIT : table->size * TABLE_GROW), 
                         OMPI_FORTRAN_HANDLE_MAX)) {
             OPAL_THREAD_UNLOCK(&(table->lock));
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            return OPAL_ERR_OUT_OF_RESOURCE;
         }
     }
 
@@ -115,17 +148,17 @@ int ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
 }
 
 /**
- * free a slot in dynamic pointer table for reuse
+ * Set the value of the dynamic array at a specified location.
  *
  *
- * @param table Pointer to ompi_pointer_array_t object (IN)
+ * @param table Pointer to opal_pointer_array_t object (IN)
  * @param ptr Pointer to be added to table    (IN)
  *
  * @return Error code
  *
  * Assumption: NULL element is free element.
  */
-int ompi_pointer_array_set_item(ompi_pointer_array_t *table, int index,
+int opal_pointer_array_set_item(opal_pointer_array_t *table, int index,
                                 void * value)
 {
     assert(table != NULL);
@@ -137,66 +170,36 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, int index,
         if (!grow_table(table, ((index / TABLE_GROW) + 1) * TABLE_GROW,
                         index)) {
             OPAL_THREAD_UNLOCK(&(table->lock));
-			return OMPI_ERROR;
+            return OPAL_ERROR;
         }
     }
 
-    /* 
-     * allow a specific index to be changed.
-     */
-    
-    if ( NULL == table->addr[index] ) {
-        table->addr[index] = value;
-		/* mark element as free, if NULL element */
-		if( NULL == value ) {
-			if (index < table->lowest_free) {
-				table->lowest_free = index;
-			}
-		}
-		else {
-			table->number_free--;
-			/* Reset lowest_free if required */
-			if ( index == table->lowest_free ) {
-				int i;
+    /* mark element as free, if NULL element */
+    if( NULL == value ) {
+        if (index < table->lowest_free) {
+            table->lowest_free = index;
+        }
+        if( NULL != table->addr[index] ) {
+            table->number_free++;
+        }
+    } else {
+        /* Reset lowest_free if required */
+        if ( index == table->lowest_free ) {
+            int i;
             
-				table->lowest_free=table->size;
-				for ( i=index; i<table->size; i++) {
-					if ( NULL == table->addr[i] ){
-						table->lowest_free = i;
-						break;
-					}                    
-				}
-			}
-		}
+            table->lowest_free = table->size;
+            for ( i=index; i<table->size; i++) {
+                if ( NULL == table->addr[i] ){
+                    table->lowest_free = i;
+                    break;
+                }                    
+            }
+        }
     }
-    else {
-        table->addr[index] = value;
-		/* mark element as free, if NULL element */
-		if( NULL == value ) {
-			if (index < table->lowest_free) {
-				table->lowest_free = index;
-			}
-			table->number_free++;
-		}
-		else {
-			/* Reset lowest_free if required */
-			if ( index == table->lowest_free ) {
-				int i;
-            
-				table->lowest_free=table->size;
-				for ( i=index; i<table->size; i++) {
-					if ( NULL == table->addr[i] ){
-						table->lowest_free = i;
-						break;
-					}                    
-				}
-			}
-		}
-    }
-	
+    table->addr[index] = value;	
 
 #if 0
-    opal_output(0,"ompi_pointer_array_set_item: OUT: "
+    opal_output(0,"opal_pointer_array_set_item: OUT: "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
@@ -204,7 +207,7 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, int index,
 #endif
 
     OPAL_THREAD_UNLOCK(&(table->lock));
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 /**
@@ -221,14 +224,14 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, int index,
  * In contrary to array_set, this function does not allow to overwrite 
  * a value, unless the previous value is NULL ( equiv. to free ).
  */
-bool ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, 
+bool opal_pointer_array_test_and_set_item (opal_pointer_array_t *table, 
                                            int index, void *value)
 {
     assert(table != NULL);
     assert(index >= 0);
 
 #if 0
-    opal_output(0,"ompi_pointer_array_test_and_set_item: IN:  "
+    opal_output(0,"opal_pointer_array_test_and_set_item: IN:  "
                " table %p (size %ld, lowest free %ld, number free %ld)"
                " addr[%d] = %p\n",
                table, table->size, table->lowest_free, table->number_free,
@@ -272,7 +275,7 @@ bool ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table,
     }
 
 #if 0
-    opal_output(0,"ompi_pointer_array_test_and_set_item: OUT: "
+    opal_output(0,"opal_pointer_array_test_and_set_item: OUT: "
                " table %p (size %ld, lowest free %ld, number free %ld)"
                " addr[%d] = %p\n",
                table, table->size, table->lowest_free, table->number_free,
@@ -283,31 +286,38 @@ bool ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table,
     return true;
 }
 
+int opal_pointer_array_set_size(opal_pointer_array_t *array, int new_size)
+{
+    OPAL_THREAD_LOCK(&(array->lock));
+    if(new_size > array->size) {
+        if (!grow_table(array, new_size, new_size)) {
+            OPAL_THREAD_UNLOCK(&(array->lock));
+            return OPAL_ERROR;
+        }
+    }
+    OPAL_THREAD_UNLOCK(&(array->lock));
+    return OPAL_SUCCESS;
+}
 
-static bool grow_table(ompi_pointer_array_t *table, size_t soft, size_t hard)
+static bool grow_table(opal_pointer_array_t *table, size_t soft, size_t hard)
 {
     size_t new_size;
     int i, new_size_int;
     void *p;
 
-    /* Ensure that we have room to grow -- stay less than
-       OMPI_FORTRAN_HANDLE_MAX.  Note that OMPI_FORTRAN_HANDLE_MAX
-       is min(INT_MAX, fortran INTEGER max), so it's guaranteed to
-       fit within a [signed] int. */
-    
-    if (table->size >= OMPI_FORTRAN_HANDLE_MAX) {
+    /* new_size = ((table->size + num_needed + table->block_size - 1) /
+       table->block_size) * table->block_size; */
+    new_size = soft;
+    if( soft > table->max_size ) {
+        if( hard > table->max_size ) {
+            return false;
+        }
+        new_size = hard;
+    }
+    if( new_size >= table->max_size ) {
         return false;
     }
-    if (soft > OMPI_FORTRAN_HANDLE_MAX) {
-        if (hard > OMPI_FORTRAN_HANDLE_MAX) {
-            return false;
-        } else {
-            new_size = hard;
-        }
-    } else {
-        new_size = soft;
-    }
-    
+
     p = (void **) realloc(table->addr, new_size * sizeof(void *));
     if (p == NULL) {
         return false;

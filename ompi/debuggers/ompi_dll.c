@@ -628,16 +628,16 @@ int mqs_image_has_queues (mqs_image *image, char **message)
      * And now let's look at the communicator and group structures.
      */
     {
-        mqs_type* qh_type = mqs_find_type( image, "ompi_pointer_array_t", mqs_lang_c );
+        mqs_type* qh_type = mqs_find_type( image, "opal_pointer_array_t", mqs_lang_c );
         if( !qh_type ) {
-            missing_in_action = "ompi_pointer_array_t";
+            missing_in_action = "opal_pointer_array_t";
             goto type_missing;
         }
-        i_info->ompi_pointer_array_t.size = mqs_sizeof(qh_type);
-        i_info->ompi_pointer_array_t.offset.lowest_free = mqs_field_offset(qh_type, "lowest_free");
-        i_info->ompi_pointer_array_t.offset.number_free = mqs_field_offset(qh_type, "number_free");
-        i_info->ompi_pointer_array_t.offset.size = mqs_field_offset(qh_type, "size");
-        i_info->ompi_pointer_array_t.offset.addr = mqs_field_offset(qh_type, "addr");
+        i_info->opal_pointer_array_t.size = mqs_sizeof(qh_type);
+        i_info->opal_pointer_array_t.offset.lowest_free = mqs_field_offset(qh_type, "lowest_free");
+        i_info->opal_pointer_array_t.offset.number_free = mqs_field_offset(qh_type, "number_free");
+        i_info->opal_pointer_array_t.offset.size = mqs_field_offset(qh_type, "size");
+        i_info->opal_pointer_array_t.offset.addr = mqs_field_offset(qh_type, "addr");
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "ompi_communicator_t", mqs_lang_c );
@@ -824,10 +824,10 @@ static int communicators_changed (mqs_process *proc)
     mqs_tword_t lowest_free;         /* the lowest free communicator */
 
     lowest_free = fetch_int( proc,
-                             p_info->commlist_base + i_info->ompi_pointer_array_t.offset.lowest_free,
+                             p_info->commlist_base + i_info->opal_pointer_array_t.offset.lowest_free,
                              p_info );
     number_free = fetch_int( proc,
-                             p_info->commlist_base + i_info->ompi_pointer_array_t.offset.number_free,
+                             p_info->commlist_base + i_info->opal_pointer_array_t.offset.number_free,
                              p_info );
     if( (lowest_free != p_info->comm_lowest_free) ||
         (number_free != p_info->comm_number_free) ) {
@@ -889,20 +889,20 @@ static int rebuild_communicator_list (mqs_process *proc)
     DEBUG(VERBOSE_COMM,("rebuild_communicator_list called "
                         "(commlist_base %llx, array offset %ld array size %d)\n",
                         (long long)p_info->commlist_base,
-                        (long)i_info->ompi_pointer_array_t.offset.addr,
-                        i_info->ompi_pointer_array_t.size));
+                        (long)i_info->opal_pointer_array_t.offset.addr,
+                        i_info->opal_pointer_array_t.size));
     /**
      * Start by getting the number of registered communicators in the
      * global communicator array.
      */
     comm_size = fetch_int( proc,
-                           p_info->commlist_base + i_info->ompi_pointer_array_t.offset.size,
+                           p_info->commlist_base + i_info->opal_pointer_array_t.offset.size,
                            p_info );
     lowest_free = fetch_int( proc,
-                             p_info->commlist_base + i_info->ompi_pointer_array_t.offset.lowest_free,
+                             p_info->commlist_base + i_info->opal_pointer_array_t.offset.lowest_free,
                              p_info );
     number_free = fetch_int( proc,
-                             p_info->commlist_base + i_info->ompi_pointer_array_t.offset.number_free,
+                             p_info->commlist_base + i_info->opal_pointer_array_t.offset.number_free,
                              p_info );
     p_info->comm_lowest_free = lowest_free;
     p_info->comm_number_free = number_free;
@@ -923,7 +923,7 @@ static int rebuild_communicator_list (mqs_process *proc)
     /* Now get the pointer to the array of pointers to communicators */
     comm_addr_base =
         fetch_pointer( proc,
-                       p_info->commlist_base + i_info->ompi_pointer_array_t.offset.addr,
+                       p_info->commlist_base + i_info->opal_pointer_array_t.offset.addr,
                        p_info );
     DEBUG(VERBOSE_COMM,("Array of communicators starting at 0x%llx (sizeof(mqs_taddr_t*) = %d)\n",
                         (long long)comm_addr_base, (int)sizeof(mqs_taddr_t)));

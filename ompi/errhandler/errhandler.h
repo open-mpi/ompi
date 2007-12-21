@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -25,14 +26,13 @@
 #include "mpi.h"
 #include "opal/prefetch.h"
 #include "opal/class/opal_object.h"
-#include "ompi/class/ompi_pointer_array.h"
+#include "opal/class/opal_pointer_array.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "ompi/errhandler/errcode-internal.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
+
 /*
  * These must correspond to the fortran handle indices
  */
@@ -117,7 +117,7 @@ OMPI_DECLSPEC extern ompi_errhandler_t ompi_mpi_errors_throw_exceptions;
 /**
  * Table for Fortran <-> C errhandler handle conversion
  */
-OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
+OMPI_DECLSPEC extern opal_pointer_array_t ompi_errhandler_f_to_c_table;
 
 
 /**
@@ -329,8 +329,7 @@ static inline bool ompi_errhandler_is_intrinsic(ompi_errhandler_t *errhandler)
 
     return false;
 }
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+
+END_C_DECLS
 
 #endif /* OMPI_ERRHANDLER_H */

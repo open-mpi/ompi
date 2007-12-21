@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -30,7 +31,7 @@
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
-#include "ompi/class/ompi_pointer_array.h"
+#include "opal/class/opal_pointer_array.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/datatype/datatype.h"
 
@@ -72,7 +73,7 @@ struct mca_pml_dr_t {
     ompi_free_list_t buffers;
     
     /* endpoint pointer array */
-    ompi_pointer_array_t endpoints;
+    opal_pointer_array_t endpoints;
     
     /* my 'global' rank */ 
     int32_t my_rank;

@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2007 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -24,14 +24,12 @@ headers += \
         class/ompi_fifo.h \
         class/ompi_free_list.h \
         class/ompi_bitmap.h \
-        class/ompi_pointer_array.h \
-	class/ompi_rb_tree.h \
+	    class/ompi_rb_tree.h \
         class/ompi_seq_tracker.h
 
 libmpi_la_SOURCES += \
         class/ompi_bitmap.c \
         class/ompi_free_list.c \
-        class/ompi_pointer_array.c \
-	class/ompi_rb_tree.c \
+        class/ompi_rb_tree.c \
         class/ompi_seq_tracker.c
 

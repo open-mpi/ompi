@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -250,8 +251,12 @@ int mca_btl_openib_add_procs(
             continue;
         }
         
-        orte_pointer_array_add((orte_std_cntr_t*)&endpoint->index,
-                               openib_btl->hca->endpoints, (void*)endpoint);
+        endpoint->index = opal_pointer_array_add(openib_btl->hca->endpoints, (void*)endpoint);
+        if( 0 > endpoint->index ) {
+            OBJ_RELEASE(endpoint);
+            OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+            continue;
+        }
         ompi_bitmap_set_bit(reachable, i);
         OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
         
@@ -426,10 +431,10 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
     for (i=0 ; i < (int) nprocs ; i++) {
         mca_btl_base_endpoint_t* del_endpoint = peers[i];
         for(ep_index=0;
-            ep_index < orte_pointer_array_get_size(openib_btl->hca->endpoints);
+            ep_index < opal_pointer_array_get_size(openib_btl->hca->endpoints);
             ep_index++) {
             endpoint = 
-                orte_pointer_array_get_item(openib_btl->hca->endpoints,
+                opal_pointer_array_get_item(openib_btl->hca->endpoints,
                         ep_index);
             if(!endpoint || endpoint->endpoint_btl != openib_btl) {
                 continue;
@@ -437,7 +442,7 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
             if (endpoint == del_endpoint) {
                 BTL_VERBOSE(("in del_procs %d, setting another endpoint to null\n", 
                              ep_index));
-                orte_pointer_array_set_item(openib_btl->hca->endpoints,
+                opal_pointer_array_set_item(openib_btl->hca->endpoints,
                         ep_index, NULL);
                 assert(((opal_object_t*)endpoint)->obj_reference_count == 1);
                 OBJ_RELEASE(endpoint);
@@ -975,9 +980,9 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
 
     /* Release eager RDMAs */
     for(rdma_index=0;
-            rdma_index < orte_pointer_array_get_size(openib_btl->eager_rdma_buffers);
+            rdma_index < opal_pointer_array_get_size(openib_btl->eager_rdma_buffers);
         rdma_index++) {
-        endpoint=orte_pointer_array_get_item(openib_btl->eager_rdma_buffers,rdma_index);
+        endpoint=opal_pointer_array_get_item(openib_btl->eager_rdma_buffers,rdma_index);
         if(!endpoint) {
             continue;
         }
@@ -985,9 +990,9 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
     }
     /* Release all QPs */
     for(ep_index=0;
-            ep_index < orte_pointer_array_get_size(openib_btl->hca->endpoints);
+            ep_index < opal_pointer_array_get_size(openib_btl->hca->endpoints);
             ep_index++) {
-        endpoint=orte_pointer_array_get_item(openib_btl->hca->endpoints,
+        endpoint=opal_pointer_array_get_item(openib_btl->hca->endpoints,
                 ep_index);
         if(!endpoint) {
             BTL_VERBOSE(("In finalize, got another null endpoint\n"));

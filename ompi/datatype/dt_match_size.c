@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -37,7 +37,7 @@ ompi_ddt_match_size( int size, uint16_t datakind, uint16_t datalang )
 
     for( i = 0; i < ompi_ddt_number_of_predefined_data; i++ ) {
 
-        datatype = (ompi_datatype_t*)ompi_pointer_array_get_item(ompi_datatype_f_to_c_table, i);
+        datatype = (ompi_datatype_t*)opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, i);
 
         if( (datatype->flags & DT_FLAG_DATA_LANGUAGE) != datalang )
             continue;

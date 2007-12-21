@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -78,9 +79,9 @@ int mca_pml_base_select(bool enable_progress_threads,
 
         /* if there is an include list - item must be in the list to be included */
         found_pml = false;
-        for( i = 0; i < ompi_pointer_array_get_size(&mca_pml_base_pml); i++) { 
+        for( i = 0; i < opal_pointer_array_get_size(&mca_pml_base_pml); i++) { 
             char * tmp_val = NULL;
-            tmp_val = (char *) ompi_pointer_array_get_item(&mca_pml_base_pml, i);
+            tmp_val = (char *) opal_pointer_array_get_item(&mca_pml_base_pml, i);
             if( NULL == tmp_val) {
                 continue;
             }
@@ -92,7 +93,7 @@ int mca_pml_base_select(bool enable_progress_threads,
             }
         }
 
-        if(!found_pml && ompi_pointer_array_get_size(&mca_pml_base_pml)) { 
+        if(!found_pml && opal_pointer_array_get_size(&mca_pml_base_pml)) { 
             opal_output_verbose( 10, mca_pml_base_output,
                                      "select: component %s not in the include list",
                                      component->pmlm_version.mca_component_name );
@@ -158,9 +159,9 @@ int mca_pml_base_select(bool enable_progress_threads,
     
     if( NULL == best_component ) {
         opal_show_help("help-mca-base.txt", "find-available:none-found", true, "pml");
-        for( i = 0; i < ompi_pointer_array_get_size(&mca_pml_base_pml); i++) { 
+        for( i = 0; i < opal_pointer_array_get_size(&mca_pml_base_pml); i++) { 
             char * tmp_val = NULL;
-            tmp_val = (char *) ompi_pointer_array_get_item(&mca_pml_base_pml, i);
+            tmp_val = (char *) opal_pointer_array_get_item(&mca_pml_base_pml, i);
             if( NULL == tmp_val) {
                 continue;
             }

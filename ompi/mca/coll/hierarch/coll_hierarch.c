@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -38,7 +39,6 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 
-
 /* Local functions and data */
 #define HIER_MAXPROTOCOL 7
 static int mca_coll_hierarch_max_protocol=HIER_MAXPROTOCOL;
@@ -57,9 +57,8 @@ static void mca_coll_hierarch_dump_struct ( mca_coll_hierarch_module_t *c);
  * this module to indicate what level of thread support it provides.
  */
 int mca_coll_hierarch_init_query(bool allow_hierarch_user_threads,
-                             bool have_hidden_user_threads)
+                                 bool have_hidden_user_threads)
 {
-
     /* Don't ask. All done */
     return OMPI_SUCCESS;
 }
@@ -151,7 +150,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority )
      * walk through the list of registered protocols, and check which one
      * is feasable. 
      * Later we start with level=0, and introduce the multi-cell check 
-    */
+     */
     if ( ignore_sm ) {
 	mca_coll_hierarch_max_protocol = HIER_MAXPROTOCOL - 1;
     }
@@ -181,7 +180,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority )
 	    if ( mca_coll_hierarch_verbose_param ) {
 		printf("%s:%d: nobody talks with %s. Continuing to next level.\n",  
 		       comm->c_name, rank, hier_prot[level]);
-		}
+            }
 	    continue;
         }
         else if ( maxncount == (size-1) ) {
@@ -211,8 +210,8 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority )
         	return NULL;
             }
 
-           hierarch_module->hier_level = level;
-	   return &(hierarch_module->super);
+            hierarch_module->hier_level = level;
+            return &(hierarch_module->super);
         }
     }
         
@@ -260,7 +259,7 @@ int mca_coll_hierarch_module_enable (mca_coll_base_module_1_1_0_t *module,
        information about local leader and the according subcommunicators 
     */
     llead = (struct mca_coll_hierarch_llead_t * ) malloc ( 
-	sizeof(struct mca_coll_hierarch_llead_t));
+                                                          sizeof(struct mca_coll_hierarch_llead_t));
     if ( NULL == llead ) {
         goto exit;
     }
@@ -284,11 +283,11 @@ int mca_coll_hierarch_module_enable (mca_coll_base_module_1_1_0_t *module,
     llead->llcomm = llcomm;
     
     /* Store it now on the data structure */
-    OBJ_CONSTRUCT(&(hierarch_module->hier_llead), ompi_pointer_array_t);
-    ompi_pointer_array_add ( &(hierarch_module->hier_llead), llead);
+    OBJ_CONSTRUCT(&(hierarch_module->hier_llead), opal_pointer_array_t);
+    opal_pointer_array_add ( &(hierarch_module->hier_llead), llead);
     
     if ( mca_coll_hierarch_verbose_param ) {
-      mca_coll_hierarch_dump_struct (hierarch_module);
+        mca_coll_hierarch_dump_struct (hierarch_module);
     }
     
  exit:
@@ -412,9 +411,9 @@ int mca_coll_hierarch_get_llr ( mca_coll_hierarch_module_t *hierarch_module )
 
 
 struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root, 
-						     mca_coll_hierarch_module_t *hierarch_module,
-						     int* llroot,
-						     int* lroot) 
+                                                           mca_coll_hierarch_module_t *hierarch_module,
+                                                           int* llroot,
+                                                           int* lroot) 
 {
     struct ompi_communicator_t *llcomm=NULL;
     struct ompi_group_t *llgroup=NULL;
@@ -428,12 +427,12 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
 					    hierarch_module->hier_num_colorarr, 
 					    hierarch_module->hier_colorarr );
     
-    num_llead = ompi_pointer_array_get_size ( &(hierarch_module->hier_llead) );
+    num_llead = opal_pointer_array_get_size ( &(hierarch_module->hier_llead) );
     for ( found=0, i=0; i < num_llead; i++ ) {
-        llead = (struct mca_coll_hierarch_llead_t *) ompi_pointer_array_get_item (
-	    &(hierarch_module->hier_llead), i );
+        llead = (struct mca_coll_hierarch_llead_t *) opal_pointer_array_get_item (
+                                                                                  &(hierarch_module->hier_llead), i );
 	if ( NULL == llead ) {
-	  continue;
+            continue;
 	}
 
 	if (llead->offset == offset ) {
@@ -442,10 +441,10 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
 	}
 #if 0
 	else if () {
-	  /* the offset of root = maxoffset of this color and
-	   * the offset on llead is larger then offset of root.
-	   * then we can also use this llead structure 
-	   */
+            /* the offset of root = maxoffset of this color and
+             * the offset on llead is larger then offset of root.
+             * then we can also use this llead structure 
+             */
 	}
 #endif
     }
@@ -453,7 +452,7 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
     if ( !found ) {
 	/* allocate a new llead element */
 	llead = (struct mca_coll_hierarch_llead_t *) malloc (
-	    sizeof(struct mca_coll_hierarch_llead_t));
+                                                             sizeof(struct mca_coll_hierarch_llead_t));
 	if ( NULL == llead ) {
 	    return NULL;
 	}
@@ -469,7 +468,7 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
 	llead->llcomm = llcomm;
 
 	/* Store the new element on the hierarch_module struct */
-	ompi_pointer_array_add ( &(hierarch_module->hier_llead), llead);
+	opal_pointer_array_add ( &(hierarch_module->hier_llead), llead);
     }
 
     llcomm = llead->llcomm;
@@ -552,7 +551,7 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
     }
 
     bml_endpoints = (struct mca_bml_base_endpoint_t **) malloc ( size * 
-                     sizeof(struct mca_bml_base_endpoint_t*));
+                                                                 sizeof(struct mca_bml_base_endpoint_t*));
     if ( NULL == bml_endpoints ) {
         return;
     }
@@ -588,7 +587,7 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
         if (! strcmp (btl->btl_version.mca_component_name, component_name)){
             counter++;
 	    if (i<firstproc ) {
-	      firstproc = i;
+                firstproc = i;
 	    }
 	    continue;
 	}	    
@@ -634,13 +633,13 @@ static void mca_coll_hierarch_dump_struct ( mca_coll_hierarch_module_t *c)
            rank, c->hier_comm->c_name, c->hier_comm->c_contextid);
 
     printf("%d: No of llead communicators: %d No of lleaders: %d\n", 
-	   rank, ompi_pointer_array_get_size ( &(c->hier_llead)),
+	   rank, opal_pointer_array_get_size ( &(c->hier_llead)),
 	   c->hier_num_lleaders );
 
-    for ( i=0; i < ompi_pointer_array_get_size(&(c->hier_llead)); i++ ) {
-	current = (mca_coll_hierarch_llead_t*)ompi_pointer_array_get_item (&(c->hier_llead), i);
+    for ( i=0; i < opal_pointer_array_get_size(&(c->hier_llead)); i++ ) {
+	current = (mca_coll_hierarch_llead_t*)opal_pointer_array_get_item (&(c->hier_llead), i);
 	if ( current == NULL ) {
-	  continue;
+            continue;
 	}
 
 	printf("%d:  my_leader %d am_leader %d\n", rank,

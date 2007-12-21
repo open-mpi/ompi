@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
@@ -373,65 +374,65 @@ OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_replace;
 /**
  * Table for Fortran <-> C op handle conversion
  */
-extern struct ompi_pointer_array_t *ompi_op_f_to_c_table;
+extern struct opal_pointer_array_t *ompi_op_f_to_c_table;
 
-  /**
-   * Initialize the op interface.
-   *
-   * @returns OMPI_SUCCESS Upon success
-   * @returns OMPI_ERROR Otherwise
-   *
-   * Invoked from ompi_mpi_init(); sets up the op interface, creates
-   * the predefined MPI operations, and creates the corresopnding F2C
-   * translation table.
-   */
-  int ompi_op_init(void);
+/**
+ * Initialize the op interface.
+ *
+ * @returns OMPI_SUCCESS Upon success
+ * @returns OMPI_ERROR Otherwise
+ *
+ * Invoked from ompi_mpi_init(); sets up the op interface, creates
+ * the predefined MPI operations, and creates the corresopnding F2C
+ * translation table.
+ */
+int ompi_op_init(void);
 
-  /**
-   * Finalize the op interface.
-   *
-   * @returns OMPI_SUCCESS Always
-   *
-   * Invokes from ompi_mpi_finalize(); tears down the op interface, and
-   * destroys the F2C translation table.
-   */
-  int ompi_op_finalize(void);
+/**
+ * Finalize the op interface.
+ *
+ * @returns OMPI_SUCCESS Always
+ *
+ * Invokes from ompi_mpi_finalize(); tears down the op interface, and
+ * destroys the F2C translation table.
+ */
+int ompi_op_finalize(void);
 
-  /**
-   * Create a ompi_op_t
-   *
-   * @param commute Boolean indicating whether the operation is
-   *        communative or not
-   * @param func Function pointer of the error handler
-   *
-   * @returns op Pointer to the ompi_op_t that will be
-   *   created and returned
-   *
-   * This function is called as the back-end of all the MPI_OP_CREATE
-   * functions.  It creates a new ompi_op_t object, initializes it to
-   * the correct object type, and sets the callback function on it.
-   *
-   * The type of the function pointer is (arbitrarily) the fortran
-   * function handler type.  Since this function has to accept 2
-   * different function pointer types (lest we have 2 different
-   * functions to create errhandlers), the fortran one was picked
-   * arbitrarily.  Note that (void*) is not sufficient because at
-   * least theoretically, a sizeof(void*) may not necessarily be the
-   * same as sizeof(void(*)).
-   *
-   * NOTE: It *always* sets the "fortran" flag to false.  The Fortran
-   * wrapper for MPI_OP_CREATE is expected to reset this flag to true
-   * manually.
-   */
-  ompi_op_t *ompi_op_create(bool commute, ompi_op_fortran_handler_fn_t *func);
+/**
+ * Create a ompi_op_t
+ *
+ * @param commute Boolean indicating whether the operation is
+ *        communative or not
+ * @param func Function pointer of the error handler
+ *
+ * @returns op Pointer to the ompi_op_t that will be
+ *   created and returned
+ *
+ * This function is called as the back-end of all the MPI_OP_CREATE
+ * functions.  It creates a new ompi_op_t object, initializes it to
+ * the correct object type, and sets the callback function on it.
+ *
+ * The type of the function pointer is (arbitrarily) the fortran
+ * function handler type.  Since this function has to accept 2
+ * different function pointer types (lest we have 2 different
+ * functions to create errhandlers), the fortran one was picked
+ * arbitrarily.  Note that (void*) is not sufficient because at
+ * least theoretically, a sizeof(void*) may not necessarily be the
+ * same as sizeof(void(*)).
+ *
+ * NOTE: It *always* sets the "fortran" flag to false.  The Fortran
+ * wrapper for MPI_OP_CREATE is expected to reset this flag to true
+ * manually.
+ */
+ompi_op_t *ompi_op_create(bool commute, ompi_op_fortran_handler_fn_t *func);
 
-  /**
-   * Mark an MPI_Op as holding a C++ callback function, and cache
-   * that function in the MPI_Op.  See a lenghty comment in
-   * ompi/mpi/cxx/op.c::ompi_mpi_cxx_op_intercept() for a full
-   * expalantion.
-   */
-  OMPI_DECLSPEC void ompi_op_set_cxx_callback(ompi_op_t *op, MPI_User_function *fn);
+/**
+ * Mark an MPI_Op as holding a C++ callback function, and cache
+ * that function in the MPI_Op.  See a lenghty comment in
+ * ompi/mpi/cxx/op.c::ompi_mpi_cxx_op_intercept() for a full
+ * expalantion.
+ */
+OMPI_DECLSPEC void ompi_op_set_cxx_callback(ompi_op_t *op, MPI_User_function *fn);
 
 /**
  * Check to see if an op is intrinsic.

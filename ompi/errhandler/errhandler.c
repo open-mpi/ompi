@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -23,13 +24,13 @@
 #include "ompi/file/file.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/errhandler/errhandler_predefined.h"
-#include "ompi/class/ompi_pointer_array.h"
+#include "opal/class/opal_pointer_array.h"
 
 
 /*
  * Table for Fortran <-> C errhandler handle conversion
  */
-ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
+opal_pointer_array_t ompi_errhandler_f_to_c_table;
 
 
 /*
@@ -68,8 +69,9 @@ int ompi_errhandler_init(void)
 {
   /* initialize ompi_errhandler_f_to_c_table */
 
-  ompi_errhandler_f_to_c_table = OBJ_NEW(ompi_pointer_array_t);
-  if (NULL == ompi_errhandler_f_to_c_table){
+  OBJ_CONSTRUCT( &ompi_errhandler_f_to_c_table, opal_pointer_array_t);
+  if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_errhandler_f_to_c_table, 0,
+                                              OMPI_FORTRAN_HANDLE_MAX, 64) ) {
     return OMPI_ERROR;
   }
 
@@ -166,7 +168,7 @@ int ompi_errhandler_finalize(void)
      decremented and they will not naturally get to 0 during FINALIZE.
      Hence, we RELEASE on the intrinsics until they are freed. */
   
-    OBJ_RELEASE(ompi_errhandler_f_to_c_table);
+    OBJ_DESTRUCT(&ompi_errhandler_f_to_c_table);
 
     /* All done */
 
@@ -237,7 +239,7 @@ static void ompi_errhandler_construct(ompi_errhandler_t *new_errhandler)
 
   /* assign entry in fortran <-> c translation array */
 
-  ret_val = ompi_pointer_array_add(ompi_errhandler_f_to_c_table, 
+  ret_val = opal_pointer_array_add(&ompi_errhandler_f_to_c_table, 
                                    new_errhandler);
   new_errhandler->eh_f_to_c_index = ret_val;
 
@@ -260,10 +262,10 @@ static void ompi_errhandler_destruct(ompi_errhandler_t *errhandler)
   /* reset the ompi_errhandler_f_to_c_table entry - make sure that the
      entry is in the table */
 
-  if (NULL!= ompi_pointer_array_get_item(ompi_errhandler_f_to_c_table,
+  if (NULL!= opal_pointer_array_get_item(&ompi_errhandler_f_to_c_table,
                                         errhandler->eh_f_to_c_index)) {
-    ompi_pointer_array_set_item(ompi_errhandler_f_to_c_table,
-                               errhandler->eh_f_to_c_index, NULL);
+    opal_pointer_array_set_item(&ompi_errhandler_f_to_c_table,
+                                errhandler->eh_f_to_c_index, NULL);
   }
 
   /* Reset the static state if we're releasing one of the

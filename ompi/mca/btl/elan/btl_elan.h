@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -25,7 +26,6 @@
 /* Open MPI includes */
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_bitmap.h"
-#include "orte/class/orte_pointer_array.h"
 #include "opal/event/event.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"

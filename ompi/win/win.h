@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -48,7 +49,7 @@ extern "C" {
 #define OMPI_WIN_STARTED      0x00000040
 #define OMPI_WIN_LOCK_ACCESS  0x00000080
 
-OMPI_DECLSPEC extern ompi_pointer_array_t ompi_mpi_windows;
+OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_windows;
 
 struct ompi_win_t {
     opal_object_t w_base;

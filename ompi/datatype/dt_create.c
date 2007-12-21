@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -22,6 +22,7 @@
 #include "ompi/datatype/datatype_internal.h"
 #include "limits.h"
 #include "ompi/attribute/attribute.h"
+#include "opal/class/opal_pointer_array.h"
 
 static void __get_free_dt_struct( ompi_datatype_t* pData )
 {
@@ -45,7 +46,7 @@ static void __get_free_dt_struct( ompi_datatype_t* pData )
     pData->true_ub            = LONG_MIN;
     pData->lb                 = LONG_MAX;
     pData->ub                 = LONG_MIN;
-    pData->d_f_to_c_index     = ompi_pointer_array_add(ompi_datatype_f_to_c_table, pData);
+    pData->d_f_to_c_index     = opal_pointer_array_add(&ompi_datatype_f_to_c_table, pData);
     pData->d_keyhash          = NULL;
     pData->name[0]            = '\0';
     pData->packed_description = NULL;
@@ -80,8 +81,8 @@ static void __destroy_ddt_struct( ompi_datatype_t* datatype )
         free( datatype->packed_description );
         datatype->packed_description = NULL;
     }
-    if( NULL != ompi_pointer_array_get_item(ompi_datatype_f_to_c_table, datatype->d_f_to_c_index) ){
-        ompi_pointer_array_set_item( ompi_datatype_f_to_c_table, datatype->d_f_to_c_index, NULL );
+    if( NULL != opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, datatype->d_f_to_c_index) ){
+        opal_pointer_array_set_item( &ompi_datatype_f_to_c_table, datatype->d_f_to_c_index, NULL );
     }
     /* any pending attributes ? */
     if (NULL != datatype->d_keyhash) {

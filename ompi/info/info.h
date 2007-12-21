@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -24,7 +25,7 @@
 #include "mpi.h"
 #include "opal/util/strncpy.h"
 #include "opal/class/opal_list.h"
-#include "ompi/class/ompi_pointer_array.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/threads/mutex.h"
 
 
@@ -69,182 +70,178 @@ struct ompi_info_entry_t {
  */
 typedef struct ompi_info_entry_t ompi_info_entry_t;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-  /**
-   * Table for Fortran <-> C translation table
-   */ 
-  extern ompi_pointer_array_t ompi_info_f_to_c_table;
+BEGIN_C_DECLS
 
-  /**
-   * Global instance for MPI_INFO_NULL
-   */
-  OMPI_DECLSPEC extern ompi_info_t ompi_mpi_info_null;
+/**
+ * Table for Fortran <-> C translation table
+ */ 
+extern opal_pointer_array_t ompi_info_f_to_c_table;
 
-  /**
-   * \internal
-   * Some declarations needed to use OBJ_NEW and OBJ_DESTRUCT macros
-   */
-  OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_info_t);
+/**
+ * Global instance for MPI_INFO_NULL
+ */
+OMPI_DECLSPEC extern ompi_info_t ompi_mpi_info_null;
 
-  /**
-   * \internal
-   * Some declarations needed to use OBJ_NEW and OBJ_DESTRUCT macros
-   */
-  OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_info_entry_t);
+/**
+ * \internal
+ * Some declarations needed to use OBJ_NEW and OBJ_DESTRUCT macros
+ */
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_info_t);
 
-  /**
-   * This function is invoked during ompi_mpi_init() and sets up
-   * MPI_Info handling.
-   */
-  int ompi_info_init(void);
+/**
+ * \internal
+ * Some declarations needed to use OBJ_NEW and OBJ_DESTRUCT macros
+ */
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_info_entry_t);
 
-  /**
-   * This functions is called during ompi_mpi_finalize() and shuts
-   * down MPI_Info handling.
-   */
-  int ompi_info_finalize(void);
+/**
+ * This function is invoked during ompi_mpi_init() and sets up
+ * MPI_Info handling.
+ */
+int ompi_info_init(void);
 
-  /**
-   *   ompi_info_dup - Duplicate an 'MPI_Info' object
-   *
-   *   @param info source info object (handle)
-   *   @param newinfo pointer to the new info object (handle)
-   *
-   *   @retval MPI_SUCCESS upon success
-   *   @retval MPI_ERR_NO_MEM if out of memory
-   *
-   *   Not only will the (key, value) pairs be duplicated, the order
-   *   of keys will be the same in 'newinfo' as it is in 'info'.  When
-   *   an info object is no longer being used, it should be freed with
-   *   'MPI_Info_free'.
-   */
-  int ompi_info_dup (ompi_info_t *info, ompi_info_t **newinfo);
+/**
+ * This functions is called during ompi_mpi_finalize() and shuts
+ * down MPI_Info handling.
+ */
+int ompi_info_finalize(void);
 
-  /*
-   * Set a new key,value pair on info.
-   *
-   * @param info pointer to ompi_info_t object
-   * @param key pointer to the new key object
-   * @param value pointer to the new value object
-   *
-   * @retval MPI_SUCCESS upon success
-   * @retval MPI_ERR_NO_MEM if out of memory
-   */
-  int ompi_info_set (ompi_info_t *info, char *key, char *value);
+/**
+ *   ompi_info_dup - Duplicate an 'MPI_Info' object
+ *
+ *   @param info source info object (handle)
+ *   @param newinfo pointer to the new info object (handle)
+ *
+ *   @retval MPI_SUCCESS upon success
+ *   @retval MPI_ERR_NO_MEM if out of memory
+ *
+ *   Not only will the (key, value) pairs be duplicated, the order
+ *   of keys will be the same in 'newinfo' as it is in 'info'.  When
+ *   an info object is no longer being used, it should be freed with
+ *   'MPI_Info_free'.
+ */
+int ompi_info_dup (ompi_info_t *info, ompi_info_t **newinfo);
 
-  /**
-   * ompi_info_free - Free an 'MPI_Info' object.
-   *
-   *   @param info pointer to info (ompi_info_t *) object to be freed (handle)
-   *
-   *   @retval MPI_SUCCESS
-   *   @retval MPI_ERR_ARG
-   *
-   *   Upon successful completion, 'info' will be set to
-   *   'MPI_INFO_NULL'.  Free the info handle and all of its keys and
-   *   values.
-   */
-  int ompi_info_free (ompi_info_t **info);
+/*
+ * Set a new key,value pair on info.
+ *
+ * @param info pointer to ompi_info_t object
+ * @param key pointer to the new key object
+ * @param value pointer to the new value object
+ *
+ * @retval MPI_SUCCESS upon success
+ * @retval MPI_ERR_NO_MEM if out of memory
+ */
+int ompi_info_set (ompi_info_t *info, char *key, char *value);
 
-  /**
-   *   Get a (key, value) pair from an 'MPI_Info' object
-   *
-   *   @param info Pointer to ompi_info_t object
-   *   @param key null-terminated character string of the index key
-   *   @param valuelen maximum length of 'value' (integer)
-   *   @param value null-terminated character string of the value
-   *   @param flag true (1) if 'key' defined on 'info', false (0) if not
-   *               (logical)
-   *
-   *   @retval MPI_SUCCESS
-   *
-   *   In C and C++, 'valuelen' should be one less than the allocated
-   *   space to allow for for the null terminator.
-   */
-  int ompi_info_get (ompi_info_t *info, char *key, int valuelen,
-                     char *value, int *flag);
+/**
+ * ompi_info_free - Free an 'MPI_Info' object.
+ *
+ *   @param info pointer to info (ompi_info_t *) object to be freed (handle)
+ *
+ *   @retval MPI_SUCCESS
+ *   @retval MPI_ERR_ARG
+ *
+ *   Upon successful completion, 'info' will be set to
+ *   'MPI_INFO_NULL'.  Free the info handle and all of its keys and
+ *   values.
+ */
+int ompi_info_free (ompi_info_t **info);
 
-  /**
-   * Delete a (key,value) pair from "info"
-   *
-   * @param info ompi_info_t pointer on which we need to operate
-   * @param key The key portion of the (key,value) pair that
-   *            needs to be deleted
-   *
-   * @retval MPI_SUCCESS
-   * @retval MPI_ERR_NOKEY
-   */
-  int ompi_info_delete (ompi_info_t *info, char *key);
+/**
+ *   Get a (key, value) pair from an 'MPI_Info' object
+ *
+ *   @param info Pointer to ompi_info_t object
+ *   @param key null-terminated character string of the index key
+ *   @param valuelen maximum length of 'value' (integer)
+ *   @param value null-terminated character string of the value
+ *   @param flag true (1) if 'key' defined on 'info', false (0) if not
+ *               (logical)
+ *
+ *   @retval MPI_SUCCESS
+ *
+ *   In C and C++, 'valuelen' should be one less than the allocated
+ *   space to allow for for the null terminator.
+ */
+int ompi_info_get (ompi_info_t *info, char *key, int valuelen,
+                   char *value, int *flag);
 
-  /**
-   *   @param info - ompi_info_t pointer object (handle)
-   *   @param key - null-terminated character string of the index key
-   *   @param valuelen - length of the value associated with 'key' (integer)
-   *   @param flag - true (1) if 'key' defined on 'info', false (0) if not
-   *   (logical)
-   *
-   *   @retval MPI_SUCCESS
-   *   @retval MPI_ERR_ARG
-   *   @retval MPI_ERR_INFO_KEY
-   *
-   *   The length returned in C and C++ does not include the end-of-string
-   *   character.  If the 'key' is not found on 'info', 'valuelen' is left
-   *   alone.
-   */
-  OMPI_DECLSPEC int ompi_info_get_valuelen (ompi_info_t *info, char *key, int *valuelen,
+/**
+ * Delete a (key,value) pair from "info"
+ *
+ * @param info ompi_info_t pointer on which we need to operate
+ * @param key The key portion of the (key,value) pair that
+ *            needs to be deleted
+ *
+ * @retval MPI_SUCCESS
+ * @retval MPI_ERR_NOKEY
+ */
+int ompi_info_delete (ompi_info_t *info, char *key);
+
+/**
+ *   @param info - ompi_info_t pointer object (handle)
+ *   @param key - null-terminated character string of the index key
+ *   @param valuelen - length of the value associated with 'key' (integer)
+ *   @param flag - true (1) if 'key' defined on 'info', false (0) if not
+ *   (logical)
+ *
+ *   @retval MPI_SUCCESS
+ *   @retval MPI_ERR_ARG
+ *   @retval MPI_ERR_INFO_KEY
+ *
+ *   The length returned in C and C++ does not include the end-of-string
+ *   character.  If the 'key' is not found on 'info', 'valuelen' is left
+ *   alone.
+ */
+OMPI_DECLSPEC int ompi_info_get_valuelen (ompi_info_t *info, char *key, int *valuelen,
                               int *flag);
 
-  /**
-   *   ompi_info_get_nthkey - Get a key indexed by integer from an 'MPI_Info' o
-   *
-   *   @param info Pointer to ompi_info_t object
-   *   @param n index of key to retrieve (integer)
-   *   @param key character string of at least 'MPI_MAX_INFO_KEY' characters
-   *
-   *   @retval MPI_SUCCESS
-   *   @retval MPI_ERR_ARG
-   */
-  int ompi_info_get_nthkey (ompi_info_t *info, int n, char *key);
+/**
+ *   ompi_info_get_nthkey - Get a key indexed by integer from an 'MPI_Info' o
+ *
+ *   @param info Pointer to ompi_info_t object
+ *   @param n index of key to retrieve (integer)
+ *   @param key character string of at least 'MPI_MAX_INFO_KEY' characters
+ *
+ *   @retval MPI_SUCCESS
+ *   @retval MPI_ERR_ARG
+ */
+int ompi_info_get_nthkey (ompi_info_t *info, int n, char *key);
 
-  int ompi_info_value_to_int(char *value, int *interp);
+int ompi_info_value_to_int(char *value, int *interp);
 
-  /**
-   * Convert value string to boolean
-   *
-   * Convert value string \c value into a boolean, using the
-   * interpretation rules specified in MPI-2 Section 4.10.  The
-   * strings "true", "false", and integer numbers can be converted
-   * into booleans.  All others will return \c OMPI_ERR_BAD_PARAM
-   *
-   * @param value Value string for info key to interpret
-   * @param interp returned interpretation of the value key
-   *
-   * @retval OMPI_SUCCESS string was successfully interpreted
-   * @retval OMPI_ERR_BAD_PARAM string was not able to be interpreted
-   */
-  int ompi_info_value_to_bool(char *value, bool *interp);
+/**
+ * Convert value string to boolean
+ *
+ * Convert value string \c value into a boolean, using the
+ * interpretation rules specified in MPI-2 Section 4.10.  The
+ * strings "true", "false", and integer numbers can be converted
+ * into booleans.  All others will return \c OMPI_ERR_BAD_PARAM
+ *
+ * @param value Value string for info key to interpret
+ * @param interp returned interpretation of the value key
+ *
+ * @retval OMPI_SUCCESS string was successfully interpreted
+ * @retval OMPI_ERR_BAD_PARAM string was not able to be interpreted
+ */
+int ompi_info_value_to_bool(char *value, bool *interp);
 
-  /**
-   * Convert value string to integer
-   *
-   * Convert value string \c value into a integer, using the
-   * interpretation rules specified in MPI-2 Section 4.10.  
-   * All others will return \c OMPI_ERR_BAD_PARAM
-   *
-   * @param value Value string for info key to interpret
-   * @param interp returned interpretation of the value key
-   *
-   * @retval OMPI_SUCCESS string was successfully interpreted
-   * @retval OMPI_ERR_BAD_PARAM string was not able to be interpreted
-   */
-  int ompi_info_value_to_bool(char *value, bool *interp);
+/**
+ * Convert value string to integer
+ *
+ * Convert value string \c value into a integer, using the
+ * interpretation rules specified in MPI-2 Section 4.10.  
+ * All others will return \c OMPI_ERR_BAD_PARAM
+ *
+ * @param value Value string for info key to interpret
+ * @param interp returned interpretation of the value key
+ *
+ * @retval OMPI_SUCCESS string was successfully interpreted
+ * @retval OMPI_ERR_BAD_PARAM string was not able to be interpreted
+ */
+int ompi_info_value_to_bool(char *value, bool *interp);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
+END_C_DECLS
 
 /**
  * Return whether this info has been freed already or not.
@@ -280,6 +277,5 @@ ompi_info_get_nkeys(ompi_info_t *info, int *nkeys)
     *nkeys = (int) opal_list_get_size(&(info->super));
     return MPI_SUCCESS;
 }
-
 
 #endif /* OMPI_INFO_H */

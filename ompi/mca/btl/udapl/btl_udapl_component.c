@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -1076,7 +1077,7 @@ int mca_btl_udapl_component_progress()
             mca_btl_udapl_frag_t *local_rdma_frag;
 
             endpoint =
-                orte_pointer_array_get_item(btl->udapl_eager_rdma_endpoints, j);
+                opal_pointer_array_get_item(btl->udapl_eager_rdma_endpoints, j);
 
             OPAL_THREAD_LOCK(&endpoint->endpoint_eager_rdma_local.lock);
 

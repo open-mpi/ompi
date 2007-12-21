@@ -1,5 +1,6 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
@@ -17,8 +18,6 @@
 #include "ompi/peruse/peruse.h"
 #include "ompi/peruse/peruse-internal.h"
 #include "ompi/constants.h"
-#include "class/ompi_pointer_array.h"
-
 
 static opal_list_t peruse_handle_list;
 static opal_mutex_t peruse_handle_list_lock;

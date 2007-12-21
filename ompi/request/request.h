@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -27,7 +28,7 @@
 
 #include "mpi.h"
 #include "ompi/class/ompi_free_list.h"
-#include "ompi/class/ompi_pointer_array.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/threads/condition.h"
 
 BEGIN_C_DECLS
@@ -77,6 +78,13 @@ typedef int (*ompi_request_free_fn_t)(struct ompi_request_t** rptr);
  */
 typedef int (*ompi_request_cancel_fn_t)(struct ompi_request_t* request, int flag); 
 
+/*
+ * Optional function called when the request is completed from the MPI
+ * library perspective. This function is not allowed to release any
+ * ressources related to the request.
+ */
+typedef int (*ompi_request_complete_fn_t)(struct ompi_request_t* request);
+
 /**
  * Forward declaration
  */
@@ -105,16 +113,17 @@ typedef union ompi_mpi_object_t {
  * Main top-level request struct definition 
  */
 struct ompi_request_t {
-    ompi_free_list_item_t super;               /**< Base type */
-    ompi_request_type_t req_type;              /**< Enum indicating the type of the request */
-    ompi_status_public_t req_status;           /**< Completion status */
-    volatile bool req_complete;                /**< Flag indicating wether request has completed */
-    volatile ompi_request_state_t req_state;   /**< enum indicate state of the request */
-    bool req_persistent;                       /**< flag indicating if the this is a persistent request */
-    int req_f_to_c_index;                      /**< Index in Fortran <-> C translation array */
-    ompi_request_free_fn_t req_free;           /**< Called by free */
-    ompi_request_cancel_fn_t req_cancel;       /**< Optional function to cancel the request */
-    ompi_mpi_object_t req_mpi_object;          /**< Pointer to MPI object that created this request */
+    ompi_free_list_item_t super;                /**< Base type */
+    ompi_request_type_t req_type;               /**< Enum indicating the type of the request */
+    ompi_status_public_t req_status;            /**< Completion status */
+    volatile bool req_complete;                 /**< Flag indicating wether request has completed */
+    volatile ompi_request_state_t req_state;    /**< enum indicate state of the request */
+    bool req_persistent;                        /**< flag indicating if the this is a persistent request */
+    int req_f_to_c_index;                       /**< Index in Fortran <-> C translation array */
+    ompi_request_free_fn_t req_free;            /**< Called by free */
+    ompi_request_cancel_fn_t req_cancel;        /**< Optional function to cancel the request */
+    ompi_request_complete_fn_t req_complete_cb; /**< Called when the request is MPI completed */
+    ompi_mpi_object_t req_mpi_object;           /**< Pointer to MPI object that created this request */
 };
 
 /**
@@ -155,7 +164,7 @@ typedef struct ompi_request_t ompi_request_t;
 do {                                                                    \
     (request)->req_state = OMPI_REQUEST_INVALID;                        \
     if (MPI_UNDEFINED != (request)->req_f_to_c_index) {                 \
-        ompi_pointer_array_set_item(&ompi_request_f_to_c_table,         \
+        opal_pointer_array_set_item(&ompi_request_f_to_c_table,         \
                                     (request)->req_f_to_c_index, NULL); \
         (request)->req_f_to_c_index = MPI_UNDEFINED;                    \
     }                                                                   \
@@ -297,7 +306,7 @@ typedef struct ompi_request_fns_t {
 /**
  * Globals used for tracking requests and request completion.
  */
-OMPI_DECLSPEC extern ompi_pointer_array_t  ompi_request_f_to_c_table;
+OMPI_DECLSPEC extern opal_pointer_array_t  ompi_request_f_to_c_table;
 OMPI_DECLSPEC extern size_t                ompi_request_waiting;
 OMPI_DECLSPEC extern size_t                ompi_request_completed;
 OMPI_DECLSPEC extern int32_t               ompi_request_poll;
@@ -384,6 +393,9 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
 
 static inline int ompi_request_complete(ompi_request_t* request)
 {
+    if( NULL != request->req_complete_cb ) {
+        request->req_complete_cb( request );
+    }
     ompi_request_completed++;
     request->req_complete = true;
     if(ompi_request_waiting)

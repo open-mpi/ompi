@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -32,7 +33,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/dss/dss.h"
-#include "orte/class/orte_pointer_array.h"
+#include "opal/class/opal_pointer_array.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
@@ -1158,8 +1159,9 @@ void mca_btl_udapl_endpoint_connect_eager_rdma(
      }
 
     OPAL_THREAD_LOCK(&udapl_btl->udapl_eager_rdma_lock);
-    if(orte_pointer_array_add (&endpoint->endpoint_eager_rdma_index,
-                udapl_btl->udapl_eager_rdma_endpoints, endpoint) < 0)
+    endpoint->endpoint_eager_rdma_index =
+        opal_pointer_array_add(udapl_btl->udapl_eager_rdma_endpoints, endpoint);
+    if( 0 > endpoint->endpoint_eager_rdma_index )
            goto cleanup;
 
     /* record first fragment location */
@@ -1175,7 +1177,7 @@ void mca_btl_udapl_endpoint_connect_eager_rdma(
 
     udapl_btl->udapl_eager_rdma_endpoint_count--;
     endpoint->endpoint_eager_rdma_local.base.pval = NULL;
-    orte_pointer_array_set_item(udapl_btl->udapl_eager_rdma_endpoints,
+    opal_pointer_array_set_item(udapl_btl->udapl_eager_rdma_endpoints,
             endpoint->endpoint_eager_rdma_index, NULL);
 
 cleanup:

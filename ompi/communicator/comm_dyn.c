@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -863,9 +864,9 @@ int ompi_comm_dyn_finalize (void)
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        max = ompi_pointer_array_get_size(&ompi_mpi_communicators);
+        max = opal_pointer_array_get_size(&ompi_mpi_communicators);
         for ( i=3; i<max; i++ ) {
-            comm = (ompi_communicator_t*)ompi_pointer_array_get_item(&ompi_mpi_communicators,i);
+            comm = (ompi_communicator_t*)opal_pointer_array_get_item(&ompi_mpi_communicators,i);
             if ( OMPI_COMM_IS_DYNAMIC(comm)) {
                 objs[j++]=ompi_comm_disconnect_init(comm);
             }

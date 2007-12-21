@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /**
   * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
   *                         University Research and Technology
   *                         Corporation.  All rights reserved.
-  * Copyright (c) 2004-2006 The University of Tennessee and The University
+  * Copyright (c) 2004-2007 The University of Tennessee and The University
   *                         of Tennessee Research Foundation.  All rights
   *                         reserved.
   * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -21,6 +22,7 @@
   */
 #ifndef MCA_RCACHE_RB_H
 #define MCA_RCACHE_RB_H
+
 #include "opal/mca/mca.h"
 #include "ompi/info/info.h"
 #include "opal/class/opal_list.h" 
@@ -42,31 +44,26 @@ typedef struct mca_rcache_rb_module_t mca_rcache_rb_module_t;
 
 struct mca_rcache_rb_component_t { 
     mca_rcache_base_component_t super; 
-}; typedef struct mca_rcache_rb_component_t mca_rcache_rb_component_t; 
+};
+typedef struct mca_rcache_rb_component_t mca_rcache_rb_component_t; 
 
 OMPI_MODULE_DECLSPEC extern mca_rcache_rb_component_t mca_rcache_rb_component;
 
 void mca_rcache_rb_module_init( mca_rcache_rb_module_t* rcache );
 
-int mca_rcache_rb_find (
-                        mca_rcache_base_module_t* rcache, 
+int mca_rcache_rb_find( mca_rcache_base_module_t* rcache, 
                         void* addr, 
                         size_t size, 
-                        ompi_pointer_array_t* regs, 
-                        uint32_t *cnt
-                        );
+                        opal_pointer_array_t* regs, 
+                        uint32_t *cnt );
 
-int mca_rcache_rb_insert ( 
-                          struct mca_rcache_base_module_t* rcache, 
+int mca_rcache_rb_insert( struct mca_rcache_base_module_t* rcache, 
                           mca_mpool_base_registration_t* registration, 
-                          uint32_t flags
-                          ); 
+                          uint32_t flags ); 
 
-int mca_rcache_rb_delete (
-                          struct mca_rcache_base_module_t* rcache, 
+int mca_rcache_rb_delete( struct mca_rcache_base_module_t* rcache, 
                           mca_mpool_base_registration_t* registration, 
-                          uint32_t flags
-                          ); 
+                          uint32_t flags ); 
 
 
 /**
@@ -75,14 +72,7 @@ int mca_rcache_rb_delete (
 
 void mca_rcache_rb_module_init( mca_rcache_rb_module_t* rcache );
 
-void mca_rcache_rb_finalize(
-                            struct mca_rcache_base_module_t*
-                            );
-
-
-
-
+void mca_rcache_rb_finalize( struct mca_rcache_base_module_t* );
 
 #endif /* MCA_RCACHE_RB_H */
-
 

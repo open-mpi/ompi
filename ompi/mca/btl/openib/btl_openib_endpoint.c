@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -785,7 +786,6 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     char *buf;
     mca_btl_openib_recv_frag_t *headers_buf;
     int i;
-    orte_std_cntr_t index;
 
     /* Set local rdma pointer to 1 temporarily so other threads will not try
      * to enter the function */
@@ -854,8 +854,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
          * at init time */
         OBJ_RETAIN(endpoint);
         assert(((opal_object_t*)endpoint)->obj_reference_count == 2);
-        orte_pointer_array_add(&index, openib_btl->eager_rdma_buffers,
-                endpoint);
+        opal_pointer_array_add(openib_btl->eager_rdma_buffers, endpoint);
         /* from this point progress function starts to poll new buffer */
         OPAL_THREAD_ADD32(&openib_btl->eager_rdma_buffers_count, 1);
         return;

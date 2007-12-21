@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
@@ -22,14 +23,14 @@
 #include "ompi/constants.h"
 #include "ompi/op/op.h"
 #include "ompi/op/op_predefined.h"
-#include "ompi/class/ompi_pointer_array.h"
+#include "opal/class/opal_pointer_array.h"
 #include "ompi/datatype/datatype_internal.h"
 
 
 /*
  * Table for Fortran <-> C op handle conversion
  */
-ompi_pointer_array_t *ompi_op_f_to_c_table;
+opal_pointer_array_t *ompi_op_f_to_c_table;
 
 
 /*
@@ -606,7 +607,7 @@ int ompi_op_init(void)
 
   /* initialize ompi_op_f_to_c_table */
 
-    ompi_op_f_to_c_table = OBJ_NEW(ompi_pointer_array_t);
+    ompi_op_f_to_c_table = OBJ_NEW(opal_pointer_array_t);
     if (NULL == ompi_op_f_to_c_table){
         return OMPI_ERROR;
     }
@@ -789,7 +790,7 @@ static void ompi_op_construct(ompi_op_t *new_op)
 
     /* assign entry in fortran <-> c translation array */
 
-    ret_val = ompi_pointer_array_add(ompi_op_f_to_c_table, new_op);
+    ret_val = opal_pointer_array_add(ompi_op_f_to_c_table, new_op);
     new_op->o_f_to_c_index = ret_val;
 }
 
@@ -802,9 +803,9 @@ static void ompi_op_destruct(ompi_op_t *op)
     /* reset the ompi_op_f_to_c_table entry - make sure that the
        entry is in the table */
 
-    if (NULL != ompi_pointer_array_get_item(ompi_op_f_to_c_table,
+    if (NULL != opal_pointer_array_get_item(ompi_op_f_to_c_table,
                                             op->o_f_to_c_index)) {
-        ompi_pointer_array_set_item(ompi_op_f_to_c_table,
+        opal_pointer_array_set_item(ompi_op_f_to_c_table,
                                     op->o_f_to_c_index, NULL);
     }
 }

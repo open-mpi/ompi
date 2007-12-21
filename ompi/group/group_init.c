@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -35,7 +36,7 @@ OBJ_CLASS_INSTANCE(ompi_group_t,
 /*
  * Table for Fortran <-> C group handle conversion
  */
-ompi_pointer_array_t *ompi_group_f_to_c_table;
+opal_pointer_array_t ompi_group_f_to_c_table;
 
 /*
  * Predefined group objects
@@ -243,7 +244,7 @@ static void ompi_group_construct(ompi_group_t *new_group)
        either). */
 
     /* assign entry in fortran <-> c translation array */
-    ret_val = ompi_pointer_array_add(ompi_group_f_to_c_table, new_group);
+    ret_val = opal_pointer_array_add(&ompi_group_f_to_c_table, new_group);
     new_group->grp_f_to_c_index = ret_val;
     new_group->grp_flags = 0;
 
@@ -289,9 +290,9 @@ static void ompi_group_destruct(ompi_group_t *group)
 
     /* reset the ompi_group_f_to_c_table entry - make sure that the
      * entry is in the table */
-    if (NULL != ompi_pointer_array_get_item(ompi_group_f_to_c_table,
+    if (NULL != opal_pointer_array_get_item(&ompi_group_f_to_c_table,
                                            group->grp_f_to_c_index)) {
-        ompi_pointer_array_set_item(ompi_group_f_to_c_table,
+        opal_pointer_array_set_item(&ompi_group_f_to_c_table,
                                    group->grp_f_to_c_index, NULL);
     }
 
@@ -306,7 +307,11 @@ static void ompi_group_destruct(ompi_group_t *group)
 int ompi_group_init(void)
 {
     /* initialize ompi_group_f_to_c_table */
-    ompi_group_f_to_c_table = OBJ_NEW(ompi_pointer_array_t);
+    OBJ_CONSTRUCT( &ompi_group_f_to_c_table, opal_pointer_array_t);
+    if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_group_f_to_c_table, 0,
+                                                OMPI_FORTRAN_HANDLE_MAX, 64) ) {
+        return OMPI_ERROR;
+    }
     
     /* add MPI_GROUP_NULL to table */
     OBJ_CONSTRUCT(&ompi_mpi_group_null, ompi_group_t);
@@ -339,7 +344,7 @@ int ompi_group_finalize(void)
     ompi_mpi_group_null.grp_flags = 0;
     OBJ_DESTRUCT(&ompi_mpi_group_empty);
 
-    OBJ_RELEASE(ompi_group_f_to_c_table);
+    OBJ_DESTRUCT(&ompi_group_f_to_c_table);
     
     return OMPI_SUCCESS;
 }

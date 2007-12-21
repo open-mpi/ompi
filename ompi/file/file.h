@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -31,9 +32,7 @@
 #define OMPI_FILE_ISCLOSED     0x00000001
 #define OMPI_FILE_HIDDEN       0x00000002
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Back-end structure for MPI_File
@@ -107,83 +106,79 @@ OMPI_DECLSPEC extern ompi_file_t  ompi_mpi_file_null;
 /**
  * Fortran to C conversion table
  */
-extern ompi_pointer_array_t ompi_file_f_to_c_table;
+extern opal_pointer_array_t ompi_file_f_to_c_table;
 
+/**
+ * Initialize MPI_File handling.
+ *
+ * @retval OMPI_SUCCESS Always.
+ *
+ * Invoked during ompi_mpi_init().
+ */
+int ompi_file_init(void);
 
-
-    /**
-     * Initialize MPI_File handling.
-     *
-     * @retval OMPI_SUCCESS Always.
-     *
-     * Invoked during ompi_mpi_init().
-     */
-    int ompi_file_init(void);
-
-    /**
-     * Back-end to MPI_FILE_OPEN: create a file handle, select an io
-     * component to use, and have that componet open the file.
-     *
-     * @param comm Communicator
-     * @param filename String filename
-     * @param amode Mode flags
-     * @param info Info
-     * @param fh Output file handle
-     *
-     * @retval OMPI_SUCCESS Upon success
-     * @retval OMPI_ERR* Upon error
-     *
-     * Create a file handle and select an io module to be paired with
-     * it.  There is a corresponding ompi_file_close() function; it
-     * mainly calls OBJ_RELEASE() but also does some other error
-     * handling as well.
-     */
-    int ompi_file_open(struct ompi_communicator_t *comm, char *filename, 
-                       int amode, struct ompi_info_t *info, 
-                       ompi_file_t **fh);
+/**
+ * Back-end to MPI_FILE_OPEN: create a file handle, select an io
+ * component to use, and have that componet open the file.
+ *
+ * @param comm Communicator
+ * @param filename String filename
+ * @param amode Mode flags
+ * @param info Info
+ * @param fh Output file handle
+ *
+ * @retval OMPI_SUCCESS Upon success
+ * @retval OMPI_ERR* Upon error
+ *
+ * Create a file handle and select an io module to be paired with
+ * it.  There is a corresponding ompi_file_close() function; it
+ * mainly calls OBJ_RELEASE() but also does some other error
+ * handling as well.
+ */
+int ompi_file_open(struct ompi_communicator_t *comm, char *filename, 
+                   int amode, struct ompi_info_t *info, 
+                   ompi_file_t **fh);
     
-    /** 
-     * Atomicly set a name on a file handle.
-     *
-     * @param file MPI_File handle to set the name on
-     * @param name NULL-terminated string to use
-     *
-     * @returns OMPI_SUCCESS Always.
-     *
-     * At most (MPI_MAX_OBJECT_NAME-1) characters will be copied over to
-     * the file name's name.  This function is performed atomically -- a
-     * lock is used to ensure that there are not multiple writers to the
-     * name to ensure that we don't end up with an erroneous name (e.g.,
-     * a name without a \0 at the end).  After invoking this function,
-     * ompi_file_is_name_set() will return true.
-     */
-    int ompi_file_set_name(ompi_file_t *file, char *name);
+/** 
+ * Atomicly set a name on a file handle.
+ *
+ * @param file MPI_File handle to set the name on
+ * @param name NULL-terminated string to use
+ *
+ * @returns OMPI_SUCCESS Always.
+ *
+ * At most (MPI_MAX_OBJECT_NAME-1) characters will be copied over to
+ * the file name's name.  This function is performed atomically -- a
+ * lock is used to ensure that there are not multiple writers to the
+ * name to ensure that we don't end up with an erroneous name (e.g.,
+ * a name without a \0 at the end).  After invoking this function,
+ * ompi_file_is_name_set() will return true.
+ */
+int ompi_file_set_name(ompi_file_t *file, char *name);
 
-    /**
-     * Back-end to MPI_FILE_CLOSE: destroy an ompi_file_t handle and
-     * close the file.
-     *
-     * @param file Pointer to ompi_file_t
-     *
-     * @returns OMPI_SUCCESS Always.
-     *
-     * This is the preferred mechanism for freeing an ompi_file_t.
-     * Although the main action that it performs is OBJ_RELEASE(), it
-     * also does some additional handling for error checking, etc.
-     */
-    int ompi_file_close(ompi_file_t **file);
+/**
+ * Back-end to MPI_FILE_CLOSE: destroy an ompi_file_t handle and
+ * close the file.
+ *
+ * @param file Pointer to ompi_file_t
+ *
+ * @returns OMPI_SUCCESS Always.
+ *
+ * This is the preferred mechanism for freeing an ompi_file_t.
+ * Although the main action that it performs is OBJ_RELEASE(), it
+ * also does some additional handling for error checking, etc.
+ */
+int ompi_file_close(ompi_file_t **file);
 
-    /**
-     * Tear down MPI_File handling.
-     *
-     * @retval OMPI_SUCCESS Always.
-     *
-     * Invoked during ompi_mpi_finalize().
-     */
-    int ompi_file_finalize(void);
+/**
+ * Tear down MPI_File handling.
+ *
+ * @retval OMPI_SUCCESS Always.
+ *
+ * Invoked during ompi_mpi_finalize().
+ */
+int ompi_file_finalize(void);
     
-
-
 /**
  * Check to see if an MPI_File handle is valid.
  *
@@ -202,7 +197,6 @@ static inline bool ompi_file_invalid(ompi_file_t *file)
             0 != (file->f_flags & OMPI_FILE_ISCLOSED));
 }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif /* OMPI_FILE_H */
