@@ -818,9 +818,11 @@ mca_btl_base_module_t** mca_btl_sctp_component_init(int *num_btl_modules,
         for(i = 0; i < MCA_BTL_SCTP_PROC_TABLE_SIZE; i++) { 
             recvr_proc_table[i].valid = 0;
             recvr_proc_table[i].sctp_assoc_id = 0;
+            recvr_proc_table[i].vpid = 0;
             recvr_proc_table[i].proc = NULL;
             sender_proc_table[i].valid = 0;
             sender_proc_table[i].sctp_assoc_id = 0;
+            sender_proc_table[i].vpid = 0;
             sender_proc_table[i].proc = NULL;
         }
 #endif
