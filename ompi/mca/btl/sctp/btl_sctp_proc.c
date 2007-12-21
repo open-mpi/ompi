@@ -366,10 +366,15 @@ int mca_btl_sctp_proc_check(sctp_assoc_t id, struct mca_btl_sctp_proc_table_node
 #if MCA_BTL_SCTP_DONT_USE_HASH
     int i;
     for(i = 0; i < MCA_BTL_SCTP_PROC_TABLE_SIZE; i++) {
-        /* once invalid is found, can return INVALID_ENTRY (added incrementally) */
+        /*  sender_proc_table uses orte_vpid_t.
+         *  recvr_proc_table uses sctp_assoc_id.
+         *  This code assumes sizeof(sctp_assoc_id) >= sizeof(orte_vpid_t).  if this
+         *  is false, we need a second _check function.
+         */
         if(table[i].valid && table[i].sctp_assoc_id == id) {
             return VALID_ENTRY;
         } else if(table[i].valid == 0) {
+            /* once invalid is found, can return INVALID_ENTRY (added incrementally) */
 	    break;
         }
     }
