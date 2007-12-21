@@ -866,7 +866,9 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
                     &(req->req_recv.req_base), PERUSE_RECV);
 
             PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q,
-                    req->req_recv.req_base.req_comm, hdr->hdr_src, hdr->hdr_tag,
+                    req->req_recv.req_base.req_comm,
+                    req->req_recv.req_base.req_ompi.req_status.MPI_SOURCE,
+                    req->req_recv.req_base.req_ompi.req_status.MPI_TAG,
                     PERUSE_RECV);
 
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
