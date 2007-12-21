@@ -361,10 +361,10 @@ int mca_btl_sctp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_sc
         int rc = OMPI_SUCCESS;
         
         /* What if there are multiple procs on this endpoint? Possible? */
-        int vpid = btl_endpoint->endpoint_proc->proc_name.vpid;
+        sctp_assoc_t vpid = (sctp_assoc_t) btl_endpoint->endpoint_proc->proc_name.vpid;
         OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
 
-        if((mca_btl_sctp_proc_check((uint32_t)vpid, sender_proc_table)) == INVALID_ENTRY) {
+        if((mca_btl_sctp_proc_check(vpid, sender_proc_table)) == INVALID_ENTRY) {
             opal_list_append(&btl_endpoint->endpoint_frags, (opal_list_item_t*)frag);
 
             rc = mca_btl_sctp_endpoint_start_connect(btl_endpoint);
@@ -372,7 +372,7 @@ int mca_btl_sctp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_sc
             /* add the proc to sender_proc_table somewhere here */
             mca_btl_sctp_proc_add(vpid, btl_endpoint->endpoint_proc, sender_proc_table);
         }
-        else if((mca_btl_sctp_proc_check((uint32_t)vpid, sender_proc_table)) == VALID_ENTRY) {
+        else {   /* VALID_ENTRY */
 
             if (btl_endpoint->endpoint_send_frag == NULL) {
                 if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY &&
@@ -1183,11 +1183,11 @@ static void mca_btl_sctp_endpoint_send_handler(int sd, short flags, void* user)
         /* 1 to many */
         mca_btl_sctp_endpoint_t* btl_endpoint = (mca_btl_sctp_endpoint_t *)user;
         our_sctp_endpoint *current_our_endpoint = NULL;
-        int vpid;
+        sctp_assoc_t vpid;
     send_handler_1_to_many_different_endpoint: 
-        vpid = btl_endpoint->endpoint_proc->proc_name.vpid;
+        vpid = (sctp_assoc_t) btl_endpoint->endpoint_proc->proc_name.vpid;
         OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
-        if((mca_btl_sctp_proc_check((uint32_t)vpid, sender_proc_table)) == VALID_ENTRY) {            
+        if((mca_btl_sctp_proc_check(vpid, sender_proc_table)) == VALID_ENTRY) {            
             /* complete the current send */
             do {
                 mca_btl_sctp_frag_t* frag = btl_endpoint->endpoint_send_frag;
