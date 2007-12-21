@@ -910,7 +910,7 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
         }
     }
 
-    opanib_btl->eager_rdma_buffers = OBJ_NEW(opal_pointer_array_t);
+    openib_btl->eager_rdma_buffers = OBJ_NEW(opal_pointer_array_t);
     opal_pointer_array_init(openib_btl->eager_rdma_buffers, 
             mca_btl_openib_component.max_eager_rdma,
             mca_btl_openib_component.max_eager_rdma, 
