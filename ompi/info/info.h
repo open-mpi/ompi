@@ -208,8 +208,6 @@ OMPI_DECLSPEC int ompi_info_get_valuelen (ompi_info_t *info, char *key, int *val
  */
 int ompi_info_get_nthkey (ompi_info_t *info, int n, char *key);
 
-int ompi_info_value_to_int(char *value, int *interp);
-
 /**
  * Convert value string to boolean
  *
@@ -239,7 +237,7 @@ int ompi_info_value_to_bool(char *value, bool *interp);
  * @retval OMPI_SUCCESS string was successfully interpreted
  * @retval OMPI_ERR_BAD_PARAM string was not able to be interpreted
  */
-int ompi_info_value_to_bool(char *value, bool *interp);
+int ompi_info_value_to_int(char *value, int *interp);
 
 END_C_DECLS
 
