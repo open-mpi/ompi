@@ -1,4 +1,4 @@
-
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -117,7 +117,7 @@ int mca_pml_dr_enable(bool enable)
     OBJ_CONSTRUCT(&mca_pml_dr.send_active, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_dr.acks_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_dr.buffers, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_pml_dr.endpoints, ompi_pointer_array_t);
+    OBJ_CONSTRUCT(&mca_pml_dr.endpoints, opal_pointer_array_t);
     OBJ_CONSTRUCT(&mca_pml_dr.lock, opal_mutex_t);
 
     mca_pml_dr.enabled = true;
@@ -240,8 +240,7 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
         
         /* this won't work for comm spawn and other dynamic
            processes, but will work for initial job start */
-        idx = ompi_pointer_array_add(&mca_pml_dr.endpoints,
-                                     (void*) endpoint);
+        idx = opal_pointer_array_add(&mca_pml_dr.endpoints, (void*) endpoint);
         if(orte_ns.compare_fields(ORTE_NS_CMP_ALL,
                            orte_process_info.my_name,
                            &(endpoint->proc_ompi->proc_name)) == ORTE_EQUAL) {
@@ -256,7 +255,7 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
     
     for(i = 0; i < nprocs; i++) { 
         mca_pml_dr_endpoint_t* ep =  (mca_pml_dr_endpoint_t*) 
-            ompi_pointer_array_get_item(&mca_pml_dr.endpoints, i);
+            opal_pointer_array_get_item(&mca_pml_dr.endpoints, i);
             ep->src = mca_pml_dr.my_rank;
     }
     /* no longer need this */

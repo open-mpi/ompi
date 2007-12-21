@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2007 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -24,7 +24,7 @@ check_PROGRAMS = \
 	opal_hash_table \
 	opal_list \
 	opal_value_array \
-	ompi_pointer_array \
+	opal_pointer_array \
 	ompi_rb_tree
 
 TESTS = \
@@ -66,13 +66,13 @@ opal_hash_table_LDADD = \
         $(top_builddir)/test/support/libsupport.a
 opal_hash_table_DEPENDENCIES = $(opal_hash_table_LDADD)
 
-ompi_pointer_array_SOURCES = ompi_pointer_array.c
-ompi_pointer_array_LDADD = \
+opal_pointer_array_SOURCES = opal_pointer_array.c
+opal_pointer_array_LDADD = \
         $(top_builddir)/ompi/libmpi.la \
         $(top_builddir)/orte/libopen-rte.la \
         $(top_builddir)/opal/libopen-pal.la \
         $(top_builddir)/test/support/libsupport.a
-ompi_pointer_array_DEPENDENCIES = $(ompi_pointer_array_LDADD)
+opal_pointer_array_DEPENDENCIES = $(opal_pointer_array_LDADD)
 
 opal_value_array_SOURCES = opal_value_array.c
 opal_value_array_LDADD = \

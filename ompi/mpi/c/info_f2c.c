@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -58,9 +59,9 @@ MPI_Info MPI_Info_f2c(MPI_Fint info)
     
     if (info_index < 0 || 
         info_index >= 
-        ompi_pointer_array_get_size(&ompi_info_f_to_c_table)) {
+        opal_pointer_array_get_size(&ompi_info_f_to_c_table)) {
         return NULL;
     }
 
-    return (MPI_Info)ompi_pointer_array_get_item(&ompi_info_f_to_c_table, info_index);
+    return (MPI_Info)opal_pointer_array_get_item(&ompi_info_f_to_c_table, info_index);
 }

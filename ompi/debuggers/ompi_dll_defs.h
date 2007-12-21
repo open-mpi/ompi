@@ -139,7 +139,7 @@ typedef struct
             int size;
             int addr;
         } offset;
-    } ompi_pointer_array_t;
+    } opal_pointer_array_t;
     struct {
         int size;
         struct {

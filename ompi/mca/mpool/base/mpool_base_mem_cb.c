@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -25,7 +26,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/mca/ns/ns_types.h"
 
-ompi_pointer_array_t mca_mpool_base_mem_cb_array; 
+opal_pointer_array_t mca_mpool_base_mem_cb_array; 
 
 /*
  *  memory hook callback, called when memory is free'd out from under us

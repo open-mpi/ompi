@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -48,9 +49,9 @@ MPI_Comm MPI_Comm_f2c(MPI_Fint comm)
        return an invalid C handle. */
 
     if ( 0 > o_index ||
-         o_index >= ompi_pointer_array_get_size(&ompi_mpi_communicators)) {
+         o_index >= opal_pointer_array_get_size(&ompi_mpi_communicators)) {
         return NULL;
     }
         
-    return (MPI_Comm)ompi_pointer_array_get_item(&ompi_mpi_communicators, o_index);
+    return (MPI_Comm)opal_pointer_array_get_item(&ompi_mpi_communicators, o_index);
 }

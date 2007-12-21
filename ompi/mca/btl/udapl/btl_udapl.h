@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -30,7 +31,7 @@
 #include <dat/udat.h>
 
 /* Open MPI includes */
-#include "orte/class/orte_pointer_array.h"
+#include "opal/class/opal_pointer_array.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_bitmap.h"
 #include "opal/event/event.h"
@@ -131,7 +132,7 @@ struct mca_btl_udapl_module_t {
                                                  * endpoints in
                                                  * udapl_eager_rdma_endpoints
                                                  */
-    orte_pointer_array_t *udapl_eager_rdma_endpoints;   /* array of endpoints
+    opal_pointer_array_t *udapl_eager_rdma_endpoints;   /* array of endpoints
                                                          * with eager rdma
                                                          * connections
                                                          */

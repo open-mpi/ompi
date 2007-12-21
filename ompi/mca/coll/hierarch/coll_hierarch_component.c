@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -140,7 +141,6 @@ mca_coll_hierarch_module_construct(mca_coll_hierarch_module_t *module)
 {
     module->hier_lcomm    = MPI_COMM_NULL;
     module->hier_reqs     = NULL;
-/*    module->hier_llead    = (ompi_pointer_array_t ) NULL; */
     module->hier_colorarr = NULL;
     module->hier_llr      = NULL;
 
@@ -161,17 +161,17 @@ mca_coll_hierarch_module_destruct(mca_coll_hierarch_module_t *hierarch_module)
     }
 
 /*    if ( NULL != hierarch_module->hier_llead ) { */
-	size = ompi_pointer_array_get_size ( &(hierarch_module->hier_llead));
+	size = opal_pointer_array_get_size ( &(hierarch_module->hier_llead));
 	for ( i=0; i<size; i++) {
-	    current = (struct mca_coll_hierarch_llead_t *)ompi_pointer_array_get_item ( 
+	    current = (struct mca_coll_hierarch_llead_t *)opal_pointer_array_get_item ( 
 		&(hierarch_module->hier_llead), i ) ;
 	    if ( current->lleaders != NULL ) {
-		ompi_comm_free ( &(current->llcomm));
-		free ( current->lleaders );
+            ompi_comm_free ( &(current->llcomm));
+            free ( current->lleaders );
 	    }
 	    free ( current );
 	}
-	ompi_pointer_array_remove_all ( &(hierarch_module->hier_llead));
+	opal_pointer_array_remove_all ( &(hierarch_module->hier_llead));
 	OBJ_DESTRUCT (&(hierarch_module->hier_llead));
 /*    } */
 

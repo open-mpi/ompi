@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -61,7 +62,7 @@ int mca_rcache_vma_find(struct mca_rcache_base_module_t* rcache,
 }
 
 int mca_rcache_vma_find_all(struct mca_rcache_base_module_t* rcache,
-        void* addr, size_t size, ompi_pointer_array_t *regs)
+        void* addr, size_t size, opal_pointer_array_t *regs)
 {
     void *base_addr, *bound_addr;
 

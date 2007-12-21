@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -26,11 +27,9 @@
 
 #include "mpi.h"
 #include "opal/class/opal_object.h"
-#include "ompi/class/ompi_pointer_array.h"
+#include "opal/class/opal_pointer_array.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Back-end type for MPI error codes. 
@@ -48,7 +47,7 @@ struct ompi_mpi_errcode_t {
 };
 typedef struct ompi_mpi_errcode_t ompi_mpi_errcode_t;
 
-OMPI_DECLSPEC extern ompi_pointer_array_t ompi_mpi_errcodes;
+OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_errcodes;
 OMPI_DECLSPEC extern int ompi_mpi_errcode_lastused;
 OMPI_DECLSPEC extern int ompi_mpi_errcode_lastpredefined;
 
@@ -72,7 +71,7 @@ static inline int ompi_mpi_errcode_get_class (int errcode)
 {
     ompi_mpi_errcode_t *err;
 
-    err = (ompi_mpi_errcode_t *)ompi_pointer_array_get_item(&ompi_mpi_errcodes, errcode);
+    err = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errcode);
     /* If we get a bogus errcode, return MPI_ERR_UNKNOWN */
     if (NULL != err) {
 	if ( err->code != MPI_UNDEFINED ) { 
@@ -100,7 +99,7 @@ static inline int ompi_mpi_errnum_is_class ( int errnum )
 	return true;
     }
 
-    err = (ompi_mpi_errcode_t *)ompi_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
+    err = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
     if (NULL != err) {
 	if ( MPI_UNDEFINED == err->code) { 
 	    /* Distinction between error class and error code is that for the 
@@ -120,7 +119,7 @@ static inline char* ompi_mpi_errnum_get_string (int errnum)
 {
     ompi_mpi_errcode_t *err;
     
-    err = (ompi_mpi_errcode_t *)ompi_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
+    err = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
     /* If we get a bogus errcode, return a string indicating that this
        truly should not happen */
     if (NULL != err) {
@@ -131,62 +130,59 @@ static inline char* ompi_mpi_errnum_get_string (int errnum)
 }
 
 
-    /**
-     * Initialize the error codes
-     *
-     * @returns OMPI_SUCCESS Upon success
-     * @returns OMPI_ERROR Otherwise
-     *
-     * Invoked from ompi_mpi_init(); sets up all static MPI error codes,
-     */
-    int ompi_mpi_errcode_init(void);
+/**
+ * Initialize the error codes
+ *
+ * @returns OMPI_SUCCESS Upon success
+ * @returns OMPI_ERROR Otherwise
+ *
+ * Invoked from ompi_mpi_init(); sets up all static MPI error codes,
+ */
+int ompi_mpi_errcode_init(void);
     
-    /**
-     * Finalize the error codes.
-     *
-     * @returns OMPI_SUCCESS Always
-     *
-     * Invokes from ompi_mpi_finalize(); tears down the error code array.
-     */
-    int ompi_mpi_errcode_finalize(void);
+/**
+ * Finalize the error codes.
+ *
+ * @returns OMPI_SUCCESS Always
+ *
+ * Invokes from ompi_mpi_finalize(); tears down the error code array.
+ */
+int ompi_mpi_errcode_finalize(void);
     
-    /** 
-     * Add an error code
-     *
-     * @param: error class to which this new error code belongs to
-     *
-     * @returns the new error code on SUCCESS (>0)
-     * @returns OMPI_ERROR otherwise
-     * 
-     */
-    int ompi_mpi_errcode_add (int errclass);
+/** 
+ * Add an error code
+ *
+ * @param: error class to which this new error code belongs to
+ *
+ * @returns the new error code on SUCCESS (>0)
+ * @returns OMPI_ERROR otherwise
+ * 
+ */
+int ompi_mpi_errcode_add (int errclass);
 
-    /** 
-     * Add an error class
-     *
-     * @param: none
-     *
-     * @returns the new error class on SUCCESS (>0)
-     * @returns OMPI_ERROR otherwise
-     * 
-     */
-    int ompi_mpi_errclass_add (void);
+/** 
+ * Add an error class
+ *
+ * @param: none
+ *
+ * @returns the new error class on SUCCESS (>0)
+ * @returns OMPI_ERROR otherwise
+ * 
+ */
+int ompi_mpi_errclass_add (void);
 
-    /**
-     * Add an error string to an error code
-     *
-     * @param: error code for which the string is defined
-     * @param: error string to add
-     * @param: length of the string
-     *
-     * @returns OMPI_SUCCESS on success
-     * @returns OMPI_ERROR on error
-     */
-    int ompi_mpi_errnum_add_string (int errnum, char* string, int len);
+/**
+ * Add an error string to an error code
+ *
+ * @param: error code for which the string is defined
+ * @param: error string to add
+ * @param: length of the string
+ *
+ * @returns OMPI_SUCCESS on success
+ * @returns OMPI_ERROR on error
+ */
+int ompi_mpi_errnum_add_string (int errnum, char* string, int len);
     
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
+END_C_DECLS
 
 #endif /* OMPI_MPI_ERRCODE_H */

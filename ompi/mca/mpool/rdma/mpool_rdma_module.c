@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -358,17 +359,17 @@ int mca_mpool_rdma_release_memory(struct mca_mpool_base_module_t *mpool,
 {
     mca_mpool_rdma_module_t *mpool_rdma = (mca_mpool_rdma_module_t*)mpool;
     mca_mpool_base_registration_t *reg;
-    ompi_pointer_array_t regs;
+    opal_pointer_array_t regs;
     int reg_cnt, i, err = 0;
 
-    OBJ_CONSTRUCT(&regs, ompi_pointer_array_t);
+    OBJ_CONSTRUCT(&regs, opal_pointer_array_t);
 
     OPAL_THREAD_LOCK(&mpool->rcache->lock);
     reg_cnt = mpool->rcache->rcache_find_all(mpool->rcache, base, size, &regs);
 
     for(i = 0; i < reg_cnt; i++) {
         reg = (mca_mpool_base_registration_t*)
-            ompi_pointer_array_get_item(&regs, i);
+            opal_pointer_array_get_item(&regs, i);
 
         if(0 == reg->ref_count) {
             if(dereg_mem(mpool, reg) != OMPI_SUCCESS) {
@@ -393,7 +394,7 @@ int mca_mpool_rdma_release_memory(struct mca_mpool_base_module_t *mpool,
         }
     }
     OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-    ompi_pointer_array_remove_all(&regs);
+    opal_pointer_array_remove_all(&regs);
 
     return err?OMPI_ERROR:OMPI_SUCCESS;
 }
@@ -402,7 +403,7 @@ void mca_mpool_rdma_finalize(struct mca_mpool_base_module_t *mpool)
 {
     mca_mpool_rdma_module_t *mpool_rdma = (mca_mpool_rdma_module_t*)mpool;
     mca_mpool_base_registration_t *reg;
-    ompi_pointer_array_t regs;
+    opal_pointer_array_t regs;
     int reg_cnt, i;
 
     /* Statistic */
@@ -415,14 +416,14 @@ void mca_mpool_rdma_finalize(struct mca_mpool_base_module_t *mpool)
                 mpool_rdma->stat_evicted);
     }
 
-    OBJ_CONSTRUCT(&regs, ompi_pointer_array_t);
+    OBJ_CONSTRUCT(&regs, opal_pointer_array_t);
 
     OPAL_THREAD_LOCK(&mpool->rcache->lock);
     reg_cnt = mpool->rcache->rcache_find_all(mpool->rcache, 0, (size_t)-1, &regs);
 
     for(i = 0; i < reg_cnt; i++) {
         reg = (mca_mpool_base_registration_t*)
-            ompi_pointer_array_get_item(&regs, i);
+            opal_pointer_array_get_item(&regs, i);
 
         if(reg->ref_count) {
             reg->ref_count = 0; /* otherway dereg will fail on assert */
@@ -443,5 +444,5 @@ void mca_mpool_rdma_finalize(struct mca_mpool_base_module_t *mpool)
     OBJ_DESTRUCT(&mpool_rdma->mru_list);
     OBJ_DESTRUCT(&mpool_rdma->reg_list);
     OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-    ompi_pointer_array_remove_all(&regs);
+    opal_pointer_array_remove_all(&regs);
 }

@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -68,8 +69,7 @@ OBJ_CLASS_INSTANCE(ompi_info_entry_t,
 /*
  * The global fortran <-> C translation table
  */
-ompi_pointer_array_t ompi_info_f_to_c_table;
-
+opal_pointer_array_t ompi_info_f_to_c_table;
 
 /*
  * This function is called during ompi_init and initializes the
@@ -79,7 +79,11 @@ int ompi_info_init(void)
 {
     /* initialize table */
 
-    OBJ_CONSTRUCT(&ompi_info_f_to_c_table, ompi_pointer_array_t);
+    OBJ_CONSTRUCT(&ompi_info_f_to_c_table, opal_pointer_array_t);
+    if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_info_f_to_c_table, 0,
+                                                OMPI_FORTRAN_HANDLE_MAX, 64) ) {
+        return OMPI_ERROR;
+    }
 
     /* Create MPI_INFO_NULL */
 
@@ -303,14 +307,14 @@ int ompi_info_finalize(void)
        don't want to call OBJ_RELEASE on it. */
     
     OBJ_DESTRUCT(&ompi_mpi_info_null);
-    ompi_pointer_array_set_item(&ompi_info_f_to_c_table, 0, NULL);
+    opal_pointer_array_set_item(&ompi_info_f_to_c_table, 0, NULL);
     
     /* Go through the f2c table and see if anything is left.  Free them
        all. */
     
-    max = ompi_pointer_array_get_size(&ompi_info_f_to_c_table);
+    max = opal_pointer_array_get_size(&ompi_info_f_to_c_table);
     for (i = 0; i < max; ++i) {
-        info = (ompi_info_t *)ompi_pointer_array_get_item(&ompi_info_f_to_c_table, i);
+        info = (ompi_info_t *)opal_pointer_array_get_item(&ompi_info_f_to_c_table, i);
         
         /* If the info was freed but still exists because the user
            told us to never free handles, then do an OBJ_RELEASE it
@@ -319,7 +323,7 @@ int ompi_info_finalize(void)
         
         if (NULL != info && ompi_debug_no_free_handles && info->i_freed) {
             OBJ_RELEASE(info);
-            info = (ompi_info_t *)ompi_pointer_array_get_item(&ompi_info_f_to_c_table, i);
+            info = (ompi_info_t *)opal_pointer_array_get_item(&ompi_info_f_to_c_table, i);
         } 
         
         /* If it still exists here and was never freed, then it's an
@@ -369,7 +373,7 @@ int ompi_info_finalize(void)
  */
 static void info_constructor(ompi_info_t *info) 
 {
-    info->i_f_to_c_index = ompi_pointer_array_add(&ompi_info_f_to_c_table, 
+    info->i_f_to_c_index = opal_pointer_array_add(&ompi_info_f_to_c_table, 
                                                   info);
     info->i_lock = OBJ_NEW(opal_mutex_t);
     info->i_freed = false;
@@ -406,9 +410,9 @@ static void info_destructor(ompi_info_t *info)
        entry is in the table */
     
     if (MPI_UNDEFINED != info->i_f_to_c_index &&
-        NULL != ompi_pointer_array_get_item(&ompi_info_f_to_c_table, 
+        NULL != opal_pointer_array_get_item(&ompi_info_f_to_c_table, 
                                             info->i_f_to_c_index)){
-        ompi_pointer_array_set_item(&ompi_info_f_to_c_table, 
+        opal_pointer_array_set_item(&ompi_info_f_to_c_table, 
                                     info->i_f_to_c_index, NULL);
     }
 

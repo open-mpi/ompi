@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -40,7 +41,7 @@ extern int mca_mpool_base_disable_sbrk;
 
 
 extern int mca_mpool_base_use_mem_hooks;
-extern ompi_pointer_array_t mca_mpool_base_mem_cb_array; 
+extern opal_pointer_array_t mca_mpool_base_mem_cb_array; 
 
 mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name)
 {
@@ -102,7 +103,7 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
         if(mca_mpool_base_use_mem_hooks &&
 	       0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
               opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
-              OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, ompi_pointer_array_t);
+              OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, opal_pointer_array_t);
         }
 
 #if MPOOL_BASE_CAN_DISABLE_SBRK

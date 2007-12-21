@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -28,7 +29,7 @@
 /*
  * Table for Fortran <-> C file handle conversion
  */
-ompi_pointer_array_t ompi_file_f_to_c_table; 
+opal_pointer_array_t ompi_file_f_to_c_table; 
 
 /*
  * MPI_FILE_NULL
@@ -59,7 +60,11 @@ int ompi_file_init(void)
 {
     /* Setup file array */
 
-    OBJ_CONSTRUCT(&ompi_file_f_to_c_table, ompi_pointer_array_t); 
+    OBJ_CONSTRUCT(&ompi_file_f_to_c_table, opal_pointer_array_t); 
+    if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_file_f_to_c_table, 0,
+                                                OMPI_FORTRAN_HANDLE_MAX, 64) ) {
+        return OMPI_ERROR;
+    }
 
     /* Setup MPI_FILE_NULL.  Note that it will have the default error
        handler of MPI_ERRORS_RETURN, per MPI-2:9.7 (p265).  */
@@ -68,7 +73,7 @@ int ompi_file_init(void)
     ompi_mpi_file_null.f_comm = &ompi_mpi_comm_null;
     OBJ_RETAIN(ompi_mpi_file_null.f_comm);
     ompi_mpi_file_null.f_f_to_c_index = 0;
-    ompi_pointer_array_set_item(&ompi_file_f_to_c_table, 0,
+    opal_pointer_array_set_item(&ompi_file_f_to_c_table, 0,
                                 &ompi_mpi_file_null);
 
     /* All done */
@@ -159,14 +164,14 @@ int ompi_file_finalize(void)
      to call OBJ_RELEASE on it. */
 
     OBJ_DESTRUCT(&ompi_mpi_file_null);
-    ompi_pointer_array_set_item(&ompi_file_f_to_c_table, 0, NULL);
+    opal_pointer_array_set_item(&ompi_file_f_to_c_table, 0, NULL);
 
     /* Iterate through all the file handles and destroy them.  Note
        that this also takes care of destroying MPI_FILE_NULL. */
 
-    max = ompi_pointer_array_get_size(&ompi_file_f_to_c_table);
+    max = opal_pointer_array_get_size(&ompi_file_f_to_c_table);
     for (num_unnamed = i = 0; i < max; ++i) {
-        file = (ompi_file_t *)ompi_pointer_array_get_item(&ompi_file_f_to_c_table, i);
+        file = (ompi_file_t *)opal_pointer_array_get_item(&ompi_file_f_to_c_table, i);
         
         /* If the file was closed but still exists because the user
            told us to never free handles, then do an OBJ_RELEASE it
@@ -176,7 +181,7 @@ int ompi_file_finalize(void)
         if (NULL != file && ompi_debug_no_free_handles && 
             0 == (file->f_flags & OMPI_FILE_ISCLOSED)) {
             OBJ_RELEASE(file);
-            file = (ompi_file_t *)ompi_pointer_array_get_item(&ompi_file_f_to_c_table, i);
+            file = (ompi_file_t *)opal_pointer_array_get_item(&ompi_file_f_to_c_table, i);
         } 
         
         if (NULL != file) {
@@ -223,7 +228,7 @@ static void file_constructor(ompi_file_t *file)
 
     /* Initialize the fortran <--> C translation index */
 
-    file->f_f_to_c_index = ompi_pointer_array_add(&ompi_file_f_to_c_table, 
+    file->f_f_to_c_index = opal_pointer_array_add(&ompi_file_f_to_c_table, 
                                                   file);
 
     /* Initialize the error handler.  Per MPI-2:9.7 (p265), the
@@ -313,9 +318,9 @@ static void file_destructor(ompi_file_t *file)
     /* Reset the f_to_c table entry */
 
     if (MPI_UNDEFINED != file->f_f_to_c_index &&
-        NULL != ompi_pointer_array_get_item(&ompi_file_f_to_c_table,
+        NULL != opal_pointer_array_get_item(&ompi_file_f_to_c_table,
                                             file->f_f_to_c_index)) {
-        ompi_pointer_array_set_item(&ompi_file_f_to_c_table,
+        opal_pointer_array_set_item(&ompi_file_f_to_c_table,
                                     file->f_f_to_c_index, NULL);
     }
 }

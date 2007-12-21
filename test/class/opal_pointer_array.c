@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -17,7 +18,7 @@
  */
 
 /*
- * This test is intended to test the ompi_pointer_array
+ * This test is intended to test the opal_pointer_array
  *   class
  */
 
@@ -28,7 +29,7 @@
 #include <string.h>
 
 #include "support.h"
-#include "ompi/class/ompi_pointer_array.h"
+#include "ompi/class/opal_pointer_array.h"
 
 typedef union {
     int ivalue;
@@ -38,7 +39,7 @@ typedef union {
 static void test(bool thread_usage){
 
     /* local variables */
-    ompi_pointer_array_t *array;
+    opal_pointer_array_t *array;
     value_t *test_data;
     int len_test_data,i,test_len_in_array,error_cnt;
     int ele_index;
@@ -48,7 +49,7 @@ static void test(bool thread_usage){
     /* initialize thread levels */
     use_threads=(int)opal_set_using_threads(thread_usage);
     
-    array=OBJ_NEW(ompi_pointer_array_t);
+    array=OBJ_NEW(opal_pointer_array_t);
     assert(array);
 
     len_test_data=5;
@@ -63,7 +64,7 @@ static void test(bool thread_usage){
     test_len_in_array=3;
     assert(len_test_data>=test_len_in_array);
     for(i=0 ; i < test_len_in_array ; i++ ) {
-        ompi_pointer_array_add(array,test_data[i].cvalue);
+        opal_pointer_array_add(array,test_data[i].cvalue);
     }
     /* check to see that test_len_in_array are in array */
     if( (array->size - array->number_free) == test_len_in_array) {
@@ -89,11 +90,11 @@ static void test(bool thread_usage){
     /* free 2nd element and make sure that value is reset correctly,
      *   and that the lowest_index is also reset correctly */
     ele_index=1;
-    error_code=ompi_pointer_array_set_item(array,ele_index,NULL);
+    error_code=opal_pointer_array_set_item(array,ele_index,NULL);
     if( 0 == error_code ) {
         test_success();
     } else {
-        test_failure(" ompi_pointer_array_set_item ");
+        test_failure(" opal_pointer_array_set_item ");
     }
     if( NULL == array->addr[ele_index]){
         test_success();
@@ -106,7 +107,7 @@ static void test(bool thread_usage){
         test_failure(" lowest free ");
     }
 
-    /* test ompi_pointer_array_get_item */
+    /* test opal_pointer_array_get_item */
     array->number_free=array->size;
     array->lowest_free=0;
     for(i=0 ; i < array->size ; i++ ) {
@@ -115,7 +116,7 @@ static void test(bool thread_usage){
     error_cnt=0;
     for(i=0 ; i < array->size ; i++ ) {
         value.ivalue = i + 2;
-        ele_index=ompi_pointer_array_add(array, value.cvalue);
+        ele_index=opal_pointer_array_add(array, value.cvalue);
         if( i != ele_index ) {
             error_cnt++;
         }
@@ -123,12 +124,12 @@ static void test(bool thread_usage){
     if( 0 == error_cnt ) {
         test_success();
     } else {
-        test_failure(" ompi_pointer_array_add 2nd ");
+        test_failure(" opal_pointer_array_add 2nd ");
     }
 
     error_cnt=0;
     for(i=0 ; i < array->size ; i++ ) {
-        value.cvalue = ompi_pointer_array_get_item(array,i);
+        value.cvalue = opal_pointer_array_get_item(array,i);
         if( (i+2) != value.ivalue ) {
             error_cnt++;
         }
@@ -146,7 +147,7 @@ static void test(bool thread_usage){
 
 int main(int argc, char **argv)
 {
-    test_init("ompi_pointer_array");
+    test_init("opal_pointer_array");
 
     /* run through tests with thread usage set to false */
     test(false);

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -356,7 +357,8 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
                            NULL);
 
     /* initialize eager rdma buffer info */
-    orte_pointer_array_init(&btl->udapl_eager_rdma_endpoints, 
+    btl->udapl_eager_rdma_endpoints = OBJ_NEW(opal_pointer_array_t);
+    opal_pointer_array_init(btl->udapl_eager_rdma_endpoints, 
         mca_btl_udapl_component.udapl_max_eager_rdma_peers,
         mca_btl_udapl_component.udapl_max_eager_rdma_peers, 
         0);
@@ -393,7 +395,7 @@ int mca_btl_udapl_finalize(struct mca_btl_base_module_t* base_btl)
      */
     for (i=0; i < udapl_btl->udapl_eager_rdma_endpoint_count; i++) {
         mca_btl_udapl_endpoint_t* endpoint =
-            orte_pointer_array_get_item(udapl_btl->udapl_eager_rdma_endpoints,
+            opal_pointer_array_get_item(udapl_btl->udapl_eager_rdma_endpoints,
                 i);
 
         OBJ_DESTRUCT(endpoint);

@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -138,7 +139,7 @@ int btl_openib_component_open(void)
     /* initialize state */
     mca_btl_openib_component.ib_num_btls = 0;
     mca_btl_openib_component.openib_btls = NULL;
-    OBJ_CONSTRUCT(&mca_btl_openib_component.hcas, ompi_pointer_array_t);
+    OBJ_CONSTRUCT(&mca_btl_openib_component.hcas, opal_pointer_array_t);
     mca_btl_openib_component.hcas_count = 0;
 
     /* initialize objects */ 
@@ -726,8 +727,9 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         hca->progress = false;
 #endif
 #endif
-        orte_pointer_array_init(&hca->endpoints, 10, INT_MAX, 10);
-        ompi_pointer_array_add(&mca_btl_openib_component.hcas, hca);
+        hca->endpoints = OBJ_NEW(opal_pointer_array_t);
+        opal_pointer_array_init(hca->endpoints, 10, INT_MAX, 10);
+        opal_pointer_array_add(&mca_btl_openib_component.hcas, hca);
         mca_btl_openib_component.hcas_count++;
         return OMPI_SUCCESS;
     }
@@ -908,7 +910,8 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
         }
     }
 
-    orte_pointer_array_init(&openib_btl->eager_rdma_buffers, 
+    opanib_btl->eager_rdma_buffers = OBJ_NEW(opal_pointer_array_t);
+    opal_pointer_array_init(openib_btl->eager_rdma_buffers, 
             mca_btl_openib_component.max_eager_rdma,
             mca_btl_openib_component.max_eager_rdma, 
             0);
@@ -1530,7 +1533,7 @@ static int btl_openib_component_progress(void)
 
         for(j = 0; j < c; j++) {
             endpoint = 
-                orte_pointer_array_get_item(openib_btl->eager_rdma_buffers, j);
+                opal_pointer_array_get_item(openib_btl->eager_rdma_buffers, j);
 
             if(!endpoint) /* shouldn't happen */
                 continue;
@@ -1580,7 +1583,7 @@ static int btl_openib_component_progress(void)
 
     for(i = 0; i < mca_btl_openib_component.hcas_count; i++) {
         mca_btl_openib_hca_t *hca =
-            ompi_pointer_array_get_item(&mca_btl_openib_component.hcas, i);
+            opal_pointer_array_get_item(&mca_btl_openib_component.hcas, i);
         count += btl_openib_module_progress(hca);
     }
 
@@ -1676,7 +1679,7 @@ static int btl_openib_module_progress(mca_btl_openib_hca_t* hca)
             case IBV_WC_RECV:
                 if(wc.wc_flags & IBV_WC_WITH_IMM) {
                     endpoint = (mca_btl_openib_endpoint_t*)
-                        orte_pointer_array_get_item(hca->endpoints, wc.imm_data);
+                        opal_pointer_array_get_item(hca->endpoints, wc.imm_data);
                     frag->endpoint = endpoint;
                     openib_btl = endpoint->endpoint_btl;
                 }

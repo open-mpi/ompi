@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
@@ -75,7 +76,7 @@ mca_pml_base_module_t mca_pml = {
 
 opal_list_t mca_pml_base_components_available;
 mca_pml_base_component_t mca_pml_base_selected_component;
-ompi_pointer_array_t mca_pml_base_pml;
+opal_pointer_array_t mca_pml_base_pml;
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -123,10 +124,9 @@ int mca_pml_base_open(void)
      * uses BTLs and any other PMLs that do not in the mca_pml_base_pml array.
      */
 
-    OBJ_CONSTRUCT(&mca_pml_base_pml, ompi_pointer_array_t);
-    
+    OBJ_CONSTRUCT(&mca_pml_base_pml, opal_pointer_array_t);
 #if MCA_pml_DIRECT_CALL
-    ompi_pointer_array_add(&mca_pml_base_pml, 
+    opal_pointer_array_add(&mca_pml_base_pml, 
                            stringify(MCA_pml_DIRECT_CALL_COMPONENT));
 #else
     {
@@ -137,10 +137,10 @@ int mca_pml_base_open(void)
                                        false, false, "", &default_pml);
         
         if(0 == strlen(default_pml)){ 
-            ompi_pointer_array_add(&mca_pml_base_pml, strdup("ob1")); 
-            ompi_pointer_array_add(&mca_pml_base_pml, strdup("cm"));
+            opal_pointer_array_add(&mca_pml_base_pml, strdup("ob1")); 
+            opal_pointer_array_add(&mca_pml_base_pml, strdup("cm"));
         } else { 
-            ompi_pointer_array_add(&mca_pml_base_pml, strdup(default_pml));
+            opal_pointer_array_add(&mca_pml_base_pml, strdup(default_pml));
         }
     }
 #if OPAL_ENABLE_FT == 1
@@ -154,7 +154,7 @@ int mca_pml_base_open(void)
                                    false, false,
                                    NULL, &wrapper_pml);
     if( NULL != wrapper_pml ) {
-        ompi_pointer_array_add(&mca_pml_base_pml, strdup(wrapper_pml));
+        opal_pointer_array_add(&mca_pml_base_pml, strdup(wrapper_pml));
     }
 #endif
 

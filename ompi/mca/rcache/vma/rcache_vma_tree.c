@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /**
   * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
   *                         University Research and Technology
   *                         Corporation.  All rights reserved.
-  * Copyright (c) 2004-2005 The University of Tennessee and The University
+  * Copyright (c) 2004-2007 The University of Tennessee and The University
   *                         of Tennessee Research Foundation.  All rights
   *                         reserved.
   * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -285,12 +286,12 @@ mca_mpool_base_registration_t *mca_rcache_vma_tree_find(
     return NULL;
 }
 
-static inline bool is_reg_in_array(ompi_pointer_array_t *regs, void *p)
+static inline bool is_reg_in_array(opal_pointer_array_t *regs, void *p)
 {
     int i;
 
-    for(i = 0; i < ompi_pointer_array_get_size(regs); i++) {
-        if(ompi_pointer_array_get_item(regs, i) == p)
+    for(i = 0; i < opal_pointer_array_get_size(regs); i++) {
+        if(opal_pointer_array_get_item(regs, i) == p)
             return true;
     }
 
@@ -299,7 +300,7 @@ static inline bool is_reg_in_array(ompi_pointer_array_t *regs, void *p)
 
 int mca_rcache_vma_tree_find_all(
         mca_rcache_vma_module_t *vma_rcache, unsigned char *base,
-        unsigned char *bound, ompi_pointer_array_t *regs)
+        unsigned char *bound, opal_pointer_array_t *regs)
 {
     int cnt = 0;
 
@@ -330,7 +331,7 @@ int mca_rcache_vma_tree_find_all(
             if(is_reg_in_array(regs, (void*)vma_item->reg)) {
                 continue;
             }
-            ompi_pointer_array_add(regs, (void*)vma_item->reg);
+            opal_pointer_array_add(regs, (void*)vma_item->reg);
             cnt++;
         }
 

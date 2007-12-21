@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -57,46 +58,44 @@ extern int mca_coll_hierarch_symmetric_param;
 */
 
 struct mca_coll_hierarch_module_t {
-        struct mca_coll_base_module_1_1_0_t super;
+    struct mca_coll_base_module_1_1_0_t super;
 
-	struct ompi_communicator_t        *hier_comm; /* link back to the attached comm */ 
-	struct ompi_communicator_t       *hier_lcomm; /* low level communicator */
-	ompi_pointer_array_t              hier_llead; /* local leader communicator structure */
-	int                        hier_num_lleaders; /* number of local leaders */
-	int                               hier_level; /* level in the hierarchy. For debugging*/
- 	int                            hier_num_reqs; /* num. of requests */
-	ompi_request_t                   **hier_reqs; /* list of requests */
-	int                        hier_num_colorarr; /* size of the colorarr array */
-	int                                *hier_llr; /* color array compacted (1 entry per color).
-						         Array of size hier_num_lleaders */
-	int                         *hier_max_offset; /* Number of processes for each color. 
-							 Array of size hier_num_lleaders */
-	int                           *hier_colorarr; /* array containing the color of all procs */
+    struct ompi_communicator_t        *hier_comm; /* link back to the attached comm */ 
+    struct ompi_communicator_t       *hier_lcomm; /* low level communicator */
+    opal_pointer_array_t              hier_llead; /* local leader communicator structure */
+    int                        hier_num_lleaders; /* number of local leaders */
+    int                               hier_level; /* level in the hierarchy. For debugging*/
+    int                            hier_num_reqs; /* num. of requests */
+    ompi_request_t                   **hier_reqs; /* list of requests */
+    int                        hier_num_colorarr; /* size of the colorarr array */
+    int                                *hier_llr; /* color array compacted (1 entry per color).
+                                                     Array of size hier_num_lleaders */
+    int                         *hier_max_offset; /* Number of processes for each color. 
+                                                     Array of size hier_num_lleaders */
+    int                           *hier_colorarr; /* array containing the color of all procs */
 };
 typedef struct mca_coll_hierarch_module_t mca_coll_hierarch_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_hierarch_module_t);
 
-
-    struct mca_coll_hierarch_llead_t {
-	struct ompi_communicator_t    *llcomm; /* local leader communicator */
-	int                         *lleaders; /* list of local leaders, ranks in comm */
-	int                        my_lleader; /* rank of my lleader in lcomm */
-	int                        am_lleader; /* am I an lleader? */
-	int                            offset; /* Offset used for this llcomm */
-    };
+struct mca_coll_hierarch_llead_t {
+    struct ompi_communicator_t    *llcomm; /* local leader communicator */
+    int                         *lleaders; /* list of local leaders, ranks in comm */
+    int                        my_lleader; /* rank of my lleader in lcomm */
+    int                        am_lleader; /* am I an lleader? */
+    int                            offset; /* Offset used for this llcomm */
+};
     
     typedef struct mca_coll_hierarch_llead_t mca_coll_hierarch_llead_t;
 
 
 static inline int mca_coll_hierarch_count_lleaders ( int size, int *carr)
 {
-
-/* 
- * Determine the number of local leaders. Please note, that any process
- * with color = MPI_UNDEFINED will be counted as the head of a group of its own.
- * Please note furthermore, that every process with color=MPI_UNDEFINED will be
- * stored in this array on its own...
- */ 
+    /* 
+     * Determine the number of local leaders. Please note, that any process
+     * with color = MPI_UNDEFINED will be counted as the head of a group of its own.
+     * Please note furthermore, that every process with color=MPI_UNDEFINED will be
+     * stored in this array on its own...
+     */ 
     int cnt, i, j, found;
     int *llr=NULL;
 

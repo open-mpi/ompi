@@ -283,7 +283,7 @@ const ompi_datatype_t* ompi_ddt_basicDatatypes[DT_MAX_PREDEFINED] = {
     &ompi_mpi_unavailable
 };
 
-ompi_pointer_array_t *ompi_datatype_f_to_c_table = NULL;
+opal_pointer_array_t ompi_datatype_f_to_c_table;
 
 size_t ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 
@@ -430,8 +430,9 @@ int32_t ompi_ddt_init( void )
     }
 
     /* Create the f2c translation table */
-    ompi_datatype_f_to_c_table = OBJ_NEW(ompi_pointer_array_t);
-    if (NULL == ompi_datatype_f_to_c_table) {
+    OBJ_CONSTRUCT(&ompi_datatype_f_to_c_table, opal_pointer_array_t);
+    if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_datatype_f_to_c_table,
+                                                0, OMPI_FORTRAN_HANDLE_MAX, 64)) {
         return OMPI_ERROR;
     }
     /* All temporary datatypes created on the following statement will get registered
@@ -647,12 +648,12 @@ int32_t ompi_ddt_init( void )
     /* This macro makes everything significantly easier to read below.
        All hail the moog!  :-) */
 
-#define MOOG(name)                                                      \
-    {                                                                   \
-        ompi_mpi_##name.d_f_to_c_index =                                \
-            ompi_pointer_array_add(ompi_datatype_f_to_c_table, &ompi_mpi_##name); \
+#define MOOG(name)                                                                  \
+    {                                                                               \
+        ompi_mpi_##name.d_f_to_c_index =                                            \
+            opal_pointer_array_add(&ompi_datatype_f_to_c_table, &ompi_mpi_##name);  \
         if( ompi_ddt_number_of_predefined_data < (ompi_mpi_##name).d_f_to_c_index ) \
-            ompi_ddt_number_of_predefined_data = (ompi_mpi_##name).d_f_to_c_index; \
+            ompi_ddt_number_of_predefined_data = (ompi_mpi_##name).d_f_to_c_index;  \
     }
 
     /*
@@ -723,7 +724,7 @@ int32_t ompi_ddt_init( void )
     MOOG(cxx_ldblcplex);
 
     for( i = 0; i < ompi_mpi_cxx_ldblcplex.d_f_to_c_index; i++ ) {
-        ompi_datatype_t* datatype = (ompi_datatype_t*)ompi_pointer_array_get_item( ompi_datatype_f_to_c_table, i );
+        ompi_datatype_t* datatype = (ompi_datatype_t*)opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, i );
 
         if( (datatype->ub - datatype->lb) == (ptrdiff_t)datatype->size ) {
             datatype->flags |= DT_FLAG_NO_GAPS;
@@ -752,7 +753,7 @@ int32_t ompi_ddt_finalize( void )
     }
 
     /* Get rid of the Fortran2C translation table */
-    OBJ_RELEASE(ompi_datatype_f_to_c_table);
+    OBJ_DESTRUCT(&ompi_datatype_f_to_c_table);
 
 #if defined(VERBOSE)
     if( ompi_ddt_dfd != -1 )

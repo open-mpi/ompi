@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -25,12 +26,12 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "opal/class/opal_object.h"
-#include "ompi/class/ompi_pointer_array.h"
+#include "opal/class/opal_pointer_array.h"
 
 #define OMPI_MAX_ERROR_STRING 64
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+
+BEGIN_C_DECLS
+
 /**
  * Back-end type for MPI error codes
  */
@@ -43,7 +44,7 @@ struct ompi_errcode_intern_t {
 };
 typedef struct ompi_errcode_intern_t ompi_errcode_intern_t;
 
-OMPI_DECLSPEC extern ompi_pointer_array_t ompi_errcodes_intern;
+OMPI_DECLSPEC extern opal_pointer_array_t ompi_errcodes_intern;
 OMPI_DECLSPEC extern int ompi_errcode_intern_lastused;
 
 /** 
@@ -64,7 +65,7 @@ static inline int ompi_errcode_get_mpi_code(int errcode)
     /* Otherwise, it's an internal OMPI code and we need to translate
        it */
     for ( __i=0; __i<ompi_errcode_intern_lastused; __i++) {
-        __errc = (ompi_errcode_intern_t *)ompi_pointer_array_get_item(&ompi_errcodes_intern, __i);
+        __errc = (ompi_errcode_intern_t *)opal_pointer_array_get_item(&ompi_errcodes_intern, __i);
         if ( __errc->code == errcode ) {
             __ret = __errc->mpi_code;
             break;
@@ -73,30 +74,25 @@ static inline int ompi_errcode_get_mpi_code(int errcode)
     return __ret;
 }
 
-
-
-    /**
-     * Initialize the error codes
-     *
-     * @returns OMPI_SUCCESS Upon success
-     * @returns OMPI_ERROR Otherwise
-     *
-     * Invoked from ompi_mpi_init(); sets up all static MPI error codes,
-     */
-    int ompi_errcode_intern_init(void);
+/**
+ * Initialize the error codes
+ *
+ * @returns OMPI_SUCCESS Upon success
+ * @returns OMPI_ERROR Otherwise
+ *
+ * Invoked from ompi_mpi_init(); sets up all static MPI error codes,
+ */
+int ompi_errcode_intern_init(void);
     
-    /**
-     * Finalize the error codes.
-     *
-     * @returns OMPI_SUCCESS Always
-     *
-     * Invokes from ompi_mpi_finalize(); tears down the error code array.
-     */
-    int ompi_errcode_intern_finalize(void);
+/**
+ * Finalize the error codes.
+ *
+ * @returns OMPI_SUCCESS Always
+ *
+ * Invokes from ompi_mpi_finalize(); tears down the error code array.
+ */
+int ompi_errcode_intern_finalize(void);
         
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
+END_C_DECLS
 
 #endif /* OMPI_ERRCODE_INTERNAL_H */

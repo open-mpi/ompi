@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -39,7 +40,7 @@
 ** on cid.
 ** 
 */
-ompi_pointer_array_t ompi_mpi_communicators; 
+opal_pointer_array_t ompi_mpi_communicators; 
 
 ompi_communicator_t  ompi_mpi_comm_world;
 ompi_communicator_t  ompi_mpi_comm_self;
@@ -66,8 +67,11 @@ int ompi_comm_init(void)
     size_t size;
 
     /* Setup communicator array */
-    OBJ_CONSTRUCT(&ompi_mpi_communicators, ompi_pointer_array_t); 
-
+    OBJ_CONSTRUCT(&ompi_mpi_communicators, opal_pointer_array_t); 
+    if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_mpi_communicators, 0,
+                                                OMPI_FORTRAN_HANDLE_MAX, 64) ) {
+        return OMPI_ERROR;
+    }
 
     /* Setup MPI_COMM_WORLD */
     OBJ_CONSTRUCT(&ompi_mpi_comm_world, ompi_communicator_t);
@@ -91,7 +95,7 @@ int ompi_comm_init(void)
     ompi_mpi_comm_world.error_handler  = &ompi_mpi_errors_are_fatal;
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_world);
-    ompi_pointer_array_set_item (&ompi_mpi_communicators, 0, &ompi_mpi_comm_world);
+    opal_pointer_array_set_item (&ompi_mpi_communicators, 0, &ompi_mpi_comm_world);
 
     strncpy (ompi_mpi_comm_world.c_name, "MPI_COMM_WORLD", 
              strlen("MPI_COMM_WORLD")+1 );
@@ -124,7 +128,7 @@ int ompi_comm_init(void)
     ompi_mpi_comm_self.error_handler  = &ompi_mpi_errors_are_fatal;
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_self);
-    ompi_pointer_array_set_item (&ompi_mpi_communicators, 1, &ompi_mpi_comm_self);
+    opal_pointer_array_set_item (&ompi_mpi_communicators, 1, &ompi_mpi_comm_self);
 
     strncpy(ompi_mpi_comm_self.c_name,"MPI_COMM_SELF",strlen("MPI_COMM_SELF")+1);
     ompi_mpi_comm_self.c_flags |= OMPI_COMM_NAMEISSET;
@@ -148,7 +152,7 @@ int ompi_comm_init(void)
 
     ompi_mpi_comm_null.error_handler  = &ompi_mpi_errors_are_fatal;
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
-    ompi_pointer_array_set_item (&ompi_mpi_communicators, 2, &ompi_mpi_comm_null);
+    opal_pointer_array_set_item (&ompi_mpi_communicators, 2, &ompi_mpi_comm_null);
 
     strncpy(ompi_mpi_comm_null.c_name,"MPI_COMM_NULL",strlen("MPI_COMM_NULL")+1);
     ompi_mpi_comm_null.c_flags |= OMPI_COMM_NAMEISSET;
@@ -240,13 +244,13 @@ int ompi_comm_finalize(void)
     OBJ_DESTRUCT( &ompi_mpi_comm_null );
 
     /* Check whether we have some communicators left */
-    max = ompi_pointer_array_get_size(&ompi_mpi_communicators);
+    max = opal_pointer_array_get_size(&ompi_mpi_communicators);
     for ( i=3; i<max; i++ ) {
-        comm = (ompi_communicator_t *)ompi_pointer_array_get_item(&ompi_mpi_communicators, i);
+        comm = (ompi_communicator_t *)opal_pointer_array_get_item(&ompi_mpi_communicators, i);
         if ( NULL != comm ) {
             /* Communicator has not been freed before finalize */
             OBJ_RELEASE(comm);
-            comm=(ompi_communicator_t *)ompi_pointer_array_get_item(&ompi_mpi_communicators, i);
+            comm=(ompi_communicator_t *)opal_pointer_array_get_item(&ompi_mpi_communicators, i);
             if ( NULL != comm ) {
                 /* Still here ? */
                 if ( ompi_debug_show_handle_leaks && !(OMPI_COMM_IS_FREED(comm)) ){
@@ -411,9 +415,9 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
 
     /* reset the ompi_comm_f_to_c_table entry */
     if ( MPI_UNDEFINED != comm->c_f_to_c_index && 
-         NULL != ompi_pointer_array_get_item(&ompi_mpi_communicators,
+         NULL != opal_pointer_array_get_item(&ompi_mpi_communicators,
                                              comm->c_f_to_c_index )) {
-        ompi_pointer_array_set_item ( &ompi_mpi_communicators,
+        opal_pointer_array_set_item ( &ompi_mpi_communicators,
                                       comm->c_f_to_c_index, NULL);
     }
 

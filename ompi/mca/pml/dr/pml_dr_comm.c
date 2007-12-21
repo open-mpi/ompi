@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -54,7 +55,7 @@ static void mca_pml_dr_comm_construct(mca_pml_dr_comm_t* comm)
 {
     OBJ_CONSTRUCT(&comm->wild_receives, opal_list_t);
     OBJ_CONSTRUCT(&comm->matching_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&comm->sparse_procs, ompi_pointer_array_t);
+    OBJ_CONSTRUCT(&comm->sparse_procs, opal_pointer_array_t);
     comm->recv_sequence = 0;
     comm->procs = NULL;
     comm->num_procs = 0;
@@ -104,7 +105,7 @@ int mca_pml_dr_comm_init(mca_pml_dr_comm_t* dr_comm, ompi_communicator_t* ompi_c
         ompi_proc = ompi_group_peer_lookup(ompi_comm->c_remote_group,i);
         proc->ompi_proc = ompi_proc;
         pml_ep = (mca_pml_dr_endpoint_t*) ompi_proc->proc_pml;
-        ompi_pointer_array_set_item(&dr_comm->sparse_procs, 
+        opal_pointer_array_set_item(&dr_comm->sparse_procs, 
                                     pml_ep->dst,  /* from our view this is the 
                                                   peers source 'global rank' */
                                     proc); 

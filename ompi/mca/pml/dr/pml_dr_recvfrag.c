@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -51,7 +52,7 @@ do {                                                                            
             return;                                                                            \
         }                                                                                      \
     }                                                                                          \
-    ep = (mca_pml_dr_endpoint_t*)ompi_pointer_array_get_item(&mca_pml_dr.endpoints, hdr->hdr_common.hdr_src);          \
+    ep = (mca_pml_dr_endpoint_t*)opal_pointer_array_get_item(&mca_pml_dr.endpoints, hdr->hdr_common.hdr_src);          \
     assert(ep != NULL);                                                                        \
     if(ompi_seq_tracker_check_duplicate(&ep->seq_sends, hdr->hdr_common.hdr_vid)) {            \
         MCA_PML_DR_DEBUG(0, (0, "%s:%d: dropping duplicate ack, vfrag ID %d", \
@@ -138,7 +139,7 @@ void mca_pml_dr_recv_frag_callback(
                                      __FILE__, __LINE__, hdr->hdr_common.hdr_src, hdr->hdr_common.hdr_dst));            
                 return;                                                                                
             } 
-            ep = (mca_pml_dr_endpoint_t*)ompi_pointer_array_get_item(&mca_pml_dr.endpoints, hdr->hdr_common.hdr_src);              
+            ep = (mca_pml_dr_endpoint_t*)opal_pointer_array_get_item(&mca_pml_dr.endpoints, hdr->hdr_common.hdr_src);              
             assert(ep != NULL);                                                                        
 
             if(ompi_seq_tracker_check_duplicate(&ep->seq_recvs, hdr->hdr_common.hdr_vid)) {    
@@ -158,8 +159,8 @@ void mca_pml_dr_recv_frag_callback(
                 return;                                                                                
             }                                                                                          
             comm = (mca_pml_dr_comm_t*)ompi_comm->c_pml_comm;                                          
-            assert(hdr->hdr_common.hdr_src < ompi_pointer_array_get_size(&comm->sparse_procs));        
-            proc = (mca_pml_dr_comm_proc_t*)ompi_pointer_array_get_item(&comm->sparse_procs, hdr->hdr_common.hdr_src);          
+            assert(hdr->hdr_common.hdr_src < opal_pointer_array_get_size(&comm->sparse_procs));        
+            proc = (mca_pml_dr_comm_proc_t*)opal_pointer_array_get_item(&comm->sparse_procs, hdr->hdr_common.hdr_src);          
             assert(proc != NULL);                                                                      
             assert(ep == proc->pml_endpoint);                                                              
             mca_pml_dr_recv_frag_match(comm,proc,btl,&hdr->hdr_match,segments,des->des_dst_cnt);
@@ -188,7 +189,7 @@ void mca_pml_dr_recv_frag_callback(
                                      __FILE__, __LINE__, hdr->hdr_common.hdr_src, hdr->hdr_common.hdr_dst));
                 return;
             } 
-            ep = (mca_pml_dr_endpoint_t*)ompi_pointer_array_get_item(&mca_pml_dr.endpoints, hdr->hdr_common.hdr_src);
+            ep = (mca_pml_dr_endpoint_t*)opal_pointer_array_get_item(&mca_pml_dr.endpoints, hdr->hdr_common.hdr_src);
             assert(ep != NULL);
             
             /* seq_recvs protected by matching lock */
@@ -211,8 +212,8 @@ void mca_pml_dr_recv_frag_callback(
                     }
                 }
                 comm = (mca_pml_dr_comm_t*)ompi_comm->c_pml_comm;
-                assert(hdr->hdr_common.hdr_src < ompi_pointer_array_get_size(&comm->sparse_procs));
-                proc = (mca_pml_dr_comm_proc_t*)ompi_pointer_array_get_item(&comm->sparse_procs, hdr->hdr_common.hdr_src);
+                assert(hdr->hdr_common.hdr_src < opal_pointer_array_get_size(&comm->sparse_procs));
+                proc = (mca_pml_dr_comm_proc_t*)opal_pointer_array_get_item(&comm->sparse_procs, hdr->hdr_common.hdr_src);
                 assert(proc != NULL);
                 assert(ep == proc->pml_endpoint);
                 
@@ -243,8 +244,8 @@ void mca_pml_dr_recv_frag_callback(
                     orte_errmgr.abort();
                 }
                 comm = (mca_pml_dr_comm_t*)ompi_comm->c_pml_comm;
-                assert(hdr->hdr_common.hdr_src < ompi_pointer_array_get_size(&comm->sparse_procs));
-                proc = (mca_pml_dr_comm_proc_t*)ompi_pointer_array_get_item(&comm->sparse_procs, hdr->hdr_common.hdr_src);
+                assert(hdr->hdr_common.hdr_src < opal_pointer_array_get_size(&comm->sparse_procs));
+                proc = (mca_pml_dr_comm_proc_t*)opal_pointer_array_get_item(&comm->sparse_procs, hdr->hdr_common.hdr_src);
                 assert(proc != NULL);
                 assert(ep == proc->pml_endpoint);
                 mca_pml_dr_recv_frag_match(comm,proc,btl,&hdr->hdr_match,segments,des->des_dst_cnt);
@@ -274,7 +275,7 @@ void mca_pml_dr_recv_frag_callback(
                              __FILE__, __LINE__, hdr->hdr_common.hdr_src, hdr->hdr_common.hdr_dst));
                 return;                                                                                
             } 
-            ep = (mca_pml_dr_endpoint_t*)ompi_pointer_array_get_item(&mca_pml_dr.endpoints, hdr->hdr_common.hdr_src);
+            ep = (mca_pml_dr_endpoint_t*)opal_pointer_array_get_item(&mca_pml_dr.endpoints, hdr->hdr_common.hdr_src);
             assert(ep != NULL);                                                                        
             
             /* seq_recvs protected by matching lock */
@@ -292,8 +293,8 @@ void mca_pml_dr_recv_frag_callback(
                     orte_errmgr.abort();
                 }
                 comm = (mca_pml_dr_comm_t*)ompi_comm->c_pml_comm;                                          
-                assert(hdr->hdr_common.hdr_src < ompi_pointer_array_get_size(&comm->sparse_procs));        
-                proc = (mca_pml_dr_comm_proc_t*)ompi_pointer_array_get_item(&comm->sparse_procs, hdr->hdr_common.hdr_src);          
+                assert(hdr->hdr_common.hdr_src < opal_pointer_array_get_size(&comm->sparse_procs));        
+                proc = (mca_pml_dr_comm_proc_t*)opal_pointer_array_get_item(&comm->sparse_procs, hdr->hdr_common.hdr_src);          
                 assert(proc != NULL);                                                                      
                 assert(ep == proc->pml_endpoint); 
                 
@@ -927,7 +928,7 @@ rematch:
                  *   look only at "specific" receives, or "wild" receives,
                  *   or if we need to traverse both sets at the same time.
                  */
-                proc = (mca_pml_dr_comm_proc_t*)ompi_pointer_array_get_item(&comm->sparse_procs, 
+                proc = (mca_pml_dr_comm_proc_t*)opal_pointer_array_get_item(&comm->sparse_procs, 
                                                                             hdr->hdr_common.hdr_src);
                 
                 if (opal_list_get_size(&proc->specific_receives) == 0 ) {

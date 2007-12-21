@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -17,8 +18,8 @@
  */
 /** @file
  *
- * See ompi_bitmap.h for an explanation of why there is a split
- * between OMPI and ORTE for this generic class.
+ * See opal_bitmap.h for an explanation of why there is a split
+ * between OPAL and ORTE for this generic class.
  *
  * Utility functions to manage fortran <-> c opaque object
  * translation.  Note that since MPI defines fortran handles as
@@ -28,22 +29,20 @@
  * INTEGER max)), just to be sure.
  */
 
-#ifndef OMPI_POINTER_ARRAY_H
-#define OMPI_POINTER_ARRAY_H
+#ifndef OPAL_POINTER_ARRAY_H
+#define OPAL_POINTER_ARRAY_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/threads/mutex.h"
 #include "opal/class/opal_object.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * dynamic pointer array
  */
-struct ompi_pointer_array_t {
+struct opal_pointer_array_t {
     /** base class */
     opal_object_t super;
     /** synchronization object */
@@ -57,17 +56,39 @@ struct ompi_pointer_array_t {
     int number_free;
     /** size of list, i.e. number of elements in addr */
     int size;
+    /** maximum size of the array */
+    int max_size;
+    /** block size for each allocation */
+    int block_size;
     /** pointer to array of pointers */
     void **addr;
 };
 /**
  * Convenience typedef
  */
-typedef struct ompi_pointer_array_t ompi_pointer_array_t;
+typedef struct opal_pointer_array_t opal_pointer_array_t;
 /**
  * Class declaration
  */
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_pointer_array_t);
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_pointer_array_t);
+
+/**
+ * Initialize the pointer array with an initial size of initial_allocation.
+ * Set the maximum size of the array, as well as the size of the allocation
+ * block for all subsequent growing operations. Remarque: The pointer array
+ * has to be created bfore calling this function.
+ *
+ * @param array Pointer to pointer of an array (IN/OUT)
+ * @param initial_allocation The number of elements in the initial array (IN)
+ * @param max_size The maximum size of the array (IN)
+ * @param block_size The size for all subsequent grows of the array (IN).
+ *
+ * @return OPAL_SUCCESS if all initializations were succesfull. Otherwise,
+ *  the error indicate what went wrong in the function.
+ */
+OPAL_DECLSPEC int opal_pointer_array_init( opal_pointer_array_t* array,
+                                           int initial_allocation,
+                                           int max_size, int block_size );
 
 /**
  * Add a pointer to the array (Grow the array, if need be)
@@ -78,7 +99,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_pointer_array_t);
  * @return Index of inserted array element.  Return value of
  *  (-1) indicates an error.
  */
-OMPI_DECLSPEC int ompi_pointer_array_add(ompi_pointer_array_t *array, void *ptr);
+OPAL_DECLSPEC int opal_pointer_array_add(opal_pointer_array_t *array, void *ptr);
 
 /**
  * Set the value of an element in array
@@ -89,7 +110,7 @@ OMPI_DECLSPEC int ompi_pointer_array_add(ompi_pointer_array_t *array, void *ptr)
  *
  * @return Error code.  (-1) indicates an error.
  */
-OMPI_DECLSPEC int ompi_pointer_array_set_item(ompi_pointer_array_t *array, 
+OPAL_DECLSPEC int opal_pointer_array_set_item(opal_pointer_array_t *array, 
                                 int index, void *value);
 
 /**
@@ -101,7 +122,7 @@ OMPI_DECLSPEC int ompi_pointer_array_set_item(ompi_pointer_array_t *array,
  * @return Error code.  NULL indicates an error.
  */
 
-static inline void *ompi_pointer_array_get_item(ompi_pointer_array_t *table, 
+static inline void *opal_pointer_array_get_item(opal_pointer_array_t *table, 
                                                 int element_index)
 {
     void *p;
@@ -126,11 +147,22 @@ static inline void *ompi_pointer_array_get_item(ompi_pointer_array_t *table,
  * Simple inline function to return the size of the array in order to
  * hide the member field from external users.
  */
-static inline int ompi_pointer_array_get_size(ompi_pointer_array_t *array)
+static inline int opal_pointer_array_get_size(opal_pointer_array_t *array)
 {
   return array->size;
 }
 
+/**
+ * Set the size of the pointer array
+ *
+ * @param array Pointer to array (IN)
+ *
+ * @param size Desired size of the array
+ *
+ * Simple function to set the size of the array in order to
+ * hide the member field from external users.
+ */
+OPAL_DECLSPEC int opal_pointer_array_set_size(opal_pointer_array_t *array, int size);
 
 /**
  * Test whether a certain element is already in use. If not yet
@@ -146,7 +178,7 @@ static inline int ompi_pointer_array_get_size(ompi_pointer_array_t *array)
  * In contrary to array_set, this function does not allow to overwrite 
  * a value, unless the previous value is NULL ( equiv. to free ).
  */
-OMPI_DECLSPEC bool ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, 
+OPAL_DECLSPEC bool opal_pointer_array_test_and_set_item (opal_pointer_array_t *table, 
                                           int index,
                                           void *value);
 
@@ -156,19 +188,21 @@ OMPI_DECLSPEC bool ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *t
  * @param array Pointer to array (IN)
  *
  */
-static inline void ompi_pointer_array_remove_all(ompi_pointer_array_t *array)
+static inline void opal_pointer_array_remove_all(opal_pointer_array_t *array)
 {
-  int i;
-  OPAL_THREAD_LOCK(&array->lock);
-  array->lowest_free = 0;
-  array->number_free = array->size;
-  for(i=0; i<array->size; i++) {
-      array->addr[i] = NULL;
-  }
-  OPAL_THREAD_UNLOCK(&array->lock);
+    int i;
+    if( array->number_free == array->size )
+        return;  /* nothing to do here this time (the array is already empty) */
+ 
+    OPAL_THREAD_LOCK(&array->lock);
+    array->lowest_free = 0;
+    array->number_free = array->size;
+    for(i=0; i<array->size; i++) {
+        array->addr[i] = NULL;
+    }
+    OPAL_THREAD_UNLOCK(&array->lock);
 }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-#endif /* OMPI_POINTER_ARRAY_H */
+END_C_DECLS
+
+#endif /* OPAL_POINTER_ARRAY_H */

@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -28,7 +29,7 @@
 #include "mpool_base_mem_cb.h"
 
 extern int mca_mpool_base_use_mem_hooks; 
-extern ompi_pointer_array_t mca_mpool_base_mem_cb_array; 
+extern opal_pointer_array_t mca_mpool_base_mem_cb_array; 
 
 int mca_mpool_base_close(void)
 {
