@@ -362,16 +362,17 @@ bool mca_btl_sctp_proc_accept(mca_btl_sctp_proc_t* btl_proc, struct sockaddr_in*
  *
  *  TODO - change this to use a hash for constant time performance
  */
-int mca_btl_sctp_proc_check(sctp_assoc_t id, struct mca_btl_sctp_proc_table_node *table) {
+static int mca_btl_sctp_proc_check(int is_vpid, sctp_assoc_t id, orte_vpid_t vpid, struct mca_btl_sctp_proc_table_node *table) {
 #if MCA_BTL_SCTP_DONT_USE_HASH
     int i;
     for(i = 0; i < MCA_BTL_SCTP_PROC_TABLE_SIZE; i++) {
         /*  sender_proc_table uses orte_vpid_t.
          *  recvr_proc_table uses sctp_assoc_id.
-         *  This code assumes sizeof(sctp_assoc_id) >= sizeof(orte_vpid_t).  if this
-         *  is false, we need a second _check function.
+         *  Calls using this function use one or the other.
          */
-        if(table[i].valid && table[i].sctp_assoc_id == id) {
+        if((0 == is_vpid && table[i].valid && table[i].sctp_assoc_id == id) ||
+           (1 == is_vpid && table[i].valid && table[i].vpid == vpid))
+        {
             return VALID_ENTRY;
         } else if(table[i].valid == 0) {
             /* once invalid is found, can return INVALID_ENTRY (added incrementally) */
@@ -391,6 +392,15 @@ int mca_btl_sctp_proc_check(sctp_assoc_t id, struct mca_btl_sctp_proc_table_node
 #endif
 }
 
+int mca_btl_sctp_proc_check_vpid(orte_vpid_t vpid, struct mca_btl_sctp_proc_table_node *table) {
+    return mca_btl_sctp_proc_check(1, 0, vpid, table);
+}
+
+int mca_btl_sctp_proc_check_assoc_id(sctp_assoc_t id, struct mca_btl_sctp_proc_table_node *table) {
+    return mca_btl_sctp_proc_check(0, id, 0, table);
+}
+
+
 
 /**
  * void mca_btl_sctp_proc_add
@@ -400,12 +410,13 @@ int mca_btl_sctp_proc_check(sctp_assoc_t id, struct mca_btl_sctp_proc_table_node
  *  TODO change this to a hash table that can expand to eliminate
  *    MCA_BTL_SCTP_PROC_TABLE_SIZE limitation
  */
-void mca_btl_sctp_proc_add(sctp_assoc_t id, struct mca_btl_sctp_proc_t *proc, struct mca_btl_sctp_proc_table_node *table) {
+static void mca_btl_sctp_proc_add(sctp_assoc_t id, orte_vpid_t vpid, struct mca_btl_sctp_proc_t *proc, struct mca_btl_sctp_proc_table_node *table) {
 #if MCA_BTL_SCTP_DONT_USE_HASH
     int i;
     for(i = 0; i < MCA_BTL_SCTP_PROC_TABLE_SIZE; i++) {
-        if(table[i].sctp_assoc_id == 0 && table[i].valid == 0) {
+        if(table[i].sctp_assoc_id == 0 && table[i].vpid == 0 && table[i].valid == 0) {
             table[i].sctp_assoc_id = id;
+            table[i].vpid = vpid;
             table[i].proc = proc;
             table[i].valid = 1;
             return;
@@ -416,6 +427,14 @@ void mca_btl_sctp_proc_add(sctp_assoc_t id, struct mca_btl_sctp_proc_t *proc, st
     int rc = opal_hash_table_set_value_uint32(&mca_btl_sctp_component.sctp_assocID_hash, id, proc);
     /* TODO handle return code */
 #endif    
+}
+
+void mca_btl_sctp_proc_add_vpid(orte_vpid_t vpid, struct mca_btl_sctp_proc_t *proc, struct mca_btl_sctp_proc_table_node *table) {
+    mca_btl_sctp_proc_add(0, vpid, proc, table);
+}
+
+void mca_btl_sctp_proc_add_assoc_id(sctp_assoc_t id, struct mca_btl_sctp_proc_t *proc, struct mca_btl_sctp_proc_table_node *table) {
+    mca_btl_sctp_proc_add(id, 0, proc, table);
 }
 
 
