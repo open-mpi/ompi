@@ -26,9 +26,7 @@
 #include "ompi/datatype/convertor.h"
 #include "ompi/peruse/peruse-internal.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Base type for receive requests.
@@ -118,8 +116,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
         ompi_convertor_cleanup( &((request)->req_base.req_convertor) ); \
     } while (0)
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif
 
