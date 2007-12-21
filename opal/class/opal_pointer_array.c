@@ -31,7 +31,7 @@ enum { TABLE_INIT = 1, TABLE_GROW = 2 };
 
 static void opal_pointer_array_construct(opal_pointer_array_t *);
 static void opal_pointer_array_destruct(opal_pointer_array_t *);
-static bool grow_table(opal_pointer_array_t *table, size_t soft, size_t hard);
+static bool grow_table(opal_pointer_array_t *table, int soft, int hard);
 
 OBJ_CLASS_INSTANCE(opal_pointer_array_t, opal_object_t,
                    opal_pointer_array_construct,
@@ -299,9 +299,9 @@ int opal_pointer_array_set_size(opal_pointer_array_t *array, int new_size)
     return OPAL_SUCCESS;
 }
 
-static bool grow_table(opal_pointer_array_t *table, size_t soft, size_t hard)
+static bool grow_table(opal_pointer_array_t *table, int soft, int hard)
 {
-    size_t new_size;
+    int new_size;
     int i, new_size_int;
     void *p;
 
