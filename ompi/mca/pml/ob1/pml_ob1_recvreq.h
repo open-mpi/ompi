@@ -30,10 +30,7 @@
 #include "ompi/mca/pml/base/pml_base_recvreq.h"
 #include "ompi/datatype/datatype.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
+BEGIN_C_DECLS
 
 struct mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
@@ -382,8 +379,7 @@ int mca_pml_ob1_recv_request_get_frag(mca_pml_ob1_rdma_frag_t* frag);
  * operation cannot be accomplished for some reason. */
 void mca_pml_ob1_recv_request_process_pending(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif
 
