@@ -29,7 +29,7 @@
 #include <string.h>
 
 #include "support.h"
-#include "ompi/class/opal_pointer_array.h"
+#include "opal/class/opal_pointer_array.h"
 
 typedef union {
     int ivalue;
