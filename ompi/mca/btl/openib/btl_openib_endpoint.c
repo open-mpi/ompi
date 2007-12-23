@@ -544,7 +544,8 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
     }
    
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTED;
-    
+    endpoint->endpoint_btl->hca->non_eager_rdma_endpoints++;
+
     /* The connection is correctly setup. Now we can decrease the
        event trigger. */
     opal_progress_event_users_decrement();
@@ -850,13 +851,19 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
             buf);
 
     if(mca_btl_openib_endpoint_send_eager_rdma(endpoint) == OMPI_SUCCESS) {
-        /* This can never fail because max number of entries allocated
-         * at init time */
+        mca_btl_openib_hca_t *hca = endpoint->endpoint_btl->hca;
+        mca_btl_openib_endpoint_t **p;
         OBJ_RETAIN(endpoint);
         assert(((opal_object_t*)endpoint)->obj_reference_count == 2);
-        opal_pointer_array_add(openib_btl->eager_rdma_buffers, endpoint);
+        do {
+            p = &hca->eager_rdma_buffers[hca->eager_rdma_buffers_count];
+        } while(!opal_atomic_cmpset_ptr(p, NULL, endpoint));
+
+        OPAL_THREAD_ADD32(&hca->non_eager_rdma_endpoints, -1);
+        assert(hca->non_eager_rdma_endpoints >= 0);
+        OPAL_THREAD_ADD32(&openib_btl->eager_rdma_channels, 1);
         /* from this point progress function starts to poll new buffer */
-        OPAL_THREAD_ADD32(&openib_btl->eager_rdma_buffers_count, 1);
+        OPAL_THREAD_ADD32(&hca->eager_rdma_buffers_count, 1);
         return;
     }
 
