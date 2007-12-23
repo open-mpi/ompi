@@ -990,6 +990,12 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
         }
         if(endpoint->endpoint_btl != openib_btl)
             continue;
+        for(i = 0; i < openib_btl->hca->eager_rdma_buffers_count; i++) {
+            if(openib_btl->hca->eager_rdma_buffers[i] == endpoint) {
+                openib_btl->hca->eager_rdma_buffers[i] = NULL;
+                OBJ_RELEASE(endpoint);
+            }
+        }
         OBJ_RELEASE(endpoint);
     }
     /* Release SRQ resources */
@@ -1001,7 +1007,7 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
                         &openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
                 if (ibv_destroy_srq(openib_btl->qps[qp].u.srq_qp.srq)){
                     BTL_VERBOSE(("Failed to close SRQ %d", qp));
-                    return OMPI_ERROR;
+                    rc = OMPI_ERROR;
                 }
                 OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
                 OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
