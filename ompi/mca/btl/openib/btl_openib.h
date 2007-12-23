@@ -197,6 +197,9 @@ struct mca_btl_openib_component_t {
         that they all exist) */
     char **if_list;
     bool use_message_coalescing;
+    uint32_t cq_poll_ratio;
+    uint32_t cq_poll_progress;
+    uint32_t eager_rdma_poll_ratio;
 #ifdef HAVE_IBV_FORK_INIT
     /** Whether we want fork support or not */
     int want_fork_support;
@@ -242,7 +245,10 @@ typedef struct mca_btl_openib_port_info_t mca_btl_openib_port_info_t;
         MCA_BTL_OPENIB_LID_HTON(hdr); \
     } while (0)
 
-struct mca_btl_openib_hca_t {
+struct mca_btl_base_endpoint_t;
+
+typedef struct mca_btl_openib_hca_t {
+    opal_object_t super;
     struct ibv_device *ib_dev;  /* the ib device */
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     struct ibv_comp_channel *ib_channel; /* Channel event for the HCA */
@@ -262,6 +268,9 @@ struct mca_btl_openib_hca_t {
     uint8_t use_eager_rdma;
     uint8_t btls;              /** < number of btls using this HCA */
     opal_pointer_array_t *endpoints;
+    uint16_t hp_cq_polls;
+    uint16_t eager_rdma_polls;
+    bool pollme;
 #if OMPI_HAVE_THREADS
     volatile bool got_fatal_event;
 #endif
@@ -269,8 +278,11 @@ struct mca_btl_openib_hca_t {
     struct ibv_xrc_domain *xrc_domain;
     int xrc_fd;
 #endif
-};
-typedef struct mca_btl_openib_hca_t mca_btl_openib_hca_t;
+    uint32_t non_eager_rdma_endpoints;
+    int32_t eager_rdma_buffers_count;
+    struct mca_btl_base_endpoint_t **eager_rdma_buffers;
+} mca_btl_openib_hca_t;
+OBJ_CLASS_DECLARATION(mca_btl_openib_hca_t);
 
 struct mca_btl_openib_module_pp_qp_t {
     int32_t dummy;
@@ -325,8 +337,7 @@ struct mca_btl_openib_module_t {
     size_t ib_inline_max; /**< max size of inline send*/ 
     
     size_t eager_rdma_frag_size;                /**< length of eager frag */
-    opal_pointer_array_t *eager_rdma_buffers;   /**< RDMA buffers to poll */
-    volatile int32_t eager_rdma_buffers_count;  /**< number of RDMA buffers */
+    volatile int32_t eager_rdma_channels;  /**< number of open RDMA channels */
 
     mca_btl_base_module_error_cb_fn_t error_cb; /**< error handler */
    

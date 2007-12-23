@@ -952,7 +952,7 @@ static int mca_btl_finalize_hca(struct mca_btl_openib_hca_t *hca)
         }
     }
     OBJ_DESTRUCT(&hca->hca_lock); 
-    free(hca);
+    OBJ_RELEASE(hca);
     return OMPI_SUCCESS;
 }
 
@@ -960,7 +960,7 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
 {
     mca_btl_openib_module_t* openib_btl; 
     mca_btl_openib_endpoint_t* endpoint;
-    int ep_index, rdma_index, i;
+    int ep_index, i;
     int qp, rc = OMPI_SUCCESS;
     
     openib_btl = (mca_btl_openib_module_t*) btl; 
@@ -978,16 +978,6 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
 
     mca_btl_openib_component.ib_num_btls--;
 
-    /* Release eager RDMAs */
-    for(rdma_index=0;
-            rdma_index < opal_pointer_array_get_size(openib_btl->eager_rdma_buffers);
-        rdma_index++) {
-        endpoint=opal_pointer_array_get_item(openib_btl->eager_rdma_buffers,rdma_index);
-        if(!endpoint) {
-            continue;
-        }
-        OBJ_RELEASE(endpoint);
-    }
     /* Release all QPs */
     for(ep_index=0;
             ep_index < opal_pointer_array_get_size(openib_btl->hca->endpoints);

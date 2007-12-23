@@ -425,8 +425,21 @@ int btl_openib_register_mca_params(void)
                   "Use message coalescing", 1, &ival, 0));
     mca_btl_openib_component.use_message_coalescing = (0 != ival);
 
-    /* Info only */
+    CHECK(reg_int("cq_poll_ratio", 
+                  "how often poll high priority CQ versus low priority CQ",
+                  100, &ival, REGINT_GE_ONE));
+    mca_btl_openib_component.cq_poll_ratio = (uint32_t)ival;
+    CHECK(reg_int("eager_rdma_poll_ratio", 
+                  "how often poll eager RDMA channel versus CQ",
+                  100, &ival, REGINT_GE_ONE));
+    mca_btl_openib_component.eager_rdma_poll_ratio = (uint32_t)ival;
+    CHECK(reg_int("hp_cq_poll_per_progress", 
+                  "max number of completion events to process for each call "
+                  "of BTL progress engine",
+                  10, &ival, REGINT_GE_ONE));
+    mca_btl_openib_component.cq_poll_progress = (uint32_t)ival;
 
+    /* Info only */
     mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version, 
                            "have_fork_support", 
                            "Whether the OpenFabrics stack supports applications that invoke the \"fork()\" system call or not (0 = no, 1 = yes).  Note that this value does NOT indicate whether the system being run on supports \"fork()\" with OpenFabrics applications or not.",

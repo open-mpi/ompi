@@ -84,7 +84,7 @@ static void merge_values(ompi_btl_openib_ini_values_t *target,
                          ompi_btl_openib_ini_values_t *src);
 static char* btl_openib_component_status_to_string(enum ibv_wc_status status);
 static int btl_openib_component_progress(void);
-static int btl_openib_module_progress(mca_btl_openib_hca_t *hca);
+static int poll_hca(mca_btl_openib_hca_t *hca, int count);
 static void progress_pending_frags_pp(mca_btl_base_endpoint_t *, const int);
 static void progress_pending_frags_srq( mca_btl_openib_module_t* , const int);
 static void progress_pending_eager_rdma(mca_btl_base_endpoint_t*);
@@ -506,6 +506,37 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
     return OMPI_SUCCESS;
 }
 
+static void hca_construct(mca_btl_openib_hca_t *hca)
+{
+    hca->ib_dev = NULL;
+    hca->ib_dev_context = NULL;
+    hca->btls = 0;
+    hca->ib_cq[BTL_OPENIB_HP_CQ] = NULL;
+    hca->ib_cq[BTL_OPENIB_LP_CQ] = NULL;
+    hca->cq_size[BTL_OPENIB_HP_CQ] = 0;
+    hca->cq_size[BTL_OPENIB_LP_CQ] = 0;
+    hca->non_eager_rdma_endpoints = 0;
+    hca->hp_cq_polls = mca_btl_openib_component.cq_poll_ratio;
+    hca->eager_rdma_polls = mca_btl_openib_component.eager_rdma_poll_ratio;
+    hca->pollme = true;
+    hca->eager_rdma_buffers_count = 0;
+    hca->eager_rdma_buffers = NULL;
+}
+
+static void hca_destruct(mca_btl_openib_hca_t *hca)
+{
+    if(hca->eager_rdma_buffers) {
+        int i;
+        for(i = 0; i < hca->eager_rdma_buffers_count; i++)
+            if(hca->eager_rdma_buffers[i])
+                OBJ_RELEASE(hca->eager_rdma_buffers[i]);
+        free(hca->eager_rdma_buffers);
+    }
+}
+
+OBJ_CLASS_INSTANCE(mca_btl_openib_hca_t, opal_object_t, hca_construct,
+        hca_destruct);
+
 static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
 {
     struct mca_mpool_base_resources_t mpool_resources;
@@ -515,7 +546,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     ompi_btl_openib_ini_values_t values, default_values;
     int *allowed_ports = NULL;
     
-    hca = malloc(sizeof(mca_btl_openib_hca_t));
+    hca = OBJ_NEW(mca_btl_openib_hca_t);
     if(NULL == hca){
         BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -523,11 +554,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     
     hca->ib_dev = ib_dev;
     hca->ib_dev_context = ibv_open_device(ib_dev);
-    hca->btls = 0;
-    hca->ib_cq[BTL_OPENIB_HP_CQ] = NULL;
-    hca->ib_cq[BTL_OPENIB_LP_CQ] = NULL;
-    hca->cq_size[BTL_OPENIB_HP_CQ] = 0;
-    hca->cq_size[BTL_OPENIB_LP_CQ] = 0;
+
     OBJ_CONSTRUCT(&hca->hca_lock, opal_mutex_t); 
     if(NULL == hca->ib_dev_context){ 
         BTL_ERROR(("error obtaining device context for %s errno says %s\n",
@@ -541,7 +568,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         goto close_hca;
     }
     /* If mca_btl_if_include/exclude were specified, get usable ports */
-    allowed_ports = (int*) malloc(hca->ib_dev_attr.phys_port_cnt * sizeof(int));
+    allowed_ports = (int*)malloc(hca->ib_dev_attr.phys_port_cnt * sizeof(int));
     port_cnt = get_port_list(hca, allowed_ports);
     if(0 == port_cnt) {
         ret = OMPI_SUCCESS;
@@ -730,6 +757,17 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         hca->endpoints = OBJ_NEW(opal_pointer_array_t);
         opal_pointer_array_init(hca->endpoints, 10, INT_MAX, 10);
         opal_pointer_array_add(&mca_btl_openib_component.hcas, hca);
+        if(mca_btl_openib_component.max_eager_rdma > 0 &&
+                mca_btl_openib_component.use_eager_rdma &&
+                hca->use_eager_rdma) {
+            hca->eager_rdma_buffers =
+                calloc(mca_btl_openib_component.max_eager_rdma * hca->btls,
+                        sizeof(mca_btl_openib_endpoint_t*));
+            if(NULL == hca->eager_rdma_buffers) {
+                BTL_ERROR(("Memory allocation fails\n"));
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+        }
         mca_btl_openib_component.hcas_count++;
         return OMPI_SUCCESS;
     }
@@ -756,7 +794,7 @@ close_hca:
         free(allowed_ports);
     }
 free_hca:
-    free(hca);
+    OBJ_RELEASE(hca);
     return ret;
 }
 
@@ -910,12 +948,7 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
         }
     }
 
-    openib_btl->eager_rdma_buffers = OBJ_NEW(opal_pointer_array_t);
-    opal_pointer_array_init(openib_btl->eager_rdma_buffers, 
-            mca_btl_openib_component.max_eager_rdma,
-            mca_btl_openib_component.max_eager_rdma, 
-            0);
-    openib_btl->eager_rdma_buffers_count = 0;
+    openib_btl->eager_rdma_channels = 0;
 
     openib_btl->eager_rdma_frag_size = OPAL_ALIGN(
             sizeof(mca_btl_openib_header_t) +
@@ -1500,91 +1533,99 @@ void* mca_btl_openib_progress_thread(opal_object_t* arg)
 
         ibv_ack_cq_events(ev_cq, 1);
 
-        while(btl_openib_module_progress(hca));
+        while(poll_hca(hca, 0));
     }
 
     return PTHREAD_CANCELED;
 }
 #endif
 
+static int progress_one_hca(mca_btl_openib_hca_t *hca)
+{
+    int i, c, count = 0, ret;
+    mca_btl_openib_recv_frag_t* frag;
+    mca_btl_openib_endpoint_t* endpoint;
+    uint32_t non_eager_rdma_endpoints = 0;
+
+    c = hca->eager_rdma_buffers_count;
+    non_eager_rdma_endpoints += (hca->non_eager_rdma_endpoints + hca->pollme);
+
+    for(i = 0; i < c; i++) {
+        endpoint = hca->eager_rdma_buffers[i];
+
+        if(!endpoint)
+            continue;
+
+        OPAL_THREAD_LOCK(&endpoint->eager_rdma_local.lock);
+        frag = MCA_BTL_OPENIB_GET_LOCAL_RDMA_FRAG(endpoint,
+                endpoint->eager_rdma_local.head);
+
+        if(MCA_BTL_OPENIB_RDMA_FRAG_LOCAL(frag)) {
+            uint32_t size;
+            mca_btl_openib_module_t *btl = endpoint->endpoint_btl;
+
+            opal_atomic_rmb();
+
+            if(endpoint->nbo) {
+                BTL_OPENIB_FOOTER_NTOH(*frag->ftr);
+            }
+            size = MCA_BTL_OPENIB_RDMA_FRAG_GET_SIZE(frag->ftr);
+#if OMPI_ENABLE_DEBUG
+            if (frag->ftr->seq != endpoint->eager_rdma_local.seq)
+                BTL_ERROR(("Eager RDMA wrong SEQ: received %d expected %d",
+                           frag->ftr->seq,
+                           endpoint->eager_rdma_local.seq));
+            endpoint->eager_rdma_local.seq++;
+#endif
+            MCA_BTL_OPENIB_RDMA_NEXT_INDEX(endpoint->eager_rdma_local.head);
+
+            OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
+            frag->hdr = (mca_btl_openib_header_t*)(((char*)frag->ftr) -
+                    size + sizeof(mca_btl_openib_footer_t));
+            to_base_frag(frag)->segment.seg_addr.pval =
+                ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);
+
+            ret = btl_openib_handle_incoming(btl, to_com_frag(frag)->endpoint,
+                    frag, size - sizeof(mca_btl_openib_footer_t));
+            if (ret != MPI_SUCCESS) {
+                btl->error_cb(&btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
+                return 0;
+            }
+
+            count++;
+        } else
+            OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
+    }
+
+    hca->eager_rdma_polls--;
+
+    if(0 == count || non_eager_rdma_endpoints != 0 || !hca->eager_rdma_polls) {
+        count += poll_hca(hca, count);
+        hca->eager_rdma_polls = mca_btl_openib_component.eager_rdma_poll_ratio;
+    }
+
+    return count;
+}
+
 /*
  *  IB component progress.
  */
 static int btl_openib_component_progress(void)
 {
-    int i, j, c;
-    int count = 0, ret;
-    mca_btl_openib_endpoint_t* endpoint; 
-    
+    int i;
+    int count = 0;
+
 #if OMPI_HAVE_THREADS
-    if(mca_btl_openib_component.use_async_event_thread &&
-            mca_btl_openib_component.fatal_counter) {
+    if(OPAL_UNLIKELY(mca_btl_openib_component.use_async_event_thread &&
+            mca_btl_openib_component.fatal_counter)) {
         goto error;
     }
 #endif
 
-    /* Poll for RDMA completions - if any succeed, we don't process the slower
-     * queues.
-     */
-    for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
-        mca_btl_openib_recv_frag_t* frag; 
-        mca_btl_openib_module_t* openib_btl = mca_btl_openib_component.openib_btls[i];
-        c = openib_btl->eager_rdma_buffers_count;
-
-        for(j = 0; j < c; j++) {
-            endpoint = 
-                opal_pointer_array_get_item(openib_btl->eager_rdma_buffers, j);
-
-            if(!endpoint) /* shouldn't happen */
-                continue;
-
-            OPAL_THREAD_LOCK(&endpoint->eager_rdma_local.lock);
-            frag = MCA_BTL_OPENIB_GET_LOCAL_RDMA_FRAG (endpoint,
-                    endpoint->eager_rdma_local.head);
-
-            if(MCA_BTL_OPENIB_RDMA_FRAG_LOCAL(frag)) {
-                uint32_t size;
-                opal_atomic_rmb();
-                if(endpoint->nbo) {
-                    BTL_OPENIB_FOOTER_NTOH(*frag->ftr);
-                }
-                size = MCA_BTL_OPENIB_RDMA_FRAG_GET_SIZE(frag->ftr);
-#if OMPI_ENABLE_DEBUG
-                if (frag->ftr->seq != endpoint->eager_rdma_local.seq)
-                    BTL_ERROR(("Eager RDMA wrong SEQ: received %d expected %d",
-                               frag->ftr->seq, 
-                               endpoint->eager_rdma_local.seq));
-                endpoint->eager_rdma_local.seq++;
-#endif
-                MCA_BTL_OPENIB_RDMA_NEXT_INDEX(endpoint->eager_rdma_local.head);
-
-                OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
-                frag->hdr = (mca_btl_openib_header_t*)(((char*)frag->ftr) - 
-                        size + sizeof(mca_btl_openib_footer_t));
-                to_base_frag(frag)->segment.seg_addr.pval =
-                    ((unsigned char* )frag->hdr) +
-                    sizeof(mca_btl_openib_header_t);
-
-                ret = btl_openib_handle_incoming(openib_btl,
-                        to_com_frag(frag)->endpoint, frag, 
-                        size - sizeof(mca_btl_openib_footer_t));
-                if (ret != MPI_SUCCESS) { 
-                    openib_btl->error_cb(&openib_btl->super, 
-                                         MCA_BTL_ERROR_FLAGS_FATAL);
-                    return 0;
-                }
-
-                count++;
-            } else
-                OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
-        }
-    }
-    if(count) return count;
-
     for(i = 0; i < mca_btl_openib_component.hcas_count; i++) {
         mca_btl_openib_hca_t *hca =
             opal_pointer_array_get_item(&mca_btl_openib_component.hcas, i);
-        count += btl_openib_module_progress(hca);
+        count += progress_one_hca(hca);
     }
 
     return count;
@@ -1595,150 +1636,163 @@ error:
     mca_btl_openib_component.fatal_counter = 0;
     /* Lets found all fatal events */
     for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
-        mca_btl_openib_module_t* openib_btl = mca_btl_openib_component.openib_btls[i];
+        mca_btl_openib_module_t* openib_btl =
+            mca_btl_openib_component.openib_btls[i];
         if(openib_btl->hca->got_fatal_event) {
-            openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
+            openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
         }
     }
     return count;
 #endif
 }
 
-static int btl_openib_module_progress(mca_btl_openib_hca_t* hca)
+static char *cq_name[] = {"HP CQ", "LP CQ"};
+static void handle_wc(mca_btl_openib_hca_t* hca, const uint32_t cq,
+        struct ibv_wc *wc)
 {
-    static char *cq_name[] = {"HP CQ", "LP CQ"};
-    int cq, qp;
-    int count = 0, ne = 0;
+    static int flush_err_printed[] = {0, 0};
     mca_btl_openib_com_frag_t* frag;
     mca_btl_base_descriptor_t *des;
-    mca_btl_openib_endpoint_t* endpoint; 
+    mca_btl_openib_endpoint_t* endpoint;
     mca_btl_openib_module_t *openib_btl = NULL;
-    struct ibv_wc wc; 
+    ompi_proc_t* remote_proc = NULL;
+    int qp;
 
-    for(cq = 0; cq < 2;) {
+    des = (mca_btl_base_descriptor_t*)(uintptr_t)wc->wr_id;
+    frag = to_com_frag(des);
+
+    /* For receive fragments "order" contains QP idx the fragment was posted
+     * to. For send fragments "order" contains QP idx the fragment was send
+     * through */
+    qp = des->order;
+    endpoint = frag->endpoint;
+
+    if(endpoint)
+        openib_btl = endpoint->endpoint_btl;
+
+    if(wc->status != IBV_WC_SUCCESS)
+        goto error;
+
+    /* Handle work completions */
+    switch(wc->opcode) {
+        case IBV_WC_RDMA_READ:
+            OPAL_THREAD_ADD32(&endpoint->get_tokens, 1);
+            /* fall through */
+
+        case IBV_WC_RDMA_WRITE:
+        case IBV_WC_SEND:
+            if(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_SEND) {
+                opal_list_item_t *i;
+                while((i = opal_list_remove_first(&to_send_frag(des)->coalesced_frags)))
+                    to_base_frag(i)->base.des_cbfunc(&openib_btl->super, endpoint,
+                            &to_base_frag(i)->base, OMPI_SUCCESS);
+            }
+            /* Process a completed send/put/get */
+            des->des_cbfunc(&openib_btl->super, endpoint, des,OMPI_SUCCESS);
+
+            /* return send wqe */
+            qp_put_wqe(endpoint, qp);
+
+            if(IBV_WC_SEND == wc->opcode && !BTL_OPENIB_QP_TYPE_PP(qp)) {
+                OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1);
+
+                /* new SRQ credit available. Try to progress pending frags*/
+                progress_pending_frags_srq(openib_btl, qp);
+            }
+            /* new wqe or/and get token available. Try to progress pending frags */
+            progress_pending_frags_wqe(endpoint->qps[qp].qp);
+            mca_btl_openib_frag_progress_pending_put_get(endpoint, qp);
+            break;
+        case IBV_WC_RECV:
+            if(wc->wc_flags & IBV_WC_WITH_IMM) {
+                endpoint = (mca_btl_openib_endpoint_t*)
+                    opal_pointer_array_get_item(hca->endpoints, wc->imm_data);
+                frag->endpoint = endpoint;
+                openib_btl = endpoint->endpoint_btl;
+            }
+
+            /* Process a RECV */
+            if(btl_openib_handle_incoming(openib_btl, endpoint, to_recv_frag(frag),
+                        wc->byte_len) != OMPI_SUCCESS) {
+                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
+                break;
+            }
+
+            /* decide if it is time to setup an eager rdma channel */
+            if(!endpoint->eager_rdma_local.base.pval && endpoint->use_eager_rdma &&
+                    wc->byte_len < mca_btl_openib_component.eager_limit &&
+                    openib_btl->eager_rdma_channels <
+                    mca_btl_openib_component.max_eager_rdma &&
+                    OPAL_THREAD_ADD32(&endpoint->eager_recv_count, 1) ==
+                    mca_btl_openib_component.eager_rdma_threshold) {
+                mca_btl_openib_endpoint_connect_eager_rdma(endpoint);
+            }
+            break;
+        default:
+            BTL_ERROR(("Unhandled work completion opcode is %d", wc->opcode));
+            if(openib_btl)
+                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
+            break;
+    }
+
+    return;
+
+error:
+    if(endpoint && endpoint->endpoint_proc && endpoint->endpoint_proc->proc_ompi)
+        remote_proc = endpoint->endpoint_proc->proc_ompi;
+
+    if(wc->status != IBV_WC_WR_FLUSH_ERR || !flush_err_printed[cq]++) {
+        BTL_PEER_ERROR(remote_proc, ("error polling %s with status %s "
+                    "status number %d for wr_id %llu opcode %d qp_idx %d",
+                    cq_name[cq], btl_openib_component_status_to_string(wc->status),
+                    wc->status, wc->wr_id, wc->opcode, qp));
+    }
+
+    if(IBV_WC_RETRY_EXC_ERR == wc->status)
+        opal_show_help("help-mpi-btl-openib.txt", "btl_openib:retry-exceeded", true);
+
+    if(openib_btl)
+        openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
+}
+
+static int poll_hca(mca_btl_openib_hca_t* hca, int count)
+{
+    int ne = 0, cq; 
+    uint32_t hp_iter = 0;
+    struct ibv_wc wc;
+
+    hca->pollme = false;
+    for(cq = 0; cq < 2 && hp_iter < mca_btl_openib_component.cq_poll_progress;)
+    {
         ne = ibv_poll_cq(hca->ib_cq[cq], 1, &wc);
         if(0 == ne) {
-            /* don't check low prio cq if there was something in high prio cq */
-            if(count)
+            /* don't check low prio cq if there was something in high prio cq,
+             * but for each cq_poll_ratio hp cq polls poll lp cq once */
+            if(count && hca->hp_cq_polls)
                 break;
             cq++;
+            hca->hp_cq_polls = mca_btl_openib_component.cq_poll_ratio;
             continue;
         }
+
         if(ne < 0)
             goto error;
 
         count++;
-       
-        des = (mca_btl_base_descriptor_t*)(uintptr_t)wc.wr_id;
-        frag = to_com_frag(des);
 
-        /* For receive fragments "order" contains QP idx the fragment was posted
-         * to. For send fragments "order" contains QP idx the fragment was send
-         * through */
-        qp = des->order;
-        endpoint = frag->endpoint;
-
-        if(endpoint)
-            openib_btl = endpoint->endpoint_btl;
-
-        if(wc.status != IBV_WC_SUCCESS)
-            goto error;
-
-        /* Handle work completions */
-        switch(wc.opcode) {
-            case IBV_WC_RDMA_READ:
-                OPAL_THREAD_ADD32(&endpoint->get_tokens, 1);
-                /* fall through */
-        
-            case IBV_WC_RDMA_WRITE:
-            case IBV_WC_SEND:
-                if(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_SEND) {
-                    opal_list_item_t *i;
-                    while((i = opal_list_remove_first(
-                                &to_send_frag(des)->coalesced_frags))) {
-                        to_base_frag(i)->base.des_cbfunc(&openib_btl->super,
-                                endpoint, &to_base_frag(i)->base, OMPI_SUCCESS);
-                    }
-                }
-                /* Process a completed send/put/get */
-                des->des_cbfunc(&openib_btl->super, endpoint, des,OMPI_SUCCESS); 
-
-                /* return send wqe */
-                qp_put_wqe(endpoint, qp);
-
-                if(IBV_WC_SEND == wc.opcode && !BTL_OPENIB_QP_TYPE_PP(qp)) {
-                    OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1);
-
-                    /* new SRQ credit available. Try to progress pending frags*/
-                    progress_pending_frags_srq(openib_btl, qp);
-                }
-                /* new wqe or/and get token available. Try to progress pending frags */
-                progress_pending_frags_wqe(endpoint->qps[qp].qp);
-                mca_btl_openib_frag_progress_pending_put_get(endpoint, qp);
-                break;
-            case IBV_WC_RECV:
-                if(wc.wc_flags & IBV_WC_WITH_IMM) {
-                    endpoint = (mca_btl_openib_endpoint_t*)
-                        opal_pointer_array_get_item(hca->endpoints, wc.imm_data);
-                    frag->endpoint = endpoint;
-                    openib_btl = endpoint->endpoint_btl;
-                }
-
-                /* Process a RECV */ 
-                if(btl_openib_handle_incoming(openib_btl, endpoint,
-                        to_recv_frag(frag), wc.byte_len) != OMPI_SUCCESS) {
-                    openib_btl->error_cb(&openib_btl->super,
-                            MCA_BTL_ERROR_FLAGS_FATAL);
-                    return 0;
-                }
-
-                /* decide if it is time to setup an eager rdma channel */
-                if (!endpoint->eager_rdma_local.base.pval &&
-                        endpoint->use_eager_rdma &&
-                        wc.byte_len < mca_btl_openib_component.eager_limit &&
-                        openib_btl->eager_rdma_buffers_count <
-                        mca_btl_openib_component.max_eager_rdma &&
-                        OPAL_THREAD_ADD32(&endpoint->eager_recv_count, 1) ==
-                        mca_btl_openib_component.eager_rdma_threshold) {
-                    mca_btl_openib_endpoint_connect_eager_rdma(endpoint); 
-                }
-                break; 
-            default:
-                BTL_ERROR(("Unhandled work completion opcode is %d",
-                            wc.opcode));
-                if(openib_btl)
-                    openib_btl->error_cb(&openib_btl->super,
-                            MCA_BTL_ERROR_FLAGS_FATAL);
-                break;
+        if(BTL_OPENIB_HP_CQ == cq) {
+            hca->pollme = true;
+            hp_iter++;
+            hca->hp_cq_polls--;
         }
+      
+        handle_wc(hca, cq, &wc);
     }
     
     return count;
 error:
-    if(ne < 0){ 
-        BTL_ERROR(("error polling %s with %d errno says %s\n",
-                   cq_name[cq], ne, strerror(errno))); 
-    } else {
-        static int flush_err_printed[] = {0, 0};
-        ompi_proc_t* remote_proc = NULL; 
-        if(frag && endpoint && endpoint->endpoint_proc &&
-                endpoint->endpoint_proc->proc_ompi) { 
-            remote_proc = endpoint->endpoint_proc->proc_ompi; 
-        }
-        if(wc.status != IBV_WC_WR_FLUSH_ERR || !flush_err_printed[cq]++) {
-            BTL_PEER_ERROR(remote_proc, ("error polling %s with status %s "
-                        "status number %d for wr_id %llu opcode %d qp_idx %d",
-                        cq_name[cq],
-                        btl_openib_component_status_to_string(wc.status), 
-                        wc.status, wc.wr_id, wc.opcode, qp)); 
-        }
-        if(wc.status == IBV_WC_RETRY_EXC_ERR) { 
-            opal_show_help("help-mpi-btl-openib.txt",
-                    "btl_openib:retry-exceeded", true);
-        }
-    }
-    if(openib_btl)
-        openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
+    BTL_ERROR(("error polling %s with %d errno says %s\n", cq_name[cq], ne,
+                strerror(errno))); 
     return count;
 }
 
