@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(btl_openib_CPPFLAGS) -DPKGDATADIR=\"$(pkgdatadir)\"
+AM_CPPFLAGS = $(btl_openib_CPPFLAGS)
 AM_LFLAGS = -Pbtl_openib_ini_yy
 LEX_OUTPUT_ROOT = lex.btl_openib_ini_yy
 
