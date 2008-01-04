@@ -828,6 +828,7 @@ int mca_oob_tcp_peer_send_ident(mca_oob_tcp_peer_t* peer)
     mca_oob_tcp_hdr_t hdr;
     if(peer->peer_state != MCA_OOB_TCP_CONNECTED)
         return ORTE_SUCCESS;
+    hdr.msg_origin = *orte_process_info.my_name;
     hdr.msg_src = *orte_process_info.my_name;
     hdr.msg_dst = peer->peer_name;
     hdr.msg_type = MCA_OOB_TCP_IDENT;
