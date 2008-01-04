@@ -208,7 +208,7 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
                         ORTE_ERROR_LOG(rc);
                         goto cleanup;
                     }
-                    proc->maped_rank = *vptr;
+                    proc->maped_rank = OPAL_INT_TO_BOOL(*vptr);
                     continue;
                 }
                 if(strcmp(keyval->key, ORTE_PROC_NAME_KEY) == 0) {
