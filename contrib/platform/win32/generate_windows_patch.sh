@@ -2,7 +2,7 @@
 
 VERSION_FILES="opal/include/opal/version.h orte/include/orte/version.h ompi/include/ompi/version.h"
 CONFIG_FILES="opal/include/opal_config.h orte/include/orte_config.h ompi/include/ompi_config.h"
-MISC_FILES="opal/mca/installdirs/config/install_dirs.h generate_windows_patch.sh ompi_install.sh"
+MISC_FILES="opal/mca/installdirs/config/install_dirs.h contrib/platform/win32/generate_windows_patch.sh contrib/platform/win32/ompi_install.sh"
 MPI_FILES="ompi/include/mpi.h ompi/include/mpif-common.h ompi/include/mpif.h"
 STATIC_COMP_FILES=`find . -name static-components.h`
 
