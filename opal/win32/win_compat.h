@@ -135,6 +135,8 @@ typedef unsigned int uint;
 #define UINT32_MIN _UI32_MIN
 #define INT32_MAX  _I32_MAX
 #define INT32_MIN  _I32_MIN
+#define INT16_MIN  _I16_MIN
+#define INT16_MAX  _I16_MAX
 #define UINT8_MAX  _UI8_MAX
 #define UINT8_MIN  _UI8_MIN
 
