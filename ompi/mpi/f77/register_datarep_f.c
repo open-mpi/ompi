@@ -200,7 +200,7 @@ static int read_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
                              void *filebuf, MPI_Offset position, 
                              void *extra_state)
 {
-    MPI_Fint ierr, count_f77 = OMPI_FINT_2_INT(count_f77);
+    MPI_Fint ierr, count_f77 = OMPI_FINT_2_INT(count_c);
     MPI_Fint type_f77 = MPI_Type_c2f(type_c);
     intercept_extra_state_t *intercept_data = 
         (intercept_extra_state_t*) extra_state;
@@ -218,7 +218,7 @@ static int write_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
                              void *filebuf, MPI_Offset position, 
                              void *extra_state)
 {
-    MPI_Fint ierr, count_f77 = OMPI_FINT_2_INT(count_f77);
+    MPI_Fint ierr, count_f77 = OMPI_FINT_2_INT(count_c);
     MPI_Fint type_f77 = MPI_Type_c2f(type_c);
     intercept_extra_state_t *intercept_data = 
         (intercept_extra_state_t*) extra_state;
