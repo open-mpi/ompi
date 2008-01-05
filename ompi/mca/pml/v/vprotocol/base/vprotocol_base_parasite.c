@@ -8,6 +8,7 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
 #include "base.h"
 #include "vprotocol_base_request.h"
 

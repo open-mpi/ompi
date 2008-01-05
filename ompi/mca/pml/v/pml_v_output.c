@@ -8,6 +8,8 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
+
 #include "pml_v_output.h"
 
 #if defined(HAVE_UNISTD_H)

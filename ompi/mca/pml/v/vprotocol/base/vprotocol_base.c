@@ -7,6 +7,8 @@
  *
  * $HEADER$
  */
+
+#include "ompi_config.h"
 #include "base.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"

@@ -11,7 +11,6 @@
 #ifndef PML_V_OUTPUT_H_HAS_BEEN_INCLUDED
 #define PML_V_OUTPUT_H_HAS_BEEN_INCLUDED
 
-#include "ompi_config.h"
 #include "opal/util/output.h"
 #include <stdio.h>
 

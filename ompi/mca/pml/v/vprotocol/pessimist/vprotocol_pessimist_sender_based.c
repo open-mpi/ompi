@@ -8,6 +8,7 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
 #include "vprotocol_pessimist_sender_based.h"
 #include <sys/types.h>
 #if defined(HAVE_SYS_MMAN_H)
