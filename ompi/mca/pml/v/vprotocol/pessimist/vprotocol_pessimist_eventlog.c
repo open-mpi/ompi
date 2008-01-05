@@ -8,6 +8,7 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
 #include "vprotocol_pessimist_eventlog.h"
 
 void vprotocol_pessimist_matching_replay(int *src) {

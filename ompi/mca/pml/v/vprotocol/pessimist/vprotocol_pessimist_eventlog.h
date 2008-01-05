@@ -11,7 +11,6 @@
 #ifndef __VPROTOCOL_PESSIMIST_EVENTLOG_H__
 #define __VPROTOCOL_PESSIMIST_EVENTLOG_H__
 
-#include "ompi_config.h"
 #include "vprotocol_pessimist.h"
 #include "vprotocol_pessimist_request.h"
 
