@@ -14,13 +14,14 @@
 #include "vprotocol_pessimist_request.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 
+BEGIN_C_DECLS
 
 /* There is several different ways of packing the data to the sender-based 
  * buffer. Just pick one. 
  */
-#undef SB_USE_PACK_METHOD 
+#define SB_USE_PACK_METHOD 
 #undef SB_USE_SELFCOMM_METHOD
-#define SB_USE_CONVERTOR_METHOD
+#undef SB_USE_CONVERTOR_METHOD
 
 
 typedef struct vprotocol_pessimist_sender_based_t 
@@ -32,8 +33,12 @@ typedef struct vprotocol_pessimist_sender_based_t
 #ifdef SB_USE_SELF_METHOD
     ompi_communicator_t *sb_comm;
 #endif    
-    
+#if defined __WINDOWS__
+    HANDLE sb_fd;           /*  file handle of mapped file */
+    HANDLE sb_map;          /*  view handle of mapped file */
+#else
     int sb_fd;              /* file descriptor of mapped file */
+#endif
     off_t sb_offset;        /* offset in mmaped file          */
       
     uintptr_t sb_addr;      /* base address of mmaped segment */
@@ -153,7 +158,7 @@ int32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t*,
 
 #define VPESSIMIST_CONV_REQ(CONV) ((mca_vprotocol_pessimist_send_request_t *) \
     (mca_vprotocol_pessimist.sender_based.sb_conv_to_pessimist_offset +       \
-     (uintptr_t) (CONV)))
+     (uintptr_t) ((CONV)->clone_of)))
 
 
 /*******************************************************************************
@@ -183,5 +188,7 @@ int32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t*,
 } while(0)
 
 #endif /* SB_USE_*_METHOD */
+
+END_C_DECLS
 
 #endif
