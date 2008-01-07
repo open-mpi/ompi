@@ -381,6 +381,12 @@ static inline int check_endpoint_state(mca_btl_openib_endpoint_t *ep,
     return rc;
 }
 
+static inline __opal_attribute_always_inline__ int
+ib_send_flags(uint32_t size, mca_btl_openib_endpoint_t *ep)
+{
+    return IBV_SEND_SIGNALED |
+        ((size <= ep->endpoint_btl->ib_inline_max) ? IBV_SEND_INLINE : 0);
+}
 END_C_DECLS
 
 #endif
