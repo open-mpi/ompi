@@ -1156,6 +1156,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     /* Setting opcode on a frag constructor isn't enough since prepare_src
      * may return send_frag instead of put_frag */ 
     frag->sr_desc.opcode = IBV_WR_RDMA_WRITE;
+    frag->sr_desc.send_flags = ib_send_flags(descriptor->des_src->seg_len, ep);
     if(ibv_post_send(ep->qps[qp].qp->lcl_qp, &frag->sr_desc, &bad_wr))
         return OMPI_ERROR;
 
