@@ -62,10 +62,6 @@ extern void*  opal_mem_free_ptmalloc2_mmap(void *start, size_t length,
    are never reused, so this keeps the number of calls to munmap and
    sbrk down significantly */
 #define DEFAULT_MMAP_THRESHOLD (2*1024*1024)
-/* free() of small allocations is not reentrant and the mvapi libraries
-   call free() from deregister.  Big allocations (using mmap()) are fine
-   and don't need any special care. */
-#define MORECORE_CANNOT_TRIM 1
 
 /* make some non-GCC compilers happy */
 #ifndef __GNUC__
