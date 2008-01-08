@@ -62,6 +62,7 @@ void mca_mpool_rdma_module_init(mca_mpool_rdma_module_t* mpool)
             0,CACHE_LINE_SIZE,
             0, -1, 32, NULL);
     OBJ_CONSTRUCT(&mpool->mru_list, opal_list_t);
+    OBJ_CONSTRUCT(&mpool->gc_list, opal_list_t);
     mpool->stat_cache_hit = mpool->stat_cache_miss = mpool->stat_evicted = 0;
     mpool->stat_cache_found = mpool->stat_cache_notfound = 0;
 }
@@ -107,6 +108,21 @@ void* mca_mpool_rdma_alloc(mca_mpool_base_module_t *mpool, size_t size,
     (*reg)->alloc_base = base_addr;
 
     return addr;
+}
+
+static void do_unregistration_gc(struct mca_mpool_base_module_t *mpool)
+{
+    mca_mpool_rdma_module_t *mpool_rdma = (mca_mpool_rdma_module_t*)mpool;
+    mca_mpool_base_registration_t *reg;
+
+    do {
+        reg = (mca_mpool_base_registration_t *)
+            opal_list_remove_first(&mpool_rdma->gc_list);
+        dereg_mem(mpool, reg);
+        mpool->rcache->rcache_delete(mpool->rcache, reg);
+        OMPI_FREE_LIST_RETURN(&mpool_rdma->reg_list,
+                (ompi_free_list_item_t*)reg);
+    } while(!opal_list_is_empty(&mpool_rdma->gc_list));
 }
 
 static int register_cache_bypass(mca_mpool_base_module_t *mpool,
@@ -169,6 +185,9 @@ int mca_mpool_rdma_register(mca_mpool_base_module_t *mpool, void *addr,
     bound = up_align_addr((void*)((char*) addr + size - 1),
              mca_mpool_base_page_size_log);
     OPAL_THREAD_LOCK(&mpool->rcache->lock);
+    if(!opal_list_is_empty(&mpool_rdma->gc_list))
+        do_unregistration_gc(mpool);
+
     /* look through existing regs if not persistent registration requested.
      * Persistent registration are always registered and placed in the cache */
     if(!(flags & MCA_MPOOL_FLAGS_PERSIST)) {
@@ -322,6 +341,14 @@ int mca_mpool_rdma_find(struct mca_mpool_base_module_t *mpool, void *addr,
     return rc;
 }
 
+static inline bool registration_is_cachebale(mca_mpool_base_registration_t *reg)
+{
+     return !(reg->flags &
+             (MCA_MPOOL_FLAGS_CACHE_BYPASS |
+              MCA_MPOOL_FLAGS_PERSIST |
+              MCA_MPOOL_FLAGS_INVALID));
+}
+
 int mca_mpool_rdma_deregister(struct mca_mpool_base_module_t *mpool,
                             mca_mpool_base_registration_t *reg)
 {
@@ -335,8 +362,8 @@ int mca_mpool_rdma_deregister(struct mca_mpool_base_module_t *mpool,
         OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
         return OMPI_SUCCESS;
     }
-    if(mca_mpool_rdma_component.leave_pinned &&
-       !(reg->flags & (MCA_MPOOL_FLAGS_CACHE_BYPASS|MCA_MPOOL_FLAGS_PERSIST))) {
+    if(mca_mpool_rdma_component.leave_pinned && registration_is_cachebale(reg))
+    {
         /* if leave_pinned is set don't deregister memory, but put it
          * on MRU list for future use */
         opal_list_prepend(&mpool_rdma->mru_list, (opal_list_item_t*)reg);
@@ -354,56 +381,50 @@ int mca_mpool_rdma_deregister(struct mca_mpool_base_module_t *mpool,
     return rc;
 }
 
+#define RDMA_MPOOL_NREGS 100
+
 int mca_mpool_rdma_release_memory(struct mca_mpool_base_module_t *mpool,
         void *base, size_t size)
 {
     mca_mpool_rdma_module_t *mpool_rdma = (mca_mpool_rdma_module_t*)mpool;
     mca_mpool_base_registration_t *reg;
-    opal_pointer_array_t regs;
+    mca_mpool_base_registration_t *regs[RDMA_MPOOL_NREGS];
     int reg_cnt, i, err = 0;
 
-    OBJ_CONSTRUCT(&regs, opal_pointer_array_t);
-
     OPAL_THREAD_LOCK(&mpool->rcache->lock);
-    reg_cnt = mpool->rcache->rcache_find_all(mpool->rcache, base, size, &regs);
+    do {
+        reg_cnt = mpool->rcache->rcache_find_all(mpool->rcache, base, size,
+                regs, RDMA_MPOOL_NREGS);
 
-    for(i = 0; i < reg_cnt; i++) {
-        reg = (mca_mpool_base_registration_t*)
-            opal_pointer_array_get_item(&regs, i);
+        for(i = 0; i < reg_cnt; i++) {
+            reg = regs[i];
 
-        if(0 == reg->ref_count) {
-            if(dereg_mem(mpool, reg) != OMPI_SUCCESS) {
-                err++;
+            reg->flags |= MCA_MPOOL_FLAGS_INVALID;
+            if(reg->ref_count) {
+                /* memory is being freed, but there are registration in use that
+                 * covers the memory. This can happen even in a correct program,
+                 * but may also be an user error. We can't tell. Mark the
+                 * registration as invalid. It will not be used any more and
+                 * will be unregistered when ref_count will become zero */
+                err++; /* tell caller that something was wrong */
                 continue;
             }
-        } else {
-            /* remove registration from cache and wait for ref_count goes to
-             * zero before unregister memory. Note that our registered memory
-             * statistic can go wrong at this point, but it is better than
-             * potential memory corruption. And we return error in this case to
-             * the caller */
-            reg->flags |= MCA_MPOOL_FLAGS_CACHE_BYPASS;
-            err++; /* tell caller that something was wrong */
-        }
-        mpool->rcache->rcache_delete(mpool->rcache, reg);
-        if(0 == reg->ref_count) {
-            opal_list_remove_item(&mpool_rdma->mru_list,
-                    (opal_list_item_t*)reg);
-            OMPI_FREE_LIST_RETURN(&mpool_rdma->reg_list,
-                    (ompi_free_list_item_t*)reg);
-        }
-    }
-    OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-    opal_pointer_array_remove_all(&regs);
 
-    return err?OMPI_ERROR:OMPI_SUCCESS;
+            opal_list_remove_item(&mpool_rdma->mru_list,(opal_list_item_t*)reg);
+            opal_list_append(&mpool_rdma->gc_list, (opal_list_item_t*)reg);
+        }
+    } while(reg_cnt == RDMA_MPOOL_NREGS);
+
+    OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
+
+    return err ? OMPI_ERROR : OMPI_SUCCESS;
 }
 
 void mca_mpool_rdma_finalize(struct mca_mpool_base_module_t *mpool)
 {
     mca_mpool_rdma_module_t *mpool_rdma = (mca_mpool_rdma_module_t*)mpool;
     mca_mpool_base_registration_t *reg;
-    opal_pointer_array_t regs;
+    mca_mpool_base_registration_t *regs[RDMA_MPOOL_NREGS];
     int reg_cnt, i;
 
     /* Statistic */
@@ -416,33 +437,35 @@ void mca_mpool_rdma_finalize(struct mca_mpool_base_module_t *mpool)
                 mpool_rdma->stat_evicted);
     }
 
-    OBJ_CONSTRUCT(&regs, opal_pointer_array_t);
-
     OPAL_THREAD_LOCK(&mpool->rcache->lock);
-    reg_cnt = mpool->rcache->rcache_find_all(mpool->rcache, 0, (size_t)-1, &regs);
+    if(!opal_list_is_empty(&mpool_rdma->gc_list))
+        do_unregistration_gc(mpool);
+    do {
+        reg_cnt = mpool->rcache->rcache_find_all(mpool->rcache, 0, (size_t)-1,
+                regs, RDMA_MPOOL_NREGS);
 
-    for(i = 0; i < reg_cnt; i++) {
-        reg = (mca_mpool_base_registration_t*)
-            opal_pointer_array_get_item(&regs, i);
+        for(i = 0; i < reg_cnt; i++) {
+            reg = regs[i];
 
-        if(reg->ref_count) {
-            reg->ref_count = 0; /* otherway dereg will fail on assert */
-        } else if (mca_mpool_rdma_component.leave_pinned) {
-            opal_list_remove_item(&mpool_rdma->mru_list,
-                    (opal_list_item_t*)reg);
+            if(reg->ref_count) {
+                reg->ref_count = 0; /* otherway dereg will fail on assert */
+            } else if (mca_mpool_rdma_component.leave_pinned) {
+                opal_list_remove_item(&mpool_rdma->mru_list,
+                        (opal_list_item_t*)reg);
+            }
+
+            if(dereg_mem(mpool, reg) != OMPI_SUCCESS) {
+                continue;
+            }
+
+            mpool->rcache->rcache_delete(mpool->rcache, reg);
+            OMPI_FREE_LIST_RETURN(&mpool_rdma->reg_list,
+                    (ompi_free_list_item_t*)reg);
         }
-
-        if(dereg_mem(mpool, reg) != OMPI_SUCCESS) {
-            continue;
-        }
-
-        mpool->rcache->rcache_delete(mpool->rcache, reg);
-        OMPI_FREE_LIST_RETURN(&mpool_rdma->reg_list,
-                (ompi_free_list_item_t*)reg);
-    }
+    } while(reg_cnt == RDMA_MPOOL_NREGS);
 
     OBJ_DESTRUCT(&mpool_rdma->mru_list);
+    OBJ_DESTRUCT(&mpool_rdma->gc_list);
     OBJ_DESTRUCT(&mpool_rdma->reg_list);
     OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-    opal_pointer_array_remove_all(&regs);
 }

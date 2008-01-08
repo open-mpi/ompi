@@ -57,6 +57,7 @@ struct mca_mpool_rdma_module_t {
     struct mca_mpool_base_resources_t resources;
     ompi_free_list_t reg_list;
     opal_list_t mru_list;
+    opal_list_t gc_list;
     uint32_t stat_cache_hit;
     uint32_t stat_cache_miss;
     uint32_t stat_evicted;

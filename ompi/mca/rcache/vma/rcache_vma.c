@@ -62,7 +62,8 @@ int mca_rcache_vma_find(struct mca_rcache_base_module_t* rcache,
 }
 
 int mca_rcache_vma_find_all(struct mca_rcache_base_module_t* rcache,
-        void* addr, size_t size, opal_pointer_array_t *regs)
+        void* addr, size_t size, mca_mpool_base_registration_t **regs,
+        int reg_cnt)
 {
     void *base_addr, *bound_addr;
 
@@ -74,7 +75,8 @@ int mca_rcache_vma_find_all(struct mca_rcache_base_module_t* rcache,
     bound_addr = up_align_addr((void*) ((unsigned long) addr + size - 1), mca_mpool_base_page_size_log);
 
     return mca_rcache_vma_tree_find_all((mca_rcache_vma_module_t*)rcache,
-            (unsigned char*)base_addr, (unsigned char*)bound_addr, regs);
+            (unsigned char*)base_addr, (unsigned char*)bound_addr, regs,
+            reg_cnt);
 }
 
 int mca_rcache_vma_insert(struct mca_rcache_base_module_t* rcache,
