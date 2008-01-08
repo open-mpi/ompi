@@ -76,7 +76,8 @@ mca_mpool_base_registration_t* mca_rcache_vma_tree_find(
  */
 int mca_rcache_vma_tree_find_all(
         mca_rcache_vma_module_t *vma_rcache, unsigned char *base,
-        unsigned char *bound, opal_pointer_array_t *regs);
+        unsigned char *bound, mca_mpool_base_registration_t **regs,
+        int reg_cnt);
 
 /* 
  * insert an item in the vma tree 

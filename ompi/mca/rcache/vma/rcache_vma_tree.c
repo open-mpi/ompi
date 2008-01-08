@@ -272,26 +272,30 @@ mca_mpool_base_registration_t *mca_rcache_vma_tree_find(
     if(!vma)
         return NULL;
     
-    item = (mca_rcache_vma_reg_list_item_t*)opal_list_get_first(&vma->reg_list);
-
-    do {
+    for(item = (mca_rcache_vma_reg_list_item_t*)
+            opal_list_get_first(&vma->reg_list);
+            item != (mca_rcache_vma_reg_list_item_t*)
+            opal_list_get_end(&vma->reg_list);
+            item = (mca_rcache_vma_reg_list_item_t*)
+            opal_list_get_next(item)) {
+        if(item->reg->flags & MCA_MPOOL_FLAGS_INVALID)
+            continue;
         if(item->reg->bound >= bound)
             return item->reg;
         if(!(item->reg->flags & MCA_MPOOL_FLAGS_PERSIST))
             break;
-        item = (mca_rcache_vma_reg_list_item_t*)opal_list_get_next(item);
-    } while(item !=
-            (mca_rcache_vma_reg_list_item_t*)opal_list_get_end(&vma->reg_list));
+    }
 
     return NULL;
 }
 
-static inline bool is_reg_in_array(opal_pointer_array_t *regs, void *p)
+static inline bool is_reg_in_array(mca_mpool_base_registration_t **regs,
+        int cnt, mca_mpool_base_registration_t *p)
 {
     int i;
 
-    for(i = 0; i < opal_pointer_array_get_size(regs); i++) {
-        if(opal_pointer_array_get_item(regs, i) == p)
+    for(i = 0; i < cnt; i++) {
+        if(regs[i] == p)
             return true;
     }
 
@@ -300,7 +304,8 @@ static inline bool is_reg_in_array(opal_pointer_array_t *regs, void *p)
 
 int mca_rcache_vma_tree_find_all(
         mca_rcache_vma_module_t *vma_rcache, unsigned char *base,
-        unsigned char *bound, opal_pointer_array_t *regs)
+        unsigned char *bound, mca_mpool_base_registration_t **regs,
+        int reg_cnt)
 {
     int cnt = 0;
 
@@ -310,7 +315,8 @@ int mca_rcache_vma_tree_find_all(
     do {
         mca_rcache_vma_t *vma;
         opal_list_item_t *item;
-        vma = (mca_rcache_vma_t*)ompi_rb_tree_find_with(&vma_rcache->rb_tree, base,
+        vma = (mca_rcache_vma_t*)
+            ompi_rb_tree_find_with(&vma_rcache->rb_tree, base,
                 mca_rcache_vma_tree_node_compare_closest);
 
         if(NULL == vma) {
@@ -328,11 +334,13 @@ int mca_rcache_vma_tree_find_all(
                 item = opal_list_get_next(item)) {
             mca_rcache_vma_reg_list_item_t *vma_item;
             vma_item = (mca_rcache_vma_reg_list_item_t*)item;
-            if(is_reg_in_array(regs, (void*)vma_item->reg)) {
+            if((vma_item->reg->flags & MCA_MPOOL_FLAGS_INVALID) ||
+                    is_reg_in_array(regs, cnt, vma_item->reg)) {
                 continue;
             }
-            opal_pointer_array_add(regs, (void*)vma_item->reg);
-            cnt++;
+            regs[cnt++] = vma_item->reg;
+            if(cnt == reg_cnt)
+                return cnt; /* no space left in the provided array */
         }
 
         base = (unsigned char *)vma->end + 1;

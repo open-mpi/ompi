@@ -32,6 +32,7 @@
 #define MCA_MPOOL_FLAGS_CACHE_BYPASS 0x1
 #define MCA_MPOOL_FLAGS_PERSIST 0x2 
 #define MCA_MPOOL_FLAGS_MPI_ALLOC_MEM 0x4
+#define MCA_MPOOL_FLAGS_INVALID 0x8
 
 struct mca_mpool_base_resources_t;
 

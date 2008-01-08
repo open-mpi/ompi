@@ -54,7 +54,7 @@ int mca_rcache_vma_find(mca_rcache_base_module_t* rcache, void* addr,
         size_t size, mca_mpool_base_registration_t **reg);
 
 int mca_rcache_vma_find_all(mca_rcache_base_module_t* rcache, void* addr,
-         size_t size, opal_pointer_array_t *regs);
+         size_t size,  mca_mpool_base_registration_t **regs, int reg_cnt);
 
 int mca_rcache_vma_insert(struct mca_rcache_base_module_t* rcache,
         mca_mpool_base_registration_t* registration, size_t limit);

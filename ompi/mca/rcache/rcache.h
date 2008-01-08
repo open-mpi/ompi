@@ -41,7 +41,7 @@ typedef int (*mca_rcache_base_module_find_fn_t) (
 
 typedef int (*mca_rcache_base_module_find_all_fn_t)(
         struct mca_rcache_base_module_t* rcache, void* addr, size_t size,
-        opal_pointer_array_t *regs);
+        mca_mpool_base_registration_t **regs, int reg_cnt);
 
 typedef int (*mca_rcache_base_module_insert_fn_t)(
         struct mca_rcache_base_module_t* rcache,
