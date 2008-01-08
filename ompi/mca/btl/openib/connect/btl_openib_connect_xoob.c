@@ -748,6 +748,10 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
                             rem_info.rem_subnet_id,requested_lid));
                 return; 
             }
+            if (OMPI_SUCCESS != mca_btl_openib_endpoint_post_recvs(ib_endpoint)) {
+                BTL_ERROR(("XOOB. Failed to post on XRC SRQs"));
+                return; 
+            }
             OPAL_THREAD_LOCK(&ib_endpoint->endpoint_lock);
             rc = xoob_send_connect_data(ib_endpoint, ENDPOINT_XOOB_CONNECT_XRC_RESPONSE);
             if (OMPI_SUCCESS != rc) {
@@ -783,7 +787,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
             OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
             break;
         case ENDPOINT_XOOB_CONNECT_XRC_RESPONSE:
-            BTL_VERBOSE(("Received ENDPOINT_XOOB_CONNECT_XRC_REQUEST: lid %d, sid %d\n",
+            BTL_VERBOSE(("Received ENDPOINT_XOOB_CONNECT_XRC_RESPONSE: lid %d, sid %d\n",
                         rem_info.rem_lid, 
                         rem_info.rem_subnet_id));
             ib_endpoint = xoob_find_endpoint(process_name, rem_info.rem_subnet_id, 
