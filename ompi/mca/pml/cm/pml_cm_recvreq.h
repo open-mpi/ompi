@@ -28,7 +28,7 @@ struct mca_pml_cm_thin_recv_request_t {
     mca_mtl_request_t req_mtl;            /**< the mtl specific memory. This field should be the last in the struct */
 };
 typedef struct mca_pml_cm_thin_recv_request_t mca_pml_cm_thin_recv_request_t;
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_thin_recv_request_t);
+OBJ_CLASS_DECLARATION(mca_pml_cm_thin_recv_request_t);
 
 struct mca_pml_cm_hvy_recv_request_t {
     mca_pml_cm_request_t req_base;
@@ -43,7 +43,7 @@ struct mca_pml_cm_hvy_recv_request_t {
 }; 
 typedef struct mca_pml_cm_hvy_recv_request_t mca_pml_cm_hvy_recv_request_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_recv_request_t);
+OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_recv_request_t);
 
 /**
  *  Allocate a recv request from the modules free list.

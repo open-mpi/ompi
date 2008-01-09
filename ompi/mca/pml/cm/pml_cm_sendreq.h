@@ -31,7 +31,7 @@ struct mca_pml_cm_send_request_t {
     mca_pml_base_send_mode_t req_send_mode;
 };
 typedef struct mca_pml_cm_send_request_t mca_pml_cm_send_request_t;
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_send_request_t);
+OBJ_CLASS_DECLARATION(mca_pml_cm_send_request_t);
 
 
 struct mca_pml_cm_thin_send_request_t { 
@@ -39,7 +39,7 @@ struct mca_pml_cm_thin_send_request_t {
     mca_mtl_request_t req_mtl;            /**< the mtl specific memory. This field should be the last in the struct */
 };
 typedef struct mca_pml_cm_thin_send_request_t mca_pml_cm_thin_send_request_t;
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_thin_send_request_t);
+OBJ_CLASS_DECLARATION(mca_pml_cm_thin_send_request_t);
 
 
 struct mca_pml_cm_hvy_send_request_t {
@@ -53,7 +53,7 @@ struct mca_pml_cm_hvy_send_request_t {
     mca_mtl_request_t req_mtl;            /**< the mtl specific memory. This field should be the last in the struct */
 };
 typedef struct mca_pml_cm_hvy_send_request_t mca_pml_cm_hvy_send_request_t;
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_send_request_t);
+OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_send_request_t);
 
 
 #define MCA_PML_CM_THIN_SEND_REQUEST_ALLOC(sendreq, comm, dst,          \
