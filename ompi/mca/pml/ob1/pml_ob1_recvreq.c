@@ -716,10 +716,6 @@ int mca_pml_ob1_recv_request_schedule_once(
     ((MCA_PML_REQUEST_IPROBE == (R)->req_recv.req_base.req_type) || \
      (MCA_PML_REQUEST_PROBE == (R)->req_recv.req_base.req_type))
 
-static inline void append_recv_req_to_queue(opal_list_t*, mca_pml_ob1_recv_request_t*);
-mca_pml_ob1_recv_frag_t *recv_req_match_specific_proc(
-        const mca_pml_ob1_recv_request_t*, mca_pml_ob1_comm_proc_t*);
-
 static inline void append_recv_req_to_queue(opal_list_t *queue,
         mca_pml_ob1_recv_request_t *req)
 {
@@ -744,7 +740,7 @@ static inline void append_recv_req_to_queue(opal_list_t *queue,
  *  it places the request in the appropriate matched receive list. This
  *  function has to be called with the communicator matching lock held.
 */
-mca_pml_ob1_recv_frag_t *recv_req_match_specific_proc(
+static mca_pml_ob1_recv_frag_t *recv_req_match_specific_proc(
         const mca_pml_ob1_recv_request_t *req,
         mca_pml_ob1_comm_proc_t *proc)
 {
