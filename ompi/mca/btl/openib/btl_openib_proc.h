@@ -46,7 +46,7 @@ struct mca_btl_openib_proc_t {
     orte_process_name_t proc_guid;           
     /**< globally unique identifier for the process */
     
-    struct mca_btl_openib_port_info_t* proc_ports; 
+    mca_btl_openib_port_info_t* proc_ports; 
     size_t proc_port_count;                  
     /**< number of ports published by endpoint */
 
