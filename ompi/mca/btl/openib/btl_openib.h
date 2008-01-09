@@ -78,6 +78,8 @@ struct mca_btl_openib_qp_info_t {
     size_t size;
     int32_t rd_num;
     int32_t rd_low;
+    ompi_free_list_t send_free;     /**< free lists of send buffer descriptors */
+    ompi_free_list_t recv_free;     /**< free lists of receive buffer descriptors */
     union { 
         mca_btl_openib_pp_qp_info_t pp_qp;
         mca_btl_openib_srq_qp_info_t srq_qp;
@@ -206,6 +208,12 @@ struct mca_btl_openib_component_t {
 #endif
     int rdma_qp;
     int credits_qp; /* qp used for software flow control */
+    /**< free list of frags only; used for pining user memory */
+    ompi_free_list_t send_user_free;
+    /**< free list of frags only; used for pining user memory */
+    ompi_free_list_t recv_user_free;
+    /**< frags for coalesced massages */
+    ompi_free_list_t send_free_coalesced;
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;
@@ -245,6 +253,11 @@ typedef struct mca_btl_openib_port_info_t mca_btl_openib_port_info_t;
         MCA_BTL_OPENIB_LID_HTON(hdr); \
     } while (0)
 
+typedef struct mca_btl_openib_hca_qp_t {
+    ompi_free_list_t send_free;     /**< free lists of send buffer descriptors */
+    ompi_free_list_t recv_free;     /**< free lists of receive buffer descriptors */
+} mca_btl_openib_hca_qp_t;
+
 struct mca_btl_base_endpoint_t;
 
 typedef struct mca_btl_openib_hca_t {
@@ -281,6 +294,9 @@ typedef struct mca_btl_openib_hca_t {
     uint32_t non_eager_rdma_endpoints;
     int32_t eager_rdma_buffers_count;
     struct mca_btl_base_endpoint_t **eager_rdma_buffers;
+    /**< frags for control massages */
+    ompi_free_list_t send_free_control;
+    mca_btl_openib_hca_qp_t *qps;
 } mca_btl_openib_hca_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_hca_t);
 
@@ -297,8 +313,6 @@ struct mca_btl_openib_module_srq_qp_t {
 }; typedef struct mca_btl_openib_module_srq_qp_t mca_btl_openib_module_srq_qp_t;
 
 struct mca_btl_openib_module_qp_t {
-    ompi_free_list_t send_free;     /**< free lists of send buffer descriptors */
-    ompi_free_list_t recv_free;     /**< free lists of receive buffer descriptors */
     union {
         mca_btl_openib_module_pp_qp_t pp_qp;
         mca_btl_openib_module_srq_qp_t srq_qp;
@@ -322,16 +336,6 @@ struct mca_btl_openib_module_t {
         
     int32_t num_peers;
     
-    ompi_free_list_t send_user_free;   /**< free list of frags only... 
-                                       *   used for pining user memory */ 
-    
-    ompi_free_list_t recv_user_free;   /**< free list of frags only... 
-                                       *   used for pining user memory */ 
-
-    ompi_free_list_t send_free_control; /**< frags for control massages */ 
-
-    ompi_free_list_t send_free_coalesced; /**< frags for coalesced massages */
-
     opal_mutex_t ib_lock;              /**< module level lock */ 
     
     size_t ib_inline_max; /**< max size of inline send*/ 

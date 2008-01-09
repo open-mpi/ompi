@@ -633,14 +633,14 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     mca_btl_openib_module_t* openib_btl = endpoint->endpoint_btl;
     mca_btl_openib_send_control_frag_t* frag;
     mca_btl_openib_rdma_credits_header_t *credits_hdr;
-    int ib_rc;
+    int rc;
     bool do_rdma = false;
     int32_t cm_return;
 
     frag = endpoint->qps[qp].credit_frag;
 
     if(OPAL_UNLIKELY(NULL == frag)) {
-        MCA_BTL_IB_FRAG_ALLOC_CREDIT_WAIT(openib_btl, frag, ib_rc);
+        frag = alloc_credit_frag(openib_btl);
         frag->qp_idx = qp;
         endpoint->qps[qp].credit_frag = frag;
         /* set those once and forever */
@@ -686,9 +686,7 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     if(endpoint->nbo)
          BTL_OPENIB_RDMA_CREDITS_HEADER_HTON(*credits_hdr);
 
-    ib_rc = post_send(endpoint, frag, do_rdma);
-
-    if(0 == ib_rc)
+    if((rc = post_send(endpoint, frag, do_rdma)) == 0)
         return;
 
     if(endpoint->nbo) {
@@ -705,7 +703,7 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     else
         OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_sent, -1);
 
-    BTL_ERROR(("error posting send request errno %d says %s", ib_rc,
+    BTL_ERROR(("error posting send request errno %d says %s", rc,
                 strerror(errno)));
 }
 
@@ -728,7 +726,7 @@ static int mca_btl_openib_endpoint_send_eager_rdma(
     mca_btl_openib_send_control_frag_t* frag;
     int rc;
 
-    MCA_BTL_IB_FRAG_ALLOC_CREDIT_WAIT(openib_btl, frag, rc);
+    frag = alloc_credit_frag(openib_btl);
     if(NULL == frag) {
         return -1;
     }

@@ -486,7 +486,7 @@ ib_frag_alloc(mca_btl_openib_module_t *btl, size_t size, uint8_t order,
 
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
          if(mca_btl_openib_component.qp_infos[qp].size >= size) {
-             OMPI_FREE_LIST_GET(&btl->qps[qp].send_free, item, rc);
+             OMPI_FREE_LIST_GET(&btl->hca->qps[qp].send_free, item, rc);
              if(item)
                  break;
          }
@@ -585,7 +585,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
         return ib_frag_alloc((mca_btl_openib_module_t*)btl, size, order, flags);
 
     /* begin coalescing message */
-    MCA_BTL_IB_FRAG_ALLOC_COALESCED(obtl, cfrag);
+    cfrag = alloc_coalesced_frag();
     cfrag->send_frag = sfrag;
 
     /* fix up new coalescing header if this is the first coalesced frag */
@@ -725,7 +725,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     if(ompi_convertor_need_buffers(convertor) == false && 0 == reserve) {
         /* GMS  bloody HACK! */
         if(registration != NULL || max_data > btl->btl_max_send_size) {
-            MCA_BTL_IB_FRAG_ALLOC_SEND_USER(openib_btl, frag, rc);
+            frag = alloc_send_user_frag();
             if(NULL == frag) {
                 return NULL;
             }
@@ -829,8 +829,8 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     void *buffer;
 
     openib_btl = (mca_btl_openib_module_t*)btl;
-        
-    MCA_BTL_IB_FRAG_ALLOC_RECV_USER(openib_btl, frag, rc);
+
+    frag = alloc_recv_user_frag();
     if(NULL == frag) {
         return NULL;
     }
@@ -939,7 +939,6 @@ static int mca_btl_finalize_hca(struct mca_btl_openib_hca_t *hca)
             return OMPI_ERROR;
         }
     }
-    OBJ_DESTRUCT(&hca->hca_lock); 
     OBJ_RELEASE(hca);
     return OMPI_SUCCESS;
 }
@@ -1001,14 +1000,7 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
                 OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
                 break;
         }
-        /* Destroy free lists */
-        OBJ_DESTRUCT(&openib_btl->qps[qp].send_free);
-        OBJ_DESTRUCT(&openib_btl->qps[qp].recv_free);
     }
-
-    OBJ_DESTRUCT(&openib_btl->send_free_control);
-    OBJ_DESTRUCT(&openib_btl->send_user_free);
-    OBJ_DESTRUCT(&openib_btl->recv_user_free);
 
     /* Release pending lists */
     if (!(--openib_btl->hca->btls)) {
