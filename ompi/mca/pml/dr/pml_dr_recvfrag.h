@@ -144,11 +144,10 @@ void mca_pml_dr_recv_frag_ack(
  *  Callback from BTL on receipt of a recv_frag.
  */
 
-OMPI_DECLSPEC void mca_pml_dr_recv_frag_callback(
-    mca_btl_base_module_t *btl, 
-    mca_btl_base_tag_t tag,
-    mca_btl_base_descriptor_t* descriptor,
-    void* cbdata);
+void mca_pml_dr_recv_frag_callback( mca_btl_base_module_t *btl, 
+                                    mca_btl_base_tag_t tag,
+                                    mca_btl_base_descriptor_t* descriptor,
+                                    void* cbdata);
 
 /**
  * Match incoming recv_frags against posted receives.  
@@ -160,13 +159,12 @@ OMPI_DECLSPEC void mca_pml_dr_recv_frag_callback(
  * @param additional_matches (OUT)  List of additional matches 
  * @return                          OMPI_SUCCESS or error status on failure.
  */
-OMPI_DECLSPEC bool mca_pml_dr_recv_frag_match(
-    mca_pml_dr_comm_t* comm,
-    mca_pml_dr_comm_proc_t* proc,
-    mca_btl_base_module_t* btl, 
-    mca_pml_dr_match_hdr_t *hdr,
-    mca_btl_base_segment_t* segments,
-    size_t num_segments);
+bool mca_pml_dr_recv_frag_match( mca_pml_dr_comm_t* comm,
+                                 mca_pml_dr_comm_proc_t* proc,
+                                 mca_btl_base_module_t* btl, 
+                                 mca_pml_dr_match_hdr_t *hdr,
+                                 mca_btl_base_segment_t* segments,
+                                 size_t num_segments);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

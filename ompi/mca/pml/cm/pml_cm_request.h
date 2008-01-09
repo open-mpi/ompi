@@ -51,6 +51,6 @@ struct mca_pml_cm_request_t {
 /* END: These fields have to match the definition of the mca_pml_base_request_t */
 };
 typedef struct mca_pml_cm_request_t mca_pml_cm_request_t;
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_request_t);
+OBJ_CLASS_DECLARATION(mca_pml_cm_request_t);
 
 #endif

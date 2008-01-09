@@ -70,7 +70,7 @@ struct mca_pml_comm_t {
 };
 typedef struct mca_pml_comm_t mca_pml_dr_comm_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_dr_comm_t);
+OBJ_CLASS_DECLARATION(mca_pml_dr_comm_t);
 
 
 /**
@@ -81,7 +81,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_dr_comm_t);
  * @return           OMPI_SUCCESS or error status on failure.
  */
 
-OMPI_DECLSPEC extern int mca_pml_dr_comm_init(mca_pml_dr_comm_t* dr_comm, ompi_communicator_t* ompi_comm);
+extern int mca_pml_dr_comm_init(mca_pml_dr_comm_t* dr_comm, ompi_communicator_t* ompi_comm);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
