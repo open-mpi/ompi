@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -41,6 +42,10 @@ struct mca_btl_sm_hdr_t {
     struct mca_btl_sm_frag_t *frag;
     size_t len;
     mca_btl_base_tag_t tag;
+   /* Add a 4 byte pad to round out structure to 16 bytes for 32-bit
+    * and to 24 bytes for 64-bit.  Helps prevent bus errors for strict
+    * alignment cases like SPARC. */
+    char pad[4];
 };
 typedef struct mca_btl_sm_hdr_t mca_btl_sm_hdr_t;
 
