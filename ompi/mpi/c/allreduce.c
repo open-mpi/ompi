@@ -53,13 +53,21 @@ int MPI_Allreduce(void *sendbuf, void *recvbuf, int count,
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                           FUNC_NAME);
         } else if (MPI_OP_NULL == op) {
-          err = MPI_ERR_OP;
+            err = MPI_ERR_OP;
         } else if (!ompi_op_is_valid(op, datatype, &msg, FUNC_NAME)) {
             int ret = OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, msg);
             free(msg);
             return ret;
+        } else if( MPI_IN_PLACE == recvbuf ) {
+	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_BUFFER, 
+                                          FUNC_NAME);
+        } else if( (sendbuf == recvbuf) && 
+                   (MPI_BOTTOM != sendbuf) &&
+                   (count > 1) ) {
+	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_BUFFER, 
+                                          FUNC_NAME);
         } else {
-          OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
+            OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
         }
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
