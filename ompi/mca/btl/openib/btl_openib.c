@@ -998,7 +998,6 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
                 }
                 OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
                 OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
-                break;
         }
     }
 
