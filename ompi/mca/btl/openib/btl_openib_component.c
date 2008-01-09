@@ -1576,23 +1576,27 @@ static char* btl_openib_component_status_to_string(enum ibv_wc_status status)
     }
 }
 
-static void progress_pending_frags_wqe(mca_btl_openib_qp_t *qp)
+static void
+progress_pending_frags_wqe(mca_btl_base_endpoint_t *ep, const int qpn)
 {
     int i;
     opal_list_item_t *frag;
-    
-    OPAL_THREAD_LOCK(&qp->lock);
+    mca_btl_openib_qp_t *qp = ep->qps[qpn].qp;
+
+    OPAL_THREAD_LOCK(&ep->endpoint_lock);
     for(i = 0; i < 2; i++) {
        while(qp->sd_wqe > 0) {
             mca_btl_base_endpoint_t *ep;
+            OPAL_THREAD_LOCK(&qp->lock);
             frag = opal_list_remove_first(&qp->pending_frags[i]);
+            OPAL_THREAD_UNLOCK(&qp->lock);
             if(NULL == frag)
                 break;
             ep = to_com_frag(frag)->endpoint;
             mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag));
        }
     }
-    OPAL_THREAD_UNLOCK(&qp->lock);
+    OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
 }
 
 static void progress_pending_frags_srq(mca_btl_openib_module_t* openib_btl,
@@ -1673,7 +1677,7 @@ static void handle_wc(mca_btl_openib_hca_t* hca, const uint32_t cq,
                 progress_pending_frags_srq(openib_btl, qp);
             }
             /* new wqe or/and get token available. Try to progress pending frags */
-            progress_pending_frags_wqe(endpoint->qps[qp].qp);
+            progress_pending_frags_wqe(endpoint, qp);
             mca_btl_openib_frag_progress_pending_put_get(endpoint, qp);
             break;
         case IBV_WC_RECV:
