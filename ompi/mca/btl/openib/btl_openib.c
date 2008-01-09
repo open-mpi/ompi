@@ -58,7 +58,6 @@
 #include <sys/resource.h>
 #endif
 
-
 mca_btl_openib_module_t mca_btl_openib_module = {
     {
         &mca_btl_openib_component.super,
@@ -91,13 +90,6 @@ mca_btl_openib_module_t mca_btl_openib_module = {
     }
 };
 
-/*
- * Local functions
- */
-static int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size_t nprocs);
-static int mca_btl_finalize_hca(struct mca_btl_openib_hca_t *hca);
-
-
 static void show_init_error(const char *file, int line, 
                             const char *func, const char *dev) 
 {
@@ -127,6 +119,156 @@ static void show_init_error(const char *file, int line,
     }
 }
 
+static inline struct ibv_cq *ibv_create_cq_compat(struct ibv_context *context,
+        int cqe, void *cq_context, struct ibv_comp_channel *channel,
+        int comp_vector)
+{
+#if OMPI_IBV_CREATE_CQ_ARGS == 3
+    return ibv_create_cq(context, cqe, channel);
+#else
+    return ibv_create_cq(context, cqe, cq_context, channel, comp_vector); 
+#endif
+}
+
+static int adjust_cq(mca_btl_openib_hca_t *hca, const int cq)
+{
+    uint32_t cq_size = hca->cq_size[cq];
+
+    /* make sure we don't exceed the maximum CQ size and that we 
+     * don't size the queue smaller than otherwise requested 
+     */
+     if(cq_size < mca_btl_openib_component.ib_cq_size[cq])
+        cq_size = mca_btl_openib_component.ib_cq_size[cq];
+
+    if(cq_size > (uint32_t)hca->ib_dev_attr.max_cq)
+        cq_size = hca->ib_dev_attr.max_cq;
+
+    if(NULL == hca->ib_cq[cq]) {
+        hca->ib_cq[cq] = ibv_create_cq_compat(hca->ib_dev_context, cq_size,
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+                hca, hca->ib_channel,
+#else
+                NULL, NULL,
+#endif
+                0);
+    
+        if (NULL == hca->ib_cq[cq]) {
+            show_init_error(__FILE__, __LINE__, "ibv_create_cq",
+                        ibv_get_device_name(hca->ib_dev));
+            return OMPI_ERROR;
+        }
+
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+        if(ibv_req_notify_cq(hca->ib_cq[cq], 0)) {
+            show_init_error(__FILE__, __LINE__, "ibv_req_notify_cq",
+                            ibv_get_device_name(hca->ib_dev));
+            return OMPI_ERROR;
+        }
+
+        OPAL_THREAD_LOCK(&hca->hca_lock);
+        if (!hca->progress) {
+            int rc;
+            hca->progress = true;
+            if(OPAL_SUCCESS != (rc = opal_thread_start(&hca->thread))) {
+                BTL_ERROR(("Unable to create progress thread, retval=%d", rc));
+                return rc;
+            }
+        }
+        OPAL_THREAD_UNLOCK(&hca->hca_lock);
+#endif
+    }
+#ifdef HAVE_IBV_RESIZE_CQ
+    else if (cq_size > mca_btl_openib_component.ib_cq_size[cq]){
+        int rc;
+        rc = ibv_resize_cq(hca->ib_cq[cq], cq_size);
+        /* For ConnectX the resize CQ is not implemented and verbs returns -ENOSYS 
+         * but should return ENOSYS. So it is reason for abs */
+        if(rc && ENOSYS != abs(rc)) {
+            BTL_ERROR(("cannot resize completion queue, error: %d", rc));
+            return OMPI_ERROR;
+        }
+    }
+#endif
+
+    return OMPI_SUCCESS;
+}
+
+/* 
+ * create both the high and low priority completion queues 
+ * and the shared receive queue (if requested)
+ */ 
+static int create_srq(mca_btl_openib_module_t *openib_btl)
+{
+    int qp;
+
+    /* create the SRQ's */
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
+        struct ibv_srq_init_attr attr; 
+
+        if(!BTL_OPENIB_QP_TYPE_PP(qp)) { 
+            attr.attr.max_wr = mca_btl_openib_component.qp_infos[qp].rd_num + 
+                mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
+            attr.attr.max_sge = mca_btl_openib_component.ib_sg_list_size;
+            openib_btl->qps[qp].u.srq_qp.rd_posted = 0;
+#if HAVE_XRC
+            if(BTL_OPENIB_QP_TYPE_XRC(qp)) {
+                openib_btl->qps[qp].u.srq_qp.srq =
+                    ibv_create_xrc_srq(openib_btl->hca->ib_pd,
+                            openib_btl->hca->xrc_domain,
+                            openib_btl->hca->ib_cq[qp_cq_prio(qp)], &attr);
+            } else
+#endif
+            {
+
+               openib_btl->qps[qp].u.srq_qp.srq =
+                   ibv_create_srq(openib_btl->hca->ib_pd, &attr);
+            }
+            if (NULL == openib_btl->qps[qp].u.srq_qp.srq) { 
+                show_init_error(__FILE__, __LINE__, "ibv_create_srq",
+                                ibv_get_device_name(openib_btl->hca->ib_dev));
+                return OMPI_ERROR; 
+            }
+        }
+    }
+       
+    return OMPI_SUCCESS;
+}
+
+static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl, size_t nprocs) 
+{
+    uint32_t send_cqes, recv_cqes;
+    int rc = OMPI_SUCCESS, qp;
+    mca_btl_openib_hca_t *hca = openib_btl->hca;
+
+    /* figure out reasonable sizes for completion queues */
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
+        if(BTL_OPENIB_QP_TYPE_SRQ(qp)) {
+            send_cqes = mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
+            recv_cqes = mca_btl_openib_component.qp_infos[qp].rd_num;
+        } else {
+            send_cqes = (mca_btl_openib_component.qp_infos[qp].rd_num +
+                mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv) * nprocs;
+            recv_cqes = send_cqes;
+        }
+        openib_btl->hca->cq_size[qp_cq_prio(qp)] += recv_cqes;
+        openib_btl->hca->cq_size[BTL_OPENIB_LP_CQ] += send_cqes;
+    }
+   
+    rc = adjust_cq(hca, BTL_OPENIB_HP_CQ);
+    if(rc != OMPI_SUCCESS)
+        goto out;
+
+    rc = adjust_cq(hca, BTL_OPENIB_LP_CQ);
+    if(rc != OMPI_SUCCESS)
+        goto out;
+
+    if(0 == openib_btl->num_peers)
+       rc = create_srq(openib_btl); 
+
+out:
+    openib_btl->num_peers += nprocs;
+    return rc;
+}
 
 /* 
  *  add a proc to this btl module 
@@ -266,156 +408,6 @@ int mca_btl_openib_add_procs(
     return mca_btl_openib_size_queues(openib_btl, nprocs);
 }
 
-static inline struct ibv_cq *ibv_create_cq_compat(struct ibv_context *context,
-        int cqe, void *cq_context, struct ibv_comp_channel *channel,
-        int comp_vector)
-{
-#if OMPI_IBV_CREATE_CQ_ARGS == 3
-    return ibv_create_cq(context, cqe, channel);
-#else
-    return ibv_create_cq(context, cqe, cq_context, channel, comp_vector); 
-#endif
-}
-
-/* 
- * create both the high and low priority completion queues 
- * and the shared receive queue (if requested)
- */ 
-static int create_srq(mca_btl_openib_module_t *openib_btl)
-{
-    int qp;
-
-    /* create the SRQ's */
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-        struct ibv_srq_init_attr attr; 
-
-        if(!BTL_OPENIB_QP_TYPE_PP(qp)) { 
-            attr.attr.max_wr = mca_btl_openib_component.qp_infos[qp].rd_num + 
-                mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
-            attr.attr.max_sge = mca_btl_openib_component.ib_sg_list_size;
-            openib_btl->qps[qp].u.srq_qp.rd_posted = 0;
-#if HAVE_XRC
-            if(BTL_OPENIB_QP_TYPE_XRC(qp)) {
-                openib_btl->qps[qp].u.srq_qp.srq =
-                    ibv_create_xrc_srq(openib_btl->hca->ib_pd,
-                            openib_btl->hca->xrc_domain,
-                            openib_btl->hca->ib_cq[qp_cq_prio(qp)], &attr);
-            } else
-#endif
-            {
-
-               openib_btl->qps[qp].u.srq_qp.srq =
-                   ibv_create_srq(openib_btl->hca->ib_pd, &attr);
-            }
-            if (NULL == openib_btl->qps[qp].u.srq_qp.srq) { 
-                show_init_error(__FILE__, __LINE__, "ibv_create_srq",
-                                ibv_get_device_name(openib_btl->hca->ib_dev));
-                return OMPI_ERROR; 
-            }
-        }
-    }
-       
-    return OMPI_SUCCESS;
-}
-
-static int adjust_cq(mca_btl_openib_hca_t *hca, const int cq)
-{
-    uint32_t cq_size = hca->cq_size[cq];
-
-    /* make sure we don't exceed the maximum CQ size and that we 
-     * don't size the queue smaller than otherwise requested 
-     */
-     if(cq_size < mca_btl_openib_component.ib_cq_size[cq])
-        cq_size = mca_btl_openib_component.ib_cq_size[cq];
-
-    if(cq_size > (uint32_t)hca->ib_dev_attr.max_cq)
-        cq_size = hca->ib_dev_attr.max_cq;
-
-    if(NULL == hca->ib_cq[cq]) {
-        hca->ib_cq[cq] = ibv_create_cq_compat(hca->ib_dev_context, cq_size,
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
-                hca, hca->ib_channel,
-#else
-                NULL, NULL,
-#endif
-                0);
-    
-        if (NULL == hca->ib_cq[cq]) {
-            show_init_error(__FILE__, __LINE__, "ibv_create_cq",
-                        ibv_get_device_name(hca->ib_dev));
-            return OMPI_ERROR;
-        }
-
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
-        if(ibv_req_notify_cq(hca->ib_cq[cq], 0)) {
-            show_init_error(__FILE__, __LINE__, "ibv_req_notify_cq",
-                            ibv_get_device_name(hca->ib_dev));
-            return OMPI_ERROR;
-        }
-
-        OPAL_THREAD_LOCK(&hca->hca_lock);
-        if (!hca->progress) {
-            int rc;
-            hca->progress = true;
-            if(OPAL_SUCCESS != (rc = opal_thread_start(&hca->thread))) {
-                BTL_ERROR(("Unable to create progress thread, retval=%d", rc));
-                return rc;
-            }
-        }
-        OPAL_THREAD_UNLOCK(&hca->hca_lock);
-#endif
-    }
-#ifdef HAVE_IBV_RESIZE_CQ
-    else if (cq_size > mca_btl_openib_component.ib_cq_size[cq]){
-        int rc;
-        rc = ibv_resize_cq(hca->ib_cq[cq], cq_size);
-        /* For ConnectX the resize CQ is not implemented and verbs returns -ENOSYS 
-         * but should return ENOSYS. So it is reason for abs */
-        if(rc && ENOSYS != abs(rc)) {
-            BTL_ERROR(("cannot resize completion queue, error: %d", rc));
-            return OMPI_ERROR;
-        }
-    }
-#endif
-
-    return OMPI_SUCCESS;
-}
-
-static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl, size_t nprocs) 
-{
-    uint32_t send_cqes, recv_cqes;
-    int rc = OMPI_SUCCESS, qp;
-    mca_btl_openib_hca_t *hca = openib_btl->hca;
-
-    /* figure out reasonable sizes for completion queues */
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-        if(BTL_OPENIB_QP_TYPE_SRQ(qp)) {
-            send_cqes = mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
-            recv_cqes = mca_btl_openib_component.qp_infos[qp].rd_num;
-        } else {
-            send_cqes = (mca_btl_openib_component.qp_infos[qp].rd_num +
-                mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv) * nprocs;
-            recv_cqes = send_cqes;
-        }
-        openib_btl->hca->cq_size[qp_cq_prio(qp)] += recv_cqes;
-        openib_btl->hca->cq_size[BTL_OPENIB_LP_CQ] += send_cqes;
-    }
-   
-    rc = adjust_cq(hca, BTL_OPENIB_HP_CQ);
-    if(rc != OMPI_SUCCESS)
-        goto out;
-
-    rc = adjust_cq(hca, BTL_OPENIB_LP_CQ);
-    if(rc != OMPI_SUCCESS)
-        goto out;
-
-    if(0 == openib_btl->num_peers)
-       rc = create_srq(openib_btl); 
-
-out:
-    openib_btl->num_peers += nprocs;
-    return rc;
-}
 /* 
  * delete the proc as reachable from this btl module 
  */
@@ -471,7 +463,6 @@ int mca_btl_openib_register(
     OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); 
     return OMPI_SUCCESS;
 }
-
 
 /* 
  *Register callback function for error handling..
@@ -688,7 +679,6 @@ int mca_btl_openib_free(
     return OMPI_SUCCESS; 
 }
 
-
 /**
  * register user buffer or pack 
  * data into pre-registered buffer and return a 
@@ -760,7 +750,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             }
             openib_reg = (mca_btl_openib_reg_t*)registration;
 
-
             frag->sg_entry.length = max_data;
             frag->sg_entry.lkey = openib_reg->mr->lkey;
             frag->sg_entry.addr = (uint64_t)(uintptr_t)iov.iov_base;
@@ -777,7 +766,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
                         "frag->segment.seg_key.key32[0] = %lu",
                         frag->sg_entry.lkey, frag->sg_entry.addr,
                         frag->sg_entry.lkey));
-
 
             return &to_base_frag(frag)->base;
         }
@@ -1162,7 +1150,6 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
 
     return OMPI_SUCCESS; 
 }
-
 
 /*
  * RDMA READ remote buffer to local buffer address.
