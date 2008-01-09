@@ -266,12 +266,16 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_coalesced_frag_t);
  *
  */
 
-#define MCA_BTL_IB_FRAG_ALLOC_CREDIT_WAIT(btl, frag, rc)               \
-    do {                                                               \
-        ompi_free_list_item_t *item;                                   \
-        OMPI_FREE_LIST_WAIT(&(btl)->send_free_control, item, rc);      \
-        frag = to_send_control_frag(item);                             \
-    } while(0)
+static inline mca_btl_openib_send_control_frag_t *
+alloc_credit_frag(mca_btl_openib_module_t *btl)
+{
+    int rc;
+    ompi_free_list_item_t *item;
+
+    OMPI_FREE_LIST_WAIT(&btl->hca->send_free_control, item, rc);
+
+    return to_send_control_frag(item);
+}
 
 static inline uint8_t frag_size_to_order(mca_btl_openib_module_t* btl,
         size_t size)
@@ -284,27 +288,35 @@ static inline uint8_t frag_size_to_order(mca_btl_openib_module_t* btl,
     return MCA_BTL_NO_ORDER;
 }
 
-#define MCA_BTL_IB_FRAG_ALLOC_SEND_USER(btl, frag, rc)                 \
-    do {                                                               \
-        ompi_free_list_item_t *item;                                   \
-        OMPI_FREE_LIST_GET(&(btl)->send_user_free, item, rc);          \
-        frag = to_com_frag(item);                                      \
-    } while(0)
+static inline mca_btl_openib_com_frag_t *alloc_send_user_frag(void)
+{
+    int rc;
+    ompi_free_list_item_t *item;
 
-#define MCA_BTL_IB_FRAG_ALLOC_RECV_USER(btl, frag, rc)                  \
-    do {                                                                \
-        ompi_free_list_item_t *item;                                    \
-        OMPI_FREE_LIST_GET(&(btl)->recv_user_free, item, rc);           \
-        frag = to_com_frag(item);                                       \
-    } while(0)
+    OMPI_FREE_LIST_GET(&mca_btl_openib_component.send_user_free, item, rc);
 
-#define MCA_BTL_IB_FRAG_ALLOC_COALESCED(btl, frag)                      \
-    do {                                                                \
-        int ign_rc;                                                     \
-        ompi_free_list_item_t *item;                                    \
-        OMPI_FREE_LIST_GET(&(btl)->send_free_coalesced, item, ign_rc)   \
-        frag = to_coalesced_frag(item);                                 \
-    } while(0)
+    return to_com_frag(item);
+}
+
+static inline mca_btl_openib_com_frag_t *alloc_recv_user_frag(void)
+{
+    int rc;
+    ompi_free_list_item_t *item;
+
+    OMPI_FREE_LIST_GET(&mca_btl_openib_component.recv_user_free, item, rc);
+
+    return to_com_frag(item);
+}
+
+static inline mca_btl_openib_coalesced_frag_t *alloc_coalesced_frag(void)
+{
+    int rc;
+    ompi_free_list_item_t *item;
+
+    OMPI_FREE_LIST_GET(&mca_btl_openib_component.send_free_coalesced, item, rc);
+
+    return to_coalesced_frag(item);
+}
 
 #define MCA_BTL_IB_FRAG_RETURN(frag)                                    \
     do {                                                                \
