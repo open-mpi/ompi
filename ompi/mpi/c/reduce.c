@@ -53,26 +53,28 @@ int MPI_Reduce(void *sendbuf, void *recvbuf, int count,
         /* Checks for all ranks */
 	
         else if (MPI_OP_NULL == op || NULL == op) {
-          err = MPI_ERR_OP;
+            err = MPI_ERR_OP;
         } else if (!ompi_op_is_valid(op, datatype, &msg, FUNC_NAME)) {
             int ret = OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, msg);
             free(msg);
             return ret;
         } else if ((ompi_comm_rank(comm) != root && MPI_IN_PLACE == sendbuf) ||
                    (ompi_comm_rank(comm) == root && MPI_IN_PLACE == recvbuf)) {
-          err = MPI_ERR_ARG;
+            err = MPI_ERR_ARG;
+        } else if( sendbuf == recvbuf ) {
+            err = MPI_ERR_ARG;
         } else {
-          OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
+            OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
         }
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
 
         /* Intercommunicator errors */
 
         if (!OMPI_COMM_IS_INTRA(comm)) {
-          if (! ((root >= 0 && root < ompi_comm_remote_size(comm)) ||
-                 MPI_ROOT == root || MPI_PROC_NULL == root)) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
-          }
+            if (! ((root >= 0 && root < ompi_comm_remote_size(comm)) ||
+                   MPI_ROOT == root || MPI_PROC_NULL == root)) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
+            }
         }
 
         /* Intracommunicator errors */
