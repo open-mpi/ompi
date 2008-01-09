@@ -104,7 +104,7 @@ int mca_base_open(void)
   asprintf(&lds.lds_prefix, "[%s:%05d] ", hostname, getpid());
   opal_output_reopen(0, &lds);
   opal_output_verbose(5, 0, "mca: base: opening components");
-
+  free(lds.lds_prefix);
   /* Open up the component repository */
 
   return mca_base_component_repository_init();
