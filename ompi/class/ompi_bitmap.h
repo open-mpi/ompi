@@ -40,7 +40,6 @@
  * There are several classes that have forked between their OMPI and
  * ORTE implementations.  As of this writing:
  *
- * - ompi_bitmap and orte_bitmap
  * - opal_value_array and orte_value_array
  *
  * Short version: 
