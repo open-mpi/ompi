@@ -66,34 +66,13 @@
 #endif
 #include "connect/base.h"
 
-
 /*
  * Local functions
  */
 static int btl_openib_component_open(void);
 static int btl_openib_component_close(void);
-static int btl_openib_modex_send(void);
-static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
-                         uint8_t port_num, uint16_t pkey_index,
-                         struct ibv_port_attr *ib_port_attr);
-static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev);
-static mca_btl_base_module_t **btl_openib_component_init(
-    int *num_btl_modules, bool enable_progress_threads,
-    bool enable_mpi_threads);
-static void merge_values(ompi_btl_openib_ini_values_t *target,
-                         ompi_btl_openib_ini_values_t *src);
-static char* btl_openib_component_status_to_string(enum ibv_wc_status status);
+static mca_btl_base_module_t **btl_openib_component_init(int*, bool, bool);
 static int btl_openib_component_progress(void);
-static int poll_hca(mca_btl_openib_hca_t *hca, int count);
-static void progress_pending_frags_pp(mca_btl_base_endpoint_t *, const int);
-static void progress_pending_frags_srq( mca_btl_openib_module_t* , const int);
-static void progress_pending_eager_rdma(mca_btl_base_endpoint_t*);
-
-static int openib_reg_mr(void *reg_data, void *base, size_t size,
-        mca_mpool_base_registration_t *reg);
-static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg);
-static int get_port_list(mca_btl_openib_hca_t *hca, int *allowed_ports);
-
 
 mca_btl_openib_component_t mca_btl_openib_component = {
     {
@@ -126,12 +105,10 @@ mca_btl_openib_component_t mca_btl_openib_component = {
     }
 };
 
-
 /*
  *  Called by MCA framework to open the component, registers
  *  component parameters.
  */
-
 int btl_openib_component_open(void)
 {
     int ret;
@@ -172,12 +149,10 @@ static int btl_openib_component_close(void)
     return OMPI_SUCCESS;
 }
 
-
 /*
  *  Register OPENIB  port information. The MCA framework
  *  will make this available to all peers.
  */
-
 static int btl_openib_modex_send(void)
 {
     int         rc, i;
@@ -677,6 +652,139 @@ static int prepare_hca_for_use(mca_btl_openib_hca_t *hca)
 
     mca_btl_openib_component.hcas_count++;
     return OMPI_SUCCESS;
+}
+
+static int
+get_port_list(mca_btl_openib_hca_t *hca, int *allowed_ports)
+{
+    int i, j, k, num_ports = 0;
+    const char *dev_name;
+    char *name;
+
+    dev_name = ibv_get_device_name(hca->ib_dev);
+    name = (char*) malloc(strlen(dev_name) + 4);
+    if (NULL == name) {
+        return 0;
+    }
+
+    /* Assume that all ports are allowed.  num_ports will be adjusted
+       below to reflect whether this is true or not. */
+    for (i = 1; i <= hca->ib_dev_attr.phys_port_cnt; ++i) {
+        allowed_ports[num_ports++] = i;
+    }
+    num_ports = 0;
+    if (NULL != mca_btl_openib_component.if_include_list) {
+        /* If only the HCA name is given (eg. mthca0,mthca1) use all
+           ports */
+        i = 0;
+        while (mca_btl_openib_component.if_include_list[i]) {
+            if (0 == strcmp(dev_name, 
+                            mca_btl_openib_component.if_include_list[i])) {
+                num_ports = hca->ib_dev_attr.phys_port_cnt;
+                goto done;
+            }
+            ++i;
+        }
+        /* Include only requested ports on the HCA */
+        for (i = 1; i <= hca->ib_dev_attr.phys_port_cnt; ++i) {
+            sprintf(name,"%s:%d",dev_name,i);
+            for (j = 0; 
+                 NULL != mca_btl_openib_component.if_include_list[j]; ++j) {
+                if (0 == strcmp(name, 
+                                mca_btl_openib_component.if_include_list[j])) {
+                    allowed_ports[num_ports++] = i;
+                    break;
+                }
+            }
+        }
+    } else if (NULL != mca_btl_openib_component.if_exclude_list) {
+        /* If only the HCA name is given (eg. mthca0,mthca1) exclude
+           all ports */
+        i = 0;
+        while (mca_btl_openib_component.if_exclude_list[i]) {
+            if (0 == strcmp(dev_name, 
+                            mca_btl_openib_component.if_exclude_list[i])) {
+                num_ports = 0;
+                goto done;
+            }
+            ++i;
+        }
+        /* Exclude the specified ports on this HCA */
+        for (i = 1; i <= hca->ib_dev_attr.phys_port_cnt; ++i) {
+            sprintf(name,"%s:%d",dev_name,i);
+            for (j = 0; 
+                 NULL != mca_btl_openib_component.if_exclude_list[j]; ++j) {
+                if (0 == strcmp(name, 
+                                mca_btl_openib_component.if_exclude_list[j])) {
+                    /* If found, set a sentinel value */
+                    j = -1;
+                    break;
+                }
+            }
+            /* If we didn't find it, it's ok to include in the list */
+            if (-1 != j) {
+                allowed_ports[num_ports++] = i;
+            }
+        }
+    } else {
+        num_ports = hca->ib_dev_attr.phys_port_cnt;
+    }
+
+done:
+
+    /* Remove the following from the error-checking if_list:
+       - bare device name
+       - device name suffixed with port number */
+    if (NULL != mca_btl_openib_component.if_list) {
+        for (i = 0; NULL != mca_btl_openib_component.if_list[i]; ++i) {
+
+            /* Look for raw device name */
+            if (0 == strcmp(mca_btl_openib_component.if_list[i], dev_name)) {
+                j = opal_argv_count(mca_btl_openib_component.if_list);
+                opal_argv_delete(&j, &(mca_btl_openib_component.if_list),
+                                 i, 1);
+                --i;
+            }
+        }
+        for (i = 1; i <= hca->ib_dev_attr.phys_port_cnt; ++i) {
+            sprintf(name, "%s:%d", dev_name, i);
+            for (j = 0; NULL != mca_btl_openib_component.if_list[j]; ++j) {
+                if (0 == strcmp(mca_btl_openib_component.if_list[j], name)) {
+                    k = opal_argv_count(mca_btl_openib_component.if_list);
+                    opal_argv_delete(&k, &(mca_btl_openib_component.if_list),
+                                     j, 1);
+                    --j;
+                    break;
+                }
+            }
+        }
+    }
+
+    free(name);
+
+    return num_ports;
+}
+
+static void merge_values(ompi_btl_openib_ini_values_t *target,
+                         ompi_btl_openib_ini_values_t *src)
+{
+    if (!target->mtu_set && src->mtu_set) {
+        target->mtu = src->mtu;
+        target->mtu_set = true;
+    }
+
+    if (!target->use_eager_rdma_set && src->use_eager_rdma_set) {
+        target->use_eager_rdma = src->use_eager_rdma;
+        target->use_eager_rdma_set = true;
+    }
+}
+
+static bool inline is_credit_message(const mca_btl_openib_recv_frag_t *frag)
+{
+    mca_btl_openib_control_header_t* chdr =
+        to_base_frag(frag)->segment.seg_addr.pval;
+    return (MCA_BTL_TAG_BTL == frag->hdr->tag) &&
+        (MCA_BTL_OPENIB_CONTROL_CREDITS == chdr->type);
 }
 
 static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
@@ -1223,27 +1331,81 @@ btl_openib_component_init(int *num_btl_modules,
     return NULL;
 }
 
-
-static void merge_values(ompi_btl_openib_ini_values_t *target,
-                         ompi_btl_openib_ini_values_t *src)
+static void progress_pending_eager_rdma(mca_btl_base_endpoint_t *ep)
 {
-    if (!target->mtu_set && src->mtu_set) {
-        target->mtu = src->mtu;
-        target->mtu_set = true;
-    }
+    int qp;
+    opal_list_item_t *frag;
 
-    if (!target->use_eager_rdma_set && src->use_eager_rdma_set) {
-        target->use_eager_rdma = src->use_eager_rdma;
-        target->use_eager_rdma_set = true;
+    /* Go over all QPs and try to send high prio packets over eager rdma
+     * channel */
+    OPAL_THREAD_LOCK(&ep->endpoint_lock);
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
+       while(ep->qps[qp].qp->sd_wqe > 0 && ep->eager_rdma_remote.tokens > 0) {
+            frag = opal_list_remove_first(&ep->qps[qp].pending_frags[0]);
+            if(NULL == frag)
+                break;
+            mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag));
+       }
+       if(ep->eager_rdma_remote.tokens == 0)
+           break;
     }
+    OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
 }
 
-static bool inline is_credit_message(const mca_btl_openib_recv_frag_t *frag)
+static inline int
+get_enpoint_credits(mca_btl_base_endpoint_t *ep, const int qp)
 {
-    mca_btl_openib_control_header_t* chdr =
-        to_base_frag(frag)->segment.seg_addr.pval;
-    return (MCA_BTL_TAG_BTL == frag->hdr->tag) &&
-        (MCA_BTL_OPENIB_CONTROL_CREDITS == chdr->type);
+    return BTL_OPENIB_QP_TYPE_PP(qp) ? ep->qps[qp].u.pp_qp.sd_credits : 1;
+}
+
+static void progress_pending_frags_pp(mca_btl_base_endpoint_t *ep, const int qp)
+{
+    int i;
+    opal_list_item_t *frag;
+    
+    OPAL_THREAD_LOCK(&ep->endpoint_lock);
+    for(i = 0; i < 2; i++) {
+       while((get_enpoint_credits(ep, qp) +
+                   (1 - i) * ep->eager_rdma_remote.tokens) > 0) {
+            frag = opal_list_remove_first(&ep->qps[qp].pending_frags[i]);
+            if(NULL == frag)
+                break;
+            mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag));
+       }
+    }
+    OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
+}
+
+void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
+        const int qp)
+{ 
+    mca_btl_openib_module_t* openib_btl = ep->endpoint_btl;
+    opal_list_item_t *frag;
+    size_t i, len = opal_list_get_size(&ep->pending_get_frags);
+
+    for(i = 0; i < len && ep->qps[qp].qp->sd_wqe > 0 && ep->get_tokens > 0; i++)
+    {
+        OPAL_THREAD_LOCK(&ep->endpoint_lock);
+        frag = opal_list_remove_first(&(ep->pending_get_frags));
+        OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
+        if(NULL == frag)
+            break;
+        if(mca_btl_openib_get((mca_btl_base_module_t *)openib_btl, ep,
+                    &to_base_frag(frag)->base) == OMPI_ERR_OUT_OF_RESOURCE)
+            break;
+    }
+    
+    len = opal_list_get_size(&ep->pending_put_frags);
+    for(i = 0; i < len && ep->qps[qp].qp->sd_wqe > 0; i++) {
+        OPAL_THREAD_LOCK(&ep->endpoint_lock);
+        frag = opal_list_remove_first(&(ep->pending_put_frags));
+        OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
+        if(NULL == frag)
+            break;
+        if(mca_btl_openib_put((mca_btl_base_module_t*)openib_btl, ep,
+                    &to_base_frag(frag)->base) == OMPI_ERR_OUT_OF_RESOURCE)
+            break;
+    }
 }
 
 static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
@@ -1414,27 +1576,6 @@ static char* btl_openib_component_status_to_string(enum ibv_wc_status status)
     }
 }
 
-static void progress_pending_eager_rdma(mca_btl_base_endpoint_t *ep)
-{
-    int qp;
-    opal_list_item_t *frag;
-
-    /* Go over all QPs and try to send high prio packets over eager rdma
-     * channel */
-    OPAL_THREAD_LOCK(&ep->endpoint_lock);
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
-       while(ep->qps[qp].qp->sd_wqe > 0 && ep->eager_rdma_remote.tokens > 0) {
-            frag = opal_list_remove_first(&ep->qps[qp].pending_frags[0]);
-            if(NULL == frag)
-                break;
-            mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag));
-       }
-       if(ep->eager_rdma_remote.tokens == 0)
-           break;
-    }
-    OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
-}
-
 static void progress_pending_frags_wqe(mca_btl_openib_qp_t *qp)
 {
     int i;
@@ -1452,62 +1593,6 @@ static void progress_pending_frags_wqe(mca_btl_openib_qp_t *qp)
        }
     }
     OPAL_THREAD_UNLOCK(&qp->lock);
-}
-
-static inline int
-get_enpoint_credits(mca_btl_base_endpoint_t *ep, const int qp)
-{
-    return BTL_OPENIB_QP_TYPE_PP(qp) ? ep->qps[qp].u.pp_qp.sd_credits : 1;
-}
-
-static void progress_pending_frags_pp(mca_btl_base_endpoint_t *ep, const int qp)
-{
-    int i;
-    opal_list_item_t *frag;
-    
-    OPAL_THREAD_LOCK(&ep->endpoint_lock);
-    for(i = 0; i < 2; i++) {
-       while((get_enpoint_credits(ep, qp) +
-                   (1 - i) * ep->eager_rdma_remote.tokens) > 0) {
-            frag = opal_list_remove_first(&ep->qps[qp].pending_frags[i]);
-            if(NULL == frag)
-                break;
-            mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag));
-       }
-    }
-    OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
-}
-
-void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
-        const int qp)
-{ 
-    mca_btl_openib_module_t* openib_btl = ep->endpoint_btl;
-    opal_list_item_t *frag;
-    size_t i, len = opal_list_get_size(&ep->pending_get_frags);
-
-    for(i = 0; i < len && ep->qps[qp].qp->sd_wqe > 0 && ep->get_tokens > 0; i++)
-    {
-        OPAL_THREAD_LOCK(&ep->endpoint_lock);
-        frag = opal_list_remove_first(&(ep->pending_get_frags));
-        OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
-        if(NULL == frag)
-            break;
-        if(mca_btl_openib_get((mca_btl_base_module_t *)openib_btl, ep,
-                    &to_base_frag(frag)->base) == OMPI_ERR_OUT_OF_RESOURCE)
-            break;
-    }
-    
-    len = opal_list_get_size(&ep->pending_put_frags);
-    for(i = 0; i < len && ep->qps[qp].qp->sd_wqe > 0; i++) {
-        OPAL_THREAD_LOCK(&ep->endpoint_lock);
-        frag = opal_list_remove_first(&(ep->pending_put_frags));
-        OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
-        if(NULL == frag)
-            break;
-        if(mca_btl_openib_put((mca_btl_base_module_t*)openib_btl, ep,
-                    &to_base_frag(frag)->base) == OMPI_ERR_OUT_OF_RESOURCE)
-            break;
-    }
 }
 
 static void progress_pending_frags_srq(mca_btl_openib_module_t* openib_btl,
@@ -1532,150 +1617,6 @@ static void progress_pending_frags_srq(mca_btl_openib_module_t* openib_btl,
                     to_send_frag(frag));
         }
     }
-}
-
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
-void* mca_btl_openib_progress_thread(opal_object_t* arg)
-{
-    opal_thread_t* thread = (opal_thread_t*)arg;
-    mca_btl_openib_hca_t* hca = thread->t_arg;
-    struct ibv_cq *ev_cq;
-    void *ev_ctx;
-
-    /* This thread enter in a cancel enabled state */
-    pthread_setcancelstate( PTHREAD_CANCEL_ENABLE, NULL );
-    pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL );
-
-    opal_output(0, "WARNING: the openib btl progress thread code *does not yet work*.  Your run is likely to hang, crash, break the kitchen sink, and/or eat your cat.  You have been warned.");
-
-    while (hca->progress) {
-        while(opal_progress_threads()) {
-            while(opal_progress_threads())
-                sched_yield();
-            usleep(100); /* give app a chance to re-enter library */
-        }
-
-        if(ibv_get_cq_event(hca->ib_channel, &ev_cq, &ev_ctx))
-            BTL_ERROR(("Failed to get CQ event with error %s",
-                        strerror(errno)));
-        if(ibv_req_notify_cq(ev_cq, 0)) {
-            BTL_ERROR(("Couldn't request CQ notification with error %s",
-                        strerror(errno)));
-        }
-
-        ibv_ack_cq_events(ev_cq, 1);
-
-        while(poll_hca(hca, 0));
-    }
-
-    return PTHREAD_CANCELED;
-}
-#endif
-
-static int progress_one_hca(mca_btl_openib_hca_t *hca)
-{
-    int i, c, count = 0, ret;
-    mca_btl_openib_recv_frag_t* frag;
-    mca_btl_openib_endpoint_t* endpoint;
-    uint32_t non_eager_rdma_endpoints = 0;
-
-    c = hca->eager_rdma_buffers_count;
-    non_eager_rdma_endpoints += (hca->non_eager_rdma_endpoints + hca->pollme);
-
-    for(i = 0; i < c; i++) {
-        endpoint = hca->eager_rdma_buffers[i];
-
-        if(!endpoint)
-            continue;
-
-        OPAL_THREAD_LOCK(&endpoint->eager_rdma_local.lock);
-        frag = MCA_BTL_OPENIB_GET_LOCAL_RDMA_FRAG(endpoint,
-                endpoint->eager_rdma_local.head);
-
-        if(MCA_BTL_OPENIB_RDMA_FRAG_LOCAL(frag)) {
-            uint32_t size;
-            mca_btl_openib_module_t *btl = endpoint->endpoint_btl;
-
-            opal_atomic_rmb();
-
-            if(endpoint->nbo) {
-                BTL_OPENIB_FOOTER_NTOH(*frag->ftr);
-            }
-            size = MCA_BTL_OPENIB_RDMA_FRAG_GET_SIZE(frag->ftr);
-#if OMPI_ENABLE_DEBUG
-            if (frag->ftr->seq != endpoint->eager_rdma_local.seq)
-                BTL_ERROR(("Eager RDMA wrong SEQ: received %d expected %d",
-                           frag->ftr->seq,
-                           endpoint->eager_rdma_local.seq));
-            endpoint->eager_rdma_local.seq++;
-#endif
-            MCA_BTL_OPENIB_RDMA_NEXT_INDEX(endpoint->eager_rdma_local.head);
-
-            OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
-            frag->hdr = (mca_btl_openib_header_t*)(((char*)frag->ftr) -
-                    size + sizeof(mca_btl_openib_footer_t));
-            to_base_frag(frag)->segment.seg_addr.pval =
-                ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);
-
-            ret = btl_openib_handle_incoming(btl, to_com_frag(frag)->endpoint,
-                    frag, size - sizeof(mca_btl_openib_footer_t));
-            if (ret != MPI_SUCCESS) {
-                btl->error_cb(&btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
-                return 0;
-            }
-
-            count++;
-        } else
-            OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
-    }
-
-    hca->eager_rdma_polls--;
-
-    if(0 == count || non_eager_rdma_endpoints != 0 || !hca->eager_rdma_polls) {
-        count += poll_hca(hca, count);
-        hca->eager_rdma_polls = mca_btl_openib_component.eager_rdma_poll_ratio;
-    }
-
-    return count;
-}
-
-/*
- *  IB component progress.
- */
-static int btl_openib_component_progress(void)
-{
-    int i;
-    int count = 0;
-
-#if OMPI_HAVE_THREADS
-    if(OPAL_UNLIKELY(mca_btl_openib_component.use_async_event_thread &&
-            mca_btl_openib_component.fatal_counter)) {
-        goto error;
-    }
-#endif
-
-    for(i = 0; i < mca_btl_openib_component.hcas_count; i++) {
-        mca_btl_openib_hca_t *hca =
-            opal_pointer_array_get_item(&mca_btl_openib_component.hcas, i);
-        count += progress_one_hca(hca);
-    }
-
-    return count;
-
-#if OMPI_HAVE_THREADS
-error:
-    /* Set the fatal counter to zero */
-    mca_btl_openib_component.fatal_counter = 0;
-    /* Lets found all fatal events */
-    for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
-        mca_btl_openib_module_t* openib_btl =
-            mca_btl_openib_component.openib_btls[i];
-        if(openib_btl->hca->got_fatal_event) {
-            openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
-        }
-    }
-    return count;
-#endif
 }
 
 static char *cq_name[] = {"HP CQ", "LP CQ"};
@@ -1828,115 +1769,148 @@ error:
     return count;
 }
 
-static int
-get_port_list(mca_btl_openib_hca_t *hca, int *allowed_ports)
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+void* mca_btl_openib_progress_thread(opal_object_t* arg)
 {
-    int i, j, k, num_ports = 0;
-    const char *dev_name;
-    char *name;
+    opal_thread_t* thread = (opal_thread_t*)arg;
+    mca_btl_openib_hca_t* hca = thread->t_arg;
+    struct ibv_cq *ev_cq;
+    void *ev_ctx;
 
-    dev_name = ibv_get_device_name(hca->ib_dev);
-    name = (char*) malloc(strlen(dev_name) + 4);
-    if (NULL == name) {
-        return 0;
+    /* This thread enter in a cancel enabled state */
+    pthread_setcancelstate( PTHREAD_CANCEL_ENABLE, NULL );
+    pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL );
+
+    opal_output(0, "WARNING: the openib btl progress thread code *does not yet work*.  Your run is likely to hang, crash, break the kitchen sink, and/or eat your cat.  You have been warned.");
+
+    while (hca->progress) {
+        while(opal_progress_threads()) {
+            while(opal_progress_threads())
+                sched_yield();
+            usleep(100); /* give app a chance to re-enter library */
+        }
+
+        if(ibv_get_cq_event(hca->ib_channel, &ev_cq, &ev_ctx))
+            BTL_ERROR(("Failed to get CQ event with error %s",
+                        strerror(errno)));
+        if(ibv_req_notify_cq(ev_cq, 0)) {
+            BTL_ERROR(("Couldn't request CQ notification with error %s",
+                        strerror(errno)));
+        }
+
+        ibv_ack_cq_events(ev_cq, 1);
+
+        while(poll_hca(hca, 0));
     }
 
-    /* Assume that all ports are allowed.  num_ports will be adjusted
-       below to reflect whether this is true or not. */
-    for (i = 1; i <= hca->ib_dev_attr.phys_port_cnt; ++i) {
-        allowed_ports[num_ports++] = i;
-    }
-    num_ports = 0;
-    if (NULL != mca_btl_openib_component.if_include_list) {
-        /* If only the HCA name is given (eg. mthca0,mthca1) use all
-           ports */
-        i = 0;
-        while (mca_btl_openib_component.if_include_list[i]) {
-            if (0 == strcmp(dev_name, 
-                            mca_btl_openib_component.if_include_list[i])) {
-                num_ports = hca->ib_dev_attr.phys_port_cnt;
-                goto done;
+    return PTHREAD_CANCELED;
+}
+#endif
+
+static int progress_one_hca(mca_btl_openib_hca_t *hca)
+{
+    int i, c, count = 0, ret;
+    mca_btl_openib_recv_frag_t* frag;
+    mca_btl_openib_endpoint_t* endpoint;
+    uint32_t non_eager_rdma_endpoints = 0;
+
+    c = hca->eager_rdma_buffers_count;
+    non_eager_rdma_endpoints += (hca->non_eager_rdma_endpoints + hca->pollme);
+
+    for(i = 0; i < c; i++) {
+        endpoint = hca->eager_rdma_buffers[i];
+
+        if(!endpoint)
+            continue;
+
+        OPAL_THREAD_LOCK(&endpoint->eager_rdma_local.lock);
+        frag = MCA_BTL_OPENIB_GET_LOCAL_RDMA_FRAG(endpoint,
+                endpoint->eager_rdma_local.head);
+
+        if(MCA_BTL_OPENIB_RDMA_FRAG_LOCAL(frag)) {
+            uint32_t size;
+            mca_btl_openib_module_t *btl = endpoint->endpoint_btl;
+
+            opal_atomic_rmb();
+
+            if(endpoint->nbo) {
+                BTL_OPENIB_FOOTER_NTOH(*frag->ftr);
             }
-            ++i;
-        }
-        /* Include only requested ports on the HCA */
-        for (i = 1; i <= hca->ib_dev_attr.phys_port_cnt; ++i) {
-            sprintf(name,"%s:%d",dev_name,i);
-            for (j = 0; 
-                 NULL != mca_btl_openib_component.if_include_list[j]; ++j) {
-                if (0 == strcmp(name, 
-                                mca_btl_openib_component.if_include_list[j])) {
-                    allowed_ports[num_ports++] = i;
-                    break;
-                }
+            size = MCA_BTL_OPENIB_RDMA_FRAG_GET_SIZE(frag->ftr);
+#if OMPI_ENABLE_DEBUG
+            if (frag->ftr->seq != endpoint->eager_rdma_local.seq)
+                BTL_ERROR(("Eager RDMA wrong SEQ: received %d expected %d",
+                           frag->ftr->seq,
+                           endpoint->eager_rdma_local.seq));
+            endpoint->eager_rdma_local.seq++;
+#endif
+            MCA_BTL_OPENIB_RDMA_NEXT_INDEX(endpoint->eager_rdma_local.head);
+
+            OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
+            frag->hdr = (mca_btl_openib_header_t*)(((char*)frag->ftr) -
+                    size + sizeof(mca_btl_openib_footer_t));
+            to_base_frag(frag)->segment.seg_addr.pval =
+                ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);
+
+            ret = btl_openib_handle_incoming(btl, to_com_frag(frag)->endpoint,
+                    frag, size - sizeof(mca_btl_openib_footer_t));
+            if (ret != MPI_SUCCESS) {
+                btl->error_cb(&btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
+                return 0;
             }
-        }
-    } else if (NULL != mca_btl_openib_component.if_exclude_list) {
-        /* If only the HCA name is given (eg. mthca0,mthca1) exclude
-           all ports */
-        i = 0;
-        while (mca_btl_openib_component.if_exclude_list[i]) {
-            if (0 == strcmp(dev_name, 
-                            mca_btl_openib_component.if_exclude_list[i])) {
-                num_ports = 0;
-                goto done;
-            }
-            ++i;
-        }
-        /* Exclude the specified ports on this HCA */
-        for (i = 1; i <= hca->ib_dev_attr.phys_port_cnt; ++i) {
-            sprintf(name,"%s:%d",dev_name,i);
-            for (j = 0; 
-                 NULL != mca_btl_openib_component.if_exclude_list[j]; ++j) {
-                if (0 == strcmp(name, 
-                                mca_btl_openib_component.if_exclude_list[j])) {
-                    /* If found, set a sentinel value */
-                    j = -1;
-                    break;
-                }
-            }
-            /* If we didn't find it, it's ok to include in the list */
-            if (-1 != j) {
-                allowed_ports[num_ports++] = i;
-            }
-        }
-    } else {
-        num_ports = hca->ib_dev_attr.phys_port_cnt;
+
+            count++;
+        } else
+            OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
     }
 
-done:
+    hca->eager_rdma_polls--;
 
-    /* Remove the following from the error-checking if_list:
-       - bare device name
-       - device name suffixed with port number */
-    if (NULL != mca_btl_openib_component.if_list) {
-        for (i = 0; NULL != mca_btl_openib_component.if_list[i]; ++i) {
-
-            /* Look for raw device name */
-            if (0 == strcmp(mca_btl_openib_component.if_list[i], dev_name)) {
-                j = opal_argv_count(mca_btl_openib_component.if_list);
-                opal_argv_delete(&j, &(mca_btl_openib_component.if_list),
-                                 i, 1);
-                --i;
-            }
-        }
-        for (i = 1; i <= hca->ib_dev_attr.phys_port_cnt; ++i) {
-            sprintf(name, "%s:%d", dev_name, i);
-            for (j = 0; NULL != mca_btl_openib_component.if_list[j]; ++j) {
-                if (0 == strcmp(mca_btl_openib_component.if_list[j], name)) {
-                    k = opal_argv_count(mca_btl_openib_component.if_list);
-                    opal_argv_delete(&k, &(mca_btl_openib_component.if_list),
-                                     j, 1);
-                    --j;
-                    break;
-                }
-            }
-        }
+    if(0 == count || non_eager_rdma_endpoints != 0 || !hca->eager_rdma_polls) {
+        count += poll_hca(hca, count);
+        hca->eager_rdma_polls = mca_btl_openib_component.eager_rdma_poll_ratio;
     }
 
-    free(name);
+    return count;
+}
 
-    return num_ports;
+/*
+ *  IB component progress.
+ */
+static int btl_openib_component_progress(void)
+{
+    int i;
+    int count = 0;
+
+#if OMPI_HAVE_THREADS
+    if(OPAL_UNLIKELY(mca_btl_openib_component.use_async_event_thread &&
+            mca_btl_openib_component.fatal_counter)) {
+        goto error;
+    }
+#endif
+
+    for(i = 0; i < mca_btl_openib_component.hcas_count; i++) {
+        mca_btl_openib_hca_t *hca =
+            opal_pointer_array_get_item(&mca_btl_openib_component.hcas, i);
+        count += progress_one_hca(hca);
+    }
+
+    return count;
+
+#if OMPI_HAVE_THREADS
+error:
+    /* Set the fatal counter to zero */
+    mca_btl_openib_component.fatal_counter = 0;
+    /* Lets found all fatal events */
+    for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
+        mca_btl_openib_module_t* openib_btl =
+            mca_btl_openib_component.openib_btls[i];
+        if(openib_btl->hca->got_fatal_event) {
+            openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
+        }
+    }
+    return count;
+#endif
 }
 
 int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl, const int qp)
