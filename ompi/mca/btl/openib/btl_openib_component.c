@@ -224,8 +224,8 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
                   rdma_hdr->rdma_start.pval, rdma_hdr->rdma_start.ival));
        
        if (ep->eager_rdma_remote.base.pval) {
-	       BTL_ERROR(("Got RDMA connect twice!"));
-	       return;
+           BTL_ERROR(("Got RDMA connect twice!"));
+           return;
        }
        ep->eager_rdma_remote.rkey = rdma_hdr->rkey;
        ep->eager_rdma_remote.base.lval = rdma_hdr->rdma_start.lval;
@@ -1165,7 +1165,6 @@ btl_openib_component_init(int *num_btl_modules,
 #endif
 
     /* Parse the include and exclude lists, checking for errors */
-
     mca_btl_openib_component.if_include_list =
         mca_btl_openib_component.if_exclude_list = 
         mca_btl_openib_component.if_list = NULL;
@@ -1204,7 +1203,6 @@ btl_openib_component_init(int *num_btl_modules,
     dlist_for_each_data(dev_list, ib_dev, struct ibv_device)
         num_devs++; 
 #endif
-
     if(0 == num_devs) { 
         mca_btl_base_error_no_nics("OpenIB", "HCA");
         btl_openib_modex_send();

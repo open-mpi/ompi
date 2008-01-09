@@ -220,7 +220,7 @@ OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;
 
 typedef mca_btl_base_recv_reg_t mca_btl_openib_recv_reg_t; 
     
-struct mca_btl_openib_port_info_t {
+struct mca_btl_openib_port_info {
     uint32_t mtu;
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT 
     uint8_t padding[4]; 
@@ -230,7 +230,7 @@ struct mca_btl_openib_port_info_t {
     uint16_t lid; /* used only in xrc */
 #endif
 };
-typedef struct mca_btl_openib_port_info_t mca_btl_openib_port_info_t;
+typedef struct mca_btl_openib_port_info mca_btl_openib_port_info_t;
 
 #if HAVE_XRC
 #define MCA_BTL_OPENIB_LID_NTOH(hdr) (hdr).lid = ntohs((hdr).lid)

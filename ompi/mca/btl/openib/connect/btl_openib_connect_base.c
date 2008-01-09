@@ -8,7 +8,6 @@
  * 
  * $HEADER$
  */
-
 #include "ompi_config.h"
 
 #include "btl_openib.h"
