@@ -506,7 +506,7 @@ int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t *endpoint)
 
     for (qp = 0; qp < mca_btl_openib_component.num_qps; ++qp) { 
         if (BTL_OPENIB_QP_TYPE_PP(qp)) { 
-            mca_btl_openib_endpoint_post_rr(endpoint, qp);
+            mca_btl_openib_endpoint_post_rr_nolock(endpoint, qp);
         } else {
             mca_btl_openib_post_srr(endpoint->endpoint_btl, qp);
         }

@@ -267,7 +267,7 @@ static inline int post_recvs(mca_btl_base_endpoint_t *ep, const int qp,
     return OMPI_ERROR;
 }
 
-static inline int mca_btl_openib_endpoint_post_rr(
+static inline int mca_btl_openib_endpoint_post_rr_nolock(
         mca_btl_base_endpoint_t *ep, const int qp)
 {
     int rd_rsv = mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
@@ -277,8 +277,6 @@ static inline int mca_btl_openib_endpoint_post_rr(
     int cm_received = 0, num_post = 0;
     
     assert(BTL_OPENIB_QP_TYPE_PP(qp));
-
-    OPAL_THREAD_LOCK(&ep->endpoint_lock);
 
     if(ep->qps[qp].u.pp_qp.rd_posted <= rd_low)
         num_post = rd_num - ep->qps[qp].u.pp_qp.rd_posted;
@@ -306,8 +304,17 @@ static inline int mca_btl_openib_endpoint_post_rr(
     assert(ep->qps[qp].u.pp_qp.rd_credits <= rd_num &&
             ep->qps[qp].u.pp_qp.rd_credits >= 0);
 
-    OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
     return OMPI_SUCCESS;
+}
+
+static inline int mca_btl_openib_endpoint_post_rr(
+        mca_btl_base_endpoint_t *ep, const int qp)
+{
+    int ret;
+    OPAL_THREAD_LOCK(&ep->endpoint_lock);
+    ret =  mca_btl_openib_endpoint_post_rr_nolock(ep, qp);
+    OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
+    return ret;
 }
 
 #define BTL_OPENIB_CREDITS_SEND_TRYLOCK(E, Q) \
