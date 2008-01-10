@@ -51,7 +51,7 @@ else
 component_noinst += libmca_coll_sm.la
 endif
 
-# See ompi/mca/ptl/sm/Makefile.am for an explanation of
+# See ompi/mca/btl/sm/Makefile.am for an explanation of
 # libmca_common_sm.la.
 
 mcacomponentdir = $(pkglibdir)
