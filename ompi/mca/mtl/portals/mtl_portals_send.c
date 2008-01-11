@@ -105,6 +105,39 @@ ompi_mtl_portals_long_callback(ptl_event_t *ev, struct ompi_mtl_portals_request_
     return OMPI_SUCCESS;
 }
 
+/* called for a rendezvous long send */ 
+static int
+ompi_mtl_portals_long_rendezvous_callback(ptl_event_t *ev, struct ompi_mtl_portals_request_t* ptl_request)
+{
+
+    switch (ev->type) {
+
+	case PTL_EVENT_GET_END:
+
+		if (ptl_request->free_after) {
+		    free(ev->md.start);
+		}
+
+		OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+				     "send complete: 0x%016llx\n", 
+				     ev->match_bits));
+
+		ptl_request->is_complete = true;
+		if ( NULL != ptl_request->super.ompi_req ) {
+		    ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
+		    ptl_request->super.completion_callback(&ptl_request->super);
+		}
+
+	    break;
+
+	default:
+	    opal_output(fileno(stderr)," Unexpected event type %d in ompi_mtl_portals_long_callback()\n",ev->type); 
+	    abort();
+    }
+    
+    return OMPI_SUCCESS;
+}
+
 /* called when sync send should wait for an ack or put */
 static int
 ompi_mtl_portals_sync_callback(ptl_event_t *ev, struct ompi_mtl_portals_request_t* ptl_request)
@@ -280,7 +313,13 @@ ompi_mtl_portals_long_isend( void *start, int length, int contextid, int localra
 
     md.start = start;
     md.length = length;
-    md.threshold = 2; /* send, {ack, get} */
+
+    if (ompi_mtl_portals.ptl_use_rendezvous == true) {
+        md.threshold = 1; /* get event */
+    } else {
+        md.threshold = 2; /* sent event, ack or get event */
+    }
+
     md.options = PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE;
     md.user_ptr = ptl_request;
     md.eq_handle = ompi_mtl_portals.ptl_eq_h;
@@ -302,14 +341,35 @@ ompi_mtl_portals_long_isend( void *start, int length, int contextid, int localra
 	return ompi_common_portals_error_ptl_to_ompi(ret);
     }
 
-    ret = PtlPut(md_h,
-		 PTL_ACK_REQ,
-		 dest,
-		 OMPI_MTL_PORTALS_SEND_TABLE_ID,
-		 0,
-		 match_bits,
-		 0,
-		 (ptl_hdr_data_t)(uintptr_t)ptl_request);
+    if (ompi_mtl_portals.ptl_use_rendezvous == false) {
+
+        ret = PtlPut(md_h,
+		     PTL_ACK_REQ,
+		     dest,
+		     OMPI_MTL_PORTALS_SEND_TABLE_ID,
+		     0,
+		     match_bits,
+		     0,
+		     (ptl_hdr_data_t)(uintptr_t)ptl_request);
+
+	ptl_request->event_callback = ompi_mtl_portals_long_callback;
+
+    } else {
+
+        /* just send a zero-length message */
+	ret = PtlPut(ompi_mtl_portals.ptl_zero_md_h,
+		     PTL_NO_ACK_REQ,
+		     dest,
+		     OMPI_MTL_PORTALS_SEND_TABLE_ID,
+                     0,
+                     match_bits,
+                     0,
+                     (ptl_hdr_data_t)(uintptr_t)ptl_request);
+
+	ptl_request->event_callback = ompi_mtl_portals_long_rendezvous_callback;
+
+    }
+
     if (PTL_OK != ret) {
 	PtlMEUnlink(me_h);
 	if (ptl_request->free_after) free(start);
@@ -317,7 +377,6 @@ ompi_mtl_portals_long_isend( void *start, int length, int contextid, int localra
     }
 
     ptl_request->is_complete = false;
-    ptl_request->event_callback = ompi_mtl_portals_long_callback;
     ptl_request->event_count = 0;
 
     return OMPI_SUCCESS;
