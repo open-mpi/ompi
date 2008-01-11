@@ -89,6 +89,9 @@ struct mca_mtl_portals_module_t {
     /* turn off aggressive polling of the unex msg event queue */
     bool ptl_aggressive_polling;
 
+    /* use rendezvous for long messages */
+    bool ptl_use_rendezvous;
+
 };
 typedef struct mca_mtl_portals_module_t mca_mtl_portals_module_t;
 
@@ -165,6 +168,8 @@ OBJ_CLASS_DECLARATION(ompi_mtl_portals_event_t);
 
 #define PTL_IS_SHORT_MSG(match_bits)            \
     (0 != (PTL_SHORT_MSG & match_bits))
+#define PTL_IS_LONG_MSG(match_bits)             \
+    (0 != (PTL_LONG_MSG & match_bits))
 #define PTL_IS_READY_MSG(match_bits)            \
     (0 != (PTL_READY_MSG & match_bits))
 #define PTL_IS_SYNC_MSG(event) \

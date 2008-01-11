@@ -137,10 +137,19 @@ ompi_mtl_portals_component_open(void)
                            "Turn off aggressive polling of unexpected messages",
                            false,
                            false,
+                           1,
+                           &tmp);
+    ompi_mtl_portals.ptl_aggressive_polling = (tmp == 0) ? false : true;
+    
+    mca_base_param_reg_int(&mca_mtl_portals_component.mtl_version,
+                           "use_rendezvous",
+                           "Use a rendezvous protocol for long messages",
+                           false,
+                           false,
                            0,
                            &tmp);
-    ompi_mtl_portals.ptl_aggressive_polling = (tmp == 0) ? true : false;
-    
+
+    ompi_mtl_portals.ptl_use_rendezvous = ((tmp == 0) ? false : true);
 
     return OMPI_SUCCESS;
 }
