@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -212,6 +212,7 @@ namespace MPI {
 #include "openmpi/ompi/mpi/cxx/info.h"
 #endif
 
+    // JMS To be deleted when the all the STL is removed from these bindings
     extern opal_mutex_t *mpi_map_mutex;
 }
 
