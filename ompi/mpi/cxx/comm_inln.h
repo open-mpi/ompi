@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -560,9 +560,11 @@ MPI::Comm::Create_keyval(MPI::Comm::Copy_attr_function* comm_copy_attr_fn,
                          void* extra_state)
 {
     // Back-end function does the heavy lifting
-    return do_create_keyval(NULL, NULL, 
-                            comm_copy_attr_fn, comm_delete_attr_fn,
-                            extra_state);
+    int ret, keyval;
+    ret = do_create_keyval(NULL, NULL, 
+                           comm_copy_attr_fn, comm_delete_attr_fn,
+                           extra_state, keyval);
+    return (MPI_SUCCESS == ret) ? keyval : ret;
 }
 
 // 2) overload Create_keyval to take the first 2 arguments as C
@@ -573,9 +575,11 @@ MPI::Comm::Create_keyval(MPI_Comm_copy_attr_function* comm_copy_attr_fn,
                          void* extra_state)
 {
     // Back-end function does the heavy lifting
+    int ret, keyval;
     return do_create_keyval(comm_copy_attr_fn, comm_delete_attr_fn,
                             NULL, NULL,
-                            extra_state);
+                            extra_state, keyval);
+    return (MPI_SUCCESS == ret) ? keyval : ret;
 }
 
 // 3) overload Create_keyval to take the first 2 arguments as C++ & C
@@ -586,9 +590,11 @@ MPI::Comm::Create_keyval(MPI::Comm::Copy_attr_function* comm_copy_attr_fn,
                          void* extra_state)
 {
     // Back-end function does the heavy lifting
+    int ret, keyval;
     return do_create_keyval(NULL, comm_delete_attr_fn,
                             comm_copy_attr_fn, NULL,
-                            extra_state);
+                            extra_state, keyval);
+    return (MPI_SUCCESS == ret) ? keyval : ret;
 }
 
 // 4) overload Create_keyval to take the first 2 arguments as C & C++
@@ -599,9 +605,11 @@ MPI::Comm::Create_keyval(MPI_Comm_copy_attr_function* comm_copy_attr_fn,
                          void* extra_state)
 {
     // Back-end function does the heavy lifting
+    int ret, keyval;
     return do_create_keyval(comm_copy_attr_fn, NULL,
                             NULL, comm_delete_attr_fn,
-                            extra_state);
+                            extra_state, keyval);
+    return (MPI_SUCCESS == ret) ? keyval : ret;
 }
 
 inline void

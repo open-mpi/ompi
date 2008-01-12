@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -28,7 +28,6 @@
 #include "opal/threads/mutex.h"
 
 MPI::Comm::mpi_comm_err_map_t MPI::Comm::mpi_comm_err_map;
-MPI::Comm::mpi_comm_keyval_fn_map_t MPI::Comm::mpi_comm_keyval_fn_map;
 
 MPI::Win::mpi_win_map_t MPI::Win::mpi_win_map;
 MPI::Win::mpi_win_keyval_fn_map_t MPI::Win::mpi_win_keyval_fn_map;
@@ -288,19 +287,25 @@ ompi_mpi_cxx_op_intercept(void *invec, void *outvec, int *len,
 //
 extern "C" int
 ompi_mpi_cxx_comm_copy_attr_intercept(MPI_Comm comm, int keyval, 
-                                      void *extra_state, void *attribute_val_in, 
+                                      void *extra_state, 
+                                      void *attribute_val_in, 
                                       void *attribute_val_out, int *flag,
                                       MPI_Comm newcomm)
 {
   int ret = 0;
-  MPI::Comm::keyval_pair_t* copy_and_delete; 
-  MPI::Comm::Copy_attr_function* copy_fn;
+  MPI::Comm::keyval_intercept_data_t *kid = 
+      (MPI::Comm::keyval_intercept_data_t*) extra_state;
 
-  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
-  copy_and_delete = MPI::Comm::mpi_comm_keyval_fn_map[keyval];
-  copy_fn = copy_and_delete->first;
-  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
-  
+  // The callback may be in C or C++.  If it's in C, it's easy - just
+  // call it with no extra C++ machinery.
+
+  if (NULL != kid->c_copy_fn) {
+      return kid->c_copy_fn(comm, keyval, kid->extra_state, attribute_val_in,
+                            attribute_val_out, flag);
+  }
+
+  // If the callback was C++, we have to do a little more work
+
   MPI::Intracomm intracomm;
   MPI::Intercomm intercomm;
   MPI::Graphcomm graphcomm;
@@ -308,23 +313,27 @@ ompi_mpi_cxx_comm_copy_attr_intercept(MPI_Comm comm, int keyval,
   
   bool bflag = OPAL_INT_TO_BOOL(*flag); 
 
-  if (NULL != copy_fn) {
+  if (NULL != kid->cxx_copy_fn) {
       if (OMPI_COMM_IS_GRAPH(comm)) {
           graphcomm = MPI::Graphcomm(comm);
-          ret = copy_fn(graphcomm, keyval, extra_state,
-                        attribute_val_in, attribute_val_out, bflag);
+          ret = kid->cxx_copy_fn(graphcomm, keyval, kid->extra_state,
+                                 attribute_val_in, attribute_val_out, 
+                                 bflag);
       } else if (OMPI_COMM_IS_CART(comm)) {
           cartcomm = MPI::Cartcomm(comm);
-          ret = copy_fn(cartcomm, keyval, extra_state,
-                        attribute_val_in, attribute_val_out, bflag);
+          ret = kid->cxx_copy_fn(cartcomm, keyval, kid->extra_state,
+                                 attribute_val_in, attribute_val_out, 
+                                 bflag);
       } else if (OMPI_COMM_IS_INTRA(comm)) {
           intracomm = MPI::Intracomm(comm);
-          ret = copy_fn(intracomm, keyval, extra_state,
-                        attribute_val_in, attribute_val_out, bflag);
+          ret = kid->cxx_copy_fn(intracomm, keyval, kid->extra_state,
+                                 attribute_val_in, attribute_val_out, 
+                                 bflag);
       } else if (OMPI_COMM_IS_INTER(comm)) {
           intercomm = MPI::Intercomm(comm);
-          ret = copy_fn(intercomm, keyval, extra_state,
-                        attribute_val_in, attribute_val_out, bflag);
+          ret = kid->cxx_copy_fn(intercomm, keyval, kid->extra_state,
+                                 attribute_val_in, attribute_val_out, 
+                                 bflag);
       } else {
           ret = MPI::ERR_COMM;
       }
@@ -341,32 +350,40 @@ ompi_mpi_cxx_comm_delete_attr_intercept(MPI_Comm comm, int keyval,
                                         void *attribute_val, void *extra_state)
 {
   int ret = 0;
-  MPI::Comm::keyval_pair_t * copy_and_delete;
-  MPI::Comm::Delete_attr_function* delete_fn;  
+  MPI::Comm::keyval_intercept_data_t *kid = 
+      (MPI::Comm::keyval_intercept_data_t*) extra_state;
 
-  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
-  copy_and_delete = MPI::Comm::mpi_comm_keyval_fn_map[keyval];
-  delete_fn = copy_and_delete->second;
-  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
+  // The callback may be in C or C++.  If it's in C, it's easy - just
+  // call it with no extra C++ machinery.
+
+  if (NULL != kid->c_delete_fn) {
+      return kid->c_delete_fn(comm, keyval, attribute_val, kid->extra_state);
+  }
+
+  // If the callback was C++, we have to do a little more work
 
   MPI::Intracomm intracomm;
   MPI::Intercomm intercomm;
   MPI::Graphcomm graphcomm;
   MPI::Cartcomm cartcomm;
   
-  if (NULL != delete_fn) {
+  if (NULL != kid->cxx_delete_fn) {
       if (OMPI_COMM_IS_GRAPH(comm)) {
           graphcomm = MPI::Graphcomm(comm);
-          ret = delete_fn(graphcomm, keyval, attribute_val, extra_state);
+          ret = kid->cxx_delete_fn(graphcomm, keyval, attribute_val, 
+                                   kid->extra_state);
       } else if (OMPI_COMM_IS_CART(comm)) {
           cartcomm = MPI::Cartcomm(comm);
-          ret = delete_fn(cartcomm, keyval, attribute_val, extra_state);
+          ret = kid->cxx_delete_fn(cartcomm, keyval, attribute_val, 
+                                   kid->extra_state);
       } else if (OMPI_COMM_IS_INTRA(comm)) {
           intracomm = MPI::Intracomm(comm);
-          ret = delete_fn(intracomm, keyval, attribute_val, extra_state);
+          ret = kid->cxx_delete_fn(intracomm, keyval, attribute_val, 
+                                   kid->extra_state);
       } else if (OMPI_COMM_IS_INTER(comm)) {
           intercomm = MPI::Intercomm(comm);
-          ret = delete_fn(intercomm, keyval, attribute_val, extra_state);
+          ret = kid->cxx_delete_fn(intercomm, keyval, attribute_val, 
+                                   kid->extra_state);
       } else {
           ret = MPI::ERR_COMM;
       }

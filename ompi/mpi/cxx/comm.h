@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -412,7 +412,7 @@ protected:
                               MPI_Comm_delete_attr_function* c_delete_fn,
                               Copy_attr_function* cxx_copy_fn,
                               Delete_attr_function* cxx_delete_fn,
-                              void* extra_state);
+                              void* extra_state, int &keyval);
 
 public:
 
@@ -450,14 +450,22 @@ public: // JGS hmmm, these used by errhandler_intercept
   typedef ::std::map<MPI_Comm, Comm*> mpi_comm_err_map_t;
   static mpi_comm_err_map_t mpi_comm_err_map;
   
-  typedef ::std::pair<Comm::_MPI2CPP_COPYATTRFN_*, Comm::_MPI2CPP_DELETEATTRFN_*> keyval_pair_t;
-  typedef ::std::map<int, keyval_pair_t*> mpi_comm_keyval_fn_map_t;
-  static mpi_comm_keyval_fn_map_t mpi_comm_keyval_fn_map;
-  
   void init() {
     my_errhandler = (Errhandler*)0;
   }
 
+    // Data that is passed through keyval create when C++ callback
+    // functions are used
+    struct keyval_intercept_data_t {
+        MPI_Comm_copy_attr_function *c_copy_fn;
+        MPI_Comm_delete_attr_function *c_delete_fn;
+        Copy_attr_function* cxx_copy_fn;
+        Delete_attr_function* cxx_delete_fn;
+        void *extra_state;
+    };
+
+    // Protect the global list from multiple thread access
+    static opal_mutex_t cxx_extra_states_lock;
 #endif
 
 };
