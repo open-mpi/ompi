@@ -255,11 +255,11 @@ static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl
     }
    
     rc = adjust_cq(hca, BTL_OPENIB_HP_CQ);
-    if(rc != OMPI_SUCCESS)
+    if (OMPI_SUCCESS != rc)
         goto out;
 
     rc = adjust_cq(hca, BTL_OPENIB_LP_CQ);
-    if(rc != OMPI_SUCCESS)
+    if (OMPI_SUCCESS != rc)
         goto out;
 
     if(0 == openib_btl->num_peers)
