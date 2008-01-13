@@ -50,7 +50,7 @@ int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_hca_t *hca)
         return OMPI_ERROR;
     }
     
-    hca->xrc_fd = open(xrc_file_name, O_CREAT);
+    hca->xrc_fd = open(xrc_file_name, O_CREAT, S_IWUSR|S_IRUSR);
     if (0 > hca->xrc_fd) {
         BTL_ERROR(("Failed to open XRC domain file %s, errno says %s\n",
                 xrc_file_name,strerror(errno)));
