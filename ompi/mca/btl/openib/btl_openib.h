@@ -46,6 +46,8 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h" 
 
+#include "connect/connect.h"
+
 BEGIN_C_DECLS
 
 #define HAVE_XRC (defined(HAVE_IBV_OPEN_XRC_DOMAIN) && (1 == OMPI_ENABLE_CONNECTX_XRC_SUPPORT))
@@ -229,6 +231,7 @@ struct mca_btl_openib_port_info {
 #if HAVE_XRC
     uint16_t lid; /* used only in xrc */
 #endif
+    char *cpclist;
 };
 typedef struct mca_btl_openib_port_info mca_btl_openib_port_info_t;
 

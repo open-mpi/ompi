@@ -258,8 +258,6 @@ int mca_bml_r2_add_procs(
                 btl_inuse++;
 
                 if(NULL == bml_endpoint) { 
-                    
-                    
                     /* allocate bml specific proc data */
                     bml_endpoint = OBJ_NEW(mca_bml_base_endpoint_t);
                     if (NULL == bml_endpoint) {
@@ -281,8 +279,7 @@ int mca_bml_r2_add_procs(
                 }
 
                 bml_endpoints[p] =(mca_bml_base_endpoint_t*)  proc->proc_bml; 
-                
-                
+
                 /* dont allow an additional BTL with a lower exclusivity ranking */
                 size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
                 if(size > 0) {

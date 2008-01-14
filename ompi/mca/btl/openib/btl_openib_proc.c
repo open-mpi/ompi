@@ -100,17 +100,19 @@ static mca_btl_openib_proc_t* mca_btl_openib_proc_lookup_ompi(ompi_proc_t* ompi_
 mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
 {
     mca_btl_openib_proc_t* module_proc = NULL;
-    size_t size;
+    size_t msg_size;
+    uint32_t size;
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     size_t i;
 #endif
     int rc;
+    void *message;
+    char *offset;
     
     /* Check if we have already created a IB proc
      * structure for this ompi process */
     module_proc = mca_btl_openib_proc_lookup_ompi(ompi_proc);
-
-    if(module_proc != NULL) {
+    if (NULL != module_proc) {
         /* Gotcha! */
         return module_proc;
     }
@@ -126,34 +128,59 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
      * size) to represent the proc */
     module_proc->proc_guid = ompi_proc->proc_name;
 
-    
     /* query for the peer address info */ 
-    rc = ompi_modex_recv(
-                                 &mca_btl_openib_component.super.btl_version, 
-                                 ompi_proc, 
-                                 (void*)&module_proc->proc_ports, 
-                                 &size
-                                 ); 
-    
-    
-
-    if(OMPI_SUCCESS != rc) {
+    rc = ompi_modex_recv(&mca_btl_openib_component.super.btl_version, 
+                         ompi_proc,
+                         &message,
+                         &msg_size); 
+    if (OMPI_SUCCESS != rc) {
         BTL_ERROR(("[%s:%d] ompi_modex_recv failed for peer %s",
                    __FILE__, __LINE__,
                    ORTE_NAME_PRINT(&ompi_proc->proc_name)));
         OBJ_RELEASE(module_proc);
         return NULL;
     }
-
-    if((size % sizeof(mca_btl_openib_port_info_t)) != 0) {
-        BTL_ERROR(("[%s:%d] invalid module address for peer %s",
-                   __FILE__, __LINE__,
-                   ORTE_NAME_PRINT(&ompi_proc->proc_name)));
-        OBJ_RELEASE(module_proc);
+    if (0 == msg_size) {
         return NULL;
     }
 
-    module_proc->proc_port_count = size/sizeof(mca_btl_openib_port_info_t);
+    /* Message was packed in btl_openib_component.c; the format is
+       listed in a comment in that file */
+    /* Unpack the number of ports in the message */
+    offset = message;
+    memcpy(&(module_proc->proc_port_count), offset, sizeof(uint32_t));
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    module_proc->proc_port_count = ntohl(module_proc->proc_port_count);
+#endif
+    module_proc->proc_ports = (mca_btl_openib_port_info_t *)malloc(sizeof(mca_btl_openib_port_info_t) * module_proc->proc_port_count);
+    offset += sizeof(uint32_t);
+
+    /* Loop over unpacking all the ports */
+    for (i = 0; i < module_proc->proc_port_count; i++) {
+        /* Unpack the port */
+        memcpy(&module_proc->proc_ports[i], offset, 
+               sizeof(mca_btl_openib_port_info_t));
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        MCA_BTL_OPENIB_PORT_INFO_NTOH(module_proc->proc_ports[i]);
+#endif
+        offset += sizeof(mca_btl_openib_port_info_t);
+
+        /* Unpack the string length */
+        memcpy(&size, offset, sizeof(size));
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        size = ntohl(size);
+#endif
+        offset += sizeof(size);
+
+        /* Unpack the string */
+        module_proc->proc_ports[i].cpclist = malloc(size + 1);
+        if (NULL == module_proc->proc_ports[i].cpclist) {
+            /* JMS some error */
+        }
+        memcpy(module_proc->proc_ports[i].cpclist, offset, size);
+        module_proc->proc_ports[i].cpclist[size] = '\0';
+        offset += size;
+    }
 
     if (0 == module_proc->proc_port_count) {
         module_proc->proc_endpoints = NULL;
@@ -161,13 +188,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
         module_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
             malloc(module_proc->proc_port_count * sizeof(mca_btl_base_endpoint_t*));
     }
-#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    for(i=0; i < module_proc->proc_port_count; ++i) {
-        MCA_BTL_OPENIB_PORT_INFO_NTOH(module_proc->proc_ports[i]);
-    }
-#endif
-
-    if(NULL == module_proc->proc_endpoints) {
+    if (NULL == module_proc->proc_endpoints) {
         OBJ_RELEASE(module_proc);
         return NULL;
     }

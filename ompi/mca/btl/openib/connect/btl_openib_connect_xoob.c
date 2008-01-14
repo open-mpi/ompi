@@ -22,8 +22,10 @@
 #include "btl_openib_xrc.h"
 #include "connect/connect.h"
 
+static void xoob_open(void);
 static int xoob_init(void);
 static int xoob_start_connect(mca_btl_base_endpoint_t *e);
+static int xoob_query(mca_btl_openib_hca_t *hca);
 static int xoob_finalize(void);
 
 /*
@@ -32,17 +34,17 @@ static int xoob_finalize(void);
  */
 ompi_btl_openib_connect_base_funcs_t ompi_btl_openib_connect_xoob = {
     "xoob",
-    /* No need for "open */
-    NULL,
+    /* Open */
+    xoob_open,
     /* Init */
     xoob_init,
     /* Connect */
     xoob_start_connect,
+    /* Query */
+    xoob_query,
     /* Finalize */
     xoob_finalize,
 };
-
-#if HAVE_XRC
 
 typedef enum {
     SEND,
@@ -99,6 +101,24 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
 
 static int init_rem_info(mca_btl_openib_rem_info_t *rem_info);
 static void free_rem_info(mca_btl_openib_rem_info_t *rem_info);
+
+static int xoob_priority = 60;
+
+/* Open - this functions sets up any xoob specific commandline params */
+static void xoob_open(void)
+{
+    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
+                           "connect_xoob_priority",
+                           "The selection method priority for xoob",
+                           false, false, xoob_priority, &xoob_priority);
+
+    if (xoob_priority > 100) {
+        xoob_priority = 100;
+    } else if (xoob_priority < -1) {
+        xoob_priority = -1;
+    }
+}
+
 /*
  * Init function.  Post non-blocking RML receive to accept incoming
  * connection requests.
@@ -171,6 +191,15 @@ static int xoob_start_connect(mca_btl_base_endpoint_t *endpoint)
     } 
     OPAL_THREAD_UNLOCK(&endpoint->ib_addr->addr_lock);
     return rc;
+}
+
+static int xoob_query(mca_btl_openib_hca_t *hca)
+{
+    if (mca_btl_openib_component.num_xrc_qps > 0) {
+        return xoob_priority;
+    }
+
+    return -1;
 }
 
 /*
@@ -836,24 +865,3 @@ static void free_rem_info(mca_btl_openib_rem_info_t *rem_info)
         free(rem_info->rem_srqs);
     }
 }
-
-#else
-/* In case if the XRC was disabled during compilation we will print message and return error */
-static int xoob_init(void)
-{
-    printf("xoob init\n");
-    return OMPI_ERR_NOT_IMPLEMENTED;
-}
-
-static int xoob_start_connect(mca_btl_base_endpoint_t *e)
-{
-    printf("xoob start connect\n");
-    return OMPI_ERR_NOT_IMPLEMENTED;
-}
-
-static int xoob_finalize(void)
-{
-    printf("xoob finalize\n");
-    return OMPI_ERR_NOT_IMPLEMENTED;
-}
-#endif

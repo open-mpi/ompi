@@ -62,16 +62,23 @@
  * main openib BTL will start sending out fragments that were queued
  * while the connection was establing, etc.).
  */
-
 #ifndef BTL_OPENIB_CONNECT_H
 #define BTL_OPENIB_CONNECT_H
 
 BEGIN_C_DECLS
 
+#define BCF_MAX_NAME 64
+
+/**
+ * Must forward declare mca_btl_openib_hca_t; it's defined in
+ * btl_openib.h, but that file includes this file.
+ */
+struct mca_btl_openib_hca_t;
+
 /**
  * Function to register MCA params in the connect functions
  */
-typedef int (*ompi_btl_openib_connect_base_func_open_t)(void);
+typedef void (*ompi_btl_openib_connect_base_func_open_t)(void);
 
 /**
  * Function to intialize the connection functions (i.e., it's been
@@ -86,11 +93,14 @@ typedef int (*ompi_btl_openib_connect_base_func_start_connect_t)
     (struct mca_btl_base_endpoint_t *e);
 
 /**
+ * Query the CPC to see if it wants to run on a specific HCA
+ */
+typedef int (*ompi_btl_openib_connect_base_func_query_t)(struct mca_btl_openib_hca_t *hca);
+
+/**
  * Function to finalize the connection functions
  */
 typedef int (*ompi_btl_openib_connect_base_func_finalize_t)(void);
-
-#define BCF_MAX_NAME 64
 
 struct ompi_btl_openib_connect_base_funcs_t {
     /** Name of this set of connection functions */
@@ -105,8 +115,11 @@ struct ompi_btl_openib_connect_base_funcs_t {
     /** Connect function */
     ompi_btl_openib_connect_base_func_start_connect_t bcf_start_connect;
 
+    /** Query function */
+    ompi_btl_openib_connect_base_func_query_t bcf_query;
+
     /** Finalize function */
-    ompi_btl_openib_connect_base_func_open_t bcf_finalize;
+    ompi_btl_openib_connect_base_func_finalize_t bcf_finalize;
 };
 typedef struct ompi_btl_openib_connect_base_funcs_t ompi_btl_openib_connect_base_funcs_t;
 
