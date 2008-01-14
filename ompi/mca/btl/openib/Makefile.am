@@ -53,13 +53,17 @@ sources = \
     connect/btl_openib_connect_base.c \
     connect/btl_openib_connect_oob.c \
     connect/btl_openib_connect_oob.h \
-    connect/btl_openib_connect_xoob.c \
-    connect/btl_openib_connect_xoob.h \
     connect/btl_openib_connect_rdma_cm.c \
     connect/btl_openib_connect_rdma_cm.h \
     connect/btl_openib_connect_ibcm.c \
     connect/btl_openib_connect_ibcm.h \
     connect/connect.h
+
+if MCA_btl_openib_have_xrc
+sources += \
+    connect/btl_openib_connect_xoob.c \
+    connect/btl_openib_connect_xoob.h
+endif
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

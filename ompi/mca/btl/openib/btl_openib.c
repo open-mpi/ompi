@@ -219,7 +219,6 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
             } else
 #endif
             {
-
                openib_btl->qps[qp].u.srq_qp.srq =
                    ibv_create_srq(openib_btl->hca->ib_pd, &attr);
             }
@@ -313,6 +312,7 @@ int mca_btl_openib_add_procs(
     for(i = 0; i < (int) nprocs; i++) {
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
         mca_btl_openib_proc_t* ib_proc;
+        bool cpc_error = 0;
         
         if(NULL == (ib_proc = mca_btl_openib_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -322,6 +322,16 @@ int mca_btl_openib_add_procs(
         /* check if the remote proc has a reachable subnet first */
         BTL_VERBOSE(("got %d port_infos \n", ib_proc->proc_port_count));
         for(j = 0; j < (int) ib_proc->proc_port_count; j++){
+            int rc;
+
+            /* Setup connect module */
+            rc = ompi_btl_openib_connect_base_select(ib_proc->proc_ports[j].cpclist,
+                                                     openib_btl->port_info.cpclist);
+            if (rc != OMPI_SUCCESS) {
+                cpc_error = 1;
+                continue;
+            }
+
             BTL_VERBOSE(("got a subnet %016x\n",
                          ib_proc->proc_ports[j].subnet_id));
             if(ib_proc->proc_ports[j].subnet_id ==
@@ -330,7 +340,12 @@ int mca_btl_openib_add_procs(
                 rem_subnet_id_port_cnt ++;
             }
         }
-        
+
+        if (cpc_error) {
+            BTL_ERROR(("cpc_error error"));
+            return OMPI_ERROR;
+        }
+
         if(!rem_subnet_id_port_cnt ) {
             /* no use trying to communicate with this endpointlater */
             BTL_VERBOSE(("No matching subnet id was found, moving on.. \n"));

@@ -39,8 +39,12 @@ typedef enum {
     ENDPOINT_CONNECT_ACK
 } connect_message_type_t;
 
+static int oob_priority = 50;
+
+static void oob_open(void);
 static int oob_init(void);
 static int oob_start_connect(mca_btl_base_endpoint_t *e);
+static int oob_query(mca_btl_openib_hca_t *hca);
 static int oob_finalize(void);
 
 static int reply_start_connect(mca_btl_openib_endpoint_t *endpoint,
@@ -67,15 +71,32 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
  */
 ompi_btl_openib_connect_base_funcs_t ompi_btl_openib_connect_oob = {
     "oob",
-    /* No need for "open */
-    NULL,
+    /* Open */
+    oob_open,
     /* Init */
     oob_init,
     /* Connect */
     oob_start_connect,
+    /* Query */
+    oob_query,
     /* Finalize */
     oob_finalize,
 };
+
+/* Open - this functions sets up any oob specific commandline params */
+static void oob_open(void)
+{
+    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
+                           "connect_oob_priority",
+                           "The selection method priority for oob",
+                           false, false, oob_priority, &oob_priority);
+
+    if (oob_priority > 100) {
+        oob_priority = 100;
+    } else if (oob_priority < -1) {
+        oob_priority = -1;
+    }
+}
 
 /*
  * Init function.  Post non-blocking RML receive to accept incoming
@@ -116,6 +137,15 @@ static int oob_start_connect(mca_btl_base_endpoint_t *endpoint)
     }
 
     return OMPI_SUCCESS;
+}
+
+static int oob_query(mca_btl_openib_hca_t *hca)
+{
+    if (IBV_TRANSPORT_IB == hca->ib_dev->transport_type) {
+        return oob_priority;
+    }
+
+    return -1;
 }
 
 /*

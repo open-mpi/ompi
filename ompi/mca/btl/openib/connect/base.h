@@ -28,7 +28,8 @@ int ompi_btl_openib_connect_base_open(void);
 /*
  * Select function
  */
-int ompi_btl_openib_connect_base_select(void);
+int ompi_btl_openib_connect_base_select(char*, char*);
+int ompi_btl_openib_connect_base_query(char**, mca_btl_openib_hca_t*);
 
 END_C_DECLS
 

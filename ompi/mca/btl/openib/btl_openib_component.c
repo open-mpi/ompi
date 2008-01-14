@@ -155,30 +155,70 @@ static int btl_openib_component_close(void)
  */
 static int btl_openib_modex_send(void)
 {
-    int         rc, i;
-    size_t      size;
-    mca_btl_openib_port_info_t *ports = NULL;
+    int    rc, i;
+    char *message, *offset;
+    uint32_t size, size_save;
+    size_t msg_size;
 
-    size = mca_btl_openib_component.ib_num_btls * sizeof (mca_btl_openib_port_info_t);
-    if (size != 0) {
-        ports = (mca_btl_openib_port_info_t *)malloc (size);
-        if (NULL == ports) {
-            BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
+    /* The message is packed into 2 parts:
+     * 1. a uint32_t indicating the number of ports in the message
+     * 2. for each port:
+     *    a. the port data
+     *    b. a uint32_t indicating a string length
+     *    c. the string cpc list for that port, length specified by 2b.
+     */
+    msg_size = sizeof(uint32_t) + mca_btl_openib_component.ib_num_btls * (sizeof(uint32_t) + sizeof(mca_btl_openib_port_info_t));
+    for (i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
+        msg_size += strlen(mca_btl_openib_component.openib_btls[i]->port_info.cpclist);
+    }
 
-        for (i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
-            mca_btl_openib_module_t *btl = mca_btl_openib_component.openib_btls[i];
-            ports[i] = btl->port_info;
+    if (0 == msg_size) {
+        return 0;
+    }
+
+    message = malloc(msg_size);
+    if (NULL == message) {
+        BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    } 
+
+    /* Pack the number of ports */
+    size = mca_btl_openib_component.ib_num_btls;
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            MCA_BTL_OPENIB_PORT_INFO_HTON(ports[i]);
+    size = htonl(size);
 #endif
-        }
+    memcpy(message, &size, sizeof(size));
+    offset = message + sizeof(size);
+
+    /* Pack each of the ports */
+    for (i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
+        /* Pack the port struct */
+        memcpy(offset, &mca_btl_openib_component.openib_btls[i]->port_info, sizeof(mca_btl_openib_port_info_t));
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        MCA_BTL_OPENIB_PORT_INFO_HTON(*(mca_btl_openib_port_info_t *)offset);
+#endif
+        offset += sizeof(mca_btl_openib_port_info_t);
+
+        /* Pack the strlen of the cpclist */
+        size = size_save =
+            strlen(mca_btl_openib_component.openib_btls[i]->port_info.cpclist);
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        size = htonl(size);
+#endif
+        memcpy(offset, &size, sizeof(size));
+        offset += sizeof(size);
+
+        /* Pack the string */
+        memcpy(offset, 
+               mca_btl_openib_component.openib_btls[i]->port_info.cpclist, 
+               size_save);
+        offset += size_save;
     }
-    rc = ompi_modex_send (&mca_btl_openib_component.super.btl_version, ports, size);
-    if (NULL != ports) {
-        free (ports);
-    }
+
+    rc = ompi_modex_send(&mca_btl_openib_component.super.btl_version, 
+                         message, msg_size);
+    free(message);
+
     return rc;
 }
 
@@ -357,6 +397,8 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             lid < ib_port_attr->lid + lmc; lid++){
         for(i = 0; i < mca_btl_openib_component.btls_per_lid; i++){
             char param[40];
+            int rc;
+
             openib_btl = malloc(sizeof(mca_btl_openib_module_t));
             if(NULL == openib_btl) {
                 BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
@@ -383,6 +425,11 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
                 openib_btl->port_info.lid = lid;
             }
 #endif
+            rc = ompi_btl_openib_connect_base_query(&openib_btl->port_info.cpclist, hca);
+            if (OMPI_SUCCESS != rc) {
+                continue;
+            }
+
             openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbfunc = btl_openib_control;
             openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbdata = NULL;
 
@@ -1295,10 +1342,6 @@ btl_openib_component_init(int *num_btl_modules,
             return NULL;
      }
 
-    /* Setup connect module */
-    if (OMPI_SUCCESS != ompi_btl_openib_connect_base_select()) {
-        return NULL;
-    }
     btl_openib_modex_send();
 
     *num_btl_modules = mca_btl_openib_component.ib_num_btls;
