@@ -390,10 +390,10 @@ int mca_btl_openib_add_procs(
             }
 
             assert(rem_port_cnt == btl_rank);
-            /* Push the subnet and lid to in the component */
+            /* Push the subnet/lid/jobid to xrc hash */
             rc = mca_btl_openib_ib_address_add_new(
-                    ib_proc->proc_ports[j].subnet_id,
-                    ib_proc->proc_ports[j].lid, endpoint);
+                    ib_proc->proc_ports[j].lid, ib_proc->proc_ports[j].subnet_id,
+                    ompi_proc->proc_name.jobid, endpoint);
             if (OMPI_SUCCESS != rc ) {
                 OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
                 return OMPI_ERROR;

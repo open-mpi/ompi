@@ -23,7 +23,7 @@
 #include "btl_openib.h"
 
 #if HAVE_XRC
-#define SIZE_OF2(A,B) (sizeof(A) + sizeof(B))
+#define SIZE_OF3(A, B, C) (sizeof(A) + sizeof(B) + sizeof(C))
 
 static void ib_address_constructor(ib_address_t *ib_addr);
 static void ib_address_destructor(ib_address_t *ib_addr);
@@ -106,18 +106,19 @@ static void ib_address_destructor(ib_address_t *ib_addr)
     OBJ_DESTRUCT(&ib_addr->pending_ep);
 }
 
-static int ib_address_init(ib_address_t *ib_addr, uint64_t s_id, uint16_t lid)
+static int ib_address_init(ib_address_t *ib_addr, uint16_t lid, uint64_t s_id, orte_jobid_t ep_jobid)
 {
-    ib_addr->key = malloc(SIZE_OF2(s_id,lid));
+    ib_addr->key = malloc(SIZE_OF3(s_id, lid, ep_jobid));
     if (NULL == ib_addr->key) {
         BTL_ERROR(("Failed to allocate memory for key\n"));
         return OMPI_ERROR;
     }
-
-    memset(ib_addr->key, 0, SIZE_OF2(s_id,lid));
-    /* creating the key */
+    memset(ib_addr->key, 0, SIZE_OF3(s_id, lid, ep_jobid));
+    /* creating the key = lid + s_id + ep_jobid */
     memcpy(ib_addr->key, &lid, sizeof(lid));
     memcpy((void*)((char*)ib_addr->key + sizeof(lid)), &s_id, sizeof(s_id));
+    memcpy((void*)((char*)ib_addr->key + sizeof(lid) + sizeof(s_id)),
+            &ep_jobid, sizeof(ep_jobid));
     /* caching lid and subnet id */
     ib_addr->subnet_id = s_id;
     ib_addr->lid = lid;
@@ -129,13 +130,14 @@ static int ib_address_init(ib_address_t *ib_addr, uint64_t s_id, uint16_t lid)
  * update the endpoint pointer. 
  * Before call to this function you need to protect with
  */
-int mca_btl_openib_ib_address_add_new (uint64_t s_id, uint16_t lid, mca_btl_openib_endpoint_t *ep)
+int mca_btl_openib_ib_address_add_new (uint16_t lid, uint64_t s_id,
+        orte_jobid_t ep_jobid, mca_btl_openib_endpoint_t *ep)
 {
     void *tmp;
     int ret = OMPI_SUCCESS;
     struct ib_address_t *ib_addr = OBJ_NEW(ib_address_t);
 
-    ret = ib_address_init(ib_addr, s_id, lid);
+    ret = ib_address_init(ib_addr, lid, s_id, ep_jobid);
     if (OMPI_SUCCESS != ret ) {
         BTL_ERROR(("XRC Internal error. Failed to init ib_addr\n"));
         OBJ_DESTRUCT(ib_addr);
@@ -145,10 +147,10 @@ int mca_btl_openib_ib_address_add_new (uint64_t s_id, uint16_t lid, mca_btl_open
     OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
     if (OPAL_SUCCESS != opal_hash_table_get_value_ptr(&mca_btl_openib_component.ib_addr_table,
                 ib_addr->key, 
-                SIZE_OF2(s_id,lid), &tmp)) {
+                SIZE_OF3(s_id, lid, ep_jobid), &tmp)) {
         /* It is new one, lets put it on the table */
         ret = opal_hash_table_set_value_ptr(&mca_btl_openib_component.ib_addr_table,
-                ib_addr->key, SIZE_OF2(s_id,lid), (void*)ib_addr);
+                ib_addr->key, SIZE_OF3(s_id, lid, ep_jobid), (void*)ib_addr);
         if (OPAL_SUCCESS != ret) {
             BTL_ERROR(("XRC Internal error."
                         " Failed to add element to mca_btl_openib_component.ib_addr_table\n"));
@@ -156,7 +158,6 @@ int mca_btl_openib_ib_address_add_new (uint64_t s_id, uint16_t lid, mca_btl_open
             OBJ_DESTRUCT(ib_addr);
             return ret;
         }
-        /* opal_list_append(&mca_btl_openib_component.ib_addr_list,(opal_list_item_t*)ib_addr); */
         /* update the endpoint with pointer to ib address */
         ep->ib_addr = ib_addr;
     } else {
