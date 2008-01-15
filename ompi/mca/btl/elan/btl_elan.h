@@ -301,5 +301,5 @@ mca_btl_elan_prepare_dst( struct mca_btl_base_module_t* btl,
 
 END_C_DECLS
 
-#endif   /* MCA_BTL_ELAN_H */
+#endif  /* MCA_BTL_ELAN_H */
 
