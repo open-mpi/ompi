@@ -75,9 +75,6 @@ extern mca_btl_sm_module_resource_t mca_btl_sm_module_resource;
 #define DONE (char)1
 #endif
 
-typedef mca_btl_base_recv_reg_t mca_btl_sm_recv_reg_t;
-
-
 /**
  * Shared Memory (SM) BTL module.
  */
@@ -179,7 +176,6 @@ extern int mca_btl_sm_component_progress(void);
 struct mca_btl_sm_t {
     mca_btl_base_module_t  super;       /**< base BTL interface */
     bool btl_inited;  /**< flag indicating if btl has been inited */
-    mca_btl_sm_recv_reg_t sm_reg[256];
     mca_btl_base_module_error_cb_fn_t error_cb;
 };
 typedef struct mca_btl_sm_t mca_btl_sm_t;
@@ -247,26 +243,6 @@ extern int mca_btl_sm_del_procs(
     size_t nprocs,
     struct ompi_proc_t **procs,
     struct mca_btl_base_endpoint_t **peers
-);
-
-
-/**
- * Register a callback function that is called on receipt
- * of a fragment.
- *
- * @param btl (IN)     BTL module
- * @return             Status indicating if cleanup was successful
- *
- * When the process list changes, the PML notifies the BTL of the
- * change, to provide the opportunity to cleanup or release any
- * resources associated with the peer.
- */
-
-extern int mca_btl_sm_register(
-    struct mca_btl_base_module_t* btl,
-    mca_btl_base_tag_t tag,
-    mca_btl_base_module_recv_cb_fn_t cbfunc,
-    void* cbdata
 );
 
 

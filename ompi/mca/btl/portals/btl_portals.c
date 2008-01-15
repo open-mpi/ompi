@@ -55,7 +55,7 @@ mca_btl_portals_module_t mca_btl_portals_module = {
 
         mca_btl_portals_add_procs,
         mca_btl_portals_del_procs,
-        mca_btl_portals_register,
+        NULL,
         mca_btl_portals_finalize,
 
         mca_btl_portals_alloc,
@@ -221,21 +221,6 @@ mca_btl_portals_del_procs(struct mca_btl_base_module_t *btl_base,
     }
 
     return ret;
-}
-
-
-int
-mca_btl_portals_register(struct mca_btl_base_module_t* btl_base, 
-                          mca_btl_base_tag_t tag, 
-                          mca_btl_base_module_recv_cb_fn_t cbfunc, 
-                          void* cbdata)
-{
-    assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
-
-    mca_btl_portals_module.portals_reg[tag].cbfunc = cbfunc; 
-    mca_btl_portals_module.portals_reg[tag].cbdata = cbdata; 
-
-    return OMPI_SUCCESS;
 }
 
 

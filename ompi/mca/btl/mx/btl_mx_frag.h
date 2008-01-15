@@ -31,6 +31,9 @@
 extern "C" {
 #endif
     
+#define MCA_BTL_MX_SEND  0x01
+#define MCA_BTL_MX_RECV  0x02
+
     /**
      * MX send framxent derived type.
      */
@@ -38,7 +41,7 @@ extern "C" {
         mca_btl_base_descriptor_t       base; 
         mca_btl_base_segment_t          segment[2]; 
         struct mca_btl_base_endpoint_t* endpoint; 
-        mca_btl_base_tag_t              tag;
+        uint8_t                         type;
         mx_request_t                    mx_request;
         size_t                          size; 
         ompi_free_list_t*               mx_frag_list;

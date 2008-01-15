@@ -51,7 +51,7 @@ mca_btl_tcp_module_t mca_btl_tcp_module = {
         0, /* flags */
         mca_btl_tcp_add_procs,
         mca_btl_tcp_del_procs,
-        mca_btl_tcp_register, 
+        NULL, 
         mca_btl_tcp_finalize,
         mca_btl_tcp_alloc, 
         mca_btl_tcp_free, 
@@ -156,23 +156,6 @@ int mca_btl_tcp_del_procs(struct mca_btl_base_module_t* btl,
         }
         opal_progress_event_users_decrement();
     }
-    return OMPI_SUCCESS;
-}
-
-
-/**
- * Register callback function to support send/recv semantics
- */
-
-int mca_btl_tcp_register(
-                        struct mca_btl_base_module_t* btl, 
-                        mca_btl_base_tag_t tag, 
-                        mca_btl_base_module_recv_cb_fn_t cbfunc, 
-                        void* cbdata)
-{
-    mca_btl_tcp_module_t* tcp_btl = (mca_btl_tcp_module_t*) btl; 
-    tcp_btl->tcp_reg[tag].cbfunc = cbfunc; 
-    tcp_btl->tcp_reg[tag].cbdata = cbdata; 
     return OMPI_SUCCESS;
 }
 

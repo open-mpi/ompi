@@ -71,7 +71,7 @@ mca_btl_gm_module_t mca_btl_gm_module = {
         0, /* flags */
         mca_btl_gm_add_procs,
         mca_btl_gm_del_procs,
-        mca_btl_gm_register, 
+        NULL, 
         mca_btl_gm_finalize,
         mca_btl_gm_alloc, 
         mca_btl_gm_free, 
@@ -161,24 +161,6 @@ int mca_btl_gm_del_procs(struct mca_btl_base_module_t* btl,
     /* TODO */
     return OMPI_SUCCESS;
 }
-
-
-/**
- * Register callback function to support send/recv semantics
- */
-
-int mca_btl_gm_register(
-                        struct mca_btl_base_module_t* btl, 
-                        mca_btl_base_tag_t tag, 
-                        mca_btl_base_module_recv_cb_fn_t cbfunc, 
-                        void* cbdata)
-{
-    mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*) btl; 
-    gm_btl->gm_reg[tag].cbfunc = cbfunc; 
-    gm_btl->gm_reg[tag].cbdata = cbdata; 
-    return OMPI_SUCCESS;
-}
-
 
 /* 
  *Register callback function for error handling..

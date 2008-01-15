@@ -533,19 +533,6 @@ typedef int (*mca_bml_base_module_del_proc_btl_fn_t)(
     struct mca_btl_base_module_t* );
 
 /**
- * Callback function that is called asynchronously on receipt
- * of data by the transport layer.
- */
-
-typedef void (*mca_bml_base_module_recv_cb_fn_t)(
-                                                 mca_btl_base_module_t* bml_btl, 
-                                                 mca_btl_base_tag_t tag,
-                                                 mca_btl_base_descriptor_t* descriptor,
-                                                 void* cbdata
-                                                 );
-
-
-/**
  * Register a callback function that is called on receipt
  * of a fragment.
  *
@@ -558,7 +545,7 @@ typedef void (*mca_bml_base_module_recv_cb_fn_t)(
  */
 typedef int (*mca_bml_base_module_register_fn_t)(
                                                  mca_btl_base_tag_t tag,
-                                                 mca_bml_base_module_recv_cb_fn_t cbfunc,
+                                                 mca_btl_base_module_recv_cb_fn_t cbfunc,
                                                  void* cbdata
                                                  );
 

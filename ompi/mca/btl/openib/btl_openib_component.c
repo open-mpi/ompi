@@ -238,6 +238,7 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
     mca_btl_openib_eager_rdma_header_t *rdma_hdr;
     mca_btl_openib_header_coalesced_t *clsc_hdr =
         (mca_btl_openib_header_coalesced_t*)(ctl_hdr + 1);
+    mca_btl_active_message_callback_t* reg;
     size_t len = des->des_dst->seg_len - sizeof(*ctl_hdr);
     
     switch (ctl_hdr->type) {
@@ -290,8 +291,8 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
             tmp_seg.seg_len = clsc_hdr->size;
 
             /* call registered callback */
-            obtl->ib_reg[clsc_hdr->tag].cbfunc(&obtl->super, clsc_hdr->tag,
-                    &tmp_des, obtl->ib_reg[clsc_hdr->tag].cbdata);
+            reg = mca_btl_base_active_message_trigger + clsc_hdr->tag;
+            reg->cbfunc( &obtl->super, clsc_hdr->tag, &tmp_des, reg->cbdata );
             len -= skip;
             clsc_hdr = (mca_btl_openib_header_coalesced_t*)
                 (((unsigned char*)clsc_hdr) + skip);
@@ -430,8 +431,8 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
                 continue;
             }
 
-            openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbfunc = btl_openib_control;
-            openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbdata = NULL;
+            mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbfunc = btl_openib_control;
+            mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbdata = NULL;
 
             /* Check bandwidth configured for this HCA */
             sprintf(param, "bandwidth_%s", ibv_get_device_name(hca->ib_dev));
@@ -1470,8 +1471,9 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
 
     if(OPAL_LIKELY(!(is_credit_msg = is_credit_message(frag)))) {
         /* call registered callback */
-        openib_btl->ib_reg[hdr->tag].cbfunc(&openib_btl->super, hdr->tag, des,
-            openib_btl->ib_reg[hdr->tag].cbdata);
+        mca_btl_active_message_callback_t* reg;
+        reg = mca_btl_base_active_message_trigger + hdr->tag;
+        reg->cbfunc( &openib_btl->super, hdr->tag, des, reg->cbdata );
         if(MCA_BTL_OPENIB_RDMA_FRAG(frag)) {
             cqp = (hdr->credits >> 11) & 0x0f;
             hdr->credits &= 0x87ff;

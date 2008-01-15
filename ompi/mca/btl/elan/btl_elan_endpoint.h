@@ -9,8 +9,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_BTL_TEMPLATE_ENDPOINT_H
-#define MCA_BTL_TEMPLATE_ENDPOINT_H
+#ifndef MCA_BTL_ELAN_ENDPOINT_H
+#define MCA_BTL_ELAN_ENDPOINT_H
 
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"
@@ -18,10 +18,8 @@
 #include "ompi/mca/btl/btl.h"
 #include "btl_elan_frag.h"
 #include "btl_elan.h"
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
+BEGIN_C_DECLS
 
 /**
  * State of ELAN endpoint connection.
@@ -51,7 +49,6 @@ typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
 typedef mca_btl_base_endpoint_t  mca_btl_elan_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_btl_elan_endpoint_t);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-#endif
+END_C_DECLS
+
+#endif  /* MCA_BTL_ELAN_ENDPOINT_H */

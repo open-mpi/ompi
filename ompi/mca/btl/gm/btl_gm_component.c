@@ -594,10 +594,10 @@ int mca_btl_gm_component_progress()
                 unsigned char* buffer = (unsigned char*)gm_ntohp(event->recv.buffer);
                 mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)*((uintptr_t*)(buffer - sizeof(uintptr_t)));
                 mca_btl_base_header_t* hdr = (mca_btl_base_header_t *)gm_ntohp(event->recv.message);
-                mca_btl_base_recv_reg_t* reg;
+                mca_btl_active_message_callback_t* reg;
                 frag->segment.seg_addr.pval = (hdr+1);
                 frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
-                reg = &btl->gm_reg[hdr->tag];
+                reg = mca_btl_base_active_message_trigger + hdr->tag;
 
                 /* cbfunc may be null if interface goes down.. */
                 if(reg->cbfunc) { 
@@ -621,10 +621,10 @@ int mca_btl_gm_component_progress()
                 unsigned char* buffer = (unsigned char*)gm_ntohp(event->recv.buffer);
                 mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)*((uintptr_t*)(buffer - sizeof(uintptr_t)));
                 mca_btl_base_header_t* hdr = (mca_btl_base_header_t*)buffer;
-                mca_btl_base_recv_reg_t* reg;
+                mca_btl_active_message_callback_t* reg;
                 frag->segment.seg_addr.pval = (hdr+1);
                 frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
-                reg = &btl->gm_reg[hdr->tag];
+                reg = mca_btl_base_active_message_trigger + hdr->tag;
                 if(reg->cbfunc) { 
                     OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
                     reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
@@ -687,10 +687,10 @@ static void* mca_btl_gm_progress_thread( opal_object_t* arg )
                 unsigned char* buffer = (unsigned char*)gm_ntohp(event->recv.buffer);
                 mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)*((uintptr_t*)(buffer - sizeof(uintptr_t)));
                 mca_btl_base_header_t* hdr = (mca_btl_base_header_t *)gm_ntohp(event->recv.message);
-                mca_btl_base_recv_reg_t* reg;
+                mca_btl_active_message_callback_t* reg;
                 frag->segment.seg_addr.pval = (hdr+1);
                 frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
-                reg = &btl->gm_reg[hdr->tag];
+                reg = mca_btl_base_active_message_trigger + hdr->tag;
 
                 OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
                 reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
@@ -707,10 +707,10 @@ static void* mca_btl_gm_progress_thread( opal_object_t* arg )
                 unsigned char* buffer = (unsigned char*)gm_ntohp(event->recv.buffer);
                 mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)*((uintptr_t*)(buffer - sizeof(uintptr_t)));
                 mca_btl_base_header_t* hdr = (mca_btl_base_header_t*)buffer;
-                mca_btl_base_recv_reg_t* reg;
+                mca_btl_active_message_callback_t* reg;
                 frag->segment.seg_addr.pval = (hdr+1);
                 frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
-                reg = &btl->gm_reg[hdr->tag];
+                reg = mca_btl_base_active_message_trigger + hdr->tag;
 
                 OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
                 reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);

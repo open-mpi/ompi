@@ -328,7 +328,6 @@ struct mca_btl_openib_module_qp_t {
 struct mca_btl_openib_module_t {
     mca_btl_base_module_t  super;      /**< base BTL interface */
     bool btl_inited; 
-    mca_btl_openib_recv_reg_t ib_reg[256]; 
     mca_btl_openib_port_info_t port_info;  /* contains only the subnet id right now */ 
     mca_btl_openib_hca_t *hca;
     uint8_t port_num;                  /**< ID of the PORT */ 
@@ -363,25 +362,6 @@ typedef struct mca_btl_openib_reg_t mca_btl_openib_reg_t;
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
 extern void* mca_btl_openib_progress_thread(opal_object_t*);
 #endif
-
-/**
- * Register a callback function that is called on receipt
- * of a fragment.
- *
- * @param btl (IN)     BTL module
- * @return             Status indicating if cleanup was successful
- *
- * When the process list changes, the PML notifies the BTL of the
- * change, to provide the opportunity to cleanup or release any
- * resources associated with the peer.
- */
-
-int mca_btl_openib_register(
-    struct mca_btl_base_module_t* btl,
-    mca_btl_base_tag_t tag,
-    mca_btl_base_module_recv_cb_fn_t cbfunc,
-    void* cbdata
-);
 
 
 /**

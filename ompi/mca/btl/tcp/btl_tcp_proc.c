@@ -72,7 +72,6 @@ void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* proc)
     }
 }
 
-
 /*
  * Create a TCP process structure. There is a one-to-one correspondence
  * between a ompi_proc_t and a mca_btl_tcp_proc_t instance. We cache

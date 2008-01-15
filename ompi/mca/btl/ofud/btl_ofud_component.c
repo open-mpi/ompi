@@ -425,7 +425,7 @@ int mca_btl_ud_component_progress(void)
     struct ibv_recv_wr* bad_wr;
     struct ibv_recv_wr* head_wr;
     mca_btl_ud_module_t* ud_btl;
-    mca_btl_base_recv_reg_t* reg;
+    mca_btl_active_message_callback_t* reg;
     struct ibv_wc* cwc;
     struct ibv_wc wc[MCA_BTL_UD_NUM_WC];
 
@@ -480,7 +480,7 @@ int mca_btl_ud_component_progress(void)
             }
             case MCA_BTL_UD_FRAG_RECV:
                 assert(cwc->opcode == IBV_WC_RECV);
-                reg = &ud_btl->ib_reg[frag->hdr->tag];
+                reg = mca_btl_base_active_message_trigger + frag->hdr->tag;
 
                 frag->segment.seg_addr.pval = frag->hdr + 1;
                 frag->segment.seg_len = cwc->byte_len -

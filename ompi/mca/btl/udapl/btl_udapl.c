@@ -64,7 +64,7 @@ mca_btl_udapl_module_t mca_btl_udapl_module = {
         MCA_BTL_FLAGS_SEND,
         mca_btl_udapl_add_procs,
         mca_btl_udapl_del_procs,
-        mca_btl_udapl_register, 
+        NULL, 
         mca_btl_udapl_finalize,
         mca_btl_udapl_alloc, 
         mca_btl_udapl_free, 
@@ -709,24 +709,6 @@ int mca_btl_udapl_del_procs(struct mca_btl_base_module_t* btl,
         struct mca_btl_base_endpoint_t ** peers)
 {
     /* TODO */
-    return OMPI_SUCCESS;
-}
-
-
-/**
- * Register callback function to support send/recv semantics
- */
-
-int mca_btl_udapl_register(
-                        struct mca_btl_base_module_t* btl, 
-                        mca_btl_base_tag_t tag, 
-                        mca_btl_base_module_recv_cb_fn_t cbfunc, 
-                        void* cbdata)
-{
-    mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*) btl; 
-    udapl_btl->udapl_reg[tag].cbfunc = cbfunc; 
-    udapl_btl->udapl_reg[tag].cbdata = cbdata; 
-
     return OMPI_SUCCESS;
 }
 

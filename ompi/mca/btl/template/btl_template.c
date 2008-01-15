@@ -149,9 +149,6 @@ int mca_btl_template_register(
                         mca_btl_base_module_recv_cb_fn_t cbfunc, 
                         void* cbdata)
 {
-    mca_btl_template_module_t* template_btl = (mca_btl_template_module_t*) btl; 
-    template_btl->template_reg[tag].cbfunc = cbfunc; 
-    template_btl->template_reg[tag].cbdata = cbdata; 
     return OMPI_SUCCESS;
 }
 

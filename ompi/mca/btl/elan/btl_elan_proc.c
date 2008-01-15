@@ -65,9 +65,9 @@ static mca_btl_elan_proc_t* mca_btl_elan_proc_lookup_ompi(ompi_proc_t* ompi_proc
     mca_btl_elan_proc_t* elan_proc;
     OPAL_THREAD_LOCK(&mca_btl_elan_component.elan_lock);
     for(elan_proc = (mca_btl_elan_proc_t*)
-        opal_list_get_first(&mca_btl_elan_component.elan_procs);
+            opal_list_get_first(&mca_btl_elan_component.elan_procs);
         elan_proc != (mca_btl_elan_proc_t*)
-        opal_list_get_end(&mca_btl_elan_component.elan_procs);
+            opal_list_get_end(&mca_btl_elan_component.elan_procs);
         elan_proc  = (mca_btl_elan_proc_t*)opal_list_get_next(elan_proc)) {
         if(elan_proc->proc_ompi == ompi_proc) {
             OPAL_THREAD_UNLOCK(&mca_btl_elan_component.elan_lock);
@@ -79,7 +79,7 @@ static mca_btl_elan_proc_t* mca_btl_elan_proc_lookup_ompi(ompi_proc_t* ompi_proc
 }
 
 /*
- * Create a TEMPLATE process structure. There is a one-to-one correspondence
+ * Create a ELAN process structure. There is a one-to-one correspondence
  * between a ompi_proc_t and a mca_btl_elan_proc_t instance. We cache
  * additional data (specifically the list of mca_btl_elan_endpoint_t instances, 
  * and published addresses) associated w/ a given destination on this
@@ -101,8 +101,8 @@ mca_btl_elan_proc_t* mca_btl_elan_proc_create(ompi_proc_t* ompi_proc)
     /* Oops! First time, gotta create a new Elan proc
      * out of the ompi_proc ... */
     module_proc = OBJ_NEW(mca_btl_elan_proc_t);
-	if(NULL == module_proc)
-            return NULL;
+    if(NULL == module_proc)
+        return NULL;
     /* Initialize number of peer */
     module_proc->proc_endpoint_count = 0;
     module_proc->proc_ompi = ompi_proc;
@@ -115,19 +115,19 @@ mca_btl_elan_proc_t* mca_btl_elan_proc_create(ompi_proc_t* ompi_proc)
                           (void**)&module_proc->elan_vp_array,
                           &size );
     if(rc != OMPI_SUCCESS) {
-            BTL_ERROR(("mca_base_modex_recv: failed with return value=%d", rc));
-            OBJ_RELEASE(module_proc);
-            return NULL;
+        BTL_ERROR(("mca_base_modex_recv: failed with return value=%d", rc));
+        OBJ_RELEASE(module_proc);
+        return NULL;
     }
     module_proc->proc_addr_count = size / sizeof(unsigned int);;
     /* XXX: Right now, there can be only 1 peer associated
      * with a proc. Needs a little bit change in 
      * mca_btl_elan_proc_t to allow on demand increasing of
      * number of endpoints for this proc 
-    */
+     */
 
     module_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
-    malloc((1+module_proc->proc_addr_count )* sizeof(mca_btl_base_endpoint_t*));
+        malloc((1+module_proc->proc_addr_count )* sizeof(mca_btl_base_endpoint_t*));
     if(NULL == module_proc->proc_endpoints) {
         OBJ_RELEASE(module_proc);
         return NULL;
@@ -142,7 +142,7 @@ mca_btl_elan_proc_t* mca_btl_elan_proc_create(ompi_proc_t* ompi_proc)
  * it an address.
  */
 int mca_btl_elan_proc_insert( mca_btl_elan_proc_t* module_proc, 
-			       mca_btl_base_endpoint_t* module_endpoint )
+                              mca_btl_base_endpoint_t* module_endpoint )
 {
     /* insert into endpoint array */
     size_t i;

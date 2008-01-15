@@ -207,7 +207,7 @@ mca_btl_mx_unexpected_handler( void *context, mx_endpoint_addr_t source,
                                void * data_if_available )
 {
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)context;
-    mca_btl_base_recv_reg_t* reg;
+    mca_btl_active_message_callback_t* reg;
     mca_btl_base_tag_t tag;
     mca_btl_base_descriptor_t descriptor;
     mca_btl_base_segment_t segment;
@@ -220,7 +220,7 @@ mca_btl_mx_unexpected_handler( void *context, mx_endpoint_addr_t source,
 
     tag = match_value & 0xff;
     assert( tag < 16 );
-    reg = &(mx_btl->mx_reg[tag]);
+    reg = mca_btl_base_active_message_trigger + tag;
 
     segment.seg_addr.pval = data_if_available;
     segment.seg_len = length;
@@ -612,24 +612,24 @@ int mca_btl_mx_component_progress(void)
             continue;
         }
         /* on the mx_status we have now the pointer attached to the request.
-	 * This pointer indicate which fragment we are working on. On the
-	 * status we have the status of the operation, so we know what we
-	 * are supposed to do next.
+         * This pointer indicate which fragment we are working on. On the
+         * status we have the status of the operation, so we know what we
+         * are supposed to do next.
          */
         frag = mx_status.context;
         if( NULL != frag ) {
-            if( 0xff == frag->tag ) {  /* it's a send */
+            if( 0xff == frag->type ) {  /* it's a send */
                 /* call the completion callback */
                 frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint,
                                        &(frag->base), OMPI_SUCCESS );
             } else if( !mca_btl_mx_component.mx_use_unexpected ) { /* and this one is a receive */
-                mca_btl_base_recv_reg_t* reg;
+                mca_btl_active_message_callback_t* reg;
                 mx_segment_t mx_segment;
+                uint8_t tag = mx_status.match_info & 0xff;
 
-                reg = &(mx_btl->mx_reg[frag->tag]);
+                reg = mca_btl_base_active_message_trigger + tag;
                 frag->base.des_dst->seg_len = mx_status.msg_length;
-                reg->cbfunc( &(mx_btl->super), frag->tag, &(frag->base),
-                             reg->cbdata );
+                reg->cbfunc( &(mx_btl->super), tag, &(frag->base), reg->cbdata );
                 /**
                  * The upper level extract the data from the fragment.
                  * Now we can register the fragment
@@ -638,7 +638,7 @@ int mca_btl_mx_component_progress(void)
                 mx_segment.segment_ptr = frag->base.des_dst->seg_addr.pval;
                 mx_segment.segment_length = mca_btl_mx_module.super.btl_eager_limit;
                 mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1,
-                                      (uint64_t)frag->tag, BTL_MX_RECV_MASK,
+                                      0x0ULL, 0x0ULL,
                                       frag, &(frag->mx_request) );
                 if( MX_SUCCESS != mx_return ) {
                     opal_output( 0, "Fail to re-register a fragment with the MX NIC ... (%s)\n",

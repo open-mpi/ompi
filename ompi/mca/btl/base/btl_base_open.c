@@ -29,6 +29,8 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 
+ mca_btl_active_message_callback_t mca_btl_base_active_message_trigger[MCA_BTL_TAG_MAX];
+
 /*
  *  mca_btl_base_descriptor_t
  */

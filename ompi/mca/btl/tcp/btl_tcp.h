@@ -83,7 +83,7 @@ struct mca_btl_tcp_component_t {
     int32_t tcp6_port_min;                  /**< IPv4 minimum port */
     int32_t tcp6_port_range;                /**< IPv4 port range */
 #endif
-        /* Port range restriction */
+    /* Port range restriction */
 
     char*  tcp_if_include;                  /**< comma seperated list of interface to include */
     char*  tcp_if_exclude;                  /**< comma seperated list of interface to exclude */
@@ -108,7 +108,6 @@ OMPI_MODULE_DECLSPEC extern mca_btl_tcp_component_t mca_btl_tcp_component;
  */
 struct mca_btl_tcp_module_t {
     mca_btl_base_module_t  super;  /**< base BTL interface */
-    mca_btl_base_recv_reg_t tcp_reg[256]; 
     uint16_t           tcp_ifkindex; /** <BTL kernel interface index */
 #if 0
     int                tcp_ifindex; /**< PTL interface index */
@@ -268,21 +267,6 @@ extern int mca_btl_tcp_get(
     struct mca_btl_base_descriptor_t* decriptor
 );
 
-/**
- * Register a callback function that is called on receipt
- * of a fragment.
- *
- * @param btl (IN)     BTL module
- * @return             Status indicating if registration was successful
- *
- */
-
-extern int mca_btl_tcp_register(
-    struct mca_btl_base_module_t* btl, 
-    mca_btl_base_tag_t tag, 
-    mca_btl_base_module_recv_cb_fn_t cbfunc, 
-    void* cbdata); 
-    
 /**
  * Allocate a descriptor with a segment of the requested size.
  * Note that the BTL layer may choose to return a smaller size

@@ -36,14 +36,6 @@
 extern "C" {
 #endif
 
-typedef mca_bml_base_module_recv_cb_fn_t mca_bml_r2_recv_reg_t;  
-
-void mca_bml_r2_recv_callback(
-                              mca_btl_base_module_t* btl, 
-                              mca_btl_base_tag_t tag, 
-                              mca_btl_base_descriptor_t *des, 
-                              void* cbdata); 
-
 /**
  * BML module interface functions and attributes.
  */
@@ -53,7 +45,6 @@ struct mca_bml_r2_module_t {
     mca_btl_base_module_t** btl_modules; 
     size_t num_btl_progress; 
     mca_btl_base_component_progress_fn_t * btl_progress; 
-    mca_bml_r2_recv_reg_t r2_reg[256]; 
     bool btls_added;
     bool show_unreach_errors;
 };
@@ -87,7 +78,7 @@ int mca_bml_r2_del_btl( mca_btl_base_module_t* btl );
 int mca_bml_r2_del_proc_btl( struct ompi_proc_t* proc, mca_btl_base_module_t* btl );
 
 int mca_bml_r2_register( mca_btl_base_tag_t tag, 
-                         mca_bml_base_module_recv_cb_fn_t cbfunc, 
+                         mca_btl_base_module_recv_cb_fn_t cbfunc, 
                          void* data ); 
 
 int mca_bml_r2_register_error( mca_btl_base_module_error_cb_fn_t  cbfunc );

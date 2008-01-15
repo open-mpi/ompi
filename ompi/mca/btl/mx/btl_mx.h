@@ -115,7 +115,6 @@ OMPI_MODULE_DECLSPEC extern mca_btl_mx_component_t mca_btl_mx_component;
  */
 struct mca_btl_mx_module_t {
     mca_btl_base_module_t   super;                   /**< base BTL interface */
-    mca_btl_base_recv_reg_t mx_reg[MCA_BTL_TAG_MAX]; /**< the PML registered callbacks */
     mx_endpoint_t           mx_endpoint;             /**< local MX endpoint */
     mx_endpoint_addr_t      mx_endpoint_addr;        /**< local MX endpoint address */
     uint32_t                mx_unique_network_id;    /**< unique identifier for this BTL,

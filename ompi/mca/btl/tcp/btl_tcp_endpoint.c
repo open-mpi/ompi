@@ -676,15 +676,16 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
                 btl_endpoint->endpoint_recv_frag = frag;
             } else {
                 btl_endpoint->endpoint_recv_frag = NULL;
-		if( MCA_BTL_TCP_HDR_TYPE_SEND == frag->hdr.type ) {
-		  mca_btl_base_recv_reg_t* reg = frag->btl->tcp_reg + frag->hdr.base.tag;
-		  reg->cbfunc(&frag->btl->super, frag->hdr.base.tag, &frag->base, reg->cbdata);
+                if( MCA_BTL_TCP_HDR_TYPE_SEND == frag->hdr.type ) {
+                    mca_btl_active_message_callback_t* reg;
+                    reg = mca_btl_base_active_message_trigger + frag->hdr.base.tag;
+                    reg->cbfunc(&frag->btl->super, frag->hdr.base.tag, &frag->base, reg->cbdata);
                 }
 #if MCA_BTL_TCP_ENDPOINT_CACHE
                 if( 0 != btl_endpoint->endpoint_cache_length ) {
-		    /* If the cache still contain some data we can reuse the same fragment
-		     * until we flush it completly.
-		     */
+                    /* If the cache still contain some data we can reuse the same fragment
+                     * until we flush it completly.
+                     */
                     MCA_BTL_TCP_FRAG_INIT_DST(frag, btl_endpoint);
                     goto data_still_pending_on_endpoint;
                 }

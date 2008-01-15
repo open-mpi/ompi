@@ -123,7 +123,6 @@ extern mca_btl_ud_profile_t mca_btl_ud_profile;
 
 struct mca_btl_ud_module_t {
     mca_btl_base_module_t super;
-    mca_btl_ud_recv_reg_t ib_reg[256]; /* protected by ib_lock */
 
     uint8_t ib_port_num;
     struct ibv_device* ib_dev;
@@ -139,7 +138,7 @@ struct mca_btl_ud_module_t {
 
     opal_list_t pending_frags;      /**< list of pending send frags */
 
-    opal_mutex_t ud_lock;           /**< lock for ib_reg and pending_frags */
+    opal_mutex_t ud_lock;           /**< lock for pending_frags */
 
     size_t ib_inline_max;           /**< max size of IB inline send */
 
@@ -201,20 +200,6 @@ extern mca_btl_base_module_t** mca_btl_ud_component_init(
  * UD/IB component progress.
  */
 extern int mca_btl_ud_component_progress(void);
-
-
-/**
- * Register a callback function that is called on receipt
- * of a fragment.
- *
- * @param btl (IN)     BTL module
- * @return             Status indicating if cleanup was successful
- */
-
-int mca_btl_ud_register(struct mca_btl_base_module_t* btl,
-                        mca_btl_base_tag_t tag,
-                        mca_btl_base_module_recv_cb_fn_t cbfunc,
-                        void* cbdata);
 
 
 /**

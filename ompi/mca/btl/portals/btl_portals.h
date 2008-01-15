@@ -73,9 +73,6 @@ struct mca_btl_portals_module_t {
     /* base BTL module interface */
     mca_btl_base_module_t super;
 
-    /* registered callbacks */
-    mca_btl_base_recv_reg_t portals_reg[MCA_BTL_TAG_MAX];
-
     /* number of processes we're actively connected to.  Needed to
        know when to do activation / shutdown */
     int32_t portals_num_procs;
@@ -164,11 +161,6 @@ int mca_btl_portals_del_procs(struct mca_btl_base_module_t* btl_base,
                               size_t nprocs,
                               struct ompi_proc_t **procs,
                               struct mca_btl_base_endpoint_t** peers);
-
-int mca_btl_portals_register(struct mca_btl_base_module_t* btl_base,
-                             mca_btl_base_tag_t tag,
-                             mca_btl_base_module_recv_cb_fn_t cbfunc,
-                             void* cbdata);
 
 mca_btl_base_descriptor_t* 
 mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base, 

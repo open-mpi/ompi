@@ -53,7 +53,7 @@ mca_btl_ud_module_t mca_btl_ofud_module = {
         MCA_BTL_FLAGS_SEND,
         mca_btl_ud_add_procs,
         mca_btl_ud_del_procs,
-        mca_btl_ud_register,
+        NULL,
         mca_btl_ud_finalize,
         mca_btl_ud_alloc,
         mca_btl_ud_free,
@@ -183,26 +183,6 @@ int mca_btl_ud_del_procs(struct mca_btl_base_module_t* btl,
         OBJ_RELEASE(endpoint);
     }
 
-    return OMPI_SUCCESS;
-}
-
-
-/*
- * Register callback function to support send/recv semantics
- */
-
-int mca_btl_ud_register(struct mca_btl_base_module_t* btl,
-                        mca_btl_base_tag_t tag,
-                        mca_btl_base_module_recv_cb_fn_t cbfunc,
-                        void* cbdata)
-{
-
-    mca_btl_ud_module_t* ud_btl = (mca_btl_ud_module_t*)btl;
-
-    OPAL_THREAD_LOCK(&ud_btl->ud_lock);
-    ud_btl->ib_reg[tag].cbfunc = cbfunc;
-    ud_btl->ib_reg[tag].cbdata = cbdata;
-    OPAL_THREAD_UNLOCK(&ud_btl->ud_lock);
     return OMPI_SUCCESS;
 }
 

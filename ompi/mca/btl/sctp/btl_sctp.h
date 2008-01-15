@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -107,7 +107,6 @@ OMPI_MODULE_DECLSPEC extern mca_btl_sctp_component_t mca_btl_sctp_component;
  */
 struct mca_btl_sctp_module_t {
     mca_btl_base_module_t  super;  /**< base BTL interface */
-    mca_btl_base_recv_reg_t sctp_reg[256]; 
     int                sctp_ifindex; /**< PTL interface index */
     struct sockaddr_in sctp_ifaddr;  /**< PTL interface address */
     struct sockaddr_in sctp_ifmask;  /**< PTL interface netmask */
@@ -266,21 +265,6 @@ extern int mca_btl_sctp_get(
     struct mca_btl_base_descriptor_t* decriptor
 );
 
-/**
- * Register a callback function that is called on receipt
- * of a fragment.
- *
- * @param btl (IN)     BTL module
- * @return             Status indicating if registration was successful
- *
- */
-
-extern int mca_btl_sctp_register(
-    struct mca_btl_base_module_t* btl, 
-    mca_btl_base_tag_t tag, 
-    mca_btl_base_module_recv_cb_fn_t cbfunc, 
-    void* cbdata); 
-    
 /**
  * Allocate a descriptor with a segment of the requested size.
  * Note that the BTL layer may choose to return a smaller size
