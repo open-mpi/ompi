@@ -21,8 +21,6 @@
 # MCA_btl_openib_POST_CONFIG([should_build])
 # ------------------------------------------
 AC_DEFUN([MCA_btl_openib_POST_CONFIG], [
-    AS_IF([test $1 -eq 0 -a "$enable_dist" = "yes"],
-          [AC_MSG_ERROR([BTL openib is disabled but --enable-dist specifed.  This will result in a bad tarball.  Aborting configure.])])
     AM_CONDITIONAL([MCA_btl_openib_have_xrc], [test $1 -eq 1 -a "x$btl_openib_have_xrc" = "x1" -a "x$ompi_want_connectx_xrc" = "x1"])
 ])
 
