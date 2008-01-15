@@ -138,12 +138,33 @@ typedef uint8_t mca_btl_base_tag_t;
 
 #define MCA_BTL_NO_ORDER       255
 
-/* reserved tag values */
-#define MCA_BTL_TAG_BTL        0
-#define MCA_BTL_TAG_PML        1
-#define MCA_BTL_TAG_OSC_RDMA   2
-#define MCA_BTL_TAG_USR        3
-#define MCA_BTL_TAG_MAX      255 /* 1 + highest allowed tag num */
+/*
+ * Communication specific defines. There are a number of active message ID
+ * that can be shred between all frameworks that need to communicate (i.e.
+ * use the PML or the BTL directly). These ID are exchanged between the
+ * processes, therefore they need to be identical everywhere. The simplest
+ * approach is to have them defined as constants, and give each framework a
+ * small number. Here is the rule that defines these ID (they are 8 bits):
+ * - the first 3 bits are used to code the framework (i.e. PML, OSC, COLL)
+ * - the remaining 5 bytes are used internally by the framework, and divided
+ *   based on the components requirements. Therefore, the way the PML and
+ * the OSC frameworks use these defines will be different. For more
+ * information about how these framework ID are defined, take a look in the
+ * header file associated with the framework.
+ */
+#define MCA_BTL_AM_FRAMEWORK_MASK   0xD0
+#define MCA_BTL_TAG_BTL             0x20
+#define MCA_BTL_TAG_PML             0x40
+#define MCA_BTL_TAG_OSC_RDMA        0x60
+#define MCA_BTL_TAG_USR             0x80
+#define MCA_BTL_TAG_MAX             255 /* 1 + highest allowed tag num */
+
+/*
+ * Reserved tags for specific BTLs. As multiple BTLs can be active
+ * simultaneously, their tags should not collide.
+ */
+#define MCA_BTL_TAG_IB                (MCA_BTL_TAG_BTL + 0)
+#define MCA_BTL_TAG_UDAPL             (MCA_BTL_TAG_BTL + 1)
 
 /* prefered protocol */
 #define MCA_BTL_FLAGS_SEND            0x0001
@@ -193,7 +214,6 @@ typedef void (*mca_btl_base_completion_fn_t)(
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_btl_base_descriptor_t* descriptor,
     int status);
-
 
 /**
  * Describes a region/segment of memory that is addressable 
@@ -324,6 +344,35 @@ typedef int (*mca_btl_base_component_progress_fn_t)(void);
 
 
 /**
+ * Callback function that is called asynchronously on receipt
+ * of data by the transport layer. 
+ * Note that the the mca_btl_base_descriptor_t is only valid within the 
+ * completion function, this implies that all data payload in the 
+ * mca_btl_base_descriptor_t must be copied out within this callback or 
+ * forfeited back to the BTL.
+ * 
+ * @param[IN] btl        BTL module
+ * @param[IN] tag        The active message receive callback tag value 
+ * @param[IN] descriptor The BTL descriptor (contains the receive payload) 
+ * @param[IN] cbdata     Opaque callback data
+ */
+
+typedef void (*mca_btl_base_module_recv_cb_fn_t)(
+    struct mca_btl_base_module_t* btl, 
+    mca_btl_base_tag_t tag,
+    mca_btl_base_descriptor_t* descriptor,
+    void* cbdata
+);
+
+typedef struct mca_btl_active_message_callback_t {
+    mca_btl_base_module_recv_cb_fn_t cbfunc;
+    void* cbdata;
+} mca_btl_active_message_callback_t;
+
+OMPI_DECLSPEC extern
+mca_btl_active_message_callback_t mca_btl_base_active_message_trigger[MCA_BTL_TAG_MAX];
+
+/**
  *  BTL component descriptor. Contains component version information
  *  and component open/close/init functions.
  */
@@ -421,28 +470,6 @@ typedef int (*mca_btl_base_module_del_procs_fn_t)(
     struct ompi_proc_t** procs, 
     struct mca_btl_base_endpoint_t** peer
 );
-
-/**
- * Callback function that is called asynchronously on receipt
- * of data by the transport layer. 
- * Note that the the mca_btl_base_descriptor_t is only valid within the 
- * completion function, this implies that all data payload in the 
- * mca_btl_base_descriptor_t must be copied out within this callback or 
- * forfeited back to the BTL.
- * 
- * @param[IN] btl        BTL module
- * @param[IN] tag        The active message receive callback tag value 
- * @param[IN] descriptor The BTL descriptor (contains the receive payload) 
- * @param[IN] cbdata     Opaque callback data
- */
-
-typedef void (*mca_btl_base_module_recv_cb_fn_t)(
-    struct mca_btl_base_module_t* btl, 
-    mca_btl_base_tag_t tag,
-    mca_btl_base_descriptor_t* descriptor,
-    void* cbdata
-);
-
 
 /**
  * Register a callback function that is called on receipt

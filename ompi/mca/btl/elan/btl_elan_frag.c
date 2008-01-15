@@ -17,6 +17,7 @@ static void mca_btl_elan_frag_common_constructor(mca_btl_elan_frag_t* frag)
     frag->base.des_src_cnt = 0;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
+    frag->elan_event = NULL;
 }
 
 static void mca_btl_elan_frag_eager_constructor(mca_btl_elan_frag_t* frag) 
@@ -40,27 +41,22 @@ static void mca_btl_elan_frag_user_constructor(mca_btl_elan_frag_t* frag)
 }
 
 
-OBJ_CLASS_INSTANCE(
-    mca_btl_elan_frag_t, 
-    mca_btl_base_descriptor_t, 
-    NULL, 
-    NULL); 
+OBJ_CLASS_INSTANCE( mca_btl_elan_frag_t, 
+                    mca_btl_base_descriptor_t, 
+                    NULL, 
+                    NULL ); 
 
-OBJ_CLASS_INSTANCE(
-    mca_btl_elan_frag_eager_t, 
-    mca_btl_base_descriptor_t, 
-    mca_btl_elan_frag_eager_constructor, 
-    NULL); 
+OBJ_CLASS_INSTANCE( mca_btl_elan_frag_eager_t, 
+                    mca_btl_base_descriptor_t, 
+                    mca_btl_elan_frag_eager_constructor, 
+                    NULL );
 
-OBJ_CLASS_INSTANCE(
-    mca_btl_elan_frag_max_t, 
-    mca_btl_base_descriptor_t, 
-    mca_btl_elan_frag_max_constructor, 
-    NULL); 
+OBJ_CLASS_INSTANCE( mca_btl_elan_frag_max_t, 
+                    mca_btl_base_descriptor_t, 
+                    mca_btl_elan_frag_max_constructor, 
+                    NULL );
 
-OBJ_CLASS_INSTANCE(
-    mca_btl_elan_frag_user_t, 
-    mca_btl_base_descriptor_t, 
-    mca_btl_elan_frag_user_constructor, 
-    NULL); 
-
+OBJ_CLASS_INSTANCE( mca_btl_elan_frag_user_t, 
+                    mca_btl_base_descriptor_t, 
+                    mca_btl_elan_frag_user_constructor, 
+                    NULL );

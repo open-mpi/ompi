@@ -112,9 +112,6 @@ int mca_btl_mx_register( struct mca_btl_base_module_t* btl,
 {
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; 
 
-    mx_btl->mx_reg[tag].cbfunc = cbfunc; 
-    mx_btl->mx_reg[tag].cbdata = cbdata; 
-
     if( (NULL != cbfunc) && ( 0 == mca_btl_mx_component.mx_use_unexpected) ) {
         mca_btl_mx_frag_t* frag;
         mx_return_t mx_return;
@@ -135,12 +132,11 @@ int mca_btl_mx_register( struct mca_btl_base_module_t* btl,
             frag->base.des_src     = NULL;
             frag->base.des_src_cnt = 0;
             frag->mx_frag_list     = NULL;
-            frag->tag              = tag;
+            frag->type             = MCA_BTL_MX_RECV;
             
             mx_segment.segment_ptr    = (void*)(frag+1);
             mx_segment.segment_length = mx_btl->super.btl_eager_limit;
-            mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1, (uint64_t)tag,
-                                  BTL_MX_RECV_MASK,
+            mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1, 0x0ULL, 0x0ULL,
                                   frag, &(frag->mx_request) );
             if( MX_SUCCESS != mx_return ) {
                 opal_output( 0, "mca_btl_mx_register: mx_irecv failed with status %d (%s)\n",
@@ -197,7 +193,7 @@ int mca_btl_mx_free( struct mca_btl_base_module_t* btl,
 {
     mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)des; 
 
-    assert( 0xff == frag->tag );
+    assert( MCA_BTL_MX_SEND == frag->type );
     MCA_BTL_MX_FRAG_RETURN(btl, frag);
 
     return OMPI_SUCCESS; 
@@ -330,7 +326,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
     }
 
     /* Allow the fragment to be recycled using the mca_btl_mx_free function */
-    frag->tag = 0xff;
+    frag->type = MCA_BTL_MX_SEND;
 
     frag->base.des_dst = frag->segment;
     frag->base.des_dst_cnt = 1;
@@ -367,7 +363,7 @@ static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
     }
 
     frag->endpoint  = endpoint;
-    frag->tag       = 0xff;
+    frag->type      = MCA_BTL_MX_SEND;
 
     do {
         mx_segment[i].segment_ptr    = descriptor->des_src[i].seg_addr.pval;
@@ -417,7 +413,7 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
     }
 
     frag->endpoint  = endpoint;
-    frag->tag       = 0xff;
+    frag->type      = MCA_BTL_MX_SEND;
 
     do {
         mx_segment[i].segment_ptr    = descriptor->des_src[i].seg_addr.pval;

@@ -73,7 +73,7 @@ mca_btl_openib_module_t mca_btl_openib_module = {
         0, /* TODO this should be PUT btl flags */
         mca_btl_openib_add_procs,
         mca_btl_openib_del_procs,
-        mca_btl_openib_register, 
+        NULL, 
         mca_btl_openib_finalize,
         /* we need alloc free, pack */ 
         mca_btl_openib_alloc, 
@@ -457,25 +457,6 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
         }
     }
 
-    return OMPI_SUCCESS;
-}
-
-/* 
- *Register callback function to support send/recv semantics 
- */ 
-int mca_btl_openib_register(
-                        struct mca_btl_base_module_t* btl, 
-                        mca_btl_base_tag_t tag, 
-                        mca_btl_base_module_recv_cb_fn_t cbfunc, 
-                        void* cbdata)
-{
-    
-    mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl; 
-    
-    OPAL_THREAD_LOCK(&openib_btl->ib_lock); 
-    openib_btl->ib_reg[tag].cbfunc = cbfunc; 
-    openib_btl->ib_reg[tag].cbdata = cbdata; 
-    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); 
     return OMPI_SUCCESS;
 }
 

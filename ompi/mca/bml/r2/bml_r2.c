@@ -83,22 +83,6 @@ static int btl_exclusivity_compare(const void* arg1, const void* arg2)
     }
 }
 
-void mca_bml_r2_recv_callback(
-                              mca_btl_base_module_t* btl, 
-                              mca_btl_base_tag_t tag, 
-                              mca_btl_base_descriptor_t* desc, 
-                              void* cbdata
-                              ){ 
-
-    /* just pass it up the stack.. */ 
-    mca_bml_r2.r2_reg[tag](btl,
-                           tag, 
-                           desc, 
-                           cbdata); 
-    
-}
-
-
 int mca_bml_r2_progress( void )
 { 
     int i, count = 0;
@@ -758,24 +742,30 @@ int mca_bml_r2_add_btl(mca_btl_base_module_t* btl)
 /*
  *  Register callback w/ all active btls
  */
-
-int mca_bml_r2_register( 
-                        mca_btl_base_tag_t tag, 
-                        mca_bml_base_module_recv_cb_fn_t cbfunc, 
-                        void* data
-                        )
+int mca_bml_r2_register( mca_btl_base_tag_t tag, 
+                         mca_btl_base_module_recv_cb_fn_t cbfunc, 
+                         void* data )
 {
-    uint32_t  i; 
-    int rc;
-    mca_btl_base_module_t *btl; 
+    mca_btl_base_active_message_trigger[tag].cbfunc = cbfunc;
+    mca_btl_base_active_message_trigger[tag].cbdata = data;
+    /* Give an oportunity to the BTLs to do something special
+     * for each registration.
+     */
+    {
+        int i, rc;
+        mca_btl_base_module_t *btl;
 
-    for(i = 0; i < mca_bml_r2.num_btl_modules; i++) { 
-        btl = mca_bml_r2.btl_modules[i]; 
-        rc = btl->btl_register(btl, tag, cbfunc, data);  
-        if(OMPI_SUCCESS != rc) {
-            return rc;
+        for(i = 0; i < (int)mca_bml_r2.num_btl_modules; i++) { 
+            btl = mca_bml_r2.btl_modules[i];
+            if( NULL == btl->btl_register )
+                continue;
+            rc = btl->btl_register(btl, tag, cbfunc, data);  
+            if(OMPI_SUCCESS != rc) {
+                return rc;
+            }
         }
     }
+
     return OMPI_SUCCESS; 
 }
 

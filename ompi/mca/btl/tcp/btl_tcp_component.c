@@ -263,6 +263,7 @@ int mca_btl_tcp_component_open(void)
 
     mca_btl_tcp_component.tcp_disable_family =
         mca_btl_tcp_param_register_int ("disable_family", NULL, 0);
+
     return OMPI_SUCCESS;
 }
 

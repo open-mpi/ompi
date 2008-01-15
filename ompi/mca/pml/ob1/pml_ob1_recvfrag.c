@@ -378,7 +378,7 @@ static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
      * correct order (if multiple network interfaces).
      */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_ARRIVED, comm_ptr,
-                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+                           hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
 
     /* get next expected message sequence number - if threaded
      * run, lock to make sure that if another thread is processing 
@@ -455,7 +455,7 @@ wrong_seq:
      * is ahead of sequence.  Save it for later.
      */
     append_frag_to_list(&proc->frags_cant_match, btl, hdr, segments,
-            num_segments, NULL);
+                        num_segments, NULL);
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
     return OMPI_SUCCESS;
 }

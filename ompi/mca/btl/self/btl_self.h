@@ -51,7 +51,6 @@ struct mca_btl_self_component_t {
     ompi_free_list_t self_frags_eager;     /**< free list of self first */
     ompi_free_list_t self_frags_send;      /**< free list of self second */
     ompi_free_list_t self_frags_rdma;      /**< free list of self second */
-    mca_btl_base_recv_reg_t self_reg[256];
 };
 typedef struct mca_btl_self_component_t mca_btl_self_component_t;
 OMPI_MODULE_DECLSPEC extern mca_btl_self_component_t mca_btl_self_component;
@@ -134,26 +133,6 @@ int mca_btl_self_del_procs(
     struct mca_btl_base_endpoint_t **peers
 );
 
-
-/**
- * Register a callback function that is called on receipt
- * of a fragment.
- *
- * @param btl (IN)     BTL module
- * @return             Status indicating if cleanup was successful
- *
- * When the process list changes, the PML notifies the BTL of the
- * change, to provide the opportunity to cleanup or release any
- * resources associated with the peer.
- */
-
-int mca_btl_self_register(
-    struct mca_btl_base_module_t* btl,
-    mca_btl_base_tag_t tag,
-    mca_btl_base_module_recv_cb_fn_t cbfunc,
-    void* cbdata
-);
-                                                                                                                   
 
 /**
  * Allocate a segment.

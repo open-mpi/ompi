@@ -46,9 +46,8 @@ static void mca_btl_elan_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 }
 
 
-OBJ_CLASS_INSTANCE(
-    mca_btl_elan_endpoint_t, 
-    opal_list_item_t, 
-    mca_btl_elan_endpoint_construct, 
-    mca_btl_elan_endpoint_destruct);
+OBJ_CLASS_INSTANCE(mca_btl_elan_endpoint_t, 
+                   opal_list_item_t, 
+                   mca_btl_elan_endpoint_construct, 
+                   mca_btl_elan_endpoint_destruct);
 

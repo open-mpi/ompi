@@ -98,7 +98,7 @@ mca_btl_sm_t mca_btl_sm = {
         0, /* btl flags */
         mca_btl_sm_add_procs,
         mca_btl_sm_del_procs,
-        mca_btl_sm_register,
+        NULL,
         mca_btl_sm_finalize,
         mca_btl_sm_alloc,
         mca_btl_sm_free,
@@ -675,30 +675,6 @@ int mca_btl_sm_finalize(struct mca_btl_base_module_t* btl)
 }
 
 
-/**
- * Register a callback function that is called on receipt
- * of a fragment.
- *
- * @param btl (IN)     BTL module
- * @return             Status indicating if cleanup was successful
- *
- * When the process list changes, the PML notifies the BTL of the
- * change, to provide the opportunity to cleanup or release any
- * resources associated with the peer.
- */
-
-int mca_btl_sm_register(
-    struct mca_btl_base_module_t* btl,
-    mca_btl_base_tag_t tag,
-    mca_btl_base_module_recv_cb_fn_t cbfunc,
-    void* cbdata)
-{
-    mca_btl_sm_t* sm_btl = (mca_btl_sm_t*)btl;
-    sm_btl->sm_reg[tag].cbfunc = cbfunc;
-    sm_btl->sm_reg[tag].cbdata = cbdata;
-    return OMPI_SUCCESS;
-}
-                                                                                                                 
 /* 
  * Register callback function for error handling..
  */

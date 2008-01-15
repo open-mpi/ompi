@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -48,7 +48,7 @@ mca_btl_sctp_module_t mca_btl_sctp_module = {
         0, /* flags */
         mca_btl_sctp_add_procs,
         mca_btl_sctp_del_procs,
-        mca_btl_sctp_register, 
+        NULL, 
         mca_btl_sctp_finalize,
         mca_btl_sctp_alloc, 
         mca_btl_sctp_free, 
@@ -154,23 +154,6 @@ int mca_btl_sctp_del_procs(struct mca_btl_base_module_t* btl,
         }
         opal_progress_event_users_decrement();
     }
-    return OMPI_SUCCESS;
-}
-
-
-/**
- * Register callback function to support send/recv semantics
- */
-
-int mca_btl_sctp_register(
-                        struct mca_btl_base_module_t* btl, 
-                        mca_btl_base_tag_t tag, 
-                        mca_btl_base_module_recv_cb_fn_t cbfunc, 
-                        void* cbdata)
-{
-    mca_btl_sctp_module_t* sctp_btl = (mca_btl_sctp_module_t*) btl; 
-    sctp_btl->sctp_reg[tag].cbfunc = cbfunc; 
-    sctp_btl->sctp_reg[tag].cbdata = cbdata; 
     return OMPI_SUCCESS;
 }
 

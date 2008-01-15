@@ -188,7 +188,8 @@ data_still_pending_on_endpoint:
             switch(frag->hdr.type) {
                 case MCA_BTL_SCTP_HDR_TYPE_SEND:
                     {
-                        mca_btl_base_recv_reg_t* reg = frag->btl->sctp_reg + frag->hdr.base.tag;
+                        mca_btl_active_message_callback_t* reg;
+                        reg = mca_btl_base_active_message_trigger + frag->hdr.base.tag;
                         reg->cbfunc(&frag->btl->super, frag->hdr.base.tag, &frag->base, reg->cbdata);
                         break;
                     }

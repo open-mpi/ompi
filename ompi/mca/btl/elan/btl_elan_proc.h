@@ -9,8 +9,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_BTL_TEMPLATE_PROC_H
-#define MCA_BTL_TEMPLATE_PROC_H
+#ifndef MCA_BTL_ELAN_PROC_H
+#define MCA_BTL_ELAN_PROC_H
 
 #include "orte/mca/ns/ns.h"
 #include "opal/class/opal_object.h"
@@ -18,9 +18,7 @@
 #include "btl_elan.h"
 #include "btl_elan_endpoint.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Represents the state of a remote process and the set of addresses
@@ -58,7 +56,6 @@ OBJ_CLASS_DECLARATION(mca_btl_elan_proc_t);
 mca_btl_elan_proc_t* mca_btl_elan_proc_create(ompi_proc_t* ompi_proc);
 int mca_btl_elan_proc_insert(mca_btl_elan_proc_t*, mca_btl_base_endpoint_t*);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-#endif
+END_C_DECLS
+
+#endif  /* MCA_BTL_ELAN_PROC_H */

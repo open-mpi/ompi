@@ -148,8 +148,6 @@ mca_btl_portals_component_open(void)
        copy and send.  So don't use it for now. */
 
     mca_btl_portals_module.portals_num_procs = 0;
-    bzero(&(mca_btl_portals_module.portals_reg),
-          sizeof(mca_btl_portals_module.portals_reg));
 
     for (i = 0 ; i < OMPI_BTL_PORTALS_EQ_SIZE ; ++i) {
         mca_btl_portals_module.portals_eq_sizes[i] = 0;
@@ -403,13 +401,11 @@ mca_btl_portals_component_progress(void)
                         block->full = true;
                     }
 
-                    assert(NULL != mca_btl_portals_module.portals_reg[tag].cbfunc);
-
-                    mca_btl_portals_module.portals_reg[tag].cbfunc(
+                    mca_btl_base_active_message_trigger[tag].cbfunc(
                                              &mca_btl_portals_module.super,
                                              tag,
                                              &frag->base,
-                                             mca_btl_portals_module.portals_reg[tag].cbdata);
+                                             mca_btl_base_active_message_trigger[tag].cbdata);
                     mca_btl_portals_return_block_part(&mca_btl_portals_module, block);
                 }
                 break;

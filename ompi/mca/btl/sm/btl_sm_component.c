@@ -421,13 +421,13 @@ int mca_btl_sm_component_progress(void)
             }
             case MCA_BTL_SM_FRAG_SEND:
             {
-                mca_btl_sm_recv_reg_t* reg;
+                mca_btl_active_message_callback_t* reg;
                 /* change the address from address relative to the shared
                  * memory address, to a true virtual address */
                 hdr = (mca_btl_sm_hdr_t *)((char *)hdr +
                         mca_btl_sm_component.sm_offset[peer_smp_rank]);
                 /* recv upcall */
-                reg = mca_btl_sm.sm_reg + hdr->tag;
+                reg = mca_btl_base_active_message_trigger + hdr->tag;
                 Frag.segment.seg_addr.pval = ((char*)hdr) +
                     sizeof(mca_btl_sm_hdr_t);
                 Frag.segment.seg_len = hdr->len;

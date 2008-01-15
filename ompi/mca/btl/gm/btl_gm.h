@@ -81,7 +81,6 @@ OMPI_MODULE_DECLSPEC extern mca_btl_gm_component_t mca_btl_gm_component;
  */
 struct mca_btl_gm_module_t {
     mca_btl_base_module_t  super;  /**< base BTL interface */
-    mca_btl_base_recv_reg_t gm_reg[256]; 
 
     /* local port handle/address */
     struct gm_port *port;
@@ -239,34 +238,6 @@ extern int mca_btl_gm_get(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* btl_peer,
     struct mca_btl_base_descriptor_t* decriptor
-);
-
-/**
- * Register a callback function that is called on receipt
- * of a fragment.
- *
- * @param btl (IN)     BTL module
- * @return             Status indicating if registration was successful
- *
- */
-
-extern int mca_btl_gm_register(
-    struct mca_btl_base_module_t* btl, 
-    mca_btl_base_tag_t tag, 
-    mca_btl_base_module_recv_cb_fn_t cbfunc, 
-    void* cbdata); 
-
-
-/**
- * Register a callback function that is called on error..
- *
- * @param btl (IN)     BTL module
- * @return             Status indicating if cleanup was successful
- */
-
-int mca_btl_gm_register_error_cb(
-    struct mca_btl_base_module_t* btl,
-    mca_btl_base_module_error_cb_fn_t cbfunc
 );
 
 /**

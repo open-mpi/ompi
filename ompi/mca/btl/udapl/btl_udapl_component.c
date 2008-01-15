@@ -536,8 +536,8 @@ mca_btl_udapl_component_init (int *num_btl_modules,
         }
 
         /* register internal control message callback */
-        btl->udapl_reg[MCA_BTL_TAG_BTL].cbfunc = mca_btl_udapl_receive_control; 
-        btl->udapl_reg[MCA_BTL_TAG_BTL].cbdata = NULL;
+        mca_btl_base_active_message_trigger[MCA_BTL_TAG_UDAPL].cbfunc = mca_btl_udapl_receive_control; 
+        mca_btl_base_active_message_trigger[MCA_BTL_TAG_UDAPL].cbdata = NULL;
 
         /* successful btl creation */
         mca_btl_udapl_component.udapl_btls[mca_btl_udapl_component.udapl_num_btls] = btl;
@@ -858,7 +858,7 @@ int mca_btl_udapl_component_progress()
                 }
                 case MCA_BTL_UDAPL_RECV:
                 {
-                    mca_btl_base_recv_reg_t* reg;
+                    mca_btl_active_message_callback_t* reg;
                     int cntrl_msg = -1;
 
                     assert(frag->base.des_dst == &frag->segment);
@@ -880,7 +880,7 @@ int mca_btl_udapl_component_progress()
 
                     cntrl_msg = frag->ftr->tag;
 
-                    reg = &btl->udapl_reg[frag->ftr->tag];
+                    reg = mca_btl_base_active_message_trigger + frag->ftr->tag;
                     OPAL_THREAD_UNLOCK(&mca_btl_udapl_component.udapl_lock);
 
                     reg->cbfunc(&btl->super,
@@ -1087,7 +1087,7 @@ int mca_btl_udapl_component_progress()
 
             if (local_rdma_frag->rdma_ftr->active == 1) {
                 int pad = 0;
-                mca_btl_base_recv_reg_t* reg;
+                mca_btl_active_message_callback_t* reg;
 
                 MCA_BTL_UDAPL_RDMA_NEXT_INDEX(endpoint->endpoint_eager_rdma_local.head);
                 OPAL_THREAD_UNLOCK(&endpoint->endpoint_eager_rdma_local.lock);
@@ -1109,7 +1109,7 @@ int mca_btl_udapl_component_progress()
                         local_rdma_frag->segment.seg_len);
                         
                 /* retrieve callback and callback */
-                reg = &btl->udapl_reg[local_rdma_frag->ftr->tag];
+                reg = mca_btl_base_active_message_trigger + local_rdma_frag->ftr->tag;
                 reg->cbfunc(&btl->super,
                     local_rdma_frag->ftr->tag, &local_rdma_frag->base, reg->cbdata);
 

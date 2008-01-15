@@ -57,7 +57,7 @@ mca_btl_base_module_t mca_btl_self = {
     0, /* btl flags */
     mca_btl_self_add_procs,
     mca_btl_self_del_procs,
-    mca_btl_self_register,
+    NULL,
     mca_btl_self_finalize,
     mca_btl_self_alloc,
     mca_btl_self_free,
@@ -118,29 +118,6 @@ int mca_btl_self_finalize(struct mca_btl_base_module_t* btl)
     return OMPI_SUCCESS;
 }
 
-
-/**
- * Register a callback function that is called on receipt
- * of a fragment.
- *
- * @param btl (IN)     BTL module
- * @return             Status indicating if cleanup was successful
- *
- * When the process list changes, the PML notifies the BTL of the
- * change, to provide the opportunity to cleanup or release any
- * resources associated with the peer.
- */
-
-int mca_btl_self_register( struct mca_btl_base_module_t* btl,
-                           mca_btl_base_tag_t tag,
-                           mca_btl_base_module_recv_cb_fn_t cbfunc,
-                           void* cbdata )
-{
-    mca_btl_self_component.self_reg[tag].cbfunc = cbfunc;
-    mca_btl_self_component.self_reg[tag].cbdata = cbdata;
-    return OMPI_SUCCESS;
-}
-                                                                                                                 
 
 /**
  * Allocate a segment.
@@ -315,6 +292,8 @@ int mca_btl_self_send( struct mca_btl_base_module_t* btl,
                        struct mca_btl_base_descriptor_t* des,
                        mca_btl_base_tag_t tag )
 {
+    mca_btl_active_message_callback_t* reg;
+
     /**
      * We have to set the dst before the call to the function and reset them
      * after.
@@ -322,7 +301,8 @@ int mca_btl_self_send( struct mca_btl_base_module_t* btl,
     des->des_dst     = des->des_src;
     des->des_dst_cnt = des->des_src_cnt;
     /* upcall */
-    mca_btl_self_component.self_reg[tag].cbfunc( btl, tag, des, (void*)OMPI_SUCCESS );
+    reg = mca_btl_base_active_message_trigger + tag;
+    reg->cbfunc( btl, tag, des, reg->cbdata );
     des->des_dst     = NULL;
     des->des_dst_cnt = 0;
     /* send completion */
