@@ -21,6 +21,7 @@
 
 #include "ompi_config.h"
 #include "opal/class/opal_atomic_lifo.h"
+#include "opal/prefetch.h"
 #include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
 #include "ompi/constants.h"
@@ -211,7 +212,7 @@ OMPI_DECLSPEC int ompi_free_list_parse( ompi_free_list_t* list,
 { \
     rc = OMPI_SUCCESS; \
     item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
-    if( NULL == item ) { \
+    if( OPAL_UNLIKELY(NULL == item) ) { \
         if(opal_using_threads()) { \
             opal_mutex_lock(&((fl)->fl_lock)); \
             ompi_free_list_grow((fl), (fl)->fl_num_per_alloc); \
@@ -220,7 +221,7 @@ OMPI_DECLSPEC int ompi_free_list_parse( ompi_free_list_t* list,
             ompi_free_list_grow((fl), (fl)->fl_num_per_alloc); \
         } \
         item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
-        if( NULL == item ) rc = OMPI_ERR_TEMP_OUT_OF_RESOURCE; \
+        if( OPAL_UNLIKELY(NULL == item) ) rc = OMPI_ERR_TEMP_OUT_OF_RESOURCE; \
     }  \
 } 
 
