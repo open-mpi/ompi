@@ -226,7 +226,7 @@ mca_btl_elan_component_init( int *num_btl_modules,
         if(NULL == btl)
             continue;
         memcpy( btl, &mca_btl_elan_module, sizeof(mca_btl_elan_module_t) );
-        OBJ_CONSTRUCT (&btl->elan_lock, opal_mutex_t);
+        OBJ_CONSTRUCT( &btl->elan_lock, opal_mutex_t );
         OBJ_CONSTRUCT( &btl->recv_list, opal_list_t );
         OBJ_CONSTRUCT( &btl->send_list, opal_list_t );
         OBJ_CONSTRUCT( &btl->rdma_list, opal_list_t );
@@ -255,9 +255,9 @@ static mca_btl_elan_frag_t* mca_btl_elan_ipeek(mca_btl_elan_module_t* elan_btl)
     frag = (mca_btl_elan_frag_t*)opal_list_get_first( &(elan_btl->recv_list) );
     if( elan_tportRxDone(frag->elan_event) ) {
         int tag;  /* we need it for the cast */
-	size_t length;
+        size_t length;
         elan_tportRxWait( frag->elan_event, NULL, &tag, &length );
-	frag->base.des_dst->seg_len = length;
+        frag->base.des_dst->seg_len = length;
         frag->tag = (mca_btl_base_tag_t)tag;
         opal_list_remove_first( &(elan_btl->recv_list) );
         return frag;
@@ -327,7 +327,7 @@ int mca_btl_elan_component_progress( void )
                                        &(frag->base), OMPI_SUCCESS );
             }
             num_progressed++;
-        } while(0)
+        } while(0);
     }
 
     return num_progressed;
