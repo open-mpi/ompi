@@ -413,7 +413,7 @@ _opal_list_append(l,i)
 
 static inline void _opal_list_append(opal_list_t *list, opal_list_item_t *item
 #if OMPI_ENABLE_DEBUG
-                                     , char* FILE_NAME, int LINENO
+                                     , const char* FILE_NAME, int LINENO
 #endif  /* OMPI_ENABLE_DEBUG */
                                      )
 {
