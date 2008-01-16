@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -909,7 +909,7 @@ int mca_btl_udapl_component_progress()
                                 BTL_UDAPL_EAGER_CONNECTION);
                         }
 
-                        if (MCA_BTL_TAG_BTL == cntrl_msg) {
+                        if (MCA_BTL_TAG_UDAPL == cntrl_msg) {
                             mca_btl_udapl_frag_progress_pending(btl,
                                 frag->endpoint,
                                 BTL_UDAPL_EAGER_CONNECTION);
@@ -931,7 +931,7 @@ int mca_btl_udapl_component_progress()
                                 BTL_UDAPL_MAX_CONNECTION);
                         }
 
-                        if (MCA_BTL_TAG_BTL == cntrl_msg) {
+                        if (MCA_BTL_TAG_UDAPL == cntrl_msg) {
                             mca_btl_udapl_frag_progress_pending(btl,
                                 frag->endpoint,
                                 BTL_UDAPL_MAX_CONNECTION);
@@ -1107,8 +1107,8 @@ int mca_btl_udapl_component_progress()
                 local_rdma_frag->segment.seg_addr.pval = (unsigned char *)
                     ((char *)local_rdma_frag->ftr -
                         local_rdma_frag->segment.seg_len);
-                        
-                /* retrieve callback and callback */
+
+                /* trigger callback */
                 reg = mca_btl_base_active_message_trigger + local_rdma_frag->ftr->tag;
                 reg->cbfunc(&btl->super,
                     local_rdma_frag->ftr->tag, &local_rdma_frag->base, reg->cbdata);

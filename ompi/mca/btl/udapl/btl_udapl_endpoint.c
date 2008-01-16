@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -1066,7 +1066,7 @@ static int mca_btl_udapl_endpoint_send_eager_rdma(
 
     /* send fragment */
     rc = mca_btl_udapl_send((mca_btl_base_module_t *)udapl_btl, endpoint,
-        des, MCA_BTL_TAG_BTL);
+        des, MCA_BTL_TAG_UDAPL);
 
     return rc;
 }
@@ -1238,7 +1238,7 @@ int mca_btl_udapl_endpoint_send_eager_rdma_credits(
     frag->endpoint = endpoint;
     frag->ftr = (mca_btl_udapl_footer_t *)
         ((char *)frag->segment.seg_addr.pval + frag->segment.seg_len);
-    frag->ftr->tag = MCA_BTL_TAG_BTL;
+    frag->ftr->tag = MCA_BTL_TAG_UDAPL;
     frag->type = MCA_BTL_UDAPL_SEND;
     cookie.as_ptr = frag;
                     
@@ -1307,7 +1307,7 @@ int mca_btl_udapl_endpoint_send_sr_credits(
     frag->endpoint = endpoint;
     frag->ftr = (mca_btl_udapl_footer_t *)
         ((char *)frag->segment.seg_addr.pval + frag->segment.seg_len);
-    frag->ftr->tag = MCA_BTL_TAG_BTL;
+    frag->ftr->tag = MCA_BTL_TAG_UDAPL;
     frag->type = MCA_BTL_UDAPL_SEND;
     cookie.as_ptr = frag;
                     
