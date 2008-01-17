@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -88,6 +88,7 @@ struct mca_btl_udapl_component_t {
     opal_list_t udapl_procs;   /**< list of udapl proc structures */
     opal_mutex_t udapl_lock;   /**< lock for accessing module state */
     char* udapl_mpool_name;    /**< name of memory pool */ 
+    int32_t udapl_compare_subnet;/**< whether to compare with netmask or not */
     char *if_include;
     char **if_include_list;
     char *if_exclude;
@@ -149,6 +150,7 @@ struct mca_btl_udapl_module_t {
     int udapl_max_recv_dtos;    /**< maximum number of outstanding consumer
                                        submitted recv operations, see section
                                        6.6.6 of uDAPL Spec */
+    uint32_t udapl_if_mask;     /**< netmask value btl module */
 }; 
 typedef struct mca_btl_udapl_module_t mca_btl_udapl_module_t;
 extern mca_btl_udapl_module_t mca_btl_udapl_module;

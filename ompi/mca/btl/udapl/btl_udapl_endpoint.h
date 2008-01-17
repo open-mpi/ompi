@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -46,6 +46,7 @@ extern "C" {
 struct mca_btl_udapl_addr_t {
     DAT_CONN_QUAL port;
     DAT_SOCK_ADDR addr;
+    bool inuse;
 };
 typedef struct mca_btl_udapl_addr_t mca_btl_udapl_addr_t;
 

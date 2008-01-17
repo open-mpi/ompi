@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,6 +63,8 @@ struct mca_btl_udapl_proc_t {
 };
 typedef struct mca_btl_udapl_proc_t mca_btl_udapl_proc_t;
 OBJ_CLASS_DECLARATION(mca_btl_udapl_proc_t);
+
+#define MCA_BTL_UDAPL_INVALID_PEER_ADDR_IDX 4294967295
 
 mca_btl_udapl_proc_t* mca_btl_udapl_proc_create(ompi_proc_t* ompi_proc);
 int mca_btl_udapl_proc_insert(mca_btl_udapl_proc_t*, mca_btl_base_endpoint_t*);
