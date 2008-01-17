@@ -919,7 +919,7 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
     int rc;
 #if OPAL_WANT_IPV6
     int error;
-    struct addrinfo hints, *res, *r;
+    struct addrinfo hints, *res = NULL, *r;
 #else
 #ifndef __WINDOWS__
     in_addr_t inaddr;
@@ -938,7 +938,6 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
-    res = NULL;
     error = getaddrinfo(if_addr, NULL, &hints, &res);
 
     if (error) {
@@ -972,8 +971,10 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
                 }
             }
         }
-     }
-     freeaddrinfo (res);
+    }
+    if (NULL != res) {
+        freeaddrinfo (res);
+    }
 #else
     inaddr = inet_addr(if_addr);
 
