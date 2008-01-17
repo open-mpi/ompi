@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -241,6 +241,15 @@ int mca_btl_udapl_register_mca_params(void)
         VERBOSE_SHOW_HELP,
         &(mca_btl_udapl_component.udapl_verbosity),
         REGINT_NEG_ONE_OK), tmp_rc, rc);
+
+    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("compare_subnet",
+        "By default uDAPL BTL will compare subnets using netmask to "
+        "determine if an interface is reachable. Setting this parameter to "
+        "0 will essentially turn this comparison off and the uDAPL BTL will "
+        "assume all uDAPL interfaces are reachable (0 or 1, default==1).",
+        1,
+        &(mca_btl_udapl_component.udapl_compare_subnet),
+        REGINT_GE_ZERO), tmp_rc, rc);
 
     /* register uDAPL module parameters */
     CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("async_evd_qlen",

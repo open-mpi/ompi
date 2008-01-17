@@ -254,7 +254,6 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
         } else {
             assert(frag->size ==
                 mca_btl_udapl_component.udapl_max_frag_size);
-            OPAL_THREAD_ADD32(&endpoint->endpoint_max_sends, -1);
             opal_list_append(&endpoint->endpoint_max_frags,
                 (opal_list_item_t*)frag);
         }
@@ -540,9 +539,11 @@ void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint,
             for(i = 0; i < proc->proc_endpoint_count; i++) {
                 ep = proc->proc_endpoints[i];
 
-                /* Does this endpoint match? */
+                /* Does this endpoint match? Only compare the address
+                 * portion of mca_btl_udapl_addr_t.
+                 */
                 if(!memcmp(&addr, &ep->endpoint_addr,
-                        sizeof(mca_btl_udapl_addr_t))) {
+                    (sizeof(DAT_CONN_QUAL) + sizeof(DAT_SOCK_ADDR)))) {   
                     OPAL_THREAD_UNLOCK(&mca_btl_udapl_component.udapl_lock);
                     mca_btl_udapl_endpoint_connect(ep);
                     return;
@@ -805,11 +806,10 @@ static int mca_btl_udapl_endpoint_finish_max(mca_btl_udapl_endpoint_t* endpoint)
                 opal_list_remove_first(&endpoint->endpoint_max_frags))) {
         cookie.as_ptr = frag;
             
-        assert(frag->triplet.virtual_address == (DAT_VADDR)frag->ftr);
         assert(frag->triplet.segment_length ==
                 frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t));
         assert(frag->size ==
-                mca_btl_udapl_component.udapl_eager_frag_size);
+                mca_btl_udapl_component.udapl_max_frag_size);
 
         rc = dat_ep_post_send(endpoint->endpoint_max, 1,
             &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
@@ -947,10 +947,14 @@ static void mca_btl_udapl_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     OBJ_DESTRUCT(&endpoint->endpoint_lock);
 
     /* release eager rdma resources */
-    udapl_btl->super.btl_mpool->mpool_free(udapl_btl->super.btl_mpool,
-        NULL,
-        reg);
-    free(endpoint->endpoint_eager_rdma_local.base.pval);
+    if (NULL != reg) {
+        udapl_btl->super.btl_mpool->mpool_free(udapl_btl->super.btl_mpool,
+            NULL, reg);
+    }
+
+    if (NULL != endpoint->endpoint_eager_rdma_local.base.pval) {
+        free(endpoint->endpoint_eager_rdma_local.base.pval);
+    }
 }
 
 

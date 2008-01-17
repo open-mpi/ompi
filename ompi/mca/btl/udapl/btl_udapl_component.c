@@ -261,6 +261,8 @@ mca_btl_udapl_modex_send(void)
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
+        memset(addrs, 0, size);
+
         for (i = 0; i < mca_btl_udapl_component.udapl_num_btls; i++) {
             mca_btl_udapl_module_t* btl = mca_btl_udapl_component.udapl_btls[i];
             addrs[i] = btl->udapl_addr;

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -48,6 +48,7 @@ static int udapl_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg);
 static int mca_btl_udapl_set_peer_parameters(
         struct mca_btl_udapl_module_t* udapl_btl,
         size_t nprocs);
+static int mca_btl_udapl_assign_netmask(mca_btl_udapl_module_t* udapl_btl);
 
 mca_btl_udapl_module_t mca_btl_udapl_module = {
     {
@@ -188,6 +189,9 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
 
     memcpy(&btl->udapl_addr.addr, (btl->udapl_ia_attr).ia_address_ptr,
         sizeof(DAT_SOCK_ADDR));
+
+    /* determine netmask */
+    mca_btl_udapl_assign_netmask(btl);
 
     /* check evd qlen against adapter max */
     if (btl->udapl_dto_evd_qlen > (btl->udapl_ia_attr).max_evd_qlen) {
@@ -415,6 +419,14 @@ int mca_btl_udapl_finalize(struct mca_btl_base_module_t* base_btl)
     OBJ_DESTRUCT(&udapl_btl->udapl_frag_control);
     OBJ_DESTRUCT(&udapl_btl->udapl_eager_rdma_lock);
     
+    /* destroy mpool */
+    if (OMPI_SUCCESS !=
+        mca_mpool_base_module_destroy(udapl_btl->super.btl_mpool)) {
+        BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_INFORM,
+            ("WARNING: Failed to release mpool"));
+        return OMPI_ERROR;
+    }
+
     free(udapl_btl);
     return OMPI_SUCCESS;
 }
@@ -636,6 +648,97 @@ static int mca_btl_udapl_set_peer_parameters(
 }
 
 /*
+ * Find and assign system netmask for the address of the uDAPL BTL
+ * module, but only if udapl_if_mask has not been set by the "--mca
+ * btl_udapl_if_mask" parameter. This routine will either find
+ * the system netmask or set the value to 0.
+ *
+ * @param udapl_btl (IN)      BTL module
+ *
+ * @return                    OMPI_SUCCESS or OMPI_ERROR
+ */
+static int mca_btl_udapl_assign_netmask(mca_btl_udapl_module_t* udapl_btl)
+{
+    struct sockaddr *saddr;
+    struct sockaddr_in *btl_addr;
+    char btl_addr_string[INET_ADDRSTRLEN]; 
+    char btl_ifname[INET_ADDRSTRLEN];
+
+    /* Setting if_mask to 0 informs future steps to assume all
+     * addresses are reachable.
+     */
+    udapl_btl->udapl_if_mask = 0; 
+
+    if (mca_btl_udapl_component.udapl_compare_subnet) {
+        /* go get system netmask value */
+
+        /* use generic address to find address family */
+        saddr = (struct sockaddr *)&(udapl_btl->udapl_addr.addr);
+
+        if (saddr->sa_family == AF_INET) {
+
+            btl_addr = (struct sockaddr_in *)saddr;
+
+            /*
+             * Retrieve the netmask of the udapl btl address. To
+             * accomplish this requires 4 steps and the use of an opal
+             * utility. This same utility is used by the tcp oob.
+             * Steps:
+             *     1. Get string value of known udapl btl module address.
+             *     2. Use string value to find the interface name of address.
+             *     3. Use interface name to find its index.
+             *     4. From the index get the netmask.
+             */
+
+            /* retrieve string value of udapl btl address */
+            inet_ntop(AF_INET, (void *) &btl_addr->sin_addr,
+                btl_addr_string, INET_ADDRSTRLEN);
+
+            /* use address string to retrieve associated interface name */
+            if (OPAL_SUCCESS != 
+                opal_ifaddrtoname(btl_addr_string,
+                    btl_ifname, INET_ADDRSTRLEN)) {
+
+                BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
+                    ("help-mpi-btl-udapl.txt", "interface not found",
+                        true, orte_system_info.nodename, btl_addr_string));
+
+                return OMPI_ERROR;
+            }
+
+            /* use interface name to retrieve index;  then
+             * use index to retrieve udapl btl address netmask
+             */
+            if (OPAL_SUCCESS != 
+                opal_ifindextomask(opal_ifnametoindex(btl_ifname),
+                    &(udapl_btl->udapl_if_mask), sizeof(udapl_btl->udapl_if_mask))) {
+
+                BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
+                    ("help-mpi-btl-udapl.txt", "netmask not found",
+                        true, orte_system_info.nodename, btl_addr_string));
+
+                return OMPI_ERROR;
+            }
+
+            /* report if_mask used by address */
+            BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_INFORM,
+                ("uDAPL BTL address %s : if_mask = %d",
+                btl_addr_string, udapl_btl->udapl_if_mask));
+
+        } else {
+            /* current uDAPL BTL does not support IPv6 */
+            BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
+                ("help-mpi-btl-udapl.txt", "IPv4 only",
+                    true, orte_system_info.nodename));
+
+            return OMPI_ERROR;
+        }
+    }
+
+    return OMPI_SUCCESS;
+}
+
+/*
  *
  */
 
@@ -661,12 +764,6 @@ int mca_btl_udapl_add_procs(
         if(NULL == (udapl_proc = mca_btl_udapl_proc_create(ompi_proc))) {
             continue;
         }
-
-        /*
-         * Check to make sure that the peer has at least as many interface 
-         * addresses exported as we are trying to use. If not, then 
-         * don't bind this BTL instance to the proc.
-         */
 
         OPAL_THREAD_LOCK(&udapl_proc->proc_lock);
 

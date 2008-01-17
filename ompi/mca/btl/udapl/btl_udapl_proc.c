@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,8 +22,9 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_hash_table.h"
+#include "opal/util/show_help.h"
 #include "ompi/runtime/ompi_module_exchange.h"
-
+#include "opal/util/net.h"
 #include "btl_udapl.h"
 #include "btl_udapl_endpoint.h"
 #include "btl_udapl_proc.h"
@@ -161,6 +162,114 @@ mca_btl_udapl_proc_t* mca_btl_udapl_proc_create(ompi_proc_t* ompi_proc)
 
 
 /*
+ * Find an address on the peer_process which matches stated criteria
+ * to the udapl btl module address information. Return in peer_addr_idx
+ * the index to the peer_process address that matches the btl module
+ * address. Where match criteria is:
+ * - the address in not already in use
+ * - compare addresses using netmask, the netmask value can be modified with
+ *   "--mca btl_udapl_if_mask"
+ *
+ * Note: since this is called from mca_btl_udapl_proc_insert() it
+ * is assumed that the process lock is locked when entered.
+ *
+ * @param udapl_btl (IN)        BTL module
+ * @param peer_process (IN)     BTL peer process
+ * @param peer_addr_idx(IN/OUT) Index of address on peer_process
+ *                              which matches the udapl_btl address data.
+ *                              On success should be  >= 0.
+ * @return                      OMPI_SUCCESS or error status on failure
+ */
+static int mca_btl_udapl_proc_address_match(
+    mca_btl_udapl_module_t* udapl_btl,
+    mca_btl_udapl_proc_t* peer_proc,
+    int* peer_addr_idx)
+{
+    int i;
+    struct sockaddr *saddr;
+    struct sockaddr_in *btl_addr;
+    struct sockaddr_in *peer_addr;
+    char btl_addr_string[INET_ADDRSTRLEN]; 
+    char peer_addr_string[INET_ADDRSTRLEN];
+
+    *peer_addr_idx = MCA_BTL_UDAPL_INVALID_PEER_ADDR_IDX;
+
+    /* use generic address to find address family */
+    saddr = (struct sockaddr *)&(udapl_btl->udapl_addr.addr);
+
+    if (saddr->sa_family == AF_INET) {
+
+        btl_addr = (struct sockaddr_in *)saddr;
+
+        /* Loop thru peer process addresses looking for match.
+         * Match criteria:
+         * - address should not be "inuse"
+         * - both udapl btl module and peer address should be on
+         *   the same subnet (compare with if_mask value)
+         */
+        for(i = 0; i < (int) peer_proc->proc_addr_count; i++) {
+
+            peer_addr =
+                (struct sockaddr_in *)&(peer_proc->proc_addrs[i].addr);
+
+            if (VERBOSE_INFORM <=
+                mca_btl_udapl_component.udapl_verbosity) {
+
+                /*  retrieve udapl btl and peer address string for reporting */
+                inet_ntop(AF_INET, (void *) &btl_addr->sin_addr,
+                    btl_addr_string, INET_ADDRSTRLEN);
+                inet_ntop(AF_INET, (void *) &peer_addr->sin_addr,
+                    peer_addr_string, INET_ADDRSTRLEN);
+            }
+
+            if ((false == peer_proc->proc_addrs[i].inuse) &&
+                (opal_net_samenetwork((struct sockaddr *)btl_addr,
+                    (struct sockaddr *)peer_addr, udapl_btl->udapl_if_mask))) {
+
+                /* capture index of remote address where match found */
+                *peer_addr_idx = i;
+
+                /* mark this address as now being used */
+                peer_proc->proc_addrs[i].inuse = true;
+
+                /* report what address was found to match */
+                BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_INFORM,
+                    ("uDAPL BTL module(%s) matched %s",
+                    btl_addr_string, peer_addr_string));
+                break;
+            } else {
+                /* peer address already used by another udapl btl
+                 * module or netmask check not successful so skip
+                 */
+                BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_INFORM,
+                    ("uDAPL BTL module(%s) either skipped because it "
+                    "is already in use or match criteria not successful "
+                    "for peer address %s",
+                    btl_addr_string, peer_addr_string));
+            }
+        }
+
+    } else {
+        /* current uDAPL BTL only supports IPv4 */
+        BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
+            ("help-mpi-btl-udapl.txt", "IPv4 only",
+            true, orte_system_info.nodename));
+        return OMPI_ERROR;
+    }
+
+    if (MCA_BTL_UDAPL_INVALID_PEER_ADDR_IDX == *peer_addr_idx) {
+        BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
+            ("help-mpi-btl-udapl.txt", "no network match",
+            true, btl_addr_string, orte_system_info.nodename,
+            peer_proc->proc_ompi->proc_hostname));
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }    
+
+    return OMPI_SUCCESS;
+}
+
+    
+/*
  * Note that this routine must be called with the lock on the process
  * already held.  Insert a btl instance into the proc array and assign 
  * it an address.
@@ -169,13 +278,32 @@ int mca_btl_udapl_proc_insert(
     mca_btl_udapl_proc_t* udapl_proc, 
     mca_btl_base_endpoint_t* udapl_endpoint)
 {
-    /* insert into endpoint array */
-    if(udapl_proc->proc_endpoint_count > udapl_proc->proc_addr_count)
+    int peer_address_idx;
+    mca_btl_udapl_module_t* udapl_btl = udapl_endpoint->endpoint_btl;
+
+    /* Check so as not to create more endpoints than addresses.
+     * Example: If one node has 3 btl modules and another only has 2,
+     * this check prevents the node with 3 btl modules from
+     * overloading the other, i.e. only 2 possible connections will
+     * be possible.
+     */
+    if (udapl_proc->proc_endpoint_count > udapl_proc->proc_addr_count)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
+    /* Find an endpoint on the udapl process of interest that matches
+     * the endpoint information of the current udapl btl module
+     */
+    if (OMPI_SUCCESS !=
+        mca_btl_udapl_proc_address_match(udapl_btl, udapl_proc,
+            &peer_address_idx)) { 
+        /* no address on peer proc met criteria */
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* insert into endpoint array */
     udapl_endpoint->endpoint_proc = udapl_proc;
     udapl_endpoint->endpoint_addr =
-            udapl_proc->proc_addrs[udapl_proc->proc_endpoint_count];
+        udapl_proc->proc_addrs[peer_address_idx];
    
     udapl_proc->proc_endpoints[udapl_proc->proc_endpoint_count] = udapl_endpoint;
     udapl_proc->proc_endpoint_count++;
