@@ -938,10 +938,13 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
+    res = NULL;
     error = getaddrinfo(if_addr, NULL, &hints, &res);
 
     if (error) {
-        freeaddrinfo (res);
+        if (NULL != res) {
+            freeaddrinfo (res);
+        }
         return OPAL_ERR_NOT_FOUND;
     }
 
