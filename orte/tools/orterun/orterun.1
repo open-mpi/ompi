@@ -22,20 +22,26 @@ other.  Using any of the names will result in exactly identical behavior.
 .PP
 Single Process Multiple Data (SPMD) Model:
 
-.B mpirun [ options ] 
-.B <program> [ <args> ]
+.B mpirun
+[ options ] 
+.B <program>
+[ <args> ]
 .P
 
 Multiple Instruction Multiple Data (MIMD) Model:
 
-.B mpirun .R [ global_options ]
+.B mpirun
+[ global_options ]
        [ local_options1 ]
-.B <program1> .R [ <args1> ] :
+.B <program1>
+[ <args1> ] :
        [ local_options2 ]
-.B <program2> .R [ <args2> ] : 
+.B <program2>
+[ <args2> ] : 
        ... : 
        [ local_optionsN ]
-.B <programN> .R [ <argsN> ]
+.B <programN>
+[ <argsN> ]
 .P
 
 Note that in both models, invoking \fImpirun\fR via an absolute path
