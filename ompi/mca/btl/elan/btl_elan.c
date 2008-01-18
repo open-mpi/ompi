@@ -157,7 +157,9 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
         frag->base.des_src     = NULL;
         frag->base.des_src_cnt = 0;
         frag->type             = MCA_BTL_ELAN_HDR_TYPE_RECV;
-        frag->elan_event = elan_tportRxStart( elan_btl->tport, 0/*ELAN_TPORT_RXANY*/, 0, 0, 0, 0,
+        frag->elan_event = elan_tportRxStart( elan_btl->tport,
+                                              ELAN_TPORT_RXBUF | ELAN_TPORT_RXANY,
+                                              0, 0, 0, 0,
                                               frag->base.des_dst->seg_addr.pval,
                                               mca_btl_elan_module.super.btl_eager_limit );
         /* Add the fragment to the pending RDMA list */
