@@ -508,7 +508,6 @@ int mca_btl_elan_finalize( struct mca_btl_base_module_t* btl )
             }
             /* disable the network */
             elan_disable_network( elan_btl->state );
-#if 0
             /* Cancel all pending receives */
             {
                 mca_btl_elan_frag_t* frag;
@@ -520,7 +519,6 @@ int mca_btl_elan_finalize( struct mca_btl_base_module_t* btl )
                     frag = (mca_btl_elan_frag_t*)opal_list_remove_first(&(elan_btl->recv_list));
                 }
             }
-#endif
             /* Release the mutex */
             OBJ_DESTRUCT(&elan_btl->elan_lock);
             OBJ_DESTRUCT(&elan_btl->recv_list);
