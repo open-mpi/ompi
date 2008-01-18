@@ -119,8 +119,8 @@ int mca_btl_elan_component_open(void)
     mca_btl_elan_module.super.btl_min_rdma_pipeline_size = 128 * 1024;
     mca_btl_elan_module.super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE /*| MCA_BTL_FLAGS_GET */| MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND ;
     /* mca_btl_elan_module.super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE|MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_SEND ;*/
-    mca_btl_elan_module.super.btl_bandwidth = 2000;
-    mca_btl_elan_module.super.btl_latency = 5;
+    mca_btl_elan_module.super.btl_bandwidth = 1959;
+    mca_btl_elan_module.super.btl_latency = 4;
     mca_btl_base_param_register(&mca_btl_elan_component.super.btl_version,
                                 &mca_btl_elan_module.super);
 
@@ -230,6 +230,8 @@ mca_btl_elan_component_init( int *num_btl_modules,
         OBJ_CONSTRUCT( &btl->recv_list, opal_list_t );
         OBJ_CONSTRUCT( &btl->send_list, opal_list_t );
         OBJ_CONSTRUCT( &btl->rdma_list, opal_list_t );
+
+        OBJ_CONSTRUCT( &btl->recv_frag, mca_btl_elan_frag_t );
         mca_btl_elan_component.elan_btls[count++] = btl;
     }
     mca_btl_elan_component.elan_num_btls = count ;
@@ -245,86 +247,84 @@ mca_btl_elan_component_init( int *num_btl_modules,
     return btls;
 }
 
-static mca_btl_elan_frag_t* mca_btl_elan_ipeek(mca_btl_elan_module_t* elan_btl)
-{
-    mca_btl_elan_frag_t* frag;
-
-    /* The receive list will always contain at least one element. There
-     * is no need to perform any checks.
-     */
-    frag = (mca_btl_elan_frag_t*)opal_list_get_first( &(elan_btl->recv_list) );
-    if( elan_tportRxDone(frag->elan_event) ) {
-        int tag;  /* we need it for the cast */
-        size_t length;
-        elan_tportRxWait( frag->elan_event, NULL, &tag, &length );
-        frag->base.des_dst->seg_len = length;
-        frag->tag = (mca_btl_base_tag_t)tag;
-        opal_list_remove_first( &(elan_btl->recv_list) );
-        return frag;
-    }
-    /* If there are any pending sends check their completion */
-    if( !opal_list_is_empty( &(elan_btl->send_list) ) ) {
-        frag = (mca_btl_elan_frag_t*)opal_list_get_first( &(elan_btl->send_list) );
-        if( elan_tportTxDone(frag->elan_event) ) {
-            opal_list_remove_first( &(elan_btl->send_list) );
-            /* call the completion callback */
-            elan_tportTxWait(frag->elan_event);
-            return frag;
-        }
-    }
-    /* If any RDMA have been posted, check their status */
-    if( !opal_list_is_empty( &(elan_btl->rdma_list) ) ) {
-        frag = (mca_btl_elan_frag_t*)opal_list_get_first( &(elan_btl->rdma_list) );
-        if( elan_done(frag->elan_event,0) ) {
-            opal_list_remove_first( &(elan_btl->rdma_list) );
-            elan_wait( frag->elan_event, ELAN_WAIT_EVENT );
-            return frag;
-        }
-    }
-    return NULL;
-}
-
 /*
  *  Elan4 component progress.
  */
 int mca_btl_elan_component_progress( void )
 {
-    size_t num_progressed = 0, i, no_btls;
-    mca_btl_elan_frag_t*    frag;
-    no_btls = mca_btl_elan_component.elan_num_btls;
+    int num_progressed = 0, i;
+    mca_btl_elan_frag_t* frag;
 
-    for (i = 0; i < no_btls; i++) {
+    for( i = 0; i < (int)mca_btl_elan_component.elan_num_btls; i++ ) {
         mca_btl_elan_module_t* elan_btl = mca_btl_elan_component.elan_btls[i];
-        /**
-         * As long as there are event on the network, keep looping here. Only go
-         * to the next BTL once this one is emptied.
-         */
+
         do {
-            OPAL_THREAD_LOCK(&elan_btl->elan_lock);
-            frag = mca_btl_elan_ipeek(elan_btl);
-            OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
-            if( NULL == frag)
-                break;
-            if(frag->type == MCA_BTL_ELAN_HDR_TYPE_RECV ) {
-                /* and this one is a receive */
+            /* The receive list will always contain at least one element. There
+             * is no need to perform any checks.
+             */
+            frag = (mca_btl_elan_frag_t*)opal_list_get_first( &(elan_btl->recv_list) );
+            if( elan_done(frag->elan_event, 0) ) {
+                int tag;  /* we need it for the cast */
+                size_t length;
                 mca_btl_active_message_callback_t* reg;
+                void* recv_buf;
+
+                recv_buf = elan_tportRxWait( frag->elan_event, NULL, &tag, &length );
+                num_progressed++;
+
+                /* Move the receive request to the end of the list */
+                OPAL_THREAD_LOCK(&elan_btl->elan_lock);
+                opal_list_remove_first( &(elan_btl->recv_list) );
+                OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
+
+                frag->base.des_dst->seg_addr.pval = recv_buf;
+                frag->base.des_dst->seg_len = length;
+                frag->tag = (mca_btl_base_tag_t)tag;
+
                 reg = mca_btl_base_active_message_trigger + frag->tag;
                 reg->cbfunc( &(elan_btl->super), frag->tag, &(frag->base), reg->cbdata );
                 /**
                  * The upper level extract the data from the fragment.
                  * Now we can register the fragment again with the network.
                  */
-                frag->elan_event = elan_tportRxStart( elan_btl->tport, 0, 0, 0, 0, 0,
+                if( recv_buf != (void*)(frag+1) ) {
+                    elan_tportBufFree( elan_btl->tport, recv_buf );
+                    frag->base.des_dst->seg_addr.pval = (void*)(frag+1);
+                }
+                OPAL_THREAD_LOCK(&elan_btl->elan_lock);
+                frag->elan_event = elan_tportRxStart( elan_btl->tport, 0/*ELAN_TPORT_RXANY*/, 0, 0, 0, 0,
                                                       frag->base.des_dst->seg_addr.pval,
                                                       mca_btl_elan_module.super.btl_eager_limit );
-                
-                OPAL_THREAD_LOCK(&elan_btl->elan_lock);
                 opal_list_append( &(elan_btl->recv_list), (opal_list_item_t*)frag );
                 OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
-            } else {
-                /* it's either a send or a put/get */
-                frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint,
-                                       &(frag->base), OMPI_SUCCESS );
+            }
+            /* If there are any pending sends check their completion */
+            if( !opal_list_is_empty( &(elan_btl->send_list) ) ) {
+                frag = (mca_btl_elan_frag_t*)opal_list_get_first( &(elan_btl->send_list) );
+                if( elan_poll(frag->elan_event, 0) ) {
+                    OPAL_THREAD_LOCK(&elan_btl->elan_lock);
+                    opal_list_remove_first( &(elan_btl->send_list) );
+                    OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
+                    /* call the completion callback */
+                    /*elan_tportTxWait(frag->elan_event);*/
+                    num_progressed++;
+
+                    frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint,
+                                           &(frag->base), OMPI_SUCCESS );
+                }
+            }
+            /* If any RDMA have been posted, check their status */
+            if( !opal_list_is_empty( &(elan_btl->rdma_list) ) ) {
+                frag = (mca_btl_elan_frag_t*)opal_list_get_first( &(elan_btl->rdma_list) );
+                if( elan_poll(frag->elan_event, 0) ) {
+                    OPAL_THREAD_LOCK(&elan_btl->elan_lock);
+                    opal_list_remove_first( &(elan_btl->rdma_list) );
+                    OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
+                    num_progressed++;
+
+                    frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint,
+                                           &(frag->base), OMPI_SUCCESS );
+                }
             }
             num_progressed++;
         } while(0);

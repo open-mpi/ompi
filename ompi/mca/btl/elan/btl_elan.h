@@ -17,12 +17,6 @@
 
 #include "ompi_config.h"
 
-
-/* Standard system includes */
-#include <sys/types.h>
-#include <string.h>
-#include <stdio.h>
-
 /* Open MPI includes */
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_bitmap.h"
@@ -92,10 +86,9 @@ struct mca_btl_elan_component_t {
     /**< pin memory on first use and leave pinned */
 	
 }; 
-    typedef struct mca_btl_elan_component_t mca_btl_elan_component_t;
+typedef struct mca_btl_elan_component_t mca_btl_elan_component_t;
 
-    OMPI_MODULE_DECLSPEC extern mca_btl_elan_component_t mca_btl_elan_component;
-
+OMPI_MODULE_DECLSPEC extern mca_btl_elan_component_t mca_btl_elan_component;
 
 /**
  * BTL Module Interface
@@ -114,6 +107,7 @@ struct mca_btl_elan_module_t {
     opal_list_t    recv_list;  /* list of pending receives. */
     opal_list_t    send_list;  /* list of posted sends */
     opal_list_t    rdma_list;  /* list of posted receives */
+    mca_btl_elan_frag_t recv_frag;
     struct bufdesc_t *    tportFIFOHead;
     struct bufdesc_t *    tportFIFOTail;
     struct mca_mpool_base_module_t* elan_mpool;
@@ -155,149 +149,9 @@ mca_btl_elan_component_init( int* num_btl_modules,
  */
 extern int mca_btl_elan_component_progress(void);
 
-/**
- * Cleanup any resources held by the BTL.
- * 
- * @param btl  BTL instance.
- * @return     OMPI_SUCCESS or error status on failure.
- */
-extern void cancel_elanRx( mca_btl_elan_module_t* elan_btl );
-
 extern int mca_btl_elan_finalize( struct mca_btl_base_module_t* btl );
 
 extern int mca_btl_elan_ft_event(int state);
-
-/**
- * PML->BTL notification of change in the process list.
- * 
- * @param btl (IN)
- * @param nprocs (IN)     Number of processes
- * @param procs (IN)      Set of processes
- * @param peers (OUT)     Set of (optional) peer addressing info.
- * @param peers (IN/OUT)  Set of processes that are reachable via this BTL.
- * @return     OMPI_SUCCESS or error status on failure.
- * 
- */
-
-extern int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
-                                   size_t nprocs,
-                                   struct ompi_proc_t **procs,
-                                   struct mca_btl_base_endpoint_t** peers,
-                                   ompi_bitmap_t* reachable );
-
-/**
- * PML->BTL notification of change in the process list.
- *
- * @param btl (IN)     BTL instance
- * @param nproc (IN)   Number of processes.
- * @param procs (IN)   Set of processes.
- * @param peers (IN)   Set of peer data structures.
- * @return             Status indicating if cleanup was successful
- *
- */
-
-extern int mca_btl_elan_del_procs( struct mca_btl_base_module_t* btl,
-                                   size_t nprocs,
-                                   struct ompi_proc_t **procs,
-                                   struct mca_btl_base_endpoint_t** peers );
-
-/**
- * Initiate an asynchronous send.
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transfered
- * @param tag (IN)         The tag value used to notify the peer.
- */
-
-extern int mca_btl_elan_send( struct mca_btl_base_module_t* btl,
-                              struct mca_btl_base_endpoint_t* btl_peer,
-                              struct mca_btl_base_descriptor_t* descriptor, 
-                              mca_btl_base_tag_t tag );
-
-/**
- * Initiate an asynchronous put.
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
- */
-
-extern int mca_btl_elan_put( struct mca_btl_base_module_t* btl,
-                             struct mca_btl_base_endpoint_t* btl_peer,
-                             struct mca_btl_base_descriptor_t* decriptor );
-
-/**
- * Initiate an asynchronous get.
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
- */
-
-extern int mca_btl_elan_get( struct mca_btl_base_module_t* btl,
-                             struct mca_btl_base_endpoint_t* btl_peer,
-                             struct mca_btl_base_descriptor_t* decriptor );
-
-/**
- * Allocate a descriptor with a segment of the requested size.
- * Note that the BTL layer may choose to return a smaller size
- * if it cannot support the request.
- *
- * @param btl (IN)      BTL module
- * @param size (IN)     Request segment size.
- */
-
-extern mca_btl_base_descriptor_t*
-mca_btl_elan_alloc( struct mca_btl_base_module_t* btl,
-                    struct mca_btl_base_endpoint_t* peer,
-                    uint8_t order,
-                    size_t size,
-                    uint32_t flags );
-
-/**
- * Return a segment allocated by this BTL.
- *
- * @param btl (IN)      BTL module
- * @param descriptor (IN)  Allocated descriptor.
- */
-
-extern int mca_btl_elan_free( struct mca_btl_base_module_t* btl, 
-                              mca_btl_base_descriptor_t* des );
-
-/**
- * Prepare a descriptor for send/rdma using the supplied
- * convertor. If the convertor references data that is contigous,
- * the descriptor may simply point to the user buffer. Otherwise,
- * this routine is responsible for allocating buffer space and
- * packing if required.
- *
- * @param btl (IN)          BTL module
- * @param endpoint (IN)     BTL peer addressing
- * @param convertor (IN)    Data type convertor
- * @param reserve (IN)      Additional bytes requested by upper layer to precede user data
- * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT) 
- */
-
-mca_btl_base_descriptor_t*
-mca_btl_elan_prepare_src( struct mca_btl_base_module_t* btl,
-                          struct mca_btl_base_endpoint_t* peer,
-                          struct mca_mpool_base_registration_t*,
-                          struct ompi_convertor_t* convertor,
-                          uint8_t order,
-                          size_t reserve,
-                          size_t* size,
-                          uint32_t flags );
-
-extern mca_btl_base_descriptor_t*
-mca_btl_elan_prepare_dst( struct mca_btl_base_module_t* btl, 
-                          struct mca_btl_base_endpoint_t* peer,
-                          struct mca_mpool_base_registration_t*,
-                          struct ompi_convertor_t* convertor,
-                          uint8_t order,
-                          size_t reserve,
-                          size_t* size,
-                          uint32_t flags );
 
 END_C_DECLS
 
