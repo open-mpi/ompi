@@ -33,47 +33,27 @@
 #include "opal/util/opal_environ.h"
 #include "orte/util/proc_info.h"
 
-mca_btl_elan_module_t mca_btl_elan_module = {
-    {
-        &mca_btl_elan_component.super,
-        0, /* max size of first fragment */
-        0, /* min send fragment size */
-        0, /* max send fragment size */
-        0, /* btl_rdma_pipeline_offset */
-        0, /* btl_rdma_pipeline_frag_size */
-        0, /* btl_min_rdma_pipeline_size */				
-        0, /* exclusivity */
-        0, /* latency */
-        0, /* bandwidth */
-        0, /* flags */
-        mca_btl_elan_add_procs,
-        mca_btl_elan_del_procs,
-        NULL,
-        mca_btl_elan_finalize,
-        mca_btl_elan_alloc, 
-        mca_btl_elan_free, 
-        mca_btl_elan_prepare_src,
-        mca_btl_elan_prepare_dst,
-        mca_btl_elan_send,
-        mca_btl_elan_put,
-        mca_btl_elan_get,
-        NULL, /*mca_btl_elan_dump,*/
-        NULL, /* mpool */
-        NULL, /* register error cb */
-        mca_btl_elan_ft_event /* mca_btl_elan_ft_event*/
-    }
-};
-
 /**
  *
  */
 extern char** environ;
 
-int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl, 
-                            size_t nprocs, 
-                            struct ompi_proc_t **ompi_procs, 
-                            struct mca_btl_base_endpoint_t** peers, 
-                            ompi_bitmap_t* reachable )
+/**
+ * PML->BTL notification of change in the process list.
+ * 
+ * @param btl (IN)
+ * @param nprocs (IN)     Number of processes
+ * @param procs (IN)      Set of processes
+ * @param peers (OUT)     Set of (optional) peer addressing info.
+ * @param peers (IN/OUT)  Set of processes that are reachable via this BTL.
+ * @return     OMPI_SUCCESS or error status on failure.
+ * 
+ */
+static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl, 
+                                   size_t nprocs, 
+                                   struct ompi_proc_t **ompi_procs, 
+                                   struct mca_btl_base_endpoint_t** peers, 
+                                   ompi_bitmap_t* reachable )
 {
     mca_btl_elan_module_t* elan_btl = (mca_btl_elan_module_t*)btl;
     mca_btl_elan_frag_t* frag;
@@ -111,12 +91,13 @@ int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
     /* Create the global queue (it's a synchronization point) */
     if( (q = elan_gallocQueue(base, base->allGroup)) == NULL ) {  
         return OMPI_ERR_OUT_OF_RESOURCE;
-    }  
-    if( !(p = elan_tportInit(base->state,  
-                             (ELAN_QUEUE *)q, 
-                             base->tport_nslots,  
-                             base->tport_smallmsg,   
-                             base->tport_bigmsg, 
+    }
+
+    if( !(p = elan_tportInit(base->state,
+                             q,
+                             base->tport_nslots,
+                             base->tport_smallmsg,
+                             mca_btl_elan_module.super.btl_eager_limit, /*base->tport_bigmsg,*/
                              base->tport_stripemsg, 
                              ELAN_POLL_EVENT,  
                              base->retryCount, 
@@ -176,32 +157,42 @@ int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
         frag->base.des_src     = NULL;
         frag->base.des_src_cnt = 0;
         frag->type             = MCA_BTL_ELAN_HDR_TYPE_RECV;
-        frag->elan_event = elan_tportRxStart( elan_btl->tport, 0, 0, 0, 0, 0,
+        frag->elan_event = elan_tportRxStart( elan_btl->tport, 0/*ELAN_TPORT_RXANY*/, 0, 0, 0, 0,
                                               frag->base.des_dst->seg_addr.pval,
                                               mca_btl_elan_module.super.btl_eager_limit );
         /* Add the fragment to the pending RDMA list */
         opal_list_append( &(elan_btl->recv_list), (opal_list_item_t*)frag );
     }
-
     return OMPI_SUCCESS;
 }
 
-int mca_btl_elan_del_procs( struct mca_btl_base_module_t* btl, 
-                            size_t nprocs, 
-                            struct ompi_proc_t **procs, 
-                            struct mca_btl_base_endpoint_t ** endpoints )
+/**
+ * PML->BTL notification of change in the process list.
+ *
+ * @param btl (IN)     BTL instance
+ * @param nproc (IN)   Number of processes.
+ * @param procs (IN)   Set of processes.
+ * @param peers (IN)   Set of peer data structures.
+ * @return             Status indicating if cleanup was successful
+ *
+ */
+static int mca_btl_elan_del_procs( struct mca_btl_base_module_t* btl, 
+                                   size_t nprocs, 
+                                   struct ompi_proc_t **procs, 
+                                   struct mca_btl_base_endpoint_t ** endpoints )
 {
     return OMPI_SUCCESS;
 }
 
 /**
- * Allocate a segment.
+ * Allocate a descriptor with a segment of the requested size.
+ * Note that the BTL layer may choose to return a smaller size
+ * if it cannot support the request.
  *
  * @param btl (IN)      BTL module
  * @param size (IN)     Request segment size.
  */
-
-mca_btl_base_descriptor_t*
+static mca_btl_base_descriptor_t*
 mca_btl_elan_alloc( struct mca_btl_base_module_t* btl,
                     struct mca_btl_base_endpoint_t* peer,
                     uint8_t order,
@@ -233,17 +224,20 @@ mca_btl_elan_alloc( struct mca_btl_base_module_t* btl,
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0; 
     frag->btl = (mca_btl_elan_module_t*)btl;
+    frag->endpoint = peer;
     frag->base.order = MCA_BTL_NO_ORDER;
     return (mca_btl_base_descriptor_t*)frag;
 }
 
 
 /**
- * Return a segment
+ * Return a segment allocated by this BTL.
+ *
+ * @param btl (IN)      BTL module
+ * @param descriptor (IN)  Allocated descriptor.
  */
-
-int mca_btl_elan_free( struct mca_btl_base_module_t* btl, 
-		       mca_btl_base_descriptor_t* des ) 
+static int mca_btl_elan_free( struct mca_btl_base_module_t* btl, 
+                              mca_btl_base_descriptor_t* des ) 
 {
     mca_btl_elan_frag_t* frag = (mca_btl_elan_frag_t*)des;
     MCA_BTL_ELAN_FRAG_RETURN(frag); 
@@ -251,13 +245,19 @@ int mca_btl_elan_free( struct mca_btl_base_module_t* btl,
 }
 
 /**
- * Pack data and return a descriptor that can be
- * used for send/put.
+ * Prepare a descriptor for send/rdma using the supplied
+ * convertor. If the convertor references data that is contigous,
+ * the descriptor may simply point to the user buffer. Otherwise,
+ * this routine is responsible for allocating buffer space and
+ * packing if required.
  *
- * @param btl (IN)      BTL module
- * @param peer (IN)     BTL peer addressing
+ * @param btl (IN)          BTL module
+ * @param endpoint (IN)     BTL peer addressing
+ * @param convertor (IN)    Data type convertor
+ * @param reserve (IN)      Additional bytes requested by upper layer to precede user data
+ * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT) 
  */
-mca_btl_base_descriptor_t*
+static mca_btl_base_descriptor_t*
 mca_btl_elan_prepare_src( struct mca_btl_base_module_t* btl,
                           struct mca_btl_base_endpoint_t* endpoint,
                           struct mca_mpool_base_registration_t* registration,
@@ -266,8 +266,6 @@ mca_btl_elan_prepare_src( struct mca_btl_base_module_t* btl,
                           size_t reserve,
                           size_t* size,
                           uint32_t flags)
-
-
 {
     mca_btl_elan_frag_t* frag;
     struct iovec iov;
@@ -351,7 +349,7 @@ mca_btl_elan_prepare_src( struct mca_btl_base_module_t* btl,
  * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT)
  */
 
-mca_btl_base_descriptor_t*
+static mca_btl_base_descriptor_t*
 mca_btl_elan_prepare_dst( struct mca_btl_base_module_t* btl,
                           struct mca_btl_base_endpoint_t* endpoint,
                           struct mca_mpool_base_registration_t* registration,
@@ -395,10 +393,10 @@ mca_btl_elan_prepare_dst( struct mca_btl_base_module_t* btl,
  * @param tag (IN)         The tag value used to notify the peer.
  */
 
-int mca_btl_elan_send( struct mca_btl_base_module_t* btl,
-                       struct mca_btl_base_endpoint_t* endpoint,
-                       struct mca_btl_base_descriptor_t* descriptor, 
-                       mca_btl_base_tag_t tag )
+static int mca_btl_elan_send( struct mca_btl_base_module_t* btl,
+                              struct mca_btl_base_endpoint_t* endpoint,
+                              struct mca_btl_base_descriptor_t* descriptor, 
+                              mca_btl_base_tag_t tag )
    
 {
     mca_btl_elan_module_t* elan_btl = (mca_btl_elan_module_t*) btl;
@@ -406,18 +404,23 @@ int mca_btl_elan_send( struct mca_btl_base_module_t* btl,
     int peer, proc, send_len;
     void* sbuf = NULL;
 
-    /* TODO */
     frag->btl = elan_btl;
     frag->endpoint = endpoint;
     frag->tag = tag;
     frag->type = MCA_BTL_ELAN_HDR_TYPE_SEND;
     peer = endpoint->elan_vp;
     proc = elan_btl->elan_vp;
-    sbuf     = (void *)frag->base.des_src->seg_addr.pval;
+    sbuf     = (void*)frag->base.des_src->seg_addr.pval;
     send_len = frag->base.des_src->seg_len; 
     frag->elan_event = elan_tportTxStart( elan_btl->tport, 0, peer, proc, frag->tag,
                                           sbuf, send_len) ;
-    /*opal_output( 0, "send message startoing from %d to %d\n", proc, peer );*/
+    if( elan_tportTxDone(frag->elan_event) ) {
+        elan_tportTxWait(frag->elan_event);
+        frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint,
+                               &(frag->base), OMPI_SUCCESS );
+        return OMPI_SUCCESS;
+    }
+
     /* Add the fragment to the pending send list */
     opal_list_append( &(elan_btl->send_list), (opal_list_item_t*)frag );
     return OMPI_SUCCESS;
@@ -431,10 +434,9 @@ int mca_btl_elan_send( struct mca_btl_base_module_t* btl,
  * @param endpoint (IN)    BTL addressing information
  * @param descriptor (IN)  Description of the data to be transferred
  */
-
-int mca_btl_elan_put( mca_btl_base_module_t* btl,
-                      mca_btl_base_endpoint_t* endpoint,
-                      mca_btl_base_descriptor_t* des )
+static int mca_btl_elan_put( mca_btl_base_module_t* btl,
+                             mca_btl_base_endpoint_t* endpoint,
+                             mca_btl_base_descriptor_t* des )
 {
     mca_btl_elan_module_t* elan_btl = (mca_btl_elan_module_t*) btl;
     mca_btl_elan_frag_t* frag = (mca_btl_elan_frag_t*) des; 
@@ -464,9 +466,9 @@ int mca_btl_elan_put( mca_btl_base_module_t* btl,
  *
  */
 
-int mca_btl_elan_get( mca_btl_base_module_t* btl,
-                      mca_btl_base_endpoint_t* endpoint,
-                      mca_btl_base_descriptor_t* des )
+static int mca_btl_elan_get( mca_btl_base_module_t* btl,
+                             mca_btl_base_endpoint_t* endpoint,
+                             mca_btl_base_descriptor_t* des )
 {
     mca_btl_elan_module_t* elan_btl = (mca_btl_elan_module_t*) btl;
     mca_btl_elan_frag_t* frag = (mca_btl_elan_frag_t*) des; 
@@ -487,23 +489,6 @@ int mca_btl_elan_get( mca_btl_base_module_t* btl,
     return OMPI_SUCCESS;
 }
 
-
-/*
- * Cleanup/release module resources.
- */
-
-void cancel_elanRx(mca_btl_elan_module_t* elan_btl)
-{
-    mca_btl_elan_frag_t* frag;
-    
-    while( NULL != (frag = (mca_btl_elan_frag_t*)opal_list_remove_first(&elan_btl->recv_list)) ) {
-        if( elan_tportRxCancel(frag->elan_event) ) {
-            MCA_BTL_ELAN_FRAG_RETURN(frag);
-        }
-        frag = (mca_btl_elan_frag_t*)opal_list_remove_first(&(elan_btl->recv_list));
-    }
-}
-
 int mca_btl_elan_finalize( struct mca_btl_base_module_t* btl )
 {
     mca_btl_elan_module_t* elan_btl = (mca_btl_elan_module_t*) btl; 
@@ -519,12 +504,26 @@ int mca_btl_elan_finalize( struct mca_btl_base_module_t* btl )
             } else {
                 mca_btl_elan_component.elan_btls[i] =  mca_btl_elan_component.elan_btls[num_btls-1];
             }
-            /* Cancel all pending receives */
-            cancel_elanRx(elan_btl);
             /* disable the network */
             elan_disable_network( elan_btl->state );
+#if 0
+            /* Cancel all pending receives */
+            {
+                mca_btl_elan_frag_t* frag;
+    
+                while( NULL != (frag = (mca_btl_elan_frag_t*)opal_list_remove_first(&elan_btl->recv_list)) ) {
+                    if( elan_tportRxCancel(frag->elan_event) ) {
+                        MCA_BTL_ELAN_FRAG_RETURN(frag);
+                    }
+                    frag = (mca_btl_elan_frag_t*)opal_list_remove_first(&(elan_btl->recv_list));
+                }
+            }
+#endif
             /* Release the mutex */
             OBJ_DESTRUCT(&elan_btl->elan_lock);
+            OBJ_DESTRUCT(&elan_btl->recv_list);
+            OBJ_DESTRUCT(&elan_btl->send_list);
+            OBJ_DESTRUCT(&elan_btl->rdma_list);
             /* The BTL is clean, remove it */
             free(elan_btl);
 
@@ -555,3 +554,47 @@ int mca_btl_elan_ft_event(int state)
 
     return OMPI_SUCCESS;
 }
+
+static void mca_btl_elan_dump( struct mca_btl_base_module_t* btl,
+                                  struct mca_btl_base_endpoint_t* endpoint,
+                                  int verbose )
+{
+}
+
+static int
+mca_btl_elan_register_error( struct mca_btl_base_module_t* btl, 
+                             mca_btl_base_module_error_cb_fn_t cbfunc )
+{
+    return OMPI_SUCCESS;
+}
+
+mca_btl_elan_module_t mca_btl_elan_module = {
+    {
+        &mca_btl_elan_component.super,
+        0, /* max size of first fragment */
+        0, /* min send fragment size */
+        0, /* max send fragment size */
+        0, /* btl_rdma_pipeline_offset */
+        0, /* btl_rdma_pipeline_frag_size */
+        0, /* btl_min_rdma_pipeline_size */				
+        0, /* exclusivity */
+        0, /* latency */
+        0, /* bandwidth */
+        0, /* flags */
+        mca_btl_elan_add_procs,
+        mca_btl_elan_del_procs,
+        NULL,  /* btl_register */
+        mca_btl_elan_finalize,
+        mca_btl_elan_alloc, 
+        mca_btl_elan_free, 
+        mca_btl_elan_prepare_src,
+        mca_btl_elan_prepare_dst,
+        mca_btl_elan_send,
+        mca_btl_elan_put,
+        mca_btl_elan_get,
+        mca_btl_elan_dump,
+        NULL, /* mpool */
+        mca_btl_elan_register_error, /* register error cb */
+        mca_btl_elan_ft_event /* mca_btl_elan_ft_event*/
+    }
+};
