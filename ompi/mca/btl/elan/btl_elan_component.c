@@ -292,7 +292,9 @@ int mca_btl_elan_component_progress( void )
                     frag->base.des_dst->seg_addr.pval = (void*)(frag+1);
                 }
                 OPAL_THREAD_LOCK(&elan_btl->elan_lock);
-                frag->elan_event = elan_tportRxStart( elan_btl->tport, 0/*ELAN_TPORT_RXANY*/, 0, 0, 0, 0,
+                frag->elan_event = elan_tportRxStart( elan_btl->tport,
+                                                      ELAN_TPORT_RXBUF | ELAN_TPORT_RXANY,
+                                                      0, 0, 0, 0,
                                                       frag->base.des_dst->seg_addr.pval,
                                                       mca_btl_elan_module.super.btl_eager_limit );
                 opal_list_append( &(elan_btl->recv_list), (opal_list_item_t*)frag );
