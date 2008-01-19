@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -307,7 +307,7 @@ Group: Development/Libraries
 %if %{disable_auto_requires}
 AutoReq: no
 %endif
-Requires: openmpi-runtime
+Requires: %{name}-runtime
 
 %description devel
 Open MPI is a project combining technologies and resources from
@@ -329,7 +329,7 @@ Group: Development/Documentation
 %if %{disable_auto_requires}
 AutoReq: no
 %endif
-Requires: openmpi-runtime
+Requires: %{name}-runtime
 
 %description docs
 Open MPI is a project combining technologies and resources from several other
@@ -722,6 +722,10 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Fri Jan 18 2008 Jeff Squyres <jsquyres@cisco.com>
+- Remove the hard-coded "openmpi" name from two Requires statements
+  and use %{name} instead (FWIW, %{_name} caused rpmbuild to barf).
+
 * Wed Jan  2 2008 Jeff Squyres <jsquyres@cisco.com>
 - Remove duplicate %{_sysconfdir} in the % files sections when
   building the sub-packages.
