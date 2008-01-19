@@ -47,6 +47,6 @@ int mca_coll_self_allgatherv_intra(void *sbuf, int scount,
             return OMPI_ERROR;
         }
         return ompi_ddt_sndrcv(sbuf, scount, sdtype,
-                               ((char *) rbuf) + disps[0], rcounts[0], rdtype);
+                               ((char *) rbuf) + disps[0] * extent, rcounts[0], rdtype);
     }
 }
