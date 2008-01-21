@@ -294,7 +294,7 @@ typedef struct mca_btl_openib_hca_t {
     struct ibv_xrc_domain *xrc_domain;
     int xrc_fd;
 #endif
-    uint32_t non_eager_rdma_endpoints;
+    int32_t non_eager_rdma_endpoints;
     int32_t eager_rdma_buffers_count;
     struct mca_btl_base_endpoint_t **eager_rdma_buffers;
     /**< frags for control massages */
