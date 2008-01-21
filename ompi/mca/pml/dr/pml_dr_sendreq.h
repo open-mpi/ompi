@@ -407,11 +407,11 @@ do {                                                                 \
     (vfrag)->vf_state &= ~MCA_PML_DR_VFRAG_NACKED;                   \
                                                                      \
     assert(sendreq->req_descriptor->des_src != NULL);                \
+    des_old = sendreq->req_descriptor;                               \
     mca_bml_base_alloc(bml_btl, &des_new,                            \
                        MCA_BTL_NO_ORDER,                             \
                        sizeof(mca_pml_dr_rendezvous_hdr_t),          \
                        des_old->des_flags);                          \
-    des_old = sendreq->req_descriptor;                               \
     /* build hdr */                                                  \
     hdr = (mca_pml_dr_hdr_t*)des_new->des_src->seg_addr.pval;        \
     hdr->hdr_common.hdr_flags = 0;                                   \
