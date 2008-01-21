@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -220,16 +220,16 @@ class Grequest : public MPI::Request {
 	    Cancel_function *, void *);
 
     virtual void Complete();
-};
 
-//
-// Type used for intercepting Generalized requests in the C++ layer so
-// that the type can be converted to C++ types before invoking the
-// user-specified C++ callbacks.
-//
-struct Grequest_intercept_t {
-    void *git_extra;
-    Grequest::Query_function *git_cxx_query_fn;
-    Grequest::Free_function *git_cxx_free_fn;
-    Grequest::Cancel_function *git_cxx_cancel_fn;
+    //
+    // Type used for intercepting Generalized requests in the C++ layer so
+    // that the type can be converted to C++ types before invoking the
+    // user-specified C++ callbacks.
+    //
+    struct Intercept_data_t {
+        void *id_extra;
+        Grequest::Query_function *id_cxx_query_fn;
+        Grequest::Free_function *id_cxx_free_fn;
+        Grequest::Cancel_function *id_cxx_cancel_fn;
+    };
 };

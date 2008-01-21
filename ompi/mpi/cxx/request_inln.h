@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
@@ -343,13 +343,13 @@ MPI::Grequest::Start(Query_function *query_fn, Free_function *free_fn,
 	Cancel_function *cancel_fn, void *extra)
 {
     MPI_Request grequest = 0;
-    struct Grequest_intercept_t *new_extra = 
-        new struct MPI::Grequest_intercept_t;
+    Intercept_data_t *new_extra = 
+        new MPI::Grequest::Intercept_data_t;
 
-    new_extra->git_extra = extra;
-    new_extra->git_cxx_query_fn = query_fn;
-    new_extra->git_cxx_free_fn = free_fn;
-    new_extra->git_cxx_cancel_fn = cancel_fn;
+    new_extra->id_extra = extra;
+    new_extra->id_cxx_query_fn = query_fn;
+    new_extra->id_cxx_free_fn = free_fn;
+    new_extra->id_cxx_cancel_fn = cancel_fn;
     (void) MPI_Grequest_start(ompi_mpi_cxx_grequest_query_fn_intercept,
                               ompi_mpi_cxx_grequest_free_fn_intercept,
                               ompi_mpi_cxx_grequest_cancel_fn_intercept,
