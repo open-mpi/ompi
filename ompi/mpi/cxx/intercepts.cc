@@ -495,11 +495,11 @@ ompi_mpi_cxx_win_delete_attr_intercept(MPI_Win win, int keyval,
 extern "C" int
 ompi_mpi_cxx_grequest_query_fn_intercept(void *state, MPI_Status *status)
 {
-    struct MPI::Grequest_intercept_t *data = 
-        (struct MPI::Grequest_intercept_t *) state;
+    MPI::Grequest::Intercept_data_t *data = 
+        (MPI::Grequest::Intercept_data_t *) state;
 
     MPI::Status s(*status);
-    int ret = data->git_cxx_query_fn(data->git_extra, s);
+    int ret = data->id_cxx_query_fn(data->id_extra, s);
     *status = s;
     return ret;
 }
@@ -507,9 +507,9 @@ ompi_mpi_cxx_grequest_query_fn_intercept(void *state, MPI_Status *status)
 extern "C" int
 ompi_mpi_cxx_grequest_free_fn_intercept(void *state)
 {
-    struct MPI::Grequest_intercept_t *data = 
-        (struct MPI::Grequest_intercept_t *) state;
-    int ret = data->git_cxx_free_fn(data->git_extra);
+    MPI::Grequest::Intercept_data_t *data = 
+        (MPI::Grequest::Intercept_data_t *) state;
+    int ret = data->id_cxx_free_fn(data->id_extra);
     // Delete the struct that was "new"ed in MPI::Grequest::Start()
     delete data;
     return ret;
@@ -518,8 +518,8 @@ ompi_mpi_cxx_grequest_free_fn_intercept(void *state)
 extern "C" int
 ompi_mpi_cxx_grequest_cancel_fn_intercept(void *state, int cancelled)
 {
-    struct MPI::Grequest_intercept_t *data = 
-        (struct MPI::Grequest_intercept_t *) state;
-    return data->git_cxx_cancel_fn(data->git_extra, 
-                                   (0 != cancelled ? true : false));
+    MPI::Grequest::Intercept_data_t *data = 
+        (MPI::Grequest::Intercept_data_t *) state;
+    return data->id_cxx_cancel_fn(data->id_extra, 
+                                  (0 != cancelled ? true : false));
 }
