@@ -201,7 +201,7 @@ struct mca_btl_base_endpoint_t {
     /**< info about remote RDMA buffer */
     mca_btl_openib_eager_rdma_local_t eager_rdma_local;
     /**< info about local RDMA buffer */
-    uint32_t index;           /**< index of the endpoint in endpoints array */
+    int32_t index;           /**< index of the endpoint in endpoints array */
 
     /**< frags for sending explicit high priority credits */
     bool nbo;       /**< does the endpoint require network byte ordering? */

@@ -103,7 +103,7 @@ int ompi_btl_openib_connect_base_select(char *remotelist, char *locallist)
 {
     int i, j, max = -1;
     char **localist_formatted, **remotelist_formatted;
-    char *name;
+    char *name = NULL;
 
     BTL_VERBOSE(("remotelist = %s locallist = %s", remotelist, locallist));
 
