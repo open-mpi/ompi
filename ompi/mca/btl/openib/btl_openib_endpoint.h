@@ -5,19 +5,19 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2007      Mellanox Technologies.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -31,8 +31,8 @@
 #include "btl_openib.h"
 #include "btl_openib_frag.h"
 #include "btl_openib_eager_rdma.h"
-#include <errno.h> 
-#include <string.h> 
+#include <errno.h>
+#include <string.h>
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "connect/base.h"
 
@@ -53,8 +53,8 @@ typedef enum {
     MCA_BTL_IB_CONNECT_ACK,
 
     /*Waiting for final connection ACK from endpoint */
-    MCA_BTL_IB_WAITING_ACK, 
-    
+    MCA_BTL_IB_WAITING_ACK,
+
     /* Connected ... both sender & receiver have
      * buffers associated with this connection */
     MCA_BTL_IB_CONNECTED,
@@ -68,23 +68,23 @@ typedef enum {
     MCA_BTL_IB_FAILED
 } mca_btl_openib_endpoint_state_t;
 
-struct mca_btl_openib_rem_qp_info_t { 
-    uint32_t                    rem_qp_num; 
-    /* Remote QP number */ 
-    uint32_t                    rem_psn; 
-    /* Remote processes port sequence number */ 
-}; typedef struct mca_btl_openib_rem_qp_info_t mca_btl_openib_rem_qp_info_t; 
+struct mca_btl_openib_rem_qp_info_t {
+    uint32_t                    rem_qp_num;
+    /* Remote QP number */
+    uint32_t                    rem_psn;
+    /* Remote processes port sequence number */
+}; typedef struct mca_btl_openib_rem_qp_info_t mca_btl_openib_rem_qp_info_t;
 
 struct mca_btl_openib_rem_srq_info_t {
     /* Remote SRQ number */
     uint32_t                    rem_srq_num;
 }; typedef struct mca_btl_openib_rem_srq_info_t mca_btl_openib_rem_srq_info_t;
 
-struct mca_btl_openib_rem_info_t { 
+struct mca_btl_openib_rem_info_t {
     uint16_t                    rem_lid;
     /* Local identifier of the remote process */
-    uint64_t                    rem_subnet_id; 
-    /* subnet id of remote process */     
+    uint64_t                    rem_subnet_id;
+    /* subnet id of remote process */
     uint32_t                    rem_mtu;
     /* MTU of remote process */
     uint32_t                    rem_index;
@@ -92,18 +92,18 @@ struct mca_btl_openib_rem_info_t {
     mca_btl_openib_rem_qp_info_t *rem_qps;
     /* remote xrc_srq info , used only with xrc connections */
     mca_btl_openib_rem_srq_info_t *rem_srqs;
-}; typedef struct mca_btl_openib_rem_info_t mca_btl_openib_rem_info_t; 
+}; typedef struct mca_btl_openib_rem_info_t mca_btl_openib_rem_info_t;
 
 
 /**
- *  Agggregates all per peer qp info for an endpoint 
+ *  Agggregates all per peer qp info for an endpoint
  */
-struct mca_btl_openib_endpoint_pp_qp_t { 
-    int32_t sd_credits;  /**< this rank's view of the credits 
-                          *  available for sending: 
-                          *  this is the credits granted by the 
-                          *  remote peer which has some relation to the 
-                          *  number of receive buffers posted remotely 
+struct mca_btl_openib_endpoint_pp_qp_t {
+    int32_t sd_credits;  /**< this rank's view of the credits
+                          *  available for sending:
+                          *  this is the credits granted by the
+                          *  remote peer which has some relation to the
+                          *  number of receive buffers posted remotely
                           */
     int32_t  rd_posted;   /**< number of descriptors posted to the nic*/
     int32_t  rd_credits;  /**< number of credits to return to peer */
@@ -114,9 +114,9 @@ struct mca_btl_openib_endpoint_pp_qp_t {
 
 
 /**
- *  Aggregates all srq qp info for an endpoint 
+ *  Aggregates all srq qp info for an endpoint
  */
-struct mca_btl_openib_endpoint_srq_qp_t { 
+struct mca_btl_openib_endpoint_srq_qp_t {
     int32_t dummy;
 }; typedef struct mca_btl_openib_endpoint_srq_qp_t mca_btl_openib_endpoint_srq_qp_t;
 
@@ -169,26 +169,26 @@ struct mca_btl_base_endpoint_t {
 
     opal_mutex_t                endpoint_lock;
     /**< lock for concurrent access to endpoint state */
-    
+
     opal_list_t                 pending_lazy_frags;
-    /**< list of pending frags due to lazy connection establishment 
-     *   for this endpotint 
+    /**< list of pending frags due to lazy connection establishment
+     *   for this endpotint
      */
-    
+
     mca_btl_openib_endpoint_qp_t *qps;
     struct ibv_qp *xrc_recv_qp; /* in xrc we will use it as recv qp */
-    uint32_t xrc_recv_psn; 
+    uint32_t xrc_recv_psn;
 
-       
+
     opal_list_t                 pending_get_frags; /**< list of pending rget ops */
     opal_list_t                 pending_put_frags; /**< list of pending rput ops */
 
-    
-    
-    
+
+
+
     /* Local processes port sequence number (Low and High) */
- 
-    
+
+
     int32_t                     get_tokens;    /**< number of available get tokens */
 
 
@@ -202,12 +202,12 @@ struct mca_btl_base_endpoint_t {
     mca_btl_openib_eager_rdma_local_t eager_rdma_local;
     /**< info about local RDMA buffer */
     uint32_t index;           /**< index of the endpoint in endpoints array */
-    
+
     /**< frags for sending explicit high priority credits */
     bool nbo;       /**< does the endpoint require network byte ordering? */
     bool use_eager_rdma; /**< use eager rdma for this peer? */
-    
-    mca_btl_openib_rem_info_t rem_info; 
+
+    mca_btl_openib_rem_info_t rem_info;
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
@@ -242,7 +242,7 @@ static inline int post_recvs(mca_btl_base_endpoint_t *ep, const int qp,
     int i;
     struct ibv_recv_wr *bad_wr, *wr_list = NULL, *wr = NULL;
     mca_btl_openib_module_t *openib_btl = ep->endpoint_btl;
-   
+
     if(0 == num_post)
         return OMPI_SUCCESS;
 
@@ -275,7 +275,7 @@ static inline int mca_btl_openib_endpoint_post_rr_nolock(
     int rd_low = mca_btl_openib_component.qp_infos[qp].rd_low;
     int cqp = mca_btl_openib_component.credits_qp, rc;
     int cm_received = 0, num_post = 0;
-    
+
     assert(BTL_OPENIB_QP_TYPE_PP(qp));
 
     if(ep->qps[qp].u.pp_qp.rd_posted <= rd_low)
@@ -350,7 +350,7 @@ static inline void send_credits(mca_btl_openib_endpoint_t *ep, int qp)
 
     if(!check_eager_rdma_credits(ep))
         return;
-    
+
 try_send:
     if(BTL_OPENIB_CREDITS_SEND_TRYLOCK(ep, qp))
         mca_btl_openib_endpoint_send_credits(ep, qp);

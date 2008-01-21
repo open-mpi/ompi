@@ -32,20 +32,20 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_openib.h"
-#include "btl_openib_frag.h" 
+#include "btl_openib_frag.h"
 #include "btl_openib_proc.h"
 #include "btl_openib_endpoint.h"
 #include "btl_openib_xrc.h"
-#include "ompi/datatype/convertor.h" 
-#include "ompi/datatype/datatype.h" 
+#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/datatype.h"
 #include "ompi/datatype/dt_arch.h"
-#include "ompi/mca/mpool/base/base.h" 
-#include "ompi/mca/mpool/mpool.h" 
+#include "ompi/mca/mpool/base/base.h"
+#include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "ompi/runtime/params.h"
 #include "orte/util/sys_info.h"
-#include <errno.h> 
-#include <string.h> 
+#include <errno.h>
+#include <string.h>
 #include <math.h>
 #include <inttypes.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -73,11 +73,11 @@ mca_btl_openib_module_t mca_btl_openib_module = {
         0, /* TODO this should be PUT btl flags */
         mca_btl_openib_add_procs,
         mca_btl_openib_del_procs,
-        NULL, 
+        NULL,
         mca_btl_openib_finalize,
-        /* we need alloc free, pack */ 
-        mca_btl_openib_alloc, 
-        mca_btl_openib_free, 
+        /* we need alloc free, pack */
+        mca_btl_openib_alloc,
+        mca_btl_openib_free,
         mca_btl_openib_prepare_src,
         mca_btl_openib_prepare_dst,
         mca_btl_openib_send,
@@ -90,8 +90,8 @@ mca_btl_openib_module_t mca_btl_openib_module = {
     }
 };
 
-static void show_init_error(const char *file, int line, 
-                            const char *func, const char *dev) 
+static void show_init_error(const char *file, int line,
+                            const char *func, const char *dev)
 {
     if (ENOMEM == errno) {
         int ret;
@@ -108,13 +108,13 @@ static void show_init_error(const char *file, int line,
         }
 
         opal_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
-                       true, orte_system_info.nodename, 
+                       true, orte_system_info.nodename,
                        file, line, func, dev, str_limit);
 
         if (NULL != str_limit) free(str_limit);
     } else {
         opal_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
-                       true, orte_system_info.nodename, 
+                       true, orte_system_info.nodename,
                        file, line, func, strerror(errno), errno, dev);
     }
 }
@@ -126,7 +126,7 @@ static inline struct ibv_cq *ibv_create_cq_compat(struct ibv_context *context,
 #if OMPI_IBV_CREATE_CQ_ARGS == 3
     return ibv_create_cq(context, cqe, channel);
 #else
-    return ibv_create_cq(context, cqe, cq_context, channel, comp_vector); 
+    return ibv_create_cq(context, cqe, cq_context, channel, comp_vector);
 #endif
 }
 
@@ -134,8 +134,8 @@ static int adjust_cq(mca_btl_openib_hca_t *hca, const int cq)
 {
     uint32_t cq_size = hca->cq_size[cq];
 
-    /* make sure we don't exceed the maximum CQ size and that we 
-     * don't size the queue smaller than otherwise requested 
+    /* make sure we don't exceed the maximum CQ size and that we
+     * don't size the queue smaller than otherwise requested
      */
      if(cq_size < mca_btl_openib_component.ib_cq_size[cq])
         cq_size = mca_btl_openib_component.ib_cq_size[cq];
@@ -151,7 +151,7 @@ static int adjust_cq(mca_btl_openib_hca_t *hca, const int cq)
                 NULL, NULL,
 #endif
                 0);
-    
+
         if (NULL == hca->ib_cq[cq]) {
             show_init_error(__FILE__, __LINE__, "ibv_create_cq",
                         ibv_get_device_name(hca->ib_dev));
@@ -181,7 +181,7 @@ static int adjust_cq(mca_btl_openib_hca_t *hca, const int cq)
     else if (cq_size > mca_btl_openib_component.ib_cq_size[cq]){
         int rc;
         rc = ibv_resize_cq(hca->ib_cq[cq], cq_size);
-        /* For ConnectX the resize CQ is not implemented and verbs returns -ENOSYS 
+        /* For ConnectX the resize CQ is not implemented and verbs returns -ENOSYS
          * but should return ENOSYS. So it is reason for abs */
         if(rc && ENOSYS != abs(rc)) {
             BTL_ERROR(("cannot resize completion queue, error: %d", rc));
@@ -193,20 +193,20 @@ static int adjust_cq(mca_btl_openib_hca_t *hca, const int cq)
     return OMPI_SUCCESS;
 }
 
-/* 
- * create both the high and low priority completion queues 
+/*
+ * create both the high and low priority completion queues
  * and the shared receive queue (if requested)
- */ 
+ */
 static int create_srq(mca_btl_openib_module_t *openib_btl)
 {
     int qp;
 
     /* create the SRQ's */
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-        struct ibv_srq_init_attr attr; 
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
+        struct ibv_srq_init_attr attr;
 
-        if(!BTL_OPENIB_QP_TYPE_PP(qp)) { 
-            attr.attr.max_wr = mca_btl_openib_component.qp_infos[qp].rd_num + 
+        if(!BTL_OPENIB_QP_TYPE_PP(qp)) {
+            attr.attr.max_wr = mca_btl_openib_component.qp_infos[qp].rd_num +
                 mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
             attr.attr.max_sge = mca_btl_openib_component.ib_sg_list_size;
             openib_btl->qps[qp].u.srq_qp.rd_posted = 0;
@@ -222,25 +222,25 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
                openib_btl->qps[qp].u.srq_qp.srq =
                    ibv_create_srq(openib_btl->hca->ib_pd, &attr);
             }
-            if (NULL == openib_btl->qps[qp].u.srq_qp.srq) { 
+            if (NULL == openib_btl->qps[qp].u.srq_qp.srq) {
                 show_init_error(__FILE__, __LINE__, "ibv_create_srq",
                                 ibv_get_device_name(openib_btl->hca->ib_dev));
-                return OMPI_ERROR; 
+                return OMPI_ERROR;
             }
         }
     }
-       
+
     return OMPI_SUCCESS;
 }
 
-static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl, size_t nprocs) 
+static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl, size_t nprocs)
 {
     uint32_t send_cqes, recv_cqes;
     int rc = OMPI_SUCCESS, qp;
     mca_btl_openib_hca_t *hca = openib_btl->hca;
 
     /* figure out reasonable sizes for completion queues */
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
         if(BTL_OPENIB_QP_TYPE_SRQ(qp)) {
             send_cqes = mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
             recv_cqes = mca_btl_openib_component.qp_infos[qp].rd_num;
@@ -252,7 +252,7 @@ static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl
         openib_btl->hca->cq_size[qp_cq_prio(qp)] += recv_cqes;
         openib_btl->hca->cq_size[BTL_OPENIB_LP_CQ] += send_cqes;
     }
-   
+
     rc = adjust_cq(hca, BTL_OPENIB_HP_CQ);
     if (OMPI_SUCCESS != rc)
         goto out;
@@ -262,23 +262,23 @@ static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl
         goto out;
 
     if(0 == openib_btl->num_peers)
-       rc = create_srq(openib_btl); 
+       rc = create_srq(openib_btl);
 
 out:
     openib_btl->num_peers += nprocs;
     return rc;
 }
 
-/* 
- *  add a proc to this btl module 
+/*
+ *  add a proc to this btl module
  *    creates an endpoint that is setup on the
  *    first send to the endpoint
- */ 
+ */
 int mca_btl_openib_add_procs(
-    struct mca_btl_base_module_t* btl, 
-    size_t nprocs, 
-    struct ompi_proc_t **ompi_procs, 
-    struct mca_btl_base_endpoint_t** peers, 
+    struct mca_btl_base_module_t* btl,
+    size_t nprocs,
+    struct ompi_proc_t **ompi_procs,
+    struct mca_btl_base_endpoint_t** peers,
     ompi_bitmap_t* reachable)
 {
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*)btl;
@@ -287,11 +287,11 @@ int mca_btl_openib_add_procs(
     int lcl_subnet_id_port_cnt = 0;
     int btl_rank = 0;
     mca_btl_base_endpoint_t* endpoint;
-    
-    for(j=0; j < mca_btl_openib_component.ib_num_btls; j++){ 
+
+    for(j=0; j < mca_btl_openib_component.ib_num_btls; j++){
         if(mca_btl_openib_component.openib_btls[j]->port_info.subnet_id
-           == openib_btl->port_info.subnet_id) { 
-            if(openib_btl == mca_btl_openib_component.openib_btls[j]) { 
+           == openib_btl->port_info.subnet_id) {
+            if(openib_btl == mca_btl_openib_component.openib_btls[j]) {
                 btl_rank = lcl_subnet_id_port_cnt;
             }
             lcl_subnet_id_port_cnt++;
@@ -313,7 +313,7 @@ int mca_btl_openib_add_procs(
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
         mca_btl_openib_proc_t* ib_proc;
         bool cpc_error = 0;
-        
+
         if(NULL == (ib_proc = mca_btl_openib_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -353,20 +353,20 @@ int mca_btl_openib_add_procs(
         }
 
 #if 0
-        num_endpoints = rem_subnet_id_port_cnt  / lcl_subnet_id_port_cnt + 
+        num_endpoints = rem_subnet_id_port_cnt  / lcl_subnet_id_port_cnt +
             (btl_rank < (rem_subnet_id_port_cnt  / lcl_subnet_id_port_cnt)) ? 1:0;
-#endif 
+#endif
 
-        if(rem_subnet_id_port_cnt  < lcl_subnet_id_port_cnt && 
+        if(rem_subnet_id_port_cnt  < lcl_subnet_id_port_cnt &&
            btl_rank >= rem_subnet_id_port_cnt ) {
             BTL_VERBOSE(("Not enough remote ports on this subnet id, moving on.. \n"));
             continue;
-            
+
         }
         OPAL_THREAD_LOCK(&ib_proc->proc_lock);
 
         /* The btl_proc datastructure is shared by all IB BTL
-         * instances that are trying to reach this destination. 
+         * instances that are trying to reach this destination.
          * Cache the peer instance on the btl_proc.
          */
         endpoint = OBJ_NEW(mca_btl_openib_endpoint_t);
@@ -375,7 +375,7 @@ int mca_btl_openib_add_procs(
             OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-            
+
 #if HAVE_XRC
         if (MCA_BTL_XRC_ENABLED) {
             int rem_port_cnt = 0;
@@ -407,7 +407,7 @@ int mca_btl_openib_add_procs(
             OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
             continue;
         }
-        
+
         endpoint->index = opal_pointer_array_add(openib_btl->hca->endpoints, (void*)endpoint);
         if( 0 > endpoint->index ) {
             OBJ_RELEASE(endpoint);
@@ -416,38 +416,38 @@ int mca_btl_openib_add_procs(
         }
         ompi_bitmap_set_bit(reachable, i);
         OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
-        
+
         peers[i] = endpoint;
     }
 
     return mca_btl_openib_size_queues(openib_btl, nprocs);
 }
 
-/* 
- * delete the proc as reachable from this btl module 
+/*
+ * delete the proc as reachable from this btl module
  */
-int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl, 
-        size_t nprocs, 
-        struct ompi_proc_t **procs, 
+int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
+        size_t nprocs,
+        struct ompi_proc_t **procs,
         struct mca_btl_base_endpoint_t ** peers)
 {
     int i,ep_index;
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl;
     mca_btl_openib_endpoint_t* endpoint;
-        
+
     for (i=0 ; i < (int) nprocs ; i++) {
         mca_btl_base_endpoint_t* del_endpoint = peers[i];
         for(ep_index=0;
             ep_index < opal_pointer_array_get_size(openib_btl->hca->endpoints);
             ep_index++) {
-            endpoint = 
+            endpoint =
                 opal_pointer_array_get_item(openib_btl->hca->endpoints,
                         ep_index);
             if(!endpoint || endpoint->endpoint_btl != openib_btl) {
                 continue;
             }
             if (endpoint == del_endpoint) {
-                BTL_VERBOSE(("in del_procs %d, setting another endpoint to null\n", 
+                BTL_VERBOSE(("in del_procs %d, setting another endpoint to null\n",
                              ep_index));
                 opal_pointer_array_set_item(openib_btl->hca->endpoints,
                         ep_index, NULL);
@@ -460,15 +460,15 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
     return OMPI_SUCCESS;
 }
 
-/* 
+/*
  *Register callback function for error handling..
- */ 
+ */
 int mca_btl_openib_register_error_cb(
-                        struct mca_btl_base_module_t* btl, 
+                        struct mca_btl_base_module_t* btl,
                         mca_btl_base_module_error_cb_fn_t cbfunc)
 {
-    
-    mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl; 
+
+    mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl;
     openib_btl->error_cb = cbfunc; /* stash for later */
     return OMPI_SUCCESS;
 }
@@ -541,9 +541,9 @@ static mca_btl_openib_send_frag_t *check_coalescing(opal_list_t *frag_list,
  *
  * @param btl (IN)      BTL module
  * @param size (IN)     Request segment size.
- * @param size (IN) Size of segment to allocate    
- * 
- * When allocating a segment we pull a pre-alllocated segment 
+ * @param size (IN) Size of segment to allocate
+ *
+ * When allocating a segment we pull a pre-alllocated segment
  * from one of two free lists, an eager list and a max list
  */
 mca_btl_base_descriptor_t* mca_btl_openib_alloc(
@@ -603,7 +603,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
             BTL_OPENIB_HEADER_COALESCED_HTON(*clsc_hdr);
         sfrag->coalesced_length = sizeof(mca_btl_openib_control_header_t) +
             sizeof(mca_btl_openib_header_coalesced_t);
-        to_com_frag(sfrag)->sg_entry.addr = (uint64_t)(uintptr_t)sfrag->hdr; 
+        to_com_frag(sfrag)->sg_entry.addr = (uint64_t)(uintptr_t)sfrag->hdr;
     }
 
     cfrag->hdr = (mca_btl_openib_header_coalesced_t*)
@@ -623,15 +623,15 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     return &to_base_frag(cfrag)->base;
 }
 
-/** 
- * Return a segment 
- * 
- * Return the segment to the appropriate 
- *  preallocated segment list 
- */ 
+/**
+ * Return a segment
+ *
+ * Return the segment to the appropriate
+ *  preallocated segment list
+ */
 int mca_btl_openib_free(
-                    struct mca_btl_base_module_t* btl, 
-                    mca_btl_base_descriptor_t* des) 
+                    struct mca_btl_base_module_t* btl,
+                    mca_btl_base_descriptor_t* des)
 {
     /* is this fragment pointing at user memory? */
     if(MCA_BTL_OPENIB_FRAG_SEND_USER == openib_frag_type(des) ||
@@ -644,7 +644,7 @@ int mca_btl_openib_free(
             frag->registration = NULL;
         }
     }
-  
+
     /* reset those field on free so we will not have to do it on alloc */
     to_base_frag(des)->base.des_flags = 0;
     switch(openib_frag_type(des)) {
@@ -671,37 +671,37 @@ int mca_btl_openib_free(
             break;
     }
     MCA_BTL_IB_FRAG_RETURN(des);
-        
-    return OMPI_SUCCESS; 
+
+    return OMPI_SUCCESS;
 }
 
 /**
- * register user buffer or pack 
- * data into pre-registered buffer and return a 
+ * register user buffer or pack
+ * data into pre-registered buffer and return a
  * descriptor that can be
  * used for send/put.
  *
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
- *  
- * prepare source's behavior depends on the following: 
- * Has a valid memory registration been passed to prepare_src? 
- *    if so we attempt to use the pre-registered user-buffer, if the memory registration 
- *    is too small (only a portion of the user buffer) then we must reregister the user buffer 
- * Has the user requested the memory to be left pinned? 
- *    if so we insert the memory registration into a memory tree for later lookup, we 
- *    may also remove a previous registration if a MRU (most recently used) list of 
+ *
+ * prepare source's behavior depends on the following:
+ * Has a valid memory registration been passed to prepare_src?
+ *    if so we attempt to use the pre-registered user-buffer, if the memory registration
+ *    is too small (only a portion of the user buffer) then we must reregister the user buffer
+ * Has the user requested the memory to be left pinned?
+ *    if so we insert the memory registration into a memory tree for later lookup, we
+ *    may also remove a previous registration if a MRU (most recently used) list of
  *    registrations is full, this prevents resources from being exhausted.
- * Is the requested size larger than the btl's max send size? 
- *    if so and we aren't asked to leave the registration pinned, then we register the memory if 
- *    the users buffer is contiguous 
- * Otherwise we choose from two free lists of pre-registered memory in which to pack the data into. 
- * 
+ * Is the requested size larger than the btl's max send size?
+ *    if so and we aren't asked to leave the registration pinned, then we register the memory if
+ *    the users buffer is contiguous
+ * Otherwise we choose from two free lists of pre-registered memory in which to pack the data into.
+ *
  */
 mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
-    mca_mpool_base_registration_t* registration, 
+    mca_mpool_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
@@ -725,12 +725,12 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             if(NULL == frag) {
                 return NULL;
             }
-            
+
             iov.iov_len = max_data;
             iov.iov_base = NULL;
-            
+
             ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
-            
+
             *size = max_data;
 
             if(NULL == registration) {
@@ -755,9 +755,9 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             to_base_frag(frag)->segment.seg_addr.pval = iov.iov_base;
             to_base_frag(frag)->segment.seg_key.key32[0] =
                 (uint32_t)frag->sg_entry.lkey;
-            
+
             assert(MCA_BTL_NO_ORDER == order);
-            
+
             BTL_VERBOSE(("frag->sg_entry.lkey = %lu .addr = %llu "
                         "frag->segment.seg_key.key32[0] = %lu",
                         frag->sg_entry.lkey, frag->sg_entry.addr,
@@ -766,13 +766,13 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             return &to_base_frag(frag)->base;
         }
     }
-    
-    assert(MCA_BTL_NO_ORDER == order); 
-    
+
+    assert(MCA_BTL_NO_ORDER == order);
+
     if(max_data + reserve > btl->btl_max_send_size) {
         max_data = btl->btl_max_send_size - reserve;
     }
-  
+
     frag = (mca_btl_openib_com_frag_t*)(reserve ?
             mca_btl_openib_alloc(btl, endpoint, order, max_data + reserve,
                 flags) :
@@ -785,7 +785,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     iov.iov_base = (unsigned char*)to_base_frag(frag)->segment.seg_addr.pval +
         reserve;
     rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
-    
+
     *size = max_data;
 
     /* not all upper layer users set this */
@@ -799,13 +799,13 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
  *
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
- * prepare dest's behavior depends on the following: 
- * Has a valid memory registration been passed to prepare_src? 
- *    if so we attempt to use the pre-registered user-buffer, if the memory registration 
- *    is to small (only a portion of the user buffer) then we must reregister the user buffer 
- * Has the user requested the memory to be left pinned? 
- *    if so we insert the memory registration into a memory tree for later lookup, we 
- *    may also remove a previous registration if a MRU (most recently used) list of 
+ * prepare dest's behavior depends on the following:
+ * Has a valid memory registration been passed to prepare_src?
+ *    if so we attempt to use the pre-registered user-buffer, if the memory registration
+ *    is to small (only a portion of the user buffer) then we must reregister the user buffer
+ * Has the user requested the memory to be left pinned?
+ *    if so we insert the memory registration into a memory tree for later lookup, we
+ *    may also remove a previous registration if a MRU (most recently used) list of
  *    registrations is full, this prevents resources from being exhausted.
  */
 mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
@@ -830,13 +830,13 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     if(NULL == frag) {
         return NULL;
     }
-    
+
     ompi_convertor_get_current_pointer(convertor, &buffer);
 
     if(NULL == registration){
         /* we didn't get a memory registration passed in, so we have to
          * register the region ourselves
-         */ 
+         */
         rc = btl->btl_mpool->mpool_register(btl->btl_mpool, buffer, *size, 0,
                 &registration);
         if(OMPI_SUCCESS != rc || NULL == registration) {
@@ -941,12 +941,12 @@ static int mca_btl_finalize_hca(struct mca_btl_openib_hca_t *hca)
 
 int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
 {
-    mca_btl_openib_module_t* openib_btl; 
+    mca_btl_openib_module_t* openib_btl;
     mca_btl_openib_endpoint_t* endpoint;
     int ep_index, i;
     int qp, rc = OMPI_SUCCESS;
-    
-    openib_btl = (mca_btl_openib_module_t*) btl; 
+
+    openib_btl = (mca_btl_openib_module_t*) btl;
 
     /* Remove the btl from component list */
     if ( mca_btl_openib_component.ib_num_btls > 1 ) {
@@ -982,7 +982,7 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
         OBJ_RELEASE(endpoint);
     }
     /* Release SRQ resources */
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
         if(!BTL_OPENIB_QP_TYPE_PP(qp)) {
                 MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
                         &openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
@@ -1001,7 +1001,7 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
     if (!(--openib_btl->hca->btls)) {
         /* All btls for the HCA were closed
          * Now we can close the HCA
-         */     
+         */
         if (OMPI_SUCCESS != mca_btl_finalize_hca(openib_btl->hca)) {
             BTL_VERBOSE(("Failed to close HCA"));
             rc = OMPI_ERROR;
@@ -1029,7 +1029,7 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
     }
 #endif
 
-    OBJ_DESTRUCT(&openib_btl->ib_lock); 
+    OBJ_DESTRUCT(&openib_btl->ib_lock);
     free(openib_btl);
 
     BTL_VERBOSE(("Success in closing BTL resources"));
@@ -1038,21 +1038,21 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
 }
 
 /*
- *  Initiate a send. 
+ *  Initiate a send.
  */
 
-int mca_btl_openib_send( 
+int mca_btl_openib_send(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* ep,
     struct mca_btl_base_descriptor_t* des,
     mca_btl_base_tag_t tag)
-   
+
 {
     mca_btl_openib_send_frag_t *frag;
 
     assert(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_SEND ||
             openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_COALESCED);
- 
+
     if(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_COALESCED) {
         to_coalesced_frag(des)->hdr->tag = tag;
         to_coalesced_frag(des)->hdr->size = des->des_src->seg_len;
@@ -1061,7 +1061,7 @@ int mca_btl_openib_send(
         frag = to_coalesced_frag(des)->send_frag;
     } else {
         frag = to_send_frag(des);
-        to_com_frag(des)->endpoint = ep; 
+        to_com_frag(des)->endpoint = ep;
         frag->hdr->tag = tag;
     }
 
@@ -1076,8 +1076,8 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
                     mca_btl_base_endpoint_t* ep,
                     mca_btl_base_descriptor_t* descriptor)
 {
-    struct ibv_send_wr* bad_wr; 
-    mca_btl_openib_out_frag_t* frag = to_out_frag(descriptor); 
+    struct ibv_send_wr* bad_wr;
+    mca_btl_openib_out_frag_t* frag = to_out_frag(descriptor);
     int qp = descriptor->order;
     uint64_t rem_addr = descriptor->des_dst->seg_addr.lval;
     uint32_t rkey = descriptor->des_dst->seg_key.key32[0];
@@ -1119,23 +1119,23 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     frag->sr_desc.wr.rdma.rkey = rkey;
 
     to_com_frag(frag)->sg_entry.addr =
-        (uint64_t)(uintptr_t)descriptor->des_src->seg_addr.pval; 
-    to_com_frag(frag)->sg_entry.length = descriptor->des_src->seg_len; 
+        (uint64_t)(uintptr_t)descriptor->des_src->seg_addr.pval;
+    to_com_frag(frag)->sg_entry.length = descriptor->des_src->seg_len;
     to_com_frag(frag)->endpoint = ep;
 #if HAVE_XRC
     if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp))
         frag->sr_desc.xrc_remote_srq_num=ep->rem_info.rem_srqs[qp].rem_srq_num;
 #endif
-   
+
     descriptor->order = qp;
     /* Setting opcode on a frag constructor isn't enough since prepare_src
-     * may return send_frag instead of put_frag */ 
+     * may return send_frag instead of put_frag */
     frag->sr_desc.opcode = IBV_WR_RDMA_WRITE;
     frag->sr_desc.send_flags = ib_send_flags(descriptor->des_src->seg_len, ep);
     if(ibv_post_send(ep->qps[qp].qp->lcl_qp, &frag->sr_desc, &bad_wr))
         return OMPI_ERROR;
 
-    return OMPI_SUCCESS; 
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -1146,8 +1146,8 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
                     mca_btl_base_endpoint_t* ep,
                     mca_btl_base_descriptor_t* descriptor)
 {
-    struct ibv_send_wr* bad_wr; 
-    mca_btl_openib_get_frag_t* frag = to_get_frag(descriptor); 
+    struct ibv_send_wr* bad_wr;
+    mca_btl_openib_get_frag_t* frag = to_get_frag(descriptor);
     int qp = descriptor->order;
     uint64_t rem_addr = descriptor->des_src->seg_addr.lval;
     uint32_t rkey = descriptor->des_src->seg_key.key32[0];
@@ -1186,22 +1186,22 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
         return OMPI_SUCCESS;
     }
-    
+
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     if((ep->endpoint_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN)
             != (ompi_proc_local()->proc_arch & OMPI_ARCH_ISBIGENDIAN)) {
-        rem_addr = opal_swap_bytes8(rem_addr); 
-        rkey = opal_swap_bytes4(rkey); 
+        rem_addr = opal_swap_bytes8(rem_addr);
+        rkey = opal_swap_bytes4(rkey);
     }
 #endif
-    frag->sr_desc.wr.rdma.remote_addr = rem_addr; 
+    frag->sr_desc.wr.rdma.remote_addr = rem_addr;
     frag->sr_desc.wr.rdma.rkey = rkey;
 
     to_com_frag(frag)->sg_entry.addr =
-        (uint64_t)(uintptr_t)descriptor->des_dst->seg_addr.pval; 
-    to_com_frag(frag)->sg_entry.length  = descriptor->des_dst->seg_len; 
+        (uint64_t)(uintptr_t)descriptor->des_dst->seg_addr.pval;
+    to_com_frag(frag)->sg_entry.length  = descriptor->des_dst->seg_len;
     to_com_frag(frag)->endpoint = ep;
-       
+
 #if HAVE_XRC
     if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp))
         frag->sr_desc.xrc_remote_srq_num=ep->rem_info.rem_srqs[qp].rem_srq_num;
@@ -1210,7 +1210,7 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
     if(ibv_post_send(ep->qps[qp].qp->lcl_qp, &frag->sr_desc, &bad_wr))
         return OMPI_ERROR;
 
-    return OMPI_SUCCESS; 
+    return OMPI_SUCCESS;
 }
 
 int mca_btl_openib_ft_event(int state) {

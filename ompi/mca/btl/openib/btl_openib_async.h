@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2007 Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * @file

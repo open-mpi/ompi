@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2007 Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * @file
@@ -34,7 +34,7 @@ struct ib_address_t {
     opal_list_t pending_ep;                /* list of endpoints that use this ib_address */
     mca_btl_openib_qp_t *qp;               /* pointer to qp that will be used
                                               for communication with the
-                                              destination */ 
+                                              destination */
     opal_mutex_t addr_lock;             /* protection */
     mca_btl_openib_ib_addr_state_t status; /* ib port status */
 };

@@ -69,7 +69,7 @@ typedef struct mca_btl_openib_eager_rdma_remote_t mca_btl_openib_eager_rdma_remo
 #define MCA_BTL_OPENIB_RDMA_MAKE_REMOTE(F) do {                        \
                              ((volatile uint8_t*)(F)->u.buf)[3] = EAGER_RDMA_BUFFER_REMOTE; \
                             }while (0)
-        
+
 #define MCA_BTL_OPENIB_RDMA_MAKE_LOCAL(F) do {                        \
                              ((volatile uint8_t*)(F)->u.buf)[3] = EAGER_RDMA_BUFFER_LOCAL; \
                             }while (0)

@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 2007 Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "ompi_config.h"
 
-#include <infiniband/verbs.h> 
+#include <infiniband/verbs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -49,7 +49,7 @@ int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_hca_t *hca)
                 strerror(errno)));
         return OMPI_ERROR;
     }
-    
+
     hca->xrc_fd = open(xrc_file_name, O_CREAT, S_IWUSR|S_IRUSR);
     if (0 > hca->xrc_fd) {
         BTL_ERROR(("Failed to open XRC domain file %s, errno says %s\n",
@@ -57,7 +57,7 @@ int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_hca_t *hca)
         free(xrc_file_name);
         return OMPI_ERROR;
     }
-   
+
     hca->xrc_domain = ibv_open_xrc_domain(hca->ib_dev_context, hca->xrc_fd, O_CREAT);
     if (NULL == hca->xrc_domain) {
         BTL_ERROR(("Failed to open XRC domain\n"));
@@ -127,7 +127,7 @@ static int ib_address_init(ib_address_t *ib_addr, uint16_t lid, uint64_t s_id, o
 }
 
 /* Create new entry in hash table for subnet_id and lid,
- * update the endpoint pointer. 
+ * update the endpoint pointer.
  * Before call to this function you need to protect with
  */
 int mca_btl_openib_ib_address_add_new (uint16_t lid, uint64_t s_id,
@@ -146,7 +146,7 @@ int mca_btl_openib_ib_address_add_new (uint16_t lid, uint64_t s_id,
     /* is it already in the table ?*/
     OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
     if (OPAL_SUCCESS != opal_hash_table_get_value_ptr(&mca_btl_openib_component.ib_addr_table,
-                ib_addr->key, 
+                ib_addr->key,
                 SIZE_OF3(s_id, lid, ep_jobid), &tmp)) {
         /* It is new one, lets put it on the table */
         ret = opal_hash_table_set_value_ptr(&mca_btl_openib_component.ib_addr_table,

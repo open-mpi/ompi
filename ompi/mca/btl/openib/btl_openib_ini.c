@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -47,7 +47,7 @@ typedef struct parsed_section_values_t {
 
     uint32_t *vendor_ids;
     int vendor_ids_len;
-    
+
     uint32_t *vendor_part_ids;
     int vendor_part_ids_len;
 
@@ -162,14 +162,14 @@ int ompi_btl_openib_ini_query(uint32_t vendor_id, uint32_t vendor_part_id,
     }
 
     if (mca_btl_openib_component.verbose) {
-        BTL_OUTPUT(("Querying INI files for vendor 0x%04x, part ID %d", 
+        BTL_OUTPUT(("Querying INI files for vendor 0x%04x, part ID %d",
                     vendor_id, vendor_part_id));
     }
 
     reset_values(values);
 
     /* Iterate over all the saved hcas */
-    for (item = opal_list_get_first(&hcas); 
+    for (item = opal_list_get_first(&hcas);
          item != opal_list_get_end(&hcas);
          item = opal_list_get_next(item)) {
         h = (hca_values_t*) item;
@@ -364,7 +364,7 @@ static int parse_line(parsed_section_values_t *sv)
        all whitespace at the beginning and ending of the value. */
 
     if (0 == strcasecmp(key_buffer, "vendor_id")) {
-        if (OMPI_SUCCESS != (ret = intify_list(value, &sv->vendor_ids, 
+        if (OMPI_SUCCESS != (ret = intify_list(value, &sv->vendor_ids,
                                                &sv->vendor_ids_len))) {
             return ret;
         }
@@ -393,7 +393,7 @@ static int parse_line(parsed_section_values_t *sv)
         /* Have no idea what this parameter is.  Not an error -- just
            ignore it */
         if (!showed_unknown_field_warning) {
-            opal_show_help("help-mpi-btl-openib.txt", 
+            opal_show_help("help-mpi-btl-openib.txt",
                            "ini file:unknown field", true,
                            ini_filename, btl_openib_ini_yynewlines,
                            key_buffer);
@@ -487,7 +487,7 @@ static int save_section(parsed_section_values_t *s)
     bool found;
 
     /* Is the parsed section valid? */
-    if (NULL == s->name || 0 == s->vendor_ids_len || 
+    if (NULL == s->name || 0 == s->vendor_ids_len ||
         0 == s->vendor_part_ids_len) {
         return OMPI_ERR_BAD_PARAM;
     }
@@ -499,7 +499,7 @@ static int save_section(parsed_section_values_t *s)
             found = false;
 
             /* Iterate over all the saved hcas */
-            for (item = opal_list_get_first(&hcas); 
+            for (item = opal_list_get_first(&hcas);
                  item != opal_list_get_end(&hcas);
                  item = opal_list_get_next(item)) {
                 h = (hca_values_t*) item;
@@ -515,7 +515,7 @@ static int save_section(parsed_section_values_t *s)
                         h->values.use_eager_rdma = s->values.use_eager_rdma;
                         h->values.use_eager_rdma_set = true;
                     }
-                    
+
                     found = true;
                     break;
                 }
@@ -574,7 +574,7 @@ static int intify_list(char *value, uint32_t **values, int *len)
     char *str = value;
 
     *len = 0;
-    
+
     /* Comma-delimited list of values */
     comma = strchr(str, ',');
     if (NULL == comma) {

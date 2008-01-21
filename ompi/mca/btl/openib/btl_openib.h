@@ -6,19 +6,19 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * @file
@@ -40,11 +40,11 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "opal/util/output.h"
-#include "ompi/mca/mpool/mpool.h" 
-#include "ompi/mca/btl/base/btl_base_error.h" 
+#include "ompi/mca/mpool/mpool.h"
+#include "ompi/mca/btl/base/btl_base_error.h"
 
 #include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/base.h" 
+#include "ompi/mca/btl/base/base.h"
 
 #include "connect/connect.h"
 
@@ -60,7 +60,7 @@ BEGIN_C_DECLS
  * Infiniband (IB) BTL component.
  */
 
-typedef enum { 
+typedef enum {
     MCA_BTL_OPENIB_PP_QP,
     MCA_BTL_OPENIB_SRQ_QP,
     MCA_BTL_OPENIB_XRC_QP
@@ -82,10 +82,10 @@ struct mca_btl_openib_qp_info_t {
     int32_t rd_low;
     ompi_free_list_t send_free;     /**< free lists of send buffer descriptors */
     ompi_free_list_t recv_free;     /**< free lists of receive buffer descriptors */
-    union { 
+    union {
         mca_btl_openib_pp_qp_info_t pp_qp;
         mca_btl_openib_srq_qp_info_t srq_qp;
-    } u; 
+    } u;
 }; typedef struct mca_btl_openib_qp_info_t mca_btl_openib_qp_info_t;
 
 #define BTL_OPENIB_QP_TYPE(Q) (mca_btl_openib_component.qp_infos[(Q)].type)
@@ -97,11 +97,11 @@ struct mca_btl_openib_qp_info_t {
     (BTL_OPENIB_QP_TYPE(Q) == MCA_BTL_OPENIB_XRC_QP)
 
 struct mca_btl_openib_component_t {
-    mca_btl_base_component_1_0_1_t          super;  /**< base BTL component */ 
+    mca_btl_base_component_1_0_1_t          super;  /**< base BTL component */
 
     int                                ib_max_btls;
     /**< maximum number of hcas available to the IB component */
-    
+
     int                                ib_num_btls;
     /**< number of hcas available to the IB component */
 
@@ -132,37 +132,37 @@ struct mca_btl_openib_component_t {
     opal_mutex_t                            ib_lock;
     /**< lock for accessing module state */
 
-    char* ib_mpool_name; 
-    /**< name of ib memory pool */ 
+    char* ib_mpool_name;
+    /**< name of ib memory pool */
 
     uint8_t num_pp_qps;          /**< number of pp qp's */
     uint8_t num_srq_qps;         /**< number of srq qp's */
     uint8_t num_xrc_qps;         /**< number of xrc qp's */
     uint8_t num_qps;             /**< total number of qp's */
-   
+
     opal_hash_table_t ib_addr_table; /**< used only for xrc.hash-table that
                                        keeps table of all lids/subnets */
     mca_btl_openib_qp_info_t* qp_infos;
-        
+
     size_t eager_limit;      /**< Eager send limit of first fragment, in Bytes */
     size_t max_send_size;    /**< Maximum send size, in Bytes */
     uint32_t reg_mru_len;    /**< Length of the registration cache most recently used list */
-    uint32_t use_srq;        /**< Use the Shared Receive Queue (SRQ mode) */ 
-    
-    uint32_t ib_cq_size[2];  /**< Max outstanding CQE on the CQ */  
-    
-    uint32_t ib_sg_list_size; /**< Max scatter/gather descriptor entries on the WQ */ 
+    uint32_t use_srq;        /**< Use the Shared Receive Queue (SRQ mode) */
+
+    uint32_t ib_cq_size[2];  /**< Max outstanding CQE on the CQ */
+
+    uint32_t ib_sg_list_size; /**< Max scatter/gather descriptor entries on the WQ */
     uint32_t ib_pkey_ix;     /**< InfiniBand pkey index */
     uint32_t ib_pkey_val;
-    uint32_t ib_psn; 
-    uint32_t ib_qp_ous_rd_atom; 
-    uint32_t ib_mtu; 
-    uint32_t ib_min_rnr_timer; 
-    uint32_t ib_timeout; 
-    uint32_t ib_retry_count; 
-    uint32_t ib_rnr_retry; 
-    uint32_t ib_max_rdma_dst_ops; 
-    uint32_t ib_service_level; 
+    uint32_t ib_psn;
+    uint32_t ib_qp_ous_rd_atom;
+    uint32_t ib_mtu;
+    uint32_t ib_min_rnr_timer;
+    uint32_t ib_timeout;
+    uint32_t ib_retry_count;
+    uint32_t ib_rnr_retry;
+    uint32_t ib_max_rdma_dst_ops;
+    uint32_t ib_service_level;
     uint32_t use_eager_rdma;
     int32_t eager_rdma_threshold; /**< After this number of msg, use RDMA for short messages, always */
     int32_t eager_rdma_num;
@@ -174,7 +174,7 @@ struct mca_btl_openib_component_t {
     int32_t fatal_counter;           /**< Counts number on fatal events that we got on all hcas */
     int async_pipe[2];               /**< Pipe for comunication with async event thread */
     pthread_t   async_thread;        /**< Async thread that will handle fatal errors */
-    uint32_t use_async_event_thread; /**< Use the async event handler */ 
+    uint32_t use_async_event_thread; /**< Use the async event handler */
 #endif
     char *if_include;
     char **if_include_list;
@@ -220,12 +220,12 @@ struct mca_btl_openib_component_t {
 
 OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;
 
-typedef mca_btl_base_recv_reg_t mca_btl_openib_recv_reg_t; 
-    
+typedef mca_btl_base_recv_reg_t mca_btl_openib_recv_reg_t;
+
 struct mca_btl_openib_port_info {
     uint32_t mtu;
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT 
-    uint8_t padding[4]; 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t padding[4];
 #endif
     uint64_t subnet_id;
 #if HAVE_XRC
@@ -271,7 +271,7 @@ typedef struct mca_btl_openib_hca_t {
     opal_thread_t thread;                /* Progress thread */
     volatile bool progress;              /* Progress status */
 #endif
-    opal_mutex_t hca_lock;          /* hca level lock */ 
+    opal_mutex_t hca_lock;          /* hca level lock */
     struct ibv_context *ib_dev_context;
     struct ibv_device_attr ib_dev_attr;
     struct ibv_pd *ib_pd;
@@ -308,10 +308,10 @@ struct mca_btl_openib_module_pp_qp_t {
 }; typedef struct mca_btl_openib_module_pp_qp_t mca_btl_openib_module_pp_qp_t;
 
 struct mca_btl_openib_module_srq_qp_t {
-    struct ibv_srq *srq; 
-    int32_t rd_posted; 
-    int32_t sd_credits;  /* the max number of outstanding sends on a QP when using SRQ */ 
-                         /*  i.e. the number of frags that  can be outstanding (down counter) */ 
+    struct ibv_srq *srq;
+    int32_t rd_posted;
+    int32_t sd_credits;  /* the max number of outstanding sends on a QP when using SRQ */
+                         /*  i.e. the number of frags that  can be outstanding (down counter) */
     opal_list_t pending_frags[2];    /**< list of high/low prio frags */
 }; typedef struct mca_btl_openib_module_srq_qp_t mca_btl_openib_module_srq_qp_t;
 
@@ -327,26 +327,26 @@ struct mca_btl_openib_module_qp_t {
  */
 struct mca_btl_openib_module_t {
     mca_btl_base_module_t  super;      /**< base BTL interface */
-    bool btl_inited; 
-    mca_btl_openib_port_info_t port_info;  /* contains only the subnet id right now */ 
+    bool btl_inited;
+    mca_btl_openib_port_info_t port_info;  /* contains only the subnet id right now */
     mca_btl_openib_hca_t *hca;
-    uint8_t port_num;                  /**< ID of the PORT */ 
+    uint8_t port_num;                  /**< ID of the PORT */
     uint16_t pkey_index;
-    struct ibv_port_attr ib_port_attr; 
+    struct ibv_port_attr ib_port_attr;
     uint16_t lid;                      /**< lid that is actually used (for LMC) */
     uint8_t src_path_bits;             /**< offset from base lid (for LMC) */
-        
+
     int32_t num_peers;
-    
-    opal_mutex_t ib_lock;              /**< module level lock */ 
-    
-    size_t ib_inline_max; /**< max size of inline send*/ 
-    
+
+    opal_mutex_t ib_lock;              /**< module level lock */
+
+    size_t ib_inline_max; /**< max size of inline send*/
+
     size_t eager_rdma_frag_size;                /**< length of eager frag */
     volatile int32_t eager_rdma_channels;  /**< number of open RDMA channels */
 
     mca_btl_base_module_error_cb_fn_t error_cb; /**< error handler */
-   
+
     mca_btl_openib_module_qp_t * qps;
 };
 typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
@@ -375,11 +375,11 @@ int mca_btl_openib_register_error_cb(
     struct mca_btl_base_module_t* btl,
     mca_btl_base_module_error_cb_fn_t cbfunc
 );
-                                                                                                                     
+
 
 /**
  * Cleanup any resources held by the BTL.
- * 
+ *
  * @param btl  BTL instance.
  * @return     OMPI_SUCCESS or error status on failure.
  */
@@ -391,14 +391,14 @@ extern int mca_btl_openib_finalize(
 
 /**
  * PML->BTL notification of change in the process list.
- * 
+ *
  * @param btl (IN)            BTL module
  * @param nprocs (IN)         Number of processes
  * @param procs (IN)          Set of processes
  * @param peers (OUT)         Set of (optional) peer addressing info.
  * @param reachable (IN/OUT)  Set of processes that are reachable via this BTL.
  * @return     OMPI_SUCCESS or error status on failure.
- * 
+ *
  */
 
 extern int mca_btl_openib_add_procs(
@@ -438,7 +438,7 @@ extern int mca_btl_openib_del_procs(
 extern int mca_btl_openib_send(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* btl_peer,
-    struct mca_btl_base_descriptor_t* descriptor, 
+    struct mca_btl_base_descriptor_t* descriptor,
     mca_btl_base_tag_t tag
 );
 
@@ -467,7 +467,7 @@ extern int mca_btl_openib_get(
     struct mca_btl_base_endpoint_t* btl_peer,
     struct mca_btl_base_descriptor_t* descriptor
     );
-    
+
 
 /**
  * Allocate a descriptor.
@@ -480,8 +480,8 @@ extern mca_btl_base_descriptor_t* mca_btl_openib_alloc(
         struct mca_btl_base_endpoint_t* endpoint,
         uint8_t order,
         size_t size,
-        uint32_t flags); 
-    
+        uint32_t flags);
+
 
 /**
  * Return a segment allocated by this BTL.
@@ -490,9 +490,9 @@ extern mca_btl_base_descriptor_t* mca_btl_openib_alloc(
  * @param descriptor (IN)  Allocated descriptor.
  */
 extern int mca_btl_openib_free(
-                               struct mca_btl_base_module_t* btl, 
-                               mca_btl_base_descriptor_t* des); 
-    
+                               struct mca_btl_base_module_t* btl,
+                               mca_btl_base_descriptor_t* des);
+
 
 /**
  * Pack data and return a descriptor that can be
@@ -504,7 +504,7 @@ extern int mca_btl_openib_free(
 mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
                                                       struct mca_btl_base_module_t* btl,
                                                       struct mca_btl_base_endpoint_t* peer,
-                                                      mca_mpool_base_registration_t* registration, 
+                                                      mca_mpool_base_registration_t* registration,
                                                       struct ompi_convertor_t* convertor,
                                                       uint8_t order,
                                                       size_t reserve,
@@ -518,15 +518,15 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-extern mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst( 
-                                                             struct mca_btl_base_module_t* btl, 
+extern mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
+                                                             struct mca_btl_base_module_t* btl,
                                                              struct mca_btl_base_endpoint_t* peer,
-                                                             mca_mpool_base_registration_t* registration, 
+                                                             mca_mpool_base_registration_t* registration,
                                                              struct ompi_convertor_t* convertor,
                                                              uint8_t order,
                                                              size_t reserve,
                                                              size_t* size,
-                                                             uint32_t flags); 
+                                                             uint32_t flags);
 
 extern void mca_btl_openib_frag_progress_pending_put_get(
         struct mca_btl_base_endpoint_t*, const int);
@@ -545,7 +545,7 @@ extern int mca_btl_openib_ft_event(int state);
 
 
 /**
- * Post to Shared Receive Queue with certain priority 
+ * Post to Shared Receive Queue with certain priority
  *
  * @param openib_btl (IN) BTL module
  * @param additional (IN) Additional Bytes to reserve
