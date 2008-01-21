@@ -5,17 +5,17 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -24,7 +24,7 @@
 
 #include "ompi_config.h"
 
-#include <infiniband/verbs.h> 
+#include <infiniband/verbs.h>
 #include "ompi/mca/btl/btl.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -84,7 +84,7 @@ typedef struct mca_btl_openib_footer_t mca_btl_openib_footer_t;
 
 #ifdef WORDS_BIGENDIAN
 #define MCA_BTL_OPENIB_FTR_SIZE_REVERSE(ftr)
-#else 
+#else
 #define MCA_BTL_OPENIB_FTR_SIZE_REVERSE(ftr)    \
     do {                                        \
         uint8_t tmp = (ftr).u.buf[0];           \
@@ -106,7 +106,7 @@ typedef struct mca_btl_openib_footer_t mca_btl_openib_footer_t;
         BTL_OPENIB_FOOTER_SEQ_HTON(h);          \
         MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
     } while (0)
-    
+
 #define BTL_OPENIB_FOOTER_NTOH(h)               \
     do {                                        \
         BTL_OPENIB_FOOTER_SEQ_NTOH(h);          \
@@ -124,7 +124,7 @@ typedef struct mca_btl_openib_control_header_t mca_btl_openib_control_header_t;
 
 struct mca_btl_openib_eager_rdma_header_t {
     mca_btl_openib_control_header_t control;
-    uint8_t padding[3]; 
+    uint8_t padding[3];
     uint32_t rkey;
     ompi_ptr_t rdma_start;
 };
@@ -135,14 +135,14 @@ typedef struct mca_btl_openib_eager_rdma_header_t mca_btl_openib_eager_rdma_head
         (h).rkey = htonl((h).rkey);                        \
         (h).rdma_start.lval = hton64((h).rdma_start.lval); \
     } while (0)
-    
+
 #define BTL_OPENIB_EAGER_RDMA_CONTROL_HEADER_NTOH(h)         \
     do {                                                     \
         (h).rkey = ntohl((h).rkey);                          \
         (h).rdma_start.lval = ntoh64((h).rdma_start.lval);   \
     } while (0)
-    
-    
+
+
 struct mca_btl_openib_rdma_credits_header_t {
     mca_btl_openib_control_header_t control;
     uint8_t qpn;
@@ -178,9 +178,9 @@ typedef enum mca_btl_openib_frag_type_t mca_btl_openib_frag_type_t;
 
 /* base openib frag */
 typedef struct mca_btl_openib_frag_t {
-    mca_btl_base_descriptor_t base; 
-    mca_btl_base_segment_t segment; 
-    mca_btl_openib_frag_type_t type; 
+    mca_btl_base_descriptor_t base;
+    mca_btl_base_segment_t segment;
+    mca_btl_openib_frag_type_t type;
     ompi_free_list_t* list;
 } mca_btl_openib_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_frag_t);
@@ -192,7 +192,7 @@ typedef struct mca_btl_openib_com_frag_t {
     mca_btl_openib_frag_t super;
     struct ibv_sge sg_entry;
     struct mca_btl_openib_reg_t *registration;
-    struct mca_btl_base_endpoint_t *endpoint; 
+    struct mca_btl_base_endpoint_t *endpoint;
 } mca_btl_openib_com_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_com_frag_t);
 
@@ -200,7 +200,7 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_com_frag_t);
 
 typedef struct mca_btl_openib_out_frag_t {
     mca_btl_openib_com_frag_t super;
-    struct ibv_send_wr sr_desc; 
+    struct ibv_send_wr sr_desc;
 } mca_btl_openib_out_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_out_frag_t);
 
@@ -234,21 +234,21 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_t);
 
 #define to_recv_frag(f) ((mca_btl_openib_recv_frag_t*)(f))
 
-typedef struct mca_btl_openib_out_frag_t mca_btl_openib_put_frag_t; 
+typedef struct mca_btl_openib_out_frag_t mca_btl_openib_put_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_put_frag_t);
 
 #define to_put_frag(f) ((mca_btl_openib_put_frag_t*)(f))
 
 typedef struct mca_btl_openib_get_frag_t {
     mca_btl_openib_in_frag_t super;
-    struct ibv_send_wr sr_desc; 
+    struct ibv_send_wr sr_desc;
 } mca_btl_openib_get_frag_t;
-OBJ_CLASS_DECLARATION(mca_btl_openib_get_frag_t); 
+OBJ_CLASS_DECLARATION(mca_btl_openib_get_frag_t);
 
 #define to_get_frag(f) ((mca_btl_openib_get_frag_t*)(f))
 
-typedef struct mca_btl_openib_send_frag_t mca_btl_openib_send_control_frag_t; 
-OBJ_CLASS_DECLARATION(mca_btl_openib_send_control_frag_t); 
+typedef struct mca_btl_openib_send_frag_t mca_btl_openib_send_control_frag_t;
+OBJ_CLASS_DECLARATION(mca_btl_openib_send_control_frag_t);
 
 #define to_send_control_frag(f) ((mca_btl_openib_send_control_frag_t*)(f))
 

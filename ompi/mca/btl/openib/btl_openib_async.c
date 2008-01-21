@@ -3,9 +3,9 @@
  * Copyright (c) 2007 Cisco, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -13,11 +13,11 @@
 #include "ompi_config.h"
 
 #if OMPI_HAVE_THREADS
-#include <infiniband/verbs.h> 
+#include <infiniband/verbs.h>
 #include <fcntl.h>
 #include <sys/poll.h>
 #include <unistd.h>
-#include <errno.h> 
+#include <errno.h>
 
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
@@ -32,7 +32,7 @@ struct mca_btl_openib_async_poll {
     int active_poll_size;
     int poll_size;
     struct pollfd *async_pollfd;
-}; 
+};
 typedef struct mca_btl_openib_async_poll mca_btl_openib_async_poll;
 
 static int return_status = OMPI_ERROR;
@@ -137,9 +137,9 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *hcas_poll
                             , __FILE__, __LINE__));
                 return OMPI_ERROR;
             }
-            memcpy (async_pollfd_tmp,hcas_poll->async_pollfd, 
+            memcpy (async_pollfd_tmp,hcas_poll->async_pollfd,
                     sizeof(struct pollfd) * (hcas_poll->active_poll_size));
-            free(hcas_poll->async_pollfd); 
+            free(hcas_poll->async_pollfd);
             hcas_poll->async_pollfd = async_pollfd_tmp;
         }
         hcas_poll->async_pollfd[hcas_poll->active_poll_size].fd = fd;
@@ -153,7 +153,7 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *hcas_poll
         BTL_VERBOSE(("Removing HCA [%d] from async event poll [%d]"
                     ,fd,hcas_poll->active_poll_size));
         if (hcas_poll->active_poll_size > 1) {
-            for (j=0; (j < hcas_poll->active_poll_size || !fd_found); j++) { 
+            for (j=0; (j < hcas_poll->active_poll_size || !fd_found); j++) {
                 if (hcas_poll->async_pollfd[j].fd == fd) {
                     hcas_poll->async_pollfd[j].fd =
                         hcas_poll->async_pollfd[hcas_poll->active_poll_size-1].fd;
@@ -197,7 +197,7 @@ static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, in
     if (NULL != hca) {
         if (ibv_get_async_event((struct ibv_context *)hca->ib_dev_context,&event) < 0) {
             if (EWOULDBLOCK == errno) {
-                /* No event found ? 
+                /* No event found ?
                  * It was handled by somebody other */
                 return OMPI_SUCCESS;
             } else {
@@ -241,7 +241,7 @@ static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, in
                         event.event_type);
         }
         ibv_ack_async_event(&event);
-    } else { 
+    } else {
         /* the hca == NULL , we failed to locate the HCA
          * this failure should not never happed */
         BTL_ERROR(("Failed to find HCA with FD %d."
@@ -253,7 +253,7 @@ static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, in
 }
 
 /* This Async event thread is handling all async event of
- * all btls/hcas in openib component 
+ * all btls/hcas in openib component
  */
 void* btl_openib_async_thread(void * async)
 {
@@ -282,28 +282,28 @@ void* btl_openib_async_thread(void * async)
                 case 0:
                     /* no events */
                     break;
-                case POLLIN: 
+                case POLLIN:
                     /* Processing our event */
-                    if (0 == i) { 
+                    if (0 == i) {
                         /* 0 poll we use for comunication with main thread */
                         if (OMPI_SUCCESS != btl_openib_async_commandh(&hcas_poll)) {
                             free(hcas_poll.async_pollfd);
-                            BTL_ERROR(("Failed to process async thread process." 
+                            BTL_ERROR(("Failed to process async thread process."
                                         "Fatal error, stoping asyn event thread"));
                             pthread_exit(&return_status);
                         }
-                    } else {  
+                    } else {
                         /* We get hca event */
                         if (btl_openib_async_hcah(&hcas_poll, i)) {
                             free(hcas_poll.async_pollfd);
-                            BTL_ERROR(("Failed to process async thread process." 
+                            BTL_ERROR(("Failed to process async thread process."
                                         "Fatal error, stoping asyn event thread"));
                             pthread_exit(&return_status);
                         }
-                    }  
+                    }
                     break;
-                default:  
-                    /* Get event other than POLLIN 
+                default:
+                    /* Get event other than POLLIN
                      * this case should not never happend */
                     BTL_ERROR(("Got unexpected event %d."
                                 "Fatal error, stoping asyn event thread"

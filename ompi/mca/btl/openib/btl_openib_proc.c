@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -30,8 +30,8 @@
 static void mca_btl_openib_proc_construct(mca_btl_openib_proc_t* proc);
 static void mca_btl_openib_proc_destruct(mca_btl_openib_proc_t* proc);
 
-OBJ_CLASS_INSTANCE(mca_btl_openib_proc_t, 
-        opal_list_item_t, mca_btl_openib_proc_construct, 
+OBJ_CLASS_INSTANCE(mca_btl_openib_proc_t,
+        opal_list_item_t, mca_btl_openib_proc_construct,
         mca_btl_openib_proc_destruct);
 
 void mca_btl_openib_proc_construct(mca_btl_openib_proc_t* proc)
@@ -92,7 +92,7 @@ static mca_btl_openib_proc_t* mca_btl_openib_proc_lookup_ompi(ompi_proc_t* ompi_
 /*
  * Create a IB process structure. There is a one-to-one correspondence
  * between a ompi_proc_t and a mca_btl_openib_proc_t instance. We cache
- * additional data (specifically the list of mca_btl_openib_endpoint_t instances, 
+ * additional data (specifically the list of mca_btl_openib_endpoint_t instances,
  * and published addresses) associated w/ a given destination on this
  * datastructure.
  */
@@ -108,7 +108,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
     int rc;
     void *message;
     char *offset;
-    
+
     /* Check if we have already created a IB proc
      * structure for this ompi process */
     module_proc = mca_btl_openib_proc_lookup_ompi(ompi_proc);
@@ -128,11 +128,11 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
      * size) to represent the proc */
     module_proc->proc_guid = ompi_proc->proc_name;
 
-    /* query for the peer address info */ 
-    rc = ompi_modex_recv(&mca_btl_openib_component.super.btl_version, 
+    /* query for the peer address info */
+    rc = ompi_modex_recv(&mca_btl_openib_component.super.btl_version,
                          ompi_proc,
                          &message,
-                         &msg_size); 
+                         &msg_size);
     if (OMPI_SUCCESS != rc) {
         BTL_ERROR(("[%s:%d] ompi_modex_recv failed for peer %s",
                    __FILE__, __LINE__,
@@ -158,7 +158,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
     /* Loop over unpacking all the ports */
     for (i = 0; i < module_proc->proc_port_count; i++) {
         /* Unpack the port */
-        memcpy(&module_proc->proc_ports[i], offset, 
+        memcpy(&module_proc->proc_ports[i], offset,
                sizeof(mca_btl_openib_port_info_t));
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
         MCA_BTL_OPENIB_PORT_INFO_NTOH(module_proc->proc_ports[i]);
@@ -198,15 +198,15 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
 
 /*
  * Note that this routine must be called with the lock on the process
- * already held.  Insert a btl instance into the proc array and assign 
+ * already held.  Insert a btl instance into the proc array and assign
  * it an address.
  */
-int mca_btl_openib_proc_insert(mca_btl_openib_proc_t* module_proc, 
+int mca_btl_openib_proc_insert(mca_btl_openib_proc_t* module_proc,
         mca_btl_base_endpoint_t* module_endpoint)
 {
     /* insert into endpoint array */
-    
-    
+
+
 #ifndef WORDS_BIGENDIAN
     /* if we are little endian and our peer is not so lucky, then we
        need to put all information sent to him in big endian (aka
@@ -217,10 +217,10 @@ int mca_btl_openib_proc_insert(mca_btl_openib_proc_t* module_proc,
         module_endpoint->nbo = true;
     }
 #endif
-    
+
     /* only allow eager rdma if the peers agree on the size of a long */
     if((module_proc->proc_ompi->proc_arch & OMPI_ARCH_LONGISxx) !=
-       (ompi_proc_local()->proc_arch & OMPI_ARCH_LONGISxx)) { 
+       (ompi_proc_local()->proc_arch & OMPI_ARCH_LONGISxx)) {
         module_endpoint->use_eager_rdma = false;
     }
 

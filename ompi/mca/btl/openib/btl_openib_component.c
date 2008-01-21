@@ -6,27 +6,27 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "ompi_config.h"
 
-#include <infiniband/verbs.h> 
-#include <errno.h> 
-#include <string.h>   /* for strerror()*/ 
+#include <infiniband/verbs.h>
+#include <errno.h>
+#include <string.h>   /* for strerror()*/
 
 #include "ompi/constants.h"
 #include "opal/event/event.h"
@@ -46,16 +46,16 @@
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
-#include "ompi/mca/mpool/base/base.h" 
+#include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "ompi/mca/btl/base/base.h"
-#include "ompi/datatype/convertor.h" 
-#include "ompi/mca/mpool/mpool.h" 
+#include "ompi/datatype/convertor.h"
+#include "ompi/mca/mpool/mpool.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 
 #include "btl_openib.h"
 #include "btl_openib_frag.h"
-#include "btl_openib_endpoint.h" 
+#include "btl_openib_endpoint.h"
 #include "btl_openib_eager_rdma.h"
 #include "btl_openib_proc.h"
 #include "btl_openib_ini.h"
@@ -100,7 +100,7 @@ mca_btl_openib_component_t mca_btl_openib_component = {
             MCA_BASE_METADATA_PARAM_NONE
         },
 
-        btl_openib_component_init,  
+        btl_openib_component_init,
         btl_openib_component_progress,
     }
 };
@@ -119,7 +119,7 @@ int btl_openib_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_openib_component.hcas, opal_pointer_array_t);
     mca_btl_openib_component.hcas_count = 0;
 
-    /* initialize objects */ 
+    /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_procs, opal_list_t);
 
     /* register IB component parameters */
@@ -180,7 +180,7 @@ static int btl_openib_modex_send(void)
     if (NULL == message) {
         BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
         return OMPI_ERR_OUT_OF_RESOURCE;
-    } 
+    }
 
     /* Pack the number of ports */
     size = mca_btl_openib_component.ib_num_btls;
@@ -209,13 +209,13 @@ static int btl_openib_modex_send(void)
         offset += sizeof(size);
 
         /* Pack the string */
-        memcpy(offset, 
-               mca_btl_openib_component.openib_btls[i]->port_info.cpclist, 
+        memcpy(offset,
+               mca_btl_openib_component.openib_btls[i]->port_info.cpclist,
                size_save);
         offset += size_save;
     }
 
-    rc = ompi_modex_send(&mca_btl_openib_component.super.btl_version, 
+    rc = ompi_modex_send(&mca_btl_openib_component.super.btl_version,
                          message, msg_size);
     free(message);
 
@@ -240,30 +240,30 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
         (mca_btl_openib_header_coalesced_t*)(ctl_hdr + 1);
     mca_btl_active_message_callback_t* reg;
     size_t len = des->des_dst->seg_len - sizeof(*ctl_hdr);
-    
+
     switch (ctl_hdr->type) {
     case MCA_BTL_OPENIB_CONTROL_CREDITS:
         assert(0); /* Credit message is handled elsewhere */
         break;
     case MCA_BTL_OPENIB_CONTROL_RDMA:
        rdma_hdr = (mca_btl_openib_eager_rdma_header_t*)ctl_hdr;
-       
-       BTL_VERBOSE(("prior to NTOH received  rkey %lu, rdma_start.lval %llu, pval %p, ival %u\n", 
-                  rdma_hdr->rkey, 
+
+       BTL_VERBOSE(("prior to NTOH received  rkey %lu, rdma_start.lval %llu, pval %p, ival %u\n",
+                  rdma_hdr->rkey,
                   (unsigned long) rdma_hdr->rdma_start.lval,
                   rdma_hdr->rdma_start.pval,
                   rdma_hdr->rdma_start.ival
                   ));
-       
+
        if(ep->nbo) {
            BTL_OPENIB_EAGER_RDMA_CONTROL_HEADER_NTOH(*rdma_hdr);
        }
-           
+
        BTL_VERBOSE(("received  rkey %lu, rdma_start.lval %llu, pval %p,"
                    " ival %u\n", rdma_hdr->rkey,
                    (unsigned long) rdma_hdr->rdma_start.lval,
                   rdma_hdr->rdma_start.pval, rdma_hdr->rdma_start.ival));
-       
+
        if (ep->eager_rdma_remote.base.pval) {
            BTL_ERROR(("Got RDMA connect twice!"));
            return;
@@ -379,7 +379,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
     ibv_query_gid(hca->ib_dev_context, port_num, 0, &gid);
     subnet_id = ntoh64(gid.global.subnet_prefix);
     BTL_VERBOSE(("my subnet_id is %016x\n", subnet_id));
-    
+
     if(mca_btl_openib_component.ib_num_btls > 0 &&
             IB_DEFAULT_GID_PREFIX == subnet_id &&
             mca_btl_openib_component.warn_default_gid_prefix) {
@@ -389,7 +389,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
 
     lmc = (1 << ib_port_attr->lmc);
 
-    if (0 != mca_btl_openib_component.max_lmc && 
+    if (0 != mca_btl_openib_component.max_lmc &&
         mca_btl_openib_component.max_lmc < lmc) {
         lmc = mca_btl_openib_component.max_lmc;
     }
@@ -477,19 +477,19 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
                    forumula is 80% of the reported speed (to get the
                    true link speed) times the number of links. */
                 switch (ib_port_attr->active_speed) {
-                case 1: 
+                case 1:
                     /* 2.5Gbps * 0.8, in megabits */
                     openib_btl->super.btl_bandwidth = 2000;
                     break;
-                case 2: 
+                case 2:
                     /* 5.0Gbps * 0.8, in megabits */
                     openib_btl->super.btl_bandwidth = 4000;
                     break;
-                case 4: 
+                case 4:
                     /* 10.0Gbps * 0.8, in megabits */
                     openib_btl->super.btl_bandwidth = 8000;
                     break;
-                default: 
+                default:
                     /* Who knows? */
                     return OMPI_ERR_VALUE_OUT_OF_BOUNDS;
                 }
@@ -555,7 +555,7 @@ static void hca_construct(mca_btl_openib_hca_t *hca)
 #endif
     hca->qps = (mca_btl_openib_hca_qp_t*)calloc(mca_btl_openib_component.num_qps,
             sizeof(mca_btl_openib_hca_qp_t));
-    OBJ_CONSTRUCT(&hca->hca_lock, opal_mutex_t); 
+    OBJ_CONSTRUCT(&hca->hca_lock, opal_mutex_t);
     for(i = 0; i < mca_btl_openib_component.num_qps; i++) {
         OBJ_CONSTRUCT(&hca->qps[i].send_free, ompi_free_list_t);
         OBJ_CONSTRUCT(&hca->qps[i].recv_free, ompi_free_list_t);
@@ -574,7 +574,7 @@ static void hca_destruct(mca_btl_openib_hca_t *hca)
                 OBJ_RELEASE(hca->eager_rdma_buffers[i]);
         free(hca->eager_rdma_buffers);
     }
-    OBJ_DESTRUCT(&hca->hca_lock); 
+    OBJ_DESTRUCT(&hca->hca_lock);
     for(i = 0; i < mca_btl_openib_component.num_qps; i++) {
         OBJ_DESTRUCT(&hca->qps[i].send_free);
         OBJ_DESTRUCT(&hca->qps[i].recv_free);
@@ -604,7 +604,7 @@ static int prepare_hca_for_use(mca_btl_openib_hca_t *hca)
                     &hca->ib_dev_context->async_fd, sizeof(int))<0){
             BTL_ERROR(("Failed to write to pipe [%d]",errno));
             return OMPI_ERROR;
-        } 
+        }
     }
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* Prepare data for thread, but not starting it */
@@ -632,12 +632,12 @@ static int prepare_hca_for_use(mca_btl_openib_hca_t *hca)
 
     init_data = malloc(sizeof(mca_btl_openib_frag_init_data_t));
     length = sizeof(mca_btl_openib_header_t) +
-        sizeof(mca_btl_openib_footer_t) + 
+        sizeof(mca_btl_openib_footer_t) +
         sizeof(mca_btl_openib_eager_rdma_header_t);
-        
+
     init_data->order = MCA_BTL_NO_ORDER;
     init_data->list = &hca->send_free_control;
-        
+
     if(OMPI_SUCCESS != ompi_free_list_init_ex_new(
                 &hca->send_free_control,
                 sizeof(mca_btl_openib_send_control_frag_t), CACHE_LINE_SIZE,
@@ -646,20 +646,20 @@ static int prepare_hca_for_use(mca_btl_openib_hca_t *hca)
                 mca_btl_openib_component.ib_free_list_num, -1,
                 mca_btl_openib_component.ib_free_list_inc,
                 hca->mpool, mca_btl_openib_frag_init,
-                init_data)) { 
+                init_data)) {
         return OMPI_ERROR;
     }
 
-    /* setup all the qps */ 
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
+    /* setup all the qps */
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
         init_data = malloc(sizeof(mca_btl_openib_frag_init_data_t));
-        /* Initialize pool of send fragments */ 
+        /* Initialize pool of send fragments */
         length = sizeof(mca_btl_openib_header_t) +
             sizeof(mca_btl_openib_header_coalesced_t) +
             sizeof(mca_btl_openib_control_header_t) +
             sizeof(mca_btl_openib_footer_t) +
             mca_btl_openib_component.qp_infos[qp].size;
-        
+
         init_data->order = qp;
         init_data->list = &hca->qps[qp].send_free;
 
@@ -671,20 +671,20 @@ static int prepare_hca_for_use(mca_btl_openib_hca_t *hca)
                     mca_btl_openib_component.ib_free_list_max,
                     mca_btl_openib_component.ib_free_list_inc,
                     hca->mpool, mca_btl_openib_frag_init,
-                    init_data)) { 
+                    init_data)) {
             return OMPI_ERROR;
         }
-           
+
         init_data = malloc(sizeof(mca_btl_openib_frag_init_data_t));
         length = sizeof(mca_btl_openib_header_t) +
             sizeof(mca_btl_openib_header_coalesced_t) +
             sizeof(mca_btl_openib_control_header_t) +
             sizeof(mca_btl_openib_footer_t) +
             mca_btl_openib_component.qp_infos[qp].size;
-        
+
         init_data->order = qp;
         init_data->list = &hca->qps[qp].recv_free;
-        
+
         if(OMPI_SUCCESS != ompi_free_list_init_ex_new(init_data->list,
                     sizeof(mca_btl_openib_recv_frag_t), CACHE_LINE_SIZE,
                     OBJ_CLASS(mca_btl_openib_recv_frag_t),
@@ -693,7 +693,7 @@ static int prepare_hca_for_use(mca_btl_openib_hca_t *hca)
                     mca_btl_openib_component.ib_free_list_max,
                     mca_btl_openib_component.ib_free_list_inc,
                     hca->mpool, mca_btl_openib_frag_init,
-                    init_data)) { 
+                    init_data)) {
             return OMPI_ERROR;
         }
     }
@@ -726,7 +726,7 @@ get_port_list(mca_btl_openib_hca_t *hca, int *allowed_ports)
            ports */
         i = 0;
         while (mca_btl_openib_component.if_include_list[i]) {
-            if (0 == strcmp(dev_name, 
+            if (0 == strcmp(dev_name,
                             mca_btl_openib_component.if_include_list[i])) {
                 num_ports = hca->ib_dev_attr.phys_port_cnt;
                 goto done;
@@ -736,9 +736,9 @@ get_port_list(mca_btl_openib_hca_t *hca, int *allowed_ports)
         /* Include only requested ports on the HCA */
         for (i = 1; i <= hca->ib_dev_attr.phys_port_cnt; ++i) {
             sprintf(name,"%s:%d",dev_name,i);
-            for (j = 0; 
+            for (j = 0;
                  NULL != mca_btl_openib_component.if_include_list[j]; ++j) {
-                if (0 == strcmp(name, 
+                if (0 == strcmp(name,
                                 mca_btl_openib_component.if_include_list[j])) {
                     allowed_ports[num_ports++] = i;
                     break;
@@ -750,7 +750,7 @@ get_port_list(mca_btl_openib_hca_t *hca, int *allowed_ports)
            all ports */
         i = 0;
         while (mca_btl_openib_component.if_exclude_list[i]) {
-            if (0 == strcmp(dev_name, 
+            if (0 == strcmp(dev_name,
                             mca_btl_openib_component.if_exclude_list[i])) {
                 num_ports = 0;
                 goto done;
@@ -760,9 +760,9 @@ get_port_list(mca_btl_openib_hca_t *hca, int *allowed_ports)
         /* Exclude the specified ports on this HCA */
         for (i = 1; i <= hca->ib_dev_attr.phys_port_cnt; ++i) {
             sprintf(name,"%s:%d",dev_name,i);
-            for (j = 0; 
+            for (j = 0;
                  NULL != mca_btl_openib_component.if_exclude_list[j]; ++j) {
-                if (0 == strcmp(name, 
+                if (0 == strcmp(name,
                                 mca_btl_openib_component.if_exclude_list[j])) {
                     /* If found, set a sentinel value */
                     j = -1;
@@ -843,25 +843,25 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     int ret = -1, port_cnt;
     ompi_btl_openib_ini_values_t values, default_values;
     int *allowed_ports = NULL;
-    
+
     hca = OBJ_NEW(mca_btl_openib_hca_t);
     if(NULL == hca){
         BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    
+
     hca->ib_dev = ib_dev;
     hca->ib_dev_context = ibv_open_device(ib_dev);
 
-    if(NULL == hca->ib_dev_context){ 
+    if(NULL == hca->ib_dev_context){
         BTL_ERROR(("error obtaining device context for %s errno says %s\n",
-                    ibv_get_device_name(ib_dev), strerror(errno))); 
+                    ibv_get_device_name(ib_dev), strerror(errno)));
         goto error;
-    } 
-       
-    if(ibv_query_device(hca->ib_dev_context, &hca->ib_dev_attr)){ 
+    }
+
+    if(ibv_query_device(hca->ib_dev_context, &hca->ib_dev_attr)){
         BTL_ERROR(("error obtaining device attributes for %s errno says %s\n",
-                    ibv_get_device_name(ib_dev), strerror(errno))); 
+                    ibv_get_device_name(ib_dev), strerror(errno)));
         goto error;
     }
     /* If mca_btl_if_include/exclude were specified, get usable ports */
@@ -976,7 +976,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
                      ibv_get_device_name(ib_dev), strerror(errno)));
          goto error;
     }
-   
+
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     hca->ib_channel = ibv_create_comp_channel(hca->ib_dev_context);
     if (NULL == hca->ib_channel) {
@@ -987,7 +987,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     }
 #endif
 
-    ret = OMPI_SUCCESS; 
+    ret = OMPI_SUCCESS;
 
     /* Note ports are 1 based (i >= 1) */
     for(k = 0; k < port_cnt; k++){
@@ -997,7 +997,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
             BTL_ERROR(("error getting port attributes for device %s "
                         "port number %d errno says %s",
                         ibv_get_device_name(ib_dev), i, strerror(errno)));
-            break; 
+            break;
         }
         if(IBV_PORT_ACTIVE == ib_port_attr.state){
 
@@ -1017,7 +1017,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
                 }
             }
             if (OMPI_SUCCESS != ret) {
-                /* Out of bounds error indicates that we hit max btl number 
+                /* Out of bounds error indicates that we hit max btl number
                  * don't propagate the error to the caller */
                 if(OMPI_ERR_VALUE_OUT_OF_BOUNDS == ret)
                     ret = OMPI_SUCCESS;
@@ -1061,27 +1061,27 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
 
     /* Initialize module state */
     OBJ_CONSTRUCT(&openib_btl->ib_lock, opal_mutex_t);
-        
+
     /* setup the qp structure */
     openib_btl->qps = (mca_btl_openib_module_qp_t*)
         calloc(mca_btl_openib_component.num_qps,
                 sizeof(mca_btl_openib_module_qp_t));
-        
-    /* setup all the qps */ 
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-        if(!BTL_OPENIB_QP_TYPE_PP(qp)) { 
+
+    /* setup all the qps */
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
+        if(!BTL_OPENIB_QP_TYPE_PP(qp)) {
             OBJ_CONSTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[0],
                     opal_list_t);
             OBJ_CONSTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1],
                     opal_list_t);
-            openib_btl->qps[qp].u.srq_qp.sd_credits = 
+            openib_btl->qps[qp].u.srq_qp.sd_credits =
                 mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
         }
     }
 
-    /* initialize the memory pool using the hca */ 
+    /* initialize the memory pool using the hca */
     openib_btl->super.btl_mpool = openib_btl->hca->mpool;
-        
+
     openib_btl->eager_rdma_channels = 0;
 
     openib_btl->eager_rdma_frag_size = OPAL_ALIGN(
@@ -1103,28 +1103,28 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
  *  (3) register BTL parameters with the MCA
  */
 
-static mca_btl_base_module_t** 
-btl_openib_component_init(int *num_btl_modules, 
+static mca_btl_base_module_t**
+btl_openib_component_init(int *num_btl_modules,
                           bool enable_progress_threads,
                           bool enable_mpi_threads)
 {
-    struct ibv_device **ib_devs; 
+    struct ibv_device **ib_devs;
     mca_btl_base_module_t** btls;
     int i, ret, num_devs, length;
-    opal_list_t btl_list; 
-    mca_btl_openib_module_t * openib_btl; 
-    mca_btl_base_selected_module_t* ib_selected; 
-    opal_list_item_t* item; 
+    opal_list_t btl_list;
+    mca_btl_openib_module_t * openib_btl;
+    mca_btl_base_selected_module_t* ib_selected;
+    opal_list_item_t* item;
 #if !defined(HAVE_IBV_GET_DEVICE_LIST)
-    struct dlist *dev_list; 
-    struct ibv_device* ib_dev; 
+    struct dlist *dev_list;
+    struct ibv_device* ib_dev;
 #endif
     unsigned short seedv[3];
     mca_btl_openib_frag_init_data_t *init_data;
 
     /* initialization */
     *num_btl_modules = 0;
-    num_devs = 0; 
+    num_devs = 0;
 
     seedv[0] = orte_process_info.my_name->vpid;
     seedv[1] = opal_sys_timer_get_cycles();
@@ -1146,10 +1146,10 @@ btl_openib_component_init(int *num_btl_modules,
     OBJ_CONSTRUCT(&mca_btl_openib_component.recv_user_free, ompi_free_list_t);
 
     init_data = malloc(sizeof(mca_btl_openib_frag_init_data_t));
-        
+
     init_data->order = mca_btl_openib_component.rdma_qp;
     init_data->list = &mca_btl_openib_component.send_user_free;
-        
+
     if(OMPI_SUCCESS != ompi_free_list_init_ex_new(
                 &mca_btl_openib_component.send_user_free,
                 sizeof(mca_btl_openib_put_frag_t), 2,
@@ -1158,15 +1158,15 @@ btl_openib_component_init(int *num_btl_modules,
                 mca_btl_openib_component.ib_free_list_num,
                 mca_btl_openib_component.ib_free_list_max,
                 mca_btl_openib_component.ib_free_list_inc,
-                NULL, mca_btl_openib_frag_init, init_data)) { 
+                NULL, mca_btl_openib_frag_init, init_data)) {
         goto no_btls;
     }
-        
+
     init_data = malloc(sizeof(mca_btl_openib_frag_init_data_t));
 
     init_data->order = mca_btl_openib_component.rdma_qp;
     init_data->list = &mca_btl_openib_component.recv_user_free;
-        
+
     if(OMPI_SUCCESS != ompi_free_list_init_ex_new(
                 &mca_btl_openib_component.recv_user_free,
                 sizeof(mca_btl_openib_get_frag_t), 2,
@@ -1175,7 +1175,7 @@ btl_openib_component_init(int *num_btl_modules,
                 mca_btl_openib_component.ib_free_list_num,
                 mca_btl_openib_component.ib_free_list_max,
                 mca_btl_openib_component.ib_free_list_inc,
-                NULL, mca_btl_openib_frag_init, init_data)) { 
+                NULL, mca_btl_openib_frag_init, init_data)) {
         goto no_btls;
     }
 
@@ -1207,14 +1207,14 @@ btl_openib_component_init(int *num_btl_modules,
                                "ibv_fork_init fail", true,
                                orte_system_info.nodename);
                 goto no_btls;
-            } 
+            }
         }
     }
 #endif
 
     /* Parse the include and exclude lists, checking for errors */
     mca_btl_openib_component.if_include_list =
-        mca_btl_openib_component.if_exclude_list = 
+        mca_btl_openib_component.if_exclude_list =
         mca_btl_openib_component.if_list = NULL;
     if (NULL != mca_btl_openib_component.if_include &&
         NULL != mca_btl_openib_component.if_exclude) {
@@ -1224,59 +1224,59 @@ btl_openib_component_init(int *num_btl_modules,
                        mca_btl_openib_component.if_exclude, NULL);
         goto no_btls;
     } else if (NULL != mca_btl_openib_component.if_include) {
-        mca_btl_openib_component.if_include_list = 
+        mca_btl_openib_component.if_include_list =
             opal_argv_split(mca_btl_openib_component.if_include, ',');
-        mca_btl_openib_component.if_list = 
+        mca_btl_openib_component.if_list =
             opal_argv_copy(mca_btl_openib_component.if_include_list);
     } else if (NULL != mca_btl_openib_component.if_exclude) {
-        mca_btl_openib_component.if_exclude_list = 
+        mca_btl_openib_component.if_exclude_list =
             opal_argv_split(mca_btl_openib_component.if_exclude, ',');
-        mca_btl_openib_component.if_list = 
+        mca_btl_openib_component.if_list =
             opal_argv_copy(mca_btl_openib_component.if_exclude_list);
     }
 
 #ifdef HAVE_IBV_GET_DEVICE_LIST
     ib_devs = ibv_get_device_list(&num_devs);
-#else 
+#else
     /* Determine the number of hca's available on the host */
-    dev_list = ibv_get_devices(); 
+    dev_list = ibv_get_devices();
     if (NULL == dev_list) {
         mca_btl_base_error_no_nics("OpenIB", "HCA");
         mca_btl_openib_component.ib_num_btls = 0;
         btl_openib_modex_send();
         return NULL;
     }
-    dlist_start(dev_list); 
+    dlist_start(dev_list);
 
     dlist_for_each_data(dev_list, ib_dev, struct ibv_device)
-        num_devs++; 
+        num_devs++;
 #endif
-    if(0 == num_devs) { 
+    if(0 == num_devs) {
         mca_btl_base_error_no_nics("OpenIB", "HCA");
         btl_openib_modex_send();
-        return NULL; 
+        return NULL;
     }
-       
+
 #if !defined(HAVE_IBV_GET_DEVICE_LIST)
-    /* Allocate space for the ib devices */ 
+    /* Allocate space for the ib devices */
     ib_devs = (struct ibv_device**) malloc(num_devs * sizeof(struct ibv_dev*));
     if(NULL == ib_devs) {
         BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
         return NULL;
     }
 
-    dlist_start(dev_list); 
+    dlist_start(dev_list);
 
-    i = 0; 
+    i = 0;
     dlist_for_each_data(dev_list, ib_dev, struct ibv_device)
-        ib_devs[i++] =  ib_dev; 
+        ib_devs[i++] =  ib_dev;
 #endif
-            
+
     /* We must loop through all the hca id's, get their handles and
        for each hca we query the number of ports on the hca and set up
-       a distinct btl module for each hca port */ 
+       a distinct btl module for each hca port */
 
-    OBJ_CONSTRUCT(&btl_list, opal_list_t); 
+    OBJ_CONSTRUCT(&btl_list, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_lock, opal_mutex_t);
 #if OMPI_HAVE_THREADS
     mca_btl_openib_component.async_thread = 0;
@@ -1303,11 +1303,11 @@ btl_openib_component_init(int *num_btl_modules,
         char *str = opal_argv_join(mca_btl_openib_component.if_list, ',');
         opal_show_help("help-mpi-btl-openib.txt", "nonexistent port",
                        true, orte_system_info.nodename,
-                       ((NULL != mca_btl_openib_component.if_include) ? 
+                       ((NULL != mca_btl_openib_component.if_include) ?
                         "in" : "ex"), str);
         free(str);
     }
-       
+
     if(0 == mca_btl_openib_component.ib_num_btls) {
         opal_show_help("help-mpi-btl-openib.txt",
                 "no active ports found", true, orte_system_info.nodename);
@@ -1332,11 +1332,11 @@ btl_openib_component_init(int *num_btl_modules,
     /* Copy the btl module structs into a contiguous array and fully
        initialize them */
     for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++){
-        item = opal_list_remove_first(&btl_list); 
-        ib_selected = (mca_btl_base_selected_module_t*)item; 
+        item = opal_list_remove_first(&btl_list);
+        ib_selected = (mca_btl_base_selected_module_t*)item;
         mca_btl_openib_component.openib_btls[i] =
-            (mca_btl_openib_module_t*)ib_selected->btl_module; 
-        OBJ_RELEASE(ib_selected); 
+            (mca_btl_openib_module_t*)ib_selected->btl_module;
+        OBJ_RELEASE(ib_selected);
         openib_btl = mca_btl_openib_component.openib_btls[i];
         btls[i] = &openib_btl->super;
         if(finish_btl_init(openib_btl) != OMPI_SUCCESS)
@@ -1404,7 +1404,7 @@ static void progress_pending_frags_pp(mca_btl_base_endpoint_t *ep, const int qp)
 {
     int i;
     opal_list_item_t *frag;
-    
+
     OPAL_THREAD_LOCK(&ep->endpoint_lock);
     for(i = 0; i < 2; i++) {
        while((get_enpoint_credits(ep, qp) +
@@ -1420,7 +1420,7 @@ static void progress_pending_frags_pp(mca_btl_base_endpoint_t *ep, const int qp)
 
 void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
         const int qp)
-{ 
+{
     mca_btl_openib_module_t* openib_btl = ep->endpoint_btl;
     opal_list_item_t *frag;
     size_t i, len = opal_list_get_size(&ep->pending_get_frags);
@@ -1436,7 +1436,7 @@ void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
                     &to_base_frag(frag)->base) == OMPI_ERR_OUT_OF_RESOURCE)
             break;
     }
-    
+
     len = opal_list_get_size(&ep->pending_put_frags);
     for(i = 0; i < len && ep->qps[qp].qp->sd_wqe > 0; i++) {
         OPAL_THREAD_LOCK(&ep->endpoint_lock);
@@ -1452,7 +1452,7 @@ void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
 
 static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
                                          mca_btl_openib_endpoint_t *ep,
-                                         mca_btl_openib_recv_frag_t *frag, 
+                                         mca_btl_openib_recv_frag_t *frag,
                                          size_t byte_len)
 {
     mca_btl_base_descriptor_t *des = &to_base_frag(frag)->base;
@@ -1545,13 +1545,13 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
 }
 
 static char* btl_openib_component_status_to_string(enum ibv_wc_status status)
-{ 
-    switch(status) { 
+{
+    switch(status) {
     case IBV_WC_SUCCESS:
-        return "SUCCESS"; 
+        return "SUCCESS";
         break;
     case IBV_WC_LOC_LEN_ERR:
-        return "LOCAL LENGTH ERROR"; 
+        return "LOCAL LENGTH ERROR";
         break;
     case IBV_WC_LOC_QP_OP_ERR:
         return "LOCAL QP OPERATION ERROR";
@@ -1604,7 +1604,7 @@ static char* btl_openib_component_status_to_string(enum ibv_wc_status status)
     case IBV_WC_INV_EEC_STATE_ERR:
         return "INVALID EEC STATE ERROR";
         break;
-    case IBV_WC_FATAL_ERR: 
+    case IBV_WC_FATAL_ERR:
         return "FATAL ERROR";
         break;
     case IBV_WC_RESP_TIMEOUT_ERR:
@@ -1647,9 +1647,9 @@ static void progress_pending_frags_srq(mca_btl_openib_module_t* openib_btl,
 {
     opal_list_item_t *frag;
     int i;
-    
+
     assert(BTL_OPENIB_QP_TYPE_SRQ(qp) || BTL_OPENIB_QP_TYPE_XRC(qp));
-    
+
     for(i = 0; i < 2; i++) {
         while(openib_btl->qps[qp].u.srq_qp.sd_credits > 0) {
             OPAL_THREAD_LOCK(&openib_btl->ib_lock);
@@ -1777,7 +1777,7 @@ error:
 
 static int poll_hca(mca_btl_openib_hca_t* hca, int count)
 {
-    int ne = 0, cq; 
+    int ne = 0, cq;
     uint32_t hp_iter = 0;
     struct ibv_wc wc;
 
@@ -1805,14 +1805,14 @@ static int poll_hca(mca_btl_openib_hca_t* hca, int count)
             hp_iter++;
             hca->hp_cq_polls--;
         }
-      
+
         handle_wc(hca, cq, &wc);
     }
-    
+
     return count;
 error:
     BTL_ERROR(("error polling %s with %d errno says %s\n", cq_name[cq], ne,
-                strerror(errno))); 
+                strerror(errno)));
     return count;
 }
 
