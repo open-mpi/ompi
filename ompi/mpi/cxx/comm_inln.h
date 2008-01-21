@@ -576,9 +576,9 @@ MPI::Comm::Create_keyval(MPI_Comm_copy_attr_function* comm_copy_attr_fn,
 {
     // Back-end function does the heavy lifting
     int ret, keyval;
-    return do_create_keyval(comm_copy_attr_fn, comm_delete_attr_fn,
-                            NULL, NULL,
-                            extra_state, keyval);
+    ret = do_create_keyval(comm_copy_attr_fn, comm_delete_attr_fn,
+                           NULL, NULL,
+                           extra_state, keyval);
     return (MPI_SUCCESS == ret) ? keyval : ret;
 }
 
@@ -591,9 +591,9 @@ MPI::Comm::Create_keyval(MPI::Comm::Copy_attr_function* comm_copy_attr_fn,
 {
     // Back-end function does the heavy lifting
     int ret, keyval;
-    return do_create_keyval(NULL, comm_delete_attr_fn,
-                            comm_copy_attr_fn, NULL,
-                            extra_state, keyval);
+    ret = do_create_keyval(NULL, comm_delete_attr_fn,
+                           comm_copy_attr_fn, NULL,
+                           extra_state, keyval);
     return (MPI_SUCCESS == ret) ? keyval : ret;
 }
 
@@ -606,9 +606,9 @@ MPI::Comm::Create_keyval(MPI_Comm_copy_attr_function* comm_copy_attr_fn,
 {
     // Back-end function does the heavy lifting
     int ret, keyval;
-    return do_create_keyval(comm_copy_attr_fn, NULL,
-                            NULL, comm_delete_attr_fn,
-                            extra_state, keyval);
+    ret = do_create_keyval(comm_copy_attr_fn, NULL,
+                           NULL, comm_delete_attr_fn,
+                           extra_state, keyval);
     return (MPI_SUCCESS == ret) ? keyval : ret;
 }
 
