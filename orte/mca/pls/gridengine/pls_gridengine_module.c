@@ -10,8 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
- *                         Use is subject to license terms.
+ * Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -25,11 +24,6 @@
  * files, keeping these symbols as the only symbols in this file
  * prevents utility programs such as "ompi_info" from having to import
  * entire components just to query their version and parameters.
- */
-/**
- * @file:
- * Part of the gridengine launcher.
- * See pls_gridengine.h for an overview of how it works.
  */
 
 #include "orte_config.h"
@@ -135,10 +129,15 @@ static int orte_pls_gridengine_fill_orted_path(char** orted_path)
 static void orte_pls_gridengine_wait_daemon(pid_t pid, int status, void* cbdata)
 {
     if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
-        /* tell the user something went wrong. We need to do this BEFORE we
-         * set the state to ABORTED as that action will cause a trigger to
-         * fire that will kill the job before any output would get printed!
-         */
+        /* Need to catch SIGUSR1/2 for "qrsh/qsub -notify" to work. 
+         * With "-notify" set, SIGUSR1/2 becomes the precursor for any pending 
+         * SIGSTOP/SIGKILL. So just return and ignore the daemon_failed
+         * at the end as that would kill off the user processes */
+        if (SIGUSR1 == status || SIGUSR2 == status) {
+            opal_output(0, "The daemon received a signal %d", status);
+            return;
+        }
+        /* Otherwise, tell the user something went wrong. */
         opal_output(0, "ERROR: A daemon failed to start as expected.");
         opal_output(0, "ERROR: There may be more information available from");
         opal_output(0, "ERROR: the 'qstat -t' command on the Grid Engine tasks.");
@@ -216,7 +215,7 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     if (num_nodes == 0) {
         /* have all the daemons we need - launch app */
         if (mca_pls_gridengine_component.debug) {
-            opal_output(0, "pls:rsh: no new daemons to launch");
+            opal_output(0, "pls:gridengine: no new daemons to launch");
         }
         goto launch_apps;
     }
