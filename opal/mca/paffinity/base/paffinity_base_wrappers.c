@@ -46,3 +46,29 @@ int opal_paffinity_base_get(opal_paffinity_base_cpu_set_t *cpumask)
     }
     return opal_paffinity_base_module->paff_module_get(cpumask);
 }
+
+int opal_paffinity_base_map_to_processor_id(int socket, int core, int *processor_id)
+{
+   return OPAL_ERR_NOT_SUPPORTED;
+}
+
+int opal_paffinity_base_map_to_socket_core(int processor_id, int *socket, int *core)
+{
+   return OPAL_ERR_NOT_SUPPORTED;
+}
+
+int opal_paffinity_base_max_processor_id(int *max_processor_id)
+{
+   return OPAL_ERR_NOT_SUPPORTED;
+}
+
+int opal_paffinity_base_max_socket(int *max_socket)
+{
+   return OPAL_ERR_NOT_SUPPORTED;
+}
+
+int opal_paffinity_base_max_core(int socket, int *max_core)
+{
+   return OPAL_ERR_NOT_SUPPORTED;
+}
+

@@ -36,7 +36,7 @@ static int windows_module_get(opal_paffinity_base_cpu_set_t *cpumask);
 static SYSTEM_INFO sys_info;
 
 /*
- * Linux paffinity module
+ * Linux paffinity module 
  */
 static const opal_paffinity_base_module_1_1_0_t module = {
 
@@ -47,6 +47,11 @@ static const opal_paffinity_base_module_1_1_0_t module = {
     /* Module function pointers */
     windows_module_set,
     windows_module_get,
+    opal_paffinity_base_map_to_processor_id,
+    opal_paffinity_base_map_to_socket_core,
+    opal_paffinity_base_max_processor_id,
+    opal_paffinity_base_max_socket,
+    opal_paffinity_base_max_core,
     windows_module_finalize
 };
 
