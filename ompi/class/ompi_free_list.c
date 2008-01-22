@@ -51,6 +51,7 @@ static void ompi_free_list_construct(ompi_free_list_t* fl)
     fl->fl_payload_buffer_alignment=0;
     fl->fl_frag_class = OBJ_CLASS(ompi_free_list_item_t);
     fl->fl_mpool = 0;
+    fl->ctx = NULL;
     OBJ_CONSTRUCT(&(fl->fl_allocations), opal_list_t);
 }
 
