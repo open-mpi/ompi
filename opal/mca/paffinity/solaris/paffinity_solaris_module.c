@@ -54,6 +54,11 @@ static const opal_paffinity_base_module_1_1_0_t module = {
 
     solaris_module_set,
     solaris_module_get,
+    opal_paffinity_base_map_to_processor_id,
+    opal_paffinity_base_map_to_socket_core,
+    opal_paffinity_base_max_processor_id,
+    opal_paffinity_base_max_socket,
+    opal_paffinity_base_max_core,
     solaris_module_finalize
 };
 

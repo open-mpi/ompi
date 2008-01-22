@@ -136,6 +136,61 @@ extern "C" {
     OPAL_DECLSPEC int opal_paffinity_base_close(void);
 
     /**
+     * Map (socket,core) tuple to virtual processor ID
+     * 
+     * @param socket
+     * @param core
+     * @param processor_id
+     * 
+     * @return int - OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+     *         supported
+     */
+    OPAL_DECLSPEC int opal_paffinity_base_map_to_processor_id(int socket, int core, int *processor_id);
+
+    /**
+     * Map processor_id to (socket,core) tuple
+     * 
+     * @param processor_id
+     * @param socket
+     * @param core
+     * 
+     * @return int - OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+     *         supported
+     */
+    OPAL_DECLSPEC int opal_paffinity_base_map_to_socket_core(int processor_id, int *socket, int *core);
+
+    /**
+     * Return the max processor ID
+     * 
+     * @param max_processor_id
+     * 
+     * @return int - OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+     *         supported
+     */
+    OPAL_DECLSPEC int opal_paffinity_base_max_processor_id(int *max_processor_id);
+
+    /**
+     * Return the max socket number
+     * 
+     * @param max_socket
+     * 
+     * @return int - OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+     *         supported
+     */
+    OPAL_DECLSPEC int opal_paffinity_base_max_socket(int *max_socket);
+
+    /**
+     * Return the max core number for a given socket
+     * 
+     * @param socket
+     * @param max_core
+     * 
+     * @return int - OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+     *         supported
+     */
+    OPAL_DECLSPEC int opal_paffinity_base_max_core(int socket, int *max_core);
+
+    /**
      * Indication of whether a component was successfully selected or
      * not
      */

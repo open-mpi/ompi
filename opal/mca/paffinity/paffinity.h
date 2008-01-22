@@ -169,6 +169,51 @@ typedef int (*opal_paffinity_base_module_set_fn_t)(opal_paffinity_base_cpu_set_t
  */
 typedef int (*opal_paffinity_base_module_get_fn_t)(opal_paffinity_base_cpu_set_t *cpumask);
 
+/**
+ * Provides mapping socket:core -> processor id. currently
+ * supported only in Linux hosts
+ * 
+ * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+ * supporeted (solaris, windows, etc...)
+ */
+typedef int (*opal_paffinity_base_module_map_to_processor_id_fn_t)(int socket, int core, int *processor_id);
+
+/**
+ * Provides mapping processor id -> socket:core. currently
+ * supported only in Linux hosts
+ * 
+ * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+ * supporeted (solaris, windows, etc...)
+ */
+typedef int (*opal_paffinity_base_module_map_to_socket_core_fn_t)(int processor_id, int *socket, int *core);
+
+/**
+ * Provides highest processor id number in a host. currently
+ * supported only in Linux hosts
+ * 
+ * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+ * supporeted (solaris, windows, etc...)
+ */
+typedef int (*opal_paffinity_base_module_max_processor_id_fn_t)(int *max_processor_id);
+
+/**
+ * Provides the number of sockets in a host. currently supported
+ * only in Linux hosts
+ * 
+ * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+ * supporeted (solaris, windows, etc...)
+ */
+typedef int (*opal_paffinity_base_module_max_socket_fn_t)(int *max_socket);
+
+/**
+ * Provides the number of cores in a socket. currently supported
+ * only in Linux hosts
+ * 
+ * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+ * supporeted (solaris, windows, etc...)
+ */
+typedef int (*opal_paffinity_base_module_max_core)(int socket, int *max_core);
+
 
 /**
  * Module finalize function.  Invoked by the base on the selected
@@ -209,6 +254,21 @@ struct opal_paffinity_base_module_1_1_0_t {
 
     /** Get this process' affinity */
     opal_paffinity_base_module_get_fn_t paff_module_get;
+
+    /** Map socket:core to processor ID */
+    opal_paffinity_base_module_map_to_processor_id_fn_t paff_map_to_processor_id;
+
+    /** Map processor ID to socket:core */
+    opal_paffinity_base_module_map_to_socket_core_fn_t  paff_map_to_socket_core;
+
+    /** Return the max processor ID */
+    opal_paffinity_base_module_max_processor_id_fn_t paff_max_processor_id;
+
+    /** Return the max socket number */
+    opal_paffinity_base_module_max_socket_fn_t paff_max_socket;
+
+    /** Return the max core number */
+    opal_paffinity_base_module_max_core paff_max_core;
 
     /** Shut down this module */
     opal_paffinity_base_module_finalize_fn_t paff_module_finalize;
