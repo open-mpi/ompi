@@ -36,6 +36,8 @@
 #include "opal/mca/backtrace/base/base.h"
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/mca/paffinity/base/base.h"
+#include "opal/mca/carto/carto.h"
+#include "opal/mca/carto/base/base.h"
 #include "opal/mca/maffinity/maffinity.h"
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/mca/memory/memory.h"
@@ -210,6 +212,9 @@ void ompi_info::open_components()
 
   opal_paffinity_base_open();
   component_map["paffinity"] = &opal_paffinity_base_components_opened;
+
+  opal_carto_base_open();
+  component_map["carto"] = &opal_carto_base_components_opened;
 
   opal_maffinity_base_open();
   component_map["maffinity"] = &opal_maffinity_base_components_opened;
@@ -395,6 +400,7 @@ void ompi_info::close_components()
         opal_backtrace_base_close();
         opal_memory_base_close();
         opal_paffinity_base_close();
+        opal_carto_base_close();
         opal_maffinity_base_close();
         opal_timer_base_close();
 #if OPAL_ENABLE_FT == 1

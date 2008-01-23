@@ -171,6 +171,9 @@ opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Provide a hostfile" },
 
+    { "carto", "file", "path", '\0', "cf", "cartofile", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Provide a cartography file" },
     /* Don't wait for the process to finish before exiting */
 #if 0
     { NULL, NULL, NULL, '\0', "nw", "nw", 0,

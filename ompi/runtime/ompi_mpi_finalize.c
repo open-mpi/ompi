@@ -42,6 +42,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/util/show_help.h"
 #include "opal/sys/atomic.h"
+#include "opal/mca/carto/base/base.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/mca/schema/schema.h"
@@ -145,6 +146,8 @@ int ompi_mpi_finalize(void)
     if (ompi_mpi_maffinity_setup) {
         opal_maffinity_base_close();
     }
+
+    opal_carto_base_close();
 
     /* wait for everyone to reach this point
        This is a grpcomm barrier instead of an MPI barrier because an
