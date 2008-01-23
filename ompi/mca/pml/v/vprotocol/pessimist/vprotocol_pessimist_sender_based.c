@@ -82,6 +82,9 @@ static void sb_mmap_alloc(void)
         ompi_mpi_abort(MPI_COMM_NULL, MPI_ERR_NO_SPACE, false);    
     }
 #else    
+#ifndef MAP_NOCACHE
+#   define MAP_NOCACHE 0
+#endif
     if(-1 == ftruncate(sb.sb_fd, sb.sb_offset + sb.sb_length))
     {
         V_OUTPUT_ERR("pml_v: vprotocol_pessimist: sender_based_alloc: ftruncate: %s", 
