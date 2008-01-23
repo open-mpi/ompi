@@ -39,6 +39,7 @@
 #include "opal/util/num_procs.h"
 #include "opal/runtime/opal.h"
 #include "opal/event/event.h"
+#include "opal/mca/carto/base/base.h"
 
 #include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
@@ -319,6 +320,16 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                 }
             }
         }
+    }
+
+    if (OPAL_SUCCESS != (ret = opal_carto_base_open())) {
+        error = "opal_carto_base_open";
+        goto error;
+    }
+
+    if (OPAL_SUCCESS != (ret = opal_carto_base_select())) {
+        error = "opal_carto_base_select";
+        goto error;
     }
 
     /* initialize datatypes. This step should be done early as it will
