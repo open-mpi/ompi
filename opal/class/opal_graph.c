@@ -22,7 +22,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/constants.h"
 #include "opal/class/opal_graph.h"
-
+#include "opal/util/output.h"
 
 static int compare_vertex_distance(const void *item1, const void *item2);
 
@@ -33,7 +33,6 @@ static int compare_vertex_distance(const void *item1, const void *item2);
 
 static void opal_graph_vertex_construct(opal_graph_vertex_t *vertex);
 static void opal_graph_vertex_destruct(opal_graph_vertex_t *vertex);
-static void delete_all_edges_connected_to_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex);
 
 OBJ_CLASS_INSTANCE(
     opal_graph_vertex_t,
@@ -278,7 +277,7 @@ void opal_graph_add_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex)
  */
 int opal_graph_add_edge(opal_graph_t *graph, opal_graph_edge_t *edge) 
 {
-    opal_adjacency_list_t *aj_list, *start_aj_list, *end_aj_list;
+    opal_adjacency_list_t *aj_list, *start_aj_list= NULL, *end_aj_list;
     opal_list_item_t *item;
     bool start_found = false, end_found = false;
 
@@ -395,14 +394,14 @@ uint32_t opal_graph_adjacent(opal_graph_t *graph, opal_graph_vertex_t *vertex1, 
      * Verify that the first vertex belongs to the graph.
      */
     if (graph != vertex1->in_graph) {
-        opal_output(0,"opal_graph_adjacent 1 Vertex1 %p not in the graph %p\n",(void *)vertex1,(void *)graph);
+        OPAL_OUTPUT((0,"opal_graph_adjacent 1 Vertex1 %p not in the graph %p\n",(void *)vertex1,(void *)graph));
         return DISTANCE_INFINITY;
     }
     /**
      * Verify that the second vertex belongs to the graph.
      */
     if (graph != vertex2->in_graph) {
-        opal_output(0,"opal_graph_adjacent 2 Vertex2 %p not in the graph %p\n",(void *)vertex2,(void *)graph);
+        OPAL_OUTPUT((0,"opal_graph_adjacent 2 Vertex2 %p not in the graph %p\n",(void *)vertex2,(void *)graph));
         return DISTANCE_INFINITY;
     }
     /**
@@ -552,7 +551,7 @@ int opal_graph_get_adjacent_vertices(opal_graph_t *graph, opal_graph_vertex_t *v
      * Verify that the vertex belongs to the graph.
      */
     if (graph != vertex->in_graph) {
-        opal_output(0,"Vertex %p not in the graph %p\n", (void *)vertex, (void *)graph);
+        OPAL_OUTPUT((0,"Vertex %p not in the graph %p\n", (void *)vertex, (void *)graph));
         return 0;
     }
     /**
@@ -596,14 +595,14 @@ uint32_t opal_graph_spf(opal_graph_t *graph, opal_graph_vertex_t *vertex1, opal_
      * Verify that the first vertex belongs to the graph.
      */
     if (graph != vertex1->in_graph) {
-        opal_output(0,"opal_graph_spf 1 Vertex1 %p not in the graph %p\n",(void *)vertex1,(void *)graph);
+        OPAL_OUTPUT((0,"opal_graph_spf 1 Vertex1 %p not in the graph %p\n",(void *)vertex1,(void *)graph));
         return DISTANCE_INFINITY;
     }
     /**
      * Verify that the second vertex belongs to the graph.
      */
     if (graph != vertex2->in_graph) {
-        opal_output(0,"opal_graph_spf 2 Vertex2 %p not in the graph %p\n",(void *)vertex2,(void *)graph);
+        OPAL_OUTPUT((0,"opal_graph_spf 2 Vertex2 %p not in the graph %p\n",(void *)vertex2,(void *)graph));
         return DISTANCE_INFINITY;
     }
     /**
@@ -690,7 +689,7 @@ uint32_t dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex, opal_value_a
      * Verify that the reference vertex belongs to the graph.
      */
     if (graph != vertex->in_graph) {
-        opal_output(0,"dijkstra: vertex %p not in the graph %p\n",(void *)vertex,(void *)graph);
+        OPAL_OUTPUT((0,"dijkstra: vertex %p not in the graph %p\n",(void *)vertex,(void *)graph));
         return 0;
     }
     /* get the order of the graph and allocate a working queue accordingly */
@@ -875,9 +874,4 @@ void opal_graph_print(opal_graph_t *graph)
         free(tmp_str1);
     }
 }
-
-
-
-
-
 
