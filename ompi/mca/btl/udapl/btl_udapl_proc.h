@@ -64,7 +64,7 @@ struct mca_btl_udapl_proc_t {
 typedef struct mca_btl_udapl_proc_t mca_btl_udapl_proc_t;
 OBJ_CLASS_DECLARATION(mca_btl_udapl_proc_t);
 
-#define MCA_BTL_UDAPL_INVALID_PEER_ADDR_IDX 4294967295
+#define MCA_BTL_UDAPL_INVALID_PEER_ADDR_IDX -1
 
 mca_btl_udapl_proc_t* mca_btl_udapl_proc_create(ompi_proc_t* ompi_proc);
 int mca_btl_udapl_proc_insert(mca_btl_udapl_proc_t*, mca_btl_base_endpoint_t*);
