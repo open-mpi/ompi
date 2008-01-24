@@ -14,11 +14,13 @@
 #include "ompi_config.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
+#include <inttypes.h>
 
 BEGIN_C_DECLS
 
+/* Make sure -Wformat is happy... */ 
 typedef uint64_t vprotocol_pessimist_clock_t;
-#define PRIpclock "llx"
+#define PRIpclock PRIx64
 
 typedef enum {
   VPROTOCOL_PESSIMIST_EVENT_TYPE_MATCHING,
