@@ -46,7 +46,7 @@ OMPI_LOAD_PLATFORM
 #
 # Init automake
 #
-AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.10])
+AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.10 tar-ustar])
 
 m4_pattern_allow([m4_ifval])
 
