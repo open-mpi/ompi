@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -59,10 +59,13 @@ static int rdma_cm_connect(mca_btl_base_endpoint_t *e)
 
 static int rdma_cm_query(mca_btl_openib_hca_t *hca)
 {
+    /* JMS need something better than this */
+#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
     if (IBV_TRANSPORT_IWARP == hca->ib_dev->transport_type) {
         BTL_ERROR(("rdma cm Not currently supported"));
         return rdma_cm_priority;
     }
+#endif
 
     return -1;
 }
