@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
@@ -103,7 +103,14 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
           [AC_CHECK_DECLS([IBV_EVENT_CLIENT_REREGISTER], [], [], 
                           [#include <infiniband/verbs.h>])
            AC_CHECK_FUNCS([ibv_get_device_list ibv_resize_cq])
-           AC_CHECK_FUNCS([ibv_open_xrc_domain], [$1_have_xrc=1])])
+
+           # struct ibv_device.transport_type was added in OFED v1.2
+           AC_CHECK_MEMBERS([struct ibv_device.transport_type], [], [],
+                            [#include <infiniband/verbs.h>])
+
+           # ibv_open_xrc_domain was added in OFED 1.3
+           AC_CHECK_FUNCS([ibv_open_xrc_domain], [$1_have_xrc=1])
+          ])
 
     CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
     LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"

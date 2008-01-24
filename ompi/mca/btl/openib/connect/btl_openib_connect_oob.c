@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco, Inc.  All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  *
@@ -141,11 +141,16 @@ static int oob_start_connect(mca_btl_base_endpoint_t *endpoint)
 
 static int oob_query(mca_btl_openib_hca_t *hca)
 {
+    /* JMS need something better than this */
+#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
     if (IBV_TRANSPORT_IB == hca->ib_dev->transport_type) {
         return oob_priority;
     }
 
     return -1;
+#else
+    return oob_priority;
+#endif
 }
 
 /*
