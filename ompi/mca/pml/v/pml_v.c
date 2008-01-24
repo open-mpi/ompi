@@ -11,4 +11,4 @@
 #include "ompi_config.h"
 #include "pml_v.h"
 
-mca_pml_v_t mca_pml_v = {NULL, 0, 0};
+mca_pml_v_t mca_pml_v = {0, 0};
