@@ -79,11 +79,7 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         rc = ompi_request_wait(&req, status);
     } else {
         if (MPI_STATUS_IGNORE != status) {
-            status->MPI_SOURCE = MPI_PROC_NULL;
-            status->MPI_TAG = MPI_ANY_TAG;
-            status->MPI_ERROR = MPI_SUCCESS;
-            status->_count = 0;
-            status->_cancelled = 0;
+            *status = ompi_request_empty.req_status;
         }
         rc = MPI_SUCCESS;
     }

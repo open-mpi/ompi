@@ -50,11 +50,7 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
 
     if (MPI_REQUEST_NULL == *request) {
         if (MPI_STATUS_IGNORE != status) {
-            status->MPI_SOURCE = MPI_PROC_NULL;
-            status->MPI_TAG = MPI_ANY_TAG;
-            status->MPI_ERROR = MPI_SUCCESS;
-            status->_count = 0;
-            status->_cancelled = 0;
+            *status = ompi_request_empty.req_status;
         }
         return MPI_SUCCESS;
     }
