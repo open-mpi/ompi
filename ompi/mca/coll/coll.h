@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 UT-Battelle, LLC
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,15 +28,23 @@
  * handler invocation, but the collective components provide all other
  * functionality.
  *
- * Component selection is per communicator (ie, comm_query will be
- * called once per communicator when the communicator is called).
- * During the call to coll_enable(), components are ordered by
- * priority and functions are copied form the highest available
- * component then the next highest and so on until all functions are
- * available.  This selection process is detailed during comm_query()
- * and comm_enable() and can result in up to N different components
- * being used for a single communicator, one per needed collective
- * function.
+ * Component selection is done per commuicator, at Communicator
+ * construction time.  mca_coll_base_comm_select() is used to
+ * create the list of components available to the compoenent
+ * collm_comm_query function, instantiating a module for each
+ * component that i usable, and sets the module collective function pointers.
+ * mca_coll_base_comm_select() then loops through the list of available
+ * components (via the instantiated module), and uses the 
+ * module's coll_module_enable() function to enable the modules, and
+ * if successful, sets the communicator collective functions to the
+ * those supplied by the given module, keeping track of which module it
+ * is associated with.
+ *
+ * The module destructors are called for each module used by the
+ * communicator, at communicator desctruction time.
+ *
+ * This can result in up to N different components being used for a 
+ * single communicator, one per needed collective function.
  *
  * The interface is the same for inter- or intra-communicators, and
  * components should be able to handle either style of communicator
