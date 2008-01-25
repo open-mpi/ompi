@@ -18,10 +18,11 @@
 #
 
 headers += \
-        base/base.h
+        base/base.h \
+        carto_base_graph.h
 
 libmca_carto_la_SOURCES += \
         base/carto_base_close.c \
         base/carto_base_select.c \
-	base/carto_base_graph.c \
+        base/carto_base_graph.c \
         base/carto_base_open.c
