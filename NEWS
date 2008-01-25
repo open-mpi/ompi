@@ -76,7 +76,14 @@ Trunk (not on release branches yet)
   --> Expected: 1.3
 
 
-1.2.5 (not released yet)
+1.2.6 (not released yet, if ever)
+-----
+- Fixed some C++ compiler warnings. See ticket #1203.
+- Fixed formatting of the orterun man page.  See ticket #1202.
+  Thanks to Peter Breitenlohner for the patch.
+
+
+1.2.5
 -----
 
 - Fixed compile issue with open() on Fedora 8 (and newer) platforms.
