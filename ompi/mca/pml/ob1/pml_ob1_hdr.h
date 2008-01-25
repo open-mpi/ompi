@@ -30,6 +30,7 @@
 #endif
 
 #include "opal/types.h"
+#include "ompi/proc/proc.h"
 #include "ompi/datatype/dt_arch.h"
 
 #define MCA_PML_OB1_HDR_TYPE_MATCH     1
