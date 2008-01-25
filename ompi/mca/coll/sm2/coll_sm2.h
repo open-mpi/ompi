@@ -90,16 +90,22 @@ BEGIN_C_DECLS
      */
     OMPI_MODULE_DECLSPEC extern mca_coll_sm2_component_t mca_coll_sm2_component;
 
+
     /*
      * coll module functions
      */
 
-    int mca_coll_sm_init_query(bool enable_progress_threads,
+    /* query to see if the component is available for use, and can
+     * satisfy the thread and progress requirements
+     */
+    int mca_coll_sm2_init_query(bool enable_progress_threads,
 			       bool enable_mpi_threads);
 
+    /* query to see if the module is available for use on the given
+     * communicator, and if so, what it's priority is.
+     */
     struct mca_coll_base_module_1_1_0_t *
-    mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority);
-
+    mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority);
 
 /**
  * Macro to setup flag usage

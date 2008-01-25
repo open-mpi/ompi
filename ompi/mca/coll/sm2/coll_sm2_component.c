@@ -41,6 +41,12 @@ const char *mca_coll_sm_component_version_string =
 /*
  * Local functions
  */
+static int sm2_module_enable(struct mca_coll_base_module_1_1_0_t *module,
+        struct ompi_communicator_t *comm);
+
+/*
+ * Local functions
+ */
 
 static int sm2_open(void);
 static int sm2_close(void);
@@ -100,17 +106,35 @@ mca_coll_sm2_component_t mca_coll_sm2_component = {
 };
 
 
+static void                
+mca_coll_sm2_module_construct(mca_coll_sm2_module_t *module)
+{
+    /* debug */
+    fprintf(stderr," sm2 constructor called \n");
+    fflush(stderr);
+    /* end debug */
+}
+
+static void                
+mca_coll_sm2_module_destruct(mca_coll_sm2_module_t *module)
+{
+    /* debug */
+    fprintf(stderr," sm2 destructor called \n");
+    fflush(stderr);
+    /* end debug */
+}
+
+
 /*
  * Open the component
  */
-static int sm_open(void)
+static int sm2_open(void)
 {
-    size_t size1, size2;
     mca_base_component_t *c = &mca_coll_sm2_component.super.collm_version;
     mca_coll_sm2_component_t *cs = &mca_coll_sm2_component;
 
     mca_base_param_reg_int(c, "priority", 
-                           "Priority of the sm coll component",
+                           "Priority of the sm-v2 coll component",
                            false, false, 
                            cs->sm_priority,
                            &cs->sm_priority);
@@ -122,22 +146,69 @@ static int sm_open(void)
 /*
  * Close the component
  */
-static int sm_close(void)
+static int sm2_close(void)
 {
     return OMPI_SUCCESS;
 }
 
-
-static void
-mca_coll_sm_module_construct(mca_coll_sm_module_t *module)
+/* query to see if the component is available for use, and can 
+ * satisfy the thread and progress requirements 
+ */
+int mca_coll_sm2_init_query(bool enable_progress_threads,
+        bool enable_mpi_threads)
 {
-    module->sm_data = NULL;
-    module->previous_reduce_module = NULL;
+
+    /* done */
+    return OMPI_SUCCESS;
 }
 
-static void
-mca_coll_sm_module_destruct(mca_coll_sm2_module_t *module)
+
+/* query to see if the module is available for use on the given
+ * communicator, and if so, what it's priority is.
+ */
+struct mca_coll_base_module_1_1_0_t *
+mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
+    /* local variables */
+    mca_coll_sm2_module_t *sm_module;
+
+    /* Get our priority */
+    *priority = mca_coll_sm2_component.sm_priority;
+
+    /* allocate and initialize an sm-v2  module */
+    sm_module = OBJ_NEW(mca_coll_sm2_module_t);
+
+    sm_module->super.coll_module_enable = sm2_module_enable;
+    sm_module->super.ft_event        = NULL;
+    sm_module->super.coll_allgather  = NULL;
+    sm_module->super.coll_allgatherv = NULL;
+    sm_module->super.coll_allreduce  = NULL;
+    sm_module->super.coll_alltoall   = NULL;
+    sm_module->super.coll_alltoallv  = NULL;
+    sm_module->super.coll_alltoallw  = NULL;
+    sm_module->super.coll_barrier    = NULL;
+    sm_module->super.coll_bcast      = NULL;
+    sm_module->super.coll_exscan     = NULL;
+    sm_module->super.coll_gather     = NULL;
+    sm_module->super.coll_gatherv    = NULL;
+    sm_module->super.coll_reduce     = NULL;
+    sm_module->super.coll_reduce_scatter = NULL;
+    sm_module->super.coll_scan       = NULL;
+    sm_module->super.coll_scatter    = NULL;
+    sm_module->super.coll_scatterv   = NULL;
+    return &(sm_module->super);
+
+}
+
+/*
+    * Init module on the communicator
+     */
+static int
+sm2_module_enable(struct mca_coll_base_module_1_1_0_t *module,
+                         struct ompi_communicator_t *comm)
+{
+    /* All done */
+    return OMPI_SUCCESS;
 }
 
 
