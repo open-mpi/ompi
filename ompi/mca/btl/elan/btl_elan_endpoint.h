@@ -42,7 +42,6 @@ struct mca_btl_base_endpoint_t {
     /**< proc structure corresponding to endpoint */
 
     unsigned int 		  elan_vp;
-
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;

@@ -150,7 +150,6 @@ int mca_btl_elan_proc_insert( mca_btl_elan_proc_t* module_proc,
     module_proc->proc_endpoints[module_proc->proc_endpoint_count++] = module_endpoint;
     for( i = 0; i < module_proc->proc_addr_count; i++ ) {
         module_endpoint->elan_vp = module_proc->elan_vp_array[i];
-        /* module_endpoint->elan_vp = ompi_comm_rank(&ompi_mpi_comm_world);*/
         return OMPI_SUCCESS;
     }
     return OMPI_SUCCESS;

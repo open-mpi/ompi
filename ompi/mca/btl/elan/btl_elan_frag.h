@@ -36,7 +36,6 @@ struct mca_btl_elan_frag_t {
     mca_btl_base_tag_t tag;
     struct ELAN_EVENT* elan_event;
     size_t size;
-    struct mca_mpool_base_registration_t* registration;
 }; 
 typedef struct mca_btl_elan_frag_t mca_btl_elan_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_elan_frag_t); 
@@ -64,7 +63,6 @@ OBJ_CLASS_DECLARATION(mca_btl_elan_frag_user_t);
         ompi_free_list_item_t *item;                                    \
         OMPI_FREE_LIST_WAIT(&mca_btl_elan_component.elan_frag_eager, item, rc); \
         frag = (mca_btl_elan_frag_t*) item;                             \
-        frag->segment.seg_addr.pval = (void*)(frag+1);                  \
         frag->my_list = &mca_btl_elan_component.elan_frag_eager;        \
     }
 
@@ -74,7 +72,6 @@ OBJ_CLASS_DECLARATION(mca_btl_elan_frag_user_t);
         ompi_free_list_item_t *item;                                    \
         OMPI_FREE_LIST_WAIT(&mca_btl_elan_component.elan_frag_max, item, rc); \
         frag = (mca_btl_elan_frag_t*) item;                             \
-        frag->segment.seg_addr.pval = (void*)(frag+1);                  \
         frag->my_list = &mca_btl_elan_component.elan_frag_max;          \
     }
 

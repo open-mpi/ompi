@@ -24,7 +24,6 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "opal/util/output.h"
-#include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 
 #include "ompi/mca/btl/btl.h"
@@ -76,15 +75,7 @@ struct mca_btl_elan_component_t {
     opal_mutex_t                            elan_lock;
     /**< lock for accessing module state */
 	
-
-    char* elan_mpool_name; 
-    /**< name of memory pool */ 
-
     char* elanidmap_file;  /**< name of the ELANIDMAP file */
-
-    bool leave_pinned;
-    /**< pin memory on first use and leave pinned */
-	
 }; 
 typedef struct mca_btl_elan_component_t mca_btl_elan_component_t;
 
@@ -95,32 +86,23 @@ OMPI_MODULE_DECLSPEC extern mca_btl_elan_component_t mca_btl_elan_component;
  */
 
 struct mca_btl_elan_module_t {
-    mca_btl_base_module_t  super;  /**< base BTL interface */
-    ELAN_STATE     *state;
-    ELAN_BASE      *base;
-    ELAN_TPORT     *tport;          /* What we actually use for moving messages */
-    ELAN_QUEUE	   *queue;
-    ELAN_GROUP     *group;          /* The group with everyone in      */
-    unsigned int   elan_vp;      /**< elan vpid, not ompi vpid */
-    unsigned int   elan_nvp;     /**< total # of elan vpid */
-    opal_mutex_t   elan_lock;
-    opal_list_t    recv_list;  /* list of pending receives. */
-    opal_list_t    send_list;  /* list of posted sends */
-    opal_list_t    rdma_list;  /* list of posted receives */
-    mca_btl_elan_frag_t recv_frag;
-    struct bufdesc_t *    tportFIFOHead;
-    struct bufdesc_t *    tportFIFOTail;
-    struct mca_mpool_base_module_t* elan_mpool;
+    mca_btl_base_module_t  super;             /**< base BTL interface */
+    ELAN_BASE*             base;
+    ELAN_TPORT*            tport;
+    ELAN_QUEUE*            global_queue;      /**< The global queue */
+    ELAN_QUEUE_RX*         rx_queue;          /**< The local receive queue */
+    ELAN_QUEUE_TX*         tx_queue;          /**< The global send queue */
+    opal_mutex_t           elan_lock;
+    opal_list_t            send_list;         /**< list of posted sends */
+    opal_list_t            rdma_list;         /**< list of posted receives */
 }; 
 typedef struct mca_btl_elan_module_t mca_btl_elan_module_t;
 extern mca_btl_elan_module_t mca_btl_elan_module;
 
-struct bufdesc_t {
-    ELAN_EVENT          * eve;       
-    struct mca_btl_elan_frag_t * frag;
-    struct bufdesc_t    * next;
-};
-typedef struct bufdesc_t bufdesc_t;
+typedef struct mca_btl_elan_hdr_t {
+    int tag;
+    int length;
+} mca_btl_elan_hdr_t;
 
 /**
  * Register ELAN component parameters with the MCA framework
