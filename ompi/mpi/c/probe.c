@@ -20,6 +20,7 @@
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/request/request.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Probe = PMPI_Probe
@@ -54,12 +55,8 @@ int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
     }
 
     if (MPI_PROC_NULL == source) {
-        if (status) {
-            status->MPI_SOURCE = MPI_PROC_NULL;
-            status->MPI_TAG = MPI_ANY_TAG;
-            status->MPI_ERROR = MPI_SUCCESS;
-            status->_count = 0;
-            status->_cancelled = 0;
+        if (MPI_STATUS_IGNORE != status) {
+            *status = ompi_request_empty.req_status;
         }
         return MPI_SUCCESS;
     }

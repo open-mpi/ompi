@@ -20,6 +20,7 @@
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/request/request.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Recv = PMPI_Recv
@@ -59,11 +60,7 @@ int MPI_Recv(void *buf, int count, MPI_Datatype type, int source,
 
     if (MPI_PROC_NULL == source) {
         if (MPI_STATUS_IGNORE != status) {
-            status->MPI_SOURCE = MPI_PROC_NULL;
-            status->MPI_TAG = MPI_ANY_TAG;
-            status->MPI_ERROR = MPI_SUCCESS;
-            status->_count = 0;
-            status->_cancelled = 0;
+            *status = ompi_request_empty.req_status;
         }
         return MPI_SUCCESS;
     }
