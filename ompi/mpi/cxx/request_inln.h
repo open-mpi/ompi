@@ -343,8 +343,8 @@ MPI::Grequest::Start(Query_function *query_fn, Free_function *free_fn,
 	Cancel_function *cancel_fn, void *extra)
 {
     MPI_Request grequest = 0;
-    struct Grequest_intercept_t *new_extra = 
-        new struct MPI::Grequest_intercept_t;
+    Grequest_intercept_t *new_extra = 
+        new MPI::Grequest_intercept_t;
 
     new_extra->git_extra = extra;
     new_extra->git_cxx_query_fn = query_fn;
