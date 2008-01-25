@@ -24,14 +24,12 @@ static void mca_btl_elan_frag_common_constructor(mca_btl_elan_frag_t* frag)
 
 static void mca_btl_elan_frag_eager_constructor(mca_btl_elan_frag_t* frag) 
 { 
-    frag->registration = NULL;
     frag->size         = mca_btl_elan_module.super.btl_eager_limit;  
     mca_btl_elan_frag_common_constructor(frag); 
 }
 
 static void mca_btl_elan_frag_max_constructor(mca_btl_elan_frag_t* frag) 
 { 
-    frag->registration = NULL;
     frag->size         = mca_btl_elan_module.super.btl_max_send_size; 
     mca_btl_elan_frag_common_constructor(frag); 
 }

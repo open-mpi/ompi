@@ -22,7 +22,6 @@
 
 #include "ompi/datatype/convertor.h" 
 #include "ompi/mca/btl/base/base.h" 
-#include "ompi/mca/mpool/mpool.h" 
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "orte/class/orte_proc_table.h" 
 #include "opal/class/opal_hash_table.h"   
@@ -56,14 +55,10 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
                                    ompi_bitmap_t* reachable )
 {
     mca_btl_elan_module_t* elan_btl = (mca_btl_elan_module_t*)btl;
-    mca_btl_elan_frag_t* frag;
     int i, rc;
     FILE* file;
     char* filename;
-    ELAN_BASE    *base;
-    ELAN_STATE   *state;
-    ELAN_QUEUE   *q = NULL;
-    ELAN_TPORT   *p = NULL;
+    ELAN_BASE* base;
 
     /* Create the mapid file in the temporary storage */
     filename = opal_os_path( false, orte_process_info.proc_session_dir, "ELAN_ID", NULL );
@@ -82,39 +77,51 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
     base = elan_baseInit(0);  
     if( NULL == base )  
         return OMPI_ERR_OUT_OF_RESOURCE;
-    state = base->state;   
-    if( NULL == state ) {  
+    if( NULL == base->state ) {  
         mca_btl_base_error_no_nics( "ELAN", "Quadrics" ); 
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    elan_btl->base = base; 
 
-    /* Create the global queue (it's a synchronization point) */
-    if( (q = elan_gallocQueue(base, base->allGroup)) == NULL ) {  
+    /* Create the global queue */
+    if( (elan_btl->global_queue = elan_gallocQueue(base, base->allGroup)) == NULL ) {  
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    if( !(p = elan_tportInit(base->state,
-                             q,
-                             base->tport_nslots,
-                             base->tport_smallmsg,
-                             mca_btl_elan_module.super.btl_eager_limit, /*base->tport_bigmsg,*/
-                             base->tport_stripemsg, 
-                             ELAN_POLL_EVENT,  
-                             base->retryCount, 
-                             &base->shm_key,  
-                             base->shm_fifodepth, 
-                             base->shm_fragsize,  
-                             ELAN_TPORT_SHM_DISABLE | ELAN_TPORT_USERCOPY_DISABLE))) { 
+    /* Create and initialize the tport */
+    if( !(elan_btl->tport = elan_tportInit(base->state,
+                                           elan_btl->global_queue,
+                                           mca_btl_elan_component.elan_max_posted_recv,
+                                           base->tport_smallmsg,
+                                           mca_btl_elan_module.super.btl_rndv_eager_limit,
+                                           base->tport_stripemsg, 
+                                           ELAN_POLL_EVENT,  
+                                           base->retryCount, 
+                                           &base->shm_key,  
+                                           base->shm_fifodepth, 
+                                           base->shm_fragsize,  
+                                           ELAN_TPORT_SHM_DISABLE | ELAN_TPORT_USERCOPY_DISABLE))) { 
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    elan_btl->base  = base; 
-    elan_btl->state = state; 
-    elan_btl->queue = q;  
-    elan_btl->tport = p;  
-    elan_btl->elan_vp = state->vp;  
-    elan_btl->elan_nvp = state->nvp; 
 
-    for(i = 0; i < (int) nprocs; i++) {
+    /* Create the receive queue */
+    elan_btl->rx_queue =
+        elan_queueRxInit( base->state,                                 /* ELAN_STATE *state */
+                          elan_btl->global_queue,                      /* ELAN_QUEUE *queue */
+                          mca_btl_elan_component.elan_max_posted_recv, /* int nSlots */
+                          mca_btl_elan_module.super.btl_eager_limit,   /* int slotSize */
+                          ELAN_RAIL_ALL,                               /* int rail */
+                          (ELAN_TPORT_SHM_DISABLE |
+                           ELAN_TPORT_USERCOPY_DISABLE)                /* ELAN_FLAGS flags */);
+
+    elan_btl->tx_queue =
+        elan_queueTxInit( base->state,                         /* ELAN_STATE *state */
+                          elan_btl->global_queue,              /* ELAN_QUEUE *q */
+                          ELAN_RAIL_ALL,                       /* int rail */
+                          (ELAN_TPORT_SHM_DISABLE |
+                           ELAN_TPORT_USERCOPY_DISABLE) );     /* ELAN_FLAGS flags */
+
+    for(i = 0; i < (int)nprocs; i++) {
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
         mca_btl_elan_proc_t* elan_proc;
         mca_btl_base_endpoint_t* elan_endpoint;
@@ -145,26 +152,9 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
         peers[i] = elan_endpoint;
     }
 
-    /* Post some receives */
-    for( i = 0; i < mca_btl_elan_component.elan_max_posted_recv; i++ ) {
-        /* Post the receives if there is no unexpected handler */
-        MCA_BTL_ELAN_FRAG_ALLOC_EAGER(frag, rc );
-        if( NULL == frag ) {
-            return OMPI_ERROR; 
-        }
-        frag->base.des_dst     = &(frag->segment);
-        frag->base.des_dst_cnt = 1;
-        frag->base.des_src     = NULL;
-        frag->base.des_src_cnt = 0;
-        frag->type             = MCA_BTL_ELAN_HDR_TYPE_RECV;
-        frag->elan_event = elan_tportRxStart( elan_btl->tport,
-                                              ELAN_TPORT_RXBUF | ELAN_TPORT_RXANY,
-                                              0, 0, 0, 0,
-                                              frag->base.des_dst->seg_addr.pval,
-                                              mca_btl_elan_module.super.btl_eager_limit );
-        /* Add the fragment to the pending RDMA list */
-        opal_list_append( &(elan_btl->recv_list), (opal_list_item_t*)frag );
-    }
+    /* enable the network */
+    elan_enable_network( elan_btl->base->state );
+
     return OMPI_SUCCESS;
 }
 
@@ -204,27 +194,27 @@ mca_btl_elan_alloc( struct mca_btl_base_module_t* btl,
     mca_btl_elan_frag_t* frag;
     int rc;
 
-    if( size <= btl->btl_eager_limit ) { 
-        MCA_BTL_ELAN_FRAG_ALLOC_EAGER(frag, rc); 
+    if( size <= btl->btl_eager_limit ) {
+        MCA_BTL_ELAN_FRAG_ALLOC_EAGER(frag, rc);
         if( OPAL_UNLIKELY(NULL == frag) ) {
             return NULL;
         }
-        frag->segment.seg_len = size;
     } else if( size <= btl->btl_max_send_size ) {
         MCA_BTL_ELAN_FRAG_ALLOC_MAX(frag, rc); 
         if( OPAL_UNLIKELY(NULL == frag) ) {
             return NULL;
         }
-        frag->segment.seg_len = size;
     } else {
         return NULL;
     }
-    frag->segment.seg_addr.pval = (void*)(frag+1);
+    frag->segment.seg_addr.pval = (void*)((char*)(frag + 1)
+                                          + sizeof(mca_btl_elan_hdr_t));
+    frag->segment.seg_len = size;
     frag->base.des_src = &(frag->segment);
-    frag->base.des_src_cnt = 1;   
+    frag->base.des_src_cnt = 1;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = 0; 
+    frag->base.des_flags = 0;
     frag->btl = (mca_btl_elan_module_t*)btl;
     frag->endpoint = peer;
     frag->base.order = MCA_BTL_NO_ORDER;
@@ -403,21 +393,26 @@ static int mca_btl_elan_send( struct mca_btl_base_module_t* btl,
 {
     mca_btl_elan_module_t* elan_btl = (mca_btl_elan_module_t*) btl;
     mca_btl_elan_frag_t* frag = (mca_btl_elan_frag_t*)descriptor; 
-    int peer, proc, send_len;
-    void* sbuf = NULL;
+    mca_btl_elan_hdr_t* elan_hdr = (mca_btl_elan_hdr_t*)(frag+1);
+    int send_len;
 
-    frag->btl = elan_btl;
-    frag->endpoint = endpoint;
-    frag->tag = tag;
-    frag->type = MCA_BTL_ELAN_HDR_TYPE_SEND;
-    peer = endpoint->elan_vp;
-    proc = elan_btl->elan_vp;
-    sbuf     = (void*)frag->base.des_src->seg_addr.pval;
-    send_len = frag->base.des_src->seg_len; 
-    frag->elan_event = elan_tportTxStart( elan_btl->tport, 0, peer, proc, frag->tag,
-                                          sbuf, send_len) ;
-    if( elan_tportTxDone(frag->elan_event) ) {
-        elan_tportTxWait(frag->elan_event);
+    frag->btl        = elan_btl;
+    frag->endpoint   = endpoint;
+    frag->tag        = tag;
+    frag->type       = MCA_BTL_ELAN_HDR_TYPE_SEND;
+
+    elan_hdr->tag    = (int)tag;
+    elan_hdr->length = (int)frag->segment.seg_len;
+    send_len         = frag->segment.seg_len + sizeof(mca_btl_elan_hdr_t);
+    frag->elan_event = elan_queueTx( elan_btl->tx_queue,
+                                     endpoint->elan_vp,
+                                     (void*)elan_hdr,
+                                     send_len, ELAN_RAIL_ALL );
+    if( OPAL_UNLIKELY(NULL == frag->elan_event) ) {
+        opal_output( 0, "elan_queueTx failed for destination %d\n", endpoint->elan_vp );
+        return OMPI_ERROR;
+    }
+    if( elan_poll( frag->elan_event, 0 ) ) {
         frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint,
                                &(frag->base), OMPI_SUCCESS );
         return OMPI_SUCCESS;
@@ -448,11 +443,11 @@ static int mca_btl_elan_put( mca_btl_base_module_t* btl,
     unsigned char* src_addr = (unsigned char*)src->seg_addr.pval;
     size_t src_len = src->seg_len;
     unsigned char* dst_addr = (unsigned char*)ompi_ptr_ltop(dst->seg_addr.lval);
+
     frag->endpoint = endpoint;
     frag->btl = elan_btl;
     frag->type = MCA_BTL_ELAN_HDR_TYPE_PUT;
-    /* opal_output(0, "put from %p to %d peer , %d\n", src_addr, peer, src_len); */
-    frag->elan_event = elan_put(elan_btl->state, src_addr, dst_addr, src_len, peer);
+    frag->elan_event = elan_put(elan_btl->base->state, src_addr, dst_addr, src_len, peer);
     /* Add the fragment to the pending RDMA list */
     opal_list_append( &(elan_btl->rdma_list), (opal_list_item_t*)frag );
     return OMPI_SUCCESS;
@@ -480,12 +475,11 @@ static int mca_btl_elan_get( mca_btl_base_module_t* btl,
     unsigned char* src_addr = (unsigned char*)src->seg_addr.pval;
     size_t src_len = src->seg_len;
     unsigned char* dst_addr = (unsigned char*)ompi_ptr_ltop(dst->seg_addr.lval);
-    /*size_t dst_len = dst->seg_len;*/
+
     frag->endpoint = endpoint;
     frag->btl = elan_btl;
     frag->type = MCA_BTL_ELAN_HDR_TYPE_GET;
-    /*opal_output(0, "get from %p to %d peer , %d\n", src_addr, peer, src_len); */
-    frag->elan_event = elan_get(elan_btl->state, src_addr, dst_addr, src_len, peer);
+    frag->elan_event = elan_get(elan_btl->base->state, src_addr, dst_addr, src_len, peer);
     /* Add the fragment to the pending RDMA list */
     opal_list_append( &(elan_btl->rdma_list), (opal_list_item_t*)frag );
     return OMPI_SUCCESS;
@@ -500,28 +494,19 @@ int mca_btl_elan_finalize( struct mca_btl_base_module_t* btl )
     num_btls = mca_btl_elan_component.elan_num_btls;
     for( i = 0; i < num_btls; i++ ) {
         if( elan_btl == mca_btl_elan_component.elan_btls[i] ) {
-            /* Get rid of the BTL */
+            /* disable the network */
+            elan_disable_network( elan_btl->base->state );
+
+            /* Remove it from the list attached to the component */
             if( i == (num_btls-1) ) {
                 mca_btl_elan_component.elan_btls[i] = NULL;
             } else {
                 mca_btl_elan_component.elan_btls[i] =  mca_btl_elan_component.elan_btls[num_btls-1];
             }
-            /* disable the network */
-            elan_disable_network( elan_btl->state );
-            /* Cancel all pending receives */
-            {
-                mca_btl_elan_frag_t* frag;
-    
-                while( NULL != (frag = (mca_btl_elan_frag_t*)opal_list_remove_first(&elan_btl->recv_list)) ) {
-                    if( elan_tportRxCancel(frag->elan_event) ) {
-                        MCA_BTL_ELAN_FRAG_RETURN(frag);
-                    }
-                    frag = (mca_btl_elan_frag_t*)opal_list_remove_first(&(elan_btl->recv_list));
-                }
-            }
-            /* Release the mutex */
+            mca_btl_elan_component.elan_num_btls--;
+
+            /* Release the internal structures */
             OBJ_DESTRUCT(&elan_btl->elan_lock);
-            OBJ_DESTRUCT(&elan_btl->recv_list);
             OBJ_DESTRUCT(&elan_btl->send_list);
             OBJ_DESTRUCT(&elan_btl->rdma_list);
             /* The BTL is clean, remove it */
@@ -556,8 +541,8 @@ int mca_btl_elan_ft_event(int state)
 }
 
 static void mca_btl_elan_dump( struct mca_btl_base_module_t* btl,
-                                  struct mca_btl_base_endpoint_t* endpoint,
-                                  int verbose )
+                               struct mca_btl_base_endpoint_t* endpoint,
+                               int verbose )
 {
 }
 
@@ -576,7 +561,7 @@ mca_btl_elan_module_t mca_btl_elan_module = {
         0, /* max send fragment size */
         0, /* btl_rdma_pipeline_offset */
         0, /* btl_rdma_pipeline_frag_size */
-        0, /* btl_min_rdma_pipeline_size */				
+        0, /* btl_min_rdma_pipeline_size */
         0, /* exclusivity */
         0, /* latency */
         0, /* bandwidth */
@@ -585,8 +570,8 @@ mca_btl_elan_module_t mca_btl_elan_module = {
         mca_btl_elan_del_procs,
         NULL,  /* btl_register */
         mca_btl_elan_finalize,
-        mca_btl_elan_alloc, 
-        mca_btl_elan_free, 
+        mca_btl_elan_alloc,
+        mca_btl_elan_free,
         mca_btl_elan_prepare_src,
         mca_btl_elan_prepare_dst,
         mca_btl_elan_send,

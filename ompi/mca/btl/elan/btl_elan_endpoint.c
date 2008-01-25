@@ -32,8 +32,8 @@
 
 static void mca_btl_elan_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 {
-    endpoint->endpoint_btl = NULL;
-    endpoint->endpoint_proc = NULL;
+    endpoint->endpoint_btl      = NULL;
+    endpoint->endpoint_proc     = NULL;
 }
 
 /*
