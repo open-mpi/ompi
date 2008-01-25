@@ -26,6 +26,13 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
+1.2.6 (not released yet, if ever)
+-----
+- Fixed some C++ compiler warnings. See ticket #1203.
+- Fixed formatting of the orterun man page.  See ticket #1202.
+  Thanks to Peter Breitenlohner for the patch.
+
+
 1.2.5
 -----
 
