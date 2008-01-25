@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -54,16 +54,16 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_base_frag_t);
  *  Free-list allocation of fragments.
  */
 
-#define ORTE_IOF_BASE_FRAG_ALLOC(frag,rc) { \
-    opal_free_list_item_t* item; \
-    OPAL_FREE_LIST_GET(&orte_iof_base.iof_fragments, item,rc); \
-    if((frag = (orte_iof_base_frag_t*)item) == NULL) { \
+#define ORTE_IOF_BASE_FRAG_ALLOC(frag,rc) do { \
+    opal_free_list_item_t* _item; \
+    OPAL_FREE_LIST_GET(&orte_iof_base.iof_fragments, _item, rc); \
+    if(NULL == (frag = (orte_iof_base_frag_t*)_item)) { \
         opal_output(0, "ORTE_IOF_BASE_FRAG_ALLOC failed with status=%d\n", rc); \
     } \
     frag->frag_owner = NULL; \
     frag->frag_ptr = frag->frag_data; \
     frag->frag_len = 0; \
-}
+} while(0)
 
 #define ORTE_IOF_BASE_FRAG_RETURN(frag) \
     OPAL_FREE_LIST_RETURN(&orte_iof_base.iof_fragments, \
