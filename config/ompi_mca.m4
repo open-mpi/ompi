@@ -80,7 +80,7 @@ AC_DEFUN([OMPI_MCA],[
     if test "$enable_mca_no_build" = "yes"; then
         AC_MSG_RESULT([yes])
         AC_MSG_ERROR([*** The enable-mca-no-build flag requires an explicit list
-*** of type-component pairs.  For example, --enable-mca-direct=pml-teg])
+*** of type-component pairs.  For example, --enable-mca-direct=pml-ob1])
     else
         ifs_save="$IFS"
         IFS="${IFS}$PATH_SEPARATOR,"
@@ -111,7 +111,7 @@ AC_DEFUN([OMPI_MCA],[
     if test "$enable_mca_direct" = "yes" ; then
         AC_MSG_RESULT([yes])
         AC_MSG_ERROR([*** The enable-mca-direct flag requires an explicit list of
-*** type-component pairs.  For example, --enable-mca-direct=pml-teg,coll-basic])
+*** type-component pairs.  For example, --enable-mca-direct=pml-ob1,coll-basic])
     elif test ! -z "$enable_mca_direct" -a "$enable_mca_direct" != "" ; then
         #
         # we need to add this into the static list, unless the static list
