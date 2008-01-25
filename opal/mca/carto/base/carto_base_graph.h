@@ -25,14 +25,14 @@
 
 #include "opal/mca/carto/carto.h"
 
-extern opal_carto_graph_t *carto_base_common_host_graph;
+OPAL_DECLSPEC extern opal_carto_graph_t *carto_base_common_host_graph;
 
 /**
  * Create new carto graph.
  * 
  * @param graph an empty graph pointer
  */
-void opal_carto_base_graph_create(opal_carto_graph_t **graph);
+OPAL_DECLSPEC void opal_carto_base_graph_create(opal_carto_graph_t **graph);
 
 /**
  * Add a node to carto graph.
@@ -40,13 +40,14 @@ void opal_carto_base_graph_create(opal_carto_graph_t **graph);
  * @param graph the carto graph to add the node to.
  * @param node the node to add.
  */
-void opal_carto_base_graph_add_node(opal_carto_graph_t *graph, opal_carto_base_node_t *node);
+OPAL_DECLSPEC void
+opal_carto_base_graph_add_node(opal_carto_graph_t *graph, opal_carto_base_node_t *node);
 
 /**
  * Free a carto graph
  * @param graph the graph we want to free.
  */
-void opal_carto_base_free_graph(opal_carto_graph_t *graph);
+OPAL_DECLSPEC void opal_carto_base_free_graph(opal_carto_graph_t *graph);
 
 /**
  * Connect two nodes by adding an edge to the graph.
@@ -59,8 +60,9 @@ void opal_carto_base_free_graph(opal_carto_graph_t *graph);
  * @return int success or error (if one of the nodes does not
  *         belong to the graph.
  */
-int opal_carto_base_connect_nodes(opal_carto_graph_t *graph, opal_carto_base_node_t *start,
-                                  opal_carto_base_node_t *end, uint32_t weight);
+OPAL_DECLSPEC int
+opal_carto_base_connect_nodes(opal_carto_graph_t *graph, opal_carto_base_node_t *start,
+                              opal_carto_base_node_t *end, uint32_t weight);
 
 /**
  * Duplicate a carto graph and reduce the new graph to contain
@@ -71,8 +73,9 @@ int opal_carto_base_connect_nodes(opal_carto_graph_t *graph, opal_carto_base_nod
  * @param node_type the node type(s) that the new graph will
  *                  include.
  */
-void opal_carto_base_duplicate_graph(opal_carto_graph_t **destination, const opal_carto_graph_t *source,
-                                     char *node_type);
+OPAL_DECLSPEC void
+opal_carto_base_duplicate_graph(opal_carto_graph_t **destination, const opal_carto_graph_t *source,
+                                char *node_type);
 
 
 /**
@@ -86,8 +89,9 @@ void opal_carto_base_duplicate_graph(opal_carto_graph_t **destination, const opa
  * 
  * @return int number of nodes in the returned array.
  */
-int opal_carto_base_get_nodes_distance(opal_carto_graph_t *graph, opal_carto_base_node_t *reference_node, 
-                                       char *node_type, opal_value_array_t *dist_array);
+OPAL_DECLSPEC int
+opal_carto_base_get_nodes_distance(opal_carto_graph_t *graph, opal_carto_base_node_t *reference_node, 
+                                   char *node_type, opal_value_array_t *dist_array);
 
 /**
  * Find the shortest path between two nodes in the graph
@@ -98,8 +102,9 @@ int opal_carto_base_get_nodes_distance(opal_carto_graph_t *graph, opal_carto_bas
  * 
  * @return uint32_t he distance between the nodes.
  */
-uint32_t opal_carto_base_graph_spf(opal_carto_graph_t *graph, opal_carto_base_node_t *node1, 
-                                   opal_carto_base_node_t *node2);
+OPAL_DECLSPEC uint32_t
+opal_carto_base_graph_spf(opal_carto_graph_t *graph, opal_carto_base_node_t *node1, 
+                          opal_carto_base_node_t *node2);
 
 /**
  * Find a node in the graph according to its name.
@@ -110,14 +115,15 @@ uint32_t opal_carto_base_graph_spf(opal_carto_graph_t *graph, opal_carto_base_no
  * @return opal_carto_base_node_t* the node with the name -if
  *         found or NULL.
  */
-opal_carto_base_node_t *opal_carto_base_graph_find_node(opal_carto_graph_t *graph, char *node_name);
+OPAL_DECLSPEC opal_carto_base_node_t
+*opal_carto_base_graph_find_node(opal_carto_graph_t *graph, char *node_name);
 
 /**
  * Print a carto graph (for debug uses)
  * 
  * @param graph the graph we want to print.
  */
-void opal_carto_print_graph(opal_carto_graph_t *graph);
+OPAL_DECLSPEC void opal_carto_print_graph(opal_carto_graph_t *graph);
 
 /**
  * Get the host cartography graph.
@@ -128,6 +134,6 @@ void opal_carto_print_graph(opal_carto_graph_t *graph);
  * 
  * @return int success or error
  */
-int opal_carto_base_graph_get_host_graph(opal_carto_graph_t **graph, char * graph_type);
+OPAL_DECLSPEC int opal_carto_base_graph_get_host_graph(opal_carto_graph_t **graph, char * graph_type);
 
 #endif

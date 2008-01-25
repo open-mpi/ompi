@@ -38,8 +38,6 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_carto_auto_detect_la_SOURCES = $(sources)
 mca_carto_auto_detect_la_LDFLAGS = -module -avoid-version
-mca_carto_auto_detect_la_LIBADD = \
-        $(top_ompi_builddir)/opal/libopen-pal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_carto_auto_detect_la_SOURCES =$(sources)
