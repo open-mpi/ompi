@@ -19,7 +19,7 @@
 
 headers += \
         base/base.h \
-        carto_base_graph.h
+        base/carto_base_graph.h
 
 libmca_carto_la_SOURCES += \
         base/carto_base_close.c \
