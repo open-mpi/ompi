@@ -141,14 +141,14 @@ int ompi_info_set (ompi_info_t *info, char *key, char *value)
         /*
          * key already exists. remove the value associated with it
          */
-         free(old_info->ie_value);
-         old_info->ie_value = new_value;
+        free(old_info->ie_value);
+        old_info->ie_value = new_value;
     } else {
-         new_info = OBJ_NEW(ompi_info_entry_t);
-         if (NULL == new_info) {
+        new_info = OBJ_NEW(ompi_info_entry_t);
+        if (NULL == new_info) {
             OPAL_THREAD_UNLOCK(info->i_lock);
             return MPI_ERR_NO_MEM;
-         }
+        }
         strncpy (new_info->ie_key, key, MPI_MAX_INFO_KEY);
         new_info->ie_value = new_value;
         opal_list_append (&(info->super), (opal_list_item_t *) new_info);
