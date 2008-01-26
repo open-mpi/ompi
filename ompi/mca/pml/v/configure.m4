@@ -51,6 +51,7 @@ EOF
     
     # Reload the output from vprotocol framework's config
     . $project/mca/$framework/$component/mca_vprotocol_config_output
+    rm  $project/mca/$framework/$component/mca_vprotocol_config_output
 
     AC_SUBST(MCA_vprotocol_ALL_COMPONENTS)
     AC_SUBST(MCA_vprotocol_STATIC_COMPONENTS)
