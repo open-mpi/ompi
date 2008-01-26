@@ -41,7 +41,7 @@ m4_define([OMPI_GET_VERSION],[
 
     dnl quote eval to suppress macro expansion with non-GNU m4
     if test -f "$1"; then
-        [eval] "`sed -n \"\
+        ompi_vers=`sed -n "
 	t clear
 	: clear
 	s/^major/$2_MAJOR_VERSION/
@@ -53,7 +53,8 @@ m4_define([OMPI_GET_VERSION],[
 	t print
 	b
 	: print
-	p\" < \"\$1\"`"
+	p" < "$1"`
+	[eval] "$ompi_vers"
 
         # Only print release version if it isn't 0
         if test $$2_RELEASE_VERSION -ne 0 ; then
