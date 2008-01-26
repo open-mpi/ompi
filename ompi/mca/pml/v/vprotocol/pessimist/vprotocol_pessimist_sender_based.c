@@ -52,7 +52,7 @@ static int sb_mmap_file_open(const char *path)
 static void sb_mmap_file_close(void)
 {
 #if defined(__WINDOWS__)    
-    closeHandle(sb.sb_fd);
+    CloseHandle(sb.sb_fd);
 #else
     int ret = close(sb.sb_fd);
     if(-1 == ret)
@@ -75,12 +75,12 @@ static void sb_mmap_alloc(void)
     
     sb.sb_addr = (uintptr_t) MapViewOfFile(sb.sb_map, FILE_MAP_ALL_ACCESS, 0, 
                                            sb.sb_offset, sb.sb_length); 
-    if(NULL == sb.sb_addr) 
+    if(NULL == (void*)sb.sb_addr) 
     {
         V_OUTPUT_ERR("pml_v: vprotocol_pessimist: sender_based_alloc: mmap: %s", 
                      GetLastError());
-        closeHandle(sb.sb_map);
-        closeHandle(sb.sb_fd);
+        CloseHandle(sb.sb_map);
+        CloseHandle(sb.sb_fd);
         ompi_mpi_abort(MPI_COMM_NULL, MPI_ERR_NO_SPACE, false);    
     }
 #else    
@@ -111,8 +111,8 @@ static void sb_mmap_alloc(void)
 static void sb_mmap_free(void)
 {
 #if    defined(__WINDOWS__)
-    UnmapViewOfFile(sb.sb_addr);
-    closeHandle(sb.sb_map);
+    UnmapViewOfFile( (LPCVOID)sb.sb_addr);
+    CloseHandle(sb.sb_map);
 #else
     int ret = munmap((void *) sb.sb_addr, sb.sb_length);
     if(-1 == ret)
