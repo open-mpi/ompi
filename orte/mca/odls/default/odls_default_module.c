@@ -211,7 +211,7 @@ static int odls_default_fork_local_proc(
     }
     
     /* A pipe is used to communicate between the parent and child to
-       indicate whether the exec ultiimately succeeded or failed.  The
+       indicate whether the exec ultimately succeeded or failed.  The
        child sets the pipe to be close-on-exec; the child only ever
        writes anything to the pipe if there is an error (e.g.,
        executable not found, exec() fails, etc.).  The parent does a
