@@ -67,10 +67,10 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
 	case OMPI_ERRHANDLER_TYPE_FILE:
 	    file = (ompi_file_t *) mpi_object;
 	    if (errhandler->eh_fortran_function) {
-		fortran_handle = OMPI_INT_2_FINT(file->f_f_to_c_index);
-		errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
+                fortran_handle = OMPI_INT_2_FINT(file->f_f_to_c_index);
+                errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
 	    } else {
-		errhandler->eh_file_fn(&file, &err_code, message, NULL);
+                errhandler->eh_file_fn(&file, &err_code, message, NULL);
 	    }
 	    break;
     }
