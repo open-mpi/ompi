@@ -395,6 +395,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
         lmc = mca_btl_openib_component.max_lmc;
     }
 
+#if OMPI_HAVE_THREADS
     /* APM support */
     if (lmc > 1){
         if (-1 == mca_btl_openib_component.apm) {
@@ -413,6 +414,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             opal_show_help("help-mpi-btl-openib.txt", "apm without lmc",true);
         }
     }
+#endif
 
     for(lid = ib_port_attr->lid;
             lid < ib_port_attr->lid + lmc; lid += lmc_step){

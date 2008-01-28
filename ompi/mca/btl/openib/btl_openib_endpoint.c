@@ -541,6 +541,7 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
     }
 
     /* Run over all qps and load alternative path */
+#if OMPI_HAVE_THREADS
     if (0 != mca_btl_openib_component.apm) {
         int i;
         if (MCA_BTL_XRC_ENABLED) {
@@ -551,6 +552,7 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
             }
         }
     }
+#endif
 
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTED;
     endpoint->endpoint_btl->hca->non_eager_rdma_endpoints++;

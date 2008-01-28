@@ -402,12 +402,12 @@ int btl_openib_register_mca_params(void)
                   0, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.max_lmc = (uint32_t) ival;
 
+#if OMPI_HAVE_THREADS
     CHECK(reg_int("enable_apm", "Maximum number of alterative paths for each HCA port "
                   "(must be >= -1, where 0 = disable apm, -1 = all availible alternative paths )",
                   0, &ival, REGINT_NEG_ONE_OK|REGINT_GE_ZERO));
     mca_btl_openib_component.apm = (uint32_t) ival;
 
-#if OMPI_HAVE_THREADS
     CHECK(reg_int("use_async_event_thread",
                 "If nonzero, use the thread that will handle InfiniBand asyncihronous events ",
                 1, &ival, 0));
