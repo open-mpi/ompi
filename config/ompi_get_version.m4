@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -74,12 +75,10 @@ m4_define([OMPI_GET_VERSION],[
                          [AC_MSG_CHECKING([for SVN version])])
                 if test -d "$srcdir/.svn" ; then
                     $2_SVN_R=r`svnversion "$srcdir"`
-                    # make sure svnversion worked
-                    if test $? -ne 0 ; then
-                        $2_SVN_R=svn`date '+%m%d%Y'` 
-                    fi
-                    svnversion_result="$$2_SVN_R"
-                else
+                elif test -d "$srcdir/.hg" ; then
+                    $2_SVN_R=hg`hg -v -R "$srcdir" tip | grep changeset | cut -d: -f3`
+                fi
+                if test "$2_SVN_R" = ""; then
                     $2_SVN_R=svn`date '+%m%d%Y'`
                 fi
                 m4_ifdef([AC_MSG_RESULT],

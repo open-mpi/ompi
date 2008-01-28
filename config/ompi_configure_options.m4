@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
@@ -21,6 +21,15 @@ dnl
 
 AC_DEFUN([OMPI_CONFIGURE_OPTIONS],[
 ompi_show_subtitle "Configuration options"
+
+#
+# Is this a developer copy?
+#
+if test -d .svn -o -d .hg; then
+    OMPI_DEVEL=1
+else
+    OMPI_DEVEL=0
+fi
 
 #
 # Code coverage options
@@ -78,7 +87,7 @@ else
     WANT_MEM_DEBUG=0
 fi
 #################### Early development override ####################
-if test "$WANT_MEM_DEBUG" = "0" -a -z "$enable_mem_debug" -a -d .svn; then
+if test "$WANT_MEM_DEBUG" = "0" -a -z "$enable_mem_debug" -a "$OMPI_DEVEL" = 1; then
     WANT_MEM_DEBUG=1
     echo "--> developer override: enable mem profiling by default"
 fi
@@ -102,7 +111,7 @@ else
     WANT_MEM_PROFILE=0
 fi
 #################### Early development override ####################
-if test "$WANT_MEM_PROFILE" = "0" -a -z "$enable_mem_profile" -a -d .svn; then
+if test "$WANT_MEM_PROFILE" = "0" -a -z "$enable_mem_profile" -a "$OMPI_DEVEL" = 1; then
     WANT_MEM_PROFILE=1
     echo "--> developer override: enable mem profiling by default"
 fi
@@ -126,7 +135,7 @@ else
     WANT_PICKY_COMPILER=0
 fi
 #################### Early development override ####################
-if test "$WANT_PICKY_COMPILER" = "0" -a -z "$enable_picky" -a -d .svn; then
+if test "$WANT_PICKY_COMPILER" = "0" -a -z "$enable_picky" -a "$OMPI_DEVEL" = 1; then
     WANT_PICKY_COMPILER=1
     echo "--> developer override: enable picky compiler by default"
 fi
@@ -148,7 +157,7 @@ else
     WANT_DEBUG=0
 fi
 #################### Early development override ####################
-if test "$WANT_DEBUG" = "0" -a -z "$enable_debug" -a -d .svn; then
+if test "$WANT_DEBUG" = "0" -a -z "$enable_debug" -a "$OMPI_DEVEL" = 1; then
     WANT_DEBUG=1
     echo "--> developer override: enable debugging code by default"
 fi
