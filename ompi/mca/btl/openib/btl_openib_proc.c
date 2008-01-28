@@ -102,9 +102,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
     mca_btl_openib_proc_t* module_proc = NULL;
     size_t msg_size;
     uint32_t size;
-#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     size_t i;
-#endif
     int rc;
     void *message;
     char *offset;
