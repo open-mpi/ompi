@@ -845,9 +845,14 @@ int fsetpos(FILE *stream, const fpos_t *pos) {
 
 	VT_IOWRAP_CHECK_TRACING2(stream, pos);
 
+/*
 	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, " OFF_T_STRARG "\n",
 	 	stream != NULL ? fileno(stream) : -1,
 	 	pos->__pos);
+*/
+	/* pos->__pos does not exist on every platform */
+	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i\n",
+	 	stream != NULL ? fileno(stream) : -1);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
@@ -871,9 +876,14 @@ int fsetpos64(FILE *stream, const fpos64_t *pos) {
 
 	VT_IOWRAP_CHECK_TRACING2(stream, pos);
 
+/*
 	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, " S64_STRARG "\n",
 	 	stream != NULL ? fileno(stream) : -1,
 	 	pos->__pos);
+*/
+	/* pos->__pos does not exist on every platform */
+	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i\n",
+	 	stream != NULL ? fileno(stream) : -1);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
