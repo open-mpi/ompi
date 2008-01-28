@@ -1,0 +1,77 @@
+13. !!!INCOMPATIBLE CHANGE!!!
+    POMP interface routines renamed from pomp_type_event to
+    POMP_Type_event. Necessary to allow porting to machines
+    where Fortran name mangling is all lowercase (like IBM).
+
+12. Support for Intel Linux compilers
+
+11. Improved C/C++ parsing so that cases where nested for loops
+    did not uses braces for all loop bodies work correctly now.
+    For example
+
+      #pragma omp for
+      for (i=0; i<N; ++i)
+        for (j=0; j<N; ++j) { }
+
+    is now correctly instrumented. Version 1.1 required extra braces
+    for the body of the "i" loop.
+
+10. Fixed support for threadprivate
+
+09. Port to Hitachi SR8000
+
+------------------- Released version 1.1 ---------------------
+
+08. Various portability fixes to allow OPARI to be compiled
+    with IBM xlC, SUN CC, SGI CC
+
+07. Fixed wrong C string comparison (without strcmp, but ==)
+    which worked by accident in handler.cc
+
+06. Improved version of POMP stub routines in subdirectory "lib".
+    Automatic configuration of fortran subroutine object names.
+
+05. Fixed that OPARI does not generate (wrong or incomplete)
+    files (output file, opari include file, opari table file, opari
+    resource file) in case of errors.
+
+04. New extended version of pragmas for user specified region
+    instrumentation. Version 1.0 allowed only a matching pair of
+    "INST BEGIN" and "INST END" directives/pragmas. This did not
+    allow to instrument user functions with more than one exit
+    point. For this situation, a new "INST ALTEND" directive/pragma
+    was introduced. This "alternative end user region" construct
+    can only appear between a matching "begin user region"
+    and "end user region" directive/pragma. Example:
+
+      void foo(bool b) {
+        #pragma pomp inst begin(foo)
+        if (b) {
+          #pragma pomp inst altend(foo)
+          return;
+        }    
+        #pragma pomp inst end(foo)
+      }
+
+03. Instrumentation for OpenMP "FLUSH" directives/pragmas added:
+
+      call pomp_flush_enter(d)
+      !$OMP FLUSH
+      call pomp_flush_exit(d)
+
+02. Improved C/C++ parsing so that cases where a statement or
+    block "closes" more than pragma are handled correctly. For
+    example
+
+      #pragma omp parallel
+        #pragma omp for
+          for (i=0; i<N; ++i) { }
+
+    is now correctly instrumented. Version 1.0 required extra braces
+    for the body of the "#pragma omp parallel".
+
+01. Fixed bug where incorrect runtime table file was produced when
+    opari was fed a program without any OpenMP regions.
+
+------------------- Released version 1.0 ---------------------
+

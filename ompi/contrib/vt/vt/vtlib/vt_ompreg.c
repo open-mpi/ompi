@@ -1,0 +1,68 @@
+/**
+ * VampirTrace
+ * http://www.tu-dresden.de/zih/vampirtrace
+ *
+ * Copyright (c) 2005-2007, ZIH, TU Dresden, Federal Republic of Germany
+ *
+ * Copyright (c) 1998-2005, Forschungszentrum Juelich GmbH, Federal
+ * Republic of Germany
+ *
+ * See the file COPYRIGHT in the package base directory for details
+ **/
+
+#include "vt_ompreg.h"
+
+#include "vt_trc.h"
+
+int vt_omp_regid[VT__OMP_REGID_NUM];
+
+void vt_omp_register()
+{
+  uint32_t fid;
+  
+  fid = vt_def_file("OpenMP");
+  /* fid = VT_NO_ID; */
+
+  vt_omp_regid[VT__OMP_DESTROY_LOCK] =
+    vt_def_region("omp_destroy_lock", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);          
+  vt_omp_regid[VT__OMP_DESTROY_NEST_LOCK] =
+    vt_def_region("omp_destroy_nest_lock", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);
+  vt_omp_regid[VT__OMP_GET_DYNAMIC] =
+    vt_def_region("omp_get_dynamic", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);            
+  vt_omp_regid[VT__OMP_GET_MAX_THREADS] =
+    vt_def_region("omp_get_max_threads", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);   
+  vt_omp_regid[VT__OMP_GET_NESTED] =
+    vt_def_region("omp_get_nested", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);             
+  vt_omp_regid[VT__OMP_GET_NUM_PROCS] =
+    vt_def_region("omp_get_num_procs", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);        
+  vt_omp_regid[VT__OMP_GET_NUM_THREADS] =
+    vt_def_region("omp_get_num_threads", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);    
+  vt_omp_regid[VT__OMP_GET_THREAD_NUM] =
+    vt_def_region("omp_get_thread_num", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);      
+  vt_omp_regid[VT__OMP_IN_PARALLEL] =
+    vt_def_region("omp_in_parallel", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);            
+  vt_omp_regid[VT__OMP_INIT_LOCK] =
+    vt_def_region("omp_init_lock", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);                
+  vt_omp_regid[VT__OMP_INIT_NEST_LOCK] =
+    vt_def_region("omp_init_nest_lock", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);      
+  vt_omp_regid[VT__OMP_SET_DYNAMIC] =
+    vt_def_region("omp_set_dynamic", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);            
+  vt_omp_regid[VT__OMP_SET_LOCK] =
+    vt_def_region("omp_set_lock", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);                  
+  vt_omp_regid[VT__OMP_SET_NEST_LOCK] =
+    vt_def_region("omp_set_nest_lock", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);        
+  vt_omp_regid[VT__OMP_SET_NESTED] =
+    vt_def_region("omp_set_nested", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);              
+  vt_omp_regid[VT__OMP_SET_NUM_THREADS] =
+    vt_def_region("omp_set_num_threads", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);    
+  vt_omp_regid[VT__OMP_TEST_LOCK] =
+    vt_def_region("omp_test_lock", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);                
+  vt_omp_regid[VT__OMP_TEST_NEST_LOCK] =
+    vt_def_region("omp_test_nest_lock", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);      
+  vt_omp_regid[VT__OMP_UNSET_LOCK] =
+    vt_def_region("omp_unset_lock", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);              
+  vt_omp_regid[VT__OMP_UNSET_NEST_LOCK] =
+    vt_def_region("omp_unset_nest_lock", fid, VT_NO_LNO, VT_NO_LNO, "OMP", VT_FUNCTION);    
+}
+
+

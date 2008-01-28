@@ -47,6 +47,7 @@ EXTRA_DIST = \
         ompi_config_solaris_threads.m4 \
         ompi_config_threads.m4 \
         ompi_configure_options.m4 \
+        ompi_contrib.m4 \
         ompi_functions.m4 \
         ompi_get_version.m4 \
         ompi_get_version.m4sh \

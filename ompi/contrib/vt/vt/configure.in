@@ -1,0 +1,301 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.60)
+AC_INIT(VampirTrace, 5.4.4, service@vampir.eu)
+AM_INIT_AUTOMAKE(VampirTrace, 5.4.4)
+AC_CONFIG_SRCDIR(config.h.in)
+AM_CONFIG_HEADER(config.h)
+
+ACVT_CONF_INIT
+
+ACVT_CONF_TITLE([Initialization])
+
+# Check for absolute paths of $builddir and $srcdir
+top_vt_builddir="`pwd`"
+cd "$srcdir"
+top_vt_srcdir="`pwd`"
+cd "$top_vt_builddir"
+AC_MSG_NOTICE([builddir: $top_vt_builddir])
+AC_MSG_NOTICE([srcdir: $top_vt_srcdir])
+AS_IF([test "$top_vt_builddir" != "$top_vt_srcdir"], AC_MSG_NOTICE([detected VPATH build]))
+
+# Check for type of host system
+AC_CANONICAL_HOST
+
+# Correct install paths
+AS_IF([test x"$prefix" = "xNONE"], [prefix="$ac_default_prefix"])
+AS_IF([test x"$exec_prefix" = "xNONE"], [exec_prefix="$prefix"])
+AS_IF([test x"$datarootdir" = x -o "$datarootdir" = "\${prefix}/share"],
+[datarootdir="\${prefix}/share/\${PACKAGE_TARNAME}"])
+AS_IF([test x"$docdir" = x -o "$docdir" = "\${datarootdir}/doc/\${PACKAGE_TARNAME}"],
+[docdir="\${datarootdir}/doc"])
+
+ACVT_CONF_TITLE([Compiler, preprocessor, and programs])
+
+# Check for compiler and preprocessor
+AS_IF([test x"$F77" = x -a x"$FC" != x], [F77=$FC])
+AC_PROG_CC
+AM_PROG_CC_C_O
+AC_PROG_CXX
+AC_PROG_CPP
+AC_PROG_CXXCPP
+AC_PROG_F77
+AC_PROG_FC
+
+AM_CONDITIONAL(AMHAVECC, test x"$CC" != x)
+AM_CONDITIONAL(AMHAVECXX, test x"$CXX" != x)
+AM_CONDITIONAL(AMHAVEF77, test x"$F77" != x)
+AM_CONDITIONAL(AMHAVEFC, test x"$FC" != x)
+
+# Check for *front-end* C++ compiler, preprocessor, and flags
+AC_ARG_VAR(CXX_FOR_BUILD, [C++ compiler command for build system])
+AC_ARG_VAR(CXXFLAGS_FOR_BUILD, [C++ compiler flags for build system])
+AC_ARG_VAR(CXXCPP_FOR_BUILD, [C++ preprocessor for build system])
+AC_ARG_VAR(CPPFLAGS_FOR_BUILD, [C/C++/Objective C preprocessor flags for build system])
+AC_ARG_VAR(LDFLAGS_FOR_BUILD, [linker flags for build system])
+AC_ARG_VAR(LIBS_FOR_BUILD, [libraries to pass to the linker for build system])
+
+AS_IF([test x"$cross_compiling" = "xyes"],
+[
+	AC_MSG_CHECKING([for C++ compiler for build system ($build)])
+	AS_IF([test x"$CXX_FOR_BUILD" = x],
+	[
+		AC_MSG_RESULT([$CXX])
+		AC_MSG_NOTICE([no C++ compiler command for build system given
+In cross compile mode, it's recommended to build the compiler wrappers and OPARI for the build system. Set \`CXX_FOR_BUILD' to the C++ compiler of build system therefor.])
+		CXX_FOR_BUILD=$CXX
+		cxx_for_build_given="no"
+	],
+	[
+		AC_MSG_RESULT([$CXX_FOR_BUILD])
+		cxx_for_build_given="yes"
+	])
+	AS_IF([test x"$CXXFLAGS_FOR_BUILD" = x], [CXXFLAGS_FOR_BUILD=$CXXFLAGS])
+	AS_IF([test x"$CXXCPP_FOR_BUILD" = x], [CXXCPP_FOR_BUILD=$CXXCPP])
+	AS_IF([test x"$CPPFLAGS_FOR_BUILD" = x], [CPPFLAGS_FOR_BUILD=$CPPFLAGS])
+	AS_IF([test x"$LDFLAGS_FOR_BUILD" = x], [LDFLAGS_FOR_BUILD=$LDFLAGS])
+	AS_IF([test x"$LIBS_FOR_BUILD" = x], [LIBS_FOR_BUILD=$LIBS])
+
+	AS_IF([test x"$cxx_for_build_given" = "xyes"],
+	[
+		AC_LANG([C++])
+		sav_CXX=$CXX; sav_CXXFLAGS=$CXXFLAGS; sav_CXXCPP=$CXXCPP
+		sav_CPPFLAGS=$CPPFLAGS; sav_LDFLAGS=$LDFLAGS; sav_LIBS=$LIBS
+		CXX=$CXX_FOR_BUILD; CXXFLAGS=$CXXFLAGS_FOR_BUILD; CXXCPP=$CXXCPP_FOR_BUILD
+		CPPFLAGS=$CPPFLAGS_FOR_BUILD; LDFLAGS=$LDFLAGS_FOR_BUILD; LIBS=$LIBS_FOR_BUILD
+		AC_MSG_CHECKING([whether the C++ compiler for build system works])
+		AC_TRY_LINK([], [],
+		[AC_MSG_RESULT([yes])],
+		[AC_MSG_ERROR([C++ compiler for build system cannot create executables
+See \`config.log' for more details.])])
+		CXX=$sav_CXX; CXXFLAGS=$sav_CXXFLAGS; CXXCPP=$sav_CXXCPP
+	        CPPFLAGS=$sav_CPPFLAGS; LDFLAGS=$sav_LDFLAGS; LIBS=$sav_LIBS
+		AC_LANG([C])
+	])
+],
+[
+	# reset *_FOR_BUILD variables, if no cross compiling
+	CXX_FOR_BUILD=$CXX; CXXFLAGS_FOR_BUILD=$CXXFLAGS; CXXCPP_FOR_BUILD=$CXXCPP
+	CPPFLAGS_FOR_BUILD=$CPPFLAGS; LDFLAGS_FOR_BUILD=$LDFLAGS; LIBS_FOR_BUILD=$LIBS
+])
+
+# Check for programs
+AC_ARG_VAR(AR, [archiver command]) #AC_PROG_AR ?
+AC_CHECK_PROGS(AR, ar, AR=ar)
+AC_PROG_RANLIB
+AM_PROG_AS
+
+ACVT_CONF_TITLE([Header files, types, and functions])
+
+# Check for header files
+AC_HEADER_STDC
+AC_CHECK_HEADERS([stdint.h inttypes.h fnmatch.h])
+
+# Check for datatypes
+AC_TYPE_SIZE_T
+AC_CHECK_SIZEOF(void*, 8)
+AC_CHECK_SIZEOF(int, 4)
+AC_CHECK_SIZEOF(long, 8)
+AC_CHECK_SIZEOF(mode_t, 4)
+
+# Check for library functions
+#AC_REPLACE_FNMATCH
+#AC_FUNC_MALLOC
+#AC_FUNC_REALLOC
+AC_CHECK_FUNCS([atexit gethostname setenv])
+
+# Check for OTF
+ACVT_CONF_TITLE([Open Trace Format (OTF) library and tools])
+ACVT_OTF
+AS_IF([test x"$use_extern_otf" = "xyes" -a x"$otf_error" = "xyes"], [exit 1])
+AM_CONDITIONAL(AMEXTERNOTF, test x"$use_extern_otf" = "xyes")
+
+# Check for platform
+ACVT_CONF_TITLE([Platform specific setup])
+ACVT_PLATFORM
+
+# Check for compiler instrumentation
+ACVT_CONF_TITLE([Compiler instrumentation])
+ACVT_COMPINST
+AS_IF([test x"$force_compinst" = "xyes" -a x"$compinst_error" = "xyes"], [exit 1])
+AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_compinst" = "xno"],
+[AC_MSG_NOTICE([disabled via command line switch])])
+AM_CONDITIONAL(AMBUILDCOMPINST_GNU, test x"$build_compinst_gnu" = "xyes")
+AM_CONDITIONAL(AMBUILDCOMPINST_INTEL, test x"$build_compinst_intel" = "xyes")
+AM_CONDITIONAL(AMBUILDCOMPINST_PGI, test x"$build_compinst_pgi" = "xyes")
+AM_CONDITIONAL(AMBUILDCOMPINST_PHAT, test x"$build_compinst_phat" = "xyes")
+AM_CONDITIONAL(AMBUILDCOMPINST_XL, test x"$build_compinst_xl" = "xyes")
+AM_CONDITIONAL(AMBUILDCOMPINST_FTRACE, test x"$build_compinst_ftrace" = "xyes")
+AM_CONDITIONAL(AMHAVEBFD, test x"$have_bfd" = "xyes")
+
+# Check for binary instrumentation by Dyninst
+ACVT_CONF_TITLE([Binary instrumentation by Dyninst])
+ACVT_DYNINST
+AS_IF([test x"$force_dyninst" = "xyes" -a x"$dyninst_error" = "xyes"], [exit 1])
+AS_IF([test x"$force_dynattlib" = "xyes" -a x"$dynattlib_error" = "xyes"], [exit 1])
+AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_dyninst" = "xno"],
+[AC_MSG_NOTICE([disabled via command line switch])])
+AM_CONDITIONAL(AMHAVEDYNINST, test x"$have_dyninst" = "xyes")
+AM_CONDITIONAL(AMBUILDDYNATTLIB, test x"$have_dyninst" = "xyes" -a x"$LDSHFLAG" != "x")
+AM_CONDITIONAL(AMHAVELIBERTY, test x"$have_liberty" = "xyes")
+
+# Check for MPI and OpenMP
+check_omp="yes"; build_omp="yes"; force_omp="no"
+check_mpi="yes"; build_mpi="yes"; build_fmpi="no"; force_mpi="no"
+build_hyb="yes"
+AC_ARG_ENABLE(mpi,
+	AC_HELP_STRING([--enable-mpi], [enable MPI support, default: enable if MPI-installation found by configure]),
+	[
+		AS_IF([test x"$enableval" = "xyes"],
+		[force_mpi="yes"], [check_mpi="no"; build_mpi="no"])
+	], [])
+
+AC_ARG_ENABLE(omp,
+	AC_HELP_STRING([--enable-omp], [enable OpenMP support, default: enable if given compiler supports OpenMP]),
+	[
+		AS_IF([test x"$enableval" = "xyes"],
+		[force_omp="yes"], [check_omp="no"; build_omp="no"])
+	], [])
+
+AC_ARG_ENABLE(hyb,
+	AC_HELP_STRING([--enable-hyb], [enable Hybrid (MPI/OpenMP) support, default: enable if MPI-installation found and given compiler supports OpenMP]),
+	[
+		AS_IF([test x"$enableval" = "xyes"],
+                [check_omp="yes"; force_omp="yes"
+		 check_mpi="yes"; force_mpi="yes"],
+		[build_hyb="no"])
+	], [check_omp="yes"; check_mpi="yes"])
+
+ACVT_CONF_TITLE([Message Passing Interface (MPI)])
+
+AS_IF([test x"$check_mpi" = "xyes"],
+[
+	ACVT_MPI
+	AS_IF([test x"$mpi_error" = "xyes"],
+	[
+		AS_IF([test x"$force_mpi" = "xyes"], [exit 1])
+		build_mpi="no"; build_fmpi="no"; build_hyb="no"
+        ])
+],
+[
+	AS_IF([test x"$enable_config_titles" = "xyes"],
+	[AC_MSG_NOTICE([disabled via command line switch])])
+])
+AS_IF([test x"$MPICC" = x], [MPICC=$CC])
+
+ACVT_CONF_TITLE([OpenMP parallelizer])
+
+AS_IF([test x"$check_omp" = "xyes"],
+[
+	ACVT_OMP
+	AS_IF([test x"$omp_error" = "xyes"],
+	[
+		AS_IF([test x"$force_omp" = "xyes"], [exit 1])
+		build_omp="no"; build_hyb="no"
+	])
+],
+[
+	AS_IF([test x"$enable_config_titles" = "xyes"],
+	[AC_MSG_NOTICE([disabled via command line switch])])
+])
+
+AM_CONDITIONAL(AMBUILDMPI, test x"$build_mpi" = "xyes")
+AM_CONDITIONAL(AMBUILDFMPI, test x"$build_fmpi" = "xyes")
+AM_CONDITIONAL(AMHAVEOMP, test x"$have_omp" = "xyes")
+AM_CONDITIONAL(AMBUILDOMP, test x"$build_omp" = "xyes")
+AM_CONDITIONAL(AMBUILDHYB, test x"$build_hyb" = "xyes")
+
+ACVT_CONF_TITLE([Additional tracing support])
+
+# Check for memory tracing support
+ACVT_CONF_SUBTITLE([GLIBC's memory allocation tracing])
+ACVT_MEMHOOKS
+AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_memhooks" = "xno"],
+[AC_MSG_NOTICE([disabled via command line switch])])
+AS_IF([test x"$force_memhooks" = "xyes" -a x"$memhooks_error" = "xyes"], [exit 1])
+AM_CONDITIONAL(AMHAVEMEMHOOKS, test x"$have_memhooks" = "xyes")
+
+# Check for I/O tracing support
+ACVT_CONF_SUBTITLE([LIBC's I/O tracing])
+AS_IF([test x"$PLATFORM" = "xmacos"],
+[
+	AC_MSG_NOTICE([not supported on MacOS])
+	have_iowrap="no"
+],
+[
+	ACVT_IOWRAP
+	AS_IF([test x"$force_iowrap" = "xyes" -a x"$iowrap_error" = "xyes"], [exit 1])
+	AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_iowrap" = "xno"],
+	[AC_MSG_NOTICE([disabled via command line switch])])
+])
+AM_CONDITIONAL(AMBUILDIOWRAP, test x"$have_iowrap" = "xyes")
+
+# Check for PAPI hardware counter support
+ACVT_CONF_SUBTITLE([PAPI hardware counter])
+AS_IF([test x"$PLATFORM" = "xnecsx"],
+[
+	AC_MSG_NOTICE([not supported on NEC SX])
+	have_papi="no"
+],
+[
+	ACVT_PAPI
+	AS_IF([test x"$force_papi" = "xyes" -a x"$papi_error" = "xyes"], [exit 1])
+	AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_papi" = "xno"],
+	[AC_MSG_NOTICE([disabled via command line switch])])
+])
+AM_CONDITIONAL(AMHAVEPAPI, test x"$have_papi" = "xyes")
+
+# Check path for node-local temporary directory
+ACVT_LTMPDIR
+
+# Setup compiler wrappers
+ACVT_COMPWRAP
+
+# Output files
+AC_CONFIG_FILES([Makefile
+	extlib/Makefile
+	vtlib/Makefile
+	tools/Makefile
+	tools/compwrap/Makefile
+	tools/compwrap/vtcc-wrapper-data.txt
+	tools/compwrap/vtcxx-wrapper-data.txt
+	tools/compwrap/vtf77-wrapper-data.txt
+	tools/compwrap/vtf90-wrapper-data.txt
+	tools/opari/Makefile
+	tools/opari/tool/Makefile
+	tools/opari/doc/Makefile
+	tools/vtdyn/Makefile
+	tools/vtdyn/dynattlib/Makefile
+	tools/vtfilter/Makefile
+	tools/vtunify/Makefile
+	doc/Makefile
+])
+
+# Create output files
+ACVT_CONF_TITLE([Final output])
+AC_OUTPUT
+
+# Show configure summary
+ACVT_CONF_SUMMARY
+
