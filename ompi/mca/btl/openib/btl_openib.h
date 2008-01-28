@@ -169,6 +169,7 @@ struct mca_btl_openib_component_t {
     int32_t max_eager_rdma;
     uint32_t btls_per_lid;
     uint32_t max_lmc;
+    int32_t apm;
     uint32_t buffer_alignment;    /**< Preferred communication buffer alignment in Bytes (must be power of two) */
 #if OMPI_HAVE_THREADS
     int32_t fatal_counter;           /**< Counts number on fatal events that we got on all hcas */
@@ -334,6 +335,7 @@ struct mca_btl_openib_module_t {
     uint16_t pkey_index;
     struct ibv_port_attr ib_port_attr;
     uint16_t lid;                      /**< lid that is actually used (for LMC) */
+    uint16_t apm_lmc_max;                  /**< the maximal lmc that can be used for apm */
     uint8_t src_path_bits;             /**< offset from base lid (for LMC) */
 
     int32_t num_peers;

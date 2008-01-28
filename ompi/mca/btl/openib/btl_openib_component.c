@@ -370,7 +370,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
                          uint8_t port_num, uint16_t pkey_index,
                          struct ibv_port_attr *ib_port_attr)
 {
-    uint16_t lid, i, lmc;
+    uint16_t lid, i, lmc, lmc_step;
     mca_btl_openib_module_t *openib_btl;
     mca_btl_base_selected_module_t *ib_selected;
     union ibv_gid gid;
@@ -388,14 +388,34 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
     }
 
     lmc = (1 << ib_port_attr->lmc);
+    lmc_step = 1;
 
     if (0 != mca_btl_openib_component.max_lmc &&
         mca_btl_openib_component.max_lmc < lmc) {
         lmc = mca_btl_openib_component.max_lmc;
     }
 
+    /* APM support */
+    if (lmc > 1){
+        if (-1 == mca_btl_openib_component.apm) {
+            lmc_step = lmc;
+        } else if (0 == lmc % (mca_btl_openib_component.apm + 1)) {
+            lmc_step = mca_btl_openib_component.apm + 1;
+        } else {
+            opal_show_help("help-mpi-btl-openib.txt", "apm with wrong lmc",true,
+                    mca_btl_openib_component.apm, lmc);
+            return OMPI_ERROR;
+        }
+    } else {
+        if (mca_btl_openib_component.apm) {
+            /* Disable apm and report warning */
+            mca_btl_openib_component.apm = 0;
+            opal_show_help("help-mpi-btl-openib.txt", "apm without lmc",true);
+        }
+    }
+
     for(lid = ib_port_attr->lid;
-            lid < ib_port_attr->lid + lmc; lid++){
+            lid < ib_port_attr->lid + lmc; lid += lmc_step){
         for(i = 0; i < mca_btl_openib_component.btls_per_lid; i++){
             char param[40];
             int rc;
@@ -415,6 +435,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             openib_btl->port_num = (uint8_t) port_num;
             openib_btl->pkey_index = pkey_index;
             openib_btl->lid = lid;
+            openib_btl->apm_lmc_max = lmc_step ;
             openib_btl->src_path_bits = lid - ib_port_attr->lid;
             /* store the subnet for multi-nic support */
             openib_btl->port_info.subnet_id = subnet_id;

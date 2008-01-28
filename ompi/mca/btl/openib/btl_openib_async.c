@@ -206,6 +206,13 @@ static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, in
             }
         }
         switch(event.event_type) {
+            case IBV_EVENT_PATH_MIG:
+                if (0 != mca_btl_openib_component.apm) {
+                    BTL_ERROR(("APM: Alternative path migration reported."));
+                    mca_btl_openib_load_apm(event.element.qp,
+                            mca_btl_openib_component.openib_btls[j]);
+                }
+                break;
             case IBV_EVENT_DEVICE_FATAL:
                 /* Set the flag to fatal */
                 hca->got_fatal_event = true;
@@ -215,7 +222,6 @@ static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, in
             case IBV_EVENT_QP_FATAL:
             case IBV_EVENT_QP_REQ_ERR:
             case IBV_EVENT_QP_ACCESS_ERR:
-            case IBV_EVENT_PATH_MIG:
             case IBV_EVENT_PATH_MIG_ERR:
             case IBV_EVENT_SRQ_ERR:
             case IBV_EVENT_PORT_ERR:
@@ -314,5 +320,43 @@ void* btl_openib_async_thread(void * async)
         }
     }
     return PTHREAD_CANCELED;
+}
+
+/* Load new dlid to the QP */
+void mca_btl_openib_load_apm(struct ibv_qp *qp, struct mca_btl_openib_module_t *btl)
+{
+    struct ibv_qp_init_attr qp_init_attr;
+    struct ibv_qp_attr attr;
+    enum ibv_qp_attr_mask mask;
+
+    BTL_VERBOSE(("APM: Loading alternative path"));
+
+    if (mca_btl_openib_component.num_xrc_qps > 0) {
+        /* XRC API is not ready */
+    } else {
+        if (ibv_query_qp(qp, &attr, mask, &qp_init_attr))
+            BTL_ERROR(("Failed to ibv_query_qp, qp num: %d", qp->qp_num));
+    }
+
+    if (attr.ah_attr.src_path_bits - btl->src_path_bits < btl->apm_lmc_max) {
+        attr.alt_ah_attr.src_path_bits = attr.ah_attr.src_path_bits + 1;
+    } else {
+        BTL_ERROR(("Failed to load alternative path, all %d were used",
+                    attr.ah_attr.src_path_bits - btl->src_path_bits));
+    }
+
+    attr.alt_ah_attr.dlid = attr.ah_attr.dlid + 1;
+    mask = IBV_QP_ALT_PATH|IBV_QP_PATH_MIG_STATE;
+    attr.alt_ah_attr.static_rate = attr.ah_attr.static_rate;
+    attr.alt_ah_attr.sl = attr.ah_attr.sl;
+    attr.alt_pkey_index = attr.pkey_index;
+    attr.alt_port_num = attr.port_num;
+
+    if (mca_btl_openib_component.num_xrc_qps > 0) {
+        /* XRC API is not ready */
+    } else {
+        if (ibv_modify_qp(qp, &attr, mask))
+            BTL_ERROR(("Failed to ibv_query_qp, qp num: %d", qp->qp_num));
+    }
 }
 #endif
