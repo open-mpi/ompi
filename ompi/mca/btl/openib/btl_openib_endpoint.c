@@ -43,6 +43,7 @@
 #include "btl_openib_endpoint.h"
 #include "btl_openib_proc.h"
 #include "btl_openib_xrc.h"
+#include "btl_openib_async.h"
 
 static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint);
 static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint);
@@ -536,6 +537,18 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
             /* I'm master of XRC */
             endpoint->ib_addr->status = MCA_BTL_IB_ADDR_CONNECTED;
             master = true;
+        }
+    }
+
+    /* Run over all qps and load alternative path */
+    if (0 != mca_btl_openib_component.apm) {
+        int i;
+        if (MCA_BTL_XRC_ENABLED) {
+            mca_btl_openib_load_apm(endpoint->ib_addr->qp->lcl_qp, endpoint->endpoint_btl);
+        } else {
+            for(i = 0; i < mca_btl_openib_component.num_qps; i++) {
+                mca_btl_openib_load_apm(endpoint->qps[i].qp->lcl_qp, endpoint->endpoint_btl);
+            }
         }
     }
 

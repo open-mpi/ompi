@@ -13,5 +13,5 @@
 #define MCA_BTL_OPENIB_ASYNC_H
 
 void*      btl_openib_async_thread(void *one_hca);
-
+void       mca_btl_openib_load_apm(struct ibv_qp *qp, struct mca_btl_openib_module_t *btl);
 #endif
