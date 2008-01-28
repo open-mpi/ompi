@@ -1,0 +1,85 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+
+AC_PREREQ(2.57)
+AC_INIT(OTF, 1.3.9, andreas.knuepfer@tu-dresden.de )
+AC_CANONICAL_SYSTEM
+AM_INIT_AUTOMAKE(OTF, 1.3.9)
+AC_CONFIG_SRCDIR([config.h.in])
+AM_CONFIG_HEADER(config.h)
+
+# Checks for programs.
+AC_PROG_CXX
+AC_PROG_CC
+AC_DISABLE_SHARED
+AC_PROG_LIBTOOL
+
+# Own stuff
+
+CHECK_VTF3
+if test x"$force_vtf3" = "xyes" -a x"$vtf3_error" = "xyes"; then exit 1; fi
+AM_CONDITIONAL(AMHAVEVTF3, test x"$have_vtf3" = xyes)
+
+CHECK_ZLIB
+if test x"$force_zlib" = "xyes" -a x"$zlib_error" = "xyes"; then exit 1; fi
+AM_CONDITIONAL(AMHAVEZLIB, test x"$have_zlib" = xyes)
+AM_CONDITIONAL(AMDEPZLIB, test x"$have_zlib" = xyes -a x"$enable_shared" = xyes)
+
+#checking for swig and python-dev
+SWIG_PYTHON
+AM_CONDITIONAL(AMHAVEPYTHONSWIG, [test "$pythonexists" = yes -a "$swigexists" = yes] )
+
+WITH_DEBUG
+WITH_VERBOSE
+
+
+# Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS([stddef.h stdlib.h string.h sys/time.h unistd.h])
+AC_CHECK_HEADER([stdint.h], [have_stdint_h=1], [have_stdint_h=0])
+AC_CHECK_HEADER([inttypes.h], [have_inttypes_h=1], [have_inttypes_h=0])
+AC_SUBST([have_stdint_h])
+AC_SUBST([have_inttypes_h])
+
+# Checks for library functions.
+AC_CHECK_FUNCS([strdup])
+
+# Checks for typedefs, structures, and compiler characteristics.
+# AC_C_CONST ### do not use this if you want to do C++ programs because it might define 'const'
+#	to an empty string which produces a total mess later on!!!
+
+AC_TYPE_SIZE_T
+#AC_HEADER_TIME
+
+# Checks for library functions.
+# AC_FUNC_FSEEKO
+#AC_FUNC_MALLOC
+#AC_FUNC_REALLOC
+#AC_FUNC_STAT
+#AC_CHECK_FUNCS([gettimeofday memmove strdup])
+
+# Checks for datatype sizes.
+AC_CHECK_SIZEOF(long, 8)
+sizeof_long=$ac_cv_sizeof_long
+AC_SUBST([sizeof_long])
+
+AC_CONFIG_FILES([Makefile
+	tools/Makefile
+	tools/otfdump/Makefile
+	tools/otfmerge/Makefile
+	tools/vtf2otf/Makefile
+	tools/otf2vtf/Makefile
+	tools/otfaux/Makefile
+	otflib/Makefile
+	otflib_py/Makefile
+	otflib/OTF_inttypes.h
+	tools/otfcompress/Makefile
+	tools/otfconfig/Makefile
+])
+#	tools/otfdump/Makefile
+
+## workaround for stupid warning caused by newer autoconf versions
+AC_DEFUN([AC_DATAROOTDIR_CHECKED])
+
+AC_OUTPUT

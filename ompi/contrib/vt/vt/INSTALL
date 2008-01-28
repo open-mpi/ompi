@@ -1,0 +1,183 @@
+
+How to install and configure VampirTrace
+========================================
+
+  Basics
+  ------
+
+    Building VampirTrace is typically a combination of running "configure"
+    and "make".  Execute the following commands to install VampirTrace from
+    within the directory at the top of the tree:
+
+         $ ./configure --prefix=/where/to/install
+         [...lots of output...]
+         $ make all install
+
+    If you need special access to install, then you can execute "make
+    all" as a user with write permissions in the build tree, and a
+    separate "make install" as a user with write permissions to the
+    install tree.
+
+    However, for more details, read also the following instructions. Sometimes
+    it might be necessary to provide ./configure with options, e.g.
+    specifications of paths or compilers. Consult the CONFIG-EXAMPLES file to
+    get an idea of how to configure VampirTrace for your platform.
+
+
+  Configure Options
+  -----------------
+
+    * Compilers and Options
+
+      Some systems require unusual options for compilation or linking that
+      the `configure' script does not know about.  Run `./configure --help'
+      for details on some of the pertinent environment variables.
+
+      You can give `configure' initial values for configuration parameters
+      by setting variables in the command line or in the environment.  Here
+      is an example:
+
+           ./configure CC=c89 CFLAGS=-O2 LIBS=-lposix
+
+
+    * Installation Names
+
+      By default, `make install' will install the package's files in
+      `/usr/local/bin', /usr/local/include', etc.  You can specify an
+      installation prefix other than `/usr/local' by giving `configure' the
+      option `--prefix=PATH'.
+
+
+    * Optional Features
+
+      --enable-compinst=COMPINSTLIST
+                              enable support for compiler instrumentation
+                              (gnu,intel,pgi,phat,xl,ftrace), default:
+                              automatically by configure
+                              NOTE: the first item in list is the default 
+                              instrumentation type for the compiler-wrapper
+
+      --enable-mpi            enable MPI support, default: enable if
+                              MPI-installation found by configure
+
+      --enable-omp            enable OpenMP support, default: enable if given
+                              compiler supports OpenMP
+
+      --enable-hyb            enable Hybrid (MPI/OpenMP) support, default:
+                              enable if MPI-installation found and given
+                              compiler supports OpenMP
+
+      --enable-dyninst        enable support for binary-instrumentation using
+                              Dyninst, default: enable if found by configure
+                              Note: needs Dyninst version 5.0.1 or higher !
+                              (downloadable at http://www.dyninst.org)
+
+      --enable-dyninst-attlib build shared library which attach dyninst to running
+                              user's application, default: enable if dyninst found
+                              by configure and system supports shared libraries
+
+      --enable-papi           enable PAPI hardware counter support, default:
+                              enable if found by configure
+
+      If your system does not have a MPI Fortran library, set
+
+      --enable-fmpi-lib       build MPI Fortran support library, default: enable
+                              if no MPI Fortran library found by configure
+
+
+    * Important Optional Packages
+
+      --with-local-tmp-dir=LTMPDIR
+                              give the path for node-local temporary directory,
+                              default: /tmp
+
+        Specify name of (SMP) node-local directory that can be used to store
+        temporary trace files.
+
+      If you would like to use an external version of OTF library, set
+      --with-extern-otf       use external OTF library, default: not set
+      --with-extern-otf-dir=OTFDIR
+                              give the path for OTF, default: /usr
+
+      --with-otf-extra-opts=OTFEXTRAOPTS
+                              extra options for OTF configuration
+                              (only for internal OTF version)
+
+      --with-otf-lib=OTFLIB   use given otf lib, default: -lotf -lz
+
+        If used OTF library was built without zlib support, then it will do
+        to set OTFLIB to '-lotf'.
+
+      --with-dyninst-dir=DYNIDIR
+                              give the path for DYNINST, default: /usr
+
+      --with-papi-dir=PAPIDIR
+                              give the path for PAPI, default: /usr
+
+      If you don't have specified the environment variable MPICC
+      (MPI compiler command), use following options to set location
+      of your MPI installation:
+
+      --with-mpi-dir=MPIDIR   give the path for MPI, default: /usr
+
+      --with-mpi-inc-dir=MPIINCDIR
+                              give the path for MPI-include-files, default:
+                              MPIDIR/include
+
+      --with-mpi-lib-dir=MPILIBDIR
+                              give the path for MPI-libraries, default:
+                              MPIDIR/lib
+
+      --with-mpi-lib          use given mpi lib
+
+      --with-pmpi-lib         use given pmpi lib
+
+      If your system does not have a MPI Fortran library,
+      set '--enable-fmpi-lib' (see above), otherwise set
+
+      --with-fmpi-lib         use given fmpi lib
+
+
+  Set up the Environment
+  ----------------------
+
+    Add the bin subdirectory of the installation directory to your PATH
+    environment variable. To use VampirTrace with Dyninst, you will also need
+    to add the lib subdirectory to your LD_LIBRARY_PATH environment variable:
+
+    for csh and tcsh:
+
+         > setenv PATH <vampirtrace-install>/bin:$PATH
+         > setenv LD_LIBRARY_PATH <vampirtrace-install>/lib:$LD_LIBRARY_PATH
+
+    for bash and sh:
+
+         $ export PATH=<vampirtrace-install>/bin:$PATH
+         $ export LD_LIBRARY_PATH=<vampirtrace-install>/lib:$LD_LIBRARY_PATH
+
+
+  Notes for Developers
+  --------------------
+
+    * Building
+    
+      If you have checked out a DEVELOPER'S COPY of VampirTrace (i.e. you
+      checked out from CVS), you should first run:
+
+           $ ./bootstrap
+
+      (Note that GNU Autoconf 2.53 or higher is required.)
+
+
+    * Creating a distribution tarball (VampirTrace-X.X.X.tar.gz)
+
+      If you would like create a new distribution tarball, run:
+
+           $ ./makedist <version> <otftarball>
+
+      instead of 'make dist'.
+
+      The script 'makedist' adapts the version number (<version>) in
+      configure.in and extracts given OTF-tarball (<otftarball>) in 
+      ./extlib/otf.
+

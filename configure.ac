@@ -977,6 +977,17 @@ OMPI_MCA
 # checkpoint results
 AC_CACHE_SAVE
 
+##################################
+# Contributed software
+##################################
+
+ompi_show_title "Contributed software setup"
+
+OMPI_CONTRIB
+
+# checkpoint results
+AC_CACHE_SAVE
+
 
 ############################################################################
 # Final top-level OMPI configuration
