@@ -67,7 +67,38 @@ BEGIN_C_DECLS
         mca_coll_base_component_1_1_0_t super;
 
         /** MCA parameter: Priority of this component */
-        int sm_priority;
+        int sm2_priority;
+
+        /** MCA parameter: control region size (bytes), per proc */
+        size_t sm2_ctl_size_per_proc;
+
+        /** MCA parameter: control region size (bytes) actually allocated - per proc*/
+        size_t sm2_ctl_size_allocated;
+
+        /** MCA parameter: control region alignment */
+        size_t sm2_ctl_alignment;
+
+        /** MCA parameter: Max data Segment size */
+        size_t sm2_max_data_seg_size;
+
+        /** MCA parameter: Min data Segment size */
+        size_t sm2_data_seg_size;
+
+        /** MCA parameter: control data size (bytes) actually allocated - per proc*/
+        size_t sm2_data_size_allocated;
+
+        /** MCA parameter: data region alignment */
+        size_t sm2_data_alignment;
+
+        /** MCA parameter: number of memory banks */
+        size_t sm2_num_mem_banks;
+
+        /** MCA parameter: number of regions per memory bank */
+        size_t sm2_num_regions_per_bank;
+
+        /* size of shared memory backing file */
+        size_t size_sm2_backing_file;
+
     };
 
     /**
