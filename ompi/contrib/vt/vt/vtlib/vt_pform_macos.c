@@ -124,7 +124,7 @@ uint64_t vt_pform_wtime()
 # ifdef __powerpc64__
     /* ... PPC64 */
     asm volatile("mftb %0" : "=r" (clock_value));
-# elif defined(__powerpc__)
+# elif defined(__powerpc__) || defined(__POWERPC__)
     /* ... PPC32 */
     {
       uint32_t low = 0;
