@@ -21,7 +21,7 @@ PARAM_CONFIG_FILES="Makefile"
     cd $pd_ompi_topdir
     mv "$mca_no_config_env_file" "$mca_no_config_env_file.bak"
     mv "$mca_m4_config_env_file" "$mca_m4_config_env_file.bak" 
-    process_framework $pd_dir/vprotocol $rg_cwd vprotocol vprotocol
+    process_framework $pd_dir/mca/vprotocol $rg_cwd v vprotocol
     mv "$mca_no_config_env_file.bak" "$mca_no_config_env_file"
     mv "$mca_m4_config_env_file.bak" "$mca_m4_config_env_file" 
 )

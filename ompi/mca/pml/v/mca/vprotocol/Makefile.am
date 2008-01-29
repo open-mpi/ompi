@@ -9,9 +9,6 @@
 # $HEADER$
 #
 
-# iterate trough the components
-SUBDIRS= $(MCA_vprotocol_ALL_SUBDIRS)
-
 # main library setup
 noinst_LTLIBRARIES = libmca_vprotocol.la
 libmca_vprotocol_la_SOURCES =

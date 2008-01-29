@@ -14,7 +14,6 @@
 #include "ompi_config.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "../vprotocol.h"
-#include "../../pml_v.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
