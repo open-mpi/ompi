@@ -38,7 +38,11 @@ AC_DEFUN([OMPI_contrib_vt_CONFIG],[
          AS_IF([test ! -z $host], [contrib_vt_flags="$contrib_vt_flags --host=$host"])
          AS_IF([test ! -z $target], [contrib_vt_flags="$contrib_vt_flags --target=$target"])])
 
-    contrib_vt_flags="MPICC="'"'"$CC"'"'" --with-openmpi --with-mpi-inc-dir="'"'"$top_ompi_builddir/ompi/include"'"'" --with-mpi-status-size=5 --with-mpi-io --disable-config-titles --disable-config-summary $contrib_vt_flags"
+    AS_IF([test "$define_mpi_io" = "1"],
+        [contrib_vt_flags="$contrib_vt_flags --enable-mpi-io"],
+        [contrib_vt_flags="$contrib_vt_flags --disable-mpi-io"])
+
+    contrib_vt_flags="MPICC="'"'"$CC"'"'" --with-openmpi --with-mpi-inc-dir="'"'"$top_ompi_builddir/ompi/include"'"'" --with-mpi-status-size=5 --disable-config-titles --disable-config-summary $contrib_vt_flags"
 
     # Run VampirTrace's configure and see if it succeeded
     OMPI_CONFIG_SUBDIR([ompi/contrib/vt/vt],
