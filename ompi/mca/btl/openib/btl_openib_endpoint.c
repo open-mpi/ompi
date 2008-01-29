@@ -735,6 +735,12 @@ static void mca_btl_openib_endpoint_eager_rdma_connect_cb(
     struct mca_btl_base_descriptor_t* descriptor,
     int status)
 {
+    mca_btl_openib_hca_t *hca = endpoint->endpoint_btl->hca;
+    mca_btl_openib_module_t* openib_btl =
+        (mca_btl_openib_module_t*)btl;
+    OPAL_THREAD_ADD32(&hca->non_eager_rdma_endpoints, -1);
+    assert(hca->non_eager_rdma_endpoints >= 0);
+    OPAL_THREAD_ADD32(&openib_btl->eager_rdma_channels, 1);
     MCA_BTL_IB_FRAG_RETURN(descriptor);
 }
 
@@ -874,9 +880,6 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
             p = &hca->eager_rdma_buffers[hca->eager_rdma_buffers_count];
         } while(!opal_atomic_cmpset_ptr(p, NULL, endpoint));
 
-        OPAL_THREAD_ADD32(&hca->non_eager_rdma_endpoints, -1);
-        assert(hca->non_eager_rdma_endpoints >= 0);
-        OPAL_THREAD_ADD32(&openib_btl->eager_rdma_channels, 1);
         /* from this point progress function starts to poll new buffer */
         OPAL_THREAD_ADD32(&hca->eager_rdma_buffers_count, 1);
         return;
