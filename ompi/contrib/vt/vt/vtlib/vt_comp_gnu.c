@@ -309,7 +309,7 @@ static void get_symtab(void)
   /* read application's executable by using BFD */
   else
   {
-#if VT_BFD
+#ifdef VT_BFD
     get_symtab_bfd();
 #else
     vt_error_msg("No symbol list file given. Please set the environment variable VT_NMFILE to the path of your symbol list file, created with 'nm'.");
