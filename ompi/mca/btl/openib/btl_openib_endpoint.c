@@ -321,11 +321,17 @@ endpoint_init_qp_srq(mca_btl_openib_endpoint_qp_t *ep_qp, const int qp)
 }
 
 static void
-endpoint_init_qp_xrc(mca_btl_openib_endpoint_qp_t *ep_qp, const int qp,
-        mca_btl_openib_qp_t *xrc_qp)
+endpoint_init_qp_xrc(mca_btl_base_endpoint_t *ep, const int qp)
 {
-    ep_qp->qp = xrc_qp;
+    int max = ep->endpoint_btl->hca->ib_dev_attr.max_qp_wr -
+        (mca_btl_openib_component.use_eager_rdma ?
+         mca_btl_openib_component.max_eager_rdma : 0);
+    mca_btl_openib_endpoint_qp_t *ep_qp = &ep->qps[qp];
+    ep_qp->qp = ep->ib_addr->qp;
     ep_qp->qp->sd_wqe += mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
+    /* make sure that we don't overrun maximum supported by hca */
+    if (ep_qp->qp->sd_wqe > max)
+        ep_qp->qp->sd_wqe =  max;
     ep_qp->qp->users++;
 }
 
@@ -348,7 +354,7 @@ static void endpoint_init_qp(mca_btl_base_endpoint_t *ep, const int qp)
         case MCA_BTL_OPENIB_XRC_QP:
             if(NULL == ep->ib_addr->qp)
                 ep->ib_addr->qp = endpoint_alloc_qp();
-            endpoint_init_qp_xrc(ep_qp, qp, ep->ib_addr->qp);
+            endpoint_init_qp_xrc(ep, qp);
             break;
         default:
             BTL_ERROR(("Wrong QP type"));
