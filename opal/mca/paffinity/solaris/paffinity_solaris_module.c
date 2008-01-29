@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -26,7 +27,7 @@
 #include <sys/processor.h>
 #include <sys/procset.h>
 #include <unistd.h>
-#include <sys/pset.h>
+#include <errno.h>
 
 #include "opal/constants.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -38,9 +39,11 @@
  * Local functions
  */
 static int solaris_module_init(void);
-static int solaris_module_set(opal_paffinity_base_cpu_set_t cpuset);
-static int solaris_module_get(opal_paffinity_base_cpu_set_t *cpuset);
+static int solaris_module_set(opal_paffinity_base_cpu_set_t cpumask);
+static int solaris_module_get(opal_paffinity_base_cpu_set_t *cpumask);
 static int solaris_module_finalize(void);
+static int cpumask_to_id(opal_paffinity_base_cpu_set_t cpumask);
+
 /*
  * Solaris paffinity module
  */
@@ -74,111 +77,89 @@ opal_paffinity_solaris_component_query(int *query)
     return &module;
 }
 
-/*
-   we are commenting out code in the solaris section - it is not clear
-   from man pages exactly what we want. In particular the following global
-   is not good programming practice, but it seems like it may be needed to
-   be able to have a persistent pset under solaris
-
-static psetid_t opal_pset;
-*/
-
+/* do nothing here. both mpirun and processes would run init(), but
+ * only processes would run the solaris_module_set function */
 static int solaris_module_init(void)
 {
-    int ierr;
-
-    /* We need to set up a processor set  
-     * Actual setting/getting of processors will use pset_assign calls
-     * A failure here will return an error ( one likely reason for failure 
-     * is insufficient privilege to create a pset) */
-
-    /* ierr = pset_create(&opal_pset);
-    if(0 == ierr) {
-        return OPAL_SUCCESS;
-    } else {
-        return OPAL_ERR_IN_ERRNO;
-    } */
     return OPAL_SUCCESS;
 }
 
-/*
-   Solaris_module_set will need to assign processors in the mask to a pset. This
-   pset needs to be created (and persist until solaris_module_finalize
-   is called - hence the global variable above). 
-
-   there is some ambiguity in the available documentation as to
-   the order in which pset_bind and pset_assign calls must be made.
-
-   My reading is that the LWP must be bound to a pset (even an empty
-   pset) before processors can be assigned. This doesn't make a lot of
-   sense though, and it may be that the pset_assign calls need to be done
-   prior to the pset_bind call.
-
-   Documentation is located at http://docs.sun.com/app/docs/doc/819-2241/6n4huc7m7?a=view
-   */
-
-static int solaris_module_set(opal_paffinity_base_cpu_set_t mask)
+/* this gives us a cpumask which tells which CPU to bind */
+static int solaris_module_set(opal_paffinity_base_cpu_set_t cpumask)
 {
-/*
-    int loopindex;
-    psetid_t temp_pset;
-*/
-    /* Bind process to opal_pset  - have to bind to a pset before
-     * assigning processors */
-    /* 
-    if (0 != pset_bind(PS_QUERY, P_PID, P_MYID, &temp_pset)) {
+    int index, *cpuid_list, cpuid_loc=0;
+    processorid_t currid, cpuid_max;
+    processor_info_t pinfo;
+
+    /* cpuid_max is the max number available for a system arch. It is
+     * an inclusive list. e.g. If cpuid_max=31, cpuid would be 0-31 */
+    cpuid_max = sysconf(_SC_CPUID_MAX);
+    cpuid_list = (int*)malloc((cpuid_max+1)*sizeof(int));
+
+    /* Because not all CPU ID in cpuid_max are actually valid,
+     * and CPU ID may also not be contiguous. Therefore we
+     * need to run through processor_info to ensure the validity.
+     * Then find out which are actually online */
+    for (currid=0; currid<=cpuid_max; currid++) {
+        if (0 == processor_info(currid, &pinfo)) {
+            if (P_ONLINE == pinfo.pi_state) {
+                 cpuid_list[cpuid_loc++] = currid;
+            } 
+        }
+    }
+
+    /* Find out where in the cpumask is the location of the current CPU.
+     * Once the index position of the CPU is located, then the set index
+     * We will use the same index in cpuid_list to locate the CPU ID */
+    index = cpumask_to_id(cpumask);
+    if (-1 == index) {
+        opal_output(0, "paffinity:solaris: Error when coverting cpumask to id");
         return OPAL_ERR_IN_ERRNO;
     }
-*/
-    /* Assign all processors in mask to opal_pset */
-/*
-    for(loopindex=0;loopindex< sizeof(mask); loopindex++) {
-        if(OPAL_PAFFINITY_CPU_ISSET(loopindex,mask)) {
-            pset_assign(PS_MYID,(processor_t) loopindex, NULL);
 
-        } 
-    } */
-    return OPAL_SUCCESS;
-}
-
-/*
-   Solaris_module_get is a bit easier - we do a  pset_info call and then loop through
-   the array of processor ids and set them in the mask structure
-
-   */
-
-static int solaris_module_get(opal_paffinity_base_cpu_set_t *mask) 
-{
-    /*
-    processorid_t solar_cpulist;
-    uint_t solar_numcpus;
-    int loopindex, type; */
-    /*
-     * pset_info returns an array of processor_t elements for the
-     * processors that are in this pset. There are solar_numcpus in the
-     * array
-     */
-/*    if (0 != pset_info(temp_pset, &type, &solar_numcpus, &solar_cpulist)) {
+    if (0 != processor_bind(P_PID, P_MYID, cpuid_list[index], NULL)) {
+        opal_output(0, "paffinity:solaris: Error when binding to CPU %d: %s",
+            cpuid_list[index], strerror(errno));
+        free(cpuid_list);
         return OPAL_ERR_IN_ERRNO;
     }
-    if (PS_NONE == type) { */
-     /* do the right thing */
-/*    }
-    for (loopindex = 0; loopindex < solar_numcpus; loopindex++) {
-        OPAL_PAFFINITY_CPU_SET((int) solar_cpulist[loopindex],*mask);
-    } */
+    opal_output_verbose(100, opal_paffinity_base_output,
+        "paffinity:solaris: Successfully bind to CPU %d", cpuid_list[index]);
+    free(cpuid_list);
     return OPAL_SUCCESS;
 }
+
+/* this takes a cpumask and converts it to CPU id on a node */
+static int cpumask_to_id(opal_paffinity_base_cpu_set_t cpumask)
+{
+    int currid;
+
+    for(currid=0; currid<OPAL_PAFFINITY_BITMASK_CPU_MAX; currid++) {
+        if (OPAL_PAFFINITY_CPU_ISSET(currid, cpumask))
+            return currid;
+    }
+    return -1;
+}
+
+/* This get function returns the CPU id that's currently binded,
+ * and then sets the cpumask. But I don't see this function or the
+ * base paffinity get called from anywhere */
+static int solaris_module_get(opal_paffinity_base_cpu_set_t *cpumask) 
+{
+    processorid_t obind;
+    if (0 != processor_bind(P_PID, P_MYID, PBIND_QUERY, &obind)) {
+        return OPAL_ERR_IN_ERRNO;
+    }
+    opal_output_verbose(100, opal_paffinity_base_output,
+        "paffinity:solaris: obind=%d", obind);
+
+    OPAL_PAFFINITY_CPU_ZERO(*cpumask);
+    OPAL_PAFFINITY_CPU_SET(obind, *cpumask);
+    return OPAL_SUCCESS;
+}
+
 static int solaris_module_finalize(void)
 {
-    /*
-    int ierr;
-    ierr = pset_destroy(opal_pset);
-    if(0 == ierr) {
-        return OPAL_SUCCESS;
-    } else {
-        return OPAL_ERR_IN_ERRNO;
-    } */
     return OPAL_SUCCESS;
 }
 
