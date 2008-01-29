@@ -366,6 +366,10 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 		[answer="yes"], [answer="no"])
 		echo "  Build OTF library and tools:               $answer"
 
+		AS_IF([test x"$have_zlib" = "xyes"],
+		[answer="yes"], [answer="no"])
+		echo "   ZLIB trace compression support            $answer"
+
 		AS_IF([test x"$build_mpi" = "xyes"],
 		[answer="yes"], [answer="no"])
 		echo "  Build MPI support:                         $answer"
@@ -710,7 +714,7 @@ AC_DEFUN([ACVT_LIBERTY],
 
 	AC_ARG_WITH(liberty-lib-dir,
 		AC_HELP_STRING([--with-liberty-lib-dir=LIBERTYLIBDIR],
-		[give the path for LIBERTY-libraries, default: LIBERTY/lib]),
+		[give the path for LIBERTY-libraries, default: LIBERTYDIR/lib]),
 	[LIBERTYLIBDIR="-L$withval/"],
 	[AS_IF([test x"$LIBERTYDIR" != x], [LIBERTYLIBDIR="-L$LIBERTYDIR"lib/])])
 
@@ -847,10 +851,10 @@ AC_DEFUN([ACVT_MPI],
 		[mpi_status_size=$withval])
 	])
 
-	AC_ARG_WITH(mpi-io,
-		AC_HELP_STRING(--with-mpi-io,
+	AC_ARG_ENABLE(mpi-io,
+		AC_HELP_STRING(--enable-mpi-io,
 		[MPI supports file access, default: yes if found by configure]),
-	[have_mpio="$withval"])
+	[AS_IF([test x"$enableval" = "xyes"], [have_mpio=yes], [have_mpio=no])])
 
 	AC_ARG_ENABLE(fmpi-lib,
 		AC_HELP_STRING([--enable-fmpi-lib],
@@ -1268,6 +1272,8 @@ AC_DEFUN([ACVT_OTF],
 	OTFINCDIR=
 	OTFLIBDIR=
 
+	AC_REQUIRE([ACVT_ZLIB])
+
 	AC_ARG_WITH(extern-otf,
 		AC_HELP_STRING([--with-extern-otf], [use external OTF library, default: not set]),
 	[use_extern_otf="yes"], [use_extern_otf="no"])
@@ -1309,10 +1315,10 @@ AC_DEFUN([ACVT_OTF],
 		AS_IF([test x"$OTFLIB" = x -a "$otf_error" = "no"],
 		[
 			sav_LIBS=$LIBS
-			LIBS="$LIBS $OTFLIBDIR -lotf -lz"
-			AC_MSG_CHECKING([whether linking with -lotf -lz works])
+			LIBS="$LIBS $OTFLIBDIR -lotf $ZLIBLIBDIR $ZLIBLIB"
+			AC_MSG_CHECKING([whether linking with -lotf $ZLIBLIBDIR $ZLIBLIB works])
 			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); OTFLIB="-lotf -lz"],[AC_MSG_RESULT([no])])
+			[AC_MSG_RESULT([yes]); OTFLIB="-lotf $ZLIBLIBDIR $ZLIBLIB"],[AC_MSG_RESULT([no])])
 			LIBS=$sav_LIBS
 		])
 
@@ -1350,10 +1356,20 @@ AC_DEFUN([ACVT_OTF],
 		esac
 
 		otf_conf_cmd="$otf_srcdir/configure"
-		otf_conf_args=""
+		AS_IF([test x"$have_zlib" = "xyes"],
+		[
+			AS_IF([test x"$force_zlib" = "xyes"],
+			[otf_conf_args=--with-zlib], [otf_conf_args=""])
+		],
+		[
+			otf_conf_args=--without-zlib
+		])
 		AS_IF([test x"$cross_compiling" = "xyes"],
-			[AS_IF([test ! -z $build], [otf_conf_args="$otf_conf_args --build=$build"])
-			 AS_IF([test ! -z $host], [otf_conf_args="$otf_conf_args --host=$host"])])
+		[
+			AS_IF([test ! -z $build], [otf_conf_args="$otf_conf_args --build=$build"])
+			AS_IF([test ! -z $host], [otf_conf_args="$otf_conf_args --host=$host"])
+		])
+
 		otf_conf_args="$otf_conf_args --prefix=\"$prefix\" --exec-prefix=\"$exec_prefix\" --bindir=\"$bindir\" --libdir=\"$libdir\" --includedir=\"$includedir\" --datarootdir=\"$datarootdir\" --datadir=\"$datadir\" --docdir=\"$docdir\" $OTFFLAGS --cache-file=\"/dev/null\" --srcdir=\"$otf_srcdir\""
 		
 		AC_MSG_NOTICE([running $SHELL $otf_conf_cmd $otf_conf_args])
@@ -1362,21 +1378,9 @@ AC_DEFUN([ACVT_OTF],
 
 		cd $otf_parent_dir
 
-		dnl check if linking zlib works
-		sav_LIBS=$LIBS
-		cl="-lz"
-		if test x"$zlib_lib_dir" != x; then
-			cl="-L$zlib_lib_dir $cl"
-		fi
-		LIBS="$LIBS $cl"
-		AC_MSG_CHECKING([whether linking with -lz works])
-		AC_TRY_LINK([],[],
-		[AC_MSG_RESULT([yes]); zlib_lib=-lz],[AC_MSG_RESULT([no])])
-		LIBS=$sav_LIBS
-
 		OTFINCDIR=
 		OTFLIBDIR=
-		AS_IF([test x"$OTFLIB" = x], [OTFLIB="-lotf $zlib_lib"])
+		AS_IF([test x"$OTFLIB" = x], [OTFLIB="-lotf $ZLIBLIBDIR $ZLIBLIB"])
 	])
 
 	AC_SUBST(OTFDIR)
@@ -1646,6 +1650,82 @@ AC_DEFUN([ACVT_PLATFORM],
 	esac
 
 	AC_SUBST(PLATFORM)
+])
+
+AC_DEFUN([ACVT_ZLIB],
+[
+	zlib_error="no"
+	check_zlib="yes"
+        force_zlib="no"
+	have_zlib="no"
+
+	ZLIBDIR=
+	ZLIBINCDIR=
+	ZLIBLIBDIR=
+	ZLIBLIB=
+
+	AC_ARG_ENABLE(zlib,
+		AC_HELP_STRING([--enable-zlib],
+		[enable ZLIB trace compression support, default: enable if found by configure]),
+	[AS_IF([test x"$enableval" = "xyes"], [force_zlib="yes"], [check_zlib="no"])])
+
+	AC_ARG_WITH(zlib-dir,
+		AC_HELP_STRING([--with-zlib-dir=ZLIBDIR], [give the path for ZLIB, default: /usr]),
+	[ZLIBDIR="$withval/"])
+
+	AC_ARG_WITH(zlib-inc-dir,
+		AC_HELP_STRING([--with-zlib-inc-dir=ZLIBINCDIR],
+		[give the path for ZLIB-include files, default: ZLIB/include]),
+	[ZLIBINCDIR="-I$withval/"],
+	[AS_IF([test x"$ZLIBDIR" != x], [ZLIBINCDIR="-I$ZLIBDIR"include/])])
+
+	AC_ARG_WITH(zlib-lib-dir,
+		AC_HELP_STRING([--with-zlib-lib-dir=ZLIBLIBDIR],
+		[give the path for ZLIB-libraries, default: ZLIBDIR/lib]),
+	[ZLIBLIBDIR="-L$withval/"],
+	[AS_IF([test x"$ZLIBDIR" != x], [ZLIBLIBDIR="-L$ZLIBDIR"lib/])])
+
+	AC_ARG_WITH(zlib-lib,
+		AC_HELP_STRING([--with-zlib-lib=ZLIBLIB], [use given zlib lib, default: -lz]),
+	[ZLIBLIB="$withval"])
+
+	AS_IF([test x"$check_zlib" = "xyes"],
+        [
+		sav_CPPFLAGS=$CPPFLAGS
+		CPPFLAGS="$CPPFLAGS $ZLIBINCDIR"
+		AC_CHECK_HEADER([zlib.h], [],
+		[
+			AC_MSG_NOTICE([error: no zlib.h found; check path for ZLIB package first...])
+			zlib_error="yes"
+		])
+		CPPFLAGS=$sav_CPPFLAGS
+
+		AS_IF([test x"$ZLIBLIB" = x -a x"$zlib_error" = "xno"],
+		[
+			sav_LIBS=$LIBS
+			LIBS="$LIBS $ZLIBLIBDIR -lz"
+			AC_MSG_CHECKING([whether linking with -lz works])
+			AC_TRY_LINK([],[],
+			[AC_MSG_RESULT([yes]); ZLIBLIB=-lz],[AC_MSG_RESULT([no])])
+			LIBS=$sav_LIBS
+		])
+
+		AS_IF([test x"$ZLIBLIB" = x -a x"$zlib_error" = "xno"],
+		[
+			AC_MSG_NOTICE([error: no libz found; check path for ZLIB package first...])
+			zlib_error="yes"
+		])
+
+		AS_IF([test x"$ZLIBLIB" != x -a x"$zlib_error" = "xno"],
+		[have_zlib="yes"])
+
+		AS_IF([test x"$force_zlib" = "xyes" -a x"$zlib_error" = "xyes"],
+		[exit 1])
+	])
+
+	AC_SUBST(ZLIBINCDIR)
+	AC_SUBST(ZLIBLIBDIR)
+	AC_SUBST(ZLIBLIB)
 ])
 
 dnl @synopsis AX_OPENMP([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])

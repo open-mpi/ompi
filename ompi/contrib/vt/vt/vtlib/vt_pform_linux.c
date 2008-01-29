@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2007, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich GmbH, Federal
  * Republic of Germany
@@ -89,7 +89,11 @@ void vt_pform_init()
       vt_cpu_count++;
 #if TIMER == TIMER_CYCLE_COUNTER
     {
+# if defined(__ia64__)
+      if (!strncmp("itc MHz", line, 7))
+# else
       if (!strncmp("cpu MHz", line, 7))
+# endif
       {
 	strtok(line, ":");
       
@@ -103,15 +107,6 @@ void vt_pform_init()
 	vt_ticks_per_sec =
 	  strtol((char*) strtok(NULL, " \n"), (char**) NULL, 0);
       }
-# if defined(__ia64__)
-      if (!strncmp("itc MHz", line, 7))
-      {
-	strtok(line, ":"); 
-
-	vt_ticks_per_sec =
-	  strtol((char*) strtok(NULL, " \n"), (char**) NULL, 0) * 1e6;
-      }
-# endif
     }
 #endif
   }
@@ -160,7 +155,7 @@ uint64_t vt_pform_wtime()
 # ifdef __powerpc64__
     /* ... PPC64 */
     asm volatile("mftb %0" : "=r" (clock_value));
-# elif defined(__powerpc__)
+# elif defined(__powerpc__) || defined(__POWERPC__)
     /* ... PPC32 */
     {
       uint32_t low = 0;

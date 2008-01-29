@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2007, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich GmbH, Federal
  * Republic of Germany
@@ -1429,8 +1429,9 @@ Wrapper::comp_setCmd( const std::string cmd )
    if( ls != -1 ) bcomp = cmd.substr( ls+1 );
    
    if( !usesMPI() &&
-       bcomp.compare( 0, 2, "mp" ) == 0 ||
-       bcomp.compare( 0, 4, "sxmp" ) == 0 )
+       ( bcomp.compare( 0, 2, "mp" ) == 0 ||
+	 bcomp.compare( 0, 4, "sxmp" ) == 0 ||
+	 bcomp.compare( 0, 4, "scmp" ) == 0 ) )
       setUsesMPI( true );
 
    Properties.comp_cmd = cmd;

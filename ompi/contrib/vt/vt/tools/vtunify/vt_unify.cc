@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2007, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich GmbH, Federal
  * Republic of Germany
@@ -29,11 +29,12 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #define USAGETEXT std::endl \
 << " " << ExeName << " - local trace unifier for VampirTrace." << std::endl \
 << std::endl \
-<< " Syntax: " << ExeName << " <#files> <iprefix> [-o <oprefix>] [-c|--compress <on|off>] [-k|--keeplocal] [-v|--verbose]" << std::endl \
+<< " Syntax: " << ExeName << " <#files> <iprefix> [options...]" << std::endl \
 << std::endl \
 << "   options:" << std::endl \
 << "     -h, --help          Show this help message." << std::endl \
