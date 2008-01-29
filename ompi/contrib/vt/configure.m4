@@ -38,7 +38,7 @@ AC_DEFUN([OMPI_contrib_vt_CONFIG],[
          AS_IF([test ! -z $host], [contrib_vt_flags="$contrib_vt_flags --host=$host"])
          AS_IF([test ! -z $target], [contrib_vt_flags="$contrib_vt_flags --target=$target"])])
 
-    AS_IF([test "$define_mpi_io" = "1"],
+    AS_IF([test "$enable_mpi_io" != "no"],
         [contrib_vt_flags="$contrib_vt_flags --enable-mpi-io"],
         [contrib_vt_flags="$contrib_vt_flags --disable-mpi-io"])
 
