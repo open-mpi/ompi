@@ -14,9 +14,7 @@
 #include "ompi_config.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
-#endif  /* HAVE_INTTYPES_H */
+#include "opal_stdint.h"
 
 BEGIN_C_DECLS
 
