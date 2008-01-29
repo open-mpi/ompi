@@ -327,7 +327,7 @@ void mca_btl_openib_load_apm(struct ibv_qp *qp, struct mca_btl_openib_module_t *
 {
     struct ibv_qp_init_attr qp_init_attr;
     struct ibv_qp_attr attr;
-    enum ibv_qp_attr_mask mask;
+    enum ibv_qp_attr_mask mask = 0;
 
     BTL_VERBOSE(("APM: Loading alternative path"));
 
