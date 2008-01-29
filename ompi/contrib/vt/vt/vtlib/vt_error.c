@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2007, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich GmbH, Federal
  * Republic of Germany
@@ -88,15 +88,17 @@ void vt_cntl_msg(const char* fmt, ...)
 
 inline void vt_debug_msg(int level, const char* fmt, ...)
 {
-#if defined(VT_DEBUG) && (VT_DEBUG > 0)
   va_list ap;
-
+#if defined(VT_DEBUG) && (VT_DEBUG > 0)
   if( level <= VT_DEBUG ) {
     va_start(ap, fmt);
     vt_print_msg(fmt, ap);
   }
+#else
+  va_start(ap, fmt); /* only for avoiding a compiler warning */
 #endif
 }
+
 
 
 

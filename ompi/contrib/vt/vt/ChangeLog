@@ -194,4 +194,8 @@
 	  'strdup()'
 	- removed variadic macros (they were introduced in C99)
 	- fixed a bug for determining the timer-resolution for ITC
+	- added check if we can link '-lz' in order to pass either '-lotf -lz'
+	  or just '-lotf' as OTF link option
+	- renamed configure's option '--with[out]-mpi-io' to
+	  '[enable/disable]-mpi-io' for more consistent
 

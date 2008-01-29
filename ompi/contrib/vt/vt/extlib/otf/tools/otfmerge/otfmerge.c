@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2007.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -54,7 +54,6 @@ static const char* Helptext[] = {
 "                    compression and 9 is the highest level        \n",
 "      -p            show progress                                 \n",
 "                                                                  \n",
-" Part of OTF library. Copyright by ZIH, TU Dresden, 2005-2006.    \n",
 "                                                                  \n", NULL };
 
 void initProgressDisplay( void );

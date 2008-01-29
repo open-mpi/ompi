@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2006.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -28,7 +28,6 @@ static const char* Helptext[] = {
 "      --libs        libline needed for linking otf                \n",
 "      --sizes       print size of integer types                   \n",
 "                                                                  \n",
-" Part of OTF library. Copyright by ZIH, TU Dresden, 2005-2006.    \n",
 "                                                                  \n", NULL };
 
 int main( int argc, char** argv ) {

@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2007, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich GmbH, Federal
  * Republic of Germany
@@ -1158,7 +1158,6 @@ static map<uint32_t,uint64_t> readFilterFile( const string& filename, const map<
     string func;
 	uint64_t ulimit;
     int a;
-    vector<string>::iterator itf;
 
     if( filename.empty() == false ) {
         i.open( filename.c_str(), ios_base::in );

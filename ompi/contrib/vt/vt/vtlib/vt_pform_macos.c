@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2007, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich GmbH, Federal
  * Republic of Germany
@@ -138,9 +138,6 @@ uint64_t vt_pform_wtime()
       } while (highb != higha);
       clock_value = ((uint64_t)higha << 32) | (uint64_t)low;
     }
-# elif defined(__ia64__)
-    /* ... ITC */
-    asm volatile ("mov %0=ar.itc" : "=r"(clock_value));
 # else
     /* ... TSC */
     {
