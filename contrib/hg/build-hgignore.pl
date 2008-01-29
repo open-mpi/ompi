@@ -26,6 +26,7 @@ my @globals = qw/.libs
 *.so
 *.a
 .dirstamp
+.DS_Store
 stamp-h[1-9]
 configure
 config.guess
