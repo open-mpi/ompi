@@ -20,11 +20,11 @@ BEGIN_C_DECLS
 
 /* Make sure -Wformat is happy... */ 
 typedef uint64_t vprotocol_pessimist_clock_t;
-#ifdef __WINDOWS__
+#ifndef PRIx64
 #define PRIpclock "%llx"
 #else
 #define PRIpclock PRIx64
-#endif  /* __WINDOWS__ */
+#endif
 
 typedef enum {
   VPROTOCOL_PESSIMIST_EVENT_TYPE_MATCHING,
