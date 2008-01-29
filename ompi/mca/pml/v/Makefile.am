@@ -20,7 +20,7 @@ component_noinst = libmca_pml_v.la
 component_install =
 endif
 
-SUBDIRS = vprotocol $(MCA_pml_v_SUBDIRS)
+SUBDIRS = mca/vprotocol $(MCA_vprotocol_DSO_SUBDIRS) $(MCA_vprotocol_STATIC_SUBDIRS)
 
 local_sources = \
         pml_v.c \
@@ -32,11 +32,11 @@ local_sources = \
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_v_la_SOURCES = $(local_sources)
-mca_pml_v_la_LIBADD = vprotocol/libmca_vprotocol.la
+mca_pml_v_la_LIBADD = mca/vprotocol/libmca_vprotocol.la $(MCA_vprotocol_STATIC_LTLIBS)
 mca_pml_v_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pml_v_la_SOURCES = $(local_sources)
-libmca_pml_v_la_LIBADD = vprotocol/libmca_vprotocol.la
+libmca_pml_v_la_LIBADD = mca/vprotocol/libmca_vprotocol.la $(MCA_vprotocol_STATIC_LTLIBS)
 libmca_pml_v_la_LDFLAGS = -module -avoid-version
 
