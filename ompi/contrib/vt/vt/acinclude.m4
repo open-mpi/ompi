@@ -1362,9 +1362,21 @@ AC_DEFUN([ACVT_OTF],
 
 		cd $otf_parent_dir
 
+		dnl check if linking zlib works
+		sav_LIBS=$LIBS
+		cl="-lz"
+		if test x"$zlib_lib_dir" != x; then
+			cl="-L$zlib_lib_dir $cl"
+		fi
+		LIBS="$LIBS $cl"
+		AC_MSG_CHECKING([whether linking with -lz works])
+		AC_TRY_LINK([],[],
+		[AC_MSG_RESULT([yes]); zlib_lib=-lz],[AC_MSG_RESULT([no])])
+		LIBS=$sav_LIBS
+
 		OTFINCDIR=
 		OTFLIBDIR=
-		AS_IF([test x"$OTFLIB" = x], [OTFLIB="-lotf -lz"])
+		AS_IF([test x"$OTFLIB" = x], [OTFLIB="-lotf $zlib_lib"])
 	])
 
 	AC_SUBST(OTFDIR)
