@@ -327,16 +327,16 @@ bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
 {
     size_t i;
     OPAL_THREAD_LOCK(&btl_proc->proc_lock);
-    for( i = 0; i < btl_proc->proc_addr_count; i++ ) {
-        mca_btl_tcp_addr_t*  exported_address = btl_proc->proc_addrs + i;
+    for( i = 0; i < btl_proc->proc_endpoint_count; i++ ) {
+        mca_btl_base_endpoint_t* btl_endpoint = btl_proc->proc_endpoints[i];
         /* Check all conditions before going to try to accept the connection. */
-        if( exported_address->addr_family != addr->sa_family ) {
+        if( btl_endpoint->endpoint_addr->addr_family != addr->sa_family ) {
             continue;
         }
 
         switch (addr->sa_family) {
         case AF_INET:
-            if( memcmp( &exported_address->addr_inet,
+            if( memcmp( &btl_endpoint->endpoint_addr->addr_inet,
                         &(((struct sockaddr_in*)addr)->sin_addr),
                         sizeof(struct in_addr) ) ) {
                 continue;
@@ -344,8 +344,9 @@ bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
             break;
 #if OPAL_WANT_IPV6
         case AF_INET6:
-            if( IN6_ARE_ADDR_EQUAL (&exported_address->addr_inet,
-                        &(((struct sockaddr_in6*)addr)->sin6_addr))) {
+            if( memcmp( &btl_endpoint->endpoint_addr->addr_inet,
+                        &(((struct sockaddr_in6*)addr)->sin6_addr),
+                        sizeof(struct in6_addr) ) ) {
                 continue;
             }
             break;
@@ -354,7 +355,7 @@ bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
             ;
         }
 
-        if(mca_btl_tcp_endpoint_accept(btl_proc->proc_endpoints[0], addr, sd)) {
+        if(mca_btl_tcp_endpoint_accept(btl_endpoint, addr, sd)) {
             OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
             return true;
         }
