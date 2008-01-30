@@ -63,9 +63,9 @@ void OMPragmaC::add_descr(int n) {
 }
 
 namespace {
-  inline void sreplace(string& lhs, const string& rhs, int from, int to) {
-    for (int i=from; i<to; ++i) lhs[i] = rhs[i];
-  }
+  //inline void sreplace(string& lhs, const string& rhs, int from, int to) {
+  //  for (int i=from; i<to; ++i) lhs[i] = rhs[i];
+  //}
 
   inline void sreplace(string& lhs, const char* rhs, int from) {
     do { lhs[from] = *rhs; ++from; ++rhs; } while ( *rhs );

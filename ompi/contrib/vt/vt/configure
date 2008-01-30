@@ -8121,6 +8121,8 @@ fi
 	check_zlib="yes"
         force_zlib="no"
 	have_zlib="no"
+	zlib_incdir_withval=
+	zlib_libdir_withval=
 
 	ZLIBDIR=
 	ZLIBINCDIR=
@@ -8148,7 +8150,7 @@ fi
 
 # Check whether --with-zlib-inc-dir was given.
 if test "${with_zlib_inc_dir+set}" = set; then
-  withval=$with_zlib_inc_dir; ZLIBINCDIR="-I$withval/"
+  withval=$with_zlib_inc_dir; zlib_incdir_withval=$withval; ZLIBINCDIR="-I$withval/"
 else
   if test x"$ZLIBDIR" != x; then
   ZLIBINCDIR="-I$ZLIBDIR"include/
@@ -8160,7 +8162,7 @@ fi
 
 # Check whether --with-zlib-lib-dir was given.
 if test "${with_zlib_lib_dir+set}" = set; then
-  withval=$with_zlib_lib_dir; ZLIBLIBDIR="-L$withval/"
+  withval=$with_zlib_lib_dir; zlib_libdir_withval=$withval; ZLIBLIBDIR="-L$withval/"
 else
   if test x"$ZLIBDIR" != x; then
   ZLIBLIBDIR="-L$ZLIBDIR"lib/
@@ -8714,12 +8716,23 @@ fi
 		esac
 
 		otf_conf_cmd="$otf_srcdir/configure"
+		otf_conf_args=
 		if test x"$have_zlib" = "xyes"; then
 
 			if test x"$force_zlib" = "xyes"; then
-  otf_conf_args=--with-zlib
-else
-  otf_conf_args=""
+  otf_conf_args="$otf_conf_args --with-zlib"
+fi
+
+			if test x"$zlib_incdir_withval" != x; then
+  otf_conf_args="$otf_conf_args --with-zlib-inc-dir=$zlib_incdir_withval"
+fi
+
+			if test x"$zlib_libdir_withval" != x; then
+  otf_conf_args="$otf_conf_args --with-zlib-lib-dir=$zlib_libdir_withval"
+fi
+
+			if test x"$ZLIBLIB" != x; then
+  otf_conf_args="$otf_conf_args --with-zlib-lib=$ZLIBLIB"
 fi
 
 

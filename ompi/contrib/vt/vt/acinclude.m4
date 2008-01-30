@@ -1356,10 +1356,17 @@ AC_DEFUN([ACVT_OTF],
 		esac
 
 		otf_conf_cmd="$otf_srcdir/configure"
+		otf_conf_args=
 		AS_IF([test x"$have_zlib" = "xyes"],
 		[
 			AS_IF([test x"$force_zlib" = "xyes"],
-			[otf_conf_args=--with-zlib], [otf_conf_args=""])
+			[otf_conf_args="$otf_conf_args --with-zlib"])
+			AS_IF([test x"$zlib_incdir_withval" != x],
+			[otf_conf_args="$otf_conf_args --with-zlib-inc-dir=$zlib_incdir_withval"])
+			AS_IF([test x"$zlib_libdir_withval" != x],
+			[otf_conf_args="$otf_conf_args --with-zlib-lib-dir=$zlib_libdir_withval"])
+			AS_IF([test x"$ZLIBLIB" != x],
+			[otf_conf_args="$otf_conf_args --with-zlib-lib=$ZLIBLIB"])
 		],
 		[
 			otf_conf_args=--without-zlib
@@ -1658,6 +1665,8 @@ AC_DEFUN([ACVT_ZLIB],
 	check_zlib="yes"
         force_zlib="no"
 	have_zlib="no"
+	zlib_incdir_withval=
+	zlib_libdir_withval=
 
 	ZLIBDIR=
 	ZLIBINCDIR=
@@ -1676,13 +1685,13 @@ AC_DEFUN([ACVT_ZLIB],
 	AC_ARG_WITH(zlib-inc-dir,
 		AC_HELP_STRING([--with-zlib-inc-dir=ZLIBINCDIR],
 		[give the path for ZLIB-include files, default: ZLIB/include]),
-	[ZLIBINCDIR="-I$withval/"],
+	[zlib_incdir_withval=$withval; ZLIBINCDIR="-I$withval/"],
 	[AS_IF([test x"$ZLIBDIR" != x], [ZLIBINCDIR="-I$ZLIBDIR"include/])])
 
 	AC_ARG_WITH(zlib-lib-dir,
 		AC_HELP_STRING([--with-zlib-lib-dir=ZLIBLIBDIR],
 		[give the path for ZLIB-libraries, default: ZLIBDIR/lib]),
-	[ZLIBLIBDIR="-L$withval/"],
+	[zlib_libdir_withval=$withval; ZLIBLIBDIR="-L$withval/"],
 	[AS_IF([test x"$ZLIBDIR" != x], [ZLIBLIBDIR="-L$ZLIBDIR"lib/])])
 
 	AC_ARG_WITH(zlib-lib,
