@@ -365,8 +365,8 @@ bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
                     break;
 #if OPAL_WANT_IPV6
                 case AF_INET6:
-                    if(!IN6_ARE_ADDR_EQUAL(
-                                &btl_endpoint->endpoint_addr->addr_inet,
+                    if(IN6_ARE_ADDR_EQUAL(
+                                &exported_address->addr_inet,
                                 &(((struct sockaddr_in6*)addr)->sin6_addr))) {
                         matched = true;
                     }
