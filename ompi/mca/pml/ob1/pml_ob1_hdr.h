@@ -33,16 +33,15 @@
 #include "ompi/proc/proc.h"
 #include "ompi/datatype/dt_arch.h"
 
-#define MCA_PML_OB1_HDR_TYPE_MATCH     1
-#define MCA_PML_OB1_HDR_TYPE_RNDV      2
-#define MCA_PML_OB1_HDR_TYPE_RGET      3
-#define MCA_PML_OB1_HDR_TYPE_ACK       4
-#define MCA_PML_OB1_HDR_TYPE_NACK      5
-#define MCA_PML_OB1_HDR_TYPE_FRAG      6
-#define MCA_PML_OB1_HDR_TYPE_GET       7
-#define MCA_PML_OB1_HDR_TYPE_PUT       8
-#define MCA_PML_OB1_HDR_TYPE_FIN       9
-#define MCA_PML_OB1_HDR_TYPE_MAX       10
+#define MCA_PML_OB1_HDR_TYPE_MATCH     (MCA_BTL_TAG_PML + 1)
+#define MCA_PML_OB1_HDR_TYPE_RNDV      (MCA_BTL_TAG_PML + 2)
+#define MCA_PML_OB1_HDR_TYPE_RGET      (MCA_BTL_TAG_PML + 3)
+#define MCA_PML_OB1_HDR_TYPE_ACK       (MCA_BTL_TAG_PML + 4)
+#define MCA_PML_OB1_HDR_TYPE_NACK      (MCA_BTL_TAG_PML + 5)
+#define MCA_PML_OB1_HDR_TYPE_FRAG      (MCA_BTL_TAG_PML + 6)
+#define MCA_PML_OB1_HDR_TYPE_GET       (MCA_BTL_TAG_PML + 7)
+#define MCA_PML_OB1_HDR_TYPE_PUT       (MCA_BTL_TAG_PML + 8)
+#define MCA_PML_OB1_HDR_TYPE_FIN       (MCA_BTL_TAG_PML + 9)
 
 #define MCA_PML_OB1_HDR_FLAGS_ACK     1  /* is an ack required */
 #define MCA_PML_OB1_HDR_FLAGS_NBO     2  /* is the hdr in network byte order */
