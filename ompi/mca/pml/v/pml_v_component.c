@@ -103,8 +103,7 @@ static int mca_pml_v_component_close(void)
     ret = mca_base_component_repository_retain_component("pml", "v");
     if(OPAL_SUCCESS != ret)
     {
-        V_OUTPUT_ERR("pml_v: component_close: can't retain myself !");
-        return ret;
+        V_OUTPUT_ERR("pml_v: component_close: can't retain myself. If Open MPI is build static you can ignore this error. Otherwise it should crash soon.");
     }
     
     /* Mark that we have changed something */ 
