@@ -71,7 +71,7 @@ static void out_constructor(mca_btl_openib_out_frag_t *frag)
     base_frag->base.des_dst = NULL;
     base_frag->base.des_dst_cnt = 0;
 
-    frag->sr_desc.wr_id = (uint64_t)frag;
+    frag->sr_desc.wr_id = (uint64_t)(uintptr_t)frag;
     frag->sr_desc.sg_list = &to_com_frag(frag)->sg_entry;
     frag->sr_desc.num_sge = 1;
     frag->sr_desc.opcode = IBV_WR_SEND;
@@ -117,7 +117,7 @@ static void recv_constructor(mca_btl_openib_recv_frag_t *frag)
         ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);
     to_com_frag(frag)->sg_entry.addr = (uint64_t)(uintptr_t)frag->hdr;
 
-    frag->rd_desc.wr_id = (uint64_t)frag;
+    frag->rd_desc.wr_id = (uint64_t)(uintptr_t)frag;
     frag->rd_desc.sg_list = &to_com_frag(frag)->sg_entry;
     frag->rd_desc.num_sge = 1;
     frag->rd_desc.next = NULL;
@@ -138,7 +138,7 @@ static void get_constructor(mca_btl_openib_get_frag_t *frag)
 {
     to_base_frag(frag)->type = MCA_BTL_OPENIB_FRAG_RECV_USER;
 
-    frag->sr_desc.wr_id = (uint64_t)frag;
+    frag->sr_desc.wr_id = (uint64_t)(uintptr_t)frag;
     frag->sr_desc.sg_list = &to_com_frag(frag)->sg_entry;
     frag->sr_desc.num_sge = 1;
     frag->sr_desc.opcode = IBV_WR_RDMA_READ;
