@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      University of Houston. All rights reserved.
+ * Copyright (c) 2007-2008 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,12 +40,11 @@ const char *mca_coll_hierarch_component_version_string =
 /*
  * Global variable
  */
-int mca_coll_hierarch_priority_param = 0;
-int mca_coll_hierarch_verbose_param = 0;
+int mca_coll_hierarch_priority_param=0;
+int mca_coll_hierarch_verbose_param=0;
 int mca_coll_hierarch_use_rdma_param=0;   
 int mca_coll_hierarch_ignore_sm_param=0;   
-int mca_coll_hierarch_symmetric_param=0;   
-
+int mca_coll_hierarch_detection_alg_param=0;
 
 /*
  * Local function
@@ -127,11 +126,12 @@ static int hierarch_open(void)
                            false, false, mca_coll_hierarch_ignore_sm_param,
                            &mca_coll_hierarch_ignore_sm_param);
 
-    mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version, 
-			   "symmetric",
-                           "Assume symmetric configuration",
-                           false, false, mca_coll_hierarch_symmetric_param,
-                           &mca_coll_hierarch_symmetric_param);
+    mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version,
+                           "detection_alg",
+                           "Used to specify the algorithm for detecting Hierarchy."
+			   "To specify all levels or two levels of hierarchy",
+                           false, false, mca_coll_hierarch_detection_alg_param,
+                           &mca_coll_hierarch_detection_alg_param);
 
     return OMPI_SUCCESS;
 }
@@ -160,20 +160,18 @@ mca_coll_hierarch_module_destruct(mca_coll_hierarch_module_t *hierarch_module)
 	free ( hierarch_module->hier_reqs );
     }
 
-/*    if ( NULL != hierarch_module->hier_llead ) { */
-	size = opal_pointer_array_get_size ( &(hierarch_module->hier_llead));
-	for ( i=0; i<size; i++) {
-	    current = (struct mca_coll_hierarch_llead_t *)opal_pointer_array_get_item ( 
-		&(hierarch_module->hier_llead), i ) ;
-	    if ( current->lleaders != NULL ) {
+    size = opal_pointer_array_get_size ( &(hierarch_module->hier_llead));
+    for ( i=0; i<size; i++) {
+        current = (struct mca_coll_hierarch_llead_t *)opal_pointer_array_get_item ( 
+                  &(hierarch_module->hier_llead), i ) ;
+        if ( current->lleaders != NULL ) {
             ompi_comm_free ( &(current->llcomm));
             free ( current->lleaders );
-	    }
-	    free ( current );
-	}
-	opal_pointer_array_remove_all ( &(hierarch_module->hier_llead));
-	OBJ_DESTRUCT (&(hierarch_module->hier_llead));
-/*    } */
+        }
+        free ( current );
+    }
+    opal_pointer_array_remove_all ( &(hierarch_module->hier_llead));
+    OBJ_DESTRUCT (&(hierarch_module->hier_llead));
 
     if ( NULL != hierarch_module->hier_colorarr ) {
 	free ( hierarch_module->hier_colorarr );

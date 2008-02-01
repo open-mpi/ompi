@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      University of Houston. All rights reserved.
+ * Copyright (c) 2007-2008 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,15 +40,20 @@
 #include "ompi/mca/btl/btl.h"
 
 /* Local functions and data */
-#define HIER_MAXPROTOCOL 7
+#define HIER_MAXPROTOCOL 5
+#define HIER_MAX_PROTNAMELEN 7
 static int mca_coll_hierarch_max_protocol=HIER_MAXPROTOCOL;
 
-static char hier_prot[HIER_MAXPROTOCOL][7]={"0","tcp","gm","mx","mvapi","openib","sm"};
+/* Commments: need to add ofud, udapl, portals and sctp into this list! */
+static char hier_prot[HIER_MAXPROTOCOL][HIER_MAX_PROTNAMELEN]={"0","tcp","mx","openib","sm"};
 
 static void mca_coll_hierarch_checkfor_component (struct ompi_communicator_t *comm,
 						  int component_level,
 						  char *component_name, 
 						  int *key, int *ncount);
+static void mca_coll_hierarch_checkfor_sm (struct ompi_communicator_t *comm,
+					   int *color,
+					   int *ncount);
 static void mca_coll_hierarch_dump_struct ( mca_coll_hierarch_module_t *c);
 
 
@@ -73,11 +78,11 @@ mca_coll_base_module_1_1_0_t *
 mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority )
 {
     int size, rank;
-    int color, ncount, maxncount;
+    int color, ncount=0, maxncount;
     int level;
     int ret=OMPI_SUCCESS;
     int ignore_sm=0;
-    int symmetric=0;
+    int detection_alg=0;
     mca_coll_hierarch_module_t *hierarch_module;
 
     hierarch_module = OBJ_NEW ( mca_coll_hierarch_module_t);
@@ -124,13 +129,6 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority )
        of the some ib or gm collectives. */
     ignore_sm = mca_coll_hierarch_ignore_sm_param;
 
-
-    /* Check whether we can assume a symmetric configuration. This can save commmunication
-       and improve the startup time, since we can conclude from our configuration onto
-       the configuration of every other process.
-    */
-    symmetric = mca_coll_hierarch_symmetric_param;
-
     size = ompi_comm_size(comm);
     if ( size < 3 ) {
 	/* No need for hierarchical collectives for 1 or 2 procs. */
@@ -148,71 +146,84 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority )
 
     /* 
      * walk through the list of registered protocols, and check which one
-     * is feasable. 
+     * is feasible. 
      * Later we start with level=0, and introduce the multi-cell check 
      */
     if ( ignore_sm ) {
 	mca_coll_hierarch_max_protocol = HIER_MAXPROTOCOL - 1;
     }
-    for ( level = mca_coll_hierarch_max_protocol - 1; level >0 ; level--) {
-        mca_coll_hierarch_checkfor_component ( comm, 
-					       level, 
-					       hier_prot[level], 
-					       &color, 
-					       &ncount);
- 
-        /* This is probably a no-no! but for the moment we agreed with Jeff,
-           that this might be the best solution. These functions emulate an 
-	   allreduce and  an allgather.
-        */
-	if ( symmetric ) {
-	    maxncount = ncount;
+
+    /* if number of levels is not specified, or if it is specified as ALL_LEVELS,
+    * proceed in the usual way
+    */
+
+    detection_alg = mca_coll_hierarch_detection_alg_param;
+    if( TWO_LEVELS == detection_alg ) {
+	mca_coll_hierarch_max_protocol = 2;
+	if ( mca_coll_hierarch_verbose_param ) {
+	    printf("Switching to two level hierarchy detection\n");
 	}
-	else {
-	    ret = mca_coll_hierarch_allreduce_tmp (&ncount, &maxncount, 1, MPI_INT, 
-						   MPI_MAX, comm );
-	    if ( OMPI_SUCCESS != ret ) {
-		return NULL;
-	    }
+    }
+
+    for ( level = mca_coll_hierarch_max_protocol - 1; level >0 ; level--) {
+	if ( ALL_LEVELS == detection_alg ) {
+	    mca_coll_hierarch_checkfor_component ( comm, 
+						   level, 
+						   hier_prot[level], 
+						   &color, 
+						   &ncount);
+	}
+        else if  (TWO_LEVELS == detection_alg ) {
+            mca_coll_hierarch_checkfor_sm ( comm, &color, &ncount );
 	}
 
-        if ( 0 == maxncount ) {
+        /* This is probably a no-no! but for the moment we agreed with Jeff,
+	** that this might be the best solution. These functions emulate an 
+        ** allreduce and  an allgather.
+	*/
+	ret = mca_coll_hierarch_allreduce_tmp (&ncount, &maxncount, 1, MPI_INT, 
+					       MPI_MAX, comm );
+	if ( OMPI_SUCCESS != ret ) {
+	    return NULL;
+	}
+
+	if ( 0 == maxncount ) {
 	    if ( mca_coll_hierarch_verbose_param ) {
 		printf("%s:%d: nobody talks with %s. Continuing to next level.\n",  
 		       comm->c_name, rank, hier_prot[level]);
-            }
+	    }
 	    continue;
-        }
-        else if ( maxncount == (size-1) ) {
+	}
+	else if ( maxncount == (size-1) ) {
 	    /* 
-             * everybody can talk to every other process with this protocol, 
-             * no need to continue in the hierarchy tree and for the 
-             * hierarchical component.
-             * Its (size-1) because we do not count ourselves.
+	     * everybody can talk to every other process with this protocol, 
+	     * no need to continue in the hierarchy tree and for the 
+	     * hierarchical component.
+	     * Its (size-1) because we do not count ourselves.
 	     * maxncount[1] should be zero.
-             */
+	     */
 	    if ( mca_coll_hierarch_verbose_param ) {
 		printf("%s:%d: everybody talks with %s. No need to continue\n", 
 		       comm->c_name, rank, hier_prot[level]);
 	    }
-            goto exit;
-        }
-        else {
+	    goto exit;
+	}
+	else {
 	    if ( mca_coll_hierarch_verbose_param ) {
 		printf("%s:%d: %d procs talk with %s. Use this protocol, key %d\n", 
 		       comm->c_name, rank, maxncount, hier_prot[level], color);
 	    }
-
-            ret = mca_coll_hierarch_allgather_tmp (&color, 1, MPI_INT, 
+	    
+	    ret = mca_coll_hierarch_allgather_tmp (&color, 1, MPI_INT, 
 						   hierarch_module->hier_colorarr, 1, 
 						   MPI_INT, comm );
-            if ( OMPI_SUCCESS != ret ) {
-        	return NULL;
-            }
-
-            hierarch_module->hier_level = level;
-            return &(hierarch_module->super);
-        }
+	    if ( OMPI_SUCCESS != ret ) {
+		return NULL;
+	    }
+	    
+	    hierarch_module->hier_level = level;
+	    return &(hierarch_module->super);
+	}
     }
         
  exit:
@@ -501,6 +512,37 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
+static void
+mca_coll_hierarch_checkfor_sm ( struct ompi_communicator_t *comm, int *color,  int *ncount )
+{
+    int i, size;
+    int lncount=0;
+    struct ompi_proc_t** procs=NULL;
+    struct ompi_proc_t* my_proc=NULL;
+
+
+    *color = -1;
+    size = ompi_comm_size(comm);
+    my_proc = ompi_proc_local();
+    procs = comm->c_local_group->grp_proc_pointers;
+    for ( i = 0 ; i < size ; i++) {
+	if ( procs[i]->proc_name.jobid == my_proc->proc_name.jobid &&
+	     ( (procs[i]->proc_flags & OMPI_PROC_FLAG_LOCAL)) ) {
+	    lncount++;
+	    if ( *color == -1){
+		 *color = i;
+	    }
+	}
+    }
+
+    /* we need to decrease ncount in order to make the other allreduce/allgather 
+       operations work */
+    lncount--;
+    *ncount = lncount;
+    return;
+}
+
+
 /* This function checks how many processes are using the component
    'component_name' for communication and returns this count in 
    'ncount'. Furthermore it returns a 'key', which can be used to split
