@@ -96,9 +96,6 @@ BEGIN_C_DECLS
         /** MCA parameter: number of regions per memory bank */
         size_t sm2_num_regions_per_bank;
 
-        /* size of shared memory backing file */
-        size_t size_sm2_backing_file;
-
     };
 
     /**
@@ -110,6 +107,16 @@ BEGIN_C_DECLS
     struct mca_coll_sm2_module_t {
         /* base structure */
         mca_coll_base_module_1_1_0_t super;
+
+        /* Shared Memory file name */
+        char *coll_sm2_file_name;
+
+        /* size of shared memory backing file */
+        size_t size_sm2_backing_file;
+
+        /* Memory pointer to shared file */
+        char *shared_memory_region;
+
     };
 
     typedef struct mca_coll_sm2_module_t mca_coll_sm2_module_t;
