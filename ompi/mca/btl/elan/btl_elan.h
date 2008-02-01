@@ -43,8 +43,8 @@ BEGIN_C_DECLS
 struct mca_btl_elan_component_t {
     mca_btl_base_component_1_0_1_t          super;  /**< base BTL component */ 
 
-    uint32_t                                ib_max_btls;
-    /**< maximum number of hcas available to the ELAN component */
+    size_t                                  queue_max_size;
+    /**< maximum amount of data transfered using the queues */
 	
     uint32_t                                elan_num_btls;
     /**< number of hcas available to the ELAN component */
@@ -87,14 +87,18 @@ OMPI_MODULE_DECLSPEC extern mca_btl_elan_component_t mca_btl_elan_component;
 
 struct mca_btl_elan_module_t {
     mca_btl_base_module_t  super;             /**< base BTL interface */
+    int                    expect_tport_recv;
+    int                    elan_vp;
     ELAN_BASE*             base;
     ELAN_TPORT*            tport;
     ELAN_QUEUE*            global_queue;      /**< The global queue */
+    ELAN_QUEUE*            tport_queue;
     ELAN_QUEUE_RX*         rx_queue;          /**< The local receive queue */
     ELAN_QUEUE_TX*         tx_queue;          /**< The global send queue */
     opal_mutex_t           elan_lock;
     opal_list_t            send_list;         /**< list of posted sends */
     opal_list_t            rdma_list;         /**< list of posted receives */
+    opal_list_t            recv_list;
 }; 
 typedef struct mca_btl_elan_module_t mca_btl_elan_module_t;
 extern mca_btl_elan_module_t mca_btl_elan_module;

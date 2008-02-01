@@ -90,27 +90,18 @@ int mca_btl_elan_component_open(void)
     mca_btl_elan_component.elan_num_btls = 0;
     mca_btl_elan_component.elan_btls = NULL;
 
-    mca_btl_elan_module.super.btl_exclusivity = 0;
-    mca_btl_elan_module.super.btl_eager_limit =  2*1024 - sizeof(mca_btl_elan_hdr_t);
-    mca_btl_elan_module.super.btl_rndv_eager_limit = 32*1024 - sizeof(mca_btl_elan_hdr_t);
+    mca_btl_elan_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT;
+    mca_btl_elan_module.super.btl_eager_limit =  32*1024;
+    mca_btl_elan_module.super.btl_rndv_eager_limit = mca_btl_elan_module.super.btl_eager_limit;
     mca_btl_elan_module.super.btl_max_send_size = 64*1024; /*64*1024;*/
     mca_btl_elan_module.super.btl_rdma_pipeline_send_length = 512 * 1024;
     mca_btl_elan_module.super.btl_rdma_pipeline_frag_size = 128 * 1024;
     mca_btl_elan_module.super.btl_min_rdma_pipeline_size = 128 * 1024;
-    mca_btl_elan_module.super.btl_flags = /* MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_GET |*/ MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND;
-    /* mca_btl_elan_module.super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE|MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_SEND ;*/
+    mca_btl_elan_module.super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND;
     mca_btl_elan_module.super.btl_bandwidth = 1959;
     mca_btl_elan_module.super.btl_latency = 4;
     mca_btl_base_param_register(&mca_btl_elan_component.super.btl_version,
                                 &mca_btl_elan_module.super);
-
-    /* register Elan4 component parameters */
-    mca_btl_elan_component.elan_free_list_num =
-        mca_btl_elan_param_register_int ("free_list_num", 8);
-    mca_btl_elan_component.elan_free_list_max =
-        mca_btl_elan_param_register_int ("free_list_max", 128);
-    mca_btl_elan_component.elan_free_list_inc =
-        mca_btl_elan_param_register_int ("free_list_inc", 32);
 
     mca_base_param_reg_string( (mca_base_component_t*)&mca_btl_elan_component, "elanidmap",
                                "System-wide configuration file for the Quadrics network (elanidmap)",
@@ -121,6 +112,16 @@ int mca_btl_elan_component_open(void)
                             " in performances",
                             false, false, 128, &mca_btl_elan_component.elan_max_posted_recv );
  
+    /* register Elan4 component parameters */
+    mca_btl_elan_component.elan_free_list_num =
+        mca_btl_elan_param_register_int( "free_list_num", 8 );
+    mca_btl_elan_component.elan_free_list_max =
+        mca_btl_elan_param_register_int( "free_list_max",
+                                         (mca_btl_elan_component.elan_free_list_num +
+                                          mca_btl_elan_component.elan_max_posted_recv) );
+    mca_btl_elan_component.elan_free_list_inc =
+        mca_btl_elan_param_register_int( "free_list_inc", 32 );
+
     return OMPI_SUCCESS;
 }
 
@@ -238,6 +239,9 @@ mca_btl_elan_component_init( int *num_btl_modules,
         OBJ_CONSTRUCT( &btl->elan_lock, opal_mutex_t );
         OBJ_CONSTRUCT( &btl->send_list, opal_list_t );
         OBJ_CONSTRUCT( &btl->rdma_list, opal_list_t );
+        OBJ_CONSTRUCT( &btl->recv_list, opal_list_t );
+
+        btl->expect_tport_recv = 1;
 
         mca_btl_elan_component.elan_btls[count++] = btl;
     }
@@ -283,6 +287,42 @@ int mca_btl_elan_component_progress( void )
 
             elan_queueRxComplete( elan_btl->rx_queue );
             num_progressed++;
+        }
+        if(elan_btl->expect_tport_recv) { /* There is a pending message on the tport */
+            mca_btl_elan_frag_t* frag = (mca_btl_elan_frag_t*)opal_list_get_first( &(elan_btl->recv_list) );
+            if( elan_done(frag->elan_event, 0) ) {
+                int tag; 
+                size_t length;
+                mca_btl_active_message_callback_t* reg;
+                void* recv_buf;
+                recv_buf = (mca_btl_elan_hdr_t*)elan_tportRxWait( frag->elan_event,
+                                                                  NULL, &tag, &length );
+                num_progressed++;
+                /*elan_btl->expect_tport_recv--;*/
+
+                OPAL_THREAD_LOCK(&elan_btl->elan_lock);
+                opal_list_remove_first( &(elan_btl->recv_list) );
+                OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
+
+                frag->base.des_dst->seg_addr.pval = (void*)recv_buf;
+                frag->base.des_dst->seg_len = length;
+                frag->tag = (mca_btl_base_tag_t)tag;
+                reg = mca_btl_base_active_message_trigger + frag->tag;
+                reg->cbfunc( &(elan_btl->super), frag->tag, &(frag->base), reg->cbdata );
+                if( recv_buf != (void*)(frag+1) ) {
+                    elan_tportBufFree( elan_btl->tport, recv_buf );
+                    frag->base.des_dst->seg_addr.pval = (void*)(frag+1);
+                }
+
+                OPAL_THREAD_LOCK(&elan_btl->elan_lock);
+                frag->elan_event = elan_tportRxStart( elan_btl->tport,
+                                                      ELAN_TPORT_RXBUF | ELAN_TPORT_RXANY,
+                                                      0, 0, 0, 0,
+                                                      frag->base.des_dst->seg_addr.pval,
+                                                      mca_btl_elan_module.super.btl_eager_limit );
+                opal_list_append( &(elan_btl->recv_list), (opal_list_item_t*)frag );
+                OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
+            }
         }
         /* If there are any pending sends check their completion */
         if( !opal_list_is_empty( &(elan_btl->send_list) ) ) {
