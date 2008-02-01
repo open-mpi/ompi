@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -92,6 +93,9 @@ int mca_coll_hierarch_bcast_tmp ( void *buf, int count,  struct ompi_datatype_t 
         int size=ompi_comm_size ( comm );
 
         for ( i=0; i<size; i++ ) {
+	    if ( i == root ) {
+		continue;
+	    }
             err =  MCA_PML_CALL(send(buf, count, dtype, i,
         			     MCA_COLL_BASE_TAG_BCAST,
         			     MCA_PML_BASE_SEND_STANDARD, comm));

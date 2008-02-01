@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      University of Houston. All rights reserved.
+ * Copyright (c) 2007-2008 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,6 +20,9 @@
 
 #ifndef MCA_COLL_HIERARCH_EXPORT_H
 #define MCA_COLL_HIERARCH_EXPORT_H
+
+#define ALL_LEVELS 0
+#define TWO_LEVELS 2
 
 #include "ompi_config.h"
 
@@ -40,8 +43,7 @@ extern int mca_coll_hierarch_priority_param;
 extern int mca_coll_hierarch_verbose_param;
 extern int mca_coll_hierarch_use_rdma_param;
 extern int mca_coll_hierarch_ignore_sm_param;
-extern int mca_coll_hierarch_symmetric_param;
-
+extern int mca_coll_hierarch_detection_alg_param;
 
 #define HIER_DEFAULT_NUM_LLEAD 5
 /*
