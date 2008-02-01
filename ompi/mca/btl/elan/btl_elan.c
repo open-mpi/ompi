@@ -81,19 +81,19 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
         mca_btl_base_error_no_nics( "ELAN", "Quadrics" ); 
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    elan_btl->base = base; 
-
-    /* Create the global queue */
-    if( (elan_btl->global_queue = elan_gallocQueue(base, base->allGroup)) == NULL ) {  
+    elan_btl->base      = base; 
+    elan_btl->elan_vp   = base->state->vp;
+    /* Create the tport global queue */
+    if( (elan_btl->tport_queue = elan_gallocQueue(base, base->allGroup)) == NULL ) {  
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* Create and initialize the tport */
     if( !(elan_btl->tport = elan_tportInit(base->state,
-                                           elan_btl->global_queue,
+                                           elan_btl->tport_queue,
                                            mca_btl_elan_component.elan_max_posted_recv,
                                            base->tport_smallmsg,
-                                           mca_btl_elan_module.super.btl_rndv_eager_limit,
+                                           mca_btl_elan_module.super.btl_eager_limit,
                                            base->tport_stripemsg, 
                                            ELAN_POLL_EVENT,  
                                            base->retryCount, 
@@ -105,11 +105,17 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
     }
 
     /* Create the receive queue */
+    if( (elan_btl->global_queue = elan_gallocQueue(base, base->allGroup)) == NULL ) {  
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    mca_btl_elan_component.queue_max_size = elan_queueMaxSlotSize( base->state )
+        - sizeof(mca_btl_elan_hdr_t);
+
     elan_btl->rx_queue =
         elan_queueRxInit( base->state,                                 /* ELAN_STATE *state */
                           elan_btl->global_queue,                      /* ELAN_QUEUE *queue */
                           mca_btl_elan_component.elan_max_posted_recv, /* int nSlots */
-                          mca_btl_elan_module.super.btl_eager_limit,   /* int slotSize */
+                          (int)mca_btl_elan_component.queue_max_size,  /* int slotSize */
                           ELAN_RAIL_ALL,                               /* int rail */
                           (ELAN_TPORT_SHM_DISABLE |
                            ELAN_TPORT_USERCOPY_DISABLE)                /* ELAN_FLAGS flags */);
@@ -152,6 +158,27 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
         peers[i] = elan_endpoint;
     }
 
+    for( i = 0; i < mca_btl_elan_component.elan_max_posted_recv; i++ ) {
+        mca_btl_elan_frag_t* frag;
+
+        MCA_BTL_ELAN_FRAG_ALLOC_EAGER(frag, rc );
+        if( NULL == frag ) {
+            return OMPI_ERROR; 
+        }
+        frag->segment.seg_addr.pval = (void*)(frag + 1);
+        frag->base.des_dst     = &(frag->segment);
+        frag->base.des_dst_cnt = 1;
+        frag->base.des_src     = NULL;
+        frag->base.des_src_cnt = 0;
+        frag->type             = MCA_BTL_ELAN_HDR_TYPE_RECV;
+        frag->elan_event = elan_tportRxStart( elan_btl->tport,
+                                              ELAN_TPORT_RXBUF | ELAN_TPORT_RXANY,
+                                              0, 0, 0, 0,
+                                              frag->segment.seg_addr.pval,
+                                              mca_btl_elan_module.super.btl_eager_limit );
+        opal_list_append( &(elan_btl->recv_list), (opal_list_item_t*)frag );
+    }
+
     /* enable the network */
     elan_enable_network( elan_btl->base->state );
 
@@ -191,24 +218,26 @@ mca_btl_elan_alloc( struct mca_btl_base_module_t* btl,
                     size_t size,
                     uint32_t flags )
 {
-    mca_btl_elan_frag_t* frag;
+    mca_btl_elan_frag_t* frag = NULL;
+    ptrdiff_t hdr_skip = 0;
     int rc;
 
     if( size <= btl->btl_eager_limit ) {
         MCA_BTL_ELAN_FRAG_ALLOC_EAGER(frag, rc);
-        if( OPAL_UNLIKELY(NULL == frag) ) {
+        if( NULL == frag ) {
             return NULL;
+        }
+        if( size <= mca_btl_elan_component.queue_max_size ) {  /* This will be going over the queue */
+            hdr_skip = sizeof(mca_btl_elan_hdr_t);
         }
     } else if( size <= btl->btl_max_send_size ) {
-        MCA_BTL_ELAN_FRAG_ALLOC_MAX(frag, rc); 
-        if( OPAL_UNLIKELY(NULL == frag) ) {
-            return NULL;
-        }
-    } else {
+        MCA_BTL_ELAN_FRAG_ALLOC_MAX(frag, rc);
+    }
+    if( OPAL_UNLIKELY(NULL == frag) ) {
         return NULL;
     }
-    frag->segment.seg_addr.pval = (void*)((char*)(frag + 1)
-                                          + sizeof(mca_btl_elan_hdr_t));
+
+    frag->segment.seg_addr.pval = (void*)((char*)(frag + 1) + hdr_skip);
     frag->segment.seg_len = size;
     frag->base.des_src = &(frag->segment);
     frag->base.des_src_cnt = 1;
@@ -262,49 +291,43 @@ mca_btl_elan_prepare_src( struct mca_btl_base_module_t* btl,
     mca_btl_elan_frag_t* frag;
     struct iovec iov;
     uint32_t iov_count = 1;
-    size_t max_data = *size;
+    size_t max_data = *size, skip = 0;
     int rc;
 
     if( OPAL_UNLIKELY(max_data > UINT32_MAX) ) {  
         max_data = (size_t)UINT32_MAX;
     }
-    if( max_data+reserve <= btl->btl_eager_limit ) {
-        MCA_BTL_ELAN_FRAG_ALLOC_EAGER(frag, rc);
-        if( NULL == frag ) {
-            return NULL;
+    if( 0 != reserve ) {
+        if( max_data + reserve <= btl->btl_eager_limit ) {
+            MCA_BTL_ELAN_FRAG_ALLOC_EAGER(frag, rc);
+            if( NULL == frag ) {
+                return NULL;
+            }
+            if( (max_data + reserve) <= mca_btl_elan_component.queue_max_size ) {
+                skip = sizeof(mca_btl_elan_hdr_t);
+            }
+        } else {
+            MCA_BTL_ELAN_FRAG_ALLOC_MAX(frag, rc);
+            if( NULL == frag ) {
+                return NULL;
+            }
+            
+            if( (max_data + reserve) > btl->btl_max_send_size ) {
+                max_data = btl->btl_max_send_size - reserve;
+            }
         }
+        frag->segment.seg_addr.pval = (void*)((unsigned char*)(frag + 1) + skip);
         iov.iov_len = max_data;
-        iov.iov_base = (void*)((unsigned char*) frag->segment.seg_addr.pval + reserve);
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
-        *size  = max_data;
-        if( rc < 0 ) {
-            MCA_BTL_ELAN_FRAG_RETURN(frag);
-            return NULL;
-        }
-        frag->segment.seg_addr.pval = frag+1;
-        frag->segment.seg_len = max_data + reserve;
-    }
-    else if( max_data+reserve <= btl->btl_max_send_size ) {
-        MCA_BTL_ELAN_FRAG_ALLOC_MAX(frag, rc);
-        if( NULL == frag ) {
-            return NULL;
-        }
-                                                                                                   
-        if(max_data + reserve > btl->btl_max_send_size){
-            max_data = btl->btl_max_send_size - reserve;
-        }
-        iov.iov_len = max_data;
-        iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
-                                                                                                    
+        iov.iov_base = (unsigned char*)frag->segment.seg_addr.pval + reserve;
+        
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );                                                                                                    
+        *size  = max_data;
         if( rc < 0 ) {
             MCA_BTL_ELAN_FRAG_RETURN(frag);
             return NULL;
         }
-        frag->segment.seg_addr.pval = frag+1;
-        *size  = max_data;
         frag->segment.seg_len = max_data + reserve;
-    } else {
+    } else {  /* this is a real RDMA operation */
         MCA_BTL_ELAN_FRAG_ALLOC_USER(frag, rc);
         if(NULL == frag) {
             return NULL;
@@ -317,6 +340,7 @@ mca_btl_elan_prepare_src( struct mca_btl_base_module_t* btl,
         frag->segment.seg_addr.pval = iov.iov_base;
         frag->segment.seg_len = max_data;
     }
+
     frag->base.des_src = &(frag->segment);
     frag->base.des_src_cnt = 1;
     frag->base.order = MCA_BTL_NO_ORDER;
@@ -352,20 +376,24 @@ mca_btl_elan_prepare_dst( struct mca_btl_base_module_t* btl,
                           uint32_t flags )
 {
     mca_btl_elan_frag_t* frag;
+    size_t origin, position = *size;
     int rc;
 
-    if( OPAL_UNLIKELY((*size) > UINT32_MAX) ) {  
+    if( OPAL_UNLIKELY((*size) > UINT32_MAX) ) {
         *size = (size_t)UINT32_MAX;
     }
     MCA_BTL_ELAN_FRAG_ALLOC_USER(frag, rc);
     if( NULL == frag ) {
         return NULL;
     }
+
     ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
+    origin = convertor->bConverted;
+    position += origin;
+    ompi_convertor_set_position( convertor, &position );
+    *size = position - origin;
+
     frag->segment.seg_len = *size;
-    frag->segment.seg_key.key64 = (uint64_t)(intptr_t)convertor;
-    /*frag->segment.seg_addr.pval = convertor->pBaseBuf + convertor->bConverted;*/
-    frag->type         = MCA_BTL_ELAN_HDR_TYPE_PUT;
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
     frag->base.des_flags = 0;	
@@ -401,23 +429,34 @@ static int mca_btl_elan_send( struct mca_btl_base_module_t* btl,
     frag->tag        = tag;
     frag->type       = MCA_BTL_ELAN_HDR_TYPE_SEND;
 
-    elan_hdr->tag    = (int)tag;
-    elan_hdr->length = (int)frag->segment.seg_len;
-    send_len         = frag->segment.seg_len + sizeof(mca_btl_elan_hdr_t);
-    frag->elan_event = elan_queueTx( elan_btl->tx_queue,
-                                     endpoint->elan_vp,
-                                     (void*)elan_hdr,
-                                     send_len, ELAN_RAIL_ALL );
-    if( OPAL_UNLIKELY(NULL == frag->elan_event) ) {
-        opal_output( 0, "elan_queueTx failed for destination %d\n", endpoint->elan_vp );
-        return OMPI_ERROR;
+    if( frag->segment.seg_len <= mca_btl_elan_component.queue_max_size ) {
+        elan_hdr->tag    = (int)tag;
+        elan_hdr->length = (int)frag->segment.seg_len;
+        send_len         = frag->segment.seg_len + sizeof(mca_btl_elan_hdr_t);
+        frag->elan_event = elan_queueTx( elan_btl->tx_queue,
+                                         endpoint->elan_vp,
+                                         (void*)elan_hdr,
+                                         send_len, ELAN_RAIL_ALL );
+        if( OPAL_UNLIKELY(NULL == frag->elan_event) ) {
+            opal_output( 0, "elan_queueTx failed for destination %d\n", endpoint->elan_vp );
+            return OMPI_ERROR;
+        }
+        if( elan_poll( frag->elan_event, 0 ) ) {
+            frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint,
+                                   &(frag->base), OMPI_SUCCESS );
+            return OMPI_SUCCESS;
+        }
+    } else {
+        frag->elan_event = elan_tportTxStart( elan_btl->tport, 0, endpoint->elan_vp,
+                                              elan_btl->elan_vp, frag->tag,
+                                              (void*)elan_hdr, frag->segment.seg_len );
+        if( elan_tportTxDone(frag->elan_event) ) {
+            elan_tportTxWait(frag->elan_event);
+            frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint,
+                                   &(frag->base), OMPI_SUCCESS );
+            return OMPI_SUCCESS;
+        }
     }
-    if( elan_poll( frag->elan_event, 0 ) ) {
-        frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint,
-                               &(frag->base), OMPI_SUCCESS );
-        return OMPI_SUCCESS;
-    }
-
     /* Add the fragment to the pending send list */
     opal_list_append( &(elan_btl->send_list), (opal_list_item_t*)frag );
     return OMPI_SUCCESS;
@@ -469,16 +508,18 @@ static int mca_btl_elan_get( mca_btl_base_module_t* btl,
 {
     mca_btl_elan_module_t* elan_btl = (mca_btl_elan_module_t*) btl;
     mca_btl_elan_frag_t* frag = (mca_btl_elan_frag_t*) des; 
-    int     peer = endpoint->elan_vp;
+    int peer = endpoint->elan_vp;
     mca_btl_base_segment_t* src = des->des_src;
     mca_btl_base_segment_t* dst = des->des_dst;
     unsigned char* src_addr = (unsigned char*)src->seg_addr.pval;
     size_t src_len = src->seg_len;
-    unsigned char* dst_addr = (unsigned char*)ompi_ptr_ltop(dst->seg_addr.lval);
+    unsigned char* dst_addr = (unsigned char*)dst->seg_addr.lval;
 
     frag->endpoint = endpoint;
     frag->btl = elan_btl;
     frag->type = MCA_BTL_ELAN_HDR_TYPE_GET;
+    opal_output( 0, "elan_get( remote %p, local %p, length %d, peer %d )\n",
+                 (void*)src_addr, (void*)dst_addr, (int)src_len, peer );
     frag->elan_event = elan_get(elan_btl->base->state, src_addr, dst_addr, src_len, peer);
     /* Add the fragment to the pending RDMA list */
     opal_list_append( &(elan_btl->rdma_list), (opal_list_item_t*)frag );
@@ -505,10 +546,13 @@ int mca_btl_elan_finalize( struct mca_btl_base_module_t* btl )
             }
             mca_btl_elan_component.elan_num_btls--;
 
+            /* Cancel all posted receives */
+
             /* Release the internal structures */
-            OBJ_DESTRUCT(&elan_btl->elan_lock);
+            OBJ_DESTRUCT(&elan_btl->recv_list);
             OBJ_DESTRUCT(&elan_btl->send_list);
             OBJ_DESTRUCT(&elan_btl->rdma_list);
+            OBJ_DESTRUCT(&elan_btl->elan_lock);
             /* The BTL is clean, remove it */
             free(elan_btl);
 
