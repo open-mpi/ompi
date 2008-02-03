@@ -1118,6 +1118,53 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
     return OMPI_SUCCESS;
 }
 
+static struct ibv_device **ibv_get_device_list_compat(int *num_devs)
+{
+    struct ibv_device **ib_devs;
+
+#ifdef HAVE_IBV_GET_DEVICE_LIST
+    ib_devs = ibv_get_device_list(num_devs);
+
+    return ib_devs;
+#else
+    struct dlist *dev_list;
+    struct ibv_device *ib_dev;
+    *num_devs = 0;
+
+    /* Determine the number of hca's available on the host */
+    dev_list = ibv_get_devices();
+    if (NULL == dev_list)
+        return NULL;
+
+    dlist_start(dev_list);
+
+    dlist_for_each_data(dev_list, ib_dev, struct ibv_device)
+        (*num_devs)++;
+
+    /* Allocate space for the ib devices */
+    ib_devs = (struct ibv_device**)malloc(*num_devs * sizeof(struct ibv_dev*));
+    if(NULL == ib_devs) {
+        *num_devs = 0;
+        BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
+        return NULL;
+    }
+
+    dlist_start(dev_list);
+
+    dlist_for_each_data(dev_list, ib_dev, struct ibv_device)
+        *(++ib_devs) =  ib_dev;
+#endif
+}
+
+static void ibv_free_device_list_compat(struct ibv_device **ib_devs)
+{
+#ifdef HAVE_IBV_GET_DEVICE_LIST
+    ibv_free_device_list(ib_devs);
+#else
+    free(ib_devs);
+#endif
+}
+
 /*
  *  IB component initialization:
  *  (1) read interface list from kernel and compare against component parameters
@@ -1138,10 +1185,6 @@ btl_openib_component_init(int *num_btl_modules,
     mca_btl_openib_module_t * openib_btl;
     mca_btl_base_selected_module_t* ib_selected;
     opal_list_item_t* item;
-#if !defined(HAVE_IBV_GET_DEVICE_LIST)
-    struct dlist *dev_list;
-    struct ibv_device* ib_dev;
-#endif
     unsigned short seedv[3];
     mca_btl_openib_frag_init_data_t *init_data;
 
@@ -1258,42 +1301,12 @@ btl_openib_component_init(int *num_btl_modules,
             opal_argv_copy(mca_btl_openib_component.if_exclude_list);
     }
 
-#ifdef HAVE_IBV_GET_DEVICE_LIST
-    ib_devs = ibv_get_device_list(&num_devs);
-#else
-    /* Determine the number of hca's available on the host */
-    dev_list = ibv_get_devices();
-    if (NULL == dev_list) {
+    ib_devs = ibv_get_device_list_compat(&num_devs);
+
+    if(0 == num_devs || NULL == ib_devs) {
         mca_btl_base_error_no_nics("OpenIB", "HCA");
-        mca_btl_openib_component.ib_num_btls = 0;
-        btl_openib_modex_send();
-        return NULL;
+        goto no_btls;
     }
-    dlist_start(dev_list);
-
-    dlist_for_each_data(dev_list, ib_dev, struct ibv_device)
-        num_devs++;
-#endif
-    if(0 == num_devs) {
-        mca_btl_base_error_no_nics("OpenIB", "HCA");
-        btl_openib_modex_send();
-        return NULL;
-    }
-
-#if !defined(HAVE_IBV_GET_DEVICE_LIST)
-    /* Allocate space for the ib devices */
-    ib_devs = (struct ibv_device**) malloc(num_devs * sizeof(struct ibv_dev*));
-    if(NULL == ib_devs) {
-        BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
-        return NULL;
-    }
-
-    dlist_start(dev_list);
-
-    i = 0;
-    dlist_for_each_data(dev_list, ib_dev, struct ibv_device)
-        ib_devs[i++] =  ib_dev;
-#endif
 
     /* We must loop through all the hca id's, get their handles and
        for each hca we query the number of ports on the hca and set up
@@ -1345,8 +1358,9 @@ btl_openib_component_init(int *num_btl_modules,
         BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
         return NULL;
     }
-    btls = (struct mca_btl_base_module_t **)malloc(mca_btl_openib_component.ib_num_btls *
-            sizeof(struct mca_btl_base_module_t*));
+    btls = (struct mca_btl_base_module_t **)
+        malloc(mca_btl_openib_component.ib_num_btls *
+               sizeof(struct mca_btl_base_module_t*));
     if(NULL == btls) {
         BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
         return NULL;
@@ -1369,11 +1383,7 @@ btl_openib_component_init(int *num_btl_modules,
     btl_openib_modex_send();
 
     *num_btl_modules = mca_btl_openib_component.ib_num_btls;
-#ifdef HAVE_IBV_GET_DEVICE_LIST
-    ibv_free_device_list(ib_devs);
-#else
-    free(ib_devs);
-#endif
+    ibv_free_device_list_compat(ib_devs);
     if (NULL != mca_btl_openib_component.if_include_list) {
         opal_argv_free(mca_btl_openib_component.if_include_list);
         mca_btl_openib_component.if_include_list = NULL;
