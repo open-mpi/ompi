@@ -101,10 +101,6 @@
 # type: bool (0/1)
 %{!?build_all_in_one_rpm: %define build_all_in_one_rpm 1}
 
-# Should we leave the BUILD_ROOT around?  Default: no
-# type: bool (0/1)
-%{!?leave_build_root: %define leave_build_root 0}
-
 # Should we use the default "check_files" RPM step (i.e., check for
 # unpackaged files)?  It is discouraged to disable this, but some
 # installers need it (e.g., OFED, because it installs lots of other
@@ -167,7 +163,6 @@
 #############################################################################
 
 %if %{ofed}
-%define leave_build_root 1
 %define use_check_files 0
 %define install_shell_scripts 1
 %define shell_scripts_basename mpivars
@@ -347,14 +342,8 @@ This subpackage provides the documentation for Open MPI.
 # Unbelievably, some versions of RPM do not first delete the previous
 # installation root (e.g., it may have been left over from a prior
 # failed build).  This can lead to Badness later if there's files in
-# there that are not meant to be packaged.  HOWEVER: in some cases, we
-# do not want to delete the prior RPM_BUILD_ROOT because there may be
-# other stuff in there that we need (e.g., the OFED installer installs
-# everything into RPM_BUILD_ROOT that OMPI needs to compile, like the
-# OpenFabrics drivers).
-%if !%{leave_build_root}
+# there that are not meant to be packaged.
 rm -rf $RPM_BUILD_ROOT
-%endif
 
 %setup -q -n openmpi-%{version}
 
@@ -578,10 +567,7 @@ cd /tmp
 # Remove installed driver after rpm build finished
 rm -rf $RPM_BUILD_DIR/%{name}-%{version} 
 
-# Leave $RPM_BUILD_ROOT in order to build dependent packages, if desired
-%if !%{leave_build_root}
 test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
-%endif
 
 #############################################################################
 #
@@ -722,6 +708,10 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Mon Feb  4 2008 Jeff Squyres <jsquyres@cisco.com>
+- OFED 1.3 has a much better installer; remove all the
+  leave_build_root kludge nastyness.  W00t!
+
 * Fri Jan 18 2008 Jeff Squyres <jsquyres@cisco.com>
 - Remove the hard-coded "openmpi" name from two Requires statements
   and use %{name} instead (FWIW, %{_name} caused rpmbuild to barf).
