@@ -1124,8 +1124,6 @@ static struct ibv_device **ibv_get_device_list_compat(int *num_devs)
 
 #ifdef HAVE_IBV_GET_DEVICE_LIST
     ib_devs = ibv_get_device_list(num_devs);
-
-    return ib_devs;
 #else
     struct dlist *dev_list;
     struct ibv_device *ib_dev;
@@ -1154,6 +1152,8 @@ static struct ibv_device **ibv_get_device_list_compat(int *num_devs)
     dlist_for_each_data(dev_list, ib_dev, struct ibv_device)
         *(++ib_devs) =  ib_dev;
 #endif
+
+    return ib_devs;
 }
 
 static void ibv_free_device_list_compat(struct ibv_device **ib_devs)
