@@ -176,7 +176,7 @@ struct mca_btl_base_endpoint_t {
      */
 
     mca_btl_openib_endpoint_qp_t *qps;
-    struct ibv_qp *xrc_recv_qp; /* in xrc we will use it as recv qp */
+    uint32_t xrc_recv_qp_num; /* in xrc we will use it as recv qp */
     uint32_t xrc_recv_psn;
 
 

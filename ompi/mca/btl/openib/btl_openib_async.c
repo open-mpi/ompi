@@ -186,6 +186,8 @@ static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, in
     int j;
     mca_btl_openib_hca_t *hca = NULL;
     struct ibv_async_event event;
+    bool xrc_event = false;
+    int event_type;
 
     /* We need to find correct hca and process this event */
     for (j=0; j < mca_btl_openib_component.ib_num_btls; j++) {
@@ -205,7 +207,17 @@ static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, in
                 return OMPI_ERROR;
             }
         }
-        switch(event.event_type) {
+
+        event_type = event.event_type;
+#if HAVE_XRC
+        /* is it XRC event ?*/
+        if (IBV_XRC_QP_EVENT_FLAG & event.event_type) {
+            xrc_event = true;
+            /* Clean the bitnd handel as usual */
+            event_type ^= IBV_XRC_QP_EVENT_FLAG;
+        }
+#endif
+        switch(event_type) {
             case IBV_EVENT_PATH_MIG:
                 if (0 != mca_btl_openib_component.apm) {
                     BTL_ERROR(("APM: Alternative path migration reported."));
@@ -227,7 +239,8 @@ static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, in
             case IBV_EVENT_PORT_ERR:
                 opal_show_help("help-mpi-btl-openib.txt", "of error event",
                     true,orte_system_info.nodename, orte_process_info.pid,
-                    event.event_type, openib_event_to_str(event.event_type));
+                    event.event_type, openib_event_to_str(event.event_type),
+                    xrc_event ? "true" : "false");
                 break;
             case IBV_EVENT_COMM_EST:
             case IBV_EVENT_PORT_ACTIVE:
@@ -244,7 +257,7 @@ static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, in
             default:
                 opal_show_help("help-mpi-btl-openib.txt", "of unknown event",
                         true,orte_system_info.nodename, orte_process_info.pid,
-                        event.event_type);
+                        event.event_type, xrc_event ? "true" : "false");
         }
         ibv_ack_async_event(&event);
     } else {
