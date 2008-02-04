@@ -68,7 +68,7 @@ static void metricv_add(char* name, int code)
 
 /* PAPI-specific error message */
 
-void vt_metric_error(int errcode, char *note)
+static void vt_metric_error(int errcode, char *note)
 {
   char   errstring[PAPI_MAX_STR_LEN];
 
@@ -82,7 +82,7 @@ void vt_metric_error(int errcode, char *note)
 
 /* PAPI-specific warning message */
 
-void vt_metric_warning(int errcode, char *note)
+static void vt_metric_warning(int errcode, char *note)
 {
   char   errstring[PAPI_MAX_STR_LEN];
 
@@ -96,7 +96,7 @@ void vt_metric_warning(int errcode, char *note)
 
 /* get metric descriptions */
 
-void vt_metric_descriptions()
+static void vt_metric_descriptions(void)
 {
     int i, j, k, retval;
     PAPI_event_info_t info;
@@ -123,7 +123,7 @@ void vt_metric_descriptions()
             char derive_ch = strcmp(info.derived,"DERIVED_SUB")?'+':'-';
             strncat(metricv[i]->descr, " [ ", sizeof(metricv[i]->descr));
             strncat(metricv[i]->descr, info.name[0], sizeof(metricv[i]->descr));
-            for (k=1; k<info.count; k++) {
+            for (k=1; k<(int)info.count; k++) {
                 char op[4];
                 postfix_chp = postfix_chp?strpbrk(++postfix_chp, "+-*/"):NULL;
                 sprintf(op, " %c ", (postfix_chp?*postfix_chp:derive_ch));
@@ -143,7 +143,7 @@ void vt_metric_descriptions()
 
 /* test whether requested event combination valid */
 
-void vt_metric_test()
+static void vt_metric_test(void)
 {
   int i;
   int retval;
