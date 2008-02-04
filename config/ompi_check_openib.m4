@@ -108,8 +108,8 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
            AC_CHECK_MEMBERS([struct ibv_device.transport_type], [], [],
                             [#include <infiniband/verbs.h>])
 
-           # ibv_open_xrc_domain was added in OFED 1.3
-           AC_CHECK_FUNCS([ibv_open_xrc_domain], [$1_have_xrc=1])
+           # ibv_create_xrc_rcv_qp was added in OFED 1.3
+           AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp], [$1_have_xrc=1])
           ])
 
     CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"

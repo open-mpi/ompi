@@ -35,7 +35,8 @@ struct ib_address_t {
     mca_btl_openib_qp_t *qp;               /* pointer to qp that will be used
                                               for communication with the
                                               destination */
-    opal_mutex_t addr_lock;             /* protection */
+    uint32_t remote_xrc_rcv_qp_num;        /* remote xrc qp number */
+    opal_mutex_t addr_lock;                /* protection */
     mca_btl_openib_ib_addr_state_t status; /* ib port status */
 };
 typedef struct ib_address_t ib_address_t;

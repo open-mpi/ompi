@@ -396,7 +396,7 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     }
 
     endpoint->ib_addr = NULL;
-    endpoint->xrc_recv_qp = NULL;
+    endpoint->xrc_recv_qp_num = 0;
     endpoint->endpoint_btl = 0;
     endpoint->endpoint_proc = 0;
     endpoint->endpoint_tstamp = 0.0;
@@ -483,12 +483,15 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     /* free the qps */
     free(endpoint->qps);
 
-    /* destroy recv qp */
-    if (NULL != endpoint->xrc_recv_qp) {
-        if(ibv_destroy_qp(endpoint->xrc_recv_qp)) {
-            BTL_ERROR(("Failed to destroy XRC recv QP:%d\n", qp));
+    /* unregister xrc recv qp */
+#if HAVE_XRC
+    if (0 != endpoint->xrc_recv_qp_num) {
+        if(ibv_unreg_xrc_rcv_qp(endpoint->endpoint_btl->hca->xrc_domain,
+                    endpoint->xrc_recv_qp_num)) {
+            BTL_ERROR(("Failed to unregister XRC recv QP:%d\n", endpoint->xrc_recv_qp_num));
         }
     }
+#endif
 
     OBJ_DESTRUCT(&endpoint->endpoint_lock);
     /* Clean pending lists */
