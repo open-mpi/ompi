@@ -75,7 +75,7 @@ opal_carto_base_connect_nodes(opal_carto_graph_t *graph, opal_carto_base_node_t 
  */
 OPAL_DECLSPEC void
 opal_carto_base_duplicate_graph(opal_carto_graph_t **destination, const opal_carto_graph_t *source,
-                                char *node_type);
+                                const char *node_type);
 
 
 /**
@@ -91,7 +91,7 @@ opal_carto_base_duplicate_graph(opal_carto_graph_t **destination, const opal_car
  */
 OPAL_DECLSPEC int
 opal_carto_base_get_nodes_distance(opal_carto_graph_t *graph, opal_carto_base_node_t *reference_node, 
-                                   char *node_type, opal_value_array_t *dist_array);
+                                   const char *node_type, opal_value_array_t *dist_array);
 
 /**
  * Find the shortest path between two nodes in the graph
@@ -116,7 +116,7 @@ opal_carto_base_graph_spf(opal_carto_graph_t *graph, opal_carto_base_node_t *nod
  *         found or NULL.
  */
 OPAL_DECLSPEC opal_carto_base_node_t
-*opal_carto_base_graph_find_node(opal_carto_graph_t *graph, char *node_name);
+*opal_carto_base_graph_find_node(opal_carto_graph_t *graph, const char *node_name);
 
 /**
  * Print a carto graph (for debug uses)
@@ -134,6 +134,6 @@ OPAL_DECLSPEC void opal_carto_print_graph(opal_carto_graph_t *graph);
  * 
  * @return int success or error
  */
-OPAL_DECLSPEC int opal_carto_base_graph_get_host_graph(opal_carto_graph_t **graph, char * graph_type);
+OPAL_DECLSPEC int opal_carto_base_graph_get_host_graph(opal_carto_graph_t **graph, const char * graph_type);
 
 #endif

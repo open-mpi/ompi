@@ -65,6 +65,7 @@ static const opal_carto_base_module_1_0_0_t module = {
     opal_carto_base_free_graph,
     opal_carto_base_get_nodes_distance,
     opal_carto_base_graph_spf,
+    opal_carto_base_graph_find_node,
     opal_carto_file_finalize,
 };
 

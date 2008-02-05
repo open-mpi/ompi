@@ -248,7 +248,7 @@ int opal_carto_base_connect_nodes(opal_carto_graph_t *graph, opal_carto_base_nod
  * @param node_type the node type(s) that the new graph will
  *                  include.
  */
-void opal_carto_base_duplicate_graph(opal_carto_graph_t **destination, const opal_carto_graph_t *source, char *node_type)
+void opal_carto_base_duplicate_graph(opal_carto_graph_t **destination, const opal_carto_graph_t *source, const char *node_type)
 {
     opal_pointer_array_t *vertices;
     int i, graph_order; 
@@ -289,7 +289,7 @@ void opal_carto_base_duplicate_graph(opal_carto_graph_t **destination, const opa
  * @return int number of nodes in the returned array.
  */
 int opal_carto_base_get_nodes_distance(opal_carto_graph_t *graph, opal_carto_base_node_t *reference_node, 
-                                       char *node_type, opal_value_array_t *dist_array)
+                                       const char *node_type, opal_value_array_t *dist_array)
 {
     opal_value_array_t *distance_array;
     vertex_distance_from_t *vertex_distance;
@@ -343,13 +343,13 @@ uint32_t opal_carto_base_graph_spf(opal_carto_graph_t *graph, opal_carto_base_no
  * @return opal_carto_base_node_t* the node with the name -if
  *         found or NULL.
  */
-opal_carto_base_node_t *opal_carto_base_graph_find_node(opal_carto_graph_t *graph, char *node_name)
+opal_carto_base_node_t *opal_carto_base_graph_find_node(opal_carto_graph_t *graph, const char *node_name)
 {
     opal_carto_base_node_t node;
     opal_graph_vertex_t    *vertex;
 
     /* build a temporary node */
-    node.node_name = node_name;
+    node.node_name = strdup(node_name);
     /**
      * find a vertex in the graph. the find_vertex uses the
      * compare_vertex_data method. in our case, compare_vertex_data
@@ -357,6 +357,7 @@ opal_carto_base_node_t *opal_carto_base_graph_find_node(opal_carto_graph_t *grap
      * nodes names.
      */
     vertex = opal_graph_find_vertex((opal_graph_t *)graph, (void *)&node);
+    free(node.node_name);
     if (NULL != vertex) {
         /* return the fund vertex data (node) */ 
         return vertex->vertex_data;
@@ -384,7 +385,7 @@ void opal_carto_print_graph(opal_carto_graph_t *graph)
  * 
  * @return int success or error
  */
-int opal_carto_base_graph_get_host_graph(opal_carto_graph_t **graph, char *graph_type)
+int opal_carto_base_graph_get_host_graph(opal_carto_graph_t **graph, const char *graph_type)
 {
     /* duplicate the host graph and delete all the relevant nodes */
     opal_carto_base_duplicate_graph(graph, carto_base_common_host_graph, graph_type);
