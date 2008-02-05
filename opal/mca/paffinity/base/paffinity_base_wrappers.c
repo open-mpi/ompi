@@ -49,26 +49,41 @@ int opal_paffinity_base_get(opal_paffinity_base_cpu_set_t *cpumask)
 
 int opal_paffinity_base_map_to_processor_id(int socket, int core, int *processor_id)
 {
-   return OPAL_ERR_NOT_SUPPORTED;
+    if (!opal_paffinity_base_selected) {
+        return OPAL_ERR_NOT_FOUND;
+    }
+    return opal_paffinity_base_module->paff_map_to_processor_id(socket, core, processor_id);
 }
 
 int opal_paffinity_base_map_to_socket_core(int processor_id, int *socket, int *core)
 {
-   return OPAL_ERR_NOT_SUPPORTED;
+    if (!opal_paffinity_base_selected) {
+        return OPAL_ERR_NOT_FOUND;
+    }
+    return opal_paffinity_base_module->paff_map_to_socket_core(processor_id, socket, core);
 }
 
 int opal_paffinity_base_max_processor_id(int *max_processor_id)
 {
-   return OPAL_ERR_NOT_SUPPORTED;
+    if (!opal_paffinity_base_selected) {
+        return OPAL_ERR_NOT_FOUND;
+    }
+    return opal_paffinity_base_module->paff_max_processor_id(max_processor_id);
 }
 
 int opal_paffinity_base_max_socket(int *max_socket)
 {
-   return OPAL_ERR_NOT_SUPPORTED;
+    if (!opal_paffinity_base_selected) {
+        return OPAL_ERR_NOT_FOUND;
+    }
+    return opal_paffinity_base_module->paff_max_socket(max_socket);
 }
 
 int opal_paffinity_base_max_core(int socket, int *max_core)
 {
-   return OPAL_ERR_NOT_SUPPORTED;
+    if (!opal_paffinity_base_selected) {
+        return OPAL_ERR_NOT_FOUND;
+    }
+    return opal_paffinity_base_module->paff_max_core(socket, max_core);
 }
 

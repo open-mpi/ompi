@@ -43,6 +43,11 @@ static int solaris_module_set(opal_paffinity_base_cpu_set_t cpumask);
 static int solaris_module_get(opal_paffinity_base_cpu_set_t *cpumask);
 static int solaris_module_finalize(void);
 static int cpumask_to_id(opal_paffinity_base_cpu_set_t cpumask);
+static int solaris_module_map_to_processor_id(int socket, int core, int *processor_id);
+static int solaris_module_map_to_socket_core(int processor_id, int *socket, int *core);
+static int solaris_module_max_processor_id(int *max_processor_id);
+static int solaris_module_max_socket(int *max_socket);
+static int solaris_module_max_core(int socket, int *max_core);
 
 /*
  * Solaris paffinity module
@@ -57,11 +62,11 @@ static const opal_paffinity_base_module_1_1_0_t module = {
 
     solaris_module_set,
     solaris_module_get,
-    opal_paffinity_base_map_to_processor_id,
-    opal_paffinity_base_map_to_socket_core,
-    opal_paffinity_base_max_processor_id,
-    opal_paffinity_base_max_socket,
-    opal_paffinity_base_max_core,
+    solaris_module_map_to_processor_id,
+    solaris_module_map_to_socket_core,
+    solaris_module_max_processor_id,
+    solaris_module_max_socket,
+    solaris_module_max_core,
     solaris_module_finalize
 };
 
@@ -157,6 +162,32 @@ static int solaris_module_get(opal_paffinity_base_cpu_set_t *cpumask)
     OPAL_PAFFINITY_CPU_SET(obind, *cpumask);
     return OPAL_SUCCESS;
 }
+
+static int solaris_module_map_to_processor_id(int socket, int core, int *processor_id)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
+static int solaris_module_map_to_socket_core(int processor_id, int *socket, int *core)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
+static int solaris_module_max_processor_id(int *max_processor_id)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
+static int solaris_module_max_socket(int *max_socket)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
+static int solaris_module_max_core(int socket, int *max_core)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
 
 static int solaris_module_finalize(void)
 {

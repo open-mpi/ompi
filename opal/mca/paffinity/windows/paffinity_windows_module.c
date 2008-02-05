@@ -32,6 +32,11 @@ static int windows_module_finalize(void);
 static int windows_module_get_num_procs(int *num_procs);
 static int windows_module_set(opal_paffinity_base_cpu_set_t cpumask);
 static int windows_module_get(opal_paffinity_base_cpu_set_t *cpumask);
+static int windows_module_map_to_processor_id(int socket, int core, int *processor_id);
+static int windows_module_map_to_socket_core(int processor_id, int *socket, int *core);
+static int windows_module_max_processor_id(int *max_processor_id);
+static int windows_module_max_socket(int *max_socket);
+static int windows_module_max_core(int socket, int *max_core);
 
 static SYSTEM_INFO sys_info;
 
@@ -47,11 +52,11 @@ static const opal_paffinity_base_module_1_1_0_t module = {
     /* Module function pointers */
     windows_module_set,
     windows_module_get,
-    opal_paffinity_base_map_to_processor_id,
-    opal_paffinity_base_map_to_socket_core,
-    opal_paffinity_base_max_processor_id,
-    opal_paffinity_base_max_socket,
-    opal_paffinity_base_max_core,
+    windows_module_map_to_processor_id,
+    windows_module_map_to_socket_core,
+    windows_module_max_processor_id,
+    windows_module_max_socket,
+    windows_module_max_core,
     windows_module_finalize
 };
 
@@ -118,4 +123,31 @@ static int windows_module_get(opal_paffinity_base_cpu_set_t *cpumask)
     cpumask->bitmask[0] = 1;
     return OPAL_ERR_BAD_PARAM;
 }
+
+static int windows_module_map_to_processor_id(int socket, int core, int *processor_id)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
+static int windows_module_map_to_socket_core(int processor_id, int *socket, int *core)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
+static int windows_module_max_processor_id(int *max_processor_id)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
+static int windows_module_max_socket(int *max_socket)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
+static int windows_module_max_core(int socket, int *max_core)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
+
 
