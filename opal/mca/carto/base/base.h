@@ -129,6 +129,64 @@ OPAL_DECLSPEC extern bool opal_carto_base_components_opened_valid;
  */
 OPAL_DECLSPEC extern opal_list_t opal_carto_base_components_opened;
 
+
+/**
+ * Get the local host graph. you can reduce the graph for only
+ * the nodes that interst you using the node type.
+ * 
+ * @param graph
+ * @param graph_type
+ * 
+ * @return OPAL_DECLSPEC int
+ */
+OPAL_DECLSPEC int carto_base_get_host_graph(opal_carto_graph_t **graph, const char *graph_type);
+
+
+/**
+ * Frre a graph
+ * 
+ * @param graph
+ * 
+ * @return OPAL_DECLSPEC void
+ */
+OPAL_DECLSPEC void carto_base_free_graph(opal_carto_graph_t *graph);
+
+/**
+ * Get the distance (weight) from a start node to all other
+ * nodes. you can reduce the list to the list to the node types
+ * that intersts you.
+ * 
+ * @param graph
+ * @param start
+ * @param node_type
+ * @param distance_
+ * 
+ * @return OPAL_DECLSPEC int
+ */
+OPAL_DECLSPEC int carto_base_get_nodes_distance(opal_carto_graph_t *graph, opal_carto_base_node_t *start, const char *node_type, opal_value_array_t *distance_);
+
+/**
+ * find the distance between two nodes.
+ * 
+ * @param graph
+ * @param start
+ * @param end
+ * 
+ * @return OPAL_DECLSPEC uint32_t
+ */
+OPAL_DECLSPEC uint32_t carto_base_spf(opal_carto_graph_t *graph,opal_carto_base_node_t *start, opal_carto_base_node_t *end);
+
+/**
+ * Find a node in the graph
+ * 
+ * @param graph
+ * @param node_name
+ * 
+ * @return OPAL_DECLSPEC opal_carto_base_node_t
+ */
+OPAL_DECLSPEC opal_carto_base_node_t *carto_base_find_node(opal_carto_graph_t *graph, const char *node_name);
+
+
 /**
  * Debugging output stream
  */

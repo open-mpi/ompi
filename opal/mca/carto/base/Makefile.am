@@ -25,4 +25,5 @@ libmca_carto_la_SOURCES += \
         base/carto_base_close.c \
         base/carto_base_select.c \
         base/carto_base_graph.c \
+	base/carto_base_wrapers.c \
         base/carto_base_open.c

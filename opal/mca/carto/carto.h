@@ -87,7 +87,7 @@ typedef int (*opal_carto_base_module_init_1_0_0_fn_t)(void);
  * the nodes that interst you using the node type.
  */
 typedef int (*opal_carto_base_get_host_graph_fn_t)
-        (opal_carto_graph_t **graph, char *graph_type);
+        (opal_carto_graph_t **graph, const char *graph_type);
 
 /**
  * Frre a graph
@@ -101,13 +101,19 @@ typedef void (*opal_carto_base_free_graph_fn_t)
  * that intersts you.
  */
 typedef int (*opal_carto_base_get_nodes_distance_fn_t)
-            (opal_carto_graph_t *graph, opal_carto_base_node_t *start, char *node_type, opal_value_array_t *distance_); 
+            (opal_carto_graph_t *graph, opal_carto_base_node_t *start, const char *node_type, opal_value_array_t *distance_); 
 
 /**
  * find the distance between two nodes.
  */
 typedef uint32_t (*opal_carto_base_spf_fn_t)
             (opal_carto_graph_t *graph,opal_carto_base_node_t *start, opal_carto_base_node_t *end);
+
+/**
+ * Find a node in the graph
+ */
+typedef opal_carto_base_node_t *(*opal_carto_base_find_node)
+            (opal_carto_graph_t *graph, const char *node_name);
 
 
 /**
@@ -151,6 +157,8 @@ struct opal_carto_base_module_1_0_0_t {
     opal_carto_base_get_nodes_distance_fn_t get_nodes_distance;
     /** Find the distance between two nodes */
     opal_carto_base_spf_fn_t  spf;
+    /** Find a node in the graph */
+    opal_carto_base_find_node find_node;
     /** Shut down this module */
     opal_carto_base_module_finalize_fn_t carto_module_finalize;
 };
