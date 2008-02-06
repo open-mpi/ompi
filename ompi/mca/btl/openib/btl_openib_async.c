@@ -221,13 +221,14 @@ static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, in
             case IBV_EVENT_PATH_MIG:
                 if (0 != mca_btl_openib_component.apm) {
                     BTL_ERROR(("APM: Alternative path migration reported."));
-                    if (xrc_event) {
+                    if (!xrc_event) 
                         mca_btl_openib_load_apm(event.element.qp,
                                 mca_btl_openib_component.openib_btls[j]);
-                    } else {
+#if HAVE_XRC
+                    else
                         mca_btl_openib_load_apm_xrc_rcv(event.element.xrc_qp_num,
                                 mca_btl_openib_component.openib_btls[j]);
-                    }
+#endif
                 }
                 break;
             case IBV_EVENT_DEVICE_FATAL:
