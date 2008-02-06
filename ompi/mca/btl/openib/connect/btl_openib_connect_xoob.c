@@ -20,6 +20,7 @@
 #include "btl_openib_endpoint.h"
 #include "btl_openib_proc.h"
 #include "btl_openib_xrc.h"
+#include "btl_openib_async.h"
 #include "connect/connect.h"
 
 static void xoob_open(void);
@@ -569,6 +570,10 @@ static int xoob_recv_qp_create(mca_btl_openib_endpoint_t *endpoint, mca_btl_open
                     endpoint->xrc_recv_qp_num, strerror(ret), ret));
         return OMPI_ERROR;
     }
+    if (0 != mca_btl_openib_component.apm) {
+        mca_btl_openib_load_apm_xrc_rcv(endpoint->xrc_recv_qp_num, openib_btl);
+    }
+
     return OMPI_SUCCESS;
 }
 
