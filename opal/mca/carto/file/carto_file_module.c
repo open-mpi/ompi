@@ -148,7 +148,7 @@ static int opal_carto_file_parse(const char *cartofile)
     carto_file_in = fopen(cartofile, "r"); /* open the carto file */
     /* if the file not found, return an error */
     if (NULL == carto_file_in) {
-        opal_show_help("help-opal-carto-file.txt", "expected node name", true, cartofile);
+        opal_show_help("help-opal-carto-file.txt", "file not found", true, cartofile);
         return OPAL_ERR_NOT_FOUND;
     }
     while (!carto_file_done) {
