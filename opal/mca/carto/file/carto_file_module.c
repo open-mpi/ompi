@@ -137,9 +137,12 @@ static int opal_carto_file_parse(const char *cartofile)
         "File-error",
         "Node deceleration",
         "Connection deceleration",
+        "bi directional connection",
         "Integer",
         "Name",
         "Node connection",
+        "Undefined"
+        "Undefined"
         "Undefined"
     };
 
@@ -228,6 +231,67 @@ static int opal_carto_file_parse(const char *cartofile)
                             goto error;
                         }
                         opal_carto_base_connect_nodes(carto_base_common_host_graph, node, end_node, weight);
+                        free(node2_name);
+                        break;
+                    case OPAL_CARTO_FILE_NEWLINE:
+                        line_number++;
+                        break;
+                    default:
+                        opal_show_help("help-opal-carto-file.txt", "expected Connection", 
+                                       true, cartofile, line_number, token_to_string[token]);
+                        free(node1_name);
+                        goto error;
+                    }
+                }
+                free(node1_name);
+                break;
+            default:
+                opal_show_help("help-opal-carto-file.txt", "expected node name", 
+                               true, cartofile, line_number, token_to_string[token]);
+                goto error;
+            }
+            break;
+        case OPAL_CARTO_FILE_BIDIRECTION_CONNECTION:
+            token = carto_file_lex();
+            switch (token) {
+            case OPAL_CARTO_FILE_NAME:
+                node1_name = strdup(carto_file_value.sval);
+                while (OPAL_CARTO_FILE_NEWLINE != token) {
+                    token = carto_file_lex();
+                    switch (token) {
+                    case OPAL_CARTO_FILE_NODE_CONNECTION:
+                        value = carto_file_value.sval;
+                        argv = opal_argv_split (value, ':');
+                        cnt = opal_argv_count (argv);
+                        if (2 == cnt) {
+                            node2_name = strdup(argv[0]);
+                            weight = atoi(argv[1]);
+                        } else {
+                            opal_show_help("help-opal-carto-file.txt", "incorrect connection", true, cartofile, line_number, value);
+                            opal_argv_free (argv);
+                            free(node1_name);
+                            free(node2_name);
+                            goto error;
+                        }
+                        opal_argv_free (argv);
+                        /* find the start node of the connection */
+                        node = opal_carto_base_graph_find_node(carto_base_common_host_graph,node1_name);
+                        if (NULL == node) {
+                            opal_show_help("help-opal-carto-file.txt", "vertex not found", true, cartofile, line_number, node1_name);
+                            free(node1_name);
+                            free(node2_name);
+                            goto error;
+                        }
+                        /* find the end node of the connection */
+                        end_node = opal_carto_base_graph_find_node(carto_base_common_host_graph,node2_name);
+                        if (NULL == end_node) {
+                            opal_show_help("help-opal-carto-file.txt", "vertex not found", true, cartofile, line_number, node2_name);
+                            free(node1_name);
+                            free(node2_name);
+                            goto error;
+                        }
+                        opal_carto_base_connect_nodes(carto_base_common_host_graph, node, end_node, weight);
+                        opal_carto_base_connect_nodes(carto_base_common_host_graph, end_node, node, weight);
                         free(node2_name);
                         break;
                     case OPAL_CARTO_FILE_NEWLINE:

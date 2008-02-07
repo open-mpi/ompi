@@ -59,9 +59,10 @@ extern orte_rds_value_t  carto_file_value;
 #define OPAL_CARTO_FILE_ERROR                  1
 #define OPAL_CARTO_FILE_NODE_DECELERATION       2
 #define OPAL_CARTO_FILE_CONNECTION_DECELERATION 3
-#define OPAL_CARTO_FILE_INT                    4
-#define OPAL_CARTO_FILE_NAME                   5
-#define OPAL_CARTO_FILE_NODE_CONNECTION        6
+#define OPAL_CARTO_FILE_BIDIRECTION_CONNECTION  4
+#define OPAL_CARTO_FILE_INT                    5
+#define OPAL_CARTO_FILE_NAME                   6
+#define OPAL_CARTO_FILE_NODE_CONNECTION        7
 
 #endif
 
