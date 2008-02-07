@@ -19,15 +19,7 @@
  */
 
 /**
- * @file
- *
- * The file component uses a cartograpy file to discover the
- * host cartography.
- * 
- * An example cartography file:
- * 
- 
-# This is a comment
+ * @file#this is a comment
 # Node declaration   Node type (Free string)   Node name (Free string)
 # (Reserve word)     (slot is a reserve word   (free string)
 #                     for CPU slot)
@@ -49,26 +41,38 @@
   NODE               Ethernet                  eth1
 #
 #
-# Connection decleration  From node   To node:weight   To node:weight   ......   
-# (Reserve word)          (declered   (declered        (declered 
-#                          above)      above)           above)          
+# Connection decleration  From node   To node:weight   To node:weight   ......
+# (Reserve word)          (declered   (declered        (declered
+#                          above)      above)           above)
 #===============================================================================================
   CONNECTION              mem0        slot0:0
-  CONNECTION              mem1        slot1:0
-  CONNECTION              mem2        slot2:0
   CONNECTION              mem3        slot3:0
+#
   CONNECTION              slot0       mem0:0           slot1:1           slot2:1 mthca0:1 eth0:1
-  CONNECTION              slot1       mem1:0           slot0:1           slot3:1
-  CONNECTION              slot2       mem2:0           slot1:1           slot3:1
+  CONNECTION              slot1       slot0:1          slot3:1
+  CONNECTION              slot2       slot1:1          slot3:1
   CONNECTION              slot3       mem3:0           slot1:1           slot2:1 mthca1:1 eth1:1
+#
 #
   CONNECTION              mthca0      slot0:1
   CONNECTION              mthca1      slot3:1
 #
   CONNECTION              eth0        slot0:1
-  CONNECTION              eth1        slot3:1 
+  CONNECTION              eth1        slot3:1
+
+#Bi-Directional connection
+#
+  CON_BI_DIR              slot1       mem1:0
+  CON_BI_DIR              slot2       mem2:0
 #
 # end of carto file.
+
+ *
+ * The file component uses a cartograpy file to discover the
+ * host cartography.
+ * 
+ * An example cartography file:
+ * 
 
  * 
  * 
