@@ -183,7 +183,7 @@ ompi_osc_rdma_sendreq_rdma(ompi_osc_rdma_module_t *module,
             descriptor->des_dst_cnt = 1;
             descriptor->des_dst[0].seg_addr.lval = 
                 module->m_peer_info[target].peer_base + 
-                (sendreq->req_target_disp * module->m_win->w_disp_unit);
+                ((unsigned long)sendreq->req_target_disp * module->m_win->w_disp_unit);
             descriptor->des_dst[0].seg_len = 
                 sendreq->req_origin_bytes_packed;
             descriptor->des_dst[0].seg_key.key64 = 
@@ -213,7 +213,7 @@ ompi_osc_rdma_sendreq_rdma(ompi_osc_rdma_module_t *module,
             descriptor->des_src_cnt = 1;
             descriptor->des_src[0].seg_addr.lval = 
                 module->m_peer_info[target].peer_base + 
-                (sendreq->req_target_disp * module->m_win->w_disp_unit);
+                ((unsigned long)sendreq->req_target_disp * module->m_win->w_disp_unit);
             descriptor->des_src[0].seg_len = 
                 sendreq->req_origin_bytes_packed;
             descriptor->des_src[0].seg_key.key64 = 
@@ -790,7 +790,7 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
 {
     int ret = OMPI_SUCCESS;
     void *target = (unsigned char*) module->m_win->w_baseptr + 
-        (header->hdr_target_disp * module->m_win->w_disp_unit);    
+        ((unsigned long)header->hdr_target_disp * module->m_win->w_disp_unit);    
     ompi_proc_t *proc = ompi_comm_peer_lookup( module->m_comm, header->hdr_origin );
     struct ompi_datatype_t *datatype = 
         ompi_osc_base_datatype_create(proc, inbuf);
@@ -889,7 +889,7 @@ ompi_osc_rdma_sendreq_recv_accum_long_cb(ompi_osc_rdma_longreq_t *longreq)
     ompi_osc_rdma_module_t *module = longreq->req_module;
     unsigned char *target_buffer =
         (unsigned char*) module->m_win->w_baseptr + 
-        (header->hdr_target_disp * module->m_win->w_disp_unit);
+        ((unsigned long)header->hdr_target_disp * module->m_win->w_disp_unit);
 
     /* lock the window for accumulates */
     OPAL_THREAD_LOCK(&longreq->req_module->m_acc_lock);
@@ -971,7 +971,7 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
         unsigned char *target_buffer;
 
         target_buffer = (unsigned char*) module->m_win->w_baseptr + 
-            (header->hdr_target_disp * module->m_win->w_disp_unit);
+            ((unsigned long)header->hdr_target_disp * module->m_win->w_disp_unit);
 
         /* lock the window for accumulates */
         OPAL_THREAD_LOCK(&module->m_acc_lock);

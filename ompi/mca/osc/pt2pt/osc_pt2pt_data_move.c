@@ -522,7 +522,7 @@ ompi_osc_pt2pt_sendreq_recv_put(ompi_osc_pt2pt_module_t *module,
 {
     int ret = OMPI_SUCCESS;
     void *target = (unsigned char*) module->p2p_win->w_baseptr + 
-        (header->hdr_target_disp * module->p2p_win->w_disp_unit);    
+        ((unsigned long)header->hdr_target_disp * module->p2p_win->w_disp_unit);    
     ompi_proc_t *proc = ompi_comm_peer_lookup( module->p2p_comm, header->hdr_origin );
     struct ompi_datatype_t *datatype = 
         ompi_osc_base_datatype_create(proc, &inbuf);
@@ -605,7 +605,7 @@ ompi_osc_pt2pt_sendreq_recv_accum_long_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
     void *payload = (void*) (header + 1);
     int ret;
     void *target = (unsigned char*) module->p2p_win->w_baseptr + 
-        (header->hdr_target_disp * module->p2p_win->w_disp_unit);    
+        ((unsigned long)header->hdr_target_disp * module->p2p_win->w_disp_unit);    
 
     /* lock the window for accumulates */
     OPAL_THREAD_LOCK(&longreq->req_module->p2p_acc_lock);
@@ -677,7 +677,7 @@ ompi_osc_pt2pt_sendreq_recv_accum(ompi_osc_pt2pt_module_t *module,
     struct ompi_datatype_t *datatype = 
         ompi_osc_base_datatype_create(proc, &payload);
     void *target = (unsigned char*) module->p2p_win->w_baseptr + 
-        (header->hdr_target_disp * module->p2p_win->w_disp_unit);    
+        ((unsigned long)header->hdr_target_disp * module->p2p_win->w_disp_unit);    
 
     if (NULL == datatype) {
         opal_output(ompi_osc_base_output,
