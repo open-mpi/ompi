@@ -75,6 +75,10 @@ Trunk (not on release branches yet)
   debugging.
   --> Expected: 1.3
 
+- Fixed F90 interface for MPI_CART_CREATE.  Thanks to Michal Charemza
+  for reporting the problem.
+  --> Expected: 1.2.6 ?
+
 
 1.2.6 (not released yet, if ever)
 -----
