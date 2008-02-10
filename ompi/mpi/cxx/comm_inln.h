@@ -537,19 +537,15 @@ MPI::Comm::Abort(int errorcode)
 inline MPI::Errhandler
 MPI::Comm::Get_errhandler() const
 {
-  return *my_errhandler;
+    MPI_Errhandler errhandler;
+    MPI_Comm_get_errhandler(mpi_comm, &errhandler);
+    return errhandler;
 }
 
-inline MPI::Errhandler
-MPI::Comm::Create_errhandler(MPI::Comm::_MPI2CPP_ERRHANDLERFN_* function)
+inline void
+MPI::Comm::Set_errhandler(const MPI::Errhandler& errhandler) const
 {
-  MPI_Errhandler errhandler;
-  // $%%@#%# AIX/POE 2.3.0.0 makes us put in this cast here
-  (void)MPI_Comm_create_errhandler((MPI_Handler_function*) ompi_mpi_cxx_comm_errhandler_intercept, 
-			      &errhandler);
-  MPI::Errhandler temp(errhandler);
-  temp.comm_handler_fn = (void(*)(MPI::Comm&, int*, ...))function;
-  return temp;
+    (void)MPI_Comm_set_errhandler(mpi_comm, errhandler);
 }
 
 // 1) original Create_keyval that takes the first 2 arguments as C++

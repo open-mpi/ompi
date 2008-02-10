@@ -166,9 +166,9 @@ struct ompi_attribute_keyval_t {
     int key; /**< Keep a track of which key this item belongs to, so that
                 the key can be deleted when this object is destroyed */
 
-    /** If non-null, call this function when the OBJ destructor for this
-        object is invoked */
-    ompi_attribute_keyval_destructor_fn_t *extra_destructor;
+    /** Extra state for bindings to hang data on.  If non-NULL, will be
+        freed by the C base when the keyval is destroyed. */
+    void *bindings_extra_state;
 };
 
 typedef struct ompi_attribute_keyval_t ompi_attribute_keyval_t;
@@ -224,6 +224,10 @@ int ompi_attr_finalize(void);
  * @param extra_state    Extra state to hang off/do some special things (IN)
  * @param flags          Flags for the key -- flags contain OMPI_KEYVAL_F77,
  *                       OMPI_KEYVAL_PREDEFINED
+ * @param bindings_extra_state Extra state that, if non-NULL, will
+ *                       automatically be free()'ed by the C base when
+ *                       the keyval is destroyed.
+ *
  * NOTE: I have taken the assumption that user cannot modify/delete
  * any predefined keys or the attributes attached. To accomplish this,
  * all MPI* calls will have OMPI_KEYVAL_PREDEFINED set as 0. MPI
@@ -246,7 +250,7 @@ OMPI_DECLSPEC int ompi_attr_create_keyval(ompi_attribute_type_t type,
                                           ompi_attribute_fn_ptr_union_t copy_attr_fn, 
                                           ompi_attribute_fn_ptr_union_t delete_attr_fn,
                                           int *key, void *extra_state, int flags,
-                                          ompi_attribute_keyval_destructor_fn_t *destructor);
+                                          void *bindings_extra_state);
 
 /**
  * Free an attribute keyval

@@ -411,6 +411,25 @@ EOF
             patch -N -p0 < config/lt21a-pathCC.diff > /dev/null 2>&1
         fi
         rm -f aclocal.m4.orig
+
+
+        # Libtool 1.5.2x and 2.1x automatically link in the "Cstd" STL library
+        # when using the Sun compilers on Linux or Solaris, even if the
+        # application does not use the STL (as of Feb 2008, Open MPI does not
+        # use any C++ STL). The problem is that Solaris has two different STL
+        # libraries: Cstd and stlport. Having Libtool choose that OMPI (and its
+        # wrapper compilers) use Cstd is problematic for users who want to
+        # compile their MPI applications with the other STL library. So we
+        # currently hack aclocal's LT macros to *not* add the Cstd library to
+        # any of OMPI's CXXFLAGS; the OMPI wrapper compilers can then therefore
+        # be used with any STL library -- it's the user's choice.
+
+        echo "   ++ patching to remove solaris Cstd"
+        sed -e 's/-lCstd -lCrun//' \
+            -e 's/-library=Cstd -library=Crun//' \
+            aclocal.m4 > aclocal.m4.new
+        cp aclocal.m4.new aclocal.m4
+        rm -f aclocal.m4.new
     fi
 
     run_and_check $ompi_autoconf

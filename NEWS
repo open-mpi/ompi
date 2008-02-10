@@ -29,6 +29,18 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
+-Convert the C++ Comm, Datatype and Winn keyval creation and intercept callbacks
+  to *not* use the STL as well as removing the STL use from the error handler
+  routines.  This was removing the STL from the C++ bindings (Solaris has 2
+  versions of the STL; if OMPI uses one and an MPI application wants to use
+  another, Bad Things happen).
+
+  The main idea is to wrap up the C++ callback function pointers and the user's
+  extra_state into our own struct that is passed as the extra_state to the C
+  keyval registration along with the intercept routines in intercepts.cc. When the
+  C++ intercepts are activated, they unwrap the user's callback and extra state
+  and call them.
+
 - Added Cray Compute Node Linux (CNL) and ALPS Support.
   --> Expected: ???
 - Added Microsoft Windows support.  See README.WINDOWS file for

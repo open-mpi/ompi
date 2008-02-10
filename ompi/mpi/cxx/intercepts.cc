@@ -25,19 +25,8 @@
 #include "ompi_config.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/datatype/datatype.h"
 #include "opal/threads/mutex.h"
-
-MPI::Comm::mpi_comm_err_map_t MPI::Comm::mpi_comm_err_map;
-
-MPI::Win::mpi_win_map_t MPI::Win::mpi_win_map;
-MPI::Win::mpi_win_keyval_fn_map_t MPI::Win::mpi_win_keyval_fn_map;
-
-MPI::Datatype::mpi_type_map_t MPI::Datatype::mpi_type_map;
-MPI::Datatype::mpi_type_keyval_fn_map_t MPI::Datatype::mpi_type_keyval_fn_map;
-
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
-MPI::File::mpi_file_map_t MPI::File::mpi_file_map;
-#endif
 
 opal_mutex_t *MPI::mpi_map_mutex;
 
@@ -110,57 +99,54 @@ MPI::FinalizeIntercepts()
 }
 
 
+// This function uses OMPI types, and is invoked with C linkage for
+// the express purpose of having a C++ entity call back the C++
+// function (so that types can be converted, etc.).
 extern "C"
-void ompi_mpi_cxx_comm_errhandler_intercept(MPI_Comm *mpi_comm, int *err, ...)
+void ompi_mpi_cxx_comm_errhandler_invoke(ompi_errhandler_t *c_errhandler,
+                                         MPI_Comm *c_comm, int *err, 
+                                         const char *message)
 {
-  MPI::Comm* comm;
+    // MPI::Comm is an abstract base class; can't instantiate one of
+    // those.  So fake it by instantiating an MPI::Intracomm and then
+    // casting it down to an (MPI::Comm&) when invoking the callback.
+    MPI::Intracomm cxx_comm(*c_comm);
+    MPI::Comm::Errhandler_fn *cxx_fn = 
+        (MPI::Comm::Errhandler_fn*) c_errhandler->eh_comm_fn;
 
-  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
-  comm = MPI::Comm::mpi_comm_err_map[*mpi_comm];
-  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
-
-  if (comm && comm->my_errhandler) {
-    va_list ap;
-    va_start(ap, err);
-    comm->my_errhandler->comm_handler_fn(*comm, err, ap);
-    va_end(ap);
-  }
+    cxx_fn((MPI::Comm&) cxx_comm, err, message);
 }
 
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
+// This function uses OMPI types, and is invoked with C linkage for
+// the express purpose of having a C++ entity call back the C++
+// function (so that types can be converted, etc.).
 extern "C"
-void ompi_mpi_cxx_file_errhandler_intercept(MPI_File *mpi_file, int *err, ...)
+void ompi_mpi_cxx_file_errhandler_invoke(ompi_errhandler_t *c_errhandler,
+                                         MPI_File *c_file, int *err, 
+                                         const char *message)
 {
-  MPI::File* file;
+    MPI::File cxx_file(*c_file);
+    MPI::File::Errhandler_fn *cxx_fn = 
+        (MPI::File::Errhandler_fn*) c_errhandler->eh_file_fn;
 
-  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
-  file = MPI::File::mpi_file_map[*mpi_file];
-  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
-
-  if (file && file->my_errhandler) {
-    va_list ap;
-    va_start(ap, err);
-    file->my_errhandler->file_handler_fn(*file, err, ap);
-    va_end(ap);
-  }
+    cxx_fn(cxx_file, err, message);
 }
 #endif
 
+// This function uses OMPI types, and is invoked with C linkage for
+// the express purpose of having a C++ entity call back the C++
+// function (so that types can be converted, etc.).
 extern "C"
-void ompi_mpi_cxx_win_errhandler_intercept(MPI_Win *mpi_win, int *err, ...)
+void ompi_mpi_cxx_win_errhandler_invoke(ompi_errhandler_t *c_errhandler,
+                                        MPI_Win *c_win, int *err, 
+                                        const char *message)
 {
-  MPI::Win* win;
+    MPI::Win cxx_win(*c_win);
+    MPI::Win::Errhandler_fn *cxx_fn = 
+        (MPI::Win::Errhandler_fn*) c_errhandler->eh_win_fn;
 
-  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
-  win = MPI::Win::mpi_win_map[*mpi_win];
-  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
-
-  if (win && win->my_errhandler) {
-    va_list ap;
-    va_start(ap, err);
-    win->my_errhandler->win_handler_fn(*win, err, ap);
-    va_end(ap);
-  }
+    cxx_fn(cxx_win, err, message);
 }
 
 // This is a bit weird; bear with me.  The user-supplied function for
@@ -394,30 +380,32 @@ ompi_mpi_cxx_comm_delete_attr_intercept(MPI_Comm comm, int keyval,
   return ret; 
 }
 
-
 extern "C" int
 ompi_mpi_cxx_type_copy_attr_intercept(MPI_Datatype oldtype, int keyval, 
                                       void *extra_state, void *attribute_val_in, 
                                       void *attribute_val_out, int *flag)
 {
   int ret = 0;
+  MPI::Datatype::keyval_intercept_data_t *kid = 
+      (MPI::Datatype::keyval_intercept_data_t*) extra_state;
 
-  MPI::Datatype::keyval_pair_t* copy_and_delete;
-  MPI::Datatype::Copy_attr_function* copy_fn;
-  MPI::Datatype *cxx_oldtype;
 
-  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
-  cxx_oldtype = MPI::Datatype::mpi_type_map[oldtype];
-  copy_and_delete = MPI::Datatype::mpi_type_keyval_fn_map[keyval];
-  copy_fn = copy_and_delete->first;
-  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
+  if (NULL != kid->c_copy_fn) {
+      // The callback may be in C or C++.  If it's in C, it's easy - just
+      // call it with no extra C++ machinery.
+      ret = kid->c_copy_fn(oldtype, keyval, kid->extra_state, attribute_val_in, 
+                           attribute_val_out, flag);
+  } else if (NULL != kid->cxx_copy_fn) {
+      // If the callback was C++, we have to do a little more work
+      bool bflag = OPAL_INT_TO_BOOL(*flag); 
+      MPI::Datatype cxx_datatype(oldtype);
+      ret = kid->cxx_copy_fn(cxx_datatype, keyval, kid->extra_state, 
+                             attribute_val_in, attribute_val_out, bflag);
+      *flag = (int)bflag;
+  } else {
+    ret = MPI::ERR_TYPE;
+  }
 
-  bool bflag = OPAL_INT_TO_BOOL(*flag); 
-
-  ret = copy_fn(*cxx_oldtype, keyval, extra_state, attribute_val_in, 
-                attribute_val_out, bflag);
-
-  *flag = (int)bflag;
   return ret;
 }
 
@@ -426,44 +414,47 @@ ompi_mpi_cxx_type_delete_attr_intercept(MPI_Datatype type, int keyval,
                                         void *attribute_val, void *extra_state)
 {
   int ret = 0;
+  MPI::Datatype::keyval_intercept_data_t *kid = 
+      (MPI::Datatype::keyval_intercept_data_t*) extra_state;
 
-  MPI::Datatype::keyval_pair_t* copy_and_delete;
-  MPI::Datatype::Delete_attr_function* delete_fn;
-  MPI::Datatype *cxx_type;
+  if (NULL != kid->c_delete_fn) {
+      return kid->c_delete_fn(type, keyval, attribute_val, kid->extra_state);
+  } else if (NULL != kid->cxx_delete_fn) {
+      MPI::Datatype cxx_datatype(type);
+      return kid->cxx_delete_fn(cxx_datatype, keyval, attribute_val, 
+                                kid->extra_state);
+  } else {
+    ret = MPI::ERR_TYPE;
+  }
 
-  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
-  cxx_type = MPI::Datatype::mpi_type_map[type];
-  copy_and_delete = MPI::Datatype::mpi_type_keyval_fn_map[keyval];
-  delete_fn = copy_and_delete->second;
-  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
-
-  ret = delete_fn(*cxx_type, keyval, attribute_val, extra_state); 
   return ret;
 }
 
 extern "C" int
 ompi_mpi_cxx_win_copy_attr_intercept(MPI_Win oldwin, int keyval, 
-                                      void *extra_state, void *attribute_val_in, 
+                                      void *extra_state, void *attribute_val_in,
                                       void *attribute_val_out, int *flag)
 {
   int ret = 0;
+  MPI::Win::keyval_intercept_data_t *kid =
+    (MPI::Win::keyval_intercept_data_t*) extra_state;
 
-  MPI::Win::keyval_pair_t* copy_and_delete;
-  MPI::Win::Copy_attr_function* copy_fn;
-  MPI::Win *cxx_oldwin;
+  if (NULL != kid->c_copy_fn) {
+      // The callback may be in C or C++.  If it's in C, it's easy - just
+      // call it with no extra C++ machinery.
+      ret = kid->c_copy_fn(oldwin, keyval, kid->extra_state, attribute_val_in, 
+                           attribute_val_out, flag);
+  } else if (NULL != kid->cxx_copy_fn) {
+      // If the callback was C++, we have to do a little more work
+      bool bflag = OPAL_INT_TO_BOOL(*flag); 
+      MPI::Win cxx_win(oldwin);
+      ret = kid->cxx_copy_fn(cxx_win, keyval, kid->extra_state, 
+                             attribute_val_in, attribute_val_out, bflag);
+      *flag = (int)bflag;
+  } else {
+      ret = MPI::ERR_WIN;
+  }
 
-  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
-  cxx_oldwin = MPI::Win::mpi_win_map[oldwin];
-  copy_and_delete = MPI::Win::mpi_win_keyval_fn_map[keyval];
-  copy_fn = copy_and_delete->first;
-  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
-
-  bool bflag = OPAL_INT_TO_BOOL(*flag); 
-
-  ret = copy_fn(*cxx_oldwin, keyval, extra_state, attribute_val_in, 
-                attribute_val_out, bflag);
-
-  *flag = (int)bflag;
   return ret;
 }
 
@@ -472,21 +463,21 @@ ompi_mpi_cxx_win_delete_attr_intercept(MPI_Win win, int keyval,
                                         void *attribute_val, void *extra_state)
 {
   int ret = 0;
+  MPI::Win::keyval_intercept_data_t *kid = 
+      (MPI::Win::keyval_intercept_data_t*) extra_state;
 
-  MPI::Win::keyval_pair_t* copy_and_delete;
-  MPI::Win::Delete_attr_function* delete_fn;
-  MPI::Win *cxx_win;
+  if (NULL != kid->c_delete_fn) {
+      return kid->c_delete_fn(win, keyval, attribute_val, kid->extra_state);
+  } else if (NULL != kid->cxx_delete_fn) {
+      MPI::Win cxx_win(win);
+      return kid->cxx_delete_fn(cxx_win, keyval, attribute_val, 
+                                kid->extra_state);
+  } else {
+      ret = MPI::ERR_WIN;
+  }
 
-  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
-  cxx_win = MPI::Win::mpi_win_map[win];
-  copy_and_delete = MPI::Win::mpi_win_keyval_fn_map[keyval];
-  delete_fn = copy_and_delete->second;
-  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
-
-  ret = delete_fn(*cxx_win, keyval, attribute_val, extra_state); 
   return ret;
 }
-
 
 // For similar reasons as above, we need to intercept calls for the 3
 // generalized request callbacks (convert arguments to C++ types and

@@ -439,7 +439,7 @@ ompi_attribute_keyval_construct(ompi_attribute_keyval_t *keyval)
     keyval->copy_attr_fn.attr_communicator_copy_fn = NULL;
     keyval->delete_attr_fn.attr_communicator_copy_fn = NULL;
     keyval->extra_state = NULL;
-    keyval->extra_destructor = NULL;
+    keyval->bindings_extra_state = NULL;
 
     /* Set the keyval->key value to an invalid value so that we can know
        if it has been initialized with a proper value or not.
@@ -458,9 +458,9 @@ ompi_attribute_keyval_destruct(ompi_attribute_keyval_t *keyval)
        the key. */
 
     if (-1 != keyval->key) {
-        /* If the destructor function pointer is not NULL, call it */
-        if (NULL != keyval->extra_destructor) {
-            keyval->extra_destructor(keyval->key);
+        /* If the bindings_extra_state pointer is not NULL, free it */
+        if (NULL != keyval->bindings_extra_state) {
+            free(keyval->bindings_extra_state);
         }
 
         opal_hash_table_remove_value_uint32(keyval_hash, keyval->key);
@@ -530,7 +530,7 @@ int ompi_attr_create_keyval(ompi_attribute_type_t type,
                             ompi_attribute_fn_ptr_union_t copy_attr_fn,
                             ompi_attribute_fn_ptr_union_t delete_attr_fn,
                             int *key, void *extra_state, int flags,
-                            ompi_attribute_keyval_destructor_fn_t *destructor_fn)
+                            void *bindings_extra_state)
 {
     ompi_attribute_keyval_t *keyval;
     int ret;
@@ -558,7 +558,7 @@ int ompi_attr_create_keyval(ompi_attribute_type_t type,
     keyval->attr_type = type;
     keyval->attr_flag = flags;
     keyval->key = -1;
-    keyval->extra_destructor = destructor_fn;
+    keyval->bindings_extra_state = bindings_extra_state;
 
     /* Create a new unique key and fill the hash */
   

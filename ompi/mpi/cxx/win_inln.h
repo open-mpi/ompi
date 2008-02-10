@@ -11,7 +11,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
-// Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -27,21 +27,18 @@
 
 
 inline MPI::Errhandler 
-MPI::Win::Create_errhandler(MPI::Win::Errhandler_fn* function)
-{
-  MPI_Errhandler errhandler;
-  (void) MPI_Win_create_errhandler((MPI_Win_errhandler_fn *) ompi_mpi_cxx_win_errhandler_intercept, 
-				   &errhandler);
-  MPI::Errhandler temp(errhandler);
-  temp.win_handler_fn = (void(*)(MPI::Win&, int* , ...)) function;
-  return temp;
-}
-
-       
-inline MPI::Errhandler 
 MPI::Win:: Get_errhandler() const 
 {
-    return *my_errhandler;
+    MPI_Errhandler errhandler;
+    MPI_Win_get_errhandler(mpi_win, &errhandler);
+    return errhandler;
+}
+
+
+inline void 
+MPI::Win::Set_errhandler(const MPI::Errhandler& errhandler) const
+{
+    (void)MPI_Win_set_errhandler(mpi_win, errhandler);
 }
 
 
@@ -181,57 +178,64 @@ MPI::Win::Call_errhandler(int errorcode) const
   (void) MPI_Win_call_errhandler(mpi_win, errorcode);
 }
 
-
 // 1) original Create_keyval that takes the first 2 arguments as C++
 //    functions
 inline int
 MPI::Win::Create_keyval(MPI::Win::Copy_attr_function* win_copy_attr_fn,
-                        MPI::Win::Delete_attr_function* win_delete_attr_fn, 
-                        void* extra_state)
+                             MPI::Win::Delete_attr_function* win_delete_attr_fn, 
+                             void* extra_state)
 {
     // Back-end function does the heavy lifting
-    return do_create_keyval(NULL, NULL, 
-                            win_copy_attr_fn, win_delete_attr_fn,
-                            extra_state);
+    int ret, keyval;
+    ret = do_create_keyval(NULL, NULL, 
+                           win_copy_attr_fn, win_delete_attr_fn,
+                           extra_state, keyval);
+    return (MPI_SUCCESS == ret) ? keyval : ret;
 }
 
 // 2) overload Create_keyval to take the first 2 arguments as C
 //    functions
 inline int
 MPI::Win::Create_keyval(MPI_Win_copy_attr_function* win_copy_attr_fn,
-                        MPI_Win_delete_attr_function* win_delete_attr_fn, 
-                        void* extra_state)
+                             MPI_Win_delete_attr_function* win_delete_attr_fn, 
+                             void* extra_state)
 {
     // Back-end function does the heavy lifting
-    return do_create_keyval(win_copy_attr_fn, win_delete_attr_fn,
-                            NULL, NULL,
-                            extra_state);
+    int ret, keyval;
+    ret = do_create_keyval(win_copy_attr_fn, win_delete_attr_fn,
+                           NULL, NULL, 
+                           extra_state, keyval);
+    return (MPI_SUCCESS == ret) ? keyval : ret;
 }
 
 // 3) overload Create_keyval to take the first 2 arguments as C++ & C
 //    functions
 inline int
 MPI::Win::Create_keyval(MPI::Win::Copy_attr_function* win_copy_attr_fn,
-                        MPI_Win_delete_attr_function* win_delete_attr_fn,
-                        void* extra_state)
+                             MPI_Win_delete_attr_function* win_delete_attr_fn,
+                             void* extra_state)
 {
     // Back-end function does the heavy lifting
-    return do_create_keyval(NULL, win_delete_attr_fn,
-                            win_copy_attr_fn, NULL,
-                            extra_state);
+    int ret, keyval;
+    ret = do_create_keyval(NULL, win_delete_attr_fn,
+                           win_copy_attr_fn, NULL, 
+                           extra_state, keyval);
+    return (MPI_SUCCESS == ret) ? keyval : ret;
 }
 
 // 4) overload Create_keyval to take the first 2 arguments as C & C++
 //    functions
 inline int
 MPI::Win::Create_keyval(MPI_Win_copy_attr_function* win_copy_attr_fn,
-                        MPI::Win::Delete_attr_function* win_delete_attr_fn,
-                        void* extra_state)
+                             MPI::Win::Delete_attr_function* win_delete_attr_fn,
+                             void* extra_state)
 {
     // Back-end function does the heavy lifting
-    return do_create_keyval(win_copy_attr_fn, NULL,
-                            NULL, win_delete_attr_fn,
-                            extra_state);
+    int ret, keyval;
+    ret = do_create_keyval(win_copy_attr_fn, NULL,
+                           NULL, win_delete_attr_fn,
+                           extra_state, keyval);
+    return (MPI_SUCCESS == ret) ? keyval : ret;
 }
 
 inline void 

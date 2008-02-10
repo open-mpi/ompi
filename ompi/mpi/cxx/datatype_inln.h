@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+// Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 
 // $COPYRIGHT$
 // 
@@ -205,9 +205,11 @@ MPI::Datatype::Create_keyval(MPI::Datatype::Copy_attr_function* type_copy_attr_f
                              void* extra_state)
 {
     // Back-end function does the heavy lifting
-    return do_create_keyval(NULL, NULL, 
-                            type_copy_attr_fn, type_delete_attr_fn,
-                            extra_state);
+    int ret, keyval;
+    ret = do_create_keyval(NULL, NULL, 
+                           type_copy_attr_fn, type_delete_attr_fn,
+                           extra_state, keyval);
+    return (MPI_SUCCESS == ret) ? keyval : ret;
 }
 
 // 2) overload Create_keyval to take the first 2 arguments as C
@@ -218,9 +220,11 @@ MPI::Datatype::Create_keyval(MPI_Type_copy_attr_function* type_copy_attr_fn,
                              void* extra_state)
 {
     // Back-end function does the heavy lifting
-    return do_create_keyval(type_copy_attr_fn, type_delete_attr_fn,
-                            NULL, NULL,
-                            extra_state);
+    int ret, keyval;
+    ret = do_create_keyval(type_copy_attr_fn, type_delete_attr_fn,
+                           NULL, NULL, 
+                           extra_state, keyval);
+    return (MPI_SUCCESS == ret) ? keyval : ret;
 }
 
 // 3) overload Create_keyval to take the first 2 arguments as C++ & C
@@ -231,9 +235,11 @@ MPI::Datatype::Create_keyval(MPI::Datatype::Copy_attr_function* type_copy_attr_f
                              void* extra_state)
 {
     // Back-end function does the heavy lifting
-    return do_create_keyval(NULL, type_delete_attr_fn,
-                            type_copy_attr_fn, NULL,
-                            extra_state);
+    int ret, keyval;
+    ret = do_create_keyval(NULL, type_delete_attr_fn,
+                           type_copy_attr_fn, NULL, 
+                           extra_state, keyval);
+    return (MPI_SUCCESS == ret) ? keyval : ret;
 }
 
 // 4) overload Create_keyval to take the first 2 arguments as C & C++
@@ -244,9 +250,11 @@ MPI::Datatype::Create_keyval(MPI_Type_copy_attr_function* type_copy_attr_fn,
                              void* extra_state)
 {
     // Back-end function does the heavy lifting
-    return do_create_keyval(type_copy_attr_fn, NULL,
-                            NULL, type_delete_attr_fn,
-                            extra_state);
+    int ret, keyval;
+    ret = do_create_keyval(type_copy_attr_fn, NULL,
+                           NULL, type_delete_attr_fn,
+                           extra_state, keyval);
+    return (MPI_SUCCESS == ret) ? keyval : ret;
 }
 
 inline void
@@ -337,9 +345,3 @@ typedef int MPI::Datatype::Delete_attr_function(Datatype& type,
 						       void* attribute_val,
 						       void* extra_state);
 #endif
-
-
-
-
-
-

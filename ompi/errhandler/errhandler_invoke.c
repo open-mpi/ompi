@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,35 +44,64 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
        fortran or C, and then invoke it */
     
     switch (object_type) {
-	case OMPI_ERRHANDLER_TYPE_COMM:
-	    comm = (ompi_communicator_t *) mpi_object;
-	    if (errhandler->eh_fortran_function) {
-		fortran_handle = OMPI_INT_2_FINT(comm->c_f_to_c_index);
-		errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
-	    } else {
-		errhandler->eh_comm_fn(&comm, &err_code, message, NULL);
-	  }
-	  break;
-
-	case OMPI_ERRHANDLER_TYPE_WIN:
-	    win = (ompi_win_t *) mpi_object;
-	    if (errhandler->eh_fortran_function) {
-		fortran_handle = OMPI_INT_2_FINT(win->w_f_to_c_index);
-		errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
-	    } else {
-		errhandler->eh_win_fn(&win, &err_code, message, NULL);
-	    }
-	    break;
-	    
-	case OMPI_ERRHANDLER_TYPE_FILE:
-	    file = (ompi_file_t *) mpi_object;
-	    if (errhandler->eh_fortran_function) {
-                fortran_handle = OMPI_INT_2_FINT(file->f_f_to_c_index);
-                errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
-	    } else {
-                errhandler->eh_file_fn(&file, &err_code, message, NULL);
-	    }
-	    break;
+    case OMPI_ERRHANDLER_TYPE_COMM:
+        comm = (ompi_communicator_t *) mpi_object;
+        switch (errhandler->eh_lang) {
+        case OMPI_ERRHANDLER_LANG_C:
+            errhandler->eh_comm_fn(&comm, &err_code, message, NULL);
+            break;
+            
+        case OMPI_ERRHANDLER_LANG_CXX:
+            errhandler->eh_cxx_dispatch_fn(errhandler, &comm, 
+                                           &err_code, message);
+            break;
+            
+        case OMPI_ERRHANDLER_LANG_FORTRAN:
+            fortran_handle = OMPI_INT_2_FINT(comm->c_f_to_c_index);
+            errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
+            err_code = OMPI_FINT_2_INT(fortran_err_code);
+            break;
+        }
+        break;
+        
+    case OMPI_ERRHANDLER_TYPE_WIN:
+        win = (ompi_win_t *) mpi_object;
+        switch (errhandler->eh_lang) {
+        case OMPI_ERRHANDLER_LANG_C:
+            errhandler->eh_win_fn(&win, &err_code, message, NULL);
+            break;
+            
+        case OMPI_ERRHANDLER_LANG_CXX:
+            errhandler->eh_cxx_dispatch_fn(errhandler, &win, 
+                                           &err_code, message);
+            break;
+            
+        case OMPI_ERRHANDLER_LANG_FORTRAN:
+            fortran_handle = OMPI_INT_2_FINT(win->w_f_to_c_index);
+            errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
+            err_code = OMPI_FINT_2_INT(fortran_err_code);
+            break;
+        }
+        
+    case OMPI_ERRHANDLER_TYPE_FILE:
+        file = (ompi_file_t *) mpi_object;
+        switch (errhandler->eh_lang) {
+        case OMPI_ERRHANDLER_LANG_C:
+            errhandler->eh_file_fn(&file, &err_code, message, NULL);
+            break;
+            
+        case OMPI_ERRHANDLER_LANG_CXX:
+            errhandler->eh_cxx_dispatch_fn(errhandler, &file, 
+                                           &err_code, message);
+            break;
+            
+        case OMPI_ERRHANDLER_LANG_FORTRAN:
+            fortran_handle = OMPI_INT_2_FINT(file->f_f_to_c_index);
+            errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
+            err_code = OMPI_FINT_2_INT(fortran_err_code);
+            break;
+        }
+        break;
     }
     
     /* All done */

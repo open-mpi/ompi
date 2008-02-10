@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,7 +56,8 @@ int MPI_Comm_create_errhandler(MPI_Comm_errhandler_fn *function,
 
   *errhandler = 
     ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_COMM,
-                          (ompi_errhandler_generic_handler_fn_t*) function);
+                           (ompi_errhandler_generic_handler_fn_t*) function,
+                           OMPI_ERRHANDLER_LANG_C);
   if (NULL == *errhandler) {
     err = MPI_ERR_INTERN;
   }
