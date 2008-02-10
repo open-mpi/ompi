@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -80,7 +81,7 @@ int ompi_errhandler_init(void)
   if( ompi_mpi_errhandler_null.eh_f_to_c_index != OMPI_ERRHANDLER_NULL_FORTRAN )
       return OMPI_ERROR;
   ompi_mpi_errhandler_null.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
-  ompi_mpi_errhandler_null.eh_fortran_function = false;
+  ompi_mpi_errhandler_null.eh_lang = OMPI_ERRHANDLER_LANG_C;
   ompi_mpi_errhandler_null.eh_comm_fn = NULL;
   ompi_mpi_errhandler_null.eh_file_fn = NULL;
   ompi_mpi_errhandler_null.eh_win_fn  = NULL ;
@@ -93,7 +94,7 @@ int ompi_errhandler_init(void)
   if( ompi_mpi_errors_are_fatal.eh_f_to_c_index != OMPI_ERRORS_ARE_FATAL_FORTRAN )
       return OMPI_ERROR;
   ompi_mpi_errors_are_fatal.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
-  ompi_mpi_errors_are_fatal.eh_fortran_function = false;
+  ompi_mpi_errors_are_fatal.eh_lang = OMPI_ERRHANDLER_LANG_C;
   ompi_mpi_errors_are_fatal.eh_comm_fn = ompi_mpi_errors_are_fatal_comm_handler;
   ompi_mpi_errors_are_fatal.eh_file_fn = ompi_mpi_errors_are_fatal_file_handler;
   ompi_mpi_errors_are_fatal.eh_win_fn  = ompi_mpi_errors_are_fatal_win_handler ;
@@ -105,7 +106,7 @@ int ompi_errhandler_init(void)
   if( ompi_mpi_errors_return.eh_f_to_c_index != OMPI_ERRORS_RETURN_FORTRAN )
       return OMPI_ERROR;
   ompi_mpi_errors_return.eh_mpi_object_type  = OMPI_ERRHANDLER_TYPE_PREDEFINED;
-  ompi_mpi_errors_return.eh_fortran_function = false;
+  ompi_mpi_errors_return.eh_lang = OMPI_ERRHANDLER_LANG_C;
   ompi_mpi_errors_return.eh_comm_fn = ompi_mpi_errors_return_comm_handler;
   ompi_mpi_errors_return.eh_file_fn = ompi_mpi_errors_return_file_handler;
   ompi_mpi_errors_return.eh_win_fn  = ompi_mpi_errors_return_win_handler;
@@ -116,7 +117,7 @@ int ompi_errhandler_init(void)
   /* If we're going to use C++, functions will be fixed up during MPI::Init */
   OBJ_CONSTRUCT( &ompi_mpi_errors_throw_exceptions, ompi_errhandler_t );
   ompi_mpi_errors_are_fatal.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
-  ompi_mpi_errors_are_fatal.eh_fortran_function = false;
+  ompi_mpi_errors_are_fatal.eh_lang = OMPI_ERRHANDLER_LANG_C;
   ompi_mpi_errors_are_fatal.eh_comm_fn = ompi_mpi_errors_are_fatal_comm_handler;
   ompi_mpi_errors_are_fatal.eh_file_fn = ompi_mpi_errors_are_fatal_file_handler;
   ompi_mpi_errors_are_fatal.eh_win_fn  = ompi_mpi_errors_are_fatal_win_handler ;
@@ -177,7 +178,8 @@ int ompi_errhandler_finalize(void)
 
 
 ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
-					  ompi_errhandler_generic_handler_fn_t *func)
+					  ompi_errhandler_generic_handler_fn_t *func,
+                                          ompi_errhandler_lang_t lang)
 {
   ompi_errhandler_t *new_errhandler;
 
@@ -190,16 +192,13 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
       new_errhandler = NULL;
     } else {
 
-      /* The new object is valid -- initialize it.  If this is being
-         created from fortran, the fortran MPI API wrapper function
-         will override the eh_fortran_field directly.  We cast the
-         function pointer type to the fortran type arbitrarily -- it
-         only has to be a function pointer in order to store properly,
-         it doesn't matter what type it is (we'll cast it to the Right
-         type when we *use* it). */
-
+      /* We cast the user's callback function to any one of the
+         function pointer types in the union; it doesn't matter which.
+         It only matters that we dereference/use the right member when
+         invoking the callback. */
+      
       new_errhandler->eh_mpi_object_type = object_type;
-      new_errhandler->eh_fortran_function = false;
+      new_errhandler->eh_lang = lang;
       switch (object_type ) {
 	  case (OMPI_ERRHANDLER_TYPE_COMM):
 	      new_errhandler->eh_comm_fn = (MPI_Comm_errhandler_fn *)func;
@@ -243,12 +242,14 @@ static void ompi_errhandler_construct(ompi_errhandler_t *new_errhandler)
                                    new_errhandler);
   new_errhandler->eh_f_to_c_index = ret_val;
 
-  new_errhandler->eh_fortran_function = false;
+  new_errhandler->eh_lang = OMPI_ERRHANDLER_LANG_C;
 
   new_errhandler->eh_comm_fn      = NULL;
   new_errhandler->eh_win_fn       = NULL;
   new_errhandler->eh_file_fn      = NULL;
   new_errhandler->eh_fort_fn      = NULL;
+
+  new_errhandler->eh_cxx_dispatch_fn = NULL;
 
   memset (new_errhandler->eh_name, 0, MPI_MAX_OBJECT_NAME);
 }

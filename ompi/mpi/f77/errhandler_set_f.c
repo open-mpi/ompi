@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -67,8 +68,4 @@ void mpi_errhandler_set_f(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr)
     c_errhandler = MPI_Errhandler_f2c(*errhandler);
 
     *ierr = OMPI_INT_2_FINT(MPI_Errhandler_set(c_comm, c_errhandler));
-    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr) && 
-	OMPI_ERRHANDLER_TYPE_PREDEFINED != c_errhandler->eh_mpi_object_type ) {
-        c_errhandler->eh_fortran_function = true;
-    }
 }

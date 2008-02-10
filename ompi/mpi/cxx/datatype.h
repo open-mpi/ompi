@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
+// Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 // Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
@@ -185,7 +185,7 @@ protected:
                               MPI_Type_delete_attr_function* c_delete_fn,
                               Copy_attr_function* cxx_copy_fn,
                               Delete_attr_function* cxx_delete_fn,
-                              void* extra_state);
+                              void* extra_state, int &keyval);
 
 public:
 
@@ -220,15 +220,16 @@ protected:
 #endif
 
 public:
-  typedef ::std::map<MPI_Datatype, Datatype*> mpi_type_map_t;
-  static mpi_type_map_t mpi_type_map;
+    // Data that is passed through keyval create when C++ callback
+    // functions are used
+    struct keyval_intercept_data_t {
+        MPI_Type_copy_attr_function *c_copy_fn;
+        MPI_Type_delete_attr_function *c_delete_fn;
+        Copy_attr_function* cxx_copy_fn;
+        Delete_attr_function* cxx_delete_fn;
+        void *extra_state;
+    };
 
-  typedef ::std::pair<Datatype::Copy_attr_function*, Datatype::Delete_attr_function*> keyval_pair_t;
-  typedef ::std::map<int, keyval_pair_t*> mpi_type_keyval_fn_map_t;
-  static mpi_type_keyval_fn_map_t mpi_type_keyval_fn_map;
+    // Protect the global list from multiple thread access
+    static opal_mutex_t cxx_extra_states_lock;
 };
-
-
-
-
-

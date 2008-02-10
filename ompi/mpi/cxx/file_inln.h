@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -632,22 +633,19 @@ MPI::File::Write_shared(const void* buf, int count,
 }
 
 
-inline MPI::Errhandler 
-MPI::File::Create_errhandler(MPI::File::Errhandler_fn* function)
+inline void
+MPI::File::Set_errhandler(const MPI::Errhandler& errhandler) const
 {
-  MPI_Errhandler errhandler;
-  (void) MPI_File_create_errhandler((MPI_File_errhandler_fn *) ompi_mpi_cxx_file_errhandler_intercept, 
-				   &errhandler);
-  MPI::Errhandler temp(errhandler);
-  temp.file_handler_fn = (void(*)(MPI::File&, int* , ...)) function;
-  return temp;
+    (void)MPI_File_set_errhandler(mpi_file, errhandler);
 }
 
 
 inline MPI::Errhandler
 MPI::File::Get_errhandler() const
 {
-    return *my_errhandler;
+    MPI_Errhandler errhandler;
+    MPI_File_get_errhandler(mpi_file, &errhandler);
+    return errhandler;
 }
 
 inline void 

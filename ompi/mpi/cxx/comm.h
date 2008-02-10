@@ -380,12 +380,12 @@ public:
   // Errhandler
   //
 
-  virtual void Set_errhandler(const Errhandler& errhandler);
+  static Errhandler Create_errhandler(Comm::Errhandler_fn* function);
+
+  virtual void Set_errhandler(const Errhandler& errhandler) const;
 
   virtual Errhandler Get_errhandler() const;
 
-  //JGS took out const below from fn arg
-  static Errhandler Create_errhandler(Comm::Errhandler_fn* function);
 
   //
   // Keys and Attributes
@@ -442,17 +442,7 @@ private:
 #endif
 
 #if ! 0 /* OMPI_ENABLE_MPI_PROFILING */
-public: // JGS hmmm, these used by errhandler_intercept
-        // should make it a friend
-
-  Errhandler* my_errhandler;
-
-  typedef ::std::map<MPI_Comm, Comm*> mpi_comm_err_map_t;
-  static mpi_comm_err_map_t mpi_comm_err_map;
-  
-  void init() {
-    my_errhandler = (Errhandler*)0;
-  }
+public:
 
     // Data that is passed through keyval create when C++ callback
     // functions are used

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,6 +20,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/f77/bindings.h"
+#include "ompi/errhandler/errhandler.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_ERRHANDLER_CREATE = mpi_errhandler_create_f
@@ -60,15 +62,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ERRHANDLER_CREATE,
 void mpi_errhandler_create_f(ompi_errhandler_fortran_handler_fn_t* function, 
 			     MPI_Fint *errhandler, MPI_Fint *ierr)
 {
-    MPI_Errhandler c_errhandler;
-
-    /* See the note in src/mpi/f77/prototypes_mpi.h about the use of
-       (void*) for function pointers in this function */
-
-    *ierr = OMPI_INT_2_FINT(MPI_Errhandler_create(
-                    (MPI_Handler_function *) function,
-                    &c_errhandler));
-    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
-        *errhandler = MPI_Errhandler_c2f(c_errhandler);
-    }
+    mpi_comm_create_errhandler_f(function, errhandler, ierr);
 }

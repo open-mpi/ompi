@@ -71,12 +71,18 @@ ompi_mpi_cxx_op_intercept(void *invec, void *outvec, int *len,
                           MPI_Datatype *datatype, MPI_User_function *fn);
 
 extern "C" void
-ompi_mpi_cxx_comm_errhandler_intercept(MPI_Comm * mpi_comm, int * err, ...);
+ompi_mpi_cxx_comm_errhandler_invoke(ompi_errhandler_t *c_errhandler,
+                                    MPI_Comm *mpi_comm, int *err, 
+                                    const char *message);
 extern "C" void
-ompi_mpi_cxx_win_errhandler_intercept(MPI_Win * mpi_comm, int * err, ...);
+ompi_mpi_cxx_win_errhandler_invoke(ompi_errhandler_t *c_errhandler,
+                                   MPI_Win *mpi_comm, int *err,
+                                   const char *message);
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
 extern "C" void
-ompi_mpi_cxx_file_errhandler_intercept(MPI_File * mpi_comm, int * err, ...);
+ompi_mpi_cxx_file_errhandler_invoke(ompi_errhandler_t *c_errhandler,
+                                    MPI_File *mpi_comm, int *err,
+                                    const char *message);
 #endif
 
 //used for attr intercept functions

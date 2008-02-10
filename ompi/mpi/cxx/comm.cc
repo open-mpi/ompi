@@ -27,37 +27,12 @@
 #endif
 
 #include "opal/threads/mutex.h"
-#include "opal/class/opal_object.h"
-#include "opal/threads/mutex.h"
+#include "opal/class/opal_list.h"
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/errhandler/errhandler.h"
 
-// Struct to make a linked list of keyval intercept data
-struct keyval_intercept_data_item_t {
-    opal_list_item_t super;
-    int kid_keyval;
-    MPI::Comm::keyval_intercept_data_t *kid_data;
-};
-
-// We are explicitly *not* using the STL here (just for the sake of
-// avoiding using the STL; e.g., Solaris has 2 STL's -- which one
-// should OMPI use?  What if OMPI uses one and the MPI app wants to
-// use the other?), so use the C++-like opal_list_t stuff.
-OBJ_CLASS_DECLARATION(keyval_intercept_data_item_t);
-OBJ_CLASS_INSTANCE(keyval_intercept_data_item_t, opal_list_item_t, NULL, NULL);
-
-// List to hold the cxx_extra_state structs that are new'ed when C++
-// keyvals are created
-static opal_list_t cxx_extra_states;
-// Whether or not cxx_extra_states has been initialized yet
-static volatile bool cxx_extra_states_init = false;
-// Will be set to 1 by the thread who is actually doing the initialization
-static volatile int32_t cxx_extra_states_init_thread = 0;
-// Lock to protect cxx_extra_states from being accessed by multiple
-// threads at the same time
-opal_mutex_t MPI::Comm::cxx_extra_states_lock;
 
 //
 // These functions are all not inlined because they need to use locks to
@@ -79,39 +54,18 @@ MPI::Comm::Comm(const Comm_Null& data) : Comm_Null(data)
 {
 }
 
-
-void
-MPI::Comm::Set_errhandler(const MPI::Errhandler& errhandler)
+// This function needs some internal OMPI types, so it's not inlined
+MPI::Errhandler
+MPI::Comm::Create_errhandler(MPI::Comm::_MPI2CPP_ERRHANDLERFN_* function)
 {
-    my_errhandler = (MPI::Errhandler *)&errhandler;
-    OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
-    MPI::Comm::mpi_comm_err_map[mpi_comm] = this;
-    OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
-    (void)MPI_Errhandler_set(mpi_comm, errhandler);
-}
-
-
-// This function is called back out of the keyval destructor in the C
-// layer when the keyval is not be used by any attributes anymore,
-// anywhere.  So we can definitely safely remove the entry for this
-// keyval's C++ intercept extra_state from the list
-static void cxx_comm_keyval_destructor(int keyval) 
-{
-    opal_list_item_t *item;
-    keyval_intercept_data_item_t *kid;
-
-    // Search the list until we find the item with the same keyval
-    for (item = opal_list_get_first(&cxx_extra_states);
-         opal_list_get_end(&cxx_extra_states) != item; 
-         item = opal_list_get_next(item)) {
-        kid = (keyval_intercept_data_item_t *) item;
-        if (kid->kid_keyval == keyval) {
-            delete kid->kid_data;
-            opal_list_remove_item(&cxx_extra_states, item);
-            OBJ_RELEASE(item);
-            break;
-        }
-    }
+    MPI_Errhandler c_errhandler = 
+        ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_COMM,
+                               (ompi_errhandler_generic_handler_fn_t*) function,
+                               OMPI_ERRHANDLER_LANG_CXX);
+    c_errhandler->eh_cxx_dispatch_fn = 
+        (ompi_errhandler_cxx_dispatch_fn_t*)
+        ompi_mpi_cxx_comm_errhandler_invoke;
+    return c_errhandler;
 }
 
 
@@ -149,8 +103,11 @@ MPI::Comm::do_create_keyval(MPI_Comm_copy_attr_function* c_copy_fn,
     // don't get one extra_state for the copy callback and another
     // extra_state for the delete callback), we have to use the C++
     // callbacks for both (and therefore translate the C++-special
-    // extra_state into the user's original extra_state).
-    cxx_extra_state = new keyval_intercept_data_t;
+    // extra_state into the user's original extra_state).  Ensure to
+    // malloc() the struct here (vs new) so that it can be free()'ed
+    // by the C attribute base.
+    cxx_extra_state = (keyval_intercept_data_t*) 
+        malloc(sizeof(keyval_intercept_data_t));
     if (NULL == cxx_extra_state) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM, 
                                       "MPI::Comm::Create_keyval");
@@ -159,6 +116,7 @@ MPI::Comm::do_create_keyval(MPI_Comm_copy_attr_function* c_copy_fn,
     cxx_extra_state->cxx_copy_fn = cxx_copy_fn;
     cxx_extra_state->c_delete_fn = c_delete_fn;
     cxx_extra_state->cxx_delete_fn = cxx_delete_fn;
+    cxx_extra_state->extra_state = extra_state;
 
     // Error check.  Must have exactly 2 non-NULL function pointers.
     if (NULL != c_copy_fn) {
@@ -179,14 +137,9 @@ MPI::Comm::do_create_keyval(MPI_Comm_copy_attr_function* c_copy_fn,
     }
 
     // We do not call MPI_Comm_create_keyval() here because we need to
-    // pass in a special destructor to the backend keyval creation
-    // that gets invoked when the keyval's reference count goes to 0
-    // and is finally destroyed (i.e., clean up some caching/lookup
-    // data here in the C++ bindings layer).  This destructor is
-    // *only* used in the C++ bindings, so it's not set by the C
-    // MPI_Comm_create_keyval().  Hence, we do all the work here (and
-    // ensure to set the destructor atomicly when the keyval is
-    // created).
+    // pass in the cxx_extra_state to the backend keyval creation so
+    // that when the keyval is destroyed (i.e., when its refcount goes
+    // to 0), the cxx_extra_state is free()'ed.
 
     copy_fn.attr_communicator_copy_fn =
         (MPI_Comm_internal_copy_attr_function*) 
@@ -195,37 +148,11 @@ MPI::Comm::do_create_keyval(MPI_Comm_copy_attr_function* c_copy_fn,
         ompi_mpi_cxx_comm_delete_attr_intercept;
     ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, delete_fn,
                                   &keyval, cxx_extra_state, 0,
-                                  cxx_comm_keyval_destructor);
+                                  cxx_extra_state);
     if (OMPI_SUCCESS != ret) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret,
                                       "MPI::Comm::Create_keyval");
     }
-
-    // Ensure to initialize the list safely
-    if (opal_atomic_cmpset_32(&cxx_extra_states_init_thread, 0, 1)) {
-        OBJ_CONSTRUCT(&cxx_extra_states, opal_list_t);
-        OBJ_CONSTRUCT(&cxx_extra_states_lock, opal_mutex_t);
-        cxx_extra_states_init = true;
-    } else {
-        while (!cxx_extra_states_init) {
-#if defined(__WINDOWS__)
-            SwitchToThread();
-#else
-            sched_yield();
-#endif  /* defined(__WINDOWS__) */
-        }
-    }
-
-    // Put this cxx_extra_state in a place where the
-    // cxx_comm_keyval_destructor can find it based on the keyval
-    // (because that's all the cxx_comm_keyval_destructor gets as an
-    // argument)
-    keyval_intercept_data_item_t *kid = OBJ_NEW(keyval_intercept_data_item_t);
-    kid->kid_keyval = keyval;
-    kid->kid_data = cxx_extra_state;
-    OPAL_THREAD_LOCK(&cxx_extra_states_lock);
-    opal_list_append(&cxx_extra_states, &kid->super);
-    OPAL_THREAD_UNLOCK(&cxx_extra_states_lock);
 
     return MPI_SUCCESS;
 }

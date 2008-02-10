@@ -2,7 +2,7 @@
 // 
 // Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 //                         reserved. 
-// Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -27,21 +27,20 @@ MPI::File::Close()
 {
     MPI_File save = mpi_file;
     (void) MPI_File_close(&mpi_file);
-
-    OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
-    MPI::File::mpi_file_map.erase(save);
-    OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
 }
 
   
-void
-MPI::File::Set_errhandler(const MPI::Errhandler& errhandler)
+MPI::Errhandler 
+MPI::File::Create_errhandler(MPI::File::Errhandler_fn* function)
 {
-    my_errhandler = (MPI::Errhandler *)&errhandler;
-    OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
-    MPI::File::mpi_file_map[mpi_file] = this;
-    OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
-    (void)MPI_File_set_errhandler(mpi_file, errhandler);
+    MPI_Errhandler c_errhandler = 
+        ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_FILE,
+                               (ompi_errhandler_generic_handler_fn_t*) function,
+                               OMPI_ERRHANDLER_LANG_CXX);
+    c_errhandler->eh_cxx_dispatch_fn = 
+        (ompi_errhandler_cxx_dispatch_fn_t*)
+        ompi_mpi_cxx_file_errhandler_invoke;
+    return c_errhandler;
 }
 
 

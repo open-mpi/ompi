@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -289,17 +289,20 @@ public:
 
   void Write_shared(const void* buf, int count,
 		     const MPI::Datatype& datatype, MPI::Status& status);
-  
-  void Call_errhandler(int errorcode) const;
 
+  //
+  // Errhandler
+  //
   typedef void Errhandler_fn(MPI::File &, int *, ... );
 
   static MPI::Errhandler Create_errhandler(Errhandler_fn* function); 
 
   MPI::Errhandler Get_errhandler() const;
-  
-  void Set_errhandler(const MPI::Errhandler& errhandler);
-    
+
+  void Set_errhandler(const MPI::Errhandler& errhandler) const;
+
+  void Call_errhandler(int errorcode) const;
+
 protected:
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */
       PMPI::File pmpi_file;
@@ -312,7 +315,5 @@ protected:
 public:
   Errhandler* my_errhandler;
 
-  typedef ::std::map<MPI_File, File*> mpi_file_map_t;
-  static mpi_file_map_t mpi_file_map;
 };
 

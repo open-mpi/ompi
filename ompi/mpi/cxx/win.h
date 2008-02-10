@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
@@ -88,11 +88,13 @@ public:
   typedef void Errhandler_fn(Win &, int *, ... );
   
   //
-  // Miscellany
+  // Errhandler
   //
-  static MPI::Errhandler Create_errhandler(Errhandler_fn* function); 
+  static MPI::Errhandler Create_errhandler(Errhandler_fn* function);
+
+  virtual void Set_errhandler(const MPI::Errhandler& errhandler) const;
+
   virtual MPI::Errhandler Get_errhandler() const; 
-  virtual void Set_errhandler(const MPI::Errhandler& errhandler);
 
   //
   // One sided communication
@@ -160,11 +162,13 @@ public:
 			   void* extra_state);
   
 protected:
+  // Back-end function to do the heavy lifting for creating the
+  // keyval
   static int do_create_keyval(MPI_Win_copy_attr_function* c_copy_fn,
                               MPI_Win_delete_attr_function* c_delete_fn,
                               Copy_attr_function* cxx_copy_fn,
                               Delete_attr_function* cxx_delete_fn,
-                              void* extra_state);
+                              void* extra_state, int &keyval);
 
 public:
   virtual void Delete_attr(int win_keyval);
@@ -184,14 +188,18 @@ public:
   
   virtual void Set_name(const char* win_name);
 
-  Errhandler* my_errhandler;
+  // Data that is passed through keyval create when C++ callback
+  // functions are used
+  struct keyval_intercept_data_t {
+      MPI_Win_copy_attr_function *c_copy_fn;
+      MPI_Win_delete_attr_function *c_delete_fn;
+      Copy_attr_function* cxx_copy_fn;
+      Delete_attr_function* cxx_delete_fn;
+      void *extra_state;
+  };
 
-  typedef ::std::map<MPI_Win, Win*> mpi_win_map_t;
-  static mpi_win_map_t mpi_win_map;
-  
-  typedef ::std::pair<Win::Copy_attr_function*, Win::Delete_attr_function*> keyval_pair_t;
-  typedef ::std::map<int, keyval_pair_t*> mpi_win_keyval_fn_map_t;
-  static mpi_win_keyval_fn_map_t mpi_win_keyval_fn_map;
+  // Protect the global list from multiple thread access
+  static opal_mutex_t cxx_extra_states_lock;
   
 protected:
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */

@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -54,6 +55,16 @@ typedef void (ompi_errhandler_fortran_handler_fn_t)(MPI_Fint *,
  */
 typedef void (ompi_errhandler_generic_handler_fn_t)(void *, int *, ...);
 
+/**
+ * Enum to denote what language the error handler was created from
+ */
+enum ompi_errhandler_lang_t {
+    OMPI_ERRHANDLER_LANG_C,
+    OMPI_ERRHANDLER_LANG_CXX,
+    OMPI_ERRHANDLER_LANG_FORTRAN
+};
+typedef enum ompi_errhandler_lang_t ompi_errhandler_lang_t;
+
 
 /**
  * Enum used to describe what kind MPI object an error handler is used for
@@ -67,6 +78,18 @@ enum ompi_errhandler_type_t {
 typedef enum ompi_errhandler_type_t ompi_errhandler_type_t;
 
 
+/*
+ * Need to forward declare this for use in ompi_errhandle_cxx_dispatch_fn_t.
+ */
+struct ompi_errhandler_t;
+
+/**
+ * C++ invocation function signature
+ */
+typedef void (ompi_errhandler_cxx_dispatch_fn_t)(struct ompi_errhandler_t *errhandler,
+                                                 void *handle, int *err_code,
+                                                 const char *message);
+
 /**
  * Back-end type for MPI_Errorhandler.
  */
@@ -78,14 +101,25 @@ struct ompi_errhandler_t {
     
     ompi_errhandler_type_t eh_mpi_object_type;
 
-    /* Flags about the error handler */
-    bool eh_fortran_function;
+    /* What language was the error handler created in */
+    ompi_errhandler_lang_t eh_lang;
 
-    /* Function pointers */
+    /* Function pointers.  Note that we *have* to have all 4 types
+       (vs., for example, a union) because the predefined errhandlers
+       can be invoked on any MPI object type, so we need callbacks for
+       all of three. */
     MPI_Comm_errhandler_fn *eh_comm_fn;
     ompi_file_errhandler_fn *eh_file_fn;
     MPI_Win_errhandler_fn *eh_win_fn;
     ompi_errhandler_fortran_handler_fn_t *eh_fort_fn;
+
+    /* Have separate callback for C++ errhandlers.  This pointer is
+       initialized to NULL and will be set explicitly by the C++
+       bindings for Create_errhandler.  This function is invoked
+       when eh_lang==OMPI_ERRHANDLER_LANG_CXX so that the user's
+       callback function can be invoked with the right language
+       semantics. */
+    ompi_errhandler_cxx_dispatch_fn_t *eh_cxx_dispatch_fn;
 
     /* index in Fortran <-> C translation array */
     int eh_f_to_c_index;
@@ -301,13 +335,10 @@ struct ompi_request_t;
    * arbitrarily.  Note that (void*) is not sufficient because at
    * least theoretically, a sizeof(void*) may not necessarily be the
    * same as sizeof(void(*)).
-   *
-   * NOTE: It *always* sets the "fortran" flag to false.  Fortran
-   * wrappers for MPI_*_CREATE_ERRHANDLER are expected to reset this
-   * flag to true manually.
    */
   ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
-					    ompi_errhandler_generic_handler_fn_t *func);
+					    ompi_errhandler_generic_handler_fn_t *func,
+                                            ompi_errhandler_lang_t language);
 
 
 /**
