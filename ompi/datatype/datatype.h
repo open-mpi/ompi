@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -30,22 +30,13 @@
 #ifndef DATATYPE_H_HAS_BEEN_INCLUDED
 #define DATATYPE_H_HAS_BEEN_INCLUDED
 
-#include "ompi_config.h"
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#include <stddef.h>
-#include <string.h>
-#include "ompi/constants.h"
 #include "opal/class/opal_object.h"
-#include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_pointer_array.h"
 #include "mpi.h"
 
 BEGIN_C_DECLS
+
+struct opal_hash_table_t;
 
 extern struct opal_pointer_array_t ompi_datatype_f_to_c_table;
 
@@ -117,7 +108,7 @@ typedef struct ompi_datatype_t {
     uint64_t           bdt_used; /**< which basic datatypes are used in the data description */
 
     /* Attribute fields */
-    opal_hash_table_t *d_keyhash;
+    struct opal_hash_table_t *d_keyhash;
     int32_t            d_f_to_c_index;
     char               name[MPI_MAX_OBJECT_NAME];
     dt_type_desc_t     desc;     /**< the data description */

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -702,8 +702,7 @@ __ompi_ddt_create_from_args( int32_t* i, MPI_Aint* a,
         break;
         /******************************************************************/
     case MPI_COMBINER_F90_INTEGER:
-        /*pArgs->i[0] = i[0][0];
-         */
+        /*pArgs->i[0] = i[0][0];*/
         break;
         /******************************************************************/
     case MPI_COMBINER_RESIZED:
