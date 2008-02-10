@@ -29,6 +29,9 @@
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/mca/mpool/mpool.h" 
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
 
 static opal_mutex_t     mca_pml_bsend_mutex;      /* lock for thread safety */
 static opal_condition_t mca_pml_bsend_condition;  /* condition variable to block on detach */
