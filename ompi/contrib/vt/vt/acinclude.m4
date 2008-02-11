@@ -1357,6 +1357,11 @@ AC_DEFUN([ACVT_OTF],
 
 		otf_conf_cmd="$otf_srcdir/configure"
 		otf_conf_args=
+		AS_IF([test x"$cross_compiling" = "xyes"],
+		[
+			AS_IF([test ! -z $build], [otf_conf_args="$otf_conf_args --build=$build"])
+			AS_IF([test ! -z $host], [otf_conf_args="$otf_conf_args --host=$host"])
+		])
 		AS_IF([test x"$have_zlib" = "xyes"],
 		[
 			AS_IF([test x"$force_zlib" = "xyes"],
@@ -1370,11 +1375,6 @@ AC_DEFUN([ACVT_OTF],
 		],
 		[
 			otf_conf_args=--without-zlib
-		])
-		AS_IF([test x"$cross_compiling" = "xyes"],
-		[
-			AS_IF([test ! -z $build], [otf_conf_args="$otf_conf_args --build=$build"])
-			AS_IF([test ! -z $host], [otf_conf_args="$otf_conf_args --host=$host"])
 		])
 
 		otf_conf_args="$otf_conf_args --prefix=\"$prefix\" --exec-prefix=\"$exec_prefix\" --bindir=\"$bindir\" --libdir=\"$libdir\" --includedir=\"$includedir\" --datarootdir=\"$datarootdir\" --datadir=\"$datadir\" --docdir=\"$docdir\" $OTFFLAGS --cache-file=\"/dev/null\" --srcdir=\"$otf_srcdir\""
@@ -1781,7 +1781,7 @@ AC_CACHE_CHECK([for OpenMP flag of _AC_LANG compiler], ax_cv_[]_AC_LANG_ABBREV[]
 ax_cv_[]_AC_LANG_ABBREV[]_openmp=unknown
 # Flags to try:  -fopenmp (gcc), -openmp (icc), -mp (SGI & PGI),
 #                -xopenmp (Sun), -omp (Tru64), -qsmp=omp (AIX), none
-ax_openmp_flags="-fopenmp -openmp -mp -xopenmp -omp -qsmp=omp none"
+ax_openmp_flags="-mp -fopenmp -openmp -xopenmp -omp -qsmp=omp none"
 if test "x$OPENMP_[]_AC_LANG_PREFIX[]FLAGS" != x; then
   ax_openmp_flags="$OPENMP_[]_AC_LANG_PREFIX[]FLAGS $ax_openmp_flags"
 fi

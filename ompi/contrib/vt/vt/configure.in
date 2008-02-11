@@ -72,7 +72,6 @@ In cross compile mode, it's recommended to build the compiler wrappers and OPARI
 		cxx_for_build_given="yes"
 	])
 	AS_IF([test x"$CXXFLAGS_FOR_BUILD" = x], [CXXFLAGS_FOR_BUILD=$CXXFLAGS])
-	AS_IF([test x"$CXXCPP_FOR_BUILD" = x], [CXXCPP_FOR_BUILD=$CXXCPP])
 	AS_IF([test x"$CPPFLAGS_FOR_BUILD" = x], [CPPFLAGS_FOR_BUILD=$CPPFLAGS])
 	AS_IF([test x"$LDFLAGS_FOR_BUILD" = x], [LDFLAGS_FOR_BUILD=$LDFLAGS])
 	AS_IF([test x"$LIBS_FOR_BUILD" = x], [LIBS_FOR_BUILD=$LIBS])
@@ -82,13 +81,22 @@ In cross compile mode, it's recommended to build the compiler wrappers and OPARI
 		AC_LANG([C++])
 		sav_CXX=$CXX; sav_CXXFLAGS=$CXXFLAGS; sav_CXXCPP=$CXXCPP
 		sav_CPPFLAGS=$CPPFLAGS; sav_LDFLAGS=$LDFLAGS; sav_LIBS=$LIBS
-		CXX=$CXX_FOR_BUILD; CXXFLAGS=$CXXFLAGS_FOR_BUILD; CXXCPP=$CXXCPP_FOR_BUILD
+		CXX=$CXX_FOR_BUILD; CXXFLAGS=$CXXFLAGS_FOR_BUILD
 		CPPFLAGS=$CPPFLAGS_FOR_BUILD; LDFLAGS=$LDFLAGS_FOR_BUILD; LIBS=$LIBS_FOR_BUILD
 		AC_MSG_CHECKING([whether the C++ compiler for build system works])
 		AC_TRY_LINK([], [],
 		[AC_MSG_RESULT([yes])],
 		[AC_MSG_ERROR([C++ compiler for build system cannot create executables
 See \`config.log' for more details.])])
+
+		AS_IF([test x"$CXXCPP_FOR_BUILD" = x],
+		[
+			unset CXXCPP
+			unset ac_cv_prog_CXXCPP # clear cache variable for CXXCPP
+			AC_PROG_CXXCPP
+			CXXCPP_FOR_BUILD=$CXXCPP
+		])
+
 		CXX=$sav_CXX; CXXFLAGS=$sav_CXXFLAGS; CXXCPP=$sav_CXXCPP
 	        CPPFLAGS=$sav_CPPFLAGS; LDFLAGS=$sav_LDFLAGS; LIBS=$sav_LIBS
 		AC_LANG([C])
