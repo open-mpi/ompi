@@ -39,6 +39,9 @@
 #include "opal/sys/atomic.h"
 #include "opal/util/argv.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/carto/carto.h"
+#include "opal/mca/carto/base/base.h"
+#include "opal/mca/paffinity/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/sys_info.h"
@@ -1165,6 +1168,90 @@ static void ibv_free_device_list_compat(struct ibv_device **ib_devs)
 #endif
 }
 
+static opal_carto_graph_t *host_topo;
+
+static int get_ib_dev_distance(struct ibv_device *dev)
+{
+    opal_paffinity_base_cpu_set_t cpus;
+    opal_carto_base_node_t *hca_node;
+    int min_distance = -1, i, max_proc_id;
+    const char *hca = ibv_get_device_name(dev);
+
+    if(opal_paffinity_base_max_processor_id(&max_proc_id) != OMPI_SUCCESS)
+        max_proc_id = 100; /* Choose something big enough */
+
+    hca_node = carto_base_find_node(host_topo, hca);
+
+    /* no topology info for HCA found. Assume that it is close */
+    if(NULL == hca_node)
+        return 0;
+
+    OPAL_PAFFINITY_CPU_ZERO(cpus);
+    opal_paffinity_base_get(&cpus);
+
+    for(i = 0; i < max_proc_id; i++) {
+        opal_carto_base_node_t *slot_node;
+        int distance, socket, core;
+        char *slot;
+
+        if(!OPAL_PAFFINITY_CPU_ISSET(i, cpus))
+            continue;
+
+        opal_paffinity_base_map_to_socket_core(i, &socket, &core);
+        asprintf(&slot, "slot%d", socket);
+
+        slot_node = carto_base_find_node(host_topo, slot);
+
+        free(slot);
+
+        if(NULL == slot_node)
+            return 0;
+
+        distance = carto_base_spf(host_topo, slot_node, hca_node);
+
+        if(distance < 0)
+            return 0;
+
+        if(min_distance < 0 || min_distance < distance)
+            min_distance = distance;
+    }
+
+    return min_distance;
+}
+
+struct dev_distance {
+    struct ibv_device *ib_dev;
+    int distance;
+};
+
+static int compare_distance(const void *p1, const void *p2)
+{
+    const struct dev_distance *d1 = p1;
+    const struct dev_distance *d2 = p2;
+
+    return d1->distance - d2->distance;
+}
+
+static struct dev_distance *
+sort_devs_by_distance(struct ibv_device **ib_devs, int count)
+{
+    int i;
+    struct dev_distance *devs = malloc(count * sizeof(struct dev_distance));
+
+    carto_base_get_host_graph(&host_topo, "Infiniband");
+
+    for(i = 0; i < count; i++) {
+        devs[i].ib_dev = ib_devs[i];
+        devs[i].distance = get_ib_dev_distance(ib_devs[i]);
+    }
+
+    qsort(devs, count, sizeof(struct dev_distance), compare_distance);
+
+    carto_base_free_graph(host_topo);
+
+    return devs;
+}
+
 /*
  *  IB component initialization:
  *  (1) read interface list from kernel and compare against component parameters
@@ -1187,6 +1274,8 @@ btl_openib_component_init(int *num_btl_modules,
     opal_list_item_t* item;
     unsigned short seedv[3];
     mca_btl_openib_frag_init_data_t *init_data;
+    struct dev_distance *dev_sorted;
+    int distance;
 
     /* initialization */
     *num_btl_modules = 0;
@@ -1308,6 +1397,8 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
+    dev_sorted = sort_devs_by_distance(ib_devs, num_devs);
+
     /* We must loop through all the hca id's, get their handles and
        for each hca we query the number of ports on the hca and set up
        a distinct btl module for each hca port */
@@ -1320,7 +1411,13 @@ btl_openib_component_init(int *num_btl_modules,
     for(i = 0; i < num_devs && (-1 == mca_btl_openib_component.ib_max_btls ||
                 mca_btl_openib_component.ib_num_btls <
                 mca_btl_openib_component.ib_max_btls); i++) {
-        if(OMPI_SUCCESS != (ret = init_one_hca(&btl_list, ib_devs[i])))
+        if(0 == mca_btl_openib_component.ib_num_btls)
+            distance = dev_sorted[i].distance;
+        else if(distance != dev_sorted[i].distance)
+            break;
+
+        if(OMPI_SUCCESS !=
+           (ret = init_one_hca(&btl_list, dev_sorted[i].ib_dev)))
             break;
     }
 
@@ -1328,6 +1425,8 @@ btl_openib_component_init(int *num_btl_modules,
         opal_show_help("help-mpi-btl-openib.txt",
                 "error in hca init", true, orte_system_info.nodename);
     }
+
+    free(dev_sorted);
 
     /* If we got back from checking all the HCAs and find that there
        are still items in the component.if_list, that means that they
