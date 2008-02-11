@@ -29,6 +29,14 @@ struct Process {
 };
 struct FiltHandlerArgument {
 
+	FiltHandlerArgument() {}
+
+	FiltHandlerArgument(const FiltHandlerArgument& src)
+			: nm2tok(src.nm2tok), t2p(src.t2p),
+			wstream(src.wstream), mc(src.mc)
+	{
+	}
+	
 	std::map<std::string, uint32_t> nm2tok; /* created during definition reading*/
 	std::map<uint32_t, Process > t2p;
 	OTF_WStream* wstream;

@@ -196,9 +196,23 @@ void vt_check_thrd_id(uint32_t tid);
 
 void vt_open()
 {
+  int i_am_the_initer = 0;
+
   /* check for double initialization error */
-  if ( vt_open_called ) return;
-  vt_open_called = 1;
+#if (defined (VT_OMPI) || defined (VT_OMP)) 
+# pragma omp critical
+  {
+#endif
+  if ( !vt_open_called ) {
+    vt_open_called = 1;
+    i_am_the_initer = 1;
+  }
+#if (defined (VT_OMPI) || defined (VT_OMP)) 
+  }
+#endif
+
+  if (vt_open_called && !i_am_the_initer)
+    return;
 
  /* initialization specific to this platform */
   vt_pform_init();
@@ -368,13 +382,26 @@ void vt_open()
 void vt_close()
 {  
   int i, nf;
+  int i_am_the_closer = 0;
 
   /* catch vt_close called from child processes through atexit */
   if ( init_pid != getpid() ) return;
 
   /* check for double finalization error */
-  if ( vt_close_called ) return;
-  vt_close_called = 1;
+#if (defined (VT_OMPI) || defined (VT_OMP)) 
+# pragma omp critical
+  {
+#endif
+  if ( !vt_close_called ) {
+    vt_close_called = 1;
+    i_am_the_closer = 1;
+  }
+#if (defined (VT_OMPI) || defined (VT_OMP)) 
+  }
+#endif
+
+  if (vt_close_called && !i_am_the_closer)
+    return;
 
   vt_is_alive = 0;
 
@@ -418,7 +445,7 @@ void vt_close()
 #endif
 
   /* copy per-process trace from local directory to 
-     current working directory */
+     global directory */
   for(i=0; i<(int)VTThrd_get_num_thrds(); i++)
     vt_cpy_to_gdir(i);
 
@@ -433,7 +460,7 @@ void vt_close()
   /*- Rank 0: unify trace files -*/
   if (my_trace == 0 && vt_env_do_unify())
     {
-      int len = strlen(vt_env_gdir()) + strlen(vt_env_fprefix()) + 16;
+      int len = strlen(vt_env_gdir()) + strlen(vt_env_fprefix()) + 32;
       char* filename;
       char* cmd;
 
@@ -721,7 +748,7 @@ static void vt_cpy_to_gdir(uint32_t tid)
     suffix = strchr(tmp_name+strlen(tmp_prefix)+1, '.');
       
     local_name = (char*)calloc(strlen(vt_env_gdir()) +
-			strlen(vt_env_fprefix()) + 16, sizeof(char));
+			strlen(vt_env_fprefix()) + 32, sizeof(char));
 
     /* build local file name */
     sprintf(local_name, "%s/%s.%x%s",

@@ -396,7 +396,8 @@ int main( int argc, char** argv ) {
 		
 		#ifdef VT_OMP
 		#pragma omp parallel for firstprivate(mc,nfiles,minbytes,maxbytes) \
-			shared(fha,curbytes,readrecords,lastprogressupdate,progress_counter,erroroccured)
+			shared(fha,curbytes,readrecords,lastprogressupdate,progress_counter,erroroccured) \
+			private(retev,retst,retsn)
 		#endif
 		for( int streamindex = 0; streamindex < maxstreams; ++streamindex )
 		{
@@ -802,7 +803,8 @@ int main( int argc, char** argv ) {
 		
 		#ifdef VT_OMP
 		#pragma omp parallel for firstprivate(fha,nfiles,compression,minbytes,maxbytes) \
-			shared(curbytes,readrecords,lastprogressupdate,progress_counter)
+			shared(curbytes,readrecords,lastprogressupdate,progress_counter) \
+			private(retev,retst,retsn)
 		#endif
 		for( int streamindex = 0; streamindex < maxstreams; ++streamindex )
 		{
@@ -1176,8 +1178,8 @@ static map<uint32_t,uint64_t> readFilterFile( const string& filename, const map<
 
             ulimit= ATOL8(line.substr(a+4, line.size()-a-4).c_str());
             line= line.substr(0, a);
-	    sline = new char[line.length()+1];
-	    strcpy( sline, line.c_str() );
+			sline = new char[line.length()+1];
+			strcpy( sline,line.c_str() );
 
             char* token = strtok(sline, ";");
 			while( token ) {
@@ -1224,7 +1226,7 @@ void updateProgressDisplay( uint32_t i, uint64_t max, uint64_t cur ) {
 
 
 /*	static char animation[]= {"-", "\\", "|", "/" }; */
-	static char* animation[]= { (char*)"", (char*)"." };
+	static const char* animation[]= { "", "." };
 
 
 /*	printf( "%llu / %llu \n", cur, max ); */
