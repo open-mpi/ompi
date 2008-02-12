@@ -98,6 +98,18 @@ OPAL_DECLSPEC extern const opal_memchecker_base_module_1_0_0_t
  */
 extern int opal_memchecker_base_output;
 
+/**
+ * Check if we are running under the memory debugger.
+ *
+ * @retval 0   if not running under memory debugger
+ *         !=0 if running under memory debugger
+ *
+ */
+OPAL_DECLSPEC int opal_memchecker_base_runindebugger(void);
+#if OMPI_WANT_MEMCHECKER == 0
+#define opal_memchecker_base_runindebugger()
+#endif
+
 
 /**
  * Check if a memory region is valid to address
