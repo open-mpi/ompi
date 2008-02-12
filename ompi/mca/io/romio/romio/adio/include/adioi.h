@@ -24,10 +24,6 @@
 #ifndef ADIOI_INCLUDE
 #define ADIOI_INCLUDE
 
-/* Open MPI: We need to rename almost all of these functions, as well
-   a the types to be names that conform to the prefix rule */
-#include "io_adio_conv.h"
-
 /* each pending nonblocking request is stored on a linked list */
 typedef struct ADIOI_Async {
     ADIO_Request *request;

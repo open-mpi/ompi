@@ -21,10 +21,6 @@
 #ifndef ADIO_INCLUDE
 #define ADIO_INCLUDE
 
-/* Open MPI: We need to rename almost all of these functions, as well
-   a the types to be names that conform to the prefix rule */
-#include "io_adio_conv.h"
-
 #ifdef SPPUX
 #define _POSIX_SOURCE
 #endif
