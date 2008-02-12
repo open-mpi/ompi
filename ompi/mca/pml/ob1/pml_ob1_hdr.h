@@ -196,7 +196,7 @@ typedef struct mca_pml_ob1_ack_hdr_t mca_pml_ob1_ack_hdr_t;
    headers */
 #define MCA_PML_OB1_ACK_HDR_NTOH(h) \
     do { \
-    MCA_PML_OB1_COMMON_HDR_NTOH(h.hdr_common); \
+    MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
     (h).hdr_send_offset = ntoh64((h).hdr_send_offset); \
     } while (0)
 
@@ -225,7 +225,7 @@ typedef struct mca_pml_ob1_rdma_hdr_t mca_pml_ob1_rdma_hdr_t;
 
 #define MCA_PML_OB1_RDMA_HDR_NTOH(h) \
     do { \
-    MCA_PML_OB1_COMMON_HDR_NTOH(h.hdr_common); \
+    MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
     (h).hdr_seg_cnt = ntohl((h).hdr_seg_cnt); \
     (h).hdr_rdma_offset = ntoh64((h).hdr_rdma_offset); \
     } while (0)
@@ -253,7 +253,7 @@ typedef struct mca_pml_ob1_fin_hdr_t mca_pml_ob1_fin_hdr_t;
 
 #define MCA_PML_OB1_FIN_HDR_NTOH(h) \
     do { \
-    MCA_PML_OB1_COMMON_HDR_NTOH(h.hdr_common); \
+    MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
     } while (0)
 
 #define MCA_PML_OB1_FIN_HDR_HTON(h) \

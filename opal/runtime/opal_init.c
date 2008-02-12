@@ -310,7 +310,7 @@ opal_init(void)
     }
             
     /*
-     * Intialize the general progress engine
+     * Initialize the general progress engine
      */
     if (OPAL_SUCCESS != (ret = opal_progress_init())) {
         error = "opal_progress_init";
