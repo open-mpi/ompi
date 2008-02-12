@@ -67,20 +67,13 @@ AC_DEFUN([OMPI_CONTRIB],[
     # Cycle through each of the hard-coded software packages and
     # configure them if not disabled.  May someday be expanded to have
     # autogen find the packages instead of this hard-coded list
-    # (https://svn.open-mpi.org/trac/ompi/ticket/1162).  I couldn't
-    # figure out a simple/easy way to have the m4 foreach do the m4
-    # include *and* all the rest of the stuff, so I settled for having
-    # two lists: each contribted software package will need to add its
-    # configure.m4 list here and then add its name to the m4 define
-    # for contrib_software_list.  Cope.
-#dnl    m4_include(ompi/contrib/libnbc/configure.m4)
-    m4_include(ompi/contrib/vt/configure.m4)
-
-    m4_define(contrib_software_list, [vt])
-#dnl    m4_define(contrib_software_list, [libnbc, vt])
+    # (https://svn.open-mpi.org/trac/ompi/ticket/1162).
+    # m4_define([contrib_software_list], [libnbc, vt])
+    m4_define([contrib_software_list], [vt])
     m4_foreach(software, [contrib_software_list],
-               [OMPI_CONTRIB_DIST_SUBDIRS="$OMPI_CONTRIB_DIST_SUBDIRS contrib/software"
-               _OMPI_CONTRIB_CONFIGURE(software)])
+              [m4_include([ompi/contrib/]software[/configure.m4])
+              OMPI_CONTRIB_DIST_SUBDIRS="$OMPI_CONTRIB_DIST_SUBDIRS contrib/software"
+              _OMPI_CONTRIB_CONFIGURE(software)])
 
     # Setup the top-level glue
     AC_SUBST(OMPI_CONTRIB_SUBDIRS)
