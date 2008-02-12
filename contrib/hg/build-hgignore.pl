@@ -41,7 +41,6 @@ install-sh
 aclocal.m4
 autom4te.cache
 Makefile
-Makefile.in
 static-components.h
 *~
 *\\\#/;
@@ -73,19 +72,19 @@ exit(0);
 sub process {
     my $dir = shift;
 
+    # Ensure we're in a svn-controlled directory
+    return
+        if (! -d "$dir/.svn");
+
     # Look at the svn:ignore property for this directory
-    my $svn_ignore = `svn pg svn:ignore $dir`;
+    my $svn_ignore = `svn pg svn:ignore $dir 2> /dev/null`;
+    # If svn failed, bail on this directory.
+    return
+        if ($? != 0);
+
     chomp($svn_ignore);
     if ($svn_ignore ne "") {
         print "Found svn:ignore in $dir\n";
-#        my $formatted_dir = $dir;
-#        if ($formatted_dir eq ".") {
-#            $formatted_dir = "";
-#        } else {
-#            $formatted_dir =~ s/^\.\///;
-#            $formatted_dir .= "/";
-#        }
-        
         foreach my $line (split(/\n/, $svn_ignore)) {
             chomp($line);
             $line =~ s/^\.\///;
