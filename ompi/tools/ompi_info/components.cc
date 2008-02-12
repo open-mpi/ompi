@@ -31,7 +31,6 @@
 
 #include "opal/event/event.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/memory/memory.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/mca/backtrace/base/base.h"
 #include "opal/mca/paffinity/paffinity.h"
@@ -42,6 +41,8 @@
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/mca/memory/memory.h"
 #include "opal/mca/memory/base/base.h"
+#include "opal/mca/memchecker/memchecker.h"
+#include "opal/mca/memchecker/base/base.h"
 #include "opal/mca/timer/timer.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/installdirs/installdirs.h"
@@ -209,6 +210,10 @@ void ompi_info::open_components()
 
   opal_memory_base_open();
   component_map["memory"] = &opal_memory_base_components_opened;
+
+  opal_memchecker_base_open();
+  component_map["memchecker"] = &opal_memchecker_base_components_opened;
+
 
   opal_paffinity_base_open();
   component_map["paffinity"] = &opal_paffinity_base_components_opened;
@@ -399,6 +404,7 @@ void ompi_info::close_components()
         
         opal_backtrace_base_close();
         opal_memory_base_close();
+        opal_memchecker_base_close();
         opal_paffinity_base_close();
         opal_carto_base_close();
         opal_maffinity_base_close();
