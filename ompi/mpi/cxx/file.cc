@@ -25,7 +25,6 @@
 void 
 MPI::File::Close() 
 {
-    MPI_File save = mpi_file;
     (void) MPI_File_close(&mpi_file);
 }
 
