@@ -18,6 +18,11 @@
 #include "opal/mca/memchecker/memchecker.h"
 #include "opal/mca/memchecker/base/base.h"
 
+int opal_memchecker_base_runindebugger(void)
+{
+    return opal_memchecker_base_module->runindebugger();
+}
+
 int opal_memchecker_base_isaddressible(void * p, size_t len)
 {
     return opal_memchecker_base_module->isaddressible(p, len);

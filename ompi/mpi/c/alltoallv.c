@@ -49,7 +49,7 @@ int MPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls,
         memchecker_datatype(recvtype);
         
         for ( i = 0; i < size; i++ ) {
-            memchecker_call(&opal_memchecker_base_isdefined, sendbuf+sdispls[i], sendcounts[i], sendtype);
+            memchecker_call(&opal_memchecker_base_isdefined, (char*)sendbuf+sdispls[i], sendcounts[i], sendtype);
             memchecker_comm(comm);
         }
     );

@@ -53,6 +53,12 @@ typedef const struct opal_memchecker_base_module_1_0_0_t *
 typedef int (*opal_memchecker_base_module_init_1_0_0_fn_t)(void);
 
 /**
+ * Module function to query, whether we're under the memory
+ * checking program, like valgrind
+ */
+typedef int (*opal_memchecker_base_module_runindebugger_fn_t)(void);
+
+/**
  * Module function to check, whether memory region is addressible
  */
 typedef int (*opal_memchecker_base_module_isaddressible_fn_t)(void * p, size_t len);
@@ -135,6 +141,9 @@ struct opal_memchecker_base_module_1_0_0_t {
 
     /** Module initialization function */
     opal_memchecker_base_module_init_1_0_0_fn_t init;
+
+    /** Module function to check, whether we are executed by memory debugger */
+    opal_memchecker_base_module_runindebugger_fn_t runindebugger;
 
     /** Module function to check, whether memory region is addressible */
     opal_memchecker_base_module_isaddressible_fn_t isaddressible;

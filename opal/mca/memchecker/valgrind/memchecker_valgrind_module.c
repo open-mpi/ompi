@@ -31,6 +31,7 @@
  * Local functions
  */
 static int valgrind_module_init(void);
+static int valgrind_module_runindebugger(void);
 static int valgrind_module_isaddressible(void * p, size_t len);
 static int valgrind_module_isdefined(void * p, size_t len);
 static int valgrind_module_mem_noaccess(void * p, size_t len);
@@ -40,8 +41,11 @@ static int valgrind_module_mem_defined_if_addressible(void * p, size_t len);
 static int valgrind_module_create_block(void * p, size_t len, char * description);
 static int valgrind_module_discard_block(void * p); /* Here, we need to do some mapping for valgrind */
 static int valgrind_module_leakcheck(void);
+#if 0
 static int valgrind_module_get_vbits(void * p, char * vbits, size_t len);
 static int valgrind_module_set_vbits(void * p, char * vbits, size_t len);
+#endif
+
 /*
  * Valgrind memchecker module
  */
@@ -52,6 +56,7 @@ static const opal_memchecker_base_module_1_0_0_t module = {
     valgrind_module_init,
 
     /* Module function pointers */
+    valgrind_module_runindebugger,
     valgrind_module_isaddressible,
     valgrind_module_isdefined,
     valgrind_module_mem_noaccess,
@@ -81,6 +86,12 @@ static int valgrind_module_init(void)
     /* Nothing to do yet, possibly update the amount of memory blocks. */
 
     return OPAL_SUCCESS;
+}
+
+
+static int valgrind_module_runindebugger(void)
+{
+    return RUNNING_ON_VALGRIND;
 }
 
 
@@ -173,6 +184,7 @@ static int valgrind_module_leakcheck(void)
 }
 
 
+#if 0
 static int valgrind_module_get_vbits(void * p, char * vbits, size_t len)
 {
     if (len > 0) {
@@ -191,3 +203,5 @@ static int valgrind_module_set_vbits(void * p, char * vbits, size_t len)
 
     return OPAL_SUCCESS;
 }
+#endif
+

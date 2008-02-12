@@ -22,14 +22,9 @@
 #include "opal/mca/memchecker/base/base.h"
 
 #if OMPI_WANT_MEMCHECKER
-/* JMS why is this here? Seems like an abstraction violation... */
-#include "valgrind/valgrind.h"
-
 #  define MEMCHECKER(x) do {       \
-        if(RUNNING_ON_VALGRIND){   \
             x;                     \
-        }                          \
-} while(0)
+   } while(0)
 #else
 #  define MEMCHECKER(x)
 #endif /* OMPI_WANT_MEMCHECKER */
@@ -204,10 +199,14 @@ static inline int memchecker_call (int (*f)(void *, size_t), void * p, size_t co
 #ifdef OMPI_WANT_MEMCHECKER_MPI_OBJECTS
 static inline int memchecker_comm(MPI_Comm comm)
 {
-/*
- * We should not check unterlying objects in this way -- either another opal/include/memchecker.h
- * However, let us assume, that underlying objects are initialized correctly
- */
+    if (!opal_memchecker_base_runindebugger()) {
+        return OMPI_SUCCESS;
+    }
+
+    /*
+     * We should not check unterlying objects in this way -- either another opal/include/memchecker.h
+     * However, let us assume, that underlying objects are initialized correctly
+     */
 #if 0
     /* c_base */
     opal_memchecker_base_isdefined (&comm->c_base.obj_class, sizeof(opal_class_t *));
@@ -304,6 +303,10 @@ static inline int memchecker_comm(MPI_Comm comm)
 #ifdef OMPI_WANT_MEMCHECKER_MPI_OBJECTS
 static inline int memchecker_request(MPI_Request *request)
 {
+    if (!opal_memchecker_base_runindebugger()) {
+        return OMPI_SUCCESS;
+    }
+
 #if 0
     opal_memchecker_base_isdefined (&(*request)->super.super.super.obj_class, sizeof(opal_class_t *));
     opal_memchecker_base_isdefined ((void*)&(*request)->super.super.super.obj_reference_count, sizeof(volatile int32_t));
@@ -358,6 +361,10 @@ static inline int memchecker_request(MPI_Request *request)
 #ifdef OMPI_WANT_MEMCHECKER_MPI_OBJECTS
 static inline int memchecker_status(MPI_Status *status)
 {
+    if (!opal_memchecker_base_runindebugger()) {
+        return OMPI_SUCCESS;
+    }
+
     opal_memchecker_base_isdefined (&status->MPI_SOURCE, sizeof(int));
     opal_memchecker_base_isdefined (&status->MPI_TAG, sizeof(int));
     opal_memchecker_base_isdefined (&status->MPI_ERROR, sizeof(int));
@@ -377,6 +384,10 @@ static inline int memchecker_status(MPI_Status *status)
 #ifdef OMPI_WANT_MEMCHECKER_MPI_OBJECTS
 static inline int memchecker_datatype(MPI_Datatype type)
 {
+    if (!opal_memchecker_base_runindebugger()) {
+        return OMPI_SUCCESS;
+    }
+
     /* the data description.*/
     opal_memchecker_base_isdefined (&type->size, sizeof(size_t));
     opal_memchecker_base_isdefined (&type->align, sizeof(uint32_t));
