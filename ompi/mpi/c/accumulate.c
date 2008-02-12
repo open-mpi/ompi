@@ -24,7 +24,7 @@
 #include "ompi/op/op.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/datatype_internal.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Accumulate = PMPI_Accumulate

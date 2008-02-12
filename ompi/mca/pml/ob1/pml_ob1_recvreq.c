@@ -30,7 +30,7 @@
 #include "ompi/mca/bml/base/base.h" 
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/datatype/dt_arch.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 void mca_pml_ob1_recv_request_process_pending(void)
 {

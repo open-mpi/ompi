@@ -35,7 +35,7 @@
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/datatype/dt_arch.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 static int component_open(void);
 static void component_fragment_cb(ompi_osc_pt2pt_mpireq_t *mpireq);

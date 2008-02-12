@@ -21,7 +21,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mpi/f77/fint_2_int.h"
 #include "ompi/mpi/f77/constants.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Status_c2f = PMPI_Status_c2f

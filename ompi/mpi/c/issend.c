@@ -21,7 +21,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Issend = PMPI_Issend

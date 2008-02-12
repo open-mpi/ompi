@@ -22,7 +22,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Bsend = PMPI_Bsend

@@ -22,7 +22,7 @@
 #include "ompi/datatype/datatype.h"
 #include "ompi/info/info.h"
 #include "ompi/file/file.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_File_set_view = PMPI_File_set_view

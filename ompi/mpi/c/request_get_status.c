@@ -22,7 +22,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/request/request.h"
 #include "ompi/request/grequest.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Request_get_status = PMPI_Request_get_status

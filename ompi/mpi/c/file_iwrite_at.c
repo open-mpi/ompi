@@ -23,7 +23,7 @@
 #include "ompi/file/file.h"
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/io_base_request.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_File_iwrite_at = PMPI_File_iwrite_at

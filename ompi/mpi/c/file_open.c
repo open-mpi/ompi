@@ -23,7 +23,7 @@
 #include "ompi/file/file.h"
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_File_open = PMPI_File_open

@@ -24,7 +24,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Intercomm_merge = PMPI_Intercomm_merge

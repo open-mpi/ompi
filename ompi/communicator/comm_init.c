@@ -33,7 +33,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/mca/topo/topo.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 /*
 ** Table for Fortran <-> C communicator handle conversion

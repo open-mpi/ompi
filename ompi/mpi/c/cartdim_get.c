@@ -20,7 +20,7 @@
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mca/topo/topo.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Cartdim_get = PMPI_Cartdim_get

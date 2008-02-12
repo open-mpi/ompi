@@ -30,7 +30,7 @@
 #include "pml_ob1_rdmafrag.h"
 #include "pml_ob1_recvreq.h"
 #include "ompi/mca/bml/base/base.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 OBJ_CLASS_INSTANCE(mca_pml_ob1_send_range_t, ompi_free_list_item_t,
         NULL, NULL);
