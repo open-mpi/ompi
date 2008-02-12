@@ -976,9 +976,10 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         hca->use_eager_rdma = values.use_eager_rdma;
     }
 
+    /* Allocate the protection domain for the HCA */
     hca->ib_pd = ibv_alloc_pd(hca->ib_dev_context);
     if(NULL == hca->ib_pd){
-        BTL_ERROR(("error allocating pd for %s errno says %s\n",
+        BTL_ERROR(("error allocating protection domain for %s errno says %s\n",
                     ibv_get_device_name(ib_dev), strerror(errno)));
         goto error;
     }
