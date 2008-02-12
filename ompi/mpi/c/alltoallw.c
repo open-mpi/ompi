@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -22,6 +22,7 @@
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/datatype/datatype.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Alltoallw = PMPI_Alltoallw
@@ -39,7 +40,17 @@ int MPI_Alltoallw(void *sendbuf, int *sendcounts, int *sdispls,
                   void *recvbuf, int *recvcounts, int *rdispls, 
                   MPI_Datatype *recvtypes, MPI_Comm comm) 
 {
-    int i, size, err;
+    int i, size, err;   
+    
+    MEMCHECKER(
+        size = ompi_comm_remote_size(comm);
+        for ( i = 0; i < size; i++ ) {
+            memchecker_datatype(sendtypes[i]);
+            memchecker_datatype(recvtypes[i]);
+            memchecker_call(&opal_memchecker_base_isdefined, sendbuf+sdispls[i], sendcounts[i], sendtypes[i]);
+            memchecker_comm(comm);
+        }
+    );
 
     OPAL_CR_TEST_CHECKPOINT_READY();
 

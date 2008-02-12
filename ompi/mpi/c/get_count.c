@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -20,6 +20,7 @@
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/datatype/datatype.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Get_count = PMPI_Get_count
@@ -36,6 +37,18 @@ int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count)
 {
    size_t size = 0;
    int rc      = MPI_SUCCESS;
+
+    MEMCHECKER(
+        if (status != MPI_STATUSES_IGNORE) {
+            /*
+             * Before checking the complete status, we need to reset the definedness
+             * of the MPI_ERROR-field (single-completion calls wait/test).
+             */
+            opal_memchecker_base_mem_defined(&status->MPI_ERROR, sizeof(int));
+            memchecker_status(status);
+            memchecker_datatype(datatype);
+        }
+    );
 
     OPAL_CR_TEST_CHECKPOINT_READY();
 

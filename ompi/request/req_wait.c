@@ -25,6 +25,8 @@
 
 #include "opal/runtime/opal_cr.h"
 #include "ompi/mca/crcp/crcp.h"
+#include "ompi/mca/pml/base/pml_base_request.h"
+#include "ompi/include/ompi/memchecker.h"
 
 
 int ompi_request_default_wait(
@@ -38,7 +40,13 @@ int ompi_request_default_wait(
 #if OPAL_ENABLE_FT == 1
     OMPI_CRCP_REQUEST_COMPLETE(req);
 #endif
-
+    
+    MEMCHECKER(
+        if (req->req_state != OMPI_REQUEST_INACTIVE) {
+            MCA_PML_BASE_REQUEST_MEMCHECKER_DEFINED((mca_pml_base_request_t*) req);
+        }
+    );
+    
     /* return status.  If it's a generalized request, we *have* to
        invoke the query_fn, even if the user procided STATUS_IGNORE.
        MPI-2:8.2. */
@@ -201,6 +209,17 @@ finished:
         }
     }
 #endif
+    
+    MEMCHECKER(
+        rptr = requests;
+        for (i = 0; i < count; i++, rptr++) {
+            request = *rptr;
+            if ((true == request->req_complete) &&
+                (OMPI_REQUEST_INACTIVE != request->req_state)) {
+                MCA_PML_BASE_REQUEST_MEMCHECKER_DEFINED((mca_pml_base_request_t*) request);
+            }
+        }
+    );
 
     return rc;
 }
@@ -227,7 +246,6 @@ int ompi_request_default_wait_all( size_t count,
      * unless required
      */
     if (completed != count) {
-
         /*
          * acquire lock and test for completion - if all requests are
          * not completed pend on condition variable until a request
@@ -285,6 +303,17 @@ int ompi_request_default_wait_all( size_t count,
         }
     }
 #endif
+
+    MEMCHECKER(
+        rptr = requests;
+        for (i = 0; i < count; i++, rptr++) {
+            request = *rptr;
+            if ((true == request->req_complete) &&
+                (OMPI_REQUEST_INACTIVE != request->req_state)) {
+                MCA_PML_BASE_REQUEST_MEMCHECKER_DEFINED((mca_pml_base_request_t*) request);
+            }
+        }
+    );
 
     rptr = requests;
     if (MPI_STATUSES_IGNORE != statuses) {
@@ -453,6 +482,17 @@ finished:
         }
     }
 #endif
+
+    MEMCHECKER(
+        rptr = requests;
+        for (i = 0; i < count; i++, rptr++) {
+            request = *rptr;
+            if ((true == request->req_complete) &&
+                (OMPI_REQUEST_INACTIVE != request->req_state)) {
+                MCA_PML_BASE_REQUEST_MEMCHECKER_DEFINED((mca_pml_base_request_t*) request);
+            }
+        }
+    );
 
     if(num_requests_null_inactive == count) {
         *outcount = MPI_UNDEFINED;

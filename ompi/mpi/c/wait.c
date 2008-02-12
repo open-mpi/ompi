@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -22,6 +22,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Wait = PMPI_Wait
@@ -36,6 +37,9 @@ static const char FUNC_NAME[] = "MPI_Wait";
 
 int MPI_Wait(MPI_Request *request, MPI_Status *status)
 {
+    MEMCHECKER(
+        memchecker_request(request);
+    );
 
     OPAL_CR_TEST_CHECKPOINT_READY();
 
@@ -51,12 +55,27 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
     if (MPI_REQUEST_NULL == *request) {
         if (MPI_STATUS_IGNORE != status) {
             *status = ompi_request_empty.req_status;
+            /*
+             * Per MPI-1, the MPI_ERROR field is not defined for single-completion calls
+             */
+            MEMCHECKER(
+                opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
+            );
         }
         return MPI_SUCCESS;
     }
 
     if (OMPI_SUCCESS == ompi_request_wait(request, status)) {
+        /*
+         * Per MPI-1, the MPI_ERROR field is not defined for single-completion calls
+         */
+        MEMCHECKER(
+            opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
+        );
         return MPI_SUCCESS;
     }
+    MEMCHECKER(
+        opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));        
+    );
     return ompi_errhandler_request_invoke(1, request, FUNC_NAME);
 }

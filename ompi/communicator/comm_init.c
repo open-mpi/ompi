@@ -33,6 +33,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/mca/topo/topo.h"
+#include "ompi/include/ompi/memchecker.h"
 
 /*
 ** Table for Fortran <-> C communicator handle conversion
@@ -97,7 +98,8 @@ int ompi_comm_init(void)
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_world);
     opal_pointer_array_set_item (&ompi_mpi_communicators, 0, &ompi_mpi_comm_world);
 
-    strncpy (ompi_mpi_comm_world.c_name, "MPI_COMM_WORLD", 
+    MEMCHECKER (memset (ompi_mpi_comm_world.c_name, 0, MPI_MAX_OBJECT_NAME));
+    strncpy (ompi_mpi_comm_world.c_name, "MPI_COMM_WORLD",
              strlen("MPI_COMM_WORLD")+1 );
     ompi_mpi_comm_world.c_flags |= OMPI_COMM_NAMEISSET;
     ompi_mpi_comm_world.c_flags |= OMPI_COMM_INTRINSIC;
@@ -130,6 +132,7 @@ int ompi_comm_init(void)
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_self);
     opal_pointer_array_set_item (&ompi_mpi_communicators, 1, &ompi_mpi_comm_self);
 
+    MEMCHECKER (memset (ompi_mpi_comm_self.c_name, 0, MPI_MAX_OBJECT_NAME));
     strncpy(ompi_mpi_comm_self.c_name,"MPI_COMM_SELF",strlen("MPI_COMM_SELF")+1);
     ompi_mpi_comm_self.c_flags |= OMPI_COMM_NAMEISSET;
     ompi_mpi_comm_self.c_flags |= OMPI_COMM_INTRINSIC;
@@ -138,7 +141,7 @@ int ompi_comm_init(void)
        predefined attributes.  If a user defines an attribute on
        MPI_COMM_SELF, the keyhash will automatically be created. */
     ompi_mpi_comm_self.c_keyhash = NULL;
-    
+
     /* Setup MPI_COMM_NULL */
     OBJ_CONSTRUCT(&ompi_mpi_comm_null, ompi_communicator_t);
     ompi_mpi_comm_null.c_local_group  = &ompi_mpi_group_null;
@@ -154,6 +157,7 @@ int ompi_comm_init(void)
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
     opal_pointer_array_set_item (&ompi_mpi_communicators, 2, &ompi_mpi_comm_null);
 
+    MEMCHECKER (memset (ompi_mpi_comm_null.c_name, 0, MPI_MAX_OBJECT_NAME));
     strncpy(ompi_mpi_comm_null.c_name,"MPI_COMM_NULL",strlen("MPI_COMM_NULL")+1);
     ompi_mpi_comm_null.c_flags |= OMPI_COMM_NAMEISSET;
     ompi_mpi_comm_null.c_flags |= OMPI_COMM_INTRINSIC;

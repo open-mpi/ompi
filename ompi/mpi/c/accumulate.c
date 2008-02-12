@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -24,6 +24,7 @@
 #include "ompi/op/op.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/datatype_internal.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Accumulate = PMPI_Accumulate
@@ -44,6 +45,12 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
     ompi_win_t *ompi_win = (ompi_win_t*) win;
 
     OPAL_CR_TEST_CHECKPOINT_READY();
+
+    MEMCHECKER(
+        memchecker_datatype(origin_datatype);
+        memchecker_datatype(target_datatype);
+        memchecker_call(&opal_memchecker_base_isdefined, origin_addr, origin_count, origin_datatype);
+    );
 
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;
@@ -214,6 +221,12 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
 
     if (MPI_PROC_NULL == target_rank) return MPI_SUCCESS;
 
+    /* Set buffer to be unaccessable before sending it.
+     * It's set accessable again in file osc_pt2pt_data_move. */
+    MEMCHECKER (
+        memchecker_call(&opal_memchecker_base_mem_noaccess, origin_addr, origin_count, origin_datatype);
+    );
+    
     rc = ompi_win->w_osc_module->osc_accumulate(origin_addr, 
                                                 origin_count,
                                                 origin_datatype,

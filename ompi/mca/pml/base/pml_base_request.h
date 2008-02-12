@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -25,6 +25,7 @@
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/request/request.h"
 #include "ompi/datatype/convertor.h"
+#include "ompi/include/ompi/memchecker.h"
 
 BEGIN_C_DECLS
 
@@ -74,6 +75,15 @@ struct mca_pml_base_request_t {
 typedef struct mca_pml_base_request_t mca_pml_base_request_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_request_t);
+
+static inline void MCA_PML_BASE_REQUEST_MEMCHECKER_DEFINED(mca_pml_base_request_t * req) {
+#if OMPI_WANT_MEMCHECKER
+    memchecker_call(&opal_memchecker_base_mem_defined,
+                   req->req_addr,
+                   req->req_count,
+                   req->req_datatype);
+#endif
+}
 
 END_C_DECLS
 

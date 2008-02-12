@@ -35,6 +35,7 @@
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/timer/base/base.h"
+#include "opal/mca/memchecker/base/base.h"
 
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/crs/base/base.h"
@@ -270,6 +271,18 @@ opal_init(void)
     /* initialize the memory manager / tracker */
     if (OPAL_SUCCESS != opal_mem_hooks_init()) {
         error = "opal_mem_hooks_init";
+        goto return_error;
+    }
+
+    /* initialize the memory checker, to allow early support for annotation */
+    if (OPAL_SUCCESS != opal_memchecker_base_open()) {
+        error = "opal_memchecker_base_open";
+        goto return_error;
+    }
+
+    /* select the memory checker */
+    if (OPAL_SUCCESS != opal_memchecker_base_select()) {
+        error = "opal_memchecker_base_select";
         goto return_error;
     }
 

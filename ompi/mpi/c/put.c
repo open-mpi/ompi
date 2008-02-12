@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -23,6 +23,7 @@
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/datatype/datatype.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Put = PMPI_Put
@@ -72,6 +73,12 @@ int MPI_Put(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
     }
 
     if (MPI_PROC_NULL == target_rank) return MPI_SUCCESS;
+    
+    /* Set buffer to be unaccessable before using it.
+     * It's set accessable again in file osc_pt2pt_data_move. */
+    MEMCHECKER (
+        memchecker_call(&opal_memchecker_base_mem_noaccess, origin_addr, origin_count, origin_datatype);
+    );
 
     rc = win->w_osc_module->osc_put(origin_addr, origin_count, origin_datatype,
                                     target_rank, target_disp, target_count,

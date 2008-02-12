@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -22,6 +22,7 @@
 #include "opal/util/show_help.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/info/info.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_spawn_multiple = PMPI_Comm_spawn_multiple
@@ -46,6 +47,10 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
     char *tmp_port;
     orte_rml_tag_t tag = 0;
 
+    MEMCHECKER(
+        memchecker_comm(comm);
+    );
+    
     OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {

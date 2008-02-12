@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -22,6 +22,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Test = PMPI_Test
@@ -37,6 +38,10 @@ static const char FUNC_NAME[] = "MPI_Test";
 int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status) 
 {
     int rc;
+
+    MEMCHECKER(
+        memchecker_request (request);
+    );
 
     OPAL_CR_TEST_CHECKPOINT_READY();
 
@@ -55,6 +60,10 @@ int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status)
     if (*completed < 0) {
         *completed = 0;
     }
+
+    MEMCHECKER(
+        opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
+    );
 
     if (OMPI_SUCCESS == rc) {
         return MPI_SUCCESS;
