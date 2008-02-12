@@ -14,14 +14,17 @@
 #define OMPI_MEMCHECKER_H
 
 #include "ompi_config.h"
+
 #include "ompi/communicator/communicator.h"
 #include "ompi/group/group.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/request/request.h"
 #include "opal/mca/memchecker/base/base.h"
-#include "valgrind/valgrind.h"
 
 #if OMPI_WANT_MEMCHECKER
+/* JMS why is this here? Seems like an abstraction violation... */
+#include "valgrind/valgrind.h"
+
 #  define MEMCHECKER(x) do {       \
         if(RUNNING_ON_VALGRIND){   \
             x;                     \
