@@ -18,36 +18,16 @@
 
 include $(top_srcdir)/Makefile.options
 
-# It is unfortunately necessary to make all the filenames in the ROMIO
-# distribtion confrom to the MCA prefix name rule -- there is at least
-# one or two filename conflicts that potentially create problems when
-# merging everything into onelibmpi.
-
-# In developer's copies, we have the real ROMIO files, and sym links
-# are made.  In distribution tarballs, the sym-linked files turn into
-# real files and the original filenames do not appear.
-
 noinst_LTLIBRARIES = libadio_pvfs.la
 libadio_pvfs_la_SOURCES = \
-        io_romio_ad_pvfs.c \
+        ad_pvfs.c \
         ad_pvfs.h \
-        io_romio_ad_pvfs_close.c \
-        io_romio_ad_pvfs_delete.c \
-        io_romio_ad_pvfs_fcntl.c \
-        io_romio_ad_pvfs_flush.c \
-        io_romio_ad_pvfs_hints.c \
-        io_romio_ad_pvfs_open.c \
-        io_romio_ad_pvfs_read.c \
-        io_romio_ad_pvfs_resize.c \
-        io_romio_ad_pvfs_write.c
-
-#
-# Sym link the sources to conform to the MCA prefix name rule
-#
-dir=$(top_srcdir)/adio/ad_pvfs
-$(libadio_pvfs_la_SOURCES):
-	if test ! -r $@ ; then \
-		pname=`echo $@ | cut -b '10-'` ; \
-		rm -f $@; \
-		ln -s $(dir)/$$pname $@ ; \
-	fi
+        ad_pvfs_close.c \
+        ad_pvfs_delete.c \
+        ad_pvfs_fcntl.c \
+        ad_pvfs_flush.c \
+        ad_pvfs_hints.c \
+        ad_pvfs_open.c \
+        ad_pvfs_read.c \
+        ad_pvfs_resize.c \
+        ad_pvfs_write.c
