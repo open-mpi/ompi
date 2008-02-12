@@ -26,7 +26,7 @@
 #include "opal/runtime/opal_cr.h"
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 
 int ompi_request_default_wait(

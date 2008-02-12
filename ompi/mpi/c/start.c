@@ -23,7 +23,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Start = PMPI_Start

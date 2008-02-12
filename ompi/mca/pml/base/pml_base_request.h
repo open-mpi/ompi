@@ -25,7 +25,7 @@
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/request/request.h"
 #include "ompi/datatype/convertor.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 BEGIN_C_DECLS
 

@@ -22,7 +22,7 @@
 #include "opal/util/show_help.h"
 #include "ompi/info/info.h"
 #include "ompi/mpi/c/bindings.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_spawn = PMPI_Comm_spawn

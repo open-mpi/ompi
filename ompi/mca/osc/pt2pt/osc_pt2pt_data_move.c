@@ -29,7 +29,7 @@
 #include "ompi/datatype/dt_arch.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 
 static inline int32_t

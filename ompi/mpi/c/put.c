@@ -23,7 +23,7 @@
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/datatype/datatype.h"
-#include "ompi/include/ompi/memchecker.h"
+#include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Put = PMPI_Put
