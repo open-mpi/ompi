@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -21,6 +21,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/datatype/datatype.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Type_get_attr = PMPI_Type_get_attr
@@ -41,6 +42,10 @@ int MPI_Type_get_attr (MPI_Datatype type,
     int ret;
 
     OPAL_CR_TEST_CHECKPOINT_READY();
+    
+    MEMCHECKER(
+        memchecker_datatype(type);
+    );
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

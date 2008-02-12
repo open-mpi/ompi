@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -30,6 +30,7 @@
 #include "ompi/mca/bml/base/base.h" 
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/datatype/dt_arch.h"
+#include "ompi/include/ompi/memchecker.h"
 
 void mca_pml_ob1_recv_request_process_pending(void)
 {
@@ -67,7 +68,15 @@ static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
     }
 
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
-
+    /*
+     * Package successfully received, make user buffer accessable.
+     */
+    MEMCHECKER(
+        memchecker_call(&opal_memchecker_base_mem_defined,
+                        recvreq->req_recv.req_base.req_addr,
+                        recvreq->req_recv.req_base.req_count,
+                        recvreq->req_recv.req_base.req_datatype);
+    );
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 } 
@@ -78,9 +87,18 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
     mca_pml_ob1_comm_t* comm = request->req_recv.req_base.req_comm->c_pml_comm;
 
     if( true == ompi_request->req_complete ) { /* way to late to cancel this one */
-       return OMPI_SUCCESS;
+        /*
+         * Receive request completed, make user buffer accessable.
+         */
+        MEMCHECKER(
+            memchecker_call(&opal_memchecker_base_mem_defined,
+                            request->req_recv.req_base.req_addr,
+                            request->req_recv.req_base.req_count,
+                            request->req_recv.req_base.req_datatype);
+        );
+        return OMPI_SUCCESS;
     }
-    
+
     /* The rest should be protected behind the match logic lock */
     OPAL_THREAD_LOCK(&comm->matching_lock);
     if( OMPI_ANY_TAG == ompi_request->req_status.MPI_TAG ) { /* the match has not been already done */
@@ -108,6 +126,15 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
      */
     MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE(request);
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
+    /*
+     * Receive request cancelled, make user buffer accessable.
+     */
+    MEMCHECKER(
+        memchecker_call(&opal_memchecker_base_mem_defined,
+                        request->req_recv.req_base.req_addr,
+                        request->req_recv.req_base.req_count,
+                        request->req_recv.req_base.req_datatype);
+    );
     return OMPI_SUCCESS;
 }
 
@@ -457,6 +484,15 @@ void mca_pml_ob1_recv_request_progress( mca_pml_ob1_recv_request_t* recvreq,
             bytes_received -= sizeof(mca_pml_ob1_match_hdr_t);
             recvreq->req_recv.req_bytes_packed = bytes_received;
             MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq,&hdr->hdr_match);
+            /*
+             *  Make user buffer accessable(defined) before unpacking.
+             */
+            MEMCHECKER(
+                memchecker_call(&opal_memchecker_base_mem_defined,
+                                recvreq->req_recv.req_base.req_addr,
+                                recvreq->req_recv.req_base.req_count,
+                                recvreq->req_recv.req_base.req_datatype);
+            );
             MCA_PML_OB1_RECV_REQUEST_UNPACK( recvreq,
                                              segments,
                                              num_segments,
@@ -464,6 +500,17 @@ void mca_pml_ob1_recv_request_progress( mca_pml_ob1_recv_request_t* recvreq,
                                              data_offset,
                                              bytes_received,
                                              bytes_delivered);
+            /*
+             *  Unpacking finished, make the user buffer unaccessable again.
+             */
+            MEMCHECKER(
+                memchecker_call(&opal_memchecker_base_mem_noaccess,
+                                recvreq->req_recv.req_base.req_addr,
+                                recvreq->req_recv.req_base.req_count,
+                                recvreq->req_recv.req_base.req_datatype);
+            );
+            recvreq->req_match_received = true;
+            opal_atomic_wmb();
             break;
 
         case MCA_PML_OB1_HDR_TYPE_RNDV:
@@ -499,7 +546,16 @@ void mca_pml_ob1_recv_request_progress( mca_pml_ob1_recv_request_t* recvreq,
 
         case MCA_PML_OB1_HDR_TYPE_FRAG:
             bytes_received -= sizeof(mca_pml_ob1_frag_hdr_t);
-            data_offset = hdr->hdr_frag.hdr_frag_offset;
+            data_offset     = hdr->hdr_frag.hdr_frag_offset;
+            /*
+             *  Make user buffer accessable(defined) before unpacking.
+             */
+            MEMCHECKER(
+                memchecker_call(&opal_memchecker_base_mem_defined,
+                                recvreq->req_recv.req_base.req_addr,
+                                recvreq->req_recv.req_base.req_count,
+                                recvreq->req_recv.req_base.req_datatype);
+            );
             MCA_PML_OB1_RECV_REQUEST_UNPACK( recvreq,
                                              segments,
                                              num_segments,
@@ -507,6 +563,15 @@ void mca_pml_ob1_recv_request_progress( mca_pml_ob1_recv_request_t* recvreq,
                                              data_offset,
                                              bytes_received,
                                              bytes_delivered );
+            /*
+             *  Unpacking finished, make the user buffer unaccessable again.
+             */
+            MEMCHECKER(
+                memchecker_call(&opal_memchecker_base_mem_noaccess,
+                                recvreq->req_recv.req_base.req_addr,
+                                recvreq->req_recv.req_base.req_count,
+                                recvreq->req_recv.req_base.req_datatype);
+            );
             break;
 
         default:

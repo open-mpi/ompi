@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -20,6 +20,7 @@
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/include/ompi/memchecker.h"
 #include "ompi/communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -35,6 +36,10 @@ static const char FUNC_NAME[] = "MPI_Abort";
 
 int MPI_Abort(MPI_Comm comm, int errorcode) 
 {
+    MEMCHECKER(
+        memchecker_comm(comm);
+    );
+
     OPAL_CR_TEST_CHECKPOINT_READY();
 
     /* Don't even bother checking comm and errorcode values for

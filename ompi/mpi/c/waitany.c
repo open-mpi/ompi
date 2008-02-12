@@ -7,7 +7,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -24,6 +24,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Waitany = PMPI_Waitany
@@ -38,7 +39,13 @@ static const char FUNC_NAME[] = "MPI_Waitany";
 
 int MPI_Waitany(int count, MPI_Request *requests, int *index, MPI_Status *status) 
 {
-
+    MEMCHECKER(
+        int j;
+        for (j = 0; j < count; j++){
+            memchecker_request(&requests[j]);
+        }
+    );
+    
     OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {

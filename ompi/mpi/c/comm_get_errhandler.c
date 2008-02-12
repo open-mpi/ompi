@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -20,6 +20,7 @@
 #include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_get_errhandler = PMPI_Comm_get_errhandler
@@ -35,6 +36,11 @@ static const char FUNC_NAME[] = "MPI_Comm_get_errhandler";
 
 int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
 {
+    /* Error checking */
+    MEMCHECKER(
+        memchecker_comm(comm);
+    );
+
     OPAL_CR_TEST_CHECKPOINT_READY();
 
   /* Error checking */

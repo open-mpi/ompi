@@ -181,6 +181,7 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("opal");
 
   ompi_info::mca_types.push_back("backtrace");
+  ompi_info::mca_types.push_back("memchecker");
   ompi_info::mca_types.push_back("memory");
   ompi_info::mca_types.push_back("paffinity");
   ompi_info::mca_types.push_back("carto");

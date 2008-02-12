@@ -7,7 +7,7 @@
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
+ * Copyright (c) 2004-2008 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -20,6 +20,7 @@
 #include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_create = PMPI_Comm_create
@@ -35,6 +36,10 @@ static const char FUNC_NAME[] = "MPI_Comm_create";
 int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm) {
     
     int rc;
+    MEMCHECKER(
+        memchecker_comm(comm);
+    );
+    OPAL_CR_TEST_CHECKPOINT_READY();
 
     OPAL_CR_TEST_CHECKPOINT_READY();
 

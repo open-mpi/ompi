@@ -21,6 +21,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Recv_init = PMPI_Recv_init
@@ -37,6 +38,12 @@ int MPI_Recv_init(void *buf, int count, MPI_Datatype type, int source,
                   int tag, MPI_Comm comm, MPI_Request *request)
 {
     int rc = MPI_SUCCESS;
+    MEMCHECKER(
+        memchecker_datatype(type);
+        memchecker_call(&opal_memchecker_base_isaddressible, buf, count, type);
+        memchecker_comm(comm);
+    );
+    OPAL_CR_TEST_CHECKPOINT_READY();
 
     OPAL_CR_TEST_CHECKPOINT_READY();
 
@@ -73,6 +80,9 @@ int MPI_Recv_init(void *buf, int count, MPI_Datatype type, int source,
         return MPI_SUCCESS;
     }
 
+    /*
+     * Here, we just initialize the request -- memchecker should set the buffer in MPI_Start.
+     */
     rc = MCA_PML_CALL(irecv_init(buf,count,type,source,tag,comm,request));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }

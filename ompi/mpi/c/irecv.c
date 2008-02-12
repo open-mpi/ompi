@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -21,6 +21,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Irecv = PMPI_Irecv
@@ -37,6 +38,11 @@ int MPI_Irecv(void *buf, int count, MPI_Datatype type, int source,
               int tag, MPI_Comm comm, MPI_Request *request)
 {
     int rc = MPI_SUCCESS;
+    MEMCHECKER(
+        memchecker_datatype(type);
+        memchecker_comm(comm);
+    );
+    OPAL_CR_TEST_CHECKPOINT_READY();
 
     OPAL_CR_TEST_CHECKPOINT_READY();
 
@@ -63,6 +69,8 @@ int MPI_Irecv(void *buf, int count, MPI_Datatype type, int source,
         *request = &ompi_request_empty;
         return MPI_SUCCESS;
     }
+
+    MEMCHECKER (memchecker_call(&opal_memchecker_base_mem_noaccess, buf, count, type));
 
     rc = MCA_PML_CALL(irecv(buf,count,type,source,tag,comm,request));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);

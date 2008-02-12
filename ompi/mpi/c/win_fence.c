@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -21,6 +21,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Win_fence = PMPI_Win_fence
@@ -53,7 +54,11 @@ int MPI_Win_fence(int assert, MPI_Win win)
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_SYNC, FUNC_NAME);
         } 
     }
-
+    MEMCHECKER (
+        /* First, we have to make sure it's a valid and initialised win. */
+        if( win->w_baseptr != NULL && win->w_size != 0 && win->w_mode != 0)
+            opal_memchecker_base_mem_noaccess( win->w_baseptr, win->w_size );
+    );
     rc = win->w_osc_module->osc_fence(assert, win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }

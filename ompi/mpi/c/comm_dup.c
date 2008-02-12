@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -20,6 +20,7 @@
 #include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_dup = PMPI_Comm_dup
@@ -34,6 +35,12 @@ static const char FUNC_NAME[] = "MPI_Comm_dup";
 int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) 
 {
     int rc=MPI_SUCCESS;
+
+    OPAL_CR_TEST_CHECKPOINT_READY();
+    
+    MEMCHECKER(
+        memchecker_comm(comm);
+    );
 
     OPAL_CR_TEST_CHECKPOINT_READY();
     

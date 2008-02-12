@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -20,6 +20,7 @@
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/datatype/datatype.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Type_ub = PMPI_Type_ub
@@ -37,6 +38,10 @@ int MPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
   MPI_Aint lb;
   MPI_Aint extent;
   int status;
+
+  MEMCHECKER(
+      memchecker_datatype(mtype);
+  );
 
   OPAL_CR_TEST_CHECKPOINT_READY();
 

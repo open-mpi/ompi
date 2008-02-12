@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -22,6 +22,7 @@
 #include "pml_ob1.h"
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_sendreq.h"
+#include "ompi/include/ompi/memchecker.h"
 
 
 int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
@@ -106,6 +107,15 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
                 return OMPI_ERR_REQUEST;
         }
 
+        /*
+         * We do not distinguish on SEND or RECV-requests.
+         */
+        MEMCHECKER (memchecker_call(&opal_memchecker_base_mem_noaccess,
+                                   pml_request->req_addr,
+                                   pml_request->req_count,
+                                   pml_request->req_datatype));
+
+
         /* start the request */
         switch(pml_request->req_type) {
             case MCA_PML_REQUEST_SEND: 
@@ -115,7 +125,7 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
                     size_t offset = 0;
                     /**
                      * Reset the convertor in case we're dealing with the original
-		     * request, which when completed do not reset the convertor.
+                     * request, which when completed do not reset the convertor.
                      */
                     ompi_convertor_set_position( &sendreq->req_send.req_base.req_convertor,
                                                  &offset );

@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -21,6 +21,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mpi/f77/fint_2_int.h"
 #include "ompi/mpi/f77/constants.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Status_c2f = PMPI_Status_c2f
@@ -36,6 +37,16 @@ static const char FUNC_NAME[] = "MPI_Status_c2f";
 int MPI_Status_c2f(MPI_Status *c_status, MPI_Fint *f_status) 
 {
     int i, *c_ints;
+    MEMCHECKER(
+        if(c_status != MPI_STATUSES_IGNORE) {
+            /*
+             * Before checking the complete status, we need to reset the definedness
+             * of the MPI_ERROR-field (single-completion calls wait/test).
+             */
+            opal_memchecker_base_mem_defined(&c_status->MPI_ERROR, sizeof(int));
+            memchecker_status(c_status);
+        }
+    );
 
     OPAL_CR_TEST_CHECKPOINT_READY();
     

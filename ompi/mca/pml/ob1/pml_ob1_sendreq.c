@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,10 +16,9 @@
  * $HEADER$
  */
 
+
 #include "ompi_config.h"
-
 #include "opal/prefetch.h"
-
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
@@ -31,6 +30,7 @@
 #include "pml_ob1_rdmafrag.h"
 #include "pml_ob1_recvreq.h"
 #include "ompi/mca/bml/base/base.h"
+#include "ompi/include/ompi/memchecker.h"
 
 OBJ_CLASS_INSTANCE(mca_pml_ob1_send_range_t, ompi_free_list_item_t,
         NULL, NULL);
@@ -103,7 +103,7 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
     }
 
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
-
+    
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
@@ -443,11 +443,33 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
         /* pack the data into the supplied buffer */
         iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval +
                 sizeof(mca_pml_ob1_match_hdr_t));
-        iov.iov_len = size;
-        iov_count = 1;
+        iov.iov_len  = size;
+        iov_count    = 1;
+        /*
+         * Before copy the user buffer, make the target part 
+         * accessable.
+         */
+        MEMCHECKER(
+            memchecker_call(&opal_memchecker_base_mem_defined,
+                            sendreq->req_send.req_base.req_addr,
+                            sendreq->req_send.req_base.req_count,
+                            sendreq->req_send.req_base.req_datatype);
+        );
         (void)ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor,
-                &iov, &iov_count, &max_data );
+                                   &iov, &iov_count, &max_data );
+         /*
+          *  Packing finished, make the user buffer unaccessable.
+          */
+        MEMCHECKER(
+            memchecker_call(&opal_memchecker_base_mem_defined,
+                            sendreq->req_send.req_base.req_addr,
+                            sendreq->req_send.req_base.req_count,
+                            sendreq->req_send.req_base.req_datatype);
+        );
+
+        descriptor->des_cbfunc = mca_pml_ob1_match_completion_free;
     }
+
     
     /* build match header */
     hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;

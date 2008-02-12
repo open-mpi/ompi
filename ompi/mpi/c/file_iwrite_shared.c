@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -23,6 +23,7 @@
 #include "ompi/file/file.h"
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/io_base_request.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_File_iwrite_shared = PMPI_File_iwrite_shared
@@ -40,6 +41,10 @@ int MPI_File_iwrite_shared(MPI_File fh, void *buf, int count,
 {
     int rc;
     mca_io_base_request_t *io_request;
+    MEMCHECKER(
+        memchecker_datatype(datatype);
+    );
+    OPAL_CR_TEST_CHECKPOINT_READY();
 
     OPAL_CR_TEST_CHECKPOINT_READY();
 

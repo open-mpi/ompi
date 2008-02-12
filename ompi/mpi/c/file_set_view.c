@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -22,6 +22,7 @@
 #include "ompi/datatype/datatype.h"
 #include "ompi/info/info.h"
 #include "ompi/file/file.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_File_set_view = PMPI_File_set_view
@@ -41,6 +42,10 @@ int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
 
     OPAL_CR_TEST_CHECKPOINT_READY();
 
+    MEMCHECKER(
+        memchecker_datatype(etype);
+    );
+    
     if (MPI_PARAM_CHECK) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

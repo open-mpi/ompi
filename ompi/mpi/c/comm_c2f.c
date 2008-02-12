@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -21,6 +21,7 @@
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mpi/f77/fint_2_int.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_c2f = PMPI_Comm_c2f
@@ -35,6 +36,9 @@ static const char FUNC_NAME[] = "MPI_Comm_c2f";
 
 MPI_Fint MPI_Comm_c2f(MPI_Comm comm) 
 {
+    MEMCHECKER(
+        memchecker_comm(comm);
+    );
     OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK) {

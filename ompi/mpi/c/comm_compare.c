@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -20,6 +20,7 @@
 #include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_compare = PMPI_Comm_compare
@@ -35,7 +36,10 @@ static const char FUNC_NAME[] = "MPI_Comm_compare";
 int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
 
     int rc;
-
+    MEMCHECKER(
+        memchecker_comm(comm1);
+        memchecker_comm(comm2);
+    );
     OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {

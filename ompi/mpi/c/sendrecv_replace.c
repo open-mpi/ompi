@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -22,6 +22,7 @@
 #include "ompi/datatype/convertor.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/proc/proc.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Sendrecv_replace = PMPI_Sendrecv_replace
@@ -40,6 +41,12 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
 
 {
     int rc = MPI_SUCCESS;
+    MEMCHECKER(
+        memchecker_datatype(datatype);
+        memchecker_call(&opal_memchecker_base_isdefined, buf, count, datatype);
+        memchecker_comm(comm);
+    );
+    OPAL_CR_TEST_CHECKPOINT_READY();
 
     OPAL_CR_TEST_CHECKPOINT_READY();
 

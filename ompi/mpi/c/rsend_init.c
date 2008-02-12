@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -22,6 +22,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
+#include "ompi/include/ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Rsend_init = PMPI_Rsend_init
@@ -39,6 +40,12 @@ int MPI_Rsend_init(void *buf, int count, MPI_Datatype type,
                    MPI_Request *request) 
 {
     int rc;
+    MEMCHECKER(
+        memchecker_datatype(type);
+        memchecker_call(&opal_memchecker_base_isdefined, buf, count, type);
+        memchecker_comm(comm);
+    );
+    OPAL_CR_TEST_CHECKPOINT_READY();
 
     OPAL_CR_TEST_CHECKPOINT_READY();
 
@@ -75,6 +82,9 @@ int MPI_Rsend_init(void *buf, int count, MPI_Datatype type,
         return MPI_SUCCESS;
     }
 
+    /*
+     * Here, we just initialize the request -- memchecker should set the buffer in MPI_Start.
+     */
     rc =  MCA_PML_CALL(isend_init(buf,count,type,dest,tag,
                                   MCA_PML_BASE_SEND_READY,comm,request));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
