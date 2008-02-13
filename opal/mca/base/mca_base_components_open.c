@@ -75,7 +75,7 @@ int mca_base_components_open(const char *type_name, int output_id,
                              bool open_dso_components)
 {
     int ret, param;
-    opal_list_item_t *item, *next;
+    opal_list_item_t *item;
     opal_list_t components_found;
     char **requested_component_names;
     int param_verbose = -1;
@@ -83,8 +83,11 @@ int mca_base_components_open(const char *type_name, int output_id,
     int verbose_level;
     char *str;
     bool include_mode;
+#if (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1)
+    opal_list_item_t *next;
     uint32_t open_only_flags = MCA_BASE_METADATA_PARAM_NONE;
     const mca_base_component_t *component;
+#endif
  
     /* Register MCA parameters */
     /* Check to see if it exists first */
@@ -151,16 +154,24 @@ int mca_base_components_open(const char *type_name, int output_id,
      * Pre-process the list with parameter constraints
      * e.g., If requested to select only CR enabled components
      *       then only make available those components.
+     *
+     * JJH Note: Currently checkpoint/restart is the only user of this
+     *           functionality. If other component constraint options are
+     *           added, then this logic can be used for all contraint
+     *           options.
      */
-    if( !(MCA_BASE_METADATA_PARAM_NONE & open_only_flags) ) {
 #if (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1)
+    if( !(MCA_BASE_METADATA_PARAM_NONE & open_only_flags) ) {
         if( MCA_BASE_METADATA_PARAM_CHECKPOINT & open_only_flags) {
             opal_output_verbose(10, output_id,
                                 "mca: base: components_open: "
                                 "including only %s components that are checkpoint enabled", type_name);
         }
-#endif  /* (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1) */
-      
+
+        /*
+         * Check all the components to make sure they adhere to the user
+         * expressed requirements.
+         */
         for(item  = opal_list_get_first(&components_found);
             item != opal_list_get_end(&components_found);
             item  = next ) {
@@ -171,7 +182,6 @@ int mca_base_components_open(const char *type_name, int output_id,
       
             next = opal_list_get_next(item);
       
-#if (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1)
             /*
              * If the user asked for a checkpoint enabled run
              * then only load checkpoint enabled components.
@@ -193,9 +203,9 @@ int mca_base_components_open(const char *type_name, int output_id,
                     opal_list_remove_item(&components_found, item);
                 }
             }
-#endif  /* (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1) */
         }
     }
+#endif  /* (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1) */
 
     /* Open all remaining components */
     ret = open_components(type_name, output_id,
