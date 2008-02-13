@@ -266,6 +266,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+AUTOMAKE_OPTIONS = -Wno-gnu
 @AMHAVECC_FALSE@WRAP_CC = 
 @AMHAVECC_TRUE@WRAP_CC = vtcc
 @AMHAVECXX_FALSE@WRAP_CXX = 

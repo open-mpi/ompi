@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = -Wno-gnu
+
 bin_PROGRAMS = opari
 
 include_HEADERS = \

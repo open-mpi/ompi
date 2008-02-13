@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = -Wno-gnu
+
 if AMHAVECC
 WRAP_CC = vtcc
 else
