@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -336,10 +337,9 @@ struct ompi_request_t;
    * least theoretically, a sizeof(void*) may not necessarily be the
    * same as sizeof(void(*)).
    */
-  ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
+  OMPI_DECLSPEC ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
 					    ompi_errhandler_generic_handler_fn_t *func,
                                             ompi_errhandler_lang_t language);
-
 
 /**
  * Check to see if an errhandler is intrinsic.
