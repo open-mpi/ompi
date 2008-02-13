@@ -167,7 +167,7 @@ extern "C" {
      * @return int - OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
      *         supported
      */
-    OPAL_DECLSPEC int opal_paffinity_base_max_processor_id(int *max_processor_id);
+    OPAL_DECLSPEC int opal_paffinity_base_get_processor_info(int *num_processors, int *max_processor_id);
 
     /**
      * Return the max socket number
@@ -177,7 +177,7 @@ extern "C" {
      * @return int - OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
      *         supported
      */
-    OPAL_DECLSPEC int opal_paffinity_base_max_socket(int *max_socket);
+    OPAL_DECLSPEC int opal_paffinity_base_get_socket_info(int *num_sockets, int *max_socket_num);
 
     /**
      * Return the max core number for a given socket
@@ -188,7 +188,7 @@ extern "C" {
      * @return int - OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
      *         supported
      */
-    OPAL_DECLSPEC int opal_paffinity_base_max_core(int socket, int *max_core);
+    OPAL_DECLSPEC int opal_paffinity_base_get_core_info(int socket, int *num_cores, int *max_core_num);
 
     /**
      * Indication of whether a component was successfully selected or
