@@ -466,8 +466,6 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
                             sendreq->req_send.req_base.req_count,
                             sendreq->req_send.req_base.req_datatype);
         );
-
-        descriptor->des_cbfunc = mca_pml_ob1_match_completion_free;
     }
 
     
