@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     int ret = 0;
     int need_help = 0;
     int show_topo = 0;
-    int have_topo, num_sockets, max_socket_num, num_cores, max_core_num;
+    int have_topo, max_socket, max_core;
     PLPA_NAME(api_type_t) api_probe;
 
     for (i = 1; i < argc; ++i) {
@@ -73,15 +73,10 @@ int main(int argc, char *argv[])
         have_topo = 0;
     }
     printf("Kernel topology support: %s\n", have_topo ? "yes" : "no");
-    if (0 != PLPA_NAME(get_socket_info)(&num_sockets, &max_socket_num)) {
-        num_sockets = max_socket_num = -1;
+    if (0 != PLPA_NAME(max_socket)(&max_socket)) {
+        max_socket = -1;
     }
-    printf("Number of processor sockets: ");
-    if (have_topo && num_sockets >= 0) {
-        printf("%d\n", num_sockets);
-    } else {
-        printf("unknown\n");
-    }
+    printf("Number of processor sockets: %d\n", have_topo ? max_socket : -1);
 
     /* If asked, print the map */
 
@@ -89,11 +84,13 @@ int main(int argc, char *argv[])
         if (have_topo) {
             /* Remember that max_socket and max_core values are
                0-indexed */
-            for (i = 0; i <= max_socket_num; ++i) {
-                ret = PLPA_NAME(get_core_info)(i, &num_cores, &max_core_num);
+            for (i = 0; i <= max_socket; ++i) {
+                ret = PLPA_NAME(max_core)(i, &max_core);
                 if (0 == ret) {
-                    printf("Socket %d: %d core%s\n", i, num_cores,
-                           (1 == num_cores) ? "" : "s");
+                    printf("Socket %d: %d core%s\n", i, max_core + 1,
+                           (0 == max_core) ? "" : "s");
+                } else {
+                    printf("Socket %d: unknown cores\n", i);
                 }
             }
         } else {

@@ -130,25 +130,18 @@ typedef struct tuple_t_ {
 } tuple_t;
 
 static int supported = 0;
-static int num_processors = -1;
-static int max_processor_num = -1;
-static int num_sockets = -1;
-static int max_socket_num = -1;
-static int *max_core_num = NULL;
-static int *num_cores = NULL;
-static int max_core_num_overall = -1;
+static int max_processor = -1;
+static int max_socket = -1;
+static int *max_core = NULL;
+static int max_core_overall = -1;
 static tuple_t *map_processor_id_to_tuple = NULL;
 static tuple_t ***map_tuple_to_processor_id = NULL;
 
 static void clear_cache(void)
 {
-    if (NULL != max_core_num) {
-        free(max_core_num);
-        max_core_num = NULL;
-    }
-    if (NULL != num_cores) {
-        free(num_cores);
-        num_cores = NULL;
+    if (NULL != max_core) {
+        free(max_core);
+        max_core = NULL;
     }
     if (NULL != map_processor_id_to_tuple) {
         free(map_processor_id_to_tuple);
@@ -163,17 +156,15 @@ static void clear_cache(void)
         map_tuple_to_processor_id = NULL;
     }
 
-    num_processors = max_processor_num = -1;
-    num_sockets = max_socket_num = -1;
-    max_core_num_overall = -1;
+    max_processor = -1;
+    max_socket = -1;
+    max_core_overall = -1;
 }
 
 static void load_cache(const char *sysfs_mount)
 {
     int i, j, k, invalid_entry, fd;
     char path[PATH_MAX], buf[8];
-    PLPA_NAME(cpu_set_t) *cores_on_sockets;
-    int found;
 
     /* Check for the parent directory */
     sprintf(path, "%s/devices/system/cpu", sysfs_mount);
@@ -182,30 +173,23 @@ static void load_cache(const char *sysfs_mount)
     }
 
     /* Go through and find the max processor ID */
-    for (num_processors = max_processor_num = i = 0; 
-         i < PLPA_BITMASK_CPU_MAX; ++i) {
-        sprintf(path, "%s/devices/system/cpu/cpu%d", sysfs_mount, i);
-        if (0 != access(path, (R_OK | X_OK))) {
-            max_processor_num = i - 1;
+    for (max_processor = 0; max_processor < PLPA_BITMASK_CPU_MAX; 
+         ++max_processor) {
+        sprintf(path, "%s/devices/system/cpu/cpu%d", sysfs_mount, 
+                max_processor);
+        if ( access(path, R_OK|X_OK) ) {
             break;
         }
-        ++num_processors;
     }
-
-    /* If we found no processors, then we have no topology info */
-    if (0 == num_processors) {
-        clear_cache();
-        return;
-    }
+    --max_processor;
 
     /* Malloc space for the first map (processor ID -> tuple).
        Include enough space for one invalid entry. */
-    map_processor_id_to_tuple = malloc(sizeof(tuple_t) * 
-                                       (max_processor_num + 2));
+    map_processor_id_to_tuple = malloc(sizeof(tuple_t) * (max_processor + 2));
     if (NULL == map_processor_id_to_tuple) {
         return;
     }
-    for (i = 0; i <= max_processor_num; ++i) {
+    for (i = 0; i <= max_processor; ++i) {
         map_processor_id_to_tuple[i].processor_id = i;
         map_processor_id_to_tuple[i].socket = -1;
         map_processor_id_to_tuple[i].core = -1;
@@ -216,119 +200,57 @@ static void load_cache(const char *sysfs_mount)
     map_processor_id_to_tuple[invalid_entry].socket = -1;
     map_processor_id_to_tuple[invalid_entry].core = -1;
 
+    /* Malloc space for the max number of cores on each socket */
+    max_core = malloc(sizeof(int) * (max_processor + 1));
+    if (NULL == max_core) {
+        clear_cache();
+        return;
+    }
+    for (i = 0; i <= max_processor; ++i) {
+        max_core[i] = -1;
+    }
+
     /* Build a cached map of (socket,core) tuples */
-    for (found = 0, i = 0; i <= max_processor_num; ++i) {
+    for ( i = 0; i <= max_processor; i++ ) {
         sprintf(path, "%s/devices/system/cpu/cpu%d/topology/core_id", 
                 sysfs_mount, i);
         fd = open(path, O_RDONLY);
         if ( fd < 0 ) {
-            continue;
+            clear_cache();
+            return;
         }
         if ( read(fd, buf, 7) <= 0 ) {
-            continue;
+            clear_cache();
+            return;
         }
         sscanf(buf, "%d", &(map_processor_id_to_tuple[i].core));
         close(fd);
         
-        sprintf(path,
-                "%s/devices/system/cpu/cpu%d/topology/physical_package_id",
+        sprintf(path, "%s/devices/system/cpu/cpu%d/topology/physical_package_id",
                 sysfs_mount, i);
         fd = open(path, O_RDONLY);
         if ( fd < 0 ) {
-            continue;
+            clear_cache();
+            return;
         }
         if ( read(fd, buf, 7) <= 0 ) {
-            continue;
+            clear_cache();
+            return;
         }
         sscanf(buf, "%d", &(map_processor_id_to_tuple[i].socket));
         close(fd);
-        found = 1;
         
-        /* Keep a running tab on the max socket number */
-        if (map_processor_id_to_tuple[i].socket > max_socket_num) {
-            max_socket_num = map_processor_id_to_tuple[i].socket;
+        /* Compute some globals */
+        if (map_processor_id_to_tuple[i].socket > max_socket) {
+            max_socket = map_processor_id_to_tuple[i].socket;
         }
-    }
-
-    /* Now that we know the max number of sockets, allocate some
-       arrays */
-    max_core_num = malloc(sizeof(int) * (max_socket_num + 1));
-    if (NULL == max_core_num) {
-        clear_cache();
-        return;
-    }
-    num_cores = malloc(sizeof(int) * (max_socket_num + 1));
-    if (NULL == num_cores) {
-        clear_cache();
-        return;
-    }
-    for (i = 0; i <= max_socket_num; ++i) {
-        num_cores[i] = -1;
-        max_core_num[i] = -1;
-    }
-
-    /* Find the max core number on each socket */
-    for (i = 0; i <= max_processor_num; ++i) {
         if (map_processor_id_to_tuple[i].core > 
-            max_core_num[map_processor_id_to_tuple[i].socket]) {
-            max_core_num[map_processor_id_to_tuple[i].socket] = 
+            max_core[map_processor_id_to_tuple[i].socket]) {
+            max_core[map_processor_id_to_tuple[i].socket] = 
                 map_processor_id_to_tuple[i].core;
         }
-        if (max_core_num[map_processor_id_to_tuple[i].socket] > 
-            max_core_num_overall) {
-            max_core_num_overall = 
-                max_core_num[map_processor_id_to_tuple[i].socket];
-        }
-    }
-
-    /* If we didn't find any core_id/physical_package_id's, then we
-       don't have the topology info */
-    if (!found) {
-        clear_cache();
-        return;
-    }
-
-    /* Go through and count the number of unique sockets found.  It
-       may not be the same as max_socket_num because there may be
-       "holes" -- e.g., sockets 0 and 3 are used, but sockets 1 and 2
-       are empty. */
-    for (j = i = 0; i <= max_socket_num; ++i) {
-        if (max_core_num[i] >= 0) {
-            ++j;
-        }
-    }
-    if (j > 0) {
-        num_sockets = j;
-    }
-
-    /* Count how many cores are available on each socket.  This may
-       not be the same as max_core_num[socket_num] if there are
-       "holes".  I don't know if holes can happen (i.e., if specific
-       cores can be taken offline), but what the heck... */
-    cores_on_sockets = malloc(sizeof(PLPA_NAME(cpu_set_t)) * 
-                              (max_socket_num + 1));
-    if (NULL == cores_on_sockets) {
-        clear_cache();
-        return;
-    }
-    for (i = 0; i <= max_socket_num; ++i) {
-        PLPA_CPU_ZERO(&(cores_on_sockets[i]));
-    }
-    for (i = 0; i <= max_processor_num; ++i) {
-        if (map_processor_id_to_tuple[i].socket >= 0) {
-            PLPA_CPU_SET(map_processor_id_to_tuple[i].core,
-                         &(cores_on_sockets[map_processor_id_to_tuple[i].socket]));
-        }
-    }
-    for (i = 0; i <= max_socket_num; ++i) {
-        int count = 0;
-        for (j = 0; j < PLPA_BITMASK_CPU_MAX; ++j) {
-            if (PLPA_CPU_ISSET(j, &(cores_on_sockets[i]))) {
-                ++count;
-            }
-        }
-        if (count > 0) {
-            num_cores[i] = count;
+        if (max_core[map_processor_id_to_tuple[i].socket] > max_core_overall) {
+            max_core_overall = max_core[map_processor_id_to_tuple[i].socket];
         }
     }
 
@@ -336,27 +258,26 @@ static void load_cache(const char *sysfs_mount)
        (socket,core) => processor_id.  This map simply points to
        entries in the other map (i.e., it's by reference instead of by
        value). */
-    map_tuple_to_processor_id = malloc(sizeof(tuple_t **) *
-                                       (max_socket_num + 1));
+    map_tuple_to_processor_id = malloc(sizeof(tuple_t **) * (max_socket + 1));
     if (NULL == map_tuple_to_processor_id) {
         clear_cache();
         return;
     }
     map_tuple_to_processor_id[0] = malloc(sizeof(tuple_t *) * 
-                                          ((max_socket_num + 1) * 
-                                           (max_core_num_overall + 1)));
+                                          ((max_socket + 1) * 
+                                           (max_core_overall + 1)));
     if (NULL == map_tuple_to_processor_id[0]) {
         clear_cache();
         return;
     }
     /* Set pointers for 2nd dimension */
-    for (i = 1; i <= max_socket_num; ++i) {
+    for (i = 1; i <= max_socket; ++i) {
         map_tuple_to_processor_id[i] = 
-            map_tuple_to_processor_id[i - 1] + max_core_num_overall;
+            map_tuple_to_processor_id[i - 1] + max_core_overall;
     }
     /* Compute map */
-    for (i = 0; i <= max_socket_num; ++i) {
-        for (j = 0; j <= max_core_num_overall; ++j) {
+    for (i = 0; i <= max_socket; ++i) {
+        for (j = 0; j <= max_core_overall; ++j) {
             /* Default to the invalid entry in the other map, meaning
                that this (socket,core) combination doesn't exist
                (e.g., the core number does not exist in this socket,
@@ -367,7 +288,7 @@ static void load_cache(const char *sysfs_mount)
             /* See if this (socket,core) tuple exists in the other
                map.  If so, set this entry to point to it (overriding
                the invalid entry default). */
-            for (k = 0; k <= max_processor_num; ++k) {
+            for (k = 0; k <= max_processor; ++k) {
                 if (map_processor_id_to_tuple[k].socket == i &&
                     map_processor_id_to_tuple[k].core == j) {
                     map_tuple_to_processor_id[i][j] = 
@@ -449,8 +370,8 @@ int PLPA_NAME(map_to_processor_id)(int socket, int core, int *processor_id)
     }
 
     /* Check for some invalid entries */
-    if (socket < 0 || socket > max_socket_num ||
-        core < 0 || core > max_core_num_overall ||
+    if (socket < 0 || socket > max_socket ||
+        core < 0 || core > max_core_overall ||
         NULL == processor_id) {
         return EINVAL;
     }
@@ -482,7 +403,7 @@ int PLPA_NAME(map_to_socket_core)(int processor_id, int *socket, int *core)
     }
 
     /* Check for some invalid entries */
-    if (processor_id < 0 || processor_id > max_processor_num ||
+    if (processor_id < 0 || processor_id > max_processor ||
         NULL == socket ||
         NULL == core) {
         return EINVAL;
@@ -494,8 +415,7 @@ int PLPA_NAME(map_to_socket_core)(int processor_id, int *socket, int *core)
     return 0;
 }
 
-int PLPA_NAME(get_processor_info)(int *num_processors_arg,
-                                  int *max_processor_num_arg)
+int PLPA_NAME(max_processor_id)(int *max_processor_id_arg)
 {
     int ret;
 
@@ -507,7 +427,7 @@ int PLPA_NAME(get_processor_info)(int *num_processors_arg,
     }
 
     /* Check for bozo arguments */
-    if (NULL == max_processor_num_arg || NULL == num_processors_arg) {
+    if (NULL == max_processor_id_arg) {
         return EINVAL;
     }
 
@@ -517,13 +437,12 @@ int PLPA_NAME(get_processor_info)(int *num_processors_arg,
     }
 
     /* All done */
-    *num_processors_arg = num_processors;
-    *max_processor_num_arg = max_processor_num;
+    *max_processor_id_arg = max_processor;
     return 0;
 }
 
 /* Return the max socket number */
-int PLPA_NAME(get_socket_info)(int *num_sockets_arg, int *max_socket_num_arg)
+int PLPA_NAME(max_socket)(int *max_socket_arg)
 {
     int ret;
 
@@ -535,7 +454,7 @@ int PLPA_NAME(get_socket_info)(int *num_sockets_arg, int *max_socket_num_arg)
     }
 
     /* Check for bozo arguments */
-    if (NULL == max_socket_num_arg || NULL == num_sockets_arg) {
+    if (NULL == max_socket_arg) {
         return EINVAL;
     }
 
@@ -545,14 +464,12 @@ int PLPA_NAME(get_socket_info)(int *num_sockets_arg, int *max_socket_num_arg)
     }
 
     /* All done */
-    *num_sockets_arg = num_sockets;
-    *max_socket_num_arg = max_socket_num;
+    *max_socket_arg = max_socket;
     return 0;
 }
 
-/* Return the number of cores in a socket and the max core ID number */
-int PLPA_NAME(get_core_info)(int socket, int *num_cores_arg, 
-                             int *max_core_num_arg)
+/* Return the max core number for a given socket */
+int PLPA_NAME(max_core)(int socket, int *max_core_arg)
 {
     int ret;
 
@@ -564,7 +481,7 @@ int PLPA_NAME(get_core_info)(int socket, int *num_cores_arg,
     }
 
     /* Check for bozo arguments */
-    if (NULL == max_core_num_arg || NULL == num_cores_arg) {
+    if (NULL == max_core_arg) {
         return EINVAL;
     }
 
@@ -574,12 +491,11 @@ int PLPA_NAME(get_core_info)(int socket, int *num_cores_arg,
     }
 
     /* Check for some invalid entries */
-    if (socket < 0 || socket > max_socket_num || -1 == max_core_num[socket]) {
+    if (socket < 0 || socket > max_socket) {
         return EINVAL;
     }
 
     /* All done */
-    *num_cores_arg = num_cores[socket];
-    *max_core_num_arg = max_core_num[socket];
+    *max_core_arg = max_core[socket];
     return 0;
 }
