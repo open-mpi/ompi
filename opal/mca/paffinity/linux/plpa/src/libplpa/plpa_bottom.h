@@ -4,7 +4,6 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +26,7 @@
 
 /* Internal macro to munge names */
 
-/* Preprocessors are fun -- the double inderection is necessary.
+/* Preprocessors are fun -- the double indirection is necessary.
    Extra bonus points if you can figure out why! :p */
 #define PLPA_MUNGE_NAME(a, b) PLPA_MUNGE_NAME2(a, b)
 #define PLPA_MUNGE_NAME2(a, b) a ## b
@@ -120,13 +119,13 @@ int PLPA_NAME(map_to_processor_id)(int socket, int core, int *processor_id);
 int PLPA_NAME(map_to_socket_core)(int processor_id, int *socket, int *core);
 
 /* Return the max processor ID */
-int PLPA_NAME(get_processor_info)(int *num_processors, int *max_processor_id);
+int PLPA_NAME(max_processor_id)(int *max_processor_id);
 
 /* Return the max socket number */
-int PLPA_NAME(get_socket_info)(int *num_sockets, int *max_socket_num);
+int PLPA_NAME(max_socket)(int *max_socket);
 
 /* Return the max core number for a given socket */
-int PLPA_NAME(get_core_info)(int socket, int *num_cores, int *max_core_num);
+int PLPA_NAME(max_core)(int socket, int *max_core);
 
 /* Shut down PLPA */
 int PLPA_NAME(finalize)(void);

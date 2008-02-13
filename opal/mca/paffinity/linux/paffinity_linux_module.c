@@ -45,9 +45,9 @@ static int linux_module_set(opal_paffinity_base_cpu_set_t cpumask);
 static int linux_module_get(opal_paffinity_base_cpu_set_t *cpumask);
 static int linux_module_map_to_processor_id(int socket, int core, int *processor_id);
 static int linux_module_map_to_socket_core(int processor_id, int *socket, int *core);
-static int linux_module_get_processor_info(int *num_processors, int *max_processor_id);
-static int linux_module_get_socket_info(int *num_sockets, int *max_socket_num);
-static int linux_module_get_core_info(int socket, int *num_cores, int *max_core_num);
+static int linux_module_max_processor_id(int *max_processor_id);
+static int linux_module_max_socket(int *max_socket);
+static int linux_module_max_core(int socket, int *max_core);
 
 /*
  * Linux paffinity module
@@ -64,9 +64,9 @@ static const opal_paffinity_base_module_1_1_0_t module = {
     linux_module_get,
     linux_module_map_to_processor_id,
     linux_module_map_to_socket_core,
-    linux_module_get_processor_info,
-    linux_module_get_socket_info,
-    linux_module_get_core_info,
+    linux_module_max_processor_id,
+    linux_module_max_socket,
+    linux_module_max_core,
     NULL
 };
 
@@ -168,18 +168,18 @@ static int linux_module_map_to_socket_core(int processor_id, int *socket, int *c
    return opal_paffinity_linux_plpa_map_to_socket_core(processor_id, socket, core);
 }
 
-static int linux_module_get_processor_info(int *num_processors, int *max_processor_id)
+static int linux_module_max_processor_id(int *max_processor_id)
 {
-   return opal_paffinity_linux_plpa_get_processor_info(num_processors, max_processor_id);
+   return opal_paffinity_linux_plpa_max_processor_id(max_processor_id);
 }
 
-static int linux_module_get_socket_info(int *num_sockets, int *max_socket_num)
+static int linux_module_max_socket(int *max_socket)
 {
-   return opal_paffinity_linux_plpa_get_socket_info(num_sockets, max_socket_num);
+   return opal_paffinity_linux_plpa_max_socket(max_socket);
 }
 
-static int linux_module_get_core_info(int socket, int *num_cores, int *max_core_num)
+static int linux_module_max_core(int socket, int *max_core)
 {
-   return opal_paffinity_linux_plpa_get_core_info(socket, num_cores, max_core_num);
+   return opal_paffinity_linux_plpa_max_core(socket, max_core);
 }
 

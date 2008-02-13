@@ -194,7 +194,7 @@ typedef int (*opal_paffinity_base_module_map_to_socket_core_fn_t)(int processor_
  * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
  * supporeted (solaris, windows, etc...)
  */
-typedef int (*opal_paffinity_base_module_get_processor_info_fn_t)(int *num_processors, int *max_processor_id);
+typedef int (*opal_paffinity_base_module_max_processor_id_fn_t)(int *max_processor_id);
 
 /**
  * Provides the number of sockets in a host. currently supported
@@ -203,7 +203,7 @@ typedef int (*opal_paffinity_base_module_get_processor_info_fn_t)(int *num_proce
  * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
  * supporeted (solaris, windows, etc...)
  */
-typedef int (*opal_paffinity_base_module_get_socket_info_fn_t)(int *num_sockets, int *max_socket_num);
+typedef int (*opal_paffinity_base_module_max_socket_fn_t)(int *max_socket);
 
 /**
  * Provides the number of cores in a socket. currently supported
@@ -212,7 +212,7 @@ typedef int (*opal_paffinity_base_module_get_socket_info_fn_t)(int *num_sockets,
  * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
  * supporeted (solaris, windows, etc...)
  */
-typedef int (*opal_paffinity_base_module_get_core_info_fn_t)(int socket, int *num_cores, int *max_core_num);
+typedef int (*opal_paffinity_base_module_max_core)(int socket, int *max_core);
 
 
 /**
@@ -262,13 +262,13 @@ struct opal_paffinity_base_module_1_1_0_t {
     opal_paffinity_base_module_map_to_socket_core_fn_t  paff_map_to_socket_core;
 
     /** Return the max processor ID */
-    opal_paffinity_base_module_get_processor_info_fn_t paff_get_processor_info;
+    opal_paffinity_base_module_max_processor_id_fn_t paff_max_processor_id;
 
     /** Return the max socket number */
-    opal_paffinity_base_module_get_socket_info_fn_t paff_get_socket_info;
+    opal_paffinity_base_module_max_socket_fn_t paff_max_socket;
 
     /** Return the max core number */
-    opal_paffinity_base_module_get_core_info_fn_t paff_get_core_info;
+    opal_paffinity_base_module_max_core paff_max_core;
 
     /** Shut down this module */
     opal_paffinity_base_module_finalize_fn_t paff_module_finalize;
