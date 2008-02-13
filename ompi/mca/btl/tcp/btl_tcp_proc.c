@@ -39,6 +39,18 @@
 static void mca_btl_tcp_proc_construct(mca_btl_tcp_proc_t* proc);
 static void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* proc);
 
+mca_btl_tcp_interface_t* local_interfaces[MAX_KERNEL_INTERFACES];
+mca_btl_tcp_interface_t* peer_interfaces[MAX_KERNEL_INTERFACES];
+int local_kindex_to_index[MAX_KERNEL_INTERFACE_INDEX];
+int peer_kindex_to_index[MAX_KERNEL_INTERFACE_INDEX];
+size_t num_local_interfaces;
+size_t num_peer_interfaces;
+unsigned int *best_assignment;
+int max_assignment_weight;
+int max_assignment_cardinality;
+enum mca_btl_tcp_connection_quality **weights;
+struct mca_btl_tcp_addr_t ***best_addr;
+
 OBJ_CLASS_INSTANCE( mca_btl_tcp_proc_t, 
                     opal_list_item_t, 
                     mca_btl_tcp_proc_construct, 
@@ -155,6 +167,70 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(ompi_proc_t* ompi_proc)
 }
 
 
+
+static void evaluate_assignment(int *a) {
+    size_t i;
+    unsigned int max_interfaces = num_local_interfaces;
+    int assignment_weight = 0;
+    int assignment_cardinality = 0;
+
+
+
+    if(max_interfaces < num_peer_interfaces) {
+        max_interfaces = num_peer_interfaces;
+    }
+
+    for(i = 0; i < max_interfaces; ++i) {
+        if(0 < weights[i][a[i]-1]) {
+            ++assignment_cardinality;
+            assignment_weight += weights[i][a[i]-1];
+        }
+    }
+
+    /*
+     * check wether current solution beats all previous solutions
+     */
+    if(assignment_cardinality > max_assignment_cardinality
+            || (assignment_cardinality == max_assignment_cardinality
+                && assignment_weight > max_assignment_weight)) {
+
+        for(i = 0; i < max_interfaces; ++i) {
+             best_assignment[i] = a[i]-1;
+        }
+        max_assignment_weight = assignment_weight;
+        max_assignment_cardinality = assignment_cardinality;
+    }
+}
+
+static void visit(int k, int level, int siz, int *a)
+{
+    level = level+1; a[k] = level;
+
+    if (level == siz) {
+        evaluate_assignment(a);
+    } else {
+        int i;
+        for ( i = 0; i < siz; i++)
+            if (a[i] == 0)
+                visit(i, level, siz, a);
+    }
+
+    level = level-1; a[k] = 0;
+}
+
+
+static void mca_btl_tcp_initialise_interface(mca_btl_tcp_interface_t* interface,
+        int ifk_index, int index)
+{
+    interface->kernel_index = ifk_index;
+    interface->peer_interface = -1;
+    interface->ipv4_address = NULL;
+    interface->ipv6_address =  NULL;
+    interface->index = index;
+    interface->inuse = 0;
+}
+
+
 /*
  * Note that this routine must be called with the lock on the process
  * already held.  Insert a btl instance into the proc array and assign 
@@ -163,8 +239,14 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(ompi_proc_t* ompi_proc)
 int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc, 
                              mca_btl_base_endpoint_t* btl_endpoint )
 {
-    size_t i;
-    struct sockaddr_storage endpoint_addr_ss;
+    size_t i, j;
+    struct sockaddr_storage endpoint_addr_ss, local_addr;
+    int idx, rc;
+    int *a = NULL;
+    unsigned int perm_size;
+
+    num_local_interfaces = 0;
+    num_peer_interfaces = 0;
 
 #ifndef WORDS_BIGENDIAN
     /* if we are little endian and our peer is not so lucky, then we
@@ -181,97 +263,258 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
     btl_endpoint->endpoint_proc = btl_proc;
     btl_proc->proc_endpoints[btl_proc->proc_endpoint_count++] = btl_endpoint;
 
+
+    memset(local_kindex_to_index, -1, sizeof(int)*MAX_KERNEL_INTERFACE_INDEX);
+    memset(peer_kindex_to_index, -1, sizeof(int)*MAX_KERNEL_INTERFACE_INDEX);
+    memset(local_interfaces, 0, sizeof(local_interfaces));
+    memset(peer_interfaces, 0, sizeof(peer_interfaces));
+
     /*
-     * Look through the proc instance for an address that is on the
-     * directly attached network. If we don't find one, pick the first
-     * unused address.
-    */
-    for( i = 0; i < btl_proc->proc_addr_count; i++ ) {
-        mca_btl_tcp_addr_t* endpoint_addr = btl_proc->proc_addrs + i;
-        if(endpoint_addr->addr_inuse != 0) {
-            continue;
+     * the following two blocks shout CODE DUPLICATION. We are aware of
+     * the problem
+     */
+
+    /*
+     * identify all kernel interfaces and the associated addresses of
+     * the local node
+     */
+    for (idx = opal_ifbegin(); idx >= 0; idx=opal_ifnext (idx)) {
+        int kindex, index;
+
+        opal_ifindextoaddr (idx, (struct sockaddr*) &local_addr, sizeof (local_addr));
+
+        kindex = opal_ifindextokindex(idx);
+        index = local_kindex_to_index[kindex];
+
+        /* create entry, for this kernel index previsouly not seen */
+        if(-1 == index) {
+            index = num_local_interfaces++;
+            local_kindex_to_index[kindex] = index;
+            local_interfaces[index] = malloc(sizeof(mca_btl_tcp_interface_t));
+            assert(NULL != local_interfaces[index]);
+            mca_btl_tcp_initialise_interface(local_interfaces[index], kindex, index);
         }
+
+        switch(local_addr.ss_family) {
+            case AF_INET:
+                local_interfaces[local_kindex_to_index[kindex]]->ipv4_address = 
+                    malloc(sizeof(local_addr));
+                memcpy(local_interfaces[local_kindex_to_index[kindex]]->ipv4_address, 
+                        &local_addr, sizeof(local_addr));
+                opal_ifindextomask(idx, 
+                        &local_interfaces[local_kindex_to_index[kindex]]->ipv4_netmask, 
+                        sizeof(int));
+                break;
+            case AF_INET6:
+                local_interfaces[local_kindex_to_index[kindex]]->ipv6_address 
+                    = malloc(sizeof(local_addr));
+                memcpy(local_interfaces[local_kindex_to_index[kindex]]->ipv6_address, 
+                        &local_addr, sizeof(local_addr));
+                opal_ifindextomask(idx, 
+                        &local_interfaces[local_kindex_to_index[kindex]]->ipv6_netmask, 
+                        sizeof(int));
+                break;
+            default:
+                opal_output(0, "unknown address family for tcp: %d\n",
+                        local_addr.ss_family);
+        }
+    }
+
+    /*
+     * identify all kernel interfaces and the associated addresses of
+     * the peer
+     */
+
+    for( i = 0; i < btl_proc->proc_addr_count; i++ ) {
+
+        int index;
+
+        mca_btl_tcp_addr_t* endpoint_addr = btl_proc->proc_addrs + i;
+
         mca_btl_tcp_proc_tosocks (endpoint_addr, &endpoint_addr_ss);
 
-        /* The best we could get is IPv4 public. So let's check */
-        if (true == opal_net_addr_isipv4public((struct sockaddr*) &endpoint_addr_ss)) {
-            btl_endpoint->endpoint_addr = endpoint_addr;
-            btl_endpoint->endpoint_addr->addr_inuse++;
-            return OMPI_SUCCESS;
-        }
+        index = peer_kindex_to_index[endpoint_addr->addr_ifkindex];
 
-#if OPAL_WANT_IPV6
-        /* Bug, FIXME: this is Thomas' job: if we have IPv6 AND RFC1918,
-         * use IPv6, else use IPv4 private */
-        /* 
-         * adi@2006-11-22: new bug. It's not sufficient to look for
-         * remote's IPv6 capabilities, we even need to check if we're
-         * able to communicate via IPv6. We might also want to look
-         * at mca_btl_tcp_component.tcp_disable_family
-         */
-        if((AF_INET6 == endpoint_addr->addr_family) &&
-           (6 != mca_btl_tcp_component.tcp_disable_family)) {
-            btl_endpoint->endpoint_addr = endpoint_addr;
-            btl_endpoint->endpoint_addr->addr_inuse++;
-            return OMPI_SUCCESS;
-        }
-#endif
-        /* Read:
-         * if we are on the same network, accept.
-         * Bug, FIXME. May be wrong. That's only a
-         * last resort
-         */
+        if(-1 == index) {
+            index = num_peer_interfaces++;
+            peer_kindex_to_index[endpoint_addr->addr_ifkindex] = index;
+            peer_interfaces[index] = malloc(sizeof(mca_btl_tcp_interface_t));
+            mca_btl_tcp_initialise_interface(peer_interfaces[index], 
+                    endpoint_addr->addr_ifkindex, index);
+        }       
         
-        /* loop over our local addresses and see if we could accept it */
-        {
-            int index;
-            struct sockaddr_storage local_ss;
-            uint32_t netmask;
-            for (index = opal_ifbegin(); index >= 0; index=opal_ifnext (index)) {
-                /* we're only looking for IPv4 (private) */
-                if (AF_INET != endpoint_addr->addr_family) {
-                    continue;
-                }
-                if (OPAL_SUCCESS != 
-                    opal_ifindextoaddr (index, (struct sockaddr*) &local_ss, sizeof (local_ss))) {
-                    opal_output (0,
-                            "btl_tcp_proc: problems getting address for index %i (kernel index %i)\n", index, opal_ifindextokindex (index));
-                    continue;
-                }
-                if (OPAL_SUCCESS != 
-                        opal_ifindextomask (index, &netmask, sizeof (netmask))) {
-                    opal_output (0,
-                            "btl_tcp_proc: problems getting netmask for index %i (kernel index %i)\n", index, opal_ifindextokindex (index));
-                    continue;
-                }
+        /*
+         * in case one of the peer addresses is already in use,
+         * mark the complete peer interface as 'not available'
+         */
+        if(endpoint_addr->addr_inuse) {
+            peer_interfaces[index]->inuse = 1;
+        }
 
-                /* we know that we're only talking about IPv4 now.
-                 * Let's talk about IPv4 _private_, so isipv4public must
-                 * return false
+        switch(endpoint_addr_ss.ss_family) {
+            case AF_INET:
+                peer_interfaces[index]->ipv4_address = malloc(sizeof(endpoint_addr_ss));
+                peer_interfaces[index]->ipv4_endpoint_addr = endpoint_addr;
+                memcpy(peer_interfaces[index]->ipv4_address, 
+                        &endpoint_addr_ss, sizeof(endpoint_addr_ss));
+                break;
+            case AF_INET6:
+                peer_interfaces[index]->ipv6_address = malloc(sizeof(endpoint_addr_ss));
+                peer_interfaces[index]->ipv6_endpoint_addr = endpoint_addr;
+                memcpy(peer_interfaces[index]->ipv6_address, 
+                        &endpoint_addr_ss, sizeof(endpoint_addr_ss));
+                break;
+            default:
+                opal_output(0, "unknown address family for tcp: %d\n",
+                        local_addr.ss_family);
+                /*
+                 * return OMPI_UNREACH or some error, as this is not
+                 * good
                  */
-                if (false == opal_net_addr_isipv4public((struct sockaddr*) &local_ss)) {
-                    if (opal_net_samenetwork((struct sockaddr*) &local_ss,
-                                             (struct sockaddr*) &endpoint_addr_ss, 
-                                             netmask)) {
-                        btl_endpoint->endpoint_addr = endpoint_addr;
-                        btl_endpoint->endpoint_addr->addr_inuse++;
-                        return OMPI_SUCCESS;
+        }
+    }
+
+    /*
+     * assign weights to each possible pair of interfaces    
+     */
+
+    perm_size = num_local_interfaces;
+    if(num_peer_interfaces > perm_size) {
+        perm_size = num_peer_interfaces;
+    }
+
+    weights = (enum mca_btl_tcp_connection_quality**) malloc(perm_size
+            * sizeof(enum mca_btl_tcp_connection_quality*));
+    
+    best_addr = (mca_btl_tcp_addr_t ***) malloc(perm_size
+            * sizeof(mca_btl_tcp_addr_t **));
+    for(i = 0; i < perm_size; ++i) {
+        weights[i] = (enum mca_btl_tcp_connection_quality*) malloc(perm_size *
+                sizeof(enum mca_btl_tcp_connection_quality));
+        memset(weights[i], 0, perm_size * sizeof(enum mca_btl_tcp_connection_quality));
+
+        best_addr[i] = (mca_btl_tcp_addr_t **) malloc(perm_size *
+                sizeof(mca_btl_tcp_addr_t *));
+        memset(best_addr[i], 0, perm_size * sizeof(mca_btl_tcp_addr_t *));
+    }
+    
+
+    for(i=0; i<num_local_interfaces; ++i) {
+        for(j=0; j<num_peer_interfaces; ++j) {
+
+            /*  initially, assume no connection is possible */
+            weights[i][j] = CQ_NO_CONNECTION;
+
+            /* check state of ipv4 address pair */
+            if(NULL != local_interfaces[i]->ipv4_address &&
+               NULL != peer_interfaces[j]->ipv4_address) {
+
+                /*  check for RFC1918 */
+                if(opal_net_addr_isipv4public((struct sockaddr*) local_interfaces[i]->ipv4_address)
+                        && opal_net_addr_isipv4public((struct sockaddr*) 
+                            peer_interfaces[j]->ipv4_address)) {
+                    if(opal_net_samenetwork((struct sockaddr*) local_interfaces[i]->ipv4_address,
+                                (struct sockaddr*) peer_interfaces[j]->ipv4_address,
+                                local_interfaces[i]->ipv4_netmask)) {
+                        weights[i][j] = CQ_PUBLIC_SAME_NETWORK;
+                    } else {
+                        weights[i][j] = CQ_PUBLIC_DIFFERENT_NETWORK;
                     }
+                    best_addr[i][j] = peer_interfaces[j]->ipv4_endpoint_addr;
+                    continue;
+                } else {
+                    if(opal_net_samenetwork((struct sockaddr*) local_interfaces[i]->ipv4_address,
+                                (struct sockaddr*) peer_interfaces[j]->ipv4_address,
+                                local_interfaces[i]->ipv4_netmask)) {
+                        weights[i][j] = CQ_PRIVATE_SAME_NETWORK;
+                    } else {
+                        weights[i][j] = CQ_PRIVATE_DIFFERENT_NETWORK;
+                    }
+                    best_addr[i][j] = peer_interfaces[j]->ipv4_endpoint_addr;
                 }
             }
-        }
-    } /* end of for btl_proc_proc_addr_count */
 
-    /* Make sure there is a common interface */
-    if( NULL != btl_endpoint->endpoint_addr ) {
-        btl_endpoint->endpoint_addr->addr_inuse++;
-        return OMPI_SUCCESS;
-    }
-    /* Bug, FIXME: Once upon a time, there was a lot of
-     * code in here. I've removed it. There might be better
-     * approaches. Thomas will show...
+            /* check state of ipv6 address pair - ipv6 is always public,
+             * since link-local addresses are skipped in opal_ifinit()
+             */
+            if(NULL != local_interfaces[i]->ipv6_address &&
+               NULL != peer_interfaces[j]->ipv6_address) {
+                if(opal_net_samenetwork((struct sockaddr*) local_interfaces[i]->ipv6_address,
+                            (struct sockaddr*) peer_interfaces[j]->ipv6_address,
+                            local_interfaces[i]->ipv6_netmask)) {
+                    weights[i][j] = CQ_PUBLIC_SAME_NETWORK;
+                } else {
+                    weights[i][j] = CQ_PUBLIC_DIFFERENT_NETWORK;
+                }
+                best_addr[i][j] = peer_interfaces[j]->ipv6_endpoint_addr;
+            } 
+
+        } /* for each peer interface */
+    } /* for each local interface */
+
+    /*
+     * determine the size of the set to permute (max number of
+     * interfaces
      */
-    return OMPI_ERR_UNREACH;
+
+    best_assignment = malloc (perm_size * sizeof(int));
+
+    a = (int *) malloc(perm_size * sizeof(int));
+    if (NULL == a) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    memset(a, 0, perm_size * sizeof(int));
+    max_assignment_cardinality = -1;
+    max_assignment_weight = -1;
+    visit(0, -1, perm_size, a);
+
+    rc = OMPI_ERR_UNREACH;
+    for(i = 0; i < perm_size; ++i) {
+        if(best_assignment[i] > num_peer_interfaces
+                || weights[i][best_assignment[i]] == CQ_NO_CONNECTION
+                || peer_interfaces[best_assignment[i]]->inuse 
+                || NULL == peer_interfaces[best_assignment[i]]) {
+            continue;
+        } 
+        peer_interfaces[best_assignment[i]]->inuse++;
+        btl_endpoint->endpoint_addr = best_addr[i][best_assignment[i]];
+        btl_endpoint->endpoint_addr->addr_inuse++;
+        rc = OMPI_SUCCESS;
+        break;
+    }
+
+    for(i = 0; i < perm_size; ++i) {
+        free(weights[i]);
+        free(best_addr[i]);
+    }
+
+    for(i = 0; i < num_peer_interfaces; ++i) {
+        if(NULL != peer_interfaces[i]->ipv4_address) {
+            free(peer_interfaces[i]->ipv4_address);
+        }
+        if(NULL != peer_interfaces[i]->ipv6_address) {
+            free(peer_interfaces[i]->ipv6_address);
+        }
+        free(peer_interfaces[i]);
+    }
+
+    for(i = 0; i < num_local_interfaces; ++i) {
+        if(NULL != local_interfaces[i]->ipv4_address) {
+            free(local_interfaces[i]->ipv4_address);
+        }
+        if(NULL != local_interfaces[i]->ipv6_address) {
+            free(local_interfaces[i]->ipv6_address);
+        }
+        free(local_interfaces[i]);
+    }
+
+    free(weights);
+    free(best_addr);
+    free(best_assignment);
+    free(a);
+
+    return rc;
 }
 
 /*
