@@ -87,11 +87,11 @@ static void append(char *str, int val)
 
 static char *cpu_set_to_list(const PLPA_NAME(cpu_set_t) *cpu_set)
 {
-    size_t i, j, last_bit, size = PLPA_BITMASK_NUM_ELEMENTS;
+    size_t i, j, last_bit, size = PLPA_BITMASK_CPU_MAX;
     unsigned long long mask_value = 0;
     /* Upper bound on string length: 4 digits per
-       PLPA_BITMASK_NUM_ELEMENTS + 1 comma for each */
-    static char str[PLPA_BITMASK_NUM_ELEMENTS * 5];
+       PLPA_BITMASK_CPU_MAX + 1 comma for each */
+    static char str[PLPA_BITMASK_CPU_MAX * 5];
     char temp[8];
 
     if (sizeof(mask_value) * 8 < size) {
@@ -156,7 +156,7 @@ static char *cpu_set_to_list(const PLPA_NAME(cpu_set_t) *cpu_set)
 
 static unsigned long long cpu_set_to_ll(const PLPA_NAME(cpu_set_t) *cpu_set)
 {
-    size_t i, size = PLPA_BITMASK_NUM_ELEMENTS;
+    size_t i, size = PLPA_BITMASK_CPU_MAX;
     unsigned long long mask_value = 0;
 
     if (sizeof(mask_value) * 8 < size) {
@@ -164,7 +164,7 @@ static unsigned long long cpu_set_to_ll(const PLPA_NAME(cpu_set_t) *cpu_set)
     }
     for (i = 0; i < size; ++i) {
         if (PLPA_CPU_ISSET(i, cpu_set)) {
-            mask_value += 1 << i;
+            mask_value |= 1llu << i;
         }
     }
     return mask_value;
@@ -184,7 +184,7 @@ static int cpu_list_to_cpu_set(char *str, PLPA_NAME(cpu_set_t) *cpu_set)
     return ret;
 }
 
-static int mask_to_cpu_set(char *mask_string, PLPA_NAME(cpu_set_t) *cpu_set)
+static int mask_to_cpu_set(const char *mask_string, PLPA_NAME(cpu_set_t) *cpu_set)
 {
     size_t i;
     unsigned int mask_value;
@@ -192,7 +192,7 @@ static int mask_to_cpu_set(char *mask_string, PLPA_NAME(cpu_set_t) *cpu_set)
     PLPA_CPU_ZERO(cpu_set);
     sscanf(mask_string, "%x", &mask_value);
     for (i = 0; i < sizeof(mask_value) * 8; ++i) {
-        if (0 != (mask_value & (1 << i))) {
+        if (0 != (mask_value & (1u << i))) {
             PLPA_CPU_SET(i, cpu_set);
         }
     }
@@ -371,7 +371,6 @@ int main(int argc, char *argv[])
         { "cpu-list", 0, NULL, 'c' },
         { "help", 0, NULL, 'h' },
         { "version", 0, NULL, 'V' },
-        { "testing", 0, NULL, 't' },
         /* Undocumented testing function */
         { "testing", 0, NULL, 't' },
         { NULL, 0, NULL, 0 }
