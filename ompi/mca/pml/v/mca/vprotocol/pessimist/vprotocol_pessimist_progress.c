@@ -13,7 +13,7 @@
 
 int mca_vprotocol_pessimist_progress(void)
 {
-    int ret;
+    int ret = OMPI_ERR_NOT_IMPLEMENTED;
 #if 0    
     /* First let the real progress take place */
     ret = mca_pml_v.host_pml.pml_progress();
