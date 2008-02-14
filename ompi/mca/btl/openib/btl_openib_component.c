@@ -27,6 +27,7 @@
 #include <infiniband/verbs.h>
 #include <errno.h>
 #include <string.h>   /* for strerror()*/
+#include <unistd.h>
 
 #include "ompi/constants.h"
 #include "opal/event/event.h"
