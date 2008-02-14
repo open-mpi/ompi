@@ -869,7 +869,7 @@ int mca_btl_udapl_component_progress()
                     assert(frag->base.des_src_cnt == 0);
                     assert(frag->type == MCA_BTL_UDAPL_RECV);
                     assert(frag->triplet.virtual_address ==
-                            (DAT_VADDR)frag->segment.seg_addr.pval);
+                            (DAT_VADDR)(uintptr_t)frag->segment.seg_addr.pval);
                     assert(frag->triplet.segment_length == frag->size);
                     assert(frag->btl == btl);
 
