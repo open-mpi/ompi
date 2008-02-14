@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -136,7 +136,8 @@ int mca_btl_mx_register( struct mca_btl_base_module_t* btl,
             
             mx_segment.segment_ptr    = (void*)(frag+1);
             mx_segment.segment_length = mx_btl->super.btl_eager_limit;
-            mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1, 0x0ULL, 0x0ULL,
+            mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1,
+                                  0x01ULL, BTL_MX_RECV_MASK,
                                   frag, &(frag->mx_request) );
             if( MX_SUCCESS != mx_return ) {
                 opal_output( 0, "mca_btl_mx_register: mx_irecv failed with status %d (%s)\n",
@@ -317,13 +318,25 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
 
     mx_segment.segment_ptr    = frag->segment[0].seg_addr.pval;
     mx_segment.segment_length = frag->segment[0].seg_len;
-    mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1, frag->segment[0].seg_key.key64, 
+    mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1,
+                          frag->segment[0].seg_key.key64, 
                           BTL_MX_PUT_MASK, NULL, &(frag->mx_request) );
     if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
         opal_output( 0, "Fail to re-register a fragment with the MX NIC ...\n" );
         MCA_BTL_MX_FRAG_RETURN( btl, frag );
         return NULL;
     }
+
+#ifdef HAVE_MX_FORGET
+    {
+        mx_return = mx_forget( mx_btl->mx_endpoint, &(frag->mx_request) );
+        if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
+            opal_output( 0, "mx_forget failed in mca_btl_mx_prepare_dst with error %d (%s)\n",
+                         mx_return, mx_strerror(mx_return) );
+            return NULL;
+        }
+    }
+#endif
 
     /* Allow the fragment to be recycled using the mca_btl_mx_free function */
     frag->type = MCA_BTL_MX_SEND;
@@ -372,7 +385,8 @@ static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
 
     mx_return = mx_isend( mx_btl->mx_endpoint, mx_segment, descriptor->des_src_cnt,
                           endpoint->mx_peer_addr,
-                          descriptor->des_dst[0].seg_key.key64, frag, &frag->mx_request );
+                          descriptor->des_dst[0].seg_key.key64, frag,
+                          &frag->mx_request );
     if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
         opal_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
         return OMPI_ERROR;
@@ -400,7 +414,7 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
     mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)descriptor;
     mx_segment_t mx_segment[2];
     mx_return_t mx_return;
-    uint64_t total_length = 0;
+    uint64_t total_length = 0, tag64;
     uint32_t i = 0;
 
     if( OPAL_UNLIKELY(MCA_BTL_MX_CONNECTED != ((mca_btl_mx_endpoint_t*)endpoint)->status) ) {
@@ -421,8 +435,10 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
         total_length += descriptor->des_src[i].seg_len;
     } while (++i < descriptor->des_src_cnt);
 
-    mx_return = mx_isend( mx_btl->mx_endpoint, mx_segment, descriptor->des_src_cnt, endpoint->mx_peer_addr,
-                          (uint64_t)tag, frag, &frag->mx_request );
+    tag64 = 0x01ULL | (((uint64_t)tag) << 8);
+    mx_return = mx_isend( mx_btl->mx_endpoint, mx_segment, descriptor->des_src_cnt,
+                          endpoint->mx_peer_addr,
+                          tag64, frag, &frag->mx_request );
     if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
         opal_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
         return OMPI_ERROR;

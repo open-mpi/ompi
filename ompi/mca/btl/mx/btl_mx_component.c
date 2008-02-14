@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -143,9 +143,9 @@ int mca_btl_mx_component_open(void)
 			       false, false, NULL, &mca_btl_mx_component.mx_if_exclude );
 
     mca_btl_mx_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT;
-    mca_btl_mx_module.super.btl_eager_limit = 4096;
-    mca_btl_mx_module.super.btl_rndv_eager_limit = 4096;
-    mca_btl_mx_module.super.btl_max_send_size = 64*1024;
+    mca_btl_mx_module.super.btl_eager_limit = 1024;
+    mca_btl_mx_module.super.btl_rndv_eager_limit = 1024;
+    mca_btl_mx_module.super.btl_max_send_size = 8*1024;
     mca_btl_mx_module.super.btl_rdma_pipeline_send_length = 256*1024;
     mca_btl_mx_module.super.btl_rdma_pipeline_frag_size = 8*1024*1024;
     mca_btl_mx_module.super.btl_min_rdma_pipeline_size = 0;
@@ -215,11 +215,10 @@ mca_btl_mx_unexpected_handler( void *context, mx_endpoint_addr_t source,
     /*opal_output( 0, "Get unexpected handler context %p source %lld match_value %lld\n"
       "\tlength %d data %p\n", context, source.stuff[0], match_value, length,
       data_if_available );*/
-    if( match_value > MCA_BTL_TAG_MAX )
+    if( !(0x01 & match_value) )
         return MX_RECV_CONTINUE;
 
-    tag = match_value & 0xff;
-    assert( tag < 16 );
+    tag = (match_value >> 8) & 0xff;
     reg = mca_btl_base_active_message_trigger + tag;
 
     segment.seg_addr.pval = data_if_available;
@@ -437,17 +436,26 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
         return NULL;
     }
 
-    /* set the MX error handle to always return. This function is the only MX function
-     * allowed to be called before mx_init in order to make sure that if the MX is not
-     * up and running the MX library does not exit the application.
+    /**
+     * As the MX MTL get initialized before the MX BTL it will call the
+     * mx_init and the environment variables set by the BTL will be useless.
+     * Closing the MX will force the next call to mx_init to take these
+     * environment variables into account.
      */
-    mx_set_error_handler(MX_ERRORS_RETURN);
+    /*(void)ompi_common_mx_finalize();*/
+
     if( 0 == mca_btl_mx_component.mx_support_sharedmem )
         opal_setenv( "MX_DISABLE_SHMEM", "1", true, &environ );
     if( 0 == mca_btl_mx_component.mx_support_self )
         opal_setenv( "MX_DISABLE_SELF", "1", true, &environ );
     /* Force the long pipeline (up to 4Kb fragments) */
     opal_setenv( "MX_PIPELINE_LOG", "0", true, &environ );
+
+    /* set the MX error handle to always return. This function is the only MX function
+     * allowed to be called before mx_init in order to make sure that if the MX is not
+     * up and running the MX library does not exit the application.
+     */
+    mx_set_error_handler(MX_ERRORS_RETURN);
 
     /* First check if MX is available ... */
     if( OMPI_SUCCESS != ompi_common_mx_initialize() ) { 
@@ -618,15 +626,15 @@ int mca_btl_mx_component_progress(void)
          */
         frag = mx_status.context;
         if( NULL != frag ) {
-            if( 0xff == frag->type ) {  /* it's a send */
+            if( MCA_BTL_MX_SEND == frag->type ) {  /* it's a send */
                 /* call the completion callback */
                 frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint,
                                        &(frag->base), OMPI_SUCCESS );
             } else if( !mca_btl_mx_component.mx_use_unexpected ) { /* and this one is a receive */
                 mca_btl_active_message_callback_t* reg;
                 mx_segment_t mx_segment;
-                uint8_t tag = mx_status.match_info & 0xff;
-
+                uint8_t tag = (mx_status.match_info >> 8) & 0xff;
+                
                 reg = mca_btl_base_active_message_trigger + tag;
                 frag->base.des_dst->seg_len = mx_status.msg_length;
                 reg->cbfunc( &(mx_btl->super), tag, &(frag->base), reg->cbdata );
@@ -638,7 +646,7 @@ int mca_btl_mx_component_progress(void)
                 mx_segment.segment_ptr = frag->base.des_dst->seg_addr.pval;
                 mx_segment.segment_length = mca_btl_mx_module.super.btl_eager_limit;
                 mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1,
-                                      0x0ULL, 0x0ULL,
+                                      0x01ULL, BTL_MX_RECV_MASK,
                                       frag, &(frag->mx_request) );
                 if( MX_SUCCESS != mx_return ) {
                     opal_output( 0, "Fail to re-register a fragment with the MX NIC ... (%s)\n",

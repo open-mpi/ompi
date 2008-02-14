@@ -42,14 +42,12 @@
 #include <mx_extensions.h>
 #endif  /* HAVE_MX_EXTENSIONS_H */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * The mask used for receive and for the PUT protocol
  */
-#define BTL_MX_RECV_MASK 0x0000ffffffffffffULL
+#define BTL_MX_RECV_MASK 0x00000000000000ffULL
 #define BTL_MX_PUT_MASK  0xffffffffffffffffULL
 
 /**
@@ -310,7 +308,6 @@ mca_btl_mx_prepare_dst( struct mca_btl_base_module_t* btl,
  */
 int mca_btl_mx_ft_event(int state);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif
