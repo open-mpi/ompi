@@ -106,7 +106,7 @@ mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc)
 {
     mca_btl_mx_proc_t* module_proc = NULL;
     mca_btl_mx_addr_t  *mx_peers;
-    int rc, i;
+    int rc;
     size_t size;
 
     /* Check if we have already created a MX proc
@@ -142,8 +142,8 @@ mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc)
     module_proc->mx_peers_count = size / sizeof(mca_btl_mx_addr_t);
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    for (i = 0 ; i < module_proc->mx_peers_count ; ++i) {
-        BTL_MX_ADDR_NTOH(mx_peers[i]);
+    for (rc = 0 ; rc < module_proc->mx_peers_count ; ++rc) {
+        BTL_MX_ADDR_NTOH(mx_peers[rc]);
     }
 #endif
     module_proc->mx_peers = mx_peers;
