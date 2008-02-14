@@ -92,7 +92,7 @@ static int udapl_reg_mr(void *reg_data, void *base, size_t size,
     int rc;
 
     region.for_va = base;
-    udapl_reg->lmr_triplet.virtual_address = (DAT_VADDR)base;
+    udapl_reg->lmr_triplet.virtual_address = (DAT_VADDR)(uintptr_t)base;
     udapl_reg->lmr_triplet.segment_length = size;
     udapl_reg->lmr = NULL;
 
@@ -849,7 +849,8 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
      * that rdma can be used to transfer the fragment the
      * triplet.segment_len will have to change.
      */
-    frag->triplet.virtual_address = (DAT_VADDR)frag->segment.seg_addr.pval;
+    frag->triplet.virtual_address =
+        (DAT_VADDR)(uintptr_t)frag->segment.seg_addr.pval;
     frag->triplet.segment_length =
         frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t);
     assert(frag->triplet.lmr_context ==
@@ -956,7 +957,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
             frag->segment.seg_len = max_data;
             frag->segment.seg_addr.pval = iov.iov_base;
             frag->triplet.segment_length = max_data;
-            frag->triplet.virtual_address = (DAT_VADDR)iov.iov_base;
+            frag->triplet.virtual_address = (DAT_VADDR)(uintptr_t)iov.iov_base;
             frag->triplet.lmr_context =
                 ((mca_btl_udapl_reg_t*)registration)->lmr_triplet.lmr_context;
 
@@ -1005,7 +1006,8 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
     frag->segment.seg_len = max_data + reserve;
     frag->triplet.segment_length =
         max_data + reserve + sizeof(mca_btl_udapl_footer_t);
-    frag->triplet.virtual_address = (DAT_VADDR)frag->segment.seg_addr.pval;
+    frag->triplet.virtual_address =
+        (DAT_VADDR)(uintptr_t)frag->segment.seg_addr.pval;
 
     /* initialize base descriptor */
     frag->base.des_src = &frag->segment;
@@ -1149,7 +1151,7 @@ int mca_btl_udapl_put(
         remote_buffer.rmr_context =
             (DAT_RMR_CONTEXT)dst_segment->seg_key.key32[0];
         remote_buffer.target_address =
-            (DAT_VADDR)dst_segment->seg_addr.lval;
+            (DAT_VADDR)(uintptr_t)dst_segment->seg_addr.lval;
         remote_buffer.segment_length = dst_segment->seg_len;
 
         cookie.as_ptr = frag;

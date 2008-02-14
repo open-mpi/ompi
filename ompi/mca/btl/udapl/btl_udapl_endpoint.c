@@ -127,7 +127,7 @@ int mca_btl_udapl_endpoint_write_eager(mca_btl_base_endpoint_t* endpoint,
     /* establish remote memory region */
     remote_buffer.rmr_context =
         (DAT_RMR_CONTEXT)endpoint->endpoint_eager_rdma_remote.rkey;
-    remote_buffer.target_address = (DAT_VADDR)remote_buf;
+    remote_buffer.target_address = (DAT_VADDR)(uintptr_t)remote_buf;
     remote_buffer.segment_length = frag->triplet.segment_length;
 
     /* write the data out */
@@ -773,7 +773,7 @@ static int mca_btl_udapl_endpoint_finish_max(mca_btl_udapl_endpoint_t* endpoint)
         cookie.as_ptr = frag;
             
         assert(frag->triplet.virtual_address == 
-               (DAT_VADDR)frag->segment.seg_addr.pval);
+               (DAT_VADDR)(uintptr_t)frag->segment.seg_addr.pval);
         assert(frag->triplet.segment_length ==
                 frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t));
         assert(frag->size ==
@@ -861,7 +861,8 @@ static int mca_btl_udapl_endpoint_post_recv(mca_btl_udapl_endpoint_t* endpoint,
         assert(size == frag->size);
         /* Set up the LMR triplet from the frag segment */
         /* Note that this triplet defines a sub-region of a registered LMR */
-        frag->triplet.virtual_address = (DAT_VADDR)frag->segment.seg_addr.pval;
+        frag->triplet.virtual_address =
+            (DAT_VADDR)(uintptr_t)frag->segment.seg_addr.pval;
         frag->triplet.segment_length = frag->size;
     
         frag->btl = endpoint->endpoint_btl;
@@ -1009,7 +1010,8 @@ static mca_btl_base_descriptor_t* mca_btl_udapl_endpoint_initialize_control_mess
 
     /* Set up the LMR triplet from the frag segment */
     frag->segment.seg_len = (uint32_t)size;
-    frag->triplet.virtual_address = (DAT_VADDR)frag->segment.seg_addr.pval;
+    frag->triplet.virtual_address =
+        (DAT_VADDR)(uintptr_t)frag->segment.seg_addr.pval;
 
     /* assume send/recv as default when computing segment_length */
     frag->triplet.segment_length =
