@@ -28,6 +28,7 @@
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
+#include "ompi/request/request.h"
 
 BEGIN_C_DECLS
 
@@ -96,6 +97,9 @@ BEGIN_C_DECLS
         /** MCA parameter: number of regions per memory bank */
         size_t sm2_num_regions_per_bank;
 
+        /** MCA parameter: order of barrier tree */
+        int order_barrier_tree;
+
     };
 
     /**
@@ -103,6 +107,67 @@ BEGIN_C_DECLS
      */
     typedef struct mca_coll_sm2_component_t mca_coll_sm2_component_t;
 
+
+    /*
+     * N-order tree node description
+     */
+    struct tree_node_t {
+        int my_rank;
+        int tree_size;
+        int n_parents;
+        int n_children;
+        int parent_rank;
+        int *children_ranks;
+    };
+    typedef struct tree_node_t tree_node_t;
+
+    /*
+     * Barrier request objects
+     */
+
+    /* shared memory data strucutures */
+    struct mca_coll_sm2_nb_request_process_shared_mem_t {
+        /* flag used to indicate the status of this memory region */
+        long long flag;
+
+        /* pading */
+        char padding[CACHE_LINE_SIZE-sizeof(long long)];
+    };
+    typedef struct mca_coll_sm2_nb_request_process_shared_mem_t
+        mca_coll_sm2_nb_request_process_shared_mem_t;
+
+
+    /* enum for phase at which the nb barrier is in */
+    enum{
+        NB_BARRIER_FAN_IN,
+        NB_BARRIER_FAN_OUT,
+        /* done and not started are the same for all practicle
+         * purposes, as the init funtion always sets this flag
+         */
+        NB_BARRIER_DONE
+    };
+    /* process private data structures */
+    struct mca_coll_sm2_nb_request_process_private_mem_t {
+        struct ompi_request_t super;
+        /* tag that will be used as unique barrier identifier */
+        long long tag;
+
+        /* pointer to module */
+        /* shared memory strucuture index - will be flip-flopping between structures */
+        int sm_index;
+
+        /* this processes base address of the barrier shared memory region */
+        mca_coll_sm2_nb_request_process_shared_mem_t *barrier_base_address[2];
+
+        /* module pointer */
+        mca_coll_sm2_module_t *coll_sm2_module;
+
+        /* barrier phase */
+        sm2_barrier_phase;
+        
+    };
+    typedef struct mca_coll_sm2_nb_request_process_private_mem_t 
+        mca_coll_sm2_nb_request_process_private_mem_t;
 
     struct mca_coll_sm2_module_t {
         /* base structure */
@@ -117,12 +182,65 @@ BEGIN_C_DECLS
         /* Memory pointer to shared file */
         char *shared_memory_region;
 
+        /* Pointer to the collective buffers */
+        char *collective_buffer_region;
+
+        /* size of memory region, per process, for memory bank management */
+        size_t sm2_size_management_region_per_proc;
+
+        /* size of each memory segment */
+        size_t segment_size;
+
+        /* size, per process, of each memory segment */
+        size_t segement_size_per_process;
+
+        /* number of memory banks */
+        int sm2_module_num_memory_banks;
+
+        /* number of buffers per memory bank */
+        int sm2_module_num_regions_per_bank;
+
+        /* total number of working buffers */
+        int sm2_module_num_buffers;
+
+        /* allocated buffer index - local counter */
+        int sm2_allocated_buffer_index;
+
+        /* freed allocated buffer index - local counter */
+        int sm2_freed_buffer_index;
+
+        /* index of first buffer in next memory bank - need to
+         *   make sure next bank is ready for use, before we use it.
+         *   We complete the non-blocking barrier before allocating
+         *   this buffer.
+         */
+        int sm2_first_buffer_index_next_bank;
+
+        /* index of last buffer in this memory bank - 
+         *   We start the non-blocking barrier after allocating
+         *   this buffer.
+         */
+        int sm2_last_buffer_index_this_bank;
+
+        /* communicator - there is a one-to-one association between
+         *  the communicator and the module
+         */
+        struct ompi_communicator_t *module_comm;
+
+        /* non-blocking barrier strcutres used for mangeing the shared
+         * buffers */
+        tree_node_t barrier_tree;
+
+        mca_coll_sm2_nb_request_process_private_mem_t *barrier_request;
+
+        /* unique tag used for non-blocking collectives */
+        long long nb_barrier_tag;
+
     };
 
     typedef struct mca_coll_sm2_module_t mca_coll_sm2_module_t;
     OBJ_CLASS_DECLARATION(mca_coll_sm2_module_t);
 
-    
     /**
      * Global component instance
      */
@@ -144,6 +262,11 @@ BEGIN_C_DECLS
      */
     struct mca_coll_base_module_1_1_0_t *
     mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority);
+
+    /* non-blocking barrier - init function */
+    int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
+            mca_coll_sm2_nb_request_process_private_mem_t *request,
+            struct mca_coll_base_module_1_1_0_t *module);
 
 /**
  * Macro to setup flag usage

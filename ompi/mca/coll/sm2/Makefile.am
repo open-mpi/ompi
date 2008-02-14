@@ -20,7 +20,10 @@ not_used_yet =
 
 sources = \
         coll_sm2.h \
-        coll_sm2_component.c 
+        coll_sm2_component.c  \
+        coll_sm2_module.c \
+        coll_sm2_allreduce.c \
+        coll_sm2_barrier.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
