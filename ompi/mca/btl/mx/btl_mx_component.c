@@ -119,15 +119,6 @@ int mca_btl_mx_component_open(void)
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "free_list_max",
                             "Maximum number of request this device is allowed to allocate",
                             false, false, 128, &mca_btl_mx_component.mx_free_list_max );
-    /* The ompi_free_list has a problem if the (max - num) is not
-     * divisible by the increament. So make sure it is ...
-     */
-    if( (mca_btl_mx_component.mx_free_list_max - mca_btl_mx_component.mx_free_list_num) %
-        mca_btl_mx_component.mx_free_list_inc ) {
-        int overhead = (mca_btl_mx_component.mx_free_list_max - mca_btl_mx_component.mx_free_list_num) %
-            mca_btl_mx_component.mx_free_list_inc;
-        mca_btl_mx_component.mx_free_list_max -= overhead;
-    }
 
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_posted_recv",
                             "Number of received posted in advance. Increasing this number for"
