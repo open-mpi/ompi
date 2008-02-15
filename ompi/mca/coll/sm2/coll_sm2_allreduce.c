@@ -45,7 +45,7 @@ int mca_coll_sm2_allreduce_intra(void *sbuf, void *rbuf, int count,
     }
 
     /* "free" the shared-memory working buffer */
-    rc=alloc_sm2_shared_buffer(sm_module);
+    rc=free_sm2_shared_buffer(sm_module);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }
@@ -53,5 +53,9 @@ int mca_coll_sm2_allreduce_intra(void *sbuf, void *rbuf, int count,
     return OMPI_SUCCESS;
 
 Error:
+    /* debug */
+    fprintf(stderr," EEEError from allredcue : %d \n",rc);
+    fflush(stderr);
+    /* end debug */
     return rc;
 }
