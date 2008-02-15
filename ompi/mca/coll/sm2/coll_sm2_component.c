@@ -130,6 +130,9 @@ static int sm2_open(void)
     /* set component priority */
     cs->sm2_priority=
         mca_coll_sm2_param_register_int("sm_priority",0);
+    /* debug */
+    fprintf(stderr," DDDD cs->sm2_priority %d \n",cs->sm2_priority);
+    /* end debub */
 
     /* set control region size (bytes), per proc */
     cs->sm2_ctl_size_per_proc=
