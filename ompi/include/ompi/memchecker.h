@@ -40,21 +40,23 @@ static inline int memchecker_call (int (*f)(void *, size_t), void * p, size_t co
     size_t j;
     MPI_Aint *array_of_adds;
     MPI_Datatype *array_of_dtypes;
-    
+
     if (ompi_ddt_is_contiguous_memory_layout(type, count)) {
         f(p, count * (type->true_ub - type->true_lb));
     } else {
         char * tmp = (char *)p;
         int disp;
 
-        MPI_Type_get_envelope(type, &num_ints, &num_adds, &num_dtypes, &combiner);
+        ompi_ddt_get_args( type, 0, &num_ints, NULL, &num_adds, NULL, 
+                           &num_dtypes, NULL, &combiner );
         
         array_of_ints = (int *)malloc( num_ints * sizeof(int) );
         array_of_adds = (MPI_Aint *)malloc( num_adds * sizeof(MPI_Aint) );
         array_of_dtypes = (MPI_Datatype *)malloc( num_dtypes * sizeof(MPI_Datatype) );
-        
-        MPI_Type_get_contents( type, num_ints, num_adds, num_dtypes,
-                               array_of_ints, array_of_adds, array_of_dtypes );
+
+        ompi_ddt_get_args( type, 1, &num_ints, array_of_ints,
+                            &num_adds, array_of_adds,
+                            &num_dtypes, array_of_dtypes, NULL );
             
         switch(combiner) {
         case MPI_COMBINER_NAMED:
