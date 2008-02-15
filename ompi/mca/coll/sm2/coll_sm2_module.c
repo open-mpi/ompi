@@ -469,7 +469,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     sm_module->super.ft_event        = NULL;
     sm_module->super.coll_allgather  = NULL;
     sm_module->super.coll_allgatherv = NULL;
-    sm_module->super.coll_allreduce  = NULL;
+    sm_module->super.coll_allreduce  = mca_coll_sm2_allreduce_intra;
     sm_module->super.coll_alltoall   = NULL;
     sm_module->super.coll_alltoallv  = NULL;
     sm_module->super.coll_alltoallw  = NULL;
