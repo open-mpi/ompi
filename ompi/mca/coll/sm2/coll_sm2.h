@@ -133,12 +133,13 @@ BEGIN_C_DECLS
         /* pading */
         char padding[CACHE_LINE_SIZE-sizeof(long long)];
     };
+
     typedef struct mca_coll_sm2_nb_request_process_shared_mem_t
         mca_coll_sm2_nb_request_process_shared_mem_t;
 
-
     /* enum for phase at which the nb barrier is in */
     enum{
+        NB_BARRIER_INACTIVE,
         NB_BARRIER_FAN_IN,
         NB_BARRIER_FAN_OUT,
         /* done and not started are the same for all practicle
@@ -146,13 +147,16 @@ BEGIN_C_DECLS
          */
         NB_BARRIER_DONE
     };
-    /* process private data structures */
+
+    /* forward declartion */
+    struct mca_coll_sm2_module_t;
+
+    /* process private barrier request object */
     struct mca_coll_sm2_nb_request_process_private_mem_t {
         struct ompi_request_t super;
         /* tag that will be used as unique barrier identifier */
         long long tag;
 
-        /* pointer to module */
         /* shared memory strucuture index - will be flip-flopping between structures */
         int sm_index;
 
@@ -160,10 +164,10 @@ BEGIN_C_DECLS
         mca_coll_sm2_nb_request_process_shared_mem_t *barrier_base_address[2];
 
         /* module pointer */
-        mca_coll_sm2_module_t *coll_sm2_module;
+        struct mca_coll_sm2_module_t *coll_sm2_module;
 
         /* barrier phase */
-        sm2_barrier_phase;
+        int sm2_barrier_phase;
         
     };
     typedef struct mca_coll_sm2_nb_request_process_private_mem_t 
@@ -231,7 +235,11 @@ BEGIN_C_DECLS
          * buffers */
         tree_node_t barrier_tree;
 
+        /* request objects for the non-blocking barrier */
         mca_coll_sm2_nb_request_process_private_mem_t *barrier_request;
+
+        /* barrier request to progress */
+        int current_request_index;
 
         /* unique tag used for non-blocking collectives */
         long long nb_barrier_tag;
@@ -240,6 +248,7 @@ BEGIN_C_DECLS
 
     typedef struct mca_coll_sm2_module_t mca_coll_sm2_module_t;
     OBJ_CLASS_DECLARATION(mca_coll_sm2_module_t);
+
 
     /**
      * Global component instance
@@ -265,6 +274,11 @@ BEGIN_C_DECLS
 
     /* non-blocking barrier - init function */
     int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
+            mca_coll_sm2_nb_request_process_private_mem_t *request,
+            struct mca_coll_base_module_1_1_0_t *module);
+
+    /* non-blocking barrier - completion function */
+    int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
             mca_coll_sm2_nb_request_process_private_mem_t *request,
             struct mca_coll_base_module_1_1_0_t *module);
 
