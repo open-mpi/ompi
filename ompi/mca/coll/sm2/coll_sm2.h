@@ -282,6 +282,15 @@ BEGIN_C_DECLS
             mca_coll_sm2_nb_request_process_private_mem_t *request,
             struct mca_coll_base_module_1_1_0_t *module);
 
+    /* allocate working buffer */
+    char *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module);
+
+    /* free working buffer - it is assumed that buffers are released in
+     * the order they are allocated.  We can assume this because each
+     * communiator will have only one outstanding collective at a given
+     * time, and we ensure that operations are completed in order. */
+    int free_sm2_shared_buffer(mca_coll_sm2_module_t *module);
+
 /**
  * Macro to setup flag usage
  */
