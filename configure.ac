@@ -423,6 +423,14 @@ AC_DEFINE([ompi_fortran_bogus_type_t], [int],
 
 OMPI_F77_CHECK([LOGICAL], [yes], 
                [char, int32_t, int, int64_t, long long, long], [-1])
+OMPI_F77_CHECK([LOGICAL*1], [yes], 
+               [char, int8_t, short, int32_t, int, int64_t, long long, long], [1])
+OMPI_F77_CHECK([LOGICAL*2], [yes], 
+               [short, int16_t, int32_t, int, int64_t, long long, long], [2])
+OMPI_F77_CHECK([LOGICAL*4], [yes], 
+               [int32_t, int, int64_t, long long, long], [4])
+OMPI_F77_CHECK([LOGICAL*8], [yes], 
+               [int, int64_t, long long, long], [8])
 OMPI_F77_CHECK([INTEGER], [yes], 
                [int32_t, int, int64_t, long long, long], [-1])
 OMPI_F77_CHECK([INTEGER*1], [no], 
@@ -520,6 +528,10 @@ OMPI_F90_CKINDS=""
 
 # LOGICAL and friends
 OMPI_F90_CHECK([LOGICAL])
+OMPI_F90_CHECK([LOGICAL*1], [1])
+OMPI_F90_CHECK([LOGICAL*2], [2])
+OMPI_F90_CHECK([LOGICAL*4], [4])
+OMPI_F90_CHECK([LOGICAL*8], [8])
 
 # INTEGER and friends
 OMPI_F90_CHECK([INTEGER])

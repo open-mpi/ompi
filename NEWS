@@ -29,6 +29,9 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
+-Add support for some optional Fortran datatypes (MPI_LOGICAL1, MPI_LOGICAL2,
+  MPI_LOGICAL4 and MPI_LOGICAL8)
+
 -Convert the C++ Comm, Datatype and Winn keyval creation and intercept callbacks
   to *not* use the STL as well as removing the STL use from the error handler
   routines.  This was removing the STL from the C++ bindings (Solaris has 2
