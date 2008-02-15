@@ -628,6 +628,18 @@ OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_cxx_ldblcplex;
 OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_cxx_bool;
 OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_2cplex, ompi_mpi_2dblcplex;
 /* other MPI2 datatypes */
+#if OMPI_HAVE_FORTRAN_LOGICAL1
+OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_logical1;
+#endif
+#if OMPI_HAVE_FORTRAN_LOGICAL2
+OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_logical2;
+#endif
+#if OMPI_HAVE_FORTRAN_LOGICAL4
+OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_logical4;
+#endif
+#if OMPI_HAVE_FORTRAN_LOGICAL8
+OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_logical8;
+#endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
 OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_integer1;
 #endif
@@ -735,6 +747,18 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 /* Fortran datatype bindings */
 #define MPI_CHARACTER (&ompi_mpi_character)
 #define MPI_LOGICAL (&ompi_mpi_logic)
+#if OMPI_HAVE_FORTRAN_LOGICAL1
+#define MPI_LOGICAL1 (&ompi_mpi_logical1)
+#endif
+#if OMPI_HAVE_FORTRAN_LOGICAL2
+#define MPI_LOGICAL2 (&ompi_mpi_logical2)
+#endif
+#if OMPI_HAVE_FORTRAN_LOGICAL4
+#define MPI_LOGICAL4 (&ompi_mpi_logical4)
+#endif
+#if OMPI_HAVE_FORTRAN_LOGICAL8
+#define MPI_LOGICAL8 (&ompi_mpi_logical8)
+#endif
 #define MPI_INTEGER (&ompi_mpi_integer)
 #if OMPI_HAVE_FORTRAN_INTEGER1
 #define MPI_INTEGER1 (&ompi_mpi_integer1)
