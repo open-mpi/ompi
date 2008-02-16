@@ -33,6 +33,18 @@
    ompi_config.h must be included before all other files, so this
    should be good enough */
 
+/* Whether we have FORTRAN LOGICAL*1 or not */
+#undef OMPI_HAVE_FORTRAN_LOGICAL1
+
+/* Whether we have FORTRAN LOGICAL*2 or not */
+#undef OMPI_HAVE_FORTRAN_LOGICAL2
+
+/* Whether we have FORTRAN LOGICAL*4 or not */
+#undef OMPI_HAVE_FORTRAN_LOGICAL4
+
+/* Whether we have FORTRAN LOGICAL*8 or not */
+#undef OMPI_HAVE_FORTRAN_LOGICAL8
+
 /* Whether we have FORTRAN INTEGER*1 or not */
 #undef OMPI_HAVE_FORTRAN_INTEGER1
 
