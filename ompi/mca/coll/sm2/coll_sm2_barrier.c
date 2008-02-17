@@ -116,7 +116,7 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
     /* Set my completion flag */
     sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
         (sm_barrier_region+
-         sm_module->barrier_tree.children_ranks[sm_module->barrier_tree.my_rank] *
+         sm_module->barrier_tree.my_rank*
          sm_module->segement_size_per_process);
     sm_address->flag=tag;
     /* don't need memory barrier here, as we are not setting any other sm
