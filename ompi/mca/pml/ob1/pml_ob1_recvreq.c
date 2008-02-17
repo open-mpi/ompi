@@ -767,9 +767,6 @@ int mca_pml_ob1_recv_request_schedule_once(
             mca_bml_base_free(bml_btl,dst);
             continue;
         }
-
-        /* run progress as the prepare (pinning) can take some time */
-        mca_bml.bml_progress();
     }
 
     return OMPI_SUCCESS;

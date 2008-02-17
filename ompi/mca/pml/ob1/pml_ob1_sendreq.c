@@ -988,7 +988,6 @@ cannot_pack:
             mca_bml_base_free(bml_btl,des);
             continue;
         }
-        mca_bml.bml_progress();
     }
 
     return OMPI_SUCCESS;
