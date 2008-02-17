@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      UT-Battelle, LLC
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,6 +19,8 @@
  */
 
 #include "ompi_config.h"
+#include <stdio.h>
+
 #include "ompi/datatype/convertor_internal.h"
 #include "ompi/datatype/datatype_internal.h"
 
