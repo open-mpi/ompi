@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      UT-Battelle, LLC
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -85,6 +86,8 @@ ORTE_DECLSPEC int orte_ras_base_reallocate(orte_jobid_t parent_jobid,
 ORTE_DECLSPEC int orte_ras_base_set_oversubscribe_override(orte_jobid_t job);
 
 ORTE_DECLSPEC int orte_ras_base_get_oversubscribe_override(orte_jobid_t job, bool *flag);
+
+ORTE_DECLSPEC int orte_ras_base_read_nodename_file(opal_list_t *nodes, char *filename);
 
 /*
  * Query the registry for all available nodes 
