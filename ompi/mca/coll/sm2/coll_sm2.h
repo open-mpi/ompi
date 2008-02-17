@@ -157,6 +157,9 @@ BEGIN_C_DECLS
         /* tag that will be used as unique barrier identifier */
         long long tag;
 
+        /* barrier phase */
+        int sm2_barrier_phase;
+        
         /* shared memory strucuture index - will be flip-flopping between structures */
         int sm_index;
 
@@ -166,9 +169,6 @@ BEGIN_C_DECLS
         /* module pointer */
         struct mca_coll_sm2_module_t *coll_sm2_module;
 
-        /* barrier phase */
-        int sm2_barrier_phase;
-        
     };
     typedef struct mca_coll_sm2_nb_request_process_private_mem_t 
         mca_coll_sm2_nb_request_process_private_mem_t;

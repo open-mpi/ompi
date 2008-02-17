@@ -33,6 +33,10 @@ int mca_coll_sm2_allreduce_intra(void *sbuf, void *rbuf, int count,
 
     /* get a pointer to the shared-memory working buffer */
     sm_buffer=alloc_sm2_shared_buffer(sm_module);
+    /* debug 
+    fprintf(stderr," HHH sm_buffer %p pid %u \n",sm_buffer,getpid());
+    fflush(stderr);
+     end debug */
     if( NULL == sm_buffer) {
         rc=OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
