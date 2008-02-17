@@ -461,7 +461,7 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
           *  Packing finished, make the user buffer unaccessable.
           */
         MEMCHECKER(
-            memchecker_call(&opal_memchecker_base_mem_defined,
+            memchecker_call(&opal_memchecker_base_mem_noaccess,
                             sendreq->req_send.req_base.req_addr,
                             sendreq->req_send.req_base.req_count,
                             sendreq->req_send.req_base.req_datatype);
