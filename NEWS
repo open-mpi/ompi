@@ -4,7 +4,7 @@ Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 Copyright (c) 2004-2006 The University of Tennessee and The University
                         of Tennessee Research Foundation.  All rights
                         reserved.
-Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
@@ -28,6 +28,7 @@ version 1.0.
 
 Trunk (not on release branches yet)
 -----------------------------------
+- Add Valgrind-based memory checking for MPI-semantic checks.
 
 -Add support for some optional Fortran datatypes (MPI_LOGICAL1, MPI_LOGICAL2,
   MPI_LOGICAL4 and MPI_LOGICAL8)
