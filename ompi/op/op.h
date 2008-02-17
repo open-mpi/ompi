@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      UT-Battelle, LLC
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,6 +32,8 @@
 #include "ompi/datatype/datatype.h"
 #include "opal/class/opal_object.h"
 #include "ompi/mpi/f77/fint_2_int.h"
+
+#include <stdio.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
