@@ -27,16 +27,16 @@
 
 #include "orte/orte_constants.h"
 #include "orte/mca/sds/sds.h"
-#include "orte/mca/sds/cnos/sds_cnos.h"
+#include "orte/mca/sds/alps/sds_alps.h"
 #include "opal/mca/base/mca_base_param.h"
 
-extern orte_sds_base_module_t orte_sds_cnos_module;
+extern orte_sds_base_module_t orte_sds_alps_module;
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
-orte_sds_base_component_t mca_sds_cnos_component = {
+orte_sds_base_component_t mca_sds_alps_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
     {
@@ -45,14 +45,14 @@ orte_sds_base_component_t mca_sds_cnos_component = {
         ORTE_SDS_BASE_VERSION_1_0_0,
 
         /* Component name and version */
-        "cnos",
+        "alps",
         ORTE_MAJOR_VERSION,
         ORTE_MINOR_VERSION,
         ORTE_RELEASE_VERSION,
 
         /* Component open and close functions */
-        orte_sds_cnos_component_open,
-        orte_sds_cnos_component_close
+        orte_sds_alps_component_open,
+        orte_sds_alps_component_close
     },
 
     /* Next the MCA v1.0.0 component meta data */
@@ -62,19 +62,19 @@ orte_sds_base_component_t mca_sds_cnos_component = {
     },
 
     /* Initialization / querying functions */
-    orte_sds_cnos_component_init
+    orte_sds_alps_component_init
 };
 
 
 int
-orte_sds_cnos_component_open(void)
+orte_sds_alps_component_open(void)
 {
     return ORTE_SUCCESS;
 }
 
 
 orte_sds_base_module_t *
-orte_sds_cnos_component_init(int *priority)
+orte_sds_alps_component_init(int *priority)
 {
     int id;
     char *mode;
@@ -82,21 +82,24 @@ orte_sds_cnos_component_init(int *priority)
     /* okay, not seed/singleton attempt another approach */
     id = mca_base_param_register_string("ns", "nds", NULL, NULL, NULL);
     mca_base_param_lookup_string(id, &mode);
-
-    /* if mode isn't NULL, then we have an ORTE starter.  Don't use
-       this component */
+    
+    if (NULL == mode || 0 != strcmp("alps", mode)) {
+        if (NULL != mode) {
+            free(mode);
+        }
+        return NULL; 
+    }
     if (NULL != mode) {
         free(mode);
-        return NULL;
     }
 
-    *priority = 30;
-    return &orte_sds_cnos_module;
+    *priority = 35;
+    return &orte_sds_alps_module;
 }
 
 
 int
-orte_sds_cnos_component_close(void)
+orte_sds_alps_component_close(void)
 {
     return ORTE_SUCCESS;
 }

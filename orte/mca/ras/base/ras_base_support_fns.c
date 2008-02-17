@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      UT-Battelle, LLC
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -115,6 +116,68 @@ CLEANUP:
     if (NULL != values) {
         free(values);
     }
+    
+    return ORTE_SUCCESS;
+}
+
+#define RAS_BASE_FILE_MAX_LINE_LENGTH   512
+
+static char *ras_getline(FILE *fp)
+{
+    char *ret, *buff = NULL;
+    char input[RAS_BASE_FILE_MAX_LINE_LENGTH];
+    
+    ret = fgets(input, RAS_BASE_FILE_MAX_LINE_LENGTH, fp);
+    if (NULL != ret) {
+        input[strlen(input)-1] = '\0';  /* remove newline */
+        buff = strdup(input);
+    }
+    
+    return buff;
+}
+    
+int orte_ras_base_read_nodename_file(opal_list_t *nodes, char *filename)
+{
+    FILE *fp;
+    int32_t nodeid=0;
+    orte_ras_node_t *node=NULL;
+    char *hostname;
+    
+    fp = fopen(filename, "r");
+    if (NULL == fp) {
+        ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
+        return ORTE_ERR_FILE_OPEN_FAILURE;
+    }
+    
+    while (NULL != (hostname = ras_getline(fp))) {
+        opal_output(orte_ras_base.ras_output, 
+                    "ras:base:read_nodename: got hostname %s", hostname);
+        
+        /* if this matches the prior nodename, then just add
+         * to the slot count
+         */
+        if (NULL != node &&
+            0 == strcmp(node->node_name, hostname)) {
+            ++node->node_slots;
+            /* free the hostname that came back since we don't need it */
+            free(hostname);
+            continue;
+        }
+        
+        /* must be a new name, so add a new item to the list */
+        opal_output(orte_ras_base.ras_output, 
+                    "ras:base:read_nodename: not found -- added to list");
+        node = OBJ_NEW(orte_ras_node_t);
+        node->node_name = hostname;
+        node->launch_id = nodeid;
+        node->node_slots_inuse = 0;
+        node->node_slots_max = 0;
+        node->node_slots = 1;
+        opal_list_append(nodes, &node->super);
+        /* up the nodeid */
+        nodeid++;
+    }
+    fclose(fp);
     
     return ORTE_SUCCESS;
 }
