@@ -476,7 +476,7 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
             OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
             if( btl_ownership ) {
-                mca_btl_gm_free(btl, frag);
+                mca_btl_gm_free(&btl->super, &frag->base);
             }
             /* return the send token and deque pending fragments */
             MCA_BTL_GM_RETURN_TOKEN(btl);
@@ -494,7 +494,7 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_ERROR);
             OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
             if( btl_ownership ) {
-                mca_btl_gm_free(btl, frag);
+                mca_btl_gm_free(&btl->super, &frag->base);
             }
             break;
     }
@@ -670,7 +670,7 @@ static void mca_btl_gm_put_callback( struct gm_port* port, void* context, gm_sta
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
             OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
             if( btl_ownership ) {
-                mca_btl_gm_free(btl, frag);
+                mca_btl_gm_free(&btl->super, &frag->base);
             }
 
             /* return the send token and deque pending fragments */
@@ -688,7 +688,7 @@ static void mca_btl_gm_put_callback( struct gm_port* port, void* context, gm_sta
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_ERROR);
             OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
             if( btl_ownership ) {
-                mca_btl_gm_free(btl, frag);
+                mca_btl_gm_free(&btl->super, &frag->base);
             }
             break;
     }
@@ -824,7 +824,7 @@ static void mca_btl_gm_get_callback( struct gm_port* port, void* context, gm_sta
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
             OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
             if( btl_ownership ) {
-                mca_btl_gm_free(btl, frag);
+                mca_btl_gm_free(&btl->super, &frag->base);
             }
 
             /* return the send token and deque pending fragments */
@@ -842,7 +842,7 @@ static void mca_btl_gm_get_callback( struct gm_port* port, void* context, gm_sta
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_ERROR);
             OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
             if( btl_ownership ) {
-                mca_btl_gm_free(btl, frag);
+                mca_btl_gm_free(&btl->super, &frag->base);
             }
             break;
     }
