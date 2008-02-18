@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -216,7 +216,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_alloc(
     frag->base.des_src_cnt = 1;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = 0; 
+    frag->base.des_flags = flags; 
     frag->base.order = MCA_BTL_NO_ORDER;
     return &frag->base;
 }
@@ -299,12 +299,12 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
             frag->segment.seg_len = max_data;
             frag->segment.seg_addr.pval = iov.iov_base;
 
-            frag->base.des_src = &frag->segment;
+            frag->base.des_src     = &frag->segment;
             frag->base.des_src_cnt = 1;
-            frag->base.des_dst = NULL;
+            frag->base.des_dst     = NULL;
             frag->base.des_dst_cnt = 0;
-            frag->base.des_flags = 0;
-            frag->base.order = MCA_BTL_NO_ORDER;
+            frag->base.des_flags   = flags;
+            frag->base.order       = MCA_BTL_NO_ORDER;
 
             return &frag->base;
         }
@@ -341,13 +341,13 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
         return NULL;
     }
     *size  = max_data;
-    frag->segment.seg_len = max_data + reserve;
-    frag->base.des_src = &frag->segment;
+    frag->segment.seg_len  = max_data + reserve;
+    frag->base.des_src     = &frag->segment;
     frag->base.des_src_cnt = 1;
-    frag->base.des_dst = NULL;
+    frag->base.des_dst     = NULL;
     frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = 0;
-    frag->base.order = MCA_BTL_NO_ORDER;
+    frag->base.des_flags   = flags;
+    frag->base.order       = MCA_BTL_NO_ORDER;
 
     return &frag->base;
 }
@@ -386,11 +386,6 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
     if(NULL == frag) {
         return NULL;
     }
-    /*
-     * just assign it something.. 
-     *  we will assign the real value in put/get 
-     */
-    frag->type = MCA_BTL_GM_PUT;
     
     /* 
      *  we don't know that this is for a PUT,
@@ -406,7 +401,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
     frag->base.des_src_cnt = 0;
     frag->base.des_dst = &frag->segment;
     frag->base.des_dst_cnt = 1;
-    frag->base.des_flags = 0;
+    frag->base.des_flags = flags;
     frag->base.order = MCA_BTL_NO_ORDER;
 
     if(NULL == registration) {
@@ -447,6 +442,7 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
 {
     mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)context;
     mca_btl_gm_module_t* btl = frag->btl;
+    int btl_ownership = frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
 
     switch(status) {
         case GM_TRY_AGAIN:
@@ -479,7 +475,9 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
             OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
             OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
-
+            if( btl_ownership ) {
+                mca_btl_gm_free(btl, frag);
+            }
             /* return the send token and deque pending fragments */
             MCA_BTL_GM_RETURN_TOKEN(btl);
             break;
@@ -495,6 +493,9 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
             OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_ERROR);
             OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+            if( btl_ownership ) {
+                mca_btl_gm_free(btl, frag);
+            }
             break;
     }
 }
@@ -633,6 +634,7 @@ static void mca_btl_gm_put_callback( struct gm_port* port, void* context, gm_sta
 {
     mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)context;
     mca_btl_gm_module_t* btl = frag->btl;
+    int btl_ownership = frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
 
     /* call the completion callback */
     switch(status) {
@@ -667,6 +669,9 @@ static void mca_btl_gm_put_callback( struct gm_port* port, void* context, gm_sta
             OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
             OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+            if( btl_ownership ) {
+                mca_btl_gm_free(btl, frag);
+            }
 
             /* return the send token and deque pending fragments */
             MCA_BTL_GM_RETURN_TOKEN(btl);
@@ -682,6 +687,9 @@ static void mca_btl_gm_put_callback( struct gm_port* port, void* context, gm_sta
             OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_ERROR);
             OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+            if( btl_ownership ) {
+                mca_btl_gm_free(btl, frag);
+            }
             break;
     }
 }
@@ -781,6 +789,7 @@ static void mca_btl_gm_get_callback( struct gm_port* port, void* context, gm_sta
 {
     mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)context;
     mca_btl_gm_module_t* btl = frag->btl;
+    int btl_ownership = frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
 
     /* call the completion callback */
     switch(status) {
@@ -814,6 +823,9 @@ static void mca_btl_gm_get_callback( struct gm_port* port, void* context, gm_sta
             OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
             OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+            if( btl_ownership ) {
+                mca_btl_gm_free(btl, frag);
+            }
 
             /* return the send token and deque pending fragments */
             MCA_BTL_GM_RETURN_TOKEN(btl);
@@ -829,6 +841,9 @@ static void mca_btl_gm_get_callback( struct gm_port* port, void* context, gm_sta
             OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_ERROR);
             OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+            if( btl_ownership ) {
+                mca_btl_gm_free(btl, frag);
+            }
             break;
     }
 }

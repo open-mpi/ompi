@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -273,16 +273,13 @@ typedef struct mca_btl_base_descriptor_t mca_btl_base_descriptor_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
 
-                         
-                                                                                      
-#define MCA_BTL_DES_FLAGS_DEREGISTER   0x0001
-#define MCA_BTL_DES_FLAGS_PRIORITY     0x0002
+#define MCA_BTL_DES_FLAGS_PRIORITY       0x0001
+#define MCA_BTL_DES_FLAGS_BTL_OWNERSHIP  0x0002
 
 /**
  * Maximum number of allowed segments in src/dst fields of a descriptor.
  */
 #define MCA_BTL_DES_MAX_SEGMENTS 16
-
 
 /* 
  *  BTL base header, stores the tag at a minimum 

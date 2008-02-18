@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -313,8 +313,6 @@ static void mca_pml_ob1_fin_completion( mca_btl_base_module_t* btl,
 {
     
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context; 
-    
-    mca_bml_base_free(bml_btl, des);
 
     /* check for pending requests */
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
@@ -331,13 +329,12 @@ int mca_pml_ob1_send_fin( ompi_proc_t* proc,
     int rc;
 
     mca_bml_base_alloc(bml_btl, &fin, order, sizeof(mca_pml_ob1_fin_hdr_t),
-            MCA_BTL_DES_FLAGS_PRIORITY);
+                       MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
     if(NULL == fin) {
         MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_des, bml_btl, order, status);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    fin->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     fin->des_cbfunc = mca_pml_ob1_fin_completion;
     fin->des_cbdata = NULL;
 

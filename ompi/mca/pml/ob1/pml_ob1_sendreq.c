@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -161,9 +161,6 @@ mca_pml_ob1_match_completion_free( struct mca_btl_base_module_t* btl,
         orte_errmgr.abort();
     }
 
-    /* free the descriptor */
-    mca_bml_base_free( bml_btl, descriptor ); 
-
     /* signal request completion */
     send_request_pml_complete(sendreq);
 
@@ -208,9 +205,6 @@ mca_pml_ob1_rndv_completion( mca_btl_base_module_t* btl,
 
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
 
-    /* return the descriptor */
-    mca_bml_base_free(bml_btl, descriptor); 
-
     /* advance the request */
     OPAL_THREAD_ADD32(&sendreq->req_state, -1);
 
@@ -241,9 +235,10 @@ mca_pml_ob1_rget_completion( mca_btl_base_module_t* btl,
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
 
     send_request_pml_complete_check(sendreq);
-
+#if 0
     /* release resources */
     btl->btl_free(btl,des);
+#endif
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
 
@@ -258,9 +253,7 @@ mca_pml_ob1_send_ctl_completion( mca_btl_base_module_t* btl,
                                  struct mca_btl_base_descriptor_t* descriptor,
                                  int status )
 {
-    /* return the descriptor */
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context; 
-    mca_bml_base_free(bml_btl, descriptor);
 
     /* check for pending requests */
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
@@ -295,10 +288,6 @@ mca_pml_ob1_frag_completion( mca_btl_base_module_t* btl,
                                         req_bytes_delivered );
 
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth, -1);
-
-    /* return the descriptor */
-    mca_bml_base_free(bml_btl, descriptor);
-
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
 
     if(send_request_pml_complete_check(sendreq) == false)
@@ -329,7 +318,7 @@ int mca_pml_ob1_send_request_start_buffered(
     mca_bml_base_alloc(bml_btl, &descriptor, 
                        MCA_BTL_NO_ORDER,
                        sizeof(mca_pml_ob1_rendezvous_hdr_t) + size,
-                       MCA_BTL_DES_FLAGS_PRIORITY);
+                       MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
     if( OPAL_UNLIKELY(NULL == descriptor) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
@@ -367,7 +356,6 @@ int mca_pml_ob1_send_request_start_buffered(
     segment->seg_len = sizeof(mca_pml_ob1_rendezvous_hdr_t) + max_data;
 
     descriptor->des_cbfunc = mca_pml_ob1_rndv_completion;
-    descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     descriptor->des_cbdata = sendreq;
 
     /* buffer the remainder of the message */
@@ -433,7 +421,7 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
     mca_bml_base_alloc( bml_btl, &descriptor,
                         MCA_BTL_NO_ORDER,
                         sizeof(mca_pml_ob1_match_hdr_t) + size,
-                        MCA_BTL_DES_FLAGS_PRIORITY);
+                        MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
     if( OPAL_UNLIKELY(NULL == descriptor) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -485,7 +473,6 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
     segment->seg_len = sizeof(mca_pml_ob1_match_hdr_t) + max_data;
 
     /* short message */
-    descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     descriptor->des_cbdata = sendreq;
     descriptor->des_cbfunc = mca_pml_ob1_match_completion_free;
 
@@ -531,7 +518,7 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
                               MCA_BTL_NO_ORDER,
                               sizeof(mca_pml_ob1_match_hdr_t),
                               &size,
-                              MCA_BTL_DES_FLAGS_PRIORITY,
+                              MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
                               &descriptor );
     if( OPAL_UNLIKELY(NULL == descriptor) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -553,7 +540,6 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
     /* short message */
     descriptor->des_cbfunc = mca_pml_ob1_match_completion_free;
 
-    descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     descriptor->des_cbdata = sendreq;
 
     /* send */
@@ -603,7 +589,7 @@ int mca_pml_ob1_send_request_start_rdma(
                                   MCA_BTL_NO_ORDER,
                                   0,
                                   &size,
-                                  0,
+                                  MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
                                   &src );
         if( OPAL_UNLIKELY(NULL == src) ) {
             ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
@@ -617,7 +603,7 @@ int mca_pml_ob1_send_request_start_rdma(
         mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER,
                 sizeof(mca_pml_ob1_rget_hdr_t) +
                 (sizeof(mca_btl_base_segment_t) * (src->des_src_cnt-1)),
-                MCA_BTL_DES_FLAGS_PRIORITY);
+                MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
         if( OPAL_UNLIKELY(NULL == des) ) {
             ompi_convertor_set_position(
                     &sendreq->req_send.req_base.req_convertor,
@@ -670,7 +656,7 @@ int mca_pml_ob1_send_request_start_rdma(
         mca_bml_base_alloc(bml_btl, &des, 
                            MCA_BTL_NO_ORDER,
                            sizeof(mca_pml_ob1_rendezvous_hdr_t),
-                           MCA_BTL_DES_FLAGS_PRIORITY);
+                           MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
         if( OPAL_UNLIKELY(NULL == des)) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -700,7 +686,6 @@ int mca_pml_ob1_send_request_start_rdma(
         sendreq->req_state = 2;
     }
 
-    des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     des->des_cbdata = sendreq;
 
     /* send */
@@ -733,7 +718,7 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
                             &des, 
                             MCA_BTL_NO_ORDER,
                             sizeof(mca_pml_ob1_rendezvous_hdr_t),
-                            MCA_BTL_DES_FLAGS_PRIORITY ); 
+                            MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP ); 
     } else {
         mca_bml_base_prepare_src( bml_btl, 
                                   NULL,
@@ -741,7 +726,7 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
                                   MCA_BTL_NO_ORDER,
                                   sizeof(mca_pml_ob1_rendezvous_hdr_t),
                                   &size,
-                                  MCA_BTL_DES_FLAGS_PRIORITY,
+                                  MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
                                   &des );
     }
 
@@ -765,7 +750,6 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
             sendreq->req_send.req_base.req_proc);
 
     /* first fragment of a long message */
-    des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     des->des_cbdata = sendreq;
     des->des_cbfunc = mca_pml_ob1_rndv_completion;
 
@@ -939,7 +923,7 @@ cannot_pack:
                                  &sendreq->req_send.req_base.req_convertor,
                                  MCA_BTL_NO_ORDER,
                                  sizeof(mca_pml_ob1_frag_hdr_t),
-                                 &size, 0, &des);
+                                 &size, MCA_BTL_DES_FLAGS_BTL_OWNERSHIP, &des);
 
         if( OPAL_UNLIKELY(des == NULL || size == 0) ) {
             if(des) {
@@ -1027,12 +1011,6 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
     send_request_pml_complete_check(sendreq);
 
     MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
-    /* return rdma descriptor - do this after queuing the fin message - as 
-     * release rdma resources (unpin memory) can take some time.
-     */
-    des->des_dst = NULL;
-    des->des_dst_cnt = 0;
-    mca_bml_base_free(bml_btl, des);
 
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
@@ -1052,7 +1030,7 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
                               MCA_BTL_NO_ORDER,
                               0,
                               &frag->rdma_length,
-                              0,
+                              MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
                               &des );
     
     if( OPAL_UNLIKELY(NULL == des) ) {

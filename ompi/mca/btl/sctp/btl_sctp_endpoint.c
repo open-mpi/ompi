@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -337,8 +337,12 @@ int mca_btl_sctp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_sc
                 if (btl_endpoint->endpoint_send_frag == NULL) {
                     if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY &&
                             mca_btl_sctp_frag_send(frag, btl_endpoint->endpoint_sd)) {
+                        int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
                         OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
                         frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
+                        if( btl_ownership ) {
+                            MCA_BTL_STCP_FRAG_RETURN(frag);
+                        }
                         return OMPI_SUCCESS;
                     } else {
                         btl_endpoint->endpoint_send_frag = frag;
@@ -377,13 +381,17 @@ int mca_btl_sctp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_sc
             if (btl_endpoint->endpoint_send_frag == NULL) {
                 if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY &&
                         mca_btl_sctp_frag_send(frag, btl_endpoint->endpoint_sd)) {
+                    int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
                     OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
                     frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
+                    if( btl_ownership ) {
+                        MCA_BTL_STCP_FRAG_RETURN(frag);
+                    }
                     return OMPI_SUCCESS;
                 } else {
                     btl_endpoint->endpoint_send_frag = frag;
 
-                    /* TOOD make this all a function since repeated below */
+                    /* TODO make this all a function since repeated below */
                     
                     /* if this endpoint is already in the sending_endpoints list; don't add duplicate */
                     /* if the associated endpoint is this one, avoid putting into the list */
@@ -1148,6 +1156,7 @@ static void mca_btl_sctp_endpoint_send_handler(int sd, short flags, void* user)
                 break;
             case MCA_BTL_SCTP_CONNECTED:
                 {
+                    int btl_ownership;
                     /* complete the current send */
                     do {
                         mca_btl_sctp_frag_t* frag = btl_endpoint->endpoint_send_frag;
@@ -1158,11 +1167,14 @@ static void mca_btl_sctp_endpoint_send_handler(int sd, short flags, void* user)
                         btl_endpoint->endpoint_send_frag = (mca_btl_sctp_frag_t*)
                             opal_list_remove_first(&btl_endpoint->endpoint_frags);
 
+                        btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
                         /* if required - update request status and release fragment */
                         OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
                         frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
                         OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
-
+                        if( btl_ownership ) {
+                            MCA_BTL_STCP_FRAG_RETURN(frag);
+                        }
                     } while (NULL != btl_endpoint->endpoint_send_frag);
 
                     /* if nothing else to do unregister for send event notifications */
@@ -1188,7 +1200,8 @@ static void mca_btl_sctp_endpoint_send_handler(int sd, short flags, void* user)
     send_handler_1_to_many_different_endpoint: 
         vpid = btl_endpoint->endpoint_proc->proc_name.vpid;
         OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
-        if((mca_btl_sctp_proc_check_vpid(vpid, sender_proc_table)) == VALID_ENTRY) {            
+        if((mca_btl_sctp_proc_check_vpid(vpid, sender_proc_table)) == VALID_ENTRY) {                 int btl_ownership;
+
             /* complete the current send */
             do {
                 mca_btl_sctp_frag_t* frag = btl_endpoint->endpoint_send_frag;
@@ -1202,10 +1215,14 @@ static void mca_btl_sctp_endpoint_send_handler(int sd, short flags, void* user)
                 btl_endpoint->endpoint_send_frag = (mca_btl_sctp_frag_t*)
                     opal_list_remove_first(&btl_endpoint->endpoint_frags);
 
+                btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
                 /* if required - update request status and release fragment */
                 OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
                 frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
                 OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
+                if( btl_ownership ) {
+                    MCA_BTL_STCP_FRAG_RETURN(frag);
+                }
 
             }while (NULL != btl_endpoint->endpoint_send_frag);
 

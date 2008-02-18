@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -144,7 +144,7 @@ mca_btl_base_descriptor_t* mca_btl_self_alloc(
         return NULL; 
     }
     
-    frag->base.des_flags   = 0;
+    frag->base.des_flags   = flags;
     frag->base.des_src     = &(frag->segment);
     frag->base.des_src_cnt = 1;
     return (mca_btl_base_descriptor_t*)frag;
@@ -219,7 +219,6 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_src(
             MCA_BTL_SELF_FRAG_RETURN_SEND(frag);
             return NULL;
         }
-        frag->base.des_flags = 0;
         frag->segment.seg_addr.pval = frag+1;
         frag->segment.seg_len = reserve + max_data;
         *size = max_data;
@@ -239,9 +238,9 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_src(
         }
         frag->segment.seg_addr.pval = iov.iov_base;
         frag->segment.seg_len = max_data;
-        frag->base.des_flags = 0;
         *size = max_data;
     }
+    frag->base.des_flags = flags;
     frag->base.des_src          = &frag->segment;
     frag->base.des_src_cnt      = 1;
     frag->segment.seg_key.key64 = (uint64_t)(intptr_t)convertor;
@@ -276,7 +275,7 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_dst(
     frag->segment.seg_key.key64 = (uint64_t)(intptr_t)convertor;
     frag->base.des_dst = &frag->segment;
     frag->base.des_dst_cnt = 1;
-    frag->base.des_flags = 0;
+    frag->base.des_flags = flags;
     return &frag->base;
 }
  
@@ -293,6 +292,7 @@ int mca_btl_self_send( struct mca_btl_base_module_t* btl,
                        mca_btl_base_tag_t tag )
 {
     mca_btl_active_message_callback_t* reg;
+    int btl_ownership = (des->des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
     /**
      * We have to set the dst before the call to the function and reset them
@@ -306,7 +306,10 @@ int mca_btl_self_send( struct mca_btl_base_module_t* btl,
     des->des_dst     = NULL;
     des->des_dst_cnt = 0;
     /* send completion */
-    des->des_cbfunc(btl,endpoint,des,OMPI_SUCCESS);
+    des->des_cbfunc( btl, endpoint, des, OMPI_SUCCESS );
+    if( btl_ownership ) {
+        mca_btl_self_free( btl, des );
+    }
     return OMPI_SUCCESS;
 }
 
@@ -329,6 +332,7 @@ int mca_btl_self_rdma( struct mca_btl_base_module_t* btl,
     size_t src_len = src->seg_len;
     unsigned char* dst_addr = (unsigned char*)ompi_ptr_ltop(dst->seg_addr.lval);
     size_t dst_len = dst->seg_len;
+    int btl_ownership = (des->des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
     while(src_len && dst_len) {
 
@@ -384,7 +388,10 @@ int mca_btl_self_rdma( struct mca_btl_base_module_t* btl,
     }
 
     /* rdma completion */
-    des->des_cbfunc(btl,endpoint,des,OMPI_SUCCESS);
+    des->des_cbfunc( btl, endpoint, des, OMPI_SUCCESS );
+    if( btl_ownership ) {
+        mca_btl_self_free( btl, des );
+    }
     return OMPI_SUCCESS;
 }
 

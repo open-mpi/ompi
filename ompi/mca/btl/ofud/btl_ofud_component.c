@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -420,7 +420,7 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int* num_btl_modules,
 int mca_btl_ud_component_progress(void)
 {
     uint32_t i;
-    int count = 0, ne, j;
+    int count = 0, ne, j, btl_ownership;
     mca_btl_ud_frag_t* frag;
     struct ibv_recv_wr* bad_wr;
     struct ibv_recv_wr* head_wr;
@@ -458,9 +458,12 @@ int mca_btl_ud_component_progress(void)
             case MCA_BTL_UD_FRAG_USER:
             {
                 assert(cwc->opcode == IBV_WC_SEND);
-
+                btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
                 frag->base.des_cbfunc(&ud_btl->super,
                         frag->endpoint, &frag->base, OMPI_SUCCESS);
+                if( btl_ownership ) {
+                    mca_btl_ud_free( &ud_btl->super, &frag->base );
+                }
 
                 /* Increment send counter, post if any sends are queued */
                 OPAL_THREAD_ADD32(&ud_btl->sd_wqe, 1);

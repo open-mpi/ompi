@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -861,7 +861,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
     frag->base.des_src_cnt = 1;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = 0;
+    frag->base.des_flags = flags;
     frag->base.order = MCA_BTL_NO_ORDER;
     return &frag->base;
 }
@@ -966,7 +966,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
             frag->base.des_src_cnt = 1;
             frag->base.des_dst = NULL;
             frag->base.des_dst_cnt = 0;
-            frag->base.des_flags = 0;
+            frag->base.des_flags = flags;
             frag->base.order = MCA_BTL_NO_ORDER;
             return &frag->base;
         }
@@ -1014,7 +1014,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
     frag->base.des_src_cnt = 1;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = 0;
+    frag->base.des_flags = flags;
     frag->base.order = MCA_BTL_NO_ORDER;
     return &frag->base;
 }
@@ -1074,7 +1074,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
     frag->base.des_src_cnt = 0;
     frag->base.des_dst = &frag->segment;
     frag->base.des_dst_cnt = 1;
-    frag->base.des_flags = 0;
+    frag->base.des_flags = flags;
 
     frag->segment.seg_key.key32[0] =
         ((mca_btl_udapl_reg_t*)registration)->rmr_context;

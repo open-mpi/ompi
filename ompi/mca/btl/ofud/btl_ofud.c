@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -215,6 +215,7 @@ mca_btl_base_descriptor_t* mca_btl_ud_alloc(struct mca_btl_base_module_t* btl,
     }
 
     frag->base.order = MCA_BTL_NO_ORDER;
+    frag->base.des_flags = flags;
     frag->segment.seg_len = size;
     return (mca_btl_base_descriptor_t*)frag;
 }
@@ -304,7 +305,7 @@ mca_btl_base_descriptor_t* mca_btl_ud_prepare_src(
 
         frag->segment.seg_len = max_data;
         frag->segment.seg_addr.pval = iov.iov_base;
-        frag->base.des_flags = 0;
+        frag->base.des_flags = flags;
         frag->base.order = MCA_BTL_NO_ORDER;
 
         if(NULL == registration) {
@@ -355,7 +356,7 @@ mca_btl_base_descriptor_t* mca_btl_ud_prepare_src(
     frag->base.des_src_cnt = 1;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = 0;
+    frag->base.des_flags = flags;
     frag->base.order = MCA_BTL_NO_ORDER;
     *size  = max_data;
 

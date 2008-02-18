@@ -179,7 +179,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_alloc( struct mca_btl_base_module_t* btl,
     frag->segment[0].seg_addr.pval = (void*)(frag+1);
     frag->base.des_src = frag->segment;
     frag->base.des_src_cnt = 1;
-    frag->base.des_flags = 0;
+    frag->base.des_flags = flags;
     frag->base.order = MCA_BTL_NO_ORDER;
 
     return (mca_btl_base_descriptor_t*)frag;
@@ -272,8 +272,9 @@ mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
         frag->segment[1].seg_len       = max_data;
         frag->segment[1].seg_addr.pval = iov.iov_base;
     }
-    frag->base.des_src = frag->segment;
-    frag->base.order = MCA_BTL_NO_ORDER;
+    frag->base.des_src   = frag->segment;
+    frag->base.des_flags = flags;
+    frag->base.order     = MCA_BTL_NO_ORDER;
 
     return &frag->base;
 }
@@ -339,11 +340,11 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
 #endif
 
     /* Allow the fragment to be recycled using the mca_btl_mx_free function */
-    frag->type = MCA_BTL_MX_SEND;
-
-    frag->base.des_dst = frag->segment;
+    frag->type             = MCA_BTL_MX_SEND;
+    frag->base.des_dst     = frag->segment;
     frag->base.des_dst_cnt = 1;
-    frag->base.order = MCA_BTL_NO_ORDER;
+    frag->base.des_flags   = flags;
+    frag->base.order       = MCA_BTL_NO_ORDER;
 
     return &frag->base;
 }
@@ -416,6 +417,7 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
     mx_return_t mx_return;
     uint64_t total_length = 0, tag64;
     uint32_t i = 0;
+    int btl_ownership = (descriptor->des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
     if( OPAL_UNLIKELY(MCA_BTL_MX_CONNECTED != ((mca_btl_mx_endpoint_t*)endpoint)->status) ) {
         if( MCA_BTL_MX_NOT_REACHEABLE == ((mca_btl_mx_endpoint_t*)endpoint)->status )
@@ -456,6 +458,9 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
         if( mx_result ) {
             mx_return = mx_forget( mx_btl->mx_endpoint, &(frag->mx_request) );
             frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS);
+            if( btl_ownership ) {
+                MCA_BTL_MX_FRAG_RETURN( mx_btl, frag );
+            }
             if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
                 opal_output( 0, "mx_forget failed with error %d (%s)\n",
                              mx_return, mx_strerror(mx_return) );
@@ -476,6 +481,9 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
         /* call the completion callback */
         if( mx_result ) {
             frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS);
+            if( btl_ownership ) {
+                MCA_BTL_MX_FRAG_RETURN( mx_btl, frag );
+            }
             return OMPI_SUCCESS;
         }
     }

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -409,14 +409,23 @@ int mca_btl_sm_component_progress(void)
             case MCA_BTL_SM_FRAG_ACK:
             {
                 int status = (uintptr_t)hdr & MCA_BTL_SM_FRAG_STATUS_MASK;
+                struct mca_btl_base_endpoint_t* endpoint;
+                int btl_ownership;
+
                 frag = (mca_btl_sm_frag_t *)((char*)((uintptr_t)hdr &
                             (~(MCA_BTL_SM_FRAG_TYPE_MASK |
                             MCA_BTL_SM_FRAG_STATUS_MASK))));
+                endpoint = frag->endpoint;
+                btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
                 /* completion callback */
                 frag->base.des_cbfunc(&mca_btl_sm.super, frag->endpoint,
                         &frag->base, status?OMPI_ERROR:OMPI_SUCCESS);
-                if(opal_list_get_size(&frag->endpoint->pending_sends))
-                    process_pending_send(frag->endpoint);
+                if( btl_ownership ) {
+                    MCA_BTL_SM_FRAG_RETURN(frag);
+                }
+                if(opal_list_get_size(&endpoint->pending_sends)) {
+                    process_pending_send(endpoint);
+                }
                 break;
             }
             case MCA_BTL_SM_FRAG_SEND:
