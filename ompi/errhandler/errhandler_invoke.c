@@ -28,7 +28,7 @@
 
 
 int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object, 
-			   int object_type, int err_code, const char *message)
+                           int object_type, int err_code, const char *message)
 {
     MPI_Fint fortran_handle, fortran_err_code = OMPI_INT_2_FINT(err_code);
     ompi_communicator_t *comm;
@@ -37,7 +37,7 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
     
     /* If we got no errorhandler, then just invoke errors_abort */
     if (NULL == errhandler) {
-	ompi_mpi_errors_are_fatal_comm_handler(NULL, NULL, message);
+        ompi_mpi_errors_are_fatal_comm_handler(NULL, NULL, message);
     }
     
     /* Figure out what kind of errhandler it is, figure out if it's
@@ -82,6 +82,7 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
             err_code = OMPI_FINT_2_INT(fortran_err_code);
             break;
         }
+        break;
         
     case OMPI_ERRHANDLER_TYPE_FILE:
         file = (ompi_file_t *) mpi_object;
