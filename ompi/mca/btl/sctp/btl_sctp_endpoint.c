@@ -341,7 +341,7 @@ int mca_btl_sctp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_sc
                         OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
                         frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
                         if( btl_ownership ) {
-                            MCA_BTL_STCP_FRAG_RETURN(frag);
+                            MCA_BTL_SCTP_FRAG_RETURN(frag);
                         }
                         return OMPI_SUCCESS;
                     } else {
@@ -385,7 +385,7 @@ int mca_btl_sctp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_sc
                     OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
                     frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
                     if( btl_ownership ) {
-                        MCA_BTL_STCP_FRAG_RETURN(frag);
+                        MCA_BTL_SCTP_FRAG_RETURN(frag);
                     }
                     return OMPI_SUCCESS;
                 } else {
@@ -1173,7 +1173,7 @@ static void mca_btl_sctp_endpoint_send_handler(int sd, short flags, void* user)
                         frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
                         OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
                         if( btl_ownership ) {
-                            MCA_BTL_STCP_FRAG_RETURN(frag);
+                            MCA_BTL_SCTP_FRAG_RETURN(frag);
                         }
                     } while (NULL != btl_endpoint->endpoint_send_frag);
 
@@ -1221,7 +1221,7 @@ static void mca_btl_sctp_endpoint_send_handler(int sd, short flags, void* user)
                 frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
                 OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
                 if( btl_ownership ) {
-                    MCA_BTL_STCP_FRAG_RETURN(frag);
+                    MCA_BTL_SCTP_FRAG_RETURN(frag);
                 }
 
             }while (NULL != btl_endpoint->endpoint_send_frag);
