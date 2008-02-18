@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -301,7 +301,7 @@ int
 mca_btl_portals_component_progress(void)
 {
     int num_progressed = 0;
-    int ret, which;
+    int ret, which, btl_ownership;
     static ptl_event_t ev;
     mca_btl_portals_frag_t *frag = NULL;
     mca_btl_portals_recv_block_t *block = NULL;
@@ -320,6 +320,7 @@ mca_btl_portals_component_progress(void)
         switch (ret) {
         case PTL_OK:
             frag = ev.md.user_ptr;
+            btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
             num_progressed++;
 
             switch (ev.type) {
@@ -432,6 +433,9 @@ mca_btl_portals_component_progress(void)
                                       frag->endpoint,
                                       &frag->base,
                                       OMPI_SUCCESS);
+                if( btl_ownership ) {
+                    mca_btl_portals_free(btl, &frag->base);
+                }
 
                 break;
 
@@ -450,6 +454,9 @@ mca_btl_portals_component_progress(void)
                                           frag->endpoint,
                                           &frag->base,
                                           OMPI_ERROR);
+                    if( btl_ownership ) {
+                        mca_btl_portals_free(btl, &frag->base);
+                    }
                 }
 #endif
                 break;
@@ -468,6 +475,9 @@ mca_btl_portals_component_progress(void)
                                           frag->endpoint,
                                           &frag->base,
                                           OMPI_ERROR);
+                    if( btl_ownership ) {
+                        mca_btl_portals_free(btl, &frag->base);
+                    }
                 }
 #endif
                 break;
@@ -490,6 +500,9 @@ mca_btl_portals_component_progress(void)
                                           frag->endpoint,
                                           &frag->base,
                                           OMPI_ERROR);
+                    if( btl_ownership ) {
+                        mca_btl_portals_free(btl, &frag->base);
+                    }
                 } else
 #endif
 
@@ -514,6 +527,9 @@ mca_btl_portals_component_progress(void)
                                           frag->endpoint,
                                           &frag->base,
                                           OMPI_SUCCESS);
+                    if( btl_ownership ) {
+                        mca_btl_portals_free(btl, &frag->base);
+                    }
                 }
 
                 opal_output_verbose(50, mca_btl_portals_component.portals_output, "fuck");

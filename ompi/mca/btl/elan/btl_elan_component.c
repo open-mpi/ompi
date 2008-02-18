@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -269,6 +269,7 @@ int mca_btl_elan_component_progress( void )
     for( i = 0; i < (int)mca_btl_elan_component.elan_num_btls; i++ ) {
         mca_btl_elan_module_t* elan_btl = mca_btl_elan_component.elan_btls[i];
 
+        /* This is a fast receive over the queue */
         if( elan_queueRxPoll( elan_btl->rx_queue, 0 ) ) {
             mca_btl_active_message_callback_t* reg;
             mca_btl_elan_hdr_t* elan_hdr = NULL;
@@ -284,11 +285,11 @@ int mca_btl_elan_component_progress( void )
 
             reg = mca_btl_base_active_message_trigger + frag.tag;
             reg->cbfunc( &(elan_btl->super), frag.tag, &(frag.base), reg->cbdata );
-
             elan_queueRxComplete( elan_btl->rx_queue );
             num_progressed++;
         }
-        if(elan_btl->expect_tport_recv) { /* There is a pending message on the tport */
+        /* This is the slower receive over the tport */
+        if(elan_btl->expect_tport_recv) {
             mca_btl_elan_frag_t* frag = (mca_btl_elan_frag_t*)opal_list_get_first( &(elan_btl->recv_list) );
             if( elan_done(frag->elan_event, 0) ) {
                 int tag; 
@@ -327,7 +328,9 @@ int mca_btl_elan_component_progress( void )
         /* If there are any pending sends check their completion */
         if( !opal_list_is_empty( &(elan_btl->send_list) ) ) {
             mca_btl_elan_frag_t* frag = (mca_btl_elan_frag_t*)opal_list_get_first( &(elan_btl->send_list) );
-            if( elan_poll(frag->elan_event, 1) ) {
+            if( elan_poll(frag->elan_event, 0) ) {
+                int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP );
+
                 OPAL_THREAD_LOCK(&elan_btl->elan_lock);
                 opal_list_remove_first( &(elan_btl->send_list) );
                 OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
@@ -335,12 +338,17 @@ int mca_btl_elan_component_progress( void )
 
                 frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint,
                                        &(frag->base), OMPI_SUCCESS );
+                if( btl_ownership ) {
+                    MCA_BTL_ELAN_FRAG_RETURN(frag);
+                }
             }
         }
         /* If any RDMA have been posted, check their status */
         if( !opal_list_is_empty( &(elan_btl->rdma_list) ) ) {
             mca_btl_elan_frag_t* frag = (mca_btl_elan_frag_t*)opal_list_get_first( &(elan_btl->rdma_list) );
-            if( elan_poll(frag->elan_event, 1) ) {
+            if( elan_poll(frag->elan_event, 0) ) {
+                int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP );
+
                 OPAL_THREAD_LOCK(&elan_btl->elan_lock);
                 opal_list_remove_first( &(elan_btl->rdma_list) );
                 OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
@@ -348,6 +356,9 @@ int mca_btl_elan_component_progress( void )
 
                 frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint,
                                        &(frag->base), OMPI_SUCCESS );
+                if( btl_ownership ) {
+                    MCA_BTL_ELAN_FRAG_RETURN(frag);
+                }
             }
         }
     }

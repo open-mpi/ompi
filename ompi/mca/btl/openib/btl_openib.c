@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -560,7 +560,8 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
 
     assert(qp != MCA_BTL_NO_ORDER);
 
-    if(mca_btl_openib_component.use_message_coalescing) {
+    if(mca_btl_openib_component.use_message_coalescing &&
+       (flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
         int prio = !(flags & MCA_BTL_DES_FLAGS_PRIORITY);
         sfrag = check_coalescing(&ep->qps[qp].qp->pending_frags[prio],
                 &ep->qps[qp].qp->lock, ep, size);
@@ -751,6 +752,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             frag->sg_entry.addr = (uint64_t)(uintptr_t)iov.iov_base;
 
             to_base_frag(frag)->base.order = order;
+            to_base_frag(frag)->base.des_flags = flags;
             to_base_frag(frag)->segment.seg_len = max_data;
             to_base_frag(frag)->segment.seg_addr.pval = iov.iov_base;
             to_base_frag(frag)->segment.seg_key.key32[0] =
@@ -790,6 +792,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 
     /* not all upper layer users set this */
     to_base_frag(frag)->segment.seg_len = max_data + reserve;
+    to_base_frag(frag)->base.des_flags = flags;
 
     return &to_base_frag(frag)->base;
 }

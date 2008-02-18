@@ -191,7 +191,7 @@ mca_btl_base_descriptor_t* mca_btl_sctp_alloc(
     frag->base.des_src_cnt = 1;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = 0;
+    frag->base.des_flags = flags;
     frag->base.order = MCA_BTL_NO_ORDER;
     frag->btl = (mca_btl_sctp_module_t*)btl;
     return (mca_btl_base_descriptor_t*)frag;
@@ -299,7 +299,7 @@ mca_btl_base_descriptor_t* mca_btl_sctp_prepare_src(
     frag->base.des_src = frag->segments;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = 0;
+    frag->base.des_flags = flags;
     *size = max_data;
     return &frag->base;
 }
@@ -346,7 +346,7 @@ mca_btl_base_descriptor_t* mca_btl_sctp_prepare_dst(
     frag->base.des_src_cnt = 0;
     frag->base.des_dst = frag->segments;
     frag->base.des_dst_cnt = 1;
-    frag->base.des_flags = 0;
+    frag->base.des_flags = flags;
     return &frag->base;
 }
 

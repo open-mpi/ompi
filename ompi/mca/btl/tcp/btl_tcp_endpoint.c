@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -249,8 +249,13 @@ int mca_btl_tcp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_tcp
         if (btl_endpoint->endpoint_send_frag == NULL) {
             if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY &&
                mca_btl_tcp_frag_send(frag, btl_endpoint->endpoint_sd)) {
+                int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+
                 OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
                 frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
+                if( btl_ownership ) {
+                    MCA_BTL_TCP_FRAG_RETURN(frag);
+                }
                 return OMPI_SUCCESS;
             } else {
                 btl_endpoint->endpoint_send_frag = frag;
@@ -727,6 +732,8 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
         /* complete the current send */
         while (NULL != btl_endpoint->endpoint_send_frag) {
             mca_btl_tcp_frag_t* frag = btl_endpoint->endpoint_send_frag;
+            int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+
             if(mca_btl_tcp_frag_send(frag, btl_endpoint->endpoint_sd) == false) {
                 break;
             }
@@ -737,6 +744,9 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
             /* if required - update request status and release fragment */
             OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
             frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
+            if( btl_ownership ) {
+                MCA_BTL_TCP_FRAG_RETURN(frag);
+            }
             OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
 
         }

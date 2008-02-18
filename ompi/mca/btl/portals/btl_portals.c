@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -249,7 +249,7 @@ mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base,
     }
     
     frag->base.des_src_cnt = 1;
-    frag->base.des_flags = 0; 
+    frag->base.des_flags = flags; 
     frag->base.order = MCA_BTL_NO_ORDER;
 
     return &frag->base;
@@ -407,7 +407,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
     frag->base.des_src = frag->segments;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = 0;
+    frag->base.des_flags = flags;
     frag->base.order = MCA_BTL_NO_ORDER;
     return &frag->base;
 }
@@ -451,7 +451,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
     frag->base.des_src_cnt = 0;
     frag->base.des_dst = frag->segments;
     frag->base.des_dst_cnt = 1;
-    frag->base.des_flags = 0;
+    frag->base.des_flags = flags;
 
     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                          "rdma dest posted for frag 0x%x, callback 0x%x, bits %lld",

@@ -618,9 +618,13 @@ int mca_btl_mx_component_progress(void)
         frag = mx_status.context;
         if( NULL != frag ) {
             if( MCA_BTL_MX_SEND == frag->type ) {  /* it's a send */
+                int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
                 /* call the completion callback */
                 frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint,
                                        &(frag->base), OMPI_SUCCESS );
+                if( btl_ownership ) {
+                    MCA_BTL_MX_FRAG_RETURN( mx_btl, frag );
+                }
             } else if( !mca_btl_mx_component.mx_use_unexpected ) { /* and this one is a receive */
                 mca_btl_active_message_callback_t* reg;
                 mx_segment_t mx_segment;

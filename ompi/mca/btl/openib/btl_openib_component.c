@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -1810,7 +1810,7 @@ static void handle_wc(mca_btl_openib_hca_t* hca, const uint32_t cq,
     mca_btl_openib_endpoint_t* endpoint;
     mca_btl_openib_module_t *openib_btl = NULL;
     ompi_proc_t* remote_proc = NULL;
-    int qp;
+    int qp, btl_ownership;
 
     des = (mca_btl_base_descriptor_t*)(uintptr_t)wc->wr_id;
     frag = to_com_frag(des);
@@ -1837,12 +1837,21 @@ static void handle_wc(mca_btl_openib_hca_t* hca, const uint32_t cq,
         case IBV_WC_SEND:
             if(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_SEND) {
                 opal_list_item_t *i;
-                while((i = opal_list_remove_first(&to_send_frag(des)->coalesced_frags)))
+                while((i = opal_list_remove_first(&to_send_frag(des)->coalesced_frags))) {
+                    btl_ownership = (to_base_frag(i)->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
                     to_base_frag(i)->base.des_cbfunc(&openib_btl->super, endpoint,
                             &to_base_frag(i)->base, OMPI_SUCCESS);
+                    if( btl_ownership ) {
+                        mca_btl_openib_free(&openib_btl->super, &to_base_frag(i)->base);
+                    }
+                }
             }
             /* Process a completed send/put/get */
+            btl_ownership = (des->des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
             des->des_cbfunc(&openib_btl->super, endpoint, des,OMPI_SUCCESS);
+            if( btl_ownership ) {
+                mca_btl_openib_free(&openib_btl->super, des);
+            }
 
             /* return send wqe */
             qp_put_wqe(endpoint, qp);

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -780,7 +780,9 @@ int mca_btl_udapl_component_progress()
     DAT_EVENT event;
     size_t i;
     int32_t j, rdma_ep_count;
-    int count = 0;
+    int count = 0, btl_ownership;
+    mca_btl_udapl_frag_t* frag;
+    mca_btl_base_endpoint_t* endpoint;
 
     /* prevent deadlock - only one thread should be 'progressing' at a time */
     if(OPAL_THREAD_ADD32(&inprogress, 1) > 1) {
@@ -797,7 +799,6 @@ int mca_btl_udapl_component_progress()
         while(DAT_SUCCESS ==
                 dat_evd_dequeue(btl->udapl_evd_dto, &event)) {
             DAT_DTO_COMPLETION_EVENT_DATA* dto;
-            mca_btl_udapl_frag_t* frag;
 
             switch(event.event_number) {
             case DAT_DTO_COMPLETION_EVENT:
@@ -812,6 +813,8 @@ int mca_btl_udapl_component_progress()
                                  dto->status, frag->type, (unsigned long)frag->size, dto->ep_handle));
                     break;
                 }
+                endpoint = frag->endpoint;
+                btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
                 switch(frag->type) {
                 case MCA_BTL_UDAPL_RDMA_WRITE:
@@ -822,40 +825,42 @@ int mca_btl_udapl_component_progress()
                     assert(frag->base.des_dst_cnt == 0);
                     assert(frag->type == MCA_BTL_UDAPL_RDMA_WRITE);
     
-                    frag->base.des_cbfunc(&btl->super, frag->endpoint,
+                    frag->base.des_cbfunc(&btl->super, endpoint,
                         &frag->base, OMPI_SUCCESS);
-                    
+                    if( btl_ownership ) {
+                        mca_btl_udapl_free(btl, &frag->base);
+                    }
+
                     mca_btl_udapl_frag_progress_pending(btl,
-                        frag->endpoint,
-                        BTL_UDAPL_EAGER_CONNECTION);
+                        endpoint, BTL_UDAPL_EAGER_CONNECTION);
 
                     break;
                 }
                 case MCA_BTL_UDAPL_SEND:
                 {
+                    int connection = BTL_UDAPL_EAGER_CONNECTION;
+
                     assert(frag->base.des_src == &frag->segment);
                     assert(frag->base.des_src_cnt == 1);
                     assert(frag->base.des_dst == NULL);
                     assert(frag->base.des_dst_cnt == 0);
                     assert(frag->type == MCA_BTL_UDAPL_SEND);
 
-                    frag->base.des_cbfunc(&btl->super, frag->endpoint,
-                            &frag->base, OMPI_SUCCESS);
-
-                    if(frag->size ==
+                    if(frag->size !=
                             mca_btl_udapl_component.udapl_eager_frag_size) {
-
-                        mca_btl_udapl_frag_progress_pending(btl,
-                            frag->endpoint,
-                            BTL_UDAPL_EAGER_CONNECTION);
-                    } else {
                         assert(frag->size ==
                             mca_btl_udapl_component.udapl_max_frag_size);
 
-                        mca_btl_udapl_frag_progress_pending(btl,
-                            frag->endpoint,
-                            BTL_UDAPL_MAX_CONNECTION);
+                        connection = BTL_UDAPL_MAX_CONNECTION;
                     }
+                    frag->base.des_cbfunc(&btl->super, endpoint,
+                            &frag->base, OMPI_SUCCESS);
+                    if( btl_ownership ) {
+                        mca_btl_udapl_free(btl, &frag->base);
+                    }
+
+                    mca_btl_udapl_frag_progress_pending(btl,
+                        endpoint, connection);
                     break;
                 }
                 case MCA_BTL_UDAPL_RECV:
@@ -949,14 +954,16 @@ int mca_btl_udapl_component_progress()
                     assert(frag->base.des_dst_cnt == 1);
                     assert(frag->type == MCA_BTL_UDAPL_PUT);
                     
-                    frag->base.des_cbfunc(&btl->super, frag->endpoint,
+                    frag->base.des_cbfunc(&btl->super, endpoint,
                         &frag->base, OMPI_SUCCESS);
+                    if( btl_ownership ) {
+                        mca_btl_udapl_free(btl, &frag->base);
+                    }
 
-                    OPAL_THREAD_ADD32(&(frag->endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION]), 1);
+                    OPAL_THREAD_ADD32(&(endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION]), 1);
 
                     mca_btl_udapl_frag_progress_pending(btl,
-                        frag->endpoint,
-                        BTL_UDAPL_MAX_CONNECTION);
+                        endpoint, BTL_UDAPL_MAX_CONNECTION);
          
                     break;
                 }                    

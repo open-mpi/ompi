@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -238,12 +238,12 @@ mca_btl_elan_alloc( struct mca_btl_base_module_t* btl,
     }
 
     frag->segment.seg_addr.pval = (void*)((char*)(frag + 1) + hdr_skip);
-    frag->segment.seg_len = size;
-    frag->base.des_src = &(frag->segment);
+    frag->segment.seg_len  = size;
+    frag->base.des_src     = &(frag->segment);
     frag->base.des_src_cnt = 1;
-    frag->base.des_dst = NULL;
+    frag->base.des_dst     = NULL;
     frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = 0;
+    frag->base.des_flags   = flags;
     frag->btl = (mca_btl_elan_module_t*)btl;
     frag->endpoint = peer;
     frag->base.order = MCA_BTL_NO_ORDER;
@@ -346,7 +346,7 @@ mca_btl_elan_prepare_src( struct mca_btl_base_module_t* btl,
     frag->base.order = MCA_BTL_NO_ORDER;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = 0;
+    frag->base.des_flags = flags;
     return &frag->base;
 
 }
@@ -396,7 +396,7 @@ mca_btl_elan_prepare_dst( struct mca_btl_base_module_t* btl,
     frag->segment.seg_len = *size;
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
-    frag->base.des_flags = 0;	
+    frag->base.des_flags = flags;	
     frag->base.des_dst = &(frag->segment);
     frag->base.des_dst_cnt = 1;
     frag->base.order = MCA_BTL_NO_ORDER;
@@ -441,25 +441,28 @@ static int mca_btl_elan_send( struct mca_btl_base_module_t* btl,
             opal_output( 0, "elan_queueTx failed for destination %d\n", endpoint->elan_vp );
             return OMPI_ERROR;
         }
-        if( elan_poll( frag->elan_event, 0 ) ) {
-            frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint,
-                                   &(frag->base), OMPI_SUCCESS );
-            return OMPI_SUCCESS;
-        }
     } else {
         frag->elan_event = elan_tportTxStart( elan_btl->tport, 0, endpoint->elan_vp,
                                               elan_btl->elan_vp, frag->tag,
                                               (void*)elan_hdr, frag->segment.seg_len );
-        if( elan_tportTxDone(frag->elan_event) ) {
-            elan_tportTxWait(frag->elan_event);
-            frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint,
-                                   &(frag->base), OMPI_SUCCESS );
-            return OMPI_SUCCESS;
+        if( OPAL_UNLIKELY(NULL == frag->elan_event) ) {
+            opal_output( 0, "elan_tportTxStart failed for destination %d\n", endpoint->elan_vp );
+            return OMPI_ERROR;
         }
+    }
+    if( elan_poll( frag->elan_event, 0 ) ) {
+        int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP );
+
+        frag->base.des_cbfunc( &(elan_btl->super), frag->endpoint,
+                               &(frag->base), OMPI_SUCCESS );
+        if( btl_ownership ) {
+            MCA_BTL_ELAN_FRAG_RETURN(frag);
+        }
+        return OMPI_SUCCESS;
     }
     /* Add the fragment to the pending send list */
     opal_list_append( &(elan_btl->send_list), (opal_list_item_t*)frag );
-    return OMPI_SUCCESS;
+    return OMPI_ERR_RESOURCE_BUSY;
 }
 
 
