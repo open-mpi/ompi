@@ -27,6 +27,7 @@
 #include "orte/mca/schema/schema_types.h"
 
 #include "orte/mca/ras/base/ras_private.h"
+#include "opal/util/output.h"
 
 /*
  * Indicate that the allocation for this job is uncertain - therefore,
