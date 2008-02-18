@@ -517,8 +517,11 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
                     openib_btl->super.btl_bandwidth = 8000;
                     break;
                 default:
-                    /* Who knows? */
-                    return OMPI_ERR_VALUE_OUT_OF_BOUNDS;
+                    /* Who knows?  Declare this port unreachable (do
+                       *not* return ERR_VALUE_OF_OUT_OF_BOUNDS; that
+                       is reserved for when we exceed the number of
+                       allowable BTLs). */
+                    return OMPI_ERR_UNREACH;
                 }
                 switch (ib_port_attr->active_width) {
                 case 1:
@@ -538,8 +541,11 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
                     openib_btl->super.btl_bandwidth *= 12;
                     break;
                 default:
-                    /* Who knows? */
-                    return OMPI_ERR_VALUE_OUT_OF_BOUNDS;
+                    /* Who knows?  Declare this port unreachable (do
+                       *not* return ERR_VALUE_OF_OUT_OF_BOUNDS; that
+                       is reserved for when we exceed the number of
+                       allowable BTLs). */
+                    return OMPI_ERR_UNREACH;
                 }
             }
             opal_list_append(btl_list, (opal_list_item_t*) ib_selected);
