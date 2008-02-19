@@ -25,6 +25,11 @@
 #define  OPAL_MUTEX_H 1
 
 #include "opal_config.h"
+
+#ifdef HAVE_STDBOOL_H
+#include <stdbool.h>
+#endif
+
 #if OMPI_HAVE_THREAD_SUPPORT
 #include "opal/sys/atomic.h"
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
