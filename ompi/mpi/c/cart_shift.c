@@ -39,12 +39,10 @@ int MPI_Cart_shift(MPI_Comm comm, int direction, int disp,
 {
     int err;
     mca_topo_base_module_cart_shift_fn_t func;
+
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
@@ -71,12 +69,15 @@ int MPI_Cart_shift(MPI_Comm comm, int direction, int disp,
         }
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     /* get the function pointer on this communicator */
     func = comm->c_topo->topo_cart_shift;
 
     /* call the function */
-    if ( MPI_SUCCESS != 
-            (err = func(comm, direction, disp, rank_source, rank_dest))) {
+    err = func(comm, direction, disp, rank_source, rank_dest);
+    OPAL_CR_EXIT_LIBRARY();
+    if ( MPI_SUCCESS != err ) {
         return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
     }
 

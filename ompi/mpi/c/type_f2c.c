@@ -39,11 +39,11 @@ MPI_Datatype MPI_Type_f2c(MPI_Fint datatype)
 {
     int datatype_index = OMPI_FINT_2_INT(datatype);
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     MEMCHECKER(
         memchecker_datatype(datatype);
     );
+
+    OPAL_CR_NOOP_PROGRESS();
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

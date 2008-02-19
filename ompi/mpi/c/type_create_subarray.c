@@ -46,8 +46,6 @@ int MPI_Type_create_subarray(int ndims,
     int32_t i, step, start_loop, end_loop;
     MPI_Aint size, displ, extent;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     MEMCHECKER(
         memchecker_datatype(oldtype);
     );
@@ -72,12 +70,15 @@ int MPI_Type_create_subarray(int ndims,
         }
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     ompi_ddt_type_extent( oldtype, &extent );
 
     /* If the ndims is zero then return the NULL datatype */
     if( ndims < 2 ) {
         if( 0 == ndims ) {
             *newtype = &ompi_mpi_datatype_null;
+            OPAL_CR_EXIT_LIBRARY();
             return MPI_SUCCESS;
         }
         ompi_ddt_create_contiguous( subsize_array[0], oldtype, &last_type );
@@ -145,6 +146,8 @@ int MPI_Type_create_subarray(int ndims,
         ompi_ddt_set_args( *newtype, 3 * ndims + 2, a_i, 0, NULL, 1, &oldtype,
                            MPI_COMBINER_SUBARRAY );
     }
+
+    OPAL_CR_EXIT_LIBRARY();
 
     return MPI_SUCCESS;
 }

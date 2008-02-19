@@ -38,13 +38,11 @@ int MPI_File_write_shared(MPI_File fh, void *buf, int count,
                           MPI_Datatype datatype, MPI_Status *status)
 {
     int rc;
+
     MEMCHECKER(
         memchecker_datatype(datatype);
         memchecker_call(&opal_memchecker_base_isdefined, buf, count, datatype);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
         rc = MPI_SUCCESS;
@@ -59,6 +57,8 @@ int MPI_File_write_shared(MPI_File fh, void *buf, int count,
         }
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
 

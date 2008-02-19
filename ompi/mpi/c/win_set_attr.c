@@ -37,15 +37,15 @@ int MPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val)
 {
     int ret;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (ompi_win_invalid(win)) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
-	}
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
+        }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     ret = ompi_attr_set_c(WIN_ATTR, win, &win->w_keyhash, 
                           win_keyval, attribute_val, false, true);

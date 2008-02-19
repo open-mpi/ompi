@@ -41,8 +41,6 @@ int MPI_Pack_external_size(char *datarep, int incount,
     ompi_convertor_t local_convertor;
     size_t length;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     MEMCHECKER(
         memchecker_datatype(datatype);
     );
@@ -56,6 +54,8 @@ int MPI_Pack_external_size(char *datarep, int incount,
         }
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     OBJ_CONSTRUCT(&local_convertor, ompi_convertor_t);
 
     /* the resulting convertor will be set to the position ZERO */
@@ -67,6 +67,7 @@ int MPI_Pack_external_size(char *datarep, int incount,
     ompi_convertor_get_packed_size( &local_convertor, &length );
     *size = (MPI_Aint)length;
     OBJ_DESTRUCT( &local_convertor );
-    
+
+    OPAL_CR_EXIT_LIBRARY();
     return OMPI_SUCCESS;
 }

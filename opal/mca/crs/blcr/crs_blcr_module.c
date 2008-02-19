@@ -64,7 +64,10 @@ static opal_crs_base_module_t blcr_module = {
     opal_crs_blcr_enable_checkpoint,
 
     /** Prelaunch */
-    opal_crs_base_none_prelaunch
+    opal_crs_base_none_prelaunch,
+
+    /** Register Thread */
+    opal_crs_blcr_reg_thread
 };
 
 /***************************
@@ -198,6 +201,22 @@ int opal_crs_blcr_module_init(void)
                         "crs:blcr: module_init() --> Finished [%d]",
                         opal_cr_is_tool);
     
+    return OPAL_SUCCESS;
+}
+int opal_crs_blcr_reg_thread(void)
+{
+    cr_client_id_t loc_client_id;
+
+    /*
+     * Initialize BLCR
+     */
+    loc_client_id = cr_init();
+    if (0 > loc_client_id) {
+        opal_output(mca_crs_blcr_component.super.output_handle,
+                    "Error: crs:blcr: reg_thread: cr_init failed (%d)\n", loc_client_id);
+        return OPAL_ERROR;
+    }
+
     return OPAL_SUCCESS;
 }
 

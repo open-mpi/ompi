@@ -37,8 +37,6 @@ int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int *ranks1,
 {
     int err;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     /* check for errors */
     if( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -57,6 +55,8 @@ int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int *ranks1,
                                           FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     err = ompi_group_translate_ranks ( group1, n_ranks, ranks1,
                                        group2, ranks2 );

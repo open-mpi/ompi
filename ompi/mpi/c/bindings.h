@@ -25,8 +25,8 @@
 #include "ompi/datatype/datatype.h"
 #include "ompi/runtime/params.h"
 
-/* This library needs to be here so that we can define 
- * OPAL_CR_TEST_CHECKPOINT_READY 
+/* This library needs to be here so that we can define
+ * the OPAL_CR_* checks
  */
 #include "opal/runtime/opal_cr.h"
 

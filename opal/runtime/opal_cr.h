@@ -129,28 +129,87 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
     OPAL_DECLSPEC extern bool opal_cr_stall_check;
     OPAL_DECLSPEC extern bool opal_cr_currently_stalled;
 
-    /* If not using FT or using the thead, disable the process checks */
-#if OPAL_ENABLE_FT == 1 && OPAL_ENABLE_FT_THREAD == 0
+#if OPAL_ENABLE_FT_THREAD == 1
+    /* Some thread functions */
+    OPAL_DECLSPEC void opal_cr_thread_init_library(void);
+    OPAL_DECLSPEC void opal_cr_thread_finalize_library(void);
+    OPAL_DECLSPEC void opal_cr_thread_abort_library(void);
+    OPAL_DECLSPEC void opal_cr_thread_enter_library(void);
+    OPAL_DECLSPEC void opal_cr_thread_exit_library(void);
+    OPAL_DECLSPEC void opal_cr_thread_noop_progress(void);
+#endif /* OPAL_ENABLE_FT_THREAD == 1 */
+
+    /* 
+     * If not using FT then make the #defines noops
+     */
+#if OPAL_ENABLE_FT == 0
+#define OPAL_CR_TEST_CHECKPOINT_READY() ;
+#define OPAL_CR_TEST_CHECKPOINT_READY_STALL() ;
+#define OPAL_CR_INIT_LIBRARY() ;
+#define OPAL_CR_FINALIZE_LIBRARY() ;
+#define OPAL_CR_ABORT_LIBRARY() ;
+#define OPAL_CR_ENTER_LIBRARY() ;
+#define OPAL_CR_EXIT_LIBRARY() ;
+#define OPAL_CR_NOOP_PROGRESS() ;
+#endif /* #if OPAL_ENABLE_FT == 0 */
+
+    /*
+     * If using FT
+     */
+#if OPAL_ENABLE_FT == 1
 #define OPAL_CR_TEST_CHECKPOINT_READY()      \
   {                                          \
     if(OPAL_UNLIKELY(opal_cr_is_enabled) ) { \
       opal_cr_test_if_checkpoint_ready();    \
     }                                        \
   }
-#else
-#define OPAL_CR_TEST_CHECKPOINT_READY() ;
-#endif
 
-#if OPAL_ENABLE_FT == 1 && OPAL_ENABLE_FT_THREAD == 0
 #define OPAL_CR_TEST_CHECKPOINT_READY_STALL()        \
   {                                                  \
     if(OPAL_UNLIKELY(opal_cr_is_enabled && !opal_cr_stall_check)) { \
       opal_cr_test_if_checkpoint_ready();            \
     }                                                \
   }
-#else
-#define OPAL_CR_TEST_CHECKPOINT_READY_STALL() ;
-#endif
+
+/* If *not* using FT thread */
+#if OPAL_ENABLE_FT_THREAD == 0
+#define OPAL_CR_INIT_LIBRARY()     OPAL_CR_TEST_CHECKPOINT_READY();
+#define OPAL_CR_FINALIZE_LIBRARY() OPAL_CR_TEST_CHECKPOINT_READY();
+#define OPAL_CR_ABORT_LIBRARY()    OPAL_CR_TEST_CHECKPOINT_READY();
+#define OPAL_CR_ENTER_LIBRARY()    OPAL_CR_TEST_CHECKPOINT_READY();
+#define OPAL_CR_EXIT_LIBRARY()     OPAL_CR_TEST_CHECKPOINT_READY();
+#define OPAL_CR_NOOP_PROGRESS()    OPAL_CR_TEST_CHECKPOINT_READY();
+#endif /* OPAL_ENABLE_FT_THREAD == 0 */
+
+/* If using FT thread */
+#if OPAL_ENABLE_FT_THREAD == 1
+#define OPAL_CR_INIT_LIBRARY()    \
+ {                                \
+   opal_cr_thread_init_library(); \
+ }
+#define OPAL_CR_FINALIZE_LIBRARY()    \
+ {                                    \
+   opal_cr_thread_finalize_library(); \
+ }
+#define OPAL_CR_ABORT_LIBRARY()    \
+ {                                 \
+   opal_cr_thread_abort_library(); \
+ }
+#define OPAL_CR_ENTER_LIBRARY()    \
+ {                                 \
+   opal_cr_thread_enter_library(); \
+ }
+#define OPAL_CR_EXIT_LIBRARY()    \
+ {                                \
+   opal_cr_thread_exit_library(); \
+ }
+#define OPAL_CR_NOOP_PROGRESS()    \
+ {                                 \
+   opal_cr_thread_noop_progress(); \
+ }
+#endif /* OPAL_ENABLE_FT_THREAD == 1 */
+
+#endif /* OPAL_ENABLE_FT == 1 */
 
     /*******************************
      * Notification Routines

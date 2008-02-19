@@ -35,7 +35,7 @@ static const char FUNC_NAME[] = "MPI_Group_rank";
 
 int MPI_Group_rank(MPI_Group group, int *rank) 
 {
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_NOOP_PROGRESS();
 
     /* error checking */
     if( MPI_PARAM_CHECK ) {

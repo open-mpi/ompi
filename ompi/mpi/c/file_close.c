@@ -36,8 +36,6 @@ int MPI_File_close(MPI_File *fh)
 {
     int rc;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
@@ -50,6 +48,8 @@ int MPI_File_close(MPI_File *fh)
                                           FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Release the MPI_File; the destructor releases the component,
        zeroes out fiels, etc. */

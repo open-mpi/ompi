@@ -37,8 +37,6 @@ int MPI_Open_port(MPI_Info info, char *port_name)
 {
     int rc;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-    
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
 
@@ -62,6 +60,8 @@ int MPI_Open_port(MPI_Info info, char *port_name)
            - "ip_address" : value contains IP address
         */
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     rc = ompi_open_port(port_name);
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);

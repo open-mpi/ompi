@@ -82,7 +82,10 @@ static opal_crs_base_module_t none_module = {
     opal_crs_base_none_enable_checkpoint,
 
     /** Prelaunch */
-    opal_crs_base_none_prelaunch
+    opal_crs_base_none_prelaunch,
+
+    /** Register thread */
+    opal_crs_base_none_reg_thread
 };
 
 int opal_crs_base_select(void)

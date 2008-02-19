@@ -56,7 +56,6 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     MEMCHECKER(
         memchecker_comm(intercomm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
@@ -70,6 +69,8 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
             return OMPI_ERRHANDLER_INVOKE ( intercomm, MPI_ERR_ARG, 
                                             FUNC_NAME);
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     local_size  = ompi_comm_size ( intercomm );
     remote_size = ompi_comm_remote_size ( intercomm );
@@ -144,6 +145,8 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     
 
  exit:
+    OPAL_CR_EXIT_LIBRARY();
+
     if ( NULL != procs ) {
         free ( procs );
     }

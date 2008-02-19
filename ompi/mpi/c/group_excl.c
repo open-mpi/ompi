@@ -43,8 +43,6 @@ int MPI_Group_excl(MPI_Group group, int n, int *ranks,
     ompi_group_t *group_pointer = (ompi_group_t *)group;
     int i, err, group_size;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     group_size = ompi_group_size ( group_pointer);
     if( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -65,13 +63,13 @@ int MPI_Group_excl(MPI_Group group, int n, int *ranks,
                                           FUNC_NAME);
         }
 
-	/* check to see if procs are within range */
+        /* check to see if procs are within range */
         for( i=0 ; i  < n ; i++ ) {
             if( ( 0 > ranks[i] ) || (ranks[i] >= group_size)){
-		return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
-					      FUNC_NAME );
-	    }
-	}
+                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
+                                              FUNC_NAME );
+            }
+        }
 
     }  /* end if( MPI_CHECK_ARGS) */
     
@@ -81,8 +79,8 @@ int MPI_Group_excl(MPI_Group group, int n, int *ranks,
         return MPI_SUCCESS;
     }
 
-    err = ompi_group_excl ( group, n, ranks, new_group );
-    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME );
+    OPAL_CR_ENTER_LIBRARY();
 
-   
+    err = ompi_group_excl ( group, n, ranks, new_group );
+    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME );   
 }

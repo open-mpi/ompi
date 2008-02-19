@@ -41,12 +41,10 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
 
     int err;
     bool re_order = false;
+
     MEMCHECKER(
         memchecker_comm(old_comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
@@ -92,6 +90,8 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
         }
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     /* 
      * everything seems to be alright with the communicator, we can go 
      * ahead and select a topology module for this purpose and create 
@@ -108,6 +108,7 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
                             (struct ompi_communicator_t **)comm_graph,
                             OMPI_COMM_GRAPH);
 
+    OPAL_CR_EXIT_LIBRARY();
     /* check the error status */
     if (MPI_SUCCESS != err) {
         return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);

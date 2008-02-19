@@ -46,18 +46,16 @@ int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         memchecker_comm(comm);
     );
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-    
     if (MPI_PARAM_CHECK) {
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                           FUNC_NAME);
-	} else if ((ompi_comm_rank(comm) != root && MPI_IN_PLACE == sendbuf) ||
+        } else if ((ompi_comm_rank(comm) != root && MPI_IN_PLACE == sendbuf) ||
                    (ompi_comm_rank(comm) == root && MPI_IN_PLACE == recvbuf)) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-	}
+        }
 
         /* Errors for intracommunicators */
 
@@ -137,6 +135,8 @@ int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
           }
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
 	

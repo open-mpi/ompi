@@ -43,8 +43,6 @@ int MPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
       memchecker_datatype(mtype);
   );
 
-  OPAL_CR_TEST_CHECKPOINT_READY();
-
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     if (NULL == mtype || MPI_DATATYPE_NULL == mtype) {
@@ -53,6 +51,8 @@ int MPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
     }
   }
+
+  OPAL_CR_ENTER_LIBRARY();
 
   status = ompi_ddt_get_extent( mtype, &lb, &extent );
   if (MPI_SUCCESS == status) {

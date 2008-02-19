@@ -45,7 +45,7 @@ MPI_Info MPI_Info_f2c(MPI_Fint info)
 {
     int info_index = OMPI_FINT_2_INT(info);
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_NOOP_PROGRESS();
 
     /* check the arguments */
 

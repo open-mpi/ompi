@@ -42,8 +42,6 @@ int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
         memchecker_comm(comm);
     );
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -71,6 +69,8 @@ int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
         }
         return MPI_SUCCESS;
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     rc = MCA_PML_CALL(probe(source, tag, comm, status));
     /*

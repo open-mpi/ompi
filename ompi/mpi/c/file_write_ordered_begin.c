@@ -39,8 +39,6 @@ int MPI_File_write_ordered_begin(MPI_File fh, void *buf, int count,
 {
     int rc;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     MEMCHECKER(
         memchecker_datatype(datatype);
         memchecker_call(&opal_memchecker_base_isdefined, buf, count, datatype);
@@ -59,6 +57,8 @@ int MPI_File_write_ordered_begin(MPI_File fh, void *buf, int count,
         }
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
 

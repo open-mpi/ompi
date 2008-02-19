@@ -42,43 +42,43 @@ int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group)
   int i, group_size, err;
   ompi_group_t *group_pointer;
 
-  OPAL_CR_TEST_CHECKPOINT_READY();
-
   group_pointer = (ompi_group_t *)group;
   group_size = ompi_group_size ( group_pointer );
 
   if( MPI_PARAM_CHECK ) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-    /* verify that group is valid group */
-    if ( (MPI_GROUP_NULL == group) || ( NULL == group) ||
-         (NULL == new_group) ) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                                          FUNC_NAME);
-    } else if (NULL == ranks) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                          FUNC_NAME);
-    }
+      /* verify that group is valid group */
+      if ( (MPI_GROUP_NULL == group) || ( NULL == group) ||
+           (NULL == new_group) ) {
+          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+                                        FUNC_NAME);
+      } else if (NULL == ranks) {
+          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                        FUNC_NAME);
+      }
 
-    /* check that new group is no larger than old group */
-    if ( n > group_size ) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
-                                      FUNC_NAME);
-    }
+      /* check that new group is no larger than old group */
+      if ( n > group_size ) {
+          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
+                                        FUNC_NAME);
+      }
 
-    for (i = 0; i < n; i++) {
-	if ((ranks[i] < 0) || (ranks[i] >= group_size)){
-	    return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_RANK, 
-					   FUNC_NAME);
-	}
-    }    
+      for (i = 0; i < n; i++) {
+          if ((ranks[i] < 0) || (ranks[i] >= group_size)){
+              return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_RANK, 
+                                             FUNC_NAME);
+          }
+      }
   }  /* end if( MPI_CHECK_ARGS) */
-
+  
   if ( 0 == n ) {
       *new_group = MPI_GROUP_EMPTY;
       OBJ_RETAIN(MPI_GROUP_EMPTY);
       return MPI_SUCCESS;
   }
+
+  OPAL_CR_ENTER_LIBRARY();
 
   err = ompi_group_incl(group,n,ranks,new_group);
   OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD,err,FUNC_NAME);

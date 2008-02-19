@@ -42,8 +42,6 @@ int MPI_Register_datarep(char *datarep,
 {
     int rc;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -70,6 +68,7 @@ int MPI_Register_datarep(char *datarep,
         }
     }
 
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
     rc = mca_io_base_register_datarep(datarep, read_conversion_fn,

@@ -167,6 +167,11 @@ int opal_crs_base_none_prelaunch(int32_t rank,
     return OPAL_SUCCESS;
 }
 
+int opal_crs_base_none_reg_thread(void)
+{
+    return OPAL_SUCCESS;
+}
+
 /*
  * Utility functions
  */

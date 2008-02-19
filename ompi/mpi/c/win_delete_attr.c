@@ -37,16 +37,16 @@ int MPI_Win_delete_attr(MPI_Win win, int win_keyval)
 {
     int ret; 
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (ompi_win_invalid(win)) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
-	}
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
+        }
     }
-  
+
+    OPAL_CR_ENTER_LIBRARY();
+
     ret = ompi_attr_delete(WIN_ATTR, win, win->w_keyhash, win_keyval, 
                            false, true);
     OMPI_ERRHANDLER_RETURN(ret, win, MPI_ERR_OTHER, FUNC_NAME);  

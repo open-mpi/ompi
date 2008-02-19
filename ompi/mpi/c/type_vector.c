@@ -44,10 +44,6 @@ int MPI_Type_vector(int count,
        memchecker_datatype(oldtype);
    );
    
-   OPAL_CR_TEST_CHECKPOINT_READY();
-
-   OPAL_CR_TEST_CHECKPOINT_READY();
-
    if( MPI_PARAM_CHECK ) {
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
       if (NULL == oldtype || MPI_DATATYPE_NULL == oldtype ||
@@ -63,6 +59,8 @@ int MPI_Type_vector(int count,
       }
    }
 
+   OPAL_CR_ENTER_LIBRARY();
+
    rc = ompi_ddt_create_vector ( count, blocklength, stride, oldtype, newtype );
    OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME );
 
@@ -74,5 +72,7 @@ int MPI_Type_vector(int count,
 
       ompi_ddt_set_args( *newtype, 3, a_i, 0, NULL, 1, &oldtype, MPI_COMBINER_VECTOR );
    }
+
+   OPAL_CR_EXIT_LIBRARY();
    return MPI_SUCCESS;
 }

@@ -49,7 +49,6 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
         memchecker_datatype(datatype);
         memchecker_call(&opal_memchecker_base_isdefined, inbuf, incount, datatype);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -63,6 +62,8 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     OBJ_CONSTRUCT(&local_convertor, ompi_convertor_t);
 
@@ -79,6 +80,7 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
     ompi_convertor_get_packed_size( &local_convertor, &size );
     if( (*position + size) > (size_t)outsize ) {  /* we can cast as we already checked for < 0 */
         OBJ_DESTRUCT( &local_convertor );
+        OPAL_CR_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_INVOKE( MPI_COMM_WORLD, MPI_ERR_TRUNCATE, FUNC_NAME );
     }
 

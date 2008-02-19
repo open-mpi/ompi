@@ -237,5 +237,55 @@ fi
 AC_DEFINE_UNQUOTED([OMPI_ENABLE_PROGRESS_THREADS], [$OMPI_ENABLE_PROGRESS_THREADS],
                    [Whether we should use progress threads rather than polling])
 AC_MSG_RESULT([$enable_progress_threads])
+
+#
+# Fault Tolerance Thread
+#
+# --enable-ft-thread
+#  #if OPAL_ENABLE_FT_THREAD == 0 /* Disabled */
+#  #if OPAL_ENABLE_FT_THREAD == 1 /* Enabled  */
+# 
+AC_MSG_CHECKING([if want fault tolerance thread])
+AC_ARG_ENABLE([ft_thread],
+    [AC_HELP_STRING([--disable-ft-thread],
+                    [Disable fault tolerance thread running inside all processes. Requires progress and/or MPI threads (default: enabled)])],
+    [enable_ft_thread="$enableval"],
+    [enable_ft_thread="undef"])
+
+# if they do not want FT support, then they do not want this thread either
+if test "$ompi_want_ft" = "0"; then
+    ompi_want_ft_thread=0
+    AC_MSG_RESULT([Disabled (fault tolerance disabled --without-ft)])
+# if --disable-ft-thread
+elif test "$enable_ft_thread" = "no"; then
+    ompi_want_ft_thread=0
+    AC_MSG_RESULT([Disabled])
+# if default, and no progress or MPI threads
+elif test "$enable_ft_thread" = "undef" -a "$enable_progress_threads" = "no"  -a "$enable_mpi_threads" = "no" ; then
+    ompi_want_ft_thread=0
+    AC_MSG_RESULT([Disabled (Progress and MPI Threads Disabled)])
+# if default, and either progress or MPI threads enabled
+else
+    # Default: Enable
+    # Make sure we have at least Progress Threads or MPI Threads enabled 
+    if test "$enable_progress_threads" = "no" -a "$enable_mpi_threads" = "no"; then
+        AC_MSG_RESULT([Must enable progress or MPI threads to use this option])
+        AC_MSG_ERROR([Cannot continue])
+    else
+        AC_MSG_RESULT([yes])
+        ompi_want_ft_thread=1
+        AC_MSG_WARN([**************************************************])
+        AC_MSG_WARN([*** Fault Tolerance with a thread in Open MPI    *])
+        AC_MSG_WARN([*** is an experimental, research quality option. *])
+        AC_MSG_WARN([*** It requires progress or MPI threads, and     *])
+        AC_MSG_WARN([*** care should be used when enabling these      *])
+        AC_MSG_WARN([*** options.                                     *])
+        AC_MSG_WARN([**************************************************])
+    fi
+fi
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT_THREAD], [$ompi_want_ft_thread],
+                   [Enable fault tolerance thread in Open PAL])
+AM_CONDITIONAL(WANT_FT_THREAD, test "$ompi_want_ft_thread" = "1")
+
 ])dnl
 

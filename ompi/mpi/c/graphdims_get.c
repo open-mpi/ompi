@@ -42,7 +42,6 @@ int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges)
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
@@ -64,12 +63,16 @@ int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges)
                                            FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
+
     /* get the function pointer to do the right thing */
     func = comm->c_topo->topo_graphdims_get;
 
     /* call the function */
-    if ( MPI_SUCCESS != 
-            (err = func(comm, nnodes, nedges))) {
+    err = func(comm, nnodes, nedges);
+    OPAL_CR_EXIT_LIBRARY();
+    if ( MPI_SUCCESS != err ) {
         return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
     }
     

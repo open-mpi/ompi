@@ -205,7 +205,17 @@ typedef int (*opal_crs_base_module_prelaunch_fn_t)
           char **cwd, 
           char ***argv,
           char ***env);
- 
+
+/**
+ * Register another thread that may call this library.
+ * Some CR systems require that each thread that will call into their library
+ * register individually before doing so.
+ *
+ * Returns OPAL_SUCCESS or OPAL_ERROR
+ */
+typedef int (*opal_crs_base_module_reg_thread_fn_t)
+     (void);
+
 /**
  * Structure for CRS v1.0.0 components.
  */
@@ -250,6 +260,9 @@ struct opal_crs_base_module_1_0_0_t {
 
     /** Pre Launch */
     opal_crs_base_module_prelaunch_fn_t      crs_prelaunch;
+
+    /** Per thread registration */
+    opal_crs_base_module_reg_thread_fn_t      crs_reg_thread;
 };
 typedef struct opal_crs_base_module_1_0_0_t opal_crs_base_module_1_0_0_t;
 typedef struct opal_crs_base_module_1_0_0_t opal_crs_base_module_t;

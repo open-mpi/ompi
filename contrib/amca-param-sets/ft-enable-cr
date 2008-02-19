@@ -12,11 +12,13 @@
 # - Select only checkpoint ready components
 # - Enable Additional FT infrastructure
 # - Auto-select OPAL CRS component
+# - If available, use the FT Thread (Default)
 #
 opal_cr_allow_opal_only=0
 mca_base_component_distill_checkpoint_ready=1
 ft_cr_enabled=1
 crs=
+opal_cr_use_thread=1
 
 #
 # ORTE Parameters

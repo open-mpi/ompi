@@ -51,8 +51,6 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
         memchecker_comm(comm);
     );
     
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
@@ -108,6 +106,8 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
         }
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     if ( rank == root ) {
         /* Open a port. The port_name is passed as an environment variable
          * to the children. */
@@ -124,6 +124,7 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
     rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
 
 error:
+    OPAL_CR_EXIT_LIBRARY();
     /* close the port again. Nothing has to be done for that at the moment.*/
 
     /* set array of errorcodes */

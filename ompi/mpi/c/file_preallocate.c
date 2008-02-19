@@ -36,8 +36,6 @@ int MPI_File_preallocate(MPI_File fh, MPI_Offset size)
 {
     int rc;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -47,6 +45,8 @@ int MPI_File_preallocate(MPI_File fh, MPI_Offset size)
         }
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
 

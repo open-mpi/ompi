@@ -41,8 +41,6 @@ int MPI_Type_get_attr (MPI_Datatype type,
 {
     int ret;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-    
     MEMCHECKER(
         memchecker_datatype(type);
     );
@@ -50,14 +48,16 @@ int MPI_Type_get_attr (MPI_Datatype type,
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == type || MPI_DATATYPE_NULL == type) {
-          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE,
-                                        FUNC_NAME );
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE,
+                                          FUNC_NAME );
         } else if ((NULL == attribute_val) || (NULL == flag)) {
-          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
-                                        MPI_ERR_ARG, 
-                                        FUNC_NAME);
-	}
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
+                                          MPI_ERR_ARG, 
+                                          FUNC_NAME);
+        }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* This stuff is very confusing.  Be sure to see
        src/attribute/attribute.c for a lengthy comment explaining Open

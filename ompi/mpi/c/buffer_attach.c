@@ -35,8 +35,7 @@ static const char FUNC_NAME[] = "MPI_Buffer_attach";
 
 int MPI_Buffer_attach(void *buffer, int size) 
 {
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    int ret = OMPI_SUCCESS;
 
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -45,6 +44,10 @@ int MPI_Buffer_attach(void *buffer, int size)
     }
   }
 
-  return mca_pml_base_bsend_attach(buffer, size);
+  OPAL_CR_ENTER_LIBRARY();
+  ret = mca_pml_base_bsend_attach(buffer, size);
+
+  OPAL_CR_EXIT_LIBRARY();
+  return ret;
 }
 

@@ -43,7 +43,6 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
         memchecker_call(&opal_memchecker_base_isdefined, buffer, count, datatype); 
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
       err = MPI_SUCCESS;
@@ -85,6 +84,8 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
         0 == count) {
         return MPI_SUCCESS;
     } 
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
 

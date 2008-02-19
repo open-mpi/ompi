@@ -43,7 +43,6 @@ int MPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors,
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
@@ -70,12 +69,16 @@ int MPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors,
                                            FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
+
     /* neighbors the function pointer to do the right thing */
     func = comm->c_topo->topo_graph_neighbors;
 
     /* call the function */
-    if ( MPI_SUCCESS != 
-            (err = func(comm, rank, maxneighbors, neighbors))) {
+    err = func(comm, rank, maxneighbors, neighbors);
+    OPAL_CR_EXIT_LIBRARY();
+    if ( MPI_SUCCESS != err ) {
         return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
     }
     

@@ -41,7 +41,7 @@ int MPI_Get_processor_name(char *name, int *resultlen)
     char tmp[MPI_MAX_PROCESSOR_NAME];
     int len;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_NOOP_PROGRESS();
 
     if ( MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

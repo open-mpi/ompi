@@ -58,8 +58,6 @@ int MPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen,
     int key_length;
     int err;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     /*
      * Simple function. All we need to do is search for the value
      * having the "key" associated with it and return the length
@@ -82,6 +80,8 @@ int MPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen,
                                           FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     err = ompi_info_get_valuelen (info, key, valuelen, flag);
     OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);

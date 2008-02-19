@@ -40,7 +40,8 @@ int MPI_Comm_remote_group(MPI_Comm comm, MPI_Group *group)
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
+
+    OPAL_CR_NOOP_PROGRESS();
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

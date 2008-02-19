@@ -40,15 +40,13 @@ int MPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
                   MPI_Comm comm)
 {
     int err;
+
     MEMCHECKER(
         memchecker_datatype(sendtype);
         memchecker_datatype(recvtype);
         memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
 
@@ -80,6 +78,8 @@ int MPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         (0 == recvcount)) {
         return MPI_SUCCESS;
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
 

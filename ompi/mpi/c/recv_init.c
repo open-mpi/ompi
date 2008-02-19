@@ -38,14 +38,12 @@ int MPI_Recv_init(void *buf, int count, MPI_Datatype type, int source,
                   int tag, MPI_Comm comm, MPI_Request *request)
 {
     int rc = MPI_SUCCESS;
+
     MEMCHECKER(
         memchecker_datatype(type);
         memchecker_call(&opal_memchecker_base_isaddressible, buf, count, type);
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -79,6 +77,8 @@ int MPI_Recv_init(void *buf, int count, MPI_Datatype type, int source,
         (*request)->req_free = ompi_request_persistent_proc_null_free;
         return MPI_SUCCESS;
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /*
      * Here, we just initialize the request -- memchecker should set the buffer in MPI_Start.

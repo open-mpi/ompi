@@ -38,8 +38,6 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
 {
     int err;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if ( MPI_PARAM_CHECK ) {
         if (required < MPI_THREAD_SINGLE || required > MPI_THREAD_MULTIPLE) {
             ompi_mpi_errors_are_fatal_comm_handler(NULL, NULL, FUNC_NAME);
@@ -74,6 +72,8 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     /* Call the back-end initialization function (we need to put as
        little in this function as possible so that if it's profiled, we
        don't lose anything) */
@@ -83,6 +83,8 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
     } else {
         err = ompi_mpi_init(0, NULL, required, provided);
     }
+
+    OPAL_CR_EXIT_LIBRARY();
 
     /* Since we don't have a communicator to invoke an errorhandler on
        here, don't use the fancy-schmancy ERRHANDLER macros; they're

@@ -36,8 +36,6 @@ int MPI_Win_free(MPI_Win *win)
 {
     int ret;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
@@ -50,8 +48,12 @@ int MPI_Win_free(MPI_Win *win)
         }
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     ret = ompi_win_free(*win);
-    if (OMPI_SUCCESS == ret) *win = MPI_WIN_NULL;
+    if (OMPI_SUCCESS == ret) {
+        *win = MPI_WIN_NULL;
+    }
 
     OMPI_ERRHANDLER_RETURN(ret, *win, ret, FUNC_NAME);
 }

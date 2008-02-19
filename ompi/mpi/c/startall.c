@@ -37,7 +37,8 @@ static const char FUNC_NAME[] = "MPI_Startall";
 
 int MPI_Startall(int count, MPI_Request *requests) 
 {
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    int ret = OMPI_SUCCESS;
+
     MEMCHECKER(
         int j;
         for (j = 0; j < count; j++){
@@ -64,6 +65,12 @@ int MPI_Startall(int count, MPI_Request *requests)
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
-    return MCA_PML_CALL(start(count, requests));
+
+    OPAL_CR_ENTER_LIBRARY();
+
+    ret = MCA_PML_CALL(start(count, requests));
+
+    OPAL_CR_EXIT_LIBRARY();
+    return ret;
 }
 

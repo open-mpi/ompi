@@ -90,6 +90,7 @@ static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
         while (c->c_signaled == 0) {
             opal_mutex_unlock(m);
             opal_progress();
+            OPAL_CR_TEST_CHECKPOINT_READY_STALL();
             opal_mutex_lock(m);
         }
 #endif

@@ -45,7 +45,6 @@ int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
         memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
         char *msg;
@@ -97,6 +96,8 @@ int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
     if (size == count) {
         return MPI_SUCCESS;
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
 

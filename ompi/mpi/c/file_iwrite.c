@@ -41,13 +41,11 @@ int MPI_File_iwrite(MPI_File fh, void *buf, int count, MPI_Datatype
 {
     int rc;
     mca_io_base_request_t *io_request;
+
     MEMCHECKER(
         memchecker_datatype(datatype);
         memchecker_call(&opal_memchecker_base_isdefined, buf, count, datatype);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
         rc = MPI_SUCCESS;
@@ -63,9 +61,12 @@ int MPI_File_iwrite(MPI_File fh, void *buf, int count, MPI_Datatype
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     /* Get a request */
 
     if (OMPI_SUCCESS != mca_io_base_request_alloc(fh, &io_request)) {
+        OPAL_CR_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_INVOKE(fh, MPI_ERR_NO_MEM, FUNC_NAME);
     }
     *request = (ompi_request_t*) io_request;

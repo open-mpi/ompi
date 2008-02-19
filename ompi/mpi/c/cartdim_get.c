@@ -38,12 +38,10 @@ int MPI_Cartdim_get(MPI_Comm comm, int *ndims)
 {
     mca_topo_base_module_cartdim_get_fn_t func;
     int err;
+
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -65,13 +63,16 @@ int MPI_Cartdim_get(MPI_Comm comm, int *ndims)
        }
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     /* get the function pointer on this communicator */
     func = comm->c_topo->topo_cartdim_get;
 
     /* call the function */
-    if ( MPI_SUCCESS != 
-              (err = func(comm, ndims))) {
-         return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
+    err = func(comm, ndims);
+    OPAL_CR_EXIT_LIBRARY();
+    if ( MPI_SUCCESS != err ) {
+        return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
     }
 
     return MPI_SUCCESS;

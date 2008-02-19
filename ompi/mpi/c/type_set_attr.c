@@ -40,8 +40,6 @@ int MPI_Type_set_attr (MPI_Datatype type,
 {
     int ret;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     MEMCHECKER(
         memchecker_datatype(type);
     );
@@ -54,6 +52,8 @@ int MPI_Type_set_attr (MPI_Datatype type,
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
     }
   }
+
+  OPAL_CR_ENTER_LIBRARY();
 
     ret = ompi_attr_set_c(TYPE_ATTR, type, &type->d_keyhash, 
                           type_keyval, attribute_val, false, true);

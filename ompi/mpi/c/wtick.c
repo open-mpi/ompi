@@ -40,7 +40,7 @@ static const char FUNC_NAME[] = "MPI_Wtick";
 
 double MPI_Wtick(void)
 {
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_NOOP_PROGRESS();
 
 #if OPAL_TIMER_USEC_NATIVE
     /* We may or may not have native usec precision on Windows, so put

@@ -38,18 +38,18 @@ int MPI_Win_get_attr(MPI_Win win, int win_keyval,
 {
     int ret;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if (ompi_win_invalid(win)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
-        } else if ((NULL == attribute_val) || (NULL == flag)) {
-	    return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ARG, FUNC_NAME);
-	}
+       if (ompi_win_invalid(win)) {
+           return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
+       } else if ((NULL == attribute_val) || (NULL == flag)) {
+           return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ARG, FUNC_NAME);
+       }
     }
-    
+
+    OPAL_CR_ENTER_LIBRARY();
+
     /* This stuff is very confusing.  Be sure to see
        src/attribute/attribute.c for a lengthy comment explaining Open
        MPI attribute behavior. */

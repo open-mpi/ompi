@@ -40,12 +40,10 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
 
     int err;
     bool re_order = false;
+
     MEMCHECKER(
         memchecker_comm(old_comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
@@ -107,6 +105,8 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
         }
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     /* everything seems to be alright with the communicator, we can go 
      * ahead and select a topology module for this purpose and create 
      * the new cartesian communicator
@@ -122,6 +122,7 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
                             comm_cart,
                             OMPI_COMM_CART);
 
+    OPAL_CR_EXIT_LIBRARY();
     /* check the error status */
     if (MPI_SUCCESS != err) {
         return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);

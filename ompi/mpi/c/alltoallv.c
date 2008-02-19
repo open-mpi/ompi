@@ -54,8 +54,6 @@ int MPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls,
         }
     );
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
 
       /* Unrooted operation -- same checks for all ranks */
@@ -90,6 +88,8 @@ int MPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls,
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
       }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
 

@@ -41,8 +41,6 @@ int MPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn,
     ompi_attribute_fn_ptr_union_t copy_fn;
     ompi_attribute_fn_ptr_union_t del_fn;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if ((NULL == comm_copy_attr_fn) || (NULL == comm_delete_attr_fn) ||
@@ -51,7 +49,9 @@ int MPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn,
                                           FUNC_NAME);
         }
     }
-    
+
+    OPAL_CR_ENTER_LIBRARY();
+
     copy_fn.attr_communicator_copy_fn = (MPI_Comm_internal_copy_attr_function*)comm_copy_attr_fn;
     del_fn.attr_communicator_delete_fn = comm_delete_attr_fn;
 

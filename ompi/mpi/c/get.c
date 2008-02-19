@@ -42,8 +42,6 @@ int MPI_Get(void *origin_addr, int origin_count,
 {
     int rc;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;
 
@@ -76,6 +74,7 @@ int MPI_Get(void *origin_addr, int origin_count,
     MEMCHECKER (
         memchecker_call(&opal_memchecker_base_mem_noaccess, origin_addr, origin_count, origin_datatype);
     );
+    OPAL_CR_ENTER_LIBRARY();
 
     rc = win->w_osc_module->osc_get(origin_addr, origin_count, origin_datatype,
                                     target_rank, target_disp, target_count,

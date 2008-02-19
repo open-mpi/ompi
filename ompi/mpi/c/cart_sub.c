@@ -38,12 +38,10 @@ int MPI_Cart_sub(MPI_Comm comm, int *remain_dims, MPI_Comm *new_comm)
 {
     int err;
     mca_topo_base_module_cart_sub_fn_t func;
+
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
@@ -66,12 +64,15 @@ int MPI_Cart_sub(MPI_Comm comm, int *remain_dims, MPI_Comm *new_comm)
         }
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     /* get the function pointer on this communicator */
     func = comm->c_topo->topo_cart_sub;
 
     /* call the function */
-    if ( MPI_SUCCESS != 
-            (err = func(comm, remain_dims, new_comm))) {
+    err = func(comm, remain_dims, new_comm);
+    OPAL_CR_EXIT_LIBRARY();
+    if ( MPI_SUCCESS != err ) {
         return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
     }
 

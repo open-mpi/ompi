@@ -46,8 +46,6 @@ int MPI_Info_free(MPI_Info *info)
 {
     int err;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     /*
      * Free all the alloced items from MPI_Info info.
      * Make sure the items are freed in an orderly
@@ -61,6 +59,8 @@ int MPI_Info_free(MPI_Info *info)
                                           FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     err = ompi_info_free(info);
     OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);

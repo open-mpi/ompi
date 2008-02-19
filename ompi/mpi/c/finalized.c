@@ -35,7 +35,7 @@ int MPI_Finalized(int *flag)
 {
     MPI_Comm null = NULL;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_NOOP_PROGRESS();
 
     if (MPI_PARAM_CHECK) {
         if (NULL == flag) {

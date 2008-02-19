@@ -36,8 +36,7 @@ static const char FUNC_NAME[] = "MPI_Op_c2f";
 
 MPI_Fint MPI_Op_c2f(MPI_Op op) 
 {
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_NOOP_PROGRESS();
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

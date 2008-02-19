@@ -38,8 +38,6 @@ int MPI_Publish_name(char *service_name, MPI_Info info,
 {
     int rc;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
 
@@ -57,16 +55,19 @@ int MPI_Publish_name(char *service_name, MPI_Info info,
         }
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     /* 
      * No predefined info-objects for this function in MPI-2,
      * therefore, we do not parse the info-object at the moment.
      */
 
     rc = ompi_comm_namepublish (service_name, port_name);
+    OPAL_CR_EXIT_LIBRARY();
     if ( OMPI_SUCCESS != rc ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
                                       FUNC_NAME);
     }
-    
+
     return MPI_SUCCESS;
 }

@@ -41,7 +41,7 @@ int MPI_Test_cancelled(MPI_Status *status, int *flag)
             memchecker_status(status);
     );
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_NOOP_PROGRESS();
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

@@ -41,8 +41,6 @@ int MPI_Type_create_indexed_block(int count,
 {
    int rc;
 
-   OPAL_CR_TEST_CHECKPOINT_READY();
-
    MEMCHECKER(
       memchecker_datatype(oldtype);
    );
@@ -61,6 +59,9 @@ int MPI_Type_create_indexed_block(int count,
                                       FUNC_NAME );
       }
    }
+
+   OPAL_CR_ENTER_LIBRARY();
+
    rc = ompi_ddt_create_indexed_block( count, blocklength, array_of_displacements,
                                       oldtype, newtype );
    if( rc != MPI_SUCCESS ) {
@@ -74,5 +75,7 @@ int MPI_Type_create_indexed_block(int count,
       a_i[2] = array_of_displacements;
       ompi_ddt_set_args( *newtype, 2 + count, a_i, 0, NULL, 1, &oldtype, MPI_COMBINER_INDEXED_BLOCK );
    }
+
+   OPAL_CR_EXIT_LIBRARY();
    return MPI_SUCCESS;
 }

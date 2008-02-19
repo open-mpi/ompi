@@ -41,8 +41,6 @@ int MPI_Type_get_envelope(MPI_Datatype type,
 {
    int rc;
 
-   OPAL_CR_TEST_CHECKPOINT_READY();
-
    MEMCHECKER(
       memchecker_datatype(type);
    );
@@ -58,6 +56,8 @@ int MPI_Type_get_envelope(MPI_Datatype type,
                                       FUNC_NAME );
       }
    }
+
+   OPAL_CR_ENTER_LIBRARY();
 
    rc = ompi_ddt_get_args( type, 0, num_integers, NULL, num_addresses, NULL, 
                            num_datatypes, NULL, combiner );

@@ -41,11 +41,10 @@ static const char FUNC_NAME[] = "MPI_Cancel";
 int MPI_Cancel(MPI_Request *request) 
 {
     int rc;
+
     MEMCHECKER(
         memchecker_request(request);
     );
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
@@ -59,6 +58,8 @@ int MPI_Cancel(MPI_Request *request)
     if (MPI_REQUEST_NULL == *request) {
         return MPI_SUCCESS;
     }
+
+    OPAL_CR_ENTER_LIBRARY();
     rc = ompi_request_cancel(*request);
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }

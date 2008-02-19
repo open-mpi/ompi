@@ -44,8 +44,6 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
     int rc;
     ompi_win_t *ompi_win = (ompi_win_t*) win;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     MEMCHECKER(
         memchecker_datatype(origin_datatype);
         memchecker_datatype(target_datatype);
@@ -219,14 +217,17 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
         }
     }
 
-    if (MPI_PROC_NULL == target_rank) return MPI_SUCCESS;
+    if (MPI_PROC_NULL == target_rank) {
+        return MPI_SUCCESS;
+    }
 
     /* Set buffer to be unaccessable before sending it.
      * It's set accessable again in file osc_pt2pt_data_move. */
     MEMCHECKER (
         memchecker_call(&opal_memchecker_base_mem_noaccess, origin_addr, origin_count, origin_datatype);
     );
-    
+    OPAL_CR_ENTER_LIBRARY();
+
     rc = ompi_win->w_osc_module->osc_accumulate(origin_addr, 
                                                 origin_count,
                                                 origin_datatype,

@@ -48,8 +48,6 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         memchecker_comm(comm);
     );
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-    
     if (MPI_PARAM_CHECK) {
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -127,6 +125,8 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
          0 == sendcount)) {
         return MPI_SUCCESS;
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
 	

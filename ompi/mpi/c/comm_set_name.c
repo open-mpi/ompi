@@ -44,7 +44,6 @@ int MPI_Comm_set_name(MPI_Comm comm, char *name)
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -59,6 +58,8 @@ int MPI_Comm_set_name(MPI_Comm comm, char *name)
                                             FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     rc = ompi_comm_set_name (comm, name );
     /* -- Tracing information for new communicator name -- */

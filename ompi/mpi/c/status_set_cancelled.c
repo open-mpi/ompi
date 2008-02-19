@@ -45,7 +45,7 @@ int MPI_Status_set_cancelled(MPI_Status *status, int flag)
         }
     );
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_NOOP_PROGRESS();
 
     if (MPI_PARAM_CHECK) {
         int rc = MPI_SUCCESS;

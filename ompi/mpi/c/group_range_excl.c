@@ -42,84 +42,84 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
 {
     int err, i, group_size,index,*elements_int_list;
     
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     /* can't act on NULL group */
     if( MPI_PARAM_CHECK ) {
-	OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-	if ( (MPI_GROUP_NULL == group) || (NULL == group) ||
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if ( (MPI_GROUP_NULL == group) || (NULL == group) ||
              (NULL == new_group) ) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, 
-					  FUNC_NAME);
-	}
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, 
+                                          FUNC_NAME);
+        }
 
-	group_size = ompi_group_size ( group );
-	elements_int_list = (int *) 
-	    malloc(sizeof(int) * group_size);
-	if (NULL == elements_int_list) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
-					  FUNC_NAME);
-	}
-	for (i = 0; i < group_size; i++) {
-	    elements_int_list[i] = -1;
-	}
+        group_size = ompi_group_size ( group );
+        elements_int_list = (int *) 
+            malloc(sizeof(int) * group_size);
+        if (NULL == elements_int_list) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
+                                          FUNC_NAME);
+        }
+        for (i = 0; i < group_size; i++) {
+            elements_int_list[i] = -1;
+        }
 
-	for (i = 0; i < n_triplets; i++) {
-	    if ((0 > ranges[i][0]) || (ranges[i][0] > group_size )) {
-		return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
-					      FUNC_NAME);
-	    }
-	    if ((0 > ranges[i][1]) || (ranges[i][1] > group_size )) {
-		return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
-					      FUNC_NAME);
-	    }
-	    if (ranges[i][2] == 0) {
-		return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
-					      FUNC_NAME);
-	    }
-	    if ( (ranges[i][0] < ranges[i][1])) {
-	        if( ( ranges[i][2] < 0) ) {
-		    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
-						FUNC_NAME);
-		}
-		/* positive stride */
-		for (index = ranges[i][0]; index <= ranges[i][1]; index += ranges[i][2]) {
-		    /* make sure rank has not already been selected */
-		    if (elements_int_list[index] != -1) {
-		        free(elements_int_list);
-			return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
-						  FUNC_NAME);
-		    }
-		}
-	    }
-	    if ( (ranges[i][0] > ranges[i][1])) { 
-	          if((ranges[i][2] > 0)) {
-		      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
-						FUNC_NAME);
-		  }
-		  /* negative stride */
-		  for (index = ranges[i][0]; index >= ranges[i][1]; index += ranges[i][2]) {
-		      /* make sure rank has not already been selected */
-		      if (elements_int_list[index] != -1) {
-			  free(elements_int_list);
-			  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
-						   FUNC_NAME);
-		      }
-		  }
+        for (i = 0; i < n_triplets; i++) {
+            if ((0 > ranges[i][0]) || (ranges[i][0] > group_size )) {
+                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
+                                              FUNC_NAME);
             }
-	    else {
-	        /* first_rank == last_rank */
-	        index = ranges[i][0];
-	        if (elements_int_list[index] != -1) {
-		    free(elements_int_list);
-		    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
-						     FUNC_NAME);
-		}
-	    }
-	}
+            if ((0 > ranges[i][1]) || (ranges[i][1] > group_size )) {
+                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
+                                              FUNC_NAME);
+            }
+            if (ranges[i][2] == 0) {
+                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
+                                              FUNC_NAME);
+            }
+            if ( (ranges[i][0] < ranges[i][1])) {
+                if( ( ranges[i][2] < 0) ) {
+                    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
+                                                  FUNC_NAME);
+                }
+                /* positive stride */
+                for (index = ranges[i][0]; index <= ranges[i][1]; index += ranges[i][2]) {
+                    /* make sure rank has not already been selected */
+                    if (elements_int_list[index] != -1) {
+                        free(elements_int_list);
+                        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
+                                                      FUNC_NAME);
+                    }
+                }
+            }
+            if ( (ranges[i][0] > ranges[i][1])) { 
+                if((ranges[i][2] > 0)) {
+                    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
+                                                  FUNC_NAME);
+                }
+                /* negative stride */
+                for (index = ranges[i][0]; index >= ranges[i][1]; index += ranges[i][2]) {
+                    /* make sure rank has not already been selected */
+                    if (elements_int_list[index] != -1) {
+                        free(elements_int_list);
+                        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
+                                                      FUNC_NAME);
+                    }
+                }
+            }
+            else {
+                /* first_rank == last_rank */
+                index = ranges[i][0];
+                if (elements_int_list[index] != -1) {
+                    free(elements_int_list);
+                    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
+                                                  FUNC_NAME);
+                }
+            }
+        }
 	
-	free (elements_int_list);
+        free (elements_int_list);
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     err = ompi_group_range_excl(group,n_triplets,ranges,new_group);
     OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD,err,FUNC_NAME);

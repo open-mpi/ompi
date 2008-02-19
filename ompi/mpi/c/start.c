@@ -38,10 +38,11 @@ static const char FUNC_NAME[] = "MPI_Start";
 
 int MPI_Start(MPI_Request *request) 
 {
+    int ret = OMPI_SUCCESS;
+
     MEMCHECKER(
         memchecker_request(request);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
@@ -54,7 +55,12 @@ int MPI_Start(MPI_Request *request)
 
     switch((*request)->req_type) {
     case OMPI_REQUEST_PML:
-        return MCA_PML_CALL(start(1, request));
+        OPAL_CR_ENTER_LIBRARY();
+
+        ret = MCA_PML_CALL(start(1, request));
+
+        OPAL_CR_EXIT_LIBRARY();
+        return ret;
         break;
 
     case OMPI_REQUEST_NOOP:

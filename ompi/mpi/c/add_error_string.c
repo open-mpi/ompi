@@ -38,7 +38,7 @@ int MPI_Add_error_string(int errorcode, char *string)
 {
     int rc;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_NOOP_PROGRESS();
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

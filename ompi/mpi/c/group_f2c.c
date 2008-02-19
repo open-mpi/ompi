@@ -39,7 +39,7 @@ MPI_Group MPI_Group_f2c(MPI_Fint group_f)
 {
     int group_index = OMPI_FINT_2_INT(group_f);
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_NOOP_PROGRESS();
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

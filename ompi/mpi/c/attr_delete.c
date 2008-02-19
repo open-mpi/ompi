@@ -42,16 +42,17 @@ int MPI_Attr_delete(MPI_Comm comm, int keyval)
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-	if (ompi_comm_invalid(comm)) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-					 FUNC_NAME);
-	}
+        if (ompi_comm_invalid(comm)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+                                          FUNC_NAME);
+        }
     }
-  
+
+    OPAL_CR_ENTER_LIBRARY();
+
     ret = ompi_attr_delete(COMM_ATTR, comm, comm->c_keyhash, keyval, 
                            false, true);
 

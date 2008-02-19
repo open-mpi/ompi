@@ -36,11 +36,11 @@ static const char FUNC_NAME[] = "MPI_Comm_compare";
 int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
 
     int rc;
+
     MEMCHECKER(
         memchecker_comm(comm1);
         memchecker_comm(comm2);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -55,7 +55,9 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
                                           FUNC_NAME);
         }
     }
-    
+
+    OPAL_CR_ENTER_LIBRARY();
+
     rc = ompi_comm_compare ( (ompi_communicator_t*)comm1, 
                              (ompi_communicator_t*)comm2,
                              result);

@@ -42,8 +42,6 @@ int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf,
     int rc;
     mca_io_base_request_t *io_request;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     MEMCHECKER(
         memchecker_datatype(datatype);
     );
@@ -62,9 +60,12 @@ int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf,
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     /* Get a request */
 
     if (OMPI_SUCCESS != mca_io_base_request_alloc(fh, &io_request)) {
+        OPAL_CR_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_INVOKE(fh, MPI_ERR_NO_MEM, FUNC_NAME);
     }
     *request = (ompi_request_t*) io_request;

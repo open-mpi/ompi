@@ -41,8 +41,6 @@ int MPI_Group_difference(MPI_Group group1, MPI_Group group2,
                          MPI_Group *new_group) {
   int err;
 
-  OPAL_CR_TEST_CHECKPOINT_READY();
-
   /* error checking */
   if( MPI_PARAM_CHECK ) {
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -54,6 +52,9 @@ int MPI_Group_difference(MPI_Group group1, MPI_Group group2,
                                         FUNC_NAME);
       }
   }
+
+  OPAL_CR_ENTER_LIBRARY();
+
   err = ompi_group_difference ( group1, group2,  new_group );
   OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME );
 }

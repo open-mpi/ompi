@@ -50,8 +50,6 @@ int MPI_Info_get_nkeys(MPI_Info info, int *nkeys)
 {
     int err;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == info || MPI_INFO_NULL == info ||
@@ -64,6 +62,8 @@ int MPI_Info_get_nkeys(MPI_Info info, int *nkeys)
                                           FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     err = ompi_info_get_nkeys(info, nkeys);
     OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);

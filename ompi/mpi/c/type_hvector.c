@@ -38,8 +38,6 @@ int MPI_Type_hvector(int count,
                      MPI_Datatype oldtype,
                      MPI_Datatype *newtype)
 {
-    OPAL_CR_TEST_CHECKPOINT_READY();
-    
     MEMCHECKER(
         memchecker_datatype(oldtype);
     );

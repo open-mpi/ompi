@@ -45,7 +45,6 @@ int MPI_Scan(void *sendbuf, void *recvbuf, int count,
         memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
         char *msg;
@@ -86,6 +85,8 @@ int MPI_Scan(void *sendbuf, void *recvbuf, int count,
     if (0 == count) {
         return MPI_SUCCESS;
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Call the coll component to actually perform the allgather */
 

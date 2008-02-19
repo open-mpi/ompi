@@ -43,7 +43,7 @@ int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result) {
     ompi_group_t *group1_pointer, *group2_pointer;
     ompi_proc_t *proc1_pointer, *proc2_pointer;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_NOOP_PROGRESS();
 
     /* initialization */
     return_value=MPI_SUCCESS;

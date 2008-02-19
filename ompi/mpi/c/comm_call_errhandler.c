@@ -39,7 +39,7 @@ int MPI_Comm_call_errhandler(MPI_Comm comm, int errorcode)
         memchecker_comm(comm);
     );
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_NOOP_PROGRESS();
 
   /* Error checking */
 

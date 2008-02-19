@@ -37,8 +37,6 @@ int MPI_Type_free(MPI_Datatype *type)
 {
    int rc;
 
-   OPAL_CR_TEST_CHECKPOINT_READY();
-
    MEMCHECKER(
       memchecker_datatype(*type);
    );
@@ -51,11 +49,15 @@ int MPI_Type_free(MPI_Datatype *type)
       }
    }
 
+   OPAL_CR_ENTER_LIBRARY();
+
    rc = ompi_ddt_destroy( type );
    if( rc != MPI_SUCCESS ) {
       OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
                              MPI_ERR_INTERN, FUNC_NAME );
    }
    *type = MPI_DATATYPE_NULL;
+
+   OPAL_CR_EXIT_LIBRARY();
    return MPI_SUCCESS;
 }

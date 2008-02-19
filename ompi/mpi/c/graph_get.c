@@ -43,7 +43,6 @@ int MPI_Graph_get(MPI_Comm comm, int maxindex, int maxedges,
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
@@ -64,12 +63,16 @@ int MPI_Graph_get(MPI_Comm comm, int maxindex, int maxedges,
                                            FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
+
     /* get the function pointer to do the right thing */
     func = comm->c_topo->topo_graph_get;
 
     /* call the function */
-    if ( MPI_SUCCESS != 
-            (err = func(comm, maxindex, maxedges, index, edges))) {
+    err = func(comm, maxindex, maxedges, index, edges);
+    OPAL_CR_EXIT_LIBRARY();
+    if ( MPI_SUCCESS != err ) {
         return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
     }
     

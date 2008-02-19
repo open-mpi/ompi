@@ -72,6 +72,7 @@ extern "C" {
     int opal_crs_blcr_disable_checkpoint(void);
     int opal_crs_blcr_enable_checkpoint(void);
 
+    int opal_crs_blcr_reg_thread(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

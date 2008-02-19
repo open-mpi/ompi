@@ -37,8 +37,6 @@ int MPI_Group_free(MPI_Group *group)
 {
     int ret;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     /* check to make sure we don't free GROUP_NULL.  Note that we *do*
        allow freeing GROUP_EMPTY after much debate in the OMPI core
        group.  The final thread about this, and the decision to
@@ -64,8 +62,11 @@ int MPI_Group_free(MPI_Group *group)
 
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     ret = ompi_group_free ( group);
     OMPI_ERRHANDLER_CHECK(ret, MPI_COMM_WORLD, ret, FUNC_NAME);
 
+    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

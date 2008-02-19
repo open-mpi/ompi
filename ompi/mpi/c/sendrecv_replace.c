@@ -41,14 +41,12 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
 
 {
     int rc = MPI_SUCCESS;
+
     MEMCHECKER(
         memchecker_datatype(datatype);
         memchecker_call(&opal_memchecker_base_isdefined, buf, count, datatype);
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
@@ -68,10 +66,15 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
- 
+
+    OPAL_CR_ENTER_LIBRARY();
+
     /* simple case */
     if ( source == MPI_PROC_NULL || dest == MPI_PROC_NULL || count == 0 ) {
-        return MPI_Sendrecv(buf,count,datatype,dest,sendtag,buf,count,datatype,source,recvtag,comm,status);
+        rc = MPI_Sendrecv(buf,count,datatype,dest,sendtag,buf,count,datatype,source,recvtag,comm,status);
+
+        OPAL_CR_EXIT_LIBRARY();
+        return rc;
     } else {
 
         ompi_convertor_t convertor;
@@ -128,6 +131,8 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
             MPI_Free_mem(iov.iov_base);
         }
         OBJ_DESTRUCT(&convertor);
+
+        OPAL_CR_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }
 }

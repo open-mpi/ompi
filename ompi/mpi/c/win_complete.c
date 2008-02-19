@@ -37,8 +37,6 @@ int MPI_Win_complete(MPI_Win win)
 {
     int rc;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
@@ -48,6 +46,8 @@ int MPI_Win_complete(MPI_Win win)
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_SYNC, FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     rc = win->w_osc_module->osc_complete(win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
