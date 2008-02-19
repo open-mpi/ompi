@@ -47,6 +47,32 @@ static int sm2_module_enable(struct mca_coll_base_module_1_1_0_t *module,
 /*
  * Local functions
  */
+static void                
+mca_coll_sm2_module_construct(mca_coll_sm2_module_t *module)
+{
+}
+
+static void                
+mca_coll_sm2_module_destruct(mca_coll_sm2_module_t *module)
+{
+    int ret;
+    /* free the mmaped shared file */
+    if( module->shared_memory_region) {
+        ret=munmap(module->shared_memory_region,
+                module->size_sm2_backing_file);
+        /* this is cleanup, no recovery will be done */
+    }
+
+    /* free list of children in the barrier-tree */
+    if( NULL != module->barrier_tree.children_ranks ) {
+        free(module->barrier_tree.children_ranks);
+    }
+
+    /* free non-blocking barrier request objects */
+    if( NULL != module->barrier_request ) {
+        free(module->barrier_request);
+    }
+}
 
 static bool have_local_peers(ompi_group_t *group, size_t size)
 {
@@ -271,6 +297,8 @@ static int setup_nary_tree(int tree_order, int my_rank, int num_nodes,
         n_lvls_in_tree++;
     };
 
+    my_node->children_ranks=(int *)NULL;
+
     /* get list of children */
     if( my_level_in_tree == (n_lvls_in_tree -1 ) ) {
         /* last level has no children */
@@ -306,7 +334,7 @@ static int setup_nary_tree(int tree_order, int my_rank, int num_nodes,
             for (lvl= start_index ; lvl <= end_index ; lvl++ ) {
                 my_node->children_ranks[lvl-start_index]=lvl;
             }
-        }
+        } 
     }
 
     /* successful return */
@@ -344,8 +372,8 @@ static int init_sm2_barrier(struct ompi_communicator_t *comm,
 
     /* Allocate barrier control structures - allocating one barrier structure
      * per memory bank.  Allocating two shared memory regions per bank. */
-    module->barrier_request=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-        malloc(sizeof(mca_coll_sm2_nb_request_process_shared_mem_t) * 
+    module->barrier_request=(mca_coll_sm2_nb_request_process_private_mem_t *)
+        malloc(sizeof(mca_coll_sm2_nb_request_process_private_mem_t) * 
                 component->sm2_num_mem_banks);
     if( NULL == module->barrier_request ){
         rc=OMPI_ERROR;
@@ -385,22 +413,6 @@ Error:
     return rc;
 }
 
-static void                
-mca_coll_sm2_module_construct(mca_coll_sm2_module_t *module)
-{
-}
-
-static void                
-mca_coll_sm2_module_destruct(mca_coll_sm2_module_t *module)
-{
-    int ret;
-    /* remove shared memory backing file */
-    if( module->shared_memory_region) {
-        ret=munmap(module->shared_memory_region,
-                module->size_sm2_backing_file);
-        /* this is cleanup, no recovery will be done */
-    }
-}
 
 
 /* query to see if the module is available for use on the given
@@ -608,16 +620,19 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     /* touch pages to apply memory affinity - Note: do we really need this or will
      * the algorithms do this */
 
+
     /* return */
     return &(sm_module->super);
 
 
 CLEANUP:
-    OBJ_RELEASE(sm_module);
 
-    if( NULL == sm_module->coll_sm2_file_name ) {
+    if( NULL != sm_module->coll_sm2_file_name ) {
         free(sm_module->coll_sm2_file_name);
+        sm_module->coll_sm2_file_name=NULL;
     }
+
+    OBJ_RELEASE(sm_module);
 
     return NULL;
 }
@@ -715,7 +730,7 @@ char *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
                  *  to the request for the next memory bank
                  */
                 /* set request to inactive */
-                request->sm2_barrier_phase==NB_BARRIER_INACTIVE;
+                request->sm2_barrier_phase=NB_BARRIER_INACTIVE;
                 /* move pointer to next request that needs to be completed */
                 module->current_request_index=memory_bank_index+1;
                 /* wrap around */
