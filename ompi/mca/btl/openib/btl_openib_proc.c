@@ -146,10 +146,11 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
        listed in a comment in that file */
     /* Unpack the number of ports in the message */
     offset = message;
-    memcpy(&(module_proc->proc_port_count), offset, sizeof(uint32_t));
+    memcpy(&size, offset, sizeof(uint32_t));
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    module_proc->proc_port_count = ntohl(module_proc->proc_port_count);
+    size = ntohl(size);
 #endif
+    module_proc->proc_port_count = size;
     module_proc->proc_ports = (mca_btl_openib_port_info_t *)malloc(sizeof(mca_btl_openib_port_info_t) * module_proc->proc_port_count);
     offset += sizeof(uint32_t);
 
