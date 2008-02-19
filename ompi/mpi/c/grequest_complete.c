@@ -37,11 +37,10 @@ static const char FUNC_NAME[] = "MPI_Grequest_complete";
 int MPI_Grequest_complete(MPI_Request request) 
 {
     int rc = MPI_SUCCESS;
+
     MEMCHECKER(
         memchecker_request(&request);
     );
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -52,6 +51,8 @@ int MPI_Grequest_complete(MPI_Request request)
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     rc = ompi_grequest_complete(request);
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);

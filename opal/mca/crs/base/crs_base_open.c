@@ -37,7 +37,9 @@ opal_crs_base_module_t opal_crs = {
     NULL, /* crs_checkpoint         */
     NULL, /* crs_restart_cmd        */
     NULL, /* crs_disable_checkpoint */
-    NULL  /* crs_enable_checkpoint  */
+    NULL, /* crs_enable_checkpoint  */
+    NULL, /* crs_prelaunch          */
+    NULL  /* crs_reg_thread         */
 };
 opal_list_t opal_crs_base_components_available;
 opal_crs_base_component_t opal_crs_base_selected_component;

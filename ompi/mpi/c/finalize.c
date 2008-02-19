@@ -33,13 +33,13 @@ static const char FUNC_NAME[] = "MPI_Finalize";
 
 int MPI_Finalize(void)
 {
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_FINALIZE_LIBRARY();
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    }
 
-  /* Pretty simple */
+    /* Pretty simple */
 
-  return ompi_mpi_finalize();
+    return ompi_mpi_finalize();
 }

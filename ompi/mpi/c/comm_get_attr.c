@@ -37,12 +37,10 @@ int MPI_Comm_get_attr(MPI_Comm comm, int comm_keyval,
                       void *attribute_val, int *flag)
 {
     int ret;
+
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -50,6 +48,8 @@ int MPI_Comm_get_attr(MPI_Comm comm, int comm_keyval,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* This stuff is very confusing.  Be sure to see
        src/attribute/attribute.c for a lengthy comment explaining Open

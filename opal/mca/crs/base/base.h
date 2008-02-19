@@ -97,6 +97,7 @@ extern "C" {
                                      char **cwd,
                                      char ***argv,
                                      char ***env);
+    int opal_crs_base_none_reg_thread(void);
 
     /**
      * Some utility functions

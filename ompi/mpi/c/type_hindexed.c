@@ -40,8 +40,6 @@ int MPI_Type_hindexed(int count,
 {
    int i;
 
-   OPAL_CR_TEST_CHECKPOINT_READY();
-   
     MEMCHECKER(
         memchecker_datatype(oldtype);
     );

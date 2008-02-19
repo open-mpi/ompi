@@ -39,7 +39,7 @@ MPI_File MPI_File_f2c(MPI_Fint file_f)
 {
     int file_index = OMPI_FINT_2_INT(file_f);
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_NOOP_PROGRESS();
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

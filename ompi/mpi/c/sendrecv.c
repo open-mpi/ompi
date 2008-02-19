@@ -40,15 +40,13 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 {
     ompi_request_t* req;
     int rc = MPI_SUCCESS;
+
     MEMCHECKER(
         memchecker_datatype(sendtype);
         memchecker_datatype(recvtype);
         memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -70,6 +68,8 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     if (source != MPI_PROC_NULL) { /* post recv */
         rc = MCA_PML_CALL(irecv(recvbuf, recvcount, recvtype,

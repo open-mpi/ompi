@@ -51,7 +51,8 @@ int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
             memchecker_datatype(datatype);
         }
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
+
+    OPAL_CR_NOOP_PROGRESS();
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

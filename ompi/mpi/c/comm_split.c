@@ -40,7 +40,6 @@ int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm) {
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -60,7 +59,9 @@ int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm) {
                                           FUNC_NAME);
         }
     }
-    
+
+    OPAL_CR_ENTER_LIBRARY();
+
     rc = ompi_comm_split ( (ompi_communicator_t*)comm, color, key, 
                           (ompi_communicator_t**)newcomm, false);
     OMPI_ERRHANDLER_RETURN ( rc, comm, rc, FUNC_NAME);

@@ -40,8 +40,6 @@ static const char FUNC_NAME[] = "MPI_Alloc_mem";
 int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 {
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (size < 0 || NULL == baseptr) {
@@ -64,15 +62,17 @@ int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
         *((void **) baseptr) = NULL;
         return MPI_SUCCESS;
     }
-    
+
+    OPAL_CR_ENTER_LIBRARY();
+
     *((void **) baseptr) = mca_mpool_base_alloc((size_t) size, info);
+    OPAL_CR_EXIT_LIBRARY();
     if (NULL == *((void **) baseptr)) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM, 
                                       FUNC_NAME);
     }
 
     /* All done */
-
     return MPI_SUCCESS;
 }
 

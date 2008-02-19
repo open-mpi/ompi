@@ -50,8 +50,6 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
     int nkeys;
     int err;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     /*
      * 1. Check if info is a valid handle
      * 2. Check if there are at least (n+1) elements
@@ -74,6 +72,8 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
         }
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     /* Keys are indexed on 0, which makes the "n" parameter offset by
        1 from the value returned by get_nkeys().  So be sure to
        compare appropriately. */
@@ -81,6 +81,7 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
     err = ompi_info_get_nkeys(info, &nkeys);
     OMPI_ERRHANDLER_CHECK(err, MPI_COMM_WORLD, err, FUNC_NAME);
     if (n > (nkeys - 1)) {
+        OPAL_CR_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
                                        FUNC_NAME);
     }

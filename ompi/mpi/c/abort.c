@@ -40,7 +40,7 @@ int MPI_Abort(MPI_Comm comm, int errorcode)
         memchecker_comm(comm);
     );
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_ABORT_LIBRARY();
 
     /* Don't even bother checking comm and errorcode values for
        errors */

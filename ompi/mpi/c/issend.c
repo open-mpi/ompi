@@ -38,14 +38,12 @@ int MPI_Issend(void *buf, int count, MPI_Datatype type, int dest,
                int tag, MPI_Comm comm, MPI_Request *request) 
 {
     int rc = MPI_SUCCESS;
+
     MEMCHECKER(
         memchecker_datatype(type);
         memchecker_call(&opal_memchecker_base_isdefined, buf, count, type);
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -73,6 +71,7 @@ int MPI_Issend(void *buf, int count, MPI_Datatype type, int dest,
     }
 
     MEMCHECKER (memchecker_call(&opal_memchecker_base_mem_noaccess, buf, count, type));
+    OPAL_CR_ENTER_LIBRARY();
 
     rc = MCA_PML_CALL(isend(buf,count,type,dest,tag,
                             MCA_PML_BASE_SEND_SYNCHRONOUS,comm,request));

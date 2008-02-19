@@ -38,7 +38,7 @@ MPI_Op MPI_Op_f2c(MPI_Fint op_f)
 {
     int op_index = OMPI_FINT_2_INT(op_f);
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_NOOP_PROGRESS();
 
     /* Error checking */
 

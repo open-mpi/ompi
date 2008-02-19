@@ -39,8 +39,6 @@ int MPI_File_read(MPI_File fh, void *buf, int count,
 {
     int rc;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     MEMCHECKER(
         memchecker_datatype(datatype);
     );
@@ -58,6 +56,8 @@ int MPI_File_read(MPI_File fh, void *buf, int count,
         }
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
 

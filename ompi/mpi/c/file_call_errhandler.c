@@ -35,7 +35,7 @@ static const char FUNC_NAME[] = "MPI_File_call_errhandler";
 int MPI_File_call_errhandler(MPI_File fh, int errorcode) 
 {
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_NOOP_PROGRESS();
 
   /* Error checking */
 

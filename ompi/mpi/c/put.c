@@ -42,8 +42,6 @@ int MPI_Put(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
 {
     int rc;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;
 
@@ -79,6 +77,8 @@ int MPI_Put(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
     MEMCHECKER (
         memchecker_call(&opal_memchecker_base_mem_noaccess, origin_addr, origin_count, origin_datatype);
     );
+
+    OPAL_CR_ENTER_LIBRARY();
 
     rc = win->w_osc_module->osc_put(origin_addr, origin_count, origin_datatype,
                                     target_rank, target_disp, target_count,

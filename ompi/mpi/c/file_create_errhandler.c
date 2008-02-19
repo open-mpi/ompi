@@ -37,8 +37,6 @@ int MPI_File_create_errhandler(MPI_File_errhandler_fn *function,
 		                        MPI_Errhandler *errhandler) {
   int err = MPI_SUCCESS;
 
-  OPAL_CR_TEST_CHECKPOINT_READY();
-
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
@@ -49,6 +47,8 @@ int MPI_File_create_errhandler(MPI_File_errhandler_fn *function,
                                    "MPI_File_create_errhandler");
     }
   }
+
+  OPAL_CR_ENTER_LIBRARY();
 
   /* Create and cache the errhandler.  Sets a refcount of 1. */
 

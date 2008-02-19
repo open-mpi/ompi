@@ -44,8 +44,6 @@ int MPI_Waitall(int count, MPI_Request *requests, MPI_Status *statuses)
         }
     );
     
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if ( MPI_PARAM_CHECK ) {
         int i, rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -65,12 +63,19 @@ int MPI_Waitall(int count, MPI_Request *requests, MPI_Status *statuses)
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     if (OMPI_SUCCESS == ompi_request_wait_all(count, requests, statuses)) {
+        OPAL_CR_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }
+
     if (MPI_SUCCESS != 
         ompi_errhandler_request_invoke(count, requests, FUNC_NAME)) {
+        OPAL_CR_EXIT_LIBRARY();
         return MPI_ERR_IN_STATUS;
     }
+
+    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

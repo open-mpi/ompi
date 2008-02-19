@@ -36,8 +36,6 @@ int MPI_File_get_group(MPI_File fh, MPI_Group *group)
 {
     int rc;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -49,6 +47,8 @@ int MPI_File_get_group(MPI_File fh, MPI_Group *group)
         }
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Does not need to invoke a back-end io function */
 

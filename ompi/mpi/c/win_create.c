@@ -42,8 +42,6 @@ int MPI_Win_create(void *base, MPI_Aint size, int disp_unit,
 {
     int ret = MPI_SUCCESS;
     
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     MEMCHECKER(
         memchecker_comm(comm);
     );
@@ -73,13 +71,17 @@ int MPI_Win_create(void *base, MPI_Aint size, int disp_unit,
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM, FUNC_NAME);
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     /* create window and return */
     ret = ompi_win_create(base, (size_t)size, disp_unit, comm,
                           info, win);
     if (OMPI_SUCCESS != ret) {
         *win = MPI_WIN_NULL;
+        OPAL_CR_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_WIN, FUNC_NAME);
     }
 
+    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

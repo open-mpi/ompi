@@ -44,14 +44,12 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
     struct iovec outvec;
     unsigned int iov_count;
     size_t size;
+
     MEMCHECKER(
         memchecker_datatype(datatype);
         memchecker_call(&opal_memchecker_base_isdefined, outbuf, outcount, datatype);
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -72,6 +70,9 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
+
     if( insize > 0 ) { 
         OBJ_CONSTRUCT( &local_convertor, ompi_convertor_t );
         /* the resulting convertor will be set the the position ZERO */
@@ -82,6 +83,7 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
         ompi_convertor_get_packed_size( &local_convertor, &size );
         if( (*position + size) > (unsigned int)insize ) {
             OBJ_DESTRUCT( &local_convertor );
+            OPAL_CR_EXIT_LIBRARY();
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
         }
         
@@ -99,6 +101,7 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
            OMPI_SUCCESS. */
  
     }
+
     OMPI_ERRHANDLER_RETURN((rc == 1) ? OMPI_SUCCESS : OMPI_ERROR,
                            comm, MPI_ERR_UNKNOWN, FUNC_NAME);
     

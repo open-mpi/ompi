@@ -373,6 +373,12 @@ void ompi_info::do_config(bool want_all)
       threads = "no";
   }
 
+  string ft_support;
+  ft_support  = OPAL_ENABLE_FT ? "yes" : "no";
+  ft_support += "  (checkpoint thread: ";
+  ft_support += OPAL_ENABLE_FT_THREAD ? "yes" : "no";
+  ft_support += ")";
+
   out("Configured by", "config:user", OMPI_CONFIGURE_USER);
   out("Configured on", "config:timestamp", OMPI_CONFIGURE_DATE);
   out("Configure host", "config:host", OMPI_CONFIGURE_HOST);
@@ -596,4 +602,6 @@ void ompi_info::do_config(bool want_all)
       mpirun_prefix_by_default);
   out("MPI I/O support", "options:mpi-io", have_mpi_io);
   out("MPI_WTIME support", "options:mpi-wtime", wtime_support);
+
+  out("FT Checkpoint support", "options:ft_support", ft_support);
 }

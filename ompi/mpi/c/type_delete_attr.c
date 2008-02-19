@@ -38,8 +38,6 @@ int MPI_Type_delete_attr (MPI_Datatype type, int type_keyval)
 {
    int ret;
 
-   OPAL_CR_TEST_CHECKPOINT_READY();
-
    MEMCHECKER(
       memchecker_datatype(type);
    );
@@ -52,7 +50,9 @@ int MPI_Type_delete_attr (MPI_Datatype type, int type_keyval)
                                        FUNC_NAME);
       }
    }
-  
+
+   OPAL_CR_ENTER_LIBRARY();
+
    ret = ompi_attr_delete(TYPE_ATTR, type, type->d_keyhash, type_keyval, 
                           false, true);
    OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD,

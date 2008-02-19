@@ -42,8 +42,6 @@ int MPI_Keyval_create(MPI_Copy_function *copy_attr_fn,
     ompi_attribute_fn_ptr_union_t copy_fn;
     ompi_attribute_fn_ptr_union_t del_fn;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == keyval) {
@@ -54,6 +52,9 @@ int MPI_Keyval_create(MPI_Copy_function *copy_attr_fn,
                                           FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
+
     copy_fn.attr_communicator_copy_fn = (MPI_Comm_internal_copy_attr_function*)copy_attr_fn;
     del_fn.attr_communicator_delete_fn = delete_attr_fn;
 

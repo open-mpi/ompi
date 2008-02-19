@@ -61,8 +61,6 @@ int MPI_Type_create_darray(int size,
     int i, start_loop, end_loop, step;
     int *coords = NULL, rc = OMPI_SUCCESS;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     MEMCHECKER(
         memchecker_datatype(oldtype);
     );
@@ -103,12 +101,15 @@ int MPI_Type_create_darray(int size,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     /* speedy corner case */
     if (ndims < 1) {
         /* Don't just return MPI_DATATYPE_NULL as that can't be
            MPI_TYPE_FREE()ed, and that seems bad */
         *newtype = ompi_ddt_create(0);
         ompi_ddt_add(*newtype, &ompi_mpi_datatype_null, 0, 0, 0);
+        OPAL_CR_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }
 
@@ -228,6 +229,8 @@ int MPI_Type_create_darray(int size,
  cleanup:
     if (NULL != st_offsets) free(st_offsets);
     if (NULL != coords) free(coords);
+
+    OPAL_CR_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }

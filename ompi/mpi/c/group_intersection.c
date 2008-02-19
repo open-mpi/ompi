@@ -42,8 +42,6 @@ int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
 {
   int err;
 
-  OPAL_CR_TEST_CHECKPOINT_READY();
-
   if ( MPI_PARAM_CHECK ) {
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
      
@@ -51,10 +49,12 @@ int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
       if ( (MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2) ||
            ( NULL == group1) || (NULL == group2) ||
            (NULL == new_group) ) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                                    FUNC_NAME);
+          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+                                        FUNC_NAME);
       }
   }
+
+  OPAL_CR_ENTER_LIBRARY();
 
   err = ompi_group_intersection ( group1, group2,  new_group );
   OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME );

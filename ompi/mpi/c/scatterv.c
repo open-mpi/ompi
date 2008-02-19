@@ -47,8 +47,6 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
         memchecker_comm(comm);
     );
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-    
     if (MPI_PARAM_CHECK) {
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -146,6 +144,8 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
           }
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
 	

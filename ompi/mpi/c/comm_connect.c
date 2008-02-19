@@ -44,12 +44,10 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
     orte_process_name_t *port_proc_name=NULL;
     char *tmp_port=NULL;
     orte_rml_tag_t tag;
+
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -91,7 +89,9 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
      * if ( rank == root && MPI_INFO_NULL != info ) {
      * }
      */
-    
+
+    OPAL_CR_ENTER_LIBRARY();
+
     /* 
      * translate the port_name string into the according process_name_t 
      * structure. 

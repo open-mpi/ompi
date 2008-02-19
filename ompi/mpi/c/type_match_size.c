@@ -34,11 +34,11 @@ static const char FUNC_NAME[] = "MPI_Type_match_size";
 
 int MPI_Type_match_size(int typeclass, int size, MPI_Datatype *type)
 {
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     switch( typeclass ) {
     case MPI_TYPECLASS_REAL:
@@ -53,8 +53,11 @@ int MPI_Type_match_size(int typeclass, int size, MPI_Datatype *type)
     default:
         *type = &ompi_mpi_datatype_null;
     }
-    if( *type != &ompi_mpi_datatype_null ) 
+
+    OPAL_CR_EXIT_LIBRARY();
+    if( *type != &ompi_mpi_datatype_null ) {
         return MPI_SUCCESS;
+    }
 
     return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
 }

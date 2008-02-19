@@ -63,7 +63,10 @@ static opal_crs_base_module_t loc_module = {
     opal_crs_self_enable_checkpoint,
 
     /** Prelaunch */
-    opal_crs_base_none_prelaunch
+    opal_crs_base_none_prelaunch,
+
+    /** Register Thread */
+    opal_crs_base_none_reg_thread
 };
 
 /*

@@ -47,8 +47,6 @@ int MPI_Allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         memchecker_comm (comm);
     );
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
 
         /* Unrooted operation -- same checks for all ranks on both
@@ -60,8 +58,8 @@ int MPI_Allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                           FUNC_NAME);
         } else if (MPI_IN_PLACE == recvbuf) {
-          return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-	}
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+        }
 
         if (MPI_IN_PLACE != sendbuf) {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
@@ -94,6 +92,8 @@ int MPI_Allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     if (i >= ompi_comm_size(comm)) {
         return MPI_SUCCESS;
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
 

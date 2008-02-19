@@ -36,8 +36,6 @@ int MPI_Win_get_group(MPI_Win win, MPI_Group *group)
 {
     int ret;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
@@ -47,6 +45,8 @@ int MPI_Win_get_group(MPI_Win win, MPI_Group *group)
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ARG, FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     ret = ompi_win_group(win, (ompi_group_t**) group);
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);

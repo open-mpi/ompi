@@ -39,12 +39,10 @@ int MPI_Cart_map(MPI_Comm comm, int ndims, int *dims,
 {
     int err;
     mca_topo_base_module_cart_map_fn_t func;
+
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
@@ -63,22 +61,26 @@ int MPI_Cart_map(MPI_Comm comm, int ndims, int *dims,
         }
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     if(!OMPI_COMM_IS_CART(comm)) {
-	/* In case the communicator has no topo-module attached to 
-	   it, we just return the "default" value suggested by MPI:
-	   newrank = rank */
-	*newrank = ompi_comm_rank(comm);
+        /* In case the communicator has no topo-module attached to 
+           it, we just return the "default" value suggested by MPI:
+           newrank = rank */
+        *newrank = ompi_comm_rank(comm);
     }
     else {
-	/* get the function pointer on this communicator */
-	func = comm->c_topo->topo_cart_map;
+        /* get the function pointer on this communicator */
+        func = comm->c_topo->topo_cart_map;
 	
-	/* call the function */
-	if ( MPI_SUCCESS != 
-	     (err = func(comm, ndims, dims, periods, newrank))) {
-	    return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
-	}
+        /* call the function */
+        err = func(comm, ndims, dims, periods, newrank);
+        if ( MPI_SUCCESS != err ) {
+            OPAL_CR_EXIT_LIBRARY();
+            return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
+        }
     }
 
+    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

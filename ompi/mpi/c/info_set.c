@@ -61,8 +61,6 @@ int MPI_Info_set(MPI_Info info, char *key, char *value)
     int key_length;
     int value_length;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     /*
      * Error conditions are
      *          - info is NULL
@@ -93,6 +91,8 @@ int MPI_Info_set(MPI_Info info, char *key, char *value)
                                            FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /*
      * If all is right with the arguments, then call the back-end

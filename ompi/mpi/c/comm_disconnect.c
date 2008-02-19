@@ -38,7 +38,6 @@ int MPI_Comm_disconnect(MPI_Comm *comm)
     MEMCHECKER(
         memchecker_comm(*comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -52,6 +51,7 @@ int MPI_Comm_disconnect(MPI_Comm *comm)
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
     }
 
+    OPAL_CR_ENTER_LIBRARY();
 
     if ( OMPI_COMM_IS_DYNAMIC(*comm)) {
         ompi_comm_disconnect_obj *dobj;
@@ -64,5 +64,7 @@ int MPI_Comm_disconnect(MPI_Comm *comm)
     }
 
     ompi_comm_free(comm);
+
+    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

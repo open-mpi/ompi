@@ -41,8 +41,6 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
         memchecker_request(request);
     );
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -65,6 +63,8 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
         return MPI_SUCCESS;
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     if (OMPI_SUCCESS == ompi_request_wait(request, status)) {
         /*
          * Per MPI-1, the MPI_ERROR field is not defined for single-completion calls
@@ -72,10 +72,13 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
         MEMCHECKER(
             opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
         );
+        OPAL_CR_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }
+
     MEMCHECKER(
         opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));        
     );
+    OPAL_CR_EXIT_LIBRARY();
     return ompi_errhandler_request_invoke(1, request, FUNC_NAME);
 }

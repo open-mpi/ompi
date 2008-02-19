@@ -44,7 +44,8 @@ int MPI_Request_get_status(MPI_Request request, int *flag,
     MEMCHECKER(
         memchecker_request(&request);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
+
+    OPAL_CR_NOOP_PROGRESS();
 
     if( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

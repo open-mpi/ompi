@@ -38,8 +38,6 @@ int MPI_Win_fence(int assert, MPI_Win win)
 {
     int rc;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
@@ -59,6 +57,9 @@ int MPI_Win_fence(int assert, MPI_Win win)
         if( win->w_baseptr != NULL && win->w_size != 0 && win->w_mode != 0)
             opal_memchecker_base_mem_noaccess( win->w_baseptr, win->w_size );
     );
+
+    OPAL_CR_ENTER_LIBRARY();
+
     rc = win->w_osc_module->osc_fence(assert, win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }

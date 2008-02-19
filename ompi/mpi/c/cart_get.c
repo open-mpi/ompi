@@ -40,12 +40,10 @@ int MPI_Cart_get(MPI_Comm comm, int maxdims, int *dims,
     /* local variables */
     mca_topo_base_module_cart_get_fn_t func;
     int err;
+
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
@@ -65,12 +63,16 @@ int MPI_Cart_get(MPI_Comm comm, int maxdims, int *dims,
                                           FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
+
     /* get the function pointer to do the right thing */
     func = comm->c_topo->topo_cart_get;
 
     /* all arguments are checked and now call the back end function */
-    if ( MPI_SUCCESS != 
-            (err = func(comm, maxdims, dims, periods, coords))) {
+    err = func(comm, maxdims, dims, periods, coords);
+    OPAL_CR_EXIT_LIBRARY();
+    if ( MPI_SUCCESS != err ) {
         return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
     }
     

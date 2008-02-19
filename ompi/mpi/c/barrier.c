@@ -40,10 +40,6 @@ int MPI_Barrier(MPI_Comm comm)
     memchecker_comm(comm);
   );
   
-  OPAL_CR_TEST_CHECKPOINT_READY();
-
-  OPAL_CR_TEST_CHECKPOINT_READY();
-
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
@@ -52,6 +48,8 @@ int MPI_Barrier(MPI_Comm comm)
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
     }
   }
+
+  OPAL_CR_ENTER_LIBRARY();
 
   /* Intracommunicators: Only invoke the back-end coll module barrier
      function if there's more than one process in the communicator */

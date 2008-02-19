@@ -40,8 +40,6 @@ int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
 {
     int rc;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     MEMCHECKER(
         memchecker_datatype(etype);
     );
@@ -60,6 +58,8 @@ int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
         }
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
 

@@ -38,12 +38,12 @@ int MPI_Recv(void *buf, int count, MPI_Datatype type, int source,
              int tag, MPI_Comm comm, MPI_Status *status) 
 {
     int rc = MPI_SUCCESS;
+
     MEMCHECKER(
         memchecker_datatype(type);
         memchecker_call(&opal_memchecker_base_isaddressible, buf, count, type);
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -69,6 +69,8 @@ int MPI_Recv(void *buf, int count, MPI_Datatype type, int source,
         }
         return MPI_SUCCESS;
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     rc = MCA_PML_CALL(recv(buf, count, type, source, tag, comm, status));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);

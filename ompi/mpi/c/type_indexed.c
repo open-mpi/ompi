@@ -40,8 +40,6 @@ int MPI_Type_indexed(int count,
 {
    int rc, i;
 
-   OPAL_CR_TEST_CHECKPOINT_READY();
-
    MEMCHECKER(
       memchecker_datatype(oldtype);
    );
@@ -68,6 +66,8 @@ int MPI_Type_indexed(int count,
       }
    }
 
+   OPAL_CR_ENTER_LIBRARY();
+
    rc = ompi_ddt_create_indexed ( count, array_of_blocklengths, 
                                  array_of_displacements,
                                  oldtype, newtype );
@@ -87,6 +87,8 @@ int MPI_Type_indexed(int count,
       ompi_ddt_set_args( *newtype, 2 * count + 1, a_i, 0, NULL, 1, &oldtype,
                          MPI_COMBINER_INDEXED );
    }
+
+   OPAL_CR_EXIT_LIBRARY();
 
    return MPI_SUCCESS;
 }

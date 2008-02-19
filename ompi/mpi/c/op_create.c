@@ -37,8 +37,6 @@ int MPI_Op_create(MPI_User_function *function, int commute,
 {
   int err = MPI_SUCCESS;
 
-  OPAL_CR_TEST_CHECKPOINT_READY();
-
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
@@ -49,6 +47,8 @@ int MPI_Op_create(MPI_User_function *function, int commute,
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
     }
   }
+
+  OPAL_CR_ENTER_LIBRARY();
 
   /* Create and cache the op.  Sets a refcount of 1. */
 

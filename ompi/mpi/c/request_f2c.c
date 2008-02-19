@@ -38,7 +38,7 @@ MPI_Request MPI_Request_f2c(MPI_Fint request)
 {
     int request_index = OMPI_FINT_2_INT(request);
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
+    OPAL_CR_NOOP_PROGRESS();
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

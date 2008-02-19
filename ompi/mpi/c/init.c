@@ -101,7 +101,7 @@ int MPI_Init(int *argc, char ***argv)
                                     err, FUNC_NAME);
   }
 
-  OPAL_CR_TEST_CHECKPOINT_READY();
+  OPAL_CR_INIT_LIBRARY();
 
   return MPI_SUCCESS;
 }

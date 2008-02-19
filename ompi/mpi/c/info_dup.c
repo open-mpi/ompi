@@ -50,8 +50,6 @@ static const char FUNC_NAME[] = "MPI_Info_dup";
 int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
     int err;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     /**
      * Here we need to do 2 things
      * 1. Create a newinfo object using MPI_Info_create
@@ -76,6 +74,8 @@ int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
                                       FUNC_NAME);
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /*
      * Now to actually duplicate all the values

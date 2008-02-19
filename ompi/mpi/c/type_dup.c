@@ -37,8 +37,6 @@ static const char FUNC_NAME[] = "MPI_Type_dup";
 int MPI_Type_dup (MPI_Datatype type,
                   MPI_Datatype *newtype)
 {
-   OPAL_CR_TEST_CHECKPOINT_READY();
-   
    MEMCHECKER(
       memchecker_datatype(type);
    );
@@ -51,6 +49,8 @@ int MPI_Type_dup (MPI_Datatype type,
                                       FUNC_NAME );
       }
    }
+
+   OPAL_CR_ENTER_LIBRARY();
 
    if (OMPI_SUCCESS != ompi_ddt_duplicate( type, newtype)) {
        ompi_ddt_destroy( newtype );
@@ -76,6 +76,8 @@ int MPI_Type_dup (MPI_Datatype type,
                                    MPI_ERR_INTERN, FUNC_NAME );
        }                                    
    }
+
+   OPAL_CR_EXIT_LIBRARY();
 
    return MPI_SUCCESS;
 }

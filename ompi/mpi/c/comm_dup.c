@@ -36,14 +36,10 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
 {
     int rc=MPI_SUCCESS;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-    
     MEMCHECKER(
         memchecker_comm(comm);
     );
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-    
     /* argument checking */
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -57,7 +53,8 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
                                           FUNC_NAME);
     }
 
-    
+    OPAL_CR_ENTER_LIBRARY();
+
     rc = ompi_comm_dup ( comm, newcomm, 0);
     OMPI_ERRHANDLER_RETURN ( rc, comm, rc, FUNC_NAME);
 }

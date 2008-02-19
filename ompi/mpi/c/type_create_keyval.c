@@ -42,18 +42,18 @@ int MPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn,
     ompi_attribute_fn_ptr_union_t copy_fn;
     ompi_attribute_fn_ptr_union_t del_fn;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-	if ((NULL == type_copy_attr_fn) || (NULL == type_delete_attr_fn) ||
-	    (NULL == type_keyval)) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+        if ((NULL == type_copy_attr_fn) || (NULL == type_delete_attr_fn) ||
+            (NULL == type_keyval)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
                                           MPI_ERR_ARG, 
                                           FUNC_NAME);
-	}
+        }
     }
-	
+
+    OPAL_CR_ENTER_LIBRARY();
+
     copy_fn.attr_datatype_copy_fn = (MPI_Type_internal_copy_attr_function*)type_copy_attr_fn;
     del_fn.attr_datatype_delete_fn = type_delete_attr_fn;
 

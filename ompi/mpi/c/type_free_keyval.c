@@ -36,18 +36,18 @@ int MPI_Type_free_keyval(int *type_keyval)
 {
     int ret;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     /* Check for valid key pointer */
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-	if (NULL == type_keyval) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
-					 MPI_ERR_ARG, 
-					 FUNC_NAME);
-	}
+        if (NULL == type_keyval) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+                                          MPI_ERR_ARG, 
+                                          FUNC_NAME);
+        }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     ret = ompi_attr_free_keyval(TYPE_ATTR, type_keyval, 0);
 

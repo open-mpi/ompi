@@ -45,8 +45,6 @@ int MPI_Bsend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Co
         memchecker_comm(comm);
     );
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-   
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
@@ -70,6 +68,8 @@ int MPI_Bsend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Co
     if (MPI_PROC_NULL == dest) {
         return MPI_SUCCESS;
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     rc = MCA_PML_CALL(send(buf, count, type, dest, tag, MCA_PML_BASE_SEND_BUFFERED, comm));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);

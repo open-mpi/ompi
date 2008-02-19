@@ -39,8 +39,6 @@ int MPI_File_delete(char *filename, MPI_Info info)
 {
     int rc;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -75,6 +73,8 @@ int MPI_File_delete(char *filename, MPI_Info info)
             return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, rc, FUNC_NAME);
         }
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Since there is no MPI_File handle associated with this
        function, the MCA has to do a selection and perform the

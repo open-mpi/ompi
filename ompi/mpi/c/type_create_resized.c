@@ -40,8 +40,6 @@ int MPI_Type_create_resized(MPI_Datatype oldtype,
 {
    int rc;
 
-   OPAL_CR_TEST_CHECKPOINT_READY();
-
    MEMCHECKER(
       memchecker_datatype(oldtype);
    );
@@ -55,6 +53,8 @@ int MPI_Type_create_resized(MPI_Datatype oldtype,
       }
    }
 
+   OPAL_CR_ENTER_LIBRARY();
+
    rc = ompi_ddt_create_resized( oldtype, lb, extent, newtype );
    if( rc != MPI_SUCCESS ) {
       ompi_ddt_destroy( newtype );
@@ -67,6 +67,8 @@ int MPI_Type_create_resized(MPI_Datatype oldtype,
       a_a[1] = extent;
       ompi_ddt_set_args( *newtype, 0, NULL, 2, a_a, 1, &oldtype, MPI_COMBINER_RESIZED );
    }
+
+   OPAL_CR_EXIT_LIBRARY();
    return MPI_SUCCESS;
 }
 

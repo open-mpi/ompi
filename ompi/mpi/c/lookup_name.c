@@ -37,8 +37,6 @@ int MPI_Lookup_name(char *service_name, MPI_Info info, char *port_name)
 {
     char *tmp;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
 
@@ -56,6 +54,8 @@ int MPI_Lookup_name(char *service_name, MPI_Info info, char *port_name)
         }
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     /* 
      * No predefined info-objects for this function in MPI-2,
      * therefore, we do not parse the info-object at the moment.
@@ -71,6 +71,8 @@ int MPI_Lookup_name(char *service_name, MPI_Info info, char *port_name)
                                       FUNC_NAME);
     }
 
-    strncpy ( port_name, tmp, MPI_MAX_PORT_NAME );    
+    strncpy ( port_name, tmp, MPI_MAX_PORT_NAME );
+
+    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

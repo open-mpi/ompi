@@ -37,10 +37,10 @@ static const char FUNC_NAME[] = "MPI_Iprobe";
 int MPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag, MPI_Status *status)
 {
     int rc;
+
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
@@ -69,6 +69,8 @@ int MPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag, MPI_Status *status
         }
         return MPI_SUCCESS;
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     rc = MCA_PML_CALL(iprobe(source, tag, comm, flag, status));
 

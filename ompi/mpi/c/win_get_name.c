@@ -36,8 +36,6 @@ int MPI_Win_get_name(MPI_Win win, char *win_name, int *resultlen)
 {
     int ret;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
@@ -48,7 +46,8 @@ int MPI_Win_get_name(MPI_Win win, char *win_name, int *resultlen)
         }
     }
 
-    ret = ompi_win_get_name(win, win_name, resultlen);
+    OPAL_CR_ENTER_LIBRARY();
 
+    ret = ompi_win_get_name(win, win_name, resultlen);
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
 }

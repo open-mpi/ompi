@@ -35,8 +35,6 @@ int MPI_Type_struct(int count,
                     MPI_Datatype array_of_types[],
                     MPI_Datatype *newtype)
 {
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     /* the param check will be done if necessary on the MPI_Type_create_struct */
     return MPI_Type_create_struct(count,
                                   array_of_blocklengths,

@@ -39,12 +39,10 @@ int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords)
 {
     int err;
     mca_topo_base_module_cart_coords_fn_t func;
+
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
@@ -71,12 +69,15 @@ int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords)
         }
     }
 
+    OPAL_CR_ENTER_LIBRARY();
+
     /* get the function pointer on this communicator */
     func = comm->c_topo->topo_cart_coords;
 
     /* call the function */
-    if ( MPI_SUCCESS != 
-            (err = func(comm, rank, maxdims, coords))) {
+    err = func(comm, rank, maxdims, coords);
+    OPAL_CR_EXIT_LIBRARY();
+    if ( MPI_SUCCESS != err ) {
         return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
     }
 

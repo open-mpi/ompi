@@ -36,12 +36,10 @@ static const char FUNC_NAME[] = "MPI_Comm_create";
 int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm) {
     
     int rc;
+
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -58,6 +56,8 @@ int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
                                           FUNC_NAME);
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     rc = ompi_comm_create ( (ompi_communicator_t*)comm, (ompi_group_t*)group, 
                            (ompi_communicator_t**)newcomm );

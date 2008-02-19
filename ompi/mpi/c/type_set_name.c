@@ -39,11 +39,11 @@ int MPI_Type_set_name (MPI_Datatype type, char *type_name)
 {
   int length;
 
-  OPAL_CR_TEST_CHECKPOINT_READY();
-
   MEMCHECKER(
         memchecker_datatype(type);
     );
+
+  OPAL_CR_NOOP_PROGRESS();
 
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

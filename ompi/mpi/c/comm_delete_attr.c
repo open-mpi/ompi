@@ -37,12 +37,10 @@ static const char FUNC_NAME[] = "MPI_Comm_delete_attr";
 int MPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval) 
 {
     int ret;
+
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -51,7 +49,9 @@ int MPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval)
                                           FUNC_NAME);
         }
     }
-  
+
+    OPAL_CR_ENTER_LIBRARY();
+
     ret = ompi_attr_delete(COMM_ATTR, comm, comm->c_keyhash, comm_keyval, 
                            false, true);
 

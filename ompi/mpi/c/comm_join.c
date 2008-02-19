@@ -61,8 +61,6 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     ompi_communicator_t *newcomp;
     orte_process_name_t *port_proc_name=NULL;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
@@ -71,12 +69,15 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
                                           FUNC_NAME);
         }
     }
-    
+
+    OPAL_CR_ENTER_LIBRARY();
+
     /* sendrecv OOB-name (port-name) through the socket connection.
        Need to determine somehow how to avoid a potential deadlock
        here. */
     myproc = ompi_proc_self (&size);
     if (ORTE_SUCCESS != (rc = orte_ns.get_proc_name_string (&name, &(myproc[0]->proc_name)))) {
+        OPAL_CR_EXIT_LIBRARY();
         return rc;
     }
     llen   = (uint32_t)(strlen(name)+1);
@@ -89,6 +90,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     rname = (char *) malloc (lrlen);
     if ( NULL == rname ) {
         *intercomm = MPI_COMM_NULL;
+        OPAL_CR_EXIT_LIBRARY();
         return MPI_ERR_INTERN;
     }
 
@@ -99,6 +101,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     ompi_socket_recv (fd, rname, lrlen);
     
     if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(&port_proc_name, rname))) {
+        OPAL_CR_EXIT_LIBRARY();
         return rc;
     }
     rc = ompi_comm_connect_accept (MPI_COMM_SELF, 0, port_proc_name,

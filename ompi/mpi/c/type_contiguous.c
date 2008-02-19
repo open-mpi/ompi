@@ -40,8 +40,6 @@ int MPI_Type_contiguous(int count,
 {
    int rc;
 
-   OPAL_CR_TEST_CHECKPOINT_READY();
-
   MEMCHECKER(
     memchecker_datatype(oldtype);
   );
@@ -55,7 +53,9 @@ int MPI_Type_contiguous(int count,
        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COUNT, FUNC_NAME);
       }
    }
-   
+
+   OPAL_CR_ENTER_LIBRARY();
+
    rc = ompi_ddt_create_contiguous( count, oldtype, newtype );
    OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME );
 

@@ -36,8 +36,6 @@ int MPI_Comm_free_keyval(int *comm_keyval)
 {
     int ret;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     /* Check for valid key pointer */
 
     if (MPI_PARAM_CHECK) {
@@ -47,7 +45,9 @@ int MPI_Comm_free_keyval(int *comm_keyval)
                                           FUNC_NAME);
         }
     }
-      
+
+    OPAL_CR_ENTER_LIBRARY();
+
     ret = ompi_attr_free_keyval(COMM_ATTR, comm_keyval, 0);
 
     OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);

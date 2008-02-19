@@ -32,7 +32,6 @@
 int MPI_Errhandler_create(MPI_Handler_function *function,
                           MPI_Errhandler *errhandler)
 {
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     /* This is a deprecated -- just turn around and call the real
        function */

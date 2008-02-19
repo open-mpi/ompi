@@ -38,8 +38,6 @@ int MPI_Type_extent(MPI_Datatype type, MPI_Aint *extent)
   int rc;
   MPI_Aint lb;
 
-  OPAL_CR_TEST_CHECKPOINT_READY();
-  
   MEMCHECKER(
     memchecker_datatype(type);
   );
@@ -52,6 +50,8 @@ int MPI_Type_extent(MPI_Datatype type, MPI_Aint *extent)
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
     }
   }
+
+  OPAL_CR_ENTER_LIBRARY();
 
   rc = ompi_ddt_get_extent( type, &lb, extent );
   OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME );

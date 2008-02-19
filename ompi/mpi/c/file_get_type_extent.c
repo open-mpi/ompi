@@ -38,8 +38,6 @@ int MPI_File_get_type_extent(MPI_File fh, MPI_Datatype datatype,
 {
     int rc;
 
-    OPAL_CR_TEST_CHECKPOINT_READY();
-
     MEMCHECKER(
         memchecker_datatype(datatype);
     );
@@ -55,6 +53,8 @@ int MPI_File_get_type_extent(MPI_File fh, MPI_Datatype datatype,
         }
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
 

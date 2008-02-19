@@ -44,28 +44,26 @@ int MPI_Exscan(void *sendbuf, void *recvbuf, int count,
         memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
         memchecker_comm(comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if (MPI_PARAM_CHECK) {
         char *msg;
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                           FUNC_NAME);
-	}
+        }
 
         /* Unrooted operation -- same checks for intracommunicators
            and intercommunicators */
-
-	else if (MPI_OP_NULL == op) {
-          err = MPI_ERR_OP;
+        else if (MPI_OP_NULL == op) {
+            err = MPI_ERR_OP;
         } else if (!ompi_op_is_valid(op, datatype, &msg, FUNC_NAME)) {
             int ret = OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, msg);
             free(msg);
             return ret;
         } else {
-          OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
+            OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
         }
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
@@ -77,6 +75,8 @@ int MPI_Exscan(void *sendbuf, void *recvbuf, int count,
     if (0 == count) {
         return MPI_SUCCESS;
     }
+
+    OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
 

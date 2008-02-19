@@ -54,7 +54,6 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
         memchecker_comm(local_comm);
         memchecker_comm(bridge_comm);
     );
-    OPAL_CR_TEST_CHECKPOINT_READY();
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
@@ -73,7 +72,9 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                                              FUNC_NAME);
         */
     }
-    
+
+    OPAL_CR_ENTER_LIBRARY();
+
     local_size = ompi_comm_size ( local_comm );
     local_rank = ompi_comm_rank ( local_comm );
     lleader = local_leader;
@@ -89,10 +90,12 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
         if ( local_rank == local_leader ) {
             if ( ompi_comm_invalid ( bridge_comm ) ||
                  (bridge_comm->c_flags & OMPI_COMM_INTER) ) {
+                OPAL_CR_EXIT_LIBRARY();
                 return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_COMM, 
                                                 FUNC_NAME);
             }            
             if ( (remote_leader < 0) || (remote_leader >= ompi_comm_size(bridge_comm))) {
+                OPAL_CR_EXIT_LIBRARY();
                 return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG,
                                                 FUNC_NAME);
             }
@@ -157,7 +160,8 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     }
     new_group_pointer=ompi_group_allocate(rsize);
     if( NULL == new_group_pointer ) {
-      return MPI_ERR_GROUP;
+        OPAL_CR_EXIT_LIBRARY();
+        return MPI_ERR_GROUP;
     }
 
     /* put group elements in the list */
@@ -220,6 +224,8 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     }
     
  err_exit:
+    OPAL_CR_EXIT_LIBRARY();
+
     if ( NULL != rprocs ) {
         free ( rprocs );
     }

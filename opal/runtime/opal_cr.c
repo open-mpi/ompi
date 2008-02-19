@@ -104,7 +104,60 @@ int    opal_cr_checkpointing      = OPAL_CR_STATUS_NONE;
 /* Current checkpoint request channel state */
 int    opal_cr_checkpoint_request = OPAL_CR_STATUS_NONE;
 
+#if OPAL_ENABLE_FT_THREAD == 1
+/*****************
+ * Threading Functions and Variables
+ *****************/
+static void* opal_cr_thread_fn(opal_object_t *obj);
+bool    opal_cr_thread_is_active  = false;
+bool    opal_cr_thread_in_library = false;
+bool    opal_cr_thread_use_if_avail = true;
+int32_t opal_cr_thread_num_in_library = 0;
+int     opal_cr_thread_sleep_check = 0;
+int     opal_cr_thread_sleep_wait = 0;
+opal_thread_t opal_cr_thread;
+opal_mutex_t  opal_cr_thread_lock;
+#if 0
+#define OPAL_CR_LOCK()           opal_cr_thread_in_library = true;  opal_mutex_lock(&opal_cr_thread_lock);
+#define OPAL_CR_UNLOCK()         opal_cr_thread_in_library = false; opal_mutex_unlock(&opal_cr_thread_lock);
+#define OPAL_CR_THREAD_LOCK()    opal_mutex_lock(&opal_cr_thread_lock);
+#define OPAL_CR_THREAD_UNLOCK()  opal_mutex_unlock(&opal_cr_thread_lock);
+#else
+/* This technique will potentially starve the thread, but that is OK since
+ * it is only there as support for when the process is not in the MPI library
+ */
+static const uint32_t ThreadFlag = 0x1;
+static const uint32_t ProcInc    = 0x2;
 
+#define OPAL_CR_LOCK()                                            \
+ {                                                                \
+    opal_cr_thread_in_library = true;                             \
+    OPAL_THREAD_ADD32(&opal_cr_thread_num_in_library, ProcInc);   \
+    while( (opal_cr_thread_num_in_library & ThreadFlag ) != 0 ) { \
+      sched_yield();                                              \
+    }                                                             \
+ }
+#define OPAL_CR_UNLOCK()                                         \
+ {                                                               \
+    OPAL_THREAD_ADD32(&opal_cr_thread_num_in_library, -ProcInc); \
+    if( opal_cr_thread_num_in_library <= 0 ) {                   \
+      opal_cr_thread_in_library = false;                         \
+    }                                                            \
+ }
+#define OPAL_CR_THREAD_LOCK()                                                      \
+ {                                                                                 \
+    while(!OPAL_ATOMIC_CMPSET_32(&opal_cr_thread_num_in_library, 0, ThreadFlag)) { \
+      sched_yield();                                                               \
+      usleep(opal_cr_thread_sleep_wait);                                           \
+    }                                                                              \
+ }
+#define OPAL_CR_THREAD_UNLOCK()                                     \
+ {                                                                  \
+    OPAL_THREAD_ADD32(&opal_cr_thread_num_in_library, -ThreadFlag); \
+ }
+#endif
+
+#endif /* OPAL_ENABLE_FT_THREAD == 1 */
 
 int opal_cr_set_enabled(bool en)
 {
@@ -150,16 +203,39 @@ int opal_cr_init(void )
                                 "Enable fault tolerance for this program",
                                 false, false,
                                 0, &val);
-    if(0 != val) {
-        opal_cr_set_enabled(true);
-    }
-    else {
-        opal_cr_set_enabled(false);
-    }
+    opal_cr_set_enabled(OPAL_INT_TO_BOOL(val));
 
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: FT Enabled: %d",
                         val);
+
+#if OPAL_ENABLE_FT_THREAD == 1
+    mca_base_param_reg_int_name("opal_cr", "use_thread",
+                                "Use an async thread to checkpoint this program (Default: Enabled)",
+                                false, false,
+                                1, &val);
+    opal_cr_thread_use_if_avail = OPAL_INT_TO_BOOL(val);
+
+    opal_output_verbose(10, opal_cr_output,
+                        "opal_cr: init: FT Use thread: %d",
+                        val);
+
+    mca_base_param_reg_int_name("opal_cr", "thread_sleep_check",
+                                "Time to sleep between checking for a checkpoint (Default: 0)",
+                                false, false,
+                                0, &val);
+    opal_cr_thread_sleep_check = val;
+
+    mca_base_param_reg_int_name("opal_cr", "thread_sleep_wait",
+                                "Time to sleep waiting for process to exit MPI library (Default: 0)",
+                                false, false,
+                                0, &val);
+    opal_cr_thread_sleep_wait = val;
+
+    opal_output_verbose(10, opal_cr_output,
+                        "opal_cr: init: FT thread sleep: check = %d, wait = %d",
+                        opal_cr_thread_sleep_check, opal_cr_thread_sleep_wait);
+#endif
 
     /*
      * Whether or not to allow OPAL only checkpointing.
@@ -171,12 +247,7 @@ int opal_cr_init(void )
                                 "Enable OPAL Only checkpointing [Default: Disabled]",
                                 true, false,
                                 0, &val);
-    if(0 != val) {
-        opal_cr_allow_opal_only = true;
-    }
-    else {
-        opal_cr_allow_opal_only = false;
-    }
+    opal_cr_allow_opal_only = OPAL_INT_TO_BOOL(val);
 
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: OPAL CR Allow OPAL Only: %d",
@@ -187,12 +258,7 @@ int opal_cr_init(void )
                                 false, false,
                                 0,
                                 &val);
-    if(0 != val) {
-        opal_cr_is_tool = true;
-    }
-    else {
-        opal_cr_is_tool = false;
-    }
+    opal_cr_is_tool = OPAL_INT_TO_BOOL(val);
 
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: Is a tool program: %d",
@@ -229,6 +295,9 @@ int opal_cr_init(void )
         opal_cr_stall_check = false;
         opal_cr_currently_stalled = false;
 
+        /*
+         * Register the entry point
+         */
         if( OPAL_SUCCESS != (ret = opal_cr_entry_point_init()) ) {
             exit_status = OPAL_ERROR;
             goto cleanup;
@@ -258,6 +327,26 @@ int opal_cr_init(void )
     }
 #endif
 
+#if OPAL_ENABLE_FT_THREAD == 1
+    if( !opal_cr_is_tool && opal_cr_thread_use_if_avail) {
+        opal_set_using_threads(true);
+        /*
+         * Start the thread
+         */
+        OBJ_CONSTRUCT(&opal_cr_thread,     opal_thread_t);
+        OBJ_CONSTRUCT(&opal_cr_thread_lock, opal_mutex_t);
+
+        opal_cr_thread_is_active  = false;
+        opal_cr_thread_num_in_library = 0;
+        opal_cr_thread_in_library = false;
+
+        opal_cr_thread.t_run = opal_cr_thread_fn;
+        opal_cr_thread.t_arg = NULL;
+        opal_thread_start(&opal_cr_thread);
+
+    } /* End opal_cr_is_tool = true */
+#endif /* OPAL_ENABLE_FT_THREAD == 1 */
+
  cleanup:
     return exit_status;
 }
@@ -274,6 +363,18 @@ int opal_cr_finalize(void)
     }
 
     if( !opal_cr_is_tool ) {
+#if OPAL_ENABLE_FT_THREAD == 1
+        if( opal_cr_thread_use_if_avail ) {
+            void *data;
+            /*
+             * Stop the thread
+             */
+            opal_thread_join(&opal_cr_thread, &data);
+            OBJ_DESTRUCT(&opal_cr_thread);
+            OBJ_DESTRUCT(&opal_cr_thread_lock);
+        }
+#endif /* OPAL_ENABLE_FT_THREAD == 1 */
+
         if( OPAL_SUCCESS != (ret = opal_cr_entry_point_finalize()) ) {
             exit_status = ret;
         }
@@ -1003,3 +1104,125 @@ static int cr_entry_point_notify_reopen_files(int *prog_read_fd, int *prog_write
 #endif  /* __WINDOWS__ */
 #endif  /* HAVE_MKFIFO */
 }
+
+#if OPAL_ENABLE_FT_THREAD == 1
+static void* opal_cr_thread_fn(opal_object_t *obj)
+{
+    /* Sanity Check */
+    if( !opal_cr_thread_use_if_avail ) {
+        return NULL;
+    }
+
+    /*
+     * Register this thread with the OPAL CRS
+     */
+    if( NULL != opal_crs.crs_reg_thread ) {
+        if( OPAL_SUCCESS != opal_crs.crs_reg_thread() ) {
+            opal_output(0, "Error: Thread registration failed\n");
+            return NULL;
+        }
+    }
+
+    /*
+     * Wait to become active
+     */
+    while( !opal_cr_thread_is_active ) {
+        sched_yield();
+    }
+
+    /*
+     * While active
+     */
+    while( opal_cr_thread_is_active ) {
+        /*
+         * While no threads are in the MPI library then try to process
+         * checkpoint requests.
+         */
+        OPAL_CR_THREAD_LOCK();
+
+        while ( !opal_cr_thread_in_library ) {
+            sched_yield();
+            usleep(opal_cr_thread_sleep_check);
+
+            OPAL_CR_TEST_CHECKPOINT_READY();
+            /* Sanity check */
+            if( OPAL_UNLIKELY(opal_cr_currently_stalled) ) {
+                OPAL_CR_TEST_CHECKPOINT_READY();
+            }
+        }
+
+        /*
+         * While they are in the MPI library yield
+         */
+        OPAL_CR_THREAD_UNLOCK();
+
+        while ( opal_cr_thread_in_library && opal_cr_thread_is_active ) {
+            sched_yield();
+            usleep(opal_cr_thread_sleep_wait);
+        }
+    }
+
+    return NULL;
+}
+
+void opal_cr_thread_init_library(void)
+{
+    if( !opal_cr_thread_use_if_avail ) {
+        OPAL_CR_TEST_CHECKPOINT_READY();
+    } else {
+        /* Activate the CR Thread */
+        opal_cr_thread_in_library = false;
+        opal_cr_thread_is_active  = true;
+    }
+}
+
+void opal_cr_thread_finalize_library(void)
+{
+    if( !opal_cr_thread_use_if_avail ) {
+        OPAL_CR_TEST_CHECKPOINT_READY();
+    } else {
+        /* Deactivate the CR Thread */
+        opal_cr_thread_is_active  = false;
+        opal_cr_thread_in_library = true;
+    }
+}
+
+void opal_cr_thread_abort_library(void)
+{
+    if( !opal_cr_thread_use_if_avail ) {
+        OPAL_CR_TEST_CHECKPOINT_READY();
+    } else {
+        /* Deactivate the CR Thread */
+        opal_cr_thread_is_active  = false;
+        opal_cr_thread_in_library = true;
+    }
+}
+
+void opal_cr_thread_enter_library(void)
+{
+    if( !opal_cr_thread_use_if_avail ) {
+        OPAL_CR_TEST_CHECKPOINT_READY();
+    } else {
+        /* Lock out the CR Thread */
+        OPAL_CR_LOCK();
+    }
+}
+
+void opal_cr_thread_exit_library(void)
+{
+    if( !opal_cr_thread_use_if_avail ) {
+        OPAL_CR_TEST_CHECKPOINT_READY();
+    } else {
+        /* Allow CR Thread to continue */
+        OPAL_CR_UNLOCK();
+    }
+}
+
+void opal_cr_thread_noop_progress(void)
+{
+    if( !opal_cr_thread_use_if_avail ) {
+        OPAL_CR_TEST_CHECKPOINT_READY();
+    }
+}
+
+#endif /* OPAL_ENABLE_FT_THREAD == 1 */

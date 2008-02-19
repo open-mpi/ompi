@@ -37,6 +37,9 @@ int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count)
 {
    int i;
    size_t size;
+
+   OPAL_CR_NOOP_PROGRESS();
+
    MEMCHECKER(
        if (status != MPI_STATUSES_IGNORE) {
            /*
@@ -48,8 +51,6 @@ int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count)
            memchecker_datatype(datatype);
        }
    );
-
-   OPAL_CR_TEST_CHECKPOINT_READY();
 
    if (MPI_PARAM_CHECK) {
       int err = MPI_SUCCESS;
