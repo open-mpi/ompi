@@ -621,6 +621,8 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     opal_list_append(&sfrag->coalesced_frags, (opal_list_item_t*)cfrag);
     sfrag->coalesced_length += (size+sizeof(mca_btl_openib_header_coalesced_t));
 
+    to_base_frag(cfrag)->base.des_flags = flags;
+
     return &to_base_frag(cfrag)->base;
 }
 
@@ -792,7 +794,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 
     /* not all upper layer users set this */
     to_base_frag(frag)->segment.seg_len = max_data + reserve;
-    to_base_frag(frag)->base.des_flags = flags;
 
     return &to_base_frag(frag)->base;
 }
