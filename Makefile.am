@@ -18,7 +18,7 @@
 #
 
 SUBDIRS = config contrib $(MCA_PROJECT_SUBDIRS) test
-EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE
+EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE autogen.sh
 
 include examples/Makefile.include
 
