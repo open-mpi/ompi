@@ -94,6 +94,8 @@ Trunk (not on release branches yet)
 
 1.2.6 (not released yet, if ever)
 -----
+- Made the openib BTL a bit more resillient in the face of driver
+  errors.  See ticket #1217.
 - Fixed F90 interface for MPI_CART_CREATE.  See ticket #1208.
   Thanks to Michal Charemza for reporting the problem.
 - Fixed some C++ compiler warnings. See ticket #1203.
