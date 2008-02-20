@@ -92,7 +92,7 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
     for( child=0 ; child < sm_module->barrier_tree.n_children ; child++ ) {
         /* compute flag address */
         sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-            (sm_barrier_region+
+            ((char *)sm_barrier_region+
             sm_module->barrier_tree.children_ranks[child] *
             sm_module->segement_size_per_process);
         if(sm_address->flag == tag ) {
@@ -115,7 +115,7 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
 
     /* Set my completion flag */
     sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-        (sm_barrier_region+
+        ((char *)sm_barrier_region+
          sm_module->barrier_tree.my_rank*
          sm_module->segement_size_per_process);
     sm_address->flag=tag;
@@ -132,22 +132,21 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
      */
     if(sm_module->barrier_tree.n_parents > 0 ) {
         sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-            (sm_barrier_region+
+            ((char *)sm_barrier_region+
             sm_module->barrier_tree.parent_rank*
             sm_module->segement_size_per_process);
         if( sm_address->flag != -tag ) {
-            /* set restart parameters, and exit */
+            /* if parent has not checked in - set parameters for async
+             *   completion, incomplet barrier flag, and bail
+             */
             request->sm2_barrier_phase=NB_BARRIER_FAN_OUT;
             return OMPI_SUCCESS;
         }
     }
 
-    /* if parent has not checked in - set parameters for async
-     *   completion, incomplet barrier flag, and bail
-     */
     sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-        (sm_barrier_region+
-         sm_module->barrier_tree.children_ranks[sm_module->barrier_tree.my_rank] *
+        ((char *)sm_barrier_region+
+         sm_module->barrier_tree.my_rank *
          sm_module->segement_size_per_process);
     sm_address->flag=-tag;
 
@@ -206,7 +205,7 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
     for( child=0 ; child < sm_module->barrier_tree.n_children ; child++ ) {
         /* compute flag address */
         sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-            (sm_barrier_region+
+            ((char *)sm_barrier_region+
             sm_module->barrier_tree.children_ranks[child] *
             sm_module->segement_size_per_process);
         if(sm_address->flag == tag ) {
@@ -229,8 +228,8 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
 
     /* Set my completion flag */
     sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-        (sm_barrier_region+
-         sm_module->barrier_tree.children_ranks[sm_module->barrier_tree.my_rank] *
+        ((char *)sm_barrier_region+
+         sm_module->barrier_tree.my_rank *
          sm_module->segement_size_per_process);
     sm_address->flag=tag;
     /* don't need memory barrier here, as we are not setting any other sm
@@ -247,22 +246,21 @@ FANOUT:
      */
     if(sm_module->barrier_tree.n_parents > 0 ) {
         sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-            (sm_barrier_region+
+            ((char *)sm_barrier_region+
             sm_module->barrier_tree.parent_rank*
             sm_module->segement_size_per_process);
         if( sm_address->flag != -tag ) {
-            /* set restart parameters, and exit */
+            /* if parent has not checked in - set parameters for async
+             *   completion, incomplet barrier flag, and bail
+             */
             request->sm2_barrier_phase=NB_BARRIER_FAN_OUT;
             return OMPI_SUCCESS;
         }
     }
 
-    /* if parent has not checked in - set parameters for async
-     *   completion, incomplet barrier flag, and bail
-     */
     sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-        (sm_barrier_region+
-         sm_module->barrier_tree.children_ranks[sm_module->barrier_tree.my_rank] *
+        ((char *)sm_barrier_region+
+         sm_module->barrier_tree.my_rank *
          sm_module->segement_size_per_process);
     sm_address->flag=-tag;
 
