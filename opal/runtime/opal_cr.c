@@ -109,6 +109,7 @@ int    opal_cr_checkpoint_request = OPAL_CR_STATUS_NONE;
  * Threading Functions and Variables
  *****************/
 static void* opal_cr_thread_fn(opal_object_t *obj);
+bool    opal_cr_thread_is_done    = false;
 bool    opal_cr_thread_is_active  = false;
 bool    opal_cr_thread_in_library = false;
 bool    opal_cr_thread_use_if_avail = true;
@@ -336,9 +337,10 @@ int opal_cr_init(void )
         OBJ_CONSTRUCT(&opal_cr_thread,     opal_thread_t);
         OBJ_CONSTRUCT(&opal_cr_thread_lock, opal_mutex_t);
 
+        opal_cr_thread_is_done    = false;
         opal_cr_thread_is_active  = false;
-        opal_cr_thread_num_in_library = 0;
         opal_cr_thread_in_library = false;
+        opal_cr_thread_num_in_library = 0;
 
         opal_cr_thread.t_run = opal_cr_thread_fn;
         opal_cr_thread.t_arg = NULL;
@@ -369,6 +371,7 @@ int opal_cr_finalize(void)
             /*
              * Stop the thread
              */
+            opal_cr_thread_is_done    = true;
             opal_cr_thread_is_active  = false;
             opal_cr_thread_in_library = true;
 
@@ -1129,8 +1132,12 @@ static void* opal_cr_thread_fn(opal_object_t *obj)
     /*
      * Wait to become active
      */
-    while( !opal_cr_thread_is_active ) {
+    while( !opal_cr_thread_is_active && !opal_cr_thread_is_done) {
         sched_yield();
+    }
+
+    if( opal_cr_thread_is_done ) {
+        return NULL;
     }
 
     /*
@@ -1175,6 +1182,7 @@ void opal_cr_thread_init_library(void)
     } else {
         /* Activate the CR Thread */
         opal_cr_thread_in_library = false;
+        opal_cr_thread_is_done    = false;
         opal_cr_thread_is_active  = true;
     }
 }
@@ -1186,6 +1194,7 @@ void opal_cr_thread_finalize_library(void)
     } else {
         /* Deactivate the CR Thread */
         opal_cr_thread_is_active  = false;
+        opal_cr_thread_is_done    = true;
         opal_cr_thread_in_library = true;
     }
 }
@@ -1197,6 +1206,7 @@ void opal_cr_thread_abort_library(void)
     } else {
         /* Deactivate the CR Thread */
         opal_cr_thread_is_active  = false;
+        opal_cr_thread_is_done    = true;
         opal_cr_thread_in_library = true;
     }
 }
