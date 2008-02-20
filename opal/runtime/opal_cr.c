@@ -369,6 +369,9 @@ int opal_cr_finalize(void)
             /*
              * Stop the thread
              */
+            opal_cr_thread_is_active  = false;
+            opal_cr_thread_in_library = true;
+
             opal_thread_join(&opal_cr_thread, &data);
             OBJ_DESTRUCT(&opal_cr_thread);
             OBJ_DESTRUCT(&opal_cr_thread_lock);
