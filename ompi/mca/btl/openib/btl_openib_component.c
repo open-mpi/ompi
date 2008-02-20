@@ -402,19 +402,20 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
 #if OMPI_HAVE_THREADS
     /* APM support */
     if (lmc > 1){
-        if (-1 == mca_btl_openib_component.apm) {
+        if (-1 == mca_btl_openib_component.apm_lmc) {
             lmc_step = lmc;
-        } else if (0 == lmc % (mca_btl_openib_component.apm + 1)) {
-            lmc_step = mca_btl_openib_component.apm + 1;
+            mca_btl_openib_component.apm_lmc = lmc - 1;
+        } else if (0 == lmc % (mca_btl_openib_component.apm_lmc + 1)) {
+            lmc_step = mca_btl_openib_component.apm_lmc + 1;
         } else {
             opal_show_help("help-mpi-btl-openib.txt", "apm with wrong lmc",true,
-                    mca_btl_openib_component.apm, lmc);
+                    mca_btl_openib_component.apm_lmc, lmc);
             return OMPI_ERROR;
         }
     } else {
-        if (mca_btl_openib_component.apm) {
+        if (mca_btl_openib_component.apm_lmc) {
             /* Disable apm and report warning */
-            mca_btl_openib_component.apm = 0;
+            mca_btl_openib_component.apm_lmc = 0;
             opal_show_help("help-mpi-btl-openib.txt", "apm without lmc",true);
         }
     }
@@ -441,18 +442,14 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             openib_btl->port_num = (uint8_t) port_num;
             openib_btl->pkey_index = pkey_index;
             openib_btl->lid = lid;
-            openib_btl->apm_lmc_max = lmc_step ;
+            openib_btl->apm_port = 0;
             openib_btl->src_path_bits = lid - ib_port_attr->lid;
             /* store the subnet for multi-nic support */
             openib_btl->port_info.subnet_id = subnet_id;
             openib_btl->port_info.mtu = hca->mtu;
-#if HAVE_XRC
             /* This code is protected with ifdef because we don't want to send
              * extra bytes during OOB */
-            if(MCA_BTL_XRC_ENABLED) {
-                openib_btl->port_info.lid = lid;
-            }
-#endif
+            openib_btl->port_info.lid = lid;
             rc = ompi_btl_openib_connect_base_query(&openib_btl->port_info.cpclist, hca);
             if (OMPI_SUCCESS != rc) {
                 continue;
@@ -549,6 +546,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
                 }
             }
             opal_list_append(btl_list, (opal_list_item_t*) ib_selected);
+            opal_pointer_array_add(hca->hca_btls, (void*) openib_btl);
             hca->btls++;
             ++mca_btl_openib_component.ib_num_btls;
             if (-1 != mca_btl_openib_component.ib_max_btls &&
@@ -868,6 +866,22 @@ static bool inline is_credit_message(const mca_btl_openib_recv_frag_t *frag)
         (MCA_BTL_OPENIB_CONTROL_CREDITS == chdr->type);
 }
 
+static void init_apm_port(mca_btl_openib_hca_t *hca, int port, uint16_t lid)
+{
+    int index;
+    struct mca_btl_openib_module_t *btl;
+    for(index = 0; index < hca->btls; index++) {
+        btl = opal_pointer_array_get_item(hca->hca_btls, index);
+        /* Ok, we already have btl for the fist port,
+         * second one will be used for APM */
+        btl->apm_port = port;
+        btl->port_info.apm_lid = lid + btl->src_path_bits;
+        mca_btl_openib_component.apm_ports++;
+        BTL_VERBOSE(("APM-PORT: Setting alternative port - %d, lid - %d"
+                    ,port ,lid));
+    }
+}
+
 static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
 {
     struct mca_mpool_base_resources_t mpool_resources;
@@ -885,6 +899,11 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
 
     hca->ib_dev = ib_dev;
     hca->ib_dev_context = ibv_open_device(ib_dev);
+    hca->hca_btls = OBJ_NEW(opal_pointer_array_t);
+    if (OPAL_SUCCESS != opal_pointer_array_init(hca->hca_btls, 2, INT_MAX, 2)) {
+        BTL_ERROR(("Failed to initialize hca_btls array: %s:%d\n", __FILE__, __LINE__));
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     if(NULL == hca->ib_dev_context){
         BTL_ERROR(("error obtaining device context for %s errno says %s\n",
@@ -1033,13 +1052,15 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
                         ibv_get_device_name(ib_dev), i, strerror(errno)));
             break;
         }
-        if(IBV_PORT_ACTIVE == ib_port_attr.state){
-
+        if(IBV_PORT_ACTIVE == ib_port_attr.state) {
+            if (mca_btl_openib_component.apm_ports && hca->btls > 0) {
+                init_apm_port(hca, i, ib_port_attr.lid);
+                break;
+            }
             if (0 == mca_btl_openib_component.ib_pkey_val) {
                 ret = init_one_port(btl_list, hca, i, mca_btl_openib_component.ib_pkey_ix,
                                     &ib_port_attr);
-            }
-            else {
+            } else {
                 uint16_t pkey,j;
                 for (j=0; j < hca->ib_dev_attr.max_pkeys; j++) {
                     ibv_query_pkey(hca->ib_dev_context, i, j, &pkey);
@@ -1063,6 +1084,11 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     /* If we made a BTL, we're done.  Otherwise, fall through and
        destroy everything */
     if (hca->btls > 0) {
+        /* if apm was enabled it should be > 1 */
+        if (1 == mca_btl_openib_component.apm_ports) {
+            opal_show_help("help-mpi-btl-openib.txt", "apm not enough ports", true);
+            mca_btl_openib_component.apm_ports = 0;
+        }
         ret = prepare_hca_for_use(hca);
         if(OMPI_SUCCESS == ret)
             return OMPI_SUCCESS;

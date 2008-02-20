@@ -11,8 +11,12 @@
 
 #ifndef MCA_BTL_OPENIB_ASYNC_H
 #define MCA_BTL_OPENIB_ASYNC_H
+#include "btl_openib_endpoint.h"
 
 void*      btl_openib_async_thread(void *one_hca);
-void       mca_btl_openib_load_apm(struct ibv_qp *qp, struct mca_btl_openib_module_t *btl);
-void       mca_btl_openib_load_apm_xrc_rcv(uint32_t qp_num, struct mca_btl_openib_module_t *btl);
+void       mca_btl_openib_load_apm(struct ibv_qp *qp, mca_btl_openib_endpoint_t *ep);
+void       mca_btl_openib_load_apm_xrc_rcv(uint32_t qp_num, mca_btl_openib_endpoint_t *ep);
+
+#define APM_ENABLED (0 != mca_btl_openib_component.apm_lmc || 0 != mca_btl_openib_component.apm_ports)
+
 #endif
