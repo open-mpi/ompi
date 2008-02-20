@@ -336,6 +336,15 @@ static int setup_nary_tree(int tree_order, int my_rank, int num_nodes,
             }
         } 
     }
+    /* set node type */
+    if( 0 == my_node->n_parents ) {
+        my_node->my_node_type=ROOT_NODE;
+    } else if ( 0 == my_node->n_children ) {
+        my_node->my_node_type=LEAF_NODE;
+    } else {
+        my_node->my_node_type=INTERIOR_NODE;
+    }
+
 
     /* successful return */
     return OMPI_SUCCESS;

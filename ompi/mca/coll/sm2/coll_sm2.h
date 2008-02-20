@@ -107,16 +107,31 @@ BEGIN_C_DECLS
      */
     typedef struct mca_coll_sm2_component_t mca_coll_sm2_component_t;
 
+    /* enum for node type */
+    enum{
+        ROOT_NODE,
+        LEAF_NODE,
+        INTERIOR_NODE
+    };
+
 
     /*
      * N-order tree node description
      */
     struct tree_node_t {
+        /* my rank within the group */
         int my_rank;
+        /* my node type - root, leaf, or interior */
+        int my_node_type;
+        /* number of nodes in the tree */
         int tree_size;
+        /* number of parents (0/1) */
         int n_parents;
+        /* number of children */
         int n_children;
+        /* parent rank within the group */
         int parent_rank;
+        /* chidren ranks within the group */
         int *children_ranks;
     };
     typedef struct tree_node_t tree_node_t;
