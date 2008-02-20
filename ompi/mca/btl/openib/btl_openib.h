@@ -169,7 +169,8 @@ struct mca_btl_openib_component_t {
     int32_t max_eager_rdma;
     uint32_t btls_per_lid;
     uint32_t max_lmc;
-    int32_t apm;
+    int32_t apm_lmc;
+    int32_t apm_ports;
     uint32_t buffer_alignment;    /**< Preferred communication buffer alignment in Bytes (must be power of two) */
 #if OMPI_HAVE_THREADS
     int32_t fatal_counter;           /**< Counts number on fatal events that we got on all hcas */
@@ -229,9 +230,8 @@ struct mca_btl_openib_port_info {
     uint8_t padding[4];
 #endif
     uint64_t subnet_id;
-#if HAVE_XRC
     uint16_t lid; /* used only in xrc */
-#endif
+    uint16_t apm_lid; /* the lid is used for APM to different port */
     char *cpclist;
 };
 typedef struct mca_btl_openib_port_info mca_btl_openib_port_info_t;
@@ -285,6 +285,7 @@ typedef struct mca_btl_openib_hca_t {
     uint8_t use_eager_rdma;
     uint8_t btls;              /** < number of btls using this HCA */
     opal_pointer_array_t *endpoints;
+    opal_pointer_array_t *hca_btls;
     uint16_t hp_cq_polls;
     uint16_t eager_rdma_polls;
     bool pollme;
@@ -335,7 +336,7 @@ struct mca_btl_openib_module_t {
     uint16_t pkey_index;
     struct ibv_port_attr ib_port_attr;
     uint16_t lid;                      /**< lid that is actually used (for LMC) */
-    uint16_t apm_lmc_max;                  /**< the maximal lmc that can be used for apm */
+    int apm_port;                      /**< Alternative port that may be used for APM */
     uint8_t src_path_bits;             /**< offset from base lid (for LMC) */
 
     int32_t num_peers;

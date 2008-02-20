@@ -27,6 +27,8 @@
 #include "btl_openib.h"
 #include "btl_openib_mca.h"
 #include "btl_openib_async.h"
+#include "btl_openib_proc.h"
+#include "btl_openib_endpoint.h"
 
 struct mca_btl_openib_async_poll {
     int active_poll_size;
@@ -89,6 +91,33 @@ static const char *openib_event_to_str (enum ibv_event_type event)
     default:
         return "UNKNOWN";
     }
+}
+/* QP to endpoint */
+static mca_btl_openib_endpoint_t * qp2endpoint(struct ibv_qp *qp, mca_btl_openib_hca_t *hca)
+{
+    mca_btl_openib_endpoint_t *ep;
+    int  ep_i, qp_i;
+    for(ep_i = 0; ep_i < opal_pointer_array_get_size(hca->endpoints); ep_i++) {
+        ep = opal_pointer_array_get_item(hca->endpoints, ep_i);
+        for(qp_i = 0; qp_i < mca_btl_openib_component.num_qps; qp_i++) {
+            if (qp == ep->qps[qp_i].qp->lcl_qp)
+                return ep;
+        }
+    }
+    return NULL;
+}
+
+/* XRC recive QP to endpoint */
+static mca_btl_openib_endpoint_t * xrc_qp2endpoint(uint32_t qp_num, mca_btl_openib_hca_t *hca)
+{
+    mca_btl_openib_endpoint_t *ep;
+    int  ep_i;
+    for(ep_i = 0; ep_i < opal_pointer_array_get_size(hca->endpoints); ep_i++) {
+        ep = opal_pointer_array_get_item(hca->endpoints, ep_i);
+        if (qp_num == ep->xrc_recv_qp_num)
+            return ep;
+    }
+    return NULL;
 }
 
 /* Function inits mca_btl_openib_async_poll */
@@ -194,6 +223,7 @@ static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, in
         if (mca_btl_openib_component.openib_btls[j]->hca->ib_dev_context->async_fd ==
                 hcas_poll->async_pollfd[index].fd ) {
             hca = mca_btl_openib_component.openib_btls[j]->hca;
+            break;
         }
     }
     if (NULL != hca) {
@@ -219,15 +249,16 @@ static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, in
 #endif
         switch(event_type) {
             case IBV_EVENT_PATH_MIG:
-                if (0 != mca_btl_openib_component.apm) {
-                    BTL_ERROR(("APM: Alternative path migration reported."));
+                BTL_ERROR(("Alternative path migration event reported"));
+                if (APM_ENABLED) {
+                    BTL_ERROR(("Trying to find additional path..."));
                     if (!xrc_event) 
                         mca_btl_openib_load_apm(event.element.qp,
-                                mca_btl_openib_component.openib_btls[j]);
+                                qp2endpoint(event.element.qp, hca));
 #if HAVE_XRC
                     else
                         mca_btl_openib_load_apm_xrc_rcv(event.element.xrc_qp_num,
-                                mca_btl_openib_component.openib_btls[j]);
+                                xrc_qp2endpoint(event.element.xrc_qp_num, hca));
 #endif
                 }
                 break;
@@ -345,55 +376,126 @@ static void apm_update_attr(struct ibv_qp_attr *attr, enum ibv_qp_attr_mask *mas
 {
     *mask = IBV_QP_ALT_PATH|IBV_QP_PATH_MIG_STATE;
     attr->alt_ah_attr.dlid = attr->ah_attr.dlid + 1;
+    attr->alt_ah_attr.src_path_bits = attr->ah_attr.src_path_bits + 1;
     attr->alt_ah_attr.static_rate = attr->ah_attr.static_rate;
     attr->alt_ah_attr.sl = attr->ah_attr.sl;
     attr->alt_pkey_index = attr->pkey_index;
     attr->alt_port_num = attr->port_num;
+    attr->alt_timeout = attr->timeout;
+    attr->path_mig_state = IBV_MIG_REARM;
+    BTL_VERBOSE(("New APM LMC loaded: alt_src_port:%d, dlid: %d, src_bits %d, old_src_bits: %d, old_dlid %d",
+                attr->alt_port_num, attr->alt_ah_attr.dlid,
+                attr->alt_ah_attr.src_path_bits, attr->ah_attr.src_path_bits, attr->ah_attr.dlid));
+}
+
+static int apm_update_port(mca_btl_openib_endpoint_t *ep,
+        struct ibv_qp_attr *attr, enum ibv_qp_attr_mask *mask)
+{
+    size_t port_i;
+    uint16_t apm_lid = 0;
+
+    if (attr->port_num == ep->endpoint_btl->apm_port) {
+        /* all ports were used */
+        BTL_ERROR(("APM: already all ports were used port_num %d apm_port %d",
+                    attr->port_num, ep->endpoint_btl->apm_port));
+        return OMPI_ERROR;
+    }
+    /* looking for alternatve lid on remote site */
+    for(port_i = 0; port_i < ep->endpoint_proc->proc_port_count; port_i++) {
+        if (ep->endpoint_proc->proc_ports[port_i].lid == attr->ah_attr.dlid - mca_btl_openib_component.apm_lmc) {
+            apm_lid = ep->endpoint_proc->proc_ports[port_i].apm_lid;
+        }
+    }
+    if (0 == apm_lid) {
+        /* APM was disabled on one of site ? */
+        BTL_VERBOSE(("APM: Was disabled ? dlid %d %d %d", attr->ah_attr.dlid, attr->ah_attr.src_path_bits, ep->endpoint_btl->src_path_bits));
+        return OMPI_ERROR;
+    }
+    /* We guess cthat the LMC is the same on all ports */
+    attr->alt_ah_attr.static_rate = attr->ah_attr.static_rate;
+    attr->alt_ah_attr.sl = attr->ah_attr.sl;
+    attr->alt_pkey_index = attr->pkey_index;
+    attr->alt_timeout = attr->timeout;
+    attr->path_mig_state = IBV_MIG_REARM;
+    *mask = IBV_QP_ALT_PATH|IBV_QP_PATH_MIG_STATE;
+
+    attr->alt_port_num = ep->endpoint_btl->apm_port;
+    attr->alt_ah_attr.src_path_bits = ep->endpoint_btl->src_path_bits;
+    attr->alt_ah_attr.dlid = apm_lid;
+
+    BTL_VERBOSE(("New APM port loaded: alt_src_port:%d, dlid: %d, src_bits: %d:%d, old_dlid %d",
+                attr->alt_port_num, attr->alt_ah_attr.dlid,
+                attr->ah_attr.src_path_bits, attr->alt_ah_attr.src_path_bits,
+                attr->ah_attr.dlid));
+    return OMPI_SUCCESS;
 }
 
 /* Load new dlid to the QP */
-void mca_btl_openib_load_apm(struct ibv_qp *qp, struct mca_btl_openib_module_t *btl)
+void mca_btl_openib_load_apm(struct ibv_qp *qp, mca_btl_openib_endpoint_t *ep)
 {
     struct ibv_qp_init_attr qp_init_attr;
     struct ibv_qp_attr attr;
     enum ibv_qp_attr_mask mask = 0;
+    struct mca_btl_openib_module_t *btl;
 
     BTL_VERBOSE(("APM: Loading alternative path"));
+    assert (NULL != ep);
+    btl = ep->endpoint_btl;
 
     if (ibv_query_qp(qp, &attr, mask, &qp_init_attr))
         BTL_ERROR(("Failed to ibv_query_qp, qp num: %d", qp->qp_num));
 
-    if (attr.ah_attr.src_path_bits - btl->src_path_bits < btl->apm_lmc_max) {
-        attr.alt_ah_attr.src_path_bits = attr.ah_attr.src_path_bits + 1;
+    if (mca_btl_openib_component.apm_lmc &&
+            attr.ah_attr.src_path_bits - btl->src_path_bits < mca_btl_openib_component.apm_lmc) {
+        BTL_VERBOSE(("APM LMC: src: %d btl_src: %d lmc_max: %d",
+                    attr.ah_attr.src_path_bits,
+                    btl->src_path_bits,
+                    mca_btl_openib_component.apm_lmc));
+        apm_update_attr(&attr, &mask);
     } else {
-        BTL_ERROR(("Failed to load alternative path, all %d were used",
-                    attr.ah_attr.src_path_bits - btl->src_path_bits));
+        if (mca_btl_openib_component.apm_ports) {
+            /* Try to migrate to next port */
+            if (OMPI_SUCCESS != apm_update_port(ep, &attr, &mask))
+                return;
+        } else {
+            BTL_ERROR(("Failed to load alternative path, all %d were used",
+                        attr.ah_attr.src_path_bits - btl->src_path_bits));
+        }
     }
-    apm_update_attr(&attr, &mask);
 
     if (ibv_modify_qp(qp, &attr, mask))
-        BTL_ERROR(("Failed to ibv_query_qp, qp num: %d", qp->qp_num));
+        BTL_ERROR(("Failed to ibv_query_qp, qp num: %p, errno says: %s (%d)"
+                    ,qp->qp_num ,strerror(errno), errno));
 }
 
-void mca_btl_openib_load_apm_xrc_rcv(uint32_t qp_num, struct mca_btl_openib_module_t *btl)
+void mca_btl_openib_load_apm_xrc_rcv(uint32_t qp_num, mca_btl_openib_endpoint_t *ep)
 {
 #if HAVE_XRC
     struct ibv_qp_init_attr qp_init_attr;
     struct ibv_qp_attr attr;
     enum ibv_qp_attr_mask mask = 0;
+    struct mca_btl_openib_module_t *btl;
 
     BTL_VERBOSE(("APM XRC: Loading alternative path"));
+    assert (NULL != ep);
+    btl = ep->endpoint_btl;
 
     if (ibv_query_xrc_rcv_qp(btl->hca->xrc_domain, qp_num, &attr, mask, &qp_init_attr))
         BTL_ERROR(("Failed to ibv_query_qp, qp num: %d", qp_num));
 
-    if (attr.ah_attr.src_path_bits - btl->src_path_bits < btl->apm_lmc_max) {
-        attr.alt_ah_attr.src_path_bits = attr.ah_attr.src_path_bits + 1;
+    if (mca_btl_openib_component.apm_lmc &&
+            attr.ah_attr.src_path_bits - btl->src_path_bits < mca_btl_openib_component.apm_lmc) {
+        apm_update_attr(&attr, &mask);
     } else {
-        BTL_ERROR(("Failed to load alternative path, all %d were used",
-                    attr.ah_attr.src_path_bits - btl->src_path_bits));
+        if (mca_btl_openib_component.apm_ports) {
+            /* Try to migrate to next port */
+            if (OMPI_SUCCESS != apm_update_port(ep, &attr, &mask))
+                return;
+        } else {
+            BTL_ERROR(("Failed to load alternative path, all %d were used",
+                        attr.ah_attr.src_path_bits - btl->src_path_bits));
+        }
     }
-    apm_update_attr(&attr, &mask);
 
     ibv_modify_xrc_rcv_qp(btl->hca->xrc_domain, qp_num, &attr, mask);
     /* Maybe the qp already was modified by other process - ignoring error */

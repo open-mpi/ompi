@@ -551,15 +551,15 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
 
     /* Run over all qps and load alternative path */
 #if OMPI_HAVE_THREADS
-    if (0 != mca_btl_openib_component.apm) {
+    if (APM_ENABLED) {
         int i;
         if (MCA_BTL_XRC_ENABLED) {
             if (master) {
-                mca_btl_openib_load_apm(endpoint->ib_addr->qp->lcl_qp, endpoint->endpoint_btl);
+                mca_btl_openib_load_apm(endpoint->ib_addr->qp->lcl_qp, endpoint);
             }
         } else {
             for(i = 0; i < mca_btl_openib_component.num_qps; i++) {
-                mca_btl_openib_load_apm(endpoint->qps[i].qp->lcl_qp, endpoint->endpoint_btl);
+                mca_btl_openib_load_apm(endpoint->qps[i].qp->lcl_qp, endpoint);
             }
         }
     }

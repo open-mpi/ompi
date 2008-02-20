@@ -444,3 +444,7 @@ APM support will be disabled.
 #
 [apm with wrong lmc]
 Can not provide %d alternative paths with LMC bit configured to %d.
+#
+[apm not enough ports]
+WARNING: For APM over ports ompi require at least 2 active ports and only single
+active port was found. Disabling APM over ports
