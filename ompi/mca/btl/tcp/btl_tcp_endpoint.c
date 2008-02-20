@@ -482,8 +482,6 @@ static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_en
         return OMPI_ERR_UNREACH;
     }
 
-    /* connected */
-    mca_btl_tcp_endpoint_connected(btl_endpoint);
 #if OMPI_ENABLE_DEBUG && WANT_PEER_DUMP
     mca_btl_tcp_endpoint_dump(btl_endpoint, "connected");
 #endif
@@ -643,12 +641,20 @@ static void mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_e
 static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
 {
     mca_btl_base_endpoint_t* btl_endpoint = (mca_btl_base_endpoint_t *)user;
+
     OPAL_THREAD_LOCK(&btl_endpoint->endpoint_recv_lock);
     switch(btl_endpoint->endpoint_state) {
     case MCA_BTL_TCP_CONNECT_ACK:
         {
-            mca_btl_tcp_endpoint_recv_connect_ack(btl_endpoint);
+            int rc;
+            rc = mca_btl_tcp_endpoint_recv_connect_ack(btl_endpoint);
             OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
+            if( OMPI_SUCCESS == rc ) {
+                /* we are now connected. Start sending the data */
+                OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
+                mca_btl_tcp_endpoint_connected(btl_endpoint);
+                OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
+            }
             break;
         }
     case MCA_BTL_TCP_CONNECTED:
