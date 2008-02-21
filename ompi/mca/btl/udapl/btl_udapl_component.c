@@ -828,7 +828,8 @@ int mca_btl_udapl_component_progress()
                     frag->base.des_cbfunc(&btl->super, endpoint,
                         &frag->base, OMPI_SUCCESS);
                     if( btl_ownership ) {
-                        mca_btl_udapl_free(btl, &frag->base);
+                        mca_btl_udapl_free((mca_btl_base_module_t*)btl,
+                            &frag->base);
                     }
 
                     mca_btl_udapl_frag_progress_pending(btl,
@@ -856,7 +857,8 @@ int mca_btl_udapl_component_progress()
                     frag->base.des_cbfunc(&btl->super, endpoint,
                             &frag->base, OMPI_SUCCESS);
                     if( btl_ownership ) {
-                        mca_btl_udapl_free(btl, &frag->base);
+                        mca_btl_udapl_free((mca_btl_base_module_t*)btl,
+                            &frag->base);
                     }
 
                     mca_btl_udapl_frag_progress_pending(btl,
@@ -957,7 +959,8 @@ int mca_btl_udapl_component_progress()
                     frag->base.des_cbfunc(&btl->super, endpoint,
                         &frag->base, OMPI_SUCCESS);
                     if( btl_ownership ) {
-                        mca_btl_udapl_free(btl, &frag->base);
+                        mca_btl_udapl_free((mca_btl_base_module_t*)btl,
+                            &frag->base);
                     }
 
                     OPAL_THREAD_ADD32(&(endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION]), 1);
