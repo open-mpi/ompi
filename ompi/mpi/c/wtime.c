@@ -43,8 +43,6 @@ double MPI_Wtime(void)
 {
     double wtime;
 
-    OPAL_CR_NOOP_PROGRESS();
-
 #if OPAL_TIMER_USEC_NATIVE
     /* We may or may not have native usec precision on Windows, so put
        this #if before the #ifdef checking for Windows. */
@@ -59,6 +57,8 @@ double MPI_Wtime(void)
     wtime = tv.tv_sec;
     wtime += (double)tv.tv_usec / 1000000.0;
 #endif
+
+    OPAL_CR_NOOP_PROGRESS();
 
     return wtime;
 }
