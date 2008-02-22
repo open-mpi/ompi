@@ -629,7 +629,7 @@ static inline int mca_btl_udapl_sendrecv(mca_btl_udapl_module_t* btl,
     /* Post a receive to get the peer's address data */
     frag = (mca_btl_udapl_frag_t*)
         mca_btl_udapl_alloc(
-                            (mca_btl_base_module_t*)btl,
+                            &btl->super,
                             btl_endpoint, 
                             MCA_BTL_NO_ORDER,
                             sizeof(mca_btl_udapl_addr_t) +
@@ -656,7 +656,7 @@ static inline int mca_btl_udapl_sendrecv(mca_btl_udapl_module_t* btl,
     /* Send our local address data over this EP */
     frag = (mca_btl_udapl_frag_t*)
         mca_btl_udapl_alloc(
-                            (mca_btl_base_module_t*)btl, 
+                            &btl->super, 
                             btl_endpoint, 
                             MCA_BTL_NO_ORDER,
                             sizeof(mca_btl_udapl_addr_t) +
@@ -699,9 +699,9 @@ static inline int mca_btl_udapl_frag_progress_one(
             rc = mca_btl_udapl_endpoint_send(frag->endpoint, frag);
             break;
         case MCA_BTL_UDAPL_PUT:
-            rc = mca_btl_udapl_put((mca_btl_base_module_t*)udapl_btl,
+            rc = mca_btl_udapl_put(&udapl_btl->super,
                 frag->endpoint,
-                (mca_btl_base_descriptor_t*)frag);
+                &frag->base);
             break;
         default:
             rc = OMPI_ERROR; 
@@ -828,7 +828,7 @@ int mca_btl_udapl_component_progress()
                     frag->base.des_cbfunc(&btl->super, endpoint,
                         &frag->base, OMPI_SUCCESS);
                     if( btl_ownership ) {
-                        mca_btl_udapl_free((mca_btl_base_module_t*)btl,
+                        mca_btl_udapl_free(&btl->super,
                             &frag->base);
                     }
 
@@ -857,7 +857,7 @@ int mca_btl_udapl_component_progress()
                     frag->base.des_cbfunc(&btl->super, endpoint,
                             &frag->base, OMPI_SUCCESS);
                     if( btl_ownership ) {
-                        mca_btl_udapl_free((mca_btl_base_module_t*)btl,
+                        mca_btl_udapl_free(&btl->super,
                             &frag->base);
                     }
 
@@ -959,7 +959,7 @@ int mca_btl_udapl_component_progress()
                     frag->base.des_cbfunc(&btl->super, endpoint,
                         &frag->base, OMPI_SUCCESS);
                     if( btl_ownership ) {
-                        mca_btl_udapl_free((mca_btl_base_module_t*)btl,
+                        mca_btl_udapl_free(&btl->super,
                             &frag->base);
                     }
 
@@ -980,8 +980,7 @@ int mca_btl_udapl_component_progress()
                 case MCA_BTL_UDAPL_CONN_SEND:
                     frag->segment.seg_len =
                             mca_btl_udapl_module.super.btl_eager_limit;
-                    mca_btl_udapl_free((mca_btl_base_module_t*)btl,
-                            (mca_btl_base_descriptor_t*)frag);
+                    mca_btl_udapl_free(&btl->super, &frag->base);
                     break;
                 default:
                     BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_DIAGNOSE,
