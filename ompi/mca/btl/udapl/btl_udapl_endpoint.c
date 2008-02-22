@@ -1053,7 +1053,7 @@ static int mca_btl_udapl_endpoint_send_eager_rdma(
     int rc = OMPI_SUCCESS;
 
     des = mca_btl_udapl_endpoint_initialize_control_message(
-        (mca_btl_base_module_t *)udapl_btl, cntrl_msg_size); 
+        &udapl_btl->super, cntrl_msg_size); 
     
     des->des_flags = 0;
     des->des_cbfunc = mca_btl_udapl_endpoint_control_send_cb;
@@ -1071,7 +1071,7 @@ static int mca_btl_udapl_endpoint_send_eager_rdma(
         (unsigned char*)frag->base.super.ptr;
 
     /* send fragment */
-    rc = mca_btl_udapl_send((mca_btl_base_module_t *)udapl_btl, endpoint,
+    rc = mca_btl_udapl_send(&udapl_btl->super, endpoint,
         des, MCA_BTL_TAG_UDAPL);
 
     return rc;
@@ -1224,7 +1224,7 @@ int mca_btl_udapl_endpoint_send_eager_rdma_credits(
     int rc = OMPI_SUCCESS;
 
     des = mca_btl_udapl_endpoint_initialize_control_message(
-        (mca_btl_base_module_t *)udapl_btl, cntrl_msg_size);
+        &udapl_btl->super, cntrl_msg_size);
 
     /* fill in data */
     segment = des->des_src;
@@ -1292,7 +1292,7 @@ int mca_btl_udapl_endpoint_send_sr_credits(
     int rc = OMPI_SUCCESS;
 
     des = mca_btl_udapl_endpoint_initialize_control_message(
-        (mca_btl_base_module_t *)udapl_btl, cntrl_msg_size);
+        &udapl_btl->super, cntrl_msg_size);
 
     /* fill in data */
     segment = des->des_src;
