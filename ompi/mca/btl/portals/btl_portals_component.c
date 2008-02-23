@@ -327,24 +327,24 @@ mca_btl_portals_component_progress(void)
             case PTL_EVENT_GET_START:
                 /* generated on source (target) when a get from memory starts */
                 OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
-                                     "PTL_EVENT_GET_START for 0x%x, %d",
-                                     frag, (int) ev.hdr_data));
+                                     "PTL_EVENT_GET_START for 0x%lx, %d",
+                                     (unsigned long) frag, (int) ev.hdr_data));
 
                 break;
 
             case PTL_EVENT_GET_END:
                 /* generated on source (target) when a get from memory ends */
                 OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
-                                     "PTL_EVENT_GET_END for 0x%x, %d",
-                                     frag, (int) ev.hdr_data));
+                                     "PTL_EVENT_GET_END for 0x%lx, %d",
+                                     (unsigned long) frag, (int) ev.hdr_data));
 
                 break;
 
             case PTL_EVENT_PUT_START:
                 /* generated on destination (target) when a put into memory starts */
                 OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
-                                     "PTL_EVENT_PUT_START for 0x%x, %d",
-                                     frag, (int) ev.hdr_data));
+                                     "PTL_EVENT_PUT_START for 0x%lx, %d",
+                                     (unsigned long) frag, (int) ev.hdr_data));
 
 #if OMPI_ENABLE_DEBUG
                 if (ev.ni_fail_type != PTL_NI_OK) {
@@ -364,8 +364,8 @@ mca_btl_portals_component_progress(void)
             case PTL_EVENT_PUT_END: 
                 /* generated on destination (target) when a put into memory ends */
                 OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
-                                     "PTL_EVENT_PUT_END for 0x%x, %d",
-                                     frag, (int) ev.hdr_data));
+                                     "PTL_EVENT_PUT_END for 0x%lx, %d",
+                                     (unsigned long) frag, (int) ev.hdr_data));
 
 #if OMPI_ENABLE_DEBUG
                 if (ev.ni_fail_type != PTL_NI_OK) {
@@ -388,17 +388,19 @@ mca_btl_portals_component_progress(void)
                     frag->segments[0].seg_len = ev.mlength;
 
                     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                                         "received send fragment %x (thresh: %d, length %d)", 
-                                         frag, ev.md.threshold, (int) ev.mlength));
+                                         "received send fragment 0x%lx (thresh: %d, length %d)", 
+                                         (unsigned long) frag,
+                                         ev.md.threshold, (int) ev.mlength));
 
-                    if (ev.md.length - (ev.offset + ev.mlength) < ev.md.max_size ||
+                    if (ev.md.length - (ev.offset + ev.mlength) < (ptl_size_t) ev.md.max_size ||
                         ev.md.threshold == 1) {
                         /* the block is full.  It's deactivated automagically, but we
                            can't start it up again until everyone is done with it.
                            The actual reactivation and all that will happen after the
                            free completes the last operation... */
                         OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                                             "marking block 0x%x as full", block->start));
+                                             "marking block 0x%lx as full",
+                                             (unsigned long) block->start));
                         block->full = true;
                     }
 
@@ -416,8 +418,8 @@ mca_btl_portals_component_progress(void)
                    returning data */
 
                 OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
-                                     "PTL_EVENT_REPLY_START for 0x%x, %d",
-                                     frag, (int) ev.hdr_data));
+                                     "PTL_EVENT_REPLY_START for 0x%lx, %d",
+                                     (unsigned long) frag, (int) ev.hdr_data));
 
                 break;
 
@@ -426,7 +428,8 @@ mca_btl_portals_component_progress(void)
                    done returning data */
 
                 OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                                     "PTL_EVENT_REPLY_END for 0x%x", frag));
+                                     "PTL_EVENT_REPLY_END for 0x%lx",
+                                     (unsigned long) frag));
 
                 /* let the PML know we're done */
                 frag->base.des_cbfunc(&mca_btl_portals_module.super,
@@ -434,7 +437,8 @@ mca_btl_portals_component_progress(void)
                                       &frag->base,
                                       OMPI_SUCCESS);
                 if( btl_ownership ) {
-                    mca_btl_portals_free(btl, &frag->base);
+                    mca_btl_portals_free(&mca_btl_portals_module.super,
+                                         &frag->base);
                 }
 
                 break;
@@ -444,8 +448,8 @@ mca_btl_portals_component_progress(void)
 
 #if OMPI_ENABLE_DEBUG
                 OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
-                                     "PTL_EVENT_SEND_START for 0x%x, %d",
-                                     frag, (int) ev.hdr_data));
+                                     "PTL_EVENT_SEND_START for 0x%lx, %d",
+                                     (unsigned long) frag, (int) ev.hdr_data));
 
                 if (ev.ni_fail_type != PTL_NI_OK) {
                     opal_output(mca_btl_portals_component.portals_output,
@@ -455,7 +459,8 @@ mca_btl_portals_component_progress(void)
                                           &frag->base,
                                           OMPI_ERROR);
                     if( btl_ownership ) {
-                        mca_btl_portals_free(btl, &frag->base);
+                        mca_btl_portals_free(&mca_btl_portals_module.super,
+                                             &frag->base);
                     }
                 }
 #endif
@@ -465,8 +470,8 @@ mca_btl_portals_component_progress(void)
                 /* generated on source (origin) when put stops sending */
 #if OMPI_ENABLE_DEBUG
                 OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                                     "PTL_EVENT_SEND_END for 0x%x, %d",
-                                     frag, (int) ev.hdr_data));
+                                     "PTL_EVENT_SEND_END for 0x%lx, %d",
+                                     (unsigned long) frag, (int) ev.hdr_data));
 
                 if (ev.ni_fail_type != PTL_NI_OK) {
                     opal_output(mca_btl_portals_component.portals_output,
@@ -476,7 +481,8 @@ mca_btl_portals_component_progress(void)
                                           &frag->base,
                                           OMPI_ERROR);
                     if( btl_ownership ) {
-                        mca_btl_portals_free(btl, &frag->base);
+                        mca_btl_portals_free(&mca_btl_portals_module.super,
+                                             &frag->base);
                     }
                 }
 #endif
@@ -490,7 +496,8 @@ mca_btl_portals_component_progress(void)
                    Requeue the put on badness */
 
                 OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                                     "PTL_EVENT_ACK for 0x%x", frag));
+                                     "PTL_EVENT_ACK for 0x%lx",
+                                     (unsigned long) frag));
 
 #if OMPI_ENABLE_DEBUG
                 if (ev.ni_fail_type != PTL_NI_OK) {
@@ -501,7 +508,8 @@ mca_btl_portals_component_progress(void)
                                           &frag->base,
                                           OMPI_ERROR);
                     if( btl_ownership ) {
-                        mca_btl_portals_free(btl, &frag->base);
+                        mca_btl_portals_free(&mca_btl_portals_module.super,
+                                             &frag->base);
                     }
                 } else
 #endif
@@ -528,11 +536,10 @@ mca_btl_portals_component_progress(void)
                                           &frag->base,
                                           OMPI_SUCCESS);
                     if( btl_ownership ) {
-                        mca_btl_portals_free(btl, &frag->base);
+                        mca_btl_portals_free(&mca_btl_portals_module.super,
+                                             &frag->base);
                     }
                 }
-
-                opal_output_verbose(50, mca_btl_portals_component.portals_output, "fuck");
 
                 if (0 != frag->size) {
                     OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops,

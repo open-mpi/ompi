@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
+#include <inttypes.h>
 
 #include "ompi/constants.h"
 #include "opal/util/output.h"
@@ -90,8 +91,8 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
     opal_output_verbose(50, mca_btl_portals_component.portals_output,
-                        "Adding %d procs (%d)", nprocs,
-                        mca_btl_portals_module.portals_num_procs);
+                        "Adding %d procs (%d)", (int) nprocs,
+                        (int) mca_btl_portals_module.portals_num_procs);
 
     /* if we havne't already, get our network handle */
     if (mca_btl_portals_module.portals_ni_h == PTL_INVALID_HANDLE) {
@@ -129,7 +130,7 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
                             &distance);
             if (ret != PTL_OK) {
                 opal_output_verbose(10, mca_btl_portals_component.portals_output,
-                                    "Could not find distance to process %d", i);
+                                    "Could not find distance to process %d", (int) i);
                 continue;
             }
         }
@@ -191,8 +192,8 @@ mca_btl_portals_del_procs(struct mca_btl_base_module_t *btl_base,
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
     opal_output_verbose(50, mca_btl_portals_component.portals_output,
-                        "Removing %d procs (%d)", nprocs,
-                        mca_btl_portals_module.portals_num_procs);
+                        "Removing %d procs (%d)", (int) nprocs,
+                        (int) mca_btl_portals_module.portals_num_procs);
 
     for (i = 0 ; i < nprocs ; ++i) {
         free(peers[i]);
@@ -361,8 +362,10 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
 
         /* either a put or get.  figure out which later */
         OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                             "rdma src posted for frag 0x%x, callback 0x%x, bits %lld",
-                             frag, frag->base.des_cbfunc, frag->segments[0].seg_key.key64));
+                             "rdma src posted for frag 0x%lx, callback 0x%lx, bits %" PRIu64,
+                             (unsigned long) frag, 
+                             (unsigned long) frag->base.des_cbfunc,
+                             frag->segments[0].seg_key.key64));
 
         /* create a match entry */
         ret = PtlMEAttach(mca_btl_portals_module.portals_ni_h,
@@ -454,8 +457,10 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
     frag->base.des_flags = flags;
 
     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                         "rdma dest posted for frag 0x%x, callback 0x%x, bits %lld",
-                         frag, frag->base.des_cbfunc, frag->segments[0].seg_key.key64));
+                         "rdma dest posted for frag 0x%lx, callback 0x%lx, bits %" PRIu64,
+                         (unsigned long) frag,
+                         (unsigned long) frag->base.des_cbfunc,
+                         frag->segments[0].seg_key.key64));
 
     /* create a match entry */
     ret = PtlMEAttach(mca_btl_portals_module.portals_ni_h,

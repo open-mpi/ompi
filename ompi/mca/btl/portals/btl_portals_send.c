@@ -43,14 +43,15 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
     frag->hdr.tag = tag;
 
     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                         "PtlPut (send) fragment %x", frag));
+                         "PtlPut (send) fragment %lx",
+                         (unsigned long) frag));
 
     if (OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, 1) >
         mca_btl_portals_module.portals_max_outstanding_ops) {
         /* no space - queue and continute */
         opal_output_verbose(50, mca_btl_portals_component.portals_output,
-                            "no space for message 0x%x.  Adding to back of queue",
-                            frag);
+                            "no space for message 0x%lx.  Adding to back of queue",
+                            (unsigned long) frag);
         OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, -1);
         opal_list_append(&(mca_btl_portals_module.portals_queued_sends),
                          (opal_list_item_t*) frag);
@@ -79,9 +80,9 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
 
     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                          "fragment info:\n"
-                         "\tstart: 0x%x\n"
+                         "\tstart: 0x%lx\n"
                          "\tlen: %d",
-                         frag->segments[0].seg_addr.pval,
+                         (unsigned long) frag->segments[0].seg_addr.pval,
                          frag->segments[0].seg_len)); 
 
     ret = PtlPutRegion(frag->md_h,                /* memory descriptor */
