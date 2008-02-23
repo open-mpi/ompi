@@ -19,6 +19,8 @@
 
 #include "ompi_config.h"
 
+#include <inttypes.h>
+
 #include "ompi/constants.h"
 #include "opal/util/output.h"
 
@@ -34,7 +36,8 @@ mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
     int ret;
 
     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                         "PtlPut (rdma) fragment %x, bits %lld", frag,
+                         "PtlPut (rdma) fragment %lx, bits %" PRIx64,
+                         (unsigned long) frag,
                          frag->base.des_dst[0].seg_key.key64));
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
@@ -73,7 +76,8 @@ mca_btl_portals_get(struct mca_btl_base_module_t* btl_base,
     int ret;
 
     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                         "PtlGet (rdma) fragment %x, bits %lld", frag,
+                         "PtlGet (rdma) fragment %lx, bits %" PRIx64,
+                         (unsigned long) frag,
                          frag->base.des_src[0].seg_key.key64));
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
