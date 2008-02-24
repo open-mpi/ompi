@@ -129,7 +129,7 @@ static int sm2_open(void)
 
     /* set component priority */
     cs->sm2_priority=
-        mca_coll_sm2_param_register_int("sm_priority",0);
+        mca_coll_sm2_param_register_int("sm2_priority",0);
     /* debug */
     fprintf(stderr," DDDD cs->sm2_priority %d \n",cs->sm2_priority);
     /* end debub */
@@ -168,9 +168,13 @@ static int sm2_open(void)
     cs->sm2_num_regions_per_bank=
         mca_coll_sm2_param_register_int("sm2_num_regions_per_bank",8);
 
-    /* Order of Barrier Tree */
+    /* Order of buffer management  Barrier Tree */
     cs->order_barrier_tree=
         mca_coll_sm2_param_register_int("order_barrier_tree",2);
+
+    /* Order of reduction Tree */
+    cs->order_reduction_tree=
+        mca_coll_sm2_param_register_int("order_reduction_tree",2);
 
     return OMPI_SUCCESS;
 }

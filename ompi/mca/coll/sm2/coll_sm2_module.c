@@ -55,7 +55,7 @@ mca_coll_sm2_module_construct(mca_coll_sm2_module_t *module)
 static void                
 mca_coll_sm2_module_destruct(mca_coll_sm2_module_t *module)
 {
-    int ret;
+    int i,ret;
     /* free the mmaped shared file */
     if( module->shared_memory_region) {
         ret=munmap(module->shared_memory_region,
@@ -64,13 +64,23 @@ mca_coll_sm2_module_destruct(mca_coll_sm2_module_t *module)
     }
 
     /* free list of children in the barrier-tree */
-    if( NULL != module->barrier_tree.children_ranks ) {
-        free(module->barrier_tree.children_ranks);
+    if( NULL != module->sm_buffer_mgmt_barrier_tree.children_ranks ) {
+        free(module->sm_buffer_mgmt_barrier_tree.children_ranks);
     }
 
     /* free non-blocking barrier request objects */
     if( NULL != module->barrier_request ) {
         free(module->barrier_request);
+    }
+
+    /* free reduction tree */
+    if( NULL != module->reduction_tree ) {
+        for( i=0 ; i < module->comm_size ; i++ ) {
+            if( NULL != module->reduction_tree[i].children_ranks) {
+                free(module->reduction_tree[i].children_ranks);
+            }
+        }
+        free(module->reduction_tree);
     }
 }
 
@@ -374,7 +384,7 @@ static int init_sm2_barrier(struct ompi_communicator_t *comm,
 
     /* initialize fan-in/fan-out tree */
     rc=setup_nary_tree(tree_order, my_rank, comm_size,
-        &(module->barrier_tree));
+        &(module->sm_buffer_mgmt_barrier_tree));
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }
@@ -403,14 +413,14 @@ static int init_sm2_barrier(struct ompi_communicator_t *comm,
                 (mca_coll_sm2_nb_request_process_shared_mem_t *)
                 (module->shared_memory_region + j*
                  module->sm2_size_management_region_per_proc *
-                 module->barrier_tree.tree_size);
+                 module->sm_buffer_mgmt_barrier_tree.tree_size);
         }
     }
 
     /* set pointer to the collective operation buffers */
     module->collective_buffer_region=module->shared_memory_region+
         module->sm2_size_management_region_per_proc*
-        module->barrier_tree.tree_size;
+        module->sm_buffer_mgmt_barrier_tree.tree_size;
 
     /* set the pointer to the request that needs to be completed first */
     module->current_request_index=0;
@@ -432,6 +442,9 @@ struct mca_coll_base_module_1_1_0_t *
 mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     /* local variables */
+    /* debug */
+    int i,j;
+    /* end debug */
     mca_coll_sm2_module_t *sm_module;
     int group_size,ret;
     size_t alignment,size,size_tot,size_tot_per_proc_per_seg;
@@ -490,6 +503,11 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     sm_module->super.coll_scatter    = NULL;
     sm_module->super.coll_scatterv   = NULL;
 
+    /*
+     * Some initialization
+     */
+    sm_module->reduction_tree=NULL;
+
     /* 
      * create backing file 
      */
@@ -500,6 +518,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     group_size=ompi_comm_size(comm);
 
     sm_module->module_comm=comm;
+    sm_module->comm_size=group_size;
 
     /*
      * set memory region parameters 
@@ -607,7 +626,36 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         sm_module);
     if( MPI_SUCCESS != ret ) {
         goto CLEANUP;
+    } 
+
+    /* initialize barrier reduction tree */
+    sm_module->reduction_tree=(tree_node_t *) malloc(
+            sizeof(tree_node_t )*group_size);
+    if( NULL == sm_module->reduction_tree ) {
+        goto CLEANUP;
     }
+    
+    ret=setup_multinomial_tree(mca_coll_sm2_component.order_reduction_tree,
+            group_size,sm_module->reduction_tree);
+    if( MPI_SUCCESS != ret ) {
+        goto CLEANUP;
+    }
+    /* debug */
+    if( 0 == ompi_comm_rank(comm) ) {
+        fprintf(stderr," my rank %d \n",ompi_comm_rank(comm));
+        for( i=0 ; i < ompi_comm_size(comm) ; i++ ) {
+            fprintf(stderr," DDDD i %d parent %d children :: ",
+                    i,sm_module->reduction_tree[i].parent_rank);
+            for (j=0 ; j < sm_module->reduction_tree[i].n_children ; j++ ) {
+            
+                fprintf(stderr," %d ",
+                        sm_module->reduction_tree[i].children_ranks[j]);
+            }
+            fprintf(stderr," \n");
+            fflush(stderr);
+        }
+    }
+
 
     /* initialize local counters */
     sm_module->sm2_allocated_buffer_index=-1;
@@ -637,6 +685,11 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 CLEANUP:
 
     if( NULL != sm_module->coll_sm2_file_name ) {
+        free(sm_module->coll_sm2_file_name);
+        sm_module->coll_sm2_file_name=NULL;
+    }
+
+    if( NULL != sm_module->reduction_tree ) {
         free(sm_module->coll_sm2_file_name);
         sm_module->coll_sm2_file_name=NULL;
     }
