@@ -219,6 +219,12 @@ BEGIN_C_DECLS
         /* size, per process, of each memory segment */
         size_t segement_size_per_process;
 
+        /* size, per process and segment , of control region */
+        size_t ctl_memory_per_proc_per_segment;
+
+        /* size, per process and segment , of data region */
+        size_t data_memory_per_proc_per_segment;
+
         /* number of memory banks */
         int sm2_module_num_memory_banks;
 
@@ -267,6 +273,9 @@ BEGIN_C_DECLS
 
         /* multinumial reduction tree */
         tree_node_t *reduction_tree;
+
+        /* collective tag */
+        long long collective_tag;
 
     };
 

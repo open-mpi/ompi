@@ -425,6 +425,9 @@ static int init_sm2_barrier(struct ompi_communicator_t *comm,
     /* set the pointer to the request that needs to be completed first */
     module->current_request_index=0;
 
+    /* set collective tag */
+    module->collective_tag=0;
+
     /* return - successful */
     return OMPI_SUCCESS;
 
@@ -546,6 +549,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         (alignment + ctl_memory_per_proc_per_segment -1) / alignment;
     ctl_memory_per_proc_per_segment*=alignment;
     mca_coll_sm2_component.sm2_ctl_size_allocated=ctl_memory_per_proc_per_segment;
+    sm_module->ctl_memory_per_proc_per_segment=ctl_memory_per_proc_per_segment;
 
     /* get data region size - allocation happens on a page granularity, with
      * a minimum of a page allocated per proc, so adjust to this
@@ -566,6 +570,8 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     sm_module->segement_size_per_process=size_tot_per_proc_per_seg;
     sm_module->segment_size=size_tot_per_segment;
+    sm_module->data_memory_per_proc_per_segment=size_tot_per_proc_per_seg-
+        ctl_memory_per_proc_per_segment;
 
     /* compute memory per bank */
     tot_size_per_bank=size_tot_per_segment*mca_coll_sm2_component.sm2_num_regions_per_bank;
@@ -640,22 +646,6 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     if( MPI_SUCCESS != ret ) {
         goto CLEANUP;
     }
-    /* debug */
-    if( 0 == ompi_comm_rank(comm) ) {
-        fprintf(stderr," my rank %d \n",ompi_comm_rank(comm));
-        for( i=0 ; i < ompi_comm_size(comm) ; i++ ) {
-            fprintf(stderr," DDDD i %d parent %d children :: ",
-                    i,sm_module->reduction_tree[i].parent_rank);
-            for (j=0 ; j < sm_module->reduction_tree[i].n_children ; j++ ) {
-            
-                fprintf(stderr," %d ",
-                        sm_module->reduction_tree[i].children_ranks[j]);
-            }
-            fprintf(stderr," \n");
-            fflush(stderr);
-        }
-    }
-
 
     /* initialize local counters */
     sm_module->sm2_allocated_buffer_index=-1;
