@@ -97,8 +97,11 @@ BEGIN_C_DECLS
         /** MCA parameter: number of regions per memory bank */
         size_t sm2_num_regions_per_bank;
 
-        /** MCA parameter: order of barrier tree */
+        /** MCA parameter: order of buffer management barrier tree */
         int order_barrier_tree;
+
+        /** MCA parameter: order of reduction tree */
+        int order_reduction_tree;
 
     };
 
@@ -192,6 +195,9 @@ BEGIN_C_DECLS
         /* base structure */
         mca_coll_base_module_1_1_0_t super;
 
+        /* size */
+        int comm_size;
+
         /* Shared Memory file name */
         char *coll_sm2_file_name;
 
@@ -248,7 +254,7 @@ BEGIN_C_DECLS
 
         /* non-blocking barrier strcutres used for mangeing the shared
          * buffers */
-        tree_node_t barrier_tree;
+        tree_node_t sm_buffer_mgmt_barrier_tree;
 
         /* request objects for the non-blocking barrier */
         mca_coll_sm2_nb_request_process_private_mem_t *barrier_request;
@@ -258,6 +264,9 @@ BEGIN_C_DECLS
 
         /* unique tag used for non-blocking collectives */
         long long nb_barrier_tag;
+
+        /* multinumial reduction tree */
+        tree_node_t *reduction_tree;
 
     };
 
@@ -286,6 +295,12 @@ BEGIN_C_DECLS
      */
     struct mca_coll_base_module_1_1_0_t *
     mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority);
+
+    /* setup an multi-nomial tree - for each node in the tree
+     *  this returns it's parent, and it's children 
+     */
+    int setup_multinomial_tree(int tree_order, int num_nodes,
+                    tree_node_t *tree_nodes);
 
     /* non-blocking barrier - init function */
     int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
