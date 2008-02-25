@@ -147,9 +147,11 @@ BEGIN_C_DECLS
     struct mca_coll_sm2_nb_request_process_shared_mem_t {
         /* flag used to indicate the status of this memory region */
         long long flag;
+        long long index;
 
         /* pading */
-        char padding[CACHE_LINE_SIZE-sizeof(long long)];
+        /* Note: need to change this so it takes less memory */
+        char padding[2*CACHE_LINE_SIZE-2*sizeof(long long)];
     };
 
     typedef struct mca_coll_sm2_nb_request_process_shared_mem_t
