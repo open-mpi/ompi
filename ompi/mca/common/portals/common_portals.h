@@ -34,8 +34,7 @@
 #define OMPI_MTL_PORTALS_READ_TABLE_ID 3
 #define OMPI_MTL_PORTALS_ACK_TABLE_ID  4
 
-#elif OMPI_PORTALS_CRAYXT3
-
+#elif (OMPI_PORTALS_CRAYXT3 || OMPI_PORTALS_CRAYXT3_MODEX)
 #include <portals/portals3.h>
 #define PTL_EQ_HANDLER_NONE NULL
 /* Cray's definition, differs from the spec */
@@ -91,11 +90,13 @@ int ompi_common_portals_register_mca(void);
  * may not be possible if use of the modex is required to setup the
  * network (as is the case with the utcp reference implementation).
  *
+ * @param ni_handle (OUT) network interface handle
+ * @param bool (OUT) true if using accelerated Portals, false otherwise
+ *
  * @retval OMPI_SUCCESS Portals successfully initialized
  * @retval OMPI_ERR_NOT_AVAILABLE Portals could not be initialized
  */
-int ompi_common_portals_initialize(void);
-
+int ompi_common_portals_initialize(ptl_handle_ni_t *ni_handle, bool *accel);
 
 /**
  * Initialize network interface
@@ -112,8 +113,7 @@ int ompi_common_portals_initialize(void);
  * @retval OMPI_SUCCESS Portals network interface successfully initialized
  * @retval OMPI_ERROR Something bad happened
  */
-int ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle,
-                                      bool *accel);
+int ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle, bool *accel);
 
 
 /**

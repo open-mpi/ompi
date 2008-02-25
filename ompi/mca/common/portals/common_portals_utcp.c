@@ -80,7 +80,7 @@ ompi_common_portals_register_mca(void)
 
 
 int
-ompi_common_portals_initialize(void)
+ompi_common_portals_initialize(ptl_handle_ni_t *ni_handle, bool *accel)
 {
     int ret;
     ptl_process_id_t info;

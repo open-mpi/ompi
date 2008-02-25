@@ -166,11 +166,12 @@ static mca_mtl_base_module_t*
 ompi_mtl_portals_component_init(bool enable_progress_threads,
                                 bool enable_mpi_threads)
 {
+    bool accel;
     /* we don't run with no stinkin' threads */
     if (enable_progress_threads || enable_mpi_threads) return NULL;
 
     /* initialize our interface */
-    if (OMPI_SUCCESS != ompi_common_portals_initialize()) {
+    if (OMPI_SUCCESS != ompi_common_portals_initialize(&(ompi_mtl_portals.ptl_ni_h), &accel)) {
         return NULL;
     }
 

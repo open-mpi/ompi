@@ -125,6 +125,14 @@ mca_btl_portals_component_open(void)
                            32,
                            &(mca_btl_portals_component.portals_free_list_eager_max_num));
 
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "support_self",
+                           "Use portals for send to self",
+                           false,
+                           false,
+                           1, /* default to true.. */ 
+                           &(mca_btl_portals_component.portals_support_self));
+
     /* 
      * fill default module state 
      */
@@ -222,6 +230,7 @@ mca_btl_portals_component_init(int *num_btls,
                                bool enable_mpi_threads)
 {
     mca_btl_base_module_t ** btls = malloc(sizeof(mca_btl_base_module_t*));
+    bool accel;
     btls[0] = (mca_btl_base_module_t*) &mca_btl_portals_module;
 
     if (enable_progress_threads || enable_mpi_threads) {
@@ -232,7 +241,7 @@ mca_btl_portals_component_init(int *num_btls,
 
     /* initialize portals btl.  note that this is in the compat code because
        it's fairly non-portable between implementations */
-    if (OMPI_SUCCESS != ompi_common_portals_initialize()) {
+    if (OMPI_SUCCESS != ompi_common_portals_initialize(&mca_btl_portals_module.portals_ni_h, &accel)) {
         opal_output_verbose(20, mca_btl_portals_component.portals_output,
                             "disabled because compatibility init failed");
         return NULL;

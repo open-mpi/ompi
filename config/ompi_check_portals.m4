@@ -43,7 +43,7 @@ AC_DEFUN([OMPI_CHECK_PORTALS],[
     AC_ARG_WITH([portals-config],
             AC_HELP_STRING([--with-portals-config],
                            [configuration to use for Portals support.
-                            One of "utcp", "xt3".  (default: utcp)]))
+                            One of "utcp", "xt3", "xt3-modex".  (default: utcp)]))
     AC_ARG_WITH([portals-libs], 
         [AC_HELP_STRING([--with-portals-libs=LIBS],
                        [Libraries to link with for portals])])
@@ -53,9 +53,12 @@ AC_DEFUN([OMPI_CHECK_PORTALS],[
         with_portals_config="utcp"
     elif test "$with_portals_config" = "redstorm" ; then
         with_portals_config="xt3"
+    elif test "$with_portals_config" = "cnl_modex" ; then
+	with_portals_config="xt3-modex"
     fi
     OMPI_PORTALS_UTCP=0
     OMPI_PORTALS_CRAYXT3=0
+    OMPI_PORTALS_CRAYXT3_MODEX=0
     case "$with_portals_config" in
         "utcp")
             OMPI_PORTALS_UTCP=1
@@ -71,6 +74,13 @@ AC_DEFUN([OMPI_CHECK_PORTALS],[
             check_portals_header_prefix="portals/"
             AC_MSG_RESULT([Cray XT3])
             ;;
+        "xt3-modex")
+            OMPI_PORTALS_CRAYXT3_MODEX=1
+            OMPI_PORTALS_HAVE_EVENT_UNLINK=0
+            check_portals_LIBS=
+            check_portals_header_prefix="portals/"
+            AC_MSG_RESULT([Cray XT3 - Modex])
+            ;;
         *)
             # ok to call ERROR here - the user specified something invalid.
             # that should be brought to his attention
@@ -84,8 +94,12 @@ AC_DEFUN([OMPI_CHECK_PORTALS],[
 
     AC_DEFINE_UNQUOTED([OMPI_PORTALS_UTCP], [$OMPI_PORTALS_UTCP],
                        [Use the UTCP reference implementation of Portals])
+
     AC_DEFINE_UNQUOTED([OMPI_PORTALS_CRAYXT3], [$OMPI_PORTALS_CRAYXT3],
                        [Use the Cray XT-3 implementation of Portals])
+    
+    AC_DEFINE_UNQUOTED([OMPI_PORTALS_CRAYXT3_MODEX], [$OMPI_PORTALS_CRAYXT3_MODEX],
+                       [Use the Cray XT-3 implementation of Portals using Modex])
 
     # Add correct -I and -L flags
     AS_IF([test -n "$with_portals"],

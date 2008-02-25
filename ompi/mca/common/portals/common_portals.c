@@ -29,6 +29,9 @@
 
 #include "common_portals_crayxt3.c"
 
+#elif OMPI_PORTALS_CRAYXT3_MODEX
+#include "common_portals_cray_xt_modex.c"
+
 #else
 
 #error "Unknown Portals library configuration"
@@ -107,7 +110,7 @@ ompi_common_portals_error_ptl_to_ompi(int ptl_error)
     case PTL_SR_INDEX_INVALID:
         ret = OMPI_ERR_BAD_PARAM;
         break;
-#if !OMPI_PORTALS_CRAYXT3
+#if !(OMPI_PORTALS_CRAYXT3 || OMPI_PORTALS_CRAYXT3_MODEX)
     case PTL_UNKNOWN_ERROR:
         ret = OMPI_ERROR;
         break;

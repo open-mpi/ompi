@@ -61,6 +61,9 @@ struct mca_btl_portals_component_t {
 
     /* number of eager fragments */
     int portals_free_list_eager_max_num;
+    
+    /* shall I use portals to send to thyself? */
+    int portals_support_self;
 };
 typedef struct mca_btl_portals_component_t mca_btl_portals_component_t;
 

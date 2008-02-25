@@ -526,14 +526,14 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
         for (i = 0 ; i < OMPI_BTL_PORTALS_EQ_SIZE ; ++i) {
             int ptl_ret = PtlEQFree(mca_btl_portals_module.portals_eq_handles[i]);
             if (PTL_OK != ptl_ret) {
-#if OMPI_PORTALS_CRAYXT3
+#if (OMPI_PORTALS_CRAYXT3 || OMPI_PORTALS_CRAYXT3_MODEX)
                 if (i != OMPI_BTL_PORTALS_EQ_SEND && PTL_EQ_IN_USE != ptl_ret) {
                     /* The PML isn't great about cleaning up after itself.
                        Ignore related errors. */
 #endif
                     opal_output(mca_btl_portals_component.portals_output,
                             "Error freeing EQ %d: %d", i, ptl_ret);
-#if OMPI_PORTALS_CRAYXT3
+#if (OMPI_PORTALS_CRAYXT3 || OMPI_PORTALS_CRAYXT3_MODEX)
                 }
 #endif
             }
