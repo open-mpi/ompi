@@ -1209,6 +1209,27 @@ AC_SUBST([AMCA_PARAM_SETS_DIR], ['$(pkgdatadir)/amca-param-sets'])
 ompi_show_subtitle "Wrapper compiler flags"
 OMPI_SETUP_WRAPPER_FINAL
 
+# Recreate some defines prefixed with OMPI_ so that there are no bare
+# autoconf macro defines in mpi.h.  Since AC sometimes changes whether
+# things are defined as null tokens or an integer result, two projects
+# with different versions of AC can cause problems.
+if test $ac_cv_header_stdc = yes; then
+  AC_DEFINE(OMPI_STDC_HEADERS, 1,
+	    [Do not use outside of mpi.h.  Define to 1 if you have the ANSI C header files.])
+fi
+if test $ac_cv_header_sys_time_h = yes ; then
+  AC_DEFINE(OMPI_HAVE_SYS_TIME_H, 1,
+	    [Do not use outside of mpi.h.  Define to 1 if you have the <sys/time.h> header file.])
+fi
+if test $ac_cv_type_long_long = yes ; then
+  AC_DEFINE(OMPI_HAVE_LONG_LONG, 1,
+	    [Do not use outside of mpi.h.  Define to 1 if the system has the type `long long'.]) dnl `
+fi
+AC_DEFINE_UNQUOTED(OMPI_SIZEOF_BOOL, $ac_cv_sizeof_bool,
+          [Do not use outside of mpi.h.  The size of a `bool', as computed by sizeof.]) dnl `
+AC_DEFINE_UNQUOTED(OMPI_SIZEOF_INT, $ac_cv_sizeof_int,
+          [Do not use outside of mpi.h.  The size of a `int', as computed by sizeof.]) dnl `
+
 ############################################################################
 # Party on
 ############################################################################
