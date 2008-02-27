@@ -98,5 +98,5 @@ ompi_mtl_datatype_unpack(struct ompi_convertor_t *convertor,
         free(buffer);
     }
 
-    return OMPI_ERROR;
+    return OMPI_SUCCESS;
 }
