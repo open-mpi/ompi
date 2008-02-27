@@ -19,6 +19,9 @@
  */
 
 #include "ompi_config.h"
+
+#include <stdio.h>
+
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/datatype_internal.h"
 #include "ompi/datatype/convertor_internal.h"
