@@ -19,9 +19,9 @@ BEGIN_C_DECLS
 /* There is several different ways of packing the data to the sender-based 
  * buffer. Just pick one. 
  */
-#undef SB_USE_PACK_METHOD 
+#define SB_USE_PACK_METHOD 
 #undef SB_USE_SELFCOMM_METHOD
-#define SB_USE_CONVERTOR_METHOD
+#undef SB_USE_CONVERTOR_METHOD
 
 
 typedef struct vprotocol_pessimist_sender_based_t 
