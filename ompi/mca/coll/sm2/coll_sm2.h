@@ -103,6 +103,9 @@ BEGIN_C_DECLS
         /** MCA parameter: order of reduction tree */
         int order_reduction_tree;
 
+        /** MCA parameter: order of fan-out read tree */
+        int order_fanout_read_tree;
+
     };
 
     /**
@@ -146,8 +149,8 @@ BEGIN_C_DECLS
     /* shared memory data strucutures */
     struct mca_coll_sm2_nb_request_process_shared_mem_t {
         /* flag used to indicate the status of this memory region */
-        long long flag;
-        long long index;
+        volatile long long flag;
+        volatile long long index;
 
         /* pading */
         /* Note: need to change this so it takes less memory */
@@ -275,6 +278,9 @@ BEGIN_C_DECLS
 
         /* multinumial reduction tree */
         tree_node_t *reduction_tree;
+
+        /* multinumial fan-out read tree */
+        tree_node_t *fanout_read_tree;
 
         /* collective tag */
         long long collective_tag;
