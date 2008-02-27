@@ -176,6 +176,10 @@ static int sm2_open(void)
     cs->order_reduction_tree=
         mca_coll_sm2_param_register_int("order_reduction_tree",2);
 
+    /* Order of fan-out read Tree */
+    cs->order_fanout_read_tree=
+        mca_coll_sm2_param_register_int("order_fanout_read_tree",4);
+
     return OMPI_SUCCESS;
 }
 

@@ -82,6 +82,19 @@ mca_coll_sm2_module_destruct(mca_coll_sm2_module_t *module)
         }
         free(module->reduction_tree);
     }
+
+    /* free fan-out read tree */
+    if( NULL != module->fanout_read_tree ) {
+        for( i=0 ; i < module->comm_size ; i++ ) {
+            if( NULL != module->fanout_read_tree[i].children_ranks) {
+                free(module->fanout_read_tree[i].children_ranks);
+            }
+        }
+        free(module->fanout_read_tree);
+    }
+
+
+    /* done */
 }
 
 static bool have_local_peers(ompi_group_t *group, size_t size)
@@ -510,6 +523,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
      * Some initialization
      */
     sm_module->reduction_tree=NULL;
+    sm_module->fanout_read_tree=NULL;
 
     /* 
      * create backing file 
@@ -634,7 +648,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         goto CLEANUP;
     } 
 
-    /* initialize barrier reduction tree */
+    /* initialize reduction tree */
     sm_module->reduction_tree=(tree_node_t *) malloc(
             sizeof(tree_node_t )*group_size);
     if( NULL == sm_module->reduction_tree ) {
@@ -647,6 +661,18 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         goto CLEANUP;
     }
 
+    /* initialize fan-out read tree */
+    sm_module->fanout_read_tree=(tree_node_t *) malloc(
+            sizeof(tree_node_t )*group_size);
+    if( NULL == sm_module->fanout_read_tree ) {
+        goto CLEANUP;
+    }
+    
+    ret=setup_multinomial_tree(mca_coll_sm2_component.order_fanout_read_tree,
+            group_size,sm_module->fanout_read_tree);
+    if( MPI_SUCCESS != ret ) {
+        goto CLEANUP;
+    }
     /* initialize local counters */
     sm_module->sm2_allocated_buffer_index=-1;
     sm_module->sm2_freed_buffer_index=-1;
