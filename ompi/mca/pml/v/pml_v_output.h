@@ -12,6 +12,7 @@
 #define PML_V_OUTPUT_H_HAS_BEEN_INCLUDED
 
 #include "opal/util/output.h"
+#include "opal_stdint.h"
 #include <stdio.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)

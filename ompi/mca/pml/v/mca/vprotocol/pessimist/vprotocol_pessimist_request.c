@@ -38,7 +38,7 @@ static void vprotocol_pessimist_request_construct(mca_pml_base_request_t *req)
 int mca_vprotocol_pessimist_request_free(ompi_request_t **req)
 {
   mca_pml_base_request_t *pml_req = (mca_pml_base_request_t *) *req; 
-  V_OUTPUT_VERBOSE(50, "pessimist:\treq\tfree\t%"PRIpclock"\tpeer %d\ttag %d\tsize %ld", VPESSIMIST_REQ(pml_req)->reqid, pml_req->req_peer, pml_req->req_tag, (long) pml_req->req_count); 
+  V_OUTPUT_VERBOSE(50, "pessimist:\treq\tfree\t%"PRIpclock"\tpeer %d\ttag %d\tsize %"PRIsize_t, VPESSIMIST_REQ(pml_req)->reqid, pml_req->req_peer, pml_req->req_tag, pml_req->req_count); 
   VPROTOCOL_PESSIMIST_MATCHING_LOG_FINALIZE(pml_req);
   pml_req->req_ompi.req_status.MPI_SOURCE = -1; /* no matching made flag */
   VPROTOCOL_PESSIMIST_SENDER_BASED_FLUSH(pml_req);

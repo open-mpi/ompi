@@ -198,11 +198,8 @@ int32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t* pCo
     preq = VPESSIMIST_CONV_REQ(pConvertor);
     pConvertor->flags = preq->sb_conv_flags;
     pConvertor->fAdvance = preq->sb_conv_advance;
-#if 0
-    V_OUTPUT_VERBOSE(1, "%p\t%0x\t%p", pConvertor, pConvertor->flags & CONVERTOR_NO_OP, pConvertor->fAdvance);
-#endif
     ret = ompi_convertor_pack(pConvertor, iov, out_size, max_data);
-    V_OUTPUT_VERBOSE(39, "pessimist:\tsb\tpack\t%lu", *max_data);
+    V_OUTPUT_VERBOSE(39, "pessimist:\tsb\tpack\t%"PRIsize_t, *max_data);
 
     for(i = 0, pending_length = *max_data; pending_length > 0; i++) {
         assert(i < *out_size);
