@@ -51,7 +51,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
                int errcode,
                bool kill_remote_of_intercomm)
 {
-    int count = 0, i, ret = OMPI_SUCCESS;
+    int count = 0, i;
     char *host, hostname[MAXHOSTNAMELEN];
     pid_t pid = 0;
     orte_process_name_t *abort_procs;
@@ -182,7 +182,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
 
     if (nabort_procs > 0) {
 #if 0
-        ret = orte_errmgr.abort_procs_request(abort_procs, nabort_procs);
+        int ret = orte_errmgr.abort_procs_request(abort_procs, nabort_procs);
         if (OMPI_SUCCESS != ret) {
             orte_errmgr.abort(ret, "Open MPI failed to abort procs as requested (%d). Exiting.", ret);
         }
