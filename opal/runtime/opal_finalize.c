@@ -40,6 +40,7 @@
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/event/event.h"
 #include "opal/runtime/opal_progress.h"
+#include "opal/mca/carto/base/base.h"
 
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/crs/base/base.h"
@@ -57,6 +58,9 @@ opal_finalize_util(void)
         return OPAL_SUCCESS;
     }
 
+    /* close the carto framework */
+    opal_carto_base_close();
+    
     /* Clear out all the registered MCA params */
     mca_base_param_finalize();
 
