@@ -19,10 +19,11 @@
 #ifndef ORTE_VALUE_ARRAY_H
 #define ORTE_VALUE_ARRAY_H
 
-#include <string.h>
 #include "orte_config.h"
-#include "orte/orte_constants.h"
-#include "orte/orte_types.h"
+#include "orte/constants.h"
+#include "orte/types.h"
+
+#include <string.h>
 
 #include "opal/class/opal_object.h"
 #if OMPI_ENABLE_DEBUG
@@ -35,9 +36,8 @@
  * See ompi_bitmap.h for an explanation of why there is a split
  * between OMPI and ORTE for this generic class.
  */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+
+BEGIN_C_DECLS
 
 struct orte_value_array_t
 {
@@ -275,9 +275,8 @@ static inline int orte_value_array_remove_item(orte_value_array_t *array, orte_s
 #define ORTE_VALUE_ARRAY_GET_BASE(array, item_type) \
   ((item_type*) ((array)->array_items))
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif  
 
 

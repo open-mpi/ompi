@@ -24,6 +24,7 @@
 #define MCA_OOB_H_
 
 #include "orte_config.h"
+#include "orte/types.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -32,10 +33,7 @@
 #include "opal/types.h"
 #include "opal/mca/mca.h"
 
-#include "orte/mca/ns/ns_types.h"
-
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/oob/oob_types.h"
 
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"

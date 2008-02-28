@@ -21,8 +21,12 @@
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/info/info.h"
-#include "orte/mca/ns/ns.h"
+#include "ompi/mca/dpm/dpm.h"
 #include "ompi/memchecker.h"
+
+#include "orte/util/name_fns.h"
+#include "opal/dss/dss.h"
+#include "orte/runtime/orte_globals.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_connect = PMPI_Comm_connect
@@ -41,7 +45,7 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
     int rank, rc;
     int send_first=1;   /* yes, we are the active part in this game */
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
-    orte_process_name_t *port_proc_name=NULL;
+    orte_process_name_t port_proc_name;
     char *tmp_port=NULL;
     orte_rml_tag_t tag;
 
@@ -97,18 +101,18 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
      * structure. 
      */ 
     if ( rank == root ) { 
-        tmp_port = ompi_parse_port (port_name, &tag);
-        if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(&port_proc_name, tmp_port))) {
-            return rc;
+        tmp_port = ompi_dpm.parse_port (port_name, &tag);
+        if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_process_name(&port_proc_name, tmp_port))) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_PORT, FUNC_NAME);
         }
-        if ( NULL == port_proc_name ) {
+        if ( OPAL_EQUAL == opal_dss.compare(&port_proc_name, ORTE_NAME_INVALID, ORTE_NAME) ) {
             *newcomm = MPI_COMM_NULL;
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_PORT, FUNC_NAME);
         }
         free (tmp_port);
     }
 
-    rc = ompi_comm_connect_accept (comm, root, port_proc_name, send_first,
+    rc = ompi_dpm.connect_accept (comm, root, &port_proc_name, send_first,
                                    &newcomp, tag);
     
     *newcomm = newcomp;

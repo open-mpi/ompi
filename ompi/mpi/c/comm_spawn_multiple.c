@@ -22,6 +22,7 @@
 #include "opal/util/show_help.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/info/info.h"
+#include "ompi/mca/dpm/dpm.h"
 #include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -40,12 +41,13 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
                             int root, MPI_Comm comm, MPI_Comm *intercomm,
                             int *array_of_errcodes) 
 {
-    int i=0, rc=0, rank=0;
+    int i=0, rc=0, rank=0, flag;
     ompi_communicator_t *newcomp=NULL;
     int send_first=0; /* they are contacting us first */
     char port_name[MPI_MAX_PORT_NAME];
     char *tmp_port;
     orte_rml_tag_t tag = 0;
+    bool non_mpi, cumulative = false;
 
     MEMCHECKER(
         memchecker_comm(comm);
@@ -77,6 +79,24 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
                                               FUNC_NAME);
             }
+            /* If ompi_non_mpi is set to true on any info, it must be
+               set to true on all of them.  Note that not setting
+               ompi_non_mpi is the same as setting it to false. */
+            ompi_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi,
+                               &flag);
+            if (flag && 0 == i) {
+                /* If this is the first info, save its ompi_non_mpi value */
+                cumulative = non_mpi;
+            } else if (!flag) {
+                non_mpi = false;
+            }
+            /* If this info's effective value doesn't agree with the
+               rest of them, error */
+            if (cumulative != non_mpi) {
+                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+                                              MPI_ERR_INFO,
+                                              FUNC_NAME);
+            }
         }
     }
    
@@ -106,22 +126,43 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
         }
     }
 
+    if (MPI_INFO_NULL == array_of_info[0]) {
+        non_mpi = false;
+    } else {
+        ompi_info_get_bool(array_of_info[0], "ompi_non_mpi", &non_mpi,
+                           &flag);
+        if (!flag) {
+            non_mpi = false;
+        }
+    }
+
     OPAL_CR_ENTER_LIBRARY();
 
     if ( rank == root ) {
-        /* Open a port. The port_name is passed as an environment variable
-         * to the children. */
-        ompi_open_port (port_name);
-        if (OMPI_SUCCESS != (rc = ompi_comm_start_processes(count, array_of_commands,
-                                                            array_of_argv, array_of_maxprocs,
-                                                            array_of_info, port_name))) {
+        if (non_mpi) {
+            /* RHC: should this be better? */
+            port_name[0] = '\0';
+        } else {
+            /* Open a port. The port_name is passed as an environment
+               variable to the children. */
+            ompi_dpm.open_port (port_name);
+        }
+        if (OMPI_SUCCESS != (rc = ompi_dpm.spawn(count, array_of_commands,
+                                                 array_of_argv, array_of_maxprocs,
+                                                 array_of_info, port_name))) {
             goto error;
         }
-        tmp_port = ompi_parse_port (port_name, &tag);
-        free(tmp_port);
+        if (!non_mpi) {
+            tmp_port = ompi_dpm.parse_port (port_name, &tag);
+            free(tmp_port);
+        }
     }
 
-    rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
+    if (non_mpi) {
+        newcomp = MPI_COMM_NULL;
+    } else {
+        rc = ompi_dpm.connect_accept (comm, root, NULL, send_first, &newcomp, tag);
+    }
 
 error:
     OPAL_CR_EXIT_LIBRARY();

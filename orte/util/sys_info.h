@@ -28,6 +28,7 @@
 #define _ORTE_SYS_INFO_H_
 
 #include "orte_config.h"
+#include "orte/types.h"
 
 #ifdef HAVE_SYS_UTSNAME_H
 #include <sys/utsname.h>
@@ -36,11 +37,8 @@
 #include <sys/types.h>
 #endif
 
-#include "orte/mca/ns/ns_types.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * System information structure
@@ -56,7 +54,7 @@ struct orte_sys_info_t {
 			    */
     char *sysname;         /**< Name of OS in use on this node. */
     char *nodename;        /**< Fully qualified host name on the network. */
-    orte_nodeid_t nodeid;
+    orte_vpid_t nodeid;
     char *release;	   /**< Release level of the operating system. */
     char *version;	   /**< Version of the operating system release. */
     char *machine;	   /**< Type of hardware composing this node. */
@@ -100,7 +98,5 @@ ORTE_DECLSPEC int orte_sys_info(void);
  */
 ORTE_DECLSPEC int orte_sys_info_finalize(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

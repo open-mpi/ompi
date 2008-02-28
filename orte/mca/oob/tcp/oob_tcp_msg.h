@@ -23,17 +23,20 @@
 #ifndef _MCA_OOB_TCP_MESSAGE_H_
 #define _MCA_OOB_TCP_MESSAGE_H_
 
+#include "orte_config.h"
+#include "orte/types.h"
+
+#include <errno.h>
+
 #include "opal/class/opal_list.h"
+#include "opal/util/output.h"
+
 #include "orte/mca/oob/oob.h"
 #include "oob_tcp_peer.h"
 #include "oob_tcp_hdr.h"
-#include <errno.h>
-#include "opal/util/output.h"
-#include "orte/mca/ns/ns_types.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
+
 struct mca_oob_tcp_peer_t;
 
 #define MCA_OOB_TCP_IOV_MAX  16
@@ -211,8 +214,7 @@ static inline void mca_oob_tcp_msg_iov_return(mca_oob_tcp_msg_t* msg, struct iov
         free(iov);
 }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif /* _MCA_OOB_TCP_MESSAGE_H_ */
 

@@ -33,10 +33,10 @@
 
 #include "ompi/types.h"
 #include "opal/class/opal_list.h"
-#include "orte/dss/dss_types.h"
 #include "opal/threads/mutex.h"
 
-#include "orte/mca/ns/ns_types.h"
+#include "orte/types.h"
+#include "opal/dss/dss_types.h"
 
 BEGIN_C_DECLS
 
@@ -54,14 +54,12 @@ struct ompi_proc_t {
     opal_list_item_t                super;
     /** this process' name */
     orte_process_name_t             proc_name;
-    /** "nodeid" on which the proc resides */
-    orte_nodeid_t                   proc_nodeid;
+    /** "nodeid" on which the proc resides - equiv to vpid of local daemon */
+    orte_vpid_t                     proc_nodeid;
     /** PML specific proc data */
     struct mca_pml_base_endpoint_t* proc_pml;
     /** BML specific proc data */
     struct mca_bml_base_endpoint_t* proc_bml;
-    /** MCA module exchange data */
-    opal_object_t*                  proc_modex;
     /** architecture of this process */
     uint32_t                        proc_arch;
     /** Base convertor for the proc described by this process */
@@ -117,7 +115,7 @@ OMPI_DECLSPEC extern ompi_proc_t* ompi_proc_local_proc;
  * the conclusion of the stage gate.
  *
  * @retval OMPI_SUCESS  System successfully initialized
- * @retval OMPI_ERRROR  Initialization failed due to unspecified error
+ * @retval OMPI_ERROR   Initialization failed due to unspecified error
  */
 int ompi_proc_init(void);
 
@@ -135,7 +133,7 @@ int ompi_proc_init(void);
  * the conclusion of the stage gate.
  *
  * @retval OMPI_SUCESS  Information available in the modex
- * @retval OMPI_ERRROR  Failure due to unspecified error
+ * @retval OMPI_ERROR   Failure due to unspecified error
  */
 int ompi_proc_publish_info(void);
 
@@ -271,8 +269,8 @@ OMPI_DECLSPEC ompi_proc_t * ompi_proc_find ( const orte_process_name_t* name );
  * @retval OMPI_SUCCESS    Success
  * @retval OMPI_ERROR      Unspecified error
  */
-int ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
-                   orte_buffer_t *buf);
+OMPI_DECLSPEC int ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
+                                 opal_buffer_t *buf);
 
 
 /**
@@ -314,10 +312,25 @@ int ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
  *   OMPI_SUCCESS               on success
  *   OMPI_ERROR                 else
  */
-int ompi_proc_unpack(orte_buffer_t *buf, 
-                     int proclistsize, ompi_proc_t ***proclist,
-                     int *newproclistsize, ompi_proc_t ***newproclist);
+OMPI_DECLSPEC int ompi_proc_unpack(opal_buffer_t *buf, 
+                                   int proclistsize, ompi_proc_t ***proclist,
+                                   int *newproclistsize, ompi_proc_t ***newproclist);
 
+
+/**
+ * Refresh the OMPI process subsystem
+ *
+ * Refrsh the Open MPI process subsystem. This function will update
+ * the list of proc instances in the current MPI_COMM_WORLD with
+ * data from the run-time environemnt.
+ *
+ * @note This is primarily used when restarting a process and thus
+ * need to update the jobid and node name.
+ *
+ * @retval OMPI_SUCESS  System successfully refreshed
+ * @retval OMPI_ERROR   Refresh failed due to unspecified error
+ */
+int ompi_proc_refresh(void);
 
 END_C_DECLS
 

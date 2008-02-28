@@ -24,6 +24,7 @@
 #define _MCA_OOB_BASE_H_
 
 #include "orte_config.h"
+#include "orte/types.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -38,15 +39,8 @@
 #include "orte/mca/oob/oob.h"
 
 #include "opal/mca/mca.h"
-#include "orte/dss/dss_types.h"
-#include "orte/mca/ns/ns_types.h"
-#include "orte/mca/gpr/gpr_types.h"
-#include "orte/mca/oob/oob_types.h"
-#include "orte/mca/rml/rml_types.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * global flag for use in timing tests
@@ -105,8 +99,6 @@ extern char* mca_oob_base_exclude;
 ORTE_DECLSPEC extern opal_list_t mca_oob_base_components;
 ORTE_DECLSPEC extern opal_list_t mca_oob_base_modules;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif
 

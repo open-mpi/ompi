@@ -17,10 +17,10 @@
  */
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
+
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/proc_info.h"
 #include "opal/util/output.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
@@ -86,11 +86,10 @@ static int orte_rmaps_round_robin_open(void)
 
 static orte_rmaps_base_module_t* 
 orte_rmaps_round_robin_init(int *priority)
-{    
-    /* if I am NOT an HNP, then don't consider me! */
-    if (!orte_process_info.seed) {
-        return NULL;
-    }
+{
+    /* the RMAPS framework is -only- opened on HNP's,
+     * so no need to check for that here
+     */
     
     *priority = mca_rmaps_round_robin_component.priority;
     return &orte_rmaps_round_robin_module;

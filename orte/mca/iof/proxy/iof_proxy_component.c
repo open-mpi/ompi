@@ -18,12 +18,16 @@
  */
 
 #include "orte_config.h"
-#include "orte/util/proc_info.h"
+
 #include "opal/util/output.h"
 #include "opal/runtime/opal_progress.h"
-#include "orte/mca/rml/rml.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+
+#include "orte/mca/rml/rml.h"
+#include "orte/util/proc_info.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/iof/base/iof_base_endpoint.h"
 #include "iof_proxy.h"
@@ -89,7 +93,7 @@ static orte_iof_base_module_t*
 orte_iof_proxy_init(int* priority, bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
     int rc;
-    if(orte_process_info.seed == true)
+    if(orte_process_info.hnp == true)
         return NULL;
 
     *priority = 1;

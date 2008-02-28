@@ -25,13 +25,14 @@
 #ifndef ORTE_PROC_TABLE_H
 #define ORTE_PROC_TABLE_H
 
+#include "orte_config.h"
+#include "orte/types.h"
+
 #include "opal/class/opal_hash_table.h"
-#include "orte/mca/ns/ns_types.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+#include "orte/util/name_fns.h"
 
+BEGIN_C_DECLS
 
 /**
  *  Retrieve value via orte_process_name_t key.
@@ -52,7 +53,7 @@ ORTE_DECLSPEC void *orte_hash_table_get_proc(
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
  *  @param   value   The value to be associated with the key (IN).
- *  @return  OMPI return code.
+ *  @return  ORTE return code.
  *
  */
 
@@ -66,7 +67,7 @@ ORTE_DECLSPEC int orte_hash_table_set_proc(
  *
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
- *  @return  OMPI return code.
+ *  @return  ORTE return code.
  *
  */
 
@@ -75,9 +76,52 @@ ORTE_DECLSPEC int orte_hash_table_remove_proc(
     const orte_process_name_t* key);
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+/**
+*  Retrieve process name via orte_process_name_t key.
+ *
+ *  @param   table   The input hash table (IN).
+ *  @param   key     The input key (IN).
+ *  @return  The process name associated with the key or
+ *           ORTE_NAME_INVALID if the item is not found.
+ *
+ */
+
+ORTE_DECLSPEC orte_process_name_t orte_hash_table_get_proc_name(
+    opal_hash_table_t* table, 
+    const orte_process_name_t* key,
+    orte_ns_cmp_bitmask_t mask);
+
+/**
+*  Set process name based on uint32_t key.
+ *
+ *  @param   table   The input hash table (IN).
+ *  @param   key     The input key (IN).
+ *  @param   value   The process name to be associated with the key (IN).
+ *  @return  ORTE return code.
+ *
+ */
+
+ORTE_DECLSPEC int orte_hash_table_set_proc_name(
+    opal_hash_table_t* table, 
+    const orte_process_name_t*, 
+    const orte_process_name_t*,
+    orte_ns_cmp_bitmask_t mask);
+
+/**
+*  Remove process name based on uint32_t key.
+ *
+ *  @param   table   The input hash table (IN).
+ *  @param   key     The input key (IN).
+ *  @return  ORTE return code.
+ *
+ */
+
+ORTE_DECLSPEC int orte_hash_table_remove_proc_name(
+    opal_hash_table_t* table, 
+    const orte_process_name_t* key,
+    orte_ns_cmp_bitmask_t mask);
+
+END_C_DECLS
 
 
 #endif  /* OMPI_HASH_TABLE_H */

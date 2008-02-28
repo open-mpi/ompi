@@ -55,6 +55,7 @@
 
 #include "ompi/types.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
+#include "orte/util/name_fns.h"
 #include "btl_sctp.h"
 #include "btl_sctp_endpoint.h" 
 #include "btl_sctp_proc.h"
@@ -567,7 +568,6 @@ bool mca_btl_sctp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint, struct 
         /* 1 to 1 */
         mca_btl_sctp_addr_t* btl_addr;
         mca_btl_sctp_proc_t* this_proc = mca_btl_sctp_proc_local();
-        orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL;
         int cmpval;
 
         OPAL_THREAD_LOCK(&btl_endpoint->endpoint_recv_lock);
@@ -576,7 +576,7 @@ bool mca_btl_sctp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint, struct 
            btl_addr->addr_inet.s_addr == addr->sin_addr.s_addr)
         {
             mca_btl_sctp_proc_t *endpoint_proc = btl_endpoint->endpoint_proc;
-            cmpval = orte_ns.compare_fields(mask, 
+            cmpval = orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
                     &endpoint_proc->proc_ompi->proc_name,
                     &this_proc->proc_ompi->proc_name);
             if((btl_endpoint->endpoint_sd < 0) ||

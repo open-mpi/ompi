@@ -19,7 +19,6 @@
 #include "ompi_config.h"
 #include "pml_dr.h"
 #include "pml_dr_endpoint.h"
-#include "orte/mca/ns/ns.h"
 
 
 

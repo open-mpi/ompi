@@ -20,10 +20,12 @@ nodist_pkgdata_DATA =
 dist_pkgdata_DATA = \
 	help-orte-restart.txt
 
-bin_PROGRAMS = orte-restart
-
 orte_restart_SOURCES = \
 	orte-restart.c
+
+if OMPI_INSTALL_BINARIES
+
+bin_PROGRAMS = orte-restart
 
 # Manual pages
 man_MANS = orte-restart.1 ompi-restart.1
@@ -43,3 +45,4 @@ ompi-restart.1: $(top_srcdir)/orte/tools/orte-restart/orte-restart.1
 
 distclean-local:
 	rm -f ompi-restart.1
+endif

@@ -27,15 +27,15 @@
 #define ORTE_MCA_ODLS_H
 
 #include "orte_config.h"
+#include "orte/types.h"
 
 #include "opal/mca/mca.h"
 #include "opal/class/opal_list.h"
 
-#include "orte/dss/dss_types.h"
-#include "orte/mca/gpr/gpr_types.h"
-#include "orte/mca/ns/ns_types.h"
+#include "opal/dss/dss_types.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml_types.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/odls/odls_types.h"
 
@@ -47,21 +47,21 @@ extern "C" {
 #endif
     
 /*
- * Construct a notify data object for use in adding local processes
- * In order to reuse daemons, we need a way for the HNP to construct a notify_data object that
+ * Construct a buffer for use in adding local processes
+ * In order to reuse daemons, we need a way for the HNP to construct a buffer that
  * contains the data needed by the active ODLS component to launch a local process. Since the
  * only one that knows what a particular ODLS component needs is that component, we require an
- * entry point that the HNP can call to get the required notify_data object. This is constructed
+ * entry point that the HNP can call to get the required buffer. This is constructed
  * for *all* nodes - the individual orteds then parse that data to find the specific launch info
  * for procs on their node
  */
-typedef int (*orte_odls_base_module_get_add_procs_data_fn_t)(orte_gpr_notify_data_t **data,
-                                                             orte_job_map_t *map);
+typedef int (*orte_odls_base_module_get_add_procs_data_fn_t)(opal_buffer_t *data,
+                                                             orte_jobid_t job);
 
 /**
  * Locally launch the provided processes
  */
-typedef int (*orte_odls_base_module_launch_local_processes_fn_t)(orte_gpr_notify_data_t *data);
+typedef int (*orte_odls_base_module_launch_local_processes_fn_t)(opal_buffer_t *data);
 
 /**
  * Kill the local processes on this node
@@ -77,19 +77,13 @@ typedef int (*orte_odls_base_module_signal_local_process_fn_t)(const orte_proces
 /**
     * Deliver a message to local processes
  */
-typedef int (*orte_odls_base_module_deliver_message_fn_t)(orte_jobid_t job, orte_buffer_t *buffer,
+typedef int (*orte_odls_base_module_deliver_message_fn_t)(orte_jobid_t job, opal_buffer_t *buffer,
                                                           orte_rml_tag_t tag);
 
 /**
- * Extract the mapping of daemon-proc pair
- */
-typedef int (*orte_odls_base_module_extract_proc_map_info_fn_t)(orte_process_name_t *daemon,
-                                                                opal_list_t *proc_list,
-                                                                orte_gpr_value_t *value);
-/**
  * Register to require sync before termination
  */
-typedef int (*orte_odls_base_module_require_sync_fn_t)(orte_process_name_t *proc);
+typedef int (*orte_odls_base_module_require_sync_fn_t)(orte_process_name_t *proc, opal_buffer_t *buffer);
 
 /**
  * pls module version 1.3.0
@@ -100,7 +94,6 @@ struct orte_odls_base_module_1_3_0_t {
     orte_odls_base_module_kill_local_processes_fn_t         kill_local_procs;
     orte_odls_base_module_signal_local_process_fn_t   		signal_local_procs;
     orte_odls_base_module_deliver_message_fn_t              deliver_message;
-    orte_odls_base_module_extract_proc_map_info_fn_t        extract_proc_map_info;
     orte_odls_base_module_require_sync_fn_t                 require_sync;
 };
 

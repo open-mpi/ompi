@@ -18,19 +18,15 @@
  */
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 
 #include <stdio.h>
 #include <string.h>
 
-#include "orte/runtime/runtime.h"
 #include "opal/util/output.h"
-#include "orte/util/proc_info.h"
-#include "opal/util/argv.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ns/ns.h"
+
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/oob/base/base.h"
 

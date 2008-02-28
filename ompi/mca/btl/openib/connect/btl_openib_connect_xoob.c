@@ -10,11 +10,11 @@
 
 #include "ompi_config.h"
 
-#include "orte/mca/ns/base/base.h"
-#include "orte/mca/oob/base/base.h"
+#include "orte/util/name_fns.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/dss/dss.h"
+#include "opal/dss/dss.h"
+#include "ompi/mca/dpm/dpm.h"
 
 #include "btl_openib.h"
 #include "btl_openib_endpoint.h"
@@ -55,8 +55,6 @@ typedef enum {
     ENDPOINT_XOOB_CONNECT_XRC_NR_RESPONSE /* The xrc recv qp already was destroyed */
 } connect_message_type_t;
 
-#define XOOB_TAG (ORTE_RML_TAG_DYNAMIC - 1)
-
 #define XOOB_SET_REMOTE_INFO(EP, INFO)                                    \
 do {                                                                      \
     /* copy the rem_info stuff */                                         \
@@ -79,7 +77,7 @@ static int xoob_priority = 60;
  * remote peer
  */
 static void xoob_rml_send_cb(int status, orte_process_name_t* endpoint,
-                        orte_buffer_t* buffer, orte_rml_tag_t tag,
+                        opal_buffer_t* buffer, orte_rml_tag_t tag,
                         void* cbdata)
 {
     OBJ_RELEASE(buffer);
@@ -87,29 +85,29 @@ static void xoob_rml_send_cb(int status, orte_process_name_t* endpoint,
 
 /* Receive connect information to remote endpoint */
 static int xoob_receive_connect_data(mca_btl_openib_rem_info_t *info, uint16_t *lid,
-        uint8_t *message_type, orte_buffer_t* buffer)
+        uint8_t *message_type, opal_buffer_t* buffer)
 {
     int cnt = 1, rc, srq;
 
     /* Recv standart header */
-    BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT8));
-    rc = orte_dss.unpack(buffer, message_type, &cnt, ORTE_UINT8);
+    BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT8));
+    rc = opal_dss.unpack(buffer, message_type, &cnt, OPAL_UINT8);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return OMPI_ERROR;
     }
     BTL_VERBOSE(("Recv unpack Message type  = %d", *message_type));
 
-    BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT64));
-    rc = orte_dss.unpack(buffer, &info->rem_subnet_id, &cnt, ORTE_UINT64);
+    BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT64));
+    rc = opal_dss.unpack(buffer, &info->rem_subnet_id, &cnt, OPAL_UINT64);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return OMPI_ERROR;
     }
     BTL_VERBOSE(("Recv unpack sid  = %d", info->rem_subnet_id));
 
-    BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT16));
-    rc = orte_dss.unpack(buffer, &info->rem_lid, &cnt, ORTE_UINT16);
+    BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT16));
+    rc = opal_dss.unpack(buffer, &info->rem_lid, &cnt, OPAL_UINT16);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return OMPI_ERROR;
@@ -121,26 +119,26 @@ static int xoob_receive_connect_data(mca_btl_openib_rem_info_t *info, uint16_t *
      */
     if (ENDPOINT_XOOB_CONNECT_REQUEST == *message_type ||
             ENDPOINT_XOOB_CONNECT_RESPONSE == *message_type) {
-        BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT32));
-        rc = orte_dss.unpack(buffer, &info->rem_qps->rem_qp_num, &cnt,
-                ORTE_UINT32);
+        BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
+        rc = opal_dss.unpack(buffer, &info->rem_qps->rem_qp_num, &cnt,
+                OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return OMPI_ERROR;
         }
         BTL_VERBOSE(("Recv unpack remote qp  = %x", info->rem_qps->rem_qp_num));
 
-        BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT32));
-        rc = orte_dss.unpack(buffer, &info->rem_qps->rem_psn, &cnt,
-                ORTE_UINT32);
+        BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
+        rc = opal_dss.unpack(buffer, &info->rem_qps->rem_psn, &cnt,
+                OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return OMPI_ERROR;
         }
         BTL_VERBOSE(("Recv unpack remote psn = %d", info->rem_qps->rem_psn));
 
-        BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT32));
-        rc = orte_dss.unpack(buffer, &info->rem_mtu, &cnt, ORTE_UINT32);
+        BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
+        rc = opal_dss.unpack(buffer, &info->rem_mtu, &cnt, OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return OMPI_ERROR;
@@ -151,8 +149,8 @@ static int xoob_receive_connect_data(mca_btl_openib_rem_info_t *info, uint16_t *
     if (ENDPOINT_XOOB_CONNECT_REQUEST == *message_type ||
             ENDPOINT_XOOB_CONNECT_XRC_REQUEST == *message_type) {
         /* unpack requested lid info */
-        BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT16));
-        rc = orte_dss.unpack(buffer, lid, &cnt, ORTE_UINT16);
+        BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT16));
+        rc = opal_dss.unpack(buffer, lid, &cnt, OPAL_UINT16);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return OMPI_ERROR;
@@ -162,10 +160,10 @@ static int xoob_receive_connect_data(mca_btl_openib_rem_info_t *info, uint16_t *
 
     /* Unpack requested recv qp number */
     if (ENDPOINT_XOOB_CONNECT_XRC_REQUEST == *message_type) {
-        BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT32));
+        BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
         /* In XRC request case we will use rem_qp_num as container for requested qp number */
-        rc = orte_dss.unpack(buffer, &info->rem_qps->rem_qp_num, &cnt,
-                ORTE_UINT32);
+        rc = opal_dss.unpack(buffer, &info->rem_qps->rem_qp_num, &cnt,
+                OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -175,8 +173,8 @@ static int xoob_receive_connect_data(mca_btl_openib_rem_info_t *info, uint16_t *
 
     if (ENDPOINT_XOOB_CONNECT_RESPONSE == *message_type ||
             ENDPOINT_XOOB_CONNECT_XRC_RESPONSE == *message_type) {
-        BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT32));
-        rc = orte_dss.unpack(buffer, &info->rem_index, &cnt, ORTE_UINT32);
+        BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
+        rc = opal_dss.unpack(buffer, &info->rem_index, &cnt, OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return OMPI_ERROR;
@@ -184,8 +182,8 @@ static int xoob_receive_connect_data(mca_btl_openib_rem_info_t *info, uint16_t *
         BTL_VERBOSE(("Recv unpack remote index = %d", info->rem_index));
 
         for (srq = 0; srq < mca_btl_openib_component.num_xrc_qps; srq++) {
-            BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT32));
-            rc = orte_dss.unpack(buffer, &info->rem_srqs[srq].rem_srq_num, &cnt, ORTE_UINT32);
+            BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
+            rc = opal_dss.unpack(buffer, &info->rem_srqs[srq].rem_srq_num, &cnt, OPAL_UINT32);
             if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 return OMPI_ERROR;
@@ -202,7 +200,7 @@ static int xoob_receive_connect_data(mca_btl_openib_rem_info_t *info, uint16_t *
 static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
         uint8_t message_type)
 {
-    orte_buffer_t* buffer = OBJ_NEW(orte_buffer_t);
+    opal_buffer_t* buffer = OBJ_NEW(opal_buffer_t);
     int rc, srq;
 
     if (NULL == buffer) {
@@ -217,24 +215,24 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
      */
     /* pack the info in the send buffer */
     BTL_VERBOSE(("Send pack Message type = %d", message_type));
-    BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT8));
-    rc = orte_dss.pack(buffer, &message_type, 1, ORTE_UINT8);
+    BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT8));
+    rc = opal_dss.pack(buffer, &message_type, 1, OPAL_UINT8);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     BTL_VERBOSE(("Send pack sid = %d", endpoint->subnet_id));
-    BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT64));
-    rc = orte_dss.pack(buffer, &endpoint->subnet_id, 1, ORTE_UINT64);
+    BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT64));
+    rc = opal_dss.pack(buffer, &endpoint->subnet_id, 1, OPAL_UINT64);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     BTL_VERBOSE(("Send pack lid = %d", endpoint->endpoint_btl->lid));
-    BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT16));
-    rc = orte_dss.pack(buffer, &endpoint->endpoint_btl->lid, 1, ORTE_UINT16);
+    BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT16));
+    rc = opal_dss.pack(buffer, &endpoint->endpoint_btl->lid, 1, OPAL_UINT16);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -260,24 +258,24 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
         /* stuff all the QP info into the buffer */
         /* we need to send only one QP */
         BTL_VERBOSE(("Send pack qp num = %x", qp_num));
-        BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
-        rc = orte_dss.pack(buffer, &qp_num, 1, ORTE_UINT32);
+        BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
+        rc = opal_dss.pack(buffer, &qp_num, 1, OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         BTL_VERBOSE(("Send pack lpsn = %d", psn));
-        BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
-        rc = orte_dss.pack(buffer, &psn, 1, ORTE_UINT32);
+        BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
+        rc = opal_dss.pack(buffer, &psn, 1, OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         BTL_VERBOSE(("Send pack mtu = %d", endpoint->endpoint_btl->hca->mtu));
-        BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
-        rc = orte_dss.pack(buffer, &endpoint->endpoint_btl->hca->mtu, 1,
-                ORTE_UINT32);
+        BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
+        rc = opal_dss.pack(buffer, &endpoint->endpoint_btl->hca->mtu, 1,
+                OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -293,8 +291,8 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
         /* when we are sending request we add remote lid that we want to connect */
 
         BTL_VERBOSE(("Send pack remote lid = %d", endpoint->ib_addr->lid));
-        BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT16));
-        rc = orte_dss.pack(buffer, &endpoint->ib_addr->lid, 1, ORTE_UINT16);
+        BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT16));
+        rc = opal_dss.pack(buffer, &endpoint->ib_addr->lid, 1, OPAL_UINT16);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -305,9 +303,9 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
      * recv qp number that we want to connect. */
     if (ENDPOINT_XOOB_CONNECT_XRC_REQUEST == message_type) {
         BTL_VERBOSE(("Send pack remote qp = %x", endpoint->ib_addr->remote_xrc_rcv_qp_num));
-        BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
-        rc = orte_dss.pack(buffer, &endpoint->ib_addr->remote_xrc_rcv_qp_num,
-                1, ORTE_UINT32);
+        BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
+        rc = opal_dss.pack(buffer, &endpoint->ib_addr->remote_xrc_rcv_qp_num,
+                1, OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -322,8 +320,8 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
             ENDPOINT_XOOB_CONNECT_XRC_RESPONSE == message_type) {
         /* we need to send the endpoint index for immidate send */
         BTL_VERBOSE(("Send pack index = %d", endpoint->index));
-        BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
-        rc = orte_dss.pack(buffer, &endpoint->index, 1, ORTE_UINT32);
+        BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
+        rc = opal_dss.pack(buffer, &endpoint->index, 1, OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -331,9 +329,9 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
         /* on response we add all SRQ numbers */
         for (srq = 0; srq < mca_btl_openib_component.num_xrc_qps; srq++) {
             BTL_VERBOSE(("Send pack srq[%d] num  = %d", srq, endpoint->endpoint_btl->qps[srq].u.srq_qp.srq->xrc_srq_num));
-            BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
-            rc = orte_dss.pack(buffer, &endpoint->endpoint_btl->qps[srq].u.srq_qp.srq->xrc_srq_num,
-                    1, ORTE_UINT32);
+            BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
+            rc = opal_dss.pack(buffer, &endpoint->endpoint_btl->qps[srq].u.srq_qp.srq->xrc_srq_num,
+                    1, OPAL_UINT32);
             if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
@@ -343,7 +341,7 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
 
     /* send to remote endpoint */
     rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid,
-            buffer, XOOB_TAG, 0,
+            buffer, OMPI_RML_TAG_XOPENIB, 0,
             xoob_rml_send_cb, NULL);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
@@ -642,8 +640,8 @@ static mca_btl_openib_endpoint_t* xoob_find_endpoint(orte_process_name_t* proces
             ib_proc != (mca_btl_openib_proc_t*)
             opal_list_get_end(&mca_btl_openib_component.ib_procs);
             ib_proc  = (mca_btl_openib_proc_t*)opal_list_get_next(ib_proc)) {
-        if (orte_ns.compare_fields(ORTE_NS_CMP_ALL,
-                    &ib_proc->proc_guid, process_name) == ORTE_EQUAL) {
+        if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+                    &ib_proc->proc_guid, process_name) == OPAL_EQUAL) {
             found = true;
             break;
         }
@@ -753,7 +751,7 @@ static void free_rem_info(mca_btl_openib_rem_info_t *rem_info)
  * otherwise try to modify QP's and establish reliable connection
  */
 static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
-                        orte_buffer_t* buffer, orte_rml_tag_t tag,
+                        opal_buffer_t* buffer, orte_rml_tag_t tag,
                         void* cbdata)
 {
     int rc;
@@ -947,7 +945,7 @@ static int xoob_init(void)
     int rc;
 
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                 XOOB_TAG,
+                                 OMPI_RML_TAG_XOPENIB,
                                  ORTE_RML_PERSISTENT,
                                  xoob_rml_recv_cb,
                                  NULL);
@@ -1018,6 +1016,6 @@ static int xoob_start_connect(mca_btl_base_endpoint_t *endpoint)
  */
 static int xoob_finalize(void)
 {
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, XOOB_TAG);
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, OMPI_RML_TAG_XOPENIB);
     return OMPI_SUCCESS;
 }

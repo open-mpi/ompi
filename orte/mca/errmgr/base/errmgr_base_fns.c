@@ -18,16 +18,21 @@
 
 
 #include "orte_config.h"
+#include "orte/constants.h"
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <stdlib.h>
-#include "orte/orte_constants.h"
 
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
-#include "orte/util/proc_info.h"
-#include "orte/mca/ns/ns_types.h"
+#include "opal/util/error.h"
+
+#include "orte/runtime/orte_globals.h"
+#include "orte/util/name_fns.h"
+#include "orte/util/session_dir.h"
+#include "orte/mca/ess/ess.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"
@@ -43,39 +48,45 @@ void orte_errmgr_base_log(int error_code, char *filename, int line)
     }
     
     opal_output(0, "%s ORTE_ERROR_LOG: %s in file %s at line %d",
-                ORTE_NAME_PRINT(orte_process_info.my_name),
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                 ORTE_ERROR_NAME(error_code), filename, line);
 }
 
-int orte_errmgr_base_proc_aborted_not_avail(orte_gpr_notify_message_t *msg)
+void orte_errmgr_base_proc_aborted_not_avail(orte_process_name_t *name, int exit_code)
 {
-    return ORTE_ERR_NOT_AVAILABLE;
+    return;
 }
 
-int orte_errmgr_base_incomplete_start_not_avail(orte_gpr_notify_message_t *msgb)
+void orte_errmgr_base_incomplete_start_not_avail(orte_jobid_t job, int exit_code)
 {
-    return ORTE_ERR_NOT_AVAILABLE;
+    return;
 }
 
-void orte_errmgr_base_error_detected(int error_code, char *fmt, ...)
+void orte_errmgr_base_error_abort(int error_code, char *fmt, ...)
 {
-    /* we can't know if any output is available yet, so
-     * we just exit */
-    exit(error_code);
+    va_list arglist;
+    
+    /* If there was a message, output it */
+    va_start(arglist, fmt);
+    if( NULL != fmt ) {
+        char* buffer = NULL;
+        vasprintf( &buffer, fmt, arglist );
+        opal_output( 0, buffer );
+        free( buffer );
+    }
+    va_end(arglist);
+    
+    /* cleanup my session directory */
+    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+    
+    /* abnormal exit */
+    orte_ess.abort(error_code, false);
 }
 
-void orte_errmgr_base_abort(void)
-{
-    /* guess we should exit */
-    exit(-1);
-}
-
-int orte_errmgr_base_register_job_not_avail(orte_jobid_t job)
-{
-    return ORTE_ERR_NOT_AVAILABLE;
-}
-
-int orte_errmgr_base_abort_procs_request_not_avail(orte_process_name_t *procs, orte_std_cntr_t num_procs)
+int orte_errmgr_base_register_cb_not_avail(orte_jobid_t job,
+                                           orte_job_state_t state,
+                                           orte_errmgr_cb_fn_t cbfunc,
+                                           void *cbdata)
 {
     return ORTE_ERR_NOT_AVAILABLE;
 }

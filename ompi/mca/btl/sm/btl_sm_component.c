@@ -45,6 +45,8 @@
 #include "opal/util/output.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "ompi/mca/pml/pml.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/runtime/ompi_module_exchange.h"
@@ -263,7 +265,7 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
     /* create a named pipe to receive events  */
     sprintf( mca_btl_sm_component.sm_fifo_path, 
              "%s"OPAL_PATH_SEP"sm_fifo.%lu", orte_process_info.job_session_dir,
-             (unsigned long)orte_process_info.my_name->vpid );
+             (unsigned long)ORTE_PROC_MY_NAME->vpid );
     if(mkfifo(mca_btl_sm_component.sm_fifo_path, 0660) < 0) {
         opal_output(0, "mca_btl_sm_component_init: mkfifo failed with errno=%d\n",errno);
         return NULL;

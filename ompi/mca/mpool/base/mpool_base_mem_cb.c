@@ -23,8 +23,8 @@
 #include "opal/util/output.h"
 #include "mpool_base_mem_cb.h"
 #include "base.h"
+#include "orte/types.h"
 #include "orte/util/proc_info.h"
-#include "orte/mca/ns/ns_types.h"
 
 opal_pointer_array_t mca_mpool_base_mem_cb_array; 
 

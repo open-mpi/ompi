@@ -26,12 +26,11 @@
 #define MCA_FILEM_H
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
-#include "orte/orte_types.h"
+#include "orte/constants.h"
+#include "orte/types.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "orte/mca/ns/ns.h"
 
 #include "opal/class/opal_object.h"
 

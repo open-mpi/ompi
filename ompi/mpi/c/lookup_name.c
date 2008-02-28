@@ -21,6 +21,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/pubsub/pubsub.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Lookup_name = PMPI_Lookup_name
@@ -65,7 +66,7 @@ int MPI_Lookup_name(char *service_name, MPI_Info info, char *port_name)
      * if multiple entries found, this implementation uses
      * at the moment the first entry.
      */
-    tmp = (char *) ompi_comm_namelookup(service_name);
+    tmp = (char *) ompi_pubsub.lookup(service_name, info);
     if ( NULL == tmp ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NAME,
                                       FUNC_NAME);

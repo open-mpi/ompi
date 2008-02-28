@@ -191,6 +191,8 @@ int main(int argc, char *argv[])
 #if OPAL_ENABLE_FT == 1
   ompi_info::mca_types.push_back("crs");
 #endif
+  ompi_info::mca_types.push_back("dpm");
+  ompi_info::mca_types.push_back("pubsub");
 
   ompi_info::mca_types.push_back("allocator");
   ompi_info::mca_types.push_back("coll");
@@ -209,21 +211,17 @@ int main(int argc, char *argv[])
 #endif
 
   ompi_info::mca_types.push_back("errmgr");
-  ompi_info::mca_types.push_back("gpr");
   ompi_info::mca_types.push_back("grpcomm");
   ompi_info::mca_types.push_back("iof");
-  ompi_info::mca_types.push_back("ns");
   ompi_info::mca_types.push_back("oob");
   ompi_info::mca_types.push_back("odls");
+  ompi_info::mca_types.push_back("ess");
   ompi_info::mca_types.push_back("ras");
-  ompi_info::mca_types.push_back("rds");
   ompi_info::mca_types.push_back("rmaps");
-  ompi_info::mca_types.push_back("rmgr");
   ompi_info::mca_types.push_back("rml");
   ompi_info::mca_types.push_back("routed");
-  ompi_info::mca_types.push_back("pls");
+  ompi_info::mca_types.push_back("plm");
   ompi_info::mca_types.push_back("sds");
-  ompi_info::mca_types.push_back("soh");
 #if OPAL_ENABLE_FT == 1
   ompi_info::mca_types.push_back("snapc");
 #endif

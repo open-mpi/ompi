@@ -27,11 +27,11 @@
 #define _ORTE_PROC_INFO_H_
 
 #include "orte_config.h"
+#include "orte/types.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include "orte/mca/ns/ns_types.h"
 
 BEGIN_C_DECLS
 
@@ -45,38 +45,36 @@ BEGIN_C_DECLS
  * files - however, these are all initialized elsewhere.
  */
 struct orte_proc_info_t {
-    orte_process_name_t *my_name;       /**< My official process name */
+    orte_process_name_t my_name;        /**< My official process name */
     orte_process_name_t my_daemon;      /**< Name of my local daemon */
+    char *my_daemon_uri;                /**< Contact info to local daemon */
+    orte_process_name_t my_hnp;         /**< Name of my hnp */
+    char *my_hnp_uri;                   /**< Contact info for my hnp */
+    pid_t hnp_pid;                      /**< hnp pid - used if singleton */
     orte_std_cntr_t app_num;            /**< our index into the app_context array */
     orte_std_cntr_t universe_size;      /**< the size of the universe we are in */
-    bool singleton;                     /**< I am a singleton */
-    orte_std_cntr_t num_procs;          /**< number of processes in this job */
+    orte_vpid_t num_procs;              /**< number of processes in this job */
     orte_vpid_t local_rank;             /**< local rank on this node */
     orte_std_cntr_t num_local_procs;    /**< total number of procs on this node */
     pid_t pid;                          /**< Local process ID for this process */
-    bool seed;                          /**< Indicate whether or not this is seed daemon */
+    bool singleton;                     /**< I am a singleton */
     bool daemon;                        /**< Indicate whether or not I am a daemon */
-    char *ns_replica_uri;               /**< contact info for name services replica */
-    char *gpr_replica_uri;              /**< contact info for registry replica */
-    orte_process_name_t *ns_replica;    /**< Name of my name server replica (NULL=>me) */
-    orte_process_name_t *gpr_replica;   /**< Name of my registry replica (NULL=>me) */
+    bool hnp;                           /**< Indicate whether or not I am the HNP (orterun) */
+    bool tool;                          /**< I am a tool or not */
+    /* The session directory has the form
+     * <prefix>/<openmpi-sessions-user>/<jobid>/<procid>, where the prefix
+     * can either be provided by the user via the
+     * --tmpdir command-line flag, the use of one of several
+     * environmental variables, or else a default location.
+     */
     char *tmpdir_base;                  /**< Base directory of the session dir tree */
     char *top_session_dir;              /**< Top-most directory of the session tree */
-    char *universe_session_dir;         /**< Location of universe temp dir.
-			    * The session directory has the form
-			    * <prefix><openmpi-sessions-user><universe>, where the prefix
-			    * can either be provided by the user via the
-			    * --tmpdir command-line flag, the use of one of several
-			    * environmental variables, or else a default location.
-			    */
+    char *job_session_dir;              /**< Session directory for job */
+    char *proc_session_dir;             /**< Session directory for the process */
 
-    char *job_session_dir;          /**< Session directory for job */
-
-    char *proc_session_dir;         /**< Session directory for the process */
-
-    char *sock_stdin;               /**< Path name to temp file for stdin. */
-    char *sock_stdout;              /**< Path name to temp file for stdout. */
-    char *sock_stderr;              /**< Path name to temp file for stderr. */
+    char *sock_stdin;                   /**< Path name to temp file for stdin. */
+    char *sock_stdout;                  /**< Path name to temp file for stdout. */
+    char *sock_stderr;                  /**< Path name to temp file for stderr. */
 };
 typedef struct orte_proc_info_t orte_proc_info_t;
 

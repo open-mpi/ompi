@@ -23,8 +23,11 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/request/request.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/mca/dpm/dpm.h"
+
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
+
 
 int
 ompi_init_preconnect_mpi(void)
@@ -140,7 +143,7 @@ ompi_init_preconnect_oob(void)
             ret = orte_rml.send(&procs[next]->proc_name,
                                 outmsg,
                                 1,
-                                ORTE_RML_TAG_WIREUP,
+                                OMPI_RML_TAG_WIREUP,
                                 0);
             if (ret < 0) return ret;
         }
@@ -150,7 +153,7 @@ ompi_init_preconnect_oob(void)
             ret = orte_rml.recv(&procs[prev]->proc_name,
                                 inmsg,
                                 1,
-                                ORTE_RML_TAG_WIREUP,
+                                OMPI_RML_TAG_WIREUP,
                                 0);
             if (ret < 0) return ret;
         }

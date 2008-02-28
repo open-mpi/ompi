@@ -25,7 +25,6 @@
  * includes
  */
 #include "orte_config.h"
-#include "orte/orte_constants.h"
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
@@ -36,10 +35,7 @@
 /*
  * Global functions for MCA overall collective open and close
  */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
+BEGIN_C_DECLS
 
 /*
  * function definitions
@@ -61,7 +57,5 @@ ORTE_DECLSPEC extern orte_grpcomm_base_component_t mca_grpcomm_base_selected_com
  * external API functions will be documented in the mca/grpcomm/grpcomm.h file
  */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

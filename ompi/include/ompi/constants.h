@@ -19,7 +19,7 @@
 #ifndef OMPI_CONSTANTS_H
 #define OMPI_CONSTANTS_H
 
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 
 #define OMPI_ERR_BASE   ORTE_ERR_MAX
 

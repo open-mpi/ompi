@@ -18,15 +18,15 @@
  */
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
+#include "orte/types.h"
 
 #include <string.h>
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif  /* HAVE_SYS_TIME_H */
 
-#include "orte/dss/dss.h"
-#include "orte/mca/ns/ns_types.h"
+#include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml_types.h"
 
@@ -37,26 +37,40 @@
 #endif
 
 /* API functions */
-static int xcast_nb(orte_jobid_t job,
-                    orte_buffer_t *buffer,
-                    orte_rml_tag_t tag);
-
 static int xcast(orte_jobid_t job,
-                 orte_buffer_t *buffer,
+                 opal_buffer_t *buffer,
                  orte_rml_tag_t tag);
 
 static int orte_grpcomm_cnos_barrier(void);
 
-static int allgather(orte_buffer_t *sbuf, orte_buffer_t *rbuf);
+static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf);
 
-static int allgather_list(opal_list_t *names, orte_buffer_t *sbuf, orte_buffer_t *rbuf);
+static int allgather_list(opal_list_t *names, opal_buffer_t *sbuf, opal_buffer_t *rbuf);
+
+static int next_recips(opal_list_t *names, orte_grpcomm_mode_t mode);
+
+static int set_proc_attr(const char *attr_name,
+                         const void *data,
+                         size_t size);
+
+static int get_proc_attr(const orte_process_name_t proc,
+                         const char * attribute_name, void **val, 
+                         size_t *size);
+
+static int modex(opal_list_t *procs);
+
+static int purge_proc_attrs(void);
 
 orte_grpcomm_base_module_t orte_grpcomm_cnos_module = {
     xcast,
-    xcast_nb,
     allgather,
     allgather_list,
-    orte_grpcomm_cnos_barrier
+    orte_grpcomm_cnos_barrier,
+    next_recips,
+    set_proc_attr,
+    get_proc_attr,
+    modex,
+    purge_proc_attrs
 };
 
 
@@ -66,17 +80,9 @@ orte_grpcomm_base_module_t orte_grpcomm_cnos_module = {
  *  @param  buffer  The data to broadcast
  */
 
-/* Non-blocking version */
-static int xcast_nb(orte_jobid_t job,
-                    orte_buffer_t *buffer,
-                    orte_rml_tag_t tag)
-{
-    return ORTE_SUCCESS;
-}
-
 /* Blocking version */
 static int xcast(orte_jobid_t job,
-                 orte_buffer_t *buffer,
+                 opal_buffer_t *buffer,
                  orte_rml_tag_t tag)
 {
     return ORTE_SUCCESS;
@@ -92,28 +98,59 @@ orte_grpcomm_cnos_barrier(void)
     return ORTE_SUCCESS;
 }
 
-static int allgather(orte_buffer_t *sbuf, orte_buffer_t *rbuf)
+static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
 {
     int rc;
     orte_std_cntr_t zero=0;
     
     /* seed the outgoing buffer with num_procs=0 so it won't be unpacked */
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(rbuf, &zero, 1, ORTE_STD_CNTR))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(rbuf, &zero, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     return rc;
 }
 
-static int allgather_list(opal_list_t *names, orte_buffer_t *sbuf, orte_buffer_t *rbuf)
+static int allgather_list(opal_list_t *names, opal_buffer_t *sbuf, opal_buffer_t *rbuf)
 {
     int rc;
     orte_std_cntr_t zero=0;
     
     /* seed the outgoing buffer with num_procs=0 so it won't be unpacked */
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(rbuf, &zero, 1, ORTE_STD_CNTR))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(rbuf, &zero, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     return rc;
 }
+
+static int next_recips(opal_list_t *names, orte_grpcomm_mode_t mode)
+{
+    /* nothing to do here */
+    return ORTE_SUCCESS;
+}
+
+static int set_proc_attr(const char *attr_name,
+                         const void *data,
+                         size_t size)
+{
+    return ORTE_SUCCESS;
+}
+
+static int get_proc_attr(const orte_process_name_t proc,
+                         const char * attribute_name, void **val, 
+                         size_t *size)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
+static int modex(opal_list_t *procs)
+{
+    return ORTE_SUCCESS;
+}
+
+static int purge_proc_attrs(void)
+{
+    return ORTE_SUCCESS;
+}
+

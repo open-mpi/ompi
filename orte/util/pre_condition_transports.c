@@ -17,6 +17,8 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
+#include "orte/types.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -34,15 +36,14 @@
 #include <time.h>
 #endif
 
-#include "orte/orte_constants.h"
-#include "orte/orte_types.h"
-
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/opal_environ.h"
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/plm/plm_types.h"
 
 #include "orte/util/pre_condition_transports.h"
 
@@ -60,12 +61,14 @@ static inline void orte_pre_condition_transports_use_rand(uint64_t* unique_key) 
     unique_key[2] = rand();
 }
 
-int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_context)
+int orte_pre_condition_transports(orte_job_t *jdata)
 {
     size_t i, string_key_len, written_len;
     char *cs_env, *string_key = NULL, *format = NULL;
     uint64_t unique_key[2];
     unsigned int *int_ptr;
+    orte_std_cntr_t n;
+    orte_app_context_t **apps;
 
 #if !defined(__WINDOWS__)
     int fd_rand;
@@ -149,8 +152,9 @@ int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_c
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    for (i=0; i < num_context; i++) {
-        opal_setenv(cs_env, string_key, true, &app_context[i]->env);
+    apps = (orte_app_context_t**)jdata->apps->addr;
+    for (n=0; n < jdata->num_apps; n++) {
+        opal_setenv(cs_env, string_key, true, &apps[n]->env);
     }
 
     free(cs_env);

@@ -35,7 +35,6 @@ int orte_errmgr_base_select(void)
   mca_base_component_list_item_t *cli;
   mca_errmgr_base_component_t *component, *best_component = NULL;
   orte_errmgr_base_module_t *module, *best_module = NULL;
-  bool multi, hidden;
   int priority, best_priority = -1;
 
   /* Iterate through all the available components */
@@ -49,7 +48,7 @@ int orte_errmgr_base_select(void)
     /* Call the component's init function and see if it wants to be
        selected */
 
-    module = component->errmgr_init(&multi, &hidden, &priority);
+    module = component->errmgr_init(&priority);
 
     /* If we got a non-NULL module back, then the component wants to
        be selected.  So save its multi/hidden values and save the

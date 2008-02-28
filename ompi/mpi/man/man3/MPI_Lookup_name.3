@@ -35,7 +35,7 @@ service_name
 A service name (string).
 .TP 1.4i
 info
-Options to the name service functions (handle). No options currently supported.
+Options to the name service functions (handle).
 
 .SH OUTPUT PARAMETERS
 .ft R
@@ -52,9 +52,37 @@ This function retrieves a \fIport_name\fP published under
 \fIservice_name\fP by a previous invocation of MPI_Publish_name. The
 application must supply a \fIport_name\fP buffer large enough to hold
 the largest possible port name (i.e., MPI_MAX_PORT_NAME bytes).
+
+.SH INFO ARGUMENTS
+The following keys for \fIinfo\fP are recognized:
 .sp
-The \fIinfo\fP parameter should be MPI_INFO_NULL, as this routine does
-not parse any MPI Info arguments.
+.sp
+.nf
+Key                   Type      Description
+---                   ----      -----------
+
+ompi_lookup_order     char *    Resolution order for name lookup.
+.fi
+
+The \fIompi_lookup_order\fP info key can specify one of four valid
+string values (see the NAME SCOPE section below for more information
+on name scopes):
+
+.TP 4
+\fIlocal\fP: Only search the local scope for name resolution.
+.TP 4
+\fIglobal\fP: Only search the global scope for name resolution.
+.TP 4
+\fIlocal,global\fP: Search the local scope for name resolution.  If
+not found, try searching the global scope for name resolution.  This
+behavior is the default if the \fIompi_lookup_order\fP info key is not
+specified.
+.TP 4
+\fIglobal,local\fP: Search the global scope for name resolution.  If
+not found, try searching the local scope for name resolution.
+
+.SH NAME SCOPE
+RHC fill in here :-)
 
 .SH ERRORS
 .ft R

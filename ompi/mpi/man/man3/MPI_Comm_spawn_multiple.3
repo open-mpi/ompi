@@ -105,17 +105,37 @@ Error codes are treated as for MPI_Comm_spawn.
 
  
 .SH INFO ARGUMENTS
-The following values for \fIinfo\fP are recognized in Open MPI 1.2. (The reserved values mentioned in Section 5.3.4 of the MPI-2 standard are not implemented.)
+The following keys for \fIinfo\fP are recognized in Open MPI 1.2. (The reserved values mentioned in Section 5.3.4 of the MPI-2 standard are not implemented.)
 .sp
 .sp
 .nf
-Key value             Type      Description
-----------            ----      -----------
+Key                   Type      Description
+---                   ----      -----------
 
 host                  char *    Host on which the process should be spawned.
 wdir                  char *    Directory where the executable is located.
+ompi_prefix           char *    Same as the --prefix command line argument
+                                to mpirun.
+ompi_non_mpi          bool      If set to true, launching a non-MPI
+                                application; the returned communicator
+                                will be MPI_COMM_NULL.
 .fi
- 
+
+.sp 
+\fIbool\fP info keys are actually strings but are evaluated as
+follows: if the string value is a number, it is converted to an
+integer and cast to a boolean (meaning that zero integers are false
+and non-zero values are true).  If the string value is
+(case-insensitive) "yes" or "true", the boolean is true.  If the
+string value is (case-insensitive) "no" or "false", the boolean is
+false.  All other string values are unrecognized, and therefore false.
+
+.sp
+Note that if any of the info handles have \fIompi_non_mpi\fP set to
+true, then all info handles must have it set to true.  If some are set
+to true, but others are set to false (or are unset), MPI_ERR_INFO will
+be returned.
+  
 .sp
 Note that in Open MPI 1.2, the first array location in \fIarray_of_info\fP is applied to all the commands in \fIarray_of_commands\fP. 
 

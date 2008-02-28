@@ -24,7 +24,7 @@
 #endif
 #include <time.h>
 
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -34,9 +34,10 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/os_dirpath.h"
 
-#include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/rml/base/rml_contact.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/runtime/orte_globals.h"
+#include "orte/util/name_fns.h"
 
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
@@ -94,7 +95,7 @@ ORTE_DECLSPEC OBJ_CLASS_INSTANCE(orte_filem_base_request_t,
                                  orte_filem_base_construct,
                                  orte_filem_base_destruct);
 
-ORTE_DECLSPEC void orte_filem_base_construct(orte_filem_base_request_t *req) {
+void orte_filem_base_construct(orte_filem_base_request_t *req) {
     OBJ_CONSTRUCT(&req->process_sets,  opal_list_t);
     OBJ_CONSTRUCT(&req->file_sets,     opal_list_t);
 
@@ -108,7 +109,7 @@ ORTE_DECLSPEC void orte_filem_base_construct(orte_filem_base_request_t *req) {
     req->movement_type = ORTE_FILEM_MOVE_TYPE_UNKNOWN;
 }
 
-ORTE_DECLSPEC void orte_filem_base_destruct( orte_filem_base_request_t *req) {
+void orte_filem_base_destruct( orte_filem_base_request_t *req) {
     opal_list_item_t* item = NULL;
 
     while( NULL != (item = opal_list_remove_first(&req->process_sets)) ) {
@@ -207,155 +208,114 @@ int orte_filem_base_none_wait_all(opal_list_t *request_list)
 /********************
  * Utility functions
  ********************/
-int orte_filem_base_listener_init(orte_rml_buffer_callback_fn_t rml_cbfunc) {
-    int ret;
-
-    if( ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                       ORTE_RML_TAG_FILEM,
-                                                       0,
-                                                       rml_cbfunc,
-                                                       NULL)) ) {
-        return ret;
-    }
-
-    return ORTE_SUCCESS;
-}
-
-int orte_filem_base_listener_cancel() {
-    int ret;
-
-    if( ORTE_SUCCESS != (ret = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_FILEM) ) ) {
-        return ret;
-    }
-
-    return ORTE_SUCCESS;
-}
-
 int orte_filem_base_get_proc_node_name(orte_process_name_t *proc, char **machine_name) {
-    int ret, exit_status = ORTE_SUCCESS;
-    char *segment = NULL, **tokens, *keys[2];
-    orte_gpr_value_t** values = NULL;
-    orte_std_cntr_t num_tokens = 0, num_values = 0, i, j;
-    char   *tmp_node_name = NULL;
-    
-    /*
-     * Contact GPR and get the 'orte-node-name' for this process
-     */
-    keys[0] = ORTE_NODE_NAME_KEY;
-    keys[1] = NULL;
+    int ret;
+    orte_std_cntr_t count;
+    opal_buffer_t request, answer;
+    orte_filem_cmd_flag_t command=ORTE_FILEM_GET_PROC_NODE_NAME_CMD;
 
-    /* 
-     * Get the job segment
-     */
-    if(ORTE_SUCCESS != (ret = orte_schema.get_job_segment_name(&segment, proc->jobid))) {
-        exit_status = ret;
-        goto cleanup;
-    }
+    /* set default answer */
+    *machine_name = NULL;
 
-    /*
-     * Get the process tokens
-     */
-    if (ORTE_SUCCESS != (ret = orte_schema.get_proc_tokens(&tokens,
-                                                           &num_tokens,
-                                                           proc) )) {
-        exit_status = ret;
-        goto cleanup;
-    }
+    if (orte_process_info.hnp) {
+        /* if I am the HNP, then all the data structures are local to me - no
+         * need to send messages around to get the info
+         */
+        orte_job_t *jdata;
+        orte_proc_t **procs;
 
-    /*
-     * Get the requested values
-     */
-    if( ORTE_SUCCESS != (ret = orte_gpr.get(ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
-                                            segment,
-                                            tokens,
-                                            keys,
-                                            &num_values,
-                                            &values ) ) ) {
-        
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    /*
-     * Parse the values
-     */
-    for(i = 0; i < num_values; ++i) {
-        orte_gpr_value_t* value = values[i];
-
-        for(j = 0; j < value->cnt; ++j) {
-            orte_gpr_keyval_t* keyval = value->keyvals[j];
-
-            if (strcmp(keyval->key, keys[0]) == 0) {
-                if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&(tmp_node_name), keyval->value, ORTE_STRING))) {
-                    exit_status = ret;
-                    goto cleanup;
-                }
-                *machine_name = strdup(tmp_node_name);
-                if(NULL != tmp_node_name) {
-                    free(tmp_node_name);
-                    tmp_node_name = NULL;
-                }
-                continue;
-            }
+        /* get the job data object for this proc */
+        if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
         }
+        /* get the proc object for it */
+        procs = (orte_proc_t**)jdata->procs->addr;
+        if (NULL == procs[proc->vpid] || NULL == procs[proc->vpid]->node) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        *machine_name = strdup(procs[proc->vpid]->node->name);
+        return ORTE_SUCCESS;
+    }
+    
+    /* if I am not the HNP, then I have to send a request to the HNP
+     * for the information
+     */
+    OBJ_CONSTRUCT(&request, opal_buffer_t);
+    OBJ_CONSTRUCT(&answer, opal_buffer_t);
+ 
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&request, &command, 1, ORTE_FILEM_CMD))) {
+        ORTE_ERROR_LOG(ret);
+        goto CLEANUP;
+    }
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&request, proc, 1, ORTE_NAME))) {
+        ORTE_ERROR_LOG(ret);
+        goto CLEANUP;
+    }
+    
+    if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &request, ORTE_RML_TAG_FILEM_BASE, 0))) {
+        ORTE_ERROR_LOG(ret);
+        goto CLEANUP;
     }
 
-    if (NULL == *machine_name ){
-        exit_status = ORTE_ERROR;
-        goto cleanup;
+    /* wait for answer */
+    if (0 > (ret = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &answer, ORTE_RML_TAG_FILEM_BASE_RESP, 0))) {
+        ORTE_ERROR_LOG(ret);
+        goto CLEANUP;
+    }
+    
+    /* unpack the machine name */
+    count = 1;
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, machine_name, &count, OPAL_STRING))) {
+        ORTE_ERROR_LOG(ret);
+        goto CLEANUP;
     }
 
- cleanup:
-    if( NULL != segment)
-        free(segment);
+ CLEANUP:
+    OBJ_DESTRUCT(&answer);
+    OBJ_DESTRUCT(&request);
 
-    if(NULL != tmp_node_name) {
-        free(tmp_node_name);
-        tmp_node_name = NULL;
-    }
-
-    return exit_status;
+    return ret;
 }
 
 
 /*
- * This function is paired with the orte_filem_base_query_callback() function on the remote machine
+ * This function is paired with the filem_base_process_get_remote_path_cmd() function on the remote machine
  */
-int orte_filem_base_query_remote_path(char **remote_ref, orte_process_name_t *peer, int *flag) {
+int orte_filem_base_get_remote_path(char **remote_ref, orte_process_name_t *peer, int *flag) {
     int ret, exit_status = ORTE_SUCCESS;
     char *tmp_ref = NULL;
     orte_std_cntr_t n;
-    orte_buffer_t *loc_buffer = NULL;
+    opal_buffer_t request, answer;
     int tmp_flag;
+    orte_filem_cmd_flag_t command=ORTE_FILEM_GET_REMOTE_PATH_CMD;
 
     /*
      * Ask for remote file information from the HNP
      */
-    if( NULL == (loc_buffer = OBJ_NEW(orte_buffer_t) ) ) {
-        exit_status = ORTE_ERR_OUT_OF_RESOURCE;
+    OBJ_CONSTRUCT(&request, opal_buffer_t);
+    OBJ_CONSTRUCT(&answer, opal_buffer_t);
+
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&request, &command, 1, ORTE_FILEM_CMD))) {
+        ORTE_ERROR_LOG(ret);
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(loc_buffer, remote_ref, 1, ORTE_STRING))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&request, remote_ref, 1, OPAL_STRING))) {
         exit_status = ret;
         goto cleanup;
     }
 
-    if (0 > (ret = orte_rml.send_buffer(peer, loc_buffer, ORTE_RML_TAG_FILEM, 0))) {
+    if (0 > (ret = orte_rml.send_buffer(peer, &request, ORTE_RML_TAG_FILEM_BASE, 0))) {
         exit_status = ret;
         goto cleanup;
     }
     
-    OBJ_RELEASE(loc_buffer);
-    if( NULL == (loc_buffer = OBJ_NEW(orte_buffer_t) ) ) {
-        exit_status = ORTE_ERR_OUT_OF_RESOURCE;
-        goto cleanup;
-    }
-
     /*
      * Get the response
      */
-    if( 0 > (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_FILEM, 0)) ) {
+    if( 0 > (ret = orte_rml.recv_buffer(peer, &answer, ORTE_RML_TAG_FILEM_BASE_RESP, 0)) ) {
         exit_status = ret;
         goto cleanup;
     }
@@ -364,7 +324,7 @@ int orte_filem_base_query_remote_path(char **remote_ref, orte_process_name_t *pe
      * The absolute path for the remote file
      */
     n = 1;
-    if ( ORTE_SUCCESS != (ret = orte_dss.unpack(loc_buffer, &tmp_ref, &n, ORTE_STRING)) ) {
+    if ( ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &tmp_ref, &n, OPAL_STRING)) ) {
         exit_status = ret;
         goto cleanup;
     }
@@ -373,7 +333,7 @@ int orte_filem_base_query_remote_path(char **remote_ref, orte_process_name_t *pe
      * The file type on the remote machine
      */
     n = 1;
-    if ( ORTE_SUCCESS != (ret = orte_dss.unpack(loc_buffer, &tmp_flag, &n, ORTE_INT)) ) {
+    if ( ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &tmp_flag, &n, OPAL_INT)) ) {
         exit_status = ret;
         goto cleanup;
     }
@@ -385,117 +345,13 @@ int orte_filem_base_query_remote_path(char **remote_ref, orte_process_name_t *pe
     *flag = tmp_flag;
 
  cleanup:
-    if( NULL != loc_buffer)
-        OBJ_RELEASE(loc_buffer);
+    OBJ_DESTRUCT(&answer);
+    OBJ_DESTRUCT(&request);
+
     if( NULL != tmp_ref)
         free(tmp_ref);
 
     return exit_status;
-}
-
-/*
- * This function is paired with the orte_filem_base_query_remote_path() function on the 
- * requesting machine.
- * This function is responsible for:
- * - Constructing the remote absolute path for the specified file/dir
- * - Verify the existence of the file/dir
- * - Determine if the specified file/dir is in fact a file or dir or unknown if not found.
- * 
- */
-void orte_filem_base_query_callback(int status,
-                                    orte_process_name_t* peer,
-                                    orte_buffer_t *buffer,
-                                    orte_rml_tag_t tag,
-                                    void* cbdata) {
-    int ret, exit_status = ORTE_SUCCESS;
-    orte_std_cntr_t n;
-    orte_buffer_t loc_buffer;
-    char *filename = NULL;
-    char *tmp_name = NULL;
-    char cwd[OMPI_PATH_MAX];
-    int file_type = ORTE_FILEM_TYPE_UNKNOWN;
-    struct stat file_status;
-
-    /*
-     * Receive the file/dir name in question
-     */
-    n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &filename, &n, ORTE_STRING))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    OBJ_CONSTRUCT(&loc_buffer, orte_buffer_t);
-    
-    /*
-     * Determine the absolute path of the file
-     */
-    if(filename[0] != '/') { /* if it is not an absolute path already */
-        getcwd(cwd, sizeof(cwd));
-        asprintf(&tmp_name, "%s/%s", cwd, filename);
-    }
-    else {
-        tmp_name = strdup(filename);
-    }
-
-    opal_output_verbose(10, orte_filem_base_output,
-                        "filem:base: filem_base_query_callback: %s -> %s: Filename Requested (%s) translated to (%s)",
-                        ORTE_NAME_PRINT(orte_process_info.my_name),
-                        ORTE_NAME_PRINT(peer),
-                        filename, tmp_name);
-
-    /*
-     * Determine if the file/dir exists at that absolute path
-     * Determine if the file/dir is a file or a directory
-     */
-    if(0 != (ret = stat(tmp_name, &file_status) ) ){
-        file_type = ORTE_FILEM_TYPE_UNKNOWN;
-    }
-    else {
-        /* Is it a directory? */
-        if(S_ISDIR(file_status.st_mode)) {
-            file_type = ORTE_FILEM_TYPE_DIR;
-        }
-        else if(S_ISREG(file_status.st_mode)) {
-            file_type = ORTE_FILEM_TYPE_FILE;
-        }
-    }
-
-    /*
-     * Send back the Absolute Path
-     */
-    n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(&loc_buffer, &tmp_name, n, ORTE_STRING))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * Send back the reference type
-     * - ORTE_FILEM_TYPE_FILE    = File
-     * - ORTE_FILEM_TYPE_DIR     = Directory
-     * - ORTE_FILEM_TYPE_UNKNOWN = Could not be determined, or does not exist
-     */
-    n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(&loc_buffer, &file_type, n, ORTE_INT))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    if (0 > (ret = orte_rml.send_buffer(peer, &loc_buffer, ORTE_RML_TAG_FILEM, 0))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-    
- cleanup:
-    OBJ_DESTRUCT(&loc_buffer);
-
-    if( NULL != filename) 
-        free(filename);
-    if( NULL != tmp_name)
-        free(tmp_name);
-
-    return;
 }
 
 int orte_filem_base_prepare_request(orte_filem_base_request_t *request, int move_type)

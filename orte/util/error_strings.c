@@ -19,8 +19,8 @@
 /** @file **/
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
-#include "orte/orte_constants.h"
 #include <stdio.h>
 
 const char *
@@ -37,9 +37,6 @@ orte_err2str(int errnum)
     case ORTE_ERR_NO_MATCH_YET:
         retval = "No match for receive posted";
         break;
-    case ORTE_ERR_BUFFER:
-        retval = "Buffer error";
-        break;
     case ORTE_ERR_REQUEST:
         retval = "Request error";
         break;
@@ -52,23 +49,8 @@ orte_err2str(int errnum)
     case ORTE_ERR_CONNECTION_FAILED:
         retval = "Connection failed";
         break;
-    case ORTE_ERR_PACK_MISMATCH:
-        retval = "Pack data mismatch";
-        break;
-    case ORTE_ERR_PACK_FAILURE:
-        retval = "Data pack failed";
-        break;
-    case ORTE_ERR_UNPACK_FAILURE:
-        retval = "Data unpack failed";
-        break;
     case ORTE_ERR_COMM_FAILURE:
         retval = "Communication failure";
-        break;
-    case ORTE_ERR_UNPACK_INADEQUATE_SPACE:
-        retval = "Data unpack had inadequate space";
-        break;
-    case ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER:
-        retval = "Data unpack would read past end of buffer";
         break;
     case ORTE_ERR_GPR_DATA_CORRUPT:
         retval = "GPR data corruption";
@@ -81,18 +63,6 @@ orte_err2str(int errnum)
         break;
     case ORTE_ERR_COPY_FAILURE:
         retval = "Data copy failure";
-        break;
-    case ORTE_ERR_UNKNOWN_DATA_TYPE:
-        retval = "Unknown data type";
-        break;
-    case ORTE_ERR_DATA_TYPE_REDEF:
-        retval = "Attempt to redefine an existing data type";
-        break;
-    case ORTE_ERR_DATA_OVERWRITE_ATTEMPT:
-        retval = "Attempt to overwrite a data value";
-        break;
-    case ORTE_ERR_OPERATION_UNSUPPORTED:
-        retval = "Requested operation is not supported on referenced data type";
         break;
     case ORTE_ERR_PROC_STATE_MISSING:
         retval = "The process state information is missing on the registry";

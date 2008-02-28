@@ -21,12 +21,14 @@
 #define MCA_IOF_PROXY_SVC_H
 
 #include "orte_config.h"
-#include "orte/mca/iof/iof.h"
-#include "orte/mca/ns/ns.h"
+#include "orte/types.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+#include "orte/mca/rml/rml_types.h"
+#include "orte/util/name_fns.h"
+
+#include "orte/mca/iof/iof.h"
+
+BEGIN_C_DECLS
 
 /*
  * Send requests to the svc component
@@ -74,8 +76,7 @@ void orte_iof_proxy_svc_recv(
     void* cbdata);
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-};
-#endif
+END_C_DECLS
+
 #endif
 

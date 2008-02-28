@@ -94,7 +94,7 @@ int orte_grpcomm_base_select(void)
   orte_grpcomm = *best_module;
   mca_grpcomm_base_selected_component = *best_component;
   mca_grpcomm_base_selected = true;
-
+  
   /* all done */
 
   return ORTE_SUCCESS;

@@ -24,6 +24,8 @@
 #include "ompi/datatype/convertor_internal.h"
 #include "ompi/datatype/datatype_internal.h"
 
+#include <stdio.h>
+
 #if OMPI_ENABLE_DEBUG
 extern int ompi_unpack_debug;
 #define DO_DEBUG(INST)  if( ompi_unpack_debug ) { INST }

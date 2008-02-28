@@ -18,7 +18,7 @@
 
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -47,20 +47,17 @@
  */
 int orte_errmgr_base_output = -1;
 /*
- * we must define a default module so that the error logging
- * functions can be available as early as possible
+ * define a default module that all application procs
+ * can use without having to open the framework. The
+ * decision on whether or not to open the framework is
+ * made in orte_init
  */
-orte_errmgr_base_module_t orte_errmgr_default = {
-    orte_errmgr_base_log,
+orte_errmgr_base_module_t orte_errmgr = {
     orte_errmgr_base_proc_aborted_not_avail,
     orte_errmgr_base_incomplete_start_not_avail,
-    orte_errmgr_base_error_detected,
-    orte_errmgr_base_register_job_not_avail,
-    orte_errmgr_base_abort,
-    orte_errmgr_base_abort_procs_request_not_avail
+    orte_errmgr_base_register_cb_not_avail,
+    orte_errmgr_base_error_abort
 };
-/* start out with a default module */
-orte_errmgr_base_module_t orte_errmgr;
 
 bool orte_errmgr_base_selected = false;
 opal_list_t orte_errmgr_base_components_available;
@@ -90,9 +87,6 @@ int orte_errmgr_base_open(void)
             orte_errmgr_base_output = -1;
         }
 
-        /* set the default module */
-        orte_errmgr = orte_errmgr_default;
-        
         /* Open up all available components */
     
         if (ORTE_SUCCESS != 

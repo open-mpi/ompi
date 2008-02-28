@@ -17,13 +17,13 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
 
-#include "orte/orte_constants.h"
 #include "orte/class/orte_pointer_array.h"
 #include "opal/util/output.h"
 

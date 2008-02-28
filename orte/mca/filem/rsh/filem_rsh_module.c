@@ -19,7 +19,7 @@
  */
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -45,7 +45,9 @@
 #include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
 
-#include "orte/mca/gpr/gpr.h"
+#include "orte/util/name_fns.h"
+#include "orte/util/proc_info.h"
+#include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/filem/filem.h"
@@ -71,11 +73,6 @@ static int start_child(char * command,
 static int  orte_filem_rsh_query_remote_path(char **remote_ref,
                                              orte_process_name_t *proc,
                                              int *flag);
-static void orte_filem_rsh_query_callback(int status,
-                                          orte_process_name_t* sender,
-                                          orte_buffer_t *buffer,
-                                          orte_rml_tag_t tag,
-                                          void* cbdata);
 
 static void filem_rsh_waitpid_cb(pid_t pid, int status, void* cbdata);
 
@@ -84,7 +81,7 @@ static int orte_filem_rsh_permission_listener_init(orte_rml_buffer_callback_fn_t
 static int orte_filem_rsh_permission_listener_cancel(void);
 static void orte_filem_rsh_permission_callback(int status,
                                                orte_process_name_t* sender,
-                                               orte_buffer_t *buffer,
+                                               opal_buffer_t *buffer,
                                                orte_rml_tag_t tag,
                                                void* cbdata);
 static int orte_filem_rsh_permission_ask(orte_process_name_t* sender, int num_sends);
@@ -209,8 +206,8 @@ static orte_filem_base_module_t loc_module = {
 orte_filem_base_module_1_0_0_t *
 orte_filem_rsh_component_query(int *priority)
 {
-    opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                        "filem:rsh: component_query()");
+    OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                         "filem:rsh: component_query()"));
 
     *priority = mca_filem_rsh_component.super.priority;
 
@@ -221,8 +218,8 @@ int orte_filem_rsh_module_init(void)
 {
     int ret;
 
-    opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                        "filem:rsh: module_init()");
+    OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                         "filem:rsh: module_init()"));
 
     /*
      * Allocate the work pools
@@ -237,15 +234,6 @@ int orte_filem_rsh_module_init(void)
     work_pool_all_done = false;
 
     /*
-     * Start the listener for path resolution
-     */ 
-    if( ORTE_SUCCESS != (ret = orte_filem_base_listener_init(orte_filem_rsh_query_callback) ) ) {
-        opal_output(mca_filem_rsh_component.super.output_handle,
-                    "filem:rsh:init Failed to start listener\n");
-        return ret;
-    }
-
-    /*
      * Start the listener for permission
      */ 
     if( ORTE_SUCCESS != (ret = orte_filem_rsh_permission_listener_init(orte_filem_rsh_permission_callback) ) ) {
@@ -254,6 +242,12 @@ int orte_filem_rsh_module_init(void)
         return ret;
     }
     
+    /* start the base receive */
+    if (ORTE_SUCCESS != (ret = orte_filem_base_comm_start())) {
+        opal_output(mca_filem_rsh_component.super.output_handle,
+                    "filem:rsh:init Failed to start base receive\n");
+        return ret;
+    }
     return ORTE_SUCCESS;
 }
 
@@ -261,8 +255,8 @@ int orte_filem_rsh_module_finalize(void)
 {
     opal_list_item_t *item = NULL;
 
-    opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                        "filem:rsh: module_finalize()");
+    OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                         "filem:rsh: module_finalize()"));
 
     /*
      * Make sure all active requests are completed
@@ -274,8 +268,12 @@ int orte_filem_rsh_module_finalize(void)
     /*
      * Stop the listeners
      */
-    orte_filem_base_listener_cancel();
     orte_filem_rsh_permission_listener_cancel();
+    
+    /*
+     * Stop the base receive
+     */
+    orte_filem_base_comm_stop();
 
     /*
      * Deallocate the work pools
@@ -492,8 +490,8 @@ int orte_filem_rsh_wait(orte_filem_base_request_t *request)
                     continue;
                 }
 
-                opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                                    "filem:rsh: wait(): Transfer complete. Cleanup\n");
+                OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                                     "filem:rsh: wait(): Transfer complete. Cleanup\n"));
 
                 opal_list_remove_item(&work_pool_active, item);
 
@@ -550,6 +548,8 @@ int orte_filem_rsh_wait_all(opal_list_t * request_list)
         orte_filem_base_request_t *request = (orte_filem_base_request_t *) item;
 
         if( ORTE_SUCCESS != (ret = orte_filem_rsh_wait(request)) ) {
+            opal_output(mca_filem_rsh_component.super.output_handle,
+                        "filem:rsh: wait_all(): Wait failed (%d)", ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -584,31 +584,64 @@ static int orte_filem_rsh_start_copy(orte_filem_base_request_t *request) {
              p_item  = opal_list_get_next(   p_item) ) {
             orte_filem_base_process_set_t * p_set = (orte_filem_base_process_set_t*)p_item;
 
-            opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                                "filem:rsh: copy(): %s -> %s Moving file %s to %s\n",
-                                ORTE_NAME_PRINT(&p_set->source),
-                                ORTE_NAME_PRINT(&p_set->sink),
-                                f_set->local_target,
-                                f_set->remote_target);
+            if( request->movement_type == ORTE_FILEM_MOVE_TYPE_PUT ) {
+                OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                                     "filem:rsh: copy(): %s -> %s: Moving file %s to %s\n",
+                                     ORTE_NAME_PRINT(&p_set->source),
+                                     ORTE_NAME_PRINT(&p_set->sink),
+                                     f_set->local_target,
+                                     f_set->remote_target));
+            } else {
+                OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                                     "filem:rsh: copy(): %s -> %s: Moving file %s to %s\n",
+                                     ORTE_NAME_PRINT(&p_set->source),
+                                     ORTE_NAME_PRINT(&p_set->sink),
+                                     f_set->remote_target,
+                                     f_set->local_target));
+            }
 
             /*
              * Get the remote machine identifier from the process_name struct
              */
+            OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                                 "filem:rsh: copy(): %s -> %s: Get node name.\n",
+                                 ORTE_NAME_PRINT(&p_set->source),
+                                 ORTE_NAME_PRINT(&p_set->sink)));
             if( ORTE_SUCCESS != (ret = orte_filem_base_get_proc_node_name(&p_set->source, &remote_machine))) {
+                opal_output(mca_filem_rsh_component.super.output_handle,
+                            "filem:rsh: copy(): Get Node Name failed (%d)", ret);
                 exit_status = ret;
                 goto cleanup;
             }
+            OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                                 "filem:rsh: copy(): %s -> %s: Got node name: %s\n",
+                                 ORTE_NAME_PRINT(&p_set->source),
+                                 ORTE_NAME_PRINT(&p_set->sink),
+                                 remote_machine));
 
             /*
              * Fix the remote_filename.
              * If it is an absolute path, then assume it is valid for the remote server
              * ow then we must construct the correct path.
              */
+            OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                                 "filem:rsh: copy(): %s -> %s: Query remote path (%s).\n",
+                                 ORTE_NAME_PRINT(&p_set->source),
+                                 ORTE_NAME_PRINT(&p_set->sink),
+                                 f_set->remote_target));
             remote_file = strdup(f_set->remote_target);
             if( ORTE_SUCCESS != (ret = orte_filem_rsh_query_remote_path(&remote_file, &p_set->source, &f_set->target_flag) ) ) {
+                opal_output(mca_filem_rsh_component.super.output_handle,
+                            "filem:rsh: copy(): Query Remote Path failed (%d)", ret);
                 exit_status = ret;
                 goto cleanup;
             }
+            OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                                 "filem:rsh: copy(): %s -> %s: Remote path (%s) is (%s).\n",
+                                 ORTE_NAME_PRINT(&p_set->source),
+                                 ORTE_NAME_PRINT(&p_set->sink),
+                                 f_set->remote_target,
+                                 remote_file));
 
             /*
              * Transfer the file or directory
@@ -617,6 +650,8 @@ static int orte_filem_rsh_start_copy(orte_filem_base_request_t *request) {
                 dir_arg = strdup(" -r ");
             }
             else if(ORTE_FILEM_TYPE_UNKNOWN == f_set->target_flag) {
+                opal_output(mca_filem_rsh_component.super.output_handle,
+                            "filem:rsh: copy(): Error: File type unknown");
                 goto continue_set;
             }
             else {
@@ -633,8 +668,8 @@ static int orte_filem_rsh_start_copy(orte_filem_base_request_t *request) {
                          f_set->local_target,
                          remote_machine, 
                          remote_file);
-                opal_output_verbose(17, mca_filem_rsh_component.super.output_handle,
-                                    "filem:rsh:put about to execute [%s]", command);
+                OPAL_OUTPUT_VERBOSE((17, mca_filem_rsh_component.super.output_handle,
+                                     "filem:rsh:put about to execute [%s]", command));
 
                 if( ORTE_SUCCESS != (ret = orte_filem_rsh_start_command(p_set,
                                                                         f_set,
@@ -656,8 +691,8 @@ static int orte_filem_rsh_start_copy(orte_filem_base_request_t *request) {
                          remote_file,
                          f_set->local_target);
                 
-                opal_output_verbose(17, mca_filem_rsh_component.super.output_handle,
-                                    "filem:rsh:get about to execute [%s]", command);
+                OPAL_OUTPUT_VERBOSE((17, mca_filem_rsh_component.super.output_handle,
+                                     "filem:rsh:get about to execute [%s]", command));
                 
                 if( ORTE_SUCCESS != (ret = orte_filem_rsh_start_command(p_set,
                                                                         f_set,
@@ -777,8 +812,8 @@ static int orte_filem_rsh_start_rm(orte_filem_base_request_t *request)
                  dir_arg,
                  remote_targets);
 
-        opal_output_verbose(15, mca_filem_rsh_component.super.output_handle,
-                            "filem:rsh:rm about to execute [%s]", command);
+        OPAL_OUTPUT_VERBOSE((15, mca_filem_rsh_component.super.output_handle,
+                             "filem:rsh:rm about to execute [%s]", command));
 
         if( ORTE_SUCCESS != (ret = orte_filem_rsh_start_command(p_set,
                                                                 NULL,
@@ -873,9 +908,9 @@ static int  orte_filem_rsh_start_command(orte_filem_base_process_set_t *proc_set
     /*
      * Ask for permission to send this file so we do not overwhelm the peer
      */
-    opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                        "filem:rsh: start_command(): Ask permission to send from proc %s",
-                        ORTE_NAME_PRINT(&(proc_set->source)));
+    OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                         "filem:rsh: start_command(): Ask permission to send from proc %s",
+                         ORTE_NAME_PRINT(&(proc_set->source))));
     if( ORTE_SUCCESS != (ret = orte_filem_rsh_permission_ask(&(proc_set->source), 1)) ) {
         return ret;
     }
@@ -893,9 +928,9 @@ static int start_child(char * command,
     char **argv = NULL;
     int status, ret;
 
-    opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                        "filem:rsh: start_child(): Starting the command [%s]",
-                        command);
+    OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                         "filem:rsh: start_child(): Starting the command [%s]",
+                         command));
     /* fork() -> done = false, active = true */
     request->is_done[index]     = false;
     request->is_active[index]   = true;
@@ -913,9 +948,9 @@ static int start_child(char * command,
         exit(ORTE_ERROR);
     }
     else if( request->exit_status[index] > 0 ) {
-        opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                            "filem:rsh: start_child(): Started Child %d Running command [%s]",
-                            request->exit_status[index], command);
+        OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                             "filem:rsh: start_child(): Started Child %d Running command [%s]",
+                             request->exit_status[index], command));
 
         /*
          * Register a callback for when this process exits
@@ -941,9 +976,9 @@ static void filem_rsh_waitpid_cb(pid_t pid, int status, void* cbdata)
     opal_list_item_t *item = NULL;
     int index;
 
-    opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                        "filem:rsh: waitpid_cb(): Pid %d finished with status [%d].\n",
-                        pid, status);
+    OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                         "filem:rsh: waitpid_cb(): Pid %d finished with status [%d].\n",
+                         pid, status));
 
     /*
      * Find this pid in the active queue
@@ -961,9 +996,9 @@ static void filem_rsh_waitpid_cb(pid_t pid, int status, void* cbdata)
             /* waitpid() -> done = true, active = false */
             request->is_done[index]     = true;
             request->is_active[index]   = false;
-            opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                                "filem:rsh: waitpid_cb(): Marked pid %d as complete [status = %d].\n",
-                                pid, status);
+            OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                                 "filem:rsh: waitpid_cb(): Marked pid %d as complete [status = %d].\n",
+                                 pid, status));
             break;
         }
     }
@@ -979,60 +1014,28 @@ static void filem_rsh_waitpid_cb(pid_t pid, int status, void* cbdata)
  * Path resolution functions
  ******************************/
 /*
- * This function is paired with the orte_filem_rsh_query_callback() function on the remote machine
+ * This function is paired with the filem_base_process_get_remote_path_cmd() function on the remote machine
  */
 static int orte_filem_rsh_query_remote_path(char **remote_ref, orte_process_name_t *peer, int *flag) {
     int ret;
 
-#if 1 /* JJH: Some debugging */
-    /* If it is an absolute path */
+#if 0
+    /* An optimization if we are guarenteed that this remote files exists.
+     * Then the 'scp -r' option will work with both files and directories.
+     * JJH: For general correctness disable this piece of code.
+     */
     if( *remote_ref[0] == '/' ) {
         *flag = ORTE_FILEM_TYPE_DIR;
         return ORTE_SUCCESS;
     }
 #endif
 
-    /* Put our listener on hold */
-    orte_filem_base_listener_cancel();
-
     /* Call the base function */
-    if( ORTE_SUCCESS != (ret = orte_filem_base_query_remote_path(remote_ref, peer, flag) ) ) {
-        return ret;
-    }
-
-    /* Reset the listener */
-    if( ORTE_SUCCESS != (ret = orte_filem_base_listener_init(orte_filem_rsh_query_callback) ) ) {
+    if( ORTE_SUCCESS != (ret = orte_filem_base_get_remote_path(remote_ref, peer, flag) ) ) {
         return ret;
     }
 
     return ORTE_SUCCESS;
-}
-
-/*
- * This function is paired with the orte_filem_rsh_query_remote_path() function on the 
- * requesting machine.
- * This function is responsible for:
- * - Constructing the remote absolute path for the specified file/dir
- * - Verify the existence of the file/dir
- * - Determine if the specified file/dir is in fact a file or dir or unknown if not found.
- * 
- */
-static void orte_filem_rsh_query_callback(int status,
-                                          orte_process_name_t* peer,
-                                          orte_buffer_t *buffer,
-                                          orte_rml_tag_t tag,
-                                          void* cbdata) 
-{
-    opal_output_verbose(15, mca_filem_rsh_component.super.output_handle,
-                        "filem:rsh: query_callback(%s -> %s)",
-                        ORTE_NAME_PRINT(orte_process_info.my_name),
-                        ORTE_NAME_PRINT(peer));
-
-    /* Call the base callback function */
-    orte_filem_base_query_callback(status, peer, buffer, tag, cbdata);
-
-    /* Reset the listener */
-    orte_filem_base_listener_init(orte_filem_rsh_query_callback);
 }
 
 /******************************
@@ -1074,7 +1077,7 @@ static int orte_filem_rsh_permission_listener_cancel(void)
 
 static void orte_filem_rsh_permission_callback(int status,
                                                orte_process_name_t* sender,
-                                               orte_buffer_t *buffer,
+                                               opal_buffer_t *buffer,
                                                orte_rml_tag_t tag,
                                                void* cbdata)
 {
@@ -1085,9 +1088,9 @@ static void orte_filem_rsh_permission_callback(int status,
     int num_req, num_allowed = 0;
     int perm_flag, i;
 
-    opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                        "filem:rsh: permission_callback(? ?): Peer %s ...",
-                        ORTE_NAME_PRINT(sender));
+    OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                         "filem:rsh: permission_callback(? ?): Peer %s ...",
+                         ORTE_NAME_PRINT(sender)));
 
     /*
      * Receive the flag indicating if this is:
@@ -1095,23 +1098,23 @@ static void orte_filem_rsh_permission_callback(int status,
      * - Allowing us to send (ORTE_FILEM_RSH_ALLOW)
      */
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &perm_flag, &n, ORTE_INT))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &perm_flag, &n, OPAL_INT))) {
         goto cleanup;
     }
 
     /* Asking for permission to send */
     if( ORTE_FILEM_RSH_ASK == perm_flag ) {
-        opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                            "filem:rsh: permission_callback(ASK): Peer %s Asking permission to send [Used %d of %d]",
-                            ORTE_NAME_PRINT(sender),
-                            cur_num_incomming,
-                            orte_filem_rsh_max_incomming);
+        OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                             "filem:rsh: permission_callback(ASK): Peer %s Asking permission to send [Used %d of %d]",
+                             ORTE_NAME_PRINT(sender),
+                             cur_num_incomming,
+                             orte_filem_rsh_max_incomming));
 
         /*
          * Receive the requested amount
          */
         n = 1;
-        if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &num_req, &n, ORTE_INT))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_req, &n, OPAL_INT))) {
             goto cleanup;
         }
 
@@ -1123,9 +1126,9 @@ static void orte_filem_rsh_permission_callback(int status,
          */
         if( orte_filem_rsh_max_incomming < cur_num_incomming + 1) {
             /* Add to the waiting list */
-            opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                                "filem:rsh: permission_callback(ASK): Add Peer %s request to waiting list",
-                                ORTE_NAME_PRINT(sender));
+            OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                                 "filem:rsh: permission_callback(ASK): Add Peer %s request to waiting list",
+                                 ORTE_NAME_PRINT(sender)));
 
             wp_item = OBJ_NEW(orte_filem_rsh_work_pool_item_t);
             wp_item->proc_set.source.jobid = sender->jobid;
@@ -1138,24 +1141,24 @@ static void orte_filem_rsh_permission_callback(int status,
             num_allowed = 1;
             cur_num_incomming += 1;
 
-            opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                                "filem:rsh: permission_callback(ASK): Respond to Peer %s with %d",
-                                ORTE_NAME_PRINT(sender), num_allowed);
+            OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                                 "filem:rsh: permission_callback(ASK): Respond to Peer %s with %d",
+                                 ORTE_NAME_PRINT(sender), num_allowed));
 
             permission_send_num_allowed(sender, num_allowed);
         }
     }
     /* Allowing us to start some number of sends */
     else if( ORTE_FILEM_RSH_ALLOW == perm_flag ) {
-        opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                            "filem:rsh: permission_callback(ALLOW): Peer %s Allowing me to send",
-                            ORTE_NAME_PRINT(sender));
+        OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                             "filem:rsh: permission_callback(ALLOW): Peer %s Allowing me to send",
+                             ORTE_NAME_PRINT(sender)));
 
         /*
          * Receive the allowed transmit amount
          */
         n = 1;
-        if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &num_req, &n, ORTE_INT))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_req, &n, OPAL_INT))) {
             goto cleanup;
         }
 
@@ -1166,9 +1169,9 @@ static void orte_filem_rsh_permission_callback(int status,
          */
         for(i = 0; i < num_req; ++i ) {
             if( 0 >= opal_list_get_size(&work_pool_pending) ) {
-                opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                                    "filem:rsh: permission_callback(ALLOW): No more pending sends to peer %s...",
-                                    ORTE_NAME_PRINT(sender));
+                OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                                     "filem:rsh: permission_callback(ALLOW): No more pending sends to peer %s...",
+                                     ORTE_NAME_PRINT(sender)));
                 break;
             }
 
@@ -1184,13 +1187,13 @@ static void orte_filem_rsh_permission_callback(int status,
             }
 
             if( item == opal_list_get_end(&work_pool_pending) ) {
-                opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                                    "filem:rsh: permission_callback(ALLOW): Unable to find message on the pending list\n");
+                OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                                     "filem:rsh: permission_callback(ALLOW): Unable to find message on the pending list\n"));
             }
 
-            opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                                "filem:rsh: permission_callback(ALLOW): Starting to send to peer %s... (# pending = %d)",
-                                ORTE_NAME_PRINT(sender), (int)opal_list_get_size(&work_pool_pending));
+            OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                                 "filem:rsh: permission_callback(ALLOW): Starting to send to peer %s... (# pending = %d)",
+                                 ORTE_NAME_PRINT(sender), (int)opal_list_get_size(&work_pool_pending)));
             wp_item->active = true;
             opal_list_append(&work_pool_active, &(wp_item->super));
             if( ORTE_SUCCESS != (ret = start_child(wp_item->command,
@@ -1202,15 +1205,15 @@ static void orte_filem_rsh_permission_callback(int status,
     }
     /* Peer said they are done sending one or more files */
     else if( ORTE_FILEM_RSH_DONE == perm_flag ) {
-        opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
-                            "filem:rsh: permission_callback(DONE): Peer %s is done sending to me",
-                            ORTE_NAME_PRINT(sender));
+        OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
+                             "filem:rsh: permission_callback(DONE): Peer %s is done sending to me",
+                             ORTE_NAME_PRINT(sender)));
 
         /*
          * Receive the number of open slots
          */
         n = 1;
-        if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &num_req, &n, ORTE_INT))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_req, &n, OPAL_INT))) {
             goto cleanup;
         }
 
@@ -1243,17 +1246,17 @@ static int orte_filem_rsh_permission_ask(orte_process_name_t* source,
                                          int num_sends)
 {
     int ret, exit_status = ORTE_SUCCESS;
-    orte_buffer_t loc_buffer;
+    opal_buffer_t loc_buffer;
     int perm_flag = ORTE_FILEM_RSH_ASK;
 
-    OBJ_CONSTRUCT(&loc_buffer, orte_buffer_t);
+    OBJ_CONSTRUCT(&loc_buffer, opal_buffer_t);
 
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(&loc_buffer, &perm_flag, 1, ORTE_INT))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&loc_buffer, &perm_flag, 1, OPAL_INT))) {
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(&loc_buffer, &num_sends, 1, ORTE_INT))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&loc_buffer, &num_sends, 1, OPAL_INT))) {
         exit_status = ret;
         goto cleanup;
     }
@@ -1271,17 +1274,17 @@ static int orte_filem_rsh_permission_ask(orte_process_name_t* source,
 
 static int permission_send_done(orte_process_name_t* peer, int num_avail) {
     int ret, exit_status = ORTE_SUCCESS;
-    orte_buffer_t loc_buffer;
+    opal_buffer_t loc_buffer;
     int perm_flag = ORTE_FILEM_RSH_DONE;
 
-    OBJ_CONSTRUCT(&loc_buffer, orte_buffer_t);
+    OBJ_CONSTRUCT(&loc_buffer, opal_buffer_t);
 
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(&loc_buffer, &perm_flag, 1, ORTE_INT))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&loc_buffer, &perm_flag, 1, OPAL_INT))) {
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(&loc_buffer, &num_avail, 1, ORTE_INT))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&loc_buffer, &num_avail, 1, OPAL_INT))) {
         exit_status = ret;
         goto cleanup;
     }
@@ -1300,17 +1303,17 @@ static int permission_send_done(orte_process_name_t* peer, int num_avail) {
 static int permission_send_num_allowed(orte_process_name_t* peer, int num_allowed)
 {
     int ret, exit_status = ORTE_SUCCESS;
-    orte_buffer_t loc_buffer;
+    opal_buffer_t loc_buffer;
     int perm_flag = ORTE_FILEM_RSH_ALLOW;
 
-    OBJ_CONSTRUCT(&loc_buffer, orte_buffer_t);
+    OBJ_CONSTRUCT(&loc_buffer, opal_buffer_t);
 
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(&loc_buffer, &perm_flag, 1, ORTE_INT))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&loc_buffer, &perm_flag, 1, OPAL_INT))) {
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(&loc_buffer, &num_allowed, 1, ORTE_INT))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&loc_buffer, &num_allowed, 1, OPAL_INT))) {
         exit_status = ret;
         goto cleanup;
     }

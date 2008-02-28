@@ -22,11 +22,14 @@
 
 #include "ompi_config.h"
 
-#include "orte/mca/ns/base/base.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/dss/dss.h"
+#include "opal/dss/dss.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
+
+#include "ompi/mca/dpm/dpm.h"
 
 #include "btl_openib.h"
 #include "btl_openib_endpoint.h" 
@@ -59,10 +62,10 @@ static int send_connect_data(mca_btl_base_endpoint_t* endpoint,
                              uint8_t message_type);
 
 static void rml_send_cb(int status, orte_process_name_t* endpoint, 
-                        orte_buffer_t* buffer, orte_rml_tag_t tag, 
+                        opal_buffer_t* buffer, orte_rml_tag_t tag, 
                         void* cbdata);
 static void rml_recv_cb(int status, orte_process_name_t* process_name, 
-                        orte_buffer_t* buffer, orte_rml_tag_t tag, 
+                        opal_buffer_t* buffer, orte_rml_tag_t tag, 
                         void* cbdata);
 
 /*
@@ -107,7 +110,7 @@ static int oob_init(void)
     int rc;
 
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, 
-                                 ORTE_RML_TAG_OPENIB,
+                                 OMPI_RML_TAG_OPENIB,
                                  ORTE_RML_PERSISTENT,
                                  rml_recv_cb,
                                  NULL);
@@ -158,7 +161,7 @@ static int oob_query(mca_btl_openib_hca_t *hca)
  */
 static int oob_finalize(void)
 {
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_OPENIB);
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, OMPI_RML_TAG_OPENIB);
     return OMPI_SUCCESS;
 }
 
@@ -416,7 +419,7 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
 static int send_connect_data(mca_btl_base_endpoint_t* endpoint, 
                              uint8_t message_type)
 {
-    orte_buffer_t* buffer = OBJ_NEW(orte_buffer_t);
+    opal_buffer_t* buffer = OBJ_NEW(opal_buffer_t);
     int rc;
     
     if (NULL == buffer) {
@@ -425,15 +428,15 @@ static int send_connect_data(mca_btl_base_endpoint_t* endpoint,
     }
 
     /* pack the info in the send buffer */ 
-    BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT8));
-    rc = orte_dss.pack(buffer, &message_type, 1, ORTE_UINT8);
+    BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT8));
+    rc = opal_dss.pack(buffer, &message_type, 1, OPAL_UINT8);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-    BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT64));
-    rc = orte_dss.pack(buffer, &endpoint->subnet_id, 1, ORTE_UINT64);
+    BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT64));
+    rc = opal_dss.pack(buffer, &endpoint->subnet_id, 1, OPAL_UINT64);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -441,16 +444,16 @@ static int send_connect_data(mca_btl_base_endpoint_t* endpoint,
 
     if (message_type != ENDPOINT_CONNECT_REQUEST) {
         /* send the QP connect request info we respond to */
-        BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
-        rc = orte_dss.pack(buffer,
+        BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
+        rc = opal_dss.pack(buffer,
                            &endpoint->rem_info.rem_qps[0].rem_qp_num, 1,
-                           ORTE_UINT32);
+                           OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT16));
-        rc = orte_dss.pack(buffer, &endpoint->rem_info.rem_lid, 1, ORTE_UINT16);
+        BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT16));
+        rc = opal_dss.pack(buffer, &endpoint->rem_info.rem_lid, 1, OPAL_UINT16);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -461,37 +464,37 @@ static int send_connect_data(mca_btl_base_endpoint_t* endpoint,
         int qp;
         /* stuff all the QP info into the buffer */
         for (qp = 0; qp < mca_btl_openib_component.num_qps; qp++) { 
-            BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
-            rc = orte_dss.pack(buffer, &endpoint->qps[qp].qp->lcl_qp->qp_num,
-                               1, ORTE_UINT32);
+            BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
+            rc = opal_dss.pack(buffer, &endpoint->qps[qp].qp->lcl_qp->qp_num,
+                               1, OPAL_UINT32);
             if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
-            rc = orte_dss.pack(buffer, &endpoint->qps[qp].qp->lcl_psn, 1,
-                               ORTE_UINT32); 
+            BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
+            rc = opal_dss.pack(buffer, &endpoint->qps[qp].qp->lcl_psn, 1,
+                               OPAL_UINT32); 
             if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
         }
         
-        BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT16));
-        rc = orte_dss.pack(buffer, &endpoint->endpoint_btl->lid, 1, ORTE_UINT16);
+        BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT16));
+        rc = opal_dss.pack(buffer, &endpoint->endpoint_btl->lid, 1, OPAL_UINT16);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
-        rc = orte_dss.pack(buffer, &endpoint->endpoint_btl->hca->mtu, 1,
-                ORTE_UINT32);
+        BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
+        rc = opal_dss.pack(buffer, &endpoint->endpoint_btl->hca->mtu, 1,
+                OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        BTL_VERBOSE(("packing %d of %d\n", 1, ORTE_UINT32));
-        rc = orte_dss.pack(buffer, &endpoint->index, 1, ORTE_UINT32);
+        BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
+        rc = opal_dss.pack(buffer, &endpoint->index, 1, OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -500,7 +503,7 @@ static int send_connect_data(mca_btl_base_endpoint_t* endpoint,
 
     /* send to remote endpoint */
     rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, 
-                                 buffer, ORTE_RML_TAG_OPENIB, 0,
+                                 buffer, OMPI_RML_TAG_OPENIB, 0,
                                  rml_send_cb, NULL);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
@@ -519,7 +522,7 @@ static int send_connect_data(mca_btl_base_endpoint_t* endpoint,
  * remote peer
  */
 static void rml_send_cb(int status, orte_process_name_t* endpoint, 
-                        orte_buffer_t* buffer, orte_rml_tag_t tag, 
+                        opal_buffer_t* buffer, orte_rml_tag_t tag, 
                         void* cbdata)
 {
     OBJ_RELEASE(buffer);
@@ -532,7 +535,7 @@ static void rml_send_cb(int status, orte_process_name_t* endpoint,
  * otherwise try to modify QP's and establish reliable connection
  */
 static void rml_recv_cb(int status, orte_process_name_t* process_name, 
-                        orte_buffer_t* buffer, orte_rml_tag_t tag, 
+                        opal_buffer_t* buffer, orte_rml_tag_t tag, 
                         void* cbdata)
 {
     mca_btl_openib_proc_t *ib_proc;
@@ -548,29 +551,29 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
     
     /* start by unpacking data first so we know who is knocking at 
        our door */ 
-    BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT8));
-    rc = orte_dss.unpack(buffer, &message_type, &cnt, ORTE_UINT8);
+    BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT8));
+    rc = opal_dss.unpack(buffer, &message_type, &cnt, OPAL_UINT8);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
     }
     
-    BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT64));
-    rc = orte_dss.unpack(buffer, &rem_info.rem_subnet_id, &cnt, ORTE_UINT64);
+    BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT64));
+    rc = opal_dss.unpack(buffer, &rem_info.rem_subnet_id, &cnt, OPAL_UINT64);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
     }
     
     if (ENDPOINT_CONNECT_REQUEST != message_type) {
-        BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT32));
-        rc = orte_dss.unpack(buffer, &lcl_qp, &cnt, ORTE_UINT32);
+        BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
+        rc = opal_dss.unpack(buffer, &lcl_qp, &cnt, OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return;
         }
-        BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT16));
-        rc = orte_dss.unpack(buffer, &lcl_lid, &cnt, ORTE_UINT16);
+        BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT16));
+        rc = opal_dss.unpack(buffer, &lcl_lid, &cnt, OPAL_UINT16);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return;
@@ -585,36 +588,36 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
         
         /* unpack all the qp info */
         for (qp = 0; qp < mca_btl_openib_component.num_qps; ++qp) { 
-            BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT32));
-            rc = orte_dss.unpack(buffer, &rem_info.rem_qps[qp].rem_qp_num, &cnt,
-                                 ORTE_UINT32);
+            BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
+            rc = opal_dss.unpack(buffer, &rem_info.rem_qps[qp].rem_qp_num, &cnt,
+                                 OPAL_UINT32);
             if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 return;
             }
-            BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT32));
-            rc = orte_dss.unpack(buffer, &rem_info.rem_qps[qp].rem_psn, &cnt,
-                                 ORTE_UINT32);
+            BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
+            rc = opal_dss.unpack(buffer, &rem_info.rem_qps[qp].rem_psn, &cnt,
+                                 OPAL_UINT32);
             if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 return;
             }
         }
         
-        BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT16));
-        rc = orte_dss.unpack(buffer, &rem_info.rem_lid, &cnt, ORTE_UINT16);
+        BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT16));
+        rc = opal_dss.unpack(buffer, &rem_info.rem_lid, &cnt, OPAL_UINT16);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return;
         }
-        BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT32));
-        rc = orte_dss.unpack(buffer, &rem_info.rem_mtu, &cnt, ORTE_UINT32);
+        BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
+        rc = opal_dss.unpack(buffer, &rem_info.rem_mtu, &cnt, OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return;
         }
-        BTL_VERBOSE(("unpacking %d of %d\n", cnt, ORTE_UINT32));
-        rc = orte_dss.unpack(buffer, &rem_info.rem_index, &cnt, ORTE_UINT32);
+        BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
+        rc = opal_dss.unpack(buffer, &rem_info.rem_index, &cnt, OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return;
@@ -625,7 +628,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
                  rem_info.rem_lid, 
                  rem_info.rem_subnet_id));
     
-    master = orte_ns.compare_fields(ORTE_NS_CMP_ALL, orte_process_info.my_name,
+    master = orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME,
                                     process_name) > 0 ? true : false;
     
     for (ib_proc = (mca_btl_openib_proc_t*)
@@ -635,8 +638,8 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
         ib_proc  = (mca_btl_openib_proc_t*)opal_list_get_next(ib_proc)) {
         bool found = false;
         
-        if (orte_ns.compare_fields(ORTE_NS_CMP_ALL,
-                                   &ib_proc->proc_guid, process_name) != ORTE_EQUAL) {
+        if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+                                   &ib_proc->proc_guid, process_name) != OPAL_EQUAL) {
             continue;
         }
         

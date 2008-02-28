@@ -26,17 +26,12 @@
  * includes
  */
 #include "orte_config.h"
+#include "orte/constants.h"
+#include "orte/types.h"
 
-#include "orte/orte_constants.h"
-#include "orte/orte_types.h"
-
-#include "opal/util/output.h"
-#include "opal/mca/mca.h"
-#include "opal/mca/base/mca_base_param.h"
-
-#include "orte/dss/dss.h"
-#include "orte/util/proc_info.h"
+#include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/base.h"
@@ -44,7 +39,7 @@
 
 static bool recv_issued=false;
 static void orte_rml_base_recv(int status, orte_process_name_t* sender,
-                               orte_buffer_t* buffer, orte_rml_tag_t tag,
+                               opal_buffer_t* buffer, orte_rml_tag_t tag,
                                void* cbdata);
 
 int orte_rml_base_comm_start(void)
@@ -93,28 +88,22 @@ int orte_rml_base_comm_stop(void)
 
 static void
 orte_rml_base_recv(int status, orte_process_name_t* sender,
-                   orte_buffer_t* buffer, orte_rml_tag_t tag,
+                   opal_buffer_t* buffer, orte_rml_tag_t tag,
                    void* cbdata)
 {
     orte_rml_cmd_flag_t command;
     orte_std_cntr_t count;
-    orte_gpr_notify_data_t *data;
     int rc;
 
     count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &command, &count, ORTE_RML_CMD))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &command, &count, ORTE_RML_CMD))) {
         ORTE_ERROR_LOG(rc);
         return;
     }
 
     switch (command) {
         case ORTE_RML_UPDATE_CMD:
-            count = 1;
-            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &data, &count, ORTE_GPR_NOTIFY_DATA))) {
-                ORTE_ERROR_LOG(rc);
-                return;
-            }
-            orte_rml_base_contact_info_notify(data, NULL);
+            orte_rml_base_update_contact_info(buffer);
             break;
             
         default:

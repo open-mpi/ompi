@@ -26,9 +26,7 @@
 #include "orte/mca/ras/ras.h"
 #include "orte/mca/ras/base/base.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     struct orte_ras_tm_component_t {
         orte_ras_base_component_t super;
@@ -39,8 +37,6 @@ extern "C" {
     ORTE_DECLSPEC extern orte_ras_tm_component_t mca_ras_tm_component;
     ORTE_DECLSPEC extern orte_ras_base_module_t orte_ras_tm_module;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif

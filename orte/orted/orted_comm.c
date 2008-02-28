@@ -20,6 +20,7 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -36,7 +37,6 @@
 #include <errno.h>
 #include <signal.h>
 
-#include "orte/orte_constants.h"
 
 #include "opal/event/event.h"
 #include "opal/mca/base/base.h"
@@ -53,143 +53,102 @@
 #include "opal/util/trace.h"
 #include "opal/util/argv.h"
 #include "opal/runtime/opal.h"
+#include "opal/runtime/opal_progress.h"
 #include "opal/mca/base/mca_base_param.h"
 
 
-#include "orte/dss/dss.h"
+#include "opal/dss/dss.h"
 #include "orte/class/orte_value_array.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
-#include "orte/util/univ_info.h"
 #include "orte/util/session_dir.h"
-#include "orte/util/universe_setup_file_io.h"
+#include "orte/util/name_fns.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ns/ns.h"
-#include "orte/mca/ras/ras.h"
-#include "orte/mca/rds/rds.h"
-#include "orte/mca/rmaps/rmaps.h"
-#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"
-#include "orte/mca/smr/smr.h"
-#include "orte/mca/rmgr/rmgr.h"
-#include "orte/mca/rmgr/base/rmgr_private.h"
 #include "orte/mca/odls/odls.h"
-#include "orte/mca/pls/pls.h"
+#include "orte/mca/plm/plm.h"
 #include "orte/mca/routed/routed.h"
 
-
 #include "orte/runtime/runtime.h"
-#include "orte/runtime/params.h"
+#include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
+#include "orte/runtime/orte_wakeup.h"
 
 #include "orte/orted/orted.h"
 
 /*
  * Globals
  */
-static bool warmup_routes;
-
-static int binomial_route_msg(orte_process_name_t *sender,
-                              orte_buffer_t *buf,
-                              orte_rml_tag_t tag);
+static bool send_relay_buffer;
+static opal_buffer_t *relay_buf;
+static orte_grpcomm_mode_t relay_mode;
 
 static int process_commands(orte_process_name_t* sender,
-                            orte_buffer_t *buffer,
+                            opal_buffer_t *buffer,
                             orte_rml_tag_t tag);
 
 
-void orte_daemon_recv_routed(int status, orte_process_name_t* sender,
-                             orte_buffer_t *buffer, orte_rml_tag_t tag,
-                             void* cbdata)
+/* local callback function for non-blocking sends */
+static void send_callback(int status, orte_process_name_t *peer,
+                          opal_buffer_t *buf, orte_rml_tag_t tag,
+                          void *cbdata)
 {
-    orte_daemon_cmd_flag_t routing_mode;
+    /* nothing to do here - just release buffer and return */
+    OBJ_RELEASE(buf);
+}
+
+static void send_relay(void)
+{
+    opal_list_t recips;
+    opal_list_item_t *item;
     int ret;
-    orte_std_cntr_t n;
-
-    OPAL_TRACE(1);
-
-    OPAL_THREAD_LOCK(&orted_comm_mutex);
-
-    if (orte_debug_daemons_flag) {
-       opal_output(0, "%s orted_recv_routed: received message from %s",
-                   ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                   ORTE_NAME_PRINT(sender));
-    }
-
-    /* init the warmup routes flag */
-    warmup_routes = false;
     
-    /* unpack the routing algorithm */
-    n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &routing_mode, &n, ORTE_DAEMON_CMD))) {
+    /* setup a list of next recipients */
+    OBJ_CONSTRUCT(&recips, opal_list_t);
+    /* ask the active grpcomm module for the next recipients */
+    if (ORTE_SUCCESS != (ret = orte_grpcomm.next_recipients(&recips, relay_mode))) {
         ORTE_ERROR_LOG(ret);
         goto CLEANUP;
     }
-
-    /* if the mode is BINOMIAL, then handle that elsewhere */
-    if (ORTE_DAEMON_ROUTE_BINOMIAL == routing_mode) {
-        if (ORTE_SUCCESS != (ret = binomial_route_msg(sender, buffer, tag))) {
+    /* send the message - if we are at the end of the chain, then there
+     * will be nothing on the list, so remove_first will return NULL
+     */
+    while (NULL != (item = opal_list_remove_first(&recips))) {
+        orte_namelist_t *target = (orte_namelist_t*)item;
+        if (0 > (ret = orte_rml.send_buffer(&target->name, relay_buf, ORTE_RML_TAG_DAEMON, 0))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
         }
-    } else {
-        /* process the command locally */
-        if (ORTE_SUCCESS != (ret = process_commands(sender, buffer, tag))) {
-            ORTE_ERROR_LOG(ret);
-        }
+        OBJ_RELEASE(item);
     }
-
+    
 CLEANUP:
-    /* see if we need to warmup any daemon-to-daemon routes */
-    if (warmup_routes) {
-        if (ORTE_SUCCESS != (ret = orte_routed.warmup_routes())) {
-            ORTE_ERROR_LOG(ret);
-        }
-    }
-    
-    OPAL_THREAD_UNLOCK(&orted_comm_mutex);
+    /* ensure that we don't try to do this again */
+    send_relay_buffer = false;
+    /* cleanup */
+    OBJ_DESTRUCT(&recips);
+    OBJ_RELEASE(relay_buf);
+    /* make sure these messages have a chance to get out */
+    opal_progress();
+}
 
-    /* reissue the non-blocking receive */
-    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_ROUTED,
-                                  ORTE_RML_NON_PERSISTENT, orte_daemon_recv_routed, NULL);
-    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(ret);
-    }
-}    
-    
 void orte_daemon_recv(int status, orte_process_name_t* sender,
-                      orte_buffer_t *buffer, orte_rml_tag_t tag,
+                      opal_buffer_t *buffer, orte_rml_tag_t tag,
                       void* cbdata)
 {
     int ret;
     
-    OPAL_TRACE(1);
-    
-    OPAL_THREAD_LOCK(&orted_comm_mutex);
-    
-    if (orte_debug_daemons_flag) {
-        opal_output(0, "%s orted_recv_cmd: received message from %s",
-                    ORTE_NAME_PRINT(orte_process_info.my_name),
-                    ORTE_NAME_PRINT(sender));
-    }
-    
-    /* init the warmup routes flag */
-    warmup_routes = false;
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                         "%s orted_recv_cmd: received message from %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
 
-    /* process the command */
-    if (ORTE_SUCCESS != (ret = process_commands(sender, buffer, tag))) {
+    if (ORTE_SUCCESS != (ret = orte_daemon_cmd_processor(sender, buffer, tag))) {
         ORTE_ERROR_LOG(ret);
     }
-    
-    /* see if we need to warmup any daemon-to-daemon routes */
-    if (warmup_routes) {
-        if (ORTE_SUCCESS != (ret = orte_routed.warmup_routes())) {
-            ORTE_ERROR_LOG(ret);
-        }
-    }
-    
-    OPAL_THREAD_UNLOCK(&orted_comm_mutex);
     
     /* reissue the non-blocking receive */
     ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
@@ -197,30 +156,118 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
     }
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                         "%s orted_recv_cmd: reissued recv",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+}    
+    
+int orte_daemon_cmd_processor(orte_process_name_t* sender,
+                              opal_buffer_t *buffer, orte_rml_tag_t tag)
+{
+    int ret;
+    char *unpack_ptr;
+    orte_std_cntr_t n;
+    orte_daemon_cmd_flag_t command;
+
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                         "%s orte:daemon:cmd:processor called by %s for tag %ld",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender),
+                        (long)(tag)));
+
+    /* save the original buffer pointers */
+    unpack_ptr = buffer->unpack_ptr;
+    
+    /* unpack the initial command */
+    n = 1;
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &n, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(ret);
+        goto CLEANUP;
+    }
+    
+    /* see if this is a "process-and-relay" command */
+    if (ORTE_DAEMON_PROCESS_AND_RELAY_CMD == command) {
+        /* set flag so we can relay the buffer - after we process it! */
+        send_relay_buffer = true;
+        /* unpack the routing mode in use */
+        n = 1;
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &relay_mode, &n, ORTE_GRPCOMM_MODE))) {
+            ORTE_ERROR_LOG(ret);
+            goto CLEANUP;
+        }
+        /* initialize the relay buffer */
+        relay_buf = OBJ_NEW(opal_buffer_t);
+        if (NULL == relay_buf) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            goto PROCESS;
+        }
+        /* tell the downstream daemons to process-and-relay */
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(relay_buf, &command, 1, ORTE_DAEMON_CMD))) {
+            ORTE_ERROR_LOG(ret);
+            goto PROCESS;
+        }
+        /* tell the downstream daemons the routing algo in use */
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(relay_buf, &relay_mode, 1, ORTE_GRPCOMM_MODE))) {
+            ORTE_ERROR_LOG(ret);
+            goto CLEANUP;
+        }
+        /* copy the message payload to the relay buffer - this is non-destructive */
+        if (ORTE_SUCCESS != (ret = opal_dss.copy_payload(relay_buf, buffer))) {
+            ORTE_ERROR_LOG(ret);
+            goto PROCESS;
+        }
+        /* the remainder of the buffer contains the message to be processed */
+    } else {
+        /* rewind the buffer so we can process it correctly */
+        buffer->unpack_ptr = unpack_ptr;
+        /* no relay */
+        send_relay_buffer = false;
+    }
+    
+PROCESS:
+    /* process the command */
+    if (ORTE_SUCCESS != (ret = process_commands(sender, buffer, tag))) {
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                             "%s orte:daemon:cmd:processor failed on error %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(ret)));
+    }
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                         "%s orte:daemon:cmd:processor: processing commands completed",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* if we need to relay, do so now */
+    if (send_relay_buffer) {
+        send_relay();
+    }
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                         "%s orte:daemon:cmd:processor: relay completed",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+CLEANUP:
+    return ret;
 }    
 
 static int process_commands(orte_process_name_t* sender,
-                            orte_buffer_t *buffer,
+                            opal_buffer_t *buffer,
                             orte_rml_tag_t tag)
 {
     orte_daemon_cmd_flag_t command;
-    orte_buffer_t *relay;
+    opal_buffer_t *relay_msg;
     int ret;
     orte_std_cntr_t n;
     int32_t signal;
-    orte_gpr_notify_data_t *ndat;
-    orte_jobid_t *jobs, job;
-    orte_std_cntr_t num_jobs;
+    orte_jobid_t job;
     orte_rml_tag_t target_tag;
-    opal_list_t attrs;
-    opal_list_item_t *item;
     char *contact_info;
-    orte_buffer_t *answer;
+    opal_buffer_t *answer;
     orte_rml_cmd_flag_t rml_cmd;
 
     /* unpack the command */
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &command, &n, ORTE_DAEMON_CMD))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &n, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -230,58 +277,35 @@ static int process_commands(orte_process_name_t* sender,
 
         /****    KILL_LOCAL_PROCS   ****/
         case ORTE_DAEMON_KILL_LOCAL_PROCS:
-            /* unpack the number of jobids */
+            /* unpack the jobid */
             n = 1;
-            if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &num_jobs, &n, ORTE_STD_CNTR))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(ret);
-                goto CLEANUP;
-            }
-            /* unpack the array of jobids */
-            jobs = (orte_jobid_t*)malloc(num_jobs * sizeof(orte_jobid_t));
-            if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, jobs, &num_jobs, ORTE_JOBID))) {
-                ORTE_ERROR_LOG(ret);
-                free(jobs);
                 goto CLEANUP;
             }
 
-            for (n=0; n < num_jobs; n++) {
-                if (orte_debug_daemons_flag) {
-                    opal_output(0, "%s orted_cmd: received kill_local_procs for job %ld",
-                                ORTE_NAME_PRINT(orte_process_info.my_name), (long)jobs[n]);
-                }
-                
-                if (ORTE_SUCCESS != (ret = orte_odls.kill_local_procs(jobs[n], true))) {
-                    ORTE_ERROR_LOG(ret);
-                }
+            if (ORTE_SUCCESS != (ret = orte_odls.kill_local_procs(job, true))) {
+                ORTE_ERROR_LOG(ret);
             }
-            free(jobs);
             break;
             
         /****    SIGNAL_LOCAL_PROCS   ****/
         case ORTE_DAEMON_SIGNAL_LOCAL_PROCS:
             if (orte_debug_daemons_flag) {
                 opal_output(0, "%s orted_cmd: received signal_local_procs",
-                            ORTE_NAME_PRINT(orte_process_info.my_name));
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
-            /* unpack the number of jobids */
+            /* unpack the jobid */
             n = 1;
-            if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &num_jobs, &n, ORTE_STD_CNTR))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(ret);
-                goto CLEANUP;
-            }
-            /* unpack the array of jobids */
-            jobs = (orte_jobid_t*)malloc(num_jobs * sizeof(orte_jobid_t));
-            if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, jobs, &num_jobs, ORTE_JOBID))) {
-                ORTE_ERROR_LOG(ret);
-                free(jobs);
                 goto CLEANUP;
             }
                 
             /* get the signal */
             n = 1;
-            if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &signal, &n, ORTE_INT32))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &signal, &n, OPAL_INT32))) {
                 ORTE_ERROR_LOG(ret);
-                free(jobs);
                 goto CLEANUP;
             }
                 
@@ -289,57 +313,48 @@ static int process_commands(orte_process_name_t* sender,
             if (ORTE_SUCCESS != (ret = orte_odls.signal_local_procs(NULL, signal))) {
                 ORTE_ERROR_LOG(ret);
             }
-            free(jobs);
             break;
 
             /****    ADD_LOCAL_PROCS   ****/
         case ORTE_DAEMON_ADD_LOCAL_PROCS:
             if (orte_debug_daemons_flag) {
                 opal_output(0, "%s orted_cmd: received add_local_procs",
-                            ORTE_NAME_PRINT(orte_process_info.my_name));
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
-            /* unpack the notify data object */
-            n = 1;
-            if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &ndat, &n, ORTE_GPR_NOTIFY_DATA))) {
-                ORTE_ERROR_LOG(ret);
-                goto CLEANUP;
-            }
-            
             /* launch the processes */
-            if (ORTE_SUCCESS != (ret = orte_odls.launch_local_procs(ndat))) {
-                ORTE_ERROR_LOG(ret);
+            if (ORTE_SUCCESS != (ret = orte_odls.launch_local_procs(buffer))) {
+                OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                     "%s orted:comm:add_procs failed to launch on error %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(ret)));
             }
-
-            /* cleanup the memory */
-            OBJ_RELEASE(ndat);
             break;
            
             /****    DELIVER A MESSAGE TO THE LOCAL PROCS    ****/
         case ORTE_DAEMON_MESSAGE_LOCAL_PROCS:
             if (orte_debug_daemons_flag) {
                 opal_output(0, "%s orted_cmd: received message_local_procs",
-                            ORTE_NAME_PRINT(orte_process_info.my_name));
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
                         
             /* unpack the jobid of the procs that are to receive the message */
             n = 1;
-            if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }
                 
             /* unpack the tag where we are to deliver the message */
             n = 1;
-            if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &target_tag, &n, ORTE_RML_TAG))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &target_tag, &n, ORTE_RML_TAG))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }
                 
-            relay = OBJ_NEW(orte_buffer_t);
-            orte_dss.copy_payload(relay, buffer);
+            relay_msg = OBJ_NEW(opal_buffer_t);
+            opal_dss.copy_payload(relay_msg, buffer);
             
-            /* if job=0, then this message is for us and not for our children */
-            if (0 == job) {
+            /* if job=my_jobid, then this message is for us and not for our children */
+            if (ORTE_PROC_MY_NAME->jobid == job) {
                 /* if the target tag is our xcast_barrier or rml_update, then we have
                  * to handle the message as a special case. The RML has logic in it
                  * intended to make it easier to use. This special logic mandates that
@@ -361,45 +376,39 @@ static int process_commands(orte_process_name_t* sender,
                  */
                 if (ORTE_RML_TAG_RML_INFO_UPDATE == target_tag) {
                     n = 1;
-                    if (ORTE_SUCCESS != (ret = orte_dss.unpack(relay, &rml_cmd, &n, ORTE_RML_CMD))) {
+                    if (ORTE_SUCCESS != (ret = opal_dss.unpack(relay_msg, &rml_cmd, &n, ORTE_RML_CMD))) {
                         ORTE_ERROR_LOG(ret);
                         goto CLEANUP;
                     }
-                    if (ORTE_SUCCESS != (ret = orte_dss.unpack(relay, &ndat, &n, ORTE_GPR_NOTIFY_DATA))) {
-                        ORTE_ERROR_LOG(ret);
-                        goto CLEANUP;
-                    }
-                    /* initialize the routes to my peers */
-                    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(0, ndat))) {
-                        ORTE_ERROR_LOG(ret);
-                        goto CLEANUP;
-                    }
-                    /* set the warmup flag so we can warmup the routes between all
-                     * daemons, as required by the routed framework. We have to set
-                     * the flag here, but do the actual warmup later, to avoid blocking
-                     * any relayed xcast (e.g., binomial)
+                    /* initialize the routes to my peers - this will update the number
+                     * of daemons in the system (i.e., orte_process_info.num_procs) as
+                     * this might have changed
                      */
-                    warmup_routes = true;
+                    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, relay_msg))) {
+                        ORTE_ERROR_LOG(ret);
+                        goto CLEANUP;
+                    }
                 } else {
                     /* just deliver it to ourselves */
-                    if ((ret = orte_rml.send_buffer(ORTE_PROC_MY_NAME, relay, target_tag, 0)) < 0) {
+                    if ((ret = orte_rml.send_buffer(ORTE_PROC_MY_NAME, relay_msg, target_tag, 0)) < 0) {
                         ORTE_ERROR_LOG(ret);
                     } else {
                         ret = ORTE_SUCCESS;
+                        opal_progress(); /* give us a chance to move the message along */
                     }
                 }
             } else {
                 /* must be for our children - deliver the message */
-                if (ORTE_SUCCESS != (ret = orte_odls.deliver_message(job, relay, target_tag))) {
+                if (ORTE_SUCCESS != (ret = orte_odls.deliver_message(job, relay_msg, target_tag))) {
                     ORTE_ERROR_LOG(ret);
                 }
             }
-            OBJ_RELEASE(relay);
+            OBJ_RELEASE(relay_msg);
             break;
     
             /****    EXIT COMMAND    ****/
         case ORTE_DAEMON_EXIT_CMD:
-            if (orte_orterun) {
+            if (orte_process_info.hnp) {
                 /* if we are mpirun, do nothing - we will
                  * exit at our own sweet time
                  */
@@ -407,55 +416,28 @@ static int process_commands(orte_process_name_t* sender,
             }
             /* eventually, we need to revise this so we only
              * exit if all our children are dead. For now, treat
-             * the same as an exit_vm "hard kill" command
+             * the same as a "hard kill" command
              */
             if (orte_debug_daemons_flag) {
                 opal_output(0, "%s orted_cmd: received exit",
-                            ORTE_NAME_PRINT(orte_process_info.my_name));
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
-            /* no response to send here - we'll send it when nearly exit'd */
-            orted_comm_exit_cond = true;
-            opal_condition_signal(&orted_comm_cond);
-            /* have to unlock here as we are waking up and will
-             * do things inside the orted
+            /* if we need to relay a buffer, we need to do it
+             * now as the wakeup trigger will cause us to exit
              */
+            if (send_relay_buffer) {
+                send_relay();
+            }
+            /* trigger our appropriate exit procedure */
+            orte_wakeup(0);
             return ORTE_SUCCESS;
             break;
 
-            /****    HALT VM COMMAND    ****/
-        case ORTE_DAEMON_HALT_VM_CMD:
-            if (orte_orterun) {
-                /* if we are mpirun, do nothing - we will
-                * exit at our own sweet time
-                */
-                return ORTE_SUCCESS;
-            }
-            if (orte_debug_daemons_flag) {
-                opal_output(0, "%s orted_cmd: received halt vm",
-                            ORTE_NAME_PRINT(orte_process_info.my_name));
-            }
-            /* if we are the HNP, then terminate all orteds reporting to us */
-            if (orte_process_info.seed) {
-                OBJ_CONSTRUCT(&attrs, opal_list_t);
-                orte_rmgr.add_attribute(&attrs, ORTE_DAEMON_HARD_KILL, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
-                ret = orte_pls.terminate_orteds(&orte_abort_timeout, &attrs);
-                while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
-                OBJ_DESTRUCT(&attrs);                
-            }
-            /* wake up so we can exit too */
-            orted_comm_exit_cond = true;
-            opal_condition_signal(&orted_comm_cond);
-            /* have to unlock here as we are waking up and will
-            * do things inside the orted
-            */
-            return ORTE_SUCCESS;
-            break;
-            
             /****     CONTACT QUERY COMMAND    ****/
         case ORTE_DAEMON_CONTACT_QUERY_CMD:
             if (orte_debug_daemons_flag) {
                 opal_output(0, "%s orted_cmd: received contact query",
-                            ORTE_NAME_PRINT(orte_process_info.my_name));
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
             /* send back contact info */
             contact_info = orte_rml.get_contact_info();
@@ -466,9 +448,9 @@ static int process_commands(orte_process_name_t* sender,
                 goto CLEANUP;
             }
             
-                /* setup buffer with answer */
-            answer = OBJ_NEW(orte_buffer_t);
-            if (ORTE_SUCCESS != (ret = orte_dss.pack(answer, &contact_info, 1, ORTE_STRING))) {
+            /* setup buffer with answer */
+            answer = OBJ_NEW(opal_buffer_t);
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &contact_info, 1, OPAL_STRING))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(answer);
                 goto CLEANUP;
@@ -481,17 +463,354 @@ static int process_commands(orte_process_name_t* sender,
             OBJ_RELEASE(answer);
             break;
             
-            /****     HOSTFILE COMMAND    ****/
-        case ORTE_DAEMON_HOSTFILE_CMD:
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
-            ret = ORTE_ERR_NOT_IMPLEMENTED;
+            /****     REPORT_JOB_INFO_CMD COMMAND    ****/
+        case ORTE_DAEMON_REPORT_JOB_INFO_CMD:
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_cmd: received job info query",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            }
+            /* if we are not the HNP, we can do nothing - report
+             * back 0 procs so the tool won't hang
+             */
+            if (!orte_process_info.hnp) {
+                orte_std_cntr_t zero=0;
+                
+                answer = OBJ_NEW(opal_buffer_t);
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &zero, 1, ORTE_STD_CNTR))) {
+                    ORTE_ERROR_LOG(ret);
+                    OBJ_RELEASE(answer);
+                    goto CLEANUP;
+                }
+                /* callback function will release buffer */
+                if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+                                                send_callback, NULL)) {
+                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                    ret = ORTE_ERR_COMM_FAILURE;
+                }
+            } else {
+                /* if we are the HNP, process the request */
+                orte_std_cntr_t i, num_jobs=0;
+                orte_job_t **jobs, *jobdat;
+                
+                /* unpack the jobid */
+                n = 1;
+                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto CLEANUP;
+                }
+                
+                /* setup return */
+                answer = OBJ_NEW(opal_buffer_t);
+                
+                /* if they asked for a specific job, then just get that info */
+                if (ORTE_JOBID_WILDCARD != job) {
+                    if (NULL != (jobdat = orte_get_job_data_object(job))) {
+                        num_jobs = 1;
+                        jobs = &jobdat;
+                    }
+                } else {
+                    /* count number of jobs */
+                    for (i=0; i < orte_job_data->size; i++) {
+                        if (NULL == orte_job_data->addr[i]) break;
+                        num_jobs++;
+                    }
+                    jobs = (orte_job_t**)orte_job_data->addr;
+                }
+                
+                /* pack the answer */
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_jobs, 1, ORTE_STD_CNTR))) {
+                    ORTE_ERROR_LOG(ret);
+                    OBJ_RELEASE(answer);
+                    goto CLEANUP;
+                }
+                if (0 < num_jobs) {
+                    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, jobs, num_jobs, ORTE_JOB))) {
+                        ORTE_ERROR_LOG(ret);
+                        OBJ_RELEASE(answer);
+                        goto CLEANUP;
+                    }
+                }
+                /* callback function will release buffer */
+                if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+                                                send_callback, NULL)) {
+                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                    ret = ORTE_ERR_COMM_FAILURE;
+                }
+           }
             break;
             
-            /****     SCRIPTFILE COMMAND    ****/
-        case ORTE_DAEMON_SCRIPTFILE_CMD:
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
-            ret = ORTE_ERR_NOT_IMPLEMENTED;
+            /****     REPORT_NODE_INFO_CMD COMMAND    ****/
+        case ORTE_DAEMON_REPORT_NODE_INFO_CMD:
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_cmd: received node info query",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            }
+            /* if we are not the HNP, we can do nothing - report
+             * back 0 nodes so the tool won't hang
+             */
+            if (!orte_process_info.hnp) {
+                orte_std_cntr_t zero=0;
+                
+                answer = OBJ_NEW(opal_buffer_t);
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &zero, 1, ORTE_STD_CNTR))) {
+                    ORTE_ERROR_LOG(ret);
+                    OBJ_RELEASE(answer);
+                    goto CLEANUP;
+                }
+                /* callback function will release buffer */
+                if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+                                                send_callback, NULL)) {
+                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                    ret = ORTE_ERR_COMM_FAILURE;
+                }
+            } else {
+                /* if we are the HNP, process the request */
+                orte_std_cntr_t i, num_nodes=0;
+                orte_node_t **nodes;
+                orte_nodeid_t nid;
+                
+                /* unpack the nodeid */
+                n = 1;
+                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &nid, &n, ORTE_NODEID))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto CLEANUP;
+                }
+                
+                /* setup return */
+                answer = OBJ_NEW(opal_buffer_t);
+                
+                /* if they asked for a specific node, then just get that info */
+                if (ORTE_NODEID_WILDCARD != nid) {
+                    /* find this node */
+                    nodes = (orte_node_t**)orte_node_pool->addr;
+                    for (i=0; i < orte_node_pool->size; i++) {
+                        if (NULL == nodes[i]) break; /* stop when we get past the end of data */
+                        if (nid == nodes[i]->nodeid) {
+                            nodes = &nodes[i];
+                            num_nodes = 1;
+                            break;
+                        }
+                    }
+                } else {
+                    /* count number of nodes */
+                    for (i=0; i < orte_node_pool->size; i++) {
+                        if (NULL == orte_node_pool->addr[i]) break;
+                        num_nodes++;
+                    }
+                    nodes = (orte_node_t**)orte_node_pool->addr;
+                }
+                
+                /* pack the answer */
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_nodes, 1, ORTE_STD_CNTR))) {
+                    ORTE_ERROR_LOG(ret);
+                    OBJ_RELEASE(answer);
+                    goto CLEANUP;
+                }
+                if (0 < num_nodes) {
+                    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, nodes, num_nodes, ORTE_NODE))) {
+                        ORTE_ERROR_LOG(ret);
+                        OBJ_RELEASE(answer);
+                        goto CLEANUP;
+                    }
+                }
+                /* callback function will release buffer */
+                if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+                                                send_callback, NULL)) {
+                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                    ret = ORTE_ERR_COMM_FAILURE;
+                }
+            }
             break;
+            
+            /****     REPORT_PROC_INFO_CMD COMMAND    ****/
+        case ORTE_DAEMON_REPORT_PROC_INFO_CMD:
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_cmd: received proc info query",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            }
+            /* if we are not the HNP, we can do nothing - report
+             * back 0 procs so the tool won't hang
+             */
+            if (!orte_process_info.hnp) {
+                orte_std_cntr_t zero=0;
+                
+                answer = OBJ_NEW(opal_buffer_t);
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &zero, 1, ORTE_STD_CNTR))) {
+                    ORTE_ERROR_LOG(ret);
+                    OBJ_RELEASE(answer);
+                    goto CLEANUP;
+                }
+                /* callback function will release buffer */
+                if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+                                                send_callback, NULL)) {
+                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                    ret = ORTE_ERR_COMM_FAILURE;
+                }
+            } else {
+                /* if we are the HNP, process the request */
+                orte_job_t *jdata;
+                orte_proc_t **procs;
+                orte_vpid_t num_procs=0, vpid;
+                orte_std_cntr_t i;
+                
+                /* setup the answer */
+                answer = OBJ_NEW(opal_buffer_t);
+                
+                /* unpack the jobid */
+                n = 1;
+                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto CLEANUP;
+                }
+                
+                /* look up job data object */
+                if (NULL == (jdata = orte_get_job_data_object(job))) {
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    goto PACK_ANSWER;
+                }
+                
+                /* unpack the vpid */
+                n = 1;
+                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &vpid, &n, ORTE_VPID))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto PACK_ANSWER;
+                }
+
+                /* if they asked for a specific proc, then just get that info */
+                if (ORTE_VPID_WILDCARD != vpid) {
+                    /* find this proc */
+                    procs = (orte_proc_t**)jdata->procs->addr;
+                    for (i=0; i < jdata->procs->size; i++) {
+                        if (NULL == procs[i]) break; /* stop when we get past the end of data */
+                        if (vpid == procs[i]->name.vpid) {
+                            procs = &procs[i];
+                            num_procs = 1;
+                            break;
+                        }
+                    }
+                } else {
+                    procs = (orte_proc_t**)jdata->procs->addr;
+                    num_procs = jdata->num_procs;
+                }
+                
+PACK_ANSWER:
+                /* pack number of procs */
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_procs, 1, ORTE_VPID))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto SEND_ANSWER;
+                }
+                if (0 < num_procs) {
+                    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, procs, jdata->num_procs, ORTE_PROC))) {
+                        ORTE_ERROR_LOG(ret);
+                        goto SEND_ANSWER;
+                    }
+                }
+SEND_ANSWER:
+                /* callback function will release buffer */
+                if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+                                                send_callback, NULL)) {
+                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                    ret = ORTE_ERR_COMM_FAILURE;
+                }
+            }
+            break;
+            
+            /****     ATTACH_STDIO COMMAND    ****/
+        case ORTE_DAEMON_ATTACH_STDOUT_CMD:
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_cmd: received attach stdio cmd",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            }
+#if 0
+            /* if we are not the HNP, we can do nothing - report
+             * back error so the tool won't hang
+             */
+            if (!orte_process_info.hnp) {
+                int status=ORTE_ERR_NOT_SUPPORTED;
+                
+                answer = OBJ_NEW(opal_buffer_t);
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &status, 1, OPAL_INT))) {
+                    ORTE_ERROR_LOG(ret);
+                    OBJ_RELEASE(answer);
+                    goto CLEANUP;
+                }
+                /* callback function will release buffer */
+                if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+                                                send_callback, NULL)) {
+                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                    ret = ORTE_ERR_COMM_FAILURE;
+                }
+            } else {
+                /* if we are the HNP, process the request */
+                int fd, status;
+                orte_vpid_t vpid;
+                orte_process_name_t source;
+                
+                /* setup the answer */
+                answer = OBJ_NEW(opal_buffer_t);
+                
+                /* unpack the jobid */
+                n = 1;
+                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto CLEANUP;
+                }
+                
+                /* unpack the vpid */
+                n = 1;
+                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &vpid, &n, ORTE_VPID))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto PACK_ANSWER;
+                }
+                
+                /* unpack the file descriptor */
+                n = 1;
+                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &fd, &n, OPAL_INT))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto PACK_ANSWER;
+                }
+                
+                /* tell the iof to attach it */
+                status = orte_iof.pull(
+                /* if they asked for a specific proc, then just get that info */
+                if (ORTE_VPID_WILDCARD != vpid) {
+                    /* find this proc */
+                    procs = (orte_proc_t**)jdata->procs->addr;
+                    for (i=0; i < jdata->procs->size; i++) {
+                        if (NULL == procs[i]) break; /* stop when we get past the end of data */
+                        if (vpid == procs[i]->name.vpid) {
+                            procs = &procs[i];
+                            num_procs = 1;
+                            break;
+                        }
+                    }
+                } else {
+                    procs = (orte_proc_t**)jdata->procs->addr;
+                    num_procs = jdata->num_procs;
+                }
+                
+PACK_ANSWER:
+                /* pack number of procs */
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_procs, 1, ORTE_VPID))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto SEND_ANSWER;
+                }
+                if (0 < num_procs) {
+                    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, procs, jdata->num_procs, ORTE_PROC))) {
+                        ORTE_ERROR_LOG(ret);
+                        goto SEND_ANSWER;
+                    }
+                }
+SEND_ANSWER:
+                /* callback function will release buffer */
+                if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+                                                send_callback, NULL)) {
+                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                    ret = ORTE_ERR_COMM_FAILURE;
+                }
+            }
+#endif
+break;
             
             /****     HEARTBEAT COMMAND    ****/
         case ORTE_DAEMON_HEARTBEAT_CMD:
@@ -516,7 +835,7 @@ static int process_commands(orte_process_name_t* sender,
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(sender));
             }
-            if (ORTE_SUCCESS != (ret = orte_odls.require_sync(sender))) {
+            if (ORTE_SUCCESS != (ret = orte_odls.require_sync(sender, buffer))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }
@@ -529,87 +848,4 @@ static int process_commands(orte_process_name_t* sender,
 
 CLEANUP:
     return ret;
-}
-
-
-static int binomial_route_msg(orte_process_name_t *sender,
-                              orte_buffer_t *buf,
-                              orte_rml_tag_t tag)
-{
-    orte_daemon_cmd_flag_t mode;
-    orte_std_cntr_t n, num_daemons;
-    int i, bitmap, peer, size, rank, hibit, mask;
-    orte_process_name_t target;
-    orte_buffer_t *relay;
-    int ret;
-    
-    /* initialize the relay buffer */
-    relay = OBJ_NEW(orte_buffer_t);
-    if (NULL == relay) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    /* tell the downstream daemons the routing algorithm is binomial */
-    mode = ORTE_DAEMON_ROUTE_BINOMIAL;
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(relay, &mode, 1, ORTE_DAEMON_CMD))) {
-        ORTE_ERROR_LOG(ret);
-        goto CLEANUP;
-    }
-    
-    /* unpack the current number of daemons - we need it here! */
-    n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buf, &num_daemons, &n, ORTE_STD_CNTR))) {
-        ORTE_ERROR_LOG(ret);
-        goto CLEANUP;
-    }
-    
-    /* pass that value to the downstream daemons */
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(relay, &num_daemons, 1, ORTE_STD_CNTR))) {
-        ORTE_ERROR_LOG(ret);
-        goto CLEANUP;
-    }
-        
-    /* copy the message payload to the relay buffer - this is non-destructive
-     * Note that this still includes the target job and target tag data
-     * required for eventual delivery of the payload
-     */
-    if (ORTE_SUCCESS != (ret = orte_dss.copy_payload(relay, buf))) {
-        ORTE_ERROR_LOG(ret);
-        goto CLEANUP;
-    }
-        
-    /* process the command locally - we need to do this prior to attempting
-     * to send the message to the next recipient in case this message
-     * contains address information for that recipient. If we don't, then
-     * the send will fail
-     */
-    if (ORTE_SUCCESS != (ret = process_commands(sender, buf, tag))) {
-        ORTE_ERROR_LOG(ret);
-    }
-
-    /* compute the bitmap */
-    bitmap = opal_cube_dim((int)num_daemons);
-    rank = (int)ORTE_PROC_MY_NAME->vpid;
-    size = (int)num_daemons;
-    
-    hibit = opal_hibit(rank, bitmap);
-    --bitmap;
-    
-    target.jobid = 0;
-    for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
-        peer = rank | mask;
-        if (peer < size) {
-            target.vpid = (orte_vpid_t)peer;
-            if (0 > (ret = orte_rml.send_buffer(&target, relay, ORTE_RML_TAG_ORTED_ROUTED, 0))) {
-                ORTE_ERROR_LOG(ret);
-                goto CLEANUP;
-            }
-        }
-    }
-
-CLEANUP:
-    OBJ_RELEASE(relay);
-    
-    return ORTE_SUCCESS;
 }

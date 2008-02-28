@@ -17,7 +17,7 @@
  */
 
 #include "ompi_config.h"
-
+#include "ompi/constants.h"
 #include "common_portals.h"
 
 

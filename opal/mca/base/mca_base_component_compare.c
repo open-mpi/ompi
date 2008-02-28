@@ -136,4 +136,17 @@ int mca_base_component_compatible(
     return 0;
 }
 
+/**
+ * Returns a string which represents the component name and version.
+ * Has the form: comp_type.comp_name.major_version.minor_version
+ */
+char * mca_base_component_to_string(const mca_base_component_t *a) {
+    char * str = NULL;
+    if(0 > asprintf(&str, "%s.%s.%d.%d", a->mca_type_name, 
+                    a->mca_component_name, a->mca_component_major_version,
+                    a->mca_component_minor_version)) {
+        return NULL;
+    }
+    return str;
+}
 

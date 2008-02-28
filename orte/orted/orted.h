@@ -20,35 +20,25 @@
 #define ORTED_H
 
 #include "orte_config.h"
+#include "orte/types.h"
 
-#include "orte/dss/dss_types.h"
-#include "orte/mca/ns/ns_types.h"
+#include "opal/dss/dss_types.h"
 #include "orte/mca/rml/rml_types.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /* main orted routine */
 ORTE_DECLSPEC int orte_daemon(int argc, char *argv[]);
 
-/* setup routine - needed to instantiate the orted globals in libopenrte. To
- * make it at least be useful, will also start the necessary communication
- * receive calls for daemon comm
- */
-ORTE_DECLSPEC int orte_daemon_setup(void);
-    
 /* orted communication functions */
 ORTE_DECLSPEC void orte_daemon_recv(int status, orte_process_name_t* sender,
-                      orte_buffer_t *buffer, orte_rml_tag_t tag,
+                      opal_buffer_t *buffer, orte_rml_tag_t tag,
                       void* cbdata);
 
-ORTE_DECLSPEC void orte_daemon_recv_routed(int status, orte_process_name_t* sender,
-                             orte_buffer_t *buffer, orte_rml_tag_t tag,
-                             void* cbdata);
+/* direct cmd processing entry point - used by HNP */
+ORTE_DECLSPEC int orte_daemon_cmd_processor(orte_process_name_t* sender,
+                                            opal_buffer_t *buffer, orte_rml_tag_t tag);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* ORTED_H */

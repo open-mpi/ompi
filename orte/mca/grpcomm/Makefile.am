@@ -24,7 +24,9 @@ libmca_grpcomm_la_SOURCES =
 nobase_orte_HEADERS =
 
 # local files
-headers = grpcomm.h
+headers = grpcomm.h \
+          grpcomm_types.h
+
 libmca_grpcomm_la_SOURCES += $(headers)
 
 # Conditionally install the header files

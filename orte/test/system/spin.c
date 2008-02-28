@@ -10,29 +10,31 @@
 #include <unistd.h>
 
 #include "orte/util/proc_info.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 
 int main(int argc, char* argv[])
 {
 
-    int i, rc;
+    int i, rc, j=0;
     double pi;
     pid_t pid;
 
-    if (0 > (rc = orte_init(ORTE_NON_INFRASTRUCTURE))) {
+    if (0 > (rc = orte_init(ORTE_NON_TOOL))) {
         fprintf(stderr, "spin: couldn't init orte - error code %d\n", rc);
         return rc;
     }
     pid = getpid();
 
-    printf("spin: Name %s Pid %ld\n", ORTE_NAME_PRINT(orte_process_info.my_name), (long)pid);
+    printf("spin: Name %s Pid %ld\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)pid);
     
     i = 0;
-    while (1) {
+    while (0 == j) {
         i++;
         pi = i / 3.14159256;
         if (i > 100) i = 0;
     }
-
+    
     return 0;
 }

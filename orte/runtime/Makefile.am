@@ -25,17 +25,24 @@ headers += \
 	runtime/orte_wait.h \
 	runtime/orte_wakeup.h \
         runtime/runtime.h \
-        runtime/params.h \
-        runtime/orte_cr.h
+        runtime/orte_globals.h \
+        runtime/orte_globals_class_instances.h \
+        runtime/orte_cr.h \
+        runtime/orte_data_server.h \
+        runtime/data_type_support/orte_dt_support.h
 
 libopen_rte_la_SOURCES += \
-        runtime/orte_abort.c \
         runtime/orte_finalize.c \
         runtime/orte_init.c \
-        runtime/orte_params.c \
-        runtime/orte_monitor.c \
-        runtime/orte_restart.c \
-        runtime/orte_universe_exists.c \
+        runtime/orte_globals.c \
+        runtime/data_type_support/orte_dt_compare_fns.c \
+        runtime/data_type_support/orte_dt_copy_fns.c \
+        runtime/data_type_support/orte_dt_print_fns.c \
+        runtime/data_type_support/orte_dt_release_fns.c \
+        runtime/data_type_support/orte_dt_size_fns.c \
+        runtime/data_type_support/orte_dt_packing_fns.c \
+        runtime/data_type_support/orte_dt_unpacking_fns.c \
         runtime/orte_wait.c \
         runtime/orte_wakeup.c \
-        runtime/orte_cr.c
+        runtime/orte_cr.c \
+        runtime/orte_data_server.c

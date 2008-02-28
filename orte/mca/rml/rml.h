@@ -30,6 +30,9 @@
 #ifndef ORTE_MCA_RML_RML_H_
 #define ORTE_MCA_RML_RML_H_
 
+#include "orte_config.h"
+#include "orte/types.h"
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -46,7 +49,7 @@ BEGIN_C_DECLS
 /* ******************************************************************** */
 
 
-struct orte_buffer_t;
+struct opal_buffer_t;
 struct orte_process_name_t;
 struct orte_rml_module_t;
 
@@ -145,7 +148,7 @@ typedef void (*orte_rml_callback_fn_t)(int status,
  */
 typedef void (*orte_rml_buffer_callback_fn_t)(int status,
                                               struct orte_process_name_t* peer,
-                                              struct orte_buffer_t* buffer,
+                                              struct opal_buffer_t* buffer,
                                               orte_rml_tag_t tag,
                                               void* cbdata);
 
@@ -334,7 +337,7 @@ typedef int (*orte_rml_module_send_fn_t)(struct orte_process_name_t* peer,
  * @retval ORTE_ERROR  An unspecified error occurred
  */
 typedef int (*orte_rml_module_send_buffer_fn_t)(struct orte_process_name_t* peer,
-                                                struct orte_buffer_t* buffer,
+                                                struct opal_buffer_t* buffer,
                                                 orte_rml_tag_t tag,
                                                 int flags);
 
@@ -396,7 +399,7 @@ typedef int (*orte_rml_module_send_nb_fn_t)(struct orte_process_name_t* peer,
  * @retval ORTE_ERROR  An unspecified error occurred
  */
 typedef int (*orte_rml_module_send_buffer_nb_fn_t)(struct orte_process_name_t* peer,
-                                                   struct orte_buffer_t* buffer,
+                                                   struct opal_buffer_t* buffer,
                                                    orte_rml_tag_t tag,
                                                    int flags,
                                                    orte_rml_buffer_callback_fn_t cbfunc,
@@ -455,7 +458,7 @@ typedef int (*orte_rml_module_recv_fn_t)(struct orte_process_name_t* peer,
  * @retval ORTE_ERROR  An unspecified error occurred
  */
 typedef int (*orte_rml_module_recv_buffer_fn_t) (struct orte_process_name_t* peer,
-                                                 struct orte_buffer_t *buf,
+                                                 struct opal_buffer_t *buf,
                                                  orte_rml_tag_t tag,
                                                  int flags);
 

@@ -44,6 +44,8 @@
 #include "ompi/datatype/convertor.h" 
 #include "btl_gm_endpoint.h"
 #include "orte/util/proc_info.h"
+#include "orte/runtime/orte_globals.h"
+#include "orte/util/name_fns.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 
 
@@ -440,7 +442,7 @@ static int mca_btl_gm_discover( void )
                         "%s gm_port %08lX, "
                         "board %" PRIu32 ", global %" PRIu32 " "
                         "node %" PRIu32 "port %" PRIu32 "\n", 
-                        ORTE_NAME_PRINT(orte_process_info.my_name), 
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), 
                         (unsigned long) port, board_no, global_id, node_id, port_no);
         }
 

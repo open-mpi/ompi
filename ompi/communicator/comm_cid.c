@@ -22,9 +22,9 @@
 
 #include "ompi_config.h"
 
-#include "orte/dss/dss.h"
+#include "opal/dss/dss.h"
 #include "opal/util/convert.h"
-#include "orte/mca/ns/ns_types.h"
+#include "orte/types.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 #include "ompi/constants.h"
@@ -35,10 +35,10 @@
 #include "orte/mca/rml/rml.h"
 #include "ompi/request/request.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/mca/dpm/dpm.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
+
 /**
  * These functions make sure, that we determine the global result over 
  * an intra communicators (simple), an inter-communicator and a
@@ -774,26 +774,26 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
     }
     
     if (local_rank == local_leader ) {
-        orte_buffer_t *sbuf;
-        orte_buffer_t *rbuf;
+        opal_buffer_t *sbuf;
+        opal_buffer_t *rbuf;
 
-        sbuf = OBJ_NEW(orte_buffer_t);
-        rbuf = OBJ_NEW(orte_buffer_t);
+        sbuf = OBJ_NEW(opal_buffer_t);
+        rbuf = OBJ_NEW(opal_buffer_t);
         
-        if (ORTE_SUCCESS != (rc = orte_dss.pack(sbuf, tmpbuf, (orte_std_cntr_t)count, ORTE_INT))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(sbuf, tmpbuf, (orte_std_cntr_t)count, OPAL_INT))) {
             goto exit;
         }
 
         if ( send_first ) {
-            rc = orte_rml.send_buffer(remote_leader, sbuf, ORTE_RML_TAG_COMM_CID_INTRA, 0);
-            rc = orte_rml.recv_buffer(remote_leader, rbuf, ORTE_RML_TAG_COMM_CID_INTRA, 0);
+            rc = orte_rml.send_buffer(remote_leader, sbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0);
+            rc = orte_rml.recv_buffer(remote_leader, rbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0);
         }
         else {
-            rc = orte_rml.recv_buffer(remote_leader, rbuf, ORTE_RML_TAG_COMM_CID_INTRA, 0);
-            rc = orte_rml.send_buffer(remote_leader, sbuf, ORTE_RML_TAG_COMM_CID_INTRA, 0);
+            rc = orte_rml.recv_buffer(remote_leader, rbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0);
+            rc = orte_rml.send_buffer(remote_leader, sbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0);
         }
 
-        if (ORTE_SUCCESS != (rc = orte_dss.unpack(rbuf, outbuf, &size_count, ORTE_INT))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, outbuf, &size_count, OPAL_INT))) {
             goto exit;
         }
         OBJ_RELEASE(sbuf);
@@ -834,6 +834,5 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
 
     return (rc);
 }
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+
+END_C_DECLS

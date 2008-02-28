@@ -24,6 +24,7 @@
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
+#include <stdio.h>
 
 #include "opal/prefetch.h"
 

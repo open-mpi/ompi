@@ -27,7 +27,6 @@
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/pml/crcpw/pml_crcpw.h"
 #include "ompi/mca/bml/base/base.h"
-#include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "ompi/class/ompi_free_list.h"

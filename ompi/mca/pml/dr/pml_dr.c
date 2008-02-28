@@ -34,7 +34,8 @@
 #include "pml_dr_sendreq.h"
 #include "pml_dr_recvreq.h"
 #include "ompi/mca/bml/base/base.h"
-#include "orte/mca/ns/ns.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/pml/base/base.h"
 
@@ -241,9 +242,9 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
         /* this won't work for comm spawn and other dynamic
            processes, but will work for initial job start */
         idx = opal_pointer_array_add(&mca_pml_dr.endpoints, (void*) endpoint);
-        if(orte_ns.compare_fields(ORTE_NS_CMP_ALL,
-                           orte_process_info.my_name,
-                           &(endpoint->proc_ompi->proc_name)) == ORTE_EQUAL) {
+        if(orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+                           ORTE_PROC_MY_NAME,
+                           &(endpoint->proc_ompi->proc_name)) == OPAL_EQUAL) {
             mca_pml_dr.my_rank = idx;
         }
         endpoint->local = endpoint->dst = idx;

@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -148,6 +149,32 @@ int ompi_info_set (ompi_info_t *info, char *key, char *value);
  */
 int ompi_info_free (ompi_info_t **info);
 
+  /**
+   *   Get a (key, value) pair from an 'MPI_Info' object and assign it
+   *   into a boolen output.
+   *
+   *   @param info Pointer to ompi_info_t object
+   *   @param key null-terminated character string of the index key
+   *   @param value Boolean output value
+   *   @param flag true (1) if 'key' defined on 'info', false (0) if not
+   *               (logical)
+   *
+   *   @retval MPI_SUCCESS
+   *
+   *   If found, the string value will be cast to the boolen output in
+   *   the following manner:
+   *
+   *   - If the string value is digits, the return value is "(bool)
+   *     atoi(value)"
+   *   - If the string value is (case-insensitive) "yes" or "true", the
+   *     result is true
+   *   - If the string value is (case-insensitive) "no" or "false", the
+   *     result is false
+   *   - All other values are false
+   */
+OMPI_DECLSPEC int ompi_info_get_bool (ompi_info_t *info, char *key, bool *value,
+                                      int *flag);
+
 /**
  *   Get a (key, value) pair from an 'MPI_Info' object
  *
@@ -163,8 +190,8 @@ int ompi_info_free (ompi_info_t **info);
  *   In C and C++, 'valuelen' should be one less than the allocated
  *   space to allow for for the null terminator.
  */
-int ompi_info_get (ompi_info_t *info, char *key, int valuelen,
-                   char *value, int *flag);
+OMPI_DECLSPEC int ompi_info_get (ompi_info_t *info, char *key, int valuelen,
+                                 char *value, int *flag);
 
 /**
  * Delete a (key,value) pair from "info"

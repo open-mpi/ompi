@@ -20,7 +20,6 @@
 #define MCA_BTL_SCTP_PROC_H
 
 #include "opal/class/opal_object.h"
-#include "orte/mca/ns/ns.h"
 #include "ompi/proc/proc.h"
 #include "btl_sctp.h"
 #include "btl_sctp_addr.h"

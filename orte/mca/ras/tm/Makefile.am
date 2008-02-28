@@ -16,6 +16,11 @@
 # $HEADER$
 #
 
+# Use the top-level Makefile.options
+
+dist_pkgdata_DATA = help-ras-tm.txt
+
+
 AM_CPPFLAGS = $(ras_tm_CPPFLAGS)
 
 sources = \

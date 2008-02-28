@@ -17,14 +17,19 @@
  * $HEADER$
  */
 #include "orte_config.h"
+#include "orte/types.h"
+#include "orte/constants.h"
+
 #include "opal/util/output.h"
+
+#include "orte/class/orte_proc_table.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/rml/rml_types.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/name_fns.h"
+
 #include "orte/mca/iof/base/iof_base_header.h"
 #include "orte/mca/iof/base/iof_base_endpoint.h"
 #include "orte/mca/iof/base/iof_base_fragment.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/class/orte_proc_table.h"
 #include "iof_svc.h"
 #include "iof_svc_proxy.h"
 #include "iof_svc_pub.h"
@@ -173,7 +178,7 @@ static void orte_iof_svc_proxy_msg(
 
         /* if the subscription origin doesn't match the message's
            origin, skip this subscription */
-        if (ORTE_EQUAL == orte_ns.compare_fields(sub->origin_mask,&sub->origin_name,&hdr->msg_origin)) {
+        if (OPAL_EQUAL == orte_util_compare_name_fields(sub->origin_mask,&sub->origin_name,&hdr->msg_origin)) {
             opal_output(orte_iof_base.iof_output, "sub MATCH: origin %s, msg origin %s, msg proxy %s orte_iof_svc_proxy_msg: tag %d sequence %d, len %d",
                         ORTE_NAME_PRINT(&sub->origin_name),
                         ORTE_NAME_PRINT(&hdr->msg_origin),

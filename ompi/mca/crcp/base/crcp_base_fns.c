@@ -31,9 +31,6 @@
 #include "opal/util/output.h"
 #include "opal/util/os_dirpath.h"
 
-#include "orte/mca/smr/smr.h"
-#include "orte/mca/gpr/gpr.h"
-
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 #include "opal/mca/base/mca_base_param.h"

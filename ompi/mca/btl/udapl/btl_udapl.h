@@ -226,7 +226,7 @@ do {                                                                \
     if (verbose_level <= mca_btl_udapl_component.udapl_verbosity) { \
         mca_btl_base_out("[%s]%s[%s:%d:%s] ",                       \
             orte_system_info.nodename,                              \
-            ORTE_NAME_PRINT(orte_process_info.my_name),             \
+            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),                     \
             __FILE__, __LINE__, __func__);                          \
         mca_btl_base_out args;                                      \
         mca_btl_base_out("\n");                                     \

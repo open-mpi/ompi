@@ -20,8 +20,8 @@
 # orte/include//Makefile.am
 
 headers += \
-	orte/orte_constants.h \
-	orte/orte_types.h
+	orte/constants.h \
+	orte/types.h
 
 nodist_headers += \
 	orte/version.h

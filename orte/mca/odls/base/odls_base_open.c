@@ -18,7 +18,7 @@
 
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -27,10 +27,11 @@
 #include "opal/util/trace.h"
 #include "opal/util/argv.h"
 
-#include "orte/dss/dss.h"
-#include "orte/util/proc_info.h"
+#include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/smr/smr_types.h"
+#include "orte/mca/plm/plm_types.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
@@ -49,22 +50,6 @@
  */
 orte_odls_base_module_t orte_odls;
 
-/* instance the app_context list object */
-static void orte_odls_app_context_constructor(orte_odls_app_context_t *ptr)
-{
-    ptr->environ_copy = NULL;
-}
-static void orte_odls_app_context_destructor(orte_odls_app_context_t *ptr)
-{
-    if (NULL != ptr->environ_copy) {
-        opal_argv_free(ptr->environ_copy);
-    }
-}
-OBJ_CLASS_INSTANCE(orte_odls_app_context_t,
-                   opal_list_item_t,
-                   orte_odls_app_context_constructor,
-                   orte_odls_app_context_destructor);
-
 
 /* instance the child list object */
 static void orte_odls_child_constructor(orte_odls_child_t *ptr)
@@ -74,15 +59,20 @@ static void orte_odls_child_constructor(orte_odls_child_t *ptr)
     ptr->pid = 0;
     ptr->app_idx = -1;
     ptr->alive = false;
-    ptr->state = ORTE_PROC_STATE_UNDEF;
+    /* set the default state to "failed to start" so
+     * we can correctly report should something
+     * go wrong during launch
+     */
+    ptr->state = ORTE_PROC_STATE_FAILED_TO_START;
     ptr->exit_code = 0;
     ptr->cpu_set = 0xffffffff;
-    ptr->sync_required = false;
+    ptr->rml_uri = NULL;
 
 }
 static void orte_odls_child_destructor(orte_odls_child_t *ptr)
 {
     if (NULL != ptr->name) free(ptr->name);
+    if (NULL != ptr->rml_uri) free(ptr->rml_uri);
 }
 OBJ_CLASS_INSTANCE(orte_odls_child_t,
                    opal_list_item_t,
@@ -101,41 +91,14 @@ orte_odls_globals_t orte_odls_globals;
  */
 int orte_odls_base_open(void)
 {
-    int param, value, rc;
-    orte_data_type_t tmp;
-
-    OPAL_TRACE(5);
-    
-    /* Debugging / verbose output */
-    
-    param = mca_base_param_reg_int_name("odls", "base_verbose",
-                                        "Verbosity level for the odls framework",
-                                        false, false, 0, &value);
-    if (value != 0) {
-        orte_odls_globals.output = opal_output_open(NULL);
-    } else {
-        orte_odls_globals.output = -1;
-    }
+    /* Debugging / verbose output.  Always have stream open, with
+        verbose set by the mca open system... */
+    orte_odls_globals.output = opal_output_open(NULL);
 
     mca_base_param_reg_int_name("odls", "base_sigkill_timeout",
                                 "Time to wait for a process to die after issuing a kill signal to it",
                                 false, false, 1, &orte_odls_globals.timeout_before_sigkill);
 
-    /* register the daemon cmd data type */
-    tmp = ORTE_DAEMON_CMD;
-    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_odls_pack_daemon_cmd,
-                                                     orte_odls_unpack_daemon_cmd,
-                                                     (orte_dss_copy_fn_t)orte_odls_copy_daemon_cmd,
-                                                     (orte_dss_compare_fn_t)orte_odls_compare_daemon_cmd,
-                                                     (orte_dss_size_fn_t)orte_odls_size_daemon_cmd,
-                                                     (orte_dss_print_fn_t)orte_odls_print_daemon_cmd,
-                                                     (orte_dss_release_fn_t)orte_odls_std_release,
-                                                     ORTE_DSS_UNSTRUCTURED,
-                                                     "ORTE_DAEMON_CMD", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
     /* initialize globals */
     OBJ_CONSTRUCT(&orte_odls_globals.mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&orte_odls_globals.cond, opal_condition_t);

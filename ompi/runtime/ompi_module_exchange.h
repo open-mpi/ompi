@@ -51,8 +51,7 @@
 #include <sys/types.h>
 #endif
 
-#include "orte/dss/dss_types.h"
-#include "orte/mca/ns/ns_types.h"
+#include "orte/types.h"
 
 struct mca_base_component_t;
 struct ompi_proc_t;
@@ -172,50 +171,6 @@ OMPI_DECLSPEC int ompi_modex_recv(struct mca_base_component_t *dest_component,
 
 
 /**
- * Non-blocking modex receive callback
- *
- * Prototype for non-blocking modex receive callback.
- *
- * @param[in] component    Pointer to copy of the component struct
- * @param[in] proc         Peer process infromation is from
- * @param[in] buffer       Newly updated buffer
- * @param[in] size         Size (in bytes) of buffer
- * @param[in] cbdata       Callback data provided when non-blocking
- *                         receive is posted
- */
-typedef void (*ompi_modex_cb_fn_t)(struct mca_base_component_t *component,
-                                   struct ompi_proc_t* proc,
-                                   void* buffer,
-                                   size_t size,
-                                   void* cbdata);
-
-
-/**
- * Register to receive a callback on change to module specific data.
- *
- * The non-blocking version of ompi_modex_recv().  All information
- * about ompi_modex_recv() applies to ompi_modex_recv_nb(), with the
- * exception of what happens when data is available for the given peer
- * process but not the specified module.  In that case, no callback
- * will be fired until data is available.
- *
- * @param[in] component  A pointer to this module's component struct
- * @param[in] proc       Peer process to receive from
- * @param[in] cbfunc     Callback function when data is available,
- *                       of type ompi_modex_cb_fn_t
- * @param[in] cbdata     Opaque callback data to pass to cbfunc
- *
- * @retval OMPI_SUCCESS  Success
- * @retval OMPI_ERR_OUT_OF_RESOURCE No memory could be allocated
- *                       for internal data structures
- */
-OMPI_DECLSPEC int ompi_modex_recv_nb(struct mca_base_component_t *component,
-                                     struct ompi_proc_t* proc,
-                                     ompi_modex_cb_fn_t cbfunc,
-                                     void* cbdata);
-
-
-/**
  * Receive a buffer from a given peer
  *
  * Similar to ompi_modex_recv(), but uses a char* key instead of a
@@ -247,66 +202,6 @@ OMPI_DECLSPEC int ompi_modex_recv_string(const char* key,
                                          struct ompi_proc_t *source_proc,
                                          void **buffer, size_t *size);
 
-
-/**
- * Retrieve a copy of the modex buffer
- *
- * Each component will "send" its data on its own. The modex
- * collects that data into a local static buffer. At some point,
- * we need to provide a copy of the collected info so someone
- * (usually mpi_init) can send it to everyone else. This function
- * xfers the payload in the local static buffer into the provided
- * buffer, thus resetting the local buffer for future use.
- *
- * @note This function is probably not useful outside of application
- * initialization code.
- *
- * @param[in] *buf      Pointer to the target buffer
- *
- * @retval OMPI_SUCCESS Successfully exchanged information
- * @retval OMPI_ERROR   An unspecified error occurred
- */
-OMPI_DECLSPEC int ompi_modex_get_my_buffer(orte_buffer_t *buf);
-
-/**
- * Process the data in a modex buffer
- *
- * Given a buffer containing a set of modex entries, this
- * function will destructively read the buffer, adding the
- * modex info to each proc. An error will be returned if
- * modex info is found for a proc that is not yet in the
- * ompi_proc table
- *
- * @param[in] *buf      Pointer to a buffer containing the data
- *
- * @retval OMPI_SUCCESS Successfully exchanged information
- * @retval OMPI_ERROR   An unspecified error occurred
- */
-OMPI_DECLSPEC int ompi_modex_process_data(orte_buffer_t *buf);
-
-
-/**
- * Initialize the modex system
- *
- * Allocate memory for the local data cache and initialize the
- * module exchange system.  Does not cause communication nor any
- * subscriptions to be placed on the registry.
- *
- * @retval OMPI_SUCCESS   Successfully initialized modex subsystem
- */
-OMPI_DECLSPEC int ompi_modex_init(void);
-
-
-/**
- * Finalize the modex system
- *
- * Release any memory associated with the modex system, remove all
- * subscriptions on the GPR and end all non-blocking update triggers
- * currently available on the system.
- *
- * @retval OMPI_SUCCESS    Successfully shut down modex subsystem
- */
-OMPI_DECLSPEC int ompi_modex_finalize(void);
 
 END_C_DECLS
 

@@ -22,6 +22,7 @@
 #include "ompi/datatype/datatype_memcpy.h"
 #include <fcntl.h>
 
+#include "orte/util/proc_info.h"
 
 #define sb mca_vprotocol_pessimist.sender_based
 

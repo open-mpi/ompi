@@ -43,10 +43,7 @@
 #include "opal/mca/mca.h"
 #include "orte/mca/iof/iof.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
+BEGIN_C_DECLS
 
 struct orte_iof_base_t {
    int                  iof_output;
@@ -58,7 +55,7 @@ struct orte_iof_base_t {
    size_t               iof_waiting;
    opal_free_list_t     iof_fragments;
    size_t               iof_window_size;
-   orte_process_name_t* iof_service;
+   orte_process_name_t  iof_service;
 };
 typedef struct orte_iof_base_t orte_iof_base_t;
 
@@ -71,7 +68,6 @@ ORTE_DECLSPEC int orte_iof_base_flush(void);
 
 ORTE_DECLSPEC extern orte_iof_base_t orte_iof_base;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-#endif /* MCA_PML_H */
+END_C_DECLS
+
+#endif /* MCA_IOF_BASE_H */

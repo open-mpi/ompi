@@ -25,4 +25,5 @@ libmca_snapc_la_SOURCES += \
         base/snapc_base_open.c \
         base/snapc_base_close.c \
         base/snapc_base_select.c \
-        base/snapc_base_fns.c
+	base/snapc_base_fns.c
+

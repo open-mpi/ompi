@@ -20,6 +20,7 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -49,8 +50,6 @@
 #endif  /* HAVE_DIRENT_H */
 #include <signal.h>
 
-#include "orte/orte_constants.h"
-
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
@@ -60,14 +59,10 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/univ_info.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/os_path.h"
 #include "orte/util/session_dir.h"
-#include "orte/util/universe_setup_file_io.h"
-#include "orte/mca/gpr/gpr.h"
-#include "orte/mca/rml/rml.h"
 
 #include "opal/runtime/opal.h"
 #if OPAL_ENABLE_FT == 1
@@ -137,15 +132,22 @@ main(int argc, char *argv[])
         goto cleanup;
     }
     /*
-     * Clean out all /tmp directories except for our own.
+     * Clean out all session directories - we don't have to protect
+     * our own session directory because (since we are a tool) we
+     * didn't create one!
      */
-    orte_universe_clean_directories(orte_universe_info.name, orte_clean_globals.verbose);
+    if (orte_clean_globals.verbose) {
+        fprintf(stderr, "orte-clean: cleaning session dir tree %s\n", 
+                orte_process_info.top_session_dir);
+    }
+    opal_os_dirpath_destroy(orte_process_info.top_session_dir, true, NULL);
+    
+    /* now kill any lingering procs, if we can */
 #if !defined(__WINDOWS__)
     kill_procs();
 #endif  /* !defined(__WINDOWS__) */
 
     orte_finalize();
-    opal_finalize();
 
  cleanup:
     return exit_status;
@@ -196,13 +198,6 @@ static int parse_args(int argc, char *argv[]) {
 static int orte_clean_init(void) {
     int exit_status = ORTE_SUCCESS, ret;
 
-    /*
-     * We are trying to attach to another process' GPR so we need to 
-     * attach no matter if it is identified as private or not.
-     */
-    opal_setenv(mca_base_param_env_var("universe_console"),
-                "1", true, NULL);
-
 #if OPAL_ENABLE_FT == 1
     /* Disable the checkpoint notification routine for this
      * tool. As we will never need to checkpoint this tool.
@@ -216,20 +211,7 @@ static int orte_clean_init(void) {
                 true, &environ);
 #endif
 
-#if 0
-    
-    /***************************
-     * We need all of OPAL
-     * RHC: this is included in orte_init,
-     * so I don't think this is needed right now.
-     ***************************/
-    if (ORTE_SUCCESS != (ret = opal_init())) {
-        exit_status = ret;
-        goto cleanup;
-    }
-#endif
-    
-    if (ORTE_SUCCESS != (ret = orte_init(ORTE_INFRASTRUCTURE))) {
+    if (ORTE_SUCCESS != (ret = orte_init(ORTE_TOOL_WITH_NAME))) {
         exit_status = ret;
         goto cleanup;
     }
@@ -239,6 +221,28 @@ static int orte_clean_init(void) {
 }
 
 #if !defined(__WINDOWS__)
+static char *orte_getline(FILE *fp)
+{
+    char *ret, *buff;
+    char input[1024];
+    int i;
+    
+    ret = fgets(input, 1024, fp);
+    if (NULL != ret) {
+        /* remove trailing spaces */
+        for (i=strlen(input)-2; i > 0; i--) {
+            if (input[i] != ' ') {
+                input[i+1] = '\0';
+                break;
+            }
+        }
+        buff = strdup(input);
+        return buff;
+    }
+    
+    return NULL;
+}
+
 /*
  * This function makes a call to "ps" to find out the processes that 
  * are running on this node.  It then attempts to kill off any orteds
@@ -247,13 +251,12 @@ static int orte_clean_init(void) {
 static
 void kill_procs(void) {
     int ortedpid;
-    char procname[MAXPATHLEN]; /* only really need 8, but being safe */
-    char pidstr[MAXPATHLEN];   /* only really need 8, but being safe */
-    char user[MAXPATHLEN];
+    char *procname;
+    char *pidstr;
+    char *user;
     int procpid;
     FILE *psfile;
-    bool kill_orteruns = false;
-    int orunpid = 0;
+    char *inputline, *tmpline;
 
     /*
      * This is the command that is used to get the information about
@@ -272,33 +275,12 @@ void kill_procs(void) {
      * use.  If it is set to unknown, then we skip this section.
      */
     char command[] = ORTE_CLEAN_PS_CMD;
-    if (!(strcmp("unknown", command))) {
-	return;
+    if (0 == strcmp("unknown", command)) {
+        return;
     }
 
-    /*
-     * Try to get the pid of our orterun process from our universe name.
-     * This works in the case where one is using the default universe name
-     * which appends the pid after the 'default-universe-' string.  In
-     * this way, we avoid killing our own mpirun process.  Note that if
-     * we cannot determine our orterun pid, then we skip killing the
-     * orterun processes to avoid odd behavior for the user.
-     */
-    if (!(strncmp(ORTE_DEFAULT_UNIVERSE, orte_universe_info.name, 
-                  sizeof(ORTE_DEFAULT_UNIVERSE)-1))) {
-        char *tptr;
-
-        /* 
-         * Set a pointer to the pid part of the name.  The pointer
-	 * is adjusted by the name along with one extra to remove the
-         * dash before the pid.  Then convert to a pid.  If the strtol()
-         * returns zero, then we got an error on the conversion and we
-         * will skip killing the orteruns.  
-         */
-        tptr = orte_universe_info.name + sizeof(ORTE_DEFAULT_UNIVERSE);
-	if (0 != (orunpid = (int)strtol(tptr, (char **)NULL, 10))) {
-	    kill_orteruns = true;
-	}
+    if (orte_clean_globals.verbose) {
+        fprintf(stderr, "orte-clean: killing any lingering procs\n");
     }
 
     /*
@@ -326,27 +308,65 @@ void kill_procs(void) {
      * as it is the header consisting of the words COMMAND, PID and
      * USER.
      */
-    if ((fscanf(psfile, "%s%s%s", procname, pidstr, user)) == EOF) {
+    if (NULL == (inputline = orte_getline(psfile))) {
         return;
     } 
+    free(inputline);  /* dump the header line */
+    
+    while (NULL != (inputline = orte_getline(psfile))) {
         
-    while ((fscanf(psfile, "%s%s%s", procname, pidstr, user)) != EOF) {
-
+        /* the user name is at the end of the line, with a space
+         * preceeding it - extract that field
+         */
+        user = strrchr(inputline, ' ');
+        *user = '\0';  /* null terminate the remainder of the line */
+        user++;  /* increment to point to the beginning of the user name */
+        
+        /* if we are not the user, dump this input */
+        if (0 != strcmp(user, orte_system_info.user)) {
+            /* not us */
+            free(inputline);
+            continue;
+        }
+         /* copy just the first part so we can search
+         * from the back of the string
+         */
+        tmpline = strdup(inputline);
+        
+        /* parse the truncated line for the procname and pid */
+        pidstr = strrchr(tmpline, ' ');
+        *pidstr = '\0';  /* NULL terminate the front of the line */
+        pidstr++;
         procpid = atoi(pidstr);
-
+        
+        /* since we null-terminated inputline at the end of the
+         * procname field, we can now search that field to
+         * separate out the base command name in case they
+         * have a bunch of path stuff at the start
+         */
+        if (NULL == (procname = strrchr(tmpline, '/'))) {
+            procname = tmpline;  /* no path in command name */
+        } else {
+            procname++;  /* move past the / */
+        }
+        
         /*
          * Look for any orteds that are not our parent and attempt to
          * kill them.  We currently do not worry whether we are the
          * owner or not.  If we are not, we will just fail to send
          * the signal and that is OK.  This also allows a root process
          * to kill all orteds.
+         *
+         * NOTE: need to also look for "(orted)" as a non-active
+         * proc is sometimes reported that way
          */
-        if (!strcmp("orted", procname)) {
+        if (0 == strncmp("orted", procname, strlen("orted")) ||
+            0 == strncmp("(orted)", procname, strlen("(orted)"))) {
             if (procpid != ortedpid) {
                 if (orte_clean_globals.verbose) {
-                    opal_output(0, "orte-clean: found potential rogue orted process"
-                                " (pid=%d,user=%s), sending SIGKILL...\n", 
-                                procpid, user);
+                    fprintf(stderr, "orte-clean: found potential rogue orted process"
+                            " (pid=%d,user=%s), sending SIGKILL...\n", 
+                            procpid, user);
                 }
                 /*
                  * We ignore the return code here as we do not really
@@ -359,22 +379,33 @@ void kill_procs(void) {
         /*
          * Now check for any orteruns.
          */
-        if (kill_orteruns) {
-            if (!strcmp("orterun", procname)) {
-                if (procpid != orunpid) {
-                    if (orte_clean_globals.verbose) {
-                        opal_output(0, "orte-clean: found potential rogue orterun process"
-                                    " (pid=%d,user=%s), sending SIGKILL...\n", 
-                                    procpid, user);
+        if (0 == strncmp("orterun", procname, strlen("orterun")) ||
+            0 == strncmp("mpirun", procname, strlen("mpirun"))) {
+            /* if we are on the same node as the HNP, then the ortedpid
+             * is the same as that of our orterun, so don't kill it
+             */
+            if (procpid != ortedpid) {
+                if (orte_clean_globals.verbose) {
+                    fprintf(stderr, "orte-clean: found potential rogue orterun process"
+                            " (pid=%d,user=%s), sending SIGKILL...\n", 
+                            procpid, user);
+                    
+                }
+                /* if we are a singleton, check the hnp_pid as well */
+                if (orte_process_info.singleton) {
+                    if (procpid != orte_process_info.hnp_pid) {
+                        (void)kill(procpid, SIGKILL);
                     }
-                    /*
-                     * We ignore the return code here as we do not really
+                } else {
+                    /* We ignore the return code here as we do not really
                      * care whether this worked or not.
                      */
                     (void)kill(procpid, SIGKILL);
                 }
             }
         }
+        free(inputline);
+        free(tmpline);
     }
     return;
 }

@@ -29,12 +29,22 @@
 
 #include "opal/mca/mca.h"
 #include "opal/event/event.h"
+
+#include "orte/runtime/orte_globals.h"
+#include "orte/mca/errmgr/errmgr.h"
+
 #include "orte/mca/snapc/snapc.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
+/*
+ * cmds for base receive
+ */
+typedef uint8_t orte_snapc_full_cmd_flag_t;
+#define ORTE_SNAPC_FULL_CMD  OPAL_UINT8
+#define ORTE_SNAPC_FULL_UPDATE_JOB_STATE_CMD   1
+#define ORTE_SNAPC_FULL_UPDATE_PROC_STATE_CMD  2
+#define ORTE_SNAPC_FULL_VPID_ASSOC_CMD         3
     /*
      * Local Component structures
      */
@@ -97,7 +107,12 @@ extern "C" {
     int global_coord_finalize(void);
     int global_coord_setup_job(orte_jobid_t jobid);
     int global_coord_release_job(orte_jobid_t jobid);
-
+    int global_coord_vpid_assoc_update(orte_process_name_t local_coord,
+                                       orte_process_name_t proc_name);
+    int global_coord_vpid_state_update(orte_process_name_t proc_name,
+                                       size_t proc_ckpt_state,
+                                       char **proc_ckpt_ref,
+                                       char **proc_ckpt_loc);
     /*
      * Local Coordinator Functionality
      */
@@ -105,6 +120,10 @@ extern "C" {
     int local_coord_finalize(void);
     int local_coord_setup_job(orte_jobid_t jobid);
     int local_coord_release_job(orte_jobid_t jobid);
+    int local_coord_job_state_update(orte_jobid_t jobid,
+                                     size_t job_ckpt_state,
+                                     char **job_ckpt_ref,
+                                     char **job_ckpt_loc);
 
     /*
      * Application Coordinator Functionality
@@ -112,8 +131,6 @@ extern "C" {
     int app_coord_init(void);
     int app_coord_finalize(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* MCA_SNAPC_FULL_EXPORT_H */

@@ -23,6 +23,9 @@
 #include "ompi/runtime/ompi_module_exchange.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/runtime/orte_globals.h"
+#include "ompi/mca/mpool/base/base.h" 
+
 #include "btl_elan.h"
 #include "btl_elan_frag.h"
 #include "btl_elan_endpoint.h" 
@@ -225,6 +228,8 @@ mca_btl_elan_component_init( int *num_btl_modules,
                              mca_btl_elan_component.elan_free_list_inc,
                              NULL ); /* use default allocator */
     
+    vpid = ORTE_PROC_MY_NAME->vpid;
+   
     ompi_modex_send( &mca_btl_elan_component.super.btl_version, &vpid,
                      sizeof(vpid));
 

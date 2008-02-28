@@ -726,3 +726,12 @@ static void output(int output_id, const char *format, va_list arglist)
         free(str);
     }
 }
+
+int opal_output_get_verbosity(int output_id)
+{
+    if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS && info[output_id].ldi_used) {
+        return info[output_id].ldi_verbose_level;
+    } else {
+        return -1;
+    }
+}

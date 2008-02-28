@@ -17,6 +17,7 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -27,31 +28,33 @@
 #include <sys/types.h>
 #endif
 
-#include "orte/orte_constants.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/util/output.h"
+
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/util/proc_info.h"
 
 ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
-    /*  .my_name =              */   NULL,
-    /*  .my_daemon =            */  {ORTE_JOBID_INVALID, ORTE_VPID_INVALID},
+    /*  .my_name =              */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID},
+    /*  .my_daemon =            */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID},
+    /*  .my_daemon_uri =        */   NULL,
+    /*  .my_hnp =               */   {0, 0},
+    /*  .my_hnp_uri =           */   NULL,
+    /*  .hnp_pid =              */    0,
     /*  ,app_num =              */   -1,
     /*  ,universe_size =        */   -1,
-    /*  .singleton =            */   false,
     /*  .num_procs =            */   1,
     /*  .local_rank =           */   ORTE_VPID_INVALID,
     /*  .num_local_procs =      */   0,
     /*  .pid =                  */   0,
-    /*  .seed =                 */   false,
+    /*  .singleton =            */   false,
     /*  .daemon =               */   false,
-    /*  .ns_replica_uri =       */   NULL,
-    /*  .gpr_replica_uri =      */   NULL,
-    /*  .ns_replica =           */   NULL,
-    /*  .gpr_replica =          */   NULL,
+    /*  .hnp =                  */   false,
+    /*  .tool =                 */   false,
     /*  .tmpdir_base =          */   NULL,
     /*  .top_session_dir =      */   NULL,
-    /*  .universe_session_dir = */   NULL,
     /*  .job_session_dir =      */   NULL,
     /*  .proc_session_dir =     */   NULL,
     /*  .sock_stdin =           */   NULL,
@@ -62,39 +65,62 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
 
 int orte_proc_info(void)
 {
+    
+    int tmp;
+    char *uri, *ptr;
+    size_t len, i;
+    
+    mca_base_param_reg_string_name("orte", "hnp_uri",
+                                   "HNP contact info",
+                                   true, false, NULL,  &uri);
+    if (NULL != uri) {
+        /* the uri value passed to us will have quote marks around it to protect
+        * the value if passed on the command line. We must remove those
+        * to have a correct uri string
+        */
+        if ('"' == uri[0]) {
+            /* if the first char is a quote, then so will the last one be */
+            ptr = &uri[1];
+            len = strlen(ptr) - 1;
+        } else {
+            ptr = &uri[0];
+            len = strlen(uri);
+        }
+        
+        /* we have to copy the string by hand as strndup is a GNU extension
+         * and may not be generally available
+         */
+        orte_process_info.my_hnp_uri = (char*)malloc(len+1);
+        for (i=0; i < len; i++) {
+            orte_process_info.my_hnp_uri[i] = ptr[i];
+        }
+        orte_process_info.my_hnp_uri[len] = '\0';  /* NULL terminate */
+        free(uri);
 
-    int id, tmp;
-    
-    /* all other params are set elsewhere */
-    
-    id = mca_base_param_register_int("seed", NULL, NULL, NULL, orte_process_info.seed);
-    mca_base_param_lookup_int(id, &tmp);
-    orte_process_info.seed = OPAL_INT_TO_BOOL(tmp);
-    /* if we are a seed, then make sure the daemon flag is NOT set so that
-     * framework components are properly selected
-     */
-    if (orte_process_info.seed) {
-        orte_process_info.daemon = false;
     }
+    
+    mca_base_param_reg_string_name("orte", "local_daemon_uri",
+                                   "Daemon contact info",
+                                   true, false, NULL,  &(orte_process_info.my_daemon_uri));
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                         "proc_info: hnp_uri %s\n\tdaemon uri %s",
+                         (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri,
+                         (NULL == orte_process_info.my_daemon_uri) ? "NULL" : orte_process_info.my_daemon_uri));
 
-    id = mca_base_param_register_int("orte", "app", "num", NULL, -1);
-    mca_base_param_lookup_int(id, &tmp);
+    mca_base_param_reg_int_name("orte", "app_num",
+                                "Index of the app_context that defines this proc",
+                                true, false, -1, &tmp);
     orte_process_info.app_num = tmp;
-
-    id = mca_base_param_register_int("orte", "universe", "size", NULL, -1);
-    mca_base_param_lookup_int(id, &tmp);
+    
+    mca_base_param_reg_int_name("orte", "universe_size",
+                                "Total number of process slots allocated to this job",
+                                true, false, -1, &tmp);
     orte_process_info.universe_size = tmp;
 
-    id = mca_base_param_register_string("gpr", "replica", "uri", NULL, orte_process_info.gpr_replica_uri);
-    mca_base_param_lookup_string(id, &(orte_process_info.gpr_replica_uri));
-    mca_base_param_set_internal(id, true);
-
-    id = mca_base_param_register_string("ns", "replica", "uri", NULL, orte_process_info.ns_replica_uri);
-    mca_base_param_lookup_string(id, &(orte_process_info.ns_replica_uri));
-    mca_base_param_set_internal(id, true);
-
-    id = mca_base_param_register_string("tmpdir", "base", NULL, NULL, orte_process_info.tmpdir_base);
-    mca_base_param_lookup_string(id, &(orte_process_info.tmpdir_base));
+    mca_base_param_reg_string_name("tmpdir", "base",
+                                   "Base of the session directory tree",
+                                   false, false, NULL,  &(orte_process_info.tmpdir_base));
 
     /* get the process id */
     orte_process_info.pid = getpid();
@@ -105,31 +131,6 @@ int orte_proc_info(void)
 
 int orte_proc_info_finalize(void)
 {
-    if (NULL != orte_process_info.my_name) {
-        free(orte_process_info.my_name);
-        orte_process_info.my_name = NULL;
-    }
-    
-    if (NULL != orte_process_info.ns_replica_uri) {
-        free(orte_process_info.ns_replica_uri);
-        orte_process_info.ns_replica_uri = NULL;
-    }
-    
-    if (NULL != orte_process_info.gpr_replica_uri) {
-        free(orte_process_info.gpr_replica_uri);
-        orte_process_info.gpr_replica_uri = NULL;
-    }
-    
-    if (NULL != orte_process_info.ns_replica) {
-        free(orte_process_info.ns_replica);
-        orte_process_info.ns_replica = NULL;
-    }
-    
-    if (NULL != orte_process_info.gpr_replica) {
-        free(orte_process_info.gpr_replica);
-        orte_process_info.gpr_replica = NULL;
-    }
- 
      if (NULL != orte_process_info.tmpdir_base) {
         free(orte_process_info.tmpdir_base);
         orte_process_info.tmpdir_base = NULL;
@@ -140,11 +141,6 @@ int orte_proc_info_finalize(void)
         orte_process_info.top_session_dir = NULL;
     }
  
-     if (NULL != orte_process_info.universe_session_dir) {
-        free(orte_process_info.universe_session_dir);
-        orte_process_info.universe_session_dir = NULL;
-    }
-    
     if (NULL != orte_process_info.job_session_dir) {
         free(orte_process_info.job_session_dir);
         orte_process_info.job_session_dir = NULL;
@@ -170,7 +166,7 @@ int orte_proc_info_finalize(void)
         orte_process_info.sock_stderr = NULL;
     }
 
-    orte_process_info.seed = false;
+    orte_process_info.hnp = false;
     orte_process_info.singleton = false;
     orte_process_info.daemon = false;
     

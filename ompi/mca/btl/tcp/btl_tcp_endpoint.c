@@ -344,7 +344,7 @@ bool mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint,
         return false;
     }
 
-    cmpval = orte_ns.compare_fields(ORTE_NS_CMP_ALL, 
+    cmpval = orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
                                     &endpoint_proc->proc_ompi->proc_name,
                                     &this_proc->proc_ompi->proc_name);
     if((btl_endpoint->endpoint_sd < 0) ||
@@ -475,7 +475,7 @@ static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_en
     }
     ORTE_PROCESS_NAME_NTOH(guid);
     /* compare this to the expected values */
-    if (0 != orte_ns.compare_fields(ORTE_NS_CMP_ALL, &btl_proc->proc_name, &guid)) {
+    if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &btl_proc->proc_name, &guid)) {
         BTL_ERROR(("received unexpected process identifier %s", 
                    ORTE_NAME_PRINT(&guid)));
         mca_btl_tcp_endpoint_close(btl_endpoint);

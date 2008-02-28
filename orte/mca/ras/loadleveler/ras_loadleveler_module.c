@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -32,8 +32,6 @@
  */
  
 #include "orte_config.h"
-#include "orte/orte_constants.h"
-#include "orte/orte_types.h"
 
 #include <errno.h>
 #include <unistd.h>
@@ -44,10 +42,9 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 
-#include "orte/dss/dss.h"
-#include "orte/mca/gpr/gpr.h"
-#include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/runtime/orte_globals.h"
+#include "orte/constants.h"
 
 #include "orte/mca/ras/base/ras_private.h"
 #include "ras_loadleveler.h"
@@ -56,8 +53,7 @@
 /*
  * Local functions
  */
-static int orte_ras_loadleveler_allocate(orte_jobid_t jobid, opal_list_t *attributes);
-static int orte_ras_loadleveler_deallocate(orte_jobid_t jobid);
+static int orte_ras_loadleveler_allocate(opal_list_t *nodes);
 static int orte_ras_loadleveler_finalize(void);
 static int orte_ras_loadleveler_get_hostlist(int * num_hosts, char*** hostlist);
 
@@ -67,12 +63,6 @@ static int orte_ras_loadleveler_get_hostlist(int * num_hosts, char*** hostlist);
  */
 orte_ras_base_module_t orte_ras_loadleveler_module = {
     orte_ras_loadleveler_allocate,
-    orte_ras_base_node_insert,
-    orte_ras_base_node_query,
-    orte_ras_base_node_query_alloc,
-    orte_ras_base_node_lookup,
-    orte_ras_base_proc_query_alloc,
-    orte_ras_loadleveler_deallocate,
     orte_ras_loadleveler_finalize
 };
 
@@ -81,73 +71,54 @@ orte_ras_base_module_t orte_ras_loadleveler_module = {
  * Discover available (pre-allocated) nodes.  Allocate the
  * requested number of nodes/process slots to the job.
  */
-static int orte_ras_loadleveler_allocate(orte_jobid_t jobid, opal_list_t *attributes)
+static int orte_ras_loadleveler_allocate(opal_list_t *nodes)
 {
-    int i, ret;
-    opal_list_t nodes_list;
+    int i, ret=ORTE_SUCCESS;
     opal_list_item_t* item;
-    orte_ras_node_t* node;
+    orte_node_t* node;
     char ** hostlist = NULL;
     int num_hosts = 0;
 
-    OBJ_CONSTRUCT(&nodes_list, opal_list_t);
-
     ret = orte_ras_loadleveler_get_hostlist(&num_hosts, &hostlist);
     if(ORTE_SUCCESS != ret) {
-        goto cleanup;
+        ORTE_ERROR_LOG(ret);
+        return ret;
     }
 
     for (i = 0; i < num_hosts; i++) {
         /* check for duplicated nodes */
-        for (item = opal_list_get_first(&nodes_list); 
-             opal_list_get_end(&nodes_list) != item;
+        for (item = opal_list_get_first(nodes); 
+             opal_list_get_end(nodes) != item;
              item = opal_list_get_next(item)) {
-             node = (orte_ras_node_t*) item;
-             if (0 == strcmp(node->node_name, hostlist[i])) {
-                ++node->node_slots;
+             node = (orte_node_t*) item;
+             if (0 == strcmp(node->name, hostlist[i])) {
+                ++node->slots;
                 break;
             }
         }
      
-        if(opal_list_get_end(&nodes_list) == item) {
+        if(opal_list_get_end(nodes) == item) {
             /* we did not find a duplicate, so add a new item to the list */
-            node = OBJ_NEW(orte_ras_node_t);
+            node = OBJ_NEW(orte_node_t);
             if (NULL == node) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 ret = ORTE_ERR_OUT_OF_RESOURCE;
                 goto cleanup;
             }
-            node->node_name = strdup(hostlist[i]);
-            node->node_arch = NULL;
-            node->node_state = ORTE_NODE_STATE_UP;
-            node->node_slots_inuse = 0;
-            node->node_slots_max = 0;
-            node->node_slots = 1;
-            opal_list_append(&nodes_list, &node->super);
+            node->name = strdup(hostlist[i]);
+            node->state = ORTE_NODE_STATE_UP;
+            node->slots_inuse = 0;
+            node->slots_max = 0;
+            node->slots = 1;
+            opal_list_append(nodes, &node->super);
         }   
-    }       
-    ret = orte_ras_base_node_insert(&nodes_list);
-    ret = orte_ras_base_allocate_nodes(jobid, &nodes_list);
-
-cleanup:            
-    while (NULL != (item = opal_list_remove_first(&nodes_list))) {
-        OBJ_RELEASE(item);    
-    }       
-    OBJ_DESTRUCT(&nodes_list);
+    }
+    
+cleanup:
     opal_argv_free(hostlist);
             
     return ret;
 }
-
-/*
- * There's really nothing to do here
- */
-static int orte_ras_loadleveler_deallocate(orte_jobid_t jobid)
-{
-    opal_output(orte_ras_base.ras_output, 
-                "ras:loadleveler:deallocate: success (nothing to do)");
-    return ORTE_SUCCESS;
-}
-
 
 /*
  * There's really nothing to do here
@@ -442,55 +413,3 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
 
     return ORTE_SUCCESS;
 }
-
-#if 0
-/* For now, we do not get the node architectures from LoadLeveler. It is slow,
- * and we don't even use the value. */
-/*
- * get the machine arch from LoadLeveler
- * Will return NULL on error or a arch string that needs to be freed
- * (some code from the IBM documentation, licensed as above)
- */
-static char* orte_ras_loadleveler_get_host_arch(char * hostname) {
-    LL_element *queryObject, *machine; 
-    int rc, obj_count, err_code;
-    char * hostlist[2];
-    char * arch;
-  
-    /* Initialize the query: Machine query */
-    queryObject = ll_query(MACHINES);
-    if(NULL == queryObject) {
-        return NULL;
-    } 
-  
-    /* Set query parameters: query specific machines by name */ 
-    hostlist[0] = hostname;
-    hostlist[1] = NULL; 
-   
-    rc = ll_set_request(queryObject, QUERY_HOST, hostlist, ALL_DATA); 
-    if(0 != rc) { 
-        return NULL;
-    } 
-  
-    /* Get the machine objects from the LoadL_negotiator (central manager) daemon */ 
-    machine = ll_get_objs(queryObject, LL_CM, NULL, &obj_count, &err_code); 
-    if(NULL == machine || 1 != obj_count) {
-        return NULL;
-    } 
- 
-    /* Process the machine object */
-    rc = ll_get_data(machine, LL_MachineArchitecture, &arch); 
-    if(0 != rc) { 
-        return NULL;
-    } 
-  
-    /* Free objects obtained from Negotiator */ 
-    ll_free_objs(queryObject); 
- 
-    /* Free query element */ 
-    ll_deallocate(queryObject); 
-    
-    return arch;
-}
-#endif
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -40,7 +40,7 @@
 
 #include "opal/mca/mca.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/dss/dss_types.h"
+#include "opal/dss/dss_types.h"
 
 BEGIN_C_DECLS
 
@@ -90,37 +90,6 @@ ORTE_DECLSPEC int orte_rml_base_select(void);
  */
 ORTE_DECLSPEC int orte_rml_base_close(void);
 
-
-/* ******************************************************************** */
-
-
-ORTE_DECLSPEC int orte_rml_base_compare_tags(orte_rml_tag_t *value1, 
-                                             orte_rml_tag_t *value2, 
-                                             orte_data_type_t type);
-ORTE_DECLSPEC int orte_rml_base_copy_tag(orte_rml_tag_t **dest, 
-                                         orte_rml_tag_t *src, 
-                                         orte_data_type_t type);
-ORTE_DECLSPEC int orte_rml_base_pack_tag(orte_buffer_t *buffer, 
-                                         const void *src,
-                                         orte_std_cntr_t num_vals, 
-                                         orte_data_type_t type);
-ORTE_DECLSPEC int orte_rml_base_print_tag(char **output,
-                                          char *prefix, 
-                                          orte_rml_tag_t *src, 
-                                          orte_data_type_t type);
-ORTE_DECLSPEC void orte_rml_base_std_obj_release(orte_data_value_t *value);
-ORTE_DECLSPEC int orte_rml_base_size_tag(size_t *size, 
-                                         orte_rml_tag_t *src,
-                                         orte_data_type_t type);
-ORTE_DECLSPEC int orte_rml_base_unpack_tag(orte_buffer_t *buffer,
-                                           void *dest,
-                                           orte_std_cntr_t *num_vals,
-                                           orte_data_type_t type);
-
-
-/* ******************************************************************** */
-
-
 /**
  * Post receive to get updates regarding contact information
  *
@@ -133,7 +102,7 @@ ORTE_DECLSPEC int orte_rml_base_unpack_tag(orte_buffer_t *buffer,
  * @retval ORTE_SUCCESS Receive successfully started
  * @retval ORTE_ERROR   An unknown error occurred
  */
-int orte_rml_base_comm_start(void);
+ORTE_DECLSPEC int orte_rml_base_comm_start(void);
 
 
 /**
@@ -144,7 +113,7 @@ int orte_rml_base_comm_start(void);
  *
  * @retval ORTE_SUCCESS Receive succesffully cancelled.
  */
-int orte_rml_base_comm_stop(void);
+ORTE_DECLSPEC int orte_rml_base_comm_stop(void);
 
 
 /**

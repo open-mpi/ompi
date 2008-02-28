@@ -97,7 +97,7 @@ extern "C" {
      * Send Buffer
      */
     int orte_rml_ftrm_send_buffer(orte_process_name_t* peer,
-                                  orte_buffer_t* buffer,
+                                  opal_buffer_t* buffer,
                                   orte_rml_tag_t tag,
                                   int flags);
 
@@ -105,7 +105,7 @@ extern "C" {
      * Send Buffer Non-blocking
      */
     int orte_rml_ftrm_send_buffer_nb(orte_process_name_t* peer,
-                                     orte_buffer_t* buffer,
+                                     opal_buffer_t* buffer,
                                      orte_rml_tag_t tag,
                                      int flags,
                                      orte_rml_buffer_callback_fn_t cbfunc,
@@ -135,7 +135,7 @@ extern "C" {
      * Recv Buffer
      */
     int orte_rml_ftrm_recv_buffer(orte_process_name_t* peer,
-                                  orte_buffer_t *buf,
+                                  opal_buffer_t *buf,
                                   orte_rml_tag_t tag,
                                   int flags);
 

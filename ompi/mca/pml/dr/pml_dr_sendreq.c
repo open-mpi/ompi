@@ -121,7 +121,7 @@ static void mca_pml_dr_error_completion(
             mca_bml.bml_del_btl(btl);
             break;
         default:
-            orte_errmgr.abort();
+            orte_errmgr.abort(-1, NULL);
             break;
     }
 

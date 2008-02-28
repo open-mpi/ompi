@@ -34,6 +34,8 @@
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 
+#include "orte/runtime/orte_globals.h"
+
 #include "btl_ofud.h"
 #include "btl_ofud_frag.h"
 #include "btl_ofud_endpoint.h"
@@ -280,7 +282,7 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int* num_btl_modules,
     *num_btl_modules = 0;
     num_devs = 0;
 
-    seedv[0] = orte_process_info.my_name->vpid;
+    seedv[0] = ORTE_PROC_MY_NAME->vpid;
     seedv[1] = opal_sys_timer_get_cycles();
     seedv[2] = opal_sys_timer_get_cycles();
     seed48(seedv);

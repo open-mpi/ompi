@@ -1,5 +1,29 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
 #include "orte_config.h"
+#include "orte/types.h"
+#include "orte/constants.h"
+
 #include "opal/util/output.h"
+
+#include "orte/util/name_fns.h"
+
 #include "orte/mca/iof/base/iof_base_header.h"
 #include "iof_svc.h"
 #include "iof_svc_proxy.h"
@@ -36,8 +60,8 @@ int orte_iof_svc_pub_create(
         item != opal_list_get_end(&mca_iof_svc_component.svc_published);
         item =  opal_list_get_next(item)) {
         pub = (orte_iof_svc_pub_t*)item;
-        if(ORTE_EQUAL == orte_ns.compare_fields(pub_mask,pub_name,&pub->pub_name) &&
-           ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL,pub_proxy,&pub->pub_proxy) &&
+        if(OPAL_EQUAL == orte_util_compare_name_fields(pub_mask,pub_name,&pub->pub_name) &&
+           OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,pub_proxy,&pub->pub_proxy) &&
            pub_tag == pub->pub_tag) {
            OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
            return ORTE_SUCCESS;
@@ -89,8 +113,8 @@ orte_iof_svc_pub_t* orte_iof_svc_pub_lookup(
         item != opal_list_get_end(&mca_iof_svc_component.svc_published);
         item =  opal_list_get_next(item)) {
         orte_iof_svc_pub_t* pub = (orte_iof_svc_pub_t*)item;
-        if (ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &pub->pub_name,pub_name) &&
-            ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &pub->pub_proxy,pub_proxy) &&
+        if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &pub->pub_name,pub_name) &&
+            OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &pub->pub_proxy,pub_proxy) &&
             pub->pub_mask == pub_mask &&
             pub->pub_tag == pub_tag) {
             return pub;
@@ -150,8 +174,8 @@ void orte_iof_svc_pub_delete_all(
         opal_list_item_t* p_next = opal_list_get_next(p_item);
         orte_iof_svc_pub_t* pub = (orte_iof_svc_pub_t*)p_item;
 
-        if (ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &pub->pub_name,name) ||
-            ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &pub->pub_proxy,name)) {
+        if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &pub->pub_name,name) ||
+            OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &pub->pub_proxy,name)) {
 
             opal_list_item_t* s_item;
             for(s_item  = opal_list_get_first(&mca_iof_svc_component.svc_subscribed);

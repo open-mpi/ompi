@@ -21,11 +21,14 @@
 #include <string.h>
 
 #include "opal/util/output.h"
+
+#include "orte/class/orte_proc_table.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "orte/mca/iof/base/iof_base_header.h"
 #include "orte/mca/iof/base/iof_base_fragment.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/class/orte_proc_table.h"
 #include "iof_svc.h"
 #include "iof_svc_proxy.h"
 #include "iof_svc_pub.h"
@@ -85,10 +88,10 @@ int orte_iof_svc_sub_create(
         item =  opal_list_get_next(item)) {
         sub = (orte_iof_svc_sub_t*)item;
         if (sub->origin_mask == origin_mask &&
-            ORTE_EQUAL == orte_ns.compare_fields(sub->origin_mask,&sub->origin_name,origin_name) &&
+            OPAL_EQUAL == orte_util_compare_name_fields(sub->origin_mask,&sub->origin_name,origin_name) &&
             sub->origin_tag == origin_tag &&
             sub->target_mask == target_mask &&
-            ORTE_EQUAL == orte_ns.compare_fields(sub->target_mask,&sub->target_name,target_name) &&
+            OPAL_EQUAL == orte_util_compare_name_fields(sub->target_mask,&sub->target_name,target_name) &&
             sub->target_tag == target_tag) {
                 OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
                 return ORTE_SUCCESS;
@@ -197,9 +200,9 @@ void orte_iof_svc_sub_ack(
 
         /* If the subscription origin/tag doesn't match the ACK
            origin/tag, skip it */
-        if (ORTE_EQUAL != orte_ns.compare_fields(sub->origin_mask,
-                                                 &sub->origin_name, 
-                                                 &hdr->msg_origin) ||
+        if (OPAL_EQUAL != orte_util_compare_name_fields(sub->origin_mask,
+                                                        &sub->origin_name, 
+                                                        &hdr->msg_origin) ||
             sub->origin_tag != hdr->msg_tag) {
             continue;
         }
@@ -221,9 +224,9 @@ void orte_iof_svc_sub_ack(
            coming from this process, then update the seq_min
            calculation */
         if (NULL != sub->sub_endpoint &&
-            ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL,
-                                                 orte_process_info.my_name,
-                                                 peer)) {
+            OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+                                                        ORTE_PROC_MY_NAME,
+                                                        peer)) {
             if (do_close) {
                 /* JMS what to do here?  Need to set sub->sub_endpoint
                    to NULL.  Have similar leak for do_close for
@@ -257,8 +260,8 @@ void orte_iof_svc_sub_ack(
             /* If the publication origin or publication proxy matches
                the ACK'ing proxy, save the ACK'ed byte count for this
                *origin* (not the proxy). */
-            if (ORTE_EQUAL == orte_ns.compare_fields(pub->pub_mask,&pub->pub_name,peer) ||
-                ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL,&pub->pub_proxy,peer)) {
+            if (OPAL_EQUAL == orte_util_compare_name_fields(pub->pub_mask,&pub->pub_name,peer) ||
+                OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,&pub->pub_proxy,peer)) {
                 opal_output(orte_iof_base.iof_output,
                             "ack: found matching pub");
                 /* If we're closing, then remove this proc from
@@ -313,12 +316,12 @@ void orte_iof_svc_sub_ack(
     if (seq_min == hdr->msg_seq+hdr->msg_len) {
         /* If the original message was initiated from this process,
            then the ACK delivery is local. */
-        if (ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL,
-                                                 orte_process_info.my_name,
-                                                 &hdr->msg_origin) ||
-            ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL,
-                                                 orte_process_info.my_name,
-                                                 &hdr->msg_proxy)) {
+        if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+                                                        ORTE_PROC_MY_NAME,
+                                                        &hdr->msg_origin) ||
+            OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+                                                        ORTE_PROC_MY_NAME,
+                                                        &hdr->msg_proxy)) {
             orte_iof_base_endpoint_t* endpoint;
             endpoint = orte_iof_base_endpoint_match(&hdr->msg_origin, 
                                                     ORTE_NS_CMP_ALL, 
@@ -383,10 +386,10 @@ int orte_iof_svc_sub_delete(
         opal_list_item_t* next =  opal_list_get_next(item);
         orte_iof_svc_sub_t* sub = (orte_iof_svc_sub_t*)item;
         if (sub->origin_mask == origin_mask &&
-            ORTE_EQUAL == orte_ns.compare_fields(sub->origin_mask,&sub->origin_name,origin_name) &&
+            OPAL_EQUAL == orte_util_compare_name_fields(sub->origin_mask,&sub->origin_name,origin_name) &&
             sub->origin_tag == origin_tag &&
             sub->target_mask == target_mask &&
-            ORTE_EQUAL == orte_ns.compare_fields(sub->target_mask,&sub->target_name,target_name) &&
+            OPAL_EQUAL == orte_util_compare_name_fields(sub->target_mask,&sub->target_name,target_name) &&
             sub->target_tag == target_tag) {
             opal_list_remove_item(&mca_iof_svc_component.svc_subscribed, item);
             OBJ_RELEASE(item);
@@ -408,9 +411,9 @@ int orte_iof_svc_sub_delete_all(
         opal_list_item_t* next =  opal_list_get_next(item);
         orte_iof_svc_sub_t* sub = (orte_iof_svc_sub_t*)item;
         if ((sub->origin_mask == ORTE_NS_CMP_ALL &&
-             ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL,&sub->origin_name,name)) ||
+             OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,&sub->origin_name,name)) ||
             (sub->target_mask == ORTE_NS_CMP_ALL &&
-             ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL,&sub->target_name,name))) {
+             OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,&sub->target_name,name))) {
             opal_list_remove_item(&mca_iof_svc_component.svc_subscribed, item);
             OBJ_RELEASE(item);
         }
@@ -536,7 +539,7 @@ bool orte_iof_svc_fwd_match(
     orte_iof_svc_sub_t* sub,
     orte_iof_svc_pub_t* pub)
 {
-    if (ORTE_EQUAL == orte_ns.compare_fields(sub->target_mask,&sub->target_name,&pub->pub_name) &&
+    if (OPAL_EQUAL == orte_util_compare_name_fields(sub->target_mask,&sub->target_name,&pub->pub_name) &&
         sub->origin_tag == pub->pub_tag) {
         return true;
     } else {

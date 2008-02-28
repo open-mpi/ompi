@@ -15,8 +15,8 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
-#include "orte/orte_constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
@@ -57,9 +57,7 @@ static orte_snapc_base_component_t none_component = {
     /* opal_output handler */
     -1,
     /* Default priority */
-    1,
-    /* Unassigned Coordinator type */
-    ORTE_SNAPC_UNASSIGN_TYPE
+    1
 };
 
 static orte_snapc_base_module_t none_module = {

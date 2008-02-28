@@ -25,20 +25,15 @@
 #define ORTE_WAKEUP_H
 
 #include "orte_config.h"
+#include "orte/types.h"
 
-#include "orte/mca/ns/ns_types.h"
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Wakeup orterun by reporting the termination of all processes
  */
-ORTE_DECLSPEC int orte_wakeup(orte_jobid_t job);
+ORTE_DECLSPEC int orte_wakeup(int exit_status);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* #ifndef ORTE_WAKEUP_H */

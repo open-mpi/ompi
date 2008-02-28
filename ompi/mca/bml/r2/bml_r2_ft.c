@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "opal/util/show_help.h"
-#include "orte/mca/ns/ns.h"
 #include "ompi/runtime/ompi_cr.h"
 #include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/bml/bml.h"
@@ -35,9 +34,7 @@
 #include "ompi/mca/bml/base/bml_base_btl.h" 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
-#include "orte/mca/smr/smr.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/gpr/gpr.h"
 #include "orte/class/orte_proc_table.h" 
 #include "ompi/proc/proc.h"
 
@@ -117,9 +114,11 @@ int mca_bml_r2_ft_event(int state) {
 
         if( NULL != mca_bml_r2.btl_modules) {
             free( mca_bml_r2.btl_modules);
+            mca_bml_r2.btl_modules = NULL;
         }
         if( NULL != mca_bml_r2.btl_progress ) {
             free( mca_bml_r2.btl_progress);
+            mca_bml_r2.btl_progress = NULL;
         }
 
         opal_output_verbose(10, ompi_cr_output,
@@ -163,8 +162,10 @@ int mca_bml_r2_ft_event(int state) {
         mca_bml_r2.btls_added = false;
 
         for(p = 0; p < (int)num_procs; ++p) {
-            OBJ_RELEASE(procs[p]->proc_bml);
-            procs[p]->proc_bml = NULL;
+            if( NULL != procs[p]->proc_bml) {
+                OBJ_RELEASE(procs[p]->proc_bml);
+                procs[p]->proc_bml = NULL;
+            }
 
             OBJ_RELEASE(procs[p]);
         }

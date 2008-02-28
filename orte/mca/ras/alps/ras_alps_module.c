@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      UT-Battelle, LLC
+ * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,8 +17,8 @@
  * $HEADER$
  */
 #include "orte_config.h"
-#include "orte/orte_constants.h"
-#include "orte/orte_types.h"
+#include "orte/constants.h"
+#include "orte/types.h"
 
 #include <unistd.h>
 #include <string.h>
@@ -27,20 +27,19 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-#include "orte/dss/dss.h"
-#include "orte/mca/rmgr/rmgr.h"
+#include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 
-#include "orte/mca/ras/base/ras_private.h"
 #include "ras_alps.h"
+#include "orte/mca/ras/base/ras_private.h"
 
 
 /*
  * Local functions
  */
-static int orte_ras_alps_allocate(orte_jobid_t jobid, opal_list_t *attributes);
-static int orte_ras_alps_deallocate(orte_jobid_t jobid);
+static int orte_ras_alps_allocate(opal_list_t *nodes);
 static int orte_ras_alps_finalize(void);
+int orte_ras_alps_read_nodename_file(opal_list_t *nodes, char *filename);
 
 
 
@@ -50,12 +49,6 @@ static int orte_ras_alps_finalize(void);
  */
 orte_ras_base_module_t orte_ras_alps_module = {
     orte_ras_alps_allocate,
-    orte_ras_base_node_insert,
-    orte_ras_base_node_query,
-    orte_ras_base_node_query_alloc,
-    orte_ras_base_node_lookup,
-    orte_ras_base_proc_query_alloc,
-    orte_ras_alps_deallocate,
     orte_ras_alps_finalize
 };
 
@@ -64,12 +57,10 @@ orte_ras_base_module_t orte_ras_alps_module = {
  * requested number of nodes/process slots to the job.
  *  
  */
-static int orte_ras_alps_allocate(orte_jobid_t jobid, opal_list_t *attributes)
+static int orte_ras_alps_allocate(opal_list_t *nodes)
 {
     int ret;
     char *alps_batch_id;
-    opal_list_t nodes;
-    opal_list_item_t* item;
     
     char *alps_node_cmd_str = "apstat -a `apstat -r | grep $BATCH_PARTITION_ID  | awk '{print $2}'` " 
         " -r   -v | egrep  \"(nid [0-9]+)\" -o | awk '{print $2}' > ./ompi_ras_alps_node_file";
@@ -87,23 +78,25 @@ static int orte_ras_alps_allocate(orte_jobid_t jobid, opal_list_t *attributes)
                     alps_node_cmd_str);
         return ORTE_ERROR;
     }
-
-    OBJ_CONSTRUCT(&nodes, opal_list_t);
-
-    if (ORTE_SUCCESS != (ret = orte_ras_base_read_nodename_file(&nodes, "./ompi_ras_alps_node_file"))) {
+    
+    if (ORTE_SUCCESS != (ret = orte_ras_alps_read_nodename_file(nodes, "./ompi_ras_alps_node_file"))) {
         ORTE_ERROR_LOG(ret);
         goto cleanup;
     }
 
-    ret = orte_ras_base_allocate_nodes(jobid, &nodes);
+#if 0
+    ret = orte_ras_alps_allocate_nodes(jobid, &nodes);
 
-    ret = orte_ras_base_node_insert(&nodes);
+    ret = orte_ras_alps_node_insert(&nodes);
+#endif
 
 cleanup:
+#if 0
     while (NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);
+#endif 
 
     /* All done */
 
@@ -117,16 +110,67 @@ cleanup:
     return ret;
 }
 
-/*
- * There's really nothing to do here
- */
-static int orte_ras_alps_deallocate(orte_jobid_t jobid)
+
+#define RAS_BASE_FILE_MAX_LINE_LENGTH   512
+
+static char *ras_alps_getline(FILE *fp)
 {
-    opal_output(orte_ras_base.ras_output, 
-                "ras:alps:deallocate: success (nothing to do)");
-    return ORTE_SUCCESS;
+    char *ret, *buff = NULL;
+    char input[RAS_BASE_FILE_MAX_LINE_LENGTH];
+    
+    ret = fgets(input, RAS_BASE_FILE_MAX_LINE_LENGTH, fp);
+    if (NULL != ret) {
+        input[strlen(input)-1] = '\0';  /* remove newline */
+        buff = strdup(input);
+    }
+    
+    return buff;
 }
 
+int orte_ras_alps_read_nodename_file(opal_list_t *nodes, char *filename)
+{
+    FILE *fp;
+    int32_t nodeid=0;
+    char *hostname;
+    orte_node_t* node = NULL;
+    fp = fopen(filename, "r");
+    if (NULL == fp) {
+        ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
+        return ORTE_ERR_FILE_OPEN_FAILURE;
+    }
+    
+    while (NULL != (hostname = ras_alps_getline(fp))) {
+        opal_output(orte_ras_base.ras_output, 
+                    "ras:base:read_nodename: got hostname %s", hostname);
+        
+        /* if this matches the prior nodename, then just add
+         * to the slot count
+         */
+        if (NULL != node &&
+            0 == strcmp(node->name, hostname)) {
+            ++node->slots;
+            /* free the hostname that came back since we don't need it */
+            free(hostname);
+            continue;
+        }
+        
+        /* must be a new name, so add a new item to the list */
+        opal_output(orte_ras_base.ras_output, 
+                    "ras:base:read_nodename: not found -- added to list");
+        node = OBJ_NEW(orte_node_t);
+        node->name = hostname;
+        node->launch_id = nodeid;
+        node->slots_inuse = 0;
+        node->slots_max = 0;
+        node->slots = 1;
+        opal_list_append(nodes, &node->super);
+        /* up the nodeid */
+        nodeid++;
+    }
+    fclose(fp);
+    
+    return ORTE_SUCCESS;
+}
 
 /*
  * There's really nothing to do here

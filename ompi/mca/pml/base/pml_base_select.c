@@ -25,7 +25,11 @@
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
@@ -165,10 +169,10 @@ int mca_pml_base_select(bool enable_progress_threads,
             if( NULL == tmp_val) {
                 continue;
             }
-            orte_errmgr.error_detected(1, "PML %s cannot be selected", tmp_val, NULL);
+            orte_errmgr.abort(1, "PML %s cannot be selected", tmp_val);
         }
         if(0 == i) { 
-            orte_errmgr.error_detected(2, "No pml component available.  This shouldn't happen.", NULL);
+            orte_errmgr.abort(2, "No pml component available.  This shouldn't happen.");
         }
     } 
     

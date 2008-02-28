@@ -17,226 +17,235 @@
  */
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
+#include "orte/types.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
 #include "opal/class/opal_list.h"
+#include "opal/util/show_help.h"
 
-#include "orte/dss/dss.h"
+#include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/rmgr/rmgr.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
+#include "orte/util/hostfile/hostfile.h"
+#include "orte/util/dash_host/dash_host.h"
+#include "orte/util/sys_info.h"
 
-#include "orte/mca/ras/base/proxy/ras_base_proxy.h"
 #include "orte/mca/ras/base/ras_private.h"
 
 /*
  * Function for selecting one component from all those that are
  * available.
  */
-int orte_ras_base_allocate(orte_jobid_t jobid, opal_list_t *attributes)
+int orte_ras_base_allocate(orte_job_t *jdata)
 {
-    int ret;
-    opal_list_item_t *item;
-    orte_ras_base_cmp_t *cmp;
+    int rc;
     opal_list_t nodes;
-    orte_attribute_t * attr;
-    orte_jobid_t * jptr;
+    orte_node_t *node;
+    orte_std_cntr_t i;
+    bool override_oversubscribed;
+    orte_app_context_t **apps;
 
-    /* so there are a lot of possibilities here */
-    /* Case 1: we are not on the head node, so use the proxy component */
-    if (!orte_process_info.seed) {
-        return orte_ras_base_proxy_allocate(jobid, attributes);
-    }
-
-    /* Case 2: We want to use our parent's allocation. This can occur if we 
-     * are doing a dynamic process spawn and don't want to do go through 
-     * the allocators again. */
-    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RAS_USE_PARENT_ALLOCATION))) {
-        opal_output(orte_ras_base.ras_output,
-                    "orte:ras:base:allocate: reallocating parent's allocation as our own");
-        /* attribute was given - just reallocate to the new jobid */
-        if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&jptr, attr->value, ORTE_JOBID))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        if (ORTE_SUCCESS != (ret = orte_ras_base_reallocate(*jptr, jobid))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
+    OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+                         "%s ras:base:allocate",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* if we already did this, don't do it again - the pool of
+     * global resources is set. 
+     */
+    if (orte_ras_base.allocation_read) {
+        
+        OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+                             "%s ras:base:allocate allocation already read",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        
         return ORTE_SUCCESS;
     }
     
-    /* Case 3: We want to get a new allocation. This can happen if we
-     * are spawning a new process that does not want to use its parent's
-     * allocation.  */
-    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RAS_USE_NEW_ALLOCATION))) {
-        /* If no components are available, then return an error */
-        if (opal_list_is_empty(&orte_ras_base.ras_available)) {
-            opal_output(orte_ras_base.ras_output,
-                        "orte:ras:base:allocate: no components available!");
-            ret = ORTE_ERR_NOT_FOUND;
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        
-        /* Otherwise, go through the [already sorted in priority order]
-        * list and call them until one of them puts something on
-        * the node segment */
-        for (item = opal_list_get_first(&orte_ras_base.ras_available);
-             item != opal_list_get_end(&orte_ras_base.ras_available);
-             item = opal_list_get_next(item)) {
-            cmp = (orte_ras_base_cmp_t *) item;
-            opal_output(orte_ras_base.ras_output,
-                        "orte:ras:base:allocate: attemping to allocate using module: %s",
-                        cmp->component->ras_version.mca_component_name);
-            
-            if (NULL != cmp->module->allocate_job) {
-                ret = cmp->module->allocate_job(jobid, attributes);
-                if (ORTE_SUCCESS == ret) {
-                    bool empty;
-                    
-                    if (ORTE_SUCCESS != 
-                        (ret = orte_ras_base_node_segment_empty(&empty))) {
-                        ORTE_ERROR_LOG(ret);
-                        return ret;
-                    }
-                    
-                    /* If this module put something on the node segment,
-                        we're done */
-                    
-                    if (!empty) {
-                        opal_output(orte_ras_base.ras_output,
-                                    "orte:ras:base:allocate: found good module: %s",
-                                    cmp->component->ras_version.mca_component_name);
-                        return ORTE_SUCCESS;
-                    }
-                }
-            }
-        }
-        
-        /* We didn't find anyone who put anything on the node segment */
-        opal_output(orte_ras_base.ras_output,
-                    "orte:ras:base:allocate: no module put anything in the node segment");
-        ret = ORTE_ERR_NOT_FOUND;
-        ORTE_ERROR_LOG(ret);
-        return ret;
-    }
+    /* Otherwise, we have to create
+     * the initial set of resources that will delineate all
+     * further operations serviced by this HNP. This list will
+     * contain ALL nodes that can be used by any subsequent job.
+     *
+     * In other words, if a node isn't found in this step, then
+     * no job launched by this HNP will be able to utilize it.
+     */
     
-    /* Case 4: no RAS-specific directive was passed. This means that if the node segment is empty, we
-     * want to allocate new nodes. Otherwise allocate all the existing nodes to
-     * our job */
+    /* note that the allocation has been read so we don't
+     * come in here again!
+     */
+    orte_ras_base.allocation_read = true;
+
+    /* construct a list to hold the results */
     OBJ_CONSTRUCT(&nodes, opal_list_t);
-    /* See if there are any nodes already on the registry. Most of the time
-     * these would have been put there by the RDS reading the hostfile. */
-    if (ORTE_SUCCESS != (ret = orte_ras_base_node_query(&nodes))) {
-        OBJ_DESTRUCT(&nodes);
-        return ret;
-    }
-    /* If there are any nodes at all, allocate them all to this job */
+
+    /* if a component was selected, then we know we are in a managed
+     * environment.  - the active module will return a list of what it found
+     */
+    if (NULL != orte_ras_base.active_module)  {
+        /* read the allocation */
+        if (ORTE_SUCCESS != (rc = orte_ras_base.active_module->allocate(&nodes))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&nodes);
+            return rc;
+        }
+    } 
+    /* If something came back, save it and we are done */
     if (!opal_list_is_empty(&nodes)) {
-        opal_output(orte_ras_base.ras_output,
-                    "orte:ras:base:allocate: reallocating nodes that are already on registry");
-        ret = orte_ras_base_allocate_nodes(jobid, &nodes);
+        /* store the results in the global resource pool - this removes the
+        * list items
+        */
+        if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&nodes);
+            return rc;
+        }
         OBJ_DESTRUCT(&nodes);
-        return ret;
+        return ORTE_SUCCESS;
     }
-
-    /* there were no nodes already on the registry, so get them from the
-     * RAS components */
- 
-    /* If no components are available, then return an error */
-    if (opal_list_is_empty(&orte_ras_base.ras_available)) {
-        opal_output(orte_ras_base.ras_output,
-                    "orte:ras:base:allocate: no components available!");
-        ret = ORTE_ERR_NOT_FOUND;
-        ORTE_ERROR_LOG(ret);
-        return ret;
-    }
-
-    /* Otherwise, go through the [already sorted in priority order]
-     * list and initialize them until one of them puts something on
-     * the node segment */
-    for (item = opal_list_get_first(&orte_ras_base.ras_available);
-         item != opal_list_get_end(&orte_ras_base.ras_available);
-         item = opal_list_get_next(item)) {
-        cmp = (orte_ras_base_cmp_t *) item;
-        opal_output(orte_ras_base.ras_output,
-                    "orte:ras:base:allocate: attemping to allocate using module: %s",
-                    cmp->component->ras_version.mca_component_name);
-
-        if (NULL != cmp->module->allocate_job) {
-            ret = cmp->module->allocate_job(jobid, attributes);
-            if (ORTE_SUCCESS == ret) {
-                bool empty;
-
-                if (ORTE_SUCCESS != 
-                    (ret = orte_ras_base_node_segment_empty(&empty))) {
-                    ORTE_ERROR_LOG(ret);
-                    return ret;
-                }
-
-                /* If this module put something on the node segment,
-                   we're done */
-
-                if (!empty) {
-                    opal_output(orte_ras_base.ras_output,
-                                "orte:ras:base:allocate: found good module: %s",
-                                cmp->component->ras_version.mca_component_name);
-                    return ORTE_SUCCESS;
-                }
+    
+    
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+                         "%s ras:base:allocate nothing found in module - proceeding to hostfile",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* nothing was found, or no active module was alive. Our next
+     * option is to look for a hostfile and assign our global
+     * pool from there. Hostfile names, if given, are included
+     * in the app_contexts for this job. We therefore need to
+     * retrieve the app_contexts for the job, and then cycle
+     * through them to see if anything is there. The parser will
+     * add the nodes found in each hostfile to our list - i.e.,
+     * the resulting list contains the UNION of all nodes specified
+     * in hostfiles from across all app_contexts
+     */
+    
+    /* convenience def */
+    apps = (orte_app_context_t**)jdata->apps->addr;
+    
+    for (i=0; i < jdata->num_apps; i++) {
+        if (NULL != apps[i]->hostfile) {
+            
+            OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+                                 "%s ras:base:allocate checking hostfile %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 apps[i]->hostfile));
+            
+            /* hostfile was specified - parse it and add it to the list */
+            if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
+                                                &override_oversubscribed,
+                                                apps[i]->hostfile))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_DESTRUCT(&nodes);
+                return rc;
             }
         }
     }
 
-    /* We didn't find anyone who put anything on the node segment */
-    opal_output(orte_ras_base.ras_output,
-                "orte:ras:base:allocate: no module put anything in the node segment");
-    ret = ORTE_ERR_NOT_FOUND;
-    ORTE_ERROR_LOG(ret);
-    return ret;
-}
-
-int orte_ras_base_deallocate(orte_jobid_t job)
-{
-    /* if we are not a HNP, then use proxy */
-    if (!orte_process_info.seed) {
-        return orte_ras_base_proxy_deallocate(job);
-    }
-    return ORTE_SUCCESS;
-}
-
-
-/*
- * Reallocate nodes so another jobid can use them in addition to the
- * specified one
- */
-int orte_ras_base_reallocate(orte_jobid_t parent_jobid,
-                             orte_jobid_t child_jobid)
-{
-    opal_list_t current_alloc;
-    opal_list_item_t *item;
-    int rc;
-
-    
-    OBJ_CONSTRUCT(&current_alloc, opal_list_t);
-    
-    if (ORTE_SUCCESS != (rc = orte_ras_base_node_query_alloc(&current_alloc, parent_jobid))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&current_alloc);
+    /* if something was found in the hostfile(s), we use that as our global
+     * pool - set it and we are done
+     */
+    if (!opal_list_is_empty(&nodes)) {
+        /* store the results in the global resource pool - this removes the
+         * list items
+         */
+        if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        /* update the jdata object with override_oversubscribed flag */
+        jdata->oversubscribe_override = override_oversubscribed;
+        /* cleanup */
+        OBJ_DESTRUCT(&nodes);
         return rc;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_ras_base_node_assign(&current_alloc, child_jobid))) {
+    
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+                         "%s ras:base:allocate nothing found in hostfiles - checking dash-host options",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* Our next option is to look for hosts provided via the -host
+     * command line option. If they are present, we declare this
+     * to represent not just a mapping, but to define the global
+     * resource pool in the absence of any other info.
+     *
+     * -host lists are provided as part of the app_contexts for
+     * this job. We therefore need to retrieve the app_contexts
+     * for the job, and then cycle through them to see if anything
+     * is there. The parser will add the -host nodes to our list - i.e.,
+     * the resulting list contains the UNION of all nodes specified
+     * by -host across all app_contexts
+     */
+    for (i=0; i < jdata->num_apps; i++) {
+        if (0 < apps[i]->num_map) {
+            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
+                                                    &override_oversubscribed,
+                                                    apps[i]->num_map,
+                                                    apps[i]->map_data))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_DESTRUCT(&nodes);
+                return rc;
+            }
+        }
+    }
+
+    /* if something was found in -host, we use that as our global
+     * pool - set it and we are done
+     */
+    if (!opal_list_is_empty(&nodes)) {
+        /* store the results in the global resource pool - this removes the
+         * list items
+         */
+        if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        /* update the jdata object with override_oversubscribed flag */
+        jdata->oversubscribe_override = override_oversubscribed;
+        /* cleanup */
+        OBJ_DESTRUCT(&nodes);
+        return rc;
+    }
+    
+    
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+                         "%s ras:base:allocate nothing found in dash-host - inserting current node",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* if nothing was found by any of the above methods, then we have no
+     * earthly idea what to do - so just add the local host
+     */
+    node = OBJ_NEW(orte_node_t);
+    if (NULL == node) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&nodes);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    /* use the same name we got in orte_system_info so we avoid confusion in
+     * the session directories
+     */
+    node->name = strdup(orte_system_info.nodename);
+    node->state = ORTE_NODE_STATE_UP;
+    node->slots_inuse = 0;
+    node->slots_max = 0;
+    node->slots = 1;
+    /* indicate that we don't know anything about over_subscribing */
+    jdata->oversubscribe_override = true;
+    opal_list_append(&nodes, &node->super);
+    
+    /* store the results in the global resource pool - this removes the
+     * list items
+     */
+    if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&nodes);
+        return rc;
     }
-    
-    /* clean up memory */
-    while (NULL != (item = opal_list_remove_first(&current_alloc))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&current_alloc);
-    
-    return rc;
+    OBJ_DESTRUCT(&nodes);
+    return ORTE_SUCCESS;
 }

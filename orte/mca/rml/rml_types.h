@@ -26,6 +26,7 @@
 #define MCA_RML_TYPES_H_
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
 #include <limits.h>
 #ifdef HAVE_SYS_UIO_H
@@ -35,9 +36,6 @@
 #ifdef HAVE_NET_UIO_H
 #include <net/uio.h>
 #endif
-
-#include "orte/orte_constants.h"
-#include "orte/util/proc_info.h"
 
 
 BEGIN_C_DECLS
@@ -50,61 +48,51 @@ BEGIN_C_DECLS
  * Constant tag values for well-known services
  */
 
-#define ORTE_RML_TAG_T    ORTE_UINT32
-#define ORTE_RML_TAG_MAX  UINT32_MAX
+#define ORTE_RML_TAG_T    OPAL_UINT32
 
-#define ORTE_RML_TAG_NS                      1
-#define ORTE_RML_TAG_GPR                     2
-#define ORTE_RML_TAG_GPR_NOTIFY              3
-#define ORTE_RML_TAG_DAEMON                  4
-#define ORTE_RML_TAG_IOF_SVC                 5
-#define ORTE_RML_TAG_IOF_CLNT                6
-#define ORTE_RML_TAG_XCAST_BARRIER           7
-#define ORTE_RML_TAG_ORTED_ROUTED            8
-#define ORTE_RML_TAG_RMGR                    9
-#define ORTE_RML_TAG_PROBE                  10
-#define ORTE_RML_TAG_RDS                    11
-#define ORTE_RML_TAG_RAS                    12
-#define ORTE_RML_TAG_RMAPS                  13
-#define ORTE_RML_TAG_PLS                    14
-#define ORTE_RML_TAG_ERRMGR                 15
-#define ORTE_RML_TAG_BPROC                  16
-#define ORTE_RML_TAG_BPROC_ABORT            17
-#define ORTE_RML_TAG_SM_BACK_FILE_CREATED   18
-#define ORTE_RML_TAG_WIREUP                 19
-#define ORTE_RML_TAG_RML_INFO_UPDATE        20
-#define ORTE_RML_TAG_ORTED_CALLBACK         21
+#define ORTE_RML_TAG_DAEMON                  1
+#define ORTE_RML_TAG_IOF_SVC                 2
+#define ORTE_RML_TAG_IOF_CLNT                3
+#define ORTE_RML_TAG_XCAST_BARRIER           4
+#define ORTE_RML_TAG_PLM                     5
+#define ORTE_RML_TAG_PLM_PROXY               6
+#define ORTE_RML_TAG_ERRMGR                  7
+#define ORTE_RML_TAG_WIREUP                  8
+#define ORTE_RML_TAG_RML_INFO_UPDATE         9
+#define ORTE_RML_TAG_ORTED_CALLBACK         10
+#define ORTE_RML_TAG_APP_LAUNCH_CALLBACK    11
 
-#define ORTE_RML_TAG_FILEM                  22
-#define ORTE_RML_TAG_CKPT                   23
+#define ORTE_RML_TAG_CKPT                   12
 
-#define ORTE_RML_TAG_RML_ROUTE              24
+#define ORTE_RML_TAG_RML_ROUTE              13
 
-#define ORTE_RML_TAG_UDAPL                  25
-#define ORTE_RML_TAG_OPENIB                 26
-#define ORTE_RML_TAG_MVAPI                  27
+#define ORTE_RML_TAG_ALLGATHER              14
+#define ORTE_RML_TAG_ALLGATHER_LIST         15
+#define ORTE_RML_TAG_BARRIER                16
 
-#define ORTE_RML_TAG_COMM_CID_INTRA         28
+#define ORTE_RML_TAG_INIT_ROUTES            17
+#define ORTE_RML_TAG_UPDATE_ROUTES          18
+#define ORTE_RML_TAG_SYNC                   19
 
-#define ORTE_RML_TAG_ALLGATHER              29
-#define ORTE_RML_TAG_ALLGATHER_LIST         30
-#define ORTE_RML_TAG_BARRIER                31
-
-#define ORTE_RML_TAG_INIT_ROUTES            32
-#define ORTE_RML_TAG_UPDATE_ROUTES          33
-#define ORTE_RML_TAG_SYNC                   34
+/* For FileM Base */
+#define ORTE_RML_TAG_FILEM_BASE             20
+#define ORTE_RML_TAG_FILEM_BASE_RESP        21
 
 /* For FileM RSH Component */
-#define ORTE_RML_TAG_FILEM_RSH              35
+#define ORTE_RML_TAG_FILEM_RSH              22
 
-/* For SnapC Full Component */
-#define ORTE_RML_TAG_SNAPC_FULL             36
+/* For SnapC Framework */
+#define ORTE_RML_TAG_SNAPC                  23
+#define ORTE_RML_TAG_SNAPC_FULL             24
 
-/* For CRCP Coord Component */
-#define OMPI_CRCP_COORD_BOOKMARK_TAG      4242
+/* For tools */
+#define ORTE_RML_TAG_TOOL                   25
 
+/* support data store/lookup */
+#define ORTE_RML_TAG_DATA_SERVER            26
+#define ORTE_RML_TAG_DATA_CLIENT            27
 
-#define ORTE_RML_TAG_DYNAMIC              2000
+#define ORTE_RML_TAG_MAX                   100
 
 
 /** 
@@ -125,7 +113,7 @@ typedef uint32_t orte_rml_tag_t;
  * RML proxy commands
  */
 typedef uint8_t orte_rml_cmd_flag_t;
-#define ORTE_RML_CMD    ORTE_UINT8
+#define ORTE_RML_CMD    OPAL_UINT8
 #define ORTE_RML_UPDATE_CMD    1
 
 

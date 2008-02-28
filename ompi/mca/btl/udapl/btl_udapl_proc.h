@@ -20,7 +20,6 @@
 #ifndef MCA_BTL_UDAPL_PROC_H
 #define MCA_BTL_UDAPL_PROC_H
 
-#include "orte/mca/ns/ns.h"
 #include "opal/class/opal_object.h"
 #include "ompi/proc/proc.h"
 #include "btl_udapl.h"

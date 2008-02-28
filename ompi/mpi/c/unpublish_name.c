@@ -20,6 +20,7 @@
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/info/info.h"
+#include "ompi/mca/pubsub/pubsub.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Unpublish_name = PMPI_Unpublish_name
@@ -60,10 +61,26 @@ int MPI_Unpublish_name(char *service_name, MPI_Info info,
      * No predefined info-objects for this function in MPI-2,
      * therefore, we do not parse the info-object at the moment.
      */
-    rc = ompi_comm_nameunpublish(service_name);
+    rc = ompi_pubsub.unpublish(service_name, info);
     if ( OMPI_SUCCESS != rc ) {
+        if (OMPI_ERR_NOT_FOUND == rc) {
+            /* service couldn't be found */
+            OPAL_CR_EXIT_LIBRARY();
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_SERVICE,
+                                          FUNC_NAME);
+        }
+        if (OMPI_ERR_PERM == rc) {
+            /* this process didn't own the specified service */
+            OPAL_CR_EXIT_LIBRARY();
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ACCESS,
+                                          FUNC_NAME);
+        }
+        
+        /* none of the MPI-specific errors occurred - must be some
+         * kind of internal error
+         */
         OPAL_CR_EXIT_LIBRARY();
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_SERVICE,
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
                                       FUNC_NAME);
     }
 

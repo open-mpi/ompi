@@ -30,6 +30,7 @@
 #include "opal/util/show_help.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/ras/base/ras_private.h"
 #include "ras_lsf.h"
@@ -38,8 +39,7 @@
 /*
  * Local functions
  */
-static int allocate(orte_jobid_t jobid, opal_list_t *attributes);
-static int deallocate(orte_jobid_t jobid);
+static int allocate(orte_jobid_t job, opal_list_t *nodes);
 static int finalize(void);
 
 
@@ -48,23 +48,15 @@ static int finalize(void);
  */
 orte_ras_base_module_t orte_ras_lsf_module = {
     allocate,
-    orte_ras_base_node_insert,
-    orte_ras_base_node_query,
-    orte_ras_base_node_query_alloc,
-    orte_ras_base_node_lookup,
-    orte_ras_base_proc_query_alloc,
-    deallocate,
     finalize
 };
 
 
-static int allocate(orte_jobid_t jobid, opal_list_t *attributes)
+static int allocate(orte_jobid_t job, opal_list_t *nodes)
 {
     char **nodelist;
-    opal_list_t nodes;
-    opal_list_item_t *item;
-    orte_ras_node_t *node;
-    int i, count, rc, num_nodes;
+    orte_node_t *node;
+    int i, num_nodes;
 
     /* get the list of allocated nodes */
     if ((num_nodes = lsb_getalloc(&nodelist)) < 0) {
@@ -72,64 +64,31 @@ static int allocate(orte_jobid_t jobid, opal_list_t *attributes)
         return ORTE_ERR_NOT_AVAILABLE;
     }
     
-    OBJ_CONSTRUCT(&nodes, opal_list_t);
     node = NULL;
     
     /* step through the list */
-    for (count = i = 0; i < num_nodes; i++) {
+    for (i = 0; i < num_nodes; i++) {
         /* is this a repeat of the current node? */
-        if (NULL != node && 0 == strcmp(nodelist[i], node->node_name)) {
+        if (NULL != node && 0 == strcmp(nodelist[i], node->name)) {
             /* it is a repeat - just bump the slot count */
             ++node->node_slots;
             continue;
         }
         
         /* not a repeat - create a node entry for it */
-        node = OBJ_NEW(orte_ras_node_t);
-        node->node_name = strdup(nodelist[i]);
-        node->node_slots_inuse = 0;
-        node->node_slots_max = 0;
-        node->node_slots = 1;
-        opal_list_append(&nodes, &node->super);
+        node = OBJ_NEW(orte_node_t);
+        node->name = strdup(nodelist[i]);
+        node->slots_inuse = 0;
+        node->slots_max = 0;
+        node->slots = 1;
+        opal_list_append(nodes, &node->super);
     }
-    
-    /* add any newly discovered nodes to the registry */
-    if (0 < opal_list_get_size(&nodes)) {
-        rc = orte_ras_base_node_insert(&nodes); 
-        if(ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-    } else {
-        /* we didn't find anything - report that and return error */
-        opal_show_help("help-ras-lsf.txt", "no-nodes-avail", true);
-        rc = ORTE_ERR_NOT_AVAILABLE;
-        goto cleanup;
-    }
-    
-    /* now allocate them to this job */
-    rc = orte_ras_base_allocate_nodes(jobid, &nodes);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-    }
-    
-cleanup:
-    while (NULL != (item = opal_list_remove_first(&nodes))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&nodes);
-    
+        
     /* release the nodelist from lsf */
     opal_argv_free(nodelist);
 
-    return rc;
-}
-
-static int deallocate(orte_jobid_t jobid)
-{
     return ORTE_SUCCESS;
 }
-
 
 static int finalize(void)
 {

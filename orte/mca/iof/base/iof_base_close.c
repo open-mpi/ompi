@@ -17,6 +17,7 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
 #include <stdio.h>
 
@@ -55,10 +56,6 @@ int orte_iof_base_close(void)
     OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     while((item = opal_list_remove_first(&orte_iof_base.iof_endpoints)) != NULL) {
         OBJ_RELEASE(item);
-    }
-
-    if (NULL != orte_iof_base.iof_service) {
-        free(orte_iof_base.iof_service);
     }
 
     OBJ_DESTRUCT(&orte_iof_base.iof_components_opened);

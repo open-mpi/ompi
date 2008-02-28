@@ -26,20 +26,19 @@
 #endif  /* HAVE_UNISTD_H */
 #include <time.h>
 
-#include "orte/orte_constants.h"
-
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/util/basename.h"
 
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/os_dirpath.h"
+#include "opal/util/basename.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
-#include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/runtime/orte_globals.h"
+#include "orte/util/name_fns.h"
 
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
@@ -56,7 +55,6 @@
 #define SNAPC_METADATA_SNAP_REF ("# Snapshot Reference: ")
 #define SNAPC_METADATA_SNAP_LOC ("# Snapshot Location: ")
 
-static int snapc_base_reg_gpr_request( orte_jobid_t jobid, orte_gpr_notify_cb_fn_t gpr_cbfunc, void* gpr_cbdata );
 static int get_next_seq_number(FILE *file);
 static int get_next_valid_seq_number(FILE *file);
 static int metadata_extract_next_token(FILE *file, char **token, char **value);
@@ -168,30 +166,27 @@ int orte_snapc_base_module_finalize(void)
     return ORTE_SUCCESS;
 }
 
-/* None RML response callback */
-static void snapc_none_global_recv(int status,
-                                   orte_process_name_t* sender,
-                                   orte_buffer_t *buffer,
-                                   orte_rml_tag_t tag,
-                                   void* cbdata);
-/* None GPR response callback */
-static void snapc_none_job_ckpt_request_callback(orte_gpr_notify_data_t *data, void *cbdata);
-
+/* None RML command line response callback */
+static void snapc_none_global_cmdline_request(int status,
+                                              orte_process_name_t* sender,
+                                              opal_buffer_t *buffer,
+                                              orte_rml_tag_t tag,
+                                              void* cbdata);
 int orte_snapc_base_none_setup_job(orte_jobid_t jobid)
 {
-    int ret, exit_status = ORTE_SUCCESS;
+    int exit_status = ORTE_SUCCESS;
+    int rc;
 
     /*
-     * Setup the checkpoint request callback
-     * Do this so we can respond with a 'not checkpointable' response
-     * to any requesting tools
+     * Coordinator command listener
      */
     orte_snapc_base_snapshot_seq_number = -1;
-    if(ORTE_SUCCESS != (ret = orte_snapc_base_global_init_request(jobid,
-                                                                  snapc_none_global_recv,    NULL, /* RML */
-                                                                  snapc_none_job_ckpt_request_callback, NULL) /* GPR */
-                        ) ) {
-        exit_status = ret;
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                                      ORTE_RML_TAG_CKPT,
+                                                      ORTE_RML_PERSISTENT,
+                                                      snapc_none_global_cmdline_request,
+                                                      NULL))) {
+        exit_status = rc;
         goto cleanup;
     }
 
@@ -212,20 +207,20 @@ int orte_snapc_base_none_release_job(orte_jobid_t jobid)
  * Local Functions
  ********************/
 /* None RML response callback */
-static void snapc_none_global_recv(int status,
-                                   orte_process_name_t* sender,
-                                   orte_buffer_t *buffer,
-                                   orte_rml_tag_t tag,
-                                   void* cbdata)
+static void snapc_none_global_cmdline_request(int status,
+                                              orte_process_name_t* sender,
+                                              opal_buffer_t *buffer,
+                                              orte_rml_tag_t tag,
+                                              void* cbdata)
 {
     int ret, exit_status = ORTE_SUCCESS;
-    size_t command;
+    orte_snapc_cmd_flag_t command;
     orte_std_cntr_t n = 1;
     bool term = false;
     orte_jobid_t jobid;
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &command, &n, ORTE_CKPT_CMD))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &n, ORTE_SNAPC_CMD))) {
         exit_status = ret;
         goto cleanup;
     }
@@ -238,7 +233,7 @@ static void snapc_none_global_recv(int status,
         /*
          * Do the basic handshake with the orte_checkpoint command
          */
-        if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_init_cmd(sender, &term, &jobid)) ) {
+        if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_init_cmd(sender, buffer, &term, &jobid)) ) {
             exit_status = ret;
             goto cleanup;
         }
@@ -259,423 +254,150 @@ static void snapc_none_global_recv(int status,
     }
     
  cleanup:
-
-    return;
-}
-
-/* None GPR response callback */
-static void snapc_none_job_ckpt_request_callback(orte_gpr_notify_data_t *data, void *cbdata)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    orte_gpr_value_t **values;
-    orte_jobid_t jobid;
-    orte_std_cntr_t i;
-    size_t job_ckpt_state = ORTE_SNAPC_CKPT_STATE_NONE;
-    size_t *size_ptr;
-
-    /*
-     * Get jobid from the segment name in the first value
-     */
-    values = (orte_gpr_value_t**)(data->values)->addr;
-    if (ORTE_SUCCESS != (ret = orte_schema.extract_jobid_from_segment_name(&jobid,
-                                                                           values[0]->segment))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    /*
-     * Get the state change (ORTE_JOB_CKPT_STATE_KEY)
-     */
-    for( i = 0; i < values[0]->cnt; ++i) {
-        orte_gpr_keyval_t* keyval = values[0]->keyvals[i];
-        if(strcmp(keyval->key, ORTE_JOB_CKPT_STATE_KEY) == 0) {
-            if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&(size_ptr), keyval->value, ORTE_SIZE))) {
-                exit_status = ret;
-                goto cleanup;
-            }
-            job_ckpt_state = *size_ptr;
-        }
-    }
-    
-    if(ORTE_SNAPC_CKPT_STATE_REQUEST == job_ckpt_state ) {
-        /*
-         * Replace with an invalid state
-         */
-        if( ORTE_SUCCESS != (ret = orte_snapc_base_set_job_ckpt_info(jobid, 
-                                                                     ORTE_SNAPC_CKPT_STATE_NO_CKPT,
-                                                                     strdup(""),  /* Snapshot ref */
-                                                                     strdup("") ) /* Snapshot loc */ 
-                             ) ) {
-            exit_status = ret;
-            goto cleanup;
-        }
-    }
-
- cleanup:
     return;
 }
 
 /********************
  * Utility functions
  ********************/
-int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer, bool *term, orte_jobid_t *jobid)
+int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer,
+                                               opal_buffer_t* buffer,
+                                               bool *term,
+                                               orte_jobid_t *jobid)
 {
     int ret, exit_status = ORTE_SUCCESS;
-    orte_buffer_t *loc_buffer;
-    orte_std_cntr_t n = 1;
-    pid_t my_pid;
-    bool ack = true;
+    orte_std_cntr_t count = 1;
 
     /*
      * Do not send to self, as that is silly.
      */
-    if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, peer, ORTE_PROC_MY_HNP) ||
-        0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, peer, ORTE_PROC_MY_NAME) ) {
-        opal_output_verbose(10, orte_snapc_base_output,
-                            "snapc:base: ckpt_init_cmd: Error: Do not send to self!\n");
+    if (peer->jobid == ORTE_PROC_MY_HNP->jobid &&
+        peer->vpid  == ORTE_PROC_MY_HNP->vpid ) {
+        OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
+                             "%s) base:ckpt_init_cmd: Error: Do not send to self!\n",
+                             ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type)));
         return ORTE_SUCCESS;
     }
 
-    opal_output_verbose(10, orte_snapc_base_output,
-                        "snapc:base: ckpt_init_cmd: Sending commands\n");
+    OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
+                         "%s) base:ckpt_init_cmd: Receiving commands\n",
+                         ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type)));
 
-    /*
-     * Setup the buffer that we may send back
-     */
-    if( NULL == (loc_buffer = OBJ_NEW(orte_buffer_t) ) ) {
-        exit_status = ORTE_ERR_OUT_OF_RESOURCE;
-        goto cleanup;
-    }
-    
     /********************
-     * Send over our PID for a sanity check
+     * Receive command line checkpoint request:
+     * - Command (already received)
+     * - term flag
+     * - jobid
      ********************/
-    my_pid = getpid();
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(loc_buffer, &my_pid, 1, ORTE_PID))) {
+    count = 1;
+    if ( ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, term, &count, OPAL_BOOL)) ) {
         opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_init_cmd: Error: DSS Pack (PID) failure (ret = %d) (LINE = %d)\n",
+                    "%s) base:ckpt_init_cmd: Error: DSS Unpack (term) Failure (ret = %d) (LINE = %d)\n",
+                    ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     ret, __LINE__);
         exit_status = ret;
         goto cleanup;
     }
     
-    if (0 > (ret = orte_rml.send_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0))) {
+    count = 1;
+    if ( ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, jobid, &count, ORTE_JOBID)) ) {
         opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_init_cmd: Error: Send Buffer (PID) Failure (ret = %d) (LINE = %d)\n",
+                    "%s) base:ckpt_init_cmd: Error: DSS Unpack (jobid) Failure (ret = %d) (LINE = %d)\n",
+                    ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     ret, __LINE__);
         exit_status = ret;
-        goto cleanup;
-    }
-    
-    /* ACK */
-    if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_recv_ack(peer, &ack)) ) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_init_cmd: Error: ACK (PID) Failure (ret = %d) (LINE = %d)\n",
-                    ret, __LINE__);
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-    if( !ack ) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_init_cmd: Error: NACK (PID) (LINE = %d)\n",
-                    __LINE__);
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-    
-    /********************
-     * Receive Term flag
-     ********************/
-    OBJ_RELEASE(loc_buffer);
-    if( NULL == (loc_buffer = OBJ_NEW(orte_buffer_t) ) ) {
-        exit_status = ORTE_ERR_OUT_OF_RESOURCE;
         goto cleanup;
     }
 
-    if( 0 > (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0)) ) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_init_cmd: Error: Recv (term) Failure (ret = %d) (LINE = %d)\n",
-                    ret, __LINE__);
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    n = 1;
-    if ( ORTE_SUCCESS != (ret = orte_dss.unpack(loc_buffer, term, &n, ORTE_BOOL)) ) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_init_cmd: Error: DSS Unpack (term) Failure (ret = %d) (LINE = %d)\n",
-                    ret, __LINE__);
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    /********************
-     * Receive the jobid
-     ********************/
-    OBJ_RELEASE(loc_buffer);
-    if( NULL == (loc_buffer = OBJ_NEW(orte_buffer_t) ) ) {
-        exit_status = ORTE_ERR_OUT_OF_RESOURCE;
-        goto cleanup;
-    }
-
-    if( 0 > (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0)) ) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_init_cmd: Error: Recv (jobid) Failure (ret = %d) (LINE = %d)\n",
-                    ret, __LINE__);
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    n = 1;
-    if ( ORTE_SUCCESS != (ret = orte_dss.unpack(loc_buffer, jobid, &n, ORTE_SIZE)) ) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_init_cmd: Error: DSS Unpack (jobid) Failure (ret = %d) (LINE = %d)\n",
-                    ret, __LINE__);
-        exit_status = ret;
-        goto cleanup;
-    }
+    OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
+                         "%s) base:ckpt_init_cmd: Received [%d, %s]\n",
+                         ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
+                         (int)*term,
+                         ORTE_JOBID_PRINT(*jobid)));
 
  cleanup:
-    OBJ_RELEASE(loc_buffer);
     return exit_status;
 }
 
-int orte_snapc_base_global_coord_recv_ack(orte_process_name_t* peer, bool *ack)
+int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
+                                                 char *global_snapshot_handle,
+                                                 int seq_num,
+                                                 int ckpt_status)
 {
     int ret, exit_status = ORTE_SUCCESS;
-    orte_buffer_t *loc_buffer;
-    orte_std_cntr_t n = 1;
-
-    if (NULL == (loc_buffer = OBJ_NEW(orte_buffer_t))) {
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-
-    if( 0 > (ret = orte_rml.recv_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0)) ) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: recv_ack: Error: Recv Failed: %d\n",
-                    ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    if ( ORTE_SUCCESS != (ret = orte_dss.unpack(loc_buffer, ack, &n, ORTE_BOOL)) ) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: recv_ack: Error: Unpack Failed: %d\n",
-                    ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-    
- cleanup:
-    OBJ_RELEASE(loc_buffer);
-
-    return exit_status;
-}
-
-int orte_snapc_base_global_coord_send_ack(orte_process_name_t* peer, bool ack)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    orte_buffer_t *buffer;
-
-    if (NULL == (buffer = OBJ_NEW(orte_buffer_t))) {
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(buffer, &ack, 1, ORTE_BOOL))) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: send_ack: Error: Pack Failed: %d\n",
-                    ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    if (0 > (ret = orte_rml.send_buffer(peer, buffer, ORTE_RML_TAG_CKPT, 0))) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: send_ack: Error: Send Failed: %d\n",
-                    ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-    
- cleanup:
-    OBJ_RELEASE(buffer);
-
-    return exit_status;
-}
-
-int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char *global_snapshot_handle,
-                                                 int seq_num, int ckpt_status)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    orte_buffer_t *loc_buffer = NULL;
-    bool ack = true;
-    size_t str_len = 0;
+    opal_buffer_t *loc_buffer = NULL;
+    orte_snapc_cmd_flag_t command = ORTE_SNAPC_GLOBAL_UPDATE_CMD;
 
     /*
      * Do not send to self, as that is silly.
      */
-    if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, peer, ORTE_PROC_MY_HNP) ||
-        0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, peer, ORTE_PROC_MY_NAME) ) {
-        opal_output_verbose(10, orte_snapc_base_output,
-                            "snapc:base: ckpt_update_cmd: Error: Do not send to self!\n");
+    if (peer->jobid == ORTE_PROC_MY_HNP->jobid &&
+        peer->vpid  == ORTE_PROC_MY_HNP->vpid ) {
+        OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
+                             "%s) base:ckpt_update_cmd: Error: Do not send to self!\n",
+                             ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type)));
         return ORTE_SUCCESS;
     }
 
-    opal_output_verbose(10, orte_snapc_base_output,
-                        "snapc:base: ckpt_update_cmd: Sending update command <%s> <%d> <%d>\n",
-                        global_snapshot_handle, seq_num, ckpt_status);
-
-    /*
-     * Setup the buffer that we may send back
-     */
-    if( NULL == (loc_buffer = OBJ_NEW(orte_buffer_t) ) ) {
-        exit_status = ORTE_ERR_OUT_OF_RESOURCE;
-        goto cleanup;
-    }
+    OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
+                         "%s) base:ckpt_update_cmd: Sending update command <%s> <seq %d> <status %d>\n",
+                         ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
+                         global_snapshot_handle, seq_num, ckpt_status));
 
     /********************
      * Send over the status of the checkpoint
+     * - ckpt_state
+     * - global snapshot handle (upon finish only)
+     * - sequence number        (upon finish only)
      ********************/
-    if(NULL != loc_buffer) {
-        OBJ_RELEASE(loc_buffer);
-        loc_buffer = NULL;
-    }
-    if (NULL == (loc_buffer = OBJ_NEW(orte_buffer_t))) {
+    if (NULL == (loc_buffer = OBJ_NEW(opal_buffer_t))) {
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(loc_buffer, &ckpt_status, 1, ORTE_INT))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &command, 1, ORTE_SNAPC_CMD)) ) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &ckpt_status, 1, OPAL_INT))) {
         opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_update_cmd: Error: DSS Pack (ckpt_status) Failure (ret = %d) (LINE = %d)\n",
+                    "%s) base:ckpt_update_cmd: Error: DSS Pack (ckpt_status) Failure (ret = %d) (LINE = %d)\n",
+                    ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     ret, __LINE__);
         exit_status = ret;
         goto cleanup;
     }
+
+    if( ORTE_SNAPC_CKPT_STATE_FINISHED == ckpt_status ||
+        ORTE_SNAPC_CKPT_STATE_ERROR    == ckpt_status ) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &global_snapshot_handle, 1, OPAL_STRING))) {
+            opal_output(orte_snapc_base_output,
+                        "%s) base:ckpt_update_cmd: Error: DSS Pack (snapshot handle) Failure (ret = %d) (LINE = %d)\n",
+                        ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
+                        ret, __LINE__);
+            exit_status = ret;
+            goto cleanup;
+        }
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &seq_num, 1, OPAL_INT))) {
+            opal_output(orte_snapc_base_output,
+                        "%s) base:ckpt_update_cmd: Error: DSS Pack (seq number) Failure (ret = %d) (LINE = %d)\n",
+                        ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
+                        ret, __LINE__);
+            exit_status = ret;
+            goto cleanup;
+        }
+    }
+
     if (0 > (ret = orte_rml.send_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0))) {
         opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_update_cmd: Error: Send (ckpt_status) Failure (ret = %d) (LINE = %d)\n",
+                    "%s) base:ckpt_update_cmd: Error: Send (ckpt_status) Failure (ret = %d) (LINE = %d)\n",
+                    ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     ret, __LINE__);
         exit_status = ret;
         goto cleanup;
     }
 
-    /* ACK */
-    if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_recv_ack(peer, &ack)) ) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_update_cmd: Error: ACK (ckpt_status) Failure (ret = %d) (LINE = %d)\n",
-                    ret, __LINE__);
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-    if( !ack ) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_update_cmd: Error: NACK (ckpt_status) (LINE = %d)\n",
-                    __LINE__);
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-    
-    /* If we cannot checkpoint, then just skip to the end */
-    if( ORTE_SNAPC_CKPT_STATE_NO_CKPT == ckpt_status) {
-        goto cleanup;
-    }
-
-    /********************
-     * Send over the size of the global snapshot handle
-     ********************/
-    if(NULL != loc_buffer) {
-        OBJ_RELEASE(loc_buffer);
-        loc_buffer = NULL;
-    }
-    if (NULL == (loc_buffer = OBJ_NEW(orte_buffer_t))) {
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-
-    str_len = strlen(global_snapshot_handle);
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(loc_buffer, &str_len, 1, ORTE_SIZE))) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_update_cmd: Error: DSS Pack (snapshot ref length) Failure (ret = %d) (LINE = %d)\n",
-                    ret, __LINE__);
-        exit_status = ret;
-        goto cleanup;
-    }
-    if (0 > (ret = orte_rml.send_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0))) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_update_cmd: Error: Send (snapshot ref length) Failure (ret = %d) (LINE = %d)\n",
-                    ret, __LINE__);
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /* ACK */
-    if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_recv_ack(peer, &ack)) ) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_update_cmd: Error: Send (snapshot ref length) Failure (ret = %d) (LINE = %d)\n",
-                    ret, __LINE__);
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-    if( !ack ) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_update_cmd: Error: NACK (snapshot ref length) (LINE = %d)\n",
-                    __LINE__);
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-
-    /********************
-     * Send over the global snapshot handle & sequence number
-     ********************/
-    if(NULL != loc_buffer) {
-        OBJ_RELEASE(loc_buffer);
-        loc_buffer = NULL;
-    }
-    if (NULL == (loc_buffer = OBJ_NEW(orte_buffer_t))) {
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(loc_buffer, &global_snapshot_handle, 1, ORTE_STRING))) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_update_cmd: Error: DSS Pack (snapshot handle) Failure (ret = %d) (LINE = %d)\n",
-                    ret, __LINE__);
-        exit_status = ret;
-        goto cleanup;
-    }
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(loc_buffer, &seq_num, 1, ORTE_INT))) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_update_cmd: Error: DSS Pack (seq number) Failure (ret = %d) (LINE = %d)\n",
-                    ret, __LINE__);
-        exit_status = ret;
-        goto cleanup;
-    }
-    if (0 > (ret = orte_rml.send_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0))) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_update_cmd: Error: Send (snapshot handle, seq number) Failure (ret = %d) (LINE = %d)\n",
-                    ret, __LINE__);
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /* ACK */
-    if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_recv_ack(peer, &ack)) ) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_update_cmd: Error: ACK (snapshot handle, seq number) Failure (ret = %d) (LINE = %d)\n",
-                    ret, __LINE__);
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-    if( !ack ) {
-        opal_output(orte_snapc_base_output,
-                    "snapc:base: ckpt_update_cmd: Error: NACK (snapshot handle, seq number) (LINE = %d)\n",
-                    __LINE__);
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
 
  cleanup:
     if(NULL != loc_buffer) {
@@ -686,6 +408,14 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char
     return exit_status;
 }
 
+/****************************
+ * Command line tool request functions
+ ****************************/
+/* JJH TODO - Move the command line functions here ? */
+
+/*****************************
+ * Snapshot metadata functions
+ *****************************/
 char * orte_snapc_base_unique_global_snapshot_name(pid_t pid)
 {
     char * uniq_name;
@@ -748,7 +478,8 @@ int orte_snapc_base_init_global_snapshot_directory(char *uniq_global_snapshot_na
 
     if (NULL == (meta_data = fopen(meta_data_fname, "a")) ) {
         opal_output(orte_snapc_base_output,
-                    "orte:snapc:base: init_global_snapshot_directory: Error: Unable to open the file (%s)\n",
+                    "%s) base:init_global_snapshot_directory: Error: Unable to open the file (%s)\n",
+                    ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     meta_data_fname);
         exit_status = ORTE_ERROR;
         goto cleanup;
@@ -782,614 +513,6 @@ int orte_snapc_base_init_global_snapshot_directory(char *uniq_global_snapshot_na
         free(meta_data_fname);
 
     return OPAL_SUCCESS;
-}
-
-int orte_snapc_base_global_init_request(orte_jobid_t jobid,
-                                        orte_rml_buffer_callback_fn_t rml_cbfunc, void* rml_cbdata,
-                                        orte_gpr_notify_cb_fn_t       gpr_cbfunc, void* gpr_cbdata)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    
-    /*
-     * Setup RML Callback in case the user uses orte_checkpoint()
-     */
-    if( ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, 
-                                                       ORTE_RML_TAG_CKPT, 
-                                                       0, 
-                                                       rml_cbfunc, 
-                                                       NULL)) ) {
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    /*
-     * Setup GPR Callbacks in case the application initiates a global checkpoint
-     */
-    if( ORTE_SUCCESS != (ret = snapc_base_reg_gpr_request(jobid, gpr_cbfunc, gpr_cbdata))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
- cleanup:
-    return exit_status;
-}
-
-static int snapc_base_reg_gpr_request( orte_jobid_t jobid, orte_gpr_notify_cb_fn_t gpr_cbfunc, void* gpr_cbdata )
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    char *segment = NULL, *trig_name = NULL, *tokens[2];
-    orte_gpr_subscription_id_t id;
-    char* keys[] = {
-        ORTE_JOB_CKPT_STATE_KEY,
-        NULL
-    };
-    char* trig_names[] = {
-        ORTE_JOB_CKPT_STATE_TRIGGER,
-        NULL
-    };
-
-    /*
-     * Setup the tokens
-     */
-    tokens[0] = ORTE_JOB_GLOBALS;
-    tokens[1] = NULL;
-
-    /*
-     * Identify the segment for this job
-     */
-    if( ORTE_SUCCESS != (ret = orte_schema.get_job_segment_name(&segment, jobid))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    /*
-     * Attach to the standard trigger
-     */
-    if( ORTE_SUCCESS != (ret = orte_schema.get_std_trigger_name(&trig_name, trig_names[0], jobid))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * Subscribe to the GPR
-     */
-    if( ORTE_SUCCESS != (ret = orte_gpr.subscribe_1(&id,
-                                                    trig_name,
-                                                    NULL,
-                                                    ORTE_GPR_NOTIFY_VALUE_CHG,
-                                                    ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
-                                                    segment,
-                                                    tokens,
-                                                    keys[0],
-                                                    gpr_cbfunc,
-                                                    NULL))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    
- cleanup:
-    if(NULL != segment)
-        free(segment);
-    if(NULL != trig_name)
-        free(trig_name);
-    
-    return exit_status;
-}
-
-int orte_snapc_base_get_job_ckpt_info( orte_jobid_t jobid, 
-                                       size_t *ckpt_state, 
-                                       char **ckpt_snapshot_ref, 
-                                       char **ckpt_snapshot_loc)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    char *segment = NULL, *tokens[2], *keys[4];
-    orte_gpr_value_t** values = NULL;
-    orte_std_cntr_t i, j;
-    orte_std_cntr_t num_values = 0;
-    size_t *tmp_state = 0;
-    char   *tmp_snap = NULL;
-
-    /*
-     * Setup tokens and keys
-     */
-    tokens[0] = ORTE_JOB_GLOBALS;
-    tokens[1] = NULL;
-
-    keys[0] = ORTE_JOB_CKPT_STATE_KEY;
-    keys[1] = ORTE_JOB_CKPT_SNAPSHOT_REF_KEY;
-    keys[2] = ORTE_JOB_CKPT_SNAPSHOT_LOC_KEY;
-    keys[3] = NULL;
-    
-    /* 
-     * Get the job segment
-     */
-    if(ORTE_SUCCESS != (ret = orte_schema.get_job_segment_name(&segment, jobid))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * Get the requested values
-     */
-    if( ORTE_SUCCESS != (ret = orte_gpr.get(ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
-                                            segment,
-                                            tokens,
-                                            keys,
-                                            &num_values,
-                                            &values ) ) ) {
-        
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    /*
-     * Parse the values
-     */
-    for(i = 0; i < num_values; ++i) {
-        orte_gpr_value_t* value = values[i];
-
-        for(j = 0; j < value->cnt; ++j) {
-            orte_gpr_keyval_t* keyval = value->keyvals[j];
-
-            if(strcmp(keyval->key, ORTE_JOB_CKPT_STATE_KEY) == 0) {
-                if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&(tmp_state), keyval->value, ORTE_SIZE))) {
-                    exit_status = ret;
-                    goto cleanup;
-                }
-                *ckpt_state = *tmp_state;
-                continue;
-            }
-            else if (strcmp(keyval->key, ORTE_JOB_CKPT_SNAPSHOT_REF_KEY) == 0) {
-                if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&(tmp_snap), keyval->value, ORTE_STRING))) {
-                    exit_status = ret;
-                    goto cleanup;
-                }
-                *ckpt_snapshot_ref = strdup(tmp_snap);
-                if(NULL != tmp_snap) {
-                    free(tmp_snap);
-                    tmp_snap = NULL;
-                }
-                continue;
-            }
-            else if (strcmp(keyval->key, ORTE_JOB_CKPT_SNAPSHOT_LOC_KEY) == 0) {
-                if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&(tmp_snap), keyval->value, ORTE_STRING))) {
-                    exit_status = ret;
-                    goto cleanup;
-                }
-                *ckpt_snapshot_loc = strdup(tmp_snap);
-                if(NULL != tmp_snap) {
-                    free(tmp_snap);
-                    tmp_snap = NULL;
-                }
-                continue;
-            }
-        }
-    }
-    
- cleanup:
-    if( NULL != segment) 
-        free(segment);
-
-    if(NULL != tmp_snap) {
-        free(tmp_snap);
-        tmp_snap = NULL;
-    }
-
-    return exit_status;
-}
-
-int orte_snapc_base_set_job_ckpt_info( orte_jobid_t jobid,
-                                       size_t ckpt_state, 
-                                       char  *ckpt_snapshot_ref,
-                                       char  *ckpt_snapshot_loc)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    orte_gpr_value_t **values = NULL;
-    char *segment = NULL;
-
-    if(ORTE_SUCCESS != (ret = orte_schema.get_job_segment_name(&segment, jobid))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    values = (orte_gpr_value_t**)malloc(1 * sizeof(orte_gpr_value_t*));
-    if(NULL == values) {
-        exit_status = ORTE_ERR_OUT_OF_RESOURCE;
-        goto cleanup;
-    }
-
-    if (ORTE_SUCCESS != (ret = orte_gpr.create_value(&(values[0]), 
-                                                     ORTE_GPR_OVERWRITE,
-                                                     segment, 
-                                                     3, 
-                                                     0))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * Get the tokens for the job
-     */
-    if( ORTE_SUCCESS != (ret = orte_schema.get_job_tokens(&(values[0]->tokens),
-                                                          &(values[0]->num_tokens),
-                                                          jobid) ) ) {
-        exit_status = ret;
-        goto cleanup;
-    }
-    values[0]->tokens[0] = strdup(ORTE_JOB_GLOBALS);
-    values[0]->tokens[1] = NULL;
-
-    /*
-     * Set the values
-     */
-    if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[0]),
-                                                      ORTE_JOB_CKPT_STATE_KEY,
-                                                      ORTE_SIZE,
-                                                      &ckpt_state))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-    if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[1]),
-                                                      ORTE_JOB_CKPT_SNAPSHOT_REF_KEY,
-                                                      ORTE_STRING,
-                                                      ckpt_snapshot_ref
-                                                      ))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-    if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[2]),
-                                                      ORTE_JOB_CKPT_SNAPSHOT_LOC_KEY,
-                                                      ORTE_STRING,
-                                                      ckpt_snapshot_loc
-                                                      ))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    if (ORTE_SUCCESS != (ret = orte_gpr.put(1, values))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
- cleanup:
-    if(NULL != segment) {
-        free(segment);
-        segment = NULL;
-    }
-    if( NULL != values) {
-        OBJ_RELEASE(values[0]);
-        free(values);
-        values = NULL;
-    }
-
-    return exit_status;
-}
-
-int orte_snapc_base_get_vpid_ckpt_info( orte_process_name_t proc, 
-                                        size_t *ckpt_state,
-                                        char **ckpt_snapshot_ref, 
-                                        char **ckpt_snapshot_loc)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    char *segment = NULL, **tokens = NULL, *keys[4];
-    orte_gpr_value_t** values = NULL;
-    orte_std_cntr_t i, j, num_values = 0, num_tokens = 0;
-    size_t *tmp_state = 0;
-    char   *tmp_snap = NULL;
-
-    keys[0] = ORTE_PROC_CKPT_STATE_KEY;
-    keys[1] = ORTE_PROC_CKPT_SNAPSHOT_REF_KEY;
-    keys[2] = ORTE_PROC_CKPT_SNAPSHOT_LOC_KEY;
-    keys[3] = NULL;
-
-    /* 
-     * Get the job segment
-     */
-    if(ORTE_SUCCESS != (ret = orte_schema.get_job_segment_name(&segment, proc.jobid))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * Get the process tokens
-     */
-    if (ORTE_SUCCESS != (ret = orte_schema.get_proc_tokens(&tokens,
-                                                           &num_tokens,
-                                                           &proc) )) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * Get the requested values
-     */
-    if( ORTE_SUCCESS != (ret = orte_gpr.get(ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
-                                            segment,
-                                            tokens,
-                                            keys,
-                                            &num_values,
-                                            &values ) ) ) {
-        
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    /*
-     * Parse the values
-     */
-    for(i = 0; i < num_values; ++i) {
-        orte_gpr_value_t* value = values[i];
-
-        for(j = 0; j < value->cnt; ++j) {
-            orte_gpr_keyval_t* keyval = value->keyvals[j];
-
-            if(strcmp(keyval->key, ORTE_PROC_CKPT_STATE_KEY) == 0) {
-                if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&(tmp_state), keyval->value, ORTE_SIZE))) {
-                    exit_status = ret;
-                    goto cleanup;
-                }
-                *ckpt_state = *tmp_state;
-                continue;
-            }
-            else if (strcmp(keyval->key, ORTE_PROC_CKPT_SNAPSHOT_REF_KEY) == 0) {
-                if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&(tmp_snap), keyval->value, ORTE_STRING))) {
-                    exit_status = ret;
-                    goto cleanup;
-                }
-                *ckpt_snapshot_ref = strdup(tmp_snap);
-                if(NULL != tmp_snap) {
-                    free(tmp_snap);
-                    tmp_snap = NULL;
-                }
-                continue;
-            }
-            else if (strcmp(keyval->key, ORTE_PROC_CKPT_SNAPSHOT_LOC_KEY) == 0) {
-                if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&(tmp_snap), keyval->value, ORTE_STRING))) {
-                    exit_status = ret;
-                    goto cleanup;
-                }
-                *ckpt_snapshot_loc = strdup(tmp_snap);
-                if(NULL != tmp_snap) {
-                    free(tmp_snap);
-                    tmp_snap = NULL;
-                }
-                continue;
-            }
-        }
-    } 
-   
- cleanup:
-    if( NULL != segment) 
-        free(segment);
-
-    if(NULL != tmp_snap) {
-        free(tmp_snap);
-        tmp_snap = NULL;
-    }
-
-    return exit_status;
-}
-
-int orte_snapc_base_set_vpid_ckpt_info( orte_process_name_t proc, 
-                                   size_t ckpt_state, 
-                                   char *ckpt_ref, 
-                                   char *ckpt_loc)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    orte_gpr_value_t *values[1];
-    char *segment = NULL;
-    
-    /*
-     * Get Job segment
-     */
-    if(ORTE_SUCCESS != (ret = orte_schema.get_job_segment_name(&segment, proc.jobid))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * Create the value structure
-     */
-    if (ORTE_SUCCESS != (ret = orte_gpr.create_value(&values[0], 
-                                                     ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
-                                                     segment, 
-                                                     3, 
-                                                     0))) {
-        
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    /*
-     * Get the tokens for the process
-     */
-    if (ORTE_SUCCESS != (ret = orte_schema.get_proc_tokens(&(values[0]->tokens), 
-                                                           &(values[0]->num_tokens), 
-                                                           &proc) )) {
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    /*
-     * Set the values
-     */
-    if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[0]), 
-                                                      ORTE_PROC_CKPT_STATE_KEY, 
-                                                      ORTE_SIZE, 
-                                                      &ckpt_state)) ) {
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[1]), 
-                                                      ORTE_PROC_CKPT_SNAPSHOT_REF_KEY, 
-                                                      ORTE_STRING, 
-                                                      ckpt_ref
-                                                      ) ) ) {
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_gpr.create_keyval(&(values[0]->keyvals[2]), 
-                                                      ORTE_PROC_CKPT_SNAPSHOT_LOC_KEY, 
-                                                      ORTE_STRING, 
-                                                      ckpt_loc
-                                                      )) ) {
-        exit_status = ret;
-        goto cleanup;
-    }
-    
-    /*
-     * Put it in the GPR
-     */
-    if (ORTE_SUCCESS != (ret = orte_gpr.put(1, values)) ) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
- cleanup:
-    if( NULL != segment)
-        free(segment);
-
-    return exit_status;
-}
-
-int orte_snapc_base_extract_gpr_vpid_ckpt_info(orte_gpr_notify_data_t *data,
-                                               orte_process_name_t **proc,
-                                               size_t *ckpt_state,
-                                               char **ckpt_snapshot_ref,
-                                               char **ckpt_snapshot_loc)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    orte_gpr_value_t **values, *value;
-    orte_std_cntr_t i, j, k;
-    orte_gpr_keyval_t** keyvals;
-    size_t *tmp_state = 0;
-
-    values = (orte_gpr_value_t**)(data->values)->addr;
-
-    /*
-     * Extract the process name from the proper token
-     */
-    if( ORTE_SUCCESS != (ret = orte_ns.convert_string_to_process_name(proc, values[0]->tokens[0]) ) ) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * Parse the values structure to get the values that changed
-     */
-    for(i = 0, k = 0; 
-        k < data->cnt && 
-            i < (data->values)->size; 
-        ++i) {
-
-        if( NULL != values[i]) {
-            ++k;
-            value = values[i];
-            keyvals = value->keyvals;
-
-            for(j = 0; j < value->cnt; ++j) {
-                orte_gpr_keyval_t* keyval = keyvals[j];
-                if(strcmp(keyval->key, ORTE_PROC_CKPT_STATE_KEY) == 0) {
-                    if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&(tmp_state), keyval->value, ORTE_SIZE))) {
-                        exit_status = ret;
-                        goto cleanup;
-                    }
-                    *ckpt_state = *tmp_state;
-                    continue;
-                }
-                else if(strcmp(keyval->key, ORTE_PROC_CKPT_SNAPSHOT_REF_KEY) == 0) {
-                    char * tmp_snap = NULL;
-                    if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&(tmp_snap), keyval->value, ORTE_STRING))) {
-                        exit_status = ret;
-                        goto cleanup;
-                    }
-                    *ckpt_snapshot_ref = strdup(tmp_snap);
-                    continue;
-                }
-                else if(strcmp(keyval->key, ORTE_PROC_CKPT_SNAPSHOT_LOC_KEY) == 0) {
-                    char * tmp_snap = NULL;
-                    if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&(tmp_snap), keyval->value, ORTE_STRING))) {
-                        exit_status = ret;
-                        goto cleanup;
-                    }
-                    *ckpt_snapshot_loc = strdup(tmp_snap);
-
-                    continue;
-                }
-            }
-        }
-    }
-
- cleanup:
-
-    return exit_status;
-}
-
-int orte_snapc_base_extract_gpr_job_ckpt_info(orte_gpr_notify_data_t *data,
-                                              size_t *ckpt_state,
-                                              char **ckpt_snapshot_ref,
-                                              char **ckpt_snapshot_loc)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    orte_gpr_value_t **values, *value;
-    orte_std_cntr_t i, j, k;
-    orte_gpr_keyval_t** keyvals;
-    size_t *tmp_state = 0;
-
-    values = (orte_gpr_value_t**)(data->values)->addr;
-
-    /*
-     * Parse the values structure to get the values that changed
-     */
-    for(i = 0, k = 0; 
-        k < data->cnt && 
-            i < (data->values)->size; 
-        ++i) {
-
-        if( NULL != values[i]) {
-            ++k;
-            value = values[i];
-            keyvals = value->keyvals;
-
-            for(j = 0; j < value->cnt; ++j) {
-                orte_gpr_keyval_t* keyval = keyvals[j];
-                if(strcmp(keyval->key, ORTE_JOB_CKPT_STATE_KEY) == 0) {
-                    if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&(tmp_state), keyval->value, ORTE_SIZE))) {
-                        exit_status = ret;
-                        goto cleanup;
-                    }
-                    *ckpt_state = *tmp_state;
-                    continue;
-                }
-                else if(strcmp(keyval->key, ORTE_JOB_CKPT_SNAPSHOT_REF_KEY) == 0) {
-                    char * tmp_snap = NULL;
-                    if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&(tmp_snap), keyval->value, ORTE_STRING))) {
-                        exit_status = ret;
-                        goto cleanup;
-                    }
-                    *ckpt_snapshot_ref = strdup(tmp_snap);
-                    continue;
-                }
-                else if(strcmp(keyval->key, ORTE_JOB_CKPT_SNAPSHOT_LOC_KEY) == 0) {
-                    char * tmp_snap = NULL;
-                    if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&(tmp_snap), keyval->value, ORTE_STRING))) {
-                        exit_status = ret;
-                        goto cleanup;
-                    }
-                    *ckpt_snapshot_loc = strdup(tmp_snap);
-
-                    continue;
-                }
-            }
-        }
-    }
-
- cleanup:
-
-    return exit_status;
 }
 
 /*
@@ -1439,7 +562,8 @@ int orte_snapc_base_add_timestamp(char * global_snapshot_ref)
 
     if (NULL == (meta_data = fopen(meta_data_fname, "a")) ) {
         opal_output(orte_snapc_base_output,
-                    "orte:snapc:base: orte_snapc_base_add_timestamp: Error: Unable to open the file (%s)\n",
+                    "%s) base:add_timestamp: Error: Unable to open the file (%s)\n",
+                    ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     meta_data_fname);
         exit_status = ORTE_ERROR;
         goto cleanup;
@@ -1470,7 +594,8 @@ int orte_snapc_base_finalize_metadata(char * global_snapshot_ref)
 
     if (NULL == (meta_data = fopen(meta_data_fname, "a")) ) {
         opal_output(orte_snapc_base_output,
-                    "orte:snapc:base: orte_snapc_base_add_timestamp: Error: Unable to open the file (%s)\n",
+                    "%s) base:add_timestamp: Error: Unable to open the file (%s)\n",
+                    ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     meta_data_fname);
         exit_status = ORTE_ERROR;
         goto cleanup;
@@ -1496,15 +621,17 @@ int orte_snapc_base_add_vpid_metadata( orte_process_name_t *proc,
     int exit_status = ORTE_SUCCESS;
     FILE * meta_data = NULL;
     char * meta_data_fname = NULL;
-    char * proc_str = NULL, *crs_comp = NULL;
+    char * crs_comp = NULL;
     char * local_dir = NULL;
+    char * proc_name = NULL;
     int prev_pid = 0;
 
     meta_data_fname = orte_snapc_base_get_global_snapshot_metadata_file(global_snapshot_ref);
 
     if (NULL == (meta_data = fopen(meta_data_fname, "a")) ) {
         opal_output(orte_snapc_base_output,
-                    "orte:snapc:base: orte_snapc_base_add_metadata: Error: Unable to open the file (%s)\n",
+                    "%s) base:add_metadata: Error: Unable to open the file (%s)\n",
+                    ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     meta_data_fname);
         exit_status = ORTE_ERROR;
         goto cleanup;
@@ -1516,8 +643,7 @@ int orte_snapc_base_add_vpid_metadata( orte_process_name_t *proc,
      * or better yet start to create the proper app schema:
      * orte_restart --mca crs_base_snapshot_dir /tmp/ompi_global_snapshot_8827.ckpt/1 opal_snapshot_0.ckpt
      */
-    /* Get the process string */
-    orte_ns.get_proc_name_string(&proc_str, proc);
+    orte_util_convert_process_name_to_string(&proc_name, proc);
 
     /* Extract the checkpointer */
     crs_comp = opal_crs_base_extract_expected_component(snapshot_location, &prev_pid);
@@ -1531,7 +657,7 @@ int orte_snapc_base_add_vpid_metadata( orte_process_name_t *proc,
     local_dir = opal_dirname(local_dir);
 
     /* Write the string */
-    fprintf(meta_data, "%s%s\n", SNAPC_METADATA_PROCESS,   proc_str);
+    fprintf(meta_data, "%s%s\n", SNAPC_METADATA_PROCESS,   proc_name);
     fprintf(meta_data, "%s%s\n", SNAPC_METADATA_CRS_COMP,  crs_comp);
     fprintf(meta_data, "%s%s\n", SNAPC_METADATA_SNAP_REF,  snapshot_ref);
     fprintf(meta_data, "%s%s\n", SNAPC_METADATA_SNAP_LOC,  local_dir);
@@ -1608,9 +734,9 @@ int orte_snapc_base_extract_metadata(orte_snapc_base_global_snapshot_t *global_s
             }
         }
         else if(0 == strncmp(SNAPC_METADATA_PROCESS, token, strlen(SNAPC_METADATA_PROCESS)) ) {
-            orte_process_name_t *proc;
+            orte_process_name_t proc;
 
-            orte_ns.convert_string_to_process_name(&proc, value);            
+            orte_util_convert_string_to_process_name(&proc, value);
 
             /* Not the first process, so append it to the list */
             if( NULL != vpid_snapshot) {
@@ -1619,8 +745,8 @@ int orte_snapc_base_extract_metadata(orte_snapc_base_global_snapshot_t *global_s
 
             vpid_snapshot = OBJ_NEW(orte_snapc_base_snapshot_t);
 
-            vpid_snapshot->process_name.jobid  = proc->jobid;
-            vpid_snapshot->process_name.vpid   = proc->vpid;
+            vpid_snapshot->process_name.jobid  = proc.jobid;
+            vpid_snapshot->process_name.vpid   = proc.vpid;
         }
         else if(0 == strncmp(SNAPC_METADATA_CRS_COMP, token, strlen(SNAPC_METADATA_CRS_COMP)) ) {
             vpid_snapshot->crs_snapshot_super.component_name = strdup(value);

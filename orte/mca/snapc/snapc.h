@@ -73,33 +73,20 @@
 #define MCA_SNAPC_H
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
-#include "orte/orte_types.h"
+#include "orte/constants.h"
+#include "orte/types.h"
 
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
-#include "orte/mca/ns/ns.h"
 
 #include "opal/class/opal_object.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
-/**
- * Three types of Coordinator types, plus
- *  the case when it hasn't been defined.
- * These need to be able to be bit masked, so
- *  a process can be both Local & Application Coordinator 
- *  at the same time if needed.
- */
-#define ORTE_SNAPC_UNASSIGN_TYPE     0
-#define ORTE_SNAPC_GLOBAL_COORD_TYPE 1
-#define ORTE_SNAPC_LOCAL_COORD_TYPE  2
-#define ORTE_SNAPC_APP_COORD_TYPE    4
+#define JJH_FIX_ME 0
 
 /**
  * States that a process can be in while checkpointing
@@ -233,9 +220,6 @@ struct orte_snapc_base_component_1_0_0_t {
     int output_handle;
     /** Default Priority */
     int priority;
-    
-    /** Type of Coordinator */
-    uint32_t coord_type;
 };
 typedef struct orte_snapc_base_component_1_0_0_t orte_snapc_base_component_1_0_0_t;
 typedef struct orte_snapc_base_component_1_0_0_t orte_snapc_base_component_t;
@@ -267,9 +251,7 @@ ORTE_DECLSPEC extern orte_snapc_base_module_t orte_snapc;
     /* SNAPC v1.0 */ \
     "snapc", 1, 0, 0
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* ORTE_SNAPC_H */
 

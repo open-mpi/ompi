@@ -51,6 +51,8 @@
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/base.h"
 
+#include "ompi/mca/dpm/dpm.h"
+
 OBJ_CLASS_INSTANCE(
     mca_common_sm_mmap_t,
     opal_object_t,
@@ -179,13 +181,13 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         /* signal the rest of the local procs that the backing file
            has been created */
         for(p=1 ; p < n_local_procs ; p++ ) {
-            sm_file_created=ORTE_RML_TAG_SM_BACK_FILE_CREATED;
+            sm_file_created=OMPI_RML_TAG_SM_BACK_FILE_CREATED;
             iov[0].iov_base=&sm_file_created;
             iov[0].iov_len=sizeof(sm_file_created);
             iov[1].iov_base=&sm_file_inited;
             iov[1].iov_len=sizeof(sm_file_inited);
             rc=orte_rml.send(&(procs[p]->proc_name),iov,2,
-                ORTE_RML_TAG_SM_BACK_FILE_CREATED,0);
+                OMPI_RML_TAG_SM_BACK_FILE_CREATED,0);
             if( rc < 0 ) {
                 opal_output(0,
                     "mca_common_sm_mmap_init: orte_rml.send failed to %lu with errno=%d\n",
@@ -205,7 +207,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         iov[1].iov_base=&sm_file_inited;
         iov[1].iov_len=sizeof(sm_file_inited);
         rc=orte_rml.recv(&(procs[0]->proc_name),iov,2,
-              ORTE_RML_TAG_SM_BACK_FILE_CREATED,0);
+              OMPI_RML_TAG_SM_BACK_FILE_CREATED,0);
         if( rc < 0 ) {
             opal_output(0, "mca_common_sm_mmap_init: orte_rml.recv failed from %ld with errno=%d\n",            
                         0L, errno);

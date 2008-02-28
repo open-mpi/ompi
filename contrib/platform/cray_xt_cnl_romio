@@ -1,3 +1,7 @@
+enable_mem_debug=no
+enable_mem_profile=no
+enable_debug=no
+enable_debug_symbols=no
 enable_io_romio=yes
 enable_static=yes
 enable_shared=no
@@ -6,12 +10,9 @@ enable_pretty_print_stacktrace=no
 enable_dlopen=no
 with_portals_config=cnl_modex
 with_memory_manager=none
-enable_mca_no_build=maffinity-first_use,maffinity-libnuma,paffinity-linux,pls-rsh,pml-dr,filem-rsh,grpcomm-cnos,pls-cnos,rmgr-cnos,rml-cnos,routed-cnos,sds-portals_utcp,sds-cnos
+enable_mca_no_build=maffinity-first_use,maffinity-libnuma,paffinity-linux,ess-cnos,pml-dr,filem-rsh,grpcomm-cnos,rmgr-cnos,rml-cnos
 enable_heterogeneous=no
 enable_pty_support=no
-enable_mem_debug=no
-enable_mem_profile=no
-enable_debug_symbols=no
 enable_binaries=yes
 
 ompi_cv_f77_sizeof_LOGICAL=${ompi_cv_f77_sizeof_LOGICAL=4}

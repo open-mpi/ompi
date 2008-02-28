@@ -25,35 +25,32 @@
  * includes
  */
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
+#include "orte/types.h"
 
-#include "orte/mca/ns/ns_types.h"
-#include "orte/mca/gpr/gpr_types.h"
-#include "orte/mca/rml/rml.h"
+#include "opal/dss/dss_types.h"
+#include "orte/mca/rml/rml_types.h"
+#include "orte/mca/plm/plm_types.h"
+
+#include "orte/mca/errmgr/errmgr.h"
 
 
 /*
  * Functions for use solely within the ERRMGR framework
  */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /* Define the ERRMGR command flag */
 typedef uint8_t orte_errmgr_cmd_flag_t;
-#define ORTE_ERRMGR_CMD	ORTE_UINT8
+#define ORTE_ERRMGR_CMD	OPAL_UINT8
     
 /* define some commands */
 #define ORTE_ERRMGR_ABORT_PROCS_REQUEST_CMD     0x01
-#define ORTE_ERRMGR_REGISTER_JOB_CMD            0x02
+#define ORTE_ERRMGR_REGISTER_CALLBACK_CMD       0x02
  
-/* Internal support */
-ORTE_DECLSPEC int orte_errmgr_base_comm_start(void);
-ORTE_DECLSPEC int orte_errmgr_base_comm_stop(void);
-void orte_errmgr_base_recv(int status, orte_process_name_t* sender,
-                           orte_buffer_t* buffer, orte_rml_tag_t tag,
-                           void* cbdata);
-    
+/* provide access to verbose output channel */
+ORTE_DECLSPEC extern int orte_errmgr_base_output;
+
     
 /*
  * Base functions
@@ -61,23 +58,20 @@ void orte_errmgr_base_recv(int status, orte_process_name_t* sender,
 
 ORTE_DECLSPEC    void orte_errmgr_base_log(int error_code, char *filename, int line);
 
-ORTE_DECLSPEC    int orte_errmgr_base_proc_aborted_not_avail(orte_gpr_notify_message_t *msg);
+ORTE_DECLSPEC    void orte_errmgr_base_proc_aborted_not_avail(orte_process_name_t *name, int exit_code);
 
-ORTE_DECLSPEC    int orte_errmgr_base_incomplete_start_not_avail(orte_gpr_notify_message_t *msg);
+ORTE_DECLSPEC    void orte_errmgr_base_incomplete_start_not_avail(orte_jobid_t job, int exit_code);
 
-ORTE_DECLSPEC    void orte_errmgr_base_error_detected(int error_code, char *fmt, ...) __opal_attribute_format__(__printf__, 2, 3);
+ORTE_DECLSPEC    void orte_errmgr_base_error_abort(int error_code, char *fmt, ...);
 
-ORTE_DECLSPEC    int orte_errmgr_base_register_job_not_avail(orte_jobid_t job);
-
-ORTE_DECLSPEC    void orte_errmgr_base_abort(void) __opal_attribute_noreturn__;
-
-ORTE_DECLSPEC   int orte_errmgr_base_abort_procs_request_not_avail(orte_process_name_t *procs, orte_std_cntr_t num_procs);
+ORTE_DECLSPEC    int orte_errmgr_base_register_cb_not_avail(orte_jobid_t job,
+                                                            orte_job_state_t state,
+                                                            orte_errmgr_cb_fn_t cbfunc,
+                                                            void *cbdata);
 
 /*
  * external API functions will be documented in the mca/errmgr/errmgr.h file
  */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

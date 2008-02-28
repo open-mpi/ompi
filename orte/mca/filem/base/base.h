@@ -21,7 +21,7 @@
 #include "orte_config.h"
 
 #include "orte/mca/rml/rml.h"
-#include "orte/dss/dss.h"
+#include "opal/dss/dss.h"
 
 #include "orte/mca/filem/filem.h"
 
@@ -29,9 +29,15 @@
  * Global functions for MCA overall FILEM
  */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
+
+/*
+ * cmds for base receive
+ */
+typedef uint8_t orte_filem_cmd_flag_t;
+#define ORTE_FILEM_CMD  OPAL_UINT8
+#define ORTE_FILEM_GET_PROC_NODE_NAME_CMD  1
+#define ORTE_FILEM_GET_REMOTE_PATH_CMD     2
 
     /**
      * FileM request object maintenance functions
@@ -106,27 +112,25 @@ extern "C" {
     /**
      * Some utility functions
      */
-    ORTE_DECLSPEC int orte_filem_base_listener_init(orte_rml_buffer_callback_fn_t rml_cbfunc);
-    ORTE_DECLSPEC int orte_filem_base_listener_cancel(void);
+    /* base comm functions */
+    ORTE_DECLSPEC int orte_filem_base_comm_start(void);
+    ORTE_DECLSPEC int orte_filem_base_comm_stop(void);
+    ORTE_DECLSPEC void orte_filem_base_recv(int status, orte_process_name_t* sender,
+                                            opal_buffer_t* buffer, orte_rml_tag_t tag,
+                                            void* cbdata);
+
 
     /**
      * Get Node Name for an ORTE process
      */
     ORTE_DECLSPEC int orte_filem_base_get_proc_node_name(orte_process_name_t *proc, char **machine_name);
-    ORTE_DECLSPEC int orte_filem_base_query_remote_path(char **remote_ref, orte_process_name_t *peer, int *flag);
-    ORTE_DECLSPEC void orte_filem_base_query_callback(int status,
-                                                      orte_process_name_t* peer,
-                                                      orte_buffer_t *buffer,
-                                                      orte_rml_tag_t tag,
-                                                      void* cbdata);
+    ORTE_DECLSPEC int orte_filem_base_get_remote_path(char **remote_ref, orte_process_name_t *peer, int *flag);
 
     /**
      * Setup request structure
      */
     ORTE_DECLSPEC int orte_filem_base_prepare_request(orte_filem_base_request_t *request, int move_type);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* ORTE_FILEM_BASE_H */

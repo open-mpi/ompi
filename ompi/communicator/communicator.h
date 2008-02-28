@@ -65,7 +65,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 /* a set of special tags: */
 
 /*  to recognize an MPI_Comm_join in the comm_connect_accept routine. */
-#define OMPI_COMM_JOIN_TAG      -32000
 
 #define OMPI_COMM_ALLGATHER_TAG -31078
 #define OMPI_COMM_BARRIER_TAG   -31079
@@ -356,7 +355,7 @@ struct ompi_communicator_t {
      *                    the OOB version.
      * This routine has to be thread safe in the final version.
      */
-    int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
+OMPI_DECLSPEC int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
                             ompi_communicator_t* oldcomm,
                             ompi_communicator_t* bridgecomm,
                             void* local_leader,
@@ -373,7 +372,7 @@ struct ompi_communicator_t {
      * This is THE routine, where all the communicator stuff
      * is really set.
      */
-    int ompi_comm_set ( ompi_communicator_t** newcomm,
+OMPI_DECLSPEC int ompi_comm_set ( ompi_communicator_t** newcomm,
                         ompi_communicator_t* oldcomm,
                         int local_size,
                         int *local_ranks,
@@ -412,7 +411,7 @@ struct ompi_communicator_t {
                                    int high );
 
 
-    int ompi_comm_activate ( ompi_communicator_t* newcomm,
+OMPI_DECLSPEC int ompi_comm_activate ( ompi_communicator_t* newcomm,
                              ompi_communicator_t* oldcomm,
                              ompi_communicator_t* bridgecomm,
                              void* local_leader,
@@ -427,34 +426,8 @@ struct ompi_communicator_t {
      */
     int ompi_comm_dump ( ompi_communicator_t *comm );
 
-    /**
-     * a simple function to determint a port number
-     */
-    int ompi_open_port (char *port_name);
-
-    /**
-     * takes a port_name and returns the oob-contact information
-     * and the tag
-     */
-    char * ompi_parse_port (char *port_name, orte_rml_tag_t *tag) ;
-
-    /**
-     * routines handling name publishing, lookup and unpublishing
-     */
-    int ompi_comm_namepublish ( char *service_name, char *port_name );
-    char* ompi_comm_namelookup ( char *service_name );
-    int ompi_comm_nameunpublish ( char *service_name );
-
-
     /* setting name */
     int ompi_comm_set_name (ompi_communicator_t *comm, char *name );
-
-    /* THE routine for dynamic process management. This routine
-       sets the connection up between two independent applications.
-    */
-    int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
-                                   orte_process_name_t *port, int send_first,
-                                   ompi_communicator_t **newcomm, orte_rml_tag_t tag);
 
     /*
      * these are the init and finalize functions for the comm_reg
@@ -464,59 +437,9 @@ struct ompi_communicator_t {
     void ompi_comm_reg_init(void);
     void ompi_comm_reg_finalize(void);
 
-    /* start the new processes from MPI_Comm_spawn_multiple.  Initial
-     * version, very rough
-     */
-    int ompi_comm_start_processes(int count, char **array_of_commands,
-                                  char ***array_of_argv,
-                                  int *array_of_maxprocs,
-                                  MPI_Info *array_of_info,
-                                  char *port_name);
-
-    /*
-     * This routine checks, whether an application has been spawned
-     * by another MPI application, or has been independently started.
-     * If it has been spawned, it establishes the parent communicator.
-     * Since the routine has to communicate, it should be among the last
-     * steps in MPI_Init, to be sure that everything is already set up.
-     */
-    int ompi_comm_dyn_init(void);
-
-    /**
-     * Executes internally a disconnect on all dynamic communicators
-     * in case the user did not disconnect them.
-     */
-    int ompi_comm_dyn_finalize(void);
-
-    /* this routine counts the number of different jobids of the processes
-       given in a certain communicator. If there is more than one jobid,
-       we mark the communicator as 'dynamic'. This is especially relevant
-       for the MPI_Comm_disconnect *and* for MPI_Finalize, where we have
-       to wait for all still connected processes. */
+    /* global variable to save the number od dynamic communicators */
     extern int ompi_comm_num_dyncomm;
-    void ompi_comm_mark_dyncomm (ompi_communicator_t *comm);
 
-    /* the next two routines implement a kind of non-blocking barrier.
-       the only difference is, that you can wait for the completion
-       of more than one initiated ibarrier. This is required for waiting
-       for all still connected processes in MPI_Finalize.
-
-       ompi_comm_disconnect_init returns a handle, which has to be passed in
-       to ompi_comm_disconnect_waitall. The second routine blocks, until
-       all non-blocking barriers described by the handles are finished.
-       The communicators can than be released.
-    */
-
-    struct ompi_comm_disconnect_obj {
-        ompi_communicator_t       *comm;
-        int                       size;
-        struct ompi_request_t     **reqs;
-        int                       buf;
-    };
-    typedef struct ompi_comm_disconnect_obj ompi_comm_disconnect_obj;
-
-    ompi_comm_disconnect_obj *ompi_comm_disconnect_init (ompi_communicator_t *comm);
-    void ompi_comm_disconnect_waitall (int count, ompi_comm_disconnect_obj **objs );
 
 END_C_DECLS
 

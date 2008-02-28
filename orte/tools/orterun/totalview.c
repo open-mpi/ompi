@@ -63,10 +63,10 @@
 #include "opal/mca/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/rmgr/rmgr_types.h"
+#include "orte/mca/plm/plm_types.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/runtime/runtime.h"
-#include "orte/runtime/params.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "orterun.h"
 #include "totalview.h"
@@ -420,13 +420,10 @@ void orte_totalview_init_before_spawn(void)
  */
 void orte_totalview_init_after_spawn(orte_jobid_t jobid)
 {
-    orte_job_map_t *map;
-    opal_list_item_t *item, *item2;
-    orte_mapped_node_t *node;
-    orte_mapped_proc_t *proc;
-    orte_app_context_t *appctx;
-    orte_std_cntr_t i;
-    int rc;
+    orte_job_t *jdata;
+    orte_proc_t **procs;
+    orte_app_context_t *appctx, **apps;
+    orte_vpid_t i, j;
 
     if (MPIR_proctable) {
         /* already initialized */
@@ -454,19 +451,15 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
 
         MPIR_debug_state = 1;
 
-        /* Get the resource map for this job */
-
-        rc = orte_rmaps.get_job_map(&map, jobid);
-        if (ORTE_SUCCESS != rc) {
-            opal_output(0, "Error: Can't get resource map\n");
-            ORTE_ERROR_LOG(rc);
+        /* Get the job data for this job */
+        if (NULL == (jdata = orte_get_job_data_object(jobid))) {
+            opal_output(0, "Error: Can't get job data\n");
+            return;
         }
+        
+        /* set the total number of processes in the job */
 
-        /* find the total number of processes in the job */
-
-        for (i=0; i < map->num_apps; i++) {
-            MPIR_proctable_size += map->apps[i]->num_procs;
-        }
+        MPIR_proctable_size = jdata->num_procs;
 
         /* allocate MPIR_proctable */
 
@@ -474,36 +467,31 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
                                                          MPIR_proctable_size);
         if (MPIR_proctable == NULL) {
             opal_output(0, "Error: Out of memory\n");
-            OBJ_RELEASE(map);
         }
 
         /* initialize MPIR_proctable */
 
         i=0;
-        for (item =  opal_list_get_first(&map->nodes);
-             item != opal_list_get_end(&map->nodes);
-             item =  opal_list_get_next(item)) {
-            node = (orte_mapped_node_t*)item;
-            
-            for (item2 = opal_list_get_first(&node->procs);
-                 item2 != opal_list_get_end(&node->procs);
-                 item2 = opal_list_get_next(item2)) {
-                proc = (orte_mapped_proc_t*)item2;
-                appctx = map->apps[proc->app_idx];
-                
-                MPIR_proctable[i].host_name = strdup(node->nodename);
-                if ( 0 == strncmp(appctx->app, OPAL_PATH_SEP, 1 )) { 
-                   MPIR_proctable[i].executable_name = 
-                     opal_os_path( false, appctx->app, NULL ); 
-                } else {
-                   MPIR_proctable[i].executable_name =
-                     opal_os_path( false, appctx->cwd, appctx->app, NULL ); 
-                } 
-                MPIR_proctable[i].pid = proc->pid;
-                i++;
+        procs = (orte_proc_t**)jdata->procs->addr;
+        apps = (orte_app_context_t**)jdata->apps->addr;
+        for (j=0; j < jdata->num_procs; j++) {
+            if (NULL == procs[j]) {
+                opal_output(0, "Error: undefined proc at position %ld\n", (long)j);
             }
+            
+            appctx = apps[procs[j]->app_idx];
+            
+            MPIR_proctable[i].host_name = strdup(procs[j]->node->name);
+            if ( 0 == strncmp(appctx->app, OPAL_PATH_SEP, 1 )) { 
+                MPIR_proctable[i].executable_name = 
+                opal_os_path( false, appctx->app, NULL ); 
+            } else {
+                MPIR_proctable[i].executable_name =
+                opal_os_path( false, appctx->cwd, appctx->app, NULL ); 
+            } 
+            MPIR_proctable[i].pid = procs[j]->pid;
+            i++;
         }
-        OBJ_RELEASE(map);
     }
 
     if (orte_debug_flag) {

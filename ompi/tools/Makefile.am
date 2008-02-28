@@ -24,9 +24,11 @@ EXTRA_DIST += tools/win_makefile
 SUBDIRS += \
 	tools/ompi_info \
 	tools/wrappers \
-	tools/ortetools
+	tools/ortetools \
+        tools/ompi-server
 
 DIST_SUBDIRS += \
 	tools/ompi_info \
 	tools/wrappers \
-	tools/ortetools
+	tools/ortetools \
+        tools/ompi-server

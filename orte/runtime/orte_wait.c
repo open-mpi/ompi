@@ -20,7 +20,15 @@
 
 
 #include "orte_config.h"
+#include "orte/constants.h"
+
 #include <assert.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_SYS_QUEUE_H
+#include <sys/queue.h>
+#endif
 #include <errno.h>
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -28,7 +36,11 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#include <fcntl.h>
+#include <stdlib.h>
 #include <signal.h>
+#include <stdio.h>
+#include <sys/stat.h>
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
@@ -39,15 +51,20 @@
 #include "opal/event/event.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
-#include "orte/orte_constants.h"
+
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "orte/runtime/orte_wait.h"
+
+
+#ifdef HAVE_WAITPID
 
 static volatile int cb_enabled = true;
 static opal_mutex_t mutex;
 static opal_list_t pending_pids;
 static opal_list_t registered_cb;
-
-#ifdef HAVE_WAITPID
 
 /*********************************************************************
  *
@@ -389,6 +406,68 @@ orte_wait_cb_enable()
     OPAL_THREAD_UNLOCK(&mutex);
 
     return ORTE_SUCCESS;
+}
+
+
+/* RHC: someone will need to add the windows support here - I
+ * am not familiar enough with their "pipe" equivalent
+ */
+int orte_wait_event(opal_event_t **event, int *trig,
+                    void (*cbfunc)(int, short, void*))
+{
+    int p[2];
+    
+    if (pipe(p) < 0) {
+        ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
+        return ORTE_ERR_SYS_LIMITS_PIPES;
+    }
+
+    /* create the event */
+    *event = (opal_event_t*)malloc(sizeof(opal_event_t));
+    
+    /* pass back the write end of the pipe */
+    *trig = p[1];
+    
+    /* define the event to fire when someone writes to the pipe */
+    opal_event_set(*event, p[0], OPAL_EV_READ, cbfunc, NULL);
+    
+	/* Add it to the active events, without a timeout */
+	opal_event_add(*event, NULL);
+
+    /* all done */
+    return ORTE_SUCCESS;
+}
+
+
+void orte_trigger_event(int trig)
+{
+    int data=1;
+    
+    write(trig, &data, sizeof(int));
+    opal_progress();
+}
+
+static void delay_fire(int ign1, short ign2, void* arg)
+{
+    int trig = *(int*)arg;
+    
+    /* the arg contains the trigger to be fired */
+    orte_trigger_event(trig);
+}
+
+void orte_delayed_trigger_event(int trig)
+{
+    opal_event_t ev;
+    struct timeval now;
+    
+    /* setup a zero-time timer to fire the specified
+     * event - pass the trig arg so we can use
+     * it to fire the specified event
+     */
+    opal_evtimer_set(&ev, delay_fire, &trig);
+    now.tv_sec = 0;
+    now.tv_usec = 0;
+    opal_evtimer_add(&ev, &now);
 }
 
 
@@ -952,6 +1031,18 @@ orte_wait_cb_disable(void)
 
 int
 orte_wait_cb_enable(void)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+void
+orte_trigger_event(int trig)
+{
+}
+
+int
+orte_wait_event(opal_event_t **event, int *trig,
+                void (*cbfunc)(int, short, void*))
 {
     return ORTE_ERR_NOT_SUPPORTED;
 }

@@ -19,6 +19,8 @@
 #include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
+#include "ompi/mca/dpm/dpm.h"
+
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Close_port = PMPI_Close_port
@@ -33,6 +35,7 @@ static const char FUNC_NAME[] = "MPI_Close_port";
 
 int MPI_Close_port(char *port_name) 
 {
+    int ret;
 
     OPAL_CR_NOOP_PROGRESS();
 
@@ -44,13 +47,7 @@ int MPI_Close_port(char *port_name)
                                           FUNC_NAME);
     }
 
-    /* 
-     *  since the port_name is our own process_name_t structure,
-     *  we do not have to close anything or free a pointer.
-     *  This function is therefore just a dummy function
-     *  and fully implemented. I love these type functions,
-     *  we should have more of them :-). 
-     */
-
-    return MPI_SUCCESS;
+    ret = ompi_dpm.close_port(port_name);
+    
+    OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD, ret, FUNC_NAME);
 }

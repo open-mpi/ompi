@@ -23,6 +23,8 @@
  */
 
 #include "orte_config.h"
+#include "orte/types.h"
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -51,8 +53,9 @@
 #endif
 #include "opal/event/event.h"
 
-#include "orte/mca/ns/ns_types.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/oob/tcp/oob_tcp.h"
 
@@ -89,7 +92,7 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     if(ORTE_SUCCESS != (rc = mca_oob_tcp_parse_uri(uri, (struct sockaddr*) &inaddr))) {
        opal_output(0,
             "%s-%s mca_oob_tcp_ping: invalid uri: %s\n",
-            ORTE_NAME_PRINT(orte_process_info.my_name),
+            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
             ORTE_NAME_PRINT(name),
             uri);
         return rc;
@@ -100,7 +103,7 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     if (sd < 0) {
        opal_output(0,
             "%s-%s mca_oob_tcp_ping: socket() failed: %s (%d)\n",
-            ORTE_NAME_PRINT(orte_process_info.my_name),
+            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
             ORTE_NAME_PRINT(name),
             strerror(opal_socket_errno),
             opal_socket_errno);
@@ -110,7 +113,7 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     /* setup the socket as non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
         opal_output(0, "%s-%s mca_oob_tcp_ping: fcntl(F_GETFL) failed: %s (%d)\n", 
-            ORTE_NAME_PRINT(orte_process_info.my_name),
+            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
             ORTE_NAME_PRINT(name),
             strerror(opal_socket_errno),
             opal_socket_errno);
@@ -118,7 +121,7 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
             opal_output(0, "%s-%s mca_oob_tcp_ping: fcntl(F_SETFL) failed: %s (%d)\n",
-                ORTE_NAME_PRINT(orte_process_info.my_name),
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                 ORTE_NAME_PRINT(name),
                 strerror(opal_socket_errno),
                 opal_socket_errno);
@@ -142,7 +145,7 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
         /* connect failed? */
         if(opal_socket_errno != EINPROGRESS && opal_socket_errno != EWOULDBLOCK) {
             opal_output(0, "%s-%s mca_oob_tcp_ping: connect failed: %s (%d)\n",
-                        ORTE_NAME_PRINT(orte_process_info.my_name),
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(name),
                         strerror(opal_socket_errno),
                         opal_socket_errno);
@@ -164,7 +167,7 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     flags &= ~O_NONBLOCK;
     if(fcntl(sd, F_SETFL, flags) < 0) {
          opal_output(0, "%s-%s mca_oob_tcp_ping: fcntl(F_SETFL) failed: %s (%d)\n",
-             ORTE_NAME_PRINT(orte_process_info.my_name),
+             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
              ORTE_NAME_PRINT(name),
              strerror(opal_socket_errno),
              opal_socket_errno);
@@ -172,11 +175,8 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
 
     /* send a probe message */
     memset(&hdr, 0, sizeof(hdr));
-    if(orte_process_info.my_name != NULL) {
-        hdr.msg_src = *orte_process_info.my_name;
-    } else {
-        hdr.msg_src = *ORTE_NAME_INVALID;
-    }
+    hdr.msg_src = *ORTE_PROC_MY_NAME;
+
     hdr.msg_dst = *name;
     hdr.msg_type = MCA_OOB_TCP_PROBE;
     MCA_OOB_TCP_HDR_HTON(&hdr);

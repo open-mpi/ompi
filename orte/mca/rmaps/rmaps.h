@@ -42,10 +42,11 @@
 #define ORTE_MCA_RMAPS_H
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/types.h"
 
 #include "opal/mca/mca.h"
-#include "orte/mca/ns/ns_types.h"
+
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/rmaps/rmaps_types.h"
 
@@ -56,26 +57,26 @@ BEGIN_C_DECLS
  */
 
 /**
- * Mapping function
+ * Public API
  */
-typedef int (*orte_rmaps_base_module_map_fn_t)(orte_jobid_t job, opal_list_t *attributes);
+typedef int (*orte_rmaps_base_API_map_fn_t)(orte_job_t *jdata);
+
+typedef orte_job_map_t* (*orte_rmaps_base_API_get_job_map_fn_t)(orte_jobid_t job);
+
+/* global structure for accessing RMAPS API's */
+typedef struct {
+    orte_rmaps_base_API_map_fn_t            map_job;
+    orte_rmaps_base_API_get_job_map_fn_t    get_job_map;
+} orte_rmaps_t;
+
+ORTE_DECLSPEC extern orte_rmaps_t orte_rmaps;
+
 
 /**
- * Get the map of a job from the registry
- */
-typedef int (*orte_rmaps_base_module_get_job_map_fn_t)(orte_job_map_t **map, orte_jobid_t job);
-
-/**
- * Get the map for a job on a specific node from the registry. Providing a jobid of
- * ORTE_JOBID_WILDCARD will return the map of all processes on that node
- */
-typedef int (*orte_rmaps_base_module_get_node_map_fn_t)(orte_mapped_node_t **node,
-                                                        char *nodename, orte_jobid_t job);
-
-/**
- * Cleanup module resources.
- */
-typedef int (*orte_rmaps_base_module_finalize_fn_t)(void);
+* RMAPS module functions - these are not accessible to the outside world,
+* but are defined here by convention
+*/
+typedef int (*orte_rmaps_base_module_map_fn_t)(orte_job_t *jdata);
 
 /*
  * rmaps module version 1.3.0
@@ -83,12 +84,6 @@ typedef int (*orte_rmaps_base_module_finalize_fn_t)(void);
 struct orte_rmaps_base_module_1_3_0_t {
     /** Mapping function pointer */
     orte_rmaps_base_module_map_fn_t         	map_job;
-    /** Get job map pointer */
-    orte_rmaps_base_module_get_job_map_fn_t		get_job_map;
-    /** Node map pointer */
-    orte_rmaps_base_module_get_node_map_fn_t    get_node_map;
-    /** Finalization function pointer */
-    orte_rmaps_base_module_finalize_fn_t    	finalize;
 };
 /** Convenience typedef */
 typedef struct orte_rmaps_base_module_1_3_0_t orte_rmaps_base_module_1_3_0_t;
@@ -132,10 +127,6 @@ typedef orte_rmaps_base_component_1_3_0_t orte_rmaps_base_component_t;
   MCA_BASE_VERSION_1_0_0, \
   /* rmaps v1.3 */ \
   "rmaps", 1, 3, 0
-
-
-/* global structure for accessing RMAPS modules */
-ORTE_DECLSPEC extern orte_rmaps_base_module_t orte_rmaps;
 
 END_C_DECLS
 

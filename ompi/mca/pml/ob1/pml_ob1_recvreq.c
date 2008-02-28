@@ -323,7 +323,7 @@ static void mca_pml_ob1_rget_completion( mca_btl_base_module_t* btl,
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
         ORTE_ERROR_LOG(status);
-        orte_errmgr.abort();
+        orte_errmgr.abort(-1, NULL);
     }
 
     mca_pml_ob1_send_fin(recvreq->req_recv.req_base.req_proc,
@@ -390,7 +390,7 @@ int mca_pml_ob1_recv_request_get_frag( mca_pml_ob1_rdma_frag_t* frag )
             return OMPI_ERR_OUT_OF_RESOURCE;
         } else {
             ORTE_ERROR_LOG(rc);
-            orte_errmgr.abort();
+            orte_errmgr.abort(-1, NULL);
         }
     }
 
@@ -420,7 +420,7 @@ static void mca_pml_ob1_recv_request_rget(
     if( OPAL_UNLIKELY(NULL == frag) ) {
         /* GLB - FIX */
          ORTE_ERROR_LOG(rc);
-         orte_errmgr.abort();
+         orte_errmgr.abort(-1, NULL);
     }
 
     /* lookup bml datastructures */
@@ -442,7 +442,7 @@ static void mca_pml_ob1_recv_request_rget(
     frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
     if( OPAL_UNLIKELY(NULL == frag->rdma_bml) ) {
         opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
-        orte_errmgr.abort();
+        orte_errmgr.abort(-1, NULL);
     }
     frag->rdma_hdr.hdr_rget = *hdr;
     frag->rdma_req = recvreq;

@@ -16,7 +16,7 @@
 
 #include "orte_config.h"
 
-#include "orte/orte_constants.h"
+#include "orte/util/name_fns.h"
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 #include "snapc_full.h"
@@ -71,9 +71,7 @@ orte_snapc_full_component_t mca_snapc_full_component = {
         /* opal_output handler */
         -1,
         /* Default priority */
-        20,
-        /* Unassigned Coordinator type */
-        ORTE_SNAPC_UNASSIGN_TYPE
+        20
     }
 };
 

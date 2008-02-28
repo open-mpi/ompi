@@ -57,6 +57,7 @@
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif
+#include <unistd.h>
 
 mca_btl_openib_module_t mca_btl_openib_module = {
     {

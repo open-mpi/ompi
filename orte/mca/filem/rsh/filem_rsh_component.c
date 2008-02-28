@@ -15,9 +15,10 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
 #include "opal/util/output.h"
-#include "orte/orte_constants.h"
+
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
 #include "filem_rsh.h"

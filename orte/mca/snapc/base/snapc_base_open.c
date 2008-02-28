@@ -17,8 +17,8 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
-#include "orte/orte_constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
@@ -44,6 +44,7 @@ orte_snapc_base_module_t orte_snapc = {
 
 opal_list_t orte_snapc_base_components_available;
 orte_snapc_base_component_t orte_snapc_base_selected_component;
+orte_snapc_coord_type_t orte_snapc_coord_type = ORTE_SNAPC_UNASSIGN_TYPE;
 
 char * orte_snapc_base_global_snapshot_dir = NULL;
 char * orte_snapc_base_global_snapshot_loc = NULL;
@@ -58,9 +59,12 @@ bool orte_snapc_base_establish_gloabl_snapshot_dir = false;
  */
 int orte_snapc_base_open(void)
 {
-    int value;
+    int value = 0;
     char * str_value = NULL;
     char * home = NULL;
+
+    OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
+                         "snapc:base: open()"));
 
     /* Debugging/Verbose output */
     mca_base_param_reg_int_name("snapc",
@@ -74,6 +78,10 @@ int orte_snapc_base_open(void)
         orte_snapc_base_output = -1;
     }
     opal_output_set_verbosity(orte_snapc_base_output, value);
+
+    OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
+                         "snapc:base: open: verbose    = %d",
+                         value));
 
     /* We may need this later */
 #if !defined(__WINDOWS__)
@@ -89,6 +97,11 @@ int orte_snapc_base_open(void)
                                    false, false,
                                    home,
                                    &orte_snapc_base_global_snapshot_dir);
+
+    OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
+                         "snapc:base: open: base_global_snapshot_dir    = %s",
+                         orte_snapc_base_global_snapshot_dir));
+
     /*
      * Store the checkpoint files in their final location.
      * This assumes that the storage place is on a shared file 
@@ -104,6 +117,9 @@ int orte_snapc_base_open(void)
                                 1,
                                 &value);
     orte_snapc_base_store_in_place = OPAL_INT_TO_BOOL(value);
+    OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
+                         "snapc:base: open: base_store_in_place    = %d",
+                         orte_snapc_base_store_in_place));
 
     /*
      * Reuse sequence numbers
@@ -117,7 +133,11 @@ int orte_snapc_base_open(void)
                                 0,
                                 &value);
     orte_snapc_base_store_only_one_seq = OPAL_INT_TO_BOOL(value);
-    
+
+    OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
+                         "snapc:base: open: base_only_one_seq    = %d",
+                         orte_snapc_base_store_only_one_seq));
+
     /*
      * Pre-establish the global snapshot directory upon job registration
      */
@@ -128,6 +148,10 @@ int orte_snapc_base_open(void)
                                 0,
                                 &value);
     orte_snapc_base_establish_gloabl_snapshot_dir = OPAL_INT_TO_BOOL(value);
+
+    OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
+                         "snapc:base: open: base_establish_gloabl_snapshot_dir    = %d",
+                         orte_snapc_base_establish_gloabl_snapshot_dir));
 
     /*
      * User defined global snapshot directory name for this job
@@ -140,6 +164,9 @@ int orte_snapc_base_open(void)
                                    NULL,
                                    &orte_snapc_base_global_snapshot_ref);
 
+    OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
+                         "snapc:base: open: base_global_snapshot_ref    = %s",
+                         orte_snapc_base_global_snapshot_ref));
 
     /* Init the sequence (interval) number */
     orte_snapc_base_snapshot_seq_number = 0;
