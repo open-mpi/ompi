@@ -139,10 +139,14 @@ int setup_multinomial_tree(int tree_order, int num_nodes,
                         }
                     }
                     tree_nodes[node_index].n_children=n_children;
-                    tree_nodes[node_index].children_ranks=(int *)
-                        malloc(sizeof(int)*n_children);
-                    if( NULL == tree_nodes[node_index].children_ranks) {
-                        goto Error;
+                    if( 0 < n_children ) {
+                        tree_nodes[node_index].children_ranks=(int *)
+                            malloc(sizeof(int)*n_children);
+                        if( NULL == tree_nodes[node_index].children_ranks) {
+                            goto Error;
+                        }
+                    } else {
+                        tree_nodes[node_index].children_ranks=NULL;
                     }
                     /* fill in list */
                     for( rank=0 ; rank < n_children ; rank++ ) {
