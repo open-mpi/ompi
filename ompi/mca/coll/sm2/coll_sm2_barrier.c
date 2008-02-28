@@ -49,12 +49,15 @@
  * parent, and the leaves that have no children.  But that's the
  * general idea.
  */
+/* once this is implemented, change this to be visible */
+/*
 int mca_coll_sm2_barrier_intra(struct ompi_communicator_t *comm,
                               struct mca_coll_base_module_1_1_0_t *module)
 {
 
     return OMPI_SUCCESS;
 }
+*/
 
 /* non-blocking barrier - init function */
 int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,

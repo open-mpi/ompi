@@ -89,13 +89,13 @@ BEGIN_C_DECLS
         size_t sm2_data_size_allocated;
 
         /** MCA parameter: data region alignment */
-        size_t sm2_data_alignment;
+        int sm2_data_alignment;
 
         /** MCA parameter: number of memory banks */
-        size_t sm2_num_mem_banks;
+        int sm2_num_mem_banks;
 
         /** MCA parameter: number of regions per memory bank */
-        size_t sm2_num_regions_per_bank;
+        int sm2_num_regions_per_bank;
 
         /** MCA parameter: order of buffer management barrier tree */
         int order_barrier_tree;
@@ -346,6 +346,7 @@ BEGIN_C_DECLS
             struct ompi_op_t *op,
             struct ompi_communicator_t *comm,
             struct mca_coll_base_module_1_1_0_t *module);
+
 
 /**
  * Macro to setup flag usage
