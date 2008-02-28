@@ -37,6 +37,7 @@
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/carto/base/base.h"
 
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/crs/base/base.h"
@@ -334,6 +335,17 @@ opal_init(void)
         goto return_error;
     }
 
+    /* setup the carto framework */
+    if (OPAL_SUCCESS != (ret = opal_carto_base_open())) {
+        error = "opal_carto_base_open";
+        goto return_error;
+    }
+    
+    if (OPAL_SUCCESS != (ret = opal_carto_base_select())) {
+        error = "opal_carto_base_select";
+        goto return_error;
+    }
+    
     /*
      * Need to start the event and progress engines if noone else is.
      * opal_cr_init uses the progress engine, so it is lumped together
