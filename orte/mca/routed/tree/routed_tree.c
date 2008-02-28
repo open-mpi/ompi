@@ -23,6 +23,7 @@
 #include "orte/mca/odls/odls_types.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/rml/base/rml_contact.h"
 
@@ -136,11 +137,8 @@ orte_routed_tree_get_route(orte_process_name_t *target)
     return ret;
 }
 
-static void routed_tree_callback(int status, orte_process_name_t* sender,
-                                  opal_buffer_t *buffer, orte_rml_tag_t tag,
-                                  void* cbdata)
+static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
 {
-    orte_jobid_t job;
     orte_proc_t **procs;
     orte_job_t *jdata;
     orte_std_cntr_t cnt;
@@ -148,21 +146,10 @@ static void routed_tree_callback(int status, orte_process_name_t* sender,
     orte_process_name_t name;
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                         "%s routed_tree:callback from proc %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(sender)));
-    
-    /* unpack the jobid this is for */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &job, &cnt, ORTE_JOBID))) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    
     /* lookup the job object for this process */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return;
+        return ORTE_ERR_NOT_FOUND;
     }
     procs = (orte_proc_t**)jdata->procs->addr;
     
@@ -190,7 +177,7 @@ static void routed_tree_callback(int status, orte_process_name_t* sender,
         /* the procs are stored in vpid order, so update the record */
         procs[name.vpid]->rml_uri = strdup(rml_uri);
         free(rml_uri);
-
+        
         /* update the proc state */
         if (procs[name.vpid]->state < ORTE_PROC_STATE_RUNNING) {
             procs[name.vpid]->state = ORTE_PROC_STATE_RUNNING;
@@ -201,8 +188,9 @@ static void routed_tree_callback(int status, orte_process_name_t* sender,
     }
     if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
         ORTE_ERROR_LOG(rc);
+        return rc;
     }    
-        
+    
     /* if all procs have reported, update our job state */
     if (jdata->num_reported == jdata->num_procs) {
         /* update the job state */
@@ -211,13 +199,7 @@ static void routed_tree_callback(int status, orte_process_name_t* sender,
         }
     }
     
-    /* reissue the recv */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_INIT_ROUTES,
-                                                      ORTE_RML_NON_PERSISTENT, routed_tree_callback, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    
+    return ORTE_SUCCESS;
 }
 
 int orte_routed_tree_init_routes(orte_jobid_t job, opal_buffer_t *ndat)
@@ -318,18 +300,25 @@ int orte_routed_tree_init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             /* if ndat is NULL, then this is being called during init, so just
              * make myself available to catch any reported contact info
              */
-            if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_INIT_ROUTES,
-                                                              ORTE_RML_NON_PERSISTENT, routed_tree_callback, NULL))) {
+            if (ORTE_SUCCESS != (rc = orte_routed_base_comm_start())) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
         } else {
-            /* ndat != NULL means we are getting an update of RML info
+            /* if this is for my own jobid, then I am getting an update of RML info
              * for the daemons - so update our contact info and routes
              */
-            if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(ndat))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
+            if (ORTE_PROC_MY_NAME->jobid == job) {
+                if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(ndat))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            } else {
+                /* if not, then I need to process the callback */
+                if (ORTE_SUCCESS != (rc = process_callback(job, ndat))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
             }
         }
 

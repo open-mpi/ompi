@@ -53,7 +53,6 @@ opal_dss_t opal_dss = {
     opal_dss_peek,
     opal_dss_unload,
     opal_dss_load,
-    opal_dss_xfer_payload,
     opal_dss_copy_payload,
     opal_dss_register,
     opal_dss_lookup_data_type,

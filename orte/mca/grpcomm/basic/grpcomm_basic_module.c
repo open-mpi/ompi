@@ -39,6 +39,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 #include "orte/orted/orted.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/grpcomm/base/base.h"
 #include "grpcomm_basic.h"
@@ -241,11 +242,15 @@ static int xcast_binomial_tree(orte_jobid_t job,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));
     
-    /* if I am the HNP, then just call the cmd processor - don't send this to myself */
+    /* if I am the HNP, just set things up so the cmd processor gets called.
+     * We don't want to message ourselves as this can create circular logic
+     * in the RML. Instead, this macro will set a zero-time event which will
+     * cause the buffer to be processed by the cmd processor - probably will
+     * fire right away, but that's okay
+     * The macro makes a copy of the buffer, so it's okay to release it here
+     */
     if (orte_process_info.hnp) {
-        if (ORTE_SUCCESS != (rc = orte_daemon_cmd_processor(ORTE_PROC_MY_NAME, buf, ORTE_RML_TAG_DAEMON))) {
-            ORTE_ERROR_LOG(rc);
-        }
+        ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, buf, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
     } else {
         if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_DAEMON, 0))) {
             ORTE_ERROR_LOG(rc);
@@ -340,12 +345,9 @@ static int xcast_linear(orte_jobid_t job,
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&dummy)));
 
-        /* if the target is the HNP and I am the HNP, then just call the cmd processor */
+        /* if the target is the HNP and I am the HNP, then just setup to call the cmd processor */
         if (0 == i && orte_process_info.hnp) {
-            if (ORTE_SUCCESS != (rc = orte_daemon_cmd_processor(ORTE_PROC_MY_NAME, buf, ORTE_RML_TAG_DAEMON))) {
-                ORTE_ERROR_LOG(rc);
-                goto CLEANUP;
-            }
+            ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, buf, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
         } else {
             if (0 > (rc = orte_rml.send_buffer(&dummy, buf, ORTE_RML_TAG_DAEMON, 0))) {
                 ORTE_ERROR_LOG(rc);
@@ -404,14 +406,11 @@ static int xcast_direct(orte_jobid_t job,
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&peer)));
 
-        /* if the target is the HNP and I am the HNP, then just call the cmd processor */
+        /* if the target is the HNP and I am the HNP, then just setup to call the cmd processor */
         if (peer.jobid == ORTE_PROC_MY_NAME->jobid &&
             peer.vpid == ORTE_PROC_MY_NAME->vpid &&
             orte_process_info.hnp) {
-            if (ORTE_SUCCESS != (rc = orte_daemon_cmd_processor(ORTE_PROC_MY_NAME, buffer, tag))) {
-                ORTE_ERROR_LOG(rc);
-                goto CLEANUP;
-            }
+            ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, buffer, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
         } else {
             if (0 > (rc = orte_rml.send_buffer(&peer, buffer, tag, 0))) {
                 ORTE_ERROR_LOG(rc);
@@ -666,7 +665,7 @@ static int barrier(void)
     /* xcast the release */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     opal_dss.pack(&buf, &i, 1, ORTE_STD_CNTR); /* put something meaningless here */
-    orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, &buf, ORTE_RML_TAG_BARRIER);
+    xcast(ORTE_PROC_MY_NAME->jobid, &buf, ORTE_RML_TAG_BARRIER);
     OBJ_DESTRUCT(&buf);
 
     /* xcast automatically ensures that the sender -always- gets a copy

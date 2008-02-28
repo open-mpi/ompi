@@ -70,6 +70,15 @@ ORTE_DECLSPEC int orte_plm_base_select(void);
 ORTE_DECLSPEC int orte_plm_base_finalize(void);
 ORTE_DECLSPEC int orte_plm_base_close(void);
 
+
+/**
+ * Functions that other frameworks may need to call directly
+ * Specifically, the ODLS needs to access some of these
+ * to avoid recursive callbacks
+ */
+ORTE_DECLSPEC void orte_plm_base_app_report_launch(int fd, short event, void *data);
+ORTE_DECLSPEC void orte_plm_base_receive_process_msg(int fd, short event, void *data);
+
 END_C_DECLS
 
 #endif

@@ -491,14 +491,7 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
     
     if (0 != status) {
         if (failed_launch) {
-            /* we have a problem during launch */
-            opal_output(0, "ERROR: srun failed to start the required daemons.");
-            opal_output(0, "ERROR: This could be due to an inability to find the orted binary");
-            opal_output(0, "ERROR: on one or more remote nodes, lack of authority to execute");
-            opal_output(0, "ERROR: on one or more specified nodes, or other factors.");
-            
-            /* report that the daemon has failed so we break out of the daemon
-             * callback receive and exit
+            /* report that the daemon has failed so we can exit
              */
             orte_plm_base_launch_failed(active_job, true, pid, status, ORTE_JOB_STATE_FAILED_TO_START);
             
@@ -506,7 +499,7 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
             /* an orted must have died unexpectedly after launch - report
              * that the daemon has failed so we exit
              */
-            orte_plm_base_launch_failed(active_job, false, pid, status, ORTE_JOB_STATE_ABORTED);
+            orte_plm_base_launch_failed(active_job, true, pid, status, ORTE_JOB_STATE_ABORTED);
         }
     }
     

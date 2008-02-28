@@ -88,9 +88,10 @@ ORTE_DECLSPEC int orte_plm_base_orted_signal_local_procs(orte_jobid_t job, int32
  */
 ORTE_DECLSPEC int orte_plm_base_comm_start(void);
 ORTE_DECLSPEC int orte_plm_base_comm_stop(void);
-void orte_plm_base_recv(int status, orte_process_name_t* sender,
-                        opal_buffer_t* buffer, orte_rml_tag_t tag,
-                        void* cbdata);
+ORTE_DECLSPEC void orte_plm_base_recv(int status, orte_process_name_t* sender,
+                                      opal_buffer_t* buffer, orte_rml_tag_t tag,
+                                      void* cbdata);
+
     
 /**
  * Construct basic ORTE Daemon command line arguments

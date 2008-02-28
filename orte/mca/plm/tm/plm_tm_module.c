@@ -376,7 +376,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
         rc = tm_poll(TM_NULL_EVENT, &event, 1, &local_err);
         if (TM_SUCCESS != rc) {
             errno = local_err;
-            opal_output(0, "plm:tm: failed to poll for a spawned proc, return status = %d", rc);
+            opal_output(0, "plm:tm: failed to poll for a spawned daemon, return status = %d", rc);
             goto cleanup;
         }
     }
@@ -445,7 +445,7 @@ launch_apps:
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_plm_base_launch_failed(jdata->jobid, false, -1, 0, ORTE_JOB_STATE_FAILED_TO_START);
+        orte_plm_base_launch_failed(jdata->jobid, true, -1, 0, ORTE_JOB_STATE_FAILED_TO_START);
     }
         
     /* check for timing request - get stop time and process if so */

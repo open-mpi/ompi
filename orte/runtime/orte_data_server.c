@@ -35,6 +35,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/runtime/orte_data_server.h"
 
@@ -142,24 +143,19 @@ static orte_data_object_t *lookup(char *service)
     return NULL;
 }
 
-
-void orte_data_server(int status, orte_process_name_t* sender,
-                      opal_buffer_t* buffer, orte_rml_tag_t tag,
-                      void* cbdata)
+static void process_message(int fd, short event, void *evdat)
 {
+    orte_message_event_t *mev = (orte_message_event_t*)evdat;
+    orte_process_name_t *sender = &mev->sender;
+    opal_buffer_t *buffer = mev->buffer;
     orte_data_server_cmd_t command;
     orte_std_cntr_t count;
     char *service_name, *port_name;
     orte_data_object_t *data;
     opal_buffer_t answer;
     int rc, ret;
-
-    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
-                         "%s data server got message from %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(sender)));
-    
     count = 1;
+    
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &command, &count, ORTE_DATA_SERVER_CMD))) {
         ORTE_ERROR_LOG(rc);
         return;
@@ -387,6 +383,31 @@ SEND_ANSWER:
         ORTE_ERROR_LOG(rc);
     }
     OBJ_DESTRUCT(&answer);
+
+    OBJ_RELEASE(mev);
+}
+
+void orte_data_server(int status, orte_process_name_t* sender,
+                      opal_buffer_t* buffer, orte_rml_tag_t tag,
+                      void* cbdata)
+{
+    int rc;
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                         "%s data server got message from %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
+    
+    /* don't process this right away - we need to get out of the recv before
+     * we process the message as it may ask us to do something that involves
+     * more messaging! Instead, setup an event so that the message gets processed
+     * as soon as we leave the recv.
+     *
+     * The macro makes a copy of the buffer, which we release above - the incoming
+     * buffer, however, is NOT released here, although its payload IS transferred
+     * to the message buffer for later processing
+     */
+    ORTE_MESSAGE_EVENT(sender, buffer, tag, process_message);
 
     /* reissue the recv */
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,

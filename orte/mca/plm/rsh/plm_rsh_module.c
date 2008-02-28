@@ -278,34 +278,10 @@ static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 {
     unsigned long deltat;
     
-    if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
-        /* tell the user something went wrong */
-        opal_output(0, "ERROR: A daemon failed to start as expected.");
-        opal_output(0, "ERROR: There may be more information available from");
-        opal_output(0, "ERROR: the remote shell (see above).");
-        
-        if (WIFEXITED(status)) {
-            opal_output(0, "ERROR: The daemon exited unexpectedly with status %d.",
-                        WEXITSTATUS(status));
-        } else if (WIFSIGNALED(status)) {
-#ifdef WCOREDUMP
-            if (WCOREDUMP(status)) {
-                opal_output(0, "The daemon received a signal %d (with core).",
-                            WTERMSIG(status));
-            } else {
-                opal_output(0, "The daemon received a signal %d.", WTERMSIG(status));
-            }
-#else
-            opal_output(0, "The daemon received a signal %d.", WTERMSIG(status));
-#endif /* WCOREDUMP */
-        } else {
-            opal_output(0, "No extra status information is available: %d.", status);
-        }
-        /* report that the daemon has failed so we break out of the daemon
-         * callback receive and can exit
-         */
+    if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) { /* if abnormal exit */
+        /* report that the daemon has failed so we can exit */
         orte_plm_base_launch_failed(active_job, true, pid, status, ORTE_JOB_STATE_FAILED_TO_START);
-    } /* if abnormal exit */
+    }
 
     /* release any waiting threads */
     OPAL_THREAD_LOCK(&mca_plm_rsh_component.lock);

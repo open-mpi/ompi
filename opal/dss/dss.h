@@ -328,15 +328,6 @@ typedef int (*opal_dss_load_fn_t)(opal_buffer_t *buffer,
 
 
 /**
- * Transfer a payload from one buffer to another
- * This function is a convenience shortcut that basically unloads the
- * payload from one buffer and loads it into another. This is a destructive
- * action - see the unload and load descriptions above.
- */
-typedef int (*opal_dss_xfer_payload_fn_t)(opal_buffer_t *dest,
-                                          opal_buffer_t *src);
-
-/**
  * Copy a payload from one buffer to another
  * This function will append a copy of the payload in one buffer into
  * another buffer. If the destination buffer is NOT empty, then the
@@ -628,7 +619,6 @@ struct opal_dss_t {
     opal_dss_peek_next_item_fn_t    peek;
     opal_dss_unload_fn_t            unload;
     opal_dss_load_fn_t              load;
-    opal_dss_xfer_payload_fn_t      xfer_payload;
     opal_dss_copy_payload_fn_t      copy_payload;
     opal_dss_register_fn_t          register_type;
     opal_dss_lookup_data_type_fn_t  lookup_data_type;

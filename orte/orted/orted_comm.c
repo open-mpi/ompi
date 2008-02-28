@@ -146,9 +146,16 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));
 
-    if (ORTE_SUCCESS != (ret = orte_daemon_cmd_processor(sender, buffer, tag))) {
-        ORTE_ERROR_LOG(ret);
-    }
+    /* don't process this right away - we need to get out of the recv before
+     * we process the message as it may ask us to do something that involves
+     * more messaging! Instead, setup an event so that the message gets processed
+     * as soon as we leave the recv.
+     *
+     * The macro makes a copy of the buffer, which we release when processed - the incoming
+     * buffer, however, is NOT released here, although its payload IS transferred
+     * to the message buffer for later processing
+     */
+    ORTE_MESSAGE_EVENT(sender, buffer, tag, orte_daemon_cmd_processor);
     
     /* reissue the non-blocking receive */
     ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
@@ -162,9 +169,12 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 }    
     
-int orte_daemon_cmd_processor(orte_process_name_t* sender,
-                              opal_buffer_t *buffer, orte_rml_tag_t tag)
+void orte_daemon_cmd_processor(int fd, short event, void *data)
 {
+    orte_message_event_t *mev = (orte_message_event_t*)data;
+    orte_process_name_t *sender = &(mev->sender);
+    opal_buffer_t *buffer = mev->buffer;
+    orte_rml_tag_t tag = mev->tag;
     int ret;
     char *unpack_ptr;
     orte_std_cntr_t n;
@@ -247,7 +257,8 @@ PROCESS:
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
 CLEANUP:
-    return ret;
+    OBJ_RELEASE(mev);
+    return;
 }    
 
 static int process_commands(orte_process_name_t* sender,
@@ -456,7 +467,8 @@ static int process_commands(orte_process_name_t* sender,
                 goto CLEANUP;
             }
             
-            if (0 > orte_rml.send_buffer(sender, answer, tag, 0)) {
+            if (0 > orte_rml.send_buffer_nb(sender, answer, tag, 0,
+                                            send_callback, NULL)) {
                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                 ret = ORTE_ERR_COMM_FAILURE;
             }

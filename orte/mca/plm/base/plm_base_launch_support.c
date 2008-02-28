@@ -46,11 +46,13 @@
 #include "orte/runtime/orte_wakeup.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/orte_wait.h"
 #include "orte/util/name_fns.h"
 
 #include "orte/tools/orterun/totalview.h"
 
 #include "orte/mca/plm/base/plm_private.h"
+#include "orte/mca/plm/base/base.h"
 
 static int orte_plm_base_report_launched(orte_jobid_t job);
 
@@ -171,37 +173,42 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
     return rc;
 }
 
-void orte_plm_base_launch_failed(orte_jobid_t job, bool callback_active, pid_t pid,
+/* daemons callback when they start - need to listen for them */
+static int orted_num_callback;
+static bool orted_failed_launch;
+static orte_job_t *jdatorted;
+static orte_proc_t **pdatorted;
+
+void orte_plm_base_launch_failed(orte_jobid_t job, bool daemons_launching, pid_t pid,
                                  int status, orte_job_state_t state)
 {
-    int src[3] = {-1, -1, -1};
-    opal_buffer_t ack;
-    int rc;
     orte_job_t *jdata;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:launch_failed for job %s during %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job),
-                         (callback_active) ? "daemon launch" : "app launch"));
+                         (daemons_launching) ? "daemon launch" : "app launch"));
 
-    if (callback_active) {
-        /* if we failed while launching daemons, we need to fake a message to
-         * the daemon callback system so it can break out of its receive loop
-         */
-        src[2] = pid;
-        if(WIFSIGNALED(status)) {
-            src[1] = WTERMSIG(status);
+    if (daemons_launching) {
+        if (WIFSIGNALED(status)) { /* died on signal */
+#ifdef WCOREDUMP
+            if (WCOREDUMP(status)) {
+                opal_show_help("help-plm-base.txt", "daemon-died-signal-core", true,
+                               pid, WTERMSIG(status));
+            } else {
+                opal_show_help("help-plm-base.txt", "daemon-died-signal", true,
+                               pid, WTERMSIG(status));
+            }
+#else
+            opal_show_help("help-plm-base.txt", "daemon-died-signal", true,
+                           pid, WTERMSIG(status));
+#endif /* WCOREDUMP */
+        } else {
+            opal_show_help("help-plm-base.txt", "daemon-died-no-signal", true,
+                           pid, WEXITSTATUS(status));
         }
-        OBJ_CONSTRUCT(&ack, opal_buffer_t);
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&ack, &src, 3, OPAL_INT))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        rc = orte_rml.send_buffer(ORTE_PROC_MY_NAME, &ack, ORTE_RML_TAG_ORTED_CALLBACK, 0);
-        if (0 > rc) {
-            ORTE_ERROR_LOG(rc);
-        }
-        OBJ_DESTRUCT(&ack);
+        orted_failed_launch = true;
         /* set the flag indicating that a daemon failed so we use the proper
          * methods for attempting to shutdown the rest of the system
          */
@@ -223,21 +230,15 @@ void orte_plm_base_launch_failed(orte_jobid_t job, bool callback_active, pid_t p
     
 WAKEUP:
     /* wakeup so orterun can exit */
-        orte_wakeup(status);
+    orte_wakeup(status);
 }
 
-/* daemons callback when they start - need to listen for them */
-static int orted_num_callback;
-static bool orted_failed_launch;
-static orte_job_t *jdatorted;
-static orte_proc_t **pdatorted;
 
 static void orted_report_launch(int status, orte_process_name_t* sender,
                                 opal_buffer_t *buffer,
                                 orte_rml_tag_t tag, void *cbdata)
 {
     char *rml_uri;
-    int src[4];
     int rc, idx;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -245,35 +246,7 @@ static void orted_report_launch(int status, orte_process_name_t* sender,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));
     
-    /* a daemon actually only sends us back one int value. However, if
-     * the daemon fails to launch, our local launcher may have additional
-     * info it wants to pass back to us, so we allow up to four int
-     * values to be returned. Fortunately, the DSS unpack routine
-     * knows how to handle this situation - it will only unpack the
-     * actual number of packed entries up to the number we specify here
-     */
-    idx = 4;
-    src[0]=src[1]=src[2]=src[3]=0;
-    rc = opal_dss.unpack(buffer, &src, &idx, OPAL_INT);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        orted_failed_launch = true;
-        goto CLEANUP;
-    }
-    
-    if(-1 == src[0]) {
-        /* one of the daemons has failed to properly launch */
-        if(-1 == src[1]) { /* did not die on a signal */
-            opal_show_help("help-plm-base.txt", "daemon-died-no-signal", true, src[2]);
-        } else { /* died on a signal */
-            opal_show_help("help-plm-base.txt", "daemon-died-signal", true,
-                           src[2], src[1]);
-        }
-        orted_failed_launch = true;
-        goto CLEANUP;
-    }
-
-    /* okay, so the daemon says it started up okay - unpack its contact info */
+    /* unpack its contact info */
     idx = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &rml_uri, &idx, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
@@ -350,10 +323,7 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
         return rc;
     }
     
-    while (!orted_failed_launch &&
-           orted_num_callback < num_daemons) {
-        opal_progress();
-    }
+    ORTE_PROGRESSED_WAIT(orted_failed_launch, orted_num_callback, num_daemons);
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:daemon_callback completed",
@@ -396,10 +366,15 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
  */
 static bool app_launch_failed;
 
-static void app_report_launch(int status, orte_process_name_t* sender,
-                              opal_buffer_t *buffer,
-                              orte_rml_tag_t tag, void *cbdata)
+/* since the HNP also reports launch of procs, we need to separate out
+ * the processing of the message vs its receipt so that the HNP
+ * can call the processing part directly
+ */
+void orte_plm_base_app_report_launch(int fd, short event, void *data)
 {
+    orte_message_event_t *mev = (orte_message_event_t*)data;
+    orte_process_name_t *sender = &(mev->sender);
+    opal_buffer_t *buffer = mev->buffer;
     orte_std_cntr_t cnt;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
@@ -409,7 +384,7 @@ static void app_report_launch(int status, orte_process_name_t* sender,
     orte_job_t *jdata;
     orte_proc_t **procs;
     int rc;
-
+    
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:app_report_launch from daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -429,7 +404,7 @@ static void app_report_launch(int status, orte_process_name_t* sender,
         goto CLEANUP;
     }
     procs = (orte_proc_t**)(jdata->procs->addr);
-
+    
     /* the daemon will report the vpid, state, and pid of each
      * process it launches - we need the pid in particular so
      * that any debuggers can attach to the process
@@ -493,6 +468,35 @@ static void app_report_launch(int status, orte_process_name_t* sender,
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
     }
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                         "%s plm:base:app_report_launch completed processing",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+CLEANUP:
+    if (app_launch_failed) {
+        orte_errmgr.incomplete_start(jdata->jobid, jdata->aborted_proc->exit_code);
+    }
+    
+}
+
+
+static void app_report_launch(int status, orte_process_name_t* sender,
+                              opal_buffer_t *buffer,
+                              orte_rml_tag_t tag, void *cbdata)
+{
+    int rc;
+    
+    /* don't process this right away - we need to get out of the recv before
+     * we process the message as it may ask us to do something that involves
+     * more messaging! Instead, setup an event so that the message gets processed
+     * as soon as we leave the recv.
+     *
+     * The macro makes a copy of the buffer, which we release when processed - the incoming
+     * buffer, however, is NOT released here, although its payload IS transferred
+     * to the message buffer for later processing
+     */
+    ORTE_MESSAGE_EVENT(sender, buffer, tag, orte_plm_base_app_report_launch);
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:app_report_launch reissuing non-blocking recv",
@@ -505,12 +509,7 @@ static void app_report_launch(int status, orte_process_name_t* sender,
         ORTE_ERROR_LOG(rc);
         app_launch_failed = true;
     }
-    
-CLEANUP:
-    if (app_launch_failed) {
-        orte_errmgr.incomplete_start(jdata->jobid, jdata->aborted_proc->exit_code);
-    }
-    
+
 }
 
 static int orte_plm_base_report_launched(orte_jobid_t job)
@@ -541,10 +540,7 @@ static int orte_plm_base_report_launched(orte_jobid_t job)
         return rc;
     }
     
-    while (!app_launch_failed &&
-           jdata->num_launched < jdata->num_procs) {
-        opal_progress();
-    }
+    ORTE_PROGRESSED_WAIT(app_launch_failed, jdata->num_launched, jdata->num_procs);
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:report_launched all apps reported",

@@ -26,6 +26,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/rml/base/rml_contact.h"
 
@@ -238,11 +239,8 @@ found:
     return ret;
 }
 
-static void routed_unity_callback(int status, orte_process_name_t* sender,
-                                  opal_buffer_t *buffer, orte_rml_tag_t tag,
-                                  void* cbdata)
+static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
 {
-    orte_jobid_t job;
     orte_proc_t **procs;
     orte_job_t *jdata;
     orte_process_name_t name;
@@ -251,24 +249,13 @@ static void routed_unity_callback(int status, orte_process_name_t* sender,
     char *rml_uri;
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                         "%s routed_unity:callback from proc %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(sender)));
-    
-    /* unpack the jobid this is for */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &job, &cnt, ORTE_JOBID))) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    
     /* lookup the job object */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return;
+        return ORTE_ERR_NOT_FOUND;
     }
     procs = (orte_proc_t**)jdata->procs->addr;
- 
+    
     /* unpack the data for each entry */
     cnt = 1;
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &rml_uri, &cnt, OPAL_STRING))) {
@@ -306,6 +293,7 @@ static void routed_unity_callback(int status, orte_process_name_t* sender,
     }
     if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
         ORTE_ERROR_LOG(rc);
+        return rc;
     }    
     
     /* if all procs have reported, then send out the info to complete the exchange */
@@ -325,26 +313,20 @@ static void routed_unity_callback(int status, orte_process_name_t* sender,
         if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(jdata->jobid, &buf))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&buf);
-            return;
+            return rc;
         }
         
         /* send it to all procs via xcast */
         if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(jdata->jobid, &buf, ORTE_RML_TAG_INIT_ROUTES))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&buf);
-            return;
+            return rc;
         }
         
         OBJ_DESTRUCT(&buf);
     }
     
-    /* reissue the recv */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_INIT_ROUTES,
-                                                      ORTE_RML_NON_PERSISTENT, routed_unity_callback, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    
+    return ORTE_SUCCESS;
 }
 
 int orte_routed_unity_init_routes(orte_jobid_t job, opal_buffer_t *ndata)
@@ -424,8 +406,15 @@ int orte_routed_unity_init_routes(orte_jobid_t job, opal_buffer_t *ndata)
         int rc;
         
         if (ORTE_PROC_MY_NAME->jobid == job) {
-            if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_INIT_ROUTES,
-                                          ORTE_RML_NON_PERSISTENT, routed_unity_callback, NULL))) {
+            if (ORTE_SUCCESS != (rc = orte_routed_base_comm_start())) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else {
+            /* if its from some other job, then this is info I need
+             * to process
+             */
+            if (ORTE_SUCCESS != (rc = process_callback(job, ndata))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }

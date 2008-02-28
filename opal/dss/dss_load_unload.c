@@ -118,52 +118,6 @@ int opal_dss_load(opal_buffer_t *buffer, void *payload,
 }
 
 
-/* Move the UNPACKED portion of a source buffer into a destination buffer
- * The complete contents of the src buffer are NOT moved - only that
- * portion that has not been previously unpacked. However, we must ensure
- * that we don't subsequently "free" memory from inside a previously
- * malloc'd block. Hence, we must obtain a new memory allocation for the
- * dest buffer's storage before we move the data across. As a result, this
- * looks functionally a lot more like a destructive "copy" - both for
- * the source and destination buffers - then a direct transfer of data!
- */
-int opal_dss_xfer_payload(opal_buffer_t *dest, opal_buffer_t *src)
-{
-    int rc;
-    
-    /* ensure we have valid source and destination */
-    if (NULL == dest || NULL == src) {
-        return OPAL_ERR_BAD_PARAM;
-    }
-    
-    /* if the dest is already populated, release the data */
-    if (0 != dest->bytes_used) {
-        free(dest->base_ptr);
-        dest->base_ptr = NULL;
-        dest->pack_ptr = dest->unpack_ptr = NULL;
-        dest->bytes_allocated = dest->bytes_used = 0;
-    }
-    
-    /* ensure the dest buffer type matches the src */
-    dest->type = src->type;
-    
-    /* copy the src payload to the dest - this will allocate "fresh"
-     * memory for the unpacked payload remaining in the src buffer
-     */
-    if (OPAL_SUCCESS != (rc = opal_dss_copy_payload(dest, src))) {
-        return rc;
-    }
-    
-    /* dereference everything in src */
-    free(src->base_ptr);
-    src->base_ptr = NULL;
-    src->pack_ptr = src->unpack_ptr = NULL;
-    src->bytes_allocated = src->bytes_used = 0;
-    
-    return OPAL_SUCCESS;
-}
-
-
 /* Copy the UNPACKED portion of a source buffer into a destination buffer
  * The complete contents of the src buffer are NOT copied - only that
  * portion that has not been previously unpacked is copied.
