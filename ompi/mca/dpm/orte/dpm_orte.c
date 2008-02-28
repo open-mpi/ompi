@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -478,7 +478,6 @@ static int spawn(int count, char **array_of_commands,
     char *base_prefix=NULL;
 
     orte_job_t *jdata;
-    orte_std_cntr_t dummy;
     orte_app_context_t *app;
     
     bool timing = false;
@@ -522,7 +521,7 @@ static int spawn(int count, char **array_of_commands,
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         /* add the app to the job data */
-        orte_pointer_array_add(&dummy, jdata->apps, app);
+        opal_pointer_array_add(jdata->apps, app);
         jdata->num_apps++;
         
         /* copy over the name of the executable */

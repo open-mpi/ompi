@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -448,20 +448,19 @@ int orte_daemon(int argc, char *argv[])
         orte_proc_t *proc;
         orte_node_t **nodes;
         orte_app_context_t *app;
-        orte_std_cntr_t index;
         char *tmp, *nptr;
         int rc;
 
         /* setup the singleton's job */
         jdata = OBJ_NEW(orte_job_t);
         orte_plm_base_create_jobid(&jdata->jobid);
-        orte_pointer_array_add(&index, orte_job_data, jdata);
+        opal_pointer_array_add(orte_job_data, jdata);
         
         /* setup an app_context for the singleton */
         app = OBJ_NEW(orte_app_context_t);
         app->app = strdup("singleton");
         app->num_procs = 1;
-        orte_pointer_array_add(&index, jdata->apps, app);
+        opal_pointer_array_add(jdata->apps, app);
         
         /* run our local allocator to read the available
          * allocation in case this singleton decides to
@@ -488,7 +487,7 @@ int orte_daemon(int argc, char *argv[])
         proc->app_idx = 0;
         proc->node = nodes[0]; /* hnp node must be there */
         OBJ_RETAIN(nodes[0]);  /* keep accounting straight */
-        orte_pointer_array_add(&index, jdata->procs, proc);
+        opal_pointer_array_add(jdata->procs, proc);
         jdata->num_procs = 1;
         
         /* create a string that contains our uri + the singleton's name */

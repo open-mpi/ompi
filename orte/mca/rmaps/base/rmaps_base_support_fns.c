@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -203,7 +203,7 @@ int orte_rmaps_base_get_target_procs(opal_list_t *procs)
 int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_node_t *node,
                                     bool oversubscribed, orte_proc_t *proc)
 {
-    orte_std_cntr_t index, i;
+    orte_std_cntr_t i;
     orte_node_t **nodes;
     int rc;
     
@@ -223,7 +223,7 @@ int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_node_t *node,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == node->name) ? "NULL" : node->name));
     
-    if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&index, map->nodes, (void*)node))) {
+    if (ORTE_SUCCESS > (rc = opal_pointer_array_add(map->nodes, (void*)node))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -241,7 +241,7 @@ PROCESS:
                          ORTE_NAME_PRINT(&proc->name),
                          (NULL == node->name) ? "NULL" : node->name));
     
-    if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&index, node->procs, (void*)proc))) {
+    if (0 > (rc = opal_pointer_array_add(node->procs, (void*)proc))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -292,8 +292,8 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
                          "%s rmaps:base:claim_slot mapping rank %d to job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          vpid, ORTE_JOBID_PRINT(jdata->jobid)));
-    if (ORTE_SUCCESS != (rc = orte_pointer_array_set_item(jdata->procs,
-                                                          (orte_std_cntr_t)vpid,
+    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs,
+                                                          (int)vpid,
                                                           (void*)proc))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(proc);
@@ -490,7 +490,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
     orte_node_t *node, **nodes;
     orte_proc_t *proc;
     orte_job_t *daemons;
-    orte_std_cntr_t i, index;
+    orte_std_cntr_t i;
     int rc;
     
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
@@ -532,7 +532,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name)));
             /* add the daemon to the daemon job object */
-            if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&index, daemons->procs, (void*)proc))) {
+            if (0 > (rc = opal_pointer_array_add(daemons->procs, (void*)proc))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }

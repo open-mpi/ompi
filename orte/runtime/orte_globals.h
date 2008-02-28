@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -36,8 +36,7 @@
 
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
-
-#include "orte/class/orte_pointer_array.h"
+#include "opal/class/opal_pointer_array.h"
 
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/rmaps/rmaps_types.h"
@@ -153,7 +152,7 @@ typedef struct {
     /** number of procs on this node */
     orte_vpid_t num_procs;
     /* array of pointers to procs on this node */
-    orte_pointer_array_t *procs;
+    opal_pointer_array_t *procs;
     /* whether or not we are oversubscribed */
     bool oversubscribed;
     /** The node architecture, as reported by the remote node. This
@@ -198,7 +197,7 @@ typedef struct {
     /* jobid for this job */
     orte_jobid_t jobid;
     /* app_context array for this job */
-    orte_pointer_array_t *apps;
+    opal_pointer_array_t *apps;
     /* number of app_contexts in the array */
     orte_std_cntr_t num_apps;
     /* whether or not this job is locally spawned */
@@ -208,7 +207,7 @@ typedef struct {
     /* number of procs in this job */
     orte_vpid_t num_procs;
     /* array of pointers to procs in this job */
-    orte_pointer_array_t *procs;
+    opal_pointer_array_t *procs;
     /* map of the job */
     orte_job_map_t *map;
     /* bookmark for where we are in mapping - this
@@ -329,8 +328,8 @@ ORTE_DECLSPEC extern int orte_timeout_usec_per_proc;
 ORTE_DECLSPEC extern float orte_max_timeout;
 
 /* global arrays for data storage */
-ORTE_DECLSPEC extern orte_pointer_array_t *orte_job_data;
-ORTE_DECLSPEC extern orte_pointer_array_t *orte_node_pool;
+ORTE_DECLSPEC extern opal_pointer_array_t *orte_job_data;
+ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;
 
 /**
  * Whether ORTE is initialized or we are in orte_finalize

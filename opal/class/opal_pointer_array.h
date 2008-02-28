@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -127,9 +127,9 @@ static inline void *opal_pointer_array_get_item(opal_pointer_array_t *table,
 {
     void *p;
 
-	if( table->size <= element_index ) {
-		return NULL;
-	}
+    if( table->size <= element_index ) {
+        return NULL;
+    }
     OPAL_THREAD_LOCK(&(table->lock));
     p = table->addr[element_index];
     OPAL_THREAD_UNLOCK(&(table->lock));

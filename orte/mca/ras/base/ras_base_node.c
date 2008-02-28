@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -24,7 +24,6 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 
-#include "orte/class/orte_pointer_array.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -81,7 +80,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
     /* set the size of the global array - this helps minimize time
      * spent doing realloc's
      */
-    if (ORTE_SUCCESS != (rc = orte_pointer_array_set_size(orte_node_pool, num_nodes))) {
+    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_size(orte_node_pool, num_nodes))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -124,7 +123,8 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
                                  (NULL == node->name) ? "NULL" : node->name));
             /* set node to available for use */
             node->allocate = true;
-            if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&node->index, orte_node_pool, (void*)node))) {
+            node->index = opal_pointer_array_add(orte_node_pool, (void*)node);
+            if (ORTE_SUCCESS > (rc = node->index)) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
