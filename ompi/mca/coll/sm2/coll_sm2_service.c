@@ -194,8 +194,8 @@ int setup_multinomial_tree(int tree_order, int num_nodes,
 Error:
     /* free allocated memory */
     for( i=0 ; i < num_nodes ; i++ ) {
-        if( NULL != tree_nodes[node_index].children_ranks ) {
-            free(tree_nodes[node_index].children_ranks);
+        if( NULL != tree_nodes[i].children_ranks ) {
+            free(tree_nodes[i].children_ranks);
         }
     }
 

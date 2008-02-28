@@ -20,6 +20,7 @@
 /**
  * Shared memory blocking allreduce.
  */
+static
 int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype, 
                                 struct ompi_op_t *op,
@@ -28,7 +29,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
 {
     /* local variables */
     int rc=OMPI_SUCCESS,n_dts_per_buffer,n_data_segments,stripe_number;
-    int my_rank, child_rank, parent_rank, child, n_parents, n_children;
+    int my_rank, child_rank, child, n_parents, n_children;
     int my_fanin_parent,count_processed,count_this_stripe;
     int my_fanout_parent;
     size_t message_extent,dt_extent,ctl_size,len_data_buffer;
@@ -39,7 +40,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
     volatile char * parent_data_pointer;
     char *my_base_temp_pointer;
     volatile char * child_base_temp_pointer;
-    char * volatile parent_base_temp_pointer, * volatile root_base_temp_pointer;
+    volatile char * parent_base_temp_pointer; 
     mca_coll_sm2_nb_request_process_shared_mem_t *my_ctl_pointer;
     volatile mca_coll_sm2_nb_request_process_shared_mem_t * child_ctl_pointer;
     volatile mca_coll_sm2_nb_request_process_shared_mem_t * parent_ctl_pointer;
@@ -117,7 +118,8 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
          *   eliminate extra copies.
          */
         rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
-                my_data_pointer, (char *)sbuf+dt_extent*count_processed);
+                (char *)my_data_pointer, 
+                (char *)((char *)sbuf+dt_extent*count_processed));
         if( 0 != rc ) {
             return OMPI_ERROR;
         }
@@ -139,15 +141,15 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
 
             /* wait until child flag is set */
             while(! 
-                    (child_ctl_pointer->flag == tag &
-                     child_ctl_pointer->index== stripe_number) ) {
+                    ( (child_ctl_pointer->flag == tag) &
+                     (child_ctl_pointer->index== stripe_number) ) ) {
                 /* Note: Actually need to make progress here */
                 ;
             }
 
             /* apply collective operation */
-            ompi_op_reduce(op,child_data_pointer,my_data_pointer,
-                    count_this_stripe,dtype);
+            ompi_op_reduce(op,(void *)child_data_pointer,
+                    (void *)my_data_pointer, count_this_stripe,dtype);
         } /* end child loop */
 
         /* set memory barriet to make sure data is in main memory before
@@ -174,7 +176,8 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
 
             /* copy data to user supplied buffer */
             rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
-                    (char *)rbuf+dt_extent*count_processed,my_data_pointer);
+                    (char *)((char *)rbuf+dt_extent*count_processed),
+                    (char *)my_data_pointer);
             if( 0 != rc ) {
                 return OMPI_ERROR;
             }
@@ -184,8 +187,11 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
                 ((char *)sm_buffer+my_fanout_parent*
                  sm_module->segement_size_per_process);
    
-            parent_data_pointer=parent_base_temp_pointer+ctl_size;
-            parent_ctl_pointer=parent_base_temp_pointer;
+            parent_data_pointer=(volatile char *)
+                ((char *)parent_base_temp_pointer+ctl_size);
+            parent_ctl_pointer=(volatile 
+                    mca_coll_sm2_nb_request_process_shared_mem_t *)
+                parent_base_temp_pointer;
 
             child_ctl_pointer=
                 (volatile  mca_coll_sm2_nb_request_process_shared_mem_t *)
@@ -195,15 +201,15 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
              * wait on Parent to signal that data is ready
              */
             while(! 
-                    (parent_ctl_pointer->flag == -tag &
-                     parent_ctl_pointer->index== stripe_number) ) {
+                    ( (parent_ctl_pointer->flag == -tag) &
+                     (parent_ctl_pointer->index== stripe_number) ) ) {
                 /* Note: Actually need to make progress here */
                 ;
             }
 
             /* copy the data to my shared buffer, for access by children */
             rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
-                    my_data_pointer,parent_data_pointer);
+                    (char *)my_data_pointer,(char *)parent_data_pointer);
             if( 0 != rc ) {
                 return OMPI_ERROR;
             }
@@ -218,7 +224,8 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
 
             /* copy data to user supplied buffer */
             rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
-                    (char *)rbuf+dt_extent*count_processed,my_data_pointer);
+                    (char *)rbuf+dt_extent*count_processed,
+                    (char *)my_data_pointer);
             if( 0 != rc ) {
                 return OMPI_ERROR;
             }

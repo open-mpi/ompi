@@ -122,7 +122,7 @@ static int allocate_shared_file(size_t size, char *file_name,
     int group_size,my_rank;
 
     bool i_create_shared_file=false;
-    size_t p;
+    ssize_t p;
     int rc=0, sm_file_inited=0;
     struct iovec iov[2]; 
     int sm_file_created;
@@ -460,7 +460,8 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     /* local variables */
     mca_coll_sm2_module_t *sm_module;
     int group_size,ret;
-    size_t alignment,size,size_tot,size_tot_per_proc_per_seg;
+    size_t alignment,size;
+    ssize_t size_tot_per_proc_per_seg;
     size_t tot_size_per_bank,size_tot_per_segment;
     size_t tot_size_mem_banks;
     size_t ctl_memory_per_proc_per_segment;
@@ -842,7 +843,7 @@ char *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 int free_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 {
     /* local variables */
-    int rc,buffer_index,memory_bank_index;
+    int rc,memory_bank_index;
     mca_coll_sm2_nb_request_process_private_mem_t *request;
 
     /* check to see if need to progress the current nb-barrier, which

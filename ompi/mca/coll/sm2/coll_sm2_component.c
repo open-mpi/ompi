@@ -48,12 +48,6 @@ const char *mca_coll_sm2_component_version_string =
 /*
  * Local functions
  */
-static int sm2_module_enable(struct mca_coll_base_module_1_1_0_t *module,
-        struct ompi_communicator_t *comm);
-
-/*
- * Local functions
- */
 
 static int sm2_open(void);
 static int sm2_close(void);
