@@ -26,7 +26,6 @@ headers += \
 
 libopen_pal_la_SOURCES += \
         dss/dss_internal_functions.c \
-        dss/dss_arith.c \
         dss/dss_compare.c \
         dss/dss_copy.c \
         dss/dss_dump.c \

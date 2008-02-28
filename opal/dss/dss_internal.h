@@ -213,12 +213,6 @@ extern opal_data_type_t opal_dss_num_reg_types;
 
     int opal_dss_get(void **data, opal_dss_value_t *value, opal_data_type_t type);
 
-    int opal_dss_arith(opal_dss_value_t *value, opal_dss_value_t *operand, opal_dss_arith_op_t operation);
-
-    int opal_dss_increment(opal_dss_value_t *value);
-
-    int opal_dss_decrement(opal_dss_value_t *value);
-
     int opal_dss_set_buffer_type(opal_buffer_t *buffer, opal_dss_buffer_type_t type);
 
     int opal_dss_pack(opal_buffer_t *buffer, const void *src,
