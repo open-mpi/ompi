@@ -25,6 +25,8 @@
 #include "opal/threads/condition.h"
 #include "opal/util/cmd_line.h"
 
+#include "orte/runtime/orte_globals.h"
+
 BEGIN_C_DECLS
 
 /**
@@ -47,7 +49,6 @@ struct globals_t {
     bool do_not_launch;
     bool debugger;
     int num_procs;
-    int exit_status;
     char *hostfile;
     char *env_val;
     char *appfile;
@@ -57,8 +58,8 @@ struct globals_t {
     char *preload_files;
     char *preload_files_dest_dir;
     opal_mutex_t lock;
-    opal_condition_t cond;
     bool sleep;
+    char *ompi_server;
 };
 
 /**

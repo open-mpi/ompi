@@ -547,6 +547,25 @@ AC_DEFINE_UNQUOTED([ORTE_ENABLE_JUMBO_APPS], [$orte_want_jumbo_apps],
 
 
 #
+# Minimal RTE support
+#
+
+AC_MSG_CHECKING([if want full RTE support])
+AC_ARG_ENABLE([rte],
+    [AC_HELP_STRING([--disable-rte-support],
+                    [Disable RTE support for systems that do not require it (default: full RTE support enabled)])])
+if test "$enable_rte_support" = "no"; then
+    AC_MSG_RESULT([no])
+    orte_disable_full_support=1
+else
+    AC_MSG_RESULT([yes])
+    orte_disable_full_support=0
+fi
+AC_DEFINE_UNQUOTED([ORTE_DISABLE_FULL_SUPPORT], [$orte_disable_full_support],
+                   [Enable full RTE support])
+AM_CONDITIONAL(ORTE_DISABLE_FULL_SUPPORT, test "$enable_rte_support" = "no")
+
+#
 # Cross-compile data
 #
 AC_ARG_WITH([cross],

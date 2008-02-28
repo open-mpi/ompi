@@ -21,28 +21,22 @@
 # This makefile.am does not stand on its own - it is included from orte/Makefile.am
 
 SUBDIRS += \
-	tools/orteboot \
 	tools/orted \
-	tools/ortehalt \
-	tools/ortekill \
-	tools/orteprobe \
 	tools/orterun \
-	tools/wrappers \
+	tools/orte-clean \
 	tools/orte-ps \
-	tools/orte-clean
+	tools/orte-checkpoint \
+	tools/orte-restart \
+	tools/wrappers
 
 DIST_SUBDIRS += \
-	tools/orteboot \
 	tools/orted \
-	tools/ortehalt \
-	tools/ortekill \
-	tools/orteprobe \
 	tools/orterun \
-	tools/wrappers \
 	tools/orte-ps \
 	tools/orte-clean \
 	tools/orte-checkpoint \
-	tools/orte-restart
+	tools/orte-restart \
+	tools/wrappers
 
 if WANT_FT
 SUBDIRS += \

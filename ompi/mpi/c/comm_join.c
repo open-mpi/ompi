@@ -33,8 +33,10 @@
 #endif
 
 #include "ompi/mpi/c/bindings.h"
-#include "orte/mca/ns/ns.h"
 #include "ompi/proc/proc.h"
+#include "ompi/mca/dpm/dpm.h"
+
+#include "orte/util/name_fns.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_join = PMPI_Comm_join
@@ -51,7 +53,8 @@ static int ompi_socket_recv (int fd, char *buf, int len );
 
 int MPI_Comm_join(int fd, MPI_Comm *intercomm) 
 {
-    int rc, tag=OMPI_COMM_JOIN_TAG;
+    int rc;
+    orte_rml_tag_t tag=OMPI_COMM_JOIN_TAG;
     size_t size;
     uint32_t len, rlen, llen, lrlen;
     int send_first=1;
@@ -59,7 +62,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
 
     ompi_proc_t **myproc=NULL;
     ompi_communicator_t *newcomp;
-    orte_process_name_t *port_proc_name=NULL;
+    orte_process_name_t port_proc_name;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -76,7 +79,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
        Need to determine somehow how to avoid a potential deadlock
        here. */
     myproc = ompi_proc_self (&size);
-    if (ORTE_SUCCESS != (rc = orte_ns.get_proc_name_string (&name, &(myproc[0]->proc_name)))) {
+    if (ORTE_SUCCESS != (rc = orte_util_convert_process_name_to_string (&name, &(myproc[0]->proc_name)))) {
         OPAL_CR_EXIT_LIBRARY();
         return rc;
     }
@@ -100,17 +103,16 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     ompi_socket_send (fd, name, llen);
     ompi_socket_recv (fd, rname, lrlen);
     
-    if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(&port_proc_name, rname))) {
+    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_process_name(&port_proc_name, rname))) {
         OPAL_CR_EXIT_LIBRARY();
-        return rc;
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_PORT, FUNC_NAME);
     }
-    rc = ompi_comm_connect_accept (MPI_COMM_SELF, 0, port_proc_name,
-                                   send_first, &newcomp, tag);
+    rc = ompi_dpm.connect_accept (MPI_COMM_SELF, 0, &port_proc_name,
+                                  send_first, &newcomp, tag);
     
     
     free ( name );
     free ( rname);
-    free ( port_proc_name );
     free ( myproc );
 
     *intercomm = newcomp;

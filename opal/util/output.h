@@ -73,9 +73,7 @@
 
 #include "opal/class/opal_object.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * \class opal_output_stream_t 
@@ -393,6 +391,14 @@ struct opal_output_stream_t {
     OPAL_DECLSPEC void opal_output_set_verbosity(int output_id, int level);
 
     /**
+     * Get the verbosity level for a stream
+     *
+     * @param output_id Stream id returned from opal_output_open()
+     * @returns Verbosity of stream
+     */
+    OPAL_DECLSPEC int opal_output_get_verbosity(int output_id);
+
+    /**
      * Set characteristics for output files.
      *
      * @param dir Directory where output files will go
@@ -485,9 +491,7 @@ struct opal_output_stream_t {
  */
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_output_stream_t);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_OUTPUT_H_ */
 

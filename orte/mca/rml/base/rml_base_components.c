@@ -13,8 +13,6 @@
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/base.h"
-#include "orte/dss/dss.h"
-#include "orte/dss/dss_types.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 
@@ -36,27 +34,11 @@ int
 orte_rml_base_open(void)
 {
     int ret;
-    orte_data_type_t tmp;
-    int param, value;
 
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_rml_base_components, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_base_subscriptions, opal_list_t);
 
-    /* register the base system types with the DPS */
-    tmp = ORTE_RML_TAG;
-    if (ORTE_SUCCESS != (ret = orte_dss.register_type(orte_rml_base_pack_tag,
-                                       orte_rml_base_unpack_tag,
-                                       (orte_dss_copy_fn_t)orte_rml_base_copy_tag,
-                                       (orte_dss_compare_fn_t)orte_rml_base_compare_tags,
-                                       (orte_dss_size_fn_t)orte_rml_base_size_tag,
-                                       (orte_dss_print_fn_t)orte_rml_base_print_tag,
-                                       (orte_dss_release_fn_t)orte_rml_base_std_obj_release,
-                                       ORTE_DSS_UNSTRUCTURED,
-                                       "ORTE_RML_TAG", &tmp))) {
-        ORTE_ERROR_LOG(ret);
-        return ret;
-    }
 
     /* 
      * Which RML Wrapper component to use, if any
@@ -69,15 +51,7 @@ orte_rml_base_open(void)
                                    NULL, NULL);
     
     /* register parameters */
-    param = mca_base_param_reg_int_name("rml", "base_verbose",
-                                        "Verbosity level for the rml framework",
-                                        false, false, 0, &value);
-    if (value != 0) {
-        orte_rml_base_output = opal_output_open(NULL);
-    } else {
-        orte_rml_base_output = -1;
-    }
-
+    orte_rml_base_output = opal_output_open(NULL);
     
     /* Open up all available components */
     ret = mca_base_components_open("rml",

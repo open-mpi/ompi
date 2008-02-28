@@ -23,7 +23,10 @@
 #ifndef _MCA_OOB_TCP_HDR_H_
 #define _MCA_OOB_TCP_HDR_H_
 
-#include "orte/mca/ns/ns_types.h"
+#include "orte_config.h"
+#include "orte/types.h"
+
+BEGIN_C_DECLS
 
 #define MCA_OOB_TCP_PROBE    1
 #define MCA_OOB_TCP_CONNECT  2
@@ -65,6 +68,8 @@ typedef struct mca_oob_tcp_hdr_t mca_oob_tcp_hdr_t;
     (h)->msg_type = htonl((h)->msg_type);		  \
     (h)->msg_size = htonl((h)->msg_size);				  \
     (h)->msg_tag = htonl((h)->msg_tag);
+
+END_C_DECLS
 
 #endif /* _MCA_OOB_TCP_MESSAGE_H_ */
 

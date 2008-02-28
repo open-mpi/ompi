@@ -21,7 +21,7 @@
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
 
-#include "orte/orte_constants.h"
+#include "orte/util/name_fns.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
@@ -149,7 +149,7 @@ int orte_snapc_full_module_init(bool seed, bool app)
         opal_output_verbose(5, mca_snapc_full_component.super.output_handle,
                             "snapc:full: module_init: Global Snapshot Coordinator");
 
-        mca_snapc_full_component.super.coord_type = ORTE_SNAPC_GLOBAL_COORD_TYPE;
+        orte_snapc_coord_type |= ORTE_SNAPC_GLOBAL_COORD_TYPE;
 
         if( ORTE_SUCCESS != (ret = global_coord_init()) ) {
             exit_status = ret;
@@ -169,7 +169,7 @@ int orte_snapc_full_module_init(bool seed, bool app)
         opal_output_verbose(5, mca_snapc_full_component.super.output_handle,
                             "snapc:full: module_init: Local Snapshot Coordinator");
 
-        mca_snapc_full_component.super.coord_type = ORTE_SNAPC_LOCAL_COORD_TYPE;
+        orte_snapc_coord_type |= ORTE_SNAPC_LOCAL_COORD_TYPE;
 
         if( ORTE_SUCCESS != (ret = local_coord_init()) ) {
             exit_status = ret;
@@ -183,7 +183,7 @@ int orte_snapc_full_module_init(bool seed, bool app)
         opal_output_verbose(5, mca_snapc_full_component.super.output_handle,
                             "snapc:full: module_init: Application Snapshot Coordinator");
 
-        mca_snapc_full_component.super.coord_type = ORTE_SNAPC_APP_COORD_TYPE;
+        orte_snapc_coord_type |= ORTE_SNAPC_APP_COORD_TYPE;
 
         if( ORTE_SUCCESS != (ret = app_coord_init()) ) {
             exit_status = ret;
@@ -197,7 +197,7 @@ int orte_snapc_full_module_init(bool seed, bool app)
         opal_output_verbose(5, mca_snapc_full_component.super.output_handle,
                             "snapc:full: module_init: Unknown Snapshot Coordinator");
 
-        mca_snapc_full_component.super.coord_type = ORTE_SNAPC_UNASSIGN_TYPE;
+        orte_snapc_coord_type = ORTE_SNAPC_UNASSIGN_TYPE;
 
         exit_status = ORTE_ERROR;
         goto cleanup;
@@ -212,7 +212,7 @@ int orte_snapc_full_module_finalize(void)
     opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
                         "snapc:full: module_finalize()");
 
-    switch(mca_snapc_full_component.super.coord_type) 
+    switch(orte_snapc_coord_type) 
         {
         case ORTE_SNAPC_GLOBAL_COORD_TYPE:
             global_coord_finalize();
@@ -227,7 +227,7 @@ int orte_snapc_full_module_finalize(void)
             break;
         }
 
-    mca_snapc_full_component.super.coord_type = ORTE_SNAPC_UNASSIGN_TYPE;
+    orte_snapc_coord_type = ORTE_SNAPC_UNASSIGN_TYPE;
 
     return ORTE_SUCCESS;
 }
@@ -235,12 +235,12 @@ int orte_snapc_full_module_finalize(void)
 int orte_snapc_full_setup_job(orte_jobid_t jobid) {
     int ret, exit_status = ORTE_SUCCESS;
 
-    if( ORTE_SNAPC_GLOBAL_COORD_TYPE == mca_snapc_full_component.super.coord_type ) {
+    if( ORTE_SNAPC_GLOBAL_COORD_TYPE == (orte_snapc_coord_type & ORTE_SNAPC_GLOBAL_COORD_TYPE)) {
         if(ORTE_SUCCESS != (ret = global_coord_setup_job(jobid) ) ) {
             exit_status = ret;
         }
     }
-    else if( ORTE_SNAPC_LOCAL_COORD_TYPE == mca_snapc_full_component.super.coord_type ) {
+    else if( ORTE_SNAPC_LOCAL_COORD_TYPE == (orte_snapc_coord_type & ORTE_SNAPC_LOCAL_COORD_TYPE)) {
         if(ORTE_SUCCESS != (ret = local_coord_setup_job(jobid) ) ) {
             exit_status = ret;
         }
@@ -252,12 +252,12 @@ int orte_snapc_full_setup_job(orte_jobid_t jobid) {
 int orte_snapc_full_release_job(orte_jobid_t jobid) {
     int ret, exit_status = ORTE_SUCCESS;
 
-    if( ORTE_SNAPC_GLOBAL_COORD_TYPE == mca_snapc_full_component.super.coord_type ) {
+    if( ORTE_SNAPC_GLOBAL_COORD_TYPE == (orte_snapc_coord_type & ORTE_SNAPC_GLOBAL_COORD_TYPE)) {
         if(ORTE_SUCCESS != (ret = global_coord_release_job(jobid) ) ) {
             exit_status = ret;
         }
     }
-    else if( ORTE_SNAPC_LOCAL_COORD_TYPE == mca_snapc_full_component.super.coord_type ) {
+    else if( ORTE_SNAPC_LOCAL_COORD_TYPE == (orte_snapc_coord_type & ORTE_SNAPC_LOCAL_COORD_TYPE )) {
         if(ORTE_SUCCESS != (ret = local_coord_release_job(jobid) ) ) {
             exit_status = ret;
         }

@@ -43,7 +43,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "orte/mca/oob/base/base.h"
-#include "orte/mca/ns/ns_types.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 

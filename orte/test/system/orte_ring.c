@@ -2,8 +2,9 @@
 #include <signal.h>
 
 
-#include "orte/orte_types.h"
-#include "orte/mca/ns/ns.h"
+#include "orte/util/proc_info.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/oob/base/base.h"
 
@@ -29,38 +30,34 @@ main(int argc, char *argv[]){
     /*
      * Init
      */
-    orte_init(ORTE_NON_INFRASTRUCTURE);
+    orte_init(ORTE_NON_TOOL);
 
     num_peers = orte_process_info.num_procs;
 
     /*
      * Construct Peer name in a ring
      */
-    right_peer_orte_name.jobid  = orte_process_info.my_name->jobid;
-    right_peer_orte_name.vpid   = orte_process_info.my_name->vpid + 1;
+    right_peer_orte_name.jobid  = ORTE_PROC_MY_NAME->jobid;
+    right_peer_orte_name.vpid   = ORTE_PROC_MY_NAME->vpid + 1;
     if( right_peer_orte_name.vpid >= num_peers ) {
         right_peer_orte_name.vpid = 0;
     }
 
-    left_peer_orte_name.jobid  = orte_process_info.my_name->jobid;
-    left_peer_orte_name.vpid   = orte_process_info.my_name->vpid - 1;
-    if( orte_process_info.my_name->vpid == 0 ) {
+    left_peer_orte_name.jobid  = ORTE_PROC_MY_NAME->jobid;
+    left_peer_orte_name.vpid   = ORTE_PROC_MY_NAME->vpid - 1;
+    if( ORTE_PROC_MY_NAME->vpid == 0 ) {
         left_peer_orte_name.vpid = num_peers - 1;
     }
 
-    /*
-     * Get the string version
-     */
-    orte_ns.get_proc_name_string(&my_name, orte_process_info.my_name);
-    orte_ns.get_proc_name_string(&my_right_peer, &right_peer_orte_name);
-    orte_ns.get_proc_name_string(&my_left_peer,  &left_peer_orte_name);
-
-    printf("My name is: %s -- PID %d\tMy Left Peer is %s\tMy Right Peer is %s\n", my_name, getpid(), my_left_peer, my_right_peer);
+    printf("My name is: %s -- PID %d\tMy Left Peer is %s\tMy Right Peer is %s\n",
+           ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), getpid(),
+           ORTE_NAME_PRINT(&left_peer_orte_name),
+           ORTE_NAME_PRINT(&right_peer_orte_name));
 
     /*
      * Rank 0 starts the ring...
      */
-    if( orte_process_info.my_name->vpid == 0) {
+    if( ORTE_PROC_MY_NAME->vpid == 0) {
         /* update value */
         counter = 1;
 
@@ -68,7 +65,10 @@ main(int argc, char *argv[]){
         msg.iov_base = (void *) &counter;
         msg.iov_len  = sizeof(counter);
 
-        printf("%s) Send Counter (%d) to peer (%s)\n", my_name,  counter, my_right_peer);
+        printf("%s Send Counter (%d) to peer %s\n",
+               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), 
+               counter, ORTE_NAME_PRINT(&right_peer_orte_name));
+        
         if( 0 > orte_rml.send(&right_peer_orte_name,
                                              &msg,
                                              1,
@@ -83,7 +83,9 @@ main(int argc, char *argv[]){
         int *cnt;
 
         /* Receive from left */
-        printf("%s) Waiting to Recv Counter from peer (%s)\n", my_name,  my_left_peer);
+        printf("%s Waiting to Recv Counter from peer %s\n", 
+               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&left_peer_orte_name));
+        
         msg.iov_base = NULL;
         msg.iov_len  = 0;
 
@@ -99,11 +101,11 @@ main(int argc, char *argv[]){
         counter = *cnt;
 
         /* Update */
-        printf("%s) Recv %d ... Send %d\n", my_name, counter, counter + 1);
-        if( orte_process_info.my_name->vpid == 0 ) {
+        printf("%s Recv %d ... Send %d\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), counter, counter + 1);
+        if( ORTE_PROC_MY_NAME->vpid == 0 ) {
             sleep(2);
         }
-        if(orte_process_info.my_name->vpid == 0) {
+        if(ORTE_PROC_MY_NAME->vpid == 0) {
             counter++;
         }
         
@@ -115,7 +117,9 @@ main(int argc, char *argv[]){
         msg.iov_base = (void *) &counter;
         msg.iov_len  = sizeof(counter);
 
-        printf("%s) Send Counter (%d) to peer (%s)\n", my_name,  counter, my_right_peer);
+        printf("%s Send Counter (%d) to peer (%s)\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),  counter,
+               ORTE_NAME_PRINT(&right_peer_orte_name));
+        
         if( 0 > orte_rml.send(&right_peer_orte_name,
                                              &msg,
                                              1,

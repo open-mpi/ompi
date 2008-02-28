@@ -21,7 +21,7 @@
  */
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
@@ -63,36 +63,14 @@
 #endif
 #endif /* HAVE_SCHED_YIELD */
 
-#include "opal/event/event.h"
-#include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "opal/util/os_path.h"
 #include "opal/util/show_help.h"
-#include "opal/util/path.h"
-#include "opal/util/basename.h"
-#include "opal/util/opal_environ.h"
-#include "opal/mca/base/mca_base_param.h"
-#include "opal/util/num_procs.h"
-#include "opal/util/sys_limits.h"
 
-#include "orte/dss/dss.h"
-#include "orte/util/sys_info.h"
-#include "orte/util/univ_info.h"
-#include "orte/util/session_dir.h"
 #include "orte/runtime/orte_wait.h"
-#include "orte/runtime/params.h"
+#include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/errmgr/base/base.h"
-#include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/iof_base_setup.h"
-#include "orte/mca/ns/ns.h"
-#include "orte/mca/sds/base/base.h"
-#include "orte/mca/rmgr/rmgr.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/mca/gpr/gpr.h"
-#include "orte/mca/rmaps/base/base.h"
-#include "orte/mca/smr/smr.h"
-#include "orte/mca/routed/routed.h"
+#include "orte/util/name_fns.h"
 
 #include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/odls/default/odls_default.h"
@@ -100,7 +78,7 @@
 /*
  * External Interface
  */
-static int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data);
+static int orte_odls_default_launch_local_procs(opal_buffer_t *data);
 static int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state);
 static int orte_odls_default_signal_local_procs(const orte_process_name_t *proc, int32_t signal);
 
@@ -112,7 +90,6 @@ orte_odls_base_module_t orte_odls_default_module = {
     orte_odls_default_kill_local_procs,
     orte_odls_default_signal_local_procs,
     orte_odls_base_default_deliver_message,
-    orte_odls_base_default_extract_proc_map_info,
     orte_odls_base_default_require_sync
 };
 
@@ -131,12 +108,22 @@ static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_s
         if (pid == ret) {
             /* It died -- return success */
             return true;
+        } else if (0 == ret) {
+            /* with NOHANG specified, if a process has already exited
+             * while waitpid was registered, then waitpid returns 0
+             * as there is no error - this is a race condition problem
+             * that occasionally causes us to incorrectly report a proc
+             * as refusing to die. Unfortunately, errno may not be reset
+             * by waitpid in this case, so we cannot check it - just assume
+             * the proc has indeed died
+             */
+            return true;
         } else if (-1 == ret && ECHILD == errno) {
             /* The pid no longer exists, so we'll call this "good
                enough for government work" */
             return true;
         }
-
+        
 #if defined(HAVE_SCHED_YIELD)
         sched_yield();
 #else
@@ -183,7 +170,6 @@ static int odls_default_fork_local_proc(
     orte_odls_child_t *child,
     char **environ_copy)
 {
-    pid_t pid;
     orte_iof_base_io_conf_t opts;
     int rc;
     sigset_t sigs;
@@ -226,15 +212,15 @@ static int odls_default_fork_local_proc(
     }
 
     /* Fork off the child */
-    pid = fork();
-    if(pid < 0) {
+    child->pid = fork();
+    if(child->pid < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_CHILDREN);
         child->state = ORTE_PROC_STATE_FAILED_TO_START;
         child->exit_code = ORTE_ERR_SYS_LIMITS_CHILDREN;
         return ORTE_ERR_SYS_LIMITS_CHILDREN;
     }
 
-    if (pid == 0) {
+    if (child->pid == 0) {
         long fd, fdmax = sysconf(_SC_OPEN_MAX);
 
         /* Setup the pipe to be close-on-exec */
@@ -315,7 +301,11 @@ static int odls_default_fork_local_proc(
                 /* Other errno's are bad */
                 child->state = ORTE_PROC_STATE_FAILED_TO_START;
                 child->exit_code = ORTE_ERR_PIPE_READ_FAILURE;
-                opal_output(orte_odls_globals.output, "odls: got code %d back from child", i);
+                
+                OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                                     "%s odls:default:fork got code %d back from child",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i));
+                
                 return ORTE_ERR_PIPE_READ_FAILURE;
                 break;
             } else if (0 == rc) {
@@ -332,14 +322,17 @@ static int odls_default_fork_local_proc(
                 */
                 child->state = ORTE_PROC_STATE_FAILED_TO_START;
                 child->exit_code = i;
-                opal_output(orte_odls_globals.output, "odls: got code %d back from child", i);
+                
+                OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                                     "%s odls:default:fork got code %d back from child",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i));
+                
                 return i;
             }
         }
 
-        /* set the proc state to LAUNCHED and save the pid */
+        /* set the proc state to LAUNCHED */
         child->state = ORTE_PROC_STATE_LAUNCHED;
-        child->pid = pid;
         child->alive = true;
     }
     
@@ -351,26 +344,18 @@ static int odls_default_fork_local_proc(
  * Launch all processes allocated to the current node.
  */
 
-int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data)
+int orte_odls_default_launch_local_procs(opal_buffer_t *data)
 {
     int rc;
     orte_std_cntr_t total_slots_alloc, num_local_procs;
     orte_jobid_t job;
     orte_vpid_t range;
-    opal_list_item_t *item;
     bool node_included;
     bool override_oversubscribed;
     bool oversubscribed;
-    opal_list_t app_context_list;
+    orte_std_cntr_t i, num_contexts;
+    orte_app_context_t **app_contexts;
 
-    /* We need to create a list of the app_contexts
-     * so we can know what to launch - the process info only gives
-     * us an index into the app_context array, not the app_context
-     * info itself.
-     */
-    
-    OBJ_CONSTRUCT(&app_context_list, opal_list_t);
-    
     /* construct the list of children we are to launch */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_construct_child_list(data, &job,
                                                                           &num_local_procs,
@@ -379,8 +364,11 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data)
                                                                           &node_included,
                                                                           &oversubscribed,
                                                                           &override_oversubscribed,
-                                                                          &app_context_list))) {
-        ORTE_ERROR_LOG(rc);
+                                                                          &num_contexts,
+                                                                          &app_contexts))) {
+        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                             "%s odls:default:launch:local failed to construct child list on error %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         goto CLEANUP;
     }
     
@@ -391,22 +379,25 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data)
     }
 
     /* launch the local procs */
-    if (ORTE_SUCCESS != (rc = orte_odls_base_default_launch_local(job, &app_context_list,
+    if (ORTE_SUCCESS != (rc = orte_odls_base_default_launch_local(job,
+                                                                  num_contexts, app_contexts,
                                                                   num_local_procs,
                                                                   range, total_slots_alloc,
                                                                   oversubscribed,
                                                                   override_oversubscribed,
                                                                   odls_default_fork_local_proc))) {
-        ORTE_ERROR_LOG(rc);
+        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                             "%s odls:default:launch:local failed to launch on error %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         goto CLEANUP;
     }
     
 CLEANUP:
     /* cleanup */
-    while (NULL != (item = opal_list_remove_first(&app_context_list))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&app_context_list);
+    for (i=0; i < num_contexts; i++) {
+        if (NULL != app_contexts[i]) OBJ_RELEASE(app_contexts[i]);
+    };
+    if (NULL != app_contexts) free(app_contexts);
     
     return rc;
 }

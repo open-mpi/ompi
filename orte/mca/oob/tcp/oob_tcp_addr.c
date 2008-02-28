@@ -17,6 +17,9 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
+#include "orte/types.h"
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -30,13 +33,11 @@
 #include <arpa/inet.h>
 #endif
 #include <string.h>
-#include "orte/orte_constants.h"
+
 #include "opal/util/if.h"
 #include "opal/util/net.h"
 
-#include "orte/mca/ns/ns_types.h"
 #include "orte/util/proc_info.h"
-#include "orte/dss/dss.h"
 
 #include "oob_tcp.h"
 #include "oob_tcp_addr.h"

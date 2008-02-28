@@ -29,18 +29,15 @@
  */
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
-
-
-#include "orte/mca/schema/schema.h"
-#include "orte/mca/gpr/gpr_types.h"
-#include "orte/mca/ns/ns_types.h"
+#include "orte/constants.h"
+#include "orte/types.h"
 
 #include "opal/mca/mca.h"
+#include "opal/util/error.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+#include "orte/mca/plm/plm_types.h"
+
+BEGIN_C_DECLS
 
 /*
  * Macro definitions
@@ -51,9 +48,15 @@ extern "C" {
  */
 
 #define ORTE_ERROR_NAME(n)  opal_strerror(n)
-
 #define ORTE_ERROR_LOG(n) \
-    orte_errmgr.log((n), __FILE__, __LINE__)
+    orte_errmgr_base_log(n, __FILE__, __LINE__)
+
+/**
+ * This is not part of any
+ * module so it can be used at any time!
+ */
+ORTE_DECLSPEC extern void orte_errmgr_base_log(int error_code, char *filename, int line);
+
 
 
 /*
@@ -61,31 +64,24 @@ extern "C" {
  */
 
 /**
- * Log an error
- * Log an error that occurred in the runtime environment
- *
- * @code
- * orte_errmgr.log("this is an error", __FILE__, __LINE__);
- * @endcode
- */
-typedef void (*orte_errmgr_base_module_log_fn_t)(int error_code, char *filename, int line);
-
-
-/**
  * Alert - process aborted
- * This function is called when a remote process aborts during execution. The function
- * is called via the GPR's trigger notification system. Actions taken in response
- * to the abnormal termination of a remote application process will vary across
+ * This function is called by the PLM when a remote process aborts during execution. Actions taken
+ * in response to the abnormal termination of a remote application process will vary across
  * the various errmgr components.
- 
+ *
  * NOTE: Local process errors should always be reported through the error_detected interface and
  * NOT here.
+ *
+ * @param *name Pointer to the name of the proc that aborted
+ *
+ * @retval ORTE_SUCCESS Whatever action that was taken was successful
+ * @retval ORTE_ERROR Appropriate error code
  */
-typedef int (*orte_errmgr_base_module_proc_aborted_fn_t)(orte_gpr_notify_message_t *msg);
+typedef void (*orte_errmgr_base_module_proc_aborted_fn_t)(orte_process_name_t *name, int exit_code);
 
 /**
  * Alert - incomplete start of a job
- * This function is called when an attempted launch of a job encounters failure of
+ * This function is called by the PLM when an attempted launch of a job encounters failure of
  * one or more processes to start. The strategy for dealing
  * with this "incomplete start" situation varies across the various errmgr components.
  *
@@ -97,28 +93,16 @@ typedef int (*orte_errmgr_base_module_proc_aborted_fn_t)(orte_gpr_notify_message
  * NOTE: Errmgr components on non-HNP and non-daemon processes are expressly forbidden
  * from taking any action to this function call. Instead, they are restricted to simply
  * returning.
+ *
+ * @param job Job that failed to start
+ *
+ * @retval ORTE_SUCCESS Whatever action that was taken was successful
+ * @retval ORTE_ERROR Appropriate error code
  */
-typedef int (*orte_errmgr_base_module_incomplete_start_fn_t)(orte_gpr_notify_message_t *msg);
+typedef void (*orte_errmgr_base_module_incomplete_start_fn_t)(orte_jobid_t job, int exit_code);
 
-/**
- * Alert - internal error detected
- * This function is called when an internal error is detected within a local process.
- * It decides what to do about the error. In the case of application processes, it simply
- * orders the local process to finalize and terminate. The abnormal termination will be
- * detected and dealt with by the daemon/HNP system.
- *
- * HNPs, of course, cannot simply exit - they must first cleanup their running jobs if at
- * all possible. In some cases, this cannot be done - e.g., if the error detected would
- * prevent operation of the registry or has corrupted memory. In these extreme cases,
- * nothing can really be done.
- *
- * Likewise, orteds have responsibility towards their local application processes and
- * must make some attempt to clean them up before exiting.
- *
- * The function pretty prints an error message if possible.  Error message should be
- * specified using the standard \code printf() format.
- */
-typedef void (*orte_errmgr_base_module_error_detected_fn_t)(int error_code, char *fmt, ...);
+/* error manager callback function */
+typedef void (*orte_errmgr_cb_fn_t)(orte_jobid_t job, orte_job_state_t state, void *cbdata);
 
 /*
  * Register a job with the error manager
@@ -136,43 +120,28 @@ typedef void (*orte_errmgr_base_module_error_detected_fn_t)(int error_code, char
  * NOTE: ONLY HNPs are allowed to register for trigger reports. All other components
  * MUST do nothing but return ORTE_SUCCESS.
  */
-typedef int (*orte_errmgr_base_module_register_job_fn_t)(orte_jobid_t job);
+typedef int (*orte_errmgr_base_module_register_cb_fn_t)(orte_jobid_t job,
+                                                        orte_job_state_t state,
+                                                        orte_errmgr_cb_fn_t cbfunc,
+                                                        void *cbdata);
 
 /**
  * Alert - self aborting
- * This function is called when a process is aborting. It will finalize the process
- * itself, and then exits - it takes no other actions. The intent here is to provide
+ * This function is called when a process is aborting due to some internal error.
+ * It will finalize the process
+ * itself, and then exit - it takes no other actions. The intent here is to provide
  * a last-ditch exit procedure that attempts to clean up a little.
  */
-typedef void (*orte_errmgr_base_module_abort_fn_t)(void) __opal_attribute_noreturn__;
+typedef void (*orte_errmgr_base_module_abort_fn_t)(int error_code, char *fmt, ...) __opal_attribute_format__(__printf__, 2, 3);
 
-/*
- * Request that the system abort processes other than myself
- * The possibility exists that a process will decide that ONLY a small subset of a job
- * must be aborted. This function allows a process to request that the identified
- * processes be aborted. The "request" portion of the function's name is not
- * by accident - this function specifically does NOT perform the abort process
- * itself, but simply requests that it be done.
- *
- * NOTE: Please ensure that you do NOT include your own process name in the
- * array or else you will be ordered to "die" before you complete this function
- * (i.e., you will be held in a blocking receive pending an answer from the
- * HNP, which won't come before you receive your own "die" command). If you need
- * to die too, then call "abort" after completing this function call.
- */
-typedef int (*orte_errmgr_base_module_abort_procs_request_fn_t)(orte_process_name_t *procs, orte_std_cntr_t num_procs);
- 
 /*
  * Ver 1.0.0
  */
 struct orte_errmgr_base_module_1_3_0_t {
-    orte_errmgr_base_module_log_fn_t                    log;
     orte_errmgr_base_module_proc_aborted_fn_t           proc_aborted;
     orte_errmgr_base_module_incomplete_start_fn_t       incomplete_start;
-    orte_errmgr_base_module_error_detected_fn_t         error_detected;
-    orte_errmgr_base_module_register_job_fn_t           register_job;
+    orte_errmgr_base_module_register_cb_fn_t            register_callback;
     orte_errmgr_base_module_abort_fn_t                  abort;
-    orte_errmgr_base_module_abort_procs_request_fn_t    abort_procs_request;
 };
 
 typedef struct orte_errmgr_base_module_1_3_0_t orte_errmgr_base_module_1_3_0_t;
@@ -182,10 +151,7 @@ typedef orte_errmgr_base_module_1_3_0_t orte_errmgr_base_module_t;
  * ERRMGR Component
  */
 
-typedef orte_errmgr_base_module_t* (*orte_errmgr_base_component_init_fn_t)(
-    bool *allow_multi_user_threads,
-    bool *have_hidden_threads,
-    int *priority);
+typedef orte_errmgr_base_module_t* (*orte_errmgr_base_component_init_fn_t)(int *priority);
 
 typedef int (*orte_errmgr_base_component_finalize_fn_t)(void);
 
@@ -218,8 +184,6 @@ typedef mca_errmgr_base_component_1_3_0_t mca_errmgr_base_component_t;
  */
 ORTE_DECLSPEC extern orte_errmgr_base_module_t orte_errmgr;  /* holds selected module's function pointers */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif

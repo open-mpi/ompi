@@ -25,6 +25,9 @@
 #include <inttypes.h>
 #endif
 
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "btl_gm.h"
 #include "btl_gm_proc.h"
 
@@ -191,7 +194,7 @@ int mca_btl_gm_proc_insert(
     if(mca_btl_gm_component.gm_debug > 0) {
         opal_output(0, "%s mapped global id %" PRIu32 
             " to node id %" PRIu32 "\n", 
-            ORTE_NAME_PRINT(orte_process_info.my_name),
+            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
             gm_endpoint->endpoint_addr.global_id,
             gm_endpoint->endpoint_addr.node_id);
     }

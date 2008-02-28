@@ -29,6 +29,8 @@ ORTE_DECLSPEC int orte_routed_base_close(void);
 ORTE_DECLSPEC extern int orte_routed_base_output;
 ORTE_DECLSPEC extern opal_list_t orte_routed_base_components;
 
+ORTE_DECLSPEC extern int orte_routed_base_register_sync(void);
+
 END_C_DECLS
 
 #endif /* MCA_ROUTED_BASE_H */

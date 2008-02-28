@@ -20,8 +20,8 @@
 #define MCA_BTL_TCP_PROC_H
 
 #include "opal/class/opal_object.h"
-#include "orte/mca/ns/ns.h"
 #include "ompi/proc/proc.h"
+#include "orte/types.h"
 #include "btl_tcp.h"
 #include "btl_tcp_addr.h"
 #include "btl_tcp_endpoint.h"

@@ -23,7 +23,10 @@
 #include <stdio.h>
 
 #include "ompi/constants.h"
-#include "orte/dss/dss.h"
+
+#include "opal/dss/dss.h"
+#include "orte/util/name_fns.h"
+
 #include "ompi/proc/proc.h"
 #include "opal/threads/mutex.h"
 #include "opal/util/bit_ops.h"
@@ -31,7 +34,7 @@
 #include "opal/util/convert.h"
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
-#include "orte/mca/ns/ns.h"
+#include "ompi/mca/dpm/dpm.h"
 
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
@@ -139,7 +142,7 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
     
     /* Check how many different jobids are represented in this communicator.
        Necessary for the disconnect of dynamic communicators. */
-    ompi_comm_mark_dyncomm (newcomm);
+    ompi_dpm.mark_dyncomm (newcomm);
     
     /* Set error handler */
     newcomm->error_handler = errh;
@@ -1035,7 +1038,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     ompi_proc_t **rprocs=NULL;
     orte_std_cntr_t size_len;
     int int_len, rlen;
-    orte_buffer_t *sbuf=NULL, *rbuf=NULL;
+    opal_buffer_t *sbuf=NULL, *rbuf=NULL;
     void *sendbuf;
     char *recvbuf;
     ompi_proc_t **proc_list=NULL;
@@ -1045,7 +1048,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     local_size = ompi_comm_size (local_comm);    
 
     if (local_rank == local_leader) {
-        sbuf = OBJ_NEW(orte_buffer_t);
+        sbuf = OBJ_NEW(opal_buffer_t);
         if (NULL == sbuf) {
             rc = ORTE_ERROR;
             goto err_exit;
@@ -1065,7 +1068,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        if (ORTE_SUCCESS != (rc = orte_dss.unload(sbuf, &sendbuf, &size_len))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unload(sbuf, &sendbuf, &size_len))) {
             goto err_exit;
         }
     
@@ -1131,13 +1134,13 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         goto err_exit;
     }
 
-    rbuf = OBJ_NEW(orte_buffer_t);
+    rbuf = OBJ_NEW(opal_buffer_t);
     if (NULL == rbuf) {
         rc = ORTE_ERROR;
         goto err_exit;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_dss.load(rbuf, recvbuf, rlen))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.load(rbuf, recvbuf, rlen))) {
         goto err_exit;
     }
     
@@ -1250,7 +1253,7 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
         theirproc = ompi_group_peer_lookup(intercomm->c_remote_group,0);
 
         mask = ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
-        rc = orte_ns.compare_fields(mask, &(ourproc->proc_name), &(theirproc->proc_name));
+        rc = orte_util_compare_name_fields(mask, &(ourproc->proc_name), &(theirproc->proc_name));
         if ( 0 > rc ) {
             flag = true;
         }
@@ -1611,7 +1614,7 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
 
     /* verify whether to set the flag, that this comm
        contains process from more than one jobid. */
-    ompi_comm_mark_dyncomm (comm);
+    ompi_dpm.mark_dyncomm (comm);
 
     /* set the error handler */
     comm->error_handler = errh;

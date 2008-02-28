@@ -18,6 +18,8 @@
  * $HEADER$
  */
 #include "orte_config.h"
+#include "orte/constants.h"
+
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -26,9 +28,11 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
-#include "orte/orte_constants.h"
 #include "opal/util/output.h"
+
 #include "orte/mca/oob/base/base.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/iof/base/iof_base_endpoint.h"
 #include "iof_svc.h"

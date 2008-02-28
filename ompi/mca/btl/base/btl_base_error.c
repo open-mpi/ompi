@@ -25,8 +25,11 @@
 #include "base.h"
 #include "btl_base_error.h"
 #include "opal/util/show_help.h"
+
 #include "orte/util/sys_info.h"
-#include "orte/mca/ns/ns_types.h"
+#include "orte/types.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 
 int mca_btl_base_verbose;
 
@@ -60,7 +63,7 @@ void mca_btl_base_error_no_nics(const char* transport,
     char *procid;
     if (mca_btl_base_warn_component_unused) {
         /* print out no-nic warning if user told us to */
-        asprintf(&procid, "%s", ORTE_NAME_PRINT(orte_process_info.my_name));
+        asprintf(&procid, "%s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
         opal_show_help("help-mpi-btl-base.txt", "btl:no-nics",
                        true, procid, transport, orte_system_info.nodename,

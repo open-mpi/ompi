@@ -17,10 +17,9 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
 #include <stdio.h>
-
-#include "orte/orte_constants.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -34,41 +33,46 @@
 
 int orte_ras_base_finalize(void)
 {
-    opal_list_item_t* item;
-    int rc;
-
-    if (orte_ras_base.ras_available_valid) {
-        /* Finalize all available modules */
-        while (NULL != 
-               (item = opal_list_remove_first(&orte_ras_base.ras_available))) {
-            orte_ras_base_cmp_t* cmp = (orte_ras_base_cmp_t*)item;
-            cmp->module->finalize();
-            OBJ_RELEASE(cmp);
-        }
-        OBJ_DESTRUCT(&orte_ras_base.ras_available);
-
-        /* if we are an HNP, stop the receive */
-        if (orte_process_info.seed) {
-            if (ORTE_SUCCESS != (rc = orte_ras_base_comm_stop())) {
-                ORTE_ERROR_LOG(rc);
-            }
-        }
-    }
-
+#ifdef ORTE_WANT_NO_RAS_SUPPORT
+    /* some systems require no allocation support - they handle
+     * the allocation internally themselves. In those cases, memory
+     * footprint is often a consideration. Hence, we provide a means
+     * for someone to transparently configure out all RAS support.
+     */
     return ORTE_SUCCESS;
+    
+#else
+    /* For all other systems, provide the following support */
+
+    if (NULL != orte_ras_base.active_module) {
+        orte_ras_base.active_module->finalize();
+    }
+    
+    return ORTE_SUCCESS;
+#endif
 }
 
 
 int orte_ras_base_close(void)
 {
-    if (orte_ras_base.ras_opened_valid) {
+#ifdef ORTE_WANT_NO_RAS_SUPPORT
+    /* some systems require no allocation support - they handle
+     * the allocation internally themselves. In those cases, memory
+     * footprint is often a consideration. Hence, we provide a means
+     * for someone to transparently configure out all RAS support.
+     */
+    return ORTE_SUCCESS;
+    
+#else
+    /* For all other systems, provide the following support */
+    
         /* Close all remaining available components (may be one if this is a
         Open RTE program, or [possibly] multiple if this is ompi_info) */
 
         mca_base_components_close(orte_ras_base.ras_output, 
                                   &orte_ras_base.ras_opened, NULL);
-    }
   
     return ORTE_SUCCESS;
+#endif
 }
 

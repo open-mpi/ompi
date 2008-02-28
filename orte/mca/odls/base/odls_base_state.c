@@ -19,7 +19,7 @@
 
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -31,109 +31,19 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
-
-#include "orte/util/sys_info.h"
-#include "orte/mca/gpr/gpr.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/smr/smr.h"
-#include "orte/dss/dss.h"
-
 #include "opal/util/show_help.h"
 #include "opal/util/basename.h"
+
+#include "orte/util/sys_info.h"
+#include "orte/util/name_fns.h"
+#include "orte/mca/errmgr/errmgr.h"
+
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
 
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
 
-
-/*
- * Function for reporting the state and other process-related info
- * for newly spawned child processes
- */
-int orte_odls_base_report_spawn(opal_list_t *children)
-{
-    opal_list_item_t *item;
-    orte_odls_child_t *child;
-    char **tokens, *segment;
-    orte_std_cntr_t num_tokens;
-    orte_gpr_addr_mode_t mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND | ORTE_GPR_KEYS_OR;
-    orte_data_value_t dval = ORTE_DATA_VALUE_EMPTY;
-    orte_buffer_t *buffer;
-    int rc;
-    
-    buffer = OBJ_NEW(orte_buffer_t);
-    if (ORTE_SUCCESS != (rc = orte_gpr.begin_compound_cmd(buffer))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buffer);
-        return rc;
-    }
-    
-    for (item = opal_list_get_first(children);
-         item != opal_list_get_end(children);
-         item = opal_list_get_next(item)) {
-        child = (orte_odls_child_t*)item;
-        
-        if (ORTE_PROC_STATE_LAUNCHED == child->state) {
-            /* when we launch the child, we need to store the pid
-             * in addition to setting the state. Be sure to store
-             * the pid first, though, as setting the state can
-             * cause triggers to fire
-             */
-            if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&tokens, &num_tokens, child->name))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(buffer);
-                return rc;
-            }
-            if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, child->name->jobid))) {
-                ORTE_ERROR_LOG(rc);
-                opal_argv_free(tokens);
-                OBJ_RELEASE(buffer);
-                return rc;
-            }
-            if (ORTE_SUCCESS != (rc = orte_dss.set(&dval, (void*)&(child->pid), ORTE_PID))) {
-                ORTE_ERROR_LOG(rc);
-                opal_argv_free(tokens);
-                free(segment);
-                OBJ_RELEASE(buffer);
-                return rc;
-            }
-            if (ORTE_SUCCESS != (rc = orte_gpr.put_1(mode, segment, tokens, ORTE_PROC_LOCAL_PID_KEY, &dval))) {
-                ORTE_ERROR_LOG(rc);
-                opal_argv_free(tokens);
-                free(segment);
-                OBJ_RELEASE(buffer);
-                return rc;
-            }
-            dval.data = NULL;
-            opal_argv_free(tokens);
-            free(segment);
-            
-            /* now set the process state to LAUNCHED */
-            if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_LAUNCHED, 0))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(buffer);
-                return rc;
-            }
-        } else if (ORTE_PROC_STATE_FAILED_TO_START == child->state) {
-            if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_FAILED_TO_START, child->exit_code))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(buffer);
-                return rc;
-            }
-        }
-    }
-    
-    if (ORTE_SUCCESS != (rc = orte_gpr.exec_compound_cmd(buffer))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buffer);
-        return rc;
-    }
-    OBJ_RELEASE(buffer);
-    
-    /* All done */
-    return ORTE_SUCCESS;
-}
 
 /*
  * Preload all files for a single app context
@@ -161,16 +71,18 @@ int orte_odls_base_preload_files_app_context(orte_app_context_t* app_context)
 
     /* Define the process set */
     p_set = OBJ_NEW(orte_filem_base_process_set_t);
-    if( NULL == orte_process_info.gpr_replica ) {
-        p_set->source.jobid = orte_process_info.my_name->jobid;
-        p_set->source.vpid  = orte_process_info.my_name->vpid;
+    if( orte_process_info.hnp ) {
+        /* if I am the HNP, then use me as the source */
+        p_set->source.jobid = ORTE_PROC_MY_NAME->jobid;
+        p_set->source.vpid  = ORTE_PROC_MY_NAME->vpid;
     }
     else {
-        p_set->source.jobid = orte_process_info.gpr_replica->jobid;
-        p_set->source.vpid  = orte_process_info.gpr_replica->vpid;
+        /* otherwise, set the HNP as the source */
+        p_set->source.jobid = ORTE_PROC_MY_HNP->jobid;
+        p_set->source.vpid  = ORTE_PROC_MY_HNP->vpid;
     }
-    p_set->sink.jobid   = orte_process_info.my_name->jobid;
-    p_set->sink.vpid    = orte_process_info.my_name->vpid;
+    p_set->sink.jobid   = ORTE_PROC_MY_NAME->jobid;
+    p_set->sink.vpid    = ORTE_PROC_MY_NAME->vpid;
 
     opal_list_append(&(filem_request->process_sets), &(p_set->super) );
 

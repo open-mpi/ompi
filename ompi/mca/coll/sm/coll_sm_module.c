@@ -43,7 +43,10 @@
 #include "opal/mca/maffinity/maffinity.h"
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/util/os_path.h"
-#include "orte/mca/ns/ns.h"
+
+#include "orte/util/proc_info.h"
+#include "orte/util/name_fns.h"
+
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
@@ -598,7 +601,7 @@ static int bootstrap_comm(ompi_communicator_t *comm,
         empty_index = -1;
         for (i = 0; i < mca_coll_sm_component.sm_bootstrap_num_segments; ++i) {
             if (comm->c_contextid == bshe->smbhe_keys[i].mcsbck_cid &&
-                ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL,
+                OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
                                      rank0,
                                      &bshe->smbhe_keys[i].mcsbck_rank0_name)) {
                 found = true;

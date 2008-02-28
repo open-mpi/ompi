@@ -108,6 +108,7 @@ OPAL_DECLSPEC int mca_base_component_compare(const mca_base_component_t *a,
                                              const mca_base_component_t *b);
 OPAL_DECLSPEC int mca_base_component_compatible(const mca_base_component_t *a,
                                                 const mca_base_component_t *b);
+OPAL_DECLSPEC char * mca_base_component_to_string(const mca_base_component_t *a);
 
 /* mca_base_component_find.c */
 

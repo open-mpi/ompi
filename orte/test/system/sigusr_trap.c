@@ -4,25 +4,28 @@
  *
  * A test to trap user signals
  */
+#include "orte_config.h"
 
 #include <stdio.h>
 #include <signal.h>
 
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 
 void sigusr_handler(int signum)
 {
     switch (signum) {
         case SIGUSR1:
-            fprintf(stderr, "Trapped SIGUSR1\n");
+            fprintf(stderr, "%s Trapped SIGUSR1\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             break;
 
         case SIGUSR2:
-            fprintf(stderr, "Trapped SIGUSR2\n");
+            fprintf(stderr, "%s Trapped SIGUSR2\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             return;
 
         default:
-            fprintf(stderr, "Undefined signal %d trapped\n", signum);
+            fprintf(stderr, "%s Undefined signal %d trapped\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), signum);
             return;
     }
 }
@@ -42,6 +45,8 @@ int main(int argc, char* argv[])
     int i;
     double pi;
 
+    orte_init(ORTE_TOOL_WITH_NAME);
+    
     if (signal(SIGUSR1, sigusr_handler) == SIG_IGN) {
         fprintf(stderr, "Could not setup signal trap for SIGUSR1\n");
         exit(1);

@@ -158,7 +158,7 @@ mca_pml_ob1_match_completion_free( struct mca_btl_base_module_t* btl,
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        orte_errmgr.abort();
+        orte_errmgr.abort(-1, NULL);
     }
 
     /* signal request completion */
@@ -191,7 +191,7 @@ mca_pml_ob1_rndv_completion( mca_btl_base_module_t* btl,
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        orte_errmgr.abort();
+        orte_errmgr.abort(-1, NULL);
     }
 
     /* count bytes of user data actually delivered. As the rndv completion only
@@ -278,7 +278,7 @@ mca_pml_ob1_frag_completion( mca_btl_base_module_t* btl,
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        orte_errmgr.abort();
+        orte_errmgr.abort(-1, NULL);
     }
 
     /* count bytes of user data actually delivered */
@@ -997,7 +997,7 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
         ORTE_ERROR_LOG(status);
-        orte_errmgr.abort();
+        orte_errmgr.abort(-1, NULL);
     }
 
     mca_pml_ob1_send_fin(sendreq->req_send.req_base.req_proc, 
@@ -1079,7 +1079,7 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
         } else {
             /* TSW - FIX */
             ORTE_ERROR_LOG(rc);
-            orte_errmgr.abort();
+            orte_errmgr.abort(-1, NULL);
         }
     }
     return OMPI_SUCCESS;
@@ -1110,7 +1110,7 @@ void mca_pml_ob1_send_request_put( mca_pml_ob1_send_request_t* sendreq,
     if( OPAL_UNLIKELY(NULL == frag) ) {
         /* TSW - FIX */
         ORTE_ERROR_LOG(rc);
-        orte_errmgr.abort();
+        orte_errmgr.abort(-1, NULL);
     }
 
     /* setup fragment */

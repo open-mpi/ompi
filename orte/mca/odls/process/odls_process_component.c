@@ -11,6 +11,8 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
+
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -19,20 +21,12 @@
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
 #include "opal/mca/base/mca_base_param.h"
+
 #include "orte/util/proc_info.h"
-#include "orte/orte_constants.h"
+
 #include "orte/mca/odls/odls.h"
+#include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/odls/process/odls_process.h"
-
-/* Instantiate the component globals */
-orte_odls_process_globals_t orte_odls_process;
-
-
-/* instance the app_context list object */
-OBJ_CLASS_INSTANCE(odls_process_app_context_t,
-                   opal_list_item_t,
-                   NULL, NULL);
-
 
 /*
  * Instantiate the public struct with all of our public information
@@ -74,21 +68,8 @@ orte_odls_base_component_t mca_odls_process_component = {
     orte_odls_process_component_finalize
 };
 
-bool orte_odls_process_debug = false;
-
 int orte_odls_process_component_open(void)
 {
-    int tmp;
-    /* initialize globals */
-    OBJ_CONSTRUCT(&orte_odls_process.mutex, opal_mutex_t);
-    OBJ_CONSTRUCT(&orte_odls_process.cond, opal_condition_t);
-    OBJ_CONSTRUCT(&orte_odls_process.children, opal_list_t);
-
-    /* lookup parameters */
-    mca_base_param_reg_int( &mca_odls_process_component.version, "debug",
-                           "Whether or not to enable debugging output for the process odls component (0 or 1)",
-                           false, false, false, &tmp);
-    orte_odls_process_debug = OPAL_INT_TO_BOOL(tmp);
     return ORTE_SUCCESS;
 }
 
@@ -105,9 +86,6 @@ orte_odls_base_module_t *orte_odls_process_component_init(int *priority)
 
 int orte_odls_process_component_close(void)
 {
-    OBJ_DESTRUCT(&orte_odls_process.mutex);
-    OBJ_DESTRUCT(&orte_odls_process.cond);
-    OBJ_DESTRUCT(&orte_odls_process.children);
     return ORTE_SUCCESS;
 }
 
@@ -116,7 +94,7 @@ int orte_odls_process_component_finalize(void)
     opal_list_item_t *item;
     
     /* cleanup state */
-    while (NULL != (item = opal_list_remove_first(&orte_odls_process.children))) {
+    while (NULL != (item = opal_list_remove_first(&orte_odls_globals.children))) {
         OBJ_RELEASE(item);
     }
     

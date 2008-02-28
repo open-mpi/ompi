@@ -23,11 +23,14 @@
  */
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/name_fns.h"
 #include "opal/util/output.h"
+
+#include "orte/mca/ras/base/ras_private.h"
 #include "ras_gridengine.h"
 
 /*
@@ -45,10 +48,10 @@ orte_ras_gridengine_component_t mca_ras_gridengine_component = {
          information about the component itself */
 
       {
-        /* Indicate that we are a ras v1.3.0 component (which also
+        /* Indicate that we are a ras v2.0.0 component (which also
            implies a specific MCA version) */
 
-        ORTE_RAS_BASE_VERSION_1_3_0,
+        ORTE_RAS_BASE_VERSION_2_0_0,
         "gridengine",                /* MCA component name */
         ORTE_MAJOR_VERSION,          /* MCA component major version */
         ORTE_MINOR_VERSION,          /* MCA component minor version */
@@ -98,21 +101,18 @@ static int orte_ras_gridengine_open(void)
 
 static orte_ras_base_module_t *orte_ras_gridengine_init(int* priority)
 {
-    /* if we are not an HNP, then we must not be selected */
-    if (!orte_process_info.seed) {
-        return NULL;
-    }
-    
     *priority = mca_ras_gridengine_component.priority;
 
     if (NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") && 
         NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
-        opal_output(orte_ras_base.ras_output, 
-                "ras:gridengine: available for selection");
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                             "%s ras:gridengine: available for selection",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         return &orte_ras_gridengine_module;
     }
-    opal_output(orte_ras_base.ras_output, 
-                "ras:gridengine: NOT available for selection");
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                         "%s ras:gridengine: NOT available for selection",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     return NULL;
 }
 

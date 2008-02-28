@@ -22,7 +22,7 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 #include "orte/util/proc_info.h"
 #include "ras_alps.h"
 
@@ -45,10 +45,10 @@ orte_ras_base_component_t mca_ras_alps_component = {
        information about the component itself */
 
     {
-        /* Indicate that we are a ras v1.3.0 component (which also
+        /* Indicate that we are a ras v2.0.0 component (which also
            implies a specific MCA version) */
         
-        ORTE_RAS_BASE_VERSION_1_3_0,
+        ORTE_RAS_BASE_VERSION_2_0_0,
         
         /* Component name and version */
         
@@ -88,7 +88,7 @@ static int ras_alps_open(void)
 static orte_ras_base_module_t *ras_alps_init(int* priority)
 {
     /* if we are not an HNP, then we must not be selected */
-    if (!orte_process_info.seed) {
+    if (!orte_process_info.hnp) {
         return NULL;
     }
     

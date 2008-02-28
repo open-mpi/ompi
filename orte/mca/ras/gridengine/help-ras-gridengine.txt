@@ -37,3 +37,8 @@ The following error is returned:
 
   %s
 
+[no-nodes-found]
+No slots were found in the Grid Engine Parallel Environment (PE). This
+is probably a setup issue, or could be due to a corrupted $PE_HOSTFILE.There is also a chance that you may not be running under a parallel job
+environment (PE) -- you may have forgotten to specify this is a parallel
+job. If so, please specify that to Grid Engine and try again.

@@ -24,8 +24,7 @@
  */
 
 #include "orte_config.h"
-
-#include "orte/orte_types.h"
+#include "orte/types.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -50,12 +49,14 @@
 #include "opal/util/if.h"
 #include "opal/util/net.h"
 #include "opal/class/opal_hash_table.h"
+
 #include "orte/class/orte_proc_table.h"
-#include "orte/mca/oob/tcp/oob_tcp.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ns/ns.h"
-#include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
+
+#include "orte/mca/oob/tcp/oob_tcp.h"
 
 #if defined(__WINDOWS__)
 static opal_mutex_t windows_callback;
@@ -473,7 +474,7 @@ static void mca_oob_tcp_accept(int incoming_sd)
         /* log the accept */
         if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
             opal_output(0, "%s mca_oob_tcp_accept: %s:%d\n",
-                        ORTE_NAME_PRINT(orte_process_info.my_name),
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         opal_net_get_hostname((struct sockaddr*) &addr),
                         opal_net_get_port((struct sockaddr*) &addr));
         }
@@ -721,7 +722,7 @@ static void* mca_oob_tcp_listen_thread(opal_object_t *obj)
 
             if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
                 opal_output(0, "%s mca_oob_tcp_listen_thread: (%d, %d) %s:%d\n",
-                            ORTE_NAME_PRINT(orte_process_info.my_name),
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             item->fd, opal_socket_errno,
                             inet_ntoa(item->addr.sin_addr),
                             item->addr.sin_port);
@@ -792,7 +793,7 @@ static int mca_oob_tcp_listen_progress(void)
             /* log the accept */
             if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
                 opal_output(0, "%s mca_oob_tcp_listen_progress: %s:%d\n",
-                            ORTE_NAME_PRINT(orte_process_info.my_name),
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             inet_ntoa(item->addr.sin_addr),
                             item->addr.sin_port);
             }
@@ -892,7 +893,7 @@ static void mca_oob_tcp_recv_probe(int sd, mca_oob_tcp_hdr_t* hdr)
 
     hdr->msg_type = MCA_OOB_TCP_PROBE;
     hdr->msg_dst = hdr->msg_src;
-    hdr->msg_src = *orte_process_info.my_name;
+    hdr->msg_src = *ORTE_PROC_MY_NAME;
     MCA_OOB_TCP_HDR_HTON(hdr);
 
     while(cnt < sizeof(mca_oob_tcp_hdr_t)) {
@@ -900,7 +901,7 @@ static void mca_oob_tcp_recv_probe(int sd, mca_oob_tcp_hdr_t* hdr)
         if(retval < 0) {
             if(opal_socket_errno != EINTR && opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK) {
                 opal_output(0, "%s-%s mca_oob_tcp_peer_recv_probe: send() failed: %s (%d)\n",
-                    ORTE_NAME_PRINT(orte_process_info.my_name),
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&(hdr->msg_src)),
                     strerror(opal_socket_errno),
                     opal_socket_errno);
@@ -926,33 +927,28 @@ static void mca_oob_tcp_recv_connect(int sd, mca_oob_tcp_hdr_t* hdr)
     /* now set socket up to be non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
         opal_output(0, "%s mca_oob_tcp_recv_handler: fcntl(F_GETFL) failed: %s (%d)",
-               ORTE_NAME_PRINT(orte_process_info.my_name), strerror(opal_socket_errno), opal_socket_errno);
+               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
             opal_output(0, "%s mca_oob_tcp_recv_handler: fcntl(F_SETFL) failed: %s (%d)",
-                ORTE_NAME_PRINT(orte_process_info.my_name), strerror(opal_socket_errno), opal_socket_errno);
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
         }
     }
 
-    /* check for invalid name - if this is true - we allocate a name from the name server
-     * and return to the peer
+    /* check for invalid name - if this is true, then we have an error
      */
-    cmpval = orte_ns.compare_fields(ORTE_NS_CMP_ALL, &hdr->msg_src, ORTE_NAME_INVALID);
-    if (cmpval == ORTE_EQUAL) {
-        if (ORTE_SUCCESS != orte_ns.create_jobid(&hdr->msg_src.jobid, NULL)) {
-           return;
-        }
-        if (ORTE_SUCCESS != orte_ns.reserve_range(hdr->msg_src.jobid, 1, &hdr->msg_src.vpid)) {
-           return;
-        }
+    cmpval = orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &hdr->msg_src, ORTE_NAME_INVALID);
+    if (cmpval == OPAL_EQUAL) {
+        ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+        return;
     }
 
     /* lookup the corresponding process */
     peer = mca_oob_tcp_peer_lookup(&hdr->msg_src);
     if(NULL == peer) {
         opal_output(0, "%s mca_oob_tcp_recv_handler: unable to locate peer",
-                ORTE_NAME_PRINT(orte_process_info.my_name));
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         CLOSE_THE_SOCKET(sd);
         return;
     }
@@ -961,7 +957,7 @@ static void mca_oob_tcp_recv_connect(int sd, mca_oob_tcp_hdr_t* hdr)
         if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT_FAIL) {
             opal_output(0, "%s-%s mca_oob_tcp_recv_handler: "
                     "rejected connection from %s connection state %d",
-                    ORTE_NAME_PRINT(orte_process_info.my_name),
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&(peer->peer_name)),
                     ORTE_NAME_PRINT(&(hdr->msg_src)),
                     peer->peer_state);
@@ -1002,14 +998,14 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
         if(rc >= 0) {
             if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT_FAIL) {
                 opal_output(0, "%s mca_oob_tcp_recv_handler: peer closed connection",
-                    ORTE_NAME_PRINT(orte_process_info.my_name));
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
             CLOSE_THE_SOCKET(sd);
             return;
         }
         if(opal_socket_errno != EINTR) {
             opal_output(0, "%s mca_oob_tcp_recv_handler: recv() failed: %s (%d)\n",
-                ORTE_NAME_PRINT(orte_process_info.my_name), strerror(opal_socket_errno), opal_socket_errno);
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
             CLOSE_THE_SOCKET(sd);
             return;
         }
@@ -1026,7 +1022,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
             break;
         default:
             opal_output(0, "%s mca_oob_tcp_recv_handler: invalid message type: %d\n",
-                ORTE_NAME_PRINT(orte_process_info.my_name), hdr.msg_type);
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hdr.msg_type);
             CLOSE_THE_SOCKET(sd);
             break;
     }
@@ -1160,11 +1156,11 @@ int mca_oob_tcp_init(void)
     /* random delay to stagger connections back to seed */
 #if defined(__WINDOWS__)
     if(1 == mca_oob_tcp_component.connect_sleep) {
-        Sleep((orte_process_info.my_name->vpid % randval % 1000) * 100);
+        Sleep((ORTE_PROC_MY_NAME->vpid % randval % 1000) * 100);
     }
 #elif defined(HAVE_USLEEP)
     if(1 == mca_oob_tcp_component.connect_sleep) {
-        usleep((orte_process_info.my_name->vpid % randval % 1000) * 1000);
+        usleep((ORTE_PROC_MY_NAME->vpid % randval % 1000) * 1000);
     }
 #endif
 
@@ -1173,7 +1169,7 @@ int mca_oob_tcp_init(void)
     
     /* create a listen socket */
     if ((OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) && 
-        orte_process_info.seed) {  
+        orte_process_info.hnp) {  
         if (mca_oob_tcp_create_listen_thread() != ORTE_SUCCESS) {
             opal_output(0, "mca_oob_tcp_init: unable to create listen thread");
             return ORTE_ERROR;
@@ -1187,7 +1183,7 @@ int mca_oob_tcp_init(void)
         opal_progress_register(mca_oob_tcp_listen_progress);
         if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_INFO) {
             opal_output(0, "%s accepting connections via listen thread",
-                        ORTE_NAME_PRINT(orte_process_info.my_name));
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         }
     } else {
         /* fix up the listen_type, since we might have been in thread,
@@ -1216,7 +1212,7 @@ int mca_oob_tcp_init(void)
 #endif
         if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_INFO) {
             opal_output(0, "%s accepting connections via event library",
-                        ORTE_NAME_PRINT(orte_process_info.my_name));
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         }
     }
 
@@ -1304,7 +1300,7 @@ int mca_oob_tcp_fini(void)
 
 int mca_oob_tcp_process_name_compare(const orte_process_name_t* n1, const orte_process_name_t* n2)
 {
-    return orte_ns.compare_fields(ORTE_NS_CMP_ALL, n1, n2);
+    return orte_util_compare_name_fields(ORTE_NS_CMP_ALL, n1, n2);
 }
 
 
@@ -1549,7 +1545,7 @@ mca_oob_tcp_get_new_name(orte_process_name_t* name)
 
     if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_ALL) {
         opal_output(0, "%s-%s mca_oob_tcp_get_new_name: starting\n",
-                    ORTE_NAME_PRINT(orte_process_info.my_name),
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&(peer->peer_name)));
     }
 
@@ -1572,10 +1568,10 @@ mca_oob_tcp_get_new_name(orte_process_name_t* name)
     mca_oob_tcp_msg_wait(msg, &rc);
 
     if (ORTE_SUCCESS == rc) {
-        *name = *orte_process_info.my_name;
+        *name = *ORTE_PROC_MY_NAME;
         if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_ALL) {
             opal_output(0, "%s mca_oob_tcp_get_new_name: done\n",
-                        ORTE_NAME_PRINT(orte_process_info.my_name));
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         }
     }
 

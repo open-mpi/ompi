@@ -35,7 +35,6 @@ DIST_SUBDIRS = \
 lib_LTLIBRARIES = libopen-rte.la
 libopen_rte_la_SOURCES =
 libopen_rte_la_LIBADD = \
-	dss/libdss.la \
 	$(MCA_orte_FRAMEWORK_LIBS) \
 	$(top_ompi_builddir)/opal/libopen-pal.la
 libopen_rte_la_DEPENDENCIES = $(libopen_rte_la_LIBADD)
@@ -58,7 +57,6 @@ ortedir = $(includedir)
 endif
 
 include class/Makefile.am
-include dss/Makefile.am
 include runtime/Makefile.am
 include util/Makefile.am
 include tools/Makefile.am

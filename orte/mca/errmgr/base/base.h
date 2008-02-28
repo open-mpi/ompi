@@ -25,12 +25,11 @@
  * includes
  */
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 
 #include "opal/class/opal_list.h"
 
 #include "opal/mca/mca.h"
-#include "orte/mca/ns/ns_types.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 
@@ -53,14 +52,11 @@ ORTE_DECLSPEC    int orte_errmgr_base_close(void);
  * globals that might be needed
  */
 
-ORTE_DECLSPEC extern int orte_errmgr_base_output;
 extern bool orte_errmgr_base_selected;
 extern bool orte_errmgr_initialized;
 ORTE_DECLSPEC extern opal_list_t orte_errmgr_base_components_available;
 ORTE_DECLSPEC extern mca_errmgr_base_component_t orte_errmgr_base_selected_component;
 
-/* make the default module available so that close can use it */
-ORTE_DECLSPEC extern orte_errmgr_base_module_t orte_errmgr_default;
 /*
  * external API functions will be documented in the mca/errmgr/errmgr.h file
  */

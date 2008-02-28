@@ -8,7 +8,7 @@ int main( int argc, char **argv )
 {
     int rc;
     
-    if (ORTE_SUCCESS != (rc = orte_init(ORTE_NON_INFRASTRUCTURE))) {
+    if (ORTE_SUCCESS != (rc = orte_init(ORTE_TOOL))) {
         fprintf(stderr, "couldn't init orte - error code %d\n", rc);
         return rc;
     }

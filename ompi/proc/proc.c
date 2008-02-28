@@ -24,12 +24,14 @@
 #include "opal/threads/mutex.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+
 #include "orte/util/sys_info.h"
-#include "orte/dss/dss.h"
-#include "orte/mca/ns/ns.h"
-#include "orte/mca/gpr/gpr.h"
+#include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/datatype/dt_arch.h"
@@ -57,7 +59,6 @@ void ompi_proc_construct(ompi_proc_t* proc)
 {
     proc->proc_bml = NULL;
     proc->proc_pml = NULL;
-    proc->proc_modex = NULL;
     OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
 
     /* By default all processors are supposelly having the same architecture as me. Thus,
@@ -82,9 +83,6 @@ void ompi_proc_construct(ompi_proc_t* proc)
 
 void ompi_proc_destruct(ompi_proc_t* proc)
 {
-    if (proc->proc_modex != NULL) {
-        OBJ_RELEASE(proc->proc_modex);
-    }
     /* As all the convertors are created with OBJ_NEW we can just call OBJ_RELEASE. All, except
      * the local convertor, will get destroyed at some point here. If the reference count is correct
      * the local convertor (who has the reference count increased in the datatype) will not get
@@ -103,28 +101,23 @@ void ompi_proc_destruct(ompi_proc_t* proc)
 
 int ompi_proc_init(void)
 {
-    orte_process_name_t *peers;
-    orte_std_cntr_t i, npeers;
+    orte_vpid_t i;
     int rc;
     uint32_t ui32;
 
     OBJ_CONSTRUCT(&ompi_proc_list, opal_list_t);
     OBJ_CONSTRUCT(&ompi_proc_lock, opal_mutex_t);
 
-    /* create a shell of a proc structure for every proc in MPI_COMM_WORLD */
-    if(ORTE_SUCCESS != (rc = orte_ns.get_peers(&peers, &npeers, NULL))) {
-        opal_output(0, "ompi_proc_init: get_peers failed with errno=%d", rc);
-        return rc;
-    }
-    for( i = 0; i < npeers; i++ ) {
+    /* create proc structures and find self */
+    for( i = 0; i < orte_process_info.num_procs; i++ ) {
         ompi_proc_t *proc = OBJ_NEW(ompi_proc_t);
-        proc->proc_name = peers[i];
+        proc->proc_name.jobid = ORTE_PROC_MY_NAME->jobid;
+        proc->proc_name.vpid = i;
         if( i == ORTE_PROC_MY_NAME->vpid ) {
             ompi_proc_local_proc = proc;
             proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
         }
     }
-    free(peers);
 
     /* Fill in our local information */
     rc = ompi_arch_compute_local_id(&ui32);
@@ -157,11 +150,11 @@ int ompi_proc_publish_info(void)
 {
     orte_std_cntr_t datalen;
     void *data;
-    orte_buffer_t* buf;    
+    opal_buffer_t* buf;    
     int rc;
 
     /* pack our local data for others to use */
-    buf = OBJ_NEW(orte_buffer_t);
+    buf = OBJ_NEW(opal_buffer_t);
     rc = ompi_proc_pack(&ompi_proc_local_proc, 1, buf);
     if (OMPI_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
@@ -169,7 +162,7 @@ int ompi_proc_publish_info(void)
     }
 
     /* send our data into the ether */
-    rc = orte_dss.unload(buf, &data, &datalen);
+    rc = opal_dss.unload(buf, &data, &datalen);
     if (OMPI_SUCCESS != rc) return rc;
     OBJ_RELEASE(buf);
 
@@ -197,9 +190,9 @@ ompi_proc_get_info(void)
         char *hostname;
         void *data;
         size_t datalen;
-        orte_nodeid_t nodeid;
+        orte_vpid_t nodeid;
 
-        if (ORTE_EQUAL != orte_ns.compare_fields(ORTE_NS_CMP_JOBID,
+        if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_JOBID,
                                                  &ompi_proc_local_proc->proc_name,
                                                  &proc->proc_name)) {
             /* not in our jobid -- this shouldn't happen */
@@ -209,12 +202,12 @@ ompi_proc_get_info(void)
 
         ret = ompi_modex_recv_string("ompi-proc-info", proc, &data, &datalen);
         if (OMPI_SUCCESS == ret) {
-            orte_buffer_t *buf;
+            opal_buffer_t *buf;
             orte_std_cntr_t count=1;
             orte_process_name_t name;
 
-            buf = OBJ_NEW(orte_buffer_t);
-            ret = orte_dss.load(buf, data, datalen);
+            buf = OBJ_NEW(opal_buffer_t);
+            ret = opal_dss.load(buf, data, datalen);
             if (OMPI_SUCCESS != ret)
                 goto out;
 
@@ -222,23 +215,23 @@ ompi_proc_get_info(void)
                could, in theory, use the unpack code on this proc.  We
                don't,because we aren't adding procs, but need to
                update them */
-            ret = orte_dss.unpack(buf, &name, &count, ORTE_NAME);
+            ret = opal_dss.unpack(buf, &name, &count, ORTE_NAME);
             if (ret != ORTE_SUCCESS)
                 goto out;
 
-            ret = orte_dss.unpack(buf, &nodeid, &count, ORTE_NODEID);
+            ret = opal_dss.unpack(buf, &nodeid, &count, ORTE_VPID);
             if (ret != ORTE_SUCCESS) {
                 ORTE_ERROR_LOG(ret);
                 goto out;
             }
 
-            ret = orte_dss.unpack(buf, &arch, &count, ORTE_UINT32);
+            ret = opal_dss.unpack(buf, &arch, &count, OPAL_UINT32);
             if (ret != ORTE_SUCCESS) {
                 ORTE_ERROR_LOG(ret);
                 goto out;
             }
                 
-            ret = orte_dss.unpack(buf, &hostname, &count, ORTE_STRING);
+            ret = opal_dss.unpack(buf, &hostname, &count, OPAL_STRING);
             if (ret != ORTE_SUCCESS) {
                 ORTE_ERROR_LOG(ret);
                 goto out;
@@ -324,7 +317,7 @@ ompi_proc_t** ompi_proc_world(size_t *size)
     for (proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
          proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
          proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
-        if (ORTE_EQUAL == orte_ns.compare_fields(mask, &proc->proc_name, &my_name)) {
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proc->proc_name, &my_name)) {
             ++count;
         }
     }
@@ -340,7 +333,7 @@ ompi_proc_t** ompi_proc_world(size_t *size)
     for (proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
          proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
          proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
-        if (ORTE_EQUAL == orte_ns.compare_fields(mask, &proc->proc_name, &my_name)) {
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proc->proc_name, &my_name)) {
             procs[count++] = proc;
         }
     }
@@ -398,7 +391,7 @@ ompi_proc_t * ompi_proc_find ( const orte_process_name_t * name )
     for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
         proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
-        if (ORTE_EQUAL == orte_ns.compare_fields(mask, &proc->proc_name, name)) {
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proc->proc_name, name)) {
             rproc = proc;
             break;
         }
@@ -421,7 +414,7 @@ ompi_proc_find_and_add(const orte_process_name_t * name, bool* isnew)
     for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
         proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
-        if (ORTE_EQUAL == orte_ns.compare_fields(mask, &proc->proc_name, name)) {
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proc->proc_name, name)) {
             rproc = proc;
             *isnew = false;
             break;
@@ -445,31 +438,31 @@ ompi_proc_find_and_add(const orte_process_name_t * name, bool* isnew)
 
 
 int
-ompi_proc_pack(ompi_proc_t **proclist, int proclistsize, orte_buffer_t* buf)
+ompi_proc_pack(ompi_proc_t **proclist, int proclistsize, opal_buffer_t* buf)
 {
     int i, rc;
 
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     for (i=0; i<proclistsize; i++) {
-        rc = orte_dss.pack(buf, &(proclist[i]->proc_name), 1, ORTE_NAME);
+        rc = opal_dss.pack(buf, &(proclist[i]->proc_name), 1, ORTE_NAME);
         if(rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
             return rc;
         }
-        rc = orte_dss.pack(buf, &(proclist[i]->proc_nodeid), 1, ORTE_NODEID);
+        rc = opal_dss.pack(buf, &(proclist[i]->proc_nodeid), 1, ORTE_VPID);
         if(rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
             return rc;
         }
-        rc = orte_dss.pack(buf, &(proclist[i]->proc_arch), 1, ORTE_UINT32);
+        rc = opal_dss.pack(buf, &(proclist[i]->proc_arch), 1, OPAL_UINT32);
         if(rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
             return rc;
         }
-        rc = orte_dss.pack(buf, &(proclist[i]->proc_hostname), 1, ORTE_STRING);
+        rc = opal_dss.pack(buf, &(proclist[i]->proc_hostname), 1, OPAL_STRING);
         if(rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
@@ -482,7 +475,7 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize, orte_buffer_t* buf)
 
 
 int
-ompi_proc_unpack(orte_buffer_t* buf, 
+ompi_proc_unpack(opal_buffer_t* buf, 
                  int proclistsize, ompi_proc_t ***proclist,
                  int *newproclistsize, ompi_proc_t ***newproclist)
 {
@@ -509,24 +502,24 @@ ompi_proc_unpack(orte_buffer_t* buf,
         char *new_hostname;
         bool isnew = false;
         int rc;
-        orte_nodeid_t new_nodeid;
+        orte_vpid_t new_nodeid;
 
-        rc = orte_dss.unpack(buf, &new_name, &count, ORTE_NAME);
+        rc = opal_dss.unpack(buf, &new_name, &count, ORTE_NAME);
         if (rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        rc = orte_dss.unpack(buf, &new_nodeid, &count, ORTE_NODEID);
+        rc = opal_dss.unpack(buf, &new_nodeid, &count, ORTE_VPID);
         if (rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        rc = orte_dss.unpack(buf, &new_arch, &count, ORTE_UINT32);
+        rc = opal_dss.unpack(buf, &new_arch, &count, OPAL_UINT32);
         if (rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        rc = orte_dss.unpack(buf, &new_hostname, &count, ORTE_STRING);
+        rc = opal_dss.unpack(buf, &new_hostname, &count, OPAL_STRING);
         if (rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -571,4 +564,60 @@ ompi_proc_unpack(orte_buffer_t* buf,
 
     *proclist = plist;
     return OMPI_SUCCESS;
+}
+
+int ompi_proc_refresh(void) {
+    ompi_proc_t *proc = NULL;
+    opal_list_item_t *item = NULL;
+    orte_vpid_t i = 0;
+    int rc;
+    uint32_t ui32;
+
+    OPAL_THREAD_LOCK(&ompi_proc_lock);
+
+    for( item  = opal_list_get_first(&ompi_proc_list), i = 0;
+         item != opal_list_get_end(&ompi_proc_list);
+         item  = opal_list_get_next(item), ++i ) {
+        proc = (ompi_proc_t*)item;
+
+        /* Does not change: orte_process_info.num_procs */
+        /* Does not change: proc->proc_name.vpid */
+        proc->proc_name.jobid = ORTE_PROC_MY_NAME->jobid;
+        if( i == ORTE_PROC_MY_NAME->vpid ) {
+            ompi_proc_local_proc = proc;
+            proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
+        } else {
+            proc->proc_flags = 0;
+        }
+    }
+
+    /* Fill in our local information */
+    rc = ompi_arch_compute_local_id(&ui32);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    ompi_proc_local_proc->proc_nodeid = orte_system_info.nodeid;
+    ompi_proc_local_proc->proc_arch = ui32;
+    if (ompi_mpi_keep_peer_hostnames) {
+        if (ompi_mpi_keep_fqdn_hostnames) {
+            /* use the entire FQDN name */
+            ompi_proc_local_proc->proc_hostname = strdup(orte_system_info.nodename);
+        } else {
+            /* use the unqualified name */
+            char *tmp, *ptr;
+            tmp = strdup(orte_system_info.nodename);
+            if (NULL != (ptr = strchr(tmp, '.'))) {
+                *ptr = '\0';
+            }
+            ompi_proc_local_proc->proc_hostname = strdup(tmp);
+            free(tmp);
+        }
+    }
+
+    rc = ompi_proc_publish_info();
+
+    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+
+    return rc;   
 }

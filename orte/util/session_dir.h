@@ -88,12 +88,9 @@
 #define ORTE_SESSION_DIR_H_HAS_BEEN_INCLUDED
 
 #include "orte_config.h"
+#include "orte/types.h"
 
-#include "orte/mca/ns/ns_types.h"
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /** @param create A boolean variable that indicates whether or not to
  *                create the specified directory. If set to "false",
@@ -119,7 +116,6 @@ extern "C" {
  * @param batchid Batch job name, used in batch scheduling
  *                systems. NULL indicates that the default of "0" is
  *                to be used.
- * @param universe name of the universe being setup.
  * @param job String version of the jobid for which a session
  *                directory is to be created/found. NULL indicates
  *                that only the universe directory is to be
@@ -134,7 +130,7 @@ extern "C" {
  *                "false") or created (if create is "true").
  */
 ORTE_DECLSPEC int orte_session_dir(bool create, char *prefix, char *user, char *hostid, 
-                     char *batchid, char *universe, char *job, char *vpid);
+                     char *batchid, char *job, char *vpid);
 
 /*
  * Construct the session directory name from the input parameters.
@@ -144,7 +140,7 @@ ORTE_DECLSPEC int orte_session_dir_get_name(char **fulldirpath,
                                             char **prfx,
                                             char **frontend,
                                             char *usr, char *hostid,
-                                            char *batchid, char *univ, 
+                                            char *batchid, 
                                             char *job, char *proc);
 
 /** The orte_session_dir_finalize() function performs a cleanup of the
@@ -175,8 +171,6 @@ ORTE_DECLSPEC int orte_session_dir_finalize(orte_process_name_t *proc);
  */
 ORTE_DECLSPEC int orte_session_dir_cleanup(orte_jobid_t jobid);
 
-#endif  /* ORTE_SESSION_DIR_H_HAS_BEEN_INCLUDED */
+END_C_DECLS
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+#endif  /* ORTE_SESSION_DIR_H_HAS_BEEN_INCLUDED */

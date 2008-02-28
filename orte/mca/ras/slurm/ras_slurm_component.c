@@ -17,12 +17,17 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/orte_constants.h"
+
 #include "orte/util/proc_info.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
+
+#include "orte/mca/ras/base/ras_private.h"
 #include "ras_slurm.h"
 
 
@@ -44,10 +49,10 @@ orte_ras_base_component_t mca_ras_slurm_component = {
        information about the component itself */
 
     {
-        /* Indicate that we are a ras v1.3.0 component (which also
+        /* Indicate that we are a ras v2.0.0 component (which also
            implies a specific MCA version) */
         
-        ORTE_RAS_BASE_VERSION_1_3_0,
+        ORTE_RAS_BASE_VERSION_2_0_0,
         
         /* Component name and version */
         
@@ -86,23 +91,21 @@ static int ras_slurm_open(void)
 
 static orte_ras_base_module_t *ras_slurm_init(int* priority)
 {
-    /* if we are not an HNP, then we must not be selected */
-    if (!orte_process_info.seed) {
-        return NULL;
-    }
-    
     /* Are we running under a SLURM job? */
 
     if (NULL != getenv("SLURM_JOBID")) {
         mca_base_param_lookup_int(param_priority, priority);
-        opal_output(orte_ras_base.ras_output,
-                    "ras:slurm: available for selection");
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                             "%s ras:slurm: available for selection",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         return &orte_ras_slurm_module;
     }
 
     /* Sadly, no */
 
-    opal_output(orte_ras_base.ras_output,
-                "ras:slurm: NOT available for selection");
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                         "%s ras:slurm: NOT available for selection",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     return NULL;
 }

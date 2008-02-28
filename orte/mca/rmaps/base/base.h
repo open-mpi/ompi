@@ -26,82 +26,72 @@
  * includes
  */
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/types.h"
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
-#include "orte/mca/ns/ns_types.h"
 
 #include "orte/mca/rmaps/rmaps.h"
 
+BEGIN_C_DECLS
 
 /*
  * Global functions for MCA overall collective open and close
  */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
+/**
+ * Struct to hold data global to the rmaps framework
+ */
+typedef struct {
+    /** Verbose/debug output stream */
+    int rmaps_output;
+    /** List of available components */
+    opal_list_t available_components;
+    /** selected module */
+    orte_rmaps_base_module_t *active_module;
+    /* user specified mapping policy */
+    uint8_t policy;
+    /** whether or not we allow oversubscription of nodes */
+    bool oversubscribe;
+    /** do we want one ppn if num_procs not specified */
+    bool pernode;
+    /** number of ppn for n_per_node mode */
+    int npernode;
+    /* do we not allow use of the localhost */
+    bool no_use_local;
+    /* display the map after it is computed */
+    bool display_map;
+} orte_rmaps_base_t;
 
-    /**
-     * Struct to hold data global to the rmaps framework
-     */
-    typedef struct orte_rmaps_base_t {
-        /** Verbose/debug output stream */
-        int rmaps_output;
-        /** Whether or not the NO_OP module is in use */
-        bool no_op_selected;
-        /** List of opened components */
-        opal_list_t rmaps_opened;
-        /** Sorted list of available components (highest priority first) */
-        opal_list_t rmaps_available;
-        /* user specified mapping policy? */
-        bool user_specified_policy;
-        /* map by node or not */
-        bool bynode;
-        /** whether or not we allow oversubscription of nodes */
-        bool oversubscribe;
-        /** do we want one ppn if num_procs not specified */
-        bool per_node;
-        /** number of ppn for n_per_node mode */
-        int n_per_node;
-        /* do we not allow use of the localhost */
-        bool no_use_local;
-        /* display the map after it is computed */
-        bool display_map;
-    } orte_rmaps_base_t;
-    ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_base_t);
-    /**
-     * Global instance of rmaps-wide framework data
-     */
-    ORTE_DECLSPEC extern orte_rmaps_base_t orte_rmaps_base;
+/**
+ * Global instance of rmaps-wide framework data
+ */
+ORTE_DECLSPEC extern orte_rmaps_base_t orte_rmaps_base;
 
-    /**
-     * Open the rmaps framework
-     */
-    ORTE_DECLSPEC int orte_rmaps_base_open(void);
+/**
+ * Open the rmaps framework
+ */
+ORTE_DECLSPEC int orte_rmaps_base_open(void);
 
-    /**
-     * Select an rmaps component / module
-     */
-    ORTE_DECLSPEC int orte_rmaps_base_find_available(void);
+/**
+ * Select an rmaps component / module
+ */
+ORTE_DECLSPEC int orte_rmaps_base_select(void);
 
-    /**
-     * Utility routines to get/set vpid mapping for the job
-     */ 
-                                                                      
-    ORTE_DECLSPEC int orte_rmaps_base_get_vpid_range(orte_jobid_t jobid, 
-        orte_vpid_t *start, orte_vpid_t *range);
-    ORTE_DECLSPEC int orte_rmaps_base_set_vpid_range(orte_jobid_t jobid, 
-        orte_vpid_t start, orte_vpid_t range);
+/**
+ * Utility routines to get/set vpid mapping for the job
+ */ 
+                                                                  
+ORTE_DECLSPEC int orte_rmaps_base_get_vpid_range(orte_jobid_t jobid, 
+    orte_vpid_t *start, orte_vpid_t *range);
+ORTE_DECLSPEC int orte_rmaps_base_set_vpid_range(orte_jobid_t jobid, 
+    orte_vpid_t start, orte_vpid_t range);
 
-    /**
-     * Close down the rmaps framework
-     */
-    ORTE_DECLSPEC int orte_rmaps_base_finalize(void);
-    ORTE_DECLSPEC int orte_rmaps_base_close(void);
+/**
+ * Close down the rmaps framework
+ */
+ORTE_DECLSPEC int orte_rmaps_base_close(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif

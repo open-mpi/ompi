@@ -21,10 +21,10 @@
 #define ORTE_SNAPC_BASE_H
 
 #include "orte_config.h"
+#include "orte/types.h"
 
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/gpr/gpr_types.h"
-#include "orte/dss/dss.h"
+#include "opal/dss/dss.h"
 
 #include "orte/mca/snapc/snapc.h"
 
@@ -32,16 +32,36 @@
  * Global functions for MCA overall SNAPC
  */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
-    /**
-     * Global Snapshot Coordinator RML tags
-     */
-#define ORTE_SNAPC_GLOBAL_INIT_CMD    0x01
-#define ORTE_SNAPC_GLOBAL_TERM_CMD    0x02
-    
+/*
+ * Commands for command line tool and SnapC interaction
+ */
+typedef uint8_t orte_snapc_cmd_flag_t;
+#define ORTE_SNAPC_CMD  OPAL_UINT8
+#define ORTE_SNAPC_GLOBAL_INIT_CMD    1
+#define ORTE_SNAPC_GLOBAL_TERM_CMD    2
+#define ORTE_SNAPC_GLOBAL_UPDATE_CMD  3
+#define ORTE_SNAPC_LOCAL_UPDATE_CMD   4
+
+/**
+ * There are 3 types of Coordinators, and any process may be once or more type.
+ * e.g., orterun is can often be both a Global and Local coordinator if it
+ *       launches processes locally.
+ */
+typedef uint32_t orte_snapc_coord_type_t;
+#define ORTE_SNAPC_UNASSIGN_TYPE     0
+#define ORTE_SNAPC_GLOBAL_COORD_TYPE 1
+#define ORTE_SNAPC_LOCAL_COORD_TYPE  2
+#define ORTE_SNAPC_APP_COORD_TYPE    4
+ORTE_DECLSPEC extern orte_snapc_coord_type_t orte_snapc_coord_type;
+
+#define ORTE_SNAPC_COORD_NAME_PRINT(ct) ( (ct == (ORTE_SNAPC_GLOBAL_COORD_TYPE | ORTE_SNAPC_LOCAL_COORD_TYPE) ) ? "Global-Local" : \
+                                          (ct ==  ORTE_SNAPC_GLOBAL_COORD_TYPE) ? "Global" : \
+                                          (ct ==  ORTE_SNAPC_LOCAL_COORD_TYPE)  ? "Local"  : \
+                                          (ct ==  ORTE_SNAPC_APP_COORD_TYPE)    ? "App"    : \
+                                          "Unknown")
+
     /**
      * Global Snapshot Object Maintenance functions
      */
@@ -86,13 +106,13 @@ extern "C" {
      * These are to be used when no component is selected.
      * They just return success, and empty strings as necessary.
      */
-    int orte_snapc_base_none_open(void);
-    int orte_snapc_base_none_close(void);
+    ORTE_DECLSPEC int orte_snapc_base_none_open(void);
+    ORTE_DECLSPEC int orte_snapc_base_none_close(void);
 
-    int orte_snapc_base_module_init(bool seed, bool app);
-    int orte_snapc_base_module_finalize(void);
-    int orte_snapc_base_none_setup_job(orte_jobid_t jobid);
-    int orte_snapc_base_none_release_job(orte_jobid_t jobid);
+    ORTE_DECLSPEC int orte_snapc_base_module_init(bool seed, bool app);
+    ORTE_DECLSPEC int orte_snapc_base_module_finalize(void);
+    ORTE_DECLSPEC int orte_snapc_base_none_setup_job(orte_jobid_t jobid);
+    ORTE_DECLSPEC int orte_snapc_base_none_release_job(orte_jobid_t jobid);
 
     ORTE_DECLSPEC extern int  orte_snapc_base_output;
     ORTE_DECLSPEC extern opal_list_t orte_snapc_base_components_available;
@@ -123,22 +143,6 @@ extern "C" {
     ORTE_DECLSPEC char * orte_snapc_base_get_global_snapshot_directory(char *uniq_global_snapshot_name);
     ORTE_DECLSPEC int    orte_snapc_base_init_global_snapshot_directory(char *uniq_global_snapshot_name,
                                                                         bool empty_metadata);
-    ORTE_DECLSPEC int    orte_snapc_base_get_job_ckpt_info( orte_jobid_t jobid,
-                                                            size_t *ckpt_state,
-                                                            char **ckpt_snapshot_ref,
-                                                            char **ckpt_snapshot_loc);
-    ORTE_DECLSPEC int    orte_snapc_base_set_job_ckpt_info( orte_jobid_t jobid,
-                                                            size_t ckpt_state,
-                                                            char  *ckpt_snapshot_ref,
-                                                            char  *ckpt_snapshot_loc);
-    ORTE_DECLSPEC int    orte_snapc_base_get_vpid_ckpt_info( orte_process_name_t proc,
-                                                             size_t *ckpt_state,
-                                                             char **ckpt_ref,
-                                                             char **ckpt_loc);
-    ORTE_DECLSPEC int    orte_snapc_base_set_vpid_ckpt_info( orte_process_name_t proc,
-                                                             size_t ckpt_state,
-                                                             char *ckpt_ref,
-                                                             char *ckpt_loc);
     ORTE_DECLSPEC int orte_snapc_base_add_timestamp(char * global_snapshot_ref);
     ORTE_DECLSPEC int orte_snapc_base_add_vpid_metadata(orte_process_name_t *proc,
                                                         char * global_snapshot_ref,
@@ -151,28 +155,15 @@ extern "C" {
      * Global Coordinator functions
      *******************************/
     /* Initial handshake with the orte_checkpoint command */
-    ORTE_DECLSPEC int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer, bool *term, orte_jobid_t *jobid);
-    ORTE_DECLSPEC int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer, char *global_snapshot_handle, int seq_num, int ckpt_status);
+    ORTE_DECLSPEC int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer,
+                                                                 opal_buffer_t* buffer,
+                                                                 bool *term,
+                                                                 orte_jobid_t *jobid);
+    ORTE_DECLSPEC int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
+                                                                   char *global_snapshot_handle,
+                                                                   int seq_num,
+                                                                   int ckpt_status);
 
-    ORTE_DECLSPEC int orte_snapc_base_global_coord_recv_ack(orte_process_name_t* peer, bool *ack);
-    ORTE_DECLSPEC int orte_snapc_base_global_coord_send_ack(orte_process_name_t* peer, bool  ack);
-
-    ORTE_DECLSPEC int orte_snapc_base_global_init_request(orte_jobid_t jobid,
-                                                          orte_rml_buffer_callback_fn_t rml_cbfunc, void* rml_cbdata,
-                                                          orte_gpr_notify_cb_fn_t       gpr_cbfunc, void* gpr_cbdata);
-
-    ORTE_DECLSPEC int orte_snapc_base_extract_gpr_vpid_ckpt_info(orte_gpr_notify_data_t *data,
-                                                                 orte_process_name_t **proc,
-                                                                 size_t *ckpt_state,
-                                                                 char **ckpt_snapshot_ref,
-                                                                 char **ckpt_snapshot_loc);
-    ORTE_DECLSPEC int orte_snapc_base_extract_gpr_job_ckpt_info(orte_gpr_notify_data_t *data,
-                                                                size_t *ckpt_state,
-                                                                char **ckpt_snapshot_ref,
-                                                                char **ckpt_snapshot_loc);
-
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* ORTE_SNAPC_BASE_H */

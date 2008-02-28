@@ -46,6 +46,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/sys_info.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
@@ -1315,7 +1316,7 @@ btl_openib_component_init(int *num_btl_modules,
     *num_btl_modules = 0;
     num_devs = 0;
 
-    seedv[0] = orte_process_info.my_name->vpid;
+    seedv[0] = ORTE_PROC_MY_NAME->vpid;
     seedv[1] = opal_sys_timer_get_cycles();
     seedv[2] = opal_sys_timer_get_cycles();
     seed48(seedv);

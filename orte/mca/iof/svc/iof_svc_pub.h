@@ -20,14 +20,16 @@
 #define ORTE_IOF_SVC_PUBLISH_H
 
 #include "orte_config.h"
+#include "orte/types.h"
+
+#include "orte/util/name_fns.h"
+
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/iof/base/iof_base_endpoint.h"
 #include "iof_svc.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  *  Endpoints that are sinks of data are published by the
@@ -87,9 +89,7 @@ int orte_iof_svc_pub_delete(
 void orte_iof_svc_pub_delete_all(
     const orte_process_name_t* name);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif
 

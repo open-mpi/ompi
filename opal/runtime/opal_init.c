@@ -36,6 +36,7 @@
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
+#include "opal/dss/dss.h"
 
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/crs/base/base.h"
@@ -133,6 +134,36 @@ opal_err2str(int errnum)
     case OPAL_ERR_FILE_OPEN_FAILURE:
         retval = "File open failure";
         break;
+    case OPAL_ERR_PACK_MISMATCH:
+        retval = "Pack data mismatch";
+        break;
+    case OPAL_ERR_PACK_FAILURE:
+        retval = "Data pack failed";
+        break;
+    case OPAL_ERR_UNPACK_FAILURE:
+        retval = "Data unpack failed";
+        break;
+    case OPAL_ERR_UNPACK_INADEQUATE_SPACE:
+        retval = "Data unpack had inadequate space";
+        break;
+    case OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER:
+        retval = "Data unpack would read past end of buffer";
+        break;
+    case OPAL_ERR_OPERATION_UNSUPPORTED:
+        retval = "Requested operation is not supported on referenced data type";
+        break;
+    case OPAL_ERR_UNKNOWN_DATA_TYPE:
+        retval = "Unknown data type";
+        break;
+    case OPAL_ERR_BUFFER:
+        retval = "Buffer error";
+        break;
+    case OPAL_ERR_DATA_TYPE_REDEF:
+        retval = "Attempt to redefine an existing data type";
+        break;
+    case OPAL_ERR_DATA_OVERWRITE_ATTEMPT:
+        retval = "Attempt to overwrite a data value";
+        break;
     default:
         retval = NULL;
     }
@@ -212,6 +243,13 @@ opal_init_util(void)
         goto return_error;
     }
 
+    /*
+     * Initialize the data storage service.
+     */
+    if (OPAL_SUCCESS != (ret = opal_dss_open())) {
+        error = "opal_dss_open";
+        goto return_error;
+    }
     return OPAL_SUCCESS;
 
  return_error:

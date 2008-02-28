@@ -1263,11 +1263,7 @@ AC_CONFIG_FILES([
     orte/include/Makefile
     orte/etc/Makefile
 
-    orte/tools/orteboot/Makefile
     orte/tools/orted/Makefile
-    orte/tools/ortehalt/Makefile
-    orte/tools/ortekill/Makefile
-    orte/tools/orteprobe/Makefile
     orte/tools/orterun/Makefile
     orte/tools/wrappers/Makefile
     orte/tools/wrappers/ortecc-wrapper-data.txt
@@ -1304,6 +1300,7 @@ AC_CONFIG_FILES([
     ompi/tools/wrappers/mpif77-wrapper-data.txt
     ompi/tools/wrappers/mpif90-wrapper-data.txt
     ompi/tools/ortetools/Makefile
+    ompi/tools/ompi-server/Makefile
 
     test/Makefile
     test/event/Makefile

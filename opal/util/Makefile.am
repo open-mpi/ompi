@@ -43,13 +43,14 @@ headers = \
         numtostr.h \
         num_procs.h \
         opal_environ.h \
+        opal_getcwd.h \
+	opal_pty.h \
         os_dirpath.h \
         os_path.h \
         output.h \
         path.h \
         pow2.h \
         printf.h \
-	opal_pty.h \
         qsort.h \
         show_help.h \
         show_help_lex.h \
@@ -75,13 +76,14 @@ libopalutil_la_SOURCES = \
         numtostr.c \
         num_procs.c \
         opal_environ.c \
+        opal_getcwd.c \
+	opal_pty.c \
         os_dirpath.c \
         os_path.c \
         output.c \
         path.c \
         pow2.c \
         printf.c \
-	opal_pty.c \
         qsort.c \
         show_help.c \
         show_help_lex.l \

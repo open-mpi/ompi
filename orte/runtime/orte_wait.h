@@ -30,14 +30,19 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
 #endif
+
+#include "opal/util/output.h"
+#include "opal/event/event.h"
+
+#include "orte/runtime/orte_globals.h"
+
+BEGIN_C_DECLS
 
 /** typedef for callback function used in \c ompi_rte_wait_cb */
 typedef void (*orte_wait_fn_t)(pid_t wpid, int status, void *data);
-
 
 /**
  * Wait for process terminiation
@@ -77,6 +82,81 @@ ORTE_DECLSPEC int orte_wait_cb_disable(void);
 ORTE_DECLSPEC int orte_wait_cb_enable(void);
 
 /**
+ * Setup to wait for an event
+ *
+ * This function is used to setup a pipe that can be used elsewhere
+ * in the code base where we want to wait for some event to
+ * happen. For example, orterun uses this function to setup an event
+ * that is used to notify orterun of abnormal and normal termination
+ * so it can wakeup and exit cleanly.
+ *
+ * The event will be defined so that a write to the provided trigger
+ * pipe will cause the event to trigger and callback to the provided
+ * function
+ */
+ORTE_DECLSPEC int orte_wait_event(opal_event_t **event, int *trig,
+                                  void (*cbfunc)(int, short, void*));
+
+/**
+ * Trigger a defined event
+ *
+ * This function will trigger a previously-defined event - as setup
+ * by orte_wait_event - by sending a message to the provided pipe
+ */
+ORTE_DECLSPEC void orte_trigger_event(int trig);
+
+/**
+ * Delayed triggering of a defined event
+ *
+ * Sometimes, we need to trigger an event, but not until we return
+ * from a current function. For example, if we are in an OOB recv
+ * callback, we don't really want to trigger an event that will
+ * do an OOB send as this can get us into a loopback situation.
+ * This function will setup a separate timed event such that
+ * the specified event can be triggered as soon as the recv
+ * callback is completed
+ */
+ORTE_DECLSPEC void orte_delayed_trigger_event(int trig);
+
+/**
+ * In a number of places within the code, we want to setup a timer
+ * to detect when some procedure failed to complete. For example,
+ * when we launch the daemons, we frequently have no way to directly
+ * detect that a daemon failed to launch. Setting a timer allows us
+ * to automatically fail out of the launch if we don't hear from a
+ * daemon in some specified time window.
+ *
+ * Computing the amount of time to wait takes a few lines of code, but
+ * this macro encapsulates those lines along with the timer event
+ * definition just as a convenience. It also centralizes the
+ * necessary checks to ensure that the microsecond field is always
+ * less than 1M since some systems care about that, and to ensure
+ * that the computed wait time doesn't exceed the desired max
+ * wait
+ */
+#define ORTE_DETECT_TIMEOUT(event, n, deltat, maxwait, cbfunc)      \
+    do {                                                            \
+        struct timeval now;                                         \
+        opal_event_t *tmp;                                          \
+        tmp = (opal_event_t*)malloc(sizeof(opal_event_t));          \
+        opal_evtimer_set(tmp, (cbfunc), NULL);                      \
+        now.tv_sec = 0;                                             \
+        now.tv_usec = (float)(deltat) * (float)(n);                 \
+        if (now.tv_usec > (maxwait)) {                              \
+            now.tv_usec = (maxwait);                                \
+        }                                                           \
+        if (now.tv_usec > 1000000.0) {                              \
+            now.tv_sec = (float)((int)(now.tv_usec/1000000.0));     \
+            now.tv_usec = now.tv_usec - 1000000.0*now.tv_sec;       \
+        }                                                           \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                  \
+                             "defining timeout: %ld sec %ld usec",  \
+                            (long)now.tv_sec, (long)now.tv_usec));  \
+        opal_evtimer_add(tmp, &now);                                \
+        *(event) = tmp;                                             \
+    }while(0);                                                      \
+
+/**
  * \internal
  *
  * Initialize the wait system (allocate mutexes, etc.)
@@ -95,8 +175,6 @@ ORTE_DECLSPEC int orte_wait_kill(int sig);
  */
 ORTE_DECLSPEC int orte_wait_finalize(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* #ifndef ORTE_WAIT_H */

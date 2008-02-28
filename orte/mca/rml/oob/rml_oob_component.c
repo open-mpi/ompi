@@ -18,19 +18,21 @@
  */
 
 #include "orte_config.h"
-
-#include "rml_oob.h"
+#include "orte/constants.h"
 
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/orte_constants.h"
+
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/routed.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/oob/base/base.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ns/ns.h"
+#include "rml_oob.h"
 
 static orte_rml_module_t* rml_oob_init(int* priority);
 static int rml_oob_open(void);
@@ -175,6 +177,9 @@ orte_rml_oob_init(void)
                                                       rml_oob_recv_route_callback,
                                                       NULL);
 
+    /* enable the base receive to get updates on contact info */
+    orte_rml_base_comm_start();
+    
     return ret;
 }
 
@@ -194,6 +199,9 @@ orte_rml_oob_fini(void)
     OBJ_DESTRUCT(&orte_rml_oob_module.queued_lock);
     orte_rml_oob_module.active_oob->oob_exception_callback = NULL;
 
+    /* clear the base receive */
+    orte_rml_base_comm_stop();
+    
     return ORTE_SUCCESS;
 }
 
@@ -251,14 +259,6 @@ orte_rml_oob_ft_event(int state) {
             exit_status = ret;
             goto cleanup;
         }
-
-        if(NULL != orte_process_info.ns_replica_uri) {
-            orte_rml_oob_set_uri(orte_process_info.ns_replica_uri);
-        }
-
-        if(NULL != orte_process_info.gpr_replica_uri) {
-            orte_rml_oob_set_uri(orte_process_info.gpr_replica_uri);
-        }
     }
     else if(OPAL_CRS_TERM == state ) {
         ;
@@ -280,7 +280,7 @@ msg_construct(orte_rml_oob_msg_t *msg)
     msg->msg_status = 0;
     msg->msg_complete = false;
     msg->msg_persistent = false;
-    OBJ_CONSTRUCT(&msg->msg_recv_buffer, orte_buffer_t);
+    OBJ_CONSTRUCT(&msg->msg_recv_buffer, opal_buffer_t);
     msg->msg_data = NULL;
 }
 
@@ -352,14 +352,14 @@ rml_oob_queued_progress(int fd, short event, void *arg)
             abort();
         }
 
-        if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &next, ORTE_PROC_MY_NAME)) {
+        if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &next, ORTE_PROC_MY_NAME)) {
             opal_output(0, "%s trying to get message to %s, routing loop",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&hdr->destination));
             abort();
         }
 
-        if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &next, &hdr->destination)) {
+        if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &next, &hdr->destination)) {
             real_tag = hdr->tag;
         } else {
             real_tag = ORTE_RML_TAG_RML_ROUTE;
@@ -400,7 +400,7 @@ rml_oob_queued_progress(int fd, short event, void *arg)
                             "%s failed to send message to %s: %s (rc = %d)",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(&next),
-                            opal_strerror(ret),
+                            ORTE_ERROR_NAME(ret),
                             ret);
                 abort();
             }
@@ -449,14 +449,14 @@ rml_oob_recv_route_callback(int status,
         abort();
     }
 
-    if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &next, ORTE_PROC_MY_NAME)) {
+    if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &next, ORTE_PROC_MY_NAME)) {
         opal_output(0, "%s trying to get message to %s, routing loop",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&hdr->destination));
         abort();
     }
 
-    if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &next, &hdr->destination)) {
+    if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &next, &hdr->destination)) {
         real_tag = hdr->tag;
     } else {
         real_tag = ORTE_RML_TAG_RML_ROUTE;

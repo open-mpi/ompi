@@ -9,16 +9,19 @@
  */
 
 #include "orte_config.h"
-
-#include "routed_tree.h"
+#include "orte/constants.h"
+#include "orte/types.h"
 
 #include "opal/util/output.h"
+#include "opal/class/opal_hash_table.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/orte_constants.h"
-#include "orte/mca/routed/base/base.h"
+
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ns/ns.h"
+#include "orte/runtime/orte_globals.h"
+
+#include "orte/mca/routed/base/base.h"
+#include "routed_tree.h"
 
 static orte_routed_module_t* routed_tree_init(int* priority);
 static bool selected=false;
@@ -57,18 +60,15 @@ orte_routed_tree_module_t orte_routed_tree_module = {
         orte_routed_tree_finalize,
         orte_routed_tree_update_route,
         orte_routed_tree_get_route,
-        orte_routed_tree_init_routes,
-        orte_routed_tree_warmup_routes
+        orte_routed_tree_init_routes
     }
 };
 
 
-OBJ_CLASS_INSTANCE(orte_routed_tree_entry_t, opal_list_item_t, NULL, NULL);
-
 static orte_routed_module_t*
 routed_tree_init(int* priority)
 {
-    *priority = 5;
+    *priority = 70;
 
     return &orte_routed_tree_module.super;
 }
@@ -76,16 +76,19 @@ routed_tree_init(int* priority)
 int
 orte_routed_tree_module_init(void)
 {
-    OBJ_CONSTRUCT(&orte_routed_tree_module.peer_list, opal_list_t);
-    OBJ_CONSTRUCT(&orte_routed_tree_module.vpid_wildcard_list, opal_list_t);
-    OBJ_CONSTRUCT(&orte_routed_tree_module.jobid_wildcard_list, opal_list_t);
+    OBJ_CONSTRUCT(&orte_routed_tree_module.peer_list, opal_hash_table_t);
+    opal_hash_table_init(&orte_routed_tree_module.peer_list, 128);
     
-    orte_routed_tree_module.full_wildcard_entry.target.jobid = ORTE_JOBID_WILDCARD;
-    orte_routed_tree_module.full_wildcard_entry.target.vpid = ORTE_VPID_WILDCARD;
+    OBJ_CONSTRUCT(&orte_routed_tree_module.vpid_wildcard_list, opal_hash_table_t);
+    opal_hash_table_init(&orte_routed_tree_module.vpid_wildcard_list, 128);
     
-    orte_routed_tree_module.full_wildcard_entry.route.jobid = ORTE_JOBID_INVALID;
-    orte_routed_tree_module.full_wildcard_entry.route.vpid = ORTE_VPID_INVALID;
-    
+    orte_routed_tree_module.wildcard_route.jobid = ORTE_NAME_INVALID->jobid;
+    orte_routed_tree_module.wildcard_route.vpid = ORTE_NAME_INVALID->vpid;
+
+    /* setup the global condition and lock */
+    OBJ_CONSTRUCT(&orte_routed_tree_module.cond, opal_condition_t);
+    OBJ_CONSTRUCT(&orte_routed_tree_module.lock, opal_mutex_t);
+
     selected = true;
     return ORTE_SUCCESS;
 }
@@ -93,25 +96,31 @@ orte_routed_tree_module_init(void)
 int
 orte_routed_tree_finalize(void)
 {
-    opal_list_item_t *item;
+    int rc;
 
     if (selected) {
-        while (NULL != (item = opal_list_remove_first(&orte_routed_tree_module.peer_list))) {
-            OBJ_RELEASE(item);
+        /* if I am an application process, indicate that I am
+         * truly finalizing prior to departure
+         */
+        if (!orte_process_info.hnp &&
+            !orte_process_info.daemon &&
+            !orte_process_info.tool) {
+            if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync())) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
         }
+        /* don't destruct the routes until *after* we send the
+         * sync as the oob will be asking us how to route
+         * the message!
+         */
         OBJ_DESTRUCT(&orte_routed_tree_module.peer_list);
-        
-        while (NULL != (item = opal_list_remove_first(&orte_routed_tree_module.vpid_wildcard_list))) {
-            OBJ_RELEASE(item);
-        }
         OBJ_DESTRUCT(&orte_routed_tree_module.vpid_wildcard_list);
-        
-        while (NULL != (item = opal_list_remove_first(&orte_routed_tree_module.jobid_wildcard_list))) {
-            OBJ_RELEASE(item);
-        }
-        OBJ_DESTRUCT(&orte_routed_tree_module.jobid_wildcard_list);
+        /* destruct the global condition and lock */
+        OBJ_DESTRUCT(&orte_routed_tree_module.cond);
+        OBJ_DESTRUCT(&orte_routed_tree_module.lock);
     }
-
+    
     return ORTE_SUCCESS;
 }
 

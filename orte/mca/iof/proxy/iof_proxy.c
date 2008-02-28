@@ -18,6 +18,7 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
@@ -27,15 +28,19 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
-#include "orte/orte_constants.h"
 #include "opal/util/output.h"
+
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/iof/base/iof_base_endpoint.h"
-#include "orte/mca/errmgr/errmgr.h"
+
 #include "iof_proxy.h"
 #include "iof_proxy_svc.h"
 
@@ -84,7 +89,7 @@ int orte_iof_proxy_publish(
 
     if (orte_iof_base.iof_output >= 0) {
         char* name_str;
-        orte_ns.get_proc_name_string(&name_str, origin);
+        orte_util_convert_process_name_to_string(&name_str, origin);
         opal_output(orte_iof_base.iof_output,
                     "orte_iof_proxy_publish(%s,%d,%d,%d)\n", 
                     name_str, mode, tag, fd);

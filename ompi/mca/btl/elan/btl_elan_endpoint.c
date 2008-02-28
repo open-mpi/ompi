@@ -14,11 +14,10 @@
 #include <sys/time.h>
 #include <time.h>
 #include "ompi/types.h"
-#include "orte/mca/ns/base/base.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/dss/dss.h"
+#include "opal/dss/dss.h"
 #include "btl_elan.h"
 #include "btl_elan_endpoint.h" 
 #include "btl_elan_proc.h"

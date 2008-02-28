@@ -24,11 +24,16 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
+
 #include "opal/opal_socket_errno.h"
 
 #include "orte/class/orte_proc_table.h"
-#include "orte/orte_constants.h"
-#include "orte/mca/ns/ns.h"
+#include "orte/util/name_fns.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/routed/routed.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "orte/mca/oob/tcp/oob_tcp.h"
 #include "orte/mca/oob/tcp/oob_tcp_msg.h"
 
@@ -269,7 +274,7 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
                 return false;
             else {
                 opal_output(0, "%s-%s mca_oob_tcp_msg_send_handler: writev failed: %s (%d)", 
-                    ORTE_NAME_PRINT(orte_process_info.my_name), 
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), 
                     ORTE_NAME_PRINT(&(peer->peer_name)), 
                     strerror(opal_socket_errno),
                     opal_socket_errno);
@@ -317,7 +322,7 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
              msg->msg_rwbuf = malloc(msg->msg_hdr.msg_size);
              if(NULL == msg->msg_rwbuf) {
                  opal_output(0, "%s-%s mca_oob_tcp_msg_recv_handler: malloc(%d) failed\n", 
-                     ORTE_NAME_PRINT(orte_process_info.my_name),
+                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                      ORTE_NAME_PRINT(&(peer->peer_name)),
                      msg->msg_hdr.msg_size);
                  mca_oob_tcp_peer_close(peer);
@@ -333,7 +338,7 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
         }
         if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_INFO) {
             opal_output(0, "%s-%s (origin: %s) mca_oob_tcp_msg_recv_handler: size %lu\n",
-                        ORTE_NAME_PRINT(orte_process_info.my_name),
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&(peer->peer_name)),
                         ORTE_NAME_PRINT(&(msg->msg_hdr.msg_origin)),
                         (unsigned long)(msg->msg_hdr.msg_size) );
@@ -375,7 +380,7 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
             else if (opal_socket_errno == EAGAIN || opal_socket_errno == EWOULDBLOCK)
                 return false;
 	    opal_output(0, "%s-%s mca_oob_tcp_msg_recv: readv failed: %s (%d)", 
-			ORTE_NAME_PRINT(orte_process_info.my_name),
+			ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
 			ORTE_NAME_PRINT(&(peer->peer_name)),
 			strerror(opal_socket_errno),
 			opal_socket_errno);
@@ -387,7 +392,7 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
         } else if (rc == 0)  {
             if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT_FAIL) {
                 opal_output(0, "%s-%s mca_oob_tcp_msg_recv: peer closed connection", 
-                   ORTE_NAME_PRINT(orte_process_info.my_name),
+                   ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                    ORTE_NAME_PRINT(&(peer->peer_name)));
             }
             mca_oob_tcp_peer_close(peer);
@@ -434,7 +439,7 @@ void mca_oob_tcp_msg_recv_complete(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* p
             break;
         default:
             opal_output(0, "%s mca_oob_tcp_msg_recv_complete: invalid message type: %d from peer %s\n",
-                        ORTE_NAME_PRINT(orte_process_info.my_name), msg->msg_hdr.msg_type, 
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), msg->msg_hdr.msg_type, 
                         ORTE_NAME_PRINT(&peer->peer_name));
             MCA_OOB_TCP_MSG_RETURN(msg);
             break;
@@ -452,7 +457,7 @@ static void mca_oob_tcp_msg_ident(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pe
     orte_process_name_t src = msg->msg_hdr.msg_src;
     
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    if (orte_ns.compare_fields(ORTE_NS_CMP_ALL, &peer->peer_name, &src) != ORTE_EQUAL) {
+    if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &peer->peer_name, &src) != OPAL_EQUAL) {
         orte_hash_table_remove_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name);
         peer->peer_name = src;
         orte_hash_table_set_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name, peer);
@@ -481,8 +486,32 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
 {
     /* attempt to match unexpected message to a posted recv */
     mca_oob_tcp_msg_t* post;
+    int rc;
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
 
+    if (ORTE_JOB_FAMILY(msg->msg_hdr.msg_origin.jobid) !=
+        ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+        /* this message came from a different job family, so we may
+         * not know how to route any reply back to the originator. Update
+         * our route so we can dynamically build the routing table
+         */
+        /* if the origin and the src are the same, then we don't need to do
+         * this - update_route was already called when the connection was
+         * established in oob_tcp_peer
+         */
+        if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
+                                                        &(msg->msg_hdr.msg_origin),
+                                                        &(msg->msg_hdr.msg_src))) {
+            if (ORTE_SUCCESS != (rc = orte_routed.update_route(&(msg->msg_hdr.msg_origin),
+                                                               &(msg->msg_hdr.msg_src)))) {
+                /* Nothing we can do about errors here as we definitely want
+                 * the receive to complete, but at least bark loudly
+                 */
+                ORTE_ERROR_LOG(rc);
+            }
+        }
+    }
+    
     /* match msg against posted receives */
     post = mca_oob_tcp_msg_match_post(&msg->msg_hdr.msg_origin, msg->msg_hdr.msg_tag);
     if(NULL != post) {
@@ -594,7 +623,7 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(orte_process_name_t* name, int tag
         msg != (mca_oob_tcp_msg_t*) opal_list_get_end(&mca_oob_tcp_component.tcp_msg_recv);
         msg =  (mca_oob_tcp_msg_t*) opal_list_get_next(msg)) {
 
-        if(ORTE_EQUAL == orte_dss.compare(name, &msg->msg_hdr.msg_origin, ORTE_NAME)) {
+        if(OPAL_EQUAL == opal_dss.compare(name, &msg->msg_hdr.msg_origin, ORTE_NAME)) {
             if (tag == msg->msg_hdr.msg_tag) {
                 return msg;
             }
@@ -619,7 +648,7 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(orte_process_name_t* name, int tag
         msg != (mca_oob_tcp_msg_t*) opal_list_get_end(&mca_oob_tcp_component.tcp_msg_post);
         msg =  (mca_oob_tcp_msg_t*) opal_list_get_next(msg)) {
 
-        if(ORTE_EQUAL == orte_dss.compare(name, &msg->msg_peer, ORTE_NAME)) {
+        if(OPAL_EQUAL == opal_dss.compare(name, &msg->msg_peer, ORTE_NAME)) {
             if (msg->msg_hdr.msg_tag == tag) {
                 if((msg->msg_flags & ORTE_RML_PERSISTENT) == 0) {
                     opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super.super);

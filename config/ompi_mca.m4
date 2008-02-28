@@ -50,7 +50,7 @@ AC_DEFUN([OMPI_MCA],[
     AC_ARG_ENABLE([mca-no-build],
         [AC_HELP_STRING([--enable-mca-no-build=LIST],
                         [Comma-separated list of <type>-<component> pairs 
-                         that will not be built.  Example: "--enable-mca-no-build=maffinity-libnuma,btl-portals" will disable building both the "libnuma" maffinity and "portals" btl components.])])
+                         that will not be built.  Example: "--enable-mca-no-build=maffinity,btl-portals" will disable building all maffinity components and the "portals" btl components.])])
     AC_ARG_ENABLE(mca-dso,
         AC_HELP_STRING([--enable-mca-dso=LIST],
                        [Comma-separated list of types and/or
@@ -88,9 +88,13 @@ AC_DEFUN([OMPI_MCA],[
         for item in $enable_mca_no_build; do
             type="`echo $item | cut -s -f1 -d-`"
             comp="`echo $item | cut -s -f2- -d-`"
-            if test -z $type -o -z $comp ; then
-                AC_MSG_ERROR([*** The enable-no-build flag requires a
-*** list of type-component pairs.  Invalid input detected.])
+            if test -z $type ; then
+                type=$item
+            fi
+            if test -z $comp ; then
+                str="`echo DISABLE_${type}=1 | sed s/-/_/g`"
+                eval $str
+                msg="$item $msg"
             else
                 str="`echo DISABLE_${type}_${comp}=1 | sed s/-/_/g`"
                 eval $str
@@ -359,7 +363,11 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     # abort with a reasonable message.
     m4_ifdef([mca_$2_no_config_component_list], [], 
              [m4_fatal([Could not find mca_$2_no_config_component_list - rerun autogen.sh without -l])])
+    # make sure priority stuff set right
     m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST],
+          [m4_ifval(mca_$2_no_config_component_list,
+                   [m4_fatal([Framework $2 using STOP_AT_FIRST but at least one component has no configure.m4])])])
+    m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
           [m4_ifval(mca_$2_no_config_component_list,
                    [m4_fatal([Framework $2 using STOP_AT_FIRST but at least one component has no configure.m4])])])
     m4_foreach(mca_component, [mca_$2_no_config_component_list],
@@ -404,7 +412,7 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     # It would be really hard to run these for "find first that
     # works", so we don't :)
     m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST], [],
-          [m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST], [],
+          [m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY], [],
                  [AS_IF([test "$3" != "0"],
                         [MCA_CONFIGURE_ALL_CONFIG_COMPONENTS($1, $2, [all_components],
                                                [static_components], [dso_components],
@@ -876,6 +884,11 @@ AC_DEFUN([MCA_COMPONENT_BUILD_CHECK],[
     fi
 
     # if we were explicitly disabled, don't build :)
+    str="DISABLED_COMPONENT_CHECK=\$DISABLE_${framework}"
+    eval $str
+    if test "$DISABLED_COMPONENT_CHECK" = "1" ; then
+        want_component=0
+    fi
     str="DISABLED_COMPONENT_CHECK=\$DISABLE_${framework}_$component"
     eval $str
     if test "$DISABLED_COMPONENT_CHECK" = "1" ; then

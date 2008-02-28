@@ -9,17 +9,21 @@
  */
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 
 #include "opal/util/output.h"
+#include "opal/threads/condition.h"
+#include "opal/runtime/opal_progress.h"
 
+#include "opal/dss/dss.h"
+#include "orte/class/orte_proc_table.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ns/ns.h"
-#include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/mca/odls/odls.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/odls/odls_types.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 
-#include "orte/mca/smr/smr.h"
 #include "orte/mca/rml/base/rml_contact.h"
 
 #include "orte/mca/routed/base/base.h"
@@ -29,6 +33,8 @@ int
 orte_routed_tree_update_route(orte_process_name_t *target,
                                orte_process_name_t *route)
 { 
+    int rc;
+    
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID) {
         return ORTE_ERR_BAD_PARAM;
@@ -41,61 +47,48 @@ orte_routed_tree_update_route(orte_process_name_t *target,
                          ORTE_NAME_PRINT(route)));
 
 
+    /* if I am an application process, we don't update the route unless
+     * the conditions dictate it. This is done to avoid creating large
+     * hash tables when they aren't needed
+     */
+    if (!orte_process_info.hnp && !orte_process_info.daemon &&
+        !orte_process_info.tool) {
+        /* if the route is the daemon, then do nothing - we already route
+         * everything through the daemon anyway
+         */
+        if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, route,
+                                                        ORTE_PROC_MY_DAEMON)) {
+            return ORTE_SUCCESS;
+        }
+        
+        /* if this is for my own job family, then do nothing - we -always- route
+         * our own job family through the daemons
+         */
+        if (ORTE_JOB_FAMILY(target->jobid) == ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+            return ORTE_SUCCESS;
+        }
+    }
+    
     /* exact match */
     if (target->jobid != ORTE_JOBID_WILDCARD &&
         target->vpid != ORTE_VPID_WILDCARD) {
-        opal_list_item_t *item;
-        orte_routed_tree_entry_t *entry;
-
-        for (item = opal_list_get_first(&orte_routed_tree_module.peer_list) ;
-             item != opal_list_get_end(&orte_routed_tree_module.peer_list) ;
-             item = opal_list_get_next(item)) {
-            entry = (orte_routed_tree_entry_t*) item;
-
-            if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, 
-                                            target, &entry->target)) {
-                entry->route = *route;
-                return ORTE_SUCCESS;
-            }
+        if (ORTE_SUCCESS != (rc = orte_hash_table_set_proc_name(&orte_routed_tree_module.peer_list,
+                                                                target, route,
+                                                                ORTE_NS_CMP_ALL))) {
+            ORTE_ERROR_LOG(rc);
         }
-
-        entry = OBJ_NEW(orte_routed_tree_entry_t);
-        entry->target = *target;
-        entry->route = *route;
-        opal_list_append(&orte_routed_tree_module.peer_list, &entry->super);
-        return ORTE_SUCCESS;
+        return rc;
     }
 
     /* vpid wildcard */
     if (target->jobid != ORTE_JOBID_WILDCARD &&
         target->vpid == ORTE_VPID_WILDCARD) {
-        opal_list_item_t *item;
-        orte_routed_tree_entry_t *entry;
-
-        for (item = opal_list_get_first(&orte_routed_tree_module.vpid_wildcard_list) ;
-             item != opal_list_get_end(&orte_routed_tree_module.vpid_wildcard_list) ;
-             item = opal_list_get_next(item)) {
-            entry = (orte_routed_tree_entry_t*) item;
-
-            if (0 == orte_ns.compare_fields(ORTE_NS_CMP_JOBID, 
-                                            target, &entry->target)) {
-                entry->route = *route;
-                return ORTE_SUCCESS;
-            }
+        if (ORTE_SUCCESS != (rc = orte_hash_table_set_proc_name(&orte_routed_tree_module.vpid_wildcard_list,
+                                                                target, route,
+                                                                ORTE_NS_CMP_JOBID))) {
+            ORTE_ERROR_LOG(rc);
         }
-
-        entry = OBJ_NEW(orte_routed_tree_entry_t);
-        entry->target = *target;
-        entry->route = *route;
-        opal_list_append(&orte_routed_tree_module.vpid_wildcard_list, &entry->super);
-        return ORTE_SUCCESS;
-    }
-
-    /* wildcard */
-    if (target->jobid == ORTE_JOBID_WILDCARD &&
-        target->vpid == ORTE_VPID_WILDCARD) {
-        orte_routed_tree_module.full_wildcard_entry.route = *route;
-        return ORTE_SUCCESS;
+        return rc;
     }
 
     return ORTE_ERR_NOT_SUPPORTED;
@@ -106,29 +99,31 @@ orte_process_name_t
 orte_routed_tree_get_route(orte_process_name_t *target)
 {
     orte_process_name_t ret;
-    opal_list_item_t *item;
 
     /* if it is me, then the route is just direct */
-    if (ORTE_EQUAL == orte_dss.compare(ORTE_PROC_MY_NAME, target, ORTE_NAME)) {
+    if (OPAL_EQUAL == opal_dss.compare(ORTE_PROC_MY_NAME, target, ORTE_NAME)) {
         ret = *target;
         goto found;
     }
     
     /* check exact matches */
-    for (item = opal_list_get_first(&orte_routed_tree_module.peer_list) ;
-         item != opal_list_get_end(&orte_routed_tree_module.peer_list) ;
-         item = opal_list_get_next(item)) {
-        orte_routed_tree_entry_t *entry = 
-            (orte_routed_tree_entry_t*) item;
-
-        if (0 == orte_ns.compare_fields(ORTE_NS_CMP_ALL, 
-                                        target, &entry->target)) {
-            ret = entry->route;
-            goto found;
-        }
+    ret = orte_hash_table_get_proc_name(&orte_routed_tree_module.peer_list,
+                                        target, ORTE_NS_CMP_ALL);
+    if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &ret, ORTE_NAME_INVALID)) {
+        /* got a good result - return it */
+        goto found;
     }
-
-    ret = orte_routed_tree_module.full_wildcard_entry.route;
+    
+    /* didn't find an exact match - check to see if a route for this job was defined */
+    ret = orte_hash_table_get_proc_name(&orte_routed_tree_module.vpid_wildcard_list,
+                                        target, ORTE_NS_CMP_JOBID);
+    if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &ret, ORTE_NAME_INVALID)) {
+        /* got a good result - return it */
+        goto found;
+    }
+    
+    /* default to wildcard route */
+    ret = orte_routed_tree_module.wildcard_route;
 
  found:
 
@@ -141,7 +136,91 @@ orte_routed_tree_get_route(orte_process_name_t *target)
     return ret;
 }
 
-int orte_routed_tree_init_routes(orte_jobid_t job, orte_gpr_notify_data_t *ndat)
+static void routed_tree_callback(int status, orte_process_name_t* sender,
+                                  opal_buffer_t *buffer, orte_rml_tag_t tag,
+                                  void* cbdata)
+{
+    orte_jobid_t job;
+    orte_proc_t **procs;
+    orte_job_t *jdata;
+    orte_std_cntr_t cnt;
+    char *rml_uri;
+    orte_process_name_t name;
+    int rc;
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+                         "%s routed_tree:callback from proc %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(sender)));
+    
+    /* unpack the jobid this is for */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &job, &cnt, ORTE_JOBID))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    
+    /* lookup the job object for this process */
+    if (NULL == (jdata = orte_get_job_data_object(job))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return;
+    }
+    procs = (orte_proc_t**)jdata->procs->addr;
+    
+    /* unpack the data for each entry */
+    cnt = 1;
+    while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &rml_uri, &cnt, OPAL_STRING))) {
+        
+        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+                             "%s routed_tree:callback got uri %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (NULL == rml_uri) ? "NULL" : rml_uri));
+        
+        if (rml_uri == NULL) continue;
+        
+        /* we don't need to set the contact info into our rml
+         * hash table as we won't talk to the proc directly
+         */
+        
+        /* extract the proc's name */
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(rml_uri, &name, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            free(rml_uri);
+            continue;
+        }
+        /* the procs are stored in vpid order, so update the record */
+        procs[name.vpid]->rml_uri = strdup(rml_uri);
+        free(rml_uri);
+
+        /* update the proc state */
+        if (procs[name.vpid]->state < ORTE_PROC_STATE_RUNNING) {
+            procs[name.vpid]->state = ORTE_PROC_STATE_RUNNING;
+        }
+        
+        ++jdata->num_reported;
+        cnt = 1;
+    }
+    if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+        ORTE_ERROR_LOG(rc);
+    }    
+        
+    /* if all procs have reported, update our job state */
+    if (jdata->num_reported == jdata->num_procs) {
+        /* update the job state */
+        if (jdata->state < ORTE_JOB_STATE_RUNNING) {
+            jdata->state = ORTE_JOB_STATE_RUNNING;
+        }
+    }
+    
+    /* reissue the recv */
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_INIT_ROUTES,
+                                                      ORTE_RML_NON_PERSISTENT, routed_tree_callback, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    
+}
+
+int orte_routed_tree_init_routes(orte_jobid_t job, opal_buffer_t *ndat)
 {
     /* the tree module routes all proc communications through
      * the local daemon. Daemons must identify which of their
@@ -154,248 +233,214 @@ int orte_routed_tree_init_routes(orte_jobid_t job, orte_gpr_notify_data_t *ndat)
      */
     int rc;
 
+    /* if I am a tool, then I stand alone - there is nothing to do */
+    if (orte_process_info.tool) {
+        return ORTE_SUCCESS;
+    }
+    
     /* if I am a daemon or HNP, then I have to extract the routing info for this job
      * from the data sent to me for launch and update the routing tables to
      * point at the daemon for each proc
      */
-    if (orte_process_info.daemon || orte_process_info.seed) {
-        orte_std_cntr_t j;
-        orte_process_name_t daemon, proc;
-        orte_gpr_value_t **values, *value;
-        opal_list_t proc_list;
-        opal_list_item_t *item;
-        orte_namelist_t *nitem;
+    if (orte_process_info.daemon) {
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                             "%s routed_tree: init routes for daemon/seed job %ld",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)job));
+                             "%s routed_tree: init routes for daemon job %s\n\thnp_uri %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(job),
+                             (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri));
         
-        if (0 == job) {
-            if (NULL == ndat) {
-                /* if ndat is NULL, then this is being called during init,
-                 * so just seed the routing table with a path back to the HNP...
-                 */
-                if (ORTE_SUCCESS != (rc = orte_routed_tree_update_route(ORTE_PROC_MY_HNP,
-                                                                        ORTE_PROC_MY_HNP))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-                /* ...and register our contact info with the HNP */
-                if (ORTE_SUCCESS != (rc = orte_rml_base_register_contact_info())) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-            } else {
+        if (NULL == ndat) {
+            /* indicates this is being called during orte_init.
+             * Get the HNP's name for possible later use
+             */
+            if (NULL == orte_process_info.my_hnp_uri) {
+                /* fatal error */
+                ORTE_ERROR_LOG(ORTE_ERR_FATAL);
+                return ORTE_ERR_FATAL;
+            }
+            /* set the contact info into the hash table */
+            if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_process_info.my_hnp_uri))) {
+                ORTE_ERROR_LOG(rc);
+                return(rc);
+            }
+            
+            /* extract the hnp name and store it */
+            if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
+                                                               ORTE_PROC_MY_HNP, NULL))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+
+            /* if ndat is NULL, then this is being called during init,
+             * so just seed the routing table with a path back to the HNP...
+             */
+            if (ORTE_SUCCESS != (rc = orte_routed_tree_update_route(ORTE_PROC_MY_HNP,
+                                                                    ORTE_PROC_MY_HNP))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* set the wildcard route for anybody whose name we don't recognize
+             * to be the HNP
+             */
+            orte_routed_tree_module.wildcard_route.jobid = ORTE_PROC_MY_HNP->jobid;
+            orte_routed_tree_module.wildcard_route.vpid = ORTE_PROC_MY_HNP->vpid;
+            /* daemons will send their contact info back to the HNP as
+             * part of the message confirming they are read to go. HNP's
+             * load their contact info during orte_init
+             */
+        } else {
                 /* ndat != NULL means we are getting an update of RML info
                  * for the daemons - so update our contact info and routes
                  */
-                orte_rml_base_contact_info_notify(ndat, NULL);
-            }
-
-            return ORTE_SUCCESS;
-        }
-        
-        /* if ndat=NULL, then I can just ignore anything else - this is
-         * being called because there are places where other routing
-         * algos need to be called and we don't
-         */
-        if (NULL == ndat) {
-            OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
-                                 "%s routed_tree: no routing info provided for daemons",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            return ORTE_SUCCESS;
-        }
-        
-        /* for any other job, extract the contact map from the launch
-         * message since it contains info from every daemon
-         */
-        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
-                             "%s routed_tree: extract proc routing info",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        
-        values = (orte_gpr_value_t**)(ndat->values)->addr;
-        daemon.jobid = 0;
-        /* loop through all returned values - the first position contains only
-         * job-global data, so we can skip it
-         */
-        for (j=1; j < ndat->cnt; j++) {
-            value = values[j];
-            
-            /* extract the relevant data for this node */
-            OBJ_CONSTRUCT(&proc_list, opal_list_t);
-            if (ORTE_SUCCESS != (rc = orte_odls.extract_proc_map_info(&daemon, &proc_list, value))) {
-                ORTE_ERROR_LOG(rc);
+                if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(ndat))) {
+                    ORTE_ERROR_LOG(rc);
+                }
                 return rc;
             }
 
-            while (NULL != (item = opal_list_remove_first(&proc_list))) {
-                nitem = (orte_namelist_t*)item;
-                proc.jobid = job;
-                proc.vpid = nitem->name->vpid;
-                if (ORTE_PROC_MY_NAME->vpid != daemon.vpid) {
-                    /* Setup the route to the remote proc via its daemon */
-                    if (ORTE_SUCCESS != (rc = orte_routed_tree_update_route(&proc, &daemon))) {
-                        ORTE_ERROR_LOG(rc);
-                        return rc;
-                    }
-                } else {
-                    /* setup the route for my own procs as they may not have talked
-                     * to me yet - if they have, this will simply overwrite the existing
-                     * entry, so no harm done
-                     */
-                    if (ORTE_SUCCESS != (rc = orte_routed_tree_update_route(&proc, &proc))) {
-                        ORTE_ERROR_LOG(rc);
-                        return rc;
-                    }
-                }
-                OBJ_RELEASE(nitem);
-            }
-            OBJ_DESTRUCT(&proc_list);
-        }
-        
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                              "%s routed_tree: completed init routes",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        
         return ORTE_SUCCESS;
     }
     
 
-    /* I must be a proc - just setup my route to the local daemon */
-    {
-        int id;
-        char *rml_uri;
-
-        if (ORTE_EQUAL == orte_dss.compare(ORTE_NAME_INVALID, &orte_process_info.my_daemon, ORTE_NAME)) {
-            /* the daemon wasn't previously defined, so look for it */
-            id = mca_base_param_register_string("orte", "local_daemon", "uri", NULL, NULL);
-            mca_base_param_lookup_string(id, &rml_uri);
-            if (NULL == rml_uri) {
-                /* in this module, we absolutely MUST have this information - if
-                 * we didn't get it, then error out
-                 */
-                opal_output(0, "%s ERROR: Failed to identify the local daemon's URI",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                opal_output(0, "%s ERROR: This is a fatal condition when the tree router",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                opal_output(0, "%s ERROR: has been selected - either select the unity router",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                opal_output(0, "%s ERROR: or ensure that the local daemon info is provided",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                return ORTE_ERR_FATAL;
-            }
-            /* Set the contact info in the RML - this won't actually establish
-             * the connection, but just tells the RML how to reach the daemon
-             * if/when we attempt to send to it
+    if (orte_process_info.hnp) {
+        
+        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+                             "%s routed_tree: init routes for HNP job %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(job)));
+        
+        if (NULL == ndat) {
+            /* if ndat is NULL, then this is being called during init, so just
+             * make myself available to catch any reported contact info
              */
-            if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(rml_uri))) {
+            if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_INIT_ROUTES,
+                                                              ORTE_RML_NON_PERSISTENT, routed_tree_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
-                free(rml_uri);
-                return(rc);
-            }
-            /* extract the daemon's name so we can update the routing table */
-            if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(rml_uri, &orte_process_info.my_daemon, NULL))) {
-                ORTE_ERROR_LOG(rc);
-                free(rml_uri);
                 return rc;
             }
-            free(rml_uri);  /* done with this */
+        } else {
+            /* ndat != NULL means we are getting an update of RML info
+             * for the daemons - so update our contact info and routes
+             */
+            if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(ndat))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+
+        return ORTE_SUCCESS;
+    }
+
+    {  /* MUST BE A PROC */
+        /* if ndat != NULL, then this is being invoked by the proc to
+         * init a route to a specified process that is outside of our
+         * job family. We want that route to go through our HNP, routed via
+         * out local daemon - however, we cannot know for
+         * certain that the HNP already knows how to talk to the specified
+         * procs. For example, in OMPI's publish/subscribe procedures, the
+         * DPM framework looks for an mca param containing the global ompi-server's
+         * uri. This info will come here so the proc can setup a route to
+         * the server - we need to pass the routing info to our HNP
+         */
+        if (NULL != ndat) {
+            int rc;
+            
+            OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+                                 "%s routed_tree: init routes w/non-NULL data",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            
+            /* send the buffer to the proper tag on the daemon */
+            if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, ndat,
+                                               ORTE_RML_TAG_RML_INFO_UPDATE, 0))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* we already have defined our routes to everyone to
+             * be through the local daemon, so nothing further to do
+             */
+            return ORTE_SUCCESS;
+        }
+        
+        /* if ndat=NULL, then we are being called during orte_init. In this
+         * case, we need to setup a few critical pieces of info
+         */
+        
+        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+                             "%s routed_tree: init routes for proc job %s\n\thnp_uri %s\n\tdaemon uri %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job),
+                             (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri,
+                             (NULL == orte_process_info.my_daemon_uri) ? "NULL" : orte_process_info.my_daemon_uri));
+                
+        if (NULL == orte_process_info.my_daemon_uri) {
+            /* in this module, we absolutely MUST have this information - if
+             * we didn't get it, then error out
+             */
+            opal_output(0, "%s ERROR: Failed to identify the local daemon's URI",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            opal_output(0, "%s ERROR: This is a fatal condition when the tree router",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            opal_output(0, "%s ERROR: has been selected - either select the unity router",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            opal_output(0, "%s ERROR: or ensure that the local daemon info is provided",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            return ORTE_ERR_FATAL;
+        }
+            
+        /* we have to set the HNP's name, even though we won't route messages directly
+         * to it. This is required to ensure that we -do- send messages to the correct
+         * HNP name
+         */
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
+                                                           ORTE_PROC_MY_HNP, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* Set the contact info in the RML - this won't actually establish
+         * the connection, but just tells the RML how to reach the daemon
+         * if/when we attempt to send to it
+         */
+        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_process_info.my_daemon_uri))) {
+            ORTE_ERROR_LOG(rc);
+            return(rc);
+        }
+        /* extract the daemon's name so we can update the routing table */
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_daemon_uri,
+                                                           ORTE_PROC_MY_DAEMON, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
         
         /* setup the route to all other procs to flow through the daemon */
-        if (ORTE_SUCCESS != (rc = orte_routed_tree_update_route(ORTE_NAME_WILDCARD, &orte_process_info.my_daemon))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* set my proc state - this will fire the corresponding trigger so
-         * everything else in this procedure can happen. Note that it involves a
-         * a communication, which means that a connection to the local daemon
-         * will be initiated. Thus, the local daemon will subsequently know
-         * my contact info
+        orte_routed_tree_module.wildcard_route.jobid = ORTE_PROC_MY_DAEMON->jobid;
+        orte_routed_tree_module.wildcard_route.vpid = ORTE_PROC_MY_DAEMON->vpid;
+        
+        /* register ourselves -this sends a message to the daemon (warming up that connection)
+         * and sends our contact info to the HNP when all local procs have reported
+         *
+         * NOTE: it may seem odd that we send our contact info to the HNP - after all,
+         * the HNP doesn't really need to know how to talk to us directly if we are
+         * using this routing method. However, this is good for two reasons:
+         *
+         * (1) some debuggers and/or tools may need RML contact
+         *     info to set themselves up
+         *
+         * (2) doing so allows the HNP to "block" in a dynamic launch
+         *     until all procs are reported running, thus ensuring that no communication
+         *     is attempted until the overall ORTE system knows how to talk to everyone -
+         *     otherwise, the system can just hang.
          */
-        if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(ORTE_PROC_MY_NAME, ORTE_PROC_STATE_AT_STG1, 0))) {
+        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync())) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        /* no answer is expected or coming */
         
         return ORTE_SUCCESS;
     }
-    
-}
-
-int orte_routed_tree_warmup_routes(void)
-{
-    orte_std_cntr_t i, j, simultaneous, world_size, istop;
-    orte_process_name_t next, prev;
-    struct iovec inmsg[1], outmsg[1];
-    int ret;
-
-    if (orte_process_info.seed) {
-        /* the HNP does not need to participate as it already has
-         * a warmed-up connection to every daemon, so just return
-         */
-        return ORTE_SUCCESS;
-    }
-
-    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                         "%s routed_tree: warming up daemon wireup for %ld procs",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)orte_process_info.num_procs));
-    
-    world_size = orte_process_info.num_procs;
-    istop = world_size/2;
-    simultaneous = 1;
-    if (world_size < simultaneous) {
-        simultaneous = world_size;
-    }
-    next.jobid = 0;
-    prev.jobid = 0;
-    inmsg[0].iov_base = outmsg[0].iov_base = NULL;
-    inmsg[0].iov_len = outmsg[0].iov_len = 0;
-
-    for (i = 1 ; i <= istop ; i += simultaneous) {
-#if 0
-        if (simultaneous > (istop - i)) {
-            /* only fill in the rest */
-            simultaneous = istop - i;
-        }
-#endif
-        /* the HNP does not need to participate as it already has
-         * a warmed-up connection to every daemon, so we exclude
-         * vpid=0 from both send and receive
-         */
-        for (j = 0 ; j < simultaneous ; ++j) {
-            next.vpid = (ORTE_PROC_MY_NAME->vpid + (i + j )) % world_size;
-            if (next.vpid == 0) {
-                continue;
-            }
-            OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                                 "%s routed_tree: daemon wireup sending to %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&next)));
-            
-            /* sends do not wait for a match */
-            ret = orte_rml.send(&next,
-                                outmsg,
-                                1,
-                                ORTE_RML_TAG_WIREUP,
-                                0);
-            if (ret < 0) return ret;
-        }
-        for (j = 0 ; j < simultaneous ; ++j) {
-            prev.vpid = (ORTE_PROC_MY_NAME->vpid - (i + j) + world_size) % world_size;
-            if (prev.vpid == 0) {
-                continue;
-            }
-            OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                                 "%s routed_tree: daemon wireup recving from %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&prev)));
-            
-            ret = orte_rml.recv(&prev,
-                                inmsg,
-                                1,
-                                ORTE_RML_TAG_WIREUP,
-                                0);
-            if (ret < 0) return ret;
-        }
-    }
-    return ORTE_SUCCESS;
-    
 }

@@ -21,8 +21,7 @@
 #define GRPCOMM_BASIC_H
 
 #include "orte_config.h"
-#include "orte/orte_types.h"
-#include "orte/orte_constants.h"
+#include "orte/types.h"
 
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
@@ -39,11 +38,14 @@ BEGIN_C_DECLS
  * globals needed within component
  */
 typedef struct {
-    int xcast_linear_xover;
-    int xcast_binomial_xover;
+    orte_vpid_t xcast_linear_xover;
+    orte_vpid_t xcast_binomial_xover;
     orte_std_cntr_t num_active;
     opal_mutex_t mutex;
     opal_condition_t cond;
+    opal_hash_table_t modex_data;
+    opal_buffer_t modex_buffer;
+    orte_std_cntr_t modex_num_entries;
 } orte_grpcomm_basic_globals_t;
  
 extern orte_grpcomm_basic_globals_t orte_grpcomm_basic;

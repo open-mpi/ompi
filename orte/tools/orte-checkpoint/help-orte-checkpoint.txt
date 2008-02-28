@@ -45,7 +45,7 @@ Error: The process with PID %d is not checkpointable.
 [no_universe]
 Error: Unable to find the contact information for PID %d.
        This could be due to one of the following:
-        - The universe specified by the '--universe' option is not 
+        - The jobid specified by the '--hnp-jobid' option is not 
           correct.
         - The PID is not that of an active MPIRUN.
         - The application with this PID isn't checkpointable
@@ -57,7 +57,7 @@ Error: Unable to find the contact information for PID %d.
 Error: Unable to connect to the Head Node Process to initiate the 
        checkpoint of the application.
        This could be due to one of the following:
-        - The universe specified by the '--universe' option is not 
+        - The universe specified by the '--hnp-jobid' option is not 
           correct.
         - The PID is not that of an active MPIRUN.
         - The application with this PID isn't checkpointable

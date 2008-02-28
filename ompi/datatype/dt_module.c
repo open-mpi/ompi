@@ -25,6 +25,7 @@
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/datatype_internal.h"
 #include "ompi/datatype/convertor_internal.h"
+#include <stdio.h>
 
 #if OMPI_ENABLE_DEBUG
 #include "opal/mca/base/mca_base_param.h"

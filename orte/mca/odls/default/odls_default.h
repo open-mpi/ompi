@@ -26,15 +26,9 @@
 
 #include "opal/mca/mca.h"
 
-#include "orte/mca/ns/ns_types.h"
-#include "orte/mca/gpr/gpr_types.h"
-#include "orte/mca/rmaps/rmaps_types.h"
-
 #include "orte/mca/odls/odls.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * Module open / close
@@ -54,7 +48,6 @@ int orte_odls_default_finalize(void);
 extern orte_odls_base_module_t orte_odls_default_module;
 ORTE_MODULE_DECLSPEC extern orte_odls_base_component_t mca_odls_default_component;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif /* ORTE_ODLS_H */

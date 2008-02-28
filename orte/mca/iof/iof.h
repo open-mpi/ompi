@@ -142,12 +142,15 @@
 #define ORTE_IOF_H
 
 #include "orte_config.h"
+#include "orte/types.h"
+
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
-#include "orte/mca/ns/ns.h"
 
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
+
+#include "orte/util/name_fns.h"
 
 BEGIN_C_DECLS
 

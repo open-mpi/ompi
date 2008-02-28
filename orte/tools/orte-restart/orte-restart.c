@@ -25,6 +25,7 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -61,7 +62,6 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
-#include "orte/orte_constants.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_cr.h"
 #include "orte/mca/snapc/snapc.h"
@@ -257,13 +257,21 @@ static int initialize(int argc, char *argv[]) {
         orte_restart_globals.output = 0; /* Default=STDOUT */
     }
 
-    /* We don't need any crs component */
-    opal_setenv(mca_base_param_env_var("crs"),
-                strdup("none"),
-                true, &environ);
+    /* Disable the checkpoint notification routine for this
+     * tool. As we will never need to checkpoint this tool.
+     * Note: This must happen before opal_init().
+     */
     opal_cr_set_enabled(false);
 
-    if (OPAL_SUCCESS != (ret = orte_init(ORTE_INFRASTRUCTURE))) {
+    /* Select the none component, since we don't actually use a checkpointer */
+    opal_setenv(mca_base_param_env_var("crs"),
+                "none",
+                true, &environ);
+
+    /*
+     * Setup any ORTE stuff we might need
+     */
+    if (OPAL_SUCCESS != (ret = orte_init(ORTE_TOOL))) {
         exit_status = ret;
         goto cleanup;
     }

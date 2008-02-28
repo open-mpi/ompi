@@ -84,3 +84,4 @@ include threads/Makefile.am
 include mca/Makefile.am
 include win32/Makefile.am
 include tools/Makefile.am
+include dss/Makefile.am

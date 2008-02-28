@@ -23,22 +23,13 @@
  */
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <ctype.h>
-
-#include "opal/util/argv.h"
-#include "opal/util/path.h"
-#include "opal/util/basename.h"
-#include "opal/util/show_help.h"
-#include "opal/mca/base/mca_base_param.h"
-
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/rml/rml.h"
 
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/odls_private.h"

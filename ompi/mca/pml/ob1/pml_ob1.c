@@ -41,9 +41,7 @@
 
 #include "ompi/runtime/ompi_cr.h"
 #include "ompi/runtime/ompi_module_exchange.h"
-#include "orte/mca/smr/smr.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/gpr/gpr.h"
 
 mca_pml_ob1_t mca_pml_ob1 = {
     {
@@ -450,7 +448,7 @@ void mca_pml_ob1_process_pending_rdma(void)
 void mca_pml_ob1_error_handler(
         struct mca_btl_base_module_t* btl,
         int32_t flags) { 
-    orte_errmgr.abort();
+    orte_errmgr.abort(-1, NULL);
 }
 
 int mca_pml_ob1_ft_event( int state )
@@ -458,7 +456,6 @@ int mca_pml_ob1_ft_event( int state )
     ompi_proc_t** procs = NULL;
     size_t num_procs;
     int ret, p;
-    orte_buffer_t mdx_buf, rbuf;
 
     if(OPAL_CRS_CHECKPOINT == state) {
         ;
@@ -469,10 +466,6 @@ int mca_pml_ob1_ft_event( int state )
     else if(OPAL_CRS_RESTART == state) {
         /*
          * Get a list of processes
-         * NOTE: Do *not* call ompi_proc_finalize as there are many places in
-         *       the code that point to indv. procs in this strucutre. For our
-         *       needs here we only need to fix up the modex, bml and pml 
-         *       references.
          */
         procs = ompi_proc_all(&num_procs);
         if(NULL == procs) {
@@ -484,43 +477,26 @@ int mca_pml_ob1_ft_event( int state )
          */
         opal_output_verbose(10, ompi_cr_output,
                             "pml:ob1: ft_event(Restart): Restart Modex information");
-        if (OMPI_SUCCESS != (ret = ompi_modex_finalize())) {
+        if (OMPI_SUCCESS != (ret = orte_grpcomm.purge_proc_attrs())) {
             opal_output(0,
-                        "pml:ob1: ft_event(Restart): modex_finalize Failed %d",
+                        "pml:ob1: ft_event(Restart): purge_modex Failed %d",
                         ret);
             return ret;
         }
 
         /*
-         * Make sure the modex is NULL so it can be re-initalized
+         * Refresh the proc structure, and publish our proc info in the modex.
+         * NOTE: Do *not* call ompi_proc_finalize as there are many places in
+         *       the code that point to indv. procs in this strucutre. For our
+         *       needs here we only need to fix up the modex, bml and pml 
+         *       references.
          */
-        for(p = 0; p < (int)num_procs; ++p) {
-            if( NULL != procs[p]->proc_modex ) {
-                OBJ_RELEASE(procs[p]->proc_modex);
-                procs[p]->proc_modex = NULL;
-            }
-        }
-
-        /*
-         * Init the modex structures
-         */
-        if (OMPI_SUCCESS != (ret = ompi_modex_init())) {
+        if (OMPI_SUCCESS != (ret = ompi_proc_refresh())) {
             opal_output(0,
-                        "pml:ob1: ft_event(Restart): modex_init Failed %d",
+                        "pml:ob1: ft_event(Restart): proc_refresh Failed %d",
                         ret);
             return ret;
         }
-
-        /*
-         * Load back up the hostname/arch information into the modex
-         */
-        if (OMPI_SUCCESS != (ret = ompi_proc_publish_info())) {
-            opal_output(0,
-                        "pml:ob1: ft_event(Restart): proc_init Failed %d",
-                        ret);
-            return ret;
-        }
-
     }
     else if(OPAL_CRS_TERM == state ) {
         ;
@@ -547,38 +523,15 @@ int mca_pml_ob1_ft_event( int state )
     }
     else if(OPAL_CRS_RESTART == state) {
         /*
-         * Exchange the modex information once again
+         * Exchange the modex information once again.
+         * BTLs will have republished their modex information.
          */
-        OBJ_CONSTRUCT(&mdx_buf, orte_buffer_t);
-        if (OMPI_SUCCESS != (ret = ompi_modex_get_my_buffer(&mdx_buf))) {
+        if (OMPI_SUCCESS != (ret = orte_grpcomm.modex(NULL))) {
             opal_output(0,
-                        "pml:ob1: ft_event(Restart): Failed ompi_modex_get_my_buffer() = %d",
+                        "pml:ob1: ft_event(Restart): Failed orte_grpcomm.modex() = %d",
                         ret);
             return ret;
         }
-
-        /*
-         * Do the allgather exchange of information
-         */
-        OBJ_CONSTRUCT(&rbuf, orte_buffer_t);
-        if (OMPI_SUCCESS != (ret = orte_grpcomm.allgather(&mdx_buf, &rbuf))) {
-            opal_output(0,
-                        "pml:ob1: ft_event(Restart): Failed orte_grpcomm.allgather() = %d",
-                        ret);
-            return ret;
-        }
-        OBJ_DESTRUCT(&mdx_buf);
-
-        /*
-         * Process the modex data into the proc structures
-         */
-        if (OMPI_SUCCESS != (ret = ompi_modex_process_data(&rbuf))) {
-            opal_output(0,
-                        "pml:ob1: ft_event(Restart): Failed ompi_modex_process_data() = %d",
-                        ret);
-            return ret;
-        }
-        OBJ_DESTRUCT(&rbuf);
 
         /*
          * Fill in remote proc information
@@ -592,7 +545,7 @@ int mca_pml_ob1_ft_event( int state )
 
         /*
          * Startup the PML stack now that the modex is running again
-         * Add the new procs
+         * Add the new procs (BTLs redo modex recv's)
          */
         if( OMPI_SUCCESS != (ret = mca_pml_ob1_add_procs(procs, num_procs) ) ) {
             opal_output(0, "pml:ob1: fr_event(Restart): Failed in add_procs (%d)", ret);

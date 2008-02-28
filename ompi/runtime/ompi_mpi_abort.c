@@ -35,8 +35,8 @@
 #include "opal/mca/backtrace/backtrace.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/runtime.h"
-#include "orte/runtime/params.h"
-#include "orte/mca/ns/ns.h"
+#include "orte/runtime/orte_globals.h"
+#include "orte/util/name_fns.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/sys_info.h"
 #include "ompi/communicator/communicator.h"
@@ -81,7 +81,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
 
     if (!ompi_mpi_initialized || ompi_mpi_finalized) {
         if (orte_initialized) {
-            orte_errmgr.error_detected(errcode, NULL);
+            orte_errmgr.abort(errcode, NULL);
         }
     }
 
@@ -148,16 +148,14 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     abort_procs = (orte_process_name_t*)malloc(sizeof(orte_process_name_t) * nabort_procs);
     if (NULL == abort_procs) {
         /* quick clean orte and get out */
-        orte_errmgr.error_detected(errcode, 
-                                   "Abort unable to malloc memory to kill procs", 
-                                   NULL);
+        orte_errmgr.abort(errcode, "Abort unable to malloc memory to kill procs");
     }
 
     /* put all the local procs in the abort list */
     for (i = 0 ; i < ompi_comm_size(comm) ; ++i) {
-        if (ORTE_EQUAL != orte_ns.compare_fields(ORTE_NS_CMP_ALL, 
+        if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
                                  &comm->c_local_group->grp_proc_pointers[i]->proc_name,
-                                 orte_process_info.my_name)) {
+                                 ORTE_PROC_MY_NAME)) {
             assert(count <= nabort_procs);
             abort_procs[count++] = comm->c_local_group->grp_proc_pointers[i]->proc_name;
         } else {
@@ -169,9 +167,9 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     /* if requested, kill off remote procs too */
     if (kill_remote_of_intercomm) {
         for (i = 0 ; i < ompi_comm_remote_size(comm) ; ++i) {
-            if (ORTE_EQUAL != orte_ns.compare_fields(ORTE_NS_CMP_ALL, 
+            if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
                                      &comm->c_remote_group->grp_proc_pointers[i]->proc_name,
-                                     orte_process_info.my_name)) {
+                                     ORTE_PROC_MY_NAME)) {
                 assert(count <= nabort_procs);
                 abort_procs[count++] =
                     comm->c_remote_group->grp_proc_pointers[i]->proc_name;
@@ -183,16 +181,16 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     }
 
     if (nabort_procs > 0) {
+#if 0
         ret = orte_errmgr.abort_procs_request(abort_procs, nabort_procs);
         if (OMPI_SUCCESS != ret) {
-            orte_errmgr.error_detected(ret, 
-                                       "Open MPI failed to abort procs as requested (%d). Exiting.",
-                                       ret, NULL);
+            orte_errmgr.abort(ret, "Open MPI failed to abort procs as requested (%d). Exiting.", ret);
         }
+#endif
     }
 
     /* now that we've aborted everyone else, gracefully die. */
-    orte_errmgr.error_detected(errcode, NULL);
+    orte_errmgr.abort(errcode, NULL);
     
     return OMPI_SUCCESS;
 }

@@ -33,15 +33,15 @@ The requested hosts were:
   %s
 
 Verify that you have mapped the allocated resources properly using the 
---host specification.
+--host or --hostfile specification.
 [orte-rmaps-base:no-mapped-node]
 There are no allocated resources for the application 
   %s
 that match the requested mapping:
   %s
 
-OR the requested resources in that mapping have already been consumed. Verify that you have mapped the allocated resources properly using the 
---host specification.
+Verify that you have mapped the allocated resources properly using the 
+--host or --hostfile specification.
 [orte-rmaps-base:nolocal-no-available-resources]
 There are no available nodes allocated to this job. This could be because
 no nodes were found or all the available nodes were already used.
@@ -52,4 +52,12 @@ launched on the local node.
 There are no nodes allocated to this job.
 [orte-rmaps-base:all-available-resources-used]
 All nodes which are allocated for this job are already filled.
+#
+[out-of-vpids]
+The system has exhausted its available ranks - the application is attempting
+to spawn too many daemons and will be aborted.
+
+This may be resolved by increasing the number of available ranks by
+re-configuring with the --enable-jumbo-apps option, and then
+re-building the application.
 

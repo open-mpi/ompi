@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,6 +22,7 @@
 #include "opal/util/show_help.h"
 #include "ompi/info/info.h"
 #include "ompi/mpi/c/bindings.h"
+#include "ompi/mca/dpm/dpm.h"
 #include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -39,13 +40,14 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
                     int root, MPI_Comm comm, MPI_Comm *intercomm,
                     int *array_of_errcodes) 
 {
-    int rank, rc, i;
-    int send_first=0; /* we wait to be contacted */
+    int rank, rc=OMPI_SUCCESS, i, flag;
+    bool send_first = false; /* we wait to be contacted */
     ompi_communicator_t *newcomp=NULL;
     char port_name[MPI_MAX_PORT_NAME];
     char *tmp_port;
     orte_rml_tag_t tag;
-
+    bool non_mpi = false;
+    
     MEMCHECKER(
         memchecker_comm(comm);
     );
@@ -89,21 +91,37 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
         }
     }
 
+    /* See if the info key "ompi_non_mpi" was set to true */
+    ompi_info_get_bool(info, "ompi_non_mpi", &non_mpi, &flag);
+
     OPAL_CR_ENTER_LIBRARY();
 
     if ( rank == root ) {
-        /* Open a port. The port_name is passed as an environment variable
-           to the children. */
-        ompi_open_port (port_name);
-        if (OMPI_SUCCESS != (rc = ompi_comm_start_processes (1, &command, &argv, &maxprocs, 
-                                                             &info, port_name))) {
+        if (non_mpi) {
+            /* no port is required since we won't be
+             * communicating with the children
+             */
+            port_name[0] = '\0';
+        } else {
+            /* Open a port. The port_name is passed as an environment
+               variable to the children. */
+            ompi_dpm.open_port (port_name);
+        }
+        if (OMPI_SUCCESS != (rc = ompi_dpm.spawn (1, &command, &argv, &maxprocs, 
+                                                  &info, port_name))) {
             goto error;
         }
-        tmp_port = ompi_parse_port (port_name, &tag);
-        free(tmp_port);
+        if (!non_mpi) {
+            tmp_port = ompi_dpm.parse_port (port_name, &tag);
+            free(tmp_port);
+        }
     }
-   
-    rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
+
+    if (non_mpi) {
+        newcomp = MPI_COMM_NULL;
+    } else {
+        rc = ompi_dpm.connect_accept (comm, root, NULL, send_first, &newcomp, tag);
+    }
 
 error:
     OPAL_CR_EXIT_LIBRARY();

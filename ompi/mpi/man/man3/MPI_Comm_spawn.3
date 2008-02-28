@@ -95,15 +95,28 @@ The \fIinfo\fP argument is an opaque handle of type MPI_Info in C, MPI::Info in 
 .sp
 For the SPAWN calls, \fIinfo\fP provides additional, implementation-dependent instructions to MPI and the runtime system on how to start processes. An application may pass MPI_INFO_NULL in C or Fortran. Portable programs not requiring detailed control over process locations should use MPI_INFO_NULL.
 .sp
-The following values for \fIinfo\fP are recognized in Open MPI. (The reserved values mentioned in Section 5.3.4 of the MPI-2 standard are not implemented.)
+The following keys for \fIinfo\fP are recognized in Open MPI. (The reserved values mentioned in Section 5.3.4 of the MPI-2 standard are not implemented.)
 .sp
 .nf
-Key value             Type      Description
-----------            ----      -----------
+Key                   Type      Description
+---                   ----      -----------
 
 host                  char *    Host on which the process should be spawned.
 wdir                  char *    Directory where the executable is located.
+ompi_prefix           char *    Same as the --prefix command line argument
+                                to mpirun.
+ompi_non_mpi          bool      If set to true, launching a non-MPI
+                                application; the returned communicator
+                                will be MPI_COMM_NULL.
 .fi
+
+\fIbool\fP info keys are actually strings but are evaluated as
+follows: if the string value is a number, it is converted to an
+integer and cast to a boolean (meaning that zero integers are false
+and non-zero values are true).  If the string value is
+(case-insensitive) "yes" or "true", the boolean is true.  If the
+string value is (case-insensitive) "no" or "false", the boolean is
+false.  All other string values are unrecognized, and therefore false.
   
 .sp
 The \fIroot\fP Argument

@@ -25,7 +25,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/bml/bml.h"
-#include "orte/mca/ns/ns_types.h"
+#include "orte/types.h"
 #include "ompi/mca/mpool/mpool.h" 
 #include "pml_ob1.h"
 #include "pml_ob1_rdma.h"

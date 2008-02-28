@@ -18,13 +18,14 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
+
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
 #include <string.h>
 
-#include "orte/orte_constants.h"
 #include "opal/util/output.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/rml/rml.h"

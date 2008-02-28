@@ -21,10 +21,6 @@
 #include <sys/time.h>
 #include <time.h>
 #include "ompi/types.h"
-#include "orte/mca/ns/base/base.h"
-#include "orte/mca/oob/base/base.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/mca/errmgr/errmgr.h"
 #include "btl_mx.h"
 #include "btl_mx_endpoint.h" 
 #include "btl_mx_proc.h"

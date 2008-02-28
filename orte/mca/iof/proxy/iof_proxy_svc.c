@@ -18,9 +18,12 @@
  */
 
 #include "orte_config.h"
+
 #include "opal/util/output.h"
+
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/rml/rml_types.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/iof/base/iof_base_header.h"
 #include "orte/mca/iof/base/iof_base_endpoint.h"
@@ -67,7 +70,7 @@ int orte_iof_proxy_svc_publish(
     iov.iov_len = sizeof(hdr);
 
     rc = orte_rml.send(
-        orte_iof_base.iof_service,
+        &orte_iof_base.iof_service,
         &iov,
         1,
         ORTE_RML_TAG_IOF_SVC,
@@ -105,7 +108,7 @@ int orte_iof_proxy_svc_unpublish(
     iov.iov_len = sizeof(hdr);
 
     rc = orte_rml.send(
-        orte_iof_base.iof_service,
+        &orte_iof_base.iof_service,
         &iov,
         1,
         ORTE_RML_TAG_IOF_SVC,
@@ -149,7 +152,7 @@ int orte_iof_proxy_svc_subscribe(
     iov.iov_len = sizeof(hdr);
 
     rc = orte_rml.send(
-        orte_iof_base.iof_service,
+        &orte_iof_base.iof_service,
         &iov,
         1,
         ORTE_RML_TAG_IOF_SVC,
@@ -194,7 +197,7 @@ int orte_iof_proxy_svc_unsubscribe(
     iov.iov_len = sizeof(hdr);
 
     rc = orte_rml.send(
-        orte_iof_base.iof_service,
+        &orte_iof_base.iof_service,
         &iov,
         1,
         ORTE_RML_TAG_IOF_SVC,

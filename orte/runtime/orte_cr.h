@@ -25,9 +25,7 @@
 #ifndef ORTE_CR_H
 #define ORTE_CR_H
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     /*
      * Initialization called in orte_init()
@@ -50,8 +48,6 @@ extern "C" {
     ORTE_DECLSPEC int orte_cr_entry_point_init(void);
     ORTE_DECLSPEC int orte_cr_entry_point_finalize(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* ORTE_CR_H */

@@ -25,7 +25,7 @@
 #define ORTE_POINTER_ARRAY_H
 
 #include "orte_config.h"
-#include "orte/orte_types.h"
+#include "orte/types.h"
 
 #if HAVE_STRING_H
 #include <string.h>
@@ -34,9 +34,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/class/opal_object.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * dynamic pointer array
@@ -225,7 +223,6 @@ static inline void orte_pointer_array_free_clear(orte_pointer_array_t *array)
 ORTE_DECLSPEC bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table, 
                                           orte_std_cntr_t element_index,
                                           void *value);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif /* OMPI_POINTER_ARRAY_H */

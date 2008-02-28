@@ -8,13 +8,16 @@
 
 #include "orte_config.h"
 
-#include "rml_oob.h"
-
 #include "opal/util/output.h"
+
+#include "orte/mca/rml/base/base.h"
+#include "opal/dss/dss.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/oob/base/base.h"
-#include "orte/mca/rml/base/base.h"
-#include "orte/dss/dss.h"
+#include "rml_oob.h"
 
 
 static void
@@ -54,7 +57,7 @@ orte_rml_recv_msg_callback(int status,
 
     } else if (msg->msg_type == ORTE_RML_NONBLOCKING_BUFFER_RECV) {
         /* non-blocking buffer send */
-        status = orte_dss.load(&msg->msg_recv_buffer, 
+        status = opal_dss.load(&msg->msg_recv_buffer, 
                                iov[1].iov_base, 
                                iov[1].iov_len);
 
@@ -151,7 +154,7 @@ orte_rml_oob_recv_nb(orte_process_name_t* peer,
 
 int
 orte_rml_oob_recv_buffer(orte_process_name_t* peer,
-                         orte_buffer_t *buf,
+                         opal_buffer_t *buf,
                          orte_rml_tag_t tag,
                          int flags)
 {
@@ -183,7 +186,7 @@ orte_rml_oob_recv_buffer(orte_process_name_t* peer,
     OPAL_THREAD_UNLOCK(&msg->msg_lock);
 
     if (ret > 0) {
-        ret = orte_dss.load(buf, 
+        ret = opal_dss.load(buf, 
                             msg->msg_data[1].iov_base,
                             msg->msg_data[1].iov_len);
     }

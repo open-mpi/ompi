@@ -18,8 +18,10 @@
  * $HEADER$
  */
 #include "orte_config.h"
+#include "orte/types.h"
 
-#include "orte/mca/ns/ns.h"
+#include "orte/util/proc_info.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/oob/tcp/oob_tcp.h"
 
@@ -120,11 +122,7 @@ int mca_oob_tcp_recv_nb(
 
     /* fill in the header */
     msg->msg_hdr.msg_origin = *peer;
-    if (NULL == orte_process_info.my_name) {
-        msg->msg_hdr.msg_src = *ORTE_NAME_INVALID;
-    } else {
-        msg->msg_hdr.msg_src = *orte_process_info.my_name;
-    }
+    msg->msg_hdr.msg_src = *ORTE_PROC_MY_NAME;
     msg->msg_hdr.msg_dst = *peer;
     msg->msg_hdr.msg_size = size;
     msg->msg_hdr.msg_tag = tag;
@@ -199,7 +197,7 @@ int mca_oob_tcp_recv_cancel(
         mca_oob_tcp_msg_t* msg = (mca_oob_tcp_msg_t*)item;
         next = opal_list_get_next(item);
 
-        if (ORTE_EQUAL == orte_dss.compare(name, &msg->msg_peer, ORTE_NAME)) {
+        if (OPAL_EQUAL == opal_dss.compare(name, &msg->msg_peer, ORTE_NAME)) {
             if (msg->msg_hdr.msg_tag == tag) {
                 opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super.super);
                 MCA_OOB_TCP_MSG_RETURN(msg);

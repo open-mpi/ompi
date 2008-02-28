@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -21,8 +21,10 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
-#include "orte/orte_constants.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/name_fns.h"
+
+#include "orte/mca/ras/base/ras_private.h"
 #include "ras_loadleveler.h"
 
 
@@ -43,10 +45,10 @@ orte_ras_base_component_t mca_ras_loadleveler_component = {
     /* First, the mca_base_component_t struct containing meta
        information about the component itself */
     {
-        /* Indicate that we are a ras v1.3.0 component (which also
+        /* Indicate that we are a ras v2.0.0 component (which also
            implies a specific MCA version) */
         
-        ORTE_RAS_BASE_VERSION_1_3_0,
+        ORTE_RAS_BASE_VERSION_2_0_0,
         
         /* Component name and version */
         
@@ -87,23 +89,19 @@ static int orte_ras_loadleveler_open(void)
 
 static orte_ras_base_module_t *orte_ras_loadleveler_init(int* priority)
 {
-    /* if we are not an HNP, then we must not be selected */
-    if (!orte_process_info.seed) {
-        return NULL;
-    }
-    
     /* Are we running under a LOADLEVELER job? */
     if (NULL != getenv("LOADL_STEP_ID")) {
         mca_base_param_lookup_int(param_priority, priority);
-        opal_output(orte_ras_base.ras_output,
-                    "ras:loadleveler: available for selection with priority %d",
-                    param_priority);
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                             "%s ras:loadleveler: available for selection",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         return &orte_ras_loadleveler_module;
     }
 
     /* Sadly, no */
-    opal_output(orte_ras_base.ras_output,
-                "ras:loadleveler: NOT available for selection");
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                         "%s ras:loadleveler: NOT available for selection",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     return NULL;
 }
 

@@ -25,11 +25,14 @@
  * endpoints.
  */
 
+#include "orte_config.h"
+#include "orte/types.h"
+
 #include "opal/class/opal_hash_table.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+#include "iof_svc_pub.h"
+
+BEGIN_C_DECLS
 
 struct orte_iof_svc_fwd_t {
     opal_list_item_t super;
@@ -137,9 +140,7 @@ int orte_iof_svc_fwd_delete(
     orte_iof_svc_sub_t* sub,
     orte_iof_svc_pub_t* pub);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif
 

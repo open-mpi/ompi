@@ -21,6 +21,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/info/info.h"
 #include "ompi/proc/proc.h"
+#include "ompi/mca/dpm/dpm.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Open_port = PMPI_Open_port
@@ -61,8 +62,9 @@ int MPI_Open_port(MPI_Info info, char *port_name)
         */
     }
 
+    rc = ompi_dpm.open_port(port_name);
+
     OPAL_CR_ENTER_LIBRARY();
 
-    rc = ompi_open_port(port_name);
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }

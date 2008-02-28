@@ -44,16 +44,12 @@
 #include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
+#include "orte/util/name_fns.h"
 #include "orte/runtime/runtime.h"
-#include "orte/mca/ns/ns.h"
-#include "orte/mca/ns/base/base.h"
-#include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/schema/schema.h"
-#include "orte/mca/smr/smr.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/runtime/params.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "ompi/constants.h"
 #include "ompi/mpi/f77/constants.h"
@@ -84,6 +80,8 @@
 #include "ompi/debuggers/debuggers.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
+#include "ompi/mca/dpm/base/base.h"
+#include "ompi/mca/pubsub/base/base.h"
 
 #if OPAL_ENABLE_FT == 1
 #include "ompi/mca/crcp/crcp.h"
@@ -228,7 +226,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_proc_t** procs;
     size_t nprocs;
     char *error = NULL;
-    orte_buffer_t mdx_buf, rbuf;
     bool timing = false;
     int param, value;
     struct timeval ompistart, ompistop;
@@ -256,14 +253,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     
     /* Setup ORTE stage 1, note that we are not infrastructre  */
     
-    if (ORTE_SUCCESS != (ret = orte_init(ORTE_NON_INFRASTRUCTURE))) {
+    if (ORTE_SUCCESS != (ret = orte_init(ORTE_NON_TOOL))) {
         error = "ompi_mpi_init: orte_init failed";
-        goto error;
-    }
-    
-    /* register myself to require that I finalize before exiting */
-    if (ORTE_SUCCESS != (ret = orte_smr.register_sync())) {
-        error = "ompi_mpi_init: register sync failed";
         goto error;
     }
     
@@ -303,7 +294,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
             }
             if (!set) {
                 char *vpid;
-                orte_ns.get_vpid_string(&vpid, orte_process_info.my_name);
+                orte_util_convert_vpid_to_string(&vpid, ORTE_PROC_MY_NAME->vpid);
                 opal_show_help("help-mpi-runtime",
                                "mpi_init:startup:paffinity-unavailable", 
                                true, vpid);
@@ -341,14 +332,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* Initialize module exchange - this MUST happen before proc_init
-     * as proc_init needs to send modex info!
-     */
-    if (OMPI_SUCCESS != (ret = ompi_modex_init())) {
-        error = "ompi_modex_init() failed";
-        goto error;
-    }
-    
     /* Initialize OMPI procs */
     if (OMPI_SUCCESS != (ret = ompi_proc_init())) {
         error = "mca_proc_init() failed";
@@ -524,29 +507,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         gettimeofday(&ompistart, NULL);
     }
     
-    /* get the modex buffer so we can exchange it */
-    OBJ_CONSTRUCT(&mdx_buf, orte_buffer_t);
-    if (OMPI_SUCCESS != (ret = ompi_modex_get_my_buffer(&mdx_buf))) {
-        error = "ompi_modex_execute() failed";
-        goto error;
-    }
-    
-    /* execute the exchange - this function also acts as a barrier
+    /* exchange connection info - this function also acts as a barrier
      * as it will not return until the exchange is complete
      */
-    OBJ_CONSTRUCT(&rbuf, orte_buffer_t);
-    if (OMPI_SUCCESS != (ret = orte_grpcomm.allgather(&mdx_buf, &rbuf))) {
-        error = "orte_gprcomm_allgather failed";
+    if (OMPI_SUCCESS != (ret = orte_grpcomm.modex(NULL))) {
+        error = "orte_grpcomm_modex failed";
         goto error;
     }
-    OBJ_DESTRUCT(&mdx_buf);
-
-    /* process the modex data into the proc structures */
-    if (OMPI_SUCCESS != (ret = ompi_modex_process_data(&rbuf))) {
-        error = "ompi_modex_process_data failed";
-        goto error;
-    }
-    OBJ_DESTRUCT(&rbuf);
     
     if (timing) {
         gettimeofday(&ompistop, NULL);
@@ -680,10 +647,30 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /* Setup the publish/subscribe (PUBSUB) framework */
+    if (OMPI_SUCCESS != (ret = ompi_pubsub_base_open())) {
+        error = "ompi_pubsub_base_open() failed";
+        goto error;
+    }
+    if (OMPI_SUCCESS != (ret = ompi_pubsub_base_select())) {
+        error = "ompi_pubsub_base_select() failed";
+        goto error;
+    }
+    
+    /* Setup the dynamic process management (DPM) framework */
+    if (OMPI_SUCCESS != (ret = ompi_dpm_base_open())) {
+        error = "ompi_dpm_base_open() failed";
+        goto error;
+    }
+    if (OMPI_SUCCESS != (ret = ompi_dpm_base_select())) {
+        error = "ompi_dpm_base_select() failed";
+        goto error;
+    }
+    
     /* Check whether we have been spawned or not.  We introduce that
        at the very end, since we need collectives, datatypes, ptls
        etc. up and running here.... */
-    if (OMPI_SUCCESS != (ret = ompi_comm_dyn_init())) {
+    if (OMPI_SUCCESS != (ret = ompi_dpm.dyn_init())) {
         error = "ompi_comm_dyn_init() failed";
         goto error;
     }
@@ -773,7 +760,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     if (orte_debug_flag) {
         opal_output(0, "%s ompi_mpi_init completed",
-                    ORTE_NAME_PRINT(orte_process_info.my_name));
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
 
     /* Do we need to wait for a TotalView-like debugger? */

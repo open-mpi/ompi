@@ -28,11 +28,11 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/topo/base/base.h"
-#include "orte/mca/ns/base/base.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/mca/topo/topo.h"
+#include "ompi/mca/dpm/dpm.h"
 #include "ompi/memchecker.h"
 
 /*
@@ -210,7 +210,7 @@ int ompi_comm_finalize(void)
     OBJ_DESTRUCT( &ompi_mpi_comm_self );
 
     /* disconnect all dynamic communicators */
-    ompi_comm_dyn_finalize();
+    ompi_dpm.dyn_finalize();
 
     /* Shut down MPI_COMM_WORLD */
     OBJ_DESTRUCT( &ompi_mpi_comm_world );

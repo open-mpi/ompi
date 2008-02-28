@@ -22,7 +22,7 @@
 
 #include "ompi/constants.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/dss/dss.h"
+#include "opal/dss/dss.h"
 
 #include "ompi/mca/crcp/crcp.h"
 

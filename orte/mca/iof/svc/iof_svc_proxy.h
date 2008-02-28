@@ -19,15 +19,15 @@
 #ifndef ORTE_IOF_SVC_PROXY_H
 #define ORTE_IOF_SVC_PROXY_H
 
-#include "orte/mca/iof/iof.h"
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
 #include "orte_config.h"
+#include "orte/types.h"
+
+#include "orte/mca/rml/rml_types.h"
+
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/iof_base_header.h"
 
+BEGIN_C_DECLS
 
 /**
  *  Callback function from RML on receipt of IOF request.
@@ -48,8 +48,7 @@ void orte_iof_svc_proxy_recv(
     orte_rml_tag_t tag,
     void* cbdata);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif
 

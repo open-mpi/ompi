@@ -34,21 +34,19 @@
  */
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
-#include "orte/orte_types.h"
+#include "orte/constants.h"
+#include "orte/types.h"
 
 #include "opal/mca/mca.h"
 #include "opal/class/opal_list.h"
 
-#include "orte/dss/dss_types.h"
-#include "orte/mca/gpr/gpr_types.h"
-#include "orte/mca/ns/ns_types.h"
+#include "opal/dss/dss_types.h"
 #include "orte/mca/rml/rml_types.h"
+#include "orte/mca/odls/odls_types.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+#include "orte/mca/grpcomm/grpcomm_types.h"
 
+BEGIN_C_DECLS
 
 /*
  * Component functions - all MUST be provided!
@@ -56,40 +54,60 @@ extern "C" {
 
 /* Send a message to all members of a job - blocking */
 typedef int (*orte_grpcomm_base_module_xcast_fn_t)(orte_jobid_t job,
-                                                   orte_buffer_t *buffer,
+                                                   opal_buffer_t *buffer,
                                                    orte_rml_tag_t tag);
 
-/* Send a message to all members of a job - non-blocking */
-typedef int (*orte_grpcomm_base_module_xcast_nb_fn_t)(orte_jobid_t job,
-                                                      orte_buffer_t *buffer,
-                                                      orte_rml_tag_t tag);
-
 /* allgather - gather data from all procs */
-typedef int (*orte_grpcomm_base_module_allgather_fn_t)(orte_buffer_t *sbuf, orte_buffer_t *rbuf);
+typedef int (*orte_grpcomm_base_module_allgather_fn_t)(opal_buffer_t *sbuf, opal_buffer_t *rbuf);
 
 typedef int (*orte_grpcomm_base_module_allgather_list_fn_t)(opal_list_t *names,
-                                                            orte_buffer_t *sbuf, orte_buffer_t *rbuf);
+                                                            opal_buffer_t *sbuf, opal_buffer_t *rbuf);
 
 /* barrier function */
 typedef int (*orte_grpcomm_base_module_barrier_fn_t)(void);
+
+/* for collectives, return next recipients in the chain */
+typedef int (*orte_gprcomm_base_next_recipients_fn_t)(opal_list_t *list, orte_grpcomm_mode_t mode);
+
+/** DATA EXCHANGE FUNCTIONS - SEE ompi/runtime/ompi_module_exchange.h FOR A DESCRIPTION
+ *  OF HOW THIS ALL WORKS
+ */
+
+/* send an attribute buffer */
+typedef int (*orte_grpcomm_base_modex_set_proc_attr_fn_t)(const char* attr_name, 
+                                                     const void *buffer, size_t size);
+
+/* get an attribute buffer */
+typedef int (*orte_grpcomm_base_modex_get_proc_attr_fn_t)(const orte_process_name_t name,
+                                                          const char* attr_name,
+                                                          void **buffer, size_t *size);
+
+/* perform a modex operation */
+typedef int (*orte_grpcomm_base_modex_fn_t)(opal_list_t *procs);
+
+/* purge the internal attr table */
+typedef int (*orte_grpcomm_base_purge_proc_attrs_fn_t)(void);
+
 
 /*
  * Ver 2.0
  */
 struct orte_grpcomm_base_module_2_0_0_t {
     orte_grpcomm_base_module_xcast_fn_t             xcast;
-    orte_grpcomm_base_module_xcast_nb_fn_t          xcast_nb;
     orte_grpcomm_base_module_allgather_fn_t         allgather;
     orte_grpcomm_base_module_allgather_list_fn_t    allgather_list;
     orte_grpcomm_base_module_barrier_fn_t           barrier;
+    orte_gprcomm_base_next_recipients_fn_t          next_recipients;
+    /* modex support functions */
+    orte_grpcomm_base_modex_set_proc_attr_fn_t      set_proc_attr;
+    orte_grpcomm_base_modex_get_proc_attr_fn_t      get_proc_attr;
+    orte_grpcomm_base_modex_fn_t                    modex;
+    orte_grpcomm_base_purge_proc_attrs_fn_t         purge_proc_attrs;
 };
 
 typedef struct orte_grpcomm_base_module_2_0_0_t orte_grpcomm_base_module_2_0_0_t;
 typedef orte_grpcomm_base_module_2_0_0_t orte_grpcomm_base_module_t;
 
-/*
- * NS Component
- */
 /**
  * Initialize the selected component.
  */
@@ -130,8 +148,6 @@ typedef orte_grpcomm_base_component_2_0_0_t orte_grpcomm_base_component_t;
  */
 ORTE_DECLSPEC extern orte_grpcomm_base_module_t orte_grpcomm;  /* holds selected module's function pointers */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif

@@ -45,12 +45,8 @@
 #include "opal/mca/carto/base/base.h"
 
 #include "orte/util/proc_info.h"
-#include "orte/mca/schema/schema.h"
 #include "orte/mca/oob/base/base.h"
-#include "orte/mca/ns/ns.h"
-#include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/smr/smr.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/runtime/runtime.h"
@@ -66,7 +62,6 @@
 #include "ompi/info/info.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/attribute/attribute.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/osc/base/base.h"
@@ -81,6 +76,8 @@
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/runtime/params.h"
 #include "ompi/mca/mpool/base/mpool_base_tree.h"
+#include "ompi/mca/dpm/base/base.h"
+#include "ompi/mca/pubsub/base/base.h"
 
 #if OPAL_ENABLE_FT == 1
 #include "ompi/mca/crcp/crcp.h"
@@ -136,12 +133,6 @@ int ompi_mpi_finalize(void)
        MPI lifetime, to get better latency when not using TCP */
     opal_progress_event_users_increment();
 
-    /* mark that I called finalize before exiting */
-    if (ORTE_SUCCESS != (ret = orte_smr.register_sync())) {
-        ORTE_ERROR_LOG(ret);
-        return ret;
-    }
-    
     /* If maffinity was setup, tear it down */
     if (ompi_mpi_maffinity_setup) {
         opal_maffinity_base_close();
@@ -248,7 +239,17 @@ int ompi_mpi_finalize(void)
     if ( OMPI_SUCCESS != (ret = ompi_proc_finalize())) {
         return ret;
     }
-
+    
+    /* finalize the pubsub functions */
+    if ( OMPI_SUCCESS != (ret = ompi_pubsub_base_close())) {
+        return ret;
+    }
+    
+    /* finalize the DPM framework */
+    if ( OMPI_SUCCESS != (ret = ompi_dpm_base_close())) {
+        return ret;
+    }
+    
     /* free internal error resources */
     if (OMPI_SUCCESS != (ret = ompi_errcode_intern_finalize())) {
         return ret;
@@ -278,11 +279,6 @@ int ompi_mpi_finalize(void)
 
     /* free info resources */
     if (OMPI_SUCCESS != (ret = ompi_info_finalize())) {
-        return ret;
-    }
-
-    /* free module exchange resources */
-    if (OMPI_SUCCESS != (ret = ompi_modex_finalize())) {
         return ret;
     }
 

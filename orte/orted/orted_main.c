@@ -20,6 +20,7 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -36,7 +37,6 @@
 #include <errno.h>
 #include <signal.h>
 
-#include "orte/orte_constants.h"
 
 #include "opal/event/event.h"
 #include "opal/mca/base/base.h"
@@ -44,7 +44,6 @@
 #include "opal/threads/condition.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/cmd_line.h"
-#include "opal/util/daemon_init.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
@@ -54,33 +53,30 @@
 #include "opal/util/argv.h"
 #include "opal/runtime/opal.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/util/daemon_init.h"
+#include "opal/dss/dss.h"
 
-
-#include "orte/dss/dss.h"
 #include "orte/class/orte_value_array.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
-#include "orte/util/univ_info.h"
 #include "orte/util/session_dir.h"
-#include "orte/util/universe_setup_file_io.h"
+#include "orte/util/name_fns.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ns/ns.h"
-#include "orte/mca/ras/ras.h"
-#include "orte/mca/rds/rds.h"
-#include "orte/mca/rmaps/rmaps.h"
-#include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"
-#include "orte/mca/smr/smr.h"
-#include "orte/mca/rmgr/rmgr.h"
-#include "orte/mca/rmgr/base/rmgr_private.h"
 #include "orte/mca/odls/odls.h"
-#include "orte/mca/pls/pls.h"
+#include "orte/mca/plm/plm.h"
+#include "orte/mca/ras/ras.h"
 
+/* need access to the create_jobid fn used by plm components
+* so we can set singleton name, if necessary
+*/
+#include "orte/mca/plm/base/plm_private.h"
 
 #include "orte/runtime/runtime.h"
-#include "orte/runtime/params.h"
+#include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/orted/orted.h"
 
@@ -88,24 +84,27 @@
  * Globals
  */
 
-static struct opal_event term_handler;
-static struct opal_event int_handler;
-static struct opal_event pipe_handler;
+static opal_event_t term_handler;
+static opal_event_t int_handler;
+static opal_event_t pipe_handler;
 #ifndef __WINDOWS__
-static struct opal_event sigusr1_handler;
-static struct opal_event sigusr2_handler;
+static opal_event_t sigusr1_handler;
+static opal_event_t sigusr2_handler;
 #endif  /* __WINDOWS__ */
+char *log_path = NULL;
+static opal_event_t *orted_exit_event;
 
 static void shutdown_callback(int fd, short flags, void *arg);
+static void signal_callback(int fd, short event, void *arg);
 
 static struct {
     bool help;
     bool set_sid;
-    char* ns_nds;
+    bool hnp;
+    bool daemonize;
     char* name;
     char* vpid_start;
     char* num_procs;
-    char* universe;
     int uri_pipe;
     int singleton_died_pipe;
 } orted_globals;
@@ -127,9 +126,9 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
         NULL, OPAL_CMD_LINE_TYPE_BOOL,
         "Debug the OpenRTE" },
         
-    { "orte", "no_daemonize", NULL, '\0', NULL, "no-daemonize", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Don't daemonize into the background" },
+    { "orte", "daemonize", NULL, '\0', NULL, "daemonize", 0,
+      &orted_globals.daemonize, OPAL_CMD_LINE_TYPE_BOOL,
+      "Daemonize the orted into the background" },
 
     { "orte", "debug", "daemons", '\0', NULL, "debug-daemons", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
@@ -139,57 +138,25 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of OpenRTE daemons, storing output in files" },
 
+    { NULL, NULL, NULL, '\0', NULL, "hnp", 0,
+      &orted_globals.hnp, OPAL_CMD_LINE_TYPE_BOOL,
+      "Direct the orted to act as the HNP"},
+
+    { "orte", "hnp", "uri", '\0', NULL, "hnp-uri", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "URI for the HNP"},
+    
     { NULL, NULL, NULL, '\0', NULL, "set-sid", 0,
       &orted_globals.set_sid, OPAL_CMD_LINE_TYPE_BOOL,
       "Direct the orted to separate from the current session"},
     
-    { NULL, NULL, NULL, '\0', NULL, "name", 1,
-      &orted_globals.name, OPAL_CMD_LINE_TYPE_STRING,
-      "Set the orte process name"},
-
-    { NULL, NULL, NULL, '\0', NULL, "vpid_start", 1,
-      &orted_globals.vpid_start, OPAL_CMD_LINE_TYPE_STRING,
-      "Set the starting vpid for this job"},
-
-    { NULL, NULL, NULL, '\0', NULL, "num_procs", 1,
-      &orted_globals.num_procs, OPAL_CMD_LINE_TYPE_STRING,
-      "Set the number of process in this job"},
-
-    { NULL, NULL, NULL, '\0', NULL, "ns-nds", 1,
-      &orted_globals.ns_nds, OPAL_CMD_LINE_TYPE_STRING,
-      "set sds/nds component to use for daemon (normally not needed)"},
-
-    { NULL, NULL, NULL, '\0', NULL, "nsreplica", 1,
-      &orte_process_info.ns_replica_uri, OPAL_CMD_LINE_TYPE_STRING,
-      "Name service contact information."},
-
-    { NULL, NULL, NULL, '\0', NULL, "gprreplica", 1,
-      &orte_process_info.gpr_replica_uri, OPAL_CMD_LINE_TYPE_STRING,
-      "Registry contact information."},
-
     { NULL, NULL, NULL, '\0', NULL, "nodename", 1,
       &orte_system_info.nodename, OPAL_CMD_LINE_TYPE_STRING,
       "Node name as specified by host/resource description." },
 
-    { "universe", NULL, NULL, '\0', NULL, "universe", 1,
-      &orted_globals.universe, OPAL_CMD_LINE_TYPE_STRING,
-      "Set the universe name as username@hostname:universe_name for this application" },
-
     { "tmpdir", "base", NULL, '\0', NULL, "tmpdir", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Set the root for the session directory tree" },
-
-    { "seed", NULL, NULL, '\0', NULL, "seed", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Host replicas for the core universe services"},
-
-    { "universe", "persistence", NULL, '\0', NULL, "persistent", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Remain alive after the application process completes"},
-
-    { "universe", "scope", NULL, '\0', NULL, "scope", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Set restrictions on who can connect to this universe"},
 
     { NULL, NULL, NULL, '\0', NULL, "report-uri", 1,
       &orted_globals.uri_pipe, OPAL_CMD_LINE_TYPE_INT,
@@ -204,18 +171,17 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
 
-static void signal_callback(int fd, short event, void *arg);
-
 int orte_daemon(int argc, char *argv[])
 {
     int ret = 0;
     int fd;
     opal_cmd_line_t *cmd_line = NULL;
-    char *log_path = NULL;
     char log_file[PATH_MAX];
     char *jobidstring;
+    char *rml_uri;
+    char *param;
     int i;
-    orte_buffer_t *buffer;
+    opal_buffer_t *buffer;
     int zero = 0;
     char hostname[100];
 
@@ -224,9 +190,6 @@ int orte_daemon(int argc, char *argv[])
     /* initialize the singleton died pipe to an illegal value so we can detect it was set */
     orted_globals.singleton_died_pipe = -1;
  
-    /* save the environment for use when launching application processes */
-    orte_launch_environ = opal_argv_copy(environ);
-
     /* setup to check common command line options that just report and die */
     cmd_line = OBJ_NEW(opal_cmd_line_t);
     opal_cmd_line_create(cmd_line, orte_cmd_line_opts);
@@ -264,8 +227,11 @@ int orte_daemon(int argc, char *argv[])
         exit(1);
     }
 
+    /* save the environment for use when launching application processes */
+    orte_launch_environ = opal_argv_copy(environ);
+    
     /* register and process the orte params */
-    if (ORTE_SUCCESS != (ret = orte_register_params(ORTE_INFRASTRUCTURE))) {
+    if (ORTE_SUCCESS != (ret = orte_register_params())) {
         return ret;
     }
     
@@ -286,7 +252,7 @@ int orte_daemon(int argc, char *argv[])
         free(args);
         return 1;
     }
-#if !defined(__WINDOWS__)
+#if defined(HAVE_SETSID) && !defined(__WINDOWS__)
     /* see if we were directed to separate from current session */
     if (orted_globals.set_sid) {
         setsid();
@@ -302,62 +268,21 @@ int orte_daemon(int argc, char *argv[])
     
     /* Okay, now on to serious business! */
     
-    /* Ensure the process info structure is instantiated and initialized
-     * and set the daemon flag to true
-     */
-    orte_process_info.daemon = true;
-
-    /*
-     * If the daemon was given a name on the command line, need to set the
-     * proper indicators in the environment so the name discovery service
-     * can find it
-     */
-    if (orted_globals.name) {
-        if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds",
-                                              "env", true, &environ))) {
-            opal_show_help("help-orted.txt", "orted:environ", false,
-                           "OMPI_MCA_ns_nds", "env", ret);
-            return ret;
-        }
-        if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds_name",
-                                  orted_globals.name, true, &environ))) {
-            opal_show_help("help-orted.txt", "orted:environ", false,
-                           "OMPI_MCA_ns_nds_name", orted_globals.name, ret);
-            return ret;
-        }
-        /* the following values are meaningless to the daemon, but may have
-         * been passed in anyway. we set them here because the nds_env component
-         * requires that they be set
+    if (orted_globals.hnp) {
+        /* we are to be the hnp, so set that flag */
+        orte_process_info.hnp = true;
+        orte_process_info.daemon = false;
+    } else {
+        /* set ourselves to be just a daemon */
+        orte_process_info.hnp = false;
+        orte_process_info.daemon = true;
+        /* since I am a daemon, I need to ensure that orte_init selects
+         * the rsh PLM module to support local spawns, if an rsh agent is
+         * available
          */
-        if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds_vpid_start",
-                                  orted_globals.vpid_start, true, &environ))) {
-            opal_show_help("help-orted.txt", "orted:environ", false,
-                           "OMPI_MCA_ns_nds_vpid_start", orted_globals.vpid_start, ret);
-            return ret;
-        }
-        if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds_num_procs",
-                                  orted_globals.num_procs, true, &environ))) {
-            opal_show_help("help-orted.txt", "orted:environ", false,
-                           "OMPI_MCA_ns_nds_num_procs", orted_globals.num_procs, ret);
-            return ret;
-        }
-    }
-    if (orted_globals.ns_nds) {
-        if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds",
-                                               orted_globals.ns_nds, true, &environ))) {
-            opal_show_help("help-orted.txt", "orted:environ", false,
-                           "OMPI_MCA_ns_nds", "env", ret);
-            return ret;
-        }
-    }
-
-    /* detach from controlling terminal
-     * otherwise, remain attached so output can get to us
-     */
-    if(orte_debug_flag == false &&
-       orte_debug_daemons_flag == false &&
-       orte_no_daemonize_flag == false) {
-        opal_daemon_init(NULL);
+        param = mca_base_param_environ_variable("plm","rsh",NULL);
+        putenv(param);
+        free(param);
     }
 
 #if OPAL_ENABLE_FT == 1
@@ -367,59 +292,58 @@ int orte_daemon(int argc, char *argv[])
                 true, &environ);
 #endif
 
-    /* Initialize OPAL */
-    if (ORTE_SUCCESS != (ret = opal_init())) {
-        ORTE_ERROR_LOG(ret);
-        return ret;
+    /* detach from controlling terminal
+     * otherwise, remain attached so output can get to us
+     */
+    if(!orte_debug_flag &&
+       !orte_debug_daemons_flag &&
+       orted_globals.daemonize) {
+        opal_daemon_init(NULL);
     }
-
-    /* setup the thread lock and condition variables */
-    OBJ_CONSTRUCT(&orted_comm_mutex, opal_mutex_t);
-    OBJ_CONSTRUCT(&orted_comm_cond, opal_condition_t);
-    orted_comm_exit_cond = false;
-    orte_orterun = false;
     
     /* Set the flag telling OpenRTE that I am NOT a
      * singleton, but am "infrastructure" - prevents setting
      * up incorrect infrastructure that only a singleton would
      * require.
      */
-    if (ORTE_SUCCESS != (ret = orte_init(ORTE_INFRASTRUCTURE))) {
+    if (ORTE_SUCCESS != (ret = orte_init(ORTE_NON_TOOL))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
     
-    /* setup our receive functions - this will allow us to relay messages
+    /* insert our contact info into our process_info struct so we
+     * have it for later use and set the local daemon field to our name
+     */
+    orte_process_info.my_daemon_uri = orte_rml.get_contact_info();
+    ORTE_PROC_MY_DAEMON->jobid = ORTE_PROC_MY_NAME->jobid;
+    ORTE_PROC_MY_DAEMON->vpid = ORTE_PROC_MY_NAME->vpid;
+    
+    /* if I am also the hnp, then update that contact info field too */
+    if (orte_process_info.hnp) {
+        orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
+        ORTE_PROC_MY_HNP->jobid = ORTE_PROC_MY_NAME->jobid;
+        ORTE_PROC_MY_HNP->vpid = ORTE_PROC_MY_NAME->vpid;
+    }
+    
+    /* setup an event we can wait for to tell
+     * us to terminate - both normal and abnormal
+     * termination will call us here. Use the same exit
+     * fd as orterun so that orte_comm can wake either of us up
+     * since we share that code
+     */
+    if (ORTE_SUCCESS != (ret = orte_wait_event(&orted_exit_event, &orte_exit, shutdown_callback))) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    
+    /* setup our receive function - this will allow us to relay messages
      * during start for better scalability
      */
-    /* register the daemon main receive functions */
-    /* setup to listen for broadcast commands via routed messaging algorithms */
-    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_ROUTED,
-                                  ORTE_RML_NON_PERSISTENT, orte_daemon_recv_routed, NULL);
+    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
+                                  ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
         return ret;
-    }
-    /* setup to listen for commands sent specifically to me */
-    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON, ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
-    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(ret);
-        return ret;
-    }
-    
-    /* if we are not a seed, prep a return buffer to say we started okay */
-    buffer = OBJ_NEW(orte_buffer_t);
-    if (!orte_process_info.seed) {
-        if (ORTE_SUCCESS != (ret = orte_dss.pack(buffer, &zero, 1, ORTE_INT))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_RELEASE(buffer);
-            return ret;
-        }
-        if (ORTE_SUCCESS != (ret = orte_dss.pack(buffer, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_RELEASE(buffer);
-            return ret;
-        }
     }
     
     /* Set signal handlers to catch kill signals so we can properly clean up
@@ -449,10 +373,9 @@ int orte_daemon(int argc, char *argv[])
          */
 
         /* get my jobid */
-        if (ORTE_SUCCESS != (ret = orte_ns.get_jobid_string(&jobidstring,
-                                        orte_process_info.my_name))) {
+        if (ORTE_SUCCESS != (ret = orte_util_convert_jobid_to_string(&jobidstring,
+                                        ORTE_PROC_MY_NAME->jobid))) {
             ORTE_ERROR_LOG(ret);
-            OBJ_RELEASE(buffer);
             return ret;
         }
 
@@ -485,7 +408,7 @@ int orte_daemon(int argc, char *argv[])
      */
     if (orte_debug_daemons_flag) {
         fprintf(stderr, "Daemon %s checking in as pid %ld on host %s\n",
-                ORTE_NAME_PRINT(orte_process_info.my_name), (long)orte_process_info.pid,
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)orte_process_info.pid,
                 orte_system_info.nodename);
     }
 
@@ -521,31 +444,56 @@ int orte_daemon(int argc, char *argv[])
 
     /* if requested, obtain and report a new process name and my uri to the indicated pipe */
     if (orted_globals.uri_pipe > 0) {
-        orte_process_name_t name;
-        char *tmp, *nptr;
+        orte_job_t *jdata;
+        orte_proc_t *proc;
+        orte_node_t **nodes;
         orte_app_context_t *app;
-        
+        orte_std_cntr_t index;
+        char *tmp, *nptr;
+        int rc;
+
         /* setup the singleton's job */
-        orte_ns.create_jobid(&name.jobid, NULL);
-        orte_ns.reserve_range(name.jobid, 1, &name.vpid);
+        jdata = OBJ_NEW(orte_job_t);
+        orte_plm_base_create_jobid(&jdata->jobid);
+        orte_pointer_array_add(&index, orte_job_data, jdata);
         
+        /* setup an app_context for the singleton */
         app = OBJ_NEW(orte_app_context_t);
         app->app = strdup("singleton");
         app->num_procs = 1;
+        orte_pointer_array_add(&index, jdata->apps, app);
         
-        if (ORTE_SUCCESS !=
-            (ret = orte_rmgr_base_put_app_context(name.jobid, &app, 1))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
+        /* run our local allocator to read the available
+         * allocation in case this singleton decides to
+         * comm_spawn other procs
+         */
+        if (ORTE_SUCCESS != (rc = orte_ras.allocate(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            /* don't quit as this would cause the singleton
+             * to hang!
+             */
         }
-        OBJ_RELEASE(app);
         
-        /* setup stage gates for singleton */
-        orte_rmgr_base_proc_stage_gate_init(name.jobid);
-
+        nodes = (orte_node_t**)orte_node_pool->addr;
+        
+        /* setup a proc object for the singleton - since we
+         * -must- be the HNP, and therefore we stored our
+         * node on the global node pool, and since the singleton
+         * -must- be on the same node as us, indicate that
+         */
+        proc = OBJ_NEW(orte_proc_t);
+        proc->name.jobid = jdata->jobid;
+        proc->name.vpid = 0;
+        proc->state = ORTE_PROC_STATE_RUNNING;
+        proc->app_idx = 0;
+        proc->node = nodes[0]; /* hnp node must be there */
+        OBJ_RETAIN(nodes[0]);  /* keep accounting straight */
+        orte_pointer_array_add(&index, jdata->procs, proc);
+        jdata->num_procs = 1;
+        
         /* create a string that contains our uri + the singleton's name */
-        orte_ns.get_proc_name_string(&nptr, &name);
-        asprintf(&tmp, "%s[%s]", orte_universe_info.seed_uri, nptr);
+        orte_util_convert_process_name_to_string(&nptr, &proc->name);
+        asprintf(&tmp, "%s[%s]", orte_process_info.my_daemon_uri, nptr);
         free(nptr);
 
         /* pass that info to the singleton */
@@ -566,74 +514,106 @@ int orte_daemon(int argc, char *argv[])
         opal_event_add(&pipe_handler, NULL);
     }
 
-    /* setup and enter the event monitor */
-    OPAL_THREAD_LOCK(&orted_comm_mutex);
-
-    /* if we are not a seed... */
-    if (!orte_process_info.seed) {
+    /* if we are not the HNP...the only time we will be an HNP
+     * is if we are launched by a singleton to provide support
+     * for it
+     */
+    if (!orte_process_info.hnp) {
         /* send the information to the orted report-back point - this function
-         * will kindly hand the gpr compound cmds contained in the buffer
-         * over to the gpr for processing, but also counts the number of
+         * will process the data, but also counts the number of
          * orteds that reported back so the launch procedure can continue.
          * We need to do this at the last possible second as the HNP
          * can turn right around and begin issuing orders to us
          */
+        buffer = OBJ_NEW(opal_buffer_t);
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &zero, 1, OPAL_INT))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(buffer);
+            return ret;
+        }
+        rml_uri = orte_rml.get_contact_info();
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &rml_uri, 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(buffer);
+            return ret;
+        }
         if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buffer,
                                             ORTE_RML_TAG_ORTED_CALLBACK, 0))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(buffer);
             return ret;
         }
+        OBJ_RELEASE(buffer);  /* done with this */
     }
-    OBJ_RELEASE(buffer);  /* done with this */
 
     if (orte_debug_daemons_flag) {
-        opal_output(0, "%s orted: up and running - waiting for commands!", ORTE_NAME_PRINT(orte_process_info.my_name));
+        opal_output(0, "%s orted: up and running - waiting for commands!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
 
-    while (false == orted_comm_exit_cond) {
-        opal_condition_wait(&orted_comm_cond, &orted_comm_mutex);
+    /* wait to hear we are done */
+    opal_event_dispatch();
+
+    /* should never get here, but if we do... */
+    
+    /* cleanup any lingering session directories */
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+    
+    /* Finalize and clean up ourselves */
+    if (ORTE_SUCCESS != (ret = orte_finalize())) {
+        ORTE_ERROR_LOG(ret);
     }
+    return ret;
+}
 
-    OPAL_THREAD_UNLOCK(&orted_comm_mutex);
-
+static void shutdown_callback(int fd, short flags, void *arg)
+{
+    opal_buffer_t ack;
+    orte_proc_state_t state=ORTE_PROC_STATE_TERMINATED;
+    orte_exit_code_t exit_code=0;
+    orte_plm_cmd_flag_t cmd = ORTE_PLM_UPDATE_PROC_STATE;
+    int ret;
+    
+    if (NULL != arg) {
+        /* it's the singleton pipe...  remove that handler */
+        opal_event_del(&pipe_handler);
+    }
+    
     if (orte_debug_daemons_flag) {
-       opal_output(0, "%s orted: mutex cleared - finalizing", ORTE_NAME_PRINT(orte_process_info.my_name));
+        opal_output(0, "%s orted: finalizing", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
-
+    
     /* cleanup */
     if (NULL != log_path) {
         unlink(log_path);
     }
-
+    
     /* make sure our local procs are dead - but don't update their state
-    * on the HNP as this may be redundant
-    */
+     * on the HNP as this may be redundant
+     */
     orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
-
-    /* cleanup the orted communication mutex and condition objects */
-    OBJ_DESTRUCT(&orted_comm_mutex);
-    OBJ_DESTRUCT(&orted_comm_cond);
-
+    
+    /* if we are not the HNP, send a state update so
+     * the HNP knows we are "gone"
+     */
+    if (!orte_process_info.hnp) {
+        OBJ_CONSTRUCT(&ack, opal_buffer_t);
+        opal_dss.pack(&ack, &cmd, 1, ORTE_PLM_CMD);
+        opal_dss.pack(&ack, &(ORTE_PROC_MY_NAME->jobid), 1, ORTE_JOBID);        
+        opal_dss.pack(&ack, &(ORTE_PROC_MY_NAME->vpid), 1, ORTE_VPID);        
+        opal_dss.pack(&ack, &state, 1, ORTE_PROC_STATE);        
+        opal_dss.pack(&ack, &exit_code, 1, ORTE_EXIT_CODE);
+        orte_rml.send_buffer(ORTE_PROC_MY_HNP, &ack, ORTE_RML_TAG_PLM, 0);
+        OBJ_DESTRUCT(&ack);
+    }
+    
     /* cleanup any lingering session directories */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-
+    
     /* Finalize and clean up ourselves */
     if (ORTE_SUCCESS != (ret = orte_finalize())) {
         ORTE_ERROR_LOG(ret);
     }
     exit(ret);
-}
-
-static void shutdown_callback(int fd, short flags, void *arg)
-{
-    OPAL_TRACE(1);
-    if (NULL != arg) {
-        /* it's the pipe...  remove that handler */
-        opal_event_del(&pipe_handler);
-    }
-    orted_comm_exit_cond = true;
-    opal_condition_signal(&orted_comm_cond);
 }
 
 static void signal_callback(int fd, short event, void *arg)

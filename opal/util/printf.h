@@ -29,10 +29,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
+BEGIN_C_DECLS
 
 /**
  * Writes to a string under the control of a format string
@@ -127,9 +124,7 @@ OPAL_DECLSPEC int  opal_asprintf(char **ptr, const char *fmt, ...) __opal_attrib
 OPAL_DECLSPEC int  opal_vasprintf(char **ptr, const char *fmt, va_list ap) __opal_attribute_format__(__printf__, 2, 0);
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_PRINTF_H */
 

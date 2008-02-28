@@ -21,6 +21,7 @@
 #include "opal_config.h"
 
 #include "opal/class/opal_object.h"
+#include "opal/dss/dss.h"
 #include "opal/util/trace.h"
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
@@ -81,6 +82,9 @@ opal_finalize_util(void)
        the malloc code turning off doesn't affect opal_output that
        much */
     opal_output_finalize();
+    
+    /* close the dss */
+    opal_dss_close();
 
     /* finalize the class/object system */
     opal_class_finalize();

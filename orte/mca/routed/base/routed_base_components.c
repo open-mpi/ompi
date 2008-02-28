@@ -94,6 +94,9 @@ orte_routed_base_select(void)
             if (priority > selected_priority) {
                 /* Otherwise this is a normal module and subject to normal selection */
                 if (NULL != selected_module && NULL != selected_module->finalize) {
+                    opal_output_verbose(10, orte_routed_base_output,
+                                        "orte_routed_base_select: component %s deselected - finalizing",
+                                        selected_component->routed_version.mca_component_name);
                     selected_module->finalize();
                 }
 
@@ -107,6 +110,8 @@ orte_routed_base_select(void)
     /* 
      * Unload all components that were not selected
      */
+    opal_output_verbose(10, orte_routed_base_output,
+                        "orte_routed_base_select: unloading unused components");
     mca_base_components_close(orte_routed_base_output,
                               &orte_routed_base_components,
                               &selected_component->routed_version);
@@ -120,6 +125,9 @@ orte_routed_base_select(void)
     if (NULL == selected_component) return ORTE_ERROR;
     
     /* initialize the selected component */
+    opal_output_verbose(10, orte_routed_base_output,
+                        "orte_routed_base_select: initializing selectedl component %s",
+                        selected_component->routed_version.mca_component_name);
     if (ORTE_SUCCESS != orte_routed.initialize()) {
         return ORTE_ERROR;
     }
@@ -131,6 +139,11 @@ orte_routed_base_select(void)
 int
 orte_routed_base_close(void)
 {
+    /* finalize the selected component */
+    if (NULL != orte_routed.finalize) {
+        orte_routed.finalize();
+    }
+    
     /* shutdown any remaining opened components */
     if (component_open_called) {
         mca_base_components_close(orte_routed_base_output, 

@@ -30,9 +30,7 @@
  * includes
  */
 #include "orte_config.h"
-
-#include "orte/orte_constants.h"
-#include "orte/orte_types.h"
+#include "orte/constants.h"
 
 #include "opal/threads/mutex.h"
 #include "opal/class/opal_list.h"
@@ -47,11 +45,7 @@
 
 #include "grpcomm_basic.h"
 
-/* set the default xovers to always force linear
- * this is a tmp workaround for a problem in the
- * rml that prevents the daemons from sending
- * messages to their local procs
- */
+/* set the default xovers */
 #define XCAST_LINEAR_XOVER_DEFAULT     2
 #define XCAST_BINOMIAL_XOVER_DEFAULT   16
 
@@ -88,19 +82,17 @@ int orte_grpcomm_basic_open(void)
 {
     char *mode;
     mca_base_component_t *c = &mca_grpcomm_basic_component.grpcomm_version;
-    
-    /* initialize globals */
-    OBJ_CONSTRUCT(&orte_grpcomm_basic.mutex, opal_mutex_t);
-    OBJ_CONSTRUCT(&orte_grpcomm_basic.cond, opal_condition_t);
-    orte_grpcomm_basic.num_active = 0;
-    
+    int tmp;
+
     mca_base_param_reg_int(c, "xcast_linear_xover",
                            "Number of daemons where use of linear xcast mode is to begin",
-                           false, false, XCAST_LINEAR_XOVER_DEFAULT, &orte_grpcomm_basic.xcast_linear_xover);
+                           false, false, XCAST_LINEAR_XOVER_DEFAULT, &tmp);
+    orte_grpcomm_basic.xcast_linear_xover = tmp;
     
     mca_base_param_reg_int(c, "xcast_binomial_xover",
                            "Number of daemons where use of binomial xcast mode is to begin",
-                           false, false, XCAST_BINOMIAL_XOVER_DEFAULT, &orte_grpcomm_basic.xcast_binomial_xover);
+                           false, false, XCAST_BINOMIAL_XOVER_DEFAULT, &tmp);
+    orte_grpcomm_basic.xcast_binomial_xover = tmp;
     
     mca_base_param_reg_string(c, "xcast_mode",
                               "Select xcast mode (\"linear\" | \"binomial\" | \"direct\")",
@@ -124,14 +116,22 @@ int orte_grpcomm_basic_open(void)
 /* Close the component */
 int orte_grpcomm_basic_close(void)
 {
-    OBJ_DESTRUCT(&orte_grpcomm_basic.mutex);
-    OBJ_DESTRUCT(&orte_grpcomm_basic.cond);
-    
     return ORTE_SUCCESS;
 }
 
 orte_grpcomm_base_module_t* orte_grpcomm_basic_init(int *priority)
 {
+    /* initialize globals */
+    OBJ_CONSTRUCT(&orte_grpcomm_basic.mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&orte_grpcomm_basic.cond, opal_condition_t);
+    orte_grpcomm_basic.num_active = 0;
+    
+    OBJ_CONSTRUCT(&orte_grpcomm_basic.modex_data, opal_hash_table_t);    
+    OBJ_CONSTRUCT(&orte_grpcomm_basic.modex_buffer, opal_buffer_t);
+    orte_grpcomm_basic.modex_num_entries = 0;
+    
+    opal_hash_table_init(&orte_grpcomm_basic.modex_data, 256);
+    
     /* we are the default, so set a low priority so we can be overridden */
     *priority = 1;
     
@@ -143,5 +143,12 @@ orte_grpcomm_base_module_t* orte_grpcomm_basic_init(int *priority)
  */
 int orte_grpcomm_basic_finalize(void)
 {
+    OBJ_DESTRUCT(&orte_grpcomm_basic.mutex);
+    OBJ_DESTRUCT(&orte_grpcomm_basic.cond);
+    
+    opal_hash_table_remove_all(&orte_grpcomm_basic.modex_data);
+    OBJ_DESTRUCT(&orte_grpcomm_basic.modex_data);
+    
+    OBJ_DESTRUCT(&orte_grpcomm_basic.modex_buffer);
     return ORTE_SUCCESS;
 }

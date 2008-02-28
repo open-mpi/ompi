@@ -52,6 +52,7 @@
 #include "opal/mca/crs/base/base.h"
 #endif
 #include "opal/runtime/opal.h"
+#include "opal/dss/dss.h"
 
 #include "ompi/mca/allocator/allocator.h"
 #include "ompi/mca/allocator/base/base.h"
@@ -75,6 +76,9 @@
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
+#include "ompi/mca/pubsub/base/base.h"
+#include "ompi/mca/dpm/base/base.h"
+
 #if OPAL_ENABLE_FT == 1
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
@@ -82,38 +86,26 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
-#include "orte/mca/gpr/gpr.h"
-#include "orte/mca/gpr/base/base.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
-#include "orte/mca/ns/ns.h"
-#include "orte/mca/ns/base/base.h"
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/ras/ras.h"
-#include "orte/mca/ras/base/base.h"
-#include "orte/mca/rds/rds.h"
-#include "orte/mca/rds/base/base.h"
+#include "orte/mca/ras/base/ras_private.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/rmaps/base/base.h"
-#include "orte/mca/rmgr/rmgr.h"
-#include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/routed/base/base.h"
-#include "orte/mca/pls/pls.h"
-#include "orte/mca/pls/base/base.h"
-#include "orte/mca/odls/odls.h"
-#include "orte/mca/odls/base/base.h"
-#include "orte/mca/smr/smr.h"
-#include "orte/mca/smr/base/base.h"
-#include "orte/mca/sds/sds.h"
-#include "orte/mca/sds/base/base.h"
+#include "orte/mca/plm/plm.h"
+#include "orte/mca/plm/base/base.h"
+#include "orte/mca/ess/ess.h"
+#include "orte/mca/ess/base/base.h"
 #if OPAL_ENABLE_FT == 1
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
@@ -176,9 +168,9 @@ void ompi_info::open_components()
   // it.
   opal_event_init();
 
-  // Open the DPS
+  // Open the DSS
 
-  if (ORTE_SUCCESS != orte_dss_open()) {
+  if (ORTE_SUCCESS != opal_dss_open()) {
      printf( "Unable to initialize the DSS\n" );
      return;
   }
@@ -193,7 +185,7 @@ void ompi_info::open_components()
 
   // Register the ORTE layer's MCA parameters
 
-  orte_register_params(false);
+  orte_register_params();
 
   // Register the MPI layer's MCA parameters
 
@@ -236,9 +228,9 @@ void ompi_info::open_components()
   component_map["installdirs"] = &opal_installdirs_components;
 
   // ORTE frameworks
-  // Set orte_process_info.seed to true to force all frameworks to
+  // Set orte_process_info.hnp to true to force all frameworks to
   // open components
-  orte_process_info.seed = true;
+  orte_process_info.hnp = true;
 
   mca_oob_base_open();
   component_map["oob"] = &mca_oob_base_components;
@@ -249,29 +241,17 @@ void ompi_info::open_components()
   orte_errmgr_base_open();
   component_map["errmgr"] = &orte_errmgr_base_components_available;
 
-  orte_gpr_base_open();
-  component_map["gpr"] = &orte_gpr_base_components_available;
-
   orte_grpcomm_base_open();
   component_map["grpcomm"] = &mca_grpcomm_base_components_available;
   
   orte_iof_base_open();
   component_map["iof"] = &orte_iof_base.iof_components_opened;
 
-  orte_ns_base_open();
-  component_map["ns"] = &mca_ns_base_components_available;
-
   orte_ras_base_open();
   component_map["ras"] = &orte_ras_base.ras_opened;
 
-  orte_rds_base_open();
-  component_map["rds"] = &orte_rds_base.rds_components;
-
   orte_rmaps_base_open();
-  component_map["rmaps"] = &orte_rmaps_base.rmaps_opened;
-
-  orte_rmgr_base_open();
-  component_map["rmgr"] = &orte_rmgr_base.rmgr_components;
+  component_map["rmaps"] = &orte_rmaps_base.available_components;
 
   orte_rml_base_open();
   component_map["rml"] = &orte_rml_base_components;
@@ -279,17 +259,11 @@ void ompi_info::open_components()
   orte_routed_base_open();
   component_map["routed"] = &orte_routed_base_components;
   
-  orte_pls_base_open();
-  component_map["pls"] = &orte_pls_base.available_components;
+  orte_plm_base_open();
+  component_map["plm"] = &orte_plm_base.available_components;
 
-  orte_odls_base_open();
-  component_map["odls"] = &orte_odls_base.available_components;
-
-  orte_sds_base_open();
-  component_map["sds"] = &orte_sds_base_components_available;
-
-  orte_smr_base_open();
-  component_map["smr"] = &orte_smr_base.smr_components;
+  orte_ess_base_open();
+  component_map["ess"] = &orte_ess_base_components_available;
 
 #if OPAL_ENABLE_FT == 1
   orte_snapc_base_open();
@@ -335,6 +309,12 @@ void ompi_info::open_components()
   mca_topo_base_open();
   component_map["topo"] = &mca_topo_base_components_opened;
 
+  ompi_pubsub_base_open();
+  component_map["pubsub"] = &ompi_pubsub_base_components_available;
+  
+  ompi_dpm_base_open();
+  component_map["dpm"] = &ompi_dpm_base_components_available;
+
 #if OPAL_ENABLE_FT == 1
   ompi_crcp_base_open();
   component_map["crcp"] = &ompi_crcp_base_components_available;
@@ -369,6 +349,8 @@ void ompi_info::close_components()
 #if OPAL_ENABLE_FT == 1
         ompi_crcp_base_close();
 #endif
+        ompi_dpm_base_close();
+        ompi_pubsub_base_close();
         mca_topo_base_close();
         // the PML has to call the base PTL close function.
         mca_btl_base_close();
@@ -386,16 +368,11 @@ void ompi_info::close_components()
 #endif
         orte_filem_base_close();
         orte_iof_base_close();
-        orte_sds_base_close();
-        orte_smr_base_close();
-        orte_pls_base_close();
+        orte_ess_base_close();
+        orte_plm_base_close();
         orte_odls_base_close();
-        orte_rmgr_base_close();
         orte_rmaps_base_close();
-        orte_rds_base_close();
         orte_ras_base_close();
-        orte_ns_base_close();
-        orte_gpr_base_close();
         orte_grpcomm_base_close();
         orte_errmgr_base_close();
         orte_rml_base_close();

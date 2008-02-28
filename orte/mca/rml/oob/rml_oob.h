@@ -25,7 +25,7 @@
 #include "opal/event/event.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/oob/oob.h"
-#include "orte/dss/dss_types.h"
+#include "opal/dss/dss_types.h"
 
 BEGIN_C_DECLS
 
@@ -97,9 +97,9 @@ struct orte_rml_oob_msg_t {
     struct iovec                     *msg_data;
 
     /** buffer for non-blocking buffer sends */
-    orte_buffer_t                     msg_recv_buffer;
+    opal_buffer_t                     msg_recv_buffer;
     /** pointer to user buffer for buffered sends */
-    orte_buffer_t                    *user_buffer;
+    opal_buffer_t                    *user_buffer;
   
     orte_rml_oob_msg_header_t         msg_header;  
 };
@@ -130,12 +130,12 @@ int orte_rml_oob_send_nb(orte_process_name_t* peer,
                          orte_rml_callback_fn_t cbfunc,
                          void* cbdata);
 int orte_rml_oob_send_buffer(orte_process_name_t* peer,
-                             orte_buffer_t* buffer,
+                             opal_buffer_t* buffer,
                              orte_rml_tag_t tag,
                              int flags);
 
 int orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
-                                orte_buffer_t* buffer,
+                                opal_buffer_t* buffer,
                                 orte_rml_tag_t tag,
                                 int flags,
                                 orte_rml_buffer_callback_fn_t cbfunc,
@@ -154,7 +154,7 @@ int orte_rml_oob_recv_nb(orte_process_name_t* peer,
                          orte_rml_callback_fn_t cbfunc,
                          void* cbdata);
 int orte_rml_oob_recv_buffer(orte_process_name_t* peer,
-                             orte_buffer_t *buf,
+                             opal_buffer_t *buf,
                              orte_rml_tag_t tag,
                              int flags);
 int orte_rml_oob_recv_buffer_nb(orte_process_name_t* peer,

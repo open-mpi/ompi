@@ -22,3 +22,9 @@
 # Specific to this module
 
 PARAM_CONFIG_FILES="Makefile"
+#
+# Set the config priority so that this
+# component will build for all environs -except-
+# those special ones that do not support it
+
+PARAM_CONFIG_PRIORITY=10

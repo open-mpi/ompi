@@ -17,8 +17,8 @@
  * $HEADER$
  */
 #include "orte_config.h"
-#include "orte/orte_constants.h"
-#include "orte/orte_types.h"
+#include "orte/constants.h"
+#include "orte/types.h"
 
 #include <errno.h>
 #include <unistd.h>
@@ -30,10 +30,11 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/os_path.h"
+#include "opal/util/show_help.h"
 
-#include "orte/dss/dss.h"
-#include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/runtime/orte_globals.h"
+#include "orte/util/name_fns.h"
 
 #include "orte/mca/ras/base/ras_private.h"
 #include "ras_tm.h"
@@ -42,8 +43,7 @@
 /*
  * Local functions
  */
-static int allocate(orte_jobid_t jobid, opal_list_t *attributes);
-static int deallocate(orte_jobid_t jobid);
+static int allocate(opal_list_t *nodes);
 static int finalize(void);
 
 static int discover(opal_list_t* nodelist, char *pbs_jobid);
@@ -51,31 +51,25 @@ static char *tm_getline(FILE *fp);
 
 #define TM_FILE_MAX_LINE_LENGTH 512
 
+static char *filename;
+
 /*
  * Global variable
  */
 orte_ras_base_module_t orte_ras_tm_module = {
     allocate,
-    orte_ras_base_node_insert,
-    orte_ras_base_node_query,
-    orte_ras_base_node_query_alloc,
-    orte_ras_base_node_lookup,
-    orte_ras_base_proc_query_alloc,
-    deallocate,
     finalize
 };
 
 
 /**
- * Discover available (pre-allocated) nodes.  Allocate the
- * requested number of nodes/process slots to the job.
+ * Discover available (pre-allocated) nodes and report
+ * them back to the caller.
  *  
  */
-static int allocate(orte_jobid_t jobid, opal_list_t *attributes)
+static int allocate(opal_list_t *nodes)
 {
     int ret;
-    opal_list_t nodes;
-    opal_list_item_t* item;
     char *pbs_jobid;
 
     /* get our PBS jobid from the environment */
@@ -84,49 +78,31 @@ static int allocate(orte_jobid_t jobid, opal_list_t *attributes)
         return ORTE_ERR_NOT_FOUND;
     }
     
-    OBJ_CONSTRUCT(&nodes, opal_list_t);
-    if (ORTE_SUCCESS != (ret = discover(&nodes, pbs_jobid))) {
-        opal_output(orte_ras_base.ras_output,
-                    "ras:tm:allocate: discover failed!");
+    if (ORTE_SUCCESS != (ret = discover(nodes, pbs_jobid))) {
+        ORTE_ERROR_LOG(ret);
         return ret;
     }
-    ret = orte_ras_base_allocate_nodes(jobid, &nodes);
-
-    while (NULL != (item = opal_list_remove_first(&nodes))) {
-        OBJ_RELEASE(item);
+    
+    /* in the TM world, if we didn't find anything, then this
+     * is an unrecoverable error - report it
+     */
+    if (opal_list_is_empty(nodes)) {
+        opal_show_help("help-ras-tm.txt", "no-nodes-found", true, filename);
+        return ORTE_ERR_NOT_FOUND;
     }
-    OBJ_DESTRUCT(&nodes);
-
+    
     /* All done */
-
-    if (ORTE_SUCCESS == ret) {
-        opal_output(orte_ras_base.ras_output, 
-                    "ras:tm:allocate: success");
-    } else {
-        opal_output(orte_ras_base.ras_output, 
-                    "ras:tm:allocate: failure (base_allocate_nodes=%d)", ret);
-    }
-    return ret;
-}
-
-/*
- * There's really nothing to do here
- */
-static int deallocate(orte_jobid_t jobid)
-{
-    opal_output(orte_ras_base.ras_output, 
-                "ras:tm:deallocate: success (nothing to do)");
     return ORTE_SUCCESS;
 }
-
 
 /*
  * There's really nothing to do here
  */
 static int finalize(void)
 {
-    opal_output(orte_ras_base.ras_output, 
-                "ras:tm:finalize: success (nothing to do)");
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                         "%s ras:tm:finalize: success (nothing to do)",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     return ORTE_SUCCESS;
 }
 
@@ -142,17 +118,15 @@ static int finalize(void)
 
 static int discover(opal_list_t* nodelist, char *pbs_jobid)
 {
-    int ret;
     int32_t nodeid;
-    orte_ras_node_t *node;
+    orte_node_t *node;
     opal_list_item_t* item;
-    opal_list_t new_nodes;
     FILE *fp;
-    char *hostname, *filename;
+    char *hostname;
     struct timeval start, stop;
 
     /* check for timing request - get start time if so */
-    if (orte_ras_base.timing) {
+    if (orte_timing) {
         gettimeofday(&start, NULL);
     }
     
@@ -181,43 +155,48 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
        resolving to the same hostname (i.e., vcpu's on a single
        host). */
 
-    OBJ_CONSTRUCT(&new_nodes, opal_list_t);
     nodeid=0;
     while (NULL != (hostname = tm_getline(fp))) {
-        opal_output(orte_ras_base.ras_output, 
-                    "ras:tm:allocate:discover: got hostname %s", hostname);
+
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                             "%s ras:tm:allocate:discover: got hostname %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostname));
 
         /* Remember that TM may list the same node more than once.  So
            we have to check for duplicates. */
 
-        for (item = opal_list_get_first(&new_nodes);
-             opal_list_get_end(&new_nodes) != item;
+        for (item = opal_list_get_first(nodelist);
+             opal_list_get_end(nodelist) != item;
              item = opal_list_get_next(item)) {
-            node = (orte_ras_node_t*) item;
-            if (0 == strcmp(node->node_name, hostname)) {
-                ++node->node_slots;
-                opal_output(orte_ras_base.ras_output, 
-                            "ras:tm:allocate:discover: found -- bumped slots to %d",
-                            node->node_slots);
+            node = (orte_node_t*) item;
+            if (0 == strcmp(node->name, hostname)) {
+                ++node->slots;
+
+                OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                                     "%s ras:tm:allocate:discover: found -- bumped slots to %d",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->slots));
+                
                 break;
             }
         }
 
         /* Did we find it? */
 
-        if (opal_list_get_end(&new_nodes) == item) {
+        if (opal_list_get_end(nodelist) == item) {
 
             /* Nope -- didn't find it, so add a new item to the list */
-
-            opal_output(orte_ras_base.ras_output, 
-                        "ras:tm:allocate:discover: not found -- added to list");
-            node = OBJ_NEW(orte_ras_node_t);
-            node->node_name = hostname;
+            
+            OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                                 "%s ras:tm:allocate:discover: not found -- added to list",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            
+            node = OBJ_NEW(orte_node_t);
+            node->name = hostname;
             node->launch_id = nodeid;
-            node->node_slots_inuse = 0;
-            node->node_slots_max = 0;
-            node->node_slots = 1;
-            opal_list_append(&new_nodes, &node->super);
+            node->slots_inuse = 0;
+            node->slots_max = 0;
+            node->slots = 1;
+            opal_list_append(nodelist, &node->super);
         } else {
 
             /* Yes, so we need to free the hostname that came back */
@@ -228,32 +207,8 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
         nodeid++;
     }
 
-    /* Add these nodes to the registry */
-
-    opal_output(orte_ras_base.ras_output, 
-                "ras:tm:allocate:discover: done -- adding to registry");
-    ret = orte_ras_base_node_insert(&new_nodes);
-    for (item = opal_list_remove_first(&new_nodes);
-         NULL != item; item = opal_list_remove_first(&new_nodes)) {
-        if (ORTE_SUCCESS == ret) {
-            opal_list_append(nodelist, item);
-        } else {
-            OBJ_RELEASE(item);
-        }
-    }
-
-    /* All done */
-    if (ORTE_SUCCESS == ret) {
-        opal_output(orte_ras_base.ras_output, 
-                    "ras:tm:allocate:discover: success");
-    } else {
-        opal_output(orte_ras_base.ras_output, 
-                    "ras:tm:allocate:discover: failed (rc=%d)", ret);
-    }
-    OBJ_DESTRUCT(&new_nodes);
-
     /* check for timing request - get stop time and report elapsed time if so */
-    if (orte_ras_base.timing) {
+    if (orte_timing) {
         gettimeofday(&stop, NULL);
         opal_output(0, "ras_tm: time to allocate is %ld usec",
                     (long int)((stop.tv_sec - start.tv_sec)*1000000 +
@@ -261,7 +216,7 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
         gettimeofday(&start, NULL);
     }
     
-    return ret;
+    return ORTE_SUCCESS;
 }
 
 static char *tm_getline(FILE *fp)

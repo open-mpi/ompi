@@ -28,14 +28,17 @@
 #include "ompi/types.h"
 #include "opal/include/opal/align.h"
 #include "opal/util/show_help.h"
-#include "orte/mca/ns/base/base.h"
+
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/dss/dss.h"
+#include "opal/dss/dss.h"
 #include "opal/class/opal_pointer_array.h"
+
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
+#include "ompi/mca/dpm/dpm.h"
+
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_udapl.h"
 #include "btl_udapl_endpoint.h"
@@ -44,14 +47,14 @@
 #include "btl_udapl_proc.h"
 
 static void mca_btl_udapl_endpoint_send_cb(int status, orte_process_name_t* endpoint, 
-                                           orte_buffer_t* buffer, orte_rml_tag_t tag,
+                                           opal_buffer_t* buffer, orte_rml_tag_t tag,
                                            void* cbdata);
 static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint);
 static int mca_btl_udapl_endpoint_post_recv(mca_btl_udapl_endpoint_t* endpoint,
                                             size_t size);
 void mca_btl_udapl_endpoint_connect(mca_btl_udapl_endpoint_t* endpoint);
 void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint, 
-                                 orte_buffer_t* buffer, orte_rml_tag_t tag,
+                                 opal_buffer_t* buffer, orte_rml_tag_t tag,
                                  void* cbdata);
 static int mca_btl_udapl_endpoint_finish_eager(mca_btl_udapl_endpoint_t*);
 static int mca_btl_udapl_endpoint_finish_max(mca_btl_udapl_endpoint_t*);
@@ -272,7 +275,7 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
 
 
 static void mca_btl_udapl_endpoint_send_cb(int status, orte_process_name_t* endpoint, 
-        orte_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata)
+        opal_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata)
 {
     OBJ_RELEASE(buffer);
 }
@@ -467,7 +470,7 @@ int mca_btl_udapl_endpoint_create(mca_btl_udapl_module_t* btl,
 static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint)
 {
     mca_btl_udapl_addr_t* addr = &endpoint->endpoint_btl->udapl_addr;
-    orte_buffer_t* buf = OBJ_NEW(orte_buffer_t);
+    opal_buffer_t* buf = OBJ_NEW(opal_buffer_t);
     int rc;
 
     if(NULL == buf) {
@@ -478,13 +481,13 @@ static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint)
     OPAL_THREAD_ADD32(&(endpoint->endpoint_btl->udapl_connect_inprogress), 1);
 
     /* Pack our address information */
-    rc = orte_dss.pack(buf, &addr->port, 1, ORTE_UINT64);
+    rc = opal_dss.pack(buf, &addr->port, 1, OPAL_UINT64);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-    rc = orte_dss.pack(buf, &addr->addr, sizeof(DAT_SOCK_ADDR), ORTE_UINT8);
+    rc = opal_dss.pack(buf, &addr->addr, sizeof(DAT_SOCK_ADDR), OPAL_UINT8);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -492,7 +495,7 @@ static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint)
 
     /* Send the buffer */
     rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, buf,
-            ORTE_RML_TAG_UDAPL, 0, mca_btl_udapl_endpoint_send_cb, NULL);
+            OMPI_RML_TAG_UDAPL, 0, mca_btl_udapl_endpoint_send_cb, NULL);
     if(0 > rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -504,7 +507,7 @@ static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint)
 
 
 void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint, 
-        orte_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata)
+        opal_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata)
 {
     mca_btl_udapl_addr_t addr;
     mca_btl_udapl_proc_t* proc;
@@ -514,14 +517,14 @@ void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint,
     int rc;
 
     /* Unpack data */
-    rc = orte_dss.unpack(buffer, &addr.port, &cnt, ORTE_UINT64);
+    rc = opal_dss.unpack(buffer, &addr.port, &cnt, OPAL_UINT64);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
     }
 
     cnt = sizeof(mca_btl_udapl_addr_t);
-    rc = orte_dss.unpack(buffer, &addr.addr, &cnt, ORTE_UINT8);
+    rc = opal_dss.unpack(buffer, &addr.addr, &cnt, OPAL_UINT8);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
@@ -535,7 +538,7 @@ void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint,
                 opal_list_get_end(&mca_btl_udapl_component.udapl_procs);
             proc  = (mca_btl_udapl_proc_t*)opal_list_get_next(proc)) {
 
-        if(ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &proc->proc_guid, endpoint)) {
+        if(OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &proc->proc_guid, endpoint)) {
             for(i = 0; i < proc->proc_endpoint_count; i++) {
                 ep = proc->proc_endpoints[i];
 
@@ -561,7 +564,7 @@ void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint,
 
 void mca_btl_udapl_endpoint_post_oob_recv(void)
 {
-    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_UDAPL,
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, OMPI_RML_TAG_UDAPL,
             ORTE_RML_PERSISTENT, mca_btl_udapl_endpoint_recv, NULL);
 }
 
@@ -577,7 +580,7 @@ void mca_btl_udapl_endpoint_connect(mca_btl_udapl_endpoint_t* endpoint)
     /* Nasty test to prevent deadlock and unwanted connection attempts */
     /* This right here is the whole point of using the ORTE/RML handshake */
     if((MCA_BTL_UDAPL_CONN_EAGER == endpoint->endpoint_state &&
-            0 > orte_ns.compare_fields(ORTE_NS_CMP_ALL,
+            0 > orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
                     &endpoint->endpoint_proc->proc_guid,
                     &ompi_proc_local()->proc_name)) ||
             (MCA_BTL_UDAPL_CLOSED != endpoint->endpoint_state &&
@@ -715,7 +718,7 @@ static int mca_btl_udapl_endpoint_finish_eager(
     }
 
     /* Only one side does dat_ep_connect() */
-    if(0 < orte_ns.compare_fields(ORTE_NS_CMP_ALL,
+    if(0 < orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
                 &endpoint->endpoint_proc->proc_guid,
                 &ompi_proc_local()->proc_name)) {
     

@@ -24,15 +24,18 @@
 #define _MCA_OOB_TCP_ADDR_H_
 
 #include "orte_config.h"
+#include "orte/types.h"
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include "orte/dss/dss.h"
+
 #include "opal/class/opal_object.h"
-#include "orte/mca/ns/ns_types.h"
+
+#include "opal/dss/dss.h"
 
 BEGIN_C_DECLS
 

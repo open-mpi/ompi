@@ -35,7 +35,7 @@ service_name
 A service name (string).
 .TP 1.4i
 info
-Options to the name service functions (handle). No options currently supported.
+Options to the name service functions (handle).
 .ft R
 .TP 1.4i
 port_name
@@ -53,9 +53,32 @@ an application may retrieve \fIport_name\fP by calling MPI_Lookup_name
 with \fIservice_name\fP as an argument. It is an error to publish the same
 \fIservice_name\fP twice, or to use a \fIport_name\fP argument that was
 not previously opened by the calling process via a call to MPI_Open_port.
+
+.SH INFO ARGUMENTS
+The following keys for \fIinfo\fP are recognized:
 .sp
-The \fIinfo\fP parameter should be MPI_INFO_NULL, as this routine does
-not parse any MPI Info arguments.
+.sp
+.nf
+Key                   Type      Description
+---                   ----      -----------
+
+ompi_global_scope     bool      If set to true, publish the name in
+                                the global scope.  Publish in the local
+                                scope otherwise.  See the NAME SCOPE
+                                section for more details.
+.fi
+
+.sp 
+\fIbool\fP info keys are actually strings but are evaluated as
+follows: if the string value is a number, it is converted to an
+integer and cast to a boolean (meaning that zero integers are false
+and non-zero values are true).  If the string value is
+(case-insensitive) "yes" or "true", the boolean is true.  If the
+string value is (case-insensitive) "no" or "false", the boolean is
+false.  All other string values are unrecognized, and therefore false.
+
+.SH NAME SCOPE
+RHC fill in here :-)
 
 .SH ERRORS
 .ft R

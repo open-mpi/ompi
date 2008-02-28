@@ -18,16 +18,22 @@
 
 
 #include "orte_config.h"
+#include "orte/constants.h"
+
 #include <stdio.h>
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/util/output.h"
+
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/iof/base/iof_base_header.h"
 #include "orte/mca/iof/base/iof_base_fragment.h"
-#include "opal/util/output.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -53,7 +59,7 @@ int orte_iof_base_open(void)
 {
     int id;
     int int_value;
-    char* str_value;
+    char *str_value;
 
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_iof_base.iof_components_opened, opal_list_t);
@@ -69,9 +75,14 @@ int orte_iof_base_open(void)
     mca_base_param_lookup_int(id,&int_value);
     orte_iof_base.iof_window_size = int_value;
 
-    id = mca_base_param_register_string("iof","base","service",NULL,"0.0.0");
+    /* someone might pass in an iof_service name, so do a little
+     * dance to setup the default
+     */
+    orte_util_convert_process_name_to_string(&str_value, ORTE_PROC_MY_HNP);
+    id = mca_base_param_register_string("iof","base","service",NULL,str_value);
+    free(str_value);
     mca_base_param_lookup_string(id,&str_value);
-    orte_ns.convert_string_to_process_name(&orte_iof_base.iof_service, str_value);
+    orte_util_convert_string_to_process_name(&orte_iof_base.iof_service, str_value);
     free(str_value);
 
     /* Debugging / verbose output */

@@ -21,8 +21,8 @@
 #define GRPCOMM_CNOS_H
 
 #include "orte_config.h"
-#include "orte/orte_types.h"
-#include "orte/orte_constants.h"
+#include "orte/types.h"
+#include "orte/constants.h"
 
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"

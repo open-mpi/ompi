@@ -21,6 +21,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/pubsub/pubsub.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Publish_name = PMPI_Publish_name
@@ -62,9 +63,18 @@ int MPI_Publish_name(char *service_name, MPI_Info info,
      * therefore, we do not parse the info-object at the moment.
      */
 
-    rc = ompi_comm_namepublish (service_name, port_name);
+    rc = ompi_pubsub.publish (service_name, info, port_name);
     OPAL_CR_EXIT_LIBRARY();
     if ( OMPI_SUCCESS != rc ) {
+        if (OMPI_EXISTS == rc) {
+            /* already exists - can't publish it */
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_FILE_EXISTS,
+                                          FUNC_NAME);
+        }
+
+        /* none of the MPI-specific errors occurred - must be some
+         * kind of internal error
+         */
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
                                       FUNC_NAME);
     }

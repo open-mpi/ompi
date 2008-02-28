@@ -25,6 +25,4 @@ headers += \
 libmpi_la_SOURCES += \
         communicator/comm_init.c \
 	communicator/comm.c \
-	communicator/comm_cid.c \
-	communicator/comm_dyn.c \
-	communicator/comm_publish.c 
+	communicator/comm_cid.c

@@ -25,6 +25,8 @@
 #include "ompi_config.h"
 #include "opal/include/opal/align.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 #include "opal/util/output.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include <errno.h>
@@ -431,7 +433,7 @@ void mca_mpool_rdma_finalize(struct mca_mpool_base_module_t *mpool)
     if(true == mca_mpool_rdma_component.print_stats) {
         opal_output(0, "%s rdma: stats "
                 "(hit/miss/found/not found/evicted): %d/%d/%d/%d/%d\n",
-                ORTE_NAME_PRINT(orte_process_info.my_name),
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                 mpool_rdma->stat_cache_hit, mpool_rdma->stat_cache_miss,
                 mpool_rdma->stat_cache_found, mpool_rdma->stat_cache_notfound,
                 mpool_rdma->stat_evicted);

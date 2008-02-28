@@ -25,20 +25,22 @@
 #ifndef _MCA_OOB_TCP_H_
 #define _MCA_OOB_TCP_H_
 
-#include "orte/mca/oob/oob.h"
-#include "orte/mca/oob/base/base.h"
+#include "orte_config.h"
+#include "orte/types.h"
+
 #include "opal/mca/base/base.h"
-#include "orte/mca/ns/ns_types.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/runtime/opal_cr.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
+#include "opal/mca/timer/base/base.h"
+
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/oob/base/base.h"
 #include "orte/mca/oob/tcp/oob_tcp_peer.h"
 #include "orte/mca/oob/tcp/oob_tcp_msg.h"
-
-#include "opal/mca/timer/base/base.h"
 
 
 BEGIN_C_DECLS
@@ -173,13 +175,6 @@ int mca_oob_tcp_parse_uri(
 );
 
 /**
- * Callback from registry on change to subscribed segments
- */
-void mca_oob_tcp_registry_callback(
-     orte_gpr_notify_data_t* data,
-     void* cbdata);
-
-/**
  *  Setup socket options
  */
 
@@ -281,8 +276,6 @@ struct mca_oob_tcp_device_t {
 };
 typedef struct mca_oob_tcp_device_t mca_oob_tcp_device_t;
 OBJ_CLASS_DECLARATION(mca_oob_tcp_device_t);
-
-
 
 
 END_C_DECLS

@@ -18,9 +18,11 @@
  * $HEADER$
  */
 #include "orte_config.h"
+#include "orte/types.h"
 
-#include "orte/mca/ns/ns_types.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/oob/tcp/oob_tcp.h"
 
@@ -119,7 +121,7 @@ int mca_oob_tcp_send_nb(
 
     if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_ALL) {
         opal_output(0, "%s-%s mca_oob_tcp_send_nb: tag %d size %lu\n",
-            ORTE_NAME_PRINT(orte_process_info.my_name),
+            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
             ORTE_NAME_PRINT(&(peer->peer_name)),
             tag, (unsigned long)size );
     }
@@ -129,11 +131,7 @@ int mca_oob_tcp_send_nb(
     msg->msg_hdr.msg_size = size;
     msg->msg_hdr.msg_tag = tag;
     msg->msg_hdr.msg_origin = *origin;
-    if (NULL == orte_process_info.my_name) {
-        msg->msg_hdr.msg_src = *ORTE_NAME_INVALID;
-    } else {
-        msg->msg_hdr.msg_src = *orte_process_info.my_name;
-    }
+    msg->msg_hdr.msg_src = *ORTE_PROC_MY_NAME;
     msg->msg_hdr.msg_dst = *target;
 
     /* create one additional iovect that will hold the size of the message */
@@ -154,7 +152,7 @@ int mca_oob_tcp_send_nb(
     msg->msg_complete = false;
     msg->msg_peer = peer->peer_name;
     
-    if (ORTE_EQUAL == mca_oob_tcp_process_name_compare(target, orte_process_info.my_name)) {  /* local delivery */
+    if (OPAL_EQUAL == mca_oob_tcp_process_name_compare(target, ORTE_PROC_MY_NAME)) {  /* local delivery */
         rc = mca_oob_tcp_send_self(peer,msg,iov,count);
         if (rc < 0 ) {
             return rc;

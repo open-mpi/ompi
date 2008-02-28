@@ -19,6 +19,8 @@
 
 
 #include "orte_config.h"
+#include "orte/constants.h"
+#include "orte/types.h"
 
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
@@ -29,7 +31,6 @@
 #endif  /* HAVE_SYS_STAT_H */
 #include <signal.h>
 
-#include "orte/orte_constants.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/argv.h"
 #include "opal/util/os_path.h"
@@ -37,22 +38,20 @@
 #include "opal/util/sys_limits.h"
 #include "opal/util/show_help.h"
 
-#include "orte/dss/dss.h"
+#include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/gpr/gpr.h"
-#include "orte/mca/schema/schema.h"
-#include "orte/mca/smr/smr.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
-#include "orte/mca/ns/ns.h"
-#include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/iof_base_setup.h"
-#include "orte/mca/ras/base/ras_private.h"
-#include "orte/mca/sds/base/base.h"
+#include "orte/mca/ess/base/base.h"
+
+#include "orte/util/context_fns.h"
+#include "orte/util/name_fns.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/sys_info.h"
-#include "orte/util/univ_info.h"
-#include "orte/runtime/params.h"
+#include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 
 #if OPAL_ENABLE_FT == 1
@@ -267,243 +266,154 @@ static int slot_list_to_cpu_set(char *slot_str, orte_odls_child_t *child)
 }
 
 
-int orte_odls_base_default_get_add_procs_data(orte_gpr_notify_data_t **data,
-                                              orte_job_map_t *map)
+/* IT IS CRITICAL THAT ANY CHANGE IN THE ORDER OF THE INFO PACKED IN
+ * THIS FUNCTION BE REFLECTED IN THE CONSTRUCT_CHILD_LIST PARSER BELOW
+*/
+int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
+                                              orte_jobid_t job)
 {
-    orte_gpr_notify_data_t *ndat;
-    orte_gpr_value_t *value;
-    opal_list_item_t *item, *m_item;
-    orte_mapped_node_t *node;
-    orte_mapped_proc_t *proc;
+    orte_node_t **nodes, *node;
+    orte_proc_t **procs, *proc;
     int rc;
-    int posn;
-    orte_std_cntr_t num_kvs;
-    orte_app_context_t **app_contexts;
-    orte_std_cntr_t i, num_contexts, total_slots_alloc;
-    orte_vpid_t range;
-    bool override;
-    
-    /* set default answer */
-    *data = NULL;
-    
-    ndat = OBJ_NEW(orte_gpr_notify_data_t);
-    if (NULL == ndat) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    
-    /* construct a fake trigger name so that the we can extract the jobid from it later */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(ndat->target), "bogus", map->job))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(ndat);
-        return rc;
-    }
-    
-    /* get the vpid range */
-    if (ORTE_SUCCESS != (rc = orte_ns.get_vpid_range(map->job, &range))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(ndat);
-        return rc;
-    }
-    
-    /* get the total slots allocated to us */
-    if (ORTE_SUCCESS != (rc = orte_rmgr.get_universe_size(map->job, &total_slots_alloc))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(ndat);
-        return rc;
-    }
-    
-    /* get the override_oversubscribed flag */
-    if (ORTE_SUCCESS != (rc = orte_ras_base_get_oversubscribe_override(map->job, &override))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(ndat);
-        return rc;
-    }
-    
-    /* get the app_context array */
-    if (ORTE_SUCCESS != (rc = orte_rmgr.get_app_context(map->job, &app_contexts, &num_contexts))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(ndat);
-        return rc;
-    }
-    
-    /* compute number of keyvals required */
-    num_kvs = 3 + num_contexts;
-    
-    /* create the value object - don't need tokens or segment name */
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, 0, NULL, num_kvs, 0))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(ndat);
-        return rc;
-    }
-    
-    /* store the range - ORTE_VPID_KEY */
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]),
-                                                     NULL,
-                                                     ORTE_VPID, &range))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(ndat);
-        OBJ_RELEASE(value);
-        return rc;
-    }
-    
-    /* store the total slots allocated - ORTE_JOB_TOTAL_SLOTS_ALLOC_KEY */
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[1]),
-                                                     NULL,
-                                                     ORTE_STD_CNTR, &total_slots_alloc))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(ndat);
-        OBJ_RELEASE(value);
-        return rc;
-    }
-    
-    /* store the oversubscribe override flag - ORTE_JOB_OVERSUBSCRIBE_OVERRIDE_KEY */
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[2]),
-                                                     NULL,
-                                                     ORTE_BOOL, &override))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(ndat);
-        OBJ_RELEASE(value);
-        return rc;
-    }
+    orte_job_t *jdata;
+    orte_job_map_t *map;
+    orte_std_cntr_t i;
+    orte_vpid_t j;
+    orte_vpid_t invalid_vpid=ORTE_VPID_INVALID;
 
-    /* for each context, store it - ORTE_JOB_APP_CONTEXT_KEY */
-    for (i=0; i < num_contexts; i++) {
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[i+3]),
-                                                         NULL,
-                                                         ORTE_APP_CONTEXT, app_contexts[i]))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(ndat);
-            OBJ_RELEASE(value);
-            return rc;
-        }
+    /* get the job data pointer */
+    if (NULL == (jdata = orte_get_job_data_object(job))) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
     }
     
-    /* add the data to the notify_data object */
-    if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&i, ndat->values, value))) {
+    /* pack the jobid so it can be extracted later */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &job, 1, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(ndat);
-        OBJ_RELEASE(value);
         return rc;
     }
-    ndat->cnt = 1;
     
-    /* the remainder of our required info is in the mapped_node objects, so all we
-     * have to do is transfer it over
+    /* pack the number of procs in the job - equates to the vpid range for the job */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->num_procs, 1, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* pack the total slots allocated to us */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->total_slots_alloc, 1, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* pack the override_oversubscribed flag */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->oversubscribe_override, 1, OPAL_BOOL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* pack the number of app_contexts for this job */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->num_apps, 1, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* pack the app_contexts for this job - we already checked early on that
+     * there must be at least one, so don't bother checking here again
      */
-    for (m_item = opal_list_get_first(&map->nodes);
-         m_item != opal_list_get_end(&map->nodes);
-         m_item = opal_list_get_next(m_item)) {
-        node = (orte_mapped_node_t*)m_item;
-        
-        /* determine the number of keyvals we need for this node */
-        num_kvs = 3 + 4*node->num_procs;
-        
-        /* create the value object - don't need tokens or segment name */
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, 0, NULL, num_kvs, 0))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(ndat);
-            return rc;
-        }
-        
-        /* IT IS CRITICAL THAT ANY CHANGE IN THE ORDER OF THE INFO IN THESE KEYVALS
-         * BE REFLECTED IN THE CONSTRUCT_CHILD_LIST PARSER BELOW
-         */
-
-        /* store the node-specific data */
-        /* ORTE_VPID_KEY*/
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]),
-                                                         NULL,
-                                                         ORTE_VPID, &(node->daemon->vpid)))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(ndat);
-            OBJ_RELEASE(value);
-            return rc;
-        }
-        
-        /* ORTE_NODE_NUM_PROCS_KEY */
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[1]),
-                                                         NULL,
-                                                         ORTE_STD_CNTR, &node->num_procs))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(ndat);
-            OBJ_RELEASE(value);
-            return rc;
-        }
-        
-        /* ORTE_NODE_OVERSUBSCRIBED_KEY */
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[2]),
-                                                         NULL,
-                                                         ORTE_BOOL, &node->oversubscribed))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(ndat);
-            OBJ_RELEASE(value);
-            return rc;
-        }
-                
-        /* cycle through and add the proc-specific data */
-        posn = 3;
-        for (item = opal_list_get_first(&node->procs);
-             item != opal_list_get_end(&node->procs);
-             item = opal_list_get_next(item)) {
-            proc = (orte_mapped_proc_t*)item;
-            
-            /* ORTE_VPID_KEY */
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[posn++]),
-                                                             NULL,
-                                                             ORTE_VPID, &(proc->name.vpid)))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(ndat);
-                OBJ_RELEASE(value);
-                return rc;
-            }
-            
-            /* ORTE_PROC_APP_CONTEXT_KEY */
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[posn++]),
-                                                             NULL,
-                                                             ORTE_STD_CNTR, &proc->app_idx))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(ndat);
-                OBJ_RELEASE(value);
-                return rc;
-            }
-            
-            /* ORTE_PROC_LOCAL_RANK_KEY */
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[posn++]),
-                                                             NULL,
-                                                             ORTE_VPID, &proc->local_rank))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(ndat);
-                OBJ_RELEASE(value);
-                return rc;
-            }
-            
-            /* ORTE_PROC_CPU_LIST_KEY */
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[posn++]),
-                                                             NULL,
-                                                             ORTE_STRING, proc->slot_list))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(ndat);
-                OBJ_RELEASE(value);
-                return rc;
-            }
-        }
-        
-        /* add this node's data to the notify_data object */
-        if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&i, ndat->values, value))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(ndat);
-            OBJ_RELEASE(value);
-            return rc;
-        }
-        ndat->cnt += 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, jdata->apps->addr, jdata->num_apps, ORTE_APP_CONTEXT))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
     
-    *data = ndat;
+    /* the remainder of our required info is in the node objects in this job's map,
+     * so pickup a pointer to that map
+     */
+    map = jdata->map;
+
+    /* pack the number of nodes participating in this launch */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->num_nodes, 1, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* cycle through the participating nodes */
+    nodes = (orte_node_t**)map->nodes->addr;
+    for (i=0; i < map->num_nodes; i++) {
+        node = nodes[i];
+        /* PACK NODE-SPECIFIC DATA */
+        /* pack the vpid of the daemon on this node - this will be
+         * later used to tell the daemon it has something to do
+         */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &(node->daemon->name.vpid), 1, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* pack the number of procs on this node */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &node->num_procs, 1, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* pack the oversubscribed flag for the node */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &node->oversubscribed, 1, OPAL_BOOL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* PACK THE PROC-SPECIFIC DATA FOR THE PROCS **TO BE LAUNCHED** ON THIS NODE
+         * FOR THIS JOB
+         *
+         * NOTE: The nodes object contains info on ALL procs on the node, not just those
+         * to be launched for the specified job. Thus, we must take care to CLEARLY
+         * demarcate info on those procs to be launched, or else we will get
+         * duplicate processes!!
+         */
+        /* we already packed the number of procs on the node, so cycle
+         * through them and pack each one's launch data
+         */
+        procs = (orte_proc_t**)node->procs->addr;
+        for (j=0; j < node->num_procs; j++) {
+            proc = procs[j];  /* convenience */
+            /* the mapped node includes ALL procs on it, not just those for the
+             * job to be launched. Hence, check first to see if this proc is
+             * part of the indicated job - if not, don't include it here
+             */
+            if (proc->name.jobid != job) {
+               continue;
+            }
+            /* pack the vpid for this proc */
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &(proc->name.vpid), 1, ORTE_VPID))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* pack the app_context index */
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &proc->app_idx, 1, ORTE_STD_CNTR))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* pack the local rank */
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &proc->local_rank, 1, ORTE_VPID))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* pack the cpu_list string */
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &proc->slot_list, 1, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+        /* pack an INVALID vpid as a flag that we are done with procs for this node */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &invalid_vpid, 1, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    
     return ORTE_SUCCESS;
 }
 
-int orte_odls_base_default_construct_child_list(orte_gpr_notify_data_t *data,
+int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                                                 orte_jobid_t *job,
                                                 orte_std_cntr_t *num_local_procs,
                                                 orte_vpid_t *vpid_range,
@@ -511,20 +421,22 @@ int orte_odls_base_default_construct_child_list(orte_gpr_notify_data_t *data,
                                                 bool *node_included,
                                                 bool *oversubscribed,
                                                 bool *override_oversubscribed,
-                                                opal_list_t *app_context_list)
+                                                orte_std_cntr_t *num_contexts,
+                                                orte_app_context_t ***app_contexts)
 {
     int rc;
-    orte_app_context_t *app;
-    orte_gpr_value_t *value, **values;
-    orte_vpid_t *vptr;
+    orte_vpid_t local_rank, num_procs;
     orte_odls_child_t *child;
-    orte_odls_app_context_t *app_item;
-    orte_std_cntr_t j, kv, *sptr, posn;
-    orte_process_name_t proc;
-    bool *bptr;
+    orte_std_cntr_t cnt, j, num_nodes, app_idx;
+    orte_process_name_t proc, daemon;
     char *slot_str;
+    bool node_oversubscribed;
 
-    /* parse the returned data to create the required structures
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:constructing child list",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    /* unpack the returned data to create the required structures
      * for a fork launch. Since the data will contain information
      * on procs for ALL nodes, we first have to find the value
      * struct that contains info for our node.
@@ -539,151 +451,176 @@ int orte_odls_base_default_construct_child_list(orte_gpr_notify_data_t *data,
     *oversubscribed = false;
     *override_oversubscribed = false;
     
-    /* first, retrieve the job number we are to launch from the
-     * returned data - we can extract the jobid directly from the
-     * subscription name we created
-     */
-    if (ORTE_SUCCESS != (rc = orte_schema.extract_jobid_from_std_trigger_name(job, data->target))) {
+    /* unpack the jobid we are to launch */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, job, &cnt, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    opal_output(orte_odls_globals.output, "odls: setting up launch for job %ld", (long)*job);
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:construct_child_list unpacking data to launch job %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(*job)));
     
-    /* setup the routing table for communications - we need to do this
-     * prior to launch as the procs may want to communicate right away
+    /* UNPACK JOB-SPECIFIC DATA */
+    /* unpack the number of procs in the job - equates to the vpid range */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, vpid_range, &cnt, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* unpack the total slots allocated to us */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, total_slots_alloc, &cnt, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* unpack the override_oversubscribed flag */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, override_oversubscribed, &cnt, OPAL_BOOL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* unpack the number of app_contexts for this job */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, num_contexts, &cnt, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:construct_child_list unpacking %ld app_contexts",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)*num_contexts));
+    
+    /* allocate space and unpack the app_contexts for this job - the HNP checked
+     * that there must be at least one, so don't bother checking here again
      */
-    if (ORTE_SUCCESS != (rc = orte_routed.init_routes(*job, data))) {
+    *app_contexts = (orte_app_context_t**)malloc(*num_contexts * sizeof(orte_app_context_t*));
+    if (NULL == *app_contexts) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, *app_contexts, num_contexts, ORTE_APP_CONTEXT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    /* init the proc object */
+    /* UNPACK THE NODE-SPECIFIC DATA */
+    /* unpack the number of nodes participating in this launch */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &num_nodes, &cnt, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* setup the proc and daemon names */
     proc.jobid = *job;
+    daemon.jobid = ORTE_PROC_MY_NAME->jobid;
     
-    values = (orte_gpr_value_t**)(data->values)->addr;
-    /* the first value in the data object contains the job-global data, so extract it first */
-    value = values[0];
-    /* ORTE_JOB_VPID_RANGE_KEY */
-    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&vptr, value->keyvals[0]->value, ORTE_VPID))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    *vpid_range = *vptr;
-    /* ORTE_JOB_TOTAL_SLOTS_ALLOC_KEY */
-    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, value->keyvals[1]->value, ORTE_STD_CNTR))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    *total_slots_alloc = *sptr;
-    /* ORTE_JOB_OVERSUBSCRIBE_OVERRIDE_KEY */
-    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&bptr, value->keyvals[2]->value, ORTE_BOOL))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    *override_oversubscribed = *bptr;
-    /* loop through remaining keyvals and get the app_contexts */
-    for (kv=3; kv < value->cnt; kv++) {
-        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&app, value->keyvals[kv]->value, ORTE_APP_CONTEXT))) {
+    /* cycle through them */
+    for (j=0; j < num_nodes; j++) {
+        /* unpack the vpid of the daemon */
+        cnt=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &daemon.vpid, &cnt, ORTE_VPID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        app_item = OBJ_NEW(orte_odls_app_context_t);
-        if (NULL == app_item) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        app_item->app_context = app;
-        opal_list_append(app_context_list, &app_item->super);
-        value->keyvals[kv]->value->data = NULL;  /* protect the data storage from later release */
-    }
-    /* parsing of job-global data is complete - now process the node-specific data */
-    for (j=1; j < data->cnt; j++) {  /* loop across remaining values */
-        value = values[j];
-        /* this must have be about a node, so extract the daemon's vpid so we can
-         * see if this is intended for us
-         */
-        /* vpid of daemon is in first position */
-        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&vptr, value->keyvals[0]->value, ORTE_VPID))) {
+        /* unpack the number of procs on this node */
+        cnt=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &num_procs, &cnt, ORTE_VPID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
-        /* does this data belong to us? */
-        if (ORTE_PROC_MY_NAME->vpid != *vptr) {
-            /* evidently not - ignore it */
-            continue;
-        }
-        
-        /* yes it does - indicate that we need to do something */
-        *node_included = true;
-        
-        /* harvest the rest of the node-specific data */
-        /* 2nd position - num local procs for this job on this node */
-        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, value->keyvals[1]->value, ORTE_STD_CNTR))) {
+        /* unpack the oversubscribed flag for the node */
+        cnt=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &node_oversubscribed, &cnt, OPAL_BOOL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        *num_local_procs = *sptr;  /* save the value */
         
-        /* 3rd posn - oversubscribed flag */
-        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&bptr, value->keyvals[2]->value, ORTE_BOOL))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        *oversubscribed = *bptr;  /* save the flag */
-        
-        /* loop through the children for this job and harvest their info */
-        posn = 3;
-        while (posn < value->cnt) {
-            child = OBJ_NEW(orte_odls_child_t);
-            /* 1st child posn - vpid */
-            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&vptr, value->keyvals[posn++]->value, ORTE_VPID))) {
+        /* cycle through the procs and unpack their data */
+            /* unpack the vpid for this proc */
+        cnt=1;
+        while (ORTE_SUCCESS == (rc = opal_dss.unpack(data, &(proc.vpid), &cnt, ORTE_VPID))) {
+            if (ORTE_VPID_INVALID == proc.vpid) {
+                /* this flags that all data from this node has been read - there
+                 * will be no further entries for it
+                 */
+                break;
+            }
+            /* unpack the app_context index */
+            cnt=1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &app_idx, &cnt, ORTE_STD_CNTR))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            proc.vpid = *vptr;
-            if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&child->name, &proc, ORTE_NAME))) {
+            /* unpack the local rank */
+            cnt=1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &local_rank, &cnt, ORTE_VPID))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            
-            /* 2nd child posn - app_idx */
-            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, value->keyvals[posn++]->value, ORTE_STD_CNTR))) {
+            /* unpack the cpu_list string */
+            cnt=1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &slot_str, &cnt, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            child->app_idx = *sptr;  /* save the index into the app_context objects */
-        
-            /* 3rd child posn - local rank */
-            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&vptr, value->keyvals[posn++]->value, ORTE_VPID))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            child->local_rank = *vptr;  /* save the local_rank */
-            
-            /* 4th child posn - cpu list */
-            if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&slot_str, value->keyvals[posn++]->value->data, ORTE_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            if (NULL != slot_str) {
-                if (ORTE_SUCCESS != (rc = slot_list_to_cpu_set(slot_str, child))){
+            /* does this data belong to us? */
+            if (ORTE_PROC_MY_NAME->vpid == daemon.vpid) {
+                /* yes it does - add this proc to our child list */
+                child = OBJ_NEW(orte_odls_child_t);
+                /* copy the name to preserve it */
+                if (ORTE_SUCCESS != (rc = opal_dss.copy((void**)&child->name, &proc, ORTE_NAME))) {
                     ORTE_ERROR_LOG(rc);
-                    free(slot_str);
                     return rc;
                 }
-                free(slot_str);
+                child->app_idx = app_idx;  /* save the index into the app_context objects */
+                child->local_rank = local_rank;  /* save the local_rank */
+                if (NULL != slot_str) {
+                    if (ORTE_SUCCESS != (rc = slot_list_to_cpu_set(slot_str, child))){
+                        ORTE_ERROR_LOG(rc);
+                        free(slot_str);
+                        return rc;
+                    }
+                    free(slot_str);
+                }
+                /* protect operation on the global list of children */
+                OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+                opal_list_append(&orte_odls_globals.children, &child->super);
+                opal_condition_signal(&orte_odls_globals.cond);
+                OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+                /* pass along the local info */
+                *num_local_procs = num_procs;
+                *oversubscribed = node_oversubscribed;
+                /* set the routing info to be direct - we need to do this
+                 * prior to launch as the procs may want to communicate right away
+                 */
+                if (ORTE_SUCCESS != (rc = orte_routed.update_route(&proc, &proc))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            } else {
+                /* set the routing info through the other daemon - we need to do this
+                 * prior to launch as the procs may want to communicate right away
+                 */
+                if (ORTE_SUCCESS != (rc = orte_routed.update_route(&proc, &daemon))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
             }
-                            
-            /* protect operation on the global list of children */
-            OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
-            opal_list_append(&orte_odls_globals.children, &child->super);
-            opal_condition_signal(&orte_odls_globals.cond);
-            OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+        }
+        if (ORTE_SUCCESS != rc && ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+            ORTE_ERROR_LOG(rc);
+        }
+
+        /* do we have any launching to do? */
+        if (ORTE_PROC_MY_NAME->vpid == daemon.vpid) {
+            /* pass that along for later */
+            *node_included = true;
         }
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -696,7 +633,6 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     int rc;
     int i;
     char *param, *param2;
-    char *uri;
 
     /* check the system limits - if we are at our max allowed children, then
      * we won't be allowed to do this anyway, so we may as well abort now.
@@ -713,14 +649,14 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     }
     
     /* Try to change to the context cwd and check that the app
-        exists and is executable The resource manager functions will
+        exists and is executable The function will
         take care of outputting a pretty error message, if required
         */
-    if (ORTE_SUCCESS != (rc = orte_rmgr.check_context_cwd(context, true))) {
+    if (ORTE_SUCCESS != (rc = orte_util_check_context_cwd(context, true))) {
         /* do not ERROR_LOG - it will be reported elsewhere */
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_rmgr.check_context_app(context))) {
+    if (ORTE_SUCCESS != (rc = orte_util_check_context_app(context))) {
         /* do not ERROR_LOG - it will be reported elsewhere */
         return rc;
     }
@@ -764,17 +700,21 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     }
     
     /* pass my contact info to the local proc so we can talk */
-    uri = orte_rml.get_contact_info();
     param = mca_base_param_environ_variable("orte","local_daemon","uri");
-    opal_setenv(param, uri, true, environ_copy);
+    opal_setenv(param, orte_process_info.my_daemon_uri, true, environ_copy);
     free(param);
-    free(uri);
     
-    /* pass a nodeid to the proc - for now, set this to our vpid as
-     * this is a globally unique number and we have a one-to-one
-     * mapping of daemons to nodes
+    /* pass the hnp's contact info to the local proc in case it
+     * needs it
      */
-    if (ORTE_SUCCESS != (rc = orte_ns.convert_nodeid_to_string(&param2, (orte_nodeid_t)ORTE_PROC_MY_NAME->vpid))) {
+    param = mca_base_param_environ_variable("orte","hnp","uri");
+    opal_setenv(param, orte_process_info.my_hnp_uri, true, environ_copy);
+    free(param);
+    
+    /* pass our vpid to the process as a "nodeid" so it can
+     * identify which procs are local to it
+     */
+    if (ORTE_SUCCESS != (rc = orte_util_convert_vpid_to_string(&param2, ORTE_PROC_MY_NAME->vpid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -799,39 +739,6 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     }
     free(param);
     
-    /* setup universe info */
-    if (NULL != orte_universe_info.name) {
-        param = mca_base_param_environ_variable("universe", NULL, NULL);
-        asprintf(&uri, "%s@%s:%s", orte_universe_info.uid,
-                 orte_universe_info.host,
-                 orte_universe_info.name);
-        opal_setenv(param, uri, true, environ_copy);
-        free(param);
-        free(uri);
-    }
-    
-    /* setup ns contact info */
-    if(NULL != orte_process_info.ns_replica_uri) {
-        uri = strdup(orte_process_info.ns_replica_uri);
-    } else {
-        uri = orte_rml.get_contact_info();
-    }
-    param = mca_base_param_environ_variable("ns","replica","uri");
-    opal_setenv(param, uri, true, environ_copy);
-    free(param);
-    free(uri);
-    
-    /* setup gpr contact info */
-    if(NULL != orte_process_info.gpr_replica_uri) {
-        uri = strdup(orte_process_info.gpr_replica_uri);
-    } else {
-        uri = orte_rml.get_contact_info();
-    }
-    param = mca_base_param_environ_variable("gpr","replica","uri");
-    opal_setenv(param, uri, true, environ_copy);
-    free(param);
-    free(uri);
-    
     /* set the app_context number into the environment */
     param = mca_base_param_environ_variable("orte","app","num");
     asprintf(&param2, "%ld", (long)context->idx);
@@ -845,7 +752,7 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     opal_setenv(param, param2, true, environ_copy);
     free(param);
     free(param2);
-    
+
     /* use same nodename as the starting daemon (us) */
     param = mca_base_param_environ_variable("orte", "base", "nodename");
     opal_setenv(param, orte_system_info.nodename, true, environ_copy);
@@ -854,14 +761,81 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     /* push data into environment - don't push any single proc
      * info, though. We are setting the environment up on a
      * per-context basis, and will add the individual proc
-     * info later
+     * info later. This also sets the mca param to select
+     * the "env" component in the SDS framework.
      */
-    orte_ns_nds_env_put(vpid_range, num_local_procs, environ_copy);
+    orte_ess_env_put(vpid_range, num_local_procs, environ_copy);
     
     return ORTE_SUCCESS;
 }
 
-int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_context_list,
+static int pack_state_for_proc(opal_buffer_t *alert, bool pack_pid, orte_odls_child_t *child)
+{
+    int rc;
+    
+    /* pack the child's vpid */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &(child->name->vpid), 1, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* pack its pid if we need to report it */
+    if (pack_pid) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &child->pid, 1, OPAL_PID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    /* pack its state */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &child->state, 1, ORTE_PROC_STATE))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* pack its exit code */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &child->exit_code, 1, ORTE_EXIT_CODE))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    return ORTE_SUCCESS;
+}
+
+static int pack_state_update(opal_buffer_t *alert, bool pack_pid, orte_jobid_t job)
+{
+    int rc;
+    opal_list_item_t *item;
+    orte_odls_child_t *child;
+    orte_vpid_t null=ORTE_VPID_INVALID;
+    
+    /* pack the jobid */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &job, 1, ORTE_JOBID))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    for (item = opal_list_get_first(&orte_odls_globals.children);
+         item != opal_list_get_end(&orte_odls_globals.children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        /* if this child is part of the job... */
+        if (child->name->jobid == job) {
+            if (ORTE_SUCCESS != (rc = pack_state_for_proc(alert, pack_pid, child))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+    }
+    /* flag that this job is complete so the receiver can know */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &null, 1, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    return ORTE_SUCCESS;
+}
+
+
+int orte_odls_base_default_launch_local(orte_jobid_t job,
+                                        orte_std_cntr_t num_apps,
+                                        orte_app_context_t **apps,
                                         orte_std_cntr_t num_local_procs,
                                         orte_vpid_t vpid_range,
                                         orte_std_cntr_t total_slots_alloc,
@@ -869,57 +843,20 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
                                         bool override_oversubscribed,
                                         orte_odls_base_fork_local_proc_fn_t fork_local)
 {
-    char *job_str, *vpid_str, *param, *value, *session_dir, *uri_file, *my_uri;
-    FILE *fp;
-    opal_list_item_t *item, *item2;
+    char *job_str, *vpid_str, *param, *value;
+    opal_list_item_t *item;
     orte_app_context_t *app;
-    orte_odls_app_context_t *app_item;
     orte_odls_child_t *child;
-    int proc_rank, num_processors;
-    bool want_processor, oversubscribed, quit_flag;
-    int rc;
+    int i, num_processors;
+    bool want_processor, oversubscribed;
+    int rc, ret;
     bool launch_failed=true;
+    opal_buffer_t alert;
+    orte_std_cntr_t proc_rank;
     
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
 
-    /* record my uri in a file within the session directory so the local proc
-     * can contact me
-     */
-    opal_output(orte_odls_globals.output, "odls: dropping local uri file");
-    
-    /* put the file in the job session dir for the job being launched */
-    orte_ns.convert_jobid_to_string(&job_str, job);
-    if (ORTE_SUCCESS != (rc = orte_session_dir(true, NULL, NULL, NULL,
-                                               NULL, NULL, job_str, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
-    
-    /* get the session dir name so we can put the file there */
-    session_dir = NULL;  /* init the value so session_dir_get_name doesn't attempt to free it */
-    if (ORTE_SUCCESS != (rc = orte_session_dir_get_name(&session_dir, NULL, NULL, NULL,
-                                                        NULL, NULL, NULL, job_str, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        free(job_str);
-        goto CLEANUP;
-    }
-    free(job_str);
-    
-    /* create the file and put my uri into it */
-    uri_file = opal_os_path(false, session_dir, "orted-uri.txt", NULL);
-    fp = fopen(uri_file, "w");
-    if (NULL == fp) {
-        ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
-        rc = ORTE_ERR_FILE_OPEN_FAILURE;
-        goto CLEANUP;
-    }
-    my_uri = orte_rml.get_contact_info();
-    fprintf(fp, "%s\n", my_uri);
-    fclose(fp);
-    free(uri_file);
-    free(my_uri);
-    
 #if OPAL_ENABLE_FT == 1
     /*
      * Notify the local SnapC component regarding new job
@@ -931,16 +868,14 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
 #endif
     
     /* Now we preload any files that are needed. This is done on a per
-     * app context basis */
-    for (item = opal_list_get_first(app_context_list);
-         item != opal_list_get_end(app_context_list);
-         item = opal_list_get_next(item)) {
-        app_item = (orte_odls_app_context_t*)item;
-        if(app_item->app_context->preload_binary ||
-           NULL != app_item->app_context->preload_files) {
-            if( ORTE_SUCCESS != (rc = orte_odls_base_preload_files_app_context(app_item->app_context)) ) {
+     * app context basis
+     */
+    for (i=0; i < num_apps; i++) {
+        if(apps[i]->preload_binary ||
+           NULL != apps[i]->preload_files) {
+            if( ORTE_SUCCESS != (rc = orte_odls_base_preload_files_app_context(apps[i])) ) {
                 ORTE_ERROR_LOG(rc);
-                goto CLEANUP;
+                goto unlock;
             }
         }
     }
@@ -958,11 +893,16 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
          * settings
          */
         want_processor = false;  /* default to not being a hog */
-        opal_output(orte_odls_globals.output,
-                    "odls: could not get number of processors - using conservative settings");
+        
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:launch could not get number of processors - using conservative settings",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        
     } else {
-        opal_output(orte_odls_globals.output,
-                    "odls: got %ld processors", (long)num_processors);
+        
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:launch got %ld processors",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)num_processors));
         
         /* only do this if we can actually get info on the number of processors */
         if (opal_list_get_size(&orte_odls_globals.children) > (size_t)num_processors) {
@@ -977,7 +917,11 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
          * to check it against the local number of processors to ensure we don't overload them
          */
         if (override_oversubscribed) {
-            opal_output(orte_odls_globals.output, "odls: overriding oversubscription");
+            
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                 "%s odls:launch overriding oversubscription",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            
             if (opal_list_get_size(&orte_odls_globals.children) > (size_t)num_processors) {
                 /* if the #procs > #processors, declare us oversubscribed regardless
                  * of what the mapper claimed - the user may have told us something
@@ -994,20 +938,29 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
             }
         }
     }
-    opal_output(orte_odls_globals.output, "odls: oversubscribed set to %s want_processor set to %s",
-                oversubscribed ? "true" : "false", want_processor ? "true" : "false");
     
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:launch oversubscribed set to %s want_processor set to %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         oversubscribed ? "true" : "false", want_processor ? "true" : "false"));
+    
+    /* setup to report the proc state to the HNP */
+    OBJ_CONSTRUCT(&alert, opal_buffer_t);
+
     /* setup the environment for each context */
-    for (item2 = opal_list_get_first(app_context_list);
-         item2 != opal_list_get_end(app_context_list);
-         item2 = opal_list_get_next(item2)) {
-        app_item = (orte_odls_app_context_t*)item2;
-        if (ORTE_SUCCESS != (rc = odls_base_default_setup_fork(app_item->app_context,
+    for (i=0; i < num_apps; i++) {
+        if (ORTE_SUCCESS != (rc = odls_base_default_setup_fork(apps[i],
                                                                num_local_procs,
                                                                vpid_range,
                                                                total_slots_alloc,
                                                                oversubscribed,
-                                                               &app_item->environ_copy))) {
+                                                               &apps[i]->env))) {
+            
+            OPAL_OUTPUT_VERBOSE((10, orte_odls_globals.output,
+                                 "%s odls:launch:setup_fork failed with error %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_ERROR_NAME(rc)));
+            
             /* do not ERROR_LOG this failure - it will be reported
              * elsewhere. The launch is going to fail - find at least one child
              * in this job and mark it as failed-to-start
@@ -1016,8 +969,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
                  item != opal_list_get_end(&orte_odls_globals.children);
                  item = opal_list_get_next(item)) {
                 child = (orte_odls_child_t*)item;
-                if (ORTE_EQUAL == orte_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
-                    child->state = ORTE_PROC_STATE_FAILED_TO_START;
+                if (OPAL_EQUAL == opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
                     child->exit_code = rc;
                     goto CLEANUP;
                 }
@@ -1027,9 +979,8 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
     
     
     /* okay, now let's launch our local procs using the provided fork_local fn */
-    quit_flag = false;
     for (proc_rank = 0, item = opal_list_get_first(&orte_odls_globals.children);
-         !quit_flag && item != opal_list_get_end(&orte_odls_globals.children);
+         item != opal_list_get_end(&orte_odls_globals.children);
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
         
@@ -1038,8 +989,12 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
          * If it has been launched, then do nothing
          */
         if (child->alive) {
-            opal_output(orte_odls_globals.output, "odls: child %s is already alive",
-                        ORTE_NAME_PRINT(child->name));            
+            
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                 "%s odls:launch child %s is already alive",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(child->name)));
+            
             continue;
         }
         
@@ -1047,67 +1002,72 @@ int orte_odls_base_default_launch_local(orte_jobid_t job, opal_list_t *app_conte
          * job could be given as a WILDCARD value, we must use
          * the dss.compare function to check for equality.
          */
-        if (ORTE_EQUAL != orte_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
-            opal_output(orte_odls_globals.output, "odls: child %s is not in job %ld being launched",
-                        ORTE_NAME_PRINT(child->name), (long)job);            
+        if (OPAL_EQUAL != opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
+            
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                 "%s odls:launch child %s is not in job %s being launched",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(child->name),
+                                 ORTE_JOBID_PRINT(job)));
+            
             continue;
         }
-        
-        opal_output(orte_odls_globals.output, "odls: preparing to launch child %s",
-                    ORTE_NAME_PRINT(child->name));
- 
+
         /* find the app context for this child */
-        for (item2 = opal_list_get_first(app_context_list);
-             item2 != opal_list_get_end(app_context_list);
-             item2 = opal_list_get_next(item2)) {
-            app_item = (orte_odls_app_context_t*)item2;
-            if (child->app_idx == app_item->app_context->idx) {
-                /* found it */
-                app = app_item->app_context;
-                goto DOFORK;
-            }
+        if (child->app_idx > num_apps ||
+            NULL == apps[child->app_idx]) {
+            /* get here if we couldn't find the app_context */
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            rc = ORTE_ERR_NOT_FOUND;
+            goto CLEANUP;
         }
-        /* get here if we couldn't find the app_context */
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        rc = ORTE_ERR_NOT_FOUND;
-        goto CLEANUP;
+        app = apps[child->app_idx];
         
-DOFORK:
         /* setup the rest of the environment with the proc-specific items - these
          * will be overwritten for each child
          */
-        if (ORTE_SUCCESS != (rc = orte_ns.get_jobid_string(&job_str, child->name))) {
+        if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&job_str, child->name->jobid))) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
-        if (ORTE_SUCCESS != (rc = orte_ns.get_vpid_string(&vpid_str, child->name))) {
+        if (ORTE_SUCCESS != (rc = orte_util_convert_vpid_to_string(&vpid_str, child->name->vpid))) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
-        if(NULL == (param = mca_base_param_environ_variable("ns","nds","jobid"))) {
+        if(NULL == (param = mca_base_param_environ_variable("orte","ess","jobid"))) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             goto CLEANUP;
         }
-        opal_setenv(param, job_str, true, &app_item->environ_copy);
+        opal_setenv(param, job_str, true, &app->env);
         free(param);
         free(job_str);
         
-        if(NULL == (param = mca_base_param_environ_variable("ns","nds","vpid"))) {
+        if(NULL == (param = mca_base_param_environ_variable("orte","ess","vpid"))) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             goto CLEANUP;
         }
-        opal_setenv(param, vpid_str, true, &app_item->environ_copy);
+        opal_setenv(param, vpid_str, true, &app->env);
         free(param);
-        free(vpid_str);
+        /* although the vpid IS the process' rank within the job, users
+         * would appreciate being given a public environmental variable
+         * that also represents this value - something MPI specific - so
+         * do that here.
+         *
+         * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
+         * We know - just live with it
+         */
+        opal_setenv("MPI_COMM_WORLD_RANK", vpid_str, true, &app->env);
+        free(vpid_str);  /* done with this now */
+        
         asprintf(&value, "%lu", (unsigned long) child->local_rank);
-        if(NULL == (param = mca_base_param_environ_variable("ns","nds","local_rank"))) {
+        if(NULL == (param = mca_base_param_environ_variable("orte","ess","local_rank"))) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             goto CLEANUP;
         }
-        opal_setenv(param, value, true, &app_item->environ_copy);
+        opal_setenv(param, value, true, &app->env);
         free(param);
         free(value);
         
@@ -1115,13 +1075,13 @@ DOFORK:
             param = mca_base_param_environ_variable("mpi", NULL,
                                                     "paffinity_processor");
             asprintf(&value, "%lu", (unsigned long) proc_rank);
-            opal_setenv(param, value, true, &app_item->environ_copy);
+            opal_setenv(param, value, true, &app->env);
             free(param);
             free(value);
         } else {
             param = mca_base_param_environ_variable("mpi", NULL,
                                                     "paffinity_processor");
-            opal_unsetenv(param, &app_item->environ_copy);
+            opal_unsetenv(param, &app->env);
             free(param);
         }
         
@@ -1147,50 +1107,76 @@ DOFORK:
                                                              &(app->app),
                                                              &(app->cwd),
                                                              &(app->argv),
-                                                             &(app_item->environ_copy) ) ) ) {
+                                                             &(app->env) ) ) ) {
                 ORTE_ERROR_LOG(rc);
                 goto CLEANUP;
             }
         }
 #endif
 #endif
+        if (5 < opal_output_get_verbosity(orte_odls_globals.output)) {
+            opal_output(orte_odls_globals.output, "%s odls:launch: spawning child %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(child->name));
+            
+            /* dump what is going to be exec'd */
+            if (7 < opal_output_get_verbosity(orte_odls_globals.output)) {
+                opal_dss.dump(orte_odls_globals.output, app, ORTE_APP_CONTEXT);
+            }
+        }
 
-        if (ORTE_SUCCESS != (rc = fork_local(app, child, app_item->environ_copy))) {
+        rc = fork_local(app, child, app->env);
+        /* reaquire lock so we don't double unlock... */
+        OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+        if (ORTE_SUCCESS != rc) {
             /* do NOT ERROR_LOG this error - it generates
              * a message/node as most errors will be common
              * across the entire cluster. Instead, we let orterun
              * output a consolidated error message for us
              */
-            quit_flag = true;
+            goto CLEANUP;
+        } else {
+            child->alive = true;
+            child->state = ORTE_PROC_STATE_LAUNCHED;
         }
-        /* reaquire lock so we don't double unlock... */
-        OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
         /* move to next processor */
         proc_rank++;
     }
     launch_failed = false;
 
 CLEANUP:
-    /* report the proc info and state in the registry */
-    if (ORTE_SUCCESS != (rc = orte_odls_base_report_spawn(&orte_odls_globals.children))) {
-        ORTE_ERROR_LOG(rc);
-        opal_condition_signal(&orte_odls_globals.cond);
-        OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
-        return rc;
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:launch reporting job %s launch status",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_JOBID_PRINT(job)));
+    /* pack the launch results */
+    if (ORTE_SUCCESS != (ret = pack_state_update(&alert, true, job))) {
+        ORTE_ERROR_LOG(ret);
     }
     
+    /* send the update */
+    if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_APP_LAUNCH_CALLBACK, 0))) {
+        ORTE_ERROR_LOG(ret);
+    }
+    OBJ_DESTRUCT(&alert);
+
+unlock:
     if (!launch_failed) {
-        /* setup the waitpids on the children */
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:launch setting waitpids",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        
+        /* if the launch didn't fail, setup the waitpids on the children */
         for (item = opal_list_get_first(&orte_odls_globals.children);
              item != opal_list_get_end(&orte_odls_globals.children);
              item = opal_list_get_next(item)) {
             child = (orte_odls_child_t*)item;
             
             if (ORTE_PROC_STATE_LAUNCHED == child->state) {
+                child->state = ORTE_PROC_STATE_RUNNING;
                 OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
                 orte_wait_cb(child->pid, odls_base_default_wait_local_proc, NULL);
                 OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
-                child->state = ORTE_PROC_STATE_RUNNING;
             }
         }
     }
@@ -1200,47 +1186,7 @@ CLEANUP:
     return rc;
 }
 
-int orte_odls_base_default_extract_proc_map_info(orte_process_name_t *daemon,
-                                                 opal_list_t *proc_list,
-                                                 orte_gpr_value_t *value)
-{
-    int rc;
-    orte_vpid_t *vptr;
-    orte_process_name_t name;
-    orte_std_cntr_t posn;
-    orte_namelist_t *proc;
-    
-    /* daemon jobid is set by caller */
-    /* vpid of daemon that will host these procs is in first position */
-    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&vptr, value->keyvals[0]->value, ORTE_VPID))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    daemon->vpid = *vptr;
-    
-    /* loop through the children for this job and harvest their info */
-    posn = 3;
-    name.jobid = ORTE_JOBID_INVALID;  /* must be reset by caller */
-    while (posn < value->cnt) {
-        proc = OBJ_NEW(orte_namelist_t);
-        /* 1st child posn - vpid */
-        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&vptr, value->keyvals[posn]->value, ORTE_VPID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        name.vpid = *vptr;
-        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&proc->name, &name, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        opal_list_append(proc_list, &proc->item);
-        posn += 4;
-    }
-        
-    return ORTE_SUCCESS;
-}
-
-int orte_odls_base_default_deliver_message(orte_jobid_t job, orte_buffer_t *buffer, orte_rml_tag_t tag)
+int orte_odls_base_default_deliver_message(orte_jobid_t job, opal_buffer_t *buffer, orte_rml_tag_t tag)
 {
     int rc;
     opal_list_item_t *item;
@@ -1259,11 +1205,14 @@ int orte_odls_base_default_deliver_message(orte_jobid_t job, orte_buffer_t *buff
          *  the dss.compare function to check for equality.
          */
         if (!child->alive ||
-            ORTE_EQUAL != orte_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
+            OPAL_EQUAL != opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
             continue;
         }
-        opal_output(orte_odls_globals.output, "odls: sending message to tag %lu on child %s",
-                    (unsigned long)tag, ORTE_NAME_PRINT(child->name));
+        
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls: sending message to tag %lu on child %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (unsigned long)tag, ORTE_NAME_PRINT(child->name)));
         
         /* if so, send the message */
         rc = orte_rml.send_buffer(child->name, buffer, tag, 0);
@@ -1293,8 +1242,8 @@ int orte_odls_base_default_signal_local_procs(const orte_process_name_t *proc, i
     opal_list_item_t *item;
     orte_odls_child_t *child;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
-                         "%s signaling proc %s",
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls: signaling proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == proc) ? "NULL" : ORTE_NAME_PRINT(proc)));
     
@@ -1324,7 +1273,7 @@ int orte_odls_base_default_signal_local_procs(const orte_process_name_t *proc, i
          item != opal_list_get_end(&orte_odls_globals.children);
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
-        if (ORTE_EQUAL == orte_dss.compare(&(child->name), (orte_process_name_t*)proc, ORTE_NAME)) {
+        if (OPAL_EQUAL == opal_dss.compare(&(child->name), (orte_process_name_t*)proc, ORTE_NAME)) {
             /* unlock before signaling as this may generate a callback */
             opal_condition_signal(&orte_odls_globals.cond);
             OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
@@ -1344,12 +1293,67 @@ int orte_odls_base_default_signal_local_procs(const orte_process_name_t *proc, i
     return ORTE_ERR_NOT_FOUND;
 }
 
-int orte_odls_base_default_require_sync(orte_process_name_t *proc)
+static bool all_children_registered(orte_jobid_t job)
 {
-    orte_buffer_t buffer;
+    opal_list_item_t *item;
+    orte_odls_child_t *child;
+    
+    /* the thread is locked elsewhere - don't try to do it again here */
+    
+    for (item = opal_list_get_first(&orte_odls_globals.children);
+         item != opal_list_get_end(&orte_odls_globals.children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        
+        /* is this child part of the specified job? */
+        if (OPAL_EQUAL == opal_dss.compare(&child->name->jobid, &job, ORTE_JOBID)) {
+            /* if this child is *not* registered yet, return false */
+            if (NULL == child->rml_uri) {
+                return false;
+            }
+        }
+    }
+    
+    /* if we get here, then everyone in the job is registered */
+    return true;
+    
+}
+
+static int pack_child_contact_info(orte_jobid_t job, opal_buffer_t *buf)
+{
+    opal_list_item_t *item;
+    orte_odls_child_t *child;
+    int rc;
+    
+    /* the thread is locked elsewhere - don't try to do it again here */
+    
+    for (item = opal_list_get_first(&orte_odls_globals.children);
+         item != opal_list_get_end(&orte_odls_globals.children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        
+        /* is this child part of the specified job? */
+        if (OPAL_EQUAL == opal_dss.compare(&child->name->jobid, &job, ORTE_JOBID)) {
+            /* pack the contact info */
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &child->rml_uri, 1, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+    }
+    
+    return ORTE_SUCCESS;
+    
+}
+
+
+int orte_odls_base_default_require_sync(orte_process_name_t *proc, opal_buffer_t *buf)
+{
+    opal_buffer_t buffer;
     opal_list_item_t *item;
     orte_odls_child_t *child;
     int8_t dummy;
+    orte_std_cntr_t cnt;
     int rc;
     bool found=false;
     
@@ -1362,11 +1366,13 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc)
         child = (orte_odls_child_t*)item;
         
         /* find this child */
-        if (ORTE_EQUAL == orte_dss.compare(proc, child->name, ORTE_NAME)) {
-            opal_output(orte_odls_globals.output, "odls: registering sync on child %s",
-                        ORTE_NAME_PRINT(child->name));
+        if (OPAL_EQUAL == opal_dss.compare(proc, child->name, ORTE_NAME)) {
+
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                 "%s odls: registering sync on child %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(child->name)));
             
-            child->sync_required = !child->sync_required;
             found = true;
             break;
         }
@@ -1377,23 +1383,42 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc)
      */
     if (!found) {
         child = OBJ_NEW(orte_odls_child_t);
-        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&child->name, proc, ORTE_NAME))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.copy((void**)&child->name, proc, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         opal_list_append(&orte_odls_globals.children, &child->super);
         /* we don't know any other info about the child, so just indicate it's
-         * alive and set the sync
+         * alive
          */
         child->alive = true;
-        child->sync_required = !child->sync_required;
+    }
+    
+    /* if the contact info is already set, then we are "de-registering" the child
+     * so free the info and set it to NULL
+     */
+    if (NULL != child->rml_uri) {
+        free(child->rml_uri);
+        child->rml_uri = NULL;
+    } else {
+        /* if the contact info is not set, then we are registering the child so
+         * unpack the contact info from the buffer and store it
+         */
+        cnt = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &(child->rml_uri), &cnt, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+        }
     }
     
     /* ack the call */
-    OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-    orte_dss.pack(&buffer, &dummy, 1, ORTE_INT8);  /* put anything in */
-    opal_output(orte_odls_globals.output, "odls: sending sync ack to child %s",
-                ORTE_NAME_PRINT(proc));
+    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+    opal_dss.pack(&buffer, &dummy, 1, OPAL_INT8);  /* put anything in */
+
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls: sending sync ack to child %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
+
     if (0 > (rc = orte_rml.send_buffer(proc, &buffer, ORTE_RML_TAG_SYNC, 0))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buffer);
@@ -1401,11 +1426,68 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc)
     }            
     OBJ_DESTRUCT(&buffer);
     
+    /* now check to see if everyone in this job has registered */
+    if (all_children_registered(proc->jobid)) {
+        /* once everyone registers, send their contact info to
+         * the HNP so it is available to debuggers and anyone
+         * else that needs it
+         */
+        
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls: sending contact info to HNP",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        
+        OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+        /* store jobid */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buffer, &proc->jobid, 1, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&buffer);
+            goto CLEANUP;
+        }
+        /* add in contact info for all procs in the job */
+        if (ORTE_SUCCESS != (rc = pack_child_contact_info(proc->jobid, &buffer))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&buffer);
+            goto CLEANUP;
+        }
+        /* now send it to the HNP */
+        if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buffer, ORTE_RML_TAG_INIT_ROUTES, 0))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&buffer);
+            goto CLEANUP;
+        }
+        OBJ_DESTRUCT(&buffer);
+    }
+    
+CLEANUP:
     opal_condition_signal(&orte_odls_globals.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
     return ORTE_SUCCESS;
 }
 
+static bool any_live_children(orte_jobid_t job)
+{
+    opal_list_item_t *item;
+    orte_odls_child_t *child;
+
+    /* the thread is locked elsewhere - don't try to do it again here */
+    
+    for (item = opal_list_get_first(&orte_odls_globals.children);
+         item != opal_list_get_end(&orte_odls_globals.children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        
+        /* is this child part of the specified job? */
+        if (OPAL_EQUAL == opal_dss.compare(&child->name->jobid, &job, ORTE_JOBID) &&
+            child->alive) {
+            return true;
+        }
+    }
+    
+    /* if we get here, then nobody is left alive from that job */
+    return false;
+
+}
 
 /*
  *  Wait for a callback indicating the child has completed.
@@ -1415,12 +1497,17 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
 {
     orte_odls_child_t *child;
     opal_list_item_t *item;
-    bool aborted;
+    bool aborted=false;
     char *job, *vpid, *abort_file;
     struct stat buf;
     int rc;
+    opal_buffer_t alert;
+    orte_plm_cmd_flag_t cmd=ORTE_PLM_UPDATE_PROC_STATE;
     
-    opal_output(orte_odls_globals.output, "odls: child process %ld terminated", (long)pid);
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:wait_local_proc child process %ld terminated",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)pid));
     
     /* since we are going to be working with the global list of
      * children, we need to protect that list from modification
@@ -1434,7 +1521,8 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
          item != opal_list_get_end(&orte_odls_globals.children);
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
-        if (child->alive && pid == child->pid) { /* found it */
+        
+        if (pid == child->pid) { /* found it */
             goto GOTCHILD;
         }
     }
@@ -1442,13 +1530,32 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
      * is already dead. If the latter, then we have a problem as it
      * means we are detecting it exiting multiple times
      */
-    opal_output(orte_odls_globals.output, "odls: did not find pid %ld in table!", (long) pid);
-    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:wait_local_proc did not find pid %ld in table!",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)pid));
+
+    /* it's just a race condition - don't error log it */
     opal_condition_signal(&orte_odls_globals.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
     return;
 
 GOTCHILD:
+    /* if the child was previously flagged as dead, then just
+     * ensure that its exit state gets reported to avoid hanging
+     */
+    if (!child->alive) {
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:wait_local_proc child %s was already dead",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(child->name)));
+        goto MOVEON;
+    }
+
+    /* save the exit code */
+    child->exit_code = status;
+
     /* If this child was the (vpid==0), we hooked it up to orterun's
        STDIN SOURCE earlier (do not change this without also changing
        odsl_default_fork_local_proc()).  So we have to tell the SOURCE
@@ -1462,9 +1569,13 @@ GOTCHILD:
        *have* to do this unpublish here, even if it arrives after an
        exception is detected and handled (in which case this unpublish
        request will be ignored/discarded. */
-    opal_output(orte_odls_globals.output,
-                "odls: pid %ld corresponds to %s\n",
-                (long) pid, ORTE_NAME_PRINT(child->name));
+
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:wait_local_proc pid %ld corresponds to %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)pid,
+                         ORTE_NAME_PRINT(child->name)));
+
     if (0 == child->name->vpid) {
         rc = orte_iof.iof_unpublish(child->name, ORTE_NS_CMP_ALL, 
                                     ORTE_IOF_STDIN);
@@ -1473,17 +1584,19 @@ GOTCHILD:
             /* We can't really abort, so keep going... */
         }
     }
-    opal_output(orte_odls_globals.output, "orted sent IOF unpub message!\n");
 
-    #if 0
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:wait_local_proc orted sent IOF unpub message!",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+#if 0
     /* Note that the svc IOF component will detect an exception on the
        oob because we're shutting it down, so it will take care of
        closing down any streams that it has open to us. */
     orte_iof.iof_flush();
-    #endif
+#endif
 
     /* determine the state of this process */
-    aborted = false;
     if(WIFEXITED(status)) {
         /* even though the process exited "normally", it is quite
          * possible that this happened via an orte_abort call - in
@@ -1495,56 +1608,81 @@ GOTCHILD:
          * of an "abort" file in this process' session directory. If
          * we find it, then we know that this was an abnormal termination.
          */
-        if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&job, child->name->jobid))) {
+        if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&job, child->name->jobid))) {
             ORTE_ERROR_LOG(rc);
             goto MOVEON;
         }
-        if (ORTE_SUCCESS != (rc = orte_ns.convert_vpid_to_string(&vpid, child->name->vpid))) {
+        if (ORTE_SUCCESS != (rc = orte_util_convert_vpid_to_string(&vpid, child->name->vpid))) {
             ORTE_ERROR_LOG(rc);
             free(job);
             goto MOVEON;
         }
-        abort_file = opal_os_path(false, orte_process_info.universe_session_dir,
+        abort_file = opal_os_path(false, orte_process_info.tmpdir_base,
+                                  orte_process_info.top_session_dir,
                                   job, vpid, "abort", NULL );
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:wait_local_proc checking abort file %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), abort_file));
+        
         free(job);
         free(vpid);        
         if (0 == stat(abort_file, &buf)) {
             /* the abort file must exist - there is nothing in it we need. It's
              * meer existence indicates that an abnormal termination occurred
              */
-            opal_output(orte_odls_globals.output, "odls: child %s died by abort",
-                        ORTE_NAME_PRINT(child->name));
+
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                 "%s odls:wait_local_proc child %s died by abort",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(child->name)));
+
             aborted = true;
+            child->state = ORTE_PROC_STATE_ABORTED;
             free(abort_file);
         } else {
             /* okay, it terminated normally - check to see if a sync was required and
              * if it was received
              */
-            if (child->sync_required) {
+            if (NULL != child->rml_uri) {
                 /* if this is set, then we required a sync and didn't get it, so this
                  * is considered an abnormal termination and treated accordingly
                  */
                 aborted = true;
-                opal_output(orte_odls_globals.output, "odls: child process %s terminated normally "
-                            "but did not provide a required sync - it "
-                            "will be treated as an abnormal termination",
-                            ORTE_NAME_PRINT(child->name));
+                child->state = ORTE_PROC_STATE_ABORTED;
+                
+                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                     "%s odls:wait_local_proc child process %s terminated normally "
+                                     "but did not provide a required sync - it "
+                                     "will be treated as an abnormal termination",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(child->name)));
+                
                 goto MOVEON;
+            } else {
+                child->state = ORTE_PROC_STATE_TERMINATED;
             }
-            opal_output(orte_odls_globals.output, "odls: child process %s terminated normally",
-                        ORTE_NAME_PRINT(child->name));
+
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                 "%s odls:wait_local_proc child process %s terminated normally",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(child->name)));
+
         }
     } else {
         /* the process was terminated with a signal! That's definitely
          * abnormal, so indicate that condition
          */
-        opal_output(orte_odls_globals.output, "odls: child process %s terminated with signal",
-                    ORTE_NAME_PRINT(child->name));
+        child->state = ORTE_PROC_STATE_ABORTED_BY_SIG;
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:wait_local_proc child process %s terminated with signal",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(child->name)));
+        
         aborted = true;
     }
 
 MOVEON:
-    /* set this proc to "not alive" */
+    /* indicate the child is no longer alive */
     child->alive = false;
 
     /* Clean up the session directory as if we were the process
@@ -1553,22 +1691,73 @@ MOVEON:
      */
     orte_session_dir_finalize(child->name);
 
-    /* set the proc state in the child structure */
+    /* setup the alert buffer */
+    OBJ_CONSTRUCT(&alert, opal_buffer_t);
+
+    /* if the proc aborted, tell the HNP right away */
     if (aborted) {
-        child->state = ORTE_PROC_STATE_ABORTED;
+        /* pack update state command */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &cmd, 1, ORTE_PLM_CMD))) {
+            ORTE_ERROR_LOG(rc);
+            goto unlock;
+        }
+        /* pack only the data for this proc - have to start with the jobid
+         * so the receiver can unpack it correctly
+         */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &child->name->jobid, 1, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(rc);
+            goto unlock;
+        }
+        /* now pack the child's info */
+        if (ORTE_SUCCESS != (rc = pack_state_for_proc(&alert, false, child))) {
+            ORTE_ERROR_LOG(rc);
+            goto unlock;
+        }
+        
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:wait_local_proc reporting proc %s aborted to HNP",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(child->name)));
+        
+        /* send it */
+        if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
+            ORTE_ERROR_LOG(rc);
+            goto unlock;
+        }
     } else {
-        child->state = ORTE_PROC_STATE_TERMINATED;
+        /* since it didn't abort, let's see if all of that job's procs are done */
+        if (!any_live_children(child->name->jobid)) {
+            /* all those children are dead - alert the HNP */
+            /* pack update state command */
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &cmd, 1, ORTE_PLM_CMD))) {
+                ORTE_ERROR_LOG(rc);
+                goto unlock;
+            }
+            /* pack the data for the job */
+            if (ORTE_SUCCESS != (rc = pack_state_update(&alert, false, child->name->jobid))) {
+                ORTE_ERROR_LOG(rc);
+                goto unlock;
+            }
+            
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                 "%s odls:wait_local_proc reporting all procs in %s terminated",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_JOBID_PRINT(child->name->jobid)));
+            
+            /* send it */
+            if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
+                ORTE_ERROR_LOG(rc);
+                goto unlock;
+            }
+        }
     }
 
-    /* Need to unlock before we call set_proc_state as this is going to generate
-     * a trigger that will eventually callback to us
-     */
+unlock:
+    OBJ_DESTRUCT(&alert);
+
     opal_condition_signal(&orte_odls_globals.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
 
-    if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(child->name, child->state, status))) {
-        ORTE_ERROR_LOG(rc);
-    }
 }
 
 int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
@@ -1577,20 +1766,38 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
 {
     orte_odls_child_t *child;
     opal_list_item_t *item, *next;
-    int rc = 0, exit_status = 0, err;
+    int rc = ORTE_SUCCESS, exit_status = 0, err;
     opal_list_t procs_killed;
-    orte_namelist_t *proc;
-    
+    opal_buffer_t alert;
+    orte_plm_cmd_flag_t cmd=ORTE_PLM_UPDATE_PROC_STATE;
+    orte_vpid_t null=ORTE_VPID_INVALID;
+    orte_jobid_t last_job;
+
     OBJ_CONSTRUCT(&procs_killed, opal_list_t);
     
-    opal_output(orte_odls_globals.output, "%s odls_kill_local_proc: working on job %ld",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)job);
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:kill_local_proc working on job %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_JOBID_PRINT(job)));
     
     /* since we are going to be working with the global list of
      * children, we need to protect that list from modification
      * by other threads
      */
     OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+    
+    /* setup the alert buffer - we will utilize the fact that
+     * children are stored on the list in job order. In other words,
+     * the children from one job are stored in sequence on the
+     * list
+     */
+    OBJ_CONSTRUCT(&alert, opal_buffer_t);
+    /* pack update state command */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &cmd, 1, ORTE_PLM_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    last_job = ORTE_JOBID_INVALID;
     
     for (item = opal_list_get_first(&orte_odls_globals.children);
          item != opal_list_get_end(&orte_odls_globals.children);
@@ -1600,33 +1807,68 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
         /* preserve the pointer to the next item in list in case we release it */
         next = opal_list_get_next(item);
         
-        opal_output(orte_odls_globals.output, "%s odls_kill_local_proc: checking child process %s",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(child->name));
+        
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:kill_local_proc checking child process %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(child->name)));
         
         /* do we have a child from the specified job? Because the
          *  job could be given as a WILDCARD value, we must use
          *  the dss.compare function to check for equality.
          */
-        if (ORTE_EQUAL != orte_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
+        if (OPAL_EQUAL != opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
+            
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                 "%s odls:kill_local_proc child %s is not part of job %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(child->name),
+                                 ORTE_JOBID_PRINT(job)));
+            
             continue;
         }
         
         /* remove the child from the list since it is either already dead or soon going to be dead */
         opal_list_remove_item(&orte_odls_globals.children, item);
         
+        /* store the jobid, if required */
+        if (last_job != child->name->jobid) {
+            /* if it isn't the first time through, pack a job_end flag so the
+             * receiver can correctly process the buffer
+             */
+            if (ORTE_JOBID_INVALID != last_job) {
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &null, 1, ORTE_VPID))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
+            /* pack the jobid */
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &(child->name->jobid), 1, ORTE_JOBID))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            last_job = child->name->jobid;
+        }
+        
         /* is this process alive? if not, then nothing for us
          * to do to it
          */
         if (!child->alive) {
-            opal_output(orte_odls_globals.output, "%s odls_kill_local_proc: child %s is not alive",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(child->name));
+            
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                 "%s odls:kill_local_proc child %s is not alive",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(child->name)));
+            
             /* ensure, though, that the state is terminated so we don't lockup if
              * the proc never started
              */
-            continue;
+            goto RECORD;
         }
         
-        /* de-register the SIGCHILD callback for this pid */
+        /* de-register the SIGCHILD callback for this pid so we don't get
+         * multiple alerts sent back to the HNP
+         */
         if (ORTE_SUCCESS != (rc = orte_wait_cb_cancel(child->pid))) {
             /* no need to error_log this - it just means that the pid is already gone */
             goto MOVEON;
@@ -1638,6 +1880,18 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
             opal_show_help("help-odls-default.txt",
                            "odls-default:could-not-send-kill",
                            true, orte_system_info.nodename, child->pid, err);
+            /* check the proc state - ensure it is in one of the termination
+             * states so that we properly wakeup
+             */
+            if (ORTE_PROC_STATE_UNDEF == child->state ||
+                ORTE_PROC_STATE_INIT == child->state ||
+                ORTE_PROC_STATE_LAUNCHED == child->state ||
+                ORTE_PROC_STATE_RUNNING == child->state) {
+                /* we can't be sure what happened, but make sure we
+                 * at least have a value that will let us eventually wakeup
+                 */
+                child->state = ORTE_PROC_STATE_TERMINATED;
+            }
             goto MOVEON;
         }
         
@@ -1654,46 +1908,37 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
                                true, orte_system_info.nodename, child->pid);
             }
         }
+        child->state = ORTE_PROC_STATE_ABORTED_BY_SIG;  /* we may have sent it, but that's what happened */
+        goto RECORD;
         
 MOVEON:
         /* set the process to "not alive" */
         child->alive = false;
-        
-        /* add this proc to the local list */
-        proc = OBJ_NEW(orte_namelist_t);
-        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(proc->name), child->name, ORTE_NAME))) {
+
+RECORD:
+        /* store the child in the alert buffer */
+        if (ORTE_SUCCESS != (rc = pack_state_for_proc(&alert, false, child))) {
             ORTE_ERROR_LOG(rc);
-            opal_condition_signal(&orte_odls_globals.cond);
-            OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
-            return rc;
         }
-        opal_list_append(&procs_killed, &proc->item);
-        
-        /* release the object since we killed it */
-        OBJ_RELEASE(child);
     }
     
-    /* we are done with the global list, so we can now release
+    /* if set_state, alert the HNP to what happened */
+    if (set_state) {
+        if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
+            ORTE_ERROR_LOG(rc);
+        } else {
+            rc = ORTE_SUCCESS; /* need to reset this to success since we return rc */
+        }
+    }
+    
+   /* we are done with the global list, so we can now release
      * any waiting threads - this also allows any callbacks to work
      */
     opal_condition_signal(&orte_odls_globals.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+
+CLEANUP:
+    OBJ_DESTRUCT(&alert);
     
-    /* deconstruct the local list and update the process states on the registry, if indicated */
-    while (NULL != (item = opal_list_remove_first(&procs_killed))) {
-        proc = (orte_namelist_t*)item;
-        if (set_state) {
-            if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(proc->name, ORTE_PROC_STATE_TERMINATED, exit_status))) {
-                ORTE_ERROR_LOG(rc);
-                /* don't exit out even if this didn't work - we still might need to kill more
-                 * processes, so just keep trucking
-                 */
-            }
-        }
-        OBJ_RELEASE(proc);
-    }
-    
-    OBJ_DESTRUCT(&procs_killed);
-    
-    return ORTE_SUCCESS;    
+    return rc;    
 }

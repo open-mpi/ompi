@@ -24,7 +24,7 @@ libmca_oob_la_SOURCES =
 nobase_orte_HEADERS =
 
 # local files
-headers = oob.h oob_types.h
+headers = oob.h
 libmca_oob_la_SOURCES += $(headers)
 
 # Conditionally install the header files

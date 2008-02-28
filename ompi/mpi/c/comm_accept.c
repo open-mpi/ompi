@@ -21,6 +21,7 @@
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/info/info.h"
+#include "ompi/mca/dpm/dpm.h"
 #include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -93,10 +94,10 @@ int MPI_Comm_accept(char *port_name, MPI_Info info, int root,
      * The two leaders will figure this out later. However, we need the tag.
      */
     if ( rank == root ) {
-        tmp_port = ompi_parse_port(port_name, &tag);
+        tmp_port = ompi_dpm.parse_port(port_name, &tag);
         free (tmp_port);
     }
-    rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
+    rc = ompi_dpm.connect_accept (comm, root, NULL, send_first, &newcomp, tag);
 
     *newcomm = newcomp;
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME );

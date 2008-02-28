@@ -18,12 +18,15 @@
  */
 
 #include "orte_config.h"
-#include "orte/util/proc_info.h"
+
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+
+#include "orte/util/proc_info.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/rml/rml_types.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "iof_svc.h"
 #include "iof_svc_proxy.h"
 #include "iof_svc_pub.h"
@@ -147,7 +150,7 @@ orte_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidd
 {
     int rc;
 
-    if (false == orte_process_info.seed) {
+    if (false == orte_process_info.hnp) {
         return NULL;
     }
 

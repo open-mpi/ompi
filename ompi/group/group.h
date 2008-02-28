@@ -136,7 +136,7 @@ OMPI_DECLSPEC extern ompi_group_t ompi_mpi_group_null;
  *
  * @return Pointer to new group structure
  */
-ompi_group_t *ompi_group_allocate(int group_size);
+OMPI_DECLSPEC ompi_group_t *ompi_group_allocate(int group_size);
 ompi_group_t *ompi_group_allocate_sporadic(int group_size);
 ompi_group_t *ompi_group_allocate_strided(void);
 ompi_group_t *ompi_group_allocate_bmap(int orig_group_size, int group_size);

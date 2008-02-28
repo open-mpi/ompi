@@ -24,6 +24,8 @@
 #define _MCA_OOB_TCP_PEER_H_
 
 #include "orte_config.h"
+#include "orte/types.h"
+
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
@@ -31,10 +33,12 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
-#include "orte/mca/ns/ns_types.h"
+#include "opal/event/event.h"
+
 #include "oob_tcp_msg.h"
 #include "oob_tcp_addr.h"
-#include "opal/event/event.h"
+
+BEGIN_C_DECLS
 
 /**
  * the state of the connection
@@ -93,10 +97,6 @@ typedef struct mca_oob_tcp_peer_t mca_oob_tcp_peer_t;
     OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_peer_free,         \
                           &peer->super);                                \
 }
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
 /*
  * Class declaration.
@@ -157,9 +157,7 @@ int mca_oob_tcp_peer_send_ident(mca_oob_tcp_peer_t* peer);
  */
 void mca_oob_tcp_peer_dequeue_msg(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* _MCA_OOB_TCP_PEER_H */
 

@@ -21,7 +21,7 @@
 #include "orte_config.h"
 #include "orte/orte_constants.h"
 
-#include "orte/dss/dss.h"
+#include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/schema/schema_types.h"
@@ -42,7 +42,7 @@ int orte_ras_base_set_oversubscribe_override(orte_jobid_t job)
         ORTE_JOB_GLOBALS,
         NULL
     };
-    orte_data_value_t val = ORTE_DATA_VALUE_EMPTY;
+    opal_dss_value_t val = OPAL_DATA_VALUE_EMPTY;
     bool trueval = true;
     int rc;
 
@@ -55,7 +55,7 @@ int orte_ras_base_set_oversubscribe_override(orte_jobid_t job)
     }
     
     /* setup the value to be true */
-    val.type = ORTE_BOOL;
+    val.type = OPAL_BOOL;
     val.data = &trueval;
     
     if (ORTE_SUCCESS != (rc = orte_gpr.put_1(addr_mode, segment, tokens,
@@ -105,7 +105,7 @@ int orte_ras_base_get_oversubscribe_override(orte_jobid_t job, bool *flag)
     free(segment);
     
     if (0 < cnt) {
-        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&bptr, values[0]->keyvals[0]->value, ORTE_BOOL))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.get((void**)&bptr, values[0]->keyvals[0]->value, OPAL_BOOL))) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }

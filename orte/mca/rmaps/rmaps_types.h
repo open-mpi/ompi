@@ -21,72 +21,20 @@
 #define ORTE_MCA_RMAPS_TYPES_H
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 
-#include "orte/mca/ns/ns_types.h"
-#include "orte/mca/rmgr/rmgr_types.h"
-
-/*
- * General MAP types
- */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
-/****   RMAPS ATTRIBUTES   ***/
-#define ORTE_RMAPS_MAP_POLICY           "orte-map-policy"
-#define ORTE_RMAPS_PERNODE              "orte-map-pernode"
-#define ORTE_RMAPS_N_PERNODE            "orte-map-n-pernode"
-#define ORTE_RMAPS_NO_USE_LOCAL         "orte-map-no-use-local"
-#define ORTE_RMAPS_NO_OVERSUB           "orte-map-no-oversubscribe"
-#define ORTE_RMAPS_DESIRED_MAPPER       "orte-map-desired"
-#define ORTE_RMAPS_USE_PARENT_PLAN      "orte-map-use-parent-plan"
-#define ORTE_RMAPS_BOOKMARK             "orte-map-bookmark"
-#define ORTE_RMAPS_DISPLAY_AFTER_MAP    "orte-map-display"
-#define ORTE_RMAPS_NO_ALLOC_RANGE       "orte-map-no-alloc-range"
-    
-/****   JOB_MAP OBJECTS   ***/
-/*
- * Mapped process info for job_map
- */
-struct orte_mapped_proc_t {
-    opal_list_item_t super;
-    orte_process_name_t name;	/* process name */
-    orte_vpid_t	rank;           /* process rank */
-    bool maped_rank;            /* Wether or not this rank is maped according to hostfile */
-    orte_vpid_t local_rank;     /* local rank on the node */
-    orte_std_cntr_t	app_idx;	/* index of app_context for this process */
-    pid_t pid;
-    char *slot_list;
-#if OPAL_ENABLE_FT == 1
-    size_t ckpt_state;
-    char * ckpt_snapshot_ref;
-    char * ckpt_snapshot_loc;
-#endif
-};
-typedef struct orte_mapped_proc_t orte_mapped_proc_t;
-OBJ_CLASS_DECLARATION(orte_mapped_proc_t);
+#include "orte/class/orte_pointer_array.h"
 
 /*
- * Mapping of nodes to process ranks.
+ * General MAP types - instanced in runtime/orte_globals_class_instances.h
  */
-struct orte_mapped_node_t {
-    opal_list_item_t super;
-    char *nodename;		 			/* name of node */
-    int32_t launch_id;              /* launch id of node - needed by some systems */
-    char *username;
-    orte_process_name_t *daemon;	/* name of the daemon on this node
-                                     * NULL => daemon not assigned yet
-                                     */
-    bool daemon_preexists;          /* whether or not the daemon already exists */
-    bool oversubscribed;            /* whether or not the #procs > #process slots on this node */
-    orte_std_cntr_t num_procs;      /* #procs on this node - just the length of the procs list, but
-                                     * stored here so we don't have to keep recomputing it elsewhere
-                                     */
-    opal_list_t procs;   			/* list of mapped_proc objects on this node */
-};
-typedef struct orte_mapped_node_t orte_mapped_node_t;
-OBJ_CLASS_DECLARATION(orte_mapped_node_t);
+
+BEGIN_C_DECLS
+
+#define ORTE_RMAPS_NOPOL    0x00
+#define ORTE_RMAPS_BYNODE   0x01
+#define ORTE_RMAPS_BYSLOT   0x02
+#define ORTE_RMAPS_BYUSER   0x04
 
 /*
  * Structure that represents the mapping of a job to an
@@ -94,23 +42,30 @@ OBJ_CLASS_DECLARATION(orte_mapped_node_t);
  */
 struct orte_job_map_t {
     opal_object_t super;
-    orte_jobid_t job;
-    char *mapping_mode;
-    orte_vpid_t vpid_start;
-    orte_vpid_t vpid_range;
-    orte_std_cntr_t num_apps;	/* number of app_contexts */
-    orte_app_context_t **apps;	/* the array of app_contexts for this job */
-    orte_std_cntr_t num_nodes;  /* #nodes in this map - just the length of the nodes list, but
-                                 * stored here so we don't have to keep recomputing it elsewhere
-                                 */
+    /* save the mapping configuration */
+    uint8_t policy;
+    bool no_use_local;
+    bool pernode;
+    orte_std_cntr_t npernode;
+    bool oversubscribe;
+    bool display_map;
+    /* *** */
+    /* number of new daemons required to be launched
+     * to support this job map
+     */
     orte_std_cntr_t num_new_daemons;
+    /* starting vpid of the new daemons - they will
+     * be sequential from that point
+     */
     orte_vpid_t daemon_vpid_start;
-    opal_list_t nodes;			/* list of mapped_node_t */
+    /* number of nodes participating in this job */
+    orte_std_cntr_t num_nodes;
+    /* array of pointers to nodes in this map for this job */
+    orte_pointer_array_t *nodes;
 };
 typedef struct orte_job_map_t orte_job_map_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_job_map_t);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif
