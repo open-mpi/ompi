@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -65,9 +65,9 @@
 #include "opal/version.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/os_path.h"
-
-#include "orte/class/orte_pointer_array.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
+
 #include "orte/util/proc_info.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/pre_condition_transports.h"
@@ -1174,10 +1174,9 @@ static int parse_locals(int argc, char* argv[])
                     exit(1);
                 }
                 if (made_app) {
-                    orte_std_cntr_t dummy;
                     app->idx = app_num;
                     ++app_num;
-                    orte_pointer_array_add(&dummy, jdata->apps, app);
+                    opal_pointer_array_add(jdata->apps, app);
                     ++jdata->num_apps;
                 }
 
@@ -1201,10 +1200,9 @@ static int parse_locals(int argc, char* argv[])
             exit(1);
         }
         if (made_app) {
-            orte_std_cntr_t dummy;
             app->idx = app_num;
             ++app_num;
-            orte_pointer_array_add(&dummy, jdata->apps, app);
+            opal_pointer_array_add(jdata->apps, app);
             ++jdata->num_apps;
         }
     }
@@ -1218,11 +1216,11 @@ static int parse_locals(int argc, char* argv[])
        course -- yay opal_environ_merge()).  */
 
     if (NULL != global_mca_env) {
-        size1 = orte_pointer_array_get_size(jdata->apps);
+        size1 = (size_t)opal_pointer_array_get_size(jdata->apps);
         /* Iterate through all the apps */
         for (j = 0; j < size1; ++j) {
             app = (orte_app_context_t *)
-                orte_pointer_array_get_item(jdata->apps, j);
+                opal_pointer_array_get_item(jdata->apps, j);
             if (NULL != app) {
                 /* Use handy utility function */
                 env = opal_environ_merge(global_mca_env, app->env);
@@ -1247,16 +1245,16 @@ static int parse_locals(int argc, char* argv[])
     if (NULL != global_mca_env) {
         env = global_mca_env;
     } else {
-        if (orte_pointer_array_get_size(jdata->apps) >= 1) {
+        if (opal_pointer_array_get_size(jdata->apps) >= 1) {
             /* Remember that pointer_array's can be padded with NULL
                entries; so only use the app's env if there is exactly
                1 non-NULL entry */
             app = (orte_app_context_t *)
-                orte_pointer_array_get_item(jdata->apps, 0);
+                opal_pointer_array_get_item(jdata->apps, 0);
             if (NULL != app) {
                 env = app->env;
-                for (j = 1; j < orte_pointer_array_get_size(jdata->apps); ++j) {
-                    if (NULL != orte_pointer_array_get_item(jdata->apps, j)) {
+                for (j = 1; j < opal_pointer_array_get_size(jdata->apps); ++j) {
+                    if (NULL != opal_pointer_array_get_item(jdata->apps, j)) {
                         env = NULL;
                         break;
                     }
@@ -1871,10 +1869,9 @@ static int parse_appfile(char *filename, char ***env)
                 opal_argv_free(tmp_env);
             }
             if (made_app) {
-                orte_std_cntr_t dummy;
                 app->idx = app_num;
                 ++app_num;
-                orte_pointer_array_add(&dummy, jdata->apps, app);
+                opal_pointer_array_add(jdata->apps, app);
                 ++jdata->num_apps;
             }
         }

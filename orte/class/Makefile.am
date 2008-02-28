@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2007 The University of Tennessee and The University
+# Copyright (c) 2004-2008 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -21,10 +21,8 @@
 
 headers += \
         class/orte_proc_table.h \
-        class/orte_pointer_array.h \
         class/orte_value_array.h
 
 libopen_rte_la_SOURCES += \
         class/orte_proc_table.c \
-        class/orte_pointer_array.c \
         class/orte_value_array.c

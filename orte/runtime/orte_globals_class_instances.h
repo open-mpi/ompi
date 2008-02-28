@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -140,7 +140,8 @@ OBJ_CLASS_INSTANCE(orte_app_context_map_t,
 static void orte_job_construct(orte_job_t* job)
 {
     job->jobid = ORTE_JOBID_INVALID;
-    orte_pointer_array_init(&job->apps,
+    job->apps = OBJ_NEW(opal_pointer_array_t);
+    opal_pointer_array_init(job->apps,
                             1,
                             ORTE_GLOBAL_ARRAY_MAX_SIZE,
                             2);
@@ -148,7 +149,8 @@ static void orte_job_construct(orte_job_t* job)
     job->local_spawn = false;
     job->total_slots_alloc = 0;
     job->num_procs = 0;
-    orte_pointer_array_init(&job->procs,
+    job->procs = OBJ_NEW(opal_pointer_array_t);
+    opal_pointer_array_init(job->procs,
                             ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
                             ORTE_GLOBAL_ARRAY_MAX_SIZE,
                             ORTE_GLOBAL_ARRAY_BLOCK_SIZE);
@@ -215,7 +217,8 @@ static void orte_node_construct(orte_node_t* node)
     node->launch_id = -1;
 
     node->num_procs = 0;
-    orte_pointer_array_init(&node->procs,
+    node->procs = OBJ_NEW(opal_pointer_array_t);
+    opal_pointer_array_init(node->procs,
                             ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
                             ORTE_GLOBAL_ARRAY_MAX_SIZE,
                             ORTE_GLOBAL_ARRAY_BLOCK_SIZE);
@@ -313,7 +316,8 @@ static void orte_job_map_construct(orte_job_map_t* map)
     map->num_new_daemons = 0;
     map->daemon_vpid_start = ORTE_VPID_INVALID;
     map->num_nodes = 0;
-    orte_pointer_array_init(&map->nodes,
+    map->nodes = OBJ_NEW(opal_pointer_array_t);
+    opal_pointer_array_init(map->nodes,
                             ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
                             ORTE_GLOBAL_ARRAY_MAX_SIZE,
                             ORTE_GLOBAL_ARRAY_BLOCK_SIZE);

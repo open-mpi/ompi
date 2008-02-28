@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -28,8 +28,8 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
+#include "opal/class/opal_pointer_array.h"
 
-#include "orte/class/orte_pointer_array.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -72,14 +72,15 @@ OBJ_CLASS_INSTANCE(orte_data_object_t,
                    construct, destruct);
 
 /* local globals */
-static orte_pointer_array_t *orte_data_server_store=NULL;
+static opal_pointer_array_t *orte_data_server_store=NULL;
 static bool recv_issued=false;
 
 int orte_data_server_init(void)
 {
     int rc;
 
-    if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&orte_data_server_store,
+    orte_data_server_store = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (rc = opal_pointer_array_init(orte_data_server_store,
                                                       1,
                                                       INT_MAX,
                                                       1))) {
@@ -220,7 +221,7 @@ void orte_data_server(int status, orte_process_name_t* sender,
             data->owner.vpid = sender->vpid;
             
             /* store the data */
-            orte_pointer_array_add(&data->index, orte_data_server_store, data);
+            data->index = opal_pointer_array_add(orte_data_server_store, data);
             
             OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                  "%s data server: successfully published service %s port %s",
@@ -350,7 +351,7 @@ void orte_data_server(int status, orte_process_name_t* sender,
             }
             
             /* delete the object from the data store */
-            orte_pointer_array_set_item(orte_data_server_store, data->index, NULL);
+            opal_pointer_array_set_item(orte_data_server_store, data->index, NULL);
             OBJ_RELEASE(data);
             
             OPAL_OUTPUT_VERBOSE((1, orte_debug_output,

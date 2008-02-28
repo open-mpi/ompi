@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -89,7 +89,6 @@ static int rte_init(char flags)
     orte_job_t *jdata;
     orte_node_t *node;
     orte_proc_t *proc;
-    orte_std_cntr_t index;
     
     /* Since we are the HNP, then responsibility for
      * defining the name falls to the PLM component for our
@@ -292,12 +291,12 @@ static int rte_init(char flags)
     /* create and store the job data object */
     jdata = OBJ_NEW(orte_job_t);
     jdata->jobid = ORTE_PROC_MY_NAME->jobid;
-    orte_pointer_array_add(&index, orte_job_data, jdata);
+    opal_pointer_array_add(orte_job_data, jdata);
    
     /* create and store a node object where we are */
     node = OBJ_NEW(orte_node_t);
     node->name = strdup(orte_system_info.nodename);
-    orte_pointer_array_add(&node->index, orte_node_pool, node);
+    node->index = opal_pointer_array_add(orte_node_pool, node);
     
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
@@ -308,7 +307,7 @@ static int rte_init(char flags)
     proc->state = ORTE_PROC_STATE_RUNNING;
     OBJ_RETAIN(node);  /* keep accounting straight */
     proc->node = node;
-    orte_pointer_array_add(&index, jdata->procs, proc);
+    opal_pointer_array_add(jdata->procs, proc);
 
     /* record that the daemon (i.e., us) is on this node 
      * NOTE: we do not add the proc object to the node's

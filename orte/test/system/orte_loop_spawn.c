@@ -19,7 +19,6 @@ int main(int argc, char* argv[])
     orte_app_context_t *app;
     char cwd[1024];
     int iter;
-    orte_std_cntr_t dummy;
     
     if (0 > (rc = orte_init(ORTE_NON_TOOL))) {
         fprintf(stderr, "couldn't init orte - error code %d\n", rc);
@@ -41,7 +40,7 @@ int main(int argc, char* argv[])
         app->user_specified_cwd = false;
     
         /* add the app to the job data */
-        orte_pointer_array_add(&dummy, jdata->apps, app);
+        opal_pointer_array_add(jdata->apps, app);
         jdata->num_apps = 1;
         
         fprintf(stderr, "Parent: spawning child %d\n", iter);

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -57,7 +57,6 @@ static int orte_plm_base_report_launched(orte_jobid_t job);
 int orte_plm_base_setup_job(orte_job_t *jdata)
 {
     int rc;
-    orte_std_cntr_t index;
     orte_process_name_t name = {ORTE_JOBID_INVALID, 0};
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -66,7 +65,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
                          ORTE_JOBID_PRINT(jdata->jobid)));
 
     /* insert the job object into the global pool */
-    orte_pointer_array_add(&index, orte_job_data, jdata);
+    opal_pointer_array_add(orte_job_data, jdata);
     
     if (ORTE_SUCCESS != (rc = orte_ras.allocate(jdata))) {
         ORTE_ERROR_LOG(rc);

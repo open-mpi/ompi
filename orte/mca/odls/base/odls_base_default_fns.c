@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -333,7 +333,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     /* pack the number of nodes participating in this launch */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->num_nodes, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
     /* cycle through the participating nodes */
@@ -406,7 +406,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         /* pack an INVALID vpid as a flag that we are done with procs for this node */
         if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &invalid_vpid, 1, ORTE_VPID))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            return ORTE_ERR_OUT_OF_RESOURCE;
         }
     }
     

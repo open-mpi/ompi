@@ -25,7 +25,6 @@ int main(int argc, char* argv[])
     int rc;
     orte_job_t *jdata;
     orte_app_context_t *app;
-    orte_std_cntr_t dummy;
     char cwd[1024];
     orte_process_name_t name;
     struct iovec msg;
@@ -50,7 +49,7 @@ int main(int argc, char* argv[])
     app->user_specified_cwd = false;
     
     /* add the app to the job data */
-    orte_pointer_array_add(&dummy, jdata->apps, app);
+    opal_pointer_array_add(jdata->apps, app);
     jdata->num_apps = 1;
 #if 0
     /* setup a map object */

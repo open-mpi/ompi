@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -28,8 +28,8 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
+#include "opal/class/opal_pointer_array.h"
 
-#include "orte/class/orte_pointer_array.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 
@@ -62,8 +62,8 @@ orte_process_name_t orte_globals_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID
 orte_process_name_t orte_globals_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID}; 
 
 /* global arrays for data storage */
-orte_pointer_array_t *orte_job_data;
-orte_pointer_array_t *orte_node_pool;
+opal_pointer_array_t *orte_job_data;
+opal_pointer_array_t *orte_node_pool;
 
 /*
  * Whether we have completed orte_init or we are in orte_finalize
@@ -404,7 +404,8 @@ int orte_hnp_globals_init(void)
 {
     int rc;
 
-    if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&orte_job_data,
+    orte_job_data = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (rc = opal_pointer_array_init(orte_job_data,
                                                       1,
                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
                                                       1))) {
@@ -412,7 +413,8 @@ int orte_hnp_globals_init(void)
         return rc;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&orte_node_pool,
+    orte_node_pool = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (rc = opal_pointer_array_init(orte_node_pool,
                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
