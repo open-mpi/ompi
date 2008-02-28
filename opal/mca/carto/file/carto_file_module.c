@@ -210,7 +210,6 @@ static int opal_carto_file_parse(const char *cartofile)
                             opal_show_help("help-opal-carto-file.txt", "incorrect connection", true, cartofile, line_number, value);
                             opal_argv_free (argv);
                             free(node1_name);
-                            free(node2_name);
                             goto error;
                         }
                         opal_argv_free (argv);
@@ -270,7 +269,6 @@ static int opal_carto_file_parse(const char *cartofile)
                             opal_show_help("help-opal-carto-file.txt", "incorrect connection", true, cartofile, line_number, value);
                             opal_argv_free (argv);
                             free(node1_name);
-                            free(node2_name);
                             goto error;
                         }
                         opal_argv_free (argv);
