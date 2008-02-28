@@ -36,8 +36,7 @@ ORTE_DECLSPEC void orte_daemon_recv(int status, orte_process_name_t* sender,
                       void* cbdata);
 
 /* direct cmd processing entry point - used by HNP */
-ORTE_DECLSPEC int orte_daemon_cmd_processor(orte_process_name_t* sender,
-                                            opal_buffer_t *buffer, orte_rml_tag_t tag);
+ORTE_DECLSPEC void orte_daemon_cmd_processor(int fd, short event, void *data);
 
 END_C_DECLS
 

@@ -46,6 +46,8 @@
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/iof_base_setup.h"
 #include "orte/mca/ess/base/base.h"
+#include "orte/mca/plm/base/base.h"
+#include "orte/mca/routed/base/base.h"
 
 #include "orte/util/context_fns.h"
 #include "orte/util/name_fns.h"
@@ -539,7 +541,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         }
         
         /* cycle through the procs and unpack their data */
-            /* unpack the vpid for this proc */
+        /* unpack the vpid for this proc */
         cnt=1;
         while (ORTE_SUCCESS == (rc = opal_dss.unpack(data, &(proc.vpid), &cnt, ORTE_VPID))) {
             if (ORTE_VPID_INVALID == proc.vpid) {
@@ -1154,9 +1156,18 @@ CLEANUP:
         ORTE_ERROR_LOG(ret);
     }
     
-    /* send the update */
-    if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_APP_LAUNCH_CALLBACK, 0))) {
-        ORTE_ERROR_LOG(ret);
+    /* if we are the HNP, then we would rather not send this to ourselves -
+     * instead, we queue it up for local processing
+     */
+    if (orte_process_info.hnp) {
+        ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
+                           ORTE_RML_TAG_APP_LAUNCH_CALLBACK,
+                           orte_plm_base_app_report_launch);
+    } else {
+        /* go ahead and send the update to the HNP */
+        if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_APP_LAUNCH_CALLBACK, 0))) {
+            ORTE_ERROR_LOG(ret);
+        }
     }
     OBJ_DESTRUCT(&alert);
 
@@ -1450,11 +1461,20 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc, opal_buffer_t
             OBJ_DESTRUCT(&buffer);
             goto CLEANUP;
         }
-        /* now send it to the HNP */
-        if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buffer, ORTE_RML_TAG_INIT_ROUTES, 0))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&buffer);
-            goto CLEANUP;
+        /* if we are the HNP, then we would rather not send this to ourselves -
+         * instead, we queue it up for local processing
+         */
+        if (orte_process_info.hnp) {
+            ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &buffer,
+                               ORTE_RML_TAG_INIT_ROUTES,
+                               orte_routed_base_process_msg);
+        } else {
+            /* go ahead and send it */
+            if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buffer, ORTE_RML_TAG_INIT_ROUTES, 0))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_DESTRUCT(&buffer);
+                goto CLEANUP;
+            }
         }
         OBJ_DESTRUCT(&buffer);
     }
@@ -1719,10 +1739,19 @@ MOVEON:
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(child->name)));
         
-        /* send it */
-        if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
-            ORTE_ERROR_LOG(rc);
-            goto unlock;
+        /* if we are the HNP, then we would rather not send this to ourselves -
+         * instead, we queue it up for local processing
+         */
+        if (orte_process_info.hnp) {
+            ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
+                               ORTE_RML_TAG_PLM,
+                               orte_plm_base_receive_process_msg);
+        } else {
+            /* go ahead and send it */
+            if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
+                ORTE_ERROR_LOG(rc);
+                goto unlock;
+            }
         }
     } else {
         /* since it didn't abort, let's see if all of that job's procs are done */
@@ -1744,10 +1773,19 @@ MOVEON:
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(child->name->jobid)));
             
-            /* send it */
-            if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
-                ORTE_ERROR_LOG(rc);
-                goto unlock;
+            /* if we are the HNP, then we would rather not send this to ourselves -
+             * instead, we queue it up for local processing
+             */
+            if (orte_process_info.hnp) {
+                ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
+                                   ORTE_RML_TAG_PLM,
+                                   orte_plm_base_receive_process_msg);
+            } else {
+                /* go ahead and send it */
+                if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto unlock;
+                }
             }
         }
     }
@@ -1839,13 +1877,13 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
             if (ORTE_JOBID_INVALID != last_job) {
                 if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &null, 1, ORTE_VPID))) {
                     ORTE_ERROR_LOG(rc);
-                    return rc;
+                    goto CLEANUP;
                 }
             }
             /* pack the jobid */
             if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &(child->name->jobid), 1, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(rc);
-                return rc;
+                goto CLEANUP;
             }
             last_job = child->name->jobid;
         }
@@ -1920,24 +1958,35 @@ RECORD:
         if (ORTE_SUCCESS != (rc = pack_state_for_proc(&alert, false, child))) {
             ORTE_ERROR_LOG(rc);
         }
+        goto CLEANUP;
     }
     
     /* if set_state, alert the HNP to what happened */
     if (set_state) {
-        if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
-            ORTE_ERROR_LOG(rc);
+        /* if we are the HNP, then we would rather not send this to ourselves -
+         * instead, we queue it up for local processing
+         */
+        if (orte_process_info.hnp) {
+            ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
+                               ORTE_RML_TAG_PLM,
+                               orte_plm_base_receive_process_msg);
         } else {
-            rc = ORTE_SUCCESS; /* need to reset this to success since we return rc */
+            /* go ahead and send it */
+            if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
+            rc = ORTE_SUCCESS; /* need to set this correctly if it wasn't an error */
         }
     }
     
-   /* we are done with the global list, so we can now release
+CLEANUP:
+    /* we are done with the global list, so we can now release
      * any waiting threads - this also allows any callbacks to work
      */
     opal_condition_signal(&orte_odls_globals.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
 
-CLEANUP:
     OBJ_DESTRUCT(&alert);
     
     return rc;    

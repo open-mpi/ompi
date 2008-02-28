@@ -179,10 +179,8 @@ int orte_daemon(int argc, char *argv[])
     char log_file[PATH_MAX];
     char *jobidstring;
     char *rml_uri;
-    char *param;
     int i;
     opal_buffer_t *buffer;
-    int zero = 0;
     char hostname[100];
 
     /* initialize the globals */
@@ -276,6 +274,7 @@ int orte_daemon(int argc, char *argv[])
         /* set ourselves to be just a daemon */
         orte_process_info.hnp = false;
         orte_process_info.daemon = true;
+#if 0
         /* since I am a daemon, I need to ensure that orte_init selects
          * the rsh PLM module to support local spawns, if an rsh agent is
          * available
@@ -283,6 +282,7 @@ int orte_daemon(int argc, char *argv[])
         param = mca_base_param_environ_variable("plm","rsh",NULL);
         putenv(param);
         free(param);
+#endif
     }
 
 #if OPAL_ENABLE_FT == 1
@@ -525,11 +525,6 @@ int orte_daemon(int argc, char *argv[])
          * can turn right around and begin issuing orders to us
          */
         buffer = OBJ_NEW(opal_buffer_t);
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &zero, 1, OPAL_INT))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_RELEASE(buffer);
-            return ret;
-        }
         rml_uri = orte_rml.get_contact_info();
         if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &rml_uri, 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(ret);

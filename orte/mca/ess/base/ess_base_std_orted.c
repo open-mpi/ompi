@@ -63,21 +63,6 @@ int orte_ess_base_orted_setup(void)
     char *error = NULL;
     char *jobid_str, *procid_str;
 
-    /* if I am a daemon, I still need to open and select the
-     * the PLM so I can do local spawns, if permitted
-     */
-    if (ORTE_SUCCESS != (ret = orte_plm_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_plm_base_open";
-        goto error;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_plm_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_plm_base_select";
-        goto error;
-    }
-    
     /* Setup the communication infrastructure */
     
     /* Runtime Messaging Layer */
@@ -116,17 +101,6 @@ int orte_ess_base_orted_setup(void)
         goto error;
     }
     
-    /* Now provide a chance for the PLM
-     * to perform any module-specific init functions. This
-     * needs to occur AFTER the communications are setup
-     * as it may involve starting a non-blocking recv
-     */
-    if (ORTE_SUCCESS != (ret = orte_plm.init())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_plm_init";
-        goto error;
-    }
-
     /* Open/select the odls */
     if (ORTE_SUCCESS != (ret = orte_odls_base_open())) {
         ORTE_ERROR_LOG(ret);
@@ -277,7 +251,6 @@ int orte_ess_base_orted_finalize(void)
     /* finalize selected modules so they can de-register
      * any receives
      */
-    orte_plm_base_close();
     orte_errmgr_base_close();
     
     /* now can close the rml and its friendly group comm */

@@ -248,8 +248,6 @@ extern opal_data_type_t opal_dss_num_reg_types;
                         int32_t *bytes_used);
     int opal_dss_load(opal_buffer_t *buffer, void *payload, int32_t bytes_used);
 
-    int opal_dss_xfer_payload(opal_buffer_t *dest, opal_buffer_t *src);
-
     int opal_dss_copy_payload(opal_buffer_t *dest, opal_buffer_t *src);
 
     int opal_dss_register(opal_dss_pack_fn_t pack_fn,

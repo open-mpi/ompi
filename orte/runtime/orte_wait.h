@@ -34,9 +34,13 @@
 #include <sys/time.h>
 #endif
 
+#include "opal/dss/dss.h"
+#include "opal/class/opal_list.h"
 #include "opal/util/output.h"
 #include "opal/event/event.h"
+#include "opal/runtime/opal_progress.h"
 
+#include "orte/mca/rml/rml_types.h"
 #include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
@@ -98,6 +102,26 @@ ORTE_DECLSPEC int orte_wait_event(opal_event_t **event, int *trig,
                                   void (*cbfunc)(int, short, void*));
 
 /**
+ * In a number of places in the code, we need to wait for something
+ * to complete - for example, waiting for all launched procs to
+ * report into the HNP. In such cases, we want to just call progress
+ * so that any messages get processed, but otherwise "hold" the
+ * program at this spot until the counter achieves the specified
+ * value. We also want to provide a boolean flag, though, so that
+ * we break out of the loop should something go wrong.
+ */
+#define ORTE_PROGRESSED_WAIT(failed, counter, limit)      \
+    do {                                                  \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,        \
+                            "progressed_wait: %s %d",     \
+                             __FILE__, __LINE__));        \
+        while (!(failed) && (counter) < (limit)) {        \
+            opal_progress();                              \
+        }                                                 \
+    } while(0);                                           \
+
+
+/**
  * Trigger a defined event
  *
  * This function will trigger a previously-defined event - as setup
@@ -106,17 +130,51 @@ ORTE_DECLSPEC int orte_wait_event(opal_event_t **event, int *trig,
 ORTE_DECLSPEC void orte_trigger_event(int trig);
 
 /**
- * Delayed triggering of a defined event
+ * Setup an event to process a message
  *
- * Sometimes, we need to trigger an event, but not until we return
- * from a current function. For example, if we are in an OOB recv
- * callback, we don't really want to trigger an event that will
- * do an OOB send as this can get us into a loopback situation.
- * This function will setup a separate timed event such that
- * the specified event can be triggered as soon as the recv
- * callback is completed
+ * If we are in an OOB recv callback, we frequently cannot process
+ * the received message until after we return from the callback to
+ * avoid a potential loopback situation - i.e., where processing
+ * the message can result in a message being sent somewhere that
+ * subsequently causes the recv we are in to get called again.
+ * This is typically the problem facing the daemons and HNP.
+ *
+ * To resolve this problem, we place the message to be processed on
+ * a list, and create a zero-time event that calls the function
+ * that will process the received message. The event library kindly
+ * does not trigger this event until after we return from the recv
+ * since the recv itself is considered an "event"! Thus, we will
+ * always execute the specified event cb function -after- leaving
+ * the recv.
  */
-ORTE_DECLSPEC void orte_delayed_trigger_event(int trig);
+typedef struct {
+    opal_object_t super;
+    orte_process_name_t sender;
+    opal_buffer_t *buffer;
+    orte_rml_tag_t tag;
+} orte_message_event_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
+
+#define ORTE_MESSAGE_EVENT(sndr, buf, tg, cbfunc)               \
+    do {                                                        \
+        orte_message_event_t *mev;                              \
+        struct timeval now;                                     \
+        opal_event_t *tmp;                                      \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
+                            "defining message event: %s %d",    \
+                            __FILE__, __LINE__));               \
+        tmp = (opal_event_t*)malloc(sizeof(opal_event_t));      \
+        mev = OBJ_NEW(orte_message_event_t);                    \
+        mev->sender.jobid = (sndr)->jobid;                      \
+        mev->sender.vpid = (sndr)->vpid;                        \
+        opal_dss.copy_payload(mev->buffer, (buf));              \
+        mev->tag = (tg);                                        \
+        opal_evtimer_set(tmp, (cbfunc), mev);                   \
+        now.tv_sec = 0;                                         \
+        now.tv_usec = 0;                                        \
+        opal_evtimer_add(tmp, &now);                            \
+    } while(0);
+    
 
 /**
  * In a number of places within the code, we want to setup a timer

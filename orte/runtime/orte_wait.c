@@ -45,6 +45,7 @@
 #include <sys/wait.h>
 #endif
 
+#include "opal/dss/dss_types.h"
 #include "opal/util/output.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
@@ -65,6 +66,26 @@ static volatile int cb_enabled = true;
 static opal_mutex_t mutex;
 static opal_list_t pending_pids;
 static opal_list_t registered_cb;
+
+/*********************************************************************
+*
+* Wait Object Declarations
+*
+********************************************************************/
+static void message_event_destructor(orte_message_event_t *ev)
+{
+    OBJ_RELEASE(ev->buffer);
+}
+
+static void message_event_constructor(orte_message_event_t *ev)
+{
+    ev->buffer = OBJ_NEW(opal_buffer_t);
+}
+OBJ_CLASS_INSTANCE(orte_message_event_t,
+                   opal_object_t,
+                   message_event_constructor,
+                   message_event_destructor);
+
 
 /*********************************************************************
  *
@@ -409,9 +430,6 @@ orte_wait_cb_enable()
 }
 
 
-/* RHC: someone will need to add the windows support here - I
- * am not familiar enough with their "pipe" equivalent
- */
 int orte_wait_event(opal_event_t **event, int *trig,
                     void (*cbfunc)(int, short, void*))
 {
@@ -445,29 +463,6 @@ void orte_trigger_event(int trig)
     
     write(trig, &data, sizeof(int));
     opal_progress();
-}
-
-static void delay_fire(int ign1, short ign2, void* arg)
-{
-    int trig = *(int*)arg;
-    
-    /* the arg contains the trigger to be fired */
-    orte_trigger_event(trig);
-}
-
-void orte_delayed_trigger_event(int trig)
-{
-    opal_event_t ev;
-    struct timeval now;
-    
-    /* setup a zero-time timer to fire the specified
-     * event - pass the trig arg so we can use
-     * it to fire the specified event
-     */
-    opal_evtimer_set(&ev, delay_fire, &trig);
-    now.tv_sec = 0;
-    now.tv_usec = 0;
-    opal_evtimer_add(&ev, &now);
 }
 
 

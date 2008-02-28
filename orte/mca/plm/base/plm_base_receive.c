@@ -27,6 +27,7 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
+#include "opal/class/opal_list.h"
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -39,10 +40,12 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wakeup.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
+#include "orte/mca/plm/base/base.h"
 
 static bool recv_issued=false;
 
@@ -60,7 +63,7 @@ int orte_plm_base_comm_start(void)
     
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_PLM,
-                                                      ORTE_RML_PERSISTENT,
+                                                      ORTE_RML_NON_PERSISTENT,
                                                       orte_plm_base_recv,
                                                       NULL))) {
         ORTE_ERROR_LOG(rc);
@@ -92,16 +95,10 @@ int orte_plm_base_comm_stop(void)
 }
 
 
-/*
- * handle message from proxies
- * NOTE: The incoming buffer "buffer" is OBJ_RELEASED by the calling program.
- * DO NOT RELEASE THIS BUFFER IN THIS CODE
- */
-
-void orte_plm_base_recv(int status, orte_process_name_t* sender,
-                        opal_buffer_t* buffer, orte_rml_tag_t tag,
-                        void* cbdata)
+/* process incoming messages in order of receipt */
+void orte_plm_base_receive_process_msg(int fd, short event, void *data)
 {
+    orte_message_event_t *mev = (orte_message_event_t*)data;
     orte_plm_cmd_flag_t command;
     orte_std_cntr_t count;
     orte_jobid_t job;
@@ -112,18 +109,13 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
     orte_proc_state_t state;
     orte_exit_code_t exit_code;
     int rc, ret;
-
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                         "%s plm:base:receive got message from %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(sender)));
-
+    
     count = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &command, &count, ORTE_PLM_CMD))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &command, &count, ORTE_PLM_CMD))) {
         ORTE_ERROR_LOG(rc);
         return;
     }
-
+    
     switch (command) {
         case ORTE_PLM_LAUNCH_JOB_CMD:
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -135,31 +127,31 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
             
             /* get the job object */
             count = 1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &jdata, &count, ORTE_JOB))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &jdata, &count, ORTE_JOB))) {
                 ORTE_ERROR_LOG(rc);
                 goto ANSWER_LAUNCH;
             }
-            
-            /* launch it */
-            if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
-                ORTE_ERROR_LOG(rc);
-                goto ANSWER_LAUNCH;
-            }
-            job = jdata->jobid;
+                
+                /* launch it */
+                if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto ANSWER_LAUNCH;
+                }
+                job = jdata->jobid;
             
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:receive job %s launched",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(job)));
             
-ANSWER_LAUNCH:
+        ANSWER_LAUNCH:
             /* pack the jobid to be returned */
             if (ORTE_SUCCESS != (ret = opal_dss.pack(&answer, &job, 1, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(ret);
             }
-
+            
             /* send the response back to the sender */
-            if (0 > (ret = orte_rml.send_buffer(sender, &answer, ORTE_RML_TAG_PLM_PROXY, 0))) {
+            if (0 > (ret = orte_rml.send_buffer(&mev->sender, &answer, ORTE_RML_TAG_PLM_PROXY, 0))) {
                 ORTE_ERROR_LOG(ret);
             }
             OBJ_DESTRUCT(&answer);
@@ -168,8 +160,8 @@ ANSWER_LAUNCH:
         case ORTE_PLM_UPDATE_PROC_STATE:
             count = 1;
             jdata = NULL;
-            while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
-
+            while (ORTE_SUCCESS == (rc = opal_dss.unpack(mev->buffer, &job, &count, ORTE_JOBID))) {
+                
                 OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                      "%s plm:base:receive got update_proc_state for job %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -182,20 +174,20 @@ ANSWER_LAUNCH:
                 }
                 procs = (orte_proc_t**)jdata->procs->addr;
                 count = 1;
-                while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &vpid, &count, ORTE_VPID))) {
+                while (ORTE_SUCCESS == (rc = opal_dss.unpack(mev->buffer, &vpid, &count, ORTE_VPID))) {
                     if (ORTE_VPID_INVALID == vpid) {
                         /* flag indicates that this job is complete - move on */
                         break;
                     }
                     /* unpack the state */
                     count = 1;
-                    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &state, &count, ORTE_PROC_STATE))) {
+                    if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &state, &count, ORTE_PROC_STATE))) {
                         ORTE_ERROR_LOG(rc);
                         return;
                     }
                     /* unpack the exit code */
                     count = 1;
-                    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &exit_code, &count, ORTE_EXIT_CODE))) {
+                    if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &exit_code, &count, ORTE_EXIT_CODE))) {
                         ORTE_ERROR_LOG(rc);
                         return;
                     }
@@ -220,6 +212,8 @@ ANSWER_LAUNCH:
             }
             if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
                 ORTE_ERROR_LOG(rc);
+            } else {
+                rc = ORTE_SUCCESS;
             }
             /* NOTE: jdata CAN BE NULL. This is caused by an orted
              * being ordered to kill all its procs, but there are no
@@ -229,7 +223,6 @@ ANSWER_LAUNCH:
              * So check job has to know how to handle a NULL pointer
              */
             orte_plm_base_check_job_completed(jdata);
-            return;  /* we do not send a response for this operation */
             break;
             
         default:
@@ -237,12 +230,51 @@ ANSWER_LAUNCH:
             return;
     }
     
+    /* release the message */
+    OBJ_RELEASE(mev);
     
     /* see if an error occurred - if so, wakeup so we can exit */
     if (ORTE_SUCCESS != rc) {
         orte_wakeup(1);
     }
+}
+
+/*
+ * handle message from proxies
+ * NOTE: The incoming buffer "buffer" is OBJ_RELEASED by the calling program.
+ * DO NOT RELEASE THIS BUFFER IN THIS CODE
+ */
+
+void orte_plm_base_recv(int status, orte_process_name_t* sender,
+                        opal_buffer_t* buffer, orte_rml_tag_t tag,
+                        void* cbdata)
+{
+    int rc;
     
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                         "%s plm:base:receive got message from %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
+
+    /* don't process this right away - we need to get out of the recv before
+     * we process the message as it may ask us to do something that involves
+     * more messaging! Instead, setup an event so that the message gets processed
+     * as soon as we leave the recv.
+     *
+     * The macro makes a copy of the buffer, which we release above - the incoming
+     * buffer, however, is NOT released here, although its payload IS transferred
+     * to the message buffer for later processing
+     */
+    ORTE_MESSAGE_EVENT(sender, buffer, tag, orte_plm_base_receive_process_msg);
+
+    /* reissue the recv */
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                                      ORTE_RML_TAG_PLM,
+                                                      ORTE_RML_NON_PERSISTENT,
+                                                      orte_plm_base_recv,
+                                                      NULL))) {
+        ORTE_ERROR_LOG(rc);
+    }
     return;
 }
 
