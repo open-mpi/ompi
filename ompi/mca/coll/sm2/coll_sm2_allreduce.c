@@ -145,38 +145,6 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
                 ;
             }
 
-            if( count_this_stripe >= 3 )  {
-            fprintf(stderr," HHHH child: %d %d %d me: %d %d %d\n",
-                    ((int *)child_data_pointer)[7],
-                    ((int *)child_data_pointer)[6],
-                    ((int *)child_data_pointer)[5],
-                    ((int *)my_data_pointer)[7],
-                    ((int *)my_data_pointer)[6],
-                    ((int *)my_data_pointer)[5]
-                    /*
-                    ((int *)child_data_pointer)[count_this_stripe-3],
-                    ((int *)child_data_pointer)[count_this_stripe-2],
-                    ((int *)child_data_pointer)[count_this_stripe-1],
-                    ((int *)my_data_pointer)[count_this_stripe-3],
-                    ((int *)my_data_pointer)[count_this_stripe-2],
-                    ((int *)my_data_pointer)[count_this_stripe-1]
-                    */
-                   );
-            }
-            else if( count_this_stripe >= 2 )  {
-            fprintf(stderr," HHHH child: %d %d me: %d %d \n",
-                    ((int *)child_data_pointer)[count_this_stripe-2],
-                    ((int *)child_data_pointer)[count_this_stripe-1],
-                    ((int *)my_data_pointer)[count_this_stripe-2],
-                    ((int *)my_data_pointer)[count_this_stripe-1]
-                   );
-            }
-            else {
-            fprintf(stderr," HHHH child: %d me: %d \n",
-                    ((int *)child_data_pointer)[count_this_stripe-1],
-                    ((int *)my_data_pointer)[count_this_stripe-1]
-                   );
-            }
             /* apply collective operation */
             ompi_op_reduce(op,child_data_pointer,my_data_pointer,
                     count_this_stripe,dtype);
