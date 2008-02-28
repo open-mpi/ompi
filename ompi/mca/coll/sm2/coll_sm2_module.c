@@ -458,9 +458,6 @@ struct mca_coll_base_module_1_1_0_t *
 mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     /* local variables */
-    /* debug */
-    int i,j;
-    /* end debug */
     mca_coll_sm2_module_t *sm_module;
     int group_size,ret;
     size_t alignment,size,size_tot,size_tot_per_proc_per_seg;
@@ -548,8 +545,8 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     /* 
      * get control region size 
      */ 
-    /* just enough place for one flag per process */
-    ctl_memory_per_proc_per_segment=sizeof(long long);
+    /* just enough place for two flags per process */
+    ctl_memory_per_proc_per_segment=2*sizeof(long long);
     if( mca_coll_sm2_component.sm2_ctl_size_per_proc > ctl_memory_per_proc_per_segment )
         ctl_memory_per_proc_per_segment=mca_coll_sm2_component.sm2_ctl_size_per_proc;
     ctl_memory_per_proc_per_segment=ctl_memory_per_proc_per_segment * group_size ;
@@ -834,7 +831,6 @@ char *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
     return_buffer=module->collective_buffer_region+
         buffer_index*module->segment_size;
 
-    /* return */
     return return_buffer;
 
 }
