@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -25,12 +25,12 @@
 BEGIN_C_DECLS
 
 void orte_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
-                       int argc, char *argv[]);
+                       int argc, char *argv[]) __opal_attribute_noreturn__;
 void orte_totalview_init_before_spawn(void);
 void orte_totalview_init_after_spawn(orte_jobid_t jobid);
 void orte_totalview_finalize(void);
 
-extern void *MPIR_Breakpoint(void);
+ORTE_DECLSPEC extern void *MPIR_Breakpoint(void);
 
 END_C_DECLS
 
