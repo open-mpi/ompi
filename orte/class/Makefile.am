@@ -20,9 +20,7 @@
 # This makefile.am does not stand on its own - it is included from orte/Makefile.am
 
 headers += \
-        class/orte_proc_table.h \
-        class/orte_value_array.h
+        class/orte_proc_table.h
 
 libopen_rte_la_SOURCES += \
-        class/orte_proc_table.c \
-        class/orte_value_array.c
+        class/orte_proc_table.c

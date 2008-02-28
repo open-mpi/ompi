@@ -32,7 +32,6 @@
 #include "ompi/mca/bml/base/bml_base_endpoint.h" 
 #include "ompi/mca/bml/base/bml_base_btl.h" 
 #include "bml_r2.h"
-#include "orte/class/orte_proc_table.h" 
 #include "orte/util/name_fns.h"
 #include "ompi/proc/proc.h"
 

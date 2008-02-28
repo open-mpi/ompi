@@ -35,7 +35,6 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/class/orte_proc_table.h" 
 #include "ompi/proc/proc.h"
 
 #include "bml_r2.h"
