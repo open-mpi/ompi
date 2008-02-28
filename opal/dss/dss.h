@@ -486,46 +486,6 @@ typedef int (*opal_dss_set_fn_t)(opal_dss_value_t *value, void *new_value, opal_
 typedef int (*opal_dss_get_fn_t)(void **data, opal_dss_value_t *value, opal_data_type_t type);
 
 /**
- * Perform an arithemetic operation on a data value
- *
- * Since the data values are stored in an opaque manner, the system needs
- * a function by which it can manipulate the data value within the data_value object. This
- * is the equivalent to a C++ access function.
- *
- * @retval OPAL_SUCCESS The value was successfully retrieved
- *
- * @retval OPAL_ERROR(s) An appropriate error code - usually caused by the specified type
- * not matching the data type within the stored object.
- */
-typedef int (*opal_dss_arith_fn_t)(opal_dss_value_t *value, opal_dss_value_t *operand, opal_dss_arith_op_t operation);
-
-/**
- * Increment a data value
- *
- * Since the data values are stored in an opaque manner, the system needs
- * a function by which it can manipulate the data value within the data_value object. This
- * is the equivalent to a C++ access function.
- *
- * @retval OPAL_SUCCESS The value was successfully retrieved
- *
- * @retval OPAL_ERROR(s) An appropriate error code.
- */
-typedef int (*opal_dss_increment_fn_t)(opal_dss_value_t *value);
-
-/**
- * Decrement a data value
- *
- * Since the data values are stored in an opaque manner, the system needs
- * a function by which it can manipulate the data value within the data_value object. This
- * is the equivalent to a C++ access function.
- *
- * @retval OPAL_SUCCESS The value was successfully retrieved
- *
- * @retval OPAL_ERROR(s) An appropriate error code.
- */
-typedef int (*opal_dss_decrement_fn_t)(opal_dss_value_t *value);
-
-/**
  * Release the storage used by a data value
  *
  * Since the data values are stored in an opaque manner, the system needs
@@ -605,9 +565,6 @@ typedef int (*opal_dss_unpack_buffer_fn_t)(opal_buffer_t *buffer, void *dest,
 struct opal_dss_t {
     opal_dss_set_fn_t               set;
     opal_dss_get_fn_t               get;
-    opal_dss_arith_fn_t             arith;
-    opal_dss_increment_fn_t         increment;
-    opal_dss_decrement_fn_t         decrement;
     opal_dss_set_buffer_type_fn_t   set_buffer_type;
     opal_dss_pack_fn_t              pack;
     opal_dss_unpack_fn_t            unpack;

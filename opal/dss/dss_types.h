@@ -77,15 +77,6 @@ typedef struct {
 #define OPAL_VALUE2_GREATER  -1
 #define OPAL_EQUAL            0
 
-/* define arithmetic operations for readability */
-typedef uint8_t opal_dss_arith_op_t;
-
-#define OPAL_DSS_ADD    1
-#define OPAL_DSS_SUB    2
-#define OPAL_DSS_MUL    3
-#define OPAL_DSS_DIV    4
-
-
 /* Data value object */
 typedef struct {
     opal_object_t super;                /* required for this to be an object */

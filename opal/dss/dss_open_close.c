@@ -39,9 +39,6 @@ opal_dss_buffer_type_t default_buf_type;
 opal_dss_t opal_dss = {
     opal_dss_set,
     opal_dss_get,
-    opal_dss_arith,
-    opal_dss_increment,
-    opal_dss_decrement,
     opal_dss_set_buffer_type,
     opal_dss_pack,
     opal_dss_unpack,
