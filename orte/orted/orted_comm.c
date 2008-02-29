@@ -823,22 +823,12 @@ SEND_ANSWER:
                 }
             }
 #endif
-break;
-            
+            break;
+
             /****     HEARTBEAT COMMAND    ****/
         case ORTE_DAEMON_HEARTBEAT_CMD:
             ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
             ret = ORTE_ERR_NOT_IMPLEMENTED;
-            break;
-            
-            /****    WARMUP CONNECTION TO LOCAL PROC    ****/
-        case ORTE_DAEMON_WARMUP_LOCAL_CONN:
-            /* nothing to do here - just ignore it */
-            if (orte_debug_daemons_flag) {
-                opal_output(0, "%s orted_recv: received connection from local proc",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            }
-            ret = ORTE_SUCCESS;
             break;
             
             /****    SYNC FROM LOCAL PROC    ****/

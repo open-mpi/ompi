@@ -75,6 +75,9 @@ static opal_list_t registered_cb;
 static void message_event_destructor(orte_message_event_t *ev)
 {
     OBJ_RELEASE(ev->buffer);
+#if OMPI_ENABLE_DEBUG
+    ev->file = NULL;
+#endif
 }
 
 static void message_event_constructor(orte_message_event_t *ev)
