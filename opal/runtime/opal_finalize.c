@@ -58,9 +58,6 @@ opal_finalize_util(void)
         return OPAL_SUCCESS;
     }
 
-    /* close the carto framework */
-    opal_carto_base_close();
-    
     /* Clear out all the registered MCA params */
     mca_base_param_finalize();
 
@@ -129,6 +126,9 @@ opal_finalize(void)
     /* finalize the memory manager / tracker */
     opal_mem_hooks_finalize();
 
+    /* close the carto framework */
+    opal_carto_base_close();
+    
     /* close the processor affinity base */
     opal_paffinity_base_close();
 
