@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,6 +32,33 @@
    duplicate all those symbols.  OMPI coding standards say that
    ompi_config.h must be included before all other files, so this
    should be good enough */
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef OMPI_STDC_HEADERS
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef OMPI_HAVE_SYS_TIME_H
+
+/* Define to 1 if the system has the type `long long'. */
+#undef OMPI_HAVE_LONG_LONG
+
+/* The size of a `bool', as computed by sizeof. */
+#undef OMPI_SIZEOF_BOOL
+
+/* The size of a `int', as computed by sizeof. */
+#undef OMPI_SIZEOF_INT
+
+/* Whether we have FORTRAN LOGICAL*1 or not */
+#undef OMPI_HAVE_FORTRAN_LOGICAL1
+
+/* Whether we have FORTRAN LOGICAL*2 or not */
+#undef OMPI_HAVE_FORTRAN_LOGICAL2
+
+/* Whether we have FORTRAN LOGICAL*4 or not */
+#undef OMPI_HAVE_FORTRAN_LOGICAL4
+
+/* Whether we have FORTRAN LOGICAL*8 or not */
+#undef OMPI_HAVE_FORTRAN_LOGICAL8
 
 /* Whether we have FORTRAN INTEGER*1 or not */
 #undef OMPI_HAVE_FORTRAN_INTEGER1
@@ -56,18 +83,6 @@
 
 /* Whether we have FORTRAN REAL*8 or not */
 #undef OMPI_HAVE_FORTRAN_REAL8
-
-/* Define to 1 if you have the <sys/time.h> header file. */
-#undef HAVE_SYS_TIME_H
-
-/* Define to 1 if the system has the type `long long'. */
-#undef HAVE_LONG_LONG
-
-/* The size of a `bool', as computed by sizeof. */
-#undef SIZEOF_BOOL
-
-/* The size of a `int', as computed by sizeof. */
-#undef SIZEOF_INT
 
 /* Type of MPI_Offset -- has to be defined here and typedef'ed later because mpi.h does not get AC SUBST's */
 #undef OMPI_MPI_OFFSET_TYPE
@@ -95,9 +110,6 @@
 
 /* MPI datatype corresponding to MPI_Offset */
 #undef OMPI_OFFSET_DATATYPE
-
-/* Define to 1 if you have the ANSI C header files. */
-#undef STDC_HEADERS
 
 /* Major, minor, and release version of Open MPI */
 #undef OMPI_MAJOR_VERSION
@@ -129,7 +141,7 @@
 /* @OMPI_END_CONFIGURE_SECTION@ */
 
 /* include for ptrdiff_t */
-#ifdef STDC_HEADERS
+#ifdef OMPI_STDC_HEADERS
 #include <stddef.h>
 #endif
 
@@ -679,11 +691,11 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_UB (&ompi_mpi_ub)
 #define MPI_LB (&ompi_mpi_lb)
 #define MPI_WCHAR (&ompi_mpi_wchar)
-#if HAVE_LONG_LONG
+#if OMPI_HAVE_LONG_LONG
 #define MPI_LONG_LONG_INT (&ompi_mpi_long_long_int)
 #define MPI_LONG_LONG (&ompi_mpi_long_long_int)
 #define MPI_UNSIGNED_LONG_LONG (&ompi_mpi_unsigned_long_long)
-#endif  /* HAVE_LONG_LONG */
+#endif  /* OMPI_HAVE_LONG_LONG */
 #define MPI_2COMPLEX (&ompi_mpi_2cplex)
 #define MPI_2DOUBLE_COMPLEX (&ompi_mpi_2dblcplex)
 
