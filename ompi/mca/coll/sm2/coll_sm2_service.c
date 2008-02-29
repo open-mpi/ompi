@@ -172,20 +172,22 @@ int setup_multinomial_tree(int tree_order, int num_nodes,
                 }
             }
 
-
-            /* set node type */
-            if( 0 == current_level ) {
-                tree_nodes[node_index].my_node_type=ROOT_NODE;
-            } else if ( n_lvls_in_tree == current_level ) {
-                tree_nodes[node_index].my_node_type=LEAF_NODE;
-            } else {
-                tree_nodes[node_index].my_node_type=INTERIOR_NODE;
-            }
         } /* end node loop */
 
         /* update helper counters */
         n_cum_nodes+=n_nodes_in_this_level;
         n_nodes_in_this_level*=tree_order;
+    }
+
+    /* set node type */
+    for(i=0 ; i < num_nodes ; i++ ) {
+        if( 0 == tree_nodes[i].n_parents ) {
+            tree_nodes[i].my_node_type=ROOT_NODE;
+        } else if ( 0 == tree_nodes[i].n_children ) {
+            tree_nodes[i].my_node_type=LEAF_NODE;
+        } else {
+            tree_nodes[i].my_node_type=INTERIOR_NODE;
+        }
     }
 
     /* successful return */
