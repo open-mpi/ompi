@@ -148,7 +148,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
                         ( (child_ctl_pointer->flag == tag) &
                          (child_ctl_pointer->index== stripe_number) ) ) {
                     /* Note: Actually need to make progress here */
-                    ;
+                    opal_progress();
                 }
     
                 /* apply collective operation */
@@ -235,7 +235,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
                     ( (parent_ctl_pointer->flag == -tag) &
                      (parent_ctl_pointer->index== stripe_number) ) ) {
                 /* Note: Actually need to make progress here */
-                ;
+                opal_progress();
             }
 
             /* copy data to user supplied buffer */
@@ -269,7 +269,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
                     ( (parent_ctl_pointer->flag == -tag) &
                      (parent_ctl_pointer->index== stripe_number) ) ) {
                 /* Note: Actually need to make progress here */
-                ;
+                opal_progress();
             }
 
             /* copy the data to my shared buffer, for access by children */
