@@ -111,78 +111,145 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
         my_ctl_pointer=(mca_coll_sm2_nb_request_process_shared_mem_t *)
             my_base_temp_pointer;
 
-        /* * Fan into root phase
-         */
+        /***************************
+         * Fan into root phase
+         ***************************/
 
-        /* copy segment into shared buffer - later on will optimize to
-         *   eliminate extra copies.
-         */
-        rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
-                (char *)my_data_pointer, 
-                (char *)((char *)sbuf+dt_extent*count_processed));
-        if( 0 != rc ) {
-            return OMPI_ERROR;
-        }
-        /*
-         * Wait on children, and apply op to their data
-         */
-        for( child=0 ; child < n_children ; child++ ) {
-            child_rank=my_reduction_node->children_ranks[child];
-
-            /* get base address of child process */
-            child_base_temp_pointer=(char *)
-                ((char *)sm_buffer+child_rank*
-                 sm_module->segement_size_per_process);
-   
-            child_data_pointer=child_base_temp_pointer+ctl_size;
-            child_ctl_pointer=
-                ( mca_coll_sm2_nb_request_process_shared_mem_t * volatile)
-                child_base_temp_pointer;
-
-            /* wait until child flag is set */
-            while(! 
-                    ( (child_ctl_pointer->flag == tag) &
-                     (child_ctl_pointer->index== stripe_number) ) ) {
-                /* Note: Actually need to make progress here */
-                ;
-            }
-
-            /* apply collective operation */
-            ompi_op_reduce(op,(void *)child_data_pointer,
-                    (void *)my_data_pointer, count_this_stripe,dtype);
-        } /* end child loop */
-
-        /* set memory barriet to make sure data is in main memory before
-         *  the completion flgas are set.
-         */
-        MB();
-
-        /*
-         * Signal parent that data is ready
-         */
-        my_ctl_pointer->flag=tag;
-        my_ctl_pointer->index=stripe_number;
-    
-        /*
-         * Fan out from root - let the memory copies at each
-         *   stage help reduce memory contention.
-         */
-        if( 0 == my_fanout_read_tree->n_parents ) {
-            /* I am the root - so copy  signal children, and then
-             *   start reading
+        if( LEAF_NODE != my_reduction_node->my_node_type ) {
+            /* copy segment into shared buffer - ompi_op_reduce
+             *   provids only 2 buffers, so can't add from two
+             *   into a third buffer.
              */
-            MB();
-            my_ctl_pointer->flag=-tag;
-
-            /* copy data to user supplied buffer */
             rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
-                    (char *)((char *)rbuf+dt_extent*count_processed),
-                    (char *)my_data_pointer);
+                    (char *)my_data_pointer, 
+                    (char *)((char *)sbuf+dt_extent*count_processed));
             if( 0 != rc ) {
                 return OMPI_ERROR;
             }
 
+            /*
+             * Wait on children, and apply op to their data
+             */
+            for( child=0 ; child < n_children ; child++ ) {
+                child_rank=my_reduction_node->children_ranks[child];
+    
+                /* get base address of child process */
+                child_base_temp_pointer=(char *)
+                    ((char *)sm_buffer+child_rank*
+                     sm_module->segement_size_per_process);
+       
+                child_data_pointer=child_base_temp_pointer+ctl_size;
+                child_ctl_pointer=
+                    ( mca_coll_sm2_nb_request_process_shared_mem_t * volatile)
+                    child_base_temp_pointer;
+    
+                /* wait until child flag is set */
+                while(! 
+                        ( (child_ctl_pointer->flag == tag) &
+                         (child_ctl_pointer->index== stripe_number) ) ) {
+                    /* Note: Actually need to make progress here */
+                    ;
+                }
+    
+                /* apply collective operation */
+                ompi_op_reduce(op,(void *)child_data_pointer,
+                        (void *)my_data_pointer, count_this_stripe,dtype);
+            } /* end child loop */
+    
+            /* set memory barriet to make sure data is in main memory before
+             *  the completion flgas are set.
+             */
+            MB();
+    
+            /*
+             * Signal parent that data is ready
+             */
+            my_ctl_pointer->flag=tag;
+            my_ctl_pointer->index=stripe_number;
         } else {
+            /* leaf node */
+            /* copy segment into shared buffer - later on will optimize to
+             *   eliminate extra copies.
+             */
+            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                    (char *)my_data_pointer, 
+                    (char *)((char *)sbuf+dt_extent*count_processed));
+            if( 0 != rc ) {
+                return OMPI_ERROR;
+            }
+    
+            /* set memory barriet to make sure data is in main memory before
+             *  the completion flgas are set.
+             */
+            MB();
+    
+            /*
+             * Signal parent that data is ready
+             */
+            my_ctl_pointer->flag=tag;
+            my_ctl_pointer->index=stripe_number;
+        }
+    
+        /***************************
+         * Fan into root phase
+         ***************************/
+        /*
+         * Fan out from root - let the memory copies at each
+         *   stage help reduce memory contention.
+         */
+        if( ROOT_NODE == my_fanout_read_tree->my_node_type ) {
+            if( 0 == my_fanout_read_tree->n_parents ) {
+                /* I am the root - so copy  signal children, and then
+                 *   start reading
+                 */
+                /* don't need mb, as flag has just been set to tag after
+                 *  MB()*/
+                my_ctl_pointer->flag=-tag;
+    
+                /* copy data to user supplied buffer */
+                rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                        (char *)((char *)rbuf+dt_extent*count_processed),
+                        (char *)my_data_pointer);
+                if( 0 != rc ) {
+                    return OMPI_ERROR;
+                }
+    
+            }
+        } else if( LEAF_NODE == my_fanout_read_tree->my_node_type ) {
+                parent_base_temp_pointer=(char *)
+                    ((char *)sm_buffer+my_fanout_parent*
+                     sm_module->segement_size_per_process);
+       
+                parent_data_pointer=(volatile char *)
+                    ((char *)parent_base_temp_pointer+ctl_size);
+                parent_ctl_pointer=(volatile 
+                        mca_coll_sm2_nb_request_process_shared_mem_t *)
+                    parent_base_temp_pointer;
+    
+                child_ctl_pointer=
+                    (volatile  mca_coll_sm2_nb_request_process_shared_mem_t *)
+                    parent_data_pointer;
+           
+                /*
+                 * wait on Parent to signal that data is ready
+                 */
+                while(! 
+                        ( (parent_ctl_pointer->flag == -tag) &
+                         (parent_ctl_pointer->index== stripe_number) ) ) {
+                    /* Note: Actually need to make progress here */
+                    ;
+                }
+    
+                /* copy data to user supplied buffer */
+                rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                        (char *)rbuf+dt_extent*count_processed,
+                        (char *)my_data_pointer);
+                if( 0 != rc ) {
+                    return OMPI_ERROR;
+                }
+    
+        } else {
+            /* interior nodes */
             parent_base_temp_pointer=(char *)
                 ((char *)sm_buffer+my_fanout_parent*
                  sm_module->segement_size_per_process);
@@ -229,7 +296,6 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
             if( 0 != rc ) {
                 return OMPI_ERROR;
             }
-
         }
 
         /* "free" the shared-memory working buffer */
