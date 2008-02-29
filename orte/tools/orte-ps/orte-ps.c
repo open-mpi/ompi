@@ -419,7 +419,7 @@ static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
         len_slots_m = 0;
     orte_node_t *node;
     orte_std_cntr_t i;
-    char *nid;
+    char *nid=NULL;
 
     /*
      * Caculate segment lengths

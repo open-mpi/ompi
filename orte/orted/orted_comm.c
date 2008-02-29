@@ -501,7 +501,7 @@ static int process_commands(orte_process_name_t* sender,
             } else {
                 /* if we are the HNP, process the request */
                 orte_std_cntr_t i, num_jobs=0;
-                orte_job_t **jobs, *jobdat;
+                orte_job_t **jobs=NULL, *jobdat;
                 
                 /* unpack the jobid */
                 n = 1;
@@ -660,7 +660,7 @@ static int process_commands(orte_process_name_t* sender,
             } else {
                 /* if we are the HNP, process the request */
                 orte_job_t *jdata;
-                orte_proc_t **procs;
+                orte_proc_t **procs=NULL;
                 orte_vpid_t num_procs=0, vpid;
                 orte_std_cntr_t i;
                 

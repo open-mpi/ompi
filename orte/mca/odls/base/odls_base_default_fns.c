@@ -851,7 +851,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     orte_odls_child_t *child;
     int i, num_processors;
     bool want_processor, oversubscribed;
-    int rc, ret;
+    int rc=ORTE_SUCCESS, ret;
     bool launch_failed=true;
     opal_buffer_t alert;
     orte_std_cntr_t proc_rank;

@@ -373,7 +373,6 @@ static bool app_launch_failed;
 void orte_plm_base_app_report_launch(int fd, short event, void *data)
 {
     orte_message_event_t *mev = (orte_message_event_t*)data;
-    orte_process_name_t *sender = &(mev->sender);
     opal_buffer_t *buffer = mev->buffer;
     orte_std_cntr_t cnt;
     orte_jobid_t jobid;
@@ -388,14 +387,15 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:app_report_launch from daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(sender)));
+                         ORTE_NAME_PRINT(&mev->sender)));
     
     /* unpack the jobid being reported */
     cnt = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &jobid, &cnt, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
         app_launch_failed = true;
-        goto CLEANUP;
+        orte_errmgr.incomplete_start(-1, -1); /* no way to know the jobid or exit code */
+        return;
     }
     /* get the job data object */
     if (NULL == (jdata = orte_get_job_data_object(jobid))) {
@@ -441,7 +441,7 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
                              "%s plm:base:app_report_launched for proc %s from daemon %s: pid %lu state %0x exit %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&(procs[vpid]->name)),
-                             ORTE_NAME_PRINT(sender), (unsigned long)pid,
+                             ORTE_NAME_PRINT(&mev->sender), (unsigned long)pid,
                              (int)state, (int)exit_code));
         
         /* lookup the proc and update values */
@@ -452,7 +452,7 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:app_report_launched daemon %s reports proc %s failed to start",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(sender),
+                                 ORTE_NAME_PRINT(&mev->sender),
                                  ORTE_NAME_PRINT(&(procs[vpid]->name))));
             if (NULL == jdata->aborted_proc) {
                 jdata->aborted_proc = procs[vpid];  /* only store this once */

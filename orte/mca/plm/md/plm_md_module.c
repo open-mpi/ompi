@@ -136,7 +136,7 @@ static int plm_md_launch_job(orte_job_t *jdata)
     char *param;
     char **argv = NULL;
     int argc;
-    int rc;
+    int rc=ORTE_SUCCESS;
     char *tmp;
     char** env = NULL;
     char* var;
