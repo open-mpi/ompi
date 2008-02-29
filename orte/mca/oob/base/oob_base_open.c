@@ -44,7 +44,6 @@ mca_oob_t mca_oob;
 int mca_oob_base_output = -1;
 opal_list_t mca_oob_base_components;
 opal_list_t mca_oob_base_modules;
-orte_std_cntr_t orte_oob_xcast_num_active;
 
 bool orte_oob_base_already_opened = false;
 

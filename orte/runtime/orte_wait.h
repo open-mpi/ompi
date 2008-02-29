@@ -152,8 +152,35 @@ typedef struct {
     orte_process_name_t sender;
     opal_buffer_t *buffer;
     orte_rml_tag_t tag;
+    char *file;
+    int line;
 } orte_message_event_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
+
+#if OMPI_ENABLE_DEBUG
+
+#define ORTE_MESSAGE_EVENT(sndr, buf, tg, cbfunc)               \
+    do {                                                        \
+        orte_message_event_t *mev;                              \
+        struct timeval now;                                     \
+        opal_event_t *tmp;                                      \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
+                            "defining message event: %s %d",    \
+                            __FILE__, __LINE__));               \
+        tmp = (opal_event_t*)malloc(sizeof(opal_event_t));      \
+        mev = OBJ_NEW(orte_message_event_t);                    \
+        mev->sender.jobid = (sndr)->jobid;                      \
+        mev->sender.vpid = (sndr)->vpid;                        \
+        opal_dss.copy_payload(mev->buffer, (buf));              \
+        mev->tag = (tg);                                        \
+        mev->file = strdup((buf)->parent.cls_init_file_name);   \
+        mev->line = (buf)->parent.cls_init_lineno;              \
+        opal_evtimer_set(tmp, (cbfunc), mev);                   \
+        now.tv_sec = 0;                                         \
+        now.tv_usec = 0;                                        \
+        opal_evtimer_add(tmp, &now);                            \
+    } while(0);
+#else
 
 #define ORTE_MESSAGE_EVENT(sndr, buf, tg, cbfunc)               \
     do {                                                        \
@@ -174,6 +201,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
         now.tv_usec = 0;                                        \
         opal_evtimer_add(tmp, &now);                            \
     } while(0);
+
+#endif
     
 
 /**

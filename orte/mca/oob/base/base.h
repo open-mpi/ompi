@@ -46,7 +46,6 @@ BEGIN_C_DECLS
  * global flag for use in timing tests
  */
 ORTE_DECLSPEC extern int mca_oob_base_output;
-ORTE_DECLSPEC extern orte_std_cntr_t orte_oob_xcast_num_active;
 
 /*
  * Flag indicating if this framework has been opened
