@@ -36,7 +36,7 @@
 #include "ompi/mca/coll/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/sys_info.h"
-
+#include "orte/util/proc_info.h"
 
 /*
  * Local functions
