@@ -142,7 +142,7 @@ static int sm2_open(void)
 
     /* Max data Segment size (bytes) - per proc */
     cs->sm2_max_data_seg_size=
-        mca_coll_sm2_param_register_int("sm2_max_data_seg_size",8*getpagesize());
+        mca_coll_sm2_param_register_int("sm2_max_data_seg_size",20*getpagesize());
 
     /* initialize control region allocted */
     cs->sm2_data_size_allocated=0;

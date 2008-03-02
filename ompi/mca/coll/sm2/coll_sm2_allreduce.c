@@ -154,6 +154,19 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
                 /* apply collective operation */
                 ompi_op_reduce(op,(void *)child_data_pointer,
                         (void *)my_data_pointer, count_this_stripe,dtype);
+                /* test
+                {
+                    int ii,n_ints;
+                    int *my_int=(int *)my_data_pointer;
+                    int *child_int=(int *)child_data_pointer;
+                    n_ints=count_this_stripe/4;
+                    for(ii=0 ; ii < n_ints ; ii++ ) {
+                        my_int[ii]+=child_data_pointer[ii];
+                    }
+                }
+                end test */
+
+                /* end test */
             } /* end child loop */
     
             /* set memory barriet to make sure data is in main memory before
