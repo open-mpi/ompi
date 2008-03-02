@@ -567,6 +567,7 @@ static void hca_construct(mca_btl_openib_hca_t *hca)
 
     hca->ib_dev = NULL;
     hca->ib_dev_context = NULL;
+    hca->ib_pd = NULL;
     hca->mpool = NULL;
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     hca->ib_channel = NULL;
