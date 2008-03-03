@@ -72,7 +72,6 @@ AC_DEFUN([OMPI_CONTRIB],[
     m4_define([contrib_software_list], [vt])
     m4_foreach(software, [contrib_software_list],
               [m4_include([ompi/contrib/]software[/configure.m4])
-              OMPI_CONTRIB_DIST_SUBDIRS="$OMPI_CONTRIB_DIST_SUBDIRS contrib/software"
               _OMPI_CONTRIB_CONFIGURE(software)])
 
     # Setup the top-level glue
@@ -105,6 +104,7 @@ AC_DEFUN([_OMPI_CONTRIB_CONFIGURE],[
         AC_MSG_CHECKING([if contributed component $1 can compile])
         if test "$OMPI_CONTRIB_HAPPY" = "1"; then
             OMPI_CONTRIB_SUBDIRS="$OMPI_CONTRIB_SUBDIRS contrib/$1"
+            OMPI_CONTRIB_DIST_SUBDIRS="$OMPI_CONTRIB_DIST_SUBDIRS contrib/$1"
             AC_MSG_RESULT([yes])
         else
             AC_MSG_RESULT([no])
