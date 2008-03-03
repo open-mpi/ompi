@@ -152,8 +152,10 @@ typedef struct {
     orte_process_name_t sender;
     opal_buffer_t *buffer;
     orte_rml_tag_t tag;
+#if OMPI_ENABLE_DEBUG
     char *file;
     int line;
+#endif
 } orte_message_event_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
 

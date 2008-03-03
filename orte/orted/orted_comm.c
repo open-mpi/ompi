@@ -205,6 +205,10 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
     n = 1;
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &n, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(ret);
+#if OMPI_ENABLE_DEBUG
+        opal_output(0, "%s got message buffer from file %s line %d\n",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), mev->file, mev->line);
+#endif
         goto CLEANUP;
     }
     
