@@ -51,6 +51,8 @@ typedef uint8_t orte_grpcomm_mode_t;
 #define ORTE_GRPCOMM_CHAIN      (orte_grpcomm_mode_t) 1
 /* binomial tree */
 #define ORTE_GRPCOMM_BINOMIAL   (orte_grpcomm_mode_t) 2
+/* linear - HNP sends direct to all daemons */
+#define ORTE_GRPCOMM_LINEAR     (orte_grpcomm_mode_t) 3
 
 
 END_C_DECLS
