@@ -312,14 +312,14 @@ typedef unsigned long long uintptr_t;
 #ifndef PRIsize_t
 # if defined(ACCEPT_C99)
 #   define PRIsize_t "zu"
+# elif SIZEOF_SIZE_T == SIZEOF_INT
+#   define PRIsize_t "u"
 # elif SIZEOF_SIZE_T == SIZEOF_LONG
 #   define PRIsize_t "lu"
 # elif SIZEOF_SIZE_T == SIZEOF_LONG_LONG
 #   define PRIsize_t "llu"
-# elif SIZEOF_SIZE_T == SIZEOF_INT
-#   define PRIsize_t "u"
 # endif
-#endif 
+#endif
 
 #endif /* OPAL_STDINT_H */
 
