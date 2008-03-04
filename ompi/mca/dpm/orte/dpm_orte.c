@@ -480,9 +480,6 @@ static int spawn(int count, char **array_of_commands,
     orte_job_t *jdata;
     orte_app_context_t *app;
     
-    bool timing = false;
-    struct timeval ompistart, ompistop;
-    
     /* parse the info object */
     /* check potentially for:
        - "host": desired host where to spawn the processes
@@ -679,22 +676,6 @@ static int spawn(int count, char **array_of_commands,
         free(base_prefix);
     }
 
-    /* check for timing request - get stop time and report elapsed time if so */
-    if (timing) {
-        if (0 != gettimeofday(&ompistop, NULL)) {
-            opal_output(0, "ompi_comm_start_procs: could not obtain stop time");
-        } else {
-            opal_output(0, "ompi_comm_start_procs: time from start to prepare to spawn %ld usec",
-                        (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
-                                   (ompistop.tv_usec - ompistart.tv_usec)));
-            if (0 != gettimeofday(&ompistart, NULL)) {
-                opal_output(0, "ompi_comm_start_procs: could not obtain new start time");
-                ompistart.tv_sec = ompistop.tv_sec;
-                ompistart.tv_usec = ompistop.tv_usec;
-            }
-        }
-    }
-    
     /* spawn procs */
     rc = orte_plm.spawn(jdata);
     OBJ_RELEASE(jdata);
@@ -705,17 +686,6 @@ static int spawn(int count, char **array_of_commands,
         return MPI_ERR_SPAWN;
     }
 
-    /* check for timing request - get stop time and report elapsed time if so */
-    if (timing) {
-        if (0 != gettimeofday(&ompistop, NULL)) {
-            opal_output(0, "ompi_comm_start_procs: could not obtain stop time");
-        } else {
-            opal_output(0, "ompi_comm_start_procs: time to spawn %ld usec",
-                        (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
-                                   (ompistop.tv_usec - ompistart.tv_usec)));
-         }
-    }
-    
     /* clean up */
     opal_progress_event_users_decrement();
 
