@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+dnl Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -42,6 +42,9 @@ AC_DEFUN([OMPI_CONTRIB],[
     # Parse the list to see what we should not build
     ompi_show_subtitle "Configuring contributed software packages"
     AC_MSG_CHECKING([which contributed software packages should be disabled])
+    if test "$enable_contrib_no_build" = ""; then
+        enable_contrib_no_build=all
+    fi
     if test "$enable_contrib_no_build" = "yes"; then
         AC_MSG_RESULT([yes])
         AC_MSG_ERROR([*** The enable-contrib-no-build flag requires an explicit list
@@ -99,7 +102,7 @@ AC_DEFUN([_OMPI_CONTRIB_CONFIGURE],[
     ompi_show_subsubsubtitle "$1 (m4 configuration macro)"
 
     OMPI_CONTRIB_HAPPY=0
-    if test "$DISABLE_contrib_$1" = ""; then
+    if test "$DISABLE_contrib_$1" = "" -a "$DISABLE_contrib_all" = ""; then
         OMPI_contrib_$1_CONFIG([OMPI_CONTRIB_HAPPY=1], [])
         AC_MSG_CHECKING([if contributed component $1 can compile])
         if test "$OMPI_CONTRIB_HAPPY" = "1"; then
