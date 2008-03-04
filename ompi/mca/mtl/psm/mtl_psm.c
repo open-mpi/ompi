@@ -102,6 +102,10 @@ int ompi_mtl_psm_module_init() {
     
     }
 
+    /* Let PSM know that Open MPI 1.2.x can't provide local rank information */
+    setenv("MPI_LOCALRANKID", "-1", 0);
+    setenv("MPI_LOCALNRANKS", "-1", 0);
+
     /* Handle our own errors for opening endpoints */
     psm_error_register_handler(ompi_mtl_psm.ep, ompi_mtl_psm_errhandler);
          

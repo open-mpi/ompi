@@ -28,6 +28,7 @@ version 1.0.
 
 1.2.6
 -----
+- Added shared contexts support to PSM MTL.
 - Added pml_ob1_use_early_completion MCA parameter to allow users
   to turn off the OB1 early completion semantic and avoid "stall"
   problems seen on InfiniBand in some cases.  See ticket #1224.
