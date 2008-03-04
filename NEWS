@@ -26,8 +26,11 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
-1.2.6 (not released yet, if ever)
+1.2.6
 -----
+- Added pml_ob1_use_early_completion MCA parameter to allow users
+  to turn off the OB1 early completion semantic and avoid "stall"
+  problems seen on InfiniBand in some cases.  See ticket #1224.
 - Sanitised some #define macros used in mpi.h to avoid compiler warnings
   caused by MPI programs built with different autoconf versions.
   Thanks to Ben Allan for reporting the problem, and thanks to
