@@ -753,8 +753,18 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     asprintf(&param2, "%ld", (long)total_slots_alloc);
     opal_setenv(param, param2, true, environ_copy);
     free(param);
-    free(param2);
 
+    /* although the total_slots_alloc is the universe size, users
+     * would appreciate being given a public environmental variable
+     * that also represents this value - something MPI specific - so
+     * do that here.
+     *
+     * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
+     * We know - just live with it
+     */
+    opal_setenv("OMPI_UNIVERSE_SIZE", param2, true, environ_copy);
+    free(param2);
+    
     /* use same nodename as the starting daemon (us) */
     param = mca_base_param_environ_variable("orte", "base", "nodename");
     opal_setenv(param, orte_system_info.nodename, true, environ_copy);
@@ -1060,7 +1070,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
          * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
          * We know - just live with it
          */
-        opal_setenv("MPI_COMM_WORLD_RANK", vpid_str, true, &app->env);
+        opal_setenv("OMPI_COMM_WORLD_RANK", vpid_str, true, &app->env);
         free(vpid_str);  /* done with this now */
         
         asprintf(&value, "%lu", (unsigned long) child->local_rank);
@@ -1071,6 +1081,14 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         }
         opal_setenv(param, value, true, &app->env);
         free(param);
+        /* users would appreciate being given a public environmental variable
+         * that also represents this value - something MPI specific - so
+         * do that here.
+         *
+         * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
+         * We know - just live with it
+         */
+        opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
         free(value);
         
         if (want_processor) {
