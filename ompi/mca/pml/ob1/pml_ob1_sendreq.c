@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,6 +19,7 @@
 
 
 #include "ompi_config.h"
+#include "opal/prefetch.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
@@ -162,6 +164,13 @@ mca_pml_ob1_match_completion_cache( struct mca_btl_base_module_t* btl,
         orte_errmgr.abort();
     }
 
+    /* signal normal request completion */
+    if (OPAL_UNLIKELY(!mca_pml_ob1.use_early_completion)) {
+        OPAL_THREAD_LOCK(&ompi_request_lock);
+        MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq);
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
+    }
+
     /* attempt to cache the descriptor */
     MCA_BML_BASE_BTL_DES_RETURN( bml_btl, descriptor ); 
 
@@ -195,6 +204,13 @@ mca_pml_ob1_match_completion_free( struct mca_btl_base_module_t* btl,
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         orte_errmgr.abort();
+    }
+
+    /* signal normal request completion */
+    if (OPAL_UNLIKELY(!mca_pml_ob1.use_early_completion)) {
+        OPAL_THREAD_LOCK(&ompi_request_lock);
+        MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq);
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
 
     /* free the descriptor */
@@ -554,10 +570,12 @@ int mca_pml_ob1_send_request_start_copy(
     descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     descriptor->des_cbdata = sendreq;
 
-    /* signal request completion */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq);
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+    /* signal early request completion */
+    if (OPAL_LIKELY(mca_pml_ob1.use_early_completion)) {
+        OPAL_THREAD_LOCK(&ompi_request_lock);
+        MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq);
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
+    }
 
     /* send */
     rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML);

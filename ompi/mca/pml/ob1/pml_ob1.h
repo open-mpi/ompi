@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -54,6 +55,7 @@ struct mca_pml_ob1_t {
     size_t recv_pipeline_depth;
     bool leave_pinned; 
     int leave_pinned_pipeline;
+    bool use_early_completion;
     
     /* lock queue access */
     opal_mutex_t lock;

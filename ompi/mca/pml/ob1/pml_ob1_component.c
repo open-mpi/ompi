@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -104,6 +104,8 @@ static int mca_pml_ob1_component_open(void)
         mca_pml_ob1_param_register_int("send_pipeline_depth", 3);
     mca_pml_ob1.recv_pipeline_depth =
         mca_pml_ob1_param_register_int("recv_pipeline_depth", 4);
+    mca_pml_ob1.use_early_completion = (bool)
+        mca_pml_ob1_param_register_int("use_early_completion", 1);
 
     mca_pml_ob1.leave_pinned = ompi_mpi_leave_pinned;
     mca_pml_ob1.leave_pinned_pipeline = (int) ompi_mpi_leave_pinned_pipeline;
