@@ -4,7 +4,7 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,6 +12,7 @@
  * $HEADER$
  */
 
+#include "plpa_config.h"
 #include "plpa.h"
 #include "plpa_internal.h"
 
@@ -19,7 +20,7 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
-/*
+/**
  * Call the kernel's setaffinity, massaging the user's input
  * parameters as necessary
  */
@@ -51,9 +52,6 @@ int PLPA_NAME(sched_setaffinity)(pid_t pid, size_t cpusetsize,
     case PLPA_NAME_CAPS(PROBE_OK):
         /* This shouldn't happen, but check anyway */
         if (cpusetsize > sizeof(*cpuset)) {
-            return EINVAL;
-        }
-        if (NULL == cpuset) {
             return EINVAL;
         }
 
@@ -130,7 +128,7 @@ int PLPA_NAME(sched_setaffinity)(pid_t pid, size_t cpusetsize,
 }
 
 
-/*
+/**
  * Call the kernel's getaffinity, massaging the user's input
  * parameters as necessary
  */
@@ -159,9 +157,6 @@ int PLPA_NAME(sched_getaffinity)(pid_t pid, size_t cpusetsize,
     case PLPA_NAME_CAPS(PROBE_OK):
         /* This shouldn't happen, but check anyway */
         if (PLPA_NAME(len) > sizeof(*cpuset)) {
-            return EINVAL;
-        }
-        if (NULL == cpuset) {
             return EINVAL;
         }
 
