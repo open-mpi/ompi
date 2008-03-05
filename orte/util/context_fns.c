@@ -102,7 +102,7 @@ int orte_util_check_context_cwd(orte_app_context_t *context,
             
             /* Reset the pwd in this local copy of the
                 context */
-            free(context->cwd);
+            if (NULL != context->cwd) free(context->cwd);
             context->cwd = strdup(tmp);
         }
         
@@ -148,7 +148,7 @@ int orte_util_check_context_app(orte_app_context_t *context, char **env)
         if (NULL == tmp) {
             return ORTE_ERR_EXE_NOT_FOUND;
         }
-        free(context->app);
+        if (NULL != context->app) free(context->app);
         context->app = tmp;
     } else {
         if (0 != access(context->app, X_OK)) {
