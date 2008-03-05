@@ -245,6 +245,27 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
         *(event) = tmp;                                             \
     }while(0);                                                      \
 
+
+/**
+ * There are places in the code where we just want to periodically
+ * wakeup to do something, and then go back to sleep again. Setting
+ * a timer allows us to do this
+ */
+#define ORTE_TIMER_EVENT(time, cbfunc)                          \
+    do {                                                        \
+        struct timeval now;                                     \
+        opal_event_t *tmp;                                      \
+        tmp = (opal_event_t*)malloc(sizeof(opal_event_t));      \
+        opal_evtimer_set(tmp, (cbfunc), tmp);                   \
+        now.tv_sec = (time);                                    \
+        now.tv_usec = 0;                                        \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
+                            "defining timer event: %ld sec",    \
+                            (long)now.tv_sec));                 \
+        opal_evtimer_add(tmp, &now);                            \
+    }while(0);                                                  \
+
+
 /**
  * \internal
  *

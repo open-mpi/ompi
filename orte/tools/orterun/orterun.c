@@ -923,8 +923,6 @@ static void abort_exit_callback(int fd, short ign, void *arg)
  */
 static void abort_signal_callback(int fd, short flags, void *arg)
 {
-    opal_event_t *event;
-        
     /* if we have already ordered this once, or we are already
      * aborting the job, don't keep doing it to avoid race conditions
      */
@@ -942,7 +940,7 @@ static void abort_signal_callback(int fd, short flags, void *arg)
        (which is a Bad Thing), so we can't call it directly.
        Instead, we have to exit this handler and setup to call
        job_completed() after this. */
-    ORTE_DETECT_TIMEOUT(&event, 0, 0, 1, abort_exit_callback);
+    ORTE_TIMER_EVENT(0, abort_exit_callback);
 }
 
 /**
