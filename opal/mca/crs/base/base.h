@@ -106,7 +106,7 @@ extern "C" {
 
     OPAL_DECLSPEC char * opal_crs_base_unique_snapshot_name(pid_t pid);
     OPAL_DECLSPEC char * opal_crs_base_extract_expected_component(char *snapshot_loc, int *prev_pid);
-    int    opal_crs_base_init_snapshot_directory(opal_crs_base_snapshot_t *snapshot);
+    OPAL_DECLSPEC int    opal_crs_base_init_snapshot_directory(opal_crs_base_snapshot_t *snapshot);
     OPAL_DECLSPEC char * opal_crs_base_get_snapshot_directory(char *uniq_snapshot_name);
 
     /* Opens the metadata file and places all the base information in the file.
@@ -114,14 +114,14 @@ extern "C" {
      *  'w' = Open for writing
      *  'a' = Open for writing and appending information
      */
-    FILE *opal_crs_base_open_metadata(opal_crs_base_snapshot_t *snapshot, char mode );
+    OPAL_DECLSPEC FILE *opal_crs_base_open_metadata(opal_crs_base_snapshot_t *snapshot, char mode );
 
     /* Open the metadata file, read off the base information and 
      * return the component and previous pid to the caller.
      * Note: component is allocated inside this function, it is the
      *       callers responsibility to free this memory.
      */
-    FILE * opal_crs_base_open_read_metadata(char *location, char **component, int *prev_pid);
+    OPAL_DECLSPEC FILE * opal_crs_base_open_read_metadata(char *location, char **component, int *prev_pid);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

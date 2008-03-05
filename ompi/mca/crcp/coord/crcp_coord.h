@@ -46,7 +46,7 @@ extern "C" {
         ompi_crcp_base_component_t super;  /** Base CRCP component */
     };
     typedef struct ompi_crcp_coord_component_t ompi_crcp_coord_component_t;
-    extern ompi_crcp_coord_component_t mca_crcp_coord_component;
+    OMPI_MODULE_DECLSPEC extern ompi_crcp_coord_component_t mca_crcp_coord_component;
 
     /*
      * Local variables

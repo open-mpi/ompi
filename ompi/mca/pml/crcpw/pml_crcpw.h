@@ -52,7 +52,7 @@ extern "C" {
         bool pml_crcp_wrapped;
     };
     typedef struct mca_pml_crcpw_component_t mca_pml_crcpw_component_t;
-    extern mca_pml_crcpw_component_t mca_pml_crcpw_component;
+    OMPI_MODULE_DECLSPEC extern mca_pml_crcpw_component_t mca_pml_crcpw_component;
 
     struct mca_pml_crcpw_module_t {
         mca_pml_base_module_t super;
