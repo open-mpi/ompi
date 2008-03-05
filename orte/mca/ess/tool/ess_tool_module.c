@@ -51,7 +51,8 @@ static void rte_abort(int status, bool report) __opal_attribute_noreturn__;
 orte_ess_base_module_t orte_ess_tool_module = {
     rte_init,
     orte_ess_base_tool_finalize,
-    rte_abort
+    rte_abort,
+    NULL /* ft_event */
 };
 
 

@@ -90,14 +90,14 @@ extern "C" {
 
     int opal_crs_base_none_disable_checkpoint(void);
     int opal_crs_base_none_enable_checkpoint(void);
-
-    int opal_crs_base_none_prelaunch(int32_t rank,
-                                     char *base_snapshot_dir,
-                                     char **app,
-                                     char **cwd,
-                                     char ***argv,
-                                     char ***env);
-    int opal_crs_base_none_reg_thread(void);
+    
+    OPAL_DECLSPEC int opal_crs_base_none_prelaunch(int32_t rank,
+                                                   char *base_snapshot_dir,
+                                                   char **app,
+                                                   char **cwd,
+                                                   char ***argv,
+                                                   char ***env);
+    OPAL_DECLSPEC int opal_crs_base_none_reg_thread(void);
 
     /**
      * Some utility functions

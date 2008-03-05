@@ -97,6 +97,7 @@ static orte_snapc_full_local_snapshot_t *find_vpid_snapshot(orte_process_name_t 
 static int snapc_full_local_get_vpids(void);
 
 static int snapc_full_local_setup_snapshot_dir(char * snapshot_ref, char * sugg_dir, char **actual_dir);
+static int snapc_full_establish_dir(void);
 
 static int snapc_full_local_start_checkpoint_all(size_t ckpt_state);
 static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_local_snapshot_t *vpid_snapshot);
@@ -151,6 +152,17 @@ int local_coord_setup_job(orte_jobid_t jobid)
     }
 
     /*
+     * Wait for the snapshot directory to be established before registering
+     * the callbacks since they use the same tag.
+     */
+    if(orte_snapc_base_establish_global_snapshot_dir) {
+        if( ORTE_SUCCESS != (ret = snapc_full_establish_dir() ) ) {
+            exit_status = ret;
+            goto cleanup;
+        }
+    }
+
+    /*
      * Setup Global Coordinator listener
      */
     if( ORTE_SUCCESS != (ret = snapc_full_local_start_listener() ) ) {
@@ -166,39 +178,9 @@ int local_coord_setup_job(orte_jobid_t jobid)
         goto cleanup;
     }
 
-    if(orte_snapc_base_establish_gloabl_snapshot_dir) {
-#if JJH_FIX_ME
-        size_t ckpt_state = ORTE_SNAPC_CKPT_STATE_NONE;
-        char * ckpt_snapshot_ref = NULL;
-        char * ckpt_snapshot_loc = NULL;
 
-        if( ORTE_SUCCESS != (ret = orte_snapc_base_get_job_ckpt_info(jobid,
-                                                                     &ckpt_state,
-                                                                     &ckpt_snapshot_ref,
-                                                                     &ckpt_snapshot_loc) ) ) {
-            exit_status = ret;
-            goto cleanup;
-        }
-
-        if( NULL != ckpt_snapshot_loc &&
-            (0 != strncmp(ckpt_snapshot_loc, "", strlen(""))) ) {
-            orte_snapc_base_global_snapshot_loc = strdup(ckpt_snapshot_loc);
-        }
-
-        OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
-                             "Local) The global snapshot directory has been established at [%s]\n",
-                             orte_snapc_base_global_snapshot_loc));
-
-        if( NULL != ckpt_snapshot_ref ) {
-            free(ckpt_snapshot_ref);
-            ckpt_snapshot_ref = NULL;
-        }
-        if( NULL != ckpt_snapshot_loc ) {
-            free(ckpt_snapshot_loc);
-            ckpt_snapshot_loc = NULL;
-        }
-#endif
-    }
+    OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+                         "Local) Finished setting up job\n"));
 
  cleanup:
     return exit_status;
@@ -332,7 +314,7 @@ static int snapc_full_local_start_proc_listener(void)
     }
 
     OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
-                         "Global) Receive (Command line): Start command recv"));
+                         "Local) Receive (Command line): Start command recv"));
 
     /*
      * Coordinator command listener
@@ -363,7 +345,7 @@ static int snapc_full_local_stop_proc_listener(void)
     }
     
     OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
-                         "Global) Receive (Command Line) stop command"));
+                         "Local) Receive (Command Line) stop command"));
     
     if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD,
                                                    ORTE_RML_TAG_SNAPC))) {
@@ -765,6 +747,105 @@ static int snapc_full_local_send_vpid_assoc(void)
 
  cleanup:
     OBJ_DESTRUCT(&buffer);
+
+    return exit_status;
+}
+
+static int snapc_full_establish_dir(void)
+{
+    int ret, exit_status = ORTE_SUCCESS;
+    orte_snapc_full_cmd_flag_t command = ORTE_SNAPC_FULL_ESTABLISH_DIR_CMD;
+    opal_buffer_t buffer;
+    char * ckpt_snapshot_ref = NULL;
+    char * ckpt_snapshot_loc = NULL;
+    orte_std_cntr_t count;
+
+    /*
+     * Global Coordinator: Operate locally
+     */
+    if( ORTE_SNAPC_GLOBAL_COORD_TYPE == (orte_snapc_coord_type & ORTE_SNAPC_GLOBAL_COORD_TYPE)) {
+        opal_output(0, "Error: Not supported!\n");
+        return ORTE_SUCCESS;
+    }
+
+    OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+                         "Local) Contact the HNP for global snapshot directory information to establish\n"));
+
+    /* Notify HNP of request for information */
+    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buffer, ORTE_RML_TAG_SNAPC_FULL, 0))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    OBJ_DESTRUCT(&buffer);
+
+    /* Wait for the HNP to release us */
+    OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+                         "Local) Wait for response to global snapshot directory information request\n"));
+    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+
+    if( ORTE_SUCCESS != (ret = orte_rml.recv_buffer(ORTE_PROC_MY_HNP,
+                                                    &buffer,
+                                                    ORTE_RML_TAG_SNAPC_FULL,
+                                                    ORTE_RML_NON_PERSISTENT) ) ) {
+        OBJ_DESTRUCT(&buffer);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    /*
+     * Unpack the data
+     * - command
+     * - ckpt_reference
+     * - ckpt_location
+     */
+    count = 1;
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(&buffer, &command, &count, ORTE_SNAPC_FULL_CMD))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+    count = 1;
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(&buffer, &ckpt_snapshot_ref, &count, OPAL_STRING))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+    count = 1;
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(&buffer, &ckpt_snapshot_loc, &count, OPAL_STRING))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    if( NULL != ckpt_snapshot_loc &&
+        (0 != strncmp(ckpt_snapshot_loc, "", strlen(""))) ) {
+        orte_snapc_base_global_snapshot_loc = strdup(ckpt_snapshot_loc);
+    }
+
+    OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+                         "Local) The global snapshot directory has been established at [%s]\n",
+                         orte_snapc_base_global_snapshot_loc));
+
+ cleanup:
+    OBJ_DESTRUCT(&buffer);
+    if( NULL != ckpt_snapshot_ref ) {
+        free(ckpt_snapshot_ref);
+        ckpt_snapshot_ref = NULL;
+    }
+    if( NULL != ckpt_snapshot_loc ) {
+        free(ckpt_snapshot_loc);
+        ckpt_snapshot_loc = NULL;
+    }
 
     return exit_status;
 }

@@ -86,8 +86,6 @@
 
 BEGIN_C_DECLS
 
-#define JJH_FIX_ME 0
-
 /**
  * States that a process can be in while checkpointing
  */

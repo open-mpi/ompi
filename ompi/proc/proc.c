@@ -615,9 +615,9 @@ int ompi_proc_refresh(void) {
         }
     }
 
-    rc = ompi_proc_publish_info();
-
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+
+    rc = ompi_proc_publish_info();
 
     return rc;   
 }

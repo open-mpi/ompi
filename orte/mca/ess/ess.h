@@ -72,6 +72,17 @@ typedef int (*orte_ess_base_module_finalize_fn_t)(void);
  */
 typedef void (*orte_ess_base_module_abort_fn_t)(int status, bool report);
 
+/**
+ * Handle fault tolerance updates
+ *
+ * Handle fault tolerance updates
+ *
+ * @param[in] state Fault tolerance state update
+ *
+ * @retval ORTE_SUCCESS The operation completed successfully
+ * @retval ORTE_ERROR   An unspecifed error occurred
+ */
+typedef int  (*orte_ess_base_module_ft_event_fn_t)(int state);
 
 /*
  * the standard module data structure
@@ -80,6 +91,7 @@ struct orte_ess_base_module_1_0_0_t {
     orte_ess_base_module_init_fn_t          init;
     orte_ess_base_module_finalize_fn_t      finalize;
     orte_ess_base_module_abort_fn_t         abort;
+    orte_ess_base_module_ft_event_fn_t      ft_event;
 };
 
  

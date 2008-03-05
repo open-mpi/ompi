@@ -66,7 +66,11 @@ int orte_filem_base_comm_start(void)
 {
     int rc;
 
-    if (recv_issued || !orte_process_info.hnp) {
+    /* Only active in HNP and daemons */
+    if( !orte_process_info.hnp && !orte_process_info.daemon ) {
+        return ORTE_SUCCESS;
+    }
+    if ( recv_issued ) {
         return ORTE_SUCCESS;
     }
     
@@ -91,8 +95,12 @@ int orte_filem_base_comm_start(void)
 int orte_filem_base_comm_stop(void)
 {
     int rc;
-    
-    if (!recv_issued || !orte_process_info.hnp) {
+
+    /* Only active in HNP and daemons */
+    if( !orte_process_info.hnp && !orte_process_info.daemon ) {
+        return ORTE_SUCCESS;
+    }
+    if ( recv_issued ) {
         return ORTE_SUCCESS;
     }
     
