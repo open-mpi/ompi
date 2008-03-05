@@ -91,12 +91,9 @@ cd config
 set configdir="`pwd`"
 mkdir tmp.$$
 cd tmp.$$
-#wget -t 1 -T 10 ftp://ftp.gnu.org/gnu/config/config.guess
-#wget -t 1 -T 10 ftp://ftp.gnu.org/gnu/config/config.sub
-# "Temporary" instructions at ftp.gnu.org/gnu/config advise using the 
-# following URLs:
-wget -t 1 -T 10 'http://savannah.gnu.org/cgi-bin/viewcvs/*checkout*/config/config/config.guess'
-wget -t 1 -T 10 'http://savannah.gnu.org/cgi-bin/viewcvs/*checkout*/config/config/config.sub'
+# Official HTTP git mirrors for config.guess / config.sub
+wget -t 1 -T 10 -O config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=master'
+wget -t 1 -T 10 -O config.sub 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=master'
 chmod +x config.guess config.sub
 
 # Recently, ftp.gnu.org has had zero-legnth config.guess / config.sub
