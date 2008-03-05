@@ -695,6 +695,31 @@ internal_waitpid_callback(int fd, short event, void *arg)
 
 #elif defined(__WINDOWS__)
 
+static volatile int cb_enabled = true;
+static opal_mutex_t mutex;
+static opal_list_t pending_pids;
+static opal_list_t registered_cb;
+
+
+/*********************************************************************
+*
+* Wait Object Declarations
+*
+********************************************************************/
+static void message_event_destructor(orte_message_event_t *ev)
+{
+    OBJ_RELEASE(ev->buffer);
+}
+
+static void message_event_constructor(orte_message_event_t *ev)
+{
+    ev->buffer = OBJ_NEW(opal_buffer_t);
+}
+OBJ_CLASS_INSTANCE(orte_message_event_t,
+                   opal_object_t,
+                   message_event_constructor,
+                   message_event_destructor);
+
 typedef struct {
     opal_list_item_t super;
     pid_t pid;
@@ -761,6 +786,15 @@ orte_wait_finalize(void)
 
     return ORTE_SUCCESS;
 }
+
+void orte_trigger_event(int trig)
+{
+    int data=1;
+    
+    write(trig, &data, sizeof(int));
+    opal_progress();
+}
+
 
 /**
  * Internal function which find a corresponding process structure
@@ -953,6 +987,34 @@ orte_wait_cb_enable(void)
 
     return ORTE_SUCCESS;
 }
+
+
+int orte_wait_event(opal_event_t **event, int *trig,
+                    void (*cbfunc)(int, short, void*))
+{
+    int p[2];
+    
+    if (pipe(p) < 0) {
+        ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
+        return ORTE_ERR_SYS_LIMITS_PIPES;
+    }
+
+    /* create the event */
+    *event = (opal_event_t*)malloc(sizeof(opal_event_t));
+    
+    /* pass back the write end of the pipe */
+    *trig = p[1];
+    
+    /* define the event to fire when someone writes to the pipe */
+    opal_event_set(*event, p[0], OPAL_EV_READ, cbfunc, NULL);
+    
+	/* Add it to the active events, without a timeout */
+	opal_event_add(*event, NULL);
+
+    /* all done */
+    return ORTE_SUCCESS;
+}
+
 
 int
 orte_wait_kill(int sig)
