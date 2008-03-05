@@ -42,9 +42,6 @@ AC_DEFUN([OMPI_CONTRIB],[
     # Parse the list to see what we should not build
     ompi_show_subtitle "Configuring contributed software packages"
     AC_MSG_CHECKING([which contributed software packages should be disabled])
-    if test "$enable_contrib_no_build" = ""; then
-        enable_contrib_no_build=all
-    fi
     if test "$enable_contrib_no_build" = "yes"; then
         AC_MSG_RESULT([yes])
         AC_MSG_ERROR([*** The enable-contrib-no-build flag requires an explicit list
