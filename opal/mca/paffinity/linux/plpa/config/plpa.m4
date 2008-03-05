@@ -5,7 +5,7 @@
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -22,6 +22,8 @@
 AC_DEFUN([PLPA_INIT],[
     AC_REQUIRE([_PLPA_INTERNAL_SETUP])
     AC_REQUIRE([AC_PROG_CC])
+    AC_REQUIRE([AM_PROG_LEX])
+    AC_REQUIRE([AC_PROG_YACC])
 
     # Check for syscall()
     AC_CHECK_FUNC([syscall], [happy=1], [happy=0])
@@ -81,6 +83,15 @@ int i = 1;],
           [$2])
     PLPA_DO_AM_CONDITIONALS
 
+    AC_CONFIG_FILES(
+        plpa_config_prefix[/Makefile]
+        plpa_config_prefix[/config/Makefile]
+        plpa_config_prefix[/src/Makefile]
+        plpa_config_prefix[/src/libplpa/Makefile]
+        plpa_config_prefix[/src/plpa-info/Makefile]
+        plpa_config_prefix[/src/plpa-taskset/Makefile]
+    )
+
     # Cleanup
     unset happy
 ])dnl
@@ -101,52 +112,33 @@ AC_DEFUN([PLPA_INCLUDED],[
     m4_define([plpa_config_prefix],[$1])
     AC_REQUIRE([_PLPA_INTERNAL_SETUP])
     plpa_mode=included
+    PLPA_DISABLE_EXECUTABLES
+])dnl
+
+#-----------------------------------------------------------------------
+
+dnl JMS: No fortran bindings yet
+dnl # Set whether the fortran bindings will be built or not
+dnl AC_DEFUN([PLPA_FORTRAN],[
+dnl     AC_REQUIRE([_PLPA_INTERNAL_SETUP])
+dnl 
+dnl    # Need [] around entire following line to escape m4 properly
+dnl     [plpa_tmp=`echo $1 | tr '[:upper:]' '[:lower:]'`]
+dnl     if test "$1" = "0" -o "$1" = "n"; then
+dnl         plpa_fortran=no
+dnl     elif test "$1" = "1" -o "$1" = "y"; then
+dnl         plpa_fortran=yes
+dnl     else
+dnl         AC_MSG_WARN([Did not understand PLPA_FORTRAN argument ($1) -- ignored])
+dnl     fi
+dnl ])dnl
+
+#-----------------------------------------------------------------------
+
+# Disable building the executables
+AC_DEFUN([PLPA_DISABLE_EXECUTABLES],[
+    AC_REQUIRE([_PLPA_INTERNAL_SETUP])
     plpa_executables=no
-])dnl
-
-#-----------------------------------------------------------------------
-
-# Set whether the fortran bindings will be built or not
-AC_DEFUN([PLPA_FORTRAN],[
-    AC_REQUIRE([_PLPA_INTERNAL_SETUP])
-
-    # Need [] around entire following line to escape m4 properly
-    [plpa_tmp=`echo $1 | tr '[:upper:]' '[:lower:]'`]
-    if test "$1" = "0" -o "$1" = "n"; then
-        plpa_fortran=no
-    elif test "$1" = "1" -o "$1" = "y"; then
-        plpa_fortran=yes
-    else
-	AC_MSG_WARN([Did not understand PLPA_FORTRAN argument ($1) -- ignored])
-    fi
-])dnl
-
-#-----------------------------------------------------------------------
-
-# Set whether to build and install the executables or not
-AC_DEFUN([PLPA_EXECUTABLES],[
-    AC_REQUIRE([_PLPA_INTERNAL_SETUP])
-
-    # Need [] around entire following line to escape m4 properly
-    [plpa_tmp=`echo $1 | tr '[:upper:]' '[:lower:]'`]
-    if test "$1" = "0" -o "$1" = "n"; then
-        plpa_executables=no
-    elif test "$1" = "1" -o "$1" = "y"; then
-        plpa_executables=yes
-    else
-	AC_MSG_WARN([Did not understand PLPA_EXECUTABLES argument ($1) -- ignored])
-    fi
-
-#
-# need to check for plpa_mode = included and plpa_executables=yes
-# and print a big AC_MSG_WARN if both are true
-
-    if test "$plpa_mode" = "included" -a "$plpa_executables" = "yes" ; then
-        AC_MSG_WARN([ Attempting to build executables in included mode ])
-	AC_MSG_WARN([ This will fail - libplpa_included will be built ])
-	AC_MSG_WARN([ Executables expect libplpa ])
-    fi
-
 ])dnl
 
 #-----------------------------------------------------------------------
@@ -181,15 +173,16 @@ AC_DEFUN([_PLPA_INTERNAL_SETUP],[
         plpa_mode=standalone
     fi
 
-    # Fortran bindings, or no?
-    AC_ARG_ENABLE([fortran],
-                    AC_HELP_STRING([--disable-fortran],
-                                   [Using --disable-fortran disables building the Fortran PLPA API bindings]))
-    if test "$enable_fortran" = "yes" -o "$enable_fortran" = ""; then
-        plpa_fortran=yes
-    else
-        plpa_fortran=no
-    fi
+dnl JMS: No fortran bindings yet
+dnl    # Fortran bindings, or no?
+dnl    AC_ARG_ENABLE([fortran],
+dnl                    AC_HELP_STRING([--disable-fortran],
+dnl                                   [Using --disable-fortran disables building the Fortran PLPA API bindings]))
+dnl    if test "$enable_fortran" = "yes" -o "$enable_fortran" = ""; then
+dnl        plpa_fortran=yes
+dnl    else
+dnl        plpa_fortran=no
+dnl    fi
 
     # Build and install the executables or no?
     AC_ARG_ENABLE([executables],
@@ -224,21 +217,16 @@ AC_DEFUN([_PLPA_INIT],[
 
     # We need to set a path for header, etc files depending on whether
     # we're standalone or included. this is taken care of by PLPA_INCLUDED.
-    # Move AC_CONFIG_HEADER and AC_CONFIG_FILES to here, using the
-    # path prefix from PLPA_INCLUDED
 
     AC_MSG_CHECKING([for PLPA config prefix])
     AC_MSG_RESULT(plpa_config_prefix)
 
+    # Note that plpa_config.h *MUST* be listed first so that it
+    # becomes the "main" config header file.  Any AM_CONFIG_HEADERs
+    # after that (plpa.h) will only have selective #defines replaced,
+    # not the entire file.
+    AM_CONFIG_HEADER(plpa_config_prefix[/src/libplpa/plpa_config.h])
     AM_CONFIG_HEADER(plpa_config_prefix[/src/libplpa/plpa.h])
-    AC_CONFIG_FILES(
-        plpa_config_prefix[/Makefile]
-        plpa_config_prefix[/config/Makefile]
-        plpa_config_prefix[/src/Makefile]
-        plpa_config_prefix[/src/libplpa/Makefile]
-        plpa_config_prefix[/src/plpa-info/Makefile]
-        plpa_config_prefix[/src/plpa-taskset/Makefile]
-    )
 
     # What prefix are we using?
     AC_MSG_CHECKING([for PLPA symbol prefix])
@@ -251,9 +239,10 @@ AC_DEFUN([_PLPA_INIT],[
                        [The PLPA symbol prefix in all caps])
     AC_MSG_RESULT([$plpa_symbol_prefix_value])
 
-    # Check for fortran
-    AC_MSG_CHECKING([whether to build PLPA Fortran API])
-    AC_MSG_RESULT([$plpa_fortran])
+dnl JMS: No fortran bindings yet
+dnl    # Check for fortran
+dnl    AC_MSG_CHECKING([whether to build PLPA Fortran API])
+dnl    AC_MSG_RESULT([$plpa_fortran])
 
     # Check whether to build the exectuables or not
     AC_MSG_CHECKING([whether to build PLPA executables])
@@ -263,9 +252,6 @@ AC_DEFUN([_PLPA_INIT],[
     if test "$plpa_executables" = "yes"; then
         AC_C_INLINE
     fi
-    # Always need these for make dist (both included and standalone)
-    AM_PROG_LEX
-    AC_PROG_YACC
 
     # Success
     $1
@@ -279,7 +265,8 @@ AC_DEFUN([_PLPA_INIT],[
 AC_DEFUN([PLPA_DO_AM_CONDITIONALS],[
     if test "$plpa_did_am_conditionals" != "yes"; then
         AM_CONDITIONAL([PLPA_BUILD_STANDALONE], [test "$plpa_mode" = "standalone"])
-        AM_CONDITIONAL(PLPA_BUILD_FORTRAN, [test "$plpa_fortran" = "yes"])
+dnl JMS: No fortran bindings yet
+dnl        AM_CONDITIONAL(PLPA_BUILD_FORTRAN, [test "$plpa_fortran" = "yes"])
         AM_CONDITIONAL(PLPA_BUILD_EXECUTABLES, [test "$plpa_executables" = "yes"])
     fi
     plpa_did_am_conditionals=yes

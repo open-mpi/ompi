@@ -2,6 +2,7 @@
  * Copyright (c) 2007 Cisco Systems, Inc.  All rights reserved.
  */
 
+#include "plpa_config.h"
 #include "plpa.h"
 #include "plpa_internal.h"
 

@@ -1210,10 +1210,10 @@ static int get_ib_dev_distance(struct ibv_device *dev)
 {
     opal_paffinity_base_cpu_set_t cpus;
     opal_carto_base_node_t *hca_node;
-    int min_distance = -1, i, max_proc_id;
+    int min_distance = -1, i, max_proc_id, num_processors;
     const char *hca = ibv_get_device_name(dev);
 
-    if(opal_paffinity_base_max_processor_id(&max_proc_id) != OMPI_SUCCESS)
+    if(opal_paffinity_base_get_processor_info(&num_processors, &max_proc_id) != OMPI_SUCCESS)
         max_proc_id = 100; /* Choose something big enough */
 
     hca_node = carto_base_find_node(host_topo, hca);
