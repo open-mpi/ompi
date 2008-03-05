@@ -57,6 +57,7 @@ bool orte_wakeup_ordered = false;
 bool orte_abort_in_progress = false;
 int orte_timeout_usec_per_proc;
 float orte_max_timeout;
+char *orte_default_hostfile;
 
 orte_process_name_t orte_globals_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD};
 orte_process_name_t orte_globals_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID}; 
@@ -148,6 +149,11 @@ int orte_register_params(void)
     mca_base_param_reg_int_name("orte", "timeout_step",
                                 "Time to wait [in usecs/proc] before aborting an ORTE operation (default: 10 usec/proc)",
                                 false, false, 10, &orte_timeout_usec_per_proc);
+    
+    /* default hostfile */
+    mca_base_param_reg_string_name("default", "hostfile",
+                                   "Name of the default hostfile (relative or absolute path)",
+                                   false, false, NULL, &orte_default_hostfile);
     
     
     /* All done */

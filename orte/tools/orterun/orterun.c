@@ -170,7 +170,10 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', "machinefile", "machinefile", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Provide a hostfile" },
-
+    { "default", "hostfile", NULL, '\0', "default-hostfile", "default-hostfile", 1,
+        NULL, OPAL_CMD_LINE_TYPE_STRING,
+    "Provide a default hostfile" },
+    
     /* uri of Open MPI server, or at least where to get it */
     { NULL, NULL, NULL, '\0', "ompi-server", "ompi-server", 1,
       &orterun_globals.ompi_server, OPAL_CMD_LINE_TYPE_STRING,

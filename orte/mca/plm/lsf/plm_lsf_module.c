@@ -167,7 +167,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     }
     
     /* save the active jobid */
-    active_job = jobid;
+    active_job = jdata->jobid;
     
     /* Get the map for this job */
     if (NULL == (map = orte_rmaps.get_job_map(active_job))) {
@@ -347,7 +347,7 @@ cleanup:
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
         if (ORTE_SUCCESS != 
-            orte_plm_base_launch_failed(jobid, false, -1, 0, ORTE_JOB_STATE_FAILED_TO_START);
+            orte_plm_base_launch_failed(jdata->jobid, false, -1, 0, ORTE_JOB_STATE_FAILED_TO_START);
     }
 
     return rc;
