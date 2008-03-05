@@ -83,6 +83,14 @@ int orte_ess_env_put(orte_std_cntr_t num_procs,
     }
     opal_setenv(param, value, true, env);
     free(param);
+    /* users would appreciate being given a public environmental variable
+     * that also represents this value - something MPI specific - so
+     * do that here.
+     *
+     * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
+     * We know - just live with it
+     */
+    opal_setenv("OMPI_COMM_WORLD_NUM_LOCAL_PROCS", value, true, env);
     free(value);
     
     return ORTE_SUCCESS;
