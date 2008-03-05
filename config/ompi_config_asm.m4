@@ -1047,7 +1047,7 @@ if test "$ompi_cv_asm_arch" != "WINDOWS" ; then
             AC_MSG_CHECKING([whether possible to generate assembly file])
             mkdir -p opal/asm/generated
             ompi_cv_asm_file="atomic-local.s"
-            ompi_try='$PERL $top_ompi_srcdir/opal/asm/generate-asm.pl $ompi_cv_asm_arch $ompi_cv_asm_format $top_ompi_srcdir/opal/asm/base $top_ompi_builddir/opal/asm/generated/$ompi_cv_asm_file >conftest.out 2>&1'
+            ompi_try='$PERL $top_ompi_srcdir/opal/asm/generate-asm.pl $ompi_cv_asm_arch "$ompi_cv_asm_format" $top_ompi_srcdir/opal/asm/base $top_ompi_builddir/opal/asm/generated/$ompi_cv_asm_file >conftest.out 2>&1'
             if AC_TRY_EVAL(ompi_try) ; then
                 # save the warnings
                 cat conftest.out >&AC_FD_CC
