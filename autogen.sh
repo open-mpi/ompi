@@ -1019,6 +1019,13 @@ process_project() {
     done
     framework_list_define="${framework_list_define}])"
     echo "$framework_list_define" >> "$mca_no_configure_components_file"
+
+    # process contributed software packages (ompi/contrib/*)
+    if test "$project" = "ompi"; then
+        for contrib_path in $project_path/contrib/*; do
+            process_dir $contrib_path $rg_cwd
+        done
+    fi
 }
 
 
