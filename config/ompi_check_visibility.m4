@@ -27,8 +27,12 @@ AC_DEFUN([OMPI_CHECK_VISIBILITY],[
     # Check if the compiler has support for visibilty, like some versions of gcc, icc.
     AC_ARG_ENABLE(visibility, 
         AC_HELP_STRING([--enable-visibility],
-            [enable visibility feature of certain compilers/linkers (default: disabled)]))
-    if test "$enable_visibility" = "yes"; then
+            [enable visibility feature of certain compilers/linkers (default: enabled)]))
+    if test "$enable_visibility" = "no"; then
+        AC_MSG_CHECKING([enable symbol visibilty])
+        AC_MSG_RESULT([no]) 
+        have_visibility=0
+    else
         CFLAGS_orig="$CFLAGS"
         CFLAGS="$CFLAGS_orig -fvisibility=hidden"
         add=
@@ -55,16 +59,18 @@ AC_DEFUN([OMPI_CHECK_VISIBILITY],[
         if test "$ompi_cv_cc_fvisibility" = "yes" ; then
             add=" -fvisibility=hidden"
             have_visibility=1
+            AC_MSG_CHECKING([enable symbol visibilty])
+            AC_MSG_RESULT([yes]) 
             AC_MSG_WARN([$add has been added to CFLAGS])
+        elif test "$enable_visibility" = "yes"; then
+            AC_MSG_ERROR([Symbol visibility support requested but compiler does not seem to support it.  Aborting])
         else 
+            AC_MSG_CHECKING([enable symbol visibilty])
+            AC_MSG_RESULT([no]) 
             have_visibility=0
         fi
         CFLAGS="$CFLAGS_orig$add"
         unset add 
-    else
-        AC_MSG_CHECKING([disable visibilty])
-        AC_MSG_RESULT([yes])        
-        have_visibility=0
     fi
     AC_DEFINE_UNQUOTED([OMPI_C_HAVE_VISIBILITY], [$have_visibility],
             [Whether C compiler supports -fvisibility])

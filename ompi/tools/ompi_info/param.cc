@@ -359,6 +359,7 @@ void ompi_info::do_config(bool want_all)
   const string sparse_groups(OMPI_GROUP_SPARSE ? "yes" : "no");
   const string have_mpi_io(OMPI_PROVIDE_MPI_FILE_INTERFACE ? "yes" : "no");
   const string wtime_support(OPAL_TIMER_USEC_NATIVE ? "native" : "gettimeofday");
+  const string symbol_visibility(OMPI_C_HAVE_VISIBILITY ? "yes" : "no");
 
   if (OMPI_HAVE_SOLARIS_THREADS || OMPI_HAVE_POSIX_THREADS) {
       threads = OMPI_HAVE_SOLARIS_THREADS ? "solaris" :
@@ -602,6 +603,7 @@ void ompi_info::do_config(bool want_all)
       mpirun_prefix_by_default);
   out("MPI I/O support", "options:mpi-io", have_mpi_io);
   out("MPI_WTIME support", "options:mpi-wtime", wtime_support);
+  out("Symbol visibility support", "options:visibility", symbol_visibility);
 
   out("FT Checkpoint support", "options:ft_support", ft_support);
 }
