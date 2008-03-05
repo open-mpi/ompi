@@ -270,9 +270,6 @@ int orte_dt_copy_proc(orte_proc_t **dest, orte_proc_t *src, opal_data_type_t typ
  */
 int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src, opal_data_type_t type)
 {
-    int rc;
-    orte_std_cntr_t i;
-    
     /* create the new object */
     *dest = OBJ_NEW(orte_app_context_t);
     if (NULL == *dest) {
@@ -313,44 +310,10 @@ int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src,
         (*dest)->preload_files_dest_dir  = strdup(src->preload_files_dest_dir);
     else 
         (*dest)->preload_files_dest_dir = NULL;
-    
-    if (0 < src->num_map) {
-        (*dest)->map_data = (orte_app_context_map_t**)malloc(src->num_map * sizeof(orte_app_context_map_t*));
-        if (NULL == (*dest)->map_data) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        for (i=0; i < src->num_map; i++) {
-            if (ORTE_SUCCESS != (rc = orte_dt_copy_app_context_map(&((*dest)->map_data[i]), src->map_data[i],
-                                                                         ORTE_APP_CONTEXT_MAP))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }
-    }
+   
+    (*dest)->dash_host = opal_argv_copy(src->dash_host);
     if (NULL != src->prefix_dir) {
         (*dest)->prefix_dir = strdup(src->prefix_dir);
-    }
-    
-    return ORTE_SUCCESS;
-}
-
-/*
- * APP CONTEXT MAP
- */
-int orte_dt_copy_app_context_map(orte_app_context_map_t **dest, orte_app_context_map_t *src, opal_data_type_t type)
-{
-    /* create the new object */
-    *dest = OBJ_NEW(orte_app_context_map_t);
-    if (NULL == *dest) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    
-    /* copy data into it */
-    (*dest)->map_type = src->map_type;
-    if (NULL != src->map_data) {
-        (*dest)->map_data = strdup(src->map_data);
     }
     
     return ORTE_SUCCESS;

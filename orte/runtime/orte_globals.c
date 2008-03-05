@@ -277,20 +277,6 @@ int orte_dt_init(void)
         return rc;
     }
     
-    tmp = ORTE_APP_CONTEXT_MAP;
-    if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_app_context_map,
-                                                     orte_dt_unpack_app_context_map,
-                                                     (opal_dss_copy_fn_t)orte_dt_copy_app_context_map,
-                                                     (opal_dss_compare_fn_t)orte_dt_compare_app_context_map,
-                                                     (opal_dss_size_fn_t)orte_dt_size_app_context_map,
-                                                     (opal_dss_print_fn_t)orte_dt_print_app_context_map,
-                                                     (opal_dss_release_fn_t)orte_dt_std_obj_release,
-                                                     OPAL_DSS_STRUCTURED,
-                                                     "ORTE_APP_CONTEXT_MAP", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
     tmp = ORTE_NODE_STATE;
     if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_node_state,
                                                      orte_dt_unpack_node_state,

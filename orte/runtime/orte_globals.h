@@ -60,36 +60,6 @@ BEGIN_C_DECLS
 struct orte_proc_t;
 /************/
 
-/** Value for orte_app_context_map_t: the data is uninitialized (!) */
-#define ORTE_APP_CONTEXT_MAP_INVALID        0
-/** Value for orte_app_context_map_t: the data is a comma-delimited
-    string of hostnames */
-#define ORTE_APP_CONTEXT_MAP_HOSTNAME       1
-/** Value for orte_app_context_map_t: the data is a comma-delimited
-    list of architecture names */
-#define ORTE_APP_CONTEXT_MAP_ARCH           2
-/** Value for orte_app_context_map_t: the data is a comma-delimited
-    list of C, cX, N, nX mappsing */
-#define ORTE_APP_CONTEXT_MAP_CN             3
-/** Value for orte_app_context_map_t: the data is a comma-delimited
-    string of hostnames that are to be added and used */
-#define ORTE_APP_CONTEXT_MAP_ADD_HOSTNAME   4
-
-/**
-* Information about mapping requested by the user
- */
-typedef struct {
-    /** Parent object */
-    opal_object_t super;
-    /** One of the ORTE_APP_CONTEXT_MAP_* values */
-    uint8_t map_type;
-    /** String data */
-    char *map_data;
-} orte_app_context_map_t;
-
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_map_t);
-
-
 /**
 * Information about a specific application to be launched in the RTE.
  */
@@ -116,11 +86,9 @@ typedef struct {
     char *add_hostfile;
     /** Length of the map_data array, not including the final NULL entry */
     orte_std_cntr_t num_map;
-    /** Mapping data about how this app should be laid out across CPUs
-        / nodes */
-    orte_app_context_map_t **map_data;
-    /** Prefix directory for this app (or NULL if no override
-        necessary) */
+    /** argv of hosts passed in to -host */
+    char ** dash_host;
+    /** Prefix directory for this app (or NULL if no override necessary) */
     char *prefix_dir;
     /** Preload the binary on the remote machine (in PLS via FileM) */
     bool preload_binary;

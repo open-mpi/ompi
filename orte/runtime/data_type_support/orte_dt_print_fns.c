@@ -382,9 +382,8 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
  */
 int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *src, opal_data_type_t type)
 {
-    char *tmp, *tmp2, *tmp3, *pfx, *pfx2;
-    int32_t j;
-    int i, rc, count;
+    char *tmp, *tmp2, *pfx2;
+    int i, count;
     
     /* set default result */
     *output = NULL;
@@ -414,41 +413,23 @@ int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *s
         tmp = tmp2;
     }
     
-    asprintf(&tmp2, "%s\n%s\tWorking dir: %s (user: %d)\n%s\tHostfile: %s\tAdd-Hostfile: %s\tNum maps: %lu", tmp, pfx2, src->cwd, (int) src->user_specified_cwd,
+    asprintf(&tmp2, "%s\n%s\tWorking dir: %s (user: %d)\n%s\tHostfile: %s\tAdd-Hostfile: %s", tmp, pfx2, src->cwd, (int) src->user_specified_cwd,
              pfx2, (NULL == src->hostfile) ? "NULL" : src->hostfile,
-             (NULL == src->add_hostfile) ? "NULL" : src->add_hostfile,
-             (unsigned long)src->num_map);
+             (NULL == src->add_hostfile) ? "NULL" : src->add_hostfile);
     free(tmp);
     tmp = tmp2;
     
-    asprintf(&pfx, "%s\t", pfx2);
-    
-    for (j = 0; j < src->num_map; ++j) {
-        if (ORTE_SUCCESS != (rc = orte_dt_print_app_context_map(&tmp2, pfx, src->map_data[j], ORTE_APP_CONTEXT_MAP))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        asprintf(&tmp3, "%s\n%s", tmp, tmp2);
+    count = opal_argv_count(src->dash_host);
+    for (i=0; i < count; i++) {
+        asprintf(&tmp2, "%s\n%s\tDash_host[%lu]: %s", tmp, pfx2, (unsigned long)i, src->dash_host[i]);
         free(tmp);
-        free(tmp2);
-        tmp = tmp3;
+        tmp = tmp2;
     }
     
     /* set the return */
     *output = tmp;
     
     free(pfx2);
-    return ORTE_SUCCESS;
-}
-
-/*
- * APP CONTEXT MAP
- */
-int orte_dt_print_app_context_map(char **output, char *prefix, orte_app_context_map_t *src, opal_data_type_t type)
-{
-    asprintf(output, "%sData for app_context_map: Type: %lu\tData: %s",
-             prefix, (unsigned long)src->map_type, src->map_data);
-    
     return ORTE_SUCCESS;
 }
 

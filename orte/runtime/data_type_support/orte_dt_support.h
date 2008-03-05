@@ -55,7 +55,6 @@ int orte_dt_compare_job(orte_job_t *value1, orte_job_t *value2, opal_data_type_t
 int orte_dt_compare_node(orte_node_t *value1, orte_node_t *value2, opal_data_type_t type);
 int orte_dt_compare_proc(orte_proc_t *value1, orte_proc_t *value2, opal_data_type_t type);
 int orte_dt_compare_app_context(orte_app_context_t *value1, orte_app_context_t *value2, opal_data_type_t type);
-int orte_dt_compare_app_context_map(orte_app_context_map_t *value1, orte_app_context_map_t *value2, opal_data_type_t type);
 int orte_dt_compare_exit_code(orte_exit_code_t *value1,
                                     orte_exit_code_t *value2,
                                     opal_data_type_t type);
@@ -85,7 +84,6 @@ int orte_dt_copy_job(orte_job_t **dest, orte_job_t *src, opal_data_type_t type);
 int orte_dt_copy_node(orte_node_t **dest, orte_node_t *src, opal_data_type_t type);
 int orte_dt_copy_proc(orte_proc_t **dest, orte_proc_t *src, opal_data_type_t type);
 int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src, opal_data_type_t type);
-int orte_dt_copy_app_context_map(orte_app_context_map_t **dest, orte_app_context_map_t *src, opal_data_type_t type);
 int orte_dt_copy_proc_state(orte_proc_state_t **dest, orte_proc_state_t *src, opal_data_type_t type);
 int orte_dt_copy_job_state(orte_job_state_t **dest, orte_job_state_t *src, opal_data_type_t type);
 int orte_dt_copy_node_state(orte_node_state_t **dest, orte_node_state_t *src, opal_data_type_t type);
@@ -116,8 +114,6 @@ int orte_dt_pack_proc(opal_buffer_t *buffer, const void *src,
                       int32_t num_vals, opal_data_type_t type);
 int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
                                    int32_t num_vals, opal_data_type_t type);
-int orte_dt_pack_app_context_map(opal_buffer_t *buffer, const void *src,
-                                       int32_t num_vals, opal_data_type_t type);
 int orte_dt_pack_exit_code(opal_buffer_t *buffer, const void *src,
                                  int32_t num_vals, opal_data_type_t type);
 int orte_dt_pack_node_state(opal_buffer_t *buffer, const void *src,
@@ -144,7 +140,6 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
 int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_type_t type);
 int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_type_t type);
 int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *src, opal_data_type_t type);
-int orte_dt_print_app_context_map(char **output, char *prefix, orte_app_context_map_t *src, opal_data_type_t type);
 int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_data_type_t type);
 
 /** Data type release functions */
@@ -157,7 +152,6 @@ int orte_dt_size_job(size_t *size, orte_job_t *src, opal_data_type_t type);
 int orte_dt_size_node(size_t *size, orte_node_t *src, opal_data_type_t type);
 int orte_dt_size_proc(size_t *size, orte_proc_t *src, opal_data_type_t type);
 int orte_dt_size_app_context(size_t *size, orte_app_context_t *src, opal_data_type_t type);
-int orte_dt_size_app_context_map(size_t *size, orte_app_context_map_t *src, opal_data_type_t type);
 int orte_dt_size_map(size_t *size, orte_job_map_t *src, opal_data_type_t type);
 
 /** Data type unpack functions */
@@ -177,8 +171,6 @@ int orte_dt_unpack_proc(opal_buffer_t *buffer, void *dest,
                         int32_t *num_vals, opal_data_type_t type);
 int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
                                      int32_t *num_vals, opal_data_type_t type);
-int orte_dt_unpack_app_context_map(opal_buffer_t *buffer, void *dest,
-                                         int32_t *num_vals, opal_data_type_t type);
 int orte_dt_unpack_exit_code(opal_buffer_t *buffer, void *dest,
                                    int32_t *num_vals, opal_data_type_t type);
 int orte_dt_unpack_node_state(opal_buffer_t *buffer, void *dest,

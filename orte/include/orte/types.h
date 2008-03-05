@@ -135,21 +135,20 @@ typedef void* orte_iov_base_ptr_t;
 #define    ORTE_VALUE               (OPAL_DSS_ID_DYNAMIC + 9)  /**< registry return value */
     /* Resource types */
 #define    ORTE_APP_CONTEXT         (OPAL_DSS_ID_DYNAMIC + 10) /**< argv and enviro arrays */
-#define    ORTE_APP_CONTEXT_MAP     (OPAL_DSS_ID_DYNAMIC + 11) /**< application context mapping array */
-#define    ORTE_NODE_DESC           (OPAL_DSS_ID_DYNAMIC + 12) /**< describes capabilities of nodes */
-#define    ORTE_SLOT_DESC           (OPAL_DSS_ID_DYNAMIC + 13) /**< describes slot allocations/reservations */
-#define    ORTE_JOB                 (OPAL_DSS_ID_DYNAMIC + 14) /**< job information */
-#define    ORTE_NODE                (OPAL_DSS_ID_DYNAMIC + 15) /**< node information */
-#define    ORTE_PROC                (OPAL_DSS_ID_DYNAMIC + 16) /**< process information */
-#define    ORTE_JOB_MAP             (OPAL_DSS_ID_DYNAMIC + 17) /**< map of process locations */
+#define    ORTE_NODE_DESC           (OPAL_DSS_ID_DYNAMIC + 11) /**< describes capabilities of nodes */
+#define    ORTE_SLOT_DESC           (OPAL_DSS_ID_DYNAMIC + 12) /**< describes slot allocations/reservations */
+#define    ORTE_JOB                 (OPAL_DSS_ID_DYNAMIC + 13) /**< job information */
+#define    ORTE_NODE                (OPAL_DSS_ID_DYNAMIC + 14) /**< node information */
+#define    ORTE_PROC                (OPAL_DSS_ID_DYNAMIC + 15) /**< process information */
+#define    ORTE_JOB_MAP             (OPAL_DSS_ID_DYNAMIC + 16) /**< map of process locations */
 
 /* RML types */
-#define    ORTE_RML_TAG             (OPAL_DSS_ID_DYNAMIC + 18) /**< tag for sending/receiving messages */
+#define    ORTE_RML_TAG             (OPAL_DSS_ID_DYNAMIC + 17) /**< tag for sending/receiving messages */
 
 /* DAEMON command type */
-#define    ORTE_DAEMON_CMD          (OPAL_DSS_ID_DYNAMIC + 19) /**< command flag for communicating with the daemon */
+#define    ORTE_DAEMON_CMD          (OPAL_DSS_ID_DYNAMIC + 18) /**< command flag for communicating with the daemon */
 
 /* GRPCOMM types */
-#define    ORTE_GRPCOMM_MODE        (OPAL_DSS_ID_DYNAMIC + 20) 
+#define    ORTE_GRPCOMM_MODE        (OPAL_DSS_ID_DYNAMIC + 19) 
 
 #endif

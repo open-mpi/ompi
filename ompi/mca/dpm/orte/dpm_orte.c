@@ -591,11 +591,7 @@ static int spawn(int count, char **array_of_commands,
             /* check for 'host' */
             ompi_info_get (array_of_info[i], "host", sizeof(host), host, &flag);
             if ( flag ) {
-                app->num_map = 1;
-                app->map_data = (orte_app_context_map_t **) malloc(sizeof(orte_app_context_map_t *));
-                app->map_data[0] = OBJ_NEW(orte_app_context_map_t);
-                app->map_data[0]->map_type = ORTE_APP_CONTEXT_MAP_HOSTNAME;
-                app->map_data[0]->map_data = strdup(host);
+                opal_argv_append_nosize(&app->dash_host, host);
             }
  
             /* check for 'hostfile' */
@@ -604,23 +600,13 @@ static int spawn(int count, char **array_of_commands,
                 app->hostfile = strdup(host);
             }
             
-            /* check for 'add-host' */
-            ompi_info_get (array_of_info[i], "add-host", sizeof(host), host, &flag);
-            if ( flag ) {
-                app->num_map = 1;
-                app->map_data = (orte_app_context_map_t **) malloc(sizeof(orte_app_context_map_t *));
-                app->map_data[0] = OBJ_NEW(orte_app_context_map_t);
-                app->map_data[0]->map_type = ORTE_APP_CONTEXT_MAP_ADD_HOSTNAME;
-                app->map_data[0]->map_data = strdup(host);
-            }
-            
             /* check for 'add-hostfile' */
             ompi_info_get (array_of_info[i], "add-hostfile", sizeof(host), host, &flag);
             if ( flag ) {
                 app->add_hostfile = strdup(host);
             }
             
-            /* 'path', 'arch', 'file', 'soft' -- to be implemented */ 
+            /* 'path', 'arch', 'file', 'soft', 'add-host'  -- to be implemented */ 
             
             /* check for 'ompi_prefix' (OMPI-specific -- to effect the same
              * behavior as --prefix option to orterun)

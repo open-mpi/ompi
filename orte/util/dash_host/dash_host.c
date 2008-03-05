@@ -37,8 +37,7 @@
 
 int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                                   bool *override_oversubscribed,
-                                  orte_std_cntr_t num_map,
-                                  orte_app_context_map_t **map)
+                                  char ** host_argv)
 {
     opal_list_item_t* item;
     orte_std_cntr_t i, j, k;
@@ -47,21 +46,20 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
     orte_node_t *node;
 
     /* Accumulate all of the host name mappings */
-    for (j = 0; j < num_map; ++j) {
-        if (ORTE_APP_CONTEXT_MAP_HOSTNAME == map[j]->map_type) {
-            mini_map = opal_argv_split(map[j]->map_data, ',');
-            
-            if (mapped_nodes == NULL) {
-                mapped_nodes = mini_map;
-            } else {
-                for (k = 0; NULL != mini_map[k]; ++k) {
-                    rc = opal_argv_append_nosize(&mapped_nodes, 
-                                                 mini_map[k]);
-                    if (OPAL_SUCCESS != rc) {
-                        goto cleanup;
-                    }
+    for (j = 0; j < opal_argv_count(host_argv); ++j) {
+        mini_map = opal_argv_split(host_argv[j], ',');
+        
+        if (mapped_nodes == NULL) {
+            mapped_nodes = mini_map;
+        } else {
+            for (k = 0; NULL != mini_map[k]; ++k) {
+                rc = opal_argv_append_nosize(&mapped_nodes, 
+                                             mini_map[k]);
+                if (OPAL_SUCCESS != rc) {
+                    goto cleanup;
                 }
             }
+            opal_argv_free(mini_map);
         }
     }
 
@@ -132,8 +130,7 @@ cleanup:
 
 
 int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
-                                     orte_std_cntr_t num_map,
-                                     orte_app_context_map_t **map)
+                                     char** host_argv)
 {
     opal_list_item_t* item;
     bool found;
@@ -152,21 +149,20 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
 
     
     /* Accumulate all of the host name mappings */
-    for (j = 0; j < num_map; ++j) {
-        if (ORTE_APP_CONTEXT_MAP_HOSTNAME == map[j]->map_type) {
-            mini_map = opal_argv_split(map[j]->map_data, ',');
-            
-            if (mapped_nodes == NULL) {
-                mapped_nodes = mini_map;
-            } else {
-                for (k = 0; NULL != mini_map[k]; ++k) {
-                    rc = opal_argv_append_nosize(&mapped_nodes, 
-                                                 mini_map[k]);
-                    if (OPAL_SUCCESS != rc) {
-                        goto cleanup;
-                    }
+    for (j = 0; j < opal_argv_count(host_argv); ++j) {
+        mini_map = opal_argv_split(host_argv[j], ',');
+        
+        if (mapped_nodes == NULL) {
+            mapped_nodes = mini_map;
+        } else {
+            for (k = 0; NULL != mini_map[k]; ++k) {
+                rc = opal_argv_append_nosize(&mapped_nodes, 
+                                             mini_map[k]);
+                if (OPAL_SUCCESS != rc) {
+                    goto cleanup;
                 }
             }
+            opal_argv_free(mini_map);
         }
     }
     
