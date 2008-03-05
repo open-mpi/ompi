@@ -14,9 +14,9 @@
 #include "opal/util/output.h"
 #include "opal/threads/condition.h"
 #include "opal/runtime/opal_progress.h"
-
 #include "opal/dss/dss.h"
-#include "orte/class/orte_proc_table.h"
+#include "opal/class/opal_hash_table.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
@@ -35,6 +35,7 @@ orte_routed_tree_update_route(orte_process_name_t *target,
                                orte_process_name_t *route)
 { 
     int rc;
+    orte_process_name_t * route_copy;
     
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID) {
@@ -70,12 +71,14 @@ orte_routed_tree_update_route(orte_process_name_t *target,
         }
     }
     
+    route_copy = malloc(sizeof(orte_process_name_t));
+    *route_copy = *route;
     /* exact match */
     if (target->jobid != ORTE_JOBID_WILDCARD &&
         target->vpid != ORTE_VPID_WILDCARD) {
-        if (ORTE_SUCCESS != (rc = orte_hash_table_set_proc_name(&orte_routed_tree_module.peer_list,
-                                                                target, route,
-                                                                ORTE_NS_CMP_ALL))) {
+        rc = opal_hash_table_set_value_uint64(&orte_routed_tree_module.peer_list,
+                                              orte_util_hash_name(target), route_copy);
+        if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
         }
         return rc;
@@ -84,13 +87,14 @@ orte_routed_tree_update_route(orte_process_name_t *target,
     /* vpid wildcard */
     if (target->jobid != ORTE_JOBID_WILDCARD &&
         target->vpid == ORTE_VPID_WILDCARD) {
-        if (ORTE_SUCCESS != (rc = orte_hash_table_set_proc_name(&orte_routed_tree_module.vpid_wildcard_list,
-                                                                target, route,
-                                                                ORTE_NS_CMP_JOBID))) {
+        opal_hash_table_set_value_uint32(&orte_routed_tree_module.vpid_wildcard_list,
+                                         target->jobid, route_copy);
+        if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
         }
         return rc;
     }
+    free(route_copy);
 
     return ORTE_ERR_NOT_SUPPORTED;
 }
@@ -99,32 +103,35 @@ orte_routed_tree_update_route(orte_process_name_t *target,
 orte_process_name_t
 orte_routed_tree_get_route(orte_process_name_t *target)
 {
-    orte_process_name_t ret;
+    orte_process_name_t *ret;
+    int rc;
 
     /* if it is me, then the route is just direct */
     if (OPAL_EQUAL == opal_dss.compare(ORTE_PROC_MY_NAME, target, ORTE_NAME)) {
-        ret = *target;
+        ret = target;
         goto found;
     }
     
     /* check exact matches */
-    ret = orte_hash_table_get_proc_name(&orte_routed_tree_module.peer_list,
-                                        target, ORTE_NS_CMP_ALL);
-    if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &ret, ORTE_NAME_INVALID)) {
+    rc = opal_hash_table_get_value_uint64(&orte_routed_tree_module.peer_list,
+                                          orte_util_hash_name(target), (void**)&ret);
+    if (ORTE_SUCCESS == rc && 
+        OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ret, ORTE_NAME_INVALID)) {
         /* got a good result - return it */
         goto found;
     }
     
     /* didn't find an exact match - check to see if a route for this job was defined */
-    ret = orte_hash_table_get_proc_name(&orte_routed_tree_module.vpid_wildcard_list,
-                                        target, ORTE_NS_CMP_JOBID);
-    if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &ret, ORTE_NAME_INVALID)) {
+    rc = opal_hash_table_get_value_uint32(&orte_routed_tree_module.vpid_wildcard_list,
+                                          target->jobid, (void**)&ret);
+    if (ORTE_SUCCESS == rc &&
+        OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ret, ORTE_NAME_INVALID)) {
         /* got a good result - return it */
         goto found;
     }
     
     /* default to wildcard route */
-    ret = orte_routed_tree_module.wildcard_route;
+    ret = &orte_routed_tree_module.wildcard_route;
 
  found:
 
@@ -132,9 +139,9 @@ orte_routed_tree_get_route(orte_process_name_t *target)
                          "%s routed_tree_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
-                         ORTE_NAME_PRINT(&ret)));
+                         ORTE_NAME_PRINT(ret)));
     
-    return ret;
+    return *ret;
 }
 
 static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)

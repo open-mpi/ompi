@@ -16,9 +16,8 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/threads/condition.h"
-
 #include "opal/dss/dss.h"
-#include "orte/class/orte_proc_table.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/odls/odls_types.h"
@@ -123,6 +122,8 @@ int
 orte_routed_unity_finalize(void)
 {
     int rc;
+    uint64_t key;
+    void * value, *node, *next_node;
     
     if (recv_issued) {
         if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_UPDATE_ROUTES))) {
@@ -146,6 +147,14 @@ orte_routed_unity_finalize(void)
          * sync as the oob will be asking us how to route
          * the message!
          */
+        rc = opal_hash_table_get_first_key_uint64(&peer_list, &key, &value, &node);
+        while(OPAL_SUCCESS == rc) {
+            if(NULL != value) {
+                free(value);
+            }
+            rc = opal_hash_table_get_next_key_uint64(&peer_list, &key, &value, node, &next_node);
+            node = next_node;
+        }
         OBJ_DESTRUCT(&peer_list);
         /* cleanup the global condition */
         OBJ_DESTRUCT(&cond);
@@ -160,8 +169,8 @@ int
 orte_routed_unity_update_route(orte_process_name_t *target,
                                orte_process_name_t *route)
 {
-    orte_ns_cmp_bitmask_t mask;
     int rc;
+    orte_process_name_t * route_copy;
     
     if (ORTE_JOB_FAMILY(target->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
         /* this message came from a different job family, so we will update
@@ -180,17 +189,15 @@ orte_routed_unity_update_route(orte_process_name_t *target,
                              ORTE_NAME_PRINT(target), 
                              ORTE_NAME_PRINT(route)));
 
-        /* if we are routing everything for this target through one place, set
-         * the mask to only compare jobids
+        route_copy = malloc(sizeof(orte_process_name_t));
+        *route_copy = *route;
+        /* if we are routing everything for this target through one place, 
+         * then the target vpid is ORTE_NS_VPID_WILDCARD. So no need for
+         * special cases, just add it 
          */
-        if (ORTE_VPID_WILDCARD == target->vpid) {
-            mask = ORTE_NS_CMP_JOBID;
-        } else {
-            mask = ORTE_NS_CMP_ALL;
-        }
-        if (ORTE_SUCCESS != (rc = orte_hash_table_set_proc_name(&peer_list,
-                                                                target, route,
-                                                                mask))) {
+        rc = opal_hash_table_set_value_uint64(&peer_list, orte_util_hash_name(target), 
+                                              route_copy);
+        if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
         }
         return rc;
@@ -211,32 +218,39 @@ direct:
 orte_process_name_t
 orte_routed_unity_get_route(orte_process_name_t *target)
 {
-    orte_process_name_t ret;
+    orte_process_name_t *ret, lookup;
+    int rc;
     
     if (ORTE_JOB_FAMILY(target->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
-        ret = orte_hash_table_get_proc_name(&peer_list, target, ORTE_NS_CMP_ALL);
-        if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &ret, ORTE_NAME_INVALID)) {
+        rc = opal_hash_table_get_value_uint64(&peer_list, orte_util_hash_name(target),
+                                              (void**)&ret);
+        if (ORTE_SUCCESS != rc &&
+            OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ret, ORTE_NAME_INVALID)) {
             /* got a good result - return it */
             goto found;
         }
         /* check to see if we specified the route to be for all vpids in the job */
-        ret = orte_hash_table_get_proc_name(&peer_list, target, ORTE_NS_CMP_JOBID);
-        if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &ret, ORTE_NAME_INVALID)) {
+        lookup = *target;
+        lookup.vpid = ORTE_VPID_WILDCARD;
+        rc = opal_hash_table_get_value_uint64(&peer_list, orte_util_hash_name(&lookup),
+                                              (void**)&ret);
+        if (ORTE_SUCCESS == rc &&
+            OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ret, ORTE_NAME_INVALID)) {
             /* got a good result - return it */
             goto found;
         }
     }
 
     /* if it is our own job family, or we didn't find it on the list, just go direct */
-    ret = *target;
+    ret = target;
     
 found:
     OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
                          "%s routed_unity_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
-                         ORTE_NAME_PRINT(&ret)));
-    return ret;
+                         ORTE_NAME_PRINT(ret)));
+    return *ret;
 }
 
 static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)

@@ -25,7 +25,7 @@
 #include <netinet/in.h>
 #endif
 
-#include "orte/class/orte_proc_table.h"
+#include "opal/class/opal_hash_table.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/datatype/dt_arch.h"
@@ -63,7 +63,8 @@ void mca_btl_sctp_proc_destruct(mca_btl_sctp_proc_t* proc)
 {
     /* remove from list of all proc instances */
     OPAL_THREAD_LOCK(&mca_btl_sctp_component.sctp_lock);
-    orte_hash_table_remove_proc(&mca_btl_sctp_component.sctp_procs, &proc->proc_name);
+    opal_hash_table_remove_value_uint64(&mca_btl_sctp_component.sctp_procs, 
+                                        orte_util_hash_name(&proc->proc_name));
     OPAL_THREAD_UNLOCK(&mca_btl_sctp_component.sctp_lock);
 
     /* release resources */
@@ -109,11 +110,12 @@ mca_btl_sctp_proc_t* mca_btl_sctp_proc_create(ompi_proc_t* ompi_proc)
     int rc;
     size_t size;
     mca_btl_sctp_proc_t* btl_proc;
+    uint64_t hash = orte_util_hash_name(&ompi_proc->proc_name);
 
     OPAL_THREAD_LOCK(&mca_btl_sctp_component.sctp_lock);
-    btl_proc = (mca_btl_sctp_proc_t*)orte_hash_table_get_proc(
-            &mca_btl_sctp_component.sctp_procs, &ompi_proc->proc_name);
-    if(NULL != btl_proc) {
+    rc = opal_hash_table_get_value_uint64(&mca_btl_sctp_component.sctp_procs, 
+                                          hash, (void**)&btl_proc);
+    if(OMPI_SUCCESS == rc) {
         OPAL_THREAD_UNLOCK(&mca_btl_sctp_component.sctp_lock);
         return btl_proc;
     }
@@ -126,10 +128,8 @@ mca_btl_sctp_proc_t* mca_btl_sctp_proc_create(ompi_proc_t* ompi_proc)
     btl_proc->proc_name = ompi_proc->proc_name;
 
     /* add to hash table of all proc instance */
-    orte_hash_table_set_proc(
-            &mca_btl_sctp_component.sctp_procs,
-            &btl_proc->proc_name,
-            btl_proc);
+    opal_hash_table_set_value_uint64(&mca_btl_sctp_component.sctp_procs,
+                                     hash, btl_proc);
     OPAL_THREAD_UNLOCK(&mca_btl_sctp_component.sctp_lock);
 
     /* lookup sctp parameters exported by this proc */
@@ -325,10 +325,10 @@ int mca_btl_sctp_proc_remove(mca_btl_sctp_proc_t* btl_proc, mca_btl_base_endpoin
  */
 mca_btl_sctp_proc_t* mca_btl_sctp_proc_lookup(const orte_process_name_t *name)
 {
-    mca_btl_sctp_proc_t* proc;
+    mca_btl_sctp_proc_t* proc = NULL;
     OPAL_THREAD_LOCK(&mca_btl_sctp_component.sctp_lock);
-    proc = (mca_btl_sctp_proc_t*)orte_hash_table_get_proc(
-            &mca_btl_sctp_component.sctp_procs, name);
+    opal_hash_table_get_value_uint64(&mca_btl_sctp_component.sctp_procs,
+                                     orte_util_hash_name(name), (void**)&proc);
     OPAL_THREAD_UNLOCK(&mca_btl_sctp_component.sctp_lock);
     return proc;
 }

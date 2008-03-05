@@ -97,6 +97,8 @@ int
 orte_routed_tree_finalize(void)
 {
     int rc;
+    uint64_t key;
+    void * value, *node, *next_node;
 
     if (selected) {
         /* if I am an application process, indicate that I am
@@ -114,6 +116,16 @@ orte_routed_tree_finalize(void)
          * sync as the oob will be asking us how to route
          * the message!
          */
+        rc = opal_hash_table_get_first_key_uint64(&orte_routed_tree_module.peer_list,
+                                                  &key, &value, &node);
+        while(OPAL_SUCCESS == rc) {
+            if(NULL != value) {
+                free(value);
+            }
+            rc = opal_hash_table_get_next_key_uint64(&orte_routed_tree_module.peer_list,
+                                                     &key, &value, node, &next_node);
+            node = next_node;
+        }
         OBJ_DESTRUCT(&orte_routed_tree_module.peer_list);
         OBJ_DESTRUCT(&orte_routed_tree_module.vpid_wildcard_list);
         /* destruct the global condition and lock */

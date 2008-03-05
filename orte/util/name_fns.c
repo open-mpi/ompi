@@ -529,3 +529,14 @@ int orte_util_compare_name_fields(orte_ns_cmp_bitmask_t fields,
     */
     return OPAL_EQUAL;
 }
+
+
+uint64_t  orte_util_hash_name(const orte_process_name_t * name) {
+    uint64_t hash;
+    
+    hash = name->jobid;
+    hash <<= sizeof(name->jobid) * 8;
+    hash += name->vpid;
+    
+    return hash;
+}
