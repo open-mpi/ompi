@@ -200,7 +200,11 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
                (0 == strcmp(mapped_nodes[i], "localhost") || opal_ifislocal(mapped_nodes[i])))) {
                 found = true;  /* found it - leave it alone */
                 j++;
-                break;
+                /* keep cycling here in case there are multiple instances
+                 * of the node on the mapped_node array - this will
+                 * allow us to properly account for them all so we don't
+                 * think something was specified but wasn't found
+                 */
             }
         }
         if (!found) {
