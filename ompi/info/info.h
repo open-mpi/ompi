@@ -249,7 +249,7 @@ int ompi_info_get_nthkey (ompi_info_t *info, int n, char *key);
  * @retval OMPI_SUCCESS string was successfully interpreted
  * @retval OMPI_ERR_BAD_PARAM string was not able to be interpreted
  */
-int ompi_info_value_to_bool(char *value, bool *interp);
+OMPI_DECLSPEC int ompi_info_value_to_bool(char *value, bool *interp);
 
 /**
  * Convert value string to integer
