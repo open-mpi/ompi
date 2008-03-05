@@ -329,6 +329,8 @@ ORTE_DECLSPEC extern bool orte_wakeup_ordered;
 ORTE_DECLSPEC extern int orte_timeout_usec_per_proc;
 ORTE_DECLSPEC extern float orte_max_timeout;
 
+ORTE_DECLSPEC extern char *orte_default_hostfile;
+
 /* global arrays for data storage */
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_job_data;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;

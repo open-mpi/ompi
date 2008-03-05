@@ -75,6 +75,26 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         return ORTE_ERR_SILENT;
     }
     
+    /* is there a default hostfile? */
+    if (NULL != orte_default_hostfile) {
+        /* yes - filter the node list through the file, removing
+         * any nodes not in the file -or- excluded via ^
+         */
+        if (ORTE_SUCCESS != (rc = orte_util_filter_hostfile_nodes(allocated_nodes,
+                                                                  orte_default_hostfile))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    
+    /** check that anything is here */
+    if (0 == opal_list_get_size(allocated_nodes)) {
+        opal_show_help("help-orte-rmaps-base.txt",
+                       "orte-rmaps-base:no-available-resources",
+                       true);
+        return ORTE_ERR_SILENT;
+    }
+    
     /* did the app_context contain a hostfile? */
     if (NULL != app->hostfile) {
         /* yes - filter the node list through the file, removing

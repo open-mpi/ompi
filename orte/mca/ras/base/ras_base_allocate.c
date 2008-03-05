@@ -115,7 +115,42 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     
     /* nothing was found, or no active module was alive. Our next
      * option is to look for a hostfile and assign our global
-     * pool from there. Hostfile names, if given, are included
+     * pool from there. First, we check for a default hostfile
+     * as set by an mca param
+     */
+    if (NULL != orte_default_hostfile) {
+        OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+                             "%s ras:base:allocate parsing default hostfile %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_default_hostfile));
+        
+        /* a default hostfile was provided - parse it */
+        if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
+                                                               &override_oversubscribed,
+                                                               orte_default_hostfile))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&nodes);
+            return rc;
+        }
+    }
+    /* if something was found in the default hostfile, we use that as our global
+     * pool - set it and we are done
+     */
+    if (!opal_list_is_empty(&nodes)) {
+        /* store the results in the global resource pool - this removes the
+         * list items
+         */
+        if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        /* update the jdata object with override_oversubscribed flag */
+        jdata->oversubscribe_override = override_oversubscribed;
+        /* cleanup */
+        OBJ_DESTRUCT(&nodes);
+        return rc;
+    }
+    
+    /* Individual hostfile names, if given, are included
      * in the app_contexts for this job. We therefore need to
      * retrieve the app_contexts for the job, and then cycle
      * through them to see if anything is there. The parser will

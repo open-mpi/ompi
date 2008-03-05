@@ -88,8 +88,6 @@ count              { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_COUNT; }
 slots              { orte_util_hostfile_value.sval = yytext; 
                      return ORTE_HOSTFILE_SLOTS; }
-slot               { orte_util_hostfile_value.sval = yytext; 
-                     return ORTE_HOSTFILE_SLOT; }
 "slots-max"        { orte_util_hostfile_value.sval = yytext; 
                      return ORTE_HOSTFILE_SLOTS_MAX; }
 slots_max          { orte_util_hostfile_value.sval = yytext; 
@@ -141,7 +139,7 @@ username           { orte_util_hostfile_value.sval = yytext;
                       orte_util_hostfile_value.sval = yytext;
                       return ORTE_HOSTFILE_IPV6; }
 
-([A-Za-z0-9][A-Za-z0-9_\-]*"@")?[A-Za-z][A-Za-z0-9_\-\.]*  {
+(\^?[A-Za-z0-9][A-Za-z0-9_\-]*"@")?[A-Za-z][A-Za-z0-9_\-\.]*  {
                      orte_util_hostfile_value.sval = yytext; 
                      return ORTE_HOSTFILE_HOSTNAME; }
 
