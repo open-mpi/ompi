@@ -90,7 +90,7 @@ int orte_ess_env_put(orte_std_cntr_t num_procs,
      * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
      * We know - just live with it
      */
-    opal_setenv("OMPI_COMM_WORLD_NUM_LOCAL_PROCS", value, true, env);
+    opal_setenv("OMPI_COMM_WORLD_LOCAL_SIZE", value, true, env);
     free(value);
     
     return ORTE_SUCCESS;
