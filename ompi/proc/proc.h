@@ -117,7 +117,7 @@ OMPI_DECLSPEC extern ompi_proc_t* ompi_proc_local_proc;
  * @retval OMPI_SUCESS  System successfully initialized
  * @retval OMPI_ERROR   Initialization failed due to unspecified error
  */
-int ompi_proc_init(void);
+OMPI_DECLSPEC int ompi_proc_init(void);
 
 /**
  * Publish local process information
@@ -135,7 +135,7 @@ int ompi_proc_init(void);
  * @retval OMPI_SUCESS  Information available in the modex
  * @retval OMPI_ERROR   Failure due to unspecified error
  */
-int ompi_proc_publish_info(void);
+OMPI_DECLSPEC int ompi_proc_publish_info(void);
 
 /**
  * Get data exchange information from remote processes
@@ -146,7 +146,7 @@ int ompi_proc_publish_info(void);
  * @retval OMPI_SUCCESS Information successfully received
  * @retval OMPI_ERROR   Information update failure
  */
-int ompi_proc_get_info(void);
+OMPI_DECLSPEC int ompi_proc_get_info(void);
 
 
 /**
@@ -158,7 +158,7 @@ int ompi_proc_get_info(void);
  *
  * @retval OMPI_SUCCESS  System successfully finalized
  */
-int ompi_proc_finalize(void);
+OMPI_DECLSPEC int ompi_proc_finalize(void);
 
 
 /**
@@ -330,7 +330,7 @@ OMPI_DECLSPEC int ompi_proc_unpack(opal_buffer_t *buf,
  * @retval OMPI_SUCESS  System successfully refreshed
  * @retval OMPI_ERROR   Refresh failed due to unspecified error
  */
-int ompi_proc_refresh(void);
+OMPI_DECLSPEC int ompi_proc_refresh(void);
 
 END_C_DECLS
 
