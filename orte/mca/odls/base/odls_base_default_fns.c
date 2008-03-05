@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -635,6 +635,9 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     int rc;
     int i;
     char *param, *param2;
+    char *full_search;
+    char *pathenv = NULL, *mpiexec_pathenv = NULL;
+    char **argvptr;
 
     /* check the system limits - if we are at our max allowed children, then
      * we won't be allowed to do this anyway, so we may as well abort now.
@@ -649,7 +652,15 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
             return ORTE_ERR_SYS_LIMITS_CHILDREN;
         }
     }
-    
+
+    /* setup base environment: copy the current environ and merge
+       in the app context environ */
+    if (NULL != context->env) {
+        *environ_copy = opal_environ_merge(orte_launch_environ, context->env);
+    } else {
+        *environ_copy = opal_argv_copy(orte_launch_environ);
+    }
+
     /* Try to change to the context cwd and check that the app
         exists and is executable The function will
         take care of outputting a pretty error message, if required
@@ -658,17 +669,44 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
         /* do not ERROR_LOG - it will be reported elsewhere */
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_util_check_context_app(context))) {
+
+    /* Search for the OMPI_exec_path and PATH settings in the environment. */
+    for (argvptr = *environ_copy; *argvptr != NULL; argvptr++) { 
+        if (0 == strncmp("OMPI_exec_path=", *argvptr, 15)) {
+            mpiexec_pathenv = *argvptr + 15;
+        }
+        if (0 == strncmp("PATH=", *argvptr, 5)) {
+            pathenv = *argvptr + 5;
+        }
+    }
+
+    /* If OMPI_exec_path is set (meaning --path was used), then create a
+       temporary environment to be used in the search for the executable.
+       The PATH setting in this temporary environment is a combination of
+       the OMPI_exec_path and PATH values.  If OMPI_exec_path is not set,
+       then just use existing environment with PATH in it.  */
+    if (mpiexec_pathenv) {
+        argvptr = NULL;
+        if (pathenv != NULL) {
+            asprintf(&full_search, "%s:%s", mpiexec_pathenv, pathenv);
+        } else {
+            asprintf(&full_search, "%s", mpiexec_pathenv);
+        }
+        opal_setenv("PATH", full_search, true, &argvptr);
+        free(full_search);
+    } else {
+        argvptr = *environ_copy;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_util_check_context_app(context, argvptr))) {
         /* do not ERROR_LOG - it will be reported elsewhere */
+        if (mpiexec_pathenv) {
+            opal_argv_free(argvptr);
+        }
         return rc;
     }
-    
-    /* setup base environment: copy the current environ and merge
-       in the app context environ */
-    if (NULL != context->env) {
-        *environ_copy = opal_environ_merge(orte_launch_environ, context->env);
-    } else {
-        *environ_copy = opal_argv_copy(orte_launch_environ);
+    if (mpiexec_pathenv) {
+        opal_argv_free(argvptr);
     }
 
     /* special case handling for --prefix: this is somewhat icky,
