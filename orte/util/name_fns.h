@@ -86,7 +86,8 @@ ORTE_DECLSPEC int orte_util_create_process_name(orte_process_name_t **name,
 ORTE_DECLSPEC int orte_util_compare_name_fields(orte_ns_cmp_bitmask_t fields,
                                   const orte_process_name_t* name1,
                                   const orte_process_name_t* name2);
-
+/** This funtion returns a guaranteed unique hash value for the passed process name */
+ORTE_DECLSPEC uint64_t orte_util_hash_name(const orte_process_name_t * name);
 
 END_C_DECLS
 #endif

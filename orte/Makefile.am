@@ -56,7 +56,6 @@ else
 ortedir = $(includedir)
 endif
 
-include class/Makefile.am
 include runtime/Makefile.am
 include util/Makefile.am
 include tools/Makefile.am

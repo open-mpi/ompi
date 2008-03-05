@@ -55,7 +55,7 @@
 #include "opal/util/net.h"
 #include "opal/util/error.h"
 
-#include "orte/class/orte_proc_table.h"
+#include "opal/class/opal_hash_table.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -216,14 +216,14 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
 mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
 {
     int rc;
-    mca_oob_tcp_peer_t * peer, *old;
+    mca_oob_tcp_peer_t * peer = NULL, *old;
     if (NULL == name) { /* can't look this one up */
         return NULL;
     }
     
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    peer = (mca_oob_tcp_peer_t*)orte_hash_table_get_proc(
-       &mca_oob_tcp_component.tcp_peers, name);
+    opal_hash_table_get_value_uint64(&mca_oob_tcp_component.tcp_peers,
+                                     orte_util_hash_name(name), (void**)&peer);
     if (NULL != peer && 0 == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &peer->peer_name, name)) {
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
         return peer;
@@ -247,8 +247,8 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
     peer->peer_retries = 0;
 
     /* add to lookup table */
-    if(ORTE_SUCCESS != orte_hash_table_set_proc(&mca_oob_tcp_component.tcp_peers, 
-        &peer->peer_name, peer)) {
+    if(OPAL_SUCCESS != opal_hash_table_set_value_uint64(&mca_oob_tcp_component.tcp_peers, 
+                                                        orte_util_hash_name(&peer->peer_name), peer)) {
         MCA_OOB_TCP_PEER_RETURN(peer);
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
         return NULL;

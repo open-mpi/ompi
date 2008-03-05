@@ -28,7 +28,7 @@
 
 #include "opal/opal_socket_errno.h"
 
-#include "orte/class/orte_proc_table.h"
+#include "opal/class/opal_hash_table.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/routed/routed.h"
@@ -458,9 +458,11 @@ static void mca_oob_tcp_msg_ident(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pe
     
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &peer->peer_name, &src) != OPAL_EQUAL) {
-        orte_hash_table_remove_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name);
+        opal_hash_table_remove_value_uint64(&mca_oob_tcp_component.tcp_peers, 
+                                            orte_util_hash_name(&peer->peer_name));
         peer->peer_name = src;
-        orte_hash_table_set_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name, peer);
+        opal_hash_table_set_value_uint64(&mca_oob_tcp_component.tcp_peers, 
+                                         orte_util_hash_name(&peer->peer_name), peer);
     }
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 }

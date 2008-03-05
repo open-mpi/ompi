@@ -30,7 +30,7 @@
 #include "opal/util/output.h"
 #include "opal/util/bit_ops.h"
 
-#include "orte/class/orte_proc_table.h"
+#include "opal/class/opal_hash_table.h"
 #include "orte/util/proc_info.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -905,7 +905,7 @@ static int next_recips(opal_list_t *names, orte_grpcomm_mode_t mode)
  * information must be kept for later use, because if accept/connect
  * causes the proc to be added to the ompi_proc_all() list, it could
  * cause a connection storm.  Therefore, we use an
- * orte_proc_table backing store to contain all modex information.
+ * opal_hast_table_t backing store to contain all modex information.
  *
  * While we could add the now discovered proc into the ompi_proc_all()
  * list, this has some problems, in that we don't have the
@@ -1077,11 +1077,11 @@ modex_lookup_attr_data(modex_proc_data_t *proc_data,
 static modex_proc_data_t*
 modex_lookup_orte_proc(const orte_process_name_t *orte_proc)
 {
-    modex_proc_data_t *proc_data;
+    modex_proc_data_t *proc_data = NULL;
     
     OPAL_THREAD_LOCK(&orte_grpcomm_basic.mutex);
-    proc_data = (modex_proc_data_t*)
-        orte_hash_table_get_proc(&orte_grpcomm_basic.modex_data, orte_proc);
+    opal_hash_table_get_value_uint64(&orte_grpcomm_basic.modex_data, 
+                    orte_util_hash_name(orte_proc), (void**)&proc_data);
     if (NULL == proc_data) {
         /* The proc clearly exists, so create a modex structure
         for it */
@@ -1091,7 +1091,8 @@ modex_lookup_orte_proc(const orte_process_name_t *orte_proc)
             OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
             return NULL;
         }
-        orte_hash_table_set_proc(&orte_grpcomm_basic.modex_data, orte_proc, proc_data);
+        opal_hash_table_set_value_uint64(&orte_grpcomm_basic.modex_data, 
+                    orte_util_hash_name(orte_proc), proc_data);
     }
     OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
     

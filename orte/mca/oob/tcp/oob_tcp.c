@@ -50,7 +50,6 @@
 #include "opal/util/net.h"
 #include "opal/class/opal_hash_table.h"
 
-#include "orte/class/orte_proc_table.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/name_fns.h"
@@ -1125,12 +1124,12 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
 
 int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
 {
-    mca_oob_tcp_addr_t* addr;
+    mca_oob_tcp_addr_t* addr = NULL;
 
     /* if the address is already cached - simply return it */
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    addr = (mca_oob_tcp_addr_t *)orte_hash_table_get_proc(&mca_oob_tcp_component.tcp_peer_names,
-         &peer->peer_name);
+    opal_hash_table_get_value_uint64(&mca_oob_tcp_component.tcp_peer_names,
+         orte_util_hash_name(&peer->peer_name), (void**)&addr);
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
     if(NULL != addr) {
          mca_oob_tcp_peer_resolved(peer, addr);
@@ -1459,23 +1458,26 @@ mca_oob_tcp_parse_uri(const char* uri, struct sockaddr* inaddr)
 int mca_oob_tcp_set_addr(const orte_process_name_t* name, const char* uri)
 {
     struct sockaddr_storage inaddr;
-    mca_oob_tcp_addr_t* addr;
-    mca_oob_tcp_peer_t* peer;
+    mca_oob_tcp_addr_t* addr = NULL;
+    mca_oob_tcp_peer_t* peer = NULL;
     int rc;
     if((rc = mca_oob_tcp_parse_uri(uri, (struct sockaddr*) &inaddr)) != ORTE_SUCCESS) {
         return rc;
     }
 
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    addr = (mca_oob_tcp_addr_t*)orte_hash_table_get_proc(&mca_oob_tcp_component.tcp_peer_names, name);
+    opal_hash_table_get_value_uint64(&mca_oob_tcp_component.tcp_peer_names,
+                                     orte_util_hash_name(name), (void**)&addr);
     if(NULL == addr) {
         addr = OBJ_NEW(mca_oob_tcp_addr_t);
         addr->addr_name = *name;
-        orte_hash_table_set_proc(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
+        opal_hash_table_set_value_uint64(&mca_oob_tcp_component.tcp_peer_names,
+                                         orte_util_hash_name(&addr->addr_name), addr);
     }
     rc = mca_oob_tcp_addr_insert(addr, (struct sockaddr*) &inaddr);
-    peer = (mca_oob_tcp_peer_t *)orte_hash_table_get_proc(
-        &mca_oob_tcp_component.tcp_peers, &addr->addr_name);
+    opal_hash_table_get_value_uint64(&mca_oob_tcp_component.tcp_peers,
+                                     orte_util_hash_name(&addr->addr_name), 
+                                     (void**)&peer);
     if(NULL != peer) {
         mca_oob_tcp_peer_resolved(peer, addr);
     }

@@ -93,7 +93,7 @@ typedef struct mca_oob_tcp_peer_t mca_oob_tcp_peer_t;
 #define MCA_OOB_TCP_PEER_RETURN(peer)                                   \
 {                                                                       \
     mca_oob_tcp_peer_shutdown(peer);                                    \
-    orte_hash_table_remove_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name); \
+    opal_hash_table_remove_value_uint64(&mca_oob_tcp_component.tcp_peers, orte_util_hash_name(&peer->peer_name)); \
     OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_peer_free,         \
                           &peer->super);                                \
 }

@@ -22,7 +22,7 @@
 
 #include "opal/util/output.h"
 
-#include "orte/class/orte_proc_table.h"
+#include "opal/class/opal_hash_table.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
@@ -269,13 +269,13 @@ void orte_iof_svc_sub_ack(
                    calculate seq_min anymore.  Otherwise, put its
                    updated value in the table. */
                 if (do_close) {
-                    orte_hash_table_remove_proc(&fwd->fwd_seq_hash,
-                                                &hdr->msg_origin);
+                    opal_hash_table_remove_value_uint64(&fwd->fwd_seq_hash,
+                                        orte_util_hash_name(&hdr->msg_origin));
                     value_set = false;
                 } else {
                     value.uval = hdr->msg_seq + hdr->msg_len;
-                    orte_hash_table_set_proc(&fwd->fwd_seq_hash,
-                                             &hdr->msg_origin, &value.vval);
+                    opal_hash_table_set_value_uint64(&fwd->fwd_seq_hash,
+                                        orte_util_hash_name(&hdr->msg_origin), &value.vval);
                 }
             } 
             /* Otherwise, if the publication origin and publication
@@ -289,8 +289,8 @@ void orte_iof_svc_sub_ack(
                bytes ACK'ed across all the forwards on this
                subscription. */
             else {
-                value.vval = orte_hash_table_get_proc(&fwd->fwd_seq_hash,
-                                                      &hdr->msg_origin);
+                opal_hash_table_get_value_uint64(&fwd->fwd_seq_hash,
+                        orte_util_hash_name(&hdr->msg_origin), (void**)&value.vval);
             }
 
             /* If we got a valid value, update the seq_min calculation */
