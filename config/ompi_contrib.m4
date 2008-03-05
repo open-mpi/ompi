@@ -11,6 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
+dnl Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -37,7 +38,7 @@ AC_DEFUN([OMPI_CONTRIB],[
     # Option to not build some of the contributed software packages
     AC_ARG_ENABLE([contrib-no-build],
         [AC_HELP_STRING([--enable-contrib-no-build=LIST],
-                        [Comma-separated list of contributed package NAMEs that will not be built.  Example: "--enable-mca-no-build=libnbc,vt" will disable building both the "libnbc" and "vt" contributed software packages.])])
+                        [Comma-separated list of contributed package NAMEs that will not be built.  Example: "--enable-contrib-no-build=libnbc,vt" will disable building both the "libnbc" and "vt" contributed software packages.])])
 
     # Parse the list to see what we should not build
     ompi_show_subtitle "Configuring contributed software packages"
