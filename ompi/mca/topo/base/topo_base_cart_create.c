@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -85,12 +86,6 @@ int mca_topo_base_cart_create (mca_topo_base_comm_t *topo_data,
        return MPI_SUCCESS;
    }
 
-   for (i = 0, p = topo_data->mtc_dims_or_index; i < ndims; ++i, ++p) {
-       *p = (*periods) ? -(*dims) : *dims;
-       ++dims;
-       ++periods;
-   }
-
    /* Have to replace this with the actual function body itself */
    p = topo_data->mtc_dims_or_index;
    coords =  topo_data->mtc_coords;
@@ -99,7 +94,7 @@ int mca_topo_base_cart_create (mca_topo_base_comm_t *topo_data,
    for (i=0; 
         (i < topo_data->mtc_ndims_or_nnodes && i < ndims); 
         ++i, ++p) {
-        dim = (*p > 0) ? *p : -(*p);
+        dim = *p;
         nprocs /= dim;
         *coords++ = dummy_rank / nprocs;
         dummy_rank %= nprocs;

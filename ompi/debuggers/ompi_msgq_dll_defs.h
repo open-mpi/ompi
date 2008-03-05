@@ -1,3 +1,15 @@
+/*
+ * Copyright (c) 2007      Cisco, Inc.  All rights resereved.
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
 /**********************************************************************
  * Copyright (C) 2000-2004 by Etnus, LLC.
  * Copyright (C) 1999 by Etnus, Inc.
@@ -28,153 +40,10 @@
  *              info required by the DLL for dumping message queues.
  */
 
-/***********************************************************************
- * Information associated with a specific executable image
- */
-typedef struct 
-{
-    const struct mqs_image_callbacks * image_callbacks;	/* Functions needed here */
-    /* basic structures */
-    struct {
-        int size;
-        struct {
-            int opal_list_next;
-        } offset;
-    } opal_list_item_t;
-    struct {
-        int size;
-        struct {
-            int opal_list_sentinel;
-        } offset;
-    } opal_list_t;
-    struct {
-        int size;
-    } ompi_free_list_item_t;
-    struct {
-        int size;
-        struct {
-            int fl_elem_class;    /* opal_class_t* */
-            int fl_mpool;         /* struct mca_mpool_base_module_t* */
-            int fl_elem_size;     /* size_t */
-            int fl_alignment;     /* size_t */
-            int fl_allocations;   /* opal_list_t */
-            int fl_max_to_alloc;  /* size_t */
-            int fl_num_per_alloc; /* size_t */
-            int fl_num_allocated; /* size_t */
-        } offset;
-    } ompi_free_list_t;
-    /* requests structures */
-    struct {
-        int size;
-        struct {
-            int req_type;
-            int req_status;
-            int req_complete;
-            int req_state;
-            int req_f_to_c_index;
-        } offset;
-    } ompi_request_t;
-    struct {
-        int size;
-        struct {
-            int req_addr;
-            int req_count;
-            int req_peer;
-            int req_tag;
-            int req_comm;
-            int req_datatype;
-            int req_proc;
-            int req_sequence;
-            int req_type;
-            int req_pml_complete;
-        } offset;
-    } mca_pml_base_request_t;
-    struct {
-        int size;
-        struct {
-            int req_addr;
-            int req_bytes_packed;
-            int req_send_mode;
-        } offset;
-    } mca_pml_base_send_request_t;
-    struct {
-        int size;
-        struct {
-            int req_bytes_packed;
-        } offset;
-    } mca_pml_base_recv_request_t;
-#if 0
-    /* fragments for unexpected messages (as well as theirs headers) */
-    struct {
-        int size;
-        struct {
-            int hdr;
-            int request;
-        } offset;
-    } mca_pml_ob1_recv_frag_t;
-    struct {
-        int size;
-        struct {
-            int hdr_type;
-            int hdr_flags;
-        } offset;
-    } mca_pml_ob1_common_hdr_t;
-    struct {
-        int size;
-        struct {
-            int hdr_common;
-            int hdr_ctx;
-            int hdr_src;
-            int hdr_tag;
-            int hdr_seq;
-        } offset;
-    } mca_pml_ob1_match_hdr_t;
-#endif
-    /* communicator structures */
-    struct {
-        int size;
-        struct {
-            int lowest_free;
-            int number_free;
-            int size;
-            int addr;
-        } offset;
-    } opal_pointer_array_t;
-    struct {
-        int size;
-        struct {
-            int grp_proc_count;
-            int grp_my_rank;
-            int grp_flags;
-        } offset;
-    } ompi_group_t;
-    struct {
-        int size;
-        struct {
-            int c_name;
-            int c_contextid;
-            int c_my_rank;
-            int c_local_group;
-        } offset;
-    } ompi_communicator_t;
-    struct {
-        int size;
-        struct {
-            int MPI_SOURCE;
-            int MPI_TAG;
-            int MPI_ERROR;
-            int _count;
-            int _cancelled;
-        } offset;
-    } ompi_status_public_t;
-    struct {
-        int size;
-        struct {
-            int size;
-            int name;
-        } offset;
-    } ompi_datatype_t;
-} mpi_image_info; 
+#ifndef OMPI_MSGQ_DLL_DEFS_H
+#define OMPI_MSGQ_DLL_DEFS_H
+
+#include "ompi_common_dll_defs.h"
 
 /***********************************************************************
  * Information associated with a specific process
@@ -225,10 +94,7 @@ typedef struct {
  */
 typedef struct 
 {
-  const struct mqs_process_callbacks * process_callbacks; /* Functions needed here */
-
   struct communicator_t *communicator_list;	/* List of communicators in the process */
-  mqs_target_type_sizes sizes;			/* Process architecture information */
 
   /* Addresses in the target process */
   mqs_taddr_t send_queue_base;			/* Where to find the send message queues */
@@ -248,9 +114,6 @@ typedef struct
     
   mqs_ompi_free_list_t_pos next_msg;            /* And state for the message iterator */
   mqs_op_class  what;				/* What queue are we looking on */
-} mpi_process_info;
+} mpi_process_info_extra;
 
-
-
-
-
+#endif

@@ -1402,7 +1402,7 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
     }
     memcpy (new_comm->c_topo_comm->mtc_dims_or_index,
             dims_or_index, ndims_or_nnodes * sizeof(int));
-    
+
     /* Now the topology component has been selected, let the component
      * re-arrange the proc ranks if need be. This is a down-call into
      * the topo component and does not have anything to do with this
@@ -1446,15 +1446,14 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
          * it as they deem fit */
 
         new_comm->c_topo_comm->mtc_periods_or_edges = (int *)
-        malloc (sizeof(int) * dims_or_index[ndims_or_nnodes - 1]);
+        malloc (sizeof(int) * ndims_or_nnodes);
         if (NULL == new_comm->c_topo_comm->mtc_periods_or_edges) {
             ompi_comm_free (&new_comm);
             *comm_topo = new_comm;
             return OMPI_ERROR;
         }
         memcpy (new_comm->c_topo_comm->mtc_periods_or_edges,
-                periods_or_edges, 
-                dims_or_index[ndims_or_nnodes - 1] * sizeof(int));
+                periods_or_edges, ndims_or_nnodes * sizeof(int));
 
         new_comm->c_topo_comm->mtc_coords = (int *)malloc (sizeof(int) * ndims_or_nnodes);
         if (NULL == new_comm->c_topo_comm->mtc_coords) {
@@ -1561,8 +1560,6 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
     }
 
     
-    /* finally, set the communicator to comm_cart */
-
     /* if the returned rank is -1, then this process is not in the 
      * new topology, so free everything we have allocated and return */
     if (MPI_UNDEFINED == new_rank) {

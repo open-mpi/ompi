@@ -752,8 +752,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
 
-    /* Do we need to wait for a TotalView-like debugger? */
-    ompi_wait_for_totalview();
+    /* Do we need to wait for a debugger? */
+    ompi_wait_for_debugger();
 
     /* check for timing request - get stop time and report elapsed time if so */
     if (timing) {
