@@ -46,6 +46,8 @@
 #define ORTE_GLOBAL_ARRAY_BLOCK_SIZE    64
 #define ORTE_GLOBAL_ARRAY_MAX_SIZE      INT_MAX
 
+/* define a default error return code for ORTE */
+#define ORTE_ERROR_DEFAULT_EXIT_CODE    1
 
 BEGIN_C_DECLS
 
