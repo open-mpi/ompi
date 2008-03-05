@@ -51,8 +51,7 @@ typedef struct VTGen_struct VTGen;
 EXTERN VTGen* VTGen_open              ( const char* namestub, uint32_t tid,
 					size_t buffer_size, uint8_t mode );
 
-EXTERN void VTGen_flush               ( VTGen* gen,
-					uint8_t syncFlush, uint8_t markFlush,
+EXTERN void VTGen_flush               ( VTGen* gen, uint8_t markFlush,
 					uint64_t flushBTime, uint64_t* flushETime );
 
 EXTERN void VTGen_close               ( VTGen* gen );
@@ -61,8 +60,6 @@ EXTERN void VTGen_delete              ( VTGen* gen );
 
 EXTERN void VTGen_init_trc_id         ( VTGen* gen, uint32_t trcid );
 
-EXTERN int  VTGen_get_buf_level       ( VTGen* gen );
-	
 EXTERN char* VTGen_get_name           ( VTGen* gen );
 
 EXTERN char* VTGen_get_defname        ( VTGen* gen );

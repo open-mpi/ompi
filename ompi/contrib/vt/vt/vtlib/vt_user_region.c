@@ -102,9 +102,6 @@ void VT_User_start__(char* name, char *file, int lno) {
     VT_MEMHOOKS_ON();
   }
 
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
-
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
@@ -141,9 +138,6 @@ void VT_User_start__(char* name, char *file, int lno) {
 
 void VT_User_end__(char *name) {
   uint64_t time;
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   VT_MEMHOOKS_OFF();
 
@@ -186,9 +180,6 @@ void VT_User_start___f(char* name, char *file, int *lno, int nl, int fl) {
     VT_MEMHOOKS_ON();
   }
 
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
-
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
@@ -228,9 +219,6 @@ void VT_User_start___f(char* name, char *file, int *lno, int nl, int fl) {
 
 void VT_User_end___f(char *name, int nl) {
   uint64_t time;
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   VT_MEMHOOKS_OFF();
 

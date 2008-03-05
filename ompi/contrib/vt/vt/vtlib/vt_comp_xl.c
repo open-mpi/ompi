@@ -17,17 +17,9 @@
 #include "vt_memhook.h"
 #include "vt_pform.h"
 #include "vt_trc.h"
-
 #if (defined (VT_OMPI) || defined (VT_OMP))
-#include <omp.h>
-#define VT_MY_THREAD   omp_get_thread_num() 
-#define VT_NUM_THREADS omp_get_max_threads() 
-#else
-#define VT_MY_THREAD   0
-#define VT_NUM_THREADS 1 
+#  include <omp.h>
 #endif
-
-static long *stk_level;
 
 /*
  *-----------------------------------------------------------------------------
@@ -49,19 +41,6 @@ typedef struct HN {
 static int xl_init = 1;       /* is initialization needed? */
 
 static HashNode* htab[HASH_MAX];
-
-static void xl_wrapup() {
-  uint64_t time;
-
-  VT_MEMHOOKS_OFF();
-
-  while(stk_level[VT_MY_THREAD] > 0) {
-    stk_level[VT_MY_THREAD]--; 
-    time = vt_pform_wtime();
-    vt_exit(&time);
-  }
-  vt_close();
-}
 
 /*
  * Stores region identifier `e' under hash code `h'
@@ -120,21 +99,15 @@ static HashNode *register_region(char *func, char *file, int lno) {
 
 void __func_trace_enter(char* name, char *fname, int lno) {
   HashNode *hn;
-  int mt = VT_MY_THREAD;
   uint64_t time;
 
   /* -- if not yet initialized, initialize VampirTrace -- */
   if ( xl_init ) {
     VT_MEMHOOKS_OFF();
     xl_init = 0;
-    stk_level = (long*)calloc(VT_NUM_THREADS, sizeof(long));
     vt_open();
-    vt_comp_finalize = &xl_wrapup;
     VT_MEMHOOKS_ON();
   }
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   /* -- ignore IBM OMP runtime functions -- */
   if ( strchr(name, '@') != NULL ) return;
@@ -164,7 +137,6 @@ void __func_trace_enter(char* name, char *fname, int lno) {
 
   /* -- write enter record -- */
   vt_enter(&time, hn->vtid);
-  stk_level[mt]++;
 
   VT_MEMHOOKS_ON();
 }
@@ -176,11 +148,7 @@ void __func_trace_enter(char* name, char *fname, int lno) {
 
 void __func_trace_exit(char* name, char *fname, int lno) {
   HashNode *hn;
-  int mt = VT_MY_THREAD;
   uint64_t time;
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   VT_MEMHOOKS_OFF();
 
@@ -197,7 +165,6 @@ void __func_trace_exit(char* name, char *fname, int lno) {
   hn = hash_get((long) name);
 
   vt_exit(&time);
-  stk_level[mt]--;
 
   VT_MEMHOOKS_ON();
 }

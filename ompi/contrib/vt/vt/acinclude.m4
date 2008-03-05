@@ -1299,7 +1299,7 @@ AC_DEFUN([ACVT_OTF],
 	[OTFLIB="$withval"])
 
 	AC_ARG_WITH(otf-flags,
-		AC_HELP_STRING([--with-otf-flags=FLAGS], [Pass FLAGS to the OTF distribution configuration script]), [OTFFLAGS="$withval"])
+		AC_HELP_STRING([--with-otf-flags=FLAGS], [pass FLAGS to the OTF distribution configuration script]), [OTFFLAGS="$withval"])
 
 	AS_IF([test "$use_extern_otf" = "yes"],
 	[
@@ -1366,6 +1366,8 @@ AC_DEFUN([ACVT_OTF],
 		[
 			AS_IF([test x"$force_zlib" = "xyes"],
 			[otf_conf_args="$otf_conf_args --with-zlib"])
+			AS_IF([test x"$zlib_dir_withval" != x],
+			[otf_conf_args="$otf_conf_args --with-zlib-dir=$zlib_dir_withval"])
 			AS_IF([test x"$zlib_incdir_withval" != x],
 			[otf_conf_args="$otf_conf_args --with-zlib-inc-dir=$zlib_incdir_withval"])
 			AS_IF([test x"$zlib_libdir_withval" != x],
@@ -1374,7 +1376,7 @@ AC_DEFUN([ACVT_OTF],
 			[otf_conf_args="$otf_conf_args --with-zlib-lib=$ZLIBLIB"])
 		],
 		[
-			otf_conf_args=--without-zlib
+			otf_conf_args="$otf_conf_args --without-zlib"
 		])
 
 		otf_conf_args="$otf_conf_args --prefix=\"$prefix\" --exec-prefix=\"$exec_prefix\" --bindir=\"$bindir\" --libdir=\"$libdir\" --includedir=\"$includedir\" --datarootdir=\"$datarootdir\" --datadir=\"$datadir\" --docdir=\"$docdir\" $OTFFLAGS --cache-file=\"/dev/null\" --srcdir=\"$otf_srcdir\""
@@ -1665,6 +1667,7 @@ AC_DEFUN([ACVT_ZLIB],
 	check_zlib="yes"
         force_zlib="no"
 	have_zlib="no"
+	zlib_dir_withval=
 	zlib_incdir_withval=
 	zlib_libdir_withval=
 
@@ -1680,7 +1683,7 @@ AC_DEFUN([ACVT_ZLIB],
 
 	AC_ARG_WITH(zlib-dir,
 		AC_HELP_STRING([--with-zlib-dir=ZLIBDIR], [give the path for ZLIB, default: /usr]),
-	[ZLIBDIR="$withval/"])
+	[zlib_dir_withval=$withval; ZLIBDIR="$withval/"])
 
 	AC_ARG_WITH(zlib-inc-dir,
 		AC_HELP_STRING([--with-zlib-inc-dir=ZLIBINCDIR],

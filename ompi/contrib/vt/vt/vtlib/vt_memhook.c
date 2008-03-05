@@ -53,38 +53,30 @@ void vt_memhook_finalize()
 void* vt_malloc_hook(size_t size, const void* caller)
 {
   void* result;
+  uint64_t bytes;
+  uint64_t time;
 
   VT_MEMHOOKS_OFF();   /* Restore original hooks */
 
-  if ( VT_IS_TRACE_ON() )
-  {
-    uint64_t bytes;
-    uint64_t time;
-
-    time = vt_pform_wtime();
-    vt_enter(&time, vt_mem_regid[VT__MEM_MALLOC]);
+  time = vt_pform_wtime();
+  vt_enter(&time, vt_mem_regid[VT__MEM_MALLOC]);
     
-    result = malloc(size);   /* Call recursively */
+  result = malloc(size);   /* Call recursively */
 
-    /* Get total allocated memory */
-    if ( result != NULL )
-    {
-      bytes = ( ~ (uint64_t) 3 ) & (uint64_t) *( (size_t*) ( (char*)result - SIZEOF_VOIDP ) );
-    }
-    else
-    {
-      bytes = 0;
-    }
-
-    time = vt_pform_wtime();
-
-    vt_mem_alloc(&time, bytes);
-    vt_exit(&time);
+  /* Get total allocated memory */
+  if ( result != NULL )
+  {
+    bytes = ( ~ (uint64_t) 3 ) & (uint64_t) *( (size_t*) ( (char*)result - SIZEOF_VOIDP ) );
   }
   else
   {
-    result = malloc(size);   /* Call recursively */
+    bytes = 0;
   }
+
+  time = vt_pform_wtime();
+  
+  vt_mem_alloc(&time, bytes);
+  vt_exit(&time);
 
   VT_MEMHOOKS_ON();   /* Restore our own hooks */
 
@@ -94,51 +86,43 @@ void* vt_malloc_hook(size_t size, const void* caller)
 void* vt_realloc_hook(void* ptr, size_t size, const void* caller)
 {
   void* result;
+  uint64_t bytes1;
+  uint64_t bytes2;
+  uint64_t time;
 
   VT_MEMHOOKS_OFF();   /* Restore original hooks */
 
-  if ( VT_IS_TRACE_ON() )
+  time = vt_pform_wtime();
+  vt_enter(&time, vt_mem_regid[VT__MEM_REALLOC]);
+
+  /* Get total allocated memory before realloc */
+  if ( NULL != ptr )
   {
-    uint64_t bytes1;
-    uint64_t bytes2;
-    uint64_t time;
-
-    time = vt_pform_wtime();
-    vt_enter(&time, vt_mem_regid[VT__MEM_REALLOC]);
-
-    /* Get total allocated memory before realloc */
-    if ( NULL != ptr )
-    {
-      bytes1 = ( ~ (uint64_t) 3 ) & (uint64_t) *( (size_t*) ( (char*)ptr - SIZEOF_VOIDP ) );
-    }
-    else
-    {
-      bytes1 = 0;
-    }
-
-    result = realloc(ptr, size);   /* Call recursively */
-
-    /* Get total allocated memory after realloc */
-    if ( NULL != result )
-    {
-      bytes2 = ( ~ (uint64_t) 3 ) & (uint64_t) *( (size_t*) ( (char*)result - SIZEOF_VOIDP ) );
-    }
-    else
-    {
-      bytes2 = 0;
-    }
-
-    time = vt_pform_wtime();
-    if ( bytes2 < bytes1 )
-      vt_mem_free(&time, bytes1 - bytes2);
-    else
-      vt_mem_alloc(&time, bytes2 - bytes1);
-    vt_exit(&time);
+    bytes1 = ( ~ (uint64_t) 3 ) & (uint64_t) *( (size_t*) ( (char*)ptr - SIZEOF_VOIDP ) );
   }
   else
   {
-    result = realloc(ptr, size);   /* Call recursively */
+    bytes1 = 0;
   }
+
+  result = realloc(ptr, size);   /* Call recursively */
+
+  /* Get total allocated memory after realloc */
+  if ( NULL != result )
+  {
+    bytes2 = ( ~ (uint64_t) 3 ) & (uint64_t) *( (size_t*) ( (char*)result - SIZEOF_VOIDP ) );
+  }
+  else
+  {
+    bytes2 = 0;
+  }
+
+  time = vt_pform_wtime();
+  if ( bytes2 < bytes1 )
+    vt_mem_free(&time, bytes1 - bytes2);
+  else
+    vt_mem_alloc(&time, bytes2 - bytes1);
+  vt_exit(&time);
 
   VT_MEMHOOKS_ON();   /* Restore our own hooks */
 
@@ -147,35 +131,28 @@ void* vt_realloc_hook(void* ptr, size_t size, const void* caller)
 
 void vt_free_hook(void* ptr, const void* caller)
 {
+  uint64_t bytes;
+  uint64_t time;
+
   VT_MEMHOOKS_OFF();   /* Restore original hooks */
 
-  if ( VT_IS_TRACE_ON() )
+  time = vt_pform_wtime();
+  vt_enter(&time, vt_mem_regid[VT__MEM_FREE]);
+
+  if ( NULL != ptr )
   {
-    uint64_t bytes;
-    uint64_t time;
-
-    time = vt_pform_wtime();
-    vt_enter(&time, vt_mem_regid[VT__MEM_FREE]);
-
-    if ( NULL != ptr )
-    {
-      bytes = ( ~ (uint64_t) 3 ) & (uint64_t) *( (size_t*) ( (char*)ptr - SIZEOF_VOIDP ) );
-    }
-    else
-    {
-      bytes = 0;
-    }
-
-    free(ptr);   /* Call recursively */
-
-    time = vt_pform_wtime();
-    vt_mem_free(&time, bytes);
-    vt_exit(&time);
+    bytes = ( ~ (uint64_t) 3 ) & (uint64_t) *( (size_t*) ( (char*)ptr - SIZEOF_VOIDP ) );
   }
   else
   {
-    free(ptr);   /* Call recursively */
+    bytes = 0;
   }
+
+  free(ptr);   /* Call recursively */
+
+  time = vt_pform_wtime();
+  vt_mem_free(&time, bytes);
+  vt_exit(&time);
 
   VT_MEMHOOKS_ON();   /* Restore our own hooks */
 }

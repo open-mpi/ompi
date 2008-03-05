@@ -19,14 +19,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #if (defined (VT_OMPI) || defined (VT_OMP))
-#include <omp.h>
-#define VT_MY_THREAD   omp_get_thread_num() 
-#define VT_NUM_THREADS omp_get_max_threads() 
-#else
-#define VT_MY_THREAD   0
-#define VT_NUM_THREADS 1 
+#  include <omp.h>
 #endif
 
 struct s1 {
@@ -46,34 +40,7 @@ struct s1 {
 	char *rout;
 };
 
-static long* cstsizev;
 static int   rou_init = 1;  /* initialization necessary ? */
-
-/*
- *-----------------------------------------------------------------------------
- * called during program termination
- *-----------------------------------------------------------------------------
- */
-
-void __rouexit() {
-  uint64_t time;
-
-  VT_MEMHOOKS_OFF();
-
-  /* write pending exits */
-  while(cstsizev[VT_MY_THREAD] > 0)
-    {
-      cstsizev[VT_MY_THREAD]--; 
-      time = vt_pform_wtime();
-      vt_exit(&time);
-    }
-
-  /* free call-stack-size vector */
-  free(cstsizev);
-
-  /* close trace file */
-  vt_close();
-}
 
 /*
  *-----------------------------------------------------------------------------
@@ -86,18 +53,12 @@ void __rouinit() {
 
   VT_MEMHOOKS_OFF();
 
-  /* call-stack initialization */
-  cstsizev = (long*)calloc(VT_NUM_THREADS, sizeof(long)); 
-  for (i = 0; i < VT_NUM_THREADS; i++)
-    cstsizev[i] = 0;
- 
   /* open trace file */
   vt_open();
 
   if (rou_init)
     {
       rou_init = 0;
-      vt_comp_finalize = &__rouexit;
     }
 
   VT_MEMHOOKS_ON();
@@ -116,9 +77,6 @@ void ___rouent2(struct s1 *p) {
       rou_init = 0;
       __rouinit();
     }
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   VT_MEMHOOKS_OFF();
 
@@ -164,9 +122,6 @@ void ___rouent2(struct s1 *p) {
 #endif
     }
       
-  /* increment call-stack size */
-  cstsizev[VT_MY_THREAD]++; 
-  
   /* write enter trace record */
   vt_enter(&time, p->rid);  
 
@@ -182,14 +137,8 @@ void ___rouent2(struct s1 *p) {
 void ___rouret2(void) {
   uint64_t time;
 
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
-
   VT_MEMHOOKS_OFF();
 
-  /* decrement call-stack size */
-  cstsizev[VT_MY_THREAD]--; 
-  
   time = vt_pform_wtime();
   vt_exit(&time);
 

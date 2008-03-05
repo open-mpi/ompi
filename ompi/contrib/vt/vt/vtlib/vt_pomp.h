@@ -12,7 +12,7 @@
 
 #include "vt_defs.h"
 
-#define IS_POMP_TRACE_ON ( pomp_tracing && VT_IS_TRACE_ON() )
+#define IS_POMP_TRACE_ON ( pomp_tracing )
 
 extern int pomp_tracing;
 

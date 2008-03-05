@@ -40,16 +40,21 @@
 typedef struct 
 {
 
-  uint8_t is_trace_on;          /* flag: is tracing enabled? */
+  int8_t is_trace_on;          /* flag: is tracing enabled?
+				  -1 = no (permanent)
+				   0 = no
+				   1 = yes */
 
   VTGen* gen;                   /* trace file and buffer */
   char*  tmp_name;              /* base file name for temporary files */
+
+  int stack_level;              /* current call stack level */
 
   uint64_t omp_collop_stime;    /* last timestamp of OMP collop. begin event */
 
 #if (defined (VT_MEMHOOK))
 
-  uint64_t mem_app_alloc;       /* memory usage by application */
+  uint64_t mem_app_alloc;       /* memory allocation by application */
 
 #endif
 
@@ -97,6 +102,15 @@ EXTERN uint32_t VTThrd_get_num_thrds( void );
 /* base name of the temporary files */
 #define VTTHRD_TMP_NAME(thrd)            thrd->tmp_name
 
+/* current call stack level */
+#define VTTHRD_STACK_LEVEL(thrd)         thrd->stack_level
+
+/* push the call stack */
+#define VTTHRD_STACK_PUSH(thrd)          thrd->stack_level++
+
+/* pop the call stack */
+#define VTTHRD_STACK_POP(thrd)           thrd->stack_level--
+  
 /* last timestamp of OMP collop. begin event */
 #define VTTHRD_OMP_COLLOP_STIME(thrd)    thrd->omp_collop_stime
 

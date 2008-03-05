@@ -22,18 +22,13 @@
 #include "vt_defs.h"
 #include "vt_error.h"
 
-#define VT_IS_ALIVE vt_is_alive
-#define VT_IS_TRACE_ON() vt_is_trace_on()
-#define VT_TRACE_ON() vt_trace_on()
-#define VT_TRACE_OFF() vt_trace_off()
-
 EXTERN void vt_open               ( void );
 
 EXTERN void vt_close              ( void );
 
 EXTERN void vt_trace_on           ( void );
 
-EXTERN void vt_trace_off          ( void );
+EXTERN void vt_trace_off          ( uint8_t permanent );
 
 EXTERN uint8_t vt_is_trace_on     ( void );
 

@@ -15,6 +15,7 @@
 #include "vt_pform.h"
 #include "vt_error.h"
 #include "vt_env.h"
+#include "vt_trc.h"
 
 #include <limits.h>
 #include <stdio.h>
@@ -60,6 +61,8 @@ VTThrd* VTThrd_create(uint32_t tid)
     vt_error();
 
   strcpy(thread->tmp_name, tmp);
+
+  thread->stack_level = 0;
 
   thread->omp_collop_stime = 0;
 
@@ -130,7 +133,14 @@ void VTThrd_open(VTThrd* thrd, uint32_t tid)
 void VTThrd_close(VTThrd* thrd)
 {
   if (thrd && thrd->tmp_name)
+  {
+    uint64_t time;
+    while(thrd->stack_level > 0) {
+      time = vt_pform_wtime();
+      vt_exit(&time);
+    }
     VTGen_close(thrd->gen);
+  }
 }
 
 

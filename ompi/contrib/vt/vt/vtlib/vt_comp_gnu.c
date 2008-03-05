@@ -32,19 +32,11 @@
 #include "vt_pform.h"
 #include "vt_strdup.h"
 #include "vt_trc.h"
-
 #if (defined (VT_OMPI) || defined (VT_OMP))
-#include <omp.h>
-#define VT_MY_THREAD   omp_get_thread_num() 
-#define VT_NUM_THREADS omp_get_max_threads() 
-#else
-#define VT_MY_THREAD   0
-#define VT_NUM_THREADS 1 
+#  include <omp.h>
 #endif
 
 static int gnu_init = 1;       /* is initialization needed? */
-
-static long *stk_level;        /* stack level */
 
 /*
  *-----------------------------------------------------------------------------
@@ -337,26 +329,8 @@ static void register_region(HashNode *hn) {
 }
 
 
-void cyg_profile_finalize (void);
 void __cyg_profile_func_enter(void* func, void* callsite);
 void __cyg_profile_func_exit(void* func, void* callsite);
-
-/*
- * This function is called at program end
- */
-
-void cyg_profile_finalize () {
-  uint64_t time;
-
-  VT_MEMHOOKS_OFF();
-
-  while(stk_level[VT_MY_THREAD] > 0) {
-    stk_level[VT_MY_THREAD]--;
-    time = vt_pform_wtime();
-    vt_exit(&time);
-  }
-  vt_close();
-}
 
 /*
  * This function is called at the entry of each function
@@ -365,7 +339,6 @@ void cyg_profile_finalize () {
 
 void __cyg_profile_func_enter(void* func, void* callsite) {
   HashNode *hn;
-  int mt = VT_MY_THREAD;
 
   void * funcptr = func;
 
@@ -379,15 +352,10 @@ void __cyg_profile_func_enter(void* func, void* callsite) {
   if ( gnu_init ) {
     VT_MEMHOOKS_OFF();
     gnu_init = 0;
-    stk_level = (long*)calloc(VT_NUM_THREADS, sizeof(long));
-    get_symtab();
     vt_open();
-    vt_comp_finalize = &cyg_profile_finalize;
+    get_symtab();
     VT_MEMHOOKS_ON();
   }
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   VT_MEMHOOKS_OFF();
 
@@ -415,7 +383,6 @@ void __cyg_profile_func_enter(void* func, void* callsite) {
 
     /* -- write enter record -- */
     vt_enter(&time, hn->vtid);
-    stk_level[mt]++;
   }
 
   VT_MEMHOOKS_ON();
@@ -428,12 +395,8 @@ void __cyg_profile_func_enter(void* func, void* callsite) {
 
 void __cyg_profile_func_exit(void* func, void* callsite) {
   HashNode *hn;
-  int mt = VT_MY_THREAD;
   void * funcptr = func;
   uint64_t time;
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   VT_MEMHOOKS_OFF();
 
@@ -445,7 +408,6 @@ void __cyg_profile_func_exit(void* func, void* callsite) {
 
   if ( (hn = hash_get((long)funcptr)) ) {
     vt_exit(&time);
-    stk_level[mt]--;
   }
 
   VT_MEMHOOKS_ON();

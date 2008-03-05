@@ -121,7 +121,7 @@ public:
 		    const bool ovwrt = false );
    bool usesMPI() { return Properties.uses_mpi; }
    void setUsesOMP( const bool set, const bool lock = false,
-		    const bool ovwrt = true );
+		    const bool ovwrt = false );
    bool usesOMP() { return Properties.uses_omp; }
    void setBeVerbose( const bool set ) { Properties.beverbose = set; }
    bool beverbose() { return Properties.beverbose; }

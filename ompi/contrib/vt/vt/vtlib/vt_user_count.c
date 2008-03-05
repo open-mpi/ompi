@@ -141,9 +141,6 @@ void VT_User_count_signed_val__(unsigned int cid, long long val)
 
   VT_INIT;
 
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
-
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
@@ -159,9 +156,6 @@ void VT_User_count_unsigned_val__(unsigned int cid, unsigned long long val)
   uint64_t cval;
 
   VT_INIT;
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   VT_MEMHOOKS_OFF();
 
@@ -179,9 +173,6 @@ void VT_User_count_float_val__(unsigned int cid, float val)
 
   VT_INIT;
 
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
-
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
@@ -197,9 +188,6 @@ void VT_User_count_double_val__(unsigned int cid, double val)
   uint64_t cval;
 
   VT_INIT;
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   VT_MEMHOOKS_OFF();
 
@@ -270,9 +258,6 @@ void VT_User_count_integer_val___f(unsigned int* cid, int* val)
 
   VT_INIT;
 
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
-
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
@@ -292,9 +277,6 @@ void VT_User_count_integer8_val___f(unsigned int* cid, long long* val)
   uint64_t cval;
 
   VT_INIT;
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   VT_MEMHOOKS_OFF();
 
@@ -316,9 +298,6 @@ void VT_User_count_real_val___f(unsigned int* cid, float* val)
 
   VT_INIT;
 
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
-
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
@@ -338,9 +317,6 @@ void VT_User_count_double_val___f(unsigned int* cid, double* val)
   uint64_t cval;
 
   VT_INIT;
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   VT_MEMHOOKS_OFF();
 
