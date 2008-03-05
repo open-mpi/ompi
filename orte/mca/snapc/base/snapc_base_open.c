@@ -51,7 +51,7 @@ char * orte_snapc_base_global_snapshot_loc = NULL;
 char * orte_snapc_base_global_snapshot_ref = NULL;
 bool orte_snapc_base_store_in_place = true;
 bool orte_snapc_base_store_only_one_seq = false;
-bool orte_snapc_base_establish_gloabl_snapshot_dir = false;
+bool orte_snapc_base_establish_global_snapshot_dir = false;
 
 /**
  * Function for finding and opening either all MCA components,
@@ -147,11 +147,11 @@ int orte_snapc_base_open(void)
                                 false, false,
                                 0,
                                 &value);
-    orte_snapc_base_establish_gloabl_snapshot_dir = OPAL_INT_TO_BOOL(value);
+    orte_snapc_base_establish_global_snapshot_dir = OPAL_INT_TO_BOOL(value);
 
     OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
-                         "snapc:base: open: base_establish_gloabl_snapshot_dir    = %d",
-                         orte_snapc_base_establish_gloabl_snapshot_dir));
+                         "snapc:base: open: base_establish_global_snapshot_dir    = %d",
+                         orte_snapc_base_establish_global_snapshot_dir));
 
     /*
      * User defined global snapshot directory name for this job

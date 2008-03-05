@@ -54,8 +54,8 @@ orte_ess_base_component_t mca_ess_lsf_component = {
 
     /* Next the MCA v1.0.0 component meta data */
     {
-        /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
+        /* The component is not checkpoint ready */
+        MCA_BASE_METADATA_PARAM_NONE
     },
 
     /* Initialization / querying functions */

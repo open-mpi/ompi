@@ -129,7 +129,7 @@ ORTE_DECLSPEC extern orte_snapc_coord_type_t orte_snapc_coord_type;
     ORTE_DECLSPEC extern char * orte_snapc_base_global_snapshot_loc;
     ORTE_DECLSPEC extern bool   orte_snapc_base_store_in_place;
     ORTE_DECLSPEC extern bool   orte_snapc_base_store_only_one_seq;
-    ORTE_DECLSPEC extern bool   orte_snapc_base_establish_gloabl_snapshot_dir;
+    ORTE_DECLSPEC extern bool   orte_snapc_base_establish_global_snapshot_dir;
     ORTE_DECLSPEC extern size_t orte_snapc_base_snapshot_seq_number;
 
 

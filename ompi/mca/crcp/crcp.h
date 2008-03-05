@@ -86,7 +86,7 @@ enum ompi_crcp_base_pml_states_t {
 };
 typedef enum ompi_crcp_base_pml_states_t ompi_crcp_base_pml_states_t;
 
-struct ompi_crcp_base_pml_state_t {
+OMPI_DECLSPEC struct ompi_crcp_base_pml_state_t {
     ompi_free_list_item_t super;
     ompi_crcp_base_pml_states_t state;
     int error_code;
@@ -94,7 +94,7 @@ struct ompi_crcp_base_pml_state_t {
     mca_pml_base_module_t     *wrapped_pml_module;
 };
 typedef struct ompi_crcp_base_pml_state_t ompi_crcp_base_pml_state_t;
-OBJ_CLASS_DECLARATION(ompi_crcp_base_pml_state_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_crcp_base_pml_state_t);
 
 typedef ompi_crcp_base_pml_state_t* (*ompi_crcp_base_pml_enable_fn_t)
      (bool enable, ompi_crcp_base_pml_state_t* );

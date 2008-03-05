@@ -85,8 +85,6 @@ static int orte_cr_coord_post_ckpt(void);
 static int orte_cr_coord_post_restart(void);
 static int orte_cr_coord_post_continue(void);
 
-static int orte_cr_update_process_info(orte_process_name_t proc, pid_t pid);
-
 /*************
  * Local vars
  *************/
@@ -247,19 +245,13 @@ static int orte_cr_coord_pre_ckpt(void) {
                         "orte_cr: coord_pre_ckpt: orte_cr_coord_pre_ckpt()");
 
     /*
-     * Notify IOF
+     * Notify the ESS
      */
-    if( ORTE_SUCCESS != (ret = orte_iof.ft_event(OPAL_CRS_CHECKPOINT))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * Notify RML & OOB
-     */
-    if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_CHECKPOINT))) {
-        exit_status = ret;
-        goto cleanup;
+    if( NULL != orte_ess.ft_event ) {
+        if( ORTE_SUCCESS != (ret = orte_ess.ft_event(OPAL_CRS_CHECKPOINT))) {
+            exit_status = ret;
+            goto cleanup;
+        }
     }
 
  cleanup:
@@ -305,8 +297,6 @@ static int orte_cr_coord_post_ckpt(void) {
 
 static int orte_cr_coord_post_restart(void) {
     int ret, exit_status = ORTE_SUCCESS;
-    char * procid_str = NULL;
-    char * jobid_str  = NULL;
 
     opal_output_verbose(10, orte_cr_output,
                         "orte_cr: coord_post_restart: orte_cr_coord_post_restart()");
@@ -379,28 +369,7 @@ static int orte_cr_coord_post_restart(void) {
     orte_process_info.my_name = *ORTE_NAME_INVALID;
 
     /*
-     * Notify RML & OOB
-     */
-    if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_RESTART))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * Startup Discovery Service:
-     *  - Connect to the universe
-     * Structure Elements Refreshed:
-     *   orte_universe_info.name
-     *   orte_universe_info.host
-     *   orte_universe_info.uid
-     *   orte_universe_info.persistence
-     *   orte_universe_info.scope
-     *   orte_universe_info.seed_uri
-     *   orte_universe_info.console_connected
-     *   orte_universe_info.scriptfile
-     *
-     *   orte_process_info.ns_replica_uri
-     *   orte_process_info.gpr_replica_uri
+     * Notify the ESS
      */
     if (ORTE_SUCCESS != (ret = orte_ess_base_open())) {
         exit_status = ret;
@@ -410,102 +379,14 @@ static int orte_cr_coord_post_restart(void) {
         exit_status = ret;
     }
 
-    /** JJH XXX
-     * RHC: JOSH - the ess no longer has a "set_name" api as
-     * it performs that function as part of init'ing the rte.
-     * We can restore it, if needed - or perhaps much of this
-     * could go into the ess as part of a new "restore_rte"?
-     */
-#if 0    
-    /*
-     * - Reset Contact information
-     */
-    if( ORTE_SUCCESS != (ret = orte_ess.set_name() ) ) {
-        exit_status = ret;
-    }
-#endif
-    orte_ess_base_close();
-
-    /* Session directory stuff:
-     *   orte_process_info.top_session_dir
-     *   orte_process_info.universe_session_dir
-     *   orte_process_info.job_session_dir
-     *   orte_process_info.proc_session_dir
-     */
-    if (ORTE_SUCCESS != (ret = orte_util_convert_jobid_to_string(&jobid_str, ORTE_PROC_MY_NAME->jobid))) {
-        exit_status = ret;
+    if( NULL != orte_ess.ft_event ) {
+        if( ORTE_SUCCESS != (ret = orte_ess.ft_event(OPAL_CRS_RESTART))) {
+            exit_status = ret;
+            goto cleanup;
+        }
     }
 
-    if (ORTE_SUCCESS != (ret = orte_util_convert_vpid_to_string(&procid_str, ORTE_PROC_MY_NAME->vpid))) {
-        exit_status = ret;
-    }
-
-    if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                orte_process_info.tmpdir_base,
-                                                orte_system_info.user,
-                                                orte_system_info.nodename,
-                                                NULL, /* Batch ID -- Not used */
-                                                jobid_str,
-                                                procid_str))) {
-        exit_status = ret;
-    }
-
-    /*
-     * Re-enable communication through the RML
-     */
-    if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * Notify IOF
-     */
-    if( ORTE_SUCCESS != (ret = orte_iof.ft_event(OPAL_CRS_RESTART))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * Re-exchange the routes
-     */
-    if (ORTE_SUCCESS != (ret = orte_routed.initialize()) ) {
-        exit_status = ret;
-        goto cleanup;
-    }
-    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /** RHC: JOSH - you'll need to send this to the PLM. That framework already has
-     * a receive posted, so you'll just need to add an appropriate command flag to
-     * "update proc info" - see orte/mca/plm/base/plm_base_receive.c
-     *
-     * I don't believe we use the pid info in the HNP anywhere - but this seems
-     * like it could be really dangerous to have the pid in the HNP -not- be the
-     * actual pid of the process!! Are you sure you want to do this??
-     */
-    
-    /*
-     * Send new PID to HNP/daemon
-     * The checkpointer could have used a proxy program to boot us
-     * so the pid that the orted got from fork() may not be the
-     * PID of this application.
-     * - Note: BLCR does this because it tries to preseve the PID
-     *         of the program across checkpointes
-     */
-    if( ORTE_SUCCESS != (ret = orte_cr_update_process_info(orte_process_info.my_name, getpid())) ) {
-        exit_status = ret;
-        goto cleanup;
-    }
-    
  cleanup:
-    if (NULL != jobid_str) {
-        free(jobid_str);
-        jobid_str = NULL;
-    }
-
     return exit_status;
 }
 
@@ -516,19 +397,13 @@ static int orte_cr_coord_post_continue(void) {
                         "orte_cr: coord_post_continue: orte_cr_coord_post_continue()\n");
 
     /*
-     * Notify RML & OOB
+     * Notify the ESS
      */
-    if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_CONTINUE))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * Notify IOF
-     */
-    if( ORTE_SUCCESS != (ret = orte_iof.ft_event(OPAL_CRS_CONTINUE))) {
-        exit_status = ret;
-        goto cleanup;
+    if( NULL != orte_ess.ft_event ) {
+        if( ORTE_SUCCESS != (ret = orte_ess.ft_event(OPAL_CRS_CONTINUE))) {
+            exit_status = ret;
+            goto cleanup;
+        }
     }
 
  cleanup:
@@ -557,41 +432,3 @@ int orte_cr_entry_point_finalize(void)
     return ORTE_SUCCESS;
 }
 
-static int orte_cr_update_process_info(orte_process_name_t proc, pid_t proc_pid)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    opal_buffer_t buffer;
-    orte_snapc_cmd_flag_t command = ORTE_SNAPC_LOCAL_UPDATE_CMD;
-
-    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
-
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SNAPC_CMD )) ) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &proc, 1, ORTE_NAME))) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &proc_pid, 1, OPAL_PID))) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_DAEMON, &buffer, ORTE_RML_TAG_SNAPC, 0))) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-
- cleanup:
-    OBJ_DESTRUCT(&buffer);
-
-    return exit_status;
-
-}

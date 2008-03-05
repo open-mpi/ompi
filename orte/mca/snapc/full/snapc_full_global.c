@@ -76,6 +76,8 @@ static void snapc_full_process_proc_update_cmd(orte_process_name_t* sender,
                                                opal_buffer_t* buffer);
 static void snapc_full_process_vpid_assoc_cmd(orte_process_name_t* sender,
                                               opal_buffer_t* buffer);
+static void snapc_full_process_establish_dir_cmd(orte_process_name_t* sender,
+                                                 opal_buffer_t* buffer);
 static void snapc_full_process_cmdline_request_cmd(orte_process_name_t* sender,
                                                    opal_buffer_t* buffer);
 
@@ -224,7 +226,7 @@ int global_coord_setup_job(orte_jobid_t jobid) {
     /*
      * If requested pre-establish the global snapshot directory
      */
-    if(orte_snapc_base_establish_gloabl_snapshot_dir) {
+    if(orte_snapc_base_establish_global_snapshot_dir) {
         char *global_snapshot_handle = NULL;
         char *global_dir = NULL;
         
@@ -248,17 +250,6 @@ int global_coord_setup_job(orte_jobid_t jobid) {
             goto cleanup;
         }
 
-        /*
-         * Notify orted to finish up
-         */
-        if( ORTE_SUCCESS != (ret = orte_snapc_full_global_set_job_ckpt_info(jobid,
-                                                                            ORTE_SNAPC_CKPT_STATE_NONE,
-                                                                            global_snapshot_handle,
-                                                                            global_dir) ) ) {
-            exit_status = ret;
-            goto cleanup;
-        }
-        
         free(global_snapshot_handle);
         global_snapshot_handle = NULL;
         
@@ -423,7 +414,8 @@ void snapc_full_global_cmd_recv(int status,
     int rc;
 
     OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
-                         "Global) Receive a command message."));
+                         "Global) Receive a command message from %s.",
+                         ORTE_NAME_PRINT(sender)));
 
     /*
      * If this is a command line checkpoint request, handle directly
@@ -466,6 +458,13 @@ void snapc_full_global_cmd_recv(int status,
                                  "Global) Command: Update process/orted associations"));
 
             snapc_full_process_vpid_assoc_cmd(sender, buffer);
+            break;
+
+        case ORTE_SNAPC_FULL_ESTABLISH_DIR_CMD:
+            OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+                                 "Global) Command: Establish checkpoint directory"));
+
+            snapc_full_process_establish_dir_cmd(sender, buffer);
             break;
 
         default:
@@ -573,7 +572,7 @@ int global_coord_job_state_update(orte_jobid_t jobid,
     }
 
     if(ORTE_SNAPC_CKPT_STATE_REQUEST == job_ckpt_state ) {
-#if JJH_FIX_ME
+#if 0
         /*
          * Start the checkpoint, now that we have the jobid
          */
@@ -848,6 +847,46 @@ int global_coord_vpid_assoc_update(orte_process_name_t local_coord,
     }
 
     return ORTE_SUCCESS;
+}
+
+static void snapc_full_process_establish_dir_cmd(orte_process_name_t* sender,
+                                                 opal_buffer_t* exbuf)
+{
+    int ret, exit_status = ORTE_SUCCESS;
+    orte_snapc_full_cmd_flag_t command = ORTE_SNAPC_FULL_ESTABLISH_DIR_CMD;
+    opal_buffer_t buffer;
+
+    /* Send back:
+     * - Reference
+     * - Local location
+     */
+    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(global_snapshot.reference_name), 1, OPAL_STRING))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(orte_snapc_base_global_snapshot_loc), 1, OPAL_STRING))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    if (0 > (ret = orte_rml.send_buffer(sender, &buffer, ORTE_RML_TAG_SNAPC_FULL, 0))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+ cleanup:
+    OBJ_DESTRUCT(&buffer);
+    return;
 }
 
 static void snapc_full_process_cmdline_request_cmd(orte_process_name_t* sender,

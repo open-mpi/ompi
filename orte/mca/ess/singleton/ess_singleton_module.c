@@ -69,7 +69,8 @@ static int rte_init(char flags);
 orte_ess_base_module_t orte_ess_singleton_module = {
     rte_init,
     orte_ess_base_app_finalize,
-    orte_ess_base_app_abort
+    orte_ess_base_app_abort,
+    NULL /* ft_event */
 };
 
 static int rte_init(char flags)

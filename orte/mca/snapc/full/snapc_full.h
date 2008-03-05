@@ -45,6 +45,8 @@ typedef uint8_t orte_snapc_full_cmd_flag_t;
 #define ORTE_SNAPC_FULL_UPDATE_JOB_STATE_CMD   1
 #define ORTE_SNAPC_FULL_UPDATE_PROC_STATE_CMD  2
 #define ORTE_SNAPC_FULL_VPID_ASSOC_CMD         3
+#define ORTE_SNAPC_FULL_ESTABLISH_DIR_CMD      4
+
     /*
      * Local Component structures
      */

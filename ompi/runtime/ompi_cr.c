@@ -336,14 +336,6 @@ static int ompi_cr_coord_post_restart(void) {
     opal_output_verbose(10, ompi_cr_output,
                         "ompi_cr: coord_post_restart: ompi_cr_coord_post_restart()");
 
-#if 0
-    /* register myself to require that I finalize before exiting */
-    if (ORTE_SUCCESS != (ret = orte_register_sync())) {
-        exit_status = ret;
-        goto cleanup;
-    }
-#endif
-    
     /*
      * Notify PML
      *  - Will notify BML and BTL's
