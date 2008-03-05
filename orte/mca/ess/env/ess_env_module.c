@@ -80,15 +80,20 @@ static int env_set_name(void);
 
 static int rte_init(char flags);
 static int rte_finalize(void);
+#if OPAL_ENABLE_FT == 1
 static int rte_ft_event(int state);
-
 static int ess_env_ft_event_update_process_info(orte_process_name_t proc, pid_t pid);
+#endif
 
 orte_ess_base_module_t orte_ess_env_module = {
     rte_init,
     rte_finalize,
     orte_ess_base_app_abort,
+#if OPAL_ENABLE_FT == 1
     rte_ft_event
+#else
+    NULL
+#endif
 };
 
 
@@ -212,6 +217,7 @@ static int env_set_name(void)
     return ORTE_SUCCESS;
 }
 
+#if OPAL_ENABLE_FT == 1
 static int rte_ft_event(int state)
 {
     int ret, exit_status = ORTE_SUCCESS;
@@ -389,3 +395,5 @@ static int ess_env_ft_event_update_process_info(orte_process_name_t proc, pid_t 
 
     return exit_status;
 }
+#endif
+
