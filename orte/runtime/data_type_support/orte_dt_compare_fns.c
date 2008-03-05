@@ -157,18 +157,6 @@ int orte_dt_compare_app_context(orte_app_context_t *value1, orte_app_context_t *
     return OPAL_EQUAL;
 }
 
-
-/*
- * APP CONTEXT MAP
- */
-int orte_dt_compare_app_context_map(orte_app_context_map_t *value1, orte_app_context_map_t *value2, opal_data_type_t type)
-{
-    if (value1->map_type > value2->map_type) return OPAL_VALUE1_GREATER;
-    if (value2->map_type > value1->map_type) return OPAL_VALUE2_GREATER;
-    
-    return OPAL_EQUAL;
-}
-
 /*
  * EXIT CODE
  */

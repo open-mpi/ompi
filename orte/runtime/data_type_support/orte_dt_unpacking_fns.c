@@ -626,22 +626,25 @@ int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
             return rc;
         }
         
-        /* unpack the map data */
-        max_n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack_buffer(buffer, &(app_context[i]->num_map),
-                   &max_n, ORTE_STD_CNTR))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
+        /* get the number of dash_host strings that were packed */
+        max_n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack_buffer(buffer, &count, &max_n, ORTE_STD_CNTR))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
 
-        if (app_context[i]->num_map > 0) {
-            app_context[i]->map_data = (orte_app_context_map_t**)malloc(sizeof(orte_app_context_map_t*) * app_context[i]->num_map);
-            if (NULL == app_context[i]->map_data) {
+        /* if there are dash_host strings, allocate the required space for the char * pointers */
+        if (0 < count) {
+            app_context[i]->dash_host = (char **)malloc((count+1) * sizeof(char*));
+            if (NULL == app_context[i]->dash_host) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack_buffer(buffer, app_context[i]->map_data,
-                        &(app_context[i]->num_map), ORTE_APP_CONTEXT_MAP))) {
+            app_context[i]->dash_host[count] = NULL;
+
+            /* and unpack them */
+            max_n = count;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack_buffer(buffer, app_context[i]->dash_host, &max_n, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -706,45 +709,6 @@ int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
             app_context[i]->preload_files_dest_dir = NULL;
         }
 
-    }
-
-    return ORTE_SUCCESS;
-}
-
-/*
- * APP_CONTEXT_MAP
- */
-int orte_dt_unpack_app_context_map(opal_buffer_t *buffer, void *dest,
-                                  int32_t *num_vals, opal_data_type_t type)
-{
-    int rc;
-    orte_app_context_map_t **app_context_map;
-    int32_t i, max_n=1;
-
-    /* unpack into array of app_context_map objects */
-    app_context_map = (orte_app_context_map_t**) dest;
-    for (i=0; i < *num_vals; i++) {
-
-        /* create the app_context object */
-        app_context_map[i] = OBJ_NEW(orte_app_context_map_t);
-        if (NULL == app_context_map[i]) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-
-        /* map type */
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack_buffer(buffer, &(app_context_map[i]->map_type),
-                   &max_n, OPAL_UINT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* map data */
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack_buffer(buffer, &(app_context_map[i]->map_data),
-                   &max_n, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
     }
 
     return ORTE_SUCCESS;

@@ -970,7 +970,6 @@ static int init_globals(void)
     /* Only CONSTRUCT things once */
     if (!globals_init) {
         OBJ_CONSTRUCT(&orterun_globals.lock, opal_mutex_t);
-        orterun_globals.hostfile =    NULL;
         orterun_globals.env_val =     NULL;
         orterun_globals.appfile =     NULL;
         orterun_globals.wdir =        NULL;
@@ -988,9 +987,6 @@ static int init_globals(void)
     orterun_globals.by_slot                    = false;
     orterun_globals.debugger                   = false;
     orterun_globals.num_procs                  =  0;
-    if( NULL != orterun_globals.hostfile )
-        free( orterun_globals.hostfile );
-    orterun_globals.hostfile =    NULL;
     if( NULL != orterun_globals.env_val )
         free( orterun_globals.env_val );
     orterun_globals.env_val =     NULL;
@@ -1312,113 +1308,22 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     int i, j, count, rc;
     char *param, *value, *value2;
     orte_app_context_t *app = NULL;
-#if 0 /* Used only in the C/N notion case, remove to silence compiler warnings */
-    orte_std_cntr_t l, len;
-#endif
-    bool map_data = false, save_arg, cmd_line_made = false;
-    int new_argc = 0;
-    char **new_argv = NULL;
+    bool cmd_line_made = false;
 
     *made_app = false;
 
-    /* Pre-process the command line:
-
-       - convert C, cX, N, nX arguments to "-rawmap <id> <arg>" so
-         that the parser can pick it up nicely.
-       - convert -host to -rawmap <id> <arg>
-       - convert -arch to -rawmap <id> <arg>
-
-       Converting these to the same argument type will a) simplify the
-       logic down below, and b) allow us to preserve the ordering of
-       these arguments as the user specified them on the command
-       line.  */
-
-    for (i = 0; i < argc; ++i) {
-        map_data = false;
-        save_arg = true;
-
-    /* JJH To fix in the future
-     * Currently C/N notation is not supported so don't execute this check
-     * Bug: Make this context sensitive since it will not behave properly
-     *      with the following argument set:
-     *      $ orterun -np 2 -host c2,c3,c12 hostname
-     *      Since it will see the hosts c2, c3, and c12 as C options instead
-     *      of hostnames.
+    /* Pre-process the command line if we are going to parse an appfile later.
+     * save any mca command line args so they can be passed
+     * separately to the daemons.
+     * Use Case:
+     *  $ cat launch.appfile
+     *  -np 1 -mca aaa bbb ./my-app -mca ccc ddd
+     *  -np 1 -mca aaa bbb ./my-app -mca eee fff
+     *  $ mpirun -np 2 -mca foo bar --app launch.appfile
+     * Only pick up '-mca foo bar' on this pass.
      */
-        if(false) { ; } /* Wrapper to preserve logic continuation while the below
-                           is commented out */
-#if 0
-        if (0 == strcmp(argv[i], "C") ||
-            0 == strcmp(argv[i], "N")) {
-            map_data = true;
-        }
-
-        /* Heuristic: if the string fits "[cn][0-9]+" or "[cn][0-9],",
-           then accept it as mapping data */
-
-        else if ('c' == argv[i][0] || 'n' == argv[i][0]) {
-            len = strlen(argv[i]);
-            if (len > 1) {
-                for (l = 1; l < len; ++l) {
-                    if (',' == argv[i][l]) {
-                        map_data = true;
-                        break;
-                    } else if (!isdigit(argv[i][l])) {
-                        break;
-                    }
-                }
-                if (l >= len) {
-                    map_data = true;
-                }
-            }
-        }
-#endif
-
-#if 0
-        /* JMS commented out because we don't handle this in any
-           mapper */
-        /* Save -arch args */
-
-        else if (0 == strcmp("-arch", argv[i])) {
-            char str[2] = { '0' + ORTE_APP_CONTEXT_MAP_ARCH, '\0' };
-
-            opal_argv_append(&new_argc, &new_argv, "-rawmap");
-            opal_argv_append(&new_argc, &new_argv, str);
-            save_arg = false;
-        }
-#endif
-
-        /* Save -hostfile args since they can be spec'd
-         * on a per-app_context basis
-         */
-        else if (0 == strcmp("--hostfile",argv[i]) ||
-                 0 == strcmp("-hostfile", argv[i]) ||
-                 0 == strcmp("--machinefile", argv[i]) ||
-                 0 == strcmp("-machinefile", argv[i])) {
-            opal_argv_append(&new_argc, &new_argv, "-rawhosts");
-            save_arg = false;
-        }
-        
-        /* Save -host args */
-        else if (0 == strcmp("--host",argv[i]) ||
-                 0 == strcmp("-host", argv[i]) ||
-                 0 == strcmp("-H", argv[i])) {
-            char str[2] = { '0' + ORTE_APP_CONTEXT_MAP_HOSTNAME, '\0' };
-            opal_argv_append(&new_argc, &new_argv, "-rawmap");
-            opal_argv_append(&new_argc, &new_argv, str);
-            save_arg = false;
-        }
-        /* save any mca command line args so they can be passed
-         * separately to the daemons.
-         * Only do so here if we are going to parse an appfile later.
-         * Use Case:
-         *  $ cat launch.appfile
-         *  -np 1 -mca aaa bbb ./my-app -mca ccc ddd
-         *  -np 1 -mca aaa bbb ./my-app -mca eee fff
-         *  $ mpirun -np 2 -mca foo bar --app launch.appfile
-         * Only pick up '-mca foo bar' on this pass.
-         */
-        if (NULL != orterun_globals.appfile) {
+    if (NULL != orterun_globals.appfile) {
+        for (i = 0; i < argc; ++i) {
             if (0 == strcmp("-mca",  argv[i]) ||
                 0 == strcmp("--mca", argv[i]) ) {
                 opal_argv_append_nosize(&orted_cmd_line, argv[i]);
@@ -1426,36 +1331,14 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                 opal_argv_append_nosize(&orted_cmd_line, argv[i+2]);
             }
         }
-
-        /* If this token was C/N map data, save it */
-
-        if (map_data) {
-            char str[2] = { '0' + ORTE_APP_CONTEXT_MAP_CN, '\0' };
-
-            opal_argv_append(&new_argc, &new_argv, "-rawmap");
-            opal_argv_append(&new_argc, &new_argv, str);
-        }
-
-        if (save_arg) {
-            opal_argv_append(&new_argc, &new_argv, argv[i]);
-        }
     }
-
-    /* Parse application command line options.  Add the -rawmap option
-       separately so that the user doesn't see it in the --help
-       message. Ditto for the -rawhosts option */
+    /* Parse application command line options. */
 
     init_globals();
     opal_cmd_line_create(&cmd_line, cmd_line_init);
     mca_base_cmd_line_setup(&cmd_line);
     cmd_line_made = true;
-    opal_cmd_line_make_opt3(&cmd_line, '\0', NULL, "rawmap", 2,
-                            "Hidden / internal parameter -- users should not use this!");
-    opal_cmd_line_make_opt3(&cmd_line, '\0', NULL, "rawhosts", 1,  /* only one arg */
-                            "Hidden / internal parameter -- users should not use this!");
-    rc = opal_cmd_line_parse(&cmd_line, true, new_argc, new_argv);
-    opal_argv_free(new_argv);
-    new_argv = NULL;
+    rc = opal_cmd_line_parse(&cmd_line, true, argc, argv);
     if (ORTE_SUCCESS != rc) {
         goto cleanup;
     }
@@ -1483,16 +1366,13 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     }
 
     /*
-     * Determine the application name, and location in the argv so we do not
-     * accidentally pick of the application's arguments while trying to get
-     * our own. Example:
+     * Get mca parameters so we can pass them to the daemons.
+     * Use the count determined above to make sure we do not go past
+     * the executable name. Example:
      *   mpirun -np 2 -mca foo bar ./my-app -mca bip bop
      * We want to pick up '-mca foo bar' but not '-mca bip bop'
      */
     for (i = 0; i < (argc - count); ++i) {
-        /* save any mca command line args so they can be passed
-         * separately to the daemons
-         */
         if (0 == strcmp("-mca",  argv[i]) ||
             0 == strcmp("--mca", argv[i]) ) {
             opal_argv_append_nosize(&orted_cmd_line, argv[i]);
@@ -1639,42 +1519,36 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         }
     }
 
-    /* Did the user specify a hostname? This would have been converted
-     * to --rawhost above
+    /* Did the user specify a hostfile. Need to check for both 
+     * hostfile and machine file. 
+     * We can only deal with one hostfile per app context, otherwise give an error.
      */
-    if (opal_cmd_line_is_taken(&cmd_line, "rawhosts")) {
-        value = opal_cmd_line_get_param(&cmd_line, "rawhosts", 0, 0);
-        app->hostfile = strdup(value);
+    if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "hostfile"))) {
+        if(1 < j) {
+            opal_show_help("help-orterun.txt", "orterun:multiple-hostfiles",
+                           true, orterun_basename, NULL);
+            return ORTE_ERR_FATAL;
+        } else {
+            value = opal_cmd_line_get_param(&cmd_line, "hostfile", 0, 0);
+            app->hostfile = strdup(value);
+        }
     }
-    
-    /* Did the user request any mappings?  They were all converted to
-       --rawmap items, above. */
-
-    if (opal_cmd_line_is_taken(&cmd_line, "rawmap")) {
-        j = opal_cmd_line_get_ninsts(&cmd_line, "rawmap");
-        app->map_data = (orte_app_context_map_t**)malloc(sizeof(orte_app_context_map_t*) * j);
-        if (NULL == app->map_data) {
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
-            goto cleanup;
+    if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "machinefile"))) {
+        if(1 < j || NULL != app->hostfile) {
+            opal_show_help("help-orterun.txt", "orterun:multiple-hostfiles",
+                           true, orterun_basename, NULL);
+            return ORTE_ERR_FATAL;
+        } else {
+            value = opal_cmd_line_get_param(&cmd_line, "machinefile", 0, 0);
+            app->hostfile = strdup(value);
         }
-        app->num_map = j;
+    }
+ 
+    /* Did the user specify any hosts? */
+    if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "host"))) {
         for (i = 0; i < j; ++i) {
-            app->map_data[i] = NULL;
-        }
-        for (i = 0; i < j; ++i) {
-            value = opal_cmd_line_get_param(&cmd_line, "rawmap", i, 0);
-            value2 = opal_cmd_line_get_param(&cmd_line, "rawmap", i, 1);
-            app->map_data[i] = OBJ_NEW(orte_app_context_map_t);
-            if (NULL == app->map_data[i]) {
-                rc = ORTE_ERR_OUT_OF_RESOURCE;
-                goto cleanup;
-            }
-            app->map_data[i]->map_type = value[0] - '0';
-            app->map_data[i]->map_data = strdup(value2);
-            /* map_data = true;
-             * JJH - This activates the C/N mapping stuff,
-             * or at least allows us to pass the 'num_procs' check below.
-             * since it is not implemented yet, leave commented. */
+            value = opal_cmd_line_get_param(&cmd_line, "host", i, 0);
+            opal_argv_append_nosize(&app->dash_host, value);
         }
     }
 
@@ -1743,9 +1617,6 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
  cleanup:
     if (NULL != app) {
         OBJ_RELEASE(app);
-    }
-    if (NULL != new_argv) {
-        opal_argv_free(new_argv);
     }
     if (cmd_line_made) {
         OBJ_DESTRUCT(&cmd_line);

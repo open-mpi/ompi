@@ -194,10 +194,6 @@ int orte_dt_size_proc(size_t *size, orte_proc_t *src, opal_data_type_t type)
  */
 int orte_dt_size_app_context(size_t *size, orte_app_context_t *src, opal_data_type_t type)
 {
-    int j, rc, count;
-    int32_t i;
-    size_t map_size;
-    
     /* account for the object itself */
     *size = sizeof(orte_app_context_t);
     
@@ -208,25 +204,9 @@ int orte_dt_size_app_context(size_t *size, orte_app_context_t *src, opal_data_ty
         *size += strlen(src->app);
     }
     
-    count = opal_argv_count(src->argv);
-    if (0 < count) {
-        /* account for array of char* */
-        *size += count * sizeof(char*);
-        for (j=0; j < count; j++) {
-            *size += strlen(src->argv[j]);
-        }
-    }
-    *size += sizeof(char**);  /* account for size of the argv pointer itself */
-    
-    count = opal_argv_count(src->env);
-    if (0 < count) {
-        /* account for array of char* */
-        *size += count * sizeof(char*);
-        for (i=0; i < count; i++) {
-            *size += strlen(src->env[i]);
-        }
-    }
-    *size += sizeof(char**);  /* account for size of the env pointer itself */
+    *size += opal_argv_len(src->argv);
+
+    *size += opal_argv_len(src->env);
     
     if (NULL != src->cwd) {
         *size += strlen(src->cwd);  /* working directory */
@@ -240,35 +220,11 @@ int orte_dt_size_app_context(size_t *size, orte_app_context_t *src, opal_data_ty
         *size += strlen(src->add_hostfile);  /* add_hostfile name */
     }
     
-    if (0 < src->num_map) {
-        for (i=0; i < src->num_map; i++) {
-            if (ORTE_SUCCESS != (rc = orte_dt_size_app_context_map(&map_size, src->map_data[i], ORTE_APP_CONTEXT_MAP))) {
-                ORTE_ERROR_LOG(rc);
-                *size = 0;
-                return rc;
-            }
-        }
-    }
+    *size += opal_argv_len(src->dash_host);
     
     if (NULL != src->prefix_dir) {
         *size += strlen(src->prefix_dir);
     }
-    
-    return ORTE_SUCCESS;
-}
-
-/*
- * APP CONTEXT MAP
- */
-int orte_dt_size_app_context_map(size_t *size, orte_app_context_map_t *src, opal_data_type_t type)
-{
-    /* account for the object itself */
-    *size = sizeof(orte_app_context_map_t);
-    
-    /* if src is NULL, then that's all we wanted */
-    if (NULL == src) return ORTE_SUCCESS;
-    
-    *size += strlen(src->map_data);
     
     return ORTE_SUCCESS;
 }

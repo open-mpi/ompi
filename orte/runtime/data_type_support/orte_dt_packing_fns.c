@@ -559,19 +559,20 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
             return rc;
         }
         
-        /* Pack the map data */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack_buffer(buffer,
-                (void*)(&(app_context[i]->num_map)), 1, ORTE_STD_CNTR))) {
+        /* pack the dash host argv array */
+        count = opal_argv_count(app_context[i]->dash_host);
+        if (ORTE_SUCCESS != (rc = opal_dss.pack_buffer(buffer, (void*)(&count), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
-        if (app_context[i]->num_map > 0) {
+        /* if there are entries, pack the argv entries */
+        if (0 < count) {
             if (ORTE_SUCCESS != (rc = opal_dss.pack_buffer(buffer,
-                     (void*)(app_context[i]->map_data), app_context[i]->num_map, ORTE_APP_CONTEXT_MAP))) {
-                 ORTE_ERROR_LOG(rc);
-                 return rc;
-           }
+                            (void*)(app_context[i]->dash_host), count, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
         }
 
         /* pack the prefix dir if we have one */
@@ -646,34 +647,6 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
                 }
             }
         }
-    }
-
-    return ORTE_SUCCESS;
-}
-
-/*
- * APP CONTEXT MAP
- */
-int orte_dt_pack_app_context_map(opal_buffer_t *buffer, const void *src,
-                                  int32_t num_vals, opal_data_type_t type)
-{
-    int rc;
-    orte_app_context_map_t **app_context_map;
-    int32_t i;
-
-    app_context_map = (orte_app_context_map_t**) src;
-    for (i=0; i < num_vals; i++) {
-        if (ORTE_SUCCESS != (rc = opal_dss.pack_buffer(buffer,
-                      (void*)(&(app_context_map[i]->map_type)), 1, OPAL_UINT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-         }
-
-        if (ORTE_SUCCESS != (rc = opal_dss.pack_buffer(buffer,
-                      (void*)(&(app_context_map[i]->map_data)), 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-         }
     }
 
     return ORTE_SUCCESS;

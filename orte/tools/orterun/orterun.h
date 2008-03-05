@@ -49,7 +49,6 @@ struct globals_t {
     bool do_not_launch;
     bool debugger;
     int num_procs;
-    char *hostfile;
     char *env_val;
     char *appfile;
     char *wdir;

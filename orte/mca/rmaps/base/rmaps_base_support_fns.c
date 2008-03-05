@@ -116,7 +116,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     
     /* now filter the list through any -host specification */
     if (ORTE_SUCCESS != (rc = orte_util_filter_dash_host_nodes(allocated_nodes,
-                                                               app->num_map, app->map_data))) {
+                                                               app->dash_host))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -124,7 +124,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     /** check that anything is left! */
     if (0 == opal_list_get_size(allocated_nodes)) {
         opal_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
-                       true, app->app, app->map_data);
+                       true, app->app, "");
         return ORTE_ERR_SILENT;
     }
     

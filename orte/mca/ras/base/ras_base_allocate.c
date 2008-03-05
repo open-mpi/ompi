@@ -220,8 +220,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         if (0 < apps[i]->num_map) {
             if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
                                                     &override_oversubscribed,
-                                                    apps[i]->num_map,
-                                                    apps[i]->map_data))) {
+                                                    apps[i]->dash_host))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
                 return rc;
