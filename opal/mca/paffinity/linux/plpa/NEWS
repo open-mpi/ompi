@@ -3,7 +3,7 @@ Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
                         Corporation.  All rights reserved.
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -21,16 +21,15 @@ version 1.0.
 
 - New command: plpa-taskset.  It is intended as a drop-in replacement
   for the "taskset" command, except it also understands sockets and
-  cores.  See the man page for more details.
+  cores.  See "plpa-taskset --help" for more details
 - Renamed "plpa_info" to "plpa-info".
 - Added PLPA_{MAJOR|MINOR|RELEASE}_VERSION integer macros in plpa.h.
   This release, they have the values of 1, 1, and 0, respectively.
 - Add new API functions to map from (socket,core) back and forth from
   the Linux virtual processor ID.  Thanks to AMD for the initial code
-  contribution that made this possible.  See the man page for
-  plpa_map_to_processor_id(3) as a starting point for more
+  contribution that made this possible.  See the documentation for
+  plpa_map_to_processor_id() as a starting point for more
   information.
-- Added man pages for executables and API functions.
 - Various fixes to "included" mode.
 
 

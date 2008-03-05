@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -66,7 +66,7 @@ AH_TOP([/* -*- c -*-
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -74,23 +74,18 @@ AH_TOP([/* -*- c -*-
  * $HEADER$
  */
 
-#ifndef PLPA_H
-#define PLPA_H
+#ifndef PLPA_CONFIG_H
+#define PLPA_CONFIG_H
 ])
 AH_BOTTOM([
-#if defined(__cplusplus) || defined(c_plusplus)
-extern "C" {
-#endif
-#include "plpa_bottom.h"
-#if defined(__cplusplus) || defined(c_plusplus)
-}
-#endif
-#endif /* PLPA_H */
+#endif /* PLPA_CONFIG_H */
 ])
 
 # Compiler stuff
+CFLAGS_save="$CFLAGS"
 AC_PROG_CC
 AM_PROG_CC_C_O
+CFLAGS="$CFLAGS_save"
 
 # For the common developer case, if we're in a Subversion checkout and
 # using the GNU compilers, turn on maximum warnings unless

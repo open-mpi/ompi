@@ -19,6 +19,8 @@
 /* Needed for getopt_long() */
 #define GNU_SOURCE
 
+#include "plpa_config.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -87,11 +89,11 @@ static void append(char *str, int val)
 
 static char *cpu_set_to_list(const PLPA_NAME(cpu_set_t) *cpu_set)
 {
-    size_t i, j, last_bit, size = PLPA_BITMASK_NUM_ELEMENTS;
+    size_t i, j, last_bit, size = PLPA_BITMASK_CPU_MAX;
     unsigned long long mask_value = 0;
     /* Upper bound on string length: 4 digits per
-       PLPA_BITMASK_NUM_ELEMENTS + 1 comma for each */
-    static char str[PLPA_BITMASK_NUM_ELEMENTS * 5];
+       PLPA_BITMASK_CPU_MAX + 1 comma for each */
+    static char str[PLPA_BITMASK_CPU_MAX * 5];
     char temp[8];
 
     if (sizeof(mask_value) * 8 < size) {
@@ -156,7 +158,7 @@ static char *cpu_set_to_list(const PLPA_NAME(cpu_set_t) *cpu_set)
 
 static unsigned long long cpu_set_to_ll(const PLPA_NAME(cpu_set_t) *cpu_set)
 {
-    size_t i, size = PLPA_BITMASK_NUM_ELEMENTS;
+    size_t i, size = PLPA_BITMASK_CPU_MAX;
     unsigned long long mask_value = 0;
 
     if (sizeof(mask_value) * 8 < size) {
@@ -164,7 +166,7 @@ static unsigned long long cpu_set_to_ll(const PLPA_NAME(cpu_set_t) *cpu_set)
     }
     for (i = 0; i < size; ++i) {
         if (PLPA_CPU_ISSET(i, cpu_set)) {
-            mask_value += 1 << i;
+            mask_value |= 1llu << i;
         }
     }
     return mask_value;
@@ -184,7 +186,7 @@ static int cpu_list_to_cpu_set(char *str, PLPA_NAME(cpu_set_t) *cpu_set)
     return ret;
 }
 
-static int mask_to_cpu_set(char *mask_string, PLPA_NAME(cpu_set_t) *cpu_set)
+static int mask_to_cpu_set(const char *mask_string, PLPA_NAME(cpu_set_t) *cpu_set)
 {
     size_t i;
     unsigned int mask_value;
@@ -192,7 +194,7 @@ static int mask_to_cpu_set(char *mask_string, PLPA_NAME(cpu_set_t) *cpu_set)
     PLPA_CPU_ZERO(cpu_set);
     sscanf(mask_string, "%x", &mask_value);
     for (i = 0; i < sizeof(mask_value) * 8; ++i) {
-        if (0 != (mask_value & (1 << i))) {
+        if (0 != (mask_value & (1u << i))) {
             PLPA_CPU_SET(i, cpu_set);
         }
     }
@@ -299,6 +301,8 @@ static int set_pid_affinity(int use_cpu_list, char *mask_string,
     ret = PLPA_NAME(sched_setaffinity)((pid_t) pid, sizeof(cpu_set), &cpu_set);
     switch (ret) {
     case 0:
+#if defined(PLPA_DEBUG) && PLPA_DEBUG
+        /* JMS For debugging */
         if (use_cpu_list) {
             printf("pid %d's new affinity list: %s\n", 
                    pid, cpu_set_to_list(&cpu_set));
@@ -306,6 +310,7 @@ static int set_pid_affinity(int use_cpu_list, char *mask_string,
             printf("pid %d's new affinity mask: %llx\n", 
                    pid, cpu_set_to_ll(&cpu_set));
         }
+#endif
         break;
 
     case ENOSYS:
@@ -344,6 +349,16 @@ static int launch_task(int use_cpu_list, char **argv)
         perror("sched_setaffinity");
         fprintf(stderr, "failed to set pid %d's affinity.\n", getpid());
     }
+#if defined(PLPA_DEBUG) && PLPA_DEBUG
+    /* JMS For debugging */
+    if (use_cpu_list) {
+        printf("pid %d's new affinity list: %s\n", 
+               getpid(), cpu_set_to_list(&cpu_set));
+    } else {
+        printf("pid %d's new affinity mask: %llx\n", 
+               getpid(), cpu_set_to_ll(&cpu_set));
+    }
+#endif
 
     /* The next argument may be "--".  If so, ignore it */
 
@@ -371,7 +386,6 @@ int main(int argc, char *argv[])
         { "cpu-list", 0, NULL, 'c' },
         { "help", 0, NULL, 'h' },
         { "version", 0, NULL, 'V' },
-        { "testing", 0, NULL, 't' },
         /* Undocumented testing function */
         { "testing", 0, NULL, 't' },
         { NULL, 0, NULL, 0 }
@@ -412,6 +426,10 @@ int main(int argc, char *argv[])
 
     /* Undocumented testing function */
     if (testing) {
+        if (NULL == argv[optind]) {
+            fprintf(stderr, "Nothing to test\n");
+            exit(1);
+        }
         run_test(use_cpu_list, argv[optind]);
     }
 

@@ -3,7 +3,7 @@ Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
                         Corporation.  All rights reserved.
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 $COPYRIGHT$
 
 See LICENSE file for a rollup of all copyright notices.
@@ -202,25 +202,30 @@ Linux variants.
 How do I use PLPA?
 ------------------
 
-There are two main uses of the PLPA:
+There are three main uses of the PLPA:
 
-1. Using the plpa_info executable to check if your system supports
+1. Using the plpa-info executable to check if your system supports
    processor affinity and the PLPA can determine which to use at run-time.
 2. Developers using the PLPA library to enable source and binary Linux
    processor affinity portability.
+3. Using the plpa-taskset executable to bind arbitrary executables to
+   Linux virtual procesor IDs and/or specific sockets/core.
 
 In more detail:
 
-1. The plpa_info executable is a simple call into the PLPA library
+1. The plpa-info executable is a simple call into the PLPA library
    that checks which API variant the system it is running on has.  If
    the kernel supports processor affinity and the PLPA is able to
-   figure out which API variant to use, it prints "PLPA_PROBE_OK".
-   Other responses indicate an error.
+   figure out which API variant to use, it prints "Kernel affinity
+   support: no".  Other responses indicate an error.
 
    Since the PLPA library abstracts this kind of problem away, this is
-   more a diagnostic tool than anything else.  Note that plpa_info is
+   more a diagnostic tool than anything else.  Note that plpa-info is
    *only* compiled and installed if PLPA is installed as a standalone
    package (see below).
+
+   See "plpa-info --help" for more information.  A man page does not
+   yet exist, unfortunately.
 
 2. Developers can use this package by including the <plpa.h> header
    file and using the following prototypes:
@@ -280,6 +285,25 @@ In more detail:
    functions on an unsupported kernel will not allocate any memory;
    invoking plpa_finalize() is therefore unnecessary, but harmless.
 
+   See plpa.h for a bit more information on these functions.  Detailed
+   documentation such as man pages is still lacking, unfortunately.
+
+3. The plpa-taskset executable represents an evolution of the
+   venerable "taskset(1)" command.  It allows binding of arbitrary
+   processes to specific Linux virtual processors and/or specific
+   sockets/cores.  It supports all the same command line syntax of the
+   taskset command, but also supports additional syntax for specifying
+   sockets/cores (plpa-taskset will figure out the mapping from the
+   socket/core specification to the appropriate Linux virtual
+   processor IDs).
+
+   Hence, you can launch processor-bound jobs without needing to
+   modify their source code to call the PLPA library.
+
+   See "plpa-taskset --help" for more information on the command line
+   options available, and brief examples of usage.  A man page does
+   not yet exist, unfortunately.
+
 ===========================================================================
 
 How do I compile / install the PLPA as a standalone package?
@@ -303,7 +327,7 @@ step as root or some other privileged user.
 - <plpa.h> in $includedir (typically $prefix/include)
 - libplpa.la and libplpa.a and/or libplpa.so in $libdir (typically
   $prefix/lib)
-- plpa_info executable in $bindir (typically $prefix/bin)
+- plpa-info executable in $bindir (typically $prefix/bin)
 
 Note that since PLPA builds itself with GNU Libtool, it can be built
 as a static or shared library (or both).  The default is to build a
@@ -331,7 +355,7 @@ with it?).
 When used in "included" mode, PLPA will:
 
 - not install any header files
-- not build or install plpa_info
+- not build or install plpa-info or plpa-taskset
 - not build libplpa.* -- instead, it will build libplpa_included.*
 
 There are two ways to put PLPA into "included" mode.  From the
@@ -354,12 +378,6 @@ m4_include(path/to/plpa.m4)
 
 The following macros can then be used from your configure script:
 
-- PLPA_INIT(action-upon-success, action-upon-failure)
-  Invoke the PLPA tests and setup the PLPA to build.  A traversal of
-  "make" into the PLPA directory should build everything (it is safe
-  to list the PLPA directory in the SUBDIRS of a higher-level
-  Makefile.am, for example).
-
 - PLPA_STANDALONE
   Force the building of PLPA in standalone mode.  Overrides the
   --enable-included-mode command line switch.
@@ -376,7 +394,36 @@ The following macros can then be used from your configure script:
   type/symbol clashes, and everything will compile and link
   successfully.  If you both include PLPA and do not change the symbol
   prefix, it is likely that you will get multiple symbol definitions
-  when linking.
+  when linking if an external PLPA is linked against your library /
+  application.  Note that the PLPA_CPU_*() macros are *NOT* prefixed
+  (because they are only used when compiling and therefore present no
+  link/run-time conflicts), but all other types, enum values, and
+  symbols are.  Enum values are prefixed with an upper-case
+  translation if the prefix supplied.  For example,
+  PLPA_SET_SYMBOL_PREFIX(foo_) will result in foo_init() and
+  FOO_PROBE_OK.  Tip: It might be good to include "plpa" in the
+  prefix, just for clarity.
+
+- PLPA_DISABLE_EXECUTABLES
+  Provides the same result as the --disable-executables configure
+  flag, and is implicit in included mode.
+
+- PLPA_INIT(action-upon-success, action-upon-failure)
+  Invoke the PLPA tests and setup the PLPA to build.  A traversal of
+  "make" into the PLPA directory should build everything (it is safe
+  to list the PLPA directory in the SUBDIRS of a higher-level
+  Makefile.am, for example).  PLPA_INIT must be invoked after the
+  INCLUDED / STANDALONE / SET_SYMBOL_PREFIX macros.
+
+- PLPA_DO_AM_CONDITIONALS
+  If you embed PLPA in a larger project and build it conditionally
+  (e.g., if PLPA_INIT is in a conditional), you must unconditionally
+  invoke PLPA_DO_AM_CONDITIONALS to avoid warnings from Automake (for
+  the cases where PLPA is not selected to be built).  This macro is
+  necessary because PLPA uses some AM_CONDITIONALs to build itself;
+  AM_CONDITIONALs cannot be defined conditionally.  It is safe (but
+  unnecessary) to call PLPA_DO_AM_CONDITIONALS even if PLPA_INIT is
+  invoked unconditionally.
 
 Here's an example of integrating with a larger project named sandbox:
 
@@ -395,7 +442,7 @@ shell$ edit configure.ac
 ...add error checking for plpa_happy=no case...
 shell$ edit src/my_program.c
 ...add #include <plpa.h>...
-...add calls to plpa_sched_setaffinity()...
+...add calls to sandbox_plpa_sched_setaffinity()...
 shell$ aclocal
 shell$ autoconf
 shell$ libtoolize --automake
@@ -410,8 +457,8 @@ shell$ make
 How can I tell if PLPA is working?
 ----------------------------------
 
-Run plpa_info; if it says "PLPA_PROBE_OK", then PLPA is working
-properly.
+Run plpa-info; if it says "Kernel affinity support: yes", then PLPA is
+working properly.
 
 If you want to compile your own test program to verify it, try
 compiling and running the following:
@@ -421,7 +468,8 @@ compiling and running the following:
 #include <plpa.h>
 
 int main(int argc, char* argv[]) {
-    if (PLPA_PROBE_OK == plpa_api_probe()) {
+    plpa_api_type_t p;
+    if (0 == plpa_api_probe(&p) && PLPA_PROBE_OK == p) {
         printf("All is good!\n");
     }
     return 0;

@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+# Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -325,6 +325,7 @@ run_gnu_tools() {
     find_and_delete missing
     find_and_delete mkinstalldirs
     find_and_delete libtool
+    find_and_delete configure
 
     # Run the GNU tools
 
@@ -360,13 +361,13 @@ EOF
 fi
 
 
-if test -f VERSION -a -f configure.ac -a -f src/libplpa/plpa_bottom.h ; then
+if test -f VERSION -a -f configure.ac -a -f src/libplpa/plpa.h.in ; then
     # Top level of PLPA tree
     uptime > /dev/null
 else
     cat <<EOF
 
-You must run this script from either the top level of the OMPI
+You must run this script from either the top level of the PLPA
 directory tree or the top-level of an MCA component directory tree.
 
 EOF
